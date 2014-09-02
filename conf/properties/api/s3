@@ -1,0 +1,3 @@
+port:			9020
+bucket:			sanity-bucket1-nh
+auth.prefix:	AWS

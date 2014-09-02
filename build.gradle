@@ -1,0 +1,118 @@
+apply plugin: 'java'
+apply plugin: 'java-library-distribution'
+apply plugin: 'idea'
+
+sourceCompatibility = '1.7'
+
+def confDirName = 'conf'
+distsDirName = 'dist'
+libsDirName = 'lib'
+dependencyCacheDirName = 'tmp'
+
+def loadProperties(String sourceFileName) {
+	def config = new Properties()
+	def propFile = new File(sourceFileName)
+	if (propFile.canRead()) {
+		config.load(new FileInputStream(propFile))
+		for (Map.Entry property in config) {
+			ext[property.key] = property.value;
+		}
+	}
+}
+
+loadProperties confDirName + '/properties/run'
+
+version = ext.version
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+
+	compile (
+		'com.codahale.metrics:metrics-core:3.0.2',
+		'commons-codec:commons-codec:1.9',
+		'commons-configuration:commons-configuration:1.10',
+		'org.apache.logging.log4j:log4j-api:2.0-rc2',
+		'org.apache.logging.log4j:log4j-core:2.0-rc2',
+		'org.apache.httpcomponents:httpclient:4.3.4',
+		'org.apache.httpcomponents:httpcore:4.3.2'
+	)
+
+	runtime (
+		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
+		'com.fasterxml.jackson.core:jackson-core:2.4.1',
+		'com.fasterxml.jackson.core:jackson-databind:2.4.1',
+		'com.github.rickyclarkson:jmdns:3.4.2-r353-1',
+		'commons-lang:commons-lang:2.6',
+		'commons-logging:commons-logging:1.1.3',
+		'org.apache.logging.log4j:log4j-slf4j-impl:2.0-rc2',
+		'org.apache.logging.log4j:log4j-jcl:2.0-rc2',
+		'org.slf4j:slf4j-api:1.7.7',
+		'org.python:jython:2.7-b2'
+	)
+
+	testCompile group: 'junit', name: 'junit', version: '4.11'
+
+}
+
+task rmic(dependsOn: compileJava) << {
+	String[] listClsRemote = [
+		'com.emc.mongoose.object.http.driver.WSLoadBuilderService',
+		'com.emc.mongoose.object.http.driver.impl.CreateService',
+		'com.emc.mongoose.object.http.driver.impl.DeleteService',
+		'com.emc.mongoose.object.http.driver.impl.ReadService',
+		'com.emc.mongoose.object.http.driver.impl.UpdateService'
+	]
+	for(cls in listClsRemote) {
+		String command = """rmic -classpath ${sourceSets.main.output.classesDir} -d ${sourceSets.main.output.classesDir} ${cls}"""
+		println command
+		String test = command.execute().text
+		print test
+	}
+}
+
+jar {
+	dependsOn(rmic)
+	archiveName "${baseName}.${extension}"
+	manifest {
+		attributes (
+			'Implementation-Title': rootProject.name,
+			'Implementation-Version': version,
+			'Main-Class': 'com.emc.mongoose.run.Main',
+			'Class-Path': configurations.runtime.collect { 'lib/'+it.name }.join(' ')
+		)
+	}
+}
+
+distributions {
+	main {
+		baseName = rootProject.name
+		contents {
+			into('conf') {
+				from { 'conf' }
+			}
+			into('lib') {
+				from { libsDirName }
+			}
+			into('scripts') {
+				from { sourceSets.test.resources }
+			}
+		}
+	}
+}
+
+idea {
+	module {
+		name = rootProject.name
+		jdkName = sourceCompatibility
+	}
+	project.ipr {
+		withXml { provider ->
+			provider.node.component.find { it.@name == 'VcsDirectoryMappings' }.mapping.@vcs = 'Git'
+		}
+	}
+}
+
+tasks.idea.dependsOn(cleanIdea)

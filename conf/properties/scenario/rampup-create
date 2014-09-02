@@ -1,0 +1,3 @@
+load:	create
+threads: 2,5,10
+objectsizes: 1024,2048

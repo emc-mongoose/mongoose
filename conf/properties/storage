@@ -1,0 +1,8 @@
+# comma-separated list of target storage nodes
+addrs:			lviprj075.lss.emc.com,lviprj076.lss.emc.com,lviprj077.lss.emc.com
+
+# case-insensitive, may be "atmos", "s3" or "swift"
+api:			s3
+
+# reserved for future TLS usage (may be "https")
+scheme:			http

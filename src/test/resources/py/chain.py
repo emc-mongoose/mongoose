@@ -1,0 +1,60 @@
+from __future__ import print_function, absolute_import, with_statement
+from sys import exit
+from loadbuilder import INSTANCE as loadBuilder
+#
+from org.apache.logging.log4j import LogManager
+#
+from com.emc.mongoose.api import Request
+from com.emc.mongoose.conf import RunTimeConfig
+from com.emc.mongoose.logging import Markers
+#
+from java.lang import IllegalArgumentException
+from java.util import NoSuchElementException
+#
+LOG = LogManager.getLogger()
+chain = list()
+#
+loadTypes = None
+try:
+	loadTypes = RunTimeConfig.getStringArray("scenario.chain.load")
+	LOG.info(Markers.MSG, "Load chain: {}", loadTypes)
+except NoSuchElementException:
+	LOG.error(Markers.ERR, "No load type specified, try arg -Dscenario.chain.load=<VALUE> to override")
+#
+prevLoad = None
+for loadTypeStr in loadTypes:
+	LOG.debug(Markers.MSG, "Next load type is \"{}\"", loadTypeStr)
+	try:
+		load = loadBuilder.setLoadType(Request.Type.valueOf(loadTypeStr.upper())).build()
+		if prevLoad is not None:
+			prevLoad.setConsumer(load)
+		chain.append(load)
+		if prevLoad is None:
+			loadBuilder.setInputFile(None) # prevent the file list producer creation for next loads
+		prevLoad = load
+	except IllegalArgumentException:
+		LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)
+#
+from java.lang import Integer
+from java.util.concurrent import TimeUnit
+timeOut = None  # tuple of (value, unit)
+try:
+	timeOut = RunTimeConfig.getString("run.time")
+	timeOut = timeOut.split('.')
+	timeOut = Integer.valueOf(timeOut[0]), TimeUnit.valueOf(timeOut[1].upper())
+	LOG.info(Markers.MSG, "Using time limit: {} {}", timeOut[0], timeOut[1].name().lower())
+except NoSuchElementException:
+	LOG.error(Markers.ERR, "No timeout specified, try arg -Drun.time=<INTEGER>.<UNIT> to override")
+except IllegalArgumentException:
+	LOG.error(Markers.ERR, "Timeout unit should be a name of a constant from TimeUnit enumeration")
+	exit()
+except IndexError:
+	LOG.error(Markers.ERR, "Time unit should be specified with timeout value (following after \".\" separator)")
+	exit()
+#
+for load in chain:
+	load.start()
+chain[0].join(timeOut[1].toMillis(timeOut[0]))
+for load in chain:
+	load.close()
+LOG.info(Markers.MSG, "Scenario end")
