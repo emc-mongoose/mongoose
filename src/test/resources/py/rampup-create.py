@@ -16,7 +16,7 @@ from java.util import NoSuchElementException
 LOG = LogManager.getLogger()
 #
 try:
-	loadType = Request.Type.valueOf(RunTimeConfig.getString("scenario.rampup-create.load").upper())
+	loadType = Request.Type.valueOf(RunTimeConfig.getString("scenario.rampup-read.load").upper())
 	LOG.info(Markers.MSG, "Using load type: {}", loadType.name())
 	loadBuilder.setLoadType(loadType)
 except NoSuchElementException:
