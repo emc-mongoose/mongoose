@@ -18,7 +18,7 @@ implements ThreadFactory {
 	private int threadNumber;
 	//
 	public WorkerFactory(final String threadNamePrefix) {
-		LOG.debug(Markers.MSG, "New worker factory: \"{}\"", threadNamePrefix);
+		//LOG.trace(Markers.MSG, "New worker factory: \"{}\"", threadNamePrefix);
 		this.threadNamePrefix = threadNamePrefix;
 		this.threadNumber = 0;
 	}

@@ -49,8 +49,8 @@ from java.lang import Integer
 for threadCount in threadCountList:
 	loadBuilder.setThreadsPerNodeDefault(Long.valueOf(threadCount))
 	for objectSize in objectSizeList:
-		LOG.info(Markers.MSG,"Threadcount = {}",threadCount)
-		LOG.info(Markers.MSG,"Object size = {} {}", objectSize, "bytes")
+		LOG.info(Markers.MSG, "Threadcount = {}", threadCount)
+		LOG.info(Markers.MSG, "Object size = {} {}", objectSize, "bytes")
 		loadBuilder.setMinObjSize(Integer.valueOf(objectSize))
 		loadBuilder.setMaxObjSize(Integer.valueOf(objectSize))
 		load=loadBuilder.build()

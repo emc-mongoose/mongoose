@@ -50,8 +50,8 @@ implements LoadExecutor<WSObject> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final WSRequestConfig localReqConf;
-	private final Counter counterSubm, counterRej, counterRejParent, counterReqSucc, counterReqFail;
-	private final Counter counterReqSuccParent, counterReqFailParent;
+	private final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
+	private final Counter counterSubmParent, counterRejParent, counterReqSuccParent, counterReqFailParent;
 	private final Meter reqBytes, reqBytesParent;
 	private final Histogram reqDur, reqDurParent;
 	//
@@ -69,8 +69,14 @@ implements LoadExecutor<WSObject> {
 		this.localReqConf = localReqConf;
 		//
 		counterSubm = parentMetrics.counter(MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_SUBM));
+		counterSubmParent = parentMetrics.getCounters().get(
+			MetricRegistry.name(parentName, LoadExecutor.METRIC_NAME_SUBM)
+		);
+		//
 		counterRej = parentMetrics.counter(MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_REJ));
-		counterRejParent = parentMetrics.counter(MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_REJ));
+		counterRejParent = parentMetrics.getCounters().get(
+			MetricRegistry.name(parentName, LoadExecutor.METRIC_NAME_REJ)
+		);
 		//
 		counterReqSucc = parentMetrics.counter(MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_SUCC));
 		counterReqSuccParent = parentMetrics.getCounters().get(
@@ -138,6 +144,7 @@ implements LoadExecutor<WSObject> {
 		//
 		if(object!=null) {
 			counterSubm.inc();
+			counterSubmParent.inc();
 			if(LOG.isTraceEnabled()) {
 				LOG.trace(
 					Markers.MSG, "Request for the object {} succesfully submitted",
