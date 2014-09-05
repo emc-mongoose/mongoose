@@ -1,2 +1,2 @@
-threads:			10
-verify.checksum:	true
+threads:		10
+verify.content:	true

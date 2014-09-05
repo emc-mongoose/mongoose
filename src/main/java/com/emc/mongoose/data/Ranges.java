@@ -28,6 +28,8 @@ implements Externalizable, Map<Long, UniformData> {
 			return new StrBuilder();
 		}
 	};
+	private final static String
+		FMT_EXC_MSG = "Range count should be more than 0 and less than the object size = %s";
 	//
 	private final TreeMap<Long, UniformData> offsetMap = new TreeMap<>();
 	private long parentSize;
@@ -50,17 +52,17 @@ implements Externalizable, Map<Long, UniformData> {
 	//
 	public void createRandom(final int count)
 	throws IllegalArgumentException, IOException {
-		final String excMsg = "Range count should be more than 0 and less than the object size = " +
-			Long.toString(parentSize);
 		if(count < 1 || count > parentSize) {
-			throw new IllegalArgumentException(excMsg);
+			throw new IllegalArgumentException(
+				String.format(FMT_EXC_MSG, RunTimeConfig.formatSize(parentSize))
+			);
 		}
 		final int spacePerRange = (int) parentSize / count;
 		final ThreadLocalRandom tlr = ThreadLocalRandom.current();
 		long nextItemOffset, nextRangeSize;
 		for(int i = 0; i < count; i++) {
-			nextItemOffset = i * spacePerRange + tlr.nextLong(spacePerRange);
-			nextRangeSize = tlr.nextLong(1, spacePerRange);
+			nextItemOffset = i * spacePerRange + tlr.nextLong(spacePerRange/2);
+			nextRangeSize = tlr.nextLong(1, spacePerRange/2);
 			put(nextItemOffset, new UniformData(nextRangeSize));
 		}
 	}
@@ -116,9 +118,9 @@ implements Externalizable, Map<Long, UniformData> {
 		long existingRangeEnd, newRangeEnd = parentOffset + data.getSize();
 		for(final long existingRangeOffset: offsetMap.keySet()) {
 			existingRangeEnd = existingRangeOffset + offsetMap.get(existingRangeOffset).getSize();
-			if(parentOffset < existingRangeOffset && newRangeEnd <= existingRangeOffset) {
+			if(newRangeEnd < existingRangeOffset) {
 				LOG.trace(Markers.MSG, "The range is completely before the existing one");
-			} else if(parentOffset > existingRangeOffset && existingRangeEnd >= parentOffset) {
+			} else if(parentOffset > existingRangeEnd) {
 				LOG.trace(Markers.MSG, "The range is completely after the existing one");
 			} else {
 				throw new IllegalArgumentException("Range overlapping");
@@ -130,12 +132,9 @@ implements Externalizable, Map<Long, UniformData> {
 	}
 	@Override
 	public final UniformData remove(Object parentOffset) {
-		UniformData removed, nextData;
+		UniformData removed;
 		synchronized(offsetMap) {
 			removed = offsetMap.remove(parentOffset);
-			for(final long nextParentOffset : offsetMap.keySet()) {
-				nextData = offsetMap.get(nextParentOffset);
-			}
 		}
 		return removed;
 	}

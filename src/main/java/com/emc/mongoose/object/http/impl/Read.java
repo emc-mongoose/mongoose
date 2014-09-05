@@ -17,15 +17,15 @@ extends WSLoadExecutor {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static boolean VERIFY_CHECKSUM;
+	public final static boolean VERIFY_CONTENT;
 	static {
 		boolean flag = false;
 		try {
-			flag = RunTimeConfig.getBoolean("load.read.verify.checksum");
+			flag = RunTimeConfig.getBoolean("load.read.verify.content");
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, "Failed to get the value for property \"load.read.verify.checksum\"");
 		}
-		VERIFY_CHECKSUM = flag;
+		VERIFY_CONTENT = flag;
 	}
 	//
 	public Read(
@@ -33,6 +33,6 @@ extends WSLoadExecutor {
 		final int threadsPerNode, final String listFile
 	) {
 		super(addrs, reqConf, maxCount, threadsPerNode, listFile);
-		LOG.info(Markers.MSG, "Verify data checksum during read: {}", VERIFY_CHECKSUM);
+		LOG.info(Markers.MSG, "Verify data checksum during read: {}", VERIFY_CONTENT);
 	}
 }

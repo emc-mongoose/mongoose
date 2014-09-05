@@ -161,7 +161,7 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 					case (HttpDelete.METHOD_NAME):
 						break;
 					case (HttpGet.METHOD_NAME):
-						if(Read.VERIFY_CHECKSUM) { // validate the response content checksum
+						if(Read.VERIFY_CONTENT) { // validate the response content
 							final HttpEntity httpEntity = httpResponse.getEntity();
 							if(httpEntity==null) {
 								LOG.warn(
@@ -175,13 +175,13 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 								if(dataItem.readFrom(in)) {
 									if(LOG.isTraceEnabled()) {
 										LOG.trace(
-											Markers.MSG, "Checksum verification success for \"{}\"",
+											Markers.MSG, "Content verification success for \"{}\"",
 											Long.toHexString(dataItem.getId())
 										);
 									}
 								} else {
 									LOG.warn(
-										Markers.ERR, "Checksum verification failed for \"{}\"",
+										Markers.ERR, "Content verification failed for \"{}\"",
 										Long.toHexString(dataItem.getId())
 									);
 								}
@@ -200,39 +200,36 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 				}
 			} else {
 				switch(statusCode) {
-					case (400):
+					case(400):
 						LOG.warn(Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine());
 						break;
-					case (403):
-						if(LOG.isDebugEnabled()) {
-							try(final InputStream respStream = httpResponse.getEntity().getContent()) {
-								final ByteArrayOutputStream byteBuffStream = new ByteArrayOutputStream();
-								int nextByte;
-								do {
-									nextByte = respStream.read();
-									byteBuffStream.write(nextByte);
-								} while(nextByte >= 0);
-								LOG.warn(Markers.ERR, byteBuffStream.toString());
-							} catch(final IOException|NullPointerException e) {
-								LOG.warn(
-									Markers.ERR, "Failed to read response content entity due to {}",
-									e.toString()
-								);
-							}
-						} else {
-							LOG.warn(Markers.ERR, statusLine.getReasonPhrase());
+					case(403):
+						LOG.warn(Markers.ERR, "Access failure");
+						try(final InputStream respStream = httpResponse.getEntity().getContent()) {
+							final ByteArrayOutputStream byteBuffStream = new ByteArrayOutputStream();
+							int nextByte;
+							do {
+								nextByte = respStream.read();
+								byteBuffStream.write(nextByte);
+							} while(nextByte >= 0);
+							LOG.debug(Markers.ERR, byteBuffStream.toString());
+						} catch(final IOException|NullPointerException e) {
+							LOG.debug(
+								Markers.ERR, "Failed to read response content entity due to {}",
+								e.toString()
+							);
 						}
 						break;
-					case (404):
+					case(404):
 						LOG.warn(Markers.ERR, "Not found: {}", httpRequest.getURI());
 						break;
-					case (416):
+					case(416):
 						LOG.warn(Markers.ERR, "Incorrect range");
 						break;
-					case (500):
+					case(500):
 						LOG.warn(Markers.ERR, "Storage internal failure");
 						break;
-					case (503):
+					case(503):
 						LOG.warn(Markers.ERR, "Storage prays about a mercy");
 						break;
 					default:
