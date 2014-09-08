@@ -70,6 +70,13 @@ public final class ServiceUtils {
 		try {
 			addr = InetAddress.getLocalHost();
 		} catch(final UnknownHostException e) {
+			LOG.warn(Markers.ERR, "Failed to get host address: {}", e.toString());
+			if(LOG.isTraceEnabled()) {
+				final Throwable cause = e.getCause();
+				if(cause!=null) {
+					LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
+				}
+			}
 			addr = InetAddress.getLoopbackAddress();
 		}
 		return addr.getHostAddress();
