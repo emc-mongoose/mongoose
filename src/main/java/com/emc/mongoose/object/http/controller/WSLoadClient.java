@@ -775,8 +775,10 @@ implements LoadExecutor<WSObject> {
 			new Thread() {
 				@Override
 				public final void run() {
+					LOG.info(Markers.MSG, "Shutdown hook start");
 					try {
 						close();
+						LOG.debug(Markers.MSG, "Shutdown hook finished successfully");
 					} catch(final IOException e) {
 						e.printStackTrace();
 					}
