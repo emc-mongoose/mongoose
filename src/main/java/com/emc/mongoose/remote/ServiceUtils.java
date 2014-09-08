@@ -1,6 +1,5 @@
 package com.emc.mongoose.remote;
 //
-import com.emc.mongoose.conf.RunTimeConfig;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.run.Main;
 //
