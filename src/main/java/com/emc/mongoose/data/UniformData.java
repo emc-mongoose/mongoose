@@ -4,6 +4,7 @@ import com.emc.mongoose.conf.RunTimeConfig;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.remote.ServiceUtils;
 //
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -15,6 +16,7 @@ import java.io.InterruptedIOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 09.05.14.
@@ -160,7 +162,7 @@ implements Externalizable {
 		String t;
 		int nextSepPos = v.indexOf(RunTimeConfig.LIST_SEP);
 		if(nextSepPos > 0 && nextSepPos + 1 < v.length()) {
-			offset =Long.parseLong(v.substring(0, nextSepPos), 0x10);
+			offset = Long.parseLong(v.substring(0, nextSepPos), 0x10);
 			t = v.substring(nextSepPos + 1);
 			nextSepPos = t.indexOf(RunTimeConfig.LIST_SEP);
 			if(nextSepPos > 0 && nextSepPos + 1 < v.length()) {
@@ -176,7 +178,7 @@ implements Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final int hashCode() {
-		return toString().hashCode();
+		return (int) (offset + size + (ranges==null ? 0 : ranges.size()));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Binary serialization implementation /////////////////////////////////////////////////////////
@@ -221,9 +223,48 @@ implements Externalizable {
 		}
 	}
 	//
-	public final boolean readFrom(final InputStream in)
-	throws IllegalStateException {
-		return true; // TODO content checking including modified byte ranges
+	public final boolean compareWithData(final InputStream in) {
+		boolean contentMatches = true;
+		//
+		UniformData nextRange = null;
+		long spaceBetweenRanges = size, prevRangeEnd = 0;
+		//
+		try {
+			for(final long nextRangeOffset : ranges.keySet()) {
+				// read next "spaceBetweenRanges" bytes from "in"
+				spaceBetweenRanges = nextRangeOffset - prevRangeEnd;
+				contentMatches = compareWithData(in, spaceBetweenRanges);
+				if(!contentMatches) {
+					break;
+				}
+				// read the updated range
+				nextRange = ranges.get(nextRangeOffset);
+				contentMatches = nextRange.compareWithData(in, nextRange.size);
+				if(!contentMatches) {
+					break;
+				}
+				prevRangeEnd = nextRangeOffset + nextRange.size;
+			}
+			//
+			if(nextRange!=null) { // if there were at least one range
+				spaceBetweenRanges = nextRange.size + prevRangeEnd;
+			} // spaceBetweenRanges==size otherwise
+			if(contentMatches) {
+				contentMatches = compareWithData(in, spaceBetweenRanges);
+			}
+		} catch(final IOException e) {
+			contentMatches = false;
+			LOG.warn(Markers.ERR, "Data item content read failure: {}", e.toString());
+			if(LOG.isTraceEnabled()) {
+				final Throwable cause = e.getCause();
+				if(cause!=null) {
+					LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
+				}
+			}
+		}
+		//
+		return contentMatches;
+		// old code w/ checksum calculation below
 		/*if(checkSum==null) {
 			throw new IllegalStateException("No checksum to verify");
 		}
@@ -249,6 +290,31 @@ implements Externalizable {
 			toString(), checkSum, readCheckSum
 		);
 		return checkSum.equals(readCheckSum);*/
+	}
+	//
+	private boolean compareWithData(final InputStream in, final long length)
+	throws IOException {
+		boolean contentMatches;
+		final byte
+			readBuff[] = new byte[length > MAX_PAGE_SIZE ? MAX_PAGE_SIZE : (int) length],
+			dataBuff[] = new byte[readBuff.length];
+		int doneByteCount;
+		do {
+			doneByteCount = in.read(readBuff);
+			if(doneByteCount>0) {
+				if(doneByteCount==read(dataBuff, 0, doneByteCount)) {
+					contentMatches = Arrays.equals(dataBuff, readBuff);
+				} else {
+					contentMatches = false;
+					LOG.error(Markers.ERR, "Failed to read {} bytes from data source ring", doneByteCount);
+				}
+			} else {
+				contentMatches = false;
+				LOG.warn(Markers.ERR, "Failed to read {} bytes from input stream", readBuff.length);
+			}
+
+		} while(contentMatches && doneByteCount < length);
+		return contentMatches;
 	}
 	//
 }
