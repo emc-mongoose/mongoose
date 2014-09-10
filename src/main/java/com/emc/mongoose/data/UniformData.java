@@ -4,7 +4,9 @@ import com.emc.mongoose.conf.RunTimeConfig;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.remote.ServiceUtils;
 //
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.DigestUtils;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -16,7 +18,9 @@ import java.io.InterruptedIOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
-import java.util.Arrays;
+import java.security.DigestInputStream;
+import java.security.DigestOutputStream;
+import java.security.MessageDigest;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 09.05.14.
@@ -31,14 +35,15 @@ implements Externalizable {
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
 	//
-	//protected final MessageDigest md = DigestUtils.getMd5Digest();
+	protected final MessageDigest md = DigestUtils.getMd5Digest();
 	protected long offset = 0;
 	protected long size = 0;
 	protected Ranges ranges = null;
-	//protected String checkSum = null;
+	protected String checkSum = null;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformData() {
 		super(UniformDataSource.DEFAULT.getBytes());
+		ranges = new Ranges(size);
 	}
 	//
 	public UniformData(final String metaInfo) {
@@ -95,10 +100,10 @@ implements Externalizable {
 	public final long getSize() {
 		return size;
 	}
-	/*
+	/**
 	 Gets the data checksum which is calculated during read.
 	 Should be called <u>once</u> only after the data has being read.
-	 @return MD5 checksum encoded as URL-safe-base64 string
+	 @return MD5 checksum encoded as URL-safe-base64 string */
 	public final String getCheckSum() {
 		if(checkSum==null) {
 			checkSum = Base64.encodeBase64URLSafeString(md.digest());
@@ -108,7 +113,39 @@ implements Externalizable {
 	//
 	public final void setCheckSum(final String checkSum) {
 		this.checkSum = checkSum;
-	}*/
+	}
+	//
+	private final static class NullOutputStream
+	extends OutputStream {
+		@Override
+		public void write(final int b) {}
+	}
+	//
+	/** [Re]calculates the checkSum field with ranges */
+	public final void calcCheckSum() {
+		UniformData nextRange;
+		long spaceBeforeNextRange, freeSpaceOffset = 0;
+		synchronized(md) {
+			final DigestOutputStream outDigest = new DigestOutputStream(new NullOutputStream(), md);
+			try {
+				for(final long nextRangeOffset : ranges.keySet()) {
+					if(nextRangeOffset > freeSpaceOffset) {
+						spaceBeforeNextRange = nextRangeOffset - freeSpaceOffset;
+						writeBlockTo(outDigest, freeSpaceOffset, spaceBeforeNextRange);
+					}
+					nextRange = ranges.get(nextRangeOffset);
+					nextRange.writeBlockTo(outDigest, 0, nextRange.size);
+					freeSpaceOffset = nextRangeOffset + nextRange.size;
+				}
+				if(freeSpaceOffset < size) {
+					writeBlockTo(outDigest, freeSpaceOffset, size);
+				}
+				checkSum = Base64.encodeBase64URLSafeString(md.digest());
+			} catch(final IOException e) {
+				LOG.warn(Markers.ERR, e.getMessage());
+			}
+		}
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring input stream implementation ////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -124,7 +161,6 @@ implements Externalizable {
 			pos = 0;
 			b = super.read(); // re-read the byte
 		}
-		//md.update((byte)b);
 		return b;
 	}
 	//
@@ -144,7 +180,6 @@ implements Externalizable {
 			pos = 0;
 			doneByteCount += super.read(buff, offset + doneByteCount, length - doneByteCount);
 		}
-		//md.update(buff, offset, doneByteCount);
 		return doneByteCount;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,15 +232,28 @@ implements Externalizable {
 		this.size = in.readLong();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@SuppressWarnings("SynchronizeOnNonFinalField")
-	public final void writeTo(final OutputStream out)
+	public final void writeTo(final OutputStream out) {
+		synchronized(md) {
+			try {
+				writeBlockTo(
+					new DigestOutputStream(out, md),
+					0, size
+				);
+			} catch(final IOException e) {
+				LOG.error(Markers.ERR, e.getMessage());
+			}
+		}
+		checkSum = Base64.encodeBase64URLSafeString(md.digest());
+	}
+	//
+	private void writeBlockTo(final OutputStream out, final long start, final long length)
 	throws IOException {
-		final byte buff[] = new byte[size > MAX_PAGE_SIZE ? MAX_PAGE_SIZE : (int) size];
+		final byte buff[] = new byte[(int)size % MAX_PAGE_SIZE];
 		final int
-			countPages = (int) size / buff.length,
-			countTailBytes = (int) size % buff.length;
-		synchronized(buf) {
-			setOffset(offset); // resets the position to the beginning
+			countPages = (int) length / buff.length,
+			countTailBytes = (int) length % buff.length;
+		synchronized(this) {
+			setOffset(offset + start); // resets the position in the ring to the beginning of the item
 			//
 			for(int i = 0; i < countPages; i++) {
 				if(read(buff)==buff.length) {
@@ -224,97 +272,30 @@ implements Externalizable {
 	}
 	//
 	public final boolean compareWithData(final InputStream in) {
-		boolean contentMatches = true;
-		//
-		UniformData nextRange = null;
-		long spaceBetweenRanges = size, prevRangeEnd = 0;
-		//
-		try {
-			for(final long nextRangeOffset : ranges.keySet()) {
-				// read next "spaceBetweenRanges" bytes from "in"
-				spaceBetweenRanges = nextRangeOffset - prevRangeEnd;
-				contentMatches = compareWithData(in, spaceBetweenRanges);
-				if(!contentMatches) {
-					break;
-				}
-				// read the updated range
-				nextRange = ranges.get(nextRangeOffset);
-				contentMatches = nextRange.compareWithData(in, nextRange.size);
-				if(!contentMatches) {
-					break;
-				}
-				prevRangeEnd = nextRangeOffset + nextRange.size;
-			}
-			//
-			if(nextRange!=null) { // if there were at least one range
-				spaceBetweenRanges = nextRange.size + prevRangeEnd;
-			} // spaceBetweenRanges==size otherwise
-			if(contentMatches) {
-				contentMatches = compareWithData(in, spaceBetweenRanges);
-			}
-		} catch(final IOException e) {
-			contentMatches = false;
-			LOG.warn(Markers.ERR, "Data item content read failure: {}", e.toString());
-			if(LOG.isTraceEnabled()) {
-				final Throwable cause = e.getCause();
-				if(cause!=null) {
-					LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-				}
-			}
-		}
-		//
-		return contentMatches;
-		// old code w/ checksum calculation below
-		/*if(checkSum==null) {
+		if(checkSum==null) {
 			throw new IllegalStateException("No checksum to verify");
 		}
 		//
-		final MessageDigest md5 = DigestUtils.getMd5Digest();
-		final byte buff[] = new byte[(int)size % 0x100000];
-		int readCount;
+		final String readCheckSum;
+		final byte buff[] = new byte[(int) size % MAX_PAGE_SIZE];
+		int nextByteCount;
 		//
-		try {
-			do {
-				readCount = in.read(buff);
-				if(readCount>0) {
-					md5.update(buff, 0, readCount);
-				}
-			} while(readCount>=0);
-		} catch(final IOException e) {
-			LOG.warn(Markers.ERR, "Failed to read the data");
+		synchronized(md) {
+			final DigestInputStream inDigest = new DigestInputStream(in, md);
+			try {
+				do {
+					nextByteCount = inDigest.read(buff);
+				} while(nextByteCount >= 0);
+			} catch(final IOException e) {
+				LOG.warn(Markers.ERR, "Failed to read the data");
+			}
+			readCheckSum = Base64.encodeBase64URLSafeString(md.digest());
 		}
-		//
-		final String readCheckSum = Base64.encodeBase64URLSafeString(md5.digest());
 		LOG.trace(
 			Markers.MSG, "checksum verification for {}, assumed: \"{}\", read back: \"{}\"",
 			toString(), checkSum, readCheckSum
 		);
-		return checkSum.equals(readCheckSum);*/
-	}
-	//
-	private boolean compareWithData(final InputStream in, final long length)
-	throws IOException {
-		boolean contentMatches;
-		final byte
-			readBuff[] = new byte[length > MAX_PAGE_SIZE ? MAX_PAGE_SIZE : (int) length],
-			dataBuff[] = new byte[readBuff.length];
-		int doneByteCount;
-		do {
-			doneByteCount = in.read(readBuff);
-			if(doneByteCount>0) {
-				if(doneByteCount==read(dataBuff, 0, doneByteCount)) {
-					contentMatches = Arrays.equals(dataBuff, readBuff);
-				} else {
-					contentMatches = false;
-					LOG.error(Markers.ERR, "Failed to read {} bytes from data source ring", doneByteCount);
-				}
-			} else {
-				contentMatches = false;
-				LOG.warn(Markers.ERR, "Failed to read {} bytes from input stream", readBuff.length);
-			}
-
-		} while(contentMatches && doneByteCount < length);
-		return contentMatches;
+		return checkSum.equals(readCheckSum);
 	}
 	//
 }

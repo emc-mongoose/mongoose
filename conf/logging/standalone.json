@@ -208,7 +208,7 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.data",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"

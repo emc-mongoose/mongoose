@@ -184,12 +184,14 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 										Markers.ERR, "Content verification failed for \"{}\"",
 										Long.toHexString(dataItem.getId())
 									);
+									statusCode = 512;
 								}
 							} catch(final IOException e) {
 								LOG.warn(
 									Markers.ERR, "Failed to read the object content for \"{}\"",
 									Long.toHexString(dataItem.getId())
 								);
+								statusCode = 500;
 							}
 						}
 						break;
