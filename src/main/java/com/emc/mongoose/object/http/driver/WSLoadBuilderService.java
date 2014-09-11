@@ -72,28 +72,26 @@ implements LoadBuilderService<T> {
 						}
 						loadSvc = new CreateService(
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
-							listFile, minObjSize, maxObjSize
+							minObjSize, maxObjSize
 						);
 						break;
 					case READ:
 						LOG.debug("New read load");
 						loadSvc = new ReadService(
-							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
-							listFile
+							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case UPDATE:
 						LOG.debug("New update load");
 						loadSvc = new UpdateService(
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
-							listFile, updatesPerItem
+							updatesPerItem
 						);
 						break;
 					case DELETE:
 						LOG.debug("New delete load");
 						loadSvc = new DeleteService(
-							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
-							listFile
+							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 				}

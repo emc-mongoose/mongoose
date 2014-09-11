@@ -13,5 +13,4 @@ namespace:		s3
 #
 page.size:		64kib
 
-ring.seed:		7a42d9c483244167
 ring.size:		1Mib

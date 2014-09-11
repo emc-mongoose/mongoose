@@ -102,7 +102,9 @@ extends RequestConfig<WSObject> {
 		REQ_DATA_TYPE = RunTimeConfig.getString("http.content.type"),
 		VALUE_KEEP_ALIVE = "keep-alive",
 		MSG_TMPL_NOT_SPECIFIED = "Required property \"{}\" is not specifed",
-		MSG_TMPL_RANGE_BYTES = "bytes=%d-%d";
+		MSG_TMPL_RANGE_BYTES = "bytes=%d-%d",
+		MSG_NO_DATA_ITEM = "Data item is not specified",
+		MSG_NO_REQ = "No request specified to apply to";
 	public final static String[]
 		HEADERS4CANONICAL = {
 			HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.DATE
@@ -274,6 +276,7 @@ extends RequestConfig<WSObject> {
 		}
 		if(loadType==Request.Type.UPDATE) {
 			final WSRanges ranges = WSRanges.class.cast(dataItem.getRanges());
+			dataItem.calcCheckSum(); // recalculates the checksum including modified byte ranges
 			applyRangesHeaders(httpRequest, ranges);
 			applyPayLoad(httpRequest, ranges);
 		}
@@ -305,7 +308,7 @@ extends RequestConfig<WSObject> {
 	}
 	//
 	protected abstract void applyURI(final HttpRequestBase httpRequest, final WSObject dataItem)
-	throws IllegalStateException, URISyntaxException;
+	throws IllegalArgumentException, URISyntaxException;
 	//
 	protected final void applyPayLoad(final HttpRequestBase httpRequest, final HttpEntity httpEntity) {
 		HttpEntityEnclosingRequest httpReqWithPayLoad = null;

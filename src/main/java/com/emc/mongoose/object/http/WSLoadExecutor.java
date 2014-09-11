@@ -36,7 +36,6 @@ import org.apache.logging.log4j.Marker;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -51,7 +50,6 @@ implements LoadExecutor<WSObject> {
 	private final int threadsPerNode;
 	private final ThreadPoolExecutor submitExecutor;
 	private final WSNodeExecutor nodes[];
-	private final LinkedList<WSNodeExecutor> preferredNodes;
 	private final PoolingHttpClientConnectionManager connMgr;
 	private final CloseableHttpClient httpClient;
 	private final UniformDataSource dataSrc;
@@ -97,7 +95,6 @@ implements LoadExecutor<WSObject> {
 		metricsReporter.start();
 		// prepare the node executors array
 		nodes = new WSNodeExecutor[nodeCount];
-		preferredNodes = new LinkedList<>();
 		// create and configure the connection manager for HTTP client
 		final int totalThreadCount = threadsPerNode * nodeCount;
 		connMgr = new PoolingHttpClientConnectionManager();
@@ -415,9 +412,7 @@ implements LoadExecutor<WSObject> {
 		return producer;
 	}
 	//
-	public final UniformDataSource getDataSource()
-	throws RemoteException {
+	public final UniformDataSource getDataSource() {
 		return dataSrc;
 	}
-	//
 }

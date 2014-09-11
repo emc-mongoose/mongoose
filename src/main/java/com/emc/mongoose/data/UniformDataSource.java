@@ -36,10 +36,7 @@ implements Externalizable {
 	}
 	//
 	public UniformDataSource() {
-		this(
-			Long.parseLong(RunTimeConfig.getString("data.ring.seed"), 0x10),
-			(int)RunTimeConfig.getSizeBytes("data.ring.size")
-		);
+		this(System.nanoTime(), (int)RunTimeConfig.getSizeBytes("data.ring.size"));
 	}
 	//
 	public static UniformDataSource DEFAULT = null;
@@ -96,14 +93,14 @@ implements Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void writeExternal(final ObjectOutput out)
-	throws IOException {
+		throws IOException {
 		out.writeLong(getBytes().length);
 		out.writeLong(seed);
 	}
 	//
 	@Override
 	public final void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
+		throws IOException, ClassNotFoundException {
 		dataSrc = ByteBuffer.allocate(in.readInt());
 		seed = in.readLong();
 		preProduceData();
@@ -128,7 +125,7 @@ implements Externalizable {
 	}
 	//
 	public static UniformDataSource fromString(final String metaInfo)
-	throws IllegalArgumentException, IOException {
+		throws IllegalArgumentException, IOException {
 		final String values[] = metaInfo.split(RunTimeConfig.LIST_SEP);
 		if(values.length==2) {
 			return new UniformDataSource(

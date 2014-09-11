@@ -2,7 +2,6 @@ package com.emc.mongoose;
 //
 import com.emc.mongoose.conf.RunTimeConfig;
 import com.emc.mongoose.data.UniformData;
-import com.emc.mongoose.data.UniformDataSource;
 //
 import java.rmi.RemoteException;
 import java.text.MessageFormat;

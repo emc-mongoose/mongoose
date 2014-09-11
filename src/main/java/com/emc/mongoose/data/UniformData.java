@@ -1,6 +1,7 @@
 package com.emc.mongoose.data;
 //
 import com.emc.mongoose.conf.RunTimeConfig;
+import com.emc.mongoose.data.persist.NullOutputStream;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.remote.ServiceUtils;
 //
@@ -30,6 +31,13 @@ extends ByteArrayInputStream
 implements Externalizable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static String
+		FMT_META_INFO = "%x" + RunTimeConfig.LIST_SEP + "%x" + RunTimeConfig.LIST_SEP + "%s",
+		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: %s",
+		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: %s",
+		FMT_MSG_CHECKSUM = "Date item checksum is not Base64 value: %s",
+		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s";
+	//
 	public final static int MAX_PAGE_SIZE = (int) RunTimeConfig.getSizeBytes("data.page.size");
 	private static AtomicLong NEXT_OFFSET = new AtomicLong(
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
@@ -63,7 +71,7 @@ implements Externalizable {
 	public UniformData(final long offset, final long size) {
 		super(UniformDataSource.DEFAULT.getBytes());
 		try {
-			setOffset(offset);
+			setOffset(offset, 0);
 		} catch(final IOException e) {
 			LOG.error(Markers.ERR, "Failed to set data ring offset: {}: {}", offset, e.toString());
 			if(LOG.isTraceEnabled()) {
@@ -85,11 +93,12 @@ implements Externalizable {
 		return offset;
 	}
 	//
-	public final void setOffset(final long offset)
+	public final void setOffset(final long offset0, final long offset1)
 	throws IOException {
 		pos = 0;
+		offset = offset0 + offset1; // temporary offset
 		if(skip(offset % count)==offset % count) {
-			this.offset = offset;
+			offset = offset0;
 		} else {
 			throw new IOException(
 				"Failed to change offset to \""+Long.toHexString(offset)+"\""
@@ -115,32 +124,42 @@ implements Externalizable {
 		this.checkSum = checkSum;
 	}
 	//
-	private final static class NullOutputStream
-	extends OutputStream {
-		@Override
-		public void write(final int b) {}
-	}
-	//
 	/** [Re]calculates the checkSum field with ranges */
 	public final void calcCheckSum() {
 		UniformData nextRange;
-		long spaceBeforeNextRange, freeSpaceOffset = 0;
+		long freeSpaceOffset = 0, lenFreeSpace;
 		synchronized(md) {
-			final DigestOutputStream outDigest = new DigestOutputStream(new NullOutputStream(), md);
-			try {
+			try(DigestOutputStream outDigest = new DigestOutputStream(new NullOutputStream(), md)) {
 				for(final long nextRangeOffset : ranges.keySet()) {
 					if(nextRangeOffset > freeSpaceOffset) {
-						spaceBeforeNextRange = nextRangeOffset - freeSpaceOffset;
-						writeBlockTo(outDigest, freeSpaceOffset, spaceBeforeNextRange);
+						lenFreeSpace = nextRangeOffset - freeSpaceOffset;
+						/*LOG.trace(
+							Markers.MSG, "digest: base range [{}-{}]",
+							freeSpaceOffset, freeSpaceOffset+lenFreeSpace-1
+						);*/
+						writeBlockTo(outDigest, freeSpaceOffset, lenFreeSpace);
 					}
 					nextRange = ranges.get(nextRangeOffset);
+					/*LOG.trace(
+						Markers.MSG, "digest: modified range [{}-{}]",
+						nextRangeOffset, nextRangeOffset+nextRange.size-1
+					);*/
 					nextRange.writeBlockTo(outDigest, 0, nextRange.size);
 					freeSpaceOffset = nextRangeOffset + nextRange.size;
 				}
 				if(freeSpaceOffset < size) {
-					writeBlockTo(outDigest, freeSpaceOffset, size);
+					lenFreeSpace = size - freeSpaceOffset;
+					/*LOG.trace(
+						Markers.MSG, "digest: LAST base range [{}-{}]",
+						freeSpaceOffset, freeSpaceOffset+lenFreeSpace-1
+					);*/
+					writeBlockTo(outDigest, freeSpaceOffset, lenFreeSpace);
 				}
 				checkSum = Base64.encodeBase64URLSafeString(md.digest());
+				/*LOG.trace(
+					Markers.MSG, "digest for \"{}\" is \"{}\"",
+					Hex.encodeHexString(byteByff.toByteArray()), checkSum
+				);*/
 			} catch(final IOException e) {
 				LOG.warn(Markers.ERR, e.getMessage());
 			}
@@ -187,27 +206,29 @@ implements Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public String toString() {
-		return
-			Long.toHexString(offset) + RunTimeConfig.LIST_SEP + Long.toHexString(size) +
-			((ranges!=null && ranges.size()>0) ? ranges.toString() : "");
+		return String.format(FMT_META_INFO, offset, size, checkSum);
 	}
 	//
 	public void fromString(final String v)
 	throws IllegalArgumentException, NullPointerException {
-		String t;
-		int nextSepPos = v.indexOf(RunTimeConfig.LIST_SEP);
-		if(nextSepPos > 0 && nextSepPos + 1 < v.length()) {
-			offset = Long.parseLong(v.substring(0, nextSepPos), 0x10);
-			t = v.substring(nextSepPos + 1);
-			nextSepPos = t.indexOf(RunTimeConfig.LIST_SEP);
-			if(nextSepPos > 0 && nextSepPos + 1 < v.length()) {
-				size = Long.parseLong(t.substring(0, nextSepPos), 0x10);
-				ranges.fromString(t.substring(nextSepPos + 1));
-			} else {
-				size = Long.parseLong(t, 0x10);
+		final String tokens[] = v.split(RunTimeConfig.LIST_SEP, 3);
+		if(tokens.length==3) {
+			try {
+				offset = Long.parseLong(tokens[0], 0x10);
+			} catch(final NumberFormatException e) {
+				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[0]));
+			}
+			try {
+				size = Long.parseLong(tokens[1], 0x10);
+			} catch(final NumberFormatException e) {
+				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[1]));
+			}
+			checkSum = tokens[2];
+			if(!Base64.isBase64(checkSum)) {
+				throw new IllegalArgumentException(String.format(FMT_MSG_CHECKSUM, checkSum));
 			}
 		} else {
-			throw new IllegalArgumentException("Invalid data item metainfo: "+v);
+			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_RECORD, v));
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -228,7 +249,7 @@ implements Externalizable {
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		setOffset(in.readLong());
+		setOffset(in.readLong(), 0);
 		this.size = in.readLong();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -253,7 +274,7 @@ implements Externalizable {
 			countPages = (int) length / buff.length,
 			countTailBytes = (int) length % buff.length;
 		synchronized(this) {
-			setOffset(offset + start); // resets the position in the ring to the beginning of the item
+			setOffset(offset, start); // resets the position in the ring to the beginning of the item
 			//
 			for(int i = 0; i < countPages; i++) {
 				if(read(buff)==buff.length) {
@@ -292,8 +313,8 @@ implements Externalizable {
 			readCheckSum = Base64.encodeBase64URLSafeString(md.digest());
 		}
 		LOG.trace(
-			Markers.MSG, "checksum verification for {}, assumed: \"{}\", read back: \"{}\"",
-			toString(), checkSum, readCheckSum
+			Markers.MSG, "Checksum verification for {}, read back data checksum: \"{}\"",
+			toString(), readCheckSum
 		);
 		return checkSum.equals(readCheckSum);
 	}

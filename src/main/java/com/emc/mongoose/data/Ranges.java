@@ -6,10 +6,7 @@ import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.Externalizable;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
@@ -19,7 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
  Created by kurila on 22.05.14.
  */
 public class Ranges
-implements Externalizable, Map<Long, UniformData> {
+implements Map<Long, UniformData> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static ThreadLocal<StrBuilder> REQ_BUILDER = new ThreadLocal<StrBuilder>() {
@@ -66,7 +63,7 @@ implements Externalizable, Map<Long, UniformData> {
 			put(nextItemOffset, new UniformData(nextRangeSize));
 		}
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
+	/*
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
@@ -90,7 +87,7 @@ implements Externalizable, Map<Long, UniformData> {
 			put(nextOffset, nextRangeData);
 		}
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
+	*/
 	@Override
 	public final int size() {
 		return offsetMap.size();
@@ -171,23 +168,6 @@ implements Externalizable, Map<Long, UniformData> {
 				.append(RunTimeConfig.LIST_SEP).append(data.toString());
 		}
 		return REQ_BUILDER.get().toString();
-	}
-	//
-	public final void fromString(final String v)
-	throws IllegalArgumentException, NullPointerException {
-		clear();
-		final String vv[] = v.split(RunTimeConfig.LIST_SEP);
-		UniformData nextRangeData;
-		if(vv.length > 0 && vv.length%3==0) {
-			for(int i=0; i<vv.length; i+=3) {
-				nextRangeData = new UniformData(
-					Long.parseLong(vv[i+1], 0x10), Long.parseLong(vv[i+2], 0x10)
-				);
-				put(Long.parseLong(vv[i], 0x10), nextRangeData);
-			}
-		} else {
-			throw new IllegalArgumentException("Invalid range metainfo: "+v);
-		}
 	}
 	//
 }

@@ -30,8 +30,7 @@ implements LoadService<WSObject> {
 	//
 	public CreateService(
 		final String[] addrs, final WSRequestConfig reqConf, final long maxCount,
-		final int threadsPerNode, final String listFile,
-		final long minObjSize, final long maxObjSize
+		final int threadsPerNode, final long minObjSize, final long maxObjSize
 	)
 	throws IOException, CloneNotSupportedException {
 		super(addrs, reqConf, maxCount, threadsPerNode, null, minObjSize, maxObjSize);

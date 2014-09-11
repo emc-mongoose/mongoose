@@ -30,7 +30,7 @@ implements LoadService<WSObject> {
 	//
 	public ReadService(
 		final String[] addrs, final WSRequestConfig reqConf, final long maxCount,
-		final int threadsPerNode, final String listFile
+		final int threadsPerNode
 	) {
 		super(addrs, reqConf, maxCount, threadsPerNode, null);
 		// by default, may be overriden later externally

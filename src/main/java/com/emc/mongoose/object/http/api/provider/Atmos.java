@@ -25,8 +25,9 @@ extends WSRequestConfig {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String
-		ATMOS_DEFAULT_PATH_REST = RunTimeConfig.getString("api.atmos.path.rest"),
-		ATMOS_INTERFACE_OBJECT = RunTimeConfig.getString("api.atmos.interface");
+		FMT_PATH =
+			"/" + RunTimeConfig.getString("api.atmos.path.rest") +
+			"/" + RunTimeConfig.getString("api.atmos.interface") + "/%x";
 	//
 	private String subTenant;
 	//
@@ -105,16 +106,19 @@ extends WSRequestConfig {
 	//
 	@Override
 	protected final void applyURI(final HttpRequestBase httpRequest, final WSObject dataItem)
-		throws IllegalStateException, URISyntaxException {
-		StringBuffer pathBuff = new StringBuffer("/")
-			.append(ATMOS_DEFAULT_PATH_REST).append('/')
-			.append(ATMOS_INTERFACE_OBJECT);
-		final String objId = Long.toHexString(dataItem.getId());
-		if(objId!=null) {
-			pathBuff.append('/').append(objId);
+	throws URISyntaxException {
+		if(httpRequest==null) {
+			throw new IllegalArgumentException(MSG_NO_REQ);
+		}
+		if(dataItem==null) {
+			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		synchronized(uriBuilder) {
-			httpRequest.setURI(uriBuilder.setPath(pathBuff.toString()).build());
+			httpRequest.setURI(
+				uriBuilder.setPath(
+					String.format(FMT_PATH, dataItem.getId())
+				).build()
+			);
 		}
 	}
 	//
@@ -134,7 +138,7 @@ extends WSRequestConfig {
 	}
 	//
 	protected String getCanonical(final HttpRequestBase httpRequest) {
-		final StringBuffer buffer = new StringBuffer(httpRequest.getMethod());
+		final StringBuilder buffer = new StringBuilder(httpRequest.getMethod());
 		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
 		Header header;
 		for(final String headerName: HEADERS4CANONICAL) {

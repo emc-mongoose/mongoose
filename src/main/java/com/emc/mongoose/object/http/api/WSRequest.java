@@ -102,7 +102,13 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 			reqConf.applyDataItem(httpRequest, dataItem);
 			this.dataItem = dataItem;
 		} catch(final URISyntaxException e) {
-			LOG.warn(Markers.ERR, "Failed to calculate the request URI:", e);
+			LOG.warn(Markers.ERR, "Failed to calculate the request URI: {}", e.toString());
+			if(LOG.isTraceEnabled()) {
+				final Throwable cause = e.getCause();
+				if(cause!=null) {
+					LOG.trace(Markers.MSG, cause.toString(), cause.getCause());
+				}
+			}
 		}
 		return this;
 	}

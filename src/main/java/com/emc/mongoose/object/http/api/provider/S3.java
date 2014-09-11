@@ -25,7 +25,12 @@ public final class S3
 extends WSRequestConfig {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	public final static String S3_VALUE_AWS = RunTimeConfig.getString("api.s3.auth.prefix");
+	public final static String
+		FMT_PATH = "/%s/%x",
+		FMT_AUTH_VALUE = RunTimeConfig.getString("api.s3.auth.prefix") + " %s:%s",
+		MSG_NO_BUCKET = "Bucket is not specified";
+	//
+
 	//
 	private String bucket;
 	//
@@ -87,16 +92,21 @@ extends WSRequestConfig {
 	@Override
 	protected final void applyURI(final HttpRequestBase httpRequest, final WSObject dataItem)
 	throws IllegalStateException, URISyntaxException {
+		if(httpRequest==null) {
+			throw new IllegalArgumentException(MSG_NO_REQ);
+		}
 		if(bucket==null) {
-			throw new IllegalStateException("Bucket is not specified");
+			throw new IllegalArgumentException(MSG_NO_BUCKET);
 		}
-		final String objId = Long.toHexString(dataItem.getId());
-		if(objId==null) {
-			throw new IllegalStateException("Object id is not specified");
+		if(dataItem==null) {
+			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		String path = new StringBuffer("/").append(bucket).append('/').append(objId).toString();
 		synchronized(uriBuilder) {
-			httpRequest.setURI(uriBuilder.setPath(path).build());
+			httpRequest.setURI(
+				uriBuilder.setPath(
+					String.format(FMT_PATH, bucket, dataItem.getId())
+				).build()
+			);
 		}
 	}
 	//
@@ -105,11 +115,7 @@ extends WSRequestConfig {
 		httpRequest.addHeader(HttpHeaders.CONTENT_MD5, ""); // checksum of the data item is not avalable before streaming
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
-			new StringBuffer()
-				.append(S3_VALUE_AWS).append(' ')
-				.append(userName).append(':')
-				.append(getSignature(getCanonical(httpRequest)))
-				.toString()
+			String.format(FMT_AUTH_VALUE, userName, getSignature(getCanonical(httpRequest)))
 		);
 		httpRequest.removeHeader(httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5)); // remove temporary header
 	}
