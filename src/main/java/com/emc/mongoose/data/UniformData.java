@@ -129,7 +129,8 @@ implements Externalizable {
 		UniformData nextRange;
 		long freeSpaceOffset = 0, lenFreeSpace;
 		synchronized(md) {
-			try(DigestOutputStream outDigest = new DigestOutputStream(new NullOutputStream(), md)) {
+			final DigestOutputStream outDigest = new DigestOutputStream(new NullOutputStream(), md);
+			try {
 				for(final long nextRangeOffset : ranges.keySet()) {
 					if(nextRangeOffset > freeSpaceOffset) {
 						lenFreeSpace = nextRangeOffset - freeSpaceOffset;
@@ -302,8 +303,7 @@ implements Externalizable {
 		int nextByteCount;
 		//
 		synchronized(md) {
-			final DigestInputStream inDigest = new DigestInputStream(in, md);
-			try {
+			try(final DigestInputStream inDigest = new DigestInputStream(in, md);) {
 				do {
 					nextByteCount = inDigest.read(buff);
 				} while(nextByteCount >= 0);
