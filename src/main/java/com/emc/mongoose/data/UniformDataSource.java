@@ -3,7 +3,6 @@ package com.emc.mongoose.data;
 import com.emc.mongoose.LoadExecutor;
 import com.emc.mongoose.conf.RunTimeConfig;
 import com.emc.mongoose.logging.Markers;
-import com.emc.mongoose.remote.ServiceUtils;
 //
 import org.apache.http.annotation.ThreadSafe;
 import org.apache.logging.log4j.LogManager;
@@ -29,20 +28,30 @@ implements Externalizable {
 	private long seed;
 	private ByteBuffer dataSrc;
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	public UniformDataSource()
+	throws NumberFormatException {
+		this(
+			Long.parseLong(RunTimeConfig.getString("data.ring.seed"), 0x10),
+			(int) RunTimeConfig.getSizeBytes("data.ring.size")
+		);
+	}
+	//
 	protected UniformDataSource(final long seed, final int size) {
 		this.seed = seed;
 		dataSrc = ByteBuffer.allocate(size);
 		preProduceData();
 	}
 	//
-	public UniformDataSource() {
-		this(System.nanoTime(), (int)RunTimeConfig.getSizeBytes("data.ring.size"));
-	}
-	//
-	public static UniformDataSource DEFAULT = null;
+	public static UniformDataSource
+		DATA_SRC_CREATE = null,
+		DATA_SRC_UPDATE = null;
 	static {
 		try {
-			DEFAULT = new UniformDataSource();
+			DATA_SRC_CREATE = new UniformDataSource();
+			DATA_SRC_UPDATE = new UniformDataSource(
+				Long.reverse(Long.reverseBytes(DATA_SRC_CREATE.seed)),
+				DATA_SRC_CREATE.getSize()
+			);
 		} catch(final Exception e) {
 			synchronized(LOG) {
 				LOG.fatal(Markers.ERR, "Failed to create default data source");
@@ -104,7 +113,11 @@ implements Externalizable {
 		dataSrc = ByteBuffer.allocate(in.readInt());
 		seed = in.readLong();
 		preProduceData();
-		DEFAULT = this;
+		DATA_SRC_CREATE = this;
+		DATA_SRC_UPDATE = new UniformDataSource(
+			Long.reverse(Long.reverseBytes(DATA_SRC_CREATE.seed)),
+			DATA_SRC_CREATE.getSize()
+		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final int getSize() {
@@ -124,12 +137,16 @@ implements Externalizable {
 			Integer.toHexString(dataSrc.array().length);
 	}
 	//
-	public static UniformDataSource fromString(final String metaInfo)
+	public static void fromString(final String metaInfo)
 		throws IllegalArgumentException, IOException {
 		final String values[] = metaInfo.split(RunTimeConfig.LIST_SEP);
 		if(values.length==2) {
-			return new UniformDataSource(
+			DATA_SRC_CREATE = new UniformDataSource(
 				Long.parseLong(values[0], 0x10), Integer.parseInt(values[1], 0x10)
+			);
+			DATA_SRC_UPDATE = new UniformDataSource(
+				Long.reverse(Long.reverseBytes(DATA_SRC_CREATE.seed)),
+				DATA_SRC_CREATE.getSize()
 			);
 		} else {
 			throw new IllegalArgumentException();

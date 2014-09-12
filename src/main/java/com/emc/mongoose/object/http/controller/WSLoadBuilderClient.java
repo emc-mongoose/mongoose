@@ -41,7 +41,7 @@ implements LoadBuilder {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private FileProducer<WSObject> srcProducer = null;
-	private UniformDataSource dataSrc = UniformDataSource.DEFAULT;
+	private UniformDataSource dataSrc = UniformDataSource.DATA_SRC_CREATE;
 	//
 	@SuppressWarnings("unchecked")
 	private LoadBuilderService<LoadService<WSObject>> resolve(final String driverAddr)

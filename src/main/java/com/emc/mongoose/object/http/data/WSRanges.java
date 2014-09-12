@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.SequenceInputStream;
-import java.util.Iterator;
 /**
  Created by andrey on 25.07.14.
  */
@@ -36,7 +35,7 @@ implements HttpEntity {
 	//
 	@Override
 	public final long getContentLength() {
-		return getByteCount();
+		return getPendingByteCount();
 	}
 	//
 	@Override
@@ -52,26 +51,28 @@ implements HttpEntity {
 	@Override
 	public final InputStream getContent()
 	throws IOException, IllegalStateException {
-		final Iterator<UniformData> rangeDataIterator = values().iterator();
 		InputStream contentInStream = null;
-		do {
+		//
+		UniformData nextRange;
+		for(final long nextParentOffset: pendingQueue) {
+			nextRange = get(nextParentOffset);
 			if(contentInStream==null) { // set head
-				contentInStream = rangeDataIterator.next();
+				contentInStream = nextRange;
 			} else { // append
-				contentInStream = new SequenceInputStream(
-					contentInStream, rangeDataIterator.next()
-				);
+				contentInStream = new SequenceInputStream(contentInStream, nextRange);
 			}
-		} while(rangeDataIterator.hasNext());
+		}
+		//
 		return contentInStream;
 	}
 	//
 	@Override
 	public final void writeTo(final OutputStream out)
 	throws IOException {
-		for(final UniformData nextRangeData: values()) {
-			nextRangeData.writeTo(out);
+		for(final long nextParentOffset: pendingQueue) {
+			get(nextParentOffset).writeTo(out);
 		}
+		pendingQueue.clear();
 	}
 	//
 	@Override

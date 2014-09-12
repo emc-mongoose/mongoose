@@ -153,7 +153,7 @@ implements LoadExecutor<WSObject> {
 			nodes[i] = nodeExecutor;
 		}
 		// by default, may be overriden later externally
-		setConsumer(new LogConsumer<WSObject>(UniformDataSource.DEFAULT));
+		setConsumer(new LogConsumer<WSObject>(UniformDataSource.DATA_SRC_CREATE));
 	}
 	//
 	@Override

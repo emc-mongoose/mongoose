@@ -50,7 +50,7 @@ implements Externalizable {
 	protected String checkSum = null;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformData() {
-		super(UniformDataSource.DEFAULT.getBytes());
+		super(UniformDataSource.DATA_SRC_CREATE.getBytes());
 		ranges = new Ranges(size);
 	}
 	//
@@ -69,7 +69,11 @@ implements Externalizable {
 	}
 	//
 	public UniformData(final long offset, final long size) {
-		super(UniformDataSource.DEFAULT.getBytes());
+		this(offset, size, UniformDataSource.DATA_SRC_CREATE);
+	}
+	//
+	public UniformData(final long offset, final long size, final UniformDataSource dataSrc) {
+		super(dataSrc.getBytes());
 		try {
 			setOffset(offset, 0);
 		} catch(final IOException e) {
@@ -134,33 +138,17 @@ implements Externalizable {
 				for(final long nextRangeOffset : ranges.keySet()) {
 					if(nextRangeOffset > freeSpaceOffset) {
 						lenFreeSpace = nextRangeOffset - freeSpaceOffset;
-						/*LOG.trace(
-							Markers.MSG, "digest: base range [{}-{}]",
-							freeSpaceOffset, freeSpaceOffset+lenFreeSpace-1
-						);*/
 						writeBlockTo(outDigest, freeSpaceOffset, lenFreeSpace);
 					}
 					nextRange = ranges.get(nextRangeOffset);
-					/*LOG.trace(
-						Markers.MSG, "digest: modified range [{}-{}]",
-						nextRangeOffset, nextRangeOffset+nextRange.size-1
-					);*/
 					nextRange.writeBlockTo(outDigest, 0, nextRange.size);
 					freeSpaceOffset = nextRangeOffset + nextRange.size;
 				}
 				if(freeSpaceOffset < size) {
 					lenFreeSpace = size - freeSpaceOffset;
-					/*LOG.trace(
-						Markers.MSG, "digest: LAST base range [{}-{}]",
-						freeSpaceOffset, freeSpaceOffset+lenFreeSpace-1
-					);*/
 					writeBlockTo(outDigest, freeSpaceOffset, lenFreeSpace);
 				}
 				checkSum = Base64.encodeBase64URLSafeString(md.digest());
-				/*LOG.trace(
-					Markers.MSG, "digest for \"{}\" is \"{}\"",
-					Hex.encodeHexString(byteByff.toByteArray()), checkSum
-				);*/
 			} catch(final IOException e) {
 				LOG.warn(Markers.ERR, e.getMessage());
 			}
@@ -245,13 +233,15 @@ implements Externalizable {
 	throws IOException {
 		out.writeLong(offset);
 		out.writeLong(size);
+		out.writeObject(ranges);
 	}
 	//
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		setOffset(in.readLong(), 0);
-		this.size = in.readLong();
+		size = in.readLong();
+		ranges = Ranges.class.cast(in.readObject());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final void writeTo(final OutputStream out) {

@@ -1,22 +1,25 @@
 package com.emc.mongoose.data;
 //
 import com.emc.mongoose.conf.RunTimeConfig;
-import com.emc.mongoose.logging.Markers;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.Externalizable;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.Collection;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
-import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 22.05.14.
  */
 public class Ranges
-implements Map<Long, UniformData> {
+implements Map<Long, UniformData>, Externalizable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static ThreadLocal<StrBuilder> REQ_BUILDER = new ThreadLocal<StrBuilder>() {
@@ -25,52 +28,86 @@ implements Map<Long, UniformData> {
 			return new StrBuilder();
 		}
 	};
-	private final static String
-		FMT_EXC_MSG = "Range count should be more than 0 and less than the object size = %s";
+	private final static String FMT_MSG_WRONG_RANGE_COUNT =
+		"Range count should be more than 0 and less than the object size = %s";
 	//
-	private final TreeMap<Long, UniformData> offsetMap = new TreeMap<>();
-	private long parentSize;
+	private final Map<Long, UniformData> historyMap = new ConcurrentHashMap<>();
+	private BigInteger historyMask = new BigInteger(new byte[]{0});
+	//
+	protected final Queue<Long> pendingQueue = new ConcurrentLinkedQueue<>();
+	private BigInteger pendingMask = new BigInteger(new byte[]{0});
+	//
+	private final long parentSize;
+	private final int cellCount, cellSize;
+	/**
+	 @param size the size of underlying data
+	 @return cell count = int(ln2(size)) + int(size^0.25)
+	 @throws IllegalArgumentException if size is less than 1
+	 */
+	public static int getCellCount(long size)
+	throws IllegalArgumentException {
+		if(size>0) {
+			return Long.SIZE*Byte.SIZE - Long.numberOfLeadingZeros(size) + (int) Math.pow(size, 0.25) - 1;
+		} else {
+			throw new IllegalArgumentException(
+				String.format("The size should be more than zero, but got %d", size)
+			);
+		}
+	}
 	//
 	public Ranges(final long parentSize) {
 		this.parentSize = parentSize;
+		cellCount = getCellCount(parentSize);
+		cellSize = (int) parentSize/cellCount;
 	}
 	//
-	public final long getByteCount() {
+	public final long getPendingByteCount() {
 		long sumSize = 0;
-		for(final UniformData data: offsetMap.values()) {
-			sumSize += data.getSize();
+		UniformData nextRange;
+		for(final long nextOffset: pendingQueue) {
+			nextRange = historyMap.get(nextOffset);
+			sumSize += nextRange.getSize();
 		}
 		return sumSize;
 	}
 	//
 	public final int getCount() {
-		return offsetMap.size();
+		return historyMap.size();
+	}
+	//
+	public void createRandom()
+	throws IllegalStateException {
+		final int startCellPos = ThreadLocalRandom.current().nextInt(cellCount);
+		int nextCellPos;
+		for(int i = startCellPos; i< startCellPos + cellCount; i++) {
+			nextCellPos = i % cellCount;
+			if(!historyMask.testBit(nextCellPos) && !pendingMask.testBit(nextCellPos)) {
+				pendingMask = pendingMask.setBit(nextCellPos);
+				return;
+			}
+		}
+		throw new IllegalStateException("Looks ");
 	}
 	//
 	public void createRandom(final int count)
 	throws IllegalArgumentException, IOException {
 		if(count < 1 || count > parentSize) {
 			throw new IllegalArgumentException(
-				String.format(FMT_EXC_MSG, RunTimeConfig.formatSize(parentSize))
+				String.format(FMT_MSG_WRONG_RANGE_COUNT, RunTimeConfig.formatSize(parentSize))
 			);
 		}
-		final int spacePerRange = (int) parentSize / count;
-		final ThreadLocalRandom tlr = ThreadLocalRandom.current();
-		long nextItemOffset, nextRangeSize;
 		for(int i = 0; i < count; i++) {
-			nextItemOffset = i * spacePerRange + tlr.nextLong(spacePerRange/2);
-			nextRangeSize = tlr.nextLong(1, spacePerRange/2);
-			put(nextItemOffset, new UniformData(nextRangeSize));
+			createRandom();
 		}
 	}
-	/*
+	//
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
-		out.writeInt(offsetMap.size());
-		for(final long itemOffset: offsetMap.keySet()) {
+		out.writeInt(historyMap.size());
+		for(final long itemOffset: historyMap.keySet()) {
 			out.writeLong(itemOffset);
-			out.writeObject(offsetMap.get(itemOffset));
+			out.writeObject(historyMap.get(itemOffset));
 		}
 	}
 	//
@@ -87,75 +124,92 @@ implements Map<Long, UniformData> {
 			put(nextOffset, nextRangeData);
 		}
 	}
-	*/
+	//
 	@Override
 	public final int size() {
-		return offsetMap.size();
+		return historyMap.size();
 	}
+	//
 	@Override
 	public final boolean isEmpty() {
-		return offsetMap.isEmpty();
+		return historyMap.isEmpty();
 	}
+	//
 	@Override
 	public final boolean containsKey(final Object key) {
-		return offsetMap.containsKey(key);
+		return historyMap.containsKey(key);
 	}
+	//
 	@Override
 	public final boolean containsValue(final Object value) {
-		return offsetMap.containsValue(value);
+		return historyMap.containsValue(value);
 	}
+	//
 	@Override
 	public final UniformData get(final Object parentOffset) {
-		return offsetMap.get(parentOffset);
+		return historyMap.get(parentOffset);
 	}
+	//
 	@Override
-	public final UniformData put(final Long parentOffset, final UniformData data)
+	public final UniformData put(final Long newRangeBeg, final UniformData data)
 	throws IllegalArgumentException {
-		// range overlapping checks
-		long existingRangeEnd, newRangeEnd = parentOffset + data.getSize();
-		for(final long existingRangeOffset: offsetMap.keySet()) {
-			existingRangeEnd = existingRangeOffset + offsetMap.get(existingRangeOffset).getSize();
-			if(newRangeEnd < existingRangeOffset) {
-				LOG.trace(Markers.MSG, "The range is completely before the existing one");
-			} else if(parentOffset > existingRangeEnd) {
-				LOG.trace(Markers.MSG, "The range is completely after the existing one");
-			} else {
-				throw new IllegalArgumentException("Range overlapping");
+		// range overlapping avoidance magic
+		long oldRangeEnd, newRangeEnd = newRangeBeg + data.getSize();
+		for(final long oldRangeBeg: historyMap.keySet()) {
+			oldRangeEnd = oldRangeBeg + historyMap.get(oldRangeBeg).size;
+			if(oldRangeBeg < newRangeBeg) { // old range begins before new one?
+				if(oldRangeEnd > newRangeEnd) { // old range also ends after the end of new one?
+					// stretch the new range to make it ending at the same position as old one
+					data.size += oldRangeEnd - newRangeEnd;
+				}
+				// shrink the old range to make it not overlapping w/ new one
+				historyMap.get(oldRangeBeg).size -= oldRangeEnd - newRangeBeg + 1;
+			} else if(oldRangeBeg > newRangeBeg && oldRangeBeg < newRangeEnd) {
+				// old range begins inside of new one, shrink new range
+				data.size = oldRangeBeg - newRangeBeg - 1;
 			}
+
 		}
 		//
-		offsetMap.put(parentOffset, data);
+		historyMap.put(newRangeBeg, data);
+		pendingQueue.add(newRangeBeg);
 		return data;
 	}
+	//
 	@Override
 	public final UniformData remove(Object parentOffset) {
 		UniformData removed;
-		synchronized(offsetMap) {
-			removed = offsetMap.remove(parentOffset);
+		synchronized(historyMap) {
+			removed = historyMap.remove(parentOffset);
 		}
 		return removed;
 	}
+	//
 	@Override
 	public final void putAll(final Map<? extends Long, ? extends UniformData> map) {
 		for(final long parentOffset: map.keySet()) {
 			put(parentOffset, map.get(parentOffset));
 		}
 	}
+	//
 	@Override
 	public final void clear() {
-		offsetMap.clear();
+		historyMap.clear();
 	}
+	//
 	@Override @SuppressWarnings("NullableProblems")
 	public final Set<Long> keySet() {
-		return offsetMap.keySet();
+		return historyMap.keySet();
 	}
+	//
 	@Override @SuppressWarnings("NullableProblems")
 	public final Collection<UniformData> values() {
-		return offsetMap.values();
+		return historyMap.values();
 	}
+	//
 	@Override @SuppressWarnings("NullableProblems")
 	public final Set<Entry<Long,UniformData>> entrySet() {
-		return offsetMap.entrySet();
+		return historyMap.entrySet();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -168,6 +222,10 @@ implements Map<Long, UniformData> {
 				.append(RunTimeConfig.LIST_SEP).append(data.toString());
 		}
 		return REQ_BUILDER.get().toString();
+	}
+	//
+	public final Queue<Long> getPendingQueue() {
+		return pendingQueue;
 	}
 	//
 }

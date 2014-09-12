@@ -71,8 +71,8 @@ implements Producer<T> {
 				} else {
 					//
 					if(dataItemsCount==-1) { // header -> data ring meta info
-						UniformDataSource.DEFAULT = UniformDataSource.fromString(nextLine.toLowerCase());
-					} else if(UniformDataSource.DEFAULT!=null) {
+						UniformDataSource.fromString(nextLine.toLowerCase());
+					} else if(UniformDataSource.DATA_SRC_CREATE!=null) {
 						nextData = dataItemConstructor.newInstance(nextLine);
 						LOG.trace(Markers.MSG, "Parsed the line");
 						try {

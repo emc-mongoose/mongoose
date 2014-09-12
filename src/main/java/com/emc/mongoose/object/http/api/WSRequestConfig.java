@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
@@ -327,7 +326,7 @@ extends RequestConfig<WSObject> {
 	//
 	protected final void applyRangesHeaders(final HttpRequestBase httpRequest, final WSRanges ranges) {
 		UniformData nextRangeData;
-		for(final long dataItemOffset: ranges.keySet()) {
+		for(final long dataItemOffset: ranges.getPendingQueue()) {
 			nextRangeData = ranges.get(dataItemOffset);
 			httpRequest.addHeader(
 				HttpHeaders.RANGE,
