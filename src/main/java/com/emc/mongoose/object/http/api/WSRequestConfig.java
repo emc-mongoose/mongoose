@@ -326,8 +326,8 @@ extends RequestConfig<WSObject> {
 	//
 	protected final void applyRangesHeaders(final HttpRequestBase httpRequest, final WSRanges ranges) {
 		UniformData nextRangeData;
-		for(final long dataItemOffset: ranges.getPendingQueue()) {
-			nextRangeData = ranges.get(dataItemOffset);
+		for(final long dataItemOffset: ranges.getPendingRangeOffsets()) {
+			nextRangeData = ranges.getRangeData(dataItemOffset);
 			httpRequest.addHeader(
 				HttpHeaders.RANGE,
 				String.format(

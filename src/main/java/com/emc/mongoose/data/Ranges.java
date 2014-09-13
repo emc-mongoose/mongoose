@@ -1,25 +1,26 @@
 package com.emc.mongoose.data;
 //
 import com.emc.mongoose.conf.RunTimeConfig;
+import com.emc.mongoose.logging.Markers;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.Externalizable;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.math.BigInteger;
-import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 22.05.14.
  */
 public class Ranges
-implements Map<Long, UniformData>, Externalizable {
+implements Externalizable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static ThreadLocal<StrBuilder> REQ_BUILDER = new ThreadLocal<StrBuilder>() {
@@ -31,14 +32,15 @@ implements Map<Long, UniformData>, Externalizable {
 	private final static String FMT_MSG_WRONG_RANGE_COUNT =
 		"Range count should be more than 0 and less than the object size = %s";
 	//
-	private final Map<Long, UniformData> historyMap = new ConcurrentHashMap<>();
-	private BigInteger historyMask = new BigInteger(new byte[]{0});
+	private volatile BigInteger
+		historyMask = BigInteger.ZERO,
+		pendingMask = BigInteger.ZERO;
+	private final Map<Long,UniformData>
+		historyCache = new ConcurrentHashMap<>(),
+		pendingCache = new ConcurrentHashMap<>();
 	//
-	protected final Queue<Long> pendingQueue = new ConcurrentLinkedQueue<>();
-	private BigInteger pendingMask = new BigInteger(new byte[]{0});
-	//
-	private final long parentSize;
-	private final int cellCount, cellSize;
+	private UniformData parentData;
+	private int cellCount, cellSize;
 	/**
 	 @param size the size of underlying data
 	 @return cell count = int(ln2(size)) + int(size^0.25)
@@ -55,45 +57,59 @@ implements Map<Long, UniformData>, Externalizable {
 		}
 	}
 	//
-	public Ranges(final long parentSize) {
-		this.parentSize = parentSize;
-		cellCount = getCellCount(parentSize);
-		cellSize = (int) parentSize/cellCount;
+	public Ranges(final UniformData parentData) {
+		this.parentData = parentData;
+		cellCount = getCellCount(parentData.size);
+		cellSize = (int) parentData.size/cellCount;
 	}
 	//
 	public final long getPendingByteCount() {
 		long sumSize = 0;
-		UniformData nextRange;
-		for(final long nextOffset: pendingQueue) {
-			nextRange = historyMap.get(nextOffset);
-			sumSize += nextRange.getSize();
+		for(int i=0; i<cellCount; i++) {
+			if(pendingMask.testBit(i)) {
+				sumSize += cellSize;
+			}
 		}
 		return sumSize;
 	}
 	//
 	public final int getCount() {
-		return historyMap.size();
+		int count = 0;
+		for(int i=0; i<cellCount; i++) {
+			if(pendingMask.testBit(i) || pendingMask.testBit(i)) {
+				count++;
+			}
+		}
+		return count;
 	}
 	//
 	public void createRandom()
 	throws IllegalStateException {
 		final int startCellPos = ThreadLocalRandom.current().nextInt(cellCount);
 		int nextCellPos;
+		long nextOffset;
 		for(int i = startCellPos; i< startCellPos + cellCount; i++) {
 			nextCellPos = i % cellCount;
 			if(!historyMask.testBit(nextCellPos) && !pendingMask.testBit(nextCellPos)) {
 				pendingMask = pendingMask.setBit(nextCellPos);
+				nextOffset = nextCellPos * cellSize;
+				pendingCache.put(
+					nextOffset,
+					new UniformData(
+						parentData.offset + nextOffset, cellSize, UniformDataSource.DATA_SRC_UPDATE
+					)
+				);
 				return;
 			}
 		}
-		throw new IllegalStateException("Looks ");
+		throw new IllegalStateException("Looks like there's no free range to update");
 	}
 	//
 	public void createRandom(final int count)
-	throws IllegalArgumentException, IOException {
-		if(count < 1 || count > parentSize) {
+	throws IllegalArgumentException, IllegalStateException {
+		if(count < 1 || count > parentData.size) {
 			throw new IllegalArgumentException(
-				String.format(FMT_MSG_WRONG_RANGE_COUNT, RunTimeConfig.formatSize(parentSize))
+				String.format(FMT_MSG_WRONG_RANGE_COUNT, RunTimeConfig.formatSize(parentData.size))
 			);
 		}
 		for(int i = 0; i < count; i++) {
@@ -104,128 +120,80 @@ implements Map<Long, UniformData>, Externalizable {
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
-		out.writeInt(historyMap.size());
-		for(final long itemOffset: historyMap.keySet()) {
-			out.writeLong(itemOffset);
-			out.writeObject(historyMap.get(itemOffset));
-		}
+		out.writeLong(parentData.size);
+		out.writeObject(historyMask);
+		out.writeObject(pendingMask);
 	}
 	//
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		long nextOffset;
-		UniformData nextRangeData;
-		//
-		int size = in.readInt();
-		for(int i=0; i<size; i++) {
-			nextOffset = in.readLong();
-			nextRangeData = UniformData.class.cast(in.readObject());
-			put(nextOffset, nextRangeData);
-		}
-	}
-	//
-	@Override
-	public final int size() {
-		return historyMap.size();
-	}
-	//
-	@Override
-	public final boolean isEmpty() {
-		return historyMap.isEmpty();
-	}
-	//
-	@Override
-	public final boolean containsKey(final Object key) {
-		return historyMap.containsKey(key);
-	}
-	//
-	@Override
-	public final boolean containsValue(final Object value) {
-		return historyMap.containsValue(value);
-	}
-	//
-	@Override
-	public final UniformData get(final Object parentOffset) {
-		return historyMap.get(parentOffset);
-	}
-	//
-	@Override
-	public final UniformData put(final Long newRangeBeg, final UniformData data)
-	throws IllegalArgumentException {
-		// range overlapping avoidance magic
-		long oldRangeEnd, newRangeEnd = newRangeBeg + data.getSize();
-		for(final long oldRangeBeg: historyMap.keySet()) {
-			oldRangeEnd = oldRangeBeg + historyMap.get(oldRangeBeg).size;
-			if(oldRangeBeg < newRangeBeg) { // old range begins before new one?
-				if(oldRangeEnd > newRangeEnd) { // old range also ends after the end of new one?
-					// stretch the new range to make it ending at the same position as old one
-					data.size += oldRangeEnd - newRangeEnd;
-				}
-				// shrink the old range to make it not overlapping w/ new one
-				historyMap.get(oldRangeBeg).size -= oldRangeEnd - newRangeBeg + 1;
-			} else if(oldRangeBeg > newRangeBeg && oldRangeBeg < newRangeEnd) {
-				// old range begins inside of new one, shrink new range
-				data.size = oldRangeBeg - newRangeBeg - 1;
-			}
-
-		}
-		//
-		historyMap.put(newRangeBeg, data);
-		pendingQueue.add(newRangeBeg);
-		return data;
-	}
-	//
-	@Override
-	public final UniformData remove(Object parentOffset) {
-		UniformData removed;
-		synchronized(historyMap) {
-			removed = historyMap.remove(parentOffset);
-		}
-		return removed;
-	}
-	//
-	@Override
-	public final void putAll(final Map<? extends Long, ? extends UniformData> map) {
-		for(final long parentOffset: map.keySet()) {
-			put(parentOffset, map.get(parentOffset));
-		}
-	}
-	//
-	@Override
-	public final void clear() {
-		historyMap.clear();
-	}
-	//
-	@Override @SuppressWarnings("NullableProblems")
-	public final Set<Long> keySet() {
-		return historyMap.keySet();
-	}
-	//
-	@Override @SuppressWarnings("NullableProblems")
-	public final Collection<UniformData> values() {
-		return historyMap.values();
-	}
-	//
-	@Override @SuppressWarnings("NullableProblems")
-	public final Set<Entry<Long,UniformData>> entrySet() {
-		return historyMap.entrySet();
+		parentData.size = in.readLong();
+		cellCount = getCellCount(parentData.size);
+		cellSize = (int) parentData.size / cellCount;
+		historyMask = BigInteger.class.cast(in.readObject());
+		pendingMask = BigInteger.class.cast(in.readObject());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final String toString() {
-		UniformData data;
-		for(final long parentOffset: keySet()) {
-			data = get(parentOffset);
-			REQ_BUILDER.get().clear()
-				.append(RunTimeConfig.LIST_SEP).append(parentOffset)
-				.append(RunTimeConfig.LIST_SEP).append(data.toString());
+		return historyMask.toString(0x10);
+	}
+	//
+	public final void fromString(final String v) {
+		historyMask = new BigInteger(v, 0x10);
+		pendingMask = BigInteger.ZERO;
+	}
+	//
+	public final List<Long> getPendingRangeOffsets() {
+		final List<Long> pendingRangeOffsets = new LinkedList<>();
+		for(int i=0; i<cellCount; i++) {
+			if(pendingMask.testBit(i)) {
+				pendingRangeOffsets.add((long)(i)*cellSize);
+			}
 		}
-		return REQ_BUILDER.get().toString();
+		return pendingRangeOffsets;
 	}
 	//
-	public final Queue<Long> getPendingQueue() {
-		return pendingQueue;
+	public final List<Long> getHistoryRangeOffsets() {
+		final List<Long> historyRangeOffsets = new LinkedList<>();
+		long nextOffset;
+		for(int i=0; i<cellCount; i++) {
+			if(historyMask.testBit(i)) {
+				nextOffset = i * cellSize;
+				getRangeData(nextOffset); // pregenerate range data if not exists in cache
+				historyRangeOffsets.add(nextOffset);
+			}
+		}
+		return historyRangeOffsets;
 	}
 	//
+	public final UniformData getRangeData(final long offset) {
+		UniformData rangeData = null;
+		if(pendingCache.containsKey(offset)) {
+			rangeData = pendingCache.get(offset);
+		} else if(historyMask.testBit((int)offset/cellSize)) {
+			if(historyCache.containsKey(offset)) {
+				rangeData = historyCache.get(offset);
+			} else {
+				rangeData = new UniformData(
+					parentData.offset + offset, cellSize, UniformDataSource.DATA_SRC_UPDATE
+				);
+				historyCache.put(offset, rangeData);
+			}
+		}
+		return rangeData;
+	}
+	//
+	public final synchronized void movePendingToHistory() {
+		historyMask = historyMask.add(pendingMask);
+		for(final long offset: pendingCache.keySet()) {
+			if(historyCache.containsKey(offset)) {
+				LOG.debug(Markers.ERR, "Updated ranges history already contains the pending range");
+			} else {
+				historyCache.put(offset, pendingCache.remove(offset));
+			}
+		}
+		pendingMask = BigInteger.ZERO;
+	}
 }

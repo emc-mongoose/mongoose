@@ -32,7 +32,7 @@ extends WSLoadExecutor {
 		if(wsObject!=null) {
 			try {
 				wsObject.getRanges().createRandom(updatesPerObject);
-			} catch(final IOException e) {
+			} catch(final Exception e) {
 				LOG.warn(Markers.ERR, "Failed to create modified ranges: ", e.toString());
 				if(LOG.isTraceEnabled()) {
 					final Throwable cause = e.getCause();

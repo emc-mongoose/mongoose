@@ -51,7 +51,7 @@ implements Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformData() {
 		super(UniformDataSource.DATA_SRC_CREATE.getBytes());
-		ranges = new Ranges(size);
+		ranges = new Ranges(this);
 	}
 	//
 	public UniformData(final String metaInfo) {
@@ -86,7 +86,7 @@ implements Externalizable {
 			}
 		}
 		this.size = size;
-		ranges = new Ranges(size);
+		ranges = new Ranges(this);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public Ranges getRanges() {
@@ -135,12 +135,12 @@ implements Externalizable {
 		synchronized(md) {
 			final DigestOutputStream outDigest = new DigestOutputStream(new NullOutputStream(), md);
 			try {
-				for(final long nextRangeOffset : ranges.keySet()) {
+				for(final long nextRangeOffset : ranges.getHistoryRangeOffsets()) {
 					if(nextRangeOffset > freeSpaceOffset) {
 						lenFreeSpace = nextRangeOffset - freeSpaceOffset;
 						writeBlockTo(outDigest, freeSpaceOffset, lenFreeSpace);
 					}
-					nextRange = ranges.get(nextRangeOffset);
+					nextRange = ranges.getRangeData(nextRangeOffset);
 					nextRange.writeBlockTo(outDigest, 0, nextRange.size);
 					freeSpaceOffset = nextRangeOffset + nextRange.size;
 				}
@@ -223,7 +223,7 @@ implements Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final int hashCode() {
-		return (int) (offset + size + (ranges==null ? 0 : ranges.size()));
+		return (int) (offset + size + (ranges==null ? 0 : ranges.getCount()));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Binary serialization implementation /////////////////////////////////////////////////////////

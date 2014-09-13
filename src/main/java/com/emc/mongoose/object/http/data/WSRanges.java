@@ -17,8 +17,8 @@ public final class WSRanges
 extends Ranges
 implements HttpEntity {
 	//
-	public WSRanges(final long parentSize) {
-		super(parentSize);
+	public WSRanges(final WSObject parent) {
+		super(parent);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// HttpEntity interface implementation
@@ -54,8 +54,8 @@ implements HttpEntity {
 		InputStream contentInStream = null;
 		//
 		UniformData nextRange;
-		for(final long nextParentOffset: pendingQueue) {
-			nextRange = get(nextParentOffset);
+		for(final long nextParentOffset: getPendingRangeOffsets()) {
+			nextRange = getRangeData(nextParentOffset);
 			if(contentInStream==null) { // set head
 				contentInStream = nextRange;
 			} else { // append
@@ -69,10 +69,10 @@ implements HttpEntity {
 	@Override
 	public final void writeTo(final OutputStream out)
 	throws IOException {
-		for(final long nextParentOffset: pendingQueue) {
-			get(nextParentOffset).writeTo(out);
+		for(final long nextParentOffset: getPendingRangeOffsets()) {
+			getRangeData(nextParentOffset).writeTo(out);
 		}
-		pendingQueue.clear();
+		movePendingToHistory();
 	}
 	//
 	@Override
