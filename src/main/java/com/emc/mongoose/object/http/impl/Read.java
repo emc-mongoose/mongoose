@@ -33,6 +33,6 @@ extends WSLoadExecutor {
 		final int threadsPerNode, final String listFile
 	) {
 		super(addrs, reqConf, maxCount, threadsPerNode, listFile);
-		LOG.info(Markers.MSG, "Verify data checksum during read: {}", VERIFY_CONTENT);
+		LOG.info(Markers.MSG, "Verify data integrity during read: {}", VERIFY_CONTENT);
 	}
 }

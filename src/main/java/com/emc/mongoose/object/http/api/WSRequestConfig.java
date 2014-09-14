@@ -275,7 +275,6 @@ extends RequestConfig<WSObject> {
 		}
 		if(loadType==Request.Type.UPDATE) {
 			final WSRanges ranges = WSRanges.class.cast(dataItem.getRanges());
-			dataItem.calcCheckSum(); // recalculates the checksum including modified byte ranges
 			applyRangesHeaders(httpRequest, ranges);
 			applyPayLoad(httpRequest, ranges);
 		}

@@ -31,17 +31,17 @@ implements HttpEntity {
 	public WSObject(final String metaInfo) {
 		super();
 		fromString(metaInfo);
-		this.ranges = new WSRanges(this);
+		ranges = new WSRanges(this);
 	}
 	//
 	public WSObject(final long size) {
 		super(size);
-		this.ranges = new WSRanges(this);
+		ranges = new WSRanges(this);
 	}
 	//
 	public WSObject(final long id, final long size) {
 		super(id, size);
-		this.ranges = new WSRanges(this);
+		ranges = new WSRanges(this);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// HttpEntity interface implementation
