@@ -178,7 +178,7 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 								break;
 							}
 							try(final InputStream in = httpEntity.getContent()) {
-								if(dataItem.compareWithData(in)) {
+								if(dataItem.compareWith(in)) {
 									if(LOG.isTraceEnabled()) {
 										LOG.trace(
 											Markers.MSG, "Content verification success for \"{}\"",

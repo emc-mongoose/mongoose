@@ -3,11 +3,9 @@ package com.emc.mongoose.object.http.api;
 import com.emc.mongoose.api.Request;
 import com.emc.mongoose.api.RequestConfig;
 import com.emc.mongoose.conf.RunTimeConfig;
-import com.emc.mongoose.data.UniformData;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.object.http.data.WSObject;
 //
-import com.emc.mongoose.object.http.data.WSRanges;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.http.Header;
@@ -274,9 +272,9 @@ extends RequestConfig<WSObject> {
 			applyPayLoad(httpRequest, dataItem);
 		}
 		if(loadType==Request.Type.UPDATE) {
-			final WSRanges ranges = WSRanges.class.cast(dataItem.getRanges());
-			applyRangesHeaders(httpRequest, ranges);
-			applyPayLoad(httpRequest, ranges);
+			applyRangesHeaders(httpRequest, dataItem);
+			applyPayLoad(httpRequest, dataItem.getPendingUpdatesContentEntity());
+			dataItem.movePendingUpdatesToHistory();
 		}
 	}
 	//
@@ -323,16 +321,19 @@ extends RequestConfig<WSObject> {
 		}
 	}
 	//
-	protected final void applyRangesHeaders(final HttpRequestBase httpRequest, final WSRanges ranges) {
-		UniformData nextRangeData;
-		for(final long dataItemOffset: ranges.getPendingRangeOffsets()) {
-			nextRangeData = ranges.getRangeData(dataItemOffset);
-			httpRequest.addHeader(
-				HttpHeaders.RANGE,
-				String.format(
-					MSG_TMPL_RANGE_BYTES, dataItemOffset, dataItemOffset + nextRangeData.getSize() - 1
-				)
-			);
+	protected final void applyRangesHeaders(final HttpRequestBase httpRequest, final WSObject dataItem) {
+		long nextRangeOffset;
+		for(int i=0; i<dataItem.getCountRangesTotal(); i++) {
+			if(dataItem.isRangeUpdatePending(i)) {
+				nextRangeOffset = i * dataItem.getRangeSize();
+				httpRequest.addHeader(
+					HttpHeaders.RANGE,
+					String.format(
+						MSG_TMPL_RANGE_BYTES,
+						nextRangeOffset, nextRangeOffset + dataItem.getRangeSize() - 1
+					)
+				);
+			}
 		}
 	}
 	//

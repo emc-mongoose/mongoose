@@ -3,7 +3,6 @@ package com.emc.mongoose.api;
 import com.emc.mongoose.data.UniformData;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.concurrent.Callable;
 //
 /**

@@ -15,7 +15,6 @@ import java.io.InterruptedIOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 /**
@@ -27,10 +26,10 @@ implements Externalizable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String
-		FMT_META_INFO = "%x" + RunTimeConfig.LIST_SEP + "%x" + RunTimeConfig.LIST_SEP + "%s",
+		FMT_META_INFO = "%x" + RunTimeConfig.LIST_SEP + "%x",
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: %s",
-		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: %s",
-		//FMT_MSG_CHECKSUM = "Date item checksum is not Base64 value: %s",
+		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: %s";
+	protected final static String
 		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s";
 	//
 	public final static int MAX_PAGE_SIZE = (int) RunTimeConfig.getSizeBytes("data.page.size");
@@ -40,7 +39,6 @@ implements Externalizable {
 	//
 	protected long offset = 0;
 	protected long size = 0;
-	protected Ranges ranges = null;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformData() {
 		super(UniformDataSource.DATA_SRC_CREATE.getBytes());
@@ -52,9 +50,13 @@ implements Externalizable {
 	}
 	//
 	public UniformData(final long size) {
+		this(size, UniformDataSource.DATA_SRC_CREATE);
+	}
+	//
+	public UniformData(final long size, final UniformDataSource dataSrc) {
 		this(
 			NEXT_OFFSET.getAndSet(Math.abs(UniformDataSource.nextWord(NEXT_OFFSET.get()))),
-			size
+			size, dataSrc
 		);
 	}
 	//
@@ -76,13 +78,8 @@ implements Externalizable {
 			}
 		}
 		this.size = size;
-		ranges = new Ranges(this);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public Ranges getRanges() {
-		return ranges;
-	}
-	//
 	public final long getOffset() {
 		return offset;
 	}
@@ -103,47 +100,6 @@ implements Externalizable {
 	public final long getSize() {
 		return size;
 	}
-	/*
-	 Gets the data checksum which is calculated during read.
-	 Should be called <u>once</u> only after the data has being read.
-	 @return MD5 checksum encoded as URL-safe-base64 string
-	public final String getCheckSum() {
-		if(checkSum==null) {
-			checkSum = Base64.encodeBase64URLSafeString(md.digest());
-		}
-		return checkSum;
-	}
-	//
-	public final void setCheckSum(final String checkSum) {
-		this.checkSum = checkSum;
-	}
-	//
-	/** [Re]calculates the checkSum field with ranges
-	public final void calcCheckSum() {
-		UniformData nextRange;
-		long freeSpaceOffset = 0, lenFreeSpace;
-		synchronized(md) {
-			final DigestOutputStream outDigest = new DigestOutputStream(new NullOutputStream(), md);
-			try {
-				for(final long nextRangeOffset : ranges.getHistoryRangeOffsets()) {
-					if(nextRangeOffset > freeSpaceOffset) {
-						lenFreeSpace = nextRangeOffset - freeSpaceOffset;
-						writeBlockTo(outDigest, freeSpaceOffset, lenFreeSpace);
-					}
-					nextRange = ranges.getRangeData(nextRangeOffset);
-					nextRange.writeBlockTo(outDigest, 0, nextRange.size);
-					freeSpaceOffset = nextRangeOffset + nextRange.size;
-				}
-				if(freeSpaceOffset < size) {
-					lenFreeSpace = size - freeSpaceOffset;
-					writeBlockTo(outDigest, freeSpaceOffset, lenFreeSpace);
-				}
-				checkSum = Base64.encodeBase64URLSafeString(md.digest());
-			} catch(final IOException e) {
-				LOG.warn(Markers.ERR, e.getMessage());
-			}
-		}
-	}*/
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring input stream implementation ////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,13 +141,13 @@ implements Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public String toString() {
-		return String.format(FMT_META_INFO, offset, size, ranges==null ? "0" : ranges.toString());
+		return String.format(FMT_META_INFO, offset, size);
 	}
 	//
 	public void fromString(final String v)
 	throws IllegalArgumentException, NullPointerException {
-		final String tokens[] = v.split(RunTimeConfig.LIST_SEP, 3);
-		if(tokens.length==3) {
+		final String tokens[] = v.split(RunTimeConfig.LIST_SEP, 2);
+		if(tokens.length==2) {
 			try {
 				offset = Long.parseLong(tokens[0], 0x10);
 			} catch(final NumberFormatException e) {
@@ -202,15 +158,14 @@ implements Externalizable {
 			} catch(final NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[1]));
 			}
-			ranges = new Ranges(this, new BigInteger(tokens[2], 0x10));
 		} else {
 			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_RECORD, v));
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final int hashCode() {
-		return (int) (offset + size + (ranges==null ? 0 : ranges.getCount()));
+	public int hashCode() {
+		return (int) (offset ^ size);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Binary serialization implementation /////////////////////////////////////////////////////////
@@ -220,7 +175,6 @@ implements Externalizable {
 	throws IOException {
 		out.writeLong(offset);
 		out.writeLong(size);
-		out.writeObject(ranges);
 	}
 	//
 	@Override
@@ -228,11 +182,13 @@ implements Externalizable {
 	throws IOException, ClassNotFoundException {
 		setOffset(in.readLong(), 0);
 		size = in.readLong();
-		ranges = Ranges.class.cast(in.readObject());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final void writeTo(final OutputStream out) {
-		final byte buff[] = new byte[(int)size % MAX_PAGE_SIZE];
+		if(LOG.isTraceEnabled()) {
+			LOG.trace(Markers.MSG, "Item \"{}\": stream out start", Long.toHexString(offset));
+		}
+		final byte buff[] = new byte[size < MAX_PAGE_SIZE ? (int) size : MAX_PAGE_SIZE];
 		final int
 			countPages = (int) size / buff.length,
 			countTailBytes = (int) size % buff.length;
@@ -257,97 +213,70 @@ implements Externalizable {
 				LOG.error(Markers.ERR, e.getMessage());
 			}
 		}
+		if(LOG.isTraceEnabled()) {
+			LOG.trace(Markers.MSG, "Item \"{}\": stream out finish", Long.toHexString(offset));
+		}
 	}
-	//
-	public final boolean compareWithData(final InputStream in) {
+	// checks that data read from input equals the specified range
+	protected final boolean compareWith(
+		final InputStream in, final long rangeOffset, final int rangeLength
+	) {
+		//
 		boolean contentEquals = true;
+		final byte
+			buff1[] = new byte[rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE],
+			buff2[] = new byte[buff1.length];
 		final int
-			cellCount = ranges==null ? (int) (size / MAX_PAGE_SIZE) : ranges.getCellCount(),
-			cellSize = (int) (size / cellCount),
-			tailSize = (int) (size - cellCount * cellSize);
-		long cellOffset;
+			countPages = rangeLength / buff1.length,
+			countTailBytes = rangeLength % buff1.length;
+		int doneByteCount;
+		//
 		synchronized(this) {
 			try {
-				if(ranges==null) {
-					for(int i = 0; i<cellCount; i++) {
-						cellOffset = i * cellSize;
-						setOffset(offset, cellOffset);
-						contentEquals = compareInputStreams(this, in, cellSize);
-						if(!contentEquals) {
-							break;
-						}
-					}
-				} else {
-					for(int i = 0; i<cellCount; i++) {
-						cellOffset = i * cellSize;
-						if(ranges.wasUpdated(i)) {
-							contentEquals = compareInputStreams(
-								ranges.getRangeData(cellOffset), in, cellSize
+				setOffset(offset, rangeOffset);
+				for(int i = 0; i < countPages; i++) {
+					if(buff1.length==read(buff1)) {
+						doneByteCount = 0;
+						do {
+							doneByteCount += in.read(
+								buff2, doneByteCount, buff2.length - doneByteCount
 							);
-						} else {
-							setOffset(offset, cellOffset);
-							contentEquals = compareInputStreams(this, in, cellSize);
-						}
+						} while(doneByteCount < buff2.length);
+						contentEquals = Arrays.equals(buff1, buff2);
 						if(!contentEquals) {
 							break;
 						}
+					} else {
+						LOG.debug(Markers.ERR, "Looks like reading from data ring blocked");
+						contentEquals = false;
+						break;
 					}
 				}
-				if(contentEquals && tailSize > 0) {
-					setOffset(offset, cellCount*cellSize);
-					contentEquals = compareInputStreams(this, in, tailSize);
+				//
+				if(contentEquals) {
+					// tail bytes
+					if(read(buff1, 0, countTailBytes)==countTailBytes) {
+						doneByteCount = 0;
+						do {
+							doneByteCount += in.read(
+								buff2, doneByteCount, countTailBytes - doneByteCount
+							);
+						} while(doneByteCount < countTailBytes);
+						contentEquals = Arrays.equals(buff1, buff2);
+					} else {
+						LOG.debug(Markers.ERR, "Looks like reading from data ring blocked");
+						contentEquals = false;
+					}
 				}
 			} catch(final IOException e) {
-				LOG.warn(Markers.ERR, "Failure: {}", e.toString());
+				contentEquals = false;
+				LOG.warn(Markers.ERR, "Data integrity verification failure: {}", e.toString());
 				if(LOG.isTraceEnabled()) {
 					final Throwable cause = e.getCause();
 					if(cause!=null) {
 						LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
 					}
 				}
-			}
-		}
-		return contentEquals;
-	}
-	//
-	private static boolean compareInputStreams(
-		final InputStream in1, final InputStream in2, final int len
-	) throws IOException {
-		//
-		boolean contentEquals = true;
-		final byte
-			buff1[] = new byte[len % MAX_PAGE_SIZE],
-			buff2[] = new byte[buff1.length];
-		final int
-			countPages = len / buff1.length,
-			countTailBytes = len % buff1.length;
-		int doneByteCount;
-		//
-		for(int i=0; i<countPages; i++) {
-			if(buff1.length==in1.read(buff1)) {
-				doneByteCount = 0;
-				do {
-					doneByteCount += in2.read(buff2, doneByteCount, buff2.length - doneByteCount);
-				} while(doneByteCount < buff2.length);
-				contentEquals = Arrays.equals(buff1, buff2);
-				if(!contentEquals) {
-					break;
-				}
-			} else {
-				throw new InterruptedIOException("Reading from data ring blocked?");
-			}
-		}
-		//
-		if(contentEquals) {
-			// tail bytes
-			if(in1.read(buff1, 0, countTailBytes)==countTailBytes) {
-				doneByteCount = 0;
-				do {
-					doneByteCount += in2.read(buff2, doneByteCount, countTailBytes - doneByteCount);
-				} while(doneByteCount < countTailBytes);
-				contentEquals = Arrays.equals(buff1, buff2);
-			} else {
-				throw new InterruptedIOException("Reading from data ring blocked?");
 			}
 		}
 		//

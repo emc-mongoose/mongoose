@@ -1,6 +1,7 @@
 package com.emc.mongoose.object.http.data;
 //
 import com.emc.mongoose.conf.RunTimeConfig;
+import com.emc.mongoose.data.UniformDataSource;
 import com.emc.mongoose.object.DataObject;
 //
 import org.apache.http.Header;
@@ -31,17 +32,22 @@ implements HttpEntity {
 	public WSObject(final String metaInfo) {
 		super();
 		fromString(metaInfo);
-		ranges = new WSRanges(this);
 	}
 	//
 	public WSObject(final long size) {
 		super(size);
-		ranges = new WSRanges(this);
+	}
+	//
+	public WSObject(final long size, final UniformDataSource dataSrc) {
+		super(size, dataSrc);
 	}
 	//
 	public WSObject(final long id, final long size) {
 		super(id, size);
-		ranges = new WSRanges(this);
+	}
+	//
+	public WSObject(final long id, final long size, final UniformDataSource dataSrc) {
+		super(id, size, dataSrc);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// HttpEntity interface implementation
@@ -96,5 +102,8 @@ implements HttpEntity {
 		EntityUtils.consume(this);
 	}
 	//
+	public final HttpEntity getPendingUpdatesContentEntity() {
+		return new WSUpdateRangesEntity(this);
+	}
 }
 //

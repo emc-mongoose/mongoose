@@ -49,7 +49,13 @@ implements Externalizable {
 		try {
 			DATA_SRC_CREATE = new UniformDataSource();
 			DATA_SRC_UPDATE = new UniformDataSource(
-				Long.reverse(Long.reverseBytes(DATA_SRC_CREATE.seed)),
+				Long.reverse(
+					nextWord(
+						Long.reverseBytes(
+							DATA_SRC_CREATE.seed
+						)
+					)
+				),
 				DATA_SRC_CREATE.getSize()
 			);
 		} catch(final Exception e) {

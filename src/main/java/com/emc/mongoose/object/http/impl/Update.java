@@ -7,8 +7,6 @@ import com.emc.mongoose.object.http.api.WSRequestConfig;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.io.IOException;
 /**
  Created by kurila on 06.05.14.
  */
@@ -31,7 +29,7 @@ extends WSLoadExecutor {
 	public final void submit(final WSObject wsObject) {
 		if(wsObject!=null) {
 			try {
-				wsObject.getRanges().createRandom(updatesPerObject);
+				wsObject.updateRandomRanges(updatesPerObject);
 			} catch(final Exception e) {
 				LOG.warn(Markers.ERR, "Failed to create modified ranges: ", e.toString());
 				if(LOG.isTraceEnabled()) {
@@ -44,7 +42,7 @@ extends WSLoadExecutor {
 			if(LOG.isTraceEnabled()) {
 				LOG.trace(
 					Markers.MSG, "Modified {}/{} ranges for object \"{}\"",
-					wsObject.getRanges().getCount(), updatesPerObject,
+					wsObject.getPendingUpdatesCount(), updatesPerObject,
 					Long.toHexString(wsObject.getId())
 				);
 			}

@@ -1,6 +1,7 @@
 package com.emc.mongoose.object;
 //
-import com.emc.mongoose.data.UniformData;
+import com.emc.mongoose.data.DataRanges;
+import com.emc.mongoose.data.UniformDataSource;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -9,7 +10,7 @@ import java.io.ObjectInput;
  Differs from base class with existence of identifier.
  */
 public class DataObject
-extends UniformData {
+extends DataRanges {
 	//
 	protected long id;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29,9 +30,18 @@ extends UniformData {
 		this.id = offset;
 	}
 	//
-	public DataObject(final long id, final long size
-	) {
+	public DataObject(final long size, final UniformDataSource dataSrc) {
+		super(size, dataSrc);
+		this.id = offset;
+	}
+	//
+	public DataObject(final long id, final long size) {
 		super(id, size);
+		this.id = offset;
+	}
+	//
+	public DataObject(final long id, final long size, final UniformDataSource dataSrc) {
+		super(id, size, dataSrc);
 		this.id = offset;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

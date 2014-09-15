@@ -70,7 +70,7 @@ extends WSLoadExecutor {
 		private void produceNextAndFeed()
 		throws IOException, InterruptedException, RejectedExecutionException {
 			final long nextSize = thrLocalRnd.nextLong(minObjSize, maxObjSize + 1);
-			final WSObject nextObject = new WSObject(nextSize);
+			final WSObject nextObject = new WSObject(nextSize, dataSrc);
 			consumer.submit(nextObject);
 		}
 		//

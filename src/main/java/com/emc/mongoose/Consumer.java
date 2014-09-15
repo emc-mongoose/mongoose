@@ -4,7 +4,6 @@ import com.emc.mongoose.data.UniformData;
 //
 import java.io.Closeable;
 import java.rmi.RemoteException;
-import java.util.concurrent.RejectedExecutionException;
 /**
  Created by kurila on 09.05.14.
  */
