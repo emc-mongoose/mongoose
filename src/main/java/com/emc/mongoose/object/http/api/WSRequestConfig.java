@@ -274,7 +274,6 @@ extends RequestConfig<WSObject> {
 		if(loadType==Request.Type.UPDATE) {
 			applyRangesHeaders(httpRequest, dataItem);
 			applyPayLoad(httpRequest, dataItem.getPendingUpdatesContentEntity());
-			dataItem.movePendingUpdatesToHistory();
 		}
 	}
 	//

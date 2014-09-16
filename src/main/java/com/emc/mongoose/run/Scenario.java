@@ -27,29 +27,21 @@ public final class Scenario {
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String
 		KEY_PYTHON_PATH = "python.path",
+		VALUE_JS = "js",
 		VALUE_PY = "py";
 	//
 	private final static ScriptEngineManager SCRIPT_ENGINE_MANAGER = new ScriptEngineManager();
-	static {
-		LOG.debug(Markers.MSG, "Available script engines follow below:");
-		for(final ScriptEngineFactory sef: SCRIPT_ENGINE_MANAGER.getEngineFactories()) {
-			LOG.debug(
-				Markers.MSG, "\t* {} v{} by {}",
-				sef.getLanguageName(), sef.getLanguageVersion(), sef.getEngineName()
-			);
-		}
-	}
 	private final static HashMap<String, String> SCRIPT_LANG_MAP = new HashMap<>();
 	static {
-		SCRIPT_LANG_MAP.put("js", "ECMAScript");
-		SCRIPT_LANG_MAP.put(VALUE_PY, "python");
+		SCRIPT_LANG_MAP.put(VALUE_JS, "ECMAScript");
+		SCRIPT_LANG_MAP.put(VALUE_PY, "jython");
 	}
 	//
 	public static void run() {
 		// get scenario language
-		String scriptLang = null;
+		String scriptLangKey = null;
 		try {
-			scriptLang = RunTimeConfig.getString("run.scenario.lang");
+			scriptLangKey = RunTimeConfig.getString("run.scenario.lang");
 		} catch(final NoSuchElementException e) {
 			LOG.fatal(
 				Markers.ERR,
@@ -71,7 +63,7 @@ public final class Scenario {
 		}
 		//
 		String scriptsRootDir = null;
-		if(scriptName!=null && scriptLang!=null) {
+		if(scriptName!=null && scriptLangKey!=null) {
 			try {
 				scriptsRootDir = RunTimeConfig.getString("run.scenario.dir");
 			} catch(final NoSuchElementException e) {
@@ -79,8 +71,8 @@ public final class Scenario {
 				System.exit(1);
 			}
 			//
-			final Path scriptDir = Paths.get(Main.DIR_ROOT, scriptsRootDir, scriptLang);
-			if(VALUE_PY.equals(scriptLang)) {
+			final Path scriptDir = Paths.get(Main.DIR_ROOT, scriptsRootDir, scriptLangKey);
+			if(VALUE_PY.equals(scriptLangKey)) {
 				System.setProperty(KEY_PYTHON_PATH, scriptDir.toString());
 				LOG.debug(
 					Markers.MSG, "Set \"{}\"=\"{}\"",
@@ -88,7 +80,7 @@ public final class Scenario {
 				);
 			}
 			//
-			final Path scriptPath = Paths.get(scriptDir.toString(), scriptName+'.'+scriptLang);
+			final Path scriptPath = Paths.get(scriptDir.toString(), scriptName+'.'+scriptLangKey);
 			LOG.debug(Markers.MSG, "Using scenario from file {}", scriptPath);
 			//
 			if(Files.exists(scriptPath)) {
@@ -103,32 +95,49 @@ public final class Scenario {
 				LOG.fatal(Markers.ERR, "File \"{}\" is not readable", scriptPath);
 			}
 			//
-			final ScriptEngine scriptEngine = SCRIPT_ENGINE_MANAGER.getEngineByName(
-				SCRIPT_LANG_MAP.get(scriptLang)
-			);
-			//
-			if(scriptEngine==null) {
-				LOG.warn(Markers.ERR, "Failed to get script engine for \"{}\"", scriptPath);
+			final String scriptLangValue = SCRIPT_LANG_MAP.get(scriptLangKey);
+			if(scriptLangValue==null) {
+				LOG.fatal(
+					Markers.MSG, "Failed to determine the scenario language for key \"{}\"",
+					scriptLangKey
+				);
 			} else {
-				try {
-					LOG.debug(Markers.MSG, "Script start");
-					scriptEngine.eval(Files.newBufferedReader(scriptPath, Charset.defaultCharset()));
-					LOG.debug(Markers.MSG, "Script from \"{}\" done", scriptPath);
-				} catch(final ScriptException e) {
-					LOG.error(Markers.ERR, "Script failure: {}", e.toString());
-					if(LOG.isDebugEnabled()) {
-						final Throwable cause = e.getCause();
-						if(cause!=null) {
-							LOG.debug(Markers.ERR, cause.toString(), cause.getCause());
-						}
+				ScriptEngine scriptEngine = SCRIPT_ENGINE_MANAGER
+					.getEngineByName(scriptLangValue);
+				//
+				if(scriptEngine==null) {
+					LOG.fatal(
+						Markers.ERR,
+						"Failed to get script engine for language \"{}\", the available engines are:",
+						scriptLangValue
+					);
+					for(final ScriptEngineFactory sef : SCRIPT_ENGINE_MANAGER.getEngineFactories()) {
+						LOG.info(
+							Markers.ERR, "\t{}:\tfor language \"{}\" v{}",
+							sef.getEngineName(), sef.getLanguageName(), sef.getLanguageVersion()
+						);
 					}
-				} catch(final FileNotFoundException e) {
-					LOG.error(Markers.ERR, "Script file not found at \"{}\"", scriptPath);
-				} catch(final IOException e) {
-					LOG.error(Markers.ERR, "Script file reading failure", e);
+				} else {
+					try {
+						LOG.debug(Markers.MSG, "Script start");
+						scriptEngine.eval(Files.newBufferedReader(scriptPath, Charset.defaultCharset()));
+						LOG.debug(Markers.MSG, "Script from \"{}\" done", scriptPath);
+					} catch(final ScriptException e) {
+						LOG.error(Markers.ERR, "Script failure: {}", e.toString());
+						if(LOG.isDebugEnabled()) {
+							final Throwable cause = e.getCause();
+							if(cause!=null) {
+								LOG.debug(Markers.ERR, cause.toString(), cause.getCause());
+							}
+						}
+					} catch(final FileNotFoundException e) {
+						LOG.error(Markers.ERR, "Script file not found at \"{}\"", scriptPath);
+					} catch(final IOException e) {
+						LOG.error(Markers.ERR, "Script file reading failure", e);
+					}
 				}
+				//
 			}
-			//
 		}
 	}
 }

@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.SequenceInputStream;
 import java.util.BitSet;
 import java.util.concurrent.ThreadLocalRandom;
 /**
@@ -134,18 +133,20 @@ extends UniformData {
 		long rangeOffset;
 		UniformData updatedRange;
 		for(int i=0; i<countRangesTotal; i++) {
-			updatedRange = getRangeUpdateHistory(i);
 			rangeOffset = i * rangeSize;
-			if(updatedRange==null) { // range have been not modified
-				contentEquals = compareWith(in, rangeOffset, rangeSize);
-			} else {
+			if(maskRangesHistory.get(i)) { // range have been modified
 				if(LOG.isTraceEnabled()) {
 					LOG.trace(
 						Markers.MSG, "Range #{} [{}-{}] was modified",
 						i, rangeOffset, rangeOffset + rangeSize - 1
 					);
 				}
-				contentEquals = getRangeUpdateHistory(i).compareWith(in, 0, rangeSize);
+				updatedRange = new UniformData(
+					offset + rangeOffset, rangeSize, UniformDataSource.DATA_SRC_UPDATE
+				);
+				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
+			} else {
+				contentEquals = compareWith(in, rangeOffset, rangeSize);
 			}
 			if(!contentEquals) {
 				if(LOG.isTraceEnabled()) {
@@ -166,31 +167,7 @@ extends UniformData {
 		return maskRangesPending.get(i);
 	}
 	//
-	public final boolean isRangeUpdateHistory(final int i) {
-		return maskRangesHistory.get(i);
-	}
-	//
-	public UniformData getRangeUpdatePending(final int i) {
-		UniformData updatedRange = null;
-		if(maskRangesPending.get(i)) {
-			updatedRange = new UniformData(
-				offset + i * rangeSize, rangeSize, UniformDataSource.DATA_SRC_UPDATE
-			);
-		}
-		return updatedRange;
-	}
-	//
-	public UniformData getRangeUpdateHistory(final int i) {
-		UniformData updatedRange = null;
-		if(maskRangesHistory.get(i)) {
-			updatedRange = new UniformData(
-				offset + i * rangeSize, rangeSize, UniformDataSource.DATA_SRC_UPDATE
-			);
-		}
-		return updatedRange;
-	}
-	//
-	public final void updateRandomRanges()
+	public final void updateRandomRange()
 		throws IllegalStateException {
 		final int startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
 		int nextCellPos;
@@ -201,7 +178,7 @@ extends UniformData {
 				if(LOG.isTraceEnabled()) {
 					LOG.trace(
 						Markers.MSG, "Update cell at position: {}, offset: {}, new mask: {}",
-						nextCellPos, nextCellPos,
+						nextCellPos, nextCellPos * rangeSize,
 						Hex.encodeHexString(maskRangesPending.toByteArray())
 					);
 				}
@@ -219,7 +196,7 @@ extends UniformData {
 			);
 		}
 		for(int i = 0; i < count; i++) {
-			updateRandomRanges();
+			updateRandomRange();
 		}
 	}
 	//
@@ -232,14 +209,20 @@ extends UniformData {
 		}
 		return count;
 	}
-	//
+	/*
 	public final InputStream getPendingUpdatesContent() {
 		InputStream updatesContent = null;
 		UniformData nextRangeData;
+		long rangeOffset;
 		for(int i=0; i<countRangesTotal; i++) {
 			if(maskRangesPending.get(i)) {
+				rangeOffset = i * rangeSize;
+				LOG.trace(
+					Markers.MSG, "Append range with offset {} and size {} to content for update",
+					offset + rangeOffset, rangeSize
+				);
 				nextRangeData = new UniformData(
-					offset + i * rangeSize, rangeSize, UniformDataSource.DATA_SRC_UPDATE
+					offset + rangeOffset, rangeSize, UniformDataSource.DATA_SRC_UPDATE
 				);
 				if(updatesContent==null) {
 					updatesContent = nextRangeData;
@@ -249,9 +232,16 @@ extends UniformData {
 			}
 		}
 		return updatesContent;
-	}
+	}*/
 	//
 	public final synchronized void movePendingUpdatesToHistory() {
+		if(LOG.isTraceEnabled()) {
+			LOG.trace(
+				Markers.MSG, "Move pending ranges \"{}\" to history \"{}\"",
+				Hex.encodeHexString(maskRangesPending.toByteArray()),
+				Hex.encodeHexString(maskRangesHistory.toByteArray())
+			);
+		}
 		maskRangesHistory.or(maskRangesPending);
 		maskRangesPending.clear();
 	}

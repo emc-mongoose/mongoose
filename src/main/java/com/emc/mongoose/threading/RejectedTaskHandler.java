@@ -30,13 +30,13 @@ implements RejectedExecutionHandler {
 		//
 		while(!passed) {
 			//
-			if(rejectCount==4 && LOG.isTraceEnabled()) {
+			if(rejectCount==5 && LOG.isTraceEnabled()) {
 				LOG.trace(Markers.ERR, ERR_MSG_PATTERN, task, rejectCount);
-			} else if(rejectCount==16 && LOG.isDebugEnabled()) {
+			} else if(rejectCount==25 && LOG.isDebugEnabled()) {
 				LOG.debug(Markers.ERR, ERR_MSG_PATTERN, task, rejectCount);
-			} else if(rejectCount==64) {
+			} else if(rejectCount==100) {
 				LOG.info(Markers.ERR, ERR_MSG_PATTERN, task, rejectCount);
-			} else if(rejectCount==256) {
+			} else if(rejectCount==255) {
 				LOG.warn(Markers.ERR, ERR_MSG_PATTERN, task, rejectCount);
 				break;
 			}
