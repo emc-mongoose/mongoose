@@ -8,7 +8,7 @@ src.fpath:
 src.separator:	,
 
 #
-namespace:		s3
+#namespace:		s3
 
 #
 page.size:		64kib
