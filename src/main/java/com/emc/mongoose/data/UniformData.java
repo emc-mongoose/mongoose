@@ -1,9 +1,11 @@
 package com.emc.mongoose.data;
 //
 import com.emc.mongoose.conf.RunTimeConfig;
+import com.emc.mongoose.logging.ExceptionHandler;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.remote.ServiceUtils;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -69,13 +71,9 @@ implements Externalizable {
 		try {
 			setOffset(offset, 0);
 		} catch(final IOException e) {
-			LOG.error(Markers.ERR, "Failed to set data ring offset: {}: {}", offset, e.toString());
-			if(LOG.isTraceEnabled()) {
-				final Throwable cause = e.getCause();
-				if(cause!=null) {
-					LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-				}
-			}
+			ExceptionHandler.trace(
+				LOG, Level.ERROR, e, String.format("Failed to set data ring offset: %s", offset)
+			);
 		}
 		this.size = size;
 	}
@@ -185,7 +183,7 @@ implements Externalizable {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final void writeTo(final OutputStream out) {
-		if(LOG.isTraceEnabled()) {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Item \"{}\": stream out start", Long.toHexString(offset));
 		}
 		final byte buff[] = new byte[size < MAX_PAGE_SIZE ? (int) size : MAX_PAGE_SIZE];
@@ -213,7 +211,7 @@ implements Externalizable {
 				LOG.error(Markers.ERR, e.getMessage());
 			}
 		}
-		if(LOG.isTraceEnabled()) {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Item \"{}\": stream out finish", Long.toHexString(offset));
 		}
 	}
@@ -270,13 +268,7 @@ implements Externalizable {
 				}
 			} catch(final IOException e) {
 				contentEquals = false;
-				LOG.warn(Markers.ERR, "Data integrity verification failure: {}", e.toString());
-				if(LOG.isTraceEnabled()) {
-					final Throwable cause = e.getCause();
-					if(cause!=null) {
-						LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-					}
-				}
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Data integrity verification failure");
 			}
 		}
 		//

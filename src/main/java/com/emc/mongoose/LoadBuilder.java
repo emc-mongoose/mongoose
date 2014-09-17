@@ -4,7 +4,6 @@ import com.emc.mongoose.api.Request;
 import com.emc.mongoose.api.RequestConfig;
 import com.emc.mongoose.conf.RunTimeConfig;
 import com.emc.mongoose.data.UniformData;
-import com.emc.mongoose.data.UniformDataSource;
 //
 import java.rmi.RemoteException;
 /**
@@ -49,6 +48,4 @@ extends Builder<T> {
 	long getMaxCount()
 	throws RemoteException;
 	//
-	UniformDataSource getDataSource()
-	throws RemoteException;
 }

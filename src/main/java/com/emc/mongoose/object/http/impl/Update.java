@@ -1,10 +1,12 @@
 package com.emc.mongoose.object.http.impl;
 //
+import com.emc.mongoose.logging.ExceptionHandler;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.object.http.WSLoadExecutor;
 import com.emc.mongoose.object.http.data.WSObject;
 import com.emc.mongoose.object.http.api.WSRequestConfig;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
@@ -31,15 +33,9 @@ extends WSLoadExecutor {
 			try {
 				wsObject.updateRandomRanges(updatesPerObject);
 			} catch(final Exception e) {
-				LOG.warn(Markers.ERR, "Failed to create modified ranges: ", e.toString());
-				if(LOG.isTraceEnabled()) {
-					final Throwable cause = e.getCause();
-					if(cause!=null) {
-						LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-					}
-				}
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to create modified ranges");
 			}
-			if(LOG.isTraceEnabled()) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Modified {}/{} ranges for object \"{}\"",
 					wsObject.getPendingUpdatesCount(), updatesPerObject,

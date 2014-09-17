@@ -16,6 +16,7 @@ import com.emc.mongoose.conf.RunTimeConfig;
 import com.emc.mongoose.data.UniformDataSource;
 import com.emc.mongoose.data.persist.FileProducer;
 import com.emc.mongoose.data.persist.LogConsumer;
+import com.emc.mongoose.logging.ExceptionHandler;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.object.http.data.WSObject;
 import com.emc.mongoose.object.http.api.WSRequestConfig;
@@ -153,7 +154,7 @@ implements LoadExecutor<WSObject> {
 			nodes[i] = nodeExecutor;
 		}
 		// by default, may be overriden later externally
-		setConsumer(new LogConsumer<WSObject>(UniformDataSource.DATA_SRC_CREATE));
+		setConsumer(new LogConsumer<WSObject>());
 	}
 	//
 	@Override
@@ -169,13 +170,7 @@ implements LoadExecutor<WSObject> {
 					producer.getClass().getSimpleName()
 				);
 			} catch(final IOException e) {
-				LOG.error(Markers.MSG, "Failed to start producer: {}", e.toString());
-				if(LOG.isDebugEnabled()) {
-					final Throwable cause = e.getCause();
-					if(cause!=null) {
-						LOG.debug(Markers.ERR, cause.toString(), cause.getCause());
-					}
-				}
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to stop the producer");
 			}
 		}
 		//
@@ -209,16 +204,10 @@ implements LoadExecutor<WSObject> {
 				producer.interrupt();
 				LOG.debug(Markers.MSG, "Stopped object producer {}", producer.toString());
 			} catch(final IOException e) {
-				LOG.warn(
-					Markers.ERR, "Failed to stop the producer {} because of {}",
-					producer.toString(), e.toString()
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e,
+					String.format("Failed to stop the producer: %s", producer.toString())
 				);
-				if(LOG.isDebugEnabled()) {
-					final Throwable cause = e.getCause();
-					if(cause!=null) {
-						LOG.debug(Markers.ERR, cause.toString(), cause.getCause());
-					}
-				}
 			}
 		}
 		//
@@ -270,26 +259,17 @@ implements LoadExecutor<WSObject> {
 				nodeExecutor.close();
 				LOG.debug(Markers.MSG, "Closed the node executor {}", nodeExecutor);
 			} catch(final IOException e) {
-				LOG.warn(Markers.ERR, "Failed to stop the node executor {}", nodeExecutor.getName());
-				if(LOG.isDebugEnabled()) {
-					final Throwable cause = e.getCause();
-					if(cause!=null) {
-						LOG.debug(Markers.ERR, cause.toString(), cause.getCause());
-					}
-				}
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e,
+					String.format("Failed to stop the node executor: %s", nodeExecutor.getName())
+				);
 			}
 		}
 		//
 		try {
 			httpClient.close();
 		} catch(final IOException e) {
-			LOG.warn(Markers.ERR, "Failed to close the HTTP client: {}", e.toString());
-			if(LOG.isDebugEnabled()) {
-				final Throwable cause = e.getCause();
-				if(cause!=null) {
-					LOG.debug(Markers.ERR, cause.toString(), cause.getCause());
-				}
-			}
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to close the HTTP client");
 		}
 		//
 		synchronized(LOG) {

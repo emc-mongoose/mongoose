@@ -35,7 +35,7 @@ implements LoadService<WSObject> {
 	throws IOException, CloneNotSupportedException {
 		super(addrs, reqConf, maxCount, threadsPerNode, null, minObjSize, maxObjSize);
 		// by default, may be overriden later externally:
-		super.setConsumer(new FrameBuffConsumer<WSObject>(reqConf.getDataSource()));
+		super.setConsumer(new FrameBuffConsumer<WSObject>());
 	}
 	//
 	@Override

@@ -3,7 +3,6 @@ package com.emc.mongoose.data.persist;
 import com.emc.mongoose.Consumer;
 import com.emc.mongoose.Producer;
 import com.emc.mongoose.data.UniformData;
-import com.emc.mongoose.data.UniformDataSource;
 import com.emc.mongoose.logging.Markers;
 //
 import org.apache.logging.log4j.LogManager;
@@ -69,20 +68,12 @@ implements Producer<T> {
 					LOG.debug(Markers.MSG, "No next line, exiting");
 					break;
 				} else {
-					//
-					if(dataItemsCount==-1) { // header -> data ring meta info
-						UniformDataSource.fromString(nextLine.toLowerCase());
-					} else if(UniformDataSource.DATA_SRC_CREATE!=null) {
-						nextData = dataItemConstructor.newInstance(nextLine);
-						LOG.trace(Markers.MSG, "Parsed the line");
-						try {
-							consumer.submit(nextData);
-						} catch(final RemoteException e) {
-							LOG.warn(Markers.ERR, "Failed to submit data item to remote consumer");
-						}
-					} else {
-						LOG.warn(Markers.ERR, "No data ring, check source file header: ", fPath);
-						break;
+					nextData = dataItemConstructor.newInstance(nextLine);
+					LOG.trace(Markers.MSG, "Parsed the line");
+					try {
+						consumer.submit(nextData);
+					} catch(final RemoteException e) {
+						LOG.warn(Markers.ERR, "Failed to submit data item to remote consumer");
 					}
 					dataItemsCount ++;
 				}

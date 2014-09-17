@@ -2,6 +2,7 @@ package com.emc.mongoose.object.http.api;
 //
 import com.emc.mongoose.api.Request;
 import com.emc.mongoose.api.RequestConfig;
+import com.emc.mongoose.logging.ExceptionHandler;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.object.http.data.WSObject;
 import com.emc.mongoose.object.http.impl.Read;
@@ -20,6 +21,7 @@ import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 //
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -102,13 +104,7 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 			reqConf.applyDataItem(httpRequest, dataItem);
 			this.dataItem = dataItem;
 		} catch(final URISyntaxException e) {
-			LOG.warn(Markers.ERR, "Failed to calculate the request URI: {}", e.toString());
-			if(LOG.isTraceEnabled()) {
-				final Throwable cause = e.getCause();
-				if(cause!=null) {
-					LOG.trace(Markers.MSG, cause.toString(), cause.getCause());
-				}
-			}
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to calculate the request URI");
 		}
 		return this;
 	}
@@ -149,7 +145,7 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 		} else {
 			statusCode = statusLine.getStatusCode();
 			//
-			if(LOG.isTraceEnabled()) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
 				synchronized(LOG) {
 					LOG.trace(
 						Markers.MSG, "{} {} -> {}/{}",
@@ -179,7 +175,7 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 							}
 							try(final InputStream in = httpEntity.getContent()) {
 								if(dataItem.compareWith(in)) {
-									if(LOG.isTraceEnabled()) {
+									if(LOG.isTraceEnabled(Markers.MSG)) {
 										LOG.trace(
 											Markers.MSG, "Content verification success for \"{}\"",
 											Long.toHexString(dataItem.getId())
@@ -233,6 +229,15 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 						break;
 					case(416):
 						LOG.warn(Markers.ERR, "Incorrect range");
+						if(LOG.isTraceEnabled(Markers.ERR)) {
+							for(final Header rangeHeader: httpRequest.getHeaders(HttpHeaders.RANGE)) {
+								LOG.trace(
+									Markers.ERR, "Incorrect range: {}, data item: \"{}\", size: {}",
+									rangeHeader.getValue(),
+									Long.toHexString(dataItem.getId()), dataItem.getSize()
+								);
+							}
+						}
 						break;
 					case(500):
 						LOG.warn(Markers.ERR, "Storage internal failure");

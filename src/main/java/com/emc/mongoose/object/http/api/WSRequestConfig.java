@@ -280,7 +280,7 @@ extends RequestConfig<WSObject> {
 	public final void applyHeadersFinally(final HttpRequestBase httpRequest) {
 		applyDateHeader(httpRequest);
 		applyAuthHeader(httpRequest);
-		if(LOG.isTraceEnabled()) {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 			synchronized(LOG) {
 				LOG.trace(Markers.MSG, "built request: {}", httpRequest.getURI());
 				for(final Header header: httpRequest.getAllHeaders()) {

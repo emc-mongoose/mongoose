@@ -1,7 +1,6 @@
 package com.emc.mongoose.data.persist;
 //
 import com.emc.mongoose.data.UniformData;
-import com.emc.mongoose.data.UniformDataSource;
 import com.emc.mongoose.remote.RecordFrameBuffer;
 //
 import org.apache.http.annotation.ThreadSafe;
@@ -20,12 +19,6 @@ implements RecordFrameBuffer<T> {
 	//
 	private final ConcurrentLinkedQueue<T> buff = new ConcurrentLinkedQueue<>();
 	private final Lock submLock = new ReentrantLock();
-	private final UniformDataSource dataSrc;
-	//
-	public FrameBuffConsumer(UniformDataSource dataSrc) {
-		super(dataSrc);
-		this.dataSrc = dataSrc;
-	}
 	//
 	@Override
 	public final void submit(final T data) {
@@ -34,11 +27,6 @@ implements RecordFrameBuffer<T> {
 			buff.add(data);
 			submLock.unlock();
 		}
-	}
-	//
-	@Override
-	public final UniformDataSource getDataSource() {
-		return dataSrc;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

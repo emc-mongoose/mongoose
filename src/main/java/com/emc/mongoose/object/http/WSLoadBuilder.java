@@ -255,11 +255,6 @@ implements LoadBuilder<T> {
 		return this;
 	}
 	//
-	@Override
-	public final UniformDataSource getDataSource() {
-		return reqConf.getDataSource();
-	}
-	//
 	@Override @SuppressWarnings("unchecked")
 	public final LoadBuilder<T>clone() {
 		final WSLoadBuilder lb = new WSLoadBuilder();

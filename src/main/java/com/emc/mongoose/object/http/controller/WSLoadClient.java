@@ -3,8 +3,8 @@ package com.emc.mongoose.object.http.controller;
 import com.emc.mongoose.Producer;
 import com.emc.mongoose.api.RequestConfig;
 import com.emc.mongoose.conf.RunTimeConfig;
-import com.emc.mongoose.data.UniformDataSource;
 import com.emc.mongoose.data.persist.LogConsumer;
+import com.emc.mongoose.logging.ExceptionHandler;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.Consumer;
 import com.emc.mongoose.LoadExecutor;
@@ -17,6 +17,7 @@ import com.codahale.metrics.MetricRegistry;
 //
 import com.emc.mongoose.remote.ServiceUtils;
 import com.emc.mongoose.threading.RejectedTaskHandler;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
@@ -122,7 +123,7 @@ implements LoadExecutor<WSObject> {
 	public WSLoadClient(
 		final Map<String, LoadService<WSObject>> remoteLoadMap,
 		final Map<String, JMXConnector> remoteJMXConnMap,
-		final long maxCount, final UniformDataSource dataSrc, final int driverThreadCount
+		final long maxCount, final int driverThreadCount
 	) {
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
@@ -143,16 +144,10 @@ implements LoadExecutor<WSObject> {
 			try {
 				mBeanSrvConnMap.put(addr, remoteJMXConnMap.get(addr).getMBeanServerConnection());
 			} catch(final IOException e) {
-				LOG.error(
-					Markers.ERR, "Failed to obtain MBean server connection for {} due to {}",
-					addr, e.toString()
+				ExceptionHandler.trace(
+					LOG, Level.ERROR, e,
+					String.format("Failed to obtain MBean server connection for %s", addr)
 				);
-				if(LOG.isTraceEnabled()) {
-					final Throwable cause = e.getCause();
-					if(cause!=null) {
-						LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-					}
-				}
 			}
 		}
 		////////////////////////////////////////////////////////////////////////////////////////////
@@ -214,13 +209,7 @@ implements LoadExecutor<WSObject> {
 							x *= y;
 							y = mgmtConnExecutor.submit(countBytesGetter).get();
 						} catch(final ExecutionException e) {
-							LOG.debug(Markers.ERR, "Metric value fetching failure: {}", e.toString());
-							if(LOG.isTraceEnabled()) {
-								final Throwable cause = e.getCause();
-								if(cause!=null) {
-									LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-								}
-							}
+							ExceptionHandler.trace(LOG, Level.DEBUG, e, "Metric value fetching failed");
 						} catch(final InterruptedException e) {
 							LOG.debug(Markers.ERR, "Interrupted during metric value fetching");
 						}
@@ -242,13 +231,7 @@ implements LoadExecutor<WSObject> {
 							x *= y;
 							y = mgmtConnExecutor.submit(countBytesGetter).get();
 						} catch(final ExecutionException e) {
-							LOG.debug(Markers.ERR, "Metric value fetching failure: {}", e.toString());
-							if(LOG.isTraceEnabled()) {
-								final Throwable cause = e.getCause();
-								if(cause!=null) {
-									LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-								}
-							}
+							ExceptionHandler.trace(LOG, Level.DEBUG, e, "Metric value fetching failed");
 						} catch(final InterruptedException e) {
 							LOG.debug(Markers.ERR, "Interrupted during metric value fetching");
 						}
@@ -270,13 +253,7 @@ implements LoadExecutor<WSObject> {
 							x *= y;
 							y = mgmtConnExecutor.submit(countBytesGetter).get();
 						} catch(final ExecutionException e) {
-							LOG.debug(Markers.ERR, "Metric value fetching failure: {}", e.toString());
-							if(LOG.isTraceEnabled()) {
-								final Throwable cause = e.getCause();
-								if(cause!=null) {
-									LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-								}
-							}
+							ExceptionHandler.trace(LOG, Level.DEBUG, e, "Metric value fetching failed");
 						} catch(final InterruptedException e) {
 							LOG.debug(Markers.ERR, "Interrupted during metric value fetching");
 						}
@@ -298,13 +275,7 @@ implements LoadExecutor<WSObject> {
 							x *= y;
 							y = mgmtConnExecutor.submit(countBytesGetter).get();
 						} catch(final ExecutionException e) {
-							LOG.debug(Markers.ERR, "Metric value fetching failure: {}", e.toString());
-							if(LOG.isTraceEnabled()) {
-								final Throwable cause = e.getCause();
-								if(cause!=null) {
-									LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-								}
-							}
+							ExceptionHandler.trace(LOG, Level.DEBUG, e, "Metric value fetching failed");
 						} catch(final InterruptedException e) {
 							LOG.debug(Markers.ERR, "Interrupted during metric value fetching");
 						}
@@ -328,7 +299,7 @@ implements LoadExecutor<WSObject> {
 			)
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
-		metaInfoLog = new LogConsumer<>(dataSrc);
+		metaInfoLog = new LogConsumer<>();
 		////////////////////////////////////////////////////////////////////////////////////////////
 		int threadCount = driverThreadCount*remoteLoadMap.size();
 		submitExecutor = new ThreadPoolExecutor(
@@ -384,16 +355,13 @@ implements LoadExecutor<WSObject> {
 									attrName, objectName.getCanonicalName(), addr
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
-								LOG.warn(
-									Markers.ERR, "Failed to fetch the value for \"{}\" from {}",
-									objectName.getCanonicalName()+"."+attrName, addr
+								ExceptionHandler.trace(
+									LOG, Level.WARN, e,
+									String.format(
+										"Value fetching failed for metric \"%s\" from %s",
+										objectName.getCanonicalName()+"."+attrName, addr
+									)
 								);
-								if(LOG.isTraceEnabled()) {
-									final Throwable cause = e.getCause();
-									if(cause!=null) {
-										LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-									}
-								}
 							}
 						}
 					}
@@ -445,16 +413,13 @@ implements LoadExecutor<WSObject> {
 									attrName, objectName.getCanonicalName(), addr
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
-								LOG.warn(
-									Markers.ERR, "Failed to fetch the value for \"{}\" from {}",
-									objectName.getCanonicalName()+"."+attrName, addr
+								ExceptionHandler.trace(
+									LOG, Level.WARN, e,
+									String.format(
+										"Value fetching failed for metric \"%s\" from %s",
+										objectName.getCanonicalName()+"."+attrName, addr
+									)
 								);
-								if(LOG.isTraceEnabled()) {
-									final Throwable cause = e.getCause();
-									if(cause!=null) {
-										LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-									}
-								}
 							}
 						}
 					}
@@ -506,16 +471,13 @@ implements LoadExecutor<WSObject> {
 									attrName, objectName.getCanonicalName(), addr
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
-								LOG.warn(
-									Markers.ERR, "Failed to fetch the value for \"{}\" from {}",
-									objectName.getCanonicalName()+"."+attrName, addr
+								ExceptionHandler.trace(
+									LOG, Level.WARN, e,
+									String.format(
+										"Value fetching failed for metric \"%s\" from %s",
+										objectName.getCanonicalName()+"."+attrName, addr
+									)
 								);
-								if(LOG.isTraceEnabled()) {
-									final Throwable cause = e.getCause();
-									if(cause!=null) {
-										LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-									}
-								}
 							}
 						}
 					}
@@ -564,16 +526,13 @@ implements LoadExecutor<WSObject> {
 									attrName, objectName.getCanonicalName(), addr
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
-								LOG.warn(
-									Markers.ERR, "Failed to fetch the value for \"{}\" from {}",
-									objectName.getCanonicalName()+"."+attrName, addr
+								ExceptionHandler.trace(
+									LOG, Level.WARN, e,
+									String.format(
+										"Value fetching failed for metric \"%s\" from %s",
+										objectName.getCanonicalName()+"."+attrName, addr
+									)
 								);
-								if(LOG.isTraceEnabled()) {
-									final Throwable cause = e.getCause();
-									if(cause!=null) {
-										LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-									}
-								}
 							}
 						}
 					}
@@ -622,16 +581,13 @@ implements LoadExecutor<WSObject> {
 									attrName, objectName.getCanonicalName(), addr
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
-								LOG.warn(
-									Markers.ERR, "Failed to fetch the value for \"{}\" from {}",
-									objectName.getCanonicalName()+"."+attrName, addr
+								ExceptionHandler.trace(
+									LOG, Level.WARN, e,
+									String.format(
+										"Failed to fetch the value for \"{}\" from {}",
+										objectName.getCanonicalName()+"."+attrName, addr
+									)
 								);
-								if(LOG.isTraceEnabled()) {
-									final Throwable cause = e.getCause();
-									if(cause!=null) {
-										LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-									}
-								}
 							}
 						}
 					}
@@ -668,13 +624,7 @@ implements LoadExecutor<WSObject> {
 			try {
 				nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
 			} catch(final ExecutionException e) {
-				LOG.warn(Markers.ERR, "Failed to fetch the metainfo frame due to: {}", e.toString());
-				if(LOG.isTraceEnabled()) {
-					final Throwable cause = e.getCause();
-					if(cause!=null) {
-						LOG.trace(Markers.ERR, "Cause: {}", cause.getCause());
-					}
-				}
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
 			} catch(final InterruptedException e) {
 				LOG.debug(Markers.ERR, "Interrupted while fetching the metainfo frame");
 			}
@@ -741,13 +691,7 @@ implements LoadExecutor<WSObject> {
 				)
 			);
 		} catch(final ExecutionException e) {
-			LOG.warn(Markers.ERR, "Failed to fetch the metrics due to {}", e.toString());
-			if(LOG.isTraceEnabled()) {
-				final Throwable cause = e.getCause();
-				if(cause!=null) {
-					LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-				}
-			}
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metrics");
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.ERR, "Interrupted while fetching the metric");
 		}
@@ -805,13 +749,7 @@ implements LoadExecutor<WSObject> {
 				}
 			} while(countDone < maxCount);
 		} catch(final ExecutionException e) {
-			LOG.debug(Markers.ERR, "Failure: {}", e.toString());
-			if(LOG.isTraceEnabled()) {
-				final Throwable cause = e.getCause();
-				if(cause!=null) {
-					LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-				}
-			}
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failure");
 		}
 		//
 		interrupt();

@@ -2,7 +2,6 @@ package com.emc.mongoose.data.persist;
 //
 import com.emc.mongoose.Consumer;
 import com.emc.mongoose.data.UniformData;
-import com.emc.mongoose.data.UniformDataSource;
 import com.emc.mongoose.logging.Markers;
 //
 import org.apache.http.annotation.ThreadSafe;
@@ -19,10 +18,6 @@ implements Consumer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private long maxCount = Long.MAX_VALUE, count = 0;
-	//
-	public LogConsumer(final UniformDataSource dataSrc) {
-		LOG.info(Markers.DATA_LIST, dataSrc.toString()); // header w/ data ring meta info
-	}
 	//
 	@Override
 	public final long getMaxCount() {
@@ -45,7 +40,7 @@ implements Consumer<T> {
 	@Override
 	public final void close()
 	throws IOException {
-		LOG.debug(Markers.MSG, "invoking close() here does nothing");
+		LOG.trace(Markers.MSG, "invoking close() here does nothing");
 	}
 	//
 	@Override

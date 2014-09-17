@@ -11,6 +11,7 @@ import com.emc.mongoose.LoadExecutor;
 import com.emc.mongoose.Producer;
 import com.emc.mongoose.api.Request;
 import com.emc.mongoose.api.RequestConfig;
+import com.emc.mongoose.logging.ExceptionHandler;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.object.http.data.WSObject;
 import com.emc.mongoose.object.http.api.WSRequest;
@@ -64,7 +65,8 @@ implements LoadExecutor<WSObject> {
 		super(
 			threadsPerNode, threadsPerNode, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(threadsPerNode * REQ_QUEUE_FACTOR),
-			new WorkerFactory(parentName+'<'+localReqConf.getAddr()+'>')
+			new WorkerFactory(parentName+'<'+localReqConf.getAddr()+'>'),
+			new RejectedTaskHandler()
 		);
 		this.localReqConf = localReqConf;
 		//
@@ -123,36 +125,17 @@ implements LoadExecutor<WSObject> {
 	//
 	@Override
 	public final void submit(final WSObject object) {
-		//
-		Request<WSObject> request = WSRequest.getInstanceFor(localReqConf, object);
-		//
-		boolean passed = false;
-		int rejectCount = 0;
-		while(!passed) {
-			try {
-				super.submit(request);
-				passed = true;
-			} catch(final RejectedExecutionException e) {
-				rejectCount++;
-				try {
-					Thread.sleep(rejectCount*RejectedTaskHandler.WAIT_QUANT_MILLISECS);
-				} catch(final InterruptedException ee) {
-					break;
-				}
-			}
-		}
-		//
+		super.submit(WSRequest.getInstanceFor(localReqConf, object));
 		if(object!=null) {
 			counterSubm.inc();
 			counterSubmParent.inc();
-			if(LOG.isTraceEnabled()) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Request for the object {} succesfully submitted",
 					Long.toHexString(object.getId())
 				);
 			}
 		}
-		//
 	}
 	//
 	@Override
@@ -181,16 +164,10 @@ implements LoadExecutor<WSObject> {
 						try {
 							consumer.submit(object);
 						} catch(final IOException e) {
-							LOG.warn(
-								Markers.ERR, "Failed to submit the object {} to consumer: {}",
-								Long.toHexString(object.getId()), e.toString()
+							ExceptionHandler.trace(
+								LOG, Level.WARN, e,
+								String.format("Failed to submit the object \"%s\" to consumer", object)
 							);
-							if(LOG.isTraceEnabled()) {
-								final Throwable cause = e.getCause();
-								if(cause!=null) {
-									LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-								}
-							}
 						}
 					}
 				} else {
@@ -253,7 +230,7 @@ implements LoadExecutor<WSObject> {
 							LOG.warn(Markers.ERR, "HTTP response marked as failed");
 						} else {
 							LOG.error(Markers.ERR, "Request execution failure");
-							if(LOG.isTraceEnabled() && cause!=null) {
+							if(LOG.isTraceEnabled(Markers.ERR) && cause!=null) {
 								LOG.trace(Markers.ERR, e.toString(), cause);
 							}
 						}
@@ -305,7 +282,7 @@ implements LoadExecutor<WSObject> {
 				}
 			)
 		);
-		if(LOG.isTraceEnabled()) {
+		if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
 			LOG.trace(
 				Markers.PERF_AVG,
 				"{} internal metrics: shutdown: {}, terminated: {}, tasks: {} running, {} done, {} waiting",

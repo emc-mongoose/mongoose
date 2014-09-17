@@ -10,9 +10,6 @@ import java.util.List;
  */
 public interface RecordFrameBuffer<T extends UniformData> {
 	//
-	UniformDataSource getDataSource()
-	throws RemoteException;
-	//
 	List<T> takeFrame()
 	throws RemoteException;
 	//

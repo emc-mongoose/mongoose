@@ -135,7 +135,7 @@ extends UniformData {
 		for(int i=0; i<countRangesTotal; i++) {
 			rangeOffset = i * rangeSize;
 			if(maskRangesHistory.get(i)) { // range have been modified
-				if(LOG.isTraceEnabled()) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "Range #{} [{}-{}] was modified",
 						i, rangeOffset, rangeOffset + rangeSize - 1
@@ -175,7 +175,7 @@ extends UniformData {
 			nextCellPos = i % countRangesTotal;
 			if(!maskRangesHistory.get(nextCellPos) && !maskRangesPending.get(nextCellPos)) {
 				maskRangesPending.set(nextCellPos);
-				if(LOG.isTraceEnabled()) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "Update cell at position: {}, offset: {}, new mask: {}",
 						nextCellPos, nextCellPos * rangeSize,
@@ -235,7 +235,7 @@ extends UniformData {
 	}*/
 	//
 	public final synchronized void movePendingUpdatesToHistory() {
-		if(LOG.isTraceEnabled()) {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
 				Markers.MSG, "Move pending ranges \"{}\" to history \"{}\"",
 				Hex.encodeHexString(maskRangesPending.toByteArray()),

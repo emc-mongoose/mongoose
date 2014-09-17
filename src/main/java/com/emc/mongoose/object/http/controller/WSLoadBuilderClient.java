@@ -41,7 +41,6 @@ implements LoadBuilder {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private FileProducer<WSObject> srcProducer = null;
-	private UniformDataSource dataSrc = UniformDataSource.DATA_SRC_CREATE;
 	//
 	@SuppressWarnings("unchecked")
 	private LoadBuilderService<LoadService<WSObject>> resolve(final String driverAddr)
@@ -115,7 +114,6 @@ implements LoadBuilder {
 			nextBuilder = get(addr);
 			nextBuilder.setRequestConfig(wsReqConf);
 		}
-		this.dataSrc = reqConf.getDataSource();
 		return this;
 	}
 	//
@@ -228,11 +226,6 @@ implements LoadBuilder {
 		return values().iterator().next().getMaxCount();
 	}
 	//
-	@Override
-	public final UniformDataSource getDataSource() {
-		return dataSrc;
-	}
-	//
 	@Override  @SuppressWarnings("unchecked")
 	public final WSLoadClient build()
 	throws URISyntaxException, RemoteException {
@@ -285,7 +278,7 @@ implements LoadBuilder {
 		}
 		//
 		newLoadClient = new WSLoadClient(
-			remoteLoadMap, remoteJMXConnMap, RunTimeConfig.getLong("data.count"), dataSrc,
+			remoteLoadMap, remoteJMXConnMap, RunTimeConfig.getLong("data.count"),
 			nextLoad==null? 1 : nextLoad.getThreadCount()
 		);
 		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());

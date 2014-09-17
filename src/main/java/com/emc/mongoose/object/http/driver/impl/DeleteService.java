@@ -34,7 +34,7 @@ implements LoadService<WSObject> {
 	) {
 		super(addrs, reqConf, maxCount, threadsPerNode, null);
 		// by default, may be overriden later externally:
-		super.setConsumer(new FrameBuffConsumer<WSObject>(reqConf.getDataSource()));
+		super.setConsumer(new FrameBuffConsumer<WSObject>());
 	}
 	//
 	@Override

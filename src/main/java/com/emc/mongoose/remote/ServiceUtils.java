@@ -1,9 +1,11 @@
 package com.emc.mongoose.remote;
 //
 import com.emc.mongoose.conf.RunTimeConfig;
+import com.emc.mongoose.logging.ExceptionHandler;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.run.Main;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -135,13 +137,7 @@ public final class ServiceUtils {
 		} catch(final NotBoundException e) {
 			LOG.error(Markers.ERR, "No service bound with url \"{}\"", url);
 		} catch(final RemoteException e) {
-			LOG.error(Markers.ERR, "Looks like network failure", e.toString());
-			if(LOG.isTraceEnabled()) {
-				final Throwable cause = e.getCause();
-				if(cause!=null) {
-					LOG.trace(Markers.ERR, cause.toString(), cause.getCause());
-				}
-			}
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
 		}
 		return remoteSvc;
 	}

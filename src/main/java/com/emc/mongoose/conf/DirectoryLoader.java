@@ -1,11 +1,13 @@
 package com.emc.mongoose.conf;
 //
+import com.emc.mongoose.logging.ExceptionHandler;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.logging.Markers;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.text.StrBuilder;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -61,15 +63,10 @@ extends SimpleFileVisitor<Path> {
 			currProps = new PropertiesConfiguration(file.toFile());
 			LOG.trace(Markers.MSG, "Loaded the properties {} from file {}", currProps, file);
 		} catch(final ConfigurationException e) {
-			LOG.error(
-				Markers.ERR, "Failed to load properties from file \"{}\": {}", file, e.toString()
+			ExceptionHandler.trace(
+				LOG, Level.ERROR, e,
+				String.format("Failed to load the properties from file \"%s\"", file.toString())
 			);
-			if(LOG.isDebugEnabled()) {
-				final Throwable cause = e.getCause();
-				if(cause!=null) {
-					LOG.debug(Markers.ERR, cause.toString(), cause.getCause());
-				}
-			}
 		}
 		// set the properties
 		if(currProps!=null) {
