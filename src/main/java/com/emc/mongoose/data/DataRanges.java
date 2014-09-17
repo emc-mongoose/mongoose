@@ -122,7 +122,7 @@ extends UniformData {
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		initRanges();
+		super.readExternal(in);
 		maskRangesHistory.or(BitSet.class.cast(in.readObject()));
 		maskRangesPending.or(BitSet.class.cast(in.readObject()));
 	}

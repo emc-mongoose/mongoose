@@ -5,7 +5,6 @@ import com.emc.mongoose.LoadBuilder;
 import com.emc.mongoose.api.Request;
 import com.emc.mongoose.api.RequestConfig;
 import com.emc.mongoose.conf.RunTimeConfig;
-import com.emc.mongoose.data.UniformDataSource;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.object.http.data.WSObject;
 import com.emc.mongoose.object.http.api.WSRequestConfig;

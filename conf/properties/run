@@ -5,6 +5,9 @@ version:						0.1.4
 # may be "standalone", "driver" or "controller"
 mode:							standalone
 
+# pattern: <integer>.<TimeUnit-case-insensitive-constant>
+time:							1000.days
+
 #
 scenario.dir:					scripts
 
@@ -14,11 +17,14 @@ scenario.lang:					py
 # name of the scenario to launch w/o path and filename extension
 scenario.name:					single
 
-# pattern: <integer>.<TimeUnit-case-insensitive-constant>
-time:							1000.days
-
 #
 metrics.period.sec:				10
+
+#
+wait.quant.millisec:				100
+
+#
+retry.count.max:					250
 
 #
 request.retries:				true

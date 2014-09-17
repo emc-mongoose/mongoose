@@ -2,13 +2,13 @@ from __future__ import print_function, absolute_import, with_statement
 from sys import exit
 from loadbuilder import INSTANCE as loadBuilder
 #
-from org.apache.logging.log4j import LogManager
+from org.apache.logging.log4j import Level, LogManager
 #
 from com.emc.mongoose.api import Request
 from com.emc.mongoose.conf import RunTimeConfig
-from com.emc.mongoose.logging import Markers
+from com.emc.mongoose.logging import ExceptionHandler, Markers
 #
-from java.lang import IllegalArgumentException
+from java.lang import Throwable, IllegalArgumentException
 from java.util import NoSuchElementException
 #
 LOG = LogManager.getLogger()
@@ -34,6 +34,8 @@ for loadTypeStr in loadTypes:
 		prevLoad = load
 	except IllegalArgumentException:
 		LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)
+	except Throwable as e:
+		ExceptionHandler.trace(LOG, Level.FATAL, e, "Failure")
 #
 from java.lang import Integer
 from java.util.concurrent import TimeUnit

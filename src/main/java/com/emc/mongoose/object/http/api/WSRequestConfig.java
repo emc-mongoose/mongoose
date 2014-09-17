@@ -319,19 +319,30 @@ extends RequestConfig<WSObject> {
 			httpReqWithPayLoad.setEntity(httpEntity);
 		}
 	}
-	//
+	// merge subsequent updated ranges functionality is here
 	protected final void applyRangesHeaders(final HttpRequestBase httpRequest, final WSObject dataItem) {
-		long nextRangeOffset;
+		long rangeBeg = -1, rangeEnd = -1;
+		int rangeLen = dataItem.getRangeSize(), rangeCount = dataItem.getCountRangesTotal();
 		for(int i=0; i<dataItem.getCountRangesTotal(); i++) {
 			if(dataItem.isRangeUpdatePending(i)) {
-				nextRangeOffset = i * dataItem.getRangeSize();
+				if(rangeBeg < 0) { // begin of the possible updated ranges sequence
+					rangeBeg = i * rangeLen;
+					rangeEnd = rangeBeg + rangeLen - 1;
+				} else if(rangeEnd > 0) { // next range in the sequence of updated ranges
+					rangeEnd += rangeLen;
+				}
+				if(i == rangeCount - 1) { // this is the last range which is updated also
+					httpRequest.addHeader(
+						HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
+					);
+				}
+			} else if(rangeEnd > 0) { // end of the updated ranges sequence
 				httpRequest.addHeader(
-					HttpHeaders.RANGE,
-					String.format(
-						MSG_TMPL_RANGE_BYTES,
-						nextRangeOffset, nextRangeOffset + dataItem.getRangeSize() - 1
-					)
+					HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
 				);
+				// drop the updated ranges sequence info
+				rangeBeg = -1;
+				rangeEnd = -1;
 			}
 		}
 	}

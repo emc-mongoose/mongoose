@@ -9,14 +9,12 @@ import com.codahale.metrics.Snapshot;
 import com.emc.mongoose.Consumer;
 import com.emc.mongoose.LoadExecutor;
 import com.emc.mongoose.Producer;
-import com.emc.mongoose.api.Request;
 import com.emc.mongoose.api.RequestConfig;
 import com.emc.mongoose.logging.ExceptionHandler;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.object.http.data.WSObject;
 import com.emc.mongoose.object.http.api.WSRequest;
 import com.emc.mongoose.object.http.api.WSRequestConfig;
-import com.emc.mongoose.threading.RejectedTaskHandler;
 import com.emc.mongoose.threading.WorkerFactory;
 //
 import org.apache.http.NoHttpResponseException;
@@ -65,8 +63,7 @@ implements LoadExecutor<WSObject> {
 		super(
 			threadsPerNode, threadsPerNode, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(threadsPerNode * REQ_QUEUE_FACTOR),
-			new WorkerFactory(parentName+'<'+localReqConf.getAddr()+'>'),
-			new RejectedTaskHandler()
+			new WorkerFactory(parentName+'<'+localReqConf.getAddr()+'>')
 		);
 		this.localReqConf = localReqConf;
 		//
@@ -125,7 +122,23 @@ implements LoadExecutor<WSObject> {
 	//
 	@Override
 	public final void submit(final WSObject object) {
-		super.submit(WSRequest.getInstanceFor(localReqConf, object));
+		final WSRequest request = WSRequest.getInstanceFor(localReqConf, object);
+		boolean passed = false;
+		int rejectCount = 0;
+		while(!passed && rejectCount < LoadExecutor.COUNT_RETRY_MAX) {
+			try {
+				super.submit(request);
+				passed = true;
+			} catch(final RejectedExecutionException e) {
+				rejectCount ++;
+				try {
+					Thread.sleep(rejectCount * LoadExecutor.WAIT_QUANT_MILLISEC);
+				} catch(final InterruptedException ee) {
+					break;
+				}
+			}
+		}
+		//
 		if(object!=null) {
 			counterSubm.inc();
 			counterSubmParent.inc();
@@ -236,9 +249,10 @@ implements LoadExecutor<WSObject> {
 						}
 					}
 				}
-			} catch(final ClassCastException e) {
+			} catch(final Exception e) {
 				counterReqFail.inc(); counterReqFailParent.inc();
-				LOG.error(Markers.ERR, "Unexpected exception:", e);
+				LOG.warn(Markers.MSG, reqTask.getClass().getCanonicalName());
+				ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		}
 		//

@@ -56,6 +56,10 @@
 								"type": "BurstFilter",
 								"rate": 10,
 								"maxBurst": 100
+							}, {
+								"type": "ThresholdFilter",
+								"level": "DEBUG",
+								"onMatch": "Accept"
 							}
 						]
 					}
@@ -243,7 +247,7 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.object.http.api",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"

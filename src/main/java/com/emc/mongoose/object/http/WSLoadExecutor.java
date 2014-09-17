@@ -22,7 +22,6 @@ import com.emc.mongoose.object.http.data.WSObject;
 import com.emc.mongoose.object.http.api.WSRequestConfig;
 //
 import com.emc.mongoose.remote.ServiceUtils;
-import com.emc.mongoose.threading.RejectedTaskHandler;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.config.ConnectionConfig;
@@ -40,6 +39,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 //
@@ -143,8 +143,7 @@ implements LoadExecutor<WSObject> {
 		int submitThreadCount = threadsPerNode * addrs.length;
 		submitExecutor = new ThreadPoolExecutor(
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(submitThreadCount*REQ_QUEUE_FACTOR),
-			new RejectedTaskHandler()
+			new LinkedBlockingQueue<Runnable>(submitThreadCount * REQ_QUEUE_FACTOR)
 		);
 		WSNodeExecutor nodeExecutor;
 		for(short i=0; i<addrs.length; i++) {
@@ -280,6 +279,27 @@ implements LoadExecutor<WSObject> {
 		//
 		LOG.debug(Markers.MSG, "Closed {}", getName());
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final static class SubmitTask
+	implements Runnable {
+		//
+		private final WSNodeExecutor[] nodes;
+		private final Counter counterSubm;
+		private final WSObject dataItem;
+		//
+		private SubmitTask(
+			final WSNodeExecutor[] nodes, final Counter counterSubm, final WSObject dataItem
+		) {
+			this.nodes = nodes;
+			this.counterSubm = counterSubm;
+			this.dataItem = dataItem;
+		}
+		//
+		@Override
+		public final void run() {
+			nodes[(int) counterSubm.getCount() % nodes.length].submit(dataItem);
+		}
+	}
 	//
 	@Override
 	public void submit(final WSObject object) {
@@ -291,17 +311,25 @@ implements LoadExecutor<WSObject> {
 				}
 			}
 		} else if(!isInterrupted()) {
-			submitExecutor.submit(
-				new Runnable() {
-					@Override
-					public final void run() {
-						nodes[(int) counterSubm.getCount() % nodes.length].submit(object);
+			final SubmitTask submitTask = new SubmitTask(nodes, counterSubm, object);
+			boolean passed = false;
+			int rejectCount = 0;
+			while(!passed && rejectCount < LoadExecutor.COUNT_RETRY_MAX) {
+				try {
+					submitExecutor.submit(submitTask);
+					passed = true;
+				} catch(final RejectedExecutionException e) {
+					rejectCount ++;
+					try {
+						Thread.sleep(rejectCount * LoadExecutor.WAIT_QUANT_MILLISEC);
+					} catch(final InterruptedException ee) {
+						break;
 					}
 				}
-			);
+			}
 		}
 	}
-	//
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	private void logMetrics(final Marker logMarker) {
 		//
 		final long

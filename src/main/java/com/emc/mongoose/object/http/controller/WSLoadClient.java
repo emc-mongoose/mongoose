@@ -16,7 +16,6 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 //
 import com.emc.mongoose.remote.ServiceUtils;
-import com.emc.mongoose.threading.RejectedTaskHandler;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,6 +43,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
@@ -208,10 +208,10 @@ implements LoadExecutor<WSObject> {
 							y = mgmtConnExecutor.submit(countSuccGetter).get();
 							x *= y;
 							y = mgmtConnExecutor.submit(countBytesGetter).get();
-						} catch(final ExecutionException e) {
-							ExceptionHandler.trace(LOG, Level.DEBUG, e, "Metric value fetching failed");
-						} catch(final InterruptedException e) {
-							LOG.debug(Markers.ERR, "Interrupted during metric value fetching");
+						} catch(final InterruptedException|RejectedExecutionException|ExecutionException e) {
+							ExceptionHandler.trace(
+								LOG, Level.DEBUG, e, "Metric value fetching failed"
+							);
 						}
 						return y==0 ? 0 : x / y;
 					}
@@ -230,10 +230,10 @@ implements LoadExecutor<WSObject> {
 							y = mgmtConnExecutor.submit(countSuccGetter).get();
 							x *= y;
 							y = mgmtConnExecutor.submit(countBytesGetter).get();
-						} catch(final ExecutionException e) {
-							ExceptionHandler.trace(LOG, Level.DEBUG, e, "Metric value fetching failed");
-						} catch(final InterruptedException e) {
-							LOG.debug(Markers.ERR, "Interrupted during metric value fetching");
+						} catch(final InterruptedException|RejectedExecutionException|ExecutionException e) {
+							ExceptionHandler.trace(
+								LOG, Level.DEBUG, e, "Metric value fetching failed"
+							);
 						}
 						return y==0 ? 0 : x / y;
 					}
@@ -252,10 +252,10 @@ implements LoadExecutor<WSObject> {
 							y = mgmtConnExecutor.submit(countSuccGetter).get();
 							x *= y;
 							y = mgmtConnExecutor.submit(countBytesGetter).get();
-						} catch(final ExecutionException e) {
-							ExceptionHandler.trace(LOG, Level.DEBUG, e, "Metric value fetching failed");
-						} catch(final InterruptedException e) {
-							LOG.debug(Markers.ERR, "Interrupted during metric value fetching");
+						} catch(final InterruptedException|RejectedExecutionException|ExecutionException e) {
+							ExceptionHandler.trace(
+								LOG, Level.DEBUG, e, "Metric value fetching failed"
+							);
 						}
 						return y==0 ? 0 : x / y;
 					}
@@ -274,10 +274,10 @@ implements LoadExecutor<WSObject> {
 							y = mgmtConnExecutor.submit(countSuccGetter).get();
 							x *= y;
 							y = mgmtConnExecutor.submit(countBytesGetter).get();
-						} catch(final ExecutionException e) {
-							ExceptionHandler.trace(LOG, Level.DEBUG, e, "Metric value fetching failed");
-						} catch(final InterruptedException e) {
-							LOG.debug(Markers.ERR, "Interrupted during metric value fetching");
+						} catch(final InterruptedException|RejectedExecutionException|ExecutionException e) {
+							ExceptionHandler.trace(
+								LOG, Level.DEBUG, e, "Metric value fetching failed"
+							);
 						}
 						return y==0 ? 0 : x / y;
 					}
@@ -304,15 +304,13 @@ implements LoadExecutor<WSObject> {
 		int threadCount = driverThreadCount*remoteLoadMap.size();
 		submitExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(threadCount*REQ_QUEUE_FACTOR),
-			new RejectedTaskHandler()
+			new LinkedBlockingQueue<Runnable>(threadCount*REQ_QUEUE_FACTOR)
 		);
 		//
 		threadCount = remoteLoadMap.size()*20; // metric count is 18
 		mgmtConnExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(threadCount*REQ_QUEUE_FACTOR),
-			new RejectedTaskHandler()
+			new LinkedBlockingQueue<Runnable>(threadCount*REQ_QUEUE_FACTOR)
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricsReporter.start();
@@ -359,7 +357,7 @@ implements LoadExecutor<WSObject> {
 									LOG, Level.WARN, e,
 									String.format(
 										"Value fetching failed for metric \"%s\" from %s",
-										objectName.getCanonicalName()+"."+attrName, addr
+										objectName.getCanonicalName() + "." + attrName, addr
 									)
 								);
 							}
@@ -417,7 +415,7 @@ implements LoadExecutor<WSObject> {
 									LOG, Level.WARN, e,
 									String.format(
 										"Value fetching failed for metric \"%s\" from %s",
-										objectName.getCanonicalName()+"."+attrName, addr
+										objectName.getCanonicalName() + "." + attrName, addr
 									)
 								);
 							}
@@ -530,7 +528,7 @@ implements LoadExecutor<WSObject> {
 									LOG, Level.WARN, e,
 									String.format(
 										"Value fetching failed for metric \"%s\" from %s",
-										objectName.getCanonicalName()+"."+attrName, addr
+										objectName.getCanonicalName() + "." + attrName, addr
 									)
 								);
 							}
@@ -604,18 +602,21 @@ implements LoadExecutor<WSObject> {
 		);
 		//
 		for(final LoadService<WSObject> nextLoadSvc: remoteLoadMap.values()) {
-			nextMetaInfoFrameFutures.add(
-				mgmtConnExecutor.submit(
-					new Callable<List<WSObject>>() {
-						@Override
-						public final
-						List<WSObject> call()
+			try {
+				nextMetaInfoFrameFutures.add(
+					mgmtConnExecutor.submit(
+						new Callable<List<WSObject>>() {
+							@Override
+							public final List<WSObject> call()
 							throws Exception {
-							return nextLoadSvc.takeFrame();
+								return nextLoadSvc.takeFrame();
+							}
 						}
-					}
-				)
-			);
+					)
+				);
+			} catch(final RejectedExecutionException e) {
+				ExceptionHandler.trace(LOG, Level.DEBUG, e, "");
+			}
 		}
 		//
 		List<WSObject> nextMetaInfoFrame = null;
@@ -623,10 +624,8 @@ implements LoadExecutor<WSObject> {
 			//
 			try {
 				nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
-			} catch(final ExecutionException e) {
+			} catch(final InterruptedException|ExecutionException e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
-			} catch(final InterruptedException e) {
-				LOG.debug(Markers.ERR, "Interrupted while fetching the metainfo frame");
 			}
 			//
 			if(nextMetaInfoFrame!=null && nextMetaInfoFrame.size()>0) {
@@ -648,25 +647,28 @@ implements LoadExecutor<WSObject> {
 	//
 	private void logMetrics(final Marker logMarker) {
 		//
-		countSubm = mgmtConnExecutor.submit(countSubmGetter);
-		//countRej = mgmtConnExecutor.submit(countRejGetter);
-		countReqSucc = mgmtConnExecutor.submit(countSuccGetter);
-		countReqFail = mgmtConnExecutor.submit(countFailGetter);
-		//countNanoSec = mgmtConnExecutor.submit(countNanoSecGetter);
-		//countBytes = mgmtConnExecutor.submit(countBytesGetter);
-		minDur = mgmtConnExecutor.submit(minDurGetter);
-		maxDur = mgmtConnExecutor.submit(maxDurGetter);
-		meanTP = mgmtConnExecutor.submit(meanTPGetter);
-		oneMinTP = mgmtConnExecutor.submit(oneMinTPGetter);
-		fiveMinTP = mgmtConnExecutor.submit(fiveMinTPGetter);
-		fifteenMinTP = mgmtConnExecutor.submit(fifteenMinTPGetter);
-		meanBW = mgmtConnExecutor.submit(meanBWGetter);
-		oneMinBW = mgmtConnExecutor.submit(oneMinBWGetter);
-		fiveMinBW = mgmtConnExecutor.submit(fiveMinBWGetter);
-		fifteenMinBW = mgmtConnExecutor.submit(fifteenMinBWGetter);
-		medDur = mgmtConnExecutor.submit(medDurGetter);
-		avgDur = mgmtConnExecutor.submit(avgDurGetter);
-		//
+		try {
+			countSubm = mgmtConnExecutor.submit(countSubmGetter);
+			//countRej = mgmtConnExecutor.submit(countRejGetter);
+			countReqSucc = mgmtConnExecutor.submit(countSuccGetter);
+			countReqFail = mgmtConnExecutor.submit(countFailGetter);
+			//countNanoSec = mgmtConnExecutor.submit(countNanoSecGetter);
+			//countBytes = mgmtConnExecutor.submit(countBytesGetter);
+			minDur = mgmtConnExecutor.submit(minDurGetter);
+			maxDur = mgmtConnExecutor.submit(maxDurGetter);
+			meanTP = mgmtConnExecutor.submit(meanTPGetter);
+			oneMinTP = mgmtConnExecutor.submit(oneMinTPGetter);
+			fiveMinTP = mgmtConnExecutor.submit(fiveMinTPGetter);
+			fifteenMinTP = mgmtConnExecutor.submit(fifteenMinTPGetter);
+			meanBW = mgmtConnExecutor.submit(meanBWGetter);
+			oneMinBW = mgmtConnExecutor.submit(oneMinBWGetter);
+			fiveMinBW = mgmtConnExecutor.submit(fiveMinBWGetter);
+			fifteenMinBW = mgmtConnExecutor.submit(fifteenMinBWGetter);
+			medDur = mgmtConnExecutor.submit(medDurGetter);
+			avgDur = mgmtConnExecutor.submit(avgDurGetter);
+		} catch(final RejectedExecutionException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Log remote metrics failed, skipping");
+		}
 		//
 		try {
 			LOG.info(
@@ -857,40 +859,65 @@ implements LoadExecutor<WSObject> {
 		remoteLoadMap.clear();
 		LOG.debug(Markers.MSG, "Closed {}", getName());
 	}
-	//
-	@Override
-	public final void submit(final WSObject data) {
-		submitExecutor.submit(
-			new Runnable() {
-				@Override
-				public final
-				void run() {
-					try {
-						if(maxCount > localSubmCount.get()) {
-							if(data==null) { // poison
-								LOG.trace(Markers.MSG, "Got poison, invoking the interruption");
-								maxCount = localSubmCount.get();
-							} else {
-								final Object addrs[] = remoteLoadMap.keySet().toArray();
-								final String addr = String.class.cast(
-									addrs[(int)localSubmCount.get()%addrs.length]
-								);
-								remoteLoadMap.get(addr).submit(data);
-								localSubmCount.incrementAndGet();
-							}
-						} else {
-							LOG.info(Markers.MSG, "All {} tasks submitted", maxCount);
-							maxCount = localSubmCount.get();
-							Thread.currentThread().interrupt(); // interrupt the producer
-						}
-					} catch(final RemoteException e) {
-						LOG.warn(Markers.ERR, "Failure", e);
-					}
-				}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final static class SubmitTask
+	implements Runnable {
+		//
+		private final LoadExecutor<WSObject> driver;
+		private final WSObject dataItem;
+		//
+		private SubmitTask(final LoadExecutor<WSObject> driver, final WSObject dataItem) {
+			this.driver = driver;
+			this.dataItem = dataItem;
+		}
+		//
+		@Override
+		public final void run() {
+			try {
+				driver.submit(dataItem);
+			} catch(final RemoteException e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Data item submitting failure");
 			}
-		);
+		}
 	}
 	//
+	@Override
+	public final void submit(final WSObject dataItem) {
+		if(maxCount > localSubmCount.get()) {
+			if(dataItem==null) { // poison
+				LOG.trace(Markers.MSG, "Got poison, invoking the interruption");
+				maxCount = localSubmCount.get();
+			} else {
+				final Object addrs[] = remoteLoadMap.keySet().toArray();
+				final String addr = String.class.cast(
+					addrs[(int) localSubmCount.get() % addrs.length]
+				);
+				final SubmitTask submitTask = new SubmitTask(remoteLoadMap.get(addr), dataItem);
+				boolean passed = false;
+				int rejectCount = 0;
+				while(!passed && rejectCount < LoadExecutor.COUNT_RETRY_MAX) {
+					try {
+						submitExecutor.submit(submitTask);
+						localSubmCount.incrementAndGet();
+						passed = true;
+					} catch(final RejectedExecutionException e) {
+						rejectCount ++;
+						try {
+							Thread.sleep(rejectCount * LoadExecutor.WAIT_QUANT_MILLISEC);
+						} catch(final InterruptedException ee) {
+							break;
+						}
+					}
+				}
+
+			}
+		} else {
+			LOG.info(Markers.MSG, "All {} tasks submitted", maxCount);
+			maxCount = localSubmCount.get();
+			Thread.currentThread().interrupt(); // interrupt the producer
+		}
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final long getMaxCount() {
 		return maxCount;
