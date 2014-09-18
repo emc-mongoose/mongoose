@@ -111,7 +111,7 @@ public final class Main {
 		if(runId==null || runId.length()==0) {
 			System.setProperty(
 				KEY_RUN_ID, new SimpleDateFormat(FMT_DT, Locale.ROOT).format(
-					Calendar.getInstance(TimeZone.getTimeZone("GMT")).getTime()
+					Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()
 				)
 			);
 		}

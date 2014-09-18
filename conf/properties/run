@@ -21,10 +21,10 @@ scenario.name:					single
 metrics.period.sec:				10
 
 #
-wait.quant.millisec:				100
+wait.quant.millisec:			100
 
 #
-retry.count.max:					250
+retry.count.max:				250
 
 #
 request.retries:				true
