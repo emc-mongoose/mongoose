@@ -27,7 +27,7 @@ implements Externalizable {
 	protected String addr, api, secret, userName;
 	protected int port;
 	protected Request.Type loadType;
-	protected UniformDataSource dataSrc = UniformDataSource.DATA_SRC_CREATE;
+	protected UniformDataSource dataSrc = UniformDataSource.DEFAULT;
 	protected volatile boolean retryFlag = RunTimeConfig.getBoolean("run.request.retries");
 	//
 	public final String getAPI() {

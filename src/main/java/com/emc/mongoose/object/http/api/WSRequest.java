@@ -4,6 +4,7 @@ import com.emc.mongoose.api.Request;
 import com.emc.mongoose.api.RequestConfig;
 import com.emc.mongoose.logging.ExceptionHandler;
 import com.emc.mongoose.logging.Markers;
+import com.emc.mongoose.object.http.api.provider.Atmos;
 import com.emc.mongoose.object.http.data.WSObject;
 import com.emc.mongoose.object.http.impl.Read;
 import com.emc.mongoose.pool.GenericInstancePool;
@@ -82,10 +83,19 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 		if(this.reqConf==null) { // request instance has not been configured yet?
 			this.reqConf = WSRequestConfig.class.cast(reqConf);
 			switch(reqConf.getLoadType()) {
-				case CREATE:	httpRequest = new HttpPut();	break;
-				case READ:		httpRequest = new HttpGet();	break;
-				case DELETE:	httpRequest = new HttpDelete();	break;
-				case UPDATE:	httpRequest = new HttpPut();	break;
+				case CREATE:
+					httpRequest = Atmos.class.getSimpleName().equals(reqConf.getAPI()) ?
+						new HttpPost() : new HttpPut();
+					break;
+				case READ:
+					httpRequest = new HttpGet();
+					break;
+				case DELETE:
+					httpRequest = new HttpDelete();
+					break;
+				case UPDATE:
+					httpRequest = new HttpPut();
+					break;
 			}
 		} else { // cleanup
 			httpRequest.removeHeaders(HttpHeaders.RANGE);

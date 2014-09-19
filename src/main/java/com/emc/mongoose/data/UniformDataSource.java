@@ -4,6 +4,7 @@ import com.emc.mongoose.LoadExecutor;
 import com.emc.mongoose.conf.RunTimeConfig;
 import com.emc.mongoose.logging.Markers;
 //
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.http.annotation.ThreadSafe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +27,7 @@ implements Externalizable {
 	private final static int A = 21, B = 35, C = 4;
 	//
 	private long seed;
-	private ByteBuffer dataSrc;
+	private ByteBuffer dataSrcDirect, dataSrcReverse;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformDataSource()
 	throws NumberFormatException {
@@ -38,26 +39,27 @@ implements Externalizable {
 	//
 	protected UniformDataSource(final long seed, final int size) {
 		this.seed = seed;
-		dataSrc = ByteBuffer.allocate(size);
+		dataSrcDirect = ByteBuffer.allocate(size);
 		preProduceData();
+		final byte buff[] = ArrayUtils.clone(dataSrcDirect.array());
+		ArrayUtils.reverse(buff);
+		dataSrcReverse= ByteBuffer.wrap(buff);
 	}
 	//
-	public static UniformDataSource
-		DATA_SRC_CREATE = null,
-		DATA_SRC_UPDATE = null;
+	public static UniformDataSource DEFAULT = null;
 	static {
 		try {
-			DATA_SRC_CREATE = new UniformDataSource();
-			DATA_SRC_UPDATE = new UniformDataSource(
+			DEFAULT = new UniformDataSource();
+			/*DATA_SRC_UPDATE = new UniformDataSource(
 				Long.reverse(
 					nextWord(
 						Long.reverseBytes(
-							DATA_SRC_CREATE.seed
+							DEFAULT.seed
 						)
 					)
 				),
-				DATA_SRC_CREATE.getSize()
-			);
+				DEFAULT.getSize()
+			);*/
 		} catch(final Exception e) {
 			synchronized(LOG) {
 				LOG.fatal(Markers.ERR, "Failed to create default data source");
@@ -67,9 +69,9 @@ implements Externalizable {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private synchronized void preProduceData() {
-		final LongBuffer dataSrcWordsView = dataSrc.asLongBuffer();
+		final LongBuffer dataSrcWordsView = dataSrcDirect.asLongBuffer();
 		final int
-			size = dataSrc.array().length,
+			size = dataSrcDirect.array().length,
 			countWordBytes = Long.SIZE / Byte.SIZE,
 			countWords = size / countWordBytes,
 			countTailBytes = size % countWordBytes;
@@ -86,7 +88,7 @@ implements Externalizable {
 		final ByteBuffer tailBytes = ByteBuffer.allocate(countWordBytes);
 		tailBytes.asLongBuffer().put(word).rewind();
 		for(i = 0; i < countTailBytes; i++) {
-			dataSrc.put(countWordBytes * countWords + i, tailBytes.get(i));
+			dataSrcDirect.put(countWordBytes * countWords + i, tailBytes.get(i));
 		}
 		//
 		LOG.debug(
@@ -109,25 +111,25 @@ implements Externalizable {
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 		throws IOException {
-		out.writeLong(getBytes().length);
+		out.writeLong(dataSrcDirect.array().length);
 		out.writeLong(seed);
 	}
 	//
 	@Override
 	public final void readExternal(final ObjectInput in)
 		throws IOException, ClassNotFoundException {
-		dataSrc = ByteBuffer.allocate(in.readInt());
+		dataSrcDirect = ByteBuffer.allocate(in.readInt());
 		seed = in.readLong();
 		preProduceData();
-		DATA_SRC_CREATE = this;
-		DATA_SRC_UPDATE = new UniformDataSource(
-			Long.reverse(Long.reverseBytes(DATA_SRC_CREATE.seed)),
-			DATA_SRC_CREATE.getSize()
-		);
+		DEFAULT = this;
+		/*DATA_SRC_UPDATE = new UniformDataSource(
+			Long.reverse(Long.reverseBytes(DEFAULT.seed)),
+			DEFAULT.getSize()
+		);*/
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final int getSize() {
-		return dataSrc.array().length;
+		return dataSrcDirect.array().length;
 	}
 	//
 	public final long getSeed() {
@@ -140,27 +142,27 @@ implements Externalizable {
 	public final String toString() {
 		return
 			Long.toHexString(seed) + RunTimeConfig.LIST_SEP +
-			Integer.toHexString(dataSrc.array().length);
+			Integer.toHexString(dataSrcDirect.array().length);
 	}
 	//
 	public static void fromString(final String metaInfo)
 		throws IllegalArgumentException, IOException {
 		final String values[] = metaInfo.split(RunTimeConfig.LIST_SEP);
 		if(values.length==2) {
-			DATA_SRC_CREATE = new UniformDataSource(
+			DEFAULT = new UniformDataSource(
 				Long.parseLong(values[0], 0x10), Integer.parseInt(values[1], 0x10)
 			);
-			DATA_SRC_UPDATE = new UniformDataSource(
-				Long.reverse(Long.reverseBytes(DATA_SRC_CREATE.seed)),
-				DATA_SRC_CREATE.getSize()
-			);
+			/*DATA_SRC_UPDATE = new UniformDataSource(
+				Long.reverse(Long.reverseBytes(DEFAULT.seed)),
+				DEFAULT.getSize()
+			);*/
 		} else {
 			throw new IllegalArgumentException();
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final byte[] getBytes() {
-		return dataSrc.array();
+	public final byte[] getBytes(final int layerNum) {
+		return layerNum % 2 == 0 ? dataSrcDirect.array() : dataSrcReverse.array();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }

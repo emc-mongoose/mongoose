@@ -14,6 +14,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.BitSet;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 15.09.14.
  */
@@ -22,8 +23,9 @@ extends UniformData {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	private final static char LAYER_MASK_SEP = '/';
 	private final static String
-		FMT_META_INFO = "%s" + RunTimeConfig.LIST_SEP + "%s",
+		FMT_META_INFO = "%s" + RunTimeConfig.LIST_SEP + "%x" + LAYER_MASK_SEP + "%s",
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
 		FMT_MSG_WRONG_RANGE_COUNT = "Range count should be more than 0 and less than the object size = %s";
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31,6 +33,7 @@ extends UniformData {
 		maskRangesHistory = new BitSet(),
 		maskRangesPending = new BitSet();
 	private int countRangesTotal, rangeSize;
+	private final AtomicInteger layerNum = new AtomicInteger(0);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private static int calcTotalCount(long size)
 		throws IllegalArgumentException {
@@ -43,9 +46,10 @@ extends UniformData {
 		}
 	}
 	//
-	private void initRanges() {
+	private void initRanges(final int layerNum) {
 		countRangesTotal = calcTotalCount(size);
 		rangeSize = (int) (size / countRangesTotal);
+		this.layerNum.set(layerNum);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public DataRanges() {
@@ -58,30 +62,32 @@ extends UniformData {
 	//
 	public DataRanges(final long size) {
 		super(size);
-		initRanges();
+		initRanges(1);
 	}
 	//
 	public DataRanges(final long size, final UniformDataSource dataSrc) {
 		super(size, dataSrc);
-		initRanges();
+		initRanges(1);
 	}
 	//
 	public DataRanges(final long offset, final long size) {
 		super(offset, size);
-		initRanges();
+		initRanges(1);
 	}
 	//
 	public DataRanges(final long offset, final long size, final UniformDataSource dataSrc) {
 		super(offset, size, dataSrc);
-		initRanges();
+		initRanges(1);
 	}
+	//
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public String toString() {
 		return String.format(
-			FMT_META_INFO, super.toString(), Hex.encodeHexString(maskRangesHistory.toByteArray())
+			FMT_META_INFO, super.toString(),
+			layerNum.get(), Hex.encodeHexString(maskRangesHistory.toByteArray())
 		);
 	}
 	//
@@ -93,10 +99,22 @@ extends UniformData {
 			baseItemInfo = v.substring(0, lastCommaPos);
 			super.fromString(baseItemInfo);
 			rangesInfo = v.substring(lastCommaPos + 1, v.length());
+			final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
 			try {
-				initRanges();
-				maskRangesHistory.or(BitSet.valueOf(Hex.decodeHex(rangesInfo.toCharArray())));
-			} catch(final DecoderException e) {
+				initRanges(
+					Integer.valueOf(
+						rangesInfo.substring(0, sepPos),
+						0x10
+					)
+				);
+				maskRangesHistory.or(
+					BitSet.valueOf(
+						Hex.decodeHex(
+							rangesInfo.substring(sepPos + 1, rangesInfo.length()).toCharArray()
+						)
+					)
+				);
+			} catch(final DecoderException|NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
 			}
 		} else {
@@ -115,6 +133,7 @@ extends UniformData {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
+		out.writeInt(layerNum.get());
 		out.writeObject(maskRangesHistory);
 		out.writeObject(maskRangesPending);
 	}
@@ -123,6 +142,7 @@ extends UniformData {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
+		layerNum.set(in.readInt());
 		maskRangesHistory.or(BitSet.class.cast(in.readObject()));
 		maskRangesPending.or(BitSet.class.cast(in.readObject()));
 	}
@@ -142,10 +162,15 @@ extends UniformData {
 					);
 				}
 				updatedRange = new UniformData(
-					offset + rangeOffset, rangeSize, UniformDataSource.DATA_SRC_UPDATE
+					offset + rangeOffset, rangeSize, layerNum.get(), UniformDataSource.DEFAULT
 				);
 				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
-			} else {
+			} else if(layerNum.get() > 1) { // previous layer of updated ranges
+				updatedRange = new UniformData(
+					offset + rangeOffset, rangeSize, layerNum.get() - 1, UniformDataSource.DEFAULT
+				);
+				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
+			} else { // pristine object content
 				contentEquals = compareWith(in, rangeOffset, rangeSize);
 			}
 			if(!contentEquals) {
@@ -185,7 +210,10 @@ extends UniformData {
 				return;
 			}
 		}
-		throw new IllegalStateException("Looks like there's no free range to update");
+		// looks like there's no free range to update
+		// increment layerNum
+		// clear the masks
+		updateRandomRange(); // try again
 	}
 	//
 	public final void updateRandomRanges(final int count)

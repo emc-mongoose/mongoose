@@ -43,7 +43,7 @@ implements Externalizable {
 	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformData() {
-		super(UniformDataSource.DATA_SRC_CREATE.getBytes());
+		super(UniformDataSource.DEFAULT.getBytes(0));
 	}
 	//
 	public UniformData(final String metaInfo) {
@@ -52,7 +52,7 @@ implements Externalizable {
 	}
 	//
 	public UniformData(final long size) {
-		this(size, UniformDataSource.DATA_SRC_CREATE);
+		this(size, UniformDataSource.DEFAULT);
 	}
 	//
 	public UniformData(final long size, final UniformDataSource dataSrc) {
@@ -63,11 +63,17 @@ implements Externalizable {
 	}
 	//
 	public UniformData(final long offset, final long size) {
-		this(offset, size, UniformDataSource.DATA_SRC_CREATE);
+		this(offset, size, UniformDataSource.DEFAULT);
 	}
 	//
 	public UniformData(final long offset, final long size, final UniformDataSource dataSrc) {
-		super(dataSrc.getBytes());
+		this(offset, size, 0, dataSrc);
+	}
+	//
+	public UniformData(
+		final long offset, final long size, final int layerNum, final UniformDataSource dataSrc
+	) {
+		super(dataSrc.getBytes(layerNum));
 		try {
 			setOffset(offset, 0);
 		} catch(final IOException e) {
