@@ -12,9 +12,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.OutputStream;
 import java.util.BitSet;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 15.09.14.
  */
@@ -33,7 +33,7 @@ extends UniformData {
 		maskRangesHistory = new BitSet(),
 		maskRangesPending = new BitSet();
 	private int countRangesTotal, rangeSize;
-	private final AtomicInteger layerNum = new AtomicInteger(0);
+	private volatile int layerNum = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private static int calcTotalCount(long size)
 		throws IllegalArgumentException {
@@ -49,7 +49,7 @@ extends UniformData {
 	private void initRanges(final int layerNum) {
 		countRangesTotal = calcTotalCount(size);
 		rangeSize = (int) (size / countRangesTotal);
-		this.layerNum.set(layerNum);
+		this.layerNum = layerNum;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public DataRanges() {
@@ -87,7 +87,7 @@ extends UniformData {
 	public String toString() {
 		return String.format(
 			FMT_META_INFO, super.toString(),
-			layerNum.get(), Hex.encodeHexString(maskRangesHistory.toByteArray())
+			layerNum, Hex.encodeHexString(maskRangesHistory.toByteArray())
 		);
 	}
 	//
@@ -133,7 +133,7 @@ extends UniformData {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeInt(layerNum.get());
+		out.writeInt(layerNum);
 		out.writeObject(maskRangesHistory);
 		out.writeObject(maskRangesPending);
 	}
@@ -142,7 +142,7 @@ extends UniformData {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		layerNum.set(in.readInt());
+		layerNum = in.readInt();
 		maskRangesHistory.or(BitSet.class.cast(in.readObject()));
 		maskRangesPending.or(BitSet.class.cast(in.readObject()));
 	}
@@ -162,12 +162,12 @@ extends UniformData {
 					);
 				}
 				updatedRange = new UniformData(
-					offset + rangeOffset, rangeSize, layerNum.get(), UniformDataSource.DEFAULT
+					offset + rangeOffset, rangeSize, layerNum, UniformDataSource.DEFAULT
 				);
 				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
-			} else if(layerNum.get() > 1) { // previous layer of updated ranges
+			} else if(layerNum > 1) { // previous layer of updated ranges
 				updatedRange = new UniformData(
-					offset + rangeOffset, rangeSize, layerNum.get() - 1, UniformDataSource.DEFAULT
+					offset + rangeOffset, rangeSize, layerNum - 1, UniformDataSource.DEFAULT
 				);
 				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
 			} else { // pristine object content
@@ -210,10 +210,12 @@ extends UniformData {
 				return;
 			}
 		}
-		// looks like there's no free range to update
-		// increment layerNum
-		// clear the masks
-		updateRandomRange(); // try again
+		// looks like there's no free range to update left
+		synchronized(this) {
+			layerNum ++; // increment layerNum
+			maskRangesHistory.clear(); maskRangesPending.clear(); // clear the masks
+			updateRandomRange(); // try again
+		}
 	}
 	//
 	public final void updateRandomRanges(final int count)
@@ -262,24 +264,39 @@ extends UniformData {
 		return updatesContent;
 	}*/
 	//
-	public final synchronized void movePendingUpdatesToHistory() {
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "Move pending ranges \"{}\" to history \"{}\"",
-				Hex.encodeHexString(maskRangesPending.toByteArray()),
-				Hex.encodeHexString(maskRangesHistory.toByteArray())
-			);
-		}
-		maskRangesHistory.or(maskRangesPending);
-		maskRangesPending.clear();
-	}
-	//
 	public final int getCountRangesTotal() {
 		return countRangesTotal;
 	}
 	//
 	public final int getRangeSize() {
 		return rangeSize;
+	}
+	//
+	public final void writePendingUpdatesTo(final OutputStream out)
+	throws IOException {
+		UniformData nextRangeData;
+		long rangeOffset;
+		synchronized(this) {
+			for(int i = 0; i < countRangesTotal; i++) {
+				rangeOffset = i * rangeSize;
+				if(maskRangesPending.get(i)) {
+					nextRangeData = new UniformData(
+						offset + rangeOffset, rangeSize, layerNum, UniformDataSource.DEFAULT
+					);
+					nextRangeData.writeTo(out);
+				}
+			}
+			// move pending updated ranges to history
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Move pending ranges \"{}\" to history \"{}\"",
+					Hex.encodeHexString(maskRangesPending.toByteArray()),
+					Hex.encodeHexString(maskRangesHistory.toByteArray())
+				);
+			}
+			maskRangesHistory.or(maskRangesPending);
+			maskRangesPending.clear();
+		}
 	}
 	//
 }

@@ -1,8 +1,5 @@
 package com.emc.mongoose.object.http.data;
 //
-import com.emc.mongoose.data.UniformData;
-import com.emc.mongoose.data.UniformDataSource;
-//
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
@@ -59,20 +56,7 @@ implements HttpEntity {
 	@Override
 	public final void writeTo(final OutputStream out)
 	throws IOException {
-		UniformData nextRangeData;
-		final long baseOffset = baseItem.getOffset();
-		final int rangeSize = baseItem.getRangeSize();
-		long rangeOffset;
-		for(int i=0; i<baseItem.getCountRangesTotal(); i++) {
-			rangeOffset = i * rangeSize;
-			if(baseItem.isRangeUpdatePending(i)) {
-				nextRangeData = new UniformData(
-					baseOffset + rangeOffset, rangeSize, UniformDataSource.DATA_SRC_UPDATE
-				);
-				nextRangeData.writeTo(out);
-			}
-		}
-		baseItem.movePendingUpdatesToHistory();
+		baseItem.writePendingUpdatesTo(out);
 	}
 	//
 	@Override

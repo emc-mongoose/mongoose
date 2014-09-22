@@ -56,7 +56,7 @@ implements LoadExecutor<WSObject> {
 	private final UniformDataSource dataSrc;
 	// METRICS section BEGIN
 	private final MetricRegistry metrics = new MetricRegistry();
-	private final Counter counterSubm, counterReqSucc, counterReqFail;
+	private final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
 	private final Meter reqBytes;
 	private final Histogram reqDur;
 	//
@@ -89,6 +89,7 @@ implements LoadExecutor<WSObject> {
 		this.maxCount = maxCount>0? maxCount : Long.MAX_VALUE;
 		// init metrics
 		counterSubm = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUBM));
+		counterRej = metrics.counter(MetricRegistry.name(name, METRIC_NAME_REJ));
 		counterReqSucc = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUCC));
 		counterReqFail = metrics.counter(MetricRegistry.name(name, METRIC_NAME_FAIL));
 		reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));

@@ -202,7 +202,7 @@ implements LoadExecutor<WSObject> {
 				} else {
 					final Throwable cause = e.getCause();
 					if(InterruptedException.class.isInstance(cause)) {
-						LOG.debug(Markers.MSG, "Poisoned");
+						LOG.trace(Markers.MSG, "Poisoned");
 						try {
 							consumer.submit(null); // pass the poison through the consumer-producer chain
 						} catch(final RemoteException ee) {
