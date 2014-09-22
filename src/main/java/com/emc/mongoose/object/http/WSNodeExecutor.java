@@ -203,11 +203,11 @@ implements LoadExecutor<WSObject> {
 					final Throwable cause = e.getCause();
 					if(InterruptedException.class.isInstance(cause)) {
 						LOG.trace(Markers.MSG, "Poisoned");
-						try {
+						/*try {
 							consumer.submit(null); // pass the poison through the consumer-producer chain
 						} catch(final RemoteException ee) {
 							LOG.debug(Markers.ERR, "Failed to feed the poison to consumer due to {}", ee.toString());
-						}
+						}*/
 					} else {
 						counterReqFail.inc();
 						counterReqFailParent.inc();

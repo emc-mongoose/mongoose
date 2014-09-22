@@ -158,13 +158,13 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				synchronized(LOG) {
 					LOG.trace(
-						Markers.MSG, "{} {} -> {}/{}",
-						httpRequest.getMethod(), httpRequest.getURI(),
-						statusCode, statusLine.getReasonPhrase()
+						Markers.MSG, "{}/{} <- {} {}",
+						statusCode, statusLine.getReasonPhrase(),
+						httpRequest.getMethod(), httpRequest.getURI()
 					);
-					for(final Header header : httpResponse.getAllHeaders()) {
-						LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
-					}
+					//for(final Header header : httpResponse.getAllHeaders()) {
+					//	LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
+					//}
 				}
 			}
 			//

@@ -196,9 +196,9 @@ implements LoadExecutor<WSObject> {
 	//
 	@Override
 	public final synchronized void interrupt() {
-		//
+		// set maxCount equal to current count
 		maxCount = counterSubm.getCount();
-		//
+		// interrupt producer
 		if(producer!=null) {
 			try {
 				producer.interrupt();
@@ -210,7 +210,7 @@ implements LoadExecutor<WSObject> {
 				);
 			}
 		}
-		//
+		// interrupt submit executor
 		submitExecutor.shutdown();
 		submitExecutor.getQueue().clear();
 		try {
@@ -218,7 +218,7 @@ implements LoadExecutor<WSObject> {
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.ERR, "Interrupted while awaiting the submitter termination");
 		}
-		//
+		// interrupt node executors in parallel threads
 		final Thread interrupters[] = new Thread[nodes.length];
 		for(int i=0; i<nodes.length; i++) {
 			final WSNodeExecutor nextNode = nodes[i];
@@ -231,7 +231,7 @@ implements LoadExecutor<WSObject> {
 			interrupters[i].start();
 
 		}
-		//
+		// wait for node executors to become interrupted
 		for(int i=0; i<nodes.length; i++) {
 			try {
 				interrupters[i].join();
@@ -240,7 +240,7 @@ implements LoadExecutor<WSObject> {
 				LOG.debug(Markers.ERR, e.toString());
 			}
 		}
-		//
+		// interrupt the monitoring thread
 		super.interrupt();
 		LOG.debug(Markers.MSG, "Interrupted \"{}\"", getName());
 	}
@@ -252,7 +252,8 @@ implements LoadExecutor<WSObject> {
 		if(!isInterrupted()) {
 			interrupt();
 		}
-		//
+		consumer.submit(null); // poison the consumer
+		// force shutdown the submit executor
 		LOG.debug(Markers.MSG, "Dropped {} tasks on closing", submitExecutor.shutdownNow().size());
 		for(final WSNodeExecutor nodeExecutor: nodes) {
 			try {
@@ -265,13 +266,13 @@ implements LoadExecutor<WSObject> {
 				);
 			}
 		}
-		//
+		// close shared http client
 		try {
 			httpClient.close();
 		} catch(final IOException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to close the HTTP client");
 		}
-		//
+		// provide summary metrics
 		synchronized(LOG) {
 			LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
 			logMetrics(Markers.PERF_SUM);
@@ -304,14 +305,14 @@ implements LoadExecutor<WSObject> {
 	//
 	@Override
 	public void submit(final WSObject object) {
-		if(object==null) { // handle the poison
+		if(object==null || isInterrupted()) { // handle the poison
 			maxCount = counterSubm.getCount();
 			for(final WSNodeExecutor nextNode : nodes) {
 				if(!nextNode.isShutdown()) {
 					nextNode.submit(WSObject.class.cast(null));
 				}
 			}
-		} else if(!isInterrupted()) {
+		} else {
 			final SubmitTask submitTask = new SubmitTask(nodes, counterSubm, object);
 			boolean passed = false;
 			int rejectCount = 0;

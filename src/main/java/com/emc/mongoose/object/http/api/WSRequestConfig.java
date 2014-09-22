@@ -282,7 +282,10 @@ extends RequestConfig<WSObject> {
 		applyAuthHeader(httpRequest);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			synchronized(LOG) {
-				LOG.trace(Markers.MSG, "built request: {}", httpRequest.getURI());
+				LOG.trace(
+					Markers.MSG, "built request: {} {}",
+					httpRequest.getMethod(), httpRequest.getURI()
+				);
 				for(final Header header: httpRequest.getAllHeaders()) {
 					LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
 				}
@@ -323,20 +326,26 @@ extends RequestConfig<WSObject> {
 	protected final void applyRangesHeaders(final HttpRequestBase httpRequest, final WSObject dataItem) {
 		long rangeBeg = -1, rangeEnd = -1;
 		int rangeLen = dataItem.getRangeSize(), rangeCount = dataItem.getCountRangesTotal();
-		for(int i=0; i<dataItem.getCountRangesTotal(); i++) {
+		for(int i=0; i<rangeCount; i++) {
 			if(dataItem.isRangeUpdatePending(i)) {
 				if(rangeBeg < 0) { // begin of the possible updated ranges sequence
 					rangeBeg = i * rangeLen;
 					rangeEnd = rangeBeg + rangeLen - 1;
+					LOG.trace(
+						Markers.MSG, "Begin of the possible updated ranges sequence @{}",
+						rangeBeg
+					);
 				} else if(rangeEnd > 0) { // next range in the sequence of updated ranges
 					rangeEnd += rangeLen;
 				}
 				if(i == rangeCount - 1) { // this is the last range which is updated also
+					LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
 					httpRequest.addHeader(
 						HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
 					);
 				}
-			} else if(rangeEnd > 0) { // end of the updated ranges sequence
+			} else if(rangeBeg > -1 && rangeEnd > -1) { // end of the updated ranges sequence
+				LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
 				httpRequest.addHeader(
 					HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
 				);
