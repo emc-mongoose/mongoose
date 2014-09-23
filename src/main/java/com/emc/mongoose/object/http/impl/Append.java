@@ -1,13 +1,11 @@
 package com.emc.mongoose.object.http.impl;
 //
 import com.emc.mongoose.conf.RunTimeConfig;
-import com.emc.mongoose.logging.ExceptionHandler;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.object.http.WSLoadExecutor;
 import com.emc.mongoose.object.http.api.WSRequestConfig;
 import com.emc.mongoose.object.http.data.WSObject;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -38,11 +36,7 @@ extends WSLoadExecutor {
 			final long appendSize = ThreadLocalRandom
 				.current()
 				.nextLong(minAppendSize, maxAppendSize + 1);
-			try {
-				wsObject.append(appendSize);
-			} catch(final Exception e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to create modified ranges");
-			}
+			wsObject.append(appendSize);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Append the object \"{}\": +{}",

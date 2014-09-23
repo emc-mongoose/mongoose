@@ -268,12 +268,18 @@ extends RequestConfig<WSObject> {
 		final HttpRequestBase httpRequest, final WSObject dataItem
 	) throws IllegalStateException, URISyntaxException {
 		applyURI(httpRequest, dataItem);
-		if(loadType==Request.Type.CREATE) {
-			applyPayLoad(httpRequest, dataItem);
-		}
-		if(loadType==Request.Type.UPDATE) {
-			applyRangesHeaders(httpRequest, dataItem);
-			applyPayLoad(httpRequest, dataItem.getPendingUpdatesContentEntity());
+		switch(loadType) {
+			case CREATE:
+				applyPayLoad(httpRequest, dataItem);
+				break;
+			case UPDATE:
+				applyRangesHeaders(httpRequest, dataItem);
+				applyPayLoad(httpRequest, dataItem.getPendingUpdatesContentEntity());
+				break;
+			case APPEND:
+				// TODO headers for append
+				applyPayLoad(httpRequest, dataItem.getPendingAppendContentEntity());
+				break;
 		}
 	}
 	//
@@ -356,10 +362,14 @@ extends RequestConfig<WSObject> {
 		}
 	}
 	//
+	protected final void applyAppendRangeHeader(final HttpRequestBase httpRequest, final WSObject dataItem) {
+
+	}
+	//
 	protected final void applyDateHeader(final HttpRequestBase httpRequest) {
 		final String rfc1123date = DateUtils.formatDate(new Date());
 		httpRequest.setHeader(HttpHeaders.DATE, rfc1123date);
-		httpRequest.setHeader(KEY_EMC_DATE, rfc1123date);
+		//httpRequest.setHeader(KEY_EMC_DATE, rfc1123date);
 	}
 	//
 	protected abstract void applyAuthHeader(final HttpRequestBase httpRequest);

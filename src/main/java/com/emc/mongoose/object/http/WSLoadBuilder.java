@@ -285,11 +285,6 @@ implements LoadBuilder<T> {
 				switch(loadType) {
 					case CREATE:
 						LOG.debug("New create load");
-						if(minObjSize>maxObjSize) {
-							throw new IllegalStateException(
-								"Min object size should be not more than max object size"
-							);
-						}
 						load = new Create(
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile, minObjSize, maxObjSize
