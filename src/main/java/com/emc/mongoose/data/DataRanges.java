@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
@@ -34,6 +35,8 @@ extends UniformData {
 		maskRangesPending = new BitSet();
 	private int countRangesTotal, rangeSize;
 	private volatile int layerNum = 0;
+	//
+	private long pendingAppendSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private static int calcTotalCount(long size)
 		throws IllegalArgumentException {
@@ -296,6 +299,53 @@ extends UniformData {
 			}
 			maskRangesHistory.or(maskRangesPending);
 			maskRangesPending.clear();
+		}
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final static String
+		FMT_MSG_ILLEGAL_APPEND_SIZE = "Append tail size should be more than 0, but got %D";
+	//
+	public final void append(final long appendTailSize) {
+		if(appendTailSize > 0) {
+			pendingAppendSize = appendTailSize;
+		} else {
+			throw new IllegalArgumentException(
+				String.format(FMT_MSG_ILLEGAL_APPEND_SIZE, appendTailSize)
+			);
+		}
+	}
+	//
+	public final void writeAppendTo(final OutputStream out)
+	throws IOException {
+		if(pendingAppendSize > 0) {
+			synchronized(this) {
+				setOffset(offset, size);
+				// change the size
+				size += pendingAppendSize;
+				// redirect the tail's data to the output
+				final byte buff[] = new byte[
+					pendingAppendSize < MAX_PAGE_SIZE ? (int) pendingAppendSize : MAX_PAGE_SIZE
+				];
+				final int
+					countPages = (int) pendingAppendSize / buff.length,
+					countTailBytes = (int) pendingAppendSize % buff.length;
+				//
+				for(int i = 0; i < countPages; i++) {
+					if(read(buff)==buff.length) {
+						out.write(buff);
+					} else {
+						throw new InterruptedIOException("Reading from data ring blocked?");
+					}
+				}
+				// tail bytes
+				if(read(buff, 0, countTailBytes)==countTailBytes) {
+					out.write(buff, 0, countTailBytes);
+				} else {
+					throw new InterruptedIOException("Reading from data ring blocked?");
+				}
+				// drop the appending on success
+				pendingAppendSize = 0;
+			}
 		}
 	}
 	//

@@ -42,7 +42,6 @@ extends WSLoadExecutor {
 		//
 		private final long minObjSize, maxObjSize;
 		private final UniformDataSource dataSrc;
-		private final ThreadLocalRandom thrLocalRnd;
 		private Consumer<WSObject> consumer;
 		//
 		public WSObjProducer(
@@ -51,7 +50,6 @@ extends WSLoadExecutor {
 			this.minObjSize = minObjSize;
 			this.maxObjSize = maxObjSize;
 			this.dataSrc = dataSrc;
-			thrLocalRnd = ThreadLocalRandom.current();
 			setName(getClass().getSimpleName());
 		}
 		//
@@ -69,7 +67,7 @@ extends WSLoadExecutor {
 		//
 		private void produceNextAndFeed()
 		throws IOException, InterruptedException, RejectedExecutionException {
-			final long nextSize = thrLocalRnd.nextLong(minObjSize, maxObjSize + 1);
+			final long nextSize = ThreadLocalRandom.current().nextLong(minObjSize, maxObjSize + 1);
 			final WSObject nextObject = new WSObject(nextSize, dataSrc);
 			consumer.submit(nextObject);
 		}

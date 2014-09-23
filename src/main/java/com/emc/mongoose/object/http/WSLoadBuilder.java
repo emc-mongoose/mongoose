@@ -8,6 +8,7 @@ import com.emc.mongoose.conf.RunTimeConfig;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.object.http.data.WSObject;
 import com.emc.mongoose.object.http.api.WSRequestConfig;
+import com.emc.mongoose.object.http.impl.Append;
 import com.emc.mongoose.object.http.impl.Create;
 import com.emc.mongoose.object.http.impl.Delete;
 import com.emc.mongoose.object.http.impl.Read;
@@ -315,6 +316,12 @@ implements LoadBuilder<T> {
 							listFile
 						);
 						break;
+					case APPEND:
+						LOG.debug("New append load");
+						load = new Append(
+							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
+							listFile, minObjSize, maxObjSize
+						);
 				}
 			} catch(CloneNotSupportedException|IOException e) {
 				throw new IllegalStateException(e);

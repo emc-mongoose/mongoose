@@ -240,7 +240,7 @@ public final class ServiceUtils {
 				LOG.debug(Markers.MSG, "JMX connector started", portJmxRmi);
 			} catch(final IOException e) {
 				synchronized(LOG) {
-					LOG.warn(Markers.ERR, "Failed to start JMX connector for env {}", env);
+					LOG.warn(Markers.ERR, "Failed to start JMX connector, please check that there's no another instance running", env);
 					LOG.debug(Markers.ERR, e.toString(), e.getCause());
 				}
 			}

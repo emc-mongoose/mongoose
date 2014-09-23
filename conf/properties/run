@@ -1,6 +1,6 @@
 #
 name:							mongoose
-version:						0.1.5
+version:						0.1.6
 
 # may be "standalone", "driver" or "controller"
 mode:							standalone
