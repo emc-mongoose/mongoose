@@ -23,6 +23,6 @@ extends Callable<Request<T>>, Closeable {
 	//
 	long getDuration();
 	//
-	enum Type { CREATE, READ, DELETE, UPDATE }
+	enum Type { CREATE, READ, DELETE, UPDATE, APPEND }
 	//
 }

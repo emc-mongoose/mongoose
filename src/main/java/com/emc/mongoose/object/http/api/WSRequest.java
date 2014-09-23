@@ -96,6 +96,9 @@ implements Request<WSObject>, ResponseHandler<Request<WSObject>> {
 				case UPDATE:
 					httpRequest = new HttpPut();
 					break;
+				case APPEND:
+					httpRequest = new HttpPut();
+					break;
 			}
 		} else { // cleanup
 			httpRequest.removeHeaders(HttpHeaders.RANGE);
