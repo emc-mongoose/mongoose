@@ -106,8 +106,8 @@ implements HttpEntity {
 		return new WSUpdateRangesEntity(this);
 	}
 	//
-	public final HttpEntity getPendingAppendContentEntity() {
-		return new WSAppendEntity(this);
+	public final HttpEntity getPendingAugmentContentEntity() {
+		return new WSAugmentEntity(this);
 	}
 }
 //

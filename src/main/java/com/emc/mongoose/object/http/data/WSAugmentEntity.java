@@ -9,14 +9,14 @@ import java.io.OutputStream;
 /**
  Created by kurila on 23.09.14.
  */
-public class WSAppendEntity
+public class WSAugmentEntity
 implements HttpEntity {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
 	private final WSObject baseItem;
 	//
-	protected WSAppendEntity(final WSObject baseItem) {
+	protected WSAugmentEntity(final WSObject baseItem) {
 		this.baseItem = baseItem;
 	}
 	//
@@ -32,7 +32,7 @@ implements HttpEntity {
 	//
 	@Override
 	public final long getContentLength() {
-		return baseItem.getPendingUpdatesCount() * baseItem.getRangeSize();
+		return baseItem.getPendingAugmentSize();
 	}
 	//
 	@Override
@@ -55,7 +55,7 @@ implements HttpEntity {
 	@Override
 	public final void writeTo(final OutputStream out)
 		throws IOException {
-		baseItem.writeAppendTo(out);
+		baseItem.writeAugmentTo(out);
 	}
 	//
 	@Override

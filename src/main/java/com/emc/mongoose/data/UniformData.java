@@ -208,10 +208,12 @@ implements Externalizable {
 					}
 				}
 				// tail bytes
-				if(read(buff, 0, countTailBytes)==countTailBytes) {
-					out.write(buff, 0, countTailBytes);
-				} else {
-					throw new InterruptedIOException("Reading from data ring blocked?");
+				if(countTailBytes > 0) {
+					if(read(buff, 0, countTailBytes)==countTailBytes) {
+						out.write(buff, 0, countTailBytes);
+					} else {
+						throw new InterruptedIOException("Reading from data ring blocked?");
+					}
 				}
 			} catch(final IOException e) {
 				LOG.error(Markers.ERR, e.getMessage());
@@ -233,19 +235,24 @@ implements Externalizable {
 		final int
 			countPages = rangeLength / buff1.length,
 			countTailBytes = rangeLength % buff1.length;
-		int doneByteCount;
+		int doneByteCountSum, doneByteCount;
 		//
 		synchronized(this) {
 			try {
 				setOffset(offset, rangeOffset);
 				for(int i = 0; i < countPages; i++) {
 					if(buff1.length==read(buff1)) {
-						doneByteCount = 0;
+						doneByteCountSum = 0;
 						do {
-							doneByteCount += in.read(
-								buff2, doneByteCount, buff2.length - doneByteCount
+							doneByteCount = in.read(
+								buff2, doneByteCountSum, buff2.length - doneByteCountSum
 							);
-						} while(doneByteCount < buff2.length);
+							if(doneByteCount < 0) {
+								break;
+							} else {
+								doneByteCountSum += doneByteCount;
+							}
+						} while(doneByteCountSum < buff2.length);
 						contentEquals = Arrays.equals(buff1, buff2);
 						if(!contentEquals) {
 							break;
@@ -257,15 +264,20 @@ implements Externalizable {
 					}
 				}
 				//
-				if(contentEquals) {
+				if(contentEquals && countTailBytes > 0) {
 					// tail bytes
 					if(read(buff1, 0, countTailBytes)==countTailBytes) {
-						doneByteCount = 0;
+						doneByteCountSum = 0;
 						do {
-							doneByteCount += in.read(
-								buff2, doneByteCount, countTailBytes - doneByteCount
+							doneByteCount = in.read(
+								buff2, doneByteCountSum, countTailBytes - doneByteCountSum
 							);
-						} while(doneByteCount < countTailBytes);
+							if(doneByteCount < 0) {
+								break;
+							} else {
+								doneByteCountSum += doneByteCount;
+							}
+						} while(doneByteCountSum < countTailBytes);
 						contentEquals = Arrays.equals(buff1, buff2);
 					} else {
 						LOG.debug(Markers.ERR, "Looks like reading from data ring blocked");

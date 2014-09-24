@@ -35,7 +35,7 @@ if mode == "controller":
 	except RemoteException as e:
 		LOG.fatal(Markers.ERR, "Failed to create load builder client: {}", e)
 		exit()
-else:  # standalone
+else: # standalone
 	from com.emc.mongoose.object.http import WSLoadBuilder
 	INSTANCE = WSLoadBuilder()
 #

@@ -1,6 +1,5 @@
 package com.emc.mongoose.object.http.api;
 //
-import com.emc.mongoose.api.Request;
 import com.emc.mongoose.api.RequestConfig;
 import com.emc.mongoose.conf.RunTimeConfig;
 import com.emc.mongoose.logging.Markers;
@@ -100,6 +99,7 @@ extends RequestConfig<WSObject> {
 		VALUE_KEEP_ALIVE = "keep-alive",
 		MSG_TMPL_NOT_SPECIFIED = "Required property \"{}\" is not specifed",
 		MSG_TMPL_RANGE_BYTES = "bytes=%d-%d",
+		MSG_TMPL_RANGE_BYTES_APPEND = "bytes=%d-",
 		MSG_NO_DATA_ITEM = "Data item is not specified",
 		MSG_NO_REQ = "No request specified to apply to";
 	public final static String[]
@@ -277,8 +277,8 @@ extends RequestConfig<WSObject> {
 				applyPayLoad(httpRequest, dataItem.getPendingUpdatesContentEntity());
 				break;
 			case APPEND:
-				// TODO headers for append
-				applyPayLoad(httpRequest, dataItem.getPendingAppendContentEntity());
+				applyAppendRangeHeader(httpRequest, dataItem);
+				applyPayLoad(httpRequest, dataItem.getPendingAugmentContentEntity());
 				break;
 		}
 	}
@@ -329,10 +329,12 @@ extends RequestConfig<WSObject> {
 		}
 	}
 	// merge subsequent updated ranges functionality is here
-	protected final void applyRangesHeaders(final HttpRequestBase httpRequest, final WSObject dataItem) {
+	protected final void applyRangesHeaders(
+		final HttpRequestBase httpRequest, final WSObject dataItem
+	) {
 		long rangeBeg = -1, rangeEnd = -1;
 		int rangeLen = dataItem.getRangeSize(), rangeCount = dataItem.getCountRangesTotal();
-		for(int i=0; i<rangeCount; i++) {
+		for(int i = 0; i < rangeCount; i++) {
 			if(dataItem.isRangeUpdatePending(i)) {
 				if(rangeBeg < 0) { // begin of the possible updated ranges sequence
 					rangeBeg = i * rangeLen;
@@ -344,7 +346,7 @@ extends RequestConfig<WSObject> {
 				} else if(rangeEnd > 0) { // next range in the sequence of updated ranges
 					rangeEnd += rangeLen;
 				}
-				if(i == rangeCount - 1) { // this is the last range which is updated also
+				if(i==rangeCount - 1) { // this is the last range which is updated also
 					LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
 					httpRequest.addHeader(
 						HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
@@ -362,8 +364,13 @@ extends RequestConfig<WSObject> {
 		}
 	}
 	//
-	protected final void applyAppendRangeHeader(final HttpRequestBase httpRequest, final WSObject dataItem) {
-
+	protected final void applyAppendRangeHeader(
+		final HttpRequestBase httpRequest, final WSObject dataItem
+	) {
+		httpRequest.addHeader(
+			HttpHeaders.RANGE,
+			String.format(MSG_TMPL_RANGE_BYTES_APPEND, dataItem.getSize())
+		);
 	}
 	//
 	protected final void applyDateHeader(final HttpRequestBase httpRequest) {

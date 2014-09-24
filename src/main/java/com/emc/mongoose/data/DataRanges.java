@@ -36,7 +36,7 @@ extends UniformData {
 	private int countRangesTotal, rangeSize;
 	private volatile int layerNum = 0;
 	//
-	private long pendingAppendSize = 0;
+	private long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private static int calcTotalCount(long size)
 		throws IllegalArgumentException {
@@ -305,30 +305,34 @@ extends UniformData {
 	private final static String
 		FMT_MSG_ILLEGAL_APPEND_SIZE = "Append tail size should be more than 0, but got %D";
 	//
-	public final void append(final long appendTailSize) {
-		if(appendTailSize > 0) {
-			pendingAppendSize = appendTailSize;
+	public final void append(final long augmentSize) {
+		if(augmentSize > 0) {
+			pendingAugmentSize = augmentSize;
 		} else {
 			throw new IllegalArgumentException(
-				String.format(FMT_MSG_ILLEGAL_APPEND_SIZE, appendTailSize)
+				String.format(FMT_MSG_ILLEGAL_APPEND_SIZE, augmentSize)
 			);
 		}
 	}
 	//
-	public final void writeAppendTo(final OutputStream out)
+	public final long getPendingAugmentSize() {
+		return pendingAugmentSize;
+	}
+	//
+	public final void writeAugmentTo(final OutputStream out)
 	throws IOException {
-		if(pendingAppendSize > 0) {
+		if(pendingAugmentSize > 0) {
 			synchronized(this) {
 				setOffset(offset, size);
 				// change the size
-				size += pendingAppendSize;
+				size += pendingAugmentSize;
 				// redirect the tail's data to the output
 				final byte buff[] = new byte[
-					pendingAppendSize < MAX_PAGE_SIZE ? (int) pendingAppendSize : MAX_PAGE_SIZE
+					pendingAugmentSize < MAX_PAGE_SIZE ? (int) pendingAugmentSize : MAX_PAGE_SIZE
 				];
 				final int
-					countPages = (int) pendingAppendSize / buff.length,
-					countTailBytes = (int) pendingAppendSize % buff.length;
+					countPages = (int) pendingAugmentSize / buff.length,
+					countTailBytes = (int) pendingAugmentSize % buff.length;
 				//
 				for(int i = 0; i < countPages; i++) {
 					if(read(buff)==buff.length) {
@@ -337,14 +341,15 @@ extends UniformData {
 						throw new InterruptedIOException("Reading from data ring blocked?");
 					}
 				}
-				// tail bytes
-				if(read(buff, 0, countTailBytes)==countTailBytes) {
-					out.write(buff, 0, countTailBytes);
-				} else {
-					throw new InterruptedIOException("Reading from data ring blocked?");
+				if(countTailBytes > 0) { // tail bytes
+					if(read(buff, 0, countTailBytes)==countTailBytes) {
+						out.write(buff, 0, countTailBytes);
+					} else {
+						throw new InterruptedIOException("Reading from data ring blocked?");
+					}
 				}
 				// drop the appending on success
-				pendingAppendSize = 0;
+				pendingAugmentSize = 0;
 			}
 		}
 	}
