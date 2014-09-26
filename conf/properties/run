@@ -24,7 +24,7 @@ metrics.period.sec:				10
 retry.delay.millisec:			100
 
 #
-retry.count.max:				10
+retry.count.max:				100
 
 #
 request.retries:				false

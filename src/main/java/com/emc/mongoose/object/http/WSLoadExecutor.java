@@ -38,6 +38,7 @@ import org.apache.logging.log4j.Marker;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -73,7 +74,7 @@ implements LoadExecutor<WSObject> {
 	protected volatile Producer<WSObject> producer = null;
 	protected volatile Consumer<WSObject> consumer;
 	private volatile static int instanceN = 0;
-	protected volatile long maxCount;
+	protected volatile long maxCount, tsStart;
 	//
 	protected WSLoadExecutor(
 		final String[] addrs, final WSRequestConfig reqConf, final long maxCount,
@@ -177,6 +178,7 @@ implements LoadExecutor<WSObject> {
 		//
 		super.start();
 		LOG.debug(Markers.MSG, "Started {}", getName());
+		tsStart = System.nanoTime();
 	}
 	//
 	@Override
@@ -349,6 +351,8 @@ implements LoadExecutor<WSObject> {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final static String FMT_EFF_SUM = "Load execution efficiency: %.1f[%%]";
+	//
 	private void logMetrics(final Marker logMarker) {
 		//
 		final long
@@ -388,6 +392,17 @@ implements LoadExecutor<WSObject> {
 				}
 			)
 		);
+		//
+		if(Markers.PERF_SUM.equals(logMarker)) {
+			final double totalReqNanoSeconds = reqDurSnapshot.getMean() * countReqSucc;
+			LOG.info(
+				Markers.PERF_SUM,
+				String.format(
+					Locale.ROOT, FMT_EFF_SUM,
+					100 * totalReqNanoSeconds / ((System.nanoTime() - tsStart) * getThreadCount())
+				)
+			);
+		}
 		//
 		if(LOG.isDebugEnabled(Markers.PERF_AVG)) {
 			for(final WSNodeExecutor node: nodes) {
