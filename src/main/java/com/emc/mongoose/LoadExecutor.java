@@ -14,8 +14,8 @@ extends Producer<T>, Consumer<T> {
 	//
 	static int
 		METRICS_UPDATE_PERIOD_SEC = RunTimeConfig.getInt("run.metrics.period.sec"),
-		WAIT_QUANT_MILLISEC = RunTimeConfig.getInt("run.wait.quant.millisec"),
-		COUNT_RETRY_MAX = RunTimeConfig.getInt("run.retry.count.max"),
+		RETRY_DELAY_MILLISEC = RunTimeConfig.getInt("run.retry.delay.millisec"),
+		RETRY_COUNT_MAX = RunTimeConfig.getInt("run.retry.count.max"),
 		REQ_QUEUE_FACTOR = RunTimeConfig.getInt("run.request.queue.factor"),
 		BILLION = 1000000000, MIB = 0x100000;
 	//
@@ -43,4 +43,7 @@ extends Producer<T>, Consumer<T> {
 	//
 	Producer<T> getProducer()
 	throws RemoteException;
+	//
+	void join(final long milliSecs)
+	throws RemoteException, InterruptedException;
 }

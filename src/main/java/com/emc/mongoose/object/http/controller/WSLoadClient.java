@@ -46,7 +46,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 08.05.14.
  */
@@ -114,7 +113,6 @@ implements LoadExecutor<WSObject> {
 		meanTPGetter, oneMinTPGetter, fiveMinTPGetter, fifteenMinTPGetter, meanBWGetter,
 		oneMinBWGetter, fiveMinBWGetter, fifteenMinBWGetter, medDurGetter, avgDurGetter;
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final AtomicLong localSubmCount = new AtomicLong(0);
 	private long maxCount;
 	//
 	private final ThreadPoolExecutor submitExecutor, mgmtConnExecutor;
@@ -764,20 +762,26 @@ implements LoadExecutor<WSObject> {
 	public final void interrupt() {
 		LOG.debug(Markers.MSG, "Interrupting {}...", getName());
 		//
-		submitExecutor.shutdown();
-		submitExecutor.getQueue().clear();
-		try {
-			submitExecutor.awaitTermination(
-				RequestConfig.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
-			);
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.ERR, "Awaiting the submit executor termination has been interrupted");
-		}
-		//
 		LinkedList<Thread> svcInterruptThreads = new LinkedList<>();
+		svcInterruptThreads.add(
+			new Thread("interrupt-submit-" + getName()) {
+				@Override
+				public final void run() {
+					submitExecutor.shutdown();
+					try {
+						submitExecutor.awaitTermination(
+							RequestConfig.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
+						);
+					} catch(final InterruptedException e) {
+						LOG.debug(Markers.ERR, "Awaiting the submit executor termination has been interrupted");
+					}
+				}
+			}
+		);
+		svcInterruptThreads.getLast().start();
 		for(final String addr: remoteLoadMap.keySet()) {
 			svcInterruptThreads.add(
-				new Thread("svcInterrupter@"+addr) {
+				new Thread("interrupt-svc-" + getName() + "-" + addr) {
 					@Override
 					public final void run() {
 						try {
@@ -795,7 +799,8 @@ implements LoadExecutor<WSObject> {
 		//
 		for(final Thread svcInterruptThread: svcInterruptThreads) {
 			try {
-				svcInterruptThread.join();
+				svcInterruptThread.join(RequestConfig.REQUEST_TIMEOUT_MILLISEC);
+				LOG.debug(Markers.MSG, "Finished: \"{}\"", svcInterruptThread);
 			} catch(final InterruptedException e) {
 				LOG.debug(Markers.ERR, e.toString(), e.getCause());
 			}
@@ -885,37 +890,38 @@ implements LoadExecutor<WSObject> {
 	//
 	@Override
 	public final void submit(final WSObject dataItem) {
-		if(maxCount > localSubmCount.get()) {
+		if(maxCount > submitExecutor.getTaskCount()) {
 			if(dataItem==null) { // poison
-				LOG.trace(Markers.MSG, "Got poison, invoking the interruption");
-				maxCount = localSubmCount.get();
+				LOG.trace(
+					Markers.MSG, "Got poison on #{}, invoking the soft interruption",
+					submitExecutor.getTaskCount()
+				);
+				maxCount = submitExecutor.getTaskCount();
 			} else {
 				final Object addrs[] = remoteLoadMap.keySet().toArray();
 				final String addr = String.class.cast(
-					addrs[(int) localSubmCount.get() % addrs.length]
+					addrs[(int) submitExecutor.getTaskCount() % addrs.length]
 				);
 				final SubmitTask submitTask = new SubmitTask(remoteLoadMap.get(addr), dataItem);
 				boolean passed = false;
 				int rejectCount = 0;
-				while(!passed && rejectCount < LoadExecutor.COUNT_RETRY_MAX) {
+				do {
 					try {
 						submitExecutor.submit(submitTask);
-						localSubmCount.incrementAndGet();
 						passed = true;
 					} catch(final RejectedExecutionException e) {
 						rejectCount ++;
 						try {
-							Thread.sleep(rejectCount * LoadExecutor.WAIT_QUANT_MILLISEC);
+							Thread.sleep(rejectCount * LoadExecutor.RETRY_DELAY_MILLISEC);
 						} catch(final InterruptedException ee) {
 							break;
 						}
 					}
-				}
-
+				} while(!passed && rejectCount < LoadExecutor.RETRY_COUNT_MAX);
 			}
 		} else {
-			LOG.info(Markers.MSG, "All {} tasks submitted", maxCount);
-			maxCount = localSubmCount.get();
+			LOG.debug(Markers.MSG, "All {} tasks submitted", maxCount);
+			maxCount = submitExecutor.getTaskCount();
 			Thread.currentThread().interrupt(); // interrupt the producer
 		}
 	}
@@ -965,6 +971,11 @@ implements LoadExecutor<WSObject> {
 	public final Producer<WSObject> getProducer()
 	throws RemoteException {
 		return remoteLoadMap.entrySet().iterator().next().getValue().getProducer();
+	}
+	//
+	@Override
+	public final String toString() {
+		return getName();
 	}
 	//
 }

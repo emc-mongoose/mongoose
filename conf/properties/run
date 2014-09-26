@@ -1,6 +1,6 @@
 #
 name:							mongoose
-version:						0.1.5.1
+version:						0.1.5.2
 
 # may be "standalone", "driver" or "controller"
 mode:							standalone
@@ -21,16 +21,16 @@ scenario.name:					single
 metrics.period.sec:				10
 
 #
-wait.quant.millisec:			100
+retry.delay.millisec:			100
 
 #
-retry.count.max:				250
+retry.count.max:				10
 
 #
-request.retries:				true
+request.retries:				false
 
 #
 request.timeout.millisec:		1000000
 
 #
-request.queue.factor:			2
+request.queue.factor:			1

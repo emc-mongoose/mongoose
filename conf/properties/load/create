@@ -1,3 +1,3 @@
-size.min:	8kib
-size.max:	8kib
-threads:	10
+size.min:	1Mb
+size.max:	1Mb
+threads:	4

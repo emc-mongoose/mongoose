@@ -12,6 +12,7 @@ import com.codahale.metrics.Snapshot;
 import com.emc.mongoose.Consumer;
 import com.emc.mongoose.LoadExecutor;
 import com.emc.mongoose.Producer;
+import com.emc.mongoose.api.RequestConfig;
 import com.emc.mongoose.conf.RunTimeConfig;
 import com.emc.mongoose.data.UniformDataSource;
 import com.emc.mongoose.data.persist.FileProducer;
@@ -185,7 +186,8 @@ implements LoadExecutor<WSObject> {
 			do {
 				logMetrics(Markers.PERF_AVG);
 				TimeUnit.SECONDS.sleep(METRICS_UPDATE_PERIOD_SEC); // sleep
-			} while(maxCount > counterReqSucc.getCount() + counterReqFail.getCount());
+			} while(maxCount > counterReqSucc.getCount() + counterReqFail.getCount() + counterRej.getCount());
+			LOG.trace(Markers.MSG, "Max count reached");
 		} catch(final InterruptedException e) {
 			LOG.trace(Markers.MSG, "Externally interrupted \"{}\"", getName());
 		}
@@ -197,45 +199,61 @@ implements LoadExecutor<WSObject> {
 	@Override
 	public final synchronized void interrupt() {
 		// set maxCount equal to current count
-		maxCount = counterSubm.getCount();
-		// interrupt producer
-		if(producer!=null) {
-			try {
-				producer.interrupt();
-				LOG.debug(Markers.MSG, "Stopped object producer {}", producer.toString());
-			} catch(final IOException e) {
-				ExceptionHandler.trace(
-					LOG, Level.WARN, e,
-					String.format("Failed to stop the producer: %s", producer.toString())
-				);
+		maxCount = counterSubm.getCount() + counterRej.getCount();
+		LOG.trace(Markers.MSG, "Interrupting, max count is set to {}", maxCount);
+		//
+		final Thread interrupters[] = new Thread[nodes.length + 2];
+		// interrupt a producer
+		interrupters[0] = new Thread("interrupt-producer-" + getName()) {
+			@Override
+			public final void run() {
+				if(producer!=null) {
+					try {
+						producer.interrupt();
+						LOG.debug(Markers.MSG, "Stopped object producer {}", producer.toString());
+					} catch(final IOException e) {
+						ExceptionHandler.trace(
+							LOG, Level.WARN, e,
+							String.format("Failed to stop the producer: %s", producer.toString())
+						);
+					}
+				}
+
 			}
-		}
-		// interrupt submit executor
-		submitExecutor.shutdown();
-		submitExecutor.getQueue().clear();
-		try {
-			submitExecutor.awaitTermination(1, TimeUnit.MINUTES);
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.ERR, "Interrupted while awaiting the submitter termination");
-		}
+		};
+		// interrupt the submit execution
+		interrupters[1] = new Thread("interrupt-submit-" + getName()) {
+			@Override
+			public final void run() {
+				// interrupt submit executor
+				submitExecutor.shutdown();
+				try {
+					submitExecutor.awaitTermination(
+						RequestConfig.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
+					);
+				} catch(final InterruptedException e) {
+					LOG.debug(Markers.ERR, "Interrupted while awaiting the submitter termination");
+				}
+			}
+		};
+		interrupters[1].start();
 		// interrupt node executors in parallel threads
-		final Thread interrupters[] = new Thread[nodes.length];
-		for(int i=0; i<nodes.length; i++) {
+		for(int i = 0; i < nodes.length; i ++) {
 			final WSNodeExecutor nextNode = nodes[i];
-			interrupters[i] = new Thread() {
+			interrupters[i + 2] = new Thread("interrupt-" + getName() + "-" + nextNode.getAddr()) {
 				@Override
 				public final void run() {
 					nextNode.interrupt();
 				}
 			};
-			interrupters[i].start();
+			interrupters[i + 2].start();
 
 		}
 		// wait for node executors to become interrupted
-		for(int i=0; i<nodes.length; i++) {
+		for(int i = 0; i < interrupters.length; i ++) {
 			try {
-				interrupters[i].join();
-				LOG.debug(Markers.MSG, "Interrupted node executor {}", nodes[i]);
+				interrupters[i].join(RequestConfig.REQUEST_TIMEOUT_MILLISEC);
+				LOG.debug(Markers.MSG, "Finished: \"{}\"", interrupters[i].getName());
 			} catch(final InterruptedException e) {
 				LOG.debug(Markers.ERR, e.toString());
 			}
@@ -285,50 +303,49 @@ implements LoadExecutor<WSObject> {
 	private final static class SubmitTask
 	implements Runnable {
 		//
-		private final WSNodeExecutor[] nodes;
-		private final Counter counterSubm;
+		private final WSNodeExecutor node;
 		private final WSObject dataItem;
 		//
-		private SubmitTask(
-			final WSNodeExecutor[] nodes, final Counter counterSubm, final WSObject dataItem
-		) {
-			this.nodes = nodes;
-			this.counterSubm = counterSubm;
+		private SubmitTask(final WSNodeExecutor node, final WSObject dataItem) {
+			this.node = node;
 			this.dataItem = dataItem;
 		}
 		//
 		@Override
 		public final void run() {
-			nodes[(int) counterSubm.getCount() % nodes.length].submit(dataItem);
+			node.submit(dataItem);
 		}
 	}
 	//
 	@Override
 	public void submit(final WSObject object) {
 		if(object==null || isInterrupted()) { // handle the poison
-			maxCount = counterSubm.getCount();
+			maxCount = counterSubm.getCount() + counterRej.getCount();
+			LOG.trace(Markers.MSG, "Poisoned on #{}", maxCount);
 			for(final WSNodeExecutor nextNode : nodes) {
 				if(!nextNode.isShutdown()) {
 					nextNode.submit(WSObject.class.cast(null));
 				}
 			}
 		} else {
-			final SubmitTask submitTask = new SubmitTask(nodes, counterSubm, object);
+			final SubmitTask submitTask = new SubmitTask(
+				nodes[(int) submitExecutor.getTaskCount() % nodes.length], object
+			);
 			boolean passed = false;
 			int rejectCount = 0;
-			while(!passed && rejectCount < LoadExecutor.COUNT_RETRY_MAX) {
+			do {
 				try {
 					submitExecutor.submit(submitTask);
 					passed = true;
 				} catch(final RejectedExecutionException e) {
 					rejectCount ++;
 					try {
-						Thread.sleep(rejectCount * LoadExecutor.WAIT_QUANT_MILLISEC);
+						Thread.sleep(rejectCount * LoadExecutor.RETRY_DELAY_MILLISEC);
 					} catch(final InterruptedException ee) {
 						break;
 					}
 				}
-			}
+			} while(!passed && rejectCount < LoadExecutor.RETRY_COUNT_MAX);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

@@ -95,10 +95,15 @@
 					"PatternLayout": {
 						"pattern": "%d{ISO8601}{GMT+0} %-5p %-16.16c{1} %-32.32t %m%n"
 					},
-					"MarkerFilter": {
-						"marker": "perfAvg",
-						"onMatch": "ACCEPT",
-						"onMismatch": "DENY"
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "perfAvg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
 					}
 				}, {
 					"name": "perfSumFile",

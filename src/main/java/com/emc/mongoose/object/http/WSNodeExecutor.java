@@ -39,6 +39,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 06.06.14.
  */
@@ -55,6 +58,8 @@ implements LoadExecutor<WSObject> {
 	private final Histogram reqDur, reqDurParent;
 	//
 	private volatile Consumer<WSObject> consumer = null;
+	private final Lock lock = new ReentrantLock();
+	private final Condition condInterrupted = lock.newCondition();
 	//
 	private WSNodeExecutor(
 		final int threadsPerNode, final WSRequestConfig localReqConf,
@@ -125,28 +130,39 @@ implements LoadExecutor<WSObject> {
 		final WSRequest request = WSRequest.getInstanceFor(localReqConf, object);
 		boolean passed = false;
 		int rejectCount = 0;
-		while(!passed && rejectCount < LoadExecutor.COUNT_RETRY_MAX) {
+		do {
 			try {
 				super.submit(request);
 				passed = true;
 			} catch(final RejectedExecutionException e) {
 				rejectCount ++;
 				try {
-					Thread.sleep(rejectCount * LoadExecutor.WAIT_QUANT_MILLISEC);
+					Thread.sleep(rejectCount * LoadExecutor.RETRY_DELAY_MILLISEC);
 				} catch(final InterruptedException ee) {
 					break;
 				}
 			}
-		}
+		} while(!passed && rejectCount < LoadExecutor.RETRY_COUNT_MAX);
 		//
 		if(object!=null) {
-			counterSubm.inc();
-			counterSubmParent.inc();
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-					Markers.MSG, "Request for the object {} succesfully submitted",
-					Long.toHexString(object.getId())
-				);
+			if(passed) {
+				counterSubm.inc();
+				counterSubmParent.inc();
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "Request #{} for the object \"{}\" successfully submitted",
+						counterSubmParent.getCount(), Long.toHexString(object.getId())
+					);
+				}
+			} else {
+				counterRej.inc();
+				counterRejParent.inc();
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "Request #{} for the object \"{}\" rejected",
+						counterSubmParent.getCount(), Long.toHexString(object.getId())
+					);
+				}
 			}
 		}
 	}
@@ -155,7 +171,8 @@ implements LoadExecutor<WSObject> {
 	protected final void afterExecute(final Runnable reqTask, final Throwable thrown) {
 		if(thrown!=null) {
 			LOG.warn(Markers.ERR, thrown.toString());
-			counterReqFail.inc(); counterReqFailParent.inc();
+			counterReqFail.inc();
+			counterReqFailParent.inc();
 		} else {
 			try(final WSRequest request = WSRequest.class.cast(Future.class.cast(reqTask).get())) {
 				final WSObject object = request.getDataItem();
@@ -189,16 +206,18 @@ implements LoadExecutor<WSObject> {
 				}
 				//
 			} catch(final InterruptedException e) {
-				counterReqFail.inc(); counterReqFailParent.inc();
+				counterReqFail.inc();
+				counterReqFailParent.inc();
 				LOG.trace(Markers.ERR, "Interrupted while waiting for the response");
 			} catch(final CancellationException e) {
-				counterReqFail.inc(); counterReqFailParent.inc();
+				counterReqFail.inc();
+				counterReqFailParent.inc();
 				LOG.warn(Markers.ERR, "Request has been cancelled:", e);
-				counterReqFail.inc(); counterReqFailParent.inc();
 			} catch(final ExecutionException e) {
 				if(isShutdown()) {
 					LOG.trace(Markers.ERR, "Request interrupted due to node executor shutdown");
-					counterRej.inc(); counterRejParent.inc();
+					counterRej.inc();
+					counterRejParent.inc();
 				} else {
 					final Throwable cause = e.getCause();
 					if(InterruptedException.class.isInstance(cause)) {
@@ -250,7 +269,8 @@ implements LoadExecutor<WSObject> {
 					}
 				}
 			} catch(final Exception e) {
-				counterReqFail.inc(); counterReqFailParent.inc();
+				counterReqFail.inc();
+				counterReqFailParent.inc();
 				LOG.warn(Markers.MSG, reqTask.getClass().getCanonicalName());
 				ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
 			}
@@ -336,11 +356,23 @@ implements LoadExecutor<WSObject> {
 	}
 	//
 	@Override
+	public final void join(final long milliSecs)
+	throws InterruptedException {
+		if(lock.tryLock()) {
+			try {
+				condInterrupted.await(milliSecs, TimeUnit.MILLISECONDS);
+			} finally {
+				lock.unlock();
+			}
+		}
+	}
+	//
+	@Override
 	public final void interrupt() {
+		//
 		LOG.debug(Markers.MSG, "Interrupting...");
 		localReqConf.setRetries(false);
 		shutdown();
-		getQueue().clear();
 		try {
 			LOG.debug(
 				Markers.MSG, "Wait at most {} ms before terminating {}+{} tasks",
@@ -350,6 +382,15 @@ implements LoadExecutor<WSObject> {
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.ERR, "Interrupted while waiting the submitted tasks to finish");
 		}
+		//
+		if(lock.tryLock()) {
+			try {
+				condInterrupted.signalAll();
+			} finally {
+				lock.unlock();
+			}
+		}
+		//
 	}
 	//
 	@Override

@@ -50,6 +50,7 @@ implements Externalizable {
 	static {
 		try {
 			DEFAULT = new UniformDataSource();
+			LOG.info(Markers.MSG, "Default data source: {}", DEFAULT.toString());
 			/*DATA_SRC_UPDATE = new UniformDataSource(
 				Long.reverse(
 					nextWord(

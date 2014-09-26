@@ -51,7 +51,7 @@ implements Producer<T> {
 	//
 	@Override
 	public final void run() {
-		int dataItemsCount = -1;
+		long dataItemsCount = 0;
 		try(BufferedReader fReader = Files.newBufferedReader(fPath, StandardCharsets.UTF_8)) {
 			String nextLine;
 			T nextData;
@@ -62,14 +62,13 @@ implements Producer<T> {
 			do {
 				//
 				nextLine = fReader.readLine();
-				LOG.trace(Markers.MSG, "Got next line: {}", nextLine);
+				LOG.trace(Markers.MSG, "Got next line #{}: \"{}\"", dataItemsCount, nextLine);
 				//
 				if(nextLine==null) {
 					LOG.debug(Markers.MSG, "No next line, exiting");
 					break;
 				} else {
 					nextData = dataItemConstructor.newInstance(nextLine);
-					LOG.trace(Markers.MSG, "Parsed the line");
 					try {
 						consumer.submit(nextData);
 					} catch(final RemoteException e) {
@@ -85,8 +84,8 @@ implements Producer<T> {
 		} finally {
 			LOG.debug(Markers.MSG, "Produced {} data items", dataItemsCount);
 			try {
-				LOG.debug(Markers.MSG, "Feeding poison to consumer");
-				consumer.submit(null);
+				LOG.debug(Markers.MSG, "Feeding poison to consumer \"{}\"", consumer.toString());
+				consumer.submit(null); // or: consumer.setMaxCount(dataItemsCount);
 			} catch(final RemoteException e) {
 				LOG.debug(Markers.ERR, "Failed to submit poison to consumer due to {}", e.toString());
 			}
