@@ -4,6 +4,7 @@ import com.emc.mongoose.conf.RunTimeConfig;
 import com.emc.mongoose.logging.Markers;
 import com.emc.mongoose.object.http.WSLoadBuilder;
 import com.emc.mongoose.object.http.data.WSObject;
+import com.emc.mongoose.object.http.driver.impl.AppendService;
 import com.emc.mongoose.object.http.driver.impl.CreateService;
 import com.emc.mongoose.object.http.driver.impl.DeleteService;
 import com.emc.mongoose.object.http.driver.impl.ReadService;
@@ -94,6 +95,12 @@ implements LoadBuilderService<T> {
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
+					case APPEND:
+						LOG.debug("New append load");
+						loadSvc = new AppendService(
+							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
+							minObjSize, maxObjSize
+						);
 				}
 			} catch(CloneNotSupportedException|IOException e) {
 				throw new IllegalStateException(e);

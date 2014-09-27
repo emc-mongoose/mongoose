@@ -63,7 +63,9 @@ implements LoadExecutor<WSObject> {
 	private final static MBeanServer MBEAN_SERVER = ServiceUtils.getMBeanServer(
 		RunTimeConfig.getInt("remote.monitor.port")
 	);
-	private final static String DEFAULT_DOMAIN = "metrics";
+	private final static String
+		DEFAULT_DOMAIN = "metrics",
+		FMT_MSG_FAIL_FETCH_VALUE = "Failed to fetch the value for \"%s\" from %s";
 	protected final JmxReporter metricsReporter = JmxReporter.forRegistry(metrics)
 		.convertDurationsTo(TimeUnit.SECONDS)
 		.convertRatesTo(TimeUnit.SECONDS)
@@ -354,7 +356,7 @@ implements LoadExecutor<WSObject> {
 								ExceptionHandler.trace(
 									LOG, Level.WARN, e,
 									String.format(
-										"Value fetching failed for metric \"%s\" from %s",
+										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName() + "." + attrName, addr
 									)
 								);
@@ -412,7 +414,7 @@ implements LoadExecutor<WSObject> {
 								ExceptionHandler.trace(
 									LOG, Level.WARN, e,
 									String.format(
-										"Value fetching failed for metric \"%s\" from %s",
+										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName() + "." + attrName, addr
 									)
 								);
@@ -470,7 +472,7 @@ implements LoadExecutor<WSObject> {
 								ExceptionHandler.trace(
 									LOG, Level.WARN, e,
 									String.format(
-										"Value fetching failed for metric \"%s\" from %s",
+										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName()+"."+attrName, addr
 									)
 								);
@@ -525,7 +527,7 @@ implements LoadExecutor<WSObject> {
 								ExceptionHandler.trace(
 									LOG, Level.WARN, e,
 									String.format(
-										"Value fetching failed for metric \"%s\" from %s",
+										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName() + "." + attrName, addr
 									)
 								);
@@ -580,7 +582,7 @@ implements LoadExecutor<WSObject> {
 								ExceptionHandler.trace(
 									LOG, Level.WARN, e,
 									String.format(
-										"Failed to fetch the value for \"{}\" from {}",
+										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName()+"."+attrName, addr
 									)
 								);
@@ -636,7 +638,7 @@ implements LoadExecutor<WSObject> {
 	}
 	//
 	Future<Long>
-		countSubm, /*countRej, */countReqSucc, countReqFail,
+		countSubm, countRej, countReqSucc, countReqFail,
 		/*countNanoSec, countBytes, */minDur, maxDur;
 	Future<Double>
 		meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
@@ -647,7 +649,7 @@ implements LoadExecutor<WSObject> {
 		//
 		try {
 			countSubm = mgmtConnExecutor.submit(countSubmGetter);
-			//countRej = mgmtConnExecutor.submit(countRejGetter);
+			countRej = mgmtConnExecutor.submit(countRejGetter);
 			countReqSucc = mgmtConnExecutor.submit(countSuccGetter);
 			countReqFail = mgmtConnExecutor.submit(countFailGetter);
 			//countNanoSec = mgmtConnExecutor.submit(countNanoSecGetter);
@@ -745,7 +747,7 @@ implements LoadExecutor<WSObject> {
 					logMetrics(Markers.PERF_AVG);
 					logMetaInfoFrames();
 					TimeUnit.SECONDS.sleep(METRICS_UPDATE_PERIOD_SEC); // sleep
-					countDone = countReqSucc.get() + countReqFail.get();
+					countDone = countReqSucc.get() + countReqFail.get() + countRej.get();
 				} catch(final InterruptedException e) {
 					break;
 				}

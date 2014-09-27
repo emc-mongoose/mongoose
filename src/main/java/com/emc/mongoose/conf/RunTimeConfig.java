@@ -35,8 +35,8 @@ implements Externalizable {
 		MAP_OVERRIDE.put(
 			"data.size",
 			new String[] {
-				"load.create.size.min",
-				"load.create.size.max"
+				"data.size.min",
+				"data.size.max"
 			}
 		);
 		MAP_OVERRIDE.put(

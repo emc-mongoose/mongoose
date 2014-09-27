@@ -67,7 +67,7 @@ implements LoadBuilder<T> {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		paramName = "load.create.size.min";
+		paramName = "data.size.min";
 		try {
 			setMinObjSize(RunTimeConfig.getSizeBytes(paramName));
 		} catch(final NoSuchElementException e) {
@@ -76,7 +76,7 @@ implements LoadBuilder<T> {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		paramName = "load.create.size.max";
+		paramName = "data.size.max";
 		try {
 			setMaxObjSize(RunTimeConfig.getSizeBytes(paramName));
 		} catch(final NoSuchElementException e) {

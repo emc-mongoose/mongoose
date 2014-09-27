@@ -1,5 +1,7 @@
 # zero means unlimited
 count:			0
+size.min:	1Mb
+size.max:	1Mb
 
 # should be overriden
 src.fpath:
