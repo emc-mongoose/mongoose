@@ -764,7 +764,7 @@ implements LoadExecutor<WSObject> {
 	public final void interrupt() {
 		LOG.debug(Markers.MSG, "Interrupting {}...", getName());
 		//
-		LinkedList<Thread> svcInterruptThreads = new LinkedList<>();
+		final LinkedList<Thread> svcInterruptThreads = new LinkedList<>();
 		svcInterruptThreads.add(
 			new Thread("interrupt-submit-" + getName()) {
 				@Override
@@ -781,6 +781,13 @@ implements LoadExecutor<WSObject> {
 			}
 		);
 		svcInterruptThreads.getLast().start();
+		try {
+			svcInterruptThreads.getLast().join();
+			svcInterruptThreads.removeLast();
+		} catch(final InterruptedException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while interrupting the submitter");
+		}
+		//
 		for(final String addr: remoteLoadMap.keySet()) {
 			svcInterruptThreads.add(
 				new Thread("interrupt-svc-" + getName() + "-" + addr) {

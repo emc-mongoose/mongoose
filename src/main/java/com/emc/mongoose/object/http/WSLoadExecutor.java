@@ -204,7 +204,7 @@ implements LoadExecutor<WSObject> {
 		maxCount = counterSubm.getCount() + counterRej.getCount();
 		LOG.trace(Markers.MSG, "Interrupting, max count is set to {}", maxCount);
 		//
-		final Thread interrupters[] = new Thread[nodes.length + 2];
+		final Thread interrupters[] = new Thread[nodes.length];
 		// interrupt a producer
 		interrupters[0] = new Thread("interrupt-producer-" + getName()) {
 			@Override
@@ -234,30 +234,41 @@ implements LoadExecutor<WSObject> {
 						RequestConfig.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
 					);
 				} catch(final InterruptedException e) {
-					LOG.debug(Markers.ERR, "Interrupted while awaiting the submitter termination");
+					ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while awaiting the submitter termination");
 				}
 			}
 		};
 		interrupters[1].start();
+		//
+		try {
+			interrupters[0].join();
+		} catch(final InterruptedException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while interrupting producer");
+		}
+		try {
+			interrupters[1].join();
+		} catch(final InterruptedException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while interrupting submitter");
+		}
 		// interrupt node executors in parallel threads
 		for(int i = 0; i < nodes.length; i ++) {
 			final WSNodeExecutor nextNode = nodes[i];
-			interrupters[i + 2] = new Thread("interrupt-" + getName() + "-" + nextNode.getAddr()) {
+			interrupters[i] = new Thread("interrupt-" + getName() + "-" + nextNode.getAddr()) {
 				@Override
 				public final void run() {
 					nextNode.interrupt();
 				}
 			};
-			interrupters[i + 2].start();
+			interrupters[i].start();
 
 		}
 		// wait for node executors to become interrupted
-		for(int i = 0; i < interrupters.length; i ++) {
+		for(final Thread interrupter : interrupters) {
 			try {
-				interrupters[i].join(RequestConfig.REQUEST_TIMEOUT_MILLISEC);
-				LOG.debug(Markers.MSG, "Finished: \"{}\"", interrupters[i].getName());
+				interrupter.join(RequestConfig.REQUEST_TIMEOUT_MILLISEC);
+				LOG.debug(Markers.MSG, "Finished: \"{}\"", interrupter.getName());
 			} catch(final InterruptedException e) {
-				LOG.debug(Markers.ERR, e.toString());
+				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while interrupting the node executor");
 			}
 		}
 		// interrupt the monitoring thread
