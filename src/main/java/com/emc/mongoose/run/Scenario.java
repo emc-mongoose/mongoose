@@ -1,8 +1,8 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.conf.RunTimeConfig;
-import com.emc.mongoose.logging.ExceptionHandler;
-import com.emc.mongoose.logging.Markers;
+import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

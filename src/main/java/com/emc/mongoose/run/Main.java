@@ -1,8 +1,8 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.conf.RunTimeConfig;
-import com.emc.mongoose.logging.Markers;
-import com.emc.mongoose.object.http.driver.WSLoadBuilderService;
+import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.object.load.driver.WSLoadBuilderService;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
