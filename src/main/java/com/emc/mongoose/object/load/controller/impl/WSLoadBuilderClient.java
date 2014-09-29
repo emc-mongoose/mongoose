@@ -1,10 +1,11 @@
 package com.emc.mongoose.object.load.controller.impl;
 //
 import com.emc.mongoose.base.api.RequestConfig;
-import com.emc.mongoose.base.load.LoadBuilder;
-import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.object.api.WSObjectRequestConfig;
+import com.emc.mongoose.object.load.ObjectLoadExecutor;
+import com.emc.mongoose.object.load.controller.ObjectLoadBuilderClient;
+import com.emc.mongoose.object.load.driver.ObjectLoadBuilderService;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.persist.FileProducer;
 import com.emc.mongoose.util.logging.Markers;
@@ -34,9 +35,9 @@ import java.util.NoSuchElementException;
 /**
  Created by kurila on 08.05.14.
  */
-public final class WSLoadBuilderClient<T extends WSDataObject, U extends LoadExecutor<T>>
+public final class WSLoadBuilderClient<T extends WSDataObject, U extends ObjectLoadExecutor<T>>
 extends HashMap<String, LoadBuilderService<T, U>>
-implements LoadBuilder<T, U> {
+implements ObjectLoadBuilderClient<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//

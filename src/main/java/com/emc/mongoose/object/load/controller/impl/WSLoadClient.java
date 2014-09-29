@@ -2,7 +2,7 @@ package com.emc.mongoose.object.load.controller.impl;
 //
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.object.load.ObjectLoadExecutor;
+import com.emc.mongoose.object.load.controller.ObjectLoadClient;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.persist.LogConsumer;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -52,7 +52,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class WSLoadClient<T extends WSDataObject>
 extends Thread
-implements ObjectLoadExecutor<T> {
+implements ObjectLoadClient<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
