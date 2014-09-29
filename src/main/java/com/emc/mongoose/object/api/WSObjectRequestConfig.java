@@ -36,7 +36,9 @@ extends DataObjectRequestConfig<T> {
 		MSG_TMPL_RANGE_BYTES = "bytes=%d-%d",
 		MSG_TMPL_RANGE_BYTES_APPEND = "bytes=%d-",
 		MSG_NO_DATA_ITEM = "Data item is not specified",
-		MSG_NO_REQ = "No request specified to apply to";
+		MSG_NO_REQ = "No request specified to apply to",
+		//
+		REL_PKG_WS_PROVIDERS = ".provider.http.";
 	String[]
 		HEADERS4CANONICAL = {
 			HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.DATE

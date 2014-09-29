@@ -4,9 +4,9 @@ from sys import exit
 #
 from loadbuilder import INSTANCE as loadBuilder
 #
-from com.emc.mongoose.api import Request
-from com.emc.mongoose.conf import RunTimeConfig
-from com.emc.mongoose.logging import Markers
+from com.emc.mongoose.base.api import Request
+from com.emc.mongoose.util.conf import RunTimeConfig
+from com.emc.mongoose.util.logging import Markers
 #
 from org.apache.logging.log4j import LogManager
 #

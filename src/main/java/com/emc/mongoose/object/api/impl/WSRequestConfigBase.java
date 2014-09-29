@@ -72,7 +72,7 @@ implements WSObjectRequestConfig<T> {
 		WSRequestConfigBase reqConf = null;
 		final String apiImplClsFQN =
 			WSRequestConfigBase.class.getPackage().getName() +
-				".provider.WS" + StringUtils.capitalize(api.toLowerCase());
+				REL_PKG_WS_PROVIDERS + StringUtils.capitalize(api.toLowerCase());
 		try {
 			reqConf = WSRequestConfigBase.class.cast(
 				Class.forName(apiImplClsFQN).getConstructors()[0].newInstance()

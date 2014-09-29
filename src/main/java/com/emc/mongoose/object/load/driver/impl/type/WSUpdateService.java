@@ -1,4 +1,4 @@
-package com.emc.mongoose.object.load.driver.impl;
+package com.emc.mongoose.object.load.driver.impl.type;
 //
 import com.emc.mongoose.base.data.persist.FrameBuffConsumer;
 import com.emc.mongoose.object.api.WSObjectRequestConfig;

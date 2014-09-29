@@ -4,11 +4,9 @@ from loadbuilder import INSTANCE as loadBuilder
 #
 from org.apache.logging.log4j import LogManager
 #
-from com.emc.mongoose.logging import Markers
-from com.emc.mongoose.object.http.api import WSRequestConfig
+from com.emc.mongoose.util.logging import Markers
 #
 from java.util import NoSuchElementException
 #
 LOG = LogManager.getLogger()
-loadBuilder.setRequestConfig(WSRequestConfig.useItem())
 # TODO

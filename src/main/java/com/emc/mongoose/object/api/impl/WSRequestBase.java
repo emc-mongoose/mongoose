@@ -3,7 +3,7 @@ package com.emc.mongoose.object.api.impl;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.object.api.WSObjectRequest;
 import com.emc.mongoose.object.api.WSObjectRequestConfig;
-import com.emc.mongoose.object.api.impl.provider.WSAtmos;
+import com.emc.mongoose.object.api.impl.provider.http.Atmos;
 import com.emc.mongoose.object.load.impl.type.WSRead;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -87,7 +87,7 @@ implements WSObjectRequest<T> {
 			//this.reqConf = (WSRequestConfig<T>) reqConf;
 			switch(reqConf.getLoadType()) {
 				case CREATE:
-					httpRequest = WSAtmos.class.getSimpleName().equals(reqConf.getAPI()) ?
+					httpRequest = Atmos.class.getSimpleName().equals(reqConf.getAPI()) ?
 						new HttpPost() : new HttpPut();
 					break;
 				case READ:

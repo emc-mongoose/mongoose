@@ -59,11 +59,12 @@ dependencies {
 
 task rmic(dependsOn: compileJava) << {
 	String[] listClsRemote = [
-		'com.emc.mongoose.object.load.driver.WSLoadBuilderService',
-		'com.emc.mongoose.object.load.driver.impl.CreateService',
-		'com.emc.mongoose.object.load.driver.impl.DeleteService',
-		'com.emc.mongoose.object.load.driver.impl.ReadService',
-		'com.emc.mongoose.object.load.driver.impl.UpdateService'
+		'com.emc.mongoose.object.load.driver.impl.WSLoadBuilderService',
+		'com.emc.mongoose.object.load.driver.impl.type.WSAppendService',
+		'com.emc.mongoose.object.load.driver.impl.type.WSCreateService',
+		'com.emc.mongoose.object.load.driver.impl.type.WSDeleteService',
+		'com.emc.mongoose.object.load.driver.impl.type.WSReadService',
+		'com.emc.mongoose.object.load.driver.impl.type.WSUpdateService'
 	]
 	for(cls in listClsRemote) {
 		String command = """rmic -classpath ${sourceSets.main.output.classesDir} -d ${sourceSets.main.output.classesDir} ${cls}"""

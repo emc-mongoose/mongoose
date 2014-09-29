@@ -1,15 +1,14 @@
-package com.emc.mongoose.object.api.impl.provider;
+package com.emc.mongoose.object.api.impl.provider.http;
 //
 import com.emc.mongoose.object.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.object.data.WSDataObject;
-//
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
+//
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.methods.HttpRequestBase;
-//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -21,38 +20,58 @@ import java.util.NoSuchElementException;
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSS3
+public final class Atmos
 extends WSRequestConfigBase<WSDataObject> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String
-		FMT_PATH = "/%s/%x",
-		FMT_AUTH_VALUE = RunTimeConfig.getString("api.s3.auth.prefix") + " %s:%s",
-		MSG_NO_BUCKET = "Bucket is not specified";
+		FMT_PATH =
+			"/" + RunTimeConfig.getString("api.atmos.path.rest") +
+			"/" + RunTimeConfig.getString("api.atmos.interface") + "/%x";
 	//
-
+	private String subTenant;
 	//
-	private String bucket;
-	//
-	public WSS3() {
-		api = WSS3.class.getSimpleName();
+	public
+	Atmos() {
+		api = Atmos.class.getSimpleName();
 	}
 	//
-	public final String getBucket() {
-		return bucket;
+	public final String getSubTenant() {
+		return subTenant;
 	}
-	public final WSS3 setBucket(final String bucket) {
-		this.bucket = bucket;
+	//
+	public final
+	Atmos setSubTenant(final String subTenant)
+	throws IllegalStateException {
+		this.subTenant = subTenant;
+		if(subTenant==null) {
+			throw new IllegalStateException("Subtenant is not specified for Atmos REST API");
+		} else if(userName!=null) {
+			sharedHeadersMap.put(KEY_EMC_UID, subTenant+'/'+userName);
+		}
 		return this;
 	}
 	//
 	@Override
-	public final WSS3 setProperties(final RunTimeConfig props) {
+	public final
+	Atmos setUserName(final String userName) {
+		super.setUserName(userName);
+		if(userName==null) {
+			throw new IllegalStateException("User name is not specified for Atmos REST API");
+		} else if(subTenant!=null) {
+			sharedHeadersMap.put(KEY_EMC_UID, subTenant+'/'+userName);
+		}
+		return this;
+	}
+	//
+	@Override
+	public final
+	Atmos setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		//
-		final String paramName = "api.s3.bucket";
+		final String paramName = "api.atmos.subtenant";
 		try {
-			setBucket(RunTimeConfig.getString(paramName));
+			setSubTenant(RunTimeConfig.getString(paramName));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
@@ -61,8 +80,9 @@ extends WSRequestConfigBase<WSDataObject> {
 	}
 	//
 	@Override
-	public WSS3 clone() {
-		final WSS3 copy = new WSS3();
+	public
+	Atmos clone() {
+		final Atmos copy = new Atmos();
 		copy.setAddr(getAddr());
 		copy.setLoadType(getLoadType());
 		copy.setPort(getPort());
@@ -71,7 +91,7 @@ extends WSRequestConfigBase<WSDataObject> {
 		copy.setScheme(getScheme());
 		copy.setClient(getClient());
 		copy.setNameSpace(getNameSpace());
-		copy.setBucket(getBucket());
+		copy.setSubTenant(getSubTenant());
 		return copy;
 	}
 	//
@@ -79,24 +99,21 @@ extends WSRequestConfigBase<WSDataObject> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setBucket(String.class.cast(in.readObject()));
+		setSubTenant(String.class.cast(in.readObject()));
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(bucket);
+		out.writeObject(subTenant);
 	}
 	//
 	@Override
 	protected final void applyURI(final HttpRequestBase httpRequest, final WSDataObject dataItem)
-	throws IllegalStateException, URISyntaxException {
+	throws URISyntaxException {
 		if(httpRequest==null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
-		}
-		if(bucket==null) {
-			throw new IllegalArgumentException(MSG_NO_BUCKET);
 		}
 		if(dataItem==null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
@@ -104,7 +121,7 @@ extends WSRequestConfigBase<WSDataObject> {
 		synchronized(uriBuilder) {
 			httpRequest.setURI(
 				uriBuilder.setPath(
-					String.format(FMT_PATH, bucket, dataItem.getId())
+					String.format(FMT_PATH, dataItem.getId())
 				).build()
 			);
 		}
@@ -112,20 +129,26 @@ extends WSRequestConfigBase<WSDataObject> {
 	//
 	@Override
 	protected final void applyAuthHeader(final HttpRequestBase httpRequest) {
-		httpRequest.addHeader(HttpHeaders.CONTENT_MD5, ""); // checksum of the data item is not avalable before streaming
-		httpRequest.setHeader(
-			HttpHeaders.AUTHORIZATION,
-			String.format(FMT_AUTH_VALUE, userName, getSignature(getCanonical(httpRequest)))
-		);
-		httpRequest.removeHeader(httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5)); // remove temporary header
+		if(httpRequest.getLastHeader(HttpHeaders.RANGE)==null) {
+			httpRequest.addHeader(HttpHeaders.RANGE, ""); // temporary required for canonical form
+		}
+		//
+		httpRequest.addHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
+		//
+		final Header headerLastRange = httpRequest.getLastHeader(HttpHeaders.RANGE);
+		if(headerLastRange!=null && headerLastRange.getValue().length()==0) { // the header is temp
+			httpRequest.removeHeader(headerLastRange);
+		}
+
 	}
 	//
 	protected String getCanonical(final HttpRequestBase httpRequest) {
-		StringBuffer buffer = new StringBuffer(httpRequest.getMethod());
-		//
-		for(String headerName: HEADERS4CANONICAL) {
-			// support for multiple non-unique header keys
-			for(final Header header: httpRequest.getHeaders(headerName)) {
+		final StringBuilder buffer = new StringBuilder(httpRequest.getMethod());
+		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
+		Header header;
+		for(final String headerName: HEADERS4CANONICAL) {
+			header = httpRequest.getFirstHeader(headerName);
+			if(header!=null) {
 				buffer.append('\n').append(header.getValue());
 			}
 			if(sharedHeadersMap.containsKey(headerName)) {
@@ -133,27 +156,27 @@ extends WSRequestConfigBase<WSDataObject> {
 			}
 		}
 		//
-		for(String emcHeaderName: HEADERS_EMC) {
-			for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
+		buffer.append('\n').append(httpRequest.getURI().getRawPath());
+		//
+		for(final String emcHeaderName: HEADERS_EMC) {
+			header = httpRequest.getFirstHeader(emcHeaderName);
+			if(header!=null) {
 				buffer
-					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(emcHeader.getValue());
+					.append('\n').append(emcHeaderName)
+					.append(':').append(header.getValue());
 			}
 			if(sharedHeadersMap.containsKey(emcHeaderName)) {
 				buffer
-					.append('\n').append(emcHeaderName.toLowerCase())
+					.append('\n').append(emcHeaderName)
 					.append(':').append(sharedHeadersMap.get(emcHeaderName));
 			}
 		}
-		//
-		buffer.append('\n').append(httpRequest.getURI().getRawPath());
-		//
-		LOG.trace(Markers.MSG, "Canonical request representation:\n{}", buffer);
 		//
 		return buffer.toString();
 	}
 	//
 	protected final String getSignature(final String canonicalForm) {
+		LOG.trace(Markers.MSG, "Canonical form: {}", canonicalForm);
 		byte[] signature = null;
 		try {
 			synchronized(mac) {

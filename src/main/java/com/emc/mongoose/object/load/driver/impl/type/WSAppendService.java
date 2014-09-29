@@ -1,12 +1,12 @@
-package com.emc.mongoose.object.load.driver.impl;
+package com.emc.mongoose.object.load.driver.impl.type;
 //
 import com.emc.mongoose.base.data.persist.FrameBuffConsumer;
 import com.emc.mongoose.object.api.WSObjectRequestConfig;
-import com.emc.mongoose.object.data.impl.WSDataObjectBase;
 import com.emc.mongoose.object.load.ObjectLoadExecutor;
 import com.emc.mongoose.object.load.driver.ObjectLoadService;
+import com.emc.mongoose.object.load.impl.type.WSAppend;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.object.load.impl.type.WSCreate;
+import com.emc.mongoose.object.data.WSDataObject;
 import com.emc.mongoose.base.load.driver.ConsumerService;
 import com.emc.mongoose.util.remote.RecordFrameBuffer;
 import com.emc.mongoose.util.remote.Service;
@@ -22,25 +22,25 @@ import java.util.List;
 /**
  Created by kurila on 30.05.14.
  */
-public final class WSCreateService<T extends WSDataObjectBase>
-extends WSCreate<T>
+public final class WSAppendService<T extends WSDataObject>
+extends WSAppend<T>
 implements ObjectLoadService<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public WSCreateService(
+	public WSAppendService(
 		final String[] addrs, final WSObjectRequestConfig<T> reqConf, final long maxCount,
-		final int threadsPerNode, final long minObjSize, final long maxObjSize
+		final int threadsPerNode, final long minAppendSize, final long maxAppendSize
 	)
-	throws IOException, CloneNotSupportedException {
-		super(addrs, reqConf, maxCount, threadsPerNode, null, minObjSize, maxObjSize);
+		throws IOException, CloneNotSupportedException {
+		super(addrs, reqConf, maxCount, threadsPerNode, null, minAppendSize, maxAppendSize);
 		// by default, may be overriden later externally:
 		super.setConsumer(new FrameBuffConsumer<T>());
 	}
 	//
 	@Override
 	public final synchronized void close()
-	throws IOException {
+		throws IOException {
 		super.close();
 		// close the exposed network service, if any
 		final Service svc = ServiceUtils.getLocalSvc(getName());
@@ -74,7 +74,7 @@ implements ObjectLoadService<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final List<T> takeFrame()
-	throws RemoteException {
+		throws RemoteException {
 		List<T> recFrame = Collections.emptyList();
 		if(RecordFrameBuffer.class.isInstance(consumer)) {
 			recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();

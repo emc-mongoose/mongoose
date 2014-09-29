@@ -1,17 +1,17 @@
-package com.emc.mongoose.object.load.driver.impl;
+package com.emc.mongoose.object.load.driver.impl.type;
 //
 import com.emc.mongoose.base.data.persist.FrameBuffConsumer;
 import com.emc.mongoose.object.api.WSObjectRequestConfig;
+import com.emc.mongoose.object.data.impl.WSDataObjectBase;
 import com.emc.mongoose.object.load.ObjectLoadExecutor;
 import com.emc.mongoose.object.load.driver.ObjectLoadService;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.object.data.WSDataObject;
-import com.emc.mongoose.object.load.impl.type.WSDelete;
+import com.emc.mongoose.object.load.impl.type.WSCreate;
 import com.emc.mongoose.base.load.driver.ConsumerService;
 import com.emc.mongoose.util.remote.RecordFrameBuffer;
 import com.emc.mongoose.util.remote.Service;
-//
 import com.emc.mongoose.util.remote.ServiceUtils;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -22,17 +22,18 @@ import java.util.List;
 /**
  Created by kurila on 30.05.14.
  */
-public final class WSDeleteService<T extends WSDataObject>
-extends WSDelete<T>
+public final class WSCreateService<T extends WSDataObjectBase>
+extends WSCreate<T>
 implements ObjectLoadService<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public WSDeleteService(
+	public WSCreateService(
 		final String[] addrs, final WSObjectRequestConfig<T> reqConf, final long maxCount,
-		final int threadsPerNode
-	) {
-		super(addrs, reqConf, maxCount, threadsPerNode, null);
+		final int threadsPerNode, final long minObjSize, final long maxObjSize
+	)
+	throws IOException, CloneNotSupportedException {
+		super(addrs, reqConf, maxCount, threadsPerNode, null, minObjSize, maxObjSize);
 		// by default, may be overriden later externally:
 		super.setConsumer(new FrameBuffConsumer<T>());
 	}
@@ -73,7 +74,7 @@ implements ObjectLoadService<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final List<T> takeFrame()
-		throws RemoteException {
+	throws RemoteException {
 		List<T> recFrame = Collections.emptyList();
 		if(RecordFrameBuffer.class.isInstance(consumer)) {
 			recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();

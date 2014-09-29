@@ -1,4 +1,4 @@
-package com.emc.mongoose.object.api.impl.provider;
+package com.emc.mongoose.object.api.impl.provider.http;
 //
 import com.emc.mongoose.object.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -13,16 +13,18 @@ import java.io.ObjectOutput;
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSSwift
+public final class Swift
 extends WSRequestConfigBase<WSDataObject> {
 	//
-	public WSSwift() {
-		api = WSSwift.class.getSimpleName();
+	public
+	Swift() {
+		api = Swift.class.getSimpleName();
 	}
 	//
 	@Override
-	public WSSwift clone() {
-		final WSSwift copy = new WSSwift();
+	public
+	Swift clone() {
+		final Swift copy = new Swift();
 		copy.setAddr(getAddr());
 		copy.setLoadType(getLoadType());
 		copy.setPort(getPort());
@@ -36,7 +38,8 @@ extends WSRequestConfigBase<WSDataObject> {
 	}
 	//
 	@Override
-	public WSSwift setProperties(final RunTimeConfig props) {
+	public
+	Swift setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		// TODO swift specific things
 		return this;

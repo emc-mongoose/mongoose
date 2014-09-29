@@ -56,6 +56,10 @@
 								"type": "BurstFilter",
 								"rate": 10,
 								"maxBurst": 100
+							}, {
+								"type": "ThresholdFilter",
+								"level": "DEBUG",
+								"onMatch": "Accept"
 							}
 						]
 					}
@@ -91,10 +95,15 @@
 					"PatternLayout": {
 						"pattern": "%d{ISO8601}{GMT+0} %-5p %-16.16c{1} %-32.32t %m%n"
 					},
-					"MarkerFilter": {
-						"marker": "perfAvg",
-						"onMatch": "ACCEPT",
-						"onMismatch": "DENY"
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "perfAvg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
 					}
 				}, {
 					"name": "perfSumFile",
@@ -142,7 +151,7 @@
 					"name": "async",
 					"type": "Async",
 					"blocking": "false",
-					"bufferSize": "10240",
+					"bufferSize": "1048576",
 					"AppenderRef": [
 						{ "ref": "stdout" },
 						{ "ref": "msgFile" },
@@ -166,7 +175,7 @@
 			"logger": [
 				{
 					"name": "org.apache.http",
-					"level": "info",
+					"level": "warn",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
@@ -186,42 +195,56 @@
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.api",
+					"name": "com.emc.mongoose.base",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.api.provider",
+					"name": "com.emc.mongoose.base.api",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.conf",
+					"name": "com.emc.mongoose.base.api.impl",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.data",
+					"name": "com.emc.mongoose.base.data",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.data.persist",
+					"name": "com.emc.mongoose.base.data.impl",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.logging",
+					"name": "com.emc.mongoose.base.data.persist",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.base.load",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.base.load.controller",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
@@ -235,70 +258,77 @@
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.object.http",
+					"name": "com.emc.mongoose.object.api",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.object.http.api",
+					"name": "com.emc.mongoose.object.api.impl",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.object.http.api.provider",
+					"name": "com.emc.mongoose.object.api.impl.provider",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.object.http.controller",
+					"name": "com.emc.mongoose.object.api.impl.provider.http",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.object.http.data",
+					"name": "com.emc.mongoose.object.data",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.object.http.driver",
+					"name": "com.emc.mongoose.object.data.impl",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.object.http.driver.impl",
+					"name": "com.emc.mongoose.object.load",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.object.http.impl",
+					"name": "com.emc.mongoose.object.load.controller",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.pool",
+					"name": "com.emc.mongoose.object.load.controller.impl",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.remote",
+					"name": "com.emc.mongoose.object.load.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.load.impl.type",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
@@ -312,7 +342,42 @@
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.threading",
+					"name": "com.emc.mongoose.util",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.conf",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.logging",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.pool",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.remote",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.threading",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {

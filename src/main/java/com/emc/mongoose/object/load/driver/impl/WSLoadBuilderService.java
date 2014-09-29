@@ -1,10 +1,12 @@
-package com.emc.mongoose.object.load.driver;
+package com.emc.mongoose.object.load.driver.impl;
 //
-import com.emc.mongoose.object.load.driver.impl.WSAppendService;
-import com.emc.mongoose.object.load.driver.impl.WSCreateService;
-import com.emc.mongoose.object.load.driver.impl.WSDeleteService;
-import com.emc.mongoose.object.load.driver.impl.WSReadService;
-import com.emc.mongoose.object.load.driver.impl.WSUpdateService;
+import com.emc.mongoose.object.load.driver.ObjectLoadBuilderService;
+import com.emc.mongoose.object.load.driver.ObjectLoadService;
+import com.emc.mongoose.object.load.driver.impl.type.WSAppendService;
+import com.emc.mongoose.object.load.driver.impl.type.WSCreateService;
+import com.emc.mongoose.object.load.driver.impl.type.WSDeleteService;
+import com.emc.mongoose.object.load.driver.impl.type.WSReadService;
+import com.emc.mongoose.object.load.driver.impl.type.WSUpdateService;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.object.load.impl.WSLoadBuilder;
