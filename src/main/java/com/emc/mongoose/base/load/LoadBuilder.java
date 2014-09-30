@@ -1,17 +1,21 @@
 package com.emc.mongoose.base.load;
 //
 import com.emc.mongoose.base.api.RequestConfig;
-import com.emc.mongoose.util.Builder;
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 /**
  Created by kurila on 28.04.14.
  */
-public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>>
-extends Builder<U> {
+public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>> {
+	//
+	String
+		MSG_TMPL_NOT_SPECIFIED = "\"{}\" parameter is not specified nor in configuration files neither in command line",
+		MSG_TMPL_INVALID_VALUE = "illegal value specified for \"{}\" parameter: {}";
 	//
 	LoadBuilder<T, U> setProperties(final RunTimeConfig props)
 	throws RemoteException;
@@ -45,6 +49,9 @@ extends Builder<U> {
 	//
 	LoadBuilder<T, U> setUpdatesPerItem(final int count)
 	throws RemoteException;
+	//
+	U build()
+	throws URISyntaxException, IOException;
 	//
 	long getMaxCount()
 	throws RemoteException;

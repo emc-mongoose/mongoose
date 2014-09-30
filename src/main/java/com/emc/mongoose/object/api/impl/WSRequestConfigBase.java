@@ -1,6 +1,8 @@
 package com.emc.mongoose.object.api.impl;
 //
+import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.impl.RequestConfigBase;
+import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.api.WSObjectRequestConfig;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -108,10 +110,40 @@ implements WSObjectRequestConfig<T> {
 		mac = localMac;
 	}
 	//
+	@Override
+	public final WSRequestConfigBase<T> setAPI(final String api) {
+		super.setAPI(api);
+		return this;
+	}
+	//
+	@Override
+	public final WSRequestConfigBase<T> setDataSource(final DataSource<T> dataSrc) {
+		super.setDataSource(dataSrc);
+		return this;
+	}
+	//
+	@Override
+	public WSRequestConfigBase<T> setUserName(final String userName) {
+		super.setUserName(api);
+		return this;
+	}
+	//
+	@Override
+	public final WSRequestConfigBase<T> setRetries(final boolean retryFlag) {
+		super.setRetries(retryFlag);
+		return this;
+	}
+	//
+	@Override
+	public final WSRequestConfigBase<T> setLoadType(final Request.Type loadType) {
+		super.setLoadType(loadType);
+		return this;
+	}
+	//
 	public final String getNameSpace() {
 		return sharedHeadersMap.get(KEY_EMC_NS);
 	}
-	public final WSRequestConfigBase setNameSpace(final String nameSpace) {
+	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
 		if(nameSpace==null) {
 			LOG.debug(Markers.MSG, "Using empty namespace");
 		} else {

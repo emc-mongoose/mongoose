@@ -16,14 +16,12 @@ import java.io.ObjectOutput;
 public final class Swift
 extends WSRequestConfigBase<WSDataObject> {
 	//
-	public
-	Swift() {
+	public Swift() {
 		api = Swift.class.getSimpleName();
 	}
 	//
 	@Override
-	public
-	Swift clone() {
+	public Swift clone() {
 		final Swift copy = new Swift();
 		copy.setAddr(getAddr());
 		copy.setLoadType(getLoadType());
@@ -38,8 +36,7 @@ extends WSRequestConfigBase<WSDataObject> {
 	}
 	//
 	@Override
-	public
-	Swift setProperties(final RunTimeConfig props) {
+	public Swift setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		// TODO swift specific things
 		return this;

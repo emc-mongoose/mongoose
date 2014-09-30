@@ -7,10 +7,6 @@ import java.net.URISyntaxException;
  */
 public interface Builder<T> {
 	//
-	final static String
-		MSG_TMPL_NOT_SPECIFIED = "\"{}\" parameter is not specified nor in configuration files neither in command line",
-		MSG_TMPL_INVALID_VALUE = "illegal value specified for \"{}\" parameter: {}";
-	//
 	T build()
 	throws URISyntaxException, IOException;
 	//

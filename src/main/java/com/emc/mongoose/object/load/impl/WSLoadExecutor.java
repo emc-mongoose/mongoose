@@ -333,8 +333,8 @@ implements ObjectLoadExecutor<T> {
 	}
 	//
 	@Override
-	public void submit(final T object) {
-		if(object==null || isInterrupted()) { // handle the poison
+	public void submit(final T dataItem) {
+		if(dataItem==null || isInterrupted()) { // handle the poison
 			maxCount = counterSubm.getCount() + counterRej.getCount();
 			LOG.trace(Markers.MSG, "Poisoned on #{}", maxCount);
 			for(final WSNodeExecutor<T> nextNode: nodes) {
@@ -344,14 +344,14 @@ implements ObjectLoadExecutor<T> {
 			}
 		} else {
 			final SubmitTask<T> submitTask = new SubmitTask<T>(
-				nodes[(int) submitExecutor.getTaskCount() % nodes.length], object
+				nodes[(int) submitExecutor.getTaskCount() % nodes.length], dataItem
 			);
-			boolean passed = false;
+			boolean flagSubmSucc = false;
 			int rejectCount = 0;
 			do {
 				try {
 					submitExecutor.submit(submitTask);
-					passed = true;
+					flagSubmSucc = true;
 				} catch(final RejectedExecutionException e) {
 					rejectCount ++;
 					try {
@@ -360,7 +360,7 @@ implements ObjectLoadExecutor<T> {
 						break;
 					}
 				}
-			} while(!passed && rejectCount < LoadExecutor.RETRY_COUNT_MAX);
+			} while(!flagSubmSucc && rejectCount < LoadExecutor.RETRY_COUNT_MAX);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -421,9 +421,16 @@ implements ObjectLoadExecutor<T> {
 			for(final WSNodeExecutor node: nodes) {
 				node.logMetrics(Level.DEBUG, Markers.PERF_AVG);
 			}
+			if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
+				LOG.trace(
+					Markers.PERF_AVG,
+					"Submit executor: terminated={}, completed={}, wait={}, active={}",
+					submitExecutor.isTerminated(), submitExecutor.getCompletedTaskCount(),
+					submitExecutor.getQueue().size(), submitExecutor.getActiveCount()
+				);
+				LOG.trace(Markers.PERF_AVG, "Connection pool: {}", connMgr.getTotalStats());
+			}
 		}
-		//
-		LOG.trace(Markers.PERF_AVG, "Connection pool: {}", connMgr.getTotalStats());
 		//
 	}
 	//

@@ -133,9 +133,17 @@ implements ObjectLoadExecutor<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final void submit(final T object) {
-		final WSObjectRequest<T> request = (WSObjectRequest<T>) WSRequestBase
-			.getInstanceFor(localReqConf, object);
+	public final void submit(final T dataItem) {
+		WSObjectRequest<T> request = null;
+		try {
+			request = (WSObjectRequest<T>) WSRequestBase
+				.getInstanceFor(localReqConf, dataItem);
+		} catch(final Exception e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to build request");
+		} finally {
+			LOG.trace(Markers.MSG, "Built request \"{}\"", request);
+		}
+		//
 		boolean passed = false;
 		int rejectCount = 0;
 		do {
@@ -152,14 +160,14 @@ implements ObjectLoadExecutor<T> {
 			}
 		} while(!passed && rejectCount < LoadExecutor.RETRY_COUNT_MAX);
 		//
-		if(object!=null) {
+		if(dataItem!=null) {
 			if(passed) {
 				counterSubm.inc();
 				counterSubmParent.inc();
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "Request #{} for the object \"{}\" successfully submitted",
-						counterSubmParent.getCount(), Long.toHexString(object.getId())
+						counterSubmParent.getCount(), Long.toHexString(dataItem.getId())
 					);
 				}
 			} else {
@@ -168,7 +176,7 @@ implements ObjectLoadExecutor<T> {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "Request #{} for the object \"{}\" rejected",
-						counterSubmParent.getCount(), Long.toHexString(object.getId())
+						counterSubmParent.getCount(), Long.toHexString(dataItem.getId())
 					);
 				}
 			}

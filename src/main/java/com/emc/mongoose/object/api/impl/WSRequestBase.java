@@ -67,10 +67,10 @@ implements WSObjectRequest<T> {
 					POOL_MAP.put(reqConf, pool);
 				}
 			}
-			request = (WSRequestBase) pool.take();
-			if(request!=null) {
-				request.setRequestConfig(reqConf).setDataItem(dataItem);
-			}
+			request = WSObjectRequest.class.cast(pool.take())
+				.setRequestConfig(reqConf)
+				.setDataItem(dataItem);
+			assert request != null;
 		}
 		return request;
 	}

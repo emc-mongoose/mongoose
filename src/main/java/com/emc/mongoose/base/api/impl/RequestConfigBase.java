@@ -33,7 +33,7 @@ implements RequestConfig<T> {
 		return api;
 	}
 	@Override
-	public final RequestConfigBase<T> setAPI(final String api) {
+	public RequestConfigBase<T> setAPI(final String api) {
 		this.api = api;
 		return this;
 	}
@@ -53,7 +53,7 @@ implements RequestConfig<T> {
 		return loadType;
 	}
 	@Override
-	public final RequestConfigBase<T> setLoadType(final Request.Type loadType) {
+	public RequestConfigBase<T> setLoadType(final Request.Type loadType) {
 		LOG.debug(Markers.MSG, "Setting load type {}", loadType);
 		this.loadType = loadType;
 		return this;
@@ -100,7 +100,7 @@ implements RequestConfig<T> {
 		return dataSrc;
 	}
 	@Override
-	public final RequestConfigBase<T> setDataSource(final DataSource<T> dataSrc) {
+	public RequestConfigBase<T> setDataSource(final DataSource<T> dataSrc) {
 		this.dataSrc = dataSrc;
 		return this;
 	}

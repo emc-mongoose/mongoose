@@ -31,8 +31,7 @@ extends WSRequestConfigBase<WSDataObject> {
 	//
 	private String subTenant;
 	//
-	public
-	Atmos() {
+	public Atmos() {
 		api = Atmos.class.getSimpleName();
 	}
 	//
@@ -40,8 +39,7 @@ extends WSRequestConfigBase<WSDataObject> {
 		return subTenant;
 	}
 	//
-	public final
-	Atmos setSubTenant(final String subTenant)
+	public final Atmos setSubTenant(final String subTenant)
 	throws IllegalStateException {
 		this.subTenant = subTenant;
 		if(subTenant==null) {
@@ -53,8 +51,7 @@ extends WSRequestConfigBase<WSDataObject> {
 	}
 	//
 	@Override
-	public final
-	Atmos setUserName(final String userName) {
+	public final Atmos setUserName(final String userName) {
 		super.setUserName(userName);
 		if(userName==null) {
 			throw new IllegalStateException("User name is not specified for Atmos REST API");
@@ -65,8 +62,7 @@ extends WSRequestConfigBase<WSDataObject> {
 	}
 	//
 	@Override
-	public final
-	Atmos setProperties(final RunTimeConfig props) {
+	public final Atmos setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		//
 		final String paramName = "api.atmos.subtenant";
@@ -80,8 +76,7 @@ extends WSRequestConfigBase<WSDataObject> {
 	}
 	//
 	@Override
-	public
-	Atmos clone() {
+	public Atmos clone() {
 		final Atmos copy = new Atmos();
 		copy.setAddr(getAddr());
 		copy.setLoadType(getLoadType());

@@ -1,5 +1,7 @@
 package com.emc.mongoose.object.load.driver.impl;
 //
+import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.object.load.driver.ObjectLoadBuilderService;
 import com.emc.mongoose.object.load.driver.ObjectLoadService;
 import com.emc.mongoose.object.load.driver.impl.type.WSAppendService;
@@ -31,9 +33,71 @@ implements ObjectLoadBuilderService<T, U> {
 	private RunTimeConfig clientProps = null;
 	//
 	@Override
-	public final ObjectLoadBuilderService<T, U> setProperties(final RunTimeConfig clientProps) {
+	public final WSLoadBuilderService<T, U> setProperties(final RunTimeConfig clientProps) {
 		super.setProperties(clientProps);
 		this.clientProps = clientProps;
+		return this;
+	}
+	//
+	@Override
+	public final WSLoadBuilderService<T, U> setRequestConfig(final RequestConfig<T> reqConf) {
+		super.setRequestConfig(reqConf);
+		return this;
+	}
+	//
+	@Override
+	public final WSLoadBuilderService<T, U> setDataNodeAddrs(final String[] addrs) {
+		super.setDataNodeAddrs(addrs);
+		return this;
+	}
+	//
+	@Override
+	public final WSLoadBuilderService<T, U> setLoadType(final Request.Type loadType) {
+		super.setLoadType(loadType);
+		return this;
+	}
+	//
+	@Override
+	public final WSLoadBuilderService<T, U> setMaxCount(final long maxCount) {
+		super.setMaxCount(maxCount);
+		return this;
+	}
+	//
+	@Override
+	public final WSLoadBuilderService<T, U> setThreadsPerNodeDefault(final short threadsPerNode) {
+		super.setThreadsPerNodeDefault(threadsPerNode);
+		return this;
+	}
+	//
+	@Override
+	public final WSLoadBuilderService<T, U> setThreadsPerNodeFor(
+		final short threadsPerNode, final Request.Type loadType
+	) {
+		super.setThreadsPerNodeFor(threadsPerNode, loadType);
+		return this;
+	}
+	//
+	@Override
+	public final WSLoadBuilderService<T, U> setUpdatesPerItem(final int count) {
+		super.setUpdatesPerItem(count);
+		return this;
+	}
+	//
+	@Override
+	public final WSLoadBuilderService<T, U> setMinObjSize(final long size) {
+		super.setMinObjSize(size);
+		return this;
+	}
+	//
+	@Override
+	public final WSLoadBuilderService<T, U> setMaxObjSize(final long size) {
+		super.setMaxObjSize(size);
+		return this;
+	}
+	//
+	@Override
+	public final WSLoadBuilderService<T, U> setInputFile(final String fPath) {
+		super.setInputFile(fPath);
 		return this;
 	}
 	//

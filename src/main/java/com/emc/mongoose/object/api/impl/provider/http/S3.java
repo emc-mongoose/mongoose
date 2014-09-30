@@ -34,23 +34,20 @@ extends WSRequestConfigBase<WSDataObject> {
 	//
 	private String bucket;
 	//
-	public
-	S3() {
+	public S3() {
 		api = S3.class.getSimpleName();
 	}
 	//
 	public final String getBucket() {
 		return bucket;
 	}
-	public final
-	S3 setBucket(final String bucket) {
+	public final S3 setBucket(final String bucket) {
 		this.bucket = bucket;
 		return this;
 	}
 	//
 	@Override
-	public final
-	S3 setProperties(final RunTimeConfig props) {
+	public final S3 setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		//
 		final String paramName = "api.s3.bucket";
@@ -64,8 +61,7 @@ extends WSRequestConfigBase<WSDataObject> {
 	}
 	//
 	@Override
-	public
-	S3 clone() {
+	public S3 clone() {
 		final S3 copy = new S3();
 		copy.setAddr(getAddr());
 		copy.setLoadType(getLoadType());

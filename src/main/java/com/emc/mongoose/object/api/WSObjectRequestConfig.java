@@ -1,5 +1,7 @@
 package com.emc.mongoose.object.api;
 //
+import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.data.WSDataObject;
 //
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -46,6 +48,36 @@ extends DataObjectRequestConfig<T> {
 		HEADERS_EMC = {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_NS, KEY_EMC_SIG, KEY_EMC_UID
 		};
+	//
+	@Override
+	WSObjectRequestConfig<T> setAPI(final String api);
+	//
+	@Override
+	WSObjectRequestConfig<T> setAddr(final String addr);
+	//
+	@Override
+	WSObjectRequestConfig<T> setLoadType(final Request.Type loadType);
+	//
+	@Override
+	WSObjectRequestConfig<T> setPort(final int port);
+	//
+	@Override
+	WSObjectRequestConfig<T> setUserName(final String userName);
+	//
+	@Override
+	WSObjectRequestConfig<T> setSecret(final String secret);
+	//
+	@Override
+	WSObjectRequestConfig<T> setDataSource(final DataSource<T> dataSrc);
+	//
+	@Override
+	WSObjectRequestConfig<T> setRetries(final boolean retryFlag);
+	//
+	@Override
+	WSObjectRequestConfig<T> setProperties(final RunTimeConfig props);
+	//
+	@Override @SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")
+	WSObjectRequestConfig<T> clone();
 	//
 	String getScheme();
 	WSObjectRequestConfig<T> setScheme(final String scheme);

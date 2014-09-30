@@ -133,7 +133,7 @@ implements ObjectLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final ObjectLoadBuilder<T, U> setRequestConfig(final RequestConfig<T> reqConf)
+	public WSLoadBuilder<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws ClassCastException {
 		LOG.debug(Markers.MSG, "Set request builder: {}", reqConf.toString());
 		this.reqConf = (WSObjectRequestConfig<T>) reqConf;
@@ -141,7 +141,7 @@ implements ObjectLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final ObjectLoadBuilder<T, U> setLoadType(final Request.Type loadType)
+	public WSLoadBuilder<T, U> setLoadType(final Request.Type loadType)
 	throws IllegalStateException {
 		LOG.debug(Markers.MSG, "Set load type: {}", loadType);
 		if(reqConf==null) {
@@ -156,7 +156,7 @@ implements ObjectLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final ObjectLoadBuilder<T, U> setMaxCount(final long maxCount)
+	public WSLoadBuilder<T, U> setMaxCount(final long maxCount)
 	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set max data item count: {}", maxCount);
 		if(maxCount < 0) {
@@ -172,7 +172,7 @@ implements ObjectLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final ObjectLoadBuilder<T, U> setMinObjSize(final long minObjSize)
+	public WSLoadBuilder<T, U> setMinObjSize(final long minObjSize)
 	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set min data item size: {}", RunTimeConfig.formatSize(minObjSize));
 		if(minObjSize > 0) {
@@ -185,7 +185,7 @@ implements ObjectLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final ObjectLoadBuilder<T, U> setMaxObjSize(final long maxObjSize)
+	public WSLoadBuilder<T, U> setMaxObjSize(final long maxObjSize)
 	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set max data item size: {}", RunTimeConfig.formatSize(maxObjSize));
 		if(maxObjSize > 0) {
@@ -198,7 +198,7 @@ implements ObjectLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final ObjectLoadBuilder<T, U> setThreadsPerNodeDefault(
+	public WSLoadBuilder<T, U> setThreadsPerNodeDefault(
 		final short threadsPerNode
 	) throws IllegalArgumentException {
 		if(threadsPerNode<1) {
@@ -212,7 +212,7 @@ implements ObjectLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final ObjectLoadBuilder<T, U> setThreadsPerNodeFor(
+	public WSLoadBuilder<T, U> setThreadsPerNodeFor(
 		final short threadsPerNode, final Request.Type loadType
 	) throws IllegalArgumentException {
 		if(threadsPerNode<1) {
@@ -227,7 +227,7 @@ implements ObjectLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final ObjectLoadBuilder<T, U> setDataNodeAddrs(
+	public WSLoadBuilder<T, U> setDataNodeAddrs(
 		final String[] dataNodeAddrs
 	) throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set storage nodes: {}", Arrays.toString(dataNodeAddrs));
@@ -239,14 +239,14 @@ implements ObjectLoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public final ObjectLoadBuilder<T, U> setInputFile(final String listFile) {
+	public WSLoadBuilder<T, U> setInputFile(final String listFile) {
 		LOG.debug(Markers.MSG, "Set consuming data items from file: {}", listFile);
 		this.listFile = listFile;
 		return this;
 	}
 	//
 	@Override
-	public final ObjectLoadBuilder<T, U> setUpdatesPerItem(final int count)
+	public WSLoadBuilder<T, U> setUpdatesPerItem(final int count)
 	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set updates count per data item: {}", count);
 		if(count<0) {
@@ -257,7 +257,7 @@ implements ObjectLoadBuilder<T, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final ObjectLoadBuilder<T, U> clone() {
+	public final WSLoadBuilder<T, U> clone() {
 		final WSLoadBuilder<T, U> lb = new WSLoadBuilder<>();
 		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
 		lb.reqConf = (WSObjectRequestConfig<T>) reqConf.clone();
@@ -280,7 +280,7 @@ implements ObjectLoadBuilder<T, U> {
 			throw new IllegalStateException("Should specify request builder instance");
 		}
 		//
-		ObjectLoadExecutor<T> load = null;
+		WSLoadExecutor<T> load = null;
 		if(minObjSize<=maxObjSize) {
 			try {
 				switch(loadType) {
