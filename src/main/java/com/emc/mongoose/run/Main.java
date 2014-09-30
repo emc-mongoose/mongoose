@@ -42,7 +42,8 @@ public final class Main {
 		KEY_RUN_MODE = "run.mode",
 		//
 		VALUE_RUN_MODE_STANDALONE = "standalone",
-		VALUE_RUN_MODE_DRIVER = "driver";
+		VALUE_RUN_MODE_DRIVER = "driver",
+		VALUE_RUN_MODE_WSMOCK = "wsmock";
 	//
 	public final static File
 		JAR_SELF;
@@ -93,14 +94,25 @@ public final class Main {
 		RunTimeConfig.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
 		//
-		if(VALUE_RUN_MODE_DRIVER.equals(runMode)) {
-			rootLogger.debug(Markers.MSG, "Starting the driver");
-			WSLoadBuilderService.run();
-		} else {
-			Scenario.run();
-			System.exit(0);
+		switch (runMode){
+			case VALUE_RUN_MODE_DRIVER:
+				rootLogger.debug(Markers.MSG, "Starting the driver");
+				WSLoadBuilderService.run();
+				break;
+			case VALUE_RUN_MODE_WSMOCK:
+				//rootLogger.debug(Markers.MSG, "Starting the WS Mock");
+				try {
+					WSMock.run();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				break;
+			default:
+				Scenario.run();
+				System.exit(0);
 		}
 		//
+
 	}
 	//
 	public static Logger initLogging(final String runMode) {
