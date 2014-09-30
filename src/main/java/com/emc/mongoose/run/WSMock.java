@@ -1,6 +1,7 @@
 package com.emc.mongoose.run;
 
-import com.emc.mongoose.conf.RunTimeConfig;
+
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
