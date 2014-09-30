@@ -25,6 +25,7 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import java.rmi.StubNotFoundException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RemoteStub;
@@ -84,9 +85,9 @@ public final class ServiceUtils {
 		RemoteStub stub = null;
 		try {
 			stub = UnicastRemoteObject.exportObject(svc);
-			LOG.debug(Markers.MSG, "Exported service object");
+			LOG.debug(Markers.MSG, "Exported service object successfully");
 		} catch(final RemoteException e) {
-			LOG.error(Markers.ERR, "Failed to export service object", e);
+			ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to export service object");
 		}
 		//
 		if(stub!=null) {

@@ -124,7 +124,7 @@ implements WSObjectRequestConfig<T> {
 	//
 	@Override
 	public WSRequestConfigBase<T> setUserName(final String userName) {
-		super.setUserName(api);
+		super.setUserName(userName);
 		return this;
 	}
 	//

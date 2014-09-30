@@ -29,7 +29,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URISyntaxException;
 import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 06.06.14.
@@ -55,7 +54,7 @@ implements WSObjectRequest<T> {
 		final WSObjectRequestConfig reqConf, final WSDataObject dataItem
 	) {
 		WSObjectRequest request;
-		if(dataItem==null) {
+		if(dataItem == null) {
 			request = POISON;
 		} else {
 			GenericInstancePool pool;
@@ -70,7 +69,7 @@ implements WSObjectRequest<T> {
 			request = WSObjectRequest.class.cast(pool.take())
 				.setRequestConfig(reqConf)
 				.setDataItem(dataItem);
-			assert request != null;
+			//assert request != null;
 		}
 		return request;
 	}
@@ -83,8 +82,8 @@ implements WSObjectRequest<T> {
 	// END pool related things
 	@Override
 	public WSObjectRequest<T> setRequestConfig(final RequestConfig<T> reqConf) {
-		if(this.reqConf==null) { // request instance has not been configured yet?
-			//this.reqConf = (WSRequestConfig<T>) reqConf;
+		if(this.reqConf == null) { // request instance has not been configured yet?
+			this.reqConf = (WSObjectRequestConfig<T>) reqConf;
 			switch(reqConf.getLoadType()) {
 				case CREATE:
 					httpRequest = Atmos.class.getSimpleName().equals(reqConf.getAPI()) ?
@@ -119,8 +118,8 @@ implements WSObjectRequest<T> {
 		try {
 			reqConf.applyDataItem(httpRequest, dataItem);
 			this.dataItem = dataItem;
-		} catch(final URISyntaxException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to calculate the request URI");
+		} catch(final Exception e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to apply data item");
 		}
 		return this;
 	}
