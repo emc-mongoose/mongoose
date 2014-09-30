@@ -5,8 +5,8 @@ from sys import exit
 from org.apache.logging.log4j import LogManager
 LOG = LogManager.getLogger()
 #
-from com.emc.mongoose.conf import RunTimeConfig
-from com.emc.mongoose.logging import Markers
+from com.emc.mongoose.util.conf import RunTimeConfig
+from com.emc.mongoose.util.logging import Markers
 #
 from java.util import NoSuchElementException
 #
@@ -21,7 +21,7 @@ LOG.info(Markers.MSG, "Launch mode is \"{}\"", mode)
 INSTANCE = None
 from org.apache.commons.configuration import ConversionException
 if mode == "controller":
-	from com.emc.mongoose.object.http.controller import WSLoadBuilderClient
+	from com.emc.mongoose.object.load.controller.impl import WSLoadBuilderClient
 	from java.rmi import RemoteException
 	try:
 		try:
@@ -36,7 +36,7 @@ if mode == "controller":
 		LOG.fatal(Markers.ERR, "Failed to create load builder client: {}", e)
 		exit()
 else: # standalone
-	from com.emc.mongoose.object.http import WSLoadBuilder
+	from com.emc.mongoose.object.load.impl import WSLoadBuilder
 	INSTANCE = WSLoadBuilder()
 #
 INSTANCE.setProperties(RunTimeConfig())
