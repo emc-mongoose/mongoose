@@ -37,7 +37,10 @@ dependencies {
 		'org.apache.logging.log4j:log4j-api:2.0.2',
 		'org.apache.logging.log4j:log4j-core:2.0.2',
 		'org.apache.httpcomponents:httpclient:4.3.4',
-		'org.apache.httpcomponents:httpcore:4.3.2'
+		'org.apache.httpcomponents:httpcore:4.3.2',
+         'org.eclipse.jetty:jetty-server:9.2.3.v20140905',
+         'org.eclipse.jetty:jetty-webapp:9.2.3.v20140905',
+         'org.eclipse.jetty:jetty-servlet:9.2.3.v20140905'
 	)
 
 	runtime (
