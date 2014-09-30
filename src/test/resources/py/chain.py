@@ -4,9 +4,9 @@ from loadbuilder import INSTANCE as loadBuilder
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from com.emc.mongoose.api import Request
-from com.emc.mongoose.conf import RunTimeConfig
-from com.emc.mongoose.logging import ExceptionHandler, Markers
+from com.emc.mongoose.base.api import Request
+from com.emc.mongoose.util.conf import RunTimeConfig
+from com.emc.mongoose.util.logging import ExceptionHandler, Markers
 #
 from java.lang import Throwable, IllegalArgumentException
 from java.util import NoSuchElementException
