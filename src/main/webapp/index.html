@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="http://code.jquery.com/jquery-latest.min.js"></script>
+    <script>
+            $(document).ready(function() {
+                $("#start_btn").click(function(){
+                    $.post("/start/scenario/single",
+                    {
+                        name:"start"
+                    },
+                    function(data,status){
+                        alert("Data: " + data + "\nStatus: " + status);
+                    });
+                });
+            });
+        </script>
+</head>
+<body>
+    <button id="start_btn">Старт</button>
+</body>
+</html>

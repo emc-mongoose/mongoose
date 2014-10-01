@@ -7,6 +7,8 @@ import com.emc.mongoose.object.load.driver.impl.WSLoadBuilderService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.webapp.WebAppContext;
 //
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -42,7 +44,8 @@ public final class Main {
 		KEY_RUN_MODE = "run.mode",
 		//
 		VALUE_RUN_MODE_STANDALONE = "standalone",
-		VALUE_RUN_MODE_DRIVER = "driver";
+		VALUE_RUN_MODE_DRIVER = "driver",
+        VALUE_RUN_MODE_WEBUI = "webui";
 	//
 	public final static File
 		JAR_SELF;
@@ -93,13 +96,18 @@ public final class Main {
 		RunTimeConfig.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
 		//
-		if(VALUE_RUN_MODE_DRIVER.equals(runMode)) {
-			rootLogger.debug(Markers.MSG, "Starting the driver");
-			WSLoadBuilderService.run();
-		} else {
-			Scenario.run();
-			System.exit(0);
-		}
+        switch (runMode) {
+            case VALUE_RUN_MODE_DRIVER:
+                rootLogger.debug(Markers.MSG, "Starting the driver");
+                WSLoadBuilderService.run();
+                break;
+            case VALUE_RUN_MODE_WEBUI:
+                startJetty();
+                break;
+            default:
+                Scenario.run();
+                System.exit(0);
+        }
 		//
 	}
 	//
@@ -130,6 +138,27 @@ public final class Main {
 		Policy.getPolicy().refresh();
 		System.setSecurityManager(new SecurityManager());
 	}
+
+    private static void startJetty() {
+        Server server = new Server(8080);
+
+        String webResourceBaseDir = "src/main/webapp";
+
+        WebAppContext webAppContext = new WebAppContext();
+        webAppContext.setContextPath("/");
+        webAppContext.setDescriptor(webResourceBaseDir + "/WEB-INF/web.xml");
+        webAppContext.setResourceBase(webResourceBaseDir);
+
+        webAppContext.setParentLoaderPriority(true);
+
+        server.setHandler(webAppContext);
+        try {
+            server.start();
+            server.join();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 	//
 }
 //
