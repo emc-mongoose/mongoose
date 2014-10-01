@@ -45,7 +45,8 @@ public final class Main {
 		//
 		VALUE_RUN_MODE_STANDALONE = "standalone",
 		VALUE_RUN_MODE_DRIVER = "driver",
-        VALUE_RUN_MODE_WEBUI = "webui";
+        VALUE_RUN_MODE_WEBUI = "webui",
+		VALUE_RUN_MODE_WSMOCK = "wsmock";
 	//
 	public final static File
 		JAR_SELF;
@@ -104,7 +105,14 @@ public final class Main {
             case VALUE_RUN_MODE_WEBUI:
                 startJetty();
                 break;
-            default:
+			case VALUE_RUN_MODE_WSMOCK:
+				rootLogger.debug(Markers.MSG, "Starting the wsmock");
+				try {
+					WSMock.run();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			default:
                 Scenario.run();
                 System.exit(0);
         }
