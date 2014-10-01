@@ -12,11 +12,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Created by gusakk on 01/10/14.
  */
+
 public class StartServlet extends HttpServlet {
 
     public void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -30,14 +32,14 @@ public class StartServlet extends HttpServlet {
         loadExecutor.start();
 
         String timeOutString = RunTimeConfig.getString("run.time");
-        String[] timeOutArray = timeOutString.split(".");
+        String[] timeOutArray = timeOutString.split("\\.");
+
         try {
             loadExecutor.join(TimeUnit.valueOf(timeOutArray[1].toUpperCase()).toMillis(Integer.valueOf(timeOutArray[0])));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         loadExecutor.close();
-
     }
 
 }

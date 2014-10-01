@@ -7,7 +7,10 @@ import com.emc.mongoose.object.load.driver.impl.WSLoadBuilderService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
 //
 import java.io.File;
@@ -85,9 +88,9 @@ public final class Main {
 		System.setProperty(KEY_RUN_MODE, runMode);
 		final Logger rootLogger = initLogging(runMode);
 		if(rootLogger==null) {
-			System.err.println("Logging initialization failure");
-			System.exit(1);
-		}
+            System.err.println("Logging initialization failure");
+            System.exit(1);
+        }
 		rootLogger.info(
 			Markers.MSG, "Logging configured, run.id=\"{}\"", System.getProperty(KEY_RUN_ID)
 		);
@@ -103,6 +106,7 @@ public final class Main {
                 WSLoadBuilderService.run();
                 break;
             case VALUE_RUN_MODE_WEBUI:
+                rootLogger.debug(Markers.MSG, "Starting the webui");
                 startJetty();
                 break;
 			case VALUE_RUN_MODE_WSMOCK:
@@ -160,6 +164,7 @@ public final class Main {
         webAppContext.setParentLoaderPriority(true);
 
         server.setHandler(webAppContext);
+
         try {
             server.start();
             server.join();

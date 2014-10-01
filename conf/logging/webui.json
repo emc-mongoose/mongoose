@@ -166,7 +166,7 @@
 		},
 		"loggers": {
 			"root": {
-				"level": "trace",
+				"level": "info",
 				"additivity": "false",
 				"AppenderRef": {
 					"ref": "async"
