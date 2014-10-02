@@ -21,6 +21,8 @@ import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 09.05.14.
+ A data item which may produce uniformly distributed non-compressible content.
+ Uses UniformDataSource as a ring buffer.
  */
 public class UniformData
 extends ByteArrayInputStream

@@ -1,11 +1,12 @@
 package com.emc.mongoose.object.api;
-/**
- Created by kurila on 29.09.14.
- */
+//
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.object.data.DataObject;
-//
+/**
+ Created by kurila on 29.09.14.
+ A request regarding a data object.
+ */
 public interface DataObjectRequest<T extends DataObject>
 extends Request<T> {
 	//

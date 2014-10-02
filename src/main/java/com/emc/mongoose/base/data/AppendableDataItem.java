@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 /**
  Created by kurila on 29.09.14.
+ A data item which supports append operation.
  */
 public interface AppendableDataItem
 extends DataItem {

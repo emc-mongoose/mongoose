@@ -11,6 +11,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 /**
  Created by kurila on 12.05.14.
+ A consumer which simply redirects the data items to its logger.
  */
 @ThreadSafe
 public class LogConsumer<T extends DataItem>

@@ -23,6 +23,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 /**
  Created by kurila on 12.05.14.
+ A scenario runner utility class.
  */
 public final class Scenario {
 	//

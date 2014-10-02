@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 /**
  Created by kurila on 28.04.14.
+ A builder pattern implementation which should help to instantiate a configured load executor.
  */
 public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>> {
 	//

@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 /**
  Created by kurila on 04.07.14.
+ A property loader using some directory as a root of property tree.
  */
 final class DirectoryLoader
 extends SimpleFileVisitor<Path> {

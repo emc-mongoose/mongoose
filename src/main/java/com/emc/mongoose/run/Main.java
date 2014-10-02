@@ -1,8 +1,8 @@
 package com.emc.mongoose.run;
 //
+import com.emc.mongoose.object.load.server.WSLoadBuilderSvcImpl;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.object.load.driver.impl.WSLoadBuilderService;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,6 +22,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 /**
  Created by kurila on 04.07.14.
+ Mongoose entry point.
  */
 public final class Main {
 	//
@@ -42,7 +43,7 @@ public final class Main {
 		KEY_RUN_MODE = "run.mode",
 		//
 		VALUE_RUN_MODE_STANDALONE = "standalone",
-		VALUE_RUN_MODE_DRIVER = "driver";
+		VALUE_RUN_MODE_SERVER = "server";
 	//
 	public final static File
 		JAR_SELF;
@@ -93,9 +94,9 @@ public final class Main {
 		RunTimeConfig.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
 		//
-		if(VALUE_RUN_MODE_DRIVER.equals(runMode)) {
-			rootLogger.debug(Markers.MSG, "Starting the driver");
-			WSLoadBuilderService.run();
+		if(VALUE_RUN_MODE_SERVER.equals(runMode)) {
+			rootLogger.debug(Markers.MSG, "Starting the server");
+			WSLoadBuilderSvcImpl.run();
 		} else {
 			Scenario.run();
 			System.exit(0);

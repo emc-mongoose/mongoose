@@ -20,24 +20,23 @@ LOG.info(Markers.MSG, "Launch mode is \"{}\"", mode)
 #
 INSTANCE = None
 from org.apache.commons.configuration import ConversionException
-if mode == "controller":
-	from com.emc.mongoose.object.load.controller.impl import WSLoadBuilderClient
+if mode == "client":
+	from com.emc.mongoose.object.load.client import WSLoadBuilderClientImpl
 	from java.rmi import RemoteException
 	try:
 		try:
-			INSTANCE = WSLoadBuilderClient()
+			INSTANCE = WSLoadBuilderClientImpl()
 		except ConversionException:
-			LOG.fatal(Markers.ERR, "Drivers address list should be comma delimited")
+			LOG.fatal(Markers.ERR, "Servers address list should be comma delimited")
 			exit()
-		except NoSuchElementException:  # no one driver addr not specified, try 127.0.0.1
-			LOG.fatal(Markers.ERR, "Drivers address list not specified, try  arg -Drun.drivers=<LIST> to override")
+		except NoSuchElementException:  # no one server addr not specified, try 127.0.0.1
+			LOG.fatal(Markers.ERR, "Servers address list not specified, try  arg -Dremote.servers=<LIST> to override")
 			exit()
 	except RemoteException as e:
 		LOG.fatal(Markers.ERR, "Failed to create load builder client: {}", e)
 		exit()
 else: # standalone
-	from com.emc.mongoose.object.load.impl import WSLoadBuilder
-	INSTANCE = WSLoadBuilder()
+	from com.emc.mongoose.object.load import WSLoadBuilderImpl
+	INSTANCE = WSLoadBuilderImpl()
 #
 INSTANCE.setProperties(RunTimeConfig())
-

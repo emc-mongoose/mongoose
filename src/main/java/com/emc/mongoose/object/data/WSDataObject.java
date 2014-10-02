@@ -8,6 +8,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.message.BasicHeader;
 /**
  Created by kurila on 29.09.14.
+ Web storage data object.
  */
 public interface WSDataObject
 extends DataObject, HttpEntity {

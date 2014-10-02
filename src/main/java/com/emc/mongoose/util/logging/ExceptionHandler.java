@@ -4,6 +4,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;
 /**
  Created by kurila on 17.09.14.
+ The common way to handle the exceptions by logger.
  */
 public final class ExceptionHandler {
 	//

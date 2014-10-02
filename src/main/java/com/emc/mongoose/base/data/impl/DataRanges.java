@@ -21,6 +21,7 @@ import java.util.BitSet;
 import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 15.09.14.
+ A uniform data extension which may be logically split into isolated ranges for appends and updates.
  */
 public class DataRanges
 extends UniformData

@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 /**
  Created by kurila on 29.09.14.
+ An HTTP request shared configuration.
  */
 public interface WSObjectRequestConfig<T extends WSDataObject>
 extends DataObjectRequestConfig<T> {
@@ -40,7 +41,8 @@ extends DataObjectRequestConfig<T> {
 		MSG_NO_DATA_ITEM = "Data item is not specified",
 		MSG_NO_REQ = "No request specified to apply to",
 		//
-		REL_PKG_WS_PROVIDERS = ".provider.http.";
+		REL_PKG_PROVIDERS_WS = REL_PKG_PROVIDERS + ".ws";
+		//
 	String[]
 		HEADERS4CANONICAL = {
 			HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.DATE

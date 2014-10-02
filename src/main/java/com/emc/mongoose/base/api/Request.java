@@ -7,6 +7,7 @@ import java.util.concurrent.Callable;
 //
 /**
  Created by kurila on 02.06.14.
+ Request entity supporting some common operations.
  */
 public interface Request<T extends DataItem>
 extends Callable<Request<T>>, Closeable {

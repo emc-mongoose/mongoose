@@ -114,7 +114,7 @@ public final class ServiceUtils {
 		return SVC_MAP.get(svcName);
 	}
 	/**
-	 Connect to driver service
+	 Connect to server service
 	 @param url
 	 @return
 	 */

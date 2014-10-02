@@ -7,9 +7,12 @@ import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 /**
  Created by kurila on 29.09.14.
+ A request configuration regarding data objects.
  */
 public interface DataObjectRequestConfig<T extends DataObject>
 extends RequestConfig<T> {
+	//
+	String REL_PKG_PROVIDERS = "provider";
 	//
 	@Override
 	DataObjectRequestConfig<T> setAPI(final String api);

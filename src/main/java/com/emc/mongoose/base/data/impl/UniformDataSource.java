@@ -17,6 +17,8 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 /**
  Created by kurila on 23.07.14.
+ A uniform data source for producing uniform data items.
+ Implemented as finite buffer of pseudorandom bytes.
  */
 @ThreadSafe
 public class UniformDataSource<T extends UniformData>
