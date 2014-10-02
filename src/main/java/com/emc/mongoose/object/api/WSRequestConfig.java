@@ -4,6 +4,7 @@ import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.data.WSObject;
 //
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.apache.http.HttpHeaders;
 import org.apache.http.client.HttpRequestRetryHandler;
@@ -41,8 +42,7 @@ extends DataObjectRequestConfig<T> {
 		MSG_NO_DATA_ITEM = "Data item is not specified",
 		MSG_NO_REQ = "No request specified to apply to",
 		//
-		REL_PKG_PROVIDERS_WS = REL_PKG_PROVIDERS + ".ws";
-		//
+		WS_CLS_PREFIX = "WS";
 	String[]
 		HEADERS4CANONICAL = {
 			HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.DATE
@@ -78,7 +78,7 @@ extends DataObjectRequestConfig<T> {
 	@Override
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
-	@Override @SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")
+	@Override
 	WSRequestConfig<T> clone();
 	//
 	String getScheme();

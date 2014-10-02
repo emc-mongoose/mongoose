@@ -1,4 +1,4 @@
-package com.emc.mongoose.object.api.provider.ws;
+package com.emc.mongoose.object.api.provider.s3;
 //
 import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
@@ -18,11 +18,12 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 /**
  Created by kurila on 26.03.14.
  */
-public final class S3
-extends WSRequestConfigBase<WSObject> {
+public final class WSRequestConfigImpl<T extends WSObject>
+extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String
@@ -32,27 +33,35 @@ extends WSRequestConfigBase<WSObject> {
 	//
 
 	//
-	private String bucket;
+	private String bucketName;
 	//
-	public S3() {
-		api = S3.class.getSimpleName();
+	public WSRequestConfigImpl() {
+		api = WSRequestConfigImpl.class.getSimpleName();
 	}
 	//
-	public final String getBucket() {
-		return bucket;
+	public final String getBucketName() {
+		return bucketName;
 	}
-	public final S3 setBucket(final String bucket) {
-		this.bucket = bucket;
+	//
+	public final WSRequestConfigImpl setBucketName(final String bucketName)
+	throws IllegalStateException {
+		if(bucketName == null || bucketName.length()==0) {
+			final WSBucket<T> newBucket = new WSBucket<>(this, UUID.randomUUID().toString());
+			newBucket.create();
+			this.bucketName = newBucket.getName();
+		} else {
+			this.bucketName = bucketName;
+		}
 		return this;
 	}
 	//
 	@Override
-	public final S3 setProperties(final RunTimeConfig props) {
+	public final WSRequestConfigImpl setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		//
 		final String paramName = "api.s3.bucket";
 		try {
-			setBucket(RunTimeConfig.getString(paramName));
+			setBucketName(RunTimeConfig.getString(paramName));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
@@ -61,17 +70,10 @@ extends WSRequestConfigBase<WSObject> {
 	}
 	//
 	@Override
-	public S3 clone() {
-		final S3 copy = new S3();
-		copy.setAddr(getAddr());
-		copy.setLoadType(getLoadType());
-		copy.setPort(getPort());
-		copy.setUserName(getUserName());
-		copy.setSecret(getSecret());
-		copy.setScheme(getScheme());
-		copy.setClient(getClient());
+	public WSRequestConfigImpl clone() {
+		final WSRequestConfigImpl copy = WSRequestConfigImpl.class.cast(super.clone());
 		copy.setNameSpace(getNameSpace());
-		copy.setBucket(getBucket());
+		copy.setBucketName(getBucketName());
 		return copy;
 	}
 	//
@@ -79,14 +81,14 @@ extends WSRequestConfigBase<WSObject> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setBucket(String.class.cast(in.readObject()));
+		setBucketName(String.class.cast(in.readObject()));
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(bucket);
+		out.writeObject(bucketName);
 	}
 	//
 	@Override
@@ -95,7 +97,7 @@ extends WSRequestConfigBase<WSObject> {
 		if(httpRequest==null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
 		}
-		if(bucket==null) {
+		if(bucketName==null) {
 			throw new IllegalArgumentException(MSG_NO_BUCKET);
 		}
 		if(dataItem==null) {
@@ -104,7 +106,7 @@ extends WSRequestConfigBase<WSObject> {
 		synchronized(uriBuilder) {
 			httpRequest.setURI(
 				uriBuilder.setPath(
-					String.format(FMT_PATH, bucket, dataItem.getId())
+					String.format(FMT_PATH, bucketName, dataItem.getId())
 				).build()
 			);
 		}

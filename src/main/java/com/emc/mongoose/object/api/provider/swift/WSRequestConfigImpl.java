@@ -1,4 +1,4 @@
-package com.emc.mongoose.object.api.provider.ws;
+package com.emc.mongoose.object.api.provider.swift;
 //
 import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
@@ -13,30 +13,22 @@ import java.io.ObjectOutput;
 /**
  Created by kurila on 26.03.14.
  */
-public final class Swift
+public final class WSRequestConfigImpl
 extends WSRequestConfigBase<WSObject> {
 	//
-	public Swift() {
-		api = Swift.class.getSimpleName();
+	public WSRequestConfigImpl() {
+		api = WSRequestConfigImpl.class.getSimpleName();
 	}
 	//
 	@Override
-	public Swift clone() {
-		final Swift copy = new Swift();
-		copy.setAddr(getAddr());
-		copy.setLoadType(getLoadType());
-		copy.setPort(getPort());
-		copy.setUserName(getUserName());
-		copy.setSecret(getSecret());
-		copy.setScheme(getScheme());
-		copy.setClient(getClient());
-		copy.setNameSpace(getNameSpace()); // ?
+	public WSRequestConfigImpl clone() {
+		final WSRequestConfigImpl copy = WSRequestConfigImpl.class.cast(super.clone());
 		// TODO add swift specific fields
 		return copy;
 	}
 	//
 	@Override
-	public Swift setProperties(final RunTimeConfig props) {
+	public WSRequestConfigImpl setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		// TODO swift specific things
 		return this;

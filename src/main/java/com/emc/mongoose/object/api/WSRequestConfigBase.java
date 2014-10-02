@@ -269,7 +269,17 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public abstract WSRequestConfigBase<T> clone();
+	public WSRequestConfigBase<T> clone() {
+		final WSRequestConfigBase<T> copy = (WSRequestConfigBase<T>) super.clone();
+		copy.setAddr(getAddr());
+		copy.setLoadType(getLoadType());
+		copy.setPort(getPort());
+		copy.setUserName(getUserName());
+		copy.setSecret(getSecret());
+		copy.setScheme(getScheme());
+		copy.setClient(getClient());
+		return copy;
+	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)

@@ -1,4 +1,4 @@
-package com.emc.mongoose.object.api.provider.ws;
+package com.emc.mongoose.object.api.provider.atmos;
 //
 import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
 /**
  Created by kurila on 26.03.14.
  */
-public final class Atmos
+public final class WSRequestConfigImpl
 extends WSRequestConfigBase<WSObject> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -31,15 +31,15 @@ extends WSRequestConfigBase<WSObject> {
 	//
 	private String subTenant;
 	//
-	public Atmos() {
-		api = Atmos.class.getSimpleName();
+	public WSRequestConfigImpl() {
+		api = WSRequestConfigImpl.class.getSimpleName();
 	}
 	//
 	public final String getSubTenant() {
 		return subTenant;
 	}
 	//
-	public final Atmos setSubTenant(final String subTenant)
+	public final WSRequestConfigImpl setSubTenant(final String subTenant)
 	throws IllegalStateException {
 		this.subTenant = subTenant;
 		if(subTenant==null) {
@@ -51,7 +51,7 @@ extends WSRequestConfigBase<WSObject> {
 	}
 	//
 	@Override
-	public final Atmos setUserName(final String userName) {
+	public final WSRequestConfigImpl setUserName(final String userName) {
 		super.setUserName(userName);
 		if(userName==null) {
 			throw new IllegalStateException("User name is not specified for Atmos REST API");
@@ -62,7 +62,7 @@ extends WSRequestConfigBase<WSObject> {
 	}
 	//
 	@Override
-	public final Atmos setProperties(final RunTimeConfig props) {
+	public final WSRequestConfigImpl setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		//
 		final String paramName = "api.atmos.subtenant";
@@ -76,15 +76,8 @@ extends WSRequestConfigBase<WSObject> {
 	}
 	//
 	@Override
-	public Atmos clone() {
-		final Atmos copy = new Atmos();
-		copy.setAddr(getAddr());
-		copy.setLoadType(getLoadType());
-		copy.setPort(getPort());
-		copy.setUserName(getUserName());
-		copy.setSecret(getSecret());
-		copy.setScheme(getScheme());
-		copy.setClient(getClient());
+	public WSRequestConfigImpl clone() {
+		final WSRequestConfigImpl copy = WSRequestConfigImpl.class.cast(super.clone());
 		copy.setNameSpace(getNameSpace());
 		copy.setSubTenant(getSubTenant());
 		return copy;

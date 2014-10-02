@@ -29,6 +29,13 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	private RunTimeConfig clientProps = null;
 	//
+	@Override
+	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientProps) {
+		super.setProperties(clientProps);
+		this.clientProps = clientProps;
+		return this;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws RemoteException {
