@@ -1,33 +1,35 @@
 package com.emc.mongoose.run;
-
-
+//
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import org.eclipse.jetty.server.*;
+//
+import com.emc.mongoose.util.logging.Markers;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+//
+import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.AbstractHandler;
-import org.eclipse.jetty.util.thread.QueuedThreadPool;
-
+//
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-
 /**
  * Created by olga on 30.09.14.
  */
 public final class WSMock {
 
-	public final static void run()
+	private final static Logger LOG = LogManager.getLogger();
+
+	public static void run()
 	throws Exception
 	{
 
 		final String apiName = RunTimeConfig.getString("storage.api");
 		final int port = RunTimeConfig.getInt("api."+apiName+".port");
-
-		// Setup Threadpool
-		final QueuedThreadPool threadPool = new QueuedThreadPool(1000000);
 		// Setup Jetty Server instance
-		final Server server = new Server(threadPool);
-		server.manage(threadPool);
+		final Server server = new Server();
 		server.setDumpAfterStart(false);
 		server.setDumpBeforeStop(false);
 		// Http Connector Setup
@@ -37,13 +39,13 @@ public final class WSMock {
 		//Set a new handler
 		server.setHandler(new SimpleHandler());
 		server.start();
-		System.out.println("Listening on port "+port);
+		LOG.info(Markers.MSG, "Listening on port #{}", port);
 		server.join();
 
 	}
 
 	@SuppressWarnings("serial")
-	public final static class SimpleHandler
+	private final static class SimpleHandler
 	extends AbstractHandler {
 
 		@Override

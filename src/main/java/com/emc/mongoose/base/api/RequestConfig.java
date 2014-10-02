@@ -7,6 +7,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import java.io.Externalizable;
 /**
  Created by kurila on 29.09.14.
+ Shared request configuration.
  */
 public interface RequestConfig<T extends DataItem>
 extends Externalizable {

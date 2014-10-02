@@ -13,6 +13,9 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 /**
  Created by andrey on 09.06.14.
+ A pool for any reusable objects(instances).
+ Pooled objects should define "close()" method which will invoke "release" method putting the object(instance) back into a pool.
+ Such instances pool may improve the performance in some cases.
  */
 public final class GenericInstancePool<T extends Closeable> {
 	//

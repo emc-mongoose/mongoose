@@ -1,16 +1,15 @@
 package com.emc.mongoose.run;
 //
+import com.emc.mongoose.object.load.server.WSLoadBuilderSvcImpl;
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.object.load.driver.impl.WSLoadBuilderService;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.HandlerList;
-import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
 //
 import java.io.File;
@@ -27,6 +26,7 @@ import java.util.Locale;
 import java.util.TimeZone;
 /**
  Created by kurila on 04.07.14.
+ Mongoose entry point.
  */
 public final class Main {
 	//
@@ -47,9 +47,9 @@ public final class Main {
 		KEY_RUN_MODE = "run.mode",
 		//
 		VALUE_RUN_MODE_STANDALONE = "standalone",
-		VALUE_RUN_MODE_DRIVER = "driver",
-        VALUE_RUN_MODE_WEBUI = "webui",
-		VALUE_RUN_MODE_WSMOCK = "wsmock";
+		VALUE_RUN_MODE_WEBUI = "webui",
+		VALUE_RUN_MODE_WSMOCK = "wsmock",
+		VALUE_RUN_MODE_SERVER = "server";
 	//
 	public final static File
 		JAR_SELF;
@@ -88,9 +88,9 @@ public final class Main {
 		System.setProperty(KEY_RUN_MODE, runMode);
 		final Logger rootLogger = initLogging(runMode);
 		if(rootLogger==null) {
-            System.err.println("Logging initialization failure");
-            System.exit(1);
-        }
+			System.err.println("Logging initialization failure");
+			System.exit(1);
+		}
 		rootLogger.info(
 			Markers.MSG, "Logging configured, run.id=\"{}\"", System.getProperty(KEY_RUN_ID)
 		);
@@ -101,25 +101,25 @@ public final class Main {
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
 		//
         switch (runMode) {
-            case VALUE_RUN_MODE_DRIVER:
-                rootLogger.debug(Markers.MSG, "Starting the driver");
-                WSLoadBuilderService.run();
-                break;
-            case VALUE_RUN_MODE_WEBUI:
-                rootLogger.debug(Markers.MSG, "Starting the webui");
-                startJetty();
-                break;
+			case VALUE_RUN_MODE_SERVER:
+				rootLogger.debug(Markers.MSG, "Starting the server");
+				WSLoadBuilderSvcImpl.run();
+				break;
+			case VALUE_RUN_MODE_WEBUI:
+				rootLogger.debug(Markers.MSG, "Starting the web UI");
+				startJetty(rootLogger);
+				break;
 			case VALUE_RUN_MODE_WSMOCK:
-				rootLogger.debug(Markers.MSG, "Starting the wsmock");
+				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
 				try {
 					WSMock.run();
-				} catch (Exception e) {
-					e.printStackTrace();
+				} catch (final Exception e) {
+					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
 				}
 			default:
-                Scenario.run();
-                System.exit(0);
-        }
+				Scenario.run();
+				System.exit(0);
+		}
 		//
 	}
 	//
@@ -150,26 +150,24 @@ public final class Main {
 		Policy.getPolicy().refresh();
 		System.setSecurityManager(new SecurityManager());
 	}
-
-    private static void startJetty() {
-        Server server = new Server(8080);
-
-        String webResourceBaseDir = "src/main/webapp";
-
-        WebAppContext webAppContext = new WebAppContext();
+	//
+    private static void startJetty(final Logger log) {
+        final Server server = new Server(8080);
+		//
+        final String webResourceBaseDir = "src/main/webapp";
+		//
+        final WebAppContext webAppContext = new WebAppContext();
         webAppContext.setContextPath("/");
-        webAppContext.setDescriptor(webResourceBaseDir + "/WEB-INF/web.xml");
-        webAppContext.setResourceBase(webResourceBaseDir);
-
+		webAppContext.setDescriptor(webResourceBaseDir + "/WEB-INF/web.xml");
+		webAppContext.setResourceBase(webResourceBaseDir);
         webAppContext.setParentLoaderPriority(true);
-
         server.setHandler(webAppContext);
-
+		//
         try {
             server.start();
             server.join();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (final Exception e) {
+            ExceptionHandler.trace(log, Level.FATAL, e, "Web UI service failure");
         }
     }
 	//

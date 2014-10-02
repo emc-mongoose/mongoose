@@ -1,6 +1,6 @@
 package com.emc.mongoose.base.data.persist;
 //
-import com.emc.mongoose.base.api.impl.RequestConfigBase;
+import com.emc.mongoose.base.api.RequestConfigImpl;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.LoadExecutor;
@@ -157,7 +157,7 @@ implements Consumer<T>, Producer<T> {
 		outPutExecutor.shutdown();
 		try {
 			outPutExecutor.awaitTermination(
-				RequestConfigBase.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
+				RequestConfigImpl.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
 			);
 		} catch(final InterruptedException e) {
 			ExceptionHandler.trace(

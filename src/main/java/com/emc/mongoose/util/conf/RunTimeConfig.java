@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 /**
  Created by kurila on 28.05.14.
+ A shared (singleton) runtime configuration.
  */
 public final class RunTimeConfig
 implements Externalizable {
@@ -161,7 +162,7 @@ implements Externalizable {
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)
 	throws IOException {
-		LOG.debug(Markers.MSG, "Going to upload properties to a driver");
+		LOG.debug(Markers.MSG, "Going to upload properties to a server");
 		String nextPropName;
 		Object nextPropValue;
 		final HashMap<String, String> propsMap = new HashMap<>();
@@ -189,20 +190,20 @@ implements Externalizable {
 		LOG.trace(Markers.MSG, "Sending configuration: {}", propsMap);
 		//
 		out.writeObject(propsMap);
-		LOG.debug(Markers.MSG, "Uploaded the properties from controller side");
+		LOG.debug(Markers.MSG, "Uploaded the properties from client side");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final synchronized void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		LOG.debug(Markers.MSG, "Going to fetch the properties from controller side");
+		LOG.debug(Markers.MSG, "Going to fetch the properties from client side");
 		final HashMap<String, String> propsMap = HashMap.class.cast(in.readObject());
-		LOG.trace(Markers.MSG, "Got the properties from controller side: {}", propsMap);
+		LOG.trace(Markers.MSG, "Got the properties from client side: {}", propsMap);
 		//
 		final String
-			driverVersion = getString(KEY_VERSION),
-			controllerVersion = propsMap.get(KEY_VERSION);
-		if(driverVersion.equals(controllerVersion)) {
+			serverVersion = getString(KEY_VERSION),
+			clientVersion = propsMap.get(KEY_VERSION);
+		if(serverVersion.equals(clientVersion)) {
 			// put the properties into the System
 			Object nextPropValue;
 			for(final String nextPropName: propsMap.keySet()) {
@@ -226,8 +227,8 @@ implements Externalizable {
 			}
 		} else {
 			LOG.fatal(
-				Markers.ERR, "Version mismatch, driver: {}, controller: {}",
-				driverVersion, controllerVersion
+				Markers.ERR, "Version mismatch, server: {}, client: {}",
+				serverVersion, clientVersion
 			);
 			throw new IOException("Version mismatch");
 		}

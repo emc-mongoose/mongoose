@@ -5,6 +5,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 /**
  Created by kurila on 29.09.14.
+ A data item which supports update operation.
  */
 public interface UpdatableDataItem
 extends DataItem {

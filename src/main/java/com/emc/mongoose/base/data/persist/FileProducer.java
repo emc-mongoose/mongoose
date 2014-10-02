@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.ParameterizedType;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -19,8 +18,9 @@ import java.nio.file.Path;
 import java.rmi.RemoteException;
 /**
  Created by kurila on 12.05.14.
+ A data item producer which constructs data items while reading the special input file.
  */
-public final class FileProducer<T extends DataItem>
+public class FileProducer<T extends DataItem>
 extends Thread
 implements Producer<T> {
 	//
@@ -32,7 +32,7 @@ implements Producer<T> {
 	private Consumer<T> consumer = null;
 	//
 	@SuppressWarnings("unchecked")
-	public FileProducer(final String fPathStr)
+	public FileProducer(final String fPathStr, final Class<T> dataItemsImplCls)
 	throws NoSuchMethodException, IOException {
 		super(FileProducer.class.getSimpleName());
 		//
@@ -43,14 +43,7 @@ implements Producer<T> {
 		if(!Files.isReadable(fPath)) {
 			throw new IOException("File \""+fPathStr+"\" is not readable");
 		}
-		// magic
-		dataItemConstructor = (Constructor<T>) (
-			(Class) (
-				ParameterizedType.class.cast(
-					getClass().getGenericSuperclass()
-				).getActualTypeArguments()[0]
-			)
-		).getConstructor(String.class);
+		dataItemConstructor = dataItemsImplCls.getConstructor(String.class);
 	}
 	//
 	public final String getPath() {

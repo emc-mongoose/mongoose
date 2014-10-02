@@ -11,6 +11,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 25.06.14.
+ A logging consumer which accumulates the data items until the accumulated data is externally taken.
  */
 @ThreadSafe
 public final class FrameBuffConsumer<T extends DataItem>

@@ -8,6 +8,9 @@ import java.text.MessageFormat;
 import java.util.Locale;
 /**
  Created by kurila on 28.04.14.
+ A mechanism of data items load execution.
+ May be a consumer and producer both also.
+ Supports method "join" for waiting the load execution to be done.
  */
 public interface LoadExecutor<T extends DataItem>
 extends Producer<T>, Consumer<T> {
