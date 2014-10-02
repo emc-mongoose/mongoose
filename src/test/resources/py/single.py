@@ -8,7 +8,7 @@ from com.emc.mongoose.base.api import Request
 from com.emc.mongoose.util.conf import RunTimeConfig
 from com.emc.mongoose.util.logging import Markers
 #
-from org.apache.logging.log4j import LogManager
+from org.apache.logging.log4j import Level, LogManager
 #
 from java.lang import IllegalArgumentException
 from java.util import NoSuchElementException
@@ -25,7 +25,13 @@ except IllegalArgumentException:
 	LOG.error(Markers.ERR, "No such load type, it should be a constant from Load.Type enumeration")
 	exit()
 #
-load = loadBuilder.build()
+from java.lang import Exception
+from com.emc.mongoose.util.logging import ExceptionHandler
+load = None
+try:
+	load = loadBuilder.build()
+except Exception as e:
+	ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
 #
 from java.lang import Integer
 from java.util.concurrent import TimeUnit

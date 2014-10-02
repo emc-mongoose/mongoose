@@ -107,6 +107,9 @@ distributions {
 			into('scripts') {
 				from { sourceSets.test.resources }
 			}
+			into('webapps') {
+				from { sourceSets.main.resources }
+			}
 		}
 	}
 }

@@ -21,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 /**
  Created by kurila on 02.10.14.
  */
@@ -34,7 +35,11 @@ implements Bucket<T>{
 	//
 	public WSBucket(final WSRequestConfigImpl reqConf, final String name) {
 		this.reqConf = reqConf;
-		this.name = name;
+		if(name == null || name.length() == 0) {
+			this.name = UUID.randomUUID().toString();
+		} else {
+			this.name = name;
+		}
 	}
 	//
 	@Override

@@ -250,7 +250,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setClient(final CloseableHttpClient httpClient) {
+	public WSRequestConfigBase<T> setClient(final CloseableHttpClient httpClient) {
 		this.httpClient = httpClient;
 		return this;
 	}

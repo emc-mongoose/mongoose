@@ -14,7 +14,7 @@ http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
 
     <servlet-mapping>
         <servlet-name>StartServlet</servlet-name>
-        <url-pattern>/start/scenario/single</url-pattern>
+        <url-pattern>/start/*</url-pattern>
     </servlet-mapping>
 
 </web-app>
