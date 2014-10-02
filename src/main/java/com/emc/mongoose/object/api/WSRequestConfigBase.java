@@ -70,12 +70,14 @@ implements WSRequestConfig<T> {
 		return newInstanceFor(RunTimeConfig.getString("storage.api"));
 	}
 	//
+	private final static String NAME_CLS_IMPL = "WSRequestConfigImpl";
+	//
 	public static WSRequestConfigBase newInstanceFor(final String api) {
 		WSRequestConfigBase reqConf = null;
 		final String apiImplClsFQN =
 			WSRequestConfigBase.class.getPackage().getName() +
-				Main.DOT + REL_PKG_PROVIDERS_WS + Main.DOT +
-				StringUtils.capitalize(api.toLowerCase());
+				Main.DOT + REL_PKG_PROVIDERS + Main.DOT +
+				api.toLowerCase() + Main.DOT + NAME_CLS_IMPL;
 		try {
 			reqConf = WSRequestConfigBase.class.cast(
 				Class.forName(apiImplClsFQN).getConstructors()[0].newInstance()

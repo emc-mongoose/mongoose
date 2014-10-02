@@ -206,7 +206,7 @@ implements WSLoadExecutor<T> {
 		maxCount = counterSubm.getCount() + counterRej.getCount();
 		LOG.trace(Markers.MSG, "Interrupting, max count is set to {}", maxCount);
 		//
-		final Thread interrupters[] = new Thread[nodes.length];
+		final Thread interrupters[] = new Thread[nodes.length < 2 ? 2 : nodes.length];
 		// interrupt a producer
 		interrupters[0] = new Thread("interrupt-producer-" + getName()) {
 			@Override
