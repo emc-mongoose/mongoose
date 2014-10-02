@@ -1,5 +1,5 @@
 # comma-separated list of target storage nodes
-addrs:			10.76.250.122
+addrs:			127.0.0.1
 
 # case-insensitive, may be "atmos", "s3" or "swift"
 api:			s3

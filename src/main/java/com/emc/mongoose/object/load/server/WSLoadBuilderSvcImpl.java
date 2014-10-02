@@ -46,10 +46,10 @@ implements WSLoadBuilderSvc<T, U> {
 	public final U build()
 	throws IllegalStateException {
 		if(clientProps==null) {
-			throw new IllegalStateException("Should upload properties to the server before");
+			throw new IllegalStateException("Should upload properties to the server before instancing");
 		}
 		if(reqConf==null) {
-			throw new IllegalStateException("Should specify request builder instance");
+			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
 		ObjectLoadSvc<T> loadSvc = null;
