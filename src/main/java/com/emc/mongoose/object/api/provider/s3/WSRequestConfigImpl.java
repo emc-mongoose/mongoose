@@ -48,13 +48,6 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T> setClient(final CloseableHttpClient httpClient) {
-		super.setClient(httpClient);
-		bucket.create();
-		return this;
-	}
-	//
-	@Override
 	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		//
@@ -69,7 +62,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public WSRequestConfigImpl<T> clone() {
+	public WSRequestConfigImpl<T> clone()
+	throws CloneNotSupportedException {
 		final WSRequestConfigImpl<T> copy = (WSRequestConfigImpl<T>) super.clone();
 		copy.setNameSpace(getNameSpace());
 		copy.setBucket(getBucket());
@@ -93,19 +87,19 @@ extends WSRequestConfigBase<T> {
 	@Override
 	protected final void applyURI(final HttpRequestBase httpRequest, final WSObject dataItem)
 	throws IllegalStateException, URISyntaxException {
-		if(httpRequest==null) {
+		if(httpRequest == null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
 		}
-		if(bucket==null) {
+		if(bucket == null) {
 			throw new IllegalArgumentException(MSG_NO_BUCKET);
 		}
-		if(dataItem==null) {
+		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		synchronized(uriBuilder) {
 			httpRequest.setURI(
 				uriBuilder.setPath(
-					String.format(FMT_PATH, bucket, dataItem.getId())
+					String.format(FMT_PATH, bucket.getName(), dataItem.getId())
 				).build()
 			);
 		}

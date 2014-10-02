@@ -42,6 +42,6 @@ extends Externalizable {
 	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
 	//
-	@SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")
-	RequestConfig<T> clone();
+	RequestConfig<T> clone()
+	throws CloneNotSupportedException;
 }

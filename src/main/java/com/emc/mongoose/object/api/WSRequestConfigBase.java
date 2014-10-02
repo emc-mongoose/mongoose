@@ -271,15 +271,17 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> clone() {
+	public WSRequestConfigBase<T> clone()
+	throws CloneNotSupportedException {
 		final WSRequestConfigBase<T> copy = (WSRequestConfigBase<T>) super.clone();
-		copy.setAddr(getAddr());
-		copy.setLoadType(getLoadType());
-		copy.setPort(getPort());
-		copy.setUserName(getUserName());
-		copy.setSecret(getSecret());
-		copy.setScheme(getScheme());
-		copy.setClient(getClient());
+		copy
+			.setAddr(getAddr())
+			.setLoadType(getLoadType())
+			.setPort(getPort())
+			.setUserName(getUserName())
+			.setSecret(getSecret())
+			.setScheme(getScheme())
+			.setClient(getClient());
 		return copy;
 	}
 	//
@@ -334,13 +336,13 @@ implements WSRequestConfig<T> {
 				for(final String header: sharedHeadersMap.keySet()) {
 					LOG.trace(Markers.MSG, "\t{}: {}", header, sharedHeadersMap.get(header));
 				}
-				try {
+				if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
 					LOG.trace(
 						Markers.MSG, "\tcontent: {} bytes",
 						HttpEntityEnclosingRequest.class.cast(httpRequest)
 							.getEntity().getContentLength()
 					);
-				} catch(final ClassCastException e) {
+				} else {
 					LOG.trace(Markers.MSG, "\t---- no content ----");
 				}
 			}

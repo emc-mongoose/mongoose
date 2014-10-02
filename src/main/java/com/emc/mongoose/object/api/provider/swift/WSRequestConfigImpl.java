@@ -13,22 +13,23 @@ import java.io.ObjectOutput;
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSRequestConfigImpl
-extends WSRequestConfigBase<WSObject> {
+public final class WSRequestConfigImpl<T extends WSObject>
+extends WSRequestConfigBase<T> {
 	//
 	public WSRequestConfigImpl() {
 		api = WSRequestConfigImpl.class.getSimpleName();
 	}
 	//
 	@Override
-	public WSRequestConfigImpl clone() {
-		final WSRequestConfigImpl copy = WSRequestConfigImpl.class.cast(super.clone());
+	public WSRequestConfigImpl<T> clone()
+	throws CloneNotSupportedException {
+		final WSRequestConfigImpl copy = (WSRequestConfigImpl<T>) super.clone();
 		// TODO add swift specific fields
 		return copy;
 	}
 	//
 	@Override
-	public WSRequestConfigImpl setProperties(final RunTimeConfig props) {
+	public WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		// TODO swift specific things
 		return this;

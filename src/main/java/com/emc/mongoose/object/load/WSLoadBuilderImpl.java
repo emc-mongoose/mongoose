@@ -255,7 +255,8 @@ implements WSLoadBuilder<T, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final WSLoadBuilderImpl<T, U> clone() {
+	public final WSLoadBuilderImpl<T, U> clone()
+	throws CloneNotSupportedException {
 		final WSLoadBuilderImpl<T, U> lb = new WSLoadBuilderImpl<>();
 		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
 		lb.reqConf = reqConf.clone();

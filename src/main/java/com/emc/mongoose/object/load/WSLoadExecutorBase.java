@@ -152,10 +152,14 @@ implements WSLoadExecutor<T> {
 		);
 		WSNodeExecutor<T> nodeExecutor;
 		for(int i = 0; i < addrs.length; i ++) {
-			nodeExecutor = new WSNodeExecutor<>(
-				addrs[i], threadsPerNode, reqConf, metrics, getName()
-			);
-			nodes[i] = nodeExecutor;
+			try {
+				nodeExecutor = new WSNodeExecutor<>(
+					addrs[i], threadsPerNode, reqConf, metrics, getName()
+				);
+				nodes[i] = nodeExecutor;
+			} catch(final CloneNotSupportedException e) {
+				ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to clone the request configuration");
+			}
 		}
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());

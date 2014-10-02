@@ -112,7 +112,7 @@ implements WSLoadExecutor<T> {
 	public WSNodeExecutor(
 		final String addr, final int threadsPerNode, final WSRequestConfig<T> sharedReqConf,
 		final MetricRegistry parentMetrics, final String parentName
-	) {
+	) throws CloneNotSupportedException {
 		this(
 			threadsPerNode,
 			(WSRequestConfig<T>) sharedReqConf.clone().setAddr(addr),

@@ -79,7 +79,8 @@ extends DataObjectRequestConfig<T> {
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
 	@Override
-	WSRequestConfig<T> clone();
+	WSRequestConfig<T> clone()
+	throws CloneNotSupportedException;
 	//
 	String getScheme();
 	WSRequestConfig<T> setScheme(final String scheme);

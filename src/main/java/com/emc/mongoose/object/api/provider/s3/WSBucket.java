@@ -6,10 +6,12 @@ import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -35,6 +37,7 @@ implements Bucket<T>{
 	//
 	public WSBucket(final WSRequestConfigImpl reqConf, final String name) {
 		this.reqConf = reqConf;
+		//
 		if(name == null || name.length() == 0) {
 			this.name = UUID.randomUUID().toString();
 		} else {
@@ -48,6 +51,53 @@ implements Bucket<T>{
 	}
 	//
 	@Override
+	public final boolean exists()
+	throws IllegalStateException {
+		boolean flagExists = false;
+		//
+		final HttpRequestBase createReq = new HttpHead("/" + name);
+		reqConf.applyHeadersFinally(createReq);
+		final CloseableHttpClient httpClient = reqConf.getClient();
+		//
+		CloseableHttpResponse httpResp = null;
+		if(httpClient != null) {
+			try {
+				httpResp = httpClient.execute(
+					new HttpHost(reqConf.getAddr(), reqConf.getPort(), reqConf.getScheme()),
+					createReq
+				);
+			} catch(final IOException e) {
+				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create bucket \""+name+"\"");
+			}
+		} else {
+			throw new IllegalStateException(
+				"Failed to check the bucket, no HTTP client was specified"
+			);
+		}
+		//
+		if(httpResp != null) {
+			final StatusLine statusLine = httpResp.getStatusLine();
+			if(statusLine == null) {
+				LOG.warn(Markers.MSG, "No response status");
+			} else {
+				final int statusCode = statusLine.getStatusCode();
+				if(statusCode == HttpStatus.SC_OK) {
+					LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
+					flagExists = true;
+				} else {
+					final String statusMsg = statusLine.getReasonPhrase();
+					LOG.warn(
+						Markers.ERR, "Check bucket \"{}\" response: {}/{}",
+						name, statusCode, statusMsg
+					);
+				}
+			}
+		}
+		//
+		return flagExists;
+	}
+	//
+	@Override
 	public final void create()
 	throws IllegalStateException {
 		final HttpRequestBase createReq = new HttpPut("/" + name);
@@ -57,7 +107,10 @@ implements Bucket<T>{
 		CloseableHttpResponse httpResp = null;
 		if(httpClient != null) {
 			try {
-				httpResp = httpClient.execute(createReq);
+				httpResp = httpClient.execute(
+					new HttpHost(reqConf.getAddr(), reqConf.getPort(), reqConf.getScheme()),
+					createReq
+				);
 			} catch(final IOException e) {
 				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create bucket \""+name+"\"");
 			}

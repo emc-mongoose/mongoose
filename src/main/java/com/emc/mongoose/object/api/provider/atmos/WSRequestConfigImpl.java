@@ -20,8 +20,8 @@ import java.util.NoSuchElementException;
 /**
  Created by kurila on 26.03.14.
  */
-public final class WSRequestConfigImpl
-extends WSRequestConfigBase<WSObject> {
+public final class WSRequestConfigImpl<T extends WSObject>
+extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String
@@ -39,7 +39,7 @@ extends WSRequestConfigBase<WSObject> {
 		return subTenant;
 	}
 	//
-	public final WSRequestConfigImpl setSubTenant(final String subTenant)
+	public final WSRequestConfigImpl<T> setSubTenant(final String subTenant)
 	throws IllegalStateException {
 		this.subTenant = subTenant;
 		if(subTenant==null) {
@@ -51,7 +51,7 @@ extends WSRequestConfigBase<WSObject> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl setUserName(final String userName) {
+	public final WSRequestConfigImpl<T> setUserName(final String userName) {
 		super.setUserName(userName);
 		if(userName==null) {
 			throw new IllegalStateException("User name is not specified for Atmos REST API");
@@ -62,7 +62,7 @@ extends WSRequestConfigBase<WSObject> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl setProperties(final RunTimeConfig props) {
+	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		//
 		final String paramName = "api.atmos.subtenant";
@@ -76,8 +76,9 @@ extends WSRequestConfigBase<WSObject> {
 	}
 	//
 	@Override
-	public WSRequestConfigImpl clone() {
-		final WSRequestConfigImpl copy = WSRequestConfigImpl.class.cast(super.clone());
+	public WSRequestConfigImpl<T> clone()
+	throws CloneNotSupportedException {
+		final WSRequestConfigImpl copy = (WSRequestConfigImpl<T>) super.clone();
 		copy.setNameSpace(getNameSpace());
 		copy.setSubTenant(getSubTenant());
 		return copy;

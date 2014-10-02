@@ -17,7 +17,7 @@ import java.io.ObjectOutput;
  The most common implementation of the shared request configuration.
  */
 public class RequestConfigImpl<T extends DataItem>
-implements RequestConfig<T> {
+implements RequestConfig<T>, Cloneable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -125,10 +125,11 @@ implements RequestConfig<T> {
 		return this;
 	}
 	//
-	@Override
-	@SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
-	public RequestConfigImpl<T> clone() {
-		return new RequestConfigImpl<T>()
+	@Override @SuppressWarnings("unchecked")
+	public RequestConfigImpl<T> clone()
+	throws CloneNotSupportedException {
+		final RequestConfigImpl<T> copy = (RequestConfigImpl<T>) super.clone();
+		return copy
 			.setAPI(getAPI())
 			.setAddr(getAddr())
 			.setLoadType(getLoadType())

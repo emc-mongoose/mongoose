@@ -32,6 +32,7 @@ try:
 	load = loadBuilder.build()
 except Exception as e:
 	ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
+	e.printStackTrace()
 #
 from java.lang import Integer
 from java.util.concurrent import TimeUnit

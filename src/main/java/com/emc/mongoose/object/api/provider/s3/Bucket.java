@@ -10,6 +10,9 @@ public interface Bucket<T extends DataObject> {
 	//
 	String getName();
 	//
+	boolean exists()
+	throws IllegalStateException;
+	//
 	void create()
 	throws IllegalStateException;
 	//
