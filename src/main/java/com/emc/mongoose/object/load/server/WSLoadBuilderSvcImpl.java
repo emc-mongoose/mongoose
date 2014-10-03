@@ -121,7 +121,7 @@ implements WSLoadBuilderSvc<T, U> {
 		LOG.info(Markers.MSG, "Load builder service instance created");
 		/*final RemoteStub stub = */ServiceUtils.create(loadBuilderSvc);
 		/*LOG.debug(Markers.MSG, stub.toString());*/
-		LOG.info(Markers.MSG, "Driver started and waiting for the requests");
+		LOG.info(Markers.MSG, "Server started and waiting for the requests");
 	}
 	//
 	@Override

@@ -36,6 +36,7 @@ for loadTypeStr in loadTypes:
 		LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)
 	except Throwable as e:
 		ExceptionHandler.trace(LOG, Level.FATAL, e, "Failure")
+		e.printStackTrace()
 #
 from java.lang import Integer
 from java.util.concurrent import TimeUnit

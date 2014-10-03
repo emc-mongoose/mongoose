@@ -21,6 +21,8 @@ public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>> {
 	LoadBuilder<T, U> setProperties(final RunTimeConfig props)
 	throws RemoteException;
 	//
+	RequestConfig<T> getRequestConfig()
+	throws RemoteException;
 	LoadBuilder<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws RemoteException;
 	//

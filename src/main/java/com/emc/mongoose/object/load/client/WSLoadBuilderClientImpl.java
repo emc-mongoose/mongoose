@@ -4,8 +4,11 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
 import com.emc.mongoose.object.api.WSRequestConfig;
+import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObjectImpl;
+import com.emc.mongoose.object.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.object.load.server.WSLoadBuilderSvcImpl;
+import com.emc.mongoose.object.load.server.WSLoadSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.persist.FileProducer;
 import com.emc.mongoose.util.logging.Markers;
@@ -32,26 +35,26 @@ import java.util.NoSuchElementException;
  Created by kurila on 08.05.14.
  */
 public final class WSLoadBuilderClientImpl<T extends WSObjectImpl, U extends WSLoadClient<T>>
-extends HashMap<String, LoadBuilderSvc<T, U>>
+extends HashMap<String, WSLoadBuilderSvc<T, U>>
 implements WSLoadBuilderClient<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private FileProducer<T> srcProducer = null;
-	private WSRequestConfig<T> reqConf = null;
 	private String firstNodeAddr = null;
+	private WSRequestConfig<T> reqConf = WSRequestConfigBase.getInstance();
 	//
 	@SuppressWarnings("unchecked")
-	private LoadBuilderSvc<T, U> resolve(final String serverAddr)
+	private WSLoadBuilderSvc<T, U> resolve(final String serverAddr)
 	throws IOException {
-		LoadBuilderSvc<T, U> rlb = null;
+		WSLoadBuilderSvc<T, U> rlb = null;
 		final Service remoteSvc = ServiceUtils.getRemoteSvc(
 			"//" + serverAddr + '/' + WSLoadBuilderSvcImpl.class.getSimpleName()
 		);
 		if(remoteSvc==null) {
 			throw new IOException("No remote load builder was resolved from " + serverAddr);
-		} else if(LoadBuilderSvc.class.isInstance(remoteSvc)) {
-			rlb = LoadBuilderSvc.class.cast(remoteSvc);
+		} else if(WSLoadBuilderSvc.class.isInstance(remoteSvc)) {
+			rlb = WSLoadBuilderSvc.class.cast(remoteSvc);
 		} else {
 			throw new IOException(
 				"Illegal class "+remoteSvc.getClass().getCanonicalName()+
@@ -78,6 +81,9 @@ implements WSLoadBuilderClient<T, U> {
 	@Override @SuppressWarnings("AccessStaticViaInstance")
 	public final WSLoadBuilderClientImpl<T, U> setProperties(final RunTimeConfig props)
 	throws RemoteException {
+		//
+		reqConf.setProperties(props);
+		//
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
 			nextBuilder = get(addr);
@@ -112,14 +118,19 @@ implements WSLoadBuilderClient<T, U> {
 	}
 	//
 	@Override
+	public final WSRequestConfig<T> getRequestConfig() {
+		return reqConf;
+	}
+	//
+	@Override
 	public final WSLoadBuilderClientImpl<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws ClassCastException, RemoteException {
-		this.reqConf = (WSRequestConfig<T>) reqConf;
-		LoadBuilderSvc<T, U> nextBuilder;
+		WSLoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setRequestConfig(reqConf);
 		}
+		this.reqConf = (WSRequestConfig<T>) reqConf;
 		return this;
 	}
 	//
@@ -258,10 +269,8 @@ implements WSLoadBuilderClient<T, U> {
 		for(final String addr: keySet()) {
 			//
 			nextBuilder = get(addr);
-			nextLoad = LoadSvc.class.cast(
-				ServiceUtils.getRemoteSvc(
-					"//"+addr+"/"+nextBuilder.buildRemotely()
-				)
+			nextLoad = (LoadSvc<T>) ServiceUtils.getRemoteSvc(
+				"//"+addr+"/"+nextBuilder.buildRemotely()
 			);
 			remoteLoadMap.put(addr, nextLoad);
 			//
@@ -270,7 +279,7 @@ implements WSLoadBuilderClient<T, U> {
 				svcJMXAddr = ServiceUtils.JMXRMI_URL_PREFIX + addr + ":" +
 					RunTimeConfig.getString("remote.monitor.port") + ServiceUtils.JMXRMI_URL_PATH;
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
-				LOG.debug(Markers.MSG, "Driver JMX URL: {}", svcJMXAddr);
+				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
 				LOG.error(Markers.ERR, "Failure", e);
 			}

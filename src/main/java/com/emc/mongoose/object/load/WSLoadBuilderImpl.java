@@ -131,6 +131,11 @@ implements WSLoadBuilder<T, U> {
 	}
 	//
 	@Override
+	public WSRequestConfig<T> getRequestConfig() {
+		return reqConf;
+	}
+	//
+	@Override
 	public WSLoadBuilderImpl<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws ClassCastException {
 		LOG.debug(Markers.MSG, "Set request builder: {}", reqConf.toString());
