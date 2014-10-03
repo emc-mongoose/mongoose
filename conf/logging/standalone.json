@@ -175,7 +175,7 @@
 			"logger": [
 				{
 					"name": "org.apache.http",
-					"level": "warn",
+					"level": "info",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
@@ -258,7 +258,21 @@
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.object.api.provider.ws",
+					"name": "com.emc.mongoose.object.api.provider.atmos",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.api.provider.s3",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.api.provider.swift",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {

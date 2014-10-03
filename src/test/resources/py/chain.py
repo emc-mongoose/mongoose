@@ -54,6 +54,7 @@ except IndexError:
 	LOG.error(Markers.ERR, "Time unit should be specified with timeout value (following after \".\" separator)")
 	exit()
 #
+chain[0].configureStorage()
 for load in chain:
 	load.start()
 chain[0].join(timeOut[1].toMillis(timeOut[0]))

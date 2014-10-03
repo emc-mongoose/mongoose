@@ -1,7 +1,7 @@
 package com.emc.mongoose.object.api;
 //
 import com.emc.mongoose.base.api.RequestConfig;
-import com.emc.mongoose.object.api.provider.ws.Atmos;
+import com.emc.mongoose.object.api.provider.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.object.load.type.ws.Read;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -84,7 +84,7 @@ implements WSRequest<T> {
 			this.reqConf = (WSRequestConfig<T>) reqConf;
 			switch(reqConf.getLoadType()) {
 				case CREATE:
-					httpRequest = Atmos.class.getSimpleName().equals(reqConf.getAPI()) ?
+					httpRequest = WSRequestConfigImpl.class.getSimpleName().equals(reqConf.getAPI()) ?
 						new HttpPost() : new HttpPut();
 					break;
 				case READ:
@@ -222,20 +222,6 @@ implements WSRequest<T> {
 						break;
 					case(403):
 						LOG.warn(Markers.ERR, "Access failure");
-						try(final InputStream respStream = httpResponse.getEntity().getContent()) {
-							final ByteArrayOutputStream byteBuffStream = new ByteArrayOutputStream();
-							int nextByte;
-							do {
-								nextByte = respStream.read();
-								byteBuffStream.write(nextByte);
-							} while(nextByte >= 0);
-							LOG.debug(Markers.ERR, byteBuffStream.toString());
-						} catch(final IOException|NullPointerException e) {
-							LOG.debug(
-								Markers.ERR, "Failed to read response content entity due to {}",
-								e.toString()
-							);
-						}
 						break;
 					case(404):
 						LOG.warn(Markers.ERR, "Not found: {}", httpRequest.getURI());
@@ -261,20 +247,20 @@ implements WSRequest<T> {
 					default:
 						LOG.warn(Markers.ERR, "Response code: {}", statusCode);
 				}
-				if(LOG.isTraceEnabled(Markers.ERR)) {
-					final ByteArrayOutputStream bOutPut = new ByteArrayOutputStream();
-					try {
+				if(LOG.isDebugEnabled(Markers.ERR)) {
+					try(ByteArrayOutputStream bOutPut = new ByteArrayOutputStream()) {
 						httpResponse.getEntity().writeTo(bOutPut);
+						final String errMsg = bOutPut.toString();
+						LOG.debug(
+							Markers.ERR, "{}, cause request: {}/{}",
+							errMsg, hashCode(), Long.toHexString(dataItem.getId())
+						);
 					} catch(final IOException e) {
-						LOG.warn(
-							Markers.ERR, "Failed to fetch the content of the failed response", e
+						ExceptionHandler.trace(
+							LOG, Level.ERROR, e,
+							"Failed to fetch the content of the failed response"
 						);
 					}
-					final String errMsg = bOutPut.toString();
-					LOG.trace(
-						Markers.ERR, "{}, cause request: {}/{}",
-						errMsg, hashCode(), Long.toHexString(dataItem.getId())
-					);
 				}
 			}
 		}

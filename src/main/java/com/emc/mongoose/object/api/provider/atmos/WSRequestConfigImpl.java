@@ -1,4 +1,4 @@
-package com.emc.mongoose.object.api.provider.ws;
+package com.emc.mongoose.object.api.provider.atmos;
 //
 import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
@@ -8,6 +8,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,8 +21,8 @@ import java.util.NoSuchElementException;
 /**
  Created by kurila on 26.03.14.
  */
-public final class Atmos
-extends WSRequestConfigBase<WSObject> {
+public final class WSRequestConfigImpl<T extends WSObject>
+extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String
@@ -29,45 +30,45 @@ extends WSRequestConfigBase<WSObject> {
 			"/" + RunTimeConfig.getString("api.atmos.path.rest") +
 			"/" + RunTimeConfig.getString("api.atmos.interface") + "/%x";
 	//
-	private String subTenant;
+	private WSSubTenant<T> subTenant;
 	//
-	public Atmos() {
-		api = Atmos.class.getSimpleName();
+	public WSRequestConfigImpl() {
+		api = WSRequestConfigImpl.class.getSimpleName();
 	}
 	//
-	public final String getSubTenant() {
+	public final WSSubTenant<T> getSubTenant() {
 		return subTenant;
 	}
 	//
-	public final Atmos setSubTenant(final String subTenant)
+	public final WSRequestConfigImpl<T> setSubTenant(final WSSubTenant<T> subTenant)
 	throws IllegalStateException {
 		this.subTenant = subTenant;
-		if(subTenant==null) {
+		if(subTenant == null) {
 			throw new IllegalStateException("Subtenant is not specified for Atmos REST API");
-		} else if(userName!=null) {
-			sharedHeadersMap.put(KEY_EMC_UID, subTenant+'/'+userName);
+		} else if(userName != null) {
+			sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
 		}
 		return this;
 	}
 	//
 	@Override
-	public final Atmos setUserName(final String userName) {
+	public final WSRequestConfigImpl<T> setUserName(final String userName) {
 		super.setUserName(userName);
 		if(userName==null) {
 			throw new IllegalStateException("User name is not specified for Atmos REST API");
 		} else if(subTenant!=null) {
-			sharedHeadersMap.put(KEY_EMC_UID, subTenant+'/'+userName);
+			sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
 		}
 		return this;
 	}
 	//
 	@Override
-	public final Atmos setProperties(final RunTimeConfig props) {
+	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		//
 		final String paramName = "api.atmos.subtenant";
 		try {
-			setSubTenant(RunTimeConfig.getString(paramName));
+			setSubTenant(new WSSubTenant<>(this, RunTimeConfig.getString(paramName)));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
@@ -76,15 +77,9 @@ extends WSRequestConfigBase<WSObject> {
 	}
 	//
 	@Override
-	public Atmos clone() {
-		final Atmos copy = new Atmos();
-		copy.setAddr(getAddr());
-		copy.setLoadType(getLoadType());
-		copy.setPort(getPort());
-		copy.setUserName(getUserName());
-		copy.setSecret(getSecret());
-		copy.setScheme(getScheme());
-		copy.setClient(getClient());
+	public WSRequestConfigImpl<T> clone()
+	throws CloneNotSupportedException {
+		final WSRequestConfigImpl copy = (WSRequestConfigImpl<T>) super.clone();
 		copy.setNameSpace(getNameSpace());
 		copy.setSubTenant(getSubTenant());
 		return copy;
@@ -94,14 +89,14 @@ extends WSRequestConfigBase<WSObject> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setSubTenant(String.class.cast(in.readObject()));
+		setSubTenant(new WSSubTenant<T>(this, String.class.cast(in.readObject())));
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(subTenant);
+		out.writeObject(subTenant.getName());
 	}
 	//
 	@Override
@@ -137,8 +132,9 @@ extends WSRequestConfigBase<WSObject> {
 
 	}
 	//
-	protected String getCanonical(final HttpRequestBase httpRequest) {
-		final StringBuilder buffer = new StringBuilder(httpRequest.getMethod());
+	@Override
+	public String getCanonical(final HttpRequest httpRequest) {
+		final StringBuilder buffer = new StringBuilder(httpRequest.getRequestLine().getMethod());
 		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
 		Header header;
 		for(final String headerName: HEADERS4CANONICAL) {
@@ -151,7 +147,7 @@ extends WSRequestConfigBase<WSObject> {
 			}
 		}
 		//
-		buffer.append('\n').append(httpRequest.getURI().getRawPath());
+		buffer.append('\n').append(httpRequest.getRequestLine().getUri());
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
 			header = httpRequest.getFirstHeader(emcHeaderName);
@@ -170,7 +166,8 @@ extends WSRequestConfigBase<WSObject> {
 		return buffer.toString();
 	}
 	//
-	protected final String getSignature(final String canonicalForm) {
+	@Override
+	public final String getSignature(final String canonicalForm) {
 		LOG.trace(Markers.MSG, "Canonical form: {}", canonicalForm);
 		byte[] signature = null;
 		try {
@@ -185,4 +182,16 @@ extends WSRequestConfigBase<WSObject> {
 		return signature64;
 	}
 	//
+	@Override
+	public void configureStorage()
+	throws IllegalStateException {
+		if(subTenant == null) {
+			throw new IllegalStateException("Subtenant is not specified");
+		}
+		if(subTenant.exists()) {
+			LOG.info(Markers.MSG, "Subtenant \"{}\" already exists", subTenant.getName());
+		} else {
+			subTenant.create();
+		}
+	}
 }

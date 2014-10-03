@@ -1,9 +1,10 @@
-package com.emc.mongoose.object.api.provider.ws;
+package com.emc.mongoose.object.api.provider.swift;
 //
 import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
+import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.HttpRequestBase;
 //
 import java.io.IOException;
@@ -13,30 +14,23 @@ import java.io.ObjectOutput;
 /**
  Created by kurila on 26.03.14.
  */
-public final class Swift
-extends WSRequestConfigBase<WSObject> {
+public final class WSRequestConfigImpl<T extends WSObject>
+extends WSRequestConfigBase<T> {
 	//
-	public Swift() {
-		api = Swift.class.getSimpleName();
+	public WSRequestConfigImpl() {
+		api = WSRequestConfigImpl.class.getSimpleName();
 	}
 	//
 	@Override
-	public Swift clone() {
-		final Swift copy = new Swift();
-		copy.setAddr(getAddr());
-		copy.setLoadType(getLoadType());
-		copy.setPort(getPort());
-		copy.setUserName(getUserName());
-		copy.setSecret(getSecret());
-		copy.setScheme(getScheme());
-		copy.setClient(getClient());
-		copy.setNameSpace(getNameSpace()); // ?
+	public WSRequestConfigImpl<T> clone()
+	throws CloneNotSupportedException {
+		final WSRequestConfigImpl copy = (WSRequestConfigImpl<T>) super.clone();
 		// TODO add swift specific fields
 		return copy;
 	}
 	//
 	@Override
-	public Swift setProperties(final RunTimeConfig props) {
+	public WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		// TODO swift specific things
 		return this;
@@ -65,5 +59,16 @@ extends WSRequestConfigBase<WSObject> {
 	protected final void applyAuthHeader(final HttpRequestBase httpRequest) {
 		// TODO swift specific things
 	}
-
+	//
+	@Override
+	public final String getCanonical(final HttpRequest httpRequest) {
+		// TODO swift specific things
+		return null;
+	}
+	//
+	@Override
+	public final String getSignature(final String canonicalForm) {
+		// TODO swift specific things
+		return null;
+	}
 }

@@ -70,12 +70,14 @@ implements WSRequestConfig<T> {
 		return newInstanceFor(RunTimeConfig.getString("storage.api"));
 	}
 	//
+	private final static String NAME_CLS_IMPL = "WSRequestConfigImpl";
+	//
 	public static WSRequestConfigBase newInstanceFor(final String api) {
 		WSRequestConfigBase reqConf = null;
 		final String apiImplClsFQN =
 			WSRequestConfigBase.class.getPackage().getName() +
-				Main.DOT + REL_PKG_PROVIDERS_WS + Main.DOT +
-				StringUtils.capitalize(api.toLowerCase());
+				Main.DOT + REL_PKG_PROVIDERS + Main.DOT +
+				api.toLowerCase() + Main.DOT + NAME_CLS_IMPL;
 		try {
 			reqConf = WSRequestConfigBase.class.cast(
 				Class.forName(apiImplClsFQN).getConstructors()[0].newInstance()
@@ -248,7 +250,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setClient(final CloseableHttpClient httpClient) {
+	public WSRequestConfigBase<T> setClient(final CloseableHttpClient httpClient) {
 		this.httpClient = httpClient;
 		return this;
 	}
@@ -269,7 +271,19 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public abstract WSRequestConfigBase<T> clone();
+	public WSRequestConfigBase<T> clone()
+	throws CloneNotSupportedException {
+		final WSRequestConfigBase<T> copy = (WSRequestConfigBase<T>) super.clone();
+		copy
+			.setAddr(getAddr())
+			.setLoadType(getLoadType())
+			.setPort(getPort())
+			.setUserName(getUserName())
+			.setSecret(getSecret())
+			.setScheme(getScheme())
+			.setClient(getClient());
+		return copy;
+	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
@@ -322,13 +336,13 @@ implements WSRequestConfig<T> {
 				for(final String header: sharedHeadersMap.keySet()) {
 					LOG.trace(Markers.MSG, "\t{}: {}", header, sharedHeadersMap.get(header));
 				}
-				try {
+				if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
 					LOG.trace(
 						Markers.MSG, "\tcontent: {} bytes",
 						HttpEntityEnclosingRequest.class.cast(httpRequest)
 							.getEntity().getContentLength()
 					);
-				} catch(final ClassCastException e) {
+				} else {
 					LOG.trace(Markers.MSG, "\t---- no content ----");
 				}
 			}
@@ -348,7 +362,7 @@ implements WSRequestConfig<T> {
 				httpRequest.getMethod()
 			);
 		}
-		if(httpReqWithPayLoad!=null) {
+		if(httpReqWithPayLoad != null) {
 			httpReqWithPayLoad.setEntity(httpEntity);
 		}
 	}

@@ -38,6 +38,8 @@ implements WSLoadBuilderClient<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private FileProducer<T> srcProducer = null;
+	private WSRequestConfig<T> reqConf = null;
+	private String firstNodeAddr = null;
 	//
 	@SuppressWarnings("unchecked")
 	private LoadBuilderSvc<T, U> resolve(final String serverAddr)
@@ -73,14 +75,21 @@ implements WSLoadBuilderClient<T, U> {
 		}
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("AccessStaticViaInstance")
 	public final WSLoadBuilderClientImpl<T, U> setProperties(final RunTimeConfig props)
 	throws RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
 			nextBuilder = get(addr);
-			LOG.info(Markers.MSG, "Applying the properties to server service @ \"{}\"...", addr);
+			LOG.info(Markers.MSG, "Applying the properties to server @ \"{}\"...", addr);
 			nextBuilder.setProperties(props);
+		}
+		//
+		if(firstNodeAddr == null || firstNodeAddr.length() == 0) {
+			final String nodeAddrs[] = props.getStringArray("storage.addrs");
+			if(nodeAddrs != null && nodeAddrs.length > 0) {
+				firstNodeAddr = nodeAddrs[0];
+			}
 		}
 		//
 		String dataMetaInfoFile = null;
@@ -105,11 +114,11 @@ implements WSLoadBuilderClient<T, U> {
 	@Override
 	public final WSLoadBuilderClientImpl<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws ClassCastException, RemoteException {
-		final WSRequestConfig<T> wsReqConf = (WSRequestConfig<T>) reqConf;
+		this.reqConf = (WSRequestConfig<T>) reqConf;
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
 			nextBuilder = get(addr);
-			nextBuilder.setRequestConfig(wsReqConf);
+			nextBuilder.setRequestConfig(reqConf);
 		}
 		return this;
 	}
@@ -184,6 +193,13 @@ implements WSLoadBuilderClient<T, U> {
 	@Override
 	public final WSLoadBuilderClientImpl<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException {
+		// need to remember 1st storage node address to configure later
+		if(firstNodeAddr == null || firstNodeAddr.length() == 0) {
+			if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
+				firstNodeAddr = dataNodeAddrs[0];
+			}
+		}
+		//
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
 			nextBuilder = get(addr);
@@ -275,8 +291,8 @@ implements WSLoadBuilderClient<T, U> {
 		}
 		//
 		newLoadClient = new WSLoadClientImpl<>(
-			remoteLoadMap, remoteJMXConnMap, RunTimeConfig.getLong("data.count"),
-			nextLoad==null? 1 : nextLoad.getThreadCount()
+			remoteLoadMap, remoteJMXConnMap, reqConf.setAddr(firstNodeAddr),
+			RunTimeConfig.getLong("data.count"), nextLoad==null? 1 : nextLoad.getThreadCount()
 		);
 		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer!=null && srcProducer.getConsumer()==null) {

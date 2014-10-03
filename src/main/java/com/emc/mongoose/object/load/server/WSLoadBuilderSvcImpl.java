@@ -29,6 +29,13 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	private RunTimeConfig clientProps = null;
 	//
+	@Override
+	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientProps) {
+		super.setProperties(clientProps);
+		this.clientProps = clientProps;
+		return this;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws RemoteException {
@@ -46,10 +53,10 @@ implements WSLoadBuilderSvc<T, U> {
 	public final U build()
 	throws IllegalStateException {
 		if(clientProps==null) {
-			throw new IllegalStateException("Should upload properties to the server before");
+			throw new IllegalStateException("Should upload properties to the server before instancing");
 		}
 		if(reqConf==null) {
-			throw new IllegalStateException("Should specify request builder instance");
+			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//
 		ObjectLoadSvc<T> loadSvc = null;

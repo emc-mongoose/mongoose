@@ -112,13 +112,8 @@ implements WSLoadExecutor<T> {
 	public WSNodeExecutor(
 		final String addr, final int threadsPerNode, final WSRequestConfig<T> sharedReqConf,
 		final MetricRegistry parentMetrics, final String parentName
-	) {
-		this(
-			threadsPerNode,
-			(WSRequestConfig<T>) sharedReqConf.clone().setAddr(addr),
-			parentMetrics,
-			parentName
-		);
+	) throws CloneNotSupportedException {
+		this(threadsPerNode, sharedReqConf.clone().setAddr(addr), parentMetrics, parentName);
 	}
 	//
 	@Override
@@ -363,6 +358,11 @@ implements WSLoadExecutor<T> {
 	//
 	public final String getAddr() {
 		return localReqConf.getAddr();
+	}
+	//
+	@Override
+	public final void configureStorage() {
+		localReqConf.configureStorage();
 	}
 	//
 	@Override
