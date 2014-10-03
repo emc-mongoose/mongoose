@@ -4,6 +4,7 @@ import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
+import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.HttpRequestBase;
 //
 import java.io.IOException;
@@ -58,5 +59,16 @@ extends WSRequestConfigBase<T> {
 	protected final void applyAuthHeader(final HttpRequestBase httpRequest) {
 		// TODO swift specific things
 	}
-
+	//
+	@Override
+	public final String getCanonical(final HttpRequest httpRequest) {
+		// TODO swift specific things
+		return null;
+	}
+	//
+	@Override
+	public final String getSignature(final String canonicalForm) {
+		// TODO swift specific things
+		return null;
+	}
 }

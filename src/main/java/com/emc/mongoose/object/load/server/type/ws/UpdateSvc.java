@@ -81,4 +81,9 @@ implements ObjectLoadSvc<T> {
 		return recFrame;
 	}
 	//
+	@Override
+	public final void configureStorage() {
+		throw new IllegalStateException("Shouldn't configure storage from server side");
+	}
+	//
 }

@@ -1,6 +1,5 @@
 package com.emc.mongoose.object.api.provider.s3;
 //
-import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -9,9 +8,9 @@ import com.emc.mongoose.util.logging.Markers;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.HttpRequestBase;
 //
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -115,8 +114,9 @@ extends WSRequestConfigBase<T> {
 		httpRequest.removeHeader(httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5)); // remove temporary header
 	}
 	//
-	protected String getCanonical(final HttpRequestBase httpRequest) {
-		StringBuffer buffer = new StringBuffer(httpRequest.getMethod());
+	@Override
+	public final String getCanonical(final HttpRequest httpRequest) {
+		StringBuffer buffer = new StringBuffer(httpRequest.getRequestLine().getMethod());
 		//
 		for(String headerName: HEADERS4CANONICAL) {
 			// support for multiple non-unique header keys
@@ -141,14 +141,15 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		buffer.append('\n').append(httpRequest.getURI().getRawPath());
+		buffer.append('\n').append(HttpRequestBase.class.cast(httpRequest).getURI().getRawPath());
 		//
 		LOG.trace(Markers.MSG, "Canonical request representation:\n{}", buffer);
 		//
 		return buffer.toString();
 	}
 	//
-	protected final String getSignature(final String canonicalForm) {
+	@Override
+	public final String getSignature(final String canonicalForm) {
 		byte[] signature = null;
 		try {
 			synchronized(mac) {
@@ -158,8 +159,20 @@ extends WSRequestConfigBase<T> {
 			LOG.error(e);
 		}
 		final String signature64 = Base64.encodeBase64String(signature);
-		LOG.trace(Markers.MSG, "Calculated signature: '{}'", signature64);
+		LOG.trace(Markers.MSG, "Calculated signature: \"{}\"", signature64);
 		return signature64;
 	}
 	//
+	@Override
+	public final void configureStorage()
+	throws IllegalStateException {
+		if(bucket == null) {
+			throw new IllegalStateException("Bucket is not specified");
+		}
+		if(bucket.exists()) {
+			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", bucket.getName());
+		} else {
+			bucket.create();
+		}
+	}
 }

@@ -1,5 +1,6 @@
 package com.emc.mongoose.object.api.provider.s3;
 //
+import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.api.provider.s3.Bucket;
 import com.emc.mongoose.object.api.provider.s3.WSRequestConfigImpl;
 import com.emc.mongoose.object.data.WSObject;
@@ -21,9 +22,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
-import java.util.UUID;
+import java.util.Locale;
+import java.util.TimeZone;
 /**
  Created by kurila on 02.10.14.
  */
@@ -39,7 +43,11 @@ implements Bucket<T>{
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
-			this.name = UUID.randomUUID().toString();
+			final Date
+				dt = Calendar.getInstance(
+					TimeZone.getTimeZone("GMT+0"), Locale.ROOT
+				).getTime();
+			this.name = "mongoose-" + WSRequestConfig.FMT_DT.format(dt);
 		} else {
 			this.name = name;
 		}
@@ -67,7 +75,7 @@ implements Bucket<T>{
 					createReq
 				);
 			} catch(final IOException e) {
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create bucket \""+name+"\"");
+				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to check bucket \""+name+"\"");
 			}
 		} else {
 			throw new IllegalStateException(
@@ -82,12 +90,11 @@ implements Bucket<T>{
 			} else {
 				final int statusCode = statusLine.getStatusCode();
 				if(statusCode == HttpStatus.SC_OK) {
-					LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
 					flagExists = true;
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
-					LOG.warn(
-						Markers.ERR, "Check bucket \"{}\" response: {}/{}",
+					LOG.debug(
+						Markers.MSG, "Check bucket \"{}\" response: {}/{}",
 						name, statusCode, statusMsg
 					);
 				}
@@ -127,7 +134,7 @@ implements Bucket<T>{
 			} else {
 				final int statusCode = statusLine.getStatusCode();
 				if(statusCode == HttpStatus.SC_OK) {
-					LOG.debug(Markers.MSG, "Bucket \"{}\" created", name);
+					LOG.info(Markers.MSG, "Bucket \"{}\" created", name);
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.warn(
@@ -166,7 +173,7 @@ implements Bucket<T>{
 			} else {
 				final int statusCode = statusLine.getStatusCode();
 				if(statusCode == HttpStatus.SC_OK) {
-					LOG.debug(Markers.MSG, "Bucket \"{}\" deleted", name);
+					LOG.info(Markers.MSG, "Bucket \"{}\" deleted", name);
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.warn(

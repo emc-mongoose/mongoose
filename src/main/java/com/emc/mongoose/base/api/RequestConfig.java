@@ -44,4 +44,7 @@ extends Externalizable {
 	//
 	RequestConfig<T> clone()
 	throws CloneNotSupportedException;
+	//
+	void configureStorage()
+	throws IllegalStateException;
 }

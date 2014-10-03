@@ -54,6 +54,7 @@ for threadCount in threadCountList:
 		loadBuilder.setMinObjSize(Integer.valueOf(objectSize))
 		loadBuilder.setMaxObjSize(Integer.valueOf(objectSize))
 		load=loadBuilder.build()
+		load.configureStorage()
 		load.start()
 		load.join(timeOut[1].toMillis(timeOut[0]))
 		load.close()

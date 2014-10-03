@@ -362,7 +362,7 @@ implements WSRequestConfig<T> {
 				httpRequest.getMethod()
 			);
 		}
-		if(httpReqWithPayLoad!=null) {
+		if(httpReqWithPayLoad != null) {
 			httpReqWithPayLoad.setEntity(httpEntity);
 		}
 	}

@@ -28,18 +28,28 @@ implements SubTenant<T> {
 	}
 	//
 	@Override
-	public final void create() {
+	public final boolean exists()
+	throws IllegalStateException {
+		return false;
+	}
+	//
+	@Override
+	public final void create()
+	throws IllegalStateException {
 		final HttpRequest createReq = new HttpPut("/"+name);
 		
 	}
 	//
 	@Override
-	public final void delete() {
+	public final void delete()
+	throws IllegalStateException {
 
 	}
 	//
 	@Override
-	public final List<T> enumerate() {
+	public final List<T> list()
+	throws IllegalStateException {
 		return Collections.emptyList();
 	}
+	//
 }

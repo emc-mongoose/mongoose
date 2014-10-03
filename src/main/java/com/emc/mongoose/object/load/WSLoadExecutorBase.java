@@ -118,17 +118,20 @@ implements WSLoadExecutor<T> {
 			headers.add(new BasicHeader(key, sharedHeadersMap.get(key)));
 		}
 		// configure and create the HTTP client
-		httpClient = HttpClientBuilder
-			.create()
-			.setConnectionManager(connMgr)
-			.setDefaultHeaders(headers)
-			.setRetryHandler(reqConf.getRetryHandler())
-			.disableCookieManagement()
-			//.disableAutomaticRetries()
-			.setUserAgent(WSRequestConfig.DEFAULT_USERAGENT)
-			.setMaxConnPerRoute(threadsPerNode)
-			.setMaxConnTotal(totalThreadCount)
-			.build();
+		final HttpClientBuilder
+			httpClientBuilder = HttpClientBuilder
+				.create()
+				.setConnectionManager(connMgr)
+				.setDefaultHeaders(headers)
+				.setRetryHandler(reqConf.getRetryHandler())
+				.disableCookieManagement()
+				.setUserAgent(WSRequestConfig.DEFAULT_USERAGENT)
+				.setMaxConnPerRoute(threadsPerNode)
+				.setMaxConnTotal(totalThreadCount);
+		if(!reqConf.getRetries()) {
+			httpClientBuilder.disableAutomaticRetries();
+		}
+		httpClient = httpClientBuilder.build();
 		//
 		reqConf.setClient(httpClient);
 		dataSrc = reqConf.getDataSource();
@@ -163,6 +166,15 @@ implements WSLoadExecutor<T> {
 		}
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
+	}
+	//
+	@Override
+	public void configureStorage() {
+		if(nodes.length > 0) {
+			nodes[0].configureStorage();
+		} else {
+			LOG.error(Markers.MSG, "No target nodes to configure the storage");
+		}
 	}
 	//
 	@Override
@@ -424,15 +436,6 @@ implements WSLoadExecutor<T> {
 		if(LOG.isDebugEnabled(Markers.PERF_AVG)) {
 			for(final WSNodeExecutor node: nodes) {
 				node.logMetrics(Level.DEBUG, Markers.PERF_AVG);
-			}
-			if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
-				LOG.trace(
-					Markers.PERF_AVG,
-					"Submit executor: terminated={}, completed={}, wait={}, active={}",
-					submitExecutor.isTerminated(), submitExecutor.getCompletedTaskCount(),
-					submitExecutor.getQueue().size(), submitExecutor.getActiveCount()
-				);
-				LOG.trace(Markers.PERF_AVG, "Connection pool: {}", connMgr.getTotalStats());
 			}
 		}
 		//

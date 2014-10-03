@@ -3,6 +3,7 @@ package com.emc.mongoose.object.load.client;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.server.LoadSvc;
+import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -17,6 +18,10 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 //
+import org.apache.http.Header;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
+import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,6 +62,7 @@ implements WSLoadClient<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final Map<String, LoadSvc<T>> remoteLoadMap;
+	private final WSRequestConfig<T> reqConf;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final Map<String, JMXConnector> remoteJMXConnMap;
 	private final Map<String, MBeanServerConnection> mBeanSrvConnMap;
@@ -124,11 +130,30 @@ implements WSLoadClient<T> {
 	public WSLoadClientImpl(
 		final Map<String, LoadSvc<T>> remoteLoadMap,
 		final Map<String, JMXConnector> remoteJMXConnMap,
+		final WSRequestConfig<T> reqConf,
 		final long maxCount, final int threadCountPerServer
 	) {
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
 		this.remoteJMXConnMap = remoteJMXConnMap;
+		//
+		// set shared headers to client builder
+		final LinkedList<Header> headers = new LinkedList<>();
+		final Map<String, String> sharedHeadersMap = reqConf.getSharedHeadersMap();
+		for(final String key: sharedHeadersMap.keySet()) {
+			headers.add(new BasicHeader(key, sharedHeadersMap.get(key)));
+		}
+		this.reqConf = reqConf
+			.setClient(
+				HttpClientBuilder
+					.create()
+					.setConnectionManager(new BasicHttpClientConnectionManager())
+					.setDefaultHeaders(headers)
+					.setRetryHandler(reqConf.getRetryHandler())
+					.disableCookieManagement()
+					.setUserAgent(WSRequestConfig.DEFAULT_USERAGENT)
+					.build()
+			);
 		//
 		try {
 			final Object remoteLoads[] = remoteLoadMap.values().toArray();
@@ -702,6 +727,11 @@ implements WSLoadClient<T> {
 	}
 	//
 	@Override
+	public final void configureStorage() {
+		reqConf.configureStorage();
+	}
+	//
+	@Override
 	public final void start() {
 		LoadSvc nextLoadSvc;
 		for(final String addr: remoteLoadMap.keySet()) {
@@ -982,9 +1012,14 @@ implements WSLoadClient<T> {
 	}
 	//
 	@Override
-	public final Producer<T> getProducer()
-	throws RemoteException {
-		return remoteLoadMap.entrySet().iterator().next().getValue().getProducer();
+	public final Producer<T> getProducer() {
+		Producer<T> producer = null;
+		try {
+			producer = remoteLoadMap.entrySet().iterator().next().getValue().getProducer();
+		} catch(final RemoteException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to get remote producer");
+		}
+		return producer;
 	}
 	//
 	@Override

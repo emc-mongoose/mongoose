@@ -7,8 +7,18 @@ import java.util.List;
  Created by kurila on 02.10.14.
  */
 public interface SubTenant<T extends DataObject> {
+	//
 	String getName();
-	void create();
-	void delete();
-	List<T> enumerate();
+	//
+	boolean exists()
+	throws IllegalStateException;
+	//
+	void create()
+	throws IllegalStateException;
+	//
+	void delete()
+	throws IllegalStateException;
+	//
+	List<T> list()
+	throws IllegalStateException;
 }

@@ -8,6 +8,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,23 +30,23 @@ extends WSRequestConfigBase<T> {
 			"/" + RunTimeConfig.getString("api.atmos.path.rest") +
 			"/" + RunTimeConfig.getString("api.atmos.interface") + "/%x";
 	//
-	private String subTenant;
+	private WSSubTenant<T> subTenant;
 	//
 	public WSRequestConfigImpl() {
 		api = WSRequestConfigImpl.class.getSimpleName();
 	}
 	//
-	public final String getSubTenant() {
+	public final WSSubTenant<T> getSubTenant() {
 		return subTenant;
 	}
 	//
-	public final WSRequestConfigImpl<T> setSubTenant(final String subTenant)
+	public final WSRequestConfigImpl<T> setSubTenant(final WSSubTenant<T> subTenant)
 	throws IllegalStateException {
 		this.subTenant = subTenant;
-		if(subTenant==null) {
+		if(subTenant == null) {
 			throw new IllegalStateException("Subtenant is not specified for Atmos REST API");
-		} else if(userName!=null) {
-			sharedHeadersMap.put(KEY_EMC_UID, subTenant+'/'+userName);
+		} else if(userName != null) {
+			sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
 		}
 		return this;
 	}
@@ -56,7 +57,7 @@ extends WSRequestConfigBase<T> {
 		if(userName==null) {
 			throw new IllegalStateException("User name is not specified for Atmos REST API");
 		} else if(subTenant!=null) {
-			sharedHeadersMap.put(KEY_EMC_UID, subTenant+'/'+userName);
+			sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
 		}
 		return this;
 	}
@@ -67,7 +68,7 @@ extends WSRequestConfigBase<T> {
 		//
 		final String paramName = "api.atmos.subtenant";
 		try {
-			setSubTenant(RunTimeConfig.getString(paramName));
+			setSubTenant(new WSSubTenant<>(this, RunTimeConfig.getString(paramName)));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
@@ -88,14 +89,14 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setSubTenant(String.class.cast(in.readObject()));
+		setSubTenant(new WSSubTenant<T>(this, String.class.cast(in.readObject())));
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(subTenant);
+		out.writeObject(subTenant.getName());
 	}
 	//
 	@Override
@@ -131,8 +132,9 @@ extends WSRequestConfigBase<T> {
 
 	}
 	//
-	protected String getCanonical(final HttpRequestBase httpRequest) {
-		final StringBuilder buffer = new StringBuilder(httpRequest.getMethod());
+	@Override
+	public String getCanonical(final HttpRequest httpRequest) {
+		final StringBuilder buffer = new StringBuilder(httpRequest.getRequestLine().getMethod());
 		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
 		Header header;
 		for(final String headerName: HEADERS4CANONICAL) {
@@ -145,7 +147,7 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		buffer.append('\n').append(httpRequest.getURI().getRawPath());
+		buffer.append('\n').append(httpRequest.getRequestLine().getUri());
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
 			header = httpRequest.getFirstHeader(emcHeaderName);
@@ -164,7 +166,8 @@ extends WSRequestConfigBase<T> {
 		return buffer.toString();
 	}
 	//
-	protected final String getSignature(final String canonicalForm) {
+	@Override
+	public final String getSignature(final String canonicalForm) {
 		LOG.trace(Markers.MSG, "Canonical form: {}", canonicalForm);
 		byte[] signature = null;
 		try {
@@ -179,4 +182,16 @@ extends WSRequestConfigBase<T> {
 		return signature64;
 	}
 	//
+	@Override
+	public void configureStorage()
+	throws IllegalStateException {
+		if(subTenant == null) {
+			throw new IllegalStateException("Subtenant is not specified");
+		}
+		if(subTenant.exists()) {
+			LOG.info(Markers.MSG, "Subtenant \"{}\" already exists", subTenant.getName());
+		} else {
+			subTenant.create();
+		}
+	}
 }

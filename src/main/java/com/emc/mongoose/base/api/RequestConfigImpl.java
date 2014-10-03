@@ -172,4 +172,8 @@ implements RequestConfig<T>, Cloneable {
 			((addr==null || addr.length()==0) ? "" : "@"+addr);
 	}
 	//
+	@Override
+	public void configureStorage() {
+		throw new IllegalStateException("Not implemented");
+	}
 }
