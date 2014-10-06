@@ -113,8 +113,8 @@ implements DataSource<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void writeExternal(final ObjectOutput out)
-		throws IOException {
-		out.writeLong(dataSrcDirect.array().length);
+	throws IOException {
+		out.writeInt(dataSrcDirect.array().length);
 		out.writeLong(seed);
 	}
 	//

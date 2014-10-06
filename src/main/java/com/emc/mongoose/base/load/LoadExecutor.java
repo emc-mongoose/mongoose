@@ -50,6 +50,4 @@ extends Producer<T>, Consumer<T> {
 	void join(final long milliSecs)
 	throws RemoteException, InterruptedException;
 	//
-	void configureStorage()
-	throws RemoteException;
 }

@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
+import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
 /**
  Created by kurila on 26.03.14.
@@ -26,13 +27,16 @@ extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String
+		KEY_SUBTENANT = "api.atmos.subtenant",
 		FMT_PATH =
 			"/" + RunTimeConfig.getString("api.atmos.path.rest") +
 			"/" + RunTimeConfig.getString("api.atmos.interface") + "/%x";
 	//
 	private WSSubTenant<T> subTenant;
 	//
-	public WSRequestConfigImpl() {
+	public WSRequestConfigImpl()
+	throws NoSuchAlgorithmException {
+		super();
 		api = WSRequestConfigImpl.class.getSimpleName();
 	}
 	//
@@ -66,11 +70,10 @@ extends WSRequestConfigBase<T> {
 	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		//
-		final String paramName = "api.atmos.subtenant";
 		try {
-			setSubTenant(new WSSubTenant<>(this, RunTimeConfig.getString(paramName)));
+			setSubTenant(new WSSubTenant<>(this, RunTimeConfig.getString(KEY_SUBTENANT)));
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_SUBTENANT);
 		}
 		//
 		return this;
@@ -188,10 +191,18 @@ extends WSRequestConfigBase<T> {
 		if(subTenant == null) {
 			throw new IllegalStateException("Subtenant is not specified");
 		}
+		final String subTenantName = subTenant.getName();
 		if(subTenant.exists()) {
-			LOG.info(Markers.MSG, "Subtenant \"{}\" already exists", subTenant.getName());
+			LOG.debug(Markers.MSG, "Subtenant \"{}\" already exists", subTenantName);
 		} else {
 			subTenant.create();
+			if(subTenant.exists()) {
+				RunTimeConfig.set(KEY_SUBTENANT, subTenantName);
+			} else {
+				throw new IllegalStateException(
+					String.format("Created subtenant \"%s\" doesn't exist", subTenantName)
+				);
+			}
 		}
 	}
 }

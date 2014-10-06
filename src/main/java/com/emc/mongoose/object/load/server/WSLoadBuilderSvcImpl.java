@@ -52,10 +52,10 @@ implements WSLoadBuilderSvc<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final U build()
 	throws IllegalStateException {
-		if(clientProps==null) {
+		if(clientProps == null) {
 			throw new IllegalStateException("Should upload properties to the server before instancing");
 		}
-		if(reqConf==null) {
+		if(reqConf == null) {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
 		//

@@ -10,6 +10,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
 import com.emc.mongoose.base.api.RequestConfig;
+import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
@@ -109,6 +110,7 @@ implements WSLoadExecutor<T> {
 		connMgr.setDefaultConnectionConfig(
 			ConnectionConfig
 				.custom()
+				.setBufferSize(DataItem.MAX_PAGE_SIZE)
 				.build()
 		);
 		// set shared headers to client builder
@@ -166,15 +168,6 @@ implements WSLoadExecutor<T> {
 		}
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
-	}
-	//
-	@Override
-	public void configureStorage() {
-		if(nodes.length > 0) {
-			nodes[0].configureStorage();
-		} else {
-			LOG.error(Markers.MSG, "No target nodes to configure the storage");
-		}
 	}
 	//
 	@Override

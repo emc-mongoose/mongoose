@@ -3,6 +3,7 @@ package com.emc.mongoose.object.api.provider.s3;
 import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -11,13 +12,17 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.methods.HttpRequestBase;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.net.URISyntaxException;
+import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
 /**
  Created by kurila on 26.03.14.
@@ -29,11 +34,15 @@ extends WSRequestConfigBase<T> {
 	public final static String
 		FMT_PATH = "/%s/%x",
 		FMT_AUTH_VALUE = RunTimeConfig.getString("api.s3.auth.prefix") + " %s:%s",
-		MSG_NO_BUCKET = "Bucket is not specified";
+		KEY_BUCKET = "api.s3.bucket",
+		MSG_NO_BUCKET = "Bucket is not specified",
+		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
 	//
 	private WSBucket<T> bucket;
 	//
-	public WSRequestConfigImpl() {
+	public WSRequestConfigImpl()
+	throws NoSuchAlgorithmException {
+		super();
 		api = WSRequestConfigImpl.class.getSimpleName();
 	}
 	//
@@ -50,11 +59,10 @@ extends WSRequestConfigBase<T> {
 	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
 		super.setProperties(props);
 		//
-		final String paramName = "api.s3.bucket";
 		try {
-			setBucket(new WSBucket<T>(this, RunTimeConfig.getString(paramName)));
+			setBucket(new WSBucket<T>(this, RunTimeConfig.getString(KEY_BUCKET)));
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET);
 		}
 		//
 		return this;
@@ -72,8 +80,11 @@ extends WSRequestConfigBase<T> {
 	@Override @SuppressWarnings("unchecked")
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
+		LOG.info(Markers.MSG, "WSRequestConfigImpl.readExternal begin");
 		super.readExternal(in);
 		setBucket(new WSBucket<T>(this, String.class.cast(in.readObject())));
+		LOG.info(Markers.MSG, "Got bucket {}", bucket.getName());
+		LOG.info(Markers.MSG, "WSRequestConfigImpl.readExternal end");
 	}
 	//
 	@Override
@@ -169,10 +180,18 @@ extends WSRequestConfigBase<T> {
 		if(bucket == null) {
 			throw new IllegalStateException("Bucket is not specified");
 		}
+		final String bucketName = bucket.getName();
 		if(bucket.exists()) {
-			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", bucket.getName());
+			LOG.debug(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
 		} else {
 			bucket.create();
+			if(bucket.exists()) {
+				RunTimeConfig.set(KEY_BUCKET, bucketName);
+			} else {
+				throw new IllegalStateException(
+					String.format(FMT_MSG_ERR_BUCKET_NOT_EXIST, bucketName)
+				);
+			}
 		}
 	}
 }

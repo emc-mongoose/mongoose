@@ -361,11 +361,6 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final void configureStorage() {
-		localReqConf.configureStorage();
-	}
-	//
-	@Override
 	public final void start() {
 		prestartAllCoreThreads();
 	}

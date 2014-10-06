@@ -51,7 +51,6 @@ except IndexError:
 	LOG.error(Markers.ERR, "Time unit should be specified with timeout value (following after \".\" separator)")
 	exit()
 #
-load.configureStorage()
 load.start()
 load.join(timeOut[1].toMillis(timeOut[0]))
 load.close()

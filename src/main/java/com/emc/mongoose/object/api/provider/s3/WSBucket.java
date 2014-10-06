@@ -12,6 +12,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -63,42 +64,37 @@ implements Bucket<T>{
 	throws IllegalStateException {
 		boolean flagExists = false;
 		//
-		final HttpRequestBase createReq = new HttpHead("/" + name);
-		reqConf.applyHeadersFinally(createReq);
+		final HttpRequestBase checkReq = new HttpHead("/" + name);
+		reqConf.applyHeadersFinally(checkReq);
 		final CloseableHttpClient httpClient = reqConf.getClient();
 		//
-		CloseableHttpResponse httpResp = null;
-		if(httpClient != null) {
-			try {
-				httpResp = httpClient.execute(
-					new HttpHost(reqConf.getAddr(), reqConf.getPort(), reqConf.getScheme()),
-					createReq
-				);
-			} catch(final IOException e) {
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to check bucket \""+name+"\"");
-			}
-		} else {
-			throw new IllegalStateException(
-				"Failed to check the bucket, no HTTP client was specified"
-			);
+		if(httpClient == null) {
+			throw new IllegalStateException("No HTTP client specified");
 		}
-		//
-		if(httpResp != null) {
+		try(
+			final CloseableHttpResponse httpResp = httpClient.execute(
+				new HttpHost(reqConf.getAddr(), reqConf.getPort(), reqConf.getScheme()),
+				checkReq
+			)
+		) {
 			final StatusLine statusLine = httpResp.getStatusLine();
 			if(statusLine == null) {
 				LOG.warn(Markers.MSG, "No response status");
 			} else {
 				final int statusCode = statusLine.getStatusCode();
 				if(statusCode == HttpStatus.SC_OK) {
+					LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
 					flagExists = true;
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.debug(
-						Markers.MSG, "Check bucket \"{}\" response: {}/{}",
+						Markers.MSG, "Checking bucket \"{}\" response: {}/{}",
 						name, statusCode, statusMsg
 					);
 				}
 			}
+		} catch(final IOException e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to check the bucket \""+name+"\"");
 		}
 		//
 		return flagExists;
@@ -107,27 +103,20 @@ implements Bucket<T>{
 	@Override
 	public final void create()
 	throws IllegalStateException {
+		//
 		final HttpRequestBase createReq = new HttpPut("/" + name);
 		reqConf.applyHeadersFinally(createReq);
 		final CloseableHttpClient httpClient = reqConf.getClient();
 		//
-		CloseableHttpResponse httpResp = null;
-		if(httpClient != null) {
-			try {
-				httpResp = httpClient.execute(
-					new HttpHost(reqConf.getAddr(), reqConf.getPort(), reqConf.getScheme()),
-					createReq
-				);
-			} catch(final IOException e) {
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create bucket \""+name+"\"");
-			}
-		} else {
-			throw new IllegalStateException(
-				"Failed to create the bucket, no HTTP client was specified"
-			);
+		if(httpClient == null) {
+			throw new IllegalStateException("No HTTP client specified");
 		}
-		//
-		if(httpResp != null) {
+		try(
+			final CloseableHttpResponse httpResp = httpClient.execute(
+				new HttpHost(reqConf.getAddr(), reqConf.getPort(), reqConf.getScheme()),
+				createReq
+			)
+		) {
 			final StatusLine statusLine = httpResp.getStatusLine();
 			if(statusLine == null) {
 				LOG.warn(Markers.MSG, "No response status");
@@ -143,30 +132,28 @@ implements Bucket<T>{
 					);
 				}
 			}
+		} catch(final IOException e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create the bucket \""+name+"\"");
 		}
 	}
 	//
 	@Override
 	public final void delete()
 	throws IllegalStateException {
-		final HttpRequestBase createReq = new HttpDelete("/" + name);
-		reqConf.applyHeadersFinally(createReq);
+		//
+		final HttpRequestBase deleteReq = new HttpDelete("/" + name);
+		reqConf.applyHeadersFinally(deleteReq);
 		final CloseableHttpClient httpClient = reqConf.getClient();
 		//
-		CloseableHttpResponse httpResp = null;
-		if(httpClient != null) {
-			try {
-				httpResp = httpClient.execute(createReq);
-			} catch(final IOException e) {
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to delete bucket \""+name+"\"");
-			}
-		} else {
-			throw new IllegalStateException(
-				"Failed to delete the bucket, no HTTP client was specified"
-			);
+		if(httpClient == null) {
+			throw new IllegalStateException("No HTTP client was specified");
 		}
-		//
-		if(httpResp != null) {
+		try(
+			final CloseableHttpResponse httpResp = httpClient.execute(
+				new HttpHost(reqConf.getAddr(), reqConf.getPort(), reqConf.getScheme()),
+				deleteReq
+			)
+		) {
 			final StatusLine statusLine = httpResp.getStatusLine();
 			if(statusLine == null) {
 				LOG.warn(Markers.MSG, "No response status");
@@ -182,11 +169,49 @@ implements Bucket<T>{
 					);
 				}
 			}
+		} catch(final IOException e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to delete the bucket \""+name+"\"");
 		}
+		//
 	}
 	//
 	@Override
 	public final List<T> list() {
-		return Collections.emptyList();
+		final List<T> dataItems = Collections.emptyList();
+		//
+		final HttpRequestBase listReq = new HttpGet("/" + name);
+		reqConf.applyHeadersFinally(listReq);
+		final CloseableHttpClient httpClient = reqConf.getClient();
+		//
+		if(httpClient == null) {
+			throw new IllegalStateException("No HTTP client specified");
+		}
+		try(
+			final CloseableHttpResponse httpResp = httpClient.execute(
+				new HttpHost(reqConf.getAddr(), reqConf.getPort(), reqConf.getScheme()),
+				listReq
+			)
+		) {
+			final StatusLine statusLine = httpResp.getStatusLine();
+			if(statusLine == null) {
+				LOG.warn(Markers.MSG, "No response status");
+			} else {
+				final int statusCode = statusLine.getStatusCode();
+				if(statusCode == HttpStatus.SC_OK) {
+					LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
+					// TODO fill the data items list
+				} else {
+					final String statusMsg = statusLine.getReasonPhrase();
+					LOG.debug(
+						Markers.MSG, "Listing bucket \"{}\" response: {}/{}",
+						name, statusCode, statusMsg
+					);
+				}
+			}
+		} catch(final IOException e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to list the bucket \""+name+"\"");
+		}
+		//
+		return dataItems;
 	}
 }

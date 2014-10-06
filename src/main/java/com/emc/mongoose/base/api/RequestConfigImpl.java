@@ -24,8 +24,14 @@ implements RequestConfig<T>, Cloneable {
 	protected String addr, api, secret, userName;
 	protected int port;
 	protected Request.Type loadType;
-	protected DataSource<T> dataSrc = UniformDataSource.DEFAULT;
-	protected volatile boolean retryFlag = RunTimeConfig.getBoolean("run.request.retries");
+	protected DataSource<T> dataSrc;
+	protected volatile boolean retryFlag;
+	//
+	@SuppressWarnings("unchecked")
+	public RequestConfigImpl() {
+		dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
+		retryFlag = RunTimeConfig.getBoolean("run.request.retries");
+	}
 	//
 	@Override
 	public final String getAPI() {
@@ -152,17 +158,27 @@ implements RequestConfig<T>, Cloneable {
 		out.writeBoolean(getRetries());
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
+		LOG.info(Markers.MSG, "RequestConfigImpl.readExternal begin");
 		setAPI(String.class.cast(in.readObject()));
+		LOG.info(Markers.MSG, "Got API {}", api);
 		setAddr(String.class.cast(in.readObject()));
+		LOG.info(Markers.MSG, "Got address {}", addr);
 		setLoadType(Request.Type.class.cast(in.readObject()));
+		LOG.info(Markers.MSG, "Got load type {}", loadType);
 		setPort(in.readInt());
+		LOG.info(Markers.MSG, "Got port {}", port);
 		setUserName(String.class.cast(in.readObject()));
+		LOG.info(Markers.MSG, "Got user name {}", userName);
 		setSecret(String.class.cast(in.readObject()));
-		setDataSource(UniformDataSource.class.cast(in.readObject()));
+		LOG.info(Markers.MSG, "Got secret {}", secret);
+		setDataSource((DataSource<T>) in.readObject());
+		LOG.info(Markers.MSG, "Got data source {}", dataSrc);
 		setRetries(Boolean.class.cast(in.readBoolean()));
+		LOG.info(Markers.MSG, "Got retry flag {}", retryFlag);
+		LOG.info(Markers.MSG, "RequestConfigImpl.readExternal end");
 	}
 	//
 	@Override

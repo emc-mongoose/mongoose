@@ -47,11 +47,11 @@ public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>> {
 	LoadBuilder<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException;
 	//
-	LoadBuilder<T, U> setInputFile(final String listFile)
-	throws RemoteException;
-	//
 	LoadBuilder<T, U> setUpdatesPerItem(final int count)
 	throws RemoteException;
+	//
+	LoadBuilder<T, U> setInputFile(final String listFile)
+		throws RemoteException;
 	//
 	U build()
 	throws IOException;

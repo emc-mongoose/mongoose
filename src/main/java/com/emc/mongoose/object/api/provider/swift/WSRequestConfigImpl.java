@@ -10,6 +10,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.security.NoSuchAlgorithmException;
 //
 /**
  Created by kurila on 26.03.14.
@@ -17,7 +18,9 @@ import java.io.ObjectOutput;
 public final class WSRequestConfigImpl<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
-	public WSRequestConfigImpl() {
+	public WSRequestConfigImpl()
+	throws NoSuchAlgorithmException {
+		super();
 		api = WSRequestConfigImpl.class.getSimpleName();
 	}
 	//

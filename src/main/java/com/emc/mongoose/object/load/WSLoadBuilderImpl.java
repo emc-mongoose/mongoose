@@ -280,8 +280,16 @@ implements WSLoadBuilder<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public U build()
 	throws IllegalStateException {
-		if(reqConf==null) {
+		if(reqConf == null) {
 			throw new IllegalStateException("Should specify request builder instance");
+		}
+		//
+		try {
+			reqConf
+				.setAddr(dataNodeAddrs[0])
+				.configureStorage();
+		} catch(final NullPointerException | IndexOutOfBoundsException | IllegalStateException e) {
+			throw new IllegalStateException(e);
 		}
 		//
 		WSLoadExecutorBase<T> load = null;

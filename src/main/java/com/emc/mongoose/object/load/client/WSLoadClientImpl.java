@@ -62,7 +62,6 @@ implements WSLoadClient<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final Map<String, LoadSvc<T>> remoteLoadMap;
-	private final WSRequestConfig<T> reqConf;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final Map<String, JMXConnector> remoteJMXConnMap;
 	private final Map<String, MBeanServerConnection> mBeanSrvConnMap;
@@ -136,24 +135,12 @@ implements WSLoadClient<T> {
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
 		this.remoteJMXConnMap = remoteJMXConnMap;
-		//
 		// set shared headers to client builder
 		final LinkedList<Header> headers = new LinkedList<>();
 		final Map<String, String> sharedHeadersMap = reqConf.getSharedHeadersMap();
 		for(final String key: sharedHeadersMap.keySet()) {
 			headers.add(new BasicHeader(key, sharedHeadersMap.get(key)));
 		}
-		this.reqConf = reqConf
-			.setClient(
-				HttpClientBuilder
-					.create()
-					.setConnectionManager(new BasicHttpClientConnectionManager())
-					.setDefaultHeaders(headers)
-					.setRetryHandler(reqConf.getRetryHandler())
-					.disableCookieManagement()
-					.setUserAgent(WSRequestConfig.DEFAULT_USERAGENT)
-					.build()
-			);
 		//
 		try {
 			final Object remoteLoads[] = remoteLoadMap.values().toArray();
@@ -727,10 +714,6 @@ implements WSLoadClient<T> {
 	}
 	//
 	@Override
-	public final void configureStorage() {
-	}
-	//
-	@Override
 	public final void start() {
 		LoadSvc nextLoadSvc;
 		for(final String addr: remoteLoadMap.keySet()) {
@@ -860,7 +843,7 @@ implements WSLoadClient<T> {
 		if(!isInterrupted()) {
 			interrupt();
 		}
-		LOG.debug(Markers.MSG, "Controller dropped {} tasks", submitExecutor.shutdownNow().size());
+		LOG.debug(Markers.MSG, "Client dropped {} tasks", submitExecutor.shutdownNow().size());
 		//
 		LoadSvc<T> nextLoadSvc;
 		JMXConnector nextJMXConn = null;

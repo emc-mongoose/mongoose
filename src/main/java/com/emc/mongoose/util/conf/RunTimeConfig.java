@@ -158,6 +158,11 @@ implements Externalizable {
 			x, SIZE_UNITS.charAt(z)
 		);
 	}
+	//
+	public static void set(final String key, final String value) {
+		INSTANCE.setProperty(key, value);
+		System.setProperty(key, value);
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)

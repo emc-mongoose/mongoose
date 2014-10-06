@@ -12,6 +12,8 @@ import java.io.Externalizable;
 public interface RequestConfig<T extends DataItem>
 extends Externalizable {
 	//
+	long serialVersionUID = 42L;
+	//
 	int REQUEST_TIMEOUT_MILLISEC = RunTimeConfig.getInt(
 		"run.request.timeout.millisec"
 	);

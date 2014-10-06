@@ -35,8 +35,7 @@ for loadTypeStr in loadTypes:
 	except IllegalArgumentException:
 		LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)
 	except Throwable as e:
-		ExceptionHandler.trace(LOG, Level.FATAL, e, "Failure")
-		e.printStackTrace()
+		ExceptionHandler.trace(LOG, Level.FATAL, e, "Unexpected failure")
 #
 from java.lang import Integer
 from java.util.concurrent import TimeUnit
@@ -55,7 +54,6 @@ except IndexError:
 	LOG.error(Markers.ERR, "Time unit should be specified with timeout value (following after \".\" separator)")
 	exit()
 #
-chain[0].configureStorage()
 for load in chain:
 	load.start()
 chain[0].join(timeOut[1].toMillis(timeOut[0]))
