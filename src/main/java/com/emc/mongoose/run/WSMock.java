@@ -2,7 +2,9 @@ package com.emc.mongoose.run;
 //
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -22,9 +24,7 @@ public final class WSMock {
 
 	private final static Logger LOG = LogManager.getLogger();
 
-	public static void run()
-	throws Exception
-	{
+	public static void run() {
 
 		final String apiName = RunTimeConfig.getString("storage.api");
 		final int port = RunTimeConfig.getInt("api."+apiName+".port");
@@ -38,10 +38,19 @@ public final class WSMock {
 		server.addConnector(httpConnector);
 		//Set a new handler
 		server.setHandler(new SimpleHandler());
-		server.start();
-		LOG.info(Markers.MSG, "Listening on port #{}", port);
-		server.join();
-
+		try {
+            server.start();
+            LOG.info(Markers.MSG, "Listening on port #{}", port);
+            server.join();
+        } catch (final Exception e) {
+            ExceptionHandler.trace(LOG, Level.WARN, e, "WSMock was interrupted");
+        } finally {
+            try {
+                server.stop();
+            } catch (final Exception e) {
+                ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to stop jetty");
+            }
+        }
 	}
 
 	@SuppressWarnings("serial")

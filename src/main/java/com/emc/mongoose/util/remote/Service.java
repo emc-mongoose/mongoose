@@ -10,6 +10,9 @@ import java.rmi.RemoteException;
 public interface Service
 extends Remote, Closeable {
 	//
+    void start()
+    throws RemoteException;
+    //
 	String getName()
 	throws RemoteException;
 	//

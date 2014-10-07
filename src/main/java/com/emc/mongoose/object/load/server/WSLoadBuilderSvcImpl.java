@@ -109,7 +109,7 @@ implements WSLoadBuilderSvc<T, U> {
 		return (U) loadSvc;
 	}
 	//
-	public static void run() {
+	public void start() {
 		final WSLoadBuilderSvcImpl loadBuilderSvc = new WSLoadBuilderSvcImpl<>();
 		LOG.info(Markers.MSG, "Load builder service instance created");
 		/*final RemoteStub stub = */ServiceUtils.create(loadBuilderSvc);

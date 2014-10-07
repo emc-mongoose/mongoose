@@ -70,7 +70,6 @@ public final class Main {
 		} finally {
 			DIR_ROOT = dirRoot;
 			JAR_SELF = jarSelf;
-
 		}
 	}
 	//
@@ -103,11 +102,11 @@ public final class Main {
         switch (runMode) {
 			case VALUE_RUN_MODE_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
-				WSLoadBuilderSvcImpl.run();
+				new WSLoadBuilderSvcImpl().start();
 				break;
 			case VALUE_RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-				startJetty(rootLogger);
+                JettyRunner.run();
 				break;
 			case VALUE_RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
@@ -144,31 +143,11 @@ public final class Main {
 	}
 	//
 	public static void initSecurity() {
-		// load the security policy
-		final String secPolicyURL = "file:" + DIR_ROOT + SEP + DIR_CONF + SEP + FNAME_POLICY;
-		System.setProperty(KEY_POLICY, secPolicyURL);
-		Policy.getPolicy().refresh();
-		System.setSecurityManager(new SecurityManager());
-	}
-	//
-    private static void startJetty(final Logger log) {
-        final Server server = new Server(8080);
-		//
-        final String webResourceBaseDir = "src/main/webapp";
-		//
-        final WebAppContext webAppContext = new WebAppContext();
-        webAppContext.setContextPath("/");
-		webAppContext.setDescriptor(webResourceBaseDir + "/WEB-INF/web.xml");
-		webAppContext.setResourceBase(webResourceBaseDir);
-        webAppContext.setParentLoaderPriority(true);
-        server.setHandler(webAppContext);
-		//
-        try {
-            server.start();
-            server.join();
-        } catch (final Exception e) {
-            ExceptionHandler.trace(log, Level.FATAL, e, "Web UI service failure");
-        }
+        // load the security policy
+        final String secPolicyURL = "file:" + DIR_ROOT + SEP + DIR_CONF + SEP + FNAME_POLICY;
+        System.setProperty(KEY_POLICY, secPolicyURL);
+        Policy.getPolicy().refresh();
+        System.setSecurityManager(new SecurityManager());
     }
 	//
 }
