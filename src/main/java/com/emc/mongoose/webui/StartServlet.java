@@ -73,7 +73,7 @@ public class StartServlet extends HttpServlet {
                 break;
             case VALUE_RUN_MODE_CLIENT:
                 LOG.debug(Markers.MSG, "Starting the client");
-                runClient();
+                threadId = runClient();
                 break;
             default:
                 LOG.debug(Markers.MSG, "Starting the standalone");
@@ -87,10 +87,9 @@ public class StartServlet extends HttpServlet {
         Thread thread = new Thread() {
             final WSLoadBuilderSvc loadBuilderSvc = new WSLoadBuilderSvcImpl();
             @Override
-            public void start() {
+            public void run() {
                 try {
                     loadBuilderSvc.start();
-                    super.start();
                 } catch (final RemoteException e) {
                     ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to start load builder service");
                 }
@@ -106,17 +105,80 @@ public class StartServlet extends HttpServlet {
         return thread.getId();
     }
 
-    private void runClient() {
+    private long runClient() {
         //
-        try {
-            final WSLoadBuilderClientImpl<WSObjectImpl, WSLoadClient<WSObjectImpl>> loadBuilderClient = new WSLoadBuilderClientImpl<>();
-        } catch (final ConversionException e) {
-            ExceptionHandler.trace(LOG, Level.FATAL, e, "Servers address list should be comma delimited");
-        } catch (final NoSuchElementException e) {
-            ExceptionHandler.trace(LOG, Level.FATAL, e, "Servers address list not specified, try  arg -Dremote.servers=<LIST> to override");
-        } catch (final IOException e) {
-            ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to create load builder client");
-        }
+        Thread thread = new Thread() {
+            WSLoadClient loadClient;
+            @Override
+            public void run() {
+                try {
+                    final WSLoadBuilderClientImpl<WSObjectImpl, WSLoadClient<WSObjectImpl>> loadBuilderClient = new WSLoadBuilderClientImpl<>();
+                    //
+                    try {
+                        final Request.Type loadType = Request.Type.valueOf(
+                                RunTimeConfig.getString("scenario.single.load").toUpperCase()
+                        );
+                        loadBuilderClient.setLoadType(loadType);
+                    } catch (NoSuchElementException e) {
+                        ExceptionHandler.trace(LOG, Level.ERROR, e, "No load type specified, try arg -Dscenario.single.load=<VALUE> to override");
+                    } catch (IllegalArgumentException e) {
+                        ExceptionHandler.trace(LOG, Level.ERROR, e, "No such load type, it should be a constant from Load.Type enumeration");
+                    }
+                    //
+                    //final WSLoadExecutor loadExecutor = loadBuilder.build();
+                    loadClient = loadBuilderClient.build();
+                    //
+                    final String timeOutString;
+                    final String[] timeOutArray;
+                    //
+                    try {
+                        timeOutString = RunTimeConfig.getString("run.time");
+                        timeOutArray = timeOutString.split("\\.");
+                    } catch (NoSuchElementException e) {
+                        ExceptionHandler.trace(LOG, Level.ERROR, e, "No timeout specified, try arg -Drun.time=<INTEGER>.<UNIT> to override");
+                        return;
+                    } catch (IllegalArgumentException e) {
+                        ExceptionHandler.trace(LOG, Level.ERROR, e, "Timeout unit should be a name of a constant from TimeUnit enumeration");
+                        return;
+                    } catch (IllegalStateException e) {
+                        ExceptionHandler.trace(LOG, Level.ERROR, e, "Time unit should be specified with timeout value (following after \".\" separator)");
+                        return;
+                    }
+                    //
+                    loadClient.start();
+                    //
+                    try {
+                        loadClient.join(TimeUnit.valueOf(timeOutArray[1].toUpperCase()).toMillis(Integer.valueOf(timeOutArray[0])));
+                    } catch (InterruptedException e) {
+                        ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
+                    }
+                    //
+                    LOG.info(Markers.MSG, "Scenario end");
+                    loadClient.close();
+                } catch (final ConversionException e) {
+                    ExceptionHandler.trace(LOG, Level.FATAL, e, "Servers address list should be comma delimited");
+                } catch (final NoSuchElementException e) {
+                    ExceptionHandler.trace(LOG, Level.FATAL, e, "Servers address list not specified, try  arg -Dremote.servers=<LIST> to override");
+                } catch (final IOException e) {
+                    ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to create load builder client");
+                }
+            }
+
+            @Override
+            public void interrupt() {
+                try {
+                    if (loadClient != null) {
+                        loadClient.close();
+                    }
+                } catch (IOException e) {
+                    ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to start client mode");
+                }
+                super.interrupt();
+            }
+        };
+        thread.start();
+        threads.add(thread);
+        return thread.getId();
 
     }
 
@@ -179,13 +241,13 @@ public class StartServlet extends HttpServlet {
 
             @Override
             public void interrupt() {
-                try {
-                    loadExecutor.close();
-                } catch (IOException e) {
-                    ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to close load executor");
-                }
-                //
-                super.interrupt();
+               try {
+                   loadExecutor.interrupt();
+               } catch (RemoteException e) {
+                   ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to interrupt the load executor");
+               }
+               //
+               super.interrupt();
             }
         };
 
