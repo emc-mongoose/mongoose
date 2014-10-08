@@ -1,0 +1,40 @@
+<web-app version="2.4"
+		 xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		 xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee
+http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+
+	<!-- <welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list> -->
+
+	<servlet>
+		<servlet-name>MainServlet</servlet-name>
+		<servlet-class>com.emc.mongoose.webui.MainServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>MainServlet</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+	<servlet>
+		<servlet-name>StartServlet</servlet-name>
+		<servlet-class>com.emc.mongoose.webui.StartServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>StartServlet</servlet-name>
+		<url-pattern>/start</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>StopServlet</servlet-name>
+		<servlet-class>com.emc.mongoose.webui.StopServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>StopServlet</servlet-name>
+		<url-pattern>/stop</url-pattern>
+	</servlet-mapping>
+
+</web-app>
