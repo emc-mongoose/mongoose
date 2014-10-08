@@ -41,7 +41,8 @@ extends RequestConfig<T> {
 	@Override
 	DataObjectRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
-	@Override @SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")
-	DataObjectRequestConfig<T> clone();
+	@Override
+	DataObjectRequestConfig<T> clone()
+	throws CloneNotSupportedException;
 	//
 }

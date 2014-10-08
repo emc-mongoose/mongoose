@@ -3,6 +3,8 @@ package com.emc.mongoose.object.load.client;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.server.LoadSvc;
+import com.emc.mongoose.object.api.WSRequestConfig;
+import com.emc.mongoose.object.api.provider.s3.WSRequestConfigImpl;
 import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -17,6 +19,8 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 //
+import org.apache.http.Header;
+import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -120,15 +124,24 @@ implements WSLoadClient<T> {
 	//
 	private final ThreadPoolExecutor submitExecutor, mgmtConnExecutor;
 	private final LogConsumer<T> metaInfoLog;
+	private final WSRequestConfig<T> reqConf;
 	//
 	public WSLoadClientImpl(
 		final Map<String, LoadSvc<T>> remoteLoadMap,
 		final Map<String, JMXConnector> remoteJMXConnMap,
+		final WSRequestConfig<T> reqConf,
 		final long maxCount, final int threadCountPerServer
 	) {
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
 		this.remoteJMXConnMap = remoteJMXConnMap;
+		this.reqConf = reqConf;
+		// set shared headers to client builder
+		final LinkedList<Header> headers = new LinkedList<>();
+		final Map<String, String> sharedHeadersMap = reqConf.getSharedHeadersMap();
+		for(final String key: sharedHeadersMap.keySet()) {
+			headers.add(new BasicHeader(key, sharedHeadersMap.get(key)));
+		}
 		//
 		try {
 			final Object remoteLoads[] = remoteLoadMap.values().toArray();
@@ -831,7 +844,7 @@ implements WSLoadClient<T> {
 		if(!isInterrupted()) {
 			interrupt();
 		}
-		LOG.debug(Markers.MSG, "Controller dropped {} tasks", submitExecutor.shutdownNow().size());
+		LOG.debug(Markers.MSG, "Client dropped {} tasks", submitExecutor.shutdownNow().size());
 		//
 		LoadSvc<T> nextLoadSvc;
 		JMXConnector nextJMXConn = null;
@@ -843,6 +856,13 @@ implements WSLoadClient<T> {
 				logMetrics(Markers.PERF_SUM);
 			}
 		}
+		/*
+		try {
+			final WSRequestConfigImpl reqConfS3 = WSRequestConfigImpl.class.cast(reqConf);
+			reqConfS3.getBucket().list();
+		} catch(final ClassCastException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request config API is not Amz S3");
+		}*/
 		//
 		LOG.debug(Markers.MSG, "Closing the remote services...");
 		for(final String addr: remoteLoadMap.keySet()) {
@@ -851,7 +871,7 @@ implements WSLoadClient<T> {
 				nextLoadSvc = remoteLoadMap.get(addr);
 				LOG.debug(Markers.MSG, "Closing server instance @ {}...", addr);
 				nextLoadSvc.close();
-				LOG.info(Markers.MSG, "Driver instance @ {} has been closed", addr);
+				LOG.info(Markers.MSG, "Server instance @ {} has been closed", addr);
 			} catch(final NoSuchElementException e) {
 				LOG.debug(Markers.ERR, "Looks like the remote load service is already shut down");
 			} catch(final IOException e) {
@@ -982,9 +1002,14 @@ implements WSLoadClient<T> {
 	}
 	//
 	@Override
-	public final Producer<T> getProducer()
-	throws RemoteException {
-		return remoteLoadMap.entrySet().iterator().next().getValue().getProducer();
+	public final Producer<T> getProducer() {
+		Producer<T> producer = null;
+		try {
+			producer = remoteLoadMap.entrySet().iterator().next().getValue().getProducer();
+		} catch(final RemoteException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to get remote producer");
+		}
+		return producer;
 	}
 	//
 	@Override

@@ -3,10 +3,12 @@ package com.emc.mongoose.base.data.impl;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.http.annotation.ThreadSafe;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -64,10 +66,7 @@ implements DataSource<T> {
 				DEFAULT.getSize()
 			);*/
 		} catch(final Exception e) {
-			synchronized(LOG) {
-				LOG.fatal(Markers.ERR, "Failed to create default data source");
-				LOG.debug(Markers.ERR, e.toString(), e.getCause());
-			}
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create default data source");
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,8 +112,8 @@ implements DataSource<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void writeExternal(final ObjectOutput out)
-		throws IOException {
-		out.writeLong(dataSrcDirect.array().length);
+	throws IOException {
+		out.writeInt(dataSrcDirect.array().length);
 		out.writeLong(seed);
 	}
 	//
@@ -125,10 +124,6 @@ implements DataSource<T> {
 		seed = in.readLong();
 		preProduceData();
 		DEFAULT = this;
-		/*DATA_SRC_UPDATE = new UniformDataSource(
-			Long.reverse(Long.reverseBytes(DEFAULT.seed)),
-			DEFAULT.getSize()
-		);*/
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -157,10 +152,6 @@ implements DataSource<T> {
 			DEFAULT = new UniformDataSource(
 				Long.parseLong(values[0], 0x10), Integer.parseInt(values[1], 0x10)
 			);
-			/*DATA_SRC_UPDATE = new UniformDataSource(
-				Long.reverse(Long.reverseBytes(DEFAULT.seed)),
-				DEFAULT.getSize()
-			);*/
 		} else {
 			throw new IllegalArgumentException();
 		}

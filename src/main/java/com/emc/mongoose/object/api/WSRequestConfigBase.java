@@ -9,7 +9,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -19,6 +18,8 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.DateUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
 import org.apache.logging.log4j.Level;
@@ -37,6 +38,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Locale;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 /**
@@ -70,12 +72,14 @@ implements WSRequestConfig<T> {
 		return newInstanceFor(RunTimeConfig.getString("storage.api"));
 	}
 	//
+	private final static String NAME_CLS_IMPL = "WSRequestConfigImpl";
+	//
 	public static WSRequestConfigBase newInstanceFor(final String api) {
 		WSRequestConfigBase reqConf = null;
 		final String apiImplClsFQN =
 			WSRequestConfigBase.class.getPackage().getName() +
-				Main.DOT + REL_PKG_PROVIDERS_WS + Main.DOT +
-				StringUtils.capitalize(api.toLowerCase());
+				Main.DOT + REL_PKG_PROVIDERS + Main.DOT +
+				api.toLowerCase() + Main.DOT + NAME_CLS_IMPL;
 		try {
 			reqConf = WSRequestConfigBase.class.cast(
 				Class.forName(apiImplClsFQN).getConstructors()[0].newInstance()
@@ -97,18 +101,18 @@ implements WSRequestConfig<T> {
 	protected final Mac mac;
 	protected final URIBuilder uriBuilder = new URIBuilder();
 	protected CloseableHttpClient httpClient;
-	{
-		Mac localMac = null;
-		try {
-			localMac = Mac.getInstance(VALUE_SIGN_METHOD);
-		} catch(final NoSuchAlgorithmException e) {
-			LOG.error(
-				Markers.ERR,
-				"Illegal cipher algorithm: \"{}\", check config propery \"http.req.sign.method\" value",
-				VALUE_SIGN_METHOD
-			);
-		}
-		mac = localMac;
+	//
+	public WSRequestConfigBase()
+	throws NoSuchAlgorithmException {
+		super();
+		mac = Mac.getInstance(VALUE_SIGN_METHOD);
+		sharedHeadersMap = new ConcurrentHashMap<String, String>() {
+			{
+				put(HttpHeaders.USER_AGENT, DEFAULT_USERAGENT);
+				put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
+				put(HttpHeaders.CONTENT_TYPE, REQ_DATA_TYPE);
+			}
+		};
 	}
 	//
 	@Override
@@ -238,17 +242,27 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final ConcurrentHashMap<String, String> getSharedHeadersMap() {
+	public final Map<String, String> getSharedHeadersMap() {
 		return sharedHeadersMap;
 	}
 	//
 	@Override
 	public final CloseableHttpClient getClient() {
+		if(httpClient == null) {
+			httpClient = HttpClientBuilder
+				.create()
+				.setConnectionManager(new BasicHttpClientConnectionManager())
+				.setDefaultHeaders(getSharedHeaders())
+				.setRetryHandler(getRetryHandler())
+				.disableCookieManagement()
+				.setUserAgent(WSRequestConfig.DEFAULT_USERAGENT)
+				.build();
+		}
 		return httpClient;
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setClient(final CloseableHttpClient httpClient) {
+	public WSRequestConfigBase<T> setClient(final CloseableHttpClient httpClient) {
 		this.httpClient = httpClient;
 		return this;
 	}
@@ -258,33 +272,53 @@ implements WSRequestConfig<T> {
 		return retryHandler;
 	}
 	//
-	protected WSRequestConfigBase() {
-		sharedHeadersMap = new ConcurrentHashMap<String, String>() {
-			{
-				put(HttpHeaders.USER_AGENT, DEFAULT_USERAGENT);
-				put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
-				put(HttpHeaders.CONTENT_TYPE, REQ_DATA_TYPE);
-			}
-		};
-	}
-	//
 	@Override
-	public abstract WSRequestConfigBase<T> clone();
+	public WSRequestConfigBase<T> clone()
+	throws CloneNotSupportedException {
+		final WSRequestConfigBase<T> copy = (WSRequestConfigBase<T>) super.clone();
+		copy
+			.setAddr(getAddr())
+			.setLoadType(getLoadType())
+			.setPort(getPort())
+			.setUserName(getUserName())
+			.setSecret(getSecret())
+			.setScheme(getScheme())
+			.setClient(getClient());
+		return copy;
+	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		sharedHeadersMap = (ConcurrentHashMap<String, String>) in.readObject();
 		setScheme(String.class.cast(in.readObject()));
+		LOG.trace(Markers.MSG, "Got scheme {}", uriBuilder.getScheme());
+		sharedHeadersMap = (ConcurrentHashMap<String,String>) in.readObject();
+		/*final int headersCount = in.readInt();
+		sharedHeadersMap = new ConcurrentHashMap<>(headersCount);
+		LOG.trace(Markers.MSG, "Got headers count {}", headersCount);
+		String key, value;
+		for(int i = 0; i < headersCount; i ++) {
+			key = String.class.cast(in.readObject());
+			LOG.trace(Markers.MSG, "Got header key {}", key);
+			value = String.class.cast(in.readObject());
+			LOG.trace(Markers.MSG, "Got header value {}", value);
+			sharedHeadersMap.put(key, value);
+		}*/
+		LOG.trace(Markers.MSG, "Got headers map {}", sharedHeadersMap);
 	}
 	//
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(sharedHeadersMap);
 		out.writeObject(uriBuilder.getScheme());
+		out.writeObject(sharedHeadersMap);
+		/*out.writeInt(sharedHeadersMap.size());
+		for(final String key: sharedHeadersMap.keySet()) {
+			out.writeObject(key);
+			out.writeObject(sharedHeadersMap.get(key));
+		}*/
 	}
 	//
 	@Override
@@ -322,13 +356,13 @@ implements WSRequestConfig<T> {
 				for(final String header: sharedHeadersMap.keySet()) {
 					LOG.trace(Markers.MSG, "\t{}: {}", header, sharedHeadersMap.get(header));
 				}
-				try {
+				if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
 					LOG.trace(
 						Markers.MSG, "\tcontent: {} bytes",
 						HttpEntityEnclosingRequest.class.cast(httpRequest)
 							.getEntity().getContentLength()
 					);
-				} catch(final ClassCastException e) {
+				} else {
 					LOG.trace(Markers.MSG, "\t---- no content ----");
 				}
 			}
@@ -348,7 +382,7 @@ implements WSRequestConfig<T> {
 				httpRequest.getMethod()
 			);
 		}
-		if(httpReqWithPayLoad!=null) {
+		if(httpReqWithPayLoad != null) {
 			httpReqWithPayLoad.setEntity(httpEntity);
 		}
 	}

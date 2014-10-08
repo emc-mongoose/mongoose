@@ -12,6 +12,8 @@ import java.io.Externalizable;
 public interface RequestConfig<T extends DataItem>
 extends Externalizable {
 	//
+	long serialVersionUID = 42L;
+	//
 	int REQUEST_TIMEOUT_MILLISEC = RunTimeConfig.getInt(
 		"run.request.timeout.millisec"
 	);
@@ -42,6 +44,9 @@ extends Externalizable {
 	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
 	//
-	@SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")
-	RequestConfig<T> clone();
+	RequestConfig<T> clone()
+	throws CloneNotSupportedException;
+	//
+	void configureStorage()
+	throws IllegalStateException;
 }

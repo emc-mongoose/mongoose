@@ -10,6 +10,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
 import com.emc.mongoose.base.api.RequestConfig;
+import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
@@ -109,6 +110,7 @@ implements WSLoadExecutor<T> {
 		connMgr.setDefaultConnectionConfig(
 			ConnectionConfig
 				.custom()
+				.setBufferSize(DataItem.MAX_PAGE_SIZE)
 				.build()
 		);
 		// set shared headers to client builder
@@ -118,17 +120,20 @@ implements WSLoadExecutor<T> {
 			headers.add(new BasicHeader(key, sharedHeadersMap.get(key)));
 		}
 		// configure and create the HTTP client
-		httpClient = HttpClientBuilder
-			.create()
-			.setConnectionManager(connMgr)
-			.setDefaultHeaders(headers)
-			.setRetryHandler(reqConf.getRetryHandler())
-			.disableCookieManagement()
-			//.disableAutomaticRetries()
-			.setUserAgent(WSRequestConfig.DEFAULT_USERAGENT)
-			.setMaxConnPerRoute(threadsPerNode)
-			.setMaxConnTotal(totalThreadCount)
-			.build();
+		final HttpClientBuilder
+			httpClientBuilder = HttpClientBuilder
+				.create()
+				.setConnectionManager(connMgr)
+				.setDefaultHeaders(headers)
+				.setRetryHandler(reqConf.getRetryHandler())
+				.disableCookieManagement()
+				.setUserAgent(WSRequestConfig.DEFAULT_USERAGENT)
+				.setMaxConnPerRoute(threadsPerNode)
+				.setMaxConnTotal(totalThreadCount);
+		if(!reqConf.getRetries()) {
+			httpClientBuilder.disableAutomaticRetries();
+		}
+		httpClient = httpClientBuilder.build();
 		//
 		reqConf.setClient(httpClient);
 		dataSrc = reqConf.getDataSource();
@@ -152,10 +157,14 @@ implements WSLoadExecutor<T> {
 		);
 		WSNodeExecutor<T> nodeExecutor;
 		for(int i = 0; i < addrs.length; i ++) {
-			nodeExecutor = new WSNodeExecutor<>(
-				addrs[i], threadsPerNode, reqConf, metrics, getName()
-			);
-			nodes[i] = nodeExecutor;
+			try {
+				nodeExecutor = new WSNodeExecutor<>(
+					addrs[i], threadsPerNode, reqConf, metrics, getName()
+				);
+				nodes[i] = nodeExecutor;
+			} catch(final CloneNotSupportedException e) {
+				ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to clone the request configuration");
+			}
 		}
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
@@ -206,7 +215,7 @@ implements WSLoadExecutor<T> {
 		maxCount = counterSubm.getCount() + counterRej.getCount();
 		LOG.trace(Markers.MSG, "Interrupting, max count is set to {}", maxCount);
 		//
-		final Thread interrupters[] = new Thread[nodes.length];
+		final Thread interrupters[] = new Thread[nodes.length < 2 ? 2 : nodes.length];
 		// interrupt a producer
 		interrupters[0] = new Thread("interrupt-producer-" + getName()) {
 			@Override
@@ -420,15 +429,6 @@ implements WSLoadExecutor<T> {
 		if(LOG.isDebugEnabled(Markers.PERF_AVG)) {
 			for(final WSNodeExecutor node: nodes) {
 				node.logMetrics(Level.DEBUG, Markers.PERF_AVG);
-			}
-			if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
-				LOG.trace(
-					Markers.PERF_AVG,
-					"Submit executor: terminated={}, completed={}, wait={}, active={}",
-					submitExecutor.isTerminated(), submitExecutor.getCompletedTaskCount(),
-					submitExecutor.getQueue().size(), submitExecutor.getActiveCount()
-				);
-				LOG.trace(Markers.PERF_AVG, "Connection pool: {}", connMgr.getTotalStats());
 			}
 		}
 		//

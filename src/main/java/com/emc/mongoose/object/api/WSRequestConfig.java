@@ -4,14 +4,19 @@ import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.data.WSObject;
 //
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 import java.util.Map;
 /**
  Created by kurila on 29.09.14.
@@ -39,9 +44,7 @@ extends DataObjectRequestConfig<T> {
 		MSG_TMPL_RANGE_BYTES = "bytes=%d-%d",
 		MSG_TMPL_RANGE_BYTES_APPEND = "bytes=%d-",
 		MSG_NO_DATA_ITEM = "Data item is not specified",
-		MSG_NO_REQ = "No request specified to apply to",
-		//
-		REL_PKG_PROVIDERS_WS = REL_PKG_PROVIDERS + ".ws";
+		MSG_NO_REQ = "No request specified to apply to";
 		//
 	String[]
 		HEADERS4CANONICAL = {
@@ -50,6 +53,8 @@ extends DataObjectRequestConfig<T> {
 		HEADERS_EMC = {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_NS, KEY_EMC_SIG, KEY_EMC_UID
 		};
+	//
+	DateFormat FMT_DT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.ROOT);
 	//
 	@Override
 	WSRequestConfig<T> setAPI(final String api);
@@ -78,8 +83,9 @@ extends DataObjectRequestConfig<T> {
 	@Override
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
-	@Override @SuppressWarnings("CloneDoesntDeclareCloneNotSupportedException")
-	WSRequestConfig<T> clone();
+	@Override
+	WSRequestConfig<T> clone()
+	throws CloneNotSupportedException;
 	//
 	String getScheme();
 	WSRequestConfig<T> setScheme(final String scheme);
@@ -95,4 +101,8 @@ extends DataObjectRequestConfig<T> {
 	void applyHeadersFinally(final HttpRequestBase httpRequest);
 	//
 	HttpRequestRetryHandler getRetryHandler();
+	//
+	String getCanonical(final HttpRequest httpRequest);
+	//
+	String getSignature(final String canonicalForm);
 }

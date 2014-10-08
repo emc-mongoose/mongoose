@@ -131,6 +131,11 @@ implements WSLoadBuilder<T, U> {
 	}
 	//
 	@Override
+	public WSRequestConfig<T> getRequestConfig() {
+		return reqConf;
+	}
+	//
+	@Override
 	public WSLoadBuilderImpl<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws ClassCastException {
 		LOG.debug(Markers.MSG, "Set request builder: {}", reqConf.toString());
@@ -255,7 +260,8 @@ implements WSLoadBuilder<T, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final WSLoadBuilderImpl<T, U> clone() {
+	public final WSLoadBuilderImpl<T, U> clone()
+	throws CloneNotSupportedException {
 		final WSLoadBuilderImpl<T, U> lb = new WSLoadBuilderImpl<>();
 		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
 		lb.reqConf = reqConf.clone();
@@ -274,8 +280,16 @@ implements WSLoadBuilder<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public U build()
 	throws IllegalStateException {
-		if(reqConf==null) {
+		if(reqConf == null) {
 			throw new IllegalStateException("Should specify request builder instance");
+		}
+		//
+		try {
+			reqConf
+				.setAddr(dataNodeAddrs[0])
+				.configureStorage();
+		} catch(final NullPointerException | IndexOutOfBoundsException | IllegalStateException e) {
+			throw new IllegalStateException(e);
 		}
 		//
 		WSLoadExecutorBase<T> load = null;

@@ -17,15 +17,21 @@ import java.io.ObjectOutput;
  The most common implementation of the shared request configuration.
  */
 public class RequestConfigImpl<T extends DataItem>
-implements RequestConfig<T> {
+implements RequestConfig<T>, Cloneable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected String addr, api, secret, userName;
 	protected int port;
 	protected Request.Type loadType;
-	protected DataSource<T> dataSrc = UniformDataSource.DEFAULT;
-	protected volatile boolean retryFlag = RunTimeConfig.getBoolean("run.request.retries");
+	protected DataSource<T> dataSrc;
+	protected volatile boolean retryFlag;
+	//
+	@SuppressWarnings("unchecked")
+	public RequestConfigImpl() {
+		dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
+		retryFlag = RunTimeConfig.getBoolean("run.request.retries");
+	}
 	//
 	@Override
 	public final String getAPI() {
@@ -125,10 +131,11 @@ implements RequestConfig<T> {
 		return this;
 	}
 	//
-	@Override
-	@SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
-	public RequestConfigImpl<T> clone() {
-		return new RequestConfigImpl<T>()
+	@Override @SuppressWarnings("unchecked")
+	public RequestConfigImpl<T> clone()
+	throws CloneNotSupportedException {
+		final RequestConfigImpl<T> copy = (RequestConfigImpl<T>) super.clone();
+		return copy
 			.setAPI(getAPI())
 			.setAddr(getAddr())
 			.setLoadType(getLoadType())
@@ -151,17 +158,25 @@ implements RequestConfig<T> {
 		out.writeBoolean(getRetries());
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		setAPI(String.class.cast(in.readObject()));
+		LOG.trace(Markers.MSG, "Got API {}", api);
 		setAddr(String.class.cast(in.readObject()));
+		LOG.trace(Markers.MSG, "Got address {}", addr);
 		setLoadType(Request.Type.class.cast(in.readObject()));
+		LOG.trace(Markers.MSG, "Got load type {}", loadType);
 		setPort(in.readInt());
+		LOG.trace(Markers.MSG, "Got port {}", port);
 		setUserName(String.class.cast(in.readObject()));
+		LOG.trace(Markers.MSG, "Got user name {}", userName);
 		setSecret(String.class.cast(in.readObject()));
-		setDataSource(UniformDataSource.class.cast(in.readObject()));
+		LOG.trace(Markers.MSG, "Got secret {}", secret);
+		setDataSource((DataSource<T>) in.readObject());
+		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
 		setRetries(Boolean.class.cast(in.readBoolean()));
+		LOG.trace(Markers.MSG, "Got retry flag {}", retryFlag);
 	}
 	//
 	@Override
@@ -171,4 +186,8 @@ implements RequestConfig<T> {
 			((addr==null || addr.length()==0) ? "" : "@"+addr);
 	}
 	//
+	@Override
+	public void configureStorage() {
+		throw new IllegalStateException("Not implemented");
+	}
 }

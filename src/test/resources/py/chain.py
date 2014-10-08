@@ -28,14 +28,17 @@ for loadTypeStr in loadTypes:
 		load = loadBuilder.setLoadType(Request.Type.valueOf(loadTypeStr.upper())).build()
 		if prevLoad is not None:
 			prevLoad.setConsumer(load)
-		chain.append(load)
+		if load is not None:
+			chain.append(load)
+		else:
+			LOG.error(Markers.ERR, "No load executor instanced")
 		if prevLoad is None:
 			loadBuilder.setInputFile(None) # prevent the file list producer creation for next loads
 		prevLoad = load
 	except IllegalArgumentException:
 		LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)
 	except Throwable as e:
-		ExceptionHandler.trace(LOG, Level.FATAL, e, "Failure")
+		ExceptionHandler.trace(LOG, Level.FATAL, e, "Unexpected failure")
 #
 from java.lang import Integer
 from java.util.concurrent import TimeUnit
@@ -56,7 +59,11 @@ except IndexError:
 #
 for load in chain:
 	load.start()
-chain[0].join(timeOut[1].toMillis(timeOut[0]))
+# noinspection PyBroadException
+try:
+	chain[0].join(timeOut[1].toMillis(timeOut[0]))
+except:
+	LOG.error(Markers.ERR, "No 1st load executor in the chain")
 for load in chain:
 	load.close()
 LOG.info(Markers.MSG, "Scenario end")

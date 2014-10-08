@@ -53,11 +53,13 @@ for threadCount in threadCountList:
 		LOG.info(Markers.MSG, "Object size = {} {}", objectSize, "bytes")
 		loadBuilder.setMinObjSize(Integer.valueOf(objectSize))
 		loadBuilder.setMaxObjSize(Integer.valueOf(objectSize))
-		load=loadBuilder.build()
+		load = loadBuilder.build()
+		if load is None:
+			LOG.fatal(Markers.ERR, "No load executor instanced")
+			continue
 		load.start()
 		load.join(timeOut[1].toMillis(timeOut[0]))
 		load.close()
 
 #
-
 LOG.info(Markers.MSG, "Scenario end")

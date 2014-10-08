@@ -4,22 +4,32 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
 import com.emc.mongoose.object.api.WSRequestConfig;
+import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObjectImpl;
+import com.emc.mongoose.object.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.object.load.server.WSLoadBuilderSvcImpl;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.persist.FileProducer;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.util.remote.Service;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -32,24 +42,26 @@ import java.util.NoSuchElementException;
  Created by kurila on 08.05.14.
  */
 public final class WSLoadBuilderClientImpl<T extends WSObjectImpl, U extends WSLoadClient<T>>
-extends HashMap<String, LoadBuilderSvc<T, U>>
+extends HashMap<String, WSLoadBuilderSvc<T, U>>
 implements WSLoadBuilderClient<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private FileProducer<T> srcProducer = null;
+	@SuppressWarnings("unchecked")
+	private WSRequestConfig<T> reqConf = WSRequestConfigBase.getInstance();
 	//
 	@SuppressWarnings("unchecked")
-	private LoadBuilderSvc<T, U> resolve(final String serverAddr)
+	private WSLoadBuilderSvc<T, U> resolve(final String serverAddr)
 	throws IOException {
-		LoadBuilderSvc<T, U> rlb = null;
+		WSLoadBuilderSvc<T, U> rlb = null;
 		final Service remoteSvc = ServiceUtils.getRemoteSvc(
 			"//" + serverAddr + '/' + WSLoadBuilderSvcImpl.class.getSimpleName()
 		);
 		if(remoteSvc==null) {
 			throw new IOException("No remote load builder was resolved from " + serverAddr);
-		} else if(LoadBuilderSvc.class.isInstance(remoteSvc)) {
-			rlb = LoadBuilderSvc.class.cast(remoteSvc);
+		} else if(WSLoadBuilderSvc.class.isInstance(remoteSvc)) {
+			rlb = WSLoadBuilderSvc.class.cast(remoteSvc);
 		} else {
 			throw new IOException(
 				"Illegal class "+remoteSvc.getClass().getCanonicalName()+
@@ -73,14 +85,25 @@ implements WSLoadBuilderClient<T, U> {
 		}
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("AccessStaticViaInstance")
 	public final WSLoadBuilderClientImpl<T, U> setProperties(final RunTimeConfig props)
 	throws RemoteException {
+		//
+		reqConf.setProperties(props);
+		//
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
 			nextBuilder = get(addr);
-			LOG.info(Markers.MSG, "Applying the properties to server service @ \"{}\"...", addr);
+			LOG.info(Markers.MSG, "Applying the properties to server @ \"{}\"...", addr);
 			nextBuilder.setProperties(props);
+		}
+		//
+		final String firstNodeAddr = reqConf.getAddr();
+		if(firstNodeAddr == null || firstNodeAddr.length() == 0) {
+			final String nodeAddrs[] = props.getStringArray("storage.addrs");
+			if(nodeAddrs != null && nodeAddrs.length > 0) {
+				reqConf.setAddr(nodeAddrs[0]);
+			}
 		}
 		//
 		String dataMetaInfoFile = null;
@@ -103,20 +126,21 @@ implements WSLoadBuilderClient<T, U> {
 	}
 	//
 	@Override
+	public final WSRequestConfig<T> getRequestConfig() {
+		return reqConf;
+	}
+	//
+	@Override
 	public final WSLoadBuilderClientImpl<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws ClassCastException, RemoteException {
-		final WSRequestConfig<T> wsReqConf = (WSRequestConfig<T>) reqConf;
-		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr: keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.setRequestConfig(wsReqConf);
-		}
+		this.reqConf = (WSRequestConfig<T>) reqConf;
 		return this;
 	}
 	//
 	@Override
 	public final WSLoadBuilderClientImpl<T, U> setLoadType(final Request.Type loadType)
 	throws IllegalStateException, RemoteException {
+		reqConf.setLoadType(loadType);
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
 			nextBuilder = get(addr);
@@ -184,12 +208,31 @@ implements WSLoadBuilderClient<T, U> {
 	@Override
 	public final WSLoadBuilderClientImpl<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException {
+		// need to remember 1st storage node address to configure later
+		final String firstNodeAddr = reqConf.getAddr();
+		if(firstNodeAddr == null || firstNodeAddr.length() == 0) {
+			if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
+				reqConf.setAddr(dataNodeAddrs[0]);
+			}
+		}
+		//
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setDataNodeAddrs(dataNodeAddrs);
 		}
 		return this;
+	}
+	//
+	@Override
+	public final WSLoadBuilderClientImpl<T, U> setUpdatesPerItem(int count)
+	throws RemoteException {
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr: keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.setUpdatesPerItem(count);
+		}
+		return null;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -206,16 +249,6 @@ implements WSLoadBuilderClient<T, U> {
 		return this;
 	}
 	//
-	@Override
-	public final WSLoadBuilderClientImpl<T, U> setUpdatesPerItem(int count)
-	throws RemoteException {
-		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr: keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.setUpdatesPerItem(count);
-		}
-		return null;
-	}
 	//
 	@Override
 	public final long getMaxCount()
@@ -227,7 +260,7 @@ implements WSLoadBuilderClient<T, U> {
 	public final U build()
 	throws RemoteException {
 		//
-		WSLoadClient<T> newLoadClient;
+		WSLoadClient<T> newLoadClient = null;
 		//
 		final Map<String, LoadSvc<T>> remoteLoadMap = new HashMap<>();
 		final Map<String, JMXConnector> remoteJMXConnMap = new HashMap<>();
@@ -239,13 +272,30 @@ implements WSLoadBuilderClient<T, U> {
 		JMXServiceURL nextJMXURL;
 		JMXConnector nextJMXConn;
 		//
-		for(final String addr: keySet()) {
+		reqConf.configureStorage(); // should be done after configuring and before req conf upload
+		//
+		for(final String addr : keySet()) {
 			//
 			nextBuilder = get(addr);
-			nextLoad = LoadSvc.class.cast(
-				ServiceUtils.getRemoteSvc(
-					"//"+addr+"/"+nextBuilder.buildRemotely()
-				)
+			/*
+			LOG.info(Markers.MSG, "Test req conf serialization begin {}", addr);
+			try(final FileOutputStream fileOut = new FileOutputStream("/tmp/req.conf.bin")) {
+				reqConf.writeExternal(new ObjectOutputStream(fileOut));
+				LOG.info("Serialization success");
+			} catch(final IOException e) {
+				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to serialize req conf");
+			}
+			try(final FileInputStream fileIn = new FileInputStream("/tmp/req.conf.bin")) {
+				reqConf.readExternal(new ObjectInputStream(fileIn));
+				LOG.info("Deserialization success");
+			} catch(final ClassNotFoundException | IOException e) {
+				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to deserialize req conf");
+			}
+			LOG.info(Markers.MSG, "Test req conf serialization done {}", addr);
+			*/
+			nextBuilder.setRequestConfig(reqConf); // should upload req conf right before instancing
+			nextLoad = (LoadSvc<T>) ServiceUtils.getRemoteSvc(
+				"//" + addr + "/" + nextBuilder.buildRemotely()
 			);
 			remoteLoadMap.put(addr, nextLoad);
 			//
@@ -254,7 +304,7 @@ implements WSLoadBuilderClient<T, U> {
 				svcJMXAddr = ServiceUtils.JMXRMI_URL_PREFIX + addr + ":" +
 					RunTimeConfig.getString("remote.monitor.port") + ServiceUtils.JMXRMI_URL_PATH;
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
-				LOG.debug(Markers.MSG, "Driver JMX URL: {}", svcJMXAddr);
+				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
 				LOG.error(Markers.ERR, "Failure", e);
 			}
@@ -264,7 +314,7 @@ implements WSLoadBuilderClient<T, U> {
 				try {
 					nextJMXConn = JMXConnectorFactory.connect(nextJMXURL, null);
 				} catch(final IOException e) {
-					LOG.error(Markers.ERR, "JMX: failed to connect to "+nextJMXURL, e);
+					LOG.error(Markers.ERR, "JMX: failed to connect to " + nextJMXURL, e);
 				}
 			}
 			//
@@ -275,8 +325,8 @@ implements WSLoadBuilderClient<T, U> {
 		}
 		//
 		newLoadClient = new WSLoadClientImpl<>(
-			remoteLoadMap, remoteJMXConnMap, RunTimeConfig.getLong("data.count"),
-			nextLoad==null? 1 : nextLoad.getThreadCount()
+			remoteLoadMap, remoteJMXConnMap, reqConf,
+			RunTimeConfig.getLong("data.count"), nextLoad==null ? 1 : nextLoad.getThreadCount()
 		);
 		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer!=null && srcProducer.getConsumer()==null) {
@@ -288,6 +338,7 @@ implements WSLoadBuilderClient<T, U> {
 			srcProducer.start();
 			srcProducer = null;
 		}
+		//
 		return (U) newLoadClient;
 	}
 }

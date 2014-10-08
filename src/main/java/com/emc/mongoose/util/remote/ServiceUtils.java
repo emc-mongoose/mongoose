@@ -144,10 +144,10 @@ public final class ServiceUtils {
 	//
 	public static void close(final Service svc) {
 		try {
-			UnicastRemoteObject.unexportObject(svc, true);
+            UnicastRemoteObject.unexportObject(svc, true);
 			LOG.debug(Markers.MSG, "Unexported service object");
 		} catch(NoSuchObjectException e) {
-			LOG.warn(Markers.ERR, "No such service object", e);
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to unexport service object");
 		}
 		//
 		try {
