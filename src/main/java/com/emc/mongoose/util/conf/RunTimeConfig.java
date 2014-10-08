@@ -124,8 +124,8 @@ implements Externalizable {
 		return INSTANCE.getStringArray(key);
 	}
 	//
-	private final static String SIZE_UNITS = "bkMGTPE";
-	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)i?b?");
+	private final static String SIZE_UNITS = "BkMGTPE";
+	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)[bB]?");
 	//
 	public static long getSizeBytes(final String key) {
 		final String value = INSTANCE.getString(key), unit;
@@ -148,13 +148,13 @@ implements Externalizable {
 	//
 	public static String formatSize(final long v) {
 		if(v < 1024) {
-			return v + "b";
+			return v + "B";
 		}
 		final int z = (63 - Long.numberOfLeadingZeros(v)) / 10;
 		final double x = (double) v / (1L << (z*10));
 		return String.format(
 			Locale.ROOT,
-			x < 10 ? "%.3f%sib" : x < 100 ? "%.2f%sib" : "%.1f%sib",
+			x < 10 ? "%.3f%sB" : x < 100 ? "%.2f%sB" : "%.1f%sB",
 			x, SIZE_UNITS.charAt(z)
 		);
 	}

@@ -161,24 +161,22 @@ implements RequestConfig<T>, Cloneable {
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		LOG.info(Markers.MSG, "RequestConfigImpl.readExternal begin");
 		setAPI(String.class.cast(in.readObject()));
-		LOG.info(Markers.MSG, "Got API {}", api);
+		LOG.trace(Markers.MSG, "Got API {}", api);
 		setAddr(String.class.cast(in.readObject()));
-		LOG.info(Markers.MSG, "Got address {}", addr);
+		LOG.trace(Markers.MSG, "Got address {}", addr);
 		setLoadType(Request.Type.class.cast(in.readObject()));
-		LOG.info(Markers.MSG, "Got load type {}", loadType);
+		LOG.trace(Markers.MSG, "Got load type {}", loadType);
 		setPort(in.readInt());
-		LOG.info(Markers.MSG, "Got port {}", port);
+		LOG.trace(Markers.MSG, "Got port {}", port);
 		setUserName(String.class.cast(in.readObject()));
-		LOG.info(Markers.MSG, "Got user name {}", userName);
+		LOG.trace(Markers.MSG, "Got user name {}", userName);
 		setSecret(String.class.cast(in.readObject()));
-		LOG.info(Markers.MSG, "Got secret {}", secret);
+		LOG.trace(Markers.MSG, "Got secret {}", secret);
 		setDataSource((DataSource<T>) in.readObject());
-		LOG.info(Markers.MSG, "Got data source {}", dataSrc);
+		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
 		setRetries(Boolean.class.cast(in.readBoolean()));
-		LOG.info(Markers.MSG, "Got retry flag {}", retryFlag);
-		LOG.info(Markers.MSG, "RequestConfigImpl.readExternal end");
+		LOG.trace(Markers.MSG, "Got retry flag {}", retryFlag);
 	}
 	//
 	@Override

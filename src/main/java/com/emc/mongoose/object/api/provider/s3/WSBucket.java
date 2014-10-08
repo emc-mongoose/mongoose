@@ -7,6 +7,8 @@ import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -16,12 +18,20 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 //
+import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 //
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Collections;
@@ -198,8 +208,58 @@ implements Bucket<T>{
 			} else {
 				final int statusCode = statusLine.getStatusCode();
 				if(statusCode == HttpStatus.SC_OK) {
-					LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
-					// TODO fill the data items list
+					final HttpEntity respEntity = httpResp.getEntity();
+					final String respContentType = respEntity.getContentType().getValue();
+					if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
+						try {
+							final SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
+							parser.parse(
+								respEntity.getContent(),
+								new DefaultHandler() {
+									//
+									private boolean insideKeyElement = false;
+									//
+									@Override
+									public final void startElement(
+										final String uri, final String localName,
+										final String qName, final Attributes attrs
+									) throws SAXException {
+										if("key".equals(qName.toLowerCase())) {
+											insideKeyElement = true;
+										}
+										super.startElement(uri, localName, qName, attrs);
+									}
+									//
+									@Override
+									public final void characters(
+										final char chars[], final int start, final int length
+									) throws SAXException {
+										if(insideKeyElement) {
+											LOG.info(
+												Markers.MSG, "Data item: \"{}\"",
+												new String(chars, start, length)
+											);
+										}
+										super.characters(chars, start, length);
+									}
+									//
+									@Override
+									public final void endElement(
+										final String uri, final String localName, final String qName
+									) throws SAXException {
+										if("key".equals(qName.toLowerCase())) {
+											insideKeyElement = false;
+										}
+										super.endElement(uri, localName, qName);
+									}
+								}
+							);
+						} catch(final ParserConfigurationException | SAXException e) {
+							ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create SAX parser");
+						}
+					} else {
+						LOG.warn(Markers.MSG, "Unexpected response content type: \"{}\"", respContentType);
+					}
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.debug(

@@ -4,6 +4,7 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.object.api.WSRequestConfig;
+import com.emc.mongoose.object.api.provider.s3.WSRequestConfigImpl;
 import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -19,8 +20,6 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 //
 import org.apache.http.Header;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -125,6 +124,7 @@ implements WSLoadClient<T> {
 	//
 	private final ThreadPoolExecutor submitExecutor, mgmtConnExecutor;
 	private final LogConsumer<T> metaInfoLog;
+	private final WSRequestConfig<T> reqConf;
 	//
 	public WSLoadClientImpl(
 		final Map<String, LoadSvc<T>> remoteLoadMap,
@@ -135,6 +135,7 @@ implements WSLoadClient<T> {
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
 		this.remoteJMXConnMap = remoteJMXConnMap;
+		this.reqConf = reqConf;
 		// set shared headers to client builder
 		final LinkedList<Header> headers = new LinkedList<>();
 		final Map<String, String> sharedHeadersMap = reqConf.getSharedHeadersMap();
@@ -855,6 +856,13 @@ implements WSLoadClient<T> {
 				logMetrics(Markers.PERF_SUM);
 			}
 		}
+		/*
+		try {
+			final WSRequestConfigImpl reqConfS3 = WSRequestConfigImpl.class.cast(reqConf);
+			reqConfS3.getBucket().list();
+		} catch(final ClassCastException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request config API is not Amz S3");
+		}*/
 		//
 		LOG.debug(Markers.MSG, "Closing the remote services...");
 		for(final String addr: remoteLoadMap.keySet()) {

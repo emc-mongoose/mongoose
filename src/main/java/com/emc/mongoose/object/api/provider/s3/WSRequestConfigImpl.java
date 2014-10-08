@@ -80,11 +80,9 @@ extends WSRequestConfigBase<T> {
 	@Override @SuppressWarnings("unchecked")
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		LOG.info(Markers.MSG, "WSRequestConfigImpl.readExternal begin");
 		super.readExternal(in);
 		setBucket(new WSBucket<T>(this, String.class.cast(in.readObject())));
-		LOG.info(Markers.MSG, "Got bucket {}", bucket.getName());
-		LOG.info(Markers.MSG, "WSRequestConfigImpl.readExternal end");
+		LOG.trace(Markers.MSG, "Got bucket {}", bucket.getName());
 	}
 	//
 	@Override

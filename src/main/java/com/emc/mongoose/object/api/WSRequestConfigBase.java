@@ -290,23 +290,22 @@ implements WSRequestConfig<T> {
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		LOG.info(Markers.MSG, "WSRequestConfigBase.readExternal begin");
 		super.readExternal(in);
 		setScheme(String.class.cast(in.readObject()));
-		LOG.info(Markers.MSG, "Got scheme {}", uriBuilder.getScheme());
-		final int headersCount = in.readInt();
+		LOG.trace(Markers.MSG, "Got scheme {}", uriBuilder.getScheme());
+		sharedHeadersMap = (ConcurrentHashMap<String,String>) in.readObject();
+		/*final int headersCount = in.readInt();
 		sharedHeadersMap = new ConcurrentHashMap<>(headersCount);
-		LOG.info(Markers.MSG, "Got headers count {}", headersCount);
+		LOG.trace(Markers.MSG, "Got headers count {}", headersCount);
 		String key, value;
 		for(int i = 0; i < headersCount; i ++) {
 			key = String.class.cast(in.readObject());
-			LOG.info(Markers.MSG, "Got header key {}", key);
+			LOG.trace(Markers.MSG, "Got header key {}", key);
 			value = String.class.cast(in.readObject());
-			LOG.info(Markers.MSG, "Got header value {}", value);
+			LOG.trace(Markers.MSG, "Got header value {}", value);
 			sharedHeadersMap.put(key, value);
-		}
-		LOG.info(Markers.MSG, "Got headers map {}", sharedHeadersMap);
-		LOG.info(Markers.MSG, "WSRequestConfigBase.readExternal end");
+		}*/
+		LOG.trace(Markers.MSG, "Got headers map {}", sharedHeadersMap);
 	}
 	//
 	@Override
@@ -314,11 +313,12 @@ implements WSRequestConfig<T> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeObject(uriBuilder.getScheme());
-		out.writeInt(sharedHeadersMap.size());
+		out.writeObject(sharedHeadersMap);
+		/*out.writeInt(sharedHeadersMap.size());
 		for(final String key: sharedHeadersMap.keySet()) {
 			out.writeObject(key);
 			out.writeObject(sharedHeadersMap.get(key));
-		}
+		}*/
 	}
 	//
 	@Override

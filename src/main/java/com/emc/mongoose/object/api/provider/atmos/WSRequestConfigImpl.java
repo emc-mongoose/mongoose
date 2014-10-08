@@ -79,7 +79,7 @@ extends WSRequestConfigBase<T> {
 		return this;
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public WSRequestConfigImpl<T> clone()
 	throws CloneNotSupportedException {
 		final WSRequestConfigImpl copy = (WSRequestConfigImpl<T>) super.clone();
@@ -92,7 +92,7 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setSubTenant(new WSSubTenant<T>(this, String.class.cast(in.readObject())));
+		setSubTenant(new WSSubTenant<>(this, String.class.cast(in.readObject())));
 	}
 	//
 	@Override

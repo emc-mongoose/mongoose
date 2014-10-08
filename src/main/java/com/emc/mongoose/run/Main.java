@@ -47,9 +47,12 @@ public final class Main {
 		KEY_RUN_MODE = "run.mode",
 		//
 		VALUE_RUN_MODE_STANDALONE = "standalone",
+		VALUE_RUN_MODE_CLIENT = "client",
+		VALUE_RUN_MODE_COMPAT_CLIENT = "controller",
+		VALUE_RUN_MODE_SERVER = "server",
+		VALUE_RUN_MODE_COMPAT_SERVER = "driver",
 		VALUE_RUN_MODE_WEBUI = "webui",
-		VALUE_RUN_MODE_WSMOCK = "wsmock",
-		VALUE_RUN_MODE_SERVER = "server";
+		VALUE_RUN_MODE_WSMOCK = "wsmock";
 	//
 	private final static DateFormat FMT_DT = new SimpleDateFormat(
 		"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
@@ -104,8 +107,9 @@ public final class Main {
 		RunTimeConfig.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
 		//
-        switch (runMode) {
+		switch (runMode) {
 			case VALUE_RUN_MODE_SERVER:
+			case VALUE_RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				WSLoadBuilderSvcImpl.run();
 				break;
@@ -120,9 +124,17 @@ public final class Main {
 				} catch (final Exception e) {
 					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
 				}
-			default:
+				break;
+			case VALUE_RUN_MODE_CLIENT:
+			case VALUE_RUN_MODE_STANDALONE:
+			case VALUE_RUN_MODE_COMPAT_CLIENT:
 				Scenario.run();
 				System.exit(0);
+				break;
+			default:
+				throw new IllegalArgumentException(
+					String.format("Incorrect run mode: \"%s\"", runMode)
+				);
 		}
 		//
 	}

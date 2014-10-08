@@ -1,7 +1,7 @@
 # zero means unlimited
 count:			0
-size.min:		1Mb
-size.max:		1Mb
+size.min:		1MB
+size.max:		1MB
 
 # should be overriden
 src.fpath:
@@ -13,7 +13,7 @@ src.separator:	,
 #namespace:		s3
 
 #
-page.size:		64kib
+page.size:		64kB
 
 ring.seed:		7a42d9c483244167
-ring.size:		1Mib
+ring.size:		1MB

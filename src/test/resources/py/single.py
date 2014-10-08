@@ -51,6 +51,9 @@ except IndexError:
 	LOG.error(Markers.ERR, "Time unit should be specified with timeout value (following after \".\" separator)")
 	exit()
 #
+if load is None:
+	LOG.fatal(Markers.ERR, "No load executor instanced")
+	exit()
 load.start()
 load.join(timeOut[1].toMillis(timeOut[0]))
 load.close()

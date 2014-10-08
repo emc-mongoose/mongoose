@@ -6,6 +6,10 @@ import com.emc.mongoose.object.load.WSLoadBuilder;
 import com.emc.mongoose.object.load.WSLoadBuilderImpl;
 import com.emc.mongoose.object.load.WSLoadExecutor;
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.ExceptionHandler;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -17,6 +21,8 @@ import java.util.concurrent.TimeUnit;
  * Created by gusakk on 01/10/14.
  */
 public class StartServlet extends HttpServlet {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
     public void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
@@ -39,7 +45,7 @@ public class StartServlet extends HttpServlet {
         try {
             loadExecutor.join(TimeUnit.valueOf(timeOutArray[1].toUpperCase()).toMillis(Integer.valueOf(timeOutArray[0])));
         } catch (InterruptedException e) {
-            e.printStackTrace();
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Interrupted");
         }
 		//
         loadExecutor.close();
