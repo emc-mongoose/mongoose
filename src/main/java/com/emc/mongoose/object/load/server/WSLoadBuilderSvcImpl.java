@@ -110,9 +110,8 @@ implements WSLoadBuilderSvc<T, U> {
 	}
 	//
 	public void start() {
-		final WSLoadBuilderSvcImpl loadBuilderSvc = new WSLoadBuilderSvcImpl<>();
 		LOG.info(Markers.MSG, "Load builder service instance created");
-		/*final RemoteStub stub = */ServiceUtils.create(loadBuilderSvc);
+		/*final RemoteStub stub = */ServiceUtils.create(this);
 		/*LOG.debug(Markers.MSG, stub.toString());*/
 		LOG.info(Markers.MSG, "Driver started and waiting for the requests");
 	}
