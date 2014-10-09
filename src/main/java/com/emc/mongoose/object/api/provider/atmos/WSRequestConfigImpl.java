@@ -103,7 +103,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final HttpRequestBase httpRequest, final WSObject dataItem)
+	protected final void applyURI(final HttpRequest httpRequest, final WSObject dataItem)
 	throws URISyntaxException {
 		if(httpRequest==null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
@@ -112,7 +112,7 @@ extends WSRequestConfigBase<T> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		synchronized(uriBuilder) {
-			httpRequest.setURI(
+			HttpRequestBase.class.cast(httpRequest).setURI(
 				uriBuilder.setPath(
 					String.format(FMT_PATH, dataItem.getId())
 				).build()
@@ -121,7 +121,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyAuthHeader(final HttpRequestBase httpRequest) {
+	protected final void applyAuthHeader(final HttpRequest httpRequest) {
 		if(httpRequest.getLastHeader(HttpHeaders.RANGE)==null) {
 			httpRequest.addHeader(HttpHeaders.RANGE, ""); // temporary required for canonical form
 		}
