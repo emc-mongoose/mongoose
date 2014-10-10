@@ -1,8 +1,8 @@
 package com.emc.mongoose.util.conf;
 //
 import com.emc.mongoose.util.logging.Markers;
+//
 import org.apache.commons.configuration.BaseConfiguration;
-import org.apache.commons.configuration.ConversionException;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -12,21 +12,20 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 /**
  Created by kurila on 28.05.14.
- A shared (singleton) runtime configuration.
+ A shared runtime configuration.
  */
 public final class RunTimeConfig
+extends BaseConfiguration
 implements Externalizable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -50,85 +49,12 @@ implements Externalizable {
 			}
 		);
 	}
-	private static BaseConfiguration INSTANCE = new BaseConfiguration();
-	//
-	public static boolean containsKey(final String key) {
-		return INSTANCE.containsKey(key);
-	}
-	//
-	public static BigInteger getBigInteger(final String key)
-	throws NoSuchElementException {
-		return INSTANCE.getBigInteger(key);
-	}
-	//
-	public static boolean getBoolean(final String key)
-	throws NoSuchElementException {
-		return INSTANCE.getBoolean(key);
-	}
-	//
-	public static byte getByte(final String key)
-	throws NoSuchElementException {
-		return INSTANCE.getByte(key);
-	}
-	//
-	public static double getDouble(final String key)
-	throws NoSuchElementException {
-		return INSTANCE.getDouble(key);
-	}
-	//
-	public static float getFloat(final String key)
-	throws NoSuchElementException {
-		return INSTANCE.getFloat(key);
-	}
-	//
-	public static int getInt(final String key)
-	throws NoSuchElementException {
-		return INSTANCE.getInt(key);
-	}
-	//
-	public static Iterator<String> getKeys() {
-		return INSTANCE.getKeys();
-	}
-	//
-	public static Iterator<String> getKeys(final String prefix) {
-		return INSTANCE.getKeys(prefix);
-	}
-	//
-	public static List<Object> getList(final String key)
-	throws ConversionException, NoSuchElementException {
-		return INSTANCE.getList(key);
-	}
-	//
-	public static long getLong(final String key)
-	throws NoSuchElementException {
-		return INSTANCE.getLong(key);
-	}
-	//
-	public static Object getProperty(final String key)
-	throws NoSuchElementException {
-		return INSTANCE.getProperty(key);
-	}
-	//
-	public static short getShort(final String key)
-	throws NoSuchElementException {
-		return INSTANCE.getShort(key);
-	}
-	//
-	public static String getString(final String key)
-	throws NoSuchElementException {
-		return INSTANCE.getString(key);
-	}
-	//
-	public static String[] getStringArray(final String key)
-	throws ConversionException, NoSuchElementException {
-		return INSTANCE.getStringArray(key);
-	}
 	//
 	private final static String SIZE_UNITS = "BkMGTPE";
 	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)[bB]?");
 	//
-	public static long getSizeBytes(final String key) {
-		final String value = INSTANCE.getString(key), unit;
+	public long getSizeBytes(final String key) {
+		final String value = getString(key), unit;
 		final Matcher matcher = PATTERN_SIZE.matcher(value);
 		long size = -1;
 		long degree = 0;
@@ -159,8 +85,8 @@ implements Externalizable {
 		);
 	}
 	//
-	public static void set(final String key, final String value) {
-		INSTANCE.setProperty(key, value);
+	public void set(final String key, final String value) {
+		setProperty(key, value);
 		System.setProperty(key, value);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -171,9 +97,9 @@ implements Externalizable {
 		String nextPropName;
 		Object nextPropValue;
 		final HashMap<String, String> propsMap = new HashMap<>();
-		for(final Iterator<String> i = INSTANCE.getKeys(); i.hasNext();) {
+		for(final Iterator<String> i = getKeys(); i.hasNext();) {
 			nextPropName = i.next();
-			nextPropValue = INSTANCE.getProperty(nextPropName);
+			nextPropValue = getProperty(nextPropName);
 			LOG.trace(Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
 			if(List.class.isInstance(nextPropValue)) {
 				propsMap.put(
@@ -215,12 +141,12 @@ implements Externalizable {
 				nextPropValue = propsMap.get(nextPropName);
 				LOG.trace(Markers.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
 				if(List.class.isInstance(nextPropValue)) {
-					INSTANCE.setProperty(
+					setProperty(
 						nextPropName,
 						StringUtils.join(List.class.cast(nextPropValue), LIST_SEP)
 					);
 				} else if(String.class.isInstance(nextPropValue)) {
-					INSTANCE.setProperty(nextPropName, String.class.cast(nextPropValue));
+					setProperty(nextPropName, String.class.cast(nextPropValue));
 				} else if(nextPropValue==null) {
 					LOG.warn(Markers.ERR, "Property \"{}\" is null", nextPropName);
 				} else {
@@ -239,11 +165,11 @@ implements Externalizable {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public static void loadPropsFromDir(final Path propsDir) {
-		DirectoryLoader.loadPropsFromDir(propsDir, INSTANCE);
+	public void loadPropsFromDir(final Path propsDir) {
+		DirectoryLoader.loadPropsFromDir(propsDir, this);
 	}
 	//
-	public static void loadSysProps() {
+	public void loadSysProps() {
 		final SystemConfiguration sysProps = new SystemConfiguration();
 		String key, keys2override[];
 		Object sharedValue;
@@ -251,15 +177,15 @@ implements Externalizable {
 			key = keyIter.next();
 			LOG.trace(
 				Markers.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",
-				key, INSTANCE.getProperty(key), sysProps.getProperty(key)
+				key, getProperty(key), sysProps.getProperty(key)
 			);
 			keys2override = MAP_OVERRIDE.get(key);
 			sharedValue = sysProps.getProperty(key);
 			if(keys2override==null) {
-				INSTANCE.setProperty(key, sharedValue);
+				setProperty(key, sharedValue);
 			} else {
 				for(final String key2override: keys2override) {
-					INSTANCE.setProperty(key2override, sharedValue);
+					setProperty(key2override, sharedValue);
 				}
 			}
 		}
