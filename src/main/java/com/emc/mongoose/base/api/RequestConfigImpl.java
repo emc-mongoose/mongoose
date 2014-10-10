@@ -26,13 +26,14 @@ implements RequestConfig<T>, Cloneable {
 	protected int port;
 	protected Request.Type loadType;
 	protected DataSource<T> dataSrc;
-	protected volatile boolean retryFlag;
+	protected volatile boolean retryFlag, verifyContentFlag;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
 	//
 	@SuppressWarnings("unchecked")
 	public RequestConfigImpl() {
 		dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
 		retryFlag = runTimeConfig.getRunRequestRetries();
+		verifyContentFlag = runTimeConfig.getBoolean("load.read.verify.content");
 	}
 	//
 	@Override
@@ -123,7 +124,9 @@ implements RequestConfig<T>, Cloneable {
 	}
 	//
 	@Override
-	public final boolean get
+	public final boolean getVerifyContentFlag() {
+		return verifyContentFlag;
+	}
 	//
 	@Override
 	public RequestConfigImpl<T> setProperties(final RunTimeConfig props) {
