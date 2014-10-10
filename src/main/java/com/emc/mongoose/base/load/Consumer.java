@@ -21,7 +21,4 @@ extends Closeable {
 	//
 	void setMaxCount(final long maxCount)
 	throws RemoteException;
-	//
-	//public void setProducer(final Producer<T> producer)
-	//throws RemoteException;
 }

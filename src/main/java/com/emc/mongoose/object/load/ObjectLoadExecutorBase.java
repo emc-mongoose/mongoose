@@ -272,7 +272,7 @@ implements ObjectLoadExecutor<T> {
 			LOG.trace(Markers.MSG, "Poisoned on #{}", maxCount);
 			for(final ObjectNodeExecutor<T> nextNode: nodes) {
 				if(!nextNode.isShutdown()) {
-					nextNode.submit((T)null);
+					nextNode.submit(null); // poison
 				}
 			}
 		} else {

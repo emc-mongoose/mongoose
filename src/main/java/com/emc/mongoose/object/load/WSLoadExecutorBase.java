@@ -86,7 +86,6 @@ implements WSLoadExecutor<T> {
 		if(listFile!=null && listFile.length() > 0) {
 			try {
 				producer = (Producer<T>) new FileProducer<>(listFile, WSObjectImpl.class);
-				producer.setConsumer(this);
 			} catch(final NoSuchMethodException e) {
 				LOG.fatal(Markers.ERR, "Failed to get the constructor", e);
 			} catch(final IOException e) {

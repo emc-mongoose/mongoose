@@ -5,9 +5,11 @@ import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.object.load.WSLoadExecutorBase;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -50,8 +52,7 @@ extends WSLoadExecutorBase<T> {
 		}
 		//
 		@Override
-		public final void setConsumer(final Consumer<T> consumer)
-		throws RemoteException {
+		public final void setConsumer(final Consumer<T> consumer) {
 			this.consumer = consumer;
 		}
 		//

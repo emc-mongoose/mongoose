@@ -641,8 +641,14 @@ implements WSLoadClient<T> {
 			//
 			try {
 				nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
-			} catch(final InterruptedException|ExecutionException e) {
+			} catch(final ExecutionException e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
+			} catch(final InterruptedException e) {
+				try {
+					nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
+				} catch(final InterruptedException|ExecutionException ee) {
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
+				}
 			}
 			//
 			if(nextMetaInfoFrame!=null && nextMetaInfoFrame.size()>0) {
