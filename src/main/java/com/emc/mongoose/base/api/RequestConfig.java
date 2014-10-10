@@ -38,6 +38,8 @@ extends Externalizable {
 	boolean getRetries();
 	RequestConfig<T> setRetries(final boolean retryFlag);
 	//
+	boolean getVerifyContentFlag();
+	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
 	//
 	RequestConfig<T> clone()
