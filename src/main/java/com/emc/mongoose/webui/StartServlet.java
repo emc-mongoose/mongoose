@@ -109,6 +109,7 @@ public class StartServlet extends HttpServlet {
             public void run() {
                 try {
                     final WSLoadBuilderClientImpl<WSObjectImpl, WSLoadClient<WSObjectImpl>> loadBuilderClient = new WSLoadBuilderClientImpl<>();
+                    loadBuilderClient.setProperties(new RunTimeConfig());
                     //
                     try {
                         final Request.Type loadType = Request.Type.valueOf(
