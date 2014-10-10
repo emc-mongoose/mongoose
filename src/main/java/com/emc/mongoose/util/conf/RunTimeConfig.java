@@ -49,6 +49,12 @@ implements Externalizable {
 				"load.delete.threads"
 			}
 		);
+		MAP_OVERRIDE.put(
+			"remote.drivers",
+			new String[] {
+				"remote.servers"
+			}
+		);
 	}
 	private static BaseConfiguration INSTANCE = new BaseConfiguration();
 	//
