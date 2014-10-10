@@ -1,10 +1,10 @@
 package com.emc.mongoose.base.data.persist;
 //
-import com.emc.mongoose.base.api.RequestConfigImpl;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 //
 import com.emc.mongoose.util.logging.Markers;
@@ -41,10 +41,17 @@ implements Consumer<T>, Producer<T> {
 	private final ExecutorService outPutExecutor;
 	private volatile long maxCount;
 	private final AtomicLong writtenDataItems = new AtomicLong(0);
+	private final RunTimeConfig runTimeConfig;
+	private final int retryCountMax, retryDelayMilliSec;
 	//
 	public TempFileConsumerProducer(
+		final RunTimeConfig runTimeConfig,
 		final String prefix, final String suffix, final int threadCount, final long maxCount
 	) {
+		//
+		this.runTimeConfig = runTimeConfig;
+		retryCountMax = runTimeConfig.getRunRetryCountMax();
+		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		//
 		File fBuffTmp = null;
 		try {
@@ -116,18 +123,12 @@ implements Consumer<T>, Producer<T> {
 			} catch(final RejectedExecutionException e) {
 				rejectCount ++;
 				try {
-					Thread.sleep(rejectCount * LoadExecutor.RETRY_DELAY_MILLISEC);
+					Thread.sleep(rejectCount * retryDelayMilliSec);
 				} catch(final InterruptedException ee) {
 					break;
 				}
 			}
-		} while(
-			!passed
-				&&
-			rejectCount < LoadExecutor.RETRY_COUNT_MAX
-				&&
-			writtenDataItems.get() < maxCount
-		);
+		} while(!passed && rejectCount < retryCountMax && writtenDataItems.get() < maxCount);
 		//
 		if(!passed) {
 			LOG.debug(
@@ -157,7 +158,7 @@ implements Consumer<T>, Producer<T> {
 		outPutExecutor.shutdown();
 		try {
 			outPutExecutor.awaitTermination(
-				RequestConfigImpl.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
+				runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 			);
 		} catch(final InterruptedException e) {
 			ExceptionHandler.trace(
@@ -188,7 +189,7 @@ implements Consumer<T>, Producer<T> {
 		return consumer;
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public final void run() {
 		//
 		if(!outPutExecutor.isTerminated()) {

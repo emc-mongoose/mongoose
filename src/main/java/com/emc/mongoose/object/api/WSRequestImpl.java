@@ -3,7 +3,6 @@ package com.emc.mongoose.object.api;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.object.api.provider.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.object.data.WSObject;
-import com.emc.mongoose.object.load.type.ws.Read;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.pool.GenericInstancePool;
@@ -176,7 +175,7 @@ implements WSRequest<T> {
 					case (HttpDelete.METHOD_NAME):
 						break;
 					case (HttpGet.METHOD_NAME):
-						if(Read.VERIFY_CONTENT) { // validate the response content
+						if(reqConf.verifyContent()) { // validate the response content
 							final HttpEntity httpEntity = httpResponse.getEntity();
 							if(httpEntity==null) {
 								LOG.warn(

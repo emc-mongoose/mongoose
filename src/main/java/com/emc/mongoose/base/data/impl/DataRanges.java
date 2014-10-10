@@ -1,6 +1,7 @@
 package com.emc.mongoose.base.data.impl;
 //
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
@@ -34,6 +35,7 @@ implements AppendableDataItem, UpdatableDataItem {
 		FMT_META_INFO = "%s" + RunTimeConfig.LIST_SEP + "%x" + LAYER_MASK_SEP + "%s",
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
 		FMT_MSG_WRONG_RANGE_COUNT = "Range count should be more than 0 and less than the object size = %s";
+	private final int maxPageSize = Main.RUN_TIME_CONFIG.getDataPageSize();
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final BitSet
 		maskRangesHistory = new BitSet(),
@@ -345,7 +347,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				size += pendingAugmentSize;
 				// redirect the tail's data to the output
 				final byte buff[] = new byte[
-					pendingAugmentSize < MAX_PAGE_SIZE ? (int) pendingAugmentSize : MAX_PAGE_SIZE
+					pendingAugmentSize < maxPageSize ? (int) pendingAugmentSize : maxPageSize
 				];
 				final int
 					countPages = (int) pendingAugmentSize / buff.length,

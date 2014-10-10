@@ -21,11 +21,12 @@ extends WSLoadExecutorBase<T> {
 	private final long minAppendSize, maxAppendSize;
 	//
 	public Append(
+		final RunTimeConfig runTimeConfig,
 		final String[] addrs, final WSRequestConfig<T> sharedReqConf, final long maxCount,
 		final int threadsPerNode, final String listFile,
 		final long minAppendSize, final long maxAppendSize
 	) {
-		super(addrs, sharedReqConf, maxCount, threadsPerNode, listFile);
+		super(runTimeConfig, addrs, sharedReqConf, maxCount, threadsPerNode, listFile);
 		this.minAppendSize = minAppendSize;
 		this.maxAppendSize = maxAppendSize;
 	}

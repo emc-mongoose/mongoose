@@ -8,6 +8,7 @@ import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.api.WSRequestImpl;
 import com.emc.mongoose.object.data.WSObject;
 //
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -21,10 +22,11 @@ implements WSNodeExecutor<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public WSNodeExecutorImpl(
+		final RunTimeConfig runTimeConfig,
 		final String addr, final int threadsPerNode, final WSRequestConfig<T> sharedReqConf,
 		final MetricRegistry parentMetrics, final String parentName
 	) throws CloneNotSupportedException {
-		super(addr, threadsPerNode, sharedReqConf, parentMetrics, parentName);
+		super(runTimeConfig, addr, threadsPerNode, sharedReqConf, parentMetrics, parentName);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

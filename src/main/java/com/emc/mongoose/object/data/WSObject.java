@@ -1,5 +1,6 @@
 package com.emc.mongoose.object.data;
 //
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import org.apache.http.Header;
@@ -15,11 +16,11 @@ extends DataObject, HttpEntity {
 	//
 	Header
 		HEADER_CONTENT_TYPE = new BasicHeader(
-			HttpHeaders.CONTENT_TYPE, RunTimeConfig.getString("http.content.type")
+			HttpHeaders.CONTENT_TYPE, Main.RUN_TIME_CONFIG.getHttpContentType()
 		);
 	boolean
-		IS_CONTENT_REPEATABLE = RunTimeConfig.getBoolean("http.content.repeatable"),
-		IS_CONTENT_CHUNKED = RunTimeConfig.getBoolean("http.content.chunked");
+		IS_CONTENT_REPEATABLE = Main.RUN_TIME_CONFIG.getHttpContentRepeatable(),
+		IS_CONTENT_CHUNKED = Main.RUN_TIME_CONFIG.getHttpContentChunked();
 	//
 	HttpEntity getPendingUpdatesContentEntity();
 	//

@@ -12,8 +12,6 @@ import java.io.OutputStream;
 public interface DataItem
 extends Externalizable, Closeable {
 	//
-	int MAX_PAGE_SIZE = (int) RunTimeConfig.getSizeBytes("data.page.size");
-	//
 	long getSize();
 	//
 	void writeTo(final OutputStream out);

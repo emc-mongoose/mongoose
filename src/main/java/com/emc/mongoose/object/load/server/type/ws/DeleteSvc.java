@@ -7,6 +7,7 @@ import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.object.load.ObjectLoadExecutor;
 import com.emc.mongoose.object.load.server.ObjectLoadSvc;
 import com.emc.mongoose.object.load.type.ws.Delete;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.RecordFrameBuffer;
 import com.emc.mongoose.util.remote.Service;
@@ -29,10 +30,11 @@ implements ObjectLoadSvc<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public DeleteSvc(
+		final RunTimeConfig runTimeConfig,
 		final String[] addrs, final WSRequestConfig<T> reqConf, final long maxCount,
 		final int threadsPerNode
 	) {
-		super(addrs, reqConf, maxCount, threadsPerNode, null);
+		super(runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, null);
 		// by default, may be overriden later externally:
 		super.setConsumer(new FrameBuffConsumer<T>());
 	}

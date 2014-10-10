@@ -71,6 +71,7 @@ implements WSLoadBuilderSvc<T, U> {
 							);
 						}
 						loadSvc = new CreateSvc<>(
+							runTimeConfig,
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
 							minObjSize, maxObjSize
 						);
@@ -78,12 +79,14 @@ implements WSLoadBuilderSvc<T, U> {
 					case READ:
 						LOG.debug("New read load");
 						loadSvc = new ReadSvc<>(
+							runTimeConfig,
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case UPDATE:
 						LOG.debug("New update load");
 						loadSvc = new UpdateSvc<>(
+							runTimeConfig,
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
 							updatesPerItem
 						);
@@ -91,12 +94,14 @@ implements WSLoadBuilderSvc<T, U> {
 					case DELETE:
 						LOG.debug("New delete load");
 						loadSvc = new DeleteSvc<>(
+							runTimeConfig,
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case APPEND:
 						LOG.debug("New append load");
 						loadSvc = new AppendSvc<>(
+							runTimeConfig,
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
 							minObjSize, maxObjSize
 						);

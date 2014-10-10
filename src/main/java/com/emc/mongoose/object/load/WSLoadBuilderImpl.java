@@ -10,6 +10,7 @@ import com.emc.mongoose.object.load.type.ws.Create;
 import com.emc.mongoose.object.load.type.ws.Delete;
 import com.emc.mongoose.object.load.type.ws.Read;
 import com.emc.mongoose.object.load.type.ws.Update;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 //
@@ -29,6 +30,7 @@ implements WSLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	protected RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
 	protected WSRequestConfig<T> reqConf;
 	protected Request.Type loadType;
 	protected long maxCount, minObjSize, maxObjSize;
@@ -42,14 +44,15 @@ implements WSLoadBuilder<T, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public ObjectLoadBuilder<T, U> setProperties(final RunTimeConfig props) {
+	public ObjectLoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig) {
+		this.runTimeConfig = runTimeConfig;
 		reqConf = WSRequestConfigBase.getInstance();
-		reqConf.setProperties(props);
+		reqConf.setProperties(runTimeConfig);
 		String paramName;
 		for(final Request.Type loadType: Request.Type.values()) {
 			paramName = "load."+loadType.name().toLowerCase()+".threads";
 			try {
-				setThreadsPerNodeFor(RunTimeConfig.getShort(paramName), loadType);
+				setThreadsPerNodeFor(runTimeConfig.getShort(paramName), loadType);
 			} catch(final NoSuchElementException e) {
 				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 			} catch(final IllegalArgumentException e) {
@@ -59,7 +62,7 @@ implements WSLoadBuilder<T, U> {
 		//
 		paramName = "data.count";
 		try {
-			setMaxCount(RunTimeConfig.getLong(paramName));
+			setMaxCount(runTimeConfig.getLong(paramName));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -68,7 +71,7 @@ implements WSLoadBuilder<T, U> {
 		//
 		paramName = "data.size.min";
 		try {
-			setMinObjSize(RunTimeConfig.getSizeBytes(paramName));
+			setMinObjSize(runTimeConfig.getSizeBytes(paramName));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -77,7 +80,7 @@ implements WSLoadBuilder<T, U> {
 		//
 		paramName = "data.size.max";
 		try {
-			setMaxObjSize(RunTimeConfig.getSizeBytes(paramName));
+			setMaxObjSize(runTimeConfig.getSizeBytes(paramName));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -86,7 +89,7 @@ implements WSLoadBuilder<T, U> {
 		//
 		paramName = "load.update.per.item";
 		try {
-			setUpdatesPerItem(RunTimeConfig.getInt(paramName));
+			setUpdatesPerItem(runTimeConfig.getInt(paramName));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -95,7 +98,7 @@ implements WSLoadBuilder<T, U> {
 		//
 		paramName = "storage.addrs";
 		try {
-			setDataNodeAddrs(RunTimeConfig.getStringArray(paramName));
+			setDataNodeAddrs(runTimeConfig.getStringArray(paramName));
 		} catch(final NoSuchElementException|ConversionException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -104,14 +107,14 @@ implements WSLoadBuilder<T, U> {
 		//
 		paramName = "api."+ reqConf.getAPI().toLowerCase()+".port";
 		try {
-			reqConf.setPort(RunTimeConfig.getInt(paramName));
+			reqConf.setPort(runTimeConfig.getApiPort(reqConf.getAPI().toLowerCase()));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
 		//
 		paramName = "storage.scheme";
 		try {
-			reqConf.setScheme(RunTimeConfig.getString(paramName));
+			reqConf.setScheme(runTimeConfig.getString(paramName));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -120,7 +123,7 @@ implements WSLoadBuilder<T, U> {
 		//
 		paramName = "data.src.fpath";
 		try {
-			setInputFile(RunTimeConfig.getString(paramName));
+			setInputFile(runTimeConfig.getString(paramName));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -299,6 +302,7 @@ implements WSLoadBuilder<T, U> {
 					case CREATE:
 						LOG.debug("New create load");
 						load = new Create<>(
+							runTimeConfig,
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile, minObjSize, maxObjSize
 						);
@@ -306,6 +310,7 @@ implements WSLoadBuilder<T, U> {
 					case READ:
 						LOG.debug("New read load");
 						load = new Read<>(
+							runTimeConfig,
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile
 						);
@@ -313,6 +318,7 @@ implements WSLoadBuilder<T, U> {
 					case UPDATE:
 						LOG.debug("New update load");
 						load = new Update<>(
+							runTimeConfig,
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile, updatesPerItem
 						);
@@ -320,6 +326,7 @@ implements WSLoadBuilder<T, U> {
 					case DELETE:
 						LOG.debug("New delete load");
 						load = new Delete<>(
+							runTimeConfig,
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile
 						);
@@ -327,6 +334,7 @@ implements WSLoadBuilder<T, U> {
 					case APPEND:
 						LOG.debug("New append load");
 						load = new Append<>(
+							runTimeConfig,
 							dataNodeAddrs, reqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile, minObjSize, maxObjSize
 						);

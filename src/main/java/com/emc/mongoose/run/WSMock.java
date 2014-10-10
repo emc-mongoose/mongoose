@@ -20,14 +20,20 @@ import java.io.IOException;
 /**
  * Created by olga on 30.09.14.
  */
-public final class WSMock {
+public final class WSMock
+implements Runnable {
 
 	private final static Logger LOG = LogManager.getLogger();
+	private final RunTimeConfig runTimeConfig;
 
-	public static void run() {
+	public WSMock(final RunTimeConfig runTimeConfig) {
+		this.runTimeConfig = runTimeConfig;
+	}
 
-		final String apiName = RunTimeConfig.getString("storage.api");
-		final int port = RunTimeConfig.getInt("api."+apiName+".port");
+	public void run() {
+
+		final String apiName = runTimeConfig.getString("storage.api");
+		final int port = runTimeConfig.getInt("api."+apiName+".port");
 		// Setup Jetty Server instance
 		final Server server = new Server();
 		server.setDumpAfterStart(false);

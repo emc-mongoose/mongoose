@@ -1,11 +1,11 @@
 package com.emc.mongoose.object.load;
 //
-import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
 import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.base.data.persist.FileProducer;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
@@ -33,10 +33,11 @@ implements WSLoadExecutor<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected WSLoadExecutorBase(
+		final RunTimeConfig runTimeConfig,
 		final String[] addrs, final WSRequestConfig<T> reqConf, final long maxCount,
 		final int threadsPerNode, final String listFile
 	) throws ClassCastException {
-		super(addrs, reqConf, maxCount, threadsPerNode, listFile);
+		super(runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, listFile);
 	}
 	//
 	@Override
@@ -52,7 +53,7 @@ implements WSLoadExecutor<T> {
 		connMgr.setDefaultConnectionConfig(
 			ConnectionConfig
 				.custom()
-				.setBufferSize(DataItem.MAX_PAGE_SIZE)
+				.setBufferSize(runTimeConfig.getDataPageSize())
 				.build()
 		);
 		// set shared headers to client builder
@@ -69,7 +70,7 @@ implements WSLoadExecutor<T> {
 			.setDefaultHeaders(headers)
 			.setRetryHandler(reqConf.getRetryHandler())
 			.disableCookieManagement()
-			.setUserAgent(WSRequestConfig.DEFAULT_USERAGENT)
+			.setUserAgent(reqConf.getUserAgent())
 			.setMaxConnPerRoute(threadsPerNode)
 			.setMaxConnTotal(totalThreadCount);
 		if(!reqConf.getRetries()) {
@@ -104,7 +105,7 @@ implements WSLoadExecutor<T> {
 		for(int i = 0; i < addrs.length; i ++) {
 			try {
 				nodeExecutor = new WSNodeExecutorImpl<>(
-					addrs[i], threadsPerNode, reqConf, metrics, getName()
+					runTimeConfig, addrs[i], threadsPerNode, reqConf, metrics, getName()
 				);
 				nodes[i] = nodeExecutor;
 			} catch(final CloneNotSupportedException e) {
@@ -114,11 +115,5 @@ implements WSLoadExecutor<T> {
 			}
 		}
 		//
-	}
-	//
-	@Override
-	public final void start() {
-
-		super.start();
 	}
 }

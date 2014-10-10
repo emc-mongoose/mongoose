@@ -48,6 +48,12 @@ implements Externalizable {
 				"load.delete.threads"
 			}
 		);
+		MAP_OVERRIDE.put(
+			"remote.drivers",
+			new String[] {
+				"remote.servers"
+			}
+		);
 	}
 	//
 	private final static String SIZE_UNITS = "BkMGTPE";
@@ -85,9 +91,69 @@ implements Externalizable {
 		);
 	}
 	//
-	public void set(final String key, final String value) {
+	public final void set(final String key, final String value) {
 		setProperty(key, value);
 		System.setProperty(key, value);
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	public final int getRunReqTimeOutMilliSec() {
+		return getInt("run.request.timeout.millisec");
+	}
+	//
+	public final int getRunRetryDelayMilliSec() {
+		return getInt("run.retry.delay.millisec");
+	}
+	//
+	public final int getRunRetryCountMax() {
+		return getInt("run.retry.count.max");
+	}
+	//
+	public final boolean getRunRequestRetries() {
+		return getBoolean("run.request.retries");
+	}
+	//
+	public final String getStorageApi() {
+		return getString("storage.api");
+	}
+	//
+	public final int getApiPort(final String api) {
+		return getInt("api." + api + ".port");
+	}
+	//
+	public final String getAuthId() {
+		return getString("auth.id");
+	}
+	//
+	public final String getAuthSecret() {
+		return getString("auth.secret");
+	}
+	//
+	public final int getDataPageSize() {
+		return getInt("data.page.size");
+	}
+	//
+	public final int getRemoteMonitorPort() {
+		return getInt("remote.monitor.port");
+	}
+	//
+	public final int getRunMetricsPeriodSec() {
+		return getInt("run.metrics.period.sec");
+	}
+	//
+	public final int getRunRequestQueueFactor() {
+		return getInt("run.request.queue.factor");
+	}
+	//
+	public final String getHttpContentType() {
+		return getString("http.content.type");
+	}
+	//
+	public final boolean getHttpContentRepeatable() {
+		return getBoolean("http.content.repeateable");
+	}
+	//
+	public final boolean getHttpContentChunked() {
+		return getBoolean("http.content.chunked");
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
