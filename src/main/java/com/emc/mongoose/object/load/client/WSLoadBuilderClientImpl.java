@@ -8,6 +8,7 @@ import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.object.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.object.load.server.WSLoadBuilderSvcImpl;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.persist.FileProducer;
 import com.emc.mongoose.util.logging.Markers;
@@ -40,8 +41,9 @@ implements WSLoadBuilderClient<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private FileProducer<T> srcProducer = null;
+	private volatile RunTimeConfig runTimeConfig;
 	@SuppressWarnings("unchecked")
-	private WSRequestConfig<T> reqConf = WSRequestConfigBase.getInstance();
+	private volatile WSRequestConfig<T> reqConf = WSRequestConfigBase.getInstance();
 	//
 	@SuppressWarnings("unchecked")
 	private WSLoadBuilderSvc<T, U> resolve(final String serverAddr)
@@ -65,34 +67,36 @@ implements WSLoadBuilderClient<T, U> {
 	//
 	public WSLoadBuilderClientImpl()
 	throws IOException {
-		this(RunTimeConfig.getStringArray("remote.servers"));
+		this(Main.RUN_TIME_CONFIG);
 	}
 	//
-	private WSLoadBuilderClientImpl(final String serverAddrs[])
+	public WSLoadBuilderClientImpl(final RunTimeConfig runTimeConfig)
 	throws IOException {
-		super(serverAddrs.length);
-		for(final String serverAddr: serverAddrs) {
+		super(runTimeConfig.getStringArray("remote.servers").length);
+		this.runTimeConfig = runTimeConfig;
+		for(final String serverAddr: runTimeConfig.getStringArray("remote.servers")) {
 			LOG.info(Markers.MSG, "Resolving server service @ \"{}\"...", serverAddr);
 			put(serverAddr, resolve(serverAddr));
 		}
 	}
 	//
 	@Override @SuppressWarnings("AccessStaticViaInstance")
-	public final WSLoadBuilderClientImpl<T, U> setProperties(final RunTimeConfig props)
+	public final WSLoadBuilderClientImpl<T, U> setProperties(final RunTimeConfig runTimeConfig)
 	throws RemoteException {
 		//
-		reqConf.setProperties(props);
+		this.runTimeConfig = runTimeConfig;
+		reqConf.setProperties(runTimeConfig);
 		//
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
 			nextBuilder = get(addr);
 			LOG.info(Markers.MSG, "Applying the properties to server @ \"{}\"...", addr);
-			nextBuilder.setProperties(props);
+			nextBuilder.setProperties(runTimeConfig);
 		}
 		//
 		final String firstNodeAddr = reqConf.getAddr();
 		if(firstNodeAddr == null || firstNodeAddr.length() == 0) {
-			final String nodeAddrs[] = props.getStringArray("storage.addrs");
+			final String nodeAddrs[] = runTimeConfig.getStringArray("storage.addrs");
 			if(nodeAddrs != null && nodeAddrs.length > 0) {
 				reqConf.setAddr(nodeAddrs[0]);
 			}
@@ -100,7 +104,7 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		String dataMetaInfoFile = null;
 		try {
-			dataMetaInfoFile = RunTimeConfig.getString("data.src.fpath");
+			dataMetaInfoFile = this.runTimeConfig.getString("data.src.fpath");
 			if(
 				dataMetaInfoFile!=null && dataMetaInfoFile.length()>0 &&
 				Files.isReadable(Paths.get(dataMetaInfoFile))
@@ -294,7 +298,7 @@ implements WSLoadBuilderClient<T, U> {
 			nextJMXURL = null;
 			try {
 				svcJMXAddr = ServiceUtils.JMXRMI_URL_PREFIX + addr + ":" +
-					RunTimeConfig.getString("remote.monitor.port") + ServiceUtils.JMXRMI_URL_PATH;
+					runTimeConfig.getString("remote.monitor.port") + ServiceUtils.JMXRMI_URL_PATH;
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
 				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
@@ -317,8 +321,8 @@ implements WSLoadBuilderClient<T, U> {
 		}
 		//
 		newLoadClient = new WSLoadClientImpl<>(
-			remoteLoadMap, remoteJMXConnMap, reqConf,
-			RunTimeConfig.getLong("data.count"), nextLoad==null ? 1 : nextLoad.getThreadCount()
+			runTimeConfig, remoteLoadMap, remoteJMXConnMap, reqConf,
+			runTimeConfig.getLong("data.count"), nextLoad==null ? 1 : nextLoad.getThreadCount()
 		);
 		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer!=null && srcProducer.getConsumer()==null) {

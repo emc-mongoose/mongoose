@@ -24,16 +24,32 @@ loadProperties confDirName + '/properties/run'
 
 version = ext.version
 
+configurations {
+	apacheCommonsConfiguration {
+		transitive = true
+	}
+	compile {
+		extendsFrom apacheCommonsConfiguration
+		transitive = true
+	}
+	runtime {
+		extendsFrom compile
+	}
+}
+
 repositories {
     mavenCentral()
 }
 
 dependencies {
 
+	apacheCommonsConfiguration(
+		'commons-configuration:commons-configuration:1.10'
+	)
+
 	compile (
 		'com.codahale.metrics:metrics-core:3.0.2',
 		'commons-codec:commons-codec:1.9',
-		'commons-configuration:commons-configuration:1.10',
 		'org.apache.logging.log4j:log4j-api:2.0.2',
 		'org.apache.logging.log4j:log4j-core:2.0.2',
 		'org.apache.httpcomponents:httpclient:4.3.4',
@@ -44,7 +60,6 @@ dependencies {
         'javax.servlet:javax.servlet-api:3.1.0',
         'javax.servlet.jsp:jsp-api:2.2.1-b03',
         'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127'
-
     )
 
 	runtime (
@@ -59,8 +74,7 @@ dependencies {
 		'org.slf4j:slf4j-api:1.7.7',
 		'org.python:jython:2.7-b2',
         'jstl:jstl:1.2'
-
-    )
+	)
 
 	testCompile group: 'junit', name: 'junit', version: '4.11'
 }
@@ -74,9 +88,10 @@ task rmic(dependsOn: compileJava) << {
 		'com.emc.mongoose.object.load.server.type.ws.ReadSvc',
 		'com.emc.mongoose.object.load.server.type.ws.UpdateSvc'
 	]
+	String clsPath = """${sourceSets.main.output.classesDir}:${configurations.apacheCommonsConfiguration.asPath}"""
 	for(cls in listClsRemote) {
-		String command = """rmic -classpath ${sourceSets.main.output.classesDir} -d ${sourceSets.main.output.classesDir} ${cls}"""
-		println command
+		String command = """rmic -classpath ${clsPath} -d ${sourceSets.main.output.classesDir} ${cls}"""
+		//println command
 		String test = command.execute().text
 		print test
 	}

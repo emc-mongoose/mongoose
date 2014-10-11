@@ -175,7 +175,7 @@ implements WSRequest<T> {
 					case (HttpDelete.METHOD_NAME):
 						break;
 					case (HttpGet.METHOD_NAME):
-						if(reqConf.verifyContent()) { // validate the response content
+						if(reqConf.getVerifyContentFlag()) { // validate the response content
 							final HttpEntity httpEntity = httpResponse.getEntity();
 							if(httpEntity==null) {
 								LOG.warn(

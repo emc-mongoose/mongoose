@@ -11,7 +11,7 @@ import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.persist.LogConsumer;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.base.load.StorageNodeSubmitTask;
+import com.emc.mongoose.base.load.SubmitDataItemTask;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
 import com.emc.mongoose.object.data.DataObject;
 //
@@ -284,8 +284,9 @@ implements ObjectLoadExecutor<T> {
 				}
 			}
 		} else {
-			final StorageNodeSubmitTask<T> submitTask = new StorageNodeSubmitTask<>(
-				nodes[(int) submitExecutor.getTaskCount() % nodes.length], dataItem
+			final SubmitDataItemTask<T, ObjectNodeExecutor<T>>
+				submitTask = new SubmitDataItemTask<>(
+				dataItem, nodes[(int) submitExecutor.getTaskCount() % nodes.length]
 			);
 			boolean flagSubmSucc = false;
 			int rejectCount = 0;

@@ -1,6 +1,7 @@
 package com.emc.mongoose.object.load.client;
 //
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.base.load.SubmitDataItemTask;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.data.WSObjectImpl;
@@ -919,27 +920,6 @@ implements WSLoadClient<T> {
 		LOG.debug(Markers.MSG, "Closed {}", getName());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static class SubmitTask<T extends WSObject>
-	implements Runnable {
-		//
-		private final LoadExecutor<T> loadExecSvc;
-		private final T dataItem;
-		//
-		private SubmitTask(final LoadExecutor<T> loadExecSvc, final T dataItem) {
-			this.loadExecSvc = loadExecSvc;
-			this.dataItem = dataItem;
-		}
-		//
-		@Override
-		public final void run() {
-			try {
-				loadExecSvc.submit(dataItem);
-			} catch(final RemoteException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Data item submitting failure");
-			}
-		}
-	}
-	//
 	@Override
 	public final void submit(final T dataItem) {
 		if(maxCount > submitExecutor.getTaskCount()) {
@@ -954,7 +934,9 @@ implements WSLoadClient<T> {
 				final String addr = String.class.cast(
 					addrs[(int) submitExecutor.getTaskCount() % addrs.length]
 				);
-				final SubmitTask<T> submTask = new SubmitTask<>(remoteLoadMap.get(addr), dataItem);
+				final SubmitDataItemTask<T, LoadSvc<T>> submTask = new SubmitDataItemTask<>(
+					dataItem, remoteLoadMap.get(addr)
+				);
 				boolean passed = false;
 				int rejectCount = 0;
 				do {

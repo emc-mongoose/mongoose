@@ -27,12 +27,12 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private RunTimeConfig clientProps = null;
+	private RunTimeConfig clientConfig = null;
 	//
 	@Override
-	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientProps) {
-		super.setProperties(clientProps);
-		this.clientProps = clientProps;
+	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
+		super.setProperties(clientConfig);
+		this.clientConfig = clientConfig;
 		return this;
 	}
 	//
@@ -52,7 +52,7 @@ implements WSLoadBuilderSvc<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final U build()
 	throws IllegalStateException {
-		if(clientProps == null) {
+		if(clientConfig== null) {
 			throw new IllegalStateException("Should upload properties to the server before instancing");
 		}
 		if(reqConf == null) {
