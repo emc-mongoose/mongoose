@@ -72,9 +72,10 @@ implements WSLoadBuilderClient<T, U> {
 	//
 	public WSLoadBuilderClientImpl(final RunTimeConfig runTimeConfig)
 	throws IOException {
-		super(runTimeConfig.getStringArray("remote.servers").length);
+		super(runTimeConfig.getRemoteServers().length);
 		this.runTimeConfig = runTimeConfig;
-		for(final String serverAddr: runTimeConfig.getStringArray("remote.servers")) {
+		final String remoteServers[] = runTimeConfig.getRemoteServers();
+		for(final String serverAddr: remoteServers) {
 			LOG.info(Markers.MSG, "Resolving server service @ \"{}\"...", serverAddr);
 			put(serverAddr, resolve(serverAddr));
 		}
@@ -96,7 +97,7 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		final String firstNodeAddr = reqConf.getAddr();
 		if(firstNodeAddr == null || firstNodeAddr.length() == 0) {
-			final String nodeAddrs[] = runTimeConfig.getStringArray("storage.addrs");
+			final String nodeAddrs[] = runTimeConfig.getStorageAddrs();
 			if(nodeAddrs != null && nodeAddrs.length > 0) {
 				reqConf.setAddr(nodeAddrs[0]);
 			}
@@ -104,7 +105,7 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		String dataMetaInfoFile = null;
 		try {
-			dataMetaInfoFile = this.runTimeConfig.getString("data.src.fpath");
+			dataMetaInfoFile = this.runTimeConfig.getDataSrcFPath();
 			if(
 				dataMetaInfoFile!=null && dataMetaInfoFile.length()>0 &&
 				Files.isReadable(Paths.get(dataMetaInfoFile))
@@ -298,7 +299,7 @@ implements WSLoadBuilderClient<T, U> {
 			nextJMXURL = null;
 			try {
 				svcJMXAddr = ServiceUtils.JMXRMI_URL_PREFIX + addr + ":" +
-					runTimeConfig.getString("remote.monitor.port") + ServiceUtils.JMXRMI_URL_PATH;
+					runTimeConfig.getRemoteMonitorPort() + ServiceUtils.JMXRMI_URL_PATH;
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
 				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
@@ -322,7 +323,7 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		newLoadClient = new WSLoadClientImpl<>(
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, reqConf,
-			runTimeConfig.getLong("data.count"), nextLoad==null ? 1 : nextLoad.getThreadCount()
+			runTimeConfig.getDataCount(), nextLoad==null ? 1 : nextLoad.getThreadCount()
 		);
 		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer!=null && srcProducer.getConsumer()==null) {

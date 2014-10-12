@@ -33,7 +33,7 @@ implements RequestConfig<T>, Cloneable {
 	public RequestConfigImpl() {
 		dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
 		retryFlag = runTimeConfig.getRunRequestRetries();
-		verifyContentFlag = runTimeConfig.getBoolean("load.read.verify.content");
+		verifyContentFlag = runTimeConfig.getReadVerifyContent();
 	}
 	//
 	@Override
@@ -129,14 +129,16 @@ implements RequestConfig<T>, Cloneable {
 	}
 	//
 	@Override
-	public RequestConfigImpl<T> setProperties(final RunTimeConfig props) {
-		runTimeConfig = props;
-		setAPI(runTimeConfig.getStorageApi());
-		LOG.debug(Markers.MSG, "Using API: \"{}\"", api);
-		setPort(runTimeConfig.getApiPort(api));
-		setUserName(runTimeConfig.getAuthId());
-		setSecret(runTimeConfig.getAuthSecret());
-		setRetries(runTimeConfig.getRunRequestRetries());
+	public RequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+		LOG.info(Markers.MSG, "Apply new run time config: {}", runTimeConfig);
+		this.runTimeConfig = runTimeConfig;
+		final String api = runTimeConfig.getStorageApi();
+		setAPI(api);
+		LOG.info(Markers.MSG, "Using API: \"{}\"", api);
+		setPort(this.runTimeConfig.getApiPort(api));
+		setUserName(this.runTimeConfig.getAuthId());
+		setSecret(this.runTimeConfig.getAuthSecret());
+		setRetries(this.runTimeConfig.getRunRequestRetries());
 		return this;
 	}
 	//

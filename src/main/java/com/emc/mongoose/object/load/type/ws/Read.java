@@ -24,7 +24,7 @@ extends WSLoadExecutorBase<T> {
 		final int threadsPerNode, final String listFile
 	) {
 		super(runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, listFile);
-		verifyContentFlag = runTimeConfig.getBoolean("load.read.verify.content");
+		verifyContentFlag = runTimeConfig.getReadVerifyContent();
 		LOG.info(Markers.MSG, "Verify data integrity during read: {}", verifyContentFlag);
 	}
 }

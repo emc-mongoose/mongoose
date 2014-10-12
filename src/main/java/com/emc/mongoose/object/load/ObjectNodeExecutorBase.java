@@ -6,7 +6,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
-import com.emc.mongoose.base.api.RequestConfig;
+import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
@@ -187,7 +187,6 @@ implements ObjectNodeExecutor<T> {
 		}
 	}
 	//
-	protected abstract boolean isResponseValid(final DataObjectRequest<T> request);
 	@Override @SuppressWarnings("unchecked")
 	protected final void afterExecute(final Runnable reqTask, final Throwable thrown) {
 		if(thrown!=null) {
@@ -200,7 +199,7 @@ implements ObjectNodeExecutor<T> {
 					request = (DataObjectRequest<T>) Future.class.cast(reqTask).get()
 			) {
 				final T object = request.getDataItem();
-				if(isResponseValid(request)) {
+				if(request.getResult() != Request.Result.SUCC) {
 					// update the metrics with success
 					counterReqSucc.inc();
 					counterReqSuccParent.inc();

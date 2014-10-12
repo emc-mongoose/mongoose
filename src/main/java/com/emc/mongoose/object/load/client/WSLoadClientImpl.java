@@ -136,7 +136,7 @@ implements WSLoadClient<T> {
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
-			runTimeConfig.getInt("remote.monitor.port")
+			runTimeConfig.getRemoteMonitorPort()
 		);
 		metricsReporter = JmxReporter.forRegistry(metrics)
 			.convertDurationsTo(TimeUnit.SECONDS)

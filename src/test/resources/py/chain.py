@@ -5,7 +5,7 @@ from loadbuilder import INSTANCE as loadBuilder
 from org.apache.logging.log4j import Level, LogManager
 #
 from com.emc.mongoose.base.api import Request
-from com.emc.mongoose.util.conf import RunTimeConfig
+from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.logging import ExceptionHandler, Markers
 #
 from java.lang import Throwable, IllegalArgumentException
@@ -16,7 +16,7 @@ chain = list()
 #
 loadTypes = None
 try:
-	loadTypes = RunTimeConfig.getStringArray("scenario.chain.load")
+	loadTypes = Main.RUN_TIME_CONFIG.getStringArray("scenario.chain.load")
 	LOG.info(Markers.MSG, "Load chain: {}", loadTypes)
 except NoSuchElementException:
 	LOG.error(Markers.ERR, "No load type specified, try arg -Dscenario.chain.load=<VALUE> to override")
@@ -44,7 +44,7 @@ from java.lang import Integer
 from java.util.concurrent import TimeUnit
 timeOut = None  # tuple of (value, unit)
 try:
-	timeOut = RunTimeConfig.getString("run.time")
+	timeOut = Main.RUN_TIME_CONFIG.getRunTime()
 	timeOut = timeOut.split('.')
 	timeOut = Integer.valueOf(timeOut[0]), TimeUnit.valueOf(timeOut[1].upper())
 	LOG.info(Markers.MSG, "Using time limit: {} {}", timeOut[0], timeOut[1].name().lower())

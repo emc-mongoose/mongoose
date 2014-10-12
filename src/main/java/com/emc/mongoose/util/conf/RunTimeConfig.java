@@ -155,6 +155,66 @@ implements Externalizable {
 	public final boolean getHttpContentChunked() {
 		return getBoolean("http.content.chunked");
 	}
+	//
+	public final boolean getReadVerifyContent() {
+		return getBoolean("load.read.verify.content");
+	}
+	//
+	public final String getStorageProto() {
+		return getString("storage.scheme");
+	}
+	//
+	public final String getDataNameSpace() {
+		return getString("data.namespace");
+	}
+	//
+	public final String getHttpSignMethod() {
+		return getString("http.sign.method");
+	}
+	//
+	public final String getRunName() {
+		return getString("run.name");
+	}
+	//
+	public final String getRunVersion() {
+		return getString("run.version");
+	}
+	//
+	public final long getDataCount() {
+		return getLong("data.count");
+	}
+	//
+	public final String[] getStorageAddrs() {
+		return getStringArray("storage.addrs");
+	}
+	//
+	public final String[] getRemoteServers() {
+		return getStringArray("remote.servers");
+	}
+	//
+	public final String getDataSrcFPath() {
+		return getString("data.src.fpath");
+	}
+	//
+	public final String getRunScenarioLang() {
+		return getString("run.scenario.lang");
+	}
+	//
+	public final String getRunScenarioName() {
+		return getString("run.scenario.name");
+	}
+	//
+	public final String getRunScenarioDir() {
+		return getString("run.scenario.dir");
+	}
+	//
+	public final String getRunTime() {
+		return getString("run.time");
+	}
+	//
+	public final String getRunMode() {
+		return getString("run.mode");
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)

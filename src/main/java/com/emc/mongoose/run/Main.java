@@ -98,7 +98,8 @@ public final class Main {
 			System.exit(1);
 		}
 		rootLogger.info(
-			Markers.MSG, "Logging configured, run.id=\"{}\"", System.getProperty(KEY_RUN_ID)
+			Markers.MSG, "Run in mode \"{}\", id: \"{}\"",
+			System.getProperty(KEY_RUN_MODE), System.getProperty(KEY_RUN_ID)
 		);
 		// load the properties
 		RUN_TIME_CONFIG.loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
@@ -127,7 +128,7 @@ public final class Main {
 			case VALUE_RUN_MODE_CLIENT:
 			case VALUE_RUN_MODE_STANDALONE:
 			case VALUE_RUN_MODE_COMPAT_CLIENT:
-				new Scenario(Main.RUN_TIME_CONFIG).run();
+				new Scenario(RUN_TIME_CONFIG).run();
 				System.exit(0);
 				break;
 			default:

@@ -107,12 +107,12 @@ implements WSRequestConfig<T> {
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException {
 		super();
-		signMethod = runTimeConfig.getString("http.sign.method");
+		signMethod = runTimeConfig.getHttpSignMethod();
 		mac = Mac.getInstance(signMethod);
 		final String
-			runName = runTimeConfig.getString("run.name"),
-			runVersion = runTimeConfig.getString("run.version"),
-			contentType = runTimeConfig.getString("http.content.type");
+			runName = runTimeConfig.getRunName(),
+			runVersion = runTimeConfig.getRunVersion(),
+			contentType = runTimeConfig.getHttpContentType();
 		userAgent = runName + '/' + runVersion;
 		sharedHeadersMap = new ConcurrentHashMap<String, String>() {
 			{
@@ -202,14 +202,14 @@ implements WSRequestConfig<T> {
 		//
 		String paramName = "storage.scheme";
 		try {
-			setScheme(runTimeConfig.getString(paramName));
+			setScheme(runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
 		//
 		paramName = "data.namespace";
 		try {
-			setNameSpace(runTimeConfig.getString(paramName));
+			setNameSpace(runTimeConfig.getDataNameSpace());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalStateException e) {

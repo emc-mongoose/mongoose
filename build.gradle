@@ -15,6 +15,7 @@ def loadProperties(String sourceFileName) {
 	if (propFile.canRead()) {
 		config.load(new FileInputStream(propFile))
 		for (Map.Entry property in config) {
+			//noinspection GroovyAssignabilityCheck
 			ext[property.key] = property.value;
 		}
 	}
@@ -25,13 +26,16 @@ loadProperties confDirName + '/properties/run'
 version = ext.version
 
 configurations {
+	//noinspection GroovyAssignabilityCheck
 	apacheCommonsConfiguration {
 		transitive = true
 	}
+	//noinspection GroovyAssignabilityCheck
 	compile {
 		extendsFrom apacheCommonsConfiguration
 		transitive = true
 	}
+	//noinspection GroovyAssignabilityCheck
 	runtime {
 		extendsFrom compile
 	}
@@ -41,6 +45,7 @@ repositories {
     mavenCentral()
 }
 
+//noinspection GroovyAssignabilityCheck
 dependencies {
 
 	apacheCommonsConfiguration(
@@ -97,6 +102,7 @@ task rmic(dependsOn: compileJava) << {
 	}
 }
 
+//noinspection GroovyAssignabilityCheck
 jar {
 	dependsOn(rmic)
 	archiveName "${baseName}.${extension}"
@@ -111,6 +117,7 @@ jar {
 }
 
 distributions {
+	//noinspection GroovyAssignabilityCheck
 	main {
 		baseName = rootProject.name
 		contents {

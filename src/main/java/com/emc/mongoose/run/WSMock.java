@@ -32,7 +32,7 @@ implements Runnable {
 
 	public void run() {
 
-		final String apiName = runTimeConfig.getString("storage.api");
+		final String apiName = runTimeConfig.getStorageApi();
 		final int port = runTimeConfig.getInt("api."+apiName+".port");
 		// Setup Jetty Server instance
 		final Server server = new Server();

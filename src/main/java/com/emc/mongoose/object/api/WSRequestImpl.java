@@ -1,11 +1,11 @@
 package com.emc.mongoose.object.api;
 //
+import com.emc.mongoose.base.api.RequestBase;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.object.api.provider.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.pool.GenericInstancePool;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -26,64 +26,25 @@ import org.apache.logging.log4j.Logger;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 06.06.14.
  */
 public class WSRequestImpl<T extends WSObject>
+extends RequestBase<T>
 implements WSRequest<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	public final static WSRequest POISON = new WSRequestImpl();
 	//
-	private WSRequestConfig<T> reqConf = null;
-	private T dataItem = null;
-	private HttpRequestBase httpRequest = null;
+	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
+	protected HttpRequestBase httpRequest = null;
 	//
-	private int statusCode = 0;
-	private long start = 0, duration = 0;
-	// BEGIN pool related things
-	private final static ConcurrentHashMap<WSRequestConfig, GenericInstancePool<WSRequest>>
-		POOL_MAP = new ConcurrentHashMap<>();
-	//
-	@SuppressWarnings("unchecked")
-	public static WSRequest getInstanceFor(
-		final WSRequestConfig reqConf, final WSObject dataItem
-	) {
-		WSRequest request;
-		if(dataItem == null) {
-			request = POISON;
-		} else {
-			GenericInstancePool pool;
-			synchronized(POOL_MAP) {
-				if(POOL_MAP.containsKey(reqConf)) {
-					pool = POOL_MAP.get(reqConf);
-				} else {
-					pool = new GenericInstancePool<>(WSRequestImpl.class);
-					POOL_MAP.put(reqConf, pool);
-				}
-			}
-			request = WSRequest.class.cast(pool.take())
-				.setRequestConfig(reqConf)
-				.setDataItem(dataItem);
-			//assert request != null;
-		}
-		return request;
-	}
-	//
-	@Override
-	public final void close() {
-		final GenericInstancePool<WSRequest> pool = POOL_MAP.get(reqConf);
-		pool.release(this);
-	}
-	// END pool related things
 	@Override
 	public WSRequest<T> setRequestConfig(final RequestConfig<T> reqConf) {
-		if(this.reqConf == null) { // request instance has not been configured yet?
-			this.reqConf = (WSRequestConfig<T>) reqConf;
-			switch(reqConf.getLoadType()) {
+		if(this.wsReqConf == null) { // request instance has not been configured yet?
+			this.wsReqConf = (WSRequestConfig<T>) reqConf;
+			switch(wsReqConf.getLoadType()) {
 				case CREATE:
-					httpRequest = WSRequestConfigImpl.class.getSimpleName().equals(reqConf.getAPI()) ?
+					httpRequest = WSRequestConfigImpl.class.getSimpleName().equals(wsReqConf.getAPI()) ?
 						new HttpPost() : new HttpPut();
 					break;
 				case READ:
@@ -102,19 +63,15 @@ implements WSRequest<T> {
 		} else { // cleanup
 			httpRequest.removeHeaders(HttpHeaders.RANGE);
 		}
+		super.setRequestConfig(reqConf);
 		return this;
 	}
 	//
-	@Override
-	public final T getDataItem() {
-		return dataItem;
-	}
-	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public final WSRequest<T> setDataItem(final T dataItem) {
 		try {
-			reqConf.applyDataItem(httpRequest, dataItem);
-			this.dataItem = dataItem;
+			wsReqConf.applyDataItem(httpRequest, dataItem);
+			super.setDataItem(dataItem);
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to apply data item");
 		}
@@ -122,30 +79,11 @@ implements WSRequest<T> {
 	}
 	//
 	@Override
-	public final WSRequest<T> call()
-	throws InterruptedException, IOException {
-		if(dataItem==null) {
-			throw new InterruptedException();
-		}
-		reqConf.applyHeadersFinally(httpRequest);
-		final CloseableHttpClient httpClient = reqConf.getClient();
-		start = System.nanoTime();
-		return httpClient.execute(httpRequest, this);
-	}
-	//
-	@Override
-	public final long getStartNanoTime() {
-		return start;
-	}
-	//
-	@Override
-	public final int getStatusCode() {
-		return statusCode;
-	}
-	//
-	@Override
-	public final long getDuration() {
-		return duration;
+	public final void execute()
+	throws IOException {
+		wsReqConf.applyHeadersFinally(httpRequest);
+		final CloseableHttpClient httpClient = wsReqConf.getClient();
+		httpClient.execute(httpRequest, this);
 	}
 	//
 	@Override
@@ -155,13 +93,12 @@ implements WSRequest<T> {
 		if(statusLine==null) {
 			LOG.warn(Markers.MSG, "No response status line");
 		} else {
-			statusCode = statusLine.getStatusCode();
+			final int statusCode = statusLine.getStatusCode();
 			//
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				synchronized(LOG) {
 					LOG.trace(
-						Markers.MSG, "{}/{} <- {} {}",
-						statusCode, statusLine.getReasonPhrase(),
+						Markers.MSG, "{}/{} <- {} {}", result, statusLine.getReasonPhrase(),
 						httpRequest.getMethod(), httpRequest.getURI()
 					);
 					//for(final Header header : httpResponse.getAllHeaders()) {
@@ -173,16 +110,17 @@ implements WSRequest<T> {
 			if(statusCode < 300) {
 				switch(httpRequest.getMethod()) {
 					case (HttpDelete.METHOD_NAME):
+						result = Result.SUCC;
 						break;
 					case (HttpGet.METHOD_NAME):
-						if(reqConf.getVerifyContentFlag()) { // validate the response content
+						if(wsReqConf.getVerifyContentFlag()) { // validate the response content
 							final HttpEntity httpEntity = httpResponse.getEntity();
 							if(httpEntity==null) {
 								LOG.warn(
 									Markers.ERR, "No HTTP content entity for request \"{}\"",
 									httpRequest.getRequestLine()
 								);
-								statusCode = 500;
+								result = Result.IO_FAILURE;
 								break;
 							}
 							try(final InputStream in = httpEntity.getContent()) {
@@ -193,37 +131,45 @@ implements WSRequest<T> {
 											Long.toHexString(dataItem.getId())
 										);
 									}
+									result = Result.SUCC;
 								} else {
 									LOG.warn(
 										Markers.ERR, "Content verification failed for \"{}\"",
 										Long.toHexString(dataItem.getId())
 									);
-									statusCode = 512;
+									result = Result.CORRUPT;
 								}
 							} catch(final IOException e) {
 								LOG.warn(
 									Markers.ERR, "Failed to read the object content for \"{}\"",
 									Long.toHexString(dataItem.getId())
 								);
-								statusCode = 500;
+								result = Result.IO_FAILURE;
 							}
+						} else {
+							result = Result.SUCC;
 						}
 						break;
 					case (HttpPut.METHOD_NAME):
+						result = Result.SUCC;
 						break;
 					case (HttpPost.METHOD_NAME):
+						result = Result.SUCC;
 						break;
 				}
 			} else {
 				switch(statusCode) {
 					case(400):
 						LOG.warn(Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine());
+						result = Result.CLIENT_FAILURE;
 						break;
 					case(403):
 						LOG.warn(Markers.ERR, "Access failure");
+						result = Result.AUTH_FAILURE;
 						break;
 					case(404):
 						LOG.warn(Markers.ERR, "Not found: {}", httpRequest.getURI());
+						result = Result.NOT_FOUND;
 						break;
 					case(416):
 						LOG.warn(Markers.ERR, "Incorrect range");
@@ -236,15 +182,19 @@ implements WSRequest<T> {
 								);
 							}
 						}
+						result = Result.CLIENT_FAILURE;
 						break;
 					case(500):
 						LOG.warn(Markers.ERR, "Storage internal failure");
+						result = Result.SVC_FAILURE;
 						break;
 					case(503):
 						LOG.warn(Markers.ERR, "Storage prays about a mercy");
+						result = Result.SVC_FAILURE;
 						break;
 					default:
-						LOG.warn(Markers.ERR, "Response code: {}", statusCode);
+						LOG.warn(Markers.ERR, "Response code: {}", result);
+						result = Result.UNKNOWN;
 				}
 				if(LOG.isDebugEnabled(Markers.ERR)) {
 					try(ByteArrayOutputStream bOutPut = new ByteArrayOutputStream()) {
@@ -263,12 +213,6 @@ implements WSRequest<T> {
 				}
 			}
 		}
-		//
-		duration = System.nanoTime() - start;
-		LOG.info(
-			Markers.PERF_TRACE, "{},{},{},{}",
-			Long.toHexString(dataItem.getId()), statusCode, start, duration
-		);
 		//
 		return this;
 	}

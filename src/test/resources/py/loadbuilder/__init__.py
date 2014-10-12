@@ -13,7 +13,7 @@ from java.util import NoSuchElementException
 #
 mode = None
 try:
-	mode = RunTimeConfig.getString("run.mode")
+	mode = Main.RUN_TIME_CONFIG.getRunMode()
 except NoSuchElementException:
 	LOG.fatal(Markers.ERR, "Launch mode is not specified, use -Drun.mode=<VALUE> argument")
 	exit()

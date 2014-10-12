@@ -2,6 +2,7 @@ package com.emc.mongoose.object.load;
 //
 import com.codahale.metrics.MetricRegistry;
 //
+import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.object.api.DataObjectRequest;
 import com.emc.mongoose.object.api.WSRequest;
 import com.emc.mongoose.object.api.WSRequestConfig;
@@ -31,14 +32,7 @@ implements WSNodeExecutor<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final WSRequest<T> getRequestFor(final T dataItem) {
-		return (WSRequest<T>) WSRequestImpl.getInstanceFor(
-			(WSRequestConfig<T>) localReqConf, dataItem
-		);
-	}
-	//
-	@Override
-	protected final boolean isResponseValid(final DataObjectRequest<T> request) {
-		return request.getStatusCode() < 300;
+		return (WSRequest<T>) WSRequestImpl.getInstanceFor(localReqConf, dataItem);
 	}
 	//
 }
