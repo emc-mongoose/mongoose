@@ -18,6 +18,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 /**
@@ -56,22 +57,31 @@ implements Externalizable {
 		);
 	}
 	//
-	private final static String SIZE_UNITS = "BkMGTPE";
-	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)[bB]?");
+	private final static String
+		SIZE_UNITS = "kmgtpe",
+		FMT_MSG_INVALID_SIZE = "The string \"%s\" doesn't match the pattern: \"%s\"";
+	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)b?");
 	//
 	public long getSizeBytes(final String key) {
-		final String value = getString(key), unit;
+		final String value = getString(key).toLowerCase(), unit;
 		final Matcher matcher = PATTERN_SIZE.matcher(value);
-		long size = -1;
-		long degree = 0;
+		long size, degree;
 		if(matcher.matches() && matcher.groupCount() > 0 && matcher.groupCount() < 3) {
 			size = Long.valueOf(matcher.group(1), 10);
 			unit = matcher.group(2);
-			if(unit.length()==1) {
-				degree = SIZE_UNITS.indexOf(matcher.group(2));
+			if(unit.length() == 0 && value.indexOf('b') > 0) {
+				degree = 0;
+			} else if(unit.length() == 1) {
+				degree = SIZE_UNITS.indexOf(matcher.group(2)) + 1;
+			} else {
+				throw new IllegalArgumentException(
+					String.format(FMT_MSG_INVALID_SIZE, key, PATTERN_SIZE)
+				);
 			}
 		} else {
-			throw new IllegalArgumentException("The string \""+key+"\" doesn't match the pattern: \""+PATTERN_SIZE+"\"");
+			throw new IllegalArgumentException(
+				String.format(FMT_MSG_INVALID_SIZE, key, PATTERN_SIZE)
+			);
 		}
 		size *= 1L << 10 * degree;
 		LOG.trace(Markers.MSG, "\"{}\" is {} bytes", value, size);
@@ -83,12 +93,12 @@ implements Externalizable {
 			return v + "B";
 		}
 		final int z = (63 - Long.numberOfLeadingZeros(v)) / 10;
-		final double x = (double) v / (1L << (z*10));
+		final double x = (double) v / (1L << (z * 10));
 		return String.format(
 			Locale.ROOT,
-			x < 10 ? "%.3f%sB" : x < 100 ? "%.2f%sB" : "%.1f%sB",
-			x, SIZE_UNITS.charAt(z)
-		);
+			x < 10 ? "%.3f%sb" : x < 100 ? "%.2f%sb" : "%.1f%sb",
+			x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
+		).toUpperCase();
 	}
 	//
 	public final void set(final String key, final String value) {
@@ -128,8 +138,8 @@ implements Externalizable {
 		return getString("auth.secret");
 	}
 	//
-	public final int getDataPageSize() {
-		return getInt("data.page.size");
+	public final long getDataPageSize() {
+		return getSizeBytes("data.page.size");
 	}
 	//
 	public final int getRemoteMonitorPort() {

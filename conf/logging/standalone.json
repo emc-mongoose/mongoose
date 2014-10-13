@@ -322,7 +322,7 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.util.conf",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"

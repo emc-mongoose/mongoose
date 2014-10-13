@@ -198,25 +198,25 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> setProperties(final RunTimeConfig props) {
+	public WSRequestConfigBase<T> setProperties(final RunTimeConfig runTimeConfig) {
 		//
 		String paramName = "storage.scheme";
 		try {
-			setScheme(runTimeConfig.getStorageProto());
+			setScheme(this.runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
 		//
 		paramName = "data.namespace";
 		try {
-			setNameSpace(runTimeConfig.getDataNameSpace());
+			setNameSpace(this.runTimeConfig.getDataNameSpace());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalStateException e) {
 			LOG.debug(Markers.ERR, "Failed to set the namespace", e);
 		}
 		//
-		super.setProperties(props);
+		super.setProperties(runTimeConfig);
 		//
 		return this;
 	}

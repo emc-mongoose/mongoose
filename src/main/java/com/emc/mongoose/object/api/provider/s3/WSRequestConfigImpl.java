@@ -55,11 +55,11 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
-		super.setProperties(props);
+	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+		super.setProperties(runTimeConfig);
 		//
 		try {
-			setBucket(new WSBucketImpl<T>(this, runTimeConfig.getString(KEY_BUCKET)));
+			setBucket(new WSBucketImpl<T>(this, this.runTimeConfig.getString(KEY_BUCKET)));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET);
 		}

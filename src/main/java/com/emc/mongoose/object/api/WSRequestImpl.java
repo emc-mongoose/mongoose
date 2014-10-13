@@ -1,12 +1,15 @@
 package com.emc.mongoose.object.api;
 //
+import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.RequestBase;
 import com.emc.mongoose.base.api.RequestConfig;
+import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.object.api.provider.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.pool.GenericInstancePool;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
@@ -29,7 +32,7 @@ import java.io.InputStream;
 /**
  Created by kurila on 06.06.14.
  */
-public class WSRequestImpl<T extends WSObject>
+public final class WSRequestImpl<T extends WSObject>
 extends RequestBase<T>
 implements WSRequest<T> {
 	//
@@ -37,6 +40,34 @@ implements WSRequest<T> {
 	//
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	protected HttpRequestBase httpRequest = null;
+	public WSRequestImpl() {
+		super();
+	}
+	//
+	@SuppressWarnings("unchecked")
+	public static Request getInstanceFor(
+		final RequestConfig reqConf, final DataItem dataItem
+	) {
+		Request request;
+		if(dataItem == null) {
+			request = POISON;
+		} else {
+			GenericInstancePool pool;
+			synchronized(POOL_MAP) {
+				if(POOL_MAP.containsKey(reqConf)) {
+					pool = POOL_MAP.get(reqConf);
+				} else {
+					pool = new GenericInstancePool<>(WSRequestImpl.class);
+					POOL_MAP.put(reqConf, pool);
+				}
+			}
+			request = RequestBase.class.cast(pool.take())
+				.setRequestConfig(reqConf)
+				.setDataItem(dataItem);
+			//assert request != null;
+		}
+		return request;
+	}
 	//
 	@Override
 	public WSRequest<T> setRequestConfig(final RequestConfig<T> reqConf) {

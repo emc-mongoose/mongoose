@@ -40,7 +40,7 @@ implements WSLoadBuilder<T, U> {
 	//
 	{
 		threadsPerNodeMap = new HashMap<>();
-		setProperties(new RunTimeConfig());
+		setProperties(runTimeConfig);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -62,7 +62,7 @@ implements WSLoadBuilder<T, U> {
 		//
 		paramName = "data.count";
 		try {
-			setMaxCount(runTimeConfig.getLong(paramName));
+			setMaxCount(runTimeConfig.getDataCount());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -98,7 +98,7 @@ implements WSLoadBuilder<T, U> {
 		//
 		paramName = "storage.addrs";
 		try {
-			setDataNodeAddrs(runTimeConfig.getStringArray(paramName));
+			setDataNodeAddrs(runTimeConfig.getStorageAddrs());
 		} catch(final NoSuchElementException|ConversionException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {

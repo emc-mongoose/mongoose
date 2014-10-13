@@ -67,11 +67,11 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
-		super.setProperties(props);
+	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+		super.setProperties(runTimeConfig);
 		//
 		try {
-			setSubTenant(new WSSubTenant<>(this, runTimeConfig.getString(KEY_SUBTENANT)));
+			setSubTenant(new WSSubTenant<>(this, this.runTimeConfig.getString(KEY_SUBTENANT)));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_SUBTENANT);
 		}

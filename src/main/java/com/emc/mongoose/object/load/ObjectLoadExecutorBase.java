@@ -350,7 +350,7 @@ implements ObjectLoadExecutor<T> {
 		//
 		if(Markers.PERF_SUM.equals(logMarker)) {
 			final double totalReqNanoSeconds = reqDurSnapshot.getMean() * countReqSucc;
-			LOG.info(
+			LOG.debug(
 				Markers.PERF_SUM,
 				String.format(
 					Locale.ROOT, FMT_EFF_SUM,

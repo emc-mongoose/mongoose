@@ -53,7 +53,7 @@ implements WSLoadExecutor<T> {
 		connMgr.setDefaultConnectionConfig(
 			ConnectionConfig
 				.custom()
-				.setBufferSize(runTimeConfig.getDataPageSize())
+				.setBufferSize((int) runTimeConfig.getDataPageSize())
 				.build()
 		);
 		// set shared headers to client builder

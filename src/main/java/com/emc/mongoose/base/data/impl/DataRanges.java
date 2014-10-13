@@ -35,7 +35,7 @@ implements AppendableDataItem, UpdatableDataItem {
 		FMT_META_INFO = "%s" + RunTimeConfig.LIST_SEP + "%x" + LAYER_MASK_SEP + "%s",
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
 		FMT_MSG_WRONG_RANGE_COUNT = "Range count should be more than 0 and less than the object size = %s";
-	private final int maxPageSize = Main.RUN_TIME_CONFIG.getDataPageSize();
+	private final int maxPageSize = (int) Main.RUN_TIME_CONFIG.getDataPageSize();
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final BitSet
 		maskRangesHistory = new BitSet(),

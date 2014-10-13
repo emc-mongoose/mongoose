@@ -130,11 +130,9 @@ implements RequestConfig<T>, Cloneable {
 	//
 	@Override
 	public RequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
-		LOG.info(Markers.MSG, "Apply new run time config: {}", runTimeConfig);
 		this.runTimeConfig = runTimeConfig;
 		final String api = runTimeConfig.getStorageApi();
 		setAPI(api);
-		LOG.info(Markers.MSG, "Using API: \"{}\"", api);
 		setPort(this.runTimeConfig.getApiPort(api));
 		setUserName(this.runTimeConfig.getAuthId());
 		setSecret(this.runTimeConfig.getAuthSecret());

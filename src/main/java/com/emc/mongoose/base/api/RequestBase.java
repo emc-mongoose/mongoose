@@ -29,35 +29,11 @@ implements Request<T> {
 	protected Result result = Result.UNKNOWN;
 	//
 	private long start = 0, duration = 0;
-	//
-	// BEGIN pool related things
-	private final static ConcurrentHashMap<RequestConfig, GenericInstancePool<Request>>
-		POOL_MAP = new ConcurrentHashMap<>();
-	//
-	@SuppressWarnings("unchecked")
-	public static Request getInstanceFor(
-		final RequestConfig reqConf, final DataItem dataItem
-	) {
-		Request request;
-		if(dataItem == null) {
-			request = POISON;
-		} else {
-			GenericInstancePool pool;
-			synchronized(POOL_MAP) {
-				if(POOL_MAP.containsKey(reqConf)) {
-					pool = POOL_MAP.get(reqConf);
-				} else {
-					pool = new GenericInstancePool<>(RequestBase.class);
-					POOL_MAP.put(reqConf, pool);
-				}
-			}
-			request = RequestBase.class.cast(pool.take())
-				.setRequestConfig(reqConf)
-				.setDataItem(dataItem);
-			//assert request != null;
-		}
-		return request;
+	public RequestBase() {
 	}
+	// BEGIN pool related things
+	protected final static ConcurrentHashMap<RequestConfig, GenericInstancePool<Request>>
+		POOL_MAP = new ConcurrentHashMap<>();
 	//
 	@Override
 	public final void close() {

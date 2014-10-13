@@ -40,7 +40,7 @@ implements DataItem {
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
 	//
-	private final int maxPageSize = Main.RUN_TIME_CONFIG.getDataPageSize();
+	private final int maxPageSize = (int) Main.RUN_TIME_CONFIG.getDataPageSize();
 	protected long offset = 0;
 	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
