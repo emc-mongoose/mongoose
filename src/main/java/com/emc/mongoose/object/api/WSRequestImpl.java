@@ -32,11 +32,19 @@ import java.io.InputStream;
 /**
  Created by kurila on 06.06.14.
  */
-public final class WSRequestImpl<T extends WSObject>
+public class WSRequestImpl<T extends WSObject>
 extends RequestBase<T>
 implements WSRequest<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
+	public final static WSRequestImpl POISON = new WSRequestImpl() {
+		@Override
+		public final void execute()
+		throws InterruptedException {
+			throw new InterruptedException("Attempted to eat the poison");
+		}
+	};
 	//
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	protected HttpRequestBase httpRequest = null;
@@ -110,8 +118,8 @@ implements WSRequest<T> {
 	}
 	//
 	@Override
-	public final void execute()
-	throws IOException {
+	public void execute()
+	throws InterruptedException, IOException {
 		wsReqConf.applyHeadersFinally(httpRequest);
 		final CloseableHttpClient httpClient = wsReqConf.getClient();
 		httpClient.execute(httpRequest, this);

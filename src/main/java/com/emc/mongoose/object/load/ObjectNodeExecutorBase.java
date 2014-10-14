@@ -273,10 +273,8 @@ implements ObjectNodeExecutor<T> {
 						} else if(IOException.class.isInstance(cause)) {
 							ExceptionHandler.trace(LOG, Level.WARN, cause, "Response failure");
 						} else {
-							LOG.error(Markers.ERR, "Request execution failure");
-							if(LOG.isTraceEnabled(Markers.ERR) && cause!=null) {
-								LOG.trace(Markers.ERR, e.toString(), cause);
-							}
+							ExceptionHandler.trace(LOG, Level.ERROR, cause, "Request execution failure");
+							cause.printStackTrace();
 						}
 					}
 				}

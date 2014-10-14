@@ -7,6 +7,7 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.HTTP;
 /**
  Created by kurila on 29.09.14.
  Web storage data object.
@@ -14,13 +15,12 @@ import org.apache.http.message.BasicHeader;
 public interface WSObject
 extends DataObject, HttpEntity {
 	//
-	Header
-		HEADER_CONTENT_TYPE = new BasicHeader(
-			HttpHeaders.CONTENT_TYPE, Main.RUN_TIME_CONFIG.getHttpContentType()
-		);
-	boolean
-		IS_CONTENT_REPEATABLE = Main.RUN_TIME_CONFIG.getHttpContentRepeatable(),
-		IS_CONTENT_CHUNKED = Main.RUN_TIME_CONFIG.getHttpContentChunked();
+	public final static Header HEADER_CONTENT_TYPE = new BasicHeader(
+		HTTP.CONTENT_TYPE, Main.RUN_TIME_CONFIG.getHttpContentType()
+	);
+	public final static boolean
+		IS_CONTENT_CHUNKED = Main.RUN_TIME_CONFIG.getHttpContentChunked(),
+		IS_CONTENT_REPEATABLE = Main.RUN_TIME_CONFIG.getHttpContentRepeatable();
 	//
 	HttpEntity getPendingUpdatesContentEntity();
 	//

@@ -18,7 +18,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 /**
@@ -159,7 +158,7 @@ implements Externalizable {
 	}
 	//
 	public final boolean getHttpContentRepeatable() {
-		return getBoolean("http.content.repeateable");
+		return getBoolean("http.content.repeatable");
 	}
 	//
 	public final boolean getHttpContentChunked() {

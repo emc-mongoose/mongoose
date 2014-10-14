@@ -78,7 +78,7 @@ public final class Main {
 		}
 	}
 	//
-	public final static RunTimeConfig RUN_TIME_CONFIG = new RunTimeConfig();
+	public static RunTimeConfig RUN_TIME_CONFIG;
 	//
 	public static void main(final String args[]) {
 		//
@@ -102,6 +102,7 @@ public final class Main {
 			System.getProperty(KEY_RUN_MODE), System.getProperty(KEY_RUN_ID)
 		);
 		// load the properties
+		RUN_TIME_CONFIG = new RunTimeConfig();
 		RUN_TIME_CONFIG.loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RUN_TIME_CONFIG.loadSysProps();

@@ -15,7 +15,7 @@
 					"name": "stdout",
 					"type": "Console",
 					"PatternLayout": {
-						"pattern": "%highlight{%d{ISO8601}{GMT+0} %-5p %-16.16c{1} %-32.32t %m%n}"
+						"pattern": "%highlight{%d{ISO8601}{GMT+0} %-1p %-24.24c{1} %-35.35t %m%n}"
 					},
 					"Filters": {
 						"Filter" : [
@@ -43,7 +43,7 @@
 					"bufferedIO": "true",
 					"fileName": "${path.log}messages.csv",
 					"PatternLayout": {
-						"pattern": "%d{ISO8601}{GMT+0} %-5p %-16.16c{1} %-32.32t %m%n"
+						"pattern": "%d{ISO8601}{GMT+0}; %p; %c{1}; %t; %m%n"
 					},
 					"Filters": {
 						"Filter": [
@@ -70,7 +70,7 @@
 					"bufferedIO": "true",
 					"fileName": "${path.log}errors.log",
 					"PatternLayout": {
-						"pattern": "%d{ISO8601}{GMT+0} %-5p %-16.16c{1} %-32.32t %m%n"
+						"pattern": "%d{ISO8601}{GMT+0}; %p; %c{1}; %t; %m%n"
 					},
 					"Filters": {
 						"Filter": [
@@ -93,7 +93,7 @@
 					"bufferedIO": "true",
 					"fileName": "${path.log}perf.avg.csv",
 					"PatternLayout": {
-						"pattern": "%d{ISO8601}{GMT+0} %-5p %-16.16c{1} %-32.32t %m%n"
+						"pattern": "%d{ISO8601}{GMT+0}; %-1p; %c{1}; %32t; %m%n"
 					},
 					"Filters": {
 						"Filter": [
@@ -112,7 +112,7 @@
 					"bufferedIO": "true",
 					"fileName": "${path.log}perf.sum.csv",
 					"PatternLayout": {
-						"pattern": "%d{ISO8601}{GMT+0} %-5p %-16.16c{1} %-32.32t %m%n"
+						"pattern": "%d{ISO8601}{GMT+0}; %-1p; %c{1}; %t; %m%n"
 					},
 					"MarkerFilter": {
 						"marker": "perfSum",

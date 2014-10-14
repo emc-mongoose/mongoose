@@ -78,7 +78,8 @@ dependencies {
 		'org.apache.logging.log4j:log4j-jcl:2.0.2',
 		'org.slf4j:slf4j-api:1.7.7',
 		'org.python:jython:2.7-b2',
-        'jstl:jstl:1.2'
+		'jstl:jstl:1.2',
+		'org.fusesource.jansi:jansi:1.11'
 	)
 
 	testCompile group: 'junit', name: 'junit', version: '4.11'
@@ -106,12 +107,14 @@ task rmic(dependsOn: compileJava) << {
 jar {
 	dependsOn(rmic)
 	archiveName "${baseName}.${extension}"
+	def clsPath = configurations.runtime.collect { 'lib/'+it.name }.join(' ')
+	clsPath += ' ' + confDirName + '/log4j2.json'
 	manifest {
 		attributes (
 			'Implementation-Title': rootProject.name,
 			'Implementation-Version': version,
 			'Main-Class': 'com.emc.mongoose.run.Main',
-			'Class-Path': configurations.runtime.collect { 'lib/'+it.name }.join(' ')
+			'Class-Path': clsPath
 		)
 	}
 }
