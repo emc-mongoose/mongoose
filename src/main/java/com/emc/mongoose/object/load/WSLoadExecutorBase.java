@@ -309,11 +309,11 @@ implements WSLoadExecutor<T> {
 			}
 		}
 		// close shared http client
-		try {
+		/*try {
 			httpClient.close();
 		} catch(final IOException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to close the HTTP client");
-		}
+		}*/
 		// provide summary metrics
 		synchronized(LOG) {
 			LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
