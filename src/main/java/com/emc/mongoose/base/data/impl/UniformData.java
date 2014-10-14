@@ -40,7 +40,7 @@ implements DataItem {
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
 	//
-	private final int maxPageSize = (int) Main.RUN_TIME_CONFIG.getDataPageSize();
+	public final static int MAX_PAGE_SIZE = (int) Main.RUN_TIME_CONFIG.getDataPageSize();
 	protected long offset = 0;
 	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -194,7 +194,7 @@ implements DataItem {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Item \"{}\": stream out start", Long.toHexString(offset));
 		}
-		final byte buff[] = new byte[size < maxPageSize ? (int) size : maxPageSize];
+		final byte buff[] = new byte[size < MAX_PAGE_SIZE ? (int) size : MAX_PAGE_SIZE];
 		final int
 			countPages = (int) size / buff.length,
 			countTailBytes = (int) size % buff.length;
@@ -232,7 +232,7 @@ implements DataItem {
 		//
 		boolean contentEquals = true;
 		final byte
-			buff1[] = new byte[rangeLength < maxPageSize ? rangeLength : maxPageSize],
+			buff1[] = new byte[rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE],
 			buff2[] = new byte[buff1.length];
 		final int
 			countPages = rangeLength / buff1.length,

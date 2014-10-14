@@ -199,7 +199,9 @@ implements ObjectNodeExecutor<T> {
 					request = (DataObjectRequest<T>) Future.class.cast(reqTask).get()
 			) {
 				final T object = request.getDataItem();
-				if(request.getResult() != Request.Result.SUCC) {
+				final Request.Result result = request.getResult();
+				LOG.info(Markers.MSG, "Request result: {}", result);
+				if(result != Request.Result.SUCC) {
 					// update the metrics with success
 					counterReqSucc.inc();
 					counterReqSuccParent.inc();

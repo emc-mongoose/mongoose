@@ -1,11 +1,9 @@
 package com.emc.mongoose.object.data;
 //
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HTTP;
 /**

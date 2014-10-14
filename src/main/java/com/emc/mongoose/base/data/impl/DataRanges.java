@@ -35,7 +35,6 @@ implements AppendableDataItem, UpdatableDataItem {
 		FMT_META_INFO = "%s" + RunTimeConfig.LIST_SEP + "%x" + LAYER_MASK_SEP + "%s",
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
 		FMT_MSG_WRONG_RANGE_COUNT = "Range count should be more than 0 and less than the object size = %s";
-	private final int maxPageSize = (int) Main.RUN_TIME_CONFIG.getDataPageSize();
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final BitSet
 		maskRangesHistory = new BitSet(),
@@ -347,7 +346,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				size += pendingAugmentSize;
 				// redirect the tail's data to the output
 				final byte buff[] = new byte[
-					pendingAugmentSize < maxPageSize ? (int) pendingAugmentSize : maxPageSize
+					pendingAugmentSize < MAX_PAGE_SIZE ? (int) pendingAugmentSize : MAX_PAGE_SIZE
 				];
 				final int
 					countPages = (int) pendingAugmentSize / buff.length,
