@@ -1,5 +1,6 @@
 package com.emc.mongoose.util.conf;
 //
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.configuration.BaseConfiguration;
@@ -68,7 +69,7 @@ implements Externalizable {
 		if(matcher.matches() && matcher.groupCount() > 0 && matcher.groupCount() < 3) {
 			size = Long.valueOf(matcher.group(1), 10);
 			unit = matcher.group(2);
-			if(unit.length() == 0 && value.indexOf('b') > 0) {
+			if(unit.length() == 0) {
 				degree = 0;
 			} else if(unit.length() == 1) {
 				degree = SIZE_UNITS.indexOf(matcher.group(2)) + 1;
@@ -186,7 +187,7 @@ implements Externalizable {
 	}
 	//
 	public final String getRunVersion() {
-		return getString("run.version");
+		return getString(KEY_VERSION);
 	}
 	//
 	public final long getDataCount() {
@@ -263,17 +264,17 @@ implements Externalizable {
 	public final synchronized void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		LOG.debug(Markers.MSG, "Going to fetch the properties from client side");
-		final HashMap<String, String> propsMap = HashMap.class.cast(in.readObject());
-		LOG.trace(Markers.MSG, "Got the properties from client side: {}", propsMap);
+		final HashMap<String, String> confMap = HashMap.class.cast(in.readObject());
+		LOG.trace(Markers.MSG, "Got the properties from client side: {}", confMap);
 		//
 		final String
-			serverVersion = getString(KEY_VERSION),
-			clientVersion = propsMap.get(KEY_VERSION);
+			serverVersion = Main.RUN_TIME_CONFIG.getRunVersion(),
+			clientVersion = confMap.get(KEY_VERSION);
 		if(serverVersion.equals(clientVersion)) {
 			// put the properties into the System
 			Object nextPropValue;
-			for(final String nextPropName: propsMap.keySet()) {
-				nextPropValue = propsMap.get(nextPropName);
+			for(final String nextPropName: confMap.keySet()) {
+				nextPropValue = confMap.get(nextPropName);
 				LOG.trace(Markers.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
 				if(List.class.isInstance(nextPropValue)) {
 					setProperty(

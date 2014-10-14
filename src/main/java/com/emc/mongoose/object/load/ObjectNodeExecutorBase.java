@@ -200,8 +200,7 @@ implements ObjectNodeExecutor<T> {
 			) {
 				final T object = request.getDataItem();
 				final Request.Result result = request.getResult();
-				LOG.info(Markers.MSG, "Request result: {}", result);
-				if(result != Request.Result.SUCC) {
+				if(result == Request.Result.SUCC) {
 					// update the metrics with success
 					counterReqSucc.inc();
 					counterReqSuccParent.inc();

@@ -95,8 +95,10 @@ implements AppendableDataItem, UpdatableDataItem {
 	@Override
 	public String toString() {
 		return String.format(
-			FMT_META_INFO, super.toString(),
-			layerNum, Hex.encodeHexString(maskRangesHistory.toByteArray())
+			FMT_META_INFO,
+			super.toString(),
+			layerNum,
+			maskRangesHistory.isEmpty() ? "0" : Hex.encodeHexString(maskRangesHistory.toByteArray())
 		);
 	}
 	//
