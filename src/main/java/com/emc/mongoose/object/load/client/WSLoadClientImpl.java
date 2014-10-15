@@ -4,7 +4,6 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.object.api.WSRequestConfig;
-import com.emc.mongoose.object.api.provider.s3.WSRequestConfigImpl;
 import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -109,10 +108,13 @@ implements WSLoadClient<T> {
 			return gauge.getValue();
 		}
 	}
+	@SuppressWarnings("FieldCanBeLocal")
 	private final Gauge<Long>
 		metricSuccCount, metricByteCount;
+	@SuppressWarnings("FieldCanBeLocal")
 	private final Gauge<Double>
 		metricBWMean, metricBW1Min, metricBW5Min, metricBW15Min;
+	@SuppressWarnings("FieldCanBeLocal")
 	private final GetGaugeValue<Long>
 		countSubmGetter, countRejGetter, countSuccGetter, countFailGetter,
 		minDurGetter, maxDurGetter, countBytesGetter, countNanoSecGetter;
@@ -124,6 +126,7 @@ implements WSLoadClient<T> {
 	//
 	private final ThreadPoolExecutor submitExecutor, mgmtConnExecutor;
 	private final LogConsumer<T> metaInfoLog;
+	@SuppressWarnings("FieldCanBeLocal")
 	private final WSRequestConfig<T> reqConf;
 	//
 	public WSLoadClientImpl(
@@ -638,8 +641,14 @@ implements WSLoadClient<T> {
 			//
 			try {
 				nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
-			} catch(final InterruptedException|ExecutionException e) {
+			} catch(final ExecutionException e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
+			} catch(final InterruptedException e) {
+				try {
+					nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
+				} catch(final InterruptedException|ExecutionException ee) {
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
+				}
 			}
 			//
 			if(nextMetaInfoFrame!=null && nextMetaInfoFrame.size()>0) {

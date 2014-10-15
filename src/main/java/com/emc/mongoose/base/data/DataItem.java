@@ -1,8 +1,7 @@
 package com.emc.mongoose.base.data;
 //
 import com.emc.mongoose.util.conf.RunTimeConfig;
-
-import javax.xml.crypto.Data;
+//
 import java.io.Closeable;
 import java.io.Externalizable;
 import java.io.OutputStream;

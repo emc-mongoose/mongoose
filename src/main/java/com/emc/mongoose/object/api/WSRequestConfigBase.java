@@ -13,8 +13,8 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.HttpRequestRetryHandler;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.DateUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -49,6 +49,7 @@ extends RequestConfigImpl<T>
 implements WSRequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	public final static long serialVersionUID = 42L;
 	//
 	private final HttpRequestRetryHandler retryHandler = new HttpRequestRetryHandler() {
 		//
@@ -322,7 +323,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final void applyDataItem(final HttpRequestBase httpRequest, final T dataItem)
+	public final void applyDataItem(final HttpRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
 		applyURI(httpRequest, dataItem);
 		switch(loadType) {
@@ -341,14 +342,14 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final void applyHeadersFinally(final HttpRequestBase httpRequest) {
+	public final void applyHeadersFinally(final HttpRequest httpRequest) {
 		applyDateHeader(httpRequest);
 		applyAuthHeader(httpRequest);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			synchronized(LOG) {
 				LOG.trace(
 					Markers.MSG, "built request: {} {}",
-					httpRequest.getMethod(), httpRequest.getURI()
+					httpRequest.getRequestLine().getMethod(), httpRequest.getRequestLine().getUri()
 				);
 				for(final Header header: httpRequest.getAllHeaders()) {
 					LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
@@ -369,17 +370,19 @@ implements WSRequestConfig<T> {
 		}
 	}
 	//
-	protected abstract void applyURI(final HttpRequestBase httpRequest, final T dataItem)
+	protected abstract void applyURI(final HttpRequest httpRequest, final T dataItem)
 	throws IllegalArgumentException, URISyntaxException;
 	//
-	protected final void applyPayLoad(final HttpRequestBase httpRequest, final HttpEntity httpEntity) {
+	protected final void applyPayLoad(
+		final HttpRequest httpRequest, final HttpEntity httpEntity
+	) {
 		HttpEntityEnclosingRequest httpReqWithPayLoad = null;
 		try {
 			httpReqWithPayLoad = HttpEntityEnclosingRequest.class.cast(httpRequest);
 		} catch(final ClassCastException e) {
 			LOG.error(
 				Markers.ERR, "\"{}\" HTTP request can't have a content entity",
-				httpRequest.getMethod()
+				httpRequest.getRequestLine().getMethod()
 			);
 		}
 		if(httpReqWithPayLoad != null) {
@@ -388,7 +391,7 @@ implements WSRequestConfig<T> {
 	}
 	// merge subsequent updated ranges functionality is here
 	protected final void applyRangesHeaders(
-		final HttpRequestBase httpRequest, final T dataItem
+		final HttpRequest httpRequest, final T dataItem
 	) {
 		long rangeBeg = -1, rangeEnd = -1;
 		int rangeLen = dataItem.getRangeSize(), rangeCount = dataItem.getCountRangesTotal();
@@ -423,7 +426,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected final void applyAppendRangeHeader(
-		final HttpRequestBase httpRequest, final T dataItem
+		final HttpRequest httpRequest, final T dataItem
 	) {
 		httpRequest.addHeader(
 			HttpHeaders.RANGE,
@@ -431,13 +434,13 @@ implements WSRequestConfig<T> {
 		);
 	}
 	//
-	protected final void applyDateHeader(final HttpRequestBase httpRequest) {
+	protected final void applyDateHeader(final HttpRequest httpRequest) {
 		final String rfc1123date = DateUtils.formatDate(new Date());
 		httpRequest.setHeader(HttpHeaders.DATE, rfc1123date);
 		//httpRequest.setHeader(KEY_EMC_DATE, rfc1123date);
 	}
 	//
-	protected abstract void applyAuthHeader(final HttpRequestBase httpRequest);
+	protected abstract void applyAuthHeader(final HttpRequest httpRequest);
 	//
 	//@Override
 	//public final int hashCode() {

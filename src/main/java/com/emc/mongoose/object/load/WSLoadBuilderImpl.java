@@ -259,7 +259,7 @@ implements WSLoadBuilder<T, U> {
 		return this;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
+	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
 	public final WSLoadBuilderImpl<T, U> clone()
 	throws CloneNotSupportedException {
 		final WSLoadBuilderImpl<T, U> lb = new WSLoadBuilderImpl<>();

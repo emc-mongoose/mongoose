@@ -4,12 +4,10 @@ import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.data.WSObject;
 //
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.HttpRequestRetryHandler;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.net.URISyntaxException;
@@ -23,7 +21,7 @@ import java.util.Map;
  An HTTP request shared configuration.
  */
 public interface WSRequestConfig<T extends WSObject>
-extends DataObjectRequestConfig<T> {
+extends ObjectRequestConfig<T> {
 	//
 	String
 		DEFAULT_ENC = StandardCharsets.UTF_8.name(),
@@ -95,10 +93,10 @@ extends DataObjectRequestConfig<T> {
 	//
 	Map<String, String> getSharedHeadersMap();
 	//
-	void applyDataItem(final HttpRequestBase httpRequest, T dataItem)
+	void applyDataItem(final HttpRequest httpRequest, T dataItem)
 	throws URISyntaxException;
 	//
-	void applyHeadersFinally(final HttpRequestBase httpRequest);
+	void applyHeadersFinally(final HttpRequest httpRequest);
 	//
 	HttpRequestRetryHandler getRetryHandler();
 	//
