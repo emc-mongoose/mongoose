@@ -1,0 +1,174 @@
+button[disabled] {
+	background-color: #E6E6E6;
+	border-color: #ADADAD;
+}
+
+button[disabled]:active span{
+	display: none;
+}
+
+button[disabled]:active:before {
+	content: "Blocked!";
+}
+
+#logo-image {
+	float: left;
+}
+
+.storages-block, .drivers-block {
+	width: 350px;
+	max-height: 350px;
+	overflow: auto;
+	display: inline-block;
+	vertical-align: top;
+}
+
+.data-node, .driver {
+	margin-bottom: 10px;
+}
+
+.counter {
+	width: 60px;
+	display: inline;
+}
+
+.default {
+	display: inline-block;
+	padding: 6px 12px;
+	margin-bottom: 6px;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 1.42857;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: middle;
+	cursor: pointer;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	color: #333;
+	background-color: #FFF;
+	border-color: #CCC;
+}
+
+.primary {
+	display: inline-block;
+	padding: 6px 12px;
+	margin-bottom: 6px;
+	font-size: 14px;
+	font-weight: 400;
+	line-height: 1.42857;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: middle;
+	cursor: pointer;
+	border: 1px solid transparent;
+	border-radius: 4px;
+	color: #fff;
+	background-color: #428BCA;
+	border-color: #357EBD;
+}
+
+.default:hover {
+	background-color: #E6E6E6; 
+	border-color: #ADADAD;
+}
+
+.tabs-wrapper {
+	margin-top: 15px;
+}
+
+.tab-content {
+	margin-top: 15px;
+	margin-bottom: 45px;
+}
+
+.common-settings {
+	width: 200px;
+	padding-right: 25px;
+	border-right: 1px solid #ccc;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+.advanced-content {
+	display: inline-block;
+	vertical-align: top;
+}
+
+fieldset.scheduler-border {
+    border: 1px groove #ddd !important;
+    padding: 0 1.4em 1.4em 1.4em !important;
+    margin: 0 0 1.5em 0 !important;
+    -webkit-box-shadow:  0px 0px 0px 0px #000;
+            box-shadow:  0px 0px 0px 0px #000;
+}
+
+fieldset.scheduler-border-top{
+    border: 1px groove #ddd !important;
+    padding: 0 1.4em 1.4em 1.4em !important;
+    margin: 0 0 1.5em 0 !important;
+    height: 200px;
+    -webkit-box-shadow:  0px 0px 0px 0px #000;
+            box-shadow:  0px 0px 0px 0px #000;
+}
+
+legend.scheduler-border {
+    font-size: 1.2em !important;
+    font-weight: bold !important;
+   	text-align: left !important;
+    width:auto;
+    padding:0 10px;
+    border-bottom:none;
+}
+
+.start-wrapper {
+	text-align: center;
+}
+
+#start {
+	position: relative;
+	top: 50%;
+	width: 500px;
+	cursor: pointer;
+}
+
+
+.left-side, .right-side {
+	display: inline-block;
+	vertical-align: top;
+}
+
+.left-side {
+	width: 20%;
+}
+
+.right-side {
+	width: 70%;
+}
+
+.right-side .log-wrapper {
+	border: 8px solid #ccc;
+	border-radius: 5px;
+}
+
+.right-side .tab-content {
+	word-wrap: break-word;
+	overflow-y: auto; 
+	height: 600px;
+	margin: 15px;
+}
+
+#stop {
+	width: 100px;
+}
+
+.runmodes {
+	text-align: center;
+}
+
+.fixed-block {
+	width: 350px;
+	height: 200px;
+	display: inline-block;
+	vertical-align: top;
+}
