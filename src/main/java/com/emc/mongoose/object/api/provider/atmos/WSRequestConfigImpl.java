@@ -2,6 +2,7 @@ package com.emc.mongoose.object.api.provider.atmos;
 //
 import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import org.apache.commons.codec.binary.Base64;
@@ -9,6 +10,7 @@ import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,8 +28,11 @@ public final class WSRequestConfigImpl<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static String KEY_SUBTENANT = "api.atmos.subtenant";
-	public final String fmtPath;
+	private final static String
+		KEY_SUBTENANT = "api.atmos.subtenant",
+		OBJ_PATH =
+			"/" + Main.RUN_TIME_CONFIG.getString("api.atmos.path.rest") +
+			"/" + Main.RUN_TIME_CONFIG.getString("api.atmos.interface");
 	//
 	private WSSubTenant<T> subTenant;
 	//
@@ -35,9 +40,6 @@ extends WSRequestConfigBase<T> {
 	throws NoSuchAlgorithmException {
 		super();
 		api = WSRequestConfigImpl.class.getSimpleName();
-		fmtPath =
-			"/" + runTimeConfig.getString("api.atmos.path.rest") +
-			"/" + runTimeConfig.getString("api.atmos.interface") + "/%x";
 	}
 	//
 	public final WSSubTenant<T> getSubTenant() {
@@ -103,7 +105,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final HttpRequest httpRequest, final WSObject dataItem)
+	protected final void applyURI(final HttpRequest httpRequest, final T dataItem)
 	throws URISyntaxException {
 		if(httpRequest==null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
@@ -111,13 +113,26 @@ extends WSRequestConfigBase<T> {
 		if(dataItem==null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
+		final String objId = dataItem.getId();
 		synchronized(uriBuilder) {
-			HttpRequestBase.class.cast(httpRequest).setURI(
-				uriBuilder.setPath(
-					String.format(fmtPath, dataItem.getId())
-				).build()
-			);
+			HttpRequestBase.class
+				.cast(httpRequest)
+				.setURI(
+					uriBuilder
+						.setPath(
+							objId == null ? OBJ_PATH : OBJ_PATH + '/' + objId
+						).build()
+				);
 		}
+	}
+	//
+	@Override
+	protected final void applyDateHeader(final HttpRequest httpRequest) {
+		super.applyDateHeader(httpRequest);
+		httpRequest.setHeader(
+			KEY_EMC_DATE,
+			httpRequest.getFirstHeader(HttpHeaders.DATE).getValue()
+		);
 	}
 	//
 	@Override
@@ -135,8 +150,12 @@ extends WSRequestConfigBase<T> {
 
 	}
 	//
+	private final String HEADERS4CANONICAL[] = {
+		HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.RANGE, HttpHeaders.DATE
+	};
+	//
 	@Override
-	public String getCanonical(final HttpRequest httpRequest) {
+	public final String getCanonical(final HttpRequest httpRequest) {
 		final StringBuilder buffer = new StringBuilder(httpRequest.getRequestLine().getMethod());
 		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
 		Header header;
@@ -150,7 +169,7 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		buffer.append('\n').append(httpRequest.getRequestLine().getUri());
+		buffer.append('\n').append(HttpRequestBase.class.cast(httpRequest).getURI().getRawPath());
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
 			header = httpRequest.getFirstHeader(emcHeaderName);
@@ -183,6 +202,33 @@ extends WSRequestConfigBase<T> {
 		final String signature64 = Base64.encodeBase64String(signature);
 		LOG.trace(Markers.MSG, "Calculated signature: '{}'", signature64);
 		return signature64;
+	}
+	//
+	private final static String
+		FMT_MSG_ERR_LOCATION_HEADER_VALUE = "Invalid response location header value: \"%s\"";
+	//
+	@Override
+	public final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
+		final Header headerLocation = httpResponse.getFirstHeader(HttpHeaders.LOCATION);
+		if(headerLocation != null) {
+			final String valueLocation = headerLocation.getValue();
+			if(
+				valueLocation != null &&
+				valueLocation.startsWith(OBJ_PATH) &&
+				valueLocation.length() - OBJ_PATH.length() > 1
+			) {
+				final String id = valueLocation.substring(OBJ_PATH.length() + 1);
+				if(id != null && id.length() > 0) {
+					dataObject.setId(id);
+				} else {
+					LOG.trace(Markers.ERR, "Got empty object id");
+				}
+			} else {
+				LOG.trace(Markers.ERR, String.format(FMT_MSG_ERR_LOCATION_HEADER_VALUE, valueLocation));
+			}
+		} else {
+			LOG.trace(Markers.ERR, "No location header in the http response");
+		}
 	}
 	//
 	@Override

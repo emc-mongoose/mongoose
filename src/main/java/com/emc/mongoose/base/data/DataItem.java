@@ -12,6 +12,8 @@ extends Externalizable, Closeable {
 	//
 	long getSize();
 	//
+	long getOffset();
+	//
 	void writeTo(final OutputStream out);
 	//
 }

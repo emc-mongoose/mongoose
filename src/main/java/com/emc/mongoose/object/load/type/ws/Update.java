@@ -10,6 +10,8 @@ import com.emc.mongoose.object.load.WSLoadExecutorBase;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+//
+import java.rmi.RemoteException;
 /**
  Created by kurila on 06.05.14.
  */
@@ -30,7 +32,8 @@ extends WSLoadExecutorBase<T> {
 	}
 	//
 	@Override
-	public final void submit(final T dataItem) {
+	public final void submit(final T dataItem)
+	throws RemoteException {
 		if(dataItem!=null) {
 			try {
 				dataItem.updateRandomRanges(updatesPerObject);
@@ -40,8 +43,7 @@ extends WSLoadExecutorBase<T> {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Modified {}/{} ranges for object \"{}\"",
-					dataItem.getPendingUpdatesCount(), updatesPerObject,
-					Long.toHexString(dataItem.getId())
+					dataItem.getPendingUpdatesCount(), updatesPerObject, dataItem
 				);
 			}
 		}

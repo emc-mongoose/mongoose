@@ -83,7 +83,7 @@ implements WSRequest<T> {
 			this.wsReqConf = (WSRequestConfig<T>) reqConf;
 			switch(wsReqConf.getLoadType()) {
 				case CREATE:
-					httpRequest = WSRequestConfigImpl.class.getSimpleName().equals(wsReqConf.getAPI()) ?
+					httpRequest = com.emc.mongoose.object.api.provider.atmos.WSRequestConfigImpl.class.isInstance(wsReqConf) ?
 						new HttpPost() : new HttpPut();
 					break;
 				case READ:
@@ -101,6 +101,7 @@ implements WSRequest<T> {
 			}
 		} else { // cleanup
 			httpRequest.removeHeaders(HttpHeaders.RANGE);
+			httpRequest.removeHeaders(WSRequestConfig.KEY_EMC_SIG);
 		}
 		super.setRequestConfig(reqConf);
 		return this;
@@ -137,7 +138,7 @@ implements WSRequest<T> {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				synchronized(LOG) {
 					LOG.trace(
-						Markers.MSG, "{}/{} <- {} {}", result, statusLine.getReasonPhrase(),
+						Markers.MSG, "{}/{} <- {} {}", statusCode, statusLine.getReasonPhrase(),
 						httpRequest.getMethod(), httpRequest.getURI()
 					);
 					//for(final Header header : httpResponse.getAllHeaders()) {
@@ -159,7 +160,7 @@ implements WSRequest<T> {
 									Markers.ERR, "No HTTP content entity for request \"{}\"",
 									httpRequest.getRequestLine()
 								);
-								result = Result.IO_FAILURE;
+								result = Result.FAIL_IO;
 								break;
 							}
 							try(final InputStream in = httpEntity.getContent()) {
@@ -167,32 +168,33 @@ implements WSRequest<T> {
 									if(LOG.isTraceEnabled(Markers.MSG)) {
 										LOG.trace(
 											Markers.MSG, "Content verification success for \"{}\"",
-											Long.toHexString(dataItem.getId())
+											dataItem
 										);
 									}
 									result = Result.SUCC;
 								} else {
 									LOG.warn(
 										Markers.ERR, "Content verification failed for \"{}\"",
-										Long.toHexString(dataItem.getId())
+										dataItem
 									);
-									result = Result.CORRUPT;
+									result = Result.FAIL_CORRUPT;
 								}
 							} catch(final IOException e) {
 								LOG.warn(
 									Markers.ERR, "Failed to read the object content for \"{}\"",
-									Long.toHexString(dataItem.getId())
+									dataItem
 								);
-								result = Result.IO_FAILURE;
+								result = Result.FAIL_IO;
 							}
 						} else {
 							result = Result.SUCC;
 						}
 						break;
 					case (HttpPut.METHOD_NAME):
-						result = Result.SUCC;
-						break;
 					case (HttpPost.METHOD_NAME):
+						if(dataItem != null && dataItem.getId() == null) {
+							wsReqConf.applyObjectId(dataItem, httpResponse);
+						}
 						result = Result.SUCC;
 						break;
 				}
@@ -200,48 +202,46 @@ implements WSRequest<T> {
 				switch(statusCode) {
 					case(400):
 						LOG.warn(Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine());
-						result = Result.CLIENT_FAILURE;
+						result = Result.FAIL_CLIENT;
 						break;
 					case(403):
 						LOG.warn(Markers.ERR, "Access failure");
-						result = Result.AUTH_FAILURE;
+						result = Result.FAIL_AUTH;
 						break;
 					case(404):
 						LOG.warn(Markers.ERR, "Not found: {}", httpRequest.getURI());
-						result = Result.NOT_FOUND;
+						result = Result.FAIL_NOT_FOUND;
 						break;
 					case(416):
 						LOG.warn(Markers.ERR, "Incorrect range");
 						if(LOG.isTraceEnabled(Markers.ERR)) {
 							for(final Header rangeHeader: httpRequest.getHeaders(HttpHeaders.RANGE)) {
 								LOG.trace(
-									Markers.ERR, "Incorrect range: {}, data item: \"{}\", size: {}",
-									rangeHeader.getValue(),
-									Long.toHexString(dataItem.getId()), dataItem.getSize()
+									Markers.ERR, "Incorrect range \"{}\" for data item: \"{}\"",
+									rangeHeader.getValue(), dataItem
 								);
 							}
 						}
-						result = Result.CLIENT_FAILURE;
+						result = Result.FAIL_CLIENT;
 						break;
 					case(500):
 						LOG.warn(Markers.ERR, "Storage internal failure");
-						result = Result.SVC_FAILURE;
+						result = Result.FAIL_SVC;
 						break;
 					case(503):
 						LOG.warn(Markers.ERR, "Storage prays about a mercy");
-						result = Result.SVC_FAILURE;
+						result = Result.FAIL_SVC;
 						break;
 					default:
 						LOG.warn(Markers.ERR, "Response code: {}", result);
-						result = Result.UNKNOWN;
+						result = Result.FAIL_UNKNOWN;
 				}
 				if(LOG.isDebugEnabled(Markers.ERR)) {
 					try(ByteArrayOutputStream bOutPut = new ByteArrayOutputStream()) {
 						httpResponse.getEntity().writeTo(bOutPut);
 						final String errMsg = bOutPut.toString();
 						LOG.debug(
-							Markers.ERR, "{}, cause request: {}/{}",
-							errMsg, hashCode(), Long.toHexString(dataItem.getId())
+							Markers.ERR, "{}, cause request: {}/{}", errMsg, hashCode(), dataItem
 						);
 					} catch(final IOException e) {
 						ExceptionHandler.trace(

@@ -1,5 +1,6 @@
 package com.emc.mongoose.object.load;
 //
+import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
 import com.emc.mongoose.object.api.WSRequestConfig;
@@ -42,7 +43,7 @@ implements WSLoadExecutor<T> {
 	//
 	@Override
 	protected final void initClient(
-		final int totalThreadCount, final ObjectRequestConfig<T> objReqConf
+		final int totalThreadCount, final RequestConfig<T> objReqConf
 	) throws ClassCastException {
 		final WSRequestConfig<T> reqConf = (WSRequestConfig<T>) objReqConf;
 		// create and configure the connection manager for HTTP client
@@ -84,7 +85,7 @@ implements WSLoadExecutor<T> {
 	@Override @SuppressWarnings("unchecked")
 	protected final void setFileBasedProducer(final String listFile) {
 		// if path specified use the file as producer
-		if(listFile!=null && listFile.length() > 0) {
+		if(listFile != null && listFile.length() > 0) {
 			try {
 				producer = (Producer<T>) new FileProducer<>(listFile, WSObjectImpl.class);
 			} catch(final NoSuchMethodException e) {
@@ -98,7 +99,7 @@ implements WSLoadExecutor<T> {
 	//
 	@Override
 	protected final void initNodeExecutors(
-		final String addrs[], final ObjectRequestConfig<T> objReqConf
+		final String addrs[], final RequestConfig<T> objReqConf
 	) throws ClassCastException {
 		final WSRequestConfig<T> reqConf = (WSRequestConfig<T>) objReqConf;
 		WSNodeExecutorImpl<T> nodeExecutor;

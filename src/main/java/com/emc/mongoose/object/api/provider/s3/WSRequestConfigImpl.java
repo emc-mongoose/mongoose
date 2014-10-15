@@ -10,6 +10,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 //
 import org.apache.logging.log4j.Level;
@@ -107,7 +108,7 @@ extends WSRequestConfigBase<T> {
 			try {
 				HttpRequestBase.class.cast(httpRequest).setURI(
 					uriBuilder.setPath(
-						String.format(FMT_PATH, bucket.getName(), dataItem.getId())
+						String.format(FMT_PATH, bucket.getName(), dataItem.getOffset())
 					).build()
 				);
 			} catch(final Exception e) {
@@ -125,6 +126,10 @@ extends WSRequestConfigBase<T> {
 		);
 		httpRequest.removeHeader(httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5)); // remove temporary header
 	}
+	//
+	private final String HEADERS4CANONICAL[] = {
+		HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.DATE
+	};
 	//
 	@Override
 	public final String getCanonical(final HttpRequest httpRequest) {
@@ -173,6 +178,11 @@ extends WSRequestConfigBase<T> {
 		final String signature64 = Base64.encodeBase64String(signature);
 		LOG.trace(Markers.MSG, "Calculated signature: \"{}\"", signature64);
 		return signature64;
+	}
+	//
+	@Override
+	public final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
+		dataObject.setId(Long.toHexString(dataObject.getOffset()));
 	}
 	//
 	@Override

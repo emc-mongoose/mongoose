@@ -108,7 +108,6 @@ jar {
 	dependsOn(rmic)
 	archiveName "${baseName}.${extension}"
 	def clsPath = configurations.runtime.collect { 'lib/'+it.name }.join(' ')
-	clsPath += ' ' + confDirName + '/log4j2.json'
 	manifest {
 		attributes (
 			'Implementation-Title': rootProject.name,
@@ -133,9 +132,6 @@ distributions {
 			into('scripts') {
 				from { sourceSets.test.resources }
 			}
-            into('webapp') {
-                from { 'src/main/webapp' }
-            }
 		}
 	}
 }

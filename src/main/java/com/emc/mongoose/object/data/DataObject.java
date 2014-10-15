@@ -13,9 +13,8 @@ import java.io.IOException;
 public interface DataObject
 extends DataItem, AppendableDataItem, UpdatableDataItem {
 	//
-	long getId();
+	String getId();
 	//
-	void setId(final long id)
-	throws IOException;
+	void setId(final String id);
 	//
 }

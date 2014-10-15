@@ -182,7 +182,7 @@
 					}
 				}, {
 					"name": "org.apache.http.wire",
-					"level": "info",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
@@ -287,7 +287,7 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.object.load",
-					"level": "trace",
+					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
@@ -322,7 +322,7 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.util.conf",
-					"level": "trace",
+					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"

@@ -2,10 +2,11 @@ package com.emc.mongoose.object.data;
 //
 import com.emc.mongoose.base.data.impl.DataRanges;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
-import com.emc.mongoose.object.data.DataObject;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectOutput;
 /**
  Created by kurila on 01.05.14.
  Basic data object implementation extending DataRanges.
@@ -14,63 +15,93 @@ public class DataObjectImpl
 extends DataRanges
 implements DataObject {
 	//
-	protected long id;
+	protected String id = null;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public DataObjectImpl() {
 		super();
-		this.id = offset;
 	}
 	//
 	public DataObjectImpl(final String metaInfo) {
 		super();
 		fromString(metaInfo);
-		this.id = offset;
 	}
 	//
 	public DataObjectImpl(final long size) {
 		super(size);
-		this.id = offset;
 	}
 	//
 	public DataObjectImpl(final long size, final UniformDataSource dataSrc) {
 		super(size, dataSrc);
-		this.id = offset;
 	}
 	//
-	public DataObjectImpl(final long id, final long size) {
-		super(id, size);
-		this.id = offset;
+	public DataObjectImpl(final String id, final long size) {
+		super(size);
+		this.id = id;
 	}
 	//
-	public DataObjectImpl(final long id, final long size, final UniformDataSource dataSrc) {
-		super(id, size, dataSrc);
-		this.id = offset;
+	public DataObjectImpl(
+		final String id, final long size, final UniformDataSource dataSrc
+	) {
+		super(size, dataSrc);
+		this.id = id;
+	}
+	//
+	public DataObjectImpl(final String id, final long offset, final long size) {
+		super(offset, size);
+		this.id = id;
+	}
+	//
+	public DataObjectImpl(
+		final String id, final long offset, final long size, final UniformDataSource dataSrc
+	) {
+		super(offset, size, dataSrc);
+		this.id = id;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final long getId() {
+	public final String getId() {
 		return id;
 	}
 	//
 	@Override
-	public final void setId(final long id)
-	throws IOException {
+	public final void setId(final String id) {
 		this.id = id;
-		setOffset(id, 0);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Binary serialization implementation /////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		super.readExternal(in);
-		id = offset;
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		super.writeExternal(out);
+		out.writeObject(id);
 	}
 	//
 	@Override
-	public void fromString(final String v) {
-		super.fromString(v);
-		id = offset;
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		super.readExternal(in);
+		id = String.class.cast(in.readObject());
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Human readable serialization implementation /////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	protected final static String FMT2STR = "%s" + RunTimeConfig.LIST_SEP + "%s";
+	//
+	@Override
+	public String toString() {
+		return String.format(FMT2STR, id, super.toString());
+	}
+	//
+	@Override
+	public void fromString(final String v)
+	throws IllegalArgumentException {
+		final int posSep = v.indexOf(RunTimeConfig.LIST_SEP);
+		if(posSep > 0 && posSep < v.length() - 1) {
+			id = v.substring(0, posSep - 1);
+		} else {
+			throw new IllegalArgumentException();
+		}
+		super.fromString(v.substring(posSep));
 	}
 }

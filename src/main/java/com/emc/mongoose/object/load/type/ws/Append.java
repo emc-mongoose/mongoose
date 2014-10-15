@@ -8,7 +8,8 @@ import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
+import java.rmi.RemoteException;
 import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 23.09.14.
@@ -32,7 +33,8 @@ extends WSLoadExecutorBase<T> {
 	}
 	//
 	@Override
-	public final void submit(final T dataItem) {
+	public void submit(final T dataItem)
+	throws RemoteException {
 		if(dataItem!=null) {
 			final long appendSize = ThreadLocalRandom
 				.current()
@@ -41,7 +43,7 @@ extends WSLoadExecutorBase<T> {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Append the object \"{}\": +{}",
-					Long.toHexString(dataItem.getId()), RunTimeConfig.formatSize(appendSize)
+					dataItem.getId(), RunTimeConfig.formatSize(appendSize)
 				);
 			}
 		}

@@ -31,20 +31,19 @@ implements SubTenant<T> {
 	@Override
 	public final boolean exists()
 	throws IllegalStateException {
-		return false;
+		return true;
 	}
 	//
 	@Override
 	public final void create()
 	throws IllegalStateException {
-		final HttpRequest createReq = new HttpPut("/"+name);
-		
+		// TODO
 	}
 	//
 	@Override
 	public final void delete()
 	throws IllegalStateException {
-
+		// TODO
 	}
 	//
 	@Override

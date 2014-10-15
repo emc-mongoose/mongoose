@@ -7,6 +7,7 @@ import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 
@@ -41,9 +42,6 @@ extends ObjectRequestConfig<T> {
 		MSG_NO_REQ = "No request specified to apply to";
 		//
 	String[]
-		HEADERS4CANONICAL = {
-			HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.DATE
-		},
 		HEADERS_EMC = {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_NS, KEY_EMC_SIG, KEY_EMC_UID
 		};
@@ -95,6 +93,8 @@ extends ObjectRequestConfig<T> {
 	throws URISyntaxException;
 	//
 	void applyHeadersFinally(final HttpRequest httpRequest);
+	//
+	void applyObjectId(final T dataObject, final HttpResponse httpResponse);
 	//
 	HttpRequestRetryHandler getRetryHandler();
 	//

@@ -116,7 +116,7 @@ implements WSRequestConfig<T> {
 		userAgent = runName + '/' + runVersion;
 		sharedHeadersMap = new ConcurrentHashMap<String, String>() {
 			{
-				put(HttpHeaders.USER_AGENT, userAgent);
+				//put(HttpHeaders.USER_AGENT, userAgent);
 				put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
 				put(HttpHeaders.CONTENT_TYPE, contentType);
 			}
@@ -446,10 +446,9 @@ implements WSRequestConfig<T> {
 		);
 	}
 	//
-	protected final void applyDateHeader(final HttpRequest httpRequest) {
+	protected void applyDateHeader(final HttpRequest httpRequest) {
 		final String rfc1123date = DateUtils.formatDate(new Date());
 		httpRequest.setHeader(HttpHeaders.DATE, rfc1123date);
-		//httpRequest.setHeader(KEY_EMC_DATE, rfc1123date);
 	}
 	//
 	protected abstract void applyAuthHeader(final HttpRequest httpRequest);

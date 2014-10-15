@@ -5,6 +5,7 @@ import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -72,5 +73,10 @@ extends WSRequestConfigBase<T> {
 	public final String getSignature(final String canonicalForm) {
 		// TODO swift specific things
 		return null;
+	}
+	//
+	@Override
+	public final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
+		// TODO swift specific things
 	}
 }

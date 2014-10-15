@@ -60,19 +60,6 @@ extends DefaultHandler {
 		if(isInsideItem && QNAME_ITEM.equals(qName)) {
 			isInsideItem = false;
 			//
-			long id = 0;
-			if(strId != null && strId.length() > 0) {
-				try {
-					id = Long.parseLong(strId, 0x10);
-				} catch(final NumberFormatException e) {
-					ExceptionHandler.trace(
-						LOG, Level.WARN, e, "Data object id should be 64-bit hexadecimal"
-					);
-				}
-			} else {
-				LOG.warn(Markers.MSG, "No \"{}\" element or empty", QNAME_ITEM_ID);
-			}
-			//
 			long size = 0;
 			if(strSize != null && strSize.length() > 0) {
 				try {
@@ -83,17 +70,19 @@ extends DefaultHandler {
 					);
 				}
 			} else {
-				LOG.warn(Markers.MSG, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
+				LOG.trace(Markers.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
 			}
 			//
-			if(id > 0 && size > 0) {
+			if(strId !=null && strId.length() > 0 && size > 0) {
 				try {
-					consumer.submit((T) new WSObjectImpl(id, size));
+					consumer.submit((T) new WSObjectImpl(strId, size));
 				} catch(final RemoteException e) {
 					ExceptionHandler.trace(
 						LOG, Level.WARN, e, "Failed to submit new data object to remote consumer"
 					);
 				}
+			} else {
+				LOG.trace(Markers.ERR, "Invalid object id ({}) or size ({})", strId, strSize);
 			}
 		}
 		//

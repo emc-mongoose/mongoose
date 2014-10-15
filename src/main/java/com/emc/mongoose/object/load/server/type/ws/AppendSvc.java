@@ -86,5 +86,4 @@ implements ObjectLoadSvc<T> {
 		}
 		return recFrame;
 	}
-	//
 }

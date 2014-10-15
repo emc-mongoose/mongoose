@@ -2,17 +2,14 @@ package com.emc.mongoose.object.load;
 //
 import com.codahale.metrics.MetricRegistry;
 //
-import com.emc.mongoose.base.api.Request;
-import com.emc.mongoose.object.api.DataObjectRequest;
 import com.emc.mongoose.object.api.WSRequest;
 import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.api.WSRequestImpl;
 import com.emc.mongoose.object.data.WSObject;
-//
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 //
+//import org.apache.logging.log4j.LogManager;
+//import org.apache.logging.log4j.Logger;
 /**
  Created by kurila on 06.06.14.
  */
@@ -20,7 +17,7 @@ public final class WSNodeExecutorImpl<T extends WSObject>
 extends ObjectNodeExecutorBase<T>
 implements WSNodeExecutor<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	//private final static Logger LOG = LogManager.getLogger();
 	//
 	public WSNodeExecutorImpl(
 		final RunTimeConfig runTimeConfig,

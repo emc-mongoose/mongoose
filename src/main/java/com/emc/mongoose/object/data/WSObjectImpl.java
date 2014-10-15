@@ -40,11 +40,11 @@ implements WSObject {
 		super(size, dataSrc);
 	}
 	//
-	public WSObjectImpl(final long id, final long size) {
+	public WSObjectImpl(final String id, final long size) {
 		super(id, size);
 	}
 	//
-	public WSObjectImpl(final long id, final long size, final UniformDataSource dataSrc) {
+	public WSObjectImpl(final String id, final long size, final UniformDataSource dataSrc) {
 		super(id, size, dataSrc);
 	}
 	//
