@@ -116,7 +116,7 @@ public final class Main {
 				break;
 			case VALUE_RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-                JettyRunner.run();
+                    new JettyRunner(RUN_TIME_CONFIG).run();
 				break;
 			case VALUE_RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");

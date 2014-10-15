@@ -40,11 +40,13 @@ public class StartServlet extends HttpServlet {
     private final static Logger LOG = LogManager.getLogger();
     private static List<Thread> threads;
     public static long threadId;
+    private RunTimeConfig runTimeConfig;
 
     @Override
     public void init() throws ServletException {
         super.init();
         threads = new CopyOnWriteArrayList<>();
+        runTimeConfig = (RunTimeConfig) getServletContext().getAttribute("runTimeConfig");
     }
 
     //
@@ -58,29 +60,29 @@ public class StartServlet extends HttpServlet {
         switch (RunModes.valueOf(runMode)) {
             case VALUE_RUN_MODE_SERVER:
                 LOG.debug(Markers.MSG, "Starting the server");
-                threadId = runServer();
+                runServer();
                 break;
             case VALUE_RUN_MODE_STANDALONE:
                 LOG.debug(Markers.MSG, "Starting the standalone");
-                threadId = runStandalone();
+                runStandalone();
                 break;
             case VALUE_RUN_MODE_WSMOCK:
                 LOG.debug(Markers.MSG, "Starting the web storage mock");
-                threadId = runWSMock();
+                runWSMock();
                 break;
             case VALUE_RUN_MODE_CLIENT:
                 LOG.debug(Markers.MSG, "Starting the client");
-                threadId = runClient();
+                runClient();
                 break;
             default:
                 LOG.debug(Markers.MSG, "Starting the standalone");
-                threadId = runStandalone();
+                runStandalone();
                 break;
         }
     }
 	//
 
-    private long runServer() {
+    private void runServer() {
         Thread thread = new Thread() {
             final WSLoadBuilderSvc loadBuilderSvc = new WSLoadBuilderSvcImpl();
             @Override
@@ -99,10 +101,9 @@ public class StartServlet extends HttpServlet {
         };
         thread.start();
         threads.add(thread);
-        return thread.getId();
     }
 
-    private long runClient() {
+    private void runClient() {
         //
         Thread thread = new Thread() {
             WSLoadClient loadClient;
@@ -114,7 +115,7 @@ public class StartServlet extends HttpServlet {
                     //
                     try {
                         final Request.Type loadType = Request.Type.valueOf(
-							Main.RUN_TIME_CONFIG.getString("scenario.single.load").toUpperCase()
+							runTimeConfig.getString("scenario.single.load").toUpperCase()
                         );
                         loadBuilderClient.setLoadType(loadType);
                     } catch (NoSuchElementException e) {
@@ -130,7 +131,7 @@ public class StartServlet extends HttpServlet {
                     final String[] timeOutArray;
                     //
                     try {
-                        timeOutString = Main.RUN_TIME_CONFIG.getString("run.time");
+                        timeOutString = runTimeConfig.getString("run.time");
                         timeOutArray = timeOutString.split("\\.");
                     } catch (NoSuchElementException e) {
                         ExceptionHandler.trace(LOG, Level.ERROR, e, "No timeout specified, try arg -Drun.time=<INTEGER>.<UNIT> to override");
@@ -176,11 +177,10 @@ public class StartServlet extends HttpServlet {
         };
         thread.start();
         threads.add(thread);
-        return thread.getId();
 
     }
 
-    private long runStandalone()
+    private void runStandalone()
     throws IOException {
         Thread thread = new Thread() {
             WSLoadExecutor loadExecutor;
@@ -193,7 +193,7 @@ public class StartServlet extends HttpServlet {
                     //
                     try {
                         final Request.Type loadType = Request.Type.valueOf(
-							Main.RUN_TIME_CONFIG.getString("scenario.single.load").toUpperCase()
+							runTimeConfig.getString("scenario.single.load").toUpperCase()
                         );
                         loadBuilder.setLoadType(loadType);
                     } catch (NoSuchElementException e) {
@@ -209,7 +209,7 @@ public class StartServlet extends HttpServlet {
                     final String[] timeOutArray;
                     //
                     try {
-                        timeOutString = Main.RUN_TIME_CONFIG.getString("run.time");
+                        timeOutString = runTimeConfig.getString("run.time");
                         timeOutArray = timeOutString.split("\\.");
                     } catch (NoSuchElementException e) {
                         ExceptionHandler.trace(LOG, Level.ERROR, e, "No timeout specified, try arg -Drun.time=<INTEGER>.<UNIT> to override");
@@ -251,14 +251,12 @@ public class StartServlet extends HttpServlet {
 
         thread.start();
         threads.add(thread);
-        return thread.getId();
     }
 
-    private long runWSMock() {
-        final Thread thread = new Thread(new WSMock(Main.RUN_TIME_CONFIG));
+    private void runWSMock() {
+        final Thread thread = new Thread(new WSMock(runTimeConfig));
         thread.start();
         threads.add(thread);
-        return thread.getId();
     }
 
     public static void interruptMongoose() {
