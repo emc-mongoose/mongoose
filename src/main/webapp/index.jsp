@@ -1,5 +1,6 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri='http://java.sun.com/jsp/jstl/core' prefix='c'%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <!DOCTYPE html>
 <html>
     <head>
@@ -31,7 +32,6 @@
     		</div>
 		</nav>
 
-        ${runTimeConfig.authId}
 		<div class="content-wrapper">
 			<div class="tabs-wrapper">
 				<ul class="nav nav-tabs tabs" role="tablist">
@@ -52,8 +52,10 @@
 							<fieldset class="scheduler-border-top">
 								<legend class="scheduler-border">Run</legend>
 								<label for="run-time">run.time:</label>
-								<input type="text" id="run-time" class="form-control counter" value="1000">
+								<c:set var="runTime" value="${fn:split(runTimeConfig.runTime, '.')}" />
+								<input type="text" id="run-time" class="form-control counter" value="${runTime[0]}">
 								<select>
+									<option>objects</option>
 									<option>seconds</option>
 									<option>minutes</option>
 									<option>hours</option>
@@ -61,7 +63,7 @@
 								</select>
 								<br>
 								<label for="run-metrics-period-sec">run.metrics.period.sec:</label>
-								<input type="text" class="form-control counter" value="10">
+								<input type="text" class="form-control counter" value="${runTimeConfig.runMetricsPeriodSec}">
 							</fieldset>
 						</div>
 
@@ -69,10 +71,10 @@
 							<fieldset class="scheduler-border-top">
 								<legend class="scheduler-border">Auth</legend>
 								<label for="auth-id">auth.id:</label>
-								<input type="text" class="form-control" value="wuser1@sanity.local">
+								<input type="text" class="form-control" value="${runTimeConfig.authId}">
 								<br>
 								<label for="auth-secret">auth.secret:</label>
-								<input type="text" class="form-control" value="Ug5wGLnRYgtEEdIIxDRhUwDruQl2lRGSO7uV/5A4">
+								<input type="text" class="form-control" value="${runTimeConfig.authSecret}">
 							</fieldset>
 						</div>
 						<br>
@@ -81,9 +83,9 @@
 							<fieldset class="scheduler-border">
 								<legend class="scheduler-border">Storage</legend>
 								<label>storage.api:</label>
-								<input type="text" class="form-control counter" value="s3">
+								<input type="text" class="form-control counter" value="${runTimeConfig.storageApi}">
 								<label>scheme:</label>
-								<input type="text" class="form-control counter" value="http">
+								<input type="text" class="form-control counter" value="${runTimeConfig.storageProto}">
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">Data nodes</legend>
 									<button type="button" class="default add-node">Add</button>
@@ -94,19 +96,21 @@
 										</span>
 									</div>
 
-									<div class="storages">
-										<div class="input-group">
-                    						<span class="input-group-addon">
-                        						<input type="checkbox">
-                    						</span>
-                    						<label class="form-control">
-                    							127.0.0.1
-                    						</label>
-                    						<span class="input-group-btn">
-                    							<button type="button" class="btn btn-default remove">Remove</button>
-                    						</span>
-                    					</div>
-									</div>
+                                    <c:forEach var="addr" items="${runTimeConfig.storageAddrs}">
+                                        <div class="storages">
+                                            <div class="input-group">
+                                                <span class="input-group-addon">
+                                                    <input type="checkbox">
+                                                </span>
+                                                <label class="form-control">
+                                                    ${addr}
+                                                </label>
+                                                <span class="input-group-btn">
+                                                    <button type="button" class="btn btn-default remove">Remove</button>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </c:forEach>
 								</fieldset>
 							</fieldset>
 
@@ -118,7 +122,7 @@
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">Remote</legend>
 									<label>remote.monitor.port:</label>
-									<input type="text" class="form-control counter" value="1199">
+									<input type="text" class="form-control counter" value="${runTimeConfig.remoteMonitorPort}">
 									<fieldset class="scheduler-border">
 										<legend class="scheduler-border">Drivers</legend>
 										<button type="button" class="default add-driver">Add</button>
@@ -129,19 +133,21 @@
 											</span>
 										</div>
 
-										<div class="drivers">
-											<div class="input-group">
-                    							<span class="input-group-addon">
-                        							<input type="checkbox">
-                    							</span>
-                    							<label class="form-control">
-                    								127.0.0.1
-                    							</label>
-                    							<span class="input-group-btn">
-                    								<button type="button" class="btn btn-default remove">Remove</button>
-                    							</span>
-                    						</div>
-										</div>
+                                        <c:forEach var="server" items="${runTimeConfig.remoteServers}">
+                                            <div class="drivers">
+                                                <div class="input-group">
+                                                    <span class="input-group-addon">
+                                                        <input type="checkbox">
+                                                    </span>
+                                                    <label class="form-control">
+                                                        ${server}
+                                                    </label>
+                                                    <span class="input-group-btn">
+                                                        <button type="button" class="btn btn-default remove">Remove</button>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </c:forEach>
 
 									</fieldset>
 								</fieldset>
@@ -153,7 +159,7 @@
 							<fieldset class="scheduler-border">
 								<legend class="scheduler-border">Data</legend>
 								<label for="count">data.count:</label>
-								<input id="count" type="text" class="form-control counter" value="0">
+								<input id="count" type="text" class="form-control counter" value="${runTimeConfig.dataCount}">
 								<select>
 									<option>objects</option>
 									<option>seconds</option>
