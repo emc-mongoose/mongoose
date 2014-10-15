@@ -30,6 +30,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.RemoteStub;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
+import java.util.Map;
 /**
  Created by kurila on 05.05.14.
  */
@@ -171,78 +172,84 @@ public final class ServiceUtils {
 		JMXRMI_URL_PREFIX = "service:jmx:rmi:///jndi/rmi://",
 		JMXRMI_URL_PATH = "/jmxrmi";
 	//
+	private final static Map<Integer,MBeanServer> MBEAN_SERVERS = new HashMap<>();
 	public static MBeanServer getMBeanServer(final int portJmxRmi) {
 		//
-		try {
-			System.setProperty(
-				KEY_RMI_CODEBASE,
-				URLDecoder.decode(
-					Main.JAR_SELF.toURI().toString(), StandardCharsets.UTF_8.displayName()
-				)
-			);
-		} catch(final UnsupportedEncodingException e) {
-			LOG.warn(Markers.ERR, e.toString(), e.getCause());
-		}
-		LOG.debug(Markers.MSG, "RMI codebase: {}", System.getProperty(KEY_RMI_CODEBASE));
+		MBeanServer mBeanServer;
 		//
-		System.setProperty(KEY_JMX_PORT, Integer.toString(portJmxRmi));
-		LOG.debug(Markers.MSG, "RMI JMX port: {}", System.getProperty(KEY_JMX_PORT));
-		//
-		final MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
-		//
-		try {
-			LocateRegistry.createRegistry(portJmxRmi);
-			LOG.debug(Markers.MSG, "Created locate registry for port {}", portJmxRmi);
-		} catch(final RemoteException e) {
-			synchronized(LOG) {
-				LOG.debug(
-					Markers.ERR, "Failed to create registry for port {}: ", portJmxRmi, e.toString()
-				);
-			}
-		}
-		//
-		final HashMap<String,Object> env = new HashMap<>();
-		env.put(KEY_JMX_AUTH, String.valueOf(false));
-		env.put(KEY_JMX_SSL, String.valueOf(false));
-		//
-		JMXServiceURL jmxSvcURL = null;
-		try {
-			jmxSvcURL = new JMXServiceURL(
-				JMXRMI_URL_PREFIX + ":" + Integer.toString(portJmxRmi) + JMXRMI_URL_PATH
-			);
-			LOG.debug(Markers.MSG, "Created JMX service URL {}", jmxSvcURL.toString());
-		} catch(final MalformedURLException e) {
-			synchronized(LOG) {
-				LOG.warn(Markers.ERR, "Failed to create JMX service URL for port {}", portJmxRmi);
-				LOG.debug(Markers.ERR, e.toString(), e.getCause());
-			}
-		}
-		//
-		JMXConnectorServer connectorServer = null;
-		if(jmxSvcURL!=null) {
+		if(MBEAN_SERVERS.containsKey(portJmxRmi)) {
+			mBeanServer = MBEAN_SERVERS.get(portJmxRmi);
+		} else {
 			try {
-				connectorServer = JMXConnectorServerFactory.newJMXConnectorServer(
-					jmxSvcURL, env, mBeanServer
+				System.setProperty(
+					KEY_RMI_CODEBASE,
+					URLDecoder.decode(
+						Main.JAR_SELF.toURI().toString(), StandardCharsets.UTF_8.displayName()
+					)
 				);
-				LOG.debug(Markers.MSG, "Created JMX connector");
-			} catch(final IOException e) {
+			} catch(final UnsupportedEncodingException e) {
+				LOG.warn(Markers.ERR, e.toString(), e.getCause());
+			}
+			LOG.debug(Markers.MSG, "RMI codebase: {}", System.getProperty(KEY_RMI_CODEBASE));
+			//
+			System.setProperty(KEY_JMX_PORT, Integer.toString(portJmxRmi));
+			LOG.debug(Markers.MSG, "RMI JMX port: {}", System.getProperty(KEY_JMX_PORT));
+			//
+			mBeanServer = ManagementFactory.getPlatformMBeanServer();
+			//
+			try {
+				LocateRegistry.createRegistry(portJmxRmi);
+				LOG.debug(Markers.MSG, "Created locate registry for port {}", portJmxRmi);
+			} catch(final RemoteException e) {
 				synchronized(LOG) {
-					LOG.warn(Markers.ERR, "Failed to create JMX connector for env {}", env);
+					LOG.debug(
+						Markers.ERR, "Failed to create registry for port {}: ", portJmxRmi, e.toString()
+					);
+				}
+			}
+			//
+			final HashMap<String, Object> env = new HashMap<>();
+			env.put(KEY_JMX_AUTH, String.valueOf(false));
+			env.put(KEY_JMX_SSL, String.valueOf(false));
+			//
+			JMXServiceURL jmxSvcURL = null;
+			try {
+				jmxSvcURL = new JMXServiceURL(
+					JMXRMI_URL_PREFIX + ":" + Integer.toString(portJmxRmi) + JMXRMI_URL_PATH
+				);
+				LOG.debug(Markers.MSG, "Created JMX service URL {}", jmxSvcURL.toString());
+			} catch(final MalformedURLException e) {
+				synchronized(LOG) {
+					LOG.warn(Markers.ERR, "Failed to create JMX service URL for port {}", portJmxRmi);
 					LOG.debug(Markers.ERR, e.toString(), e.getCause());
 				}
 			}
-		}
-		//
-		if(connectorServer!=null) {
-			try {
-				connectorServer.start();
-				LOG.debug(Markers.MSG, "JMX connector started", portJmxRmi);
-			} catch(final IOException e) {
-				synchronized(LOG) {
-					LOG.warn(Markers.ERR, "Failed to start JMX connector, please check that there's no another instance running", env);
-					LOG.debug(Markers.ERR, e.toString(), e.getCause());
+			//
+			JMXConnectorServer connectorServer = null;
+			if(jmxSvcURL!=null) {
+				try {
+					connectorServer = JMXConnectorServerFactory.newJMXConnectorServer(
+						jmxSvcURL, env, mBeanServer
+					);
+					LOG.debug(Markers.MSG, "Created JMX connector");
+				} catch(final IOException e) {
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to create JMX connector");
 				}
 			}
+			//
+			if(connectorServer!=null && !connectorServer.isActive()) {
+				try {
+					connectorServer.start();
+					LOG.debug(Markers.MSG, "JMX connector started", portJmxRmi);
+				} catch(final IOException e) {
+					ExceptionHandler.trace(
+						LOG, Level.WARN, e,
+						"Failed to start JMX connector, please check that there's no another instance running"
+					);
+				}
+			}
+			//
+			MBEAN_SERVERS.put(portJmxRmi, mBeanServer);
 		}
 		//
 		return mBeanServer;

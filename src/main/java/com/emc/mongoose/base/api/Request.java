@@ -3,6 +3,7 @@ package com.emc.mongoose.base.api;
 import com.emc.mongoose.base.data.DataItem;
 //
 import java.io.Closeable;
+import java.io.IOException;
 import java.util.concurrent.Callable;
 //
 /**
@@ -12,18 +13,27 @@ import java.util.concurrent.Callable;
 public interface Request<T extends DataItem>
 extends Callable<Request<T>>, Closeable {
 	//
+	enum Type {
+		CREATE, READ, DELETE, UPDATE, APPEND
+	}
+	//
+	enum Result {
+		SUCC,
+		CLIENT_FAILURE, SVC_FAILURE, NOT_FOUND, AUTH_FAILURE, CORRUPT, TIMEOUT, IO_FAILURE, UNKNOWN
+	}
+	//
 	T getDataItem();
 	//
 	Request<T> setDataItem(final T dataItem);
 	//
 	Request<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//
-	int getStatusCode();
+	Result getResult();
 	//
-	long getStartNanoTime();
+	long getStartTime();
 	//
 	long getDuration();
 	//
-	enum Type { CREATE, READ, DELETE, UPDATE, APPEND }
-	//
+	void execute()
+	throws Exception;
 }

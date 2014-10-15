@@ -1,7 +1,5 @@
 package com.emc.mongoose.base.data;
 //
-import com.emc.mongoose.util.conf.RunTimeConfig;
-//
 import java.io.Closeable;
 import java.io.Externalizable;
 import java.io.OutputStream;
@@ -11,8 +9,6 @@ import java.io.OutputStream;
  */
 public interface DataItem
 extends Externalizable, Closeable {
-	//
-	int MAX_PAGE_SIZE = (int) RunTimeConfig.getSizeBytes("data.page.size");
 	//
 	long getSize();
 	//

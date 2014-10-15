@@ -25,7 +25,8 @@ import javax.script.ScriptException;
  Created by kurila on 12.05.14.
  A scenario runner utility class.
  */
-public final class Scenario {
+public final class Scenario
+implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String
@@ -40,11 +41,21 @@ public final class Scenario {
 		SCRIPT_LANG_MAP.put(VALUE_PY, "jython");
 	}
 	//
-	public static void run() {
+	private final RunTimeConfig runTimeConfig;
+	//
+	public Scenario() {
+		this.runTimeConfig = Main.RUN_TIME_CONFIG;
+	}
+	//
+	public Scenario(final RunTimeConfig runTimeConfig) {
+		this.runTimeConfig = runTimeConfig;
+	}
+	//
+	public void run() {
 		// get scenario language
 		String scriptLangKey = null;
 		try {
-			scriptLangKey = RunTimeConfig.getString("run.scenario.lang");
+			scriptLangKey = runTimeConfig.getRunScenarioLang();
 		} catch(final NoSuchElementException e) {
 			LOG.fatal(
 				Markers.ERR,
@@ -55,7 +66,7 @@ public final class Scenario {
 		// get scenario name
 		String scriptName = null;
 		try {
-			scriptName = RunTimeConfig.getString("run.scenario.name");
+			scriptName = runTimeConfig.getRunScenarioName();
 			LOG.info(Markers.MSG, "Script name to run: \"{}\"", scriptName);
 		} catch(final NoSuchElementException e) {
 			LOG.fatal(
@@ -68,7 +79,7 @@ public final class Scenario {
 		String scriptsRootDir = null;
 		if(scriptName!=null && scriptLangKey!=null) {
 			try {
-				scriptsRootDir = RunTimeConfig.getString("run.scenario.dir");
+				scriptsRootDir = runTimeConfig.getRunScenarioDir();
 			} catch(final NoSuchElementException e) {
 				LOG.fatal(Markers.ERR, "Scenario directory not specified");
 				System.exit(1);

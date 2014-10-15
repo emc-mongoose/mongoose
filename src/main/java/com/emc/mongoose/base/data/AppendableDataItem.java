@@ -1,4 +1,5 @@
 package com.emc.mongoose.base.data;
+//
 import java.io.IOException;
 import java.io.OutputStream;
 /**
@@ -14,5 +15,4 @@ extends DataItem {
 	//
 	void writeAugmentTo(final OutputStream out)
 	throws IOException;
-	//
 }

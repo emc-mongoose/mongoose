@@ -5,7 +5,7 @@ from sys import exit
 from loadbuilder import INSTANCE as loadBuilder
 #
 from com.emc.mongoose.base.api import Request
-from com.emc.mongoose.util.conf import RunTimeConfig
+from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.logging import Markers
 #
 from org.apache.logging.log4j import LogManager
@@ -16,7 +16,7 @@ from java.util import NoSuchElementException
 LOG = LogManager.getLogger()
 #
 try:
-	loadType = Request.Type.valueOf(RunTimeConfig.getString("scenario.rampup-create.load").upper())
+	loadType = Request.Type.valueOf(Main.RUN_TIME_CONFIG.getString("scenario.rampup-create.load").upper())
 	LOG.info(Markers.MSG, "Using load type: {}", loadType.name())
 	loadBuilder.setLoadType(loadType)
 except NoSuchElementException:
@@ -29,7 +29,7 @@ from java.lang import Integer
 from java.util.concurrent import TimeUnit
 timeOut = None  # tuple of (value, unit)
 try:
-	timeOut = RunTimeConfig.getString("run.time")
+	timeOut = Main.RUN_TIME_CONFIG.getRunTime()
 	timeOut = timeOut.split('.')
 	timeOut = Integer.valueOf(timeOut[0]), TimeUnit.valueOf(timeOut[1].upper())
 	LOG.info(Markers.MSG, "Using time limit: {} {}", timeOut[0], timeOut[1].name().lower())
@@ -42,8 +42,8 @@ except IndexError:
 	LOG.error(Markers.ERR, "Time unit should be specified with timeout value (following after \".\" separator)")
 	exit()
 #
-threadCountList=RunTimeConfig.getStringArray("scenario.rampup-create.threads")
-objectSizeList=RunTimeConfig.getStringArray("scenario.rampup-create.objectsizes")
+threadCountList = Main.RUN_TIME_CONFIG.getStringArray("scenario.rampup-create.threads")
+objectSizeList = Main.RUN_TIME_CONFIG.getStringArray("scenario.rampup-create.objectsizes")
 from java.lang import Long
 from java.lang import Integer
 for threadCount in threadCountList:

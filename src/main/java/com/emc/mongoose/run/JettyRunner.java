@@ -27,8 +27,12 @@ public class JettyRunner {
             webDescriptorBaseDir;
 
     static {
-        webResourceBaseDir = Paths.get(Main.DIR_ROOT, DIR_WEBAPP).toString();
-        webDescriptorBaseDir = Paths.get(Main.DIR_ROOT, DIR_WEBAPP, DIR_WEBINF).resolve("web.xml").toString();
+        webResourceBaseDir = Paths
+			.get(Main.DIR_ROOT, DIR_WEBAPP)
+			.toString();
+        webDescriptorBaseDir = Paths
+			.get(Main.DIR_ROOT, DIR_WEBAPP, DIR_WEBINF)
+			.resolve("web.xml").toString();
     }
 
     public static void run() {

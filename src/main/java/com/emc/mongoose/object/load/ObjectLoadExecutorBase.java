@@ -7,16 +7,15 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
-import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.persist.LogConsumer;
 import com.emc.mongoose.base.load.Consumer;
-import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.base.load.StorageNodeSubmitTask;
+import com.emc.mongoose.base.load.SubmitDataItemTask;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
 import com.emc.mongoose.object.data.DataObject;
 //
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -44,11 +43,12 @@ extends Thread
 implements ObjectLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	protected final int threadsPerNode;
+	protected final int threadsPerNode, retryCountMax, retryDelayMilliSec;
 	protected final ObjectNodeExecutor<T> nodes[];
 	protected final ThreadPoolExecutor submitExecutor;
 	//
 	protected final DataSource<T> dataSrc;
+	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
 	//
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
@@ -56,14 +56,8 @@ implements ObjectLoadExecutor<T> {
 	protected final Meter reqBytes;
 	protected Histogram reqDur;
 	//
-	protected final static MBeanServer MBEAN_SERVER = ServiceUtils.getMBeanServer(
-		RunTimeConfig.getInt("remote.monitor.port")
-	);
-	protected final JmxReporter metricsReporter = JmxReporter.forRegistry(metrics)
-		.convertDurationsTo(TimeUnit.SECONDS)
-		.convertRatesTo(TimeUnit.SECONDS)
-		.registerWith(MBEAN_SERVER)
-		.build();
+	protected final MBeanServer mBeanServer;
+	protected final JmxReporter metricsReporter;
 	// METRICS section END
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
@@ -72,9 +66,21 @@ implements ObjectLoadExecutor<T> {
 	//
 	@SuppressWarnings("unchecked")
 	protected ObjectLoadExecutorBase(
+		final RunTimeConfig runTimeConfig,
 		final String[] addrs, final ObjectRequestConfig<T> reqConf, final long maxCount,
 		final int threadsPerNode, final String listFile
 	) throws ClassCastException {
+		//
+		this.runTimeConfig = runTimeConfig;
+		retryCountMax = runTimeConfig.getRunRetryCountMax();
+		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
+		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteMonitorPort());
+		metricsReporter  = JmxReporter.forRegistry(metrics)
+			.convertDurationsTo(TimeUnit.SECONDS)
+			.convertRatesTo(TimeUnit.SECONDS)
+			.registerWith(mBeanServer)
+			.build();
+		//
 		final int nodeCount = addrs.length;
 		final String name = Integer.toString(instanceN++) + '-' +
 			StringUtils.capitalize(reqConf.getAPI().toLowerCase()) + '-' +
@@ -99,10 +105,12 @@ implements ObjectLoadExecutor<T> {
 		initClient(totalThreadCount, reqConf);
 		dataSrc = reqConf.getDataSource();
 		setFileBasedProducer(listFile);
-		int submitThreadCount = threadsPerNode * addrs.length;
+		final int
+			submitThreadCount = threadsPerNode * addrs.length,
+			queueSize = submitThreadCount * runTimeConfig.getRunRequestQueueFactor();
 		submitExecutor = new ThreadPoolExecutor(
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(submitThreadCount * REQ_QUEUE_FACTOR)
+			new LinkedBlockingQueue<Runnable>(queueSize)
 		);
 		initNodeExecutors(addrs, reqConf);
 		// by default, may be overriden later externally
@@ -143,9 +151,10 @@ implements ObjectLoadExecutor<T> {
 	public final void run() {
 		//
 		try {
+			final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 			do {
 				logMetrics(Markers.PERF_AVG);
-				TimeUnit.SECONDS.sleep(METRICS_UPDATE_PERIOD_SEC); // sleep
+				TimeUnit.SECONDS.sleep(metricsUpdatePeriodSec); // sleep
 			} while(maxCount > counterReqSucc.getCount() + counterReqFail.getCount() + counterRej.getCount());
 			LOG.trace(Markers.MSG, "Max count reached");
 		} catch(final InterruptedException e) {
@@ -182,15 +191,14 @@ implements ObjectLoadExecutor<T> {
 			}
 		};
 		// interrupt the submit execution
+		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		interrupters[1] = new Thread("interrupt-submit-" + getName()) {
 			@Override
 			public final void run() {
 				// interrupt submit executor
 				submitExecutor.shutdown();
 				try {
-					submitExecutor.awaitTermination(
-						RequestConfig.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
-					);
+					submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 				} catch(final InterruptedException e) {
 					ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while awaiting the submitter termination");
 				}
@@ -223,7 +231,7 @@ implements ObjectLoadExecutor<T> {
 		// wait for node executors to become interrupted
 		for(final Thread interrupter : interrupters) {
 			try {
-				interrupter.join(RequestConfig.REQUEST_TIMEOUT_MILLISEC);
+				interrupter.join(reqTimeOutMilliSec);
 				LOG.debug(Markers.MSG, "Finished: \"{}\"", interrupter.getName());
 			} catch(final InterruptedException e) {
 				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while interrupting the node executor");
@@ -276,8 +284,9 @@ implements ObjectLoadExecutor<T> {
 				}
 			}
 		} else {
-			final StorageNodeSubmitTask<T> submitTask = new StorageNodeSubmitTask<>(
-				nodes[(int) submitExecutor.getTaskCount() % nodes.length], dataItem
+			final SubmitDataItemTask<T, ObjectNodeExecutor<T>>
+				submitTask = new SubmitDataItemTask<>(
+				dataItem, nodes[(int) submitExecutor.getTaskCount() % nodes.length]
 			);
 			boolean flagSubmSucc = false;
 			int rejectCount = 0;
@@ -288,12 +297,12 @@ implements ObjectLoadExecutor<T> {
 				} catch(final RejectedExecutionException e) {
 					rejectCount ++;
 					try {
-						Thread.sleep(rejectCount * LoadExecutor.RETRY_DELAY_MILLISEC);
+						Thread.sleep(rejectCount * retryDelayMilliSec);
 					} catch(final InterruptedException ee) {
 						break;
 					}
 				}
-			} while(!flagSubmSucc && rejectCount < LoadExecutor.RETRY_COUNT_MAX);
+			} while(!flagSubmSucc && rejectCount < retryCountMax);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -341,7 +350,7 @@ implements ObjectLoadExecutor<T> {
 		//
 		if(Markers.PERF_SUM.equals(logMarker)) {
 			final double totalReqNanoSeconds = reqDurSnapshot.getMean() * countReqSucc;
-			LOG.info(
+			LOG.debug(
 				Markers.PERF_SUM,
 				String.format(
 					Locale.ROOT, FMT_EFF_SUM,

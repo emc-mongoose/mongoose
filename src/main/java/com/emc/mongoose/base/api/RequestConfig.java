@@ -14,10 +14,6 @@ extends Externalizable {
 	//
 	long serialVersionUID = 42L;
 	//
-	int REQUEST_TIMEOUT_MILLISEC = RunTimeConfig.getInt(
-		"run.request.timeout.millisec"
-	);
-	//
 	String getAPI();
 	RequestConfig<T> setAPI(final String api);
 	//
@@ -41,6 +37,8 @@ extends Externalizable {
 	//
 	boolean getRetries();
 	RequestConfig<T> setRetries(final boolean retryFlag);
+	//
+	boolean getVerifyContentFlag();
 	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
 	//

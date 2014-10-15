@@ -78,6 +78,8 @@ public final class Main {
 		}
 	}
 	//
+	public static RunTimeConfig RUN_TIME_CONFIG;
+	//
 	public static void main(final String args[]) {
 		//
 		initSecurity();
@@ -96,12 +98,14 @@ public final class Main {
 			System.exit(1);
 		}
 		rootLogger.info(
-			Markers.MSG, "Logging configured, run.id=\"{}\"", System.getProperty(KEY_RUN_ID)
+			Markers.MSG, "Run in mode \"{}\", id: \"{}\"",
+			System.getProperty(KEY_RUN_MODE), System.getProperty(KEY_RUN_ID)
 		);
 		// load the properties
-		RunTimeConfig.loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
+		RUN_TIME_CONFIG = new RunTimeConfig();
+		RUN_TIME_CONFIG.loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
-		RunTimeConfig.loadSysProps();
+		RUN_TIME_CONFIG.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
 		//
 		switch (runMode) {
@@ -117,7 +121,7 @@ public final class Main {
 			case VALUE_RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
 				try {
-					WSMock.run();
+					new WSMock(RUN_TIME_CONFIG).run();
 				} catch (final Exception e) {
 					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
 				}
@@ -125,7 +129,7 @@ public final class Main {
 			case VALUE_RUN_MODE_CLIENT:
 			case VALUE_RUN_MODE_STANDALONE:
 			case VALUE_RUN_MODE_COMPAT_CLIENT:
-				Scenario.run();
+				new Scenario(RUN_TIME_CONFIG).run();
 				System.exit(0);
 				break;
 			default:
@@ -137,7 +141,7 @@ public final class Main {
 	}
 	//
 	public static Logger initLogging(final String runMode) {
-		// seet "dir.root" property
+		// set "dir.root" property
 		System.setProperty(KEY_DIR_ROOT, DIR_ROOT);
 		// set "run.id" property with timestamp value if not set before
 		String runId = System.getProperty(KEY_RUN_ID);

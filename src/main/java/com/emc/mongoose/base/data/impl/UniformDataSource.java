@@ -2,6 +2,7 @@ package com.emc.mongoose.base.data.impl;
 //
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -36,8 +37,8 @@ implements DataSource<T> {
 	public UniformDataSource()
 	throws NumberFormatException {
 		this(
-			Long.parseLong(RunTimeConfig.getString("data.ring.seed"), 0x10),
-			(int) RunTimeConfig.getSizeBytes("data.ring.size")
+			Long.parseLong(Main.RUN_TIME_CONFIG.getString("data.ring.seed"), 0x10),
+			(int) Main.RUN_TIME_CONFIG.getSizeBytes("data.ring.size")
 		);
 	}
 	//

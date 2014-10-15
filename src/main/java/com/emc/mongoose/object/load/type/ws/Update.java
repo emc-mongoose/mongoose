@@ -2,6 +2,7 @@ package com.emc.mongoose.object.load.type.ws;
 //
 import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.data.WSObjectImpl;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.object.load.WSLoadExecutorBase;
@@ -20,10 +21,11 @@ extends WSLoadExecutorBase<T> {
 	private final int updatesPerObject;
 	//
 	public Update(
+		final RunTimeConfig runTimeConfig,
 		final String[] addrs, final WSRequestConfig<T> sharedReqConf, final long maxCount,
 		final int threadsPerNode, final String listFile, final int updatesPerObject
 	) {
-		super(addrs, sharedReqConf, maxCount, threadsPerNode, listFile);
+		super(runTimeConfig, addrs, sharedReqConf, maxCount, threadsPerNode, listFile);
 		this.updatesPerObject = updatesPerObject;
 	}
 	//

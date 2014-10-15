@@ -32,8 +32,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
-		super.setProperties(props);
+	public WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+		super.setProperties(runTimeConfig);
 		// TODO swift specific things
 		return this;
 	}

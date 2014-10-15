@@ -6,13 +6,14 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
-import com.emc.mongoose.base.api.RequestConfig;
+import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.object.api.DataObjectRequest;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
 import com.emc.mongoose.object.data.DataObject;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.threading.WorkerFactory;
@@ -57,15 +58,22 @@ implements ObjectNodeExecutor<T> {
 	private final Lock lock = new ReentrantLock();
 	private final Condition condInterrupted = lock.newCondition();
 	//
+	private final RunTimeConfig runTimeConfig;
+	//
 	private ObjectNodeExecutorBase(
+		final RunTimeConfig runTimeConfig,
 		final int threadsPerNode, final ObjectRequestConfig<T> localReqConf,
 		final MetricRegistry parentMetrics, final String parentName
 	) {
 		super(
 			threadsPerNode, threadsPerNode, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(threadsPerNode * REQ_QUEUE_FACTOR),
+			new LinkedBlockingQueue<Runnable>(
+				threadsPerNode * runTimeConfig.getRunRequestQueueFactor()
+			),
 			new WorkerFactory(parentName+'<'+localReqConf.getAddr()+'>')
 		);
+		//
+		this.runTimeConfig = runTimeConfig;
 		this.localReqConf = localReqConf;
 		//
 		counterSubm = parentMetrics.counter(MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_SUBM));
@@ -105,10 +113,14 @@ implements ObjectNodeExecutor<T> {
 	}
 	//
 	protected ObjectNodeExecutorBase(
+		final RunTimeConfig runTimeConfig,
 		final String addr, final int threadsPerNode, final ObjectRequestConfig<T> sharedReqConf,
 		final MetricRegistry parentMetrics, final String parentName
 	) throws CloneNotSupportedException {
-		this(threadsPerNode, sharedReqConf.clone().setAddr(addr), parentMetrics, parentName);
+		this(
+			runTimeConfig, threadsPerNode, sharedReqConf.clone().setAddr(addr),
+			parentMetrics, parentName
+		);
 	}
 	//
 	@Override
@@ -134,7 +146,10 @@ implements ObjectNodeExecutor<T> {
 		}
 		//
 		boolean passed = false;
-		int rejectCount = 0;
+		int
+			rejectCount = 0,
+			retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec(),
+			retryCountMax = runTimeConfig.getRunRetryCountMax();
 		do {
 			try {
 				super.submit(request);
@@ -142,12 +157,12 @@ implements ObjectNodeExecutor<T> {
 			} catch(final RejectedExecutionException e) {
 				rejectCount ++;
 				try {
-					Thread.sleep(rejectCount * LoadExecutor.RETRY_DELAY_MILLISEC);
+					Thread.sleep(rejectCount * retryDelayMilliSec);
 				} catch(final InterruptedException ee) {
 					break;
 				}
 			}
-		} while(!passed && rejectCount < LoadExecutor.RETRY_COUNT_MAX);
+		} while(!passed && rejectCount < retryCountMax);
 		//
 		if(dataItem!=null) {
 			if(passed) {
@@ -172,7 +187,6 @@ implements ObjectNodeExecutor<T> {
 		}
 	}
 	//
-	protected abstract boolean isResponseValid(final DataObjectRequest<T> request);
 	@Override @SuppressWarnings("unchecked")
 	protected final void afterExecute(final Runnable reqTask, final Throwable thrown) {
 		if(thrown!=null) {
@@ -185,7 +199,8 @@ implements ObjectNodeExecutor<T> {
 					request = (DataObjectRequest<T>) Future.class.cast(reqTask).get()
 			) {
 				final T object = request.getDataItem();
-				if(isResponseValid(request)) {
+				final Request.Result result = request.getResult();
+				if(result == Request.Result.SUCC) {
 					// update the metrics with success
 					counterReqSucc.inc();
 					counterReqSuccParent.inc();
@@ -259,10 +274,8 @@ implements ObjectNodeExecutor<T> {
 						} else if(IOException.class.isInstance(cause)) {
 							ExceptionHandler.trace(LOG, Level.WARN, cause, "Response failure");
 						} else {
-							LOG.error(Markers.ERR, "Request execution failure");
-							if(LOG.isTraceEnabled(Markers.ERR) && cause!=null) {
-								LOG.trace(Markers.ERR, e.toString(), cause);
-							}
+							ExceptionHandler.trace(LOG, Level.ERROR, cause, "Request execution failure");
+							cause.printStackTrace();
 						}
 					}
 				}
@@ -372,11 +385,12 @@ implements ObjectNodeExecutor<T> {
 		localReqConf.setRetries(false);
 		shutdown();
 		try {
+			final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 			LOG.debug(
 				Markers.MSG, "Wait at most {} ms before terminating {}+{} tasks",
-				RequestConfig.REQUEST_TIMEOUT_MILLISEC, getQueue().size(), getActiveCount()
+				reqTimeOutMilliSec, getQueue().size(), getActiveCount()
 			);
-			awaitTermination(RequestConfig.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS);
+			awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.ERR, "Interrupted while waiting the submitted tasks to finish");
 		}

@@ -25,8 +25,6 @@ extends ObjectRequestConfig<T> {
 	//
 	String
 		DEFAULT_ENC = StandardCharsets.UTF_8.name(),
-		DEFAULT_USERAGENT = RunTimeConfig.getString("run.name") + '/' +
-			RunTimeConfig.getString("run.version"),
 		//
 		KEY_EMC_ACCEPT = "x-emc-accept",
 		KEY_EMC_DATE = "x-emc-date",
@@ -35,8 +33,6 @@ extends ObjectRequestConfig<T> {
 		KEY_EMC_SIG = "x-emc-signature",
 		KEY_EMC_UID = "x-emc-uid",
 		//
-		VALUE_SIGN_METHOD = RunTimeConfig.getString("http.sign.method"),
-		REQ_DATA_TYPE = RunTimeConfig.getString("http.content.type"),
 		VALUE_KEEP_ALIVE = "keep-alive",
 		MSG_TMPL_NOT_SPECIFIED = "Required property \"{}\" is not specifed",
 		MSG_TMPL_RANGE_BYTES = "bytes=%d-%d",
@@ -92,6 +88,8 @@ extends ObjectRequestConfig<T> {
 	WSRequestConfig<T> setClient(final CloseableHttpClient httpClient);
 	//
 	Map<String, String> getSharedHeadersMap();
+	//
+	String getUserAgent();
 	//
 	void applyDataItem(final HttpRequest httpRequest, T dataItem)
 	throws URISyntaxException;

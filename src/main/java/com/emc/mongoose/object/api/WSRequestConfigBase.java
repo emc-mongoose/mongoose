@@ -50,6 +50,7 @@ implements WSRequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static long serialVersionUID = 42L;
+	private final String userAgent, signMethod;
 	//
 	private final HttpRequestRetryHandler retryHandler = new HttpRequestRetryHandler() {
 		//
@@ -70,7 +71,7 @@ implements WSRequestConfig<T> {
 	};
 	//
 	public static WSRequestConfigBase getInstance() {
-		return newInstanceFor(RunTimeConfig.getString("storage.api"));
+		return newInstanceFor(Main.RUN_TIME_CONFIG.getStorageApi());
 	}
 	//
 	private final static String NAME_CLS_IMPL = "WSRequestConfigImpl";
@@ -106,12 +107,18 @@ implements WSRequestConfig<T> {
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException {
 		super();
-		mac = Mac.getInstance(VALUE_SIGN_METHOD);
+		signMethod = runTimeConfig.getHttpSignMethod();
+		mac = Mac.getInstance(signMethod);
+		final String
+			runName = runTimeConfig.getRunName(),
+			runVersion = runTimeConfig.getRunVersion(),
+			contentType = runTimeConfig.getHttpContentType();
+		userAgent = runName + '/' + runVersion;
 		sharedHeadersMap = new ConcurrentHashMap<String, String>() {
 			{
-				put(HttpHeaders.USER_AGENT, DEFAULT_USERAGENT);
+				put(HttpHeaders.USER_AGENT, userAgent);
 				put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
-				put(HttpHeaders.CONTENT_TYPE, REQ_DATA_TYPE);
+				put(HttpHeaders.CONTENT_TYPE, contentType);
 			}
 		};
 	}
@@ -191,25 +198,25 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> setProperties(final RunTimeConfig props) {
+	public WSRequestConfigBase<T> setProperties(final RunTimeConfig runTimeConfig) {
 		//
 		String paramName = "storage.scheme";
 		try {
-			setScheme(RunTimeConfig.getString(paramName));
+			setScheme(this.runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
 		//
 		paramName = "data.namespace";
 		try {
-			setNameSpace(RunTimeConfig.getString(paramName));
+			setNameSpace(this.runTimeConfig.getDataNameSpace());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalStateException e) {
 			LOG.debug(Markers.ERR, "Failed to set the namespace", e);
 		}
 		//
-		super.setProperties(props);
+		super.setProperties(runTimeConfig);
 		//
 		return this;
 	}
@@ -219,7 +226,7 @@ implements WSRequestConfig<T> {
 		SecretKeySpec keySpec;
 		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
 		try {
-			keySpec = new SecretKeySpec(secret.getBytes(DEFAULT_ENC), VALUE_SIGN_METHOD);
+			keySpec = new SecretKeySpec(secret.getBytes(DEFAULT_ENC), signMethod);
 			synchronized(mac) {
 				mac.init(keySpec);
 			}
@@ -248,6 +255,11 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
+	public final String getUserAgent() {
+		return userAgent;
+	}
+	//
+	@Override
 	public final CloseableHttpClient getClient() {
 		if(httpClient == null) {
 			httpClient = HttpClientBuilder
@@ -256,7 +268,7 @@ implements WSRequestConfig<T> {
 				.setDefaultHeaders(getSharedHeaders())
 				.setRetryHandler(getRetryHandler())
 				.disableCookieManagement()
-				.setUserAgent(WSRequestConfig.DEFAULT_USERAGENT)
+				.setUserAgent(userAgent)
 				.build();
 		}
 		return httpClient;
