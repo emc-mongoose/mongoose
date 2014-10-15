@@ -265,8 +265,8 @@ public class StartServlet extends HttpServlet {
         return thread.getId();
     }
 
-    public static void interruptWSMock() {
-        threads.get(0).interrupt();
+    public static void interruptMongoose() {
+        threads.get(threads.size() - 1).interrupt();
     }
 
 }
