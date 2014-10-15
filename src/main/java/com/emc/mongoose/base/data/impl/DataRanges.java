@@ -1,6 +1,7 @@
 package com.emc.mongoose.base.data.impl;
 //
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
@@ -94,8 +95,10 @@ implements AppendableDataItem, UpdatableDataItem {
 	@Override
 	public String toString() {
 		return String.format(
-			FMT_META_INFO, super.toString(),
-			layerNum, Hex.encodeHexString(maskRangesHistory.toByteArray())
+			FMT_META_INFO,
+			super.toString(),
+			layerNum,
+			maskRangesHistory.isEmpty() ? "0" : Hex.encodeHexString(maskRangesHistory.toByteArray())
 		);
 	}
 	//

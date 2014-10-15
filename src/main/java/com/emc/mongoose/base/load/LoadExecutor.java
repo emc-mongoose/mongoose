@@ -15,12 +15,7 @@ import java.util.Locale;
 public interface LoadExecutor<T extends DataItem>
 extends Producer<T>, Consumer<T> {
 	//
-	static int
-		METRICS_UPDATE_PERIOD_SEC = RunTimeConfig.getInt("run.metrics.period.sec"),
-		RETRY_DELAY_MILLISEC = RunTimeConfig.getInt("run.retry.delay.millisec"),
-		RETRY_COUNT_MAX = RunTimeConfig.getInt("run.retry.count.max"),
-		REQ_QUEUE_FACTOR = RunTimeConfig.getInt("run.request.queue.factor"),
-		BILLION = 1000000000, MIB = 0x100000;
+	static int BILLION = 1000000000, MIB = 0x100000;
 	//
 	static String
 		METRIC_NAME_SUCC = "succ",

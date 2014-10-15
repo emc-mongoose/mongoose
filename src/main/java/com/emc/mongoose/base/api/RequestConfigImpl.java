@@ -2,6 +2,7 @@ package com.emc.mongoose.base.api;
 //
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.DataSource;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
 import com.emc.mongoose.util.logging.Markers;
@@ -25,12 +26,14 @@ implements RequestConfig<T>, Cloneable {
 	protected int port;
 	protected Request.Type loadType;
 	protected DataSource<T> dataSrc;
-	protected volatile boolean retryFlag;
+	protected volatile boolean retryFlag, verifyContentFlag;
+	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
 	//
 	@SuppressWarnings("unchecked")
 	public RequestConfigImpl() {
 		dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
-		retryFlag = RunTimeConfig.getBoolean("run.request.retries");
+		retryFlag = runTimeConfig.getRunRequestRetries();
+		verifyContentFlag = runTimeConfig.getReadVerifyContent();
 	}
 	//
 	@Override
@@ -121,13 +124,19 @@ implements RequestConfig<T>, Cloneable {
 	}
 	//
 	@Override
-	public RequestConfigImpl<T> setProperties(final RunTimeConfig props) {
-		setAPI(RunTimeConfig.getString("storage.api"));
-		LOG.debug(Markers.MSG, "Using API: \"{}\"", api);
-		setPort(RunTimeConfig.getInt("api." + api + ".port"));
-		setUserName(RunTimeConfig.getString("auth.id"));
-		setSecret(RunTimeConfig.getString("auth.secret"));
-		setRetries(RunTimeConfig.getBoolean("run.request.retries"));
+	public final boolean getVerifyContentFlag() {
+		return verifyContentFlag;
+	}
+	//
+	@Override
+	public RequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+		this.runTimeConfig = runTimeConfig;
+		final String api = runTimeConfig.getStorageApi();
+		setAPI(api);
+		setPort(this.runTimeConfig.getApiPort(api));
+		setUserName(this.runTimeConfig.getAuthId());
+		setSecret(this.runTimeConfig.getAuthSecret());
+		setRetries(this.runTimeConfig.getRunRequestRetries());
 		return this;
 	}
 	//
@@ -136,13 +145,9 @@ implements RequestConfig<T>, Cloneable {
 	throws CloneNotSupportedException {
 		final RequestConfigImpl<T> copy = (RequestConfigImpl<T>) super.clone();
 		return copy
-			.setAPI(getAPI())
+			.setProperties(runTimeConfig)
 			.setAddr(getAddr())
-			.setLoadType(getLoadType())
-			.setPort(getPort())
-			.setUserName(getUserName())
-			.setSecret(getSecret())
-			.setRetries(getRetries());
+			.setLoadType(getLoadType());
 	}
 	//
 	@Override

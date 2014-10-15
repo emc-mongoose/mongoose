@@ -5,11 +5,9 @@ import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.object.load.WSLoadExecutorBase;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -27,11 +25,12 @@ extends WSLoadExecutorBase<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public Create(
+		final RunTimeConfig runTimeConfig,
 		final String[] addrs, final WSRequestConfig<T> recConf, final long maxCount,
 		final int threadsPerNode, final String listFile,
 		final long minObjSize, final long maxObjSize
 	) throws IOException, CloneNotSupportedException {
-		super(addrs, recConf, maxCount, threadsPerNode, listFile);
+		super(runTimeConfig, addrs, recConf, maxCount, threadsPerNode, listFile);
 		if(producer==null) { // otherwise producer is reader specified by "listFile"
 			producer = new WSDataItemProducer(minObjSize, maxObjSize);
 			producer.setConsumer(this);

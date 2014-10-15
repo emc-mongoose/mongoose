@@ -31,10 +31,10 @@ extends WSRequestConfigBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String
 		FMT_PATH = "/%s/%x",
-		FMT_AUTH_VALUE = RunTimeConfig.getString("api.s3.auth.prefix") + " %s:%s",
 		KEY_BUCKET = "api.s3.bucket",
 		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
+	private final String fmtAuthValue;
 	//
 	private WSBucketImpl<T> bucket;
 	//
@@ -42,6 +42,7 @@ extends WSRequestConfigBase<T> {
 	throws NoSuchAlgorithmException {
 		super();
 		api = WSRequestConfigImpl.class.getSimpleName();
+		fmtAuthValue = runTimeConfig.getString("api.s3.auth.prefix") + " %s:%s";
 	}
 	//
 	public final WSBucketImpl<T> getBucket() {
@@ -54,11 +55,11 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
-		super.setProperties(props);
+	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+		super.setProperties(runTimeConfig);
 		//
 		try {
-			setBucket(new WSBucketImpl<T>(this, RunTimeConfig.getString(KEY_BUCKET)));
+			setBucket(new WSBucketImpl<T>(this, this.runTimeConfig.getString(KEY_BUCKET)));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET);
 		}
@@ -120,7 +121,7 @@ extends WSRequestConfigBase<T> {
 		httpRequest.addHeader(HttpHeaders.CONTENT_MD5, ""); // checksum of the data item is not avalable before streaming
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
-			String.format(FMT_AUTH_VALUE, userName, getSignature(getCanonical(httpRequest)))
+			String.format(fmtAuthValue, userName, getSignature(getCanonical(httpRequest)))
 		);
 		httpRequest.removeHeader(httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5)); // remove temporary header
 	}
@@ -186,7 +187,7 @@ extends WSRequestConfigBase<T> {
 		} else {
 			bucket.create();
 			if(bucket.exists()) {
-				RunTimeConfig.set(KEY_BUCKET, bucketName);
+				runTimeConfig.set(KEY_BUCKET, bucketName);
 			} else {
 				throw new IllegalStateException(
 					String.format(FMT_MSG_ERR_BUCKET_NOT_EXIST, bucketName)

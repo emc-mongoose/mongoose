@@ -9,6 +9,7 @@ import com.emc.mongoose.object.load.client.WSLoadBuilderClientImpl;
 import com.emc.mongoose.object.load.client.WSLoadClient;
 import com.emc.mongoose.object.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.object.load.server.WSLoadBuilderSvcImpl;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.run.WSMock;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -113,7 +114,7 @@ public class StartServlet extends HttpServlet {
                     //
                     try {
                         final Request.Type loadType = Request.Type.valueOf(
-                                RunTimeConfig.getString("scenario.single.load").toUpperCase()
+							Main.RUN_TIME_CONFIG.getString("scenario.single.load").toUpperCase()
                         );
                         loadBuilderClient.setLoadType(loadType);
                     } catch (NoSuchElementException e) {
@@ -129,7 +130,7 @@ public class StartServlet extends HttpServlet {
                     final String[] timeOutArray;
                     //
                     try {
-                        timeOutString = RunTimeConfig.getString("run.time");
+                        timeOutString = Main.RUN_TIME_CONFIG.getString("run.time");
                         timeOutArray = timeOutString.split("\\.");
                     } catch (NoSuchElementException e) {
                         ExceptionHandler.trace(LOG, Level.ERROR, e, "No timeout specified, try arg -Drun.time=<INTEGER>.<UNIT> to override");
@@ -192,7 +193,7 @@ public class StartServlet extends HttpServlet {
                     //
                     try {
                         final Request.Type loadType = Request.Type.valueOf(
-                                RunTimeConfig.getString("scenario.single.load").toUpperCase()
+							Main.RUN_TIME_CONFIG.getString("scenario.single.load").toUpperCase()
                         );
                         loadBuilder.setLoadType(loadType);
                     } catch (NoSuchElementException e) {
@@ -208,7 +209,7 @@ public class StartServlet extends HttpServlet {
                     final String[] timeOutArray;
                     //
                     try {
-                        timeOutString = RunTimeConfig.getString("run.time");
+                        timeOutString = Main.RUN_TIME_CONFIG.getString("run.time");
                         timeOutArray = timeOutString.split("\\.");
                     } catch (NoSuchElementException e) {
                         ExceptionHandler.trace(LOG, Level.ERROR, e, "No timeout specified, try arg -Drun.time=<INTEGER>.<UNIT> to override");
@@ -254,12 +255,7 @@ public class StartServlet extends HttpServlet {
     }
 
     private long runWSMock() {
-        Thread thread = new Thread() {
-            @Override
-            public void run() {
-                WSMock.run();
-            }
-        };
+        final Thread thread = new Thread(new WSMock(Main.RUN_TIME_CONFIG));
         thread.start();
         threads.add(thread);
         return thread.getId();

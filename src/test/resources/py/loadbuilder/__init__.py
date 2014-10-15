@@ -6,20 +6,19 @@ from org.apache.logging.log4j import LogManager
 LOG = LogManager.getLogger()
 #
 from com.emc.mongoose.run import Main
-from com.emc.mongoose.util.conf import RunTimeConfig
 from com.emc.mongoose.util.logging import Markers
 #
 from java.util import NoSuchElementException
 #
 mode = None
 try:
-	mode = RunTimeConfig.getString("run.mode")
+	mode = Main.RUN_TIME_CONFIG.getRunMode()
 except NoSuchElementException:
 	LOG.fatal(Markers.ERR, "Launch mode is not specified, use -Drun.mode=<VALUE> argument")
 	exit()
-LOG.info(Markers.MSG, "Launch mode is \"{}\"", mode)
 #
 INSTANCE = None
+#
 from org.apache.commons.configuration import ConversionException
 if mode == Main.VALUE_RUN_MODE_CLIENT or mode == Main.VALUE_RUN_MODE_COMPAT_CLIENT:
 	from com.emc.mongoose.object.load.client import WSLoadBuilderClientImpl
@@ -38,9 +37,10 @@ if mode == Main.VALUE_RUN_MODE_CLIENT or mode == Main.VALUE_RUN_MODE_COMPAT_CLIE
 		exit()
 else: # standalone
 	from com.emc.mongoose.object.load import WSLoadBuilderImpl
+	#
 	INSTANCE = WSLoadBuilderImpl()
 #
 if INSTANCE is None:
 	LOG.fatal(Markers.ERR, "No load builder instanced")
 	exit()
-INSTANCE.setProperties(RunTimeConfig())
+INSTANCE.setProperties(Main.RUN_TIME_CONFIG)
