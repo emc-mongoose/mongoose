@@ -14,6 +14,7 @@ import java.util.List;
 public class WSSubTenant<T extends WSObject>
 implements SubTenant<T> {
 	//
+	@SuppressWarnings("FieldCanBeLocal")
 	private final WSRequestConfig<T> reqConf;
 	private final String name;
 	//

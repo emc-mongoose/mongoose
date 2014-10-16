@@ -5,7 +5,6 @@ import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import org.apache.http.HttpRequest;
-import org.apache.http.client.methods.HttpRequestBase;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -24,7 +23,7 @@ extends WSRequestConfigBase<T> {
 		api = WSRequestConfigImpl.class.getSimpleName();
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("UnnecessaryLocalVariable")
 	public WSRequestConfigImpl<T> clone()
 	throws CloneNotSupportedException {
 		final WSRequestConfigImpl copy = (WSRequestConfigImpl<T>) super.clone();
@@ -33,8 +32,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
-		super.setProperties(props);
+	public WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+		super.setProperties(runTimeConfig);
 		// TODO swift specific things
 		return this;
 	}
@@ -54,12 +53,12 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final HttpRequestBase httpRequest, final WSObject dataItem) {
+	protected final void applyURI(final HttpRequest httpRequest, final WSObject dataItem) {
 		// TODO swift specific things
 	}
 	//
 	@Override
-	protected final void applyAuthHeader(final HttpRequestBase httpRequest) {
+	protected final void applyAuthHeader(final HttpRequest httpRequest) {
 		// TODO swift specific things
 	}
 	//

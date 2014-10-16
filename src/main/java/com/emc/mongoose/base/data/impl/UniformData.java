@@ -1,6 +1,7 @@
 package com.emc.mongoose.base.data.impl;
 //
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -39,6 +40,7 @@ implements DataItem {
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
 	//
+	public final static int MAX_PAGE_SIZE = (int) Main.RUN_TIME_CONFIG.getDataPageSize();
 	protected long offset = 0;
 	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////

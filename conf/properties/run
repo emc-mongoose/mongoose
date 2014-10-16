@@ -1,6 +1,6 @@
 #
 name:							mongoose
-version:						0.2
+version:						0.3
 
 # may be "standalone", "server" or "client"
 mode:							standalone

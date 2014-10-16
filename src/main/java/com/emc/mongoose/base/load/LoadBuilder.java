@@ -6,7 +6,6 @@ import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.rmi.RemoteException;
 /**
  Created by kurila on 28.04.14.

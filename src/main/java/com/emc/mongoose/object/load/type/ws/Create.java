@@ -25,11 +25,12 @@ extends WSLoadExecutorBase<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public Create(
+		final RunTimeConfig runTimeConfig,
 		final String[] addrs, final WSRequestConfig<T> recConf, final long maxCount,
 		final int threadsPerNode, final String listFile,
 		final long minObjSize, final long maxObjSize
 	) throws IOException, CloneNotSupportedException {
-		super(addrs, recConf, maxCount, threadsPerNode, listFile);
+		super(runTimeConfig, addrs, recConf, maxCount, threadsPerNode, listFile);
 		if(producer==null) { // otherwise producer is reader specified by "listFile"
 			producer = new WSDataItemProducer(minObjSize, maxObjSize);
 			producer.setConsumer(this);
@@ -50,8 +51,7 @@ extends WSLoadExecutorBase<T> {
 		}
 		//
 		@Override
-		public final void setConsumer(final Consumer<T> consumer)
-		throws RemoteException {
+		public final void setConsumer(final Consumer<T> consumer) {
 			this.consumer = consumer;
 		}
 		//

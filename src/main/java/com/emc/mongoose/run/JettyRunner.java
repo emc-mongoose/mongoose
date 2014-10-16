@@ -1,11 +1,16 @@
 package com.emc.mongoose.run;
 
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
+import org.omg.SendingContext.RunTime;
 
 import java.nio.file.Paths;
 
@@ -15,6 +20,7 @@ import java.nio.file.Paths;
 public class JettyRunner {
 
     private final static Logger LOG = LogManager.getLogger();
+    private final RunTimeConfig runTimeConfig;
 
     public final static int JETTY_PORT = 8080;
 
@@ -27,17 +33,28 @@ public class JettyRunner {
             webDescriptorBaseDir;
 
     static {
-        webResourceBaseDir = Paths.get(Main.DIR_ROOT, DIR_WEBAPP).toString();
-        webDescriptorBaseDir = Paths.get(Main.DIR_ROOT, DIR_WEBAPP, DIR_WEBINF).resolve("web.xml").toString();
+        webResourceBaseDir = Paths
+			.get(Main.DIR_ROOT, DIR_WEBAPP)
+			.toString();
+        webDescriptorBaseDir = Paths
+			.get(Main.DIR_ROOT, DIR_WEBAPP, DIR_WEBINF)
+			.resolve("web.xml").toString();
     }
 
-    public static void run() {
+    public JettyRunner(RunTimeConfig runTimeConfig) {
+        this.runTimeConfig = runTimeConfig;
+    }
+
+    public void run() {
         final Server server = new Server(JETTY_PORT);
         //
         final WebAppContext webAppContext = new WebAppContext();
+        webAppContext.setContextPath("/");
         webAppContext.setResourceBase(webResourceBaseDir);
         webAppContext.setDescriptor(webDescriptorBaseDir);
         webAppContext.setParentLoaderPriority(true);
+        webAppContext.setAttribute("runTimeConfig", runTimeConfig);
+
         //
         server.setHandler(webAppContext);
         //

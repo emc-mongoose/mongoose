@@ -7,6 +7,7 @@ import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.object.load.ObjectLoadExecutor;
 import com.emc.mongoose.object.load.server.ObjectLoadSvc;
 import com.emc.mongoose.object.load.type.ws.Create;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.RecordFrameBuffer;
 import com.emc.mongoose.util.remote.Service;
@@ -29,11 +30,12 @@ implements ObjectLoadSvc<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public CreateSvc(
+		final RunTimeConfig runTimeConfig,
 		final String[] addrs, final WSRequestConfig<T> reqConf, final long maxCount,
 		final int threadsPerNode, final long minObjSize, final long maxObjSize
 	)
 	throws IOException, CloneNotSupportedException {
-		super(addrs, reqConf, maxCount, threadsPerNode, null, minObjSize, maxObjSize);
+		super(runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, null, minObjSize, maxObjSize);
 		// by default, may be overriden later externally:
 		super.setConsumer(new FrameBuffConsumer<T>());
 	}

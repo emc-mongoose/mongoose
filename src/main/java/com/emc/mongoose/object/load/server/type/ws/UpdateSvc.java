@@ -7,6 +7,7 @@ import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.object.load.ObjectLoadExecutor;
 import com.emc.mongoose.object.load.server.ObjectLoadSvc;
 import com.emc.mongoose.object.load.type.ws.Update;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.RecordFrameBuffer;
 import com.emc.mongoose.util.remote.Service;
@@ -29,10 +30,11 @@ implements ObjectLoadSvc<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public UpdateSvc(
+		final RunTimeConfig runTimeConfig,
 		final String[] addrs, final WSRequestConfig<T> reqConf, final long maxCount,
 		final int threadsPerNode, final int updatesPerObject
 	) {
-		super(addrs, reqConf, maxCount, threadsPerNode, null, updatesPerObject);
+		super(runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, null, updatesPerObject);
 		// by default, may be overriden later externally:
 		super.setConsumer(new FrameBuffConsumer<T>());
 	}

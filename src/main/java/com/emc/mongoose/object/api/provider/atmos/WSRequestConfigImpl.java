@@ -26,11 +26,8 @@ public final class WSRequestConfigImpl<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	public final static String
-		KEY_SUBTENANT = "api.atmos.subtenant",
-		FMT_PATH =
-			"/" + RunTimeConfig.getString("api.atmos.path.rest") +
-			"/" + RunTimeConfig.getString("api.atmos.interface") + "/%x";
+	private final static String KEY_SUBTENANT = "api.atmos.subtenant";
+	public final String fmtPath;
 	//
 	private WSSubTenant<T> subTenant;
 	//
@@ -38,6 +35,9 @@ extends WSRequestConfigBase<T> {
 	throws NoSuchAlgorithmException {
 		super();
 		api = WSRequestConfigImpl.class.getSimpleName();
+		fmtPath =
+			"/" + runTimeConfig.getString("api.atmos.path.rest") +
+			"/" + runTimeConfig.getString("api.atmos.interface") + "/%x";
 	}
 	//
 	public final WSSubTenant<T> getSubTenant() {
@@ -67,11 +67,11 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig props) {
-		super.setProperties(props);
+	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+		super.setProperties(runTimeConfig);
 		//
 		try {
-			setSubTenant(new WSSubTenant<>(this, RunTimeConfig.getString(KEY_SUBTENANT)));
+			setSubTenant(new WSSubTenant<>(this, this.runTimeConfig.getString(KEY_SUBTENANT)));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_SUBTENANT);
 		}
@@ -103,7 +103,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final HttpRequestBase httpRequest, final WSObject dataItem)
+	protected final void applyURI(final HttpRequest httpRequest, final WSObject dataItem)
 	throws URISyntaxException {
 		if(httpRequest==null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
@@ -112,16 +112,16 @@ extends WSRequestConfigBase<T> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		synchronized(uriBuilder) {
-			httpRequest.setURI(
+			HttpRequestBase.class.cast(httpRequest).setURI(
 				uriBuilder.setPath(
-					String.format(FMT_PATH, dataItem.getId())
+					String.format(fmtPath, dataItem.getId())
 				).build()
 			);
 		}
 	}
 	//
 	@Override
-	protected final void applyAuthHeader(final HttpRequestBase httpRequest) {
+	protected final void applyAuthHeader(final HttpRequest httpRequest) {
 		if(httpRequest.getLastHeader(HttpHeaders.RANGE)==null) {
 			httpRequest.addHeader(HttpHeaders.RANGE, ""); // temporary required for canonical form
 		}
@@ -197,7 +197,7 @@ extends WSRequestConfigBase<T> {
 		} else {
 			subTenant.create();
 			if(subTenant.exists()) {
-				RunTimeConfig.set(KEY_SUBTENANT, subTenantName);
+				runTimeConfig.set(KEY_SUBTENANT, subTenantName);
 			} else {
 				throw new IllegalStateException(
 					String.format("Created subtenant \"%s\" doesn't exist", subTenantName)

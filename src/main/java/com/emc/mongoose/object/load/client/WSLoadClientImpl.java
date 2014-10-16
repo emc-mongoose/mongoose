@@ -1,10 +1,9 @@
 package com.emc.mongoose.object.load.client;
 //
-import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.base.load.SubmitDataItemTask;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.object.api.WSRequestConfig;
-import com.emc.mongoose.object.api.provider.s3.WSRequestConfigImpl;
 import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -65,17 +64,10 @@ implements WSLoadClient<T> {
 	private final Map<String, JMXConnector> remoteJMXConnMap;
 	private final Map<String, MBeanServerConnection> mBeanSrvConnMap;
 	private final MetricRegistry metrics = new MetricRegistry();
-	private final static MBeanServer MBEAN_SERVER = ServiceUtils.getMBeanServer(
-		RunTimeConfig.getInt("remote.monitor.port")
-	);
 	private final static String
 		DEFAULT_DOMAIN = "metrics",
 		FMT_MSG_FAIL_FETCH_VALUE = "Failed to fetch the value for \"%s\" from %s";
-	protected final JmxReporter metricsReporter = JmxReporter.forRegistry(metrics)
-		.convertDurationsTo(TimeUnit.SECONDS)
-		.convertRatesTo(TimeUnit.SECONDS)
-		.registerWith(MBEAN_SERVER)
-		.build();
+	protected final JmxReporter metricsReporter;
 	//
 	private final static String
 		KEY_NAME = "name",
@@ -109,10 +101,13 @@ implements WSLoadClient<T> {
 			return gauge.getValue();
 		}
 	}
+	@SuppressWarnings("FieldCanBeLocal")
 	private final Gauge<Long>
 		metricSuccCount, metricByteCount;
+	@SuppressWarnings("FieldCanBeLocal")
 	private final Gauge<Double>
 		metricBWMean, metricBW1Min, metricBW5Min, metricBW15Min;
+	@SuppressWarnings("FieldCanBeLocal")
 	private final GetGaugeValue<Long>
 		countSubmGetter, countRejGetter, countSuccGetter, countFailGetter,
 		minDurGetter, maxDurGetter, countBytesGetter, countNanoSecGetter;
@@ -120,18 +115,34 @@ implements WSLoadClient<T> {
 		meanTPGetter, oneMinTPGetter, fiveMinTPGetter, fifteenMinTPGetter, meanBWGetter,
 		oneMinBWGetter, fiveMinBWGetter, fifteenMinBWGetter, medDurGetter, avgDurGetter;
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private long maxCount;
+	private volatile long maxCount;
 	//
 	private final ThreadPoolExecutor submitExecutor, mgmtConnExecutor;
 	private final LogConsumer<T> metaInfoLog;
+	private final RunTimeConfig runTimeConfig;
+	private final int retryCountMax, retryDelayMilliSec;
+	@SuppressWarnings("FieldCanBeLocal")
 	private final WSRequestConfig<T> reqConf;
 	//
 	public WSLoadClientImpl(
+		final RunTimeConfig runTimeConfig,
 		final Map<String, LoadSvc<T>> remoteLoadMap,
 		final Map<String, JMXConnector> remoteJMXConnMap,
 		final WSRequestConfig<T> reqConf,
 		final long maxCount, final int threadCountPerServer
 	) {
+		//
+		this.runTimeConfig = runTimeConfig;
+		retryCountMax = runTimeConfig.getRunRetryCountMax();
+		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
+		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
+			runTimeConfig.getRemoteMonitorPort()
+		);
+		metricsReporter = JmxReporter.forRegistry(metrics)
+			.convertDurationsTo(TimeUnit.SECONDS)
+			.convertRatesTo(TimeUnit.SECONDS)
+			.registerWith(mBeanServer)
+			.build();
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
 		this.remoteJMXConnMap = remoteJMXConnMap;
@@ -315,16 +326,18 @@ implements WSLoadClient<T> {
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metaInfoLog = new LogConsumer<>();
 		////////////////////////////////////////////////////////////////////////////////////////////
-		int threadCount = threadCountPerServer*remoteLoadMap.size();
+		int
+			threadCount = threadCountPerServer*remoteLoadMap.size(),
+			queueSize = threadCount * runTimeConfig.getRunRequestQueueFactor();
 		submitExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(threadCount*REQ_QUEUE_FACTOR)
+			new LinkedBlockingQueue<Runnable>(queueSize)
 		);
 		//
 		threadCount = remoteLoadMap.size()*20; // metric count is 18
 		mgmtConnExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(threadCount*REQ_QUEUE_FACTOR)
+			new LinkedBlockingQueue<Runnable>(queueSize)
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricsReporter.start();
@@ -638,8 +651,14 @@ implements WSLoadClient<T> {
 			//
 			try {
 				nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
-			} catch(final InterruptedException|ExecutionException e) {
+			} catch(final ExecutionException e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
+			} catch(final InterruptedException e) {
+				try {
+					nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
+				} catch(final InterruptedException|ExecutionException ee) {
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
+				}
 			}
 			//
 			if(nextMetaInfoFrame!=null && nextMetaInfoFrame.size()>0) {
@@ -754,13 +773,14 @@ implements WSLoadClient<T> {
 	public final void run() {
 		//
 		long countDone;
+		final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 		//
 		try {
 			do {
 				try {
 					logMetrics(Markers.PERF_AVG);
 					logMetaInfoFrames();
-					TimeUnit.SECONDS.sleep(METRICS_UPDATE_PERIOD_SEC); // sleep
+					TimeUnit.SECONDS.sleep(metricsUpdatePeriodSec); // sleep
 					countDone = countReqSucc.get() + countReqFail.get() + countRej.get();
 				} catch(final InterruptedException e) {
 					break;
@@ -778,6 +798,7 @@ implements WSLoadClient<T> {
 	public final void interrupt() {
 		LOG.debug(Markers.MSG, "Interrupting {}...", getName());
 		//
+		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		final LinkedList<Thread> svcInterruptThreads = new LinkedList<>();
 		svcInterruptThreads.add(
 			new Thread("interrupt-submit-" + getName()) {
@@ -785,9 +806,7 @@ implements WSLoadClient<T> {
 				public final void run() {
 					submitExecutor.shutdown();
 					try {
-						submitExecutor.awaitTermination(
-							RequestConfig.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
-						);
+						submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.ERR, "Awaiting the submit executor termination has been interrupted");
 					}
@@ -826,7 +845,7 @@ implements WSLoadClient<T> {
 		//
 		for(final Thread svcInterruptThread: svcInterruptThreads) {
 			try {
-				svcInterruptThread.join(RequestConfig.REQUEST_TIMEOUT_MILLISEC);
+				svcInterruptThread.join(reqTimeOutMilliSec);
 				LOG.debug(Markers.MSG, "Finished: \"{}\"", svcInterruptThread);
 			} catch(final InterruptedException e) {
 				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
@@ -901,27 +920,6 @@ implements WSLoadClient<T> {
 		LOG.debug(Markers.MSG, "Closed {}", getName());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static class SubmitTask<T extends WSObject>
-	implements Runnable {
-		//
-		private final LoadExecutor<T> loadExecSvc;
-		private final T dataItem;
-		//
-		private SubmitTask(final LoadExecutor<T> loadExecSvc, final T dataItem) {
-			this.loadExecSvc = loadExecSvc;
-			this.dataItem = dataItem;
-		}
-		//
-		@Override
-		public final void run() {
-			try {
-				loadExecSvc.submit(dataItem);
-			} catch(final RemoteException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Data item submitting failure");
-			}
-		}
-	}
-	//
 	@Override
 	public final void submit(final T dataItem) {
 		if(maxCount > submitExecutor.getTaskCount()) {
@@ -936,7 +934,9 @@ implements WSLoadClient<T> {
 				final String addr = String.class.cast(
 					addrs[(int) submitExecutor.getTaskCount() % addrs.length]
 				);
-				final SubmitTask<T> submTask = new SubmitTask<>(remoteLoadMap.get(addr), dataItem);
+				final SubmitDataItemTask<T, LoadSvc<T>> submTask = new SubmitDataItemTask<>(
+					dataItem, remoteLoadMap.get(addr)
+				);
 				boolean passed = false;
 				int rejectCount = 0;
 				do {
@@ -946,12 +946,12 @@ implements WSLoadClient<T> {
 					} catch(final RejectedExecutionException e) {
 						rejectCount ++;
 						try {
-							Thread.sleep(rejectCount * LoadExecutor.RETRY_DELAY_MILLISEC);
+							Thread.sleep(rejectCount * retryDelayMilliSec);
 						} catch(final InterruptedException ee) {
 							break;
 						}
 					}
-				} while(!passed && rejectCount < LoadExecutor.RETRY_COUNT_MAX);
+				} while(!passed && rejectCount < retryCountMax);
 			}
 		} else {
 			LOG.debug(Markers.MSG, "All {} tasks submitted", maxCount);

@@ -4,12 +4,10 @@ import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.data.WSObject;
 //
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.HttpRequestRetryHandler;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.net.URISyntaxException;
@@ -23,12 +21,10 @@ import java.util.Map;
  An HTTP request shared configuration.
  */
 public interface WSRequestConfig<T extends WSObject>
-extends DataObjectRequestConfig<T> {
+extends ObjectRequestConfig<T> {
 	//
 	String
 		DEFAULT_ENC = StandardCharsets.UTF_8.name(),
-		DEFAULT_USERAGENT = RunTimeConfig.getString("run.name") + '/' +
-			RunTimeConfig.getString("run.version"),
 		//
 		KEY_EMC_ACCEPT = "x-emc-accept",
 		KEY_EMC_DATE = "x-emc-date",
@@ -37,8 +33,6 @@ extends DataObjectRequestConfig<T> {
 		KEY_EMC_SIG = "x-emc-signature",
 		KEY_EMC_UID = "x-emc-uid",
 		//
-		VALUE_SIGN_METHOD = RunTimeConfig.getString("http.sign.method"),
-		REQ_DATA_TYPE = RunTimeConfig.getString("http.content.type"),
 		VALUE_KEEP_ALIVE = "keep-alive",
 		MSG_TMPL_NOT_SPECIFIED = "Required property \"{}\" is not specifed",
 		MSG_TMPL_RANGE_BYTES = "bytes=%d-%d",
@@ -95,10 +89,12 @@ extends DataObjectRequestConfig<T> {
 	//
 	Map<String, String> getSharedHeadersMap();
 	//
-	void applyDataItem(final HttpRequestBase httpRequest, T dataItem)
+	String getUserAgent();
+	//
+	void applyDataItem(final HttpRequest httpRequest, T dataItem)
 	throws URISyntaxException;
 	//
-	void applyHeadersFinally(final HttpRequestBase httpRequest);
+	void applyHeadersFinally(final HttpRequest httpRequest);
 	//
 	HttpRequestRetryHandler getRetryHandler();
 	//

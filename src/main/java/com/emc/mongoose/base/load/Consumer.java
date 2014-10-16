@@ -21,5 +21,4 @@ extends Closeable {
 	//
 	void setMaxCount(final long maxCount)
 	throws RemoteException;
-	//
 }

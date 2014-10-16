@@ -13,8 +13,8 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpRequest;
 import org.apache.http.client.HttpRequestRetryHandler;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.DateUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -49,6 +49,8 @@ extends RequestConfigImpl<T>
 implements WSRequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	public final static long serialVersionUID = 42L;
+	private final String userAgent, signMethod;
 	//
 	private final HttpRequestRetryHandler retryHandler = new HttpRequestRetryHandler() {
 		//
@@ -69,7 +71,7 @@ implements WSRequestConfig<T> {
 	};
 	//
 	public static WSRequestConfigBase getInstance() {
-		return newInstanceFor(RunTimeConfig.getString("storage.api"));
+		return newInstanceFor(Main.RUN_TIME_CONFIG.getStorageApi());
 	}
 	//
 	private final static String NAME_CLS_IMPL = "WSRequestConfigImpl";
@@ -105,12 +107,18 @@ implements WSRequestConfig<T> {
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException {
 		super();
-		mac = Mac.getInstance(VALUE_SIGN_METHOD);
+		signMethod = runTimeConfig.getHttpSignMethod();
+		mac = Mac.getInstance(signMethod);
+		final String
+			runName = runTimeConfig.getRunName(),
+			runVersion = runTimeConfig.getRunVersion(),
+			contentType = runTimeConfig.getHttpContentType();
+		userAgent = runName + '/' + runVersion;
 		sharedHeadersMap = new ConcurrentHashMap<String, String>() {
 			{
-				put(HttpHeaders.USER_AGENT, DEFAULT_USERAGENT);
+				put(HttpHeaders.USER_AGENT, userAgent);
 				put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
-				put(HttpHeaders.CONTENT_TYPE, REQ_DATA_TYPE);
+				put(HttpHeaders.CONTENT_TYPE, contentType);
 			}
 		};
 	}
@@ -190,25 +198,25 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> setProperties(final RunTimeConfig props) {
+	public WSRequestConfigBase<T> setProperties(final RunTimeConfig runTimeConfig) {
 		//
 		String paramName = "storage.scheme";
 		try {
-			setScheme(RunTimeConfig.getString(paramName));
+			setScheme(this.runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
 		//
 		paramName = "data.namespace";
 		try {
-			setNameSpace(RunTimeConfig.getString(paramName));
+			setNameSpace(this.runTimeConfig.getDataNameSpace());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalStateException e) {
 			LOG.debug(Markers.ERR, "Failed to set the namespace", e);
 		}
 		//
-		super.setProperties(props);
+		super.setProperties(runTimeConfig);
 		//
 		return this;
 	}
@@ -218,7 +226,7 @@ implements WSRequestConfig<T> {
 		SecretKeySpec keySpec;
 		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
 		try {
-			keySpec = new SecretKeySpec(secret.getBytes(DEFAULT_ENC), VALUE_SIGN_METHOD);
+			keySpec = new SecretKeySpec(secret.getBytes(DEFAULT_ENC), signMethod);
 			synchronized(mac) {
 				mac.init(keySpec);
 			}
@@ -247,6 +255,11 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
+	public final String getUserAgent() {
+		return userAgent;
+	}
+	//
+	@Override
 	public final CloseableHttpClient getClient() {
 		if(httpClient == null) {
 			httpClient = HttpClientBuilder
@@ -255,7 +268,7 @@ implements WSRequestConfig<T> {
 				.setDefaultHeaders(getSharedHeaders())
 				.setRetryHandler(getRetryHandler())
 				.disableCookieManagement()
-				.setUserAgent(WSRequestConfig.DEFAULT_USERAGENT)
+				.setUserAgent(userAgent)
 				.build();
 		}
 		return httpClient;
@@ -322,7 +335,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final void applyDataItem(final HttpRequestBase httpRequest, final T dataItem)
+	public final void applyDataItem(final HttpRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
 		applyURI(httpRequest, dataItem);
 		switch(loadType) {
@@ -341,14 +354,14 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final void applyHeadersFinally(final HttpRequestBase httpRequest) {
+	public final void applyHeadersFinally(final HttpRequest httpRequest) {
 		applyDateHeader(httpRequest);
 		applyAuthHeader(httpRequest);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			synchronized(LOG) {
 				LOG.trace(
 					Markers.MSG, "built request: {} {}",
-					httpRequest.getMethod(), httpRequest.getURI()
+					httpRequest.getRequestLine().getMethod(), httpRequest.getRequestLine().getUri()
 				);
 				for(final Header header: httpRequest.getAllHeaders()) {
 					LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
@@ -369,17 +382,19 @@ implements WSRequestConfig<T> {
 		}
 	}
 	//
-	protected abstract void applyURI(final HttpRequestBase httpRequest, final T dataItem)
+	protected abstract void applyURI(final HttpRequest httpRequest, final T dataItem)
 	throws IllegalArgumentException, URISyntaxException;
 	//
-	protected final void applyPayLoad(final HttpRequestBase httpRequest, final HttpEntity httpEntity) {
+	protected final void applyPayLoad(
+		final HttpRequest httpRequest, final HttpEntity httpEntity
+	) {
 		HttpEntityEnclosingRequest httpReqWithPayLoad = null;
 		try {
 			httpReqWithPayLoad = HttpEntityEnclosingRequest.class.cast(httpRequest);
 		} catch(final ClassCastException e) {
 			LOG.error(
 				Markers.ERR, "\"{}\" HTTP request can't have a content entity",
-				httpRequest.getMethod()
+				httpRequest.getRequestLine().getMethod()
 			);
 		}
 		if(httpReqWithPayLoad != null) {
@@ -388,7 +403,7 @@ implements WSRequestConfig<T> {
 	}
 	// merge subsequent updated ranges functionality is here
 	protected final void applyRangesHeaders(
-		final HttpRequestBase httpRequest, final T dataItem
+		final HttpRequest httpRequest, final T dataItem
 	) {
 		long rangeBeg = -1, rangeEnd = -1;
 		int rangeLen = dataItem.getRangeSize(), rangeCount = dataItem.getCountRangesTotal();
@@ -423,7 +438,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected final void applyAppendRangeHeader(
-		final HttpRequestBase httpRequest, final T dataItem
+		final HttpRequest httpRequest, final T dataItem
 	) {
 		httpRequest.addHeader(
 			HttpHeaders.RANGE,
@@ -431,13 +446,13 @@ implements WSRequestConfig<T> {
 		);
 	}
 	//
-	protected final void applyDateHeader(final HttpRequestBase httpRequest) {
+	protected final void applyDateHeader(final HttpRequest httpRequest) {
 		final String rfc1123date = DateUtils.formatDate(new Date());
 		httpRequest.setHeader(HttpHeaders.DATE, rfc1123date);
 		//httpRequest.setHeader(KEY_EMC_DATE, rfc1123date);
 	}
 	//
-	protected abstract void applyAuthHeader(final HttpRequestBase httpRequest);
+	protected abstract void applyAuthHeader(final HttpRequest httpRequest);
 	//
 	//@Override
 	//public final int hashCode() {
