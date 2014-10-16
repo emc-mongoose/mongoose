@@ -17,9 +17,11 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
 //
+import org.apache.http.pool.PoolStats;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
 import java.util.LinkedList;
@@ -32,6 +34,7 @@ extends ObjectLoadExecutorBase<T>
 implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private volatile PoolingHttpClientConnectionManager connMgr;
 	//
 	protected WSLoadExecutorBase(
 		final RunTimeConfig runTimeConfig,
@@ -39,16 +42,9 @@ implements WSLoadExecutor<T> {
 		final int threadsPerNode, final String listFile
 	) throws ClassCastException {
 		super(runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, listFile);
-	}
-	//
-	@Override
-	protected final void initClient(
-		final int totalThreadCount, final RequestConfig<T> objReqConf
-	) throws ClassCastException {
-		final WSRequestConfig<T> reqConf = (WSRequestConfig<T>) objReqConf;
 		// create and configure the connection manager for HTTP client
-		final PoolingHttpClientConnectionManager
-			connMgr = new PoolingHttpClientConnectionManager();
+		final int totalThreadCount = addrs.length * threadsPerNode;
+		connMgr = new PoolingHttpClientConnectionManager();
 		connMgr.setDefaultMaxPerRoute(threadsPerNode);
 		connMgr.setMaxTotal(totalThreadCount);
 		connMgr.setDefaultConnectionConfig(
@@ -82,12 +78,31 @@ implements WSLoadExecutor<T> {
 		reqConf.setClient(httpClient);
 	}
 	//
+	@Override
+	protected final void initNodeExecutors(final String addrs[], final RequestConfig<T> reqConf) {
+		WSNodeExecutorImpl<T> nodeExecutor;
+		for(int i = 0; i < addrs.length; i ++) {
+			try {
+				nodeExecutor = new WSNodeExecutorImpl<>(
+					runTimeConfig, addrs[i], threadsPerNode, (WSRequestConfig<T>) reqConf, metrics,
+					getName()
+				);
+				nodes[i] = nodeExecutor;
+			} catch(final CloneNotSupportedException e) {
+				ExceptionHandler.trace(
+					LOG, Level.FATAL, e, "Failed to clone the request configuration"
+				);
+			}
+		}
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	protected final void setFileBasedProducer(final String listFile) {
 		// if path specified use the file as producer
 		if(listFile != null && listFile.length() > 0) {
 			try {
 				producer = (Producer<T>) new FileProducer<>(listFile, WSObjectImpl.class);
+				producer.setConsumer(this);
 			} catch(final NoSuchMethodException e) {
 				LOG.fatal(Markers.ERR, "Failed to get the constructor", e);
 			} catch(final IOException e) {
@@ -98,23 +113,10 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected final void initNodeExecutors(
-		final String addrs[], final RequestConfig<T> objReqConf
-	) throws ClassCastException {
-		final WSRequestConfig<T> reqConf = (WSRequestConfig<T>) objReqConf;
-		WSNodeExecutorImpl<T> nodeExecutor;
-		for(int i = 0; i < addrs.length; i ++) {
-			try {
-				nodeExecutor = new WSNodeExecutorImpl<>(
-					runTimeConfig, addrs[i], threadsPerNode, reqConf, metrics, getName()
-				);
-				nodes[i] = nodeExecutor;
-			} catch(final CloneNotSupportedException e) {
-				ExceptionHandler.trace(
-					LOG, Level.FATAL, e, "Failed to clone the request configuration"
-				);
-			}
+	protected void logMetrics(final Marker logMarker) {
+		super.logMetrics(logMarker);
+		if(connMgr != null) {
+			LOG.debug(Markers.PERF_AVG, connMgr.getTotalStats());
 		}
-		//
 	}
 }

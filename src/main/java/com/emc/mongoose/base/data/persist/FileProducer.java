@@ -3,8 +3,10 @@ package com.emc.mongoose.base.data.persist;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -34,7 +36,11 @@ implements Producer<T> {
 	@SuppressWarnings("unchecked")
 	public FileProducer(final String fPathStr, final Class<T> dataItemsImplCls)
 	throws NoSuchMethodException, IOException {
-		super(FileProducer.class.getSimpleName());
+		super(
+			String.format(
+				"producer<%s>-file<%s>", dataItemsImplCls.getName(), fPathStr
+			)
+		);
 		//
 		fPath = FileSystems.getDefault().getPath(fPathStr);
 		if(!Files.exists(fPath)) {
@@ -79,16 +85,16 @@ implements Producer<T> {
 				}
 			} while(dataItemsCount < consumer.getMaxCount());
 		} catch(final IOException e) {
-			LOG.error(Markers.ERR, "Failed to read line from the file", e);
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final Exception e) {
-			LOG.warn(Markers.ERR, "Unexpected exception: ", e);
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
 		} finally {
 			LOG.debug(Markers.MSG, "Produced {} data items", dataItemsCount);
 			try {
 				LOG.debug(Markers.MSG, "Feeding poison to consumer \"{}\"", consumer.toString());
 				consumer.submit(null); // or: consumer.setMaxCount(dataItemsCount);
 			} catch(final RemoteException e) {
-				LOG.debug(Markers.ERR, "Failed to submit poison to consumer due to {}", e.toString());
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to submit the poison to remote consumer");
 			}
 			LOG.debug(Markers.MSG, "Exiting");
 		}

@@ -32,7 +32,8 @@
 							}, {
 								"type": "ThresholdFilter",
 								"level": "INFO",
-								"onMatch": "ACCEPT"
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
 							}
 						]
 					}
@@ -49,17 +50,28 @@
 						"Filter": [
 							{
 								"type": "MarkerFilter",
-								"marker": "msg",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
+								"marker": "dataList",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfAvg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfSum",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfTrace",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "BurstFilter",
 								"rate": 10,
 								"maxBurst": 100
-							}, {
-								"type": "ThresholdFilter",
-								"level": "DEBUG",
-								"onMatch": "Accept"
 							}
 						]
 					}
@@ -182,7 +194,7 @@
 					}
 				}, {
 					"name": "org.apache.http.wire",
-					"level": "trace",
+					"level": "info",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"

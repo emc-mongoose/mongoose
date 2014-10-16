@@ -1,7 +1,6 @@
 package com.emc.mongoose.base.data.impl;
 //
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
@@ -102,6 +101,9 @@ implements AppendableDataItem, UpdatableDataItem {
 		);
 	}
 	//
+	@SuppressWarnings("FieldCanBeLocal")
+	private final String FMT_MASK = "0%s";
+	//
 	@Override
 	public void fromString(final String v)
 	throws IllegalArgumentException, NullPointerException {
@@ -113,20 +115,24 @@ implements AppendableDataItem, UpdatableDataItem {
 			rangesInfo = v.substring(lastCommaPos + 1, v.length());
 			final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
 			try {
+				// extract hexadecimal layer number
 				initRanges(
 					Integer.valueOf(
 						rangesInfo.substring(0, sepPos),
 						0x10
 					)
 				);
+				// extract hexadecimal mask, convert into bit set and add to the existing mask
+				String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
+				while(rangesMask.length() == 0 || rangesMask.length() % 2 == 1) {
+					rangesMask = String.format(FMT_MASK, rangesMask);
+				}
 				maskRangesHistory.or(
 					BitSet.valueOf(
-						Hex.decodeHex(
-							rangesInfo.substring(sepPos + 1, rangesInfo.length()).toCharArray()
-						)
+						Hex.decodeHex(rangesMask.toCharArray())
 					)
 				);
-			} catch(final DecoderException|NumberFormatException e) {
+			} catch(final DecoderException | NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
 			}
 		} else {

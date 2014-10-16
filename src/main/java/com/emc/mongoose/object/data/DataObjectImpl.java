@@ -98,10 +98,10 @@ implements DataObject {
 	throws IllegalArgumentException {
 		final int posSep = v.indexOf(RunTimeConfig.LIST_SEP);
 		if(posSep > 0 && posSep < v.length() - 1) {
-			id = v.substring(0, posSep - 1);
+			id = v.substring(0, posSep);
 		} else {
 			throw new IllegalArgumentException();
 		}
-		super.fromString(v.substring(posSep));
+		super.fromString(v.substring(posSep + 1));
 	}
 }

@@ -101,8 +101,6 @@ implements LoadExecutor<T> {
 		// prepare the node executors array
 		nodes = new StorageNodeExecutor[nodeCount];
 		// create and configure the connection manager
-		final int totalThreadCount = threadsPerNode * nodeCount;
-		initClient(totalThreadCount, reqConf);
 		dataSrc = reqConf.getDataSource();
 		setFileBasedProducer(listFile);
 		final int
@@ -117,9 +115,6 @@ implements LoadExecutor<T> {
 		setConsumer(new LogConsumer<T>());
 	}
 	//
-	protected abstract void initClient(
-		final int totalThreadCount, final RequestConfig<T> reqConf
-	) throws ClassCastException;
 	protected abstract void setFileBasedProducer(final String listFile);
 	protected abstract void initNodeExecutors(
 		final String addrs[], final RequestConfig<T> reqConf
@@ -142,9 +137,9 @@ implements LoadExecutor<T> {
 			}
 		}
 		//
+		tsStart = System.nanoTime();
 		super.start();
 		LOG.debug(Markers.MSG, "Started {}", getName());
-		tsStart = System.nanoTime();
 	}
 	//
 	@Override
@@ -309,7 +304,7 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static String FMT_EFF_SUM = "Load execution efficiency: %.1f[%%]";
 	//
-	private void logMetrics(final Marker logMarker) {
+	protected void logMetrics(final Marker logMarker) {
 		//
 		final long
 			countReqSucc = counterReqSucc.getCount(),
