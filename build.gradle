@@ -64,9 +64,7 @@ dependencies {
         'org.eclipse.jetty:jetty-servlet:9.2.3.v20140905',
         'javax.servlet:javax.servlet-api:3.1.0',
         'javax.servlet.jsp:jsp-api:2.2.1-b03',
-        'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
-        'commons-dbcp:commons-dbcp:1.4',
-        'commons-pool:commons-pool:1.6'
+        'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127'
     )
 
 	runtime (

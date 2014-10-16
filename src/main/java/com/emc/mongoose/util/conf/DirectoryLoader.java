@@ -38,12 +38,10 @@ extends SimpleFileVisitor<Path> {
 	public static void loadPropsFromDir(final Path rootDir, final Configuration tgtConfig) {
 		final DirectoryLoader dirLoader = new DirectoryLoader(tgtConfig);
 		try {
-			//LOG.debug(Markers.MSG, "Load system properties from directory \"{}\"", rootDir);
-			System.out.println("Load system properties from directory \""+rootDir+"\"");
+			LOG.debug(Markers.MSG, "Load system properties from directory \"{}\"", rootDir);
 			Files.walkFileTree(rootDir, dirLoader);
 		} catch(final IOException e) {
-			//LOG.error(Markers.ERR, e.toString(), e.getCause());
-			System.out.println(e.toString()+" "+e.getCause());
+			LOG.error(Markers.ERR, e.toString(), e.getCause());
 		}
 	}
 	//

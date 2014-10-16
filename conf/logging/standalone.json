@@ -148,56 +148,6 @@
                         "onMismatch": "DENY"
                     }
                 }, {
-                    "name": "testDBFile",
-                    "type": "File",
-                    "append": "false",
-                    "bufferedIO": "true",
-                    "fileName": "${path.log}testDB.log",
-                    "PatternLayout": {
-                        "pattern": "INSERT INTO TABLE messages(run,level,class,tstamp,message) values (${sys:run.id}, %-5p, %-16.16c{1}, %d{ISO8601}{GMT+0}, %m%n"
-                    },
-                    "MarkerFilter": {
-                        "marker": "testDB",
-                        "onMatch": "ACCEPT",
-                        "onMismatch": "DENY"
-                    }
-                }, {
-                    "name": "databaseAppender",
-                    "type": "JDBC",
-                    "tableName": "test",
-                    "ConnectionFactory": {
-                        "class": "com.emc.mongoose.util.logging.ConnectionFactory",
-                        "method": "getDatabaseConnection"
-                    },
-                    "Column": [
-                        {
-                            "name": "run",
-                            "pattern": "${sys:run.id}",
-                            "isUnicode": "false"
-                        }, {
-                            "name": "level",
-                            "pattern": "%p",
-                            "isUnicode": "false"
-                        }, {
-                            "name": "class",
-                            "pattern": "%c",
-                            "isUnicode": "false"
-                        }, {
-                            "name": "tstamp",
-                            "isUnicode": "false",
-                            "isEventTimestamp": "true"
-                        }, {
-                            "name": "message",
-                            "pattern": "%m",
-                            "isUnicode": "false"
-                        }
-                    ],
-                    "MarkerFilter": {
-                        "marker": "databaseApp",
-                        "onMatch": "ACCEPT",
-                        "onMismatch": "DENY"
-                    }
-                }, {
 					"name": "async",
 					"type": "Async",
 					"blocking": "false",
@@ -209,9 +159,7 @@
 						{ "ref": "dataListFile" },
 						{ "ref": "perfAvgFile" },
 						{ "ref": "perfSumFile" },
-						{ "ref": "perfTraceFile" },
-                        { "ref": "testDBFile" },
-                        { "ref": "databaseAppender" }
+						{ "ref": "perfTraceFile" }
 					]
 				}
 			]
@@ -297,7 +245,7 @@
                     }
 				}, {
 					"name": "com.emc.mongoose.object.api",
-					"level": "trace",
+					"level": "debug",
 					"additivity": "false",
 					"AppenderRef":
                          { "ref": "async" }
@@ -339,7 +287,7 @@
                     }
 				}, {
 					"name": "com.emc.mongoose.object.load",
-					"level": "trace",
+					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
                         "ref": "async"

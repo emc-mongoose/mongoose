@@ -81,12 +81,6 @@ implements Request<T> {
 		execute();
 		duration = System.nanoTime() - start;
 		LOG.info(Markers.PERF_TRACE, "{},{},{},{}", dataItem, result, start, duration);
-		LOG.info(Markers.TESTDB,"{},{},{},{}",dataItem, result, start, duration);
-		try {
-			LOG.info(Markers.DB,"{},{},{},{}",dataItem, result, start, duration);
-		} catch (final AbstractMethodError e) {
-			e.printStackTrace();
-		}
 		return this;
 	}
 	//
