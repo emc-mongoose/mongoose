@@ -783,14 +783,14 @@ implements WSLoadClient<T> {
 			new Thread("interrupt-submit-" + getName()) {
 				@Override
 				public final void run() {
-					submitExecutor.shutdown();
-					try {
+					LOG.debug(Markers.MSG, "Dropped {} tasks", submitExecutor.shutdownNow().size());
+					/*try {
 						submitExecutor.awaitTermination(
 							RequestConfig.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
 						);
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.ERR, "Awaiting the submit executor termination has been interrupted");
-					}
+					}*/
 				}
 			}
 		);

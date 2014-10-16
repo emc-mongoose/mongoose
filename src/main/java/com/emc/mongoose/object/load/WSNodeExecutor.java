@@ -154,7 +154,7 @@ implements WSLoadExecutor<T> {
 			}
 		} while(!passed && rejectCount < LoadExecutor.RETRY_COUNT_MAX);
 		//
-		if(dataItem!=null) {
+		if(dataItem != null) {
 			if(passed) {
 				counterSubm.inc();
 				counterSubmParent.inc();
@@ -382,8 +382,11 @@ implements WSLoadExecutor<T> {
 		//
 		LOG.debug(Markers.MSG, "Interrupting...");
 		localReqConf.setRetries(false);
-		shutdown();
-		try {
+		final int droppedTasksCount = shutdownNow().size();
+		if(droppedTasksCount > 0) {
+			LOG.info(Markers.ERR, "Dropped {} tasks", droppedTasksCount);
+		}
+		/*try {
 			LOG.debug(
 				Markers.MSG, "Wait at most {} ms before terminating {}+{} tasks",
 				RequestConfig.REQUEST_TIMEOUT_MILLISEC, getQueue().size(), getActiveCount()
@@ -391,7 +394,7 @@ implements WSLoadExecutor<T> {
 			awaitTermination(RequestConfig.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.ERR, "Interrupted while waiting the submitted tasks to finish");
-		}
+		}*/
 		//
 		if(lock.tryLock()) {
 			try {
@@ -409,7 +412,7 @@ implements WSLoadExecutor<T> {
 		if(!isShutdown()) {
 			interrupt();
 		}
-		LOG.debug(Markers.MSG, "Dropping {} tasks", shutdownNow().size());
+		//LOG.debug(Markers.MSG, "Dropping {} tasks", shutdownNow().size());
 		synchronized(LOG) {
 			LOG.debug(Markers.PERF_SUM, "Summary metrics below for {}", getName());
 			logMetrics(Level.DEBUG, Markers.PERF_SUM);

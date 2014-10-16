@@ -81,18 +81,21 @@ extends WSLoadExecutorBase<T> {
 							:
 						RunTimeConfig.formatSize(minObjSize)+".."+RunTimeConfig.formatSize(maxObjSize)
 				);
-				for(long i = 0; i < maxCount; i ++) {
+				//noinspection InfiniteLoopStatement
+				long i = 0;
+				do {
 					try {
 						produceNextAndFeed();
 						LOG.trace(Markers.MSG, "Submitted object #{}", i);
+						i ++;
 					} catch(final RejectedExecutionException e) {
 						LOG.trace(Markers.ERR, "Submitting the object rejected by consumer");
 					} catch(final IOException e) {
 						LOG.trace(Markers.ERR, "Failed to submit object to consumer", e);
 					}
-				}
+				} while(!isInterrupted());
 				try {
-					consumer.submit(null);
+					consumer.submit(null); // or: consumer.setMaxCount(dataItemsCount);
 				} catch(final RejectedExecutionException e) {
 					LOG.debug(Markers.ERR, "Consumer rejected the poison");
 				}

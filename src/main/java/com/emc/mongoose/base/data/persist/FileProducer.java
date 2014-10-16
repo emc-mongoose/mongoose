@@ -77,7 +77,7 @@ implements Producer<T> {
 					}
 					dataItemsCount ++;
 				}
-			} while(dataItemsCount < consumer.getMaxCount());
+			} while(!isInterrupted());
 		} catch(final IOException e) {
 			LOG.error(Markers.ERR, "Failed to read line from the file", e);
 		} catch(final Exception e) {

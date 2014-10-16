@@ -239,13 +239,9 @@ implements WSLoadExecutor<T> {
 			@Override
 			public final void run() {
 				// interrupt submit executor
-				submitExecutor.shutdown();
-				try {
-					submitExecutor.awaitTermination(
-						RequestConfig.REQUEST_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
-					);
-				} catch(final InterruptedException e) {
-					ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while awaiting the submitter termination");
+				final int droppedTaskCount = submitExecutor.shutdownNow().size();
+				if(droppedTaskCount > 0) {
+					LOG.info(Markers.ERR, "Dropped {} tasks", droppedTaskCount);
 				}
 			}
 		};
@@ -295,8 +291,6 @@ implements WSLoadExecutor<T> {
 			interrupt();
 		}
 		consumer.submit(null); // poison the consumer
-		// force shutdown the submit executor
-		LOG.debug(Markers.MSG, "Dropped {} tasks on closing", submitExecutor.shutdownNow().size());
 		for(final WSNodeExecutor nodeExecutor: nodes) {
 			try {
 				nodeExecutor.close();
