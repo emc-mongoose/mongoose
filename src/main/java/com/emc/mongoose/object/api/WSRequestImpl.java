@@ -270,6 +270,20 @@ implements WSRequest<T> {
 			Markers.PERF_TRACE, "{},{},{},{}",
 			Long.toHexString(dataItem.getId()), statusCode, start, duration
 		);
+		LOG.info(
+			Markers.TESTDB,"{},{},{},{}",
+			Long.toHexString(dataItem.getId()), statusCode, start, duration
+		);
+		try {
+			LOG.info(
+					Markers.DB,"{},{},{},{}",
+					Long.toHexString(dataItem.getId()), statusCode, start, duration
+			);
+		} catch (final AbstractMethodError e) {
+			e.printStackTrace();
+		}
+
+
 		//
 		return this;
 	}

@@ -271,10 +271,7 @@ implements WSLoadExecutor<T> {
 						} else if(HttpResponseException.class.isInstance(cause)) {
 							LOG.warn(Markers.ERR, "HTTP response marked as failed");
 						} else {
-							LOG.error(Markers.ERR, "Request execution failure");
-							if(LOG.isTraceEnabled(Markers.ERR) && cause!=null) {
-								LOG.trace(Markers.ERR, e.toString(), cause);
-							}
+							ExceptionHandler.trace(LOG, Level.ERROR, e, "Request execution failure");
 						}
 					}
 				}

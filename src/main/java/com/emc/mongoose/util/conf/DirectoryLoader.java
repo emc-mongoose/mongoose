@@ -23,7 +23,7 @@ import java.util.LinkedList;
  Created by kurila on 04.07.14.
  A property loader using some directory as a root of property tree.
  */
-final class DirectoryLoader
+public final class DirectoryLoader
 extends SimpleFileVisitor<Path> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -38,10 +38,12 @@ extends SimpleFileVisitor<Path> {
 	public static void loadPropsFromDir(final Path rootDir, final Configuration tgtConfig) {
 		final DirectoryLoader dirLoader = new DirectoryLoader(tgtConfig);
 		try {
-			LOG.debug(Markers.MSG, "Load system properties from directory \"{}\"", rootDir);
+			//LOG.debug(Markers.MSG, "Load system properties from directory \"{}\"", rootDir);
+			System.out.println("Load system properties from directory \""+rootDir+"\"");
 			Files.walkFileTree(rootDir, dirLoader);
 		} catch(final IOException e) {
-			LOG.error(Markers.ERR, e.toString(), e.getCause());
+			//LOG.error(Markers.ERR, e.toString(), e.getCause());
+			System.out.println(e.toString()+" "+e.getCause());
 		}
 	}
 	//

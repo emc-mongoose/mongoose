@@ -4,7 +4,9 @@
 
 --Password: mongoose
 
-CREATE USER mongoose WITH password 'mongoose';
+CREATE ROLE mongoose LOGIN
+    ENCRYPTED PASSWORD 'mongoose'
+    NOSUPERUSER INHERIT CREATEDB NOCREATEROLE NOREPLICATION;
 
 -- Database: mongoose
 
@@ -24,7 +26,7 @@ CREATE DATABASE mongoose
 
 CREATE TABLE "API"
 (
-  id integer NOT NULL,
+  id serial NOT NULL,
   name text NOT NULL,
   CONSTRAINT id_api PRIMARY KEY (id)
 )
@@ -40,7 +42,7 @@ ALTER TABLE "API"
 
 CREATE TABLE "Classes"
 (
-  id bigint NOT NULL,
+  id bigserial NOT NULL,
   name text NOT NULL,
   CONSTRAINT id_class PRIMARY KEY (id)
 )
@@ -56,7 +58,7 @@ ALTER TABLE "Classes"
 
 CREATE TABLE "DataItems"
 (
-  id bigint NOT NULL,
+  id bigserial NOT NULL,
   size bigint NOT NULL,
   layer integer NOT NULL,
   mask bigint NOT NULL,
@@ -74,7 +76,7 @@ ALTER TABLE "DataItems"
 
 CREATE TABLE "Levels"
 (
-  id bigint NOT NULL,
+  id bigserial NOT NULL,
   name text NOT NULL,
   CONSTRAINT id_level PRIMARY KEY (id)
 )
@@ -90,7 +92,7 @@ ALTER TABLE "Levels"
 
 CREATE TABLE "LoadsTypes"
 (
-  id integer NOT NULL,
+  id serial NOT NULL,
   name text NOT NULL,
   CONSTRAINT id_loads_type PRIMARY KEY (id)
 )
@@ -106,7 +108,7 @@ ALTER TABLE "LoadsTypes"
 
 CREATE TABLE "Modes"
 (
-  id bigint NOT NULL,
+  id bigserial NOT NULL,
   name text NOT NULL,
   CONSTRAINT id_mode PRIMARY KEY (id)
 )
@@ -122,7 +124,7 @@ ALTER TABLE "Modes"
 
 CREATE TABLE "Nodes"
 (
-  id integer NOT NULL,
+  id serial NOT NULL,
   address text NOT NULL,
   CONSTRAINT id_node PRIMARY KEY (id)
 )
@@ -154,7 +156,7 @@ ALTER TABLE "Statuses"
 
 CREATE TABLE "Runs"
 (
-  id bigint NOT NULL,
+  id bigserial NOT NULL,
   mode bigint NOT NULL,
   tstamp timestamp without time zone NOT NULL,
   CONSTRAINT id_run PRIMARY KEY (id),
@@ -174,7 +176,7 @@ ALTER TABLE "Runs"
 
 CREATE TABLE "Loads"
 (
-  id bigint NOT NULL,
+  id bigserial NOT NULL,
   run bigint NOT NULL,
   type integer NOT NULL,
   num bigint NOT NULL,
@@ -202,7 +204,7 @@ ALTER TABLE "Loads"
 
 CREATE TABLE "Messages"
 (
-  id bigint NOT NULL,
+  id bigserial NOT NULL,
   run bigint NOT NULL,
   level bigint NOT NULL,
   class bigint NOT NULL,
@@ -231,7 +233,7 @@ ALTER TABLE "Messages"
 
 CREATE TABLE "Threads"
 (
-  id bigint NOT NULL,
+  id bigserial NOT NULL,
   load bigint NOT NULL,
   node integer NOT NULL,
   num bigint NOT NULL,
@@ -255,7 +257,7 @@ ALTER TABLE "Threads"
 
 CREATE TABLE "Traces"
 (
-  id bigint NOT NULL,
+  id bigserial NOT NULL,
   data_item bigint NOT NULL,
   thread bigint NOT NULL,
   status integer NOT NULL,
