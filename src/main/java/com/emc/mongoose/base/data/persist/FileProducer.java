@@ -83,7 +83,7 @@ implements Producer<T> {
 					}
 					dataItemsCount ++;
 				}
-			} while(dataItemsCount < consumer.getMaxCount());
+			} while(!isInterrupted());
 		} catch(final IOException e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final Exception e) {

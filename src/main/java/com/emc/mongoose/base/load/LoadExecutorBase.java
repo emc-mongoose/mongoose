@@ -184,7 +184,6 @@ implements LoadExecutor<T> {
 						);
 					}
 				}
-
 			}
 		};
 		// interrupt the submit execution
@@ -193,11 +192,15 @@ implements LoadExecutor<T> {
 			@Override
 			public final void run() {
 				// interrupt submit executor
-				submitExecutor.shutdown();
+				/*submitExecutor.shutdown();
 				try {
 					submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 				} catch(final InterruptedException e) {
 					ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while awaiting the submitter termination");
+				}*/
+				final int droppedTaskCount = submitExecutor.shutdownNow().size();
+				if(droppedTaskCount > 0) {
+					LOG.info(Markers.ERR, "Dropped {} tasks", droppedTaskCount);
 				}
 			}
 		};
@@ -248,7 +251,7 @@ implements LoadExecutor<T> {
 		}
 		consumer.submit(null); // poison the consumer
 		// force shutdown the submit executor
-		LOG.debug(Markers.MSG, "Dropped {} tasks on closing", submitExecutor.shutdownNow().size());
+		//LOG.debug(Markers.MSG, "Dropped {} tasks on closing", submitExecutor.shutdownNow().size());
 		for(final StorageNodeExecutor<T> nodeExecutor: nodes) {
 			try {
 				nodeExecutor.close();

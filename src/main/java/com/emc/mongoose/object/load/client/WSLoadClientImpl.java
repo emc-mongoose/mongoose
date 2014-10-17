@@ -804,11 +804,14 @@ implements WSLoadClient<T> {
 			new Thread("interrupt-submit-" + getName()) {
 				@Override
 				public final void run() {
-					submitExecutor.shutdown();
-					try {
+					/*try {
 						submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.ERR, "Awaiting the submit executor termination has been interrupted");
+					}*/
+					final int droppedTaskCount = submitExecutor.shutdownNow().size();
+					if(droppedTaskCount > 0) {
+						LOG.info(Markers.ERR, "Dropped {} tasks", droppedTaskCount);
 					}
 				}
 			}

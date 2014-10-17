@@ -157,7 +157,7 @@ implements StorageNodeExecutor<T> {
 			}
 		} while(!passed && rejectCount < retryCountMax);
 		//
-		if(dataItem!=null) {
+		if(dataItem != null) {
 			if(passed) {
 				counterSubm.inc();
 				counterSubmParent.inc();
@@ -354,8 +354,11 @@ implements StorageNodeExecutor<T> {
 		//
 		LOG.debug(Markers.MSG, "Interrupting...");
 		localReqConf.setRetries(false);
-		shutdown();
-		try {
+		final int droppedTaskCount = shutdownNow().size();
+		if(droppedTaskCount > 0) {
+			LOG.info(Markers.ERR, "Dropped {} tasks", droppedTaskCount);
+		}
+		/*try {
 			final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 			LOG.debug(
 				Markers.MSG, "Wait at most {} ms before terminating {}+{} tasks",
@@ -364,7 +367,7 @@ implements StorageNodeExecutor<T> {
 			awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.ERR, "Interrupted while waiting the submitted tasks to finish");
-		}
+		}*/
 		//
 		if(lock.tryLock()) {
 			try {
@@ -382,7 +385,7 @@ implements StorageNodeExecutor<T> {
 		if(!isShutdown()) {
 			interrupt();
 		}
-		LOG.debug(Markers.MSG, "Dropping {} tasks", shutdownNow().size());
+		//LOG.debug(Markers.MSG, "Dropping {} tasks", shutdownNow().size());
 		synchronized(LOG) {
 			LOG.debug(Markers.PERF_SUM, "Summary metrics below for {}", getName());
 			logMetrics(Level.DEBUG, Markers.PERF_SUM);
