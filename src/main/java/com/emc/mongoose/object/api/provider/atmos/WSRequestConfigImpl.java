@@ -4,6 +4,7 @@ import com.emc.mongoose.object.api.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
@@ -18,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -120,7 +122,7 @@ extends WSRequestConfigBase<T> {
 				.setURI(
 					uriBuilder
 						.setPath(
-							objId == null ? OBJ_PATH : OBJ_PATH + '/' + objId
+							objId==null ? OBJ_PATH : OBJ_PATH + '/' + objId
 						).build()
 				);
 		}
@@ -188,22 +190,6 @@ extends WSRequestConfigBase<T> {
 		return buffer.toString();
 	}
 	//
-	@Override
-	public final String getSignature(final String canonicalForm) {
-		LOG.trace(Markers.MSG, "Canonical form: {}", canonicalForm);
-		byte[] signature = null;
-		try {
-			synchronized(mac) {
-				signature = mac.doFinal(canonicalForm.getBytes(DEFAULT_ENC));
-			}
-		} catch(Exception e) {
-			LOG.error(e);
-		}
-		final String signature64 = Base64.encodeBase64String(signature);
-		LOG.trace(Markers.MSG, "Calculated signature: '{}'", signature64);
-		return signature64;
-	}
-	//
 	private final static String
 		FMT_MSG_ERR_LOCATION_HEADER_VALUE = "Invalid response location header value: \"%s\"";
 	//
@@ -218,7 +204,7 @@ extends WSRequestConfigBase<T> {
 				valueLocation.length() - OBJ_PATH.length() > 1
 			) {
 				final String id = valueLocation.substring(OBJ_PATH.length() + 1);
-				if(id != null && id.length() > 0) {
+				if(id.length() > 0) {
 					dataObject.setId(id);
 				} else {
 					LOG.trace(Markers.ERR, "Got empty object id");

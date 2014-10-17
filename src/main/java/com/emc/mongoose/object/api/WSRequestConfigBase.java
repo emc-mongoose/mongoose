@@ -9,6 +9,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -457,4 +458,21 @@ implements WSRequestConfig<T> {
 	//public final int hashCode() {
 	//	return uriBuilder.hashCode()^mac.hashCode()^api.hashCode();
 	//}
+	//
+	@Override
+	public String getSignature(final String canonicalForm) {
+		byte[] signature = null;
+		try {
+			synchronized(mac) {
+				signature = mac.doFinal(canonicalForm.getBytes(DEFAULT_ENC));
+			}
+		} catch(UnsupportedEncodingException e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to calculate the signature");
+		}
+		final String signature64 = signature == null ? null : Base64.encodeBase64String(signature);
+		LOG.trace(Markers.MSG, "Calculated signature: \"{}\"", signature64);
+		return signature64;
+	}
+	//
+
 }

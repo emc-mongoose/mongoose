@@ -20,6 +20,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -163,21 +164,6 @@ extends WSRequestConfigBase<T> {
 		LOG.trace(Markers.MSG, "Canonical request representation:\n{}", buffer);
 		//
 		return buffer.toString();
-	}
-	//
-	@Override
-	public final String getSignature(final String canonicalForm) {
-		byte[] signature = null;
-		try {
-			synchronized(mac) {
-				signature = mac.doFinal(canonicalForm.getBytes(DEFAULT_ENC));
-			}
-		} catch(Exception e) {
-			LOG.error(e);
-		}
-		final String signature64 = Base64.encodeBase64String(signature);
-		LOG.trace(Markers.MSG, "Calculated signature: \"{}\"", signature64);
-		return signature64;
 	}
 	//
 	@Override

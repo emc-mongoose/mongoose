@@ -70,12 +70,6 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final String getSignature(final String canonicalForm) {
-		// TODO swift specific things
-		return null;
-	}
-	//
-	@Override
 	public final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
 		// TODO swift specific things
 	}

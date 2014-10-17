@@ -11,11 +11,13 @@ import com.emc.mongoose.object.load.server.WSLoadBuilderSvcImpl;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.persist.FileProducer;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.util.remote.Service;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -269,7 +271,11 @@ implements WSLoadBuilderClient<T, U> {
 		JMXServiceURL nextJMXURL;
 		JMXConnector nextJMXConn;
 		//
-		reqConf.configureStorage(); // should be done after configuring and before req conf upload
+		try {
+			reqConf.configureStorage(); // should be done after configuring and before req conf upload
+		} catch(final IllegalStateException e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to configure storage");
+		}
 		//
 		for(final String addr : keySet()) {
 			//
