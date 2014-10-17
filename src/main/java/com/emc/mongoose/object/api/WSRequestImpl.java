@@ -4,7 +4,6 @@ import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.RequestBase;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.object.api.provider.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -13,8 +12,9 @@ import com.emc.mongoose.util.pool.GenericInstancePool;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -29,6 +29,10 @@ import org.apache.logging.log4j.Logger;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
+import java.net.ConnectException;
+import java.net.PortUnreachableException;
+import java.net.SocketTimeoutException;
 /**
  Created by kurila on 06.06.14.
  */
@@ -120,140 +124,155 @@ implements WSRequest<T> {
 	//
 	@Override
 	public void execute()
-	throws InterruptedException, IOException {
-		wsReqConf.applyHeadersFinally(httpRequest);
-		final CloseableHttpClient httpClient = wsReqConf.getClient();
-		httpClient.execute(httpRequest, this);
-	}
-	//
-	@Override
-	public final WSRequest<T> handleResponse(final HttpResponse httpResponse) {
+	throws InterruptedException {
 		//
-		final StatusLine statusLine = httpResponse.getStatusLine();
-		if(statusLine==null) {
-			LOG.warn(Markers.MSG, "No response status line");
-		} else {
-			final int statusCode = statusLine.getStatusCode();
-			//
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				synchronized(LOG) {
-					LOG.trace(
-						Markers.MSG, "{}/{} <- {} {}", statusCode, statusLine.getReasonPhrase(),
-						httpRequest.getMethod(), httpRequest.getURI()
-					);
-					//for(final Header header : httpResponse.getAllHeaders()) {
-					//	LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
-					//}
+		wsReqConf.applyHeadersFinally(httpRequest);
+		//
+		final CloseableHttpClient httpClient = wsReqConf.getClient();
+		//
+		try(final CloseableHttpResponse httpResponse = httpClient.execute(httpRequest)) {
+			final StatusLine statusLine = httpResponse.getStatusLine();
+			if(statusLine==null) {
+				LOG.warn(Markers.MSG, "No response status line");
+			} else {
+				final int statusCode = statusLine.getStatusCode();
+				//
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					synchronized(LOG) {
+						LOG.trace(
+							Markers.MSG, "{}/{} <- {} {}", statusCode, statusLine.getReasonPhrase(),
+							httpRequest.getMethod(), httpRequest.getURI()
+						);
+						//for(final Header header : httpResponse.getAllHeaders()) {
+						//	LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
+						//}
+					}
 				}
-			}
-			//
-			if(statusCode < 300) {
-				switch(httpRequest.getMethod()) {
-					case (HttpDelete.METHOD_NAME):
-						result = Result.SUCC;
-						break;
-					case (HttpGet.METHOD_NAME):
-						if(wsReqConf.getVerifyContentFlag()) { // validate the response content
-							final HttpEntity httpEntity = httpResponse.getEntity();
-							if(httpEntity==null) {
-								LOG.warn(
-									Markers.ERR, "No HTTP content entity for request \"{}\"",
-									httpRequest.getRequestLine()
-								);
-								result = Result.FAIL_IO;
-								break;
-							}
-							try(final InputStream in = httpEntity.getContent()) {
-								if(dataItem.compareWith(in)) {
-									if(LOG.isTraceEnabled(Markers.MSG)) {
-										LOG.trace(
-											Markers.MSG, "Content verification success for \"{}\"",
+				//
+				if(statusCode < 300) {
+					switch(httpRequest.getMethod()) {
+						case (HttpDelete.METHOD_NAME):
+							result = Result.SUCC;
+							break;
+						case (HttpGet.METHOD_NAME):
+							if(wsReqConf.getVerifyContentFlag()) { // validate the response content
+								final HttpEntity httpEntity = httpResponse.getEntity();
+								if(httpEntity==null) {
+									LOG.warn(
+										Markers.ERR, "No HTTP content entity for request \"{}\"",
+										httpRequest.getRequestLine()
+									);
+									result = Result.FAIL_IO;
+									break;
+								}
+								try(final InputStream in = httpEntity.getContent()) {
+									if(dataItem.compareWith(in)) {
+										if(LOG.isTraceEnabled(Markers.MSG)) {
+											LOG.trace(
+												Markers.MSG, "Content verification success for \"{}\"",
+												dataItem
+											);
+										}
+										result = Result.SUCC;
+									} else {
+										LOG.warn(
+											Markers.ERR, "Content verification failed for \"{}\"",
 											dataItem
 										);
+										result = Result.FAIL_CORRUPT;
 									}
-									result = Result.SUCC;
-								} else {
+								} catch(final IOException e) {
 									LOG.warn(
-										Markers.ERR, "Content verification failed for \"{}\"",
+										Markers.ERR, "Failed to read the object content for \"{}\"",
 										dataItem
 									);
-									result = Result.FAIL_CORRUPT;
+									result = Result.FAIL_IO;
 								}
-							} catch(final IOException e) {
-								LOG.warn(
-									Markers.ERR, "Failed to read the object content for \"{}\"",
-									dataItem
-								);
-								result = Result.FAIL_IO;
+							} else {
+								result = Result.SUCC;
 							}
-						} else {
+							break;
+						case (HttpPut.METHOD_NAME):
+						case (HttpPost.METHOD_NAME):
+							if(dataItem!=null && dataItem.getId()==null) {
+								wsReqConf.applyObjectId(dataItem, httpResponse);
+							}
 							result = Result.SUCC;
-						}
-						break;
-					case (HttpPut.METHOD_NAME):
-					case (HttpPost.METHOD_NAME):
-						if(dataItem != null && dataItem.getId() == null) {
-							wsReqConf.applyObjectId(dataItem, httpResponse);
-						}
-						result = Result.SUCC;
-						break;
-				}
-			} else {
-				switch(statusCode) {
-					case(400):
-						LOG.warn(Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine());
-						result = Result.FAIL_CLIENT;
-						break;
-					case(403):
-						LOG.warn(Markers.ERR, "Access failure");
-						result = Result.FAIL_AUTH;
-						break;
-					case(404):
-						LOG.warn(Markers.ERR, "Not found: {}", httpRequest.getURI());
-						result = Result.FAIL_NOT_FOUND;
-						break;
-					case(416):
-						LOG.warn(Markers.ERR, "Incorrect range");
-						if(LOG.isTraceEnabled(Markers.ERR)) {
-							for(final Header rangeHeader: httpRequest.getHeaders(HttpHeaders.RANGE)) {
-								LOG.trace(
-									Markers.ERR, "Incorrect range \"{}\" for data item: \"{}\"",
-									rangeHeader.getValue(), dataItem
-								);
+							break;
+					}
+				} else {
+					switch(statusCode) {
+						case (400):
+							LOG.warn(Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine());
+							result = Result.FAIL_CLIENT;
+							break;
+						case (403):
+							LOG.warn(Markers.ERR, "Access failure");
+							result = Result.FAIL_AUTH;
+							break;
+						case (404):
+							LOG.warn(Markers.ERR, "Not found: {}", httpRequest.getURI());
+							result = Result.FAIL_NOT_FOUND;
+							break;
+						case (416):
+							LOG.warn(Markers.ERR, "Incorrect range");
+							if(LOG.isTraceEnabled(Markers.ERR)) {
+								for(final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)) {
+									LOG.trace(
+										Markers.ERR, "Incorrect range \"{}\" for data item: \"{}\"",
+										rangeHeader.getValue(), dataItem
+									);
+								}
 							}
+							result = Result.FAIL_CLIENT;
+							break;
+						case (500):
+							LOG.warn(Markers.ERR, "Storage internal failure");
+							result = Result.FAIL_SVC;
+							break;
+						case (503):
+							LOG.warn(Markers.ERR, "Storage prays about a mercy");
+							result = Result.FAIL_SVC;
+							break;
+						default:
+							LOG.warn(Markers.ERR, "Response code: {}", result);
+							result = Result.FAIL_UNKNOWN;
+					}
+					if(LOG.isDebugEnabled(Markers.ERR)) {
+						try(ByteArrayOutputStream bOutPut = new ByteArrayOutputStream()) {
+							httpResponse.getEntity().writeTo(bOutPut);
+							final String errMsg = bOutPut.toString();
+							LOG.debug(
+								Markers.ERR, "{}, cause request: {}/{}", errMsg, hashCode(), dataItem
+							);
+						} catch(final IOException e) {
+							ExceptionHandler.trace(
+								LOG, Level.ERROR, e,
+								"Failed to fetch the content of the failed response"
+							);
 						}
-						result = Result.FAIL_CLIENT;
-						break;
-					case(500):
-						LOG.warn(Markers.ERR, "Storage internal failure");
-						result = Result.FAIL_SVC;
-						break;
-					case(503):
-						LOG.warn(Markers.ERR, "Storage prays about a mercy");
-						result = Result.FAIL_SVC;
-						break;
-					default:
-						LOG.warn(Markers.ERR, "Response code: {}", result);
-						result = Result.FAIL_UNKNOWN;
-				}
-				if(LOG.isDebugEnabled(Markers.ERR)) {
-					try(ByteArrayOutputStream bOutPut = new ByteArrayOutputStream()) {
-						httpResponse.getEntity().writeTo(bOutPut);
-						final String errMsg = bOutPut.toString();
-						LOG.debug(
-							Markers.ERR, "{}, cause request: {}/{}", errMsg, hashCode(), dataItem
-						);
-					} catch(final IOException e) {
-						ExceptionHandler.trace(
-							LOG, Level.ERROR, e,
-							"Failed to fetch the content of the failed response"
-						);
 					}
 				}
 			}
+		} catch(final SocketTimeoutException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Socket timeout");
+			result = Result.FAIL_TIMEOUT;
+		} catch(final PortUnreachableException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Storage port is unreachable");
+			result = Result.FAIL_UNKNOWN;
+		} catch(final ConnectException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Connection failure");
+			result = Result.FAIL_UNKNOWN;
+		} catch(final InterruptedIOException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Request interrupted");
+			result = Result.FAIL_UNKNOWN;
+		} catch(final ClientProtocolException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Client-side failure");
+			result = Result.FAIL_CLIENT;
+		} catch(final IOException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "I/O failure");
+			result = Result.FAIL_IO;
 		}
 		//
-		return this;
 	}
-	//
 }

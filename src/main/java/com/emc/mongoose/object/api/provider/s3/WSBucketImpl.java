@@ -10,6 +10,7 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 //
@@ -61,9 +62,10 @@ implements Bucket<T>{
 			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_METHOD, method));
 		}
 		//
-		final HttpRequest httpReq = RequestBuilder.create(
-			method.toUpperCase()).setUri("/" + name
-		).build();
+		final HttpUriRequest httpReq = RequestBuilder
+			.create(method.toUpperCase())
+			.setUri("/" + name)
+			.build();
 		reqConf.applyHeadersFinally(httpReq);
 		final CloseableHttpClient httpClient = reqConf.getClient();
 		//

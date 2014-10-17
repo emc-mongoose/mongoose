@@ -2,7 +2,6 @@ package com.emc.mongoose.object.load;
 //
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.object.api.ObjectRequestConfig;
 import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.data.WSObjectImpl;
 import com.emc.mongoose.base.data.persist.FileProducer;
@@ -17,7 +16,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
 //
-import org.apache.http.pool.PoolStats;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,10 +40,14 @@ implements WSLoadExecutor<T> {
 		final int threadsPerNode, final String listFile
 	) throws ClassCastException {
 		super(runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, listFile);
-		// create and configure the connection manager for HTTP client
+	}
+	//
+	@Override
+	protected final void initClient(final String addrs[], final RequestConfig<T> reqConf) {
 		final int totalThreadCount = addrs.length * threadsPerNode;
+		// create and configure the connection manager for HTTP client
 		connMgr = new PoolingHttpClientConnectionManager();
-		connMgr.setDefaultMaxPerRoute(threadsPerNode);
+		connMgr.setDefaultMaxPerRoute(totalThreadCount);
 		connMgr.setMaxTotal(totalThreadCount);
 		connMgr.setDefaultConnectionConfig(
 			ConnectionConfig
@@ -55,7 +57,8 @@ implements WSLoadExecutor<T> {
 		);
 		// set shared headers to client builder
 		final LinkedList<Header> headers = new LinkedList<>();
-		final Map<String, String> sharedHeadersMap = reqConf.getSharedHeadersMap();
+		final WSRequestConfig<T> wsReqConf = (WSRequestConfig<T>) reqConf;
+		final Map<String, String> sharedHeadersMap = wsReqConf.getSharedHeadersMap();
 		for(final String key : sharedHeadersMap.keySet()) {
 			headers.add(new BasicHeader(key, sharedHeadersMap.get(key)));
 		}
@@ -65,17 +68,17 @@ implements WSLoadExecutor<T> {
 			.create()
 			.setConnectionManager(connMgr)
 			.setDefaultHeaders(headers)
-			.setRetryHandler(reqConf.getRetryHandler())
+			.setRetryHandler(wsReqConf.getRetryHandler())
 			.disableCookieManagement()
-			.setUserAgent(reqConf.getUserAgent())
-			.setMaxConnPerRoute(threadsPerNode)
+			.setUserAgent(wsReqConf.getUserAgent())
+			.setMaxConnPerRoute(totalThreadCount)
 			.setMaxConnTotal(totalThreadCount);
 		if(!reqConf.getRetries()) {
 			httpClientBuilder.disableAutomaticRetries();
 		}
 		final CloseableHttpClient httpClient = httpClientBuilder.build();
 		//
-		reqConf.setClient(httpClient);
+		wsReqConf.setClient(httpClient);
 	}
 	//
 	@Override

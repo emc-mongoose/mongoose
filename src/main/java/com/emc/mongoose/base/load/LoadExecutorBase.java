@@ -110,12 +110,14 @@ implements LoadExecutor<T> {
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize)
 		);
+		initClient(addrs, reqConf);
 		initNodeExecutors(addrs, reqConf);
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
 	}
 	//
 	protected abstract void setFileBasedProducer(final String listFile);
+	protected abstract void initClient(final String addrs[], final RequestConfig<T> reqConf);
 	protected abstract void initNodeExecutors(
 		final String addrs[], final RequestConfig<T> reqConf
 	) throws ClassCastException;

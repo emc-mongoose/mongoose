@@ -21,11 +21,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
-import java.io.InterruptedIOException;
-import java.net.ConnectException;
-import java.net.PortUnreachableException;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
 import java.rmi.RemoteException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -248,33 +243,11 @@ implements StorageNodeExecutor<T> {
 							LOG.debug(Markers.ERR, "Failed to feed the poison to consumer due to {}", ee.toString());
 						}*/
 					} else {
+						ExceptionHandler.trace(
+							LOG, Level.WARN, cause, "Unhandled request execution failure"
+						);
 						counterReqFail.inc();
 						counterReqFailParent.inc();
-						if(InterruptedIOException.class.isInstance(cause)) {
-							LOG.warn(Markers.ERR, "Connection timeout");
-							////////////////////////////////////////////////////////////////////////
-						} else if(SocketTimeoutException.class.isInstance(cause)) {
-							LOG.warn(Markers.ERR, "Request timeout");
-						} else if(PortUnreachableException.class.isInstance(cause)) {
-							LOG.warn(
-								Markers.ERR,
-								"Service unreachable. Check that port number ({}) is correct.",
-								localReqConf.getPort()
-							);
-						} else if(ConnectException.class.isInstance(cause)) {
-							LOG.warn(
-								Markers.ERR, "Failed to connect to the server {}",
-								localReqConf.getAddr()
-							);
-						} else if(SocketException.class.isInstance(cause)) {
-							LOG.warn(Markers.ERR, "Network failure: {}", e.toString());
-							////////////////////////////////////////////////////////////////////////
-						} else if(IOException.class.isInstance(cause)) {
-							ExceptionHandler.trace(LOG, Level.WARN, cause, "Response failure");
-						} else {
-							ExceptionHandler.trace(LOG, Level.ERROR, cause, "Request execution failure");
-							cause.printStackTrace();
-						}
 					}
 				}
 			} catch(final Exception e) {
