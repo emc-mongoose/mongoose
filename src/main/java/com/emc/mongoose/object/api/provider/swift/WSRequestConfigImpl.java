@@ -69,9 +69,4 @@ extends WSRequestConfigBase<T> {
 		return null;
 	}
 	//
-	@Override
-	public final String getSignature(final String canonicalForm) {
-		// TODO swift specific things
-		return null;
-	}
 }

@@ -170,22 +170,6 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final String getSignature(final String canonicalForm) {
-		LOG.trace(Markers.MSG, "Canonical form: {}", canonicalForm);
-		byte[] signature = null;
-		try {
-			synchronized(mac) {
-				signature = mac.doFinal(canonicalForm.getBytes(DEFAULT_ENC));
-			}
-		} catch(Exception e) {
-			LOG.error(e);
-		}
-		final String signature64 = Base64.encodeBase64String(signature);
-		LOG.trace(Markers.MSG, "Calculated signature: '{}'", signature64);
-		return signature64;
-	}
-	//
-	@Override
 	public void configureStorage()
 	throws IllegalStateException {
 		if(subTenant == null) {
