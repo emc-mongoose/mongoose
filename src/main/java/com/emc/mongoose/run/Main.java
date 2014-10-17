@@ -119,22 +119,7 @@ public final class Main {
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RUN_TIME_CONFIG.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
-		//Begin transaction for write info into DataBase
-		session.beginTransaction();
-		query = session.createSQLQuery("SELECT id FROM modes WHERE name= :name")
-							.setParameter("name", System.getProperty(KEY_RUN_MODE));
-		if (query.list().isEmpty()){
-			mode = new Modes(System.getProperty(KEY_RUN_MODE));
-		}else {
-			mode = (Modes) session.get(Modes.class, (BigInteger) query.list().get(0));
-		}
-		session.save(mode);
-		//Put information about mode into DB
-		run = new Runs(mode,System.getProperty(KEY_RUN_ID));
-		mode.getRunsSet().add(run);
-		session.save(run);
-		session.getTransaction().commit();
-		//HibernateUtil.shutdown();
+		persistRunAndMode();
 		switch (runMode) {
 			case VALUE_RUN_MODE_SERVER:
 			case VALUE_RUN_MODE_COMPAT_SERVER:
@@ -194,6 +179,25 @@ public final class Main {
         Policy.getPolicy().refresh();
         System.setSecurityManager(new SecurityManager());
     }
+	//
+	public static void persistRunAndMode(){
+		//Begin transaction for write info into DataBase
+		session.beginTransaction();
+		query = session.createSQLQuery("SELECT id FROM modes WHERE name= :name")
+				.setParameter("name", System.getProperty(KEY_RUN_MODE));
+		if (query.list().isEmpty()){
+			mode = new Modes(System.getProperty(KEY_RUN_MODE));
+		}else {
+			mode = (Modes) session.get(Modes.class, (BigInteger) query.list().get(0));
+		}
+		session.save(mode);
+		//Put information about mode into DB
+		run = new Runs(mode,System.getProperty(KEY_RUN_ID));
+		mode.getRunsSet().add(run);
+		session.save(run);
+		session.getTransaction().commit();
+		//HibernateUtil.shutdown();
+	}
 	//
 }
 //
