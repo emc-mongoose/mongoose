@@ -1,14 +1,16 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri='http://java.sun.com/jsp/jstl/core' prefix='c'%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@ taglib uri="WEB-INF/property.tld" prefix="rt" %>
 <!DOCTYPE html>
 <html>
     <head>
 		<meta charset="utf-8">
+		<title>Run</title>
 		<link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
 		<link href="css/styles.css" rel="stylesheet">
 		<link href="css/bootstrap-vertical-tabs-1.1.0/bootstrap.vertical-tabs.css" rel="stylesheet">
-		<script type="text/javascript" src="http://code.jquery.com/jquery-latest.min.js"></script>
+		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
 		<script type="text/javascript" src="js/bootstrap/bootstrap.min.js"></script>
 	</head>
@@ -16,17 +18,17 @@
 		<nav class="navbar navbar-default" role="navigation">
   			<div class="container-fluid">
   				<div class="navbar-header">
-  					<a id="logo-image" href="#"><img src="images/vipr.png" width="50" height="50"></a>
-      				<a class="navbar-brand" href="#">Mongoose</a>
+  					<a id="logo-image" href="/"><img src="images/vipr.png" width="50" height="50"></a>
+      				<a class="navbar-brand" href="/">Mongoose</a>
   				</div>
     			<div class="collapse navbar-collapse" id="bx-example-navbar-collapse-1">
     				<ul class="nav navbar-nav">
     					<li class="active"><a href="#">Run</a></li>
-    					<li><a href="/home/gusakk/driver.html">Driver</a></li>
+    					<li><a href="driver.html">Driver</a></li>
     				</ul>
 
     				<ul class="nav navbar-nav navbar-right">
-    					<li><a href="#">About</a></li>
+    					<li><a href="about.html">About</a></li>
     				</ul>
     			</div>
     		</div>
@@ -167,9 +169,9 @@
 									<option>hours</option>
 									<option>days</option>
 								</select>
-								<input type="text" class="form-control counter" placeholder="min" value="${runTimeConfig.getString('data.size.min')}">
+								<input type="text" class="form-control counter" placeholder="min" value="${rt:getString(runTimeConfig, 'data.size.min')}">
 								-
-								<input type="text" class="form-control counter" placeholder="max" value="1MB">
+								<input type="text" class="form-control counter" placeholder="max" value="${rt:getString(runTimeConfig, 'data.size.max')}">
 
 
 								<!-- -->
@@ -188,27 +190,27 @@
 									<div class="tab-content">
 										<div class="tab-pane active" id="create">
 											<label>load.thread</label>
-											<input type="text" class="form-control counter" value="4">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.create.threads')}">
 										</div>
 										<div class="tab-pane" id="read">
 											<label>load.thread</label>
-											<input type="text" class="form-control counter" value="4">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.read.threads')}">
 											<label>verify.content</label>
-											<input type="text" class="form-control counter" value="true">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.read.verify.content')}">
 										</div>
 										<div class="tab-pane" id="update">
 											<label>load.thread</label>
-											<input type="text" class="form-control counter" value="4">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.update.threads')}">
 											<label>load.per.item</label>
-											<input type="text" class="form-control counter" value="1">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.update.per.item')}">
 										</div>
 										<div class="tab-pane" id="delete">
 											<label>load.thread</label>
-											<input type="text" class="form-control counter" value="4">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.delete.threads')}">
 										</div>
 										<div class="tab-pane" id="append">
 											<label>load.thread</label>
-											<input type="text" class="form-control counter" value="4">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.append.threads')}">
 										</div>
 									</div>
 								</fieldset>
@@ -231,25 +233,25 @@
 									<div class="tab-content">
 										<div class="tab-pane active" id="s3">
 											<label>api.port</label>
-											<input type="text" class="form-control counter" value="9020">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.s3.port')}">
 											<label>api.auth.prefix</label>
-											<input type="text" class="form-control counter" value="AWS">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.s3.auth.prefix')}">
 											<label>api.bucket</label>
-											<input type="text" class="form-control counter">
+											<input type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'api.s3.bucket')}">
 										</div>
 										<div class="tab-pane" id="atmos">
 											<label>api.port</label>
-											<input type="text" class="form-control counter" value="9020">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.port')}">
 											<label>api.subtenant</label>
-											<input type="text" class="form-control counter" value="511afdbfc6a3432fac65f2a5a1bc85c7">
+											<input type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'api.atmos.subtenant')}">
 											<label>api.path.rest</label>
-											<input type="text" class="form-control counter" value="rest">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.path.rest')}">
 											<label>api.interface</label>
-											<input type="text" class="form-control counter" value="objects">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.interface')}">
 										</div>
 										<div class="tab-pane" id="swift">
 											<label>api.port</label>
-											<input type="text" class="form-control counter" value="9024">
+											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.swift.port')}">
 										</div>
 									</div>
 								</fieldset>

@@ -32,6 +32,11 @@ button[disabled]:active:before {
 	display: inline;
 }
 
+.length-input {
+    width: 200px;
+    display: inline;
+}
+
 .default {
 	display: inline-block;
 	padding: 6px 12px;
