@@ -39,7 +39,6 @@ public class StartServlet extends HttpServlet {
 
     private final static Logger LOG = LogManager.getLogger();
     private static List<Thread> threads;
-    public static long threadId;
     private RunTimeConfig runTimeConfig;
 
     @Override

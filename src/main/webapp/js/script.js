@@ -74,12 +74,12 @@ $(document).ready(function() {
     }
 
     $("#distributed").click(function() {
-        $(".distributed").show();
+        /*$(".distributed").show();*/
         $(".drivers-block").show();
     });
 
     $("#standalone").click(function() {
-        $(".distributed").hide();
+        /*$(".distributed").hide();*/
         $(".drivers-block").hide();
     });
 
