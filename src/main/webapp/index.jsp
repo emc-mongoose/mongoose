@@ -167,8 +167,7 @@
 									<option>hours</option>
 									<option>days</option>
 								</select>
-								<label>data.size</label>
-								<input type="text" class="form-control counter" placeholder="min" value="1MB">
+								<input type="text" class="form-control counter" placeholder="min" value="${runTimeConfig.getString('data.size.min')}">
 								-
 								<input type="text" class="form-control counter" placeholder="max" value="1MB">
 
