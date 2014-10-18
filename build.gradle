@@ -1,7 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'java-library-distribution'
 apply plugin: 'idea'
-
+apply plugin: 'eclipse'
 sourceCompatibility = '1.7'
 
 def confDirName = 'conf'
