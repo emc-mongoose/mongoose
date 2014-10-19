@@ -92,12 +92,27 @@ $(document).ready(function() {
     });
 
     $("#start").click(function() {
-        $(this).attr("disabled", "disabled");
-        $("#stop").removeAttr("disabled");
+        $.post("/start", {
+            runTime: $("#dataNodes").val()
+        },
+        function(data,status){
+            $("#start").attr("disabled", "disabled");
+            $("#stop").removeAttr("disabled");
+        });
     });
 
     $("#stop").click(function() {
         $(this).attr("disabled", "disabled");
         $("#start").removeAttr("disabled");
+    });
+
+    $("#loadTab a").click(function(e) {
+    	e.preventDefault();
+    	$("#loadHidden").val($(this).text());
+    });
+
+    $("#apiTab").click(function(e) {
+    	e.preventDefault();
+    	$("apiHidden").val($(this).text());
     });
 });

@@ -23,7 +23,7 @@
   				</div>
     			<div class="collapse navbar-collapse" id="bx-example-navbar-collapse-1">
     				<ul class="nav navbar-nav">
-    					<li class="active"><a href="#">Run</a></li>
+    					<li class="active"><a href="/">Run</a></li>
     					<li><a href="driver.html">Driver</a></li>
     				</ul>
 
@@ -48,14 +48,13 @@
 						<button id="standalone" type="button" class="default">Standalone</button>
 						<button id="distributed" type="button" class="default">Distributed</button>
 					</div>
-					<form>
-
+					<form id="mainForm">
 						<div class="fixed-block">
 							<fieldset class="scheduler-border-top">
 								<legend class="scheduler-border">Run</legend>
 								<label for="run-time">run.time:</label>
 								<c:set var="runTime" value="${fn:split(runTimeConfig.runTime, '.')}" />
-								<input type="text" id="run-time" class="form-control counter" value="${runTime[0]}">
+								<input type="text" name="runTime" id="runTime" class="form-control counter" value="${runTime[0]}">
 								<select>
 									<option>objects</option>
 									<option>seconds</option>
@@ -65,7 +64,7 @@
 								</select>
 								<br>
 								<label for="run-metrics-period-sec">run.metrics.period.sec:</label>
-								<input type="text" class="form-control counter" value="${runTimeConfig.runMetricsPeriodSec}">
+								<input id="runMetricsPeriodSec" name="runMetricsPeriodSec" type="text" class="form-control counter" value="${runTimeConfig.runMetricsPeriodSec}">
 							</fieldset>
 						</div>
 
@@ -73,10 +72,10 @@
 							<fieldset class="scheduler-border-top">
 								<legend class="scheduler-border">Auth</legend>
 								<label for="auth-id">auth.id:</label>
-								<input type="text" class="form-control" value="${runTimeConfig.authId}">
+								<input id="authId" name="authId" type="text" class="form-control" value="${runTimeConfig.authId}">
 								<br>
 								<label for="auth-secret">auth.secret:</label>
-								<input type="text" class="form-control" value="${runTimeConfig.authSecret}">
+								<input id="authSecret" name="authSecret" type="text" class="form-control" value="${runTimeConfig.authSecret}">
 							</fieldset>
 						</div>
 						<br>
@@ -85,9 +84,9 @@
 							<fieldset class="scheduler-border">
 								<legend class="scheduler-border">Storage</legend>
 								<label>storage.api:</label>
-								<input type="text" class="form-control counter" value="${runTimeConfig.storageApi}">
+								<input id="storageApi" name="storageApi" type="text" class="form-control counter" value="${runTimeConfig.storageApi}">
 								<label>scheme:</label>
-								<input type="text" class="form-control counter" value="${runTimeConfig.storageProto}">
+								<input id="scheme" name="scheme" type="text" class="form-control counter" value="${runTimeConfig.storageProto}">
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">Data nodes</legend>
 									<button type="button" class="default add-node">Add</button>
@@ -102,7 +101,7 @@
                                         <div class="storages">
                                             <div class="input-group">
                                                 <span class="input-group-addon">
-                                                    <input type="checkbox">
+                                                    <input id="dataNodes" name="dataNodes" type="checkbox" value="${addr}">
                                                 </span>
                                                 <label class="form-control">
                                                     ${addr}
@@ -124,7 +123,7 @@
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">Remote</legend>
 									<label>remote.monitor.port:</label>
-									<input type="text" class="form-control counter" value="${runTimeConfig.remoteMonitorPort}">
+									<input id="remoteMonitorPort" name="remoteMonitorPort" type="text" class="form-control counter" value="${runTimeConfig.remoteMonitorPort}">
 									<fieldset class="scheduler-border">
 										<legend class="scheduler-border">Drivers</legend>
 										<button type="button" class="default add-driver">Add</button>
@@ -139,7 +138,7 @@
                                             <div class="drivers">
                                                 <div class="input-group">
                                                     <span class="input-group-addon">
-                                                        <input type="checkbox">
+                                                        <input id="drivers" name="drivers" type="checkbox" value="${server}">
                                                     </span>
                                                     <label class="form-control">
                                                         ${server}
@@ -161,24 +160,24 @@
 							<fieldset class="scheduler-border">
 								<legend class="scheduler-border">Data</legend>
 								<label for="count">data.count:</label>
-								<input id="count" type="text" class="form-control counter" value="${runTimeConfig.dataCount}">
-								<select>
+								<input name="dataCount" id="dataCount" type="text" class="form-control counter" value="${runTimeConfig.dataCount}">
+								<select name="dataCountSelect">
 									<option>objects</option>
 									<option>seconds</option>
 									<option>minutes</option>
 									<option>hours</option>
 									<option>days</option>
 								</select>
-								<input type="text" class="form-control counter" placeholder="min" value="${rt:getString(runTimeConfig, 'data.size.min')}">
+								<input name="dataSizeMin" type="text" class="form-control counter" placeholder="min" value="${rt:getString(runTimeConfig, 'data.size.min')}">
 								-
-								<input type="text" class="form-control counter" placeholder="max" value="${rt:getString(runTimeConfig, 'data.size.max')}">
+								<input name="dataSizeMax" type="text" class="form-control counter" placeholder="max" value="${rt:getString(runTimeConfig, 'data.size.max')}">
 
 
 								<!-- -->
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">Load</legend>
 									<div class="tabs-wrapper">
-										<ul class="nav nav-tabs" role="tablist">
+										<ul id="loadTab" class="nav nav-tabs" role="tablist">
 					  						<li class="active"><a href="#create" data-toggle="tab">Create</a></li>
 					  						<li><a href="#read" data-toggle="tab">Read</a></li>
 					  						<li><a href="#update" data-toggle="tab">Update</a></li>
@@ -187,30 +186,32 @@
 										</ul>
 									</div>
 
+									<input id="loadHidden"name="loadHidden" type="hidden" value="Create">
+
 									<div class="tab-content">
 										<div class="tab-pane active" id="create">
 											<label>load.thread</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.create.threads')}">
+											<input name="loadCreateThreads" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.create.threads')}">
 										</div>
 										<div class="tab-pane" id="read">
 											<label>load.thread</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.read.threads')}">
+											<input name="loadReadThreads" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.read.threads')}">
 											<label>verify.content</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.read.verify.content')}">
+											<input name="loadReadVerifyContent" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.read.verify.content')}">
 										</div>
 										<div class="tab-pane" id="update">
 											<label>load.thread</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.update.threads')}">
+											<input name="loadUpdateThreads" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.update.threads')}">
 											<label>load.per.item</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.update.per.item')}">
+											<input name="loadUpdatePerItem" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.update.per.item')}">
 										</div>
 										<div class="tab-pane" id="delete">
 											<label>load.thread</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.delete.threads')}">
+											<input name="loadDeleteThreads" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.delete.threads')}">
 										</div>
 										<div class="tab-pane" id="append">
 											<label>load.thread</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.append.threads')}">
+											<input name="loadAppendThreads" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.append.threads')}">
 										</div>
 									</div>
 								</fieldset>
@@ -223,35 +224,37 @@
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">API</legend>
 									<div class="tabs-wrapper">
-										<ul class="nav nav-tabs crud-tabs" role="tablist">
+										<ul id="apiTab" class="nav nav-tabs crud-tabs" role="tablist">
 							  				<li class="active"><a href="#s3" data-toggle="tab">S3</a></li>
 							  				<li><a href="#atmos" data-toggle="tab">Atmos</a></li>
 							  				<li><a href="#swift" data-toggle="tab">Swift</a></li>
 										</ul>
 									</div>
 
+									<input id="apiHidden" type="hidden" value="S3">
+
 									<div class="tab-content">
 										<div class="tab-pane active" id="s3">
 											<label>api.port</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.s3.port')}">
+											<input name="apiS3Port" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.s3.port')}">
 											<label>api.auth.prefix</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.s3.auth.prefix')}">
+											<input name="apiS3AuthPrefix" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.s3.auth.prefix')}">
 											<label>api.bucket</label>
-											<input type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'api.s3.bucket')}">
+											<input name="apiS3Bucket" type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'api.s3.bucket')}">
 										</div>
 										<div class="tab-pane" id="atmos">
 											<label>api.port</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.port')}">
+											<input name="apiAtmosPort" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.port')}">
 											<label>api.subtenant</label>
-											<input type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'api.atmos.subtenant')}">
+											<input name="apiAtmosSubtenant" type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'api.atmos.subtenant')}">
 											<label>api.path.rest</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.path.rest')}">
+											<input name="apiAtmosPathRest" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.path.rest')}">
 											<label>api.interface</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.interface')}">
+											<input name="apiAtmosInterface" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.interface')}">
 										</div>
 										<div class="tab-pane" id="swift">
 											<label>api.port</label>
-											<input type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.swift.port')}">
+											<input name="apiSwiftPort" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.swift.port')}">
 										</div>
 									</div>
 								</fieldset>
