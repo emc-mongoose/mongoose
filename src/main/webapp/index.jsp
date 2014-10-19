@@ -218,7 +218,7 @@
 
 						</div>
 
-						<div class="distributed">
+						<!-- <div class="distributed"> -->
 							<div class="interfaces">
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">API</legend>
@@ -256,7 +256,7 @@
 									</div>
 								</fieldset>
 							</div>
-						</div>
+						<!-- </div> -->
 
 						<div class="start-wrapper">
 							<button id="start" type="button" class="default"><span>Start</span></button>
