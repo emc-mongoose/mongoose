@@ -98,12 +98,12 @@ dependencies {
 
 task rmic(dependsOn: compileJava) << {
 	String[] listClsRemote = [
-		'com.emc.mongoose.object.load.server.WSLoadBuilderSvcImpl',
-		'com.emc.mongoose.object.load.server.type.ws.AppendSvc',
-		'com.emc.mongoose.object.load.server.type.ws.CreateSvc',
-		'com.emc.mongoose.object.load.server.type.ws.DeleteSvc',
-		'com.emc.mongoose.object.load.server.type.ws.ReadSvc',
-		'com.emc.mongoose.object.load.server.type.ws.UpdateSvc'
+		'com.emc.mongoose.web.load.server.WSLoadBuilderSvcImpl',
+		'com.emc.mongoose.web.load.server.type.AppendSvcImpl',
+		'com.emc.mongoose.web.load.server.type.CreateSvcImpl',
+		'com.emc.mongoose.web.load.server.type.DeleteSvcImpl',
+		'com.emc.mongoose.web.load.server.type.ReadSvcImpl',
+		'com.emc.mongoose.web.load.server.type.UpdateSvcImpl'
 	]
 	String clsPath = """${sourceSets.main.output.classesDir}:${configurations.apacheCommonsConfiguration.asPath}"""
 	for(cls in listClsRemote) {

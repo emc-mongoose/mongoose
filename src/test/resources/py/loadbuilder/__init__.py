@@ -21,7 +21,7 @@ INSTANCE = None
 #
 from org.apache.commons.configuration import ConversionException
 if mode == Main.VALUE_RUN_MODE_CLIENT or mode == Main.VALUE_RUN_MODE_COMPAT_CLIENT:
-	from com.emc.mongoose.object.load.client import WSLoadBuilderClientImpl
+	from com.emc.mongoose.web.load.client import WSLoadBuilderClientImpl
 	from java.rmi import RemoteException
 	try:
 		try:
@@ -36,7 +36,7 @@ if mode == Main.VALUE_RUN_MODE_CLIENT or mode == Main.VALUE_RUN_MODE_COMPAT_CLIE
 		LOG.fatal(Markers.ERR, "Failed to create load builder client: {}", e)
 		exit()
 else: # standalone
-	from com.emc.mongoose.object.load import WSLoadBuilderImpl
+	from com.emc.mongoose.web.load import WSLoadBuilderImpl
 	#
 	INSTANCE = WSLoadBuilderImpl()
 #

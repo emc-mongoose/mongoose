@@ -1,6 +1,6 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.object.load.server.WSLoadBuilderSvcImpl;
+import com.emc.mongoose.web.load.server.WSLoadBuilderSvcImpl;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;

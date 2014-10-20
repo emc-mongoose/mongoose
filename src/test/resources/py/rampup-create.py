@@ -2,7 +2,7 @@
 from __future__ import print_function, absolute_import, with_statement
 from sys import exit
 #
-from loadbuilder import INSTANCE as loadBuilder
+from loadbuilder import INSTANCE as LOAD_BUILDER
 #
 from com.emc.mongoose.base.api import Request
 from com.emc.mongoose.run import Main
@@ -18,7 +18,7 @@ LOG = LogManager.getLogger()
 try:
 	loadType = Request.Type.valueOf(Main.RUN_TIME_CONFIG.getString("scenario.rampup-create.load").upper())
 	LOG.info(Markers.MSG, "Using load type: {}", loadType.name())
-	loadBuilder.setLoadType(loadType)
+	LOAD_BUILDER.setLoadType(loadType)
 except NoSuchElementException:
 	LOG.info(Markers.MSG, "No load type specified, try arg -Dscenario.rampup-create.load=<VALUE> to override")
 except IllegalArgumentException:
@@ -47,13 +47,13 @@ objectSizeList = Main.RUN_TIME_CONFIG.getStringArray("scenario.rampup-create.obj
 from java.lang import Long
 from java.lang import Integer
 for threadCount in threadCountList:
-	loadBuilder.setThreadsPerNodeDefault(Long.valueOf(threadCount))
+	LOAD_BUILDER.setThreadsPerNodeDefault(Long.valueOf(threadCount))
 	for objectSize in objectSizeList:
 		LOG.info(Markers.MSG, "Threadcount = {}", threadCount)
 		LOG.info(Markers.MSG, "Object size = {} {}", objectSize, "bytes")
-		loadBuilder.setMinObjSize(Integer.valueOf(objectSize))
-		loadBuilder.setMaxObjSize(Integer.valueOf(objectSize))
-		load = loadBuilder.build()
+		LOAD_BUILDER.setMinObjSize(Integer.valueOf(objectSize))
+		LOAD_BUILDER.setMaxObjSize(Integer.valueOf(objectSize))
+		load = LOAD_BUILDER.build()
 		if load is None:
 			LOG.fatal(Markers.ERR, "No load executor instanced")
 			continue

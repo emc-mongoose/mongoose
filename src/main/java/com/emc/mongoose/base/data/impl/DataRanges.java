@@ -193,11 +193,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				contentEquals = compareWith(in, rangeOffset, rangeSize);
 			}
 			if(!contentEquals) {
-				if(LOG.isTraceEnabled()) {
-					LOG.trace(
-						Markers.MSG, "Range #{}(offset {}) corrupted?", i, rangeOffset
-					);
-				}
+				LOG.warn(Markers.MSG, "Range #{}(offset {}) corrupted?", i, rangeOffset);
 				break;
 			}
 		}

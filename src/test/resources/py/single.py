@@ -2,7 +2,11 @@
 from __future__ import print_function, absolute_import, with_statement
 from sys import exit
 #
-from loadbuilder import INSTANCE as loadBuilder
+from java.lang import NullPointerException
+try:
+	from loadbuilder import INSTANCE as LOAD_BUILDER
+except NullPointerException as e:
+	e.printStackTrace()
 #
 from com.emc.mongoose.base.api import Request
 from com.emc.mongoose.run import Main
@@ -18,7 +22,7 @@ LOG = LogManager.getLogger()
 try:
 	loadType = Request.Type.valueOf(Main.RUN_TIME_CONFIG.getString("scenario.single.load").upper())
 	LOG.debug(Markers.MSG, "Using load type: {}", loadType.name())
-	loadBuilder.setLoadType(loadType)
+	LOAD_BUILDER.setLoadType(loadType)
 except NoSuchElementException:
 	LOG.error(Markers.ERR, "No load type specified, try arg -Dscenario.single.load=<VALUE> to override")
 except IllegalArgumentException:
@@ -29,7 +33,7 @@ from java.lang import Exception
 from com.emc.mongoose.util.logging import ExceptionHandler
 load = None
 try:
-	load = loadBuilder.build()
+	load = LOAD_BUILDER.build()
 except Exception as e:
 	ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
 	e.printStackTrace()

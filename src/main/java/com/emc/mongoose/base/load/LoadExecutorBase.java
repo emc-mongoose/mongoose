@@ -309,7 +309,7 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static String FMT_EFF_SUM = "Load execution efficiency: %.1f[%%]";
 	//
-	protected void logMetrics(final Marker logMarker) {
+	protected final void logMetrics(final Marker logMarker) {
 		//
 		final long
 			countReqSucc = counterReqSucc.getCount(),
