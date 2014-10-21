@@ -7,7 +7,7 @@
     <uri>WEB-INF/property.tld</uri>
     <function>
         <name>getString</name>
-        <function-class>com.emc.mongoose.webui.expressions.Functions</function-class>
+        <function-class>com.emc.mongoose.web.ui.expressions.Functions</function-class>
         <function-signature>java.lang.String getString(com.emc.mongoose.util.conf.RunTimeConfig, java.lang.String)</function-signature>
     </function>
 </taglib>

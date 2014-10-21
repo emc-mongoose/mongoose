@@ -21,11 +21,11 @@ INSTANCE = None
 #
 from org.apache.commons.configuration import ConversionException
 if mode == Main.VALUE_RUN_MODE_CLIENT or mode == Main.VALUE_RUN_MODE_COMPAT_CLIENT:
-	from com.emc.mongoose.object.load.client import WSLoadBuilderClientImpl
+	from com.emc.mongoose.web.load.client.impl import BasicLoadBuilderClient
 	from java.rmi import RemoteException
 	try:
 		try:
-			INSTANCE = WSLoadBuilderClientImpl()
+			INSTANCE = BasicLoadBuilderClient()
 		except ConversionException:
 			LOG.fatal(Markers.ERR, "Servers address list should be comma delimited")
 			exit()
@@ -36,9 +36,9 @@ if mode == Main.VALUE_RUN_MODE_CLIENT or mode == Main.VALUE_RUN_MODE_COMPAT_CLIE
 		LOG.fatal(Markers.ERR, "Failed to create load builder client: {}", e)
 		exit()
 else: # standalone
-	from com.emc.mongoose.object.load import WSLoadBuilderImpl
+	from com.emc.mongoose.web.load.impl import BasicLoadBuilder
 	#
-	INSTANCE = WSLoadBuilderImpl()
+	INSTANCE = BasicLoadBuilder()
 #
 if INSTANCE is None:
 	LOG.fatal(Markers.ERR, "No load builder instanced")

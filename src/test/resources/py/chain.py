@@ -1,6 +1,6 @@
 from __future__ import print_function, absolute_import, with_statement
 from sys import exit
-from loadbuilder import INSTANCE as loadBuilder
+from loadbuilder import INSTANCE as LOAD_BUILDER
 #
 from org.apache.logging.log4j import Level, LogManager
 #
@@ -25,7 +25,7 @@ prevLoad = None
 for loadTypeStr in loadTypes:
 	LOG.debug(Markers.MSG, "Next load type is \"{}\"", loadTypeStr)
 	try:
-		load = loadBuilder.setLoadType(Request.Type.valueOf(loadTypeStr.upper())).build()
+		load = LOAD_BUILDER.setLoadType(Request.Type.valueOf(loadTypeStr.upper())).build()
 		if prevLoad is not None:
 			prevLoad.setConsumer(load)
 		if load is not None:
@@ -33,7 +33,7 @@ for loadTypeStr in loadTypes:
 		else:
 			LOG.error(Markers.ERR, "No load executor instanced")
 		if prevLoad is None:
-			loadBuilder.setInputFile(None) # prevent the file list producer creation for next loads
+			LOAD_BUILDER.setInputFile(None) # prevent the file list producer creation for next loads
 		prevLoad = load
 	except IllegalArgumentException:
 		LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)

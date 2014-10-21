@@ -26,7 +26,7 @@ implements Request<T> {
 	//
 	protected RequestConfig<T> reqConf = null;
 	protected T dataItem = null;
-	protected Result result = Result.UNKNOWN;
+	protected Result result = Result.FAIL_UNKNOWN;
 	//
 	private long start = 0, duration = 0;
 	public RequestBase() {

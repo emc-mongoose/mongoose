@@ -86,6 +86,7 @@ implements DataItem {
 		this.size = size;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
 	public final long getOffset() {
 		return offset;
 	}
@@ -190,6 +191,10 @@ implements DataItem {
 		size = in.readLong();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final String
+		MSG_FAIL_READ_RING_BLOCK = "Reading from data ring blocked?",
+		MSG_FAIL_READ_STREAM_BLOCK = "Reading from the stream blocked?";
+	//
 	public final void writeTo(final OutputStream out) {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Item \"{}\": stream out start", Long.toHexString(offset));
@@ -206,7 +211,7 @@ implements DataItem {
 					if(read(buff)==buff.length) {
 						out.write(buff);
 					} else {
-						throw new InterruptedIOException("Reading from data ring blocked?");
+						throw new InterruptedIOException(MSG_FAIL_READ_RING_BLOCK);
 					}
 				}
 				// tail bytes
@@ -214,7 +219,7 @@ implements DataItem {
 					if(read(buff, 0, countTailBytes)==countTailBytes) {
 						out.write(buff, 0, countTailBytes);
 					} else {
-						throw new InterruptedIOException("Reading from data ring blocked?");
+						throw new InterruptedIOException(MSG_FAIL_READ_RING_BLOCK);
 					}
 				}
 			} catch(final IOException e) {
@@ -231,36 +236,41 @@ implements DataItem {
 	) {
 		//
 		boolean contentEquals = true;
+		final int pageSize = rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE;
 		final byte
-			buff1[] = new byte[rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE],
-			buff2[] = new byte[buff1.length];
+			buff1[] = new byte[pageSize],
+			buff2[] = new byte[pageSize];
 		final int
-			countPages = rangeLength / buff1.length,
-			countTailBytes = rangeLength % buff1.length;
+			countPages = rangeLength / pageSize,
+			countTailBytes = rangeLength % pageSize;
 		int doneByteCountSum, doneByteCount;
 		//
 		synchronized(this) {
 			try {
 				setOffset(offset, rangeOffset);
 				for(int i = 0; i < countPages; i++) {
-					if(buff1.length==read(buff1)) {
+					if(pageSize == read(buff1)) {
 						doneByteCountSum = 0;
 						do {
 							doneByteCount = in.read(
-								buff2, doneByteCountSum, buff2.length - doneByteCountSum
+								buff2, doneByteCountSum, pageSize - doneByteCountSum
 							);
 							if(doneByteCount < 0) {
 								break;
 							} else {
 								doneByteCountSum += doneByteCount;
 							}
-						} while(doneByteCountSum < buff2.length);
+						} while(doneByteCountSum < pageSize);
 						contentEquals = Arrays.equals(buff1, buff2);
 						if(!contentEquals) {
+							LOG.warn(
+								Markers.ERR, "Data mismatch found at the offset of {} bytes",
+								rangeOffset + i * pageSize
+							);
 							break;
 						}
 					} else {
-						LOG.debug(Markers.ERR, "Looks like reading from data ring blocked");
+						LOG.debug(Markers.ERR, MSG_FAIL_READ_STREAM_BLOCK);
 						contentEquals = false;
 						break;
 					}
@@ -268,7 +278,7 @@ implements DataItem {
 				//
 				if(contentEquals && countTailBytes > 0) {
 					// tail bytes
-					if(read(buff1, 0, countTailBytes)==countTailBytes) {
+					if(read(buff1, 0, countTailBytes) == countTailBytes) {
 						doneByteCountSum = 0;
 						do {
 							doneByteCount = in.read(
@@ -281,8 +291,14 @@ implements DataItem {
 							}
 						} while(doneByteCountSum < countTailBytes);
 						contentEquals = Arrays.equals(buff1, buff2);
+						if(!contentEquals) {
+							LOG.warn(
+								Markers.ERR, "Data mismatch found somewhere in the range of {}-{} bytes",
+								rangeOffset + countPages * pageSize, rangeOffset + rangeLength
+							);
+						}
 					} else {
-						LOG.debug(Markers.ERR, "Looks like reading from data ring blocked");
+						LOG.debug(Markers.ERR, MSG_FAIL_READ_STREAM_BLOCK);
 						contentEquals = false;
 					}
 				}

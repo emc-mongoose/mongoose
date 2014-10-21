@@ -5,7 +5,7 @@ http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
 
 	<servlet>
 		<servlet-name>MainServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.webui.MainServlet</servlet-class>
+		<servlet-class>com.emc.mongoose.web.ui.MainServlet</servlet-class>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
 
@@ -16,7 +16,7 @@ http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
 
 	<servlet>
 		<servlet-name>StartServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.webui.StartServlet</servlet-class>
+		<servlet-class>com.emc.mongoose.web.ui.StartServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
@@ -26,7 +26,7 @@ http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
 
 	<servlet>
 		<servlet-name>StopServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.webui.StopServlet</servlet-class>
+		<servlet-class>com.emc.mongoose.web.ui.StopServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
