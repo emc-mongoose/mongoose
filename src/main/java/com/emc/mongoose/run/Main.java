@@ -5,7 +5,10 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.persist.Api;
 import com.emc.mongoose.util.persist.HibernateUtil;
+import com.emc.mongoose.util.persist.LoadType;
+import com.emc.mongoose.util.persist.Loads;
 import com.emc.mongoose.util.persist.Modes;
 import com.emc.mongoose.util.persist.Runs;
 import org.apache.logging.log4j.Level;
@@ -71,6 +74,9 @@ public final class Main {
 	public static Query query;
 	public static Modes mode;
 	public static Runs run;
+	public static Api api;
+	public static LoadType loadTypeDB;
+	public static Loads load;
 	//
 	static {
 		String dirRoot = System.getProperty("user.dir");
@@ -119,7 +125,7 @@ public final class Main {
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RUN_TIME_CONFIG.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
-		persistRunAndMode();
+		if (RUN_TIME_CONFIG.getBoolean("database.opt")) persistRunAndMode();
 		switch (runMode) {
 			case VALUE_RUN_MODE_SERVER:
 			case VALUE_RUN_MODE_COMPAT_SERVER:
@@ -134,6 +140,7 @@ public final class Main {
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
 				try {
 					new WSMock(RUN_TIME_CONFIG).run();
+					commitDataBase();
 				} catch (final Exception e) {
 					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
 				}
@@ -142,6 +149,7 @@ public final class Main {
 			case VALUE_RUN_MODE_STANDALONE:
 			case VALUE_RUN_MODE_COMPAT_CLIENT:
 				new Scenario(RUN_TIME_CONFIG).run();
+				commitDataBase();
 				System.exit(0);
 				break;
 			default:
@@ -195,9 +203,12 @@ public final class Main {
 		run = new Runs(mode,System.getProperty(KEY_RUN_ID));
 		mode.getRunsSet().add(run);
 		session.save(run);
-		session.getTransaction().commit();
+
 		//HibernateUtil.shutdown();
 	}
 	//
+	public static void commitDataBase(){
+		if (RUN_TIME_CONFIG.getBoolean("database.opt")) session.getTransaction().commit();
+	}
 }
 //

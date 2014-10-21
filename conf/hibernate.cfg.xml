@@ -15,5 +15,8 @@
 		<property name="hibernate.temp.use_jdbc_metadata_defaults">false</property>
 		<mapping class="com.emc.mongoose.util.persist.Modes"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.Runs"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.Api"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.LoadType"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.Loads"></mapping>
 	</session-factory>
 </hibernate-configuration>

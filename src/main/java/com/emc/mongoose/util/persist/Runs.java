@@ -7,11 +7,15 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.sql.Timestamp;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
@@ -23,7 +27,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 		@UniqueConstraint(columnNames = "mode"),
 		@UniqueConstraint(columnNames = "name")})
 public final class Runs
-implements java.io.Serializable{
+implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
@@ -33,6 +37,8 @@ implements java.io.Serializable{
 	private Modes mode;
 	@Column(name = "name")
 	private String name;
+	@OneToMany(targetEntity=Loads.class, fetch = FetchType.LAZY, mappedBy = "run")
+	private Set<Loads> loadsSet = new HashSet<Loads>();
 	//
 	public Runs(){
 	}
@@ -58,5 +64,11 @@ implements java.io.Serializable{
 	}
 	public void setName(String name) {
 		this.name = name;
+	}
+	public Set<Loads> getLoadsSet() {
+		return loadsSet;
+	}
+	public void setLoadsSet(Set<Loads> loadsSet) {
+		this.loadsSet = loadsSet;
 	}
 }
