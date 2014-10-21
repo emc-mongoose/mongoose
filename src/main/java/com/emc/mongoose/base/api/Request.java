@@ -18,9 +18,21 @@ extends Callable<Request<T>>, Closeable {
 	}
 	//
 	enum Result {
-		SUCC,
-		FAIL_CLIENT, FAIL_SVC, FAIL_NOT_FOUND, FAIL_AUTH, FAIL_CORRUPT,
-		FAIL_IO, FAIL_TIMEOUT, FAIL_UNKNOWN
+		SUCC(0, "Success"),
+		FAIL_CLIENT(1, "Client failure/invalid request"),
+		FAIL_SVC(2, "Storage failure"),
+		FAIL_NOT_FOUND(3, "Item not found"),
+		FAIL_AUTH(4, "Authentication/access failure"),
+		FAIL_CORRUPT(5, "Data item corruption"),
+		FAIL_IO(6, "I/O failure"),
+		FAIL_TIMEOUT(7, "Timeout"),
+		FAIL_UNKNOWN(8, "Unknown failure");
+		public final int code;
+		public final String description;
+		Result(final int code, final String description) {
+			this.code = code;
+			this.description = description;
+		}
 	}
 	//
 	T getDataItem();

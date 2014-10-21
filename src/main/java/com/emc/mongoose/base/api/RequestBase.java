@@ -80,7 +80,7 @@ implements Request<T> {
 		start = System.nanoTime();
 		execute();
 		duration = System.nanoTime() - start;
-		LOG.info(Markers.PERF_TRACE, "{},{},{},{}", dataItem, result, start, duration);
+		LOG.info(Markers.PERF_TRACE, "{},{},{},{}", dataItem, result.code, start, duration);
 		return this;
 	}
 	//

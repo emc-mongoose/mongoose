@@ -3,6 +3,7 @@ package com.emc.mongoose.web.api.impl;
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.RequestConfigImpl;
 import com.emc.mongoose.base.data.DataSource;
+import com.emc.mongoose.base.data.impl.DataRanges;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.run.Main;
@@ -409,21 +410,21 @@ implements WSRequestConfig<T> {
 	protected final void applyRangesHeaders(
 		final HttpRequest httpRequest, final T dataItem
 	) {
-		long rangeBeg = -1, rangeEnd = -1;
-		int rangeLen = dataItem.getRangeSize(), rangeCount = dataItem.getCountRangesTotal();
+		long rangeBeg = -1, rangeEnd = -1, rangeLen;
+		int rangeCount = dataItem.getCountRangesTotal();
 		for(int i = 0; i < rangeCount; i++) {
+			rangeLen = DataRanges.getRangeSize(i);
 			if(dataItem.isRangeUpdatePending(i)) {
 				if(rangeBeg < 0) { // begin of the possible updated ranges sequence
-					rangeBeg = i * rangeLen;
+					rangeBeg = DataRanges.getRangeOffset(i);;
 					rangeEnd = rangeBeg + rangeLen - 1;
 					LOG.trace(
-						Markers.MSG, "Begin of the possible updated ranges sequence @{}",
-						rangeBeg
+						Markers.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
 					);
 				} else if(rangeEnd > 0) { // next range in the sequence of updated ranges
 					rangeEnd += rangeLen;
 				}
-				if(i==rangeCount - 1) { // this is the last range which is updated also
+				if(i == rangeCount - 1) { // this is the last range which is updated also
 					LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
 					httpRequest.addHeader(
 						HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)

@@ -232,17 +232,17 @@ implements DataItem {
 	}
 	// checks that data read from input equals the specified range
 	protected final boolean compareWith(
-		final InputStream in, final long rangeOffset, final int rangeLength
+		final InputStream in, final long rangeOffset, final long rangeLength
 	) {
 		//
 		boolean contentEquals = true;
-		final int pageSize = rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE;
+		final int
+			pageSize = (int) (rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE),
+			countPages = (int) rangeLength / pageSize,
+			countTailBytes = (int) rangeLength % pageSize;
 		final byte
 			buff1[] = new byte[pageSize],
 			buff2[] = new byte[pageSize];
-		final int
-			countPages = rangeLength / pageSize,
-			countTailBytes = rangeLength % pageSize;
 		int doneByteCountSum, doneByteCount;
 		//
 		synchronized(this) {
@@ -264,8 +264,10 @@ implements DataItem {
 						contentEquals = Arrays.equals(buff1, buff2);
 						if(!contentEquals) {
 							LOG.warn(
-								Markers.ERR, "Data mismatch found at the offset of {} bytes",
-								rangeOffset + i * pageSize
+								Markers.ERR,
+								"Range internal content mismatch, offset: {}, expected: {}, got: {}",
+								rangeOffset + i * pageSize,
+								Arrays.toString(buff1), Arrays.toString(buff2)
 							);
 							break;
 						}
@@ -293,8 +295,10 @@ implements DataItem {
 						contentEquals = Arrays.equals(buff1, buff2);
 						if(!contentEquals) {
 							LOG.warn(
-								Markers.ERR, "Data mismatch found somewhere in the range of {}-{} bytes",
-								rangeOffset + countPages * pageSize, rangeOffset + rangeLength
+								Markers.ERR,
+								"Range internal content mismatch, offset: {}, expected: {}, got: {}",
+								rangeOffset + rangeLength - countTailBytes,
+								Arrays.toString(buff1), Arrays.toString(buff2)
 							);
 						}
 					} else {
@@ -304,7 +308,9 @@ implements DataItem {
 				}
 			} catch(final IOException e) {
 				contentEquals = false;
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Data integrity verification failure");
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e, "Data integrity verification failed due to I/O error"
+				);
 			}
 		}
 		//
