@@ -2,11 +2,7 @@
 from __future__ import print_function, absolute_import, with_statement
 from sys import exit
 #
-from java.lang import NullPointerException
-try:
-	from loadbuilder import INSTANCE as LOAD_BUILDER
-except NullPointerException as e:
-	e.printStackTrace()
+from loadbuilder import INSTANCE as LOAD_BUILDER
 #
 from com.emc.mongoose.base.api import Request
 from com.emc.mongoose.run import Main

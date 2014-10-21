@@ -1,15 +1,14 @@
 package com.emc.mongoose.web.ui;
 //
 import com.emc.mongoose.base.api.Request;
-import com.emc.mongoose.web.data.WSObjectImpl;
+import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadBuilder;
-import com.emc.mongoose.web.load.WSLoadBuilderImpl;
-import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.web.load.client.WSLoadBuilderClient;
-import com.emc.mongoose.web.load.client.WSLoadBuilderClientImpl;
+import com.emc.mongoose.web.load.impl.BasicLoadBuilder;
+import com.emc.mongoose.web.load.WSLoadExecutor;
+import com.emc.mongoose.web.load.client.impl.BasicLoadBuilderClient;
 import com.emc.mongoose.web.load.client.WSLoadClient;
-import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
-import com.emc.mongoose.web.load.server.WSLoadBuilderSvcImpl;
+import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.run.WSMock;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -83,7 +82,7 @@ public class StartServlet extends HttpServlet {
 
     private void runServer() {
         Thread thread = new Thread() {
-            final WSLoadBuilderSvc loadBuilderSvc = new WSLoadBuilderSvcImpl();
+            final com.emc.mongoose.web.load.server.WSLoadBuilderSvc loadBuilderSvc = new BasicLoadBuilderSvc();
             @Override
             public void run() {
                 try {
@@ -105,11 +104,11 @@ public class StartServlet extends HttpServlet {
     private void runClient() {
         //
         Thread thread = new Thread() {
-            WSLoadClient loadClient;
+            WSLoadClient<WSObject> loadClient;
             @Override
             public void run() {
                 try {
-                    final WSLoadBuilderClient<WSObjectImpl, WSLoadClient<WSObjectImpl>> loadBuilderClient = new WSLoadBuilderClientImpl<>(runTimeConfig);
+                    final WSLoadBuilderClient<WSObject, WSLoadClient<WSObject>> loadBuilderClient = new BasicLoadBuilderClient<>(runTimeConfig);
                     // WTF? -> loadBuilderClient.setProperties(new RunTimeConfig());
                     //
                     try {
@@ -182,13 +181,12 @@ public class StartServlet extends HttpServlet {
     private void runStandalone()
     throws IOException {
         Thread thread = new Thread() {
-            WSLoadExecutor loadExecutor;
+            WSLoadExecutor<WSObject> loadExecutor;
             @Override
             public void run() {
                 try {
                     //
-                    final WSLoadBuilder<WSObjectImpl, WSLoadExecutor<WSObjectImpl>>
-                            loadBuilder = new WSLoadBuilderImpl<>();
+                    final WSLoadBuilder<WSObject, WSLoadExecutor<WSObject>> loadBuilder = new BasicLoadBuilder<>();
                     //
                     try {
                         final Request.Type loadType = Request.Type.valueOf(

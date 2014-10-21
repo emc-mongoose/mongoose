@@ -171,7 +171,7 @@ implements AppendableDataItem, UpdatableDataItem {
 		final int tailSize = (int) (size - countRangesTotal * rangeSize);
 		long rangeOffset;
 		UniformData updatedRange;
-		for(int i=0; i<countRangesTotal; i++) {
+		for(int i = 0; i < countRangesTotal; i ++) {
 			rangeOffset = i * rangeSize;
 			if(maskRangesHistory.get(i)) { // range have been modified
 				if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -213,7 +213,7 @@ implements AppendableDataItem, UpdatableDataItem {
 		throws IllegalStateException {
 		final int startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
 		int nextCellPos;
-		for(int i=startCellPos; i<startCellPos+countRangesTotal; i++) {
+		for(int i = startCellPos; i < startCellPos+countRangesTotal; i ++) {
 			nextCellPos = i % countRangesTotal;
 			if(!maskRangesHistory.get(nextCellPos) && !maskRangesPending.get(nextCellPos)) {
 				maskRangesPending.set(nextCellPos);

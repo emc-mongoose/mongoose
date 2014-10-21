@@ -2,7 +2,7 @@ package com.emc.mongoose.base.load.type;
 //
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.AppendableDataItem;
-import com.emc.mongoose.base.load.LoadExecutorBase;
+import com.emc.mongoose.base.load.impl.LoadExecutorBase;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import org.apache.logging.log4j.LogManager;
