@@ -67,9 +67,9 @@ dependencies {
 		'org.eclipse.jetty:jetty-webapp:9.2.3.v20140905',
 		'javax.el:javax.el-api:3.0.1-b04',
 		'javax.servlet:javax.servlet-api:3.1.0',
-		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127'
-	)
-
+		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
+		'jstl:jstl:1.2',
+    )
 	runtime (
 		//
 		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
@@ -86,8 +86,6 @@ dependencies {
 		'org.slf4j:slf4j-api:1.7.7',
 		//
 		'org.python:jython:2.7-b2',
-		'jstl:jstl:1.2',
-		//
 		'org.postgresql:postgresql:9.3-1102-jdbc3',
 		'org.fusesource.jansi:jansi:1.11'
 	)
@@ -142,6 +140,12 @@ distributions {
 			}
 			into('scripts') {
 				from { sourceSets.test.resources }
+			}
+			into('webapp') {
+				from { 'src/main/webapp' }
+			}
+			into('webapp/WEB-INF/lib') {
+				from { configurations.compile.files {dep -> dep.name == 'jstl'} }
 			}
 		}
 	}

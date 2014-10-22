@@ -1,103 +1,101 @@
 $(document).ready(function() {
-    
-    $("#stop").attr("disabled", "disabled");
-    $(".distributed").hide();
-    $(".data-node").hide();
-    $(".driver").hide();
-    $(".drivers-block").hide();
-    $(".advanced-content").hide();
-    
-    $(".add-node").click(function() {
-        if ($(".data-node").is(":visible")) {
-            $(".data-node").hide();
-        } else {
-            $(".data-node").show();
-        }
-    });
 
-    $(".add-driver").click(function() {
-        if ($(".driver").is(":visible")) {
-            $(".driver").hide();
-        } else {
-            $(".driver").show();
-        }
-    });
+	var VALUE_RUN_MODE_CLIENT = "VALUE_RUN_MODE_CLIENT";
+	var VALUE_RUN_MODE_STANDALONE = "VALUE_RUN_MODE_STANDALONE";
 
-    $("#save").click(function() {
-        $(".storages").append(appendStorage($("#data-node-text").val()));
-        $("#data-node-text").val("");
-        $(".data-node").hide();
-    });
+	setStartCookies();
+	initComponents();
 
-    $(document).on("click", ".remove", function() {
-        $(this).parent().parent().remove();
-    });
+	$(".add-node").click(function() {
+		if ($(".data-node").is(":visible")) {
+			$(".data-node").hide();
+		} else {
+			$(".data-node").show();
+		}
+	});
 
-    function appendStorage(storage) {
-        html = 
-            '<div class="input-group">\
-                    <span class="input-group-addon">\
-                        <input type="checkbox">\
-                    </span>\
-                    <label class="form-control">' +
-                        storage +
-                    '</label>\
-                    <span class="input-group-btn">\
-                        <button type="button" class="btn btn-default remove">Remove</button>\
-                    </span>\
-            </div>';
+	$(".add-driver").click(function() {
+		if ($(".driver").is(":visible")) {
+			$(".driver").hide();
+		} else {
+			$(".driver").show();
+		}
+	});
 
-        return html;
-    }
+	$(document).on("click", ".remove", function() {
+		$(this).parent().parent().remove();
+	});
 
-    $("#save-driver").click(function() {
-        $(".drivers").append(appendStorage($("#driver-text").val()));
-        $("#driver-text").val("");
-        $(".driver").hide();
-    });
+	$(document).on("click", "#save", function() {
+		$(".storages").append(appendBlock("dataNodes", $("#data-node-text").val()));
+		$("#data-node-text").val("");
+		$(".data-node").hide();
+	});
 
-    function appendDriver(driver) {
-        html = 
-            '<div class="input-group">\
-                    <span class="input-group-addon">\
-                        <input type="checkbox">\
-                    </span>\
-                    <label class="form-control">' +
-                        driver +
-                    '</label>\
-                    <span class="input-group-btn">\
-                        <button type="button" class="btn btn-default remove">Remove</button>\
-                    </span>\
-            </div>';
+	$(document).on("click", "#save-driver", function() {
+		$(".drivers").append(appendBlock("drivers", $("#driver-text").val()));
+		$("#driver-text").val("");
+		$(".driver").hide();
+	});
 
-        return html;
-    }
+	$("#distributed").click(function() {
+		$(".drivers-block").show();
+		$("#runmode").val(VALUE_RUN_MODE_CLIENT);
+	});
 
-    $("#distributed").click(function() {
-        /*$(".distributed").show();*/
-        $(".drivers-block").show();
-    });
+	$("#standalone").click(function() {
+		$(".drivers-block").hide();
+		$("#runmode").val(VALUE_RUN_MODE_STANDALONE);
+	});
 
-    $("#standalone").click(function() {
-        /*$(".distributed").hide();*/
-        $(".drivers-block").hide();
-    });
 
-    $("#more-settings").click(function() {
-        if ($(".advanced-content").is(":visible")) {
-            $(".advanced-content").hide();
-        } else {
-            $(".advanced-content").show();
-        }
-    });
+	function setStartCookies() {
+		if (!$.cookie("start") && !$.cookie("stop")) {
+			$.cookie("start", false);
+			$.cookie("stop", true);
+		}
+	}
 
-    $("#start").click(function() {
-        $(this).attr("disabled", "disabled");
-        $("#stop").removeAttr("disabled");
-    });
+	function initComponents() {
+		$("#stop").attr("disabled", $.parseJSON($.cookie("stop")));
+		$("#start").attr("disabled", $.parseJSON($.cookie("start")));
+		$(".data-node").hide();
+		$(".driver").hide();
+		$(".drivers-block").hide();
+	}
 
-    $("#stop").click(function() {
-        $(this).attr("disabled", "disabled");
-        $("#start").removeAttr("disabled");
-    });
+	function appendBlock(key, value) {
+		html =
+			'<div class="input-group">\
+				<span class="input-group-addon">\
+					<input type="checkbox" name=' + key +' value=' + value + '>\
+				</span>\
+				<label class="form-control">' +
+					value +
+				'</label>\
+				<span class="input-group-btn">\
+					<button type="button" class="btn btn-default remove">Remove</button>\
+				</span>\
+			</div>';
+		return html;
+	}
+
+	$(document).on('submit', '#mainForm',  function(e) {
+		e.preventDefault();
+		$.post("/start", $("#mainForm").serialize(), function(data, status) {
+			$.cookie("start", true);
+			$.cookie("stop", false);
+			$("#start").attr("disabled", $.parseJSON($.cookie("start")));
+			$("#stop").attr("disabled", $.parseJSON($.cookie("stop")));
+		});
+	});
+
+	$("#stop").click(function() {
+		$.post("/stop", function(data, status) {
+			$.cookie("start", false);
+			$.cookie("stop", true);
+			$("#start").attr("disabled", $.parseJSON($.cookie("start")));
+			$("#stop").attr("disabled", $.parseJSON($.cookie("stop")));
+		});
+	});
 });

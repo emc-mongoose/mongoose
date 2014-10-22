@@ -11,7 +11,7 @@ import java.io.IOException;
  */
 public class StopServlet extends HttpServlet {
 
-    public void doPost(HttpServletRequest request, HttpServletResponse response)
+	public void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
         StartServlet.interruptMongoose();
     }
