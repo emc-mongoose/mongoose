@@ -15,20 +15,20 @@ import java.io.IOException;
  */
 public class MainServlet extends HttpServlet {
 
-    private static final Logger LOG = LogManager.getLogger();
-    private RunTimeConfig runTimeConfig;
+	private static final Logger LOG = LogManager.getLogger();
+	private RunTimeConfig runTimeConfig;
 
-    @Override
-    public void init() throws ServletException {
-        runTimeConfig = (RunTimeConfig) getServletContext().getAttribute("runTimeConfig");
-        super.init();
-    }
+	@Override
+	public void init() throws ServletException {
+		runTimeConfig = (RunTimeConfig) getServletContext().getAttribute("runTimeConfig");
+		super.init();
+	}
 
-    public void doGet(HttpServletRequest request, HttpServletResponse response)
-    throws ServletException, IOException {
-        request.setAttribute("runmodes", RunModes.values());
-        request.setAttribute("runTimeConfig", runTimeConfig);
-        request.getRequestDispatcher("index.jsp").forward(request, response);
-    }
+	public void doGet(HttpServletRequest request, HttpServletResponse response)
+	throws ServletException, IOException {
+		request.setAttribute("runmodes", RunModes.values());
+		request.setAttribute("runTimeConfig", runTimeConfig);
+		request.getRequestDispatcher("index.jsp").forward(request, response);
+	}
 
 }

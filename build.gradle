@@ -69,7 +69,8 @@ dependencies {
         'javax.servlet:javax.servlet-api:3.1.0',
 		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
 		'org.hibernate:hibernate-core:4.3.6.Final',
-		'org.eclipse.persistence:javax.persistence:2.1.0'
+		'org.eclipse.persistence:javax.persistence:2.1.0',
+		'jstl:jstl:1.2'
     )
 
 	runtime (
@@ -88,8 +89,6 @@ dependencies {
 		'org.slf4j:slf4j-api:1.7.7',
 		//
 		'org.python:jython:2.7-b2',
-		'jstl:jstl:1.2',
-		//
 		'org.postgresql:postgresql:9.3-1102-jdbc3',
 		'org.fusesource.jansi:jansi:1.11'
 	)
@@ -144,6 +143,12 @@ distributions {
 			}
 			into('scripts') {
 				from { sourceSets.test.resources }
+			}
+			into('webapp') {
+				from { 'src/main/webapp' }
+			}
+			into('webapp/WEB-INF/lib') {
+				from { configurations.compile.files {dep -> dep.name == 'jstl'} }
 			}
 		}
 	}
