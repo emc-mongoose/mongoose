@@ -45,12 +45,25 @@ implements LoadBuilderClient<T, U> {
 	//
 	public LoadBuilderClientBase(final RunTimeConfig runTimeConfig)
 	throws IOException {
+		//
 		super(runTimeConfig.getRemoteServers().length);
 		this.runTimeConfig = runTimeConfig;
 		final String remoteServers[] = runTimeConfig.getRemoteServers();
-		for(final String serverAddr: remoteServers) {
+		//
+		LoadBuilderSvc<T, U> loadBuilderSvc;
+		int maxLastInstanceN = 0, nextInstanceN;
+		for(final String serverAddr : remoteServers) {
 			LOG.info(Markers.MSG, "Resolving server service @ \"{}\"...", serverAddr);
-			put(serverAddr, resolve(serverAddr));
+			loadBuilderSvc = resolve(serverAddr);
+			nextInstanceN = loadBuilderSvc.getLastInstanceNum();
+			if(nextInstanceN > maxLastInstanceN) {
+				maxLastInstanceN = nextInstanceN;
+			}
+			put(serverAddr, loadBuilderSvc);
+		}
+		//
+		for(final String serverAddr : remoteServers) {
+			get(serverAddr).setLastInstanceNum(maxLastInstanceN);
 		}
 	}
 	//

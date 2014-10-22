@@ -64,6 +64,7 @@ implements WSRequest<T> {
 	) {
 		Request request;
 		if(dataItem == null) {
+			LOG.debug(Markers.MSG, "Preparing poison request");
 			request = POISON;
 		} else {
 			GenericInstancePool pool;

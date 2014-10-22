@@ -198,33 +198,39 @@ implements StorageNodeExecutor<T> {
 			counterReqFailParent.inc();
 		} else {
 			try(final Request<T> request = (Request<T>) Future.class.cast(reqTask).get()) {
-				final T object = request.getDataItem();
-				final Request.Result result = request.getResult();
-				if(result == Request.Result.SUCC) {
-					// update the metrics with success
-					counterReqSucc.inc();
-					counterReqSuccParent.inc();
-					final long
-						duration = request.getDuration(),
-						size = request.getTransferSize();
-					reqBytes.mark(size);
-					reqBytesParent.mark(size);
-					reqDur.update(duration);
-					reqDurParent.update(duration);
-					// feed to the consumer
-					if(consumer!=null) {
-						try {
-							consumer.submit(object);
-						} catch(final IOException e) {
-							ExceptionHandler.trace(
-								LOG, Level.WARN, e,
-								String.format("Failed to submit the object \"%s\" to consumer", object)
-							);
-						}
-					}
+				final T dataItem = request.getDataItem();
+				if(dataItem == null) {
+					consumer.submit(null);
 				} else {
-					counterReqFail.inc();
-					counterReqFailParent.inc();
+					final Request.Result result = request.getResult();
+					if(result == Request.Result.SUCC) {
+						// update the metrics with success
+						counterReqSucc.inc();
+						counterReqSuccParent.inc();
+						final long
+							duration = request.getDuration(),
+							size = request.getTransferSize();
+						reqBytes.mark(size);
+						reqBytesParent.mark(size);
+						reqDur.update(duration);
+						reqDurParent.update(duration);
+						// feed to the consumer
+						if(consumer != null) {
+							try {
+								consumer.submit(dataItem);
+							} catch(final IOException e) {
+								ExceptionHandler.trace(
+									LOG, Level.WARN, e,
+									String.format(
+										"Failed to submit the object \"%s\" to consumer", dataItem
+									)
+								);
+							}
+						}
+					} else {
+						counterReqFail.inc();
+						counterReqFailParent.inc();
+					}
 				}
 				//
 			} catch(final InterruptedException e) {

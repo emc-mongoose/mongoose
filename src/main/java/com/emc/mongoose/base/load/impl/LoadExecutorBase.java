@@ -66,6 +66,14 @@ implements LoadExecutor<T> {
 	private volatile static int instanceN = 0;
 	protected volatile long maxCount, tsStart;
 	//
+	public static int getLastInstanceNum() {
+		return instanceN;
+	}
+	//
+	public static void setLastInstanceNum(final int lastInstanceN) {
+		instanceN = lastInstanceN;
+	}
+	//
 	@SuppressWarnings("unchecked")
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig,
@@ -307,9 +315,9 @@ implements LoadExecutor<T> {
 	@Override
 	public void submit(final T dataItem)
 	throws RemoteException {
-		if(dataItem==null || isInterrupted()) { // handle the poison
+		if(dataItem == null || isInterrupted()) { // handle the poison
 			maxCount = counterSubm.getCount() + counterRej.getCount();
-			LOG.trace(Markers.MSG, "Poisoned on #{}", maxCount);
+			LOG.debug(Markers.MSG, "Poisoned on #{}", maxCount);
 			for(final StorageNodeExecutor<T> nextNode: nodes) {
 				if(!nextNode.isShutdown()) {
 					nextNode.submit(null); // poison
