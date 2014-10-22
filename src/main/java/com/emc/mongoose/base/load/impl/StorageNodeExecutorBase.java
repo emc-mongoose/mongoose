@@ -56,6 +56,7 @@ implements StorageNodeExecutor<T> {
 	private final Condition condInterrupted = lock.newCondition();
 	//
 	private final RunTimeConfig runTimeConfig;
+	private final int retryDelayMilliSec;
 	//
 	protected StorageNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
@@ -71,6 +72,7 @@ implements StorageNodeExecutor<T> {
 		);
 		//
 		this.runTimeConfig = runTimeConfig;
+		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		this.localReqConf = localReqConf;
 		//
 		counterSubm = parentMetrics.counter(MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_SUBM));
@@ -358,6 +360,14 @@ implements StorageNodeExecutor<T> {
 		//
 		LOG.debug(Markers.MSG, "Interrupting...");
 		localReqConf.setRetries(false);
+		shutdown();
+		while(getQueue().size() > 0 || getCorePoolSize() == getActiveCount()) {
+			try {
+				Thread.sleep(retryDelayMilliSec);
+			} catch(final InterruptedException e) {
+				break;
+			}
+		}
 		final int droppedTaskCount = shutdownNow().size();
 		if(droppedTaskCount > 0) {
 			LOG.info(Markers.ERR, "Dropped {} tasks", droppedTaskCount);

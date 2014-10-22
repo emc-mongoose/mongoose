@@ -194,12 +194,23 @@ implements LoadExecutor<T> {
 			@Override
 			public final void run() {
 				// interrupt submit executor
-				/*submitExecutor.shutdown();
-				try {
+				submitExecutor.shutdown();
+				/*try {
 					submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 				} catch(final InterruptedException e) {
 					ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while awaiting the submitter termination");
 				}*/
+				while(
+					submitExecutor.getQueue().size() > 0
+						||
+					submitExecutor.getCorePoolSize() == submitExecutor.getActiveCount()
+				) {
+					try {
+						Thread.sleep(retryDelayMilliSec);
+					} catch(final InterruptedException e) {
+						break;
+					}
+				}
 				final int droppedTaskCount = submitExecutor.shutdownNow().size();
 				if(droppedTaskCount > 0) {
 					LOG.info(Markers.ERR, "Dropped {} tasks", droppedTaskCount);

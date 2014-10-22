@@ -794,11 +794,18 @@ implements LoadClient<T> {
 			new Thread("interrupt-submit-" + getName()) {
 				@Override
 				public final void run() {
-					/*try {
-						submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
-					} catch(final InterruptedException e) {
-						LOG.debug(Markers.ERR, "Awaiting the submit executor termination has been interrupted");
-					}*/
+					submitExecutor.shutdown();
+					while(
+						submitExecutor.getQueue().size() > 0
+							||
+						submitExecutor.getCorePoolSize() == submitExecutor.getActiveCount()
+					) {
+						try {
+							Thread.sleep(retryDelayMilliSec);
+						} catch(final InterruptedException e) {
+							break;
+						}
+					}
 					final int droppedTaskCount = submitExecutor.shutdownNow().size();
 					if(droppedTaskCount > 0) {
 						LOG.info(Markers.ERR, "Dropped {} tasks", droppedTaskCount);
@@ -856,7 +863,6 @@ implements LoadClient<T> {
 		if(!isInterrupted()) {
 			interrupt();
 		}
-		LOG.debug(Markers.MSG, "Client dropped {} tasks", submitExecutor.shutdownNow().size());
 		//
 		LoadSvc<T> nextLoadSvc;
 		JMXConnector nextJMXConn = null;
