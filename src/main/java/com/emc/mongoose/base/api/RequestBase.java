@@ -1,6 +1,8 @@
 package com.emc.mongoose.base.api;
 //
+import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.base.data.UpdatableDataItem;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.pool.GenericInstancePool;
 //
@@ -28,9 +30,9 @@ implements Request<T> {
 	protected T dataItem = null;
 	protected Result result = Result.FAIL_UNKNOWN;
 	//
-	private long start = 0, duration = 0;
-	public RequestBase() {
-	}
+	private long start = 0, duration = 0, transferSize = 0;
+	private Type type;
+	public RequestBase() {}
 	// BEGIN pool related things
 	protected final static ConcurrentHashMap<RequestConfig, GenericInstancePool<Request>>
 		POOL_MAP = new ConcurrentHashMap<>();
@@ -41,6 +43,12 @@ implements Request<T> {
 		pool.release(this);
 	}
 	// END pool related things
+	@Override
+	public Request<T> setRequestConfig(final RequestConfig<T> reqConf) {
+		this.reqConf = reqConf;
+		type = reqConf.getLoadType();
+		return this;
+	}
 	//
 	@Override
 	public final T getDataItem() {
@@ -50,13 +58,22 @@ implements Request<T> {
 	@Override
 	public Request<T> setDataItem(final T dataItem) {
 		this.dataItem = dataItem;
+		switch(type) {
+			case APPEND:
+				transferSize = AppendableDataItem.class.cast(dataItem).getPendingAugmentSize();
+				break;
+			case UPDATE:
+				transferSize = UpdatableDataItem.class.cast(dataItem).getPendingRangesSize();
+				break;
+			default:
+				transferSize = dataItem.getSize();
+		}
 		return this;
 	}
 	//
 	@Override
-	public Request<T> setRequestConfig(final RequestConfig<T> reqConf) {
-		this.reqConf = reqConf;
-		return this;
+	public final long getTransferSize() {
+		return transferSize;
 	}
 	//
 	@Override

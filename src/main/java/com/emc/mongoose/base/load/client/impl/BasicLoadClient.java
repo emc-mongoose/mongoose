@@ -371,7 +371,7 @@ implements LoadClient<T> {
 								);
 							} catch(final IOException|MBeanException |InstanceNotFoundException |ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.WARN, e,
+									LOG, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName() + "." + attrName, addr
@@ -429,7 +429,7 @@ implements LoadClient<T> {
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.WARN, e,
+									LOG, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName() + "." + attrName, addr
@@ -487,7 +487,7 @@ implements LoadClient<T> {
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.WARN, e,
+									LOG, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName()+"."+attrName, addr
@@ -542,7 +542,7 @@ implements LoadClient<T> {
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.WARN, e,
+									LOG, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName() + "." + attrName, addr
@@ -597,7 +597,7 @@ implements LoadClient<T> {
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.WARN, e,
+									LOG, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName()+"."+attrName, addr
@@ -874,13 +874,9 @@ implements LoadClient<T> {
 				logMetrics(Markers.PERF_SUM);
 			}
 		}
-		/*
-		try {
-			final WSRequestConfigImpl reqConfS3 = WSRequestConfigImpl.class.cast(reqConf);
-			reqConfS3.getBucket().list();
-		} catch(final ClassCastException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request config API is not Amz S3");
-		}*/
+		//
+		mgmtConnExecutor.shutdownNow();
+		metricsReporter.close();
 		//
 		LOG.debug(Markers.MSG, "Closing the remote services...");
 		for(final String addr: remoteLoadMap.keySet()) {
@@ -911,9 +907,6 @@ implements LoadClient<T> {
 			}
 			//
 		}
-		mgmtConnExecutor.shutdownNow();
-		metricsReporter.close();
-		//
 		LOG.debug(Markers.MSG, "Clear the servers map");
 		remoteLoadMap.clear();
 		LOG.debug(Markers.MSG, "Closed {}", getName());

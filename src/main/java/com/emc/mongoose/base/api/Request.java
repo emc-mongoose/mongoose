@@ -35,11 +35,13 @@ extends Callable<Request<T>>, Closeable {
 		}
 	}
 	//
+	Request<T> setRequestConfig(final RequestConfig<T> reqConf);
+	//
 	T getDataItem();
 	//
 	Request<T> setDataItem(final T dataItem);
 	//
-	Request<T> setRequestConfig(final RequestConfig<T> reqConf);
+	long getTransferSize();
 	//
 	Result getResult();
 	//

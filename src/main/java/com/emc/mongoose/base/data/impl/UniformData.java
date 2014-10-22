@@ -40,9 +40,9 @@ implements DataItem {
 		FMT_MSG_STREAM_OUT_START = "Item \"{}\": stream out start",
 		FMT_MSG_STREAM_OUT_FINISH = "Item \"{}\": stream out finish",
 		FMT_MSG_CORRUPT = "Content mismatch:\n" +
-			"\trange internal offset: {},\n" +
-			"\texpected: {},\n" +
-			"\tgot: {}",
+			"\trange internal offset: {};\n" +
+			"\texpected buffer content:\n{}\n" +
+			"\tbut got the following:\n{}",
 		MSG_IO_FAILURE_DURING_VERIFICATION = "Data integrity verification failed due to I/O error";
 	protected final static String
 		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s",

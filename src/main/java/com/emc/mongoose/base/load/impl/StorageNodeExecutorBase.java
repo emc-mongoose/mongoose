@@ -8,7 +8,9 @@ import com.codahale.metrics.Snapshot;
 //
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.RequestConfig;
+import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.base.data.UpdatableDataItem;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
@@ -57,6 +59,7 @@ implements StorageNodeExecutor<T> {
 	//
 	private final RunTimeConfig runTimeConfig;
 	private final int retryDelayMilliSec;
+	private final Request.Type reqType;
 	//
 	protected StorageNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
@@ -74,6 +77,7 @@ implements StorageNodeExecutor<T> {
 		this.runTimeConfig = runTimeConfig;
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		this.localReqConf = localReqConf;
+		reqType = localReqConf.getLoadType();
 		//
 		counterSubm = parentMetrics.counter(MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_SUBM));
 		counterSubmParent = parentMetrics.getCounters().get(
@@ -193,10 +197,7 @@ implements StorageNodeExecutor<T> {
 			counterReqFail.inc();
 			counterReqFailParent.inc();
 		} else {
-			try(
-				final Request<T>
-					request = (Request<T>) Future.class.cast(reqTask).get()
-			) {
+			try(final Request<T> request = (Request<T>) Future.class.cast(reqTask).get()) {
 				final T object = request.getDataItem();
 				final Request.Result result = request.getResult();
 				if(result == Request.Result.SUCC) {
@@ -205,7 +206,7 @@ implements StorageNodeExecutor<T> {
 					counterReqSuccParent.inc();
 					final long
 						duration = request.getDuration(),
-						size = object.getSize();
+						size = request.getTransferSize();
 					reqBytes.mark(size);
 					reqBytesParent.mark(size);
 					reqDur.update(duration);

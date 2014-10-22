@@ -1,2 +1,2 @@
-threads:		4
+threads:		1
 verify.content:	true

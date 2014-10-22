@@ -141,6 +141,24 @@ implements LoadExecutor<T> {
 			}
 		}
 		//
+		// register shutdown hook which should perform correct server-side shutdown even if
+		// user hits ^C
+		Runtime.getRuntime().addShutdownHook(
+			new Thread() {
+				@Override
+				public final void run() {
+					LOG.info(Markers.MSG, "Shutdown hook start");
+					try {
+						close();
+						LOG.debug(Markers.MSG, "Shutdown hook finished successfully");
+					} catch(final IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		);
+		LOG.trace(Markers.MSG, "Registered shutdown hook");
+		//
 		tsStart = System.nanoTime();
 		super.start();
 		LOG.debug(Markers.MSG, "Started {}", getName());
