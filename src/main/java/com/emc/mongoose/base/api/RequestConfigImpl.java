@@ -6,17 +6,13 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.persist.Api;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hibernate.Query;
-import org.hibernate.Session;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.math.BigInteger;
 
 /**
  Created by kurila on 06.06.14.

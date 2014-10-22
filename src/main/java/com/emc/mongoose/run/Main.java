@@ -5,23 +5,14 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.persist.Api;
 import com.emc.mongoose.util.persist.HibernateUtil;
-import com.emc.mongoose.util.persist.LoadType;
-import com.emc.mongoose.util.persist.Loads;
-import com.emc.mongoose.util.persist.Modes;
-import com.emc.mongoose.util.persist.Runs;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.hibernate.Query;
-import org.hibernate.Session;
 //
 import java.io.File;
-import java.io.Serializable;
 import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -31,7 +22,6 @@ import java.security.Policy;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 /**
@@ -69,14 +59,6 @@ public final class Main {
 	//
 	public final static File
 		JAR_SELF;
-	//Var for DB connection
-	public static final Session session = HibernateUtil.getSessionFactory().openSession();
-	public static Query query;
-	public static Modes mode;
-	public static Runs run;
-	public static Api api;
-	public static LoadType loadTypeDB;
-	public static Loads load;
 	//
 	static {
 		String dirRoot = System.getProperty("user.dir");
@@ -99,6 +81,7 @@ public final class Main {
 	//
 	public static RunTimeConfig RUN_TIME_CONFIG;
 	//
+	public static HibernateUtil persistanceUtil = new HibernateUtil();
 	public static void main(final String args[]) {
 		initSecurity();
 		//
@@ -125,7 +108,9 @@ public final class Main {
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RUN_TIME_CONFIG.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
-		if (RUN_TIME_CONFIG.getBoolean("database.opt")) persistRunAndMode();
+		//DataBase
+		HibernateUtil.setRun(System.getProperty(KEY_RUN_ID), runMode);
+		//
 		switch (runMode) {
 			case VALUE_RUN_MODE_SERVER:
 			case VALUE_RUN_MODE_COMPAT_SERVER:
@@ -140,7 +125,6 @@ public final class Main {
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
 				try {
 					new WSMock(RUN_TIME_CONFIG).run();
-					commitDataBase();
 				} catch (final Exception e) {
 					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
 				}
@@ -149,7 +133,6 @@ public final class Main {
 			case VALUE_RUN_MODE_STANDALONE:
 			case VALUE_RUN_MODE_COMPAT_CLIENT:
 				new Scenario(RUN_TIME_CONFIG).run();
-				commitDataBase();
 				System.exit(0);
 				break;
 			default:
@@ -188,27 +171,5 @@ public final class Main {
         System.setSecurityManager(new SecurityManager());
     }
 	//
-	public static void persistRunAndMode(){
-		//Begin transaction for write info into DataBase
-		session.beginTransaction();
-		query = session.createSQLQuery("SELECT id FROM modes WHERE name= :name")
-				.setParameter("name", System.getProperty(KEY_RUN_MODE));
-		if (query.list().isEmpty()){
-			mode = new Modes(System.getProperty(KEY_RUN_MODE));
-		}else {
-			mode = (Modes) session.get(Modes.class, (BigInteger) query.list().get(0));
-		}
-		session.save(mode);
-		//Put information about mode into DB
-		run = new Runs(mode,System.getProperty(KEY_RUN_ID));
-		mode.getRunsSet().add(run);
-		session.save(run);
-
-		//HibernateUtil.shutdown();
-	}
-	//
-	public static void commitDataBase(){
-		if (RUN_TIME_CONFIG.getBoolean("database.opt")) session.getTransaction().commit();
-	}
 }
 //

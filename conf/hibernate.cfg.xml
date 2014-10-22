@@ -11,12 +11,12 @@
 		<property name="hibernate.connection.username">mongoose</property>
 		<property name="hibernate.dialect">org.hibernate.dialect.PostgreSQL9Dialect</property>
 		<property name="transaction.factory_class">org.hibernate.transaction.JDBCTransactionFactory</property>
-		<property name="show_sql">true</property>
+		<property name="show_sql">false</property>
 		<property name="hibernate.temp.use_jdbc_metadata_defaults">false</property>
-		<mapping class="com.emc.mongoose.util.persist.Modes"></mapping>
-		<mapping class="com.emc.mongoose.util.persist.Runs"></mapping>
-		<mapping class="com.emc.mongoose.util.persist.Api"></mapping>
-		<mapping class="com.emc.mongoose.util.persist.LoadType"></mapping>
-		<mapping class="com.emc.mongoose.util.persist.Loads"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.ModeEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.RunEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.ApiEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.LoadTypeEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.LoadEntity"></mapping>
 	</session-factory>
 </hibernate-configuration>

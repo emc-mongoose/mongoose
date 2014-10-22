@@ -19,6 +19,10 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.persist.ApiEntity;
+import com.emc.mongoose.util.persist.HibernateUtil;
+import com.emc.mongoose.util.persist.LoadEntity;
+import com.emc.mongoose.util.persist.LoadTypeEntity;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
 import org.apache.commons.lang.StringUtils;
@@ -27,9 +31,11 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
+import org.hibernate.Query;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.rmi.RemoteException;
 import java.util.Locale;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -65,6 +71,10 @@ implements LoadExecutor<T> {
 	protected volatile Consumer<T> consumer;
 	private volatile static int instanceN = 0;
 	protected volatile long maxCount, tsStart;
+	//For DataBase entity
+	//protected ApiEntity api= new ApiEntity();
+	protected LoadTypeEntity type = new LoadTypeEntity();
+	protected LoadEntity load ;
 	//
 	@SuppressWarnings("unchecked")
 	protected LoadExecutorBase(
@@ -72,6 +82,9 @@ implements LoadExecutor<T> {
 		final String[] addrs, final RequestConfig<T> reqConf, final long maxCount,
 		final int threadsPerNode, final String listFile
 	) throws ClassCastException {
+		//DataBase. Persist entities.
+		instanceN++;
+		//HibernateUtil.setLoad(reqConf.getAPI(),reqConf.getLoadType().toString(),instanceN);
 		//
 		this.runTimeConfig = runTimeConfig;
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
@@ -84,7 +97,7 @@ implements LoadExecutor<T> {
 			.build();
 		//
 		final int nodeCount = addrs.length;
-		final String name = Integer.toString(instanceN++) + '-' +
+		final String name = Integer.toString(instanceN) + '-' +
 			StringUtils.capitalize(reqConf.getAPI().toLowerCase()) + '-' +
 			StringUtils.capitalize(reqConf.getLoadType().toString().toLowerCase()) +
 			(maxCount>0? Long.toString(maxCount) : "") + '-' +
@@ -413,4 +426,5 @@ implements LoadExecutor<T> {
 	public final DataSource<T> getDataSource() {
 		return dataSrc;
 	}
+	//
 }

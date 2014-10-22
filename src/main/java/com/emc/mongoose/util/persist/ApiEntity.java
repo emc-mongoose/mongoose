@@ -1,19 +1,18 @@
 package com.emc.mongoose.util.persist;
 
+import com.emc.mongoose.run.Main;
+import org.hibernate.Query;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.sql.Timestamp;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,28 +21,23 @@ import static javax.persistence.GenerationType.IDENTITY;
 /**
  * Created by olga on 17.10.14.
  */
-@Entity(name = "Runs")
-@Table(name = "runs", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "mode"),
+@Entity(name="API")
+@Table(name = "API", uniqueConstraints = {
 		@UniqueConstraint(columnNames = "name")})
-public final class Runs
+public class ApiEntity
 implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
 	private BigInteger id;
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "mode", nullable = false)
-	private Modes mode;
 	@Column(name = "name")
 	private String name;
-	@OneToMany(targetEntity=Loads.class, fetch = FetchType.LAZY, mappedBy = "run")
-	private Set<Loads> loadsSet = new HashSet<Loads>();
+	@OneToMany(targetEntity=LoadEntity.class, fetch = FetchType.LAZY, mappedBy = "api")
+	private Set<LoadEntity> loadsSet = new HashSet<LoadEntity>();
 	//
-	public Runs(){
+	public ApiEntity(){
 	}
-	public Runs(Modes mode,String name){
-		this.mode = mode;
+	public ApiEntity(String name){
 		this.name = name;
 	}
 	//
@@ -53,22 +47,16 @@ implements Serializable {
 	public void setId(BigInteger id) {
 		this.id = id;
 	}
-	public Modes getMode() {
-		return mode;
-	}
-	public void setMode(Modes mode) {
-		this.mode = mode;
-	}
 	public String getName() {
 		return name;
 	}
 	public void setName(String name) {
 		this.name = name;
 	}
-	public Set<Loads> getLoadsSet() {
+	public Set<LoadEntity> getLoadsSet() {
 		return loadsSet;
 	}
-	public void setLoadsSet(Set<Loads> loadsSet) {
+	public void setLoadsSet(Set<LoadEntity> loadsSet) {
 		this.loadsSet = loadsSet;
 	}
 }

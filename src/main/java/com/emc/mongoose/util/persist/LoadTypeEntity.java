@@ -1,4 +1,7 @@
 package com.emc.mongoose.util.persist;
+//
+import com.emc.mongoose.run.Main;
+import org.hibernate.Query;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -12,16 +15,15 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
-
+//
 import static javax.persistence.GenerationType.IDENTITY;
-
 /**
- * Created by olga on 17.10.14.
+ * Created by olga on 21.10.14.
  */
-@Entity(name="API")
-@Table(name = "API", uniqueConstraints = {
+@Entity(name="LoadType")
+@Table(name = "LoadType", uniqueConstraints = {
 		@UniqueConstraint(columnNames = "name")})
-public class Api
+public class LoadTypeEntity
 implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -29,12 +31,12 @@ implements Serializable {
 	private BigInteger id;
 	@Column(name = "name")
 	private String name;
-	@OneToMany(targetEntity=Loads.class, fetch = FetchType.LAZY, mappedBy = "api")
-	private Set<Loads> loadsSet = new HashSet<Loads>();
+	@OneToMany(targetEntity=LoadEntity.class, fetch = FetchType.LAZY, mappedBy = "type")
+	private Set<LoadEntity> loadsSet = new HashSet<LoadEntity>();
 	//
-	public Api(){
+	public LoadTypeEntity(){
 	}
-	public Api(String name){
+	public LoadTypeEntity(String name){
 		this.name = name;
 	}
 	//
@@ -50,10 +52,10 @@ implements Serializable {
 	public void setName(String name) {
 		this.name = name;
 	}
-	public Set<Loads> getLoadsSet() {
+	public Set<LoadEntity> getLoadsSet() {
 		return loadsSet;
 	}
-	public void setLoadsSet(Set<Loads> loadsSet) {
+	public void setLoadsSet(Set<LoadEntity> loadsSet) {
 		this.loadsSet = loadsSet;
 	}
 }

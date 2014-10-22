@@ -18,8 +18,9 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name="Modes")
 @Table(name = "modes", uniqueConstraints = {
+		@UniqueConstraint(columnNames = "id"),
 		@UniqueConstraint(columnNames = "name")})
-public final class Modes
+public final class ModeEntity
 implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -27,12 +28,12 @@ implements Serializable {
 	private BigInteger id;
 	@Column(name = "name")
 	private String name;
-	@OneToMany(targetEntity=Runs.class, fetch = FetchType.LAZY, mappedBy = "mode")
-	private Set<Runs> runsSet = new HashSet<Runs>();
+	@OneToMany(targetEntity=RunEntity.class, fetch = FetchType.LAZY, mappedBy = "mode")
+	private Set<RunEntity> runsSet = new HashSet<RunEntity>();
 	//
-	public Modes(){
+	public ModeEntity(){
 	}
-	public Modes(String name){
+	public ModeEntity(String name){
 		this.name = name;
 	}
 	//
@@ -48,10 +49,10 @@ implements Serializable {
 	public final void setName(String name) {
 		this.name = name;
 	}
-	public Set<Runs> getRunsSet() {
+	public Set<RunEntity> getRunsSet() {
 		return runsSet;
 	}
-	public void setRunsSet(Set<Runs> runsSet) {
+	public void setRunsSet(Set<RunEntity> runsSet) {
 		this.runsSet = runsSet;
 	}
 }
