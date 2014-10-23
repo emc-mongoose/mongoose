@@ -1,11 +1,11 @@
 package com.emc.mongoose.run;
 //
+import com.emc.mongoose.util.persist.PersistDAO;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.persist.HibernateUtil;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -81,7 +81,7 @@ public final class Main {
 	//
 	public static RunTimeConfig RUN_TIME_CONFIG;
 	//
-	public static HibernateUtil persistanceUtil = new HibernateUtil();
+	public static PersistDAO persistanceUtil = new PersistDAO();
 	public static void main(final String args[]) {
 		initSecurity();
 		//
@@ -109,7 +109,7 @@ public final class Main {
 		RUN_TIME_CONFIG.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
 		//DataBase
-		HibernateUtil.setRun(System.getProperty(KEY_RUN_ID), runMode);
+		PersistDAO.setRun(System.getProperty(KEY_RUN_ID), runMode);
 		//
 		switch (runMode) {
 			case VALUE_RUN_MODE_SERVER:

@@ -19,8 +19,7 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.persist.ApiEntity;
-import com.emc.mongoose.util.persist.HibernateUtil;
+import com.emc.mongoose.util.persist.PersistDAO;
 import com.emc.mongoose.util.persist.LoadEntity;
 import com.emc.mongoose.util.persist.LoadTypeEntity;
 import com.emc.mongoose.util.remote.ServiceUtils;
@@ -31,11 +30,9 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
-import org.hibernate.Query;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
-import java.math.BigInteger;
 import java.rmi.RemoteException;
 import java.util.Locale;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -84,7 +81,7 @@ implements LoadExecutor<T> {
 	) throws ClassCastException {
 		//DataBase. Persist entities.
 		instanceN++;
-		//HibernateUtil.setLoad(reqConf.getAPI(),reqConf.getLoadType().toString(),instanceN);
+		PersistDAO.setLoad(reqConf.getAPI(), reqConf.getLoadType().toString(), instanceN);
 		//
 		this.runTimeConfig = runTimeConfig;
 		retryCountMax = runTimeConfig.getRunRetryCountMax();

@@ -37,26 +37,26 @@ implements Serializable {
 	//
 	public ApiEntity(){
 	}
-	public ApiEntity(String name){
+	public ApiEntity(final String name){
 		this.name = name;
 	}
 	//
 	public BigInteger getId() {
 		return id;
 	}
-	public void setId(BigInteger id) {
+	public void setId(final BigInteger id) {
 		this.id = id;
 	}
 	public String getName() {
 		return name;
 	}
-	public void setName(String name) {
+	public void setName(final String name) {
 		this.name = name;
 	}
 	public Set<LoadEntity> getLoadsSet() {
 		return loadsSet;
 	}
-	public void setLoadsSet(Set<LoadEntity> loadsSet) {
+	public void setLoadsSet(final Set<LoadEntity> loadsSet) {
 		this.loadsSet = loadsSet;
 	}
 }

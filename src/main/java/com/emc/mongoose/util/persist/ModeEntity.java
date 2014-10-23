@@ -33,26 +33,26 @@ implements Serializable {
 	//
 	public ModeEntity(){
 	}
-	public ModeEntity(String name){
+	public ModeEntity(final String name){
 		this.name = name;
 	}
 	//
 	public final BigInteger getId() {
 		return id;
 	}
-	public final void setId(BigInteger id) {
+	public final void setId(final BigInteger id) {
 		this.id = id;
 	}
 	public final String getName() {
 		return name;
 	}
-	public final void setName(String name) {
+	public final void setName(final String name) {
 		this.name = name;
 	}
 	public Set<RunEntity> getRunsSet() {
 		return runsSet;
 	}
-	public void setRunsSet(Set<RunEntity> runsSet) {
+	public void setRunsSet(final Set<RunEntity> runsSet) {
 		this.runsSet = runsSet;
 	}
 }

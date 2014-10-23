@@ -43,7 +43,7 @@ implements Serializable {
 	//
 	public LoadEntity(){
 	}
-	public LoadEntity(RunEntity run, LoadTypeEntity type, BigInteger num, ApiEntity api){
+	public LoadEntity(final RunEntity run, final LoadTypeEntity type, final BigInteger num, final ApiEntity api){
 		this.run = run;
 		run.getLoadsSet().add(this);
 		this.type = type;
@@ -56,31 +56,31 @@ implements Serializable {
 	public BigInteger getId() {
 		return id;
 	}
-	public void setId(BigInteger id) {
+	public void setId(final BigInteger id) {
 		this.id = id;
 	}
 	public RunEntity getRun() {
 		return run;
 	}
-	public void setRun(RunEntity run) {
+	public void setRun(final RunEntity run) {
 		this.run = run;
 	}
 	public LoadTypeEntity getType() {
 		return type;
 	}
-	public void setType(LoadTypeEntity type) {
+	public void setType(final LoadTypeEntity type) {
 		this.type = type;
 	}
 	public BigInteger getNum() {
 		return num;
 	}
-	public void setNum(BigInteger num) {
+	public void setNum(final BigInteger num) {
 		this.num = num;
 	}
 	public ApiEntity getApi() {
 		return api;
 	}
-	public void setApi(ApiEntity api) {
+	public void setApi(final ApiEntity api) {
 		this.api = api;
 	}
 }
