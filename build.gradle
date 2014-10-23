@@ -53,10 +53,14 @@ dependencies {
 	)
 
 	compile (
+		//
 		'com.codahale.metrics:metrics-core:3.0.2',
+		//
 		'commons-codec:commons-codec:1.9',
+		//
 		'org.apache.logging.log4j:log4j-api:2.0.2',
 		'org.apache.logging.log4j:log4j-core:2.0.2',
+		//
 		'org.apache.httpcomponents:httpclient:4.3.4',
 		'org.apache.httpcomponents:httpcore:4.3.2',
         'org.eclipse.jetty:jetty-server:9.2.3.v20140905',
@@ -66,17 +70,21 @@ dependencies {
         'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
         'jstl:jstl:1.2',
     )
-
 	runtime (
+		//
 		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
 		'com.fasterxml.jackson.core:jackson-core:2.4.1',
 		'com.fasterxml.jackson.core:jackson-databind:2.4.1',
+		//
 		'com.github.rickyclarkson:jmdns:3.4.2-r353-1',
+		//
 		'commons-lang:commons-lang:2.6',
 		'commons-logging:commons-logging:1.1.3',
+		//
 		'org.apache.logging.log4j:log4j-slf4j-impl:2.0.2',
 		'org.apache.logging.log4j:log4j-jcl:2.0.2',
 		'org.slf4j:slf4j-api:1.7.7',
+		//
 		'org.python:jython:2.7-b2',
         'org.postgresql:postgresql:9.3-1102-jdbc3',
 		'org.fusesource.jansi:jansi:1.11'
@@ -88,12 +96,12 @@ dependencies {
 
 task rmic(dependsOn: compileJava) << {
 	String[] listClsRemote = [
-		'com.emc.mongoose.object.load.server.WSLoadBuilderSvcImpl',
-		'com.emc.mongoose.object.load.server.type.ws.AppendSvc',
-		'com.emc.mongoose.object.load.server.type.ws.CreateSvc',
-		'com.emc.mongoose.object.load.server.type.ws.DeleteSvc',
-		'com.emc.mongoose.object.load.server.type.ws.ReadSvc',
-		'com.emc.mongoose.object.load.server.type.ws.UpdateSvc'
+		'com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc',
+		'com.emc.mongoose.web.load.server.impl.type.AppendSvc',
+		'com.emc.mongoose.web.load.server.impl.type.CreateSvc',
+		'com.emc.mongoose.web.load.server.impl.type.DeleteSvc',
+		'com.emc.mongoose.web.load.server.impl.type.ReadSvc',
+		'com.emc.mongoose.web.load.server.impl.type.UpdateSvc'
 	]
 	String clsPath = """${sourceSets.main.output.classesDir}:${configurations.apacheCommonsConfiguration.asPath}"""
 	for(cls in listClsRemote) {
@@ -109,7 +117,6 @@ jar {
 	dependsOn(rmic)
 	archiveName "${baseName}.${extension}"
 	def clsPath = configurations.runtime.collect { 'lib/'+it.name }.join(' ')
-	clsPath += ' ' + confDirName + '/log4j2.json'
 	manifest {
 		attributes (
 			'Implementation-Title': rootProject.name,

@@ -1,6 +1,6 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.object.load.server.WSLoadBuilderSvcImpl;
+import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -112,7 +112,7 @@ public final class Main {
 			case VALUE_RUN_MODE_SERVER:
 			case VALUE_RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
-				new WSLoadBuilderSvcImpl().start();
+				new BasicLoadBuilderSvc().start();
 				break;
 			case VALUE_RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");

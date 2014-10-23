@@ -18,7 +18,7 @@ public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>> {
 		MSG_TMPL_INVALID_VALUE = "illegal value specified for \"{}\" parameter: {}";
 	//
 	LoadBuilder<T, U> setProperties(final RunTimeConfig props)
-	throws RemoteException;
+	throws IllegalStateException, RemoteException;
 	//
 	RequestConfig<T> getRequestConfig()
 	throws RemoteException;
