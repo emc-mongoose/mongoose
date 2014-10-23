@@ -78,8 +78,8 @@ implements Producer<T> {
 					nextData = dataItemConstructor.newInstance(nextLine);
 					try {
 						consumer.submit(nextData);
-					} catch(final RemoteException e) {
-						LOG.warn(Markers.ERR, "Failed to submit data item to remote consumer");
+					} catch(final Exception e) {
+						ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to submit data item");
 					}
 					dataItemsCount ++;
 				}
@@ -93,7 +93,7 @@ implements Producer<T> {
 			try {
 				LOG.debug(Markers.MSG, "Feeding poison to consumer \"{}\"", consumer.toString());
 				consumer.submit(null); // or: consumer.setMaxCount(dataItemsCount);
-			} catch(final RemoteException e) {
+			} catch(final Exception e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to submit the poison to remote consumer");
 			}
 			LOG.debug(Markers.MSG, "Exiting");

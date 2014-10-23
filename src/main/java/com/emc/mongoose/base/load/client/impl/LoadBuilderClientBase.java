@@ -53,7 +53,7 @@ implements LoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;
 		for(final String serverAddr : remoteServers) {
-			LOG.info(Markers.MSG, "Resolving server service @ \"{}\"...", serverAddr);
+			LOG.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
 			loadBuilderSvc = resolve(serverAddr);
 			nextInstanceN = loadBuilderSvc.getLastInstanceNum();
 			if(nextInstanceN > maxLastInstanceN) {
@@ -86,7 +86,7 @@ implements LoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
 			nextBuilder = get(addr);
-			LOG.info(Markers.MSG, "Applying the properties to server @ \"{}\"...", addr);
+			LOG.debug(Markers.MSG, "Applying the configuration to server @ \"{}\"...", addr);
 			nextBuilder.setProperties(runTimeConfig);
 		}
 		//

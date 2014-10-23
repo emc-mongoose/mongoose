@@ -17,14 +17,14 @@ import java.util.Set;
  Pooled objects should define "close()" method which will invoke "release" method putting the object(instance) back into a pool.
  Such instances pool may improve the performance in some cases.
  */
-public final class GenericInstancePool<T extends Closeable> {
+public final class BasicInstancePool<T extends Closeable> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final Set<T> availItems = Collections.synchronizedSet(new HashSet<T>());
 	private final Class<T> itemCls;
 	//
-	public GenericInstancePool(final Class<T> itemCls) {
+	public BasicInstancePool(final Class<T> itemCls) {
 		this.itemCls = itemCls;
 	}
 	//

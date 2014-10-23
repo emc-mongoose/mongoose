@@ -4,7 +4,7 @@ import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.pool.GenericInstancePool;
+import com.emc.mongoose.util.pool.BasicInstancePool;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,12 +34,12 @@ implements Request<T> {
 	private Type type;
 	public RequestBase() {}
 	// BEGIN pool related things
-	protected final static ConcurrentHashMap<RequestConfig, GenericInstancePool<Request>>
+	protected final static ConcurrentHashMap<RequestConfig, BasicInstancePool<Request>>
 		POOL_MAP = new ConcurrentHashMap<>();
 	//
 	@Override
 	public final void close() {
-		final GenericInstancePool<Request> pool = POOL_MAP.get(reqConf);
+		final BasicInstancePool<Request> pool = POOL_MAP.get(reqConf);
 		pool.release(this);
 	}
 	// END pool related things

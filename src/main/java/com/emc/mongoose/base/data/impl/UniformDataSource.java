@@ -31,6 +31,8 @@ implements DataSource<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static int A = 21, B = 35, C = 4;
+	private final static String
+		MSG_FMT_NEW_LAYER = "Generate new byte layer #%d, previous seed: \"%x\", next one: \"%x\"";
 	//
 	private long seed;
 	private List<ByteBuffer> byteLayers = new ArrayList<>(1);
@@ -160,10 +162,7 @@ implements DataSource<T> {
 				nextLayer = ByteBuffer.allocate(ringSize);
 				prevSeed = prevLayer.getLong(0);
 				nextSeed = Long.reverse(nextWord(Long.reverseBytes(prevSeed)));
-				LOG.info(
-					Markers.MSG, "Generate new byte layer #{}, previous seed: \"{}\", next one: \"{}\"",
-					i, prevSeed, nextSeed
-				);
+				LOG.debug(Markers.MSG, String.format(MSG_FMT_NEW_LAYER, i, prevSeed, nextSeed));
 				generateData(nextLayer, nextSeed);
 				byteLayers.add(nextLayer);
 				prevLayer = nextLayer;
