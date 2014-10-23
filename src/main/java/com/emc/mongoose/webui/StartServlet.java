@@ -28,6 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -47,40 +48,28 @@ public class StartServlet extends HttpServlet {
         threads = new CopyOnWriteArrayList<>();
         runTimeConfig = (RunTimeConfig) getServletContext().getAttribute("runTimeConfig");
     }
-
     //
     public void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
 		//
-        final String runMode = request.getParameter("runmode");
-        //
-        LOG.info(Markers.MSG, "Launch mode is \"{}\"", RunModes.valueOf(runMode).getValue());
-        //
-        switch (RunModes.valueOf(runMode)) {
-            case VALUE_RUN_MODE_SERVER:
-                LOG.debug(Markers.MSG, "Starting the server");
-                runServer();
-                break;
-            case VALUE_RUN_MODE_STANDALONE:
-                LOG.debug(Markers.MSG, "Starting the standalone");
-                runStandalone();
-                break;
-            case VALUE_RUN_MODE_WSMOCK:
-                LOG.debug(Markers.MSG, "Starting the web storage mock");
-                runWSMock();
-                break;
-            case VALUE_RUN_MODE_CLIENT:
-                LOG.debug(Markers.MSG, "Starting the client");
-                runClient();
-                break;
-            default:
-                LOG.debug(Markers.MSG, "Starting the standalone");
-                runStandalone();
-                break;
-        }
+		setupRunTimeConfig(request);
+		//
+		switch (RunModes.valueOf(request.getParameter("runmode"))) {
+			case VALUE_RUN_MODE_STANDALONE:
+				LOG.debug(Markers.MSG, "Starting the standalone");
+				runStandalone();
+				break;
+			case VALUE_RUN_MODE_CLIENT:
+				LOG.debug(Markers.MSG, "Starting the client");
+				runClient();
+				break;
+			default:
+				LOG.debug(Markers.MSG, "Starting the standalone");
+				runStandalone();
+				break;
+		}
     }
 	//
-
     private void runServer() {
         Thread thread = new Thread() {
             final WSLoadBuilderSvc loadBuilderSvc = new WSLoadBuilderSvcImpl();
@@ -101,7 +90,7 @@ public class StartServlet extends HttpServlet {
         thread.start();
         threads.add(thread);
     }
-
+	//
     private void runClient() {
         //
         Thread thread = new Thread() {
@@ -110,7 +99,7 @@ public class StartServlet extends HttpServlet {
             public void run() {
                 try {
                     final WSLoadBuilderClientImpl<WSObjectImpl, WSLoadClient<WSObjectImpl>> loadBuilderClient = new WSLoadBuilderClientImpl<>();
-                    loadBuilderClient.setProperties(new RunTimeConfig());
+                    loadBuilderClient.setProperties(runTimeConfig);
                     //
                     try {
                         final Request.Type loadType = Request.Type.valueOf(
@@ -178,7 +167,7 @@ public class StartServlet extends HttpServlet {
         threads.add(thread);
 
     }
-
+	//
     private void runStandalone()
     throws IOException {
         Thread thread = new Thread() {
@@ -251,15 +240,64 @@ public class StartServlet extends HttpServlet {
         thread.start();
         threads.add(thread);
     }
-
+	//
     private void runWSMock() {
         final Thread thread = new Thread(new WSMock(runTimeConfig));
         thread.start();
         threads.add(thread);
     }
+	//
+	private void setupRunTimeConfig(HttpServletRequest request) {
+		//	Common settings
+		runTimeConfig.set("run.time", request.getParameter("runTime") + "." + request.getParameter("runTimeSelect"));
+		runTimeConfig.set("run.metrics.period.sec", request.getParameter("runMetricsPeriodSec"));
+		runTimeConfig.set("auth.id", request.getParameter("authId"));
+		runTimeConfig.set("auth.secret", request.getParameter("authSecret"));
+		//	Data & Load
+		runTimeConfig.set("data.count", request.getParameter("dataCount"));
+		runTimeConfig.set("data.size.min", request.getParameter("dataSizeMin"));
+		runTimeConfig.set("data.size.max", request.getParameter("dataSizeMax"));
+		//
+		runTimeConfig.set("load.create.threads", request.getParameter("loadCreateThreads"));
+		//
+		runTimeConfig.set("load.read.threads", request.getParameter("loadReadThreads"));
+		runTimeConfig.set("load.read.verify.content", request.getParameter("loadReadVerifyContent"));
+		//
+		runTimeConfig.set("load.update.threads", request.getParameter("loadUpdateThreads"));
+		runTimeConfig.set("load.update.per.item", request.getParameter("loadUpdatePerItem"));
+		//
+		runTimeConfig.set("load.delete.threads", request.getParameter("loadDeleteThreads"));
+		//
+		runTimeConfig.set("load.append.threads", request.getParameter("loadAppendThreads"));
+		//	API
+		runTimeConfig.set("api.s3.port", request.getParameter("apiS3Port"));
+		runTimeConfig.set("api.s3.auth.prefix", request.getParameter("apiS3AuthPrefix"));
+		runTimeConfig.set("api.s3.bucket", request.getParameter("apiS3Bucket"));
+		//
+		runTimeConfig.set("api.atmos.port", request.getParameter("apiAtmosPort"));
+		runTimeConfig.set("api.atmos.subtenant", request.getParameter("apiAtmosSubtenant"));
+		runTimeConfig.set("api.atmos.path.rest", request.getParameter("apiAtmosPathRest"));
+		runTimeConfig.set("api.atmos.interface", request.getParameter("apiAtmosInterface"));
+		//
+		runTimeConfig.set("api.swift.port", request.getParameter("apiSwiftPort"));
+		//	Storage
+		runTimeConfig.set("storage.api", request.getParameter("storageApi"));
+		runTimeConfig.set("storage.scheme", request.getParameter("scheme"));
+		runTimeConfig.set("storage.addrs", Arrays.toString(request.getParameterValues("dataNodes"))
+				.replace("[", "")
+				.replace("]", "")
+				.trim());
+		//	Drivers
+		runTimeConfig.set("remote.monitor.port", request.getParameter("remoteMonitorPort"));
+		runTimeConfig.set("remote.servers", Arrays.toString(request.getParameterValues("drivers"))
+				.replace("[", "")
+				.replace("]", "")
+				.trim());
 
-    public static void interruptMongoose() {
-        threads.get(threads.size() - 1).interrupt();
-    }
+	}
+	//
+	public static void interruptMongoose() {
+		threads.get(threads.size() - 1).interrupt();
+	}
 
 }
