@@ -13,6 +13,7 @@
 		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
 		<script type="text/javascript" src="js/bootstrap/bootstrap.min.js"></script>
+		<script type="text/javascript" src="js/jquery.cookie.js"></script>
 	</head>
 	<body>
 		<nav class="navbar navbar-default" role="navigation">
@@ -49,14 +50,15 @@
 						<button id="distributed" type="button" class="default">Distributed</button>
 					</div>
 					<form id="mainForm">
+						<input type="hidden" id="runmode" name="runmode" value="VALUE_RUN_MODE_STANDALONE">
+
 						<div class="fixed-block">
 							<fieldset class="scheduler-border-top">
 								<legend class="scheduler-border">Run</legend>
 								<label for="run-time">run.time:</label>
 								<c:set var="runTime" value="${fn:split(runTimeConfig.runTime, '.')}" />
 								<input type="text" name="runTime" id="runTime" class="form-control counter" value="${runTime[0]}">
-								<select>
-									<option>objects</option>
+								<select name="runTimeSelect">
 									<option>seconds</option>
 									<option>minutes</option>
 									<option>hours</option>
@@ -117,43 +119,40 @@
 
 						</div>
 
-						<!-- Fix it -->
-						<!-- <div class="distributed"> -->
-							<div class="drivers-block">
+						<div class="drivers-block">
+							<fieldset class="scheduler-border">
+								<legend class="scheduler-border">Remote</legend>
+								<label>remote.monitor.port:</label>
+								<input id="remoteMonitorPort" name="remoteMonitorPort" type="text" class="form-control counter" value="${runTimeConfig.remoteMonitorPort}">
 								<fieldset class="scheduler-border">
-									<legend class="scheduler-border">Remote</legend>
-									<label>remote.monitor.port:</label>
-									<input id="remoteMonitorPort" name="remoteMonitorPort" type="text" class="form-control counter" value="${runTimeConfig.remoteMonitorPort}">
-									<fieldset class="scheduler-border">
-										<legend class="scheduler-border">Drivers</legend>
-										<button type="button" class="default add-driver">Add</button>
-										<div class="input-group driver">
-											<input id="driver-text" type="text" class="form-control" placeholder="Enter driver">
-											<span class="input-group-btn">
-												<button id="save-driver" type="button" class="btn btn-default">Save</button>
-											</span>
-										</div>
+									<legend class="scheduler-border">Drivers</legend>
+									<button type="button" class="default add-driver">Add</button>
+									<div class="input-group driver">
+										<input id="driver-text" type="text" class="form-control" placeholder="Enter driver">
+										<span class="input-group-btn">
+											<button id="save-driver" type="button" class="btn btn-default">Save</button>
+										</span>
+									</div>
 
-                                        <c:forEach var="server" items="${runTimeConfig.remoteServers}">
-                                            <div class="drivers">
-                                                <div class="input-group">
-                                                    <span class="input-group-addon">
-                                                        <input id="drivers" name="drivers" type="checkbox" value="${server}">
-                                                    </span>
-                                                    <label class="form-control">
-                                                        ${server}
-                                                    </label>
-                                                    <span class="input-group-btn">
-                                                        <button type="button" class="btn btn-default remove">Remove</button>
-                                                    </span>
-                                                </div>
+                                    <c:forEach var="server" items="${runTimeConfig.remoteServers}">
+                                    	<div class="drivers">
+                                        	<div class="input-group">
+                                            	<span class="input-group-addon">
+                                                	<input id="drivers" name="drivers" type="checkbox" value="${server}">
+                                                </span>
+                                                <label class="form-control">
+                                                	${server}
+                                                </label>
+                                                <span class="input-group-btn">
+                                               		<button type="button" class="btn btn-default remove">Remove</button>
+                                                </span>
                                             </div>
-                                        </c:forEach>
+                                        </div>
+                                    </c:forEach>
 
-									</fieldset>
 								</fieldset>
-							</div>
-						<!-- </div> -->
+							</fieldset>
+						</div>
 
 
 						<div class="operations">
@@ -161,19 +160,11 @@
 								<legend class="scheduler-border">Data</legend>
 								<label for="count">data.count:</label>
 								<input name="dataCount" id="dataCount" type="text" class="form-control counter" value="${runTimeConfig.dataCount}">
-								<select name="dataCountSelect">
-									<option>objects</option>
-									<option>seconds</option>
-									<option>minutes</option>
-									<option>hours</option>
-									<option>days</option>
-								</select>
 								<input name="dataSizeMin" type="text" class="form-control counter" placeholder="min" value="${rt:getString(runTimeConfig, 'data.size.min')}">
 								-
 								<input name="dataSizeMax" type="text" class="form-control counter" placeholder="max" value="${rt:getString(runTimeConfig, 'data.size.max')}">
 
 
-								<!-- -->
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">Load</legend>
 									<div class="tabs-wrapper">
@@ -185,8 +176,6 @@
 					  						<li><a href="#append" data-toggle="tab">Append</a></li>
 										</ul>
 									</div>
-
-									<input id="loadHidden"name="loadHidden" type="hidden" value="Create">
 
 									<div class="tab-content">
 										<div class="tab-pane active" id="create">
@@ -219,50 +208,46 @@
 
 						</div>
 
-						<!-- <div class="distributed"> -->
-							<div class="interfaces">
-								<fieldset class="scheduler-border">
-									<legend class="scheduler-border">API</legend>
-									<div class="tabs-wrapper">
-										<ul id="apiTab" class="nav nav-tabs crud-tabs" role="tablist">
-							  				<li class="active"><a href="#s3" data-toggle="tab">S3</a></li>
-							  				<li><a href="#atmos" data-toggle="tab">Atmos</a></li>
-							  				<li><a href="#swift" data-toggle="tab">Swift</a></li>
-										</ul>
-									</div>
+						<div class="interfaces">
+							<fieldset class="scheduler-border">
+								<legend class="scheduler-border">API</legend>
+								<div class="tabs-wrapper">
+									<ul id="apiTab" class="nav nav-tabs crud-tabs" role="tablist">
+							  			<li class="active"><a href="#s3" data-toggle="tab">S3</a></li>
+							  			<li><a href="#atmos" data-toggle="tab">Atmos</a></li>
+							  			<li><a href="#swift" data-toggle="tab">Swift</a></li>
+									</ul>
+								</div>
 
-									<input id="apiHidden" type="hidden" value="S3">
-
-									<div class="tab-content">
-										<div class="tab-pane active" id="s3">
-											<label>api.port</label>
-											<input name="apiS3Port" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.s3.port')}">
-											<label>api.auth.prefix</label>
-											<input name="apiS3AuthPrefix" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.s3.auth.prefix')}">
-											<label>api.bucket</label>
-											<input name="apiS3Bucket" type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'api.s3.bucket')}">
-										</div>
-										<div class="tab-pane" id="atmos">
-											<label>api.port</label>
-											<input name="apiAtmosPort" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.port')}">
-											<label>api.subtenant</label>
-											<input name="apiAtmosSubtenant" type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'api.atmos.subtenant')}">
-											<label>api.path.rest</label>
-											<input name="apiAtmosPathRest" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.path.rest')}">
-											<label>api.interface</label>
-											<input name="apiAtmosInterface" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.interface')}">
-										</div>
-										<div class="tab-pane" id="swift">
-											<label>api.port</label>
-											<input name="apiSwiftPort" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.swift.port')}">
-										</div>
+								<div class="tab-content">
+									<div class="tab-pane active" id="s3">
+										<label>api.port</label>
+										<input name="apiS3Port" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.s3.port')}">
+										<label>api.auth.prefix</label>
+										<input name="apiS3AuthPrefix" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.s3.auth.prefix')}">
+										<label>api.bucket</label>
+										<input name="apiS3Bucket" type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'api.s3.bucket')}">
 									</div>
-								</fieldset>
-							</div>
-						<!-- </div> -->
+									<div class="tab-pane" id="atmos">
+										<label>api.port</label>
+										<input name="apiAtmosPort" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.port')}">
+										<label>api.subtenant</label>
+										<input name="apiAtmosSubtenant" type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'api.atmos.subtenant')}">
+										<label>api.path.rest</label>
+										<input name="apiAtmosPathRest" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.path.rest')}">
+										<label>api.interface</label>
+										<input name="apiAtmosInterface" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.interface')}">
+									</div>
+									<div class="tab-pane" id="swift">
+										<label>api.port</label>
+										<input name="apiSwiftPort" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.swift.port')}">
+									</div>
+								</div>
+							</fieldset>
+						</div>
 
 						<div class="start-wrapper">
-							<button id="start" type="button" class="default"><span>Start</span></button>
+							<button id="start" type="submit" class="default"><span>Start</span></button>
 						</div>
 					</form>
 				</div>
@@ -287,7 +272,7 @@
 						<div class="log-wrapper">
 							<div class="tab-content">
 								<div class="tab-pane active" id="data-items-csv">
-									data.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csvcsvdata.items.csv
+									data.items.csv
 								</div>
 								<div class="tab-pane" id="errors-log">
 									errors.log
