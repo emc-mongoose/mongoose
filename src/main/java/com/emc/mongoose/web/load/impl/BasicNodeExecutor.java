@@ -3,10 +3,12 @@ package com.emc.mongoose.web.load.impl;
 import com.codahale.metrics.MetricRegistry;
 //
 import com.emc.mongoose.object.load.impl.ObjectNodeExecutorBase;
+import com.emc.mongoose.web.api.WSRequest;
 import com.emc.mongoose.web.api.impl.BasicWSRequest;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.web.load.WSNodeExecutor;
 //
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
@@ -15,7 +17,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
  */
 public final class BasicNodeExecutor<T extends WSObject>
 extends ObjectNodeExecutorBase<T>
-implements com.emc.mongoose.web.load.WSNodeExecutor<T> {
+implements WSNodeExecutor<T> {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
@@ -28,8 +30,8 @@ implements com.emc.mongoose.web.load.WSNodeExecutor<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected final com.emc.mongoose.web.api.WSRequest getRequestFor(final T dataItem) {
-		return (com.emc.mongoose.web.api.WSRequest) BasicWSRequest.getInstanceFor(localReqConf, dataItem);
+	protected final WSRequest<T> getRequestFor(final T dataItem) {
+		return (WSRequest<T>) BasicWSRequest.getInstanceFor(localReqConf, dataItem);
 	}
 	//
 }

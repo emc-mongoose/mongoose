@@ -16,11 +16,9 @@ extends DataItem {
 	//
 	void updateRandomRanges(final int count);
 	//
-	int getPendingUpdatesCount();
-	//
-	int getRangeSize();
-	//
 	int getCountRangesTotal();
+	//
+	long getPendingRangesSize();
 	//
 	void writePendingUpdatesTo(final OutputStream out)
 	throws IOException;

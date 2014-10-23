@@ -16,4 +16,9 @@ extends LoadBuilder<T, U>, Service {
 	String buildRemotely()
 	throws RemoteException;
 	//
+	int getLastInstanceNum()
+	throws RemoteException;
+	//
+	void setLastInstanceNum(final int instanceN)
+	throws RemoteException;
 }

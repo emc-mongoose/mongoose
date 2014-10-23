@@ -7,6 +7,7 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
+import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -32,10 +33,21 @@ implements DataItem {
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String
 		FMT_META_INFO = "%x" + RunTimeConfig.LIST_SEP + "%x",
-		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: %s",
-		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: %s";
+		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",
+		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: \"%s\"",
+		FMT_MSG_FAIL_CHANGE_OFFSET = "Failed to change offset to \"%x\"",
+		FMT_MSG_FAIL_SET_OFFSET = "Failed to set data ring offset: \"%s\"",
+		FMT_MSG_STREAM_OUT_START = "Item \"{}\": stream out start",
+		FMT_MSG_STREAM_OUT_FINISH = "Item \"{}\": stream out finish",
+		FMT_MSG_CORRUPT = "Content mismatch:\n" +
+			"\trange internal offset: {};\n" +
+			"\texpected buffer content:\n{}\n" +
+			"\tbut got the following:\n{}",
+		MSG_IO_FAILURE_DURING_VERIFICATION = "Data integrity verification failed due to I/O error";
 	protected final static String
-		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s";
+		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s",
+		MSG_READ_RING_BLOCKED = "Reading from data ring blocked?",
+		MSG_READ_STREAM_BLOCKED = "Reading from the stream blocked?";
 	private static AtomicLong NEXT_OFFSET = new AtomicLong(
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
@@ -80,7 +92,7 @@ implements DataItem {
 			setOffset(offset, 0);
 		} catch(final IOException e) {
 			ExceptionHandler.trace(
-				LOG, Level.ERROR, e, String.format("Failed to set data ring offset: %s", offset)
+				LOG, Level.ERROR, e, String.format(FMT_MSG_FAIL_SET_OFFSET, offset)
 			);
 		}
 		this.size = size;
@@ -98,9 +110,7 @@ implements DataItem {
 		if(skip(offset % count)==offset % count) {
 			offset = offset0;
 		} else {
-			throw new IOException(
-				"Failed to change offset to \""+Long.toHexString(offset)+"\""
-			);
+			throw new IOException(String.format(FMT_MSG_FAIL_CHANGE_OFFSET, offset));
 		}
 	}
 	//
@@ -191,13 +201,9 @@ implements DataItem {
 		size = in.readLong();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final String
-		MSG_FAIL_READ_RING_BLOCK = "Reading from data ring blocked?",
-		MSG_FAIL_READ_STREAM_BLOCK = "Reading from the stream blocked?";
-	//
 	public final void writeTo(final OutputStream out) {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Item \"{}\": stream out start", Long.toHexString(offset));
+			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
 		}
 		final byte buff[] = new byte[size < MAX_PAGE_SIZE ? (int) size : MAX_PAGE_SIZE];
 		final int
@@ -211,7 +217,7 @@ implements DataItem {
 					if(read(buff)==buff.length) {
 						out.write(buff);
 					} else {
-						throw new InterruptedIOException(MSG_FAIL_READ_RING_BLOCK);
+						throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
 					}
 				}
 				// tail bytes
@@ -219,7 +225,7 @@ implements DataItem {
 					if(read(buff, 0, countTailBytes)==countTailBytes) {
 						out.write(buff, 0, countTailBytes);
 					} else {
-						throw new InterruptedIOException(MSG_FAIL_READ_RING_BLOCK);
+						throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
 					}
 				}
 			} catch(final IOException e) {
@@ -227,22 +233,22 @@ implements DataItem {
 			}
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Item \"{}\": stream out finish", Long.toHexString(offset));
+			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_FINISH, Long.toHexString(offset));
 		}
 	}
 	// checks that data read from input equals the specified range
 	protected final boolean compareWith(
-		final InputStream in, final long rangeOffset, final int rangeLength
+		final InputStream in, final long rangeOffset, final long rangeLength
 	) {
 		//
 		boolean contentEquals = true;
-		final int pageSize = rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE;
+		final int
+			pageSize = (int) (rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE),
+			countPages = (int) rangeLength / pageSize,
+			countTailBytes = (int) rangeLength % pageSize;
 		final byte
 			buff1[] = new byte[pageSize],
 			buff2[] = new byte[pageSize];
-		final int
-			countPages = rangeLength / pageSize,
-			countTailBytes = rangeLength % pageSize;
 		int doneByteCountSum, doneByteCount;
 		//
 		synchronized(this) {
@@ -263,14 +269,16 @@ implements DataItem {
 						} while(doneByteCountSum < pageSize);
 						contentEquals = Arrays.equals(buff1, buff2);
 						if(!contentEquals) {
-							LOG.warn(
-								Markers.ERR, "Data mismatch found at the offset of {} bytes",
-								rangeOffset + i * pageSize
+							LOG.debug(
+								Markers.ERR,
+								FMT_MSG_CORRUPT, rangeOffset + i * pageSize,
+								Base64.encodeBase64URLSafeString(buff1),
+								Base64.encodeBase64URLSafeString(buff2)
 							);
 							break;
 						}
 					} else {
-						LOG.debug(Markers.ERR, MSG_FAIL_READ_STREAM_BLOCK);
+						LOG.debug(Markers.ERR, MSG_READ_STREAM_BLOCKED);
 						contentEquals = false;
 						break;
 					}
@@ -292,19 +300,23 @@ implements DataItem {
 						} while(doneByteCountSum < countTailBytes);
 						contentEquals = Arrays.equals(buff1, buff2);
 						if(!contentEquals) {
-							LOG.warn(
-								Markers.ERR, "Data mismatch found somewhere in the range of {}-{} bytes",
-								rangeOffset + countPages * pageSize, rangeOffset + rangeLength
+							LOG.debug(
+								Markers.ERR, FMT_MSG_CORRUPT,
+								rangeOffset + rangeLength - countTailBytes,
+								Base64.encodeBase64URLSafeString(buff1),
+								Base64.encodeBase64URLSafeString(buff2)
 							);
 						}
 					} else {
-						LOG.debug(Markers.ERR, MSG_FAIL_READ_STREAM_BLOCK);
+						LOG.debug(Markers.ERR, MSG_READ_STREAM_BLOCKED);
 						contentEquals = false;
 					}
 				}
 			} catch(final IOException e) {
 				contentEquals = false;
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Data integrity verification failure");
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e, MSG_IO_FAILURE_DURING_VERIFICATION
+				);
 			}
 		}
 		//

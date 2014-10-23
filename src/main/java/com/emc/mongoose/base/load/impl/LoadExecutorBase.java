@@ -73,6 +73,14 @@ implements LoadExecutor<T> {
 	protected LoadTypeEntity type = new LoadTypeEntity();
 	protected LoadEntity load ;
 	//
+	public static int getLastInstanceNum() {
+		return instanceN;
+	}
+	//
+	public static void setLastInstanceNum(final int lastInstanceN) {
+		instanceN = lastInstanceN;
+	}
+	//
 	@SuppressWarnings("unchecked")
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig,
@@ -151,6 +159,24 @@ implements LoadExecutor<T> {
 			}
 		}
 		//
+		// register shutdown hook which should perform correct server-side shutdown even if
+		// user hits ^C
+		Runtime.getRuntime().addShutdownHook(
+			new Thread() {
+				@Override
+				public final void run() {
+					LOG.info(Markers.MSG, "Shutdown hook start");
+					try {
+						close();
+						LOG.debug(Markers.MSG, "Shutdown hook finished successfully");
+					} catch(final IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		);
+		LOG.trace(Markers.MSG, "Registered shutdown hook");
+		//
 		tsStart = System.nanoTime();
 		super.start();
 		LOG.debug(Markers.MSG, "Started {}", getName());
@@ -204,12 +230,23 @@ implements LoadExecutor<T> {
 			@Override
 			public final void run() {
 				// interrupt submit executor
-				/*submitExecutor.shutdown();
-				try {
+				submitExecutor.shutdown();
+				/*try {
 					submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 				} catch(final InterruptedException e) {
 					ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while awaiting the submitter termination");
 				}*/
+				while(
+					submitExecutor.getQueue().size() > 0
+						||
+					submitExecutor.getCorePoolSize() == submitExecutor.getActiveCount()
+				) {
+					try {
+						Thread.sleep(retryDelayMilliSec);
+					} catch(final InterruptedException e) {
+						break;
+					}
+				}
 				final int droppedTaskCount = submitExecutor.shutdownNow().size();
 				if(droppedTaskCount > 0) {
 					LOG.info(Markers.ERR, "Dropped {} tasks", droppedTaskCount);
@@ -288,9 +325,9 @@ implements LoadExecutor<T> {
 	@Override
 	public void submit(final T dataItem)
 	throws RemoteException {
-		if(dataItem==null || isInterrupted()) { // handle the poison
+		if(dataItem == null || isInterrupted()) { // handle the poison
 			maxCount = counterSubm.getCount() + counterRej.getCount();
-			LOG.trace(Markers.MSG, "Poisoned on #{}", maxCount);
+			LOG.debug(Markers.MSG, "Poisoned on #{}", maxCount);
 			for(final StorageNodeExecutor<T> nextNode: nodes) {
 				if(!nextNode.isShutdown()) {
 					nextNode.submit(null); // poison

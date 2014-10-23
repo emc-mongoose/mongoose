@@ -1,6 +1,5 @@
 package com.emc.mongoose.web.data.impl;
 //
-//
 import com.emc.mongoose.web.data.WSObject;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
@@ -36,7 +35,7 @@ implements HttpEntity {
 	//
 	@Override
 	public final long getContentLength() {
-		return baseItem.getPendingUpdatesCount() * baseItem.getRangeSize();
+		return baseItem.getPendingRangesSize();
 	}
 	//
 	@Override
