@@ -1,8 +1,7 @@
 package com.emc.mongoose.util.threading;
 //
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-//
+//import org.apache.logging.log4j.LogManager;
+//import org.apache.logging.log4j.Logger;
 //
 import java.util.concurrent.ThreadFactory;
 /**
@@ -11,7 +10,7 @@ import java.util.concurrent.ThreadFactory;
 public class WorkerFactory
 implements ThreadFactory {
 	//
-	private static final Logger LOG = LogManager.getLogger();
+	//private static final Logger LOG = LogManager.getLogger();
 	//
 	private final String threadNamePrefix;
 	private int threadNumber;
@@ -26,7 +25,7 @@ implements ThreadFactory {
 	public Thread newThread(final Runnable runnable) {
 		//LOG.trace(LogMark.MSG, "Handling new task \"{}\"", runnable.toString());
 		return new Thread(
-			runnable, threadNamePrefix+'#'+Integer.toString(threadNumber++)
+			runnable, threadNamePrefix + '#' + Integer.toString(threadNumber ++)
 		);
 	}
 	//

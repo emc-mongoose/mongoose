@@ -35,9 +35,8 @@ public final class Main {
 		SEP = System.getProperty("file.separator"),
 		DIR_ROOT,
 		DIR_CONF = "conf",
-		DIR_LOGGING = "logging",
 		DIR_PROPERTIES = "properties",
-		FEXT_JSON = Main.DOT + "json",
+		FNAME_LOGGING = "logging.json",
 		FNAME_POLICY = "security.policy",
 		//
 		KEY_DIR_ROOT = "dir.root",
@@ -57,9 +56,7 @@ public final class Main {
 		"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
 	);
 	//
-	public final static File
-		JAR_SELF;
-	//
+	public final static File JAR_SELF;
 	static {
 		String dirRoot = System.getProperty("user.dir");
 		File jarSelf = null;
@@ -155,9 +152,7 @@ public final class Main {
 			);
 		}
 		// load the logging configuration
-		final Path logConfPath = Paths.get(
-			DIR_ROOT, DIR_CONF, DIR_LOGGING, runMode+FEXT_JSON
-		);
+		final Path logConfPath = Paths.get(DIR_ROOT, DIR_CONF, FNAME_LOGGING);
 		Configurator.initialize(null, logConfPath.toUri().toString());
 		return LogManager.getRootLogger();
 	}

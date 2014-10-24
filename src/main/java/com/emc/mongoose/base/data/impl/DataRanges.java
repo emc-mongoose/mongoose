@@ -80,9 +80,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	@Override
 	public String toString() {
 		return String.format(
-			FMT_META_INFO,
-			super.toString(),
-			layerNum,
+			FMT_META_INFO, super.toString(), layerNum,
 			maskRangesHistory.isEmpty() ?
 				STR_EMPTY_MASK : Hex.encodeHexString(maskRangesHistory.toByteArray())
 		);
@@ -187,12 +185,12 @@ implements AppendableDataItem, UpdatableDataItem {
 					);
 				}
 				updatedRange = new UniformData(
-					offset + rangeOffset, rangeSize, layerNum, UniformDataSource.DEFAULT
+					offset + rangeOffset, rangeSize, layerNum + 1, UniformDataSource.DEFAULT
 				);
 				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
 			} else if(layerNum > 1) { // previous layer of updated ranges
 				updatedRange = new UniformData(
-					offset + rangeOffset, rangeSize, layerNum - 1, UniformDataSource.DEFAULT
+					offset + rangeOffset, rangeSize, layerNum, UniformDataSource.DEFAULT
 				);
 				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
 			} else { // pristine object content
@@ -217,29 +215,36 @@ implements AppendableDataItem, UpdatableDataItem {
 	@Override
 	public final void updateRandomRange()
 	throws IllegalStateException {
-		final int countRangesTotal = getRangeCount(size);
-		final int startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
+		final int
+			countRangesTotal = getRangeCount(size),
+			startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
 		int nextCellPos;
-		for(int i = startCellPos; i < startCellPos + countRangesTotal; i ++) {
-			nextCellPos = i % countRangesTotal;
-			if(!maskRangesHistory.get(nextCellPos) && !maskRangesPending.get(nextCellPos)) {
-				maskRangesPending.set(nextCellPos);
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						Markers.MSG, FMT_MSG_UPD_CELL,
-						nextCellPos, getRangeOffset(nextCellPos),
-						Hex.encodeHexString(maskRangesPending.toByteArray())
-					);
+		boolean updateDone = false;
+		do {
+			for(int i = 0; i < countRangesTotal; i++) {
+				nextCellPos = startCellPos + i;
+				if(!maskRangesHistory.get(nextCellPos) && !maskRangesPending.get(nextCellPos)) {
+					maskRangesPending.set(nextCellPos);
+					updateDone = true;
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG, FMT_MSG_UPD_CELL,
+							nextCellPos, getRangeOffset(nextCellPos),
+							Hex.encodeHexString(maskRangesPending.toByteArray())
+						);
+					}
+					break;
 				}
-				return;
 			}
-		}
-		// looks like there's no free range to update left
-		synchronized(this) {
-			layerNum ++; // increment layerNum
-			maskRangesHistory.clear(); maskRangesPending.clear(); // clear the masks
-			updateRandomRange(); // try again
-		}
+			if(!updateDone) { // looks like there's no free range to update left
+				synchronized(this) {
+					layerNum ++; // increment layerNum
+					maskRangesHistory.clear();
+					maskRangesPending.clear(); // clear the masks
+					updateRandomRange(); // try again
+				}
+			}
+		} while(!updateDone);
 	}
 	//
 	@Override
@@ -287,13 +292,13 @@ implements AppendableDataItem, UpdatableDataItem {
 				rangeOffset = getRangeOffset(i);
 				if(maskRangesPending.get(i)) {
 					nextRangeData = new UniformData(
-						offset + rangeOffset, rangeSize, layerNum, UniformDataSource.DEFAULT
+						offset + rangeOffset, rangeSize, layerNum + 1, UniformDataSource.DEFAULT
 					);
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
 							Markers.MSG,
 							FMT_MSG_NEW_UPD_RANGE,
-							toString(), offset + rangeOffset, rangeSize, layerNum,
+							toString(), offset + rangeOffset, rangeSize, layerNum + 1,
 							UniformDataSource.DEFAULT.toString()
 						);
 					}

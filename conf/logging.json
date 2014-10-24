@@ -12,6 +12,9 @@
 		"appenders": {
 			"appender" : [
 				{
+					"name": "custom",
+					"type": "Custom"
+				}, {
 					"name": "stdout",
 					"type": "Console",
 					"PatternLayout": {
@@ -145,21 +148,21 @@
 						"onMatch": "ACCEPT",
 						"onMismatch": "DENY"
 					}
-				}, {
-					"name": "dataListFile",
-					"type": "File",
-					"append": "false",
-					"bufferedIO": "true",
-					"fileName": "${path.log}data.items.csv",
-					"PatternLayout": {
-						"pattern": "%m%n"
-					},
-					"MarkerFilter": {
-						"marker": "dataList",
-						"onMatch": "ACCEPT",
-						"onMismatch": "DENY"
-					}
-				}, {
+				},{
+                    "name": "dataListFile",
+                    "type": "File",
+                    "append": "false",
+                    "bufferedIO": "true",
+                    "fileName": "${path.log}data.items.csv",
+                    "PatternLayout": {
+                        "pattern": "%m%n"
+                    },
+                    "MarkerFilter": {
+                        "marker": "dataList",
+                        "onMatch": "ACCEPT",
+                        "onMismatch": "DENY"
+                    }
+                }, {
 					"name": "async",
 					"type": "Async",
 					"blocking": "false",
@@ -171,7 +174,8 @@
 						{ "ref": "dataListFile" },
 						{ "ref": "perfAvgFile" },
 						{ "ref": "perfSumFile" },
-						{ "ref": "perfTraceFile" }
+						{ "ref": "perfTraceFile" },
+						{ "ref": "custom" }
 					]
 				}
 			]
@@ -180,9 +184,9 @@
 			"root": {
 				"level": "info",
 				"additivity": "false",
-				"AppenderRef": {
-					"ref": "async"
-				}
+				"AppenderRef":
+                     { "ref": "async" }
+
 			},
 			"logger": [
 				{
@@ -222,7 +226,7 @@
                     }
 				}, {
 					"name": "com.emc.mongoose.base.data",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
                         "ref": "async"
@@ -383,7 +387,7 @@
                     }
 				}, {
 					"name": "com.emc.mongoose.util.threading",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
                         "ref": "async"

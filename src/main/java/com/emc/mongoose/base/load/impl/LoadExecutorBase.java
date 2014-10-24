@@ -24,6 +24,8 @@ import com.emc.mongoose.util.persist.LoadEntity;
 import com.emc.mongoose.util.persist.LoadTypeEntity;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
+import com.emc.mongoose.util.threading.GentleExecutorShutDown;
+import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -129,7 +131,8 @@ implements LoadExecutor<T> {
 			queueSize = submitThreadCount * runTimeConfig.getRunRequestQueueFactor();
 		submitExecutor = new ThreadPoolExecutor(
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(queueSize)
+			new LinkedBlockingQueue<Runnable>(queueSize),
+			new WorkerFactory("submitDataItems")
 		);
 		initClient(addrs, reqConf);
 		initNodeExecutors(addrs, reqConf);
@@ -160,23 +163,7 @@ implements LoadExecutor<T> {
 			}
 		}
 		//
-		// register shutdown hook which should perform correct server-side shutdown even if
-		// user hits ^C
-		Runtime.getRuntime().addShutdownHook(
-			new Thread() {
-				@Override
-				public final void run() {
-					LOG.info(Markers.MSG, "Shutdown hook start");
-					try {
-						close();
-						LOG.debug(Markers.MSG, "Shutdown hook finished successfully");
-					} catch(final IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		);
-		LOG.trace(Markers.MSG, "Registered shutdown hook");
+		ShutDownHook.add(this);
 		//
 		tsStart = System.nanoTime();
 		super.start();
@@ -226,34 +213,10 @@ implements LoadExecutor<T> {
 			}
 		};
 		// interrupt the submit execution
-		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
-		interrupters[1] = new Thread("interrupt-submit-" + getName()) {
-			@Override
-			public final void run() {
-				// interrupt submit executor
-				submitExecutor.shutdown();
-				/*try {
-					submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
-				} catch(final InterruptedException e) {
-					ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while awaiting the submitter termination");
-				}*/
-				while(
-					submitExecutor.getQueue().size() > 0
-						||
-					submitExecutor.getCorePoolSize() == submitExecutor.getActiveCount()
-				) {
-					try {
-						Thread.sleep(retryDelayMilliSec);
-					} catch(final InterruptedException e) {
-						break;
-					}
-				}
-				final int droppedTaskCount = submitExecutor.shutdownNow().size();
-				if(droppedTaskCount > 0) {
-					LOG.info(Markers.ERR, "Dropped {} tasks", droppedTaskCount);
-				}
-			}
-		};
+		interrupters[1] = new Thread(
+			new GentleExecutorShutDown(submitExecutor, runTimeConfig),
+			String.format("interrupt-submit-%s", getName())
+		);
 		interrupters[1].start();
 		//
 		try {
@@ -279,6 +242,7 @@ implements LoadExecutor<T> {
 
 		}
 		// wait for node executors to become interrupted
+		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		for(final Thread interrupter : interrupters) {
 			try {
 				interrupter.join(reqTimeOutMilliSec);
@@ -300,8 +264,6 @@ implements LoadExecutor<T> {
 			interrupt();
 		}
 		consumer.submit(null); // poison the consumer
-		// force shutdown the submit executor
-		//LOG.debug(Markers.MSG, "Dropped {} tasks on closing", submitExecutor.shutdownNow().size());
 		for(final StorageNodeExecutor<T> nodeExecutor: nodes) {
 			try {
 				nodeExecutor.close();

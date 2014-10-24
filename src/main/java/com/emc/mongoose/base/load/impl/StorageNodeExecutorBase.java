@@ -8,9 +8,7 @@ import com.codahale.metrics.Snapshot;
 //
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.RequestConfig;
-import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.base.data.UpdatableDataItem;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
@@ -18,8 +16,7 @@ import com.emc.mongoose.base.load.StorageNodeExecutor;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-//
-import com.emc.mongoose.util.persist.PersistDAO;
+import com.emc.mongoose.util.threading.GentleExecutorShutDown;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
 import org.apache.logging.log4j.Level;
@@ -60,7 +57,6 @@ implements StorageNodeExecutor<T> {
 	private final Condition condInterrupted = lock.newCondition();
 	//
 	private final RunTimeConfig runTimeConfig;
-	private final int retryDelayMilliSec;
 	private final Request.Type reqType;
 	//
 	protected StorageNodeExecutorBase(
@@ -77,7 +73,6 @@ implements StorageNodeExecutor<T> {
 		);
 		//
 		this.runTimeConfig = runTimeConfig;
-		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		this.localReqConf = localReqConf;
 		reqType = localReqConf.getLoadType();
 		//
@@ -369,28 +364,8 @@ implements StorageNodeExecutor<T> {
 		//
 		LOG.debug(Markers.MSG, "Interrupting...");
 		localReqConf.setRetries(false);
-		shutdown();
-		while(getQueue().size() > 0 || getCorePoolSize() == getActiveCount()) {
-			try {
-				Thread.sleep(retryDelayMilliSec);
-			} catch(final InterruptedException e) {
-				break;
-			}
-		}
-		final int droppedTaskCount = shutdownNow().size();
-		if(droppedTaskCount > 0) {
-			LOG.info(Markers.ERR, "Dropped {} tasks", droppedTaskCount);
-		}
-		/*try {
-			final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
-			LOG.debug(
-				Markers.MSG, "Wait at most {} ms before terminating {}+{} tasks",
-				reqTimeOutMilliSec, getQueue().size(), getActiveCount()
-			);
-			awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.ERR, "Interrupted while waiting the submitted tasks to finish");
-		}*/
+		//
+		new GentleExecutorShutDown(this, runTimeConfig).run();
 		//
 		if(lock.tryLock()) {
 			try {
