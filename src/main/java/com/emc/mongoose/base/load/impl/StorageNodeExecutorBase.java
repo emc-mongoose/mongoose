@@ -378,6 +378,13 @@ implements StorageNodeExecutor<T> {
 	}
 	//
 	@Override
+	public final boolean isShutdown() {
+		return super.isShutdown()	||
+			super.isTerminating()	||
+			super.isTerminated();
+	}
+	//
+	@Override
 	public final void close()
 		throws IOException {
 		if(!isShutdown()) {

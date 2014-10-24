@@ -212,6 +212,13 @@ implements AppendableDataItem, UpdatableDataItem {
 		return maskRangesPending.get(i);
 	}
 	//
+	private synchronized void switchToNextLayer() {
+		layerNum ++; // increment layerNum
+		maskRangesHistory.clear();
+		maskRangesPending.clear(); // clear the masks
+		setDataSource(UniformDataSource.DEFAULT, layerNum);
+	}
+	//
 	@Override
 	public final void updateRandomRange()
 	throws IllegalStateException {
@@ -237,12 +244,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				}
 			}
 			if(!updateDone) { // looks like there's no free range to update left
-				synchronized(this) {
-					layerNum ++; // increment layerNum
-					maskRangesHistory.clear();
-					maskRangesPending.clear(); // clear the masks
-					updateRandomRange(); // try again
-				}
+				switchToNextLayer();
 			}
 		} while(!updateDone);
 	}

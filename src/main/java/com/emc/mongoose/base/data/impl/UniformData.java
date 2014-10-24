@@ -1,6 +1,7 @@
 package com.emc.mongoose.base.data.impl;
 //
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -114,8 +115,14 @@ implements DataItem {
 		}
 	}
 	//
+	@Override
 	public final long getSize() {
 		return size;
+	}
+	//
+	@Override
+	public final void setDataSource(final UniformDataSource dataSrc, final int layerNum) {
+		buf = dataSrc.getBytes(layerNum);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring input stream implementation ////////////////////////////////////////////////////////////
