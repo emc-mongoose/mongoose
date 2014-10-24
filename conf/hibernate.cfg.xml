@@ -18,5 +18,8 @@
 		<mapping class="com.emc.mongoose.util.persist.ApiEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.LoadTypeEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.LoadEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.LevelEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.MessageClassEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.MessageEntity"></mapping>
 	</session-factory>
 </hibernate-configuration>

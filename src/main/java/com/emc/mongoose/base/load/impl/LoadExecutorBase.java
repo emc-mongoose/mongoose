@@ -34,6 +34,7 @@ import org.apache.logging.log4j.Marker;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -377,26 +378,25 @@ implements LoadExecutor<T> {
 		}
 		notCompletedTaskCount += submitExecutor.getQueue().size() + submitExecutor.getActiveCount();
 		//
-		LOG.info(
-			logMarker,
-			MSG_FMT_METRICS.format(
-				new Object[] {
-					countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
-					//
-					(float)reqDurSnapshot.getMin() / BILLION,
-					(float)reqDurSnapshot.getMedian() / BILLION,
-					(float)reqDurSnapshot.getMean() / BILLION,
-					(float)reqDurSnapshot.getMax() / BILLION,
-					//
-					avgSize==0 ? 0 : meanBW/avgSize,
-					avgSize==0 ? 0 : oneMinBW/avgSize,
-					avgSize==0 ? 0 : fiveMinBW/avgSize,
-					avgSize==0 ? 0 : fifteenMinBW/avgSize,
-					//
-					meanBW/MIB, oneMinBW/MIB, fiveMinBW/MIB, fifteenMinBW/MIB
+		final String message = MSG_FMT_METRICS.format(
+				new Object[]{
+						countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
+						//
+						(float) reqDurSnapshot.getMin() / BILLION,
+						(float) reqDurSnapshot.getMedian() / BILLION,
+						(float) reqDurSnapshot.getMean() / BILLION,
+						(float) reqDurSnapshot.getMax() / BILLION,
+						//
+						avgSize == 0 ? 0 : meanBW / avgSize,
+						avgSize == 0 ? 0 : oneMinBW / avgSize,
+						avgSize == 0 ? 0 : fiveMinBW / avgSize,
+						avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+						//
+						meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 				}
-			)
 		);
+		LOG.info(logMarker, message);
+		//PersistDAO.setMessage(new Date(), this.getClass().getSimpleName(), "INFO", message);
 		//
 		if(Markers.PERF_SUM.equals(logMarker)) {
 			final double totalReqNanoSeconds = reqDurSnapshot.getMean() * countReqSucc;

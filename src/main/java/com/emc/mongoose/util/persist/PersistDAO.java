@@ -1,5 +1,7 @@
 package com.emc.mongoose.util.persist;
 //
+import com.emc.mongoose.util.conf.DirectoryLoader;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AnnotationConfiguration;
@@ -9,6 +11,8 @@ import java.io.File;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Date;
+
 /**
  * Created by olga on 16.10.14.
  */
@@ -17,7 +21,7 @@ public final class PersistDAO {
 	//private static final Logger LOG = LogManager.getLogger();
 	public static final Session session = sessionFactory.openSession();
 	private static RunEntity run;
-
+	public static RunTimeConfig RUN_TIME_CONFIG;
 	//
 	private static SessionFactory buildSessionFactory() {
 		final String DIR_ROOT = System.getProperty("user.dir");
@@ -79,5 +83,29 @@ public final class PersistDAO {
 		session.save(load);
 		session.getTransaction().commit();
 	}
-
+	//
+	public static void setMessage(final Date tstamp, final String className, final String levelName, final String text){
+		//Timestamp timestamp = new Timestamp(tstamp.getTime());
+		session.beginTransaction();
+		MessageClassEntity classMessage = (MessageClassEntity) session.createCriteria(MessageClassEntity.class).
+				add(Restrictions.eq("name", className)).uniqueResult();
+		if (classMessage==null){
+			classMessage = new MessageClassEntity(className);
+		}
+		LevelEntity level = (LevelEntity) session.createCriteria(LevelEntity.class).
+				add(Restrictions.eq("name", levelName)).uniqueResult();
+		if (level==null){
+			level = new LevelEntity(levelName);
+		}
+		final MessageEntity message = new MessageEntity(run, classMessage,level,text,tstamp);
+		session.save(classMessage);
+		session.save(level);
+		session.save(message);
+		session.getTransaction().commit();
+	}
+	//
+	private final Boolean dataBase(){
+		if(RUN_TIME_CONFIG.getBoolean("database.opt")) return true;
+		return false;
+	}
 }

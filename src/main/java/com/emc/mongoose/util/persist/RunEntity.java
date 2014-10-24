@@ -1,14 +1,11 @@
 package com.emc.mongoose.util.persist;
-
-import com.emc.mongoose.run.Main;
-
+//
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
@@ -17,9 +14,7 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
-
 import static javax.persistence.GenerationType.IDENTITY;
-
 /**
  * Created by olga on 17.10.14.
  */
@@ -40,6 +35,8 @@ implements Serializable {
 	private String name;
 	@OneToMany(targetEntity=LoadEntity.class, fetch = FetchType.LAZY, mappedBy = "run")
 	private Set<LoadEntity> loadsSet = new HashSet<LoadEntity>();
+	@OneToMany(targetEntity=MessageEntity.class, fetch = FetchType.LAZY, mappedBy = "run")
+	private Set<MessageEntity> messageSet = new HashSet<MessageEntity>();
 	//
 	public RunEntity(){
 	}
@@ -75,5 +72,11 @@ implements Serializable {
 	}
 	public void setLoadsSet(final Set<LoadEntity> loadsSet) {
 		this.loadsSet = loadsSet;
+	}
+	public Set<MessageEntity> getMessageSet() {
+		return messageSet;
+	}
+	public void setMessageSet(final Set<MessageEntity> messageSet) {
+		this.messageSet = messageSet;
 	}
 }
