@@ -4,7 +4,7 @@
 <%@ taglib uri="WEB-INF/property.tld" prefix="rt" %>
 <!DOCTYPE html>
 <html>
-    <head>
+	<head>
 		<meta charset="utf-8">
 		<title>Run</title>
 		<link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
@@ -17,22 +17,22 @@
 	</head>
 	<body>
 		<nav class="navbar navbar-default" role="navigation">
-  			<div class="container-fluid">
-  				<div class="navbar-header">
-  					<a id="logo-image" href="/"><img src="images/vipr.png" width="50" height="50"></a>
-      				<a class="navbar-brand" href="/">Mongoose</a>
-  				</div>
-    			<div class="collapse navbar-collapse" id="bx-example-navbar-collapse-1">
-    				<ul class="nav navbar-nav">
-    					<li class="active"><a href="/">Run</a></li>
-    					<li><a href="driver.html">Driver</a></li>
-    				</ul>
+			<div class="container-fluid">
+				<div class="navbar-header">
+					<a id="logo-image" href="/"><img src="images/vipr.png" width="50" height="50"></a>
+					<a class="navbar-brand" href="/">Mongoose</a>
+				</div>
+				<div class="collapse navbar-collapse" id="bx-example-navbar-collapse-1">
+					<ul class="nav navbar-nav">
+						<li class="active"><a href="/">Run</a></li>
+						<li><a href="driver.html">Driver</a></li>
+					</ul>
 
-    				<ul class="nav navbar-nav navbar-right">
-    					<li><a href="about.html">About</a></li>
-    				</ul>
-    			</div>
-    		</div>
+					<ul class="nav navbar-nav navbar-right">
+						<li><a href="about.html">About</a></li>
+					</ul>
+				</div>
+			</div>
 		</nav>
 
 		<div class="content-wrapper">
@@ -99,21 +99,21 @@
 										</span>
 									</div>
 
-                                    <c:forEach var="addr" items="${runTimeConfig.storageAddrs}">
-                                        <div class="storages">
-                                            <div class="input-group">
-                                                <span class="input-group-addon">
-                                                    <input id="dataNodes" name="dataNodes" type="checkbox" value="${addr}">
-                                                </span>
-                                                <label class="form-control">
-                                                    ${addr}
-                                                </label>
-                                                <span class="input-group-btn">
-                                                    <button type="button" class="btn btn-default remove">Remove</button>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </c:forEach>
+									<c:forEach var="addr" items="${runTimeConfig.storageAddrs}">
+										<div class="storages">
+											<div class="input-group">
+												<span class="input-group-addon">
+													<input id="dataNodes" name="dataNodes" type="checkbox" value="${addr}">
+												</span>
+												<label class="form-control">
+													${addr}
+												</label>
+												<span class="input-group-btn">
+													<button type="button" class="btn btn-default remove">Remove</button>
+												</span>
+											</div>
+										</div>
+									</c:forEach>
 								</fieldset>
 							</fieldset>
 
@@ -134,21 +134,21 @@
 										</span>
 									</div>
 
-                                    <c:forEach var="server" items="${runTimeConfig.remoteServers}">
-                                    	<div class="drivers">
-                                        	<div class="input-group">
-                                            	<span class="input-group-addon">
-                                                	<input id="drivers" name="drivers" type="checkbox" value="${server}">
-                                                </span>
-                                                <label class="form-control">
-                                                	${server}
-                                                </label>
-                                                <span class="input-group-btn">
-                                               		<button type="button" class="btn btn-default remove">Remove</button>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </c:forEach>
+									<c:forEach var="server" items="${runTimeConfig.remoteServers}">
+										<div class="drivers">
+											<div class="input-group">
+												<span class="input-group-addon">
+													<input id="drivers" name="drivers" type="checkbox" value="${server}">
+												</span>
+												<label class="form-control">
+													${server}
+												</label>
+												<span class="input-group-btn">
+													<button type="button" class="btn btn-default remove">Remove</button>
+												</span>
+											</div>
+										</div>
+									</c:forEach>
 
 								</fieldset>
 							</fieldset>
@@ -169,11 +169,11 @@
 									<legend class="scheduler-border">Load</legend>
 									<div class="tabs-wrapper">
 										<ul id="loadTab" class="nav nav-tabs" role="tablist">
-					  						<li class="active"><a href="#create" data-toggle="tab">Create</a></li>
-					  						<li><a href="#read" data-toggle="tab">Read</a></li>
-					  						<li><a href="#update" data-toggle="tab">Update</a></li>
-					  						<li><a href="#delete" data-toggle="tab">Delete</a></li>
-					  						<li><a href="#append" data-toggle="tab">Append</a></li>
+											<li class="active"><a href="#create" data-toggle="tab">Create</a></li>
+											<li><a href="#read" data-toggle="tab">Read</a></li>
+											<li><a href="#update" data-toggle="tab">Update</a></li>
+											<li><a href="#delete" data-toggle="tab">Delete</a></li>
+											<li><a href="#append" data-toggle="tab">Append</a></li>
 										</ul>
 									</div>
 
@@ -213,9 +213,9 @@
 								<legend class="scheduler-border">API</legend>
 								<div class="tabs-wrapper">
 									<ul id="apiTab" class="nav nav-tabs crud-tabs" role="tablist">
-							  			<li class="active"><a href="#s3" data-toggle="tab">S3</a></li>
-							  			<li><a href="#atmos" data-toggle="tab">Atmos</a></li>
-							  			<li><a href="#swift" data-toggle="tab">Swift</a></li>
+										<li class="active"><a href="#s3" data-toggle="tab">S3</a></li>
+										<li><a href="#atmos" data-toggle="tab">Atmos</a></li>
+										<li><a href="#swift" data-toggle="tab">Swift</a></li>
 									</ul>
 								</div>
 
@@ -256,14 +256,14 @@
 					<div class="left-side">
 						<div class="menu-wrapper">
 							<div class="col-xs-8">
-    							<ul class="nav nav-tabs tabs-left">
-							      	<li class="active"><a href="#data-items-csv" data-toggle="tab">data.items.csv</a></li>
-							      	<li><a href="#errors-log" data-toggle="tab">errors.log</a></li>
-							      	<li><a href="#messages-csv" data-toggle="tab">messages.csv</a></li>
-							      	<li><a href="#perf-avg-csv" data-toggle="tab">perf.avg.csv</a></li>
-							    	<li><a href="#perf-sum-csv" data-toggle="tab">perf.sum.csv</a></li>
-							    	<li><a href="#perf-trace-csv" data-toggle="tab">perf.trace.csv</a></li>
-    							</ul>
+								<ul class="nav nav-tabs tabs-left">
+									<li class="active"><a href="#data-items-csv" data-toggle="tab">data.items.csv</a></li>
+									<li><a href="#errors-log" data-toggle="tab">errors.log</a></li>
+									<li><a href="#messages-csv" data-toggle="tab">messages.csv</a></li>
+									<li><a href="#perf-avg-csv" data-toggle="tab">perf.avg.csv</a></li>
+									<li><a href="#perf-sum-csv" data-toggle="tab">perf.sum.csv</a></li>
+									<li><a href="#perf-trace-csv" data-toggle="tab">perf.trace.csv</a></li>
+								</ul>
 							</div>
 						</div>
 					</div>
@@ -278,7 +278,7 @@
 									errors.log
 								</div>
 								<div class="tab-pane" id="messages-csv">
-								   	messages.csv
+									messages.csv
 								</div>
 								<div class="tab-pane" id="perf-avg-csv">
 									perf.avg.csv
@@ -287,10 +287,10 @@
 									perf.sum.csv
 								</div>
 								<div class="tab-pane" id="perf-trace-csv">
-								   	perf.trace.csv
+									perf.trace.csv
 								</div>
-	    					</div>
-    					</div>
+							</div>
+						</div>
 					</div>
 					<button id="stop" type="button" class="default"><span>Stop</span></button>
 				</div>

@@ -5,19 +5,19 @@ package com.emc.mongoose.web.ui;
  */
 public enum RunModes {
 
-    VALUE_RUN_MODE_STANDALONE("standalone"),
-    VALUE_RUN_MODE_WSMOCK("wsmock"),
-    VALUE_RUN_MODE_SERVER("server"),
-    VALUE_RUN_MODE_CLIENT("client");
+	VALUE_RUN_MODE_STANDALONE("standalone"),
+	VALUE_RUN_MODE_WSMOCK("wsmock"),
+	VALUE_RUN_MODE_SERVER("server"),
+	VALUE_RUN_MODE_CLIENT("client");
 
-    private String value;
+	private String value;
 
-    RunModes(String value) {
-        this.value = value;
-    }
+	RunModes(String value) {
+		this.value = value;
+	}
 
-    public String getValue() {
-        return value;
-    }
+	public String getValue() {
+		return value;
+	}
 
 }
