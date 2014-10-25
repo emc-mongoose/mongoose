@@ -69,7 +69,10 @@ dependencies {
 		'javax.servlet:javax.servlet-api:3.1.0',
 		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
 		'jstl:jstl:1.2',
-    )
+		'org.eclipse.jetty.websocket:websocket-server:9.2.3.v20140905',
+		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
+		'com.google.code.gson:gson:2.3'
+	)
 	runtime (
 		//
 		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',

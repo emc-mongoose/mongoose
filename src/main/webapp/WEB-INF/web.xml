@@ -34,4 +34,14 @@ http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
 		<url-pattern>/stop</url-pattern>
 	</servlet-mapping>
 
+	<servlet>
+		<servlet-name>LogServlet</servlet-name>
+		<servlet-class>com.emc.mongoose.web.ui.LogServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>LogServlet</servlet-name>
+		<url-pattern>/logs</url-pattern>
+	</servlet-mapping>
+
 </web-app>

@@ -5,6 +5,7 @@ $(document).ready(function() {
 
 	setStartCookies();
 	initComponents();
+	initWebSocket();
 
 	$(".add-node").click(function() {
 		if ($(".data-node").is(":visible")) {
@@ -78,6 +79,43 @@ $(document).ready(function() {
 				</span>\
 			</div>';
 		return html;
+	}
+
+	function initWebSocket() {
+		var server = {
+			connect: function() {
+				var location = document.location.toString().replace('http://', 'ws://') + "logs";
+				this._ws = new WebSocket(location);
+				this._ws.onopen = this._onopen;
+				this._ws.onmessage = this._onmessage;
+				this._ws.onclose = this._onclose;
+			},
+			_onopen : function() {
+				server._send('websockets!');
+			},
+			_send : function(message) {
+				if (this._ws) {
+					this._ws.send(message);
+				}
+			},
+			send : function(text) {
+				if (text != null && text.length > 0)
+					server._send(text);
+			},
+			_onmessage : function(m) {
+				var json = JSON.parse(m.data);
+				switch (json.marker.name) {
+					case "msg":
+						alert("A");
+				}
+				//$("#messages-csv").append("<p>" + json.marker.name + "</p>");
+
+			},
+			_onclose : function(m) {
+				this._ws = null;
+			}
+		};
+		server.connect();
 	}
 
 	$(document).on('submit', '#mainForm',  function(e) {
