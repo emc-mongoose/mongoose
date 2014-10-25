@@ -42,8 +42,7 @@ extends LoadExecutorBase<T> {
 			}
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-					Markers.MSG, "Modified {}/{} ranges for object \"{}\"",
-					dataItem.getPendingUpdatesCount(), updatesPerObject, dataItem
+					Markers.MSG, "Modified {} ranges for object \"{}\"", updatesPerObject, dataItem
 				);
 			}
 		}

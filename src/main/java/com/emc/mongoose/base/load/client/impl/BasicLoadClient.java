@@ -9,6 +9,7 @@ import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.persist.LogConsumer;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.base.load.impl.ShutDownHook;
 import com.emc.mongoose.base.load.impl.SubmitDataItemTask;
 import com.emc.mongoose.base.load.client.LoadClient;
 import com.emc.mongoose.base.load.server.LoadSvc;
@@ -17,6 +18,8 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
+import com.emc.mongoose.util.threading.GentleExecutorShutDown;
+import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -83,7 +86,7 @@ implements LoadClient<T> {
 		ATTR_RATE_15MIN = "FifteenMinuteRate";
 	//
 	private final static class GetGaugeValue<V extends Number>
-		implements Callable<V> {
+	implements Callable<V> {
 		//
 		private final Gauge<V> gauge;
 		//
@@ -317,17 +320,19 @@ implements LoadClient<T> {
 		metaInfoLog = new LogConsumer<>();
 		////////////////////////////////////////////////////////////////////////////////////////////
 		int
-			threadCount = threadCountPerServer*remoteLoadMap.size(),
+			threadCount = threadCountPerServer * remoteLoadMap.size(),
 			queueSize = threadCount * runTimeConfig.getRunRequestQueueFactor();
 		submitExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(queueSize)
+			new LinkedBlockingQueue<Runnable>(queueSize),
+			new WorkerFactory("submitDataItems")
 		);
 		//
-		threadCount = remoteLoadMap.size()*20; // metric count is 18
+		threadCount = remoteLoadMap.size() * 20; // metric count is 18
 		mgmtConnExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(queueSize)
+			new LinkedBlockingQueue<Runnable>(queueSize),
+			new WorkerFactory("getMetricValue")
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricsReporter.start();
@@ -371,7 +376,7 @@ implements LoadClient<T> {
 								);
 							} catch(final IOException|MBeanException |InstanceNotFoundException |ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.WARN, e,
+									LOG, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName() + "." + attrName, addr
@@ -429,7 +434,7 @@ implements LoadClient<T> {
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.WARN, e,
+									LOG, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName() + "." + attrName, addr
@@ -487,7 +492,7 @@ implements LoadClient<T> {
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.WARN, e,
+									LOG, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName()+"."+attrName, addr
@@ -542,7 +547,7 @@ implements LoadClient<T> {
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.WARN, e,
+									LOG, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName() + "." + attrName, addr
@@ -597,7 +602,7 @@ implements LoadClient<T> {
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.WARN, e,
+									LOG, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName()+"."+attrName, addr
@@ -738,23 +743,8 @@ implements LoadClient<T> {
 				LOG.error(Markers.ERR, "Failed to start remote load @" + addr, e);
 			}
 		}
-		// register shutdown hook which should perform correct server-side shutdown even if
-		// user hits ^C
-		Runtime.getRuntime().addShutdownHook(
-			new Thread() {
-				@Override
-				public final void run() {
-					LOG.info(Markers.MSG, "Shutdown hook start");
-					try {
-						close();
-						LOG.debug(Markers.MSG, "Shutdown hook finished successfully");
-					} catch(final IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		);
-		LOG.trace(Markers.MSG, "Registered shutdown hook");
+		//
+		ShutDownHook.add(this);
 		//
 		super.start();
 	}
@@ -791,20 +781,10 @@ implements LoadClient<T> {
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		final LinkedList<Thread> svcInterruptThreads = new LinkedList<>();
 		svcInterruptThreads.add(
-			new Thread("interrupt-submit-" + getName()) {
-				@Override
-				public final void run() {
-					/*try {
-						submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
-					} catch(final InterruptedException e) {
-						LOG.debug(Markers.ERR, "Awaiting the submit executor termination has been interrupted");
-					}*/
-					final int droppedTaskCount = submitExecutor.shutdownNow().size();
-					if(droppedTaskCount > 0) {
-						LOG.info(Markers.ERR, "Dropped {} tasks", droppedTaskCount);
-					}
-				}
-			}
+			new Thread(
+				new GentleExecutorShutDown(submitExecutor, runTimeConfig),
+				"interrupt-submit-" + getName()
+			)
 		);
 		svcInterruptThreads.getLast().start();
 		try {
@@ -856,7 +836,6 @@ implements LoadClient<T> {
 		if(!isInterrupted()) {
 			interrupt();
 		}
-		LOG.debug(Markers.MSG, "Client dropped {} tasks", submitExecutor.shutdownNow().size());
 		//
 		LoadSvc<T> nextLoadSvc;
 		JMXConnector nextJMXConn = null;
@@ -868,13 +847,9 @@ implements LoadClient<T> {
 				logMetrics(Markers.PERF_SUM);
 			}
 		}
-		/*
-		try {
-			final WSRequestConfigImpl reqConfS3 = WSRequestConfigImpl.class.cast(reqConf);
-			reqConfS3.getBucket().list();
-		} catch(final ClassCastException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request config API is not Amz S3");
-		}*/
+		//
+		mgmtConnExecutor.shutdownNow();
+		metricsReporter.close();
 		//
 		LOG.debug(Markers.MSG, "Closing the remote services...");
 		for(final String addr: remoteLoadMap.keySet()) {
@@ -905,9 +880,6 @@ implements LoadClient<T> {
 			}
 			//
 		}
-		mgmtConnExecutor.shutdownNow();
-		metricsReporter.close();
-		//
 		LOG.debug(Markers.MSG, "Clear the servers map");
 		remoteLoadMap.clear();
 		LOG.debug(Markers.MSG, "Closed {}", getName());
@@ -916,12 +888,12 @@ implements LoadClient<T> {
 	@Override
 	public final void submit(final T dataItem) {
 		if(maxCount > submitExecutor.getTaskCount()) {
-			if(dataItem==null) { // poison
+			if(dataItem == null) { // poison
 				LOG.trace(
 					Markers.MSG, "Got poison on #{}, invoking the soft interruption",
 					submitExecutor.getTaskCount()
 				);
-				maxCount = submitExecutor.getTaskCount();
+				maxCount = submitExecutor.getCompletedTaskCount();
 			} else {
 				final Object addrs[] = remoteLoadMap.keySet().toArray();
 				final String addr = String.class.cast(
@@ -949,7 +921,7 @@ implements LoadClient<T> {
 		} else {
 			LOG.debug(Markers.MSG, "All {} tasks submitted", maxCount);
 			maxCount = submitExecutor.getTaskCount();
-			Thread.currentThread().interrupt(); // interrupt the producer
+			Thread.currentThread().interrupt(); // causes the producer interruption
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

@@ -4,13 +4,13 @@ import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.RequestBase;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.util.pool.BasicInstancePool;
 import com.emc.mongoose.web.api.WSRequest;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.pool.GenericInstancePool;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
@@ -64,14 +64,15 @@ implements WSRequest<T> {
 	) {
 		Request request;
 		if(dataItem == null) {
+			LOG.debug(Markers.MSG, "Preparing poison request");
 			request = POISON;
 		} else {
-			GenericInstancePool pool;
+			BasicInstancePool pool;
 			synchronized(POOL_MAP) {
 				if(POOL_MAP.containsKey(reqConf)) {
 					pool = POOL_MAP.get(reqConf);
 				} else {
-					pool = new GenericInstancePool<>(BasicWSRequest.class);
+					pool = new BasicInstancePool<>(BasicWSRequest.class);
 					POOL_MAP.put(reqConf, pool);
 				}
 			}

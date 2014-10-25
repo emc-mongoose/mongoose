@@ -45,12 +45,25 @@ implements LoadBuilderClient<T, U> {
 	//
 	public LoadBuilderClientBase(final RunTimeConfig runTimeConfig)
 	throws IOException {
+		//
 		super(runTimeConfig.getRemoteServers().length);
 		this.runTimeConfig = runTimeConfig;
 		final String remoteServers[] = runTimeConfig.getRemoteServers();
-		for(final String serverAddr: remoteServers) {
-			LOG.info(Markers.MSG, "Resolving server service @ \"{}\"...", serverAddr);
-			put(serverAddr, resolve(serverAddr));
+		//
+		LoadBuilderSvc<T, U> loadBuilderSvc;
+		int maxLastInstanceN = 0, nextInstanceN;
+		for(final String serverAddr : remoteServers) {
+			LOG.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
+			loadBuilderSvc = resolve(serverAddr);
+			nextInstanceN = loadBuilderSvc.getLastInstanceNum();
+			if(nextInstanceN > maxLastInstanceN) {
+				maxLastInstanceN = nextInstanceN;
+			}
+			put(serverAddr, loadBuilderSvc);
+		}
+		//
+		for(final String serverAddr : remoteServers) {
+			get(serverAddr).setLastInstanceNum(maxLastInstanceN);
 		}
 	}
 	//
@@ -73,7 +86,7 @@ implements LoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
 			nextBuilder = get(addr);
-			LOG.info(Markers.MSG, "Applying the properties to server @ \"{}\"...", addr);
+			LOG.debug(Markers.MSG, "Applying the configuration to server @ \"{}\"...", addr);
 			nextBuilder.setProperties(runTimeConfig);
 		}
 		//

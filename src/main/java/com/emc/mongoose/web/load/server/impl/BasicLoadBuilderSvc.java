@@ -1,5 +1,6 @@
 package com.emc.mongoose.web.load.server.impl;
 //
+import com.emc.mongoose.base.load.impl.LoadExecutorBase;
 import com.emc.mongoose.object.load.server.ObjectLoadSvc;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.impl.BasicLoadBuilder;
@@ -33,7 +34,7 @@ implements WSLoadBuilderSvc<T, U> {
 	private RunTimeConfig clientConfig = null;
 	//
 	@Override
-	public final com.emc.mongoose.web.load.server.WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
+	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
 		super.setProperties(clientConfig);
 		this.clientConfig = clientConfig;
 		return this;
@@ -50,6 +51,16 @@ implements WSLoadBuilderSvc<T, U> {
 	@Override
 	public final String getName() {
 		return "//"+ServiceUtils.getHostAddr()+'/'+getClass().getPackage().getName();
+	}
+	//
+	@Override
+	public final int getLastInstanceNum() {
+		return LoadExecutorBase.getLastInstanceNum();
+	}
+	//
+	@Override
+	public final void setLastInstanceNum(final int instanceN) {
+		LoadExecutorBase.setLastInstanceNum(instanceN);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

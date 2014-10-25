@@ -7,7 +7,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.http.annotation.ThreadSafe;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -18,6 +17,8 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
+import java.util.ArrayList;
+import java.util.List;
 /**
  Created by kurila on 23.07.14.
  A uniform data source for producing uniform data items.
@@ -30,9 +31,11 @@ implements DataSource<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static int A = 21, B = 35, C = 4;
+	private final static String
+		MSG_FMT_NEW_LAYER = "Generate new byte layer #%d, previous seed: \"%x\", next one: \"%x\"";
 	//
 	private long seed;
-	private ByteBuffer dataSrcDirect, dataSrcReverse;
+	private List<ByteBuffer> byteLayers = new ArrayList<>(1);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformDataSource()
 	throws NumberFormatException {
@@ -44,11 +47,9 @@ implements DataSource<T> {
 	//
 	protected UniformDataSource(final long seed, final int size) {
 		this.seed = seed;
-		dataSrcDirect = ByteBuffer.allocate(size);
-		preProduceData();
-		final byte buff[] = ArrayUtils.clone(dataSrcDirect.array());
-		ArrayUtils.reverse(buff);
-		dataSrcReverse= ByteBuffer.wrap(buff);
+		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
+		generateData(zeroByteLayer, seed);
+		byteLayers.add(zeroByteLayer);
 	}
 	//
 	public static UniformDataSource DEFAULT = null;
@@ -56,25 +57,15 @@ implements DataSource<T> {
 		try {
 			DEFAULT = new UniformDataSource();
 			LOG.info(Markers.MSG, "Default data source: {}", DEFAULT.toString());
-			/*DATA_SRC_UPDATE = new UniformDataSource(
-				Long.reverse(
-					nextWord(
-						Long.reverseBytes(
-							DEFAULT.seed
-						)
-					)
-				),
-				DEFAULT.getSize()
-			);*/
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create default data source");
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private synchronized void preProduceData() {
-		final LongBuffer dataSrcWordsView = dataSrcDirect.asLongBuffer();
+	private static void generateData(final ByteBuffer byteLayer, final long seed) {
+		//final LongBuffer wordLayerView = byteLayer.asLongBuffer();
 		final int
-			size = dataSrcDirect.array().length,
+			size = byteLayer.array().length,
 			countWordBytes = Long.SIZE / Byte.SIZE,
 			countWords = size / countWordBytes,
 			countTailBytes = size % countWordBytes;
@@ -84,14 +75,15 @@ implements DataSource<T> {
 		LOG.debug(Markers.MSG, "Prepare {} of ring data...", RunTimeConfig.formatSize(size));
 		// 64-bit words
 		for(i = 0; i < countWords; i++) {
-			dataSrcWordsView.put(i, word);
+			byteLayer.putLong(word);
+			//wordLayerView.putL(i, word);
 			word = nextWord(word);
 		}
 		// tail bytes
 		final ByteBuffer tailBytes = ByteBuffer.allocate(countWordBytes);
 		tailBytes.asLongBuffer().put(word).rewind();
 		for(i = 0; i < countTailBytes; i++) {
-			dataSrcDirect.put(countWordBytes * countWords + i, tailBytes.get(i));
+			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
 		}
 		//
 		LOG.debug(
@@ -114,22 +106,24 @@ implements DataSource<T> {
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
-		out.writeInt(dataSrcDirect.array().length);
+		out.writeInt(byteLayers.get(0).array().length);
 		out.writeLong(seed);
 	}
 	//
 	@Override
 	public final void readExternal(final ObjectInput in)
 		throws IOException, ClassNotFoundException {
-		dataSrcDirect = ByteBuffer.allocate(in.readInt());
+		final ByteBuffer ringZeroLayer = ByteBuffer.allocate(in.readInt());
 		seed = in.readLong();
-		preProduceData();
+		generateData(ringZeroLayer, seed);
+		byteLayers.clear();
+		byteLayers.add(ringZeroLayer);
 		DEFAULT = this;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final int getSize() {
-		return dataSrcDirect.array().length;
+		return byteLayers.get(0).array().length;
 	}
 	//
 	public final long getSeed() {
@@ -142,7 +136,7 @@ implements DataSource<T> {
 	public final String toString() {
 		return
 			Long.toHexString(seed) + RunTimeConfig.LIST_SEP +
-			Integer.toHexString(dataSrcDirect.array().length);
+			Integer.toHexString(byteLayers.get(0).array().length);
 	}
 	//
 	@Override
@@ -158,8 +152,23 @@ implements DataSource<T> {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final byte[] getBytes(final int layerNum) {
-		return layerNum % 2 == 0 ? dataSrcDirect.array() : dataSrcReverse.array();
+	public final synchronized byte[] getBytes(final int layerNum) {
+		final int layerCount = byteLayers.size();
+		if(layerNum >= layerCount) {
+			ByteBuffer prevLayer = byteLayers.get(layerCount - 1), nextLayer;
+			long prevSeed, nextSeed;
+			final int ringSize = prevLayer.array().length;
+			for(int i = layerCount; i <= layerNum; i ++) {
+				nextLayer = ByteBuffer.allocate(ringSize);
+				prevSeed = prevLayer.getLong(0);
+				nextSeed = Long.reverse(nextWord(Long.reverseBytes(prevSeed)));
+				LOG.debug(Markers.MSG, String.format(MSG_FMT_NEW_LAYER, i, prevSeed, nextSeed));
+				generateData(nextLayer, nextSeed);
+				byteLayers.add(nextLayer);
+				prevLayer = nextLayer;
+			}
+		}
+		return byteLayers.get(layerNum).array();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }

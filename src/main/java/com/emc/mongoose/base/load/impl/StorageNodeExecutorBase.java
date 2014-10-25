@@ -17,6 +17,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.threading.GentleExecutorShutDown;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
 import org.apache.logging.log4j.Level;
@@ -56,6 +57,7 @@ implements StorageNodeExecutor<T> {
 	private final Condition condInterrupted = lock.newCondition();
 	//
 	private final RunTimeConfig runTimeConfig;
+	private final Request.Type reqType;
 	//
 	protected StorageNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
@@ -72,6 +74,7 @@ implements StorageNodeExecutor<T> {
 		//
 		this.runTimeConfig = runTimeConfig;
 		this.localReqConf = localReqConf;
+		reqType = localReqConf.getLoadType();
 		//
 		counterSubm = parentMetrics.counter(MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_SUBM));
 		counterSubmParent = parentMetrics.getCounters().get(
@@ -191,37 +194,40 @@ implements StorageNodeExecutor<T> {
 			counterReqFail.inc();
 			counterReqFailParent.inc();
 		} else {
-			try(
-				final Request<T>
-					request = (Request<T>) Future.class.cast(reqTask).get()
-			) {
-				final T object = request.getDataItem();
-				final Request.Result result = request.getResult();
-				if(result == Request.Result.SUCC) {
-					// update the metrics with success
-					counterReqSucc.inc();
-					counterReqSuccParent.inc();
-					final long
-						duration = request.getDuration(),
-						size = object.getSize();
-					reqBytes.mark(size);
-					reqBytesParent.mark(size);
-					reqDur.update(duration);
-					reqDurParent.update(duration);
-					// feed to the consumer
-					if(consumer!=null) {
-						try {
-							consumer.submit(object);
-						} catch(final IOException e) {
-							ExceptionHandler.trace(
-								LOG, Level.WARN, e,
-								String.format("Failed to submit the object \"%s\" to consumer", object)
-							);
-						}
-					}
+			try(final Request<T> request = (Request<T>) Future.class.cast(reqTask).get()) {
+				final T dataItem = request.getDataItem();
+				if(dataItem == null) {
+					consumer.submit(null);
 				} else {
-					counterReqFail.inc();
-					counterReqFailParent.inc();
+					final Request.Result result = request.getResult();
+					if(result == Request.Result.SUCC) {
+						// update the metrics with success
+						counterReqSucc.inc();
+						counterReqSuccParent.inc();
+						final long
+							duration = request.getDuration(),
+							size = request.getTransferSize();
+						reqBytes.mark(size);
+						reqBytesParent.mark(size);
+						reqDur.update(duration);
+						reqDurParent.update(duration);
+						// feed to the consumer
+						if(consumer != null) {
+							try {
+								consumer.submit(dataItem);
+							} catch(final IOException e) {
+								ExceptionHandler.trace(
+									LOG, Level.WARN, e,
+									String.format(
+										"Failed to submit the object \"%s\" to consumer", dataItem
+									)
+								);
+							}
+						}
+					} else {
+						counterReqFail.inc();
+						counterReqFailParent.inc();
+					}
 				}
 				//
 			} catch(final InterruptedException e) {
@@ -358,20 +364,8 @@ implements StorageNodeExecutor<T> {
 		//
 		LOG.debug(Markers.MSG, "Interrupting...");
 		localReqConf.setRetries(false);
-		final int droppedTaskCount = shutdownNow().size();
-		if(droppedTaskCount > 0) {
-			LOG.info(Markers.ERR, "Dropped {} tasks", droppedTaskCount);
-		}
-		/*try {
-			final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
-			LOG.debug(
-				Markers.MSG, "Wait at most {} ms before terminating {}+{} tasks",
-				reqTimeOutMilliSec, getQueue().size(), getActiveCount()
-			);
-			awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.ERR, "Interrupted while waiting the submitted tasks to finish");
-		}*/
+		//
+		new GentleExecutorShutDown(this, runTimeConfig).run();
 		//
 		if(lock.tryLock()) {
 			try {

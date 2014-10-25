@@ -6,6 +6,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
 /**
@@ -30,7 +32,7 @@ extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String
-		FMT_PATH = "/%s/%x",
+		FMT_PATH = "/%s/%s",
 		KEY_BUCKET = "api.s3.bucket",
 		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
@@ -92,7 +94,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final HttpRequest httpRequest, final WSObject dataItem)
+	protected final void applyURI(final HttpRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
 		if(httpRequest == null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
@@ -103,11 +105,12 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
+		applyObjectId(dataItem, null); // S3 REST doesn't require http response
 		synchronized(uriBuilder) {
 			try {
 				HttpRequestBase.class.cast(httpRequest).setURI(
 					uriBuilder.setPath(
-						String.format(FMT_PATH, bucket.getName(), dataItem.getOffset())
+						String.format(FMT_PATH, bucket.getName(), dataItem.getId())
 					).build()
 				);
 			} catch(final Exception e) {
@@ -165,8 +168,15 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
-		dataObject.setId(Long.toHexString(dataObject.getOffset()));
+	public final void applyObjectId(final T dataObject, final HttpResponse unused) {
+		dataObject.setId(
+			Base64.encodeBase64URLSafeString(
+				ByteBuffer
+					.allocate(Long.SIZE / Byte.SIZE)
+					.putLong(dataObject.getOffset())
+					.array()
+			)
+		);
 	}
 	//
 	@Override
