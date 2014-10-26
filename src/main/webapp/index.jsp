@@ -257,12 +257,10 @@
 						<div class="menu-wrapper">
 							<div class="col-xs-8">
 								<ul class="nav nav-tabs tabs-left">
-									<li class="active"><a href="#data-items-csv" data-toggle="tab">data.items.csv</a></li>
+									<li class="active"><a href="#messages-csv" data-toggle="tab">messages.csv</a></li>
 									<li><a href="#errors-log" data-toggle="tab">errors.log</a></li>
-									<li><a href="#messages-csv" data-toggle="tab">messages.csv</a></li>
 									<li><a href="#perf-avg-csv" data-toggle="tab">perf.avg.csv</a></li>
 									<li><a href="#perf-sum-csv" data-toggle="tab">perf.sum.csv</a></li>
-									<li><a href="#perf-trace-csv" data-toggle="tab">perf.trace.csv</a></li>
 								</ul>
 							</div>
 						</div>
@@ -271,23 +269,73 @@
 					<div class="right-side">
 						<div class="log-wrapper">
 							<div class="tab-content">
-								<div class="tab-pane active" id="data-items-csv">
-									data.items.csv
+								<div class="tab-pane active" id="messages-csv">
+									<table class="table">
+										<thead>
+											<tr>
+												<th>Level</th>
+												<th>LoggerName</th>
+												<th>Marker</th>
+												<th>Message</th>
+												<th>ThreadName</th>
+												<th>TimeMillis</th>
+											</tr>
+										</thead>
+										<tbody>
+
+										</tbody>
+									</table>
 								</div>
 								<div class="tab-pane" id="errors-log">
-									errors.log
-								</div>
-								<div class="tab-pane" id="messages-csv">
-									messages.csv
+									<table class="table">
+										<thead>
+											<tr>
+												<th>Level</th>
+												<th>LoggerName</th>
+												<th>Marker</th>
+												<th>Message</th>
+												<th>ThreadName</th>
+												<th>TimeMillis</th>
+											</tr>
+										</thead>
+										<tbody>
+
+										</tbody>
+									</table>
 								</div>
 								<div class="tab-pane" id="perf-avg-csv">
-									perf.avg.csv
+									<table class="table">
+										<thead>
+											<tr>
+												<th>Level</th>
+												<th>LoggerName</th>
+												<th>Marker</th>
+												<th>Message</th>
+												<th>ThreadName</th>
+												<th>TimeMillis</th>
+											</tr>
+										</thead>
+										<tbody>
+
+										</tbody>
+									</table>
 								</div>
 								<div class="tab-pane" id="perf-sum-csv">
-									perf.sum.csv
-								</div>
-								<div class="tab-pane" id="perf-trace-csv">
-									perf.trace.csv
+									<table class="table">
+										<thead>
+											<tr>
+												<th>Level</th>
+												<th>LoggerName</th>
+												<th>Marker</th>
+												<th>Message</th>
+												<th>ThreadName</th>
+												<th>TimeMillis</th>
+											</tr>
+										</thead>
+										<tbody>
+
+										</tbody>
+									</table>
 								</div>
 							</div>
 						</div>

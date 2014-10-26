@@ -157,7 +157,6 @@ legend.scheduler-border {
 
 .right-side .tab-content {
 	word-wrap: break-word;
-	overflow-y: auto;
 	height: 600px;
 	margin: 15px;
 }
@@ -175,4 +174,38 @@ legend.scheduler-border {
 	height: 200px;
 	display: inline-block;
 	vertical-align: top;
+}
+
+table {
+	width: 100%;
+}
+
+thead, tbody, tr, td, th {
+	display: block;
+}
+
+tr:after {
+	content: ' ';
+	display: block;
+	visibility: hidden;
+	clear: both;
+}
+
+thead th {
+	height: 30px;
+}
+
+tbody {
+	height: 520px;
+	overflow-y: auto;
+}
+
+thead {
+	/* fallback */
+}
+
+
+tbody td, thead th {
+	width: 16.6%;
+	float: left;
 }

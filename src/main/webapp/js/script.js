@@ -104,18 +104,47 @@ $(document).ready(function() {
 			},
 			_onmessage : function(m) {
 				var json = JSON.parse(m.data);
-				switch (json.marker.name) {
-					case "msg":
-						alert("A");
+				if (!json.message.message) {
+					str = json.message.messagePattern.split("{}");
+					resultString = "";
+					for (s = 0; s < str.length - 1; s++) {
+						resultString += str[s]+json.message.stringArgs[s];
+					}
+					json.message.message = resultString + str[str.length - 1];
 				}
-				//$("#messages-csv").append("<p>" + json.marker.name + "</p>");
-
+				switch (json.marker.name) {
+					case "err":
+						$("#errors-log table tbody").append(appendStringToTable(json));
+						break;
+					case "msg":
+						$("#messages-csv table tbody").append(appendStringToTable(json));
+						break;
+					case "perfSum":
+						$("#perf-sum-csv table tbody").append(appendStringToTable(json));
+						break;
+					case "perfAvg":
+						$("#perf-avg-csv table tbody").append(appendStringToTable(json));
+						break;
+				}
 			},
 			_onclose : function(m) {
 				this._ws = null;
 			}
 		};
 		server.connect();
+	}
+
+	function appendStringToTable(json) {
+		html = '<tr>\
+			<td class="filterable-cell">' + json.level.name + '</td>\
+			<td class="filterable-cell">' + json.loggerName + '</td>\
+			<td class="filterable-cell">' + json.marker.name + '</td>\
+			<td class="filterable-cell">' + json.message.message + '</td>\
+			<td class="filterable-cell">' + json.threadName + '</td>\
+			<td class="filterable-cell">' + json.timeMillis + '</td>\
+			</tr>';
+		return html;
+
 	}
 
 	$(document).on('submit', '#mainForm',  function(e) {
