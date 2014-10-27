@@ -916,7 +916,7 @@ implements LoadClient<T> {
 							break;
 						}
 					}
-				} while(!passed && rejectCount < retryCountMax);
+				} while(!passed && rejectCount < retryCountMax && !submitExecutor.isShutdown());
 			}
 		} else {
 			LOG.debug(Markers.MSG, "All {} tasks submitted", maxCount);

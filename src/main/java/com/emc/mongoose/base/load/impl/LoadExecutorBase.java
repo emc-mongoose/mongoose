@@ -304,7 +304,7 @@ implements LoadExecutor<T> {
 						break;
 					}
 				}
-			} while(!flagSubmSucc && rejectCount < retryCountMax);
+			} while(!flagSubmSucc && rejectCount < retryCountMax && !submitExecutor.isShutdown());
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
