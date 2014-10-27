@@ -37,11 +37,11 @@ implements AppendableDataItem, UpdatableDataItem {
 		FMT_MSG_WRONG_RANGE_COUNT = "Range count should be more than 0 and less than the object size = %s",
 		FMT_MSG_ILLEGAL_APPEND_SIZE = "Append tail size should be more than 0, but got %D",
 		FMT_MASK = "0%s",
-		FMT_MSG_RANGE_CORRUPT = "Range #{}(offset {}) of \"{}\" corrupted",
-		FMT_MSG_NEW_UPD_RANGE = "New updated range for \"{}\", ring offset: {}, size: {}, layer #{}, ring: {}",
-		FMT_MSG_UPD_CELL = "Update cell at position: {}, offset: {}, new mask: {}",
-		FMT_MSG_RANGE_MODIFIED = "Range #{} [{}-{}] was modified, layer #{}",
-		FMT_MSG_MERGE_MASKS = "Move pending ranges \"{}\" to history \"{}\"",
+		FMT_MSG_RANGE_CORRUPT = "{}: range #{}(offset {}) of \"{}\" corrupted",
+		FMT_MSG_NEW_UPD_RANGE = "{}: new updated range for \"{}\", ring offset: {}, size: {}, layer #{}",
+		FMT_MSG_UPD_CELL = "{}: update cell at position: {}, offset: {}, new mask: {}",
+		FMT_MSG_RANGE_MODIFIED = "{}: range #{} [{}-{}] was modified, layer #{}",
+		FMT_MSG_MERGE_MASKS = "{}: move pending ranges \"{}\" to history \"{}\"",
 		STR_EMPTY_MASK = "0";
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final BitSet
@@ -181,7 +181,8 @@ implements AppendableDataItem, UpdatableDataItem {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, FMT_MSG_RANGE_MODIFIED,
-						i, rangeOffset, rangeOffset + rangeSize - 1, layerNum
+						Long.toHexString(offset), i, rangeOffset, rangeOffset + rangeSize - 1,
+						layerNum
 					);
 				}
 				updatedRange = new UniformData(
@@ -197,13 +198,19 @@ implements AppendableDataItem, UpdatableDataItem {
 				contentEquals = compareWith(in, rangeOffset, rangeSize);
 			}
 			if(!contentEquals) {
-				LOG.debug(Markers.ERR, FMT_MSG_RANGE_CORRUPT, i, rangeOffset, toString());
+				LOG.debug(
+					Markers.ERR, FMT_MSG_RANGE_CORRUPT,
+					Long.toHexString(offset), i, rangeOffset, toString()
+				);
 				break;
 			}
 		}
+		/*
+		FIXME: tail checking code doesn't work currently due to layer switching
 		if(contentEquals && tailSize > 0) {
 			contentEquals = compareWith(in, tailOffset, tailSize);
 		}
+		*/
 		return contentEquals;
 	}
 	//
@@ -229,14 +236,14 @@ implements AppendableDataItem, UpdatableDataItem {
 		boolean updateDone = false;
 		do {
 			for(int i = 0; i < countRangesTotal; i++) {
-				nextCellPos = startCellPos + i;
+				nextCellPos = (startCellPos + i) % countRangesTotal;
 				if(!maskRangesHistory.get(nextCellPos) && !maskRangesPending.get(nextCellPos)) {
 					maskRangesPending.set(nextCellPos);
 					updateDone = true;
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
 							Markers.MSG, FMT_MSG_UPD_CELL,
-							nextCellPos, getRangeOffset(nextCellPos),
+							Long.toHexString(offset), nextCellPos, getRangeOffset(nextCellPos),
 							Hex.encodeHexString(maskRangesPending.toByteArray())
 						);
 					}
@@ -298,10 +305,9 @@ implements AppendableDataItem, UpdatableDataItem {
 					);
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
-							Markers.MSG,
-							FMT_MSG_NEW_UPD_RANGE,
-							toString(), offset + rangeOffset, rangeSize, layerNum + 1,
-							UniformDataSource.DEFAULT.toString()
+							Markers.MSG, FMT_MSG_NEW_UPD_RANGE,
+							Long.toHexString(offset), toString(), offset + rangeOffset, rangeSize,
+							layerNum + 1
 						);
 					}
 					nextRangeData.writeTo(out);
@@ -311,6 +317,7 @@ implements AppendableDataItem, UpdatableDataItem {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, FMT_MSG_MERGE_MASKS,
+					Long.toHexString(offset),
 					Hex.encodeHexString(maskRangesPending.toByteArray()),
 					Hex.encodeHexString(maskRangesHistory.toByteArray())
 				);

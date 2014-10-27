@@ -1,7 +1,7 @@
 package com.emc.mongoose.web.api.impl;
 //
 import com.emc.mongoose.base.api.Request;
-import com.emc.mongoose.base.api.RequestConfigImpl;
+import com.emc.mongoose.base.api.impl.RequestConfigImpl;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
 import com.emc.mongoose.web.api.WSRequestConfig;
@@ -390,9 +390,7 @@ implements WSRequestConfig<T> {
 	protected abstract void applyURI(final HttpRequest httpRequest, final T dataItem)
 	throws IllegalArgumentException, URISyntaxException;
 	//
-	protected final void applyPayLoad(
-		final HttpRequest httpRequest, final HttpEntity httpEntity
-	) {
+	protected final void applyPayLoad(final HttpRequest httpRequest, final HttpEntity httpEntity) {
 		HttpEntityEnclosingRequest httpReqWithPayLoad = null;
 		try {
 			httpReqWithPayLoad = HttpEntityEnclosingRequest.class.cast(httpRequest);
@@ -407,14 +405,13 @@ implements WSRequestConfig<T> {
 		}
 	}
 	// merge subsequent updated ranges functionality is here
-	protected final void applyRangesHeaders(
-		final HttpRequest httpRequest, final T dataItem
-	) {
+	protected final void applyRangesHeaders(final HttpRequest httpRequest, final T dataItem) {
 		long rangeBeg = -1, rangeEnd = -1, rangeLen;
 		int rangeCount = dataItem.getCountRangesTotal();
 		for(int i = 0; i < rangeCount; i++) {
 			rangeLen = DataRanges.getRangeSize(i);
 			if(dataItem.isRangeUpdatePending(i)) {
+				LOG.trace(Markers.MSG, "\"{}\": should update range #{}", dataItem, i);
 				if(rangeBeg < 0) { // begin of the possible updated ranges sequence
 					rangeBeg = DataRanges.getRangeOffset(i);;
 					rangeEnd = rangeBeg + rangeLen - 1;

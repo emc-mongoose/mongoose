@@ -41,7 +41,7 @@ implements DataItem {
 		FMT_MSG_STREAM_OUT_START = "Item \"{}\": stream out start",
 		FMT_MSG_STREAM_OUT_FINISH = "Item \"{}\": stream out finish",
 		FMT_MSG_CORRUPT = "Content mismatch:\n" +
-			"\trange internal offset: {};\n" +
+			"\trange offset: {}; internal offset: {};\n" +
 			"\texpected buffer content:\n{}\n" +
 			"\tbut got the following:\n{}",
 		MSG_IO_FAILURE_DURING_VERIFICATION = "Data integrity verification failed due to I/O error";
@@ -278,7 +278,7 @@ implements DataItem {
 						if(!contentEquals) {
 							LOG.debug(
 								Markers.ERR,
-								FMT_MSG_CORRUPT, rangeOffset + i * pageSize,
+								FMT_MSG_CORRUPT, rangeOffset, i * pageSize,
 								Base64.encodeBase64URLSafeString(buff1),
 								Base64.encodeBase64URLSafeString(buff2)
 							);
@@ -309,7 +309,7 @@ implements DataItem {
 						if(!contentEquals) {
 							LOG.debug(
 								Markers.ERR, FMT_MSG_CORRUPT,
-								rangeOffset + rangeLength - countTailBytes,
+								rangeOffset, rangeLength - countTailBytes,
 								Base64.encodeBase64URLSafeString(buff1),
 								Base64.encodeBase64URLSafeString(buff2)
 							);

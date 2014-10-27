@@ -162,7 +162,7 @@ implements StorageNodeExecutor<T> {
 					break;
 				}
 			}
-		} while(!passed && rejectCount < retryCountMax);
+		} while(!passed && rejectCount < retryCountMax && !isShutdown());
 		//
 		if(dataItem != null) {
 			if(passed) {
