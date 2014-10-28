@@ -1,11 +1,15 @@
 package com.emc.mongoose.web.api.impl.provider.swift;
 //
+import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+//
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -18,17 +22,30 @@ import java.security.NoSuchAlgorithmException;
 public final class RequestConfig<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
+	private final Logger LOG = LogManager.getLogger();
+	//
 	public RequestConfig()
 	throws NoSuchAlgorithmException {
-		super();
-		api = RequestConfig.class.getSimpleName();
+		this(null);
 	}
 	//
-	@Override @SuppressWarnings("UnnecessaryLocalVariable")
-	public RequestConfig<T> clone()
-	throws CloneNotSupportedException {
-		final RequestConfig copy = (RequestConfig<T>) super.clone();
-		// TODO add swift specific fields
+	protected RequestConfig(final RequestConfig<T> reqConf2Clone)
+	throws NoSuchAlgorithmException {
+		super(reqConf2Clone);
+		api = RequestConfig.class.getSimpleName();
+		if(reqConf2Clone != null) {
+			// TODO copy swift specific fields
+		}
+	}
+	//
+	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
+	public RequestConfig<T> clone() {
+		RequestConfig<T> copy = null;
+		try {
+			copy = new RequestConfig<>(this);
+		} catch(final NoSuchAlgorithmException e) {
+			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
+		}
 		return copy;
 	}
 	//

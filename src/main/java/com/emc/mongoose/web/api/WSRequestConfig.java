@@ -52,13 +52,7 @@ extends ObjectRequestConfig<T> {
 	WSRequestConfig<T> setAPI(final String api);
 	//
 	@Override
-	WSRequestConfig<T> setAddr(final String addr);
-	//
-	@Override
 	WSRequestConfig<T> setLoadType(final Request.Type loadType);
-	//
-	@Override
-	WSRequestConfig<T> setPort(final int port);
 	//
 	@Override
 	WSRequestConfig<T> setUserName(final String userName);
@@ -74,10 +68,6 @@ extends ObjectRequestConfig<T> {
 	//
 	@Override
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
-	//
-	@Override
-	WSRequestConfig<T> clone()
-	throws CloneNotSupportedException;
 	//
 	String getScheme();
 	WSRequestConfig<T> setScheme(final String scheme);
