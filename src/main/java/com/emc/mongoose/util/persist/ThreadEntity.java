@@ -7,10 +7,13 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.HashSet;
+import java.util.Set;
 
 import static javax.persistence.GenerationType.IDENTITY;
 
@@ -36,7 +39,8 @@ implements Serializable{
 	private NodeEntity node;
 	@Column(name = "num")
 	private BigInteger num;
-
+	@OneToMany(targetEntity=TraceEntity.class, fetch = FetchType.LAZY, mappedBy = "thread")
+	private Set<TraceEntity> traceSet = new HashSet<TraceEntity>();
 	//
 	public ThreadEntity(){
 	}
@@ -71,5 +75,11 @@ implements Serializable{
 	}
 	public void setNode(final NodeEntity node) {
 		this.node = node;
+	}
+	public Set<TraceEntity> getTraceSet() {
+		return traceSet;
+	}
+	public void setTraceSet(final Set<TraceEntity> traceSet) {
+		this.traceSet = traceSet;
 	}
 }
