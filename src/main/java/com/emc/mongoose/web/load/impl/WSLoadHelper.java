@@ -37,7 +37,7 @@ public class WSLoadHelper {
 		connMgr.setDefaultConnectionConfig(
 			ConnectionConfig
 				.custom()
-				.setBufferSize((int) dataPageSize)
+				.setBufferSize(dataPageSize)
 				.build()
 		);
 		// set shared headers to client builder
