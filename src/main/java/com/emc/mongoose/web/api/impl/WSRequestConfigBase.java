@@ -20,7 +20,6 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.utils.DateUtils;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
@@ -55,7 +54,7 @@ implements WSRequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static long serialVersionUID = 42L;
-	private final String userAgent, signMethod;
+	protected final String userAgent, signMethod;
 	//
 	private final HttpRequestRetryHandler retryHandler = new HttpRequestRetryHandler() {
 		//
@@ -106,12 +105,17 @@ implements WSRequestConfig<T> {
 	//
 	protected ConcurrentHashMap<String, String> sharedHeadersMap;
 	protected final Mac mac;
-	protected final URIBuilder uriBuilder = new URIBuilder();
 	protected CloseableHttpClient httpClient;
 	//
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException {
-		super();
+		this(null);
+	}
+	//
+	protected WSRequestConfigBase(final WSRequestConfig<T> reqConf2Clone)
+	throws NoSuchAlgorithmException {
+		super(reqConf2Clone);
+		//
 		signMethod = runTimeConfig.getHttpSignMethod();
 		mac = Mac.getInstance(signMethod);
 		final String
@@ -126,6 +130,12 @@ implements WSRequestConfig<T> {
 				put(HttpHeaders.CONTENT_TYPE, contentType);
 			}
 		};
+		if(reqConf2Clone != null) {
+			this
+				.setSecret(reqConf2Clone.getSecret())
+				.setScheme(reqConf2Clone.getScheme())
+				.setClient(reqConf2Clone.getClient());
+		}
 	}
 	//
 	@Override
@@ -167,28 +177,6 @@ implements WSRequestConfig<T> {
 		} else {
 			sharedHeadersMap.put(KEY_EMC_NS, nameSpace);
 		}
-		return this;
-	}
-	//
-	@Override
-	public final String getAddr() {
-		return uriBuilder.getHost();
-	}
-	@Override
-	public final WSRequestConfigBase<T> setAddr(final String addr) {
-		uriBuilder.setHost(addr);
-		super.setAddr(addr);
-		return this;
-	}
-	//
-	@Override
-	public final int getPort() {
-		return uriBuilder.getPort();
-	}
-	@Override
-	public final WSRequestConfigBase<T> setPort(final int port) {
-		uriBuilder.setPort(port);
-		super.setPort(port);
 		return this;
 	}
 	//
@@ -288,21 +276,6 @@ implements WSRequestConfig<T> {
 	@Override
 	public final HttpRequestRetryHandler getRetryHandler() {
 		return retryHandler;
-	}
-	//
-	@Override
-	public WSRequestConfigBase<T> clone()
-	throws CloneNotSupportedException {
-		final WSRequestConfigBase<T> copy = (WSRequestConfigBase<T>) super.clone();
-		copy
-			.setAddr(getAddr())
-			.setLoadType(getLoadType())
-			.setPort(getPort())
-			.setUserName(getUserName())
-			.setSecret(getSecret())
-			.setScheme(getScheme())
-			.setClient(getClient());
-		return copy;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

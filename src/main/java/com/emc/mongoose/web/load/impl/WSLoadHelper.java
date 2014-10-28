@@ -2,11 +2,13 @@ package com.emc.mongoose.web.load.impl;
 //
 import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.base.load.StorageNodeExecutor;
+import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 //
+import com.emc.mongoose.web.load.WSNodeExecutor;
 import org.apache.http.Header;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -70,7 +72,7 @@ public class WSLoadHelper {
 		final MetricRegistry parentMetrics, final String name,
 		final StorageNodeExecutor[] nodes
 	) {
-		com.emc.mongoose.web.load.WSNodeExecutor nextNodeExecutor;
+		WSNodeExecutor nextNodeExecutor;
 		for(int i = 0; i < addrs.length; i ++) {
 			try {
 				nextNodeExecutor = new BasicNodeExecutor<>(
