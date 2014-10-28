@@ -382,7 +382,7 @@ implements WSRequestConfig<T> {
 		long rangeBeg = -1, rangeEnd = -1, rangeLen;
 		int rangeCount = dataItem.getCountRangesTotal();
 		for(int i = 0; i < rangeCount; i++) {
-			rangeLen = DataRanges.getRangeSize(i);
+			rangeLen = dataItem.getRangeSize(i);
 			if(dataItem.isRangeUpdatePending(i)) {
 				LOG.trace(Markers.MSG, "\"{}\": should update range #{}", dataItem, i);
 				if(rangeBeg < 0) { // begin of the possible updated ranges sequence

@@ -7,10 +7,12 @@ import com.emc.mongoose.base.data.UpdatableDataItem;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -38,9 +40,9 @@ implements AppendableDataItem, UpdatableDataItem {
 		FMT_MSG_ILLEGAL_APPEND_SIZE = "Append tail size should be more than 0, but got %D",
 		FMT_MASK = "0%s",
 		FMT_MSG_RANGE_CORRUPT = "{}: range #{}(offset {}) of \"{}\" corrupted",
-		FMT_MSG_NEW_UPD_RANGE = "{}: new updated range for \"{}\", ring offset: {}, size: {}, layer #{}",
 		FMT_MSG_UPD_CELL = "{}: update cell at position: {}, offset: {}, new mask: {}",
-		FMT_MSG_RANGE_MODIFIED = "{}: range #{} [{}-{}] was modified, layer #{}",
+		FMT_MSG_UPD_RANGE = "{}: update range(#{}, [{}]) of with data({}, {}): {}",
+		FMT_MSG_RANGE_MODIFIED = "{}: range #{} [{}-{}] was modified, layer #{}: {}",
 		FMT_MSG_MERGE_MASKS = "{}: move pending ranges \"{}\" to history \"{}\"",
 		STR_EMPTY_MASK = "0";
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,6 +101,7 @@ implements AppendableDataItem, UpdatableDataItem {
 			try {
 				// extract hexadecimal layer number
 				layerNum = Integer.valueOf(rangesInfo.substring(0, sepPos), 0x10);
+				setDataSource(UniformDataSource.DEFAULT, layerNum);
 				// extract hexadecimal mask, convert into bit set and add to the existing mask
 				String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
 				while(rangesMask.length() == 0 || rangesMask.length() % 2 == 1) {
@@ -142,7 +145,7 @@ implements AppendableDataItem, UpdatableDataItem {
 		maskRangesPending.or(BitSet.class.cast(in.readObject()));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public static int log2(long value) {
+	/*public static int log2(long value) {
 		int result = 0;
 		if((value &  0xffffffff00000000L ) != 0	) { value >>>= 32;	result += 32; }
 		if( value >= 0x10000					) { value >>>= 16;	result += 16; }
@@ -151,50 +154,53 @@ implements AppendableDataItem, UpdatableDataItem {
 		if( value >= 0x10						) { value >>>= 4;	result += 4; }
 		if( value >= 0x4						) { value >>>= 2;	result += 2; }
 		return result + (int) (value >>> 1);
-	}
+	}*/
+	//
+	private static final double LOG2 = Math.log(2);
 	//
 	public static int getRangeCount(final long size) {
-		return log2(size + 1);
+		return (int) Math.ceil(Math.log(size + 1)/LOG2);
 	}
 	//
 	public static long getRangeOffset(final int i) {
 		return (1 << i) - 1;
 	}
 	//
-	public static long getRangeSize(final int i) {
-		return 1 << i;
+	@Override
+	public final long getRangeSize(final int i) {
+		return i < getRangeCount(size) - 1 ? 1 << i : size - getRangeOffset(i);
 	}
 	//
 	@Override
 	public final boolean compareWith(final InputStream in) {
 		boolean contentEquals = true;
 		final int countRangesTotal = getRangeCount(size);
-		final long
-			tailOffset = getRangeOffset(countRangesTotal),
-			tailSize = size - tailOffset;
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
 		for(int i = 0; i < countRangesTotal; i ++) {
 			rangeOffset = getRangeOffset(i);
 			rangeSize = getRangeSize(i);
 			if(maskRangesHistory.get(i)) { // range have been modified
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						Markers.MSG, FMT_MSG_RANGE_MODIFIED,
-						Long.toHexString(offset), i, rangeOffset, rangeOffset + rangeSize - 1,
-						layerNum
-					);
-				}
 				updatedRange = new UniformData(
 					offset + rangeOffset, rangeSize, layerNum + 1, UniformDataSource.DEFAULT
 				);
 				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					final ByteArrayOutputStream contentRangeStream = new ByteArrayOutputStream();
+					updatedRange.writeTo(contentRangeStream);
+					LOG.trace(
+						Markers.MSG, FMT_MSG_RANGE_MODIFIED,
+						Long.toHexString(offset), i, rangeOffset, rangeOffset + rangeSize - 1,
+						layerNum + 1,
+						Base64.encodeBase64URLSafeString(contentRangeStream.toByteArray())
+					);
+				}
 			} else if(layerNum > 1) { // previous layer of updated ranges
 				updatedRange = new UniformData(
 					offset + rangeOffset, rangeSize, layerNum, UniformDataSource.DEFAULT
 				);
 				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
-			} else { // pristine object content
+			} else {
 				contentEquals = compareWith(in, rangeOffset, rangeSize);
 			}
 			if(!contentEquals) {
@@ -205,12 +211,6 @@ implements AppendableDataItem, UpdatableDataItem {
 				break;
 			}
 		}
-		/*
-		FIXME: tail checking code doesn't work currently due to layer switching
-		if(contentEquals && tailSize > 0) {
-			contentEquals = compareWith(in, tailOffset, tailSize);
-		}
-		*/
 		return contentEquals;
 	}
 	//
@@ -278,7 +278,7 @@ implements AppendableDataItem, UpdatableDataItem {
 		long pendingSize = 0;
 		for(int i = 0; i < rangeCount; i ++) {
 			if(maskRangesPending.get(i)) {
-				pendingSize += (1 << i);
+				pendingSize += getRangeSize(i);
 			}
 		}
 		return pendingSize;
@@ -297,20 +297,22 @@ implements AppendableDataItem, UpdatableDataItem {
 		long rangeOffset, rangeSize;
 		synchronized(this) {
 			for(int i = 0; i < countRangesTotal; i++) {
-				rangeSize = getRangeSize(i);
 				rangeOffset = getRangeOffset(i);
+				rangeSize = getRangeSize(i);
 				if(maskRangesPending.get(i)) {
 					nextRangeData = new UniformData(
 						offset + rangeOffset, rangeSize, layerNum + 1, UniformDataSource.DEFAULT
 					);
+					nextRangeData.writeTo(out);
 					if(LOG.isTraceEnabled(Markers.MSG)) {
+						final ByteArrayOutputStream rangeContentStream = new ByteArrayOutputStream();
+						nextRangeData.writeTo(rangeContentStream);
 						LOG.trace(
-							Markers.MSG, FMT_MSG_NEW_UPD_RANGE,
-							Long.toHexString(offset), toString(), offset + rangeOffset, rangeSize,
-							layerNum + 1
+							Markers.MSG, FMT_MSG_UPD_RANGE,
+							toString(), i, rangeSize, offset + rangeOffset, layerNum + 1,
+							Base64.encodeBase64URLSafeString(rangeContentStream.toByteArray())
 						);
 					}
-					nextRangeData.writeTo(out);
 				}
 			}
 			// move pending updated ranges to history
