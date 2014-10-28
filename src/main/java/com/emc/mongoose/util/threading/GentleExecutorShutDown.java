@@ -48,6 +48,8 @@ implements Runnable {
 			} while(
 				(submQueueSize > 0 || submExecCoreThreads == submExecActiveThreads)
 					&&
+				!executor.isTerminated()
+					&&
 				!executor.awaitTermination(retryDelayMilliSec, TimeUnit.MILLISECONDS)
 			);
 		} catch(final InterruptedException e) {

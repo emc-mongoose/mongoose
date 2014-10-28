@@ -10,9 +10,12 @@ import java.io.Externalizable;
  Shared request configuration.
  */
 public interface RequestConfig<T extends DataItem>
-extends Externalizable {
+extends Externalizable, Cloneable {
 	//
 	long serialVersionUID = 42L;
+	//
+	@SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
+	RequestConfig<T> clone();
 	//
 	String getAPI();
 	RequestConfig<T> setAPI(final String api);
@@ -39,11 +42,9 @@ extends Externalizable {
 	RequestConfig<T> setRetries(final boolean retryFlag);
 	//
 	boolean getVerifyContentFlag();
+	RequestConfig<T> setVerifyContentFlag(final boolean verifyContentFlag);
 	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
-	//
-	RequestConfig<T> clone()
-	throws CloneNotSupportedException;
 	//
 	void configureStorage()
 	throws IllegalStateException;

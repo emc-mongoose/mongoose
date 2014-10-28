@@ -42,9 +42,29 @@ extends WSRequestConfigBase<T> {
 	//
 	public RequestConfig()
 	throws NoSuchAlgorithmException {
-		super();
-		api = RequestConfig.class.getSimpleName();
+		this(null);
+	}
+	//
+	protected RequestConfig(final RequestConfig<T> reqConf2Clone)
+	throws NoSuchAlgorithmException {
+		super(reqConf2Clone);
+		setAPI(RequestConfig.class.getSimpleName());
 		fmtAuthValue = runTimeConfig.getString("api.s3.auth.prefix") + " %s:%s";
+		if(reqConf2Clone != null) {
+			setBucket(reqConf2Clone.getBucket());
+			setNameSpace(reqConf2Clone.getNameSpace());
+		}
+	}
+	//
+	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
+	public RequestConfig<T> clone() {
+		RequestConfig<T> copy = null;
+		try {
+			copy = new RequestConfig<>(this);
+		} catch(final NoSuchAlgorithmException e) {
+			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
+		}
+		return copy;
 	}
 	//
 	public final Bucket<T> getBucket() {
@@ -67,15 +87,6 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		return this;
-	}
-	//
-	@Override
-	public RequestConfig<T> clone()
-	throws CloneNotSupportedException {
-		final RequestConfig<T> copy = (RequestConfig<T>) super.clone();
-		copy.setNameSpace(getNameSpace());
-		copy.setBucket(getBucket());
-		return copy;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

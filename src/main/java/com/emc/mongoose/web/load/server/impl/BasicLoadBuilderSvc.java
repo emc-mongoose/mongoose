@@ -79,7 +79,7 @@ implements WSLoadBuilderSvc<T, U> {
 			try {
 				switch(loadType) {
 					case CREATE:
-						LOG.debug("New create load");
+						LOG.debug(Markers.MSG, "New create load");
 						if(minObjSize > maxObjSize) {
 							throw new IllegalStateException(
 								"Min object size should be not more than max object size"
@@ -92,14 +92,14 @@ implements WSLoadBuilderSvc<T, U> {
 						);
 						break;
 					case READ:
-						LOG.debug("New read load");
+						LOG.debug(Markers.MSG, "New read load");
 						loadSvc = new ReadSvc<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case UPDATE:
-						LOG.debug("New update load");
+						LOG.debug(Markers.MSG, "New update load");
 						loadSvc = new UpdateSvc<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
@@ -107,14 +107,14 @@ implements WSLoadBuilderSvc<T, U> {
 						);
 						break;
 					case DELETE:
-						LOG.debug("New delete load");
+						LOG.debug(Markers.MSG, "New delete load");
 						loadSvc = new DeleteSvc<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case APPEND:
-						LOG.debug("New append load");
+						LOG.debug(Markers.MSG, "New append load");
 						loadSvc = new AppendSvc<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),

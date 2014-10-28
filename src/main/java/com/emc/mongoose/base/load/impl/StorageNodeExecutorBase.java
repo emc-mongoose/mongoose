@@ -116,7 +116,7 @@ implements StorageNodeExecutor<T> {
 		final RunTimeConfig runTimeConfig,
 		final String addr, final int threadsPerNode, final RequestConfig<T> sharedReqConf,
 		final MetricRegistry parentMetrics, final String parentName
-	) throws CloneNotSupportedException {
+	) {
 		this(
 			runTimeConfig, threadsPerNode, sharedReqConf.clone().setAddr(addr),
 			parentMetrics, parentName
@@ -162,7 +162,7 @@ implements StorageNodeExecutor<T> {
 					break;
 				}
 			}
-		} while(!passed && rejectCount < retryCountMax);
+		} while(!passed && rejectCount < retryCountMax && !isShutdown());
 		//
 		if(dataItem != null) {
 			if(passed) {
@@ -375,6 +375,13 @@ implements StorageNodeExecutor<T> {
 			}
 		}
 		//
+	}
+	//
+	@Override
+	public final boolean isShutdown() {
+		return super.isShutdown()	||
+			super.isTerminating()	||
+			super.isTerminated();
 	}
 	//
 	@Override

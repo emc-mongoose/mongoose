@@ -80,7 +80,7 @@ implements WSLoadBuilder<T, U> {
 			try {
 				switch(loadType) {
 					case CREATE:
-						LOG.debug("New create load");
+						LOG.debug(Markers.MSG, "New create load");
 						load = new Create<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
@@ -88,7 +88,7 @@ implements WSLoadBuilder<T, U> {
 						);
 						break;
 					case READ:
-						LOG.debug("New read load");
+						LOG.debug(Markers.MSG, "New read load");
 						load = new Read<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
@@ -96,7 +96,7 @@ implements WSLoadBuilder<T, U> {
 						);
 						break;
 					case UPDATE:
-						LOG.debug("New update load");
+						LOG.debug(Markers.MSG, "New update load");
 						load = new Update<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
@@ -104,7 +104,7 @@ implements WSLoadBuilder<T, U> {
 						);
 						break;
 					case DELETE:
-						LOG.debug("New delete load");
+						LOG.debug(Markers.MSG, "New delete load");
 						load = new Delete<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
@@ -112,7 +112,7 @@ implements WSLoadBuilder<T, U> {
 						);
 						break;
 					case APPEND:
-						LOG.debug("New append load");
+						LOG.debug(Markers.MSG, "New append load");
 						load = new Append<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
