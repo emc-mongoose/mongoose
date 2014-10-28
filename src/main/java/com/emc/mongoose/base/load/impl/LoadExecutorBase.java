@@ -19,6 +19,7 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.persist.HibernateAppender;
 import com.emc.mongoose.util.persist.PersistDAO;
 import com.emc.mongoose.util.persist.LoadEntity;
 import com.emc.mongoose.util.persist.LoadTypeEntity;
@@ -90,9 +91,6 @@ implements LoadExecutor<T> {
 		final String[] addrs, final RequestConfig<T> reqConf, final long maxCount,
 		final int threadsPerNode, final String listFile
 	) throws ClassCastException {
-		//DataBase. Persist entities.
-		instanceN++;
-		PersistDAO.setLoad(reqConf.getAPI(), reqConf.getLoadType().toString(), instanceN);
 		//
 		this.runTimeConfig = runTimeConfig;
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
@@ -105,7 +103,7 @@ implements LoadExecutor<T> {
 			.build();
 		//
 		final int nodeCount = addrs.length;
-		final String name = Integer.toString(instanceN) + '-' +
+		final String name = Integer.toString(instanceN++) + '-' +
 			StringUtils.capitalize(reqConf.getAPI().toLowerCase()) + '-' +
 			StringUtils.capitalize(reqConf.getLoadType().toString().toLowerCase()) +
 			(maxCount>0? Long.toString(maxCount) : "") + '-' +

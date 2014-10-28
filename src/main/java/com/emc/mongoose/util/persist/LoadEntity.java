@@ -7,10 +7,13 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.math.BigInteger;
+import java.util.HashSet;
+import java.util.Set;
 //
 import static javax.persistence.GenerationType.IDENTITY;
 //
@@ -40,6 +43,8 @@ implements Serializable {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "api", nullable = false)
 	private ApiEntity api;
+	@OneToMany(targetEntity=ThreadEntity.class, fetch = FetchType.LAZY, mappedBy = "load")
+	private Set<ThreadEntity> threadSet = new HashSet<ThreadEntity>();
 	//
 	public LoadEntity(){
 	}
@@ -82,5 +87,11 @@ implements Serializable {
 	}
 	public void setApi(final ApiEntity api) {
 		this.api = api;
+	}
+	public Set<ThreadEntity> getThreadSet() {
+		return threadSet;
+	}
+	public void setThreadSet(Set<ThreadEntity> threadSet) {
+		this.threadSet = threadSet;
 	}
 }
