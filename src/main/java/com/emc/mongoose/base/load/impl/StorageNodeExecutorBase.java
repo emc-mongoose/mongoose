@@ -72,10 +72,9 @@ implements StorageNodeExecutor<T> {
 				threadsPerNode * runTimeConfig.getRunRequestQueueFactor()
 			),
 			new WorkerFactory(
-				parentName + "<" + localReqConf.getAddr() + ">",
+					parentName + '<' + localReqConf.getAddr() + '>',
 				context
-			)
-		);
+			));
 		//
 		this.runTimeConfig = runTimeConfig;
 		this.localReqConf = localReqConf;

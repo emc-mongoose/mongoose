@@ -135,9 +135,14 @@ implements WSLoadBuilderSvc<T, U> {
 		//
 		return (U) loadSvc;
 	}
+	/*
+	public final void run() {
+		start();
+
+	}*/
 	//
-	public void start() {
-		LOG.info(Markers.MSG, "Load builder service instance created");
+	public final void start() {
+		LOG.debug(Markers.MSG, "Load builder service instance created");
 		/*final RemoteStub stub = */ServiceUtils.create(this);
 		/*LOG.debug(Markers.MSG, stub.toString());*/
 		LOG.info(Markers.MSG, "Server started and waiting for the requests");
