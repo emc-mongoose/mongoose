@@ -69,7 +69,7 @@ implements StorageNodeExecutor<T> {
 			new LinkedBlockingQueue<Runnable>(
 				threadsPerNode * runTimeConfig.getRunRequestQueueFactor()
 			),
-			new WorkerFactory(parentName+'<'+localReqConf.getAddr()+'>')
+			new WorkerFactory(parentName + '<' + localReqConf.getAddr() + '>')
 		);
 		//
 		this.runTimeConfig = runTimeConfig;
