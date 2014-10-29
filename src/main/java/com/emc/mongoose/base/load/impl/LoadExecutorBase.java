@@ -35,7 +35,9 @@ import org.apache.logging.log4j.Marker;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -72,6 +74,11 @@ implements LoadExecutor<T> {
 	protected LoadTypeEntity type = new LoadTypeEntity();
 	protected LoadEntity load ;
 	//
+	private final static String KEY_NODE_ADDR = "node.addr",
+								KEY_LOAD_NUM = "load.number",
+								KEY_LOAD_TYPE = "load.type",
+								KEY_API = "api";
+	//
 	public static int getLastInstanceNum() {
 		return instanceN;
 	}
@@ -79,6 +86,11 @@ implements LoadExecutor<T> {
 	public static void setLastInstanceNum(final int lastInstanceN) {
 		instanceN = lastInstanceN;
 	}
+	//
+	private static String api;
+	public static String getApi(){ return api; };
+	private static String loadType;
+	public static String getLoadType(){ return loadType; };
 	//
 	@SuppressWarnings("unchecked")
 	protected LoadExecutorBase(
@@ -88,6 +100,10 @@ implements LoadExecutor<T> {
 	) throws ClassCastException {
 		//
 		this.runTimeConfig = runTimeConfig;
+		//
+		api = reqConf.getAPI();
+		loadType = reqConf.getLoadType().toString();
+		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteMonitorPort());
@@ -99,7 +115,7 @@ implements LoadExecutor<T> {
 		//
 		final int nodeCount = addrs.length;
 		final String name = Integer.toString(instanceN++) + '-' +
-			StringUtils.capitalize(reqConf.getAPI().toLowerCase()) + '-' +
+			StringUtils.capitalize(api.toLowerCase()) + '-' +
 			StringUtils.capitalize(reqConf.getLoadType().toString().toLowerCase()) +
 			(maxCount>0? Long.toString(maxCount) : "") + '-' +
 			Integer.toString(threadsPerNode) + 'x' + Integer.toString(nodeCount);
@@ -122,10 +138,15 @@ implements LoadExecutor<T> {
 		final int
 			submitThreadCount = threadsPerNode * addrs.length,
 			queueSize = submitThreadCount * runTimeConfig.getRunRequestQueueFactor();
+		final Map<String,String> context = new HashMap<String,String>();
+		context.put(KEY_NODE_ADDR,reqConf.getAddr());
+		context.put(KEY_LOAD_NUM, String.valueOf(LoadExecutorBase.getLastInstanceNum()));
+		context.put(KEY_API,reqConf.getAddr());
+		context.put(KEY_LOAD_TYPE,reqConf.getLoadType().toString());
 		submitExecutor = new ThreadPoolExecutor(
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("submitDataItems")
+			new WorkerFactory("submitDataItems", context)
 		);
 		initClient(addrs, reqConf);
 		initNodeExecutors(addrs, reqConf);

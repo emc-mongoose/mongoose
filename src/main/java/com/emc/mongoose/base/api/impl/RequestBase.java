@@ -5,11 +5,13 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
+import com.emc.mongoose.base.load.impl.StorageNodeExecutorBase;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.pool.BasicInstancePool;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 //
 import java.util.concurrent.ConcurrentHashMap;
 /**
@@ -100,6 +102,7 @@ implements Request<T> {
 		execute();
 		duration = System.nanoTime() - start;
 		LOG.info(Markers.PERF_TRACE, "{},{},{},{}", dataItem, result.code, start, duration);
+
 		return this;
 	}
 	//

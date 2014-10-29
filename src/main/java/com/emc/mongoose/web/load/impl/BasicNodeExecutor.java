@@ -9,6 +9,8 @@ import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.web.load.WSNodeExecutor;
+
+import java.util.Map;
 //
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
@@ -24,9 +26,9 @@ implements WSNodeExecutor<T> {
 	public BasicNodeExecutor(
 		final RunTimeConfig runTimeConfig,
 		final String addr, final int threadsPerNode, final WSRequestConfig<T> sharedReqConf,
-		final MetricRegistry parentMetrics, final String parentName
+		final MetricRegistry parentMetrics, final String parentName, final Map<String,String> context
 	) throws CloneNotSupportedException {
-		super(runTimeConfig, addr, threadsPerNode, sharedReqConf, parentMetrics, parentName);
+		super(runTimeConfig, addr, threadsPerNode, sharedReqConf, parentMetrics, parentName, context);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

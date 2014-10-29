@@ -1,13 +1,16 @@
 package com.emc.mongoose.util.persist;
 //
+import com.emc.mongoose.base.api.Request;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.appender.FileAppender;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.layout.SerializedLayout;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -40,10 +43,16 @@ extends AbstractAppender{
 	private static final String PERF_AVG = "perfAvg",
 								MSG = "msg",
 								PERF_TRACE = "perfTrace",
-								ERR = "err";
+								ERR = "err",
+								KEY_NODE_ADDR = "node.addr",
+								KEY_THREAD_NUM = "thread.number",
+								KEY_LOAD_NUM = "load.number",
+								KEY_LOAD_TYPE = "load.type",
+								KEY_API = "api";
 	//
 	private HibernateAppender(
-			final String name, final Filter filter, final Layout<? extends Serializable> layout,
+			final String name, final Filter filter,
+			final Layout<? extends Serializable> layout,
 			final String runid, final String runmode
 	) {
 		super(name, filter, layout);
@@ -73,6 +82,7 @@ extends AbstractAppender{
 		if (databaseInit){
 			initDataBase(username,password,url);
 			setRun(runid,runmode);
+
 		}
 		return new HibernateAppender(name, filter, DEFAULT_LAYOUT, runid, runmode);
 	}
@@ -88,30 +98,24 @@ extends AbstractAppender{
 		final Date date = new Date();
 		final String marker = event.getMarker().toString();
 		switch (marker){
-			case PERF_AVG:
-				System.out.println(marker);
-				final String[] list = event.getThreadName().split("-");
-				if (list.length>1){
-					setLoad(list[1],list[2],list[0]);
-				}
-				break;
 			case MSG:
 			case ERR:
 				setMessage(date,event.getLoggerName(),event.getLevel().toString(),event.getMessage().toString());
 				break;
 			case PERF_TRACE:
-				final String[] threadInfo = event.getThreadName().split("-");
-				final String nodeAddr = threadInfo[3].split("\\s*[#|<|>]\\s*")[1];
-				final String threadNum  = threadInfo[3].split("\\s*[#|<|>]\\s*")[3];
-				setThread(threadInfo[0],nodeAddr,threadNum);
-				Map<String,String> map = event.getContextMap();
-				Set<String> keys = map.keySet();
-				Iterator<String> iterKey = keys.iterator();
-				while (iterKey.hasNext()){
-					String elem = iterKey.next();
-					System.out.println(elem);
-				}
-
+				setLoad(event.getContextMap().get(KEY_API),
+						event.getContextMap().get(KEY_LOAD_TYPE),
+						event.getContextMap().get(KEY_LOAD_NUM));
+				setThread(event.getContextMap().get(KEY_LOAD_NUM),
+						event.getContextMap().get(KEY_NODE_ADDR),
+						event.getContextMap().get(KEY_THREAD_NUM));
+				final String[] message = event.getMessage().getFormattedMessage().split(",");
+				System.out.println(event.getMessage().getFormattedMessage());
+				setTrace(message[1], new BigInteger(message[2]), new BigInteger(String.valueOf(message[3].charAt(0))),
+						new BigInteger(String.valueOf(message[3].charAt(2))),
+						new BigInteger(event.getContextMap().get(KEY_THREAD_NUM)), new BigInteger(message[5]),
+						new BigInteger(message[6]));
+				break;
 		}
 	}
 	//
@@ -223,7 +227,11 @@ extends AbstractAppender{
 		session.save(threadEntity);
 		session.getTransaction().commit();
 	}
-	public static void setTrace(){
+	public static void setTrace(final String ringOffset,final BigInteger sizeString, final BigInteger layerString,
+								final BigInteger maskString, final BigInteger threadNumString,
+								final BigInteger reaStartString, final BigInteger reqDurString){
+
+
 
 	}
 }
