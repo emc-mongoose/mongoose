@@ -1,14 +1,19 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<%@ taglib uri='http://java.sun.com/jsp/jstl/core' prefix='c'%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
-<%@ taglib uri="WEB-INF/property.tld" prefix="rt" %>
-<!DOCTYPE html>
-<html>
+<?xml version="1.0" encoding="UTF-8"?>
+<html
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:jsp="http://java.sun.com/JSP/Page"
+	xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:fn="http://java.sun.com/jsp/jstl/functions"
+	xmlns:rt="WEB-INF/property.tld"
+	version="2.0">
+	<jsp:declaration>
+
+	</jsp:declaration>
 	<head>
-		<meta charset="utf-8">
+		<meta charset="utf-8"/>
 		<title>Run</title>
-		<link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
-		<link href="css/styles.css" rel="stylesheet">
+		<link href="css/bootstrap/bootstrap.min.css" rel="stylesheet"/>
+		<link href="css/styles.css" rel="stylesheet"/>
 		<link href="css/bootstrap-vertical-tabs-1.1.0/bootstrap.vertical-tabs.css" rel="stylesheet">
 		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
@@ -19,7 +24,7 @@
 		<nav class="navbar navbar-default" role="navigation">
 			<div class="container-fluid">
 				<div class="navbar-header">
-					<a id="logo-image" href="/"><img src="images/vipr.png" width="50" height="50"></a>
+					<a id="logo-image" href="/"><img src="images/vipr.png" width="50" height="50"/>
 					<a class="navbar-brand" href="/">Mongoose</a>
 				</div>
 				<div class="collapse navbar-collapse" id="bx-example-navbar-collapse-1">
@@ -64,7 +69,7 @@
 									<option>hours</option>
 									<option>days</option>
 								</select>
-								<br>
+								<br/>
 								<label for="run-metrics-period-sec">run.metrics.period.sec:</label>
 								<input id="runMetricsPeriodSec" name="runMetricsPeriodSec" type="text" class="form-control counter" value="${runTimeConfig.runMetricsPeriodSec}">
 							</fieldset>
@@ -75,12 +80,12 @@
 								<legend class="scheduler-border">Auth</legend>
 								<label for="auth-id">auth.id:</label>
 								<input id="authId" name="authId" type="text" class="form-control" value="${runTimeConfig.authId}">
-								<br>
+								<br/>
 								<label for="auth-secret">auth.secret:</label>
 								<input id="authSecret" name="authSecret" type="text" class="form-control" value="${runTimeConfig.authSecret}">
 							</fieldset>
 						</div>
-						<br>
+						<br/>
 
 						<div class="storages-block">
 							<fieldset class="scheduler-border">

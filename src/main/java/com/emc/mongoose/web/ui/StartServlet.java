@@ -8,6 +8,7 @@ import com.emc.mongoose.web.load.impl.BasicLoadBuilder;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.web.load.client.impl.BasicLoadBuilderClient;
 import com.emc.mongoose.web.load.client.WSLoadClient;
+import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.run.WSMock;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -71,7 +72,7 @@ public class StartServlet extends HttpServlet {
 	//
 	private void runServer() {
 		Thread thread = new Thread() {
-			final com.emc.mongoose.web.load.server.WSLoadBuilderSvc loadBuilderSvc = new BasicLoadBuilderSvc();
+			final WSLoadBuilderSvc loadBuilderSvc = new BasicLoadBuilderSvc();
 			@Override
 			public void run() {
 				try {
@@ -168,7 +169,7 @@ public class StartServlet extends HttpServlet {
 	//
 	private void runStandalone()
 	throws IOException {
-		Thread thread = new Thread() {
+		final Thread thread = new Thread() {
 			WSLoadExecutor<WSObject> loadExecutor;
 			@Override
 			public void run() {
@@ -225,9 +226,9 @@ public class StartServlet extends HttpServlet {
 			@Override
 			public void interrupt() {
 			   try {
-				   loadExecutor.interrupt();
-			   } catch (RemoteException e) {
-				   ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to interrupt the load executor");
+				   loadExecutor.close();
+			   } catch (IOException e) {
+				   ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to close the load executor");
 			   }
 			   //
 			   super.interrupt();
@@ -244,7 +245,7 @@ public class StartServlet extends HttpServlet {
 		threads.add(thread);
 	}
 	//
-	private void setupRunTimeConfig(HttpServletRequest request) {
+	private void setupRunTimeConfig(final HttpServletRequest request) {
 		//	Common settings
 		runTimeConfig.set("run.time", request.getParameter("runTime") + "." + request.getParameter("runTimeSelect"));
 		runTimeConfig.set("run.metrics.period.sec", request.getParameter("runMetricsPeriodSec"));

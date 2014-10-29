@@ -28,7 +28,7 @@ public class MainServlet extends HttpServlet {
 	throws ServletException, IOException {
 		request.setAttribute("runmodes", RunModes.values());
 		request.setAttribute("runTimeConfig", runTimeConfig);
-		request.getRequestDispatcher("index.jsp").forward(request, response);
+		request.getRequestDispatcher("index.jspx").forward(request, response);
 	}
 
 }
