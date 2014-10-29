@@ -104,6 +104,14 @@ extends AbstractAppender{
 				final String nodeAddr = threadInfo[3].split("\\s*[#|<|>]\\s*")[1];
 				final String threadNum  = threadInfo[3].split("\\s*[#|<|>]\\s*")[3];
 				setThread(threadInfo[0],nodeAddr,threadNum);
+				Map<String,String> map = event.getContextMap();
+				Set<String> keys = map.keySet();
+				Iterator<String> iterKey = keys.iterator();
+				while (iterKey.hasNext()){
+					String elem = iterKey.next();
+					System.out.println(elem);
+				}
+
 		}
 	}
 	//
@@ -214,5 +222,8 @@ extends AbstractAppender{
 		session.save(load);
 		session.save(threadEntity);
 		session.getTransaction().commit();
+	}
+	public static void setTrace(){
+
 	}
 }

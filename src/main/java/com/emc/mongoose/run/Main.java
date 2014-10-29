@@ -1,6 +1,5 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.util.persist.PersistDAO;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -104,9 +103,6 @@ public final class Main {
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RUN_TIME_CONFIG.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
-		//DataBase
-		//PersistDAO.setRun(System.getProperty(KEY_RUN_ID), runMode);
-		//
 		switch (runMode) {
 			case VALUE_RUN_MODE_SERVER:
 			case VALUE_RUN_MODE_COMPAT_SERVER:

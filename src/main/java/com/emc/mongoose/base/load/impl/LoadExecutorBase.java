@@ -19,8 +19,6 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.persist.HibernateAppender;
-import com.emc.mongoose.util.persist.PersistDAO;
 import com.emc.mongoose.util.persist.LoadEntity;
 import com.emc.mongoose.util.persist.LoadTypeEntity;
 import com.emc.mongoose.util.remote.ServiceUtils;
@@ -37,7 +35,6 @@ import org.apache.logging.log4j.Marker;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -72,8 +69,6 @@ implements LoadExecutor<T> {
 	protected volatile Consumer<T> consumer;
 	private volatile static int instanceN = 0;
 	protected volatile long maxCount, tsStart;
-	//For DataBase entity
-	//protected ApiEntity api= new ApiEntity();
 	protected LoadTypeEntity type = new LoadTypeEntity();
 	protected LoadEntity load ;
 	//
