@@ -25,7 +25,7 @@ implements Serializable{
 	@Id
 	//@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "code")
-	private BigInteger code;
+	private int code;
 	@Column(name = "name")
 	private String name;
 	@OneToMany(targetEntity=TraceEntity.class, fetch = FetchType.LAZY, mappedBy = "status")
@@ -33,15 +33,15 @@ implements Serializable{
 	//
 	public StatusEntity(){
 	}
-	public StatusEntity(final BigInteger code, final String name){
+	public StatusEntity(final int code, final String name){
 		this.code = code;
 		this.name = name;
 	}
 	//
-	public BigInteger getCode() {
+	public int getCode() {
 		return code;
 	}
-	public void setCode(final BigInteger code) {
+	public void setCode(final int code) {
 		this.code = code;
 	}
 	public String getName() {

@@ -31,11 +31,6 @@ public class WSLoadHelper {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static String KEY_NODE_ADDR = "node.addr",
-								KEY_LOAD_NUM = "load.number",
-								KEY_LOAD_TYPE = "load.type",
-								KEY_API = "api";
-	//
 	public static CloseableHttpClient initClient(
 		final int totalThreadCount, final int dataPageSize, final WSRequestConfig reqConf
 	) {
@@ -82,11 +77,9 @@ public class WSLoadHelper {
 		WSNodeExecutor nextNodeExecutor;
 		for(int i = 0; i < addrs.length; i ++) {
 			try {
-				final Map<String,String> context = new HashMap<String,String>();
-				context.put(KEY_NODE_ADDR,reqConf.getAddr());
-				context.put(KEY_LOAD_NUM, String.valueOf(LoadExecutorBase.getLastInstanceNum()));
-				context.put(KEY_API,LoadExecutorBase.getApi());
-				context.put(KEY_LOAD_TYPE,LoadExecutorBase.getLoadType());
+				//Add thread context
+				final Map<String,String> context = new HashMap<String,String>(LoadExecutorBase.getContext());
+				//
 				nextNodeExecutor = new BasicNodeExecutor<>(
 					runTimeConfig, addrs[i], threadsPerNode, reqConf, parentMetrics, name,context
 				);

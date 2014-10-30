@@ -78,6 +78,9 @@ implements LoadExecutor<T> {
 								KEY_LOAD_NUM = "load.number",
 								KEY_LOAD_TYPE = "load.type",
 								KEY_API = "api";
+	private static  final Map<String,String> context = new HashMap<String,String>();
+	public static Map<String,String> getContext() { return context; }
+	public static void addContextElement(final String key, final String value) { context.put(key,value); }
 	//
 	public static int getLastInstanceNum() {
 		return instanceN;
@@ -138,11 +141,12 @@ implements LoadExecutor<T> {
 		final int
 			submitThreadCount = threadsPerNode * addrs.length,
 			queueSize = submitThreadCount * runTimeConfig.getRunRequestQueueFactor();
-		final Map<String,String> context = new HashMap<String,String>();
+		//Put value in thread context map
 		context.put(KEY_NODE_ADDR,reqConf.getAddr());
-		context.put(KEY_LOAD_NUM, String.valueOf(LoadExecutorBase.getLastInstanceNum()));
-		context.put(KEY_API,reqConf.getAddr());
+		context.put(KEY_LOAD_NUM, String.valueOf(getLastInstanceNum()));
+		context.put(KEY_API,reqConf.getAPI());
 		context.put(KEY_LOAD_TYPE,reqConf.getLoadType().toString());
+		//
 		submitExecutor = new ThreadPoolExecutor(
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),

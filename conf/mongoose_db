@@ -59,8 +59,10 @@ ALTER TABLE Classes
 CREATE TABLE DataItems
 (
 	id bigserial NOT NULL,
+	identifier text NOT NULL,
+	ringOffset text NOT NULL,
 	size bigint NOT NULL,
-	layer integer NOT NULL,
+	layer bigint NOT NULL,
 	mask bigint NOT NULL,
 	CONSTRAINT id_data_item PRIMARY KEY (id)
 )
@@ -258,13 +260,13 @@ ALTER TABLE Threads
 CREATE TABLE Traces
 (
 	id bigserial NOT NULL,
-	data_item bigint NOT NULL,
+	dataItem bigint NOT NULL,
 	thread bigint NOT NULL,
 	status integer NOT NULL,
-	ts_req_start bigint NOT NULL,
-	req_dur bigint NOT NULL,
+	tsReqStart bigint NOT NULL,
+	reqDur bigint NOT NULL,
 	CONSTRAINT id_trace PRIMARY KEY (id),
-	CONSTRAINT data_item FOREIGN KEY (data_item)
+	CONSTRAINT dataitem FOREIGN KEY (dataitem)
 		REFERENCES DataItems (id) MATCH SIMPLE
 		ON UPDATE CASCADE ON DELETE CASCADE,
 	CONSTRAINT status FOREIGN KEY (status)

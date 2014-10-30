@@ -18,7 +18,9 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 28.10.14.
  */
 @Entity(name="DataItem")
-@Table(name = "dataitem", uniqueConstraints = {
+@Table(name = "dataitems", uniqueConstraints = {
+		@UniqueConstraint(columnNames =	"identifier"),
+		@UniqueConstraint(columnNames = "ringOffset"),
 		@UniqueConstraint(columnNames = "size"),
 		@UniqueConstraint(columnNames = "layer"),
 		@UniqueConstraint(columnNames = "mask")})
@@ -28,6 +30,10 @@ implements Serializable{
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
 	private BigInteger id;
+	@Column(name = "identifier")
+	private String identifier;
+	@Column(name = "ringOffset")
+	private String ringOffset;
 	@Column(name = "size")
 	private BigInteger size;
 	@Column(name = "layer")
@@ -39,7 +45,9 @@ implements Serializable{
 	//
 	public DataItemEntity(){
 	}
-	public DataItemEntity(final BigInteger size, final BigInteger layer, final BigInteger mask){
+	public DataItemEntity(final String identifier, final String ringOffset, final BigInteger size, final BigInteger layer, final BigInteger mask){
+		this.identifier = identifier;
+		this.ringOffset = ringOffset;
 		this.layer = layer;
 		this.size = size;
 		this.mask = mask;
@@ -74,5 +82,17 @@ implements Serializable{
 	}
 	public void setTraceSet(final Set<TraceEntity> traceSet) {
 		this.traceSet = traceSet;
+	}
+	public String getIdentifier() {
+		return identifier;
+	}
+	public void setIdentifier(final String identifier) {
+		this.identifier = identifier;
+	}
+	public String getRingOffset() {
+		return ringOffset;
+	}
+	public void setRingOffset(final String ringOffset) {
+		this.ringOffset = ringOffset;
 	}
 }

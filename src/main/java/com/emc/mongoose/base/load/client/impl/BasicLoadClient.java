@@ -9,7 +9,6 @@ import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.persist.LogConsumer;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.base.load.impl.LoadExecutorBase;
 import com.emc.mongoose.base.load.impl.ShutDownHook;
 import com.emc.mongoose.base.load.impl.SubmitDataItemTask;
 import com.emc.mongoose.base.load.client.LoadClient;
@@ -84,12 +83,7 @@ implements LoadClient<T> {
 		ATTR_RATE_MEAN = "MeanRate",
 		ATTR_RATE_1MIN = "OneMinuteRate",
 		ATTR_RATE_5MIN = "FiveMinuteRate",
-		ATTR_RATE_15MIN = "FifteenMinuteRate",
-	//
-		KEY_NODE_ADDR = "node.addr",
-		KEY_LOAD_NUM = "load.number",
-		KEY_LOAD_TYPE = "load.type",
-		KEY_API = "api";
+		ATTR_RATE_15MIN = "FifteenMinuteRate";
 	private final static class GetGaugeValue<V extends Number>
 	implements Callable<V> {
 		//
@@ -327,22 +321,17 @@ implements LoadClient<T> {
 		int
 			threadCount = threadCountPerServer * remoteLoadMap.size(),
 			queueSize = threadCount * runTimeConfig.getRunRequestQueueFactor();
-		final Map<String,String> context = new HashMap<String,String>();
-		context.put(KEY_NODE_ADDR,reqConf.getAddr());
-		context.put(KEY_LOAD_NUM, String.valueOf(LoadExecutorBase.getLastInstanceNum()));
-		context.put(KEY_API,LoadExecutorBase.getApi());
-		context.put(KEY_LOAD_TYPE,LoadExecutorBase.getLoadType());
 		submitExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("submitDataItems",context)
+			new WorkerFactory("submitDataItems",new HashMap<String,String>())
 		);
 		//
 		threadCount = remoteLoadMap.size() * 20; // metric count is 18
 		mgmtConnExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("getMetricValue",context)
+			new WorkerFactory("getMetricValue",new HashMap<String,String>())
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricsReporter.start();

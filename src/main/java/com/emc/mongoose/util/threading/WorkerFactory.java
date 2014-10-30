@@ -17,7 +17,6 @@ implements ThreadFactory {
 	//
 	//private static final Logger LOG = LogManager.getLogger();
 	//
-
 	private final String threadNamePrefix,
 						KEY_THREAD_NUM = "thread.number";
 	private volatile int threadNumber;
