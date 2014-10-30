@@ -66,7 +66,7 @@ implements Consumer<T>, Producer<T> {
 		//
 		ObjectOutput fBuffOutTmp = null;
 		try {
-			assert fBuff!=null;
+			assert fBuff != null;
 			fBuffOutTmp = new ObjectOutputStream(
 				new FileOutputStream(fBuff)
 			);
@@ -77,7 +77,7 @@ implements Consumer<T>, Producer<T> {
 		}
 		//
 		outPutExecutor = Executors.newFixedThreadPool(threadCount);
-		this.maxCount = maxCount;
+		this.maxCount = maxCount == 0 ? Long.MAX_VALUE : maxCount;
 		//
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
