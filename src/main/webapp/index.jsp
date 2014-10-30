@@ -282,6 +282,7 @@
 					</div>
 
 					<div class="right-side">
+						<button id="stop" type="button" class="default"><span>Stop</span></button>
 						<div class="log-wrapper">
 							<div class="tab-content">
 								<div class="tab-pane active" id="messages-csv">
@@ -291,9 +292,9 @@
 												<th>Level</th>
 												<th>LoggerName</th>
 												<th>Marker</th>
-												<th>Message</th>
 												<th>ThreadName</th>
 												<th>TimeMillis</th>
+												<th>Message</th>
 											</tr>
 										</thead>
 										<tbody>
@@ -359,7 +360,6 @@
 							</div>
 						</div>
 					</div>
-					<button id="stop" type="button" class="default"><span>Stop</span></button>
 				</div>
 			</div>
 		</div>

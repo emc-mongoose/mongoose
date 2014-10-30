@@ -164,9 +164,9 @@ $(document).ready(function() {
 			<td class="filterable-cell">' + json.level.name + '</td>\
 			<td class="filterable-cell">' + json.loggerName + '</td>\
 			<td class="filterable-cell">' + json.marker.name + '</td>\
-			<td class="filterable-cell">' + json.message.message + '</td>\
 			<td class="filterable-cell">' + json.threadName + '</td>\
-			<td class="filterable-cell">' + json.timeMillis + '</td>\
+			<td class="filterable-cell">' + new Date(json.timeMillis) + '</td>\
+			<td class="filterable-cell">' + json.message.message + '</td>\
 			</tr>';
 		return html;
 
