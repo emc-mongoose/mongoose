@@ -38,6 +38,7 @@ implements Request<T> {
 	// BEGIN pool related things
 	protected final static ConcurrentHashMap<RequestConfig, BasicInstancePool<Request>>
 		POOL_MAP = new ConcurrentHashMap<>();
+	//
 	@Override
 	public final void close() {
 		final BasicInstancePool<Request> pool = POOL_MAP.get(reqConf);

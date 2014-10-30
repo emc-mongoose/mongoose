@@ -16,6 +16,7 @@ import com.emc.mongoose.base.load.StorageNodeExecutor;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+//
 import com.emc.mongoose.util.threading.GentleExecutorShutDown;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
@@ -27,7 +28,6 @@ import org.apache.logging.log4j.ThreadContext;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -64,17 +64,14 @@ implements StorageNodeExecutor<T> {
 	protected StorageNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
 		final int threadsPerNode, final RequestConfig<T> localReqConf,
-		final MetricRegistry parentMetrics, final String parentName,final Map<String,String> context
+		final MetricRegistry parentMetrics, final String parentName, final Map<String,String> context
 	) {
 		super(
 			threadsPerNode, threadsPerNode, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				threadsPerNode * runTimeConfig.getRunRequestQueueFactor()
 			),
-			new WorkerFactory(
-					parentName + '<' + localReqConf.getAddr() + '>',
-				context
-			));
+			new WorkerFactory(parentName + '<' + localReqConf.getAddr() + '>', context));
 		//
 		this.runTimeConfig = runTimeConfig;
 		this.localReqConf = localReqConf;
@@ -146,7 +143,6 @@ implements StorageNodeExecutor<T> {
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to build request");
 		} finally {
-			ThreadContext.put("nodeAddr",localReqConf.getAddr());
 			LOG.trace(Markers.MSG, "Built request \"{}\"", request);
 		}
 		//
@@ -311,7 +307,6 @@ implements StorageNodeExecutor<T> {
 				}
 		);
 		LOG.log( logLevel, logMarker, localReqConf.getAddr() + ": " +message);
-		//PersistDAO.setMessage(new Date(), this.getClass().getSimpleName(), logLevel.toString(), message);
 		if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
 			LOG.trace(
 				Markers.PERF_AVG,

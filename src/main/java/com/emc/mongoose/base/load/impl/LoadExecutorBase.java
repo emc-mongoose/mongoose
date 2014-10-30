@@ -19,8 +19,6 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.persist.LoadEntity;
-import com.emc.mongoose.util.persist.LoadTypeEntity;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
 import com.emc.mongoose.util.threading.GentleExecutorShutDown;
@@ -37,7 +35,6 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -71,16 +68,6 @@ implements LoadExecutor<T> {
 	protected volatile Consumer<T> consumer;
 	private volatile static int instanceN = 0;
 	protected volatile long maxCount, tsStart;
-	protected LoadTypeEntity type = new LoadTypeEntity();
-	protected LoadEntity load ;
-	//
-	private final static String KEY_NODE_ADDR = "node.addr",
-								KEY_LOAD_NUM = "load.number",
-								KEY_LOAD_TYPE = "load.type",
-								KEY_API = "api";
-	private static  final Map<String,String> context = new HashMap<String,String>();
-	public static Map<String,String> getContext() { return context; }
-	public static void addContextElement(final String key, final String value) { context.put(key,value); }
 	//
 	public static int getLastInstanceNum() {
 		return instanceN;
@@ -90,11 +77,6 @@ implements LoadExecutor<T> {
 		instanceN = lastInstanceN;
 	}
 	//
-	private static String api;
-	public static String getApi(){ return api; };
-	private static String loadType;
-	public static String getLoadType(){ return loadType; };
-	//
 	@SuppressWarnings("unchecked")
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig,
@@ -103,9 +85,6 @@ implements LoadExecutor<T> {
 	) throws ClassCastException {
 		//
 		this.runTimeConfig = runTimeConfig;
-		//
-		api = reqConf.getAPI();
-		loadType = reqConf.getLoadType().toString();
 		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
@@ -118,7 +97,7 @@ implements LoadExecutor<T> {
 		//
 		final int nodeCount = addrs.length;
 		final String name = Integer.toString(instanceN++) + '-' +
-			StringUtils.capitalize(api.toLowerCase()) + '-' +
+			StringUtils.capitalize(reqConf.getAPI().toLowerCase()) + '-' +
 			StringUtils.capitalize(reqConf.getLoadType().toString().toLowerCase()) +
 			(maxCount>0? Long.toString(maxCount) : "") + '-' +
 			Integer.toString(threadsPerNode) + 'x' + Integer.toString(nodeCount);
@@ -141,16 +120,10 @@ implements LoadExecutor<T> {
 		final int
 			submitThreadCount = threadsPerNode * addrs.length,
 			queueSize = submitThreadCount * runTimeConfig.getRunRequestQueueFactor();
-		//Put value in thread context map
-		context.put(KEY_NODE_ADDR,reqConf.getAddr());
-		context.put(KEY_LOAD_NUM, String.valueOf(getLastInstanceNum()));
-		context.put(KEY_API,reqConf.getAPI());
-		context.put(KEY_LOAD_TYPE,reqConf.getLoadType().toString());
-		//
 		submitExecutor = new ThreadPoolExecutor(
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("submitDataItems", context)
+			new WorkerFactory("submitDataItems", new HashMap<String,String>())
 		);
 		initClient(addrs, reqConf);
 		initNodeExecutors(addrs, reqConf);
@@ -376,7 +349,6 @@ implements LoadExecutor<T> {
 				}
 		);
 		LOG.info(logMarker, message);
-		//PersistDAO.setMessage(new Date(), this.getClass().getSimpleName(), "INFO", message);
 		//
 		if(Markers.PERF_SUM.equals(logMarker)) {
 			final double totalReqNanoSeconds = reqDurSnapshot.getMean() * countReqSucc;

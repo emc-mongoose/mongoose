@@ -3,10 +3,7 @@ package com.emc.mongoose.util.threading;
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
 //
-import com.emc.mongoose.base.api.RequestConfig;
 import org.apache.logging.log4j.ThreadContext;
-
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadFactory;
 /**
@@ -17,8 +14,9 @@ implements ThreadFactory {
 	//
 	//private static final Logger LOG = LogManager.getLogger();
 	//
-	private final String threadNamePrefix,
-						KEY_THREAD_NUM = "thread.number";
+
+	private final String threadNamePrefix;
+	private static final String	KEY_THREAD_NUM = "thread.number";
 	private volatile int threadNumber;
 	private final Map<String,String> context;
 	//
@@ -36,7 +34,7 @@ implements ThreadFactory {
 		threadNumber ++;
 		context.put(KEY_THREAD_NUM,Integer.toString(threadNumber));
 		return new WorkerThread(
-			runnable, threadNamePrefix + '#' + Integer.toString(threadNumber),context
+			runnable, threadNamePrefix + '#' + Integer.toString(threadNumber), context
 		);
 	}
 	//
@@ -49,15 +47,15 @@ implements ThreadFactory {
 	extends Thread{
 		private final Map<String,String> context;
 		//
-		private WorkerThread(final Runnable runnable, final String nameThread, final Map<String,String> contex){
-			super(runnable,nameThread);
-			this.context = contex;
+		private WorkerThread(final Runnable runnable, final String nameThread, final Map<String,String> context){
+			super(runnable, nameThread);
+			this.context = context;
 		}
 		//
 		@Override
 		public void run() {
 			for(String key: context.keySet()){
-				ThreadContext.put(key,context.get(key));
+				ThreadContext.put(key, context.get(key));
 			}
 			super.run();
 		}

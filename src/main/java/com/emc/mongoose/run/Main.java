@@ -80,6 +80,7 @@ public final class Main {
 	public static RunTimeConfig RUN_TIME_CONFIG;
 	//
 	public static void main(final String args[]) {
+		//
 		initSecurity();
 		//
 		final String runMode;
@@ -105,6 +106,7 @@ public final class Main {
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RUN_TIME_CONFIG.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
+		//
 		switch (runMode) {
 			case RUN_MODE_SERVER:
 			case RUN_MODE_COMPAT_SERVER:

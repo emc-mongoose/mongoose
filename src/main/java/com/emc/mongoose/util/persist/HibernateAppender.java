@@ -68,17 +68,23 @@ extends AbstractAppender{
 	) {
 		databaseInit = option;
 		if (name == null) {
-			LOGGER.error("No name provided for CustomAppender");
+			LOGGER.error("No name provided for HibernateAppender");
 			return null;
 		}
 		final String url = "jdbc:postgresql://"+addr+":"+port+"/"+namedatabase;
 		//
 		if (databaseInit){
-			initDataBase(username,password,url);
-			setRun(runid,runmode);
-			setStatus();
+			try {
+				initDataBase(username, password, url);
+				setRun(runid, runmode);
+				setStatus();
+				return new HibernateAppender(name, filter, DEFAULT_LAYOUT, runid, runmode);
+			}catch (Exception e){
+				LOGGER.error("Open session database fail");
+			}
+
 		}
-		return new HibernateAppender(name, filter, DEFAULT_LAYOUT, runid, runmode);
+		return null;
 	}
 	//Init Database with username,password and url
 	private static void initDataBase(final String username,
@@ -89,38 +95,41 @@ extends AbstractAppender{
 	//Append method
 	@Override
 	public final void append(final LogEvent event) {
-		final Date date = new Date();
-		final String marker = event.getMarker().toString();
-		switch (marker){
-			case MSG:
-			case ERR:
-				setMessage(date, event.getLoggerName(), event.getLevel().toString(), event.getMessage().getFormattedMessage());
-				break;
-			case PERF_TRACE:
-				setLoad(event.getContextMap().get(KEY_API),
-						event.getContextMap().get(KEY_LOAD_TYPE),
-						event.getContextMap().get(KEY_LOAD_NUM));
-				setThread(event.getContextMap().get(KEY_LOAD_NUM),
-						event.getContextMap().get(KEY_NODE_ADDR),
-						event.getContextMap().get(KEY_THREAD_NUM));
-				final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
-				setTrace(message[0],message[1],getValueFromMessage(message,2), getValueFromMessage(message,3),
-						getValueFromMessage(message,4), new BigInteger(event.getContextMap().get(KEY_THREAD_NUM)),
-						new BigInteger(event.getContextMap().get(KEY_LOAD_NUM)),Integer.valueOf(message[5]),
-						getValueFromMessage(message,6), getValueFromMessage(message,7));
-				break;
+		if (databaseInit){
+			final Date date = new Date();
+			final String marker = event.getMarker().toString();
+			switch (marker) {
+				case MSG:
+				case ERR:
+					setMessage(date, event.getLoggerName(), event.getLevel().toString(), event.getMessage().getFormattedMessage());
+					break;
+				case PERF_TRACE:
+					//System.out.println(event.getContextMap().get(KEY_API) + " | " + event.getContextMap().get(KEY_LOAD_TYPE) + " | " + event.getContextMap().get(KEY_LOAD_NUM) + " | " + event.getContextMap().get(KEY_NODE_ADDR));
+					setLoad(event.getContextMap().get(KEY_API),
+							event.getContextMap().get(KEY_LOAD_TYPE),
+							event.getContextMap().get(KEY_LOAD_NUM));
+					setThread(event.getContextMap().get(KEY_LOAD_NUM),
+							event.getContextMap().get(KEY_NODE_ADDR),
+							event.getContextMap().get(KEY_THREAD_NUM));
+					final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
+					setTrace(message[0], message[1], getValueFromMessage(message, 2), getValueFromMessage(message, 3),
+							getValueFromMessage(message, 4), new BigInteger(event.getContextMap().get(KEY_THREAD_NUM)),
+							new BigInteger(event.getContextMap().get(KEY_LOAD_NUM)), Integer.valueOf(message[5]),
+							getValueFromMessage(message, 6), getValueFromMessage(message, 7));
+					break;
+			}
 		}
 	}
 	//
 	private static BigInteger getValueFromMessage( final String[] message, final int index){
-		return new BigInteger(message[index]);
+		return new BigInteger(message[index], 16);
 	}
 	//
 	private static SessionFactory buildSessionFactory(
 			final String username, final String password,
 			final String url) {
 		final String DIR_ROOT = System.getProperty("user.dir");
-		final Path path = Paths.get(DIR_ROOT, "conf","hibernate.cfg.xml");
+		final Path path = Paths.get(DIR_ROOT, "conf", "hibernate.cfg.xml");
 		File hibernateConfFile = new File(path.toString());
 		try {
 			// Create the SessionFactory from hibernate.cfg.xml
@@ -145,12 +154,12 @@ extends AbstractAppender{
 			mode = new ModeEntity(modeName);
 		}
 		session.save(mode);
-		run = new RunEntity(mode,runName);
+		run = new RunEntity(mode, runName);
 		session.save(run);
 		session.getTransaction().commit();
 	}
 	//
-	public static void setLoad(final String apiName,final String typeName,final String loadNumberString){
+	public static void setLoad(final String apiName, final String typeName, final String loadNumberString){
 		final BigInteger loadNumber = new BigInteger(loadNumberString);
 		session.beginTransaction();
 		ApiEntity api = getApiEntity(apiName);
@@ -163,7 +172,7 @@ extends AbstractAppender{
 		}
 		LoadEntity load = getLoadEntity(loadNumber);
 		if (load == null){
-			load = new LoadEntity(run,type,loadNumber,api);
+			load = new LoadEntity(run, type, loadNumber, api);
 		}
 		session.save(api);
 		session.save(type);
@@ -181,14 +190,14 @@ extends AbstractAppender{
 		if (level==null){
 			level = new LevelEntity(levelName);
 		}
-		final MessageEntity message = new MessageEntity(run, classMessage,level,text,tstamp);
+		final MessageEntity message = new MessageEntity(run, classMessage, level, text, tstamp);
 		session.save(classMessage);
 		session.save(level);
 		session.save(message);
 		session.getTransaction().commit();
 	}
 	//
-	public static void setThread(final String loadNumberString, final String nodeAddr,final String threadNumberString){
+	public static void setThread(final String loadNumberString, final String nodeAddr, final String threadNumberString){
 		final BigInteger threadNumber = new BigInteger(threadNumberString);
 		session.beginTransaction();
 		NodeEntity node = getNodeEntity(nodeAddr);
@@ -196,7 +205,7 @@ extends AbstractAppender{
 			node = new NodeEntity(nodeAddr);
 		}
 		LoadEntity load = getLoadEntity(new BigInteger(loadNumberString));
-		ThreadEntity threadEntity = getThreadEntity(threadNumber,load);
+		ThreadEntity threadEntity = getThreadEntity(threadNumber, load);
 		if (threadEntity == null){
 			threadEntity = new ThreadEntity(load, node, threadNumber);
 		}
@@ -205,26 +214,26 @@ extends AbstractAppender{
 		session.save(threadEntity);
 		session.getTransaction().commit();
 	}
-	public static void setTrace(final String identifier, final String ringOffset,final BigInteger size,
+	public static void setTrace(final String identifier, final String ringOffset, final BigInteger size,
 								final BigInteger layer, final BigInteger mask, final BigInteger threadNum,
 								final BigInteger loadNum, final int status,
 								final BigInteger reaStart, final BigInteger reqDur){
 		session.beginTransaction();
 		final StatusEntity statusEntity = getStatusEntity(status);
 		LoadEntity load = getLoadEntity(loadNum);
-		ThreadEntity thread = getThreadEntity(threadNum,load);
+		ThreadEntity thread = getThreadEntity(threadNum, load);
 		DataItemEntity dataItem = getDataItemEntity(identifier, ringOffset, size);
 		if (dataItem == null){
 			dataItem = new DataItemEntity(identifier, ringOffset, size, layer, mask);
 		}else{
 			//If DataItem update
-			if (dataItem.getLayer()!= layer || dataItem.getMask()!=mask){
+			if (!dataItem.getLayer().equals(layer) || !dataItem.getMask().equals(mask)){
 				dataItem.setLayer(layer);
 				dataItem.setMask(mask);
 			}
 			//
 		}
-		final TraceEntity trace = new TraceEntity(dataItem,thread,statusEntity,reaStart,reqDur);
+		final TraceEntity trace = new TraceEntity(dataItem, thread, statusEntity, reaStart, reqDur);
 		session.save(statusEntity);
 		session.save(thread);
 		session.saveOrUpdate(dataItem);
@@ -236,7 +245,7 @@ extends AbstractAppender{
 		session.beginTransaction();
 		for (Request.Result result:Request.Result.values()){
 			StatusEntity statusEntity = getStatusEntity(result.code);
-			if ((StatusEntity) session.get(StatusEntity.class,result.code) == null){
+			if (session.get(StatusEntity.class, result.code) == null){
 				statusEntity = new StatusEntity(result.code, result.description);
 			}else{
 				if (!statusEntity.getName().equals(result.description)){
@@ -253,15 +262,15 @@ extends AbstractAppender{
 	//
 	private static LoadEntity getLoadEntity(final BigInteger loadNumber){
 		return (LoadEntity) session.createCriteria(LoadEntity.class)
-				.add( Restrictions.eq("num",loadNumber))
+				.add( Restrictions.eq("num", loadNumber))
 				.add(Restrictions.eq("run", run))
 				.uniqueResult();
 	}
 	//
 	private static ThreadEntity getThreadEntity(final BigInteger threadNumber, final LoadEntity load){
 		return (ThreadEntity) session.createCriteria(ThreadEntity.class)
-				.add( Restrictions.eq("load",load))
-				.add( Restrictions.eq("num",threadNumber))
+				.add( Restrictions.eq("load", load))
+				.add( Restrictions.eq("num", threadNumber))
 				.uniqueResult();
 	}
 	//
@@ -297,7 +306,7 @@ extends AbstractAppender{
 	//
 	private static NodeEntity getNodeEntity(final String nodeAddr) {
 		return (NodeEntity) session.createCriteria(NodeEntity.class)
-				.add( Restrictions.eq("address",nodeAddr))
+				.add( Restrictions.eq("address", nodeAddr))
 				.uniqueResult();
 	}
 	//

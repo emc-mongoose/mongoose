@@ -6,9 +6,6 @@
 	<session-factory>
 		<property name="hibernate.bytecode.use_reflection_optimizer">false</property>
 		<property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
-		<property name="hibernate.connection.password">mongoose</property>
-		<property name="hibernate.connection.url">jdbc:postgresql://localhost:5432/mongoose</property>
-		<property name="hibernate.connection.username">mongoose</property>
 		<property name="hibernate.dialect">org.hibernate.dialect.PostgreSQL9Dialect</property>
 		<property name="transaction.factory_class">org.hibernate.transaction.JDBCTransactionFactory</property>
 		<property name="show_sql">false</property>

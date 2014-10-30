@@ -20,13 +20,15 @@ CREATE DATABASE mongoose
 		LC_CTYPE = 'ru_RU.UTF-8'
 		CONNECTION LIMIT = -1;
 
+
+
 -- Table: API
 
 -- DROP TABLE API;
 
 CREATE TABLE API
 (
-	id serial NOT NULL,
+	id bigserial NOT NULL,
 	name text NOT NULL,
 	CONSTRAINT id_api PRIMARY KEY (id)
 )
@@ -88,20 +90,20 @@ WITH (
 ALTER TABLE Levels
 	OWNER TO mongoose;
 
--- Table: LoadsTypes
+-- Table: LoadType
 
--- DROP TABLE LoadsTypes;
+-- DROP TABLE LoadType;
 
-CREATE TABLE LoadsTypes
+CREATE TABLE LoadType
 (
-	id serial NOT NULL,
+	id bigserial NOT NULL,
 	name text NOT NULL,
 	CONSTRAINT id_loads_type PRIMARY KEY (id)
 )
 WITH (
 	OIDS=FALSE
 );
-ALTER TABLE LoadsTypes
+ALTER TABLE LoadType
 	OWNER TO mongoose;
 
 -- Table: Modes
@@ -126,7 +128,7 @@ ALTER TABLE Modes
 
 CREATE TABLE Nodes
 (
-	id serial NOT NULL,
+	id bigserial NOT NULL,
 	address text NOT NULL,
 	CONSTRAINT id_node PRIMARY KEY (id)
 )
@@ -180,9 +182,9 @@ CREATE TABLE Loads
 (
 	id bigserial NOT NULL,
 	run bigint NOT NULL,
-	type integer NOT NULL,
-	num bigint NOT NULL,
-	api integer NOT NULL,
+	type bigint NOT NULL,
+	number bigint NOT NULL,
+	api bigint NOT NULL,
 	CONSTRAINT id_load PRIMARY KEY (id),
 	CONSTRAINT api FOREIGN KEY (api)
 		REFERENCES API (id) MATCH SIMPLE
@@ -190,8 +192,8 @@ CREATE TABLE Loads
 	CONSTRAINT run FOREIGN KEY (run)
 		REFERENCES Runs (id) MATCH SIMPLE
 		ON UPDATE CASCADE ON DELETE CASCADE,
-		CONSTRAINT type FOREIGN KEY (type)
-		REFERENCES LoadsTypes (id) MATCH SIMPLE
+	CONSTRAINT type FOREIGN KEY (type)
+		REFERENCES LoadType (id) MATCH SIMPLE
 		ON UPDATE CASCADE ON DELETE CASCADE
 )
 WITH (
@@ -237,7 +239,7 @@ CREATE TABLE Threads
 (
 	id bigserial NOT NULL,
 	load bigint NOT NULL,
-	node integer NOT NULL,
+	node bigint NOT NULL,
 	num bigint NOT NULL,
 	CONSTRAINT id_thread PRIMARY KEY (id),
 	CONSTRAINT load FOREIGN KEY (load)

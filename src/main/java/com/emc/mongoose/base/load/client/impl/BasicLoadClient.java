@@ -84,6 +84,7 @@ implements LoadClient<T> {
 		ATTR_RATE_1MIN = "OneMinuteRate",
 		ATTR_RATE_5MIN = "FiveMinuteRate",
 		ATTR_RATE_15MIN = "FifteenMinuteRate";
+	//
 	private final static class GetGaugeValue<V extends Number>
 	implements Callable<V> {
 		//
@@ -324,14 +325,14 @@ implements LoadClient<T> {
 		submitExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("submitDataItems",new HashMap<String,String>())
+			new WorkerFactory("submitDataItems", new HashMap<String,String>())
 		);
 		//
 		threadCount = remoteLoadMap.size() * 20; // metric count is 18
 		mgmtConnExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("getMetricValue",new HashMap<String,String>())
+			new WorkerFactory("getMetricValue", new HashMap<String,String>())
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricsReporter.start();

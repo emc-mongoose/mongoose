@@ -16,7 +16,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-
 /**
  Created by kurila on 06.06.14.
  The most common implementation of the shared request configuration.
