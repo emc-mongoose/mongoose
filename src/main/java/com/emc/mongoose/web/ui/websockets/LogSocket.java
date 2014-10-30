@@ -1,13 +1,18 @@
 package com.emc.mongoose.web.ui.websockets;
 
 import com.emc.mongoose.util.logging.CustomAppender;
+import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.web.ui.websockets.interfaces.WebSocketLogListener;
 import com.google.gson.Gson;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LogEvent;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 
 import java.io.IOException;
-import java.util.EventListener;
 
 /**
  * Created by gusakk on 10/24/14.
@@ -16,41 +21,41 @@ import java.util.EventListener;
 public class LogSocket implements WebSocketLogListener {
 
 	private Session session;
+	private final static Gson gson = new Gson();
+	private final static Logger LOG = LogManager.getLogger();
 
 	@OnWebSocketClose
 	public void onClose(int statusCode, String reason) {
 		CustomAppender.unregister(this);
-		System.out.println("Close: statusCode=" + statusCode + ", reason=" + reason);
+		LOG.info(Markers.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
 	}
 
 	@OnWebSocketError
 	public void onError(Throwable t) {
 		CustomAppender.unregister(this);
-		System.out.println("Error: " + t.getMessage());
+		LOG.info(Markers.ERR, "Web Socket error. Message: {}", t.getMessage());
 	}
 
 	@OnWebSocketConnect
 	public void onConnect(Session session) {
-		System.out.println("Connect: " + session.getRemoteAddress().getAddress());
+		LOG.info(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
 		this.session = session;
-		try {
-			session.getRemote().sendString("Hello Webbrowser");
-			CustomAppender.register(this);
-		} catch (IOException e) {
-			e.printStackTrace();
+		CustomAppender.register(this);
+		for (LogEvent logEvent : CustomAppender.getLogEventsList()) {
+			sendMessage(logEvent);
 		}
 	}
 
 	@OnWebSocketMessage
 	public void onMessage(String message) {
-		System.out.println("Message: " + message);
+		LOG.info(Markers.MSG, "Message from JS {}", message);
 	}
 
-	public void sendMessage(LogEvent message) {
+	public synchronized void sendMessage(LogEvent message) {
 		try {
-			session.getRemote().sendString(new Gson().toJson(message));
+			session.getRemote().sendString(gson.toJson(message));
 		} catch (IOException e) {
-			e.printStackTrace();
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "WebSocket problem");
 		}
 	}
 

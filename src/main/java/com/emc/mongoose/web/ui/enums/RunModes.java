@@ -1,4 +1,4 @@
-package com.emc.mongoose.web.ui;
+package com.emc.mongoose.web.ui.enums;
 
 /**
  * Created by gusakk on 02/10/14.

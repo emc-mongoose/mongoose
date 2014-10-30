@@ -1,4 +1,4 @@
-package com.emc.mongoose.web.ui;
+package com.emc.mongoose.web.ui.websockets;
 
 
 

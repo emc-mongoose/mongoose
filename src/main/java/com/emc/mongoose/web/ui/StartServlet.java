@@ -8,6 +8,7 @@ import com.emc.mongoose.web.load.impl.BasicLoadBuilder;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.web.load.client.impl.BasicLoadBuilderClient;
 import com.emc.mongoose.web.load.client.WSLoadClient;
+import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.run.WSMock;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -15,6 +16,7 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
+import com.emc.mongoose.web.ui.enums.RunModes;
 import org.apache.commons.configuration.ConversionException;
 
 import org.apache.logging.log4j.Level;
@@ -28,9 +30,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Arrays;
-import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 /**
  * Created by gusakk on 01/10/14.
@@ -38,29 +39,37 @@ import java.util.concurrent.TimeUnit;
 public class StartServlet extends HttpServlet {
 
 	private final static Logger LOG = LogManager.getLogger();
-	private static List<Thread> threads;
 	private RunTimeConfig runTimeConfig;
+	private static ConcurrentHashMap<String, Thread> threadsMap;
 
 	@Override
 	public void init() throws ServletException {
 		super.init();
-		threads = new CopyOnWriteArrayList<>();
+		threadsMap = new ConcurrentHashMap<>();
 		runTimeConfig = (RunTimeConfig) getServletContext().getAttribute("runTimeConfig");
 	}
 	//
 	public void doPost(HttpServletRequest request, HttpServletResponse response)
 	throws ServletException, IOException {
 		//
-		setupRunTimeConfig(request);
-		//
 		switch (RunModes.valueOf(request.getParameter("runmode"))) {
 			case VALUE_RUN_MODE_STANDALONE:
+				setupRunTimeConfig(request);
 				LOG.debug(Markers.MSG, "Starting the standalone");
 				runStandalone();
 				break;
 			case VALUE_RUN_MODE_CLIENT:
+				setupRunTimeConfig(request);
 				LOG.debug(Markers.MSG, "Starting the client");
 				runClient();
+				break;
+			case VALUE_RUN_MODE_SERVER:
+				LOG.debug(Markers.MSG, "Starting the server");
+				runServer();
+				break;
+			case VALUE_RUN_MODE_WSMOCK:
+				LOG.debug(Markers.MSG, "Starting the wsmock");
+				runWSMock();
 				break;
 			default:
 				LOG.debug(Markers.MSG, "Starting the standalone");
@@ -71,7 +80,7 @@ public class StartServlet extends HttpServlet {
 	//
 	private void runServer() {
 		Thread thread = new Thread() {
-			final com.emc.mongoose.web.load.server.WSLoadBuilderSvc loadBuilderSvc = new BasicLoadBuilderSvc();
+			final WSLoadBuilderSvc loadBuilderSvc = new BasicLoadBuilderSvc();
 			@Override
 			public void run() {
 				try {
@@ -87,7 +96,7 @@ public class StartServlet extends HttpServlet {
 			}
 		};
 		thread.start();
-		threads.add(thread);
+		threadsMap.put(RunModes.VALUE_RUN_MODE_SERVER.toString(), thread);
 	}
 	//
 	private void runClient() {
@@ -162,7 +171,7 @@ public class StartServlet extends HttpServlet {
 			}
 		};
 		thread.start();
-		threads.add(thread);
+		threadsMap.put(RunModes.VALUE_RUN_MODE_CLIENT.toString(), thread);
 
 	}
 	//
@@ -235,13 +244,13 @@ public class StartServlet extends HttpServlet {
 		};
 
 		thread.start();
-		threads.add(thread);
+		threadsMap.put(RunModes.VALUE_RUN_MODE_STANDALONE.toString(), thread);
 	}
 	//
 	private void runWSMock() {
 		final Thread thread = new Thread(new WSMock(runTimeConfig));
 		thread.start();
-		threads.add(thread);
+		threadsMap.put(RunModes.VALUE_RUN_MODE_WSMOCK.toString(), thread);
 	}
 	//
 	private void setupRunTimeConfig(HttpServletRequest request) {
@@ -290,11 +299,13 @@ public class StartServlet extends HttpServlet {
 				.replace("[", "")
 				.replace("]", "")
 				.trim());
+		//	Scenario
+		runTimeConfig.set("scenario.single.load", request.getParameter("scenarioSingleLoad"));
 
 	}
 	//
-	public static void interruptMongoose() {
-		threads.get(threads.size() - 1).interrupt();
+	public static void interruptMongoose(String runMode) {
+		threadsMap.get(runMode).interrupt();
 	}
 
 }

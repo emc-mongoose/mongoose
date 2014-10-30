@@ -1,6 +1,7 @@
 package com.emc.mongoose.web.ui;
 
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.web.ui.enums.RunModes;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

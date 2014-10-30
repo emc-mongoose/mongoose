@@ -1,4 +1,4 @@
-package com.emc.mongoose.web.ui.websockets;
+package com.emc.mongoose.web.ui.websockets.interfaces;
 
 import org.apache.logging.log4j.core.LogEvent;
 
