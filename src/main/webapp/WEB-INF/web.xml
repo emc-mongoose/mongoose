@@ -36,7 +36,7 @@ http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
 
 	<servlet>
 		<servlet-name>LogServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.web.ui.LogServlet</servlet-class>
+		<servlet-class>com.emc.mongoose.web.ui.websockets.LogServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>

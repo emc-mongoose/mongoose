@@ -2,6 +2,7 @@ $(document).ready(function() {
 
 	var VALUE_RUN_MODE_CLIENT = "VALUE_RUN_MODE_CLIENT";
 	var VALUE_RUN_MODE_STANDALONE = "VALUE_RUN_MODE_STANDALONE";
+	var COUNT_OF_RECORDS = 50;
 
 	setStartCookies();
 	initComponents();
@@ -55,11 +56,23 @@ $(document).ready(function() {
 			$.cookie("start", false);
 			$.cookie("stop", true);
 		}
+		if (!$.cookie("start-driver") && !$.cookie("stop-driver")) {
+			$.cookie("start-driver", false);
+			$.cookie("stop-driver", true);
+		}
+		if (!$.cookie("start-wsmock") && !$.cookie("stop-wsmock")) {
+			$.cookie("start-wsmock", false);
+			$.cookie("stop-wsmock", true);
+		}
 	}
 
 	function initComponents() {
 		$("#stop").attr("disabled", $.parseJSON($.cookie("stop")));
 		$("#start").attr("disabled", $.parseJSON($.cookie("start")));
+		$("#start-driver").attr("disabled", $.parseJSON($.cookie("start-driver")));
+		$("#stop-driver").attr("disabled", $.parseJSON($.cookie("stop-driver")));
+		$("#start-wsmock").attr("disabled", $.parseJSON($.cookie("start-wsmock")));
+		$("#stop-wsmock").attr("disabled", $.parseJSON($.cookie("stop-wsmock")));
 		$(".data-node").hide();
 		$(".driver").hide();
 		$(".drivers-block").hide();
@@ -104,6 +117,7 @@ $(document).ready(function() {
 			},
 			_onmessage : function(m) {
 				var json = JSON.parse(m.data);
+				// fix later
 				if (!json.message.message) {
 					str = json.message.messagePattern.split("{}");
 					resultString = "";
@@ -114,15 +128,27 @@ $(document).ready(function() {
 				}
 				switch (json.marker.name) {
 					case "err":
+						if ($("#errors-log table tbody tr").length > COUNT_OF_RECORDS) {
+							$("#errors-log table tbody tr:first-child").remove();
+						}
 						$("#errors-log table tbody").append(appendStringToTable(json));
 						break;
 					case "msg":
+						if ($("#messages-csv table tbody tr").length > COUNT_OF_RECORDS) {
+							$("#messages-csv table tbody tr:first-child").remove();
+						}
 						$("#messages-csv table tbody").append(appendStringToTable(json));
 						break;
 					case "perfSum":
+						if ($("#perf-sum-csv table tbody tr").length > COUNT_OF_RECORDS) {
+							$("#perf-sum-csv table tbody tr:first-child").remove();
+						}
 						$("#perf-sum-csv table tbody").append(appendStringToTable(json));
 						break;
 					case "perfAvg":
+						if ($("#perf-avg-csv table tbody tr").length > COUNT_OF_RECORDS) {
+							$("#perf-avg-csv table tbody tr:first-child").remove();
+						}
 						$("#perf-avg-csv table tbody").append(appendStringToTable(json));
 						break;
 				}
@@ -158,11 +184,52 @@ $(document).ready(function() {
 	});
 
 	$("#stop").click(function() {
-		$.post("/stop", function(data, status) {
+		$.post("/stop", { runmode: $("#runmode").val() }, function(data, status) {
 			$.cookie("start", false);
 			$.cookie("stop", true);
 			$("#start").attr("disabled", $.parseJSON($.cookie("start")));
 			$("#stop").attr("disabled", $.parseJSON($.cookie("stop")));
 		});
 	});
+
+	$("#start-driver").click(function() {
+		$.post("/start", { runmode: $("#runmode").val() }, function(data, status) {
+			$.cookie("start-driver", true);
+			$.cookie("stop-driver", false);
+			$("#start-driver").attr("disabled", $.parseJSON($.cookie("start-driver")));
+            $("#stop-driver").attr("disabled", $.parseJSON($.cookie("stop-driver")));
+		});
+	});
+
+	$("#stop-driver").click(function() {
+		$.post("/stop", { runmode: $("#runmode").val() }, function(data, status) {
+			$.cookie("start-driver", false);
+			$.cookie("stop-driver", true);
+			$("#start-driver").attr("disabled", $.parseJSON($.cookie("start-driver")));
+			$("#stop-driver").attr("disabled", $.parseJSON($.cookie("stop-driver")));
+		});
+	});
+
+	$("#start-wsmock").click(function() {
+		$.post("/start", { runmode: $("#runmode").val() }, function(data, status) {
+			$.cookie("start-wsmock", true);
+			$.cookie("stop-wsmock", false);
+			$("#start-wsmock").attr("disabled", $.parseJSON($.cookie("start-wsmock")));
+			$("#stop-wsmock").attr("disabled", $.parseJSON($.cookie("stop-wsmock")));
+		});
+	});
+
+	$("#stop-wsmock").click(function() {
+		$.post("/stop", { runmode: $("#runmode").val() }, function(data, status) {
+			$.cookie("start-wsmock", false);
+			$.cookie("stop-wsmock", true);
+			$("#start-wsmock").attr("disabled", $.parseJSON($.cookie("start-wsmock")));
+			$("#stop-wsmock").attr("disabled", $.parseJSON($.cookie("stop-wsmock")));
+		});
+	});
+
+	$(".clear").click(function() {
+		$(this).parent().find("tbody tr").remove();
+	});
+
 });
