@@ -7,12 +7,12 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Run</title>
-		<link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
+		<link href="css/bootstrap.min.css" rel="stylesheet">
 		<link href="css/styles.css" rel="stylesheet">
-		<link href="css/bootstrap-vertical-tabs-1.1.0/bootstrap.vertical-tabs.css" rel="stylesheet">
+		<link href="css/bootstrap.vertical-tabs.min.css" rel="stylesheet">
 		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
-		<script type="text/javascript" src="js/bootstrap/bootstrap.min.js"></script>
+		<script type="text/javascript" src="js/bootstrap.min.js"></script>
 		<script type="text/javascript" src="js/jquery.cookie.js"></script>
 	</head>
 	<body>
@@ -26,6 +26,7 @@
 					<ul class="nav navbar-nav">
 						<li class="active"><a href="/">Run</a></li>
 						<li><a href="driver.html">Driver</a></li>
+						<li><a href="wsmock.html">WSMock</a></li>
 					</ul>
 
 					<ul class="nav navbar-nav navbar-right">
@@ -86,7 +87,11 @@
 							<fieldset class="scheduler-border">
 								<legend class="scheduler-border">Storage</legend>
 								<label>storage.api:</label>
-								<input id="storageApi" name="storageApi" type="text" class="form-control counter" value="${runTimeConfig.storageApi}">
+								<select name="storageApi" id="storageApi">
+									<option value="s3">S3</option>
+									<option value="atmos">Atmos</option>
+									<option value="swift">Swift</option>
+								</select>
 								<label>scheme:</label>
 								<input id="scheme" name="scheme" type="text" class="form-control counter" value="${runTimeConfig.storageProto}">
 								<fieldset class="scheduler-border">
@@ -160,13 +165,23 @@
 								<legend class="scheduler-border">Data</legend>
 								<label for="count">data.count:</label>
 								<input name="dataCount" id="dataCount" type="text" class="form-control counter" value="${runTimeConfig.dataCount}">
+								<label>size.min</label>
 								<input name="dataSizeMin" type="text" class="form-control counter" placeholder="min" value="${rt:getString(runTimeConfig, 'data.size.min')}">
 								-
+								<label>size.max</label>
 								<input name="dataSizeMax" type="text" class="form-control counter" placeholder="max" value="${rt:getString(runTimeConfig, 'data.size.max')}">
-
+								<br>
 
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">Load</legend>
+									<label>scenario.single.load</label>
+									<select name="scenarioSingleLoad" id="scenarioSingleLoad">
+										<option value="create">Create</option>
+										<option value="read">Read</option>
+										<option value="delete">Delete</option>
+										<option value="update">Update</option>
+										<option value="append">Append</option>
+									</select>
 									<div class="tabs-wrapper">
 										<ul id="loadTab" class="nav nav-tabs" role="tablist">
 											<li class="active"><a href="#create" data-toggle="tab">Create</a></li>
@@ -285,6 +300,7 @@
 
 										</tbody>
 									</table>
+									<button type="button" class="default clear">Clear</button>
 								</div>
 								<div class="tab-pane" id="errors-log">
 									<table class="table">
@@ -302,6 +318,7 @@
 
 										</tbody>
 									</table>
+									<button type="button" class="default clear">Clear</button>
 								</div>
 								<div class="tab-pane" id="perf-avg-csv">
 									<table class="table">
@@ -319,6 +336,7 @@
 
 										</tbody>
 									</table>
+									<button type="button" class="default clear">Clear</button>
 								</div>
 								<div class="tab-pane" id="perf-sum-csv">
 									<table class="table">
@@ -336,6 +354,7 @@
 
 										</tbody>
 									</table>
+									<button type="button" class="default clear">Clear</button>
 								</div>
 							</div>
 						</div>
