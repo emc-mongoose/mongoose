@@ -1,4 +1,5 @@
 # mongoose servers list, separated w/comma
 servers:		127.0.0.1
-
-monitor.port:	1199
+control.port:	1099
+export.port:	1199
+import.port:	1199

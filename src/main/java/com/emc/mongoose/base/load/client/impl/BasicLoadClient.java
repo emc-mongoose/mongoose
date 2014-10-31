@@ -135,7 +135,7 @@ implements LoadClient<T> {
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
-			runTimeConfig.getRemoteMonitorPort()
+			runTimeConfig.getRemoteExportPort()
 		);
 		metricsReporter = JmxReporter.forRegistry(metrics)
 			.convertDurationsTo(TimeUnit.SECONDS)
@@ -630,7 +630,7 @@ implements LoadClient<T> {
 						new Callable<List<T>>() {
 							@Override
 							public final List<T> call()
-								throws Exception {
+							throws Exception {
 								return nextLoadSvc.takeFrame();
 							}
 						}
@@ -715,8 +715,8 @@ implements LoadClient<T> {
 						//
 						meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
 						//
-						meanBW.get()/MIB,
-						oneMinBW.get()/MIB, fiveMinBW.get()/MIB, fifteenMinBW.get()/MIB
+						meanBW.get() / MIB,
+						oneMinBW.get() / MIB, fiveMinBW.get() / MIB, fifteenMinBW.get() / MIB
 					}
 				)
 			);
@@ -724,6 +724,8 @@ implements LoadClient<T> {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metrics");
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.ERR, "Interrupted while fetching the metric");
+		} catch(final Exception e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
 		}
 		//
 	}

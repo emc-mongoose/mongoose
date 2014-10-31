@@ -201,8 +201,7 @@
 						{ "ref": "dataListFile" },
 						{ "ref": "perfAvgFile" },
 						{ "ref": "perfSumFile" },
-						{ "ref": "perfTraceFile" },
-						{ "ref": "custom" }
+						{ "ref": "perfTraceFile" }
 					]
 				}
 			]
@@ -331,7 +330,7 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.util.remote",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
