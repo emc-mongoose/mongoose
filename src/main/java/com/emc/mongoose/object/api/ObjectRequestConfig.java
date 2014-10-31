@@ -18,13 +18,7 @@ extends RequestConfig<T> {
 	ObjectRequestConfig<T> setAPI(final String api);
 	//
 	@Override
-	ObjectRequestConfig<T> setAddr(final String addr);
-	//
-	@Override
 	ObjectRequestConfig<T> setLoadType(final Request.Type loadType);
-	//
-	@Override
-	ObjectRequestConfig<T> setPort(final int port);
 	//
 	@Override
 	ObjectRequestConfig<T> setUserName(final String userName);
@@ -40,9 +34,5 @@ extends RequestConfig<T> {
 	//
 	@Override
 	ObjectRequestConfig<T> setProperties(final RunTimeConfig props);
-	//
-	@Override
-	ObjectRequestConfig<T> clone()
-	throws CloneNotSupportedException;
 	//
 }

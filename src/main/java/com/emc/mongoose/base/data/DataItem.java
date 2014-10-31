@@ -1,5 +1,7 @@
 package com.emc.mongoose.base.data;
 //
+import com.emc.mongoose.base.data.impl.UniformDataSource;
+
 import java.io.Closeable;
 import java.io.Externalizable;
 import java.io.OutputStream;
@@ -13,6 +15,8 @@ extends Externalizable, Closeable {
 	long getSize();
 	//
 	long getOffset();
+	//
+	void setDataSource(final UniformDataSource dataSrc, final int layerNum);
 	//
 	void writeTo(final OutputStream out);
 	//

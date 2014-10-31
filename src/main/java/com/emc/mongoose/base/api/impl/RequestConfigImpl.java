@@ -1,5 +1,7 @@
-package com.emc.mongoose.base.api;
+package com.emc.mongoose.base.api.impl;
 //
+import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.run.Main;
@@ -7,6 +9,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
 import com.emc.mongoose.util.logging.Markers;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -18,22 +21,45 @@ import java.io.ObjectOutput;
  The most common implementation of the shared request configuration.
  */
 public class RequestConfigImpl<T extends DataItem>
-implements RequestConfig<T>, Cloneable {
+implements RequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected String addr, api, secret, userName;
-	protected int port;
+	protected String api, secret, userName;
 	protected Request.Type loadType;
 	protected DataSource<T> dataSrc;
 	protected volatile boolean retryFlag, verifyContentFlag;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
+	protected final URIBuilder uriBuilder = new URIBuilder();
 	//
 	@SuppressWarnings("unchecked")
 	public RequestConfigImpl() {
-		dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
-		retryFlag = runTimeConfig.getRunRequestRetries();
-		verifyContentFlag = runTimeConfig.getReadVerifyContent();
+		this(null);
+	}
+	//
+	@SuppressWarnings("unchecked")
+	protected RequestConfigImpl(final RequestConfig<T> reqConf2Clone) {
+		if(reqConf2Clone == null) {
+			dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
+			retryFlag = runTimeConfig.getRunRequestRetries();
+			verifyContentFlag = runTimeConfig.getReadVerifyContent();
+		} else {
+			setDataSource(reqConf2Clone.getDataSource());
+			setRetries(reqConf2Clone.getRetries());
+			setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
+			//
+			setAddr(reqConf2Clone.getAddr());
+			setAPI(reqConf2Clone.getAPI());
+			secret = reqConf2Clone.getSecret();
+			setUserName(reqConf2Clone.getUserName());
+			setPort(reqConf2Clone.getPort());
+			setLoadType(reqConf2Clone.getLoadType());
+		}
+	}
+	//
+	@Override
+	public RequestConfigImpl<T> clone() {
+		return new RequestConfigImpl<>(this);
 	}
 	//
 	@Override
@@ -48,11 +74,11 @@ implements RequestConfig<T>, Cloneable {
 	//
 	@Override
 	public String getAddr() {
-		return addr;
+		return uriBuilder.getHost();
 	}
 	@Override
 	public RequestConfigImpl<T> setAddr(final String addr) {
-		this.addr = addr;
+		uriBuilder.setHost(addr);
 		return this;
 	}
 	//
@@ -62,21 +88,21 @@ implements RequestConfig<T>, Cloneable {
 	}
 	@Override
 	public RequestConfigImpl<T> setLoadType(final Request.Type loadType) {
-		LOG.debug(Markers.MSG, "Setting load type {}", loadType);
+		LOG.trace(Markers.MSG, "Setting load type {}", loadType);
 		this.loadType = loadType;
 		return this;
 	}
 	//
 	@Override
 	public int getPort() {
-		return port;
+		return uriBuilder.getPort();
 	}
 	@Override
 	public RequestConfigImpl<T> setPort(final int port)
 	throws IllegalArgumentException {
-		LOG.debug(Markers.MSG, "Using storage port: {}", port);
+		LOG.trace(Markers.MSG, "Using storage port: {}", port);
 		if(port>0 || port<0x10000) {
-			this.port = port;
+			uriBuilder.setPort(port);
 		} else {
 			throw new IllegalArgumentException("Port number value should be > 0");
 		}
@@ -129,6 +155,12 @@ implements RequestConfig<T>, Cloneable {
 	}
 	//
 	@Override
+	public final RequestConfigImpl<T> setVerifyContentFlag(final boolean verifyContentFlag) {
+		this.verifyContentFlag = verifyContentFlag;
+		return this;
+	}
+	//
+	@Override
 	public RequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
 		final String api = runTimeConfig.getStorageApi();
@@ -138,16 +170,6 @@ implements RequestConfig<T>, Cloneable {
 		setSecret(this.runTimeConfig.getAuthSecret());
 		setRetries(this.runTimeConfig.getRunRequestRetries());
 		return this;
-	}
-	//
-	@Override @SuppressWarnings("unchecked")
-	public RequestConfigImpl<T> clone()
-	throws CloneNotSupportedException {
-		final RequestConfigImpl<T> copy = (RequestConfigImpl<T>) super.clone();
-		return copy
-			.setProperties(runTimeConfig)
-			.setAddr(getAddr())
-			.setLoadType(getLoadType());
 	}
 	//
 	@Override
@@ -169,11 +191,11 @@ implements RequestConfig<T>, Cloneable {
 		setAPI(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got API {}", api);
 		setAddr(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got address {}", addr);
+		LOG.trace(Markers.MSG, "Got address {}", uriBuilder.getHost());
 		setLoadType(Request.Type.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got load type {}", loadType);
 		setPort(in.readInt());
-		LOG.trace(Markers.MSG, "Got port {}", port);
+		LOG.trace(Markers.MSG, "Got port {}", uriBuilder.getPort());
 		setUserName(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got user name {}", userName);
 		setSecret(String.class.cast(in.readObject()));
@@ -186,6 +208,7 @@ implements RequestConfig<T>, Cloneable {
 	//
 	@Override
 	public final String toString() {
+		final String addr = uriBuilder.getHost();
 		return StringUtils.capitalize(getAPI()) + '.' +
 			StringUtils.capitalize(loadType.name().toLowerCase()) +
 			((addr==null || addr.length()==0) ? "" : "@"+addr);

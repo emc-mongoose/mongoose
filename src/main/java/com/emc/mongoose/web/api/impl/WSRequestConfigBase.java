@@ -1,7 +1,7 @@
 package com.emc.mongoose.web.api.impl;
 //
 import com.emc.mongoose.base.api.Request;
-import com.emc.mongoose.base.api.RequestConfigImpl;
+import com.emc.mongoose.base.api.impl.RequestConfigImpl;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
 import com.emc.mongoose.web.api.WSRequestConfig;
@@ -20,7 +20,6 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.utils.DateUtils;
-import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
@@ -55,7 +54,7 @@ implements WSRequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static long serialVersionUID = 42L;
-	private final String userAgent, signMethod;
+	protected final String userAgent, signMethod;
 	//
 	private final HttpRequestRetryHandler retryHandler = new HttpRequestRetryHandler() {
 		//
@@ -106,12 +105,17 @@ implements WSRequestConfig<T> {
 	//
 	protected ConcurrentHashMap<String, String> sharedHeadersMap;
 	protected final Mac mac;
-	protected final URIBuilder uriBuilder = new URIBuilder();
 	protected CloseableHttpClient httpClient;
 	//
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException {
-		super();
+		this(null);
+	}
+	//
+	protected WSRequestConfigBase(final WSRequestConfig<T> reqConf2Clone)
+	throws NoSuchAlgorithmException {
+		super(reqConf2Clone);
+		//
 		signMethod = runTimeConfig.getHttpSignMethod();
 		mac = Mac.getInstance(signMethod);
 		final String
@@ -126,6 +130,12 @@ implements WSRequestConfig<T> {
 				put(HttpHeaders.CONTENT_TYPE, contentType);
 			}
 		};
+		if(reqConf2Clone != null) {
+			this
+				.setSecret(reqConf2Clone.getSecret())
+				.setScheme(reqConf2Clone.getScheme())
+				.setClient(reqConf2Clone.getClient());
+		}
 	}
 	//
 	@Override
@@ -167,28 +177,6 @@ implements WSRequestConfig<T> {
 		} else {
 			sharedHeadersMap.put(KEY_EMC_NS, nameSpace);
 		}
-		return this;
-	}
-	//
-	@Override
-	public final String getAddr() {
-		return uriBuilder.getHost();
-	}
-	@Override
-	public final WSRequestConfigBase<T> setAddr(final String addr) {
-		uriBuilder.setHost(addr);
-		super.setAddr(addr);
-		return this;
-	}
-	//
-	@Override
-	public final int getPort() {
-		return uriBuilder.getPort();
-	}
-	@Override
-	public final WSRequestConfigBase<T> setPort(final int port) {
-		uriBuilder.setPort(port);
-		super.setPort(port);
 		return this;
 	}
 	//
@@ -290,21 +278,6 @@ implements WSRequestConfig<T> {
 		return retryHandler;
 	}
 	//
-	@Override
-	public WSRequestConfigBase<T> clone()
-	throws CloneNotSupportedException {
-		final WSRequestConfigBase<T> copy = (WSRequestConfigBase<T>) super.clone();
-		copy
-			.setAddr(getAddr())
-			.setLoadType(getLoadType())
-			.setPort(getPort())
-			.setUserName(getUserName())
-			.setSecret(getSecret())
-			.setScheme(getScheme())
-			.setClient(getClient());
-		return copy;
-	}
-	//
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
@@ -390,9 +363,7 @@ implements WSRequestConfig<T> {
 	protected abstract void applyURI(final HttpRequest httpRequest, final T dataItem)
 	throws IllegalArgumentException, URISyntaxException;
 	//
-	protected final void applyPayLoad(
-		final HttpRequest httpRequest, final HttpEntity httpEntity
-	) {
+	protected final void applyPayLoad(final HttpRequest httpRequest, final HttpEntity httpEntity) {
 		HttpEntityEnclosingRequest httpReqWithPayLoad = null;
 		try {
 			httpReqWithPayLoad = HttpEntityEnclosingRequest.class.cast(httpRequest);
@@ -407,14 +378,13 @@ implements WSRequestConfig<T> {
 		}
 	}
 	// merge subsequent updated ranges functionality is here
-	protected final void applyRangesHeaders(
-		final HttpRequest httpRequest, final T dataItem
-	) {
+	protected final void applyRangesHeaders(final HttpRequest httpRequest, final T dataItem) {
 		long rangeBeg = -1, rangeEnd = -1, rangeLen;
 		int rangeCount = dataItem.getCountRangesTotal();
 		for(int i = 0; i < rangeCount; i++) {
-			rangeLen = DataRanges.getRangeSize(i);
+			rangeLen = dataItem.getRangeSize(i);
 			if(dataItem.isRangeUpdatePending(i)) {
+				LOG.trace(Markers.MSG, "\"{}\": should update range #{}", dataItem, i);
 				if(rangeBeg < 0) { // begin of the possible updated ranges sequence
 					rangeBeg = DataRanges.getRangeOffset(i);;
 					rangeEnd = rangeBeg + rangeLen - 1;

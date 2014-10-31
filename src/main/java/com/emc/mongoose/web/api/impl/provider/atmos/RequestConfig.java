@@ -1,5 +1,6 @@
 package com.emc.mongoose.web.api.impl.provider.atmos;
 //
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.run.Main;
@@ -37,8 +38,28 @@ extends WSRequestConfigBase<T> {
 	//
 	public RequestConfig()
 	throws NoSuchAlgorithmException {
-		super();
+		this(null);
+	}
+	//
+	protected RequestConfig(final RequestConfig<T> reqConf2Clone)
+	throws NoSuchAlgorithmException {
+		super(reqConf2Clone);
 		api = RequestConfig.class.getSimpleName();
+		if(reqConf2Clone != null) {
+			setNameSpace(reqConf2Clone.getNameSpace());
+			setSubTenant(reqConf2Clone.getSubTenant());
+		}
+	}
+	//
+	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
+	public RequestConfig<T> clone() {
+		RequestConfig<T> copy = null;
+		try {
+			copy = new RequestConfig<>(this);
+		} catch(final NoSuchAlgorithmException e) {
+			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
+		}
+		return copy;
 	}
 	//
 	public final SubTenant<T> getSubTenant() {
@@ -78,15 +99,6 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		return this;
-	}
-	//
-	@Override @SuppressWarnings("unchecked")
-	public RequestConfig<T> clone()
-	throws CloneNotSupportedException {
-		final RequestConfig copy = (RequestConfig<T>) super.clone();
-		copy.setNameSpace(getNameSpace());
-		copy.setSubTenant(getSubTenant());
-		return copy;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

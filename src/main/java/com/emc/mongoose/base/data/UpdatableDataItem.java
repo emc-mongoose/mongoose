@@ -25,4 +25,5 @@ extends DataItem {
 	//
 	boolean compareWith(final InputStream in);
 	//
+	public long getRangeSize(final int i);
 }

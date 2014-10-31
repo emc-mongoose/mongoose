@@ -304,7 +304,7 @@ implements LoadExecutor<T> {
 						break;
 					}
 				}
-			} while(!flagSubmSucc && rejectCount < retryCountMax);
+			} while(!flagSubmSucc && rejectCount < retryCountMax && !submitExecutor.isShutdown());
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -361,9 +361,9 @@ implements LoadExecutor<T> {
 			);
 		}
 		//
-		if(LOG.isDebugEnabled(Markers.PERF_AVG)) {
+		if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
 			for(final StorageNodeExecutor<T> node: nodes) {
-				node.logMetrics(Level.DEBUG, Markers.PERF_AVG);
+				node.logMetrics(Level.TRACE, Markers.PERF_AVG);
 			}
 		}
 		//
