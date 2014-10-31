@@ -85,9 +85,9 @@ public class WSLoadHelper {
 				//Add thread context
 				final Map<String,String> context = new HashMap<>();
 				context.put(KEY_NODE_ADDR, addrs[i]);
-				context.put(KEY_API,reqConf.getAPI());
-				context.put(KEY_LOAD_TYPE,reqConf.getLoadType().toString());
-				context.put(KEY_LOAD_NUM,String.valueOf(LoadExecutorBase.getLastInstanceNum()));
+				context.put(KEY_API, reqConf.getAPI());
+				context.put(KEY_LOAD_TYPE, reqConf.getLoadType().toString());
+				context.put(KEY_LOAD_NUM, String.valueOf(LoadExecutorBase.getLastInstanceNum()));
 				//
 				nextNodeExecutor = new BasicNodeExecutor<>(
 					runTimeConfig, addrs[i], threadsPerNode, reqConf, parentMetrics, name, context
