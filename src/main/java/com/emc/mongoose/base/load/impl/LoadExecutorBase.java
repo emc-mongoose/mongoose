@@ -86,7 +86,7 @@ implements LoadExecutor<T> {
 		this.runTimeConfig = runTimeConfig;
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
-		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteMonitorPort());
+		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteImportPort());
 		metricsReporter  = JmxReporter.forRegistry(metrics)
 			.convertDurationsTo(TimeUnit.SECONDS)
 			.convertRatesTo(TimeUnit.SECONDS)

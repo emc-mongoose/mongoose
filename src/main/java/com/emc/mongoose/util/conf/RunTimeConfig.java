@@ -146,8 +146,16 @@ implements Externalizable {
 		return getSizeBytes("data.page.size");
 	}
 	//
-	public final int getRemoteMonitorPort() {
-		return getInt("remote.monitor.port");
+	public final int getRemoteControlPort() {
+		return getInt("remote.control.port");
+	}
+	//
+	public final int getRemoteExportPort() {
+		return getInt("remote.export.port");
+	}
+	//
+	public final int getRemoteImportPort() {
+		return getInt("remote.import.port");
 	}
 	//
 	public final int getRunMetricsPeriodSec() {

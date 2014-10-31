@@ -27,10 +27,10 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.RemoteStub;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.NoSuchElementException;
 /**
  Created by kurila on 05.05.14.
  */
@@ -38,9 +38,29 @@ public final class ServiceUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	private final static int PORT_RMI_CONTROL, PORT_JMX_EXPORT, PORT_JMX_IMPORT;
+	static {
+		//
+		int tmpPort = Registry.REGISTRY_PORT; // default
+		try {
+			tmpPort = Main.RUN_TIME_CONFIG.getRemoteControlPort();
+		} catch(final NoSuchElementException e) {
+			LOG.warn(
+				Markers.ERR, "No \"remote.control.port\" specified, using default value \"{}\"",
+				tmpPort
+			);
+		} finally {
+			PORT_RMI_CONTROL = tmpPort;
+		}
+		//
+		tmpPort = 1199;
+		try {
+			tmpPort = Main.RUN_TIME_CONFIG.getR
+		}
+	}
+	//
 	private final static HashMap<String, Service> SVC_MAP;
 	//private final static Registry REGISTRY;
-	//
 	static {
 		// set up security manager
 		if(System.getSecurityManager()==null) {
@@ -54,11 +74,11 @@ public final class ServiceUtils {
 		// create or use existing registry
 		//Registry registry = null;
 		try {
-			/*registry = */LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+			/*registry = */LocateRegistry.createRegistry(PORT_RMI_CONTROL);
 			LOG.debug(Markers.MSG, "RMI registry created");
 		} catch(final RemoteException e) {
 			try {
-				/*registry = */LocateRegistry.getRegistry(Registry.REGISTRY_PORT);
+				/*registry = */LocateRegistry.getRegistry(PORT_RMI_CONTROL);
 				LOG.info(Markers.MSG, "Reusing already existing RMI registry");
 			} catch(final RemoteException ee) {
 				LOG.fatal(Markers.ERR, "Failed to obtain RMI registry", ee);
@@ -82,15 +102,15 @@ public final class ServiceUtils {
 	}
 	//
 	public static Remote create(final Service svc) {
-		RemoteStub stub = null;
+		Remote remote = null;
 		try {
-			stub = UnicastRemoteObject.exportObject(svc);
-			LOG.debug(Markers.MSG, "Exported service object successfully");
+			remote = UnicastRemoteObject.exportObject(svc, PORT_RMI_CONTROL);
+			LOG.debug(Markers.MSG, "Exported service object successfully, listening port #{}");
 		} catch(final RemoteException e) {
 			ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to export service object");
 		}
 		//
-		if(stub!=null) {
+		if(remote != null) {
 			try {
 				final String svcName = svc.getName();
 				Naming.rebind(svcName, svc);
@@ -215,7 +235,8 @@ public final class ServiceUtils {
 			JMXServiceURL jmxSvcURL = null;
 			try {
 				jmxSvcURL = new JMXServiceURL(
-					JMXRMI_URL_PREFIX + ":" + Integer.toString(portJmxRmi) + JMXRMI_URL_PATH
+					JMXRMI_URL_PREFIX + ":" + Integer.toString(portJmxRmi) +
+					JMXRMI_URL_PATH + Integer.toString(portJmxRmi)
 				);
 				LOG.debug(Markers.MSG, "Created JMX service URL {}", jmxSvcURL.toString());
 			} catch(final MalformedURLException e) {
@@ -226,7 +247,7 @@ public final class ServiceUtils {
 			}
 			//
 			JMXConnectorServer connectorServer = null;
-			if(jmxSvcURL!=null) {
+			if(jmxSvcURL != null) {
 				try {
 					connectorServer = JMXConnectorServerFactory.newJMXConnectorServer(
 						jmxSvcURL, env, mBeanServer
@@ -237,7 +258,7 @@ public final class ServiceUtils {
 				}
 			}
 			//
-			if(connectorServer!=null && !connectorServer.isActive()) {
+			if(connectorServer != null && !connectorServer.isActive()) {
 				try {
 					connectorServer.start();
 					LOG.debug(Markers.MSG, "JMX connector started", portJmxRmi);

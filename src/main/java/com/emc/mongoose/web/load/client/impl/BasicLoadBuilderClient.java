@@ -121,7 +121,7 @@ implements WSLoadBuilderClient<T, U> {
 			nextJMXURL = null;
 			try {
 				svcJMXAddr = ServiceUtils.JMXRMI_URL_PREFIX + addr + ":" +
-					runTimeConfig.getRemoteMonitorPort() + ServiceUtils.JMXRMI_URL_PATH;
+					runTimeConfig.getRemoteImportPort() + ServiceUtils.JMXRMI_URL_PATH;
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
 				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
