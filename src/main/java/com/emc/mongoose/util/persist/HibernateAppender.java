@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
+import java.util.logging.Level;
 //
 /**
  * Created by olga on 24.10.14.
@@ -66,6 +67,7 @@ extends AbstractAppender{
 			final @PluginAttribute("port") String port,
 			final @PluginAttribute("namedatabase") String namedatabase
 	) {
+		java.util.logging.Logger.getLogger("org.hibernate").setLevel(Level.OFF);
 		HibernateAppender newAppender = null;
 		ENABLED_FLAG = enabled;
 		if(name == null) {
