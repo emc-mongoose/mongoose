@@ -2,11 +2,18 @@ $(document).ready(function() {
 
 	var VALUE_RUN_MODE_CLIENT = "VALUE_RUN_MODE_CLIENT";
 	var VALUE_RUN_MODE_STANDALONE = "VALUE_RUN_MODE_STANDALONE";
+	var VALUE_RUN_MODE_SERVER = "VALUE_RUN_MODE_SERVER";
+	var VALUE_RUN_MODE_WSMOCK = "VALUE_RUN_MODE_WSMOCK";
+	var runModes = [VALUE_RUN_MODE_CLIENT, VALUE_RUN_MODE_STANDALONE, VALUE_RUN_MODE_SERVER, VALUE_RUN_MODE_WSMOCK];
 	var COUNT_OF_RECORDS = 50;
 
-	setStartCookies();
 	initComponents();
 	initWebSocket();
+	if ($.cookie("websocket")) {
+		server.connect();
+	}
+
+	$("#runmode").val($.cookie("runmode"));
 
 	$(".add-node").click(function() {
 		if ($(".data-node").is(":visible")) {
@@ -40,42 +47,41 @@ $(document).ready(function() {
 		$(".driver").hide();
 	});
 
-	$("#distributed").click(function() {
-		$(".drivers-block").show();
-		$("#runmode").val(VALUE_RUN_MODE_CLIENT);
-	});
-
-	$("#standalone").click(function() {
-		$(".drivers-block").hide();
+	$(document).on("click", "#standalone", function() {
 		$("#runmode").val(VALUE_RUN_MODE_STANDALONE);
+		$(this).addClass("active");
+		$("#distributed").removeClass("active");
+		$("#wsmock").removeClass("active");
+		$("#driver").removeClass("active");
 	});
 
+	$(document).on("click", "#distributed", function() {
+		$("#runmode").val(VALUE_RUN_MODE_CLIENT);
+		$(this).addClass("active");
+		$("#standalone").removeClass("active");
+		$("#wsmock").removeClass("active");
+		$("#driver").removeClass("active");
+	});
 
-	function setStartCookies() {
-		if (!$.cookie("start") && !$.cookie("stop")) {
-			$.cookie("start", false);
-			$.cookie("stop", true);
-		}
-		if (!$.cookie("start-driver") && !$.cookie("stop-driver")) {
-			$.cookie("start-driver", false);
-			$.cookie("stop-driver", true);
-		}
-		if (!$.cookie("start-wsmock") && !$.cookie("stop-wsmock")) {
-			$.cookie("start-wsmock", false);
-			$.cookie("stop-wsmock", true);
-		}
-	}
+	$(document).on("click", "#driver", function() {
+		$("#runmode").val(VALUE_RUN_MODE_SERVER);
+		$(this).addClass("active");
+		$("#standalone").removeClass("active");
+		$("#wsmock").removeClass("active");
+		$("#distributed").removeClass("active");
+	});
+
+	$(document).on("click", "#wsmock", function() {
+		$("#runmode").val(VALUE_RUN_MODE_WSMOCK);
+		$(this).addClass("active");
+		$("#standalone").removeClass("active");
+		$("#distributed").removeClass("active");
+		$("#driver").removeClass("active");
+	});
 
 	function initComponents() {
-		$("#stop").attr("disabled", $.parseJSON($.cookie("stop")));
-		$("#start").attr("disabled", $.parseJSON($.cookie("start")));
-		$("#start-driver").attr("disabled", $.parseJSON($.cookie("start-driver")));
-		$("#stop-driver").attr("disabled", $.parseJSON($.cookie("stop-driver")));
-		$("#start-wsmock").attr("disabled", $.parseJSON($.cookie("start-wsmock")));
-		$("#stop-wsmock").attr("disabled", $.parseJSON($.cookie("stop-wsmock")));
 		$(".data-node").hide();
 		$(".driver").hide();
-		$(".drivers-block").hide();
 	}
 
 	function appendBlock(key, value) {
@@ -116,42 +122,44 @@ $(document).ready(function() {
 					server._send(text);
 			},
 			_onmessage : function(m) {
-				var json = JSON.parse(m.data);
-				// fix later
-				if (!json.message.message) {
-					str = json.message.messagePattern.split("{}");
-					resultString = "";
-					for (s = 0; s < str.length - 1; s++) {
-						resultString += str[s]+json.message.stringArgs[s];
+				runModes.forEach(function(entry) {
+					var json = JSON.parse(m.data);
+					// fix later
+					if (!json.message.message) {
+						str = json.message.messagePattern.split("{}");
+						resultString = "";
+						for (s = 0; s < str.length - 1; s++) {
+							resultString += str[s]+json.message.stringArgs[s];
+						}
+						json.message.message = resultString + str[str.length - 1];
 					}
-					json.message.message = resultString + str[str.length - 1];
-				}
-				switch (json.marker.name) {
-					case "err":
-						if ($("#errors-log table tbody tr").length > COUNT_OF_RECORDS) {
-							$("#errors-log table tbody tr:first-child").remove();
-						}
-						$("#errors-log table tbody").append(appendStringToTable(json));
-						break;
-					case "msg":
-						if ($("#messages-csv table tbody tr").length > COUNT_OF_RECORDS) {
-							$("#messages-csv table tbody tr:first-child").remove();
-						}
-						$("#messages-csv table tbody").append(appendStringToTable(json));
-						break;
-					case "perfSum":
-						if ($("#perf-sum-csv table tbody tr").length > COUNT_OF_RECORDS) {
-							$("#perf-sum-csv table tbody tr:first-child").remove();
-						}
-						$("#perf-sum-csv table tbody").append(appendStringToTable(json));
-						break;
-					case "perfAvg":
-						if ($("#perf-avg-csv table tbody tr").length > COUNT_OF_RECORDS) {
-							$("#perf-avg-csv table tbody tr:first-child").remove();
-						}
-						$("#perf-avg-csv table tbody").append(appendStringToTable(json));
-						break;
-				}
+					switch (json.marker.name) {
+						case "err":
+							if ($("#"+entry+"errors-log table tbody tr").length > COUNT_OF_RECORDS) {
+								$("#"+entry+"errors-log table tbody tr:first-child").remove();
+							}
+							$("#"+entry+"errors-log table tbody").append(appendStringToTable(json));
+							break;
+						case "msg":
+							if ($("#"+entry+"messages-csv table tbody tr").length > COUNT_OF_RECORDS) {
+								$("#"+entry+"messages-csv table tbody tr:first-child").remove();
+							}
+							$("#"+entry+"messages-csv table tbody").append(appendStringToTable(json));
+							break;
+						case "perfSum":
+							if ($("#"+entry+"perf-sum-csv table tbody tr").length > COUNT_OF_RECORDS) {
+								$("#"+entry+"perf-sum-csv table tbody tr:first-child").remove();
+							}
+							$("#"+entry+"perf-sum-csv table tbody").append(appendStringToTable(json));
+							break;
+						case "perfAvg":
+							if ($("#"+entry+"perf-avg-csv table tbody tr").length > COUNT_OF_RECORDS) {
+								$("#"+entry+"perf-avg-csv table tbody tr:first-child").remove();
+							}
+							$("#"+entry+"perf-avg-csv table tbody").append(appendStringToTable(json));
+							break;
+					}
+				});
 			},
 			_onclose : function(m) {
 				this._ws = null;
@@ -174,57 +182,10 @@ $(document).ready(function() {
 
 	$(document).on('submit', '#mainForm',  function(e) {
 		e.preventDefault();
-		server.connect();
 		$.post("/start", $("#mainForm").serialize(), function(data, status) {
-			$.cookie("start", true);
-			$.cookie("stop", false);
-			$("#start").attr("disabled", $.parseJSON($.cookie("start")));
-			$("#stop").attr("disabled", $.parseJSON($.cookie("stop")));
-		});
-	});
-
-	$("#stop").click(function() {
-		$.post("/stop", { runmode: $("#runmode").val() }, function(data, status) {
-			$.cookie("start", false);
-			$.cookie("stop", true);
-			$("#start").attr("disabled", $.parseJSON($.cookie("start")));
-			$("#stop").attr("disabled", $.parseJSON($.cookie("stop")));
-		});
-	});
-
-	$("#start-driver").click(function() {
-		$.post("/start", { runmode: $("#runmode").val() }, function(data, status) {
-			$.cookie("start-driver", true);
-			$.cookie("stop-driver", false);
-			$("#start-driver").attr("disabled", $.parseJSON($.cookie("start-driver")));
-            $("#stop-driver").attr("disabled", $.parseJSON($.cookie("stop-driver")));
-		});
-	});
-
-	$("#stop-driver").click(function() {
-		$.post("/stop", { runmode: $("#runmode").val() }, function(data, status) {
-			$.cookie("start-driver", false);
-			$.cookie("stop-driver", true);
-			$("#start-driver").attr("disabled", $.parseJSON($.cookie("start-driver")));
-			$("#stop-driver").attr("disabled", $.parseJSON($.cookie("stop-driver")));
-		});
-	});
-
-	$("#start-wsmock").click(function() {
-		$.post("/start", { runmode: $("#runmode").val() }, function(data, status) {
-			$.cookie("start-wsmock", true);
-			$.cookie("stop-wsmock", false);
-			$("#start-wsmock").attr("disabled", $.parseJSON($.cookie("start-wsmock")));
-			$("#stop-wsmock").attr("disabled", $.parseJSON($.cookie("stop-wsmock")));
-		});
-	});
-
-	$("#stop-wsmock").click(function() {
-		$.post("/stop", { runmode: $("#runmode").val() }, function(data, status) {
-			$.cookie("start-wsmock", false);
-			$.cookie("stop-wsmock", true);
-			$("#start-wsmock").attr("disabled", $.parseJSON($.cookie("start-wsmock")));
-			$("#stop-wsmock").attr("disabled", $.parseJSON($.cookie("stop-wsmock")));
+			$.cookie("runmode", $("#runmode").val());
+			location.reload();
+			$.cookie("websocket", true);
 		});
 	});
 

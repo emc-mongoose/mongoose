@@ -228,3 +228,11 @@ tbody td, thead th {
 	width: 16.6%;
 	float: left;
 }
+
+.list-group {
+	text-align: center;
+}
+
+.list-group-item {
+	display: inline;
+}

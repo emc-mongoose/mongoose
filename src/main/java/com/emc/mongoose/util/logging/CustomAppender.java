@@ -1,6 +1,7 @@
 package com.emc.mongoose.util.logging;
 //
 import com.emc.mongoose.web.ui.websockets.interfaces.WebSocketLogListener;
+import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -33,7 +34,7 @@ extends AbstractAppender {
 		final String name, final Filter filter, final Layout<? extends Serializable> layout
 	) {
 		super(name, filter, layout);
-		listeners = new ArrayList<>();
+		listeners = new CopyOnWriteArrayList<>();
 		logEvents = new CopyOnWriteArrayList<>();
 	}
 	//
