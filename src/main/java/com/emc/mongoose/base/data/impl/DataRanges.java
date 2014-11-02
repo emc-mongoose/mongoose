@@ -172,6 +172,11 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
+	public final int getCountRangesTotal() {
+		return getRangeCount(size);
+	}
+	//
+	@Override
 	public final boolean compareWith(final InputStream in) {
 		boolean contentEquals = true;
 		final int countRangesTotal = getRangeCount(size);
@@ -213,7 +218,9 @@ implements AppendableDataItem, UpdatableDataItem {
 		}
 		return contentEquals;
 	}
-	//
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// UPDATE //////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final boolean isRangeUpdatePending(final int i) {
 		return maskRangesPending.get(i);
@@ -285,11 +292,6 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final int getCountRangesTotal() {
-		return getRangeCount(size);
-	}
-	//
-	@Override
 	public final void writePendingUpdatesTo(final OutputStream out)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
@@ -329,10 +331,18 @@ implements AppendableDataItem, UpdatableDataItem {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	// APPEND //////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void append(final long augmentSize) {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
+			final int
+				lastCellPos = getRangeCount(size) - 1,
+				nextCellPos = getRangeCount(size + augmentSize) - 1;
+			if(lastCellPos < nextCellPos && maskRangesHistory.get(lastCellPos)) {
+				maskRangesPending.set(lastCellPos + 1, nextCellPos);
+			}
 		} else {
 			throw new IllegalArgumentException(
 				String.format(FMT_MSG_ILLEGAL_APPEND_SIZE, augmentSize)
@@ -350,35 +360,44 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException {
 		if(pendingAugmentSize > 0) {
 			synchronized(this) {
-				setOffset(offset, size);
-				// change the size
-				size += pendingAugmentSize;
-				// redirect the tail's data to the output
-				final byte buff[] = new byte[
-					pendingAugmentSize < MAX_PAGE_SIZE ? (int) pendingAugmentSize : MAX_PAGE_SIZE
-				];
-				final int
-					countPages = (int) pendingAugmentSize / buff.length,
-					countTailBytes = (int) pendingAugmentSize % buff.length;
-				//
-				for(int i = 0; i < countPages; i++) {
-					if(read(buff)==buff.length) {
-						out.write(buff);
-					} else {
-						throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
+				if(maskRangesHistory.get(getRangeCount(size) - 1)) { // write from next layer
+					new UniformData(
+						offset + size, pendingAugmentSize, layerNum + 1, UniformDataSource.DEFAULT
+					).writeTo(out);
+				} else { // write from current layer
+					setOffset(offset, size);
+					// change the size
+					size += pendingAugmentSize;
+					// redirect the tail's data to the output
+					final byte buff[] = new byte[
+						pendingAugmentSize < MAX_PAGE_SIZE ?
+							(int) pendingAugmentSize : MAX_PAGE_SIZE
+						];
+					final int
+						countPages = (int) pendingAugmentSize / buff.length,
+						countTailBytes = (int) pendingAugmentSize % buff.length;
+					//
+					for(int i = 0; i < countPages; i++) {
+						if(read(buff)==buff.length) {
+							out.write(buff);
+						} else {
+							throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
+						}
+					}
+					if(countTailBytes > 0) { // tail bytes
+						if(read(buff, 0, countTailBytes)==countTailBytes) {
+							out.write(buff, 0, countTailBytes);
+						} else {
+							throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
+						}
 					}
 				}
-				if(countTailBytes > 0) { // tail bytes
-					if(read(buff, 0, countTailBytes)==countTailBytes) {
-						out.write(buff, 0, countTailBytes);
-					} else {
-						throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
-					}
-				}
-				// drop the appending on success
+				// clean up the appending on success
 				pendingAugmentSize = 0;
+				maskRangesHistory.or(maskRangesPending);
+				maskRangesPending.clear();
 			}
 		}
 	}
-	//
+	////////////////////////////////////////////////////////////////////////////////////////////////
 }

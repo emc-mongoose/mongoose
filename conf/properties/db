@@ -1,5 +1,0 @@
-username: mongoose
-password: mongoose
-addr: localhost
-port: 5432
-name: mongoose

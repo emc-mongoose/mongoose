@@ -325,14 +325,14 @@ implements LoadClient<T> {
 		submitExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("submitDataItems")
+			new WorkerFactory("submitDataItems", new HashMap<String,String>())
 		);
 		//
 		threadCount = remoteLoadMap.size() * 20; // metric count is 18
 		mgmtConnExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("getMetricValue")
+			new WorkerFactory("getMetricValue", new HashMap<String,String>())
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricsReporter.start();

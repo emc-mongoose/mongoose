@@ -180,7 +180,7 @@ public class StartServlet extends HttpServlet {
 	//
 	private void runStandalone()
 	throws IOException {
-		Thread thread = new Thread() {
+		final Thread thread = new Thread() {
 			WSLoadExecutor<WSObject> loadExecutor;
 			@Override
 			public void run() {
@@ -237,9 +237,9 @@ public class StartServlet extends HttpServlet {
 			@Override
 			public void interrupt() {
 			   try {
-				   loadExecutor.interrupt();
-			   } catch (RemoteException e) {
-				   ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to interrupt the load executor");
+				   loadExecutor.close();
+			   } catch (IOException e) {
+				   ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to close the load executor");
 			   }
 			   //
 			   super.interrupt();
@@ -256,7 +256,7 @@ public class StartServlet extends HttpServlet {
 		threadsMap.put(RunModes.VALUE_RUN_MODE_WSMOCK.toString(), thread);
 	}
 	//
-	private void setupRunTimeConfig(HttpServletRequest request) {
+	private void setupRunTimeConfig(final HttpServletRequest request) {
 		//	Common settings
 		runTimeConfig.set("run.time", request.getParameter("runTime") + "." + request.getParameter("runTimeSelect"));
 		runTimeConfig.set("run.metrics.period.sec", request.getParameter("runMetricsPeriodSec"));

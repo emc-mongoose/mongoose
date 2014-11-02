@@ -1,0 +1,485 @@
+{
+	"configuration": {
+		"status": "info",
+		"name": "mongoose",
+		"monitorInterval": "1000",
+		"properties": {
+			"property": {
+				"name": "path.log",
+				"value": "${sys:dir.root}${sys:file.separator}log${sys:file.separator}${sys:run.mode}${sys:file.separator}${sys:run.id}${sys:file.separator}"
+			}
+		},
+		"appenders": {
+			"appender" : [
+			 	{
+					"name": "hibernate",
+					"type": "Hibernate",
+					"enabled": "false",
+					"runid": "${sys:run.id}",
+					"runmode": "${sys:run.mode}",
+					"username": "mongoose",
+                    "password": "mongoose",
+                    "addr": "localhost",
+                    "port": "5432",
+                    "namedatabase": "mongoose",
+                    "Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "err",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfTrace",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "msg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
+					"name": "stdout",
+					"type": "Console",
+					"PatternLayout": {
+						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t - %m%n}"
+					},
+					"Filters": {
+						"Filter" : [
+							{
+								"type": "MarkerFilter",
+								"marker": "dataList",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfTrace",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
+					"name": "msgFile",
+					"type": "File",
+					"append": "false",
+					"bufferedIO": "true",
+					"fileName": "${path.log}messages.csv",
+					"PatternLayout": {
+						"pattern": "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "msg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}, {
+								"type": "BurstFilter",
+								"rate": 10,
+								"maxBurst": 100
+							}
+						]
+					}
+				}, {
+					"name": "3rdPartyFile",
+					"type": "File",
+					"append": "false",
+					"bufferedIO": "true",
+					"fileName": "${path.log}3rdparty.log",
+					"PatternLayout": {
+						"pattern": "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "msg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "err",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "dataList",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfAvg",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfSum",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfTrace",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "BurstFilter",
+								"rate": 10,
+								"maxBurst": 100
+							}
+						]
+					}
+				}, {
+					"name": "errFile",
+					"type": "File",
+					"append": "false",
+					"bufferedIO": "true",
+					"fileName": "${path.log}errors.log",
+					"PatternLayout": {
+						"pattern": "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "err",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}, {
+								"type": "BurstFilter",
+								"rate": 10,
+								"maxBurst": 100
+							}
+						]
+					}
+				}, {
+					"name": "perfAvgFile",
+					"type": "File",
+					"append": "false",
+					"bufferedIO": "true",
+					"fileName": "${path.log}perf.avg.csv",
+					"PatternLayout": {
+						"pattern": "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %32t | %m%n"
+					},
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "perfAvg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}, {
+					"name": "perfSumFile",
+					"type": "File",
+					"append": "false",
+					"bufferedIO": "true",
+					"fileName": "${path.log}perf.sum.csv",
+					"PatternLayout": {
+						"pattern": "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %t | %m%n"
+					},
+					"MarkerFilter": {
+						"marker": "perfSum",
+						"onMatch": "ACCEPT",
+						"onMismatch": "DENY"
+					}
+				}, {
+					"name": "perfTraceFile",
+					"type": "File",
+					"append": "false",
+					"bufferedIO": "true",
+					"fileName": "${path.log}perf.trace.csv",
+					"PatternLayout": { "pattern": "%t,%m%n" },
+					"MarkerFilter": {
+						"marker": "perfTrace",
+						"onMatch": "ACCEPT",
+						"onMismatch": "DENY"
+					}
+				}, {
+					"name": "dataListFile",
+					"type": "File",
+					"append": "false",
+					"bufferedIO": "true",
+					"fileName": "${path.log}data.items.csv",
+					"PatternLayout": { "pattern": "%m%n" },
+					"MarkerFilter": {
+						"marker": "dataList",
+						"onMatch": "ACCEPT",
+						"onMismatch": "DENY"
+					}
+				}, {
+					"name": "async",
+					"type": "Async",
+					"blocking": "false",
+					"bufferSize": "1048576",
+					"AppenderRef": [
+						{ "ref": "stdout" },
+						{ "ref": "msgFile" },
+						{ "ref": "3rdPartyFile" },
+						{ "ref": "errFile" },
+						{ "ref": "dataListFile" },
+						{ "ref": "perfAvgFile" },
+						{ "ref": "perfSumFile" },
+						{ "ref": "perfTraceFile" },
+						{ "ref": "hibernate" }
+					]
+				}
+			]
+		},
+		"loggers": {
+			"root": {
+				"level": "info",
+				"additivity": "false",
+				"AppenderRef": { "ref": "async" }
+			},
+			"logger": [
+
+				// Apache HTTP
+				{
+					"name": "org.apache.http",
+					"level": "info",
+					"additivity": "false",
+					"AppenderRef": { "ref": "async" }
+				}, {
+					"name": "org.apache.http.wire",
+					"level": "info",
+					"additivity": "false",
+					"AppenderRef": { "ref": "async" }
+				},
+
+				// Mongoose basic load generation functionality
+				{
+					"name": "com.emc.mongoose.base.api.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.base.data.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.base.data.persist",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.base.load.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.base.load.client.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.base.load.type",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				},
+
+				// Mongoose data object-related functionality
+				{
+					"name": "com.emc.mongoose.object.data.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.load.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				},
+
+				// Mongoose runners
+				{
+					"name": "com.emc.mongoose.run",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				},
+
+				// Mongoose utils
+				{
+					"name": "com.emc.mongoose.util",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.conf",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.logging",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.pool",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.remote",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.threading",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				},
+
+				// Mongoose web-related things
+				{
+					"name": "com.emc.mongoose.web",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.api.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef":
+						 { "ref": "async" }
+
+				}, {
+					"name": "com.emc.mongoose.web.api.impl.provider",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.api.impl.provider.atmos",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.api.impl.provider.s3",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.api.impl.provider.swift",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.data.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.load.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.load.client.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.load.server.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.load.server.impl.type",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.load.impl.type",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				},
+
+				// Mongoose web UI
+				{
+					"name": "com.emc.mongoose.web.ui",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.ui.expressions",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}
+			]
+		}
+	}
+}

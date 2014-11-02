@@ -20,7 +20,7 @@ except NoSuchElementException:
 INSTANCE = None
 #
 from org.apache.commons.configuration import ConversionException
-if mode == Main.VALUE_RUN_MODE_CLIENT or mode == Main.VALUE_RUN_MODE_COMPAT_CLIENT:
+if mode == Main.RUN_MODE_CLIENT or mode == Main.RUN_MODE_COMPAT_CLIENT:
 	from com.emc.mongoose.web.load.client.impl import BasicLoadBuilderClient
 	from java.rmi import RemoteException
 	try:
