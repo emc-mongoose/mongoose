@@ -40,7 +40,7 @@ public class StartServlet extends HttpServlet {
 
 	private final static Logger LOG = LogManager.getLogger();
 	private RunTimeConfig runTimeConfig;
-	private static ConcurrentHashMap<String, Thread> threadsMap;
+	public static ConcurrentHashMap<String, Thread> threadsMap;
 
 	@Override
 	public void init() throws ServletException {
@@ -76,6 +76,9 @@ public class StartServlet extends HttpServlet {
 				runStandalone();
 				break;
 		}
+
+		//	Add runModes to the http session
+		request.getSession(true).setAttribute("runmodes", threadsMap.keySet());
 	}
 	//
 	private void runServer() {

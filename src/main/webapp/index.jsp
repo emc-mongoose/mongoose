@@ -25,8 +25,6 @@
 				<div class="collapse navbar-collapse" id="bx-example-navbar-collapse-1">
 					<ul class="nav navbar-nav">
 						<li class="active"><a href="/">Run</a></li>
-						<li><a href="driver.html">Driver</a></li>
-						<li><a href="wsmock.html">WSMock</a></li>
 					</ul>
 
 					<ul class="nav navbar-nav navbar-right">
@@ -36,19 +34,28 @@
 			</div>
 		</nav>
 
+		<input type="hidden" id="sessionModes" value="${sessionScope.runmodes}">
+
 		<div class="content-wrapper">
 			<div class="tabs-wrapper">
-				<ul class="nav nav-tabs tabs" role="tablist">
+				<ul class="nav nav-tabs tabs header-tabs" role="tablist">
 					<li class="active"><a href="#configuration" data-toggle="tab">Configuration</a></li>
-					<li><a href="#monitor" data-toggle="tab">Monitor</a></li>
+					<c:forEach var="mode" items="${sessionScope.runmodes}">
+						<c:set var="stringMode" value="${fn:split(mode, '_')}"/>
+						<li><a href="#${mode}" data-toggle="tab">${stringMode[3]}</a></li>
+					</c:forEach>
 				</ul>
 			</div>
 
-			<div class="tab-content">
+			<div class="tab-content header-tab-content">
 				<div class="tab-pane active" id="configuration">
 					<div class="runmodes">
-						<button id="standalone" type="button" class="default">Standalone</button>
-						<button id="distributed" type="button" class="default">Distributed</button>
+						<div class="list-group">
+							<button id="standalone" type="button" class="list-group-item">Standalone</button>
+							<button id="distributed" type="button" class="list-group-item">Distributed</button>
+							<button id="driver" type="button" class="list-group-item">Driver</button>
+							<button id="wsmock" type="button" class="list-group-item">WSMock</button>
+						</div>
 					</div>
 					<form id="mainForm">
 						<input type="hidden" id="runmode" name="runmode" value="VALUE_RUN_MODE_STANDALONE">
@@ -267,100 +274,97 @@
 					</form>
 				</div>
 
-				<div class="tab-pane" id="monitor">
-					<div class="left-side">
-						<div class="menu-wrapper">
-							<div class="col-xs-8">
-								<ul class="nav nav-tabs tabs-left">
-									<li class="active"><a href="#messages-csv" data-toggle="tab">messages.csv</a></li>
-									<li><a href="#errors-log" data-toggle="tab">errors.log</a></li>
-									<li><a href="#perf-avg-csv" data-toggle="tab">perf.avg.csv</a></li>
-									<li><a href="#perf-sum-csv" data-toggle="tab">perf.sum.csv</a></li>
-								</ul>
-							</div>
-						</div>
-					</div>
-
-					<div class="right-side">
-						<button id="stop" type="button" class="default"><span>Stop</span></button>
-						<div class="log-wrapper">
-							<div class="tab-content">
-								<div class="tab-pane active" id="messages-csv">
-									<table class="table">
-										<thead>
-											<tr>
-												<th>Level</th>
-												<th>LoggerName</th>
-												<th>Marker</th>
-												<th>ThreadName</th>
-												<th>TimeMillis</th>
-												<th>Message</th>
-											</tr>
-										</thead>
-										<tbody>
-
-										</tbody>
-									</table>
-									<button type="button" class="default clear">Clear</button>
-								</div>
-								<div class="tab-pane" id="errors-log">
-									<table class="table">
-										<thead>
-											<tr>
-												<th>Level</th>
-												<th>LoggerName</th>
-												<th>Marker</th>
-												<th>Message</th>
-												<th>ThreadName</th>
-												<th>TimeMillis</th>
-											</tr>
-										</thead>
-										<tbody>
-
-										</tbody>
-									</table>
-									<button type="button" class="default clear">Clear</button>
-								</div>
-								<div class="tab-pane" id="perf-avg-csv">
-									<table class="table">
-										<thead>
-											<tr>
-												<th>Level</th>
-												<th>LoggerName</th>
-												<th>Marker</th>
-												<th>Message</th>
-												<th>ThreadName</th>
-												<th>TimeMillis</th>
-											</tr>
-										</thead>
-										<tbody>
-
-										</tbody>
-									</table>
-									<button type="button" class="default clear">Clear</button>
-								</div>
-								<div class="tab-pane" id="perf-sum-csv">
-									<table class="table">
-										<thead>
-											<tr>
-												<th>Level</th>
-												<th>LoggerName</th>
-												<th>Marker</th>
-												<th>Message</th>
-												<th>ThreadName</th>
-												<th>TimeMillis</th>
-											</tr>
-										</thead>
-										<tbody>
-
-										</tbody>
-									</table>
-									<button type="button" class="default clear">Clear</button>
+				<c:forEach var="mode" items="${sessionScope.runmodes}">
+					<div class="tab-pane" id="${mode}">
+						<div class="left-side">
+							<div class="menu-wrapper">
+								<div class="col-xs-8">
+									<ul class="nav nav-tabs tabs-left">
+										<li class="active"><a href="#${mode}messages-csv" data-toggle="tab">messages.csv</a></li>
+										<li><a href="#${mode}errors-log" data-toggle="tab">errors.log</a></li>
+										<li><a href="#${mode}perf-avg-csv" data-toggle="tab">perf.avg.csv</a></li>
+										<li><a href="#${mode}perf-sum-csv" data-toggle="tab">perf.sum.csv</a></li>
+									</ul>
 								</div>
 							</div>
 						</div>
+						<div class="right-side">
+							<button id="stop" type="button" class="default"><span>Stop</span></button>
+							<div class="log-wrapper">
+								<div class="tab-content">
+									<div class="tab-pane active" id="${mode}messages-csv">
+										<table class="table">
+											<thead>
+												<tr>
+													<th>Level</th>
+													<th>LoggerName</th>
+													<th>Marker</th>
+													<th>ThreadName</th>
+													<th>TimeMillis</th>
+													<th>Message</th>
+												</tr>
+											</thead>
+											<tbody>
+											</tbody>
+										</table>
+										<button type="button" class="default clear">Clear</button>
+									</div>
+									<div class="tab-pane" id="${mode}errors-log">
+										<table class="table">
+											<thead>
+												<tr>
+													<th>Level</th>
+													<th>LoggerName</th>
+													<th>Marker</th>
+													<th>ThreadName</th>
+													<th>TimeMillis</th>
+													<th>Message</th>
+												</tr>
+											</thead>
+											<tbody>
+											</tbody>
+										</table>
+										<button type="button" class="default clear">Clear</button>
+									</div>
+									<div class="tab-pane" id="${mode}perf-avg-csv">
+										<table class="table">
+											<thead>
+												<tr>
+													<th>Level</th>
+													<th>LoggerName</th>
+													<th>Marker</th>
+													<th>ThreadName</th>
+													<th>TimeMillis</th>
+													<th>Message</th>
+												</tr>
+											</thead>
+											<tbody>
+											</tbody>
+										</table>
+										<button type="button" class="default clear">Clear</button>
+									</div>
+									<div class="tab-pane" id="${mode}perf-sum-csv">
+										<table class="table">
+											<thead>
+												<tr>
+													<th>Level</th>
+													<th>LoggerName</th>
+													<th>Marker</th>
+													<th>ThreadName</th>
+													<th>TimeMillis</th>
+													<th>Message</th>
+												</tr>
+											</thead>
+											<tbody>
+											</tbody>
+										</table>
+										<button type="button" class="default clear">Clear</button>
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
-				</div>
+				</c:forEach>
 			</div>
 		</div>
 	</body>

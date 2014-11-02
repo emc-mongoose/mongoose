@@ -12,6 +12,10 @@
 		"appenders": {
 			"appender" : [
 				{
+					"name" : "custom",
+					"type" : "Custom"
+				},
+				{
 					"name": "stdout",
 					"type": "Console",
 					"PatternLayout": {
