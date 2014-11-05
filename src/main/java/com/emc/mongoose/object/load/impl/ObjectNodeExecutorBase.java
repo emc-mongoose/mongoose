@@ -8,6 +8,8 @@ import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.object.load.ObjectNodeExecutor;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
+import java.util.Map;
+//
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
 /**
@@ -22,9 +24,9 @@ implements ObjectNodeExecutor<T> {
 	protected ObjectNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
 		final String addr, final int threadsPerNode, final ObjectRequestConfig<T> sharedReqConf,
-		final MetricRegistry parentMetrics, final String parentName
+		final MetricRegistry parentMetrics, final String parentName, final Map<String,String> context
 	) {
-		super(runTimeConfig, addr, threadsPerNode, sharedReqConf, parentMetrics, parentName);
+		super(runTimeConfig, addr, threadsPerNode, sharedReqConf, parentMetrics, parentName, context);
 	}
 	//
 }

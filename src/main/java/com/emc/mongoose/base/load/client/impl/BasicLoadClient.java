@@ -322,14 +322,16 @@ implements LoadClient<T> {
 			queueSize = threadCount * runTimeConfig.getRunRequestQueueFactor();
 		submitExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(queueSize), new WorkerFactory("submitDataItems")
+			new LinkedBlockingQueue<Runnable>(queueSize),
+			new WorkerFactory("submitDataItems", new HashMap<String, String>())
 		);
 		submitExecutor.prestartAllCoreThreads();
 		//
 		threadCount = remoteLoadMap.size() * 20; // metric count is 18
 		mgmtConnExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(queueSize), new WorkerFactory("getMetricValue")
+			new LinkedBlockingQueue<Runnable>(queueSize),
+			new WorkerFactory("getMetricValue", new HashMap<String, String>())
 		) {
 			@Override
 			public final <V> Future<V> submit(final Callable<V> task) {

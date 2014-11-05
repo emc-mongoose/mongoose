@@ -24,9 +24,11 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
+import org.apache.logging.log4j.ThreadContext;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -62,15 +64,14 @@ implements StorageNodeExecutor<T> {
 	protected StorageNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
 		final int threadsPerNode, final RequestConfig<T> localReqConf,
-		final MetricRegistry parentMetrics, final String parentName
+		final MetricRegistry parentMetrics, final String parentName, final Map<String,String> context
 	) {
 		super(
 			threadsPerNode, threadsPerNode, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				threadsPerNode * runTimeConfig.getRunRequestQueueFactor()
 			),
-			new WorkerFactory(parentName + '<' + localReqConf.getAddr() + '>')
-		);
+			new WorkerFactory(parentName + '<' + localReqConf.getAddr() + '>', context));
 		//
 		this.runTimeConfig = runTimeConfig;
 		this.localReqConf = localReqConf;
@@ -115,11 +116,11 @@ implements StorageNodeExecutor<T> {
 	protected StorageNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
 		final String addr, final int threadsPerNode, final RequestConfig<T> sharedReqConf,
-		final MetricRegistry parentMetrics, final String parentName
+		final MetricRegistry parentMetrics, final String parentName, final Map<String,String> context
 	) {
 		this(
 			runTimeConfig, threadsPerNode, sharedReqConf.clone().setAddr(addr),
-			parentMetrics, parentName
+			parentMetrics, parentName, context
 		);
 	}
 	//
@@ -287,27 +288,25 @@ implements StorageNodeExecutor<T> {
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
-		LOG.log(
-			logLevel, logMarker,
-			localReqConf.getAddr() + ": " + LoadExecutor.MSG_FMT_METRICS.format(
+		final String message = LoadExecutor.MSG_FMT_METRICS.format(
 				new Object[] {
-					countReqSucc, getQueue().size() + getActiveCount(), counterReqFail.getCount(),
-					//
-					(float) reqDurSnapshot.getMin() / LoadExecutor.BILLION,
-					(float) reqDurSnapshot.getMedian() / LoadExecutor.BILLION,
-					(float) reqDurSnapshot.getMean() / LoadExecutor.BILLION,
-					(float) reqDurSnapshot.getMax() / LoadExecutor.BILLION,
-					//
-					avgSize==0 ? 0 : meanBW/avgSize,
-					avgSize==0 ? 0 : oneMinBW/avgSize,
-					avgSize==0 ? 0 : fiveMinBW/avgSize,
-					avgSize==0 ? 0 : fifteenMinBW/avgSize,
-					//
-					meanBW/LoadExecutor.MIB, oneMinBW/LoadExecutor.MIB,
-					fiveMinBW/LoadExecutor.MIB, fifteenMinBW/LoadExecutor.MIB
+						countReqSucc, getQueue().size() + getActiveCount(), counterReqFail.getCount(),
+						//
+						(float) reqDurSnapshot.getMin() / LoadExecutor.BILLION,
+						(float) reqDurSnapshot.getMedian() / LoadExecutor.BILLION,
+						(float) reqDurSnapshot.getMean() / LoadExecutor.BILLION,
+						(float) reqDurSnapshot.getMax() / LoadExecutor.BILLION,
+						//
+						avgSize==0 ? 0 : meanBW/avgSize,
+						avgSize==0 ? 0 : oneMinBW/avgSize,
+						avgSize==0 ? 0 : fiveMinBW/avgSize,
+						avgSize==0 ? 0 : fifteenMinBW/avgSize,
+						//
+						meanBW/LoadExecutor.MIB, oneMinBW/LoadExecutor.MIB,
+						fiveMinBW/LoadExecutor.MIB, fifteenMinBW/LoadExecutor.MIB
 				}
-			)
 		);
+		LOG.log( logLevel, logMarker, localReqConf.getAddr() + ": " +message);
 		if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
 			LOG.trace(
 				Markers.PERF_AVG,
@@ -315,6 +314,7 @@ implements StorageNodeExecutor<T> {
 				toString(), isShutdown(), isTerminated(), getActiveCount(), getCompletedTaskCount(),
 				getQueue().size()
 			);
+
 		}
 	}
 	//

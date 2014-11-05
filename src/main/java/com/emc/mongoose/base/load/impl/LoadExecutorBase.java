@@ -33,6 +33,7 @@ import org.apache.logging.log4j.Marker;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -84,6 +85,7 @@ implements LoadExecutor<T> {
 	) throws ClassCastException {
 		//
 		this.runTimeConfig = runTimeConfig;
+		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());
@@ -121,7 +123,7 @@ implements LoadExecutor<T> {
 		submitExecutor = new ThreadPoolExecutor(
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("submitDataItems")
+			new WorkerFactory("submitDataItems", new HashMap<String,String>())
 		);
 		initClient(addrs, reqConf);
 		initNodeExecutors(addrs, reqConf);
@@ -329,26 +331,24 @@ implements LoadExecutor<T> {
 		}
 		notCompletedTaskCount += submitExecutor.getQueue().size() + submitExecutor.getActiveCount();
 		//
-		LOG.info(
-			logMarker,
-			MSG_FMT_METRICS.format(
-				new Object[] {
-					countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
-					//
-					(float)reqDurSnapshot.getMin() / BILLION,
-					(float)reqDurSnapshot.getMedian() / BILLION,
-					(float)reqDurSnapshot.getMean() / BILLION,
-					(float)reqDurSnapshot.getMax() / BILLION,
-					//
-					avgSize==0 ? 0 : meanBW/avgSize,
-					avgSize==0 ? 0 : oneMinBW/avgSize,
-					avgSize==0 ? 0 : fiveMinBW/avgSize,
-					avgSize==0 ? 0 : fifteenMinBW/avgSize,
-					//
-					meanBW/MIB, oneMinBW/MIB, fiveMinBW/MIB, fifteenMinBW/MIB
+		final String message = MSG_FMT_METRICS.format(
+				new Object[]{
+						countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
+						//
+						(float) reqDurSnapshot.getMin() / BILLION,
+						(float) reqDurSnapshot.getMedian() / BILLION,
+						(float) reqDurSnapshot.getMean() / BILLION,
+						(float) reqDurSnapshot.getMax() / BILLION,
+						//
+						avgSize == 0 ? 0 : meanBW / avgSize,
+						avgSize == 0 ? 0 : oneMinBW / avgSize,
+						avgSize == 0 ? 0 : fiveMinBW / avgSize,
+						avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+						//
+						meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 				}
-			)
 		);
+		LOG.info(logMarker, message);
 		//
 		if(Markers.PERF_SUM.equals(logMarker)) {
 			final double totalReqNanoSeconds = reqDurSnapshot.getMean() * countReqSucc;
@@ -412,4 +412,5 @@ implements LoadExecutor<T> {
 	public final DataSource<T> getDataSource() {
 		return dataSrc;
 	}
+	//
 }
