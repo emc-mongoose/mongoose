@@ -1,8 +1,5 @@
 package com.emc.mongoose.util.persist;
-
-import com.emc.mongoose.run.Main;
-import org.hibernate.Query;
-
+//
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -15,9 +12,9 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
-
+//
 import static javax.persistence.GenerationType.IDENTITY;
-
+//
 /**
  * Created by olga on 17.10.14.
  */

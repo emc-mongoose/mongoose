@@ -1,5 +1,5 @@
 package com.emc.mongoose.util.persist;
-
+//
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;

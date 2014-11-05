@@ -1,5 +1,8 @@
 package com.emc.mongoose.util.persist;
 //
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -24,7 +27,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 		@UniqueConstraint(columnNames = "size"),
 		@UniqueConstraint(columnNames = "layer"),
 		@UniqueConstraint(columnNames = "mask")})
-public class DataItemEntity
+public class DataObjectEntity
 implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -43,9 +46,9 @@ implements Serializable{
 	@OneToMany(targetEntity=TraceEntity.class, fetch = FetchType.LAZY, mappedBy = "dataitem")
 	private Set<TraceEntity> traceSet = new HashSet<TraceEntity>();
 	//
-	public DataItemEntity(){
+	public DataObjectEntity(){
 	}
-	public DataItemEntity(final String identifier, final String ringOffset, final BigInteger size, final BigInteger layer, final BigInteger mask){
+	public DataObjectEntity(final String identifier, final String ringOffset, final BigInteger size, final BigInteger layer, final BigInteger mask){
 		this.identifier = identifier;
 		this.ringOffset = ringOffset;
 		this.layer = layer;

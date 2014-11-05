@@ -34,7 +34,9 @@ public class WSLoadHelper {
 	private final static String KEY_NODE_ADDR = "node.addr",
 								KEY_LOAD_NUM = "load.number",
 								KEY_LOAD_TYPE = "load.type",
-								KEY_API = "api";
+								KEY_API = "api",
+								KEY_RUN_ID = "run.id",
+								KEY_RUN_MODE = "run.mode";
 	//
 	public static CloseableHttpClient initClient(
 		final int totalThreadCount, final int dataPageSize, final WSRequestConfig reqConf
@@ -84,6 +86,8 @@ public class WSLoadHelper {
 			try {
 				//Add thread context
 				final Map<String,String> context = new HashMap<>();
+				context.put(KEY_RUN_ID,runTimeConfig.getRunName());
+				context.put(KEY_RUN_MODE, runTimeConfig.getRunMode());
 				context.put(KEY_NODE_ADDR, addrs[i]);
 				context.put(KEY_API, reqConf.getAPI());
 				context.put(KEY_LOAD_TYPE, reqConf.getLoadType().toString());

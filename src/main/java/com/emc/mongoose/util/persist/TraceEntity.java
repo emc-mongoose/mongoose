@@ -1,5 +1,5 @@
 package com.emc.mongoose.util.persist;
-
+//
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -11,9 +11,8 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.math.BigInteger;
-
+//
 import static javax.persistence.GenerationType.IDENTITY;
-
 /**
  * Created by olga on 28.10.14.
  */
@@ -32,7 +31,7 @@ implements Serializable{
 	private BigInteger id;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "dataItem", nullable = false)
-	private DataItemEntity dataitem;
+	private DataObjectEntity dataitem;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "thread", nullable = false)
 	private ThreadEntity thread;
@@ -46,7 +45,7 @@ implements Serializable{
 	//
 	public TraceEntity(){
 	}
-	public TraceEntity(final DataItemEntity dataitem, final ThreadEntity thread,
+	public TraceEntity(final DataObjectEntity dataitem, final ThreadEntity thread,
 					   final StatusEntity status, final BigInteger tsReqStart,
 					   final BigInteger reqDur){
 		this.dataitem = dataitem;
@@ -65,10 +64,10 @@ implements Serializable{
 	public void setId(final BigInteger id) {
 		this.id = id;
 	}
-	public DataItemEntity getDataitem() {
+	public DataObjectEntity getDataitem() {
 		return dataitem;
 	}
-	public void setDataitem(final DataItemEntity dataitem) {
+	public void setDataitem(final DataObjectEntity dataitem) {
 		this.dataitem = dataitem;
 	}
 	public ThreadEntity getThread() {

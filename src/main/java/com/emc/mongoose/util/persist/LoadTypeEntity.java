@@ -1,8 +1,5 @@
 package com.emc.mongoose.util.persist;
 //
-import com.emc.mongoose.run.Main;
-import org.hibernate.Query;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
