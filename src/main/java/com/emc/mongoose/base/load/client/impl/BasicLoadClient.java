@@ -48,6 +48,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 /**
@@ -85,12 +86,12 @@ implements LoadClient<T> {
 		ATTR_RATE_5MIN = "FiveMinuteRate",
 		ATTR_RATE_15MIN = "FifteenMinuteRate";
 	//
-	private final static class GetGaugeValue<V extends Number>
+	private final static class GetValueTask<V extends Number>
 	implements Callable<V> {
 		//
 		private final Gauge<V> gauge;
 		//
-		public GetGaugeValue(final Gauge<V> gauge) {
+		public GetValueTask(final Gauge<V> gauge) {
 			this.gauge = gauge;
 		}
 		//
@@ -107,12 +108,12 @@ implements LoadClient<T> {
 	private final Gauge<Double>
 		metricBWMean, metricBW1Min, metricBW5Min, metricBW15Min;
 	@SuppressWarnings("FieldCanBeLocal")
-	private final GetGaugeValue<Long>
-		countSubmGetter, countRejGetter, countSuccGetter, countFailGetter,
-		minDurGetter, maxDurGetter, countBytesGetter, countNanoSecGetter;
-	private final GetGaugeValue<Double>
-		meanTPGetter, oneMinTPGetter, fiveMinTPGetter, fifteenMinTPGetter, meanBWGetter,
-		oneMinBWGetter, fiveMinBWGetter, fifteenMinBWGetter, medDurGetter, avgDurGetter;
+	private final GetValueTask<Long>
+		taskGetCountSubm, taskGetCountRej, taskGetCountSucc, taskGetCountFail,
+		taskGetMinDur, taskGetMaxDur, taskGetCountBytes, taskGetCountNanoSec;
+	private final GetValueTask<Double>
+		taskGetTPMean, taskGetTP1Min, taskGetTP5Min, taskGetTP15Min, taskGetBWMean,
+		taskGetBW1Min, taskGetBW5Min, taskGetBW15Min, taskGetDurMed, taskGetDurAvg;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private volatile long maxCount;
 	//
@@ -120,8 +121,6 @@ implements LoadClient<T> {
 	private final LogConsumer<T> metaInfoLog;
 	private final RunTimeConfig runTimeConfig;
 	private final int retryCountMax, retryDelayMilliSec;
-	@SuppressWarnings("FieldCanBeLocal")
-	private final RequestConfig<T> reqConf;
 	//
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig,
@@ -135,7 +134,7 @@ implements LoadClient<T> {
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
-			runTimeConfig.getRemoteMonitorPort()
+			runTimeConfig.getRemoteExportPort()
 		);
 		metricsReporter = JmxReporter.forRegistry(metrics)
 			.convertDurationsTo(TimeUnit.SECONDS)
@@ -145,7 +144,6 @@ implements LoadClient<T> {
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
 		this.remoteJMXConnMap = remoteJMXConnMap;
-		this.reqConf = reqConf;
 		//
 		try {
 			final Object remoteLoads[] = remoteLoadMap.values().toArray();
@@ -188,33 +186,33 @@ implements LoadClient<T> {
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_RATE_15MIN
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
-		countSubmGetter = new GetGaugeValue<>(
+		taskGetCountSubm = new GetValueTask<>(
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_SUBM, ATTR_COUNT)
 		);
-		countRejGetter = new GetGaugeValue<>(
+		taskGetCountRej = new GetValueTask<>(
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_REJ, ATTR_COUNT)
 		);
-		countSuccGetter = new GetGaugeValue<>(metricSuccCount);
-		countFailGetter = new GetGaugeValue<>(
+		taskGetCountSucc = new GetValueTask<>(metricSuccCount);
+		taskGetCountFail = new GetValueTask<>(
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_FAIL, ATTR_COUNT)
 		);
-		countNanoSecGetter = new GetGaugeValue<>(
+		taskGetCountNanoSec = new GetValueTask<>(
 			registerJmxGaugeSum(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_COUNT
 			)
 		);
-		countBytesGetter = new GetGaugeValue<>(metricByteCount);
-		minDurGetter = new GetGaugeValue<>(
+		taskGetCountBytes = new GetValueTask<>(metricByteCount);
+		taskGetMinDur = new GetValueTask<>(
 			registerJmxGaugeMinLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MIN
 			)
 		);
-		maxDurGetter = new GetGaugeValue<>(
+		taskGetMaxDur = new GetValueTask<>(
 			registerJmxGaugeMaxLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MAX
 			)
 		);
-		meanTPGetter = new GetGaugeValue<>(
+		taskGetTPMean = new GetValueTask<>(
 			metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_TP + "." + ATTR_RATE_MEAN),
 				new Gauge<Double>() {
@@ -222,10 +220,10 @@ implements LoadClient<T> {
 					public final Double getValue() {
 						double x = 0, y = 0;
 						try {
-							x = mgmtConnExecutor.submit(meanBWGetter).get();
-							y = mgmtConnExecutor.submit(countSuccGetter).get();
+							x = mgmtConnExecutor.submit(taskGetBWMean).get();
+							y = mgmtConnExecutor.submit(taskGetCountSucc).get();
 							x *= y;
-							y = mgmtConnExecutor.submit(countBytesGetter).get();
+							y = mgmtConnExecutor.submit(taskGetCountBytes).get();
 						} catch(final InterruptedException | RejectedExecutionException | ExecutionException e) {
 							ExceptionHandler.trace(
 								LOG, Level.DEBUG, e, "Metric value fetching failed"
@@ -236,7 +234,7 @@ implements LoadClient<T> {
 				}
 			)
 		);
-		oneMinTPGetter = new GetGaugeValue<>(
+		taskGetTP1Min = new GetValueTask<>(
 			metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_TP + "." + ATTR_RATE_1MIN),
 				new Gauge<Double>() {
@@ -244,10 +242,10 @@ implements LoadClient<T> {
 					public final Double getValue() {
 						double x = 0, y = 0;
 						try {
-							x = mgmtConnExecutor.submit(oneMinBWGetter).get();
-							y = mgmtConnExecutor.submit(countSuccGetter).get();
+							x = mgmtConnExecutor.submit(taskGetBW1Min).get();
+							y = mgmtConnExecutor.submit(taskGetCountSucc).get();
 							x *= y;
-							y = mgmtConnExecutor.submit(countBytesGetter).get();
+							y = mgmtConnExecutor.submit(taskGetCountBytes).get();
 						} catch(final InterruptedException | RejectedExecutionException | ExecutionException e) {
 							ExceptionHandler.trace(
 								LOG, Level.DEBUG, e, "Metric value fetching failed"
@@ -258,7 +256,7 @@ implements LoadClient<T> {
 				}
 			)
 		);
-		fiveMinTPGetter = new GetGaugeValue<>(
+		taskGetTP5Min = new GetValueTask<>(
 			metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_TP + "." + ATTR_RATE_5MIN),
 				new Gauge<Double>() {
@@ -266,10 +264,10 @@ implements LoadClient<T> {
 					public final Double getValue() {
 						double x = 0, y = 0;
 						try {
-							x = mgmtConnExecutor.submit(fiveMinBWGetter).get();
-							y = mgmtConnExecutor.submit(countSuccGetter).get();
+							x = mgmtConnExecutor.submit(taskGetBW5Min).get();
+							y = mgmtConnExecutor.submit(taskGetCountSucc).get();
 							x *= y;
-							y = mgmtConnExecutor.submit(countBytesGetter).get();
+							y = mgmtConnExecutor.submit(taskGetCountBytes).get();
 						} catch(final InterruptedException | RejectedExecutionException | ExecutionException e) {
 							ExceptionHandler.trace(
 								LOG, Level.DEBUG, e, "Metric value fetching failed"
@@ -280,7 +278,7 @@ implements LoadClient<T> {
 				}
 			)
 		);
-		fifteenMinTPGetter = new GetGaugeValue<>(
+		taskGetTP15Min = new GetValueTask<>(
 			metrics.register(
 				MetricRegistry.name(getName(), METRIC_NAME_TP + "." + ATTR_RATE_15MIN),
 				new Gauge<Double>() {
@@ -288,10 +286,10 @@ implements LoadClient<T> {
 					public final Double getValue() {
 						double x = 0, y = 0;
 						try {
-							x = mgmtConnExecutor.submit(fifteenMinBWGetter).get();
-							y = mgmtConnExecutor.submit(countSuccGetter).get();
+							x = mgmtConnExecutor.submit(taskGetBW15Min).get();
+							y = mgmtConnExecutor.submit(taskGetCountSucc).get();
 							x *= y;
-							y = mgmtConnExecutor.submit(countBytesGetter).get();
+							y = mgmtConnExecutor.submit(taskGetCountBytes).get();
 						} catch(final InterruptedException | RejectedExecutionException | ExecutionException e) {
 							ExceptionHandler.trace(
 								LOG, Level.DEBUG, e, "Metric value fetching failed"
@@ -302,16 +300,16 @@ implements LoadClient<T> {
 				}
 			)
 		);
-		meanBWGetter = new GetGaugeValue<>(metricBWMean);
-		oneMinBWGetter = new GetGaugeValue<>(metricBW1Min);
-		fiveMinBWGetter = new GetGaugeValue<>(metricBW5Min);
-		fifteenMinBWGetter = new GetGaugeValue<>(metricBW15Min);
-		medDurGetter = new GetGaugeValue<>(
+		taskGetBWMean = new GetValueTask<>(metricBWMean);
+		taskGetBW1Min = new GetValueTask<>(metricBW1Min);
+		taskGetBW5Min = new GetValueTask<>(metricBW5Min);
+		taskGetBW15Min = new GetValueTask<>(metricBW15Min);
+		taskGetDurMed = new GetValueTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MED
 			)
 		);
-		avgDurGetter = new GetGaugeValue<>(
+		taskGetDurAvg = new GetValueTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_AVG
 			)
@@ -325,15 +323,43 @@ implements LoadClient<T> {
 		submitExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("submitDataItems", new HashMap<String,String>())
+			new WorkerFactory("submitDataItems", new HashMap<String, String>())
 		);
+		submitExecutor.prestartAllCoreThreads();
 		//
 		threadCount = remoteLoadMap.size() * 20; // metric count is 18
 		mgmtConnExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("getMetricValue", new HashMap<String,String>())
-		);
+			new WorkerFactory("getMetricValue", new HashMap<String, String>())
+		) {
+			@Override
+			public final <V> Future<V> submit(final Callable<V> task) {
+				Future<V> future = null;
+				boolean pass = false;
+				int tryCount = 0;
+				do {
+					try {
+						future = super.submit(task);
+						pass = true;
+					} catch(final RejectedExecutionException e) {
+						LOG.debug(Markers.ERR, "Task rejected {} times", tryCount);
+						tryCount ++;
+						try {
+							Thread.sleep(retryDelayMilliSec);
+						} catch(final InterruptedException ee) {
+							LOG.debug(Markers.ERR, "Rejection handling interrupted");
+							break;
+						}
+					}
+				} while(!pass && tryCount < retryCountMax);
+				if(!pass) {
+					LOG.warn(Markers.ERR, "Failed to handle the rejected task");
+				}
+				return future;
+			}
+		};
+		mgmtConnExecutor.prestartAllCoreThreads();
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricsReporter.start();
 	}
@@ -342,11 +368,11 @@ implements LoadClient<T> {
 		final String domain, final String mBeanName, final String attrName
 	) {
 		return metrics.register(
-			MetricRegistry.name(getName(), mBeanName+"."+attrName),
+			MetricRegistry.name(getName(), mBeanName + "." + attrName),
 			new Gauge<Long>() {
 				//
-				private final String
-					fullMBeanName = getName().substring(0, getName().lastIndexOf('x')) + '.' + mBeanName;
+				private final String fullMBeanName =
+					getName().substring(0, getName().lastIndexOf('x')) + '.' + mBeanName;
 				//
 				@Override
 				public final Long getValue() {
@@ -366,7 +392,7 @@ implements LoadClient<T> {
 							);
 						}
 						//
-						if(objectName!=null) {
+						if(objectName != null) {
 							try {
 								value += (long) nextMBeanConn.getAttribute(objectName, attrName);
 							} catch(final AttributeNotFoundException e) {
@@ -630,7 +656,7 @@ implements LoadClient<T> {
 						new Callable<List<T>>() {
 							@Override
 							public final List<T> call()
-								throws Exception {
+							throws Exception {
 								return nextLoadSvc.takeFrame();
 							}
 						}
@@ -676,26 +702,26 @@ implements LoadClient<T> {
 	private void logMetrics(final Marker logMarker) {
 		//
 		try {
-			countSubm = mgmtConnExecutor.submit(countSubmGetter);
-			countRej = mgmtConnExecutor.submit(countRejGetter);
-			countReqSucc = mgmtConnExecutor.submit(countSuccGetter);
-			countReqFail = mgmtConnExecutor.submit(countFailGetter);
-			//countNanoSec = mgmtConnExecutor.submit(countNanoSecGetter);
-			//countBytes = mgmtConnExecutor.submit(countBytesGetter);
-			minDur = mgmtConnExecutor.submit(minDurGetter);
-			maxDur = mgmtConnExecutor.submit(maxDurGetter);
-			meanTP = mgmtConnExecutor.submit(meanTPGetter);
-			oneMinTP = mgmtConnExecutor.submit(oneMinTPGetter);
-			fiveMinTP = mgmtConnExecutor.submit(fiveMinTPGetter);
-			fifteenMinTP = mgmtConnExecutor.submit(fifteenMinTPGetter);
-			meanBW = mgmtConnExecutor.submit(meanBWGetter);
-			oneMinBW = mgmtConnExecutor.submit(oneMinBWGetter);
-			fiveMinBW = mgmtConnExecutor.submit(fiveMinBWGetter);
-			fifteenMinBW = mgmtConnExecutor.submit(fifteenMinBWGetter);
-			medDur = mgmtConnExecutor.submit(medDurGetter);
-			avgDur = mgmtConnExecutor.submit(avgDurGetter);
+			countSubm = mgmtConnExecutor.submit(taskGetCountSubm);
+			countRej = mgmtConnExecutor.submit(taskGetCountRej);
+			countReqSucc = mgmtConnExecutor.submit(taskGetCountSucc);
+			countReqFail = mgmtConnExecutor.submit(taskGetCountFail);
+			//countNanoSec = mgmtConnExecutor.submit(taskGetCountNanoSec);
+			//countBytes = mgmtConnExecutor.submit(taskGetCountBytes);
+			minDur = mgmtConnExecutor.submit(taskGetMinDur);
+			maxDur = mgmtConnExecutor.submit(taskGetMaxDur);
+			meanTP = mgmtConnExecutor.submit(taskGetTPMean);
+			oneMinTP = mgmtConnExecutor.submit(taskGetTP1Min);
+			fiveMinTP = mgmtConnExecutor.submit(taskGetTP5Min);
+			fifteenMinTP = mgmtConnExecutor.submit(taskGetTP15Min);
+			meanBW = mgmtConnExecutor.submit(taskGetBWMean);
+			oneMinBW = mgmtConnExecutor.submit(taskGetBW1Min);
+			fiveMinBW = mgmtConnExecutor.submit(taskGetBW5Min);
+			fifteenMinBW = mgmtConnExecutor.submit(taskGetBW15Min);
+			medDur = mgmtConnExecutor.submit(taskGetDurMed);
+			avgDur = mgmtConnExecutor.submit(taskGetDurAvg);
 		} catch(final RejectedExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Log remote metrics failed, skipping");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Log remote metrics failed, skipping");
 		}
 		//
 		try {
@@ -715,15 +741,15 @@ implements LoadClient<T> {
 						//
 						meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
 						//
-						meanBW.get()/MIB,
-						oneMinBW.get()/MIB, fiveMinBW.get()/MIB, fifteenMinBW.get()/MIB
+						meanBW.get() / MIB,
+						oneMinBW.get() / MIB, fiveMinBW.get() / MIB, fifteenMinBW.get() / MIB
 					}
 				)
 			);
 		} catch(final ExecutionException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metrics");
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.ERR, "Interrupted while fetching the metric");
+		} catch(final InterruptedException | NullPointerException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Unexpected failure");
 		}
 		//
 	}
@@ -752,7 +778,7 @@ implements LoadClient<T> {
 	@Override
 	public final void run() {
 		//
-		long countDone;
+		long countDone = 0;
 		final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 		//
 		try {
@@ -764,6 +790,8 @@ implements LoadClient<T> {
 					countDone = countReqSucc.get() + countReqFail.get() + countRej.get();
 				} catch(final InterruptedException e) {
 					break;
+				} catch(final NullPointerException e) {
+					LOG.debug(Markers.ERR, "Looks like the metrics getting task failed to be submitted");
 				}
 			} while(countDone < maxCount);
 		} catch(final ExecutionException e) {

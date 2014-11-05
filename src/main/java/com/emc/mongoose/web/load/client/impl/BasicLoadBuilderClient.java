@@ -91,7 +91,7 @@ implements WSLoadBuilderClient<T, U> {
 	public final U build()
 	throws RemoteException {
 		//
-		com.emc.mongoose.web.load.client.WSLoadClient newLoadClient = null;
+		WSLoadClient newLoadClient = null;
 		//
 		final Map<String, LoadSvc<T>> remoteLoadMap = new HashMap<>();
 		final Map<String, JMXConnector> remoteJMXConnMap = new HashMap<>();
@@ -109,6 +109,8 @@ implements WSLoadBuilderClient<T, U> {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to configure storage");
 		}
 		//
+		final int jmxImportPort = runTimeConfig.getRemoteImportPort();
+		//
 		for(final String addr : keySet()) {
 			//
 			nextBuilder = get(addr);
@@ -121,11 +123,12 @@ implements WSLoadBuilderClient<T, U> {
 			nextJMXURL = null;
 			try {
 				svcJMXAddr = ServiceUtils.JMXRMI_URL_PREFIX + addr + ":" +
-					runTimeConfig.getRemoteMonitorPort() + ServiceUtils.JMXRMI_URL_PATH;
+					Integer.toString(jmxImportPort) + ServiceUtils.JMXRMI_URL_PATH +
+					Integer.toString(jmxImportPort);
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
 				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
-				LOG.error(Markers.ERR, "Failure", e);
+				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to generate JMX URL");
 			}
 			//
 			nextJMXConn = null;
@@ -133,7 +136,10 @@ implements WSLoadBuilderClient<T, U> {
 				try {
 					nextJMXConn = JMXConnectorFactory.connect(nextJMXURL, null);
 				} catch(final IOException e) {
-					LOG.error(Markers.ERR, "JMX: failed to connect to " + nextJMXURL, e);
+					ExceptionHandler.trace(
+						LOG, Level.ERROR, e,
+						String.format("Failed to connect to \"%s\" via JMX", nextJMXURL)
+					);
 				}
 			}
 			//
