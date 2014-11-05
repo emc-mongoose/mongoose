@@ -7,12 +7,12 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Run</title>
-		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<link href="css/bootstrap/bootstrap.min.css" rel="stylesheet">
 		<link href="css/styles.css" rel="stylesheet">
-		<link href="css/bootstrap.vertical-tabs.min.css" rel="stylesheet">
+		<link href="css/bootstrap-vertical-tabs-1.1.0/bootstrap.vertical-tabs.css" rel="stylesheet">
 		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
-		<script type="text/javascript" src="js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="js/bootstrap/bootstrap.min.js"></script>
 		<script type="text/javascript" src="js/jquery.cookie.js"></script>
 	</head>
 	<body>
@@ -25,6 +25,7 @@
 				<div class="collapse navbar-collapse" id="bx-example-navbar-collapse-1">
 					<ul class="nav navbar-nav">
 						<li class="active"><a href="/">Run</a></li>
+						<li><a href="driver.html">Driver</a></li>
 					</ul>
 
 					<ul class="nav navbar-nav navbar-right">
@@ -34,28 +35,19 @@
 			</div>
 		</nav>
 
-		<input type="hidden" id="sessionModes" value="${sessionScope.runmodes}">
-
 		<div class="content-wrapper">
 			<div class="tabs-wrapper">
-				<ul class="nav nav-tabs tabs header-tabs" role="tablist">
+				<ul class="nav nav-tabs tabs" role="tablist">
 					<li class="active"><a href="#configuration" data-toggle="tab">Configuration</a></li>
-					<c:forEach var="mode" items="${sessionScope.runmodes}">
-						<c:set var="stringMode" value="${fn:split(mode, '_')}"/>
-						<li><a href="#${mode}" data-toggle="tab">${stringMode[3]}</a></li>
-					</c:forEach>
+					<li><a href="#monitor" data-toggle="tab">Monitor</a></li>
 				</ul>
 			</div>
 
-			<div class="tab-content header-tab-content">
+			<div class="tab-content">
 				<div class="tab-pane active" id="configuration">
 					<div class="runmodes">
-						<div class="list-group">
-							<button id="standalone" type="button" class="list-group-item">Standalone</button>
-							<button id="distributed" type="button" class="list-group-item">Distributed</button>
-							<button id="driver" type="button" class="list-group-item">Driver</button>
-							<button id="wsmock" type="button" class="list-group-item">WSMock</button>
-						</div>
+						<button id="standalone" type="button" class="default">Standalone</button>
+						<button id="distributed" type="button" class="default">Distributed</button>
 					</div>
 					<form id="mainForm">
 						<input type="hidden" id="runmode" name="runmode" value="VALUE_RUN_MODE_STANDALONE">
@@ -94,11 +86,7 @@
 							<fieldset class="scheduler-border">
 								<legend class="scheduler-border">Storage</legend>
 								<label>storage.api:</label>
-								<select name="storageApi" id="storageApi">
-									<option value="s3">S3</option>
-									<option value="atmos">Atmos</option>
-									<option value="swift">Swift</option>
-								</select>
+								<input id="storageApi" name="storageApi" type="text" class="form-control counter" value="${runTimeConfig.storageApi}">
 								<label>scheme:</label>
 								<input id="scheme" name="scheme" type="text" class="form-control counter" value="${runTimeConfig.storageProto}">
 								<fieldset class="scheduler-border">
@@ -172,23 +160,13 @@
 								<legend class="scheduler-border">Data</legend>
 								<label for="count">data.count:</label>
 								<input name="dataCount" id="dataCount" type="text" class="form-control counter" value="${runTimeConfig.dataCount}">
-								<label>size.min</label>
 								<input name="dataSizeMin" type="text" class="form-control counter" placeholder="min" value="${rt:getString(runTimeConfig, 'data.size.min')}">
 								-
-								<label>size.max</label>
 								<input name="dataSizeMax" type="text" class="form-control counter" placeholder="max" value="${rt:getString(runTimeConfig, 'data.size.max')}">
-								<br>
+
 
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">Load</legend>
-									<label>scenario.single.load</label>
-									<select name="scenarioSingleLoad" id="scenarioSingleLoad">
-										<option value="create">Create</option>
-										<option value="read">Read</option>
-										<option value="delete">Delete</option>
-										<option value="update">Update</option>
-										<option value="append">Append</option>
-									</select>
 									<div class="tabs-wrapper">
 										<ul id="loadTab" class="nav nav-tabs" role="tablist">
 											<li class="active"><a href="#create" data-toggle="tab">Create</a></li>
@@ -274,97 +252,48 @@
 					</form>
 				</div>
 
-				<c:forEach var="mode" items="${sessionScope.runmodes}">
-					<div class="tab-pane" id="${mode}">
-						<div class="left-side">
-							<div class="menu-wrapper">
-								<div class="col-xs-8">
-									<ul class="nav nav-tabs tabs-left">
-										<li class="active"><a href="#${mode}messages-csv" data-toggle="tab">messages.csv</a></li>
-										<li><a href="#${mode}errors-log" data-toggle="tab">errors.log</a></li>
-										<li><a href="#${mode}perf-avg-csv" data-toggle="tab">perf.avg.csv</a></li>
-										<li><a href="#${mode}perf-sum-csv" data-toggle="tab">perf.sum.csv</a></li>
-									</ul>
-								</div>
+				<div class="tab-pane" id="monitor">
+					<div class="left-side">
+						<div class="menu-wrapper">
+							<div class="col-xs-8">
+								<ul class="nav nav-tabs tabs-left">
+									<li class="active"><a href="#data-items-csv" data-toggle="tab">data.items.csv</a></li>
+									<li><a href="#errors-log" data-toggle="tab">errors.log</a></li>
+									<li><a href="#messages-csv" data-toggle="tab">messages.csv</a></li>
+									<li><a href="#perf-avg-csv" data-toggle="tab">perf.avg.csv</a></li>
+									<li><a href="#perf-sum-csv" data-toggle="tab">perf.sum.csv</a></li>
+									<li><a href="#perf-trace-csv" data-toggle="tab">perf.trace.csv</a></li>
+								</ul>
 							</div>
 						</div>
-						<div class="right-side">
-							<button id="stop" type="button" class="default"><span>Stop</span></button>
-							<div class="log-wrapper">
-								<div class="tab-content">
-									<div class="tab-pane active" id="${mode}messages-csv">
-										<table class="table">
-											<thead>
-												<tr>
-													<th>Level</th>
-													<th>LoggerName</th>
-													<th>Marker</th>
-													<th>ThreadName</th>
-													<th>TimeMillis</th>
-													<th>Message</th>
-												</tr>
-											</thead>
-											<tbody>
-											</tbody>
-										</table>
-										<button type="button" class="default clear">Clear</button>
-									</div>
-									<div class="tab-pane" id="${mode}errors-log">
-										<table class="table">
-											<thead>
-												<tr>
-													<th>Level</th>
-													<th>LoggerName</th>
-													<th>Marker</th>
-													<th>ThreadName</th>
-													<th>TimeMillis</th>
-													<th>Message</th>
-												</tr>
-											</thead>
-											<tbody>
-											</tbody>
-										</table>
-										<button type="button" class="default clear">Clear</button>
-									</div>
-									<div class="tab-pane" id="${mode}perf-avg-csv">
-										<table class="table">
-											<thead>
-												<tr>
-													<th>Level</th>
-													<th>LoggerName</th>
-													<th>Marker</th>
-													<th>ThreadName</th>
-													<th>TimeMillis</th>
-													<th>Message</th>
-												</tr>
-											</thead>
-											<tbody>
-											</tbody>
-										</table>
-										<button type="button" class="default clear">Clear</button>
-									</div>
-									<div class="tab-pane" id="${mode}perf-sum-csv">
-										<table class="table">
-											<thead>
-												<tr>
-													<th>Level</th>
-													<th>LoggerName</th>
-													<th>Marker</th>
-													<th>ThreadName</th>
-													<th>TimeMillis</th>
-													<th>Message</th>
-												</tr>
-											</thead>
-											<tbody>
-											</tbody>
-										</table>
-										<button type="button" class="default clear">Clear</button>
-									</div>
+					</div>
+
+					<div class="right-side">
+						<div class="log-wrapper">
+							<div class="tab-content">
+								<div class="tab-pane active" id="data-items-csv">
+									data.items.csv
+								</div>
+								<div class="tab-pane" id="errors-log">
+									errors.log
+								</div>
+								<div class="tab-pane" id="messages-csv">
+									messages.csv
+								</div>
+								<div class="tab-pane" id="perf-avg-csv">
+									perf.avg.csv
+								</div>
+								<div class="tab-pane" id="perf-sum-csv">
+									perf.sum.csv
+								</div>
+								<div class="tab-pane" id="perf-trace-csv">
+									perf.trace.csv
 								</div>
 							</div>
 						</div>
 					</div>
-				</c:forEach>
+					<button id="stop" type="button" class="default"><span>Stop</span></button>
+				</div>
 			</div>
 		</div>
 	</body>

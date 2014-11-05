@@ -35,8 +35,10 @@ public final class Main {
 		SEP = System.getProperty("file.separator"),
 		DIR_ROOT,
 		DIR_CONF = "conf",
+		DIR_LOGGING = "logging",
 		DIR_PROPERTIES = "properties",
-		FNAME_LOGGING = "logging.json",
+		FNAME_LOGGING_LOCAL = "local.json",
+		FNAME_LOGGING_REMOTE = "remote.json",
 		FNAME_POLICY = "security.policy",
 		//
 		KEY_DIR_ROOT = "dir.root",
@@ -44,13 +46,13 @@ public final class Main {
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
 		//
-		VALUE_RUN_MODE_STANDALONE = "standalone",
-		VALUE_RUN_MODE_CLIENT = "client",
-		VALUE_RUN_MODE_COMPAT_CLIENT = "controller",
-		VALUE_RUN_MODE_SERVER = "server",
-		VALUE_RUN_MODE_COMPAT_SERVER = "driver",
-		VALUE_RUN_MODE_WEBUI = "webui",
-		VALUE_RUN_MODE_WSMOCK = "wsmock";
+		RUN_MODE_STANDALONE = "standalone",
+		RUN_MODE_CLIENT = "client",
+		RUN_MODE_COMPAT_CLIENT = "controller",
+		RUN_MODE_SERVER = "server",
+		RUN_MODE_COMPAT_SERVER = "driver",
+		RUN_MODE_WEBUI = "webui",
+		RUN_MODE_WSMOCK = "wsmock";
 	//
 	private final static DateFormat FMT_DT = new SimpleDateFormat(
 		"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
@@ -84,7 +86,7 @@ public final class Main {
 		//
 		final String runMode;
 		if(args==null || args.length==0) {
-			runMode = VALUE_RUN_MODE_STANDALONE;
+			runMode = RUN_MODE_STANDALONE;
 		} else {
 			runMode = args[0];
 		}
@@ -107,16 +109,16 @@ public final class Main {
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
 		//
 		switch (runMode) {
-			case VALUE_RUN_MODE_SERVER:
-			case VALUE_RUN_MODE_COMPAT_SERVER:
+			case RUN_MODE_SERVER:
+			case RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				new BasicLoadBuilderSvc().start();
 				break;
-			case VALUE_RUN_MODE_WEBUI:
+			case RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
                     new JettyRunner(RUN_TIME_CONFIG).run();
 				break;
-			case VALUE_RUN_MODE_WSMOCK:
+			case RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
 				try {
 					new WSMock(RUN_TIME_CONFIG).run();
@@ -124,9 +126,9 @@ public final class Main {
 					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
 				}
 				break;
-			case VALUE_RUN_MODE_CLIENT:
-			case VALUE_RUN_MODE_STANDALONE:
-			case VALUE_RUN_MODE_COMPAT_CLIENT:
+			case RUN_MODE_CLIENT:
+			case RUN_MODE_STANDALONE:
+			case RUN_MODE_COMPAT_CLIENT:
 				new Scenario(RUN_TIME_CONFIG).run();
 				System.exit(0);
 				break;
@@ -151,7 +153,15 @@ public final class Main {
 			);
 		}
 		// load the logging configuration
-		final Path logConfPath = Paths.get(DIR_ROOT, DIR_CONF, FNAME_LOGGING);
+		final Path logConfPath = Paths.get(
+			DIR_ROOT, DIR_CONF, DIR_LOGGING,
+			(
+				runMode.equals(RUN_MODE_STANDALONE) ||
+				runMode.equals(RUN_MODE_CLIENT) ||
+				runMode.equals(RUN_MODE_COMPAT_CLIENT)
+			) ?
+				FNAME_LOGGING_LOCAL : FNAME_LOGGING_REMOTE
+		);
 		Configurator.initialize(null, logConfPath.toUri().toString());
 		return LogManager.getRootLogger();
 	}

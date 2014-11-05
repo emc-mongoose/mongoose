@@ -15,13 +15,16 @@ public final class ExceptionHandler {
 	) {
 		logger.log(level, Markers.ERR, String.format(FMT_MSG, msg, thrown.toString()));
 		if(logger.isTraceEnabled(Markers.ERR)) {
-			final Throwable cause = thrown.getCause();
-			if(cause==null) {
-				logger.catching(Level.TRACE, thrown);
-			} else {
-				logger.trace(Markers.ERR, cause.toString(), cause.getCause());
-			}
+			Throwable cause = thrown;
+			final StringBuilder msgBuilder = new StringBuilder(thrown.toString());
+			do {
+				msgBuilder.append('\n').append(cause.toString());
+				for(final StackTraceElement stackTraceElement: thrown.getStackTrace()) {
+					msgBuilder.append("\n\t").append(stackTraceElement.toString());
+				}
+				cause = cause.getCause();
+			} while(cause != null);
+			logger.log(Level.TRACE, Markers.ERR, msgBuilder.toString());
 		}
 	}
-	//
 }
