@@ -4,7 +4,6 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.run.Main;
 //
-import org.apache.commons.configuration.ConversionException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -232,21 +231,21 @@ public final class ServiceUtils {
 			JMXServiceURL jmxSvcURL = null;
 			try {
 				jmxSvcURL = new JMXServiceURL(
-					JMXRMI_URL_PREFIX + ":" + Integer.toString(portJmxRmi)/* +
-					JMXRMI_URL_PATH + Integer.toString(portJmxRmi)*/
+					JMXRMI_URL_PREFIX + ":" + Integer.toString(portJmxRmi) +
+					JMXRMI_URL_PATH + Integer.toString(portJmxRmi)
 				);
 				LOG.debug(Markers.MSG, "Created JMX service URL {}", jmxSvcURL.toString());
 			} catch(final MalformedURLException e) {
-				synchronized(LOG) {
-					LOG.warn(Markers.ERR, "Failed to create JMX service URL for port {}", portJmxRmi);
-					LOG.debug(Markers.ERR, e.toString(), e.getCause());
-				}
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e,
+					String.format("Failed to create JMX service URL for port #%d", portJmxRmi)
+				);
 			}
 			//
 			JMXConnectorServer connectorServer = null;
 			if(jmxSvcURL!=null) {
 				try {
-					LOG.info(Markers.MSG, "{}, {}, {}", jmxSvcURL, env, mBeanServer);
+					//LOG.trace(Markers.MSG, "{}, {}, {}", jmxSvcURL, env, mBeanServer);
 					connectorServer = JMXConnectorServerFactory.newJMXConnectorServer(
 						jmxSvcURL, env, mBeanServer
 					);
@@ -258,7 +257,6 @@ public final class ServiceUtils {
 			//
 			if(connectorServer != null && !connectorServer.isActive()) {
 				try {
-					LOG.info(Markers.MSG, "{}, {}", connectorServer.toString(), connectorServer.getConnectionIds());
 					connectorServer.start();
 					LOG.debug(Markers.MSG, "JMX connector started", portJmxRmi);
 				} catch(final IOException e) {

@@ -330,7 +330,7 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.util.remote",
-					"level": "trace",
+					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"

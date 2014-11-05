@@ -123,8 +123,8 @@ implements WSLoadBuilderClient<T, U> {
 			nextJMXURL = null;
 			try {
 				svcJMXAddr = ServiceUtils.JMXRMI_URL_PREFIX + addr + ":" +
-					Integer.toString(jmxImportPort) + ServiceUtils.JMXRMI_URL_PATH/* +
-					Integer.toString(jmxImportPort)*/;
+					Integer.toString(jmxImportPort) + ServiceUtils.JMXRMI_URL_PATH +
+					Integer.toString(jmxImportPort);
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
 				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
