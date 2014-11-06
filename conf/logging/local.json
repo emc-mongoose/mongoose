@@ -18,11 +18,11 @@
 					"runid": "${sys:run.id}",
 					"runmode": "${sys:run.mode}",
 					"username": "mongoose",
-                    "password": "mongoose",
-                    "addr": "localhost",
-                    "port": "5432",
-                    "namedatabase": "mongoose",
-                    "Filters": {
+					"password": "mongoose",
+					"addr": "localhost",
+					"port": "5432",
+					"namedatabase": "mongoose",
+					"Filters": {
 						"Filter": [
 							{
 								"type": "MarkerFilter",

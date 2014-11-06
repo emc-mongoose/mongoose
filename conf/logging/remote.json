@@ -12,12 +12,6 @@
 		"appenders": {
 			"appender" : [
 				{
-<<<<<<< HEAD:conf/logging.json
-					"name" : "custom",
-					"type" : "Custom"
-				},
-				{
-=======
 					"name": "hibernate",
 					"type": "Hibernate",
 					"enabled": "false",
@@ -49,7 +43,6 @@
 						]
 					}
 				}, {
->>>>>>> origin/bugfix-0.3.1:conf/logging/remote.json
 					"name": "stdout",
 					"type": "Console",
 					"PatternLayout": {
