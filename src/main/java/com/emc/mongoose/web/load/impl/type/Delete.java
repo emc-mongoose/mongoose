@@ -15,6 +15,7 @@ import com.emc.mongoose.util.logging.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.Closeable;
 import java.io.IOException;
 /**
  Created by kurila on 06.05.14.
@@ -33,16 +34,11 @@ implements WSLoadExecutor<T> {
 		super(runTimeConfig, addrs, sharedReqConf, maxCount, threadsPerNode, listFile);
 	}
 	//
-	//
 	@Override
-	protected final void initClient(final String addrs[], final RequestConfig<T> reqConf) {
-		final WSRequestConfig<T> wsReqConf = (WSRequestConfig<T>) reqConf;
-		wsReqConf.setClient(
-			WSLoadHelper.initClient(
-				addrs.length * threadsPerNode, // total thread/connections count per load
-				(int) runTimeConfig.getDataPageSize(),
-				wsReqConf
-			)
+	protected final Closeable initClient(final String addrs[], final RequestConfig<T> reqConf) {
+		return WSLoadHelper.initClient(
+			addrs.length * threadsPerNode, // total thread/connections count per load
+			(int) runTimeConfig.getDataPageSize(), (WSRequestConfig<T>) reqConf
 		);
 	}
 	//

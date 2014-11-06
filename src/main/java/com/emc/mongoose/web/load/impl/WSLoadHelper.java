@@ -62,6 +62,8 @@ public class WSLoadHelper {
 			httpClientBuilder.disableAutomaticRetries();
 		}
 		//
+		final CloseableHttpClient httpClient = httpClientBuilder.build();
+		reqConf.setClient(httpClient);
 		return httpClientBuilder.build();
 	}
 	//
