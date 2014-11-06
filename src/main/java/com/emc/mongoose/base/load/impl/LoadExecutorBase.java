@@ -285,26 +285,28 @@ implements LoadExecutor<T> {
 					nextNode.submit(null); // poison
 				}
 			}
-		} else {
+		} else if(isAlive()) {
+			final StorageNodeExecutor<T> nodeExecutor = nodes[(int) submitExecutor.getTaskCount() % nodes.length];
 			final SubmitDataItemTask<T, StorageNodeExecutor<T>>
-				submitTask = new SubmitDataItemTask<>(
-				dataItem, nodes[(int) submitExecutor.getTaskCount() % nodes.length]
-			);
+				submitTask = new SubmitDataItemTask<>(dataItem, nodeExecutor);
 			boolean flagSubmSucc = false;
 			int rejectCount = 0;
-			do {
+			while(
+				!flagSubmSucc && rejectCount < retryCountMax &&
+				!submitExecutor.isShutdown() && !nodeExecutor.isShutdown()
+			) {
 				try {
 					submitExecutor.submit(submitTask);
 					flagSubmSucc = true;
 				} catch(final RejectedExecutionException e) {
-					rejectCount ++;
+					rejectCount++;
 					try {
 						Thread.sleep(rejectCount * retryDelayMilliSec);
 					} catch(final InterruptedException ee) {
 						break;
 					}
 				}
-			} while(!flagSubmSucc && rejectCount < retryCountMax && !submitExecutor.isShutdown());
+			}
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

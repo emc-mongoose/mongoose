@@ -59,6 +59,8 @@ implements StorageNodeExecutor<T> {
 	private final RunTimeConfig runTimeConfig;
 	private final Request.Type reqType;
 	//
+	private final int retryDelayMilliSec, retryCountMax;
+	//
 	protected StorageNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
 		final int threadsPerNode, final RequestConfig<T> localReqConf,
@@ -73,6 +75,8 @@ implements StorageNodeExecutor<T> {
 		);
 		//
 		this.runTimeConfig = runTimeConfig;
+		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
+		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		this.localReqConf = localReqConf;
 		reqType = localReqConf.getLoadType();
 		//
@@ -146,11 +150,8 @@ implements StorageNodeExecutor<T> {
 		}
 		//
 		boolean passed = false;
-		int
-			rejectCount = 0,
-			retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec(),
-			retryCountMax = runTimeConfig.getRunRetryCountMax();
-		do {
+		int rejectCount = 0;
+		while(!passed && rejectCount < retryCountMax && !isShutdown()) {
 			try {
 				super.submit(request);
 				passed = true;
@@ -162,7 +163,7 @@ implements StorageNodeExecutor<T> {
 					break;
 				}
 			}
-		} while(!passed && rejectCount < retryCountMax && !isShutdown());
+		}
 		//
 		if(dataItem != null) {
 			if(passed) {

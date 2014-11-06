@@ -2,7 +2,6 @@ package com.emc.mongoose.web.load.impl;
 //
 import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.base.load.StorageNodeExecutor;
-import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
