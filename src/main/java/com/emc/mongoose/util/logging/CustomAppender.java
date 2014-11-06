@@ -1,5 +1,6 @@
 package com.emc.mongoose.util.logging;
 //
+import com.emc.mongoose.util.threading.WorkerFactory;
 import com.emc.mongoose.web.ui.websockets.interfaces.WebSocketLogListener;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Filter;
@@ -11,6 +12,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.SerializedLayout;
+import org.apache.logging.log4j.message.MapMessage;
 //
 import java.io.Serializable;
 import java.util.*;

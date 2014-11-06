@@ -1,7 +1,6 @@
 package com.emc.mongoose.base.data.impl;
 //
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -31,7 +30,11 @@ public class UniformData
 extends ByteArrayInputStream
 implements DataItem {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static volatile Logger LOG = LogManager.getRootLogger();
+	public static void setLogger(final Logger log) {
+		LOG = log;
+	}
+	//
 	private final static String
 		FMT_META_INFO = "%x" + RunTimeConfig.LIST_SEP + "%x",
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",
@@ -53,7 +56,7 @@ implements DataItem {
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
 	//
-	public final static int MAX_PAGE_SIZE = (int) Main.RUN_TIME_CONFIG.getDataPageSize();
+	public final int maxPageSize = (int) Main.RUN_TIME_CONFIG.getDataPageSize();
 	protected long offset = 0;
 	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,7 +215,7 @@ implements DataItem {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
 		}
-		final byte buff[] = new byte[size < MAX_PAGE_SIZE ? (int) size : MAX_PAGE_SIZE];
+		final byte buff[] = new byte[size < maxPageSize ? (int) size : maxPageSize];
 		final int
 			countPages = (int) size / buff.length,
 			countTailBytes = (int) size % buff.length;
@@ -250,7 +253,7 @@ implements DataItem {
 		//
 		boolean contentEquals = true;
 		final int
-			pageSize = (int) (rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE),
+			pageSize = (int) (rangeLength < maxPageSize ? rangeLength : maxPageSize),
 			countPages = (int) rangeLength / pageSize,
 			countTailBytes = (int) rangeLength % pageSize;
 		final byte

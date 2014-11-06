@@ -1,5 +1,6 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -16,6 +17,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.tools.ant.taskdefs.email.Message;
 //
 import java.io.IOException;
 import java.util.Calendar;
@@ -28,7 +30,10 @@ import java.util.TimeZone;
 public class Bucket<T extends WSObject>
 implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static volatile Logger LOG = LogManager.getLogger();
+	public static void setLogger(final Logger log) {
+		LOG = log;
+	}
 	//
 	final RequestConfig reqConf;
 	final String name;

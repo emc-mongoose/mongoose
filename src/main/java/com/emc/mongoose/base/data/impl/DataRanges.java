@@ -29,7 +29,10 @@ public class DataRanges
 extends UniformData
 implements AppendableDataItem, UpdatableDataItem {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static volatile Logger LOG = LogManager.getRootLogger();
+	public static void setLogger(final Logger log) {
+		LOG = log;
+	}
 	//
 	private final static char LAYER_MASK_SEP = '/';
 	//
@@ -370,8 +373,8 @@ implements AppendableDataItem, UpdatableDataItem {
 					size += pendingAugmentSize;
 					// redirect the tail's data to the output
 					final byte buff[] = new byte[
-						pendingAugmentSize < MAX_PAGE_SIZE ?
-							(int) pendingAugmentSize : MAX_PAGE_SIZE
+						pendingAugmentSize < maxPageSize ?
+							(int) pendingAugmentSize : maxPageSize
 						];
 					final int
 						countPages = (int) pendingAugmentSize / buff.length,

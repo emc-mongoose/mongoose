@@ -6,15 +6,17 @@ import com.emc.mongoose.base.load.impl.LoadExecutorBase;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 /**
  Created by kurila on 20.10.14.
  */
 public abstract class ReadLoadBase<T extends DataItem>
 extends LoadExecutorBase<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private final Logger log;
 	//
 	public final boolean verifyContentFlag;
 	//
@@ -24,7 +26,8 @@ extends LoadExecutorBase<T> {
 		final int threadsPerNode, final String listFile
 	) {
 		super(runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, listFile);
+		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		verifyContentFlag = runTimeConfig.getReadVerifyContent();
-		LOG.info(Markers.MSG, "Verify data integrity during read: {}", verifyContentFlag);
+		log.info(Markers.MSG, "Verify data integrity during read: {}", verifyContentFlag);
 	}
 }

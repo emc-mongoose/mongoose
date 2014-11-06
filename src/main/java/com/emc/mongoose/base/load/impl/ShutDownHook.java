@@ -4,6 +4,7 @@ import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,7 +16,10 @@ Register shutdown hook which should perform correct server-side shutdown even if
 */
 public final class ShutDownHook {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static volatile Logger LOG = LogManager.getLogger();
+	public static void setLogger(final Logger log) {
+		LOG = log;
+	}
 	private ShutDownHook() {}
 	//
 	private static void failWithCauseAndForce(final String cause) {

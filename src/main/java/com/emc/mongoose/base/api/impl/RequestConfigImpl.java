@@ -8,6 +8,7 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.logging.log4j.LogManager;
@@ -23,7 +24,7 @@ import java.io.ObjectOutput;
 public class RequestConfigImpl<T extends DataItem>
 implements RequestConfig<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	protected Logger log = LogManager.getLogger(new MessageFactoryImpl(Main.RUN_TIME_CONFIG));
 	//
 	protected String api, secret, userName;
 	protected Request.Type loadType;
@@ -88,7 +89,7 @@ implements RequestConfig<T> {
 	}
 	@Override
 	public RequestConfigImpl<T> setLoadType(final Request.Type loadType) {
-		LOG.trace(Markers.MSG, "Setting load type {}", loadType);
+		log.trace(Markers.MSG, "Setting load type {}", loadType);
 		this.loadType = loadType;
 		return this;
 	}
@@ -100,7 +101,7 @@ implements RequestConfig<T> {
 	@Override
 	public RequestConfigImpl<T> setPort(final int port)
 	throws IllegalArgumentException {
-		LOG.trace(Markers.MSG, "Using storage port: {}", port);
+		log.trace(Markers.MSG, "Using storage port: {}", port);
 		if(port>0 || port<0x10000) {
 			uriBuilder.setPort(port);
 		} else {
@@ -163,6 +164,9 @@ implements RequestConfig<T> {
 	@Override
 	public RequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
+		//
+		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
+		//
 		final String api = runTimeConfig.getStorageApi();
 		setAPI(api);
 		setPort(this.runTimeConfig.getApiPort(api));
@@ -189,21 +193,21 @@ implements RequestConfig<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		setAPI(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got API {}", api);
+		log.trace(Markers.MSG, "Got API {}", api);
 		setAddr(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got address {}", uriBuilder.getHost());
+		log.trace(Markers.MSG, "Got address {}", uriBuilder.getHost());
 		setLoadType(Request.Type.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got load type {}", loadType);
+		log.trace(Markers.MSG, "Got load type {}", loadType);
 		setPort(in.readInt());
-		LOG.trace(Markers.MSG, "Got port {}", uriBuilder.getPort());
+		log.trace(Markers.MSG, "Got port {}", uriBuilder.getPort());
 		setUserName(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got user name {}", userName);
+		log.trace(Markers.MSG, "Got user name {}", userName);
 		setSecret(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got secret {}", secret);
+		log.trace(Markers.MSG, "Got secret {}", secret);
 		setDataSource((DataSource<T>) in.readObject());
-		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
+		log.trace(Markers.MSG, "Got data source {}", dataSrc);
 		setRetries(Boolean.class.cast(in.readBoolean()));
-		LOG.trace(Markers.MSG, "Got retry flag {}", retryFlag);
+		log.trace(Markers.MSG, "Got retry flag {}", retryFlag);
 	}
 	//
 	@Override

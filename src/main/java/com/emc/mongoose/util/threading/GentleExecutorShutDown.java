@@ -2,6 +2,7 @@ package com.emc.mongoose.util.threading;
 //
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 public final class GentleExecutorShutDown
 implements Runnable {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private final Logger log;
 	private final static String
 		MSG_INTERRUPTED = "Interrupted externally, forcing the executor shutdown",
 		MSG_FMT_DROPPED = "Dropped {} tasks",
@@ -28,6 +29,8 @@ implements Runnable {
 	) {
 		this.executor = executor;
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
+		//
+		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 	}
 	//
 	@Override
@@ -41,9 +44,9 @@ implements Runnable {
 			do {
 				submQueueSize = submQueue.size();
 				submExecActiveThreads = executor.getActiveCount();
-				LOG.trace(
-					Markers.MSG, MSG_FMT_STATUS,
-					submQueueSize, submExecActiveThreads, submExecCoreThreads
+				log.trace(
+						Markers.MSG, MSG_FMT_STATUS,
+						submQueueSize, submExecActiveThreads, submExecCoreThreads
 				);
 			} while(
 				(submQueueSize > 0 || submExecCoreThreads == submExecActiveThreads)
@@ -53,12 +56,12 @@ implements Runnable {
 				!executor.awaitTermination(retryDelayMilliSec, TimeUnit.MILLISECONDS)
 			);
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, MSG_INTERRUPTED);
+			log.debug(Markers.MSG, MSG_INTERRUPTED);
 		}
 		//
 		final int droppedTaskCount = executor.shutdownNow().size();
 		if(droppedTaskCount > 0) {
-			LOG.debug(Markers.MSG, MSG_FMT_DROPPED, droppedTaskCount);
+			log.debug(Markers.MSG, MSG_FMT_DROPPED, droppedTaskCount);
 		}
 	}
 }

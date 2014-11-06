@@ -16,6 +16,7 @@ import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
 import com.emc.mongoose.util.threading.GentleExecutorShutDown;
@@ -48,7 +49,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 /**
@@ -57,7 +57,7 @@ import java.util.concurrent.TimeUnit;
 public class BasicLoadClient<T extends DataItem>
 extends Thread
 implements LoadClient<T> {
-	private final static Logger LOG = LogManager.getLogger();
+	private final Logger log;
 	//
 	private final Map<String, LoadSvc<T>> remoteLoadMap;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -131,6 +131,7 @@ implements LoadClient<T> {
 	) {
 		//
 		this.runTimeConfig = runTimeConfig;
+		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
@@ -150,9 +151,9 @@ implements LoadClient<T> {
 			this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 			setName(LoadSvc.class.cast(remoteLoads[0]).getName()+'x'+remoteLoads.length);
 		} catch(final NoSuchElementException | NullPointerException e) {
-			LOG.error(Markers.ERR, "No remote load instances", e);
+			log.error(Markers.ERR, "No remote load instances", e);
 		} catch(final IOException e) {
-			LOG.error(Markers.ERR, "Looks like connectivity failure", e);
+			log.error(Markers.ERR, "Looks like connectivity failure", e);
 		}
 		////////////////////////////////////////////////////////////////////////////////////////////
 		mBeanSrvConnMap = new HashMap<>();
@@ -161,7 +162,7 @@ implements LoadClient<T> {
 				mBeanSrvConnMap.put(addr, remoteJMXConnMap.get(addr).getMBeanServerConnection());
 			} catch(final IOException e) {
 				ExceptionHandler.trace(
-					LOG, Level.ERROR, e,
+						log, Level.ERROR, e,
 					String.format("Failed to obtain MBean server connection for %s", addr)
 				);
 			}
@@ -171,10 +172,10 @@ implements LoadClient<T> {
 			DEFAULT_DOMAIN, METRIC_NAME_SUCC, ATTR_COUNT
 		);
 		metricByteCount = registerJmxGaugeSum(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_COUNT
+				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_COUNT
 		);
 		metricBWMean = registerJmxGaugeSumDouble(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_RATE_MEAN
+				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_RATE_MEAN
 		);
 		metricBW1Min = registerJmxGaugeSumDouble(
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_RATE_1MIN
@@ -198,7 +199,7 @@ implements LoadClient<T> {
 		);
 		taskGetCountNanoSec = new GetValueTask<>(
 			registerJmxGaugeSum(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_COUNT
+					DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_COUNT
 			)
 		);
 		taskGetCountBytes = new GetValueTask<>(metricByteCount);
@@ -209,29 +210,29 @@ implements LoadClient<T> {
 		);
 		taskGetMaxDur = new GetValueTask<>(
 			registerJmxGaugeMaxLong(
-				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MAX
+					DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MAX
 			)
 		);
 		taskGetTPMean = new GetValueTask<>(
 			metrics.register(
-				MetricRegistry.name(getName(), METRIC_NAME_TP + "." + ATTR_RATE_MEAN),
-				new Gauge<Double>() {
-					@Override
-					public final Double getValue() {
-						double x = 0, y = 0;
-						try {
-							x = mgmtConnExecutor.submit(taskGetBWMean).get();
-							y = mgmtConnExecutor.submit(taskGetCountSucc).get();
-							x *= y;
-							y = mgmtConnExecutor.submit(taskGetCountBytes).get();
-						} catch(final InterruptedException | RejectedExecutionException | ExecutionException e) {
-							ExceptionHandler.trace(
-								LOG, Level.DEBUG, e, "Metric value fetching failed"
-							);
+					MetricRegistry.name(getName(), METRIC_NAME_TP + "." + ATTR_RATE_MEAN),
+					new Gauge<Double>() {
+						@Override
+						public final Double getValue() {
+							double x = 0, y = 0;
+							try {
+								x = mgmtConnExecutor.submit(taskGetBWMean).get();
+								y = mgmtConnExecutor.submit(taskGetCountSucc).get();
+								x *= y;
+								y = mgmtConnExecutor.submit(taskGetCountBytes).get();
+							} catch (final InterruptedException | RejectedExecutionException | ExecutionException e) {
+								ExceptionHandler.trace(
+										log, Level.DEBUG, e, "Metric value fetching failed"
+								);
+							}
+							return y == 0 ? 0 : x / y;
 						}
-						return y==0 ? 0 : x / y;
 					}
-				}
 			)
 		);
 		taskGetTP1Min = new GetValueTask<>(
@@ -248,7 +249,7 @@ implements LoadClient<T> {
 							y = mgmtConnExecutor.submit(taskGetCountBytes).get();
 						} catch(final InterruptedException | RejectedExecutionException | ExecutionException e) {
 							ExceptionHandler.trace(
-								LOG, Level.DEBUG, e, "Metric value fetching failed"
+									log, Level.DEBUG, e, "Metric value fetching failed"
 							);
 						}
 						return y==0 ? 0 : x / y;
@@ -270,7 +271,7 @@ implements LoadClient<T> {
 							y = mgmtConnExecutor.submit(taskGetCountBytes).get();
 						} catch(final InterruptedException | RejectedExecutionException | ExecutionException e) {
 							ExceptionHandler.trace(
-								LOG, Level.DEBUG, e, "Metric value fetching failed"
+									log, Level.DEBUG, e, "Metric value fetching failed"
 							);
 						}
 						return y==0 ? 0 : x / y;
@@ -292,7 +293,7 @@ implements LoadClient<T> {
 							y = mgmtConnExecutor.submit(taskGetCountBytes).get();
 						} catch(final InterruptedException | RejectedExecutionException | ExecutionException e) {
 							ExceptionHandler.trace(
-								LOG, Level.DEBUG, e, "Metric value fetching failed"
+									log, Level.DEBUG, e, "Metric value fetching failed"
 							);
 						}
 						return y==0 ? 0 : x / y;
@@ -343,18 +344,18 @@ implements LoadClient<T> {
 						future = super.submit(task);
 						pass = true;
 					} catch(final RejectedExecutionException e) {
-						LOG.debug(Markers.ERR, "Task rejected {} times", tryCount);
+						log.debug(Markers.ERR, "Task rejected {} times", tryCount);
 						tryCount ++;
 						try {
 							Thread.sleep(retryDelayMilliSec);
 						} catch(final InterruptedException ee) {
-							LOG.debug(Markers.ERR, "Rejection handling interrupted");
+							log.debug(Markers.ERR, "Rejection handling interrupted");
 							break;
 						}
 					}
 				} while(!pass && tryCount < retryCountMax);
 				if(!pass) {
-					LOG.warn(Markers.ERR, "Failed to handle the rejected task");
+					log.warn(Markers.ERR, "Failed to handle the rejected task");
 				}
 				return future;
 			}
@@ -387,8 +388,8 @@ implements LoadClient<T> {
 						try {
 							objectName = new ObjectName(domain, KEY_NAME, fullMBeanName);
 						} catch(final MalformedObjectNameException e) {
-							LOG.warn(
-								Markers.ERR, "Invalid object name \"{}\": {}", mBeanName, e.toString()
+							log.warn(
+									Markers.ERR, "Invalid object name \"{}\": {}", mBeanName, e.toString()
 							);
 						}
 						//
@@ -396,13 +397,13 @@ implements LoadClient<T> {
 							try {
 								value += (long) nextMBeanConn.getAttribute(objectName, attrName);
 							} catch(final AttributeNotFoundException e) {
-								LOG.warn(
-									Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
-									attrName, objectName.getCanonicalName(), addr
+								log.warn(
+										Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
+										attrName, objectName.getCanonicalName(), addr
 								);
 							} catch(final IOException|MBeanException |InstanceNotFoundException |ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.DEBUG, e,
+										log, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName() + "." + attrName, addr
@@ -441,9 +442,9 @@ implements LoadClient<T> {
 						try {
 							objectName = new ObjectName(domain, KEY_NAME, fullMBeanName);
 						} catch(final MalformedObjectNameException e) {
-							LOG.warn(
-								Markers.ERR, "Invalid object name \"{}\": {}",
-								mBeanName, e.toString()
+							log.warn(
+									Markers.ERR, "Invalid object name \"{}\": {}",
+									mBeanName, e.toString()
 							);
 						}
 						//
@@ -454,13 +455,13 @@ implements LoadClient<T> {
 									value = t;
 								}
 							} catch(final AttributeNotFoundException e) {
-								LOG.warn(
-									Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
-									attrName, objectName.getCanonicalName(), addr
+								log.warn(
+										Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
+										attrName, objectName.getCanonicalName(), addr
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.DEBUG, e,
+										log, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName() + "." + attrName, addr
@@ -499,9 +500,9 @@ implements LoadClient<T> {
 						try {
 							objectName = new ObjectName(domain, KEY_NAME, fullMBeanName);
 						} catch(final MalformedObjectNameException e) {
-							LOG.warn(
-								Markers.ERR, "Invalid object name \"{}\": {}",
-								mBeanName, e.toString()
+							log.warn(
+									Markers.ERR, "Invalid object name \"{}\": {}",
+									mBeanName, e.toString()
 							);
 						}
 						//
@@ -512,13 +513,13 @@ implements LoadClient<T> {
 									value = t;
 								}
 							} catch(final AttributeNotFoundException e) {
-								LOG.warn(
-									Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
-									attrName, objectName.getCanonicalName(), addr
+								log.warn(
+										Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
+										attrName, objectName.getCanonicalName(), addr
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.DEBUG, e,
+										log, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName()+"."+attrName, addr
@@ -557,9 +558,9 @@ implements LoadClient<T> {
 						try {
 							objectName = new ObjectName(domain, KEY_NAME, fullMBeanName);
 						} catch(final MalformedObjectNameException e) {
-							LOG.warn(
-								Markers.ERR, "Invalid object name \"{}\": {}",
-								mBeanName, e.toString()
+							log.warn(
+									Markers.ERR, "Invalid object name \"{}\": {}",
+									mBeanName, e.toString()
 							);
 						}
 						//
@@ -567,13 +568,13 @@ implements LoadClient<T> {
 							try {
 								value += (double) nextMBeanConn.getAttribute(objectName, attrName);
 							} catch(final AttributeNotFoundException e) {
-								LOG.warn(
-									Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
-									attrName, objectName.getCanonicalName(), addr
+								log.warn(
+										Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
+										attrName, objectName.getCanonicalName(), addr
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.DEBUG, e,
+										log, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName() + "." + attrName, addr
@@ -612,9 +613,9 @@ implements LoadClient<T> {
 						try {
 							objectName = new ObjectName(domain, KEY_NAME, fullMBeanName);
 						} catch(final MalformedObjectNameException e) {
-							LOG.warn(
-								Markers.ERR, "Invalid object name \"{}\": {}",
-								mBeanName, e.toString()
+							log.warn(
+									Markers.ERR, "Invalid object name \"{}\": {}",
+									mBeanName, e.toString()
 							);
 						}
 						//
@@ -622,13 +623,13 @@ implements LoadClient<T> {
 							try {
 								value += (double) nextMBeanConn.getAttribute(objectName, attrName);
 							} catch(final AttributeNotFoundException e) {
-								LOG.warn(
-									Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
-									attrName, objectName.getCanonicalName(), addr
+								log.warn(
+										Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
+										attrName, objectName.getCanonicalName(), addr
 								);
 							} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
 								ExceptionHandler.trace(
-									LOG, Level.DEBUG, e,
+										log, Level.DEBUG, e,
 									String.format(
 										FMT_MSG_FAIL_FETCH_VALUE,
 										objectName.getCanonicalName()+"."+attrName, addr
@@ -663,7 +664,7 @@ implements LoadClient<T> {
 					)
 				);
 			} catch(final RejectedExecutionException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "");
+				ExceptionHandler.trace(log, Level.DEBUG, e, "");
 			}
 		}
 		//
@@ -673,12 +674,12 @@ implements LoadClient<T> {
 			try {
 				nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
 			} catch(final ExecutionException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
+				ExceptionHandler.trace(log, Level.WARN, e, "Failed to fetch the metainfo frame");
 			} catch(final InterruptedException e) {
 				try {
 					nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
 				} catch(final InterruptedException|ExecutionException ee) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
+					ExceptionHandler.trace(log, Level.WARN, e, "Failed to fetch the metainfo frame");
 				}
 			}
 			//
@@ -721,35 +722,35 @@ implements LoadClient<T> {
 			medDur = mgmtConnExecutor.submit(taskGetDurMed);
 			avgDur = mgmtConnExecutor.submit(taskGetDurAvg);
 		} catch(final RejectedExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Log remote metrics failed, skipping");
+			ExceptionHandler.trace(log, Level.WARN, e, "Log remote metrics failed, skipping");
 		}
 		//
 		try {
-			LOG.info(
-				logMarker,
-				MSG_FMT_METRICS.format(
-					new Object[] {
-						//
-						countReqSucc.get(),
-						submitExecutor.getQueue().size() + submitExecutor.getActiveCount(),
-						countReqFail.get(),
-						//
-						(double) minDur.get() / BILLION,
-						medDur.get() / BILLION,
-						avgDur.get() / BILLION,
-						(double) maxDur.get() / BILLION,
-						//
-						meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
-						//
-						meanBW.get() / MIB,
-						oneMinBW.get() / MIB, fiveMinBW.get() / MIB, fifteenMinBW.get() / MIB
-					}
-				)
+			log.info(
+					logMarker,
+					MSG_FMT_METRICS.format(
+							new Object[]{
+									//
+									countReqSucc.get(),
+									submitExecutor.getQueue().size() + submitExecutor.getActiveCount(),
+									countReqFail.get(),
+									//
+									(double) minDur.get() / BILLION,
+									medDur.get() / BILLION,
+									avgDur.get() / BILLION,
+									(double) maxDur.get() / BILLION,
+									//
+									meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
+									//
+									meanBW.get() / MIB,
+									oneMinBW.get() / MIB, fiveMinBW.get() / MIB, fifteenMinBW.get() / MIB
+							}
+					)
 			);
 		} catch(final ExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metrics");
+			ExceptionHandler.trace(log, Level.WARN, e, "Failed to fetch the metrics");
 		} catch(final InterruptedException | NullPointerException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Unexpected failure");
+			ExceptionHandler.trace(log, Level.DEBUG, e, "Unexpected failure");
 		}
 		//
 	}
@@ -761,12 +762,12 @@ implements LoadClient<T> {
 			nextLoadSvc = remoteLoadMap.get(addr);
 			try {
 				nextLoadSvc.start();
-				LOG.info(
-					Markers.MSG, "{} started bound to remote service @{}",
-					nextLoadSvc.getName(), addr
+				log.info(
+						Markers.MSG, "{} started bound to remote service @{}",
+						nextLoadSvc.getName(), addr
 				);
 			} catch(final IOException e) {
-				LOG.error(Markers.ERR, "Failed to start remote load @" + addr, e);
+				log.error(Markers.ERR, "Failed to start remote load @" + addr, e);
 			}
 		}
 		//
@@ -791,20 +792,20 @@ implements LoadClient<T> {
 				} catch(final InterruptedException e) {
 					break;
 				} catch(final NullPointerException e) {
-					LOG.debug(Markers.ERR, "Looks like the metrics getting task failed to be submitted");
+					log.debug(Markers.ERR, "Looks like the metrics getting task failed to be submitted");
 				}
 			} while(countDone < maxCount);
 		} catch(final ExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failure");
+			ExceptionHandler.trace(log, Level.DEBUG, e, "Failure");
 		}
 		//
 		interrupt();
-		LOG.debug(Markers.MSG, "Exiting the monitor thread");
+		log.debug(Markers.MSG, "Exiting the monitor thread");
 	}
 	//
 	@Override
 	public final void interrupt() {
-		LOG.debug(Markers.MSG, "Interrupting {}...", getName());
+		log.debug(Markers.MSG, "Interrupting {}...", getName());
 		//
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		final LinkedList<Thread> svcInterruptThreads = new LinkedList<>();
@@ -820,7 +821,7 @@ implements LoadClient<T> {
 			svcInterruptThreads.removeLast();
 		} catch(final InterruptedException e) {
 			ExceptionHandler.trace(
-				LOG, Level.DEBUG, e, "Interrupted while interrupting the submitter"
+					log, Level.DEBUG, e, "Interrupted while interrupting the submitter"
 			);
 		}
 		//
@@ -831,10 +832,10 @@ implements LoadClient<T> {
 					public final void run() {
 						try {
 							remoteLoadMap.get(addr).interrupt();
-							LOG.trace(Markers.MSG, "Interrupted remote service @ {}", addr);
+							log.trace(Markers.MSG, "Interrupted remote service @ {}", addr);
 						} catch(final IOException e) {
 							ExceptionHandler.trace(
-								LOG, Level.WARN, e,
+									log, Level.WARN, e,
 								"Failed to interrupt remote load service @ " + addr
 							);
 						}
@@ -847,14 +848,14 @@ implements LoadClient<T> {
 		for(final Thread svcInterruptThread: svcInterruptThreads) {
 			try {
 				svcInterruptThread.join(reqTimeOutMilliSec);
-				LOG.debug(Markers.MSG, "Finished: \"{}\"", svcInterruptThread);
+				log.debug(Markers.MSG, "Finished: \"{}\"", svcInterruptThread);
 			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
+				ExceptionHandler.trace(log, Level.DEBUG, e, "Interrupted");
 			}
 		}
 		//
 		super.interrupt();
-		LOG.debug(Markers.MSG, "Interrupted {}", getName());
+		log.debug(Markers.MSG, "Interrupted {}", getName());
 	}
 	//
 	@Override
@@ -868,9 +869,9 @@ implements LoadClient<T> {
 		LoadSvc<T> nextLoadSvc;
 		JMXConnector nextJMXConn = null;
 		//
-		synchronized(LOG) {
+		synchronized(log) {
 			if(!remoteLoadMap.isEmpty()) { // if have not been closed before
-				LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
+				log.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
 				logMetaInfoFrames();
 				logMetrics(Markers.PERF_SUM);
 			}
@@ -879,47 +880,47 @@ implements LoadClient<T> {
 		mgmtConnExecutor.shutdownNow();
 		metricsReporter.close();
 		//
-		LOG.debug(Markers.MSG, "Closing the remote services...");
+		log.debug(Markers.MSG, "Closing the remote services...");
 		for(final String addr: remoteLoadMap.keySet()) {
 			//
 			try {
 				nextLoadSvc = remoteLoadMap.get(addr);
-				LOG.debug(Markers.MSG, "Closing server instance @ {}...", addr);
+				log.debug(Markers.MSG, "Closing server instance @ {}...", addr);
 				nextLoadSvc.close();
-				LOG.info(Markers.MSG, "Server instance @ {} has been closed", addr);
+				log.info(Markers.MSG, "Server instance @ {} has been closed", addr);
 			} catch(final NoSuchElementException e) {
-				LOG.debug(Markers.ERR, "Looks like the remote load service is already shut down");
+				log.debug(Markers.ERR, "Looks like the remote load service is already shut down");
 			} catch(final IOException e) {
-				LOG.warn(Markers.ERR, "Failed to close remote load executor service");
-				LOG.trace(Markers.ERR, e.toString(), e.getCause());
+				log.warn(Markers.ERR, "Failed to close remote load executor service");
+				log.trace(Markers.ERR, e.toString(), e.getCause());
 			}
 			//
 			try {
 				nextJMXConn = remoteJMXConnMap.get(addr);
 				if(nextJMXConn!=null) {
 					nextJMXConn.close();
-					LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
+					log.debug(Markers.MSG, "JMX connection to {} closed", addr);
 				}
 			} catch(final NoSuchElementException e) {
-				LOG.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
+				log.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
 			} catch(final IOException e) {
-				LOG.warn(Markers.ERR, "Failed to close remote load JMX connection "+nextJMXConn);
-				LOG.trace(Markers.ERR, e.toString(), e.getCause());
+				log.warn(Markers.ERR, "Failed to close remote load JMX connection " + nextJMXConn);
+				log.trace(Markers.ERR, e.toString(), e.getCause());
 			}
 			//
 		}
-		LOG.debug(Markers.MSG, "Clear the servers map");
+		log.debug(Markers.MSG, "Clear the servers map");
 		remoteLoadMap.clear();
-		LOG.debug(Markers.MSG, "Closed {}", getName());
+		log.debug(Markers.MSG, "Closed {}", getName());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void submit(final T dataItem) {
 		if(maxCount > submitExecutor.getTaskCount()) {
 			if(dataItem == null) { // poison
-				LOG.trace(
-					Markers.MSG, "Got poison on #{}, invoking the soft interruption",
-					submitExecutor.getTaskCount()
+				log.trace(
+						Markers.MSG, "Got poison on #{}, invoking the soft interruption",
+						submitExecutor.getTaskCount()
 				);
 				maxCount = submitExecutor.getCompletedTaskCount();
 			} else {
@@ -947,7 +948,7 @@ implements LoadClient<T> {
 				} while(!passed && rejectCount < retryCountMax && !submitExecutor.isShutdown());
 			}
 		} else {
-			LOG.debug(Markers.MSG, "All {} tasks submitted", maxCount);
+			log.debug(Markers.MSG, "All {} tasks submitted", maxCount);
 			maxCount = submitExecutor.getTaskCount();
 			Thread.currentThread().interrupt(); // causes the producer interruption
 		}
@@ -969,21 +970,21 @@ implements LoadClient<T> {
 		try { // consumer is map of consumers
 			final LoadClient<T> loadClient = (LoadClient<T>) load;
 			final Map<String, LoadSvc<T>> consumeMap = loadClient.getRemoteLoadMap();
-			LOG.debug(Markers.MSG, "Consumer is LoadClient instance");
+			log.debug(Markers.MSG, "Consumer is LoadClient instance");
 			for(final String addr: consumeMap.keySet()) {
 				remoteLoadMap.get(addr).setConsumer(consumeMap.get(addr));
 			}
 		} catch(final ClassCastException e) {
 			try { // single consumer for all these producers
 				final LoadSvc loadSvc = LoadSvc.class.cast(load);
-				LOG.debug(Markers.MSG, "Consumer is RemoteLoad instance");
+				log.debug(Markers.MSG, "Consumer is RemoteLoad instance");
 				for(final String addr: remoteLoadMap.keySet()) {
 					remoteLoadMap.get(addr).setConsumer(loadSvc);
 				}
 			} catch(final ClassCastException ee) {
-				LOG.error(
-					Markers.ERR, "Unsupported consumer type: {}",
-					load.getClass().getCanonicalName()
+				log.error(
+						Markers.ERR, "Unsupported consumer type: {}",
+						load.getClass().getCanonicalName()
 				);
 			}
 		}
@@ -1000,7 +1001,7 @@ implements LoadClient<T> {
 		try {
 			producer = remoteLoadMap.entrySet().iterator().next().getValue().getProducer();
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to get remote producer");
+			ExceptionHandler.trace(log, Level.WARN, e, "Failed to get remote producer");
 		}
 		return producer;
 	}

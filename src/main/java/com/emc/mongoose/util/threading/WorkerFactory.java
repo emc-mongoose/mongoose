@@ -12,7 +12,7 @@ import java.util.concurrent.ThreadFactory;
 public class WorkerFactory
 implements ThreadFactory {
 	//
-	//private static final Logger LOG = LogManager.getLogger();
+	//private static final Logger log = LogManager.getLogger();
 	//
 
 	private final String threadNamePrefix;
@@ -21,7 +21,7 @@ implements ThreadFactory {
 	private final Map<String,String> context;
 	//
 	public WorkerFactory(final String threadNamePrefix, final Map<String,String> context) {
-		//LOG.trace(Markers.MSG, "New worker factory: \"{}\"", threadNamePrefix);
+		//log.trace(Markers.MSG, "New worker factory: \"{}\"", threadNamePrefix);
 		this.threadNamePrefix = threadNamePrefix;
 		this.threadNumber = 0;
 		this.context = context;
@@ -30,7 +30,7 @@ implements ThreadFactory {
 	//
 	@Override @SuppressWarnings("NullableProblems")
 	public Thread newThread(final Runnable runnable) {
-		//LOG.trace(LogMark.MSG, "Handling new task \"{}\"", runnable.toString());
+		//log.trace(LogMark.MSG, "Handling new task \"{}\"", runnable.toString());
 		threadNumber ++;
 		context.put(KEY_THREAD_NUM,Integer.toString(threadNumber));
 		return new WorkerThread(

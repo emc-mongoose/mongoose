@@ -10,6 +10,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.commons.configuration.ConversionException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -24,9 +25,8 @@ import java.util.NoSuchElementException;
 public abstract class LoadBuilderBase<T extends DataItem, U extends LoadExecutor<T>>
 implements LoadBuilder<T, U> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	//
 	protected RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
+	protected Logger log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 	protected RequestConfig<T> reqConf;
 	protected Request.Type loadType;
 	protected long maxCount, minObjSize, maxObjSize;
@@ -40,7 +40,7 @@ implements LoadBuilder<T, U> {
 			reqConf = getDefaultRequestConfig();
 			setProperties(runTimeConfig);
 		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to apply configuration");
+			ExceptionHandler.trace(log, Level.ERROR, e, "Failed to apply configuration");
 		}
 	}
 	protected abstract RequestConfig<T> getDefaultRequestConfig();
@@ -49,6 +49,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig)
 	throws IllegalStateException {
 		this.runTimeConfig = runTimeConfig;
+		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		if(reqConf != null) {
 			reqConf.setProperties(runTimeConfig);
 		} else {
@@ -61,9 +62,9 @@ implements LoadBuilder<T, U> {
 			try {
 				setThreadsPerNodeFor(runTimeConfig.getShort(paramName), loadType);
 			} catch(final NoSuchElementException e) {
-				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+				log.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 			} catch(final IllegalArgumentException e) {
-				LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+				log.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 			}
 		}
 		//
@@ -71,61 +72,61 @@ implements LoadBuilder<T, U> {
 		try {
 			setMaxCount(runTimeConfig.getDataCount());
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			log.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+			log.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
 		paramName = "data.size.min";
 		try {
 			setMinObjSize(runTimeConfig.getSizeBytes(paramName));
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			log.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+			log.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
 		paramName = "data.size.max";
 		try {
 			setMaxObjSize(runTimeConfig.getSizeBytes(paramName));
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			log.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+			log.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
 		paramName = "load.update.per.item";
 		try {
 			setUpdatesPerItem(runTimeConfig.getInt(paramName));
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			log.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+			log.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
 		paramName = "storage.addrs";
 		try {
 			setDataNodeAddrs(runTimeConfig.getStorageAddrs());
 		} catch(final NoSuchElementException|ConversionException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			log.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+			log.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
 		paramName = "api."+ reqConf.getAPI().toLowerCase()+".port";
 		try {
 			reqConf.setPort(runTimeConfig.getApiPort(reqConf.getAPI().toLowerCase()));
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			log.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
 		//
 		paramName = "data.src.fpath";
 		try {
 			setInputFile(runTimeConfig.getString(paramName));
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			log.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+			log.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
 		return this;
@@ -139,7 +140,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 		throws ClassCastException {
-		LOG.debug(Markers.MSG, "Set request builder: {}", reqConf.toString());
+		log.debug(Markers.MSG, "Set request builder: {}", reqConf.toString());
 		this.reqConf = reqConf;
 		return this;
 	}
@@ -147,7 +148,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setLoadType(final Request.Type loadType)
 		throws IllegalStateException {
-		LOG.debug(Markers.MSG, "Set load type: {}", loadType);
+		log.debug(Markers.MSG, "Set load type: {}", loadType);
 		if(reqConf==null) {
 			throw new IllegalStateException(
 				"Request builder should be specified before setting an I/O loadType"
@@ -162,7 +163,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setMaxCount(final long maxCount)
 		throws IllegalArgumentException {
-		LOG.debug(Markers.MSG, "Set max data item count: {}", maxCount);
+		log.debug(Markers.MSG, "Set max data item count: {}", maxCount);
 		if(maxCount < 0) {
 			throw new IllegalArgumentException("Count should be >= 0");
 		}
@@ -178,9 +179,9 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setMinObjSize(final long minObjSize)
 		throws IllegalArgumentException {
-		LOG.debug(Markers.MSG, "Set min data item size: {}", RunTimeConfig.formatSize(minObjSize));
+		log.debug(Markers.MSG, "Set min data item size: {}", RunTimeConfig.formatSize(minObjSize));
 		if(minObjSize > 0) {
-			LOG.debug(Markers.MSG, "Using min object size: {}", RunTimeConfig.formatSize(minObjSize));
+			log.debug(Markers.MSG, "Using min object size: {}", RunTimeConfig.formatSize(minObjSize));
 		} else {
 			throw new IllegalArgumentException("Min object size should not be less than min");
 		}
@@ -191,9 +192,9 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setMaxObjSize(final long maxObjSize)
 		throws IllegalArgumentException {
-		LOG.debug(Markers.MSG, "Set max data item size: {}", RunTimeConfig.formatSize(maxObjSize));
+		log.debug(Markers.MSG, "Set max data item size: {}", RunTimeConfig.formatSize(maxObjSize));
 		if(maxObjSize > 0) {
-			LOG.debug(Markers.MSG, "Using max object size: {}", RunTimeConfig.formatSize(maxObjSize));
+			log.debug(Markers.MSG, "Using max object size: {}", RunTimeConfig.formatSize(maxObjSize));
 		} else {
 			throw new IllegalArgumentException("Max object size should not be less than min");
 		}
@@ -208,7 +209,7 @@ implements LoadBuilder<T, U> {
 		if(threadsPerNode<1) {
 			throw new IllegalArgumentException("Thread count should not be less than 1");
 		}
-		LOG.debug(Markers.MSG, "Set default thread count per node: {}", threadsPerNode);
+		log.debug(Markers.MSG, "Set default thread count per node: {}", threadsPerNode);
 		for(final Request.Type loadType: Request.Type.values()) {
 			threadsPerNodeMap.put(loadType, threadsPerNode);
 		}
@@ -222,9 +223,9 @@ implements LoadBuilder<T, U> {
 		if(threadsPerNode<1) {
 			throw new IllegalArgumentException("Thread count should not be less than 1");
 		}
-		LOG.debug(
-			Markers.MSG, "Set thread count per node {} for load type \"{}\"",
-			threadsPerNode, loadType
+		log.debug(
+				Markers.MSG, "Set thread count per node {} for load type \"{}\"",
+				threadsPerNode, loadType
 		);
 		threadsPerNodeMap.put(loadType, threadsPerNode);
 		return this;
@@ -234,7 +235,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilder<T, U> setDataNodeAddrs(
 		final String[] dataNodeAddrs
 	) throws IllegalArgumentException {
-		LOG.debug(Markers.MSG, "Set storage nodes: {}", Arrays.toString(dataNodeAddrs));
+		log.debug(Markers.MSG, "Set storage nodes: {}", Arrays.toString(dataNodeAddrs));
 		if(dataNodeAddrs==null || dataNodeAddrs.length==0) {
 			throw new IllegalArgumentException("Data node address list should not be empty");
 		}
@@ -244,7 +245,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setInputFile(final String listFile) {
-		LOG.debug(Markers.MSG, "Set consuming data items from file: {}", listFile);
+		log.debug(Markers.MSG, "Set consuming data items from file: {}", listFile);
 		this.listFile = listFile;
 		return this;
 	}
@@ -252,7 +253,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setUpdatesPerItem(final int count)
 		throws IllegalArgumentException {
-		LOG.debug(Markers.MSG, "Set updates count per data item: {}", count);
+		log.debug(Markers.MSG, "Set updates count per data item: {}", count);
 		if(count<0) {
 			throw new IllegalArgumentException("Update count per item should not be less than 0");
 		}
@@ -264,7 +265,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilderBase<T, U> clone()
 	throws CloneNotSupportedException {
 		final LoadBuilderBase<T, U> lb = (LoadBuilderBase<T, U>) super.clone();
-		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
+		log.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
 		lb.reqConf = reqConf.clone();
 		lb.loadType = loadType;
 		lb.maxCount = maxCount;

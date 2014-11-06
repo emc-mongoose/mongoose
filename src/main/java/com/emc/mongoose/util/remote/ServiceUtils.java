@@ -36,7 +36,10 @@ import java.util.Map;
  */
 public final class ServiceUtils {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static volatile Logger LOG = LogManager.getRootLogger();
+	public static void setLogger(final Logger log) {
+		LOG = log;
+	}
 	//
 	public final static int PORT_RMI_CONTROL;
 	static {

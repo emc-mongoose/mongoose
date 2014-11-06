@@ -2,6 +2,7 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -28,7 +29,10 @@ public final class BucketProducer<T extends BasicWSObject>
 extends Thread
 implements Producer<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static volatile Logger LOG = LogManager.getLogger();
+	public static void setLogger(final Logger log) {
+		LOG = log;
+	}
 	//
 	private volatile Consumer<T> consumer = null;
 	private final Bucket<T> bucket;

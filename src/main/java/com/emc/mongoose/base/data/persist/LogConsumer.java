@@ -4,6 +4,7 @@ import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.http.annotation.ThreadSafe;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,7 +18,10 @@ import java.io.IOException;
 public class LogConsumer<T extends DataItem>
 implements Consumer<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static volatile Logger LOG = LogManager.getRootLogger();
+	public static void setLogger(final Logger log) {
+		LOG = log;
+	}
 	private long maxCount = Long.MAX_VALUE, count = 0;
 	//
 	@Override

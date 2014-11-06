@@ -1,6 +1,7 @@
 package com.emc.mongoose.util.persist;
 //
 import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.run.Main;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -10,6 +11,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.SerializedLayout;
+import org.apache.logging.log4j.message.MapMessage;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AnnotationConfiguration;
@@ -107,6 +109,11 @@ extends AbstractAppender{
 					break;
 				case PERF_TRACE:
 					//System.out.println(event.getContextMap().get(KEY_API) + " | " + event.getContextMap().get(KEY_LOAD_TYPE) + " | " + event.getContextMap().get(KEY_LOAD_NUM) + " | " + event.getContextMap().get(KEY_NODE_ADDR));
+					/*try {
+						MapMessage.class.cast(event.getMessage()).get(Main.KEY_RUN_ID)
+					} catch (final ClassCastException e) {
+
+					}*/
 					setLoad(event.getContextMap().get(KEY_API),
 							event.getContextMap().get(KEY_LOAD_TYPE),
 							event.getContextMap().get(KEY_LOAD_NUM));

@@ -2,6 +2,8 @@ package com.emc.mongoose.web.load.server.impl;
 //
 import com.emc.mongoose.base.load.impl.LoadExecutorBase;
 import com.emc.mongoose.object.load.server.ObjectLoadSvc;
+import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.impl.BasicLoadBuilder;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
@@ -21,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.Iterator;
 import java.util.Locale;
 /**
  Created by kurila on 30.05.14.
@@ -29,14 +32,23 @@ public class BasicLoadBuilderSvc<T extends WSObject, U extends WSLoadExecutor<T>
 extends BasicLoadBuilder<T, U>
 implements WSLoadBuilderSvc<T, U> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	//
-	private RunTimeConfig clientConfig = null;
+	protected Logger log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 	//
 	@Override
 	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
-		super.setProperties(clientConfig);
-		this.clientConfig = clientConfig;
+		// TODO merge client config to current run time config w/o "run.id" and "remote.*" properties
+		String key;
+		for(final Iterator<String> i = clientConfig.getKeys(); i.hasNext(); ) {
+			key = i.next();
+			if (Main.KEY_RUN_ID.equals(key) || key.startsWith("remote")) {
+				// ignore that
+			} else {
+				runTimeConfig.set(key, clientConfig.getString(key));
+			}
+		}
+		//
+		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
+		super.setProperties(runTimeConfig);
 		return this;
 	}
 	//
@@ -66,9 +78,9 @@ implements WSLoadBuilderSvc<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final U build()
 	throws IllegalStateException {
-		if(clientConfig== null) {
+		/*if(clientConfig == null) {
 			throw new IllegalStateException("Should upload properties to the server before instancing");
-		}
+		}*/
 		if(reqConf == null) {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
@@ -79,7 +91,7 @@ implements WSLoadBuilderSvc<T, U> {
 			try {
 				switch(loadType) {
 					case CREATE:
-						LOG.debug(Markers.MSG, "New create load");
+						log.debug(Markers.MSG, "New create load");
 						if(minObjSize > maxObjSize) {
 							throw new IllegalStateException(
 								"Min object size should be not more than max object size"
@@ -92,14 +104,14 @@ implements WSLoadBuilderSvc<T, U> {
 						);
 						break;
 					case READ:
-						LOG.debug(Markers.MSG, "New read load");
+						log.debug(Markers.MSG, "New read load");
 						loadSvc = new ReadSvc<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case UPDATE:
-						LOG.debug(Markers.MSG, "New update load");
+						log.debug(Markers.MSG, "New update load");
 						loadSvc = new UpdateSvc<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
@@ -107,14 +119,14 @@ implements WSLoadBuilderSvc<T, U> {
 						);
 						break;
 					case DELETE:
-						LOG.debug(Markers.MSG, "New delete load");
+						log.debug(Markers.MSG, "New delete load");
 						loadSvc = new DeleteSvc<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case APPEND:
-						LOG.debug(Markers.MSG, "New append load");
+						log.debug(Markers.MSG, "New append load");
 						loadSvc = new AppendSvc<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
@@ -142,10 +154,10 @@ implements WSLoadBuilderSvc<T, U> {
 	}*/
 	//
 	public final void start() {
-		LOG.debug(Markers.MSG, "Load builder service instance created");
+		log.debug(Markers.MSG, "Load builder service instance created");
 		/*final RemoteStub stub = */ServiceUtils.create(this);
-		/*LOG.debug(Markers.MSG, stub.toString());*/
-		LOG.info(Markers.MSG, "Server started and waiting for the requests");
+		/*log.debug(Markers.MSG, stub.toString());*/
+		log.info(Markers.MSG, "Server started and waiting for the requests");
 	}
 	//
 	@Override
