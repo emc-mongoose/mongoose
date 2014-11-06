@@ -218,4 +218,5 @@ implements RequestConfig<T> {
 	public void configureStorage() {
 		throw new IllegalStateException("Not implemented");
 	}
+	//
 }

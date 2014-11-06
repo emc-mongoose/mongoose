@@ -2,6 +2,7 @@ package com.emc.mongoose.web.load.impl;
 //
 import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.base.load.StorageNodeExecutor;
+import com.emc.mongoose.base.load.impl.LoadExecutorBase;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -19,6 +20,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 /**
@@ -27,6 +29,11 @@ import java.util.Map;
 public class WSLoadHelper {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
+	private final static String KEY_NODE_ADDR = "node.addr",
+								KEY_LOAD_NUM = "load.number",
+								KEY_LOAD_TYPE = "load.type",
+								KEY_API = "api";
 	//
 	public static CloseableHttpClient initClient(
 		final int totalThreadCount, final int dataPageSize, final WSRequestConfig reqConf
@@ -76,8 +83,15 @@ public class WSLoadHelper {
 		WSNodeExecutor nextNodeExecutor;
 		for(int i = 0; i < addrs.length; i ++) {
 			try {
+				//Add thread context
+				final Map<String,String> context = new HashMap<>();
+				context.put(KEY_NODE_ADDR, addrs[i]);
+				context.put(KEY_API, reqConf.getAPI());
+				context.put(KEY_LOAD_TYPE, reqConf.getLoadType().toString());
+				context.put(KEY_LOAD_NUM, String.valueOf(LoadExecutorBase.getLastInstanceNum()));
+				//
 				nextNodeExecutor = new BasicNodeExecutor<>(
-					runTimeConfig, addrs[i], threadsPerNode, reqConf, parentMetrics, name
+					runTimeConfig, addrs[i], threadsPerNode, reqConf, parentMetrics, name, context
 				);
 				nodes[i] = nextNodeExecutor;
 			} catch(final CloneNotSupportedException e) {
