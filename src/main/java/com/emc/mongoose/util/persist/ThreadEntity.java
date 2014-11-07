@@ -1,5 +1,5 @@
 package com.emc.mongoose.util.persist;
-
+//
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -14,9 +14,9 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
-
+//
 import static javax.persistence.GenerationType.IDENTITY;
-
+//
 /**
  * Created by olga on 28.10.14.
  */
@@ -25,7 +25,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 		@UniqueConstraint(columnNames = "load"),
 		@UniqueConstraint(columnNames = "node"),
 		@UniqueConstraint(columnNames = "num")})
-public class ThreadEntity
+public final class ThreadEntity
 implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -52,34 +52,34 @@ implements Serializable{
 		this.num = num;
 	}
 	//
-	public BigInteger getNum() {
+	public final BigInteger getNum() {
 		return num;
 	}
-	public void setNum(final BigInteger num) {
+	public final void setNum(final BigInteger num) {
 		this.num = num;
 	}
-	public BigInteger getId() {
+	public final BigInteger getId() {
 		return id;
 	}
-	public void setId(final BigInteger id) {
+	public final void setId(final BigInteger id) {
 		this.id = id;
 	}
-	public LoadEntity getLoad() {
+	public final LoadEntity getLoad() {
 		return load;
 	}
-	public void setLoad(final LoadEntity load) {
+	public final void setLoad(final LoadEntity load) {
 		this.load = load;
 	}
-	public NodeEntity getNode() {
+	public final NodeEntity getNode() {
 		return node;
 	}
-	public void setNode(final NodeEntity node) {
+	public final void setNode(final NodeEntity node) {
 		this.node = node;
 	}
-	public Set<TraceEntity> getTraceSet() {
+	public final Set<TraceEntity> getTraceSet() {
 		return traceSet;
 	}
-	public void setTraceSet(final Set<TraceEntity> traceSet) {
+	public final void setTraceSet(final Set<TraceEntity> traceSet) {
 		this.traceSet = traceSet;
 	}
 }

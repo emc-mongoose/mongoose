@@ -49,10 +49,10 @@ implements Serializable {
 	public final void setName(final String name) {
 		this.name = name;
 	}
-	public Set<RunEntity> getRunsSet() {
+	public final Set<RunEntity> getRunsSet() {
 		return runsSet;
 	}
-	public void setRunsSet(final Set<RunEntity> runsSet) {
+	public final void setRunsSet(final Set<RunEntity> runsSet) {
 		this.runsSet = runsSet;
 	}
 }

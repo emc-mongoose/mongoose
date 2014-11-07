@@ -17,6 +17,7 @@
 					"enabled": "false",
 					"runid": "${sys:run.id}",
 					"runmode": "${sys:run.mode}",
+					"database": "postgresql",
 					"username": "mongoose",
                     "password": "mongoose",
                     "addr": "localhost",
