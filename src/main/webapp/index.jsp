@@ -41,8 +41,8 @@
 				<ul class="nav nav-tabs tabs header-tabs" role="tablist">
 					<li class="active"><a href="#configuration" data-toggle="tab">Configuration</a></li>
 					<c:forEach var="mode" items="${sessionScope.runmodes}">
-						<c:set var="stringMode" value="${fn:split(mode, '_')}"/>
-						<li><a href="#${mode}" data-toggle="tab">${stringMode[3]}</a></li>
+						<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
+						<li><a href="#${correctMode}" data-toggle="tab">${mode}</a></li>
 					</c:forEach>
 				</ul>
 			</div>
@@ -275,15 +275,16 @@
 				</div>
 
 				<c:forEach var="mode" items="${sessionScope.runmodes}">
-					<div class="tab-pane" id="${mode}">
+					<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
+					<div class="tab-pane" id="${correctMode}">
 						<div class="left-side">
 							<div class="menu-wrapper">
 								<div class="col-xs-8">
 									<ul class="nav nav-tabs tabs-left">
-										<li class="active"><a href="#${mode}messages-csv" data-toggle="tab">messages.csv</a></li>
-										<li><a href="#${mode}errors-log" data-toggle="tab">errors.log</a></li>
-										<li><a href="#${mode}perf-avg-csv" data-toggle="tab">perf.avg.csv</a></li>
-										<li><a href="#${mode}perf-sum-csv" data-toggle="tab">perf.sum.csv</a></li>
+										<li class="active"><a href="#${correctMode}messages-csv" data-toggle="tab">messages.csv</a></li>
+										<li><a href="#${correctMode}errors-log" data-toggle="tab">errors.log</a></li>
+										<li><a href="#${correctMode}perf-avg-csv" data-toggle="tab">perf.avg.csv</a></li>
+										<li><a href="#${correctMode}perf-sum-csv" data-toggle="tab">perf.sum.csv</a></li>
 									</ul>
 								</div>
 							</div>
@@ -292,7 +293,7 @@
 							<button id="stop" type="button" class="default"><span>Stop</span></button>
 							<div class="log-wrapper">
 								<div class="tab-content">
-									<div class="tab-pane active" id="${mode}messages-csv">
+									<div class="tab-pane active" id="${correctMode}messages-csv">
 										<table class="table">
 											<thead>
 												<tr>
@@ -309,7 +310,7 @@
 										</table>
 										<button type="button" class="default clear">Clear</button>
 									</div>
-									<div class="tab-pane" id="${mode}errors-log">
+									<div class="tab-pane" id="${correctMode}errors-log">
 										<table class="table">
 											<thead>
 												<tr>
@@ -326,7 +327,7 @@
 										</table>
 										<button type="button" class="default clear">Clear</button>
 									</div>
-									<div class="tab-pane" id="${mode}perf-avg-csv">
+									<div class="tab-pane" id="${correctMode}perf-avg-csv">
 										<table class="table">
 											<thead>
 												<tr>
@@ -343,7 +344,7 @@
 										</table>
 										<button type="button" class="default clear">Clear</button>
 									</div>
-									<div class="tab-pane" id="${mode}perf-sum-csv">
+									<div class="tab-pane" id="${correctMode}perf-sum-csv">
 										<table class="table">
 											<thead>
 												<tr>

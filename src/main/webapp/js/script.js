@@ -122,44 +122,43 @@ $(document).ready(function() {
 					server._send(text);
 			},
 			_onmessage : function(m) {
-				runModes.forEach(function(entry) {
-					var json = JSON.parse(m.data);
-					// fix later
-					if (!json.message.message) {
-						str = json.message.messagePattern.split("{}");
-						resultString = "";
-						for (s = 0; s < str.length - 1; s++) {
-							resultString += str[s]+json.message.stringArgs[s];
+				var json = JSON.parse(m.data);
+				var entry = json.message.map.data["run.id"].split('.').join('_');
+				// fix later
+				if (!json.message.message) {
+					str = json.message.messagePattern.split("{}");
+					resultString = "";
+					for (s = 0; s < str.length - 1; s++) {
+						resultString += str[s]+json.message.stringArgs[s];
+					}
+					json.message.message = resultString + str[str.length - 1];
+				}
+				switch (json.marker.name) {
+					case "err":
+						if ($("#"+entry+"errors-log table tbody tr").length > COUNT_OF_RECORDS) {
+							$("#"+entry+"errors-log table tbody tr:first-child").remove();
 						}
-						json.message.message = resultString + str[str.length - 1];
-					}
-					switch (json.marker.name) {
-						case "err":
-							if ($("#"+entry+"errors-log table tbody tr").length > COUNT_OF_RECORDS) {
-								$("#"+entry+"errors-log table tbody tr:first-child").remove();
-							}
-							$("#"+entry+"errors-log table tbody").append(appendStringToTable(json));
-							break;
-						case "msg":
-							if ($("#"+entry+"messages-csv table tbody tr").length > COUNT_OF_RECORDS) {
-								$("#"+entry+"messages-csv table tbody tr:first-child").remove();
-							}
-							$("#"+entry+"messages-csv table tbody").append(appendStringToTable(json));
-							break;
-						case "perfSum":
-							if ($("#"+entry+"perf-sum-csv table tbody tr").length > COUNT_OF_RECORDS) {
-								$("#"+entry+"perf-sum-csv table tbody tr:first-child").remove();
-							}
-							$("#"+entry+"perf-sum-csv table tbody").append(appendStringToTable(json));
-							break;
-						case "perfAvg":
-							if ($("#"+entry+"perf-avg-csv table tbody tr").length > COUNT_OF_RECORDS) {
-								$("#"+entry+"perf-avg-csv table tbody tr:first-child").remove();
-							}
-							$("#"+entry+"perf-avg-csv table tbody").append(appendStringToTable(json));
-							break;
-					}
-				});
+						$("#"+entry+"errors-log table tbody").append(appendStringToTable(json));
+						break;
+					case "msg":
+						if ($("#"+entry+"messages-csv table tbody tr").length > COUNT_OF_RECORDS) {
+							$("#"+entry+"messages-csv table tbody tr:first-child").remove();
+						}
+						$("#"+entry+"messages-csv table tbody").append(appendStringToTable(json));
+						break;
+					case "perfSum":
+						if ($("#"+entry+"perf-sum-csv table tbody tr").length > COUNT_OF_RECORDS) {
+							$("#"+entry+"perf-sum-csv table tbody tr:first-child").remove();
+						}
+						$("#"+entry+"perf-sum-csv table tbody").append(appendStringToTable(json));
+						break;
+					case "perfAvg":
+						if ($("#"+entry+"perf-avg-csv table tbody tr").length > COUNT_OF_RECORDS) {
+							$("#"+entry+"perf-avg-csv table tbody tr:first-child").remove();
+						}
+						$("#"+entry+"perf-avg-csv table tbody").append(appendStringToTable(json));
+						break;
+				}
 			},
 			_onclose : function(m) {
 				this._ws = null;
@@ -183,9 +182,16 @@ $(document).ready(function() {
 	$(document).on('submit', '#mainForm',  function(e) {
 		e.preventDefault();
 		$.post("/start", $("#mainForm").serialize(), function(data, status) {
-			$.cookie("runmode", $("#runmode").val());
 			location.reload();
 			$.cookie("websocket", true);
+		});
+	});
+
+	$(".stop").click(function() {
+		var currentButton = $(this);
+		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".");
+		$.post("/stop", { "runid" : currentRunId }, function(data, status) {
+			currentButton.attr("disabled", "disabled");
 		});
 	});
 
