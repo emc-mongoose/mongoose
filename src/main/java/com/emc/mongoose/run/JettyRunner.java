@@ -2,15 +2,12 @@ package com.emc.mongoose.run;
 
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.HandlerList;
-import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.webapp.WebAppContext;
-import org.omg.SendingContext.RunTime;
 
 import java.nio.file.Paths;
 
@@ -18,8 +15,9 @@ import java.nio.file.Paths;
  * Created by gusakk on 02/10/14.
  */
 public class JettyRunner {
-
-    private final static Logger LOG = LogManager.getLogger();
+	//
+	private final Logger log;
+	//
     private final RunTimeConfig runTimeConfig;
 
     public final static int JETTY_PORT = 8080;
@@ -42,6 +40,7 @@ public class JettyRunner {
     }
 
     public JettyRunner(RunTimeConfig runTimeConfig) {
+		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
         this.runTimeConfig = runTimeConfig;
     }
 
@@ -62,7 +61,7 @@ public class JettyRunner {
             server.start();
             server.join();
         } catch (final Exception e) {
-            ExceptionHandler.trace(LOG, Level.FATAL, e, "Web UI service failure");
+            ExceptionHandler.trace(log, Level.FATAL, e, "Web UI service failure");
         }
     }
 

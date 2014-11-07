@@ -16,7 +16,7 @@ import java.io.OutputStream;
 final class AugmentEntity<T extends WSObject>
 implements HttpEntity {
 	//
-	//private final static Logger LOG = LogManager.getLogger();
+	//private final static Logger log = LogManager.getLogger();
 	//
 	private final T baseItem;
 	//

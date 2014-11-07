@@ -13,7 +13,7 @@ public class StopServlet extends HttpServlet {
 
 	public void doPost(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
-		StartServlet.interruptMongoose(request.getParameter("runmode"));
+		StartServlet.interruptMongoose(request.getParameter("runid"));
     }
 
 }

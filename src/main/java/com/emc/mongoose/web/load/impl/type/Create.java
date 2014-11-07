@@ -4,6 +4,7 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.persist.FileProducer;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.type.CreateLoadBase;
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
@@ -25,7 +26,7 @@ public class Create<T extends WSObject>
 extends CreateLoadBase<T>
 implements WSLoadExecutor<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private final Logger log;
 	//
 	@SuppressWarnings("unchecked")
 	public Create(
@@ -38,6 +39,7 @@ implements WSLoadExecutor<T> {
 			runTimeConfig, addrs, recConf, maxCount, threadsPerNode, listFile,
 			minObjSize, maxObjSize
 		);
+		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 	}
 	//
 	@Override
@@ -91,10 +93,10 @@ implements WSLoadExecutor<T> {
 				producer = (Producer<T>) new FileProducer<>(listFile, BasicWSObject.class);
 				producer.setConsumer(this);
 			} catch(final NoSuchMethodException e) {
-				LOG.fatal(Markers.ERR, "Failed to get the constructor", e);
+				log.fatal(Markers.ERR, "Failed to get the constructor", e);
 			} catch(final IOException e) {
-				LOG.warn(Markers.ERR, "Failed to use object list file \"{}\"for reading", listFile);
-				LOG.debug(Markers.ERR, e.toString(), e.getCause());
+				log.warn(Markers.ERR, "Failed to use object list file \"{}\"for reading", listFile);
+				log.debug(Markers.ERR, e.toString(), e.getCause());
 			}
 		}
 	}

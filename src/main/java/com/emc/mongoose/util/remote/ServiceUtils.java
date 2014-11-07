@@ -4,6 +4,7 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.run.Main;
 //
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,9 +37,12 @@ import java.util.Map;
  */
 public final class ServiceUtils {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	//
 	private final static HashMap<String, Service> SVC_MAP;
+	//
+	private static volatile Logger LOG = LogManager.getLogger();
+	public static void setLogger(final Logger log) {
+		LOG = log;
+	}
 	//private final static Registry REGISTRY;
 	//
 	static {
@@ -243,7 +247,7 @@ public final class ServiceUtils {
 					LOG.debug(Markers.MSG, "JMX connector started", portJmxRmi);
 				} catch(final IOException e) {
 					ExceptionHandler.trace(
-						LOG, Level.WARN, e,
+							LOG, Level.WARN, e,
 						"Failed to start JMX connector, please check that there's no another instance running"
 					);
 				}

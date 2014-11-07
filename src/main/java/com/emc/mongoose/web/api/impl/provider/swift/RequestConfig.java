@@ -1,6 +1,8 @@
 package com.emc.mongoose.web.api.impl.provider.swift;
 //
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -22,7 +24,7 @@ import java.security.NoSuchAlgorithmException;
 public final class RequestConfig<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
-	private final Logger LOG = LogManager.getLogger();
+	private Logger log = LogManager.getLogger(new MessageFactoryImpl(Main.RUN_TIME_CONFIG));
 	//
 	public RequestConfig()
 	throws NoSuchAlgorithmException {
@@ -44,7 +46,7 @@ extends WSRequestConfigBase<T> {
 		try {
 			copy = new RequestConfig<>(this);
 		} catch(final NoSuchAlgorithmException e) {
-			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
+			log.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
 		}
 		return copy;
 	}
@@ -52,6 +54,8 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public RequestConfig<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
+		//
+		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		// TODO swift specific things
 		return this;
 	}

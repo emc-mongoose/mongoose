@@ -2,6 +2,7 @@ package com.emc.mongoose.web.load.server.impl.type;
 //
 import com.emc.mongoose.base.data.persist.FrameBuffConsumer;
 import com.emc.mongoose.base.load.server.ConsumerSvc;
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.object.load.ObjectLoadExecutor;
@@ -27,7 +28,7 @@ public final class AppendSvc<T extends WSObject>
 extends Append<T>
 implements ObjectLoadSvc<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private Logger log;
 	//
 	public AppendSvc(
 		final RunTimeConfig runTimeConfig,
@@ -39,6 +40,7 @@ implements ObjectLoadSvc<T> {
 			runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, null,
 			minAppendSize, maxAppendSize
 		);
+		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		// by default, may be overriden later externally:
 		super.setConsumer(new FrameBuffConsumer<T>());
 	}
@@ -50,9 +52,9 @@ implements ObjectLoadSvc<T> {
 		// close the exposed network service, if any
 		final Service svc = ServiceUtils.getLocalSvc(getName());
 		if(svc==null) {
-			LOG.debug(Markers.ERR, "The load was not exposed remotely");
+			log.debug(Markers.ERR, "The load was not exposed remotely");
 		} else {
-			LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
+			log.debug(Markers.MSG, "The load was exposed remotely, removing the service");
 			ServiceUtils.close(svc);
 		}
 	}
@@ -60,20 +62,20 @@ implements ObjectLoadSvc<T> {
 	@Override @SuppressWarnings("unchecked")
 	public final void setConsumer(final ConsumerSvc<T> consumer) {
 		this.consumer = consumer;
-		LOG.debug(Markers.MSG, "Trying to resolve local service from the name");
+		log.debug(Markers.MSG, "Trying to resolve local service from the name");
 		try {
 			final ConsumerSvc remoteSvc = ConsumerSvc.class.cast(consumer);
 			final String remoteSvcName = remoteSvc.getName();
-			LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
+			log.debug(Markers.MSG, "Name is {}", remoteSvcName);
 			final Service localSvc = ServiceUtils.getLocalSvc(remoteSvcName);
 			if(localSvc==null) {
-				LOG.error(Markers.ERR, "Failed to get local service for name {}", remoteSvcName);
+				log.error(Markers.ERR, "Failed to get local service for name {}", remoteSvcName);
 			} else {
 				super.setConsumer((ObjectLoadExecutor<T>) localSvc);
 			}
-			LOG.debug(Markers.MSG, "Successfully resolved local service and appended it as consumer");
+			log.debug(Markers.MSG, "Successfully resolved local service and appended it as consumer");
 		} catch(final IOException ee) {
-			LOG.error(Markers.ERR, "Looks like network failure", ee);
+			log.error(Markers.ERR, "Looks like network failure", ee);
 		}
 	}
 	//

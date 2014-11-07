@@ -3,6 +3,7 @@ package com.emc.mongoose.util.conf;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -26,7 +27,10 @@ import java.util.LinkedList;
 public final class DirectoryLoader
 extends SimpleFileVisitor<Path> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static volatile Logger LOG = LogManager.getLogger();
+	public static void setLogger(final Logger log) {
+		LOG = log;
+	}
 	//
 	private LinkedList<String> prefixTokens = new LinkedList<>();
 	private final Configuration tgtConfig;

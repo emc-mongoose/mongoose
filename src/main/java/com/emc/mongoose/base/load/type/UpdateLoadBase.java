@@ -7,6 +7,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +19,7 @@ import java.rmi.RemoteException;
 public abstract class UpdateLoadBase<T extends UpdatableDataItem>
 extends LoadExecutorBase<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private final Logger log;
 	//
 	private final int updatesPerObject;
 	//
@@ -28,6 +29,7 @@ extends LoadExecutorBase<T> {
 		final int threadsPerNode, final String listFile, final int updatesPerObject
 	) {
 		super(runTimeConfig, addrs, sharedReqConf, maxCount, threadsPerNode, listFile);
+		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		this.updatesPerObject = updatesPerObject;
 	}
 	//
@@ -38,10 +40,10 @@ extends LoadExecutorBase<T> {
 			try {
 				dataItem.updateRandomRanges(updatesPerObject);
 			} catch(final Exception e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to create modified ranges");
+				ExceptionHandler.trace(log, Level.WARN, e, "Failed to create modified ranges");
 			}
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
+			if(log.isTraceEnabled(Markers.MSG)) {
+				log.trace(
 					Markers.MSG, "Modified {} ranges for object \"{}\"", updatesPerObject, dataItem
 				);
 			}

@@ -1,8 +1,22 @@
 package com.emc.mongoose.util.conf;
 //
+import com.emc.mongoose.base.api.impl.RequestBase;
+import com.emc.mongoose.base.data.impl.DataRanges;
+import com.emc.mongoose.base.data.impl.UniformData;
+import com.emc.mongoose.base.data.impl.UniformDataSource;
+import com.emc.mongoose.base.data.persist.FileProducer;
+import com.emc.mongoose.base.data.persist.LogConsumer;
+import com.emc.mongoose.base.load.impl.ShutDownHook;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
+import com.emc.mongoose.util.pool.BasicInstancePool;
+import com.emc.mongoose.util.remote.ServiceUtils;
+import com.emc.mongoose.web.api.impl.BasicWSRequest;
+import com.emc.mongoose.web.api.impl.provider.s3.Bucket;
+import com.emc.mongoose.web.api.impl.provider.s3.BucketListHandler;
+import com.emc.mongoose.web.api.impl.provider.s3.BucketProducer;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
@@ -14,11 +28,9 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 /**
@@ -32,6 +44,10 @@ implements Externalizable {
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String LIST_SEP = ",", KEY_VERSION = "run.version";
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
+	//
+	private final static DateFormat FMT_DT = new SimpleDateFormat(
+			"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
+	);
 	static {
 		MAP_OVERRIDE.put(
 			"data.size",
@@ -55,6 +71,25 @@ implements Externalizable {
 				"remote.servers"
 			}
 		);
+	}
+	//
+	{
+		set(Main.KEY_RUN_ID, FMT_DT.format(Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()));
+		UniformData.setLogger(LogManager.getLogger(UniformData.class, new MessageFactoryImpl(this)));
+		DataRanges.setLogger(LogManager.getLogger(DataRanges.class, new MessageFactoryImpl(this)));
+		//UniformDataSource.setLogger(LogManager.getLogger(UniformDataSource.class, new MessageFactoryImpl(this)));
+		UniformDataSource.setLogger(LogManager.getLogger());
+		RequestBase.setLogger(LogManager.getLogger(RequestBase.class, new MessageFactoryImpl(this)));
+		FileProducer.setLogger(LogManager.getLogger(FileProducer.class, new MessageFactoryImpl(this)));
+		LogConsumer.setLogger(LogManager.getLogger(LogConsumer.class, new MessageFactoryImpl(this)));
+		/*ShutDownHook.setLogger(LogManager.getLogger(ShutDownHook.class, new MessageFactoryImpl(this)));
+		BasicInstancePool.setLogger(LogManager.getLogger(BasicInstancePool.class, new MessageFactoryImpl(this)));
+		ServiceUtils.setLogger(LogManager.getLogger(ServiceUtils.class, new MessageFactoryImpl(this)));
+		Bucket.setLogger(LogManager.getLogger(Bucket.class, new MessageFactoryImpl(this)));
+		BucketListHandler.setLogger(LogManager.getLogger(BucketListHandler.class, new MessageFactoryImpl(this)));
+		BucketProducer.setLogger(LogManager.getLogger(BucketProducer.class, new MessageFactoryImpl(this)));
+		BasicWSRequest.setLogger(LogManager.getLogger(BasicWSRequest.class, new MessageFactoryImpl(this)));
+		DirectoryLoader.setLogger(LogManager.getLogger(DirectoryLoader.class, new MessageFactoryImpl(this)));*/
 	}
 	//
 	private final static String

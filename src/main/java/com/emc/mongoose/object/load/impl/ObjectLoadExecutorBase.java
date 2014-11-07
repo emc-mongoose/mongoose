@@ -7,6 +7,7 @@ import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.object.load.ObjectLoadExecutor;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
@@ -16,7 +17,7 @@ public abstract class ObjectLoadExecutorBase<T extends DataObject>
 extends LoadExecutorBase<T>
 implements ObjectLoadExecutor<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private final Logger log;
 	//
 	@SuppressWarnings("unchecked")
 	protected ObjectLoadExecutorBase(
@@ -25,6 +26,7 @@ implements ObjectLoadExecutor<T> {
 		final int threadsPerNode, final String listFile
 	) throws ClassCastException {
 		super(runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, listFile);
+		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 	}
 	//
 }

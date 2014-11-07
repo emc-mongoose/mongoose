@@ -2,6 +2,7 @@ package com.emc.mongoose.util.pool;
 //
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -19,7 +20,10 @@ import java.util.Set;
  */
 public final class BasicInstancePool<T extends Closeable> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static volatile Logger LOG = LogManager.getLogger();
+	public static void setLogger(final Logger log) {
+		LOG = log;
+	}
 	//
 	private final Set<T> availItems = Collections.synchronizedSet(new HashSet<T>());
 	private final Class<T> itemCls;

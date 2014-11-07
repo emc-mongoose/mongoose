@@ -4,6 +4,9 @@ import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.impl.RequestBase;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.util.pool.BasicInstancePool;
 import com.emc.mongoose.web.api.WSRequest;
 import com.emc.mongoose.web.api.WSRequestConfig;
@@ -42,7 +45,10 @@ public class BasicWSRequest<T extends WSObject>
 extends RequestBase<T>
 implements WSRequest<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static volatile Logger LOG = LogManager.getLogger();
+	public static void setLogger(final Logger log) {
+		LOG = log;
+	}
 	//
 	public final static BasicWSRequest POISON = new BasicWSRequest() {
 		@Override
@@ -148,7 +154,7 @@ implements WSRequest<T> {
 							httpRequest.getMethod(), httpRequest.getURI()
 						);
 						//for(final Header header : httpResponse.getAllHeaders()) {
-						//	LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
+						//	log.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
 						//}
 					}
 				}
@@ -163,8 +169,8 @@ implements WSRequest<T> {
 								final HttpEntity httpEntity = httpResponse.getEntity();
 								if(httpEntity==null) {
 									LOG.warn(
-										Markers.ERR, "No HTTP content entity for request \"{}\"",
-										httpRequest.getRequestLine()
+											Markers.ERR, "No HTTP content entity for request \"{}\"",
+											httpRequest.getRequestLine()
 									);
 									result = Result.FAIL_IO;
 									break;
@@ -180,15 +186,15 @@ implements WSRequest<T> {
 										result = Result.SUCC;
 									} else {
 										LOG.warn(
-											Markers.ERR, "Content verification failed for \"{}\"",
-											dataItem
+												Markers.ERR, "Content verification failed for \"{}\"",
+												dataItem
 										);
 										result = Result.FAIL_CORRUPT;
 									}
 								} catch(final IOException e) {
 									LOG.warn(
-										Markers.ERR, "Failed to read the object content for \"{}\"",
-										dataItem
+											Markers.ERR, "Failed to read the object content for \"{}\"",
+											dataItem
 									);
 									result = Result.FAIL_IO;
 								}
@@ -251,7 +257,7 @@ implements WSRequest<T> {
 							);
 						} catch(final IOException e) {
 							ExceptionHandler.trace(
-								LOG, Level.ERROR, e,
+									LOG, Level.ERROR, e,
 								"Failed to fetch the content of the failed response"
 							);
 						}

@@ -1,6 +1,7 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.Consumer;
+import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -16,10 +17,13 @@ import java.rmi.RemoteException;
 /**
  Created by kurila on 09.10.14.
  */
-final class BucketListHandler<T extends BasicWSObject>
+public final class BucketListHandler<T extends BasicWSObject>
 extends DefaultHandler {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static volatile Logger LOG = LogManager.getLogger();
+	public static void setLogger(final Logger log) {
+		LOG = log;
+	}
 	private final static String
 		QNAME_ITEM = "Contents",
 		QNAME_ITEM_ID = "Key",
