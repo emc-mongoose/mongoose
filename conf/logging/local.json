@@ -14,7 +14,7 @@
 			 	{
 					"name": "hibernate",
 					"type": "Hibernate",
-					"enabled": "true",
+					"enabled": "false",
 					"runid": "${sys:run.id}",
 					"runmode": "${sys:run.mode}",
 					"username": "mongoose",

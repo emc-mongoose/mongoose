@@ -5,11 +5,13 @@ import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.layout.SerializedLayout;
+//
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
-import org.apache.logging.log4j.core.layout.SerializedLayout;
+//
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AnnotationConfiguration;
@@ -78,7 +80,7 @@ extends AbstractAppender{
 		try {
 			if(ENABLED_FLAG) {
 				initDataBase(username, password, url);
-				setStatus();
+				setStatusEntity();
 			}
 			newAppender = new HibernateAppender(name, filter, DEFAULT_LAYOUT, runid, runmode);
 		} catch (final Exception e) {
@@ -97,28 +99,30 @@ extends AbstractAppender{
 	//Append method
 	@Override
 	public final void append(final LogEvent event) {
-		//System.out.println(Thread.currentThread().getName());
-		//System.out.println(event.getContextMap().get(KEY_RUN_ID));
 		if (ENABLED_FLAG){
-			final Date date = new Date();
+			//final Date date = new Date();
 			final String marker = event.getMarker().toString();
 			switch (marker) {
 				case MSG:
 				case ERR:
-					//System.out.println(Main.RUN_TIME_CONFIG.getRunName());
-					//setMessage(date, event.getLoggerName(), event.getLevel().toString(), event.getMessage().getFormattedMessage());
+					/*
+					SESSION.beginTransaction();
+					final ModeEntity modeEntity = loadModeEntity(modeName);
+					final RunEntity runEntity = loadRunEntity(runName, mode);
+					setMessage(date, event.getLoggerName(), event.getLevel().toString(), event.getMessage().getFormattedMessage(), runEntity);
+					SESSION.getTransaction().commit();
+					*/
 					break;
 				case PERF_TRACE:
 					SESSION.beginTransaction();
-					ModeEntity mode = loadMode(event.getContextMap().get(KEY_RUN_MODE));
+					ModeEntity mode = loadModeEntity(event.getContextMap().get(KEY_RUN_MODE));
 					RunEntity run = loadRunEntity(event.getContextMap().get(KEY_RUN_ID), mode);
-					//System.out.println(event.getContextMap().get(KEY_API) + " | " + event.getContextMap().get(KEY_LOAD_TYPE) + " | " + event.getContextMap().get(KEY_LOAD_NUM) + " | " + event.getContextMap().get(KEY_NODE_ADDR));
 					LoadEntity loadEntity = loadLoadEntity(event.getContextMap().get(KEY_LOAD_NUM), run,
 							event.getContextMap().get(KEY_LOAD_TYPE), event.getContextMap().get(KEY_API));
 					ThreadEntity threadEntity = loadThreadEntity(loadEntity, event.getContextMap().get(KEY_NODE_ADDR),
 							event.getContextMap().get(KEY_THREAD_NUM));
 					final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
-					TraceEntity traceEntity = loadTraceEntity(message[0], message[1], getValueFromMessage(message, 2), getValueFromMessage(message, 3),
+					setTraceEntity(message[0], message[1], getValueFromMessage(message, 2), getValueFromMessage(message, 3),
 							getValueFromMessage(message, 4), threadEntity, Integer.valueOf(message[5]),
 							getValueFromMessage(message, 6), getValueFromMessage(message, 7));
 					SESSION.getTransaction().commit();
@@ -154,7 +158,7 @@ extends AbstractAppender{
 		return newSessionFactory;
 	}
 	//
-	private static ModeEntity loadMode(final String modeName){
+	private static ModeEntity loadModeEntity(final String modeName){
 		ModeEntity mode = getModeEntity(modeName);
 		if (mode == null){
 			mode = new ModeEntity(modeName);
@@ -170,7 +174,7 @@ extends AbstractAppender{
 		SESSION.save(run);
 		return run;
 	}
-	private static ApiEntity loadApi(final String apiName){
+	private static ApiEntity loadApiEntity(final String apiName){
 		ApiEntity api = getApiEntity(apiName);
 		if (api==null){
 			api = new ApiEntity(apiName);
@@ -199,13 +203,11 @@ extends AbstractAppender{
 		return load;
 	}
 	//If api and load's types aren't known
-	private static LoadEntity loadLoadEntity(final String loadNumberString, final RunEntity run,
+	private static LoadEntity loadLoadEntity(final String loadNumber, final RunEntity run,
 											 final String typeName, final String apiName){
-		final BigInteger loadNumber = new BigInteger(loadNumberString);
-
-		ApiEntity api = loadApi(apiName);
+		ApiEntity api = loadApiEntity(apiName);
 		LoadTypeEntity type = loadLoadTypeEntity(typeName);
-		LoadEntity load = loadLoadEntity(loadNumberString,run,type,api);
+		LoadEntity load = loadLoadEntity(loadNumber,run,type,api);
 		SESSION.save(load);
 		return load;
 	}
@@ -247,10 +249,9 @@ extends AbstractAppender{
 		return threadEntity;
 	}
 	//If node isn't known
-	private static ThreadEntity loadThreadEntity(final LoadEntity load, final String nodeAddr, final String threadNumberString){
-		final BigInteger threadNumber = new BigInteger(threadNumberString);
+	private static ThreadEntity loadThreadEntity(final LoadEntity load, final String nodeAddr, final String threadNumber){
 		final NodeEntity node = loadNodeEntity(nodeAddr);
-		final ThreadEntity threadEntity = loadThreadEntity(threadNumberString,load,node);
+		final ThreadEntity threadEntity = loadThreadEntity(threadNumber,load,node);
 		SESSION.save(load);
 		return threadEntity;
 	}
@@ -286,25 +287,23 @@ extends AbstractAppender{
 		return statusEntity;
 	}
 	//
-	private static MessageEntity loadMessageEntity(final Date tstamp, final String className, final String levelName, final String text,final RunEntity run){
+	private static void setMessageEntity(final Date tstamp, final String className, final String levelName, final String text, final RunEntity run){
 		final MessageClassEntity classMessage = loadClassOfMessage(className);
 		final LevelEntity level = loadLevelEntity(levelName);
 		final MessageEntity messageEntity = new MessageEntity(run, classMessage, level, text, tstamp);
 		SESSION.save(messageEntity);
-		return messageEntity;
 	}
 	//
-	private static TraceEntity loadTraceEntity(final String identifier, final String ringOffset, final BigInteger size,
-								final BigInteger layer, final BigInteger mask, final ThreadEntity threadEntity,
-								final int status, final BigInteger reqStart, final BigInteger reqDur){
+	private static void setTraceEntity(final String identifier, final String ringOffset, final BigInteger size,
+											  final BigInteger layer, final BigInteger mask, final ThreadEntity threadEntity,
+											  final int status, final BigInteger reqStart, final BigInteger reqDur){
 		final StatusEntity statusEntity = getStatusEntity(status);
 		final DataObjectEntity dataItem = loadDataObjectEntity(identifier,ringOffset,size,layer,mask);
 		final TraceEntity traceEntity = new TraceEntity(dataItem, threadEntity, statusEntity, reqStart, reqDur);
 		SESSION.save(traceEntity);
-		return traceEntity;
 	}
 	//
-	private static void setStatus(){
+	private static void setStatusEntity(){
 		SESSION.beginTransaction();
 		for (final Request.Result result:Request.Result.values()){
 			StatusEntity statusEntity = loadStatusEntity(result);

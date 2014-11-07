@@ -71,7 +71,7 @@ implements Producer<T> {
 				nextLine = fReader.readLine();
 				LOG.trace(Markers.MSG, "Got next line #{}: \"{}\"", dataItemsCount, nextLine);
 				//
-				if(nextLine==null) {
+				if(nextLine==null||nextLine.isEmpty()) {
 					LOG.debug(Markers.MSG, "No next line, exiting");
 					break;
 				} else {
