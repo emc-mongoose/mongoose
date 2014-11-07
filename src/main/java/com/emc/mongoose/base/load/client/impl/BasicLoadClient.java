@@ -780,22 +780,39 @@ implements LoadClient<T> {
 		//
 		long countDone = 0;
 		final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
-		//
 		try {
-			do {
-				try {
+			if(metricsUpdatePeriodSec > 0) {
+				do {
 					logMetrics(Markers.PERF_AVG);
 					logMetaInfoFrames();
 					TimeUnit.SECONDS.sleep(metricsUpdatePeriodSec); // sleep
-					countDone = countReqSucc.get() + countReqFail.get() + countRej.get();
-				} catch(final InterruptedException e) {
-					break;
-				} catch(final NullPointerException e) {
-					LOG.debug(Markers.ERR, "Looks like the metrics getting task failed to be submitted");
+					try {
+						countDone = countReqSucc.get() + countReqFail.get() + countRej.get();
+					} catch(final ExecutionException e) {
+						ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failure");
+					}
+				} while(maxCount > countDone);
+			} else {
+				long runTimeMillis = TimeUnit.DAYS.toMillis(1000); // default
+				try {
+					final String
+						runTimeSpec[] = runTimeConfig.getRunTime().split("\\."),
+						runTimeValue = runTimeSpec[0],
+						runTimeUnit = runTimeSpec[1].toUpperCase();
+					TimeUnit.valueOf(runTimeUnit).toMillis(Long.valueOf(runTimeValue));
+				} catch(final Exception e) {
+					ExceptionHandler.trace(
+						LOG, Level.WARN, e,
+						String.format(
+							"Failed to parse run time spec: \"%s\"", runTimeConfig.getRunTime()
+						)
+					);
+				} finally {
+					Thread.sleep(runTimeMillis);
 				}
-			} while(countDone < maxCount);
-		} catch(final ExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failure");
+			}
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.MSG, "Interrupted");
 		}
 		//
 		interrupt();

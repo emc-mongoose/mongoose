@@ -143,7 +143,7 @@ implements LoadExecutor<T> {
 	public void start() {
 		//
 		if(producer == null) {
-			LOG.info(Markers.MSG, "Waiting for incoming objects to process from external producer");
+			LOG.info(Markers.MSG, "{}: using an external data items producer", getName());
 		} else {
 			try {
 				producer.start();
@@ -168,10 +168,30 @@ implements LoadExecutor<T> {
 		//
 		try {
 			final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
-			do {
-				logMetrics(Markers.PERF_AVG);
-				TimeUnit.SECONDS.sleep(metricsUpdatePeriodSec); // sleep
-			} while(maxCount > counterReqSucc.getCount() + counterReqFail.getCount() + counterRej.getCount());
+			if(metricsUpdatePeriodSec > 0) {
+				do {
+					logMetrics(Markers.PERF_AVG);
+					TimeUnit.SECONDS.sleep(metricsUpdatePeriodSec); // sleep
+				} while(maxCount > counterReqSucc.getCount() + counterReqFail.getCount() + counterRej.getCount());
+			} else {
+				long runTimeMillis = TimeUnit.DAYS.toMillis(1000); // default
+				try {
+					final String
+						runTimeSpec[] = runTimeConfig.getRunTime().split("\\."),
+						runTimeValue = runTimeSpec[0],
+						runTimeUnit = runTimeSpec[1].toUpperCase();
+					TimeUnit.valueOf(runTimeUnit).toMillis(Long.valueOf(runTimeValue));
+				} catch(final Exception e) {
+					ExceptionHandler.trace(
+						LOG, Level.WARN, e,
+						String.format(
+							"Failed to parse run time spec: \"%s\"", runTimeConfig.getRunTime()
+						)
+					);
+				} finally {
+					Thread.sleep(runTimeMillis);
+				}
+			}
 			LOG.trace(Markers.MSG, "Max count reached");
 		} catch(final InterruptedException e) {
 			LOG.trace(Markers.MSG, "Externally interrupted \"{}\"", getName());

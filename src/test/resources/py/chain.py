@@ -10,7 +10,7 @@ from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.logging import ExceptionHandler, Markers
 from com.emc.mongoose.base.data.persist import TempFileConsumerProducer
 #
-from java.lang import Throwable, IllegalArgumentException
+from java.lang import Long, Throwable, IllegalArgumentException
 from java.util import NoSuchElementException
 #
 LOG = LogManager.getLogger()
@@ -18,16 +18,19 @@ LOG = LogManager.getLogger()
 LOAD_CHAIN = None
 try:
 	LOAD_CHAIN = Main.RUN_TIME_CONFIG.getStringArray("scenario.chain.load")
-	LOG.info(Markers.MSG, "Load chain: {}", LOAD_CHAIN)
 except NoSuchElementException:
 	LOG.error(Markers.ERR, "No load type specified, try arg -Dscenario.chain.load=<VALUE> to override")
 #
 FLAG_SIMULTANEOUS = False
 try:
 	FLAG_SIMULTANEOUS = Main.RUN_TIME_CONFIG.getBoolean("scenario.chain.simultaneous")
-	LOG.info(Markers.MSG, "Simultaneous chain load: {}", LOAD_CHAIN)
 except NoSuchElementException:
 	LOG.error(Markers.ERR, "No chain simultaneous flag specified, try arg -Dscenario.chain.simultaneous=<VALUE> to override")
+LOG.info(
+	Markers.MSG,
+	"Simultaneous" if FLAG_SIMULTANEOUS else "Sequential" + " load chain: {}",
+	LOAD_CHAIN
+)
 #
 def build(flagSimultaneous=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPerNode=0):
 	chain = list()
@@ -61,9 +64,9 @@ def build(flagSimultaneous=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPe
 							prevLoad.setConsumer(mediatorBuff)
 							chain.append(mediatorBuff)
 							mediatorBuff.setConsumer(load)
-							chain.append(load)
 						else:
 							LOG.error(Markers.ERR, "No mediator buffer instanced")
+					chain.append(load)
 			else:
 				LOG.error(Markers.ERR, "No load executor instanced")
 			if prevLoad is None:
@@ -94,7 +97,8 @@ def execute(chain=(), flagSimultaneous=True):
 						if prevMediatorBuff is not None:
 							prevMediatorBuff.start()
 						loadExecutor.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
-						prevMediatorBuff.interrupt()
+						if prevMediatorBuff is not None:
+							prevMediatorBuff.interrupt()
 						loadExecutor.close()
 						mediatorBuff.close()
 						prevMediatorBuff = mediatorBuff
@@ -113,19 +117,19 @@ if __name__=="__builtin__":
 	dataItemSize, dataItemSizeMin, dataItemSizeMax, threadsPerNode = 0, 0, 0, 0
 	#
 	try:
-		dataItemSize = Main.RUN_TIME_CONFIG.getSizeBytes("data.size")
+		dataItemSize = Long(Main.RUN_TIME_CONFIG.getSizeBytes("data.size"))
 	except:
 		LOG.debug(Markers.MSG, "No \"data.size\" specified")
 	try:
-		dataItemSizeMin = Main.RUN_TIME_CONFIG.getSizeBytes("data.size.min")
+		dataItemSizeMin = Long(Main.RUN_TIME_CONFIG.getSizeBytes("data.size.min"))
 	except:
 		LOG.debug(Markers.MSG, "No \"data.size\" specified")
 	try:
-		dataItemSizeMax = Main.RUN_TIME_CONFIG.getSizeBytes("data.size.max")
+		dataItemSizeMax = Long(Main.RUN_TIME_CONFIG.getSizeBytes("data.size.max"))
 	except:
 		LOG.debug(Markers.MSG, "No \"data.size\" specified")
 	try:
-		threadsPerNode = Main.RUN_TIME_CONFIG.getShort("load.threads")
+		threadsPerNode = Long(Main.RUN_TIME_CONFIG.getShort("load.threads"))
 	except:
 		LOG.debug(Markers.MSG, "No \"load.threads\" specified")
 	#

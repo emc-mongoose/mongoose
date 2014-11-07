@@ -161,6 +161,11 @@ public final class Main {
 			) ?
 				FNAME_LOGGING_LOCAL : FNAME_LOGGING_REMOTE
 		);
+		// make loggers asynchronous
+		System.setProperty(
+			"Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+		);
+		// go
 		Configurator.initialize(null, logConfPath.toUri().toString());
 		return LogManager.getRootLogger();
 	}

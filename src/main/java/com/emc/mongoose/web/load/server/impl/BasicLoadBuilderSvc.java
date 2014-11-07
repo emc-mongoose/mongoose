@@ -2,6 +2,7 @@ package com.emc.mongoose.web.load.server.impl;
 //
 import com.emc.mongoose.base.load.impl.LoadExecutorBase;
 import com.emc.mongoose.object.load.server.ObjectLoadSvc;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.impl.BasicLoadBuilder;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
@@ -31,12 +32,10 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private RunTimeConfig clientConfig = null;
-	//
 	@Override
 	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
 		super.setProperties(clientConfig);
-		this.clientConfig = clientConfig;
+		Main.RUN_TIME_CONFIG = clientConfig;
 		return this;
 	}
 	//
@@ -66,9 +65,6 @@ implements WSLoadBuilderSvc<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final U build()
 	throws IllegalStateException {
-		if(clientConfig== null) {
-			throw new IllegalStateException("Should upload properties to the server before instancing");
-		}
 		if(reqConf == null) {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
@@ -86,7 +82,7 @@ implements WSLoadBuilderSvc<T, U> {
 							);
 						}
 						loadSvc = new CreateSvc<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							minObjSize, maxObjSize
 						);
@@ -94,14 +90,14 @@ implements WSLoadBuilderSvc<T, U> {
 					case READ:
 						LOG.debug(Markers.MSG, "New read load");
 						loadSvc = new ReadSvc<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case UPDATE:
 						LOG.debug(Markers.MSG, "New update load");
 						loadSvc = new UpdateSvc<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							updatesPerItem
 						);
@@ -109,14 +105,14 @@ implements WSLoadBuilderSvc<T, U> {
 					case DELETE:
 						LOG.debug(Markers.MSG, "New delete load");
 						loadSvc = new DeleteSvc<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case APPEND:
 						LOG.debug(Markers.MSG, "New append load");
 						loadSvc = new AppendSvc<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							minObjSize, maxObjSize
 						);

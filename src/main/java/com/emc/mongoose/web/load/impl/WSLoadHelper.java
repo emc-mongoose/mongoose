@@ -30,10 +30,11 @@ public class WSLoadHelper {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static String KEY_NODE_ADDR = "node.addr",
-								KEY_LOAD_NUM = "load.number",
-								KEY_LOAD_TYPE = "load.type",
-								KEY_API = "api";
+	private final static String
+		KEY_NODE_ADDR = "node.addr",
+		KEY_LOAD_NUM = "load.number",
+		KEY_LOAD_TYPE = "load.type",
+		KEY_API = "api";
 	//
 	public static CloseableHttpClient initClient(
 		final int totalThreadCount, final int dataPageSize, final WSRequestConfig reqConf

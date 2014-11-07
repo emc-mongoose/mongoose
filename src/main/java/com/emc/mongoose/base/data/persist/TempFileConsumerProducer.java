@@ -48,6 +48,7 @@ implements Consumer<T>, Producer<T> {
 		final RunTimeConfig runTimeConfig,
 		final String prefix, final String suffix, final int threadCount, final long maxCount
 	) {
+		setName("tmpFileDataItemsBuffer");
 		//
 		this.runTimeConfig = runTimeConfig;
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
@@ -108,9 +109,6 @@ implements Consumer<T>, Producer<T> {
 	public final void submit(T dataItem)
 	throws IllegalStateException {
 		//
-		if(outPutExecutor.isShutdown() || outPutExecutor.isTerminated()) {
-			throw new IllegalStateException("Output has been already closed");
-		}
 		//
 		final DataItemOutPutTask<T> outPutTask = new DataItemOutPutTask<>(fBuffOut, dataItem);
 		boolean passed = false;
@@ -128,7 +126,13 @@ implements Consumer<T>, Producer<T> {
 					break;
 				}
 			}
-		} while(!passed && rejectCount < retryCountMax && writtenDataItems.get() < maxCount);
+		} while(
+			!passed &&
+			rejectCount < retryCountMax &&
+			writtenDataItems.get() < maxCount &&
+			!outPutExecutor.isShutdown() &&
+			!outPutExecutor.isTerminated()
+		);
 		//
 		if(!passed) {
 			LOG.debug(
@@ -218,9 +222,21 @@ implements Consumer<T>, Producer<T> {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to read a data item");
 		} finally {
 			try {
-				consumer.setMaxCount(writtenDataItems.get());
+				consumer.submit(null); // feed the poison
 			} catch(final RemoteException e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
+			}
+		}
+	}
+	//
+	@Override
+	public final void interrupt() {
+		super.interrupt();
+		if(consumer != null) {
+			try {
+				consumer.submit(null); // feed the poison
+			} catch(final RemoteException e) {
+				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to submit");
 			}
 		}
 	}

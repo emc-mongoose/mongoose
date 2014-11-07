@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, with_statement
 #
 import chain
 #
-from java.lang import Short, Throwable, NumberFormatException
+from java.lang import Long, Short, Throwable, NumberFormatException
 #
 from org.apache.logging.log4j import Level, LogManager
 #
@@ -20,16 +20,14 @@ if __name__=="__builtin__":
 	LOG.info(Markers.MSG, "Thread counts: {}", listThreadCounts)
 	for dataItemSizeStr in listSizes:
 		try:
-			dataItemSize = RunTimeConfig.toSize(dataItemSizeStr)
-			LOG.info(Markers.MSG, "Next data item size: {}", dataItemSize)
+			dataItemSize = Long(RunTimeConfig.toSize(dataItemSizeStr))
 			for threadCountStr in listThreadCounts:
 				try:
 					threadCount = Short.valueOf(threadCountStr)
 				except NumberFormatException as e:
 					LOG.error(Markers.ERR, "")
 				try:
-					LOG.info(Markers.MSG, "Next thread count: {}", threadCount)
-					LOG.info(Markers.MSG, type(long(dataItemSize)))
+					LOG.info(Markers.MSG, "---- Rampup step: {}x{} ----", threadCount, dataItemSizeStr)
 					nextChain = chain.build(
 						chain.FLAG_SIMULTANEOUS, dataItemSize, dataItemSize, threadCount
 					)
