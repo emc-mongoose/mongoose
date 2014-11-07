@@ -23,7 +23,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 		@UniqueConstraint(columnNames = "status"),
 		@UniqueConstraint(columnNames = "tsReqStart"),
 		@UniqueConstraint(columnNames = "reqDur")})
-public class TraceEntity
+public final class TraceEntity
 implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -58,40 +58,40 @@ implements Serializable{
 		this.reqDur = reqDur;
 	}
 	//
-	public BigInteger getId() {
+	public final BigInteger getId() {
 		return id;
 	}
-	public void setId(final BigInteger id) {
+	public final void setId(final BigInteger id) {
 		this.id = id;
 	}
-	public DataObjectEntity getDataitem() {
+	public final DataObjectEntity getDataitem() {
 		return dataitem;
 	}
-	public void setDataitem(final DataObjectEntity dataitem) {
+	public final void setDataitem(final DataObjectEntity dataitem) {
 		this.dataitem = dataitem;
 	}
-	public ThreadEntity getThread() {
+	public final ThreadEntity getThread() {
 		return thread;
 	}
-	public void setThread(final ThreadEntity thread) {
+	public final void setThread(final ThreadEntity thread) {
 		this.thread = thread;
 	}
-	public StatusEntity getStatus() {
+	public final StatusEntity getStatus() {
 		return status;
 	}
-	public void setStatus(final StatusEntity status) {
+	public final void setStatus(final StatusEntity status) {
 		this.status = status;
 	}
-	public BigInteger getTsReqStart() {
+	public final BigInteger getTsReqStart() {
 		return tsReqStart;
 	}
-	public void setTsReqStart(final BigInteger tsReqStart) {
+	public final void setTsReqStart(final BigInteger tsReqStart) {
 		this.tsReqStart = tsReqStart;
 	}
-	public BigInteger getReqDur() {
+	public final BigInteger getReqDur() {
 		return reqDur;
 	}
-	public void setReqDur(final BigInteger reqDur) {
+	public final void setReqDur(final BigInteger reqDur) {
 		this.reqDur = reqDur;
 	}
 }

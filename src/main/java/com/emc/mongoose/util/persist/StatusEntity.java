@@ -18,7 +18,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Entity(name="StatusEntity")
 @Table(name = "Statuses", uniqueConstraints = {
 		@UniqueConstraint(columnNames = "name")})
-public class StatusEntity
+public final class StatusEntity
 implements Serializable{
 	@Id
 	//@GeneratedValue(strategy = IDENTITY)
@@ -36,22 +36,22 @@ implements Serializable{
 		this.name = name;
 	}
 	//
-	public int getCode() {
+	public final int getCode() {
 		return code;
 	}
-	public void setCode(final int code) {
+	public final void setCode(final int code) {
 		this.code = code;
 	}
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
-	public void setName(final String name) {
+	public final void setName(final String name) {
 		this.name = name;
 	}
-	public Set<TraceEntity> getTraceSet() {
+	public final Set<TraceEntity> getTraceSet() {
 		return traceSet;
 	}
-	public void setTraceSet(final Set<TraceEntity> traceSet) {
+	public final void setTraceSet(final Set<TraceEntity> traceSet) {
 		this.traceSet = traceSet;
 	}
 }

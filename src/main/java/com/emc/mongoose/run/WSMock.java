@@ -44,7 +44,7 @@ implements Runnable {
 		this.runTimeConfig = runTimeConfig;
 	}
 	//
-	public void run() {
+	public final void run() {
 		final String apiName = runTimeConfig.getStorageApi();
 		final int port = runTimeConfig.getInt("api."+apiName+".port");
 		LOG.debug(Markers.MSG, "Create map of BasicWSObject");
@@ -54,9 +54,12 @@ implements Runnable {
 		server.setDumpAfterStart(false);
 		server.setDumpBeforeStop(false);
 		LOG.debug(Markers.MSG, "Setup Http Connector Setup");
-		final ServerConnector httpConnector = new ServerConnector(server);
-		httpConnector.setPort(port);
-		server.addConnector(httpConnector);
+		try(final ServerConnector httpConnector = new ServerConnector(server)) {
+			httpConnector.setPort(port);
+			server.addConnector(httpConnector);
+		}catch (final Exception e){
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Creating of server connector failed");
+		}
 		LOG.debug(Markers.MSG, "Set up a new handler");
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
@@ -73,6 +76,7 @@ implements Runnable {
         } finally {
             try {
                 server.stop();
+
             } catch (final Exception e) {
                 ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to stop jetty");
             }
@@ -94,13 +98,13 @@ implements Runnable {
 					mapDataObject.put(nextData.getId(), nextData);
 				}
 			} while(true);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to read line from the file");
 		}
 	}
 	//
 	@SuppressWarnings("serial")
-	public static class SimpleWSMockServlet extends HttpServlet {
+	public final static class SimpleWSMockServlet extends HttpServlet {
 		private Map<String, BasicWSObject> mapDataObject;
 		//
 		public SimpleWSMockServlet(final Map<String, BasicWSObject> map){
@@ -108,39 +112,39 @@ implements Runnable {
 		}
 		//
 		@Override
-		protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
+		protected final void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
 		{
 			LOG.trace(Markers.MSG, " Request  method Get ");
-			String dataID = request.getRequestURI().split("/")[2];
-			ServletOutputStream servletOutputStream = response.getOutputStream();
-			LOG.trace(Markers.MSG, "   Send data object ", dataID);
-			mapDataObject.get(dataID).writeTo(servletOutputStream);
-			LOG.trace(Markers.MSG, "   Response: OK" );
-			response.setStatus(HttpServletResponse.SC_OK);
-			//
-			servletOutputStream.flush();
-			servletOutputStream.close();
+			final String dataID = request.getRequestURI().split("/")[2];
+			try(final ServletOutputStream servletOutputStream = response.getOutputStream()) {
+				LOG.trace(Markers.MSG, "   Send data object ", dataID);
+				mapDataObject.get(dataID).writeTo(servletOutputStream);
+				LOG.trace(Markers.MSG, "   Response: OK");
+				response.setStatus(HttpServletResponse.SC_OK);
+			}catch (final IOException e){
+				ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
+			}
 		}
 		@Override
-		protected void doPost(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
+		protected final void doPost(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
 		{
 			LOG.trace(Markers.MSG, " Request  method Post ");
 			response.setStatus(HttpServletResponse.SC_OK);
 		}
 		@Override
-		protected void doPut(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
+		protected final void doPut(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
 		{
 			LOG.trace(Markers.MSG, " Request  method Put ");
 			response.setStatus(HttpServletResponse.SC_OK);
 		}
 		@Override
-		protected void doDelete(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
+		protected final void doDelete(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
 		{
 			LOG.trace(Markers.MSG, " Request  method Delete ");
 			response.setStatus(HttpServletResponse.SC_OK);
 		}
 		@Override
-		protected void doHead(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
+		protected final void doHead(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
 		{
 			LOG.trace(Markers.MSG, " Request  method Head ");
 			response.setStatus(HttpServletResponse.SC_OK);

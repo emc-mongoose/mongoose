@@ -27,7 +27,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 		@UniqueConstraint(columnNames = "size"),
 		@UniqueConstraint(columnNames = "layer"),
 		@UniqueConstraint(columnNames = "mask")})
-public class DataObjectEntity
+public final class DataObjectEntity
 implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -56,46 +56,46 @@ implements Serializable{
 		this.mask = mask;
 	}
 	//
-	public BigInteger getId() {
+	public final BigInteger getId() {
 		return id;
 	}
-	public void setId(final BigInteger id) {
+	public final void setId(final BigInteger id) {
 		this.id = id;
 	}
-	public BigInteger getSize() {
+	public final BigInteger getSize() {
 		return size;
 	}
-	public void setSize(final BigInteger size) {
+	public final void setSize(final BigInteger size) {
 		this.size = size;
 	}
-	public BigInteger getLayer() {
+	public final BigInteger getLayer() {
 		return layer;
 	}
-	public void setLayer(final BigInteger layer) {
+	public final void setLayer(final BigInteger layer) {
 		this.layer = layer;
 	}
-	public BigInteger getMask() {
+	public final BigInteger getMask() {
 		return mask;
 	}
-	public void setMask(final BigInteger mask) {
+	public final void setMask(final BigInteger mask) {
 		this.mask = mask;
 	}
-	public Set<TraceEntity> getTraceSet() {
+	public final Set<TraceEntity> getTraceSet() {
 		return traceSet;
 	}
-	public void setTraceSet(final Set<TraceEntity> traceSet) {
+	public final void setTraceSet(final Set<TraceEntity> traceSet) {
 		this.traceSet = traceSet;
 	}
-	public String getIdentifier() {
+	public final String getIdentifier() {
 		return identifier;
 	}
-	public void setIdentifier(final String identifier) {
+	public final void setIdentifier(final String identifier) {
 		this.identifier = identifier;
 	}
-	public String getRingOffset() {
+	public final String getRingOffset() {
 		return ringOffset;
 	}
-	public void setRingOffset(final String ringOffset) {
+	public final void setRingOffset(final String ringOffset) {
 		this.ringOffset = ringOffset;
 	}
 }

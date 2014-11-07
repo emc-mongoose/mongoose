@@ -64,6 +64,7 @@ extends AbstractAppender{
 			final @PluginAttribute("enabled") Boolean enabled,
 			final @PluginAttribute("runid") String runid,
 			final @PluginAttribute("runmode") String runmode,
+			final @PluginAttribute("database") String database,
 			final @PluginAttribute("username") String username,
 			final @PluginAttribute("password") String password,
 			final @PluginAttribute("addr") String addr,
@@ -76,7 +77,7 @@ extends AbstractAppender{
 		if(name == null) {
 			throw new IllegalArgumentException("No name provided for HibernateAppender");
 		}
-		final String url = "jdbc:postgresql://"+addr+":"+port+"/"+namedatabase;
+		final String url = String.format("jdbc:%s://%s:%d/%s", database, addr, port, namedatabase);
 		try {
 			if(ENABLED_FLAG) {
 				initDataBase(username, password, url);
@@ -115,11 +116,11 @@ extends AbstractAppender{
 					break;
 				case PERF_TRACE:
 					SESSION.beginTransaction();
-					ModeEntity mode = loadModeEntity(event.getContextMap().get(KEY_RUN_MODE));
-					RunEntity run = loadRunEntity(event.getContextMap().get(KEY_RUN_ID), mode);
-					LoadEntity loadEntity = loadLoadEntity(event.getContextMap().get(KEY_LOAD_NUM), run,
+					final ModeEntity mode = loadModeEntity(event.getContextMap().get(KEY_RUN_MODE));
+					final RunEntity run = loadRunEntity(event.getContextMap().get(KEY_RUN_ID), mode);
+					final LoadEntity loadEntity = loadLoadEntity(event.getContextMap().get(KEY_LOAD_NUM), run,
 							event.getContextMap().get(KEY_LOAD_TYPE), event.getContextMap().get(KEY_API));
-					ThreadEntity threadEntity = loadThreadEntity(loadEntity, event.getContextMap().get(KEY_NODE_ADDR),
+					final ThreadEntity threadEntity = loadThreadEntity(loadEntity, event.getContextMap().get(KEY_NODE_ADDR),
 							event.getContextMap().get(KEY_THREAD_NUM));
 					final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
 					setTraceEntity(message[0], message[1], getValueFromMessage(message, 2), getValueFromMessage(message, 3),
