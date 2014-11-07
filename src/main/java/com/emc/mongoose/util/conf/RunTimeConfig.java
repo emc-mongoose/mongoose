@@ -230,12 +230,16 @@ implements Externalizable {
 		return getString("run.scenario.dir");
 	}
 	//
+	public final String getRunId() {
+		return getString(Main.KEY_RUN_ID);
+	}
+	//
 	public final String getRunTime() {
 		return getString("run.time");
 	}
 	//
 	public final String getRunMode() {
-		return getString("run.mode");
+		return getString(Main.KEY_RUN_MODE);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -248,7 +252,9 @@ implements Externalizable {
 		for(final Iterator<String> i = getKeys(); i.hasNext();) {
 			nextPropName = i.next();
 			nextPropValue = getProperty(nextPropName);
-			LOG.trace(Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
+			LOG.trace(
+				Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
+			);
 			if(List.class.isInstance(nextPropValue)) {
 				propsMap.put(
 					nextPropName,
@@ -286,7 +292,9 @@ implements Externalizable {
 			// put the properties into the System
 			Object nextPropValue;
 			for(final String nextPropName: confMap.keySet()) {
-				nextPropValue = confMap.get(nextPropName);
+				nextPropValue = nextPropName.startsWith("remote") ?
+					Main.RUN_TIME_CONFIG.getString(nextPropName) :
+					confMap.get(nextPropName);
 				LOG.trace(Markers.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
 				if(List.class.isInstance(nextPropValue)) {
 					setProperty(

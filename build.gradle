@@ -63,13 +63,16 @@ dependencies {
 		//
 		'org.apache.httpcomponents:httpclient:4.3.4',
 		'org.apache.httpcomponents:httpcore:4.3.2',
-		'org.eclipse.jetty:jetty-server:9.2.3.v20140905',
-		'org.eclipse.jetty:jetty-webapp:9.2.3.v20140905',
-		'javax.el:javax.el-api:3.0.1-b04',
-		'javax.servlet:javax.servlet-api:3.1.0',
+        'org.eclipse.jetty:jetty-server:9.2.3.v20140905',
+        'org.eclipse.jetty:jetty-webapp:9.2.3.v20140905',
+        'javax.el:javax.el-api:3.0.1-b04',
+        'javax.servlet:javax.servlet-api:3.1.0',
 		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
-		'jstl:jstl:1.2',
+		'org.hibernate:hibernate-core:4.3.6.Final',
+		'org.eclipse.persistence:javax.persistence:2.1.0',
+		'jstl:jstl:1.2'
     )
+
 	runtime (
 		//
 		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',

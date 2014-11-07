@@ -5,7 +5,10 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import java.rmi.RemoteException;
 import java.text.MessageFormat;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+
 /**
  Created by kurila on 28.04.14.
  A mechanism of data items load execution.

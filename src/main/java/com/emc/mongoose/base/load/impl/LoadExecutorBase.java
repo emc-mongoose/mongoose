@@ -31,8 +31,10 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
 import javax.management.MBeanServer;
+import java.io.Closeable;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -50,6 +52,7 @@ implements LoadExecutor<T> {
 	protected final int threadsPerNode, retryCountMax, retryDelayMilliSec;
 	protected final StorageNodeExecutor<T> nodes[];
 	protected final ThreadPoolExecutor submitExecutor;
+	protected final Closeable client;
 	//
 	protected final DataSource<T> dataSrc;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
@@ -84,9 +87,10 @@ implements LoadExecutor<T> {
 	) throws ClassCastException {
 		//
 		this.runTimeConfig = runTimeConfig;
+		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
-		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteImportPort());
+		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteMonitorPort());
 		metricsReporter  = JmxReporter.forRegistry(metrics)
 			.convertDurationsTo(TimeUnit.SECONDS)
 			.convertRatesTo(TimeUnit.SECONDS)
@@ -121,16 +125,16 @@ implements LoadExecutor<T> {
 		submitExecutor = new ThreadPoolExecutor(
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("submitDataItems")
+			new WorkerFactory("submitDataItems", new HashMap<String,String>())
 		);
-		initClient(addrs, reqConf);
+		client = initClient(addrs, reqConf);
 		initNodeExecutors(addrs, reqConf);
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
 	}
 	//
 	protected abstract void setFileBasedProducer(final String listFile);
-	protected abstract void initClient(final String addrs[], final RequestConfig<T> reqConf);
+	protected abstract Closeable initClient(final String addrs[], final RequestConfig<T> reqConf);
 	protected abstract void initNodeExecutors(
 		final String addrs[], final RequestConfig<T> reqConf
 	) throws ClassCastException;
@@ -264,6 +268,15 @@ implements LoadExecutor<T> {
 				);
 			}
 		}
+		//
+		if(client != null) {
+			try {
+				client.close();
+				LOG.debug(Markers.MSG, "Storage client closed");
+			} catch(final IOException e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Storage client closing failed");
+			}
+		}
 		// provide summary metrics
 		synchronized(LOG) {
 			LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
@@ -285,26 +298,28 @@ implements LoadExecutor<T> {
 					nextNode.submit(null); // poison
 				}
 			}
-		} else {
+		} else if(isAlive()) {
+			final StorageNodeExecutor<T> nodeExecutor = nodes[(int) submitExecutor.getTaskCount() % nodes.length];
 			final SubmitDataItemTask<T, StorageNodeExecutor<T>>
-				submitTask = new SubmitDataItemTask<>(
-				dataItem, nodes[(int) submitExecutor.getTaskCount() % nodes.length]
-			);
+				submitTask = new SubmitDataItemTask<>(dataItem, nodeExecutor);
 			boolean flagSubmSucc = false;
 			int rejectCount = 0;
-			do {
+			while(
+				!flagSubmSucc && rejectCount < retryCountMax &&
+				!submitExecutor.isShutdown() && !nodeExecutor.isShutdown()
+			) {
 				try {
 					submitExecutor.submit(submitTask);
 					flagSubmSucc = true;
 				} catch(final RejectedExecutionException e) {
-					rejectCount ++;
+					rejectCount++;
 					try {
 						Thread.sleep(rejectCount * retryDelayMilliSec);
 					} catch(final InterruptedException ee) {
 						break;
 					}
 				}
-			} while(!flagSubmSucc && rejectCount < retryCountMax && !submitExecutor.isShutdown());
+			}
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -329,26 +344,24 @@ implements LoadExecutor<T> {
 		}
 		notCompletedTaskCount += submitExecutor.getQueue().size() + submitExecutor.getActiveCount();
 		//
-		LOG.info(
-			logMarker,
-			MSG_FMT_METRICS.format(
-				new Object[] {
-					countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
-					//
-					(float)reqDurSnapshot.getMin() / BILLION,
-					(float)reqDurSnapshot.getMedian() / BILLION,
-					(float)reqDurSnapshot.getMean() / BILLION,
-					(float)reqDurSnapshot.getMax() / BILLION,
-					//
-					avgSize==0 ? 0 : meanBW/avgSize,
-					avgSize==0 ? 0 : oneMinBW/avgSize,
-					avgSize==0 ? 0 : fiveMinBW/avgSize,
-					avgSize==0 ? 0 : fifteenMinBW/avgSize,
-					//
-					meanBW/MIB, oneMinBW/MIB, fiveMinBW/MIB, fifteenMinBW/MIB
+		final String message = MSG_FMT_METRICS.format(
+				new Object[]{
+						countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
+						//
+						(float) reqDurSnapshot.getMin() / BILLION,
+						(float) reqDurSnapshot.getMedian() / BILLION,
+						(float) reqDurSnapshot.getMean() / BILLION,
+						(float) reqDurSnapshot.getMax() / BILLION,
+						//
+						avgSize == 0 ? 0 : meanBW / avgSize,
+						avgSize == 0 ? 0 : oneMinBW / avgSize,
+						avgSize == 0 ? 0 : fiveMinBW / avgSize,
+						avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+						//
+						meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 				}
-			)
 		);
+		LOG.info(logMarker, message);
 		//
 		if(Markers.PERF_SUM.equals(logMarker)) {
 			final double totalReqNanoSeconds = reqDurSnapshot.getMean() * countReqSucc;
