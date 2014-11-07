@@ -1,5 +1,5 @@
 package com.emc.mongoose.util.persist;
-
+//
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -11,9 +11,8 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.math.BigInteger;
-
+//
 import static javax.persistence.GenerationType.IDENTITY;
-
 /**
  * Created by olga on 28.10.14.
  */
@@ -24,7 +23,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 		@UniqueConstraint(columnNames = "status"),
 		@UniqueConstraint(columnNames = "tsReqStart"),
 		@UniqueConstraint(columnNames = "reqDur")})
-public class TraceEntity
+public final class TraceEntity
 implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -32,7 +31,7 @@ implements Serializable{
 	private BigInteger id;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "dataItem", nullable = false)
-	private DataItemEntity dataitem;
+	private DataObjectEntity dataitem;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "thread", nullable = false)
 	private ThreadEntity thread;
@@ -46,7 +45,7 @@ implements Serializable{
 	//
 	public TraceEntity(){
 	}
-	public TraceEntity(final DataItemEntity dataitem, final ThreadEntity thread,
+	public TraceEntity(final DataObjectEntity dataitem, final ThreadEntity thread,
 					   final StatusEntity status, final BigInteger tsReqStart,
 					   final BigInteger reqDur){
 		this.dataitem = dataitem;
@@ -59,40 +58,40 @@ implements Serializable{
 		this.reqDur = reqDur;
 	}
 	//
-	public BigInteger getId() {
+	public final BigInteger getId() {
 		return id;
 	}
-	public void setId(final BigInteger id) {
+	public final void setId(final BigInteger id) {
 		this.id = id;
 	}
-	public DataItemEntity getDataitem() {
+	public final DataObjectEntity getDataitem() {
 		return dataitem;
 	}
-	public void setDataitem(final DataItemEntity dataitem) {
+	public final void setDataitem(final DataObjectEntity dataitem) {
 		this.dataitem = dataitem;
 	}
-	public ThreadEntity getThread() {
+	public final ThreadEntity getThread() {
 		return thread;
 	}
-	public void setThread(final ThreadEntity thread) {
+	public final void setThread(final ThreadEntity thread) {
 		this.thread = thread;
 	}
-	public StatusEntity getStatus() {
+	public final StatusEntity getStatus() {
 		return status;
 	}
-	public void setStatus(final StatusEntity status) {
+	public final void setStatus(final StatusEntity status) {
 		this.status = status;
 	}
-	public BigInteger getTsReqStart() {
+	public final BigInteger getTsReqStart() {
 		return tsReqStart;
 	}
-	public void setTsReqStart(final BigInteger tsReqStart) {
+	public final void setTsReqStart(final BigInteger tsReqStart) {
 		this.tsReqStart = tsReqStart;
 	}
-	public BigInteger getReqDur() {
+	public final BigInteger getReqDur() {
 		return reqDur;
 	}
-	public void setReqDur(final BigInteger reqDur) {
+	public final void setReqDur(final BigInteger reqDur) {
 		this.reqDur = reqDur;
 	}
 }

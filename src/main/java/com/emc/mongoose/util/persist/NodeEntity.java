@@ -1,5 +1,5 @@
 package com.emc.mongoose.util.persist;
-
+//
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -21,7 +21,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Entity(name="NodeEntity")
 @Table(name = "Nodes", uniqueConstraints = {
 		@UniqueConstraint(columnNames = "address")})
-public class NodeEntity
+public final class NodeEntity
 implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -38,22 +38,22 @@ implements Serializable{
 		this.address = addr;
 	}
 	//
-	public BigInteger getId() {
+	public final BigInteger getId() {
 		return id;
 	}
-	public void setId(final BigInteger id) {
+	public final void setId(final BigInteger id) {
 		this.id = id;
 	}
-	public String getAddress() {
+	public final String getAddress() {
 		return address;
 	}
-	public void setAddress(final String address) {
+	public final void setAddress(final String address) {
 		this.address = address;
 	}
-	public Set<ThreadEntity> getThreadSet() {
+	public final Set<ThreadEntity> getThreadSet() {
 		return threadSet;
 	}
-	public void setThreadSet(final Set<ThreadEntity> threadSet) {
+	public final void setThreadSet(final Set<ThreadEntity> threadSet) {
 		this.threadSet = threadSet;
 	}
 }

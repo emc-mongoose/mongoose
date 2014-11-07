@@ -22,6 +22,6 @@
 		<mapping class="com.emc.mongoose.util.persist.ThreadEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.StatusEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.TraceEntity"></mapping>
-		<mapping class="com.emc.mongoose.util.persist.DataItemEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.DataObjectEntity"></mapping>
 	</session-factory>
 </hibernate-configuration>
