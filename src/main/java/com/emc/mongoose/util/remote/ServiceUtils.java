@@ -4,7 +4,6 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.run.Main;
 //
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,14 +36,31 @@ import java.util.Map;
  */
 public final class ServiceUtils {
 	//
-	private final static HashMap<String, Service> SVC_MAP;
-	//
-	private static volatile Logger LOG = LogManager.getLogger();
+	private static volatile Logger LOG = LogManager.getRootLogger();
 	public static void setLogger(final Logger log) {
 		LOG = log;
 	}
-	//private final static Registry REGISTRY;
 	//
+	public final static int PORT_RMI_CONTROL;
+	static {
+		int tmpPort = Registry.REGISTRY_PORT;
+		try {
+			tmpPort = Main.RUN_TIME_CONFIG.getRemoteControlPort();
+		} catch(final Exception e) {
+			ExceptionHandler.trace(
+				LOG, Level.WARN, e,
+				String.format(
+					"Failed to take remote control port value, will use the default value \"%d\"",
+					tmpPort
+				)
+			);
+		} finally {
+			PORT_RMI_CONTROL = tmpPort;
+		}
+	}
+	//
+	private final static HashMap<String, Service> SVC_MAP;
+	//private final static Registry REGISTRY;
 	static {
 		// set up security manager
 		if(System.getSecurityManager()==null) {
@@ -54,15 +70,14 @@ public final class ServiceUtils {
 		}
 		//
 		SVC_MAP = new HashMap<>();
-		//
 		// create or use existing registry
 		//Registry registry = null;
 		try {
-			/*registry = */LocateRegistry.createRegistry(Registry.REGISTRY_PORT);
+			/*registry = */LocateRegistry.createRegistry(PORT_RMI_CONTROL);
 			LOG.debug(Markers.MSG, "RMI registry created");
 		} catch(final RemoteException e) {
 			try {
-				/*registry = */LocateRegistry.getRegistry(Registry.REGISTRY_PORT);
+				/*registry = */LocateRegistry.getRegistry(PORT_RMI_CONTROL);
 				LOG.info(Markers.MSG, "Reusing already existing RMI registry");
 			} catch(final RemoteException ee) {
 				LOG.fatal(Markers.ERR, "Failed to obtain RMI registry", ee);
@@ -219,19 +234,21 @@ public final class ServiceUtils {
 			JMXServiceURL jmxSvcURL = null;
 			try {
 				jmxSvcURL = new JMXServiceURL(
-					JMXRMI_URL_PREFIX + ":" + Integer.toString(portJmxRmi) + JMXRMI_URL_PATH
+					JMXRMI_URL_PREFIX + ":" + Integer.toString(portJmxRmi) +
+					JMXRMI_URL_PATH + Integer.toString(portJmxRmi)
 				);
 				LOG.debug(Markers.MSG, "Created JMX service URL {}", jmxSvcURL.toString());
 			} catch(final MalformedURLException e) {
-				synchronized(LOG) {
-					LOG.warn(Markers.ERR, "Failed to create JMX service URL for port {}", portJmxRmi);
-					LOG.debug(Markers.ERR, e.toString(), e.getCause());
-				}
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e,
+					String.format("Failed to create JMX service URL for port #%d", portJmxRmi)
+				);
 			}
 			//
 			JMXConnectorServer connectorServer = null;
 			if(jmxSvcURL!=null) {
 				try {
+					//LOG.trace(Markers.MSG, "{}, {}, {}", jmxSvcURL, env, mBeanServer);
 					connectorServer = JMXConnectorServerFactory.newJMXConnectorServer(
 						jmxSvcURL, env, mBeanServer
 					);
@@ -241,13 +258,13 @@ public final class ServiceUtils {
 				}
 			}
 			//
-			if(connectorServer!=null && !connectorServer.isActive()) {
+			if(connectorServer != null && !connectorServer.isActive()) {
 				try {
 					connectorServer.start();
 					LOG.debug(Markers.MSG, "JMX connector started", portJmxRmi);
 				} catch(final IOException e) {
 					ExceptionHandler.trace(
-							LOG, Level.WARN, e,
+						LOG, Level.WARN, e,
 						"Failed to start JMX connector, please check that there's no another instance running"
 					);
 				}

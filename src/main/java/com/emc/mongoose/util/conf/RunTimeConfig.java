@@ -177,8 +177,16 @@ implements Externalizable {
 		return getSizeBytes("data.page.size");
 	}
 	//
-	public final int getRemoteMonitorPort() {
-		return getInt("remote.monitor.port");
+	public final int getRemoteControlPort() {
+		return getInt("remote.control.port");
+	}
+	//
+	public final int getRemoteExportPort() {
+		return getInt("remote.export.port");
+	}
+	//
+	public final int getRemoteImportPort() {
+		return getInt("remote.import.port");
 	}
 	//
 	public final int getRunMetricsPeriodSec() {
@@ -271,7 +279,9 @@ implements Externalizable {
 		for(final Iterator<String> i = getKeys(); i.hasNext();) {
 			nextPropName = i.next();
 			nextPropValue = getProperty(nextPropName);
-			LOG.trace(Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
+			LOG.trace(
+				Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
+			);
 			if(List.class.isInstance(nextPropValue)) {
 				propsMap.put(
 					nextPropName,
@@ -309,7 +319,9 @@ implements Externalizable {
 			// put the properties into the System
 			Object nextPropValue;
 			for(final String nextPropName: confMap.keySet()) {
-				nextPropValue = confMap.get(nextPropName);
+				nextPropValue = nextPropName.startsWith("remote") ?
+					Main.RUN_TIME_CONFIG.getString(nextPropName) :
+					confMap.get(nextPropName);
 				LOG.trace(Markers.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
 				if(List.class.isInstance(nextPropValue)) {
 					setProperty(
