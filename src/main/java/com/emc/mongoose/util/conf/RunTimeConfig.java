@@ -226,12 +226,16 @@ implements Externalizable {
 		return getString("run.scenario.dir");
 	}
 	//
+	public final String getRunId() {
+		return getString(Main.KEY_RUN_ID);
+	}
+	//
 	public final String getRunTime() {
 		return getString("run.time");
 	}
 	//
 	public final String getRunMode() {
-		return getString("run.mode");
+		return getString(Main.KEY_RUN_MODE);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
