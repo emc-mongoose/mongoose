@@ -109,36 +109,37 @@ implements Consumer<T>, Producer<T> {
 	public final void submit(T dataItem)
 	throws IllegalStateException {
 		//
-		//
-		final DataItemOutPutTask<T> outPutTask = new DataItemOutPutTask<>(fBuffOut, dataItem);
-		boolean passed = false;
-		int rejectCount = 0;
-		do {
-			try {
-				outPutExecutor.submit(outPutTask);
-				passed = true;
-				writtenDataItems.incrementAndGet();
-			} catch(final RejectedExecutionException e) {
-				rejectCount ++;
+		if(dataItem == null) {
+			outPutExecutor.shutdown();
+		} else {
+			//
+			final DataItemOutPutTask<T> outPutTask = new DataItemOutPutTask<>(fBuffOut, dataItem);
+			boolean passed = false;
+			int rejectCount = 0;
+			while(
+				!passed && rejectCount < retryCountMax && writtenDataItems.get() < maxCount &&
+					!outPutExecutor.isShutdown()
+				) {
 				try {
-					Thread.sleep(rejectCount * retryDelayMilliSec);
-				} catch(final InterruptedException ee) {
-					break;
+					outPutExecutor.submit(outPutTask);
+					writtenDataItems.incrementAndGet();
+					passed = true;
+				} catch(final RejectedExecutionException e) {
+					rejectCount ++;
+					try {
+						Thread.sleep(rejectCount * retryDelayMilliSec);
+					} catch(final InterruptedException ee) {
+						break;
+					}
 				}
 			}
-		} while(
-			!passed &&
-			rejectCount < retryCountMax &&
-			writtenDataItems.get() < maxCount &&
-			!outPutExecutor.isShutdown() &&
-			!outPutExecutor.isTerminated()
-		);
-		//
-		if(!passed) {
-			LOG.debug(
-				Markers.ERR, "Data item \"{}\" has been rejected after {} tries",
-				dataItem, rejectCount
-			);
+			//
+			if(!passed) {
+				LOG.debug(
+					Markers.ERR, "Data item \"{}\" has been rejected after {} tries",
+					dataItem, rejectCount
+				);
+			}
 		}
 	}
 	//

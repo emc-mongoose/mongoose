@@ -49,9 +49,9 @@ extends AbstractAppender{
 								KEY_RUN_MODE = "run.mode";
 	//
 	private HibernateAppender(
-			final String name, final Filter filter,
-			final Layout<? extends Serializable> layout,
-			final String runid, final String runmode
+		final String name, final Filter filter,
+		final Layout<? extends Serializable> layout,
+		final String runId, final String runMode
 	) {
 		super(name, filter, layout);
 	}
@@ -62,14 +62,14 @@ extends AbstractAppender{
 			final @PluginAttribute("ignoreExceptions") boolean ignoreExceptions,
 			final @PluginElement("Filters") Filter filter,
 			final @PluginAttribute("enabled") Boolean enabled,
-			final @PluginAttribute("runid") String runid,
-			final @PluginAttribute("runmode") String runmode,
-			final @PluginAttribute("database") String database,
-			final @PluginAttribute("username") String username,
-			final @PluginAttribute("password") String password,
+			final @PluginAttribute("runid") String runId,
+			final @PluginAttribute("runmode") String runMode,
+			final @PluginAttribute("database") String provider,
+			final @PluginAttribute("username") String userName,
+			final @PluginAttribute("password") String passWord,
 			final @PluginAttribute("addr") String addr,
 			final @PluginAttribute("port") String port,
-			final @PluginAttribute("namedatabase") String namedatabase
+			final @PluginAttribute("namedatabase") String dbName
 	) {
 		java.util.logging.Logger.getLogger("org.hibernate").setLevel(Level.OFF);
 		HibernateAppender newAppender = null;
@@ -77,27 +77,29 @@ extends AbstractAppender{
 		if(name == null) {
 			throw new IllegalArgumentException("No name provided for HibernateAppender");
 		}
-		final String url = String.format("jdbc:%s://%s:%d/%s", database, addr, port, namedatabase);
+		final String url = String.format("jdbc:%s://%s:%s/%s", provider, addr, port, dbName);
 		try {
 			if(ENABLED_FLAG) {
-				initDataBase(username, password, url);
+				initDataBase(userName, passWord, url);
 				setStatusEntity();
 			}
-			newAppender = new HibernateAppender(name, filter, DEFAULT_LAYOUT, runid, runmode);
+			newAppender = new HibernateAppender(name, filter, DEFAULT_LAYOUT, runId, runMode);
 		} catch (final Exception e) {
 			throw new IllegalStateException("Open DB session failed", e);
 		}
 		return newAppender;
 	}
-	//Init Database with username,password and url
-	private static void initDataBase(final String username,
-									 final String password, final String url){
-			final SessionFactory sessionFactory = buildSessionFactory(username, password, url);
+	// init database session with username,password and url
+	@Deprecated
+	private static void initDataBase(
+		final String userName, final String passWord, final String url
+	) {
+			final SessionFactory sessionFactory = buildSessionFactory(userName, passWord, url);
 			if(sessionFactory != null) {
 				SESSION = sessionFactory.openSession();
 			}
 	}
-	//Append method
+	// append method // - really?! (kurilov)
 	@Override
 	public final void append(final LogEvent event) {
 		if (ENABLED_FLAG){
@@ -132,13 +134,15 @@ extends AbstractAppender{
 		}
 	}
 	//
-	private static BigInteger getValueFromMessage( final String[] message, final int index){
+	private static BigInteger getValueFromMessage( final String[] message, final int index) {
 		return new BigInteger(message[index], 16);
 	}
 	//
+	@Deprecated
 	private static SessionFactory buildSessionFactory(
-			final String username, final String password,
-			final String url) {
+		final String username, final String password,
+		final String url
+	) {
 		SessionFactory newSessionFactory = null;
 		final String DIR_ROOT = System.getProperty("user.dir");
 		final Path path = Paths.get(DIR_ROOT, "conf", "hibernate.cfg.xml");
@@ -257,9 +261,10 @@ extends AbstractAppender{
 		return threadEntity;
 	}
 	//
-	private static DataObjectEntity loadDataObjectEntity(final String identifier, final String ringOffset,
-														 final BigInteger size, final BigInteger layer,
-														 final BigInteger mask){
+	private static DataObjectEntity loadDataObjectEntity(
+		final String identifier, final String ringOffset, final BigInteger size,
+		final BigInteger layer, final BigInteger mask
+	) {
 		DataObjectEntity dataObject = getDataItemEntity(identifier, ringOffset, size);
 		if (dataObject == null){
 			dataObject = new DataObjectEntity(identifier, ringOffset, size, layer, mask);
@@ -371,7 +376,9 @@ extends AbstractAppender{
 				.uniqueResult();
 	}
 	//
-	private static DataObjectEntity getDataItemEntity(final String identifier, final String ringOffset, final BigInteger size) {
+	private static DataObjectEntity getDataItemEntity(
+		final String identifier, final String ringOffset, final BigInteger size
+	) {
 		return (DataObjectEntity) SESSION.createCriteria(DataObjectEntity.class)
 				.add( Restrictions.eq("identifier", identifier))
 				.add(Restrictions.eq("ringOffset", ringOffset))

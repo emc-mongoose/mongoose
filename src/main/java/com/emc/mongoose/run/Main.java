@@ -151,7 +151,7 @@ public final class Main {
 				)
 			);
 		}
-		// load the logging configuration
+		// determine the logger configuration file path
 		final Path logConfPath = Paths.get(
 			DIR_ROOT, DIR_CONF, DIR_LOGGING,
 			(
@@ -161,7 +161,7 @@ public final class Main {
 			) ?
 				FNAME_LOGGING_LOCAL : FNAME_LOGGING_REMOTE
 		);
-		// make loggers asynchronous
+		// make all used loggers asynchronous
 		System.setProperty(
 			"Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
 		);

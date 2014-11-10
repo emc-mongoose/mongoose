@@ -156,10 +156,6 @@
 								"marker": "err",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
-							}, {
-								"type": "BurstFilter",
-								"rate": 10,
-								"maxBurst": 100
 							}
 						]
 					}

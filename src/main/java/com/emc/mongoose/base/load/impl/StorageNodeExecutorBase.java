@@ -17,7 +17,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.threading.GentleExecutorShutDown;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
 import org.apache.logging.log4j.Level;
@@ -35,9 +34,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 15.10.14.
  */
@@ -54,8 +50,6 @@ implements StorageNodeExecutor<T> {
 	private final Histogram reqDur, reqDurParent;
 	//
 	private volatile Consumer<T> consumer = null;
-	private final Lock lock = new ReentrantLock();
-	private final Condition condInterrupted = lock.newCondition();
 	//
 	private final RunTimeConfig runTimeConfig;
 	private final Request.Type reqType;
@@ -349,14 +343,8 @@ implements StorageNodeExecutor<T> {
 	//
 	@Override
 	public final void join(final long milliSecs)
-		throws InterruptedException {
-		if(lock.tryLock()) {
-			try {
-				condInterrupted.await(milliSecs, TimeUnit.MILLISECONDS);
-			} finally {
-				lock.unlock();
-			}
-		}
+	throws InterruptedException {
+		wait(milliSecs);
 	}
 	//
 	@Override
@@ -365,16 +353,13 @@ implements StorageNodeExecutor<T> {
 		LOG.debug(Markers.MSG, "Interrupting...");
 		localReqConf.setRetries(false);
 		//
-		new GentleExecutorShutDown(this, runTimeConfig).run();
-		//
-		if(lock.tryLock()) {
-			try {
-				condInterrupted.signalAll();
-			} finally {
-				lock.unlock();
-			}
+		shutdown();
+		synchronized(LOG) {
+			LOG.debug(Markers.PERF_SUM, "Summary metrics below for {}", getName());
+			logMetrics(Level.DEBUG, Markers.PERF_SUM);
 		}
-		//
+		// signal about the interruption
+		notifyAll();
 	}
 	//
 	@Override
@@ -386,14 +371,18 @@ implements StorageNodeExecutor<T> {
 	//
 	@Override
 	public final void close()
-		throws IOException {
+	throws IOException {
 		if(!isShutdown()) {
 			interrupt();
 		}
-		//LOG.debug(Markers.MSG, "Dropping {} tasks", shutdownNow().size());
-		synchronized(LOG) {
-			LOG.debug(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-			logMetrics(Level.DEBUG, Markers.PERF_SUM);
+		try {
+			if(!awaitTermination(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)) {
+				LOG.debug(Markers.MSG, "Response timeout on node executor close {}", getName());
+			}
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.MSG, "Interrupted closing node executor {}", getName());
+		} finally {
+			LOG.debug(Markers.MSG, "Dropping {} tasks", shutdownNow().size());
 		}
 		//
 		LOG.debug(Markers.MSG, "Closed {}", getThreadFactory().toString());

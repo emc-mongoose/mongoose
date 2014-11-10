@@ -87,30 +87,30 @@ def execute(chain=(), flagSimultaneous=True):
 		except:
 			LOG.error(Markers.ERR, "No 1st load executor in the chain")
 	else:
-		loadExecutor, prevMediatorBuff, mediatorBuff = None, None, None
-		for load in chain:
-			if isinstance(load, TempFileConsumerProducer):
-				mediatorBuff = load
-				if loadExecutor is not None:
+		prevLoad, nextLoad = None, None
+		for nextLoad in chain:
+			if not isinstance(nextLoad, TempFileConsumerProducer):
+				nextLoad.start()
+				if prevLoad is not None and isinstance(prevLoad, TempFileConsumerProducer):
+					prevLoad.close()
+					prevLoad.start()
 					try:
-						loadExecutor.start()
-						if prevMediatorBuff is not None:
-							prevMediatorBuff.start()
-						loadExecutor.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
-						if prevMediatorBuff is not None:
-							prevMediatorBuff.interrupt()
-						loadExecutor.close()
-						mediatorBuff.close()
-						prevMediatorBuff = mediatorBuff
+						prevLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
 					except Throwable as e:
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "Chain execution failure")
-			else:
-				loadExecutor = load
-	for load in chain:
-		try:
-			load.close()
-		except Throwable as e:
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Chain element closing failure")
+						ExceptionHandler.trace(
+							LOG, Level.ERROR, e, "Producer \"{}\" execution failure", prevLoad
+						)
+					finally:
+						prevLoad.close()
+				try:
+					nextLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
+				except Throwable as e:
+					ExceptionHandler.trace(
+						LOG, Level.ERROR, e, "Consumer \"{}\" execution failure", nextLoad
+					)
+				finally:
+					nextLoad.close()
+			prevLoad = nextLoad
 #
 if __name__=="__builtin__":
 	#
