@@ -86,18 +86,20 @@ implements Runnable {
 	private void createMapDataObject(){
 		final Path pathDataItemCSV = Paths.get(runTimeConfig.getDataSrcFPath());
 		try {
-			final BufferedReader fileReader = Files.newBufferedReader(pathDataItemCSV, StandardCharsets.UTF_8);
-			String nextLine;
-			do {
-				nextLine = fileReader.readLine();
-				if(nextLine == null || nextLine.isEmpty()) {
-					break;
-				} else {
-					LOG.trace(Markers.MSG, "Got next line: \"{}\"", nextLine);
-					final BasicWSObject nextData = new BasicWSObject(nextLine);
-					mapDataObject.put(nextData.getId(), nextData);
-				}
-			} while(true);
+			if (!pathDataItemCSV.toString().isEmpty()) {
+				final BufferedReader fileReader = Files.newBufferedReader(pathDataItemCSV, StandardCharsets.UTF_8);
+				String nextLine;
+				do {
+					nextLine = fileReader.readLine();
+					if (nextLine == null || nextLine.isEmpty()) {
+						break;
+					} else {
+						LOG.trace(Markers.MSG, "Got next line: \"{}\"", nextLine);
+						final BasicWSObject nextData = new BasicWSObject(nextLine);
+						mapDataObject.put(nextData.getId(), nextData);
+					}
+				} while (true);
+			}
 		} catch (final IOException e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to read line from the file");
 		}
