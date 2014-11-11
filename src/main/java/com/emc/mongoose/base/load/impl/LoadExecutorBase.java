@@ -41,6 +41,9 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 15.10.14.
  */
@@ -71,6 +74,9 @@ implements LoadExecutor<T> {
 	protected volatile Consumer<T> consumer;
 	private volatile static int instanceN = 0;
 	protected volatile long maxCount, tsStart;
+	//
+	private final Lock lock = new ReentrantLock();
+	private final Condition condDone = lock.newCondition();
 	//
 	public static int getLastInstanceNum() {
 		return instanceN;
@@ -167,36 +173,42 @@ implements LoadExecutor<T> {
 	@Override
 	public final void run() {
 		//
-		final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
-			runTimeConfig.getRunMetricsPeriodSec()
-		);
+		final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 		try {
-			if(metricsUpdatePeriodMilliSec > 0) {
+			if(metricsUpdatePeriodSec > 0) {
 				while(!isInterrupted()) {
-					synchronized(this) {
-						wait(metricsUpdatePeriodMilliSec);
-						logMetrics(Markers.PERF_AVG);
+					if(lock.tryLock()) {
+						try {
+							if(condDone.await(metricsUpdatePeriodSec, TimeUnit.SECONDS)) {
+								LOG.debug(Markers.MSG, "Condition \"done\" reached");
+								break;
+							}
+						} finally {
+							lock.unlock();
+						}
+					} else {
+						LOG.warn(Markers.ERR, "Failed to take the lock");
 					}
+					logMetrics(Markers.PERF_AVG);
 				}
 			} else {
-				long runTimeMillis = TimeUnit.DAYS.toMillis(1000); // by default
-				try {
-					final String
-						runTimeSpec[] = runTimeConfig.getRunTime().split("\\."),
-						runTimeValue = runTimeSpec[0],
-						runTimeUnit = runTimeSpec[1].toUpperCase();
-					TimeUnit.valueOf(runTimeUnit).toMillis(Long.valueOf(runTimeValue));
-				} catch(final Exception e) {
-					ExceptionHandler.trace(
-						LOG, Level.WARN, e,
-						String.format(
-							"Failed to parse run time spec: \"%s\"", runTimeConfig.getRunTime()
-						)
-					);
-				}
+				final String runTimeSpec[] = runTimeConfig.getRunTime().split("\\.");
 				//
-				synchronized(this) {
-					wait(runTimeMillis);
+				if(lock.tryLock()) {
+					try {
+						if(
+							condDone.await(
+								Long.valueOf(runTimeSpec[0]),
+								TimeUnit.valueOf(runTimeSpec[1].toUpperCase())
+							)
+						) {
+							LOG.debug(Markers.MSG, "Condition \"done\" reached");
+						}
+					} catch(final Exception e) {
+						ExceptionHandler.trace(LOG, Level.ERROR, e, "Condition failure");
+					} finally {
+						lock.unlock();
+					}
 				}
 				LOG.debug(Markers.MSG, "Max data items count reached");
 			}
@@ -328,21 +340,28 @@ implements LoadExecutor<T> {
 	public void submit(final T dataItem)
 	throws RemoteException {
 		if(
-			dataItem == null ||
-			isInterrupted() ||
+			dataItem == null || !isAlive() ||
 			maxCount < counterRej.getCount() + counterReqFail.getCount() + counterReqSucc.getCount()
 		) { // handle the poison
-			synchronized(this) {
-				notifyAll(); // signal about done condition
-			}
-			maxCount = counterSubm.getCount() + counterRej.getCount();
 			LOG.debug(Markers.MSG, "Poisoned on #{}", maxCount);
+			//
+			if(lock.tryLock()) {
+				try {
+					condDone.signalAll(); // signal about done condition
+				} finally {
+					lock.unlock();
+				}
+			}
+			//
+			maxCount = counterSubm.getCount() + counterRej.getCount();
 			for(final StorageNodeExecutor<T> nextNode: nodes) {
 				if(!nextNode.isShutdown()) {
 					nextNode.submit(null); // poison
 				}
 			}
-		} else if(isAlive()) {
+			//
+			Thread.currentThread().interrupt(); // causes the producer interruption
+		} else {
 			final StorageNodeExecutor<T> nodeExecutor = nodes[
 				(int) submitExecutor.getTaskCount() % nodes.length
 			];

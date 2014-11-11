@@ -51,6 +51,9 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 20.10.14.
  */
@@ -121,6 +124,9 @@ implements LoadClient<T> {
 	private final LogConsumer<T> metaInfoLog;
 	private final RunTimeConfig runTimeConfig;
 	private final int retryCountMax, retryDelayMilliSec;
+	//
+	private final Lock lock = new ReentrantLock();
+	private final Condition condDone = lock.newCondition();
 	//
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig,
@@ -780,36 +786,42 @@ implements LoadClient<T> {
 	@Override
 	public final void run() {
 		//
-		final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
-			runTimeConfig.getRunMetricsPeriodSec()
-		);
+		final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 		try {
-			if(metricsUpdatePeriodMilliSec > 0) {
+			if(metricsUpdatePeriodSec > 0) {
 				while(!isInterrupted()) {
-					synchronized(this) {
-						wait(metricsUpdatePeriodMilliSec);
-						logMetrics(Markers.PERF_AVG);
+					if(lock.tryLock()) {
+						try {
+							if(condDone.await(metricsUpdatePeriodSec, TimeUnit.SECONDS)) {
+								LOG.debug(Markers.MSG, "Condition \"done\" reached");
+								break;
+							}
+						} finally {
+							lock.unlock();
+						}
+					} else {
+						LOG.warn(Markers.ERR, "Failed to take the lock");
 					}
+					logMetrics(Markers.PERF_AVG);
 				}
 			} else {
-				long runTimeMillis = TimeUnit.DAYS.toMillis(1000); // by default
-				try {
-					final String
-						runTimeSpec[] = runTimeConfig.getRunTime().split("\\."),
-						runTimeValue = runTimeSpec[0],
-						runTimeUnit = runTimeSpec[1].toUpperCase();
-					TimeUnit.valueOf(runTimeUnit).toMillis(Long.valueOf(runTimeValue));
-				} catch(final Exception e) {
-					ExceptionHandler.trace(
-						LOG, Level.WARN, e,
-						String.format(
-							"Failed to parse run time spec: \"%s\"", runTimeConfig.getRunTime()
-						)
-					);
-				}
+				final String runTimeSpec[] = runTimeConfig.getRunTime().split("\\.");
 				//
-				synchronized(this) {
-					wait(runTimeMillis);
+				if(lock.tryLock()) {
+					try {
+						if(
+							condDone.await(
+								Long.valueOf(runTimeSpec[0]),
+								TimeUnit.valueOf(runTimeSpec[1].toUpperCase())
+							)
+							) {
+							LOG.debug(Markers.MSG, "Condition \"done\" reached");
+						}
+					} catch(final Exception e) {
+						ExceptionHandler.trace(LOG, Level.ERROR, e, "Condition failure");
+					} finally {
+						lock.unlock();
+					}
 				}
 				LOG.debug(Markers.MSG, "Max data items count reached");
 			}
@@ -941,41 +953,46 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void submit(final T dataItem) {
-		if(maxCount > submitExecutor.getTaskCount()) {
-			if(dataItem == null) { // poison
-				LOG.trace(
-					Markers.MSG, "Got poison on #{}, invoking the soft interruption",
-					submitExecutor.getTaskCount()
-				);
-				maxCount = submitExecutor.getCompletedTaskCount();
-			} else {
-				final Object addrs[] = remoteLoadMap.keySet().toArray();
-				final String addr = String.class.cast(
-					addrs[(int) submitExecutor.getTaskCount() % addrs.length]
-				);
-				final SubmitDataItemTask<T, LoadSvc<T>> submTask = new SubmitDataItemTask<>(
-					dataItem, remoteLoadMap.get(addr)
-				);
-				boolean passed = false;
-				int rejectCount = 0;
-				do {
-					try {
-						submitExecutor.submit(submTask);
-						passed = true;
-					} catch(final RejectedExecutionException e) {
-						rejectCount ++;
-						try {
-							Thread.sleep(rejectCount * retryDelayMilliSec);
-						} catch(final InterruptedException ee) {
-							break;
-						}
-					}
-				} while(!passed && rejectCount < retryCountMax && !submitExecutor.isShutdown());
+		if(maxCount < submitExecutor.getTaskCount() || dataItem == null || !isAlive()) {
+			//
+			LOG.trace(
+				Markers.MSG, "Got poison on #{}, invoking the soft interruption",
+				submitExecutor.getTaskCount()
+			);
+			maxCount = submitExecutor.getCompletedTaskCount();
+			//
+			if(lock.tryLock()) {
+				try {
+					condDone.signalAll();
+				} finally {
+					lock.unlock();
+				}
 			}
-		} else {
-			LOG.debug(Markers.MSG, "All {} tasks submitted", maxCount);
-			maxCount = submitExecutor.getTaskCount();
+			//
 			Thread.currentThread().interrupt(); // causes the producer interruption
+		} else {
+			final Object addrs[] = remoteLoadMap.keySet().toArray();
+			final String addr = String.class.cast(
+				addrs[(int) submitExecutor.getTaskCount() % addrs.length]
+			);
+			final SubmitDataItemTask<T, LoadSvc<T>> submTask = new SubmitDataItemTask<>(
+				dataItem, remoteLoadMap.get(addr)
+			);
+			boolean passed = false;
+			int rejectCount = 0;
+			do {
+				try {
+					submitExecutor.submit(submTask);
+					passed = true;
+				} catch(final RejectedExecutionException e) {
+					rejectCount ++;
+					try {
+						Thread.sleep(rejectCount * retryDelayMilliSec);
+					} catch(final InterruptedException ee) {
+						break;
+					}
+				}
+			} while(!passed && rejectCount < retryCountMax && !submitExecutor.isShutdown());
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -992,7 +1009,7 @@ implements LoadClient<T> {
 	@Override @SuppressWarnings("unchecked")
 	public final void setConsumer(final Consumer<T> load)
 	throws RemoteException {
-		try { // consumer is map of consumers
+		try { // consumer is client which has the map of consumers
 			final LoadClient<T> loadClient = (LoadClient<T>) load;
 			final Map<String, LoadSvc<T>> consumeMap = loadClient.getRemoteLoadMap();
 			LOG.debug(Markers.MSG, "Consumer is LoadClient instance");
@@ -1008,8 +1025,7 @@ implements LoadClient<T> {
 				}
 			} catch(final ClassCastException ee) {
 				LOG.error(
-					Markers.ERR, "Unsupported consumer type: {}",
-					load.getClass().getCanonicalName()
+					Markers.ERR, "Unsupported consumer type: {}", load.getClass().getCanonicalName()
 				);
 			}
 		}
