@@ -77,7 +77,7 @@ extends AbstractAppender{
 		if(name == null) {
 			throw new IllegalArgumentException("No name provided for HibernateAppender");
 		}
-		final String url = String.format("jdbc:%s://%s:%d/%s", database, addr, port, namedatabase);
+		final String url = String.format("jdbc:%s://%s:%s/%s", database, addr, port, namedatabase);
 		try {
 			if(ENABLED_FLAG) {
 				initDataBase(username, password, url);
