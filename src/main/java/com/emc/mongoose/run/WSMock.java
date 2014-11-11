@@ -116,7 +116,6 @@ implements Runnable {
 		@Override
 		protected final void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException
 		{
-			System.out.println("get");
 			LOG.trace(Markers.MSG, " Request  method Get ");
 			final String dataID = request.getRequestURI().split("/")[2];
 			try(final ServletOutputStream servletOutputStream = response.getOutputStream()) {
