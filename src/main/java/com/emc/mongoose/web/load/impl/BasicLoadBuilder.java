@@ -2,6 +2,7 @@ package com.emc.mongoose.web.load.impl;
 //
 import com.emc.mongoose.base.load.impl.LoadBuilderBase;
 import com.emc.mongoose.object.load.ObjectLoadBuilder;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
@@ -82,7 +83,7 @@ implements WSLoadBuilder<T, U> {
 					case CREATE:
 						LOG.debug(Markers.MSG, "New create load");
 						load = new Create<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile, minObjSize, maxObjSize
 						);
@@ -90,7 +91,7 @@ implements WSLoadBuilder<T, U> {
 					case READ:
 						LOG.debug(Markers.MSG, "New read load");
 						load = new Read<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile
 						);
@@ -98,7 +99,7 @@ implements WSLoadBuilder<T, U> {
 					case UPDATE:
 						LOG.debug(Markers.MSG, "New update load");
 						load = new Update<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile, updatesPerItem
 						);
@@ -106,7 +107,7 @@ implements WSLoadBuilder<T, U> {
 					case DELETE:
 						LOG.debug(Markers.MSG, "New delete load");
 						load = new Delete<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile
 						);
@@ -114,12 +115,14 @@ implements WSLoadBuilder<T, U> {
 					case APPEND:
 						LOG.debug(Markers.MSG, "New append load");
 						load = new Append<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile, minObjSize, maxObjSize
 						);
 				}
-			} catch(CloneNotSupportedException|IOException e) {
+				// cleanup after a specific load executor constructor takes the client
+				wsReqConf.setClient(null); // please don't touch
+			} catch(CloneNotSupportedException | IOException e) {
 				throw new IllegalStateException(e);
 			}
 		} else {

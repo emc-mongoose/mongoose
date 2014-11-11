@@ -63,8 +63,12 @@ implements Externalizable {
 	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)b?");
 	//
 	public long getSizeBytes(final String key) {
-		final String value = getString(key).toLowerCase(), unit;
-		final Matcher matcher = PATTERN_SIZE.matcher(value);
+		return toSize(getString(key));
+	}
+	//
+	public static long toSize(final String value) {
+		final String unit;
+		final Matcher matcher = PATTERN_SIZE.matcher(value.toLowerCase());
 		long size, degree;
 		if(matcher.matches() && matcher.groupCount() > 0 && matcher.groupCount() < 3) {
 			size = Long.valueOf(matcher.group(1), 10);
@@ -75,12 +79,12 @@ implements Externalizable {
 				degree = SIZE_UNITS.indexOf(matcher.group(2)) + 1;
 			} else {
 				throw new IllegalArgumentException(
-					String.format(FMT_MSG_INVALID_SIZE, key, PATTERN_SIZE)
+					String.format(FMT_MSG_INVALID_SIZE, value, PATTERN_SIZE)
 				);
 			}
 		} else {
 			throw new IllegalArgumentException(
-				String.format(FMT_MSG_INVALID_SIZE, key, PATTERN_SIZE)
+				String.format(FMT_MSG_INVALID_SIZE, value, PATTERN_SIZE)
 			);
 		}
 		size *= 1L << 10 * degree;

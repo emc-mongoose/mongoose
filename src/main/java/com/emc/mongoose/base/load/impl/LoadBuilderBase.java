@@ -26,7 +26,6 @@ implements LoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
 	protected RequestConfig<T> reqConf;
 	protected Request.Type loadType;
 	protected long maxCount, minObjSize, maxObjSize;
@@ -38,7 +37,7 @@ implements LoadBuilder<T, U> {
 		threadsPerNodeMap = new HashMap<>();
 		try {
 			reqConf = getDefaultRequestConfig();
-			setProperties(runTimeConfig);
+			setProperties(Main.RUN_TIME_CONFIG);
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to apply configuration");
 		}
@@ -48,7 +47,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig)
 	throws IllegalStateException {
-		this.runTimeConfig = runTimeConfig;
+		Main.RUN_TIME_CONFIG = runTimeConfig;
 		if(reqConf != null) {
 			reqConf.setProperties(runTimeConfig);
 		} else {

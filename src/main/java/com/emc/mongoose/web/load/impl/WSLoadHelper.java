@@ -3,7 +3,6 @@ package com.emc.mongoose.web.load.impl;
 import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.base.load.StorageNodeExecutor;
 import com.emc.mongoose.base.load.impl.LoadExecutorBase;
-import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -31,12 +30,11 @@ public class WSLoadHelper {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static String KEY_NODE_ADDR = "node.addr",
-								KEY_LOAD_NUM = "load.number",
-								KEY_LOAD_TYPE = "load.type",
-								KEY_API = "api",
-								KEY_RUN_ID = "run.id",
-								KEY_RUN_MODE = "run.mode";
+	private final static String
+		KEY_NODE_ADDR = "node.addr",
+		KEY_LOAD_NUM = "load.number",
+		KEY_LOAD_TYPE = "load.type",
+		KEY_API = "api";
 	//
 	public static CloseableHttpClient initClient(
 		final int totalThreadCount, final int dataPageSize, final WSRequestConfig reqConf
@@ -72,6 +70,8 @@ public class WSLoadHelper {
 			httpClientBuilder.disableAutomaticRetries();
 		}
 		//
+		final CloseableHttpClient httpClient = httpClientBuilder.build();
+		reqConf.setClient(httpClient);
 		return httpClientBuilder.build();
 	}
 	//
@@ -86,8 +86,6 @@ public class WSLoadHelper {
 			try {
 				//Add thread context
 				final Map<String,String> context = new HashMap<>();
-				context.put(KEY_RUN_ID,runTimeConfig.getRunName());
-				context.put(KEY_RUN_MODE, runTimeConfig.getRunMode());
 				context.put(KEY_NODE_ADDR, addrs[i]);
 				context.put(KEY_API, reqConf.getAPI());
 				context.put(KEY_LOAD_TYPE, reqConf.getLoadType().toString());
