@@ -12,6 +12,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.ContentType;
 //
+import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -83,6 +84,7 @@ implements Producer<T> {
 					);
 				}
 			}
+			EntityUtils.consumeQuietly(httpResp.getEntity());
 		} catch(final IOException e) {
 			ExceptionHandler.trace(
 				LOG, Level.ERROR, e, "Failed to list the bucket \""+bucket.getName()+"\""
