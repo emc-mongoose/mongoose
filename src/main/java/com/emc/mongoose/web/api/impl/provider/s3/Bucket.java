@@ -13,6 +13,7 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 //
+import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -99,6 +100,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 					);
 				}
 			}
+			EntityUtils.consumeQuietly(httpResp.getEntity());
 		} catch(final IOException e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to check the bucket \""+name+"\"");
 		}
@@ -126,6 +128,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 					);
 				}
 			}
+			EntityUtils.consumeQuietly(httpResp.getEntity());
 		} catch(final IOException e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create the bucket \""+name+"\"");
 		}
@@ -151,6 +154,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 					);
 				}
 			}
+			EntityUtils.consumeQuietly(httpResp.getEntity());
 		} catch(final IOException e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to delete the bucket \""+name+"\"");
 		}
