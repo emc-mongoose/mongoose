@@ -37,8 +37,7 @@ implements WSLoadExecutor<T> {
 	@Override
 	protected final Closeable initClient(final String addrs[], final RequestConfig<T> reqConf) {
 		return WSLoadHelper.initClient(
-			addrs.length * threadsPerNode, // total thread/connections count per load
-			(int) runTimeConfig.getDataPageSize(), (WSRequestConfig<T>) reqConf
+			addrs.length * threadsPerNode, runTimeConfig, (WSRequestConfig<T>) reqConf
 		);
 	}
 	//

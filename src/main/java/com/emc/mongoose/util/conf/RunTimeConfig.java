@@ -43,6 +43,7 @@ implements Externalizable {
 		MAP_OVERRIDE.put(
 			"load.threads",
 			new String[] {
+				"load.append.threads",
 				"load.create.threads",
 				"load.read.threads",
 				"load.update.threads",
@@ -208,6 +209,34 @@ implements Externalizable {
 	//
 	public final String[] getStorageAddrs() {
 		return getStringArray("storage.addrs");
+	}
+	//
+	public final int getConnPoolTimeOut() {
+		return getInt("storage.connection.pool.timeout.millisec");
+	}
+	//
+	public final int getConnTimeOut() {
+		return getInt("storage.connection.timeout.millisec");
+	}
+	//
+	public final int getSocketTimeOut() {
+		return getInt("storage.socket.timeout.millisec");
+	}
+	//
+	public final boolean getStaleConnCheckFlag() {
+		return getBoolean("storage.connection.stale.check");
+	}
+	//
+	public final boolean getSocketReuseAddrFlag() {
+		return getBoolean("storage.socket.reuse.addr");
+	}
+	//
+	public final boolean getSocketKeepAliveFlag() {
+		return getBoolean("storage.socket.keepalive");
+	}
+	//
+	public final boolean getSocketTCPNoDelayFlag() {
+		return getBoolean("storage.socket.tcp.nodelay");
 	}
 	//
 	public final String[] getRemoteServers() {

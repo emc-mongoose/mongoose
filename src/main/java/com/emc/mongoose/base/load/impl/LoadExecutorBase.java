@@ -222,7 +222,6 @@ implements LoadExecutor<T> {
 		LOG.trace(Markers.MSG, "Interrupting, max count is set to {}", maxCount);
 		//
 		final Thread interrupters[] = new Thread[nodes.length < 2 ? 2 : nodes.length];
-		// interrupt a producer
 		interrupters[0] = new Thread("interruptProducer-" + getName()) {
 			@Override
 			public final void run() {
@@ -328,19 +327,20 @@ implements LoadExecutor<T> {
 	@Override
 	public void submit(final T dataItem)
 	throws RemoteException {
-		if(dataItem == null || isInterrupted()) { // handle the poison
+		if(
+			dataItem == null ||
+			isInterrupted() ||
+			maxCount < counterRej.getCount() + counterReqFail.getCount() + counterReqSucc.getCount()
+		) { // handle the poison
+			synchronized(this) {
+				notifyAll(); // signal about done condition
+			}
 			maxCount = counterSubm.getCount() + counterRej.getCount();
 			LOG.debug(Markers.MSG, "Poisoned on #{}", maxCount);
 			for(final StorageNodeExecutor<T> nextNode: nodes) {
 				if(!nextNode.isShutdown()) {
 					nextNode.submit(null); // poison
 				}
-			}
-		} else if(
-			maxCount < counterRej.getCount() + counterReqFail.getCount() + counterReqSucc.getCount()
-		) {
-			synchronized(this) {
-				notifyAll(); // signal about done condition
 			}
 		} else if(isAlive()) {
 			final StorageNodeExecutor<T> nodeExecutor = nodes[

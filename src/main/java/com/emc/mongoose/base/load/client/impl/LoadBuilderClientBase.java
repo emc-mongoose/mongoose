@@ -9,8 +9,10 @@ import com.emc.mongoose.base.load.client.LoadBuilderClient;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -240,4 +242,15 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public abstract U build()
 	throws RemoteException;
+	//
+	@Override
+	public String toString() {
+		StringBuilder strBuilder = new StringBuilder(reqConf.toString());
+		try {
+			strBuilder.append('-').append(get(keySet().iterator().next()).getLastInstanceNum());
+		} catch(final RemoteException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to make load builder string");
+		}
+		return strBuilder.toString();
+	}
 }

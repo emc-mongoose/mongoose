@@ -119,16 +119,23 @@ implements Runnable {
 				ScriptEngine scriptEngine = SCRIPT_ENGINE_MANAGER
 					.getEngineByName(scriptLangValue);
 				//
-				if(scriptEngine==null) {
-					LOG.fatal(
-						Markers.ERR,
-						"Failed to get script engine for language \"{}\", the available engines are:",
-						scriptLangValue
-					);
+				if(scriptEngine == null) {
+
 					for(final ScriptEngineFactory sef : SCRIPT_ENGINE_MANAGER.getEngineFactories()) {
 						LOG.info(
 							Markers.ERR, "\t{}:\tfor language \"{}\" v{}",
 							sef.getEngineName(), sef.getLanguageName(), sef.getLanguageVersion()
+						);
+						if(scriptLangValue.equals(sef.getEngineName())) {
+							scriptEngine = sef.getScriptEngine();
+							break;
+						}
+					}
+					if(scriptEngine == null) {
+						LOG.fatal(
+							Markers.ERR,
+							"Failed to get script engine for language \"{}\", the available engines are:",
+							scriptLangValue
 						);
 					}
 				} else {

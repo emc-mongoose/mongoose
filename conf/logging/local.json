@@ -314,7 +314,7 @@
 						"ref": "async"
 					}
 				}, {
-					"name": "sun.reflect.NativeMethodAccessorImpl",
+					"name": "sun.reflect.PyReflectedFunction",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": { "ref": "async" }
