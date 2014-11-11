@@ -201,10 +201,9 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setThreadsPerNodeDefault(
-		final short threadsPerNode
-	) throws IllegalArgumentException {
-		if(threadsPerNode<1) {
+	public LoadBuilder<T, U> setThreadsPerNodeDefault(final short threadsPerNode)
+	throws IllegalArgumentException {
+		if(threadsPerNode < 1) {
 			throw new IllegalArgumentException("Thread count should not be less than 1");
 		}
 		LOG.debug(Markers.MSG, "Set default thread count per node: {}", threadsPerNode);
@@ -280,4 +279,16 @@ implements LoadBuilder<T, U> {
 	@Override
 	public abstract U build()
 	throws IllegalStateException;
+	//
+	private final static String FMT_STR = "%s.%dx%s";
+	//
+	@Override
+	public String toString() {
+		return String.format(
+			FMT_STR,
+			reqConf.toString(),
+			threadsPerNodeMap.get(threadsPerNodeMap.keySet().iterator().next()),
+			RunTimeConfig.formatSize(minObjSize == 0 ? maxObjSize : minObjSize)
+		);
+	}
 }

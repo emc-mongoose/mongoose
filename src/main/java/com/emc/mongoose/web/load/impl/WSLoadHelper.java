@@ -3,6 +3,7 @@ package com.emc.mongoose.web.load.impl;
 import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.base.load.StorageNodeExecutor;
 import com.emc.mongoose.base.load.impl.LoadExecutorBase;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -10,7 +11,9 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 //
 import com.emc.mongoose.web.load.WSNodeExecutor;
 import org.apache.http.Header;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -37,7 +40,7 @@ public class WSLoadHelper {
 		KEY_API = "api";
 	//
 	public static CloseableHttpClient initClient(
-		final int totalThreadCount, final int dataPageSize, final WSRequestConfig reqConf
+		final int totalThreadCount, final RunTimeConfig runTimeConfig, final WSRequestConfig reqConf
 	) {
 		// create and configure the connection manager for HTTP client
 		final PoolingHttpClientConnectionManager connMgr = new PoolingHttpClientConnectionManager();
@@ -46,7 +49,7 @@ public class WSLoadHelper {
 		connMgr.setDefaultConnectionConfig(
 			ConnectionConfig
 				.custom()
-				.setBufferSize(dataPageSize)
+				.setBufferSize((int) runTimeConfig.getDataPageSize())
 				.build()
 		);
 		// set shared headers to client builder
@@ -65,7 +68,24 @@ public class WSLoadHelper {
 			.disableCookieManagement()
 			.setUserAgent(reqConf.getUserAgent())
 			.setMaxConnPerRoute(totalThreadCount)
-			.setMaxConnTotal(totalThreadCount);
+			.setMaxConnTotal(totalThreadCount)
+			.setDefaultRequestConfig(
+				RequestConfig
+					.custom()
+					.setConnectionRequestTimeout(runTimeConfig.getConnPoolTimeOut())
+					.setConnectTimeout(runTimeConfig.getConnTimeOut())
+					.setSocketTimeout(runTimeConfig.getSocketTimeOut())
+					.setStaleConnectionCheckEnabled(runTimeConfig.getStaleConnCheckFlag())
+					.build()
+			)
+			.setDefaultSocketConfig(
+				SocketConfig
+					.custom()
+					.setSoReuseAddress(runTimeConfig.getSocketReuseAddrFlag())
+					.setSoKeepAlive(runTimeConfig.getSocketKeepAliveFlag())
+					.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
+					.build()
+			);
 		if(!reqConf.getRetries()) {
 			httpClientBuilder.disableAutomaticRetries();
 		}

@@ -72,7 +72,7 @@ extends LoadExecutorBase<T> {
 				//
 				LOG.debug(
 					Markers.MSG, "Will try to produce up to {} objects of {} size", maxCount,
-					minObjSize==maxObjSize ?
+					minObjSize == maxObjSize ?
 						RunTimeConfig.formatSize(minObjSize)
 						:
 						RunTimeConfig.formatSize(minObjSize)+".."+RunTimeConfig.formatSize(maxObjSize)
@@ -89,7 +89,7 @@ extends LoadExecutorBase<T> {
 					} catch(final IOException e) {
 						LOG.trace(Markers.ERR, "Failed to submit object to consumer", e);
 					}
-				} while(!isInterrupted());
+				} while(!isInterrupted() && i < maxCount);
 				try {
 					newDataConsumer.submit(null);
 				} catch(final RejectedExecutionException e) {
@@ -99,7 +99,7 @@ extends LoadExecutorBase<T> {
 			} catch(final IOException e) {
 				LOG.debug(Markers.ERR, "Failed to submit object to consumer", e);
 			} catch(final InterruptedException e) {
-				LOG.debug(Markers.ERR, "Interrupted while submitting the object to consumer");
+				LOG.debug(Markers.MSG, "Interrupted while submitting the object to consumer");
 			} finally {
 				LOG.debug(Markers.MSG, "Object producer finished");
 			}
