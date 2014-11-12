@@ -1,7 +1,5 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -32,7 +30,7 @@ import java.util.NoSuchElementException;
 public final class RequestConfig<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
-	private Logger log = LogManager.getLogger(new MessageFactoryImpl(Main.RUN_TIME_CONFIG));
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static String
 		FMT_PATH = "/%s/%s",
@@ -65,7 +63,7 @@ extends WSRequestConfigBase<T> {
 		try {
 			copy = new RequestConfig<>(this);
 		} catch(final NoSuchAlgorithmException e) {
-			log.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
+			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
 		}
 		return copy;
 	}
@@ -83,12 +81,11 @@ extends WSRequestConfigBase<T> {
 	public final RequestConfig<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		//
 		try {
 			setBucket(new Bucket<T>(this, this.runTimeConfig.getString(KEY_BUCKET)));
 		} catch(final NoSuchElementException e) {
-			log.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET);
 		}
 		//
 		return this;
@@ -99,7 +96,7 @@ extends WSRequestConfigBase<T> {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		setBucket(new Bucket<T>(this, String.class.cast(in.readObject())));
-		log.trace(Markers.MSG, "Got bucket {}", bucket.getName());
+		LOG.trace(Markers.MSG, "Got bucket {}", bucket.getName());
 	}
 	//
 	@Override
@@ -130,7 +127,7 @@ extends WSRequestConfigBase<T> {
 					).build()
 				);
 			} catch(final Exception e) {
-				ExceptionHandler.trace(log, Level.WARN, e, "Request URI setting failure");
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI setting failure");
 			}
 		}
 	}
@@ -178,7 +175,7 @@ extends WSRequestConfigBase<T> {
 		//
 		buffer.append('\n').append(HttpRequestBase.class.cast(httpRequest).getURI().getRawPath());
 		//
-		log.trace(Markers.MSG, "Canonical request representation:\n{}", buffer);
+		LOG.trace(Markers.MSG, "Canonical request representation:\n{}", buffer);
 		//
 		return buffer.toString();
 	}
@@ -203,7 +200,7 @@ extends WSRequestConfigBase<T> {
 		}
 		final String bucketName = bucket.getName();
 		if(bucket.exists()) {
-			log.debug(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
+			LOG.debug(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
 		} else {
 			bucket.create();
 			if(bucket.exists()) {

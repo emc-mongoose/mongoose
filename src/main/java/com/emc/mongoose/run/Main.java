@@ -4,10 +4,12 @@ import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.run.ThreadContextMap;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.LogEventListener;
 import org.apache.logging.log4j.core.config.Configurator;
 //
@@ -97,16 +99,20 @@ public final class Main {
 			System.err.println("Logging initialization failure");
 			System.exit(1);
 		}
+		//
 		rootLogger.info(
 			Markers.MSG, "Run in mode \"{}\", id: \"{}\"",
 			System.getProperty(KEY_RUN_MODE), System.getProperty(KEY_RUN_ID)
 		);
 		// load the properties
 		RUN_TIME_CONFIG = new RunTimeConfig();
+		//
 		RUN_TIME_CONFIG.loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RUN_TIME_CONFIG.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
+		//
+		ThreadContextMap.initThreadContextMap(RUN_TIME_CONFIG);
 		//
 		switch (runMode) {
 			case RUN_MODE_SERVER:
@@ -141,6 +147,8 @@ public final class Main {
 	}
 	//
 	public static Logger initLogging(final String runMode) {
+		//
+		System.setProperty("isThreadContextMapInheritable", "true");
 		// set "dir.root" property
 		System.setProperty(KEY_DIR_ROOT, DIR_ROOT);
 		// set "run.id" property with timestamp value if not set before
@@ -152,7 +160,7 @@ public final class Main {
 				)
 			);
 		}
-		// load the logging configuration
+		// determine the logger configuration file path
 		final Path logConfPath = Paths.get(
 			DIR_ROOT, DIR_CONF, DIR_LOGGING,
 			(
@@ -162,6 +170,11 @@ public final class Main {
 			) ?
 				FNAME_LOGGING_LOCAL : FNAME_LOGGING_REMOTE
 		);
+		// make all used loggers asynchronous
+		System.setProperty(
+			"Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+		);
+		// go
 		Configurator.initialize(null, logConfPath.toUri().toString());
 		return LogManager.getRootLogger();
 	}

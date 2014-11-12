@@ -12,11 +12,40 @@
 		"appenders": {
 			"appender" : [
 				{
+					"name": "WebUI",
+					"type": "WebUI",
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "err",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "msg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfAvg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfSum",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}
+						]
+					}
+				}, {
 					"name": "hibernate",
 					"type": "Hibernate",
 					"enabled": "false",
 					"runid": "${sys:run.id}",
 					"runmode": "${sys:run.mode}",
+					"database": "postgresql",
 					"username": "mongoose",
 					"password": "mongoose",
 					"addr": "localhost",
@@ -155,10 +184,6 @@
 								"marker": "err",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
-							}, {
-								"type": "BurstFilter",
-								"rate": 10,
-								"maxBurst": 100
 							}
 						]
 					}
@@ -233,7 +258,8 @@
 						{ "ref": "perfAvgFile" },
 						{ "ref": "perfSumFile" },
 						{ "ref": "perfTraceFile" },
-						{ "ref": "hibernate" }
+						{ "ref": "hibernate" },
+						{ "ref": "WebUI" }
 					]
 				}
 			]
@@ -245,19 +271,6 @@
 				"AppenderRef": { "ref": "async" }
 			},
 			"logger": [
-
-				// Apache HTTP
-				{
-					"name": "org.apache.http",
-					"level": "info",
-					"additivity": "false",
-					"AppenderRef": { "ref": "async" }
-				}, {
-					"name": "org.apache.http.wire",
-					"level": "info",
-					"additivity": "false",
-					"AppenderRef": { "ref": "async" }
-				},
 
 				// Mongoose basic load generation functionality
 				{
@@ -321,7 +334,7 @@
 					}
 				},
 
-				// Mongoose runners
+				// Mongoose runners and scenarios
 				{
 					"name": "com.emc.mongoose.run",
 					"level": "debug",
@@ -329,6 +342,11 @@
 					"AppenderRef": {
 						"ref": "async"
 					}
+				}, {
+					"name": "sun.reflect.PyReflectedFunction",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": { "ref": "async" }
 				},
 
 				// Mongoose utils
@@ -478,6 +496,19 @@
 					"AppenderRef": {
 						"ref": "async"
 					}
+				},
+
+				// Apache HTTP
+				{
+					"name": "org.apache.http",
+					"level": "info",
+					"additivity": "false",
+					"AppenderRef": { "ref": "async" }
+				}, {
+					"name": "org.apache.http.wire",
+					"level": "info",
+					"additivity": "false",
+					"AppenderRef": { "ref": "async" }
 				}
 			]
 		}

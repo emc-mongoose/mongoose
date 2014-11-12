@@ -4,9 +4,6 @@ import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.impl.RequestBase;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.util.pool.BasicInstancePool;
 import com.emc.mongoose.web.api.WSRequest;
 import com.emc.mongoose.web.api.WSRequestConfig;
@@ -25,8 +22,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
-//
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,10 +43,7 @@ public class BasicWSRequest<T extends WSObject>
 extends RequestBase<T>
 implements WSRequest<T> {
 	//
-	private static volatile Logger LOG = LogManager.getLogger();
-	public static void setLogger(final Logger log) {
-		LOG = log;
-	}
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static BasicWSRequest POISON = new BasicWSRequest() {
 		@Override
@@ -142,7 +137,7 @@ implements WSRequest<T> {
 		//
 		try(final CloseableHttpResponse httpResponse = httpClient.execute(httpRequest)) {
 			final StatusLine statusLine = httpResponse.getStatusLine();
-			if(statusLine==null) {
+			if(statusLine == null) {
 				LOG.warn(Markers.MSG, "No response status line");
 			} else {
 				final int statusCode = statusLine.getStatusCode();
@@ -154,7 +149,7 @@ implements WSRequest<T> {
 							httpRequest.getMethod(), httpRequest.getURI()
 						);
 						//for(final Header header : httpResponse.getAllHeaders()) {
-						//	log.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
+						//	LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
 						//}
 					}
 				}
@@ -169,8 +164,8 @@ implements WSRequest<T> {
 								final HttpEntity httpEntity = httpResponse.getEntity();
 								if(httpEntity==null) {
 									LOG.warn(
-											Markers.ERR, "No HTTP content entity for request \"{}\"",
-											httpRequest.getRequestLine()
+										Markers.ERR, "No HTTP content entity for request \"{}\"",
+										httpRequest.getRequestLine()
 									);
 									result = Result.FAIL_IO;
 									break;
@@ -186,15 +181,15 @@ implements WSRequest<T> {
 										result = Result.SUCC;
 									} else {
 										LOG.warn(
-												Markers.ERR, "Content verification failed for \"{}\"",
-												dataItem
+											Markers.ERR, "Content verification failed for \"{}\"",
+											dataItem
 										);
 										result = Result.FAIL_CORRUPT;
 									}
 								} catch(final IOException e) {
 									LOG.warn(
-											Markers.ERR, "Failed to read the object content for \"{}\"",
-											dataItem
+										Markers.ERR, "Failed to read the object content for \"{}\"",
+										dataItem
 									);
 									result = Result.FAIL_IO;
 								}
@@ -257,13 +252,16 @@ implements WSRequest<T> {
 							);
 						} catch(final IOException e) {
 							ExceptionHandler.trace(
-									LOG, Level.ERROR, e,
+								LOG, Level.ERROR, e,
 								"Failed to fetch the content of the failed response"
 							);
 						}
 					}
 				}
 			}
+			//
+			EntityUtils.consumeQuietly(httpResponse.getEntity());
+			//
 		} catch(final SocketTimeoutException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Socket timeout");
 			result = Result.FAIL_TIMEOUT;
@@ -283,6 +281,6 @@ implements WSRequest<T> {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "I/O failure");
 			result = Result.FAIL_IO;
 		}
-		//
+	//
 	}
 }

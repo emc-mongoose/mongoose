@@ -21,7 +21,7 @@ public final class BasicNodeExecutor<T extends WSObject>
 extends ObjectNodeExecutorBase<T>
 implements WSNodeExecutor<T> {
 	//
-	//private final static Logger log = LogManager.getLogger();
+	//private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicNodeExecutor(
 		final RunTimeConfig runTimeConfig,

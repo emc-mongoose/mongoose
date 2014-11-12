@@ -5,7 +5,6 @@ import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.load.impl.LoadExecutorBase;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,7 +16,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public abstract class AppendLoadBase<T extends AppendableDataItem>
 extends LoadExecutorBase<T> {
 	//
-	private final Logger log;
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final long minAppendSize, maxAppendSize;
 	//
@@ -28,7 +27,6 @@ extends LoadExecutorBase<T> {
 		final long minAppendSize, final long maxAppendSize
 	) {
 		super(runTimeConfig, addrs, sharedReqConf, maxCount, threadsPerNode, listFile);
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		this.minAppendSize = minAppendSize;
 		this.maxAppendSize = maxAppendSize;
 	}
@@ -41,10 +39,10 @@ extends LoadExecutorBase<T> {
 				.current()
 				.nextLong(minAppendSize, maxAppendSize + 1);
 			dataItem.append(appendSize);
-			if(log.isTraceEnabled(Markers.MSG)) {
-				log.trace(
-						Markers.MSG, "Append the object \"{}\": +{}",
-						dataItem, RunTimeConfig.formatSize(appendSize)
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Append the object \"{}\": +{}",
+					dataItem, RunTimeConfig.formatSize(appendSize)
 				);
 			}
 		}

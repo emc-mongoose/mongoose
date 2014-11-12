@@ -7,7 +7,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.http.annotation.ThreadSafe;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -17,7 +16,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
-import java.nio.LongBuffer;
 import java.util.ArrayList;
 import java.util.List;
 /**
@@ -29,11 +27,7 @@ import java.util.List;
 public class UniformDataSource<T extends UniformData>
 implements DataSource<T> {
 	//
-	private static volatile Logger LOG = LogManager.getRootLogger();
-	public static void setLogger(final Logger log) {
-		LOG = log;
-	}
-
+	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static int A = 21, B = 35, C = 4;
 	private final static String

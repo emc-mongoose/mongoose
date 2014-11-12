@@ -19,7 +19,7 @@
 		<nav class="navbar navbar-default" role="navigation">
 			<div class="container-fluid">
 				<div class="navbar-header">
-					<a id="logo-image" href="/"><img src="images/vipr.png" width="50" height="50"></a>
+					<a id="logo-image" href="/"><img src="images/logo.jpg" width="50" height="50"></a>
 					<a class="navbar-brand" href="/">Mongoose</a>
 				</div>
 				<div class="collapse navbar-collapse" id="bx-example-navbar-collapse-1">
@@ -115,7 +115,7 @@
 										<div class="storages">
 											<div class="input-group">
 												<span class="input-group-addon">
-													<input id="dataNodes" name="dataNodes" type="checkbox" value="${addr}">
+													<input id="dataNodes" name="dataNodes" type="checkbox" checked="true" value="${addr}">
 												</span>
 												<label class="form-control">
 													${addr}
@@ -134,8 +134,10 @@
 						<div class="drivers-block">
 							<fieldset class="scheduler-border">
 								<legend class="scheduler-border">Remote</legend>
-								<label>remote.monitor.port:</label>
-								<input id="remoteMonitorPort" name="remoteMonitorPort" type="text" class="form-control counter" value="${runTimeConfig.remoteMonitorPort}">
+								<label>remote.export.port:</label>
+								<input id="remoteExportPort" name="remoteExportPort" type="text" class="form-control counter" value="${runTimeConfig.remoteExportPort}">
+								<label>remote.import.port:</label>
+								<input id="remoteImportPort" name="remoteImportPort" type="text" class="form-control counter" value="${runTimeConfig.remoteImportPort}">
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">Drivers</legend>
 									<button type="button" class="default add-driver">Add</button>
@@ -150,7 +152,7 @@
 										<div class="drivers">
 											<div class="input-group">
 												<span class="input-group-addon">
-													<input id="drivers" name="drivers" type="checkbox" value="${server}">
+													<input id="drivers" name="drivers" type="checkbox" checked="true" value="${server}">
 												</span>
 												<label class="form-control">
 													${server}
@@ -290,7 +292,7 @@
 							</div>
 						</div>
 						<div class="right-side">
-							<button id="stop" type="button" class="default"><span>Stop</span></button>
+							<button type="button" class="default stop"><span>Stop</span></button>
 							<div class="log-wrapper">
 								<div class="tab-content">
 									<div class="tab-pane active" id="${correctMode}messages-csv">

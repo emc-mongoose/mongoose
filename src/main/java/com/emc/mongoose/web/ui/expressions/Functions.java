@@ -7,7 +7,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
  */
 public class Functions {
 
-	public static String getString(RunTimeConfig runTimeConfig, String key) {
+	public static String getString(final RunTimeConfig runTimeConfig, final String key) {
         return runTimeConfig.getString(key);
     }
 

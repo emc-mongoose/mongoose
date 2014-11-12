@@ -2,7 +2,6 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -13,6 +12,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.entity.ContentType;
 //
+import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,10 +29,7 @@ public final class BucketProducer<T extends BasicWSObject>
 extends Thread
 implements Producer<T> {
 	//
-	private static volatile Logger LOG = LogManager.getLogger();
-	public static void setLogger(final Logger log) {
-		LOG = log;
-	}
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile Consumer<T> consumer = null;
 	private final Bucket<T> bucket;
@@ -87,6 +84,7 @@ implements Producer<T> {
 					);
 				}
 			}
+			EntityUtils.consumeQuietly(httpResp.getEntity());
 		} catch(final IOException e) {
 			ExceptionHandler.trace(
 				LOG, Level.ERROR, e, "Failed to list the bucket \""+bucket.getName()+"\""

@@ -14,21 +14,24 @@ import java.io.IOException;
 /**
  * Created by gusakk on 02/10/14.
  */
-public class MainServlet extends HttpServlet {
+public final class MainServlet extends HttpServlet {
 
-	private static final Logger LOG = LogManager.getLogger();
+	private final static Logger LOG = LogManager.getLogger();
 	private RunTimeConfig runTimeConfig;
 
 	@Override
-	public void init() throws ServletException {
+	public final void init() throws ServletException {
 		runTimeConfig = (RunTimeConfig) getServletContext().getAttribute("runTimeConfig");
 		super.init();
 	}
 
-	public void doGet(HttpServletRequest request, HttpServletResponse response)
+	public final void doGet(HttpServletRequest request, HttpServletResponse response)
 	throws ServletException, IOException {
 		request.setAttribute("runmodes", RunModes.values());
 		request.setAttribute("runTimeConfig", runTimeConfig);
+		if (StartServlet.threadsMap != null) {
+			request.getSession(true).setAttribute("runmodes", StartServlet.threadsMap.keySet());
+		}
 		request.getRequestDispatcher("index.jsp").forward(request, response);
 	}
 

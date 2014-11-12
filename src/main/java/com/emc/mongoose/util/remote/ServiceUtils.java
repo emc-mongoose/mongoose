@@ -36,10 +36,7 @@ import java.util.Map;
  */
 public final class ServiceUtils {
 	//
-	private static volatile Logger LOG = LogManager.getRootLogger();
-	public static void setLogger(final Logger log) {
-		LOG = log;
-	}
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static int PORT_RMI_CONTROL;
 	static {
@@ -246,7 +243,7 @@ public final class ServiceUtils {
 			}
 			//
 			JMXConnectorServer connectorServer = null;
-			if(jmxSvcURL!=null) {
+			if(jmxSvcURL != null) {
 				try {
 					//LOG.trace(Markers.MSG, "{}, {}, {}", jmxSvcURL, env, mBeanServer);
 					connectorServer = JMXConnectorServerFactory.newJMXConnectorServer(

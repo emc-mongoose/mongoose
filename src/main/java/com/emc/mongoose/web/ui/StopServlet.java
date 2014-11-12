@@ -9,9 +9,9 @@ import java.io.IOException;
 /**
  * Created by gusakk on 03/10/14.
  */
-public class StopServlet extends HttpServlet {
+public final class StopServlet extends HttpServlet {
 
-	public void doPost(HttpServletRequest request, HttpServletResponse response)
+	public final void doPost(final HttpServletRequest request, final HttpServletResponse response)
     throws ServletException, IOException {
 		StartServlet.interruptMongoose(request.getParameter("runid"));
     }

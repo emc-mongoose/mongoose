@@ -1,6 +1,5 @@
 package com.emc.mongoose.web.api.impl.provider.atmos;
 //
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.run.Main;
@@ -27,7 +26,7 @@ import java.util.NoSuchElementException;
 public final class RequestConfig<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
-	private Logger log = LogManager.getLogger(new MessageFactoryImpl(Main.RUN_TIME_CONFIG));
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final static String
 		KEY_SUBTENANT = "api.atmos.subtenant",
@@ -58,7 +57,7 @@ extends WSRequestConfigBase<T> {
 		try {
 			copy = new RequestConfig<>(this);
 		} catch(final NoSuchAlgorithmException e) {
-			log.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
+			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
 		}
 		return copy;
 	}
@@ -93,12 +92,10 @@ extends WSRequestConfigBase<T> {
 	public final RequestConfig<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
-		//
 		try {
 			setSubTenant(new SubTenant<>(this, this.runTimeConfig.getString(KEY_SUBTENANT)));
 		} catch(final NoSuchElementException e) {
-			log.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_SUBTENANT);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_SUBTENANT);
 		}
 		//
 		return this;
@@ -219,13 +216,13 @@ extends WSRequestConfigBase<T> {
 				if(id.length() > 0) {
 					dataObject.setId(id);
 				} else {
-					log.trace(Markers.ERR, "Got empty object id");
+					LOG.trace(Markers.ERR, "Got empty object id");
 				}
 			} else {
-				log.trace(Markers.ERR, String.format(FMT_MSG_ERR_LOCATION_HEADER_VALUE, valueLocation));
+				LOG.trace(Markers.ERR, String.format(FMT_MSG_ERR_LOCATION_HEADER_VALUE, valueLocation));
 			}
 		} else {
-			log.trace(Markers.ERR, "No location header in the http response");
+			LOG.trace(Markers.ERR, "No location header in the http response");
 		}
 	}
 	//
@@ -237,7 +234,7 @@ extends WSRequestConfigBase<T> {
 		}
 		final String subTenantName = subTenant.getName();
 		if(subTenant.exists()) {
-			log.debug(Markers.MSG, "Subtenant \"{}\" already exists", subTenantName);
+			LOG.debug(Markers.MSG, "Subtenant \"{}\" already exists", subTenantName);
 		} else {
 			subTenant.create();
 			if(subTenant.exists()) {

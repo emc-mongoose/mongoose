@@ -13,7 +13,6 @@ import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.util.Date;
 
 import static javax.persistence.GenerationType.IDENTITY;
@@ -28,7 +27,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 		@UniqueConstraint(columnNames = "class"),
 		@UniqueConstraint(columnNames = "tstamp"),
 		@UniqueConstraint(columnNames = "message")})
-public class MessageEntity
+public final class MessageEntity
 implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -62,40 +61,40 @@ implements Serializable{
 		level.getMessageSet().add(this);
 	}
 	//
-	public BigInteger getId() {
+	public final BigInteger getId() {
 		return id;
 	}
-	public void setId(final BigInteger id) {
+	public final void setId(final BigInteger id) {
 		this.id = id;
 	}
-	public RunEntity getRun() {
+	public final RunEntity getRun() {
 		return run;
 	}
-	public void setRun(final RunEntity run) {
+	public final void setRun(final RunEntity run) {
 		this.run = run;
 	}
-	public LevelEntity getLevel() {
+	public final LevelEntity getLevel() {
 		return level;
 	}
-	public void setLevel(final LevelEntity level) {
+	public final void setLevel(final LevelEntity level) {
 		this.level = level;
 	}
-	public MessageClassEntity getClassMessage() {
+	public final MessageClassEntity getClassMessage() {
 		return classMessage;
 	}
-	public void setClassMessage(final MessageClassEntity className) {
+	public final void setClassMessage(final MessageClassEntity className) {
 		this.classMessage = className;
 	}
-	public Date getTstamp() {
+	public final Date getTstamp() {
 		return tstamp;
 	}
-	public void setTstamp(final Date tstamp) {
+	public final void setTstamp(final Date tstamp) {
 		this.tstamp = tstamp;
 	}
-	public String getMessage() {
+	public final String getMessage() {
 		return message;
 	}
-	public void setMessage(final String message) {
+	public final void setMessage(final String message) {
 		this.message = message;
 	}
 }

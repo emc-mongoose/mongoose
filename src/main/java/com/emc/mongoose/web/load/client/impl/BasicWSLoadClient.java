@@ -19,7 +19,7 @@ public class BasicWSLoadClient<T extends WSObject>
 extends BasicLoadClient<T>
 implements WSLoadClient<T> {
 	//
-	//private final static Logger log = LogManager.getLogger();
+	//private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicWSLoadClient(
 		final RunTimeConfig runTimeConfig,

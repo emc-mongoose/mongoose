@@ -1,22 +1,14 @@
 package com.emc.mongoose.util.conf;
 //
-import com.emc.mongoose.base.api.impl.RequestBase;
-import com.emc.mongoose.base.data.impl.DataRanges;
-import com.emc.mongoose.base.data.impl.UniformData;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
-import com.emc.mongoose.base.data.persist.FileProducer;
-import com.emc.mongoose.base.data.persist.LogConsumer;
 import com.emc.mongoose.base.load.impl.ShutDownHook;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
-import com.emc.mongoose.util.pool.BasicInstancePool;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.api.impl.BasicWSRequest;
-import com.emc.mongoose.web.api.impl.provider.s3.Bucket;
-import com.emc.mongoose.web.api.impl.provider.s3.BucketListHandler;
-import com.emc.mongoose.web.api.impl.provider.s3.BucketProducer;
+import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
+import com.emc.mongoose.web.load.impl.WSLoadHelper;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
@@ -30,7 +22,13 @@ import java.io.ObjectOutput;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Calendar;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 /**
@@ -59,6 +57,7 @@ implements Externalizable {
 		MAP_OVERRIDE.put(
 			"load.threads",
 			new String[] {
+				"load.append.threads",
 				"load.create.threads",
 				"load.read.threads",
 				"load.update.threads",
@@ -73,33 +72,18 @@ implements Externalizable {
 		);
 	}
 	//
-	{
-		set(Main.KEY_RUN_ID, FMT_DT.format(Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()));
-		UniformData.setLogger(LogManager.getLogger(UniformData.class, new MessageFactoryImpl(this)));
-		DataRanges.setLogger(LogManager.getLogger(DataRanges.class, new MessageFactoryImpl(this)));
-		//UniformDataSource.setLogger(LogManager.getLogger(UniformDataSource.class, new MessageFactoryImpl(this)));
-		UniformDataSource.setLogger(LogManager.getLogger());
-		RequestBase.setLogger(LogManager.getLogger(RequestBase.class, new MessageFactoryImpl(this)));
-		FileProducer.setLogger(LogManager.getLogger(FileProducer.class, new MessageFactoryImpl(this)));
-		LogConsumer.setLogger(LogManager.getLogger(LogConsumer.class, new MessageFactoryImpl(this)));
-		/*ShutDownHook.setLogger(LogManager.getLogger(ShutDownHook.class, new MessageFactoryImpl(this)));
-		BasicInstancePool.setLogger(LogManager.getLogger(BasicInstancePool.class, new MessageFactoryImpl(this)));
-		ServiceUtils.setLogger(LogManager.getLogger(ServiceUtils.class, new MessageFactoryImpl(this)));
-		Bucket.setLogger(LogManager.getLogger(Bucket.class, new MessageFactoryImpl(this)));
-		BucketListHandler.setLogger(LogManager.getLogger(BucketListHandler.class, new MessageFactoryImpl(this)));
-		BucketProducer.setLogger(LogManager.getLogger(BucketProducer.class, new MessageFactoryImpl(this)));
-		BasicWSRequest.setLogger(LogManager.getLogger(BasicWSRequest.class, new MessageFactoryImpl(this)));
-		DirectoryLoader.setLogger(LogManager.getLogger(DirectoryLoader.class, new MessageFactoryImpl(this)));*/
-	}
-	//
 	private final static String
 		SIZE_UNITS = "kmgtpe",
 		FMT_MSG_INVALID_SIZE = "The string \"%s\" doesn't match the pattern: \"%s\"";
 	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)b?");
 	//
 	public long getSizeBytes(final String key) {
-		final String value = getString(key).toLowerCase(), unit;
-		final Matcher matcher = PATTERN_SIZE.matcher(value);
+		return toSize(getString(key));
+	}
+	//
+	public static long toSize(final String value) {
+		final String unit;
+		final Matcher matcher = PATTERN_SIZE.matcher(value.toLowerCase());
 		long size, degree;
 		if(matcher.matches() && matcher.groupCount() > 0 && matcher.groupCount() < 3) {
 			size = Long.valueOf(matcher.group(1), 10);
@@ -110,12 +94,12 @@ implements Externalizable {
 				degree = SIZE_UNITS.indexOf(matcher.group(2)) + 1;
 			} else {
 				throw new IllegalArgumentException(
-					String.format(FMT_MSG_INVALID_SIZE, key, PATTERN_SIZE)
+					String.format(FMT_MSG_INVALID_SIZE, value, PATTERN_SIZE)
 				);
 			}
 		} else {
 			throw new IllegalArgumentException(
-				String.format(FMT_MSG_INVALID_SIZE, key, PATTERN_SIZE)
+				String.format(FMT_MSG_INVALID_SIZE, value, PATTERN_SIZE)
 			);
 		}
 		size *= 1L << 10 * degree;
@@ -136,9 +120,9 @@ implements Externalizable {
 		).toUpperCase();
 	}
 	//
-	public final void set(final String key, final String value) {
+	public final synchronized void set(final String key, final String value) {
 		setProperty(key, value);
-		System.setProperty(key, value);
+		//System.setProperty(key, value);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final int getRunReqTimeOutMilliSec() {
@@ -241,6 +225,34 @@ implements Externalizable {
 		return getStringArray("storage.addrs");
 	}
 	//
+	public final int getConnPoolTimeOut() {
+		return getInt("storage.connection.pool.timeout.millisec");
+	}
+	//
+	public final int getConnTimeOut() {
+		return getInt("storage.connection.timeout.millisec");
+	}
+	//
+	public final int getSocketTimeOut() {
+		return getInt("storage.socket.timeout.millisec");
+	}
+	//
+	public final boolean getStaleConnCheckFlag() {
+		return getBoolean("storage.connection.stale.check");
+	}
+	//
+	public final boolean getSocketReuseAddrFlag() {
+		return getBoolean("storage.socket.reuse.addr");
+	}
+	//
+	public final boolean getSocketKeepAliveFlag() {
+		return getBoolean("storage.socket.keepalive");
+	}
+	//
+	public final boolean getSocketTCPNoDelayFlag() {
+		return getBoolean("storage.socket.tcp.nodelay");
+	}
+	//
 	public final String[] getRemoteServers() {
 		return getStringArray("remote.servers");
 	}
@@ -261,12 +273,16 @@ implements Externalizable {
 		return getString("run.scenario.dir");
 	}
 	//
+	public final String getRunId() {
+		return getString(Main.KEY_RUN_ID);
+	}
+	//
 	public final String getRunTime() {
 		return getString("run.time");
 	}
 	//
 	public final String getRunMode() {
-		return getString("run.mode");
+		return getString(Main.KEY_RUN_MODE);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -348,11 +364,11 @@ implements Externalizable {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public void loadPropsFromDir(final Path propsDir) {
+	public synchronized void loadPropsFromDir(final Path propsDir) {
 		DirectoryLoader.loadPropsFromDir(propsDir, this);
 	}
 	//
-	public void loadSysProps() {
+	public synchronized void loadSysProps() {
 		final SystemConfiguration sysProps = new SystemConfiguration();
 		String key, keys2override[];
 		Object sharedValue;
@@ -374,4 +390,10 @@ implements Externalizable {
 		}
 	}
 	//
+	public synchronized RunTimeConfig clone() {
+		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
+		runTimeConfig.set(Main.KEY_RUN_ID, FMT_DT.format(
+				Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()));
+		return runTimeConfig;
+	}
 }

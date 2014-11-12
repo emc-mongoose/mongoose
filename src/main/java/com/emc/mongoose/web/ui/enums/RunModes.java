@@ -10,7 +10,7 @@ public enum RunModes {
 	VALUE_RUN_MODE_SERVER("server"),
 	VALUE_RUN_MODE_CLIENT("client");
 
-	private String value;
+	private final String value;
 
 	RunModes(String value) {
 		this.value = value;

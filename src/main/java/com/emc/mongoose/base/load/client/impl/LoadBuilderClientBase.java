@@ -9,9 +9,10 @@ import com.emc.mongoose.base.load.client.LoadBuilderClient;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -29,7 +30,7 @@ public abstract class LoadBuilderClientBase<T extends DataItem, U extends LoadEx
 extends HashMap<String, LoadBuilderSvc<T, U>>
 implements LoadBuilderClient<T, U> {
 	//
-	protected Logger log = LogManager.getLogger(new MessageFactoryImpl(Main.RUN_TIME_CONFIG));
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected FileProducer<T> srcProducer = null;
 	protected volatile RunTimeConfig runTimeConfig;
@@ -49,13 +50,12 @@ implements LoadBuilderClient<T, U> {
 		//
 		super(runTimeConfig.getRemoteServers().length);
 		this.runTimeConfig = runTimeConfig;
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		final String remoteServers[] = runTimeConfig.getRemoteServers();
 		//
 		LoadBuilderSvc<T, U> loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;
 		for(final String serverAddr : remoteServers) {
-			log.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
+			LOG.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
 			loadBuilderSvc = resolve(serverAddr);
 			nextInstanceN = loadBuilderSvc.getLastInstanceNum();
 			if(nextInstanceN > maxLastInstanceN) {
@@ -88,7 +88,7 @@ implements LoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
 			nextBuilder = get(addr);
-			log.debug(Markers.MSG, "Applying the configuration to server @ \"{}\"...", addr);
+			LOG.debug(Markers.MSG, "Applying the configuration to server @ \"{}\"...", addr);
 			nextBuilder.setProperties(runTimeConfig);
 		}
 		//
@@ -110,11 +110,11 @@ implements LoadBuilderClient<T, U> {
 				setInputFile(dataMetaInfoFile);
 			}
 		} catch(final NoSuchElementException e) {
-			log.warn(Markers.ERR, "No \"data.src.fpath\" property available");
+			LOG.warn(Markers.ERR, "No \"data.src.fpath\" property available");
 		} catch(final InvalidPathException e) {
-			log.warn(Markers.ERR, "Invalid data metainfo src file path: {}", dataMetaInfoFile);
+			LOG.warn(Markers.ERR, "Invalid data metainfo src file path: {}", dataMetaInfoFile);
 		} catch(final SecurityException e) {
-			log.warn(Markers.ERR, "Unexpected exception", e);
+			LOG.warn(Markers.ERR, "Unexpected exception", e);
 		}
 		return this;
 	}
@@ -242,4 +242,15 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public abstract U build()
 	throws RemoteException;
+	//
+	@Override
+	public String toString() {
+		StringBuilder strBuilder = new StringBuilder(reqConf.toString());
+		try {
+			strBuilder.append('-').append(get(keySet().iterator().next()).getLastInstanceNum());
+		} catch(final RemoteException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to make load builder string");
+		}
+		return strBuilder.toString();
+	}
 }

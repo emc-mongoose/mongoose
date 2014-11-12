@@ -58,40 +58,40 @@ implements Serializable {
 		api.getLoadsSet().add(this);
 	}
 	//
-	public BigInteger getId() {
+	public final BigInteger getId() {
 		return id;
 	}
-	public void setId(final BigInteger id) {
+	public final void setId(final BigInteger id) {
 		this.id = id;
 	}
-	public RunEntity getRun() {
+	public final RunEntity getRun() {
 		return run;
 	}
-	public void setRun(final RunEntity run) {
+	public final void setRun(final RunEntity run) {
 		this.run = run;
 	}
-	public LoadTypeEntity getType() {
+	public final LoadTypeEntity getType() {
 		return type;
 	}
-	public void setType(final LoadTypeEntity type) {
+	public final void setType(final LoadTypeEntity type) {
 		this.type = type;
 	}
-	public BigInteger getNum() {
+	public final BigInteger getNum() {
 		return num;
 	}
-	public void setNum(final BigInteger num) {
+	public final void setNum(final BigInteger num) {
 		this.num = num;
 	}
-	public ApiEntity getApi() {
+	public final ApiEntity getApi() {
 		return api;
 	}
-	public void setApi(final ApiEntity api) {
+	public final void setApi(final ApiEntity api) {
 		this.api = api;
 	}
-	public Set<ThreadEntity> getThreadSet() {
+	public final Set<ThreadEntity> getThreadSet() {
 		return threadSet;
 	}
-	public void setThreadSet(Set<ThreadEntity> threadSet) {
+	public final void setThreadSet(Set<ThreadEntity> threadSet) {
 		this.threadSet = threadSet;
 	}
 }

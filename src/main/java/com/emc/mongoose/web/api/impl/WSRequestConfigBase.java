@@ -4,7 +4,6 @@ import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.impl.RequestConfigImpl;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.run.Main;
@@ -53,7 +52,7 @@ public abstract class WSRequestConfigBase<T extends WSObject>
 extends RequestConfigImpl<T>
 implements WSRequestConfig<T> {
 	//
-	private static Logger log = LogManager.getLogger(new MessageFactoryImpl(Main.RUN_TIME_CONFIG));
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static long serialVersionUID = 42L;
 	protected final String userAgent, signMethod;
@@ -66,9 +65,9 @@ implements WSRequestConfig<T> {
 		public final boolean retryRequest(
 			final IOException e, final int i, final HttpContext httpContext
 		) {
-			if(log.isTraceEnabled(Markers.ERR)) {
+			if(LOG.isTraceEnabled(Markers.ERR)) {
 				ExceptionHandler.trace(
-						log, Level.TRACE, e, String.format(Locale.ROOT, FMT_ERR_MSG, i)
+					LOG, Level.TRACE, e, String.format(Locale.ROOT, FMT_ERR_MSG, i)
 				);
 			}
 			return retryFlag;
@@ -93,13 +92,13 @@ implements WSRequestConfig<T> {
 				Class.forName(apiImplClsFQN).getConstructors()[0].newInstance()
 			);
 		} catch(final ClassNotFoundException e) {
-			log.fatal(Markers.ERR, "API implementation not found: \"{}\"", apiImplClsFQN);
+			LOG.fatal(Markers.ERR, "API implementation not found: \"{}\"", apiImplClsFQN);
 		} catch(final ClassCastException e) {
-			log.fatal(Markers.ERR, "Class \"{}\" is not valid API implementation", apiImplClsFQN);
+			LOG.fatal(Markers.ERR, "Class \"{}\" is not valid API implementation", apiImplClsFQN);
 		} catch(final Exception e) {
-			synchronized(log) {
-				log.fatal(Markers.ERR, "WS API config instantiation failure: {}", e.toString());
-				log.debug(Markers.ERR, "cause: {}", e.getCause());
+			synchronized(LOG) {
+				LOG.fatal(Markers.ERR, "WS API config instantiation failure: {}", e.toString());
+				LOG.debug(Markers.ERR, "cause: {}", e.getCause());
 			}
 		}
 		return reqConf;
@@ -175,7 +174,7 @@ implements WSRequestConfig<T> {
 	}
 	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
 		if(nameSpace==null) {
-			log.debug(Markers.MSG, "Using empty namespace");
+			LOG.debug(Markers.MSG, "Using empty namespace");
 		} else {
 			sharedHeadersMap.put(KEY_EMC_NS, nameSpace);
 		}
@@ -199,20 +198,19 @@ implements WSRequestConfig<T> {
 		try {
 			setScheme(this.runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
-			log.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
 		//
 		paramName = "data.namespace";
 		try {
 			setNameSpace(this.runTimeConfig.getDataNameSpace());
 		} catch(final NoSuchElementException e) {
-			log.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalStateException e) {
-			log.debug(Markers.ERR, "Failed to set the namespace", e);
+			LOG.debug(Markers.ERR, "Failed to set the namespace", e);
 		}
 		//
 		super.setProperties(runTimeConfig);
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		//
 		return this;
 	}
@@ -220,16 +218,16 @@ implements WSRequestConfig<T> {
 	@Override
 	public WSRequestConfigBase<T> setSecret(final String secret) {
 		SecretKeySpec keySpec;
-		log.trace(Markers.MSG, "Applying secret key {}", secret);
+		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
 		try {
 			keySpec = new SecretKeySpec(secret.getBytes(DEFAULT_ENC), signMethod);
 			synchronized(mac) {
 				mac.init(keySpec);
 			}
 		} catch(UnsupportedEncodingException e) {
-			log.fatal(Markers.ERR, "Configuration error", e);
+			LOG.fatal(Markers.ERR, "Configuration error", e);
 		} catch(InvalidKeyException e) {
-			log.error(Markers.ERR, "Invalid secret key", e);
+			LOG.error(Markers.ERR, "Invalid secret key", e);
 		}
 		//
 		super.setSecret(secret);
@@ -286,20 +284,20 @@ implements WSRequestConfig<T> {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		setScheme(String.class.cast(in.readObject()));
-		log.trace(Markers.MSG, "Got scheme {}", uriBuilder.getScheme());
+		LOG.trace(Markers.MSG, "Got scheme {}", uriBuilder.getScheme());
 		sharedHeadersMap = (ConcurrentHashMap<String,String>) in.readObject();
 		/*final int headersCount = in.readInt();
 		sharedHeadersMap = new ConcurrentHashMap<>(headersCount);
-		log.trace(Markers.MSG, "Got headers count {}", headersCount);
+		LOG.trace(Markers.MSG, "Got headers count {}", headersCount);
 		String key, value;
 		for(int i = 0; i < headersCount; i ++) {
 			key = String.class.cast(in.readObject());
-			log.trace(Markers.MSG, "Got header key {}", key);
+			LOG.trace(Markers.MSG, "Got header key {}", key);
 			value = String.class.cast(in.readObject());
-			log.trace(Markers.MSG, "Got header value {}", value);
+			LOG.trace(Markers.MSG, "Got header value {}", value);
 			sharedHeadersMap.put(key, value);
 		}*/
-		log.trace(Markers.MSG, "Got headers map {}", sharedHeadersMap);
+		LOG.trace(Markers.MSG, "Got headers map {}", sharedHeadersMap);
 	}
 	//
 	@Override
@@ -338,26 +336,26 @@ implements WSRequestConfig<T> {
 	public final void applyHeadersFinally(final HttpRequest httpRequest) {
 		applyDateHeader(httpRequest);
 		applyAuthHeader(httpRequest);
-		if(log.isTraceEnabled(Markers.MSG)) {
-			synchronized(log) {
-				log.trace(
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			synchronized(LOG) {
+				LOG.trace(
 					Markers.MSG, "built request: {} {}",
 					httpRequest.getRequestLine().getMethod(), httpRequest.getRequestLine().getUri()
 				);
 				for(final Header header: httpRequest.getAllHeaders()) {
-					log.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
+					LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
 				}
 				for(final String header: sharedHeadersMap.keySet()) {
-					log.trace(Markers.MSG, "\t{}: {}", header, sharedHeadersMap.get(header));
+					LOG.trace(Markers.MSG, "\t{}: {}", header, sharedHeadersMap.get(header));
 				}
 				if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
-					log.trace(
+					LOG.trace(
 						Markers.MSG, "\tcontent: {} bytes",
 						HttpEntityEnclosingRequest.class.cast(httpRequest)
-							.getEntity().getContentLength()
+								.getEntity().getContentLength()
 					);
 				} else {
-					log.trace(Markers.MSG, "\t---- no content ----");
+					LOG.trace(Markers.MSG, "\t---- no content ----");
 				}
 			}
 		}
@@ -371,9 +369,9 @@ implements WSRequestConfig<T> {
 		try {
 			httpReqWithPayLoad = HttpEntityEnclosingRequest.class.cast(httpRequest);
 		} catch(final ClassCastException e) {
-			log.error(
-					Markers.ERR, "\"{}\" HTTP request can't have a content entity",
-					httpRequest.getRequestLine().getMethod()
+			LOG.error(
+				Markers.ERR, "\"{}\" HTTP request can't have a content entity",
+				httpRequest.getRequestLine().getMethod()
 			);
 		}
 		if(httpReqWithPayLoad != null) {
@@ -387,24 +385,24 @@ implements WSRequestConfig<T> {
 		for(int i = 0; i < rangeCount; i++) {
 			rangeLen = dataItem.getRangeSize(i);
 			if(dataItem.isRangeUpdatePending(i)) {
-				log.trace(Markers.MSG, "\"{}\": should update range #{}", dataItem, i);
+				LOG.trace(Markers.MSG, "\"{}\": should update range #{}", dataItem, i);
 				if(rangeBeg < 0) { // begin of the possible updated ranges sequence
 					rangeBeg = DataRanges.getRangeOffset(i);;
 					rangeEnd = rangeBeg + rangeLen - 1;
-					log.trace(
-							Markers.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
+					LOG.trace(
+						Markers.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
 					);
 				} else if(rangeEnd > 0) { // next range in the sequence of updated ranges
 					rangeEnd += rangeLen;
 				}
 				if(i == rangeCount - 1) { // this is the last range which is updated also
-					log.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
+					LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
 					httpRequest.addHeader(
 						HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
 					);
 				}
 			} else if(rangeBeg > -1 && rangeEnd > -1) { // end of the updated ranges sequence
-				log.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
+				LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
 				httpRequest.addHeader(
 					HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
 				);
@@ -444,10 +442,10 @@ implements WSRequestConfig<T> {
 				signature = mac.doFinal(canonicalForm.getBytes(DEFAULT_ENC));
 			}
 		} catch(UnsupportedEncodingException e) {
-			ExceptionHandler.trace(log, Level.ERROR, e, "Failed to calculate the signature");
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to calculate the signature");
 		}
 		final String signature64 = signature == null ? null : Base64.encodeBase64String(signature);
-		log.trace(Markers.MSG, "Calculated signature: \"{}\"", signature64);
+		LOG.trace(Markers.MSG, "Calculated signature: \"{}\"", signature64);
 		return signature64;
 	}
 	//

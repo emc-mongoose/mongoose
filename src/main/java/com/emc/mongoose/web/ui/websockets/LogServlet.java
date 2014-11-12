@@ -21,11 +21,10 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by gusakk on 10/24/14.
  */
-public class LogServlet extends WebSocketServlet {
+public final class LogServlet extends WebSocketServlet {
 
 	@Override
-	public void configure(WebSocketServletFactory factory) {
-		//factory.getPolicy().setIdleTimeout(10000);
+	public final void configure(final WebSocketServletFactory factory) {
 		factory.register(LogSocket.class);
 	}
 

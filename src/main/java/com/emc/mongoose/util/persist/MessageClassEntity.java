@@ -10,7 +10,6 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.math.BigInteger;
-import java.sql.Timestamp;
 import java.util.HashSet;
 import java.util.Set;
 //
@@ -21,7 +20,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Entity(name = "MessageClassEntity")
 @Table(name = "classes", uniqueConstraints = {
 		@UniqueConstraint(columnNames = "name")})
-public class MessageClassEntity
+public final class MessageClassEntity
 implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -38,22 +37,22 @@ implements Serializable{
 		this.name = name;
 	}
 	//
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
-	public void setName(final String name) {
+	public final void setName(final String name) {
 		this.name = name;
 	}
-	public BigInteger getId() {
+	public final BigInteger getId() {
 		return id;
 	}
-	public void setId(final BigInteger id) {
+	public final void setId(final BigInteger id) {
 		this.id = id;
 	}
-	public Set<MessageEntity> getMessageSet() {
+	public final Set<MessageEntity> getMessageSet() {
 		return messageSet;
 	}
-	public void setMessageSet(final Set<MessageEntity> messageSet) {
+	public final void setMessageSet(final Set<MessageEntity> messageSet) {
 		this.messageSet = messageSet;
 	}
 }
