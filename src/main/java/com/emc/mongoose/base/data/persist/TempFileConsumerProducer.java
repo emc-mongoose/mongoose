@@ -2,7 +2,6 @@ package com.emc.mongoose.base.data.persist;
 //
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -12,6 +11,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.Externalizable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -32,17 +32,22 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class TempFileConsumerProducer<T extends DataItem>
 extends Thread
-implements Consumer<T>, Producer<T> {
+implements Consumer<T>, Producer<T>, Externalizable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final File fBuff;
-	private final ObjectOutput fBuffOut;
-	private final ExecutorService outPutExecutor;
+	private volatile File fBuff;
+	private volatile ObjectOutput fBuffOut;
+	private volatile ExecutorService outPutExecutor;
 	private volatile long maxCount;
 	private final AtomicLong writtenDataItems = new AtomicLong(0);
-	private final RunTimeConfig runTimeConfig;
-	private final int retryCountMax, retryDelayMilliSec;
+	private volatile RunTimeConfig runTimeConfig;
+	private volatile int threadCount, retryCountMax, retryDelayMilliSec;
+	private volatile String prefix, suffix;
+	//
+	public TempFileConsumerProducer() {
+		setName("tmpFileDataItemsBuffer");
+	}
 	//
 	public TempFileConsumerProducer(
 		final RunTimeConfig runTimeConfig,
@@ -51,6 +56,11 @@ implements Consumer<T>, Producer<T> {
 		setName("tmpFileDataItemsBuffer");
 		//
 		this.runTimeConfig = runTimeConfig;
+		this.prefix = prefix;
+		this.suffix = suffix;
+		this.threadCount = threadCount;
+		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
+		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		//
@@ -144,18 +154,18 @@ implements Consumer<T>, Producer<T> {
 	}
 	//
 	@Override
-	public final long getMaxCount() {
+	public final synchronized long getMaxCount() {
 		return maxCount;
 	}
 	@Override
-	public final void setMaxCount(final long maxCount) {
+	public final synchronized void setMaxCount(final long maxCount) {
 		this.maxCount = maxCount;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Closeable implementation ////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void close()
+	public final synchronized void close()
 	throws IOException {
 		//
 		LOG.trace(Markers.MSG, "Closing the output");
@@ -231,7 +241,7 @@ implements Consumer<T>, Producer<T> {
 	}
 	//
 	@Override
-	public final void interrupt() {
+	public final synchronized void interrupt() {
 		super.interrupt();
 		if(consumer != null) {
 			try {
@@ -240,6 +250,57 @@ implements Consumer<T>, Producer<T> {
 				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to submit");
 			}
 		}
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Externalizable implementation
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final synchronized void writeExternal(final ObjectOutput out)
+	throws IOException {
+		out.writeObject(runTimeConfig);
+		out.writeObject(prefix);
+		out.writeObject(suffix);
+		out.writeInt(threadCount);
+		out.writeLong(maxCount);
+	}
+	//
+	@Override
+	public final synchronized void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		//
+		runTimeConfig = RunTimeConfig.class.cast(in.readObject());
+		prefix = String.class.cast(in.readObject());
+		suffix = String.class.cast(in.readObject());
+		threadCount = in.readInt();
+		maxCount = in.readLong();
+		//
+		retryCountMax = runTimeConfig.getRunRetryCountMax();
+		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
+		//
+		File fBuffTmp = null;
+		try {
+			fBuffTmp = Files
+				.createTempFile(prefix, suffix)
+				.toFile();
+		} catch(final IllegalArgumentException | UnsupportedOperationException | IOException | SecurityException  e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create temp file");
+		} finally {
+			fBuff = fBuffTmp;
+		}
+		//
+		ObjectOutput fBuffOutTmp = null;
+		try {
+			assert fBuff != null;
+			fBuffOutTmp = new ObjectOutputStream(
+				new FileOutputStream(fBuff)
+			);
+		} catch(final IOException e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to open temporary file for output");
+		} finally {
+			fBuffOut = fBuffOutTmp;
+		}
+		//
+		outPutExecutor = Executors.newFixedThreadPool(threadCount);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }

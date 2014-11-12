@@ -7,6 +7,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.persist.LogConsumer;
+import com.emc.mongoose.base.data.persist.TempFileConsumerProducer;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.impl.ShutDownHook;
@@ -1007,27 +1008,46 @@ implements LoadClient<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final void setConsumer(final Consumer<T> load)
+	public final void setConsumer(final Consumer<T> consumer)
 	throws RemoteException {
-		try { // consumer is client which has the map of consumers
-			final LoadClient<T> loadClient = (LoadClient<T>) load;
-			final Map<String, LoadSvc<T>> consumeMap = loadClient.getRemoteLoadMap();
-			LOG.debug(Markers.MSG, "Consumer is LoadClient instance");
-			for(final String addr: consumeMap.keySet()) {
-				remoteLoadMap.get(addr).setConsumer(consumeMap.get(addr));
+		if(LoadClient.class.isInstance(consumer)) {
+			// consumer is client which has the map of consumers
+			try {
+				final LoadClient<T> loadClient = (LoadClient<T>) consumer;
+				final Map<String, LoadSvc<T>> consumeMap = loadClient.getRemoteLoadMap();
+				LOG.debug(Markers.MSG, "Consumer is LoadClient instance");
+				for(final String addr: consumeMap.keySet()) {
+					remoteLoadMap.get(addr).setConsumer(consumeMap.get(addr));
+				}
+			} catch(final ClassCastException e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Data item class mismatch");
 			}
-		} catch(final ClassCastException e) {
-			try { // single consumer for all these producers
-				final LoadSvc loadSvc = LoadSvc.class.cast(load);
+		} else if(LoadSvc.class.isInstance(consumer)) {
+			// single consumer for all these producers
+			try {
+				final LoadSvc<T> loadSvc = (LoadSvc<T>) consumer;
 				LOG.debug(Markers.MSG, "Consumer is load service instance");
 				for(final String addr: remoteLoadMap.keySet()) {
 					remoteLoadMap.get(addr).setConsumer(loadSvc);
 				}
-			} catch(final ClassCastException ee) {
-				LOG.error(
-					Markers.ERR, "Unsupported consumer type: {}", load.getClass().getCanonicalName()
-				);
+			} catch(final ClassCastException e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Data item class mismatch");
 			}
+		} else if(TempFileConsumerProducer.class.isInstance(consumer)) {
+			try {
+				final TempFileConsumerProducer<T> mediator = (TempFileConsumerProducer<T>) consumer;
+				LOG.debug(Markers.MSG, "Consumer is mediator buffer");
+				for(final String addr: remoteLoadMap.keySet()) {
+					remoteLoadMap.get(addr).setConsumer(mediator);
+				}
+			} catch(final ClassCastException e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Data item class mismatch");
+			}
+		} else {
+			LOG.error(
+				Markers.ERR, "Unexpected consumer type: {}",
+				consumer == null ? null : consumer.getClass()
+			);
 		}
 	}
 	//
