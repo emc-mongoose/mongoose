@@ -93,12 +93,15 @@ public final class Main {
 			runMode = args[0];
 		}
 		//
+
 		System.setProperty(KEY_RUN_MODE, runMode);
 		final Logger rootLogger = initLogging(runMode);
 		if(rootLogger==null) {
 			System.err.println("Logging initialization failure");
 			System.exit(1);
 		}
+		//
+		ThreadContextMap.initThreadContextMap();
 		//
 		rootLogger.info(
 			Markers.MSG, "Run in mode \"{}\", id: \"{}\"",
@@ -112,7 +115,7 @@ public final class Main {
 		RUN_TIME_CONFIG.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
 		//
-		ThreadContextMap.initThreadContextMap(RUN_TIME_CONFIG);
+		//ThreadContextMap.initThreadContextMap(RUN_TIME_CONFIG);
 		//
 		switch (runMode) {
 			case RUN_MODE_SERVER:

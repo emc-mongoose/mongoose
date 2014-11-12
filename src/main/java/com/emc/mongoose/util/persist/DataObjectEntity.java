@@ -32,23 +32,23 @@ implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
-	private BigInteger id;
+	private long id;
 	@Column(name = "identifier")
 	private String identifier;
 	@Column(name = "ringOffset")
 	private String ringOffset;
 	@Column(name = "size")
-	private BigInteger size;
+	private long size;
 	@Column(name = "layer")
-	private BigInteger layer;
+	private long layer;
 	@Column(name = "mask")
-	private BigInteger mask;
+	private long mask;
 	@OneToMany(targetEntity=TraceEntity.class, fetch = FetchType.LAZY, mappedBy = "dataitem")
 	private Set<TraceEntity> traceSet = new HashSet<TraceEntity>();
 	//
 	public DataObjectEntity(){
 	}
-	public DataObjectEntity(final String identifier, final String ringOffset, final BigInteger size, final BigInteger layer, final BigInteger mask){
+	public DataObjectEntity(final String identifier, final String ringOffset, final long size, final long layer, final long mask){
 		this.identifier = identifier;
 		this.ringOffset = ringOffset;
 		this.layer = layer;
@@ -56,28 +56,28 @@ implements Serializable{
 		this.mask = mask;
 	}
 	//
-	public final BigInteger getId() {
+	public final long getId() {
 		return id;
 	}
-	public final void setId(final BigInteger id) {
+	public final void setId(final long id) {
 		this.id = id;
 	}
-	public final BigInteger getSize() {
+	public final long getSize() {
 		return size;
 	}
-	public final void setSize(final BigInteger size) {
+	public final void setSize(final long size) {
 		this.size = size;
 	}
-	public final BigInteger getLayer() {
+	public final long getLayer() {
 		return layer;
 	}
-	public final void setLayer(final BigInteger layer) {
+	public final void setLayer(final long layer) {
 		this.layer = layer;
 	}
-	public final BigInteger getMask() {
+	public final long getMask() {
 		return mask;
 	}
-	public final void setMask(final BigInteger mask) {
+	public final void setMask(final long mask) {
 		this.mask = mask;
 	}
 	public final Set<TraceEntity> getTraceSet() {

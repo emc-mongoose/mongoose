@@ -27,7 +27,7 @@ implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
-	private BigInteger id;
+	private long id;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "mode", nullable = false)
 	private ModeEntity mode;
@@ -49,10 +49,10 @@ implements Serializable {
 		this.name = name;
 	}
 	//
-	public final BigInteger getId() {
+	public final long getId() {
 		return id;
 	}
-	public final void setId(final BigInteger id) {
+	public final void setId(final long id) {
 		this.id = id;
 	}
 	public final ModeEntity getMode() {

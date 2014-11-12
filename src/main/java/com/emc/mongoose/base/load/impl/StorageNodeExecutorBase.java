@@ -13,10 +13,12 @@ import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.StorageNodeExecutor;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
 import org.apache.logging.log4j.Level;
@@ -32,6 +34,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 /**
@@ -59,14 +62,21 @@ implements StorageNodeExecutor<T> {
 	protected StorageNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
 		final int threadsPerNode, final RequestConfig<T> localReqConf,
-		final MetricRegistry parentMetrics, final String parentName, final Map<String,String> context
+		final MetricRegistry parentMetrics, final String parentName
 	) {
 		super(
-			threadsPerNode, threadsPerNode, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(
-				threadsPerNode * runTimeConfig.getRunRequestQueueFactor()
-			),
-			new WorkerFactory(parentName + '<' + localReqConf.getAddr() + '>', context));
+				threadsPerNode, threadsPerNode, 0, TimeUnit.SECONDS,
+				new LinkedBlockingQueue<Runnable>(
+						threadsPerNode * runTimeConfig.getRunRequestQueueFactor()
+				),
+				new DataObjectWorkerFactory(
+						parentName + '<' + localReqConf.getAddr() + '>',
+						localReqConf.getLoadNumber(),
+						localReqConf.getAddr(),
+						localReqConf.getAPI(),
+						localReqConf.getLoadType()
+				)
+		);
 		//
 		this.runTimeConfig = runTimeConfig;
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
@@ -113,11 +123,11 @@ implements StorageNodeExecutor<T> {
 	protected StorageNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
 		final String addr, final int threadsPerNode, final RequestConfig<T> sharedReqConf,
-		final MetricRegistry parentMetrics, final String parentName, final Map<String,String> context
+		final MetricRegistry parentMetrics, final String parentName
 	) {
 		this(
 			runTimeConfig, threadsPerNode, sharedReqConf.clone().setAddr(addr),
-			parentMetrics, parentName, context
+			parentMetrics, parentName
 		);
 	}
 	//

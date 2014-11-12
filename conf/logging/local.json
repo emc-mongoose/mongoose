@@ -42,7 +42,7 @@
 			 	}, {
 					"name": "hibernate",
 					"type": "Hibernate",
-					"enabled": "false",
+					"enabled": "true",
 					"runid": "${sys:run.id}",
 					"runmode": "${sys:run.mode}",
 					"database": "postgresql",
