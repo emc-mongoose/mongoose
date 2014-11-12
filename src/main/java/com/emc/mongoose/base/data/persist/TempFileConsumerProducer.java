@@ -43,23 +43,28 @@ implements Consumer<T>, Producer<T>, Externalizable {
 	private final AtomicLong writtenDataItems = new AtomicLong(0);
 	private volatile RunTimeConfig runTimeConfig;
 	private volatile int threadCount, retryCountMax, retryDelayMilliSec;
-	private volatile String prefix, suffix;
+	private volatile String prefix = "?", suffix = "?";
+	//
+	private final static String FMT_THREAD_NAME = "dataItemsTmpFile-%s-%s";
+	private void init() {
+		setName(String.format(FMT_THREAD_NAME, prefix, suffix));
+	}
 	//
 	public TempFileConsumerProducer() {
-		setName("tmpFileDataItemsBuffer");
+		init();
 	}
 	//
 	public TempFileConsumerProducer(
 		final RunTimeConfig runTimeConfig,
 		final String prefix, final String suffix, final int threadCount, final long maxCount
 	) {
-		setName("tmpFileDataItemsBuffer");
 		//
 		this.runTimeConfig = runTimeConfig;
 		this.prefix = prefix;
 		this.suffix = suffix;
 		this.threadCount = threadCount;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
+		init();
 		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
@@ -168,7 +173,7 @@ implements Consumer<T>, Producer<T>, Externalizable {
 	public final synchronized void close()
 	throws IOException {
 		//
-		LOG.trace(Markers.MSG, "Closing the output");
+		LOG.info(Markers.MSG, "The output to the file \"{}\" is done", fBuff.getAbsolutePath());
 		//
 		outPutExecutor.shutdown();
 		try {
@@ -209,6 +214,8 @@ implements Consumer<T>, Producer<T>, Externalizable {
 		//
 		if(!outPutExecutor.isTerminated()) {
 			throw new IllegalStateException("Output has not been closed yet");
+		} else {
+			LOG.info(Markers.MSG, "Starting the input from the file \"{}\"", fBuff.getAbsolutePath());
 		}
 		//
 		long
@@ -219,6 +226,10 @@ implements Consumer<T>, Producer<T>, Externalizable {
 		} catch(final RemoteException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
 		}
+		LOG.info(
+			Markers.MSG, "\"{}\" has {} available data items to read, while consumer limit is {}",
+			fBuff.getAbsolutePath(), availDataItems, consumerMaxCount
+		);
 		//
 		T nextDataItem;
 		try(final ObjectInput fBuffIn = new ObjectInputStream(new FileInputStream(fBuff))) {
@@ -229,6 +240,7 @@ implements Consumer<T>, Producer<T>, Externalizable {
 					break;
 				}
 			}
+			LOG.info(Markers.MSG, "Producing from \"{}\" done", fBuff.getAbsolutePath());
 		} catch(final IOException | ClassNotFoundException | ClassCastException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to read a data item");
 		} finally {
@@ -250,6 +262,7 @@ implements Consumer<T>, Producer<T>, Externalizable {
 				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to submit");
 			}
 		}
+		fBuff.deleteOnExit();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Externalizable implementation
@@ -273,6 +286,8 @@ implements Consumer<T>, Producer<T>, Externalizable {
 		suffix = String.class.cast(in.readObject());
 		threadCount = in.readInt();
 		maxCount = in.readLong();
+		//
+		init();
 		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();

@@ -1,6 +1,6 @@
 {
 	"configuration": {
-		"status": "info",
+		"status": "warn",
 		"name": "mongoose",
 		"monitorInterval": "1000",
 		"properties": {
