@@ -22,7 +22,7 @@ import java.security.NoSuchAlgorithmException;
 public final class RequestConfig<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
-	private final Logger LOG = LogManager.getLogger();
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	public RequestConfig()
 	throws NoSuchAlgorithmException {
@@ -52,6 +52,7 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public RequestConfig<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
+		//
 		// TODO swift specific things
 		return this;
 	}

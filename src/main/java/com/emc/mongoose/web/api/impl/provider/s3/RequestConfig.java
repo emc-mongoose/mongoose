@@ -31,6 +31,7 @@ public final class RequestConfig<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
 	public final static String
 		FMT_PATH = "/%s/%s",
 		KEY_BUCKET = "api.s3.bucket",
@@ -79,6 +80,7 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final RequestConfig<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
+		//
 		//
 		try {
 			setBucket(new Bucket<T>(this, this.runTimeConfig.getString(KEY_BUCKET)));

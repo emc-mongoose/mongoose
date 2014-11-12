@@ -53,6 +53,7 @@ extends RequestConfigImpl<T>
 implements WSRequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
 	public final static long serialVersionUID = 42L;
 	protected final String userAgent, signMethod;
 	//
@@ -351,7 +352,7 @@ implements WSRequestConfig<T> {
 					LOG.trace(
 						Markers.MSG, "\tcontent: {} bytes",
 						HttpEntityEnclosingRequest.class.cast(httpRequest)
-							.getEntity().getContentLength()
+								.getEntity().getContentLength()
 					);
 				} else {
 					LOG.trace(Markers.MSG, "\t---- no content ----");

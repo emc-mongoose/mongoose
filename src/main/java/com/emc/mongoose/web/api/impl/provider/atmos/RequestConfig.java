@@ -1,6 +1,5 @@
 package com.emc.mongoose.web.api.impl.provider.atmos;
 //
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.run.Main;
@@ -28,6 +27,7 @@ public final class RequestConfig<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
 	private final static String
 		KEY_SUBTENANT = "api.atmos.subtenant",
 		OBJ_PATH =

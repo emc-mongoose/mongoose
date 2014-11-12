@@ -1,7 +1,6 @@
 package com.emc.mongoose.base.data.impl;
 //
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -32,6 +31,7 @@ extends ByteArrayInputStream
 implements DataItem {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
 	private final static String
 		FMT_META_INFO = "%x" + RunTimeConfig.LIST_SEP + "%x",
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",

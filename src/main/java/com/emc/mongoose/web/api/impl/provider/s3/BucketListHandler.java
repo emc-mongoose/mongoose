@@ -16,10 +16,11 @@ import java.rmi.RemoteException;
 /**
  Created by kurila on 09.10.14.
  */
-final class BucketListHandler<T extends BasicWSObject>
+public final class BucketListHandler<T extends BasicWSObject>
 extends DefaultHandler {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
 	private final static String
 		QNAME_ITEM = "Contents",
 		QNAME_ITEM_ID = "Key",

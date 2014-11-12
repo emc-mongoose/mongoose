@@ -12,6 +12,34 @@
 		"appenders": {
 			"appender" : [
 				{
+					"name": "WebUI",
+					"type": "WebUI",
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "err",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "msg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfAvg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfSum",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}
+						]
+					}
+				}, {
 					"name": "hibernate",
 					"type": "Hibernate",
 					"enabled": "false",
@@ -230,7 +258,8 @@
 						{ "ref": "perfAvgFile" },
 						{ "ref": "perfSumFile" },
 						{ "ref": "perfTraceFile" },
-						{ "ref": "hibernate" }
+						{ "ref": "hibernate" },
+						{ "ref": "WebUI" }
 					]
 				}
 			]

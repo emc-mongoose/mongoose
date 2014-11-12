@@ -68,9 +68,11 @@ implements Runnable {
 		context.addServlet(new ServletHolder(new SimpleWSMockServlet(mapDataObject)),"/*");
 		//
 		try {
-            server.start();
-            LOG.info(Markers.MSG, "Listening on port #{}", port);
-            server.join();
+			server.start();
+			LOG.info(Markers.MSG, "Listening on port #{}", port);
+			server.join();
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.MSG, "WSMock stopped");
         } catch (final Exception e) {
             ExceptionHandler.trace(LOG, Level.WARN, e, "WSMock was interrupted");
         } finally {

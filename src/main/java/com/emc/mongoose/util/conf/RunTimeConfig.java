@@ -1,8 +1,14 @@
 package com.emc.mongoose.util.conf;
 //
+import com.emc.mongoose.base.data.impl.UniformDataSource;
+import com.emc.mongoose.base.load.impl.ShutDownHook;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.remote.ServiceUtils;
+import com.emc.mongoose.web.api.impl.BasicWSRequest;
+import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
+import com.emc.mongoose.web.load.impl.WSLoadHelper;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
@@ -14,11 +20,15 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.file.Path;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Calendar;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 /**
@@ -32,6 +42,10 @@ implements Externalizable {
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String LIST_SEP = ",", KEY_VERSION = "run.version";
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
+	//
+	private final static DateFormat FMT_DT = new SimpleDateFormat(
+			"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
+	);
 	static {
 		MAP_OVERRIDE.put(
 			"data.size",
@@ -106,9 +120,9 @@ implements Externalizable {
 		).toUpperCase();
 	}
 	//
-	public final void set(final String key, final String value) {
+	public final synchronized void set(final String key, final String value) {
 		setProperty(key, value);
-		System.setProperty(key, value);
+		//System.setProperty(key, value);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final int getRunReqTimeOutMilliSec() {
@@ -350,11 +364,11 @@ implements Externalizable {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public void loadPropsFromDir(final Path propsDir) {
+	public synchronized void loadPropsFromDir(final Path propsDir) {
 		DirectoryLoader.loadPropsFromDir(propsDir, this);
 	}
 	//
-	public void loadSysProps() {
+	public synchronized void loadSysProps() {
 		final SystemConfiguration sysProps = new SystemConfiguration();
 		String key, keys2override[];
 		Object sharedValue;
@@ -376,4 +390,10 @@ implements Externalizable {
 		}
 	}
 	//
+	public synchronized RunTimeConfig clone() {
+		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
+		runTimeConfig.set(Main.KEY_RUN_ID, FMT_DT.format(
+				Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()));
+		return runTimeConfig;
+	}
 }

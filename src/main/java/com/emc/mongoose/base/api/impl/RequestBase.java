@@ -34,7 +34,10 @@ implements Request<T> {
 	//
 	private long start = 0, duration = 0, transferSize = 0;
 	private Type type;
-	public RequestBase() {}
+
+	public RequestBase() {
+
+	}
 	// BEGIN pool related things
 	protected final static ConcurrentHashMap<RequestConfig, BasicInstancePool<Request>>
 		POOL_MAP = new ConcurrentHashMap<>();

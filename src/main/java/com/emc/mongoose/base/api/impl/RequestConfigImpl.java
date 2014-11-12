@@ -163,6 +163,7 @@ implements RequestConfig<T> {
 	@Override
 	public RequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
+		//
 		final String api = runTimeConfig.getStorageApi();
 		setAPI(api);
 		setPort(this.runTimeConfig.getApiPort(api));
