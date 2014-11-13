@@ -1,17 +1,17 @@
 package com.emc.mongoose.util.persist;
 //
 import com.emc.mongoose.base.api.Request;
-import com.emc.mongoose.run.Main;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.layout.SerializedLayout;
+//
 import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
-import org.apache.logging.log4j.core.layout.SerializedLayout;
-import org.apache.logging.log4j.message.MapMessage;
+//
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AnnotationConfiguration;
@@ -35,7 +35,6 @@ extends AbstractAppender{
 	private final static Layout<? extends Serializable>
 			DEFAULT_LAYOUT = SerializedLayout.createLayout();
 	public static Session SESSION = null;
-	private static RunEntity run;
 	private static Boolean ENABLED_FLAG;
 	private static final String PERF_AVG = "perfAvg",
 								MSG = "msg",
@@ -45,12 +44,14 @@ extends AbstractAppender{
 								KEY_THREAD_NUM = "thread.number",
 								KEY_LOAD_NUM = "load.number",
 								KEY_LOAD_TYPE = "load.type",
-								KEY_API = "api";
+								KEY_API = "api",
+								KEY_RUN_ID = "run.id",
+								KEY_RUN_MODE = "run.mode";
 	//
 	private HibernateAppender(
-			final String name, final Filter filter,
-			final Layout<? extends Serializable> layout,
-			final String runid, final String runmode
+		final String name, final Filter filter,
+		final Layout<? extends Serializable> layout,
+		final String runId, final String runMode
 	) {
 		super(name, filter, layout);
 	}
@@ -61,13 +62,14 @@ extends AbstractAppender{
 			final @PluginAttribute("ignoreExceptions") boolean ignoreExceptions,
 			final @PluginElement("Filters") Filter filter,
 			final @PluginAttribute("enabled") Boolean enabled,
-			final @PluginAttribute("runid") String runid,
-			final @PluginAttribute("runmode") String runmode,
-			final @PluginAttribute("username") String username,
-			final @PluginAttribute("password") String password,
+			final @PluginAttribute("runid") String runId,
+			final @PluginAttribute("runmode") String runMode,
+			final @PluginAttribute("database") String provider,
+			final @PluginAttribute("username") String userName,
+			final @PluginAttribute("password") String passWord,
 			final @PluginAttribute("addr") String addr,
 			final @PluginAttribute("port") String port,
-			final @PluginAttribute("namedatabase") String namedatabase
+			final @PluginAttribute("namedatabase") String dbName
 	) {
 		java.util.logging.Logger.getLogger("org.hibernate").setLevel(Level.OFF);
 		HibernateAppender newAppender = null;
@@ -75,68 +77,72 @@ extends AbstractAppender{
 		if(name == null) {
 			throw new IllegalArgumentException("No name provided for HibernateAppender");
 		}
-		final String url = "jdbc:postgresql://"+addr+":"+port+"/"+namedatabase;
+		final String url = String.format("jdbc:%s://%s:%s/%s", provider, addr, port, dbName);
 		try {
 			if(ENABLED_FLAG) {
-				initDataBase(username, password, url);
-				setRun(runid, runmode);
-				setStatus();
+				initDataBase(userName, passWord, url);
+				setStatusEntity();
 			}
-			newAppender = new HibernateAppender(name, filter, DEFAULT_LAYOUT, runid, runmode);
+			newAppender = new HibernateAppender(name, filter, DEFAULT_LAYOUT, runId, runMode);
 		} catch (final Exception e) {
 			throw new IllegalStateException("Open DB session failed", e);
 		}
 		return newAppender;
 	}
-	//Init Database with username,password and url
-	private static void initDataBase(final String username,
-									 final String password, final String url){
-			final SessionFactory sessionFactory = buildSessionFactory(username, password, url);
+	// init database session with username,password and url
+	@Deprecated
+	private static void initDataBase(
+		final String userName, final String passWord, final String url
+	) {
+			final SessionFactory sessionFactory = buildSessionFactory(userName, passWord, url);
 			if(sessionFactory != null) {
 				SESSION = sessionFactory.openSession();
 			}
 	}
-	//Append method
+	// append method // - really?! (kurilov)
 	@Override
 	public final void append(final LogEvent event) {
 		if (ENABLED_FLAG){
-			final Date date = new Date();
+			//final Date date = new Date();
 			final String marker = event.getMarker().toString();
 			switch (marker) {
 				case MSG:
 				case ERR:
-					setMessage(date, event.getLoggerName(), event.getLevel().toString(), event.getMessage().getFormattedMessage());
+					/*
+					SESSION.beginTransaction();
+					final ModeEntity modeEntity = loadModeEntity(modeName);
+					final RunEntity runEntity = loadRunEntity(runName, mode);
+					setMessage(date, event.getLoggerName(), event.getLevel().toString(), event.getMessage().getFormattedMessage(), runEntity);
+					SESSION.getTransaction().commit();
+					*/
 					break;
 				case PERF_TRACE:
-					//System.out.println(event.getContextMap().get(KEY_API) + " | " + event.getContextMap().get(KEY_LOAD_TYPE) + " | " + event.getContextMap().get(KEY_LOAD_NUM) + " | " + event.getContextMap().get(KEY_NODE_ADDR));
-					/*try {
-						MapMessage.class.cast(event.getMessage()).get(Main.KEY_RUN_ID)
-					} catch (final ClassCastException e) {
-
-					}*/
-					setLoad(event.getContextMap().get(KEY_API),
-							event.getContextMap().get(KEY_LOAD_TYPE),
-							event.getContextMap().get(KEY_LOAD_NUM));
-					setThread(event.getContextMap().get(KEY_LOAD_NUM),
-							event.getContextMap().get(KEY_NODE_ADDR),
+					SESSION.beginTransaction();
+					final ModeEntity mode = loadModeEntity(event.getContextMap().get(KEY_RUN_MODE));
+					final RunEntity run = loadRunEntity(event.getContextMap().get(KEY_RUN_ID), mode);
+					final LoadEntity loadEntity = loadLoadEntity(event.getContextMap().get(KEY_LOAD_NUM), run,
+							event.getContextMap().get(KEY_LOAD_TYPE), event.getContextMap().get(KEY_API));
+					final ThreadEntity threadEntity = loadThreadEntity(loadEntity, event.getContextMap().get(KEY_NODE_ADDR),
 							event.getContextMap().get(KEY_THREAD_NUM));
 					final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
-					setTrace(message[0], message[1], getValueFromMessage(message, 2), getValueFromMessage(message, 3),
-							getValueFromMessage(message, 4), new BigInteger(event.getContextMap().get(KEY_THREAD_NUM)),
-							new BigInteger(event.getContextMap().get(KEY_LOAD_NUM)), Integer.valueOf(message[5]),
+					setTraceEntity(message[0], message[1], getValueFromMessage(message, 2), getValueFromMessage(message, 3),
+							getValueFromMessage(message, 4), threadEntity, Integer.valueOf(message[5]),
 							getValueFromMessage(message, 6), getValueFromMessage(message, 7));
+					SESSION.getTransaction().commit();
 					break;
 			}
 		}
 	}
 	//
-	private static BigInteger getValueFromMessage( final String[] message, final int index){
+	private static BigInteger getValueFromMessage( final String[] message, final int index) {
 		return new BigInteger(message[index], 16);
 	}
 	//
+	@Deprecated
 	private static SessionFactory buildSessionFactory(
-			final String username, final String password,
-			final String url) {
+		final String username, final String password,
+		final String url
+	) {
 		SessionFactory newSessionFactory = null;
 		final String DIR_ROOT = System.getProperty("user.dir");
 		final Path path = Paths.get(DIR_ROOT, "conf", "hibernate.cfg.xml");
@@ -151,127 +157,176 @@ extends AbstractAppender{
 					.buildSessionFactory();
 		}
 		catch (Throwable ex) {
-			// Make sure you LOG the exception, as it might be swallowed
+			// Make sure you log the exception, as it might be swallowed
 			throw new ExceptionInInitializerError("Initial SessionFactory creation failed. "+ex);
 		}
 		return newSessionFactory;
 	}
 	//
-	//
-	private static void setRun(final String runName, final String modeName){
-		SESSION.beginTransaction();
+	private static ModeEntity loadModeEntity(final String modeName){
 		ModeEntity mode = getModeEntity(modeName);
-		if (mode==null){
+		if (mode == null){
 			mode = new ModeEntity(modeName);
 		}
 		SESSION.save(mode);
-		run = new RunEntity(mode, runName);
-		SESSION.save(run);
-		SESSION.getTransaction().commit();
+		return mode;
 	}
-	//
-	private static void setLoad(final String apiName, final String typeName, final String loadNumberString){
-		final BigInteger loadNumber = new BigInteger(loadNumberString);
-		SESSION.beginTransaction();
+	private static RunEntity loadRunEntity(final String runName, final ModeEntity mode){
+		RunEntity run = getRunEntity(runName);
+		if (run == null){
+			run = new RunEntity(mode, runName);
+		}
+		SESSION.save(run);
+		return run;
+	}
+	private static ApiEntity loadApiEntity(final String apiName){
 		ApiEntity api = getApiEntity(apiName);
 		if (api==null){
 			api = new ApiEntity(apiName);
 		}
+		SESSION.save(api);
+		return api;
+	}
+	//
+	private static LoadTypeEntity loadLoadTypeEntity(final String typeName){
 		LoadTypeEntity type = getLoadTypeEntity(typeName);
 		if (type==null){
 			type = new LoadTypeEntity(typeName);
 		}
-		LoadEntity load = getLoadEntity(loadNumber);
-		if (load == null){
+		SESSION.save(type);
+		return type;
+	}
+	//If entity of run, api and load's types are known
+	private static LoadEntity loadLoadEntity(final String loadNumberString, final RunEntity run,
+											 final LoadTypeEntity type, final ApiEntity api){
+		final BigInteger loadNumber = new BigInteger(loadNumberString);
+		LoadEntity load = getLoadEntity(loadNumber, run);
+		if (load == null) {
 			load = new LoadEntity(run, type, loadNumber, api);
 		}
-		SESSION.save(api);
-		SESSION.save(type);
 		SESSION.save(load);
-		SESSION.getTransaction().commit();
+		return load;
+	}
+	//If api and load's types aren't known
+	private static LoadEntity loadLoadEntity(final String loadNumber, final RunEntity run,
+											 final String typeName, final String apiName){
+		ApiEntity api = loadApiEntity(apiName);
+		LoadTypeEntity type = loadLoadTypeEntity(typeName);
+		LoadEntity load = loadLoadEntity(loadNumber,run,type,api);
+		SESSION.save(load);
+		return load;
 	}
 	//
-	private static void setMessage(final Date tstamp, final String className, final String levelName, final String text){
-		SESSION.beginTransaction();
+	private static MessageClassEntity loadClassOfMessage(final String className){
 		MessageClassEntity classMessage = getMessageClassEntity(className);
 		if (classMessage==null){
 			classMessage = new MessageClassEntity(className);
 		}
+		SESSION.save(classMessage);
+		return classMessage;
+	}
+	//
+	private static LevelEntity loadLevelEntity(final String levelName){
 		LevelEntity level = getLevelEntity(levelName);
 		if (level==null){
 			level = new LevelEntity(levelName);
 		}
-		final MessageEntity message = new MessageEntity(run, classMessage, level, text, tstamp);
-		SESSION.save(classMessage);
 		SESSION.save(level);
-		SESSION.save(message);
-		SESSION.getTransaction().commit();
+		return level;
 	}
 	//
-	private static void setThread(final String loadNumberString, final String nodeAddr, final String threadNumberString){
-		final BigInteger threadNumber = new BigInteger(threadNumberString);
-		SESSION.beginTransaction();
+	private static NodeEntity loadNodeEntity(final String nodeAddr){
 		NodeEntity node = getNodeEntity(nodeAddr);
 		if (node == null){
 			node = new NodeEntity(nodeAddr);
 		}
-		LoadEntity load = getLoadEntity(new BigInteger(loadNumberString));
+		SESSION.save(node);
+		return node;
+	}
+	//If node is known
+	private static ThreadEntity loadThreadEntity(final String threadNumberString, final LoadEntity load, final NodeEntity node){
+		final BigInteger threadNumber = new BigInteger(threadNumberString);
 		ThreadEntity threadEntity = getThreadEntity(threadNumber, load);
 		if (threadEntity == null){
 			threadEntity = new ThreadEntity(load, node, threadNumber);
 		}
-		SESSION.save(node);
-		SESSION.save(load);
 		SESSION.save(threadEntity);
-		SESSION.getTransaction().commit();
+		return threadEntity;
 	}
-	private static void setTrace(final String identifier, final String ringOffset, final BigInteger size,
-								final BigInteger layer, final BigInteger mask, final BigInteger threadNum,
-								final BigInteger loadNum, final int status,
-								final BigInteger reaStart, final BigInteger reqDur){
-		SESSION.beginTransaction();
-		final StatusEntity statusEntity = getStatusEntity(status);
-		LoadEntity load = getLoadEntity(loadNum);
-		ThreadEntity thread = getThreadEntity(threadNum, load);
-		DataItemEntity dataItem = getDataItemEntity(identifier, ringOffset, size);
-		if (dataItem == null){
-			dataItem = new DataItemEntity(identifier, ringOffset, size, layer, mask);
+	//If node isn't known
+	private static ThreadEntity loadThreadEntity(final LoadEntity load, final String nodeAddr, final String threadNumber){
+		final NodeEntity node = loadNodeEntity(nodeAddr);
+		final ThreadEntity threadEntity = loadThreadEntity(threadNumber,load,node);
+		SESSION.save(load);
+		return threadEntity;
+	}
+	//
+	private static DataObjectEntity loadDataObjectEntity(
+		final String identifier, final String ringOffset, final BigInteger size,
+		final BigInteger layer, final BigInteger mask
+	) {
+		DataObjectEntity dataObject = getDataItemEntity(identifier, ringOffset, size);
+		if (dataObject == null){
+			dataObject = new DataObjectEntity(identifier, ringOffset, size, layer, mask);
 		}else{
 			//If DataItem update
-			if (!dataItem.getLayer().equals(layer) || !dataItem.getMask().equals(mask)){
-				dataItem.setLayer(layer);
-				dataItem.setMask(mask);
+			if (!dataObject.getLayer().equals(layer) || !dataObject.getMask().equals(mask)){
+				dataObject.setLayer(layer);
+				dataObject.setMask(mask);
 			}
 			//
 		}
-		final TraceEntity trace = new TraceEntity(dataItem, thread, statusEntity, reaStart, reqDur);
-		SESSION.save(statusEntity);
-		SESSION.save(thread);
-		SESSION.saveOrUpdate(dataItem);
-		SESSION.save(trace);
+		SESSION.saveOrUpdate(dataObject);
+		return dataObject;
+	}
+	//
+	private static StatusEntity loadStatusEntity(final Request.Result result){
+		StatusEntity statusEntity = getStatusEntity(result.code);
+		if (SESSION.get(StatusEntity.class, result.code) == null){
+			statusEntity = new StatusEntity(result.code, result.description);
+		}else{
+			if (!statusEntity.getName().equals(result.description)){
+				statusEntity.setName(result.description);
+			}
+		}
+		SESSION.saveOrUpdate(statusEntity);
+		return statusEntity;
+	}
+	//
+	private static void setMessageEntity(final Date tstamp, final String className, final String levelName, final String text, final RunEntity run){
+		final MessageClassEntity classMessage = loadClassOfMessage(className);
+		final LevelEntity level = loadLevelEntity(levelName);
+		final MessageEntity messageEntity = new MessageEntity(run, classMessage, level, text, tstamp);
+		SESSION.save(messageEntity);
+	}
+	//
+	private static void setTraceEntity(final String identifier, final String ringOffset, final BigInteger size,
+											  final BigInteger layer, final BigInteger mask, final ThreadEntity threadEntity,
+											  final int status, final BigInteger reqStart, final BigInteger reqDur){
+		final StatusEntity statusEntity = getStatusEntity(status);
+		final DataObjectEntity dataItem = loadDataObjectEntity(identifier,ringOffset,size,layer,mask);
+		final TraceEntity traceEntity = new TraceEntity(dataItem, threadEntity, statusEntity, reqStart, reqDur);
+		SESSION.save(traceEntity);
+	}
+	//
+	private static void setStatusEntity(){
+		SESSION.beginTransaction();
+		for (final Request.Result result:Request.Result.values()){
+			StatusEntity statusEntity = loadStatusEntity(result);
+		}
 		SESSION.getTransaction().commit();
 	}
 	//
-	private static void setStatus(){
-		SESSION.beginTransaction();
-		for (final Request.Result result:Request.Result.values()){
-			StatusEntity statusEntity = getStatusEntity(result.code);
-			if (SESSION.get(StatusEntity.class, result.code) == null){
-				statusEntity = new StatusEntity(result.code, result.description);
-			}else{
-				if (!statusEntity.getName().equals(result.description)){
-					statusEntity.setName(result.description);
-				}
-			}
-			SESSION.saveOrUpdate(statusEntity);
-		}
-		SESSION.getTransaction().commit();
+	private static RunEntity getRunEntity(final String runName){
+		return (RunEntity) SESSION.createCriteria(RunEntity.class)
+				.add( Restrictions.eq("name", runName))
+				.uniqueResult();
 	}
 	private static StatusEntity getStatusEntity(final int codeStatus){
 		return (StatusEntity) SESSION.get(StatusEntity.class, codeStatus);
 	}
 	//
-	private static LoadEntity getLoadEntity(final BigInteger loadNumber){
+	private static LoadEntity getLoadEntity(final BigInteger loadNumber, final RunEntity run){
 		return (LoadEntity) SESSION.createCriteria(LoadEntity.class)
 				.add( Restrictions.eq("num", loadNumber))
 				.add(Restrictions.eq("run", run))
@@ -321,8 +376,10 @@ extends AbstractAppender{
 				.uniqueResult();
 	}
 	//
-	private static DataItemEntity getDataItemEntity(final String identifier, final String ringOffset, final BigInteger size) {
-		return (DataItemEntity) SESSION.createCriteria(DataItemEntity.class)
+	private static DataObjectEntity getDataItemEntity(
+		final String identifier, final String ringOffset, final BigInteger size
+	) {
+		return (DataObjectEntity) SESSION.createCriteria(DataObjectEntity.class)
 				.add( Restrictions.eq("identifier", identifier))
 				.add(Restrictions.eq("ringOffset", ringOffset))
 				.add( Restrictions.eq("size", size))

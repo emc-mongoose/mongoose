@@ -700,27 +700,29 @@ implements LoadClient<T> {
 	//
 	private void logMetrics(final Marker logMarker) {
 		//
-		try {
-			countSubm = mgmtConnExecutor.submit(taskGetCountSubm);
-			countRej = mgmtConnExecutor.submit(taskGetCountRej);
-			countReqSucc = mgmtConnExecutor.submit(taskGetCountSucc);
-			countReqFail = mgmtConnExecutor.submit(taskGetCountFail);
-			//countNanoSec = mgmtConnExecutor.submit(taskGetCountNanoSec);
-			//countBytes = mgmtConnExecutor.submit(taskGetCountBytes);
-			minDur = mgmtConnExecutor.submit(taskGetMinDur);
-			maxDur = mgmtConnExecutor.submit(taskGetMaxDur);
-			meanTP = mgmtConnExecutor.submit(taskGetTPMean);
-			oneMinTP = mgmtConnExecutor.submit(taskGetTP1Min);
-			fiveMinTP = mgmtConnExecutor.submit(taskGetTP5Min);
-			fifteenMinTP = mgmtConnExecutor.submit(taskGetTP15Min);
-			meanBW = mgmtConnExecutor.submit(taskGetBWMean);
-			oneMinBW = mgmtConnExecutor.submit(taskGetBW1Min);
-			fiveMinBW = mgmtConnExecutor.submit(taskGetBW5Min);
-			fifteenMinBW = mgmtConnExecutor.submit(taskGetBW15Min);
-			medDur = mgmtConnExecutor.submit(taskGetDurMed);
-			avgDur = mgmtConnExecutor.submit(taskGetDurAvg);
-		} catch(final RejectedExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Log remote metrics failed, skipping");
+		if(!mgmtConnExecutor.isShutdown() && !mgmtConnExecutor.isTerminated()) {
+			try {
+				countSubm = mgmtConnExecutor.submit(taskGetCountSubm);
+				countRej = mgmtConnExecutor.submit(taskGetCountRej);
+				countReqSucc = mgmtConnExecutor.submit(taskGetCountSucc);
+				countReqFail = mgmtConnExecutor.submit(taskGetCountFail);
+				//countNanoSec = mgmtConnExecutor.submit(taskGetCountNanoSec);
+				//countBytes = mgmtConnExecutor.submit(taskGetCountBytes);
+				minDur = mgmtConnExecutor.submit(taskGetMinDur);
+				maxDur = mgmtConnExecutor.submit(taskGetMaxDur);
+				meanTP = mgmtConnExecutor.submit(taskGetTPMean);
+				oneMinTP = mgmtConnExecutor.submit(taskGetTP1Min);
+				fiveMinTP = mgmtConnExecutor.submit(taskGetTP5Min);
+				fifteenMinTP = mgmtConnExecutor.submit(taskGetTP15Min);
+				meanBW = mgmtConnExecutor.submit(taskGetBWMean);
+				oneMinBW = mgmtConnExecutor.submit(taskGetBW1Min);
+				fiveMinBW = mgmtConnExecutor.submit(taskGetBW5Min);
+				fifteenMinBW = mgmtConnExecutor.submit(taskGetBW15Min);
+				medDur = mgmtConnExecutor.submit(taskGetDurMed);
+				avgDur = mgmtConnExecutor.submit(taskGetDurAvg);
+			} catch(final RejectedExecutionException e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Log remote metrics failed, skipping");
+			}
 		}
 		//
 		try {
@@ -777,28 +779,52 @@ implements LoadClient<T> {
 	@Override
 	public final void run() {
 		//
-		long countDone = 0;
-		final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
-		//
+		final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
+			runTimeConfig.getRunMetricsPeriodSec()
+		);
 		try {
-			do {
-				try {
-					logMetrics(Markers.PERF_AVG);
-					logMetaInfoFrames();
-					TimeUnit.SECONDS.sleep(metricsUpdatePeriodSec); // sleep
-					countDone = countReqSucc.get() + countReqFail.get() + countRej.get();
-				} catch(final InterruptedException e) {
-					break;
-				} catch(final NullPointerException e) {
-					LOG.debug(Markers.ERR, "Looks like the metrics getting task failed to be submitted");
+			if(metricsUpdatePeriodMilliSec > 0) {
+				while(!isInterrupted()) {
+					synchronized(this) {
+						wait(metricsUpdatePeriodMilliSec);
+						logMetrics(Markers.PERF_AVG);
+					}
 				}
-			} while(countDone < maxCount);
-		} catch(final ExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failure");
+			} else {
+				long runTimeMillis = TimeUnit.DAYS.toMillis(1000); // by default
+				try {
+					final String
+						runTimeSpec[] = runTimeConfig.getRunTime().split("\\."),
+						runTimeValue = runTimeSpec[0],
+						runTimeUnit = runTimeSpec[1].toUpperCase();
+					TimeUnit.valueOf(runTimeUnit).toMillis(Long.valueOf(runTimeValue));
+				} catch(final Exception e) {
+					ExceptionHandler.trace(
+						LOG, Level.WARN, e,
+						String.format(
+							"Failed to parse run time spec: \"%s\"", runTimeConfig.getRunTime()
+						)
+					);
+				}
+				//
+				synchronized(this) {
+					wait(runTimeMillis);
+				}
+				LOG.debug(Markers.MSG, "Max data items count reached");
+			}
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.MSG, "Interrupted");
+		} finally {
+			synchronized(LOG) {
+				// provide summary metrics
+				LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
+				logMetrics(Markers.PERF_SUM);
+			}
 		}
 		//
+		LOG.trace(Markers.MSG, "Finish reached");
+		//
 		interrupt();
-		LOG.debug(Markers.MSG, "Exiting the monitor thread");
 	}
 	//
 	@Override
@@ -964,7 +990,7 @@ implements LoadClient<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final void setConsumer(final Consumer<T> load)
-		throws RemoteException {
+	throws RemoteException {
 		try { // consumer is map of consumers
 			final LoadClient<T> loadClient = (LoadClient<T>) load;
 			final Map<String, LoadSvc<T>> consumeMap = loadClient.getRemoteLoadMap();
@@ -975,7 +1001,7 @@ implements LoadClient<T> {
 		} catch(final ClassCastException e) {
 			try { // single consumer for all these producers
 				final LoadSvc loadSvc = LoadSvc.class.cast(load);
-				LOG.debug(Markers.MSG, "Consumer is RemoteLoad instance");
+				LOG.debug(Markers.MSG, "Consumer is load service instance");
 				for(final String addr: remoteLoadMap.keySet()) {
 					remoteLoadMap.get(addr).setConsumer(loadSvc);
 				}

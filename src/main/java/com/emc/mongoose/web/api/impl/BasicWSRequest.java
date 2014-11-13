@@ -22,8 +22,9 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
-//
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.util.EntityUtils;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -136,7 +137,7 @@ implements WSRequest<T> {
 		//
 		try(final CloseableHttpResponse httpResponse = httpClient.execute(httpRequest)) {
 			final StatusLine statusLine = httpResponse.getStatusLine();
-			if(statusLine==null) {
+			if(statusLine == null) {
 				LOG.warn(Markers.MSG, "No response status line");
 			} else {
 				final int statusCode = statusLine.getStatusCode();
@@ -258,6 +259,9 @@ implements WSRequest<T> {
 					}
 				}
 			}
+			//
+			EntityUtils.consumeQuietly(httpResponse.getEntity());
+			//
 		} catch(final SocketTimeoutException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Socket timeout");
 			result = Result.FAIL_TIMEOUT;
@@ -277,6 +281,6 @@ implements WSRequest<T> {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "I/O failure");
 			result = Result.FAIL_IO;
 		}
-		//
+	//
 	}
 }

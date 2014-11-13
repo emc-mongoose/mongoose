@@ -22,7 +22,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.Iterator;
 import java.util.Locale;
 /**
  Created by kurila on 30.05.14.
@@ -34,21 +33,9 @@ implements WSLoadBuilderSvc<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	@Override
-	public synchronized final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
-		// TODO merge client config to current run time config w/o "run.id" and "remote.*" properties
-		String key;
-		/*synchronized (clientConfig) {
-			for (final Iterator<String> i = clientConfig.getKeys(); i.hasNext(); ) {
-				key = i.next();
-				if (Main.KEY_RUN_ID.equals(key) || key.startsWith("remote")) {
-					// ignore that
-				} else {
-					runTimeConfig.set(key, clientConfig.getString(key));
-				}
-			}
-		}*/
-		//
-		super.setProperties(runTimeConfig);
+	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
+		super.setProperties(clientConfig);
+		Main.RUN_TIME_CONFIG = clientConfig;
 		return this;
 	}
 	//
@@ -78,9 +65,6 @@ implements WSLoadBuilderSvc<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final U build()
 	throws IllegalStateException {
-		/*if(clientConfig == null) {
-			throw new IllegalStateException("Should upload properties to the server before instancing");
-		}*/
 		if(reqConf == null) {
 			throw new IllegalStateException("Should specify request builder instance before instancing");
 		}
@@ -98,7 +82,7 @@ implements WSLoadBuilderSvc<T, U> {
 							);
 						}
 						loadSvc = new CreateSvc<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							minObjSize, maxObjSize
 						);
@@ -106,14 +90,14 @@ implements WSLoadBuilderSvc<T, U> {
 					case READ:
 						LOG.debug(Markers.MSG, "New read load");
 						loadSvc = new ReadSvc<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case UPDATE:
 						LOG.debug(Markers.MSG, "New update load");
 						loadSvc = new UpdateSvc<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							updatesPerItem
 						);
@@ -121,14 +105,14 @@ implements WSLoadBuilderSvc<T, U> {
 					case DELETE:
 						LOG.debug(Markers.MSG, "New delete load");
 						loadSvc = new DeleteSvc<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case APPEND:
 						LOG.debug(Markers.MSG, "New append load");
 						loadSvc = new AppendSvc<T>(
-							runTimeConfig,
+							Main.RUN_TIME_CONFIG,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							minObjSize, maxObjSize
 						);

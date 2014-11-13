@@ -31,8 +31,10 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
 import javax.management.MBeanServer;
+import java.io.Closeable;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -46,11 +48,12 @@ public abstract class LoadExecutorBase<T extends DataItem>
 extends Thread
 implements LoadExecutor<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private final Logger LOG = LogManager.getLogger();
 	//
 	protected final int threadsPerNode, retryCountMax, retryDelayMilliSec;
 	protected final StorageNodeExecutor<T> nodes[];
 	protected final ThreadPoolExecutor submitExecutor;
+	protected final Closeable client;
 	//
 	protected final DataSource<T> dataSrc;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
@@ -125,14 +128,14 @@ implements LoadExecutor<T> {
 			new LinkedBlockingQueue<Runnable>(queueSize),
 			new WorkerFactory("submitDataItems", new HashMap<String,String>())
 		);
-		initClient(addrs, reqConf);
+		client = initClient(addrs, reqConf);
 		initNodeExecutors(addrs, reqConf);
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
 	}
 	//
 	protected abstract void setFileBasedProducer(final String listFile);
-	protected abstract void initClient(final String addrs[], final RequestConfig<T> reqConf);
+	protected abstract Closeable initClient(final String addrs[], final RequestConfig<T> reqConf);
 	protected abstract void initNodeExecutors(
 		final String addrs[], final RequestConfig<T> reqConf
 	) throws ClassCastException;
@@ -141,13 +144,13 @@ implements LoadExecutor<T> {
 	public void start() {
 		//
 		if(producer == null) {
-			LOG.info(Markers.MSG, "Waiting for incoming objects to process from external producer");
+			LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
 		} else {
 			try {
 				producer.start();
 				LOG.debug(
-						Markers.MSG, "Started object producer {}",
-						producer.getClass().getSimpleName()
+					Markers.MSG, "Started object producer {}",
+					producer.getClass().getSimpleName()
 				);
 			} catch(final IOException e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to stop the producer");
@@ -164,19 +167,52 @@ implements LoadExecutor<T> {
 	@Override
 	public final void run() {
 		//
+		final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
+			runTimeConfig.getRunMetricsPeriodSec()
+		);
 		try {
-			final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
-			do {
-				logMetrics(Markers.PERF_AVG);
-				TimeUnit.SECONDS.sleep(metricsUpdatePeriodSec); // sleep
-			} while(maxCount > counterReqSucc.getCount() + counterReqFail.getCount() + counterRej.getCount());
-			LOG.trace(Markers.MSG, "Max count reached");
+			if(metricsUpdatePeriodMilliSec > 0) {
+				while(!isInterrupted()) {
+					synchronized(this) {
+						wait(metricsUpdatePeriodMilliSec);
+						logMetrics(Markers.PERF_AVG);
+					}
+				}
+			} else {
+				long runTimeMillis = TimeUnit.DAYS.toMillis(1000); // by default
+				try {
+					final String
+						runTimeSpec[] = runTimeConfig.getRunTime().split("\\."),
+						runTimeValue = runTimeSpec[0],
+						runTimeUnit = runTimeSpec[1].toUpperCase();
+					TimeUnit.valueOf(runTimeUnit).toMillis(Long.valueOf(runTimeValue));
+				} catch(final Exception e) {
+					ExceptionHandler.trace(
+						LOG, Level.WARN, e,
+						String.format(
+							"Failed to parse run time spec: \"%s\"", runTimeConfig.getRunTime()
+						)
+					);
+				}
+				//
+				synchronized(this) {
+					wait(runTimeMillis);
+				}
+				LOG.debug(Markers.MSG, "Max data items count reached");
+			}
 		} catch(final InterruptedException e) {
-			LOG.trace(Markers.MSG, "Externally interrupted \"{}\"", getName());
+			LOG.debug(Markers.MSG, "Interrupted");
+		} finally {
+			synchronized(LOG) {
+				// provide summary metrics
+				LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
+				logMetrics(Markers.PERF_SUM);
+			}
 		}
 		//
-		interrupt();
+		LOG.trace(Markers.MSG, "Finish reached");
 		//
+		interrupt();
 	}
 	//
 	@Override
@@ -186,17 +222,16 @@ implements LoadExecutor<T> {
 		LOG.trace(Markers.MSG, "Interrupting, max count is set to {}", maxCount);
 		//
 		final Thread interrupters[] = new Thread[nodes.length < 2 ? 2 : nodes.length];
-		// interrupt a producer
-		interrupters[0] = new Thread("interrupt-producer-" + getName()) {
+		interrupters[0] = new Thread("interruptProducer-" + getName()) {
 			@Override
 			public final void run() {
-				if(producer!=null) {
+				if(producer != null) {
 					try {
 						producer.interrupt();
 						LOG.debug(Markers.MSG, "Stopped object producer {}", producer.toString());
 					} catch(final IOException e) {
 						ExceptionHandler.trace(
-								LOG, Level.WARN, e,
+							LOG, Level.WARN, e,
 							String.format("Failed to stop the producer: %s", producer.toString())
 						);
 					}
@@ -206,7 +241,7 @@ implements LoadExecutor<T> {
 		// interrupt the submit execution
 		interrupters[1] = new Thread(
 			new GentleExecutorShutDown(submitExecutor, runTimeConfig),
-			String.format("interrupt-submit-%s", getName())
+			String.format("interruptSubmitter-%s", getName())
 		);
 		interrupters[1].start();
 		//
@@ -220,17 +255,9 @@ implements LoadExecutor<T> {
 		} catch(final InterruptedException e) {
 			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while interrupting submitter");
 		}
-		// interrupt node executors in parallel threads
-		for(int i = 0; i < nodes.length; i ++) {
-			final StorageNodeExecutor<T> nextNode = nodes[i];
-			interrupters[i] = new Thread("interrupt-" + getName() + "-" + nextNode.getAddr()) {
-				@Override
-				public final void run() {
-					nextNode.interrupt();
-				}
-			};
-			interrupters[i].start();
-
+		// interrupt node executors
+		for(final StorageNodeExecutor<T> nextNode: nodes) {
+			ThreadPoolExecutor.class.cast(nextNode).shutdown();
 		}
 		// wait for node executors to become interrupted
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
@@ -243,35 +270,56 @@ implements LoadExecutor<T> {
 			}
 		}
 		// interrupt the monitoring thread
-		super.interrupt();
-		LOG.debug(Markers.MSG, "Interrupted \"{}\"", getName());
+		if(!isInterrupted()) {
+			super.interrupt();
+		}
 	}
 	//
 	@Override
 	public synchronized void close()
-		throws IOException {
+	throws IOException {
 		//
 		if(!isInterrupted()) {
 			interrupt();
 		}
-		consumer.submit(null); // poison the consumer
+		// poison the consumer
+		consumer.submit(null);
+		// close node executors
+		final ArrayList<Thread> nodeClosers = new ArrayList<>(nodes.length);
+		Thread nextShutDownThread;
 		for(final StorageNodeExecutor<T> nodeExecutor: nodes) {
+			nextShutDownThread = new Thread("closeNodeExecutor-"+nodeExecutor.toString()) {
+				@Override
+				public final void run() {
+					try {
+						nodeExecutor.close();
+					} catch(final IOException e) {
+						ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to close node executor");
+					}
+				}
+			};
+			nextShutDownThread.start();
+			nodeClosers.add(nextShutDownThread);
+		}
+		//
+		for(final Thread nextClosingThread: nodeClosers) {
 			try {
-				nodeExecutor.close();
-				LOG.debug(Markers.MSG, "Closed the node executor {}", nodeExecutor);
-			} catch(final IOException e) {
-				ExceptionHandler.trace(
-						LOG, Level.WARN, e,
-					String.format("Failed to stop the node executor: %s", nodeExecutor.getName())
-				);
+				nextClosingThread.join(runTimeConfig.getRunReqTimeOutMilliSec());
+			} catch(final InterruptedException e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Interrupted closing node executor");
 			}
 		}
-		// provide summary metrics
-		synchronized(LOG) {
-			LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-			logMetrics(Markers.PERF_SUM);
-		}
+		//
 		metricsReporter.close();
+		//
+		if(client != null) {
+			try {
+				client.close();
+				LOG.debug(Markers.MSG, "Storage client closed");
+			} catch(final IOException e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Storage client closing failed");
+			}
+		}
 		//
 		LOG.debug(Markers.MSG, "Closed {}", getName());
 	}
@@ -279,7 +327,14 @@ implements LoadExecutor<T> {
 	@Override
 	public void submit(final T dataItem)
 	throws RemoteException {
-		if(dataItem == null || isInterrupted()) { // handle the poison
+		if(
+			dataItem == null ||
+			isInterrupted() ||
+			maxCount < counterRej.getCount() + counterReqFail.getCount() + counterReqSucc.getCount()
+		) { // handle the poison
+			synchronized(this) {
+				notifyAll(); // signal about done condition
+			}
 			maxCount = counterSubm.getCount() + counterRej.getCount();
 			LOG.debug(Markers.MSG, "Poisoned on #{}", maxCount);
 			for(final StorageNodeExecutor<T> nextNode: nodes) {
@@ -287,14 +342,18 @@ implements LoadExecutor<T> {
 					nextNode.submit(null); // poison
 				}
 			}
-		} else {
+		} else if(isAlive()) {
+			final StorageNodeExecutor<T> nodeExecutor = nodes[
+				(int) submitExecutor.getTaskCount() % nodes.length
+			];
 			final SubmitDataItemTask<T, StorageNodeExecutor<T>>
-				submitTask = new SubmitDataItemTask<>(
-				dataItem, nodes[(int) submitExecutor.getTaskCount() % nodes.length]
-			);
+				submitTask = new SubmitDataItemTask<>(dataItem, nodeExecutor);
 			boolean flagSubmSucc = false;
 			int rejectCount = 0;
-			do {
+			while(
+				!flagSubmSucc && rejectCount < retryCountMax &&
+				!submitExecutor.isShutdown() && !nodeExecutor.isShutdown()
+			) {
 				try {
 					submitExecutor.submit(submitTask);
 					flagSubmSucc = true;
@@ -306,7 +365,7 @@ implements LoadExecutor<T> {
 						break;
 					}
 				}
-			} while(!flagSubmSucc && rejectCount < retryCountMax && !submitExecutor.isShutdown());
+			}
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -353,11 +412,11 @@ implements LoadExecutor<T> {
 		if(Markers.PERF_SUM.equals(logMarker)) {
 			final double totalReqNanoSeconds = reqDurSnapshot.getMean() * countReqSucc;
 			LOG.debug(
-					Markers.PERF_SUM,
-					String.format(
-							Locale.ROOT, FMT_EFF_SUM,
-							100 * totalReqNanoSeconds / ((System.nanoTime() - tsStart) * getThreadCount())
-					)
+				Markers.PERF_SUM,
+				String.format(
+					Locale.ROOT, FMT_EFF_SUM,
+					100 * totalReqNanoSeconds / ((System.nanoTime() - tsStart) * getThreadCount())
+				)
 			);
 		}
 		//
@@ -395,7 +454,7 @@ implements LoadExecutor<T> {
 			node.setConsumer(consumer);
 		}
 		LOG.debug(
-				Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", consumer, getName()
+			Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", consumer, getName()
 		);
 	}
 	//
@@ -412,5 +471,4 @@ implements LoadExecutor<T> {
 	public final DataSource<T> getDataSource() {
 		return dataSrc;
 	}
-	//
 }

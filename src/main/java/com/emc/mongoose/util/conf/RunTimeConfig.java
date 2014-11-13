@@ -51,6 +51,7 @@ implements Externalizable {
 		MAP_OVERRIDE.put(
 			"load.threads",
 			new String[] {
+				"load.append.threads",
 				"load.create.threads",
 				"load.read.threads",
 				"load.update.threads",
@@ -71,8 +72,12 @@ implements Externalizable {
 	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)b?");
 	//
 	public long getSizeBytes(final String key) {
-		final String value = getString(key).toLowerCase(), unit;
-		final Matcher matcher = PATTERN_SIZE.matcher(value);
+		return toSize(getString(key));
+	}
+	//
+	public static long toSize(final String value) {
+		final String unit;
+		final Matcher matcher = PATTERN_SIZE.matcher(value.toLowerCase());
 		long size, degree;
 		if(matcher.matches() && matcher.groupCount() > 0 && matcher.groupCount() < 3) {
 			size = Long.valueOf(matcher.group(1), 10);
@@ -83,12 +88,12 @@ implements Externalizable {
 				degree = SIZE_UNITS.indexOf(matcher.group(2)) + 1;
 			} else {
 				throw new IllegalArgumentException(
-					String.format(FMT_MSG_INVALID_SIZE, key, PATTERN_SIZE)
+					String.format(FMT_MSG_INVALID_SIZE, value, PATTERN_SIZE)
 				);
 			}
 		} else {
 			throw new IllegalArgumentException(
-				String.format(FMT_MSG_INVALID_SIZE, key, PATTERN_SIZE)
+				String.format(FMT_MSG_INVALID_SIZE, value, PATTERN_SIZE)
 			);
 		}
 		size *= 1L << 10 * degree;
@@ -214,6 +219,34 @@ implements Externalizable {
 		return getStringArray("storage.addrs");
 	}
 	//
+	public final int getConnPoolTimeOut() {
+		return getInt("storage.connection.pool.timeout.millisec");
+	}
+	//
+	public final int getConnTimeOut() {
+		return getInt("storage.connection.timeout.millisec");
+	}
+	//
+	public final int getSocketTimeOut() {
+		return getInt("storage.socket.timeout.millisec");
+	}
+	//
+	public final boolean getStaleConnCheckFlag() {
+		return getBoolean("storage.connection.stale.check");
+	}
+	//
+	public final boolean getSocketReuseAddrFlag() {
+		return getBoolean("storage.socket.reuse.addr");
+	}
+	//
+	public final boolean getSocketKeepAliveFlag() {
+		return getBoolean("storage.socket.keepalive");
+	}
+	//
+	public final boolean getSocketTCPNoDelayFlag() {
+		return getBoolean("storage.socket.tcp.nodelay");
+	}
+	//
 	public final String[] getRemoteServers() {
 		return getStringArray("remote.servers");
 	}
@@ -234,12 +267,16 @@ implements Externalizable {
 		return getString("run.scenario.dir");
 	}
 	//
+	public final String getRunId() {
+		return getString(Main.KEY_RUN_ID);
+	}
+	//
 	public final String getRunTime() {
 		return getString("run.time");
 	}
 	//
 	public final String getRunMode() {
-		return getString("run.mode");
+		return getString(Main.KEY_RUN_MODE);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

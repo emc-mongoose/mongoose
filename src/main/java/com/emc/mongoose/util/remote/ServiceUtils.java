@@ -243,7 +243,7 @@ public final class ServiceUtils {
 			}
 			//
 			JMXConnectorServer connectorServer = null;
-			if(jmxSvcURL!=null) {
+			if(jmxSvcURL != null) {
 				try {
 					//LOG.trace(Markers.MSG, "{}, {}, {}", jmxSvcURL, env, mBeanServer);
 					connectorServer = JMXConnectorServerFactory.newJMXConnectorServer(

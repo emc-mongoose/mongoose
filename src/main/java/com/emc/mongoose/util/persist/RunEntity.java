@@ -49,34 +49,34 @@ implements Serializable {
 		this.name = name;
 	}
 	//
-	public BigInteger getId() {
+	public final BigInteger getId() {
 		return id;
 	}
-	public void setId(final BigInteger id) {
+	public final void setId(final BigInteger id) {
 		this.id = id;
 	}
-	public ModeEntity getMode() {
+	public final ModeEntity getMode() {
 		return mode;
 	}
-	public void setMode(final ModeEntity mode) {
+	public final void setMode(final ModeEntity mode) {
 		this.mode = mode;
 	}
-	public String getName() {
+	public final String getName() {
 		return name;
 	}
-	public void setName(final String name) {
+	public final void setName(final String name) {
 		this.name = name;
 	}
-	public Set<LoadEntity> getLoadsSet() {
+	public final Set<LoadEntity> getLoadsSet() {
 		return loadsSet;
 	}
-	public void setLoadsSet(final Set<LoadEntity> loadsSet) {
+	public final void setLoadsSet(final Set<LoadEntity> loadsSet) {
 		this.loadsSet = loadsSet;
 	}
-	public Set<MessageEntity> getMessageSet() {
+	public final Set<MessageEntity> getMessageSet() {
 		return messageSet;
 	}
-	public void setMessageSet(final Set<MessageEntity> messageSet) {
+	public final void setMessageSet(final Set<MessageEntity> messageSet) {
 		this.messageSet = messageSet;
 	}
 }

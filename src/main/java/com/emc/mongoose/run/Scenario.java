@@ -45,12 +45,10 @@ implements Runnable {
 	//
 	public Scenario() {
 		this.runTimeConfig = Main.RUN_TIME_CONFIG;
-		//
 	}
 	//
 	public Scenario(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
-		//
 	}
 	//
 	public void run() {
@@ -60,8 +58,8 @@ implements Runnable {
 			scriptLangKey = runTimeConfig.getRunScenarioLang();
 		} catch(final NoSuchElementException e) {
 			LOG.fatal(
-					Markers.ERR,
-					"Scenario language not specified, use \"-Drun.scenario.lang=(js|py)\" argument"
+				Markers.ERR,
+				"Scenario language not specified, use \"-Drun.scenario.lang=(js|py)\" argument"
 			);
 			System.exit(1);
 		}
@@ -72,8 +70,8 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Script name to run: \"{}\"", scriptName);
 		} catch(final NoSuchElementException e) {
 			LOG.fatal(
-					Markers.ERR,
-					"Scenario language not specified, use \"-Drun.scenario.name=<NAME>\" argument"
+				Markers.ERR,
+				"Scenario language not specified, use \"-Drun.scenario.name=<NAME>\" argument"
 			);
 			System.exit(1);
 		}
@@ -91,8 +89,8 @@ implements Runnable {
 			if(VALUE_PY.equals(scriptLangKey)) {
 				System.setProperty(KEY_PYTHON_PATH, scriptDir.toString());
 				LOG.debug(
-						Markers.MSG, "Set \"{}\"=\"{}\"",
-						KEY_PYTHON_PATH, System.getProperty(KEY_PYTHON_PATH)
+					Markers.MSG, "Set \"{}\"=\"{}\"",
+					KEY_PYTHON_PATH, System.getProperty(KEY_PYTHON_PATH)
 				);
 			}
 			//
@@ -114,23 +112,30 @@ implements Runnable {
 			final String scriptLangValue = SCRIPT_LANG_MAP.get(scriptLangKey);
 			if(scriptLangValue==null) {
 				LOG.fatal(
-						Markers.MSG, "Failed to determine the scenario language for key \"{}\"",
-						scriptLangKey
+					Markers.MSG, "Failed to determine the scenario language for key \"{}\"",
+					scriptLangKey
 				);
 			} else {
 				ScriptEngine scriptEngine = SCRIPT_ENGINE_MANAGER
 					.getEngineByName(scriptLangValue);
 				//
-				if(scriptEngine==null) {
-					LOG.fatal(
+				if(scriptEngine == null) {
+
+					for(final ScriptEngineFactory sef : SCRIPT_ENGINE_MANAGER.getEngineFactories()) {
+						LOG.info(
+							Markers.ERR, "\t{}:\tfor language \"{}\" v{}",
+							sef.getEngineName(), sef.getLanguageName(), sef.getLanguageVersion()
+						);
+						if(scriptLangValue.equals(sef.getEngineName())) {
+							scriptEngine = sef.getScriptEngine();
+							break;
+						}
+					}
+					if(scriptEngine == null) {
+						LOG.fatal(
 							Markers.ERR,
 							"Failed to get script engine for language \"{}\", the available engines are:",
 							scriptLangValue
-					);
-					for(final ScriptEngineFactory sef : SCRIPT_ENGINE_MANAGER.getEngineFactories()) {
-						LOG.info(
-								Markers.ERR, "\t{}:\tfor language \"{}\" v{}",
-								sef.getEngineName(), sef.getLanguageName(), sef.getLanguageVersion()
 						);
 					}
 				} else {

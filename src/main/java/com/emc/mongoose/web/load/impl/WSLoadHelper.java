@@ -3,6 +3,7 @@ package com.emc.mongoose.web.load.impl;
 import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.base.load.StorageNodeExecutor;
 import com.emc.mongoose.base.load.impl.LoadExecutorBase;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -10,7 +11,9 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 //
 import com.emc.mongoose.web.load.WSNodeExecutor;
 import org.apache.http.Header;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -29,13 +32,15 @@ import java.util.Map;
 public class WSLoadHelper {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static String KEY_NODE_ADDR = "node.addr",
-								KEY_LOAD_NUM = "load.number",
-								KEY_LOAD_TYPE = "load.type",
-								KEY_API = "api";
+	//
+	private final static String
+		KEY_NODE_ADDR = "node.addr",
+		KEY_LOAD_NUM = "load.number",
+		KEY_LOAD_TYPE = "load.type",
+		KEY_API = "api";
 	//
 	public static CloseableHttpClient initClient(
-		final int totalThreadCount, final int dataPageSize, final WSRequestConfig reqConf
+		final int totalThreadCount, final RunTimeConfig runTimeConfig, final WSRequestConfig reqConf
 	) {
 		// create and configure the connection manager for HTTP client
 		final PoolingHttpClientConnectionManager connMgr = new PoolingHttpClientConnectionManager();
@@ -44,7 +49,7 @@ public class WSLoadHelper {
 		connMgr.setDefaultConnectionConfig(
 			ConnectionConfig
 				.custom()
-				.setBufferSize(dataPageSize)
+				.setBufferSize((int) runTimeConfig.getDataPageSize())
 				.build()
 		);
 		// set shared headers to client builder
@@ -63,11 +68,30 @@ public class WSLoadHelper {
 			.disableCookieManagement()
 			.setUserAgent(reqConf.getUserAgent())
 			.setMaxConnPerRoute(totalThreadCount)
-			.setMaxConnTotal(totalThreadCount);
+			.setMaxConnTotal(totalThreadCount)
+			.setDefaultRequestConfig(
+				RequestConfig
+					.custom()
+					.setConnectionRequestTimeout(runTimeConfig.getConnPoolTimeOut())
+					.setConnectTimeout(runTimeConfig.getConnTimeOut())
+					.setSocketTimeout(runTimeConfig.getSocketTimeOut())
+					.setStaleConnectionCheckEnabled(runTimeConfig.getStaleConnCheckFlag())
+					.build()
+			)
+			.setDefaultSocketConfig(
+				SocketConfig
+					.custom()
+					.setSoReuseAddress(runTimeConfig.getSocketReuseAddrFlag())
+					.setSoKeepAlive(runTimeConfig.getSocketKeepAliveFlag())
+					.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
+					.build()
+			);
 		if(!reqConf.getRetries()) {
 			httpClientBuilder.disableAutomaticRetries();
 		}
 		//
+		final CloseableHttpClient httpClient = httpClientBuilder.build();
+		reqConf.setClient(httpClient);
 		return httpClientBuilder.build();
 	}
 	//
@@ -77,7 +101,6 @@ public class WSLoadHelper {
 		final MetricRegistry parentMetrics, final String name,
 		final StorageNodeExecutor[] nodes
 	) {
-		//
 		WSNodeExecutor nextNodeExecutor;
 		for(int i = 0; i < addrs.length; i ++) {
 			try {
@@ -94,7 +117,7 @@ public class WSLoadHelper {
 				nodes[i] = nextNodeExecutor;
 			} catch(final CloneNotSupportedException e) {
 				ExceptionHandler.trace(
-						LOG, Level.FATAL, e, "Failed to clone the request configuration"
+					LOG, Level.FATAL, e, "Failed to clone the request configuration"
 				);
 			}
 		}
