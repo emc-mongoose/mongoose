@@ -4,6 +4,7 @@ import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.run.ThreadContextMap;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

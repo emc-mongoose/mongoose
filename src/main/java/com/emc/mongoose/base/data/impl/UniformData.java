@@ -53,7 +53,7 @@ implements DataItem {
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
 	//
-	public final int maxPageSize = (int) Main.RUN_TIME_CONFIG.getDataPageSize();
+	public final static int MAX_PAGE_SIZE = (int) Main.RUN_TIME_CONFIG.getDataPageSize();
 	protected long offset = 0;
 	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -93,7 +93,7 @@ implements DataItem {
 			setOffset(offset, 0);
 		} catch(final IOException e) {
 			ExceptionHandler.trace(
-					LOG, Level.ERROR, e, String.format(FMT_MSG_FAIL_SET_OFFSET, offset)
+				LOG, Level.ERROR, e, String.format(FMT_MSG_FAIL_SET_OFFSET, offset)
 			);
 		}
 		this.size = size;
@@ -212,7 +212,7 @@ implements DataItem {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
 		}
-		final byte buff[] = new byte[size < maxPageSize ? (int) size : maxPageSize];
+		final byte buff[] = new byte[size < MAX_PAGE_SIZE ? (int) size : MAX_PAGE_SIZE];
 		final int
 			countPages = (int) size / buff.length,
 			countTailBytes = (int) size % buff.length;
@@ -250,7 +250,7 @@ implements DataItem {
 		//
 		boolean contentEquals = true;
 		final int
-			pageSize = (int) (rangeLength < maxPageSize ? rangeLength : maxPageSize),
+			pageSize = (int) (rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE),
 			countPages = (int) rangeLength / pageSize,
 			countTailBytes = (int) rangeLength % pageSize;
 		final byte
@@ -277,10 +277,10 @@ implements DataItem {
 						contentEquals = Arrays.equals(buff1, buff2);
 						if(!contentEquals) {
 							LOG.debug(
-									Markers.ERR,
-									FMT_MSG_CORRUPT, rangeOffset, i * pageSize,
-									Base64.encodeBase64URLSafeString(buff1),
-									Base64.encodeBase64URLSafeString(buff2)
+								Markers.ERR,
+								FMT_MSG_CORRUPT, rangeOffset, i * pageSize,
+								Base64.encodeBase64URLSafeString(buff1),
+								Base64.encodeBase64URLSafeString(buff2)
 							);
 							break;
 						}
@@ -308,10 +308,10 @@ implements DataItem {
 						contentEquals = Arrays.equals(buff1, buff2);
 						if(!contentEquals) {
 							LOG.debug(
-									Markers.ERR, FMT_MSG_CORRUPT,
-									rangeOffset, rangeLength - countTailBytes,
-									Base64.encodeBase64URLSafeString(buff1),
-									Base64.encodeBase64URLSafeString(buff2)
+								Markers.ERR, FMT_MSG_CORRUPT,
+								rangeOffset, rangeLength - countTailBytes,
+								Base64.encodeBase64URLSafeString(buff1),
+								Base64.encodeBase64URLSafeString(buff2)
 							);
 						}
 					} else {
@@ -322,7 +322,7 @@ implements DataItem {
 			} catch(final IOException e) {
 				contentEquals = false;
 				ExceptionHandler.trace(
-						LOG, Level.WARN, e, MSG_IO_FAILURE_DURING_VERIFICATION
+					LOG, Level.WARN, e, MSG_IO_FAILURE_DURING_VERIFICATION
 				);
 			}
 		}

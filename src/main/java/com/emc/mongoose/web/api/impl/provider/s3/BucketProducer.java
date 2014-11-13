@@ -68,26 +68,26 @@ implements Producer<T> {
 							);
 						} catch(final ParserConfigurationException | SAXException e) {
 							ExceptionHandler.trace(
-									LOG, Level.ERROR, e, "Failed to create SAX parser"
+								LOG, Level.ERROR, e, "Failed to create SAX parser"
 							);
 						}
 					} else {
 						LOG.warn(
-								Markers.MSG, "Unexpected response content type: \"{}\"", respContentType
+							Markers.MSG, "Unexpected response content type: \"{}\"", respContentType
 						);
 					}
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.debug(
-							Markers.MSG, "Listing bucket \"{}\" response: {}/{}",
-							bucket.getName(), statusCode, statusMsg
+						Markers.MSG, "Listing bucket \"{}\" response: {}/{}",
+						bucket.getName(), statusCode, statusMsg
 					);
 				}
 			}
 			EntityUtils.consumeQuietly(httpResp.getEntity());
 		} catch(final IOException e) {
 			ExceptionHandler.trace(
-					LOG, Level.ERROR, e, "Failed to list the bucket \""+bucket.getName()+"\""
+				LOG, Level.ERROR, e, "Failed to list the bucket \""+bucket.getName()+"\""
 			);
 		}
 	}

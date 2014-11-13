@@ -65,7 +65,7 @@ extends SimpleFileVisitor<Path> {
 			LOG.trace(Markers.MSG, "Loaded the properties {} from file {}", currProps, file);
 		} catch(final ConfigurationException e) {
 			ExceptionHandler.trace(
-					LOG, Level.ERROR, e,
+				LOG, Level.ERROR, e,
 				String.format("Failed to load the properties from file \"%s\"", file.toString())
 			);
 		}
@@ -75,8 +75,8 @@ extends SimpleFileVisitor<Path> {
 			for(final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext();) {
 				key = keyIter.next();
 				LOG.trace(
-						Markers.MSG, "File property: \"{}\" = \"{}\"",
-						currPrefix + key, currProps.getProperty(key)
+					Markers.MSG, "File property: \"{}\" = \"{}\"",
+					currPrefix + key, currProps.getProperty(key)
 				);
 				tgtConfig.setProperty(currPrefix + key, currProps.getProperty(key));
 			}
