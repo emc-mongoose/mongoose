@@ -41,7 +41,7 @@ public class LogSocket implements WebSocketLogListener {
 		LOG.info(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
 		this.session = session;
 		WebUIAppender.register(this);
-		for (LogEvent logEvent : WebUIAppender.getLogEventsList()) {
+		for (final LogEvent logEvent : WebUIAppender.getLogEventsList()) {
 			sendMessage(logEvent);
 		}
 	}
@@ -51,10 +51,11 @@ public class LogSocket implements WebSocketLogListener {
 		LOG.info(Markers.MSG, "Message from Browser {}", message);
 	}
 
-	public synchronized void sendMessage(final LogEvent message) {
+	@Override
+	public final synchronized void sendMessage(final LogEvent message) {
 		try {
 			session.getRemote().sendString(gson.toJson(message));
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "WebSocket problem");
 		}
 	}
