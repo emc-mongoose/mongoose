@@ -184,7 +184,7 @@ implements StorageNodeExecutor<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final void afterExecute(final Runnable reqTask, final Throwable thrown) {
-		if(thrown!=null) {
+		if(thrown != null) {
 			LOG.warn(Markers.ERR, thrown.toString());
 			counterReqFail.inc();
 			counterReqFailParent.inc();
@@ -360,13 +360,6 @@ implements StorageNodeExecutor<T> {
 		}
 		// signal about the interruption
 		notifyAll();
-	}
-	//
-	@Override
-	public final boolean isShutdown() {
-		return super.isShutdown()	||
-			super.isTerminating()	||
-			super.isTerminated();
 	}
 	//
 	@Override

@@ -818,8 +818,8 @@ implements LoadClient<T> {
 							) {
 							LOG.debug(Markers.MSG, "Condition \"done\" reached");
 						}
-					} catch(final Exception e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "Condition failure");
+					} catch(final InterruptedException e) {
+						LOG.debug(Markers.MSG, "Waiting for the done condition interrupted");
 					} finally {
 						lock.unlock();
 					}
