@@ -16,7 +16,7 @@ import java.io.IOException;
  */
 public class MainServlet extends HttpServlet {
 
-	private static final Logger LOG = LogManager.getLogger();
+	private final static Logger LOG = LogManager.getLogger();
 	private RunTimeConfig runTimeConfig;
 
 	@Override

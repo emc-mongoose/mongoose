@@ -1,22 +1,14 @@
 package com.emc.mongoose.util.conf;
 //
-import com.emc.mongoose.base.api.impl.RequestBase;
-import com.emc.mongoose.base.data.impl.DataRanges;
-import com.emc.mongoose.base.data.impl.UniformData;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
-import com.emc.mongoose.base.data.persist.FileProducer;
-import com.emc.mongoose.base.data.persist.LogConsumer;
 import com.emc.mongoose.base.load.impl.ShutDownHook;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
-import com.emc.mongoose.util.pool.BasicInstancePool;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.api.impl.BasicWSRequest;
-import com.emc.mongoose.web.api.impl.provider.s3.Bucket;
-import com.emc.mongoose.web.api.impl.provider.s3.BucketListHandler;
-import com.emc.mongoose.web.api.impl.provider.s3.BucketProducer;
+import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
+import com.emc.mongoose.web.load.impl.WSLoadHelper;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
@@ -73,25 +65,6 @@ implements Externalizable {
 		);
 	}
 	//
-	{
-		set(Main.KEY_RUN_ID, FMT_DT.format(Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()));
-		UniformData.setLogger(LogManager.getLogger(UniformData.class, new MessageFactoryImpl(this)));
-		DataRanges.setLogger(LogManager.getLogger(DataRanges.class, new MessageFactoryImpl(this)));
-		//UniformDataSource.setLogger(LogManager.getLogger(UniformDataSource.class, new MessageFactoryImpl(this)));
-		UniformDataSource.setLogger(LogManager.getLogger());
-		RequestBase.setLogger(LogManager.getLogger(RequestBase.class, new MessageFactoryImpl(this)));
-		FileProducer.setLogger(LogManager.getLogger(FileProducer.class, new MessageFactoryImpl(this)));
-		LogConsumer.setLogger(LogManager.getLogger(LogConsumer.class, new MessageFactoryImpl(this)));
-		/*ShutDownHook.setLogger(LogManager.getLogger(ShutDownHook.class, new MessageFactoryImpl(this)));
-		BasicInstancePool.setLogger(LogManager.getLogger(BasicInstancePool.class, new MessageFactoryImpl(this)));
-		ServiceUtils.setLogger(LogManager.getLogger(ServiceUtils.class, new MessageFactoryImpl(this)));
-		Bucket.setLogger(LogManager.getLogger(Bucket.class, new MessageFactoryImpl(this)));
-		BucketListHandler.setLogger(LogManager.getLogger(BucketListHandler.class, new MessageFactoryImpl(this)));
-		BucketProducer.setLogger(LogManager.getLogger(BucketProducer.class, new MessageFactoryImpl(this)));
-		BasicWSRequest.setLogger(LogManager.getLogger(BasicWSRequest.class, new MessageFactoryImpl(this)));
-		DirectoryLoader.setLogger(LogManager.getLogger(DirectoryLoader.class, new MessageFactoryImpl(this)));*/
-	}
-	//
 	private final static String
 		SIZE_UNITS = "kmgtpe",
 		FMT_MSG_INVALID_SIZE = "The string \"%s\" doesn't match the pattern: \"%s\"";
@@ -136,9 +109,9 @@ implements Externalizable {
 		).toUpperCase();
 	}
 	//
-	public final void set(final String key, final String value) {
+	public final synchronized void set(final String key, final String value) {
 		setProperty(key, value);
-		System.setProperty(key, value);
+		//System.setProperty(key, value);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final int getRunReqTimeOutMilliSec() {
@@ -280,7 +253,7 @@ implements Externalizable {
 			nextPropName = i.next();
 			nextPropValue = getProperty(nextPropName);
 			LOG.trace(
-				Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
+					Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
 			);
 			if(List.class.isInstance(nextPropValue)) {
 				propsMap.put(
@@ -293,8 +266,8 @@ implements Externalizable {
 				LOG.warn(Markers.ERR, "Property \"{}\" is null");
 			} else {
 				LOG.error(
-					Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
-					nextPropValue.getClass().getCanonicalName(), nextPropName
+						Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
+						nextPropValue.getClass().getCanonicalName(), nextPropName
 				);
 			}
 		}
@@ -334,33 +307,33 @@ implements Externalizable {
 					LOG.warn(Markers.ERR, "Property \"{}\" is null", nextPropName);
 				} else {
 					LOG.error(
-						Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
-						nextPropValue.getClass().getCanonicalName(), nextPropName
+							Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
+							nextPropValue.getClass().getCanonicalName(), nextPropName
 					);
 				}
 			}
 		} else {
 			LOG.fatal(
-				Markers.ERR, "Version mismatch, server: {}, client: {}",
-				serverVersion, clientVersion
+					Markers.ERR, "Version mismatch, server: {}, client: {}",
+					serverVersion, clientVersion
 			);
 			throw new IOException("Version mismatch");
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public void loadPropsFromDir(final Path propsDir) {
+	public synchronized void loadPropsFromDir(final Path propsDir) {
 		DirectoryLoader.loadPropsFromDir(propsDir, this);
 	}
 	//
-	public void loadSysProps() {
+	public synchronized void loadSysProps() {
 		final SystemConfiguration sysProps = new SystemConfiguration();
 		String key, keys2override[];
 		Object sharedValue;
 		for(final Iterator<String> keyIter=sysProps.getKeys(); keyIter.hasNext();) {
 			key = keyIter.next();
 			LOG.trace(
-				Markers.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",
-				key, getProperty(key), sysProps.getProperty(key)
+					Markers.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",
+					key, getProperty(key), sysProps.getProperty(key)
 			);
 			keys2override = MAP_OVERRIDE.get(key);
 			sharedValue = sysProps.getProperty(key);
@@ -374,4 +347,10 @@ implements Externalizable {
 		}
 	}
 	//
+	public synchronized RunTimeConfig clone() {
+		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
+		runTimeConfig.set(Main.KEY_RUN_ID, FMT_DT.format(
+				Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()));
+		return runTimeConfig;
+	}
 }

@@ -5,15 +5,11 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.util.pool.BasicInstancePool;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.omg.SendingContext.RunTime;
 //
 import java.util.concurrent.ConcurrentHashMap;
 /**
@@ -22,10 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public abstract class RequestBase<T extends DataItem>
 implements Request<T> {
 	//
-	private static volatile Logger LOG = LogManager.getRootLogger();
-	public static void setLogger(final Logger log) {
-		LOG = log;
-	}
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static RequestBase POISON = new RequestBase() {
 		@Override

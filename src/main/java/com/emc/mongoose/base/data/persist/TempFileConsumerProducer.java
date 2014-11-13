@@ -7,7 +7,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 //
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -34,7 +33,7 @@ public class TempFileConsumerProducer<T extends DataItem>
 extends Thread
 implements Consumer<T>, Producer<T> {
 	//
-	private static Logger log;
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final File fBuff;
 	private final ObjectOutput fBuffOut;
@@ -50,8 +49,6 @@ implements Consumer<T>, Producer<T> {
 	) {
 		//
 		this.runTimeConfig = runTimeConfig;
-		// TODO fix it
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
@@ -62,7 +59,7 @@ implements Consumer<T>, Producer<T> {
 				.createTempFile(prefix, suffix)
 				.toFile();
 		} catch(final IllegalArgumentException | UnsupportedOperationException | IOException | SecurityException  e) {
-			ExceptionHandler.trace(log, Level.ERROR, e, "Failed to create temp file");
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create temp file");
 		} finally {
 			fBuff = fBuffTmp;
 		}
@@ -74,7 +71,7 @@ implements Consumer<T>, Producer<T> {
 				new FileOutputStream(fBuff)
 			);
 		} catch(final IOException e) {
-			ExceptionHandler.trace(log, Level.ERROR, e, "Failed to open temporary file for output");
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to open temporary file for output");
 		} finally {
 			fBuffOut = fBuffOutTmp;
 		}
@@ -89,6 +86,8 @@ implements Consumer<T>, Producer<T> {
 	private final static class DataItemOutPutTask<T>
 	implements Runnable {
 		//
+		private final static Logger LOG = LogManager.getLogger();
+		//
 		private final ObjectOutput fBuffOut;
 		private final T dataItem;
 		//
@@ -102,7 +101,7 @@ implements Consumer<T>, Producer<T> {
 			try {
 				fBuffOut.writeObject(dataItem);
 			} catch(final IOException e) {
-				ExceptionHandler.trace(log, Level.WARN, e, "Failed to write out the data item");
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to write out the data item");
 			}
 		}
 	}
@@ -134,7 +133,7 @@ implements Consumer<T>, Producer<T> {
 		} while(!passed && rejectCount < retryCountMax && writtenDataItems.get() < maxCount);
 		//
 		if(!passed) {
-			log.debug(
+			LOG.debug(
 					Markers.ERR, "Data item \"{}\" has been rejected after {} tries",
 					dataItem, rejectCount
 			);
@@ -156,7 +155,7 @@ implements Consumer<T>, Producer<T> {
 	public final void close()
 	throws IOException {
 		//
-		log.trace(Markers.MSG, "Closing the output");
+		LOG.trace(Markers.MSG, "Closing the output");
 		//
 		outPutExecutor.shutdown();
 		try {
@@ -165,11 +164,11 @@ implements Consumer<T>, Producer<T> {
 			);
 		} catch(final InterruptedException e) {
 			ExceptionHandler.trace(
-					log, Level.DEBUG, e, "Interrupted while writing out the remaining data items"
+					LOG, Level.DEBUG, e, "Interrupted while writing out the remaining data items"
 			);
 		} finally {
 			final int droppedTaskCount = outPutExecutor.shutdownNow().size();
-			log.debug(
+			LOG.debug(
 					Markers.MSG, "Wrote {} data items, dropped {}",
 					writtenDataItems.addAndGet(-droppedTaskCount), droppedTaskCount
 			);
@@ -205,7 +204,7 @@ implements Consumer<T>, Producer<T> {
 		try {
 			consumerMaxCount = consumer.getMaxCount();
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(log, Level.WARN, e, "Looks like network failure");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
 		}
 		//
 		T nextDataItem;
@@ -218,12 +217,12 @@ implements Consumer<T>, Producer<T> {
 				}
 			}
 		} catch(final IOException | ClassNotFoundException | ClassCastException e) {
-			ExceptionHandler.trace(log, Level.WARN, e, "Failed to read a data item");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to read a data item");
 		} finally {
 			try {
 				consumer.setMaxCount(writtenDataItems.get());
 			} catch(final RemoteException e) {
-				ExceptionHandler.trace(log, Level.WARN, e, "Looks like network failure");
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
 			}
 		}
 	}

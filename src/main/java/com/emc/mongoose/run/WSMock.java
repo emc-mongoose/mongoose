@@ -4,7 +4,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,16 +23,14 @@ import java.io.IOException;
 public final class WSMock
 implements Runnable {
 
-	private final Logger log;
+	private final static Logger LOG = LogManager.getLogger();
 	private final RunTimeConfig runTimeConfig;
 
 	public WSMock(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 	}
 
 	public void run() {
-
 		final String apiName = runTimeConfig.getStorageApi();
 		final int port = runTimeConfig.getInt("api."+apiName+".port");
 		// Setup Jetty Server instance
@@ -48,15 +45,15 @@ implements Runnable {
 		server.setHandler(new SimpleHandler());
 		try {
             server.start();
-            log.info(Markers.MSG, "Listening on port #{}", port);
+            LOG.info(Markers.MSG, "Listening on port #{}", port);
             server.join();
         } catch (final Exception e) {
-            ExceptionHandler.trace(log, Level.WARN, e, "WSMock was interrupted");
+            ExceptionHandler.trace(LOG, Level.WARN, e, "WSMock was interrupted");
         } finally {
             try {
                 server.stop();
             } catch (final Exception e) {
-                ExceptionHandler.trace(log, Level.WARN, e, "Failed to stop jetty");
+                ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to stop jetty");
             }
         }
 	}

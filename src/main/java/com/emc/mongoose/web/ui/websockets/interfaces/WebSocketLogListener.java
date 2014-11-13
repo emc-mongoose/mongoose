@@ -9,6 +9,6 @@ import java.util.EventListener;
  */
 public interface WebSocketLogListener extends EventListener {
 
-	public void sendMessage(LogEvent message);
+	public void sendMessage(final LogEvent message);
 
 }

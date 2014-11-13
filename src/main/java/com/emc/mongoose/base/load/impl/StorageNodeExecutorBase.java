@@ -13,12 +13,10 @@ import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.StorageNodeExecutor;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.util.threading.GentleExecutorShutDown;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
@@ -26,9 +24,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.message.MapMessage;
-import org.apache.logging.log4j.message.Message;
-import org.apache.logging.log4j.message.MessageFactory;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -50,7 +45,7 @@ public abstract class StorageNodeExecutorBase<T extends DataItem>
 extends ThreadPoolExecutor
 implements StorageNodeExecutor<T> {
 	//
-	private final Logger log;
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final RequestConfig<T> localReqConf;
 	private final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
@@ -78,8 +73,6 @@ implements StorageNodeExecutor<T> {
 			new WorkerFactory(parentName + '<' + localReqConf.getAddr() + '>', context));
 		//
 		this.runTimeConfig = runTimeConfig;
-		//
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		//
 		this.localReqConf = localReqConf;
 		reqType = localReqConf.getLoadType();
@@ -148,9 +141,9 @@ implements StorageNodeExecutor<T> {
 		try {
 			request = getRequestFor(dataItem);
 		} catch(final Exception e) {
-			ExceptionHandler.trace(log, Level.DEBUG, e, "Failed to build request");
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to build request");
 		} finally {
-			log.trace(Markers.MSG, "Built request \"{}\"", request);
+			LOG.trace(Markers.MSG, "Built request \"{}\"", request);
 		}
 		//
 		boolean passed = false;
@@ -176,8 +169,8 @@ implements StorageNodeExecutor<T> {
 			if(passed) {
 				counterSubm.inc();
 				counterSubmParent.inc();
-				if(log.isTraceEnabled(Markers.MSG)) {
-					log.trace(
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
 						Markers.MSG, "Request #{} for the object \"{}\" successfully submitted",
 						counterSubmParent.getCount(), dataItem
 					);
@@ -185,8 +178,8 @@ implements StorageNodeExecutor<T> {
 			} else {
 				counterRej.inc();
 				counterRejParent.inc();
-				if(log.isTraceEnabled(Markers.MSG)) {
-					log.trace(
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
 						Markers.MSG, "Request #{} for the object \"{}\" rejected",
 						counterSubmParent.getCount(), dataItem
 					);
@@ -198,7 +191,7 @@ implements StorageNodeExecutor<T> {
 	@Override @SuppressWarnings("unchecked")
 	protected final void afterExecute(final Runnable reqTask, final Throwable thrown) {
 		if(thrown!=null) {
-			log.warn(Markers.ERR, thrown.toString());
+			LOG.warn(Markers.ERR, thrown.toString());
 			counterReqFail.inc();
 			counterReqFailParent.inc();
 		} else {
@@ -225,7 +218,7 @@ implements StorageNodeExecutor<T> {
 								consumer.submit(dataItem);
 							} catch(final IOException e) {
 								ExceptionHandler.trace(
-										log, Level.WARN, e,
+										LOG, Level.WARN, e,
 									String.format(
 										"Failed to submit the object \"%s\" to consumer", dataItem
 									)
@@ -241,28 +234,28 @@ implements StorageNodeExecutor<T> {
 			} catch(final InterruptedException e) {
 				counterReqFail.inc();
 				counterReqFailParent.inc();
-				log.trace(Markers.ERR, "Interrupted while waiting for the response");
+				LOG.trace(Markers.ERR, "Interrupted while waiting for the response");
 			} catch(final CancellationException e) {
 				counterReqFail.inc();
 				counterReqFailParent.inc();
-				log.warn(Markers.ERR, "Request has been cancelled:", e);
+				LOG.warn(Markers.ERR, "Request has been cancelled:", e);
 			} catch(final ExecutionException e) {
 				if(isShutdown()) {
-					log.trace(Markers.ERR, "Request interrupted due to node executor shutdown");
+					LOG.trace(Markers.ERR, "Request interrupted due to node executor shutdown");
 					counterRej.inc();
 					counterRejParent.inc();
 				} else {
 					final Throwable cause = e.getCause();
 					if(InterruptedException.class.isInstance(cause)) {
-						log.trace(Markers.MSG, "Poisoned");
+						LOG.trace(Markers.MSG, "Poisoned");
 						/*try {
 							consumer.submit(null); // pass the poison through the consumer-producer chain
 						} catch(final RemoteException ee) {
-							log.debug(Markers.ERR, "Failed to feed the poison to consumer due to {}", ee.toString());
+							LOG.debug(Markers.ERR, "Failed to feed the poison to consumer due to {}", ee.toString());
 						}*/
 					} else {
 						ExceptionHandler.trace(
-								log, Level.WARN, cause, "Unhandled request execution failure"
+								LOG, Level.WARN, cause, "Unhandled request execution failure"
 						);
 						counterReqFail.inc();
 						counterReqFailParent.inc();
@@ -271,8 +264,8 @@ implements StorageNodeExecutor<T> {
 			} catch(final Exception e) {
 				counterReqFail.inc();
 				counterReqFailParent.inc();
-				log.warn(Markers.MSG, reqTask.getClass().getCanonicalName());
-				ExceptionHandler.trace(log, Level.ERROR, e, "Unexpected failure");
+				LOG.warn(Markers.MSG, reqTask.getClass().getCanonicalName());
+				ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		}
 		//
@@ -313,9 +306,9 @@ implements StorageNodeExecutor<T> {
 						fiveMinBW/LoadExecutor.MIB, fifteenMinBW/LoadExecutor.MIB
 				}
 		);
-		log.log(logLevel, logMarker, localReqConf.getAddr() + ": " + message);
-		if(log.isTraceEnabled(Markers.PERF_AVG)) {
-			log.trace(
+		LOG.log(logLevel, logMarker, localReqConf.getAddr() + ": " + message);
+		if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
+			LOG.trace(
 				Markers.PERF_AVG,
 				"{} internal metrics: shutdown: {}, terminated: {}, tasks: {} running, {} done, {} waiting",
 				toString(), isShutdown(), isTerminated(), getActiveCount(), getCompletedTaskCount(),
@@ -369,7 +362,7 @@ implements StorageNodeExecutor<T> {
 	@Override
 	public final void interrupt() {
 		//
-		log.debug(Markers.MSG, "Interrupting...");
+		LOG.debug(Markers.MSG, "Interrupting...");
 		localReqConf.setRetries(false);
 		//
 		new GentleExecutorShutDown(this, runTimeConfig).run();
@@ -397,13 +390,13 @@ implements StorageNodeExecutor<T> {
 		if(!isShutdown()) {
 			interrupt();
 		}
-		//log.debug(Markers.MSG, "Dropping {} tasks", shutdownNow().size());
-		synchronized(log) {
-			log.debug(Markers.PERF_SUM, "Summary metrics below for {}", getName());
+		//LOG.debug(Markers.MSG, "Dropping {} tasks", shutdownNow().size());
+		synchronized(LOG) {
+			LOG.debug(Markers.PERF_SUM, "Summary metrics below for {}", getName());
 			logMetrics(Level.DEBUG, Markers.PERF_SUM);
 		}
 		//
-		log.debug(Markers.MSG, "Closed {}", getThreadFactory().toString());
+		LOG.debug(Markers.MSG, "Closed {}", getThreadFactory().toString());
 	}
 	//
 }

@@ -23,7 +23,7 @@ public final class BasicWSObject
 extends BasicObject
 implements WSObject {
 	//
-	//private final static Logger log = LogManager.getLogger();
+	//private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicWSObject() {
 		super();

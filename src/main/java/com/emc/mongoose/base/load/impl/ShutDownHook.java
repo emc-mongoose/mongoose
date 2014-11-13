@@ -4,7 +4,6 @@ import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -16,16 +15,13 @@ Register shutdown hook which should perform correct server-side shutdown even if
 */
 public final class ShutDownHook {
 	//
-	private static volatile Logger LOG = LogManager.getLogger();
-	public static void setLogger(final Logger log) {
-		LOG = log;
-	}
+	private final static Logger LOG = LogManager.getLogger();
 	private ShutDownHook() {}
 	//
 	private static void failWithCauseAndForce(final String cause) {
 		LOG.warn(
-			Markers.ERR,
-			"Failed to add the shutdown hoot due to {}, forcing the shutdown", cause
+				Markers.ERR,
+				"Failed to add the shutdown hoot due to {}, forcing the shutdown", cause
 		);
 		System.exit(0);
 	}
@@ -38,7 +34,7 @@ public final class ShutDownHook {
 			ln = loadExecutor.getName();
 		} catch(final RemoteException e) {
 			ExceptionHandler.trace(
-				LOG, Level.WARN, e, "Failed to get the name of the remote load executor"
+					LOG, Level.WARN, e, "Failed to get the name of the remote load executor"
 			);
 		} finally {
 			loadName = ln;
@@ -69,7 +65,7 @@ public final class ShutDownHook {
 				}
 			);
 			LOG.debug(
-				Markers.MSG, "Registered shutdown hook for the load executor \"{}\"", loadName
+					Markers.MSG, "Registered shutdown hook for the load executor \"{}\"", loadName
 			);
 		} catch(final IllegalArgumentException | IllegalStateException e) {
 			failWithCauseAndForce("run-time state");

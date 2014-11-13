@@ -19,7 +19,7 @@ public abstract class ObjectNodeExecutorBase<T extends DataObject>
 extends StorageNodeExecutorBase<T>
 implements ObjectNodeExecutor<T> {
 	//
-	//private final static Logger log = LogManager.getLogger();
+	//private final static Logger LOG = LogManager.getLogger();
 	//
 	protected ObjectNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,

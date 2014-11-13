@@ -6,7 +6,6 @@ import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,10 +26,7 @@ public class FileProducer<T extends DataItem>
 extends Thread
 implements Producer<T> {
 	//
-	private static volatile Logger LOG = LogManager.getRootLogger();
-	public static void setLogger(final Logger log) {
-		LOG = log;
-	}
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final Path fPath;
 	private final Constructor<T> dataItemConstructor;
@@ -67,8 +63,8 @@ implements Producer<T> {
 			String nextLine;
 			T nextData;
 			LOG.debug(
-				Markers.MSG, "Going to produce up to {} data items for consumer \"{}\"",
-				consumer.getMaxCount(), consumer.toString()
+					Markers.MSG, "Going to produce up to {} data items for consumer \"{}\"",
+					consumer.getMaxCount(), consumer.toString()
 			);
 			do {
 				//

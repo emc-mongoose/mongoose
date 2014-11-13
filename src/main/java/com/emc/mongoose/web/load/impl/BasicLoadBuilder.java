@@ -2,8 +2,6 @@ package com.emc.mongoose.web.load.impl;
 //
 import com.emc.mongoose.base.load.impl.LoadBuilderBase;
 import com.emc.mongoose.object.load.ObjectLoadBuilder;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
@@ -29,7 +27,7 @@ public class BasicLoadBuilder<T extends WSObject, U extends WSLoadExecutor<T>>
 extends LoadBuilderBase<T, U>
 implements WSLoadBuilder<T, U> {
 	//
-	protected Logger log = LogManager.getLogger(new MessageFactoryImpl(Main.RUN_TIME_CONFIG));
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected WSRequestConfig<T> getDefaultRequestConfig() {
@@ -41,15 +39,13 @@ implements WSLoadBuilder<T, U> {
 		//
 		super.setProperties(runTimeConfig);
 		//
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
-		//
 		final String paramName = "storage.scheme";
 		try {
 			WSRequestConfig.class.cast(reqConf).setScheme(runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
-			log.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
-			log.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
 		return this;
@@ -59,7 +55,7 @@ implements WSLoadBuilder<T, U> {
 	public final BasicLoadBuilder<T, U> clone()
 	throws CloneNotSupportedException {
 		final BasicLoadBuilder<T, U> lb = (BasicLoadBuilder<T, U>) super.clone();
-		log.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
+		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
 		return lb;
 	}
 	//
@@ -84,7 +80,7 @@ implements WSLoadBuilder<T, U> {
 			try {
 				switch(loadType) {
 					case CREATE:
-						log.debug(Markers.MSG, "New create load");
+						LOG.debug(Markers.MSG, "New create load");
 						load = new Create<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
@@ -92,7 +88,7 @@ implements WSLoadBuilder<T, U> {
 						);
 						break;
 					case READ:
-						log.debug(Markers.MSG, "New read load");
+						LOG.debug(Markers.MSG, "New read load");
 						load = new Read<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
@@ -100,7 +96,7 @@ implements WSLoadBuilder<T, U> {
 						);
 						break;
 					case UPDATE:
-						log.debug(Markers.MSG, "New update load");
+						LOG.debug(Markers.MSG, "New update load");
 						load = new Update<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
@@ -108,7 +104,7 @@ implements WSLoadBuilder<T, U> {
 						);
 						break;
 					case DELETE:
-						log.debug(Markers.MSG, "New delete load");
+						LOG.debug(Markers.MSG, "New delete load");
 						load = new Delete<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
@@ -116,7 +112,7 @@ implements WSLoadBuilder<T, U> {
 						);
 						break;
 					case APPEND:
-						log.debug(Markers.MSG, "New append load");
+						LOG.debug(Markers.MSG, "New append load");
 						load = new Append<T>(
 							runTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),

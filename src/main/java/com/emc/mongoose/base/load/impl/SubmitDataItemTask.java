@@ -16,7 +16,7 @@ import java.util.concurrent.RejectedExecutionException;
 public final class SubmitDataItemTask<T extends DataItem, U extends LoadExecutor<T>>
 implements Runnable {
 	//
-	//private final static Logger log = LogManager.getLogger();
+	//private final static Logger LOG = LogManager.getLogger();
 	//
 	private final T dataItem;
 	private final U executor;

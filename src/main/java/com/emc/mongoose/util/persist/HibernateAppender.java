@@ -151,7 +151,7 @@ extends AbstractAppender{
 					.buildSessionFactory();
 		}
 		catch (Throwable ex) {
-			// Make sure you log the exception, as it might be swallowed
+			// Make sure you LOG the exception, as it might be swallowed
 			throw new ExceptionInInitializerError("Initial SessionFactory creation failed. "+ex);
 		}
 		return newSessionFactory;

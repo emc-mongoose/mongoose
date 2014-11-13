@@ -1,7 +1,6 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.Consumer;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -20,10 +19,8 @@ import java.rmi.RemoteException;
 public final class BucketListHandler<T extends BasicWSObject>
 extends DefaultHandler {
 	//
-	private static volatile Logger LOG = LogManager.getLogger();
-	public static void setLogger(final Logger log) {
-		LOG = log;
-	}
+	private final static Logger LOG = LogManager.getLogger();
+	//
 	private final static String
 		QNAME_ITEM = "Contents",
 		QNAME_ITEM_ID = "Key",
@@ -70,7 +67,7 @@ extends DefaultHandler {
 					size = Long.parseLong(strSize);
 				} catch(final NumberFormatException e) {
 					ExceptionHandler.trace(
-						LOG, Level.WARN, e, "Data object size should be a 64 bit number"
+							LOG, Level.WARN, e, "Data object size should be a 64 bit number"
 					);
 				}
 			} else {
@@ -82,7 +79,7 @@ extends DefaultHandler {
 					consumer.submit((T) new BasicWSObject(strId, size));
 				} catch(final RemoteException e) {
 					ExceptionHandler.trace(
-						LOG, Level.WARN, e, "Failed to submit new data object to remote consumer"
+							LOG, Level.WARN, e, "Failed to submit new data object to remote consumer"
 					);
 				}
 			} else {
@@ -113,7 +110,7 @@ extends DefaultHandler {
 				consumer.setMaxCount(count);
 			} catch(final RemoteException e) {
 				ExceptionHandler.trace(
-					LOG, Level.WARN, e, "Failed to limit data items count for remote consumer"
+						LOG, Level.WARN, e, "Failed to limit data items count for remote consumer"
 				);
 			}
 		}

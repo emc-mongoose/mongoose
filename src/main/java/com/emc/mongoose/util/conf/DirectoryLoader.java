@@ -3,7 +3,6 @@ package com.emc.mongoose.util.conf;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -27,10 +26,7 @@ import java.util.LinkedList;
 public final class DirectoryLoader
 extends SimpleFileVisitor<Path> {
 	//
-	private static volatile Logger LOG = LogManager.getLogger();
-	public static void setLogger(final Logger log) {
-		LOG = log;
-	}
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private LinkedList<String> prefixTokens = new LinkedList<>();
 	private final Configuration tgtConfig;
@@ -69,7 +65,7 @@ extends SimpleFileVisitor<Path> {
 			LOG.trace(Markers.MSG, "Loaded the properties {} from file {}", currProps, file);
 		} catch(final ConfigurationException e) {
 			ExceptionHandler.trace(
-				LOG, Level.ERROR, e,
+					LOG, Level.ERROR, e,
 				String.format("Failed to load the properties from file \"%s\"", file.toString())
 			);
 		}
@@ -79,8 +75,8 @@ extends SimpleFileVisitor<Path> {
 			for(final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext();) {
 				key = keyIter.next();
 				LOG.trace(
-					Markers.MSG, "File property: \"{}\" = \"{}\"",
-					currPrefix + key, currProps.getProperty(key)
+						Markers.MSG, "File property: \"{}\" = \"{}\"",
+						currPrefix + key, currProps.getProperty(key)
 				);
 				tgtConfig.setProperty(currPrefix + key, currProps.getProperty(key));
 			}

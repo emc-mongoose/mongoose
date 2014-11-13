@@ -4,7 +4,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,7 +28,7 @@ import javax.script.ScriptException;
 public final class Scenario
 implements Runnable {
 	//
-	private final Logger log;
+	private final static Logger LOG = LogManager.getLogger();
 	private final static String
 		KEY_PYTHON_PATH = "python.path",
 		VALUE_JS = "js",
@@ -47,13 +46,11 @@ implements Runnable {
 	public Scenario() {
 		this.runTimeConfig = Main.RUN_TIME_CONFIG;
 		//
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 	}
 	//
 	public Scenario(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
 		//
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 	}
 	//
 	public void run() {
@@ -62,7 +59,7 @@ implements Runnable {
 		try {
 			scriptLangKey = runTimeConfig.getRunScenarioLang();
 		} catch(final NoSuchElementException e) {
-			log.fatal(
+			LOG.fatal(
 					Markers.ERR,
 					"Scenario language not specified, use \"-Drun.scenario.lang=(js|py)\" argument"
 			);
@@ -72,9 +69,9 @@ implements Runnable {
 		String scriptName = null;
 		try {
 			scriptName = runTimeConfig.getRunScenarioName();
-			log.info(Markers.MSG, "Script name to run: \"{}\"", scriptName);
+			LOG.info(Markers.MSG, "Script name to run: \"{}\"", scriptName);
 		} catch(final NoSuchElementException e) {
-			log.fatal(
+			LOG.fatal(
 					Markers.ERR,
 					"Scenario language not specified, use \"-Drun.scenario.name=<NAME>\" argument"
 			);
@@ -86,37 +83,37 @@ implements Runnable {
 			try {
 				scriptsRootDir = runTimeConfig.getRunScenarioDir();
 			} catch(final NoSuchElementException e) {
-				log.fatal(Markers.ERR, "Scenario directory not specified");
+				LOG.fatal(Markers.ERR, "Scenario directory not specified");
 				System.exit(1);
 			}
 			//
 			final Path scriptDir = Paths.get(Main.DIR_ROOT, scriptsRootDir, scriptLangKey);
 			if(VALUE_PY.equals(scriptLangKey)) {
 				System.setProperty(KEY_PYTHON_PATH, scriptDir.toString());
-				log.debug(
+				LOG.debug(
 						Markers.MSG, "Set \"{}\"=\"{}\"",
 						KEY_PYTHON_PATH, System.getProperty(KEY_PYTHON_PATH)
 				);
 			}
 			//
 			final Path scriptPath = Paths.get(scriptDir.toString(), scriptName+'.'+scriptLangKey);
-			log.debug(Markers.MSG, "Using scenario from file {}", scriptPath);
+			LOG.debug(Markers.MSG, "Using scenario from file {}", scriptPath);
 			//
 			if(Files.exists(scriptPath)) {
-				log.debug(Markers.MSG, "File \"{}\" exists", scriptPath);
+				LOG.debug(Markers.MSG, "File \"{}\" exists", scriptPath);
 			} else {
-				log.fatal(Markers.ERR, "File \"{}\" doesn't exist", scriptPath);
+				LOG.fatal(Markers.ERR, "File \"{}\" doesn't exist", scriptPath);
 			}
 			//
 			if(Files.isReadable(scriptPath)) {
-				log.debug(Markers.MSG, "File \"{}\" is readable", scriptPath);
+				LOG.debug(Markers.MSG, "File \"{}\" is readable", scriptPath);
 			} else {
-				log.fatal(Markers.ERR, "File \"{}\" is not readable", scriptPath);
+				LOG.fatal(Markers.ERR, "File \"{}\" is not readable", scriptPath);
 			}
 			//
 			final String scriptLangValue = SCRIPT_LANG_MAP.get(scriptLangKey);
 			if(scriptLangValue==null) {
-				log.fatal(
+				LOG.fatal(
 						Markers.MSG, "Failed to determine the scenario language for key \"{}\"",
 						scriptLangKey
 				);
@@ -125,28 +122,28 @@ implements Runnable {
 					.getEngineByName(scriptLangValue);
 				//
 				if(scriptEngine==null) {
-					log.fatal(
+					LOG.fatal(
 							Markers.ERR,
 							"Failed to get script engine for language \"{}\", the available engines are:",
 							scriptLangValue
 					);
 					for(final ScriptEngineFactory sef : SCRIPT_ENGINE_MANAGER.getEngineFactories()) {
-						log.info(
+						LOG.info(
 								Markers.ERR, "\t{}:\tfor language \"{}\" v{}",
 								sef.getEngineName(), sef.getLanguageName(), sef.getLanguageVersion()
 						);
 					}
 				} else {
 					try {
-						log.debug(Markers.MSG, "Script start");
+						LOG.debug(Markers.MSG, "Script start");
 						scriptEngine.eval(Files.newBufferedReader(scriptPath, Charset.defaultCharset()));
-						log.debug(Markers.MSG, "Script from \"{}\" done", scriptPath);
+						LOG.debug(Markers.MSG, "Script from \"{}\" done", scriptPath);
 					} catch(final ScriptException e) {
-						ExceptionHandler.trace(log, Level.WARN, e, "Script failure");
+						ExceptionHandler.trace(LOG, Level.WARN, e, "Script failure");
 					} catch(final FileNotFoundException e) {
-						log.error(Markers.ERR, "Script file not found at \"{}\"", scriptPath);
+						LOG.error(Markers.ERR, "Script file not found at \"{}\"", scriptPath);
 					} catch(final IOException e) {
-						log.error(Markers.ERR, "Script file reading failure", e);
+						LOG.error(Markers.ERR, "Script file reading failure", e);
 					}
 				}
 				//

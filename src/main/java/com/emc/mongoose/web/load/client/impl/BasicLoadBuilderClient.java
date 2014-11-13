@@ -2,7 +2,6 @@ package com.emc.mongoose.web.load.client.impl;
 //
 import com.emc.mongoose.base.load.client.impl.LoadBuilderClientBase;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.util.remote.Service;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
@@ -37,18 +36,16 @@ public final class BasicLoadBuilderClient<T extends WSObject, U extends WSLoadCl
 extends LoadBuilderClientBase<T, U>
 implements WSLoadBuilderClient<T, U> {
 	//
-	private final Logger log;
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicLoadBuilderClient()
 	throws IOException {
 		super();
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 	}
 	//
 	public BasicLoadBuilderClient(final RunTimeConfig runTimeConfig)
 	throws IOException {
 		super(runTimeConfig);
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -82,9 +79,9 @@ implements WSLoadBuilderClient<T, U> {
 		if(listFile!=null) {
 			try {
 				srcProducer = (FileProducer<T>) new FileProducer<>(listFile, BasicWSObject.class);
-				log.info(Markers.MSG, "Local data items will be read from file @ \"{}\"", listFile);
+				LOG.info(Markers.MSG, "Local data items will be read from file @ \"{}\"", listFile);
 			} catch(final NoSuchMethodException | IOException e) {
-				log.error(Markers.ERR, "Failure", e);
+				LOG.error(Markers.ERR, "Failure", e);
 			}
 		}
 		return this;
@@ -109,7 +106,7 @@ implements WSLoadBuilderClient<T, U> {
 		try {
 			reqConf.configureStorage(); // should be done after configuring and before req conf upload
 		} catch(final IllegalStateException e) {
-			ExceptionHandler.trace(log, Level.ERROR, e, "Failed to configure storage");
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to configure storage");
 		}
 		//
 		final int jmxImportPort = runTimeConfig.getRemoteImportPort();
@@ -129,9 +126,9 @@ implements WSLoadBuilderClient<T, U> {
 					Integer.toString(jmxImportPort) + ServiceUtils.JMXRMI_URL_PATH +
 					Integer.toString(jmxImportPort);
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
-				log.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
+				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
-				ExceptionHandler.trace(log, Level.ERROR, e, "Failed to generate JMX URL");
+				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to generate JMX URL");
 			}
 			//
 			nextJMXConn = null;
@@ -140,7 +137,7 @@ implements WSLoadBuilderClient<T, U> {
 					nextJMXConn = JMXConnectorFactory.connect(nextJMXURL, null);
 				} catch(final IOException e) {
 					ExceptionHandler.trace(
-							log, Level.ERROR, e,
+							LOG, Level.ERROR, e,
 							String.format("Failed to connect to \"%s\" via JMX", nextJMXURL)
 					);
 				}
@@ -156,9 +153,9 @@ implements WSLoadBuilderClient<T, U> {
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
 			runTimeConfig.getDataCount(), nextLoad==null ? 1 : nextLoad.getThreadCount()
 		);
-		log.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
+		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer!=null && srcProducer.getConsumer()==null) {
-			log.debug(
+			LOG.debug(
 					Markers.MSG, "Append consumer {} for producer {}",
 					newLoadClient.getName(), srcProducer.getName()
 			);

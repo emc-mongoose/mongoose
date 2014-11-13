@@ -1,6 +1,5 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -17,7 +16,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.tools.ant.taskdefs.email.Message;
 //
 import java.io.IOException;
 import java.util.Calendar;
@@ -30,10 +28,7 @@ import java.util.TimeZone;
 public class Bucket<T extends WSObject>
 implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	//
-	private static volatile Logger LOG = LogManager.getLogger();
-	public static void setLogger(final Logger log) {
-		LOG = log;
-	}
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	final RequestConfig reqConf;
 	final String name;
@@ -99,8 +94,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.debug(
-						Markers.MSG, "Checking bucket \"{}\" response: {}/{}",
-						name, statusCode, statusMsg
+							Markers.MSG, "Checking bucket \"{}\" response: {}/{}",
+							name, statusCode, statusMsg
 					);
 				}
 			}
@@ -126,8 +121,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.warn(
-						Markers.ERR, "Create bucket \"{}\" response: {}/{}",
-						name, statusCode, statusMsg
+							Markers.ERR, "Create bucket \"{}\" response: {}/{}",
+							name, statusCode, statusMsg
 					);
 				}
 			}
@@ -151,8 +146,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.warn(
-						Markers.ERR, "Delete bucket \"{}\" response: {}/{}",
-						name, statusCode, statusMsg
+							Markers.ERR, "Delete bucket \"{}\" response: {}/{}",
+							name, statusCode, statusMsg
 					);
 				}
 			}

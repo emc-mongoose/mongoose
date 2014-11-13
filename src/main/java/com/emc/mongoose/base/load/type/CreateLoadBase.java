@@ -8,7 +8,6 @@ import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -23,7 +22,7 @@ import java.util.concurrent.RejectedExecutionException;
 public abstract class CreateLoadBase<T extends DataItem>
 extends LoadExecutorBase<T> {
 	//
-	private final Logger log;
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected CreateLoadBase(
 		final RunTimeConfig runTimeConfig,
@@ -32,7 +31,6 @@ extends LoadExecutorBase<T> {
 		final long minObjSize, final long maxObjSize
 	) throws IOException, CloneNotSupportedException {
 		super(runTimeConfig, addrs, recConf, maxCount, threadsPerNode, listFile);
-		log = LogManager.getLogger(new MessageFactoryImpl(runTimeConfig));
 		if(producer==null) { // otherwise producer is reader specified by "listFile"
 			producer = newDataItemProducer(minObjSize, maxObjSize);
 			producer.setConsumer(this);
@@ -72,7 +70,7 @@ extends LoadExecutorBase<T> {
 		public final void run() {
 			try {
 				//
-				log.debug(
+				LOG.debug(
 						Markers.MSG, "Will try to produce up to {} objects of {} size", maxCount,
 						minObjSize == maxObjSize ?
 								RunTimeConfig.formatSize(minObjSize)
@@ -84,26 +82,26 @@ extends LoadExecutorBase<T> {
 				do {
 					try {
 						produceNextAndFeed();
-						log.trace(Markers.MSG, "Submitted object #{}", i);
+						LOG.trace(Markers.MSG, "Submitted object #{}", i);
 						i ++;
 					} catch(final RejectedExecutionException e) {
-						log.trace(Markers.ERR, "Submitting the object rejected by consumer");
+						LOG.trace(Markers.ERR, "Submitting the object rejected by consumer");
 					} catch(final IOException e) {
-						log.trace(Markers.ERR, "Failed to submit object to consumer", e);
+						LOG.trace(Markers.ERR, "Failed to submit object to consumer", e);
 					}
 				} while(!isInterrupted());
 				try {
 					newDataConsumer.submit(null);
 				} catch(final RejectedExecutionException e) {
-					log.debug(Markers.ERR, "Consumer rejected the poison");
+					LOG.debug(Markers.ERR, "Consumer rejected the poison");
 				}
-				log.debug(Markers.MSG, "Generated {} items", maxCount);
+				LOG.debug(Markers.MSG, "Generated {} items", maxCount);
 			} catch(final IOException e) {
-				log.debug(Markers.ERR, "Failed to submit object to consumer", e);
+				LOG.debug(Markers.ERR, "Failed to submit object to consumer", e);
 			} catch(final InterruptedException e) {
-				log.debug(Markers.ERR, "Interrupted while submitting the object to consumer");
+				LOG.debug(Markers.ERR, "Interrupted while submitting the object to consumer");
 			} finally {
-				log.debug(Markers.MSG, "Object producer finished");
+				LOG.debug(Markers.MSG, "Object producer finished");
 			}
 		}
 		//

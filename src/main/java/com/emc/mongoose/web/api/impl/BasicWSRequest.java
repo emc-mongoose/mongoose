@@ -4,9 +4,6 @@ import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.impl.RequestBase;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.MessageFactoryImpl;
 import com.emc.mongoose.util.pool.BasicInstancePool;
 import com.emc.mongoose.web.api.WSRequest;
 import com.emc.mongoose.web.api.WSRequestConfig;
@@ -45,10 +42,7 @@ public class BasicWSRequest<T extends WSObject>
 extends RequestBase<T>
 implements WSRequest<T> {
 	//
-	private static volatile Logger LOG = LogManager.getLogger();
-	public static void setLogger(final Logger log) {
-		LOG = log;
-	}
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static BasicWSRequest POISON = new BasicWSRequest() {
 		@Override
@@ -150,11 +144,11 @@ implements WSRequest<T> {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					synchronized(LOG) {
 						LOG.trace(
-							Markers.MSG, "{}/{} <- {} {}", statusCode, statusLine.getReasonPhrase(),
-							httpRequest.getMethod(), httpRequest.getURI()
+								Markers.MSG, "{}/{} <- {} {}", statusCode, statusLine.getReasonPhrase(),
+								httpRequest.getMethod(), httpRequest.getURI()
 						);
 						//for(final Header header : httpResponse.getAllHeaders()) {
-						//	log.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
+						//	LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
 						//}
 					}
 				}
@@ -179,8 +173,8 @@ implements WSRequest<T> {
 									if(dataItem.compareWith(in)) {
 										if(LOG.isTraceEnabled(Markers.MSG)) {
 											LOG.trace(
-												Markers.MSG, "Content verification success for \"{}\"",
-												dataItem
+													Markers.MSG, "Content verification success for \"{}\"",
+													dataItem
 											);
 										}
 										result = Result.SUCC;
@@ -229,8 +223,8 @@ implements WSRequest<T> {
 							if(LOG.isTraceEnabled(Markers.ERR)) {
 								for(final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)) {
 									LOG.trace(
-										Markers.ERR, "Incorrect range \"{}\" for data item: \"{}\"",
-										rangeHeader.getValue(), dataItem
+											Markers.ERR, "Incorrect range \"{}\" for data item: \"{}\"",
+											rangeHeader.getValue(), dataItem
 									);
 								}
 							}
@@ -253,7 +247,7 @@ implements WSRequest<T> {
 							httpResponse.getEntity().writeTo(bOutPut);
 							final String errMsg = bOutPut.toString();
 							LOG.debug(
-								Markers.ERR, "{}, cause request: {}/{}", errMsg, hashCode(), dataItem
+									Markers.ERR, "{}, cause request: {}/{}", errMsg, hashCode(), dataItem
 							);
 						} catch(final IOException e) {
 							ExceptionHandler.trace(
