@@ -35,8 +35,8 @@ public final class BasicInstancePool<T extends Closeable> {
 				item = itemCls.newInstance();
 			} catch(final NullPointerException|InstantiationException|IllegalAccessException e) {
 				LOG.error(
-						Markers.ERR,
-						"Failed to instantiate pool object, check that default constructor exists", e
+					Markers.ERR,
+					"Failed to instantiate pool object, check that default constructor exists", e
 				);
 			}
 		} else {

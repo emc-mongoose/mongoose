@@ -95,8 +95,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.debug(
-							Markers.MSG, "Checking bucket \"{}\" response: {}/{}",
-							name, statusCode, statusMsg
+						Markers.MSG, "Checking bucket \"{}\" response: {}/{}",
+						name, statusCode, statusMsg
 					);
 				}
 			}
@@ -123,8 +123,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.warn(
-							Markers.ERR, "Create bucket \"{}\" response: {}/{}",
-							name, statusCode, statusMsg
+						Markers.ERR, "Create bucket \"{}\" response: {}/{}",
+						name, statusCode, statusMsg
 					);
 				}
 			}
@@ -149,8 +149,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.warn(
-							Markers.ERR, "Delete bucket \"{}\" response: {}/{}",
-							name, statusCode, statusMsg
+						Markers.ERR, "Delete bucket \"{}\" response: {}/{}",
+						name, statusCode, statusMsg
 					);
 				}
 			}

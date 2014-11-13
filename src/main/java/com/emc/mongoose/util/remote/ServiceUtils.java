@@ -45,7 +45,7 @@ public final class ServiceUtils {
 			tmpPort = Main.RUN_TIME_CONFIG.getRemoteControlPort();
 		} catch(final Exception e) {
 			ExceptionHandler.trace(
-					LOG, Level.WARN, e,
+				LOG, Level.WARN, e,
 				String.format(
 					"Failed to take remote control port value, will use the default value \"%d\"",
 					tmpPort
@@ -145,7 +145,7 @@ public final class ServiceUtils {
 				LOG.error(Markers.ERR, "Lookup method returns null");
 			} else {
 				LOG.error(
-						Markers.ERR, "Unsupported type of the resolved service: {}", remote.getClass()
+					Markers.ERR, "Unsupported type of the resolved service: {}", remote.getClass()
 				);
 			}
 		} catch(MalformedURLException e) {
@@ -219,7 +219,7 @@ public final class ServiceUtils {
 			} catch(final RemoteException e) {
 				synchronized(LOG) {
 					LOG.debug(
-							Markers.ERR, "Failed to create registry for port {}: ", portJmxRmi, e.toString()
+						Markers.ERR, "Failed to create registry for port {}: ", portJmxRmi, e.toString()
 					);
 				}
 			}
@@ -237,7 +237,7 @@ public final class ServiceUtils {
 				LOG.debug(Markers.MSG, "Created JMX service URL {}", jmxSvcURL.toString());
 			} catch(final MalformedURLException e) {
 				ExceptionHandler.trace(
-						LOG, Level.WARN, e,
+					LOG, Level.WARN, e,
 					String.format("Failed to create JMX service URL for port #%d", portJmxRmi)
 				);
 			}
@@ -261,7 +261,7 @@ public final class ServiceUtils {
 					LOG.debug(Markers.MSG, "JMX connector started", portJmxRmi);
 				} catch(final IOException e) {
 					ExceptionHandler.trace(
-							LOG, Level.WARN, e,
+						LOG, Level.WARN, e,
 						"Failed to start JMX connector, please check that there's no another instance running"
 					);
 				}

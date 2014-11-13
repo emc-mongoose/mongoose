@@ -145,8 +145,8 @@ implements WSRequest<T> {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					synchronized(LOG) {
 						LOG.trace(
-								Markers.MSG, "{}/{} <- {} {}", statusCode, statusLine.getReasonPhrase(),
-								httpRequest.getMethod(), httpRequest.getURI()
+							Markers.MSG, "{}/{} <- {} {}", statusCode, statusLine.getReasonPhrase(),
+							httpRequest.getMethod(), httpRequest.getURI()
 						);
 						//for(final Header header : httpResponse.getAllHeaders()) {
 						//	LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
@@ -164,8 +164,8 @@ implements WSRequest<T> {
 								final HttpEntity httpEntity = httpResponse.getEntity();
 								if(httpEntity==null) {
 									LOG.warn(
-											Markers.ERR, "No HTTP content entity for request \"{}\"",
-											httpRequest.getRequestLine()
+										Markers.ERR, "No HTTP content entity for request \"{}\"",
+										httpRequest.getRequestLine()
 									);
 									result = Result.FAIL_IO;
 									break;
@@ -174,22 +174,22 @@ implements WSRequest<T> {
 									if(dataItem.compareWith(in)) {
 										if(LOG.isTraceEnabled(Markers.MSG)) {
 											LOG.trace(
-													Markers.MSG, "Content verification success for \"{}\"",
-													dataItem
+												Markers.MSG, "Content verification success for \"{}\"",
+												dataItem
 											);
 										}
 										result = Result.SUCC;
 									} else {
 										LOG.warn(
-												Markers.ERR, "Content verification failed for \"{}\"",
-												dataItem
+											Markers.ERR, "Content verification failed for \"{}\"",
+											dataItem
 										);
 										result = Result.FAIL_CORRUPT;
 									}
 								} catch(final IOException e) {
 									LOG.warn(
-											Markers.ERR, "Failed to read the object content for \"{}\"",
-											dataItem
+										Markers.ERR, "Failed to read the object content for \"{}\"",
+										dataItem
 									);
 									result = Result.FAIL_IO;
 								}
@@ -224,8 +224,8 @@ implements WSRequest<T> {
 							if(LOG.isTraceEnabled(Markers.ERR)) {
 								for(final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)) {
 									LOG.trace(
-											Markers.ERR, "Incorrect range \"{}\" for data item: \"{}\"",
-											rangeHeader.getValue(), dataItem
+										Markers.ERR, "Incorrect range \"{}\" for data item: \"{}\"",
+										rangeHeader.getValue(), dataItem
 									);
 								}
 							}
@@ -248,11 +248,11 @@ implements WSRequest<T> {
 							httpResponse.getEntity().writeTo(bOutPut);
 							final String errMsg = bOutPut.toString();
 							LOG.debug(
-									Markers.ERR, "{}, cause request: {}/{}", errMsg, hashCode(), dataItem
+								Markers.ERR, "{}, cause request: {}/{}", errMsg, hashCode(), dataItem
 							);
 						} catch(final IOException e) {
 							ExceptionHandler.trace(
-									LOG, Level.ERROR, e,
+								LOG, Level.ERROR, e,
 								"Failed to fetch the content of the failed response"
 							);
 						}

@@ -194,10 +194,10 @@ implements AppendableDataItem, UpdatableDataItem {
 					final ByteArrayOutputStream contentRangeStream = new ByteArrayOutputStream();
 					updatedRange.writeTo(contentRangeStream);
 					LOG.trace(
-							Markers.MSG, FMT_MSG_RANGE_MODIFIED,
-							Long.toHexString(offset), i, rangeOffset, rangeOffset + rangeSize - 1,
-							layerNum + 1,
-							Base64.encodeBase64URLSafeString(contentRangeStream.toByteArray())
+						Markers.MSG, FMT_MSG_RANGE_MODIFIED,
+						Long.toHexString(offset), i, rangeOffset, rangeOffset + rangeSize - 1,
+						layerNum + 1,
+						Base64.encodeBase64URLSafeString(contentRangeStream.toByteArray())
 					);
 				}
 			} else if(layerNum > 1) { // previous layer of updated ranges
@@ -210,8 +210,8 @@ implements AppendableDataItem, UpdatableDataItem {
 			}
 			if(!contentEquals) {
 				LOG.debug(
-						Markers.ERR, FMT_MSG_RANGE_CORRUPT,
-						Long.toHexString(offset), i, rangeOffset, toString()
+					Markers.ERR, FMT_MSG_RANGE_CORRUPT,
+					Long.toHexString(offset), i, rangeOffset, toString()
 				);
 				break;
 			}

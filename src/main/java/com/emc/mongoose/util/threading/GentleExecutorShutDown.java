@@ -43,8 +43,8 @@ implements Runnable {
 				submQueueSize = submQueue.size();
 				submExecActiveThreads = executor.getActiveCount();
 				LOG.trace(
-						Markers.MSG, MSG_FMT_STATUS,
-						submQueueSize, submExecActiveThreads, submExecCoreThreads
+					Markers.MSG, MSG_FMT_STATUS,
+					submQueueSize, submExecActiveThreads, submExecCoreThreads
 				);
 			} while(
 				(submQueueSize > 0 || submExecCoreThreads == submExecActiveThreads)

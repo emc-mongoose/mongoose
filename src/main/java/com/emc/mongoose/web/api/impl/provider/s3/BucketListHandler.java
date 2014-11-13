@@ -67,7 +67,7 @@ extends DefaultHandler {
 					size = Long.parseLong(strSize);
 				} catch(final NumberFormatException e) {
 					ExceptionHandler.trace(
-							LOG, Level.WARN, e, "Data object size should be a 64 bit number"
+						LOG, Level.WARN, e, "Data object size should be a 64 bit number"
 					);
 				}
 			} else {
@@ -79,7 +79,7 @@ extends DefaultHandler {
 					consumer.submit((T) new BasicWSObject(strId, size));
 				} catch(final RemoteException e) {
 					ExceptionHandler.trace(
-							LOG, Level.WARN, e, "Failed to submit new data object to remote consumer"
+						LOG, Level.WARN, e, "Failed to submit new data object to remote consumer"
 					);
 				}
 			} else {
@@ -110,7 +110,7 @@ extends DefaultHandler {
 				consumer.setMaxCount(count);
 			} catch(final RemoteException e) {
 				ExceptionHandler.trace(
-						LOG, Level.WARN, e, "Failed to limit data items count for remote consumer"
+					LOG, Level.WARN, e, "Failed to limit data items count for remote consumer"
 				);
 			}
 		}

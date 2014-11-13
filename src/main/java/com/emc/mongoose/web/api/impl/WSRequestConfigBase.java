@@ -67,7 +67,7 @@ implements WSRequestConfig<T> {
 		) {
 			if(LOG.isTraceEnabled(Markers.ERR)) {
 				ExceptionHandler.trace(
-						LOG, Level.TRACE, e, String.format(Locale.ROOT, FMT_ERR_MSG, i)
+					LOG, Level.TRACE, e, String.format(Locale.ROOT, FMT_ERR_MSG, i)
 				);
 			}
 			return retryFlag;
@@ -339,8 +339,8 @@ implements WSRequestConfig<T> {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			synchronized(LOG) {
 				LOG.trace(
-						Markers.MSG, "built request: {} {}",
-						httpRequest.getRequestLine().getMethod(), httpRequest.getRequestLine().getUri()
+					Markers.MSG, "built request: {} {}",
+					httpRequest.getRequestLine().getMethod(), httpRequest.getRequestLine().getUri()
 				);
 				for(final Header header: httpRequest.getAllHeaders()) {
 					LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
@@ -350,9 +350,9 @@ implements WSRequestConfig<T> {
 				}
 				if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
 					LOG.trace(
-							Markers.MSG, "\tcontent: {} bytes",
-							HttpEntityEnclosingRequest.class.cast(httpRequest)
-									.getEntity().getContentLength()
+						Markers.MSG, "\tcontent: {} bytes",
+						HttpEntityEnclosingRequest.class.cast(httpRequest)
+								.getEntity().getContentLength()
 					);
 				} else {
 					LOG.trace(Markers.MSG, "\t---- no content ----");
@@ -370,8 +370,8 @@ implements WSRequestConfig<T> {
 			httpReqWithPayLoad = HttpEntityEnclosingRequest.class.cast(httpRequest);
 		} catch(final ClassCastException e) {
 			LOG.error(
-					Markers.ERR, "\"{}\" HTTP request can't have a content entity",
-					httpRequest.getRequestLine().getMethod()
+				Markers.ERR, "\"{}\" HTTP request can't have a content entity",
+				httpRequest.getRequestLine().getMethod()
 			);
 		}
 		if(httpReqWithPayLoad != null) {
@@ -390,7 +390,7 @@ implements WSRequestConfig<T> {
 					rangeBeg = DataRanges.getRangeOffset(i);;
 					rangeEnd = rangeBeg + rangeLen - 1;
 					LOG.trace(
-							Markers.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
+						Markers.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
 					);
 				} else if(rangeEnd > 0) { // next range in the sequence of updated ranges
 					rangeEnd += rangeLen;

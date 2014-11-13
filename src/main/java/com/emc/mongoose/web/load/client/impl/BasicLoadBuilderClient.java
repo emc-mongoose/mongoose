@@ -137,8 +137,8 @@ implements WSLoadBuilderClient<T, U> {
 					nextJMXConn = JMXConnectorFactory.connect(nextJMXURL, null);
 				} catch(final IOException e) {
 					ExceptionHandler.trace(
-							LOG, Level.ERROR, e,
-							String.format("Failed to connect to \"%s\" via JMX", nextJMXURL)
+						LOG, Level.ERROR, e,
+						String.format("Failed to connect to \"%s\" via JMX", nextJMXURL)
 					);
 				}
 			}
@@ -156,8 +156,8 @@ implements WSLoadBuilderClient<T, U> {
 		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer!=null && srcProducer.getConsumer()==null) {
 			LOG.debug(
-					Markers.MSG, "Append consumer {} for producer {}",
-					newLoadClient.getName(), srcProducer.getName()
+				Markers.MSG, "Append consumer {} for producer {}",
+				newLoadClient.getName(), srcProducer.getName()
 			);
 			srcProducer.setConsumer(newLoadClient);
 			srcProducer.start();

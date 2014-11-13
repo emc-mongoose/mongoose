@@ -290,7 +290,7 @@ implements Externalizable {
 			nextPropName = i.next();
 			nextPropValue = getProperty(nextPropName);
 			LOG.trace(
-					Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
+				Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
 			);
 			if(List.class.isInstance(nextPropValue)) {
 				propsMap.put(
@@ -303,8 +303,8 @@ implements Externalizable {
 				LOG.warn(Markers.ERR, "Property \"{}\" is null");
 			} else {
 				LOG.error(
-						Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
-						nextPropValue.getClass().getCanonicalName(), nextPropName
+					Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
+					nextPropValue.getClass().getCanonicalName(), nextPropName
 				);
 			}
 		}
@@ -344,15 +344,15 @@ implements Externalizable {
 					LOG.warn(Markers.ERR, "Property \"{}\" is null", nextPropName);
 				} else {
 					LOG.error(
-							Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
-							nextPropValue.getClass().getCanonicalName(), nextPropName
+						Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
+						nextPropValue.getClass().getCanonicalName(), nextPropName
 					);
 				}
 			}
 		} else {
 			LOG.fatal(
-					Markers.ERR, "Version mismatch, server: {}, client: {}",
-					serverVersion, clientVersion
+				Markers.ERR, "Version mismatch, server: {}, client: {}",
+				serverVersion, clientVersion
 			);
 			throw new IOException("Version mismatch");
 		}
@@ -369,8 +369,8 @@ implements Externalizable {
 		for(final Iterator<String> keyIter=sysProps.getKeys(); keyIter.hasNext();) {
 			key = keyIter.next();
 			LOG.trace(
-					Markers.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",
-					key, getProperty(key), sysProps.getProperty(key)
+				Markers.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",
+				key, getProperty(key), sysProps.getProperty(key)
 			);
 			keys2override = MAP_OVERRIDE.get(key);
 			sharedValue = sysProps.getProperty(key);

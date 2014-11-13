@@ -93,7 +93,7 @@ implements DataItem {
 			setOffset(offset, 0);
 		} catch(final IOException e) {
 			ExceptionHandler.trace(
-					LOG, Level.ERROR, e, String.format(FMT_MSG_FAIL_SET_OFFSET, offset)
+				LOG, Level.ERROR, e, String.format(FMT_MSG_FAIL_SET_OFFSET, offset)
 			);
 		}
 		this.size = size;
@@ -277,10 +277,10 @@ implements DataItem {
 						contentEquals = Arrays.equals(buff1, buff2);
 						if(!contentEquals) {
 							LOG.debug(
-									Markers.ERR,
-									FMT_MSG_CORRUPT, rangeOffset, i * pageSize,
-									Base64.encodeBase64URLSafeString(buff1),
-									Base64.encodeBase64URLSafeString(buff2)
+								Markers.ERR,
+								FMT_MSG_CORRUPT, rangeOffset, i * pageSize,
+								Base64.encodeBase64URLSafeString(buff1),
+								Base64.encodeBase64URLSafeString(buff2)
 							);
 							break;
 						}
@@ -308,10 +308,10 @@ implements DataItem {
 						contentEquals = Arrays.equals(buff1, buff2);
 						if(!contentEquals) {
 							LOG.debug(
-									Markers.ERR, FMT_MSG_CORRUPT,
-									rangeOffset, rangeLength - countTailBytes,
-									Base64.encodeBase64URLSafeString(buff1),
-									Base64.encodeBase64URLSafeString(buff2)
+								Markers.ERR, FMT_MSG_CORRUPT,
+								rangeOffset, rangeLength - countTailBytes,
+								Base64.encodeBase64URLSafeString(buff1),
+								Base64.encodeBase64URLSafeString(buff2)
 							);
 						}
 					} else {
@@ -322,7 +322,7 @@ implements DataItem {
 			} catch(final IOException e) {
 				contentEquals = false;
 				ExceptionHandler.trace(
-						LOG, Level.WARN, e, MSG_IO_FAILURE_DURING_VERIFICATION
+					LOG, Level.WARN, e, MSG_IO_FAILURE_DURING_VERIFICATION
 				);
 			}
 		}

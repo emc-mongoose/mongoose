@@ -41,8 +41,8 @@ extends LoadExecutorBase<T> {
 			dataItem.append(appendSize);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-						Markers.MSG, "Append the object \"{}\": +{}",
-						dataItem, RunTimeConfig.formatSize(appendSize)
+					Markers.MSG, "Append the object \"{}\": +{}",
+					dataItem, RunTimeConfig.formatSize(appendSize)
 				);
 			}
 		}

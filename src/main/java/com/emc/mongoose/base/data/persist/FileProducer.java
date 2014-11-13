@@ -63,8 +63,8 @@ implements Producer<T> {
 			String nextLine;
 			T nextData;
 			LOG.debug(
-					Markers.MSG, "Going to produce up to {} data items for consumer \"{}\"",
-					consumer.getMaxCount(), consumer.toString()
+				Markers.MSG, "Going to produce up to {} data items for consumer \"{}\"",
+				consumer.getMaxCount(), consumer.toString()
 			);
 			do {
 				//
