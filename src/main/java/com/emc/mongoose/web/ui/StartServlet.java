@@ -39,14 +39,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by gusakk on 01/10/14.
  */
-public class StartServlet extends HttpServlet {
+public final class StartServlet extends HttpServlet {
 
 	private final static Logger LOG = LogManager.getLogger();
 	private RunTimeConfig runTimeConfig;
 	public static ConcurrentHashMap<String, Thread> threadsMap;
 
 	@Override
-	public void init() throws ServletException {
+	public final void init() throws ServletException {
 		super.init();
 		runTimeConfig = (RunTimeConfig) getServletContext().getAttribute("runTimeConfig");
 		threadsMap = new ConcurrentHashMap<>();
