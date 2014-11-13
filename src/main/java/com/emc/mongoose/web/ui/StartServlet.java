@@ -264,7 +264,7 @@ public final class StartServlet extends HttpServlet {
 				//
 				try {
 				   loadExecutor.close();
-				} catch (IOException e) {
+				} catch (final IOException e) {
 				   ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to close the load executor");
 				}
 				//
