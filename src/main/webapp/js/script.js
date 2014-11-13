@@ -76,9 +76,7 @@ $(document).ready(function() {
 		$(".driver").hide();
 		$(".data-node").hide();
 		$("#runmode").val($.cookie("runmode"));
-		if ($.cookie("websocket")) {
-			configureWebSocket().connect();
-		}
+		configureWebSocket().connect();
 	}
 
 	function configureWebSocket() {

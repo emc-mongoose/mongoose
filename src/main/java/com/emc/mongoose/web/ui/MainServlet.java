@@ -29,6 +29,9 @@ public class MainServlet extends HttpServlet {
 	throws ServletException, IOException {
 		request.setAttribute("runmodes", RunModes.values());
 		request.setAttribute("runTimeConfig", runTimeConfig);
+		if (StartServlet.threadsMap != null) {
+			request.getSession(true).setAttribute("runmodes", StartServlet.threadsMap.keySet());
+		}
 		request.getRequestDispatcher("index.jsp").forward(request, response);
 	}
 
