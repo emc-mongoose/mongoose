@@ -24,8 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class LogServlet extends WebSocketServlet {
 
 	@Override
-	public void configure(WebSocketServletFactory factory) {
-		//factory.getPolicy().setIdleTimeout(10000);
+	public void configure(final WebSocketServletFactory factory) {
 		factory.register(LogSocket.class);
 	}
 
