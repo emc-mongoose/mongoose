@@ -60,6 +60,7 @@ dependencies {
 		//
 		'org.apache.logging.log4j:log4j-api:2.1',
 		'org.apache.logging.log4j:log4j-core:2.1',
+		'org.apache.logging.log4j:log4j-web:2.1',
 		//
 		'org.apache.httpcomponents:httpclient:4.3.6',
 		'org.apache.httpcomponents:httpcore:4.3.3',
@@ -68,14 +69,13 @@ dependencies {
         'javax.el:javax.el-api:3.0.1-b04',
         'javax.servlet:javax.servlet-api:3.1.0',
 		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
-		'jstl:jstl:1.2',
 		'org.eclipse.jetty.websocket:websocket-server:9.2.3.v20140905',
 		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
 		'com.google.code.gson:gson:2.3',
 		'org.hibernate:hibernate-core:4.3.6.Final',
 		'org.eclipse.persistence:javax.persistence:2.1.0',
 		'jstl:jstl:1.2'
-    )
+	)
 	runtime (
 		//
 		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
@@ -153,6 +153,7 @@ distributions {
 			}
 			into('webapp/WEB-INF/lib') {
 				from { configurations.compile.files {dep -> dep.name == 'jstl'} }
+				from { configurations.compile.files {dep -> dep.name == 'log4j-web'} }
 			}
 		}
 	}
