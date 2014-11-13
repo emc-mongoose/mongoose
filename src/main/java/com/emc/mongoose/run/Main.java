@@ -99,8 +99,6 @@ public final class Main {
 			System.exit(1);
 		}
 		//
-		ThreadContext.put(Main.KEY_RUN_ID, System.getProperty(Main.KEY_RUN_ID));
-		//
 		rootLogger.info(
 			Markers.MSG, "Run in mode \"{}\", id: \"{}\"",
 			System.getProperty(KEY_RUN_MODE), System.getProperty(KEY_RUN_ID)
@@ -112,6 +110,8 @@ public final class Main {
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RUN_TIME_CONFIG.loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
+		//
+		ThreadContextMap.initThreadContextMap(RUN_TIME_CONFIG);
 		//
 		switch (runMode) {
 			case RUN_MODE_SERVER:

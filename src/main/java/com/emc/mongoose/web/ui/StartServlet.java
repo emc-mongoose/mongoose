@@ -2,6 +2,7 @@ package com.emc.mongoose.web.ui;
 //
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.run.ThreadContextMap;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadBuilder;
 import com.emc.mongoose.web.load.client.WSLoadBuilderClient;
@@ -82,6 +83,7 @@ public class StartServlet extends HttpServlet {
 
 		//	Add runModes to the http session
 		request.getSession(true).setAttribute("runmodes", threadsMap.keySet());
+		response.setStatus(HttpServletResponse.SC_OK);
 	}
 	//
 	private void runServer() {
@@ -89,7 +91,7 @@ public class StartServlet extends HttpServlet {
 			WSLoadBuilderSvc loadBuilderSvc;
 			@Override
 			public void run() {
-				ThreadContext.put(Main.KEY_RUN_ID, runTimeConfig.getString(Main.KEY_RUN_ID));
+				ThreadContextMap.initThreadContextMap(runTimeConfig);
 				//
 				LOG.debug(Markers.MSG, "Starting the server");
 				//
@@ -104,7 +106,7 @@ public class StartServlet extends HttpServlet {
 			}
 			@Override
 			public void interrupt() {
-				ThreadContext.put(Main.KEY_RUN_ID, runTimeConfig.getString(Main.KEY_RUN_ID));
+				ThreadContextMap.initThreadContextMap(runTimeConfig);
 				//
 				ServiceUtils.close(loadBuilderSvc);
 				super.interrupt();
@@ -120,7 +122,7 @@ public class StartServlet extends HttpServlet {
 			WSLoadClient<WSObject> loadClient;
 			@Override
 			public void run() {
-				ThreadContext.put(Main.KEY_RUN_ID, runTimeConfig.getString(Main.KEY_RUN_ID));
+				ThreadContextMap.initThreadContextMap(runTimeConfig);
 				//
 				LOG.debug(Markers.MSG, "Starting the client");
 				//
@@ -179,7 +181,7 @@ public class StartServlet extends HttpServlet {
 
 			@Override
 			public void interrupt() {
-				ThreadContext.put(Main.KEY_RUN_ID, runTimeConfig.getString(Main.KEY_RUN_ID));
+				ThreadContextMap.initThreadContextMap(runTimeConfig);
 				//
 				try {
 					if (loadClient != null) {
@@ -202,7 +204,7 @@ public class StartServlet extends HttpServlet {
 			WSLoadExecutor<WSObject> loadExecutor;
 			@Override
 			public void run() {
-				ThreadContext.put(Main.KEY_RUN_ID, runTimeConfig.getString(Main.KEY_RUN_ID));
+				ThreadContextMap.initThreadContextMap(runTimeConfig);
 				//
 				LOG.debug(Markers.MSG, "Starting the standalone");
 				try {
@@ -258,7 +260,7 @@ public class StartServlet extends HttpServlet {
 
 			@Override
 			public void interrupt() {
-				ThreadContext.put(Main.KEY_RUN_ID, runTimeConfig.getString(Main.KEY_RUN_ID));
+				ThreadContextMap.initThreadContextMap(runTimeConfig);
 				//
 				try {
 				   loadExecutor.close();
@@ -278,7 +280,7 @@ public class StartServlet extends HttpServlet {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {
-				ThreadContext.put(Main.KEY_RUN_ID, runTimeConfig.getString(Main.KEY_RUN_ID));
+				ThreadContextMap.initThreadContextMap(runTimeConfig);
 				//
 				LOG.debug(Markers.MSG, "Starting the wsmock");
 				new WSMock(runTimeConfig).run();
@@ -293,6 +295,7 @@ public class StartServlet extends HttpServlet {
 		thread.start();
 		threadsMap.put(runTimeConfig.getString("run.id"), thread);
 	}
+	//
 	//
 	private void setupRunTimeConfig(final HttpServletRequest request) {
 		//	Common settings
@@ -346,8 +349,12 @@ public class StartServlet extends HttpServlet {
 	}
 	//
 	public static void interruptMongoose(final String runId) {
-		threadsMap.get(runId).interrupt();
-		threadsMap.remove(runId);
+		try {
+			threadsMap.get(runId).interrupt();
+			threadsMap.remove(runId);
+		} catch (final Exception e) {
+			threadsMap.remove(runId);
+		}
 	}
 
 }
