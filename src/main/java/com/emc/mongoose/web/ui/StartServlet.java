@@ -1,8 +1,8 @@
 package com.emc.mongoose.web.ui;
 //
 import com.emc.mongoose.base.api.Request;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.run.ThreadContextMap;
+import com.emc.mongoose.run.WSMockServlet;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadBuilder;
 import com.emc.mongoose.web.load.client.WSLoadBuilderClient;
@@ -12,7 +12,6 @@ import com.emc.mongoose.web.load.client.impl.BasicLoadBuilderClient;
 import com.emc.mongoose.web.load.client.WSLoadClient;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
-import com.emc.mongoose.run.WSMock;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 
@@ -24,7 +23,6 @@ import org.apache.commons.configuration.ConversionException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
 //
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -283,7 +281,7 @@ public final class StartServlet extends HttpServlet {
 				ThreadContextMap.initThreadContextMap(runTimeConfig);
 				//
 				LOG.debug(Markers.MSG, "Starting the wsmock");
-				new WSMock(runTimeConfig).run();
+				new WSMockServlet(runTimeConfig).run();
 			}
 
 			@Override

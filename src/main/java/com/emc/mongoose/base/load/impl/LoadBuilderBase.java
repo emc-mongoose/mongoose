@@ -280,7 +280,7 @@ implements LoadBuilder<T, U> {
 	public abstract U build()
 	throws IllegalStateException;
 	//
-	private final static String FMT_STR = "%s.%dx%s";
+	private final static String FMT_STR = "%s.%dx%s", FMT_SIZE_RANGE = "%s-%s";
 	//
 	@Override
 	public String toString() {
@@ -288,7 +288,9 @@ implements LoadBuilder<T, U> {
 			FMT_STR,
 			reqConf.toString(),
 			threadsPerNodeMap.get(threadsPerNodeMap.keySet().iterator().next()),
-			RunTimeConfig.formatSize(minObjSize == 0 ? maxObjSize : minObjSize)
+			minObjSize == maxObjSize ?
+				RunTimeConfig.formatSize(minObjSize) :
+				String.format(FMT_SIZE_RANGE, minObjSize, maxObjSize)
 		);
 	}
 }

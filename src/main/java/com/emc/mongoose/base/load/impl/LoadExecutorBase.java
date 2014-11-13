@@ -207,7 +207,7 @@ implements LoadExecutor<T> {
 							LOG.debug(Markers.MSG, "Condition \"done\" reached");
 						}
 					} catch(final Exception e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "Condition failure");
+						LOG.debug(Markers.MSG, "Waiting for the done condition interrupted");
 					} finally {
 						lock.unlock();
 					}
@@ -362,7 +362,10 @@ implements LoadExecutor<T> {
 				}
 			}
 			//
-			Thread.currentThread().interrupt(); // causes the producer interruption
+			final Thread producer = Thread.currentThread();
+			if(!producer.isInterrupted()) {
+				Thread.currentThread().interrupt(); // causes the producer interruption
+			}
 		} else {
 			final StorageNodeExecutor<T> nodeExecutor = nodes[
 				(int) submitExecutor.getTaskCount() % nodes.length
@@ -412,21 +415,21 @@ implements LoadExecutor<T> {
 		notCompletedTaskCount += submitExecutor.getQueue().size() + submitExecutor.getActiveCount();
 		//
 		final String message = MSG_FMT_METRICS.format(
-				new Object[]{
-						countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
-						//
-						(float) reqDurSnapshot.getMin() / BILLION,
-						(float) reqDurSnapshot.getMedian() / BILLION,
-						(float) reqDurSnapshot.getMean() / BILLION,
-						(float) reqDurSnapshot.getMax() / BILLION,
-						//
-						avgSize == 0 ? 0 : meanBW / avgSize,
-						avgSize == 0 ? 0 : oneMinBW / avgSize,
-						avgSize == 0 ? 0 : fiveMinBW / avgSize,
-						avgSize == 0 ? 0 : fifteenMinBW / avgSize,
-						//
-						meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
-				}
+			new Object[] {
+				countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
+				//
+				(float) reqDurSnapshot.getMin() / BILLION,
+				(float) reqDurSnapshot.getMedian() / BILLION,
+				(float) reqDurSnapshot.getMean() / BILLION,
+				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				avgSize == 0 ? 0 : meanBW / avgSize,
+				avgSize == 0 ? 0 : oneMinBW / avgSize,
+				avgSize == 0 ? 0 : fiveMinBW / avgSize,
+				avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+				//
+				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+			}
 		);
 		LOG.info(logMarker, message);
 		//

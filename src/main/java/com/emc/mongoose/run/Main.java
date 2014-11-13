@@ -4,14 +4,12 @@ import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.run.ThreadContextMap;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.core.LogEventListener;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.status.StatusConsoleListener;
 //
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -130,7 +128,7 @@ public final class Main {
 			case RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
 				try {
-					new WSMock(RUN_TIME_CONFIG).run();
+					new WSMockServlet(RUN_TIME_CONFIG).run();
 				} catch (final Exception e) {
 					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
 				}
@@ -163,6 +161,12 @@ public final class Main {
 				)
 			);
 		}
+		// make all used loggers asynchronous
+		System.setProperty(
+			"Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
+		);
+		StatusConsoleListener statusListener = new StatusConsoleListener(Level.OFF);
+
 		// determine the logger configuration file path
 		final Path logConfPath = Paths.get(
 			DIR_ROOT, DIR_CONF, DIR_LOGGING,
@@ -172,10 +176,6 @@ public final class Main {
 				runMode.equals(RUN_MODE_COMPAT_CLIENT)
 			) ?
 				FNAME_LOGGING_LOCAL : FNAME_LOGGING_REMOTE
-		);
-		// make all used loggers asynchronous
-		System.setProperty(
-			"Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
 		);
 		// go
 		Configurator.initialize(null, logConfPath.toUri().toString());
