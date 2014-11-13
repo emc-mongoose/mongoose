@@ -18,26 +18,26 @@ import java.io.IOException;
  * Created by gusakk on 10/24/14.
  */
 @WebSocket
-public class LogSocket implements WebSocketLogListener {
+public final class LogSocket implements WebSocketLogListener {
 
 	private Session session;
 	private final static Gson gson = new Gson();
 	private final static Logger LOG = LogManager.getLogger();
 
 	@OnWebSocketClose
-	public void onClose(int statusCode, final String reason) {
+	public final void onClose(int statusCode, final String reason) {
 		WebUIAppender.unregister(this);
 		LOG.info(Markers.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
 	}
 
 	@OnWebSocketError
-	public void onError(final Throwable t) {
+	public final void onError(final Throwable t) {
 		WebUIAppender.unregister(this);
 		LOG.info(Markers.ERR, "Web Socket error. Message: {}", t.getMessage());
 	}
 
 	@OnWebSocketConnect
-	public void onConnect(final Session session) {
+	public final void onConnect(final Session session) {
 		LOG.info(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
 		this.session = session;
 		WebUIAppender.register(this);
@@ -47,7 +47,7 @@ public class LogSocket implements WebSocketLogListener {
 	}
 
 	@OnWebSocketMessage
-	public void onMessage(final String message) {
+	public final void onMessage(final String message) {
 		LOG.info(Markers.MSG, "Message from Browser {}", message);
 	}
 
