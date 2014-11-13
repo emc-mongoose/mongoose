@@ -135,7 +135,7 @@
 							<fieldset class="scheduler-border">
 								<legend class="scheduler-border">Remote</legend>
 								<label>remote.monitor.port:</label>
-								<input id="remoteMonitorPort" name="remoteMonitorPort" type="text" class="form-control counter" value="${runTimeConfig.remoteMonitorPort}">
+								<input id="remoteMonitorPort" name="remoteMonitorPort" type="text" class="form-control counter" value="${runTimeConfig.remoteExportPort}">
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">Drivers</legend>
 									<button type="button" class="default add-driver">Add</button>
@@ -290,7 +290,7 @@
 							</div>
 						</div>
 						<div class="right-side">
-							<button id="stop" type="button" class="default"><span>Stop</span></button>
+							<button type="button" class="default stop"><span>Stop</span></button>
 							<div class="log-wrapper">
 								<div class="tab-content">
 									<div class="tab-pane active" id="${correctMode}messages-csv">

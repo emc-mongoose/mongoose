@@ -8,13 +8,8 @@ $(document).ready(function() {
 	var COUNT_OF_RECORDS = 50;
 
 	initComponents();
-	initWebSocket();
-	if ($.cookie("websocket")) {
-		server.connect();
-	}
 
-	$("#runmode").val($.cookie("runmode"));
-
+	// Storage Block
 	$(".add-node").click(function() {
 		if ($(".data-node").is(":visible")) {
 			$(".data-node").hide();
@@ -23,6 +18,7 @@ $(document).ready(function() {
 		}
 	});
 
+	// Drivers Block
 	$(".add-driver").click(function() {
 		if ($(".driver").is(":visible")) {
 			$(".driver").hide();
@@ -31,57 +27,128 @@ $(document).ready(function() {
 		}
 	});
 
-	$(document).on("click", ".remove", function() {
-		$(this).parent().parent().remove();
-	});
-
+	// Save data node in the list
 	$(document).on("click", "#save", function() {
 		$(".storages").append(appendBlock("dataNodes", $("#data-node-text").val()));
 		$("#data-node-text").val("");
 		$(".data-node").hide();
 	});
 
+	// Save Driver in the list
 	$(document).on("click", "#save-driver", function() {
 		$(".drivers").append(appendBlock("drivers", $("#driver-text").val()));
 		$("#driver-text").val("");
 		$(".driver").hide();
 	});
 
+	// Remove storage or driver from list
+	$(document).on("click", ".remove", function() {
+		$(this).parent().parent().remove();
+	});
+
+	// RunModes
 	$(document).on("click", "#standalone", function() {
 		$("#runmode").val(VALUE_RUN_MODE_STANDALONE);
+		$(".runmodes .list-group .list-group-item").removeClass("active");
 		$(this).addClass("active");
-		$("#distributed").removeClass("active");
-		$("#wsmock").removeClass("active");
-		$("#driver").removeClass("active");
 	});
 
 	$(document).on("click", "#distributed", function() {
 		$("#runmode").val(VALUE_RUN_MODE_CLIENT);
+		$(".runmodes .list-group .list-group-item").removeClass("active");
 		$(this).addClass("active");
-		$("#standalone").removeClass("active");
-		$("#wsmock").removeClass("active");
-		$("#driver").removeClass("active");
 	});
 
 	$(document).on("click", "#driver", function() {
 		$("#runmode").val(VALUE_RUN_MODE_SERVER);
+		$(".runmodes .list-group .list-group-item").removeClass("active");
 		$(this).addClass("active");
-		$("#standalone").removeClass("active");
-		$("#wsmock").removeClass("active");
-		$("#distributed").removeClass("active");
 	});
 
 	$(document).on("click", "#wsmock", function() {
 		$("#runmode").val(VALUE_RUN_MODE_WSMOCK);
+		$(".runmodes .list-group .list-group-item").removeClass("active");
 		$(this).addClass("active");
-		$("#standalone").removeClass("active");
-		$("#distributed").removeClass("active");
-		$("#driver").removeClass("active");
 	});
 
+	// functions
 	function initComponents() {
-		$(".data-node").hide();
 		$(".driver").hide();
+		$(".data-node").hide();
+		$("#runmode").val($.cookie("runmode"));
+		if ($.cookie("websocket")) {
+			configureWebSocket().connect();
+		}
+	}
+
+	function configureWebSocket() {
+		var webSocketServer = {
+			connect: function() {
+				var location = document.location.toString().replace('http://', 'ws://') + "logs";
+				this.ws = new WebSocket(location);
+				//
+				this.ws.onopen = function() {
+					// empty
+				}
+				//
+				this.ws.onmessage = function(m) {
+					var json = JSON.parse(m.data);
+					var entry = json.contextMap["run.id"].split(".").join("_");
+					// fix later
+					if (!json.message.message) {
+						str = json.message.messagePattern.split("{}");
+						resultString = "";
+						for (s = 0; s < str.length - 1; s++) {
+							resultString += str[s]+json.message.stringArgs[s];
+						}
+						json.message.message = resultString + str[str.length - 1];
+					}
+					switch (json.marker.name) {
+						case "err":
+							if ($("#"+entry+"errors-log table tbody tr").length > COUNT_OF_RECORDS) {
+								$("#"+entry+"errors-log table tbody tr:first-child").remove();
+							}
+							$("#"+entry+"errors-log table tbody").append(appendStringToTable(json));
+							break;
+						case "msg":
+							if ($("#"+entry+"messages-csv table tbody tr").length > COUNT_OF_RECORDS) {
+								$("#"+entry+"messages-csv table tbody tr:first-child").remove();
+							}
+							$("#"+entry+"messages-csv table tbody").append(appendStringToTable(json));
+							break;
+						case "perfSum":
+							if ($("#"+entry+"perf-sum-csv table tbody tr").length > COUNT_OF_RECORDS) {
+								$("#"+entry+"perf-sum-csv table tbody tr:first-child").remove();
+							}
+							$("#"+entry+"perf-sum-csv table tbody").append(appendStringToTable(json));
+							break;
+						case "perfAvg":
+							if ($("#"+entry+"perf-avg-csv table tbody tr").length > COUNT_OF_RECORDS) {
+								$("#"+entry+"perf-avg-csv table tbody tr:first-child").remove();
+							}
+							$("#"+entry+"perf-avg-csv table tbody").append(appendStringToTable(json));
+							break;
+					}
+				}
+				//
+				this.ws.onclose = function() {
+					this.ws = null;
+				}
+			}
+		};
+		return webSocketServer;
+	}
+
+	function appendStringToTable(json) {
+		html = '<tr>\
+			<td class="filterable-cell">' + json.level.name + '</td>\
+			<td class="filterable-cell">' + json.loggerName + '</td>\
+			<td class="filterable-cell">' + json.marker.name + '</td>\
+			<td class="filterable-cell">' + json.threadName + '</td>\
+			<td class="filterable-cell">' + new Date(json.timeMillis) + '</td>\
+			<td class="filterable-cell">' + json.message.message + '</td>\
+			</tr>';
+		return html;
 	}
 
 	function appendBlock(key, value) {
@@ -100,85 +167,7 @@ $(document).ready(function() {
 		return html;
 	}
 
-	function initWebSocket() {
-		this.server = {
-			connect: function() {
-				var location = document.location.toString().replace('http://', 'ws://') + "logs";
-				this._ws = new WebSocket(location);
-				this._ws.onopen = this._onopen;
-				this._ws.onmessage = this._onmessage;
-				this._ws.onclose = this._onclose;
-			},
-			_onopen : function() {
-				server._send('websockets!');
-			},
-			_send : function(message) {
-				if (this._ws) {
-					this._ws.send(message);
-				}
-			},
-			send : function(text) {
-				if (text != null && text.length > 0)
-					server._send(text);
-			},
-			_onmessage : function(m) {
-				var json = JSON.parse(m.data);
-				var entry = json.message.map.data["run.id"].split('.').join('_');
-				// fix later
-				if (!json.message.message) {
-					str = json.message.messagePattern.split("{}");
-					resultString = "";
-					for (s = 0; s < str.length - 1; s++) {
-						resultString += str[s]+json.message.stringArgs[s];
-					}
-					json.message.message = resultString + str[str.length - 1];
-				}
-				switch (json.marker.name) {
-					case "err":
-						if ($("#"+entry+"errors-log table tbody tr").length > COUNT_OF_RECORDS) {
-							$("#"+entry+"errors-log table tbody tr:first-child").remove();
-						}
-						$("#"+entry+"errors-log table tbody").append(appendStringToTable(json));
-						break;
-					case "msg":
-						if ($("#"+entry+"messages-csv table tbody tr").length > COUNT_OF_RECORDS) {
-							$("#"+entry+"messages-csv table tbody tr:first-child").remove();
-						}
-						$("#"+entry+"messages-csv table tbody").append(appendStringToTable(json));
-						break;
-					case "perfSum":
-						if ($("#"+entry+"perf-sum-csv table tbody tr").length > COUNT_OF_RECORDS) {
-							$("#"+entry+"perf-sum-csv table tbody tr:first-child").remove();
-						}
-						$("#"+entry+"perf-sum-csv table tbody").append(appendStringToTable(json));
-						break;
-					case "perfAvg":
-						if ($("#"+entry+"perf-avg-csv table tbody tr").length > COUNT_OF_RECORDS) {
-							$("#"+entry+"perf-avg-csv table tbody tr:first-child").remove();
-						}
-						$("#"+entry+"perf-avg-csv table tbody").append(appendStringToTable(json));
-						break;
-				}
-			},
-			_onclose : function(m) {
-				this._ws = null;
-			}
-		};
-	}
-
-	function appendStringToTable(json) {
-		html = '<tr>\
-			<td class="filterable-cell">' + json.level.name + '</td>\
-			<td class="filterable-cell">' + json.loggerName + '</td>\
-			<td class="filterable-cell">' + json.marker.name + '</td>\
-			<td class="filterable-cell">' + json.threadName + '</td>\
-			<td class="filterable-cell">' + new Date(json.timeMillis) + '</td>\
-			<td class="filterable-cell">' + json.message.message + '</td>\
-			</tr>';
-		return html;
-
-	}
-
+	// Start mongoose
 	$(document).on('submit', '#mainForm',  function(e) {
 		e.preventDefault();
 		$.post("/start", $("#mainForm").serialize(), function(data, status) {
@@ -187,6 +176,7 @@ $(document).ready(function() {
 		});
 	});
 
+	// Stop mongoose
 	$(".stop").click(function() {
 		var currentButton = $(this);
 		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".");
@@ -195,6 +185,7 @@ $(document).ready(function() {
 		});
 	});
 
+	// Clear logs content
 	$(".clear").click(function() {
 		$(this).parent().find("tbody tr").remove();
 	});
