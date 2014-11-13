@@ -103,6 +103,11 @@ $(document).ready(function() {
 						}
 						json.message.message = resultString + str[str.length - 1];
 					}
+					if (!json.hasOwnProperty("marker"))
+						return;
+					if (!json.marker.hasOwnProperty("name"))
+						return;
+					//
 					switch (json.marker.name) {
 						case "err":
 							if ($("#"+entry+"errors-log table tbody tr").length > COUNT_OF_RECORDS) {
@@ -180,8 +185,11 @@ $(document).ready(function() {
 	$(".stop").click(function() {
 		var currentButton = $(this);
 		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".");
-		$.post("/stop", { "runid" : currentRunId }, function(data, status) {
+		$.post("/stop", { "runid" : currentRunId }, function() {
 			currentButton.attr("disabled", "disabled");
+		}).fail(function() {
+			currentButton.attr("disabled", "disabled");
+			alert("Internal Server Error");
 		});
 	});
 
