@@ -137,6 +137,9 @@ implements WSRequestConfig<T> {
 				.setScheme(reqConf2Clone.getScheme())
 				.setClient(reqConf2Clone.getClient());
 		}
+		//
+		final String pkgSpec = getClass().getPackage().getName();
+		setAPI(pkgSpec.substring(pkgSpec.lastIndexOf('.') + 1));
 	}
 	//
 	@Override

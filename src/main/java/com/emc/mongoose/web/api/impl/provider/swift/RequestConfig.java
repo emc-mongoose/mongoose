@@ -32,7 +32,6 @@ extends WSRequestConfigBase<T> {
 	protected RequestConfig(final RequestConfig<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		api = RequestConfig.class.getSimpleName();
 		if(reqConf2Clone != null) {
 			// TODO copy swift specific fields
 		}

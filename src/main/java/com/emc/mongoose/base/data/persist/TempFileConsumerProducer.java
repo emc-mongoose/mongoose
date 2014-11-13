@@ -58,11 +58,6 @@ implements Consumer<T>, Producer<T>, Externalizable {
 		final RunTimeConfig runTimeConfig,
 		final String prefix, final String suffix, final int threadCount, final long maxCount
 	) {
-		LOG.info(
-			Markers.MSG, "New data items temp file w/ prefix \"{}\" and suffix \"{}\"",
-			prefix, suffix
-		);
-		//
 		this.runTimeConfig = runTimeConfig;
 		this.prefix = prefix;
 		this.suffix = suffix;

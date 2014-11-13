@@ -359,11 +359,6 @@ implements LoadExecutor<T> {
 					nextNode.submit(null); // poison
 				}
 			}
-			//
-			final Thread producer = Thread.currentThread();
-			if(!producer.isInterrupted()) {
-				Thread.currentThread().interrupt(); // causes the producer interruption
-			}
 		} else {
 			final StorageNodeExecutor<T> nodeExecutor = nodes[
 				(int) submitExecutor.getTaskCount() % nodes.length

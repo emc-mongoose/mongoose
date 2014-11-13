@@ -54,16 +54,13 @@ def build(flagSimultaneous=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPe
 					chain.append(load)
 				else:
 					if prevLoad is not None:
-						print(LOAD_BUILDER.toString)
 						mediatorBuff = TempFileConsumerProducer(
 							Main.RUN_TIME_CONFIG,
-							'-'.join((
+							"%s-%s" % (
 								Main.RUN_TIME_CONFIG.getRunName(),
 								Main.RUN_TIME_CONFIG.getString(Main.KEY_RUN_ID)
-							)), 'x'.join((
-								LOAD_BUILDER.toString()
-							)),
-							1, 0
+							),
+							"%s" % LOAD_BUILDER.toString(), 1, 0
 						)
 						if mediatorBuff is not None:
 							prevLoad.setConsumer(mediatorBuff)
