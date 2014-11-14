@@ -27,7 +27,7 @@ public final class LogSocket implements WebSocketLogListener {
 	@OnWebSocketClose
 	public final void onClose(int statusCode, final String reason) {
 		WebUIAppender.unregister(this);
-		LOG.info(Markers.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
+		LOG.trace(Markers.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
 	}
 
 	@OnWebSocketError
@@ -38,7 +38,7 @@ public final class LogSocket implements WebSocketLogListener {
 
 	@OnWebSocketConnect
 	public final void onConnect(final Session session) {
-		LOG.info(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
+		LOG.trace(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
 		this.session = session;
 		WebUIAppender.register(this);
 		for (final LogEvent logEvent : WebUIAppender.getLogEventsList()) {
@@ -48,7 +48,7 @@ public final class LogSocket implements WebSocketLogListener {
 
 	@OnWebSocketMessage
 	public final void onMessage(final String message) {
-		LOG.info(Markers.MSG, "Message from Browser {}", message);
+		LOG.trace(Markers.MSG, "Message from Browser {}", message);
 	}
 
 	@Override

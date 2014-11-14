@@ -208,36 +208,36 @@ th, td {
 	float: left;
 }
 
-tbody td:nth-child(1), tbody td:nth-child(3) {
-	width: 5%;
+tbody td:nth-child(3), tbody td:nth-child(4) {
+	width: 11%;
 }
 
-tbody td:nth-child(4), tbody td:nth-child(5) {
-	width: 10%;
+tbody td:nth-child(1) {
+	width: 6%;
 }
 
 tbody td:nth-child(2) {
-	width: 25%;
+	width: 26%;
 }
 
-tbody td:nth-child(6) {
-	width: 45%;
+tbody td:nth-child(5) {
+	width: 46%;
 }
 
-th:nth-child(1), th:nth-child(3) {
-	width: 5%;
+th:nth-child(3), th:nth-child(4) {
+	width: 11%;
 }
 
-th:nth-child(4), th:nth-child(5) {
-	width: 10%;
+th:nth-child(1) {
+	width: 6%;
 }
 
 th:nth-child(2) {
-	width: 25%;
+	width: 26%;
 }
 
-th:nth-child(6) {
-	width: 45%;
+th:nth-child(5) {
+	width: 46%;
 }
 
 .list-group {

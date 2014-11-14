@@ -300,7 +300,6 @@
 												<tr>
 													<th>Level</th>
 													<th>LoggerName</th>
-													<th>Marker</th>
 													<th>ThreadName</th>
 													<th>TimeMillis</th>
 													<th>Message</th>
@@ -317,7 +316,6 @@
 												<tr>
 													<th>Level</th>
 													<th>LoggerName</th>
-													<th>Marker</th>
 													<th>ThreadName</th>
 													<th>TimeMillis</th>
 													<th>Message</th>
@@ -334,7 +332,6 @@
 												<tr>
 													<th>Level</th>
 													<th>LoggerName</th>
-													<th>Marker</th>
 													<th>ThreadName</th>
 													<th>TimeMillis</th>
 													<th>Message</th>
@@ -351,7 +348,6 @@
 												<tr>
 													<th>Level</th>
 													<th>LoggerName</th>
-													<th>Marker</th>
 													<th>ThreadName</th>
 													<th>TimeMillis</th>
 													<th>Message</th>
