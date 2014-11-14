@@ -134,8 +134,10 @@
 						<div class="drivers-block">
 							<fieldset class="scheduler-border">
 								<legend class="scheduler-border">Remote</legend>
-								<label>remote.monitor.port:</label>
-								<input id="remoteMonitorPort" name="remoteMonitorPort" type="text" class="form-control counter" value="${runTimeConfig.remoteExportPort}">
+								<label>remote.export.port:</label>
+								<input id="remoteExportPort" name="remoteExportPort" type="text" class="form-control counter" value="${runTimeConfig.remoteExportPort}">
+								<label>remote.import.port:</label>
+								<input id="remoteImportPort" name="remoteImportPort" type="text" class="form-control counter" value="${runTimeConfig.remoteImportPort}">
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">Drivers</legend>
 									<button type="button" class="default add-driver">Add</button>

@@ -338,7 +338,8 @@ public final class StartServlet extends HttpServlet {
 				.replace("]", "")
 				.trim());
 		//	Drivers
-		runTimeConfig.set("remote.monitor.port", request.getParameter("remoteMonitorPort"));
+		runTimeConfig.set("remote.export.port", request.getParameter("remoteExportPort"));
+		runTimeConfig.set("remote.import.port", request.getParameter("remoteImportPort"));
 		runTimeConfig.set("remote.servers", Arrays.toString(request.getParameterValues("drivers"))
 				.replace("[", "")
 				.replace("]", "")
