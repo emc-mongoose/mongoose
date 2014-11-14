@@ -19,7 +19,7 @@
 		<nav class="navbar navbar-default" role="navigation">
 			<div class="container-fluid">
 				<div class="navbar-header">
-					<a id="logo-image" href="/"><img src="images/index.jpeg" width="50" height="50"></a>
+					<a id="logo-image" href="/"><img src="images/logo.jpg" width="50" height="50"></a>
 					<a class="navbar-brand" href="/">Mongoose</a>
 				</div>
 				<div class="collapse navbar-collapse" id="bx-example-navbar-collapse-1">

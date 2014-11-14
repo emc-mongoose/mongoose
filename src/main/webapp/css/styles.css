@@ -247,3 +247,8 @@ th:nth-child(6) {
 .list-group-item {
 	display: inline;
 }
+
+img {
+	border-radius: 15px;
+	margin-right: 15px;
+}
