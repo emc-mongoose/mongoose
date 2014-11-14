@@ -184,7 +184,6 @@ $(document).ready(function() {
 		e.preventDefault();
 		$.post("/start", $("#mainForm").serialize(), function(data, status) {
 			location.reload();
-			$.cookie("websocket", true);
 		});
 	});
 
@@ -194,6 +193,7 @@ $(document).ready(function() {
 		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".");
 		$.post("/stop", { "runid" : currentRunId }, function() {
 			currentButton.attr("disabled", "disabled");
+			location.reload();
 		}).fail(function() {
 			currentButton.attr("disabled", "disabled");
 			alert("Internal Server Error");
