@@ -8,6 +8,7 @@ $(document).ready(function() {
 	var COUNT_OF_RECORDS = 50;
 
 	initComponents();
+	excludeDuplicateOptions();
 
 	// Storage Block
 	$(".add-node").click(function() {
@@ -77,6 +78,14 @@ $(document).ready(function() {
 		$(".data-node").hide();
 		$("#runmode").val($.cookie("runmode"));
 		configureWebSocket().connect();
+	}
+
+	function excludeDuplicateOptions() {
+		var found = [];
+		$("select option").each(function() {
+			if($.inArray(this.value, found) != -1) $(this).remove();
+			found.push(this.value);
+		});
 	}
 
 	function configureWebSocket() {

@@ -10,10 +10,6 @@
 		<link href="css/bootstrap.min.css" rel="stylesheet">
 		<link href="css/styles.css" rel="stylesheet">
 		<link href="css/bootstrap.vertical-tabs.min.css" rel="stylesheet">
-		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
-		<script type="text/javascript" src="js/script.js"></script>
-		<script type="text/javascript" src="js/bootstrap.min.js"></script>
-		<script type="text/javascript" src="js/jquery.cookie.js"></script>
 	</head>
 	<body>
 		<nav class="navbar navbar-default" role="navigation">
@@ -67,6 +63,7 @@
 								<c:set var="runTime" value="${fn:split(runTimeConfig.runTime, '.')}" />
 								<input type="text" name="runTime" id="runTime" class="form-control counter" value="${runTime[0]}">
 								<select name="runTimeSelect">
+									<option selected="selected">${runTime[1]}</option>
 									<option>seconds</option>
 									<option>minutes</option>
 									<option>hours</option>
@@ -95,9 +92,10 @@
 								<legend class="scheduler-border">Storage</legend>
 								<label>storage.api:</label>
 								<select name="storageApi" id="storageApi">
-									<option value="s3">S3</option>
-									<option value="atmos">Atmos</option>
-									<option value="swift">Swift</option>
+									<option selected="selected">${runTimeConfig.storageApi}</option>
+									<option>s3</option>
+									<option>atmos</option>
+									<option>swift</option>
 								</select>
 								<label>scheme:</label>
 								<input id="scheme" name="scheme" type="text" class="form-control counter" value="${runTimeConfig.storageProto}">
@@ -185,11 +183,12 @@
 									<legend class="scheduler-border">Load</legend>
 									<label>scenario.single.load</label>
 									<select name="scenarioSingleLoad" id="scenarioSingleLoad">
-										<option value="create">Create</option>
-										<option value="read">Read</option>
-										<option value="delete">Delete</option>
-										<option value="update">Update</option>
-										<option value="append">Append</option>
+										<option>${rt:getString(runTimeConfig, 'scenario.single.load')}</option>
+										<option>create</option>
+										<option>read</option>
+										<option>delete</option>
+										<option>update</option>
+										<option>append</option>
 									</select>
 									<div class="tabs-wrapper">
 										<ul id="loadTab" class="nav nav-tabs" role="tablist">
@@ -370,5 +369,9 @@
 				</c:forEach>
 			</div>
 		</div>
+		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
+		<script type="text/javascript" src="js/script.js"></script>
+		<script type="text/javascript" src="js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="js/jquery.cookie.js"></script>
 	</body>
 </html>
