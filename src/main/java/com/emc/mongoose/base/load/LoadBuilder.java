@@ -3,6 +3,7 @@ package com.emc.mongoose.base.load;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.base.data.persist.DataItemBuffer;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import java.io.IOException;
@@ -53,6 +54,9 @@ public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>> {
 		throws RemoteException;
 	//
 	U build()
+	throws IOException;
+	//
+	DataItemBuffer<T> newDataItemBuffer()
 	throws IOException;
 	//
 	long getMaxCount()

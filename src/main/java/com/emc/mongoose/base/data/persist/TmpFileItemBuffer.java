@@ -2,7 +2,7 @@ package com.emc.mongoose.base.data.persist;
 //
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 //
@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.Externalizable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -30,9 +29,9 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by andrey on 28.09.14.
  */
-public class TempFileConsumerProducer<T extends DataItem>
+public class TmpFileItemBuffer<T extends DataItem>
 extends Thread
-implements Consumer<T>, Producer<T>, Externalizable {
+implements DataItemBuffer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -41,25 +40,23 @@ implements Consumer<T>, Producer<T>, Externalizable {
 	private volatile ExecutorService outPutExecutor;
 	private volatile long maxCount;
 	private final AtomicLong writtenDataItems = new AtomicLong(0);
-	private volatile RunTimeConfig runTimeConfig;
+	private volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
 	private volatile int threadCount, retryCountMax, retryDelayMilliSec;
-	private volatile String prefix = "?", suffix = "?";
+	private volatile String suffix = "?";
 	//
-	private final static String FMT_THREAD_NAME = "dataItemsTmpFile-%s-%s";
 	private void init() {
-		setName(String.format(FMT_THREAD_NAME, prefix, suffix));
+		setName(String.format(FMT_THREAD_NAME, runTimeConfig.getRunName(), suffix));
 	}
 	//
-	public TempFileConsumerProducer() {
+	public TmpFileItemBuffer() {
 		init();
 	}
 	//
-	public TempFileConsumerProducer(
-		final RunTimeConfig runTimeConfig,
-		final String prefix, final String suffix, final int threadCount, final long maxCount
-	) {
+	public TmpFileItemBuffer(
+		final RunTimeConfig runTimeConfig, final String suffix, final long maxCount,
+		final int threadCount
+	) throws IOException {
 		this.runTimeConfig = runTimeConfig;
-		this.prefix = prefix;
 		this.suffix = suffix;
 		this.threadCount = threadCount;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
@@ -68,16 +65,7 @@ implements Consumer<T>, Producer<T>, Externalizable {
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		//
-		File fBuffTmp = null;
-		try {
-			fBuffTmp = Files
-				.createTempFile(prefix, suffix)
-				.toFile();
-		} catch(final IllegalArgumentException | UnsupportedOperationException | IOException | SecurityException  e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create temp file");
-		} finally {
-			fBuff = fBuffTmp;
-		}
+		fBuff = Files.createTempFile(getName(), null).toFile();
 		//
 		ObjectOutput fBuffOutTmp = null;
 		try {
@@ -270,7 +258,6 @@ implements Consumer<T>, Producer<T>, Externalizable {
 	public final synchronized void writeExternal(final ObjectOutput out)
 	throws IOException {
 		out.writeObject(runTimeConfig);
-		out.writeObject(prefix);
 		out.writeObject(suffix);
 		out.writeInt(threadCount);
 		out.writeLong(maxCount);
@@ -281,7 +268,6 @@ implements Consumer<T>, Producer<T>, Externalizable {
 	throws IOException, ClassNotFoundException {
 		//
 		runTimeConfig = RunTimeConfig.class.cast(in.readObject());
-		prefix = String.class.cast(in.readObject());
 		suffix = String.class.cast(in.readObject());
 		threadCount = in.readInt();
 		maxCount = in.readLong();
@@ -293,9 +279,7 @@ implements Consumer<T>, Producer<T>, Externalizable {
 		//
 		File fBuffTmp = null;
 		try {
-			fBuffTmp = Files
-				.createTempFile(prefix, suffix)
-				.toFile();
+			fBuffTmp = Files.createTempFile(getName(), null).toFile();
 		} catch(final IllegalArgumentException | UnsupportedOperationException | IOException | SecurityException  e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create temp file");
 		} finally {
@@ -315,6 +299,8 @@ implements Consumer<T>, Producer<T>, Externalizable {
 		}
 		//
 		outPutExecutor = Executors.newFixedThreadPool(threadCount);
+		//
+		LOG.info(Markers.MSG, "Uploaded temp file items buffer: \"{}\"", fBuff.getAbsolutePath());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }

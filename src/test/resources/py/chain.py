@@ -8,7 +8,7 @@ from org.apache.logging.log4j import Level, LogManager
 from com.emc.mongoose.base.api import Request
 from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.logging import ExceptionHandler, Markers
-from com.emc.mongoose.base.data.persist import TempFileConsumerProducer
+from com.emc.mongoose.base.data.persist import DataItemBuffer
 #
 from java.lang import Long, Throwable, IllegalArgumentException
 from java.util import NoSuchElementException
@@ -54,14 +54,7 @@ def build(flagSimultaneous=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPe
 					chain.append(load)
 				else:
 					if prevLoad is not None:
-						mediatorBuff = TempFileConsumerProducer(
-							Main.RUN_TIME_CONFIG,
-							"%s-%s" % (
-								Main.RUN_TIME_CONFIG.getRunName(),
-								Main.RUN_TIME_CONFIG.getString(Main.KEY_RUN_ID)
-							),
-							"%s" % LOAD_BUILDER.toString(), 1, 0
-						)
+						mediatorBuff = LOAD_BUILDER.newDataItemBuffer()
 						if mediatorBuff is not None:
 							prevLoad.setConsumer(mediatorBuff)
 							chain.append(mediatorBuff)
@@ -78,6 +71,7 @@ def build(flagSimultaneous=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPe
 			LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)
 		except Throwable as e:
 			ExceptionHandler.trace(LOG, Level.FATAL, e, "Unexpected failure")
+			e.printStackTrace()
 	return chain
 	#
 def execute(chain=(), flagSimultaneous=True):
@@ -91,9 +85,9 @@ def execute(chain=(), flagSimultaneous=True):
 	else:
 		prevLoad, nextLoad = None, None
 		for nextLoad in chain:
-			if not isinstance(nextLoad, TempFileConsumerProducer):
+			if not isinstance(nextLoad, DataItemBuffer):
 				nextLoad.start()
-				if prevLoad is not None and isinstance(prevLoad, TempFileConsumerProducer):
+				if prevLoad is not None and isinstance(prevLoad, DataItemBuffer):
 					prevLoad.close()
 					prevLoad.start()
 					try:

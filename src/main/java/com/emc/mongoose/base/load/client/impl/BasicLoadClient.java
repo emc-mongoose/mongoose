@@ -6,10 +6,11 @@ import com.codahale.metrics.MetricRegistry;
 //
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.base.data.persist.DataItemBuffer;
 import com.emc.mongoose.base.data.persist.LogConsumer;
-import com.emc.mongoose.base.data.persist.TempFileConsumerProducer;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.base.load.client.DataItemBufferClient;
 import com.emc.mongoose.base.load.impl.ShutDownHook;
 import com.emc.mongoose.base.load.impl.SubmitDataItemTask;
 import com.emc.mongoose.base.load.client.LoadClient;
@@ -18,9 +19,9 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
-//
 import com.emc.mongoose.util.threading.GentleExecutorShutDown;
 import com.emc.mongoose.util.threading.WorkerFactory;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -49,7 +50,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -340,7 +340,7 @@ implements LoadClient<T> {
 			new LinkedBlockingQueue<Runnable>(queueSize),
 			new WorkerFactory("getMetricValue", new HashMap<String, String>())
 		) {
-			@Override
+			@Override @SuppressWarnings("NullableProblems")
 			public final <V> Future<V> submit(final Callable<V> task) {
 				Future<V> future = null;
 				boolean pass = false;
@@ -361,7 +361,7 @@ implements LoadClient<T> {
 					}
 				} while(!pass && tryCount < retryCountMax);
 				if(!pass) {
-					LOG.warn(Markers.ERR, "Failed to handle the rejected task");
+					throw new RejectedExecutionException("Failed to resubmit the rejected task");
 				}
 				return future;
 			}
@@ -969,8 +969,6 @@ implements LoadClient<T> {
 					lock.unlock();
 				}
 			}
-			//
-			Thread.currentThread().interrupt(); // causes the producer interruption
 		} else {
 			final Object addrs[] = remoteLoadMap.keySet().toArray();
 			final String addr = String.class.cast(
@@ -1033,12 +1031,12 @@ implements LoadClient<T> {
 			} catch(final ClassCastException e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Data item class mismatch");
 			}
-		} else if(TempFileConsumerProducer.class.isInstance(consumer)) {
+		} else if(DataItemBufferClient.class.isInstance(consumer)) {
 			try {
-				final TempFileConsumerProducer<T> mediator = (TempFileConsumerProducer<T>) consumer;
-				LOG.debug(Markers.MSG, "Consumer is mediator buffer");
+				final DataItemBufferClient<T> mediator = (DataItemBufferClient<T>) consumer;
+				LOG.debug(Markers.MSG, "Consumer is remote mediator buffer");
 				for(final String addr: remoteLoadMap.keySet()) {
-					remoteLoadMap.get(addr).setConsumer(mediator);
+					remoteLoadMap.get(addr).setConsumer(mediator.get(addr));
 				}
 			} catch(final ClassCastException e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Data item class mismatch");
