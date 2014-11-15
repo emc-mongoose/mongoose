@@ -33,7 +33,7 @@ button[disabled]:active:before {
 }
 
 .length-input {
-	width: 200px;
+	width: 260px;
 	display: inline;
 }
 

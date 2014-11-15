@@ -33,7 +33,7 @@ public final class LogSocket implements WebSocketLogListener {
 	@OnWebSocketError
 	public final void onError(final Throwable t) {
 		WebUIAppender.unregister(this);
-		LOG.info(Markers.ERR, "Web Socket error. Message: {}", t.getMessage());
+		LOG.trace(Markers.ERR, "Web Socket error. Message: {}", t.getMessage());
 	}
 
 	@OnWebSocketConnect
@@ -54,7 +54,7 @@ public final class LogSocket implements WebSocketLogListener {
 	@Override
 	public final synchronized void sendMessage(final LogEvent message) {
 		try {
-			if (session != null) {
+			if (session.isOpen()) {
 				session.getRemote().sendString(gson.toJson(message));
 			}
 		} catch (final IOException e) {

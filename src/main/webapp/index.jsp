@@ -180,16 +180,72 @@
 								<br>
 
 								<fieldset class="scheduler-border">
-									<legend class="scheduler-border">Load</legend>
-									<label>scenario.single.load</label>
-									<select name="scenarioSingleLoad" id="scenarioSingleLoad">
-										<option selected="selected">${rt:getString(runTimeConfig, 'scenario.single.load')}</option>
-										<option>create</option>
-										<option>read</option>
-										<option>delete</option>
-										<option>update</option>
-										<option>append</option>
+									<legend class="scheduler-border">Scenario</legend>
+									<label>run.scenario.name</label>
+									<select name="runScenarioName" id="runScenarioName">
+										<option selected="selected">${rt:getString(runTimeConfig, 'run.scenario.name')}</option>
+										<option>chain</option>
+										<option>rampup</option>
+										<option>rampup-create</option>
+										<option>single</option>
 									</select>
+									<div class="tabs-wrapper">
+										<ul id="scenarioTab" class="nav nav-tabs" role="tablist">
+											<li class="active"><a href="#single" data-toggle="tab">Single</a></li>
+											<li><a href="#chain" data-toggle="tab">Chain</a></li>
+											<li><a href="#rampup" data-toggle="tab">Rampup</a></li>
+											<li><a href="#rampup-create" data-toggle="tab">Rampup-Create</a></li>
+										</ul>
+									</div>
+
+									<div class="tab-content">
+										<div class="tab-pane active" id="single">
+											<label>scenario.single.load</label>
+											<select name="scenarioSingleLoad" id="scenarioSingleLoad">
+												<option selected="selected">${rt:getString(runTimeConfig, 'scenario.single.load')}</option>
+												<option>create</option>
+												<option>read</option>
+												<option>delete</option>
+												<option>update</option>
+												<option>append</option>
+											</select>
+										</div>
+										<div class="tab-pane" id="chain">
+											<label>scenario.chain.load</label>
+											<input name="scenarioChainLoad" id="scenarioChainLoad" type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'scenario.chain.load')}">
+											<label>scenario.chain.simultaneous</label>
+											<select name="scenarioChainSimultaneous" id="scenarioChainSimultaneous">
+												<option selected="selected">${rt:getString(runTimeConfig, 'scenario.chain.simultaneous')}</option>
+												<option>false</option>
+												<option>true</option>
+											</select>
+										</div>
+										<div class="tab-pane" id="rampup">
+											<label>scenario.rampup.thread.counts</label>
+											<input name="scenarioRampupThreadCounts" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'scenario.rampup.thread.counts')}">
+											<label>scenario.rampup.sizes</label>
+											<input name="scenarioRampupSizes" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'scenario.rampup.sizes')}">
+										</div>
+										<div class="tab-pane" id="rampup-create">
+											<label>scenario.rampup-create.load</label>
+											<select name="scenarioRampupCreateLoad" id="scenarioRampupCreateLoad">
+												<option selected="selected">${rt:getString(runTimeConfig, 'scenario.rampup-create.load')}</option>
+												<option>create</option>
+												<option>read</option>
+												<option>delete</option>
+												<option>update</option>
+												<option>append</option>
+											</select>
+											<label>scenario.rampup-create.threads</label>
+											<input name="scenarioRampupCreateThreads" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'scenario.rampup-create.threads')}">
+											<label>scenario.rampup-create.objectsizes</label>
+											<input name="scenarioRampupCreateObjectSizes" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'scenario.rampup-create.objectsizes')}">
+										</div>
+									</div>
+								</fieldset>
+
+								<fieldset class="scheduler-border">
+									<legend class="scheduler-border">Load</legend>
 									<div class="tabs-wrapper">
 										<ul id="loadTab" class="nav nav-tabs" role="tablist">
 											<li class="active"><a href="#create" data-toggle="tab">Create</a></li>

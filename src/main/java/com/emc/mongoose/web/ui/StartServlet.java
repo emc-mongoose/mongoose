@@ -345,8 +345,19 @@ public final class StartServlet extends HttpServlet {
 				.replace("]", "")
 				.trim());
 		//	Scenario
+		runTimeConfig.set("run.scenario.name", request.getParameter("runScenarioName"));
+		//	Single
 		runTimeConfig.set("scenario.single.load", request.getParameter("scenarioSingleLoad"));
-
+		//	Chain
+		runTimeConfig.set("scenario.chain.load", request.getParameter("scenarioChainLoad"));
+		runTimeConfig.set("scenario.chain.simultaneous", request.getParameter("scenarioChainSimultaneous"));
+		//	Rampup
+		runTimeConfig.set("scenario.rampup.thread.counts", request.getParameter("scenarioRampupThreadCounts"));
+		runTimeConfig.set("scenario.rampup.sizes", request.getParameter("scenarioRampupSizes"));
+		//	Rampup-Create
+		runTimeConfig.set("scenario.rampup-create.load", request.getParameter("scenarioRampupCreateLoad"));
+		runTimeConfig.set("scenario.rampup-create.objectsizes", request.getParameter("scenarioRampupCreateObjectSizes"));
+		runTimeConfig.set("scenario.rampup-create.threads", request.getParameter("scenarioRampupCreateThreads"));
 	}
 	//
 	public static void interruptMongoose(final String runId) {

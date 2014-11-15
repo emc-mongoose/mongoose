@@ -82,9 +82,16 @@ $(document).ready(function() {
 
 	function excludeDuplicateOptions() {
 		var found = [];
-		$("select option").each(function() {
-			if($.inArray(this.value, found) != -1) $(this).remove();
-			found.push(this.value);
+		var selectArray = $("select");
+		selectArray.each(function() {
+			found = [];
+			var currentSelect = $(this).children();
+			currentSelect.each(function() {
+				if ($.inArray(this.value, found) != -1) {
+					$(this).remove();
+				}
+				found.push(this.value);
+			});
 		});
 	}
 
