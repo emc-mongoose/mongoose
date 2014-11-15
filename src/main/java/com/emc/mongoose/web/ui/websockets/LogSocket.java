@@ -54,7 +54,9 @@ public final class LogSocket implements WebSocketLogListener {
 	@Override
 	public final synchronized void sendMessage(final LogEvent message) {
 		try {
-			session.getRemote().sendString(gson.toJson(message));
+			if (session != null) {
+				session.getRemote().sendString(gson.toJson(message));
+			}
 		} catch (final IOException e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "WebSocket problem");
 		}
