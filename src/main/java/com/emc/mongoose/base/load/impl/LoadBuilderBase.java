@@ -3,6 +3,8 @@ package com.emc.mongoose.base.load.impl;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.base.data.persist.TmpFileItemBuffer;
+import com.emc.mongoose.base.load.DataItemBuffer;
 import com.emc.mongoose.base.load.LoadBuilder;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
@@ -15,6 +17,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
@@ -279,6 +282,12 @@ implements LoadBuilder<T, U> {
 	@Override
 	public abstract U build()
 	throws IllegalStateException;
+	//
+	@Override
+	public DataItemBuffer<T> newDataItemBuffer()
+	throws IOException {
+		return new TmpFileItemBuffer<>(getMaxCount(), 1);
+	}
 	//
 	private final static String FMT_STR = "%s.%dx%s", FMT_SIZE_RANGE = "%s-%s";
 	//

@@ -39,17 +39,18 @@ extends AbstractAppender{
 			DEFAULT_LAYOUT = SerializedLayout.createLayout();
 	public static Session SESSION = null;
 	private static Boolean ENABLED_FLAG;
-	private static final String PERF_AVG = "perfAvg",
-								MSG = "msg",
-								PERF_TRACE = "perfTrace",
-								ERR = "err",
-								KEY_NODE_ADDR = "node.addr",
-								KEY_THREAD_NUM = "thread.number",
-								KEY_LOAD_NUM = "load.number",
-								KEY_LOAD_TYPE = "load.type",
-								KEY_API = "api",
-								KEY_RUN_ID = "run.id",
-								KEY_RUN_MODE = "run.mode";
+	private static final String
+		PERF_AVG = "perfAvg",
+		MSG = "msg",
+		PERF_TRACE = "perfTrace",
+		ERR = "err",
+		KEY_NODE_ADDR = "node.addr",
+		KEY_THREAD_NUM = "thread.number",
+		KEY_LOAD_NUM = "load.number",
+		KEY_LOAD_TYPE = "load.type",
+		KEY_API = "api",
+		KEY_RUN_ID = "run.id",
+		KEY_RUN_MODE = "run.mode";
 	//
 	private HibernateAppender(
 		final String name, final Filter filter,
@@ -61,18 +62,18 @@ extends AbstractAppender{
 	//
 	@PluginFactory
 	public static HibernateAppender createAppender(
-			final @PluginAttribute("name") String name,
-			final @PluginAttribute("ignoreExceptions") boolean ignoreExceptions,
-			final @PluginElement("Filters") Filter filter,
-			final @PluginAttribute("enabled") Boolean enabled,
-			final @PluginAttribute("runid") String runId,
-			final @PluginAttribute("runmode") String runMode,
-			final @PluginAttribute("database") String provider,
-			final @PluginAttribute("username") String userName,
-			final @PluginAttribute("password") String passWord,
-			final @PluginAttribute("addr") String addr,
-			final @PluginAttribute("port") String port,
-			final @PluginAttribute("namedatabase") String dbName
+		final @PluginAttribute("name") String name,
+		final @PluginAttribute("ignoreExceptions") boolean ignoreExceptions,
+		final @PluginElement("Filters") Filter filter,
+		final @PluginAttribute("enabled") Boolean enabled,
+		final @PluginAttribute("runid") String runId,
+		final @PluginAttribute("runmode") String runMode,
+		final @PluginAttribute("database") String provider,
+		final @PluginAttribute("username") String userName,
+		final @PluginAttribute("password") String passWord,
+		final @PluginAttribute("addr") String addr,
+		final @PluginAttribute("port") String port,
+		final @PluginAttribute("namedatabase") String dbName
 	) {
 		java.util.logging.Logger.getLogger("org.hibernate").setLevel(Level.OFF);
 		HibernateAppender newAppender = null;
@@ -105,18 +106,16 @@ extends AbstractAppender{
 	// append method // - really?! (kurilov) - yep! (zhavzharova)
 	@Override
 	public final void append(final LogEvent event) {
-		if (ENABLED_FLAG){
+		if (ENABLED_FLAG){			
 			final String marker = event.getMarker().toString();
 			switch (marker) {
 				case MSG:
-				case ERR:
-					SESSION.beginTransaction();
+				case ERR:					SESSION.beginTransaction();
 					final ModeEntity modeEntity = loadModeEntity(event.getContextMap().get(KEY_RUN_MODE));
 					final RunEntity runEntity = loadRunEntity(event.getContextMap().get(KEY_RUN_ID), modeEntity);
 					setMessageEntity(new Date(event.getTimeMillis()), event.getLoggerName(),
 							event.getLevel().toString(), event.getMessage().getFormattedMessage(), runEntity);
-					SESSION.getTransaction().commit();
-					break;
+					SESSION.getTransaction().commit();					break;
 				case PERF_TRACE:
 					SESSION.beginTransaction();
 					final ModeEntity mode = loadModeEntity(event.getContextMap().get(KEY_RUN_MODE));
