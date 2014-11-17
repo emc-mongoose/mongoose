@@ -3,8 +3,8 @@ package com.emc.mongoose.base.load.impl;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.base.data.persist.DataItemBuffer;
 import com.emc.mongoose.base.data.persist.TmpFileItemBuffer;
+import com.emc.mongoose.base.load.DataItemBuffer;
 import com.emc.mongoose.base.load.LoadBuilder;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
@@ -286,7 +286,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public DataItemBuffer<T> newDataItemBuffer()
 	throws IOException {
-		return new TmpFileItemBuffer<>(Main.RUN_TIME_CONFIG, toString(), getMaxCount(), 1);
+		return new TmpFileItemBuffer<>(getMaxCount(), 1);
 	}
 	//
 	private final static String FMT_STR = "%s.%dx%s", FMT_SIZE_RANGE = "%s-%s";

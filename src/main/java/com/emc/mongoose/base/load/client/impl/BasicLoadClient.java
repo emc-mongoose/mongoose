@@ -6,7 +6,6 @@ import com.codahale.metrics.MetricRegistry;
 //
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.base.data.persist.DataItemBuffer;
 import com.emc.mongoose.base.data.persist.LogConsumer;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
@@ -361,7 +360,7 @@ implements LoadClient<T> {
 					}
 				} while(!pass && tryCount < retryCountMax);
 				if(!pass) {
-					throw new RejectedExecutionException("Failed to resubmit the rejected task");
+					LOG.trace(Markers.ERR, "Failed to resubmit the rejected remote management task");
 				}
 				return future;
 			}
@@ -679,17 +678,17 @@ implements LoadClient<T> {
 			//
 			try {
 				nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
-			} catch(final ExecutionException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
 			} catch(final InterruptedException e) {
 				try {
 					nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
 				} catch(final InterruptedException|ExecutionException ee) {
 					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
 				}
+			} catch(final Exception e) {
+				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to fetch the metainfo frame");
 			}
 			//
-			if(nextMetaInfoFrame!=null && nextMetaInfoFrame.size()>0) {
+			if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
 				for(final T nextMetaInfoRec: nextMetaInfoFrame) {
 					metaInfoLog.submit(nextMetaInfoRec);
 				}
@@ -770,7 +769,7 @@ implements LoadClient<T> {
 			nextLoadSvc = remoteLoadMap.get(addr);
 			try {
 				nextLoadSvc.start();
-				LOG.info(
+				LOG.debug(
 					Markers.MSG, "{} started bound to remote service @{}",
 					nextLoadSvc.getName(), addr
 				);
@@ -782,6 +781,7 @@ implements LoadClient<T> {
 		ShutDownHook.add(this);
 		//
 		super.start();
+		LOG.info(Markers.MSG, "Started {}", getName());
 	}
 	//
 	@Override
@@ -830,8 +830,8 @@ implements LoadClient<T> {
 			LOG.debug(Markers.MSG, "Interrupted");
 		} finally {
 			synchronized(LOG) {
-				// provide summary metrics
 				LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
+				logMetaInfoFrames();
 				logMetrics(Markers.PERF_SUM);
 			}
 		}
@@ -898,8 +898,7 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final synchronized void close()
-		throws IOException {
-		//
+	throws IOException {
 		if(!isInterrupted()) {
 			interrupt();
 		}
@@ -907,19 +906,11 @@ implements LoadClient<T> {
 		LoadSvc<T> nextLoadSvc;
 		JMXConnector nextJMXConn = null;
 		//
-		synchronized(LOG) {
-			if(!remoteLoadMap.isEmpty()) { // if have not been closed before
-				LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-				logMetaInfoFrames();
-				logMetrics(Markers.PERF_SUM);
-			}
-		}
-		//
 		mgmtConnExecutor.shutdownNow();
 		metricsReporter.close();
 		//
 		LOG.debug(Markers.MSG, "Closing the remote services...");
-		for(final String addr: remoteLoadMap.keySet()) {
+		for(final String addr : remoteLoadMap.keySet()) {
 			//
 			try {
 				nextLoadSvc = remoteLoadMap.get(addr);
@@ -927,7 +918,9 @@ implements LoadClient<T> {
 				nextLoadSvc.close();
 				LOG.info(Markers.MSG, "Server instance @ {} has been closed", addr);
 			} catch(final NoSuchElementException e) {
-				LOG.debug(Markers.ERR, "Looks like the remote load service is already shut down");
+				LOG.debug(
+					Markers.ERR, "Looks like the remote load service is already shut down"
+				);
 			} catch(final IOException e) {
 				LOG.warn(Markers.ERR, "Failed to close remote load executor service");
 				LOG.trace(Markers.ERR, e.toString(), e.getCause());
@@ -942,8 +935,10 @@ implements LoadClient<T> {
 			} catch(final NoSuchElementException e) {
 				LOG.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
 			} catch(final IOException e) {
-				LOG.warn(Markers.ERR, "Failed to close remote load JMX connection "+nextJMXConn);
-				LOG.trace(Markers.ERR, e.toString(), e.getCause());
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e,
+					String.format("Failed to close JMX connection to %s", addr)
+				);
 			}
 			//
 		}

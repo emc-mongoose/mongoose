@@ -167,7 +167,7 @@ implements LoadExecutor<T> {
 		//
 		tsStart = System.nanoTime();
 		super.start();
-		LOG.debug(Markers.MSG, "Started {}", getName());
+		LOG.info(Markers.MSG, "Started \"{}\"", getName());
 	}
 	//
 	@Override
@@ -295,7 +295,11 @@ implements LoadExecutor<T> {
 			interrupt();
 		}
 		// poison the consumer
-		consumer.submit(null);
+		try {
+			consumer.submit(null);
+		} catch(final IllegalStateException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to feed the poison");
+		}
 		// close node executors
 		final ArrayList<Thread> nodeClosers = new ArrayList<>(nodes.length);
 		Thread nextShutDownThread;

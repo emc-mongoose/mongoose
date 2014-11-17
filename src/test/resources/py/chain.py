@@ -8,7 +8,7 @@ from org.apache.logging.log4j import Level, LogManager
 from com.emc.mongoose.base.api import Request
 from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.logging import ExceptionHandler, Markers
-from com.emc.mongoose.base.data.persist import DataItemBuffer
+from com.emc.mongoose.base.load import DataItemBuffer
 #
 from java.lang import Long, Throwable, IllegalArgumentException
 from java.util import NoSuchElementException
@@ -135,6 +135,9 @@ if __name__=="__builtin__":
 		dataItemSizeMax if dataItemSize == 0 else dataItemSize,
 		threadsPerNode
 	)
-	execute(chain, FLAG_SIMULTANEOUS)
+	try:
+		execute(chain, FLAG_SIMULTANEOUS)
+	except Throwable as e:
+		e.printStackTrace()
 	#
 	LOG.info(Markers.MSG, "Scenario end")

@@ -233,6 +233,11 @@ implements StorageNodeExecutor<T> {
 										"Failed to submit the object \"%s\" to consumer", dataItem
 									)
 								);
+							} catch(final IllegalStateException e) {
+								LOG.debug(
+									Markers.ERR,
+									"Looks like the consumer \"{}\" is already shutdown", consumer
+								);
 							}
 						}
 					} else {
@@ -274,8 +279,7 @@ implements StorageNodeExecutor<T> {
 			} catch(final Exception e) {
 				counterReqFail.inc();
 				counterReqFailParent.inc();
-				LOG.warn(Markers.MSG, reqTask.getClass().getCanonicalName());
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
 			}
 		}
 		//

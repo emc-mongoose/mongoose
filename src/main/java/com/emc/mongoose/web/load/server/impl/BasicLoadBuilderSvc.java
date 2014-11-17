@@ -1,6 +1,9 @@
 package com.emc.mongoose.web.load.server.impl;
 //
+import com.emc.mongoose.base.data.persist.TmpFileItemBuffer;
+import com.emc.mongoose.base.load.DataItemBuffer;
 import com.emc.mongoose.base.load.impl.LoadExecutorBase;
+import com.emc.mongoose.base.load.server.DataItemBufferSvc;
 import com.emc.mongoose.object.load.server.ObjectLoadSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.data.WSObject;
@@ -21,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Locale;
 /**
@@ -131,6 +135,16 @@ implements WSLoadBuilderSvc<T, U> {
 		//
 		return (U) loadSvc;
 	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	public DataItemBufferSvc<T> newDataItemBuffer()
+	throws IOException {
+		return (DataItemBufferSvc<T>) ServiceUtils.create(
+			new TmpFileItemBuffer<>(getMaxCount(), 1)
+		);
+	}
+	//
+
 	/*
 	public final void run() {
 		start();

@@ -2,8 +2,8 @@ package com.emc.mongoose.base.data.persist;
 //
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.base.load.server.DataItemBufferSvc;
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 //
 import com.emc.mongoose.util.logging.Markers;
@@ -31,56 +31,43 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class TmpFileItemBuffer<T extends DataItem>
 extends Thread
-implements DataItemBuffer<T> {
+implements DataItemBufferSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private volatile File fBuff;
-	private volatile ObjectOutput fBuffOut;
-	private volatile ExecutorService outPutExecutor;
-	private volatile long maxCount;
+	private final File fBuff;
+	private final ExecutorService outPutExecutor;
 	private final AtomicLong writtenDataItems = new AtomicLong(0);
-	private volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
-	private volatile int threadCount, retryCountMax, retryDelayMilliSec;
-	private volatile String suffix = "?";
+	private volatile long maxCount;
+	private volatile ObjectOutput fBuffOut;
+	private volatile int retryCountMax, retryDelayMilliSec;
 	//
-	private void init() {
-		setName(String.format(FMT_THREAD_NAME, runTimeConfig.getRunName(), suffix));
-	}
-	//
-	public TmpFileItemBuffer() {
-		init();
-	}
-	//
-	public TmpFileItemBuffer(
-		final RunTimeConfig runTimeConfig, final String suffix, final long maxCount,
-		final int threadCount
-	) throws IOException {
-		this.runTimeConfig = runTimeConfig;
-		this.suffix = suffix;
-		this.threadCount = threadCount;
+	public TmpFileItemBuffer(final long maxCount, final int threadCount)
+	throws IOException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		init();
 		//
-		retryCountMax = runTimeConfig.getRunRetryCountMax();
-		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
+		retryCountMax = Main.RUN_TIME_CONFIG.getRunRetryCountMax();
+		retryDelayMilliSec = Main.RUN_TIME_CONFIG.getRunRetryDelayMilliSec();
 		//
-		fBuff = Files.createTempFile(getName(), null).toFile();
+		fBuff = Files.createTempFile(
+			String.format(FMT_THREAD_NAME, Main.RUN_TIME_CONFIG.getRunName()), null
+		).toFile();
+		setName(fBuff.getName());
+		LOG.debug(Markers.MSG, "{}: created temp file", getName());
+		fBuff.deleteOnExit();
 		//
 		ObjectOutput fBuffOutTmp = null;
 		try {
-			assert fBuff != null;
 			fBuffOutTmp = new ObjectOutputStream(
 				new FileOutputStream(fBuff)
 			);
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to open temporary file for output");
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "failed to open temporary file for output");
 		} finally {
 			fBuffOut = fBuffOutTmp;
 		}
 		//
 		outPutExecutor = Executors.newFixedThreadPool(threadCount);
-		this.maxCount = maxCount == 0 ? Long.MAX_VALUE : maxCount;
 		//
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,7 +89,7 @@ implements DataItemBuffer<T> {
 			try {
 				fBuffOut.writeObject(dataItem);
 			} catch(final IOException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to write out the data item");
+				ExceptionHandler.trace(LOG, Level.WARN, e, "failed to write out the data item");
 			}
 		}
 	}
@@ -111,7 +98,9 @@ implements DataItemBuffer<T> {
 	public final void submit(T dataItem)
 	throws IllegalStateException {
 		//
-		if(dataItem == null) {
+		if(outPutExecutor.isShutdown() || fBuffOut == null) {
+			throw new IllegalStateException();
+		} else if(dataItem == null) {
 			outPutExecutor.shutdown();
 		} else {
 			//
@@ -120,8 +109,8 @@ implements DataItemBuffer<T> {
 			int rejectCount = 0;
 			while(
 				!passed && rejectCount < retryCountMax && writtenDataItems.get() < maxCount &&
-				!outPutExecutor.isShutdown()
-			) {
+					!outPutExecutor.isShutdown()
+				) {
 				try {
 					outPutExecutor.submit(outPutTask);
 					writtenDataItems.incrementAndGet();
@@ -138,8 +127,8 @@ implements DataItemBuffer<T> {
 			//
 			if(!passed) {
 				LOG.debug(
-					Markers.ERR, "Data item \"{}\" has been rejected after {} tries",
-					dataItem, rejectCount
+					Markers.ERR, "data item \"{}\" has been rejected after {} tries",
+					getName(), dataItem, rejectCount
 				);
 			}
 		}
@@ -159,27 +148,30 @@ implements DataItemBuffer<T> {
 	@Override
 	public final synchronized void close()
 	throws IOException {
-		//
-		LOG.info(Markers.MSG, "The output to the file \"{}\" is done", fBuff.getAbsolutePath());
-		//
-		outPutExecutor.shutdown();
-		try {
-			outPutExecutor.awaitTermination(
-				runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
-			);
-		} catch(final InterruptedException e) {
-			ExceptionHandler.trace(
-				LOG, Level.DEBUG, e, "Interrupted while writing out the remaining data items"
-			);
-		} finally {
-			final int droppedTaskCount = outPutExecutor.shutdownNow().size();
-			LOG.debug(
-				Markers.MSG, "Wrote {} data items, dropped {}",
-				writtenDataItems.addAndGet(-droppedTaskCount), droppedTaskCount
-			);
+		if(fBuffOut != null) {
+			//
+			LOG.debug(Markers.MSG, "{}: output to the file is done", getName());
+			//
+			outPutExecutor.shutdown();
+			try {
+				outPutExecutor.awaitTermination(
+					Main.RUN_TIME_CONFIG.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+				);
+			} catch(final InterruptedException e) {
+				ExceptionHandler.trace(
+					LOG, Level.DEBUG, e, "Interrupted while writing out the remaining data items"
+				);
+			} finally {
+				final int droppedTaskCount = outPutExecutor.shutdownNow().size();
+				LOG.debug(
+					Markers.MSG, "{}: wrote {} data items, dropped {}", getName(),
+					writtenDataItems.addAndGet(-droppedTaskCount), droppedTaskCount
+				);
+			}
+			//
+			fBuffOut.close();
+			fBuffOut = null;
 		}
-		//
-		fBuffOut.close();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
@@ -200,9 +192,11 @@ implements DataItemBuffer<T> {
 	public final void run() {
 		//
 		if(!outPutExecutor.isTerminated()) {
-			throw new IllegalStateException("Output has not been closed yet");
+			throw new IllegalStateException(
+				String.format("%s: output has not been closed yet", getName())
+			);
 		} else {
-			LOG.info(Markers.MSG, "Starting the input from the file \"{}\"", fBuff.getAbsolutePath());
+			LOG.debug(Markers.MSG, "{}: started", getName());
 		}
 		//
 		long
@@ -213,9 +207,9 @@ implements DataItemBuffer<T> {
 		} catch(final RemoteException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
 		}
-		LOG.info(
-			Markers.MSG, "\"{}\" has {} available data items to read, while consumer limit is {}",
-			fBuff.getAbsolutePath(), availDataItems, consumerMaxCount
+		LOG.debug(
+			Markers.MSG, "{}: {} available data items to read, while consumer limit is {}",
+			getName(), availDataItems, consumerMaxCount
 		);
 		//
 		T nextDataItem;
@@ -227,7 +221,7 @@ implements DataItemBuffer<T> {
 					break;
 				}
 			}
-			LOG.info(Markers.MSG, "Producing from \"{}\" done", fBuff.getAbsolutePath());
+			LOG.debug(Markers.MSG, "{}: producing done", getName());
 		} catch(final IOException | ClassNotFoundException | ClassCastException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to read a data item");
 		} finally {
@@ -249,58 +243,7 @@ implements DataItemBuffer<T> {
 				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to submit");
 			}
 		}
-		fBuff.deleteOnExit();
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// Externalizable implementation
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public final synchronized void writeExternal(final ObjectOutput out)
-	throws IOException {
-		out.writeObject(runTimeConfig);
-		out.writeObject(suffix);
-		out.writeInt(threadCount);
-		out.writeLong(maxCount);
-	}
-	//
-	@Override
-	public final synchronized void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		//
-		runTimeConfig = RunTimeConfig.class.cast(in.readObject());
-		suffix = String.class.cast(in.readObject());
-		threadCount = in.readInt();
-		maxCount = in.readLong();
-		//
-		init();
-		//
-		retryCountMax = runTimeConfig.getRunRetryCountMax();
-		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
-		//
-		File fBuffTmp = null;
-		try {
-			fBuffTmp = Files.createTempFile(getName(), null).toFile();
-		} catch(final IllegalArgumentException | UnsupportedOperationException | IOException | SecurityException  e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create temp file");
-		} finally {
-			fBuff = fBuffTmp;
-		}
-		//
-		ObjectOutput fBuffOutTmp = null;
-		try {
-			assert fBuff != null;
-			fBuffOutTmp = new ObjectOutputStream(
-				new FileOutputStream(fBuff)
-			);
-		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to open temporary file for output");
-		} finally {
-			fBuffOut = fBuffOutTmp;
-		}
-		//
-		outPutExecutor = Executors.newFixedThreadPool(threadCount);
-		//
-		LOG.info(Markers.MSG, "Uploaded temp file items buffer: \"{}\"", fBuff.getAbsolutePath());
+		LOG.debug(Markers.MSG, "{}: interrupted", getName());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }
