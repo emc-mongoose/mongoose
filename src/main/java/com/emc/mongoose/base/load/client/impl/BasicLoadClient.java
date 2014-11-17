@@ -873,7 +873,7 @@ implements LoadClient<T> {
 							LOG.trace(Markers.MSG, "Interrupted remote service @ {}", addr);
 						} catch(final IOException e) {
 							ExceptionHandler.trace(
-								LOG, Level.WARN, e,
+								LOG, Level.DEBUG, e,
 								"Failed to interrupt remote load service @ " + addr
 							);
 						}
