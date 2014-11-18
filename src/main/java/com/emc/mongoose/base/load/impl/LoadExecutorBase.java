@@ -37,6 +37,8 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -235,53 +237,47 @@ implements LoadExecutor<T> {
 		maxCount = counterSubm.getCount() + counterRej.getCount();
 		LOG.trace(Markers.MSG, "Interrupting, max count is set to {}", maxCount);
 		//
-		final Thread interrupters[] = new Thread[nodes.length < 2 ? 2 : nodes.length];
-		interrupters[0] = new Thread("interruptProducer-" + getName()) {
-			@Override
-			public final void run() {
-				if(producer != null) {
-					try {
-						producer.interrupt();
-						LOG.debug(Markers.MSG, "Stopped object producer {}", producer.toString());
-					} catch(final IOException e) {
-						ExceptionHandler.trace(
-							LOG, Level.WARN, e,
-							String.format("Failed to stop the producer: %s", producer.toString())
-						);
+		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(nodes.length);
+		//
+		interruptExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {
+					if(producer != null) {
+						try {
+							producer.interrupt();
+							LOG.debug(Markers.MSG, "Stopped object producer {}", producer.toString());
+						} catch(final IOException e) {
+							ExceptionHandler.trace(
+								LOG, Level.WARN, e,
+								String.format("Failed to stop the producer: %s", producer.toString())
+							);
+						}
 					}
 				}
 			}
-		};
-		// interrupt the submit execution
-		interrupters[1] = new Thread(
-			new GentleExecutorShutDown(submitExecutor, runTimeConfig),
-			String.format("interruptSubmitter-%s", getName())
 		);
-		interrupters[1].start();
 		//
-		try {
-			interrupters[0].join();
-		} catch(final InterruptedException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while interrupting producer");
-		}
-		try {
-			interrupters[1].join();
-		} catch(final InterruptedException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while interrupting submitter");
-		}
+		interruptExecutor.submit(new GentleExecutorShutDown(submitExecutor, runTimeConfig));
 		// interrupt node executors
 		for(final StorageNodeExecutor<T> nextNode: nodes) {
-			ThreadPoolExecutor.class.cast(nextNode).shutdown();
+			interruptExecutor.submit(
+				new Runnable() {
+					@Override
+					public final void run() {
+						ThreadPoolExecutor.class.cast(nextNode).shutdown();
+					}
+				}
+			);
 		}
-		// wait for node executors to become interrupted
-		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
-		for(final Thread interrupter : interrupters) {
-			try {
-				interrupter.join(reqTimeOutMilliSec);
-				LOG.debug(Markers.MSG, "Finished: \"{}\"", interrupter.getName());
-			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while interrupting the node executor");
-			}
+		//
+		interruptExecutor.shutdown();
+		try {
+			interruptExecutor.awaitTermination(
+				Main.RUN_TIME_CONFIG.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+			);
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.ERR, "Interrupted externally");
 		}
 		// interrupt the monitoring thread
 		if(!isInterrupted()) {
