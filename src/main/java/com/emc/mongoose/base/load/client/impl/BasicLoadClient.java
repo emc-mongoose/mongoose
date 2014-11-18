@@ -914,9 +914,8 @@ implements LoadClient<T> {
 			//
 			try {
 				nextLoadSvc = remoteLoadMap.get(addr);
-				LOG.debug(Markers.MSG, "Closing server instance @ {}...", addr);
 				nextLoadSvc.close();
-				LOG.info(Markers.MSG, "Server instance @ {} has been closed", addr);
+				LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
 			} catch(final NoSuchElementException e) {
 				LOG.debug(
 					Markers.ERR, "Looks like the remote load service is already shut down"
