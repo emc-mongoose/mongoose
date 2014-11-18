@@ -282,59 +282,62 @@ implements LoadExecutor<T> {
 	public synchronized void close()
 	throws IOException {
 		//
-		if(!isInterrupted()) {
-			interrupt();
-		}
-		// poison the consumer
-		try {
-			consumer.submit(null);
-		} catch(final IllegalStateException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to feed the poison");
-		}
-		//
-		synchronized(LOG) {
-			// provide summary metrics
-			LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-			logMetrics(Markers.PERF_SUM);
-		}
-		// close node executors
-		final ArrayList<Thread> nodeClosers = new ArrayList<>(nodes.length);
-		Thread nextShutDownThread;
-		for(final StorageNodeExecutor<T> nodeExecutor: nodes) {
-			nextShutDownThread = new Thread("closeNodeExecutor-"+nodeExecutor.toString()) {
-				@Override
-				public final void run() {
-					try {
-						nodeExecutor.close();
-					} catch(final IOException e) {
-						ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to close node executor");
+		if(!isDaemon()) { // this is just not-closed-yet marker
+			if(!isInterrupted()) {
+				interrupt();
+			}
+			// poison the consumer
+			try {
+				consumer.submit(null);
+			} catch(final IllegalStateException e) {
+				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to feed the poison");
+			}
+			//
+			synchronized(LOG) {
+				// provide summary metrics
+				LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
+				logMetrics(Markers.PERF_SUM);
+			}
+			// close node executors
+			final ArrayList<Thread> nodeClosers = new ArrayList<>(nodes.length);
+			Thread nextShutDownThread;
+			for(final StorageNodeExecutor<T> nodeExecutor : nodes) {
+				nextShutDownThread = new Thread("closeNodeExecutor-" + nodeExecutor.toString()) {
+					@Override
+					public final void run() {
+						try {
+							nodeExecutor.close();
+						} catch(final IOException e) {
+							ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to close node executor");
+						}
 					}
+				};
+				nextShutDownThread.start();
+				nodeClosers.add(nextShutDownThread);
+			}
+			//
+			for(final Thread nextClosingThread : nodeClosers) {
+				try {
+					nextClosingThread.join(runTimeConfig.getRunReqTimeOutMilliSec());
+				} catch(final InterruptedException e) {
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Interrupted closing node executor");
 				}
-			};
-			nextShutDownThread.start();
-			nodeClosers.add(nextShutDownThread);
-		}
-		//
-		for(final Thread nextClosingThread: nodeClosers) {
-			try {
-				nextClosingThread.join(runTimeConfig.getRunReqTimeOutMilliSec());
-			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Interrupted closing node executor");
 			}
-		}
-		//
-		metricsReporter.close();
-		//
-		if(client != null) {
-			try {
-				client.close();
-				LOG.debug(Markers.MSG, "Storage client closed");
-			} catch(final IOException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Storage client closing failed");
+			//
+			metricsReporter.close();
+			//
+			if(client!=null) {
+				try {
+					client.close();
+					LOG.debug(Markers.MSG, "Storage client closed");
+				} catch(final IOException e) {
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Storage client closing failed");
+				}
 			}
+			//
+			LOG.debug(Markers.MSG, "Closed {}", getName());
+			setDaemon(true); // this is just closed-already marker
 		}
-		//
-		LOG.debug(Markers.MSG, "Closed {}", getName());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

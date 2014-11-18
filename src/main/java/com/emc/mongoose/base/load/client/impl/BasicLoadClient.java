@@ -893,58 +893,60 @@ implements LoadClient<T> {
 	@Override
 	public final synchronized void close()
 	throws IOException {
-		if(!isInterrupted()) {
-			interrupt();
-		}
-		//
-		synchronized(LOG) {
-			LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-			logMetaInfoFrames();
-			logMetrics(Markers.PERF_SUM);
-		}
-		//
-		LoadSvc<T> nextLoadSvc;
-		JMXConnector nextJMXConn = null;
-		//
-		mgmtConnExecutor.shutdownNow();
-		//
-		metricsReporter.close();
-		//
-		LOG.debug(Markers.MSG, "Closing the remote services...");
-		for(final String addr : remoteLoadMap.keySet()) {
-			//
-			try {
-				nextLoadSvc = remoteLoadMap.get(addr);
-				nextLoadSvc.close();
-				LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
-			} catch(final NoSuchElementException e) {
-				LOG.debug(
-					Markers.ERR, "Looks like the remote load service is already shut down"
-				);
-			} catch(final IOException e) {
-				LOG.warn(Markers.ERR, "Failed to close remote load executor service");
-				LOG.trace(Markers.ERR, e.toString(), e.getCause());
+		if(!remoteLoadMap.isEmpty()) {
+			if(!isInterrupted()) {
+				interrupt();
 			}
 			//
-			try {
-				nextJMXConn = remoteJMXConnMap.get(addr);
-				if(nextJMXConn!=null) {
-					nextJMXConn.close();
-					LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
+			synchronized(LOG) {
+				LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
+				logMetaInfoFrames();
+				logMetrics(Markers.PERF_SUM);
+			}
+			//
+			LoadSvc<T> nextLoadSvc;
+			JMXConnector nextJMXConn = null;
+			//
+			mgmtConnExecutor.shutdownNow();
+			//
+			metricsReporter.close();
+			//
+			LOG.debug(Markers.MSG, "Closing the remote services...");
+			for(final String addr : remoteLoadMap.keySet()) {
+				//
+				try {
+					nextLoadSvc = remoteLoadMap.get(addr);
+					nextLoadSvc.close();
+					LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
+				} catch(final NoSuchElementException e) {
+					LOG.debug(
+						Markers.ERR, "Looks like the remote load service is already shut down"
+					);
+				} catch(final IOException e) {
+					LOG.warn(Markers.ERR, "Failed to close remote load executor service");
+					LOG.trace(Markers.ERR, e.toString(), e.getCause());
 				}
-			} catch(final NoSuchElementException e) {
-				LOG.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
-			} catch(final IOException e) {
-				ExceptionHandler.trace(
-					LOG, Level.WARN, e,
-					String.format("Failed to close JMX connection to %s", addr)
-				);
+				//
+				try {
+					nextJMXConn = remoteJMXConnMap.get(addr);
+					if(nextJMXConn!=null) {
+						nextJMXConn.close();
+						LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
+					}
+				} catch(final NoSuchElementException e) {
+					LOG.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
+				} catch(final IOException e) {
+					ExceptionHandler.trace(
+						LOG, Level.WARN, e,
+						String.format("Failed to close JMX connection to %s", addr)
+					);
+				}
+				//
 			}
-			//
+			LOG.debug(Markers.MSG, "Clear the servers map");
+			remoteLoadMap.clear();
+			LOG.debug(Markers.MSG, "Closed {}", getName());
 		}
-		LOG.debug(Markers.MSG, "Clear the servers map");
-		remoteLoadMap.clear();
-		LOG.debug(Markers.MSG, "Closed {}", getName());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

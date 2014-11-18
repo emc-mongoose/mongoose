@@ -9,6 +9,7 @@
 				"value": "${sys:dir.root}${sys:file.separator}log${sys:file.separator}${sys:run.mode}${sys:file.separator}"
 			}
 		},
+		"shutdownHook": "enable",
 		"appenders": {
 			"appender" : [
 				{
