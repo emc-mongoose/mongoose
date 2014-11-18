@@ -42,16 +42,16 @@
 			 	}, {
 					"name": "hibernate",
 					"type": "Hibernate",
-					"enabled": "true",
+					"enabled": "false",
 					"runid": "${sys:run.id}",
 					"runmode": "${sys:run.mode}",
 					"database": "postgresql",
 					"username": "mongoose",
-                    "password": "mongoose",
-                    "addr": "localhost",
-                    "port": "5432",
-                    "namedatabase": "mongoose",
-                    "Filters": {
+					"password": "mongoose",
+					"addr": "localhost",
+					"port": "5432",
+					"namedatabase": "mongoose",
+					"Filters": {
 						"Filter": [
 							{
 								"type": "MarkerFilter",
