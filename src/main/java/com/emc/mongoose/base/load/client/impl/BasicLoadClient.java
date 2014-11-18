@@ -828,12 +828,6 @@ implements LoadClient<T> {
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
-		} finally {
-			synchronized(LOG) {
-				LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-				logMetaInfoFrames();
-				logMetrics(Markers.PERF_SUM);
-			}
 		}
 		//
 		LOG.trace(Markers.MSG, "Finish reached");
@@ -903,10 +897,17 @@ implements LoadClient<T> {
 			interrupt();
 		}
 		//
+		synchronized(LOG) {
+			LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
+			logMetaInfoFrames();
+			logMetrics(Markers.PERF_SUM);
+		}
+		//
 		LoadSvc<T> nextLoadSvc;
 		JMXConnector nextJMXConn = null;
 		//
 		mgmtConnExecutor.shutdownNow();
+		//
 		metricsReporter.close();
 		//
 		LOG.debug(Markers.MSG, "Closing the remote services...");
