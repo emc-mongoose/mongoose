@@ -28,7 +28,7 @@ except NoSuchElementException:
 	LOG.error(Markers.ERR, "No chain simultaneous flag specified, try arg -Dscenario.chain.simultaneous=<VALUE> to override")
 LOG.info(
 	Markers.MSG,
-	"Simultaneous" if FLAG_SIMULTANEOUS else "Sequential" + " load chain: {}",
+	("Simultaneous" if FLAG_SIMULTANEOUS else "Sequential") + " load chain: {}",
 	LOAD_CHAIN
 )
 #
