@@ -390,7 +390,7 @@ implements WSRequestConfig<T> {
 			if(dataItem.isRangeUpdatePending(i)) {
 				LOG.trace(Markers.MSG, "\"{}\": should update range #{}", dataItem, i);
 				if(rangeBeg < 0) { // begin of the possible updated ranges sequence
-					rangeBeg = DataRanges.getRangeOffset(i);;
+					rangeBeg = DataRanges.getRangeOffset(i);
 					rangeEnd = rangeBeg + rangeLen - 1;
 					LOG.trace(
 						Markers.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg

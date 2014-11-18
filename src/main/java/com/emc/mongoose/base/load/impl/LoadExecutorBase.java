@@ -104,8 +104,10 @@ implements LoadExecutor<T> {
 			.registerWith(mBeanServer)
 			.build();
 		//
-		final int nodeCount = addrs.length;
-		final String name = Integer.toString(instanceN++) + '-' +
+		final int
+			nodeCount = addrs.length,
+			loadNumber = instanceN ++;
+		final String name = Integer.toString(loadNumber) + '-' +
 			StringUtils.capitalize(reqConf.getAPI().toLowerCase()) + '-' +
 			StringUtils.capitalize(reqConf.getLoadType().toString().toLowerCase()) +
 			(maxCount>0? Long.toString(maxCount) : "") + '-' +
@@ -132,10 +134,10 @@ implements LoadExecutor<T> {
 		submitExecutor = new ThreadPoolExecutor(
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("submitDataItems", new HashMap<String,String>())
+			new WorkerFactory("submitDataItems")
 		);
 		client = initClient(addrs, reqConf);
-		initNodeExecutors(addrs, reqConf);
+		initNodeExecutors(addrs, reqConf.clone().setLoadNumber(loadNumber));
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
 	}

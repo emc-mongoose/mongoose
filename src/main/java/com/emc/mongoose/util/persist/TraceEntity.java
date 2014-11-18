@@ -28,7 +28,7 @@ implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
-	private BigInteger id;
+	private long id;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "dataItem", nullable = false)
 	private DataObjectEntity dataitem;
@@ -39,15 +39,15 @@ implements Serializable{
 	@JoinColumn(name = "status", nullable = false)
 	private StatusEntity status;
 	@Column(name = "tsReqStart")
-	private BigInteger tsReqStart;
+	private long tsReqStart;
 	@Column(name = "reqDur")
-	private BigInteger reqDur;
+	private long reqDur;
 	//
 	public TraceEntity(){
 	}
 	public TraceEntity(final DataObjectEntity dataitem, final ThreadEntity thread,
-					   final StatusEntity status, final BigInteger tsReqStart,
-					   final BigInteger reqDur){
+					   final StatusEntity status, final long tsReqStart,
+					   final long reqDur){
 		this.dataitem = dataitem;
 		dataitem.getTraceSet().add(this);
 		this.thread = thread;
@@ -58,10 +58,10 @@ implements Serializable{
 		this.reqDur = reqDur;
 	}
 	//
-	public final BigInteger getId() {
+	public final long getId() {
 		return id;
 	}
-	public final void setId(final BigInteger id) {
+	public final void setId(final long id) {
 		this.id = id;
 	}
 	public final DataObjectEntity getDataitem() {
@@ -82,16 +82,16 @@ implements Serializable{
 	public final void setStatus(final StatusEntity status) {
 		this.status = status;
 	}
-	public final BigInteger getTsReqStart() {
+	public final long getTsReqStart() {
 		return tsReqStart;
 	}
-	public final void setTsReqStart(final BigInteger tsReqStart) {
+	public final void setTsReqStart(final long tsReqStart) {
 		this.tsReqStart = tsReqStart;
 	}
-	public final BigInteger getReqDur() {
+	public final long getReqDur() {
 		return reqDur;
 	}
-	public final void setReqDur(final BigInteger reqDur) {
+	public final void setReqDur(final long reqDur) {
 		this.reqDur = reqDur;
 	}
 }

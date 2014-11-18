@@ -329,7 +329,7 @@ implements LoadClient<T> {
 		submitExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("submitDataItems", new HashMap<String, String>())
+			new WorkerFactory("submitDataItems")
 		);
 		submitExecutor.prestartAllCoreThreads();
 		//
@@ -337,7 +337,7 @@ implements LoadClient<T> {
 		mgmtConnExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("getMetricValue", new HashMap<String, String>())
+			new WorkerFactory("getMetricValue")
 		) {
 			@Override @SuppressWarnings("NullableProblems")
 			public final <V> Future<V> submit(final Callable<V> task) {

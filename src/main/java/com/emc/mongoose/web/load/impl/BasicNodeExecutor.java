@@ -26,9 +26,9 @@ implements WSNodeExecutor<T> {
 	public BasicNodeExecutor(
 		final RunTimeConfig runTimeConfig,
 		final String addr, final int threadsPerNode, final WSRequestConfig<T> sharedReqConf,
-		final MetricRegistry parentMetrics, final String parentName, final Map<String,String> context
+		final MetricRegistry parentMetrics, final String parentName
 	) throws CloneNotSupportedException {
-		super(runTimeConfig, addr, threadsPerNode, sharedReqConf, parentMetrics, parentName, context);
+		super(runTimeConfig, addr, threadsPerNode, sharedReqConf, parentMetrics, parentName);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
