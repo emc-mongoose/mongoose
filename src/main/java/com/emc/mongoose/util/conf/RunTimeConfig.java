@@ -1,14 +1,8 @@
 package com.emc.mongoose.util.conf;
 //
-import com.emc.mongoose.base.data.impl.UniformDataSource;
-import com.emc.mongoose.base.load.impl.ShutDownHook;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.remote.ServiceUtils;
-import com.emc.mongoose.web.api.impl.BasicWSRequest;
-import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
-import com.emc.mongoose.web.load.impl.WSLoadHelper;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
@@ -356,11 +350,12 @@ implements Externalizable {
 				}
 			}
 		} else {
-			LOG.fatal(
-				Markers.ERR, "Version mismatch, server: {}, client: {}",
-				serverVersion, clientVersion
+			final String errMsg = String.format(
+				"%s, version mismatch, server: %s client: %s",
+				getRunName(), serverVersion, clientVersion
 			);
-			throw new IOException("Version mismatch");
+			LOG.fatal(Markers.ERR, errMsg);
+			throw new IOException(errMsg);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
