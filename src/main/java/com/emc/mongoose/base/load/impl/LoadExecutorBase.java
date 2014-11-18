@@ -130,7 +130,7 @@ implements LoadExecutor<T> {
 		dataSrc = reqConf.getDataSource();
 		setFileBasedProducer(listFile);
 		final int
-			submitThreadCount = threadsPerNode * addrs.length,
+			submitThreadCount = addrs.length * (int) Math.pow(threadsPerNode, 0.8),
 			queueSize = submitThreadCount * runTimeConfig.getRunRequestQueueFactor();
 		submitExecutor = new ThreadPoolExecutor(
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
@@ -217,12 +217,6 @@ implements LoadExecutor<T> {
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
-		} finally {
-			synchronized(LOG) {
-				// provide summary metrics
-				LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-				logMetrics(Markers.PERF_SUM);
-			}
 		}
 		//
 		LOG.trace(Markers.MSG, "Finish reached");
@@ -296,6 +290,12 @@ implements LoadExecutor<T> {
 			consumer.submit(null);
 		} catch(final IllegalStateException e) {
 			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to feed the poison");
+		}
+		//
+		synchronized(LOG) {
+			// provide summary metrics
+			LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
+			logMetrics(Markers.PERF_SUM);
 		}
 		// close node executors
 		final ArrayList<Thread> nodeClosers = new ArrayList<>(nodes.length);
