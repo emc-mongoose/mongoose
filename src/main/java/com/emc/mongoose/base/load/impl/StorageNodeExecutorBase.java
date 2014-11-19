@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -312,24 +313,42 @@ implements StorageNodeExecutor<T> {
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
-		final String message = LoadExecutor.MSG_FMT_METRICS.format(
-				new Object[] {
-						countReqSucc, getQueue().size() + getActiveCount(), counterReqFail.getCount(),
-						//
-						(float) reqDurSnapshot.getMin() / LoadExecutor.BILLION,
-						(float) reqDurSnapshot.getMedian() / LoadExecutor.BILLION,
-						(float) reqDurSnapshot.getMean() / LoadExecutor.BILLION,
-						(float) reqDurSnapshot.getMax() / LoadExecutor.BILLION,
-						//
-						avgSize==0 ? 0 : meanBW/avgSize,
-						avgSize==0 ? 0 : oneMinBW/avgSize,
-						avgSize==0 ? 0 : fiveMinBW/avgSize,
-						avgSize==0 ? 0 : fifteenMinBW/avgSize,
-						//
-						meanBW/LoadExecutor.MIB, oneMinBW/LoadExecutor.MIB,
-						fiveMinBW/LoadExecutor.MIB, fifteenMinBW/LoadExecutor.MIB
-				}
-		);
+		final String message = Markers.PERF_SUM.equals(logMarker) ?
+			String.format(
+				Locale.ROOT, MSG_FMT_SUM_METRICS,
+				//
+				getName(),
+				countReqSucc, counterReqFail.getCount(),
+				//
+				(float) reqDurSnapshot.getMean() / BILLION,
+				(float) reqDurSnapshot.getMin() / BILLION,
+				(float) reqDurSnapshot.getMedian() / BILLION,
+				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				avgSize == 0 ? 0 : meanBW / avgSize,
+				avgSize == 0 ? 0 : oneMinBW / avgSize,
+				avgSize == 0 ? 0 : fiveMinBW / avgSize,
+				avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+				//
+				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+			) :
+			String.format(
+				Locale.ROOT, MSG_FMT_METRICS,
+				//
+				countReqSucc, getQueue().size() + getActiveCount(), counterReqFail.getCount(),
+				//
+				(float) reqDurSnapshot.getMin() / BILLION,
+				(float) reqDurSnapshot.getMedian() / BILLION,
+				(float) reqDurSnapshot.getMean() / BILLION,
+				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				avgSize == 0 ? 0 : meanBW / avgSize,
+				avgSize == 0 ? 0 : oneMinBW / avgSize,
+				avgSize == 0 ? 0 : fiveMinBW / avgSize,
+				avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+				//
+				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+			);
 		LOG.log( logLevel, logMarker, localReqConf.getAddr() + ": " +message);
 		if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
 			LOG.trace(
@@ -411,10 +430,7 @@ implements StorageNodeExecutor<T> {
 		localReqConf.setRetries(false);
 		//
 		shutdown();
-		synchronized(LOG) {
-			LOG.debug(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-			logMetrics(Level.DEBUG, Markers.PERF_SUM);
-		}
+		logMetrics(Level.DEBUG, Markers.PERF_SUM);
 	}
 	//
 	@Override

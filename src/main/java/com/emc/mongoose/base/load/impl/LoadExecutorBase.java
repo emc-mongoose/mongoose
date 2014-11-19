@@ -78,6 +78,7 @@ implements LoadExecutor<T> {
 	//
 	private final Lock lock = new ReentrantLock();
 	private final Condition condDone = lock.newCondition();
+	private volatile boolean isClosed = false;
 	//
 	public static int getLastInstanceNum() {
 		return instanceN;
@@ -282,59 +283,60 @@ implements LoadExecutor<T> {
 	public synchronized void close()
 	throws IOException {
 		//
-		if(!isInterrupted()) {
-			interrupt();
-		}
-		// poison the consumer
-		try {
-			consumer.submit(null);
-		} catch(final IllegalStateException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to feed the poison");
-		}
-		//
-		synchronized(LOG) {
+		if(!isClosed) { // this is just not-closed-yet marker
+			if(!isInterrupted()) {
+				interrupt();
+			}
+			// poison the consumer
+			try {
+				consumer.submit(null);
+			} catch(final IllegalStateException e) {
+				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to feed the poison");
+			}
 			// provide summary metrics
-			LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
 			logMetrics(Markers.PERF_SUM);
-		}
-		// close node executors
-		final ArrayList<Thread> nodeClosers = new ArrayList<>(nodes.length);
-		Thread nextShutDownThread;
-		for(final StorageNodeExecutor<T> nodeExecutor: nodes) {
-			nextShutDownThread = new Thread("closeNodeExecutor-"+nodeExecutor.toString()) {
-				@Override
-				public final void run() {
-					try {
-						nodeExecutor.close();
-					} catch(final IOException e) {
-						ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to close node executor");
+			// close node executors
+			final ArrayList<Thread> nodeClosers = new ArrayList<>(nodes.length);
+			Thread nextShutDownThread;
+			for(final StorageNodeExecutor<T> nodeExecutor : nodes) {
+				nextShutDownThread = new Thread("closeNodeExecutor-" + nodeExecutor.toString()) {
+					@Override
+					public final void run() {
+						try {
+							nodeExecutor.close();
+						} catch(final IOException e) {
+							ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to close node executor");
+						}
 					}
+				};
+				nextShutDownThread.start();
+				nodeClosers.add(nextShutDownThread);
+			}
+			//
+			for(final Thread nextClosingThread : nodeClosers) {
+				try {
+					nextClosingThread.join(runTimeConfig.getRunReqTimeOutMilliSec());
+				} catch(final InterruptedException e) {
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Interrupted closing node executor");
 				}
-			};
-			nextShutDownThread.start();
-			nodeClosers.add(nextShutDownThread);
-		}
-		//
-		for(final Thread nextClosingThread: nodeClosers) {
-			try {
-				nextClosingThread.join(runTimeConfig.getRunReqTimeOutMilliSec());
-			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Interrupted closing node executor");
 			}
-		}
-		//
-		metricsReporter.close();
-		//
-		if(client != null) {
-			try {
-				client.close();
-				LOG.debug(Markers.MSG, "Storage client closed");
-			} catch(final IOException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Storage client closing failed");
+			//
+			metricsReporter.close();
+			//
+			if(client!=null) {
+				try {
+					client.close();
+					LOG.debug(Markers.MSG, "Storage client closed");
+				} catch(final IOException e) {
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Storage client closing failed");
+				}
 			}
+			//
+			isClosed = true;
+			LOG.debug(Markers.MSG, "Closed {}", getName());
+		} else {
+			LOG.debug(Markers.ERR, "Closed already");
 		}
-		//
-		LOG.debug(Markers.MSG, "Closed {}", getName());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -408,8 +410,31 @@ implements LoadExecutor<T> {
 		}
 		notCompletedTaskCount += submitExecutor.getQueue().size() + submitExecutor.getActiveCount();
 		//
-		final String message = MSG_FMT_METRICS.format(
-			new Object[] {
+		final String message = Markers.PERF_SUM.equals(logMarker) ?
+			String.format(
+				Locale.ROOT, MSG_FMT_SUM_METRICS,
+				//
+				getName(),
+				countReqSucc, counterReqFail.getCount(),
+				//
+				(float) reqDurSnapshot.getMean() / BILLION,
+				(float) reqDurSnapshot.getMin() / BILLION,
+				(float) reqDurSnapshot.getMedian() / BILLION,
+				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				avgSize == 0 ? 0 : meanBW / avgSize,
+				avgSize == 0 ? 0 : oneMinBW / avgSize,
+				avgSize == 0 ? 0 : fiveMinBW / avgSize,
+				avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+				//
+				meanBW / MIB,
+				oneMinBW / MIB,
+				fiveMinBW / MIB,
+				fifteenMinBW / MIB
+			) :
+			String.format(
+				Locale.ROOT, MSG_FMT_METRICS,
+				//
 				countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
 				//
 				(float) reqDurSnapshot.getMin() / BILLION,
@@ -422,9 +447,11 @@ implements LoadExecutor<T> {
 				avgSize == 0 ? 0 : fiveMinBW / avgSize,
 				avgSize == 0 ? 0 : fifteenMinBW / avgSize,
 				//
-				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
-			}
-		);
+				meanBW / MIB,
+				oneMinBW / MIB,
+				fiveMinBW / MIB,
+				fifteenMinBW / MIB
+			);
 		LOG.info(logMarker, message);
 		//
 		if(Markers.PERF_SUM.equals(logMarker)) {

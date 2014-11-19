@@ -42,10 +42,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -735,23 +738,35 @@ implements LoadClient<T> {
 		try {
 			LOG.info(
 				logMarker,
-				MSG_FMT_METRICS.format(
-					new Object[] {
-						//
-						countReqSucc.get(),
-						submitExecutor.getQueue().size() + submitExecutor.getActiveCount(),
-						countReqFail.get(),
-						//
-						(double) minDur.get() / BILLION,
-						medDur.get() / BILLION,
-						avgDur.get() / BILLION,
-						(double) maxDur.get() / BILLION,
-						//
-						meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
-						//
-						meanBW.get() / MIB,
-						oneMinBW.get() / MIB, fiveMinBW.get() / MIB, fifteenMinBW.get() / MIB
-					}
+				Markers.PERF_SUM.equals(logMarker) ?
+				String.format(
+					Locale.ROOT, MSG_FMT_SUM_METRICS,
+					//
+					getName(),
+					countReqSucc.get(), countReqFail.get(),
+					//
+					avgDur.get() / BILLION, (double) minDur.get() / BILLION,
+					medDur.get() / BILLION, (double) maxDur.get() / BILLION,
+					//
+					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
+					//
+					meanBW.get() / MIB, oneMinBW.get() / MIB, fiveMinBW.get() / MIB,
+					fifteenMinBW.get() / MIB
+				) :
+				String.format(
+					Locale.ROOT, MSG_FMT_METRICS,
+					//
+					countReqSucc.get(),
+					submitExecutor.getQueue().size() + submitExecutor.getActiveCount(),
+					countReqFail.get(),
+					//
+					(double) minDur.get() / BILLION, medDur.get() / BILLION,
+					avgDur.get() / BILLION, (double) maxDur.get() / BILLION,
+					//
+					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
+					//
+					meanBW.get() / MIB, oneMinBW.get() / MIB, fiveMinBW.get() / MIB,
+					fifteenMinBW.get() / MIB
 				)
 			);
 		} catch(final ExecutionException e) {
@@ -839,27 +854,12 @@ implements LoadClient<T> {
 	public final void interrupt() {
 		LOG.debug(Markers.MSG, "Interrupting {}...", getName());
 		//
-		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
-		final LinkedList<Thread> svcInterruptThreads = new LinkedList<>();
-		svcInterruptThreads.add(
-			new Thread(
-				new GentleExecutorShutDown(submitExecutor, runTimeConfig),
-				"interrupt-submit-" + getName()
-			)
-		);
-		svcInterruptThreads.getLast().start();
-		try {
-			svcInterruptThreads.getLast().join();
-			svcInterruptThreads.removeLast();
-		} catch(final InterruptedException e) {
-			ExceptionHandler.trace(
-				LOG, Level.DEBUG, e, "Interrupted while interrupting the submitter"
-			);
-		}
+		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(10);
+		interruptExecutor.submit(new GentleExecutorShutDown(submitExecutor, runTimeConfig));
 		//
 		for(final String addr: remoteLoadMap.keySet()) {
-			svcInterruptThreads.add(
-				new Thread("interrupt-svc-" + getName() + "-" + addr) {
+			interruptExecutor.submit(
+				new Runnable() {
 					@Override
 					public final void run() {
 						try {
@@ -874,16 +874,14 @@ implements LoadClient<T> {
 					}
 				}
 			);
-			svcInterruptThreads.getLast().start();
 		}
 		//
-		for(final Thread svcInterruptThread: svcInterruptThreads) {
-			try {
-				svcInterruptThread.join(reqTimeOutMilliSec);
-				LOG.debug(Markers.MSG, "Finished: \"{}\"", svcInterruptThread);
-			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
-			}
+		interruptExecutor.shutdown();
+		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
+		try {
+			interruptExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
+		} catch(final InterruptedException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
 		}
 		//
 		super.interrupt();
@@ -891,60 +889,65 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final synchronized void close()
+	public final void close()
 	throws IOException {
-		if(!isInterrupted()) {
-			interrupt();
-		}
-		//
-		synchronized(LOG) {
-			LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-			logMetaInfoFrames();
-			logMetrics(Markers.PERF_SUM);
-		}
-		//
-		LoadSvc<T> nextLoadSvc;
-		JMXConnector nextJMXConn = null;
-		//
-		mgmtConnExecutor.shutdownNow();
-		//
-		metricsReporter.close();
-		//
-		LOG.debug(Markers.MSG, "Closing the remote services...");
-		for(final String addr : remoteLoadMap.keySet()) {
-			//
-			try {
-				nextLoadSvc = remoteLoadMap.get(addr);
-				nextLoadSvc.close();
-				LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
-			} catch(final NoSuchElementException e) {
-				LOG.debug(
-					Markers.ERR, "Looks like the remote load service is already shut down"
-				);
-			} catch(final IOException e) {
-				LOG.warn(Markers.ERR, "Failed to close remote load executor service");
-				LOG.trace(Markers.ERR, e.toString(), e.getCause());
-			}
-			//
-			try {
-				nextJMXConn = remoteJMXConnMap.get(addr);
-				if(nextJMXConn!=null) {
-					nextJMXConn.close();
-					LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
+		synchronized(remoteLoadMap) {
+			if(!remoteLoadMap.isEmpty()) {
+				if(!isInterrupted()) {
+					interrupt();
 				}
-			} catch(final NoSuchElementException e) {
-				LOG.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
-			} catch(final IOException e) {
-				ExceptionHandler.trace(
-					LOG, Level.WARN, e,
-					String.format("Failed to close JMX connection to %s", addr)
-				);
+				//
+				LOG.debug(Markers.MSG, "log summary metrics");
+				logMetrics(Markers.PERF_SUM);
+				LOG.debug(Markers.MSG, "log metainfo frames");
+				logMetaInfoFrames();
+				//
+				LoadSvc<T> nextLoadSvc;
+				JMXConnector nextJMXConn = null;
+				//
+				mgmtConnExecutor.shutdownNow();
+				//
+				metricsReporter.close();
+				//
+				LOG.debug(Markers.MSG, "Closing the remote services...");
+				for(final String addr : remoteLoadMap.keySet()) {
+					//
+					try {
+						nextLoadSvc = remoteLoadMap.get(addr);
+						nextLoadSvc.close();
+						LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
+					} catch(final NoSuchElementException e) {
+						LOG.debug(
+							Markers.ERR, "Looks like the remote load service is already shut down"
+						);
+					} catch(final IOException e) {
+						LOG.warn(Markers.ERR, "Failed to close remote load executor service");
+						LOG.trace(Markers.ERR, e.toString(), e.getCause());
+					}
+					//
+					try {
+						nextJMXConn = remoteJMXConnMap.get(addr);
+						if(nextJMXConn!=null) {
+							nextJMXConn.close();
+							LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
+						}
+					} catch(final NoSuchElementException e) {
+						LOG.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
+					} catch(final IOException e) {
+						ExceptionHandler.trace(
+							LOG, Level.WARN, e,
+							String.format("Failed to close JMX connection to %s", addr)
+						);
+					}
+					//
+				}
+				LOG.debug(Markers.MSG, "Clear the servers map");
+				remoteLoadMap.clear();
+				LOG.debug(Markers.MSG, "Closed {}", getName());
+			} else {
+				LOG.debug(Markers.ERR, "Closed already");
 			}
-			//
 		}
-		LOG.debug(Markers.MSG, "Clear the servers map");
-		remoteLoadMap.clear();
-		LOG.debug(Markers.MSG, "Closed {}", getName());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
