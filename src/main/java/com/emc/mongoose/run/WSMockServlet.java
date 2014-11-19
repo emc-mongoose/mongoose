@@ -5,6 +5,7 @@ import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.Snapshot;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
@@ -34,7 +35,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.MessageFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 //
@@ -53,114 +56,125 @@ implements Runnable {
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
 	private final static String
-			METHOD_GET = "get",
-			METHOD_POST = "post",
-			METHOD_PUT = "put",
-			METHOD_DELETE = "delete",
-			METHOD_HEAD = "head",
-			ALL_METHODS = "all",
-			METRIC_COUNT = "count";
+		METHOD_GET = "get",
+		METHOD_POST = "post",
+		METHOD_PUT = "put",
+		METHOD_DELETE = "delete",
+		METHOD_HEAD = "head",
+		ALL_METHODS = "all",
+		METRIC_COUNT = "count";
 	protected final Counter
-			counterAllSucc,
-			counterAllFail,
-			counterGetSucc,
-			counterGetFail,
-			counterPostSucc,
-			counterPostFail,
-			counterPutSucc,
-			counterPutFail,
-			counterDeleteSucc,
-			counterDeleteFail,
-			counterHeadSucc,
-			counterHeadFail;
+		counterAllSucc,
+		counterAllFail,
+		counterGetSucc,
+		counterGetFail,
+		counterPostSucc,
+		counterPostFail,
+		counterPutSucc,
+		counterPutFail,
+		counterDeleteSucc,
+		counterDeleteFail,
+		counterHeadSucc,
+		counterHeadFail;
 	protected final Histogram
-			durAll,
-			durGet,
-			durPost,
-			durPut,
-			durDelete;
+		durAll,
+		durGet,
+		durPost,
+		durPut,
+		durDelete;
 	protected final Meter
-			getBW,
-			postBW,
-			putBW,
-			deleteBW,
-			allTP,
-			getTP,
-			postTP,
-			putTP,
-			deleteTP;
+		allBW,
+		getBW,
+		postBW,
+		putBW,
+		deleteBW,
+		allTP,
+		getTP,
+		postTP,
+		putTP,
+		deleteTP;
 	//
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter metricsReporter;
 	private static int MAX_PAGE_SIZE;
 	// METRICS section END
+	//message format
+	static MessageFormat MSG_FMT_METRICS = new MessageFormat(
+		"count=({0,number,integer}/{1,number,integer}); " +
+		"duration[s]=({2,number,#.###}/{3,number,#.###}/{4,number,#.###}/{5,number,#.###}); " +
+		"TP[/s]=({6,number,#.###}/{7,number,#.###}/{8,number,#.###}/{9,number,#.###}); " +
+		"BW[Mib/s]=({10,number,#.###}/{11,number,#.###}/{12,number,#.###}/{13,number,#.###})",
+		Locale.ROOT
+	);
 	public WSMockServlet(final RunTimeConfig runTimeConfig) {
 		MAX_PAGE_SIZE = (int) runTimeConfig.getDataPageSize();
 		//Init bean server
 		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());
 		metricsReporter = JmxReporter.forRegistry(metrics)
-				.convertDurationsTo(TimeUnit.SECONDS)
-				.convertRatesTo(TimeUnit.SECONDS)
-				.registerWith(mBeanServer)
-				.build();
+			.convertDurationsTo(TimeUnit.SECONDS)
+			.convertRatesTo(TimeUnit.SECONDS)
+			.registerWith(mBeanServer)
+			.build();
 		// init metrics
 		counterAllSucc = metrics.counter(MetricRegistry.name(WSMockServlet.class,
-				ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterAllFail = metrics.counter(MetricRegistry.name(WSMockServlet.class,
-				ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durAll = metrics.histogram(MetricRegistry.name(WSMockServlet.class,
-				ALL_METHODS, LoadExecutor.METRIC_NAME_DUR));
+			ALL_METHODS, LoadExecutor.METRIC_NAME_DUR));
 		allTP = metrics.meter(MetricRegistry.name(WSMockServlet.class,
-				ALL_METHODS, LoadExecutor.METRIC_NAME_TP));
+			ALL_METHODS, LoadExecutor.METRIC_NAME_TP));
+		allBW = metrics.meter(MetricRegistry.name(WSMockServlet.class,
+			ALL_METHODS, LoadExecutor.METRIC_NAME_BW));
 		//
 		counterGetSucc = metrics.counter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_GET, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			METHOD_GET, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterGetFail = metrics.counter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_GET, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			METHOD_GET, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durGet = metrics.histogram(MetricRegistry.name(WSMockServlet.class,
-				METHOD_GET, LoadExecutor.METRIC_NAME_DUR));
+			METHOD_GET, LoadExecutor.METRIC_NAME_DUR));
 		getBW = metrics.meter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_GET, LoadExecutor.METRIC_NAME_BW));
+			METHOD_GET, LoadExecutor.METRIC_NAME_BW));
 		getTP = metrics.meter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_GET, LoadExecutor.METRIC_NAME_TP));
+			METHOD_GET, LoadExecutor.METRIC_NAME_TP));
 		//
 		counterPostSucc = metrics.counter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_POST, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			METHOD_POST, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterPostFail = metrics.counter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_POST, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			METHOD_POST, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durPost = metrics.histogram(MetricRegistry.name(WSMockServlet.class,
-				METHOD_POST, LoadExecutor.METRIC_NAME_DUR));
+			METHOD_POST, LoadExecutor.METRIC_NAME_DUR));
 		postBW = metrics.meter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_POST, LoadExecutor.METRIC_NAME_BW));
+			METHOD_POST, LoadExecutor.METRIC_NAME_BW));
 		postTP = metrics.meter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_POST, LoadExecutor.METRIC_NAME_TP));
+			METHOD_POST, LoadExecutor.METRIC_NAME_TP));
 		//
 		counterPutSucc = metrics.counter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_PUT, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			METHOD_PUT, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterPutFail = metrics.counter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_PUT, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			METHOD_PUT, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durPut = metrics.histogram(MetricRegistry.name(WSMockServlet.class,
-				METHOD_PUT, LoadExecutor.METRIC_NAME_DUR));
+			METHOD_PUT, LoadExecutor.METRIC_NAME_DUR));
 		putBW = metrics.meter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_PUT, LoadExecutor.METRIC_NAME_BW));
+			METHOD_PUT, LoadExecutor.METRIC_NAME_BW));
 		putTP = metrics.meter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_PUT, LoadExecutor.METRIC_NAME_TP));
+			METHOD_PUT, LoadExecutor.METRIC_NAME_TP));
 		//
 		counterDeleteSucc = metrics.counter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_DELETE, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			METHOD_DELETE, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterDeleteFail = metrics.counter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_DELETE, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			METHOD_DELETE, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durDelete = metrics.histogram(MetricRegistry.name(WSMockServlet.class,
-				METHOD_DELETE, LoadExecutor.METRIC_NAME_DUR));
+			METHOD_DELETE, LoadExecutor.METRIC_NAME_DUR));
 		deleteBW = metrics.meter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_DELETE, LoadExecutor.METRIC_NAME_BW));
+			METHOD_DELETE, LoadExecutor.METRIC_NAME_BW));
 		deleteTP = metrics.meter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_DELETE, LoadExecutor.METRIC_NAME_TP));
+			METHOD_DELETE, LoadExecutor.METRIC_NAME_TP));
 		//
 		counterHeadSucc = metrics.counter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_HEAD, LoadExecutor.METRIC_NAME_SUCC));
+			METHOD_HEAD, LoadExecutor.METRIC_NAME_SUCC));
 		counterHeadFail = metrics.counter(MetricRegistry.name(WSMockServlet.class,
-				METHOD_HEAD, LoadExecutor.METRIC_NAME_FAIL));
+			METHOD_HEAD, LoadExecutor.METRIC_NAME_FAIL));
 		//
 		metricsReporter.start();
 		//
@@ -187,7 +201,6 @@ implements Runnable {
 		LOG.debug(Markers.MSG, "Add servlet");
 		context.addServlet(new ServletHolder(this), "/*");
 	}
-
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private void createMapDataObject() {
 		final Path pathDataItemCSV = Paths.get(dataSrcFPath);
@@ -210,7 +223,6 @@ implements Runnable {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to read line from the file");
 		}
 	}
-
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Runnable implementation
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -233,7 +245,6 @@ implements Runnable {
 			}
 		}
 	}
-
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Request handling methods ////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -274,7 +285,6 @@ implements Runnable {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
 		}
 	}
-
 	//
 	@Override
 	protected final void doPost(final HttpServletRequest request, final HttpServletResponse response
@@ -286,6 +296,7 @@ implements Runnable {
 			//
 			final long bytes = calcInputByteCount(servletInputStream);
 			postBW.mark(bytes);
+			allBW.mark(bytes);
 			//
 			nanoTime = System.nanoTime() - nanoTime;
 			durPost.update(nanoTime);
@@ -300,7 +311,6 @@ implements Runnable {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
 		}
 	}
-
 	//
 	@Override
 	protected final void doPut(final HttpServletRequest request, final HttpServletResponse response
@@ -312,6 +322,7 @@ implements Runnable {
 			//
 			final long bytes = calcInputByteCount(servletInputStream);
 			putBW.mark(bytes);
+			allBW.mark(bytes);
 			//
 			nanoTime = System.nanoTime() - nanoTime;
 			durPut.update(nanoTime);
@@ -320,13 +331,37 @@ implements Runnable {
 			counterPutSucc.inc();
 			putTP.mark(counterPutSucc.getCount());
 			allTP.mark(counterAllSucc.getCount());
+			//finally?
+			final Snapshot allDurSnapshot = durAll.getSnapshot();
+			LOG.info(Markers.PERF_AVG,
+				MSG_FMT_METRICS.format(
+					new Object[] {
+						counterAllSucc.getCount(), counterAllFail.getCount(),
+						//
+						allDurSnapshot.getMin(),
+						allDurSnapshot.getMedian(),
+						allDurSnapshot.getMean(),
+						allDurSnapshot.getMax(),
+						//
+						allTP.getMeanRate(),
+						allTP.getOneMinuteRate(),
+						allTP.getFiveMinuteRate(),
+						allTP.getFifteenMinuteRate(),
+						//
+						allBW.getMeanRate(),
+						allBW.getOneMinuteRate(),
+						allBW.getFiveMinuteRate(),
+						allBW.getFifteenMinuteRate()
+					}
+				)
+			);
+			//
 		} catch (final IOException e) {
 			counterAllFail.inc();
 			counterPutFail.inc();
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
 		}
 	}
-
 	//
 	@Override
 	protected final void doDelete(final HttpServletRequest request, final HttpServletResponse response
@@ -338,6 +373,7 @@ implements Runnable {
 			//
 			final long bytes = calcInputByteCount(servletInputStream);
 			deleteBW.mark(bytes);
+			allBW.mark(bytes);
 			//
 			nanoTime = System.nanoTime() - nanoTime;
 			durDelete.update(nanoTime);
@@ -352,7 +388,6 @@ implements Runnable {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
 		}
 	}
-
 	//
 	@Override
 	protected final void doHead(final HttpServletRequest request, final HttpServletResponse response
@@ -362,7 +397,6 @@ implements Runnable {
 		counterAllSucc.inc();
 		counterHeadSucc.inc();
 	}
-
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private long calcInputByteCount(final ServletInputStream servletInputStream
 	) throws ServletException, IOException {
@@ -380,6 +414,7 @@ implements Runnable {
 	) throws ArrayIndexOutOfBoundsException, IllegalArgumentException {
 		object.writeTo(servletOutputStream);
 		getBW.mark(object.getSize());
+		allBW.mark(object.getSize());
 	}
 	/////////////////////////////////////////////////////////////////////////////////////
 
