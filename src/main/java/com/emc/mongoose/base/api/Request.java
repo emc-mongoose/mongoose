@@ -49,6 +49,8 @@ extends Callable<Request<T>>, Closeable {
 	//
 	long getDuration();
 	//
+	long getLatency();
+	//
 	void execute()
 	throws Exception;
 }

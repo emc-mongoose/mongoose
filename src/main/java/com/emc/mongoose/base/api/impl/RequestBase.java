@@ -32,7 +32,8 @@ implements Request<T> {
 	protected T dataItem = null;
 	protected Result result = Result.FAIL_UNKNOWN;
 	//
-	private long start = 0, duration = 0, transferSize = 0;
+	protected long start = 0, duration = 0, latency = 0;
+	private long transferSize = 0;
 	private Type type;
 
 	public RequestBase() {
@@ -97,12 +98,17 @@ implements Request<T> {
 	}
 	//
 	@Override
+	public final long getLatency() {
+		return latency;
+	}
+	//
+	@Override
 	public final Request<T> call()
 	throws Exception {
 		start = System.nanoTime();
 		execute();
 		duration = System.nanoTime() - start;
-		LOG.info(Markers.PERF_TRACE, "{},{},{},{}", dataItem, result.code, start, duration);
+		LOG.info(Markers.PERF_TRACE, "{},{},{},{},{}", dataItem, result.code, start, latency, duration);
 		return this;
 	}
 	//
