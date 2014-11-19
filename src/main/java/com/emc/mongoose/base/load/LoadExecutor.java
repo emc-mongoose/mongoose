@@ -1,14 +1,8 @@
 package com.emc.mongoose.base.load;
 //
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import java.rmi.RemoteException;
-import java.text.MessageFormat;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-
 /**
  Created by kurila on 28.04.14.
  A mechanism of data items load execution.
@@ -31,13 +25,12 @@ extends Producer<T>, Consumer<T> {
 		METRIC_NAME_DUR = "dur",
 		NAME_SEP = "@";
 	//
-	static MessageFormat MSG_FMT_METRICS = new MessageFormat(
-		"count=({0,number,integer}/{1,number,integer}/{2,number,integer}); " +
-		"duration[s]=({3,number,#.###}/{4,number,#.###}/{5,number,#.###}/{6,number,#.###}); " +
-		"TP[/s]=({7,number,#.###}/{8,number,#.###}/{9,number,#.###}/{10,number,#.###}); " +
-		"BW[Mib/s]=({11,number,#.###}/{12,number,#.###}/{13,number,#.###}/{14,number,#.###})",
-		Locale.ROOT
-	);
+	static String
+		MSG_FMT_METRICS = "count=(%d/%d/%d); duration[s]=(%.6f/%.6f/%.6f/%.6f); " +
+			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)",
+		MSG_FMT_SUM_METRICS =
+			"%s: count=(%d/%d); duration[s]=(%.6f/%.6f/%.6f/%.6f); " +
+			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
 	String getName()
 	throws RemoteException;

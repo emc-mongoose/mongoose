@@ -43,23 +43,20 @@ public final class ShutDownHook {
 		try {
 			Runtime.getRuntime().addShutdownHook(
 				new Thread(String.format("shutDownHook<%s>", loadName)) {
+					private final Logger log = LogManager.getLogger();
 					@Override
 					public final void run() {
-						System.out.println(
-							String.format("Closing the load executor \"%s\"...", loadName)
-						);
+						log.info(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
 						try {
 							loadExecutor.close();
-							System.out.println(
-								String.format(
-									"The load executor \"%s\"closed successfully", loadName
-								)
+							log.info(
+								Markers.MSG, "The load executor \"{}\"closed successfully", loadName
 							);
 						} catch(final Exception e) {
-							System.err.println(
+							ExceptionHandler.trace(
+								LOG, Level.WARN, e,
 								String.format("Failed to close the load executor \"%s\"", loadName)
 							);
-							e.printStackTrace(System.err);
 						}
 					}
 				}
