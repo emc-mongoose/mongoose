@@ -103,6 +103,7 @@ dependencies {
 
 task rmic(dependsOn: compileJava) << {
 	String[] listClsRemote = [
+		'com.emc.mongoose.base.data.persist.TmpFileItemBuffer',
 		'com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc',
 		'com.emc.mongoose.web.load.server.impl.type.AppendSvc',
 		'com.emc.mongoose.web.load.server.impl.type.CreateSvc',

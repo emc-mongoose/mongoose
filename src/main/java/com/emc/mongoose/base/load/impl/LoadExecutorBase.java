@@ -104,8 +104,10 @@ implements LoadExecutor<T> {
 			.registerWith(mBeanServer)
 			.build();
 		//
-		final int nodeCount = addrs.length;
-		final String name = Integer.toString(instanceN++) + '-' +
+		final int
+			nodeCount = addrs.length,
+			loadNumber = instanceN ++;
+		final String name = Integer.toString(loadNumber) + '-' +
 			StringUtils.capitalize(reqConf.getAPI().toLowerCase()) + '-' +
 			StringUtils.capitalize(reqConf.getLoadType().toString().toLowerCase()) +
 			(maxCount>0? Long.toString(maxCount) : "") + '-' +
@@ -132,10 +134,10 @@ implements LoadExecutor<T> {
 		submitExecutor = new ThreadPoolExecutor(
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("submitDataItems", new HashMap<String,String>())
+			new WorkerFactory("submitDataItems")
 		);
 		client = initClient(addrs, reqConf);
-		initNodeExecutors(addrs, reqConf);
+		initNodeExecutors(addrs, reqConf.clone().setLoadNumber(loadNumber));
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
 	}
@@ -167,7 +169,7 @@ implements LoadExecutor<T> {
 		//
 		tsStart = System.nanoTime();
 		super.start();
-		LOG.debug(Markers.MSG, "Started {}", getName());
+		LOG.info(Markers.MSG, "Started \"{}\"", getName());
 	}
 	//
 	@Override
@@ -205,7 +207,7 @@ implements LoadExecutor<T> {
 							LOG.debug(Markers.MSG, "Condition \"done\" reached");
 						}
 					} catch(final Exception e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "Condition failure");
+						LOG.debug(Markers.MSG, "Waiting for the done condition interrupted");
 					} finally {
 						lock.unlock();
 					}
@@ -295,7 +297,11 @@ implements LoadExecutor<T> {
 			interrupt();
 		}
 		// poison the consumer
-		consumer.submit(null);
+		try {
+			consumer.submit(null);
+		} catch(final IllegalStateException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to feed the poison");
+		}
 		// close node executors
 		final ArrayList<Thread> nodeClosers = new ArrayList<>(nodes.length);
 		Thread nextShutDownThread;
@@ -359,8 +365,6 @@ implements LoadExecutor<T> {
 					nextNode.submit(null); // poison
 				}
 			}
-			//
-			Thread.currentThread().interrupt(); // causes the producer interruption
 		} else {
 			final StorageNodeExecutor<T> nodeExecutor = nodes[
 				(int) submitExecutor.getTaskCount() % nodes.length
@@ -410,21 +414,21 @@ implements LoadExecutor<T> {
 		notCompletedTaskCount += submitExecutor.getQueue().size() + submitExecutor.getActiveCount();
 		//
 		final String message = MSG_FMT_METRICS.format(
-				new Object[]{
-						countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
-						//
-						(float) reqDurSnapshot.getMin() / BILLION,
-						(float) reqDurSnapshot.getMedian() / BILLION,
-						(float) reqDurSnapshot.getMean() / BILLION,
-						(float) reqDurSnapshot.getMax() / BILLION,
-						//
-						avgSize == 0 ? 0 : meanBW / avgSize,
-						avgSize == 0 ? 0 : oneMinBW / avgSize,
-						avgSize == 0 ? 0 : fiveMinBW / avgSize,
-						avgSize == 0 ? 0 : fifteenMinBW / avgSize,
-						//
-						meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
-				}
+			new Object[] {
+				countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
+				//
+				(float) reqDurSnapshot.getMin() / BILLION,
+				(float) reqDurSnapshot.getMedian() / BILLION,
+				(float) reqDurSnapshot.getMean() / BILLION,
+				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				avgSize == 0 ? 0 : meanBW / avgSize,
+				avgSize == 0 ? 0 : oneMinBW / avgSize,
+				avgSize == 0 ? 0 : fiveMinBW / avgSize,
+				avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+				//
+				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+			}
 		);
 		LOG.info(logMarker, message);
 		//

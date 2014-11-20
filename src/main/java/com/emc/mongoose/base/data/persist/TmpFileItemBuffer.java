@@ -2,9 +2,8 @@ package com.emc.mongoose.base.data.persist;
 //
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.base.load.LoadExecutor;
-import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.base.load.server.DataItemBufferSvc;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 //
 import com.emc.mongoose.util.logging.Markers;
@@ -30,55 +29,45 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by andrey on 28.09.14.
  */
-public class TempFileConsumerProducer<T extends DataItem>
+public class TmpFileItemBuffer<T extends DataItem>
 extends Thread
-implements Consumer<T>, Producer<T> {
+implements DataItemBufferSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final File fBuff;
-	private final ObjectOutput fBuffOut;
 	private final ExecutorService outPutExecutor;
-	private volatile long maxCount;
 	private final AtomicLong writtenDataItems = new AtomicLong(0);
-	private final RunTimeConfig runTimeConfig;
-	private final int retryCountMax, retryDelayMilliSec;
+	private volatile long maxCount;
+	private volatile ObjectOutput fBuffOut;
+	private volatile int retryCountMax, retryDelayMilliSec;
 	//
-	public TempFileConsumerProducer(
-		final RunTimeConfig runTimeConfig,
-		final String prefix, final String suffix, final int threadCount, final long maxCount
-	) {
-		setName("tmpFileDataItemsBuffer");
+	public TmpFileItemBuffer(final long maxCount, final int threadCount)
+	throws IOException {
+		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		//
-		this.runTimeConfig = runTimeConfig;
-		retryCountMax = runTimeConfig.getRunRetryCountMax();
-		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
+		retryCountMax = Main.RUN_TIME_CONFIG.getRunRetryCountMax();
+		retryDelayMilliSec = Main.RUN_TIME_CONFIG.getRunRetryDelayMilliSec();
 		//
-		File fBuffTmp = null;
-		try {
-			fBuffTmp = Files
-				.createTempFile(prefix, suffix)
-				.toFile();
-		} catch(final IllegalArgumentException | UnsupportedOperationException | IOException | SecurityException  e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create temp file");
-		} finally {
-			fBuff = fBuffTmp;
-		}
+		fBuff = Files.createTempFile(
+			String.format(FMT_THREAD_NAME, Main.RUN_TIME_CONFIG.getRunName()), null
+		).toFile();
+		setName(fBuff.getName());
+		LOG.debug(Markers.MSG, "{}: created temp file", getName());
+		fBuff.deleteOnExit();
 		//
 		ObjectOutput fBuffOutTmp = null;
 		try {
-			assert fBuff != null;
 			fBuffOutTmp = new ObjectOutputStream(
 				new FileOutputStream(fBuff)
 			);
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to open temporary file for output");
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "failed to open temporary file for output");
 		} finally {
 			fBuffOut = fBuffOutTmp;
 		}
 		//
 		outPutExecutor = Executors.newFixedThreadPool(threadCount);
-		this.maxCount = maxCount == 0 ? Long.MAX_VALUE : maxCount;
 		//
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,7 +89,7 @@ implements Consumer<T>, Producer<T> {
 			try {
 				fBuffOut.writeObject(dataItem);
 			} catch(final IOException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to write out the data item");
+				ExceptionHandler.trace(LOG, Level.WARN, e, "failed to write out the data item");
 			}
 		}
 	}
@@ -109,7 +98,9 @@ implements Consumer<T>, Producer<T> {
 	public final void submit(T dataItem)
 	throws IllegalStateException {
 		//
-		if(dataItem == null) {
+		if(outPutExecutor.isShutdown() || fBuffOut == null) {
+			throw new IllegalStateException();
+		} else if(dataItem == null) {
 			outPutExecutor.shutdown();
 		} else {
 			//
@@ -136,48 +127,51 @@ implements Consumer<T>, Producer<T> {
 			//
 			if(!passed) {
 				LOG.debug(
-					Markers.ERR, "Data item \"{}\" has been rejected after {} tries",
-					dataItem, rejectCount
+					Markers.ERR, "data item \"{}\" has been rejected after {} tries",
+					getName(), dataItem, rejectCount
 				);
 			}
 		}
 	}
 	//
 	@Override
-	public final long getMaxCount() {
+	public final synchronized long getMaxCount() {
 		return maxCount;
 	}
 	@Override
-	public final void setMaxCount(final long maxCount) {
+	public final synchronized void setMaxCount(final long maxCount) {
 		this.maxCount = maxCount;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Closeable implementation ////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void close()
+	public final synchronized void close()
 	throws IOException {
-		//
-		LOG.trace(Markers.MSG, "Closing the output");
-		//
-		outPutExecutor.shutdown();
-		try {
-			outPutExecutor.awaitTermination(
-				runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
-			);
-		} catch(final InterruptedException e) {
-			ExceptionHandler.trace(
-				LOG, Level.DEBUG, e, "Interrupted while writing out the remaining data items"
-			);
-		} finally {
-			final int droppedTaskCount = outPutExecutor.shutdownNow().size();
-			LOG.debug(
-				Markers.MSG, "Wrote {} data items, dropped {}",
-				writtenDataItems.addAndGet(-droppedTaskCount), droppedTaskCount
-			);
+		if(fBuffOut != null) {
+			//
+			LOG.debug(Markers.MSG, "{}: output to the file is done", getName());
+			//
+			outPutExecutor.shutdown();
+			try {
+				outPutExecutor.awaitTermination(
+					Main.RUN_TIME_CONFIG.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+				);
+			} catch(final InterruptedException e) {
+				ExceptionHandler.trace(
+					LOG, Level.DEBUG, e, "Interrupted while writing out the remaining data items"
+				);
+			} finally {
+				final int droppedTaskCount = outPutExecutor.shutdownNow().size();
+				LOG.debug(
+					Markers.MSG, "{}: wrote {} data items, dropped {}", getName(),
+					writtenDataItems.addAndGet(-droppedTaskCount), droppedTaskCount
+				);
+			}
+			//
+			fBuffOut.close();
+			fBuffOut = null;
 		}
-		//
-		fBuffOut.close();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
@@ -198,7 +192,11 @@ implements Consumer<T>, Producer<T> {
 	public final void run() {
 		//
 		if(!outPutExecutor.isTerminated()) {
-			throw new IllegalStateException("Output has not been closed yet");
+			throw new IllegalStateException(
+				String.format("%s: output has not been closed yet", getName())
+			);
+		} else {
+			LOG.debug(Markers.MSG, "{}: started", getName());
 		}
 		//
 		long
@@ -209,6 +207,10 @@ implements Consumer<T>, Producer<T> {
 		} catch(final RemoteException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
 		}
+		LOG.debug(
+			Markers.MSG, "{}: {} available data items to read, while consumer limit is {}",
+			getName(), availDataItems, consumerMaxCount
+		);
 		//
 		T nextDataItem;
 		try(final ObjectInput fBuffIn = new ObjectInputStream(new FileInputStream(fBuff))) {
@@ -219,6 +221,7 @@ implements Consumer<T>, Producer<T> {
 					break;
 				}
 			}
+			LOG.debug(Markers.MSG, "{}: producing done", getName());
 		} catch(final IOException | ClassNotFoundException | ClassCastException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to read a data item");
 		} finally {
@@ -231,7 +234,7 @@ implements Consumer<T>, Producer<T> {
 	}
 	//
 	@Override
-	public final void interrupt() {
+	public final synchronized void interrupt() {
 		super.interrupt();
 		if(consumer != null) {
 			try {
@@ -240,6 +243,7 @@ implements Consumer<T>, Producer<T> {
 				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to submit");
 			}
 		}
+		LOG.debug(Markers.MSG, "{}: interrupted", getName());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }

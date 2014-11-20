@@ -22,6 +22,8 @@ extends LoadExecutor<T> {
 	//
 	void logMetrics(final Level level, final Marker marker);
 	//
+	void run();
+	//
 	@Override
 	void interrupt(); // overridden to throw nothing
 	//

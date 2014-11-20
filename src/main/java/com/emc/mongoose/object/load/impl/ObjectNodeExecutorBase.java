@@ -24,9 +24,9 @@ implements ObjectNodeExecutor<T> {
 	protected ObjectNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
 		final String addr, final int threadsPerNode, final ObjectRequestConfig<T> sharedReqConf,
-		final MetricRegistry parentMetrics, final String parentName, final Map<String,String> context
+		final MetricRegistry parentMetrics, final String parentName
 	) {
-		super(runTimeConfig, addr, threadsPerNode, sharedReqConf, parentMetrics, parentName, context);
+		super(runTimeConfig, addr, threadsPerNode, sharedReqConf, parentMetrics, parentName);
 	}
 	//
 }

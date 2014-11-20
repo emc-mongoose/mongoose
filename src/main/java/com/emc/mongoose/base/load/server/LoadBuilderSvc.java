@@ -21,4 +21,5 @@ extends LoadBuilder<T, U>, Service {
 	//
 	void setLastInstanceNum(final int instanceN)
 	throws RemoteException;
+	//
 }

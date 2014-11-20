@@ -46,6 +46,9 @@ extends Externalizable, Cloneable {
 	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
 	//
+	int getLoadNumber();
+	RequestConfig<T> setLoadNumber(final int loadNumber);
+	//
 	void configureStorage()
 	throws IllegalStateException;
 }

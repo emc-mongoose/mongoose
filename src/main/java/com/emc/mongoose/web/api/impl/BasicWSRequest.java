@@ -143,15 +143,10 @@ implements WSRequest<T> {
 				final int statusCode = statusLine.getStatusCode();
 				//
 				if(LOG.isTraceEnabled(Markers.MSG)) {
-					synchronized(LOG) {
-						LOG.trace(
-							Markers.MSG, "{}/{} <- {} {}", statusCode, statusLine.getReasonPhrase(),
-							httpRequest.getMethod(), httpRequest.getURI()
-						);
-						//for(final Header header : httpResponse.getAllHeaders()) {
-						//	LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
-						//}
-					}
+					LOG.trace(
+						Markers.MSG, "{}/{} <- {} {}", statusCode, statusLine.getReasonPhrase(),
+						httpRequest.getMethod(), httpRequest.getURI()
+					);
 				}
 				//
 				if(statusCode < 300) {
