@@ -31,7 +31,7 @@ implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
-	private BigInteger id;
+	private long id;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "run", nullable = false)
 	private RunEntity run;
@@ -39,7 +39,7 @@ implements Serializable {
 	@JoinColumn(name = "type", nullable = false)
 	private LoadTypeEntity type;
 	@Column(name = "number")
-	private BigInteger num;
+	private long num;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "api", nullable = false)
 	private ApiEntity api;
@@ -48,7 +48,7 @@ implements Serializable {
 	//
 	public LoadEntity(){
 	}
-	public LoadEntity(final RunEntity run, final LoadTypeEntity type, final BigInteger num, final ApiEntity api){
+	public LoadEntity(final RunEntity run, final LoadTypeEntity type, final long num, final ApiEntity api){
 		this.run = run;
 		run.getLoadsSet().add(this);
 		this.type = type;
@@ -58,10 +58,10 @@ implements Serializable {
 		api.getLoadsSet().add(this);
 	}
 	//
-	public final BigInteger getId() {
+	public final long getId() {
 		return id;
 	}
-	public final void setId(final BigInteger id) {
+	public final void setId(final long id) {
 		this.id = id;
 	}
 	public final RunEntity getRun() {
@@ -76,10 +76,10 @@ implements Serializable {
 	public final void setType(final LoadTypeEntity type) {
 		this.type = type;
 	}
-	public final BigInteger getNum() {
+	public final long getNum() {
 		return num;
 	}
-	public final void setNum(final BigInteger num) {
+	public final void setNum(final long num) {
 		this.num = num;
 	}
 	public final ApiEntity getApi() {

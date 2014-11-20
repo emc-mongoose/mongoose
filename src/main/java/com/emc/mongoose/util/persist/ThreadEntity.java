@@ -30,7 +30,7 @@ implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
-	private BigInteger id;
+	private long id;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "load", nullable = false)
 	private LoadEntity load;
@@ -38,13 +38,13 @@ implements Serializable{
 	@JoinColumn(name = "node", nullable = false)
 	private NodeEntity node;
 	@Column(name = "num")
-	private BigInteger num;
+	private long num;
 	@OneToMany(targetEntity=TraceEntity.class, fetch = FetchType.LAZY, mappedBy = "thread")
 	private Set<TraceEntity> traceSet = new HashSet<TraceEntity>();
 	//
 	public ThreadEntity(){
 	}
-	public ThreadEntity(final LoadEntity load, final NodeEntity node, final BigInteger num){
+	public ThreadEntity(final LoadEntity load, final NodeEntity node, final long num){
 		this.load = load;
 		load.getThreadSet().add(this);
 		this.node = node;
@@ -52,16 +52,16 @@ implements Serializable{
 		this.num = num;
 	}
 	//
-	public final BigInteger getNum() {
+	public final long getNum() {
 		return num;
 	}
-	public final void setNum(final BigInteger num) {
+	public final void setNum(final long num) {
 		this.num = num;
 	}
-	public final BigInteger getId() {
+	public final long getId() {
 		return id;
 	}
-	public final void setId(final BigInteger id) {
+	public final void setId(final long id) {
 		this.id = id;
 	}
 	public final LoadEntity getLoad() {

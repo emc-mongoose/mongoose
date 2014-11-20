@@ -44,7 +44,6 @@ extends WSRequestConfigBase<T> {
 	protected RequestConfig(final RequestConfig<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		api = RequestConfig.class.getSimpleName();
 		if(reqConf2Clone != null) {
 			setNameSpace(reqConf2Clone.getNameSpace());
 			setSubTenant(reqConf2Clone.getSubTenant());

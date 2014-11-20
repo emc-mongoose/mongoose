@@ -13,7 +13,7 @@ import com.emc.mongoose.web.load.client.impl.BasicLoadBuilderClient;
 import com.emc.mongoose.web.load.client.WSLoadClient;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
-import com.emc.mongoose.run.WSMock;
+import com.emc.mongoose.run.WSMockServlet;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 
@@ -167,7 +167,7 @@ public final class StartServlet extends HttpServlet {
 				ThreadContextMap.initThreadContextMap(runTimeConfig);
 				//
 				LOG.debug(Markers.MSG, "Starting the wsmock");
-				new WSMock(runTimeConfig).run();
+				new WSMockServlet(runTimeConfig).run();
 			}
 
 			@Override

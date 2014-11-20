@@ -1,6 +1,6 @@
 {
 	"configuration": {
-		"status": "info",
+		"status": "off",
 		"name": "mongoose",
 		"monitorInterval": "1000",
 		"properties": {
@@ -42,7 +42,7 @@
 			 	}, {
 					"name": "hibernate",
 					"type": "Hibernate",
-					"enabled": "false",
+					"enabled": "true",
 					"runid": "${sys:run.id}",
 					"runmode": "${sys:run.mode}",
 					"database": "postgresql",
@@ -271,7 +271,6 @@
 				"AppenderRef": { "ref": "async" }
 			},
 			"logger": [
-
 				// Mongoose basic load generation functionality
 				{
 					"name": "com.emc.mongoose.base.api.impl",

@@ -1,6 +1,6 @@
 {
 	"configuration": {
-		"status": "info",
+		"status": "off",
 		"name": "mongoose",
 		"monitorInterval": "1000",
 		"properties": {
@@ -35,7 +35,7 @@
 								"type": "MarkerFilter",
 								"marker": "perfSum",
 								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
+								"onMismatch": "DENY"
 							}
 						]
 					}
@@ -109,14 +109,14 @@
 					"Filters": {
 						"Filter": [
 							{
+								"type": "BurstFilter",
+								"rate": 10,
+								"maxBurst": 100
+							}, {
 								"type": "MarkerFilter",
 								"marker": "msg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
-							}, {
-								"type": "BurstFilter",
-								"rate": 10,
-								"maxBurst": 100
 							}
 						]
 					}
@@ -271,7 +271,6 @@
 				"AppenderRef": { "ref": "async" }
 			},
 			"logger": [
-
 				// Mongoose basic load generation functionality
 				{
 					"name": "com.emc.mongoose.base.api.impl",

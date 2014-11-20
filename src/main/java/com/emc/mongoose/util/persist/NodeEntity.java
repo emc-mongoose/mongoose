@@ -26,7 +26,7 @@ implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
-	private BigInteger id;
+	private long id;
 	@Column(name = "address")
 	private String address;
 	@OneToMany(targetEntity=ThreadEntity.class, fetch = FetchType.LAZY, mappedBy = "node")
@@ -38,10 +38,10 @@ implements Serializable{
 		this.address = addr;
 	}
 	//
-	public final BigInteger getId() {
+	public final long getId() {
 		return id;
 	}
-	public final void setId(final BigInteger id) {
+	public final void setId(final long id) {
 		this.id = id;
 	}
 	public final String getAddress() {

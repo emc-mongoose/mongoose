@@ -31,6 +31,7 @@ implements RequestConfig<T> {
 	protected volatile boolean retryFlag, verifyContentFlag;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	protected final URIBuilder uriBuilder = new URIBuilder();
+	protected int loadNumber;
 	//
 	@SuppressWarnings("unchecked")
 	public RequestConfigImpl() {
@@ -172,6 +173,18 @@ implements RequestConfig<T> {
 		setRetries(this.runTimeConfig.getRunRequestRetries());
 		return this;
 	}
+
+	@Override
+	public int getLoadNumber() {
+		return loadNumber;
+	}
+
+	@Override
+	public RequestConfig<T> setLoadNumber(int loadNumber) {
+		this.loadNumber = loadNumber;
+		return this;
+	}
+
 	//
 	@Override
 	public void writeExternal(final ObjectOutput out)

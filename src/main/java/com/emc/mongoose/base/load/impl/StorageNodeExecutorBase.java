@@ -13,10 +13,12 @@ import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.StorageNodeExecutor;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
 import org.apache.logging.log4j.Level;
@@ -32,8 +34,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 15.10.14.
  */
@@ -56,17 +62,27 @@ implements StorageNodeExecutor<T> {
 	//
 	private final int retryDelayMilliSec, retryCountMax;
 	//
+	private final Lock lock = new ReentrantLock();
+	private final Condition condDone = lock.newCondition();
+	//
 	protected StorageNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
 		final int threadsPerNode, final RequestConfig<T> localReqConf,
-		final MetricRegistry parentMetrics, final String parentName, final Map<String,String> context
+		final MetricRegistry parentMetrics, final String parentName
 	) {
 		super(
-			threadsPerNode, threadsPerNode, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(
-				threadsPerNode * runTimeConfig.getRunRequestQueueFactor()
-			),
-			new WorkerFactory(parentName + '<' + localReqConf.getAddr() + '>', context));
+				threadsPerNode, threadsPerNode, 0, TimeUnit.SECONDS,
+				new LinkedBlockingQueue<Runnable>(
+						threadsPerNode * runTimeConfig.getRunRequestQueueFactor()
+				),
+				new DataObjectWorkerFactory(
+						parentName + '<' + localReqConf.getAddr() + '>',
+						localReqConf.getLoadNumber(),
+						localReqConf.getAddr(),
+						localReqConf.getAPI(),
+						localReqConf.getLoadType()
+				)
+		);
 		//
 		this.runTimeConfig = runTimeConfig;
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
@@ -113,11 +129,11 @@ implements StorageNodeExecutor<T> {
 	protected StorageNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
 		final String addr, final int threadsPerNode, final RequestConfig<T> sharedReqConf,
-		final MetricRegistry parentMetrics, final String parentName, final Map<String,String> context
+		final MetricRegistry parentMetrics, final String parentName
 	) {
 		this(
 			runTimeConfig, threadsPerNode, sharedReqConf.clone().setAddr(addr),
-			parentMetrics, parentName, context
+			parentMetrics, parentName
 		);
 	}
 	//
@@ -179,12 +195,22 @@ implements StorageNodeExecutor<T> {
 					);
 				}
 			}
+		} else {
+			if(lock.tryLock()) {
+				try {
+					condDone.signalAll();
+				} finally {
+					lock.unlock();
+				}
+			} else {
+				LOG.warn(Markers.MSG, "Failed to obtain the lock");
+			}
 		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final void afterExecute(final Runnable reqTask, final Throwable thrown) {
-		if(thrown!=null) {
+		if(thrown != null) {
 			LOG.warn(Markers.ERR, thrown.toString());
 			counterReqFail.inc();
 			counterReqFailParent.inc();
@@ -216,6 +242,11 @@ implements StorageNodeExecutor<T> {
 									String.format(
 										"Failed to submit the object \"%s\" to consumer", dataItem
 									)
+								);
+							} catch(final IllegalStateException e) {
+								LOG.debug(
+									Markers.ERR,
+									"Looks like the consumer \"{}\" is already shutdown", consumer
 								);
 							}
 						}
@@ -258,8 +289,7 @@ implements StorageNodeExecutor<T> {
 			} catch(final Exception e) {
 				counterReqFail.inc();
 				counterReqFailParent.inc();
-				LOG.warn(Markers.MSG, reqTask.getClass().getCanonicalName());
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
 			}
 		}
 		//
@@ -324,7 +354,7 @@ implements StorageNodeExecutor<T> {
 	//
 	@Override
 	public final long getMaxCount()
-		throws RemoteException {
+	throws RemoteException {
 		return consumer.getMaxCount();
 	}
 	//
@@ -342,13 +372,40 @@ implements StorageNodeExecutor<T> {
 	}
 	//
 	@Override
+	public final void run() {
+		try {
+			join(Long.MAX_VALUE);
+		} catch(final InterruptedException e) {
+			interrupt();
+		}
+	}
+	//
+	@Override
 	public final void join(final long milliSecs)
 	throws InterruptedException {
-		wait(milliSecs);
+		if(lock.tryLock()) {
+			try {
+				condDone.await(milliSecs, TimeUnit.MILLISECONDS);
+			} catch(final InterruptedException e) {
+				interrupt();
+			} finally {
+				lock.unlock();
+			}
+		}
 	}
 	//
 	@Override
 	public final void interrupt() {
+		// signal about the interruption
+		if(lock.tryLock()) {
+			try {
+				condDone.signalAll();
+			} finally {
+				lock.unlock();
+			}
+		} else {
+			LOG.warn(Markers.MSG, "Failed to obtain the lock");
+		}
 		//
 		LOG.debug(Markers.MSG, "Interrupting...");
 		localReqConf.setRetries(false);
@@ -358,15 +415,6 @@ implements StorageNodeExecutor<T> {
 			LOG.debug(Markers.PERF_SUM, "Summary metrics below for {}", getName());
 			logMetrics(Level.DEBUG, Markers.PERF_SUM);
 		}
-		// signal about the interruption
-		notifyAll();
-	}
-	//
-	@Override
-	public final boolean isShutdown() {
-		return super.isShutdown()	||
-			super.isTerminating()	||
-			super.isTerminated();
 	}
 	//
 	@Override

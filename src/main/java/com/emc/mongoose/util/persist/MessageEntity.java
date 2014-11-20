@@ -32,7 +32,7 @@ implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
-	private BigInteger id;
+	private long id;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "run", nullable = false)
 	private RunEntity run;
@@ -61,10 +61,10 @@ implements Serializable{
 		level.getMessageSet().add(this);
 	}
 	//
-	public final BigInteger getId() {
+	public final long getId() {
 		return id;
 	}
-	public final void setId(final BigInteger id) {
+	public final void setId(final long id) {
 		this.id = id;
 	}
 	public final RunEntity getRun() {
