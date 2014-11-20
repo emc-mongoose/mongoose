@@ -72,6 +72,11 @@ $(document).ready(function() {
 		$(this).addClass("active");
 	});
 
+	//	select change
+	$("select").bind("keydown change", function() {
+		$('a[href="#' + $(this).val() + '"]').tab('show');
+    });
+
 	// functions
 	function initComponents() {
 		$(".driver").hide();
