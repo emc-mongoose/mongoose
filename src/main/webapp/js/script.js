@@ -5,7 +5,7 @@ $(document).ready(function() {
 	var VALUE_RUN_MODE_SERVER = "VALUE_RUN_MODE_SERVER";
 	var VALUE_RUN_MODE_WSMOCK = "VALUE_RUN_MODE_WSMOCK";
 	var runModes = [VALUE_RUN_MODE_CLIENT, VALUE_RUN_MODE_STANDALONE, VALUE_RUN_MODE_SERVER, VALUE_RUN_MODE_WSMOCK];
-	var COUNT_OF_RECORDS = 50;
+	var COUNT_OF_RECORDS = 2050;
 
 	initComponents();
 	excludeDuplicateOptions();
@@ -198,11 +198,10 @@ $(document).ready(function() {
 		var currentButton = $(this);
 		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".");
 		$.post("/stop", { "runid" : currentRunId }, function() {
-			currentButton.attr("disabled", "disabled");
 			location.reload();
 		}).fail(function() {
-			currentButton.attr("disabled", "disabled");
 			alert("Internal Server Error");
+			location.reload();
 		});
 	});
 

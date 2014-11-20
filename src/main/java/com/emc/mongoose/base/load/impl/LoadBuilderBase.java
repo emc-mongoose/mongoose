@@ -37,7 +37,7 @@ implements LoadBuilder<T, U> {
 		threadsPerNodeMap = new HashMap<>();
 		try {
 			reqConf = getDefaultRequestConfig();
-			setProperties(Main.RUN_TIME_CONFIG);
+			setProperties(Main.RUN_TIME_CONFIG.get());
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to apply configuration");
 		}
@@ -47,7 +47,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig)
 	throws IllegalStateException {
-		Main.RUN_TIME_CONFIG = runTimeConfig;
+		Main.RUN_TIME_CONFIG.set(runTimeConfig);
 		if(reqConf != null) {
 			reqConf.setProperties(runTimeConfig);
 		} else {

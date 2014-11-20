@@ -44,7 +44,7 @@ implements Runnable {
 	private final RunTimeConfig runTimeConfig;
 	//
 	public Scenario() {
-		this.runTimeConfig = Main.RUN_TIME_CONFIG;
+		this.runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	}
 	//
 	public Scenario(final RunTimeConfig runTimeConfig) {

@@ -42,7 +42,7 @@ implements LoadBuilderClient<T, U> {
 	//
 	public LoadBuilderClientBase()
 	throws IOException {
-		this(Main.RUN_TIME_CONFIG);
+		this(Main.RUN_TIME_CONFIG.get());
 	}
 	//
 	public LoadBuilderClientBase(final RunTimeConfig runTimeConfig)

@@ -59,7 +59,7 @@ implements LoadExecutor<T> {
 	protected final Closeable client;
 	//
 	protected final DataSource<T> dataSrc;
-	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
+	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	//
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();

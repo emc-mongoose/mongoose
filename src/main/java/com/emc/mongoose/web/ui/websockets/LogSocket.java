@@ -10,9 +10,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LogEvent;
 import org.eclipse.jetty.websocket.api.Session;
+import org.eclipse.jetty.websocket.api.WebSocketException;
 import org.eclipse.jetty.websocket.api.annotations.*;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by gusakk on 10/24/14.
@@ -37,13 +39,12 @@ public final class LogSocket implements WebSocketLogListener {
 	}
 
 	@OnWebSocketConnect
-	public final void onConnect(final Session session) {
-		LOG.trace(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
+	public final void onConnect(final Session session) throws InterruptedException {
 		this.session = session;
+		//
 		WebUIAppender.register(this);
-		for (final LogEvent logEvent : WebUIAppender.getLogEventsList()) {
-			sendMessage(logEvent);
-		}
+		sendMessagesOnConnect(WebUIAppender.getLogEventsList());
+		LOG.trace(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
 	}
 
 	@OnWebSocketMessage
@@ -51,16 +52,18 @@ public final class LogSocket implements WebSocketLogListener {
 		LOG.trace(Markers.MSG, "Message from Browser {}", message);
 	}
 
-	@Override
-	public final synchronized void sendMessage(final LogEvent message) {
-		try {
-			if (session.isOpen()) {
-				session.getRemote().sendString(gson.toJson(message));
-			}
-		} catch (final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "WebSocket problem");
+	public final synchronized void sendMessagesOnConnect(final List<LogEvent> logEvents) {
+		for (final LogEvent logEvent : logEvents) {
+			sendMessage(logEvent);
 		}
 	}
 
-
+	@Override
+	public final synchronized void sendMessage(final LogEvent message) {
+		try {
+			session.getRemote().sendString(gson.toJson(message));
+		} catch (final IOException|WebSocketException e) {
+			LOG.trace(Markers.MSG, "Web Socket closed");
+		}
+	}
 }

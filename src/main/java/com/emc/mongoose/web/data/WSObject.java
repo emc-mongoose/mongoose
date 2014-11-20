@@ -15,11 +15,11 @@ public interface WSObject
 extends DataObject, HttpEntity {
 	//
 	public final static Header HEADER_CONTENT_TYPE = new BasicHeader(
-		HTTP.CONTENT_TYPE, Main.RUN_TIME_CONFIG.getHttpContentType()
+		HTTP.CONTENT_TYPE, Main.RUN_TIME_CONFIG.get().getHttpContentType()
 	);
 	public final static boolean
-		IS_CONTENT_CHUNKED = Main.RUN_TIME_CONFIG.getHttpContentChunked(),
-		IS_CONTENT_REPEATABLE = Main.RUN_TIME_CONFIG.getHttpContentRepeatable();
+		IS_CONTENT_CHUNKED = Main.RUN_TIME_CONFIG.get().getHttpContentChunked(),
+		IS_CONTENT_REPEATABLE = Main.RUN_TIME_CONFIG.get().getHttpContentRepeatable();
 	//
 	HttpEntity getPendingUpdatesContentEntity();
 	//
