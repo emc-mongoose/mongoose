@@ -1,9 +1,9 @@
 $(document).ready(function() {
 
-	var VALUE_RUN_MODE_CLIENT = "VALUE_RUN_MODE_CLIENT";
-	var VALUE_RUN_MODE_STANDALONE = "VALUE_RUN_MODE_STANDALONE";
-	var VALUE_RUN_MODE_SERVER = "VALUE_RUN_MODE_SERVER";
-	var VALUE_RUN_MODE_WSMOCK = "VALUE_RUN_MODE_WSMOCK";
+	var VALUE_RUN_MODE_CLIENT = "client";
+	var VALUE_RUN_MODE_STANDALONE = "standalone";
+	var VALUE_RUN_MODE_SERVER = "server";
+	var VALUE_RUN_MODE_WSMOCK = "wsmock";
 	var runModes = [VALUE_RUN_MODE_CLIENT, VALUE_RUN_MODE_STANDALONE, VALUE_RUN_MODE_SERVER, VALUE_RUN_MODE_WSMOCK];
 	var COUNT_OF_RECORDS = 2050;
 
@@ -49,25 +49,25 @@ $(document).ready(function() {
 
 	// RunModes
 	$(document).on("click", "#standalone", function() {
-		$("#runmode").val(VALUE_RUN_MODE_STANDALONE);
+		$("#run\\.mode").val(VALUE_RUN_MODE_STANDALONE);
 		$(".runmodes .list-group .list-group-item").removeClass("active");
 		$(this).addClass("active");
 	});
 
 	$(document).on("click", "#distributed", function() {
-		$("#runmode").val(VALUE_RUN_MODE_CLIENT);
+		$("#run\\.mode").val(VALUE_RUN_MODE_CLIENT);
 		$(".runmodes .list-group .list-group-item").removeClass("active");
 		$(this).addClass("active");
 	});
 
 	$(document).on("click", "#driver", function() {
-		$("#runmode").val(VALUE_RUN_MODE_SERVER);
+		$("#run\\.mode").val(VALUE_RUN_MODE_SERVER);
 		$(".runmodes .list-group .list-group-item").removeClass("active");
 		$(this).addClass("active");
 	});
 
 	$(document).on("click", "#wsmock", function() {
-		$("#runmode").val(VALUE_RUN_MODE_WSMOCK);
+		$("#run\\.mode").val(VALUE_RUN_MODE_WSMOCK);
 		$(".runmodes .list-group .list-group-item").removeClass("active");
 		$(this).addClass("active");
 	});
@@ -81,7 +81,7 @@ $(document).ready(function() {
 	function initComponents() {
 		$(".driver").hide();
 		$(".data-node").hide();
-		$("#runmode").val($.cookie("runmode"));
+		$("#run\\.mode").val($.cookie("run.mode"));
 		configureWebSocket().connect();
 	}
 
@@ -202,7 +202,7 @@ $(document).ready(function() {
 	$(".stop").click(function() {
 		var currentButton = $(this);
 		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".");
-		$.post("/stop", { "runid" : currentRunId }, function() {
+		$.post("/stop", { "run.id" : currentRunId }, function() {
 			location.reload();
 		}).fail(function() {
 			alert("Internal Server Error");

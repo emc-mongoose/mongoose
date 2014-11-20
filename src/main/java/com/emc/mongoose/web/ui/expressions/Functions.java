@@ -1,6 +1,7 @@
 package com.emc.mongoose.web.ui.expressions;
 
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import org.apache.commons.lang.StringUtils;
 
 import java.util.Arrays;
 
@@ -10,18 +11,19 @@ import java.util.Arrays;
 public class Functions {
 
 	public static String getString(final RunTimeConfig runTimeConfig, final String key) {
-		if (key.equals("scenario.chain.load")) {
-			return convertArrayToString(runTimeConfig, key);
+		String[] stringArray = runTimeConfig.getStringArray(key);
+		if (runTimeConfig.getStringArray(key).length > 1) {
+			return convertArrayToString(stringArray);
 		}
-        return runTimeConfig.getString(key);
+		return stringArray[0];
     }
 
-	private static String convertArrayToString(final RunTimeConfig runTimeConfig, final String key) {
-		return Arrays.toString(runTimeConfig.getStringArray(key))
-												.replace("[", "")
-												.replace("]", "")
-												.replace(" ", "")
-												.trim();
+	private static String convertArrayToString(final String[] stringArray) {
+		return Arrays.toString(stringArray)
+								.replace("[", "")
+								.replace("]", "")
+								.replace(" ", "")
+								.trim();
 	}
 
 }

@@ -34,6 +34,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -56,30 +58,21 @@ public final class StartServlet extends HttpServlet {
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
 		//
-		switch (RunModes.valueOf(request.getParameter("runmode"))) {
+		runTimeConfig = runTimeConfig.clone();
+		setupRunTimeConfig(request);
+		//
+		switch (RunModes.getRunModeConstantByRequest(request.getParameter("run.mode"))) {
 			case VALUE_RUN_MODE_SERVER:
-				runTimeConfig = runTimeConfig.clone();
-				//
-				setupRunTimeConfig(request);
-				runServer();
+				startServer("Starting the server");
 				break;
 			case VALUE_RUN_MODE_WSMOCK:
-				runTimeConfig = runTimeConfig.clone();
-				//
-				setupRunTimeConfig(request);
-				runWSMock();
+				startWSMock("Starting the wsmock");
 				break;
 			case VALUE_RUN_MODE_CLIENT:
-				runTimeConfig = runTimeConfig.clone();
-				//
-				setupRunTimeConfig(request);
-				runClient();
+				startStandaloneOrClient("Starting the client");
 				break;
 			case VALUE_RUN_MODE_STANDALONE:
-				runTimeConfig = runTimeConfig.clone();
-				//
-				setupRunTimeConfig(request);
-				runStandalone();
+				startStandaloneOrClient("Starting the standalone");
 				break;
 		}
 		//	Add runModes to the http session
@@ -87,7 +80,7 @@ public final class StartServlet extends HttpServlet {
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 	//
-	private void runServer() {
+	private void startServer(final String message) {
 		final Thread thread = new Thread() {
 			WSLoadBuilderSvc loadBuilderSvc;
 			@Override
@@ -95,7 +88,7 @@ public final class StartServlet extends HttpServlet {
 				Main.RUN_TIME_CONFIG.set(runTimeConfig);
 				ThreadContextMap.initThreadContextMap(runTimeConfig);
 				//
-				LOG.debug(Markers.MSG, "Starting the server");
+				LOG.debug(Markers.MSG, message);
 				//
 				loadBuilderSvc = new BasicLoadBuilderSvc();
 				//
@@ -119,14 +112,14 @@ public final class StartServlet extends HttpServlet {
 		threadsMap.put(runTimeConfig.getString("run.id"), thread);
 	}
 	//
-	private void runStandalone() {
+	private void startStandaloneOrClient(final String message) {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {
 				Main.RUN_TIME_CONFIG.set(runTimeConfig);
 				ThreadContextMap.initThreadContextMap(Main.RUN_TIME_CONFIG.get());
 				//
-				LOG.debug(Markers.MSG, "Starting the standalone");
+				LOG.debug(Markers.MSG, message);
 				new Scenario(runTimeConfig).run();
 			}
 			//
@@ -139,34 +132,14 @@ public final class StartServlet extends HttpServlet {
 		threadsMap.put(runTimeConfig.getString("run.id"), thread);
 	}
 	//
-	private void runClient() {
-		final Thread thread = new Thread() {
-			@Override
-			public void run() {
-				Main.RUN_TIME_CONFIG.set(runTimeConfig);
-				ThreadContextMap.initThreadContextMap(Main.RUN_TIME_CONFIG.get());
-				//
-				LOG.debug(Markers.MSG, "Starting the client");
-				new Scenario(runTimeConfig).run();
-			}
-			//
-			@Override
-			public void interrupt() {
-				super.interrupt();
-			}
-		};
-		thread.start();
-		threadsMap.put(runTimeConfig.getString("run.id"), thread);
-	}
-	//
-	private void runWSMock() {
+	private void startWSMock(final String message) {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {
 				Main.RUN_TIME_CONFIG.set(runTimeConfig);
 				ThreadContextMap.initThreadContextMap(runTimeConfig);
 				//
-				LOG.debug(Markers.MSG, "Starting the wsmock");
+				LOG.debug(Markers.MSG, message);
 				new WSMockServlet(runTimeConfig).run();
 			}
 
@@ -181,67 +154,25 @@ public final class StartServlet extends HttpServlet {
 	}
 	//
 	private void setupRunTimeConfig(final HttpServletRequest request) {
-		runTimeConfig.set(Main.KEY_RUN_MODE, RunModes.valueOf(request.getParameter("runmode")).getValue());
-		//	Common settings
-		runTimeConfig.set("run.time", request.getParameter("runTime") + "." + request.getParameter("runTimeSelect"));
-		runTimeConfig.set("run.metrics.period.sec", request.getParameter("runMetricsPeriodSec"));
-		runTimeConfig.set("auth.id", request.getParameter("authId"));
-		runTimeConfig.set("auth.secret", request.getParameter("authSecret"));
-		//	Data & Load
-		runTimeConfig.set("data.count", request.getParameter("dataCount"));
-		runTimeConfig.set("data.size.min", request.getParameter("dataSizeMin"));
-		runTimeConfig.set("data.size.max", request.getParameter("dataSizeMax"));
-		//
-		runTimeConfig.set("load.create.threads", request.getParameter("loadCreateThreads"));
-		//
-		runTimeConfig.set("load.read.threads", request.getParameter("loadReadThreads"));
-		runTimeConfig.set("load.read.verify.content", request.getParameter("loadReadVerifyContent"));
-		//
-		runTimeConfig.set("load.update.threads", request.getParameter("loadUpdateThreads"));
-		runTimeConfig.set("load.update.per.item", request.getParameter("loadUpdatePerItem"));
-		//
-		runTimeConfig.set("load.delete.threads", request.getParameter("loadDeleteThreads"));
-		//
-		runTimeConfig.set("load.append.threads", request.getParameter("loadAppendThreads"));
-		//	API
-		runTimeConfig.set("api.s3.port", request.getParameter("apiS3Port"));
-		runTimeConfig.set("api.s3.auth.prefix", request.getParameter("apiS3AuthPrefix"));
-		runTimeConfig.set("api.s3.bucket", request.getParameter("apiS3Bucket"));
-		//
-		runTimeConfig.set("api.atmos.port", request.getParameter("apiAtmosPort"));
-		runTimeConfig.set("api.atmos.subtenant", request.getParameter("apiAtmosSubtenant"));
-		runTimeConfig.set("api.atmos.path.rest", request.getParameter("apiAtmosPathRest"));
-		runTimeConfig.set("api.atmos.interface", request.getParameter("apiAtmosInterface"));
-		//
-		runTimeConfig.set("api.swift.port", request.getParameter("apiSwiftPort"));
-		//	Storage
-		runTimeConfig.set("storage.api", request.getParameter("storageApi"));
-		runTimeConfig.set("storage.scheme", request.getParameter("scheme"));
-		runTimeConfig.set("storage.addrs", Arrays.toString(request.getParameterValues("dataNodes"))
-				.replace("[", "")
-				.replace("]", "")
-				.trim());
-		//	Drivers
-		runTimeConfig.set("remote.export.port", request.getParameter("remoteExportPort"));
-		runTimeConfig.set("remote.import.port", request.getParameter("remoteImportPort"));
-		runTimeConfig.set("remote.servers", Arrays.toString(request.getParameterValues("drivers"))
-				.replace("[", "")
-				.replace("]", "")
-				.trim());
-		//	Scenario
-		runTimeConfig.set("run.scenario.name", request.getParameter("runScenarioName"));
-		//	Single
-		runTimeConfig.set("scenario.single.load", request.getParameter("scenarioSingleLoad"));
-		//	Chain
-		runTimeConfig.set("scenario.chain.load", request.getParameter("scenarioChainLoad"));
-		runTimeConfig.set("scenario.chain.simultaneous", request.getParameter("scenarioChainSimultaneous"));
-		//	Rampup
-		runTimeConfig.set("scenario.rampup.thread.counts", request.getParameter("scenarioRampupThreadCounts"));
-		runTimeConfig.set("scenario.rampup.sizes", request.getParameter("scenarioRampupSizes"));
-		//	Rampup-Create
-		runTimeConfig.set("scenario.rampup-create.load", request.getParameter("scenarioRampupCreateLoad"));
-		runTimeConfig.set("scenario.rampup-create.objectsizes", request.getParameter("scenarioRampupCreateObjectSizes"));
-		runTimeConfig.set("scenario.rampup-create.threads", request.getParameter("scenarioRampupCreateThreads"));
+		for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
+			if (entry.getValue().length > 1) {
+				runTimeConfig.set(entry.getKey(), convertArrayToString(entry.getKey(), entry.getValue()));
+				continue;
+			}
+			runTimeConfig.set(entry.getKey(), entry.getValue()[0]);
+		}
+	}
+	//
+	private String convertArrayToString(String key, String[] stringArray) {
+		String resultString = Arrays.toString(stringArray)
+									.replace("[", "")
+									.replace("]", "")
+									.replace(" ", "")
+									.trim();
+		// TODO fix it
+		if (key.equals("run.time"))
+			return resultString.replace(",", ".");
+		return resultString;
 	}
 	//
 	public static void interruptMongoose(final String runId) {
