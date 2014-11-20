@@ -2,8 +2,10 @@
 from __future__ import print_function, absolute_import, with_statement
 from sys import exit
 #
-from loadbuilder import INSTANCE as LOAD_BUILDER
-from timeout import INSTANCE as RUN_TIME
+from timeout import timeout_init
+from loadbuilder import loadbuilder_init
+#from loadbuilder import INSTANCE as LOAD_BUILDER
+#from timeout import INSTANCE as RUN_TIME
 #
 from com.emc.mongoose.base.api import Request
 from com.emc.mongoose.run import Main
@@ -14,10 +16,12 @@ from org.apache.logging.log4j import Level, LogManager
 from java.lang import IllegalArgumentException
 from java.util import NoSuchElementException
 #
+RUN_TIME = timeout_init()
+LOAD_BUILDER = loadbuilder_init()
 LOG = LogManager.getLogger()
 #
 try:
-	loadType = Request.Type.valueOf(Main.RUN_TIME_CONFIG.getString("scenario.single.load").upper())
+	loadType = Request.Type.valueOf(Main.RUN_TIME_CONFIG.get().getString("scenario.single.load").upper())
 	LOG.debug(Markers.MSG, "Using load type: {}", loadType.name())
 	LOAD_BUILDER.setLoadType(loadType)
 except NoSuchElementException:
@@ -39,8 +43,13 @@ if load is None:
 	LOG.fatal(Markers.ERR, "No load executor instanced")
 	exit()
 #
+from java.lang import InterruptedException
 if __name__=="__builtin__":
 	load.start()
-	load.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
-	load.close()
-	LOG.info(Markers.MSG, "Scenario end")
+	try:
+		load.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
+	except InterruptedException:
+		pass
+	finally:
+		load.close()
+		LOG.info(Markers.MSG, "Scenario end")

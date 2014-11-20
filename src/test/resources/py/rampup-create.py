@@ -2,7 +2,8 @@
 from __future__ import print_function, absolute_import, with_statement
 from sys import exit
 #
-from loadbuilder import INSTANCE as LOAD_BUILDER
+from loadbuilder import loadbuilder_init
+#from loadbuilder import INSTANCE as LOAD_BUILDER
 #
 from com.emc.mongoose.base.api import Request
 from com.emc.mongoose.run import Main
@@ -13,10 +14,11 @@ from org.apache.logging.log4j import LogManager
 from java.lang import IllegalArgumentException
 from java.util import NoSuchElementException
 #
+LOAD_BUILDER = loadbuilder_init()
 LOG = LogManager.getLogger()
 #
 try:
-	loadType = Request.Type.valueOf(Main.RUN_TIME_CONFIG.getString("scenario.rampup-create.load").upper())
+	loadType = Request.Type.valueOf(Main.RUN_TIME_CONFIG.get().getString("scenario.rampup-create.load").upper())
 	LOG.info(Markers.MSG, "Using load type: {}", loadType.name())
 	LOAD_BUILDER.setLoadType(loadType)
 except NoSuchElementException:
@@ -29,7 +31,7 @@ from java.lang import Integer
 from java.util.concurrent import TimeUnit
 timeOut = None  # tuple of (value, unit)
 try:
-	timeOut = Main.RUN_TIME_CONFIG.getRunTime()
+	timeOut = Main.RUN_TIME_CONFIG.get().getRunTime()
 	timeOut = timeOut.split('.')
 	timeOut = Integer.valueOf(timeOut[0]), TimeUnit.valueOf(timeOut[1].upper())
 	LOG.info(Markers.MSG, "Using time limit: {} {}", timeOut[0], timeOut[1].name().lower())
@@ -42,10 +44,11 @@ except IndexError:
 	LOG.error(Markers.ERR, "Time unit should be specified with timeout value (following after \".\" separator)")
 	exit()
 #
-threadCountList = Main.RUN_TIME_CONFIG.getStringArray("scenario.rampup-create.threads")
-objectSizeList = Main.RUN_TIME_CONFIG.getStringArray("scenario.rampup-create.objectsizes")
+threadCountList = Main.RUN_TIME_CONFIG.get().getStringArray("scenario.rampup-create.threads")
+objectSizeList = Main.RUN_TIME_CONFIG.get().getStringArray("scenario.rampup-create.objectsizes")
 from java.lang import Long
 from java.lang import Integer
+from java.lang import InterruptedException
 for threadCount in threadCountList:
 	LOAD_BUILDER.setThreadsPerNodeDefault(Long.valueOf(threadCount))
 	for objectSize in objectSizeList:
@@ -58,8 +61,12 @@ for threadCount in threadCountList:
 			LOG.fatal(Markers.ERR, "No load executor instanced")
 			continue
 		load.start()
-		load.join(timeOut[1].toMillis(timeOut[0]))
-		load.close()
+		try:
+			load.join(timeOut[1].toMillis(timeOut[0]))
+		except InterruptedException:
+			pass
+		finally:
+			load.close()
 
 #
 LOG.info(Markers.MSG, "Scenario end")
