@@ -28,10 +28,10 @@ extends Producer<T>, Consumer<T> {
 	//
 	static String
 		MSG_FMT_METRICS = "count=(%d/%d/%d); " +
-			"duration[s]=(%.6f/%.6f/%.6f/%.6f); latency[s]=(%.6f/%.6f/%.6f/%.6f); " +
+			"latency[s]=(%.6f/%.6f/%.6f/%.6f); duration[s]=(%.6f/%.6f/%.6f/%.6f); " +
 			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)",
 		MSG_FMT_SUM_METRICS = "%s: count=(%d/%d); " +
-			"duration[s]=(%.6f/%.6f/%.6f/%.6f); latency[s]=(%.6f/%.6f/%.6f/%.6f); " +
+			"latency[s]=(%.6f/%.6f/%.6f/%.6f); duration[s]=(%.6f/%.6f/%.6f/%.6f); " +
 			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
 	String getName()
