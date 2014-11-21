@@ -388,7 +388,7 @@ implements Runnable {
 	//Class for print metrics in console with period (run.metrics.period.sec)
 	//if run.metrics.period.sec=0, it doesn't print metrics.
 	/////////////////////////////////////////////////////////////////////////////////////
-	private static class PrinterMetricsThread
+	private static final class PrinterMetricsThread
 	extends Thread{
 		//
 		private final Counter
