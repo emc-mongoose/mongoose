@@ -40,7 +40,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -60,40 +59,21 @@ implements Runnable {
 	private final Map<String, BasicWSObject> mapDataObject = new HashMap<>();
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
-	private final PrinterMetricsThread printerMetrics;
+	private final Thread displayMetricsWorker;
 	private final static String
 		ALL_METHODS = "all",
 		METRIC_COUNT = "count";
 	protected final Counter
-		counterAllSucc,
-		counterAllFail,
-		counterGetSucc,
-		counterGetFail,
-		counterPostSucc,
-		counterPostFail,
-		counterPutSucc,
-		counterPutFail,
-		counterDeleteSucc,
-		counterDeleteFail,
-		counterHeadSucc,
-		counterHeadFail;
-	protected final Histogram
-		durAll,
-		durGet,
-		durPost,
-		durPut,
-		durDelete;
+		counterAllSucc, counterAllFail,
+		counterGetSucc, counterGetFail,
+		counterPostSucc, counterPostFail,
+		counterPutSucc, counterPutFail,
+		counterDeleteSucc, counterDeleteFail,
+		counterHeadSucc, counterHeadFail;
+	protected final Histogram durAll, durGet, durPost, durPut, durDelete;
 	protected final Meter
-		allBW,
-		getBW,
-		postBW,
-		putBW,
-		deleteBW,
-		allTP,
-		getTP,
-		postTP,
-		putTP,
-		deleteTP;
+		allBW, getBW, postBW, putBW, deleteBW,
+		allTP, getTP, postTP, putTP, deleteTP;
 	//
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter metricsReporter;
@@ -172,8 +152,11 @@ implements Runnable {
 		//
 		metricsReporter.start();
 		//
-		printerMetrics = new PrinterMetricsThread(
-				counterAllFail, counterAllSucc,	allBW, allTP, durAll, runTimeConfig);
+		displayMetricsWorker = new Thread(
+			new DisplayMetricsTask(
+				counterAllFail, counterAllSucc,	allBW, allTP, durAll, runTimeConfig
+			), "displayMetricsWorker"
+		);
 		final String apiName = runTimeConfig.getStorageApi();
 		dataSrcFPath = runTimeConfig.getDataSrcFPath();
 		port = runTimeConfig.getInt("api." + apiName + ".port");
@@ -227,7 +210,8 @@ implements Runnable {
 		try {
 			server.start();
 			LOG.info(Markers.MSG, "Listening on port #{}", port);
-			printerMetrics.start();
+			displayMetricsWorker.start();
+
 			server.join();
 		} catch (final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupting the WSMock servlet");
@@ -235,19 +219,20 @@ implements Runnable {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to start WSMock servlet");
 		} finally {
 			try {
-				printerMetrics.stop();
 				server.stop();
-				metricsReporter.close();
 			} catch (final Exception e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to stop jetty");
 			}
+			displayMetricsWorker.interrupt();
+			metricsReporter.close();
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Request handling methods ////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	protected final void doGet(final HttpServletRequest request, final HttpServletResponse response
+	protected final void doGet(
+		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Get ");
 		response.setStatus(HttpServletResponse.SC_OK);
@@ -287,7 +272,8 @@ implements Runnable {
 	}
 	//
 	@Override
-	protected final void doPost(final HttpServletRequest request, final HttpServletResponse response
+	protected final void doPost(
+		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Post ");
 		response.setStatus(HttpServletResponse.SC_OK);
@@ -313,7 +299,8 @@ implements Runnable {
 	}
 	//
 	@Override
-	protected final void doPut(final HttpServletRequest request, final HttpServletResponse response
+	protected final void doPut(
+		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Put ");
 		response.setStatus(HttpServletResponse.SC_OK);
@@ -340,7 +327,8 @@ implements Runnable {
 	}
 	//
 	@Override
-	protected final void doDelete(final HttpServletRequest request, final HttpServletResponse response
+	protected final void doDelete(
+		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Delete ");
 		response.setStatus(HttpServletResponse.SC_OK);
@@ -366,7 +354,8 @@ implements Runnable {
 	}
 	//
 	@Override
-	protected final void doHead(final HttpServletRequest request, final HttpServletResponse response
+	protected final void doHead(
+		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Head ");
 		response.setStatus(HttpServletResponse.SC_OK);
@@ -374,7 +363,8 @@ implements Runnable {
 		counterHeadSucc.inc();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private long calcInputByteCount(final ServletInputStream servletInputStream
+	private long calcInputByteCount(
+		final ServletInputStream servletInputStream
 	) throws ServletException, IOException {
 		final byte buff[] = new byte[MAX_PAGE_SIZE];
 		long doneByteCountSum = 0, doneByteCount = 0;
@@ -388,8 +378,8 @@ implements Runnable {
 	//Class for print metrics in console with period (run.metrics.period.sec)
 	//if run.metrics.period.sec=0, it doesn't print metrics.
 	/////////////////////////////////////////////////////////////////////////////////////
-	private static final class PrinterMetricsThread
-	extends Thread{
+	private static final class DisplayMetricsTask
+	implements Runnable {
 		//
 		private final Counter
 			counterAllFail,
@@ -400,10 +390,10 @@ implements Runnable {
 		private final Histogram durAll;
 		private final long metricsUpdatePeriodSec;
 		//
-		private PrinterMetricsThread(final Counter counterAllFail, final Counter counterAllSucc,
-				final Meter allBW, final Meter allTP, final Histogram durAll,
-				final RunTimeConfig runTimeConfig){
-			super(PrinterMetricsThread.class.getSimpleName());
+		private DisplayMetricsTask(
+			final Counter counterAllFail, final Counter counterAllSucc, final Meter allBW,
+			final Meter allTP, final Histogram durAll, final RunTimeConfig runTimeConfig
+		) {
 			this.metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 			this.counterAllFail = counterAllFail;
 			this.counterAllSucc = counterAllSucc;
@@ -413,9 +403,10 @@ implements Runnable {
 		}
 		//
 		@Override
-		public final void run(){
-			while ((!interrupted())&&(metricsUpdatePeriodSec>0)){
-				try {
+		public final void run() {
+			try {
+				final long updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(metricsUpdatePeriodSec);
+				while (metricsUpdatePeriodSec > 0) {
 					final Snapshot allDurSnapshot = durAll.getSnapshot();
 					LOG.info(
 						Markers.PERF_AVG,
@@ -440,10 +431,10 @@ implements Runnable {
 							allBW.getFifteenMinuteRate() / LoadExecutor.MIB
 						)
 					);
-					sleep(metricsUpdatePeriodSec);
-				} catch (final InterruptedException e) {
-					ExceptionHandler.trace(LOG, Level.ERROR, e, "Fail to print metrics");
+					Thread.sleep(updatePeriodMilliSec);
 				}
+			} catch (final InterruptedException e) {
+				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
 			}
 		}
 	}
