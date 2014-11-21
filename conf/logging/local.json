@@ -1,6 +1,6 @@
 {
 	"configuration": {
-		"status": "info",
+		"status": "off",
 		"name": "mongoose",
 		"monitorInterval": "1000",
 		"properties": {
@@ -9,7 +9,7 @@
 				"value": "${sys:dir.root}${sys:file.separator}log${sys:file.separator}${sys:run.mode}${sys:file.separator}${sys:run.id}${sys:file.separator}"
 			}
 		},
-		"shutdownHook": "enable",
+		"shutdownHook": "disable",
 		"appenders": {
 			"appender" : [
 			 	{
