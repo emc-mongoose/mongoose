@@ -13,6 +13,7 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpHead;
@@ -34,12 +35,8 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -55,11 +52,9 @@ implements Runnable {
 	private final static Logger LOG = LogManager.getLogger();
 	private final int port;
 	private Server server;
-	private final String dataSrcFPath;
 	private final Map<String, BasicWSObject> mapDataObject = new HashMap<>();
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
-	private final Thread displayMetricsWorker;
 	private final static String
 		ALL_METHODS = "all",
 		METRIC_COUNT = "count";
@@ -79,8 +74,10 @@ implements Runnable {
 	protected final JmxReporter metricsReporter;
 	private static int MAX_PAGE_SIZE;
 	// METRICS section END
+	private long metricsUpdatePeriodSec;
 	public WSMockServlet(final RunTimeConfig runTimeConfig) {
 		//
+		metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 		MAX_PAGE_SIZE = (int) runTimeConfig.getDataPageSize();
 		//Init bean server
 		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());
@@ -152,16 +149,8 @@ implements Runnable {
 		//
 		metricsReporter.start();
 		//
-		displayMetricsWorker = new Thread(
-			new DisplayMetricsTask(
-				counterAllFail, counterAllSucc,	allBW, allTP, durAll, runTimeConfig
-			), "displayMetricsWorker"
-		);
 		final String apiName = runTimeConfig.getStorageApi();
-		dataSrcFPath = runTimeConfig.getDataSrcFPath();
 		port = runTimeConfig.getInt("api." + apiName + ".port");
-		LOG.debug(Markers.MSG, "Create map of BasicWSObject");
-		createMapDataObject();
 		LOG.debug(Markers.MSG, "Setup Jetty Server instance");
 		server = new Server();
 		server.setDumpAfterStart(false);
@@ -181,28 +170,6 @@ implements Runnable {
 		context.addServlet(new ServletHolder(this), "/*");
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private void createMapDataObject() {
-		final Path pathDataItemCSV = Paths.get(dataSrcFPath);
-		try {
-			if (!pathDataItemCSV.toString().isEmpty()) {
-				final BufferedReader fileReader = Files.newBufferedReader(pathDataItemCSV, StandardCharsets.UTF_8);
-				String nextLine;
-				do {
-					nextLine = fileReader.readLine();
-					if (nextLine == null || nextLine.isEmpty()) {
-						break;
-					} else {
-						LOG.trace(Markers.MSG, "Got next line: \"{}\"", nextLine);
-						final BasicWSObject nextData = new BasicWSObject(nextLine);
-						mapDataObject.put(nextData.getId(), nextData);
-					}
-				} while (true);
-			}
-		} catch (final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to read line from the file");
-		}
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Runnable implementation
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -210,8 +177,9 @@ implements Runnable {
 		try {
 			server.start();
 			LOG.info(Markers.MSG, "Listening on port #{}", port);
-			displayMetricsWorker.start();
-
+			//Output metrics
+			printMetrics();
+			//
 			server.join();
 		} catch (final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupting the WSMock servlet");
@@ -223,8 +191,42 @@ implements Runnable {
 			} catch (final Exception e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to stop jetty");
 			}
-			displayMetricsWorker.interrupt();
 			metricsReporter.close();
+		}
+	}
+	//
+	private void printMetrics(){
+		try {
+			final long updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(metricsUpdatePeriodSec);
+			while (metricsUpdatePeriodSec > 0) {
+				final Snapshot allDurSnapshot = durAll.getSnapshot();
+				LOG.info(
+						Markers.PERF_AVG,
+						String.format(Locale.ROOT, LoadExecutor.MSG_FMT_SUM_METRICS,
+								//
+								WSMockServlet.class.getSimpleName(),
+								counterAllSucc.getCount(), counterAllFail.getCount(),
+								//
+								(float) allDurSnapshot.getMin() / LoadExecutor.BILLION,
+								(float) allDurSnapshot.getMedian() / LoadExecutor.BILLION,
+								(float) allDurSnapshot.getMean() / LoadExecutor.BILLION,
+								(float) allDurSnapshot.getMax() / LoadExecutor.BILLION,
+								//
+								allTP.getMeanRate(),
+								allTP.getOneMinuteRate(),
+								allTP.getFiveMinuteRate(),
+								allTP.getFifteenMinuteRate(),
+								//
+								allBW.getMeanRate() / LoadExecutor.MIB,
+								allBW.getOneMinuteRate() / LoadExecutor.MIB,
+								allBW.getFiveMinuteRate() / LoadExecutor.MIB,
+								allBW.getFifteenMinuteRate() / LoadExecutor.MIB
+						)
+				);
+				Thread.sleep(updatePeriodMilliSec);
+			}
+		} catch (final InterruptedException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -310,6 +312,12 @@ implements Runnable {
 			final long bytes = calcInputByteCount(servletInputStream);
 			nanoTime = System.nanoTime() - nanoTime;
 			//
+			LOG.debug(Markers.MSG, "create new data object");
+			final String dataID = request.getRequestURI().split("/")[2];
+			final long offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(Base64.decodeBase64(dataID)).getLong(0);
+			final BasicWSObject dataObject = new BasicWSObject(dataID, offset, bytes);
+			mapDataObject.put(dataID,dataObject);
+			//
 			durPut.update(nanoTime);
 			durAll.update(nanoTime);
 			counterAllSucc.inc();
@@ -323,6 +331,10 @@ implements Runnable {
 			counterAllFail.inc();
 			counterPutFail.inc();
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
+		}catch (final ArrayIndexOutOfBoundsException e) {
+			counterAllFail.inc();
+			counterGetFail.inc();
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
 		}
 	}
 	//
@@ -367,75 +379,12 @@ implements Runnable {
 		final ServletInputStream servletInputStream
 	) throws ServletException, IOException {
 		final byte buff[] = new byte[MAX_PAGE_SIZE];
-		long doneByteCountSum = 0, doneByteCount = 0;
+		long doneByteCountSum = 0, doneByteCount;
 		do {
-			doneByteCount += servletInputStream.read(buff);
+			doneByteCount = servletInputStream.read(buff);
 			doneByteCountSum += (doneByteCount < 0 ? 0 : doneByteCount);
 		} while (doneByteCount >= 0);
 		return doneByteCountSum;
 	}
-	/////////////////////////////////////////////////////////////////////////////////////
-	//Class for print metrics in console with period (run.metrics.period.sec)
-	//if run.metrics.period.sec=0, it doesn't print metrics.
-	/////////////////////////////////////////////////////////////////////////////////////
-	private static final class DisplayMetricsTask
-	implements Runnable {
-		//
-		private final Counter
-			counterAllFail,
-			counterAllSucc;
-		private final Meter
-			allBW,
-			allTP;
-		private final Histogram durAll;
-		private final long metricsUpdatePeriodSec;
-		//
-		private DisplayMetricsTask(
-			final Counter counterAllFail, final Counter counterAllSucc, final Meter allBW,
-			final Meter allTP, final Histogram durAll, final RunTimeConfig runTimeConfig
-		) {
-			this.metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
-			this.counterAllFail = counterAllFail;
-			this.counterAllSucc = counterAllSucc;
-			this.allBW = allBW;
-			this.allTP = allTP;
-			this.durAll = durAll;
-		}
-		//
-		@Override
-		public final void run() {
-			try {
-				final long updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(metricsUpdatePeriodSec);
-				while (metricsUpdatePeriodSec > 0) {
-					final Snapshot allDurSnapshot = durAll.getSnapshot();
-					LOG.info(
-						Markers.PERF_AVG,
-						String.format(Locale.ROOT, LoadExecutor.MSG_FMT_SUM_METRICS,
-							//
-							WSMockServlet.class.getSimpleName(),
-							counterAllSucc.getCount(), counterAllFail.getCount(),
-							//
-							(float) allDurSnapshot.getMin() / LoadExecutor.BILLION,
-							(float) allDurSnapshot.getMedian() / LoadExecutor.BILLION,
-							(float) allDurSnapshot.getMean() / LoadExecutor.BILLION,
-							(float) allDurSnapshot.getMax() / LoadExecutor.BILLION,
-							//
-							allTP.getMeanRate(),
-							allTP.getOneMinuteRate(),
-							allTP.getFiveMinuteRate(),
-							allTP.getFifteenMinuteRate(),
-							//
-							allBW.getMeanRate() / LoadExecutor.MIB,
-							allBW.getOneMinuteRate() / LoadExecutor.MIB,
-							allBW.getFiveMinuteRate() / LoadExecutor.MIB,
-							allBW.getFifteenMinuteRate() / LoadExecutor.MIB
-						)
-					);
-					Thread.sleep(updatePeriodMilliSec);
-				}
-			} catch (final InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
-			}
-		}
-	}
+	//
 }
