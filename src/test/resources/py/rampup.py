@@ -11,9 +11,10 @@ from com.emc.mongoose.util.conf import RunTimeConfig
 from com.emc.mongoose.util.logging import ExceptionHandler, Markers
 #
 LOG = LogManager.getLogger()
+LOCAL_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get()
 #
-listSizes = Main.RUN_TIME_CONFIG.get().getStringArray("scenario.rampup.sizes")
-listThreadCounts = Main.RUN_TIME_CONFIG.get().getStringArray("scenario.rampup.thread.counts")
+listSizes = LOCAL_RUN_TIME_CONFIG.getStringArray("scenario.rampup.sizes")
+listThreadCounts = LOCAL_RUN_TIME_CONFIG.getStringArray("scenario.rampup.thread.counts")
 #
 if __name__=="__builtin__":
 	LOG.info(Markers.MSG, "Data sizes: {}", listSizes)

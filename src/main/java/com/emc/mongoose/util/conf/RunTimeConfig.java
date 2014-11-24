@@ -334,9 +334,10 @@ implements Externalizable {
 		if(serverVersion.equals(clientVersion)) {
 			// put the properties into the System
 			Object nextPropValue;
+			final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
 			for(final String nextPropName: confMap.keySet()) {
 				nextPropValue = nextPropName.startsWith("remote") ?
-					Main.RUN_TIME_CONFIG.get().getString(nextPropName) :
+					localRunTimeConfig.getString(nextPropName) :
 					confMap.get(nextPropName);
 				LOG.trace(Markers.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
 				if(List.class.isInstance(nextPropValue)) {

@@ -120,7 +120,7 @@ public final class StartServlet extends HttpServlet {
 				ThreadContextMap.initThreadContextMap(Main.RUN_TIME_CONFIG.get());
 				//
 				LOG.debug(Markers.MSG, message);
-				new Scenario(runTimeConfig).run();
+				new Scenario().run();
 			}
 			//
 			@Override

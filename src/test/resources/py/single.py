@@ -17,11 +17,12 @@ from java.lang import IllegalArgumentException
 from java.util import NoSuchElementException
 #
 RUN_TIME = timeout_init()
+LOCAL_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get()
 LOAD_BUILDER = loadbuilder_init()
 LOG = LogManager.getLogger()
 #
 try:
-	loadType = Request.Type.valueOf(Main.RUN_TIME_CONFIG.get().getString("scenario.single.load").upper())
+	loadType = Request.Type.valueOf(LOCAL_RUN_TIME_CONFIG.getString("scenario.single.load").upper())
 	LOG.debug(Markers.MSG, "Using load type: {}", loadType.name())
 	LOAD_BUILDER.setLoadType(loadType)
 except NoSuchElementException:

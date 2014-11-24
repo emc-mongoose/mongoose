@@ -75,6 +75,7 @@ implements WSLoadBuilderSvc<T, U> {
 		//
 		ObjectLoadSvc<T> loadSvc = null;
 		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(reqConf);
+		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
 		if(minObjSize <= maxObjSize) {
 			try {
 				switch(loadType) {
@@ -86,7 +87,7 @@ implements WSLoadBuilderSvc<T, U> {
 							);
 						}
 						loadSvc = new CreateSvc<T>(
-							Main.RUN_TIME_CONFIG.get(),
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							minObjSize, maxObjSize
 						);
@@ -94,14 +95,14 @@ implements WSLoadBuilderSvc<T, U> {
 					case READ:
 						LOG.debug(Markers.MSG, "New read load");
 						loadSvc = new ReadSvc<T>(
-							Main.RUN_TIME_CONFIG.get(),
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case UPDATE:
 						LOG.debug(Markers.MSG, "New update load");
 						loadSvc = new UpdateSvc<T>(
-							Main.RUN_TIME_CONFIG.get(),
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							updatesPerItem
 						);
@@ -109,14 +110,14 @@ implements WSLoadBuilderSvc<T, U> {
 					case DELETE:
 						LOG.debug(Markers.MSG, "New delete load");
 						loadSvc = new DeleteSvc<T>(
-							Main.RUN_TIME_CONFIG.get(),
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case APPEND:
 						LOG.debug(Markers.MSG, "New append load");
 						loadSvc = new AppendSvc<T>(
-							Main.RUN_TIME_CONFIG.get(),
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							minObjSize, maxObjSize
 						);

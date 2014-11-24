@@ -9,11 +9,13 @@ from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.logging import Markers
 #
 from java.util import NoSuchElementException
+#
+LOCAL_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get()
 def loadbuilder_init():
     #
     mode = None
     try:
-        mode = Main.RUN_TIME_CONFIG.get().getRunMode()
+        mode = LOCAL_RUN_TIME_CONFIG.getRunMode()
     except NoSuchElementException:
         LOG.fatal(Markers.ERR, "Launch mode is not specified, use -Drun.mode=<VALUE> argument")
         exit()
@@ -44,5 +46,5 @@ def loadbuilder_init():
     if INSTANCE is None:
         LOG.fatal(Markers.ERR, "No load builder instanced")
         exit()
-    INSTANCE.setProperties(Main.RUN_TIME_CONFIG.get())
+    INSTANCE.setProperties(LOCAL_RUN_TIME_CONFIG)
     return INSTANCE

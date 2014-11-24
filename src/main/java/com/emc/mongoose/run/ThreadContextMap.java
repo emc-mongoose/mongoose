@@ -10,6 +10,13 @@ import org.apache.logging.log4j.ThreadContext;
  */
 public class ThreadContextMap {
 	//
+	// TODO validate the variant below
+	//public static void initThreadContextMap() {
+	//	final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
+	//	ThreadContext.put(Main.KEY_RUN_ID, localRunTimeConfig.getRunId());
+	//	ThreadContext.put(Main.KEY_RUN_MODE, localRunTimeConfig.getRunMode());
+	//}
+	// TODO the following 2 methods may be unnecessary - validate and remove
 	public static void initThreadContextMap(final RunTimeConfig runTimeConfig) {
 		ThreadContext.put(Main.KEY_RUN_ID, runTimeConfig.getString(Main.KEY_RUN_ID));
 		ThreadContext.put(Main.KEY_RUN_MODE, runTimeConfig.getString(Main.KEY_RUN_MODE));
