@@ -1,5 +1,9 @@
 package com.emc.mongoose.run;
 //
+import com.emc.mongoose.base.load.server.LoadSvc;
+import com.emc.mongoose.web.data.WSObject;
+import com.emc.mongoose.web.load.WSLoadExecutor;
+import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -18,12 +22,14 @@ import org.apache.logging.log4j.status.StatusConsoleListener;
 import org.omg.SendingContext.RunTime;
 //
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.rmi.RemoteException;
 import java.security.Policy;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -125,7 +131,17 @@ public final class Main {
 			case RUN_MODE_SERVER:
 			case RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
-				new BasicLoadBuilderSvc().start();
+				try(
+					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
+						loadBuilderSvc = new BasicLoadBuilderSvc<>()
+				) {
+					loadBuilderSvc.start();
+					loadBuilderSvc.join();
+				} catch(final IOException e) {
+					ExceptionHandler.trace(rootLogger, Level.ERROR, e, "Load builder service failure");
+				} catch(InterruptedException e) {
+					rootLogger.debug(Markers.MSG, "Interrupted load builder service");
+				}
 				break;
 			case RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");

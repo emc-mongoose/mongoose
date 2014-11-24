@@ -1,8 +1,6 @@
 package com.emc.mongoose.run;
 
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.web.api.WSRequestConfig;
-import com.emc.mongoose.web.data.WSObject;
 import org.apache.logging.log4j.ThreadContext;
 
 /**
