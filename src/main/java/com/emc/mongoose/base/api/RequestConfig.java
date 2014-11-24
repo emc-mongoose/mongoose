@@ -4,13 +4,14 @@ import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
+import java.io.Closeable;
 import java.io.Externalizable;
 /**
  Created by kurila on 29.09.14.
  Shared request configuration.
  */
 public interface RequestConfig<T extends DataItem>
-extends Externalizable, Cloneable {
+extends Externalizable, Cloneable, Closeable {
 	//
 	long serialVersionUID = 42L;
 	//
@@ -49,6 +50,11 @@ extends Externalizable, Cloneable {
 	int getLoadNumber();
 	RequestConfig<T> setLoadNumber(final int loadNumber);
 	//
+	Closeable getClient();
+	RequestConfig<T> setClient(final Closeable client);
+	//
 	void configureStorage()
 	throws IllegalStateException;
+	//
+	boolean isClosed();
 }

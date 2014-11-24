@@ -13,13 +13,11 @@ import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.StorageNodeExecutor;
-import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
-import com.emc.mongoose.util.threading.WorkerFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -29,13 +27,11 @@ import org.apache.logging.log4j.Marker;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -58,7 +54,6 @@ implements StorageNodeExecutor<T> {
 	//
 	private volatile Consumer<T> consumer = null;
 	//
-	private final RunTimeConfig runTimeConfig;
 	private final Request.Type reqType;
 	//
 	private final int retryDelayMilliSec, retryCountMax;
@@ -85,7 +80,6 @@ implements StorageNodeExecutor<T> {
 				)
 		);
 		//
-		this.runTimeConfig = runTimeConfig;
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		this.localReqConf = localReqConf;
@@ -439,16 +433,8 @@ implements StorageNodeExecutor<T> {
 		if(!isShutdown()) {
 			interrupt();
 		}
-		try {
-			if(!awaitTermination(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)) {
-				LOG.debug(Markers.MSG, "Response timeout on node executor close {}", getName());
-			}
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Interrupted closing node executor {}", getName());
-		} finally {
-			LOG.debug(Markers.MSG, "Dropping {} tasks", shutdownNow().size());
-		}
-		//
+		localReqConf.close();
+		LOG.debug(Markers.MSG, "Dropping {} tasks", shutdownNow().size());
 		LOG.debug(Markers.MSG, "Closed {}", getThreadFactory().toString());
 	}
 	//

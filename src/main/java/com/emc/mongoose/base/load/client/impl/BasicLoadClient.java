@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -672,7 +671,7 @@ implements LoadClient<T> {
 					)
 				);
 			} catch(final RejectedExecutionException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "");
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Fetching metainfo frame task rejected");
 			}
 		}
 		//
@@ -688,7 +687,7 @@ implements LoadClient<T> {
 					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
 				}
 			} catch(final Exception e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to fetch the metainfo frame");
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
 			}
 			//
 			if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
@@ -819,6 +818,7 @@ implements LoadClient<T> {
 						LOG.warn(Markers.ERR, "Failed to take the lock");
 					}
 					logMetrics(Markers.PERF_AVG);
+					logMetaInfoFrames();
 				}
 			} else {
 				final String runTimeSpec[] = runTimeConfig.getRunTime().split("\\.");
@@ -854,8 +854,15 @@ implements LoadClient<T> {
 	public final void interrupt() {
 		LOG.debug(Markers.MSG, "Interrupting {}...", getName());
 		//
-		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(10);
-		interruptExecutor.submit(new GentleExecutorShutDown(submitExecutor, runTimeConfig));
+		submitExecutor.shutdown();
+		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
+		try {
+			submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.ERR, "Interrupted waiting for submit executor to finish");
+		}
+		//
+		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(remoteLoadMap.size());
 		//
 		for(final String addr: remoteLoadMap.keySet()) {
 			interruptExecutor.submit(
@@ -877,7 +884,6 @@ implements LoadClient<T> {
 		}
 		//
 		interruptExecutor.shutdown();
-		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		try {
 			interruptExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException e) {
@@ -952,14 +958,7 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void submit(final T dataItem) {
-		if(maxCount < submitExecutor.getTaskCount() || dataItem == null || !isAlive()) {
-			//
-			LOG.trace(
-				Markers.MSG, "Got poison on #{}, invoking the soft interruption",
-				submitExecutor.getTaskCount()
-			);
-			maxCount = submitExecutor.getCompletedTaskCount();
-			//
+		if(maxCount < submitExecutor.getTaskCount() || !isAlive()) {
 			if(lock.tryLock()) {
 				try {
 					condDone.signalAll();
@@ -967,6 +966,12 @@ implements LoadClient<T> {
 					lock.unlock();
 				}
 			}
+		} else if(dataItem == null) {
+			LOG.trace(
+				Markers.MSG, "Got poison on #{}, invoking the soft interruption",
+				submitExecutor.getTaskCount()
+			);
+			maxCount = submitExecutor.getCompletedTaskCount();
 		} else {
 			final Object addrs[] = remoteLoadMap.keySet().toArray();
 			final String addr = String.class.cast(

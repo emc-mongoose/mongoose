@@ -208,7 +208,8 @@ implements DataItem {
 		size = in.readLong();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final void writeTo(final OutputStream out) {
+	public final void writeTo(final OutputStream out)
+	throws IOException {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
 		}
@@ -217,26 +218,22 @@ implements DataItem {
 			countPages = (int) size / buff.length,
 			countTailBytes = (int) size % buff.length;
 		synchronized(this) {
-			try {
-				setOffset(offset, 0); // resets the position in the ring to the beginning of the item
-				//
-				for(int i = 0; i < countPages; i++) {
-					if(read(buff)==buff.length) {
-						out.write(buff);
-					} else {
-						throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
-					}
+			setOffset(offset, 0); // resets the position in the ring to the beginning of the item
+			//
+			for(int i = 0; i < countPages; i++) {
+				if(read(buff)==buff.length) {
+					out.write(buff);
+				} else {
+					throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
 				}
-				// tail bytes
-				if(countTailBytes > 0) {
-					if(read(buff, 0, countTailBytes)==countTailBytes) {
-						out.write(buff, 0, countTailBytes);
-					} else {
-						throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
-					}
+			}
+			// tail bytes
+			if(countTailBytes > 0) {
+				if(read(buff, 0, countTailBytes)==countTailBytes) {
+					out.write(buff, 0, countTailBytes);
+				} else {
+					throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
 				}
-			} catch(final IOException e) {
-				LOG.error(Markers.ERR, e.getMessage());
 			}
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -246,7 +243,7 @@ implements DataItem {
 	// checks that data read from input equals the specified range
 	protected final boolean compareWith(
 		final InputStream in, final long rangeOffset, final long rangeLength
-	) {
+	) throws IOException {
 		//
 		boolean contentEquals = true;
 		final int
@@ -259,71 +256,64 @@ implements DataItem {
 		int doneByteCountSum, doneByteCount;
 		//
 		synchronized(this) {
-			try {
-				setOffset(offset, rangeOffset);
-				for(int i = 0; i < countPages; i++) {
-					if(pageSize == read(buff1)) {
-						doneByteCountSum = 0;
-						do {
-							doneByteCount = in.read(
-								buff2, doneByteCountSum, pageSize - doneByteCountSum
-							);
-							if(doneByteCount < 0) {
-								break;
-							} else {
-								doneByteCountSum += doneByteCount;
-							}
-						} while(doneByteCountSum < pageSize);
-						contentEquals = Arrays.equals(buff1, buff2);
-						if(!contentEquals) {
-							LOG.debug(
-								Markers.ERR,
-								FMT_MSG_CORRUPT, rangeOffset, i * pageSize,
-								Base64.encodeBase64URLSafeString(buff1),
-								Base64.encodeBase64URLSafeString(buff2)
-							);
+			setOffset(offset, rangeOffset);
+			for(int i = 0; i < countPages; i++) {
+				if(pageSize == read(buff1)) {
+					doneByteCountSum = 0;
+					do {
+						doneByteCount = in.read(
+							buff2, doneByteCountSum, pageSize - doneByteCountSum
+						);
+						if(doneByteCount < 0) {
 							break;
+						} else {
+							doneByteCountSum += doneByteCount;
 						}
-					} else {
-						LOG.debug(Markers.ERR, MSG_READ_STREAM_BLOCKED);
-						contentEquals = false;
+					} while(doneByteCountSum < pageSize);
+					contentEquals = Arrays.equals(buff1, buff2);
+					if(!contentEquals) {
+						LOG.debug(
+							Markers.ERR,
+							FMT_MSG_CORRUPT, rangeOffset, i * pageSize,
+							Base64.encodeBase64URLSafeString(buff1),
+							Base64.encodeBase64URLSafeString(buff2)
+						);
 						break;
 					}
+				} else {
+					LOG.debug(Markers.ERR, MSG_READ_STREAM_BLOCKED);
+					contentEquals = false;
+					break;
 				}
-				//
-				if(contentEquals && countTailBytes > 0) {
-					// tail bytes
-					if(read(buff1, 0, countTailBytes) == countTailBytes) {
-						doneByteCountSum = 0;
-						do {
-							doneByteCount = in.read(
-								buff2, doneByteCountSum, countTailBytes - doneByteCountSum
-							);
-							if(doneByteCount < 0) {
-								break;
-							} else {
-								doneByteCountSum += doneByteCount;
-							}
-						} while(doneByteCountSum < countTailBytes);
-						contentEquals = Arrays.equals(buff1, buff2);
-						if(!contentEquals) {
-							LOG.debug(
-								Markers.ERR, FMT_MSG_CORRUPT,
-								rangeOffset, rangeLength - countTailBytes,
-								Base64.encodeBase64URLSafeString(buff1),
-								Base64.encodeBase64URLSafeString(buff2)
-							);
+			}
+			//
+			if(contentEquals && countTailBytes > 0) {
+				// tail bytes
+				if(read(buff1, 0, countTailBytes) == countTailBytes) {
+					doneByteCountSum = 0;
+					do {
+						doneByteCount = in.read(
+							buff2, doneByteCountSum, countTailBytes - doneByteCountSum
+						);
+						if(doneByteCount < 0) {
+							break;
+						} else {
+							doneByteCountSum += doneByteCount;
 						}
-					} else {
-						LOG.debug(Markers.ERR, MSG_READ_STREAM_BLOCKED);
-						contentEquals = false;
+					} while(doneByteCountSum < countTailBytes);
+					contentEquals = Arrays.equals(buff1, buff2);
+					if(!contentEquals) {
+						LOG.debug(
+							Markers.ERR, FMT_MSG_CORRUPT,
+							rangeOffset, rangeLength - countTailBytes,
+							Base64.encodeBase64URLSafeString(buff1),
+							Base64.encodeBase64URLSafeString(buff2)
+						);
 					}
+				} else {
+					LOG.debug(Markers.ERR, MSG_READ_STREAM_BLOCKED);
+					contentEquals = false;
 				}
-			} catch(final IOException e) {
-				contentEquals = false;
-				ExceptionHandler.trace(
-					LOG, Level.WARN, e, MSG_IO_FAILURE_DURING_VERIFICATION
-				);
 			}
 		}
 		//
