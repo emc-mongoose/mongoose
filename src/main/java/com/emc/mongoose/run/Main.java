@@ -134,7 +134,7 @@ public final class Main {
 			case RUN_MODE_CLIENT:
 			case RUN_MODE_STANDALONE:
 			case RUN_MODE_COMPAT_CLIENT:
-				new Scenario(RUN_TIME_CONFIG.get()).run();
+				new Scenario().run();
 				System.exit(0);
 				break;
 			default:
