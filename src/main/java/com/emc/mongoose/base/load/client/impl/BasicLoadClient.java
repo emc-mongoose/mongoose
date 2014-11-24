@@ -803,8 +803,15 @@ implements LoadClient<T> {
 		//
 		final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 		try {
-			if(metricsUpdatePeriodSec > 0) {
-				while(!isInterrupted()) {
+			while(isAlive()) {
+				try {
+					if(maxCount > countRej.get() + countReqFail.get() + countReqSucc.get()) {
+						break;
+					}
+				} catch(final ExecutionException e) {
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch metrics");
+				}
+				if(metricsUpdatePeriodSec > 0) {
 					if(lock.tryLock()) {
 						try {
 							if(condDone.await(metricsUpdatePeriodSec, TimeUnit.SECONDS)) {
@@ -819,35 +826,18 @@ implements LoadClient<T> {
 					}
 					logMetrics(Markers.PERF_AVG);
 					logMetaInfoFrames();
+				} else {
+					countRej = mgmtConnExecutor.submit(taskGetCountRej);
+					countReqSucc = mgmtConnExecutor.submit(taskGetCountSucc);
+					countReqFail = mgmtConnExecutor.submit(taskGetCountFail);
 				}
-			} else {
-				final String runTimeSpec[] = runTimeConfig.getRunTime().split("\\.");
-				//
-				if(lock.tryLock()) {
-					try {
-						if(
-							condDone.await(
-								Long.valueOf(runTimeSpec[0]),
-								TimeUnit.valueOf(runTimeSpec[1].toUpperCase())
-							)
-							) {
-							LOG.debug(Markers.MSG, "Condition \"done\" reached");
-						}
-					} catch(final InterruptedException e) {
-						LOG.debug(Markers.MSG, "Waiting for the done condition interrupted");
-					} finally {
-						lock.unlock();
-					}
-				}
-				LOG.debug(Markers.MSG, "Max data items count reached");
 			}
+			LOG.trace(Markers.MSG, "Finish reached");
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
+		} finally {
+			interrupt();
 		}
-		//
-		LOG.trace(Markers.MSG, "Finish reached");
-		//
-		interrupt();
 	}
 	//
 	@Override
@@ -958,7 +948,11 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void submit(final T dataItem) {
-		if(maxCount < submitExecutor.getTaskCount() || !isAlive()) {
+		if(maxCount <= submitExecutor.getTaskCount() || !isAlive() || dataItem == null) {
+			LOG.debug(
+				Markers.MSG, "Met final condition: max={}, tasks={}, alive={}, poison={}",
+				maxCount, submitExecutor.getTaskCount(), isAlive(), dataItem == null
+			);
 			if(lock.tryLock()) {
 				try {
 					condDone.signalAll();
@@ -966,12 +960,6 @@ implements LoadClient<T> {
 					lock.unlock();
 				}
 			}
-		} else if(dataItem == null) {
-			LOG.trace(
-				Markers.MSG, "Got poison on #{}, invoking the soft interruption",
-				submitExecutor.getTaskCount()
-			);
-			maxCount = submitExecutor.getCompletedTaskCount();
 		} else {
 			final Object addrs[] = remoteLoadMap.keySet().toArray();
 			final String addr = String.class.cast(

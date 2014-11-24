@@ -344,9 +344,13 @@ implements LoadExecutor<T> {
 	throws RemoteException {
 		if(
 			dataItem == null || !isAlive() ||
-			maxCount < counterRej.getCount() + counterReqFail.getCount() + counterReqSucc.getCount()
+			maxCount <= counterRej.getCount() + counterReqFail.getCount() + counterReqSucc.getCount()
 		) { // handle the poison
-			LOG.debug(Markers.MSG, "Poisoned on #{}", maxCount);
+			LOG.debug(
+				Markers.MSG, "Met final condition: max={}, rejected={}, failed={}, done={}, alive={}, poison={}",
+				maxCount, counterRej.getCount(), counterReqFail.getCount(),
+				counterReqSucc.getCount(), isAlive(), dataItem == null
+			);
 			//
 			if(lock.tryLock()) {
 				try {
@@ -356,7 +360,7 @@ implements LoadExecutor<T> {
 				}
 			}
 			//
-			maxCount = counterSubm.getCount() + counterRej.getCount();
+			//maxCount = counterSubm.getCount() + counterRej.getCount();
 			for(final StorageNodeExecutor<T> nextNode: nodes) {
 				if(!nextNode.isShutdown()) {
 					nextNode.submit(null); // poison
