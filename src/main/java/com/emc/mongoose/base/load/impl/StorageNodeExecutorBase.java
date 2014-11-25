@@ -434,8 +434,10 @@ implements StorageNodeExecutor<T> {
 			interrupt();
 		}
 		localReqConf.close();
-		LOG.debug(Markers.MSG, "Dropping {} tasks", shutdownNow().size());
-		LOG.debug(Markers.MSG, "Closed {}", getThreadFactory().toString());
+		LOG.debug(
+			Markers.MSG, "Dropped {} tasks while closing \"{}\"",
+			shutdownNow().size(), getThreadFactory().toString()
+		);
 	}
 	//
 }

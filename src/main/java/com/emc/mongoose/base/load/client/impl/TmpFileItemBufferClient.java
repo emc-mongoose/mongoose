@@ -73,44 +73,63 @@ implements DataItemBufferClient<T> {
 	}
 	//
 	@Override
-	public final void setMaxCount(final long maxCount)
-	throws RemoteException {
+	public final void setMaxCount(final long maxCount) {
 		DataItemBuffer<T> nextDataItemBuffer;
 		for(final String addr: keySet()) {
-			nextDataItemBuffer = get(addr);
-			if(nextDataItemBuffer != null) {
+			try {
+				nextDataItemBuffer = get(addr);
 				nextDataItemBuffer.setMaxCount(maxCount);
-			}
-		}
-	}
-	//
-	@Override
-	public final void close()
-	throws IOException {
-		DataItemBuffer<T> nextDataItemBuffer;
-		for(final String addr: keySet()) {
-			nextDataItemBuffer = get(addr);
-			if(nextDataItemBuffer != null) {
-				nextDataItemBuffer.close();
-				LOG.debug(
-					Markers.MSG, "Closed remote date item buffer for output @{}: \"{}\"",
-					addr, nextDataItemBuffer.toString()
+			} catch(final Exception e) {
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e,
+					String.format(
+						"Failed to set the count limit for remote data items buffer @ %s", addr
+					)
 				);
 			}
 		}
 	}
 	//
 	@Override
-	public final void setConsumer(final Consumer<T> consumer)
-	throws RemoteException {
+	public final void close() {
+		DataItemBuffer<T> nextDataItemBuffer;
+		for(final String addr: keySet()) {
+			try {
+				nextDataItemBuffer = get(addr);
+				nextDataItemBuffer.close();
+				LOG.debug(
+					Markers.MSG, "Closed remote date item buffer for output @{}: \"{}\"",
+					addr, nextDataItemBuffer.toString()
+				);
+			} catch(final Exception e) {
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e,
+					String.format("Failed to close remote data items buffer @ %s", addr)
+				);
+			}
+		}
+	}
+	//
+	@Override
+	public final void setConsumer(final Consumer<T> consumer) {
 		if(LoadClient.class.isInstance(consumer)) {
 			final Map<String, LoadSvc<T>> loadSvcMap = ((LoadClient<T>) consumer).getRemoteLoadMap();
 			DataItemBuffer<T> nextDataItemBuffer;
 			LoadSvc<T> nextLoadSvc;
 			for(final String addr: keySet()) {
-				nextDataItemBuffer = get(addr);
-				nextLoadSvc = loadSvcMap.get(addr);
-				nextDataItemBuffer.setConsumer(nextLoadSvc);
+				try {
+					nextDataItemBuffer = get(addr);
+					nextLoadSvc = loadSvcMap.get(addr);
+					nextDataItemBuffer.setConsumer(nextLoadSvc);
+				} catch(final Exception e) {
+					ExceptionHandler.trace(
+						LOG, Level.WARN, e,
+						String.format(
+							"Failed to set the consumer %s for remote data items buffer @ %s",
+							consumer, addr
+						)
+					);
+				}
 			}
 		} else {
 			LOG.warn(
@@ -127,32 +146,77 @@ implements DataItemBufferClient<T> {
 	}
 	//
 	@Override
-	public final void start()
-	throws RemoteException {
+	public final void start() {
 		DataItemBuffer<T> nextDataItemBuffer;
 		for(final String addr: keySet()) {
-			nextDataItemBuffer = get(addr);
-			if(nextDataItemBuffer != null) {
+			try {
+				nextDataItemBuffer = get(addr);
 				nextDataItemBuffer.start();
 				LOG.debug(
 					Markers.MSG, "Started producing from remote data items buffer @{}: \"{}\"",
 					addr, nextDataItemBuffer.toString()
+				);
+			} catch(final Exception e) {
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e,
+					String.format("Failed to start remote data items buffer @ %s", addr)
 				);
 			}
 		}
 	}
 	//
 	@Override
-	public final void interrupt()
-	throws RemoteException {
+	public final void interrupt() {
 		DataItemBuffer<T> nextDataItemBuffer;
 		for(final String addr: keySet()) {
-			nextDataItemBuffer = get(addr);
-			if(nextDataItemBuffer != null) {
+			try {
+				nextDataItemBuffer = get(addr);
 				nextDataItemBuffer.interrupt();
-				LOG.info(
+				LOG.debug(
 					Markers.MSG, "Interrupted producing from remote data items buffer @{}: \"{}\"",
 					addr, nextDataItemBuffer.toString()
+				);
+			} catch(final Exception e) {
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e,
+					String.format("Failed to interrupt remote data items buffer @ %s", addr)
+				);
+			}
+		}
+	}
+	//
+	private final static class RemoteJoinTask
+	implements Runnable {
+		//
+		private final String addr;
+		private final DataItemBuffer dataItemBuffer;
+		private final long timeOutMilliSec;
+		//
+		protected RemoteJoinTask(
+			final String addr, final DataItemBuffer dataItemBuffer, final long timeOutMilliSec
+		) {
+			this.addr = addr;
+			this.dataItemBuffer = dataItemBuffer;
+			this.timeOutMilliSec = timeOutMilliSec;
+		}
+		//
+		@Override
+		public void run() {
+			try {
+				dataItemBuffer.join(timeOutMilliSec);
+				LOG.debug(
+					Markers.MSG,
+					"Finished the remote data items buffer producing @{}: \"{}\"",
+					addr, dataItemBuffer.toString()
+				);
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.MSG, "Interrupted");
+			} catch(final IOException e) {
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e,
+					String.format(
+						"Failed to await the remote data items buffer @%s", addr
+					)
 				);
 			}
 		}
@@ -165,37 +229,13 @@ implements DataItemBufferClient<T> {
 		final ExecutorService remoteJoinExecutor = Executors.newFixedThreadPool(size());
 		//
 		for(final String addr: keySet()) {
-			final DataItemBuffer<T> nextDataItemBuffer = get(addr);
-			if(nextDataItemBuffer != null) {
-				remoteJoinExecutor.submit(
-					new Runnable() {
-						@Override
-						public void run() {
-							try {
-								nextDataItemBuffer.join(milliSec);
-								LOG.debug(
-									Markers.MSG,
-									"Finished the remote data items buffer producing @{}: \"{}\"",
-									addr, nextDataItemBuffer.toString()
-								);
-							} catch(final InterruptedException e) {
-								LOG.debug(Markers.MSG, "Interrupted");
-							} catch(final IOException e) {
-								ExceptionHandler.trace(
-									LOG, Level.WARN, e,
-									String.format(
-										"Failed to await the remote data items buffer @%s", addr
-									)
-								);
-							}
-						}
-					}
-				);
-			} else {
-				throw new IllegalStateException(
-					String.format(
-						"There is a null pointer in the remote buffers map for address \"%s\"", addr
-					)
+			try {
+				final DataItemBuffer<T> nextDataItemBuffer = get(addr);
+				remoteJoinExecutor.submit(new RemoteJoinTask(addr, nextDataItemBuffer, milliSec));
+			} catch(final Exception e) {
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e,
+					String.format("Failed to wait for remote data items buffer @ %s", addr)
 				);
 			}
 		}

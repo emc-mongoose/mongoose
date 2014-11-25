@@ -16,6 +16,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.StatusLine;
+import org.apache.http.TruncatedChunkException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -183,12 +184,6 @@ implements WSRequest<T> {
 										);
 										result = Result.FAIL_CORRUPT;
 									}
-								} catch(final IOException e) {
-									LOG.warn(
-										Markers.ERR, "Failed to read the object content for \"{}\"",
-										dataItem
-									);
-									result = Result.FAIL_IO;
 								}
 							} else {
 								result = Result.SUCC;
@@ -276,16 +271,23 @@ implements WSRequest<T> {
 			result = Result.FAIL_CLIENT;
 		} catch(final NoHttpResponseException e) {
 			if(wsReqConf.isClosed()) {
-				LOG.debug(Markers.MSG, "Ignored request failure after closing");
+				LOG.trace(Markers.ERR, "Ignored request failure after closing");
 			} else {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "No response from the storage");
 				result = Result.FAIL_SVC;
 			}
 		} catch(final SocketException e) {
 			if(wsReqConf.isClosed()) {
-				LOG.debug(Markers.MSG, "Ignored request failure after closing");
+				LOG.trace(Markers.ERR, "Ignored request failure after closing");
 			} else {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Socket failure");
+				result = Result.FAIL_IO;
+			}
+		} catch(final TruncatedChunkException e) {
+			if(wsReqConf.isClosed()) {
+				LOG.trace(Markers.ERR, "Ignored request failure after closing");
+			} else {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Storage returned truncated data");
 				result = Result.FAIL_IO;
 			}
 		} catch(final IOException e) {

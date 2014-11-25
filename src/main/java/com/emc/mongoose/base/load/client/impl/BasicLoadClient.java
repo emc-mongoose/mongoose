@@ -18,7 +18,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
-import com.emc.mongoose.util.threading.GentleExecutorShutDown;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
 import org.apache.logging.log4j.Level;
@@ -332,9 +331,24 @@ implements LoadClient<T> {
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
 			new WorkerFactory("submitDataItems")
-		);
+		) {
+			@Override
+			protected final void terminated() {
+				LOG.debug(Markers.MSG, "{}: submit executor terminated", getName());
+				if(lock.tryLock()) {
+					try {
+						condDone.signalAll();
+					} finally {
+						lock.unlock();
+					}
+				} else {
+					LOG.warn(Markers.ERR, "{}: failed to obtain the lock", getName());
+				}
+				super.terminated();
+			}
+		};
 		submitExecutor.prestartAllCoreThreads();
-		//
+		////////////////////////////////////////////////////////////////////////////////////////////
 		threadCount = remoteLoadMap.size() * 20; // metric count is 18
 		mgmtConnExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
@@ -701,7 +715,7 @@ implements LoadClient<T> {
 	//
 	Future<Long>
 		countSubm, countRej, countReqSucc, countReqFail,
-	/*countNanoSec, countBytes, */minDur, maxDur;
+		/*countNanoSec, countBytes, */minDur, maxDur;
 	Future<Double>
 		meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
 		meanBW, oneMinBW, fiveMinBW, fifteenMinBW,
@@ -803,15 +817,10 @@ implements LoadClient<T> {
 		//
 		final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 		try {
-			while(isAlive()) {
-				try {
-					if(maxCount > countRej.get() + countReqFail.get() + countReqSucc.get()) {
-						break;
-					}
-				} catch(final ExecutionException e) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch metrics");
-				}
-				if(metricsUpdatePeriodSec > 0) {
+			if(metricsUpdatePeriodSec > 0) {
+				while(isAlive()) {
+					logMetrics(Markers.PERF_AVG);
+					logMetaInfoFrames();
 					if(lock.tryLock()) {
 						try {
 							if(condDone.await(metricsUpdatePeriodSec, TimeUnit.SECONDS)) {
@@ -824,15 +833,17 @@ implements LoadClient<T> {
 					} else {
 						LOG.warn(Markers.ERR, "Failed to take the lock");
 					}
-					logMetrics(Markers.PERF_AVG);
-					logMetaInfoFrames();
-				} else {
-					countRej = mgmtConnExecutor.submit(taskGetCountRej);
-					countReqSucc = mgmtConnExecutor.submit(taskGetCountSucc);
-					countReqFail = mgmtConnExecutor.submit(taskGetCountFail);
 				}
+			} else if(lock.tryLock()) {
+				try {
+					condDone.await();
+				} finally {
+					lock.unlock();
+				}
+			} else {
+				LOG.error(Markers.ERR, "Failed to obtain the lock");
 			}
-			LOG.trace(Markers.MSG, "Finish reached");
+			LOG.debug(Markers.MSG, "Finish reached");
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
 		} finally {
@@ -843,13 +854,18 @@ implements LoadClient<T> {
 	@Override
 	public final void interrupt() {
 		LOG.debug(Markers.MSG, "Interrupting {}...", getName());
-		//
-		submitExecutor.shutdown();
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
-		try {
-			submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.ERR, "Interrupted waiting for submit executor to finish");
+		//
+		if(!submitExecutor.isShutdown()) {
+			submitExecutor.shutdown();
+		}
+		//
+		if(!submitExecutor.isTerminated()) {
+			try {
+				submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.ERR, "Interrupted waiting for submit executor to finish");
+			}
 		}
 		//
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(remoteLoadMap.size());
@@ -865,7 +881,7 @@ implements LoadClient<T> {
 						} catch(final IOException e) {
 							ExceptionHandler.trace(
 								LOG, Level.DEBUG, e,
-								"Failed to interrupt remote load service @ " + addr
+								String.format("Failed to interrupt remote load service @ %s", addr)
 							);
 						}
 					}
@@ -877,7 +893,7 @@ implements LoadClient<T> {
 		try {
 			interruptExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupting was interrupted");
 		}
 		//
 		super.interrupt();
@@ -948,41 +964,55 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void submit(final T dataItem) {
-		if(maxCount <= submitExecutor.getTaskCount() || !isAlive() || dataItem == null) {
-			LOG.debug(
-				Markers.MSG, "Met final condition: max={}, tasks={}, alive={}, poison={}",
-				maxCount, submitExecutor.getTaskCount(), isAlive(), dataItem == null
-			);
-			if(lock.tryLock()) {
-				try {
-					condDone.signalAll();
-				} finally {
-					lock.unlock();
-				}
-			}
-		} else {
-			final Object addrs[] = remoteLoadMap.keySet().toArray();
-			final String addr = String.class.cast(
-				addrs[(int) submitExecutor.getTaskCount() % addrs.length]
-			);
-			final SubmitDataItemTask<T, LoadSvc<T>> submTask = new SubmitDataItemTask<>(
-				dataItem, remoteLoadMap.get(addr)
-			);
-			boolean passed = false;
-			int rejectCount = 0;
-			do {
-				try {
-					submitExecutor.submit(submTask);
-					passed = true;
-				} catch(final RejectedExecutionException e) {
-					rejectCount ++;
+		if(maxCount > submitExecutor.getTaskCount()) {
+			if(dataItem == null) {
+				LOG.debug(Markers.MSG, "{}: poison submitted");
+				// determine the max count now
+				maxCount = submitExecutor.getTaskCount();
+				//
+				for(final String addr: remoteLoadMap.keySet()) {
 					try {
-						Thread.sleep(rejectCount * retryDelayMilliSec);
-					} catch(final InterruptedException ee) {
-						break;
+						remoteLoadMap.get(addr).submit(null);
+					} catch(final Exception e) {
+						ExceptionHandler.trace(
+							LOG, Level.WARN, e,
+							String.format("Failed to submit the poison to @%s", addr)
+						);
 					}
 				}
-			} while(!passed && rejectCount < retryCountMax && !submitExecutor.isShutdown());
+				//
+				submitExecutor.shutdown();
+			} else {
+				final Object addrs[] = remoteLoadMap.keySet().toArray();
+				final String addr = String.class.cast(
+					addrs[(int) submitExecutor.getTaskCount() % addrs.length]
+				);
+				final SubmitDataItemTask<T, LoadSvc<T>> submTask = new SubmitDataItemTask<>(
+					dataItem, remoteLoadMap.get(addr)
+				);
+				boolean passed = false;
+				int rejectCount = 0;
+				do {
+					try {
+						submitExecutor.submit(submTask);
+						passed = true;
+					} catch(final RejectedExecutionException e) {
+						rejectCount ++;
+						try {
+							Thread.sleep(rejectCount * retryDelayMilliSec);
+						} catch(final InterruptedException ee) {
+							break;
+						}
+					}
+				} while(!passed && rejectCount < retryCountMax && !submitExecutor.isShutdown());
+			}
+		} else {
+			LOG.debug(
+				Markers.MSG,
+				"{}: max data item count ({}) have been submitted, shutdown the submit executor",
+				getName(), maxCount
+			);
+			submitExecutor.shutdown();
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

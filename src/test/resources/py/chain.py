@@ -97,15 +97,15 @@ def execute(chain=(), flagSimultaneous=True):
 							LOG, Level.ERROR, e, "Producer \"{}\" execution failure", prevLoad
 						)
 					finally:
-						prevLoad.close()
-				try:
-					nextLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
-				except Throwable as e:
-					ExceptionHandler.trace(
-						LOG, Level.ERROR, e, "Consumer \"{}\" execution failure", nextLoad
-					)
-				finally:
-					nextLoad.close()
+						prevLoad.interrupt()
+				else:
+					try:
+						nextLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
+					except Throwable as e:
+						ExceptionHandler.trace(
+							LOG, Level.ERROR, e, "Consumer \"{}\" execution failure", nextLoad
+						)
+				nextLoad.close()
 			prevLoad = nextLoad
 #
 if __name__=="__builtin__":

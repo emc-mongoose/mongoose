@@ -33,7 +33,7 @@ extends LoadExecutorBase<T> {
 	//
 	@Override
 	public final void submit(final T dataItem)
-		throws RemoteException {
+	throws RemoteException, InterruptedException {
 		if(dataItem!=null) {
 			try {
 				dataItem.updateRandomRanges(updatesPerObject);

@@ -21,7 +21,7 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
-import com.emc.mongoose.util.threading.GentleExecutorShutDown;
+import com.emc.mongoose.util.threading.ExecutorShutDownTask;
 import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.commons.lang.StringUtils;
 //
@@ -130,6 +130,7 @@ implements LoadExecutor<T> {
 		// create and configure the connection manager
 		dataSrc = reqConf.getDataSource();
 		setFileBasedProducer(listFile);
+		//
 		final int
 			submitThreadCount = addrs.length * (int) Math.pow(threadsPerNode, 0.8),
 			queueSize = submitThreadCount * runTimeConfig.getRunRequestQueueFactor();
@@ -137,7 +138,24 @@ implements LoadExecutor<T> {
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
 			new WorkerFactory("submitDataItems")
-		);
+		) {
+			@Override
+			protected final void terminated() {
+				LOG.debug(Markers.MSG, "{}: submit executor terminated", getName());
+				if(lock.tryLock()) {
+					try {
+						condDone.signalAll();
+					} finally {
+						lock.unlock();
+					}
+				} else {
+					LOG.warn(Markers.ERR, "{}: failed to obtain the lock", getName());
+				}
+				super.terminated();
+			}
+		};
+		submitExecutor.prestartAllCoreThreads();
+		//
 		client = initClient(addrs, reqConf);
 		initNodeExecutors(addrs, reqConf.clone().setLoadNumber(loadNumber));
 		// by default, may be overriden later externally
@@ -180,7 +198,8 @@ implements LoadExecutor<T> {
 		final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 		try {
 			if(metricsUpdatePeriodSec > 0) {
-				while(!isInterrupted()) {
+				while(isAlive()) {
+					logMetrics(Markers.PERF_AVG);
 					if(lock.tryLock()) {
 						try {
 							if(condDone.await(metricsUpdatePeriodSec, TimeUnit.SECONDS)) {
@@ -193,36 +212,53 @@ implements LoadExecutor<T> {
 					} else {
 						LOG.warn(Markers.ERR, "Failed to take the lock");
 					}
-					logMetrics(Markers.PERF_AVG);
+				}
+			} else if(lock.tryLock()) {
+				try {
+					condDone.await();
+					LOG.debug(Markers.MSG, "Condition \"done\" reached");
+				} finally {
+					lock.unlock();
 				}
 			} else {
-				final String runTimeSpec[] = runTimeConfig.getRunTime().split("\\.");
-				//
-				if(lock.tryLock()) {
-					try {
-						if(
-							condDone.await(
-								Long.valueOf(runTimeSpec[0]),
-								TimeUnit.valueOf(runTimeSpec[1].toUpperCase())
-							)
-						) {
-							LOG.debug(Markers.MSG, "Condition \"done\" reached");
-						}
-					} catch(final Exception e) {
-						LOG.debug(Markers.MSG, "Waiting for the done condition interrupted");
-					} finally {
-						lock.unlock();
-					}
-				}
-				LOG.debug(Markers.MSG, "Max data items count reached");
+				LOG.error(Markers.ERR, "Failed to obtain the lock");
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
+		} finally {
+			LOG.debug(Markers.MSG, "Finish reached");
 		}
 		//
 		LOG.trace(Markers.MSG, "Finish reached");
 		//
 		interrupt();
+	}
+	//
+	private final static class InterruptProducerTask
+	implements Runnable {
+		//
+		private final static Logger LOG = LogManager.getLogger();
+		//
+		Producer producer;
+		//
+		protected InterruptProducerTask(final Producer producer) {
+			this.producer = producer;
+		}
+		//
+		@Override
+		public final void run() {
+			if(producer != null) {
+				try {
+					producer.interrupt();
+					LOG.debug(Markers.MSG, "Stopped object producer {}", producer.toString());
+				} catch(final IOException e) {
+					ExceptionHandler.trace(
+						LOG, Level.WARN, e,
+						String.format("Failed to stop the producer: %s", producer.toString())
+					);
+				}
+			}
+		}
 	}
 	//
 	@Override
@@ -233,26 +269,8 @@ implements LoadExecutor<T> {
 		//
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(nodes.length);
 		//
-		interruptExecutor.submit(
-			new Runnable() {
-				@Override
-				public final void run() {
-					if(producer != null) {
-						try {
-							producer.interrupt();
-							LOG.debug(Markers.MSG, "Stopped object producer {}", producer.toString());
-						} catch(final IOException e) {
-							ExceptionHandler.trace(
-								LOG, Level.WARN, e,
-								String.format("Failed to stop the producer: %s", producer.toString())
-							);
-						}
-					}
-				}
-			}
-		);
-		//
-		interruptExecutor.submit(new GentleExecutorShutDown(submitExecutor, runTimeConfig));
+		interruptExecutor.submit(new InterruptProducerTask(producer));
+		interruptExecutor.submit(new ExecutorShutDownTask(submitExecutor, runTimeConfig));
 		// interrupt node executors
 		for(final StorageNodeExecutor<T> nextNode: nodes) {
 			interruptExecutor.submit(
@@ -283,14 +301,15 @@ implements LoadExecutor<T> {
 	public synchronized void close()
 	throws IOException {
 		//
-		if(!isClosed) { // this is just not-closed-yet marker
+		if(!isClosed) { // this is just not-closed-yet flag
+			LOG.debug(Markers.MSG, "{}: do invoking close", getName());
 			if(!isInterrupted()) {
 				interrupt();
 			}
 			// poison the consumer
 			try {
 				consumer.submit(null);
-			} catch(final IllegalStateException e) {
+			} catch(final Exception e) {
 				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to feed the poison");
 			}
 			// provide summary metrics
@@ -341,55 +360,53 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public void submit(final T dataItem)
-	throws RemoteException {
-		if(
-			dataItem == null || !isAlive() ||
-			maxCount <= counterRej.getCount() + counterReqFail.getCount() + counterReqSucc.getCount()
-		) { // handle the poison
-			LOG.debug(
-				Markers.MSG, "Met final condition: max={}, rejected={}, failed={}, done={}, alive={}, poison={}",
-				maxCount, counterRej.getCount(), counterReqFail.getCount(),
-				counterReqSucc.getCount(), isAlive(), dataItem == null
-			);
-			//
-			if(lock.tryLock()) {
-				try {
-					condDone.signalAll(); // signal about done condition
-				} finally {
-					lock.unlock();
+	throws RemoteException, InterruptedException {
+		if(maxCount > counterRej.getCount() + counterReqFail.getCount() + counterReqSucc.getCount()) {
+			if(dataItem == null) {
+				LOG.debug(Markers.MSG, "{}: poison submitted", getName());
+				// determine the max count now
+				maxCount = counterSubm.getCount() + counterRej.getCount();
+				// pass the poison to all node executors
+				for(final StorageNodeExecutor<T> nextNode: nodes) {
+					if(!nextNode.isShutdown()) {
+						nextNode.submit(null);
+					}
 				}
-			}
-			//
-			//maxCount = counterSubm.getCount() + counterRej.getCount();
-			for(final StorageNodeExecutor<T> nextNode: nodes) {
-				if(!nextNode.isShutdown()) {
-					nextNode.submit(null); // poison
-				}
-			}
-		} else {
-			final StorageNodeExecutor<T> nodeExecutor = nodes[
-				(int) submitExecutor.getTaskCount() % nodes.length
-			];
-			final SubmitDataItemTask<T, StorageNodeExecutor<T>>
-				submitTask = new SubmitDataItemTask<>(dataItem, nodeExecutor);
-			boolean flagSubmSucc = false;
-			int rejectCount = 0;
-			while(
-				!flagSubmSucc && rejectCount < retryCountMax &&
-				!submitExecutor.isShutdown() && !nodeExecutor.isShutdown()
-			) {
-				try {
-					submitExecutor.submit(submitTask);
-					flagSubmSucc = true;
-				} catch(final RejectedExecutionException e) {
-					rejectCount ++;
+				//
+				submitExecutor.shutdown();
+			} else {
+				final StorageNodeExecutor<T> nodeExecutor = nodes[
+					(int) submitExecutor.getTaskCount() % nodes.length
+					];
+				final SubmitDataItemTask<T, StorageNodeExecutor<T>>
+					submitTask = new SubmitDataItemTask<>(dataItem, nodeExecutor);
+				boolean flagSubmSucc = false;
+				int rejectCount = 0;
+				while(
+					!flagSubmSucc && rejectCount < retryCountMax &&
+						!submitExecutor.isShutdown() && !nodeExecutor.isShutdown()
+					) {
 					try {
-						Thread.sleep(rejectCount * retryDelayMilliSec);
-					} catch(final InterruptedException ee) {
-						break;
+						submitExecutor.submit(submitTask);
+						flagSubmSucc = true;
+					} catch(final RejectedExecutionException e) {
+						rejectCount ++;
+						try {
+							Thread.sleep(rejectCount * retryDelayMilliSec);
+						} catch(final InterruptedException ee) {
+							break;
+						}
 					}
 				}
 			}
+		} else {
+			submitExecutor.shutdown();
+			throw new InterruptedException(
+				String.format(
+					"%s: max data item count (%d) have been submitted, shutdown the submit executor",
+					getName(), maxCount
+				)
+			);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
