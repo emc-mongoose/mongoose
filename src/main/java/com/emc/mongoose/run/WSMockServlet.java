@@ -35,8 +35,13 @@ import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -52,6 +57,7 @@ implements Runnable {
 	private final static Logger LOG = LogManager.getLogger();
 	private final int port;
 	private Server server;
+	private final String dataSrcFPath;
 	private final Map<String, BasicWSObject> mapDataObject = new HashMap<>();
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
@@ -150,7 +156,10 @@ implements Runnable {
 		metricsReporter.start();
 		//
 		final String apiName = runTimeConfig.getStorageApi();
+		dataSrcFPath = runTimeConfig.getDataSrcFPath();
 		port = runTimeConfig.getInt("api." + apiName + ".port");
+		LOG.debug(Markers.MSG, "Create map of BasicWSObject");
+		createMapDataObject();
 		LOG.debug(Markers.MSG, "Setup Jetty Server instance");
 		server = new Server();
 		server.setDumpAfterStart(false);
@@ -168,6 +177,28 @@ implements Runnable {
 		server.setHandler(context);
 		LOG.debug(Markers.MSG, "Add servlet");
 		context.addServlet(new ServletHolder(this), "/*");
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	private void createMapDataObject(){
+		final Path pathDataItemCSV = Paths.get(dataSrcFPath);
+		try {
+			if (!pathDataItemCSV.toString().isEmpty()) {
+				final BufferedReader fileReader = Files.newBufferedReader(pathDataItemCSV, StandardCharsets.UTF_8);
+				String nextLine;
+				do {
+					nextLine = fileReader.readLine();
+					if (nextLine == null || nextLine.isEmpty()) {
+						break;
+					} else {
+						LOG.trace(Markers.MSG, "Got next line: \"{}\"", nextLine);
+						final BasicWSObject nextData = new BasicWSObject(nextLine);
+						mapDataObject.put(nextData.getId(), nextData);
+					}
+				} while (true);
+			}
+		} catch (final IOException e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to read line from the file");
+		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Runnable implementation
