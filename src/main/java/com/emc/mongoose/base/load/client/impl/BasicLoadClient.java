@@ -953,6 +953,7 @@ implements LoadClient<T> {
 					}
 					//
 				}
+				ShutDownHook.del(this);
 				LOG.debug(Markers.MSG, "Clear the servers map");
 				remoteLoadMap.clear();
 				LOG.debug(Markers.MSG, "Closed {}", getName());

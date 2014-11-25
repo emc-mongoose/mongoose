@@ -351,6 +351,7 @@ implements LoadExecutor<T> {
 				}
 			}
 			//
+			ShutDownHook.del(this);
 			isClosed = true;
 			LOG.debug(Markers.MSG, "Closed {}", getName());
 		} else {

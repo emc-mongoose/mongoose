@@ -82,6 +82,9 @@ def execute(chain=(), flagSimultaneous=True):
 			chain[0].join(RUN_TIME[1].toMillis(RUN_TIME[0]))
 		except:
 			LOG.error(Markers.ERR, "No 1st load executor in the chain")
+		finally:
+			for load in chain:
+				load.close()
 	else:
 		prevLoad, nextLoad = None, None
 		for nextLoad in chain:
