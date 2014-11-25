@@ -28,48 +28,52 @@ $(document).ready(function() {
 		}
 	});
 
+	$('#run-parameters a[href="#runTimeTab"]').click(function() {
+		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
+		$("#runTimeSelect").val($("#runTimeSelect option:first").val());
+	});
+
+	$('#run-parameters a[href="#dataCountTab"]').click(function() {
+		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
+	});
+
+	$("#scenario\\.chain\\.load\\.duplicate").keyup(function() {
+		$("#scenario\\.chain\\.load").val($(this).val());
+	});
+
+	$("#scenario\\.chain\\.load").keyup(function() {
+		$("#scenario\\.chain\\.load\\.duplicate").val($(this).val());
+	});
+
 	// Save data node in the list
 	$(document).on("click", "#save", function() {
-		$(".storages").append(appendBlock("dataNodes", $("#data-node-text").val()));
+		$(".storages").append(appendBlock("storage.addrs", $("#data-node-text").val()));
 		$("#data-node-text").val("");
 		$(".data-node").hide();
 	});
 
 	// Save Driver in the list
 	$(document).on("click", "#save-driver", function() {
-		$(".drivers").append(appendBlock("drivers", $("#driver-text").val()));
+		$(".drivers").append(appendBlock("remote.servers", $("#driver-text").val()));
 		$("#driver-text").val("");
 		$(".driver").hide();
 	});
 
 	// Remove storage or driver from list
 	$(document).on("click", ".remove", function() {
-		$(this).parent().parent().remove();
-	});
-
-	// RunModes
-	$(document).on("click", "#standalone", function() {
-		$("#run\\.mode").val(VALUE_RUN_MODE_STANDALONE);
-		$(".runmodes .list-group .list-group-item").removeClass("active");
-		$(this).addClass("active");
-	});
-
-	$(document).on("click", "#distributed", function() {
-		$("#run\\.mode").val(VALUE_RUN_MODE_CLIENT);
-		$(".runmodes .list-group .list-group-item").removeClass("active");
-		$(this).addClass("active");
-	});
-
-	$(document).on("click", "#driver", function() {
-		$("#run\\.mode").val(VALUE_RUN_MODE_SERVER);
-		$(".runmodes .list-group .list-group-item").removeClass("active");
-		$(this).addClass("active");
-	});
-
-	$(document).on("click", "#wsmock", function() {
-		$("#run\\.mode").val(VALUE_RUN_MODE_WSMOCK);
-		$(".runmodes .list-group .list-group-item").removeClass("active");
-		$(this).addClass("active");
+		var elements;
+		if ($(this).hasClass("remove-driver")) {
+			elements = $(".remote\\.servers:checked");
+		} else {
+			elements = $(".storage\\.addrs:checked");
+		}
+		if (confirm("Are you sure? " + elements.size() + " will be deleted") === true) {
+			elements.each(function() {
+				$(this).parent().parent().remove();
+			});
+		} else {
+			//	do nothing
+		}
 	});
 
 	//	select change
@@ -81,7 +85,6 @@ $(document).ready(function() {
 	function initComponents() {
 		$(".driver").hide();
 		$(".data-node").hide();
-		$("#run\\.mode").val($.cookie("run.mode"));
 		configureWebSocket().connect();
 	}
 
@@ -178,14 +181,11 @@ $(document).ready(function() {
 		html =
 			'<div class="input-group">\
 				<span class="input-group-addon">\
-					<input type="checkbox" name=' + key +' value=' + value + '>\
+					<input class=' + key + ' type="checkbox" name=' + key +' value=' + value + '>\
 				</span>\
 				<label class="form-control">' +
 					value +
 				'</label>\
-				<span class="input-group-btn">\
-					<button type="button" class="btn btn-default remove">Remove</button>\
-				</span>\
 			</div>';
 		return html;
 	}
@@ -203,10 +203,10 @@ $(document).ready(function() {
 		var currentButton = $(this);
 		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".");
 		$.post("/stop", { "run.id" : currentRunId }, function() {
-			location.reload();
+			currentButton.remove();
 		}).fail(function() {
 			alert("Internal Server Error");
-			location.reload();
+			currentButton.remove();
 		});
 	});
 

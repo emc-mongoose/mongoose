@@ -177,8 +177,11 @@ public final class StartServlet extends HttpServlet {
 	//
 	public static void interruptMongoose(final String runId) {
 		try {
-			threadsMap.get(runId).interrupt();
-			threadsMap.remove(runId);
+			if (threadsMap.get(runId).isInterrupted()) {
+				threadsMap.remove(runId);
+			} else {
+				threadsMap.get(runId).interrupt();
+			}
 		} catch (final Exception e) {
 			threadsMap.remove(runId);
 		}

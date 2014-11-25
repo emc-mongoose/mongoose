@@ -23,6 +23,9 @@ public final class MainServlet extends HttpServlet {
 		if (StartServlet.threadsMap != null) {
 			request.getSession(true).setAttribute("runmodes", StartServlet.threadsMap.keySet());
 		}
+		if (StopServlet.stoppedRunModes != null) {
+			request.getSession(true).setAttribute("stopped", StopServlet.stoppedRunModes);
+		}
 		request.getRequestDispatcher("index.jsp").forward(request, response);
 	}
 
