@@ -24,6 +24,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
+import org.apache.tools.ant.taskdefs.Exec;
 //
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
@@ -101,7 +102,7 @@ implements LoadClient<T> {
 		//
 		@Override
 		public final V call()
-			throws Exception {
+		throws Exception {
 			return gauge.getValue();
 		}
 	}
@@ -365,7 +366,7 @@ implements LoadClient<T> {
 						future = super.submit(task);
 						pass = true;
 					} catch(final RejectedExecutionException e) {
-						LOG.debug(Markers.ERR, "Task rejected {} times", tryCount);
+						LOG.trace(Markers.ERR, "JMX task rejected {} times", tryCount);
 						tryCount ++;
 						try {
 							Thread.sleep(retryDelayMilliSec);
@@ -812,16 +813,68 @@ implements LoadClient<T> {
 		LOG.info(Markers.MSG, "Started {}", getName());
 	}
 	//
+	private final static class WaitForMaxCountTask
+	implements Runnable {
+		//
+		private final long maxCount;
+		private final ExecutorService mgmtConnExecutor;
+		private final GetValueTask<Long> getValueTasks[];
+		//
+		@SuppressWarnings("unchecked")
+		protected WaitForMaxCountTask(
+			final long maxCount, final ExecutorService mgmtConnExecutor,
+			final GetValueTask getValueTasks[]
+		)
+		throws ClassCastException {
+			this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
+			this.mgmtConnExecutor = mgmtConnExecutor;
+			this.getValueTasks = (GetValueTask<Long>[]) getValueTasks;
+		}
+		//
+		@Override @SuppressWarnings("unchecked")
+		public final void run() {
+			int i, tasksCount = getValueTasks.length;
+			long processedCount = 0;
+			final Future<Long> futureValues[] = new Future[tasksCount];
+			do {
+				for(i = 0; i < tasksCount; i ++) {
+					futureValues[i] = mgmtConnExecutor.submit(getValueTasks[i]);
+				}
+				for(final Future<Long> futureValue: futureValues) {
+					try {
+						processedCount += futureValue.get();
+					} catch(final InterruptedException e) {
+						LOG.debug(Markers.MSG, "Interrupted");
+						break;
+					} catch(final ExecutionException e) {
+						ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to get metric value");
+					}
+				}
+			} while(maxCount > processedCount);
+		}
+	}
+	//
 	@Override
 	public final void run() {
 		//
 		final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 		try {
 			if(metricsUpdatePeriodSec > 0) {
+				long processedCount = 0;
 				while(isAlive()) {
-					logMetrics(Markers.PERF_AVG);
+					//
 					logMetaInfoFrames();
-					if(lock.tryLock()) {
+					logMetrics(Markers.PERF_AVG);
+					//
+					try {
+						processedCount = countRej.get() + countReqSucc.get() + countReqFail.get();
+					} catch(final ExecutionException e) {
+						ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to get metric value");
+					}
+					//
+					if(maxCount <= processedCount) {
+						break;
+					} else if(lock.tryLock()) {
 						try {
 							if(condDone.await(metricsUpdatePeriodSec, TimeUnit.SECONDS)) {
 								LOG.debug(Markers.MSG, "Condition \"done\" reached");
@@ -834,14 +887,15 @@ implements LoadClient<T> {
 						LOG.warn(Markers.ERR, "Failed to take the lock");
 					}
 				}
-			} else if(lock.tryLock()) {
-				try {
-					condDone.await();
-				} finally {
-					lock.unlock();
-				}
 			} else {
-				LOG.error(Markers.ERR, "Failed to obtain the lock");
+				final Thread waitThread = new Thread(
+					new WaitForMaxCountTask(
+						maxCount, mgmtConnExecutor,
+						new GetValueTask[] {taskGetCountSucc, taskGetCountFail, taskGetCountRej}
+					)
+				);
+				waitThread.start();
+				waitThread.join();
 			}
 			LOG.debug(Markers.MSG, "Finish reached");
 		} catch(final InterruptedException e) {
