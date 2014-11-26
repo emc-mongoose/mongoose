@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 23.10.14.
  */
-public final class GentleExecutorShutDown
+public final class ExecutorShutDownTask
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -23,7 +23,7 @@ implements Runnable {
 	private final ThreadPoolExecutor executor;
 	private final int retryDelayMilliSec;
 	//
-	public GentleExecutorShutDown(
+	public ExecutorShutDownTask(
 		final ThreadPoolExecutor executor, final RunTimeConfig runTimeConfig
 	) {
 		this.executor = executor;

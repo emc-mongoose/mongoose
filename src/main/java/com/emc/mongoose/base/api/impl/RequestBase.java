@@ -109,9 +109,9 @@ implements Request<T> {
 		execute();
 		duration = System.nanoTime() - start;
 		LOG.info(
-			Markers.PERF_TRACE, "{},{},{},{},{},{}",
-			dataItem.getId(), Long.toHexString(dataItem.getSize()), result.code,
-			Long.toHexString(start), Long.toHexString(latency), Long.toHexString(duration)
+			Markers.PERF_TRACE, String.format(
+				FMT_PERF_TRACE, dataItem.getId(), dataItem.getSize(), result.code, start, latency, duration
+			)
 		);
 		return this;
 	}

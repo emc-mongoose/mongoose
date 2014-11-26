@@ -13,6 +13,7 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -28,9 +29,10 @@ implements RequestConfig<T> {
 	protected String api, secret, userName;
 	protected Request.Type loadType;
 	protected DataSource<T> dataSrc;
-	protected volatile boolean retryFlag, verifyContentFlag;
+	protected volatile boolean retryFlag, verifyContentFlag, closeFlag = false;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	protected final URIBuilder uriBuilder = new URIBuilder();
+	protected Closeable client = null;
 	protected int loadNumber;
 	//
 	@SuppressWarnings("unchecked")
@@ -173,18 +175,28 @@ implements RequestConfig<T> {
 		setRetries(this.runTimeConfig.getRunRequestRetries());
 		return this;
 	}
-
+	//
 	@Override
-	public int getLoadNumber() {
+	public final int getLoadNumber() {
 		return loadNumber;
 	}
-
+	//
 	@Override
-	public RequestConfig<T> setLoadNumber(int loadNumber) {
+	public final RequestConfig<T> setLoadNumber(int loadNumber) {
 		this.loadNumber = loadNumber;
 		return this;
 	}
-
+	//
+	@Override
+	public Closeable getClient() {
+		return client;
+	}
+	//
+	@Override
+	public RequestConfig<T> setClient(final Closeable client) {
+		this.client = client;
+		return this;
+	}
 	//
 	@Override
 	public void writeExternal(final ObjectOutput out)
@@ -233,4 +245,13 @@ implements RequestConfig<T> {
 		throw new IllegalStateException("Not implemented");
 	}
 	//
+	@Override
+	public final synchronized void close() {
+		closeFlag = true;
+	}
+	//
+	@Override
+	public final synchronized boolean isClosed() {
+		return closeFlag;
+	}
 }

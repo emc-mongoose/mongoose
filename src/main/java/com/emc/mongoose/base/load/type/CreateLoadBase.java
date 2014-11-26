@@ -68,6 +68,7 @@ extends LoadExecutorBase<T> {
 		//
 		@Override
 		public final void run() {
+			long i = 0;
 			try {
 				//
 				LOG.debug(
@@ -78,7 +79,6 @@ extends LoadExecutorBase<T> {
 						RunTimeConfig.formatSize(minObjSize)+".."+RunTimeConfig.formatSize(maxObjSize)
 				);
 				//
-				long i = 0;
 				do {
 					try {
 						produceNextAndFeed();
@@ -89,19 +89,11 @@ extends LoadExecutorBase<T> {
 					} catch(final IOException e) {
 						LOG.trace(Markers.ERR, "Failed to submit object to consumer", e);
 					}
-				} while(!isInterrupted() && i < maxCount);
-				try {
-					newDataConsumer.submit(null);
-				} catch(final RejectedExecutionException e) {
-					LOG.debug(Markers.ERR, "Consumer rejected the poison");
-				}
-				LOG.debug(Markers.MSG, "Generated {} items", maxCount);
-			} catch(final IOException e) {
-				LOG.debug(Markers.ERR, "Failed to submit object to consumer", e);
+				} while(!isInterrupted());
 			} catch(final InterruptedException e) {
 				LOG.debug(Markers.MSG, "Interrupted while submitting the object to consumer");
 			} finally {
-				LOG.debug(Markers.MSG, "Object producer finished");
+				LOG.debug(Markers.MSG, "Finished, generated {} items", i);
 			}
 		}
 		//

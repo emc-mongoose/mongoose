@@ -17,6 +17,8 @@ extends Callable<Request<T>>, Closeable {
 		CREATE, READ, DELETE, UPDATE, APPEND
 	}
 	//
+	String FMT_PERF_TRACE = "%s,%x,%d,%d,%d";
+	//
 	enum Result {
 		SUCC(0, "Success"),
 		FAIL_CLIENT(1, "Client failure/invalid request"),
