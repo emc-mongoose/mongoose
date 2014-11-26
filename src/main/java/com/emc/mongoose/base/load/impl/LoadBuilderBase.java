@@ -3,6 +3,8 @@ package com.emc.mongoose.base.load.impl;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.base.data.persist.TmpFileItemBuffer;
+import com.emc.mongoose.base.load.DataItemBuffer;
 import com.emc.mongoose.base.load.LoadBuilder;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
@@ -15,6 +17,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.NoSuchElementException;
@@ -37,7 +40,7 @@ implements LoadBuilder<T, U> {
 		threadsPerNodeMap = new HashMap<>();
 		try {
 			reqConf = getDefaultRequestConfig();
-			setProperties(Main.RUN_TIME_CONFIG);
+			setProperties(Main.RUN_TIME_CONFIG.get());
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to apply configuration");
 		}
@@ -47,7 +50,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig)
 	throws IllegalStateException {
-		Main.RUN_TIME_CONFIG = runTimeConfig;
+		Main.RUN_TIME_CONFIG.set(runTimeConfig);
 		if(reqConf != null) {
 			reqConf.setProperties(runTimeConfig);
 		} else {
@@ -280,7 +283,13 @@ implements LoadBuilder<T, U> {
 	public abstract U build()
 	throws IllegalStateException;
 	//
-	private final static String FMT_STR = "%s.%dx%s";
+	@Override
+	public DataItemBuffer<T> newDataItemBuffer()
+	throws IOException {
+		return new TmpFileItemBuffer<>(getMaxCount(), 1);
+	}
+	//
+	private final static String FMT_STR = "%s.%dx%s", FMT_SIZE_RANGE = "%s-%s";
 	//
 	@Override
 	public String toString() {
@@ -288,7 +297,9 @@ implements LoadBuilder<T, U> {
 			FMT_STR,
 			reqConf.toString(),
 			threadsPerNodeMap.get(threadsPerNodeMap.keySet().iterator().next()),
-			RunTimeConfig.formatSize(minObjSize == 0 ? maxObjSize : minObjSize)
+			minObjSize == maxObjSize ?
+				RunTimeConfig.formatSize(minObjSize) :
+				String.format(FMT_SIZE_RANGE, minObjSize, maxObjSize)
 		);
 	}
 }

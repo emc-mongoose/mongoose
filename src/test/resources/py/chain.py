@@ -1,34 +1,39 @@
 from __future__ import print_function, absolute_import, with_statement
 from sys import exit
-from loadbuilder import INSTANCE as LOAD_BUILDER
-from timeout import INSTANCE as RUN_TIME
+from timeout import timeout_init
+from loadbuilder import loadbuilder_init
+#from loadbuilder import INSTANCE as LOAD_BUILDER
+#from timeout import INSTANCE as RUN_TIME
 #
 from org.apache.logging.log4j import Level, LogManager
 #
 from com.emc.mongoose.base.api import Request
 from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.logging import ExceptionHandler, Markers
-from com.emc.mongoose.base.data.persist import TempFileConsumerProducer
+from com.emc.mongoose.base.load import DataItemBuffer
 #
 from java.lang import Long, Throwable, IllegalArgumentException
 from java.util import NoSuchElementException
 #
+RUN_TIME = timeout_init()
+LOCAL_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get()
+LOAD_BUILDER = loadbuilder_init()
 LOG = LogManager.getLogger()
 #
 LOAD_CHAIN = None
 try:
-	LOAD_CHAIN = Main.RUN_TIME_CONFIG.getStringArray("scenario.chain.load")
+	LOAD_CHAIN = LOCAL_RUN_TIME_CONFIG.getStringArray("scenario.chain.load")
 except NoSuchElementException:
 	LOG.error(Markers.ERR, "No load type specified, try arg -Dscenario.chain.load=<VALUE> to override")
 #
 FLAG_SIMULTANEOUS = False
 try:
-	FLAG_SIMULTANEOUS = Main.RUN_TIME_CONFIG.getBoolean("scenario.chain.simultaneous")
+	FLAG_SIMULTANEOUS = LOCAL_RUN_TIME_CONFIG.getBoolean("scenario.chain.simultaneous")
 except NoSuchElementException:
 	LOG.error(Markers.ERR, "No chain simultaneous flag specified, try arg -Dscenario.chain.simultaneous=<VALUE> to override")
 LOG.info(
 	Markers.MSG,
-	"Simultaneous" if FLAG_SIMULTANEOUS else "Sequential" + " load chain: {}",
+	("Simultaneous" if FLAG_SIMULTANEOUS else "Sequential") + " load chain: {}",
 	LOAD_CHAIN
 )
 #
@@ -54,16 +59,7 @@ def build(flagSimultaneous=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPe
 					chain.append(load)
 				else:
 					if prevLoad is not None:
-						mediatorBuff = TempFileConsumerProducer(
-							Main.RUN_TIME_CONFIG,
-							'-'.join((
-								Main.RUN_TIME_CONFIG.getRunName(),
-								Main.RUN_TIME_CONFIG.getString(Main.KEY_RUN_ID)
-							)), 'x'.join((
-								LOAD_BUILDER.toString()
-							)),
-							1, 0
-						)
+						mediatorBuff = LOAD_BUILDER.newDataItemBuffer()
 						if mediatorBuff is not None:
 							prevLoad.setConsumer(mediatorBuff)
 							chain.append(mediatorBuff)
@@ -80,6 +76,7 @@ def build(flagSimultaneous=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPe
 			LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)
 		except Throwable as e:
 			ExceptionHandler.trace(LOG, Level.FATAL, e, "Unexpected failure")
+			e.printStackTrace()
 	return chain
 	#
 def execute(chain=(), flagSimultaneous=True):
@@ -93,9 +90,9 @@ def execute(chain=(), flagSimultaneous=True):
 	else:
 		prevLoad, nextLoad = None, None
 		for nextLoad in chain:
-			if not isinstance(nextLoad, TempFileConsumerProducer):
+			if not isinstance(nextLoad, DataItemBuffer):
 				nextLoad.start()
-				if prevLoad is not None and isinstance(prevLoad, TempFileConsumerProducer):
+				if prevLoad is not None and isinstance(prevLoad, DataItemBuffer):
 					prevLoad.close()
 					prevLoad.start()
 					try:
@@ -121,19 +118,19 @@ if __name__=="__builtin__":
 	dataItemSize, dataItemSizeMin, dataItemSizeMax, threadsPerNode = 0, 0, 0, 0
 	#
 	try:
-		dataItemSize = Long(Main.RUN_TIME_CONFIG.getSizeBytes("data.size"))
+		dataItemSize = Long(LOCAL_RUN_TIME_CONFIG.getSizeBytes("data.size"))
 	except:
 		LOG.debug(Markers.MSG, "No \"data.size\" specified")
 	try:
-		dataItemSizeMin = Long(Main.RUN_TIME_CONFIG.getSizeBytes("data.size.min"))
+		dataItemSizeMin = Long(LOCAL_RUN_TIME_CONFIG.getSizeBytes("data.size.min"))
 	except:
 		LOG.debug(Markers.MSG, "No \"data.size\" specified")
 	try:
-		dataItemSizeMax = Long(Main.RUN_TIME_CONFIG.getSizeBytes("data.size.max"))
+		dataItemSizeMax = Long(LOCAL_RUN_TIME_CONFIG.getSizeBytes("data.size.max"))
 	except:
 		LOG.debug(Markers.MSG, "No \"data.size\" specified")
 	try:
-		threadsPerNode = Long(Main.RUN_TIME_CONFIG.getShort("load.threads"))
+		threadsPerNode = Long(LOCAL_RUN_TIME_CONFIG.getShort("load.threads"))
 	except:
 		LOG.debug(Markers.MSG, "No \"load.threads\" specified")
 	#
@@ -143,6 +140,9 @@ if __name__=="__builtin__":
 		dataItemSizeMax if dataItemSize == 0 else dataItemSize,
 		threadsPerNode
 	)
-	execute(chain, FLAG_SIMULTANEOUS)
+	try:
+		execute(chain, FLAG_SIMULTANEOUS)
+	except Throwable as e:
+		e.printStackTrace()
 	#
 	LOG.info(Markers.MSG, "Scenario end")

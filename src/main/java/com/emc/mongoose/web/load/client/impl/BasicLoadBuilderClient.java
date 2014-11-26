@@ -27,8 +27,8 @@ import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.rmi.RemoteException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 08.05.14.
  */
@@ -93,8 +93,8 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		WSLoadClient newLoadClient = null;
 		//
-		final Map<String, LoadSvc<T>> remoteLoadMap = new HashMap<>();
-		final Map<String, JMXConnector> remoteJMXConnMap = new HashMap<>();
+		final Map<String, LoadSvc<T>> remoteLoadMap = new ConcurrentHashMap<>();
+		final Map<String, JMXConnector> remoteJMXConnMap = new ConcurrentHashMap<>();
 		//
 		LoadBuilderSvc<T, U> nextBuilder = null;
 		LoadSvc<T> nextLoad = null;
@@ -151,7 +151,8 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		newLoadClient = new BasicWSLoadClient<>(
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
-			runTimeConfig.getDataCount(), nextLoad==null ? 1 : nextLoad.getThreadCount()
+			runTimeConfig.getDataCount(),
+			nextLoad==null ? 1 : (int) Math.pow(nextLoad.getThreadCount(), 0.8)
 		);
 		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer!=null && srcProducer.getConsumer()==null) {

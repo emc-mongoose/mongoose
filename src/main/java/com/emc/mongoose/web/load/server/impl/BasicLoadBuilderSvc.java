@@ -1,6 +1,9 @@
 package com.emc.mongoose.web.load.server.impl;
 //
+import com.emc.mongoose.base.data.persist.TmpFileItemBuffer;
+import com.emc.mongoose.base.load.DataItemBuffer;
 import com.emc.mongoose.base.load.impl.LoadExecutorBase;
+import com.emc.mongoose.base.load.server.DataItemBufferSvc;
 import com.emc.mongoose.object.load.server.ObjectLoadSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.data.WSObject;
@@ -21,6 +24,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Locale;
 /**
@@ -35,7 +39,7 @@ implements WSLoadBuilderSvc<T, U> {
 	@Override
 	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
 		super.setProperties(clientConfig);
-		Main.RUN_TIME_CONFIG = clientConfig;
+		Main.RUN_TIME_CONFIG.set(clientConfig);
 		return this;
 	}
 	//
@@ -71,6 +75,7 @@ implements WSLoadBuilderSvc<T, U> {
 		//
 		ObjectLoadSvc<T> loadSvc = null;
 		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(reqConf);
+		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
 		if(minObjSize <= maxObjSize) {
 			try {
 				switch(loadType) {
@@ -82,7 +87,7 @@ implements WSLoadBuilderSvc<T, U> {
 							);
 						}
 						loadSvc = new CreateSvc<T>(
-							Main.RUN_TIME_CONFIG,
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							minObjSize, maxObjSize
 						);
@@ -90,14 +95,14 @@ implements WSLoadBuilderSvc<T, U> {
 					case READ:
 						LOG.debug(Markers.MSG, "New read load");
 						loadSvc = new ReadSvc<T>(
-							Main.RUN_TIME_CONFIG,
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case UPDATE:
 						LOG.debug(Markers.MSG, "New update load");
 						loadSvc = new UpdateSvc<T>(
-							Main.RUN_TIME_CONFIG,
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							updatesPerItem
 						);
@@ -105,14 +110,14 @@ implements WSLoadBuilderSvc<T, U> {
 					case DELETE:
 						LOG.debug(Markers.MSG, "New delete load");
 						loadSvc = new DeleteSvc<T>(
-							Main.RUN_TIME_CONFIG,
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType)
 						);
 						break;
 					case APPEND:
 						LOG.debug(Markers.MSG, "New append load");
 						loadSvc = new AppendSvc<T>(
-							Main.RUN_TIME_CONFIG,
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							minObjSize, maxObjSize
 						);
@@ -131,6 +136,16 @@ implements WSLoadBuilderSvc<T, U> {
 		//
 		return (U) loadSvc;
 	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	public DataItemBufferSvc<T> newDataItemBuffer()
+	throws IOException {
+		return (DataItemBufferSvc<T>) ServiceUtils.create(
+			new TmpFileItemBuffer<>(getMaxCount(), 1)
+		);
+	}
+	//
+
 	/*
 	public final void run() {
 		start();

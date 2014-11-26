@@ -49,8 +49,6 @@ extends WSRequestConfigBase<T> {
 	protected RequestConfig(final RequestConfig<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		final String pkgName = RequestConfig.class.getPackage().getName();
-		setAPI(pkgName.substring(pkgName.lastIndexOf('.') + 1));
 		fmtAuthValue = runTimeConfig.getString("api.s3.auth.prefix") + " %s:%s";
 		if(reqConf2Clone != null) {
 			setBucket(reqConf2Clone.getBucket());

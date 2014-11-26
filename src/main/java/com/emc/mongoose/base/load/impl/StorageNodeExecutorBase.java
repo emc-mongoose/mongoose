@@ -28,6 +28,7 @@ import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -37,6 +38,9 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 15.10.14.
  */
@@ -58,6 +62,9 @@ implements StorageNodeExecutor<T> {
 	private final Request.Type reqType;
 	//
 	private final int retryDelayMilliSec, retryCountMax;
+	//
+	private final Lock lock = new ReentrantLock();
+	private final Condition condDone = lock.newCondition();
 	//
 	protected StorageNodeExecutorBase(
 		final RunTimeConfig runTimeConfig,
@@ -189,12 +196,22 @@ implements StorageNodeExecutor<T> {
 					);
 				}
 			}
+		} else {
+			if(lock.tryLock()) {
+				try {
+					condDone.signalAll();
+				} finally {
+					lock.unlock();
+				}
+			} else {
+				LOG.warn(Markers.MSG, "Failed to obtain the lock");
+			}
 		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final void afterExecute(final Runnable reqTask, final Throwable thrown) {
-		if(thrown!=null) {
+		if(thrown != null) {
 			LOG.warn(Markers.ERR, thrown.toString());
 			counterReqFail.inc();
 			counterReqFailParent.inc();
@@ -226,6 +243,11 @@ implements StorageNodeExecutor<T> {
 									String.format(
 										"Failed to submit the object \"%s\" to consumer", dataItem
 									)
+								);
+							} catch(final IllegalStateException e) {
+								LOG.debug(
+									Markers.ERR,
+									"Looks like the consumer \"{}\" is already shutdown", consumer
 								);
 							}
 						}
@@ -268,8 +290,7 @@ implements StorageNodeExecutor<T> {
 			} catch(final Exception e) {
 				counterReqFail.inc();
 				counterReqFailParent.inc();
-				LOG.warn(Markers.MSG, reqTask.getClass().getCanonicalName());
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
 			}
 		}
 		//
@@ -292,24 +313,42 @@ implements StorageNodeExecutor<T> {
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
-		final String message = LoadExecutor.MSG_FMT_METRICS.format(
-				new Object[] {
-						countReqSucc, getQueue().size() + getActiveCount(), counterReqFail.getCount(),
-						//
-						(float) reqDurSnapshot.getMin() / LoadExecutor.BILLION,
-						(float) reqDurSnapshot.getMedian() / LoadExecutor.BILLION,
-						(float) reqDurSnapshot.getMean() / LoadExecutor.BILLION,
-						(float) reqDurSnapshot.getMax() / LoadExecutor.BILLION,
-						//
-						avgSize==0 ? 0 : meanBW/avgSize,
-						avgSize==0 ? 0 : oneMinBW/avgSize,
-						avgSize==0 ? 0 : fiveMinBW/avgSize,
-						avgSize==0 ? 0 : fifteenMinBW/avgSize,
-						//
-						meanBW/LoadExecutor.MIB, oneMinBW/LoadExecutor.MIB,
-						fiveMinBW/LoadExecutor.MIB, fifteenMinBW/LoadExecutor.MIB
-				}
-		);
+		final String message = Markers.PERF_SUM.equals(logMarker) ?
+			String.format(
+				Locale.ROOT, MSG_FMT_SUM_METRICS,
+				//
+				getName(),
+				countReqSucc, counterReqFail.getCount(),
+				//
+				(float) reqDurSnapshot.getMean() / BILLION,
+				(float) reqDurSnapshot.getMin() / BILLION,
+				(float) reqDurSnapshot.getMedian() / BILLION,
+				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				avgSize == 0 ? 0 : meanBW / avgSize,
+				avgSize == 0 ? 0 : oneMinBW / avgSize,
+				avgSize == 0 ? 0 : fiveMinBW / avgSize,
+				avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+				//
+				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+			) :
+			String.format(
+				Locale.ROOT, MSG_FMT_METRICS,
+				//
+				countReqSucc, getQueue().size() + getActiveCount(), counterReqFail.getCount(),
+				//
+				(float) reqDurSnapshot.getMin() / BILLION,
+				(float) reqDurSnapshot.getMedian() / BILLION,
+				(float) reqDurSnapshot.getMean() / BILLION,
+				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				avgSize == 0 ? 0 : meanBW / avgSize,
+				avgSize == 0 ? 0 : oneMinBW / avgSize,
+				avgSize == 0 ? 0 : fiveMinBW / avgSize,
+				avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+				//
+				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+			);
 		LOG.log( logLevel, logMarker, localReqConf.getAddr() + ": " +message);
 		if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
 			LOG.trace(
@@ -334,7 +373,7 @@ implements StorageNodeExecutor<T> {
 	//
 	@Override
 	public final long getMaxCount()
-		throws RemoteException {
+	throws RemoteException {
 		return consumer.getMaxCount();
 	}
 	//
@@ -352,31 +391,46 @@ implements StorageNodeExecutor<T> {
 	}
 	//
 	@Override
+	public final void run() {
+		try {
+			join(Long.MAX_VALUE);
+		} catch(final InterruptedException e) {
+			interrupt();
+		}
+	}
+	//
+	@Override
 	public final void join(final long milliSecs)
 	throws InterruptedException {
-		wait(milliSecs);
+		if(lock.tryLock()) {
+			try {
+				condDone.await(milliSecs, TimeUnit.MILLISECONDS);
+			} catch(final InterruptedException e) {
+				interrupt();
+			} finally {
+				lock.unlock();
+			}
+		}
 	}
 	//
 	@Override
 	public final void interrupt() {
+		// signal about the interruption
+		if(lock.tryLock()) {
+			try {
+				condDone.signalAll();
+			} finally {
+				lock.unlock();
+			}
+		} else {
+			LOG.warn(Markers.MSG, "Failed to obtain the lock");
+		}
 		//
 		LOG.debug(Markers.MSG, "Interrupting...");
 		localReqConf.setRetries(false);
 		//
 		shutdown();
-		synchronized(LOG) {
-			LOG.debug(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-			logMetrics(Level.DEBUG, Markers.PERF_SUM);
-		}
-		// signal about the interruption
-		notifyAll();
-	}
-	//
-	@Override
-	public final boolean isShutdown() {
-		return super.isShutdown()	||
-			super.isTerminating()	||
-			super.isTerminated();
+		logMetrics(Level.DEBUG, Markers.PERF_SUM);
 	}
 	//
 	@Override

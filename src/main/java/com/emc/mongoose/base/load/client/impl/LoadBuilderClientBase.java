@@ -5,6 +5,7 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.persist.FileProducer;
 import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.base.load.client.DataItemBufferClient;
 import com.emc.mongoose.base.load.client.LoadBuilderClient;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
 import com.emc.mongoose.run.Main;
@@ -42,7 +43,7 @@ implements LoadBuilderClient<T, U> {
 	//
 	public LoadBuilderClientBase()
 	throws IOException {
-		this(Main.RUN_TIME_CONFIG);
+		this(Main.RUN_TIME_CONFIG.get());
 	}
 	//
 	public LoadBuilderClientBase(final RunTimeConfig runTimeConfig)
@@ -242,6 +243,12 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public abstract U build()
 	throws RemoteException;
+	//
+	@Override
+	public DataItemBufferClient<T> newDataItemBuffer()
+	throws RemoteException {
+		return new TmpFileItemBufferClient<>(this);
+	}
 	//
 	@Override
 	public String toString() {

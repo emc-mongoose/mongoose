@@ -65,8 +65,7 @@ dependencies {
 		'org.apache.httpcomponents:httpclient:4.3.6',
 		'org.apache.httpcomponents:httpcore:4.3.3',
         'org.eclipse.jetty:jetty-server:9.2.3.v20140905',
-        'org.eclipse.jetty:jetty-webapp:9.2.3.v20140905',
-        'javax.el:javax.el-api:3.0.1-b04',
+		'org.eclipse.jetty:jetty-webapp:9.2.3.v20140905',
         'javax.servlet:javax.servlet-api:3.1.0',
 		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
 		'org.eclipse.jetty.websocket:websocket-server:9.2.3.v20140905',
@@ -92,7 +91,7 @@ dependencies {
 		'org.slf4j:slf4j-api:1.7.7',
 		'com.lmax:disruptor:3.3.0',
 		//
-		'org.python:jython:2.7-b3',
+		'org.python:jython-standalone:2.7-b3',
 		'org.postgresql:postgresql:9.3-1102-jdbc3',
 		'org.fusesource.jansi:jansi:1.11'
 	)
@@ -103,6 +102,7 @@ dependencies {
 
 task rmic(dependsOn: compileJava) << {
 	String[] listClsRemote = [
+		'com.emc.mongoose.base.data.persist.TmpFileItemBuffer',
 		'com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc',
 		'com.emc.mongoose.web.load.server.impl.type.AppendSvc',
 		'com.emc.mongoose.web.load.server.impl.type.CreateSvc',

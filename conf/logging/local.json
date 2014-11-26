@@ -9,6 +9,7 @@
 				"value": "${sys:dir.root}${sys:file.separator}log${sys:file.separator}${sys:run.mode}${sys:file.separator}${sys:run.id}${sys:file.separator}"
 			}
 		},
+		"shutdownHook": "enable",
 		"appenders": {
 			"appender" : [
 			 	{
@@ -47,11 +48,11 @@
 					"runmode": "${sys:run.mode}",
 					"database": "postgresql",
 					"username": "mongoose",
-                    "password": "mongoose",
-                    "addr": "localhost",
-                    "port": "5432",
-                    "namedatabase": "mongoose",
-                    "Filters": {
+					"password": "mongoose",
+					"addr": "localhost",
+					"port": "5432",
+					"namedatabase": "mongoose",
+					"Filters": {
 						"Filter": [
 							{
 								"type": "MarkerFilter",
@@ -80,7 +81,7 @@
 					"name": "stdout",
 					"type": "Console",
 					"PatternLayout": {
-						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t - %m%n}"
+						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t %m%n}"
 					},
 					"Filters": {
 						"Filter" : [
@@ -253,7 +254,7 @@
 					"name": "async",
 					"type": "Async",
 					"blocking": "false",
-					"bufferSize": "1048576",
+					"bufferSize": "131072",
 					"AppenderRef": [
 						{ "ref": "stdout" },
 						{ "ref": "msgFile" },
@@ -276,7 +277,6 @@
 				"AppenderRef": { "ref": "async" }
 			},
 			"logger": [
-
 				// Mongoose basic load generation functionality
 				{
 					"name": "com.emc.mongoose.base.api.impl",

@@ -76,7 +76,7 @@ implements WSRequestConfig<T> {
 	};
 	//
 	public static WSRequestConfigBase getInstance() {
-		return newInstanceFor(Main.RUN_TIME_CONFIG.getStorageApi());
+		return newInstanceFor(Main.RUN_TIME_CONFIG.get().getStorageApi());
 	}
 	//
 	private final static String NAME_CLS_IMPL = "RequestConfig";
@@ -137,6 +137,9 @@ implements WSRequestConfig<T> {
 				.setScheme(reqConf2Clone.getScheme())
 				.setClient(reqConf2Clone.getClient());
 		}
+		//
+		final String pkgSpec = getClass().getPackage().getName();
+		setAPI(pkgSpec.substring(pkgSpec.lastIndexOf('.') + 1));
 	}
 	//
 	@Override

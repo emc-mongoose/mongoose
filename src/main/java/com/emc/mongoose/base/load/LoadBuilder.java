@@ -55,6 +55,9 @@ public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>> {
 	U build()
 	throws IOException;
 	//
+	DataItemBuffer<T> newDataItemBuffer()
+	throws IOException;
+	//
 	long getMaxCount()
 	throws RemoteException;
 	//

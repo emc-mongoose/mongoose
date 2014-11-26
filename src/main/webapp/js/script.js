@@ -1,13 +1,14 @@
 $(document).ready(function() {
 
-	var VALUE_RUN_MODE_CLIENT = "VALUE_RUN_MODE_CLIENT";
-	var VALUE_RUN_MODE_STANDALONE = "VALUE_RUN_MODE_STANDALONE";
-	var VALUE_RUN_MODE_SERVER = "VALUE_RUN_MODE_SERVER";
-	var VALUE_RUN_MODE_WSMOCK = "VALUE_RUN_MODE_WSMOCK";
+	var VALUE_RUN_MODE_CLIENT = "client";
+	var VALUE_RUN_MODE_STANDALONE = "standalone";
+	var VALUE_RUN_MODE_SERVER = "server";
+	var VALUE_RUN_MODE_WSMOCK = "wsmock";
 	var runModes = [VALUE_RUN_MODE_CLIENT, VALUE_RUN_MODE_STANDALONE, VALUE_RUN_MODE_SERVER, VALUE_RUN_MODE_WSMOCK];
-	var COUNT_OF_RECORDS = 50;
+	var COUNT_OF_RECORDS = 2050;
 
 	initComponents();
+	excludeDuplicateOptions();
 
 	// Storage Block
 	$(".add-node").click(function() {
@@ -27,56 +28,79 @@ $(document).ready(function() {
 		}
 	});
 
+	$('#run-parameters a[href="#runTimeTab"]').click(function() {
+		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
+		$("#runTimeSelect").val($("#runTimeSelect option:first").val());
+	});
+
+	$('#run-parameters a[href="#dataCountTab"]').click(function() {
+		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
+	});
+
+	$("#scenario\\.chain\\.load\\.duplicate").keyup(function() {
+		$("#scenario\\.chain\\.load").val($(this).val());
+	});
+
+	$("#scenario\\.chain\\.load").keyup(function() {
+		$("#scenario\\.chain\\.load\\.duplicate").val($(this).val());
+	});
+
 	// Save data node in the list
 	$(document).on("click", "#save", function() {
-		$(".storages").append(appendBlock("dataNodes", $("#data-node-text").val()));
+		$(".storages").append(appendBlock("storage.addrs", $("#data-node-text").val()));
 		$("#data-node-text").val("");
 		$(".data-node").hide();
 	});
 
 	// Save Driver in the list
 	$(document).on("click", "#save-driver", function() {
-		$(".drivers").append(appendBlock("drivers", $("#driver-text").val()));
+		$(".drivers").append(appendBlock("remote.servers", $("#driver-text").val()));
 		$("#driver-text").val("");
 		$(".driver").hide();
 	});
 
 	// Remove storage or driver from list
 	$(document).on("click", ".remove", function() {
-		$(this).parent().parent().remove();
+		var elements;
+		if ($(this).hasClass("remove-driver")) {
+			elements = $(".remote\\.servers:checked");
+		} else {
+			elements = $(".storage\\.addrs:checked");
+		}
+		if (confirm("Are you sure? " + elements.size() + " will be deleted") === true) {
+			elements.each(function() {
+				$(this).parent().parent().remove();
+			});
+		} else {
+			//	do nothing
+		}
 	});
 
-	// RunModes
-	$(document).on("click", "#standalone", function() {
-		$("#runmode").val(VALUE_RUN_MODE_STANDALONE);
-		$(".runmodes .list-group .list-group-item").removeClass("active");
-		$(this).addClass("active");
-	});
-
-	$(document).on("click", "#distributed", function() {
-		$("#runmode").val(VALUE_RUN_MODE_CLIENT);
-		$(".runmodes .list-group .list-group-item").removeClass("active");
-		$(this).addClass("active");
-	});
-
-	$(document).on("click", "#driver", function() {
-		$("#runmode").val(VALUE_RUN_MODE_SERVER);
-		$(".runmodes .list-group .list-group-item").removeClass("active");
-		$(this).addClass("active");
-	});
-
-	$(document).on("click", "#wsmock", function() {
-		$("#runmode").val(VALUE_RUN_MODE_WSMOCK);
-		$(".runmodes .list-group .list-group-item").removeClass("active");
-		$(this).addClass("active");
-	});
+	//	select change
+	$("select").bind("keydown change", function() {
+		$('a[href="#' + $(this).val() + '"]').tab('show');
+    });
 
 	// functions
 	function initComponents() {
 		$(".driver").hide();
 		$(".data-node").hide();
-		$("#runmode").val($.cookie("runmode"));
 		configureWebSocket().connect();
+	}
+
+	function excludeDuplicateOptions() {
+		var found = [];
+		var selectArray = $("select");
+		selectArray.each(function() {
+			found = [];
+			var currentSelect = $(this).children();
+			currentSelect.each(function() {
+				if ($.inArray(this.value, found) != -1) {
+					$(this).remove();
+				}
+				found.push(this.value);
+			});
+		});
 	}
 
 	function configureWebSocket() {
@@ -146,7 +170,6 @@ $(document).ready(function() {
 		html = '<tr>\
 			<td class="filterable-cell">' + json.level.name + '</td>\
 			<td class="filterable-cell">' + json.loggerName + '</td>\
-			<td class="filterable-cell">' + json.marker.name + '</td>\
 			<td class="filterable-cell">' + json.threadName + '</td>\
 			<td class="filterable-cell">' + new Date(json.timeMillis) + '</td>\
 			<td class="filterable-cell">' + json.message.message + '</td>\
@@ -158,14 +181,11 @@ $(document).ready(function() {
 		html =
 			'<div class="input-group">\
 				<span class="input-group-addon">\
-					<input type="checkbox" name=' + key +' value=' + value + '>\
+					<input class=' + key + ' type="checkbox" name=' + key +' value=' + value + '>\
 				</span>\
 				<label class="form-control">' +
 					value +
 				'</label>\
-				<span class="input-group-btn">\
-					<button type="button" class="btn btn-default remove">Remove</button>\
-				</span>\
 			</div>';
 		return html;
 	}
@@ -173,22 +193,51 @@ $(document).ready(function() {
 	// Start mongoose
 	$(document).on('submit', '#mainForm',  function(e) {
 		e.preventDefault();
-		$.post("/start", $("#mainForm").serialize(), function(data, status) {
-			location.reload();
-			$.cookie("websocket", true);
-		});
+		onStartButtonPressed();
 	});
+
+	function onStartButtonPressed() {
+		$.post("/start", $("#mainForm").serialize(), function(data, status) {
+			if (data) {
+				if (confirm("Are you sure? " + data) === true) {
+					$.post("/stop", { "run.id" : $("#run\\.id").val(), "type" : "remove" }, function(data, status) {
+						if (status) {
+							onStartButtonPressed();
+						}
+					}).fail(function() {
+						alert("Internal Server Error");
+					});
+				} else {
+					//	do nothing
+				}
+			} else {
+				location.reload();
+			}
+		});
+	}
 
 	// Stop mongoose
 	$(".stop").click(function() {
 		var currentButton = $(this);
 		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".");
-		$.post("/stop", { "runid" : currentRunId }, function() {
-			currentButton.attr("disabled", "disabled");
+		$.post("/stop", { "run.id" : currentRunId, "type" : "stop" }, function() {
+			currentButton.remove();
 		}).fail(function() {
-			currentButton.attr("disabled", "disabled");
 			alert("Internal Server Error");
+			currentButton.remove();
 		});
+	});
+
+	$(".glyphicon-remove").click(function() {
+		var currentElement = $(this);
+		var currentRunId = $(this).attr("value");
+		if (confirm("Are you sure? This action will stop Mongoose which is running on this run.id") === true) {
+			$.post("/stop", { "run.id" : currentRunId.split("_").join("."), "type" : "remove" }, function() {
+				$("#" + currentRunId).remove();
+				currentElement.parent().remove();
+				$('a[href="#configuration"]').tab('show');
+			});
+		}
 	});
 
 	// Clear logs content

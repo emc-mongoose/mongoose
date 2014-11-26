@@ -35,8 +35,9 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Locale;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -59,7 +60,7 @@ implements LoadExecutor<T> {
 	protected final Closeable client;
 	//
 	protected final DataSource<T> dataSrc;
-	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
+	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	//
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
@@ -77,6 +78,7 @@ implements LoadExecutor<T> {
 	//
 	private final Lock lock = new ReentrantLock();
 	private final Condition condDone = lock.newCondition();
+	private volatile boolean isClosed = false;
 	//
 	public static int getLastInstanceNum() {
 		return instanceN;
@@ -129,7 +131,7 @@ implements LoadExecutor<T> {
 		dataSrc = reqConf.getDataSource();
 		setFileBasedProducer(listFile);
 		final int
-			submitThreadCount = threadsPerNode * addrs.length,
+			submitThreadCount = addrs.length * (int) Math.pow(threadsPerNode, 0.8),
 			queueSize = submitThreadCount * runTimeConfig.getRunRequestQueueFactor();
 		submitExecutor = new ThreadPoolExecutor(
 			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
@@ -169,7 +171,7 @@ implements LoadExecutor<T> {
 		//
 		tsStart = System.nanoTime();
 		super.start();
-		LOG.debug(Markers.MSG, "Started {}", getName());
+		LOG.info(Markers.MSG, "Started \"{}\"", getName());
 	}
 	//
 	@Override
@@ -207,7 +209,7 @@ implements LoadExecutor<T> {
 							LOG.debug(Markers.MSG, "Condition \"done\" reached");
 						}
 					} catch(final Exception e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "Condition failure");
+						LOG.debug(Markers.MSG, "Waiting for the done condition interrupted");
 					} finally {
 						lock.unlock();
 					}
@@ -216,12 +218,6 @@ implements LoadExecutor<T> {
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
-		} finally {
-			synchronized(LOG) {
-				// provide summary metrics
-				LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-				logMetrics(Markers.PERF_SUM);
-			}
 		}
 		//
 		LOG.trace(Markers.MSG, "Finish reached");
@@ -235,53 +231,47 @@ implements LoadExecutor<T> {
 		maxCount = counterSubm.getCount() + counterRej.getCount();
 		LOG.trace(Markers.MSG, "Interrupting, max count is set to {}", maxCount);
 		//
-		final Thread interrupters[] = new Thread[nodes.length < 2 ? 2 : nodes.length];
-		interrupters[0] = new Thread("interruptProducer-" + getName()) {
-			@Override
-			public final void run() {
-				if(producer != null) {
-					try {
-						producer.interrupt();
-						LOG.debug(Markers.MSG, "Stopped object producer {}", producer.toString());
-					} catch(final IOException e) {
-						ExceptionHandler.trace(
-							LOG, Level.WARN, e,
-							String.format("Failed to stop the producer: %s", producer.toString())
-						);
+		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(nodes.length);
+		//
+		interruptExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {
+					if(producer != null) {
+						try {
+							producer.interrupt();
+							LOG.debug(Markers.MSG, "Stopped object producer {}", producer.toString());
+						} catch(final IOException e) {
+							ExceptionHandler.trace(
+								LOG, Level.WARN, e,
+								String.format("Failed to stop the producer: %s", producer.toString())
+							);
+						}
 					}
 				}
 			}
-		};
-		// interrupt the submit execution
-		interrupters[1] = new Thread(
-			new GentleExecutorShutDown(submitExecutor, runTimeConfig),
-			String.format("interruptSubmitter-%s", getName())
 		);
-		interrupters[1].start();
 		//
-		try {
-			interrupters[0].join();
-		} catch(final InterruptedException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while interrupting producer");
-		}
-		try {
-			interrupters[1].join();
-		} catch(final InterruptedException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while interrupting submitter");
-		}
+		interruptExecutor.submit(new GentleExecutorShutDown(submitExecutor, runTimeConfig));
 		// interrupt node executors
 		for(final StorageNodeExecutor<T> nextNode: nodes) {
-			ThreadPoolExecutor.class.cast(nextNode).shutdown();
+			interruptExecutor.submit(
+				new Runnable() {
+					@Override
+					public final void run() {
+						ThreadPoolExecutor.class.cast(nextNode).shutdown();
+					}
+				}
+			);
 		}
-		// wait for node executors to become interrupted
-		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
-		for(final Thread interrupter : interrupters) {
-			try {
-				interrupter.join(reqTimeOutMilliSec);
-				LOG.debug(Markers.MSG, "Finished: \"{}\"", interrupter.getName());
-			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted while interrupting the node executor");
-			}
+		//
+		interruptExecutor.shutdown();
+		try {
+			interruptExecutor.awaitTermination(
+				Main.RUN_TIME_CONFIG.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+			);
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.ERR, "Interrupted externally");
 		}
 		// interrupt the monitoring thread
 		if(!isInterrupted()) {
@@ -293,49 +283,60 @@ implements LoadExecutor<T> {
 	public synchronized void close()
 	throws IOException {
 		//
-		if(!isInterrupted()) {
-			interrupt();
-		}
-		// poison the consumer
-		consumer.submit(null);
-		// close node executors
-		final ArrayList<Thread> nodeClosers = new ArrayList<>(nodes.length);
-		Thread nextShutDownThread;
-		for(final StorageNodeExecutor<T> nodeExecutor: nodes) {
-			nextShutDownThread = new Thread("closeNodeExecutor-"+nodeExecutor.toString()) {
-				@Override
-				public final void run() {
-					try {
-						nodeExecutor.close();
-					} catch(final IOException e) {
-						ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to close node executor");
+		if(!isClosed) { // this is just not-closed-yet marker
+			if(!isInterrupted()) {
+				interrupt();
+			}
+			// poison the consumer
+			try {
+				consumer.submit(null);
+			} catch(final IllegalStateException e) {
+				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to feed the poison");
+			}
+			// provide summary metrics
+			logMetrics(Markers.PERF_SUM);
+			// close node executors
+			final ArrayList<Thread> nodeClosers = new ArrayList<>(nodes.length);
+			Thread nextShutDownThread;
+			for(final StorageNodeExecutor<T> nodeExecutor : nodes) {
+				nextShutDownThread = new Thread("closeNodeExecutor-" + nodeExecutor.toString()) {
+					@Override
+					public final void run() {
+						try {
+							nodeExecutor.close();
+						} catch(final IOException e) {
+							ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to close node executor");
+						}
 					}
+				};
+				nextShutDownThread.start();
+				nodeClosers.add(nextShutDownThread);
+			}
+			//
+			for(final Thread nextClosingThread : nodeClosers) {
+				try {
+					nextClosingThread.join(runTimeConfig.getRunReqTimeOutMilliSec());
+				} catch(final InterruptedException e) {
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Interrupted closing node executor");
 				}
-			};
-			nextShutDownThread.start();
-			nodeClosers.add(nextShutDownThread);
-		}
-		//
-		for(final Thread nextClosingThread: nodeClosers) {
-			try {
-				nextClosingThread.join(runTimeConfig.getRunReqTimeOutMilliSec());
-			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Interrupted closing node executor");
 			}
-		}
-		//
-		metricsReporter.close();
-		//
-		if(client != null) {
-			try {
-				client.close();
-				LOG.debug(Markers.MSG, "Storage client closed");
-			} catch(final IOException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Storage client closing failed");
+			//
+			metricsReporter.close();
+			//
+			if(client!=null) {
+				try {
+					client.close();
+					LOG.debug(Markers.MSG, "Storage client closed");
+				} catch(final IOException e) {
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Storage client closing failed");
+				}
 			}
+			//
+			isClosed = true;
+			LOG.debug(Markers.MSG, "Closed {}", getName());
+		} else {
+			LOG.debug(Markers.ERR, "Closed already");
 		}
-		//
-		LOG.debug(Markers.MSG, "Closed {}", getName());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -361,8 +362,6 @@ implements LoadExecutor<T> {
 					nextNode.submit(null); // poison
 				}
 			}
-			//
-			Thread.currentThread().interrupt(); // causes the producer interruption
 		} else {
 			final StorageNodeExecutor<T> nodeExecutor = nodes[
 				(int) submitExecutor.getTaskCount() % nodes.length
@@ -411,23 +410,48 @@ implements LoadExecutor<T> {
 		}
 		notCompletedTaskCount += submitExecutor.getQueue().size() + submitExecutor.getActiveCount();
 		//
-		final String message = MSG_FMT_METRICS.format(
-				new Object[]{
-						countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
-						//
-						(float) reqDurSnapshot.getMin() / BILLION,
-						(float) reqDurSnapshot.getMedian() / BILLION,
-						(float) reqDurSnapshot.getMean() / BILLION,
-						(float) reqDurSnapshot.getMax() / BILLION,
-						//
-						avgSize == 0 ? 0 : meanBW / avgSize,
-						avgSize == 0 ? 0 : oneMinBW / avgSize,
-						avgSize == 0 ? 0 : fiveMinBW / avgSize,
-						avgSize == 0 ? 0 : fifteenMinBW / avgSize,
-						//
-						meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
-				}
-		);
+		final String message = Markers.PERF_SUM.equals(logMarker) ?
+			String.format(
+				Locale.ROOT, MSG_FMT_SUM_METRICS,
+				//
+				getName(),
+				countReqSucc, counterReqFail.getCount(),
+				//
+				(float) reqDurSnapshot.getMean() / BILLION,
+				(float) reqDurSnapshot.getMin() / BILLION,
+				(float) reqDurSnapshot.getMedian() / BILLION,
+				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				avgSize == 0 ? 0 : meanBW / avgSize,
+				avgSize == 0 ? 0 : oneMinBW / avgSize,
+				avgSize == 0 ? 0 : fiveMinBW / avgSize,
+				avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+				//
+				meanBW / MIB,
+				oneMinBW / MIB,
+				fiveMinBW / MIB,
+				fifteenMinBW / MIB
+			) :
+			String.format(
+				Locale.ROOT, MSG_FMT_METRICS,
+				//
+				countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
+				//
+				(float) reqDurSnapshot.getMin() / BILLION,
+				(float) reqDurSnapshot.getMedian() / BILLION,
+				(float) reqDurSnapshot.getMean() / BILLION,
+				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				avgSize == 0 ? 0 : meanBW / avgSize,
+				avgSize == 0 ? 0 : oneMinBW / avgSize,
+				avgSize == 0 ? 0 : fiveMinBW / avgSize,
+				avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+				//
+				meanBW / MIB,
+				oneMinBW / MIB,
+				fiveMinBW / MIB,
+				fifteenMinBW / MIB
+			);
 		LOG.info(logMarker, message);
 		//
 		if(Markers.PERF_SUM.equals(logMarker)) {
