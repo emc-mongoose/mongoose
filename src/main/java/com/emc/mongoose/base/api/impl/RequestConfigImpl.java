@@ -29,7 +29,7 @@ implements RequestConfig<T> {
 	protected Request.Type loadType;
 	protected DataSource<T> dataSrc;
 	protected volatile boolean retryFlag, verifyContentFlag;
-	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG;
+	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	protected final URIBuilder uriBuilder = new URIBuilder();
 	protected int loadNumber;
 	//

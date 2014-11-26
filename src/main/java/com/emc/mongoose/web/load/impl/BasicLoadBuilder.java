@@ -77,13 +77,14 @@ implements WSLoadBuilder<T, U> {
 		//
 		WSLoadExecutor<T> load = null;
 		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(reqConf);
+		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
 		if(minObjSize <= maxObjSize) {
 			try {
 				switch(loadType) {
 					case CREATE:
 						LOG.debug(Markers.MSG, "New create load");
 						load = new Create<T>(
-							Main.RUN_TIME_CONFIG,
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile, minObjSize, maxObjSize
 						);
@@ -91,7 +92,7 @@ implements WSLoadBuilder<T, U> {
 					case READ:
 						LOG.debug(Markers.MSG, "New read load");
 						load = new Read<T>(
-							Main.RUN_TIME_CONFIG,
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile
 						);
@@ -99,7 +100,7 @@ implements WSLoadBuilder<T, U> {
 					case UPDATE:
 						LOG.debug(Markers.MSG, "New update load");
 						load = new Update<T>(
-							Main.RUN_TIME_CONFIG,
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile, updatesPerItem
 						);
@@ -107,7 +108,7 @@ implements WSLoadBuilder<T, U> {
 					case DELETE:
 						LOG.debug(Markers.MSG, "New delete load");
 						load = new Delete<T>(
-							Main.RUN_TIME_CONFIG,
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile
 						);
@@ -115,7 +116,7 @@ implements WSLoadBuilder<T, U> {
 					case APPEND:
 						LOG.debug(Markers.MSG, "New append load");
 						load = new Append<T>(
-							Main.RUN_TIME_CONFIG,
+							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
 							listFile, minObjSize, maxObjSize
 						);

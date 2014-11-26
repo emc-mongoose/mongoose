@@ -31,8 +31,8 @@ extends WSRequestConfigBase<T> {
 	private final static String
 		KEY_SUBTENANT = "api.atmos.subtenant",
 		OBJ_PATH =
-			"/" + Main.RUN_TIME_CONFIG.getString("api.atmos.path.rest") +
-			"/" + Main.RUN_TIME_CONFIG.getString("api.atmos.interface");
+			"/" + Main.RUN_TIME_CONFIG.get().getString("api.atmos.path.rest") +
+			"/" + Main.RUN_TIME_CONFIG.get().getString("api.atmos.interface");
 	//
 	private SubTenant<T> subTenant;
 	//

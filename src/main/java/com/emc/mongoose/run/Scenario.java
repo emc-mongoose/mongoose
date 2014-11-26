@@ -41,21 +41,12 @@ implements Runnable {
 		SCRIPT_LANG_MAP.put(VALUE_PY, "jython");
 	}
 	//
-	private final RunTimeConfig runTimeConfig;
-	//
-	public Scenario() {
-		this.runTimeConfig = Main.RUN_TIME_CONFIG;
-	}
-	//
-	public Scenario(final RunTimeConfig runTimeConfig) {
-		this.runTimeConfig = runTimeConfig;
-	}
-	//
 	public void run() {
+		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
 		// get scenario language
 		String scriptLangKey = null;
 		try {
-			scriptLangKey = runTimeConfig.getRunScenarioLang();
+			scriptLangKey = localRunTimeConfig.getRunScenarioLang();
 		} catch(final NoSuchElementException e) {
 			LOG.fatal(
 				Markers.ERR,
@@ -66,7 +57,7 @@ implements Runnable {
 		// get scenario name
 		String scriptName = null;
 		try {
-			scriptName = runTimeConfig.getRunScenarioName();
+			scriptName = localRunTimeConfig.getRunScenarioName();
 			LOG.info(Markers.MSG, "Script name to run: \"{}\"", scriptName);
 		} catch(final NoSuchElementException e) {
 			LOG.fatal(
@@ -79,7 +70,7 @@ implements Runnable {
 		String scriptsRootDir = null;
 		if(scriptName!=null && scriptLangKey!=null) {
 			try {
-				scriptsRootDir = runTimeConfig.getRunScenarioDir();
+				scriptsRootDir = localRunTimeConfig.getRunScenarioDir();
 			} catch(final NoSuchElementException e) {
 				LOG.fatal(Markers.ERR, "Scenario directory not specified");
 				System.exit(1);
