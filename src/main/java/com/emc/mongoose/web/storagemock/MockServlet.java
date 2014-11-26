@@ -210,9 +210,9 @@ public final class MockServlet
 								//
 								counterAllSucc.getCount(), counterAllFail.getCount(),
 								//
+								(float) allDurSnapshot.getMean() / LoadExecutor.BILLION,
 								(float) allDurSnapshot.getMin() / LoadExecutor.BILLION,
 								(float) allDurSnapshot.getMedian() / LoadExecutor.BILLION,
-								(float) allDurSnapshot.getMean() / LoadExecutor.BILLION,
 								(float) allDurSnapshot.getMax() / LoadExecutor.BILLION,
 								//
 								allTP.getMeanRate(),
