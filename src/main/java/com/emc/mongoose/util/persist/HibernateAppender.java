@@ -50,10 +50,7 @@ public final class HibernateAppender
 		KEY_RUN_MODE = "run.mode";
 	//
 	private HibernateAppender(
-			final String name, final Filter filter,
-			final Layout<? extends Serializable> layout,
-			final String runId, final String runMode
-	) {
+			final String name, final Filter filter,	final Layout<? extends Serializable> layout) {
 		super(name, filter, layout);
 	}
 	//
@@ -63,8 +60,6 @@ public final class HibernateAppender
 		final @PluginAttribute("ignoreExceptions") boolean ignoreExceptions,
 		final @PluginElement("Filters") Filter filter,
 		final @PluginAttribute("enabled") Boolean enabled,
-		final @PluginAttribute("runid") String runId,
-		final @PluginAttribute("runmode") String runMode,
 		final @PluginAttribute("database") String provider,
 		final @PluginAttribute("username") String userName,
 		final @PluginAttribute("password") String passWord,
@@ -84,7 +79,7 @@ public final class HibernateAppender
 				initDataBase(userName, passWord, url);
 				setStatusEntity();
 			}
-			newAppender = new HibernateAppender(name, filter, DEFAULT_LAYOUT, runId, runMode);
+			newAppender = new HibernateAppender(name, filter, DEFAULT_LAYOUT);
 		} catch (final Exception e) {
 			throw new IllegalStateException("Open DB session failed", e);
 		}
@@ -108,17 +103,18 @@ public final class HibernateAppender
 			final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
 			switch (marker) {
 				case MSG:
-				case ERR:					SESSION.beginTransaction();
+				case ERR:
+					SESSION.beginTransaction();
 					final ModeEntity modeEntity = loadModeEntity(event.getContextMap().get(KEY_RUN_MODE));
 					final RunEntity runEntity = loadRunEntity(event.getContextMap().get(KEY_RUN_ID), modeEntity);
 					setMessageEntity(new Date(event.getTimeMillis()), event.getLoggerName(),
-							event.getLevel().toString(), event.getMessage().getFormattedMessage(), runEntity);
+						event.getLevel().toString(), event.getMessage().getFormattedMessage(), runEntity);
 					SESSION.getTransaction().commit();
 					break;
 				case DATA_LIST:
 					SESSION.beginTransaction();
 					DataObjectEntity object = loadDataObjectEntity(message[0], message[1], Long.valueOf(message[2]),
-							Long.valueOf(message[3]), Long.valueOf(message[4]));
+						Long.valueOf(message[3]), Long.valueOf(message[4]));
 					SESSION.getTransaction().commit();
 					break;
 				case PERF_TRACE:
@@ -126,12 +122,12 @@ public final class HibernateAppender
 					final ModeEntity mode = loadModeEntity(event.getContextMap().get(KEY_RUN_MODE));
 					final RunEntity run = loadRunEntity(event.getContextMap().get(KEY_RUN_ID), mode);
 					final LoadEntity loadEntity = loadLoadEntity(event.getContextMap().get(KEY_LOAD_NUM), run,
-							event.getContextMap().get(KEY_LOAD_TYPE), event.getContextMap().get(KEY_API));
-					final ThreadEntity threadEntity = loadThreadEntity(loadEntity, event.getContextMap().get(KEY_NODE_ADDR),
-							event.getContextMap().get(KEY_THREAD_NUM));
-					//only id
+						event.getContextMap().get(KEY_LOAD_TYPE), event.getContextMap().get(KEY_API));
+					final ThreadEntity threadEntity = loadThreadEntity(loadEntity,
+						event.getContextMap().get(KEY_NODE_ADDR),
+						event.getContextMap().get(KEY_THREAD_NUM));
 					setTraceEntity(message[0], Long.valueOf(message[1]), threadEntity, Integer.valueOf(message[2]),
-							Long.valueOf(message[3]), Long.valueOf(message[4]));
+						Long.valueOf(message[3]), Long.valueOf(message[4]));
 					SESSION.getTransaction().commit();
 					break;
 			}
@@ -150,11 +146,11 @@ public final class HibernateAppender
 		try {
 			// Create the SessionFactory from hibernate.cfg.xml
 			newSessionFactory = new AnnotationConfiguration()
-					.configure(hibernateConfFile)
-					.setProperty("hibernate.connection.password", password)
-					.setProperty("hibernate.connection.username", username)
-					.setProperty("hibernate.connection.url", url)
-					.buildSessionFactory();
+				.configure(hibernateConfFile)
+				.setProperty("hibernate.connection.password", password)
+				.setProperty("hibernate.connection.username", username)
+				.setProperty("hibernate.connection.url", url)
+				.buildSessionFactory();
 		}
 		catch (Throwable ex) {
 			// Make sure you log the exception, as it might be swallowed
@@ -243,7 +239,9 @@ public final class HibernateAppender
 		return node;
 	}
 	//If node is known
-	private static ThreadEntity loadThreadEntity(final String threadNumberString, final LoadEntity load, final NodeEntity node){
+	private static ThreadEntity loadThreadEntity(final String threadNumberString, final LoadEntity load,
+			final NodeEntity node
+	){
 		ThreadEntity threadEntity = getThreadEntity(Long.valueOf(threadNumberString), load);
 		if (threadEntity == null){
 			threadEntity = new ThreadEntity(load, node, Long.valueOf(threadNumberString));
@@ -252,7 +250,9 @@ public final class HibernateAppender
 		return threadEntity;
 	}
 	//If node isn't known
-	private static ThreadEntity loadThreadEntity(final LoadEntity load, final String nodeAddr, final String threadNumber){
+	private static ThreadEntity loadThreadEntity(final LoadEntity load, final String nodeAddr,
+			final String threadNumber
+	){
 		final NodeEntity node = loadNodeEntity(nodeAddr);
 		final ThreadEntity threadEntity = loadThreadEntity(threadNumber,load,node);
 		SESSION.save(load);
@@ -291,7 +291,9 @@ public final class HibernateAppender
 		return statusEntity;
 	}
 	//
-	private static void setMessageEntity(final Date tstamp, final String className, final String levelName, final String text, final RunEntity run){
+	private static void setMessageEntity(final Date tstamp, final String className,
+			final String levelName, final String text, final RunEntity run
+	){
 		final MessageClassEntity classMessage = loadClassOfMessage(className);
 		final LevelEntity level = loadLevelEntity(levelName);
 		final MessageEntity messageEntity = new MessageEntity(run, classMessage, level, text, tstamp);
@@ -316,8 +318,8 @@ public final class HibernateAppender
 	//
 	private static RunEntity getRunEntity(final String runName){
 		return (RunEntity) SESSION.createCriteria(RunEntity.class)
-				.add( Restrictions.eq("name", runName))
-				.uniqueResult();
+			.add( Restrictions.eq("name", runName))
+			.uniqueResult();
 	}
 	private static StatusEntity getStatusEntity(final int codeStatus){
 		return (StatusEntity) SESSION.get(StatusEntity.class, codeStatus);
@@ -325,52 +327,52 @@ public final class HibernateAppender
 	//
 	private static LoadEntity getLoadEntity(final long loadNumber, final RunEntity run){
 		return (LoadEntity) SESSION.createCriteria(LoadEntity.class)
-				.add( Restrictions.eq("num", loadNumber))
-				.add(Restrictions.eq("run", run))
-				.uniqueResult();
+			.add( Restrictions.eq("num", loadNumber))
+			.add(Restrictions.eq("run", run))
+			.uniqueResult();
 	}
 	//
 	private static ThreadEntity getThreadEntity(final long threadNumber, final LoadEntity load){
 		return (ThreadEntity) SESSION.createCriteria(ThreadEntity.class)
-				.add( Restrictions.eq("load", load))
-				.add( Restrictions.eq("num", threadNumber))
-				.uniqueResult();
+			.add( Restrictions.eq("load", load))
+			.add( Restrictions.eq("num", threadNumber))
+			.uniqueResult();
 	}
 	//
 	private static ModeEntity getModeEntity(final String modeName) {
 		return (ModeEntity) SESSION.createCriteria(ModeEntity.class)
-				.add(Restrictions.eq("name", modeName))
-				.uniqueResult();
+			.add(Restrictions.eq("name", modeName))
+			.uniqueResult();
 	}
 	//
 	private static ApiEntity getApiEntity(final String apiName) {
 		return (ApiEntity) SESSION.createCriteria(ApiEntity.class)
-				.add( Restrictions.eq("name", apiName) )
-				.uniqueResult();
+			.add( Restrictions.eq("name", apiName) )
+			.uniqueResult();
 	}
 	//
 	private static LoadTypeEntity getLoadTypeEntity(final String typeName) {
 		return (LoadTypeEntity) SESSION.createCriteria(LoadTypeEntity.class)
-				.add( Restrictions.eq("name", typeName))
-				.uniqueResult();
+			.add( Restrictions.eq("name", typeName))
+			.uniqueResult();
 	}
 	//
 	private static MessageClassEntity getMessageClassEntity(final String className) {
 		return (MessageClassEntity) SESSION.createCriteria(MessageClassEntity.class)
-				.add(Restrictions.eq("name", className))
-				.uniqueResult();
+			.add(Restrictions.eq("name", className))
+			.uniqueResult();
 	}
 	//
 	private static LevelEntity getLevelEntity(final String levelName) {
 		return (LevelEntity) SESSION.createCriteria(LevelEntity.class)
-				.add(Restrictions.eq("name", levelName))
-				.uniqueResult();
+			.add(Restrictions.eq("name", levelName))
+			.uniqueResult();
 	}
 	//
 	private static NodeEntity getNodeEntity(final String nodeAddr) {
 		return (NodeEntity) SESSION.createCriteria(NodeEntity.class)
-				.add( Restrictions.eq("address", nodeAddr))
-				.uniqueResult();
+			.add( Restrictions.eq("address", nodeAddr))
+			.uniqueResult();
 	}
 	//
 	private static DataObjectEntity getDataObjectEntity(
@@ -378,9 +380,9 @@ public final class HibernateAppender
 	) {
 		//ringOffset?
 		return (DataObjectEntity) SESSION.createCriteria(DataObjectEntity.class)
-				.add( Restrictions.eq("identifier", identifier))
-						//.add(Restrictions.eq("ringOffset", ringOffset))
-				.add( Restrictions.eq("size", size))
-				.uniqueResult();
+			.add( Restrictions.eq("identifier", identifier))
+					//.add(Restrictions.eq("ringOffset", ringOffset))
+			.add( Restrictions.eq("size", size))
+			.uniqueResult();
 	}
 }

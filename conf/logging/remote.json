@@ -44,14 +44,12 @@
 					"name": "hibernate",
 					"type": "Hibernate",
 					"enabled": "false",
-					"runid": "${sys:run.id}",
-					"runmode": "${sys:run.mode}",
 					"database": "postgresql",
 					"username": "mongoose",
 					"password": "mongoose",
 					"addr": "localhost",
 					"port": "5432",
-					"namedatabase": "mongoose1",
+					"namedatabase": "mongoose",
 					"Filters": {
 						"Filter": [
 							{
