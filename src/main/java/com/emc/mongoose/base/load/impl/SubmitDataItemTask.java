@@ -30,7 +30,7 @@ implements Runnable {
 	public final void run() {
 		try {
 			executor.submit(dataItem);
-		} catch(final RemoteException e) {
+		} catch(final RemoteException|InterruptedException e) {
 			throw new RejectedExecutionException(e);
 		}
 	}

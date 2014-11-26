@@ -81,6 +81,8 @@ extends DefaultHandler {
 					ExceptionHandler.trace(
 						LOG, Level.WARN, e, "Failed to submit new data object to remote consumer"
 					);
+				} catch(final InterruptedException e) {
+					endDocument();
 				}
 			} else {
 				LOG.trace(Markers.ERR, "Invalid object id ({}) or size ({})", strId, strSize);

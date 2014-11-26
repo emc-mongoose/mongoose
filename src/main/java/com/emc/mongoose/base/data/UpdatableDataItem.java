@@ -23,7 +23,8 @@ extends DataItem {
 	void writePendingUpdatesTo(final OutputStream out)
 	throws IOException;
 	//
-	boolean compareWith(final InputStream in);
+	boolean compareWith(final InputStream in)
+	throws IOException;
 	//
 	public long getRangeSize(final int i);
 }
