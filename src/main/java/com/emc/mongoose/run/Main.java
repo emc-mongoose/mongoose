@@ -1,5 +1,6 @@
 package com.emc.mongoose.run;
 //
+import com.emc.mongoose.web.storagemock.MockServlet;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
@@ -23,7 +24,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
 import java.security.Policy;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -142,7 +142,7 @@ public final class Main {
 			case RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
 				try {
-					new WSMockServlet(RUN_TIME_CONFIG.get()).run();
+					new MockServlet(RUN_TIME_CONFIG.get()).run();
 				} catch (final Exception e) {
 					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
 				}

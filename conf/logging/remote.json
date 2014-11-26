@@ -481,6 +481,16 @@
 					}
 				},
 
+				// WebStorage mock
+				{
+					"name": "com.emc.mongoose.web.storagemock",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				},
+
 				// Mongoose web UI
 				{
 					"name": "com.emc.mongoose.web.ui",
