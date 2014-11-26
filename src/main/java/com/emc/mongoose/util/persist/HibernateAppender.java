@@ -12,8 +12,6 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 //
-import org.apache.logging.log4j.message.Message;
-import org.apache.logging.log4j.message.TimestampMessage;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AnnotationConfiguration;
@@ -21,11 +19,9 @@ import org.hibernate.criterion.Restrictions;
 //
 import java.io.File;
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
-import java.util.List;
 import java.util.logging.Level;
 //
 /**
@@ -33,28 +29,30 @@ import java.util.logging.Level;
  */
 @Plugin(name="Hibernate", category="Core", elementType="appender", printObject=true)
 public final class HibernateAppender
-extends AbstractAppender{
+		extends AbstractAppender{
 	//
 	private final static Layout<? extends Serializable>
 			DEFAULT_LAYOUT = SerializedLayout.createLayout();
 	public static Session SESSION = null;
 	private static Boolean ENABLED_FLAG;
-	private static final String PERF_AVG = "perfAvg",
-								MSG = "msg",
-								PERF_TRACE = "perfTrace",
-								ERR = "err",
-								KEY_NODE_ADDR = "node.addr",
-								KEY_THREAD_NUM = "thread.number",
-								KEY_LOAD_NUM = "load.number",
-								KEY_LOAD_TYPE = "load.type",
-								KEY_API = "api",
-								KEY_RUN_ID = "run.id",
-								KEY_RUN_MODE = "run.mode";
+	private static final String
+			PERF_AVG = "perfAvg",
+			MSG = "msg",
+			PERF_TRACE = "perfTrace",
+			ERR = "err",
+			DATA_LIST = "dataList",
+			KEY_NODE_ADDR = "node.addr",
+			KEY_THREAD_NUM = "thread.number",
+			KEY_LOAD_NUM = "load.number",
+			KEY_LOAD_TYPE = "load.type",
+			KEY_API = "api",
+			KEY_RUN_ID = "run.id",
+			KEY_RUN_MODE = "run.mode";
 	//
 	private HibernateAppender(
-		final String name, final Filter filter,
-		final Layout<? extends Serializable> layout,
-		final String runId, final String runMode
+			final String name, final Filter filter,
+			final Layout<? extends Serializable> layout,
+			final String runId, final String runMode
 	) {
 		super(name, filter, layout);
 	}
@@ -95,26 +93,32 @@ extends AbstractAppender{
 	// init database session with username,password and url
 	@Deprecated
 	private static void initDataBase(
-		final String userName, final String passWord, final String url
+			final String userName, final String passWord, final String url
 	) {
-			final SessionFactory sessionFactory = buildSessionFactory(userName, passWord, url);
-			if(sessionFactory != null) {
-				SESSION = sessionFactory.openSession();
-			}
+		final SessionFactory sessionFactory = buildSessionFactory(userName, passWord, url);
+		if(sessionFactory != null) {
+			SESSION = sessionFactory.openSession();
+		}
 	}
 	// append method // - really?! (kurilov) - yep! (zhavzharova)
 	@Override
 	public final void append(final LogEvent event) {
 		if (ENABLED_FLAG){
 			final String marker = event.getMarker().toString();
+			final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
 			switch (marker) {
 				case MSG:
-				case ERR:
-					SESSION.beginTransaction();
+				case ERR:					SESSION.beginTransaction();
 					final ModeEntity modeEntity = loadModeEntity(event.getContextMap().get(KEY_RUN_MODE));
 					final RunEntity runEntity = loadRunEntity(event.getContextMap().get(KEY_RUN_ID), modeEntity);
 					setMessageEntity(new Date(event.getTimeMillis()), event.getLoggerName(),
 							event.getLevel().toString(), event.getMessage().getFormattedMessage(), runEntity);
+					SESSION.getTransaction().commit();
+					break;
+				case DATA_LIST:
+					SESSION.beginTransaction();
+					DataObjectEntity object = loadDataObjectEntity(message[0], message[1], Long.valueOf(message[2]),
+							Long.valueOf(message[3]), Long.valueOf(message[4]));
 					SESSION.getTransaction().commit();
 					break;
 				case PERF_TRACE:
@@ -125,10 +129,9 @@ extends AbstractAppender{
 							event.getContextMap().get(KEY_LOAD_TYPE), event.getContextMap().get(KEY_API));
 					final ThreadEntity threadEntity = loadThreadEntity(loadEntity, event.getContextMap().get(KEY_NODE_ADDR),
 							event.getContextMap().get(KEY_THREAD_NUM));
-					final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
-					setTraceEntity(message[0], message[1], Long.valueOf(message[2]), Long.valueOf(message[3]),
-							Long.valueOf(message[4]), threadEntity, Integer.valueOf(message[5]),
-							Long.valueOf(message[6]), Long.valueOf(message[7]));
+					//only id
+					setTraceEntity(message[0], Long.valueOf(message[1]), threadEntity, Integer.valueOf(message[2]),
+							Long.valueOf(message[3]), Long.valueOf(message[4]));
 					SESSION.getTransaction().commit();
 					break;
 			}
@@ -137,8 +140,8 @@ extends AbstractAppender{
 	//
 	@Deprecated
 	private static SessionFactory buildSessionFactory(
-		final String username, final String password,
-		final String url
+			final String username, final String password,
+			final String url
 	) {
 		SessionFactory newSessionFactory = null;
 		final String DIR_ROOT = System.getProperty("user.dir");
@@ -257,10 +260,10 @@ extends AbstractAppender{
 	}
 	//
 	private static DataObjectEntity loadDataObjectEntity(
-		final String identifier, final String ringOffset, final long size,
-		final long layer, final long mask
+			final String identifier, final String ringOffset, final long size,
+			final long layer, final long mask
 	) {
-		DataObjectEntity dataObject = getDataItemEntity(identifier, ringOffset, size);
+		DataObjectEntity dataObject = getDataObjectEntity(identifier, size);
 		if (dataObject == null){
 			dataObject = new DataObjectEntity(identifier, ringOffset, size, layer, mask);
 		}else{
@@ -295,11 +298,10 @@ extends AbstractAppender{
 		SESSION.save(messageEntity);
 	}
 	//
-	private static void setTraceEntity(final String identifier, final String ringOffset, final long size,
-											  final long layer, final long mask, final ThreadEntity threadEntity,
-											  final int status, final long reqStart, final long reqDur){
+	private static void setTraceEntity(final String identifier, final long size, final ThreadEntity threadEntity,
+									   final int status, final long reqStart, final long reqDur){
 		final StatusEntity statusEntity = getStatusEntity(status);
-		final DataObjectEntity dataItem = loadDataObjectEntity(identifier,ringOffset,size,layer,mask);
+		final DataObjectEntity dataItem = getDataObjectEntity(identifier, size);
 		final TraceEntity traceEntity = new TraceEntity(dataItem, threadEntity, statusEntity, reqStart, reqDur);
 		SESSION.save(traceEntity);
 	}
@@ -371,12 +373,13 @@ extends AbstractAppender{
 				.uniqueResult();
 	}
 	//
-	private static DataObjectEntity getDataItemEntity(
-		final String identifier, final String ringOffset, final long size
+	private static DataObjectEntity getDataObjectEntity(
+			final String identifier, final long size
 	) {
+		//ringOffset?
 		return (DataObjectEntity) SESSION.createCriteria(DataObjectEntity.class)
 				.add( Restrictions.eq("identifier", identifier))
-				.add(Restrictions.eq("ringOffset", ringOffset))
+						//.add(Restrictions.eq("ringOffset", ringOffset))
 				.add( Restrictions.eq("size", size))
 				.uniqueResult();
 	}

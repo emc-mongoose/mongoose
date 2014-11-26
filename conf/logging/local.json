@@ -65,6 +65,11 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
+								"marker": "dataList",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
 								"marker": "msg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
