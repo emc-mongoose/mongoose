@@ -51,7 +51,7 @@ implements WSRequest<T> {
 	public final static WSRequest<WSObject> POISON = new BasicWSRequest<WSObject>() {
 		@Override
 		public final void execute()
-			throws InterruptedException {
+		throws InterruptedException {
 			throw new InterruptedException("Attempted to eat the poison");
 		}
 	};

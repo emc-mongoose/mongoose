@@ -287,7 +287,7 @@ implements LoadExecutor<T> {
 		interruptExecutor.shutdown();
 		try {
 			interruptExecutor.awaitTermination(
-				Main.RUN_TIME_CONFIG.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+				Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 			);
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.ERR, "Interrupted externally");

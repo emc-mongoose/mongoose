@@ -1,6 +1,5 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
