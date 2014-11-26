@@ -10,10 +10,6 @@
 		<link href="css/bootstrap.min.css" rel="stylesheet">
 		<link href="css/styles.css" rel="stylesheet">
 		<link href="css/bootstrap.vertical-tabs.min.css" rel="stylesheet">
-		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
-		<script type="text/javascript" src="js/script.js"></script>
-		<script type="text/javascript" src="js/bootstrap.min.js"></script>
-		<script type="text/javascript" src="js/jquery.cookie.js"></script>
 	</head>
 	<body>
 		<nav class="navbar navbar-default" role="navigation">
@@ -34,76 +30,57 @@
 			</div>
 		</nav>
 
-		<input type="hidden" id="sessionModes" value="${sessionScope.runmodes}">
-
 		<div class="content-wrapper">
 			<div class="tabs-wrapper">
 				<ul class="nav nav-tabs tabs header-tabs" role="tablist">
 					<li class="active"><a href="#configuration" data-toggle="tab">Configuration</a></li>
 					<c:forEach var="mode" items="${sessionScope.runmodes}">
 						<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
-						<li><a href="#${correctMode}" data-toggle="tab">${mode}</a></li>
+						<li><a href="#${correctMode}" data-toggle="tab">${mode}<span class="glyphicon glyphicon-remove" value="${correctMode}"></span></a></li>
 					</c:forEach>
 				</ul>
 			</div>
 
 			<div class="tab-content header-tab-content">
 				<div class="tab-pane active" id="configuration">
-					<div class="runmodes">
-						<div class="list-group">
-							<button id="standalone" type="button" class="list-group-item">Standalone</button>
-							<button id="distributed" type="button" class="list-group-item">Distributed</button>
-							<button id="driver" type="button" class="list-group-item">Driver</button>
-							<button id="wsmock" type="button" class="list-group-item">WSMock</button>
-						</div>
-					</div>
 					<form id="mainForm">
-						<input type="hidden" id="runmode" name="runmode" value="VALUE_RUN_MODE_STANDALONE">
 
-						<div class="fixed-block">
-							<fieldset class="scheduler-border-top">
-								<legend class="scheduler-border">Run</legend>
-								<label for="run-time">run.time:</label>
-								<c:set var="runTime" value="${fn:split(runTimeConfig.runTime, '.')}" />
-								<input type="text" name="runTime" id="runTime" class="form-control counter" value="${runTime[0]}">
-								<select name="runTimeSelect">
-									<option>seconds</option>
-									<option>minutes</option>
-									<option>hours</option>
-									<option>days</option>
-								</select>
-								<br>
-								<label for="run-metrics-period-sec">run.metrics.period.sec:</label>
-								<input id="runMetricsPeriodSec" name="runMetricsPeriodSec" type="text" class="form-control counter" value="${runTimeConfig.runMetricsPeriodSec}">
-							</fieldset>
-						</div>
+						<select name="run.mode">
+							<option>standalone</option>
+							<option>distributed</option>
+							<option>server</option>
+							<option>wsmock</option>
+						</select>
 
-						<div class="fixed-block">
+						<button id="start" type="submit" class="button default">Start</button>
+
+						<div class="fixed-block resize">
 							<fieldset class="scheduler-border-top">
 								<legend class="scheduler-border">Auth</legend>
-								<label for="auth-id">auth.id:</label>
-								<input id="authId" name="authId" type="text" class="form-control" value="${runTimeConfig.authId}">
+								<label for="auth.id">auth.id:</label>
+								<input id="auth.id" name="authId" type="text" class="form-control" value="${runTimeConfig.authId}">
 								<br>
-								<label for="auth-secret">auth.secret:</label>
-								<input id="authSecret" name="authSecret" type="text" class="form-control" value="${runTimeConfig.authSecret}">
+								<label for="auth.secret">auth.secret:</label>
+								<input id="auth.secret" name="auth.secret" type="text" class="form-control" value="${runTimeConfig.authSecret}">
 							</fieldset>
 						</div>
-						<br>
 
-						<div class="storages-block">
+						<div class="storages-block resize">
 							<fieldset class="scheduler-border">
 								<legend class="scheduler-border">Storage</legend>
 								<label>storage.api:</label>
-								<select name="storageApi" id="storageApi">
-									<option value="s3">S3</option>
-									<option value="atmos">Atmos</option>
-									<option value="swift">Swift</option>
+								<select name="storage.api" id="storage.api">
+									<option selected="selected">${runTimeConfig.storageApi}</option>
+									<option>s3</option>
+									<option>atmos</option>
+									<option>swift</option>
 								</select>
 								<label>scheme:</label>
-								<input id="scheme" name="scheme" type="text" class="form-control counter" value="${runTimeConfig.storageProto}">
+								<input id="storage.scheme" name="storage.scheme" type="text" class="form-control counter" value="${runTimeConfig.storageProto}">
 								<fieldset class="scheduler-border">
 									<legend class="scheduler-border">Data nodes</legend>
 									<button type="button" class="default add-node">Add</button>
+									<button type="button" class="default remove remove-node">Remove</button>
 									<div class="input-group data-node">
 										<input id="data-node-text" type="text" class="form-control" placeholder="Enter data node">
 										<span class="input-group-btn">
@@ -115,82 +92,130 @@
 										<div class="storages">
 											<div class="input-group">
 												<span class="input-group-addon">
-													<input id="dataNodes" name="dataNodes" type="checkbox" checked="true" value="${addr}">
+													<input class="storage.addrs" type="checkbox">
 												</span>
 												<label class="form-control">
+													<input type="hidden" name="storage.addrs" value="${addr}">
 													${addr}
 												</label>
-												<span class="input-group-btn">
-													<button type="button" class="btn btn-default remove">Remove</button>
-												</span>
 											</div>
 										</div>
 									</c:forEach>
 								</fieldset>
 							</fieldset>
-
 						</div>
 
-						<div class="drivers-block">
-							<fieldset class="scheduler-border">
-								<legend class="scheduler-border">Remote</legend>
-								<label>remote.export.port:</label>
-								<input id="remoteExportPort" name="remoteExportPort" type="text" class="form-control counter" value="${runTimeConfig.remoteExportPort}">
-								<label>remote.import.port:</label>
-								<input id="remoteImportPort" name="remoteImportPort" type="text" class="form-control counter" value="${runTimeConfig.remoteImportPort}">
-								<fieldset class="scheduler-border">
-									<legend class="scheduler-border">Drivers</legend>
-									<button type="button" class="default add-driver">Add</button>
-									<div class="input-group driver">
-										<input id="driver-text" type="text" class="form-control" placeholder="Enter driver">
-										<span class="input-group-btn">
-											<button id="save-driver" type="button" class="btn btn-default">Save</button>
-										</span>
+						<div class="fixed-block run-limits resize">
+							<fieldset class="scheduler-border-top">
+								<legend class="scheduler-border">Run Limits</legend>
+								<div class="tabs-wrapper">
+									<ul id="run-parameters" class="nav nav-tabs" role="tablist">
+										<li class="active"><a href="#runTimeTab" data-toggle="tab">run.time</a></li>
+										<li><a href="#dataCountTab" data-toggle="tab">data.count</a></li>
+									</ul>
+								</div>
+								<div class="tab-content">
+									<div class="tab-pane active" id="runTimeTab">
+										<label for="run.time">run.time:</label>
+										<c:set var="runTime" value="${fn:split(runTimeConfig.runTime, '.')}" />
+										<input type="text" name="run.time" id="run.time" class="form-control counter" value="${runTime[0]}">
+										<select id="runTimeSelect" name="run.time">
+											<option selected="selected">${runTime[1]}</option>
+											<option>seconds</option>
+											<option>minutes</option>
+											<option>hours</option>
+											<option>days</option>
+										</select>
 									</div>
-
-									<c:forEach var="server" items="${runTimeConfig.remoteServers}">
-										<div class="drivers">
-											<div class="input-group">
-												<span class="input-group-addon">
-													<input id="drivers" name="drivers" type="checkbox" checked="true" value="${server}">
-												</span>
-												<label class="form-control">
-													${server}
-												</label>
-												<span class="input-group-btn">
-													<button type="button" class="btn btn-default remove">Remove</button>
-												</span>
-											</div>
-										</div>
-									</c:forEach>
-
-								</fieldset>
+									<div class="tab-pane" id="dataCountTab">
+										<label for="count">data.count:</label>
+										<input name="data.count" id="data.count" type="text" class="form-control counter" value="${runTimeConfig.dataCount}">
+									</div>
+								</div>
+								<label for="run.id">run.id:</label>
+								<input id="run.id" name="run.id" type="text" class="form-control" placeholder="${runTimeConfig.runId}">
+								<br>
+								<label for="run.metrics.period.sec">run.metrics.period.sec:</label>
+								<input id="run.metrics.period.sec" name="run.metrics.period.sec" type="text" class="form-control counter" value="${runTimeConfig.runMetricsPeriodSec}">
 							</fieldset>
 						</div>
-
 
 						<div class="operations">
 							<fieldset class="scheduler-border">
 								<legend class="scheduler-border">Data</legend>
-								<label for="count">data.count:</label>
-								<input name="dataCount" id="dataCount" type="text" class="form-control counter" value="${runTimeConfig.dataCount}">
 								<label>size.min</label>
-								<input name="dataSizeMin" type="text" class="form-control counter" placeholder="min" value="${rt:getString(runTimeConfig, 'data.size.min')}">
+								<input name="data.size.min" type="text" class="form-control sizes" placeholder="min" value="${rt:getString(runTimeConfig, 'data.size.min')}">
 								-
 								<label>size.max</label>
-								<input name="dataSizeMax" type="text" class="form-control counter" placeholder="max" value="${rt:getString(runTimeConfig, 'data.size.max')}">
+								<input name="data.size.max" type="text" class="form-control sizes" placeholder="max" value="${rt:getString(runTimeConfig, 'data.size.max')}">
 								<br>
 
 								<fieldset class="scheduler-border">
-									<legend class="scheduler-border">Load</legend>
-									<label>scenario.single.load</label>
-									<select name="scenarioSingleLoad" id="scenarioSingleLoad">
-										<option value="create">Create</option>
-										<option value="read">Read</option>
-										<option value="delete">Delete</option>
-										<option value="update">Update</option>
-										<option value="append">Append</option>
+									<legend class="scheduler-border">Scenario</legend>
+									<label>run.scenario.name</label>
+									<select name="run.scenario.name" id="run.scenario.name">
+										<option selected="selected">${rt:getString(runTimeConfig, 'run.scenario.name')}</option>
+										<option>chain</option>
+										<option>rampup</option>
+										<option>single</option>
 									</select>
+									<div class="tabs-wrapper">
+										<ul id="scenarioTab" class="nav nav-tabs" role="tablist">
+											<li class="active"><a href="#single" data-toggle="tab">Single</a></li>
+											<li><a href="#chain" data-toggle="tab">Chain</a></li>
+											<li><a href="#rampup" data-toggle="tab">Rampup</a></li>
+										</ul>
+									</div>
+
+									<div class="tab-content">
+										<div class="tab-pane active" id="single">
+											<label>scenario.single.load</label>
+											<select name="scenario.single.load" id="scenario.single.load">
+												<option selected="selected">${rt:getString(runTimeConfig, 'scenario.single.load')}</option>
+												<option>create</option>
+												<option>read</option>
+												<option>delete</option>
+												<option>update</option>
+												<option>append</option>
+											</select>
+										</div>
+										<div class="tab-pane" id="chain">
+											<div class="labels">
+												<label>scenario.chain.load</label>
+												<label>scenario.chain.simultaneous</label>
+											</div>
+											<div class="properties resize">
+												<input name="scenario.chain.load" id="scenario.chain.load" type="text" class="form-control" value="${rt:getString(runTimeConfig, 'scenario.chain.load')}">
+												<select name="scenario.chain.simultaneous" id="scenario.chain.simultaneous">
+													<option selected="selected">${rt:getString(runTimeConfig, 'scenario.chain.simultaneous')}</option>
+													<option>false</option>
+													<option>true</option>
+												</select>
+											</div>
+										</div>
+										<div class="tab-pane" id="rampup">
+											<div class="labels">
+												<label>scenario.rampup.thread.counts</label>
+												<label>scenario.rampup.sizes</label>
+												<label>operations(scenario.chain.load)</label>
+											</div>
+											<div class="properties resize">
+												<input id="scenario.rampup.thread.counts" name="scenario.rampup.thread.counts" type="text" class="form-control" value="${rt:getString(runTimeConfig, 'scenario.rampup.thread.counts')}">
+                                                <input id="scenario.rampup.sizes" name="scenario.rampup.sizes" type="text" class="form-control" value="${rt:getString(runTimeConfig, 'scenario.rampup.sizes')}">
+                                                <input id="scenario.chain.load.duplicate" type="text" class="form-control" value="${rt:getString(runTimeConfig, 'scenario.chain.load')}">
+											</div>
+										</div>
+									</div>
+								</fieldset>
+
+								<fieldset class="scheduler-border">
+									<legend class="scheduler-border">Load</legend>
+									<div class="labels">
+										<label>data.src.fpath</label>
+									</div>
+									<div class="properties resize">
+										<input id="data.src.fpath" name="data.src.fpath" class="form-control" type="text" placeholder="log/<run.mode>/<run.id>/<filename>" value="${rt:getString(runTimeConfig, 'data.src.fpath')}">
+									</div>
 									<div class="tabs-wrapper">
 										<ul id="loadTab" class="nav nav-tabs" role="tablist">
 											<li class="active"><a href="#create" data-toggle="tab">Create</a></li>
@@ -203,28 +228,40 @@
 
 									<div class="tab-content">
 										<div class="tab-pane active" id="create">
-											<label>load.thread</label>
-											<input name="loadCreateThreads" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.create.threads')}">
+											<label>load.create.threads</label>
+											<input id="load.create.threads" name="load.create.threads" type="text" class="form-control sizes" value="${rt:getString(runTimeConfig, 'load.create.threads')}">
 										</div>
 										<div class="tab-pane" id="read">
-											<label>load.thread</label>
-											<input name="loadReadThreads" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.read.threads')}">
-											<label>verify.content</label>
-											<input name="loadReadVerifyContent" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.read.verify.content')}">
+											<div class="labels">
+												<label>load.read.threads</label>
+												<label>load.read.verify.content</label>
+											</div>
+											<div class="properties">
+												<input id="load.read.threads" name="load.read.threads" type="text" class="form-control sizes" value="${rt:getString(runTimeConfig, 'load.read.threads')}">
+												<br>
+												<input id="load.read.verify.content" name="load.read.verify.content" type="text" class="form-control sizes" value="${rt:getString(runTimeConfig, 'load.read.verify.content')}">
+											</div>
 										</div>
 										<div class="tab-pane" id="update">
-											<label>load.thread</label>
-											<input name="loadUpdateThreads" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.update.threads')}">
-											<label>load.per.item</label>
-											<input name="loadUpdatePerItem" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.update.per.item')}">
+											<div class="labels">
+												<label>load.update.threads</label>
+												<label>load.update.per.item</label>
+											</div>
+											<div class="properties">
+												<input id="load.update.threads" name="load.update.threads" type="text" class="form-control sizes" value="${rt:getString(runTimeConfig, 'load.update.threads')}">
+												<br>
+												<input id="load.update.per.item" name="load.update.per.item" type="text" class="form-control sizes" value="${rt:getString(runTimeConfig, 'load.update.per.item')}">
+											</div>
+
+
 										</div>
 										<div class="tab-pane" id="delete">
-											<label>load.thread</label>
-											<input name="loadDeleteThreads" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.delete.threads')}">
+											<label>load.delete.threads</label>
+											<input id="load.delete.threads" name="load.delete.threads" type="text" class="form-control sizes" value="${rt:getString(runTimeConfig, 'load.delete.threads')}">
 										</div>
 										<div class="tab-pane" id="append">
-											<label>load.thread</label>
-											<input name="loadAppendThreads" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'load.append.threads')}">
+											<label>load.append.threads</label>
+											<input id="load.append.threads" name="load.append.threads" type="text" class="form-control sizes" value="${rt:getString(runTimeConfig, 'load.append.threads')}">
 										</div>
 									</div>
 								</fieldset>
@@ -245,37 +282,82 @@
 
 								<div class="tab-content">
 									<div class="tab-pane active" id="s3">
-										<label>api.port</label>
-										<input name="apiS3Port" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.s3.port')}">
-										<label>api.auth.prefix</label>
-										<input name="apiS3AuthPrefix" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.s3.auth.prefix')}">
-										<label>api.bucket</label>
-										<input name="apiS3Bucket" type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'api.s3.bucket')}">
+										<div class="labels">
+											<label>api.s3.port</label>
+											<br>
+											<label>api.s3.auth.prefix</label>
+											<br>
+											<label>api.s3.bucket</label>
+										</div>
+										<div class="properties resize">
+											<input id="api.s3.port" name="api.s3.port" type="text" class="form-control" value="${rt:getString(runTimeConfig, 'api.s3.port')}">
+											<input id="api.s3.auth.prefix" name="api.s3.auth.prefix" type="text" class="form-control" value="${rt:getString(runTimeConfig, 'api.s3.auth.prefix')}">
+											<input id="api.s3.bucket" name="api.s3.bucket" type="text" class="form-control" value="${rt:getString(runTimeConfig, 'api.s3.bucket')}">
+										</div>
 									</div>
 									<div class="tab-pane" id="atmos">
-										<label>api.port</label>
-										<input name="apiAtmosPort" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.port')}">
-										<label>api.subtenant</label>
-										<input name="apiAtmosSubtenant" type="text" class="form-control length-input" value="${rt:getString(runTimeConfig, 'api.atmos.subtenant')}">
-										<label>api.path.rest</label>
-										<input name="apiAtmosPathRest" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.path.rest')}">
-										<label>api.interface</label>
-										<input name="apiAtmosInterface" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.atmos.interface')}">
+										<div class="labels">
+											<label>api.atmos.port</label>
+											<br>
+											<label>api.atmos.subtenant</label>
+											<br>
+											<label>api.atmos.path.rest</label>
+											<br>
+											<label>api.atmos.interface</label>
+										</div>
+										<div class="properties resize">
+											<input id="api.atmos.port" name="api.atmos.port" type="text" class="form-control" value="${rt:getString(runTimeConfig, 'api.atmos.port')}">
+											<input id="api.atmos.subtenant" name="api.atmos.subtenant" type="text" class="form-control" value="${rt:getString(runTimeConfig, 'api.atmos.subtenant')}">
+											<input id="api.atmos.path.rest" name="api.atmos.path.rest" type="text" class="form-control" value="${rt:getString(runTimeConfig, 'api.atmos.path.rest')}">
+											<input id="api.atmos.interface" name="api.atmos.interface" type="text" class="form-control" value="${rt:getString(runTimeConfig, 'api.atmos.interface')}">
+										</div>
 									</div>
 									<div class="tab-pane" id="swift">
-										<label>api.port</label>
-										<input name="apiSwiftPort" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.swift.port')}">
+										<label>api.swift.port</label>
+										<input id="api.swift.port" name="api.swift.port" type="text" class="form-control counter" value="${rt:getString(runTimeConfig, 'api.swift.port')}">
 									</div>
 								</div>
 							</fieldset>
-						</div>
 
-						<div class="start-wrapper">
-							<button id="start" type="submit" class="default"><span>Start</span></button>
+							<div class="drivers-block resize">
+								<fieldset class="scheduler-border">
+									<legend class="scheduler-border">Remote</legend>
+									<label>remote.import.port:</label>
+									<input id="remote.import.port" name="remote.import.port" type="text" class="form-control counter" value="${runTimeConfig.remoteImportPort}">
+									<fieldset class="scheduler-border">
+										<legend class="scheduler-border">Drivers</legend>
+										<button type="button" class="default add-driver">Add</button>
+										<button type="button" class="default remove remove-driver">Remove</button>
+										<div class="input-group driver">
+											<input id="driver-text" type="text" class="form-control" placeholder="Enter driver">
+											<span class="input-group-btn">
+												<button id="save-driver" type="button" class="btn btn-default">Save</button>
+											</span>
+										</div>
+
+										<c:forEach var="server" items="${runTimeConfig.remoteServers}">
+											<div class="drivers">
+												<div class="input-group">
+													<span class="input-group-addon">
+														<input class="remote.servers" type="checkbox">
+													</span>
+													<label class="form-control">
+														<input type="hidden" name="remote.servers" value="${server}">
+														${server}
+													</label>
+												</div>
+											</div>
+										</c:forEach>
+
+									</fieldset>
+									<br>
+									<label>JMX Port(remote.export.port):</label>
+									<input id="remote.export.port" name="remote.export.port" type="text" class="form-control counter" value="${runTimeConfig.remoteExportPort}">
+								</fieldset>
+							</div>
 						</div>
 					</form>
 				</div>
-
 				<c:forEach var="mode" items="${sessionScope.runmodes}">
 					<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
 					<div class="tab-pane" id="${correctMode}">
@@ -292,7 +374,9 @@
 							</div>
 						</div>
 						<div class="right-side">
-							<button type="button" class="default stop"><span>Stop</span></button>
+							<c:if test="${empty sessionScope.stopped[mode]}">
+								<button type="button" class="default stop"><span>Stop</span></button>
+							</c:if>
 							<div class="log-wrapper">
 								<div class="tab-content">
 									<div class="tab-pane active" id="${correctMode}messages-csv">
@@ -301,7 +385,6 @@
 												<tr>
 													<th>Level</th>
 													<th>LoggerName</th>
-													<th>Marker</th>
 													<th>ThreadName</th>
 													<th>TimeMillis</th>
 													<th>Message</th>
@@ -318,7 +401,6 @@
 												<tr>
 													<th>Level</th>
 													<th>LoggerName</th>
-													<th>Marker</th>
 													<th>ThreadName</th>
 													<th>TimeMillis</th>
 													<th>Message</th>
@@ -335,7 +417,6 @@
 												<tr>
 													<th>Level</th>
 													<th>LoggerName</th>
-													<th>Marker</th>
 													<th>ThreadName</th>
 													<th>TimeMillis</th>
 													<th>Message</th>
@@ -352,7 +433,6 @@
 												<tr>
 													<th>Level</th>
 													<th>LoggerName</th>
-													<th>Marker</th>
 													<th>ThreadName</th>
 													<th>TimeMillis</th>
 													<th>Message</th>
@@ -370,5 +450,9 @@
 				</c:forEach>
 			</div>
 		</div>
+		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
+		<script type="text/javascript" src="js/script.js"></script>
+		<script type="text/javascript" src="js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="js/jquery.cookie.js"></script>
 	</body>
 </html>

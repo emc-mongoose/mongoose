@@ -1,8 +1,9 @@
 package com.emc.mongoose.web.ui;
 //
 import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.run.Main;
+import com.emc.mongoose.run.Scenario;
 import com.emc.mongoose.run.ThreadContextMap;
-import com.emc.mongoose.run.WSMockServlet;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadBuilder;
 import com.emc.mongoose.web.load.client.WSLoadBuilderClient;
@@ -12,17 +13,21 @@ import com.emc.mongoose.web.load.client.impl.BasicLoadBuilderClient;
 import com.emc.mongoose.web.load.client.WSLoadClient;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
+import com.emc.mongoose.run.WSMockServlet;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.ui.enums.RunModes;
+import com.emc.mongoose.web.ui.logging.WebUIAppender;
 import org.apache.commons.configuration.ConversionException;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.core.LogEvent;
 //
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -31,6 +36,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -52,46 +59,56 @@ public final class StartServlet extends HttpServlet {
 	//
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
+		if (!isRunIdFree(request.getParameter(Main.KEY_RUN_ID))) {
+			String resultString;
+			if (threadsMap.get(request.getParameter(Main.KEY_RUN_ID)) != null) {
+				if (threadsMap.get(request.getParameter(Main.KEY_RUN_ID)).isAlive()) {
+					resultString = "Mongoose with this run.id is running at the moment";
+				} else {
+					resultString = "Logs with the previous run.mode in the same run.id will be mixed";
+				}
+				response.getWriter().write(resultString);
+			}
+			return;
+		}
+		//TODO fix it
+		if (StopServlet.stoppedRunModes != null) {
+			StopServlet.stoppedRunModes.remove(request.getParameter(Main.KEY_RUN_ID));
+		}
 		//
-		switch (RunModes.valueOf(request.getParameter("runmode"))) {
-			case VALUE_RUN_MODE_STANDALONE:
-				runTimeConfig = runTimeConfig.clone();
-				setupRunTimeConfig(request);
-				runStandalone();
-				break;
-			case VALUE_RUN_MODE_CLIENT:
-				runTimeConfig = runTimeConfig.clone();
-				setupRunTimeConfig(request);
-				runClient();
-				break;
+		runTimeConfig = runTimeConfig.clone();
+		setupRunTimeConfig(request);
+		//
+		switch (RunModes.getRunModeConstantByRequest(request.getParameter("run.mode"))) {
 			case VALUE_RUN_MODE_SERVER:
-				runTimeConfig = runTimeConfig.clone();
-				runServer();
+				startServer("Starting the server");
 				break;
 			case VALUE_RUN_MODE_WSMOCK:
-				runTimeConfig = runTimeConfig.clone();
-				runWSMock();
+				startWSMock("Starting the wsmock");
 				break;
-			default:
-				runTimeConfig = runTimeConfig.clone();
-				setupRunTimeConfig(request);
-				runStandalone();
+			case VALUE_RUN_MODE_CLIENT:
+				startStandaloneOrClient("Starting the client");
+				break;
+			case VALUE_RUN_MODE_STANDALONE:
+				startStandaloneOrClient("Starting the standalone");
 				break;
 		}
-
 		//	Add runModes to the http session
 		request.getSession(true).setAttribute("runmodes", threadsMap.keySet());
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 	//
-	private void runServer() {
+	private void startServer(final String message) {
 		final Thread thread = new Thread() {
 			WSLoadBuilderSvc loadBuilderSvc;
+			RunTimeConfig localRunTimeConfig;
 			@Override
 			public void run() {
-				ThreadContextMap.initThreadContextMap(runTimeConfig);
+				localRunTimeConfig = runTimeConfig;
+				Main.RUN_TIME_CONFIG.set(localRunTimeConfig);
+				ThreadContextMap.initThreadContextMap();
 				//
-				LOG.debug(Markers.MSG, "Starting the server");
+				LOG.debug(Markers.MSG, message);
 				//
 				loadBuilderSvc = new BasicLoadBuilderSvc();
 				//
@@ -104,7 +121,8 @@ public final class StartServlet extends HttpServlet {
 			}
 			@Override
 			public void interrupt() {
-				ThreadContextMap.initThreadContextMap(runTimeConfig);
+				Main.RUN_TIME_CONFIG.set(localRunTimeConfig);
+				ThreadContextMap.initThreadContextMap();
 				//
 				ServiceUtils.close(loadBuilderSvc);
 				super.interrupt();
@@ -114,173 +132,34 @@ public final class StartServlet extends HttpServlet {
 		threadsMap.put(runTimeConfig.getString("run.id"), thread);
 	}
 	//
-	private void runClient() {
-		//
+	private void startStandaloneOrClient(final String message) {
 		final Thread thread = new Thread() {
-			WSLoadClient<WSObject> loadClient;
 			@Override
 			public void run() {
-				ThreadContextMap.initThreadContextMap(runTimeConfig);
+				Main.RUN_TIME_CONFIG.set(runTimeConfig);
+				ThreadContextMap.initThreadContextMap();
 				//
-				LOG.debug(Markers.MSG, "Starting the client");
-				//
-				try {
-					final WSLoadBuilderClient<WSObject, WSLoadClient<WSObject>> loadBuilderClient = new BasicLoadBuilderClient<>(runTimeConfig);
-					//
-					try {
-						final Request.Type loadType = Request.Type.valueOf(
-								runTimeConfig.getString("scenario.single.load").toUpperCase()
-						);
-						loadBuilderClient.setLoadType(loadType);
-					} catch (final NoSuchElementException e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "No load type specified, try arg -Dscenario.single.load=<VALUE> to override");
-					} catch (final IllegalArgumentException e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "No such load type, it should be a constant from Load.Type enumeration");
-					}
-					//
-					//final WSLoadExecutor loadExecutor = loadBuilder.build();
-					loadClient = loadBuilderClient.build();
-					//
-					final String timeOutString;
-					final String[] timeOutArray;
-					//
-					try {
-						timeOutString = runTimeConfig.getString("run.time");
-						timeOutArray = timeOutString.split("\\.");
-					} catch (final NoSuchElementException e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "No timeout specified, try arg -Drun.time=<INTEGER>.<UNIT> to override");
-						return;
-					} catch (final IllegalArgumentException e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "Timeout unit should be a name of a constant from TimeUnit enumeration");
-						return;
-					} catch (final IllegalStateException e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "Time unit should be specified with timeout value (following after \".\" separator)");
-						return;
-					}
-					//
-					loadClient.start();
-					//
-					try {
-						loadClient.join(TimeUnit.valueOf(timeOutArray[1].toUpperCase()).toMillis(Integer.valueOf(timeOutArray[0])));
-					} catch (final InterruptedException e) {
-						ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
-					}
-					//
-					LOG.info(Markers.MSG, "Scenario end");
-					loadClient.close();
-				} catch (final ConversionException e) {
-					ExceptionHandler.trace(LOG, Level.FATAL, e, "Servers address list should be comma delimited");
-				} catch (final NoSuchElementException e) {
-					ExceptionHandler.trace(LOG, Level.FATAL, e, "Servers address list not specified, try  arg -Dremote.servers=<LIST> to override");
-				} catch (final IOException e) {
-					ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to create load builder client");
-				}
+				LOG.debug(Markers.MSG, message);
+				new Scenario().run();
 			}
-
+			//
 			@Override
 			public void interrupt() {
-				ThreadContextMap.initThreadContextMap(runTimeConfig);
-				//
-				try {
-					if (loadClient != null) {
-						loadClient.close();
-					}
-				} catch (final IOException e) {
-					ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to start client mode");
-				}
 				super.interrupt();
 			}
 		};
 		thread.start();
 		threadsMap.put(runTimeConfig.getString("run.id"), thread);
-
 	}
 	//
-	private void runStandalone()
-	throws IOException {
-		final Thread thread = new Thread() {
-			WSLoadExecutor<WSObject> loadExecutor;
-			@Override
-			public void run() {
-				ThreadContextMap.initThreadContextMap(runTimeConfig);
-				//
-				LOG.debug(Markers.MSG, "Starting the standalone");
-				try {
-					//
-					final WSLoadBuilder<WSObject, WSLoadExecutor<WSObject>> loadBuilder = new BasicLoadBuilder<>();
-					loadBuilder.setProperties(runTimeConfig);
-					//
-					try {
-						final Request.Type loadType = Request.Type.valueOf(
-								runTimeConfig.getString("scenario.single.load").toUpperCase()
-						);
-						loadBuilder.setLoadType(loadType);
-					} catch (final NoSuchElementException e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "No load type specified, try arg -Dscenario.single.load=<VALUE> to override");
-					} catch (final IllegalArgumentException e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "No such load type, it should be a constant from Load.Type enumeration");
-					}
-					//
-					//final WSLoadExecutor loadExecutor = loadBuilder.build();
-					loadExecutor = loadBuilder.build();
-					//
-					final String timeOutString;
-					final String[] timeOutArray;
-					//
-					try {
-						timeOutString = runTimeConfig.getString("run.time");
-						timeOutArray = timeOutString.split("\\.");
-					} catch (final NoSuchElementException e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "No timeout specified, try arg -Drun.time=<INTEGER>.<UNIT> to override");
-						return;
-					} catch (final IllegalArgumentException e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "Timeout unit should be a name of a constant from TimeUnit enumeration");
-						return;
-					} catch (final IllegalStateException e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "Time unit should be specified with timeout value (following after \".\" separator)");
-						return;
-					}
-					//
-					loadExecutor.start();
-					//
-					try {
-						loadExecutor.join(TimeUnit.valueOf(timeOutArray[1].toUpperCase()).toMillis(Integer.valueOf(timeOutArray[0])));
-					} catch (final InterruptedException e) {
-						ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
-					}
-					//
-					LOG.info(Markers.MSG, "Scenario end");
-					loadExecutor.close();
-				} catch (final IOException e) {
-					ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to start standalone mode");
-				}
-			}
-
-			@Override
-			public void interrupt() {
-				ThreadContextMap.initThreadContextMap(runTimeConfig);
-				//
-				try {
-				   loadExecutor.close();
-				} catch (final IOException e) {
-				   ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to close the load executor");
-				}
-				//
-				super.interrupt();
-			}
-		};
-
-		thread.start();
-		threadsMap.put(runTimeConfig.getString("run.id"), thread);
-	}
-	//
-	private void runWSMock() {
+	private void startWSMock(final String message) {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {
-				ThreadContextMap.initThreadContextMap(runTimeConfig);
+				Main.RUN_TIME_CONFIG.set(runTimeConfig);
+				ThreadContextMap.initThreadContextMap();
 				//
-				LOG.debug(Markers.MSG, "Starting the wsmock");
+				LOG.debug(Markers.MSG, message);
 				new WSMockServlet(runTimeConfig).run();
 			}
 
@@ -293,66 +172,55 @@ public final class StartServlet extends HttpServlet {
 		thread.start();
 		threadsMap.put(runTimeConfig.getString("run.id"), thread);
 	}
-	//
-	//
-	private void setupRunTimeConfig(final HttpServletRequest request) {
-		//	Common settings
-		runTimeConfig.set("run.time", request.getParameter("runTime") + "." + request.getParameter("runTimeSelect"));
-		runTimeConfig.set("run.metrics.period.sec", request.getParameter("runMetricsPeriodSec"));
-		runTimeConfig.set("auth.id", request.getParameter("authId"));
-		runTimeConfig.set("auth.secret", request.getParameter("authSecret"));
-		//	Data & Load
-		runTimeConfig.set("data.count", request.getParameter("dataCount"));
-		runTimeConfig.set("data.size.min", request.getParameter("dataSizeMin"));
-		runTimeConfig.set("data.size.max", request.getParameter("dataSizeMax"));
-		//
-		runTimeConfig.set("load.create.threads", request.getParameter("loadCreateThreads"));
-		//
-		runTimeConfig.set("load.read.threads", request.getParameter("loadReadThreads"));
-		runTimeConfig.set("load.read.verify.content", request.getParameter("loadReadVerifyContent"));
-		//
-		runTimeConfig.set("load.update.threads", request.getParameter("loadUpdateThreads"));
-		runTimeConfig.set("load.update.per.item", request.getParameter("loadUpdatePerItem"));
-		//
-		runTimeConfig.set("load.delete.threads", request.getParameter("loadDeleteThreads"));
-		//
-		runTimeConfig.set("load.append.threads", request.getParameter("loadAppendThreads"));
-		//	API
-		runTimeConfig.set("api.s3.port", request.getParameter("apiS3Port"));
-		runTimeConfig.set("api.s3.auth.prefix", request.getParameter("apiS3AuthPrefix"));
-		runTimeConfig.set("api.s3.bucket", request.getParameter("apiS3Bucket"));
-		//
-		runTimeConfig.set("api.atmos.port", request.getParameter("apiAtmosPort"));
-		runTimeConfig.set("api.atmos.subtenant", request.getParameter("apiAtmosSubtenant"));
-		runTimeConfig.set("api.atmos.path.rest", request.getParameter("apiAtmosPathRest"));
-		runTimeConfig.set("api.atmos.interface", request.getParameter("apiAtmosInterface"));
-		//
-		runTimeConfig.set("api.swift.port", request.getParameter("apiSwiftPort"));
-		//	Storage
-		runTimeConfig.set("storage.api", request.getParameter("storageApi"));
-		runTimeConfig.set("storage.scheme", request.getParameter("scheme"));
-		runTimeConfig.set("storage.addrs", Arrays.toString(request.getParameterValues("dataNodes"))
-				.replace("[", "")
-				.replace("]", "")
-				.trim());
-		//	Drivers
-		runTimeConfig.set("remote.export.port", request.getParameter("remoteExportPort"));
-		runTimeConfig.set("remote.import.port", request.getParameter("remoteImportPort"));
-		runTimeConfig.set("remote.servers", Arrays.toString(request.getParameterValues("drivers"))
-				.replace("[", "")
-				.replace("]", "")
-				.trim());
-		//	Scenario
-		runTimeConfig.set("scenario.single.load", request.getParameter("scenarioSingleLoad"));
 
+	public boolean isRunIdFree(String runId) {
+		if (threadsMap.get(runId) != null)
+			return false;
+		return true;
 	}
 	//
-	public static void interruptMongoose(final String runId) {
-		try {
-			threadsMap.get(runId).interrupt();
-			threadsMap.remove(runId);
-		} catch (final Exception e) {
-			threadsMap.remove(runId);
+	private void setupRunTimeConfig(final HttpServletRequest request) {
+		for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
+			if (entry.getValue()[0].trim().isEmpty()) {
+				continue;
+			}
+			if (entry.getValue().length > 1) {
+				runTimeConfig.set(entry.getKey(), convertArrayToString(entry.getKey(), entry.getValue()));
+				continue;
+			}
+			runTimeConfig.set(entry.getKey(), entry.getValue()[0]);
+		}
+	}
+	//
+	private String convertArrayToString(String key, String[] stringArray) {
+		String resultString = Arrays.toString(stringArray)
+									.replace("[", "")
+									.replace("]", "")
+									.replace(" ", "")
+									.trim();
+		// TODO fix it
+		if (key.equals("run.time"))
+			return resultString.replace(",", ".");
+		return resultString;
+	}
+	//
+	public static void interruptMongoose(final String runId, final String type) {
+		switch (type) {
+			case "stop":
+				try {
+					threadsMap.get(runId).interrupt();
+				} catch (final Exception e) {
+					threadsMap.remove(runId);
+				}
+				break;
+			case "remove":
+				try {
+					threadsMap.get(runId).interrupt();
+					threadsMap.remove(runId);
+				} catch (final Exception e) {
+					threadsMap.remove(runId);
+				}
+				break;
 		}
 	}
 

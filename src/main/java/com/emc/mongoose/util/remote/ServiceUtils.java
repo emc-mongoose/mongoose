@@ -42,7 +42,7 @@ public final class ServiceUtils {
 	static {
 		int tmpPort = Registry.REGISTRY_PORT;
 		try {
-			tmpPort = Main.RUN_TIME_CONFIG.getRemoteControlPort();
+			tmpPort = Main.RUN_TIME_CONFIG.get().getRemoteControlPort();
 		} catch(final Exception e) {
 			ExceptionHandler.trace(
 				LOG, Level.WARN, e,

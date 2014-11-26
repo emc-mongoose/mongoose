@@ -20,4 +20,11 @@ public enum RunModes {
 		return value;
 	}
 
+	public static RunModes getRunModeConstantByRequest(String runMode) {
+		for (RunModes runModeConstant : values()) {
+			if (runModeConstant.getValue().equals(runMode))
+				return runModeConstant;
+		}
+		return null;
+	}
 }
