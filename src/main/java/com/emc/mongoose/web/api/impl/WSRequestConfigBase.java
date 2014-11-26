@@ -76,7 +76,7 @@ implements WSRequestConfig<T> {
 	};
 	//
 	public static WSRequestConfigBase getInstance() {
-		return newInstanceFor(Main.RUN_TIME_CONFIG.getStorageApi());
+		return newInstanceFor(Main.RUN_TIME_CONFIG.get().getStorageApi());
 	}
 	//
 	private final static String NAME_CLS_IMPL = "RequestConfig";

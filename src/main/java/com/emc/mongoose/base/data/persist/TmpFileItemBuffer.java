@@ -4,6 +4,7 @@ import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.server.DataItemBufferSvc;
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 //
 import com.emc.mongoose.util.logging.Markers;
@@ -46,11 +47,12 @@ implements DataItemBufferSvc<T> {
 	throws IOException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		//
-		retryCountMax = Main.RUN_TIME_CONFIG.getRunRetryCountMax();
-		retryDelayMilliSec = Main.RUN_TIME_CONFIG.getRunRetryDelayMilliSec();
+		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
+		retryCountMax = localRunTimeConfig.getRunRetryCountMax();
+		retryDelayMilliSec = localRunTimeConfig.getRunRetryDelayMilliSec();
 		//
 		fBuff = Files.createTempFile(
-			String.format(FMT_THREAD_NAME, Main.RUN_TIME_CONFIG.getRunName()), null
+			String.format(FMT_THREAD_NAME, localRunTimeConfig.getRunName()), null
 		).toFile();
 		setName(fBuff.getName());
 		LOG.debug(Markers.MSG, "{}: created temp file", getName());
@@ -155,7 +157,7 @@ implements DataItemBufferSvc<T> {
 			outPutExecutor.shutdown();
 			try {
 				outPutExecutor.awaitTermination(
-					Main.RUN_TIME_CONFIG.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+					Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 				);
 			} catch(final InterruptedException e) {
 				ExceptionHandler.trace(

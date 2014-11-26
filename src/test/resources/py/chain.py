@@ -1,7 +1,9 @@
 from __future__ import print_function, absolute_import, with_statement
 from sys import exit
-from loadbuilder import INSTANCE as LOAD_BUILDER
-from timeout import INSTANCE as RUN_TIME
+from timeout import timeout_init
+from loadbuilder import loadbuilder_init
+#from loadbuilder import INSTANCE as LOAD_BUILDER
+#from timeout import INSTANCE as RUN_TIME
 #
 from org.apache.logging.log4j import Level, LogManager
 #
@@ -13,17 +15,20 @@ from com.emc.mongoose.base.load import DataItemBuffer
 from java.lang import Long, Throwable, IllegalArgumentException
 from java.util import NoSuchElementException
 #
+RUN_TIME = timeout_init()
+LOCAL_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get()
+LOAD_BUILDER = loadbuilder_init()
 LOG = LogManager.getLogger()
 #
 LOAD_CHAIN = None
 try:
-	LOAD_CHAIN = Main.RUN_TIME_CONFIG.getStringArray("scenario.chain.load")
+	LOAD_CHAIN = LOCAL_RUN_TIME_CONFIG.getStringArray("scenario.chain.load")
 except NoSuchElementException:
 	LOG.error(Markers.ERR, "No load type specified, try arg -Dscenario.chain.load=<VALUE> to override")
 #
 FLAG_SIMULTANEOUS = False
 try:
-	FLAG_SIMULTANEOUS = Main.RUN_TIME_CONFIG.getBoolean("scenario.chain.simultaneous")
+	FLAG_SIMULTANEOUS = LOCAL_RUN_TIME_CONFIG.getBoolean("scenario.chain.simultaneous")
 except NoSuchElementException:
 	LOG.error(Markers.ERR, "No chain simultaneous flag specified, try arg -Dscenario.chain.simultaneous=<VALUE> to override")
 LOG.info(
@@ -113,19 +118,19 @@ if __name__=="__builtin__":
 	dataItemSize, dataItemSizeMin, dataItemSizeMax, threadsPerNode = 0, 0, 0, 0
 	#
 	try:
-		dataItemSize = Long(Main.RUN_TIME_CONFIG.getSizeBytes("data.size"))
+		dataItemSize = Long(LOCAL_RUN_TIME_CONFIG.getSizeBytes("data.size"))
 	except:
 		LOG.debug(Markers.MSG, "No \"data.size\" specified")
 	try:
-		dataItemSizeMin = Long(Main.RUN_TIME_CONFIG.getSizeBytes("data.size.min"))
+		dataItemSizeMin = Long(LOCAL_RUN_TIME_CONFIG.getSizeBytes("data.size.min"))
 	except:
 		LOG.debug(Markers.MSG, "No \"data.size\" specified")
 	try:
-		dataItemSizeMax = Long(Main.RUN_TIME_CONFIG.getSizeBytes("data.size.max"))
+		dataItemSizeMax = Long(LOCAL_RUN_TIME_CONFIG.getSizeBytes("data.size.max"))
 	except:
 		LOG.debug(Markers.MSG, "No \"data.size\" specified")
 	try:
-		threadsPerNode = Long(Main.RUN_TIME_CONFIG.getShort("load.threads"))
+		threadsPerNode = Long(LOCAL_RUN_TIME_CONFIG.getShort("load.threads"))
 	except:
 		LOG.debug(Markers.MSG, "No \"load.threads\" specified")
 	#

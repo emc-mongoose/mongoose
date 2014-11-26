@@ -6,16 +6,11 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.LifeCycle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.LifeCycle;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.appender.AsyncAppender;
-import org.apache.logging.log4j.core.async.AsyncLogger;
-import org.apache.logging.log4j.core.async.AsyncLoggerConfig;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.status.StatusConsoleListener;
-import org.omg.SendingContext.RunTime;
 //
 import java.io.File;
 import java.io.UnsupportedEncodingException;
@@ -84,7 +79,7 @@ public final class Main {
 		}
 	}
 	//
-	public static RunTimeConfig RUN_TIME_CONFIG;
+	public static InheritableThreadLocal<RunTimeConfig> RUN_TIME_CONFIG = new InheritableThreadLocal<>();
 	//
 	public static void main(final String args[]) {
 		//
@@ -112,14 +107,12 @@ public final class Main {
 			System.getProperty(KEY_RUN_MODE), System.getProperty(KEY_RUN_ID)
 		);
 		// load the properties
-		RUN_TIME_CONFIG = new RunTimeConfig();
+		RUN_TIME_CONFIG.set(new RunTimeConfig());
 		//
-		RUN_TIME_CONFIG.loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
+		RUN_TIME_CONFIG.get().loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
-		RUN_TIME_CONFIG.loadSysProps();
+		RUN_TIME_CONFIG.get().loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
-		//
-		//ThreadContextMap.initThreadContextMap(RUN_TIME_CONFIG);
 		//
 		switch (runMode) {
 			case RUN_MODE_SERVER:
@@ -129,12 +122,12 @@ public final class Main {
 				break;
 			case RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-                    new JettyRunner(RUN_TIME_CONFIG).run();
+                    new JettyRunner(RUN_TIME_CONFIG.get()).run();
 				break;
 			case RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
 				try {
-					new WSMockServlet(RUN_TIME_CONFIG).run();
+					new WSMockServlet(RUN_TIME_CONFIG.get()).run();
 				} catch (final Exception e) {
 					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
 				}
@@ -142,7 +135,7 @@ public final class Main {
 			case RUN_MODE_CLIENT:
 			case RUN_MODE_STANDALONE:
 			case RUN_MODE_COMPAT_CLIENT:
-				new Scenario(RUN_TIME_CONFIG).run();
+				new Scenario().run();
 				break;
 			default:
 				throw new IllegalArgumentException(
@@ -172,6 +165,7 @@ public final class Main {
 		System.setProperty(
 			"Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
 		);
+		StatusConsoleListener statusListener = new StatusConsoleListener(Level.OFF);
 		// determine the logger configuration file path
 		final Path logConfPath = Paths.get(
 			DIR_ROOT, DIR_CONF, DIR_LOGGING,

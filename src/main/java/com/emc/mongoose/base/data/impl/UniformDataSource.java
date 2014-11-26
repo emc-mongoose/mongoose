@@ -39,8 +39,8 @@ implements DataSource<T> {
 	public UniformDataSource()
 	throws NumberFormatException {
 		this(
-			Long.parseLong(Main.RUN_TIME_CONFIG.getString("data.ring.seed"), 0x10),
-			(int) Main.RUN_TIME_CONFIG.getSizeBytes("data.ring.size")
+			Long.parseLong(Main.RUN_TIME_CONFIG.get().getString("data.ring.seed"), 0x10),
+			(int) Main.RUN_TIME_CONFIG.get().getSizeBytes("data.ring.size")
 		);
 	}
 	//
