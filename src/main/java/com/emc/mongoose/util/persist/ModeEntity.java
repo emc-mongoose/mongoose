@@ -18,8 +18,8 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name="Modes")
 @Table(name = "modes", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "id"),
-		@UniqueConstraint(columnNames = "name")})
+	@UniqueConstraint(columnNames = "id"),
+	@UniqueConstraint(columnNames = "name")})
 public final class ModeEntity
 implements Serializable {
 	@Id

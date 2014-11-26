@@ -18,11 +18,11 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name="TraceEntity")
 @Table(name = "Traces", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "dataItem"),
-		@UniqueConstraint(columnNames = "thread"),
-		@UniqueConstraint(columnNames = "status"),
-		@UniqueConstraint(columnNames = "tsReqStart"),
-		@UniqueConstraint(columnNames = "reqDur")})
+	@UniqueConstraint(columnNames = "dataItem"),
+	@UniqueConstraint(columnNames = "thread"),
+	@UniqueConstraint(columnNames = "status"),
+	@UniqueConstraint(columnNames = "tsReqStart"),
+	@UniqueConstraint(columnNames = "reqDur")})
 public final class TraceEntity
 implements Serializable{
 	@Id
@@ -46,8 +46,8 @@ implements Serializable{
 	public TraceEntity(){
 	}
 	public TraceEntity(final DataObjectEntity dataitem, final ThreadEntity thread,
-					   final StatusEntity status, final long tsReqStart,
-					   final long reqDur){
+		   final StatusEntity status, final long tsReqStart,
+		   final long reqDur){
 		this.dataitem = dataitem;
 		dataitem.getTraceSet().add(this);
 		this.thread = thread;

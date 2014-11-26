@@ -20,8 +20,8 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name = "Runs")
 @Table(name = "runs", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "mode"),
-		@UniqueConstraint(columnNames = "name")})
+	@UniqueConstraint(columnNames = "mode"),
+	@UniqueConstraint(columnNames = "name")})
 public final class RunEntity
 implements Serializable {
 	@Id

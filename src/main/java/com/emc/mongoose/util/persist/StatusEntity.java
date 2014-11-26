@@ -17,7 +17,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name="StatusEntity")
 @Table(name = "Statuses", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "name")})
+	@UniqueConstraint(columnNames = "name")})
 public final class StatusEntity
 implements Serializable{
 	@Id

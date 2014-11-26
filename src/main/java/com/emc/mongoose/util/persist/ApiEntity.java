@@ -20,7 +20,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name="API")
 @Table(name = "API", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "name")})
+	@UniqueConstraint(columnNames = "name")})
 public final class ApiEntity
 implements Serializable {
 	@Id

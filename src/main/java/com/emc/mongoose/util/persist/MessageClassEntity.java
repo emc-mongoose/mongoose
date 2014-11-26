@@ -19,7 +19,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name = "MessageClassEntity")
 @Table(name = "classes", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "name")})
+	@UniqueConstraint(columnNames = "name")})
 public final class MessageClassEntity
 implements Serializable{
 	@Id

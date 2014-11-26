@@ -22,9 +22,9 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name="Thread")
 @Table(name = "threads", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "load"),
-		@UniqueConstraint(columnNames = "node"),
-		@UniqueConstraint(columnNames = "num")})
+	@UniqueConstraint(columnNames = "load"),
+	@UniqueConstraint(columnNames = "node"),
+	@UniqueConstraint(columnNames = "num")})
 public final class ThreadEntity
 implements Serializable{
 	@Id

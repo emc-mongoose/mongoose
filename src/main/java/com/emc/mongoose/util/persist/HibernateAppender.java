@@ -113,8 +113,8 @@ public final class HibernateAppender
 					break;
 				case DATA_LIST:
 					SESSION.beginTransaction();
-					DataObjectEntity object = loadDataObjectEntity(message[0], message[1], Long.valueOf(message[2]),
-						Long.valueOf(message[3]), Long.valueOf(message[4]));
+					DataObjectEntity object = loadDataObjectEntity(message[0], message[1], Long.valueOf(message[2],0x10),
+						Long.valueOf(message[3],0x10), Long.valueOf(message[4],0x10));
 					SESSION.getTransaction().commit();
 					break;
 				case PERF_TRACE:
@@ -126,8 +126,8 @@ public final class HibernateAppender
 					final ThreadEntity threadEntity = loadThreadEntity(loadEntity,
 						event.getContextMap().get(KEY_NODE_ADDR),
 						event.getContextMap().get(KEY_THREAD_NUM));
-					setTraceEntity(message[0], Long.valueOf(message[1]), threadEntity, Integer.valueOf(message[2]),
-						Long.valueOf(message[3]), Long.valueOf(message[4]));
+					setTraceEntity(message[0], Long.valueOf(message[1],0x10), threadEntity, Integer.valueOf(message[2],0x10),
+						Long.valueOf(message[3],0x10), Long.valueOf(message[4],0x10));
 					SESSION.getTransaction().commit();
 					break;
 			}
@@ -260,6 +260,16 @@ public final class HibernateAppender
 	}
 	//
 	private static DataObjectEntity loadDataObjectEntity(
+			final String identifier, final long size) {
+		DataObjectEntity dataObject = getDataObjectEntity(identifier, size);
+		if (dataObject == null){
+			dataObject = new DataObjectEntity(identifier, size);
+		}
+		SESSION.save(dataObject);
+		return dataObject;
+	}
+	//
+	private static DataObjectEntity loadDataObjectEntity(
 			final String identifier, final String ringOffset, final long size,
 			final long layer, final long mask
 	) {
@@ -267,12 +277,9 @@ public final class HibernateAppender
 		if (dataObject == null){
 			dataObject = new DataObjectEntity(identifier, ringOffset, size, layer, mask);
 		}else{
-			//If DataItem update
-			if (dataObject.getLayer()!=layer || dataObject.getMask()!=mask){
-				dataObject.setLayer(layer);
-				dataObject.setMask(mask);
-			}
-			//
+			dataObject.setRingOffset(ringOffset);
+			dataObject.setLayer(layer);
+			dataObject.setMask(mask);
 		}
 		SESSION.saveOrUpdate(dataObject);
 		return dataObject;
@@ -287,7 +294,7 @@ public final class HibernateAppender
 				statusEntity.setName(result.description);
 			}
 		}
-		SESSION.saveOrUpdate(statusEntity);
+		SESSION.save(statusEntity);
 		return statusEntity;
 	}
 	//
@@ -303,7 +310,7 @@ public final class HibernateAppender
 	private static void setTraceEntity(final String identifier, final long size, final ThreadEntity threadEntity,
 									   final int status, final long reqStart, final long reqDur){
 		final StatusEntity statusEntity = getStatusEntity(status);
-		final DataObjectEntity dataItem = getDataObjectEntity(identifier, size);
+		final DataObjectEntity dataItem = loadDataObjectEntity(identifier, size);
 		final TraceEntity traceEntity = new TraceEntity(dataItem, threadEntity, statusEntity, reqStart, reqDur);
 		SESSION.save(traceEntity);
 	}
@@ -382,7 +389,7 @@ public final class HibernateAppender
 		return (DataObjectEntity) SESSION.createCriteria(DataObjectEntity.class)
 			.add( Restrictions.eq("identifier", identifier))
 					//.add(Restrictions.eq("ringOffset", ringOffset))
-			.add( Restrictions.eq("size", size))
+			.add(Restrictions.eq("size", size))
 			.uniqueResult();
 	}
 }

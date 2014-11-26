@@ -22,11 +22,11 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name = "MessageEntity")
 @Table(name = "messages", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "run"),
-		@UniqueConstraint(columnNames = "level"),
-		@UniqueConstraint(columnNames = "class"),
-		@UniqueConstraint(columnNames = "tstamp"),
-		@UniqueConstraint(columnNames = "message")})
+	@UniqueConstraint(columnNames = "run"),
+	@UniqueConstraint(columnNames = "level"),
+	@UniqueConstraint(columnNames = "class"),
+	@UniqueConstraint(columnNames = "tstamp"),
+	@UniqueConstraint(columnNames = "message")})
 public final class MessageEntity
 implements Serializable{
 	@Id
@@ -50,7 +50,8 @@ implements Serializable{
 	//
 	public MessageEntity(){
 	}
-	public MessageEntity(final RunEntity run, final MessageClassEntity classMessage, final LevelEntity level, final String messsage, final Date tstamp){
+	public MessageEntity(final RunEntity run, final MessageClassEntity classMessage, final LevelEntity level,
+			final String messsage, final Date tstamp){
 		this.run = run;
 		this.classMessage = classMessage;
 		this.level = level;

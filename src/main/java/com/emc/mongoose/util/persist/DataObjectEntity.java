@@ -22,11 +22,11 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name="DataItem")
 @Table(name = "dataitems", uniqueConstraints = {
-		@UniqueConstraint(columnNames =	"identifier"),
-		@UniqueConstraint(columnNames = "ringOffset"),
-		@UniqueConstraint(columnNames = "size"),
-		@UniqueConstraint(columnNames = "layer"),
-		@UniqueConstraint(columnNames = "mask")})
+	@UniqueConstraint(columnNames =	"identifier"),
+	@UniqueConstraint(columnNames = "ringOffset"),
+	@UniqueConstraint(columnNames = "size"),
+	@UniqueConstraint(columnNames = "layer"),
+	@UniqueConstraint(columnNames = "mask")})
 public final class DataObjectEntity
 implements Serializable{
 	@Id
@@ -48,12 +48,17 @@ implements Serializable{
 	//
 	public DataObjectEntity(){
 	}
-	public DataObjectEntity(final String identifier, final String ringOffset, final long size, final long layer, final long mask){
+	public DataObjectEntity(final String identifier, final String ringOffset, final long size,
+			final long layer, final long mask){
 		this.identifier = identifier;
 		this.ringOffset = ringOffset;
 		this.layer = layer;
 		this.size = size;
 		this.mask = mask;
+	}
+	public DataObjectEntity(final String identifier, final long size){
+		this.identifier = identifier;
+		this.size = size;
 	}
 	//
 	public final long getId() {

@@ -20,7 +20,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name = "LevelEntity")
 @Table(name = "levels", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "name")})
+	@UniqueConstraint(columnNames = "name")})
 public final class LevelEntity
 implements Serializable{
 	@Id

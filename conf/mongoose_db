@@ -62,10 +62,10 @@ CREATE TABLE DataItems
 (
 	id bigserial NOT NULL,
 	identifier text NOT NULL,
-	ringOffset text NOT NULL,
+	ringOffset text,
 	size bigint NOT NULL,
-	layer bigint NOT NULL,
-	mask bigint NOT NULL,
+	layer bigint,
+	mask bigint,
 	CONSTRAINT id_data_item PRIMARY KEY (id)
 )
 WITH (
