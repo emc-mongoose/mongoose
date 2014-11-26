@@ -185,7 +185,7 @@ implements LoadExecutor<T> {
 			}
 		}
 		//
-		ShutDownHook.add(this);
+		LoadCloseHook.add(this);
 		//
 		tsStart = System.nanoTime();
 		super.start();
@@ -351,7 +351,7 @@ implements LoadExecutor<T> {
 				}
 			}
 			//
-			ShutDownHook.del(this);
+			LoadCloseHook.del(this);
 			isClosed = true;
 			LOG.debug(Markers.MSG, "Closed {}", getName());
 		} else {

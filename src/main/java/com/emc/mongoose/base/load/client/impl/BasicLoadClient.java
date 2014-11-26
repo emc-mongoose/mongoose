@@ -10,7 +10,7 @@ import com.emc.mongoose.base.data.persist.LogConsumer;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.client.DataItemBufferClient;
-import com.emc.mongoose.base.load.impl.ShutDownHook;
+import com.emc.mongoose.base.load.impl.LoadCloseHook;
 import com.emc.mongoose.base.load.impl.SubmitDataItemTask;
 import com.emc.mongoose.base.load.client.LoadClient;
 import com.emc.mongoose.base.load.server.LoadSvc;
@@ -806,7 +806,7 @@ implements LoadClient<T> {
 			}
 		}
 		//
-		ShutDownHook.add(this);
+		LoadCloseHook.add(this);
 		//
 		super.start();
 		LOG.info(Markers.MSG, "Started {}", getName());
@@ -953,7 +953,7 @@ implements LoadClient<T> {
 					}
 					//
 				}
-				ShutDownHook.del(this);
+				LoadCloseHook.del(this);
 				LOG.debug(Markers.MSG, "Clear the servers map");
 				remoteLoadMap.clear();
 				LOG.debug(Markers.MSG, "Closed {}", getName());

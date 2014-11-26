@@ -15,23 +15,16 @@ import java.util.concurrent.ConcurrentHashMap;
 Created by kurila on 23.10.14.
 Register shutdown hook which should perform correct server-side shutdown even if user hits ^C
 */
-public final class ShutDownHook
-implements Runnable {
+public final class LoadCloseHook
+extends Thread {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static Map<LoadExecutor, Thread> HOOKS_MAP = new ConcurrentHashMap<>();
+	private final static Map<LoadExecutor, LoadCloseHook> HOOKS_MAP = new ConcurrentHashMap<>();
 	//
 	private final LoadExecutor loadExecutor;
 	private final String loadName;
 	//
-	private ShutDownHook(final LoadExecutor loadExecutor, final String loadName) {
-		this.loadExecutor = loadExecutor;
-		this.loadName = loadName;
-	}
-	//
-	public static void add(final LoadExecutor loadExecutor) {
-		//
-		final String loadName;
+	private LoadCloseHook(final LoadExecutor loadExecutor) {
 		String ln = "";
 		try {
 			ln = loadExecutor.getName();
@@ -41,25 +34,30 @@ implements Runnable {
 			);
 		} finally {
 			loadName = ln;
+			setName(String.format("shutDownHook<%s>", loadName));
 		}
+		this.loadExecutor = loadExecutor;
+	}
+	//
+	public static void add(final LoadExecutor loadExecutor) {
 		//
-		final Thread hookThread = new Thread(
-			new ShutDownHook(loadExecutor, loadName),
-			String.format("shutDownHook<%s>", loadName)
-		);
+		//
+		final LoadCloseHook hookThread = new LoadCloseHook(loadExecutor);
 		try {
 			Runtime.getRuntime().addShutdownHook(hookThread);
 			HOOKS_MAP.put(loadExecutor, hookThread);
 			LOG.debug(
-				Markers.MSG, "Registered shutdown hook for the load executor \"{}\"", loadName
+				Markers.MSG, "Registered shutdown hook \"{}\"", hookThread.getName()
 			);
 		} catch(final SecurityException | IllegalArgumentException | IllegalStateException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to add the shutdown hook");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to add the shutdown hook");
 		}
 	}
 	//
 	public static void del(final LoadExecutor loadExecutor) {
-		if(HOOKS_MAP.containsKey(loadExecutor)) {
+		if(LoadCloseHook.class.isInstance(Thread.currentThread())) {
+			LOG.debug(Markers.MSG, "Won't remove the shutdown hook which is in progress");
+		} else if(HOOKS_MAP.containsKey(loadExecutor)) {
 			try {
 				Runtime.getRuntime().removeShutdownHook(HOOKS_MAP.get(loadExecutor));
 				LOG.debug(Markers.MSG, "Shutdown hook for \"{}\" removed", loadExecutor);
