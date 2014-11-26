@@ -42,9 +42,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 //
 /**
@@ -58,7 +58,7 @@ implements Runnable {
 	private final int port;
 	private Server server;
 	private final String dataSrcFPath;
-	private final Map<String, BasicWSObject> mapDataObject = new HashMap<>();
+	private final Map<String, BasicWSObject> mapDataObject = new ConcurrentHashMap<>();
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
 	private final static String
