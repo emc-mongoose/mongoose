@@ -13,6 +13,9 @@ extends Remote, Closeable/*, Runnable*/ {
 	void start()
 	throws RemoteException;
 	//
+	void join()
+	throws RemoteException, InterruptedException;
+	//
 	String getName()
 	throws RemoteException;
 	//

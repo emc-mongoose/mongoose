@@ -14,7 +14,9 @@ import com.emc.mongoose.util.logging.Markers;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.StatusLine;
+import org.apache.http.TruncatedChunkException;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
@@ -35,6 +37,7 @@ import java.io.InputStream;
 import java.io.InterruptedIOException;
 import java.net.ConnectException;
 import java.net.PortUnreachableException;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 /**
  Created by kurila on 06.06.14.
@@ -45,10 +48,10 @@ implements WSRequest<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static BasicWSRequest POISON = new BasicWSRequest() {
+	public final static WSRequest<WSObject> POISON = new BasicWSRequest<WSObject>() {
 		@Override
 		public final void execute()
-		throws InterruptedException {
+			throws InterruptedException {
 			throw new InterruptedException("Attempted to eat the poison");
 		}
 	};
@@ -137,7 +140,7 @@ implements WSRequest<T> {
 		//
 		try(final CloseableHttpResponse httpResponse = httpClient.execute(httpRequest)) {
 			final StatusLine statusLine = httpResponse.getStatusLine();
-			if(statusLine == null) {
+			if(statusLine==null) {
 				LOG.warn(Markers.MSG, "No response status line");
 			} else {
 				final int statusCode = statusLine.getStatusCode();
@@ -181,12 +184,6 @@ implements WSRequest<T> {
 										);
 										result = Result.FAIL_CORRUPT;
 									}
-								} catch(final IOException e) {
-									LOG.warn(
-										Markers.ERR, "Failed to read the object content for \"{}\"",
-										dataItem
-									);
-									result = Result.FAIL_IO;
 								}
 							} else {
 								result = Result.SUCC;
@@ -272,6 +269,27 @@ implements WSRequest<T> {
 		} catch(final ClientProtocolException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Client-side failure");
 			result = Result.FAIL_CLIENT;
+		} catch(final NoHttpResponseException e) {
+			if(wsReqConf.isClosed()) {
+				LOG.trace(Markers.ERR, "Ignored request failure after closing");
+			} else {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "No response from the storage");
+				result = Result.FAIL_SVC;
+			}
+		} catch(final SocketException e) {
+			if(wsReqConf.isClosed()) {
+				LOG.trace(Markers.ERR, "Ignored request failure after closing");
+			} else {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Socket failure");
+				result = Result.FAIL_IO;
+			}
+		} catch(final TruncatedChunkException e) {
+			if(wsReqConf.isClosed()) {
+				LOG.trace(Markers.ERR, "Ignored request failure after closing");
+			} else {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Storage returned truncated data");
+				result = Result.FAIL_IO;
+			}
 		} catch(final IOException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "I/O failure");
 			result = Result.FAIL_IO;

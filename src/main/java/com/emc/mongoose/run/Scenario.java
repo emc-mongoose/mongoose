@@ -26,13 +26,13 @@ import javax.script.ScriptException;
  A scenario runner utility class.
  */
 public final class Scenario
-implements Runnable {
+		implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String
-		KEY_PYTHON_PATH = "python.path",
-		VALUE_JS = "js",
-		VALUE_PY = "py";
+			KEY_PYTHON_PATH = "python.path",
+			VALUE_JS = "js",
+			VALUE_PY = "py";
 	//
 	private final static ScriptEngineManager SCRIPT_ENGINE_MANAGER = new ScriptEngineManager();
 	private final static HashMap<String, String> SCRIPT_LANG_MAP = new HashMap<>();
@@ -41,28 +41,37 @@ implements Runnable {
 		SCRIPT_LANG_MAP.put(VALUE_PY, "jython");
 	}
 	//
+	private final RunTimeConfig runTimeConfig;
+	//
+	public Scenario() {
+		this.runTimeConfig = Main.RUN_TIME_CONFIG.get();
+	}
+	//
+	public Scenario(final RunTimeConfig runTimeConfig) {
+		this.runTimeConfig = runTimeConfig;
+	}
+	//
 	public void run() {
-		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
 		// get scenario language
 		String scriptLangKey = null;
 		try {
-			scriptLangKey = localRunTimeConfig.getRunScenarioLang();
+			scriptLangKey = runTimeConfig.getRunScenarioLang();
 		} catch(final NoSuchElementException e) {
 			LOG.fatal(
-				Markers.ERR,
-				"Scenario language not specified, use \"-Drun.scenario.lang=(js|py)\" argument"
+					Markers.ERR,
+					"Scenario language not specified, use \"-Drun.scenario.lang=(js|py)\" argument"
 			);
 			System.exit(1);
 		}
 		// get scenario name
 		String scriptName = null;
 		try {
-			scriptName = localRunTimeConfig.getRunScenarioName();
+			scriptName = runTimeConfig.getRunScenarioName();
 			LOG.info(Markers.MSG, "Script name to run: \"{}\"", scriptName);
 		} catch(final NoSuchElementException e) {
 			LOG.fatal(
-				Markers.ERR,
-				"Scenario language not specified, use \"-Drun.scenario.name=<NAME>\" argument"
+					Markers.ERR,
+					"Scenario language not specified, use \"-Drun.scenario.name=<NAME>\" argument"
 			);
 			System.exit(1);
 		}
@@ -70,7 +79,7 @@ implements Runnable {
 		String scriptsRootDir = null;
 		if(scriptName!=null && scriptLangKey!=null) {
 			try {
-				scriptsRootDir = localRunTimeConfig.getRunScenarioDir();
+				scriptsRootDir = runTimeConfig.getRunScenarioDir();
 			} catch(final NoSuchElementException e) {
 				LOG.fatal(Markers.ERR, "Scenario directory not specified");
 				System.exit(1);
@@ -80,8 +89,8 @@ implements Runnable {
 			if(VALUE_PY.equals(scriptLangKey)) {
 				System.setProperty(KEY_PYTHON_PATH, scriptDir.toString());
 				LOG.debug(
-					Markers.MSG, "Set \"{}\"=\"{}\"",
-					KEY_PYTHON_PATH, System.getProperty(KEY_PYTHON_PATH)
+						Markers.MSG, "Set \"{}\"=\"{}\"",
+						KEY_PYTHON_PATH, System.getProperty(KEY_PYTHON_PATH)
 				);
 			}
 			//
@@ -103,19 +112,19 @@ implements Runnable {
 			final String scriptLangValue = SCRIPT_LANG_MAP.get(scriptLangKey);
 			if(scriptLangValue==null) {
 				LOG.fatal(
-					Markers.MSG, "Failed to determine the scenario language for key \"{}\"",
-					scriptLangKey
+						Markers.MSG, "Failed to determine the scenario language for key \"{}\"",
+						scriptLangKey
 				);
 			} else {
 				ScriptEngine scriptEngine = SCRIPT_ENGINE_MANAGER
-					.getEngineByName(scriptLangValue);
+						.getEngineByName(scriptLangValue);
 				//
 				if(scriptEngine == null) {
 
 					for(final ScriptEngineFactory sef : SCRIPT_ENGINE_MANAGER.getEngineFactories()) {
 						LOG.info(
-							Markers.ERR, "\t{}:\tfor language \"{}\" v{}",
-							sef.getEngineName(), sef.getLanguageName(), sef.getLanguageVersion()
+								Markers.ERR, "\t{}:\tfor language \"{}\" v{}",
+								sef.getEngineName(), sef.getLanguageName(), sef.getLanguageVersion()
 						);
 						if(scriptLangValue.equals(sef.getEngineName())) {
 							scriptEngine = sef.getScriptEngine();
@@ -124,9 +133,9 @@ implements Runnable {
 					}
 					if(scriptEngine == null) {
 						LOG.fatal(
-							Markers.ERR,
-							"Failed to get script engine for language \"{}\", the available engines are:",
-							scriptLangValue
+								Markers.ERR,
+								"Failed to get script engine for language \"{}\", the available engines are:",
+								scriptLangValue
 						);
 					}
 				} else {

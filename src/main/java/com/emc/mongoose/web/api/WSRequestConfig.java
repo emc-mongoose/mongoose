@@ -11,6 +11,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.impl.client.CloseableHttpClient;
 
+import java.io.Closeable;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -72,8 +73,11 @@ extends ObjectRequestConfig<T> {
 	String getScheme();
 	WSRequestConfig<T> setScheme(final String scheme);
 	//
+	@Override
 	CloseableHttpClient getClient();
-	WSRequestConfig<T> setClient(final CloseableHttpClient httpClient);
+	//
+	@Override
+	WSRequestConfig<T> setClient(final Closeable httpClient);
 	//
 	Map<String, String> getSharedHeadersMap();
 	//

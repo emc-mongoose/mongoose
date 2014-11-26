@@ -14,7 +14,7 @@ public interface Consumer<T extends DataItem>
 extends Closeable {
 	//
 	void submit(final T data)
-	throws RemoteException;
+	throws RemoteException, InterruptedException;
 	//
 	long getMaxCount()
 	throws RemoteException;

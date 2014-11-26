@@ -177,7 +177,8 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final boolean compareWith(final InputStream in) {
+	public final boolean compareWith(final InputStream in)
+	throws IOException {
 		boolean contentEquals = true;
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
@@ -334,7 +335,8 @@ implements AppendableDataItem, UpdatableDataItem {
 	// APPEND //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void append(final long augmentSize) {
+	public final void append(final long augmentSize)
+	throws IllegalArgumentException {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
 			final int
