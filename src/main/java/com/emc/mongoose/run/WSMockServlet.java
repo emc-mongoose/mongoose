@@ -37,9 +37,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 //
 /**
@@ -52,7 +52,7 @@ public final class WSMockServlet
 	private final static Logger LOG = LogManager.getLogger();
 	private final int port;
 	private Server server;
-	private final Map<String, BasicWSObject> mapDataObject = new HashMap<>();
+	private final Map<String, BasicWSObject> mapDataObject = new ConcurrentHashMap<>();
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
 	private final static String
