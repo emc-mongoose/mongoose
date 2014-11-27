@@ -151,22 +151,22 @@ public final class WSMockServlet
 		//
 		final String apiName = runTimeConfig.getStorageApi();
 		port = runTimeConfig.getInt("api." + apiName + ".port");
-		LOG.debug(Markers.MSG, "Setup Jetty Server instance");
+		LOG.info(Markers.MSG, "Setup Jetty Server instance");
 		server = new Server();
 		server.setDumpAfterStart(false);
 		server.setDumpBeforeStop(false);
-		LOG.debug(Markers.MSG, "Setup Http Connector Setup");
+		LOG.info(Markers.MSG, "Setup Http Connector Setup");
 		try (final ServerConnector httpConnector = new ServerConnector(server)) {
 			httpConnector.setPort(port);
 			server.addConnector(httpConnector);
 		} catch (final Exception e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Creating of server connector failed");
 		}
-		LOG.debug(Markers.MSG, "Set up a new handler");
+		LOG.info(Markers.MSG, "Set up a new handler");
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
 		server.setHandler(context);
-		LOG.debug(Markers.MSG, "Add servlet");
+		LOG.info(Markers.MSG, "Add servlet");
 		context.addServlet(new ServletHolder(this), "/*");
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -237,8 +237,6 @@ public final class WSMockServlet
 			final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Get ");
-		response.setStatus(HttpServletResponse.SC_OK);
-		LOG.trace(Markers.MSG, "   Response: OK");
 		try (final ServletOutputStream servletOutputStream = response.getOutputStream()) {
 			final String dataID = request.getRequestURI().split("/")[2];
 			if (mapDataObject.containsKey(dataID)) {
@@ -255,18 +253,21 @@ public final class WSMockServlet
 				allBW.mark(object.getSize());
 				getTP.mark();
 				allTP.mark();
+				response.setStatus(HttpServletResponse.SC_OK);
+				LOG.trace(Markers.MSG, "   Response: OK");
 			} else {
 				counterAllFail.inc();
 				counterGetFail.inc();
-				throw new IllegalArgumentException(
-						String.format("No such object: \"%s\"", dataID)
-				);
+				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+				LOG.trace(Markers.ERR, String.format("No such object: \"%s\"", dataID));
 			}
 		} catch (final IOException e) {
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterGetFail.inc();
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
 		} catch (final ArrayIndexOutOfBoundsException e) {
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterGetFail.inc();
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
@@ -294,6 +295,7 @@ public final class WSMockServlet
 			postTP.mark();
 			allTP.mark();
 		} catch (final IOException e) {
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPostFail.inc();
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
@@ -314,7 +316,6 @@ public final class WSMockServlet
 			final long bytes = calcInputByteCount(servletInputStream);
 			nanoTime = System.nanoTime() - nanoTime;
 			//
-			LOG.debug(Markers.MSG, "create new data object");
 			dataID = request.getRequestURI().split("/")[2];
 			if(Base64.isBase64(dataID) && dataID.length() < 12) {
 				final byte dataIdBytes[] = Base64.decodeBase64(dataID);
@@ -335,10 +336,12 @@ public final class WSMockServlet
 			allTP.mark();
 			//
 		} catch (final IOException e) {
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPutFail.inc();
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
 		}catch (final NumberFormatException e){
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
 			ExceptionHandler.trace(
@@ -346,6 +349,7 @@ public final class WSMockServlet
 					String.format("Unexpected object id format: \"%s\"", dataID)
 			);
 		}catch (final ArrayIndexOutOfBoundsException e) {
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
@@ -373,6 +377,7 @@ public final class WSMockServlet
 			deleteTP.mark();
 			allTP.mark();
 		} catch (final IOException e) {
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterDeleteFail.inc();
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
