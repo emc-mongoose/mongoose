@@ -167,6 +167,17 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
+	public final LoadBuilderClient<T, U> setObjSizeBias(final float objSizeBias)
+		throws IllegalArgumentException, RemoteException {
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr: keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.setObjSizeBias(objSizeBias);
+		}
+		return this;
+	}
+	//
+	@Override
 	public final LoadBuilderClient<T, U> setMaxObjSize(final long maxObjSize)
 	throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;

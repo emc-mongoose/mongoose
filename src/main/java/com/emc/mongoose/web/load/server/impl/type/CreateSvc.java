@@ -30,12 +30,15 @@ implements ObjectLoadSvc<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public CreateSvc(
-		final RunTimeConfig runTimeConfig,
-		final String[] addrs, final WSRequestConfig<T> reqConf, final long maxCount,
-		final int threadsPerNode, final long minObjSize, final long maxObjSize
+		final RunTimeConfig runTimeConfig, final String[] addrs, final WSRequestConfig<T> reqConf,
+		final long maxCount, final int threadsPerNode,
+		final long minObjSize, final long maxObjSize, final float objSizeBias
 	)
 	throws IOException, CloneNotSupportedException {
-		super(runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, null, minObjSize, maxObjSize);
+		super(
+			runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, null,
+			minObjSize, maxObjSize, objSizeBias
+		);
 		// by default, may be overriden later externally:
 		super.setConsumer(new FrameBuffConsumer<T>());
 	}

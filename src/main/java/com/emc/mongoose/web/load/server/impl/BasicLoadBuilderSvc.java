@@ -89,7 +89,7 @@ implements WSLoadBuilderSvc<T, U> {
 						loadSvc = new CreateSvc<T>(
 							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
-							minObjSize, maxObjSize
+							minObjSize, maxObjSize, objSizeBias
 						);
 						break;
 					case READ:

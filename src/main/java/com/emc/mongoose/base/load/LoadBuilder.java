@@ -37,6 +37,9 @@ public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>> {
 	LoadBuilder<T, U> setMaxObjSize(final long maxObjSize)
 	throws IllegalArgumentException, RemoteException;
 	//
+	LoadBuilder<T, U> setObjSizeBias(final float objSizeBias)
+	throws IllegalArgumentException, RemoteException;
+	//
 	LoadBuilder<T, U> setThreadsPerNodeDefault(final short threadCount)
 	throws IllegalArgumentException, RemoteException;
 	//

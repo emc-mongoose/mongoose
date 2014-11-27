@@ -39,8 +39,9 @@ implements Externalizable {
 	public final static String
 		LIST_SEP = ",",
 		//
-		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_COUNT = "data.count",
+		KEY_DATA_SIZE = "data.size",
+		KEY_DATA_SIZE_BIAS = "data.size.bias",
 		KEY_DATA_RING_SEED = "data.ring.seed",
 		KEY_DATA_RING_SIZE = "data.ring.size",
 		//
@@ -215,6 +216,10 @@ implements Externalizable {
 	//
 	public final long getDataCount() {
 		return getLong(KEY_DATA_COUNT);
+	}
+	//
+	public final float getDataSizeBias() {
+		return getFloat(KEY_DATA_SIZE_BIAS);
 	}
 	//
 	public final String[] getStorageAddrs() {
@@ -432,7 +437,7 @@ implements Externalizable {
 				case RunTimeConfig.KEY_STORAGE_API:
 					strBuilder
 						.appendNewLine().append("| ")
-						.appendFixedWidthPadRight(nextKey, 47, ' ')
+						.appendFixedWidthPadRight(nextKey, 31, ' ')
 						.append("| ")
 						.appendFixedWidthPadRight(nextVal, 63, ' ')
 						.append('|');

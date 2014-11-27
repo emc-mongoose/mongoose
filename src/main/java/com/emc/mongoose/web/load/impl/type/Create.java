@@ -34,34 +34,34 @@ implements WSLoadExecutor<T> {
 		final RunTimeConfig runTimeConfig,
 		final String[] addrs, final WSRequestConfig<T> recConf, final long maxCount,
 		final int threadsPerNode, final String listFile,
-		final long minObjSize, final long maxObjSize
+		final long minObjSize, final long maxObjSize, final float objSizeBias
 	) throws IOException, CloneNotSupportedException {
 		super(
 			runTimeConfig, addrs, recConf, maxCount, threadsPerNode, listFile,
-			minObjSize, maxObjSize
+			minObjSize, maxObjSize, objSizeBias
 		);
 	}
 	//
 	@Override
-	protected Producer<T> newDataItemProducer(final long minObjSize, final long maxObjSize) {
-		return new WSObjectProducer(minObjSize, maxObjSize);
+	protected Producer<T> newDataItemProducer(
+		final long minObjSize, final long maxObjSize, final float objSizeBias
+	) {
+		return new WSObjectProducer(minObjSize, maxObjSize, objSizeBias);
 	}
 	//
 	protected class WSObjectProducer
 	extends DataItemProducerBase {
 		//
-		protected WSObjectProducer(final long minObjSize, final long maxObjSize) {
-			super(minObjSize, maxObjSize);
+		protected WSObjectProducer(
+			final long minObjSize, final long maxObjSize, final float objSizeBias
+		) {
+			super(minObjSize, maxObjSize, objSizeBias);
 		}
 		//
 		@SuppressWarnings("unchecked")
-		protected void produceNextAndFeed()
+		protected void produceNextAndFeed(final long nextSize)
 		throws IOException, InterruptedException, RejectedExecutionException {
-			newDataConsumer.submit(
-				(T) new BasicWSObject(
-					ThreadLocalRandom.current().nextLong(minObjSize, maxObjSize + 1)
-				)
-			);
+			newDataConsumer.submit((T) new BasicWSObject(nextSize));
 		}
 	}
 	//

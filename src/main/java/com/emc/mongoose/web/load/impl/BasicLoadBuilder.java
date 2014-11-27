@@ -86,7 +86,7 @@ implements WSLoadBuilder<T, U> {
 						load = new Create<T>(
 							localRunTimeConfig,
 							dataNodeAddrs, wsReqConf, maxCount, threadsPerNodeMap.get(loadType),
-							listFile, minObjSize, maxObjSize
+							listFile, minObjSize, maxObjSize, objSizeBias
 						);
 						break;
 					case READ:
