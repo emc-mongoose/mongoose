@@ -6,6 +6,7 @@ import com.emc.mongoose.util.logging.Markers;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -351,7 +352,8 @@ implements Externalizable {
 					);
 				}
 			}
-			//Main.logRunTimeConfig(LOG);
+			Main.RUN_TIME_CONFIG.set(this);
+			LOG.info(Markers.MSG, toString());
 		} else {
 			final String errMsg = String.format(
 				"%s, version mismatch, server: %s client: %s",
@@ -387,11 +389,56 @@ implements Externalizable {
 		}
 	}
 	//
+	@Override
 	public synchronized RunTimeConfig clone() {
 		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
 		runTimeConfig.set(
 			KEY_RUN_ID, FMT_DT.format(Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime())
 		);
 		return runTimeConfig;
+	}
+	//
+	private final static String
+		TABLE_BORDER = "\n+--------------------------------+----------------------------------------------------------------+",
+		TABLE_HEADER = "Configuration parameters:";
+	//
+	@Override
+	public final String toString() {
+		String nextKey, nextVal;
+		final StrBuilder strBuilder = new StrBuilder()
+			.append(TABLE_HEADER).append(TABLE_BORDER)
+			.appendNewLine().append("| ").appendFixedWidthPadRight("Key", 31, ' ')
+			.append("| ").appendFixedWidthPadRight("Value", 63, ' ').append('|')
+			.append(TABLE_BORDER);
+		for(
+			final Iterator<String> keyIterator = getKeys();
+			keyIterator.hasNext();
+			) {
+			nextKey = keyIterator.next();
+			nextVal = getString(nextKey);
+			switch(nextKey) {
+				case RunTimeConfig.KEY_RUN_ID:
+				case RunTimeConfig.KEY_RUN_MODE:
+				case RunTimeConfig.KEY_RUN_SCENARIO_NAME:
+				case RunTimeConfig.KEY_RUN_TIME:
+				case RunTimeConfig.KEY_RUN_VERSION:
+				case RunTimeConfig.KEY_DATA_COUNT:
+				case RunTimeConfig.KEY_DATA_SIZE:
+				case RunTimeConfig.KEY_DATA_RING_SEED:
+				case RunTimeConfig.KEY_DATA_RING_SIZE:
+				case RunTimeConfig.KEY_LOAD_THREADS:
+				case RunTimeConfig.KEY_LOAD_TIME:
+				case RunTimeConfig.KEY_STORAGE_ADDRS:
+				case RunTimeConfig.KEY_STORAGE_API:
+					strBuilder
+						.appendNewLine().append("| ")
+						.appendFixedWidthPadRight(nextKey, 47, ' ')
+						.append("| ")
+						.appendFixedWidthPadRight(nextVal, 63, ' ')
+						.append('|');
+					break;
+			}
+		}
+		return strBuilder.append(TABLE_BORDER).toString();
 	}
 }

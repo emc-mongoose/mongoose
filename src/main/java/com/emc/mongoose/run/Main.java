@@ -117,8 +117,7 @@ public final class Main {
 		RUN_TIME_CONFIG.get().loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RUN_TIME_CONFIG.get().loadSysProps();
-		rootLogger.debug(Markers.MSG, "Loaded the system properties");
-		logRunTimeConfig(rootLogger);
+		rootLogger.info(Markers.MSG, RUN_TIME_CONFIG.get().toString());
 		//
 		switch (runMode) {
 			case RUN_MODE_SERVER:
@@ -204,58 +203,6 @@ public final class Main {
 		System.setProperty(KEY_POLICY, secPolicyURL);
 		Policy.getPolicy().refresh();
 		System.setSecurityManager(new SecurityManager());
-	}
-	//
-	private final static String
-		TABLE_BORDER = 		"\n+------------------------------------------------+----------------------------------------------------------------+",
-		CONF_DUMP_HEADER = 	"Current non-default configuration properties:" + TABLE_BORDER +
-							"\n| Key                                            | Value                                                          |" +
-							TABLE_BORDER;
-	//
-	@SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
-	public static void logRunTimeConfig(final Logger log) {
-		final RunTimeConfig threadLocalConfig = RUN_TIME_CONFIG.get();
-		String nextKey, nextVal;
-		final StrBuilder
-			strBuilderFile = new StrBuilder(CONF_DUMP_HEADER),
-			strBuilderStdOut = new StrBuilder(CONF_DUMP_HEADER);
-		for(
-			final Iterator<String> keyIterator = threadLocalConfig.getKeys();
-			keyIterator.hasNext();
-		) {
-			nextKey = keyIterator.next();
-			nextVal = threadLocalConfig.getString(nextKey);
-			strBuilderFile
-				.appendNewLine().append("| ")
-				.appendFixedWidthPadRight(nextKey, 47, ' ')
-				.append("| ")
-				.appendFixedWidthPadRight(nextVal, 63, ' ')
-				.append('|');
-			switch(nextKey) {
-				case RunTimeConfig.KEY_RUN_ID:
-				case RunTimeConfig.KEY_RUN_MODE:
-				case RunTimeConfig.KEY_RUN_SCENARIO_NAME:
-				case RunTimeConfig.KEY_RUN_TIME:
-				case RunTimeConfig.KEY_RUN_VERSION:
-				case RunTimeConfig.KEY_DATA_COUNT:
-				case RunTimeConfig.KEY_DATA_SIZE:
-				case RunTimeConfig.KEY_DATA_RING_SEED:
-				case RunTimeConfig.KEY_DATA_RING_SIZE:
-				case RunTimeConfig.KEY_LOAD_THREADS:
-				case RunTimeConfig.KEY_LOAD_TIME:
-				case RunTimeConfig.KEY_STORAGE_ADDRS:
-				case RunTimeConfig.KEY_STORAGE_API:
-					strBuilderStdOut
-						.appendNewLine().append("| ")
-						.appendFixedWidthPadRight(nextKey, 47, ' ')
-						.append("| ")
-						.appendFixedWidthPadRight(nextVal, 63, ' ')
-						.append('|');
-					break;
-			}
-		}
-		log.debug(Markers.MSG, strBuilderFile.append(TABLE_BORDER).toString());
-		log.info(Markers.MSG, strBuilderStdOut.append(TABLE_BORDER).toString());
 	}
 }
 //
