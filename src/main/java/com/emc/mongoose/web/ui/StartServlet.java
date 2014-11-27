@@ -43,10 +43,10 @@ public final class StartServlet extends HttpServlet {
 	//
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
-		if (!isRunIdFree(request.getParameter(Main.KEY_RUN_ID))) {
+		if (!isRunIdFree(request.getParameter(RunTimeConfig.KEY_RUN_ID))) {
 			String resultString;
-			if (threadsMap.get(request.getParameter(Main.KEY_RUN_ID)) != null) {
-				if (threadsMap.get(request.getParameter(Main.KEY_RUN_ID)).isAlive()) {
+			if (threadsMap.get(request.getParameter(RunTimeConfig.KEY_RUN_ID)) != null) {
+				if (threadsMap.get(request.getParameter(RunTimeConfig.KEY_RUN_ID)).isAlive()) {
 					resultString = "Mongoose with this run.id is running at the moment";
 				} else {
 					resultString = "Logs with the previous run.mode in the same run.id will be mixed";
@@ -57,7 +57,7 @@ public final class StartServlet extends HttpServlet {
 		}
 		//TODO fix it
 		if (StopServlet.stoppedRunModes != null) {
-			StopServlet.stoppedRunModes.remove(request.getParameter(Main.KEY_RUN_ID));
+			StopServlet.stoppedRunModes.remove(request.getParameter(RunTimeConfig.KEY_RUN_ID));
 		}
 		//
 		runTimeConfig = runTimeConfig.clone();

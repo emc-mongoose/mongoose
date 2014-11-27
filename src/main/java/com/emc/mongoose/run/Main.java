@@ -9,12 +9,12 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.LifeCycle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.logging.log4j.status.StatusConsoleListener;
 //
 import java.io.File;
 import java.io.IOException;
@@ -28,6 +28,7 @@ import java.security.Policy;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Iterator;
 import java.util.Locale;
 import java.util.TimeZone;
 /**
@@ -49,8 +50,6 @@ public final class Main {
 		//
 		KEY_DIR_ROOT = "dir.root",
 		KEY_POLICY = "java.security.policy",
-		KEY_RUN_ID = "run.id",
-		KEY_RUN_MODE = "run.mode",
 		//
 		RUN_MODE_STANDALONE = "standalone",
 		RUN_MODE_CLIENT = "client",
@@ -98,7 +97,7 @@ public final class Main {
 		}
 		//
 
-		System.setProperty(KEY_RUN_MODE, runMode);
+		System.setProperty(RunTimeConfig.KEY_RUN_MODE, runMode);
 		final Logger rootLogger = initLogging(runMode);
 		if(rootLogger==null) {
 			System.err.println("Logging initialization failure");
@@ -109,7 +108,8 @@ public final class Main {
 		//
 		rootLogger.info(
 			Markers.MSG, "Run in mode \"{}\", id: \"{}\"",
-			System.getProperty(KEY_RUN_MODE), System.getProperty(KEY_RUN_ID)
+			System.getProperty(RunTimeConfig.KEY_RUN_MODE),
+			System.getProperty(RunTimeConfig.KEY_RUN_ID)
 		);
 		// load the properties
 		RUN_TIME_CONFIG.set(new RunTimeConfig());
@@ -118,6 +118,7 @@ public final class Main {
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RUN_TIME_CONFIG.get().loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
+		logRunTimeConfig(rootLogger);
 		//
 		switch (runMode) {
 			case RUN_MODE_SERVER:
@@ -168,10 +169,11 @@ public final class Main {
 		// set "dir.root" property
 		System.setProperty(KEY_DIR_ROOT, DIR_ROOT);
 		// set "run.id" property with timestamp value if not set before
-		String runId = System.getProperty(KEY_RUN_ID);
+		String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 		if(runId==null || runId.length()==0) {
 			System.setProperty(
-				KEY_RUN_ID, FMT_DT.format(
+				RunTimeConfig.KEY_RUN_ID,
+				FMT_DT.format(
 					Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()
 				)
 			);
@@ -197,12 +199,61 @@ public final class Main {
 	}
 	//
 	public static void initSecurity() {
-        // load the security policy
-        final String secPolicyURL = "file:" + DIR_ROOT + SEP + DIR_CONF + SEP + FNAME_POLICY;
-        System.setProperty(KEY_POLICY, secPolicyURL);
-        Policy.getPolicy().refresh();
-        System.setSecurityManager(new SecurityManager());
-    }
+		// load the security policy
+		final String secPolicyURL = "file:" + DIR_ROOT + SEP + DIR_CONF + SEP + FNAME_POLICY;
+		System.setProperty(KEY_POLICY, secPolicyURL);
+		Policy.getPolicy().refresh();
+		System.setSecurityManager(new SecurityManager());
+	}
 	//
+	private final static String
+		TABLE_BORDER = 		"\n+------------------------------------------------+----------------------------------------------------------------+",
+		CONF_DUMP_HEADER = 	"Current non-default configuration properties:" + TABLE_BORDER +
+							"\n| Key                                            | Value                                                          |" +
+							TABLE_BORDER;
+	//
+	@SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
+	public static void logRunTimeConfig(final Logger log) {
+		final RunTimeConfig threadLocalConfig = RUN_TIME_CONFIG.get();
+		String nextKey, nextVal;
+		final StrBuilder
+			strBuilderFile = new StrBuilder(CONF_DUMP_HEADER),
+			strBuilderStdOut = new StrBuilder(CONF_DUMP_HEADER);
+		for(
+			final Iterator<String> keyIterator = threadLocalConfig.getKeys();
+			keyIterator.hasNext();
+		) {
+			nextKey = keyIterator.next();
+			nextVal = threadLocalConfig.getString(nextKey);
+			strBuilderFile
+				.appendNewLine().append("| ")
+				.appendFixedWidthPadRight(nextKey, 47, ' ')
+				.append("| ")
+				.appendFixedWidthPadRight(nextVal, 63, ' ')
+				.append('|');
+			switch(nextKey) {
+				case RunTimeConfig.KEY_RUN_ID:
+				case RunTimeConfig.KEY_RUN_MODE:
+				case RunTimeConfig.KEY_RUN_SCENARIO_NAME:
+				case RunTimeConfig.KEY_RUN_TIME:
+				case RunTimeConfig.KEY_RUN_VERSION:
+				case RunTimeConfig.KEY_DATA_COUNT:
+				case RunTimeConfig.KEY_DATA_SIZE:
+				case RunTimeConfig.KEY_LOAD_THREADS:
+				case RunTimeConfig.KEY_LOAD_TIME:
+				case RunTimeConfig.KEY_STORAGE_ADDRS:
+				case RunTimeConfig.KEY_STORAGE_API:
+					strBuilderStdOut
+						.appendNewLine().append("| ")
+						.appendFixedWidthPadRight(nextKey, 47, ' ')
+						.append("| ")
+						.appendFixedWidthPadRight(nextVal, 63, ' ')
+						.append('|');
+					break;
+			}
+		}
+		log.debug(Markers.MSG, strBuilderFile.append(TABLE_BORDER).toString());
+		log.info(Markers.MSG, strBuilderStdOut.append(TABLE_BORDER).toString());
+	}
 }
 //

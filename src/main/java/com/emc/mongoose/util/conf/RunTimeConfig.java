@@ -34,16 +34,34 @@ extends BaseConfiguration
 implements Externalizable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	public final static String LIST_SEP = ",", KEY_VERSION = "run.version";
+	//
+	public final static String
+		LIST_SEP = ",",
+		//
+		KEY_DATA_SIZE = "data.size",
+		KEY_DATA_COUNT = "data.count",
+		//
+		KEY_LOAD_THREADS = "load.threads",
+		KEY_LOAD_TIME = "load.step.time",
+		//
+		KEY_RUN_ID = "run.id",
+		KEY_RUN_MODE = "run.mode",
+		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
+		KEY_RUN_TIME = "run.time",
+		KEY_RUN_VERSION = "run.version",
+		//
+		KEY_STORAGE_ADDRS = "storage.addrs",
+		KEY_STORAGE_API = "storage.api";
+	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
 	private final static DateFormat FMT_DT = new SimpleDateFormat(
 			"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
 	);
 	static {
-		MAP_OVERRIDE.put("data.size", new String[] {"data.size.min", "data.size.max"});
-		MAP_OVERRIDE.put("load.step.time", new String[] { "run.time" });
-		MAP_OVERRIDE.put("load.threads", new String[] {"load.append.threads", "load.create.threads", "load.read.threads", "load.update.threads", "load.delete.threads"});
+		MAP_OVERRIDE.put(KEY_DATA_SIZE, new String[] {"data.size.min", "data.size.max"});
+		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_RUN_TIME});
+		MAP_OVERRIDE.put(KEY_LOAD_THREADS, new String[] {"load.append.threads", "load.create.threads", "load.read.threads", "load.update.threads", "load.delete.threads"});
 		MAP_OVERRIDE.put("remote.drivers", new String[] {"remote.servers"});
 	}
 	//
@@ -117,7 +135,7 @@ implements Externalizable {
 	}
 	//
 	public final String getStorageApi() {
-		return getString("storage.api");
+		return getString(KEY_STORAGE_API);
 	}
 	//
 	public final int getApiPort(final String api) {
@@ -189,15 +207,15 @@ implements Externalizable {
 	}
 	//
 	public final String getRunVersion() {
-		return getString(KEY_VERSION);
+		return getString(KEY_RUN_VERSION);
 	}
 	//
 	public final long getDataCount() {
-		return getLong("data.count");
+		return getLong(KEY_DATA_COUNT);
 	}
 	//
 	public final String[] getStorageAddrs() {
-		return getStringArray("storage.addrs");
+		return getStringArray(KEY_STORAGE_ADDRS);
 	}
 	//
 	public final int getConnPoolTimeOut() {
@@ -241,7 +259,7 @@ implements Externalizable {
 	}
 	//
 	public final String getRunScenarioName() {
-		return getString("run.scenario.name");
+		return getString(KEY_RUN_SCENARIO_NAME);
 	}
 	//
 	public final String getRunScenarioDir() {
@@ -249,15 +267,15 @@ implements Externalizable {
 	}
 	//
 	public final String getRunId() {
-		return getString(Main.KEY_RUN_ID);
+		return getString(KEY_RUN_ID);
 	}
 	//
 	public final String getRunTime() {
-		return getString("run.time");
+		return getString(KEY_RUN_TIME);
 	}
 	//
 	public final String getRunMode() {
-		return getString(Main.KEY_RUN_MODE);
+		return getString(KEY_RUN_MODE);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -305,7 +323,7 @@ implements Externalizable {
 		//
 		final String
 			serverVersion = Main.RUN_TIME_CONFIG.get().getRunVersion(),
-			clientVersion = confMap.get(KEY_VERSION);
+			clientVersion = confMap.get(KEY_RUN_VERSION);
 		if(serverVersion.equals(clientVersion)) {
 			// put the properties into the System
 			Object nextPropValue;
@@ -357,9 +375,8 @@ implements Externalizable {
 			);
 			keys2override = MAP_OVERRIDE.get(key);
 			sharedValue = sysProps.getProperty(key);
-			if(keys2override==null) {
-				setProperty(key, sharedValue);
-			} else {
+			setProperty(key, sharedValue);
+			if(keys2override != null) {
 				for(final String key2override: keys2override) {
 					setProperty(key2override, sharedValue);
 				}
@@ -369,8 +386,9 @@ implements Externalizable {
 	//
 	public synchronized RunTimeConfig clone() {
 		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
-		runTimeConfig.set(Main.KEY_RUN_ID, FMT_DT.format(
-				Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()));
+		runTimeConfig.set(
+			KEY_RUN_ID, FMT_DT.format(Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime())
+		);
 		return runTimeConfig;
 	}
 }
