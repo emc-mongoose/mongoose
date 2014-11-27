@@ -12,35 +12,36 @@
 		"shutdownHook": "disable",
 		"appenders": {
 			"appender" : [
-			 	{
-			 		"name": "WebUI",
-			 		"type": "WebUI",
-			 		"Filters": {
-			 			"Filter": [
-			 				{
-			 					"type": "MarkerFilter",
-			 					"marker": "err",
-			 					"onMatch": "ACCEPT",
-			 					"onMismatch": "NEUTRAL"
-			 				}, {
-			 					"type": "MarkerFilter",
+				{
+					"name": "WebUI",
+					"type": "WebUI",
+					"enabled": "false",
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "err",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
 								"marker": "msg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
-			 				}, {
-			 					"type": "MarkerFilter",
+							}, {
+								"type": "MarkerFilter",
 								"marker": "perfAvg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
-			 				}, {
+							}, {
 								"type": "MarkerFilter",
 								"marker": "perfSum",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
-			 				}
-			 			]
-			 		}
-			 	}, {
+							}
+						]
+					}
+				}, {
 					"name": "hibernate",
 					"type": "Hibernate",
 					"enabled": "false",

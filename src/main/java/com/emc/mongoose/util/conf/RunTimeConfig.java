@@ -41,29 +41,10 @@ implements Externalizable {
 			"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
 	);
 	static {
-		MAP_OVERRIDE.put(
-			"data.size",
-			new String[] {
-				"data.size.min",
-				"data.size.max"
-			}
-		);
-		MAP_OVERRIDE.put(
-			"load.threads",
-			new String[] {
-				"load.append.threads",
-				"load.create.threads",
-				"load.read.threads",
-				"load.update.threads",
-				"load.delete.threads"
-			}
-		);
-		MAP_OVERRIDE.put(
-			"remote.drivers",
-			new String[] {
-				"remote.servers"
-			}
-		);
+		MAP_OVERRIDE.put("data.size", new String[] {"data.size.min", "data.size.max"});
+		MAP_OVERRIDE.put("load.step.time", new String[] { "run.time" });
+		MAP_OVERRIDE.put("load.threads", new String[] {"load.append.threads", "load.create.threads", "load.read.threads", "load.update.threads", "load.delete.threads"});
+		MAP_OVERRIDE.put("remote.drivers", new String[] {"remote.servers"});
 	}
 	//
 	private final static String

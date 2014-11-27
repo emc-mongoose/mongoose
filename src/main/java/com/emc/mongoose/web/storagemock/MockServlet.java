@@ -237,7 +237,7 @@ public final class MockServlet
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	protected final void doGet(
-			final HttpServletRequest request, final HttpServletResponse response
+		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Get ");
 		response.setStatus(HttpServletResponse.SC_OK);

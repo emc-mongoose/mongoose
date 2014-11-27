@@ -180,7 +180,7 @@ public final class Main {
 		System.setProperty(
 			"Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
 		);
-		StatusConsoleListener statusListener = new StatusConsoleListener(Level.OFF);
+		// StatusConsoleListener statusListener = new StatusConsoleListener(Level.OFF);
 		// determine the logger configuration file path
 		final Path logConfPath = Paths.get(
 			DIR_ROOT, DIR_CONF, DIR_LOGGING,
