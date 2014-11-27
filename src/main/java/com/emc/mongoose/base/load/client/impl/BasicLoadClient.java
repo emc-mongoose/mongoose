@@ -24,7 +24,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
-import org.apache.tools.ant.taskdefs.Exec;
 //
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;
