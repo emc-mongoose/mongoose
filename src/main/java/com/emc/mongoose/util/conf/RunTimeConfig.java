@@ -40,6 +40,8 @@ implements Externalizable {
 		//
 		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_COUNT = "data.count",
+		KEY_DATA_RING_SEED = "data.ring.seed",
+		KEY_DATA_RING_SIZE = "data.ring.size",
 		//
 		KEY_LOAD_THREADS = "load.threads",
 		KEY_LOAD_TIME = "load.step.time",
@@ -349,6 +351,7 @@ implements Externalizable {
 					);
 				}
 			}
+			//Main.logRunTimeConfig(LOG);
 		} else {
 			final String errMsg = String.format(
 				"%s, version mismatch, server: %s client: %s",

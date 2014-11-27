@@ -19,7 +19,7 @@ def timeout_init():
         INSTANCE = Main.RUN_TIME_CONFIG.get().getRunTime()
         INSTANCE = INSTANCE.split('.')
         INSTANCE = Integer.valueOf(INSTANCE[0]), TimeUnit.valueOf(INSTANCE[1].upper())
-        LOG.info(Markers.MSG, "Using time limit: {} {}", INSTANCE[0], INSTANCE[1].name().lower())
+        # LOG.info(Markers.MSG, "Using time limit: {} {}", INSTANCE[0], INSTANCE[1].name().lower())
     except NoSuchElementException:
         LOG.error(Markers.ERR, "No timeout specified, try arg -Drun.time=<INTEGER>.<UNIT> to override")
     except IllegalArgumentException:

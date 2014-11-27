@@ -105,12 +105,12 @@ public final class Main {
 		}
 		//
 		ThreadContextMap.initThreadContextMap();
-		//
+		/*
 		rootLogger.info(
 			Markers.MSG, "Run in mode \"{}\", id: \"{}\"",
 			System.getProperty(RunTimeConfig.KEY_RUN_MODE),
 			System.getProperty(RunTimeConfig.KEY_RUN_ID)
-		);
+		);*/
 		// load the properties
 		RUN_TIME_CONFIG.set(new RunTimeConfig());
 		//
@@ -239,6 +239,8 @@ public final class Main {
 				case RunTimeConfig.KEY_RUN_VERSION:
 				case RunTimeConfig.KEY_DATA_COUNT:
 				case RunTimeConfig.KEY_DATA_SIZE:
+				case RunTimeConfig.KEY_DATA_RING_SEED:
+				case RunTimeConfig.KEY_DATA_RING_SIZE:
 				case RunTimeConfig.KEY_LOAD_THREADS:
 				case RunTimeConfig.KEY_LOAD_TIME:
 				case RunTimeConfig.KEY_STORAGE_ADDRS:

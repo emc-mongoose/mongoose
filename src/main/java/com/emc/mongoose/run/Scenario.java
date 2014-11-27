@@ -58,7 +58,7 @@ implements Runnable {
 		String scriptName = null;
 		try {
 			scriptName = localRunTimeConfig.getRunScenarioName();
-			LOG.info(Markers.MSG, "Script name to run: \"{}\"", scriptName);
+			//LOG.info(Markers.MSG, "Script name to run: \"{}\"", scriptName);
 		} catch(final NoSuchElementException e) {
 			LOG.fatal(
 				Markers.ERR,
