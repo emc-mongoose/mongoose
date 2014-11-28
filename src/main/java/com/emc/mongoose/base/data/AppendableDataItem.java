@@ -9,7 +9,8 @@ import java.io.OutputStream;
 public interface AppendableDataItem
 extends DataItem {
 	//
-	void append(final long augmentSize);
+	void append(final long augmentSize)
+	throws IllegalArgumentException;
 	//
 	long getPendingAugmentSize();
 	//

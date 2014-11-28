@@ -1,17 +1,23 @@
 package com.emc.mongoose.run;
 //
+import com.emc.mongoose.web.storagemock.MockServlet;
+import com.emc.mongoose.web.data.WSObject;
+import com.emc.mongoose.web.load.WSLoadExecutor;
+import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.LifeCycle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.status.StatusConsoleListener;
 //
 import java.io.File;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -117,7 +123,17 @@ public final class Main {
 			case RUN_MODE_SERVER:
 			case RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
-				new BasicLoadBuilderSvc().start();
+				try(
+					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
+						loadBuilderSvc = new BasicLoadBuilderSvc<>()
+				) {
+					loadBuilderSvc.start();
+					loadBuilderSvc.join();
+				} catch(final IOException e) {
+					ExceptionHandler.trace(rootLogger, Level.ERROR, e, "Load builder service failure");
+				} catch(InterruptedException e) {
+					rootLogger.debug(Markers.MSG, "Interrupted load builder service");
+				}
 				break;
 			case RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
@@ -126,7 +142,7 @@ public final class Main {
 			case RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
 				try {
-					new WSMockServlet(RUN_TIME_CONFIG.get()).run();
+					new MockServlet(RUN_TIME_CONFIG.get()).run();
 				} catch (final Exception e) {
 					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
 				}
@@ -135,7 +151,6 @@ public final class Main {
 			case RUN_MODE_STANDALONE:
 			case RUN_MODE_COMPAT_CLIENT:
 				new Scenario().run();
-				System.exit(0);
 				break;
 			default:
 				throw new IllegalArgumentException(
@@ -143,6 +158,8 @@ public final class Main {
 				);
 		}
 		//
+		((LifeCycle) LogManager.getContext()).stop();
+		System.exit(0);
 	}
 	//
 	public static Logger initLogging(final String runMode) {
@@ -163,8 +180,7 @@ public final class Main {
 		System.setProperty(
 			"Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
 		);
-		StatusConsoleListener statusListener = new StatusConsoleListener(Level.OFF);
-
+		// StatusConsoleListener statusListener = new StatusConsoleListener(Level.OFF);
 		// determine the logger configuration file path
 		final Path logConfPath = Paths.get(
 			DIR_ROOT, DIR_CONF, DIR_LOGGING,

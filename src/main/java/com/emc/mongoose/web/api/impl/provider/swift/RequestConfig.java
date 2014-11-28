@@ -33,7 +33,7 @@ extends WSRequestConfigBase<T> {
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		if(reqConf2Clone != null) {
-			// TODO copy swift specific fields
+			// TODO copy swift specific fields if any
 		}
 	}
 	//
@@ -60,14 +60,14 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 		throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		// TODO add swift specific fields
+		// TODO add swift specific fields if any
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 		throws IOException {
 		super.writeExternal(out);
-		// TODO add swift specific fields
+		// TODO add swift specific fields if any
 	}
 	//
 	@Override

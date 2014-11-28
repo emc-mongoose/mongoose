@@ -42,12 +42,12 @@ implements WSObject {
 		super(size, dataSrc);
 	}
 	//
-	public BasicWSObject(final String id, final long offset, final long size) {
-		super(id, offset, size);
-	}
-	//
 	public BasicWSObject(final String id, final long size) {
 		super(id, size);
+	}
+	//
+	public BasicWSObject(final String id, final long offset, final long size) {
+		super(id, offset, size);
 	}
 	//
 	public BasicWSObject(final String id, final long size, final UniformDataSource dataSrc) {

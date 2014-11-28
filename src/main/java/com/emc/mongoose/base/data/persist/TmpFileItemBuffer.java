@@ -152,7 +152,7 @@ implements DataItemBufferSvc<T> {
 	throws IOException {
 		if(fBuffOut != null) {
 			//
-			LOG.debug(Markers.MSG, "{}: output to the file is done", getName());
+			LOG.debug(Markers.MSG, "{}: output done, {} items", getName(), writtenDataItems.get());
 			//
 			outPutExecutor.shutdown();
 			try {
@@ -223,28 +223,32 @@ implements DataItemBufferSvc<T> {
 					break;
 				}
 			}
-			LOG.debug(Markers.MSG, "{}: producing done", getName());
-		} catch(final IOException | ClassNotFoundException | ClassCastException e) {
+			LOG.debug(Markers.MSG, "done producing");
+		} catch(final IOException|ClassNotFoundException|ClassCastException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to read a data item");
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.ERR, "Interrupted during submit the data item");
 		} finally {
 			try {
 				consumer.submit(null); // feed the poison
 			} catch(final RemoteException e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.ERR, "Interrupted");
 			}
 		}
 	}
 	//
 	@Override
 	public final synchronized void interrupt() {
-		super.interrupt();
 		if(consumer != null) {
 			try {
 				consumer.submit(null); // feed the poison
-			} catch(final RemoteException e) {
+			} catch(final RemoteException|InterruptedException e) {
 				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to submit");
 			}
 		}
+		super.interrupt();
 		LOG.debug(Markers.MSG, "{}: interrupted", getName());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

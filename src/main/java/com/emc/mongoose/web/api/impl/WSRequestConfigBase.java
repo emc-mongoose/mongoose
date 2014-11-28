@@ -32,6 +32,7 @@ import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -106,7 +107,7 @@ implements WSRequestConfig<T> {
 	//
 	protected ConcurrentHashMap<String, String> sharedHeadersMap;
 	protected final Mac mac;
-	protected CloseableHttpClient httpClient;
+	protected volatile CloseableHttpClient httpClient;
 	//
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException {
@@ -272,8 +273,9 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> setClient(final CloseableHttpClient httpClient) {
-		this.httpClient = httpClient;
+	public WSRequestConfigBase<T> setClient(final Closeable httpClient)
+	throws ClassCastException {
+		this.httpClient = CloseableHttpClient.class.cast(httpClient);
 		return this;
 	}
 	//

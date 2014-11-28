@@ -33,7 +33,7 @@ extends LoadExecutorBase<T> {
 	//
 	@Override
 	public void submit(final T dataItem)
-		throws RemoteException {
+	throws RemoteException, InterruptedException {
 		if(dataItem!=null) {
 			final long appendSize = ThreadLocalRandom
 				.current()
