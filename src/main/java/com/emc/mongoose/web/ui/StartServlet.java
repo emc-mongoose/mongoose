@@ -20,12 +20,14 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.ui.enums.RunModes;
+import com.emc.mongoose.web.ui.logging.WebUIAppender;
 import org.apache.commons.configuration.ConversionException;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.core.LogEvent;
 //
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -57,6 +59,22 @@ public final class StartServlet extends HttpServlet {
 	//
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
+		if (!isRunIdFree(request.getParameter(Main.KEY_RUN_ID))) {
+			String resultString;
+			if (threadsMap.get(request.getParameter(Main.KEY_RUN_ID)) != null) {
+				if (threadsMap.get(request.getParameter(Main.KEY_RUN_ID)).isAlive()) {
+					resultString = "Mongoose with this run.id is running at the moment";
+				} else {
+					resultString = "Logs with the previous run.mode in the same run.id will be mixed";
+				}
+				response.getWriter().write(resultString);
+			}
+			return;
+		}
+		//TODO fix it
+		if (StopServlet.stoppedRunModes != null) {
+			StopServlet.stoppedRunModes.remove(request.getParameter(Main.KEY_RUN_ID));
+		}
 		//
 		runTimeConfig = runTimeConfig.clone();
 		setupRunTimeConfig(request);
@@ -83,10 +101,12 @@ public final class StartServlet extends HttpServlet {
 	private void startServer(final String message) {
 		final Thread thread = new Thread() {
 			WSLoadBuilderSvc loadBuilderSvc;
+			RunTimeConfig localRunTimeConfig;
 			@Override
 			public void run() {
-				Main.RUN_TIME_CONFIG.set(runTimeConfig);
-				ThreadContextMap.initThreadContextMap(runTimeConfig);
+				localRunTimeConfig = runTimeConfig;
+				Main.RUN_TIME_CONFIG.set(localRunTimeConfig);
+				ThreadContextMap.initThreadContextMap();
 				//
 				LOG.debug(Markers.MSG, message);
 				//
@@ -101,8 +121,8 @@ public final class StartServlet extends HttpServlet {
 			}
 			@Override
 			public void interrupt() {
-				Main.RUN_TIME_CONFIG.set(runTimeConfig);
-				ThreadContextMap.initThreadContextMap(runTimeConfig);
+				Main.RUN_TIME_CONFIG.set(localRunTimeConfig);
+				ThreadContextMap.initThreadContextMap();
 				//
 				ServiceUtils.close(loadBuilderSvc);
 				super.interrupt();
@@ -117,7 +137,7 @@ public final class StartServlet extends HttpServlet {
 			@Override
 			public void run() {
 				Main.RUN_TIME_CONFIG.set(runTimeConfig);
-				ThreadContextMap.initThreadContextMap(Main.RUN_TIME_CONFIG.get());
+				ThreadContextMap.initThreadContextMap();
 				//
 				LOG.debug(Markers.MSG, message);
 				new Scenario().run();
@@ -137,7 +157,7 @@ public final class StartServlet extends HttpServlet {
 			@Override
 			public void run() {
 				Main.RUN_TIME_CONFIG.set(runTimeConfig);
-				ThreadContextMap.initThreadContextMap(runTimeConfig);
+				ThreadContextMap.initThreadContextMap();
 				//
 				LOG.debug(Markers.MSG, message);
 				new WSMockServlet(runTimeConfig).run();
@@ -152,9 +172,18 @@ public final class StartServlet extends HttpServlet {
 		thread.start();
 		threadsMap.put(runTimeConfig.getString("run.id"), thread);
 	}
+
+	public boolean isRunIdFree(String runId) {
+		if (threadsMap.get(runId) != null)
+			return false;
+		return true;
+	}
 	//
 	private void setupRunTimeConfig(final HttpServletRequest request) {
 		for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
+			if (entry.getValue()[0].trim().isEmpty()) {
+				continue;
+			}
 			if (entry.getValue().length > 1) {
 				runTimeConfig.set(entry.getKey(), convertArrayToString(entry.getKey(), entry.getValue()));
 				continue;
@@ -175,15 +204,23 @@ public final class StartServlet extends HttpServlet {
 		return resultString;
 	}
 	//
-	public static void interruptMongoose(final String runId) {
-		try {
-			if (threadsMap.get(runId).isInterrupted()) {
-				threadsMap.remove(runId);
-			} else {
-				threadsMap.get(runId).interrupt();
-			}
-		} catch (final Exception e) {
-			threadsMap.remove(runId);
+	public static void interruptMongoose(final String runId, final String type) {
+		switch (type) {
+			case "stop":
+				try {
+					threadsMap.get(runId).interrupt();
+				} catch (final Exception e) {
+					threadsMap.remove(runId);
+				}
+				break;
+			case "remove":
+				try {
+					threadsMap.get(runId).interrupt();
+					threadsMap.remove(runId);
+				} catch (final Exception e) {
+					threadsMap.remove(runId);
+				}
+				break;
 		}
 	}
 
