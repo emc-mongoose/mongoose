@@ -108,8 +108,8 @@ extends AbstractAppender {
 					SESSION.beginTransaction();
 					final ModeEntity modeEntity = loadModeEntity(event.getContextMap().get(KEY_RUN_MODE));
 					final RunEntity runEntity = loadRunEntity(event.getContextMap().get(KEY_RUN_ID), modeEntity);
-					setMessageEntity(new Date(event.getTimeMillis()), event.getLoggerName(),
-						event.getLevel().toString(), event.getMessage().getFormattedMessage(), runEntity);
+					loadMessageEntity(new Date(event.getTimeMillis()), event.getLoggerName(),
+							event.getLevel().toString(), event.getMessage().getFormattedMessage(), runEntity);
 					SESSION.getTransaction().commit();
 					break;
 				case DATA_LIST:
@@ -127,8 +127,8 @@ extends AbstractAppender {
 					final ThreadEntity threadEntity = loadThreadEntity(loadEntity,
 						event.getContextMap().get(KEY_NODE_ADDR),
 						event.getContextMap().get(KEY_THREAD_NUM));
-					setTraceEntity(message[0], Long.valueOf(message[1],0x10), threadEntity, Integer.valueOf(message[2],0x10),
-						Long.valueOf(message[3],0x10), Long.valueOf(message[4],0x10));
+					loadTraceEntity(message[0], Long.valueOf(message[1], 0x10), threadEntity, Integer.valueOf(message[2], 0x10),
+							Long.valueOf(message[3], 0x10), Long.valueOf(message[4], 0x10));
 					SESSION.getTransaction().commit();
 					break;
 			}
@@ -305,21 +305,23 @@ extends AbstractAppender {
 		return statusEntity;
 	}
 	//
-	private static void setMessageEntity(final Date tstamp, final String className,
-			final String levelName, final String text, final RunEntity run
+	private static MessageEntity loadMessageEntity(final Date tstamp, final String className,
+										  final String levelName, final String text, final RunEntity run
 	){
 		final MessageClassEntity classMessage = loadClassOfMessage(className);
 		final LevelEntity level = loadLevelEntity(levelName);
 		final MessageEntity messageEntity = new MessageEntity(run, classMessage, level, text, tstamp);
 		SESSION.save(messageEntity);
+		return messageEntity;
 	}
 	//
-	private static void setTraceEntity(final String identifier, final long size, final ThreadEntity threadEntity,
-									   final int status, final long reqStart, final long reqDur){
+	private static TraceEntity loadTraceEntity(final String identifier, final long size, final ThreadEntity threadEntity,
+										final int status, final long reqStart, final long reqDur){
 		final StatusEntity statusEntity = getStatusEntity(status);
 		final DataObjectEntity dataItem = loadDataObjectEntity(identifier, size);
 		final TraceEntity traceEntity = new TraceEntity(dataItem, threadEntity, statusEntity, reqStart, reqDur);
 		SESSION.save(traceEntity);
+		return traceEntity;
 	}
 	//
 	private static void setStatusEntity(){
