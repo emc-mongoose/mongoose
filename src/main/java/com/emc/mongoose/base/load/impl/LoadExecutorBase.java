@@ -379,7 +379,7 @@ implements LoadExecutor<T> {
 			} else {
 				final StorageNodeExecutor<T> nodeExecutor = nodes[
 					(int) submitExecutor.getTaskCount() % nodes.length
-					];
+				];
 				final SubmitDataItemTask<T, StorageNodeExecutor<T>>
 					submitTask = new SubmitDataItemTask<>(dataItem, nodeExecutor);
 				boolean flagSubmSucc = false;

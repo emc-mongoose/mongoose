@@ -59,9 +59,9 @@ implements WSLoadExecutor<T> {
 		}
 		//
 		@SuppressWarnings("unchecked")
-		protected void produceNextAndFeed(final long nextSize)
-		throws IOException, InterruptedException, RejectedExecutionException {
-			newDataConsumer.submit((T) new BasicWSObject(nextSize));
+		protected T produceSpecificDataItem(final long nextSize)
+		throws IOException {
+			return (T) new BasicWSObject(nextSize);
 		}
 	}
 	//

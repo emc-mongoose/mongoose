@@ -158,7 +158,11 @@ implements StorageNodeExecutor<T> {
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to build request");
 		} finally {
-			LOG.trace(Markers.MSG, "Built request \"{}\"", request);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Built request \"{}\" for data item \"{}\"", request, dataItem
+				);
+			}
 		}
 		//
 		boolean passed = false;

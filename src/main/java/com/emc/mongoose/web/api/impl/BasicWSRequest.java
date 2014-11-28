@@ -192,7 +192,7 @@ implements WSRequest<T> {
 							break;
 						case (HttpPut.METHOD_NAME):
 						case (HttpPost.METHOD_NAME):
-							if(dataItem!=null && dataItem.getId()==null) {
+							if(dataItem != null && dataItem.getId() == null) {
 								wsReqConf.applyObjectId(dataItem, httpResponse);
 							}
 							result = Result.SUCC;

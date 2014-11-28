@@ -20,7 +20,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 20.10.14.
  Custom implementation should at least define methods: "newDataItemsProducer" returning new data items
- producer instance and "produceNextAndFeed" creating one data item and passing it to consumer.
+ producer instance and "produceSpecificDataItem" creating one data item and passing it to consumer.
  */
 public abstract class CreateLoadBase<T extends DataItem>
 extends LoadExecutorBase<T> {
@@ -72,8 +72,8 @@ extends LoadExecutorBase<T> {
 			return newDataConsumer;
 		}
 		//
-		protected abstract void produceNextAndFeed(final long nextSize)
-		throws IOException, InterruptedException, RejectedExecutionException;
+		protected abstract T produceSpecificDataItem(final long nextSize)
+		throws IOException;
 		//
 		private final static String
 			FMT_MSG_SUBMIT_NEXT = "Submitted object #%d of size %x",
@@ -97,8 +97,9 @@ extends LoadExecutorBase<T> {
 			//
 			do {
 				try {
-					nextSize = minObjSize + (long) Math.pow(thrLocalRnd.nextDouble(), objSizeBias) * sizeRange;
-					produceNextAndFeed(nextSize);
+					nextSize = (long) (Math.pow(thrLocalRnd.nextDouble(), objSizeBias) * sizeRange);
+					nextSize += minObjSize;
+					newDataConsumer.submit(produceSpecificDataItem(nextSize));
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(Markers.MSG, String.format(FMT_MSG_SUBMIT_NEXT, i, nextSize));
 					}
