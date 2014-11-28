@@ -233,7 +233,7 @@ implements WSRequest<T> {
 							result = Result.FAIL_SVC;
 							break;
 						default:
-							LOG.warn(Markers.ERR, "Response code: {}", result);
+							LOG.error(Markers.ERR, "Response code: {}", result);
 							result = Result.FAIL_UNKNOWN;
 					}
 					if(LOG.isDebugEnabled(Markers.ERR)) {
@@ -260,13 +260,13 @@ implements WSRequest<T> {
 			result = Result.FAIL_TIMEOUT;
 		} catch(final PortUnreachableException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Storage port is unreachable");
-			result = Result.FAIL_UNKNOWN;
+			result = Result.FAIL_IO;
 		} catch(final ConnectException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Connection failure");
-			result = Result.FAIL_UNKNOWN;
+			result = Result.FAIL_IO;
 		} catch(final InterruptedIOException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Request interrupted");
-			result = Result.FAIL_UNKNOWN;
+			result = Result.FAIL_IO;
 		} catch(final ClientProtocolException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Client-side failure");
 			result = Result.FAIL_CLIENT;

@@ -30,7 +30,7 @@ implements Request<T> {
 	//
 	protected RequestConfig<T> reqConf = null;
 	protected T dataItem = null;
-	protected Result result = Result.FAIL_UNKNOWN;
+	protected Result result = Result.FAIL_TIMEOUT;
 	//
 	protected long start = 0, duration = 0, latency = 0;
 	private long transferSize = 0;
