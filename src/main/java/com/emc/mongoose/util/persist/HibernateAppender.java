@@ -114,7 +114,7 @@ extends AbstractAppender {
 					break;
 				case DATA_LIST:
 					SESSION.beginTransaction();
-					DataObjectEntity object = loadDataObjectEntity(message[0], message[1], Long.valueOf(message[2],0x10),
+					loadDataObjectEntity(message[0], message[1], Long.valueOf(message[2],0x10),
 						Long.valueOf(message[3],0x10), Long.valueOf(message[4],0x10));
 					SESSION.getTransaction().commit();
 					break;
@@ -278,9 +278,15 @@ extends AbstractAppender {
 		if (dataObject == null){
 			dataObject = new DataObjectEntity(identifier, ringOffset, size, layer, mask);
 		}else{
-			dataObject.setRingOffset(ringOffset);
-			dataObject.setLayer(layer);
-			dataObject.setMask(mask);
+			if (dataObject.getRingOffset() == null){
+				dataObject.setRingOffset(ringOffset);
+			}
+			if (dataObject.getLayer() != layer){
+				dataObject.setLayer(layer);
+			}
+			if (dataObject.getMask() != mask){
+				dataObject.setMask(mask);
+			}
 		}
 		SESSION.saveOrUpdate(dataObject);
 		return dataObject;
