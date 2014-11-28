@@ -178,7 +178,11 @@ public final class WSMockServlet
 			server.start();
 			LOG.info(Markers.MSG, "Listening on port #{}", port);
 			//Output metrics
-			printMetrics();
+			final long updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(metricsUpdatePeriodSec);
+			while (metricsUpdatePeriodSec > 0) {
+				printMetrics();
+				Thread.sleep(updatePeriodMilliSec);
+			}
 			//
 			server.join();
 		} catch (final InterruptedException e) {
@@ -195,39 +199,33 @@ public final class WSMockServlet
 		}
 	}
 	//
+	//
 	private void printMetrics(){
-		try {
-			final long updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(metricsUpdatePeriodSec);
-			while (metricsUpdatePeriodSec > 0) {
-				final Snapshot allDurSnapshot = durAll.getSnapshot();
-				LOG.info(
-						Markers.PERF_AVG,
-						String.format(Locale.ROOT, LoadExecutor.MSG_FMT_SUM_METRICS,
-								//
-								WSMockServlet.class.getSimpleName(),
-								counterAllSucc.getCount(), counterAllFail.getCount(),
-								//
-								(float) allDurSnapshot.getMin() / LoadExecutor.BILLION,
-								(float) allDurSnapshot.getMedian() / LoadExecutor.BILLION,
-								(float) allDurSnapshot.getMean() / LoadExecutor.BILLION,
-								(float) allDurSnapshot.getMax() / LoadExecutor.BILLION,
-								//
-								allTP.getMeanRate(),
-								allTP.getOneMinuteRate(),
-								allTP.getFiveMinuteRate(),
-								allTP.getFifteenMinuteRate(),
-								//
-								allBW.getMeanRate() / LoadExecutor.MIB,
-								allBW.getOneMinuteRate() / LoadExecutor.MIB,
-								allBW.getFiveMinuteRate() / LoadExecutor.MIB,
-								allBW.getFifteenMinuteRate() / LoadExecutor.MIB
-						)
-				);
-				Thread.sleep(updatePeriodMilliSec);
-			}
-		} catch (final InterruptedException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
-		}
+		final Snapshot allDurSnapshot = durAll.getSnapshot();
+		LOG.info(
+			Markers.PERF_AVG,
+			String.format(Locale.ROOT, LoadExecutor.MSG_FMT_SUM_METRICS,
+					//
+					WSMockServlet.class.getSimpleName(),
+					counterAllSucc.getCount(), counterAllFail.getCount(),
+					//
+					(float) allDurSnapshot.getMin() / LoadExecutor.BILLION,
+					(float) allDurSnapshot.getMedian() / LoadExecutor.BILLION,
+					(float) allDurSnapshot.getMean() / LoadExecutor.BILLION,
+					(float) allDurSnapshot.getMax() / LoadExecutor.BILLION,
+					//
+					allTP.getMeanRate(),
+					allTP.getOneMinuteRate(),
+					allTP.getFiveMinuteRate(),
+					allTP.getFifteenMinuteRate(),
+					//
+					allBW.getMeanRate() / LoadExecutor.MIB,
+					allBW.getOneMinuteRate() / LoadExecutor.MIB,
+					allBW.getFiveMinuteRate() / LoadExecutor.MIB,
+					allBW.getFifteenMinuteRate() / LoadExecutor.MIB
+			)
+		);
+
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Request handling methods ////////////////////////////////////////////////////////////////////
