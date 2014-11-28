@@ -1,13 +1,13 @@
 package com.emc.mongoose.run;
-
+//
 import com.emc.mongoose.util.conf.RunTimeConfig;
+//
 import org.apache.logging.log4j.ThreadContext;
-
 /**
  * Created by gusakk on 11/13/14.
  */
-public class ThreadContextMap {
-	// TODO validate the variant below
+public final class ThreadContextMap {
+	//
 	public static void initThreadContextMap() {
 		if (Main.RUN_TIME_CONFIG.get() != null) {
 			final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();

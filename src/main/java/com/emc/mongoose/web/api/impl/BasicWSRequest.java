@@ -51,7 +51,7 @@ implements WSRequest<T> {
 	public final static WSRequest<WSObject> POISON = new BasicWSRequest<WSObject>() {
 		@Override
 		public final void execute()
-			throws InterruptedException {
+		throws InterruptedException {
 			throw new InterruptedException("Attempted to eat the poison");
 		}
 	};
@@ -94,8 +94,8 @@ implements WSRequest<T> {
 			this.wsReqConf = (WSRequestConfig<T>) reqConf;
 			switch(wsReqConf.getLoadType()) {
 				case CREATE:
-					httpRequest = com.emc.mongoose.web.api.impl.provider
-						.atmos.RequestConfig.class.isInstance(wsReqConf) ?
+					httpRequest = com.emc.mongoose.web.api.impl.provider.atmos.RequestConfig
+						.class.isInstance(wsReqConf) ?
 							new HttpPost() : new HttpPut();
 					break;
 				case READ:
@@ -139,6 +139,7 @@ implements WSRequest<T> {
 		final CloseableHttpClient httpClient = wsReqConf.getClient();
 		//
 		try(final CloseableHttpResponse httpResponse = httpClient.execute(httpRequest)) {
+			latency = System.nanoTime() - start;
 			final StatusLine statusLine = httpResponse.getStatusLine();
 			if(statusLine==null) {
 				LOG.warn(Markers.MSG, "No response status line");

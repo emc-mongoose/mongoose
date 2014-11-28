@@ -15,6 +15,7 @@
 				{
 					"name": "WebUI",
 					"type": "WebUI",
+					"enabled": "false",
 					"Filters": {
 						"Filter": [
 							{
@@ -477,6 +478,16 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.web.load.impl.type",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				},
+
+				// WebStorage mock
+				{
+					"name": "com.emc.mongoose.web.storagemock",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {

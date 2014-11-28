@@ -1,33 +1,20 @@
 package com.emc.mongoose.web.ui;
 //
-import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.run.Scenario;
 import com.emc.mongoose.run.ThreadContextMap;
-import com.emc.mongoose.web.data.WSObject;
-import com.emc.mongoose.web.load.WSLoadBuilder;
-import com.emc.mongoose.web.load.client.WSLoadBuilderClient;
-import com.emc.mongoose.web.load.impl.BasicLoadBuilder;
-import com.emc.mongoose.web.load.WSLoadExecutor;
-import com.emc.mongoose.web.load.client.impl.BasicLoadBuilderClient;
-import com.emc.mongoose.web.load.client.WSLoadClient;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
-import com.emc.mongoose.run.WSMockServlet;
+import com.emc.mongoose.web.storagemock.MockServlet;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.ui.enums.RunModes;
-import com.emc.mongoose.web.ui.logging.WebUIAppender;
-import org.apache.commons.configuration.ConversionException;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.core.LogEvent;
 //
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -36,11 +23,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 /**
  * Created by gusakk on 01/10/14.
  */
@@ -160,7 +144,7 @@ public final class StartServlet extends HttpServlet {
 				ThreadContextMap.initThreadContextMap();
 				//
 				LOG.debug(Markers.MSG, message);
-				new WSMockServlet(runTimeConfig).run();
+				new MockServlet(runTimeConfig).run();
 			}
 
 			@Override

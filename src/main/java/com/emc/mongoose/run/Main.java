@@ -1,6 +1,6 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.base.load.server.LoadSvc;
+import com.emc.mongoose.web.storagemock.MockServlet;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
@@ -10,16 +10,11 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.LifeCycle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.LifeCycle;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.appender.AsyncAppender;
-import org.apache.logging.log4j.core.async.AsyncLogger;
-import org.apache.logging.log4j.core.async.AsyncLoggerConfig;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.status.StatusConsoleListener;
-import org.omg.SendingContext.RunTime;
 //
 import java.io.File;
 import java.io.IOException;
@@ -29,7 +24,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.rmi.RemoteException;
 import java.security.Policy;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -148,7 +142,7 @@ public final class Main {
 			case RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
 				try {
-					new WSMockServlet(RUN_TIME_CONFIG.get()).run();
+					new MockServlet(RUN_TIME_CONFIG.get()).run();
 				} catch (final Exception e) {
 					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
 				}
@@ -156,7 +150,7 @@ public final class Main {
 			case RUN_MODE_CLIENT:
 			case RUN_MODE_STANDALONE:
 			case RUN_MODE_COMPAT_CLIENT:
-				new Scenario(RUN_TIME_CONFIG.get()).run();
+				new Scenario().run();
 				break;
 			default:
 				throw new IllegalArgumentException(
@@ -186,6 +180,7 @@ public final class Main {
 		System.setProperty(
 			"Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
 		);
+		// StatusConsoleListener statusListener = new StatusConsoleListener(Level.OFF);
 		// determine the logger configuration file path
 		final Path logConfPath = Paths.get(
 			DIR_ROOT, DIR_CONF, DIR_LOGGING,

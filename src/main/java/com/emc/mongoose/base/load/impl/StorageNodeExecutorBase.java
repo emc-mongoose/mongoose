@@ -50,7 +50,7 @@ implements StorageNodeExecutor<T> {
 	private final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
 	private final Counter counterSubmParent, counterRejParent, counterReqSuccParent, counterReqFailParent;
 	private final Meter reqBytes, reqBytesParent;
-	private final Histogram reqDur, reqDurParent;
+	private final Histogram reqDur, reqDurParent, respLatency, respLatencyParent;
 	//
 	private volatile Consumer<T> consumer = null;
 	//
@@ -110,6 +110,13 @@ implements StorageNodeExecutor<T> {
 		);
 		reqDurParent = parentMetrics.getHistograms().get(
 			MetricRegistry.name(parentName, LoadExecutor.METRIC_NAME_REQ, LoadExecutor.METRIC_NAME_DUR)
+		);
+		//
+		respLatency = parentMetrics.histogram(
+			MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_REQ, LoadExecutor.METRIC_NAME_LAT)
+		);
+		respLatencyParent = parentMetrics.getHistograms().get(
+			MetricRegistry.name(parentName, LoadExecutor.METRIC_NAME_REQ, LoadExecutor.METRIC_NAME_LAT)
 		);
 		//
 		reqBytes = parentMetrics.meter(
@@ -222,11 +229,14 @@ implements StorageNodeExecutor<T> {
 						counterReqSuccParent.inc();
 						final long
 							duration = request.getDuration(),
+							latency = request.getLatency(),
 							size = request.getTransferSize();
 						reqBytes.mark(size);
 						reqBytesParent.mark(size);
 						reqDur.update(duration);
 						reqDurParent.update(duration);
+						respLatency.update(latency);
+						respLatencyParent.update(latency);
 						// feed to the consumer
 						if(consumer != null) {
 							try {
@@ -297,7 +307,9 @@ implements StorageNodeExecutor<T> {
 	}
 	//
 	public final void logMetrics(final Level logLevel, final Marker logMarker) {
-		final Snapshot reqDurSnapshot = reqDur.getSnapshot();
+		final Snapshot
+			reqDurSnapshot = reqDur.getSnapshot(),
+			respLatencySnapshot = respLatency.getSnapshot();
 		final long
 			countReqSucc = counterReqSucc.getCount(),
 			countBytes = reqBytes.getCount();
@@ -319,6 +331,11 @@ implements StorageNodeExecutor<T> {
 				(float) reqDurSnapshot.getMedian() / BILLION,
 				(float) reqDurSnapshot.getMax() / BILLION,
 				//
+				(float) respLatencySnapshot.getMean() / BILLION,
+				(float) respLatencySnapshot.getMin() / BILLION,
+				(float) respLatencySnapshot.getMedian() / BILLION,
+				(float) respLatencySnapshot.getMax() / BILLION,
+				//
 				avgSize == 0 ? 0 : meanBW / avgSize,
 				avgSize == 0 ? 0 : oneMinBW / avgSize,
 				avgSize == 0 ? 0 : fiveMinBW / avgSize,
@@ -331,10 +348,15 @@ implements StorageNodeExecutor<T> {
 				//
 				countReqSucc, getQueue().size() + getActiveCount(), counterReqFail.getCount(),
 				//
+				(float) reqDurSnapshot.getMean() / BILLION,
 				(float) reqDurSnapshot.getMin() / BILLION,
 				(float) reqDurSnapshot.getMedian() / BILLION,
-				(float) reqDurSnapshot.getMean() / BILLION,
 				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				(float) respLatencySnapshot.getMean() / BILLION,
+				(float) respLatencySnapshot.getMin() / BILLION,
+				(float) respLatencySnapshot.getMedian() / BILLION,
+				(float) respLatencySnapshot.getMax() / BILLION,
 				//
 				avgSize == 0 ? 0 : meanBW / avgSize,
 				avgSize == 0 ? 0 : oneMinBW / avgSize,

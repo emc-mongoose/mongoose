@@ -27,9 +27,9 @@ import java.util.logging.Level;
 /**
  * Created by olga on 24.10.14.
  */
-@Plugin(name="Hibernate", category="Core", elementType="appender", printObject=true)
+@Plugin(name="hibernate", category="Core", elementType="appender", printObject=true)
 public final class HibernateAppender
-		extends AbstractAppender{
+extends AbstractAppender {
 	//
 	private final static Layout<? extends Serializable>
 			DEFAULT_LAYOUT = SerializedLayout.createLayout();
@@ -50,8 +50,10 @@ public final class HibernateAppender
 		KEY_RUN_MODE = "run.mode";
 	//
 	private HibernateAppender(
-			final String name, final Filter filter,	final Layout<? extends Serializable> layout) {
-		super(name, filter, layout);
+		final String name, final Filter filter,
+		final Layout<? extends Serializable> layout, final boolean ignoreExceptions
+	) {
+		super(name, filter, layout, ignoreExceptions);
 	}
 	//
 	@PluginFactory
@@ -79,14 +81,13 @@ public final class HibernateAppender
 				initDataBase(userName, passWord, url);
 				setStatusEntity();
 			}
-			newAppender = new HibernateAppender(name, filter, DEFAULT_LAYOUT);
+			newAppender = new HibernateAppender(name, filter, DEFAULT_LAYOUT, ignoreExceptions);
 		} catch (final Exception e) {
 			throw new IllegalStateException("Open DB session failed", e);
 		}
 		return newAppender;
 	}
 	// init database session with username,password and url
-	@Deprecated
 	private static void initDataBase(
 			final String userName, final String passWord, final String url
 	) {
@@ -152,9 +153,9 @@ public final class HibernateAppender
 				.setProperty("hibernate.connection.url", url)
 				.buildSessionFactory();
 		}
-		catch (Throwable ex) {
+		catch(final Exception e) {
 			// Make sure you log the exception, as it might be swallowed
-			throw new ExceptionInInitializerError("Initial SessionFactory creation failed. "+ex);
+			throw new ExceptionInInitializerError(e);
 		}
 		return newSessionFactory;
 	}

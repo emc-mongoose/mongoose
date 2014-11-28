@@ -66,7 +66,7 @@ implements LoadExecutor<T> {
 	protected final MetricRegistry metrics = new MetricRegistry();
 	protected final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
 	protected final Meter reqBytes;
-	protected Histogram reqDur;
+	protected Histogram reqDur, respLatency;
 	//
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter metricsReporter;
@@ -124,6 +124,7 @@ implements LoadExecutor<T> {
 		counterReqFail = metrics.counter(MetricRegistry.name(name, METRIC_NAME_FAIL));
 		reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));
 		reqDur = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR));
+		respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
 		metricsReporter.start();
 		// prepare the node executors array
 		nodes = new StorageNodeExecutor[nodeCount];
@@ -424,7 +425,9 @@ implements LoadExecutor<T> {
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
-		final Snapshot reqDurSnapshot = reqDur.getSnapshot();
+		final Snapshot
+			reqDurSnapshot = reqDur.getSnapshot(),
+			respLatencySnapshot = respLatency.getSnapshot();
 		//
 		int notCompletedTaskCount = 0;
 		for(final StorageNodeExecutor<T> nodeExecutor: nodes) {
@@ -444,6 +447,11 @@ implements LoadExecutor<T> {
 				(float) reqDurSnapshot.getMedian() / BILLION,
 				(float) reqDurSnapshot.getMax() / BILLION,
 				//
+				(float) respLatencySnapshot.getMean() / BILLION,
+				(float) respLatencySnapshot.getMin() / BILLION,
+				(float) respLatencySnapshot.getMedian() / BILLION,
+				(float) respLatencySnapshot.getMax() / BILLION,
+				//
 				avgSize == 0 ? 0 : meanBW / avgSize,
 				avgSize == 0 ? 0 : oneMinBW / avgSize,
 				avgSize == 0 ? 0 : fiveMinBW / avgSize,
@@ -459,10 +467,15 @@ implements LoadExecutor<T> {
 				//
 				countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
 				//
+				(float) reqDurSnapshot.getMean() / BILLION,
 				(float) reqDurSnapshot.getMin() / BILLION,
 				(float) reqDurSnapshot.getMedian() / BILLION,
-				(float) reqDurSnapshot.getMean() / BILLION,
 				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				(float) respLatencySnapshot.getMean() / BILLION,
+				(float) respLatencySnapshot.getMin() / BILLION,
+				(float) respLatencySnapshot.getMedian() / BILLION,
+				(float) respLatencySnapshot.getMax() / BILLION,
 				//
 				avgSize == 0 ? 0 : meanBW / avgSize,
 				avgSize == 0 ? 0 : oneMinBW / avgSize,
