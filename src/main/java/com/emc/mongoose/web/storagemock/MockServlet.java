@@ -338,7 +338,7 @@ public final class MockServlet
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet input stream failed");
 		}catch (final NumberFormatException e){
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
