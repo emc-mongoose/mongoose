@@ -1,5 +1,9 @@
 package com.emc.mongoose.web.ui;
 
+import com.emc.mongoose.run.Main;
+import com.emc.mongoose.web.ui.logging.WebUIAppender;
+import org.apache.logging.log4j.core.LogEvent;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
@@ -24,7 +28,7 @@ public final class StopServlet extends HttpServlet {
 
 	public final void doPost(final HttpServletRequest request, final HttpServletResponse response)
     throws ServletException, IOException {
-		StartServlet.interruptMongoose(request.getParameter("run.id"));
+		StartServlet.interruptMongoose(request.getParameter("run.id"), request.getParameter("type"));
 		stoppedRunModes.put(request.getParameter("run.id"), true);
 		request.getSession(true).setAttribute("stopped", stoppedRunModes);
     }

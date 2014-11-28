@@ -36,7 +36,7 @@
 					<li class="active"><a href="#configuration" data-toggle="tab">Configuration</a></li>
 					<c:forEach var="mode" items="${sessionScope.runmodes}">
 						<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
-						<li><a href="#${correctMode}" data-toggle="tab">${mode}</a></li>
+						<li><a href="#${correctMode}" data-toggle="tab">${mode}<span class="glyphicon glyphicon-remove" value="${correctMode}"></span></a></li>
 					</c:forEach>
 				</ul>
 			</div>
@@ -132,6 +132,9 @@
 										<input name="data.count" id="data.count" type="text" class="form-control counter" value="${runTimeConfig.dataCount}">
 									</div>
 								</div>
+								<label for="run.id">run.id:</label>
+								<input id="run.id" name="run.id" type="text" class="form-control" placeholder="${runTimeConfig.runId}">
+								<br>
 								<label for="run.metrics.period.sec">run.metrics.period.sec:</label>
 								<input id="run.metrics.period.sec" name="run.metrics.period.sec" type="text" class="form-control counter" value="${runTimeConfig.runMetricsPeriodSec}">
 							</fieldset>

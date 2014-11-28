@@ -169,6 +169,10 @@ legend.scheduler-border {
 	border-radius: 5px;
 }
 
+.log-wrapper {
+	min-width: 1200px;
+}
+
 .right-side .tab-content {
 	word-wrap: break-word;
 	height: 800px;
@@ -186,8 +190,12 @@ legend.scheduler-border {
 	vertical-align: top;
 }
 
+.operations, .interfaces {
+	min-width: 700px;
+}
+
 .run-limits {
-	height: 300px;
+	height: 350px;
 }
 
 table {
@@ -293,4 +301,13 @@ img {
 	min-width: 330px;
 	max-width: 70%;
 	vertical-align: middle;
+}
+
+.glyphicon-remove {
+	margin-left: 10px;
+	vertical-align: top;
+}
+
+.glyphicon-remove:hover {
+	color: #D43F3A;
 }

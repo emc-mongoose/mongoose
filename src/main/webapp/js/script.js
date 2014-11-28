@@ -193,21 +193,51 @@ $(document).ready(function() {
 	// Start mongoose
 	$(document).on('submit', '#mainForm',  function(e) {
 		e.preventDefault();
-		$.post("/start", $("#mainForm").serialize(), function(data, status) {
-			location.reload();
-		});
+		onStartButtonPressed();
 	});
+
+	function onStartButtonPressed() {
+		$.post("/start", $("#mainForm").serialize(), function(data, status) {
+			if (data) {
+				if (confirm("Are you sure? " + data) === true) {
+					$.post("/stop", { "run.id" : $("#run\\.id").val(), "type" : "remove" }, function(data, status) {
+						if (status) {
+							onStartButtonPressed();
+						}
+					}).fail(function() {
+						alert("Internal Server Error");
+					});
+				} else {
+					//	do nothing
+				}
+			} else {
+				location.reload();
+			}
+		});
+	}
 
 	// Stop mongoose
 	$(".stop").click(function() {
 		var currentButton = $(this);
 		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".");
-		$.post("/stop", { "run.id" : currentRunId }, function() {
+		$.post("/stop", { "run.id" : currentRunId, "type" : "stop" }, function() {
 			currentButton.remove();
 		}).fail(function() {
 			alert("Internal Server Error");
 			currentButton.remove();
 		});
+	});
+
+	$(".glyphicon-remove").click(function() {
+		var currentElement = $(this);
+		var currentRunId = $(this).attr("value");
+		if (confirm("Are you sure? This action will stop Mongoose which is running on this run.id") === true) {
+			$.post("/stop", { "run.id" : currentRunId.split("_").join("."), "type" : "remove" }, function() {
+				$("#" + currentRunId).remove();
+				currentElement.parent().remove();
+				$('a[href="#configuration"]').tab('show');
+			});
+		}
 	});
 
 	// Clear logs content
