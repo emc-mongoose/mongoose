@@ -43,19 +43,12 @@ public final class LogSocket implements WebSocketLogListener {
 		this.session = session;
 		//
 		WebUIAppender.register(this);
-		sendMessagesOnConnect(WebUIAppender.getLogEventsList());
 		LOG.trace(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
 	}
 
 	@OnWebSocketMessage
 	public final void onMessage(final String message) {
 		LOG.trace(Markers.MSG, "Message from Browser {}", message);
-	}
-
-	public final synchronized void sendMessagesOnConnect(final List<LogEvent> logEvents) {
-		for (final LogEvent logEvent : logEvents) {
-			sendMessage(logEvent);
-		}
 	}
 
 	@Override

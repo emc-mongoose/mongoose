@@ -22,10 +22,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public final class WebUIAppender
 extends AbstractAppender {
 	//
-	private static List<WebSocketLogListener> listeners;
+	private final static List<WebSocketLogListener> LISTENERS = new CopyOnWriteArrayList<>();
 	//
-	private static List<LogEvent> logEvents;
-	//
+	private static final List<LogEvent> logEvents = new LinkedList<>();
 	private final static Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
 	//
@@ -33,8 +32,6 @@ extends AbstractAppender {
 			final String name, final Filter filter, final Layout<? extends Serializable> layout
 	) {
 		super(name, filter, layout);
-		listeners = new CopyOnWriteArrayList<>();
-		logEvents = new CopyOnWriteArrayList<>();
 	}
 	//
 	@PluginFactory
@@ -51,21 +48,32 @@ extends AbstractAppender {
 	}
 	//
 	public static void register(final WebSocketLogListener listener) {
-		listeners.add(listener);
+		try {
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		sendLogEventsList(listener);
+		LISTENERS.add(listener);
 	}
 
 	public static void unregister(final WebSocketLogListener listener) {
-		listeners.remove(listener);
+		LISTENERS.remove(listener);
 	}
 
-	public static List<LogEvent> getLogEventsList() {
-		return logEvents;
+	public static synchronized void sendLogEventsList(final WebSocketLogListener listener) {
+		System.out.println("A");
+		for (LogEvent logEvent : logEvents) {
+			listener.sendMessage(logEvent);
+		}
 	}
+
 	//
 	@Override
-	public final void append(final LogEvent event) {
+	public synchronized final void append(final LogEvent event) {
+		System.out.println("B");
 		logEvents.add(event);
-		for (WebSocketLogListener listener : listeners) {
+		for (WebSocketLogListener listener : LISTENERS) {
 			listener.sendMessage(event);
 		}
 	}
