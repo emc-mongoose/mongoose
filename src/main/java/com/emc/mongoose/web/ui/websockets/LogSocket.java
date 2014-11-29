@@ -14,7 +14,11 @@ import org.apache.logging.log4j.core.LogEvent;
 //
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketException;
-import org.eclipse.jetty.websocket.api.annotations.*;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 //
 import java.io.IOException;
 import java.util.List;
@@ -38,7 +42,7 @@ implements WebSocketLogListener {
 	@OnWebSocketError
 	public final void onError(final Throwable t) {
 		WebUIAppender.unregister(this);
-		ExceptionHandler.trace(LOG, Level.WARN, t, "WebSocket failure");
+		ExceptionHandler.trace(LOG, Level.DEBUG, t, "WebSocket failure");
 	}
 	//
 	@OnWebSocketConnect
@@ -66,7 +70,7 @@ implements WebSocketLogListener {
 		try {
 			session.getRemote().sendString(gson.toJson(message));
 		} catch (final IOException|WebSocketException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "WebSocket failure");
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "WebSocket failure");
 		}
 	}
 }
