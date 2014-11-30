@@ -1,6 +1,8 @@
 package com.emc.mongoose.web.ui.logging;
 //
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.ui.websockets.interfaces.WebSocketLogListener;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -12,8 +14,10 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.SerializedLayout;
 //
 import java.io.Serializable;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  Created by kurila on 23.10.14.
@@ -21,10 +25,11 @@ import java.util.concurrent.CopyOnWriteArrayList;
 @Plugin(name="WebUI", category="Core", elementType="appender", printObject=true)
 public final class WebUIAppender
 extends AbstractAppender {
+	private final static int MAX_ELEMENTS_IN_THE_LIST = 10000;
 	//
-	private final static List<WebSocketLogListener> LISTENERS = new CopyOnWriteArrayList<>();
+	private final static ConcurrentHashMap<String, CircularFifoQueue<LogEvent>> LOG_EVENTS_MAP = new ConcurrentHashMap<>();
+	private final static List<WebSocketLogListener> LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
 	//
-	private static final List<LogEvent> logEvents = new LinkedList<>();
 	private final static Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
 	//
@@ -47,32 +52,30 @@ extends AbstractAppender {
 		return new WebUIAppender(name, filter, DEFAULT_LAYOUT);
 	}
 	//
-	public static void register(final WebSocketLogListener listener) {
-		try {
-			Thread.sleep(3000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		sendLogEventsList(listener);
+	public synchronized static void register(final WebSocketLogListener listener) {
+		sendPreviousLogs(listener);
 		LISTENERS.add(listener);
 	}
-
-	public static void unregister(final WebSocketLogListener listener) {
+	//
+	public synchronized static void unregister(final WebSocketLogListener listener) {
 		LISTENERS.remove(listener);
 	}
-
-	public static synchronized void sendLogEventsList(final WebSocketLogListener listener) {
-		System.out.println("A");
-		for (LogEvent logEvent : logEvents) {
-			listener.sendMessage(logEvent);
+	//
+	public synchronized static void sendPreviousLogs(final WebSocketLogListener listener) {
+		for (CircularFifoQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
+			for (LogEvent logEvent : queue) {
+				listener.sendMessage(logEvent);
+			}
 		}
 	}
-
 	//
 	@Override
 	public synchronized final void append(final LogEvent event) {
-		System.out.println("B");
-		logEvents.add(event);
+		String currentRunId = event.getContextMap().get(Main.KEY_RUN_ID);
+		if (LOG_EVENTS_MAP.get(currentRunId) == null) {
+			LOG_EVENTS_MAP.put(currentRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST));
+		}
+		LOG_EVENTS_MAP.get(currentRunId).add(event);
 		for (WebSocketLogListener listener : LISTENERS) {
 			listener.sendMessage(event);
 		}

@@ -47,7 +47,7 @@
 
 						<select name="run.mode">
 							<option>standalone</option>
-							<option>distributed</option>
+							<option>client</option>
 							<option>server</option>
 							<option>wsmock</option>
 						</select>
