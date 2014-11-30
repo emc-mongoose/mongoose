@@ -17,6 +17,8 @@ extends Callable<Request<T>>, Closeable {
 		CREATE, READ, DELETE, UPDATE, APPEND
 	}
 	//
+	String FMT_PERF_TRACE = "%s,%x,%x,%x,%x,%x";
+	//
 	enum Result {
 		SUCC(0, "Success"),
 		FAIL_CLIENT(1, "Client failure/invalid request"),
@@ -48,6 +50,8 @@ extends Callable<Request<T>>, Closeable {
 	long getStartTime();
 	//
 	long getDuration();
+	//
+	long getLatency();
 	//
 	void execute()
 	throws Exception;

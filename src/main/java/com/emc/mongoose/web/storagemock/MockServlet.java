@@ -1,4 +1,4 @@
-package com.emc.mongoose.run;
+package com.emc.mongoose.web.storagemock;
 //
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
@@ -37,22 +37,22 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 //
 /**
  * Created by olga on 30.09.14.
  */
-public final class WSMockServlet
+public final class MockServlet
 		extends HttpServlet
 		implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final int port;
 	private Server server;
-	private final Map<String, BasicWSObject> mapDataObject = new ConcurrentHashMap<>();
+	private final Map<String, BasicWSObject> mapDataObject = new HashMap<>();
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
 	private final static String
@@ -75,7 +75,7 @@ public final class WSMockServlet
 	private static int MAX_PAGE_SIZE;
 	// METRICS section END
 	private long metricsUpdatePeriodSec;
-	public WSMockServlet(final RunTimeConfig runTimeConfig) {
+	public MockServlet(final RunTimeConfig runTimeConfig) {
 		//
 		metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 		MAX_PAGE_SIZE = (int) runTimeConfig.getDataPageSize();
@@ -87,64 +87,64 @@ public final class WSMockServlet
 				.registerWith(mBeanServer)
 				.build();
 		// init metrics
-		counterAllSucc = metrics.counter(MetricRegistry.name(WSMockServlet.class,
+		counterAllSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
 				ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterAllFail = metrics.counter(MetricRegistry.name(WSMockServlet.class,
+		counterAllFail = metrics.counter(MetricRegistry.name(MockServlet.class,
 				ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		durAll = metrics.histogram(MetricRegistry.name(WSMockServlet.class,
+		durAll = metrics.histogram(MetricRegistry.name(MockServlet.class,
 				ALL_METHODS, LoadExecutor.METRIC_NAME_DUR));
-		allTP = metrics.meter(MetricRegistry.name(WSMockServlet.class,
+		allTP = metrics.meter(MetricRegistry.name(MockServlet.class,
 				ALL_METHODS, LoadExecutor.METRIC_NAME_TP));
-		allBW = metrics.meter(MetricRegistry.name(WSMockServlet.class,
+		allBW = metrics.meter(MetricRegistry.name(MockServlet.class,
 				ALL_METHODS, LoadExecutor.METRIC_NAME_BW));
 		//
-		counterGetSucc = metrics.counter(MetricRegistry.name(WSMockServlet.class,
+		counterGetSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
 				HttpGet.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterGetFail = metrics.counter(MetricRegistry.name(WSMockServlet.class,
+		counterGetFail = metrics.counter(MetricRegistry.name(MockServlet.class,
 				HttpGet.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		durGet = metrics.histogram(MetricRegistry.name(WSMockServlet.class,
+		durGet = metrics.histogram(MetricRegistry.name(MockServlet.class,
 				HttpGet.METHOD_NAME, LoadExecutor.METRIC_NAME_DUR));
-		getBW = metrics.meter(MetricRegistry.name(WSMockServlet.class,
+		getBW = metrics.meter(MetricRegistry.name(MockServlet.class,
 				HttpGet.METHOD_NAME, LoadExecutor.METRIC_NAME_BW));
-		getTP = metrics.meter(MetricRegistry.name(WSMockServlet.class,
+		getTP = metrics.meter(MetricRegistry.name(MockServlet.class,
 				HttpGet.METHOD_NAME, LoadExecutor.METRIC_NAME_TP));
 		//
-		counterPostSucc = metrics.counter(MetricRegistry.name(WSMockServlet.class,
+		counterPostSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
 				HttpPost.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterPostFail = metrics.counter(MetricRegistry.name(WSMockServlet.class,
+		counterPostFail = metrics.counter(MetricRegistry.name(MockServlet.class,
 				HttpPost.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		durPost = metrics.histogram(MetricRegistry.name(WSMockServlet.class,
+		durPost = metrics.histogram(MetricRegistry.name(MockServlet.class,
 				HttpPost.METHOD_NAME, LoadExecutor.METRIC_NAME_DUR));
-		postBW = metrics.meter(MetricRegistry.name(WSMockServlet.class,
+		postBW = metrics.meter(MetricRegistry.name(MockServlet.class,
 				HttpPost.METHOD_NAME, LoadExecutor.METRIC_NAME_BW));
-		postTP = metrics.meter(MetricRegistry.name(WSMockServlet.class,
+		postTP = metrics.meter(MetricRegistry.name(MockServlet.class,
 				HttpPost.METHOD_NAME, LoadExecutor.METRIC_NAME_TP));
 		//
-		counterPutSucc = metrics.counter(MetricRegistry.name(WSMockServlet.class,
+		counterPutSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
 				HttpPut.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterPutFail = metrics.counter(MetricRegistry.name(WSMockServlet.class,
+		counterPutFail = metrics.counter(MetricRegistry.name(MockServlet.class,
 				HttpPut.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		durPut = metrics.histogram(MetricRegistry.name(WSMockServlet.class,
+		durPut = metrics.histogram(MetricRegistry.name(MockServlet.class,
 				HttpPut.METHOD_NAME, LoadExecutor.METRIC_NAME_DUR));
-		putBW = metrics.meter(MetricRegistry.name(WSMockServlet.class,
+		putBW = metrics.meter(MetricRegistry.name(MockServlet.class,
 				HttpPut.METHOD_NAME, LoadExecutor.METRIC_NAME_BW));
-		putTP = metrics.meter(MetricRegistry.name(WSMockServlet.class,
+		putTP = metrics.meter(MetricRegistry.name(MockServlet.class,
 				HttpPut.METHOD_NAME, LoadExecutor.METRIC_NAME_TP));
 		//
-		counterDeleteSucc = metrics.counter(MetricRegistry.name(WSMockServlet.class,
+		counterDeleteSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
 				HttpDelete.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterDeleteFail = metrics.counter(MetricRegistry.name(WSMockServlet.class,
+		counterDeleteFail = metrics.counter(MetricRegistry.name(MockServlet.class,
 				HttpDelete.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		durDelete = metrics.histogram(MetricRegistry.name(WSMockServlet.class,
+		durDelete = metrics.histogram(MetricRegistry.name(MockServlet.class,
 				HttpDelete.METHOD_NAME, LoadExecutor.METRIC_NAME_DUR));
-		deleteBW = metrics.meter(MetricRegistry.name(WSMockServlet.class,
+		deleteBW = metrics.meter(MetricRegistry.name(MockServlet.class,
 				HttpDelete.METHOD_NAME, LoadExecutor.METRIC_NAME_BW));
-		deleteTP = metrics.meter(MetricRegistry.name(WSMockServlet.class,
+		deleteTP = metrics.meter(MetricRegistry.name(MockServlet.class,
 				HttpDelete.METHOD_NAME, LoadExecutor.METRIC_NAME_TP));
 		//
-		counterHeadSucc = metrics.counter(MetricRegistry.name(WSMockServlet.class,
+		counterHeadSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
 				HttpHead.METHOD_NAME, LoadExecutor.METRIC_NAME_SUCC));
-		counterHeadFail = metrics.counter(MetricRegistry.name(WSMockServlet.class,
+		counterHeadFail = metrics.counter(MetricRegistry.name(MockServlet.class,
 				HttpHead.METHOD_NAME, LoadExecutor.METRIC_NAME_FAIL));
 		//
 		metricsReporter.start();
@@ -199,13 +199,17 @@ public final class WSMockServlet
 		}
 	}
 	//
+	private final static String
+		MSG_FMT_METRICS = "count=(%d/%d); duration[s]=(%.6f/%.6f/%.6f/%.6f); " +
+			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
+	//
 	private void printMetrics(){
 		final Snapshot allDurSnapshot = durAll.getSnapshot();
 		LOG.info(
 			Markers.PERF_AVG,
 			String.format(Locale.ROOT, LoadExecutor.MSG_FMT_SUM_METRICS,
 			//
-				WSMockServlet.class.getSimpleName(),
+				MockServlet.class.getSimpleName(),
 				counterAllSucc.getCount(), counterAllFail.getCount(),
 				//
 				(float) allDurSnapshot.getMin() / LoadExecutor.BILLION,
@@ -230,7 +234,7 @@ public final class WSMockServlet
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	protected final void doGet(
-			final HttpServletRequest request, final HttpServletResponse response
+		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Get ");
 		response.setStatus(HttpServletResponse.SC_OK);

@@ -1,6 +1,6 @@
 {
 	"configuration": {
-		"status": "info",
+		"status": "off",
 		"name": "mongoose",
 		"monitorInterval": "1000",
 		"properties": {
@@ -9,12 +9,13 @@
 				"value": "${sys:dir.root}${sys:file.separator}log${sys:file.separator}${sys:run.mode}${sys:file.separator}"
 			}
 		},
-		"shutdownHook": "enable",
+		"shutdownHook": "disable",
 		"appenders": {
 			"appender" : [
 				{
 					"name": "WebUI",
 					"type": "WebUI",
+					"enabled": "false",
 					"Filters": {
 						"Filter": [
 							{
@@ -249,7 +250,7 @@
 					"name": "async",
 					"type": "Async",
 					"blocking": "false",
-					"bufferSize": "131072",
+					"bufferSize": "1048576",
 					"AppenderRef": [
 						{ "ref": "stdout" },
 						{ "ref": "msgFile" },
@@ -474,6 +475,16 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.web.load.impl.type",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				},
+
+				// WebStorage mock
+				{
+					"name": "com.emc.mongoose.web.storagemock",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {

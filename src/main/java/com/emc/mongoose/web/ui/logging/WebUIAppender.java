@@ -14,6 +14,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.SerializedLayout;
 //
 import java.io.Serializable;
+import java.util.List;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,7 +35,8 @@ extends AbstractAppender {
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
 	//
 	private WebUIAppender(
-			final String name, final Filter filter, final Layout<? extends Serializable> layout
+		final String name, final Filter filter, final Layout<? extends Serializable> layout,
+		final boolean ignoreExceptions
 	) {
 		super(name, filter, layout);
 	}
@@ -49,7 +51,7 @@ extends AbstractAppender {
 			LOGGER.error("No name provided for CustomAppender");
 			return null;
 		}
-		return new WebUIAppender(name, filter, DEFAULT_LAYOUT);
+		return new WebUIAppender(name, filter, DEFAULT_LAYOUT, ignoreExceptions);
 	}
 	//
 	public synchronized static void register(final WebSocketLogListener listener) {

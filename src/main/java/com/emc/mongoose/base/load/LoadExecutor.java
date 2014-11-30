@@ -23,13 +23,15 @@ extends Producer<T>, Consumer<T> {
 		METRIC_NAME_TP = "TP",
 		METRIC_NAME_BW = "BW",
 		METRIC_NAME_DUR = "dur",
+		METRIC_NAME_LAT = "lat",
 		NAME_SEP = "@";
 	//
 	static String
-		MSG_FMT_METRICS = "count=(%d/%d/%d); duration[s]=(%.6f/%.6f/%.6f/%.6f); " +
+		MSG_FMT_METRICS = "count=(%d/%d/%d); " +
+			"latency[s]=(%.6f/%.6f/%.6f/%.6f); duration[s]=(%.6f/%.6f/%.6f/%.6f); " +
 			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)",
-		MSG_FMT_SUM_METRICS =
-			"%s: count=(%d/%d); duration[s]=(%.6f/%.6f/%.6f/%.6f); " +
+		MSG_FMT_SUM_METRICS = "\"%s\" summary: count=(%d/%d); " +
+			"latency[s]=(%.6f/%.6f/%.6f/%.6f); duration[s]=(%.6f/%.6f/%.6f/%.6f); " +
 			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
 	String getName()
