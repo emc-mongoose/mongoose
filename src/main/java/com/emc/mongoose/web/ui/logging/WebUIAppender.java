@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Plugin(name="WebUI", category="Core", elementType="appender", printObject=true)
 public final class WebUIAppender
 extends AbstractAppender {
-	private final static int MAX_ELEMENTS_IN_THE_LIST = 300;
+	private final static int MAX_ELEMENTS_IN_THE_LIST = 10000;
 	//
 	private final static ConcurrentHashMap<String, CircularConcurrentLinkedQueue<LogEvent>> LOG_EVENTS_MAP = new ConcurrentHashMap<>();
 	private final static List<WebSocketLogListener> LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
