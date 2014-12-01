@@ -54,12 +54,12 @@ extends AbstractAppender {
 		return new WebUIAppender(name, filter, DEFAULT_LAYOUT, ignoreExceptions);
 	}
 	//
-	public synchronized static void register(final WebSocketLogListener listener) {
+	public static void register(final WebSocketLogListener listener) {
 		sendPreviousLogs(listener);
 		LISTENERS.add(listener);
 	}
 	//
-	public synchronized static void unregister(final WebSocketLogListener listener) {
+	public static void unregister(final WebSocketLogListener listener) {
 		LISTENERS.remove(listener);
 	}
 	//
