@@ -208,9 +208,8 @@ public final class MockServlet
 		final Snapshot allDurSnapshot = durAll.getSnapshot();
 		LOG.info(
 			Markers.PERF_AVG,
-			String.format(Locale.ROOT, LoadExecutor.MSG_FMT_SUM_METRICS,
+			String.format(Locale.ROOT, MSG_FMT_METRICS,
 			//
-				MockServlet.class.getSimpleName(),
 				counterAllSucc.getCount(), counterAllFail.getCount(),
 				//
 				(float) allDurSnapshot.getMin() / LoadExecutor.BILLION,

@@ -1,8 +1,8 @@
 package com.emc.mongoose.web.ui.logging;
 //
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.pool.CircularConcurrentLinkedQueue;
 import com.emc.mongoose.web.ui.websockets.interfaces.WebSocketLogListener;
-import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -26,9 +26,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Plugin(name="WebUI", category="Core", elementType="appender", printObject=true)
 public final class WebUIAppender
 extends AbstractAppender {
-	private final static int MAX_ELEMENTS_IN_THE_LIST = 10000;
+	private final static int MAX_ELEMENTS_IN_THE_LIST = 300;
 	//
-	private final static ConcurrentHashMap<String, CircularFifoQueue<LogEvent>> LOG_EVENTS_MAP = new ConcurrentHashMap<>();
+	private final static ConcurrentHashMap<String, CircularConcurrentLinkedQueue<LogEvent>> LOG_EVENTS_MAP = new ConcurrentHashMap<>();
 	private final static List<WebSocketLogListener> LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
 	//
 	private final static Layout<? extends Serializable>
@@ -64,7 +64,7 @@ extends AbstractAppender {
 	}
 	//
 	public synchronized static void sendPreviousLogs(final WebSocketLogListener listener) {
-		for (CircularFifoQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
+		for (CircularConcurrentLinkedQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
 			for (LogEvent logEvent : queue) {
 				listener.sendMessage(logEvent);
 			}
@@ -75,7 +75,7 @@ extends AbstractAppender {
 	public synchronized final void append(final LogEvent event) {
 		String currentRunId = event.getContextMap().get(Main.KEY_RUN_ID);
 		if (LOG_EVENTS_MAP.get(currentRunId) == null) {
-			LOG_EVENTS_MAP.put(currentRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST));
+			LOG_EVENTS_MAP.put(currentRunId, new CircularConcurrentLinkedQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST));
 		}
 		LOG_EVENTS_MAP.get(currentRunId).add(event);
 		for (WebSocketLogListener listener : LISTENERS) {
