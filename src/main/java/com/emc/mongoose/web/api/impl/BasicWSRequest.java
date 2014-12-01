@@ -139,7 +139,7 @@ implements WSRequest<T> {
 		final CloseableHttpClient httpClient = wsReqConf.getClient();
 		//
 		try(final CloseableHttpResponse httpResponse = httpClient.execute(httpRequest)) {
-			latency = System.nanoTime() - start;
+			respStart = System.nanoTime();
 			final StatusLine statusLine = httpResponse.getStatusLine();
 			if(statusLine==null) {
 				LOG.warn(Markers.MSG, "No response status line");

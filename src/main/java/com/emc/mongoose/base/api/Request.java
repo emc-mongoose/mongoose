@@ -17,7 +17,7 @@ extends Callable<Request<T>>, Closeable {
 		CREATE, READ, DELETE, UPDATE, APPEND
 	}
 	//
-	String FMT_PERF_TRACE = "%s,%x,%x,%x,%x,%x";
+	String FMT_PERF_TRACE = "%s,%x,%x,%x,%x,%x,%x";
 	//
 	enum Result {
 		SUCC(0, "Success"),
@@ -28,7 +28,8 @@ extends Callable<Request<T>>, Closeable {
 		FAIL_CORRUPT(5, "Data item corruption"),
 		FAIL_IO(6, "I/O failure"),
 		FAIL_TIMEOUT(7, "Timeout"),
-		FAIL_UNKNOWN(8, "Unknown failure");
+		FAIL_UNKNOWN(8, "Unknown failure"),
+		FAIL_NO_SPACE(9, "Not enough space on the storage");
 		public final int code;
 		public final String description;
 		Result(final int code, final String description) {
@@ -47,11 +48,13 @@ extends Callable<Request<T>>, Closeable {
 	//
 	Result getResult();
 	//
-	long getStartTime();
+	long getReqStart();
 	//
-	long getDuration();
+	long getReqDone();
 	//
-	long getLatency();
+	long getRespStart();
+	//
+	long getRespDone();
 	//
 	void execute()
 	throws Exception;

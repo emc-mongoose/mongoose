@@ -114,12 +114,12 @@ implements LoadClient<T> {
 	@SuppressWarnings("FieldCanBeLocal")
 	private final GetValueTask<Long>
 		taskGetCountSubm, taskGetCountRej, taskGetCountSucc, taskGetCountFail,
-		taskGetDurMin, taskGetDurMax, taskGetLatencyMin, taskGetLatencyMax,
+		/*taskGetDurMin, taskGetDurMax,*/ taskGetLatencyMin, taskGetLatencyMax,
 		taskGetCountBytes, taskGetCountNanoSec;
 	private final GetValueTask<Double>
 		taskGetTPMean, taskGetTP1Min, taskGetTP5Min, taskGetTP15Min,
 		taskGetBWMean, taskGetBW1Min, taskGetBW5Min, taskGetBW15Min,
-		taskGetDurMed, taskGetDurAvg, taskGetLatencyMed, taskGetLatencyAvg;
+		/*taskGetDurMed, taskGetDurAvg,*/ taskGetLatencyMed, taskGetLatencyAvg;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private volatile long maxCount;
 	//
@@ -211,7 +211,7 @@ implements LoadClient<T> {
 			)
 		);
 		taskGetCountBytes = new GetValueTask<>(metricByteCount);
-		taskGetDurMin = new GetValueTask<>(
+		/*taskGetDurMin = new GetValueTask<>(
 			registerJmxGaugeMinLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MIN
 			)
@@ -220,7 +220,7 @@ implements LoadClient<T> {
 			registerJmxGaugeMaxLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MAX
 			)
-		);
+		);*/
 		taskGetLatencyMin = new GetValueTask<>(
 			registerJmxGaugeMinLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MIN
@@ -323,7 +323,7 @@ implements LoadClient<T> {
 		taskGetBW1Min = new GetValueTask<>(metricBW1Min);
 		taskGetBW5Min = new GetValueTask<>(metricBW5Min);
 		taskGetBW15Min = new GetValueTask<>(metricBW15Min);
-		taskGetDurMed = new GetValueTask<>(
+		/*taskGetDurMed = new GetValueTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MED
 			)
@@ -332,7 +332,7 @@ implements LoadClient<T> {
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_AVG
 			)
-		);
+		);*/
 		taskGetLatencyMed = new GetValueTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MED
@@ -750,7 +750,7 @@ implements LoadClient<T> {
 	Future<Double>
 		meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
 		meanBW, oneMinBW, fiveMinBW, fifteenMinBW,
-		medDur, avgDur, medLatency, avgLatency;
+		/*medDur, avgDur,*/ medLatency, avgLatency;
 	//
 	private void logMetrics(final Marker logMarker) {
 		//
@@ -762,8 +762,8 @@ implements LoadClient<T> {
 				countReqFail = mgmtConnExecutor.submit(taskGetCountFail);
 				//countNanoSec = mgmtConnExecutor.submit(taskGetCountNanoSec);
 				//countBytes = mgmtConnExecutor.submit(taskGetCountBytes);
-				minDur = mgmtConnExecutor.submit(taskGetDurMin);
-				maxDur = mgmtConnExecutor.submit(taskGetDurMax);
+				//minDur = mgmtConnExecutor.submit(taskGetDurMin);
+				//maxDur = mgmtConnExecutor.submit(taskGetDurMax);
 				minLatency = mgmtConnExecutor.submit(taskGetLatencyMin);
 				maxLatency = mgmtConnExecutor.submit(taskGetLatencyMax);
 				meanTP = mgmtConnExecutor.submit(taskGetTPMean);
@@ -774,8 +774,8 @@ implements LoadClient<T> {
 				oneMinBW = mgmtConnExecutor.submit(taskGetBW1Min);
 				fiveMinBW = mgmtConnExecutor.submit(taskGetBW5Min);
 				fifteenMinBW = mgmtConnExecutor.submit(taskGetBW15Min);
-				medDur = mgmtConnExecutor.submit(taskGetDurMed);
-				avgDur = mgmtConnExecutor.submit(taskGetDurAvg);
+				//medDur = mgmtConnExecutor.submit(taskGetDurMed);
+				//avgDur = mgmtConnExecutor.submit(taskGetDurAvg);
 				medLatency = mgmtConnExecutor.submit(taskGetLatencyMed);
 				avgLatency = mgmtConnExecutor.submit(taskGetLatencyAvg);
 			} catch(final RejectedExecutionException e) {
@@ -793,9 +793,6 @@ implements LoadClient<T> {
 					getName(),
 					countReqSucc.get(), countReqFail.get(),
 					//
-					avgDur.get() / BILLION, (double) minDur.get() / BILLION,
-					medDur.get() / BILLION, (double) maxDur.get() / BILLION,
-					//
 					avgLatency.get() / BILLION, (double) minLatency.get() / BILLION,
 					medLatency.get() / BILLION, (double) maxLatency.get() / BILLION,
 					//
@@ -810,9 +807,6 @@ implements LoadClient<T> {
 					countReqSucc.get(),
 					submitExecutor.getQueue().size() + submitExecutor.getActiveCount(),
 					countReqFail.get(),
-					//
-					avgDur.get() / BILLION, (double) minDur.get() / BILLION,
-					medDur.get() / BILLION, (double) maxDur.get() / BILLION,
 					//
 					avgLatency.get() / BILLION, (double) minLatency.get() / BILLION,
 					medLatency.get() / BILLION, (double) maxLatency.get() / BILLION,

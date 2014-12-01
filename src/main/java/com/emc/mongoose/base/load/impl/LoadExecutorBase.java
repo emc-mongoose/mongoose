@@ -66,7 +66,7 @@ implements LoadExecutor<T> {
 	protected final MetricRegistry metrics = new MetricRegistry();
 	protected final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
 	protected final Meter reqBytes;
-	protected Histogram reqDur, respLatency;
+	protected Histogram /*reqDur, */respLatency;
 	//
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter metricsReporter;
@@ -123,7 +123,7 @@ implements LoadExecutor<T> {
 		counterReqSucc = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUCC));
 		counterReqFail = metrics.counter(MetricRegistry.name(name, METRIC_NAME_FAIL));
 		reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));
-		reqDur = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR));
+		//reqDur = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR));
 		respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
 		metricsReporter.start();
 		// prepare the node executors array
@@ -425,9 +425,7 @@ implements LoadExecutor<T> {
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
-		final Snapshot
-			reqDurSnapshot = reqDur.getSnapshot(),
-			respLatencySnapshot = respLatency.getSnapshot();
+		final Snapshot respLatencySnapshot = respLatency.getSnapshot();
 		//
 		int notCompletedTaskCount = 0;
 		for(final StorageNodeExecutor<T> nodeExecutor: nodes) {
@@ -441,11 +439,6 @@ implements LoadExecutor<T> {
 				//
 				getName(),
 				countReqSucc, counterReqFail.getCount(),
-				//
-				(float) reqDurSnapshot.getMean() / BILLION,
-				(float) reqDurSnapshot.getMin() / BILLION,
-				(float) reqDurSnapshot.getMedian() / BILLION,
-				(float) reqDurSnapshot.getMax() / BILLION,
 				//
 				(float) respLatencySnapshot.getMean() / BILLION,
 				(float) respLatencySnapshot.getMin() / BILLION,
@@ -467,11 +460,6 @@ implements LoadExecutor<T> {
 				//
 				countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
 				//
-				(float) reqDurSnapshot.getMean() / BILLION,
-				(float) reqDurSnapshot.getMin() / BILLION,
-				(float) reqDurSnapshot.getMedian() / BILLION,
-				(float) reqDurSnapshot.getMax() / BILLION,
-				//
 				(float) respLatencySnapshot.getMean() / BILLION,
 				(float) respLatencySnapshot.getMin() / BILLION,
 				(float) respLatencySnapshot.getMedian() / BILLION,
@@ -488,7 +476,7 @@ implements LoadExecutor<T> {
 				fifteenMinBW / MIB
 			);
 		LOG.info(logMarker, message);
-		//
+		/*
 		if(Markers.PERF_SUM.equals(logMarker)) {
 			final double totalReqNanoSeconds = reqDurSnapshot.getMean() * countReqSucc;
 			LOG.debug(
@@ -504,7 +492,7 @@ implements LoadExecutor<T> {
 			for(final StorageNodeExecutor<T> node: nodes) {
 				node.logMetrics(Level.TRACE, Markers.PERF_AVG);
 			}
-		}
+		}*/
 		//
 	}
 	//

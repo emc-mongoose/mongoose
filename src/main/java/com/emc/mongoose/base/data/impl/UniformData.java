@@ -208,7 +208,7 @@ implements DataItem {
 		size = in.readLong();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final void writeTo(final OutputStream out)
+	public void writeTo(final OutputStream out)
 	throws IOException {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
@@ -221,7 +221,7 @@ implements DataItem {
 			setOffset(offset, 0); // resets the position in the ring to the beginning of the item
 			//
 			for(int i = 0; i < countPages; i++) {
-				if(read(buff)==buff.length) {
+				if(read(buff) == buff.length) {
 					out.write(buff);
 				} else {
 					throw new InterruptedIOException(MSG_READ_RING_BLOCKED);

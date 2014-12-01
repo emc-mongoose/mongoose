@@ -293,7 +293,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final void writePendingUpdatesTo(final OutputStream out)
+	public void writePendingUpdatesTo(final OutputStream out)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		DataItem nextRangeData;
@@ -358,7 +358,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final void writeAugmentTo(final OutputStream out)
+	public void writeAugmentTo(final OutputStream out)
 	throws IOException {
 		if(pendingAugmentSize > 0) {
 			synchronized(this) {

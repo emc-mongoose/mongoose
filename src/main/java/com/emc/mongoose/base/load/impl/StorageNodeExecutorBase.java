@@ -50,7 +50,7 @@ implements StorageNodeExecutor<T> {
 	private final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
 	private final Counter counterSubmParent, counterRejParent, counterReqSuccParent, counterReqFailParent;
 	private final Meter reqBytes, reqBytesParent;
-	private final Histogram reqDur, reqDurParent, respLatency, respLatencyParent;
+	private final Histogram /*reqDur, reqDurParent, */respLatency, respLatencyParent;
 	//
 	private volatile Consumer<T> consumer = null;
 	//
@@ -104,13 +104,13 @@ implements StorageNodeExecutor<T> {
 		counterReqFailParent = parentMetrics.getCounters().get(
 			MetricRegistry.name(parentName, LoadExecutor.METRIC_NAME_FAIL)
 		);
-		//
+		/*
 		reqDur = parentMetrics.histogram(
 			MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_REQ, LoadExecutor.METRIC_NAME_DUR)
 		);
 		reqDurParent = parentMetrics.getHistograms().get(
 			MetricRegistry.name(parentName, LoadExecutor.METRIC_NAME_REQ, LoadExecutor.METRIC_NAME_DUR)
-		);
+		);*/
 		//
 		respLatency = parentMetrics.histogram(
 			MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_REQ, LoadExecutor.METRIC_NAME_LAT)
@@ -232,13 +232,12 @@ implements StorageNodeExecutor<T> {
 						counterReqSucc.inc();
 						counterReqSuccParent.inc();
 						final long
-							duration = request.getDuration(),
-							latency = request.getLatency(),
+							latency = request.getRespStart() - request.getReqDone(),
 							size = request.getTransferSize();
 						reqBytes.mark(size);
 						reqBytesParent.mark(size);
-						reqDur.update(duration);
-						reqDurParent.update(duration);
+						//reqDur.update(duration);
+						//reqDurParent.update(duration);
 						respLatency.update(latency);
 						respLatencyParent.update(latency);
 						// feed to the consumer
@@ -311,9 +310,7 @@ implements StorageNodeExecutor<T> {
 	}
 	//
 	public final void logMetrics(final Level logLevel, final Marker logMarker) {
-		final Snapshot
-			reqDurSnapshot = reqDur.getSnapshot(),
-			respLatencySnapshot = respLatency.getSnapshot();
+		final Snapshot respLatencySnapshot = respLatency.getSnapshot();
 		final long
 			countReqSucc = counterReqSucc.getCount(),
 			countBytes = reqBytes.getCount();
@@ -329,11 +326,6 @@ implements StorageNodeExecutor<T> {
 				//
 				getName(),
 				countReqSucc, counterReqFail.getCount(),
-				//
-				(float) reqDurSnapshot.getMean() / BILLION,
-				(float) reqDurSnapshot.getMin() / BILLION,
-				(float) reqDurSnapshot.getMedian() / BILLION,
-				(float) reqDurSnapshot.getMax() / BILLION,
 				//
 				(float) respLatencySnapshot.getMean() / BILLION,
 				(float) respLatencySnapshot.getMin() / BILLION,
@@ -351,11 +343,6 @@ implements StorageNodeExecutor<T> {
 				Locale.ROOT, MSG_FMT_METRICS,
 				//
 				countReqSucc, getQueue().size() + getActiveCount(), counterReqFail.getCount(),
-				//
-				(float) reqDurSnapshot.getMean() / BILLION,
-				(float) reqDurSnapshot.getMin() / BILLION,
-				(float) reqDurSnapshot.getMedian() / BILLION,
-				(float) reqDurSnapshot.getMax() / BILLION,
 				//
 				(float) respLatencySnapshot.getMean() / BILLION,
 				(float) respLatencySnapshot.getMin() / BILLION,
