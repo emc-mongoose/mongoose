@@ -7,6 +7,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
+import com.emc.mongoose.base.api.StorageClient;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.DataSource;
@@ -31,7 +32,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
 import javax.management.MBeanServer;
-import java.io.Closeable;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -57,7 +57,7 @@ implements LoadExecutor<T> {
 	protected final int threadsPerNode, retryCountMax, retryDelayMilliSec;
 	protected final StorageNodeExecutor<T> nodes[];
 	protected final ThreadPoolExecutor submitExecutor;
-	protected final Closeable client;
+	protected final StorageClient<T> storageClient;
 	//
 	protected final DataSource<T> dataSrc;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
@@ -157,14 +157,14 @@ implements LoadExecutor<T> {
 		};
 		submitExecutor.prestartAllCoreThreads();
 		//
-		client = initClient(addrs, reqConf);
+		storageClient = initClient(addrs, reqConf);
 		initNodeExecutors(addrs, reqConf.clone().setLoadNumber(loadNumber));
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
 	}
 	//
 	protected abstract void setFileBasedProducer(final String listFile);
-	protected abstract Closeable initClient(final String addrs[], final RequestConfig<T> reqConf);
+	protected abstract StorageClient<T> initClient(final String addrs[], final RequestConfig<T> reqConf);
 	protected abstract void initNodeExecutors(
 		final String addrs[], final RequestConfig<T> reqConf
 	) throws ClassCastException;
@@ -343,9 +343,9 @@ implements LoadExecutor<T> {
 			//
 			metricsReporter.close();
 			//
-			if(client!=null) {
+			if(storageClient!=null) {
 				try {
-					client.close();
+					storageClient.close();
 					LOG.debug(Markers.MSG, "Storage client closed");
 				} catch(final IOException e) {
 					ExceptionHandler.trace(LOG, Level.WARN, e, "Storage client closing failed");

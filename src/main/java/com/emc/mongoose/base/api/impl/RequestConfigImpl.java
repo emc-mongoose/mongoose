@@ -1,5 +1,6 @@
 package com.emc.mongoose.base.api.impl;
 //
+import com.emc.mongoose.base.api.StorageClient;
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
@@ -13,7 +14,6 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -32,7 +32,7 @@ implements RequestConfig<T> {
 	protected volatile boolean retryFlag, verifyContentFlag, closeFlag = false;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	protected final URIBuilder uriBuilder = new URIBuilder();
-	protected Closeable client = null;
+	protected StorageClient<T> storageClient = null;
 	protected int loadNumber;
 	//
 	@SuppressWarnings("unchecked")
@@ -188,13 +188,13 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public Closeable getClient() {
-		return client;
+	public StorageClient<T> getClient() {
+		return storageClient;
 	}
 	//
 	@Override
-	public RequestConfig<T> setClient(final Closeable client) {
-		this.client = client;
+	public RequestConfig<T> setClient(final StorageClient<T> storageClient) {
+		this.storageClient = storageClient;
 		return this;
 	}
 	//

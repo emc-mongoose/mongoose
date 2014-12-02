@@ -1,6 +1,7 @@
 package com.emc.mongoose.web.api;
 //
 import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.StorageClient;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
@@ -70,14 +71,14 @@ extends ObjectRequestConfig<T> {
 	@Override
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
+	@Override
+	WSRequestConfig<T> setClient(final StorageClient<T> client);
+	//
+	@Override
+	WSClient<T> getClient();
+	//
 	String getScheme();
 	WSRequestConfig<T> setScheme(final String scheme);
-	//
-	@Override
-	CloseableHttpClient getClient();
-	//
-	@Override
-	WSRequestConfig<T> setClient(final Closeable httpClient);
 	//
 	Map<String, String> getSharedHeadersMap();
 	//

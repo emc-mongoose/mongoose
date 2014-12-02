@@ -50,8 +50,8 @@ extends Externalizable, Cloneable, Closeable {
 	int getLoadNumber();
 	RequestConfig<T> setLoadNumber(final int loadNumber);
 	//
-	Closeable getClient();
-	RequestConfig<T> setClient(final Closeable client);
+	StorageClient<T> getClient();
+	RequestConfig<T> setClient(final StorageClient<T> storageClient);
 	//
 	void configureStorage()
 	throws IllegalStateException;

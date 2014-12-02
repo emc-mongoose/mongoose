@@ -62,18 +62,22 @@ dependencies {
 		'org.apache.logging.log4j:log4j-core:2.1',
 		'org.apache.logging.log4j:log4j-web:2.1',
 		//
-		'org.apache.httpcomponents:httpclient:4.3.6',
 		'org.apache.httpcomponents:httpcore:4.3.3',
+		'org.apache.httpcomponents:httpasyncclient:4.0.2',
+		//
         'org.eclipse.jetty:jetty-server:9.2.3.v20140905',
 		'org.eclipse.jetty:jetty-webapp:9.2.3.v20140905',
-        'javax.servlet:javax.servlet-api:3.1.0',
-		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
+		//
+        'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
 		'org.eclipse.jetty.websocket:websocket-server:9.2.3.v20140905',
 		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
+		//
+		'javax.servlet:javax.servlet-api:3.1.0',
+		'jstl:jstl:1.2',
 		'com.google.code.gson:gson:2.3',
+		//
 		'org.hibernate:hibernate-core:4.3.6.Final',
 		'org.eclipse.persistence:javax.persistence:2.1.0',
-		'jstl:jstl:1.2'
 	)
 	runtime (
 		//

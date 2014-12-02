@@ -1,10 +1,12 @@
 package com.emc.mongoose.web.api.impl;
 //
 import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.StorageClient;
 import com.emc.mongoose.base.api.impl.RequestBase;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.util.pool.BasicInstancePool;
+import com.emc.mongoose.web.api.WSClient;
 import com.emc.mongoose.web.api.WSRequest;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
@@ -13,7 +15,11 @@ import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.http.NoHttpResponseException;
 import org.apache.http.StatusLine;
 import org.apache.http.TruncatedChunkException;
@@ -25,6 +31,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.ContentEncoder;
+import org.apache.http.nio.IOControl;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -39,6 +49,8 @@ import java.net.ConnectException;
 import java.net.PortUnreachableException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 /**
  Created by kurila on 06.06.14.
  */
@@ -136,7 +148,15 @@ implements WSRequest<T> {
 		//
 		wsReqConf.applyHeadersFinally(httpRequest);
 		//
-		final CloseableHttpClient httpClient = wsReqConf.getClient();
+		final WSClient<T> client = wsReqConf.getClient();
+		final Future<Request.Result> futureResult = client.execute(this);
+		try {
+			futureResult.get();
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.ERR, "Interrupted");
+		} catch(final ExecutionException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Request execution failure");
+		}
 		//
 		try(final CloseableHttpResponse httpResponse = httpClient.execute(httpRequest)) {
 			respStart = System.nanoTime();
@@ -192,7 +212,7 @@ implements WSRequest<T> {
 							break;
 						case (HttpPut.METHOD_NAME):
 						case (HttpPost.METHOD_NAME):
-							if(dataItem != null && dataItem.getId() == null) {
+							if(dataItem!=null && dataItem.getId()==null) {
 								wsReqConf.applyObjectId(dataItem, httpResponse);
 							}
 							result = Result.SUCC;
@@ -295,6 +315,88 @@ implements WSRequest<T> {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "I/O failure");
 			result = Result.FAIL_IO;
 		}
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	private volatile Exception exception = null;
+	private volatile boolean flagDone = false, flagCancel = false;
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// HttpAsyncRequestProducer implementation /////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final HttpHost getTarget() {
+		return null;
+	}
 	//
+	@Override
+	public final HttpRequest generateRequest()
+	throws IOException, HttpException {
+		return httpRequest;
+	}
+	//
+	@Override
+	public final void produceContent(final ContentEncoder output, final IOControl ioCtl)
+	throws IOException {
+	}
+	//
+	@Override
+	public final void requestCompleted(final HttpContext context) {
+		reqDone = System.nanoTime();
+	}
+	//
+	@Override
+	public final boolean isRepeatable() {
+		return true;
+	}
+	//
+	@Override
+	public final void resetRequest()
+	throws IOException {
+		exception = null;
+		flagDone = false;
+		flagCancel = false;
+		reqStart = 0;
+		reqDone = 0;
+		respStart = 0;
+		respDone = 0;
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// HttpAsyncResponseConsumer implementation ////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final void responseReceived(final HttpResponse response)
+	throws IOException, HttpException {
+		respStart = System.nanoTime();
+	}
+	//
+	@Override
+	public final void consumeContent(final ContentDecoder input, final IOControl ioCtl)
+	throws IOException {
+	}
+	//
+	@Override
+	public final void responseCompleted(final HttpContext context) {
+		respDone = System.nanoTime();
+		flagDone = true;
+	}
+	//
+	@Override
+	public final void failed(final Exception e) {
+		exception = e;
+	}
+	//
+	@Override
+	public final Exception getException() {
+		return exception;
+	}
+	//
+	@Override
+	public final boolean isDone() {
+		return flagDone;
+	}
+	//
+	@Override
+	public final boolean cancel() {
+		flagCancel = true;
+		return flagCancel;
 	}
 }

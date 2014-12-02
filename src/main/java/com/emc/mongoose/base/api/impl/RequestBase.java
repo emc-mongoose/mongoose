@@ -110,13 +110,7 @@ implements Request<T> {
 	@Override
 	public final Request<T> call()
 	throws Exception {
-		reqStart = System.nanoTime();
 		execute();
-		reqDone = dataItem.getSentTimeStamp();
-		if(reqDone == 0) {
-			reqDone = reqStart;
-		}
-		respDone = System.nanoTime();
 		LOG.info(
 			Markers.PERF_TRACE, String.format(
 				FMT_PERF_TRACE, dataItem.getId(), dataItem.getSize(), result.code,

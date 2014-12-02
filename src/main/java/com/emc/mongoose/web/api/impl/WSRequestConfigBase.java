@@ -20,9 +20,6 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.utils.DateUtils;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
 //
@@ -32,7 +29,6 @@ import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
@@ -107,16 +103,18 @@ implements WSRequestConfig<T> {
 	//
 	protected ConcurrentHashMap<String, String> sharedHeadersMap;
 	protected final Mac mac;
-	protected volatile CloseableHttpClient httpClient;
 	//
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException {
 		this(null);
 	}
 	//
+	@SuppressWarnings("unchecked")
 	protected WSRequestConfigBase(final WSRequestConfig<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
+		//
+		storageClient = new WSAsyncClientImpl(1, this);
 		//
 		signMethod = runTimeConfig.getHttpSignMethod();
 		mac = Mac.getInstance(signMethod);
@@ -255,28 +253,6 @@ implements WSRequestConfig<T> {
 	@Override
 	public final String getUserAgent() {
 		return userAgent;
-	}
-	//
-	@Override
-	public final CloseableHttpClient getClient() {
-		if(httpClient == null) {
-			httpClient = HttpClientBuilder
-				.create()
-				.setConnectionManager(new BasicHttpClientConnectionManager())
-				.setDefaultHeaders(getSharedHeaders())
-				.setRetryHandler(getRetryHandler())
-				.disableCookieManagement()
-				.setUserAgent(userAgent)
-				.build();
-		}
-		return httpClient;
-	}
-	//
-	@Override
-	public WSRequestConfigBase<T> setClient(final Closeable httpClient)
-	throws ClassCastException {
-		this.httpClient = CloseableHttpClient.class.cast(httpClient);
-		return this;
 	}
 	//
 	@Override

@@ -2,6 +2,7 @@ package com.emc.mongoose.object.api;
 //
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.RequestConfig;
+import com.emc.mongoose.base.api.StorageClient;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -35,4 +36,9 @@ extends RequestConfig<T> {
 	@Override
 	ObjectRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
+	@Override
+	ObjectRequestConfig<T> setClient(final StorageClient<T> client);
+	//
+	@Override
+	ObjectStorageClient<T> getClient();
 }

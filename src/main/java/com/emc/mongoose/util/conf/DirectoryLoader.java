@@ -70,7 +70,7 @@ extends SimpleFileVisitor<Path> {
 			);
 		}
 		// set the properties
-		if(currProps!=null) {
+		if(currProps != null) {
 			String key;
 			for(final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext();) {
 				key = keyIter.next();
