@@ -198,7 +198,7 @@ implements AppendableDataItem, UpdatableDataItem {
 						Markers.MSG, FMT_MSG_RANGE_MODIFIED,
 						Long.toHexString(offset), i, rangeOffset, rangeOffset + rangeSize - 1,
 						layerNum + 1,
-						Base64.encodeBase64URLSafeString(contentRangeStream.toByteArray())
+						Base64.encodeBase64String(contentRangeStream.toByteArray())
 					);
 				}
 			} else if(layerNum > 1) { // previous layer of updated ranges
