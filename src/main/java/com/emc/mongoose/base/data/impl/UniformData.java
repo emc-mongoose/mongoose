@@ -273,10 +273,8 @@ implements DataItem {
 					contentEquals = Arrays.equals(buff1, buff2);
 					if(!contentEquals) {
 						LOG.debug(
-							Markers.ERR,
-							FMT_MSG_CORRUPT, rangeOffset, i * pageSize,
-							Base64.encodeBase64URLSafeString(buff1),
-							Base64.encodeBase64URLSafeString(buff2)
+							Markers.ERR, FMT_MSG_CORRUPT, rangeOffset, i * pageSize,
+							Base64.encodeBase64String(buff1), Base64.encodeBase64String(buff2)
 						);
 						break;
 					}
@@ -304,10 +302,8 @@ implements DataItem {
 					contentEquals = Arrays.equals(buff1, buff2);
 					if(!contentEquals) {
 						LOG.debug(
-							Markers.ERR, FMT_MSG_CORRUPT,
-							rangeOffset, rangeLength - countTailBytes,
-							Base64.encodeBase64URLSafeString(buff1),
-							Base64.encodeBase64URLSafeString(buff2)
+							Markers.ERR, FMT_MSG_CORRUPT, rangeOffset, rangeLength - countTailBytes,
+							Base64.encodeBase64String(buff1), Base64.encodeBase64String(buff2)
 						);
 					}
 				} else {
