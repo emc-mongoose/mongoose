@@ -313,7 +313,7 @@ implements AppendableDataItem, UpdatableDataItem {
 						LOG.trace(
 							Markers.MSG, FMT_MSG_UPD_RANGE,
 							toString(), i, rangeSize, offset + rangeOffset, layerNum + 1,
-							Base64.encodeBase64URLSafeString(rangeContentStream.toByteArray())
+							Base64.encodeBase64String(rangeContentStream.toByteArray())
 						);
 					}
 				}
