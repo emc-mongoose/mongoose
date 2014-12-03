@@ -177,9 +177,9 @@ public final class Main {
 			);
 		}
 		// make all used loggers asynchronous
-		System.setProperty(
+		/*System.setProperty(
 			"Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
-		);
+		);*/
 		// StatusConsoleListener statusListener = new StatusConsoleListener(Level.OFF);
 		// determine the logger configuration file path
 		final Path logConfPath = Paths.get(

@@ -36,7 +36,6 @@ extends AbstractAppender {
 	public static Session SESSION = null;
 	private static Boolean ENABLED_FLAG;
 	private static final String
-		PERF_AVG = "perfAvg",
 		MSG = "msg",
 		PERF_TRACE = "perfTrace",
 		ERR = "err",
@@ -48,6 +47,17 @@ extends AbstractAppender {
 		KEY_API = "api",
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode";
+	//
+	@Override
+	public final void start() {
+		super.start();
+	}
+	//
+	@Override
+	public final void stop() {
+		super.stop();
+		SESSION.close();
+	}
 	//
 	private HibernateAppender(
 		final String name, final Filter filter,
@@ -99,7 +109,7 @@ extends AbstractAppender {
 	// append method // - really?! (kurilov) - yep! (zhavzharova)
 	@Override
 	public final void append(final LogEvent event) {
-		if (ENABLED_FLAG){			
+		if (ENABLED_FLAG){
 			final String marker = event.getMarker().toString();
 			final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
 			switch (marker) {
@@ -132,6 +142,7 @@ extends AbstractAppender {
 					SESSION.getTransaction().commit();
 					break;
 			}
+			//
 		}
 	}
 	//
@@ -350,8 +361,8 @@ extends AbstractAppender {
 	//
 	private static ThreadEntity getThreadEntity(final long threadNumber, final LoadEntity load){
 		return (ThreadEntity) SESSION.createCriteria(ThreadEntity.class)
-			.add( Restrictions.eq("load", load))
-			.add( Restrictions.eq("num", threadNumber))
+			.add(Restrictions.eq("load", load))
+			.add(Restrictions.eq("num", threadNumber))
 			.uniqueResult();
 	}
 	//
@@ -363,13 +374,13 @@ extends AbstractAppender {
 	//
 	private static ApiEntity getApiEntity(final String apiName) {
 		return (ApiEntity) SESSION.createCriteria(ApiEntity.class)
-			.add( Restrictions.eq("name", apiName) )
+			.add(Restrictions.eq("name", apiName))
 			.uniqueResult();
 	}
 	//
 	private static LoadTypeEntity getLoadTypeEntity(final String typeName) {
 		return (LoadTypeEntity) SESSION.createCriteria(LoadTypeEntity.class)
-			.add( Restrictions.eq("name", typeName))
+			.add(Restrictions.eq("name", typeName))
 			.uniqueResult();
 	}
 	//
@@ -387,17 +398,15 @@ extends AbstractAppender {
 	//
 	private static NodeEntity getNodeEntity(final String nodeAddr) {
 		return (NodeEntity) SESSION.createCriteria(NodeEntity.class)
-			.add( Restrictions.eq("address", nodeAddr))
+			.add(Restrictions.eq("address", nodeAddr))
 			.uniqueResult();
 	}
 	//
 	private static DataObjectEntity getDataObjectEntity(
 			final String identifier, final long size
 	) {
-		//ringOffset?
 		return (DataObjectEntity) SESSION.createCriteria(DataObjectEntity.class)
-			.add( Restrictions.eq("identifier", identifier))
-					//.add(Restrictions.eq("ringOffset", ringOffset))
+			.add(Restrictions.eq("identifier", identifier))
 			.add(Restrictions.eq("size", size))
 			.uniqueResult();
 	}
