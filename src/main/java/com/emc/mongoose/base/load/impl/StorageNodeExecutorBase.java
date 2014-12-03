@@ -232,7 +232,7 @@ implements StorageNodeExecutor<T> {
 						counterReqSucc.inc();
 						counterReqSuccParent.inc();
 						final long
-							latency = request.getRespStart() - request.getReqDone(),
+							latency = request.getRespTimeStart() - request.getReqTimeDone(),
 							size = request.getTransferSize();
 						reqBytes.mark(size);
 						reqBytesParent.mark(size);

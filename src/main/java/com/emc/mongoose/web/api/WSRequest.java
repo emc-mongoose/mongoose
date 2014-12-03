@@ -14,6 +14,8 @@ import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
 public interface WSRequest<T extends WSObject>
 extends DataObjectRequest<T>, HttpAsyncRequestProducer, HttpAsyncResponseConsumer<Request.Result> {
 	//
+	enum HTTPMethod { DELETE, GET, HEAD, PUT, POST, TRACE }
+	//
 	@Override
 	WSRequest<T> setDataItem(final T dataItem);
 	//

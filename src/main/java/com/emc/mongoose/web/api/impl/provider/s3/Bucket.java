@@ -1,18 +1,30 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
+import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.object.api.DataObjectRequest;
+import com.emc.mongoose.object.data.DataObject;
+import com.emc.mongoose.web.api.WSClient;
+import com.emc.mongoose.web.api.WSRequest;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
-import org.apache.http.impl.client.CloseableHttpClient;
 //
+import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.ContentEncoder;
+import org.apache.http.nio.IOControl;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -67,15 +79,12 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 			.setUri("/" + name)
 			.build();
 		reqConf.applyHeadersFinally(httpReq);
-		final CloseableHttpClient httpClient = reqConf.getClient();
+		final WSClient httpClient = reqConf.getClient();
 		//
 		if(httpClient == null) {
 			throw new IllegalStateException("No HTTP client specified");
 		}
-		return httpClient.execute(
-			new HttpHost(reqConf.getAddr(), reqConf.getPort(), reqConf.getScheme()),
-			httpReq
-		);
+		return httpClient.execute(null/*TODO new BucketCreateRequest(bucket)*/);
 	}
 	//
 	@Override

@@ -32,7 +32,7 @@ implements Request<T> {
 	protected T dataItem = null;
 	protected Result result = Result.FAIL_TIMEOUT;
 	//
-	protected long reqStart = 0, reqDone = 0, respStart = 0, respDone = 0;
+	protected long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
 	private long transferSize = 0;
 	private Type type;
 
@@ -88,23 +88,23 @@ implements Request<T> {
 	}
 	//
 	@Override
-	public final long getReqStart() {
-		return reqStart;
+	public final long getReqTimeStart() {
+		return reqTimeStart;
 	}
 	//
 	@Override
-	public final long getReqDone() {
-		return reqDone;
+	public final long getReqTimeDone() {
+		return reqTimeDone;
 	}
 	//
 	@Override
-	public final long getRespStart() {
-		return respStart;
+	public final long getRespTimeStart() {
+		return respTimeStart;
 	}
 	//
 	@Override
-	public final long getRespDone() {
-		return respDone;
+	public final long getRespTimeDone() {
+		return respTimeDone;
 	}
 	//
 	@Override
@@ -114,7 +114,7 @@ implements Request<T> {
 		LOG.info(
 			Markers.PERF_TRACE, String.format(
 				FMT_PERF_TRACE, dataItem.getId(), dataItem.getSize(), result.code,
-				reqStart, reqDone - reqStart, respStart - reqDone, respDone - respStart
+				reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone, respTimeDone - respTimeStart
 			)
 		);
 		return this;

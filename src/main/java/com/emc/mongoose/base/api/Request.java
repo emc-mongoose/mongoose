@@ -48,13 +48,13 @@ extends Callable<Request<T>>, Closeable {
 	//
 	Result getResult();
 	//
-	long getReqStart();
+	long getReqTimeStart();
 	//
-	long getReqDone();
+	long getReqTimeDone();
 	//
-	long getRespStart();
+	long getRespTimeStart();
 	//
-	long getRespDone();
+	long getRespTimeDone();
 	//
 	void execute()
 	throws Exception;

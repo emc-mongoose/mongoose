@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration PUBLIC
+		"-//Hibernate/Hibernate Configuration DTD 3.0//EN"
+		"http://hibernate.sourceforge.net/hibernate-configuration-3.0.dtd">
+<hibernate-configuration>
+	<session-factory>
+		<property name="hibernate.bytecode.use_reflection_optimizer">false</property>
+		<property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
+		<property name="hibernate.dialect">org.hibernate.dialect.PostgreSQL9Dialect</property>
+		<property name="transaction.factory_class">org.hibernate.transaction.JDBCTransactionFactory</property>
+		<property name="show_sql">false</property>
+		<property name="hibernate.temp.use_jdbc_metadata_defaults">false</property>
+		<mapping class="com.emc.mongoose.util.persist.ModeEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.RunEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.ApiEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.LoadTypeEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.LoadEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.LevelEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.MessageClassEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.MessageEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.NodeEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.ThreadEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.StatusEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.TraceEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.DataObjectEntity"></mapping>
+	</session-factory>
+</hibernate-configuration>

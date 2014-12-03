@@ -1,13 +1,15 @@
 package com.emc.mongoose.web.data.impl;
 //
 import com.emc.mongoose.base.data.impl.UniformDataSource;
-//
 import com.emc.mongoose.object.data.impl.BasicObject;
 import com.emc.mongoose.web.data.WSObject;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.IOControl;
 import org.apache.http.util.EntityUtils;
-
+//
 import java.io.IOException;
 import java.io.InputStream;
 //
@@ -97,11 +99,16 @@ implements WSObject {
 	}
 	//
 	public final HttpEntity getPendingUpdatesContentEntity() {
-		return new UpdateRangesEntity<com.emc.mongoose.web.data.WSObject>(this);
+		return new UpdateRangesEntity<WSObject>(this);
 	}
 	//
 	public final HttpEntity getPendingAugmentContentEntity() {
-		return new AugmentEntity<com.emc.mongoose.web.data.WSObject>(this);
+		return new AugmentEntity<WSObject>(this);
+	}
+	//
+	@Override
+	public final boolean compareWith(final ContentDecoder in, final IOControl ioCtl) {
+		return true;
 	}
 }
 //

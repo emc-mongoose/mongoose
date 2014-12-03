@@ -1,9 +1,11 @@
 package com.emc.mongoose.web.api.impl;
 //
 import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.StorageClient;
 import com.emc.mongoose.base.api.impl.RequestConfigImpl;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
+import com.emc.mongoose.web.api.WSClient;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.run.Main;
@@ -21,6 +23,8 @@ import org.apache.http.HttpRequest;
 import org.apache.http.client.HttpRequestRetryHandler;
 import org.apache.http.client.utils.DateUtils;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.HttpContext;
 //
 import org.apache.logging.log4j.Level;
@@ -38,6 +42,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -114,7 +119,7 @@ implements WSRequestConfig<T> {
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		//
-		storageClient = new WSAsyncClientImpl(1, this);
+		storageClient = new WSAsyncClientImpl(1, getSharedHeaders(), getUserAgent());
 		//
 		signMethod = runTimeConfig.getHttpSignMethod();
 		mac = Mac.getInstance(signMethod);
@@ -237,8 +242,9 @@ implements WSRequestConfig<T> {
 		return this;
 	}
 	//
-	public final LinkedList<BasicHeader> getSharedHeaders() {
-		final LinkedList<BasicHeader> headers = new LinkedList<>();
+	@Override
+	public final List<Header> getSharedHeaders() {
+		final LinkedList<Header> headers = new LinkedList<>();
 		for(final String headerName: sharedHeadersMap.keySet()) {
 			headers.add(new BasicHeader(headerName, sharedHeadersMap.get(headerName)));
 		}
@@ -258,6 +264,17 @@ implements WSRequestConfig<T> {
 	@Override
 	public final HttpRequestRetryHandler getRetryHandler() {
 		return retryHandler;
+	}
+	//
+	@Override
+	public final WSClient<T> getClient() {
+		return (WSClient<T>) super.getClient();
+	}
+	//
+	@Override @SuppressWarnings("RedundantCast")
+	public final WSRequestConfigBase<T> setClient(final StorageClient<T> client) {
+		super.setClient((WSClient<T>) client);
+		return this;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -430,5 +447,19 @@ implements WSRequestConfig<T> {
 		return signature64;
 	}
 	//
+	@Override
+	public void consumeResponse(
+		final ContentDecoder in, final IOControl ioCtl, final T dataItem, final int statusCode
+	) {
+		if(
+			verifyContentFlag && loadType == Request.Type.READ &&
+			statusCode > 199 && statusCode < 300
+		) {
+			if(dataItem != null) {
+				dataItem.compareWith(in, ioCtl);
+			}
+		} else {
 
+		}
+	}
 }

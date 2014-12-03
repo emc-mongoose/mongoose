@@ -1,0 +1,19 @@
+# comma-separated list of target storage nodes
+addrs:								127.0.0.1
+
+# case-insensitive, may be "atmos", "s3" or "swift"
+api:								s3
+
+# reserved for future TLS usage (may be "https")
+scheme:								http
+
+#
+connection.timeout.millisec:		1000000
+connection.pool.timeout.millisec:	1000000
+connection.stale.check:				false
+
+#
+socket.timeout.millisec:			1000000
+socket.reuse.addr:					true
+socket.keepalive:					true
+socket.tcp.nodelay:					true

@@ -1,30 +1,20 @@
 package com.emc.mongoose.web.load.impl;
 //
 import com.codahale.metrics.MetricRegistry;
+//
 import com.emc.mongoose.base.load.StorageNodeExecutor;
-import com.emc.mongoose.base.load.impl.LoadExecutorBase;
-import com.emc.mongoose.run.ThreadContextMap;
+import com.emc.mongoose.web.api.WSClient;
 import com.emc.mongoose.web.api.WSRequestConfig;
+import com.emc.mongoose.web.api.impl.WSAsyncClientImpl;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
-//
 import com.emc.mongoose.web.load.WSNodeExecutor;
-import org.apache.http.Header;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.config.ConnectionConfig;
-import org.apache.http.config.SocketConfig;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.message.BasicHeader;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.util.LinkedList;
-import java.util.Map;
 /**
  Created by kurila on 22.04.14.
  */
@@ -32,10 +22,15 @@ public class WSLoadHelper {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public static CloseableHttpClient initClient(
+	public static WSClient initClient(
 		final int totalThreadCount, final RunTimeConfig runTimeConfig, final WSRequestConfig reqConf
 	) {
-		// create and configure the connection manager for HTTP client
+		final WSClient client = new WSAsyncClientImpl(
+			totalThreadCount, reqConf.getSharedHeaders(), reqConf.getUserAgent()
+		);
+		reqConf.setClient(client);
+		return client;
+		/* create and configure the connection manager for HTTP client
 		final PoolingHttpClientConnectionManager connMgr = new PoolingHttpClientConnectionManager();
 		connMgr.setDefaultMaxPerRoute(totalThreadCount);
 		connMgr.setMaxTotal(totalThreadCount);
@@ -46,11 +41,6 @@ public class WSLoadHelper {
 				.build()
 		);
 		// set shared headers to client builder
-		final LinkedList<Header> headers = new LinkedList<>();
-		final Map<String, String> sharedHeadersMap = reqConf.getSharedHeadersMap();
-		for(final String key : sharedHeadersMap.keySet()) {
-			headers.add(new BasicHeader(key, sharedHeadersMap.get(key)));
-		}
 		// configure and create the HTTP client
 		final HttpClientBuilder
 			httpClientBuilder = HttpClientBuilder
@@ -85,7 +75,7 @@ public class WSLoadHelper {
 		//
 		final CloseableHttpClient httpClient = httpClientBuilder.build();
 		reqConf.setClient(httpClient);
-		return httpClientBuilder.build();
+		return httpClientBuilder.build();*/
 	}
 	//
 	public static void initNodeExecutors(

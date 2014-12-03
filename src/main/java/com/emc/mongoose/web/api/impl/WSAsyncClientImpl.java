@@ -7,9 +7,10 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.web.api.WSClient;
 import com.emc.mongoose.web.api.WSRequest;
-import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 //
+import org.apache.http.Header;
+import org.apache.http.client.protocol.RequestDefaultHeaders;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
@@ -23,7 +24,7 @@ import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestExpectContinue;
+import org.apache.http.protocol.RequestDate;
 import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
 //
@@ -33,6 +34,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.List;
 import java.util.concurrent.Future;
 /**
  Created by kurila on 02.12.14.
@@ -86,16 +88,19 @@ implements WSClient<T> {
 		}
 	}
 	//
-	public WSAsyncClientImpl(final int threadCount, final WSRequestConfig<T> reqConf) {
+	public WSAsyncClientImpl(
+		final int threadCount, final List<Header> sharedHeaders, final String userAgent
+	) {
 		//
 		super(
 			HttpProcessorBuilder
 				.create()
-				.add(new RequestContent())
+				.add(new RequestContent(false))
+				.add(new RequestDate())
+				.add(new RequestDefaultHeaders(sharedHeaders))
 				.add(new RequestTargetHost())
 				.add(new RequestConnControl())
-				.add(new RequestUserAgent(reqConf.getUserAgent()))
-				.add(new RequestExpectContinue(false))
+				.add(new RequestUserAgent(userAgent))
 				.build()
 		);
 		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();

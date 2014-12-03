@@ -7,16 +7,18 @@ import com.emc.mongoose.object.api.ObjectRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 //
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpRequestRetryHandler;
-import org.apache.http.impl.client.CloseableHttpClient;
-
-import java.io.Closeable;
+import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.IOControl;
+//
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 /**
@@ -80,6 +82,8 @@ extends ObjectRequestConfig<T> {
 	String getScheme();
 	WSRequestConfig<T> setScheme(final String scheme);
 	//
+	List<Header> getSharedHeaders();
+	//
 	Map<String, String> getSharedHeadersMap();
 	//
 	String getUserAgent();
@@ -96,4 +100,8 @@ extends ObjectRequestConfig<T> {
 	String getCanonical(final HttpRequest httpRequest);
 	//
 	String getSignature(final String canonicalForm);
+	//
+	void consumeResponse(
+		final ContentDecoder in, final IOControl ioCtl, final T dataItem, final int respStatusCode
+	);
 }
