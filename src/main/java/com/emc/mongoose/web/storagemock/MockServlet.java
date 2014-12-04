@@ -297,7 +297,7 @@ public final class MockServlet
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPostFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet input stream failed");
 		}
 	}
 	//
@@ -379,7 +379,7 @@ public final class MockServlet
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterDeleteFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet input stream failed");
 		}
 	}
 	//
