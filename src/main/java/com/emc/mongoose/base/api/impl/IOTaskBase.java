@@ -1,6 +1,6 @@
 package com.emc.mongoose.base.api.impl;
 //
-import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
@@ -15,12 +15,12 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by andrey on 12.10.14.
  */
-public abstract class RequestBase<T extends DataObject>
-implements Request<T> {
+public abstract class IOTaskBase<T extends DataObject>
+implements AsyncIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static RequestBase POISON = new RequestBase() {
+	public final static IOTaskBase POISON = new IOTaskBase() {
 		@Override
 		public final void execute()
 		throws InterruptedException {
@@ -36,21 +36,21 @@ implements Request<T> {
 	private long transferSize = 0;
 	private Type type;
 
-	public RequestBase() {
+	public IOTaskBase() {
 
 	}
 	// BEGIN pool related things
-	protected final static ConcurrentHashMap<RequestConfig, BasicInstancePool<Request>>
+	protected final static ConcurrentHashMap<RequestConfig, BasicInstancePool<AsyncIOTask>>
 		POOL_MAP = new ConcurrentHashMap<>();
 	//
 	@Override
 	public final void close() {
-		final BasicInstancePool<Request> pool = POOL_MAP.get(reqConf);
+		final BasicInstancePool<AsyncIOTask> pool = POOL_MAP.get(reqConf);
 		pool.release(this);
 	}
 	// END pool related things
 	@Override
-	public Request<T> setRequestConfig(final RequestConfig<T> reqConf) {
+	public AsyncIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
 		this.reqConf = reqConf;
 		type = reqConf.getLoadType();
 		return this;
@@ -62,7 +62,7 @@ implements Request<T> {
 	}
 	//
 	@Override
-	public Request<T> setDataItem(final T dataItem) {
+	public AsyncIOTask<T> setDataItem(final T dataItem) {
 		this.dataItem = dataItem;
 		switch(type) {
 			case APPEND:
@@ -108,7 +108,7 @@ implements Request<T> {
 	}
 	//
 	@Override
-	public final Request<T> call()
+	public final AsyncIOTask<T> call()
 	throws Exception {
 		execute();
 		LOG.info(

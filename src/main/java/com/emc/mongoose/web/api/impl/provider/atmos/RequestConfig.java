@@ -1,5 +1,8 @@
 package com.emc.mongoose.web.api.impl.provider.atmos;
 //
+import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.web.api.MutableHTTPRequest;
+import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.run.Main;
@@ -8,9 +11,8 @@ import com.emc.mongoose.util.logging.Markers;
 import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -59,6 +61,23 @@ extends WSRequestConfigBase<T> {
 			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
 		}
 		return copy;
+	}
+	//
+	@Override
+	public MutableHTTPRequest createRequest(final String uri) {
+		MutableHTTPRequest r = null;
+		switch(loadType) {
+			case READ:
+			case DELETE:
+				r = super.createRequest(uri);
+				break;
+			case APPEND:
+			case CREATE:
+			case UPDATE:
+				r = WSIOTask.HTTPMethod.POST.createRequest(uri);
+				break;
+		}
+		return r;
 	}
 	//
 	public final SubTenant<T> getSubTenant() {
@@ -115,7 +134,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final HttpRequest httpRequest, final T dataItem)
+	protected final void applyURI(final MutableHTTPRequest httpRequest, final T dataItem)
 	throws URISyntaxException {
 		if(httpRequest==null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
@@ -125,9 +144,8 @@ extends WSRequestConfigBase<T> {
 		}
 		final String objId = dataItem.getId();
 		synchronized(uriBuilder) {
-			HttpRequestBase.class
-				.cast(httpRequest)
-				.setURI(
+			httpRequest
+				.setUri(
 					uriBuilder
 						.setPath(
 							objId==null ? OBJ_PATH : OBJ_PATH + '/' + objId
@@ -137,7 +155,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyDateHeader(final HttpRequest httpRequest) {
+	protected final void applyDateHeader(final MutableHTTPRequest httpRequest) {
 		super.applyDateHeader(httpRequest);
 		httpRequest.setHeader(
 			KEY_EMC_DATE,
@@ -146,7 +164,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyAuthHeader(final HttpRequest httpRequest) {
+	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
 		if(httpRequest.getLastHeader(HttpHeaders.RANGE)==null) {
 			httpRequest.addHeader(HttpHeaders.RANGE, ""); // temporary required for canonical form
 		}
@@ -165,7 +183,7 @@ extends WSRequestConfigBase<T> {
 	};
 	//
 	@Override
-	public final String getCanonical(final HttpRequest httpRequest) {
+	public final String getCanonical(final MutableHTTPRequest httpRequest) {
 		final StringBuilder buffer = new StringBuilder(httpRequest.getRequestLine().getMethod());
 		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
 		Header header;
@@ -179,7 +197,11 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		buffer.append('\n').append(HttpRequestBase.class.cast(httpRequest).getURI().getRawPath());
+		try {
+			buffer.append('\n').append(httpRequest.getURI().getRawPath());
+		} catch(final URISyntaxException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to build canonical request representation");
+		}
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
 			header = httpRequest.getFirstHeader(emcHeaderName);
@@ -244,5 +266,10 @@ extends WSRequestConfigBase<T> {
 				);
 			}
 		}
+	}
+	//
+	@Override
+	public void receiveResponse(final HttpResponse response, final T dataItem) {
+		applyObjectId(dataItem, response);
 	}
 }

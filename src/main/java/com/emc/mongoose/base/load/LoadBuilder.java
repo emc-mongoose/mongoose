@@ -1,7 +1,7 @@
 package com.emc.mongoose.base.load;
 //
 import com.emc.mongoose.base.api.RequestConfig;
-import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
@@ -25,7 +25,7 @@ public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>> {
 	LoadBuilder<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws RemoteException;
 	//
-	LoadBuilder<T, U> setLoadType(final Request.Type loadType)
+	LoadBuilder<T, U> setLoadType(final AsyncIOTask.Type loadType)
 	throws IllegalStateException, RemoteException;
 	//
 	LoadBuilder<T, U> setMaxCount(final long maxCount)
@@ -43,7 +43,7 @@ public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>> {
 	LoadBuilder<T, U> setThreadsPerNodeDefault(final short threadCount)
 	throws IllegalArgumentException, RemoteException;
 	//
-	LoadBuilder<T, U> setThreadsPerNodeFor(final short threadCount, final Request.Type loadType)
+	LoadBuilder<T, U> setThreadsPerNodeFor(final short threadCount, final AsyncIOTask.Type loadType)
 	throws IllegalArgumentException, RemoteException;
 	//
 	LoadBuilder<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)

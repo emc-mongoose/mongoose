@@ -22,6 +22,7 @@ public class WSLoadHelper {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	@SuppressWarnings("unchecked")
 	public static WSClient initClient(
 		final int totalThreadCount, final RunTimeConfig runTimeConfig, final WSRequestConfig reqConf
 	) {

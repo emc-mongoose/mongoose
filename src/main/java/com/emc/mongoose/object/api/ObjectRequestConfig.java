@@ -1,8 +1,8 @@
 package com.emc.mongoose.object.api;
 //
-import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
-import com.emc.mongoose.base.api.StorageClient;
+import com.emc.mongoose.base.api.AsyncIOClient;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -19,7 +19,7 @@ extends RequestConfig<T> {
 	ObjectRequestConfig<T> setAPI(final String api);
 	//
 	@Override
-	ObjectRequestConfig<T> setLoadType(final Request.Type loadType);
+	ObjectRequestConfig<T> setLoadType(final AsyncIOTask.Type loadType);
 	//
 	@Override
 	ObjectRequestConfig<T> setUserName(final String userName);
@@ -37,8 +37,8 @@ extends RequestConfig<T> {
 	ObjectRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
 	@Override
-	ObjectRequestConfig<T> setClient(final StorageClient<T> client);
+	ObjectRequestConfig<T> setClient(final AsyncIOClient<T> client);
 	//
 	@Override
-	ObjectStorageClient<T> getClient();
+	ObjectIOClient<T> getClient();
 }

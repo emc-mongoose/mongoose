@@ -1,7 +1,7 @@
 package com.emc.mongoose.base.load.impl;
 //
 import com.emc.mongoose.base.api.RequestConfig;
-import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.persist.TmpFileItemBuffer;
 import com.emc.mongoose.base.load.DataItemBuffer;
@@ -30,12 +30,12 @@ implements LoadBuilder<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected RequestConfig<T> reqConf;
-	protected Request.Type loadType;
+	protected AsyncIOTask.Type loadType;
 	protected long maxCount, minObjSize, maxObjSize;
 	protected float objSizeBias;
 	protected int updatesPerItem;
 	protected String listFile, dataNodeAddrs[];
-	protected final HashMap<Request.Type, Short> threadsPerNodeMap;
+	protected final HashMap<AsyncIOTask.Type, Short> threadsPerNodeMap;
 	//
 	{
 		threadsPerNodeMap = new HashMap<>();
@@ -59,7 +59,7 @@ implements LoadBuilder<T, U> {
 		}
 		//
 		String paramName;
-		for(final Request.Type loadType: Request.Type.values()) {
+		for(final AsyncIOTask.Type loadType: AsyncIOTask.Type.values()) {
 			paramName = "load."+loadType.name().toLowerCase()+".threads";
 			try {
 				setThreadsPerNodeFor(runTimeConfig.getShort(paramName), loadType);
@@ -157,7 +157,7 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setLoadType(final Request.Type loadType)
+	public LoadBuilder<T, U> setLoadType(final AsyncIOTask.Type loadType)
 		throws IllegalStateException {
 		LOG.debug(Markers.MSG, "Set load type: {}", loadType);
 		if(reqConf==null) {
@@ -233,7 +233,7 @@ implements LoadBuilder<T, U> {
 			throw new IllegalArgumentException("Thread count should not be less than 1");
 		}
 		LOG.debug(Markers.MSG, "Set default thread count per node: {}", threadsPerNode);
-		for(final Request.Type loadType: Request.Type.values()) {
+		for(final AsyncIOTask.Type loadType: AsyncIOTask.Type.values()) {
 			threadsPerNodeMap.put(loadType, threadsPerNode);
 		}
 		return this;
@@ -241,7 +241,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setThreadsPerNodeFor(
-		final short threadsPerNode, final Request.Type loadType
+		final short threadsPerNode, final AsyncIOTask.Type loadType
 	) throws IllegalArgumentException {
 		if(threadsPerNode<1) {
 			throw new IllegalArgumentException("Thread count should not be less than 1");
@@ -294,7 +294,7 @@ implements LoadBuilder<T, U> {
 		lb.maxCount = maxCount;
 		lb.minObjSize = minObjSize;
 		lb.maxObjSize = maxObjSize;
-		for(final Request.Type loadType: threadsPerNodeMap.keySet()) {
+		for(final AsyncIOTask.Type loadType: threadsPerNodeMap.keySet()) {
 			lb.threadsPerNodeMap.put(loadType, threadsPerNodeMap.get(loadType));
 		}
 		lb.dataNodeAddrs = dataNodeAddrs;

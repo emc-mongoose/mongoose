@@ -1,7 +1,7 @@
 package com.emc.mongoose.base.api.impl;
 //
-import com.emc.mongoose.base.api.StorageClient;
-import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.AsyncIOClient;
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.DataSource;
@@ -9,8 +9,9 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
 import com.emc.mongoose.util.logging.Markers;
+//
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.client.utils.URIBuilder;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -27,12 +28,12 @@ implements RequestConfig<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected String api, secret, userName;
-	protected Request.Type loadType;
+	protected AsyncIOTask.Type loadType;
 	protected DataSource<T> dataSrc;
 	protected volatile boolean retryFlag, verifyContentFlag, closeFlag = false;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	protected final URIBuilder uriBuilder = new URIBuilder();
-	protected StorageClient<T> storageClient = null;
+	protected AsyncIOClient<T> storageClient = null;
 	protected int loadNumber;
 	//
 	@SuppressWarnings("unchecked")
@@ -86,11 +87,11 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final Request.Type getLoadType() {
+	public final AsyncIOTask.Type getLoadType() {
 		return loadType;
 	}
 	@Override
-	public RequestConfigImpl<T> setLoadType(final Request.Type loadType) {
+	public RequestConfigImpl<T> setLoadType(final AsyncIOTask.Type loadType) {
 		LOG.trace(Markers.MSG, "Setting load type {}", loadType);
 		this.loadType = loadType;
 		return this;
@@ -188,12 +189,12 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public StorageClient<T> getClient() {
+	public AsyncIOClient<T> getClient() {
 		return storageClient;
 	}
 	//
 	@Override
-	public RequestConfig<T> setClient(final StorageClient<T> storageClient) {
+	public RequestConfig<T> setClient(final AsyncIOClient<T> storageClient) {
 		this.storageClient = storageClient;
 		return this;
 	}
@@ -218,7 +219,7 @@ implements RequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got API {}", api);
 		setAddr(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got address {}", uriBuilder.getHost());
-		setLoadType(Request.Type.class.cast(in.readObject()));
+		setLoadType(AsyncIOTask.Type.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got load type {}", loadType);
 		setPort(in.readInt());
 		LOG.trace(Markers.MSG, "Got port {}", uriBuilder.getPort());

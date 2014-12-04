@@ -1,6 +1,6 @@
 package com.emc.mongoose.base.load.client.impl;
 //
-import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.persist.FileProducer;
@@ -133,7 +133,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setLoadType(final Request.Type loadType)
+	public final LoadBuilderClient<T, U> setLoadType(final AsyncIOTask.Type loadType)
 	throws IllegalStateException, RemoteException {
 		reqConf.setLoadType(loadType);
 		LoadBuilderSvc<T, U> nextBuilder;
@@ -201,7 +201,7 @@ implements LoadBuilderClient<T, U> {
 	//
 	@Override
 	public final LoadBuilderClient<T, U> setThreadsPerNodeFor(
-		final short threadCount, final Request.Type loadType
+		final short threadCount, final AsyncIOTask.Type loadType
 	) throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {

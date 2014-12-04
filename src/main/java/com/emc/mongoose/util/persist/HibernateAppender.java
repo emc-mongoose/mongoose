@@ -1,6 +1,6 @@
 package com.emc.mongoose.util.persist;
 //
-import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.AsyncIOTask;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -270,7 +270,7 @@ extends AbstractAppender {
 		return dataObject;
 	}
 	//
-	private static StatusEntity loadStatusEntity(final Request.Result result){
+	private static StatusEntity loadStatusEntity(final AsyncIOTask.Result result){
 		StatusEntity statusEntity = getStatusEntity(result.code);
 		if (SESSION.get(StatusEntity.class, result.code) == null){
 			statusEntity = new StatusEntity(result.code, result.description);
@@ -301,7 +301,7 @@ extends AbstractAppender {
 	//
 	private static void setStatusEntity(){
 		SESSION.beginTransaction();
-		for (final Request.Result result:Request.Result.values()){
+		for (final AsyncIOTask.Result result: AsyncIOTask.Result.values()){
 			StatusEntity statusEntity = loadStatusEntity(result);
 		}
 		SESSION.getTransaction().commit();

@@ -6,7 +6,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
-import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.Consumer;
@@ -54,7 +54,7 @@ implements StorageNodeExecutor<T> {
 	//
 	private volatile Consumer<T> consumer = null;
 	//
-	private final Request.Type reqType;
+	private final AsyncIOTask.Type reqType;
 	//
 	private final int retryDelayMilliSec, retryCountMax;
 	//
@@ -149,18 +149,18 @@ implements StorageNodeExecutor<T> {
 		return consumer;
 	}
 	//
-	protected abstract Request<T> getRequestFor(final T dataItem);
+	protected abstract AsyncIOTask<T> getRequestFor(final T dataItem);
 	@Override @SuppressWarnings("unchecked")
 	public final void submit(final T dataItem) {
-		Request<T> request = null;
+		AsyncIOTask<T> ioTask = null;
 		try {
-			request = getRequestFor(dataItem);
+			ioTask = getRequestFor(dataItem);
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to build request");
 		} finally {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-					Markers.MSG, "Built request \"{}\" for data item \"{}\"", request, dataItem
+					Markers.MSG, "Built request \"{}\" for data item \"{}\"", ioTask, dataItem
 				);
 			}
 		}
@@ -169,7 +169,7 @@ implements StorageNodeExecutor<T> {
 		int rejectCount = 0;
 		while(!passed && rejectCount < retryCountMax && !isShutdown()) {
 			try {
-				super.submit(request);
+				super.submit(ioTask);
 				passed = true;
 			} catch(final RejectedExecutionException e) {
 				rejectCount ++;
@@ -221,19 +221,19 @@ implements StorageNodeExecutor<T> {
 			counterReqFail.inc();
 			counterReqFailParent.inc();
 		} else {
-			try(final Request<T> request = (Request<T>) Future.class.cast(reqTask).get()) {
-				final T dataItem = request.getDataItem();
+			try(final AsyncIOTask<T> ioTask = (AsyncIOTask<T>) Future.class.cast(reqTask).get()) {
+				final T dataItem = ioTask.getDataItem();
 				if(dataItem == null) {
 					consumer.submit(null);
 				} else {
-					final Request.Result result = request.getResult();
-					if(result == Request.Result.SUCC) {
+					final AsyncIOTask.Result result = ioTask.getResult();
+					if(result == AsyncIOTask.Result.SUCC) {
 						// update the metrics with success
 						counterReqSucc.inc();
 						counterReqSuccParent.inc();
 						final long
-							latency = request.getRespTimeStart() - request.getReqTimeDone(),
-							size = request.getTransferSize();
+							latency = ioTask.getRespTimeStart() - ioTask.getReqTimeDone(),
+							size = ioTask.getTransferSize();
 						reqBytes.mark(size);
 						reqBytesParent.mark(size);
 						//reqDur.update(duration);

@@ -3,14 +3,13 @@ package com.emc.mongoose.web.load.impl;
 import com.codahale.metrics.MetricRegistry;
 //
 import com.emc.mongoose.object.load.impl.ObjectNodeExecutorBase;
-import com.emc.mongoose.web.api.WSRequest;
-import com.emc.mongoose.web.api.impl.BasicWSRequest;
+import com.emc.mongoose.web.api.WSIOTask;
+import com.emc.mongoose.web.api.impl.BasicWSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.web.load.WSNodeExecutor;
 //
-import java.util.Map;
 //
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
@@ -32,8 +31,8 @@ implements WSNodeExecutor<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected final WSRequest<T> getRequestFor(final T dataItem) {
-		return (WSRequest<T>) BasicWSRequest.getInstanceFor(localReqConf, dataItem);
+	protected final WSIOTask<T> getRequestFor(final T dataItem) {
+		return (WSIOTask<T>) BasicWSIOTask.getInstanceFor(localReqConf, dataItem);
 	}
 	//
 }

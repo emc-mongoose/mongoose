@@ -117,7 +117,6 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		applyObjectId(dataItem, null); // S3 REST doesn't require http response
 		synchronized(uriBuilder) {
 			try {
 				HttpRequestBase.class.cast(httpRequest).setURI(
@@ -179,8 +178,7 @@ extends WSRequestConfigBase<T> {
 		return buffer.toString();
 	}
 	//
-	@Override
-	public final void applyObjectId(final T dataObject, final HttpResponse unused) {
+	protected final void applyObjectId(final T dataObject, final HttpResponse unused) {
 		dataObject.setId(
 			Base64.encodeBase64URLSafeString(
 				ByteBuffer

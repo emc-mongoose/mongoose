@@ -87,7 +87,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
+	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
 		// TODO swift specific things
 	}
 }

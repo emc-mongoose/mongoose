@@ -6,19 +6,17 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
+//
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-//
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
+import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
+//
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,12 +27,14 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 //
 import javax.management.MBeanServer;
+//
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+//
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -99,53 +99,53 @@ public final class MockServlet
 				ALL_METHODS, LoadExecutor.METRIC_NAME_BW));
 		//
 		counterGetSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
-				HttpGet.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			WSIOTask.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterGetFail = metrics.counter(MetricRegistry.name(MockServlet.class,
-				HttpGet.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			WSIOTask.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durGet = metrics.histogram(MetricRegistry.name(MockServlet.class,
-				HttpGet.METHOD_NAME, LoadExecutor.METRIC_NAME_DUR));
+			WSIOTask.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_DUR));
 		getBW = metrics.meter(MetricRegistry.name(MockServlet.class,
-				HttpGet.METHOD_NAME, LoadExecutor.METRIC_NAME_BW));
+			WSIOTask.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_BW));
 		getTP = metrics.meter(MetricRegistry.name(MockServlet.class,
-				HttpGet.METHOD_NAME, LoadExecutor.METRIC_NAME_TP));
+			WSIOTask.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_TP));
 		//
 		counterPostSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
-				HttpPost.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			WSIOTask.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterPostFail = metrics.counter(MetricRegistry.name(MockServlet.class,
-				HttpPost.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			WSIOTask.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durPost = metrics.histogram(MetricRegistry.name(MockServlet.class,
-				HttpPost.METHOD_NAME, LoadExecutor.METRIC_NAME_DUR));
+			WSIOTask.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_DUR));
 		postBW = metrics.meter(MetricRegistry.name(MockServlet.class,
-				HttpPost.METHOD_NAME, LoadExecutor.METRIC_NAME_BW));
+			WSIOTask.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_BW));
 		postTP = metrics.meter(MetricRegistry.name(MockServlet.class,
-				HttpPost.METHOD_NAME, LoadExecutor.METRIC_NAME_TP));
+			WSIOTask.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_TP));
 		//
 		counterPutSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
-				HttpPut.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			WSIOTask.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterPutFail = metrics.counter(MetricRegistry.name(MockServlet.class,
-				HttpPut.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			WSIOTask.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durPut = metrics.histogram(MetricRegistry.name(MockServlet.class,
-				HttpPut.METHOD_NAME, LoadExecutor.METRIC_NAME_DUR));
+			WSIOTask.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_DUR));
 		putBW = metrics.meter(MetricRegistry.name(MockServlet.class,
-				HttpPut.METHOD_NAME, LoadExecutor.METRIC_NAME_BW));
+			WSIOTask.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_BW));
 		putTP = metrics.meter(MetricRegistry.name(MockServlet.class,
-				HttpPut.METHOD_NAME, LoadExecutor.METRIC_NAME_TP));
+			WSIOTask.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_TP));
 		//
 		counterDeleteSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
-				HttpDelete.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			WSIOTask.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterDeleteFail = metrics.counter(MetricRegistry.name(MockServlet.class,
-				HttpDelete.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			WSIOTask.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durDelete = metrics.histogram(MetricRegistry.name(MockServlet.class,
-				HttpDelete.METHOD_NAME, LoadExecutor.METRIC_NAME_DUR));
+			WSIOTask.HTTPMethod.DELETE.name(), LoadExecutor.METRIC_NAME_DUR));
 		deleteBW = metrics.meter(MetricRegistry.name(MockServlet.class,
-				HttpDelete.METHOD_NAME, LoadExecutor.METRIC_NAME_BW));
+			WSIOTask.HTTPMethod.DELETE.name(), LoadExecutor.METRIC_NAME_BW));
 		deleteTP = metrics.meter(MetricRegistry.name(MockServlet.class,
-				HttpDelete.METHOD_NAME, LoadExecutor.METRIC_NAME_TP));
+			WSIOTask.HTTPMethod.DELETE.name(), LoadExecutor.METRIC_NAME_TP));
 		//
 		counterHeadSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
-				HttpHead.METHOD_NAME, LoadExecutor.METRIC_NAME_SUCC));
+			WSIOTask.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_SUCC));
 		counterHeadFail = metrics.counter(MetricRegistry.name(MockServlet.class,
-				HttpHead.METHOD_NAME, LoadExecutor.METRIC_NAME_FAIL));
+			WSIOTask.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_FAIL));
 		//
 		metricsReporter.start();
 		//

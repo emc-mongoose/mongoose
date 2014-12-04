@@ -1,18 +1,20 @@
 package com.emc.mongoose.web.api.impl;
 //
-import com.emc.mongoose.base.api.Request;
-import com.emc.mongoose.base.api.impl.RequestBase;
+import com.emc.mongoose.base.api.AsyncIOTask;
+import com.emc.mongoose.base.api.impl.IOTaskBase;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.impl.UniformData;
 import com.emc.mongoose.util.pool.BasicInstancePool;
+import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSClient;
-import com.emc.mongoose.web.api.WSRequest;
+import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.commons.lang.text.StrBuilder;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -21,35 +23,31 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.NoHttpResponseException;
 import org.apache.http.StatusLine;
-import org.apache.http.TruncatedChunkException;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.ContentDecoderChannel;
 import org.apache.http.nio.ContentEncoder;
+import org.apache.http.nio.ContentEncoderChannel;
 import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.util.EntityUtils;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
-import java.net.ConnectException;
-import java.net.PortUnreachableException;
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -57,13 +55,13 @@ import java.util.concurrent.Future;
 /**
  Created by kurila on 06.06.14.
  */
-public class BasicWSRequest<T extends WSObject>
-extends RequestBase<T>
-implements WSRequest<T> {
+public class BasicWSIOTask<T extends WSObject>
+extends IOTaskBase<T>
+implements WSIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static WSRequest<WSObject> POISON = new BasicWSRequest<WSObject>() {
+	public final static WSIOTask<WSObject> POISON = new BasicWSIOTask<WSObject>() {
 		@Override
 		public final void execute()
 		throws InterruptedException {
@@ -72,60 +70,42 @@ implements WSRequest<T> {
 	};
 	//
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
-	protected HttpRequestBase httpRequest = null;
-	public BasicWSRequest() {
+	protected MutableHTTPRequest httpRequest = null;
+	public BasicWSIOTask() {
 		super();
 	}
 	//
 	@SuppressWarnings("unchecked")
-	public static Request getInstanceFor(
+	public static AsyncIOTask getInstanceFor(
 		final RequestConfig reqConf, final DataItem dataItem
 	) {
-		Request request;
+		AsyncIOTask ioTask;
 		if(dataItem == null) {
 			LOG.debug(Markers.MSG, "Preparing poison request");
-			request = POISON;
+			ioTask = POISON;
 		} else {
 			BasicInstancePool pool;
 			synchronized(POOL_MAP) {
 				if(POOL_MAP.containsKey(reqConf)) {
 					pool = POOL_MAP.get(reqConf);
 				} else {
-					pool = new BasicInstancePool<>(BasicWSRequest.class);
+					pool = new BasicInstancePool<>(BasicWSIOTask.class);
 					POOL_MAP.put(reqConf, pool);
 				}
 			}
-			request = RequestBase.class.cast(pool.take())
+			ioTask = IOTaskBase.class.cast(pool.take())
 				.setRequestConfig(reqConf)
 				.setDataItem(dataItem);
 			//assert request != null;
 		}
-		return request;
+		return ioTask;
 	}
 	//
 	@Override
-	public WSRequest<T> setRequestConfig(final RequestConfig<T> reqConf) {
+	public WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
 		if(this.wsReqConf == null) { // request instance has not been configured yet?
 			this.wsReqConf = (WSRequestConfig<T>) reqConf;
-			switch(wsReqConf.getLoadType()) {
-				case CREATE:
-					httpRequest = com.emc.mongoose.web.api.impl.provider.atmos.RequestConfig
-						.class.isInstance(wsReqConf) ?
-							new HttpPost() : new HttpPut();
-					break;
-				case READ:
-					httpRequest = new HttpGet();
-					break;
-				case DELETE:
-					httpRequest = new HttpDelete();
-					break;
-				case UPDATE:
-					httpRequest = new HttpPut();
-					break;
-				case APPEND:
-					httpRequest = new HttpPut();
-					break;
-			}
+			httpRequest = wsReqConf.createRequest(null);
 		} else { // cleanup
 			httpRequest.removeHeaders(HttpHeaders.RANGE);
 			httpRequest.removeHeaders(WSRequestConfig.KEY_EMC_SIG);
@@ -135,7 +115,7 @@ implements WSRequest<T> {
 	}
 	//
 	@Override
-	public final WSRequest<T> setDataItem(final T dataItem) {
+	public final WSIOTask<T> setDataItem(final T dataItem) {
 		try {
 			wsReqConf.applyDataItem(httpRequest, dataItem);
 			super.setDataItem(dataItem);
@@ -152,7 +132,7 @@ implements WSRequest<T> {
 		wsReqConf.applyHeadersFinally(httpRequest);
 		//
 		final WSClient<T> client = wsReqConf.getClient();
-		final Future<Request.Result> futureResult = client.execute(this);
+		final Future<AsyncIOTask.Result> futureResult = client.submit(this);
 		try {
 			futureResult.get();
 		} catch(final InterruptedException e) {
@@ -186,7 +166,7 @@ implements WSRequest<T> {
 	private volatile HttpEntity reqEntity = null;
 	private volatile InputStream reqInStream = null;
 	@SuppressWarnings("FieldCanBeLocal")
-	private volatile int readBytesCount;
+	private volatile int byteCount;
 	//
 	@Override
 	public final HttpRequest generateRequest()
@@ -198,21 +178,21 @@ implements WSRequest<T> {
 		return httpRequest;
 	}
 	//
-	private final ByteBuffer outPutBuff = ByteBuffer.allocate(UniformData.MAX_PAGE_SIZE);
-	//
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		try {
+		try(
+			final OutputStream contentStream = Channels
+				.newOutputStream(new ContentEncoderChannel(out))
+		) {
 			if(reqInStream != null) {
+				final byte buff[] = new byte[UniformData.MAX_PAGE_SIZE];
 				do {
-					readBytesCount = reqInStream.read(outPutBuff.array());
-					if(readBytesCount > 0) {
-						outPutBuff.flip();
-						out.write(outPutBuff);
-						outPutBuff.compact();
+					byteCount = reqInStream.read(buff);
+					if(byteCount > 0) {
+						contentStream.write(buff, 0, byteCount);
 					}
-				} while(!out.isCompleted() && !outPutBuff.hasRemaining());
+				} while(byteCount != -1);
 			}
 		} finally {
 			out.complete();
@@ -233,16 +213,18 @@ implements WSRequest<T> {
 	@Override
 	public final void resetRequest()
 	throws IOException {
+		byteCount = 0;
+		result = Result.FAIL_UNKNOWN;
 		reqTimeStart = 0;
 		reqTimeDone = 0;
 		reqEntity = null;
 		reqInStream = null;
+		respStatusCode = -1;
 		respTimeStart = 0;
 		respTimeDone = 0;
 		respFlagCancel = false;
 		respFlagDone = false;
 		exception = null;
-		outPutBuff.clear();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// HttpAsyncResponseConsumer implementation ////////////////////////////////////////////////////
@@ -262,7 +244,7 @@ implements WSRequest<T> {
 			);
 		}
 		//
-		if(respStatusCode < 200 || respStatusCode > 299) {
+		if(respStatusCode < 200 || respStatusCode >= 300) {
 			switch(respStatusCode) {
 				case (400):
 					LOG.warn(Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine());
@@ -303,13 +285,37 @@ implements WSRequest<T> {
 					LOG.error(Markers.ERR, "Unsupported response code: {}", respStatusCode);
 					result = Result.FAIL_UNKNOWN;
 			}
+		} else {
+			result = Result.SUCC;
+			wsReqConf.receiveResponse(response, dataItem);
 		}
 	}
 	//
 	@Override
 	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
 	throws IOException {
-		wsReqConf.consumeResponse(in, ioCtl, dataItem, respStatusCode);
+		final InputStream contentStream = Channels.newInputStream(new ContentDecoderChannel(in));
+		byteCount = 0;
+		if(respStatusCode < 200 || respStatusCode >= 300) { // failure
+			final BufferedReader contentStreamBuff = new BufferedReader(
+				new InputStreamReader(contentStream)
+			);
+			final StrBuilder msgBuilder = new StrBuilder();
+			String nextLine;
+			do {
+				nextLine = contentStreamBuff.readLine();
+				if(nextLine == null) {
+					LOG.debug(
+						Markers.ERR, "Response failure code \"{}\", content: \"{}\"",
+						respStatusCode, msgBuilder.toString()
+					);
+				} else {
+					msgBuilder.append(nextLine);
+				}
+			} while(nextLine != null);
+		} else {
+			wsReqConf.consumeContent(contentStream, ioCtl, dataItem);
+		}
 	}
 	//
 	@Override

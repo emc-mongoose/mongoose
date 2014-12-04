@@ -1,11 +1,13 @@
 package com.emc.mongoose.web.api.impl;
 //
-import com.emc.mongoose.base.api.Request;
-import com.emc.mongoose.base.api.StorageClient;
+import com.emc.mongoose.base.api.AsyncIOClient;
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.impl.RequestConfigImpl;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
+import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSClient;
+import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.run.Main;
@@ -19,13 +21,9 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpRequest;
-import org.apache.http.client.HttpRequestRetryHandler;
-import org.apache.http.client.utils.DateUtils;
+import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
-import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
-import org.apache.http.protocol.HttpContext;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -34,18 +32,21 @@ import org.apache.logging.log4j.Logger;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 09.06.14.
@@ -58,24 +59,6 @@ implements WSRequestConfig<T> {
 	//
 	public final static long serialVersionUID = 42L;
 	protected final String userAgent, signMethod;
-	//
-	private final HttpRequestRetryHandler retryHandler = new HttpRequestRetryHandler() {
-		//
-		private final String FMT_ERR_MSG = "Request failed, try #%d";
-		//
-		@Override
-		public final boolean retryRequest(
-			final IOException e, final int i, final HttpContext httpContext
-		) {
-			if(LOG.isTraceEnabled(Markers.ERR)) {
-				ExceptionHandler.trace(
-					LOG, Level.TRACE, e, String.format(Locale.ROOT, FMT_ERR_MSG, i)
-				);
-			}
-			return retryFlag;
-		}
-		//
-	};
 	//
 	public static WSRequestConfigBase getInstance() {
 		return newInstanceFor(Main.RUN_TIME_CONFIG.get().getStorageApi());
@@ -147,6 +130,25 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
+	public MutableHTTPRequest createRequest(final String uri) {
+		MutableHTTPRequest r = null;
+		switch(loadType) {
+			case READ:
+				r = WSIOTask.HTTPMethod.GET.createRequest(uri);
+				break;
+			case DELETE:
+				r = WSIOTask.HTTPMethod.DELETE.createRequest(uri);
+				break;
+			case APPEND:
+			case CREATE:
+			case UPDATE:
+				r = WSIOTask.HTTPMethod.PUT.createRequest(uri);
+				break;
+		}
+		return r;
+	}
+	//
+	@Override
 	public final WSRequestConfigBase<T> setAPI(final String api) {
 		super.setAPI(api);
 		return this;
@@ -171,7 +173,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setLoadType(final Request.Type loadType) {
+	public final WSRequestConfigBase<T> setLoadType(final AsyncIOTask.Type loadType) {
 		super.setLoadType(loadType);
 		return this;
 	}
@@ -262,17 +264,12 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final HttpRequestRetryHandler getRetryHandler() {
-		return retryHandler;
-	}
-	//
-	@Override
 	public final WSClient<T> getClient() {
 		return (WSClient<T>) super.getClient();
 	}
 	//
 	@Override @SuppressWarnings("RedundantCast")
-	public final WSRequestConfigBase<T> setClient(final StorageClient<T> client) {
+	public final WSRequestConfigBase<T> setClient(final AsyncIOClient<T> client) {
 		super.setClient((WSClient<T>) client);
 		return this;
 	}
@@ -311,9 +308,12 @@ implements WSRequestConfig<T> {
 		}*/
 	}
 	//
+	protected abstract void applyObjectId(final T dataItem, final HttpResponse httpResponse);
+	//
 	@Override
-	public final void applyDataItem(final HttpRequest httpRequest, final T dataItem)
+	public final void applyDataItem(final MutableHTTPRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
+		applyObjectId(dataItem, null);
 		applyURI(httpRequest, dataItem);
 		switch(loadType) {
 			case CREATE:
@@ -331,7 +331,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final void applyHeadersFinally(final HttpRequest httpRequest) {
+	public final void applyHeadersFinally(final MutableHTTPRequest httpRequest) {
 		applyDateHeader(httpRequest);
 		applyAuthHeader(httpRequest);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -349,8 +349,9 @@ implements WSRequestConfig<T> {
 				if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
 					LOG.trace(
 						Markers.MSG, "\tcontent: {} bytes",
-						HttpEntityEnclosingRequest.class.cast(httpRequest)
-								.getEntity().getContentLength()
+						HttpEntityEnclosingRequest.class.cast(
+							httpRequest
+						).getEntity().getContentLength()
 					);
 				} else {
 					LOG.trace(Markers.MSG, "\t---- no content ----");
@@ -359,10 +360,12 @@ implements WSRequestConfig<T> {
 		}
 	}
 	//
-	protected abstract void applyURI(final HttpRequest httpRequest, final T dataItem)
+	protected abstract void applyURI(final MutableHTTPRequest httpRequest, final T dataItem)
 	throws IllegalArgumentException, URISyntaxException;
 	//
-	protected final void applyPayLoad(final HttpRequest httpRequest, final HttpEntity httpEntity) {
+	protected final void applyPayLoad(
+		final MutableHTTPRequest httpRequest, final HttpEntity httpEntity
+	) {
 		HttpEntityEnclosingRequest httpReqWithPayLoad = null;
 		try {
 			httpReqWithPayLoad = HttpEntityEnclosingRequest.class.cast(httpRequest);
@@ -377,7 +380,7 @@ implements WSRequestConfig<T> {
 		}
 	}
 	// merge subsequent updated ranges functionality is here
-	protected final void applyRangesHeaders(final HttpRequest httpRequest, final T dataItem) {
+	protected final void applyRangesHeaders(final MutableHTTPRequest httpRequest, final T dataItem) {
 		long rangeBeg = -1, rangeEnd = -1, rangeLen;
 		int rangeCount = dataItem.getCountRangesTotal();
 		for(int i = 0; i < rangeCount; i++) {
@@ -412,7 +415,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected final void applyAppendRangeHeader(
-		final HttpRequest httpRequest, final T dataItem
+		final MutableHTTPRequest httpRequest, final T dataItem
 	) {
 		httpRequest.addHeader(
 			HttpHeaders.RANGE,
@@ -420,12 +423,18 @@ implements WSRequestConfig<T> {
 		);
 	}
 	//
-	protected void applyDateHeader(final HttpRequest httpRequest) {
-		final String rfc1123date = DateUtils.formatDate(new Date());
-		httpRequest.setHeader(HttpHeaders.DATE, rfc1123date);
+	private final SimpleDateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(
+		"EEE, dd MMM yyyy HH:mm:ss zzz"
+	);
+	private final Calendar CALENDAR = Calendar.getInstance(
+		TimeZone.getTimeZone("GMT"), Locale.ROOT
+	);
+	//
+	protected void applyDateHeader(final MutableHTTPRequest httpRequest) {
+		httpRequest.setHeader(HttpHeaders.DATE, FMT_DATE_RFC1123.format(CALENDAR.getTime()));
 	}
 	//
-	protected abstract void applyAuthHeader(final HttpRequest httpRequest);
+	protected abstract void applyAuthHeader(final MutableHTTPRequest httpRequest);
 	//
 	//@Override
 	//public final int hashCode() {
@@ -448,18 +457,37 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public void consumeResponse(
-		final ContentDecoder in, final IOControl ioCtl, final T dataItem, final int statusCode
-	) {
-		if(
-			verifyContentFlag && loadType == Request.Type.READ &&
-			statusCode > 199 && statusCode < 300
-		) {
-			if(dataItem != null) {
-				dataItem.compareWith(in, ioCtl);
+	public void receiveResponse(final HttpResponse response, final T dataItem) {
+		// do nothing
+	}
+	//
+	@Override
+	public final boolean consumeContent(
+		final InputStream contentStream, final IOControl ioCtl, T dataItem
+	) throws IOException {
+		boolean ok = false;
+		if(dataItem != null) {
+			if(loadType == AsyncIOTask.Type.READ) { // read
+				if(verifyContentFlag) { // read and do verify
+					if(dataItem.compareWith(contentStream)) {
+						ok = true;
+					}
+				} else { // read, verification is disabled - consume quetly
+					consumeContentQuetly(contentStream, ioCtl);
+				}
+			} else { // append | create | delete | update - consume quetly
+				consumeContentQuetly(contentStream, ioCtl);
 			}
-		} else {
-
+		} else { // poison or special request (e.g. bucket-related)? - consume quetly
+			consumeContentQuetly(contentStream, ioCtl);
 		}
+		return ok;
+	}
+	//
+	@SuppressWarnings("StatementWithEmptyBody")
+	private void consumeContentQuetly(final InputStream contentStream, final IOControl ioCtl)
+	throws IOException {
+		final byte buff[] = new byte[(int) runTimeConfig.getDataPageSize()];
+		while(contentStream.read(buff) != -1);
 	}
 }

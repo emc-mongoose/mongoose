@@ -4,6 +4,7 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.persist.FileProducer;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.type.AppendLoadBase;
+import com.emc.mongoose.web.api.WSClient;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
@@ -39,9 +40,9 @@ implements WSLoadExecutor<T> {
 		);
 	}
 	//
-	@Override
-	protected final Closeable initClient(final String addrs[], final RequestConfig<T> reqConf) {
-		return WSLoadHelper.initClient(
+	@Override @SuppressWarnings("unchecked")
+	protected final WSClient<T> initClient(final String addrs[], final RequestConfig<T> reqConf) {
+		return (WSClient<T>) WSLoadHelper.initClient(
 			addrs.length * threadsPerNode, runTimeConfig, (WSRequestConfig<T>) reqConf
 		);
 	}

@@ -24,8 +24,8 @@ extends Externalizable, Cloneable, Closeable {
 	String getAddr();
 	RequestConfig<T> setAddr(final String addr);
 	//
-	Request.Type getLoadType();
-	RequestConfig<T> setLoadType(final Request.Type loadType);
+	AsyncIOTask.Type getLoadType();
+	RequestConfig<T> setLoadType(final AsyncIOTask.Type loadType);
 	//
 	int getPort();
 	RequestConfig<T> setPort(final int port);
@@ -50,8 +50,8 @@ extends Externalizable, Cloneable, Closeable {
 	int getLoadNumber();
 	RequestConfig<T> setLoadNumber(final int loadNumber);
 	//
-	StorageClient<T> getClient();
-	RequestConfig<T> setClient(final StorageClient<T> storageClient);
+	AsyncIOClient<T> getClient();
+	RequestConfig<T> setClient(final AsyncIOClient<T> storageClient);
 	//
 	void configureStorage()
 	throws IllegalStateException;

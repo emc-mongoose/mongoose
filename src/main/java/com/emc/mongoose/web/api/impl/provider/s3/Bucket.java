@@ -1,31 +1,20 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
-import com.emc.mongoose.base.api.Request;
-import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.object.api.DataObjectRequest;
-import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.web.api.WSClient;
-import com.emc.mongoose.web.api.WSRequest;
+import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.methods.RequestBuilder;
-//
-import org.apache.http.nio.ContentDecoder;
-import org.apache.http.nio.ContentEncoder;
-import org.apache.http.nio.IOControl;
-import org.apache.http.protocol.HttpContext;
+import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.util.EntityUtils;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,10 +32,10 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	final RequestConfig reqConf;
+	final RequestConfig<T> reqConf;
 	final String name;
 	//
-	public Bucket(final RequestConfig reqConf, final String name) {
+	public Bucket(final RequestConfig<T> reqConf, final String name) {
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
@@ -65,26 +54,25 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		return name;
 	}
 	//
-	private final static String FMT_MSG_INVALID_METHOD = "Invalid HTTP method name: \"%s\"";
+	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	final CloseableHttpResponse execute(final String method)
+	final HttpResponse execute(final WSIOTask.HTTPMethod method)
 	throws IOException {
 		//
-		if(method == null || method.length() < 3) {
-			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_METHOD, method));
+		if(method == null) {
+			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
 		//
-		final HttpUriRequest httpReq = RequestBuilder
-			.create(method.toUpperCase())
-			.setUri("/" + name)
-			.build();
+		final HttpRequest httpReq = new BasicHttpRequest(method.name(), "/" + name);
 		reqConf.applyHeadersFinally(httpReq);
-		final WSClient httpClient = reqConf.getClient();
+		final WSClient<T> httpClient = reqConf.getClient();
 		//
 		if(httpClient == null) {
 			throw new IllegalStateException("No HTTP client specified");
 		}
-		return httpClient.execute(null/*TODO new BucketCreateRequest(bucket)*/);
+		return httpClient.execute(
+			new HttpHost(reqConf.getAddr(), reqConf.getPort(), reqConf.getScheme()), httpReq
+		);
 	}
 	//
 	@Override
@@ -92,26 +80,29 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	throws IllegalStateException {
 		boolean flagExists = false;
 		//
-		try(final CloseableHttpResponse httpResp = execute("head")) {
-			final StatusLine statusLine = httpResp.getStatusLine();
-			if(statusLine == null) {
-				LOG.warn(Markers.MSG, "No response status");
-			} else {
-				final int statusCode = statusLine.getStatusCode();
-				if(statusCode == HttpStatus.SC_OK) {
-					LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
-					flagExists = true;
+		try {
+			final HttpResponse httpResp = execute(WSIOTask.HTTPMethod.HEAD);
+			if(httpResp != null) {
+				final StatusLine statusLine = httpResp.getStatusLine();
+				if(statusLine==null) {
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
-					final String statusMsg = statusLine.getReasonPhrase();
-					LOG.debug(
-						Markers.MSG, "Checking bucket \"{}\" response: {}/{}",
-						name, statusCode, statusMsg
-					);
+					final int statusCode = statusLine.getStatusCode();
+					if(statusCode==HttpStatus.SC_OK) {
+						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
+						flagExists = true;
+					} else {
+						final String statusMsg = statusLine.getReasonPhrase();
+						LOG.debug(
+							Markers.MSG, "Checking bucket \"{}\" response: {}/{}",
+							name, statusCode, statusMsg
+						);
+					}
 				}
+				EntityUtils.consumeQuietly(httpResp.getEntity());
 			}
-			EntityUtils.consumeQuietly(httpResp.getEntity());
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to check the bucket \""+name+"\"");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 		return flagExists;
@@ -121,25 +112,28 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	public final void create()
 	throws IllegalStateException {
 		//
-		try(final CloseableHttpResponse httpResp = execute("put")) {
-			final StatusLine statusLine = httpResp.getStatusLine();
-			if(statusLine == null) {
-				LOG.warn(Markers.MSG, "No response status");
-			} else {
-				final int statusCode = statusLine.getStatusCode();
-				if(statusCode == HttpStatus.SC_OK) {
-					LOG.info(Markers.MSG, "Bucket \"{}\" created", name);
+		try {
+			final HttpResponse httpResp = execute(WSIOTask.HTTPMethod.PUT);
+			if(httpResp != null) {
+				final StatusLine statusLine = httpResp.getStatusLine();
+				if(statusLine==null) {
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
-					final String statusMsg = statusLine.getReasonPhrase();
-					LOG.warn(
-						Markers.ERR, "Create bucket \"{}\" response: {}/{}",
-						name, statusCode, statusMsg
-					);
+					final int statusCode = statusLine.getStatusCode();
+					if(statusCode==HttpStatus.SC_OK) {
+						LOG.info(Markers.MSG, "Bucket \"{}\" created", name);
+					} else {
+						final String statusMsg = statusLine.getReasonPhrase();
+						LOG.debug(
+							Markers.MSG, "Creating bucket \"{}\" response: {}/{}",
+							name, statusCode, statusMsg
+						);
+					}
 				}
+				EntityUtils.consumeQuietly(httpResp.getEntity());
 			}
-			EntityUtils.consumeQuietly(httpResp.getEntity());
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create the bucket \""+name+"\"");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 	}
 	//
@@ -147,25 +141,28 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	public final void delete()
 	throws IllegalStateException {
 		//
-		try(final CloseableHttpResponse httpResp = execute("delete")) {
-			final StatusLine statusLine = httpResp.getStatusLine();
-			if(statusLine == null) {
-				LOG.warn(Markers.MSG, "No response status");
-			} else {
-				final int statusCode = statusLine.getStatusCode();
-				if(statusCode == HttpStatus.SC_OK) {
-					LOG.info(Markers.MSG, "Bucket \"{}\" deleted", name);
+		try {
+			final HttpResponse httpResp = execute(WSIOTask.HTTPMethod.DELETE);
+			if(httpResp != null) {
+				final StatusLine statusLine = httpResp.getStatusLine();
+				if(statusLine==null) {
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
-					final String statusMsg = statusLine.getReasonPhrase();
-					LOG.warn(
-						Markers.ERR, "Delete bucket \"{}\" response: {}/{}",
-						name, statusCode, statusMsg
-					);
+					final int statusCode = statusLine.getStatusCode();
+					if(statusCode==HttpStatus.SC_OK) {
+						LOG.info(Markers.MSG, "Bucket \"{}\" deleted", name);
+					} else {
+						final String statusMsg = statusLine.getReasonPhrase();
+						LOG.debug(
+							Markers.MSG, "Deleting bucket \"{}\" response: {}/{}",
+							name, statusCode, statusMsg
+						);
+					}
 				}
+				EntityUtils.consumeQuietly(httpResp.getEntity());
 			}
-			EntityUtils.consumeQuietly(httpResp.getEntity());
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to delete the bucket \""+name+"\"");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 	}

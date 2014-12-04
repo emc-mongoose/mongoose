@@ -1,19 +1,19 @@
 package com.emc.mongoose.web.api;
 //
-import com.emc.mongoose.base.api.Request;
-import com.emc.mongoose.base.api.StorageClient;
+import com.emc.mongoose.base.api.AsyncIOTask;
+import com.emc.mongoose.base.api.AsyncIOClient;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 //
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.apache.http.Header;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpRequestRetryHandler;
-import org.apache.http.nio.ContentDecoder;
+import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.nio.IOControl;
 //
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
@@ -52,11 +52,13 @@ extends ObjectRequestConfig<T> {
 	//
 	DateFormat FMT_DT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.ROOT);
 	//
+	MutableHTTPRequest createRequest(final String uri);
+	//
 	@Override
 	WSRequestConfig<T> setAPI(final String api);
 	//
 	@Override
-	WSRequestConfig<T> setLoadType(final Request.Type loadType);
+	WSRequestConfig<T> setLoadType(final AsyncIOTask.Type loadType);
 	//
 	@Override
 	WSRequestConfig<T> setUserName(final String userName);
@@ -74,7 +76,7 @@ extends ObjectRequestConfig<T> {
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
 	@Override
-	WSRequestConfig<T> setClient(final StorageClient<T> client);
+	WSRequestConfig<T> setClient(final AsyncIOClient<T> client);
 	//
 	@Override
 	WSClient<T> getClient();
@@ -88,20 +90,17 @@ extends ObjectRequestConfig<T> {
 	//
 	String getUserAgent();
 	//
-	void applyDataItem(final HttpRequest httpRequest, T dataItem)
+	void applyDataItem(final MutableHTTPRequest httpRequest, T dataItem)
 	throws URISyntaxException;
 	//
-	void applyHeadersFinally(final HttpRequest httpRequest);
+	void applyHeadersFinally(final MutableHTTPRequest httpRequest);
 	//
-	void applyObjectId(final T dataObject, final HttpResponse httpResponse);
-	//
-	HttpRequestRetryHandler getRetryHandler();
-	//
-	String getCanonical(final HttpRequest httpRequest);
+	String getCanonical(final MutableHTTPRequest httpRequest);
 	//
 	String getSignature(final String canonicalForm);
 	//
-	void consumeResponse(
-		final ContentDecoder in, final IOControl ioCtl, final T dataItem, final int respStatusCode
-	);
+	void receiveResponse(final HttpResponse response, final T dataItem);
+	//
+	boolean consumeContent(final InputStream contentStream, final IOControl ioCtl, T dataItem)
+	throws IOException;
 }

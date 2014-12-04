@@ -7,7 +7,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
-import com.emc.mongoose.base.api.StorageClient;
+import com.emc.mongoose.base.api.AsyncIOClient;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.DataSource;
@@ -57,7 +57,7 @@ implements LoadExecutor<T> {
 	protected final int threadsPerNode, retryCountMax, retryDelayMilliSec;
 	protected final StorageNodeExecutor<T> nodes[];
 	protected final ThreadPoolExecutor submitExecutor;
-	protected final StorageClient<T> storageClient;
+	protected final AsyncIOClient<T> storageClient;
 	//
 	protected final DataSource<T> dataSrc;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
@@ -164,7 +164,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	protected abstract void setFileBasedProducer(final String listFile);
-	protected abstract StorageClient<T> initClient(final String addrs[], final RequestConfig<T> reqConf);
+	protected abstract AsyncIOClient<T> initClient(final String addrs[], final RequestConfig<T> reqConf);
 	protected abstract void initNodeExecutors(
 		final String addrs[], final RequestConfig<T> reqConf
 	) throws ClassCastException;

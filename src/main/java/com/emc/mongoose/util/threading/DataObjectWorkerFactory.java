@@ -1,10 +1,7 @@
 package com.emc.mongoose.util.threading;
 
-import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.run.ThreadContextMap;
-
-import java.util.concurrent.ThreadFactory;
-
 /**
  * Created by olga on 12.11.14.
  */
@@ -14,7 +11,7 @@ extends WorkerFactory {
 	private final String addr;
 	private final String api;
 	private final int loadNumber;
-	private final Request.Type loadType;
+	private final AsyncIOTask.Type loadType;
 	//
 	private static final String
 			KEY_THREAD_NUM = "thread.number",
@@ -29,7 +26,7 @@ extends WorkerFactory {
 			final int loadNumber,
 			final String addr,
 			final String api,
-			final Request.Type loadType
+			final AsyncIOTask.Type loadType
 	) {
 		super(threadNamePrefix);
 		this.loadNumber = loadNumber;
@@ -60,7 +57,7 @@ extends WorkerFactory {
 		private final String addr;
 		private final String api;
 		private final int loadNumber;
-		private final Request.Type loadType;
+		private final AsyncIOTask.Type loadType;
 		//
 		private DataObjectWorkerThread(
 				final Runnable runnable,
@@ -69,7 +66,7 @@ extends WorkerFactory {
 				final int loadNumber,
 				final String addr,
 				final String api,
-				final Request.Type loadType
+				final AsyncIOTask.Type loadType
 				){
 			super(runnable, nameThread);
 			this.threadNumber = threadNumber;
