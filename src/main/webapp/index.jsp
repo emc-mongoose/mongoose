@@ -43,7 +43,7 @@
 				<ul class="nav nav-tabs" role="presentation">
 					<li class="active"><a href="#configuration" data-toggle="tab">Configuration</a></li>
 					<c:forEach var="mode" items="${sessionScope.runmodes}">
-						<c:set var="correctMode" value="${fn:replace(mode, '.', '_'}"/>
+						<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
 						<li><a href="#${correctMode}" data-toggle="tab">
 							${mode}
 							<span class="glyphicon glyphicon-remove" value="${correctMode}"></span>
@@ -56,7 +56,7 @@
 				<div class="tab-pane active" id="configuration">
 					<div id="menu">
 						<div id="runmodes">
-							<select name="run.mode">
+							<select>
 								<option>standalone</option>
 								<option>client</option>
 								<option>server</option>
@@ -117,6 +117,7 @@
 						</ol>
 
 						<form id="main-form">
+                            <input type="hidden" name="run.mode" id="run-mode" value="standalone">
 							<div id="configuration-content">
 								<div id="atmos">
 									<div class="property-labels">
@@ -280,6 +281,15 @@
 										<input type="text" id="data-page-size" name="data.page.size"><br/>
 										<input type="text" id="data-ring-seed" name="data.ring.seed"><br/>
 										<input type="text" id="data-ring-size" name="data.ring.size">
+									</div>
+								</div>
+
+								<div id="run">
+									<div class="property-labels">
+										<label for="run-id">run.id</label>
+									</div>
+									<div class="property-inputs">
+										<input type="text" id="run-id" name="run.id">
 									</div>
 								</div>
 							</div>

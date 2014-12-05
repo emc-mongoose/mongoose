@@ -52,7 +52,7 @@ label {
 }
 
 .file a {
-	background: url('document.png') 0 0 no-repeat;
+	background: url('../images/document.png') 0 0 no-repeat;
 	padding-left: 21px;
 	text-decoration: none;
 	display: block;
@@ -76,7 +76,7 @@ label {
 }
 
 li input + ul {
-	background: url('toggle-small-expand.png') 40px 0 no-repeat;
+	background: url('../images/toggle-small-expand.png') 40px 0 no-repeat;
 	margin: -1.67em 0 0 -44px;
 	height: 1em;
 }
@@ -88,14 +88,14 @@ li input + ul > li {
 }
 
 li label {
-	background: url('folder.png') 15px 1px no-repeat;
+	background: url('../images/folder.png') 15px 1px no-repeat;
 	cursor: pointer;
 	display: block;
 	padding-left: 37px;
 }
 
 li input:checked + ul {
-	background: url('toggle-small.png') 40px 5px no-repeat;
+	background: url('../images/toggle-small.png') 40px 5px no-repeat;
 	margin: -2em 0 0 -44px;
 	padding: 1.563em 0 0 80px;
 	height: auto;
@@ -141,6 +141,7 @@ li input:checked + ul > li:last-child {
 .dropdown-image {
 	margin-right: 6px;
 }
+
 /*border*/
 .left-side, .right-side {
 	display: inline-block;

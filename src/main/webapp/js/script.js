@@ -7,6 +7,11 @@ $(document).ready(function() {
 	var runModes = [VALUE_RUN_MODE_CLIENT, VALUE_RUN_MODE_STANDALONE, VALUE_RUN_MODE_SERVER, VALUE_RUN_MODE_WSMOCK];
 	var COUNT_OF_RECORDS = 2050;
 
+    $('select').on('change', function() {
+		var valueSelected = this.value;
+		$("#run-mode").val(valueSelected);
+    });
+
 	initComponents();
 	excludeDuplicateOptions();
 
@@ -33,7 +38,7 @@ $(document).ready(function() {
 	function configureWebSocket() {
 		var webSocketServer = {
 			connect: function() {
-				var location = document.location.toString().replace('http://', 'ws://') + "logs";
+				var location = "ws://localhost:8080/logs";
 				this.ws = new WebSocket(location);
 				//
 				this.ws.onopen = function() {
@@ -105,13 +110,13 @@ $(document).ready(function() {
 	}
 
 	// Start mongoose
-	$(document).on('submit', '#mainForm',  function(e) {
+	$("#start").click(function(e) {
 		e.preventDefault();
 		onStartButtonPressed();
 	});
 
 	function onStartButtonPressed() {
-		$.post("/start", $("#mainForm").serialize(), function(data, status) {
+		$.post("/start", $("#main-form").serialize(), function(data, status) {
 			if (data) {
 				if (confirm("Are you sure? " + data) === true) {
 					$.post("/stop", { "run.id" : $("#run\\.id").val(), "type" : "remove" }, function(data, status) {
@@ -199,14 +204,13 @@ $(document).ready(function() {
 });
 
 function appendBreadcrumb(element, childrenFolders, childrenDocuments) {
-	appendBreadcrumb
 	var htmlString = "";
 	if (!childrenFolders.length && !childrenDocuments.length) {
 		htmlString = "<li class='active'>" + element.text() + "</li>";
 	} else {
 		var dropDownString = "";
 		childrenFolders.each(function() {
-			dropDownString += "<li><a tabindex='-1' href='#" + $(this).text() + "'><img class='dropdown-image' src='css/folder.png'>" + $(this).text() + "</a></li>";
+			dropDownString += "<li><a tabindex='-1' href='#" + $(this).text() + "'><img class='dropdown-image' src='../images/folder.png'>" + $(this).text() + "</a></li>";
 		});
 
 		if (childrenFolders.length) {
@@ -214,7 +218,7 @@ function appendBreadcrumb(element, childrenFolders, childrenDocuments) {
 		}
 
 		childrenDocuments.each(function() {
-			dropDownString += "<li><a tabindex='-1' href='#" + $(this).text() + "'><img class='dropdown-image' src='css/document.png'>" + $(this).text() + "</a></li>";
+			dropDownString += "<li><a tabindex='-1' href='#" + $(this).text() + "'><img class='dropdown-image' src='../images/document.png'>" + $(this).text() + "</a></li>";
 		});
 		htmlString = "<li class='dropdown open'>\
 						<a class='dropdown-toggle' data-toggle='dropdown' href='#'>" + element.text() + "</a>\
