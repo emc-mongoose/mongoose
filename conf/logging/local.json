@@ -72,7 +72,7 @@
 								"type": "MarkerFilter",
 								"marker": "msg",
 								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
+								"onMismatch": "NEUTRAL"
 							}
 						]
 					}
