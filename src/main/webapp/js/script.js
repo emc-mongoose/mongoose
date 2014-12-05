@@ -10,81 +10,8 @@ $(document).ready(function() {
 	initComponents();
 	excludeDuplicateOptions();
 
-	// Storage Block
-	$(".add-node").click(function() {
-		if ($(".data-node").is(":visible")) {
-			$(".data-node").hide();
-		} else {
-			$(".data-node").show();
-		}
-	});
-
-	// Drivers Block
-	$(".add-driver").click(function() {
-		if ($(".driver").is(":visible")) {
-			$(".driver").hide();
-		} else {
-			$(".driver").show();
-		}
-	});
-
-	$('#run-parameters a[href="#runTimeTab"]').click(function() {
-		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
-		$("#runTimeSelect").val($("#runTimeSelect option:first").val());
-	});
-
-	$('#run-parameters a[href="#dataCountTab"]').click(function() {
-		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
-	});
-
-	$("#scenario\\.chain\\.load\\.duplicate").keyup(function() {
-		$("#scenario\\.chain\\.load").val($(this).val());
-	});
-
-	$("#scenario\\.chain\\.load").keyup(function() {
-		$("#scenario\\.chain\\.load\\.duplicate").val($(this).val());
-	});
-
-	// Save data node in the list
-	$(document).on("click", "#save", function() {
-		$(".storages").append(appendBlock("storage.addrs", $("#data-node-text").val()));
-		$("#data-node-text").val("");
-		$(".data-node").hide();
-	});
-
-	// Save Driver in the list
-	$(document).on("click", "#save-driver", function() {
-		$(".drivers").append(appendBlock("remote.servers", $("#driver-text").val()));
-		$("#driver-text").val("");
-		$(".driver").hide();
-	});
-
-	// Remove storage or driver from list
-	$(document).on("click", ".remove", function() {
-		var elements;
-		if ($(this).hasClass("remove-driver")) {
-			elements = $(".remote\\.servers:checked");
-		} else {
-			elements = $(".storage\\.addrs:checked");
-		}
-		if (confirm("Are you sure? " + elements.size() + " will be deleted") === true) {
-			elements.each(function() {
-				$(this).parent().parent().remove();
-			});
-		} else {
-			//	do nothing
-		}
-	});
-
-	//	select change
-	$("select").bind("keydown change", function() {
-		$('a[href="#' + $(this).val() + '"]').tab('show');
-    });
-
 	// functions
 	function initComponents() {
-		$(".driver").hide();
-		$(".data-node").hide();
 		configureWebSocket().connect();
 	}
 
@@ -177,19 +104,6 @@ $(document).ready(function() {
 		return html;
 	}
 
-	function appendBlock(key, value) {
-		html =
-			'<div class="input-group">\
-				<span class="input-group-addon">\
-					<input class=' + key + ' type="checkbox" name=' + key +' value=' + value + '>\
-				</span>\
-				<label class="form-control">' +
-					value +
-				'</label>\
-			</div>';
-		return html;
-	}
-
 	// Start mongoose
 	$(document).on('submit', '#mainForm',  function(e) {
 		e.preventDefault();
@@ -245,4 +159,67 @@ $(document).ready(function() {
 		$(this).parent().find("tbody tr").remove();
 	});
 
+
+	/*border*/
+	$('#configuration-content').children().hide();
+
+    	$(document).on('click', '.breadcrumb ul a', function() {
+    		var sameElement = $(this).attr("href");
+    		var element = $(".folders a[href='" + sameElement + "']");
+    		if (!element.length) {
+    			element = $(".folders label[for='" + sameElement.replace("#", '') + "'");
+    		}
+    		element.trigger('click');
+    	});
+
+    	$(".folders a, .folders label").click(function() {
+    		resetParams();
+    		$($(this).attr("href")).show();
+    		var childrenFolders = "";
+    		var childrenDocuments = "";
+    		var parentsArray = $(this).parent().parents("li").find("label:first");
+    		parentsArray.each(function() {
+    			childrenFolders = $(this).siblings("ul").find("label");
+    			childrenDocuments = $(this).siblings("ul").children(".file");
+    			$(".breadcrumb").append(appendBreadcrumb($(this), childrenFolders, childrenDocuments));
+    		});
+    		childrenFolders = $(this).siblings("ul").find("label");
+    		childrenDocuments = $(this).siblings("ul").children(".file");
+    		$(".breadcrumb").append(appendBreadcrumb($(this), childrenFolders, childrenDocuments));
+    		$(this).css("color", "#CC0033");
+    		$("a[href='#" + $(this).text() + "']").css("color", "#CC0033");
+    	});
+
+    	function resetParams() {
+    		$("a, label").css("color", "");
+    		$(".breadcrumb").empty();
+    		$("#configuration-content").children().hide();
+    	}
+
 });
+
+function appendBreadcrumb(element, childrenFolders, childrenDocuments) {
+	appendBreadcrumb
+	var htmlString = "";
+	if (!childrenFolders.length && !childrenDocuments.length) {
+		htmlString = "<li class='active'>" + element.text() + "</li>";
+	} else {
+		var dropDownString = "";
+		childrenFolders.each(function() {
+			dropDownString += "<li><a tabindex='-1' href='#" + $(this).text() + "'><img class='dropdown-image' src='css/folder.png'>" + $(this).text() + "</a></li>";
+		});
+
+		if (childrenFolders.length) {
+			dropDownString += "<hr/>";
+		}
+
+		childrenDocuments.each(function() {
+			dropDownString += "<li><a tabindex='-1' href='#" + $(this).text() + "'><img class='dropdown-image' src='css/document.png'>" + $(this).text() + "</a></li>";
+		});
+		htmlString = "<li class='dropdown open'>\
+						<a class='dropdown-toggle' data-toggle='dropdown' href='#'>" + element.text() + "</a>\
+						<ul class='dropdown-menu'>" + dropDownString + "</ul>\
+					</li>";
+	}
+	return htmlString;
+}
