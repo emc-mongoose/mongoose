@@ -5,11 +5,10 @@ import com.emc.mongoose.base.api.AsyncIOClient;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
-//
 import com.emc.mongoose.util.conf.RunTimeConfig;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
-import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.nio.IOControl;
 //
 import java.io.IOException;
@@ -52,7 +51,7 @@ extends ObjectRequestConfig<T> {
 	//
 	DateFormat FMT_DT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.ROOT);
 	//
-	MutableHTTPRequest createRequest(final String uri);
+	MutableHTTPRequest createRequest();
 	//
 	@Override
 	WSRequestConfig<T> setAPI(final String api);
@@ -80,9 +79,6 @@ extends ObjectRequestConfig<T> {
 	//
 	@Override
 	WSClient<T> getClient();
-	//
-	String getScheme();
-	WSRequestConfig<T> setScheme(final String scheme);
 	//
 	List<Header> getSharedHeaders();
 	//

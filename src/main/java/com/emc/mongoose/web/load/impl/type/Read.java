@@ -16,7 +16,6 @@ import com.emc.mongoose.util.logging.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.Closeable;
 import java.io.IOException;
 /**
  Created by kurila on 06.05.14.

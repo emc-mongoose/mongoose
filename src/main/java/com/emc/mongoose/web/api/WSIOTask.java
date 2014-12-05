@@ -19,8 +19,8 @@ extends DataObjectIOTask<T>, HttpAsyncRequestProducer, HttpAsyncResponseConsumer
 		//
 		DELETE, GET, HEAD, PUT, POST, TRACE;
 		//
-		public MutableHTTPRequest createRequest(final String uri) {
-			return new ReusableHTTPRequest(this, uri);
+		public MutableHTTPRequest createRequest() {
+			return new ReusableHTTPRequest(this, null, "/");
 		}
 	}
 	//

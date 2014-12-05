@@ -32,6 +32,7 @@ import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
 import org.apache.http.protocol.RequestDate;
+import org.apache.http.protocol.RequestExpectContinue;
 import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
 //
@@ -124,12 +125,12 @@ implements WSClient<T> {
 		super(
 			HttpProcessorBuilder
 				.create()
-				.add(new RequestContent(false))
-				.add(new RequestDate())
 				.add(new RequestDefaultHeaders(sharedHeaders))
 				.add(new RequestTargetHost())
 				.add(new RequestConnControl())
 				.add(new RequestUserAgent(userAgent))
+				//.add(new RequestExpectContinue(true))
+				.add(new RequestContent(true))
 				.build()
 		);
 		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();

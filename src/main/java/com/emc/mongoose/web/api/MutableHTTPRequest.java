@@ -1,18 +1,18 @@
 package com.emc.mongoose.web.api;
 //
-import org.apache.http.HttpRequest;
-//
-import java.net.URI;
-import java.net.URISyntaxException;
+import org.apache.http.HttpEntityEnclosingRequest;
 /**
  Created by kurila on 04.12.14.
  */
 public interface MutableHTTPRequest
-extends HttpRequest {
+extends HttpEntityEnclosingRequest {
 	//
 	WSIOTask.HTTPMethod getMethod();
-	void setMethod(final WSIOTask.HTTPMethod method);
+	MutableHTTPRequest setMethod(final WSIOTask.HTTPMethod method);
 	//
-	URI getURI();
-	void setUri(final String uri);
+	String getUriAddr();
+	MutableHTTPRequest setUriAddr(final String addr);
+	//
+	String getUriPath();
+	MutableHTTPRequest setUriPath(final String path);
 }

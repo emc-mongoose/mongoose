@@ -1,6 +1,5 @@
 package com.emc.mongoose.web.api.impl.provider.atmos;
 //
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
@@ -12,14 +11,12 @@ import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
 /**
@@ -30,11 +27,15 @@ extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static String
-		KEY_SUBTENANT = "api.atmos.subtenant",
-		OBJ_PATH =
-			"/" + Main.RUN_TIME_CONFIG.get().getString("api.atmos.path.rest") +
-			"/" + Main.RUN_TIME_CONFIG.get().getString("api.atmos.interface");
+	private final static String KEY_SUBTENANT = "api.atmos.subtenant";
+	//
+	private final RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
+	private final String
+		objPathPrefix = String.format(
+			"/%s/%s",
+			runTimeConfig.getString("api.atmos.path.rest"),
+			runTimeConfig.getString("api.atmos.interface")
+		), fmtObjPath = objPathPrefix + "/%s";
 	//
 	private SubTenant<T> subTenant;
 	//
@@ -64,17 +65,17 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public MutableHTTPRequest createRequest(final String uri) {
+	public MutableHTTPRequest createRequest() {
 		MutableHTTPRequest r = null;
 		switch(loadType) {
 			case READ:
 			case DELETE:
-				r = super.createRequest(uri);
+				r = super.createRequest();
 				break;
 			case APPEND:
 			case CREATE:
 			case UPDATE:
-				r = WSIOTask.HTTPMethod.POST.createRequest(uri);
+				r = WSIOTask.HTTPMethod.POST.createRequest();
 				break;
 		}
 		return r;
@@ -134,8 +135,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final MutableHTTPRequest httpRequest, final T dataItem)
-	throws URISyntaxException {
+	protected final void applyURI(final MutableHTTPRequest httpRequest, final T dataItem) {
 		if(httpRequest==null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
 		}
@@ -143,15 +143,7 @@ extends WSRequestConfigBase<T> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		final String objId = dataItem.getId();
-		synchronized(uriBuilder) {
-			httpRequest
-				.setUri(
-					uriBuilder
-						.setPath(
-							objId==null ? OBJ_PATH : OBJ_PATH + '/' + objId
-						).build()
-				);
-		}
+		httpRequest.setUriAddr(uriAddr).setUriPath(String.format(fmtObjPath, objId));
 	}
 	//
 	@Override
@@ -197,11 +189,7 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		try {
-			buffer.append('\n').append(httpRequest.getURI().getRawPath());
-		} catch(final URISyntaxException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to build canonical request representation");
-		}
+		buffer.append('\n').append(httpRequest.getUriPath());
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
 			header = httpRequest.getFirstHeader(emcHeaderName);
@@ -230,10 +218,10 @@ extends WSRequestConfigBase<T> {
 			final String valueLocation = headerLocation.getValue();
 			if(
 				valueLocation != null &&
-				valueLocation.startsWith(OBJ_PATH) &&
-				valueLocation.length() - OBJ_PATH.length() > 1
+				valueLocation.startsWith(objPathPrefix) &&
+				valueLocation.length() - objPathPrefix.length() > 1
 			) {
-				final String id = valueLocation.substring(OBJ_PATH.length() + 1);
+				final String id = valueLocation.substring(objPathPrefix.length() + 1);
 				if(id.length() > 0) {
 					dataObject.setId(id);
 				} else {

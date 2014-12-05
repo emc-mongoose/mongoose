@@ -160,7 +160,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilder<T, U> setLoadType(final AsyncIOTask.Type loadType)
 		throws IllegalStateException {
 		LOG.debug(Markers.MSG, "Set load type: {}", loadType);
-		if(reqConf==null) {
+		if(reqConf == null) {
 			throw new IllegalStateException(
 				"Request builder should be specified before setting an I/O loadType"
 			);

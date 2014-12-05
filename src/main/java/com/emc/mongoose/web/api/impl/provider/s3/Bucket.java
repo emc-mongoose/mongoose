@@ -1,5 +1,6 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
+import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSClient;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
@@ -7,6 +8,8 @@ import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.commons.lang.text.StrBuilder;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -18,7 +21,10 @@ import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
 //
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
@@ -63,7 +69,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
 		//
-		final HttpRequest httpReq = new BasicHttpRequest(method.name(), "/" + name);
+		final MutableHTTPRequest httpReq = method.createRequest().setUriPath("/" + name);
 		reqConf.applyHeadersFinally(httpReq);
 		final WSClient<T> httpClient = reqConf.getClient();
 		//
@@ -83,6 +89,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		try {
 			final HttpResponse httpResp = execute(WSIOTask.HTTPMethod.HEAD);
 			if(httpResp != null) {
+				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine==null) {
 					LOG.warn(Markers.MSG, "No response status");
@@ -92,14 +99,20 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
 						flagExists = true;
 					} else {
-						final String statusMsg = statusLine.getReasonPhrase();
+						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+						if(httpEntity != null) {
+							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
+								httpEntity.writeTo(buff);
+								msg.appendNewLine().append(buff.toString());
+							}
+						}
 						LOG.debug(
-							Markers.MSG, "Checking bucket \"{}\" response: {}/{}",
-							name, statusCode, statusMsg
+							Markers.ERR, "Checking bucket \"{}\" response ({}): {}",
+							name, statusCode, msg.toString()
 						);
 					}
 				}
-				EntityUtils.consumeQuietly(httpResp.getEntity());
+				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
@@ -115,22 +128,29 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		try {
 			final HttpResponse httpResp = execute(WSIOTask.HTTPMethod.PUT);
 			if(httpResp != null) {
+				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
-				if(statusLine==null) {
+				if(statusLine == null) {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					if(statusCode==HttpStatus.SC_OK) {
+					if(statusCode == HttpStatus.SC_OK) {
 						LOG.info(Markers.MSG, "Bucket \"{}\" created", name);
 					} else {
-						final String statusMsg = statusLine.getReasonPhrase();
-						LOG.debug(
-							Markers.MSG, "Creating bucket \"{}\" response: {}/{}",
-							name, statusCode, statusMsg
+						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+						if(httpEntity != null) {
+							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
+								httpEntity.writeTo(buff);
+								msg.appendNewLine().append(buff.toString());
+							}
+						}
+						LOG.warn(
+							Markers.ERR, "Create bucket \"{}\" response ({}): {}",
+							name, statusCode, msg.toString()
 						);
 					}
 				}
-				EntityUtils.consumeQuietly(httpResp.getEntity());
+				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
@@ -144,6 +164,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		try {
 			final HttpResponse httpResp = execute(WSIOTask.HTTPMethod.DELETE);
 			if(httpResp != null) {
+				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine==null) {
 					LOG.warn(Markers.MSG, "No response status");
@@ -152,14 +173,20 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 					if(statusCode==HttpStatus.SC_OK) {
 						LOG.info(Markers.MSG, "Bucket \"{}\" deleted", name);
 					} else {
-						final String statusMsg = statusLine.getReasonPhrase();
-						LOG.debug(
-							Markers.MSG, "Deleting bucket \"{}\" response: {}/{}",
-							name, statusCode, statusMsg
+						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+						if(httpEntity != null) {
+							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
+								httpEntity.writeTo(buff);
+								msg.appendNewLine().append(buff.toString());
+							}
+						}
+						LOG.warn(
+							Markers.ERR, "Delete bucket \"{}\" response ({}): {}",
+							name, statusCode, msg.toString()
 						);
 					}
 				}
-				EntityUtils.consumeQuietly(httpResp.getEntity());
+				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");

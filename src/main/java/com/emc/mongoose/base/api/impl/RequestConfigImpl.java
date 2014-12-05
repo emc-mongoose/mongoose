@@ -8,10 +8,12 @@ import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.lang.StringUtils;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -26,13 +28,15 @@ public class RequestConfigImpl<T extends DataItem>
 implements RequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	protected final static String FMT_URI_ADDR = "%s://%s:%s";
 	//
 	protected String api, secret, userName;
 	protected AsyncIOTask.Type loadType;
 	protected DataSource<T> dataSrc;
 	protected volatile boolean retryFlag, verifyContentFlag, closeFlag = false;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
-	protected final URIBuilder uriBuilder = new URIBuilder();
+	protected volatile String addr, scheme, uriAddr;
+	protected volatile int port;
 	protected AsyncIOClient<T> storageClient = null;
 	protected int loadNumber;
 	//
@@ -43,21 +47,26 @@ implements RequestConfig<T> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigImpl(final RequestConfig<T> reqConf2Clone) {
-		if(reqConf2Clone == null) {
-			dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
-			retryFlag = runTimeConfig.getRunRequestRetries();
-			verifyContentFlag = runTimeConfig.getReadVerifyContent();
-		} else {
-			setDataSource(reqConf2Clone.getDataSource());
-			setRetries(reqConf2Clone.getRetries());
-			setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
-			//
-			setAddr(reqConf2Clone.getAddr());
-			setAPI(reqConf2Clone.getAPI());
-			secret = reqConf2Clone.getSecret();
-			setUserName(reqConf2Clone.getUserName());
-			setPort(reqConf2Clone.getPort());
-			setLoadType(reqConf2Clone.getLoadType());
+		try {
+			if(reqConf2Clone==null) {
+				dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
+				retryFlag = runTimeConfig.getRunRequestRetries();
+				verifyContentFlag = runTimeConfig.getReadVerifyContent();
+			} else {
+				setDataSource(reqConf2Clone.getDataSource());
+				setRetries(reqConf2Clone.getRetries());
+				setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
+				//
+				setAddr(reqConf2Clone.getAddr());
+				setAPI(reqConf2Clone.getAPI());
+				secret = reqConf2Clone.getSecret();
+				setUserName(reqConf2Clone.getUserName());
+				setPort(reqConf2Clone.getPort());
+				setLoadType(reqConf2Clone.getLoadType());
+				setClient(reqConf2Clone.getClient());
+			}
+		} catch(final Exception e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request config instantiation failure");
 		}
 	}
 	//
@@ -77,16 +86,6 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public String getAddr() {
-		return uriBuilder.getHost();
-	}
-	@Override
-	public RequestConfigImpl<T> setAddr(final String addr) {
-		uriBuilder.setHost(addr);
-		return this;
-	}
-	//
-	@Override
 	public final AsyncIOTask.Type getLoadType() {
 		return loadType;
 	}
@@ -98,15 +97,49 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public int getPort() {
-		return uriBuilder.getPort();
+	public final String getScheme() {
+		return scheme;
 	}
 	@Override
-	public RequestConfigImpl<T> setPort(final int port)
+	public final RequestConfigImpl<T> setScheme(final String scheme) {
+		this.scheme = scheme;
+		uriAddr = String.format(
+			FMT_URI_ADDR,
+			scheme, addr == null ? "%s" : addr,
+			(port > 0 && port < 0x10000) ? Integer.toString(port) : "%s"
+		);
+		return this;
+	}
+	//
+	@Override
+	public final String getAddr() {
+		return addr;
+	}
+	@Override
+	public final RequestConfigImpl<T> setAddr(final String addr) {
+		this.addr = addr;
+		uriAddr = String.format(
+			FMT_URI_ADDR,
+			scheme == null ? "%s" : scheme, addr,
+			(port > 0 && port < 0x10000) ? Integer.toString(port) : "%s"
+		);
+		return this;
+	}
+	//
+	@Override
+	public final int getPort() {
+		return port;
+	}
+	@Override
+	public final RequestConfigImpl<T> setPort(final int port)
 	throws IllegalArgumentException {
 		LOG.trace(Markers.MSG, "Using storage port: {}", port);
 		if(port>0 || port<0x10000) {
-			uriBuilder.setPort(port);
+			this.port = port;
+			uriAddr = String.format(
+				FMT_URI_ADDR,
+				scheme == null ? "%s" : scheme, addr == null ? "%s" : addr, Integer.toString(port)
+			);
 		} else {
 			throw new IllegalArgumentException("Port number value should be > 0");
 		}
@@ -218,11 +251,11 @@ implements RequestConfig<T> {
 		setAPI(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got API {}", api);
 		setAddr(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got address {}", uriBuilder.getHost());
+		LOG.trace(Markers.MSG, "Got address {}", addr);
 		setLoadType(AsyncIOTask.Type.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got load type {}", loadType);
 		setPort(in.readInt());
-		LOG.trace(Markers.MSG, "Got port {}", uriBuilder.getPort());
+		LOG.trace(Markers.MSG, "Got port {}", port);
 		setUserName(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got user name {}", userName);
 		setSecret(String.class.cast(in.readObject()));
@@ -235,7 +268,6 @@ implements RequestConfig<T> {
 	//
 	@Override
 	public final String toString() {
-		final String addr = uriBuilder.getHost();
 		return StringUtils.capitalize(getAPI()) + '.' +
 			StringUtils.capitalize(loadType.name().toLowerCase()) +
 			((addr==null || addr.length()==0) ? "" : "@"+addr);

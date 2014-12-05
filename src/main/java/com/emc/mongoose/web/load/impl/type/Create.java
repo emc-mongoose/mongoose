@@ -13,14 +13,10 @@ import com.emc.mongoose.web.load.impl.WSLoadHelper;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 //
-import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.Closeable;
 import java.io.IOException;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 23.04.14.
  */

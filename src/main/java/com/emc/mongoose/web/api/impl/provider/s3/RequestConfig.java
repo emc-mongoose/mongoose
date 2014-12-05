@@ -1,19 +1,16 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
+import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -106,7 +103,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final HttpRequest httpRequest, final T dataItem)
+	protected final void applyURI(final MutableHTTPRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
 		if(httpRequest == null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
@@ -117,21 +114,15 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		synchronized(uriBuilder) {
-			try {
-				HttpRequestBase.class.cast(httpRequest).setURI(
-					uriBuilder.setPath(
-						String.format(FMT_PATH, bucket.getName(), dataItem.getId())
-					).build()
-				);
-			} catch(final Exception e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI setting failure");
-			}
-		}
+		httpRequest
+			.setUriAddr(uriAddr)
+			.setUriPath(
+				String.format(FMT_PATH, bucket.getName(), dataItem.getId())
+			);
 	}
 	//
 	@Override
-	protected final void applyAuthHeader(final HttpRequest httpRequest) {
+	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
 		httpRequest.addHeader(HttpHeaders.CONTENT_MD5, ""); // checksum of the data item is not avalable before streaming
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
@@ -145,7 +136,7 @@ extends WSRequestConfigBase<T> {
 	};
 	//
 	@Override
-	public final String getCanonical(final HttpRequest httpRequest) {
+	public final String getCanonical(final MutableHTTPRequest httpRequest) {
 		StringBuffer buffer = new StringBuffer(httpRequest.getRequestLine().getMethod());
 		//
 		for(String headerName: HEADERS4CANONICAL) {
@@ -171,7 +162,7 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		buffer.append('\n').append(HttpRequestBase.class.cast(httpRequest).getURI().getRawPath());
+		buffer.append('\n').append(httpRequest.getUriPath());
 		//
 		LOG.trace(Markers.MSG, "Canonical request representation:\n{}", buffer);
 		//

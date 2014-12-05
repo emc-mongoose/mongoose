@@ -17,23 +17,15 @@ import com.emc.mongoose.util.logging.Markers;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.ContentDecoderChannel;
 import org.apache.http.nio.ContentEncoder;
-import org.apache.http.nio.ContentEncoderChannel;
 import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.HttpContext;
 //
@@ -45,7 +37,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.util.Map;
@@ -96,7 +87,6 @@ implements WSIOTask<T> {
 			ioTask = IOTaskBase.class.cast(pool.take())
 				.setRequestConfig(reqConf)
 				.setDataItem(dataItem);
-			//assert request != null;
 		}
 		return ioTask;
 	}
@@ -105,7 +95,7 @@ implements WSIOTask<T> {
 	public WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
 		if(this.wsReqConf == null) { // request instance has not been configured yet?
 			this.wsReqConf = (WSRequestConfig<T>) reqConf;
-			httpRequest = wsReqConf.createRequest(null);
+			httpRequest = wsReqConf.createRequest();
 		} else { // cleanup
 			httpRequest.removeHeaders(HttpHeaders.RANGE);
 			httpRequest.removeHeaders(WSRequestConfig.KEY_EMC_SIG);
@@ -171,32 +161,28 @@ implements WSIOTask<T> {
 	@Override
 	public final HttpRequest generateRequest()
 	throws IOException, HttpException {
-		if(HttpEntityEnclosingRequest.class.isInstance(httpRequest)) {
-			reqEntity = HttpEntityEnclosingRequest.class.cast(httpRequest).getEntity();
-			reqInStream = reqEntity.getContent();
-		}
+		reqEntity = httpRequest.getEntity();
+		reqInStream = reqEntity == null ? null : reqEntity.getContent();
 		return httpRequest;
 	}
 	//
+	private final ByteBuffer buffWrapper = ByteBuffer.allocate(UniformData.MAX_PAGE_SIZE);
+	private final byte buff[] = buffWrapper.array();
+	//
 	@Override
-	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
+	public final synchronized void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		try(
-			final OutputStream contentStream = Channels
-				.newOutputStream(new ContentEncoderChannel(out))
-		) {
-			if(reqInStream != null) {
-				final byte buff[] = new byte[UniformData.MAX_PAGE_SIZE];
-				do {
-					byteCount = reqInStream.read(buff);
-					if(byteCount > 0) {
-						contentStream.write(buff, 0, byteCount);
-					}
-				} while(byteCount != -1);
-			}
-		} finally {
+		buffWrapper.clear();
+		byteCount = reqInStream.read(buff);
+		if(byteCount < 0) {
 			out.complete();
 			reqInStream.reset();
+		} else if(!out.isCompleted()) {
+			buffWrapper.flip();
+			do {
+				out.write(buffWrapper);
+				buffWrapper.compact();
+			} while(buffWrapper.hasRemaining());
 		}
 	}
 	//
@@ -239,8 +225,8 @@ implements WSIOTask<T> {
 		//
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				Markers.MSG, "{}/{} <- {} {}", respStatusCode, status.getReasonPhrase(),
-				httpRequest.getMethod(), httpRequest.getURI()
+				Markers.MSG, "{}/{} <- {} {}{}", respStatusCode, status.getReasonPhrase(),
+				httpRequest.getMethod(), httpRequest.getUriAddr(), httpRequest.getUriPath()
 			);
 		}
 		//
@@ -255,7 +241,10 @@ implements WSIOTask<T> {
 					result = Result.FAIL_AUTH;
 					break;
 				case (404):
-					LOG.warn(Markers.ERR, "Not found: {}", httpRequest.getURI());
+					LOG.warn(
+						Markers.ERR, "Not found: {}{}",
+						httpRequest.getUriAddr(), httpRequest.getUriPath()
+					);
 					result = Result.FAIL_NOT_FOUND;
 					break;
 				case (416):

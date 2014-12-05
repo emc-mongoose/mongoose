@@ -5,7 +5,7 @@ from sys import exit
 from loadbuilder import loadbuilder_init
 #from loadbuilder import INSTANCE as LOAD_BUILDER
 #
-from com.emc.mongoose.base.api import Request
+from com.emc.mongoose.base.api import AsyncIOTask
 from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.logging import Markers
 #
@@ -18,7 +18,7 @@ LOAD_BUILDER = loadbuilder_init()
 LOG = LogManager.getLogger()
 #
 try:
-	loadType = Request.Type.valueOf(Main.RUN_TIME_CONFIG.get().getString("scenario.rampup-create.load").upper())
+	loadType = AsyncIOTask.Type.valueOf(Main.RUN_TIME_CONFIG.get().getString("scenario.rampup-create.load").upper())
 	LOG.info(Markers.MSG, "Using load type: {}", loadType.name())
 	LOAD_BUILDER.setLoadType(loadType)
 except NoSuchElementException:

@@ -21,11 +21,14 @@ extends Externalizable, Cloneable, Closeable {
 	String getAPI();
 	RequestConfig<T> setAPI(final String api);
 	//
-	String getAddr();
-	RequestConfig<T> setAddr(final String addr);
-	//
 	AsyncIOTask.Type getLoadType();
 	RequestConfig<T> setLoadType(final AsyncIOTask.Type loadType);
+	//
+	String getScheme();
+	RequestConfig<T> setScheme(final String scheme);
+	//
+	String getAddr();
+	RequestConfig<T> setAddr(final String addr);
 	//
 	int getPort();
 	RequestConfig<T> setPort(final int port);

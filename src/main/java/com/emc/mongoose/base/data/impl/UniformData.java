@@ -135,7 +135,7 @@ implements DataItem {
 	@Override
 	public final int read() {
 		int b = super.read();
-		if(b<0) { // end of file
+		if(b < 0) { // end of file
 			pos = 0;
 			b = super.read(); // re-read the byte
 		}

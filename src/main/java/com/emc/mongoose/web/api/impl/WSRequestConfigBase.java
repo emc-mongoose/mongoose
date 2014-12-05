@@ -15,6 +15,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.web.load.impl.WSLoadHelper;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.http.Header;
@@ -36,6 +37,7 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -46,6 +48,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 /**
@@ -66,6 +69,7 @@ implements WSRequestConfig<T> {
 	//
 	private final static String NAME_CLS_IMPL = "RequestConfig";
 	//
+	@SuppressWarnings("unchecked")
 	public static WSRequestConfigBase newInstanceFor(final String api) {
 		WSRequestConfigBase reqConf = null;
 		final String apiImplClsFQN =
@@ -73,18 +77,16 @@ implements WSRequestConfig<T> {
 				Main.DOT + REL_PKG_PROVIDERS + Main.DOT +
 				api.toLowerCase() + Main.DOT + NAME_CLS_IMPL;
 		try {
-			reqConf = WSRequestConfigBase.class.cast(
-				Class.forName(apiImplClsFQN).getConstructors()[0].newInstance()
-			);
+			final Class apiImplCls = Class.forName(apiImplClsFQN);
+			final Constructor<WSRequestConfigBase>
+				constructor = (Constructor<WSRequestConfigBase>) apiImplCls.getConstructors()[0];
+			reqConf = constructor.newInstance();
 		} catch(final ClassNotFoundException e) {
 			LOG.fatal(Markers.ERR, "API implementation not found: \"{}\"", apiImplClsFQN);
 		} catch(final ClassCastException e) {
 			LOG.fatal(Markers.ERR, "Class \"{}\" is not valid API implementation", apiImplClsFQN);
 		} catch(final Exception e) {
-			synchronized(LOG) {
-				LOG.fatal(Markers.ERR, "WS API config instantiation failure: {}", e.toString());
-				LOG.debug(Markers.ERR, "cause: {}", e.getCause());
-			}
+			ExceptionHandler.trace(LOG, Level.FATAL, e, "WS API config instantiation failure");
 		}
 		return reqConf;
 	}
@@ -102,8 +104,6 @@ implements WSRequestConfig<T> {
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		//
-		storageClient = new WSAsyncClientImpl(1, getSharedHeaders(), getUserAgent());
-		//
 		signMethod = runTimeConfig.getHttpSignMethod();
 		mac = Mac.getInstance(signMethod);
 		final String
@@ -111,38 +111,44 @@ implements WSRequestConfig<T> {
 			runVersion = runTimeConfig.getRunVersion(),
 			contentType = runTimeConfig.getHttpContentType();
 		userAgent = runName + '/' + runVersion;
-		sharedHeadersMap = new ConcurrentHashMap<String, String>() {
-			{
-				//put(HttpHeaders.USER_AGENT, userAgent);
-				put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
-				put(HttpHeaders.CONTENT_TYPE, contentType);
+		try {
+			sharedHeadersMap = new ConcurrentHashMap<String, String>() {
+				{
+					put(HttpHeaders.USER_AGENT, userAgent);
+					put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
+					put(HttpHeaders.CONTENT_TYPE, contentType);
+				}
+			};
+			if(reqConf2Clone != null) {
+				this
+					.setSecret(reqConf2Clone.getSecret())
+					.setScheme(reqConf2Clone.getScheme())
+					.setClient(reqConf2Clone.getClient());
+			} else {
+				storageClient = new WSAsyncClientImpl<>(1, getSharedHeaders(), getUserAgent());
 			}
-		};
-		if(reqConf2Clone != null) {
-			this
-				.setSecret(reqConf2Clone.getSecret())
-				.setScheme(reqConf2Clone.getScheme())
-				.setClient(reqConf2Clone.getClient());
+			//
+			final String pkgSpec = getClass().getPackage().getName();
+			setAPI(pkgSpec.substring(pkgSpec.lastIndexOf('.') + 1));
+		} catch(final Exception e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request config instantiation failure");
 		}
-		//
-		final String pkgSpec = getClass().getPackage().getName();
-		setAPI(pkgSpec.substring(pkgSpec.lastIndexOf('.') + 1));
 	}
 	//
 	@Override
-	public MutableHTTPRequest createRequest(final String uri) {
+	public MutableHTTPRequest createRequest() {
 		MutableHTTPRequest r = null;
 		switch(loadType) {
 			case READ:
-				r = WSIOTask.HTTPMethod.GET.createRequest(uri);
+				r = WSIOTask.HTTPMethod.GET.createRequest();
 				break;
 			case DELETE:
-				r = WSIOTask.HTTPMethod.DELETE.createRequest(uri);
+				r = WSIOTask.HTTPMethod.DELETE.createRequest();
 				break;
 			case APPEND:
 			case CREATE:
 			case UPDATE:
-				r = WSIOTask.HTTPMethod.PUT.createRequest(uri);
+				r = WSIOTask.HTTPMethod.PUT.createRequest();
 				break;
 		}
 		return r;
@@ -187,16 +193,6 @@ implements WSRequestConfig<T> {
 		} else {
 			sharedHeadersMap.put(KEY_EMC_NS, nameSpace);
 		}
-		return this;
-	}
-	//
-	@Override
-	public final String getScheme() {
-		return uriBuilder.getScheme();
-	}
-	@Override
-	public final WSRequestConfigBase<T> setScheme(final String scheme) {
-		uriBuilder.setScheme(scheme);
 		return this;
 	}
 	//
@@ -278,8 +274,6 @@ implements WSRequestConfig<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setScheme(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got scheme {}", uriBuilder.getScheme());
 		sharedHeadersMap = (ConcurrentHashMap<String,String>) in.readObject();
 		/*final int headersCount = in.readInt();
 		sharedHeadersMap = new ConcurrentHashMap<>(headersCount);
@@ -299,7 +293,6 @@ implements WSRequestConfig<T> {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(uriBuilder.getScheme());
 		out.writeObject(sharedHeadersMap);
 		/*out.writeInt(sharedHeadersMap.size());
 		for(final String key: sharedHeadersMap.keySet()) {
@@ -343,9 +336,6 @@ implements WSRequestConfig<T> {
 				for(final Header header: httpRequest.getAllHeaders()) {
 					LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
 				}
-				for(final String header: sharedHeadersMap.keySet()) {
-					LOG.trace(Markers.MSG, "\t{}: {}", header, sharedHeadersMap.get(header));
-				}
 				if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
 					LOG.trace(
 						Markers.MSG, "\tcontent: {} bytes",
@@ -366,21 +356,11 @@ implements WSRequestConfig<T> {
 	protected final void applyPayLoad(
 		final MutableHTTPRequest httpRequest, final HttpEntity httpEntity
 	) {
-		HttpEntityEnclosingRequest httpReqWithPayLoad = null;
-		try {
-			httpReqWithPayLoad = HttpEntityEnclosingRequest.class.cast(httpRequest);
-		} catch(final ClassCastException e) {
-			LOG.error(
-				Markers.ERR, "\"{}\" HTTP request can't have a content entity",
-				httpRequest.getRequestLine().getMethod()
-			);
-		}
-		if(httpReqWithPayLoad != null) {
-			httpReqWithPayLoad.setEntity(httpEntity);
-		}
+		httpRequest.setEntity(httpEntity);
 	}
 	// merge subsequent updated ranges functionality is here
 	protected final void applyRangesHeaders(final MutableHTTPRequest httpRequest, final T dataItem) {
+		httpRequest.removeHeaders(HttpHeaders.RANGE); // cleanup
 		long rangeBeg = -1, rangeEnd = -1, rangeLen;
 		int rangeCount = dataItem.getCountRangesTotal();
 		for(int i = 0; i < rangeCount; i++) {
@@ -424,11 +404,10 @@ implements WSRequestConfig<T> {
 	}
 	//
 	private final SimpleDateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(
-		"EEE, dd MMM yyyy HH:mm:ss zzz"
-	);
-	private final Calendar CALENDAR = Calendar.getInstance(
-		TimeZone.getTimeZone("GMT"), Locale.ROOT
-	);
+		"EEE, dd MMM yyyy HH:mm:ss zzz", Locale.ROOT
+	) {{ setTimeZone(TimeZone.getTimeZone("UTC")); }};
+	//
+	private final Calendar CALENDAR = Calendar.getInstance();
 	//
 	protected void applyDateHeader(final MutableHTTPRequest httpRequest) {
 		httpRequest.setHeader(HttpHeaders.DATE, FMT_DATE_RFC1123.format(CALENDAR.getTime()));

@@ -7,7 +7,7 @@ from loadbuilder import loadbuilder_init
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from com.emc.mongoose.base.api import Request
+from com.emc.mongoose.base.api import AsyncIOTask
 from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.logging import ExceptionHandler, Markers
 from com.emc.mongoose.base.load import DataItemBuffer
@@ -43,7 +43,7 @@ def build(flagSimultaneous=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPe
 	for loadTypeStr in LOAD_CHAIN:
 		LOG.debug(Markers.MSG, "Next load type is \"{}\"", loadTypeStr)
 		try:
-			LOAD_BUILDER.setLoadType(Request.Type.valueOf(loadTypeStr.upper()))
+			LOAD_BUILDER.setLoadType(AsyncIOTask.Type.valueOf(loadTypeStr.upper()))
 			if dataItemSizeMin > 0:
 				LOAD_BUILDER.setMinObjSize(dataItemSizeMin)
 			if dataItemSizeMax > 0:

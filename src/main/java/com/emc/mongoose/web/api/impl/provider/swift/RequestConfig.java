@@ -1,11 +1,11 @@
 package com.emc.mongoose.web.api.impl.provider.swift;
 //
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 //
 import org.apache.logging.log4j.LogManager;
@@ -71,17 +71,17 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final HttpRequest httpRequest, final WSObject dataItem) {
+	protected final void applyURI(final MutableHTTPRequest httpRequest, final WSObject dataItem) {
 		// TODO swift specific things
 	}
 	//
 	@Override
-	protected final void applyAuthHeader(final HttpRequest httpRequest) {
+	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
 		// TODO swift specific things
 	}
 	//
 	@Override
-	public final String getCanonical(final HttpRequest httpRequest) {
+	public final String getCanonical(final MutableHTTPRequest httpRequest) {
 		// TODO swift specific things
 		return null;
 	}

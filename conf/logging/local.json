@@ -160,6 +160,11 @@
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "NEUTRAL",
+								"onMismatch": "DENY"
+							}, {
 								"type": "BurstFilter",
 								"rate": 10,
 								"maxBurst": 100
@@ -270,7 +275,9 @@
 			"root": {
 				"level": "debug",
 				"additivity": "false",
-				"AppenderRef": { "ref": "async" }
+				"AppenderRef": {
+					"ref": "async"
+				}
 			},
 			"logger": [
 				// Mongoose basic load generation functionality
@@ -405,10 +412,11 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.web.api.impl",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
-					"AppenderRef":
-						 { "ref": "async" }
+					"AppenderRef": {
+						"ref": "async"
+					}
 
 				}, {
 					"name": "com.emc.mongoose.web.api.impl.provider",
