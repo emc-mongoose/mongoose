@@ -13,14 +13,14 @@ $(document).ready(function() {
     });
 
 	initComponents();
-	excludeDuplicateOptions();
+	//excludeDuplicateOptions();
 
 	// functions
 	function initComponents() {
 		configureWebSocket().connect();
 	}
 
-	function excludeDuplicateOptions() {
+	/*function excludeDuplicateOptions() {
 		var found = [];
 		var selectArray = $("select");
 		selectArray.each(function() {
@@ -33,7 +33,7 @@ $(document).ready(function() {
 				found.push(this.value);
 			});
 		});
-	}
+	}*/
 
 	function configureWebSocket() {
 		var webSocketServer = {
@@ -111,6 +111,7 @@ $(document).ready(function() {
 
 	// Start mongoose
 	$("#start").click(function(e) {
+		alert($("#main-form").serialize());
 		e.preventDefault();
 		onStartButtonPressed();
 	});

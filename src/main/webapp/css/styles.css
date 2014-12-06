@@ -110,7 +110,7 @@ li input:checked + ul > li:last-child {
 	margin: 0 0 0.063em;
 }
 
-#right-side {
+#main-content {
 	display: inline-block;
 	width: 80%;
 	vertical-align: top;
@@ -125,7 +125,7 @@ li input:checked + ul > li:last-child {
 	vertical-align: middle;
 }
 
-.property-inputs {
+.property-text {
 	display: inline-block;
 	vertical-align: middle;
 }
@@ -143,36 +143,45 @@ li input:checked + ul > li:last-child {
 }
 
 /*border*/
-.left-side, .right-side {
+
+.top {
+	margin-top: 20px;
+	margin-bottom: 20px;
+}
+
+.nav-pills {
 	display: inline-block;
-	vertical-align: top;
 }
 
-.left-side {
-	width: 15%;
+.nav-pills > li {
+	float: none;
+	display: inline-block;
+	zoom: 1;
 }
 
-.right-side {
-	width: 84%;
+.stop {
+	display: inline-block;
 }
 
-.right-side .log-wrapper {
+.table-content {
+	width: 100%;
+	height: 100%;
 	border: 8px solid #ccc;
-	border-radius: 5px;
 }
 
 .log-wrapper {
 	min-width: 1200px;
+	height: 98%;
 }
 
-.right-side .tab-content {
+.table-content .tab-content {
 	word-wrap: break-word;
-	height: 800px;
+	height: 100%;
 	margin: 15px;
 }
 
-#stop {
-	width: 100px;
+.tab-pane {
+	width: 100%;
 }
 
 table {
