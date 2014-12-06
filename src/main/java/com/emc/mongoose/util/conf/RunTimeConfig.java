@@ -43,6 +43,8 @@ implements Externalizable {
 	public final static String LIST_SEP = ",", KEY_VERSION = "run.version";
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
+	private final Map<String, Map<String, Map<String, String>>> properties = new HashMap<>();
+	//
 	private final static DateFormat FMT_DT = new SimpleDateFormat(
 			"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
 	);
@@ -118,6 +120,18 @@ implements Externalizable {
 			x < 10 ? "%.3f%sb" : x < 100 ? "%.2f%sb" : "%.1f%sb",
 			x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
 		).toUpperCase();
+	}
+	//
+	public Map getPropertiesMap() {
+		return properties;
+	}
+	//
+	public final synchronized void put(String dirName, String fileName,
+		Map<String, String> props) {
+			if (properties.get(dirName) == null) {
+				properties.put(dirName, new HashMap<String, Map<String, String>>());
+			}
+			properties.get(dirName).put(fileName, props);
 	}
 	//
 	public final synchronized void set(final String key, final String value) {

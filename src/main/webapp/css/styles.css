@@ -144,44 +144,36 @@ li input:checked + ul > li:last-child {
 
 /*border*/
 
-.top {
-	margin-top: 20px;
-	margin-bottom: 20px;
-}
-
-.nav-pills {
+.left-side, .right-side {
 	display: inline-block;
+	vertical-align: top;
 }
 
-.nav-pills > li {
-	float: none;
-	display: inline-block;
-	zoom: 1;
+.left-side {
+	width: 15%;
 }
 
-.stop {
-	display: inline-block;
+.right-side {
+	width: 84%;
 }
 
-.table-content {
-	width: 100%;
-	height: 100%;
+.right-side .log-wrapper {
 	border: 8px solid #ccc;
+	border-radius: 5px;
 }
 
 .log-wrapper {
 	min-width: 1200px;
-	height: 98%;
 }
 
-.table-content .tab-content {
+.right-side .tab-content {
 	word-wrap: break-word;
-	height: 100%;
+	height: 800px;
 	margin: 15px;
 }
 
-.tab-pane {
-	width: 100%;
+.stop {
+	margin-bottom: 15px;
 }
 
 table {
@@ -263,4 +255,8 @@ th:nth-child(5) {
 
 .glyphicon-remove:hover {
 	color: #D43F3A;
+}
+
+.table-pane {
+	margin-top: 20px;
 }
