@@ -9,6 +9,7 @@ import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.api.impl.BasicWSRequest;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.load.impl.WSLoadHelper;
+import com.google.gson.Gson;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
@@ -118,12 +119,9 @@ implements Externalizable {
 		).toUpperCase();
 	}
 	//
-	public Map<String, HashMap<String, String>> getPropertiesMap() {
-		Map<String, HashMap<String, String>> map = new HashMap<>();
-		HashMap<String, String> simple = new HashMap<>();
-		simple.put("kirill", "gusakov");
-		map.put("text", simple);
-		return map;
+	public String getPropertiesMap() {
+		Gson gson = new Gson();
+		return gson.toJson(properties);
 	}
 	//
 	public final synchronized void put(List<String> dirs, String fileName, Map<String, String> props) {

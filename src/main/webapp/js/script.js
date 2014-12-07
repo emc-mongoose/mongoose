@@ -1,5 +1,8 @@
 $(document).ready(function() {
 
+	$.each(propertiesMap, function(key, value) {
+		alert(key);
+	});
 	var VALUE_RUN_MODE_CLIENT = "client";
 	var VALUE_RUN_MODE_STANDALONE = "standalone";
 	var VALUE_RUN_MODE_SERVER = "server";
@@ -227,4 +230,8 @@ function appendBreadcrumb(element, childrenFolders, childrenDocuments) {
 					</li>";
 	}
 	return htmlString;
+}
+
+function start(param) {
+	alert(param);
 }
