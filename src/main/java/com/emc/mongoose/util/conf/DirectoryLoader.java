@@ -85,10 +85,7 @@ extends SimpleFileVisitor<Path> {
 				props.put(currPrefix + key, key);
 				tgtConfig.setProperty(currPrefix + key, currProps.getProperty(key));
 			}
-			if (currPrefix.equals("run.")) {
-				props.put("run.id", "id");
-			}
-			tgtConfig.put(prefixTokens.getLast(), file.getFileName().toString(), props);
+			tgtConfig.put(prefixTokens.subList(1, prefixTokens.size()), file.getFileName().toString(), props);
 		}
 		//
 		return FileVisitResult.CONTINUE;

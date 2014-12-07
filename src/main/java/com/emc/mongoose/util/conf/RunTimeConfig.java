@@ -12,6 +12,7 @@ import com.emc.mongoose.web.load.impl.WSLoadHelper;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -22,15 +23,10 @@ import java.io.ObjectOutput;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Calendar;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 /**
  Created by kurila on 28.05.14.
  A shared runtime configuration.
@@ -43,7 +39,7 @@ implements Externalizable {
 	public final static String LIST_SEP = ",", KEY_VERSION = "run.version";
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
-	private final Map<String, Map<String, Map<String, String>>> properties = new HashMap<>();
+	private final Map<String, Object> properties = new HashMap<>();
 	//
 	private final static DateFormat FMT_DT = new SimpleDateFormat(
 			"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
@@ -122,16 +118,30 @@ implements Externalizable {
 		).toUpperCase();
 	}
 	//
-	public Map getPropertiesMap() {
-		return properties;
+	public Map<String, HashMap<String, String>> getPropertiesMap() {
+		Map<String, HashMap<String, String>> map = new HashMap<>();
+		HashMap<String, String> simple = new HashMap<>();
+		simple.put("kirill", "gusakov");
+		map.put("text", simple);
+		return map;
 	}
 	//
-	public final synchronized void put(String dirName, String fileName,
-		Map<String, String> props) {
-			if (properties.get(dirName) == null) {
-				properties.put(dirName, new HashMap<String, Map<String, String>>());
+	public final synchronized void put(List<String> dirs, String fileName, Map<String, String> props) {
+		Map<String, Object> node = properties;
+		if (dirs != null) {
+			for (final String nextDir : dirs) {
+				if (!node.containsKey(nextDir)) {
+					node.put(nextDir, new HashMap<>());
+				}
+				node = (Map<String, Object>) node.get(nextDir);
 			}
-			properties.get(dirName).put(fileName, props);
+		}
+		//
+		/*final List<BasicNameValuePair> shortNamedProps = new LinkedList<>();
+		for(final String propShortName: props.keySet()) {
+			shortNamedProps.add(new BasicNameValuePair(propShortName, props.get(propShortName)));
+		}*/
+		//node.put(fileName, props);
 	}
 	//
 	public final synchronized void set(final String key, final String value) {
