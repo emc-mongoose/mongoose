@@ -181,10 +181,11 @@ $(document).ready(function() {
 		html =
 			'<div class="input-group">\
 				<span class="input-group-addon">\
-					<input class=' + key + ' type="checkbox" name=' + key +' value=' + value + '>\
+					<input class=' + key + ' type="checkbox">\
 				</span>\
-				<label class="form-control">' +
-					value +
+				<label class="form-control">\
+					<input type="hidden" name=' + key +' value=' + value + '>'
+					+ value +
 				'</label>\
 			</div>';
 		return html;
@@ -193,11 +194,12 @@ $(document).ready(function() {
 	// Start mongoose
 	$(document).on('submit', '#mainForm',  function(e) {
 		e.preventDefault();
-		onStartButtonPressed();
+		onStartButtonPressed($("#mainForm").serialize());
 	});
 
-	function onStartButtonPressed() {
-		$.post("/start", $("#mainForm").serialize(), function(data, status) {
+	function onStartButtonPressed(serializedForm) {
+		alert(serializedForm);
+		$.post("/start", serializedForm, function(data, status) {
 			if (data) {
 				if (confirm("Are you sure? " + data) === true) {
 					$.post("/stop", { "run.id" : $("#run\\.id").val(), "type" : "remove" }, function(data, status) {
