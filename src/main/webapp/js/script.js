@@ -198,7 +198,6 @@ $(document).ready(function() {
 	});
 
 	function onStartButtonPressed(serializedForm) {
-		alert(serializedForm);
 		$.post("/start", serializedForm, function(data, status) {
 			if (data) {
 				if (confirm("Are you sure? " + data) === true) {
