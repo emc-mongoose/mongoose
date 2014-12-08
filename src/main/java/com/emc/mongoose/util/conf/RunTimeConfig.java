@@ -129,17 +129,20 @@ implements Externalizable {
 		if (dirs != null) {
 			for (final String nextDir : dirs) {
 				if (!node.containsKey(nextDir)) {
-					node.put(nextDir, new HashMap<>());
+					node.put(nextDir, new LinkedHashMap<>());
 				}
 				node = (Map<String, Object>) node.get(nextDir);
 			}
 		}
 		//
-		/*final List<BasicNameValuePair> shortNamedProps = new LinkedList<>();
+		final List<BasicNameValuePair> shortNamedProps = new LinkedList<>();
+		if (fileName.equals("run")) {
+			shortNamedProps.add(new BasicNameValuePair("run.id", "id"));
+		}
 		for(final String propShortName: props.keySet()) {
 			shortNamedProps.add(new BasicNameValuePair(propShortName, props.get(propShortName)));
-		}*/
-		//node.put(fileName, props);
+		}
+		node.put(fileName, shortNamedProps);
 	}
 	//
 	public final synchronized void set(final String key, final String value) {

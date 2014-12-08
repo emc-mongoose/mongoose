@@ -1,8 +1,38 @@
 $(document).ready(function() {
 
-	$.each(propertiesMap, function(key, value) {
-		alert(key);
-	});
+	var map = propertiesMap;
+	var ul = $(".folders");
+	var propsMap = {};
+	function iterMap(map, ul) {
+		$.each(map, function(key, value) {
+			var element;
+			if (jQuery.type(value) === 'array') {
+				element = ul.addChild("<li class='file'><a href='#" + key + "'>" + key + "</a></li>");
+				propsMap[key] = value;
+				return;
+			} else {
+				element = ul.addChild("<li><label for=" + key + ">" + key + "</label><input type='checkbox' id='" + key + "'></li>").addChild("<ul></ul>");
+			}
+			iterMap(value, element);
+		});
+	}
+	function printProps() {
+		for (var key in propsMap) {
+			var keyDiv = $("<div id='" + key + "'></div>");
+			var obj = propsMap[key];
+			var propertyLabels = $("<div class='property-labels'></div>");
+			var propertyText = $("<div class='property-text'></div>");
+			for (var i = 0; i < obj.length; i++) {
+				propertyLabels.append("<label for='" + obj[i].name + "'>" + obj[i].value + "</label>");
+				propertyText.append("<input type='text' id=" + obj[i].name + " name='" + obj[i].name + "'><br/>");
+			}
+			keyDiv.append(propertyLabels);
+			keyDiv.append(propertyText);
+			keyDiv.appendTo("#configuration-content");
+		}
+	}
+	iterMap(map, ul);
+	printProps();
 	var VALUE_RUN_MODE_CLIENT = "client";
 	var VALUE_RUN_MODE_STANDALONE = "standalone";
 	var VALUE_RUN_MODE_SERVER = "server";
@@ -114,7 +144,6 @@ $(document).ready(function() {
 
 	// Start mongoose
 	$("#start").click(function(e) {
-		alert($("#main-form").serialize());
 		e.preventDefault();
 		onStartButtonPressed();
 	});
@@ -235,3 +264,11 @@ function appendBreadcrumb(element, childrenFolders, childrenDocuments) {
 function start(param) {
 	alert(param);
 }
+
+jQuery.fn.addChild = function(html)
+{
+    var target  = $(this[0])
+    var child = $(html);
+    child.appendTo(target);
+    return child;
+};

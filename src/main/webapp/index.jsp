@@ -1,8 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ taglib uri='http://java.sun.com/jsp/jstl/core' prefix='c'%>
-
-<%@ taglib tagdir="/WEB-INF/tags" prefix="tag" %>
-<%@ page import="java.util.*" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<%@ taglib uri="WEB-INF/property.tld" prefix="rt" %>
 <html>
 	<head>
 		<meta charset="utf-8">
@@ -45,5 +44,143 @@
 			</div>
 		</nav>
 
+		<div class="content-wrapper">
+			<div class="tabs-wrapper">
+				<ul class="nav nav-tabs" role="presentation">
+					<li class="active"><a href="#configuration" data-toggle="tab">Configuration</a></li>
+					<c:forEach var="mode" items="${sessionScope.runmodes}">
+						<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
+						<li><a href="#${correctMode}" data-toggle="tab">
+							${mode}
+							<span class="glyphicon glyphicon-remove" value="${correctMode}"></span>
+						</a></li>
+					</c:forEach>
+				</ul>
+			</div>
+
+			<div class="tab-content">
+				<div class="tab-pane active" id="configuration">
+					<div id="menu">
+						<div id="runmodes">
+							<select>
+								<option>standalone</option>
+								<option>client</option>
+								<option>server</option>
+								<option>wsmock</option>
+							</select>
+							<button id="start" type="button">
+								Start
+							</button>
+						</div>
+						<ul class="folders">
+
+						</ul>
+					</div>
+
+					<div id="main-content">
+						<ol class="breadcrumb">
+
+						</ol>
+
+						<form id="main-form">
+							<input type="hidden" name="run.mode" id="run-mode" value="standalone">
+							<div id="configuration-content">
+
+							</div>
+						</form>
+					</div>
+				</div>
+				<c:forEach var="mode" items="${sessionScope.runmodes}">
+					<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
+					<div class="tab-pane table-pane" id="${correctMode}">
+						<div class="left-side">
+							<div class="menu-wrapper">
+								<div class="col-xs-8">
+									<ul class="nav nav-tabs tabs-left">
+										<li class="active"><a href="#${correctMode}messages-csv" data-toggle="tab">messages.csv</a></li>
+										<li><a href="#${correctMode}errors-log" data-toggle="tab">errors.log</a></li>
+										<li><a href="#${correctMode}perf-avg-csv" data-toggle="tab">perf.avg.csv</a></li>
+										<li><a href="#${correctMode}perf-sum-csv" data-toggle="tab">perf.sum.csv</a></li>
+									</ul>
+								</div>
+							</div>
+						</div>
+						<div class="right-side">
+							<c:if test="${empty sessionScope.stopped[mode]}">
+								<button type="button" class="default stop"><span>Stop</span></button>
+							</c:if>
+							<div class="log-wrapper">
+								<div class="tab-content">
+									<div class="tab-pane active" id="${correctMode}messages-csv">
+										<table class="table">
+											<thead>
+												<tr>
+													<th>Level</th>
+													<th>LoggerName</th>
+													<th>ThreadName</th>
+													<th>TimeMillis</th>
+													<th>Message</th>
+												</tr>
+											</thead>
+											<tbody>
+											</tbody>
+										</table>
+										<button type="button" class="default clear">Clear</button>
+									</div>
+									<div class="tab-pane" id="${correctMode}errors-log">
+										<table class="table">
+											<thead>
+												<tr>
+													<th>Level</th>
+													<th>LoggerName</th>
+													<th>ThreadName</th>
+													<th>TimeMillis</th>
+													<th>Message</th>
+												</tr>
+											</thead>
+											<tbody>
+											</tbody>
+										</table>
+										<button type="button" class="default clear">Clear</button>
+									</div>
+									<div class="tab-pane" id="${correctMode}perf-avg-csv">
+										<table class="table">
+											<thead>
+												<tr>
+													<th>Level</th>
+													<th>LoggerName</th>
+													<th>ThreadName</th>
+													<th>TimeMillis</th>
+													<th>Message</th>
+												</tr>
+											</thead>
+											<tbody>
+											</tbody>
+										</table>
+										<button type="button" class="default clear">Clear</button>
+									</div>
+									<div class="tab-pane" id="${correctMode}perf-sum-csv">
+										<table class="table">
+											<thead>
+												<tr>
+													<th>Level</th>
+													<th>LoggerName</th>
+													<th>ThreadName</th>
+													<th>TimeMillis</th>
+													<th>Message</th>
+												</tr>
+											</thead>
+											<tbody>
+											</tbody>
+										</table>
+										<button type="button" class="default clear">Clear</button>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</c:forEach>
+			</div>
+		</div>
 	</body>
 </html>
