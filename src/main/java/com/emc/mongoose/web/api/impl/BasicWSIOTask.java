@@ -26,6 +26,7 @@ import org.apache.http.StatusLine;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.ContentDecoderChannel;
 import org.apache.http.nio.ContentEncoder;
+import org.apache.http.nio.ContentEncoderChannel;
 import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.HttpContext;
 //
@@ -37,6 +38,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.Channels;
 import java.util.Map;
@@ -154,35 +156,77 @@ implements WSIOTask<T> {
 	}
 	//
 	private volatile HttpEntity reqEntity = null;
-	private volatile InputStream reqInStream = null;
-	@SuppressWarnings("FieldCanBeLocal")
-	private volatile int byteCount;
 	//
 	@Override
 	public final HttpRequest generateRequest()
 	throws IOException, HttpException {
 		reqEntity = httpRequest.getEntity();
-		reqInStream = reqEntity == null ? null : reqEntity.getContent();
 		return httpRequest;
 	}
 	//
-	private final ByteBuffer buffWrapper = ByteBuffer.allocate(UniformData.MAX_PAGE_SIZE);
-	private final byte buff[] = buffWrapper.array();
+	private final static class ContentOutputStream
+	extends OutputStream {
+		//
+		private ByteBuffer bb = null;
+		private byte[] bs = null; // Invoker's previous array
+		private byte[] b1 = null;
+		private final ContentEncoder out;
+		private final IOControl ioCtl;
+		//
+		protected ContentOutputStream(final ContentEncoder out, final IOControl ioCtl) {
+			this.out = out;
+			this.ioCtl = ioCtl;
+		}
+		//
+		@Override
+		public synchronized void write(int b)
+		throws IOException {
+			if(b1 == null) {
+				b1 = new byte[1];
+			}
+			b1[0] = (byte) b;
+			this.write(b1);
+		}
+		//
+		@Override
+		public final synchronized void write(byte[] bs, int off, int len)
+		throws IOException {
+			if(
+				(off < 0) || (off > bs.length) || (len < 0) || ((off + len) > bs.length) ||
+				((off + len) < 0)
+			) {
+				throw new IndexOutOfBoundsException();
+			} else if (len == 0) {
+				return;
+			}
+			final ByteBuffer bb = ((this.bs == bs) ? this.bb : ByteBuffer.wrap(bs));
+			bb.limit(Math.min(off + len, bb.capacity()));
+			bb.position(off);
+			this.bb = bb;
+			this.bs = bs;
+			int n;
+			while(bb.remaining() > 0) {
+				n = out.write(bb);
+				if(n <= 0) {
+					LOG.debug(Markers.ERR, "No bytes written");
+					ioCtl.requestOutput();
+				}
+			}
+		}
+		//
+		public final void close()
+		throws IOException {
+			out.complete();
+		}
+	}
 	//
 	@Override
-	public final synchronized void produceContent(final ContentEncoder out, final IOControl ioCtl)
+	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		buffWrapper.clear();
-		byteCount = reqInStream.read(buff);
-		if(byteCount < 0) {
-			out.complete();
-			reqInStream.reset();
-		} else if(!out.isCompleted()) {
-			buffWrapper.flip();
-			do {
-				out.write(buffWrapper);
-				buffWrapper.compact();
-			} while(buffWrapper.hasRemaining());
+		try(final ContentOutputStream outStream = new ContentOutputStream(out, ioCtl)) {
+			reqEntity.writeTo(outStream);
+		} catch(final Exception e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, String.format("%s: failed to write the content", dataItem.getId()));
 		}
 	}
 	//
@@ -199,12 +243,10 @@ implements WSIOTask<T> {
 	@Override
 	public final void resetRequest()
 	throws IOException {
-		byteCount = 0;
 		result = Result.FAIL_UNKNOWN;
 		reqTimeStart = 0;
 		reqTimeDone = 0;
 		reqEntity = null;
-		reqInStream = null;
 		respStatusCode = -1;
 		respTimeStart = 0;
 		respTimeDone = 0;
@@ -284,7 +326,6 @@ implements WSIOTask<T> {
 	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
 	throws IOException {
 		final InputStream contentStream = Channels.newInputStream(new ContentDecoderChannel(in));
-		byteCount = 0;
 		if(respStatusCode < 200 || respStatusCode >= 300) { // failure
 			final BufferedReader contentStreamBuff = new BufferedReader(
 				new InputStreamReader(contentStream)

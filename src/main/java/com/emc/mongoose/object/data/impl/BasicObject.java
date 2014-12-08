@@ -1,6 +1,6 @@
 package com.emc.mongoose.object.data.impl;
 //
-import com.emc.mongoose.base.data.impl.DataItemBase;
+import com.emc.mongoose.base.data.impl.DataRanges;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
 import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -13,7 +13,7 @@ import java.io.ObjectOutput;
  Basic data object implementation extending DataRanges.
  */
 public class BasicObject
-extends DataItemBase
+extends DataRanges
 implements DataObject {
 	//
 	protected String id = null;
