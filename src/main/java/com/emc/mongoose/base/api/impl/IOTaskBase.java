@@ -114,7 +114,8 @@ implements AsyncIOTask<T> {
 		LOG.info(
 			Markers.PERF_TRACE, String.format(
 				FMT_PERF_TRACE, dataItem.getId(), dataItem.getSize(), result.code,
-				reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone, respTimeDone - respTimeStart
+				reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
+				respTimeDone - respTimeStart
 			)
 		);
 		return this;

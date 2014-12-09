@@ -1,13 +1,8 @@
 package com.emc.mongoose.util.io;
 //
-import com.emc.mongoose.util.logging.Markers;
-//
 import com.emc.mongoose.util.pool.BasicInstancePool;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
-//
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,11 +13,9 @@ import java.nio.ByteBuffer;
 public final class HTTPContentOutputStream
 extends OutputStream {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	//
-	private ByteBuffer bb = null;
-	private byte[] bs = null; // Invoker's previous array
-	private byte[] b1 = new byte[1];
+	private volatile ByteBuffer bb = null;
+	private volatile byte[] bs = null; // Invoker's previous array
+	private volatile byte[] b1 = new byte[1];
 	private volatile ContentEncoder out = null;
 	private volatile IOControl ioCtl = null;
 	//
@@ -55,13 +48,14 @@ extends OutputStream {
 		//
 		int n;
 		while(bb.remaining() > 0) {
-			n = out.write(bb);
-			if(n <= 0) {
-				if(LOG.isTraceEnabled(Markers.ERR)) {
-					LOG.trace(Markers.ERR, "No bytes written");
+			do {
+				n = out.write(bb);
+				if(n > 0) {
+					break;
+				} else {
+					ioCtl.requestOutput();
 				}
-				ioCtl.requestOutput();
-			}
+			} while(true);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

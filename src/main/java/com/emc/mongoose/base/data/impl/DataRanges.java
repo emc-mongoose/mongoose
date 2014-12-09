@@ -156,6 +156,11 @@ implements AppendableDataItem, UpdatableDataItem {
 		return result + (int) (value >>> 1);
 	}*/
 	//
+	@Override
+	public final int getLayerNum() {
+		return layerNum;
+	}
+	//
 	private static final double LOG2 = Math.log(2);
 	//
 	public static int getRangeCount(final long size) {

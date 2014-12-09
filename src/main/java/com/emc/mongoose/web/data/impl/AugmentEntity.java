@@ -1,7 +1,9 @@
 package com.emc.mongoose.web.data.impl;
 //
-//
+import com.emc.mongoose.base.data.impl.UniformData;
+import com.emc.mongoose.base.data.impl.UniformDataSource;
 import com.emc.mongoose.web.data.WSObject;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
@@ -50,10 +52,11 @@ implements HttpEntity {
 	}
 	//
 	@Override
-	public final InputStream getContent()
-	throws IOException, IllegalStateException {
-		throw new IllegalStateException("Shouldn't be invoked");
-		//return baseItem.getPendingUpdatesContent();
+	public final InputStream getContent() {
+		return new UniformData(
+			baseItem.getOffset() + baseItem.getSize(), baseItem.getPendingAugmentSize(),
+			baseItem.getLayerNum() + 1, UniformDataSource.DEFAULT
+		);
 	}
 	//
 	@Override

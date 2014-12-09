@@ -13,9 +13,9 @@ import java.nio.ByteBuffer;
 public final class HTTPContentInputStream
 extends InputStream {
 	//
-	private ByteBuffer bb = null;
-	private byte[] bs = null; // Invoker's previous array
-	private byte[] b1 = new byte[1];
+	private volatile ByteBuffer bb = null;
+	private volatile byte[] bs = null; // Invoker's previous array
+	private volatile byte[] b1 = new byte[1];
 	private volatile ContentDecoder in = null;
 	private volatile IOControl ioCtl = null;
 	//

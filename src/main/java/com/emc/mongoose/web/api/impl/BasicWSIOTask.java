@@ -127,6 +127,7 @@ implements WSIOTask<T> {
 		//
 		final WSClient<T> client = wsReqConf.getClient();
 		final Future<AsyncIOTask.Result> futureResult = client.submit(this);
+		reqTimeStart = System.nanoTime();
 		try {
 			futureResult.get();
 		} catch(final InterruptedException e) {
@@ -163,7 +164,6 @@ implements WSIOTask<T> {
 	public final HttpRequest generateRequest()
 	throws IOException, HttpException {
 		reqEntity = httpRequest.getEntity();
-		reqTimeStart = System.nanoTime();
 		return httpRequest;
 	}
 	//
@@ -172,13 +172,12 @@ implements WSIOTask<T> {
 	throws IOException {
 		try(final OutputStream outStream = HTTPContentOutputStream.getInstance(out, ioCtl)) {
 			reqEntity.writeTo(outStream);
-		} finally {
-			reqTimeDone = System.nanoTime();
 		}
 	}
 	//
 	@Override
 	public final void requestCompleted(final HttpContext context) {
+		reqTimeDone = System.nanoTime();
 	}
 	//
 	@Override
@@ -280,7 +279,7 @@ implements WSIOTask<T> {
 				String nextLine;
 				do {
 					nextLine = contentStreamBuff.readLine();
-					if(nextLine==null) {
+					if(nextLine == null) {
 						LOG.debug(
 							Markers.ERR, "Response failure code \"{}\", content: \"{}\"",
 							respStatusCode, msgBuilder.toString()
@@ -288,7 +287,7 @@ implements WSIOTask<T> {
 					} else {
 						msgBuilder.append(nextLine);
 					}
-				} while(nextLine!=null);
+				} while(nextLine != null);
 			} else {
 				wsReqConf.consumeContent(contentStream, ioCtl, dataItem);
 			}
