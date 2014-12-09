@@ -2,7 +2,7 @@ package com.emc.mongoose.web.api.impl;
 //
 import com.emc.mongoose.base.api.AsyncIOClient;
 import com.emc.mongoose.base.api.AsyncIOTask;
-import com.emc.mongoose.base.api.impl.RequestConfigImpl;
+import com.emc.mongoose.base.api.impl.RequestConfigBase;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
@@ -15,7 +15,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.web.load.impl.WSLoadHelper;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.http.Header;
@@ -48,14 +47,13 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.SimpleTimeZone;
 import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 09.06.14.
  */
 public abstract class WSRequestConfigBase<T extends WSObject>
-extends RequestConfigImpl<T>
+extends RequestConfigBase<T>
 implements WSRequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

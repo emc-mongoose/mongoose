@@ -28,8 +28,6 @@ public interface WSRequestConfig<T extends WSObject>
 extends ObjectRequestConfig<T> {
 	//
 	String
-		DEFAULT_ENC = StandardCharsets.UTF_8.name(),
-		//
 		KEY_EMC_ACCEPT = "x-emc-accept",
 		KEY_EMC_DATE = "x-emc-date",
 		KEY_EMC_NS = "x-emc-namespace",

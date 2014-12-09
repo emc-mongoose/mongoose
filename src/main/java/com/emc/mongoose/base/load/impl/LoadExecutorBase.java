@@ -158,7 +158,11 @@ implements LoadExecutor<T> {
 		submitExecutor.prestartAllCoreThreads();
 		//
 		storageClient = initClient(addrs, reqConf);
-		initNodeExecutors(addrs, reqConf.clone().setLoadNumber(loadNumber));
+		try {
+			initNodeExecutors(addrs, reqConf.clone().setLoadNumber(loadNumber));
+		} catch(final CloneNotSupportedException e) {
+			ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to clone request configuration");
+		}
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
 	}

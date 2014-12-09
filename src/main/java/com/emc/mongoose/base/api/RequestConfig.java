@@ -6,6 +6,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import java.io.Closeable;
 import java.io.Externalizable;
+import java.nio.charset.StandardCharsets;
 /**
  Created by kurila on 29.09.14.
  Shared request configuration.
@@ -14,9 +15,10 @@ public interface RequestConfig<T extends DataItem>
 extends Externalizable, Cloneable, Closeable {
 	//
 	long serialVersionUID = 42L;
+	String DEFAULT_ENC = StandardCharsets.UTF_8.name();
 	//
-	@SuppressWarnings({"CloneDoesntCallSuperClone", "CloneDoesntDeclareCloneNotSupportedException"})
-	RequestConfig<T> clone();
+	RequestConfig<T> clone()
+	throws CloneNotSupportedException;
 	//
 	String getAPI();
 	RequestConfig<T> setAPI(final String api);

@@ -132,7 +132,7 @@ implements StorageNodeExecutor<T> {
 		final RunTimeConfig runTimeConfig,
 		final String addr, final int threadsPerNode, final RequestConfig<T> sharedReqConf,
 		final MetricRegistry parentMetrics, final String parentName
-	) {
+	) throws CloneNotSupportedException {
 		this(
 			runTimeConfig, threadsPerNode, sharedReqConf.clone().setAddr(addr),
 			parentMetrics, parentName

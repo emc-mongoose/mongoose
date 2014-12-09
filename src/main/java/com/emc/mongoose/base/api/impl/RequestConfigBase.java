@@ -8,12 +8,10 @@ import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.lang.StringUtils;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -24,7 +22,7 @@ import java.io.ObjectOutput;
  Created by kurila on 06.06.14.
  The most common implementation of the shared request configuration.
  */
-public class RequestConfigImpl<T extends DataItem>
+public abstract class RequestConfigBase<T extends DataItem>
 implements RequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -41,38 +39,46 @@ implements RequestConfig<T> {
 	protected int loadNumber;
 	//
 	@SuppressWarnings("unchecked")
-	public RequestConfigImpl() {
-		this(null);
+	protected RequestConfigBase() {
+		dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
+		retryFlag = runTimeConfig.getRunRequestRetries();
+		verifyContentFlag = runTimeConfig.getReadVerifyContent();
 	}
 	//
-	@SuppressWarnings("unchecked")
-	protected RequestConfigImpl(final RequestConfig<T> reqConf2Clone) {
-		try {
-			if(reqConf2Clone==null) {
-				dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
-				retryFlag = runTimeConfig.getRunRequestRetries();
-				verifyContentFlag = runTimeConfig.getReadVerifyContent();
-			} else {
-				setDataSource(reqConf2Clone.getDataSource());
-				setRetries(reqConf2Clone.getRetries());
-				setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
-				//
-				setAddr(reqConf2Clone.getAddr());
-				setAPI(reqConf2Clone.getAPI());
-				secret = reqConf2Clone.getSecret();
-				setUserName(reqConf2Clone.getUserName());
-				setPort(reqConf2Clone.getPort());
-				setLoadType(reqConf2Clone.getLoadType());
-				setClient(reqConf2Clone.getClient());
-			}
-		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request config instantiation failure");
+	protected RequestConfigBase(final RequestConfig<T> reqConf2Clone) {
+		this();
+		if(reqConf2Clone != null) {
+			setDataSource(reqConf2Clone.getDataSource());
+			setRetries(reqConf2Clone.getRetries());
+			setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
+			setAddr(reqConf2Clone.getAddr());
+			setAPI(reqConf2Clone.getAPI());
+			setUserName(reqConf2Clone.getUserName());
+			setPort(reqConf2Clone.getPort());
+			setScheme(reqConf2Clone.getScheme());
+			setLoadType(reqConf2Clone.getLoadType());
+			setClient(reqConf2Clone.getClient());
+			secret = reqConf2Clone.getSecret();
 		}
 	}
 	//
-	@Override
-	public RequestConfigImpl<T> clone() {
-		return new RequestConfigImpl<>(this);
+	@Override @SuppressWarnings("unchecked")
+	public RequestConfigBase<T> clone()
+	throws CloneNotSupportedException {
+		final RequestConfigBase<T> requestConfigBranch = (RequestConfigBase<T>) super.clone();
+		requestConfigBranch
+			.setDataSource(dataSrc)
+			.setRetries(retryFlag)
+			.setVerifyContentFlag(verifyContentFlag)
+			.setAddr(addr)
+			.setAPI(api)
+			.setUserName(userName)
+			.setPort(port)
+			.setScheme(scheme)
+			.setLoadType(loadType)
+			.setClient(storageClient);
+		requestConfigBranch.secret = secret;
+		return requestConfigBranch;
 	}
 	//
 	@Override
@@ -80,7 +86,7 @@ implements RequestConfig<T> {
 		return api;
 	}
 	@Override
-	public RequestConfigImpl<T> setAPI(final String api) {
+	public RequestConfigBase<T> setAPI(final String api) {
 		this.api = api;
 		return this;
 	}
@@ -90,7 +96,7 @@ implements RequestConfig<T> {
 		return loadType;
 	}
 	@Override
-	public RequestConfigImpl<T> setLoadType(final AsyncIOTask.Type loadType) {
+	public RequestConfigBase<T> setLoadType(final AsyncIOTask.Type loadType) {
 		LOG.trace(Markers.MSG, "Setting load type {}", loadType);
 		this.loadType = loadType;
 		return this;
@@ -101,7 +107,7 @@ implements RequestConfig<T> {
 		return scheme;
 	}
 	@Override
-	public final RequestConfigImpl<T> setScheme(final String scheme) {
+	public final RequestConfigBase<T> setScheme(final String scheme) {
 		this.scheme = scheme;
 		uriAddr = String.format(
 			FMT_URI_ADDR,
@@ -116,7 +122,7 @@ implements RequestConfig<T> {
 		return addr;
 	}
 	@Override
-	public final RequestConfigImpl<T> setAddr(final String addr) {
+	public final RequestConfigBase<T> setAddr(final String addr) {
 		this.addr = addr;
 		uriAddr = String.format(
 			FMT_URI_ADDR,
@@ -131,7 +137,7 @@ implements RequestConfig<T> {
 		return port;
 	}
 	@Override
-	public final RequestConfigImpl<T> setPort(final int port)
+	public final RequestConfigBase<T> setPort(final int port)
 	throws IllegalArgumentException {
 		LOG.trace(Markers.MSG, "Using storage port: {}", port);
 		if(port>0 || port<0x10000) {
@@ -151,7 +157,7 @@ implements RequestConfig<T> {
 		return userName;
 	}
 	@Override
-	public RequestConfigImpl<T> setUserName(final String userName) {
+	public RequestConfigBase<T> setUserName(final String userName) {
 		this.userName = userName;
 		return this;
 	}
@@ -161,7 +167,7 @@ implements RequestConfig<T> {
 		return secret;
 	}
 	@Override
-	public RequestConfigImpl<T> setSecret(final String secret) {
+	public RequestConfigBase<T> setSecret(final String secret) {
 		this.secret = secret;
 		return this;
 	}
@@ -171,7 +177,7 @@ implements RequestConfig<T> {
 		return dataSrc;
 	}
 	@Override
-	public RequestConfigImpl<T> setDataSource(final DataSource<T> dataSrc) {
+	public RequestConfigBase<T> setDataSource(final DataSource<T> dataSrc) {
 		this.dataSrc = dataSrc;
 		return this;
 	}
@@ -181,7 +187,7 @@ implements RequestConfig<T> {
 		return retryFlag;
 	}
 	@Override
-	public RequestConfigImpl<T> setRetries(final boolean retryFlag) {
+	public RequestConfigBase<T> setRetries(final boolean retryFlag) {
 		this.retryFlag = retryFlag;
 		return this;
 	}
@@ -192,13 +198,13 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final RequestConfigImpl<T> setVerifyContentFlag(final boolean verifyContentFlag) {
+	public final RequestConfigBase<T> setVerifyContentFlag(final boolean verifyContentFlag) {
 		this.verifyContentFlag = verifyContentFlag;
 		return this;
 	}
 	//
 	@Override
-	public RequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+	public RequestConfigBase<T> setProperties(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
 		//
 		final String api = runTimeConfig.getStorageApi();
@@ -274,9 +280,7 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public void configureStorage() {
-		throw new IllegalStateException("Not implemented");
-	}
+	public abstract void configureStorage();
 	//
 	@Override
 	public final synchronized void close() {

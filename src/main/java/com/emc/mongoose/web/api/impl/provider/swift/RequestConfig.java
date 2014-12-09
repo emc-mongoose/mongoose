@@ -90,4 +90,9 @@ extends WSRequestConfigBase<T> {
 	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
 		// TODO swift specific things
 	}
+	//
+	@Override
+	public final void configureStorage() {
+		// TODO swift specific things
+	}
 }

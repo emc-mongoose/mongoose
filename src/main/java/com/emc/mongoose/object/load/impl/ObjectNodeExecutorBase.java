@@ -25,7 +25,7 @@ implements ObjectNodeExecutor<T> {
 		final RunTimeConfig runTimeConfig,
 		final String addr, final int threadsPerNode, final ObjectRequestConfig<T> sharedReqConf,
 		final MetricRegistry parentMetrics, final String parentName
-	) {
+	) throws CloneNotSupportedException{
 		super(runTimeConfig, addr, threadsPerNode, sharedReqConf, parentMetrics, parentName);
 	}
 	//
