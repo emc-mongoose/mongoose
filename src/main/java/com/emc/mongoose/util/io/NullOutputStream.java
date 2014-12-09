@@ -1,4 +1,4 @@
-package com.emc.mongoose.util;
+package com.emc.mongoose.util.io;
 //
 import java.io.OutputStream;
 /**

@@ -1,9 +1,9 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSClient;
 import com.emc.mongoose.web.api.WSIOTask;
-import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -11,25 +11,18 @@ import com.emc.mongoose.util.logging.Markers;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
-import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.util.EntityUtils;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
 //
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
-import java.util.TimeZone;
 /**
  Created by kurila on 02.10.14.
  */
@@ -45,11 +38,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
-			final Date
-				dt = Calendar.getInstance(
-					TimeZone.getTimeZone("GMT+0"), Locale.ROOT
-				).getTime();
-			this.name = "mongoose-" + WSRequestConfig.FMT_DT.format(dt);
+			final Date dt = Main.CALENDAR_DEFAULT.getTime();
+			this.name = "mongoose-" + Main.FMT_DT.format(dt);
 		} else {
 			this.name = name;
 		}

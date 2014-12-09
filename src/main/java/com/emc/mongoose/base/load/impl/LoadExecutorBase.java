@@ -439,7 +439,7 @@ implements LoadExecutor<T> {
 		//
 		final String message = Markers.PERF_SUM.equals(logMarker) ?
 			String.format(
-				Locale.ROOT, MSG_FMT_SUM_METRICS,
+				Main.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 				//
 				getName(),
 				countReqSucc, counterReqFail.getCount(),
@@ -460,7 +460,7 @@ implements LoadExecutor<T> {
 				fifteenMinBW / MIB
 			) :
 			String.format(
-				Locale.ROOT, MSG_FMT_METRICS,
+				Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
 				countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
 				//
@@ -486,7 +486,7 @@ implements LoadExecutor<T> {
 			LOG.debug(
 				Markers.PERF_SUM,
 				String.format(
-					Locale.ROOT, FMT_EFF_SUM,
+					Main.LOCALE_DEFAULT, FMT_EFF_SUM,
 					100 * totalReqNanoSeconds / ((System.nanoTime() - tsStart) * getThreadCount())
 				)
 			);

@@ -128,7 +128,7 @@ implements WSLoadBuilderSvc<T, U> {
 		} else {
 			throw new IllegalStateException(
 				String.format(
-					Locale.ROOT, "Min object size %s should be less than upper bound %s",
+					Main.LOCALE_DEFAULT, "Min object size %s should be less than upper bound %s",
 					RunTimeConfig.formatSize(minObjSize), RunTimeConfig.formatSize(maxObjSize)
 				)
 			);

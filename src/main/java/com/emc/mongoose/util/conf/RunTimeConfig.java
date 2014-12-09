@@ -59,9 +59,6 @@ implements Externalizable {
 	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
-	private final static DateFormat FMT_DT = new SimpleDateFormat(
-			"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
-	);
 	static {
 		MAP_OVERRIDE.put(KEY_DATA_SIZE, new String[] {"data.size.min", "data.size.max"});
 		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_RUN_TIME});
@@ -398,7 +395,7 @@ implements Externalizable {
 	public synchronized RunTimeConfig clone() {
 		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
 		runTimeConfig.set(
-			KEY_RUN_ID, FMT_DT.format(Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime())
+			KEY_RUN_ID, Main.FMT_DT.format(Main.CALENDAR_DEFAULT.getTime())
 		);
 		return runTimeConfig;
 	}

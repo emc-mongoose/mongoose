@@ -13,6 +13,7 @@ import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.StorageNodeExecutor;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -322,7 +323,7 @@ implements StorageNodeExecutor<T> {
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
 		final String message = Markers.PERF_SUM.equals(logMarker) ?
 			String.format(
-				Locale.ROOT, MSG_FMT_SUM_METRICS,
+				Main.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 				//
 				getName(),
 				countReqSucc, counterReqFail.getCount(),
@@ -340,7 +341,7 @@ implements StorageNodeExecutor<T> {
 				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 			) :
 			String.format(
-				Locale.ROOT, MSG_FMT_METRICS,
+				Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
 				countReqSucc, getQueue().size() + getActiveCount(), counterReqFail.getCount(),
 				//

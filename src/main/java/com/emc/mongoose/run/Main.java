@@ -9,7 +9,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.LifeCycle;
 import org.apache.logging.log4j.LogManager;
@@ -28,7 +27,6 @@ import java.security.Policy;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.TimeZone;
 /**
@@ -36,6 +34,15 @@ import java.util.TimeZone;
  Mongoose entry point.
  */
 public final class Main {
+	//
+	public final static TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
+	public final static Locale LOCALE_DEFAULT = Locale.ROOT;
+	public final static Calendar CALENDAR_DEFAULT = Calendar.getInstance(Main.TZ_UTC, LOCALE_DEFAULT);
+	public final static DateFormat FMT_DT = new SimpleDateFormat(
+		"yyyy.MM.dd.HH.mm.ss.SSS", LOCALE_DEFAULT
+	) {
+		{ setTimeZone(TZ_UTC); }
+	};
 	//
 	public final static String
 		DOT = ".",
@@ -58,10 +65,6 @@ public final class Main {
 		RUN_MODE_COMPAT_SERVER = "driver",
 		RUN_MODE_WEBUI = "webui",
 		RUN_MODE_WSMOCK = "wsmock";
-	//
-	private final static DateFormat FMT_DT = new SimpleDateFormat(
-		"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
-	);
 	//
 	public final static File JAR_SELF;
 	static {
@@ -171,10 +174,7 @@ public final class Main {
 		String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 		if(runId==null || runId.length()==0) {
 			System.setProperty(
-				RunTimeConfig.KEY_RUN_ID,
-				FMT_DT.format(
-					Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()
-				)
+				RunTimeConfig.KEY_RUN_ID, FMT_DT.format(CALENDAR_DEFAULT.getTime())
 			);
 		}
 		// make all used loggers asynchronous

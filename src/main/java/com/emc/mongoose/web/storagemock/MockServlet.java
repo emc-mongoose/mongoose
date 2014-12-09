@@ -8,6 +8,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -205,26 +206,27 @@ public final class MockServlet
 			while (metricsUpdatePeriodSec > 0) {
 				final Snapshot allDurSnapshot = durAll.getSnapshot();
 				LOG.info(
-						Markers.PERF_AVG,
-						String.format(Locale.ROOT, MSG_FMT_METRICS,
-								//
-								counterAllSucc.getCount(), counterAllFail.getCount(),
-								//
-								(float) allDurSnapshot.getMean() / LoadExecutor.BILLION,
-								(float) allDurSnapshot.getMin() / LoadExecutor.BILLION,
-								(float) allDurSnapshot.getMedian() / LoadExecutor.BILLION,
-								(float) allDurSnapshot.getMax() / LoadExecutor.BILLION,
-								//
-								allTP.getMeanRate(),
-								allTP.getOneMinuteRate(),
-								allTP.getFiveMinuteRate(),
-								allTP.getFifteenMinuteRate(),
-								//
-								allBW.getMeanRate() / LoadExecutor.MIB,
-								allBW.getOneMinuteRate() / LoadExecutor.MIB,
-								allBW.getFiveMinuteRate() / LoadExecutor.MIB,
-								allBW.getFifteenMinuteRate() / LoadExecutor.MIB
-						)
+					Markers.PERF_AVG,
+					String.format(
+						Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
+						//
+						counterAllSucc.getCount(), counterAllFail.getCount(),
+						//
+						(float) allDurSnapshot.getMean() / LoadExecutor.BILLION,
+						(float) allDurSnapshot.getMin() / LoadExecutor.BILLION,
+						(float) allDurSnapshot.getMedian() / LoadExecutor.BILLION,
+						(float) allDurSnapshot.getMax() / LoadExecutor.BILLION,
+						//
+						allTP.getMeanRate(),
+						allTP.getOneMinuteRate(),
+						allTP.getFiveMinuteRate(),
+						allTP.getFifteenMinuteRate(),
+						//
+						allBW.getMeanRate() / LoadExecutor.MIB,
+						allBW.getOneMinuteRate() / LoadExecutor.MIB,
+						allBW.getFiveMinuteRate() / LoadExecutor.MIB,
+						allBW.getFifteenMinuteRate() / LoadExecutor.MIB
+					)
 				);
 				Thread.sleep(updatePeriodMilliSec);
 			}

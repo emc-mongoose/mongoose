@@ -14,6 +14,7 @@ import com.emc.mongoose.base.load.impl.LoadCloseHook;
 import com.emc.mongoose.base.load.impl.SubmitDataItemTask;
 import com.emc.mongoose.base.load.client.LoadClient;
 import com.emc.mongoose.base.load.server.LoadSvc;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -788,7 +789,7 @@ implements LoadClient<T> {
 				logMarker,
 				Markers.PERF_SUM.equals(logMarker) ?
 				String.format(
-					Locale.ROOT, MSG_FMT_SUM_METRICS,
+					Main.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 					//
 					getName(),
 					countReqSucc.get(), countReqFail.get(),
@@ -802,7 +803,7 @@ implements LoadClient<T> {
 					fifteenMinBW.get() / MIB
 				) :
 				String.format(
-					Locale.ROOT, MSG_FMT_METRICS,
+					Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
 					//
 					countReqSucc.get(),
 					submitExecutor.getQueue().size() + submitExecutor.getActiveCount(),

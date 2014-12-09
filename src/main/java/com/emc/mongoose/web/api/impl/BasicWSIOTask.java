@@ -5,6 +5,8 @@ import com.emc.mongoose.base.api.impl.IOTaskBase;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.impl.UniformData;
+import com.emc.mongoose.util.io.HTTPContentInputStream;
+import com.emc.mongoose.util.io.HTTPContentOutputStream;
 import com.emc.mongoose.util.pool.BasicInstancePool;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSClient;
@@ -161,78 +163,22 @@ implements WSIOTask<T> {
 	public final HttpRequest generateRequest()
 	throws IOException, HttpException {
 		reqEntity = httpRequest.getEntity();
+		reqTimeStart = System.nanoTime();
 		return httpRequest;
-	}
-	//
-	private final static class ContentOutputStream
-	extends OutputStream {
-		//
-		private ByteBuffer bb = null;
-		private byte[] bs = null; // Invoker's previous array
-		private byte[] b1 = null;
-		private final ContentEncoder out;
-		private final IOControl ioCtl;
-		//
-		protected ContentOutputStream(final ContentEncoder out, final IOControl ioCtl) {
-			this.out = out;
-			this.ioCtl = ioCtl;
-		}
-		//
-		@Override
-		public synchronized void write(int b)
-		throws IOException {
-			if(b1 == null) {
-				b1 = new byte[1];
-			}
-			b1[0] = (byte) b;
-			this.write(b1);
-		}
-		//
-		@Override
-		public final synchronized void write(byte[] bs, int off, int len)
-		throws IOException {
-			if(
-				(off < 0) || (off > bs.length) || (len < 0) || ((off + len) > bs.length) ||
-				((off + len) < 0)
-			) {
-				throw new IndexOutOfBoundsException();
-			} else if (len == 0) {
-				return;
-			}
-			final ByteBuffer bb = ((this.bs == bs) ? this.bb : ByteBuffer.wrap(bs));
-			bb.limit(Math.min(off + len, bb.capacity()));
-			bb.position(off);
-			this.bb = bb;
-			this.bs = bs;
-			int n;
-			while(bb.remaining() > 0) {
-				n = out.write(bb);
-				if(n <= 0) {
-					LOG.debug(Markers.ERR, "No bytes written");
-					ioCtl.requestOutput();
-				}
-			}
-		}
-		//
-		public final void close()
-		throws IOException {
-			out.complete();
-		}
 	}
 	//
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		try(final ContentOutputStream outStream = new ContentOutputStream(out, ioCtl)) {
+		try(final OutputStream outStream = HTTPContentOutputStream.getInstance(out, ioCtl)) {
 			reqEntity.writeTo(outStream);
-		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, String.format("%s: failed to write the content", dataItem.getId()));
+		} finally {
+			reqTimeDone = System.nanoTime();
 		}
 	}
 	//
 	@Override
 	public final void requestCompleted(final HttpContext context) {
-		reqTimeDone = System.nanoTime();
 	}
 	//
 	@Override
@@ -325,32 +271,34 @@ implements WSIOTask<T> {
 	@Override
 	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
 	throws IOException {
-		final InputStream contentStream = Channels.newInputStream(new ContentDecoderChannel(in));
-		if(respStatusCode < 200 || respStatusCode >= 300) { // failure
-			final BufferedReader contentStreamBuff = new BufferedReader(
-				new InputStreamReader(contentStream)
-			);
-			final StrBuilder msgBuilder = new StrBuilder();
-			String nextLine;
-			do {
-				nextLine = contentStreamBuff.readLine();
-				if(nextLine == null) {
-					LOG.debug(
-						Markers.ERR, "Response failure code \"{}\", content: \"{}\"",
-						respStatusCode, msgBuilder.toString()
-					);
-				} else {
-					msgBuilder.append(nextLine);
-				}
-			} while(nextLine != null);
-		} else {
-			wsReqConf.consumeContent(contentStream, ioCtl, dataItem);
+		try(final InputStream contentStream = HTTPContentInputStream.getInstance(in, ioCtl)) {
+			if(respStatusCode < 200 || respStatusCode >= 300) { // failure
+				final BufferedReader contentStreamBuff = new BufferedReader(
+					new InputStreamReader(contentStream)
+				);
+				final StrBuilder msgBuilder = new StrBuilder();
+				String nextLine;
+				do {
+					nextLine = contentStreamBuff.readLine();
+					if(nextLine==null) {
+						LOG.debug(
+							Markers.ERR, "Response failure code \"{}\", content: \"{}\"",
+							respStatusCode, msgBuilder.toString()
+						);
+					} else {
+						msgBuilder.append(nextLine);
+					}
+				} while(nextLine!=null);
+			} else {
+				wsReqConf.consumeContent(contentStream, ioCtl, dataItem);
+			}
+		} finally {
+			respTimeDone = System.nanoTime();
 		}
 	}
 	//
 	@Override
 	public final void responseCompleted(final HttpContext context) {
-		respTimeDone = System.nanoTime();
 		respFlagDone = true;
 	}
 	//

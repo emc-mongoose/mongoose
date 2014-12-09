@@ -47,8 +47,6 @@ extends ObjectRequestConfig<T> {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_NS, KEY_EMC_SIG, KEY_EMC_UID
 		};
 	//
-	DateFormat FMT_DT = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS", Locale.ROOT);
-	//
 	MutableHTTPRequest createRequest();
 	//
 	@Override

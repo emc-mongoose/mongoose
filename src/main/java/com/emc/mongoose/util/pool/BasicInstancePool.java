@@ -1,7 +1,9 @@
 package com.emc.mongoose.util.pool;
 //
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -44,7 +46,7 @@ public final class BasicInstancePool<T extends Closeable> {
 				item = availItems.iterator().next();
 				availItems.remove(item);
 			} catch(final ConcurrentModificationException|NoSuchElementException e) {
-				LOG.error(Markers.ERR, "Unexpected exception:", e);
+				ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		}
 		return item;
@@ -54,7 +56,7 @@ public final class BasicInstancePool<T extends Closeable> {
 		try {
 			availItems.add(item);
 		} catch(final ConcurrentModificationException e) {
-			LOG.error(Markers.ERR, "Unexpected exception:", e);
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
 		}
 	}
 }

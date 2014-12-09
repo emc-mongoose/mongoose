@@ -40,6 +40,7 @@ import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.LinkedList;
@@ -401,14 +402,16 @@ implements WSRequestConfig<T> {
 		);
 	}
 	//
-	private final SimpleDateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(
-		"EEE, dd MMM yyyy HH:mm:ss zzz", Locale.ROOT
-	) {{ setTimeZone(TimeZone.getTimeZone("UTC")); }};
-	//
-	private final Calendar CALENDAR = Calendar.getInstance();
+	private final static DateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(
+		"EEE, dd MMM yyyy HH:mm:ss zzz", Main.LOCALE_DEFAULT
+	) {
+		{ setTimeZone(Main.TZ_UTC); }
+	};
 	//
 	protected void applyDateHeader(final MutableHTTPRequest httpRequest) {
-		httpRequest.setHeader(HttpHeaders.DATE, FMT_DATE_RFC1123.format(CALENDAR.getTime()));
+		httpRequest.setHeader(
+			HttpHeaders.DATE, FMT_DATE_RFC1123.format(Main.CALENDAR_DEFAULT.getTime())
+		);
 	}
 	//
 	protected abstract void applyAuthHeader(final MutableHTTPRequest httpRequest);
