@@ -71,8 +71,12 @@ dependencies {
 		'org.eclipse.jetty.websocket:websocket-server:9.2.3.v20140905',
 		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
 		'com.google.code.gson:gson:2.3',
+		//hibernate
 		'org.hibernate:hibernate-core:4.3.6.Final',
 		'org.eclipse.persistence:javax.persistence:2.1.0',
+		'org.hibernate:hibernate-c3p0:4.3.7.Final',
+		'org.hibernate:hibernate-ehcache:4.3.7.Final',
+		//
 		'jstl:jstl:1.2'
 	)
 	runtime (
