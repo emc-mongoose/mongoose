@@ -1,7 +1,5 @@
 package com.emc.mongoose.web.data.impl;
 //
-import com.emc.mongoose.base.data.impl.UniformData;
-import com.emc.mongoose.base.data.impl.UniformDataSource;
 import com.emc.mongoose.web.data.WSObject;
 //
 import org.apache.http.Header;
@@ -52,11 +50,9 @@ implements HttpEntity {
 	}
 	//
 	@Override
-	public final InputStream getContent() {
-		return new UniformData(
-			baseItem.getOffset() + baseItem.getSize(), baseItem.getPendingAugmentSize(),
-			baseItem.getLayerNum() + 1, UniformDataSource.DEFAULT
-		);
+	public final InputStream getContent()
+	throws IOException {
+		return baseItem.getAugmentContent();
 	}
 	//
 	@Override

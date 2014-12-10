@@ -28,13 +28,13 @@ implements AsyncIOTask<T> {
 		}
 	};
 	//
-	protected RequestConfig<T> reqConf = null;
-	protected T dataItem = null;
-	protected Result result = Result.FAIL_TIMEOUT;
+	protected volatile RequestConfig<T> reqConf = null;
+	protected volatile T dataItem = null;
+	protected volatile Result result = Result.FAIL_TIMEOUT;
 	//
-	protected long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
-	private long transferSize = 0;
-	private Type type;
+	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
+	private volatile long transferSize = 0;
+	private volatile Type type;
 
 	public IOTaskBase() {
 

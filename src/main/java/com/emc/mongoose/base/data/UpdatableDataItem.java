@@ -25,6 +25,9 @@ extends DataItem {
 	void writePendingUpdatesTo(final OutputStream out)
 	throws IOException;
 	//
+	InputStream getPendingUpdatesContent()
+	throws IOException;
+	//
 	boolean compareWith(final InputStream in)
 	throws IOException;
 	//

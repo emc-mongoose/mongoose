@@ -6,6 +6,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
+import com.emc.mongoose.base.api.AsyncIOClient;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
@@ -48,6 +49,7 @@ implements StorageNodeExecutor<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final RequestConfig<T> localReqConf;
+	protected final AsyncIOClient<T> client;
 	private final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
 	private final Counter counterSubmParent, counterRejParent, counterReqSuccParent, counterReqFailParent;
 	private final Meter reqBytes, reqBytesParent;
@@ -84,6 +86,7 @@ implements StorageNodeExecutor<T> {
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		this.localReqConf = localReqConf;
+		client = localReqConf.getClient();
 		reqType = localReqConf.getLoadType();
 		//
 		counterSubm = parentMetrics.counter(MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_SUBM));
@@ -171,6 +174,7 @@ implements StorageNodeExecutor<T> {
 		while(!passed && rejectCount < retryCountMax && !isShutdown()) {
 			try {
 				super.submit(ioTask);
+				LOG.trace(Markers.MSG, "I/O task for {} submitted", dataItem);
 				passed = true;
 			} catch(final RejectedExecutionException e) {
 				rejectCount ++;
@@ -448,10 +452,18 @@ implements StorageNodeExecutor<T> {
 			interrupt();
 		}
 		localReqConf.close();
-		LOG.debug(
-			Markers.MSG, "Dropped {} tasks while closing \"{}\"",
-			shutdownNow().size(), getThreadFactory().toString()
-		);
+		try {
+			awaitTermination(
+				Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+			);
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.MSG, "Interrupted");
+		} finally {
+			LOG.debug(
+				Markers.MSG, "Dropped {} tasks while closing \"{}\"",
+				shutdownNow().size(), getThreadFactory().toString()
+			);
+		}
 	}
 	//
 }

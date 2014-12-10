@@ -36,11 +36,7 @@ implements Producer<T> {
 	@SuppressWarnings("unchecked")
 	public FileProducer(final String fPathStr, final Class<T> dataItemsImplCls)
 	throws NoSuchMethodException, IOException {
-		super(
-			String.format(
-				"producer<%s>-file<%s>", dataItemsImplCls.getName(), fPathStr
-			)
-		);
+		super(fPathStr);
 		//
 		fPath = FileSystems.getDefault().getPath(fPathStr);
 		if(!Files.exists(fPath)) {

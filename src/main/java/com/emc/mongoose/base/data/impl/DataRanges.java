@@ -19,7 +19,9 @@ import java.io.InterruptedIOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+import java.io.SequenceInputStream;
 import java.util.BitSet;
+import java.util.Vector;
 import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 15.09.14.
@@ -298,7 +300,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public void writePendingUpdatesTo(final OutputStream out)
+	public final void writePendingUpdatesTo(final OutputStream out)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		DataItem nextRangeData;
@@ -336,6 +338,38 @@ implements AppendableDataItem, UpdatableDataItem {
 			maskRangesPending.clear();
 		}
 	}
+	//
+	@Override
+	public final InputStream getPendingUpdatesContent() {
+		final int countRangesTotal = getRangeCount(size);
+		final Vector<InputStream> updatedRangesData = new Vector<>();
+		long rangeOffset, rangeSize;
+		synchronized(this) {
+			for(int i = 0; i < countRangesTotal; i++) {
+				rangeOffset = getRangeOffset(i);
+				rangeSize = getRangeSize(i);
+				if(maskRangesPending.get(i)) {
+					updatedRangesData.add(
+						new UniformData(
+							offset + rangeOffset, rangeSize, layerNum + 1, UniformDataSource.DEFAULT
+						)
+					);
+				}
+			}
+			// move pending updated ranges to history
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, FMT_MSG_MERGE_MASKS,
+					Long.toHexString(offset),
+					Hex.encodeHexString(maskRangesPending.toByteArray()),
+					Hex.encodeHexString(maskRangesHistory.toByteArray())
+				);
+			}
+			maskRangesHistory.or(maskRangesPending);
+			maskRangesPending.clear();
+		}
+		return new SequenceInputStream(updatedRangesData.elements());
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// APPEND //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -363,7 +397,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public void writeAugmentTo(final OutputStream out)
+	public final void writeAugmentTo(final OutputStream out)
 	throws IOException {
 		if(pendingAugmentSize > 0) {
 			synchronized(this) {
@@ -405,6 +439,33 @@ implements AppendableDataItem, UpdatableDataItem {
 				maskRangesPending.clear();
 			}
 		}
+	}
+	//
+	@Override
+	public final InputStream getAugmentContent()
+	throws IOException {
+		InputStream augment;
+		if(pendingAugmentSize > 0) {
+			synchronized(this) {
+				if(maskRangesHistory.get(getRangeCount(size) - 1)) { // write from next layer
+					augment = new UniformData(
+						offset + size, pendingAugmentSize, layerNum + 1, UniformDataSource.DEFAULT
+					);
+				} else { // write from current layer
+					setOffset(offset, size);
+					// change the size
+					size += pendingAugmentSize;
+					augment = this;
+				}
+				// clean up the appending on success
+				pendingAugmentSize = 0;
+				maskRangesHistory.or(maskRangesPending);
+				maskRangesPending.clear();
+			}
+		} else {
+			throw new IllegalStateException("No append scheduled");
+		}
+		return augment;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }

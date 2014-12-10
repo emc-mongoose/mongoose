@@ -35,7 +35,6 @@ import javax.management.MBeanServer;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -239,43 +238,51 @@ implements LoadExecutor<T> {
 		interrupt();
 	}
 	//
-	private final static class InterruptProducerTask
-	implements Runnable {
-		//
-		private final static Logger LOG = LogManager.getLogger();
-		//
-		Producer producer;
-		//
-		protected InterruptProducerTask(final Producer producer) {
-			this.producer = producer;
-		}
-		//
-		@Override
-		public final void run() {
-			if(producer != null) {
-				try {
-					producer.interrupt();
-					LOG.debug(Markers.MSG, "Stopped object producer {}", producer.toString());
-				} catch(final IOException e) {
-					ExceptionHandler.trace(
-						LOG, Level.WARN, e,
-						String.format("Failed to stop the producer: %s", producer.toString())
-					);
-				}
-			}
-		}
-	}
-	//
 	@Override
 	public final synchronized void interrupt() {
 		// set maxCount equal to current count
 		maxCount = counterSubm.getCount() + counterRej.getCount();
 		LOG.trace(Markers.MSG, "Interrupting, max count is set to {}", maxCount);
 		//
-		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(nodes.length);
+		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
+			nodes.length, new WorkerFactory("interrupter")
+		);
 		//
-		interruptExecutor.submit(new InterruptProducerTask(producer));
-		interruptExecutor.submit(new ExecutorShutDownTask(submitExecutor, runTimeConfig));
+		interruptExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {
+					try {
+						producer.interrupt();
+					} catch(final IOException e) {
+						ExceptionHandler.trace(
+							LOG, Level.WARN, e,
+							String.format("Failed to stop the producer: %s", producer.toString())
+						);
+					}
+				}
+			}
+		);
+		interruptExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {
+					submitExecutor.shutdown();
+					try {
+						submitExecutor.awaitTermination(
+							runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+						);
+					} catch(final InterruptedException e) {
+						LOG.debug(Markers.MSG, "Interrupted");
+					} finally {
+						LOG.debug(
+							Markers.MSG, "Dropping {} submit tasks",
+							submitExecutor.shutdownNow().size()
+						);
+					}
+				}
+			}
+		);
 		// interrupt node executors
 		for(final StorageNodeExecutor<T> nextNode: nodes) {
 			interruptExecutor.submit(
@@ -320,34 +327,42 @@ implements LoadExecutor<T> {
 			// provide summary metrics
 			logMetrics(Markers.PERF_SUM);
 			// close node executors
-			final ArrayList<Thread> nodeClosers = new ArrayList<>(nodes.length);
-			Thread nextShutDownThread;
+			final ExecutorService nodeCloseExecutor = Executors.newFixedThreadPool(
+				nodes.length, new WorkerFactory("nodeCloseWorker")
+			);
 			for(final StorageNodeExecutor<T> nodeExecutor : nodes) {
-				nextShutDownThread = new Thread("closeNodeExecutor-" + nodeExecutor.toString()) {
-					@Override
-					public final void run() {
-						try {
-							nodeExecutor.close();
-						} catch(final IOException e) {
-							ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to close node executor");
+				nodeCloseExecutor.submit(
+					new Runnable() {
+						@Override
+						public final void run() {
+							try {
+								nodeExecutor.close();
+							} catch(final IOException e) {
+								ExceptionHandler.trace(
+									LOG, Level.WARN, e, "Failed to close node executor"
+								);
+							}
 						}
 					}
-				};
-				nextShutDownThread.start();
-				nodeClosers.add(nextShutDownThread);
+				);
 			}
 			//
-			for(final Thread nextClosingThread : nodeClosers) {
-				try {
-					nextClosingThread.join(runTimeConfig.getRunReqTimeOutMilliSec());
-				} catch(final InterruptedException e) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Interrupted closing node executor");
-				}
+			nodeCloseExecutor.shutdown();
+			try {
+				nodeCloseExecutor.awaitTermination(
+					runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+				);
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.ERR, "Interrupted");
 			}
+			LOG.debug(
+				Markers.MSG, "Dropping {} node closing tasks",
+				nodeCloseExecutor.shutdownNow().size()
+			);
 			//
 			metricsReporter.close();
 			//
-			if(storageClient!=null) {
+			if(storageClient != null) {
 				try {
 					storageClient.close();
 					LOG.debug(Markers.MSG, "Storage client closed");

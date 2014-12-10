@@ -4,7 +4,6 @@ import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.impl.IOTaskBase;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.base.data.impl.UniformData;
 import com.emc.mongoose.util.io.HTTPContentInputStream;
 import com.emc.mongoose.util.io.HTTPContentOutputStream;
 import com.emc.mongoose.util.pool.BasicInstancePool;
@@ -26,9 +25,7 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.nio.ContentDecoder;
-import org.apache.http.nio.ContentDecoderChannel;
 import org.apache.http.nio.ContentEncoder;
-import org.apache.http.nio.ContentEncoderChannel;
 import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.HttpContext;
 //
@@ -41,8 +38,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -103,6 +98,7 @@ implements WSIOTask<T> {
 		} else { // cleanup
 			httpRequest.removeHeaders(HttpHeaders.RANGE);
 			httpRequest.removeHeaders(WSRequestConfig.KEY_EMC_SIG);
+			httpRequest.setEntity(MutableHTTPRequest.EMPTY_CONTENT_ENTITY);
 		}
 		super.setRequestConfig(reqConf);
 		return this;
@@ -127,7 +123,6 @@ implements WSIOTask<T> {
 		//
 		final WSClient<T> client = wsReqConf.getClient();
 		final Future<AsyncIOTask.Result> futureResult = client.submit(this);
-		reqTimeStart = System.nanoTime();
 		try {
 			futureResult.get();
 		} catch(final InterruptedException e) {
@@ -164,6 +159,7 @@ implements WSIOTask<T> {
 	public final HttpRequest generateRequest()
 	throws IOException, HttpException {
 		reqEntity = httpRequest.getEntity();
+		reqTimeStart = System.nanoTime();
 		return httpRequest;
 	}
 	//

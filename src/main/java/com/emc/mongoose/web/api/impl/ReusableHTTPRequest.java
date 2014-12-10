@@ -28,7 +28,7 @@ implements MutableHTTPRequest {
 	private volatile WSIOTask.HTTPMethod method;
 	private volatile String uriAddr, uriPath;
 	private volatile RequestLine requestline;
-	private volatile HttpEntity contentEntity = null;
+	private volatile HttpEntity contentEntity = EMPTY_CONTENT_ENTITY;
 	//
 	public ReusableHTTPRequest(
 		final WSIOTask.HTTPMethod method, final String uriAddr, final String uriPath

@@ -12,8 +12,12 @@ import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
  Created by kurila on 29.09.14.
  A HTTP request for performing an operation on data object.
  */
-public interface WSIOTask<T extends WSObject>
-extends DataObjectIOTask<T>, HttpAsyncRequestProducer, HttpAsyncResponseConsumer<AsyncIOTask.Result> {
+public interface
+	WSIOTask<T extends WSObject>
+extends
+	DataObjectIOTask<T>,
+	HttpAsyncRequestProducer,
+	HttpAsyncResponseConsumer<AsyncIOTask.Result> {
 	//
 	enum HTTPMethod {
 		//
