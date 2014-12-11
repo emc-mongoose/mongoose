@@ -15,6 +15,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.web.load.impl.WSLoadExecutorBase;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.http.Header;
@@ -42,13 +43,10 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 09.06.14.
@@ -124,7 +122,7 @@ implements WSRequestConfig<T> {
 					.setScheme(reqConf2Clone.getScheme())
 					.setClient(reqConf2Clone.getClient());
 			} else {
-				storageClient = new WSAsyncClientImpl<>(1, getSharedHeaders(), getUserAgent());
+				storageClient = new WSLoadExecutorBase<>(1, getSharedHeaders(), getUserAgent());
 			}
 			//
 			final String pkgSpec = getClass().getPackage().getName();

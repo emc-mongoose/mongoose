@@ -1,5 +1,6 @@
 package com.emc.mongoose.base.load;
 //
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataItem;
 //
 import java.io.Closeable;
@@ -15,6 +16,8 @@ extends Closeable {
 	//
 	void submit(final T data)
 	throws RemoteException, InterruptedException;
+	//
+	void dispatch(final AsyncIOTask<T> task, AsyncIOTask.Result result);
 	//
 	long getMaxCount()
 	throws RemoteException;

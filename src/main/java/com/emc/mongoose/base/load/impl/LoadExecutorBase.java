@@ -7,7 +7,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
-import com.emc.mongoose.base.api.AsyncIOClient;
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.DataSource;
@@ -15,14 +15,12 @@ import com.emc.mongoose.base.data.persist.LogConsumer;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.base.load.StorageNodeExecutor;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
-import com.emc.mongoose.util.threading.ExecutorShutDownTask;
 import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.commons.lang.StringUtils;
 //
@@ -34,7 +32,6 @@ import org.apache.logging.log4j.Marker;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -54,12 +51,12 @@ implements LoadExecutor<T> {
 	private final Logger LOG = LogManager.getLogger();
 	//
 	protected final int threadsPerNode, retryCountMax, retryDelayMilliSec;
-	protected final StorageNodeExecutor<T> nodes[];
+	protected final String nodes[];
 	protected final ThreadPoolExecutor submitExecutor;
-	protected final AsyncIOClient<T> storageClient;
 	//
 	protected final DataSource<T> dataSrc;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
+	protected final RequestConfig<T> reqConfig;
 	//
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
@@ -90,11 +87,12 @@ implements LoadExecutor<T> {
 	@SuppressWarnings("unchecked")
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig,
-		final String[] addrs, final RequestConfig<T> reqConf, final long maxCount,
+		final String[] addrs, final RequestConfig<T> reqConfig, final long maxCount,
 		final int threadsPerNode, final String listFile
 	) throws ClassCastException {
 		//
 		this.runTimeConfig = runTimeConfig;
+		this.reqConfig = reqConfig;
 		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
@@ -109,8 +107,8 @@ implements LoadExecutor<T> {
 			nodeCount = addrs.length,
 			loadNumber = instanceN ++;
 		final String name = Integer.toString(loadNumber) + '-' +
-			StringUtils.capitalize(reqConf.getAPI().toLowerCase()) + '-' +
-			StringUtils.capitalize(reqConf.getLoadType().toString().toLowerCase()) +
+			StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
+			StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
 			(maxCount>0? Long.toString(maxCount) : "") + '-' +
 			Integer.toString(threadsPerNode) + 'x' + Integer.toString(nodeCount);
 		setName(name);
@@ -126,9 +124,9 @@ implements LoadExecutor<T> {
 		respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
 		metricsReporter.start();
 		// prepare the node executors array
-		nodes = new StorageNodeExecutor[nodeCount];
+		nodes = new String[nodeCount];
 		// create and configure the connection manager
-		dataSrc = reqConf.getDataSource();
+		dataSrc = reqConfig.getDataSource();
 		setFileBasedProducer(listFile);
 		//
 		final int
@@ -155,22 +153,11 @@ implements LoadExecutor<T> {
 			}
 		};
 		submitExecutor.prestartAllCoreThreads();
-		//
-		storageClient = initClient(addrs, reqConf);
-		try {
-			initNodeExecutors(addrs, reqConf.clone().setLoadNumber(loadNumber));
-		} catch(final CloneNotSupportedException e) {
-			ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to clone request configuration");
-		}
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
 	}
 	//
 	protected abstract void setFileBasedProducer(final String listFile);
-	protected abstract AsyncIOClient<T> initClient(final String addrs[], final RequestConfig<T> reqConf);
-	protected abstract void initNodeExecutors(
-		final String addrs[], final RequestConfig<T> reqConf
-	) throws ClassCastException;
 	//
 	@Override
 	public void start() {
@@ -245,7 +232,7 @@ implements LoadExecutor<T> {
 		LOG.trace(Markers.MSG, "Interrupting, max count is set to {}", maxCount);
 		//
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
-			nodes.length, new WorkerFactory("interrupter")
+			2, new WorkerFactory("interrupter")
 		);
 		//
 		interruptExecutor.submit(
@@ -283,17 +270,6 @@ implements LoadExecutor<T> {
 				}
 			}
 		);
-		// interrupt node executors
-		for(final StorageNodeExecutor<T> nextNode: nodes) {
-			interruptExecutor.submit(
-				new Runnable() {
-					@Override
-					public final void run() {
-						ThreadPoolExecutor.class.cast(nextNode).shutdown();
-					}
-				}
-			);
-		}
 		//
 		interruptExecutor.shutdown();
 		try {
@@ -327,49 +303,7 @@ implements LoadExecutor<T> {
 			// provide summary metrics
 			logMetrics(Markers.PERF_SUM);
 			// close node executors
-			final ExecutorService nodeCloseExecutor = Executors.newFixedThreadPool(
-				nodes.length, new WorkerFactory("nodeCloseWorker")
-			);
-			for(final StorageNodeExecutor<T> nodeExecutor : nodes) {
-				nodeCloseExecutor.submit(
-					new Runnable() {
-						@Override
-						public final void run() {
-							try {
-								nodeExecutor.close();
-							} catch(final IOException e) {
-								ExceptionHandler.trace(
-									LOG, Level.WARN, e, "Failed to close node executor"
-								);
-							}
-						}
-					}
-				);
-			}
-			//
-			nodeCloseExecutor.shutdown();
-			try {
-				nodeCloseExecutor.awaitTermination(
-					runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
-				);
-			} catch(final InterruptedException e) {
-				LOG.debug(Markers.ERR, "Interrupted");
-			}
-			LOG.debug(
-				Markers.MSG, "Dropping {} node closing tasks",
-				nodeCloseExecutor.shutdownNow().size()
-			);
-			//
 			metricsReporter.close();
-			//
-			if(storageClient != null) {
-				try {
-					storageClient.close();
-					LOG.debug(Markers.MSG, "Storage client closed");
-				} catch(final IOException e) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Storage client closing failed");
-				}
-			}
 			//
 			LoadCloseHook.del(this);
 			isClosed = true;
@@ -385,27 +319,20 @@ implements LoadExecutor<T> {
 		if(maxCount > counterRej.getCount() + counterReqFail.getCount() + counterReqSucc.getCount()) {
 			if(dataItem == null) {
 				LOG.debug(Markers.MSG, "{}: poison submitted", getName());
-				// determine the max count now
+				// redetermine the max count now
 				maxCount = counterSubm.getCount() + counterRej.getCount();
-				// pass the poison to all node executors
-				for(final StorageNodeExecutor<T> nextNode: nodes) {
-					if(!nextNode.isShutdown()) {
-						nextNode.submit(null);
-					}
-				}
-				//
+				// stop further submitting
 				submitExecutor.shutdown();
 			} else {
-				final StorageNodeExecutor<T> nodeExecutor = nodes[
-					(int) submitExecutor.getTaskCount() % nodes.length
-				];
+				final String node = nodes[(int) submitExecutor.getTaskCount() % nodes.length];
+
 				final SubmitDataItemTask<T, StorageNodeExecutor<T>>
-					submitTask = new SubmitDataItemTask<>(dataItem, nodeExecutor);
+					submitTask = new SubmitDataItemTask<>(dataItem, node);
 				boolean flagSubmSucc = false;
 				int rejectCount = 0;
 				while(
 					!flagSubmSucc && rejectCount < retryCountMax &&
-						!submitExecutor.isShutdown() && !nodeExecutor.isShutdown()
+						!submitExecutor.isShutdown() && !node.isShutdown()
 					) {
 					try {
 						submitExecutor.submit(submitTask);
@@ -430,6 +357,50 @@ implements LoadExecutor<T> {
 			);
 		}
 	}
+	//
+	@Override
+	public final void dispatch(final AsyncIOTask<T> ioTask, final AsyncIOTask.Result result) {
+		final T dataItem = ioTask.getDataItem();
+		try {
+			if(dataItem == null) {
+				consumer.submit(null);
+			} else if(result == AsyncIOTask.Result.SUCC) {
+				// update the metrics with success
+				counterReqSucc.inc();
+				final long
+					latency = ioTask.getRespTimeStart() - ioTask.getReqTimeDone(),
+					size = ioTask.getTransferSize();
+				reqBytes.mark(size);
+				//reqDur.update(duration);
+				//reqDurParent.update(duration);
+				respLatency.update(latency);
+				// feed to the consumer
+				if(consumer != null) {
+					try {
+						consumer.submit(dataItem);
+					} catch(final IOException e) {
+						ExceptionHandler.trace(
+							LOG, Level.WARN, e,
+							String.format(
+								"Failed to submit the object \"%s\" to consumer", dataItem
+							)
+						);
+					} catch(final IllegalStateException e) {
+						LOG.debug(
+							Markers.ERR,
+							"Looks like the consumer \"{}\" is already shutdown", consumer
+						);
+					}
+				}
+			} else {
+				counterReqFail.inc();
+			}
+		} catch(final InterruptedException e) {
+			LOG.debug(Markers.MSG, "Interrupted");
+		} catch(final RemoteException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like a network failure");
+		}
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static String FMT_EFF_SUM = "Load execution efficiency: %.1f[%%]";
 	//
@@ -446,11 +417,7 @@ implements LoadExecutor<T> {
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
 		final Snapshot respLatencySnapshot = respLatency.getSnapshot();
 		//
-		int notCompletedTaskCount = 0;
-		for(final StorageNodeExecutor<T> nodeExecutor: nodes) {
-			notCompletedTaskCount += nodeExecutor.getQueue().size() + nodeExecutor.getActiveCount();
-		}
-		notCompletedTaskCount += submitExecutor.getQueue().size() + submitExecutor.getActiveCount();
+		int notCompletedTaskCount = submitExecutor.getQueue().size() + submitExecutor.getActiveCount();
 		//
 		final String message = Markers.PERF_SUM.equals(logMarker) ?
 			String.format(
@@ -537,9 +504,6 @@ implements LoadExecutor<T> {
 	@Override
 	public final void setConsumer(final Consumer<T> consumer) {
 		this.consumer = consumer;
-		for(final StorageNodeExecutor<T> node: nodes) {
-			node.setConsumer(consumer);
-		}
 		LOG.debug(
 			Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", consumer, getName()
 		);

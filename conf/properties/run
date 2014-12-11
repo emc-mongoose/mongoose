@@ -2,7 +2,7 @@
 name:							mongoose
 version:						0.5.0
 
-# may be "standalone", "server" or "client"
+# may be "standalone", "server" or "executor"
 mode:							standalone
 
 # pattern: <integer>.<TimeUnit-case-insensitive-constant>
