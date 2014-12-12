@@ -21,7 +21,7 @@ label {
 	height: 50px;
 }
 
-#runmodes {
+#run-modes {
 	margin-top: 15px;
 	text-align: center;
 	padding-bottom: 5px;
@@ -49,6 +49,7 @@ label {
 
 .file {
 	margin-left: -1px !important;
+	padding-left: 3px;
 }
 
 .file a {
@@ -117,17 +118,6 @@ li input:checked + ul > li:last-child {
 	float: left;
 	position: absolute;
 	min-width: 528px;
-}
-
-.property-labels {
-	display: inline-block;
-	width: 300px;
-	vertical-align: middle;
-}
-
-.property-text {
-	display: inline-block;
-	vertical-align: middle;
 }
 
 #configuration-content {
@@ -259,4 +249,8 @@ th:nth-child(5) {
 
 .table-pane {
 	margin-top: 20px;
+}
+
+.form-horizontal .control-label {
+	text-align: left;
 }

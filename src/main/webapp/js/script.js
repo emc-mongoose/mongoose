@@ -1,174 +1,42 @@
 $(document).ready(function() {
-
-	var map = propertiesMap;
+	var shortPropsMap = {};
 	var ul = $(".folders");
-	var propsMap = {};
-	function iterMap(map, ul) {
-		$.each(map, function(key, value) {
-			var element;
-			if (jQuery.type(value) === 'array') {
-				element = ul.addChild("<li class='file'><a href='#" + key + "'>" + key + "</a></li>");
-				propsMap[key] = value;
-				return;
-			} else {
-				element = ul.addChild("<li><label for=" + key + ">" + key + "</label><input type='checkbox' id='" + key + "'></li>").addChild("<ul></ul>");
-			}
-			iterMap(value, element);
-		});
-	}
-	function printProps() {
-		for (var key in propsMap) {
-			var keyDiv = $("<div id='" + key + "'></div>");
-			var obj = propsMap[key];
-			var propertyLabels = $("<div class='property-labels'></div>");
-			var propertyText = $("<div class='property-text'></div>");
-			for (var i = 0; i < obj.length; i++) {
-				propertyLabels.append("<label for='" + obj[i].name + "'>" + obj[i].value + "</label>");
-				propertyText.append("<input type='text' id=" + obj[i].name + " name='" + obj[i].name + "'><br/>");
-			}
-			keyDiv.append(propertyLabels);
-			keyDiv.append(propertyText);
-			keyDiv.appendTo("#configuration-content");
-		}
-	}
-	iterMap(map, ul);
-	printProps();
-	var VALUE_RUN_MODE_CLIENT = "client";
-	var VALUE_RUN_MODE_STANDALONE = "standalone";
-	var VALUE_RUN_MODE_SERVER = "server";
-	var VALUE_RUN_MODE_WSMOCK = "wsmock";
-	var runModes = [VALUE_RUN_MODE_CLIENT, VALUE_RUN_MODE_STANDALONE, VALUE_RUN_MODE_SERVER, VALUE_RUN_MODE_WSMOCK];
+	var WEBSOCKET_URL = "ws://localhost:8080/logs";
 	var COUNT_OF_RECORDS = 2050;
 
-    $('select').on('change', function() {
+	walkTreeMap(propertiesMap, ul, shortPropsMap);
+	buildDivBlocksByFileNames(shortPropsMap);
+	generatePropertyPage();
+
+	configureWebSocket(WEBSOCKET_URL, COUNT_OF_RECORDS).connect();
+
+	$('#inputDatabaseName').keyup(function () { alert('test'); });
+	$("#run\\.time").change(function() {
+		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
+	});
+
+	$("#data\\.count").change(function() {
+		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
+	});
+
+	$('a[href="#remote"]').hide();
+	$("select").on("change", function() {
 		var valueSelected = this.value;
+		if (valueSelected === "client") {
+			$('a[href="#remote"]').show();
+		} else {
+			$('a[href="#remote"]').hide();
+			$(".breadcrumb").empty();
+			generatePropertyPage();
+		}
 		$("#run-mode").val(valueSelected);
-    });
+	});
 
-	initComponents();
-	//excludeDuplicateOptions();
-
-	// functions
-	function initComponents() {
-		configureWebSocket().connect();
-	}
-
-	/*function excludeDuplicateOptions() {
-		var found = [];
-		var selectArray = $("select");
-		selectArray.each(function() {
-			found = [];
-			var currentSelect = $(this).children();
-			currentSelect.each(function() {
-				if ($.inArray(this.value, found) != -1) {
-					$(this).remove();
-				}
-				found.push(this.value);
-			});
-		});
-	}*/
-
-	function configureWebSocket() {
-		var webSocketServer = {
-			connect: function() {
-				var location = "ws://localhost:8080/logs";
-				this.ws = new WebSocket(location);
-				//
-				this.ws.onopen = function() {
-					// empty
-				}
-				//
-				this.ws.onmessage = function(m) {
-					var json = JSON.parse(m.data);
-					var entry = json.contextMap["run.id"].split(".").join("_");
-					// fix later
-					if (!json.message.message) {
-						str = json.message.messagePattern.split("{}");
-						resultString = "";
-						for (s = 0; s < str.length - 1; s++) {
-							resultString += str[s]+json.message.stringArgs[s];
-						}
-						json.message.message = resultString + str[str.length - 1];
-					}
-					if (!json.hasOwnProperty("marker"))
-						return;
-					if (!json.marker.hasOwnProperty("name"))
-						return;
-					//
-					switch (json.marker.name) {
-						case "err":
-							if ($("#"+entry+"errors-log table tbody tr").length > COUNT_OF_RECORDS) {
-								$("#"+entry+"errors-log table tbody tr:first-child").remove();
-							}
-							$("#"+entry+"errors-log table tbody").append(appendStringToTable(json));
-							break;
-						case "msg":
-							if ($("#"+entry+"messages-csv table tbody tr").length > COUNT_OF_RECORDS) {
-								$("#"+entry+"messages-csv table tbody tr:first-child").remove();
-							}
-							$("#"+entry+"messages-csv table tbody").append(appendStringToTable(json));
-							break;
-						case "perfSum":
-							if ($("#"+entry+"perf-sum-csv table tbody tr").length > COUNT_OF_RECORDS) {
-								$("#"+entry+"perf-sum-csv table tbody tr:first-child").remove();
-							}
-							$("#"+entry+"perf-sum-csv table tbody").append(appendStringToTable(json));
-							break;
-						case "perfAvg":
-							if ($("#"+entry+"perf-avg-csv table tbody tr").length > COUNT_OF_RECORDS) {
-								$("#"+entry+"perf-avg-csv table tbody tr:first-child").remove();
-							}
-							$("#"+entry+"perf-avg-csv table tbody").append(appendStringToTable(json));
-							break;
-					}
-				}
-				//
-				this.ws.onclose = function() {
-					this.ws = null;
-				}
-			}
-		};
-		return webSocketServer;
-	}
-
-	function appendStringToTable(json) {
-		html = '<tr>\
-			<td class="filterable-cell">' + json.level.name + '</td>\
-			<td class="filterable-cell">' + json.loggerName + '</td>\
-			<td class="filterable-cell">' + json.threadName + '</td>\
-			<td class="filterable-cell">' + new Date(json.timeMillis) + '</td>\
-			<td class="filterable-cell">' + json.message.message + '</td>\
-			</tr>';
-		return html;
-	}
-
-	// Start mongoose
 	$("#start").click(function(e) {
 		e.preventDefault();
 		onStartButtonPressed();
 	});
 
-	function onStartButtonPressed() {
-		$.post("/start", $("#main-form").serialize(), function(data, status) {
-			if (data) {
-				if (confirm("Are you sure? " + data) === true) {
-					$.post("/stop", { "run.id" : $("#run\\.id").val(), "type" : "remove" }, function(data, status) {
-						if (status) {
-							onStartButtonPressed();
-						}
-					}).fail(function() {
-						alert("Internal Server Error");
-					});
-				} else {
-					//	do nothing
-				}
-			} else {
-				location.reload();
-			}
-		});
-	}
-
-	// Stop mongoose
 	$(".stop").click(function() {
 		var currentButton = $(this);
 		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".");
@@ -192,83 +60,282 @@ $(document).ready(function() {
 		}
 	});
 
-	// Clear logs content
 	$(".clear").click(function() {
 		$(this).parent().find("tbody tr").remove();
 	});
 
 
-	/*border*/
-	$('#configuration-content').children().hide();
+	$(document).on('click', '.breadcrumb ul a', function() {
+		var sameElement = $(this).attr("href");
+		var element = $(".folders a[href='" + sameElement + "']");
+		if (!element.length) {
+			element = $(".folders label[for='" + sameElement.replace("#", '') + "'");
+		}
+		element.trigger('click');
+	});
 
-    	$(document).on('click', '.breadcrumb ul a', function() {
-    		var sameElement = $(this).attr("href");
-    		var element = $(".folders a[href='" + sameElement + "']");
-    		if (!element.length) {
-    			element = $(".folders label[for='" + sameElement.replace("#", '') + "'");
-    		}
-    		element.trigger('click');
-    	});
-
-    	$(".folders a, .folders label").click(function() {
-    		resetParams();
-    		$($(this).attr("href")).show();
-    		var childrenFolders = "";
-    		var childrenDocuments = "";
-    		var parentsArray = $(this).parent().parents("li").find("label:first");
-    		parentsArray.each(function() {
-    			childrenFolders = $(this).siblings("ul").find("label");
-    			childrenDocuments = $(this).siblings("ul").children(".file");
-    			$(".breadcrumb").append(appendBreadcrumb($(this), childrenFolders, childrenDocuments));
-    		});
-    		childrenFolders = $(this).siblings("ul").find("label");
-    		childrenDocuments = $(this).siblings("ul").children(".file");
-    		$(".breadcrumb").append(appendBreadcrumb($(this), childrenFolders, childrenDocuments));
-    		$(this).css("color", "#CC0033");
-    		$("a[href='#" + $(this).text() + "']").css("color", "#CC0033");
-    	});
-
-    	function resetParams() {
-    		$("a, label").css("color", "");
-    		$(".breadcrumb").empty();
-    		$("#configuration-content").children().hide();
-    	}
-
+	$(".folders a, .folders label").click(function() {
+		onFoldersElementClick($(this));
+	});
 });
 
-function appendBreadcrumb(element, childrenFolders, childrenDocuments) {
-	var htmlString = "";
-	if (!childrenFolders.length && !childrenDocuments.length) {
-		htmlString = "<li class='active'>" + element.text() + "</li>";
-	} else {
-		var dropDownString = "";
-		childrenFolders.each(function() {
-			dropDownString += "<li><a tabindex='-1' href='#" + $(this).text() + "'><img class='dropdown-image' src='../images/folder.png'>" + $(this).text() + "</a></li>";
-		});
-
-		if (childrenFolders.length) {
-			dropDownString += "<hr/>";
-		}
-
-		childrenDocuments.each(function() {
-			dropDownString += "<li><a tabindex='-1' href='#" + $(this).text() + "'><img class='dropdown-image' src='../images/document.png'>" + $(this).text() + "</a></li>";
-		});
-		htmlString = "<li class='dropdown open'>\
-						<a class='dropdown-toggle' data-toggle='dropdown' href='#'>" + element.text() + "</a>\
-						<ul class='dropdown-menu'>" + dropDownString + "</ul>\
-					</li>";
+function generatePropertyPage() {
+	if (!$("#properties").is(":checked")) {
+		$("#properties").trigger("click");
 	}
-	return htmlString;
+	onFoldersElementClick($('a[href="#auth"]'));
 }
 
-function start(param) {
-	alert(param);
+function onFoldersElementClick(element) {
+	resetParams();
+	$($(element).attr("href")).show();
+	var childrenFolders = "";
+	var childrenDocuments = "";
+	var parentsArray = $(element).parent().parents("li").find("label:first");
+	parentsArray.each(function() {
+		childrenFolders = $(this).siblings("ul").find("label");
+		childrenDocuments = $(this).siblings("ul").children(".file");
+		$(".breadcrumb").append(appendBreadcrumb($(this), childrenFolders, childrenDocuments));
+	});
+	childrenFolders = $(element).siblings("ul").find("label");
+	childrenDocuments = $(element).siblings("ul").children(".file");
+	$(".breadcrumb").append(appendBreadcrumb($(element), childrenFolders, childrenDocuments));
+	$(element).css("color", "#CC0033");
+	$("a[href='#" + $(element).text() + "']").css("color", "#CC0033");
 }
 
-jQuery.fn.addChild = function(html)
-{
-    var target  = $(this[0])
-    var child = $(html);
-    child.appendTo(target);
-    return child;
+function walkTreeMap(map, ul, shortsPropsMap) {
+	$.each(map, function(key, value) {
+		var element;
+		if (jQuery.isArray(value)) {
+			element = ul.addChild("<li>")
+					.addClass("file")
+					.addChild("<a>")
+					.attr("href", "#" + key)
+					.text(key);
+			shortsPropsMap[key] = value;
+			return;
+		} else {
+			element = ul.prependChild("<li>")
+					.append($("<label>", {
+						for: key,
+						text: key
+					}))
+					.append($("<input>", {
+						type: "checkbox",
+						id: key
+					}))
+					.addChild("<ul>");
+
+		}
+		walkTreeMap(value, element, shortsPropsMap);
+	});
+}
+
+function buildDivBlocksByFileNames(shortPropsMap) {
+	var formGroupDiv;
+	for (var key in shortPropsMap) {
+		if (shortPropsMap.hasOwnProperty(key)) {
+			var keyDiv = $("<div>").attr("id", key);
+			keyDiv.css("display", "none");
+			var obj = shortPropsMap[key];
+			for (var i = 0; i < obj.length; i++) {
+				formGroupDiv = $("<div>").addClass("form-group");
+				var placeHolder = "";
+				if (obj[i].key === "data.count") {
+					placeHolder = "If you set this property, 'run.time' will reset to default";
+				} else if (obj[i].key === "run.time") {
+					placeHolder = "If you set this property, 'data.count' will reset to default";
+				} else if (obj[i].key === "data.src.fpath") {
+					placeHolder = "Format: log/<run.mode>/<run.id>/<filename>";
+				}
+				formGroupDiv.append($("<label>", {
+							for: obj[i].key,
+							class: "col-sm-2 control-label",
+							text: obj[i].value.key
+						}))
+						.append($("<div>", {
+							class: "col-sm-10"
+						}).append($("<input>", {
+							type: "text",
+							class: "form-control",
+							name: obj[i].key,
+							id: obj[i].key,
+							value: obj[i].value.value,
+							placeholder: "Enter '" + obj[i].key + "' property. " + placeHolder
+						})));
+				keyDiv.append(formGroupDiv);
+			}
+			keyDiv.appendTo("#configuration-content");
+		}
+	}
+}
+
+jQuery.fn.addChild = function(html) {
+	var target = $(this[0]);
+	var child = $(html);
+	child.appendTo(target);
+	return child;
 };
+
+jQuery.fn.prependChild = function(html) {
+	var target = $(this[0]);
+	var child = $(html);
+	child.prependTo(target);
+	return child;
+}
+
+/*function excludeDuplicateOptions() {
+	var found = [];
+	var selectArray = $("select");
+	selectArray.each(function() {
+		found = [];
+		var currentSelect = $(this).children();
+		currentSelect.each(function() {
+			if ($.inArray(this.value, found) != -1) {
+				$(this).remove();
+			}
+			found.push(this.value);
+		});
+	});
+}*/
+
+function configureWebSocket(url, countOfRecords) {
+	var webSocketServer = {
+		connect: function() {
+			var webSocket = new WebSocket(url);
+			webSocket.onopen = function() {
+				//	empty
+			};
+			webSocket.onmessage = function(message) {
+				var json = JSON.parse(message.data);
+				var entry = json.contextMap["run.id"].split(".").join("_");
+				//	fix later
+				if (!json.message.message) {
+					str = json.message.messagePattern.split("{}");
+					var resultString = "";
+					for (var i = 0; i < str.length; i++) {
+						resultString += str[i] + json.message.stringArgs[i];
+					}
+					json.message.message = resultString + str[str.length - 1];
+				}
+				if (!json.hasOwnProperty("marker"))
+					return;
+				if (!json.marker.hasOwnProperty("name"))
+					return;
+				switch (json.marker.name) {
+					case "err":
+						if ($("#"+entry+"errors-log table tbody tr").length > countOfRecords) {
+							$("#"+entry+"errors-log table tbody tr:first-child").remove();
+						}
+						$("#"+entry+"errors-log table tbody").append(appendStringToTable(json));
+						break;
+					case "msg":
+						if ($("#"+entry+"messages-csv table tbody tr").length > countOfRecords) {
+							$("#"+entry+"messages-csv table tbody tr:first-child").remove();
+						}
+						$("#"+entry+"messages-csv table tbody").append(appendStringToTable(json));
+						break;
+					case "perfSum":
+						if ($("#"+entry+"perf-sum-csv table tbody tr").length > countOfRecords) {
+							$("#"+entry+"perf-sum-csv table tbody tr:first-child").remove();
+						}
+						$("#"+entry+"perf-sum-csv table tbody").append(appendStringToTable(json));
+						break;
+					case "perfAvg":
+						if ($("#"+entry+"perf-avg-csv table tbody tr").length > countOfRecords) {
+							$("#"+entry+"perf-avg-csv table tbody tr:first-child").remove();
+						}
+						$("#"+entry+"perf-avg-csv table tbody").append(appendStringToTable(json));
+						break;
+				}
+			};
+			webSocket.onclose = function() {
+				webSocket = null;
+			}
+		}
+	};
+	return webSocketServer;
+}
+
+function appendStringToTable(json) {
+	html = '<tr>\
+			<td class="filterable-cell">' + json.level.name + '</td>\
+			<td class="filterable-cell">' + json.loggerName + '</td>\
+			<td class="filterable-cell">' + json.threadName + '</td>\
+			<td class="filterable-cell">' + new Date(json.timeMillis) + '</td>\
+			<td class="filterable-cell">' + json.message.message + '</td>\
+			</tr>';
+	return html;
+}
+
+function onStartButtonPressed() {
+	$.post("/start", $("#main-form").serialize(), function(data, status) {
+		if (data) {
+			if (confirm("Are you sure? " + data) === true) {
+				$.post("/stop", { "run.id" : $("#run\\.id").val(), "type" : "remove" }, function(data, status) {
+					if (status) {
+						onStartButtonPressed();
+					}
+				}).fail(function() {
+					alert("Internal Server Error");
+				});
+			} else {
+				//	do nothing
+			}
+		} else {
+			location.reload();
+		}
+	});
+}
+
+function resetParams() {
+	$("a, label").css("color", "");
+	$(".breadcrumb").empty();
+	$("#configuration-content").children().hide();
+}
+
+function appendBreadcrumb(element, childrenFolders, childrenDocuments) {
+	var html;
+	var folderImagePath = "../images/folder.png";
+	var documentImagePath = "../images/document.png";
+
+	if (!childrenFolders.length && !childrenDocuments.length) {
+		html = $("<li>").attr({
+			class: "active",
+		}).text(element.text());
+	} else {
+		var dropDownList = $("<ul>").addClass("dropdown-menu");
+		if (childrenFolders.length) {
+			iterateChildren(dropDownList, childrenFolders, folderImagePath);
+			dropDownList.append("<hr/>");
+		}
+		iterateChildren(dropDownList, childrenDocuments, documentImagePath);
+
+		html = $("<li>").addClass("dropdown")
+						.append($("<a>", {
+							class: "dropdown-toggle",
+							"data-toggle": "dropdown",
+							href: "#",
+							text: element.text()
+						}))
+						.append(dropDownList);
+    }
+    return html;
+}
+
+function iterateChildren(dropDownList, children, image) {
+	children.each(function() {
+		var currElement = $(this);
+		dropDownList.addChild("<li>")
+					.addChild($("<a>", {
+						tabindex: -1,
+						href: "#" + currElement.text()
+					}))
+					.append($("<img>", {
+						class: "dropdown-image",
+						src: image
+					}))
+					.append($("<span>").text(currElement.text()));
+	});
+}

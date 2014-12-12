@@ -13,7 +13,7 @@
 		<script type="text/javascript" src="js/script.js"></script>
 		<script type="text/javascript" src="js/bootstrap.min.js"></script>
 		<script>
-			var propertiesMap = ${runTimeConfig.propertiesMap};
+			propertiesMap = ${runTimeConfig.propertiesMap};
 		</script>
 	</head>
 	<body>
@@ -48,6 +48,7 @@
 			<div class="tabs-wrapper">
 				<ul class="nav nav-tabs" role="presentation">
 					<li class="active"><a href="#configuration" data-toggle="tab">Configuration</a></li>
+
 					<c:forEach var="mode" items="${sessionScope.runmodes}">
 						<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
 						<li><a href="#${correctMode}" data-toggle="tab">
@@ -61,7 +62,7 @@
 			<div class="tab-content">
 				<div class="tab-pane active" id="configuration">
 					<div id="menu">
-						<div id="runmodes">
+						<div id="run-modes">
 							<select>
 								<option>standalone</option>
 								<option>client</option>
@@ -72,22 +73,29 @@
 								Start
 							</button>
 						</div>
+
+						<!-- List of folders from JS-->
 						<ul class="folders">
 
 						</ul>
 					</div>
 
 					<div id="main-content">
+
+						<!-- List of breadcrumbs from JS -->
 						<ol class="breadcrumb">
 
 						</ol>
 
-						<form id="main-form">
+						<form class="form-horizontal" id="main-form" role="form">
 							<input type="hidden" name="run.mode" id="run-mode" value="standalone">
+
+							<!-- Input fields with labels from JS -->
 							<div id="configuration-content">
 
 							</div>
 						</form>
+
 					</div>
 				</div>
 				<c:forEach var="mode" items="${sessionScope.runmodes}">
