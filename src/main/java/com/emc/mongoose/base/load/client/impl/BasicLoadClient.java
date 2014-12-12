@@ -11,7 +11,7 @@ import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.client.DataItemBufferClient;
 import com.emc.mongoose.base.load.impl.LoadCloseHook;
-import com.emc.mongoose.base.load.impl.SubmitDataItemTask;
+import com.emc.mongoose.base.load.impl.SubmitRequestTask;
 import com.emc.mongoose.base.load.client.LoadClient;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.run.Main;
@@ -41,7 +41,6 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
@@ -1077,7 +1076,7 @@ implements LoadClient<T> {
 				final String addr = String.class.cast(
 					addrs[(int) submitExecutor.getTaskCount() % addrs.length]
 				);
-				final SubmitDataItemTask<T, LoadSvc<T>> submTask = new SubmitDataItemTask<>(
+				final SubmitRequestTask<T, LoadSvc<T>> submTask = new SubmitRequestTask<>(
 					dataItem, remoteLoadMap.get(addr)
 				);
 				boolean passed = false;

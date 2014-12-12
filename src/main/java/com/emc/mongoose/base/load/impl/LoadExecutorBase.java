@@ -20,8 +20,8 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
-//
 import com.emc.mongoose.util.threading.WorkerFactory;
+//
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -52,7 +53,7 @@ implements LoadExecutor<T> {
 	//
 	protected final int threadsPerNode, retryCountMax, retryDelayMilliSec;
 	protected final String nodes[];
-	protected final ThreadPoolExecutor submitExecutor;
+	protected final ThreadPoolExecutor submitExecutor, resultExecutor;
 	//
 	protected final DataSource<T> dataSrc;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
@@ -130,12 +131,12 @@ implements LoadExecutor<T> {
 		setFileBasedProducer(listFile);
 		//
 		final int
-			submitThreadCount = addrs.length * (int) Math.pow(threadsPerNode, 0.8),
-			queueSize = submitThreadCount * runTimeConfig.getRunRequestQueueFactor();
+			processingThreadCount = addrs.length * (int) Math.pow(threadsPerNode, 0.8),
+			queueSize = processingThreadCount * runTimeConfig.getRunRequestQueueFactor();
 		submitExecutor = new ThreadPoolExecutor(
-			submitThreadCount, submitThreadCount, 0, TimeUnit.SECONDS,
+			processingThreadCount, processingThreadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
-			new WorkerFactory("submitDataItems")
+			new WorkerFactory("submitRequests")
 		) {
 			@Override
 			protected final void terminated() {
@@ -153,6 +154,13 @@ implements LoadExecutor<T> {
 			}
 		};
 		submitExecutor.prestartAllCoreThreads();
+		//
+		resultExecutor = new ThreadPoolExecutor(
+			processingThreadCount, processingThreadCount, 0, TimeUnit.SECONDS,
+			new LinkedBlockingQueue<Runnable>(queueSize),
+			new WorkerFactory("processResponses")
+		);
+		resultExecutor.prestartAllCoreThreads();
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
 	}
@@ -232,7 +240,7 @@ implements LoadExecutor<T> {
 		LOG.trace(Markers.MSG, "Interrupting, max count is set to {}", maxCount);
 		//
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
-			2, new WorkerFactory("interrupter")
+			3, new WorkerFactory("interrupter")
 		);
 		//
 		interruptExecutor.submit(
@@ -263,8 +271,29 @@ implements LoadExecutor<T> {
 						LOG.debug(Markers.MSG, "Interrupted");
 					} finally {
 						LOG.debug(
-							Markers.MSG, "Dropping {} submit tasks",
+							Markers.MSG, "Submit requests executor dropping {} submit tasks",
 							submitExecutor.shutdownNow().size()
+						);
+					}
+					//
+				}
+			}
+		);
+		interruptExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {
+					resultExecutor.shutdown();
+					try {
+						resultExecutor.awaitTermination(
+							runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+						);
+					} catch(final InterruptedException e) {
+						LOG.debug(Markers.MSG, "Interrupted");
+					} finally {
+						LOG.debug(
+							Markers.MSG, "Process responses executor dropping {} submit tasks",
+							resultExecutor.shutdownNow().size()
 						);
 					}
 				}
@@ -278,6 +307,8 @@ implements LoadExecutor<T> {
 			);
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.ERR, "Interrupted externally");
+		} finally {
+			interruptExecutor.shutdownNow();
 		}
 		// interrupt the monitoring thread
 		if(!isInterrupted()) {
@@ -324,18 +355,18 @@ implements LoadExecutor<T> {
 				// stop further submitting
 				submitExecutor.shutdown();
 			} else {
-				final String node = nodes[(int) submitExecutor.getTaskCount() % nodes.length];
-
-				final SubmitDataItemTask<T, StorageNodeExecutor<T>>
-					submitTask = new SubmitDataItemTask<>(dataItem, node);
+				final AsyncIOTask<T> ioTask = reqConfig.getRequestFor(dataItem);
+				final SubmitRequestTask<T, LoadExecutorBase<T>>
+					submitTask = new SubmitRequestTask<>(ioTask, this);
 				boolean flagSubmSucc = false;
 				int rejectCount = 0;
 				while(
-					!flagSubmSucc && rejectCount < retryCountMax &&
-						!submitExecutor.isShutdown() && !node.isShutdown()
-					) {
+					!flagSubmSucc && rejectCount < retryCountMax && !submitExecutor.isShutdown()
+				) {
+					//
+					Future<Future<AsyncIOTask.Result>> futureSubmitResult = null;
 					try {
-						submitExecutor.submit(submitTask);
+						futureSubmitResult = submitExecutor.submit(submitTask);
 						flagSubmSucc = true;
 					} catch(final RejectedExecutionException e) {
 						rejectCount ++;
@@ -344,6 +375,14 @@ implements LoadExecutor<T> {
 						} catch(final InterruptedException ee) {
 							break;
 						}
+					}
+					//
+					try {
+						resultExecutor.submit(
+							new GetRequestResultTask<>(this, ioTask, futureSubmitResult)
+						);
+					} catch(final RejectedExecutionException e) {
+						LOG.warn(Markers.MSG, "Rejected the response processing task");
 					}
 				}
 			}

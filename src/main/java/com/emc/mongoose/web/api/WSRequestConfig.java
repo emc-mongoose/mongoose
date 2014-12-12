@@ -1,7 +1,6 @@
 package com.emc.mongoose.web.api;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
-import com.emc.mongoose.base.api.AsyncIOClient;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
@@ -14,11 +13,7 @@ import org.apache.http.nio.IOControl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 /**
  Created by kurila on 29.09.14.
@@ -71,10 +66,7 @@ extends ObjectRequestConfig<T> {
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
 	@Override
-	WSRequestConfig<T> setClient(final AsyncIOClient<T> client);
-	//
-	@Override
-	WSClient<T> getClient();
+	WSIOTask<T> getRequestFor(final T dataItem);
 	//
 	List<Header> getSharedHeaders();
 	//

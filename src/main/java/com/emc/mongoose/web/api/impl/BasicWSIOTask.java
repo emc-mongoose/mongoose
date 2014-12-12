@@ -65,31 +65,6 @@ implements WSIOTask<T> {
 		super();
 	}
 	//
-	@SuppressWarnings("unchecked")
-	public static AsyncIOTask getInstanceFor(
-		final RequestConfig reqConf, final DataItem dataItem
-	) {
-		AsyncIOTask ioTask;
-		if(dataItem == null) {
-			LOG.debug(Markers.MSG, "Preparing poison request");
-			ioTask = POISON;
-		} else {
-			BasicInstancePool pool;
-			synchronized(POOL_MAP) {
-				if(POOL_MAP.containsKey(reqConf)) {
-					pool = POOL_MAP.get(reqConf);
-				} else {
-					pool = new BasicInstancePool<>(BasicWSIOTask.class);
-					POOL_MAP.put(reqConf, pool);
-				}
-			}
-			ioTask = IOTaskBase.class.cast(pool.take())
-				.setRequestConfig(reqConf)
-				.setDataItem(dataItem);
-		}
-		return ioTask;
-	}
-	//
 	@Override
 	public WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
 		if(this.wsReqConf == null) { // request instance has not been configured yet?

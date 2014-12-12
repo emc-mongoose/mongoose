@@ -55,8 +55,7 @@ extends Externalizable, Cloneable, Closeable {
 	int getLoadNumber();
 	RequestConfig<T> setLoadNumber(final int loadNumber);
 	//
-	AsyncIOClient<T> getClient();
-	RequestConfig<T> setClient(final AsyncIOClient<T> storageClient);
+	AsyncIOTask<T> getRequestFor(final T dataItem);
 	//
 	void configureStorage()
 	throws IllegalStateException;

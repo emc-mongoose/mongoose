@@ -23,22 +23,22 @@ implements Runnable {
 	//
 	private final LoadExecutor<T> executor;
 	private final AsyncIOTask<T> task;
-	private final Future<AsyncIOTask.Result> futureResult;
+	private final Future<Future<AsyncIOTask.Result>> futureSubmitResult;
 	//
 	public GetRequestResultTask(
-		final LoadExecutor<T> executor,
-		final AsyncIOTask<T> task, final Future<AsyncIOTask.Result> futureResult
+		final LoadExecutor<T> executor, final AsyncIOTask<T> task,
+		final Future<Future<AsyncIOTask.Result>> futureSubmitResult
 	) {
 		this.executor = executor;
 		this.task = task;
-		this.futureResult = futureResult;
+		this.futureSubmitResult = futureSubmitResult;
 	}
 	//
 	@Override
 	public final void run() {
 		AsyncIOTask.Result result = AsyncIOTask.Result.FAIL_UNKNOWN;
 		try {
-			result = futureResult.get();
+			result = futureSubmitResult.get().get();
 		} catch(final InterruptedException e) {
 			result = AsyncIOTask.Result.FAIL_TIMEOUT;
 			LOG.trace(Markers.ERR, "Interrupted while waiting for the response");

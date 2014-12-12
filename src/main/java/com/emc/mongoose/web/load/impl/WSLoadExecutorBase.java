@@ -1,7 +1,6 @@
 package com.emc.mongoose.web.load.impl;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
-import com.emc.mongoose.base.load.impl.GetRequestResultTask;
 import com.emc.mongoose.object.load.impl.ObjectLoadExecutorBase;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -10,7 +9,6 @@ import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.threading.WorkerFactory;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
-import com.emc.mongoose.web.api.impl.BasicWSIOTask;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 //
@@ -49,8 +47,6 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 /**
  Created by kurila on 02.12.14.
@@ -64,7 +60,6 @@ implements WSLoadExecutor<T> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
-	private final ExecutorService resultExecutor;
 	//
 	private final static class ExecuteClientTask<T extends WSObject>
 	implements Runnable {
@@ -189,10 +184,6 @@ implements WSLoadExecutor<T> {
 			connPool = localConnPool;
 		}
 		//
-		resultExecutor = Executors.newFixedThreadPool(
-			(int) Math.sqrt(threadCount), new WorkerFactory("reqResultGetter")
-		);
-		//
 		new Thread(
 			new ExecuteClientTask<>(this, ioEventDispatch, ioReactor),
 			this.getClass().getSimpleName()
@@ -202,19 +193,16 @@ implements WSLoadExecutor<T> {
 	@Override
 	public final void close()
 	throws IOException {
+		super.close();
 		LOG.debug(Markers.MSG, "Going to close the web storage client");
 		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
-		resultExecutor.shutdownNow();
 		ioReactor.shutdown(thrLocalConfig.getRunReqTimeOutMilliSec());
-		super.close();
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	public final void submit(final T dataItem) {
-		final WSIOTask<T> wsTask = (WSIOTask<T>) BasicWSIOTask.getInstanceFor(reqConfig, dataItem);
-		final Future<AsyncIOTask.Result> futureResult = client.execute(wsTask, wsTask, connPool);
-		final GetRequestResultTask<T> getResultTask = new GetRequestResultTask<>(this, wsTask, futureResult);
-		resultExecutor.submit(getResultTask);
+	@Override
+	public final Future<AsyncIOTask.Result> submit(final AsyncIOTask<T> ioTask) {
+		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
+		return client.execute(wsTask, wsTask, connPool);
 	}
 	//
 	@Override

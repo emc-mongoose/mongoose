@@ -40,9 +40,6 @@ implements AsyncIOTask<T> {
 
 	}
 	// BEGIN pool related things
-	protected final static ConcurrentHashMap<RequestConfig, BasicInstancePool<AsyncIOTask>>
-		POOL_MAP = new ConcurrentHashMap<>();
-	//
 	@Override
 	public final void close() {
 		final BasicInstancePool<AsyncIOTask> pool = POOL_MAP.get(reqConf);

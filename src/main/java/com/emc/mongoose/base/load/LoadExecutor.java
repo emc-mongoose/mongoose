@@ -1,8 +1,10 @@
 package com.emc.mongoose.base.load;
 //
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataItem;
 //
 import java.rmi.RemoteException;
+import java.util.concurrent.Future;
 /**
  Created by kurila on 28.04.14.
  A mechanism of data items load execution.
@@ -41,4 +43,5 @@ extends Producer<T>, Consumer<T> {
 	void join(final long milliSecs)
 	throws RemoteException, InterruptedException;
 	//
+	Future<AsyncIOTask.Result> submit(final AsyncIOTask<T> request);
 }

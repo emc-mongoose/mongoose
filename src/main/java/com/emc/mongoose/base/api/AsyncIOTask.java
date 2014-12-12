@@ -1,9 +1,11 @@
 package com.emc.mongoose.base.api;
 //
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.util.pool.BasicInstancePool;
 //
 import java.io.Closeable;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 //
 /**
  Created by kurila on 02.06.14.
@@ -36,6 +38,9 @@ extends Callable<AsyncIOTask<T>>, Closeable {
 			this.description = description;
 		}
 	}
+	//
+	ConcurrentHashMap<RequestConfig, BasicInstancePool<AsyncIOTask>>
+		POOL_MAP = new ConcurrentHashMap<>();
 	//
 	AsyncIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//

@@ -1,12 +1,11 @@
 package com.emc.mongoose.web.api.impl;
 //
-import com.emc.mongoose.base.api.AsyncIOClient;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.impl.RequestConfigBase;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
+import com.emc.mongoose.util.pool.BasicInstancePool;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
-import com.emc.mongoose.web.api.WSClient;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
@@ -15,7 +14,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.web.load.impl.WSLoadExecutorBase;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.http.Header;
@@ -119,10 +117,7 @@ implements WSRequestConfig<T> {
 			if(reqConf2Clone != null) {
 				this
 					.setSecret(reqConf2Clone.getSecret())
-					.setScheme(reqConf2Clone.getScheme())
-					.setClient(reqConf2Clone.getClient());
-			} else {
-				storageClient = new WSLoadExecutorBase<>(1, getSharedHeaders(), getUserAgent());
+					.setScheme(reqConf2Clone.getScheme());
 			}
 			//
 			final String pkgSpec = getClass().getPackage().getName();
@@ -257,14 +252,26 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final WSClient<T> getClient() {
-		return (WSClient<T>) super.getClient();
-	}
-	//
-	@Override @SuppressWarnings("RedundantCast")
-	public final WSRequestConfigBase<T> setClient(final AsyncIOClient<T> client) {
-		super.setClient((WSClient<T>) client);
-		return this;
+	public final WSIOTask<T> getRequestFor(final T dataItem) {
+		WSIOTask<T> ioTask;
+		if(dataItem == null) {
+			LOG.debug(Markers.MSG, "Preparing poison request");
+			ioTask = (WSIOTask<T>) BasicWSIOTask.POISON;
+		} else {
+			BasicInstancePool pool;
+			synchronized(AsyncIOTask.POOL_MAP) {
+				if(AsyncIOTask.POOL_MAP.containsKey(this)) {
+					pool = AsyncIOTask.POOL_MAP.get(this);
+				} else {
+					pool = new BasicInstancePool<>(BasicWSIOTask.class);
+					AsyncIOTask.POOL_MAP.put(this, pool);
+				}
+			}
+			ioTask = BasicWSIOTask.class.cast(pool.take())
+				.setRequestConfig(this)
+				.setDataItem(dataItem);
+		}
+		return ioTask;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

@@ -1,6 +1,5 @@
 package com.emc.mongoose.base.api.impl;
 //
-import com.emc.mongoose.base.api.AsyncIOClient;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
@@ -35,7 +34,6 @@ implements RequestConfig<T> {
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	protected volatile String addr, scheme, uriAddr;
 	protected volatile int port;
-	protected AsyncIOClient<T> storageClient = null;
 	protected int loadNumber;
 	//
 	@SuppressWarnings("unchecked")
@@ -57,7 +55,6 @@ implements RequestConfig<T> {
 			setPort(reqConf2Clone.getPort());
 			setScheme(reqConf2Clone.getScheme());
 			setLoadType(reqConf2Clone.getLoadType());
-			setClient(reqConf2Clone.getClient());
 			secret = reqConf2Clone.getSecret();
 		}
 	}
@@ -75,8 +72,7 @@ implements RequestConfig<T> {
 			.setUserName(userName)
 			.setPort(port)
 			.setScheme(scheme)
-			.setLoadType(loadType)
-			.setClient(storageClient);
+			.setLoadType(loadType);
 		requestConfigBranch.secret = secret;
 		return requestConfigBranch;
 	}
@@ -228,15 +224,7 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public AsyncIOClient<T> getClient() {
-		return storageClient;
-	}
-	//
-	@Override
-	public RequestConfig<T> setClient(final AsyncIOClient<T> storageClient) {
-		this.storageClient = storageClient;
-		return this;
-	}
+	public abstract AsyncIOTask<T> getRequestFor(final T dataItem);
 	//
 	@Override
 	public void writeExternal(final ObjectOutput out)
