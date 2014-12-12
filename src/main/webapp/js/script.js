@@ -10,7 +10,6 @@ $(document).ready(function() {
 
 	configureWebSocket(WEBSOCKET_URL, COUNT_OF_RECORDS).connect();
 
-	$('#inputDatabaseName').keyup(function () { alert('test'); });
 	$("#run\\.time").change(function() {
 		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
 	});
@@ -65,7 +64,8 @@ $(document).ready(function() {
 	});
 
 
-	$(document).on('click', '.breadcrumb ul a', function() {
+	$(document).on('click', '.breadcrumb ul a', function(e) {
+		e.preventDefault();
 		var sameElement = $(this).attr("href").replace("#", "");
 		var element = $(".folders a[href='#" + sameElement + "']");
 		if (!element.length) {
@@ -74,7 +74,10 @@ $(document).ready(function() {
 		element.trigger('click');
 	});
 
-	$(".folders a, .folders label").click(function() {
+	$(".folders a, .folders label").click(function(e) {
+		if ($(this).is("a")) {
+			e.preventDefault();
+		}
 		onFoldersElementClick($(this));
 	});
 });
