@@ -1,22 +1,15 @@
 package com.emc.mongoose.util.conf;
 //
-import com.emc.mongoose.base.data.impl.UniformDataSource;
-import com.emc.mongoose.base.load.impl.ShutDownHook;
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.collections.pairs.DefaultEntry;
 import com.emc.mongoose.util.logging.Markers;
-//
-import com.emc.mongoose.util.remote.ServiceUtils;
-import com.emc.mongoose.web.api.impl.BasicWSRequest;
-import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
-import com.emc.mongoose.web.load.impl.WSLoadHelper;
 import com.google.gson.Gson;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.message.BasicNameValuePair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -24,7 +17,14 @@ import java.io.ObjectOutput;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -118,13 +118,11 @@ implements Externalizable {
 			x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
 		).toUpperCase();
 	}
-	//
 	public String getPropertiesMap() {
-		Gson gson = new Gson();
-		return gson.toJson(properties);
+		return new Gson().toJson(properties);
 	}
 	//
-	public final synchronized void put(List<String> dirs, String fileName, Map<String, String> props) {
+	public final synchronized void put(List<String> dirs, String fileName, List<DefaultEntry<String, Object>> props) {
 		Map<String, Object> node = properties;
 		if (dirs != null) {
 			for (final String nextDir : dirs) {
@@ -134,15 +132,7 @@ implements Externalizable {
 				node = (Map<String, Object>) node.get(nextDir);
 			}
 		}
-		//
-		final List<BasicNameValuePair> shortNamedProps = new LinkedList<>();
-		if (fileName.equals("run")) {
-			shortNamedProps.add(new BasicNameValuePair("run.id", "id"));
-		}
-		for(final String propShortName: props.keySet()) {
-			shortNamedProps.add(new BasicNameValuePair(propShortName, props.get(propShortName)));
-		}
-		node.put(fileName, shortNamedProps);
+		node.put(fileName, props);
 	}
 	//
 	public final synchronized void set(final String key, final String value) {
