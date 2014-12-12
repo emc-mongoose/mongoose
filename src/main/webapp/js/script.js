@@ -143,6 +143,8 @@ function buildDivBlocksByFileNames(shortPropsMap) {
 			keyDiv.css("display", "none");
 			var obj = shortPropsMap[key];
 			for (var i = 0; i < obj.length; i++) {
+				if (obj[i].key === "run.mode")
+					continue;
 				formGroupDiv = $("<div>").addClass("form-group");
 				var placeHolder = "";
 				if (obj[i].key === "data.count") {
