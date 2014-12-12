@@ -24,9 +24,11 @@ $(document).ready(function() {
 		if (valueSelected === "client") {
 			$('a[href="#remote"]').show();
 		} else {
+			if ($("#remote").is(":visible")) {
+				$(".breadcrumb").empty();
+				generatePropertyPage();
+			}
 			$('a[href="#remote"]').hide();
-			$(".breadcrumb").empty();
-			generatePropertyPage();
 		}
 		$("#run-mode").val(valueSelected);
 	});
@@ -143,6 +145,8 @@ function buildDivBlocksByFileNames(shortPropsMap) {
 			keyDiv.css("display", "none");
 			var obj = shortPropsMap[key];
 			for (var i = 0; i < obj.length; i++) {
+				if (obj[i].key === "run.mode")
+					continue;
 				formGroupDiv = $("<div>").addClass("form-group");
 				var placeHolder = "";
 				if (obj[i].key === "data.count") {
