@@ -1,7 +1,7 @@
 $(document).ready(function() {
 	var shortPropsMap = {};
 	var ul = $(".folders");
-	var WEBSOCKET_URL = "ws://localhost:8080/logs";
+	var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
 	var COUNT_OF_RECORDS = 2050;
 
 	walkTreeMap(propertiesMap, ul, shortPropsMap);
