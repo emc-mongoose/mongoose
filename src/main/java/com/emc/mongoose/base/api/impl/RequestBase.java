@@ -3,8 +3,8 @@ package com.emc.mongoose.base.api.impl;
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.AppendableDataItem;
-import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.collections.BasicInstancePool;
 //
@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by andrey on 12.10.14.
  */
-public abstract class RequestBase<T extends DataItem>
+public abstract class RequestBase<T extends DataObject>
 implements Request<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -32,7 +32,8 @@ implements Request<T> {
 	protected T dataItem = null;
 	protected Result result = Result.FAIL_UNKNOWN;
 	//
-	private long start = 0, duration = 0, transferSize = 0;
+	protected long start = 0, duration = 0, latency = 0;
+	private long transferSize = 0;
 	private Type type;
 
 	public RequestBase() {
@@ -97,12 +98,21 @@ implements Request<T> {
 	}
 	//
 	@Override
+	public final long getLatency() {
+		return latency;
+	}
+	//
+	@Override
 	public final Request<T> call()
 	throws Exception {
 		start = System.nanoTime();
 		execute();
 		duration = System.nanoTime() - start;
-		LOG.info(Markers.PERF_TRACE, "{},{},{},{}", dataItem, result.code, start, duration);
+		LOG.info(
+			Markers.PERF_TRACE, String.format(
+				FMT_PERF_TRACE, dataItem.getId(), dataItem.getSize(), result.code, start, latency, duration
+			)
+		);
 		return this;
 	}
 	//

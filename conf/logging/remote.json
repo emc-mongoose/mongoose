@@ -9,6 +9,7 @@
 				"value": "${sys:dir.root}${sys:file.separator}log${sys:file.separator}${sys:run.mode}${sys:file.separator}"
 			}
 		},
+		"shutdownHook": "disable",
 		"appenders": {
 			"appender" : [
 				{
@@ -75,7 +76,7 @@
 					"name": "stdout",
 					"type": "Console",
 					"PatternLayout": {
-						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t - %m%n}"
+						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t %m%n}"
 					},
 					"Filters": {
 						"Filter" : [
@@ -473,6 +474,16 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.web.load.impl.type",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				},
+
+				// WebStorage mock
+				{
+					"name": "com.emc.mongoose.web.storagemock",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {

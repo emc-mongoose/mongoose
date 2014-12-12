@@ -10,7 +10,7 @@ import com.emc.mongoose.base.data.persist.LogConsumer;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.client.DataItemBufferClient;
-import com.emc.mongoose.base.load.impl.ShutDownHook;
+import com.emc.mongoose.base.load.impl.LoadCloseHook;
 import com.emc.mongoose.base.load.impl.SubmitDataItemTask;
 import com.emc.mongoose.base.load.client.LoadClient;
 import com.emc.mongoose.base.load.server.LoadSvc;
@@ -18,7 +18,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
-import com.emc.mongoose.util.threading.GentleExecutorShutDown;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
 import org.apache.logging.log4j.Level;
@@ -40,12 +39,14 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -100,7 +101,7 @@ implements LoadClient<T> {
 		//
 		@Override
 		public final V call()
-			throws Exception {
+		throws Exception {
 			return gauge.getValue();
 		}
 	}
@@ -113,10 +114,12 @@ implements LoadClient<T> {
 	@SuppressWarnings("FieldCanBeLocal")
 	private final GetValueTask<Long>
 		taskGetCountSubm, taskGetCountRej, taskGetCountSucc, taskGetCountFail,
-		taskGetMinDur, taskGetMaxDur, taskGetCountBytes, taskGetCountNanoSec;
+		taskGetDurMin, taskGetDurMax, taskGetLatencyMin, taskGetLatencyMax,
+		taskGetCountBytes, taskGetCountNanoSec;
 	private final GetValueTask<Double>
-		taskGetTPMean, taskGetTP1Min, taskGetTP5Min, taskGetTP15Min, taskGetBWMean,
-		taskGetBW1Min, taskGetBW5Min, taskGetBW15Min, taskGetDurMed, taskGetDurAvg;
+		taskGetTPMean, taskGetTP1Min, taskGetTP5Min, taskGetTP15Min,
+		taskGetBWMean, taskGetBW1Min, taskGetBW5Min, taskGetBW15Min,
+		taskGetDurMed, taskGetDurAvg, taskGetLatencyMed, taskGetLatencyAvg;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private volatile long maxCount;
 	//
@@ -208,14 +211,24 @@ implements LoadClient<T> {
 			)
 		);
 		taskGetCountBytes = new GetValueTask<>(metricByteCount);
-		taskGetMinDur = new GetValueTask<>(
+		taskGetDurMin = new GetValueTask<>(
 			registerJmxGaugeMinLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MIN
 			)
 		);
-		taskGetMaxDur = new GetValueTask<>(
+		taskGetDurMax = new GetValueTask<>(
 			registerJmxGaugeMaxLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MAX
+			)
+		);
+		taskGetLatencyMin = new GetValueTask<>(
+			registerJmxGaugeMinLong(
+				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MIN
+			)
+		);
+		taskGetLatencyMax = new GetValueTask<>(
+			registerJmxGaugeMaxLong(
+				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MAX
 			)
 		);
 		taskGetTPMean = new GetValueTask<>(
@@ -320,6 +333,16 @@ implements LoadClient<T> {
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_AVG
 			)
 		);
+		taskGetLatencyMed = new GetValueTask<>(
+			registerJmxGaugeAvgDouble(
+				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MED
+			)
+		);
+		taskGetLatencyAvg = new GetValueTask<>(
+			registerJmxGaugeAvgDouble(
+				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_AVG
+			)
+		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metaInfoLog = new LogConsumer<>();
 		////////////////////////////////////////////////////////////////////////////////////////////
@@ -330,9 +353,24 @@ implements LoadClient<T> {
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(queueSize),
 			new WorkerFactory("submitDataItems")
-		);
+		) {
+			@Override
+			protected final void terminated() {
+				LOG.debug(Markers.MSG, "{}: submit executor terminated", getName());
+				if(lock.tryLock()) {
+					try {
+						condDone.signalAll();
+					} finally {
+						lock.unlock();
+					}
+				} else {
+					LOG.warn(Markers.ERR, "{}: failed to obtain the lock", getName());
+				}
+				super.terminated();
+			}
+		};
 		submitExecutor.prestartAllCoreThreads();
-		//
+		////////////////////////////////////////////////////////////////////////////////////////////
 		threadCount = remoteLoadMap.size() * 20; // metric count is 18
 		mgmtConnExecutor = new ThreadPoolExecutor(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
@@ -349,7 +387,7 @@ implements LoadClient<T> {
 						future = super.submit(task);
 						pass = true;
 					} catch(final RejectedExecutionException e) {
-						LOG.debug(Markers.ERR, "Task rejected {} times", tryCount);
+						LOG.trace(Markers.ERR, "JMX task rejected {} times", tryCount);
 						tryCount ++;
 						try {
 							Thread.sleep(retryDelayMilliSec);
@@ -650,6 +688,22 @@ implements LoadClient<T> {
 		);
 	}
 	//
+	private final static class GetFrameTask<U extends List<? extends DataItem>>
+	implements Callable<U> {
+		//
+		private final LoadSvc<?> loadSvc;
+		//
+		protected GetFrameTask(final LoadSvc<?> loadSvc) {
+			this.loadSvc = loadSvc;
+		}
+		//
+		@Override @SuppressWarnings("unchecked")
+		public final U call()
+		throws Exception {
+			return (U) loadSvc.takeFrame();
+		}
+	}
+	//
 	private void logMetaInfoFrames() {
 		final ArrayList<Future<List<T>>> nextMetaInfoFrameFutures = new ArrayList<>(
 			remoteLoadMap.size()
@@ -658,18 +712,10 @@ implements LoadClient<T> {
 		for(final LoadSvc<T> nextLoadSvc: remoteLoadMap.values()) {
 			try {
 				nextMetaInfoFrameFutures.add(
-					mgmtConnExecutor.submit(
-						new Callable<List<T>>() {
-							@Override
-							public final List<T> call()
-							throws Exception {
-								return nextLoadSvc.takeFrame();
-							}
-						}
-					)
+					mgmtConnExecutor.submit(new GetFrameTask<List<T>>(nextLoadSvc))
 				);
 			} catch(final RejectedExecutionException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "");
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Fetching metainfo frame task rejected");
 			}
 		}
 		//
@@ -685,7 +731,7 @@ implements LoadClient<T> {
 					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
 				}
 			} catch(final Exception e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to fetch the metainfo frame");
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
 			}
 			//
 			if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
@@ -699,11 +745,12 @@ implements LoadClient<T> {
 	//
 	Future<Long>
 		countSubm, countRej, countReqSucc, countReqFail,
-	/*countNanoSec, countBytes, */minDur, maxDur;
+		/*countNanoSec, countBytes, */minDur, maxDur,
+		minLatency, maxLatency;
 	Future<Double>
 		meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
 		meanBW, oneMinBW, fiveMinBW, fifteenMinBW,
-		medDur, avgDur;
+		medDur, avgDur, medLatency, avgLatency;
 	//
 	private void logMetrics(final Marker logMarker) {
 		//
@@ -715,8 +762,10 @@ implements LoadClient<T> {
 				countReqFail = mgmtConnExecutor.submit(taskGetCountFail);
 				//countNanoSec = mgmtConnExecutor.submit(taskGetCountNanoSec);
 				//countBytes = mgmtConnExecutor.submit(taskGetCountBytes);
-				minDur = mgmtConnExecutor.submit(taskGetMinDur);
-				maxDur = mgmtConnExecutor.submit(taskGetMaxDur);
+				minDur = mgmtConnExecutor.submit(taskGetDurMin);
+				maxDur = mgmtConnExecutor.submit(taskGetDurMax);
+				minLatency = mgmtConnExecutor.submit(taskGetLatencyMin);
+				maxLatency = mgmtConnExecutor.submit(taskGetLatencyMax);
 				meanTP = mgmtConnExecutor.submit(taskGetTPMean);
 				oneMinTP = mgmtConnExecutor.submit(taskGetTP1Min);
 				fiveMinTP = mgmtConnExecutor.submit(taskGetTP5Min);
@@ -727,6 +776,8 @@ implements LoadClient<T> {
 				fifteenMinBW = mgmtConnExecutor.submit(taskGetBW15Min);
 				medDur = mgmtConnExecutor.submit(taskGetDurMed);
 				avgDur = mgmtConnExecutor.submit(taskGetDurAvg);
+				medLatency = mgmtConnExecutor.submit(taskGetLatencyMed);
+				avgLatency = mgmtConnExecutor.submit(taskGetLatencyAvg);
 			} catch(final RejectedExecutionException e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Log remote metrics failed, skipping");
 			}
@@ -735,23 +786,41 @@ implements LoadClient<T> {
 		try {
 			LOG.info(
 				logMarker,
-				MSG_FMT_METRICS.format(
-					new Object[] {
-						//
-						countReqSucc.get(),
-						submitExecutor.getQueue().size() + submitExecutor.getActiveCount(),
-						countReqFail.get(),
-						//
-						(double) minDur.get() / BILLION,
-						medDur.get() / BILLION,
-						avgDur.get() / BILLION,
-						(double) maxDur.get() / BILLION,
-						//
-						meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
-						//
-						meanBW.get() / MIB,
-						oneMinBW.get() / MIB, fiveMinBW.get() / MIB, fifteenMinBW.get() / MIB
-					}
+				Markers.PERF_SUM.equals(logMarker) ?
+				String.format(
+					Locale.ROOT, MSG_FMT_SUM_METRICS,
+					//
+					getName(),
+					countReqSucc.get(), countReqFail.get(),
+					//
+					avgDur.get() / BILLION, (double) minDur.get() / BILLION,
+					medDur.get() / BILLION, (double) maxDur.get() / BILLION,
+					//
+					avgLatency.get() / BILLION, (double) minLatency.get() / BILLION,
+					medLatency.get() / BILLION, (double) maxLatency.get() / BILLION,
+					//
+					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
+					//
+					meanBW.get() / MIB, oneMinBW.get() / MIB, fiveMinBW.get() / MIB,
+					fifteenMinBW.get() / MIB
+				) :
+				String.format(
+					Locale.ROOT, MSG_FMT_METRICS,
+					//
+					countReqSucc.get(),
+					submitExecutor.getQueue().size() + submitExecutor.getActiveCount(),
+					countReqFail.get(),
+					//
+					avgDur.get() / BILLION, (double) minDur.get() / BILLION,
+					medDur.get() / BILLION, (double) maxDur.get() / BILLION,
+					//
+					avgLatency.get() / BILLION, (double) minLatency.get() / BILLION,
+					medLatency.get() / BILLION, (double) maxLatency.get() / BILLION,
+					//
+					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
+					//
+					meanBW.get() / MIB, oneMinBW.get() / MIB, fiveMinBW.get() / MIB,
+					fifteenMinBW.get() / MIB
 				)
 			);
 		} catch(final ExecutionException e) {
@@ -778,10 +847,51 @@ implements LoadClient<T> {
 			}
 		}
 		//
-		ShutDownHook.add(this);
+		LoadCloseHook.add(this);
 		//
 		super.start();
 		LOG.info(Markers.MSG, "Started {}", getName());
+	}
+	//
+	private final static class WaitForMaxCountTask
+	implements Runnable {
+		//
+		private final long maxCount;
+		private final ExecutorService mgmtConnExecutor;
+		private final GetValueTask<Long> getValueTasks[];
+		//
+		@SuppressWarnings("unchecked")
+		protected WaitForMaxCountTask(
+			final long maxCount, final ExecutorService mgmtConnExecutor,
+			final GetValueTask getValueTasks[]
+		)
+		throws ClassCastException {
+			this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
+			this.mgmtConnExecutor = mgmtConnExecutor;
+			this.getValueTasks = (GetValueTask<Long>[]) getValueTasks;
+		}
+		//
+		@Override @SuppressWarnings("unchecked")
+		public final void run() {
+			int i, tasksCount = getValueTasks.length;
+			long processedCount = 0;
+			final Future<Long> futureValues[] = new Future[tasksCount];
+			do {
+				for(i = 0; i < tasksCount; i ++) {
+					futureValues[i] = mgmtConnExecutor.submit(getValueTasks[i]);
+				}
+				for(final Future<Long> futureValue: futureValues) {
+					try {
+						processedCount += futureValue.get();
+					} catch(final InterruptedException e) {
+						LOG.debug(Markers.MSG, "Interrupted");
+						break;
+					} catch(final ExecutionException e) {
+						ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to get metric value");
+					}
+				}
+			} while(maxCount > processedCount);
+		}
 	}
 	//
 	@Override
@@ -790,8 +900,21 @@ implements LoadClient<T> {
 		final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 		try {
 			if(metricsUpdatePeriodSec > 0) {
-				while(!isInterrupted()) {
-					if(lock.tryLock()) {
+				long processedCount = 0;
+				while(isAlive()) {
+					//
+					logMetaInfoFrames();
+					logMetrics(Markers.PERF_AVG);
+					//
+					try {
+						processedCount = countRej.get() + countReqSucc.get() + countReqFail.get();
+					} catch(final ExecutionException e) {
+						ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to get metric value");
+					}
+					//
+					if(maxCount <= processedCount) {
+						break;
+					} else if(lock.tryLock()) {
 						try {
 							if(condDone.await(metricsUpdatePeriodSec, TimeUnit.SECONDS)) {
 								LOG.debug(Markers.MSG, "Condition \"done\" reached");
@@ -803,69 +926,47 @@ implements LoadClient<T> {
 					} else {
 						LOG.warn(Markers.ERR, "Failed to take the lock");
 					}
-					logMetrics(Markers.PERF_AVG);
 				}
 			} else {
-				final String runTimeSpec[] = runTimeConfig.getRunTime().split("\\.");
-				//
-				if(lock.tryLock()) {
-					try {
-						if(
-							condDone.await(
-								Long.valueOf(runTimeSpec[0]),
-								TimeUnit.valueOf(runTimeSpec[1].toUpperCase())
-							)
-							) {
-							LOG.debug(Markers.MSG, "Condition \"done\" reached");
-						}
-					} catch(final InterruptedException e) {
-						LOG.debug(Markers.MSG, "Waiting for the done condition interrupted");
-					} finally {
-						lock.unlock();
-					}
-				}
-				LOG.debug(Markers.MSG, "Max data items count reached");
+				final Thread waitThread = new Thread(
+					new WaitForMaxCountTask(
+						maxCount, mgmtConnExecutor,
+						new GetValueTask[] {taskGetCountSucc, taskGetCountFail, taskGetCountRej}
+					)
+				);
+				waitThread.start();
+				waitThread.join();
 			}
+			LOG.debug(Markers.MSG, "Finish reached");
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
 		} finally {
-			synchronized(LOG) {
-				LOG.info(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-				logMetaInfoFrames();
-				logMetrics(Markers.PERF_SUM);
-			}
+			interrupt();
 		}
-		//
-		LOG.trace(Markers.MSG, "Finish reached");
-		//
-		interrupt();
 	}
 	//
 	@Override
 	public final void interrupt() {
 		LOG.debug(Markers.MSG, "Interrupting {}...", getName());
-		//
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
-		final LinkedList<Thread> svcInterruptThreads = new LinkedList<>();
-		svcInterruptThreads.add(
-			new Thread(
-				new GentleExecutorShutDown(submitExecutor, runTimeConfig),
-				"interrupt-submit-" + getName()
-			)
-		);
-		svcInterruptThreads.getLast().start();
-		try {
-			svcInterruptThreads.getLast().join();
-			svcInterruptThreads.removeLast();
-		} catch(final InterruptedException e) {
-			ExceptionHandler.trace(
-				LOG, Level.DEBUG, e, "Interrupted while interrupting the submitter"
-			);
+		//
+		if(!submitExecutor.isShutdown()) {
+			submitExecutor.shutdown();
 		}
 		//
+		if(!submitExecutor.isTerminated()) {
+			try {
+				submitExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.ERR, "Interrupted waiting for submit executor to finish");
+			}
+		}
+		//
+		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(remoteLoadMap.size());
+		//
 		for(final String addr: remoteLoadMap.keySet()) {
-			svcInterruptThreads.add(
-				new Thread("interrupt-svc-" + getName() + "-" + addr) {
+			interruptExecutor.submit(
+				new Runnable() {
 					@Override
 					public final void run() {
 						try {
@@ -873,23 +974,20 @@ implements LoadClient<T> {
 							LOG.trace(Markers.MSG, "Interrupted remote service @ {}", addr);
 						} catch(final IOException e) {
 							ExceptionHandler.trace(
-								LOG, Level.WARN, e,
-								"Failed to interrupt remote load service @ " + addr
+								LOG, Level.DEBUG, e,
+								String.format("Failed to interrupt remote load service @ %s", addr)
 							);
 						}
 					}
 				}
 			);
-			svcInterruptThreads.getLast().start();
 		}
 		//
-		for(final Thread svcInterruptThread: svcInterruptThreads) {
-			try {
-				svcInterruptThread.join(reqTimeOutMilliSec);
-				LOG.debug(Markers.MSG, "Finished: \"{}\"", svcInterruptThread);
-			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
-			}
+		interruptExecutor.shutdown();
+		try {
+			interruptExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
+		} catch(final InterruptedException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupting was interrupted");
 		}
 		//
 		super.interrupt();
@@ -897,96 +995,119 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final synchronized void close()
+	public final void close()
 	throws IOException {
-		if(!isInterrupted()) {
-			interrupt();
-		}
-		//
-		LoadSvc<T> nextLoadSvc;
-		JMXConnector nextJMXConn = null;
-		//
-		mgmtConnExecutor.shutdownNow();
-		metricsReporter.close();
-		//
-		LOG.debug(Markers.MSG, "Closing the remote services...");
-		for(final String addr : remoteLoadMap.keySet()) {
-			//
-			try {
-				nextLoadSvc = remoteLoadMap.get(addr);
-				LOG.debug(Markers.MSG, "Closing server instance @ {}...", addr);
-				nextLoadSvc.close();
-				LOG.info(Markers.MSG, "Server instance @ {} has been closed", addr);
-			} catch(final NoSuchElementException e) {
-				LOG.debug(
-					Markers.ERR, "Looks like the remote load service is already shut down"
-				);
-			} catch(final IOException e) {
-				LOG.warn(Markers.ERR, "Failed to close remote load executor service");
-				LOG.trace(Markers.ERR, e.toString(), e.getCause());
-			}
-			//
-			try {
-				nextJMXConn = remoteJMXConnMap.get(addr);
-				if(nextJMXConn!=null) {
-					nextJMXConn.close();
-					LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
+		synchronized(remoteLoadMap) {
+			if(!remoteLoadMap.isEmpty()) {
+				if(!isInterrupted()) {
+					interrupt();
 				}
-			} catch(final NoSuchElementException e) {
-				LOG.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
-			} catch(final IOException e) {
-				ExceptionHandler.trace(
-					LOG, Level.WARN, e,
-					String.format("Failed to close JMX connection to %s", addr)
-				);
+				//
+				LOG.debug(Markers.MSG, "log summary metrics");
+				logMetrics(Markers.PERF_SUM);
+				LOG.debug(Markers.MSG, "log metainfo frames");
+				logMetaInfoFrames();
+				//
+				LoadSvc<T> nextLoadSvc;
+				JMXConnector nextJMXConn = null;
+				//
+				mgmtConnExecutor.shutdownNow();
+				//
+				metricsReporter.close();
+				//
+				LOG.debug(Markers.MSG, "Closing the remote services...");
+				for(final String addr : remoteLoadMap.keySet()) {
+					//
+					try {
+						nextLoadSvc = remoteLoadMap.get(addr);
+						nextLoadSvc.close();
+						LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
+					} catch(final NoSuchElementException e) {
+						LOG.debug(
+							Markers.ERR, "Looks like the remote load service is already shut down"
+						);
+					} catch(final IOException e) {
+						LOG.warn(Markers.ERR, "Failed to close remote load executor service");
+						LOG.trace(Markers.ERR, e.toString(), e.getCause());
+					}
+					//
+					try {
+						nextJMXConn = remoteJMXConnMap.get(addr);
+						if(nextJMXConn!=null) {
+							nextJMXConn.close();
+							LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
+						}
+					} catch(final NoSuchElementException e) {
+						LOG.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
+					} catch(final IOException e) {
+						ExceptionHandler.trace(
+							LOG, Level.WARN, e,
+							String.format("Failed to close JMX connection to %s", addr)
+						);
+					}
+					//
+				}
+				LoadCloseHook.del(this);
+				LOG.debug(Markers.MSG, "Clear the servers map");
+				remoteLoadMap.clear();
+				LOG.debug(Markers.MSG, "Closed {}", getName());
+			} else {
+				LOG.debug(Markers.ERR, "Closed already");
 			}
-			//
 		}
-		LOG.debug(Markers.MSG, "Clear the servers map");
-		remoteLoadMap.clear();
-		LOG.debug(Markers.MSG, "Closed {}", getName());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void submit(final T dataItem) {
-		if(maxCount < submitExecutor.getTaskCount() || dataItem == null || !isAlive()) {
-			//
-			LOG.trace(
-				Markers.MSG, "Got poison on #{}, invoking the soft interruption",
-				submitExecutor.getTaskCount()
-			);
-			maxCount = submitExecutor.getCompletedTaskCount();
-			//
-			if(lock.tryLock()) {
-				try {
-					condDone.signalAll();
-				} finally {
-					lock.unlock();
-				}
-			}
-		} else {
-			final Object addrs[] = remoteLoadMap.keySet().toArray();
-			final String addr = String.class.cast(
-				addrs[(int) submitExecutor.getTaskCount() % addrs.length]
-			);
-			final SubmitDataItemTask<T, LoadSvc<T>> submTask = new SubmitDataItemTask<>(
-				dataItem, remoteLoadMap.get(addr)
-			);
-			boolean passed = false;
-			int rejectCount = 0;
-			do {
-				try {
-					submitExecutor.submit(submTask);
-					passed = true;
-				} catch(final RejectedExecutionException e) {
-					rejectCount ++;
+		if(maxCount > submitExecutor.getTaskCount()) {
+			if(dataItem == null) {
+				LOG.debug(Markers.MSG, "{}: poison submitted");
+				// determine the max count now
+				maxCount = submitExecutor.getTaskCount();
+				//
+				for(final String addr: remoteLoadMap.keySet()) {
 					try {
-						Thread.sleep(rejectCount * retryDelayMilliSec);
-					} catch(final InterruptedException ee) {
-						break;
+						remoteLoadMap.get(addr).submit(null);
+					} catch(final Exception e) {
+						ExceptionHandler.trace(
+							LOG, Level.WARN, e,
+							String.format("Failed to submit the poison to @%s", addr)
+						);
 					}
 				}
-			} while(!passed && rejectCount < retryCountMax && !submitExecutor.isShutdown());
+				//
+				submitExecutor.shutdown();
+			} else {
+				final Object addrs[] = remoteLoadMap.keySet().toArray();
+				final String addr = String.class.cast(
+					addrs[(int) submitExecutor.getTaskCount() % addrs.length]
+				);
+				final SubmitDataItemTask<T, LoadSvc<T>> submTask = new SubmitDataItemTask<>(
+					dataItem, remoteLoadMap.get(addr)
+				);
+				boolean passed = false;
+				int rejectCount = 0;
+				do {
+					try {
+						submitExecutor.submit(submTask);
+						passed = true;
+					} catch(final RejectedExecutionException e) {
+						rejectCount ++;
+						try {
+							Thread.sleep(rejectCount * retryDelayMilliSec);
+						} catch(final InterruptedException ee) {
+							break;
+						}
+					}
+				} while(!passed && rejectCount < retryCountMax && !submitExecutor.isShutdown());
+			}
+		} else {
+			LOG.debug(
+				Markers.MSG,
+				"{}: max data item count ({}) have been submitted, shutdown the submit executor",
+				getName(), maxCount
+			);
+			submitExecutor.shutdown();
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

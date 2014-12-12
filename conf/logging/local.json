@@ -9,49 +9,50 @@
 				"value": "${sys:dir.root}${sys:file.separator}log${sys:file.separator}${sys:run.mode}${sys:file.separator}${sys:run.id}${sys:file.separator}"
 			}
 		},
+		"shutdownHook": "disable",
 		"appenders": {
 			"appender" : [
-			 	{
-			 		"name": "WebUI",
-			 		"type": "WebUI",
-			 		"Filters": {
-			 			"Filter": [
-			 				{
-			 					"type": "MarkerFilter",
-			 					"marker": "err",
-			 					"onMatch": "ACCEPT",
-			 					"onMismatch": "NEUTRAL"
-			 				}, {
-			 					"type": "MarkerFilter",
+				{
+					"name": "WebUI",
+					"type": "WebUI",
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "err",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
 								"marker": "msg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
-			 				}, {
-			 					"type": "MarkerFilter",
+							}, {
+								"type": "MarkerFilter",
 								"marker": "perfAvg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
-			 				}, {
+							}, {
 								"type": "MarkerFilter",
 								"marker": "perfSum",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
-			 				}
-			 			]
-			 		}
-			 	}, {
+							}
+						]
+					}
+				}, {
 					"name": "hibernate",
 					"type": "Hibernate",
-					"enabled": "true",
+					"enabled": "false",
 					"runid": "${sys:run.id}",
 					"runmode": "${sys:run.mode}",
 					"database": "postgresql",
 					"username": "mongoose",
-                    "password": "mongoose",
-                    "addr": "localhost",
-                    "port": "5432",
-                    "namedatabase": "mongoose",
-                    "Filters": {
+					"password": "mongoose",
+					"addr": "localhost",
+					"port": "5432",
+					"namedatabase": "mongoose",
+					"Filters": {
 						"Filter": [
 							{
 								"type": "MarkerFilter",
@@ -75,7 +76,7 @@
 					"name": "stdout",
 					"type": "Console",
 					"PatternLayout": {
-						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t - %m%n}"
+						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t %m%n}"
 					},
 					"Filters": {
 						"Filter" : [
@@ -473,6 +474,16 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.web.load.impl.type",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				},
+
+				// WebStorage mock
+				{
+					"name": "com.emc.mongoose.web.storagemock",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {

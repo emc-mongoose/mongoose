@@ -13,13 +13,11 @@ import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.StorageNodeExecutor;
-import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
-import com.emc.mongoose.util.threading.WorkerFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -28,13 +26,12 @@ import org.apache.logging.log4j.Marker;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.Map;
+import java.util.Locale;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
@@ -53,11 +50,10 @@ implements StorageNodeExecutor<T> {
 	private final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
 	private final Counter counterSubmParent, counterRejParent, counterReqSuccParent, counterReqFailParent;
 	private final Meter reqBytes, reqBytesParent;
-	private final Histogram reqDur, reqDurParent;
+	private final Histogram reqDur, reqDurParent, respLatency, respLatencyParent;
 	//
 	private volatile Consumer<T> consumer = null;
 	//
-	private final RunTimeConfig runTimeConfig;
 	private final Request.Type reqType;
 	//
 	private final int retryDelayMilliSec, retryCountMax;
@@ -84,7 +80,6 @@ implements StorageNodeExecutor<T> {
 				)
 		);
 		//
-		this.runTimeConfig = runTimeConfig;
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		this.localReqConf = localReqConf;
@@ -115,6 +110,13 @@ implements StorageNodeExecutor<T> {
 		);
 		reqDurParent = parentMetrics.getHistograms().get(
 			MetricRegistry.name(parentName, LoadExecutor.METRIC_NAME_REQ, LoadExecutor.METRIC_NAME_DUR)
+		);
+		//
+		respLatency = parentMetrics.histogram(
+			MetricRegistry.name(toString(), LoadExecutor.METRIC_NAME_REQ, LoadExecutor.METRIC_NAME_LAT)
+		);
+		respLatencyParent = parentMetrics.getHistograms().get(
+			MetricRegistry.name(parentName, LoadExecutor.METRIC_NAME_REQ, LoadExecutor.METRIC_NAME_LAT)
 		);
 		//
 		reqBytes = parentMetrics.meter(
@@ -227,11 +229,14 @@ implements StorageNodeExecutor<T> {
 						counterReqSuccParent.inc();
 						final long
 							duration = request.getDuration(),
+							latency = request.getLatency(),
 							size = request.getTransferSize();
 						reqBytes.mark(size);
 						reqBytesParent.mark(size);
 						reqDur.update(duration);
 						reqDurParent.update(duration);
+						respLatency.update(latency);
+						respLatencyParent.update(latency);
 						// feed to the consumer
 						if(consumer != null) {
 							try {
@@ -302,7 +307,9 @@ implements StorageNodeExecutor<T> {
 	}
 	//
 	public final void logMetrics(final Level logLevel, final Marker logMarker) {
-		final Snapshot reqDurSnapshot = reqDur.getSnapshot();
+		final Snapshot
+			reqDurSnapshot = reqDur.getSnapshot(),
+			respLatencySnapshot = respLatency.getSnapshot();
 		final long
 			countReqSucc = counterReqSucc.getCount(),
 			countBytes = reqBytes.getCount();
@@ -312,24 +319,52 @@ implements StorageNodeExecutor<T> {
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
-		final String message = LoadExecutor.MSG_FMT_METRICS.format(
-				new Object[] {
-						countReqSucc, getQueue().size() + getActiveCount(), counterReqFail.getCount(),
-						//
-						(float) reqDurSnapshot.getMin() / LoadExecutor.BILLION,
-						(float) reqDurSnapshot.getMedian() / LoadExecutor.BILLION,
-						(float) reqDurSnapshot.getMean() / LoadExecutor.BILLION,
-						(float) reqDurSnapshot.getMax() / LoadExecutor.BILLION,
-						//
-						avgSize==0 ? 0 : meanBW/avgSize,
-						avgSize==0 ? 0 : oneMinBW/avgSize,
-						avgSize==0 ? 0 : fiveMinBW/avgSize,
-						avgSize==0 ? 0 : fifteenMinBW/avgSize,
-						//
-						meanBW/LoadExecutor.MIB, oneMinBW/LoadExecutor.MIB,
-						fiveMinBW/LoadExecutor.MIB, fifteenMinBW/LoadExecutor.MIB
-				}
-		);
+		final String message = Markers.PERF_SUM.equals(logMarker) ?
+			String.format(
+				Locale.ROOT, MSG_FMT_SUM_METRICS,
+				//
+				getName(),
+				countReqSucc, counterReqFail.getCount(),
+				//
+				(float) reqDurSnapshot.getMean() / BILLION,
+				(float) reqDurSnapshot.getMin() / BILLION,
+				(float) reqDurSnapshot.getMedian() / BILLION,
+				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				(float) respLatencySnapshot.getMean() / BILLION,
+				(float) respLatencySnapshot.getMin() / BILLION,
+				(float) respLatencySnapshot.getMedian() / BILLION,
+				(float) respLatencySnapshot.getMax() / BILLION,
+				//
+				avgSize == 0 ? 0 : meanBW / avgSize,
+				avgSize == 0 ? 0 : oneMinBW / avgSize,
+				avgSize == 0 ? 0 : fiveMinBW / avgSize,
+				avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+				//
+				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+			) :
+			String.format(
+				Locale.ROOT, MSG_FMT_METRICS,
+				//
+				countReqSucc, getQueue().size() + getActiveCount(), counterReqFail.getCount(),
+				//
+				(float) reqDurSnapshot.getMean() / BILLION,
+				(float) reqDurSnapshot.getMin() / BILLION,
+				(float) reqDurSnapshot.getMedian() / BILLION,
+				(float) reqDurSnapshot.getMax() / BILLION,
+				//
+				(float) respLatencySnapshot.getMean() / BILLION,
+				(float) respLatencySnapshot.getMin() / BILLION,
+				(float) respLatencySnapshot.getMedian() / BILLION,
+				(float) respLatencySnapshot.getMax() / BILLION,
+				//
+				avgSize == 0 ? 0 : meanBW / avgSize,
+				avgSize == 0 ? 0 : oneMinBW / avgSize,
+				avgSize == 0 ? 0 : fiveMinBW / avgSize,
+				avgSize == 0 ? 0 : fifteenMinBW / avgSize,
+				//
+				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+			);
 		LOG.log( logLevel, logMarker, localReqConf.getAddr() + ": " +message);
 		if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
 			LOG.trace(
@@ -411,10 +446,7 @@ implements StorageNodeExecutor<T> {
 		localReqConf.setRetries(false);
 		//
 		shutdown();
-		synchronized(LOG) {
-			LOG.debug(Markers.PERF_SUM, "Summary metrics below for {}", getName());
-			logMetrics(Level.DEBUG, Markers.PERF_SUM);
-		}
+		logMetrics(Level.DEBUG, Markers.PERF_SUM);
 	}
 	//
 	@Override
@@ -423,17 +455,11 @@ implements StorageNodeExecutor<T> {
 		if(!isShutdown()) {
 			interrupt();
 		}
-		try {
-			if(!awaitTermination(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)) {
-				LOG.debug(Markers.MSG, "Response timeout on node executor close {}", getName());
-			}
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Interrupted closing node executor {}", getName());
-		} finally {
-			LOG.debug(Markers.MSG, "Dropping {} tasks", shutdownNow().size());
-		}
-		//
-		LOG.debug(Markers.MSG, "Closed {}", getThreadFactory().toString());
+		localReqConf.close();
+		LOG.debug(
+			Markers.MSG, "Dropped {} tasks while closing \"{}\"",
+			shutdownNow().size(), getThreadFactory().toString()
+		);
 	}
 	//
 }

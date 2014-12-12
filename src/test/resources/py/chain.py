@@ -33,7 +33,7 @@ except NoSuchElementException:
 	LOG.error(Markers.ERR, "No chain simultaneous flag specified, try arg -Dscenario.chain.simultaneous=<VALUE> to override")
 LOG.info(
 	Markers.MSG,
-	"Simultaneous" if FLAG_SIMULTANEOUS else "Sequential" + " load chain: {}",
+	("Simultaneous" if FLAG_SIMULTANEOUS else "Sequential") + " load chain: {}",
 	LOAD_CHAIN
 )
 #
@@ -87,6 +87,9 @@ def execute(chain=(), flagSimultaneous=True):
 			chain[0].join(RUN_TIME[1].toMillis(RUN_TIME[0]))
 		except:
 			LOG.error(Markers.ERR, "No 1st load executor in the chain")
+		finally:
+			for load in chain:
+				load.close()
 	else:
 		prevLoad, nextLoad = None, None
 		for nextLoad in chain:
@@ -102,15 +105,15 @@ def execute(chain=(), flagSimultaneous=True):
 							LOG, Level.ERROR, e, "Producer \"{}\" execution failure", prevLoad
 						)
 					finally:
-						prevLoad.close()
-				try:
-					nextLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
-				except Throwable as e:
-					ExceptionHandler.trace(
-						LOG, Level.ERROR, e, "Consumer \"{}\" execution failure", nextLoad
-					)
-				finally:
-					nextLoad.close()
+						prevLoad.interrupt()
+				else:
+					try:
+						nextLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
+					except Throwable as e:
+						ExceptionHandler.trace(
+							LOG, Level.ERROR, e, "Consumer \"{}\" execution failure", nextLoad
+						)
+				nextLoad.close()
 			prevLoad = nextLoad
 #
 if __name__=="__builtin__":

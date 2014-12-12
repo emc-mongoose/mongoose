@@ -12,8 +12,6 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 //
-import org.apache.logging.log4j.message.Message;
-import org.apache.logging.log4j.message.TimestampMessage;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.AnnotationConfiguration;
@@ -21,19 +19,17 @@ import org.hibernate.criterion.Restrictions;
 //
 import java.io.File;
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
-import java.util.List;
 import java.util.logging.Level;
 //
 /**
  * Created by olga on 24.10.14.
  */
-@Plugin(name="Hibernate", category="Core", elementType="appender", printObject=true)
+@Plugin(name="hibernate", category="Core", elementType="appender", printObject=true)
 public final class HibernateAppender
-extends AbstractAppender{
+extends AbstractAppender {
 	//
 	private final static Layout<? extends Serializable>
 			DEFAULT_LAYOUT = SerializedLayout.createLayout();
@@ -53,11 +49,10 @@ extends AbstractAppender{
 		KEY_RUN_MODE = "run.mode";
 	//
 	private HibernateAppender(
-		final String name, final Filter filter,
-		final Layout<? extends Serializable> layout,
-		final String runId, final String runMode
+		final String name, final Filter filter, final Layout<? extends Serializable> layout,
+		final String runId, final String runMode, final boolean ignoreExceptions
 	) {
-		super(name, filter, layout);
+		super(name, filter, layout, ignoreExceptions);
 	}
 	//
 	@PluginFactory
@@ -87,14 +82,15 @@ extends AbstractAppender{
 				initDataBase(userName, passWord, url);
 				setStatusEntity();
 			}
-			newAppender = new HibernateAppender(name, filter, DEFAULT_LAYOUT, runId, runMode);
+			newAppender = new HibernateAppender(
+				name, filter, DEFAULT_LAYOUT, runId, runMode, ignoreExceptions
+			);
 		} catch (final Exception e) {
 			throw new IllegalStateException("Open DB session failed", e);
 		}
 		return newAppender;
 	}
 	// init database session with username,password and url
-	@Deprecated
 	private static void initDataBase(
 		final String userName, final String passWord, final String url
 	) {
@@ -152,9 +148,9 @@ extends AbstractAppender{
 					.setProperty("hibernate.connection.url", url)
 					.buildSessionFactory();
 		}
-		catch (Throwable ex) {
+		catch(final Exception e) {
 			// Make sure you log the exception, as it might be swallowed
-			throw new ExceptionInInitializerError("Initial SessionFactory creation failed. "+ex);
+			throw new ExceptionInInitializerError(e);
 		}
 		return newSessionFactory;
 	}
