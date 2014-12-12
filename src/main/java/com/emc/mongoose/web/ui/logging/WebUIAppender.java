@@ -28,8 +28,10 @@ public final class WebUIAppender
 extends AbstractAppender {
 	private final static int MAX_ELEMENTS_IN_THE_LIST = 10000;
 	//
-	private final static ConcurrentHashMap<String, CircularConcurrentLinkedQueue<LogEvent>> LOG_EVENTS_MAP = new ConcurrentHashMap<>();
-	private final static List<WebSocketLogListener> LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
+	private final static ConcurrentHashMap<String, CircularConcurrentLinkedQueue<LogEvent>>
+		LOG_EVENTS_MAP = new ConcurrentHashMap<>();
+	private final static List<WebSocketLogListener>
+		LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
 	//
 	private final static Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
