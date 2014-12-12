@@ -66,10 +66,10 @@ $(document).ready(function() {
 
 
 	$(document).on('click', '.breadcrumb ul a', function() {
-		var sameElement = $(this).attr("href");
-		var element = $(".folders a[href='" + sameElement + "']");
+		var sameElement = $(this).attr("href").replace("#", "");
+		var element = $(".folders a[href='#" + sameElement + "']");
 		if (!element.length) {
-			element = $(".folders label[for='" + sameElement.replace("#", '') + "'");
+			element = $('label[for="' + sameElement + '"]');
 		}
 		element.trigger('click');
 	});
@@ -200,22 +200,24 @@ jQuery.fn.prependChild = function(html) {
 	});
 }*/
 
-function configureWebSocket(url, countOfRecords) {
+function configureWebSocket(location, countOfRecords) {
 	var webSocketServer = {
 		connect: function() {
-			var webSocket = new WebSocket(url);
-			webSocket.onopen = function() {
-				//	empty
-			};
-			webSocket.onmessage = function(message) {
-				var json = JSON.parse(message.data);
+			this.ws = new WebSocket(location);
+			//
+			this.ws.onopen = function() {
+				// empty
+			}
+			//
+			this.ws.onmessage = function(m) {
+				var json = JSON.parse(m.data);
 				var entry = json.contextMap["run.id"].split(".").join("_");
-				//	fix later
+				// fix later
 				if (!json.message.message) {
 					str = json.message.messagePattern.split("{}");
-					var resultString = "";
-					for (var i = 0; i < str.length; i++) {
-						resultString += str[i] + json.message.stringArgs[i];
+					resultString = "";
+					for (s = 0; s < str.length - 1; s++) {
+						resultString += str[s]+json.message.stringArgs[s];
 					}
 					json.message.message = resultString + str[str.length - 1];
 				}
@@ -223,6 +225,7 @@ function configureWebSocket(url, countOfRecords) {
 					return;
 				if (!json.marker.hasOwnProperty("name"))
 					return;
+				//
 				switch (json.marker.name) {
 					case "err":
 						if ($("#"+entry+"errors-log table tbody tr").length > countOfRecords) {
@@ -249,9 +252,10 @@ function configureWebSocket(url, countOfRecords) {
 						$("#"+entry+"perf-avg-csv table tbody").append(appendStringToTable(json));
 						break;
 				}
-			};
-			webSocket.onclose = function() {
-				webSocket = null;
+			}
+			//
+			this.ws.onclose = function() {
+				this.ws = null;
 			}
 		}
 	};

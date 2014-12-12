@@ -2,6 +2,7 @@
 <%@ taglib uri='http://java.sun.com/jsp/jstl/core' prefix='c'%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 <%@ taglib uri="WEB-INF/property.tld" prefix="rt" %>
+<!DOCTYPE html>
 <html>
 	<head>
 		<meta charset="utf-8">
@@ -48,7 +49,6 @@
 			<div class="tabs-wrapper">
 				<ul class="nav nav-tabs" role="presentation">
 					<li class="active"><a href="#configuration" data-toggle="tab">Configuration</a></li>
-
 					<c:forEach var="mode" items="${sessionScope.runmodes}">
 						<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
 						<li><a href="#${correctMode}" data-toggle="tab">
