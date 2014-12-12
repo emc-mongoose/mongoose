@@ -1,6 +1,7 @@
 package com.emc.mongoose.run;
 
 import org.apache.commons.cli.*;
+import org.apache.commons.lang.StringUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -182,8 +183,26 @@ public class HumanFriendlyCli {
             result.put("auth.id", props.getProperty("user"));
             result.put("auth.secret", props.getProperty("secretkey"));
             result.put("api.s3.bucket", props.getProperty("bucket").split(" ")[0]);
-            result.put("storage.addrs", System.getenv("DataNodes")
-                    .replace('(', ' ').replace(')', ' ').trim().replace(' ', ','));
+
+            String dataNodes = System.getenv("DataNodes")
+                    .replace('(', ' ').replace(')', ' ').trim().replace(' ', ',');
+
+            String s3Ports = props.getProperty("s3UnSecurePort");
+
+            if(s3Ports != null){
+                //Looks like we are working with StandaloneDeploymentOutput with custom port config
+                String firstDataNode = dataNodes.split(",")[0];
+
+                List<String> address = new ArrayList<>();
+
+                for(String port : s3Ports.split(",")){
+                    address.add(firstDataNode + ":" + port);
+                }
+
+                result.put("storage.addrs", StringUtils.join(address, ','));
+            }else{
+               result.put("storage.addrs", dataNodes);
+            }
 
             return result;
         }
