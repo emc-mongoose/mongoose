@@ -43,7 +43,6 @@ public final class StartServlet extends HttpServlet {
 	//
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
-		System.out.println(request.getParameter("storage.addrs"));
 		if (!isRunIdFree(request.getParameter(Main.KEY_RUN_ID))) {
 			String resultString;
 			if (threadsMap.get(request.getParameter(Main.KEY_RUN_ID)) != null) {
