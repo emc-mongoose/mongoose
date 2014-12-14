@@ -7,6 +7,8 @@ $(document).ready(function() {
 	walkTreeMap(propertiesMap, ul, shortPropsMap);
 	buildDivBlocksByFileNames(shortPropsMap);
 	generatePropertyPage();
+	$(".folders").hide();
+	$("#extended-config").hide();
 
 	configureWebSocket(WEBSOCKET_URL, COUNT_OF_RECORDS).connect();
 
@@ -18,8 +20,8 @@ $(document).ready(function() {
 		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
 	});
 
-	$('a[href="#remote"]').hide();
-	$("select").on("change", function() {
+	/*$('a[href="#remote"]').hide();
+	$("#select").on("change", function() {
 		var valueSelected = this.value;
 		if (valueSelected === "client") {
 			$('a[href="#remote"]').show();
@@ -31,6 +33,19 @@ $(document).ready(function() {
 			$('a[href="#remote"]').hide();
 		}
 		$("#run-mode").val(valueSelected);
+	});*/
+
+	$("#config-type").on("change", function() {
+		var valueSelected = this.value;
+		if (valueSelected === "base") {
+			$(".folders").hide();
+			$("#extended-config").hide();
+			$("#base-config").show();
+		} else {
+			$(".folders").show();
+			$("#extended-config").show();
+			$("#base-config").hide();
+		}
 	});
 
 	$("#start").click(function(e) {

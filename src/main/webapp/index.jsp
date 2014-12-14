@@ -74,6 +74,14 @@
 							</button>
 						</div>
 
+						<div id="config">
+							<label for="config-type">Config type</label>
+							<select id="config-type">
+								<option value="base">base</option>
+								<option value="extended">extended</option>
+							</select>
+						</div>
+
 						<!-- List of folders from JS-->
 						<ul class="folders">
 
@@ -81,21 +89,51 @@
 					</div>
 
 					<div id="main-content">
+						<div id="base-config">
+							<form class="form-horizontal" role="form">
+								<div>
+									<div class="form-group">
+										<label for="auth.id" class="col-sm-2 control-label">auth.id</label>
+										<div class="col-sm-10">
+											<input type="text" class="form-control" id="auth.id" name="auth.id">
+										</div>
+									</div>
 
-						<!-- List of breadcrumbs from JS -->
-						<ol class="breadcrumb">
+									<div class="form-group">
+										<label for="auth.secret" class="col-sm-2 control-label">auth.secret</label>
+										<div class="col-sm-10">
+											<input type="text" class="form-control" id="auth.secret" name="auth.secret">
+										</div>
+									</div>
+								</div>
 
-						</ol>
+								<div>
+									<label for="data">data</label>
+									<select id="data">
+										<option>objects</option>
+										<option>time</option>
+									</select>
+									<div class='form-group'>
 
-						<form class="form-horizontal" id="main-form" role="form">
-							<input type="hidden" name="run.mode" id="run-mode" value="standalone">
+									</div>
+								</div>
+							</form>
+						</div>
+						<div id="extended-config">
+							<!-- List of breadcrumbs from JS -->
+							<ol class="breadcrumb">
 
-							<!-- Input fields with labels from JS -->
-							<div id="configuration-content">
+							</ol>
 
-							</div>
-						</form>
+							<form class="form-horizontal" id="main-form" role="form">
+								<input type="hidden" name="run.mode" id="run-mode" value="standalone">
 
+								<!-- Input fields with labels from JS -->
+								<div id="configuration-content">
+
+								</div>
+							</form>
+						</div>
 					</div>
 				</div>
 				<c:forEach var="mode" items="${sessionScope.runmodes}">

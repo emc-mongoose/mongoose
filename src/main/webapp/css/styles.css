@@ -21,7 +21,7 @@ label {
 	height: 50px;
 }
 
-#run-modes {
+#run-modes, #config {
 	margin-top: 15px;
 	text-align: center;
 	padding-bottom: 5px;
@@ -253,4 +253,9 @@ th:nth-child(5) {
 
 .form-horizontal .control-label {
 	text-align: left;
+}
+
+#base-config {
+	margin-top: 10px;
+	margin-left: 10px;
 }
