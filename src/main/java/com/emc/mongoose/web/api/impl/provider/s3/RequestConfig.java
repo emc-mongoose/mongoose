@@ -1,16 +1,21 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
+import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
+import com.emc.mongoose.web.api.impl.BasicWSIOTask;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.web.data.impl.BasicWSObject;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -178,6 +183,19 @@ extends WSRequestConfigBase<T> {
 					.array()
 			)
 		);
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	public final Producer<T> getAnyDataProducer(final long maxCount) {
+		Producer<T> producer = null;
+		try {
+			producer = (Producer<T>) new BucketProducer<>(
+				(Bucket<BasicWSObject>) bucket, BasicWSObject.class, maxCount
+			);
+		} catch(final NoSuchMethodException e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
+		}
+		return producer;
 	}
 	//
 	@Override

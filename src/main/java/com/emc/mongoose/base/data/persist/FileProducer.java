@@ -30,11 +30,12 @@ implements Producer<T> {
 	//
 	private final Path fPath;
 	private final Constructor<T> dataItemConstructor;
+	private final long maxCount;
 	//
 	private Consumer<T> consumer = null;
 	//
 	@SuppressWarnings("unchecked")
-	public FileProducer(final String fPathStr, final Class<T> dataItemsImplCls)
+	public FileProducer(final long maxCount, final String fPathStr, final Class<T> dataItemsImplCls)
 	throws NoSuchMethodException, IOException {
 		super(fPathStr);
 		//
@@ -46,6 +47,8 @@ implements Producer<T> {
 			throw new IOException("File \""+fPathStr+"\" is not readable");
 		}
 		dataItemConstructor = dataItemsImplCls.getConstructor(String.class);
+		//
+		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 	}
 	//
 	public final String getPath() {
@@ -74,12 +77,12 @@ implements Producer<T> {
 					nextData = dataItemConstructor.newInstance(nextLine);
 					try {
 						consumer.submit(nextData);
+						dataItemsCount ++;
 					} catch(final Exception e) {
 						ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to submit data item");
 					}
-					dataItemsCount ++;
 				}
-			} while(!isInterrupted());
+			} while(!isInterrupted() && dataItemsCount < maxCount);
 		} catch(final IOException e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final Exception e) {

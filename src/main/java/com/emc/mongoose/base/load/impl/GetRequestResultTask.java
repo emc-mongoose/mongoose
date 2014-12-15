@@ -11,8 +11,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 /**
  Created by kurila on 11.12.14.
  */
@@ -22,49 +20,26 @@ implements Runnable {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final LoadExecutor<T> executor;
-	private final AsyncIOTask<T> task;
-	private final Future<Future<AsyncIOTask.Result>> futureSubmitResult;
+	private final AsyncIOTask<T> ioTask;
 	//
-	public GetRequestResultTask(
-		final LoadExecutor<T> executor, final AsyncIOTask<T> task,
-		final Future<Future<AsyncIOTask.Result>> futureSubmitResult
-	) {
+	public GetRequestResultTask(final LoadExecutor<T> executor, final AsyncIOTask<T> ioTask) {
 		this.executor = executor;
-		this.task = task;
-		this.futureSubmitResult = futureSubmitResult;
+		this.ioTask = ioTask;
 	}
 	//
 	@Override
 	public final void run() {
-		AsyncIOTask.Result result = AsyncIOTask.Result.FAIL_UNKNOWN;
+		AsyncIOTask.Result result;
 		try {
-			result = futureSubmitResult.get().get();
-		} catch(final InterruptedException e) {
-			result = AsyncIOTask.Result.FAIL_TIMEOUT;
-			LOG.trace(Markers.ERR, "Interrupted while waiting for the response");
+			ioTask.join();
+			result = ioTask.getResult();
 		} catch(final CancellationException e) {
 			result = AsyncIOTask.Result.FAIL_TIMEOUT;
 			LOG.warn(Markers.ERR, "Request has been cancelled:", e);
-		} catch(final ExecutionException e) {
-			final Throwable cause = e.getCause();
-			if(InterruptedException.class.isInstance(cause)) {
-				LOG.trace(Markers.MSG, "Poisoned");
-					/*try {
-						consumer.submit(null); // pass the poison through the consumer-producer chain
-					} catch(final RemoteException ee) {
-						LOG.debug(Markers.ERR, "Failed to feed the poison to consumer due to {}", ee.toString());
-					}*/
-			} else {
-				ExceptionHandler.trace(
-					LOG, Level.WARN, cause, "Unhandled request execution failure"
-				);
-				result = AsyncIOTask.Result.FAIL_UNKNOWN;
-			}
 		} catch(final Exception e) {
 			result = AsyncIOTask.Result.FAIL_UNKNOWN;
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
 		}
-		// dispatch depending on the result
-		executor.dispatch(task, result);
+		executor.handleResult(ioTask, result);
 	}
 }

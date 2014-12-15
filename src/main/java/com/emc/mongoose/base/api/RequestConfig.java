@@ -2,6 +2,7 @@ package com.emc.mongoose.base.api;
 //
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.DataSource;
+import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import java.io.Closeable;
@@ -56,6 +57,8 @@ extends Externalizable, Cloneable, Closeable {
 	RequestConfig<T> setLoadNumber(final int loadNumber);
 	//
 	AsyncIOTask<T> getRequestFor(final T dataItem);
+	//
+	Producer<T> getAnyDataProducer(final long maxCount);
 	//
 	void configureStorage()
 	throws IllegalStateException;

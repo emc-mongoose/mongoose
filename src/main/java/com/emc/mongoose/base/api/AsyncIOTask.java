@@ -4,15 +4,13 @@ import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.util.pool.BasicInstancePool;
 //
 import java.io.Closeable;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-//
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
  */
 public interface AsyncIOTask<T extends DataItem>
-extends Callable<AsyncIOTask<T>>, Closeable {
+extends Closeable {
 	//
 	enum Type {
 		CREATE, READ, DELETE, UPDATE, APPEND
@@ -60,6 +58,10 @@ extends Callable<AsyncIOTask<T>>, Closeable {
 	//
 	long getRespTimeDone();
 	//
-	void execute()
-	throws Exception;
+	void join()
+	throws InterruptedException;
+	//
+	void reset();
+	//
+	void complete();
 }

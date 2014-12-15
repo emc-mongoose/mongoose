@@ -43,5 +43,6 @@ extends Producer<T>, Consumer<T> {
 	void join(final long milliSecs)
 	throws RemoteException, InterruptedException;
 	//
-	Future<AsyncIOTask.Result> submit(final AsyncIOTask<T> request);
+	Future<AsyncIOTask<T>> submit(final AsyncIOTask<T> request);
+	void submitResultHandling(final AsyncIOTask<T> request);
 }

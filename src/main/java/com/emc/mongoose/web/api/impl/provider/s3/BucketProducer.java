@@ -3,6 +3,7 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.web.api.WSIOTask;
+import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -19,6 +20,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -26,7 +29,7 @@ import org.xml.sax.SAXException;
 /**
  Created by kurila on 08.10.14.
  */
-public final class BucketProducer<T extends BasicWSObject>
+public final class BucketProducer<T extends WSObject>
 extends Thread
 implements Producer<T> {
 	//
@@ -34,10 +37,15 @@ implements Producer<T> {
 	//
 	private volatile Consumer<T> consumer = null;
 	private final Bucket<T> bucket;
+	private final Constructor<T> dataConstructor;
+	private final long maxCount;
 	//
-	public BucketProducer(final Bucket<T> bucket) {
+	public BucketProducer(final Bucket<T> bucket, final Class<T> dataCls, final long maxCount)
+	throws NoSuchMethodException {
 		super("bucket-" + bucket.getName() + "-producer");
 		this.bucket = bucket;
+		this.dataConstructor = dataCls.getConstructor(String.class, Long.class);
+		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 	}
 	//
 	@Override
@@ -67,9 +75,14 @@ implements Producer<T> {
 							try {
 								final SAXParser parser = SAXParserFactory
 									.newInstance().newSAXParser();
-								parser.parse(
-									respEntity.getContent(), new BucketListHandler<>(consumer)
-								);
+								try(final InputStream in = respEntity.getContent()) {
+									parser.parse(
+										in,
+										new BucketListHandler<>(consumer, dataConstructor, maxCount)
+									);
+								} catch(final SAXException e) {
+									ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to parse");
+								}
 							} catch(final ParserConfigurationException | SAXException e) {
 								ExceptionHandler.trace(
 									LOG, Level.ERROR, e, "Failed to create SAX parser"

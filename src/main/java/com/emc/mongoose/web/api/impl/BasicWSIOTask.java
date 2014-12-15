@@ -1,14 +1,10 @@
 package com.emc.mongoose.web.api.impl;
 //
-import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.impl.IOTaskBase;
 import com.emc.mongoose.base.api.RequestConfig;
-import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.util.io.HTTPContentInputStream;
 import com.emc.mongoose.util.io.HTTPContentOutputStream;
-import com.emc.mongoose.util.pool.BasicInstancePool;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
-import com.emc.mongoose.web.api.WSClient;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
@@ -40,8 +36,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 /**
  Created by kurila on 06.06.14.
  */
@@ -51,13 +45,7 @@ implements WSIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static WSIOTask<WSObject> POISON = new BasicWSIOTask<WSObject>() {
-		@Override
-		public final void execute()
-		throws InterruptedException {
-			throw new InterruptedException("Attempted to eat the poison");
-		}
-	};
+	public final static WSIOTask<WSObject> POISON = new BasicWSIOTask<>();
 	//
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	protected MutableHTTPRequest httpRequest = null;
@@ -89,7 +77,7 @@ implements WSIOTask<T> {
 		}
 		return this;
 	}
-	//
+	/*
 	@Override
 	public void execute()
 	throws InterruptedException {
@@ -105,10 +93,9 @@ implements WSIOTask<T> {
 		} catch(final ExecutionException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Request execution failure");
 		}
-	}
+	}*/
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private volatile Exception exception = null;
-	private volatile boolean respFlagDone = false, respFlagCancel = false;
 	@SuppressWarnings("FieldCanBeLocal")
 	private volatile int respStatusCode = -1;
 	//
@@ -159,15 +146,9 @@ implements WSIOTask<T> {
 	@Override
 	public final void resetRequest()
 	throws IOException {
-		result = Result.FAIL_UNKNOWN;
-		reqTimeStart = 0;
-		reqTimeDone = 0;
+		reset();
 		reqEntity = null;
 		respStatusCode = -1;
-		respTimeStart = 0;
-		respTimeDone = 0;
-		respFlagCancel = false;
-		respFlagDone = false;
 		exception = null;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -262,14 +243,13 @@ implements WSIOTask<T> {
 			} else {
 				wsReqConf.consumeContent(contentStream, ioCtl, dataItem);
 			}
-		} finally {
-			respTimeDone = System.nanoTime();
 		}
 	}
 	//
 	@Override
 	public final void responseCompleted(final HttpContext context) {
-		respFlagDone = true;
+		respTimeDone = System.nanoTime();
+		complete();
 	}
 	//
 	@Override
@@ -284,12 +264,11 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final boolean isDone() {
-		return respFlagDone;
+		return respTimeDone != 0;
 	}
 	//
 	@Override
 	public final boolean cancel() {
-		respFlagCancel = true;
-		return respFlagCancel;
+		return false;
 	}
 }

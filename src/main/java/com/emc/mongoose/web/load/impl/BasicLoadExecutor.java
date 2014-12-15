@@ -1,6 +1,8 @@
 package com.emc.mongoose.web.load.impl;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
+import com.emc.mongoose.base.data.persist.FileProducer;
+import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.object.load.impl.ObjectLoadExecutorBase;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -10,6 +12,7 @@ import com.emc.mongoose.util.threading.WorkerFactory;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
+import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 //
 import org.apache.http.Header;
@@ -51,7 +54,7 @@ import java.util.concurrent.Future;
 /**
  Created by kurila on 02.12.14.
  */
-public abstract class WSLoadExecutorBase<T extends WSObject>
+public class BasicLoadExecutor<T extends WSObject>
 extends ObjectLoadExecutorBase<T>
 implements WSLoadExecutor<T> {
 	//
@@ -123,15 +126,18 @@ implements WSLoadExecutor<T> {
 		}
 	}
 	//
-	public WSLoadExecutorBase(
-		final RunTimeConfig runTimeConfig,
-		final String[] addrs, final WSRequestConfig<T> reqConf, final long maxCount,
-		final int threadsPerNode, final String listFile
+	public BasicLoadExecutor(
+		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
+		final int threadsPerNode, final String listFile, final long maxCount,
+		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
 	) throws ClassCastException {
-		super(runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, listFile);
+		super(
+			runTimeConfig, reqConfig, addrs, threadsPerNode, listFile, maxCount,
+			sizeMin, sizeMax, sizeBias, countUpdPerReq
+		);
 		//
 		final int threadCount = threadsPerNode * addrs.length;
-		final List<Header> sharedHeaders = reqConf.getSharedHeaders();
+		final List<Header> sharedHeaders = reqConfig.getSharedHeaders();
 		final String userAgent = runTimeConfig.getRunName() + "/" + runTimeConfig.getRunVersion();
 		//
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
@@ -221,5 +227,32 @@ implements WSLoadExecutor<T> {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		return response;
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	protected Producer<T> newFileBasedProducer(final long maxCount, final String listFile) {
+		Producer<T> localProducer = null;
+		try {
+			localProducer = (Producer<T>) new FileProducer<>(
+				maxCount, listFile, BasicWSObject.class
+			);
+		} catch(final NoSuchMethodException e) {
+			ExceptionHandler.trace(LOG, Level.FATAL, e, "Unexpected failure");
+		} catch(final IOException e) {
+			ExceptionHandler.trace(
+				LOG, Level.ERROR, e,
+				String.format("Failed to read the data items file \"%s\"", listFile)
+			);
+		}
+		return localProducer;
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	protected Producer<T> newDataProducer(
+		final long maxCount, final long minObjSize, final long maxObjSize, final float objSizeBias
+	) {
+		return (Producer<T>) new BasicNewDataProducer<>(
+			maxCount, minObjSize, maxObjSize, objSizeBias
+		);
 	}
 }

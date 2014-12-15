@@ -2,7 +2,6 @@ package com.emc.mongoose.object.api;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
-import com.emc.mongoose.base.api.AsyncIOClient;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -35,10 +34,4 @@ extends RequestConfig<T> {
 	//
 	@Override
 	ObjectRequestConfig<T> setProperties(final RunTimeConfig props);
-	//
-	@Override
-	ObjectRequestConfig<T> setClient(final AsyncIOClient<T> client);
-	//
-	@Override
-	ObjectIOClient<T> getClient();
 }

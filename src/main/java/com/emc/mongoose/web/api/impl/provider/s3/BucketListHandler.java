@@ -1,6 +1,7 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.Consumer;
+import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -12,11 +13,14 @@ import org.apache.logging.log4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+//
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 /**
  Created by kurila on 09.10.14.
  */
-public final class BucketListHandler<T extends BasicWSObject>
+public final class BucketListHandler<T extends WSObject>
 extends DefaultHandler {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -27,7 +31,8 @@ extends DefaultHandler {
 		QNAME_ITEM_SIZE = "Size";
 	//
 	private final Consumer<T> consumer;
-	@SuppressWarnings("FieldCanBeLocal")
+	private final Constructor<T> dataConstructor;
+	private final long maxCount;
 	private volatile long count = 0;
 	private volatile boolean
 		isInsideItem = false,
@@ -36,8 +41,12 @@ extends DefaultHandler {
 	private volatile String
 		strId = null, strSize = null;
 	//
-	BucketListHandler(final Consumer<T> consumer) {
+	BucketListHandler(
+		final Consumer<T> consumer, final Constructor<T> dataConstructor, final long maxCount
+	) {
 		this.consumer = consumer;
+		this.dataConstructor = dataConstructor;
+		this.maxCount = maxCount;
 	}
 	//
 	@Override
@@ -76,13 +85,20 @@ extends DefaultHandler {
 			//
 			if(strId !=null && strId.length() > 0 && size > 0) {
 				try {
-					consumer.submit((T) new BasicWSObject(strId, size));
+					if(count < maxCount) {
+						consumer.submit(dataConstructor.newInstance(strId, size));
+						count ++;
+					} else {
+						endDocument();
+					}
 				} catch(final RemoteException e) {
 					ExceptionHandler.trace(
 						LOG, Level.WARN, e, "Failed to submit new data object to remote consumer"
 					);
 				} catch(final InterruptedException e) {
 					endDocument();
+				} catch(final InstantiationException | IllegalAccessException | InvocationTargetException e) {
+					ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
 				}
 			} else {
 				LOG.trace(Markers.ERR, "Invalid object id ({}) or size ({})", strId, strSize);

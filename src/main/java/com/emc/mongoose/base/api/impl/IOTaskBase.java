@@ -10,23 +10,19 @@ import com.emc.mongoose.util.pool.BasicInstancePool;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
-import java.util.concurrent.ConcurrentHashMap;
+
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by andrey on 12.10.14.
  */
-public abstract class IOTaskBase<T extends DataObject>
+public class IOTaskBase<T extends DataObject>
 implements AsyncIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static IOTaskBase POISON = new IOTaskBase() {
-		@Override
-		public final void execute()
-		throws InterruptedException {
-			throw new InterruptedException("Attempted to eat the poison");
-		}
-	};
+	public final static IOTaskBase POISON = new IOTaskBase();
 	//
 	protected volatile RequestConfig<T> reqConf = null;
 	protected volatile T dataItem = null;
@@ -35,7 +31,10 @@ implements AsyncIOTask<T> {
 	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
 	private volatile long transferSize = 0;
 	private volatile Type type;
-
+	//
+	protected final Lock lock = new ReentrantLock();
+	protected final Condition condDone = lock.newCondition();
+	//
 	public IOTaskBase() {
 
 	}
@@ -43,9 +42,31 @@ implements AsyncIOTask<T> {
 	@Override
 	public final void close() {
 		final BasicInstancePool<AsyncIOTask> pool = POOL_MAP.get(reqConf);
+		reset();
 		pool.release(this);
 	}
+	//
+	@Override
+	public final void reset() {
+		result = Result.FAIL_TIMEOUT;
+		reqTimeStart = 0;
+		reqTimeDone = 0;
+		respTimeStart = 0;
+		respTimeDone = 0;
+		transferSize = 0;
+	}
 	// END pool related things
+	@Override
+	public final void complete() {
+		if(lock.tryLock()) {
+			try {
+				condDone.signalAll();
+			} finally {
+				lock.unlock();
+			}
+		}
+	}
+	//
 	@Override
 	public AsyncIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
 		this.reqConf = reqConf;
@@ -105,17 +126,22 @@ implements AsyncIOTask<T> {
 	}
 	//
 	@Override
-	public final AsyncIOTask<T> call()
-	throws Exception {
-		execute();
-		LOG.info(
-			Markers.PERF_TRACE, String.format(
-				FMT_PERF_TRACE, dataItem.getId(), dataItem.getSize(), result.code,
-				reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
-				respTimeDone - respTimeStart
-			)
-		);
-		return this;
+	public final void join() {
+		if(lock.tryLock()) {
+			try {
+				condDone.await();
+				LOG.info(
+					Markers.PERF_TRACE, String.format(
+						FMT_PERF_TRACE, dataItem.getId(), dataItem.getSize(), result.code,
+						reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
+						respTimeDone - respTimeStart
+					)
+				);
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.MSG, "Interrupted");
+			} finally {
+				lock.unlock();
+			}
+		}
 	}
-	//
 }

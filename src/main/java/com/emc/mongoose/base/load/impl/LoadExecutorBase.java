@@ -31,6 +31,8 @@ import org.apache.logging.log4j.Marker;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -58,7 +60,13 @@ implements LoadExecutor<T> {
 	protected final DataSource<T> dataSrc;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	protected final RequestConfig<T> reqConfig;
+	protected final AsyncIOTask.Type loadType;
 	//
+	protected volatile Producer<T> producer = null;
+	protected volatile Consumer<T> consumer;
+	private volatile static int instanceN = 0;
+	protected volatile long maxCount, sizeMin, sizeMax, tsStart;
+	private final float sizeBias;
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
 	protected final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
@@ -68,11 +76,6 @@ implements LoadExecutor<T> {
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter metricsReporter;
 	// METRICS section END
-	protected volatile Producer<T> producer = null;
-	protected volatile Consumer<T> consumer;
-	private volatile static int instanceN = 0;
-	protected volatile long maxCount, tsStart;
-	//
 	private final Lock lock = new ReentrantLock();
 	private final Condition condDone = lock.newCondition();
 	private volatile boolean isClosed = false;
@@ -87,13 +90,18 @@ implements LoadExecutor<T> {
 	//
 	@SuppressWarnings("unchecked")
 	protected LoadExecutorBase(
-		final RunTimeConfig runTimeConfig,
-		final String[] addrs, final RequestConfig<T> reqConfig, final long maxCount,
-		final int threadsPerNode, final String listFile
+		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
+		final int threadsPerNode, final String listFile, final long maxCount,
+		final long sizeMin, final long sizeMax, final float sizeBias
 	) throws ClassCastException {
 		//
 		this.runTimeConfig = runTimeConfig;
 		this.reqConfig = reqConfig;
+		if(reqConfig == null) {
+			throw new IllegalArgumentException("Request config shouldn't be null");
+		} else {
+			loadType = reqConfig.getLoadType();
+		}
 		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
@@ -114,7 +122,27 @@ implements LoadExecutor<T> {
 			Integer.toString(threadsPerNode) + 'x' + Integer.toString(nodeCount);
 		setName(name);
 		this.threadsPerNode = threadsPerNode;
-		this.maxCount = maxCount>0? maxCount : Long.MAX_VALUE;
+		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
+		//
+		if(sizeMin < 1) {
+			throw new IllegalArgumentException(
+				String.format(
+					"Min data item size (%s) is less than 1 [bytes]",
+					RunTimeConfig.formatSize(sizeMin)
+				)
+			);
+		}
+		if(sizeMin > sizeMax) {
+			throw new IllegalArgumentException(
+				String.format(
+					"Min data item size (%s) is greater than max (%s)",
+					RunTimeConfig.formatSize(sizeMin), RunTimeConfig.formatSize(sizeMin)
+				)
+			);
+		}
+		this.sizeMin = sizeMin;
+		this.sizeMax = sizeMax;
+		this.sizeBias = sizeBias;
 		// init metrics
 		counterSubm = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUBM));
 		counterRej = metrics.counter(MetricRegistry.name(name, METRIC_NAME_REJ));
@@ -128,7 +156,6 @@ implements LoadExecutor<T> {
 		nodes = new String[nodeCount];
 		// create and configure the connection manager
 		dataSrc = reqConfig.getDataSource();
-		setFileBasedProducer(listFile);
 		//
 		final int
 			processingThreadCount = addrs.length * (int) Math.pow(threadsPerNode, 0.8),
@@ -161,11 +188,30 @@ implements LoadExecutor<T> {
 			new WorkerFactory("processResponses")
 		);
 		resultExecutor.prestartAllCoreThreads();
+		//
+		if(listFile != null && Files.isReadable(Paths.get(listFile))) {
+			producer = newFileBasedProducer(maxCount, listFile);
+		} else if(loadType == AsyncIOTask.Type.CREATE) {
+			producer = newDataProducer(maxCount, sizeMin, sizeMax, sizeBias);
+		} else {
+			producer = reqConfig.getAnyDataProducer(maxCount);
+		}
+		//
+		if(producer != null) {
+			try {
+				producer.setConsumer(this);
+			} catch(final RemoteException e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
+			}
+		}
 		// by default, may be overriden later externally
 		setConsumer(new LogConsumer<T>());
 	}
 	//
-	protected abstract void setFileBasedProducer(final String listFile);
+	protected abstract Producer<T> newFileBasedProducer(final long maxCount, final String listFile);
+	protected abstract Producer<T> newDataProducer(
+		final long maxCount, final long minObjSize, final long maxObjSize, final float objSizeBias
+	);
 	//
 	@Override
 	public void start() {
@@ -355,19 +401,14 @@ implements LoadExecutor<T> {
 				// stop further submitting
 				submitExecutor.shutdown();
 			} else {
-				final AsyncIOTask<T> ioTask = reqConfig.getRequestFor(dataItem);
 				final SubmitRequestTask<T, LoadExecutorBase<T>>
-					submitTask = new SubmitRequestTask<>(ioTask, this);
-				boolean flagSubmSucc = false;
+					submitTask = new SubmitRequestTask<>(dataItem, this, reqConfig);
+				Future<AsyncIOTask<T>> futureSubmitResult = null;
 				int rejectCount = 0;
-				while(
-					!flagSubmSucc && rejectCount < retryCountMax && !submitExecutor.isShutdown()
-				) {
+				do {
 					//
-					Future<Future<AsyncIOTask.Result>> futureSubmitResult = null;
 					try {
 						futureSubmitResult = submitExecutor.submit(submitTask);
-						flagSubmSucc = true;
 					} catch(final RejectedExecutionException e) {
 						rejectCount ++;
 						try {
@@ -377,14 +418,11 @@ implements LoadExecutor<T> {
 						}
 					}
 					//
-					try {
-						resultExecutor.submit(
-							new GetRequestResultTask<>(this, ioTask, futureSubmitResult)
-						);
-					} catch(final RejectedExecutionException e) {
-						LOG.warn(Markers.MSG, "Rejected the response processing task");
-					}
-				}
+				} while(
+					futureSubmitResult != null &&
+					rejectCount < retryCountMax &&
+					!submitExecutor.isShutdown()
+				);
 			}
 		} else {
 			submitExecutor.shutdown();
@@ -398,7 +436,12 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public final void dispatch(final AsyncIOTask<T> ioTask, final AsyncIOTask.Result result) {
+	public final void submitResultHandling(final AsyncIOTask<T> ioTask) {
+		resultExecutor.submit(new GetRequestResultTask<>(this, ioTask));
+	}
+	//
+	@Override
+	public final void handleResult(final AsyncIOTask<T> ioTask, final AsyncIOTask.Result result) {
 		final T dataItem = ioTask.getDataItem();
 		try {
 			if(dataItem == null) {
@@ -531,10 +574,6 @@ implements LoadExecutor<T> {
 		this.maxCount = maxCount;
 	}
 	//
-	public final int getThreadCount() {
-		return threadsPerNode * nodes.length;
-	}
-	//
 	@Override
 	public final Consumer<T> getConsumer() {
 		return consumer;
@@ -556,9 +595,5 @@ implements LoadExecutor<T> {
 	@Override
 	public final Producer<T> getProducer() {
 		return producer;
-	}
-	//
-	public final DataSource<T> getDataSource() {
-		return dataSrc;
 	}
 }

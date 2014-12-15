@@ -17,7 +17,7 @@ extends Closeable {
 	void submit(final T data)
 	throws RemoteException, InterruptedException;
 	//
-	void dispatch(final AsyncIOTask<T> task, AsyncIOTask.Result result);
+	void handleResult(final AsyncIOTask<T> task, AsyncIOTask.Result result);
 	//
 	long getMaxCount()
 	throws RemoteException;
