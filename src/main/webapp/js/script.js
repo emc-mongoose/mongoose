@@ -12,6 +12,14 @@ $(document).ready(function() {
 
 	configureWebSocket(WEBSOCKET_URL, COUNT_OF_RECORDS).connect();
 
+	$("#fake-scenario").on("change", function(e) {
+		var notSelectedElements = $("#fake-scenario option:not(:selected)");
+		notSelectedElements.each(function() {
+			$("#" + $(this).val()).hide();
+		});
+		$("#" + $(this).val()).show();
+	});
+
 	$("#run\\.time").change(function() {
 		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
 	});

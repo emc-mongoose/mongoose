@@ -108,13 +108,146 @@
 								</div>
 
 								<div>
-									<label for="data">data</label>
-									<select id="data">
-										<option>objects</option>
-										<option>time</option>
-									</select>
-									<div class='form-group'>
+									<div class="form-group">
+										<label for="data" class="col-sm-2 control-label">data</label>
+										<div class="col-sm-10">
+											<select id="data" class="form-select">
+												<option>time</option>
+												<option>objects</option>
+											</select>
+										</div>
+									</div>
+									<div class="form-group">
+										<label for="data.count" class="col-sm-2 control-label">data.count</label>
+										<div class="col-sm-10">
+											<input type="text" class="form-control" id="data.count" name="data.count">
+										</div>
+									</div>
 
+									<div class="form-group">
+										<label for="run.time" class="col-sm-2 control-label">run.time</label>
+										<div class="col-sm-10">
+											<input type="text" class="form-control pre-select" id="run.time" name="run.time">
+											<select class="form-select">
+												<option>hours</option>
+											</select>
+										</div>
+									</div>
+									<div class="form-group">
+										<label for="data.size.min" class="col-sm-2 control-label">data.size.min</label>
+										<div class="col-sm-10">
+											<input type="text" class="form-control" id="data.size.min" name="data.size.min">
+										</div>
+									</div>
+									<div class="form-group">
+										<label for="data.size.max" class="col-sm-2 control-label">data.size.max</label>
+										<div class="col-sm-10">
+											<input type="text" class="form-control" id="data.size.max" name="data.size.max">
+										</div>
+									</div>
+									<div class="form-group">
+										<label for="data.src.fpath" class="col-sm-2 control-label">data.src.fpath</label>
+										<div class="col-sm-10">
+											<input type="text" class="form-control" id="data.src.fpath" name="data.src.fpath">
+										</div>
+									</div>
+									<div class="form-group">
+										<label for="remote.servers" class="col-sm-2 control-label">remote.servers</label>
+										<div class="col-sm-10">
+											<input type="text" class="form-control" id="remote.servers" name="remote.servers">
+										</div>
+									</div>
+									<div class="form-group">
+										<label for="run.id" class="col-sm-2 control-label">run.id</label>
+										<div class="col-sm-10">
+											<input type="text" class="form-control" id="run.id" name="run.id">
+										</div>
+									</div>
+									<div class="form-group">
+										<label for="remote.servers" class="col-sm-2 control-label">remote.servers</label>
+										<div class="col-sm-10">
+											<input type="text" class="form-control" id="remote.servers" name="remote.servers">
+										</div>
+									</div>
+									<div class="form-group">
+										<label for="run.scenario.name" class="col-sm-2 control-label">run.scenario.name</label>
+										<div class="col-sm-10">
+											<select class="form-select" id="fake-scenario">
+												<option value="fake-single">single</option>
+												<option value="fake-rampup">rampup</option>
+												<option value="fake-chain">chain</option>
+											</select>
+											<div class="submenu">
+												<div id="fake-single">
+													<label for="scenario.single.load">load</label>
+													<select id="scenario.single.load" name="scenario.single.load">
+														<option>create</option>
+														<option>read</option>
+														<option>update</option>
+														<option>delete</option>
+														<option>append</option>
+													</select>
+												</div>
+												<div id="fake-rampup">
+													<label for="scenario.chain.load">chain.load</label>
+													<input type="text" class="form-control" id="scenario.chain.load" name="scenario.chain.load">
+													<label for="scenario.rampup.thread.counts">thread.counts</label>
+													<input type="text" class="form-control" id="scenario.rampup.thread.counts" name="scenario.rampup.thread.counts">
+													<label for="scenario.rampup.sizes">sizes</label>
+													<input type="text" class="form-control" id="scenario.rampup.sizes" name="scenario.rampup.sizes">
+												</div>
+												<div id="fake-chain">
+													<label for="scenario.chain.load">load</label>
+													<input type="text" class="form-control" id="scenario.chain.load" name="scenario.chain.load">
+													<label for="scenario.chain.simultaneous">simultaneous</label>
+													<select id="scenario.chain.simultaneous" name="scenario.chain.simultaneous">
+														<option>true</option>
+														<option>false</option>
+													</select>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<div class="form-group">
+										<label for="run.request.retires" class="col-sm-2 control-label">run.request.retires</label>
+										<div class="col-sm-10">
+											<select class="form-select">
+												<option>true</option>
+												<option>false</option>
+											</select>
+										</div>
+									</div>
+
+									<div class="form-group">
+										<label for="storage.addrs" class="col-sm-2 control-label">storage.addrs</label>
+										<div class="col-sm-10">
+											<input type="text" class="form-control" id="storage.addrs" name="storage.addrs">
+										</div>
+									</div>
+
+									<div class="form-group">
+										<label for="storage.api" class="col-sm-2 control-label">storage.api</label>
+										<div class="col-sm-10">
+											<select class="form-select">
+												<option>s3</option>
+												<option>atmos</option>
+												<option>swift</option>
+											</select>
+											<div class="submenu">
+												<div id="s3">
+													<label for="api.s3.bucket">bucket</label>
+													<input type="text" class="form-control" id="api.s3.bucket" name="api.s3.bucket">
+												</div>
+												<div id="atmos">
+													<label for="api.atmos.subtenant">subtenant</label>
+													<input type="text" class="form-control" id="api.atmos.subtenant" name="api.atmos.subtenant">
+												</div>
+												<div id="swift">
+
+												</div>
+											</div>
+										</div>
 									</div>
 								</div>
 							</form>
