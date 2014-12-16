@@ -232,6 +232,9 @@ implements WSRequest<T> {
 							LOG.warn(Markers.ERR, "Storage prays about a mercy");
 							result = Result.FAIL_SVC;
 							break;
+						case (507):
+							LOG.warn(Markers.ERR, "Insufficient storage");
+							result = Result.FAIL_SVC;
 						default:
 							LOG.warn(Markers.ERR, "Response code: {}", result);
 							result = Result.FAIL_UNKNOWN;

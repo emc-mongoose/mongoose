@@ -81,7 +81,13 @@ implements RequestConfig<T> {
 	}
 	@Override
 	public RequestConfigImpl<T> setAddr(final String addr) {
-		uriBuilder.setHost(addr);
+		if(addr.contains(":")){ //Is not going to work for IPv6
+			String[] hostAndPort = addr.split(":", 2);
+			uriBuilder.setHost(hostAndPort[0]);
+			uriBuilder.setPort(Integer.parseInt(hostAndPort[1]));
+		}else{
+			uriBuilder.setHost(addr);
+		}
 		return this;
 	}
 	//

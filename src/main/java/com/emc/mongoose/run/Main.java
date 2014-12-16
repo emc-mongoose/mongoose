@@ -29,6 +29,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 /**
  Created by kurila on 04.07.14.
@@ -91,12 +92,14 @@ public final class Main {
 		initSecurity();
 		//
 		final String runMode;
-		if(args==null || args.length==0) {
+		if(args==null || args.length==0 || args[0].startsWith("-")) {
 			runMode = RUN_MODE_STANDALONE;
 		} else {
 			runMode = args[0];
 		}
 		//
+
+		Map<String, String> properties = HumanFriendlyCli.parseCli(args);
 
 		System.setProperty(KEY_RUN_MODE, runMode);
 		final Logger rootLogger = initLogging(runMode);
@@ -118,6 +121,12 @@ public final class Main {
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RUN_TIME_CONFIG.get().loadSysProps();
 		rootLogger.debug(Markers.MSG, "Loaded the system properties");
+
+		if(!properties.isEmpty()) {
+			rootLogger.info(Markers.MSG, "Overriding properties {}", properties);
+
+			RUN_TIME_CONFIG.get().overrideSystemProperties(properties);
+		}
 		//
 		switch (runMode) {
 			case RUN_MODE_SERVER:

@@ -77,7 +77,8 @@ dependencies {
 		'org.hibernate:hibernate-c3p0:4.3.7.Final',
 		'org.hibernate:hibernate-ehcache:4.3.7.Final',
 		//
-		'jstl:jstl:1.2'
+		'jstl:jstl:1.2',
+		'commons-cli:commons-cli:1.2'
 	)
 	runtime (
 		//
