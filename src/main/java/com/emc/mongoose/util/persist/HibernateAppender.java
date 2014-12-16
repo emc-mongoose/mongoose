@@ -1,6 +1,7 @@
 package com.emc.mongoose.util.persist;
 //
 import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.object.data.DataObject;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -12,17 +13,24 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 //
+import org.hibernate.Criteria;
+import org.hibernate.LockMode;
+import org.hibernate.LockOptions;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.hibernate.cfg.Configuration;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.exception.ConstraintViolationException;
 //
 import java.io.File;
 import java.io.Serializable;
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 //
 /**
@@ -37,6 +45,7 @@ extends AbstractAppender {
 	private final static Layout<? extends Serializable>
 			DEFAULT_LAYOUT = SerializedLayout.createLayout();
 	private static Boolean ENABLED_FLAG;
+	private volatile boolean flag = false;
 	private static final String
 		MSG = "msg",
 		PERF_TRACE = "perfTrace",
@@ -105,21 +114,37 @@ extends AbstractAppender {
 	// append method // - really?! (kurilov) - yep! (zhavzharova)
 	@Override
 	public final void append(final LogEvent event) {
+		Session session = SESSION_FACTORY.openSession();
 		if (ENABLED_FLAG){
 			final String marker = event.getMarker().toString();
 			final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
 			switch (marker) {
 				case MSG:
 				case ERR:
-					persistMessages(event);
+					persistMessages(event, session);
+					session.flush();
+					session.close();
 					break;
 				case DATA_LIST:
-					//persistDataObjects(message);
+					persistDataObjects(message, session);
+					session.flush();
+					session.close();
 					break;
 				case PERF_TRACE:
-					persistTraces(event, message);
+						DataObjectEntity dataObjectEntity = loadDataObjectEntity(session,message[0],Integer.valueOf(message[1], 0x10));
+						final StatusEntity statusEntity = getStatusEntity(session, Integer.valueOf(message[2], 0x10));
+						final RunEntity runEntity = getRunEntity(session, event.getContextMap().get(KEY_RUN_ID));
+						final LoadEntity loadEntity = loadLoadEntity(session, event.getContextMap().get(KEY_LOAD_NUM), runEntity,
+								event.getContextMap().get(KEY_LOAD_TYPE), event.getContextMap().get(KEY_API));
+						//final ThreadEntity threadEntity = loadThreadEntity(session, loadEntity,
+						//		event.getContextMap().get(KEY_NODE_ADDR), event.getContextMap().get(KEY_THREAD_NUM));
+						//persistTraces(event, message, session);
+
+						session.flush();
+						session.close();
 					break;
 			}
+
 		}
 	}
 	//
@@ -148,7 +173,7 @@ extends AbstractAppender {
 	}
 	//
 	private static void persistStatusEntity(){
-		Session session = SESSION_FACTORY.openSession();
+		final Session session = SESSION_FACTORY.openSession();
 		session.beginTransaction();
 		for (final Request.Result result:Request.Result.values()){
 			StatusEntity statusEntity = loadStatusEntity(session, result);
@@ -158,73 +183,105 @@ extends AbstractAppender {
 		session.close();
 	}
 	//
-	private static void persistMessages(final LogEvent event){
-		Session session = SESSION_FACTORY.openSession();
-		session.beginTransaction();
+	private void persistMessages(final LogEvent event, final Session session)
+	{
 		final ModeEntity modeEntity = loadModeEntity(session, event.getContextMap().get(KEY_RUN_MODE));
 		final RunEntity runEntity = loadRunEntity(session, event.getContextMap().get(KEY_RUN_ID), modeEntity);
-		final MessageEntity messageEntity = loadMessageEntity(session, new Date(event.getTimeMillis()),
-			event.getLoggerName(), event.getLevel().toString(), event.getMessage().getFormattedMessage(), runEntity);
-		session.saveOrUpdate(messageEntity);
-		session.getTransaction().commit();
-		session.close();
+		loadMessageEntity(session, new Date(event.getTimeMillis()),
+				event.getLoggerName(), event.getLevel().toString(), event.getMessage().getFormattedMessage(), runEntity);
 	}
 	//
-	private static synchronized void persistTraces(final LogEvent event, final String[] message){
-		Session session = SESSION_FACTORY.openSession();
-		session.beginTransaction();
-		final ModeEntity modeEntity = loadModeEntity(session, event.getContextMap().get(KEY_RUN_MODE));
-		final RunEntity runEntity = loadRunEntity(session, event.getContextMap().get(KEY_RUN_ID), modeEntity);
+	private static synchronized void persistTraces(final LogEvent event, final String[] message, final Session session)
+	{
+		final RunEntity runEntity = getRunEntity(session, event.getContextMap().get(KEY_RUN_ID));
 		final LoadEntity loadEntity = loadLoadEntity(session, event.getContextMap().get(KEY_LOAD_NUM), runEntity,
-			event.getContextMap().get(KEY_LOAD_TYPE), event.getContextMap().get(KEY_API));
+				event.getContextMap().get(KEY_LOAD_TYPE), event.getContextMap().get(KEY_API));
 		final ThreadEntity threadEntity = loadThreadEntity(session, loadEntity,
 			event.getContextMap().get(KEY_NODE_ADDR), event.getContextMap().get(KEY_THREAD_NUM));
 		TraceEntity traceEntity = loadTraceEntity(session, message[0], Long.valueOf(message[1], 0x10), threadEntity,
 			Integer.valueOf(message[2], 0x10), Long.valueOf(message[3], 0x10), Long.valueOf(message[4], 0x10));
-		session.saveOrUpdate(traceEntity);
-		session.getTransaction().commit();
-		session.close();
 	}
 	//
-	private static void persistDataObjects(final String[] message){
-		Session session = SESSION_FACTORY.openSession();
-		session.beginTransaction();
+	private static void persistDataObjects(final String[] message, final Session session)
+	{
 		loadDataObjectEntity(session, message[0], message[1],
-			Long.valueOf(message[2],0x10), Long.valueOf(message[3],0x10), Long.valueOf(message[4],0x10));
-		session.getTransaction().commit();
-		session.close();
+				Long.valueOf(message[2], 0x10), Long.valueOf(message[3], 0x10), Long.valueOf(message[4], 0x10));
 	}
 
-	private static ModeEntity loadModeEntity(final Session session, final String modeName){
-		ModeEntity modeEntity = getModeEntity(session, modeName);
-		if (modeEntity == null){
-			modeEntity = new ModeEntity(modeName);
-			session.saveOrUpdate(modeEntity);
+	private static ModeEntity loadModeEntity(final Session session, final String modeName)
+	{
+		ModeEntity modeEntity = null;
+		try {
+			modeEntity = getModeEntity(session, modeName);
+			if (modeEntity == null) {
+				modeEntity = new ModeEntity(modeName);
+				session.beginTransaction();
+				session.save(modeEntity);
+				session.getTransaction().commit();
+			}
+		}catch (final ConstraintViolationException e){
+			return getModeEntity(session, modeName);
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
 		}
 		return modeEntity;
 	}
-	private static RunEntity loadRunEntity(final Session session, final String runName, final ModeEntity mode){
-		RunEntity runEntity = getRunEntity(session, runName);
-		if (runEntity == null){
-			runEntity = new RunEntity(mode, runName);
-			session.saveOrUpdate(runEntity);
+	private static RunEntity loadRunEntity(final Session session, final String runName, final ModeEntity mode)
+	{
+		RunEntity runEntity = null;
+		try {
+			runEntity = getRunEntity(session, runName);
+			if (runEntity == null){
+				runEntity = new RunEntity(mode, runName);
+				session.beginTransaction();
+				session.saveOrUpdate(runEntity);
+				session.getTransaction().commit();
+			}
+		}catch (final ConstraintViolationException e){
+			return getRunEntity(session, runName);
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
 		}
 		return runEntity;
 	}
-	private static ApiEntity loadApiEntity(final Session session, final String apiName){
-		ApiEntity apiEntity = getApiEntity(session, apiName);
-		if (apiEntity==null){
-			apiEntity = new ApiEntity(apiName);
-			session.saveOrUpdate(apiName);
+	private static ApiEntity loadApiEntity(final Session session, final String apiName)
+	{
+		ApiEntity apiEntity = null;
+		try {
+			apiEntity = getApiEntity(session, apiName);
+			if (apiEntity == null) {
+				apiEntity = new ApiEntity(apiName);
+				session.beginTransaction();
+				session.saveOrUpdate(apiEntity);
+				session.getTransaction().commit();
+			}
+		}catch (final ConstraintViolationException e){
+			return getApiEntity(session, apiName);
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
 		}
 		return apiEntity;
 	}
 	//
-	private static LoadTypeEntity loadLoadTypeEntity(final Session session, final String typeName){
-		LoadTypeEntity loadTypeEntity = getLoadTypeEntity(session, typeName);
-		if (loadTypeEntity==null){
-			loadTypeEntity = new LoadTypeEntity(typeName);
-			session.saveOrUpdate(loadTypeEntity);
+	private static LoadTypeEntity loadLoadTypeEntity(final Session session, final String typeName)
+	{
+		LoadTypeEntity loadTypeEntity = null;
+		try {
+			loadTypeEntity = getLoadTypeEntity(session, typeName);
+			if (loadTypeEntity == null) {
+				loadTypeEntity = new LoadTypeEntity(typeName);
+				session.beginTransaction();
+				session.saveOrUpdate(loadTypeEntity);
+				session.getTransaction().commit();
+			}
+		}catch (final ConstraintViolationException e){
+			return getLoadTypeEntity(session, typeName);
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
 		}
 		return loadTypeEntity;
 	}
@@ -232,63 +289,117 @@ extends AbstractAppender {
 	private static LoadEntity loadLoadEntity(final Session session, final String loadNumberString, final RunEntity run,
 		final LoadTypeEntity type, final ApiEntity api)
 	{
-		LoadEntity loadEntity = getLoadEntity(session, Long.valueOf(loadNumberString), run);
-		if (loadEntity == null) {
-			loadEntity = new LoadEntity(run, type, Long.valueOf(loadNumberString), api);
-			session.saveOrUpdate(loadEntity);
+		LoadEntity loadEntity = null;
+		try {
+			loadEntity = getLoadEntity(session, Long.valueOf(loadNumberString), run);
+			if (loadEntity == null) {
+				loadEntity = new LoadEntity(run, type, Long.valueOf(loadNumberString), api);
+				session.beginTransaction();
+				session.saveOrUpdate(loadEntity);
+				session.getTransaction().commit();
+			}
+		}catch (final ConstraintViolationException e){
+			return getLoadEntity(session, Long.valueOf(loadNumberString), run);
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
 		}
 		return loadEntity;
 	}
 	//If api and load's types aren't known
 	private static LoadEntity loadLoadEntity(final Session session, final String loadNumber, final RunEntity run,
-		final String typeName, final String apiName)
+									  final String typeName, final String apiName)
 	{
 		ApiEntity apiEntity = loadApiEntity(session, apiName);
 		LoadTypeEntity loadTypeEntity = loadLoadTypeEntity(session, typeName);
 		return loadLoadEntity(session, loadNumber,run,loadTypeEntity,apiEntity);
 	}
 	//
-	private static MessageClassEntity loadClassOfMessage(final Session session, final String className){
-		MessageClassEntity messageClassEntity = getMessageClassEntity(session, className);
-		if (messageClassEntity==null){
-			messageClassEntity = new MessageClassEntity(className);
-			session.saveOrUpdate(messageClassEntity);
+	private static MessageClassEntity loadClassOfMessage(final Session session, final String className)
+	{
+		MessageClassEntity messageClassEntity = null;
+		try {
+			messageClassEntity = getMessageClassEntity(session, className);
+			if (messageClassEntity == null) {
+				messageClassEntity = new MessageClassEntity(className);
+				session.beginTransaction();
+				session.saveOrUpdate(messageClassEntity);
+				session.getTransaction().commit();
+			}
+		}catch (final ConstraintViolationException e){
+			return getMessageClassEntity(session, className);
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
 		}
 		return messageClassEntity;
 	}
 	//
-	private static LevelEntity loadLevelEntity(final Session session, final String levelName){
-		LevelEntity levelEntity = getLevelEntity(session, levelName);
-		if (levelEntity==null){
-			levelEntity = new LevelEntity(levelName);
-			session.saveOrUpdate(levelEntity);
+	private static LevelEntity loadLevelEntity(final Session session, final String levelName)
+	{
+		LevelEntity levelEntity = null;
+		try {
+			levelEntity = getLevelEntity(session, levelName);
+			//session.buildLockRequest(LockOptions.READ).lock(levelEntity);
+			if (levelEntity == null) {
+				levelEntity = new LevelEntity(levelName);
+				session.beginTransaction();
+				session.saveOrUpdate(levelEntity);
+				session.getTransaction().commit();
+			}
+		}catch (final ConstraintViolationException e){
+			return getLevelEntity(session, levelName);
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
 		}
 		return levelEntity;
 	}
 	//
-	private static NodeEntity loadNodeEntity(final Session session, final String nodeAddr){
-		NodeEntity nodeEntity = getNodeEntity(session, nodeAddr);
-		if (nodeEntity == null){
-			nodeEntity = new NodeEntity(nodeAddr);
-			session.saveOrUpdate(nodeEntity);
+	private static NodeEntity loadNodeEntity(final Session session, final String nodeAddr)
+	{
+		NodeEntity nodeEntity = null;
+		try {
+			nodeEntity = getNodeEntity(session, nodeAddr);
+			if (nodeEntity == null){
+				nodeEntity = new NodeEntity(nodeAddr);
+				session.beginTransaction();
+				session.saveOrUpdate(nodeEntity);
+				session.getTransaction().commit();
+			}
+		}catch (final ConstraintViolationException e){
+			return getNodeEntity(session, nodeAddr);
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
 		}
 		return nodeEntity;
 	}
 	//If node is known
 	private static ThreadEntity loadThreadEntity(final Session session, final String threadNumberString,
-		final LoadEntity load, final NodeEntity node
-	){
-		ThreadEntity threadEntity = getThreadEntity(session, Long.valueOf(threadNumberString), load);
-		if (threadEntity == null){
-			threadEntity = new ThreadEntity(load, node, Long.valueOf(threadNumberString));
-			session.saveOrUpdate(threadEntity);
+		final LoadEntity load, final NodeEntity node)
+	{
+		ThreadEntity threadEntity = null;
+		try {
+			threadEntity = getThreadEntity(session, Long.valueOf(threadNumberString), load);
+			if (threadEntity == null) {
+				threadEntity = new ThreadEntity(load, node, Long.valueOf(threadNumberString));
+				session.beginTransaction();
+				session.saveOrUpdate(threadEntity);
+				session.getTransaction().commit();
+			}
+		}catch (final ConstraintViolationException e){
+			return getThreadEntity(session, Long.valueOf(threadNumberString), load);
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
 		}
 		return threadEntity;
 	}
 	//If node isn't known
 	private static ThreadEntity loadThreadEntity(final Session session, final LoadEntity load, final String nodeAddr,
-		final String threadNumber
-	){
+		final String threadNumber)
+	{
 		final NodeEntity node = loadNodeEntity(session, nodeAddr);
 		return loadThreadEntity(session, threadNumber,load,node);
 	}
@@ -296,35 +407,60 @@ extends AbstractAppender {
 	private static DataObjectEntity loadDataObjectEntity(
 		final Session session, final String identifier, final long size)
 	{
-		DataObjectEntity dataObjectEntity = getDataObjectEntity(session, identifier, size);
-		if (dataObjectEntity == null){
-			dataObjectEntity = new DataObjectEntity(identifier, size);
-			session.saveOrUpdate(dataObjectEntity);
+		DataObjectEntity dataObjectEntity = null;
+		try {
+			dataObjectEntity = getDataObjectEntity(session, identifier, size);
+			if (dataObjectEntity == null) {
+				dataObjectEntity = new DataObjectEntity(identifier, size);
+				session.beginTransaction();
+				session.saveOrUpdate(dataObjectEntity);
+				session.getTransaction().commit();
+			}
+		}catch (final ConstraintViolationException e){
+			return getDataObjectEntity(session, identifier, size);
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
 		}
 		return dataObjectEntity;
 	}
 	//
 	private static DataObjectEntity loadDataObjectEntity(
-		final Session session, final String identifier, final String ringOffset, final long size,
-		final long layer, final long mask
-	) {
-		DataObjectEntity dataObjectEntity = getDataObjectEntity(session, identifier, size);
-		if (dataObjectEntity == null){
-			dataObjectEntity = new DataObjectEntity(identifier, ringOffset, size, layer, mask);
-			session.saveOrUpdate(dataObjectEntity);
-		}else{
-			if (dataObjectEntity.getRingOffset() == null){
+			final Session session, final String identifier, final String ringOffset, final long size,
+			final long layer, final long mask
+	){
+		DataObjectEntity dataObjectEntity = null;
+		try {
+			dataObjectEntity = getDataObjectEntity(session, identifier, size);
+			if (dataObjectEntity==null){
+				dataObjectEntity = new DataObjectEntity(identifier,ringOffset,size,layer,mask);
+				session.beginTransaction();
+				session.saveOrUpdate(dataObjectEntity);
+				session.getTransaction().commit();
+			}
+			if (dataObjectEntity.getRingOffset() == null) {
 				dataObjectEntity.setRingOffset(ringOffset);
+				session.beginTransaction();
 				session.saveOrUpdate(dataObjectEntity);
+				session.getTransaction().commit();
 			}
-			if (dataObjectEntity.getLayer() != layer){
+			if (dataObjectEntity.getLayer() != layer) {
 				dataObjectEntity.setLayer(layer);
+				session.beginTransaction();
 				session.saveOrUpdate(dataObjectEntity);
+				session.getTransaction().commit();
 			}
-			if (dataObjectEntity.getMask() != mask){
+			if (dataObjectEntity.getMask() != mask) {
 				dataObjectEntity.setMask(mask);
+				session.beginTransaction();
 				session.saveOrUpdate(dataObjectEntity);
+				session.getTransaction().commit();
 			}
+		}catch (final ConstraintViolationException e){
+			return getDataObjectEntity(session, identifier, size);
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
 		}
 		return dataObjectEntity;
 	}
@@ -346,20 +482,41 @@ extends AbstractAppender {
 	){
 		final MessageClassEntity classMessage = loadClassOfMessage(session, className);
 		final LevelEntity level = loadLevelEntity(session, levelName);
-		return new MessageEntity(run, classMessage, level, text, tstamp);
+		MessageEntity messageEntity = null;
+		try {
+			session.beginTransaction();
+			messageEntity = new MessageEntity(run, classMessage, level, text, tstamp);
+			session.saveOrUpdate(messageEntity);
+			session.getTransaction().commit();
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
+		}
+		return messageEntity;
 	}
 	//
 	private static TraceEntity loadTraceEntity(final Session session, final String identifier, final long size,
-		final ThreadEntity threadEntity, final int status, final long reqStart, final long reqDur)
-	{
+		final ThreadEntity threadEntity, final int status, final long reqStart, final long reqDur
+	){
 		final StatusEntity statusEntity = getStatusEntity(session, status);
 		final DataObjectEntity dataItem = loadDataObjectEntity(session, identifier, size);
-		return new TraceEntity(dataItem, threadEntity, statusEntity, reqStart, reqDur);
+		TraceEntity traceEntity = null;
+		try{
+			traceEntity = new TraceEntity(dataItem, threadEntity, statusEntity, reqStart, reqDur);
+			session.beginTransaction();
+			session.saveOrUpdate(traceEntity);
+			session.getTransaction().commit();
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
+		}
+		return traceEntity;
 	}
 	//
 	private static RunEntity getRunEntity(final Session session, final String runName){
 		return (RunEntity) session.createCriteria(RunEntity.class)
-			.add( Restrictions.eq("name", runName))
+			.setCacheable(true)
+			.add(Restrictions.eq("name", runName))
 			.uniqueResult();
 	}
 	private static StatusEntity getStatusEntity(final Session session, final int codeStatus){
@@ -368,13 +525,15 @@ extends AbstractAppender {
 	//
 	private static LoadEntity getLoadEntity(final Session session, final long loadNumber, final RunEntity run){
 		return (LoadEntity) session.createCriteria(LoadEntity.class)
-			.add( Restrictions.eq("num", loadNumber))
+			.setCacheable(true)
+			.add(Restrictions.eq("num", loadNumber))
 			.add(Restrictions.eq("run", run))
 			.uniqueResult();
 	}
 	//
 	private static ThreadEntity getThreadEntity(final Session session, final long threadNumber, final LoadEntity load){
 		return (ThreadEntity) session.createCriteria(ThreadEntity.class)
+			.setCacheable(true)
 			.add(Restrictions.eq("load", load))
 			.add(Restrictions.eq("num", threadNumber))
 			.uniqueResult();
@@ -382,36 +541,42 @@ extends AbstractAppender {
 	//
 	private static ModeEntity getModeEntity(final Session session, final String modeName) {
 		return (ModeEntity) session.createCriteria(ModeEntity.class)
+			.setCacheable(true)
 			.add(Restrictions.eq("name", modeName))
 			.uniqueResult();
 	}
 	//
 	private static ApiEntity getApiEntity(final Session session, final String apiName) {
 		return (ApiEntity) session.createCriteria(ApiEntity.class)
+			.setCacheable(true)
 			.add(Restrictions.eq("name", apiName))
 			.uniqueResult();
 	}
 	//
 	private static LoadTypeEntity getLoadTypeEntity(final Session session, final String typeName) {
 		return (LoadTypeEntity) session.createCriteria(LoadTypeEntity.class)
+			.setCacheable(true)
 			.add(Restrictions.eq("name", typeName))
 			.uniqueResult();
 	}
 	//
 	private static MessageClassEntity getMessageClassEntity(final Session session, final String className) {
 		return (MessageClassEntity) session.createCriteria(MessageClassEntity.class)
+			.setCacheable(true)
 			.add(Restrictions.eq("name", className))
 			.uniqueResult();
 	}
 	//
 	private static LevelEntity getLevelEntity(final Session session, final String levelName) {
 		return (LevelEntity) session.createCriteria(LevelEntity.class)
+			.setCacheable(true)
 			.add(Restrictions.eq("name", levelName))
 			.uniqueResult();
 	}
 	//
 	private static NodeEntity getNodeEntity(final Session session, final String nodeAddr) {
 		return (NodeEntity) session.createCriteria(NodeEntity.class)
+			.setCacheable(true)
 			.add(Restrictions.eq("address", nodeAddr))
 			.uniqueResult();
 	}
@@ -419,10 +584,17 @@ extends AbstractAppender {
 	private static DataObjectEntity getDataObjectEntity(
 			final Session session, final String identifier, final long size
 	) {
-		return (DataObjectEntity) session.createCriteria(DataObjectEntity.class)
-			.add(Restrictions.eq("identifier", identifier))
-			.add(Restrictions.eq("size", size))
-			.uniqueResult();
+		DataObjectEntity dataObjectEntity = null;
+		try{
+			dataObjectEntity = (DataObjectEntity) session.createCriteria(DataObjectEntity.class)
+					.setCacheable(true)
+					.add(Restrictions.eq("identifier", identifier))
+					.add(Restrictions.eq("size", size))
+					.uniqueResult();
+		}catch(Exception e){
+			e.printStackTrace();
+		}
+		return dataObjectEntity;
 	}
 	/////////////////////////////////////
 	private final class ShutDownThread
@@ -434,9 +606,40 @@ extends AbstractAppender {
 			super("HibernateShutDown");
 			this.appender = appender;
 		}
+
 		@Override
 		public final void run() {
+			try {
+				getThread("main").join(60);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 			appender.stop();
+		}
+
+		private Thread[] getAllThreads( ) {
+			final ThreadGroup tg = Thread.currentThread( ).getThreadGroup();
+			final ThreadGroup parentThread = tg.getParent();
+			final ThreadMXBean thbean = ManagementFactory.getThreadMXBean();
+			int nAlloc = thbean.getThreadCount( );
+			int n = 0;
+			Thread[] threads;
+			do {
+				nAlloc *= 2;
+				threads = new Thread[ nAlloc ];
+				n = parentThread.enumerate( threads, true );
+			} while ( n == nAlloc );
+			return java.util.Arrays.copyOf( threads, n );
+		}
+
+		private Thread getThread( final String name ) {
+			if ( name == null )
+				throw new NullPointerException( "Null name" );
+			final Thread[] threads = getAllThreads( );
+			for ( Thread thread : threads )
+				if ( thread.getName( ).equals( name ) )
+					return thread;
+			return null;
 		}
 	}
 	//////////////////////////////////////

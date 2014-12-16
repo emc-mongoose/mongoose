@@ -38,7 +38,7 @@ extends AbstractAppender {
 		POOL_SIZE=1000;
 	private static final String SHUTDOWN = "Shutdown";
 	private final BlockingQueue<Serializable> queue;
-	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE,50, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(50));
+	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE,50, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(100));
 	private final int queueSize;
 	private final boolean blocking;
 	private final Configuration config;

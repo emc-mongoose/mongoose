@@ -1,5 +1,8 @@
 package com.emc.mongoose.util.persist;
 //
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -26,6 +29,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 	@UniqueConstraint(columnNames = "type"),
 	@UniqueConstraint(columnNames = "number"),
 	@UniqueConstraint(columnNames = "api")})
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public class LoadEntity
 implements Serializable {
 	@Id

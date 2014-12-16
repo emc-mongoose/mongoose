@@ -1,5 +1,8 @@
 package com.emc.mongoose.util.persist;
 //
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.OneToMany;
@@ -17,16 +20,15 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 16.10.14.
  */
 @Entity(name="Modes")
-@Table(name = "modes", uniqueConstraints = {
-	@UniqueConstraint(columnNames = "id"),
-	@UniqueConstraint(columnNames = "name")})
+@Table(name = "modes")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class ModeEntity
 implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
-	@Column(name = "id")
+	@Column(name = "id", unique = true)
 	private long id;
-	@Column(name = "name")
+	@Column(name = "name", unique = true)
 	private String name;
 	@OneToMany(targetEntity=RunEntity.class, fetch = FetchType.LAZY, mappedBy = "mode")
 	private Set<RunEntity> runsSet = new HashSet<RunEntity>();

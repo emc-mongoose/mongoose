@@ -25,8 +25,8 @@ CREATE DATABASE mongoose
 
 CREATE TABLE API
 (
-	id bigserial NOT NULL,
-	name text NOT NULL,
+	id bigserial NOT NULL UNIQUE,
+	name text NOT NULL UNIQUE,
 	CONSTRAINT id_api PRIMARY KEY (id)
 )
 WITH (
@@ -42,7 +42,7 @@ ALTER TABLE API
 CREATE TABLE Classes
 (
 	id bigserial NOT NULL,
-	name text NOT NULL,
+	name text NOT NULL UNIQUE,
 	CONSTRAINT id_class PRIMARY KEY (id)
 )
 WITH (
@@ -63,6 +63,7 @@ CREATE TABLE DataItems
 	size bigint NOT NULL,
 	layer bigint,
 	mask bigint,
+	UNIQUE(identifier,size),
 	CONSTRAINT id_data_item PRIMARY KEY (id)
 )
 WITH (
@@ -78,7 +79,7 @@ ALTER TABLE DataItems
 CREATE TABLE Levels
 (
 	id bigserial NOT NULL,
-	name text NOT NULL,
+	name text NOT NULL UNIQUE,
 	CONSTRAINT id_level PRIMARY KEY (id)
 )
 WITH (
@@ -94,7 +95,7 @@ ALTER TABLE Levels
 CREATE TABLE LoadType
 (
 	id bigserial NOT NULL,
-	name text NOT NULL,
+	name text NOT NULL UNIQUE,
 	CONSTRAINT id_loads_type PRIMARY KEY (id)
 )
 WITH (
@@ -110,7 +111,7 @@ ALTER TABLE LoadType
 CREATE TABLE Modes
 (
 	id bigserial NOT NULL,
-	name text NOT NULL,
+	name text NOT NULL UNIQUE,
 	CONSTRAINT id_mode PRIMARY KEY (id)
 )
 WITH (
@@ -126,7 +127,7 @@ ALTER TABLE Modes
 CREATE TABLE Nodes
 (
 	id bigserial NOT NULL,
-	address text NOT NULL,
+	address text NOT NULL UNIQUE,
 	CONSTRAINT id_node PRIMARY KEY (id)
 )
 WITH (
@@ -142,7 +143,7 @@ ALTER TABLE Nodes
 CREATE TABLE Statuses
 (
 	code integer NOT NULL,
-	name text NOT NULL,
+	name text NOT NULL UNIQUE,
 	CONSTRAINT code PRIMARY KEY (code)
 )
 WITH (
@@ -159,7 +160,7 @@ CREATE TABLE Runs
 (
 	id bigserial NOT NULL,
 	mode bigint NOT NULL,
-	name text NOT NULL,
+	name text NOT NULL UNIQUE,
 	CONSTRAINT id_run PRIMARY KEY (id),
 	CONSTRAINT mode FOREIGN KEY (mode)
 		REFERENCES Modes (id) MATCH SIMPLE
@@ -182,6 +183,7 @@ CREATE TABLE Loads
 	type bigint NOT NULL,
 	number bigint NOT NULL,
 	api bigint NOT NULL,
+	UNIQUE(run, number),
 	CONSTRAINT id_load PRIMARY KEY (id),
 	CONSTRAINT api FOREIGN KEY (api)
 		REFERENCES API (id) MATCH SIMPLE
@@ -238,6 +240,7 @@ CREATE TABLE Threads
 	load bigint NOT NULL,
 	node bigint NOT NULL,
 	num bigint NOT NULL,
+	UNIQUE(load, num),
 	CONSTRAINT id_thread PRIMARY KEY (id),
 	CONSTRAINT load FOREIGN KEY (load)
 		REFERENCES Loads (id) MATCH SIMPLE

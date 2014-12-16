@@ -12,7 +12,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 //
@@ -27,6 +26,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 	@UniqueConstraint(columnNames = "size"),
 	@UniqueConstraint(columnNames = "layer"),
 	@UniqueConstraint(columnNames = "mask")})
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class DataObjectEntity
 implements Serializable{
 	@Id
