@@ -251,7 +251,7 @@ implements WSRequestConfig<T> {
 		return userAgent;
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public final WSIOTask<T> getRequestFor(final T dataItem) {
 		WSIOTask<T> ioTask;
 		if(dataItem == null) {

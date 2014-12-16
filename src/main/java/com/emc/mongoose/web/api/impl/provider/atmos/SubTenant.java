@@ -1,5 +1,6 @@
 package com.emc.mongoose.web.api.impl.provider.atmos;
 //
+import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 //
@@ -26,25 +27,25 @@ implements com.emc.mongoose.object.api.provider.atmos.SubTenant<T> {
 	}
 	//
 	@Override
-	public final boolean exists()
+	public final boolean exists(final LoadExecutor<T> client)
 	throws IllegalStateException {
 		return true;
 	}
 	//
 	@Override
-	public final void create()
+	public final void create(final LoadExecutor<T> client)
 	throws IllegalStateException {
 		// TODO
 	}
 	//
 	@Override
-	public final void delete()
+	public final void delete(final LoadExecutor<T> client)
 	throws IllegalStateException {
 		// TODO
 	}
 	//
 	@Override
-	public final List<T> list()
+	public final List<T> list(final LoadExecutor<T> client)
 	throws IllegalStateException {
 		return Collections.emptyList();
 	}

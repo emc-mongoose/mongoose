@@ -243,7 +243,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilder<T, U> setThreadsPerNodeFor(
 		final short threadsPerNode, final AsyncIOTask.Type loadType
 	) throws IllegalArgumentException {
-		if(threadsPerNode<1) {
+		if(threadsPerNode < 1) {
 			throw new IllegalArgumentException("Thread count should not be less than 1");
 		}
 		LOG.debug(

@@ -54,7 +54,7 @@ implements LoadExecutor<T> {
 	private final Logger LOG = LogManager.getLogger();
 	//
 	protected final int threadsPerNode, retryCountMax, retryDelayMilliSec;
-	protected final String nodes[];
+	protected final String storageNodeAddrs[];
 	protected final ThreadPoolExecutor submitExecutor, resultExecutor;
 	//
 	protected final DataSource<T> dataSrc;
@@ -65,8 +65,7 @@ implements LoadExecutor<T> {
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
 	private volatile static int instanceN = 0;
-	protected volatile long maxCount, sizeMin, sizeMax, tsStart;
-	private final float sizeBias;
+	protected volatile long maxCount, tsStart;
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
 	protected final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
@@ -88,12 +87,11 @@ implements LoadExecutor<T> {
 		instanceN = lastInstanceN;
 	}
 	//
-	@SuppressWarnings("unchecked")
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int threadsPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
-	) throws ClassCastException {
+	) {
 		//
 		this.runTimeConfig = runTimeConfig;
 		this.reqConfig = reqConfig;
@@ -123,26 +121,6 @@ implements LoadExecutor<T> {
 		setName(name);
 		this.threadsPerNode = threadsPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		//
-		if(sizeMin < 1) {
-			throw new IllegalArgumentException(
-				String.format(
-					"Min data item size (%s) is less than 1 [bytes]",
-					RunTimeConfig.formatSize(sizeMin)
-				)
-			);
-		}
-		if(sizeMin > sizeMax) {
-			throw new IllegalArgumentException(
-				String.format(
-					"Min data item size (%s) is greater than max (%s)",
-					RunTimeConfig.formatSize(sizeMin), RunTimeConfig.formatSize(sizeMin)
-				)
-			);
-		}
-		this.sizeMin = sizeMin;
-		this.sizeMax = sizeMax;
-		this.sizeBias = sizeBias;
 		// init metrics
 		counterSubm = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUBM));
 		counterRej = metrics.counter(MetricRegistry.name(name, METRIC_NAME_REJ));
@@ -153,7 +131,7 @@ implements LoadExecutor<T> {
 		respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
 		metricsReporter.start();
 		// prepare the node executors array
-		nodes = new String[nodeCount];
+		storageNodeAddrs = addrs.clone();
 		// create and configure the connection manager
 		dataSrc = reqConfig.getDataSource();
 		//
@@ -189,12 +167,15 @@ implements LoadExecutor<T> {
 		);
 		resultExecutor.prestartAllCoreThreads();
 		//
-		if(listFile != null && Files.isReadable(Paths.get(listFile))) {
+		if(listFile != null && listFile.length() > 0 && Files.isReadable(Paths.get(listFile))) {
 			producer = newFileBasedProducer(maxCount, listFile);
+			LOG.debug(Markers.MSG, "{} will use file-based producer: {}", getName(), listFile);
 		} else if(loadType == AsyncIOTask.Type.CREATE) {
 			producer = newDataProducer(maxCount, sizeMin, sizeMax, sizeBias);
+			LOG.debug(Markers.MSG, "{} will use new data items producer", getName());
 		} else {
-			producer = reqConfig.getAnyDataProducer(maxCount);
+			producer = reqConfig.getAnyDataProducer(maxCount, this);
+			LOG.debug(Markers.MSG, "{} will use {} as data items producer", getName(), producer);
 		}
 		//
 		if(producer != null) {
@@ -232,7 +213,7 @@ implements LoadExecutor<T> {
 		//
 		LoadCloseHook.add(this);
 		//
-		tsStart = System.nanoTime();
+		//tsStart = System.nanoTime();
 		super.start();
 		LOG.info(Markers.MSG, "Started \"{}\"", getName());
 	}
@@ -484,7 +465,7 @@ implements LoadExecutor<T> {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static String FMT_EFF_SUM = "Load execution efficiency: %.1f[%%]";
+	//private final static String FMT_EFF_SUM = "Load execution efficiency: %.1f[%%]";
 	//
 	protected final void logMetrics(final Marker logMarker) {
 		//
@@ -557,7 +538,7 @@ implements LoadExecutor<T> {
 		}
 		//
 		if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
-			for(final StorageNodeExecutor<T> node: nodes) {
+			for(final StorageNodeExecutor<T> node: storageNodeAddrs) {
 				node.logMetrics(Level.TRACE, Markers.PERF_AVG);
 			}
 		}*/

@@ -1,5 +1,6 @@
 package com.emc.mongoose.base.data.persist;
 //
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.server.DataItemBufferSvc;

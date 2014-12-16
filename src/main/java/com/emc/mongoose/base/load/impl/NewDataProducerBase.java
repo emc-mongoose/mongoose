@@ -50,7 +50,7 @@ implements Producer<T> {
 	}
 	//
 	protected abstract T produceSpecificDataItem(final long nextSize)
-		throws IOException;
+	throws IOException;
 	//
 	private final static String
 		FMT_MSG_SUBMIT_NEXT = "Submitted object #%d of size %x",

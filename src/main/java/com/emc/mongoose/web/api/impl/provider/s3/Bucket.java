@@ -1,14 +1,16 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
+import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
-import com.emc.mongoose.web.api.WSClient;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.web.load.WSLoadExecutor;
 import org.apache.commons.lang.text.StrBuilder;
+//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -52,32 +54,32 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	final HttpResponse execute(final WSIOTask.HTTPMethod method)
+	final HttpResponse execute(final WSLoadExecutor<T> wsClient, final WSIOTask.HTTPMethod method)
 	throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
+		if(wsClient == null) {
+			throw new IllegalStateException("No HTTP client specified");
+		}
 		//
 		final MutableHTTPRequest httpReq = method.createRequest().setUriPath("/" + name);
 		reqConf.applyHeadersFinally(httpReq);
-		final WSClient<T> httpClient = reqConf.getClient();
-		//
-		if(httpClient == null) {
-			throw new IllegalStateException("No HTTP client specified");
-		}
-		return httpClient.execute(
+		return wsClient.execute(
 			new HttpHost(reqConf.getAddr(), reqConf.getPort(), reqConf.getScheme()), httpReq
 		);
 	}
 	//
 	@Override
-	public final boolean exists()
+	public final boolean exists(final LoadExecutor<T> client)
 	throws IllegalStateException {
 		boolean flagExists = false;
 		//
 		try {
-			final HttpResponse httpResp = execute(WSIOTask.HTTPMethod.HEAD);
+			final HttpResponse httpResp = execute(
+				(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.HEAD
+			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -112,11 +114,13 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	}
 	//
 	@Override
-	public final void create()
+	public final void create(final LoadExecutor<T> client)
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(WSIOTask.HTTPMethod.PUT);
+			final HttpResponse httpResp = execute(
+				(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.PUT
+			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -148,11 +152,13 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	}
 	//
 	@Override
-	public final void delete()
+	public final void delete(final LoadExecutor<T> client)
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(WSIOTask.HTTPMethod.DELETE);
+			final HttpResponse httpResp = execute(
+				(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.DELETE
+			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();

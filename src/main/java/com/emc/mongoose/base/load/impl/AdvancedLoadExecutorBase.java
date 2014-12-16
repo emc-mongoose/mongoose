@@ -22,6 +22,8 @@ extends LoadExecutorBase<T> {
 	//
 	private final AsyncIOTask.Type loadType;
 	private final int countUpdPerReq;
+	private final long sizeMin, sizeRange;
+	private final float sizeBias;
 	//
 	protected AdvancedLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
@@ -32,17 +34,47 @@ extends LoadExecutorBase<T> {
 			runTimeConfig, reqConfig, addrs, threadsPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias
 		);
+		//
 		this.loadType = reqConfig.getLoadType();
-		if(loadType == AsyncIOTask.Type.UPDATE) {
-			if(countUpdPerReq < 0) {
-				throw new IllegalArgumentException(
-					String.format("Invalid updates per request count: %d", countUpdPerReq)
-				);
-			}
-			this.countUpdPerReq = countUpdPerReq;
-		} else {
-			this.countUpdPerReq = -1;
+		//
+		switch(loadType) {
+			case APPEND:
+			case CREATE:
+				if(sizeMin < 1) {
+					throw new IllegalArgumentException(
+						String.format(
+							"Min data item size (%s) is less than 1 [bytes]",
+							RunTimeConfig.formatSize(sizeMin)
+						)
+					);
+				}
+				if(sizeMin > sizeMax) {
+					throw new IllegalArgumentException(
+						String.format(
+							"Min object size (%s) should be less than max (%s)",
+							RunTimeConfig.formatSize(sizeMin), RunTimeConfig.formatSize(sizeMax)
+						)
+					);
+				}
+				if(sizeBias < 0) {
+					throw new IllegalArgumentException(
+						String.format("Object size bias (%f) should not be less than 0", sizeBias)
+					);
+				}
+				break;
+			case UPDATE:
+				if(countUpdPerReq < 0) {
+					throw new IllegalArgumentException(
+						String.format("Invalid updates per request count: %d", countUpdPerReq)
+					);
+				}
+				break;
 		}
+		//
+		this.sizeMin = sizeMin;
+		sizeRange = sizeMax - sizeMin;
+		this.sizeBias = sizeBias;
+		this.countUpdPerReq = countUpdPerReq;
 	}
 	// intercepts the data items which should be scheduled for update or append
 	@Override
@@ -50,6 +82,20 @@ extends LoadExecutorBase<T> {
 	throws InterruptedException, RemoteException {
 		if(dataItem != null) {
 			switch(loadType) {
+				case APPEND:
+					final long nextSize = sizeMin +
+						(long) (
+							Math.pow(ThreadLocalRandom.current().nextDouble(), sizeBias) *
+							sizeRange
+						);
+					dataItem.append(nextSize);
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG, "Append the object \"{}\": +{}",
+							dataItem, RunTimeConfig.formatSize(nextSize)
+						);
+					}
+					break;
 				case UPDATE:
 					dataItem.updateRandomRanges(countUpdPerReq);
 					if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -58,20 +104,6 @@ extends LoadExecutorBase<T> {
 							countUpdPerReq, dataItem
 						);
 					}
-					break;
-				case APPEND:
-					final long appendSize = ThreadLocalRandom
-						.current()
-						.nextLong(sizeMin, sizeMax + 1);
-					dataItem.append(appendSize);
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "Append the object \"{}\": +{}",
-							dataItem, RunTimeConfig.formatSize(appendSize)
-						);
-					}
-					break;
-				default:
 					break;
 			}
 		}

@@ -8,6 +8,7 @@ import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.emc.mongoose.web.load.WSLoadExecutor;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -29,7 +30,7 @@ import org.xml.sax.SAXException;
 /**
  Created by kurila on 08.10.14.
  */
-public final class BucketProducer<T extends WSObject>
+public final class BucketProducer<T extends WSObject, U extends WSObject>
 extends Thread
 implements Producer<T> {
 	//
@@ -39,13 +40,18 @@ implements Producer<T> {
 	private final Bucket<T> bucket;
 	private final Constructor<T> dataConstructor;
 	private final long maxCount;
+	private final WSLoadExecutor<T> wsClient;
 	//
-	public BucketProducer(final Bucket<T> bucket, final Class<T> dataCls, final long maxCount)
-	throws NoSuchMethodException {
+	@SuppressWarnings("unchecked")
+	public BucketProducer(
+		final Bucket<T> bucket, final Class<U> dataCls, final long maxCount,
+		final WSLoadExecutor<T> wsClient
+	) throws ClassCastException, NoSuchMethodException {
 		super("bucket-" + bucket.getName() + "-producer");
 		this.bucket = bucket;
-		this.dataConstructor = dataCls.getConstructor(String.class, Long.class);
+		this.dataConstructor = (Constructor<T>) dataCls.getConstructor(String.class, Long.class);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
+		this.wsClient = wsClient;
 	}
 	//
 	@Override
@@ -61,7 +67,7 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		try {
-			final HttpResponse httpResp = bucket.execute(WSIOTask.HTTPMethod.GET);
+			final HttpResponse httpResp = bucket.execute(wsClient, WSIOTask.HTTPMethod.GET);
 			if(httpResp != null) {
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine==null) {

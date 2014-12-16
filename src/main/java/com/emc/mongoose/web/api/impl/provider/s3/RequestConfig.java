@@ -1,15 +1,16 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
+import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
-import com.emc.mongoose.web.api.impl.BasicWSIOTask;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
-//
 import com.emc.mongoose.web.data.impl.BasicWSObject;
+//
+import com.emc.mongoose.web.load.WSLoadExecutor;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
@@ -186,11 +187,11 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final Producer<T> getAnyDataProducer(final long maxCount) {
+	public final Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> client) {
 		Producer<T> producer = null;
 		try {
-			producer = (Producer<T>) new BucketProducer<>(
-				(Bucket<BasicWSObject>) bucket, BasicWSObject.class, maxCount
+			producer = new BucketProducer<>(
+				bucket, BasicWSObject.class, maxCount, (WSLoadExecutor<T>) client
 			);
 		} catch(final NoSuchMethodException e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
@@ -199,17 +200,17 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final void configureStorage()
+	public final void configureStorage(final LoadExecutor<T> loadExecutor)
 	throws IllegalStateException {
 		if(bucket == null) {
 			throw new IllegalStateException("Bucket is not specified");
 		}
 		final String bucketName = bucket.getName();
-		if(bucket.exists()) {
+		if(bucket.exists(loadExecutor)) {
 			LOG.debug(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
 		} else {
-			bucket.create();
-			if(bucket.exists()) {
+			bucket.create(loadExecutor);
+			if(bucket.exists(loadExecutor)) {
 				runTimeConfig.set(KEY_BUCKET, bucketName);
 			} else {
 				throw new IllegalStateException(

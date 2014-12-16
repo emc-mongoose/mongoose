@@ -4,6 +4,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 //
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.persist.LogConsumer;
@@ -63,7 +64,7 @@ extends Thread
 implements LoadClient<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final Map<String, LoadSvc<T>> remoteLoadMap;
+	protected final Map<String, LoadSvc<T>> remoteLoadMap;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final Map<String, JMXConnector> remoteJMXConnMap;
 	private final Map<String, MBeanServerConnection> mBeanSrvConnMap;
@@ -123,9 +124,10 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private volatile long maxCount;
 	//
-	private final ThreadPoolExecutor submitExecutor, mgmtConnExecutor;
+	protected final ThreadPoolExecutor submitExecutor, mgmtConnExecutor;
 	private final LogConsumer<T> metaInfoLog;
 	private final RunTimeConfig runTimeConfig;
+	private final RequestConfig<T> reqConfig;
 	private final int retryCountMax, retryDelayMilliSec;
 	//
 	private final Lock lock = new ReentrantLock();
@@ -135,11 +137,12 @@ implements LoadClient<T> {
 		final RunTimeConfig runTimeConfig,
 		final Map<String, LoadSvc<T>> remoteLoadMap,
 		final Map<String, JMXConnector> remoteJMXConnMap,
-		final RequestConfig<T> reqConf,
+		final RequestConfig<T> reqConfig,
 		final long maxCount, final int threadCountPerServer
 	) {
 		//
 		this.runTimeConfig = runTimeConfig;
+		this.reqConfig = reqConfig;
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
@@ -743,11 +746,11 @@ implements LoadClient<T> {
 		}
 	}
 	//
-	Future<Long>
+	protected Future<Long>
 		countSubm, countRej, countReqSucc, countReqFail,
 		/*countNanoSec, countBytes, */minDur, maxDur,
 		minLatency, maxLatency;
-	Future<Double>
+	protected Future<Double>
 		meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
 		meanBW, oneMinBW, fiveMinBW, fifteenMinBW,
 		/*medDur, avgDur,*/ medLatency, avgLatency;
@@ -1061,7 +1064,7 @@ implements LoadClient<T> {
 				//
 				for(final String addr: remoteLoadMap.keySet()) {
 					try {
-						remoteLoadMap.get(addr).submit(null);
+						remoteLoadMap.get(addr).submit((T) null); // feed the poison
 					} catch(final Exception e) {
 						ExceptionHandler.trace(
 							LOG, Level.WARN, e,
@@ -1077,7 +1080,7 @@ implements LoadClient<T> {
 					addrs[(int) submitExecutor.getTaskCount() % addrs.length]
 				);
 				final SubmitRequestTask<T, LoadSvc<T>> submTask = new SubmitRequestTask<>(
-					dataItem, remoteLoadMap.get(addr)
+					dataItem, remoteLoadMap.get(addr), reqConfig
 				);
 				boolean passed = false;
 				int rejectCount = 0;
@@ -1183,5 +1186,35 @@ implements LoadClient<T> {
 	@Override
 	public final Map<String, LoadSvc<T>> getRemoteLoadMap() {
 		return remoteLoadMap;
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final void handleResult(final AsyncIOTask<T> task, final AsyncIOTask.Result result)
+	throws IOException {
+		final Object addrs[] = remoteLoadMap.keySet().toArray();
+		final String addr = String.class.cast(
+			addrs[(int) submitExecutor.getTaskCount() % addrs.length]
+		);
+		remoteLoadMap.get(addr).handleResult(task, result);
+	}
+	//
+	@Override
+	public final Future<AsyncIOTask.Result> submit(final AsyncIOTask<T> request)
+	throws IOException {
+		final Object addrs[] = remoteLoadMap.keySet().toArray();
+		final String addr = String.class.cast(
+			addrs[(int) submitExecutor.getTaskCount() % addrs.length]
+		);
+		return remoteLoadMap.get(addr).submit(request);
+	}
+	//
+	@Override
+	public final void submitResultHandling(final AsyncIOTask<T> request)
+	throws IOException {
+		final Object addrs[] = remoteLoadMap.keySet().toArray();
+		final String addr = String.class.cast(
+			addrs[(int) submitExecutor.getTaskCount() % addrs.length]
+		);
+		remoteLoadMap.get(addr).submitResultHandling(request);
 	}
 }

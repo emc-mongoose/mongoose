@@ -1,5 +1,7 @@
 package com.emc.mongoose.web.api.impl.provider.atmos;
 //
+import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
@@ -120,6 +122,12 @@ extends WSRequestConfigBase<T> {
 		return this;
 	}
 	//
+	@Override
+	public final Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> client) {
+		// TODO implement sub tenant listing producer
+		return null;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
@@ -236,17 +244,17 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public void configureStorage()
+	public void configureStorage(final LoadExecutor<T> client)
 	throws IllegalStateException {
 		if(subTenant == null) {
 			throw new IllegalStateException("Subtenant is not specified");
 		}
 		final String subTenantName = subTenant.getName();
-		if(subTenant.exists()) {
+		if(subTenant.exists(client)) {
 			LOG.debug(Markers.MSG, "Subtenant \"{}\" already exists", subTenantName);
 		} else {
-			subTenant.create();
-			if(subTenant.exists()) {
+			subTenant.create(client);
+			if(subTenant.exists(client)) {
 				runTimeConfig.set(KEY_SUBTENANT, subTenantName);
 			} else {
 				throw new IllegalStateException(

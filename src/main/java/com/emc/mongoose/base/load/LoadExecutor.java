@@ -3,6 +3,7 @@ package com.emc.mongoose.base.load;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataItem;
 //
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.Future;
 /**
@@ -43,6 +44,12 @@ extends Producer<T>, Consumer<T> {
 	void join(final long milliSecs)
 	throws RemoteException, InterruptedException;
 	//
-	Future<AsyncIOTask<T>> submit(final AsyncIOTask<T> request);
-	void submitResultHandling(final AsyncIOTask<T> request);
+	Future<AsyncIOTask.Result> submit(final AsyncIOTask<T> request)
+	throws IOException;
+	//
+	void submitResultHandling(final AsyncIOTask<T> request)
+	throws IOException;
+	//
+	void handleResult(final AsyncIOTask<T> task, AsyncIOTask.Result result)
+	throws IOException;
 }

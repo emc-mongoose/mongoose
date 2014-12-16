@@ -268,9 +268,6 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public abstract void configureStorage();
-	//
-	@Override
 	public final synchronized void close() {
 		closeFlag = true;
 	}

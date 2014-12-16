@@ -130,7 +130,7 @@ implements WSLoadExecutor<T> {
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int threadsPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
-	) throws ClassCastException {
+	) {
 		super(
 			runTimeConfig, reqConfig, addrs, threadsPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias, countUpdPerReq
@@ -197,7 +197,7 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final void close()
+	public void close()
 	throws IOException {
 		super.close();
 		LOG.debug(Markers.MSG, "Going to close the web storage client");

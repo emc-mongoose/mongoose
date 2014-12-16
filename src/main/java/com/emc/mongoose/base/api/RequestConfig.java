@@ -2,6 +2,7 @@ package com.emc.mongoose.base.api;
 //
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.DataSource;
+import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
@@ -58,9 +59,9 @@ extends Externalizable, Cloneable, Closeable {
 	//
 	AsyncIOTask<T> getRequestFor(final T dataItem);
 	//
-	Producer<T> getAnyDataProducer(final long maxCount);
+	Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> loadExecutor);
 	//
-	void configureStorage()
+	void configureStorage(final LoadExecutor<T> loadExecutor)
 	throws IllegalStateException;
 	//
 	boolean isClosed();

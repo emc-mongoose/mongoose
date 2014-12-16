@@ -41,6 +41,7 @@ extends DefaultHandler {
 	private volatile String
 		strId = null, strSize = null;
 	//
+	@SuppressWarnings("unchecked")
 	BucketListHandler(
 		final Consumer<T> consumer, final Constructor<T> dataConstructor, final long maxCount
 	) {

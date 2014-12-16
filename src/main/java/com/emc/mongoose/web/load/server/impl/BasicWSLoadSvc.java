@@ -1,40 +1,43 @@
-package com.emc.mongoose.web.load.server.impl.type;
+package com.emc.mongoose.web.load.server.impl;
 //
 import com.emc.mongoose.base.data.persist.FrameBuffConsumer;
 import com.emc.mongoose.base.load.server.ConsumerSvc;
-import com.emc.mongoose.web.api.WSRequestConfig;
-import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.object.load.ObjectLoadExecutor;
-import com.emc.mongoose.object.load.server.ObjectLoadSvc;
-import com.emc.mongoose.web.load.impl.type.Delete;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.RecordFrameBuffer;
 import com.emc.mongoose.util.remote.Service;
-//
 import com.emc.mongoose.util.remote.ServiceUtils;
+import com.emc.mongoose.web.api.WSRequestConfig;
+import com.emc.mongoose.web.data.WSObject;
+import com.emc.mongoose.web.load.impl.BasicLoadExecutor;
+import com.emc.mongoose.web.load.server.WSLoadSvc;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Collections;
 import java.util.List;
 /**
- Created by kurila on 30.05.14.
+ Created by kurila on 16.12.14.
  */
-public final class DeleteSvc<T extends WSObject>
-extends Delete<T>
-implements ObjectLoadSvc<T> {
+public final class BasicWSLoadSvc<T extends WSObject>
+extends BasicLoadExecutor<T>
+implements WSLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public DeleteSvc(
-		final RunTimeConfig runTimeConfig,
-		final String[] addrs, final WSRequestConfig<T> reqConf, final long maxCount,
-		final int threadsPerNode
+	public BasicWSLoadSvc(
+		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
+		final int threadsPerNode, final String listFile, final long maxCount,
+		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
 	) {
-		super(runTimeConfig, addrs, reqConf, maxCount, threadsPerNode, null);
+		super(
+			runTimeConfig, reqConfig, addrs, threadsPerNode, listFile, maxCount,
+			sizeMin, sizeMax, sizeBias, countUpdPerReq
+		);
 		// by default, may be overriden later externally:
 		super.setConsumer(new FrameBuffConsumer<T>());
 	}
@@ -83,4 +86,11 @@ implements ObjectLoadSvc<T> {
 		return recFrame;
 	}
 	//
+	@Override
+	public final int getThreadCount()
+	throws RemoteException {
+		return threadsPerNode * storageNodeAddrs.length;
+	}
+	//
+
 }

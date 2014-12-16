@@ -4,13 +4,13 @@ import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.Markers;
 //
+import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 //
-import com.emc.mongoose.util.logging.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -37,12 +37,13 @@ implements Callable<AsyncIOTask<T>> {
 	@Override
 	public final AsyncIOTask<T> call() {
 		final AsyncIOTask<T> ioTask = reqConfig.getRequestFor(dataItem);
-		final Future<AsyncIOTask<T>> futureSubmitResult =  executor.submit(ioTask);
 		try {
-			futureSubmitResult.get();
+			executor.submit(ioTask).get();
 			executor.submitResultHandling(ioTask);
 		} catch(final ExecutionException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Submit failure");
+		} catch(final IOException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Submit result handling failure");
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
 		}

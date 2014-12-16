@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.IOException;
 import java.util.concurrent.CancellationException;
 /**
  Created by kurila on 11.12.14.
@@ -33,13 +34,14 @@ implements Runnable {
 		try {
 			ioTask.join();
 			result = ioTask.getResult();
+			executor.handleResult(ioTask, result);
 		} catch(final CancellationException e) {
-			result = AsyncIOTask.Result.FAIL_TIMEOUT;
 			LOG.warn(Markers.ERR, "Request has been cancelled:", e);
+		} catch(final IOException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Request result handling failed");
 		} catch(final Exception e) {
-			result = AsyncIOTask.Result.FAIL_UNKNOWN;
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
 		}
-		executor.handleResult(ioTask, result);
+
 	}
 }

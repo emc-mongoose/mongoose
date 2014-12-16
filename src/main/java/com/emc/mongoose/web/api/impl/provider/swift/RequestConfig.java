@@ -1,5 +1,7 @@
 package com.emc.mongoose.web.api.impl.provider.swift;
 //
+import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
@@ -92,7 +94,14 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final void configureStorage() {
+	public final void configureStorage(final LoadExecutor<T> client) {
 		// TODO swift specific things
+	}
+	//
+	@Override
+	public final Producer<T> getAnyDataProducer(
+		final long maxCount, final LoadExecutor<T> loadExecutor
+	) {
+		return null; // TODO swift specific things
 	}
 }
