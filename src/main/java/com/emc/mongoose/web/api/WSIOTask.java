@@ -33,4 +33,7 @@ extends
 	//
 	@Override
 	WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
+	//
+	@Override
+	WSIOTask<T> setNodeAddr(final String nodeAddr);
 }

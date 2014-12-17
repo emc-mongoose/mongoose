@@ -1,4 +1,4 @@
-package com.emc.mongoose.base.load.impl;
+package com.emc.mongoose.base.load.impl.tasks;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -16,10 +16,10 @@ Created by kurila on 23.10.14.
 Register shutdown hook which should perform correct server-side shutdown even if user hits ^C
 */
 public final class LoadCloseHook
-extends Thread {
+implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static Map<LoadExecutor, LoadCloseHook> HOOKS_MAP = new ConcurrentHashMap<>();
+	private final static Map<LoadExecutor, Thread> HOOKS_MAP = new ConcurrentHashMap<>();
 	//
 	private final LoadExecutor loadExecutor;
 	private final String loadName;
@@ -34,20 +34,21 @@ extends Thread {
 			);
 		} finally {
 			loadName = ln;
-			setName(String.format("shutDownHook<%s>", loadName));
 		}
 		this.loadExecutor = loadExecutor;
 	}
 	//
 	public static void add(final LoadExecutor loadExecutor) {
 		//
-		//
-		final LoadCloseHook hookThread = new LoadCloseHook(loadExecutor);
+		final LoadCloseHook hookTask = new LoadCloseHook(loadExecutor);
 		try {
+			final Thread hookThread = new Thread(
+				hookTask, String.format("shutDownHook<%s>", hookTask.loadName)
+			);
 			Runtime.getRuntime().addShutdownHook(hookThread);
 			HOOKS_MAP.put(loadExecutor, hookThread);
 			LOG.debug(
-				Markers.MSG, "Registered shutdown hook \"{}\"", hookThread.getName()
+				Markers.MSG, "Registered shutdown hook \"{}\"", hookTask.loadName
 			);
 		} catch(final SecurityException | IllegalArgumentException | IllegalStateException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to add the shutdown hook");

@@ -1,4 +1,4 @@
-package com.emc.mongoose.base.load.impl;
+package com.emc.mongoose.base.load.impl.tasks;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
@@ -17,7 +17,7 @@ import org.apache.logging.log4j.Logger;
 /**
  Created by kurila on 09.10.14.
  */
-public final class SubmitRequestTask<T extends DataItem, U extends LoadExecutor<T>>
+public final class RequestSubmitTask<T extends DataItem, U extends LoadExecutor<T>>
 implements Callable<AsyncIOTask<T>> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -26,7 +26,7 @@ implements Callable<AsyncIOTask<T>> {
 	private final U executor;
 	private final RequestConfig<T> reqConfig;
 	//
-	public SubmitRequestTask(
+	public RequestSubmitTask(
 		final T dataItem, final U executor, final RequestConfig<T> reqConfig
 	) {
 		this.dataItem = dataItem;
@@ -36,7 +36,7 @@ implements Callable<AsyncIOTask<T>> {
 	//
 	@Override
 	public final AsyncIOTask<T> call() {
-		final AsyncIOTask<T> ioTask = reqConfig.getRequestFor(dataItem);
+		final AsyncIOTask<T> ioTask = reqConfig.getRequestFor(dataItem, executor.getNextNodeAddr());
 		try {
 			executor.submit(ioTask).get();
 			executor.submitResultHandling(ioTask);

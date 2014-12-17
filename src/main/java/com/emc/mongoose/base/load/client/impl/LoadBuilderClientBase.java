@@ -92,14 +92,14 @@ implements LoadBuilderClient<T, U> {
 			LOG.debug(Markers.MSG, "Applying the configuration to server @ \"{}\"...", addr);
 			nextBuilder.setProperties(runTimeConfig);
 		}
-		//
+		/*
 		final String firstNodeAddr = reqConf.getAddr();
 		if(firstNodeAddr == null || firstNodeAddr.length() == 0) {
 			final String nodeAddrs[] = runTimeConfig.getStorageAddrs();
 			if(nodeAddrs != null && nodeAddrs.length > 0) {
 				reqConf.setAddr(nodeAddrs[0]);
 			}
-		}
+		}*/
 		//
 		String dataMetaInfoFile = null;
 		try {
@@ -214,13 +214,13 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public final LoadBuilderClient<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException {
-		// need to remember 1st storage node address to configure later
+		/* need to remember 1st storage node address to configure later
 		final String firstNodeAddr = reqConf.getAddr();
 		if(firstNodeAddr == null || firstNodeAddr.length() == 0) {
 			if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
 				reqConf.setAddr(dataNodeAddrs[0]);
 			}
-		}
+		}*/
 		//
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {

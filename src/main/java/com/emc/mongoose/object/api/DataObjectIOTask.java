@@ -16,4 +16,6 @@ extends AsyncIOTask<T> {
 	@Override
 	DataObjectIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//
+	@Override
+	DataObjectIOTask<T> setNodeAddr(final String nodeAddr);
 }

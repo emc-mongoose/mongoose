@@ -212,7 +212,7 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final synchronized HttpResponse execute(
+	public final HttpResponse execute(
 		final HttpHost tgtHost, final HttpRequest request
 	) {
 		HttpResponse response = null;

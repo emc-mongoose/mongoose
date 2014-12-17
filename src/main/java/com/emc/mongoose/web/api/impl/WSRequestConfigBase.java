@@ -252,7 +252,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final WSIOTask<T> getRequestFor(final T dataItem) {
+	public final WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr) {
 		WSIOTask<T> ioTask;
 		if(dataItem == null) {
 			LOG.debug(Markers.MSG, "Preparing poison request");
@@ -269,6 +269,7 @@ implements WSRequestConfig<T> {
 			}
 			ioTask = BasicWSIOTask.class.cast(pool.take())
 				.setRequestConfig(this)
+				.setNodeAddr(nodeAddr)
 				.setDataItem(dataItem);
 		}
 		return ioTask;

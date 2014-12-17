@@ -406,7 +406,8 @@ implements Externalizable {
 	//
 	@Override
 	public final String toString() {
-		String nextKey, nextVal;
+		String nextKey;
+		Object nextVal;
 		final StrBuilder strBuilder = new StrBuilder()
 			.append(TABLE_HEADER).append(TABLE_BORDER)
 			.appendNewLine().append("| ").appendFixedWidthPadRight("Key", 31, ' ')
@@ -417,7 +418,7 @@ implements Externalizable {
 			keyIterator.hasNext();
 			) {
 			nextKey = keyIterator.next();
-			nextVal = getString(nextKey);
+			nextVal = getProperty(nextKey);
 			switch(nextKey) {
 				case RunTimeConfig.KEY_RUN_ID:
 				case RunTimeConfig.KEY_RUN_MODE:

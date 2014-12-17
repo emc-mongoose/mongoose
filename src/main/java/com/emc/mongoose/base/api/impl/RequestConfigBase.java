@@ -25,14 +25,14 @@ public abstract class RequestConfigBase<T extends DataItem>
 implements RequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	protected final static String FMT_URI_ADDR = "%s://%s:%s";
+	//protected final static String FMT_URI_ADDR = "%s://%s:%s";
 	//
 	protected String api, secret, userName;
 	protected AsyncIOTask.Type loadType;
 	protected DataSource<T> dataSrc;
 	protected volatile boolean retryFlag, verifyContentFlag, closeFlag = false;
 	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
-	protected volatile String addr, scheme, uriAddr;
+	protected volatile String /*addr, */scheme/*, uriTemplate*/;
 	protected volatile int port;
 	protected int loadNumber;
 	//
@@ -49,7 +49,7 @@ implements RequestConfig<T> {
 			setDataSource(reqConf2Clone.getDataSource());
 			setRetries(reqConf2Clone.getRetries());
 			setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
-			setAddr(reqConf2Clone.getAddr());
+			//setAddr(reqConf2Clone.getAddr());
 			setAPI(reqConf2Clone.getAPI());
 			setUserName(reqConf2Clone.getUserName());
 			setPort(reqConf2Clone.getPort());
@@ -67,7 +67,7 @@ implements RequestConfig<T> {
 			.setDataSource(dataSrc)
 			.setRetries(retryFlag)
 			.setVerifyContentFlag(verifyContentFlag)
-			.setAddr(addr)
+			//.setAddr(addr)
 			.setAPI(api)
 			.setUserName(userName)
 			.setPort(port)
@@ -105,14 +105,9 @@ implements RequestConfig<T> {
 	@Override
 	public final RequestConfigBase<T> setScheme(final String scheme) {
 		this.scheme = scheme;
-		uriAddr = String.format(
-			FMT_URI_ADDR,
-			scheme, addr == null ? "%s" : addr,
-			(port > 0 && port < 0x10000) ? Integer.toString(port) : "%s"
-		);
 		return this;
 	}
-	//
+	/*
 	@Override
 	public final String getAddr() {
 		return addr;
@@ -120,13 +115,13 @@ implements RequestConfig<T> {
 	@Override
 	public final RequestConfigBase<T> setAddr(final String addr) {
 		this.addr = addr;
-		uriAddr = String.format(
+		uriTemplate = String.format(
 			FMT_URI_ADDR,
 			scheme == null ? "%s" : scheme, addr,
 			(port > 0 && port < 0x10000) ? Integer.toString(port) : "%s"
 		);
 		return this;
-	}
+	}*/
 	//
 	@Override
 	public final int getPort() {
@@ -136,12 +131,13 @@ implements RequestConfig<T> {
 	public final RequestConfigBase<T> setPort(final int port)
 	throws IllegalArgumentException {
 		LOG.trace(Markers.MSG, "Using storage port: {}", port);
-		if(port>0 || port<0x10000) {
+		if(port > 0 || port < 0x10000) {
 			this.port = port;
-			uriAddr = String.format(
+			/*uriTemplate = String.format(
 				FMT_URI_ADDR,
-				scheme == null ? "%s" : scheme, addr == null ? "%s" : addr, Integer.toString(port)
-			);
+				scheme == null ? "%s" : scheme, addr == null ? "%s" : addr,
+				Integer.toString(port)
+			);*/
 		} else {
 			throw new IllegalArgumentException("Port number value should be > 0");
 		}
@@ -224,13 +220,10 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public abstract AsyncIOTask<T> getRequestFor(final T dataItem);
-	//
-	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		out.writeObject(getAPI());
-		out.writeObject(getAddr());
+		//out.writeObject(getAddr());
 		out.writeObject(getLoadType());
 		out.writeInt(getPort());
 		out.writeObject(getUserName());
@@ -244,8 +237,8 @@ implements RequestConfig<T> {
 	throws IOException, ClassNotFoundException {
 		setAPI(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got API {}", api);
-		setAddr(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got address {}", addr);
+		//setAddr(String.class.cast(in.readObject()));
+		//LOG.trace(Markers.MSG, "Got address {}", addr);
 		setLoadType(AsyncIOTask.Type.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got load type {}", loadType);
 		setPort(in.readInt());
@@ -263,8 +256,8 @@ implements RequestConfig<T> {
 	@Override
 	public final String toString() {
 		return StringUtils.capitalize(getAPI()) + '.' +
-			StringUtils.capitalize(loadType.name().toLowerCase()) +
-			((addr==null || addr.length()==0) ? "" : "@"+addr);
+			StringUtils.capitalize(loadType.name().toLowerCase())/* +
+			((addr==null || addr.length()==0) ? "" : "@"+addr)*/;
 	}
 	//
 	@Override

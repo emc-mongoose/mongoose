@@ -52,4 +52,6 @@ extends Producer<T>, Consumer<T> {
 	//
 	void handleResult(final AsyncIOTask<T> task, AsyncIOTask.Result result)
 	throws IOException;
+	//
+	String getNextNodeAddr();
 }

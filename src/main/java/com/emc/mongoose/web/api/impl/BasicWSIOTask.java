@@ -45,7 +45,12 @@ implements WSIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static WSIOTask<WSObject> POISON = new BasicWSIOTask<>();
+	public final static WSIOTask<WSObject> POISON = new BasicWSIOTask<WSObject>() {
+		@Override
+		public final String toString() {
+			return "<POISON>";
+		}
+	};
 	//
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	protected MutableHTTPRequest httpRequest = null;
@@ -77,6 +82,21 @@ implements WSIOTask<T> {
 		}
 		return this;
 	}
+	//
+	private final static Map<String, HttpHost> HTTP_HOST_MAP = new ConcurrentHashMap<>();
+	@Override
+	public final WSIOTask<T> setNodeAddr(final String nodeAddr) {
+		super.setNodeAddr(nodeAddr);
+		HttpHost tgtHost;
+		if(HTTP_HOST_MAP.containsKey(nodeAddr)) {
+			tgtHost = HTTP_HOST_MAP.get(nodeAddr);
+		} else {
+			tgtHost = new HttpHost(nodeAddr, wsReqConf.getPort(), wsReqConf.getScheme());
+			HTTP_HOST_MAP.put(nodeAddr, tgtHost);
+		}
+		httpRequest.setUriAddr(tgtHost.toURI());
+		return this;
+	}
 	/*
 	@Override
 	public void execute()
@@ -102,17 +122,9 @@ implements WSIOTask<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// HttpAsyncRequestProducer implementation /////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static Map<String, HttpHost> HTTP_HOST_MAP = new ConcurrentHashMap<>();
-	//
 	@Override
 	public final HttpHost getTarget() {
-		final String tgtAddr = wsReqConf.getAddr();
-		if(!HTTP_HOST_MAP.containsKey(tgtAddr)) {
-			HTTP_HOST_MAP.put(
-				tgtAddr, new HttpHost(tgtAddr, wsReqConf.getPort(), wsReqConf.getScheme())
-			);
-		}
-		return HTTP_HOST_MAP.get(tgtAddr);
+		return HTTP_HOST_MAP.get(nodeAddr);
 	}
 	//
 	private volatile HttpEntity reqEntity = null;
@@ -120,6 +132,7 @@ implements WSIOTask<T> {
 	@Override
 	public final HttpRequest generateRequest()
 	throws IOException, HttpException {
+		wsReqConf.applyHeadersFinally(httpRequest);
 		reqEntity = httpRequest.getEntity();
 		reqTimeStart = System.nanoTime();
 		return httpRequest;

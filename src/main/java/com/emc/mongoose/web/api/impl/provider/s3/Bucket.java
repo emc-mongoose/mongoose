@@ -67,7 +67,10 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		final MutableHTTPRequest httpReq = method.createRequest().setUriPath("/" + name);
 		reqConf.applyHeadersFinally(httpReq);
 		return wsClient.execute(
-			new HttpHost(reqConf.getAddr(), reqConf.getPort(), reqConf.getScheme()), httpReq
+			new HttpHost(
+				Main.RUN_TIME_CONFIG.get().getStorageAddrs()[0],
+				reqConf.getPort(), reqConf.getScheme()
+			), httpReq
 		);
 	}
 	//
@@ -83,11 +86,11 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
-				if(statusLine==null) {
+				if(statusLine == null) {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					if(statusCode==HttpStatus.SC_OK) {
+					if(statusCode == HttpStatus.SC_OK) {
 						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
 						flagExists = true;
 					} else {

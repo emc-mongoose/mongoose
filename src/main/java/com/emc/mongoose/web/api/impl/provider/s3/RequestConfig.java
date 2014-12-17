@@ -120,11 +120,7 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		httpRequest
-			.setUriAddr(uriAddr)
-			.setUriPath(
-				String.format(FMT_PATH, bucket.getName(), dataItem.getId())
-			);
+		httpRequest.setUriPath(String.format(FMT_PATH, bucket.getName(), dataItem.getId()));
 	}
 	//
 	@Override

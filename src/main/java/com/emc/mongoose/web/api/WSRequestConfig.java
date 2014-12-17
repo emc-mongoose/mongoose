@@ -66,7 +66,7 @@ extends ObjectRequestConfig<T> {
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
 	@Override
-	WSIOTask<T> getRequestFor(final T dataItem);
+	WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr);
 	//
 	List<Header> getSharedHeaders();
 	//

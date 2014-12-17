@@ -151,7 +151,7 @@ extends WSRequestConfigBase<T> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		final String objId = dataItem.getId();
-		httpRequest.setUriAddr(uriAddr).setUriPath(String.format(fmtObjPath, objId));
+		httpRequest.setUriPath(String.format(fmtObjPath, objId));
 	}
 	//
 	@Override

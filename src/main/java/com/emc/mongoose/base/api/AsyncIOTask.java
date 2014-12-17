@@ -42,9 +42,11 @@ extends Closeable {
 	//
 	AsyncIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//
-	T getDataItem();
+	AsyncIOTask<T> setNodeAddr(final String nodeAddr);
+	String getNodeAddr();
 	//
 	AsyncIOTask<T> setDataItem(final T dataItem);
+	T getDataItem();
 	//
 	long getTransferSize();
 	//

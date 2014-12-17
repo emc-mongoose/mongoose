@@ -1,4 +1,4 @@
-package com.emc.mongoose.base.load.impl;
+package com.emc.mongoose.base.load.impl.tasks;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataItem;
@@ -15,7 +15,7 @@ import java.util.concurrent.CancellationException;
 /**
  Created by kurila on 11.12.14.
  */
-public final class GetRequestResultTask<T extends DataItem>
+public final class RequestResultTask<T extends DataItem>
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -23,7 +23,7 @@ implements Runnable {
 	private final LoadExecutor<T> executor;
 	private final AsyncIOTask<T> ioTask;
 	//
-	public GetRequestResultTask(final LoadExecutor<T> executor, final AsyncIOTask<T> ioTask) {
+	public RequestResultTask(final LoadExecutor<T> executor, final AsyncIOTask<T> ioTask) {
 		this.executor = executor;
 		this.ioTask = ioTask;
 	}

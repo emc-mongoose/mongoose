@@ -31,8 +31,8 @@ extends Externalizable, Cloneable, Closeable {
 	String getScheme();
 	RequestConfig<T> setScheme(final String scheme);
 	//
-	String getAddr();
-	RequestConfig<T> setAddr(final String addr);
+	//String getAddr();
+	//RequestConfig<T> setAddr(final String addr);
 	//
 	int getPort();
 	RequestConfig<T> setPort(final int port);
@@ -57,7 +57,7 @@ extends Externalizable, Cloneable, Closeable {
 	int getLoadNumber();
 	RequestConfig<T> setLoadNumber(final int loadNumber);
 	//
-	AsyncIOTask<T> getRequestFor(final T dataItem);
+	AsyncIOTask<T> getRequestFor(final T dataItem, final String nodeAddr);
 	//
 	Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> loadExecutor);
 	//

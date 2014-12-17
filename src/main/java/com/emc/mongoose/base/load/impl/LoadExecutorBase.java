@@ -15,6 +15,9 @@ import com.emc.mongoose.base.data.persist.LogConsumer;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.base.load.impl.tasks.LoadCloseHook;
+import com.emc.mongoose.base.load.impl.tasks.RequestResultTask;
+import com.emc.mongoose.base.load.impl.tasks.RequestSubmitTask;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
@@ -73,7 +76,8 @@ implements LoadExecutor<T> {
 	protected Histogram /*reqDur, */respLatency;
 	//
 	protected final MBeanServer mBeanServer;
-	protected final JmxReporter metricsReporter;
+	//
+	protected final JmxReporter jmxReporter;
 	// METRICS section END
 	private final Lock lock = new ReentrantLock();
 	private final Condition condDone = lock.newCondition();
@@ -97,14 +101,13 @@ implements LoadExecutor<T> {
 		this.reqConfig = reqConfig;
 		if(reqConfig == null) {
 			throw new IllegalArgumentException("Request config shouldn't be null");
-		} else {
-			loadType = reqConfig.getLoadType();
 		}
+		loadType = reqConfig.getLoadType();
 		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());
-		metricsReporter  = JmxReporter.forRegistry(metrics)
+		jmxReporter = JmxReporter.forRegistry(metrics)
 			.convertDurationsTo(TimeUnit.SECONDS)
 			.convertRatesTo(TimeUnit.SECONDS)
 			.registerWith(mBeanServer)
@@ -129,7 +132,7 @@ implements LoadExecutor<T> {
 		reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));
 		//reqDur = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR));
 		respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
-		metricsReporter.start();
+		jmxReporter.start();
 		// prepare the node executors array
 		storageNodeAddrs = addrs.clone();
 		// create and configure the connection manager
@@ -196,6 +199,8 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public void start() {
+		//
+		reqConfig.configureStorage(this);
 		//
 		if(producer == null) {
 			LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
@@ -361,7 +366,7 @@ implements LoadExecutor<T> {
 			// provide summary metrics
 			logMetrics(Markers.PERF_SUM);
 			// close node executors
-			metricsReporter.close();
+			jmxReporter.close();
 			//
 			LoadCloseHook.del(this);
 			isClosed = true;
@@ -382,8 +387,8 @@ implements LoadExecutor<T> {
 				// stop further submitting
 				submitExecutor.shutdown();
 			} else {
-				final SubmitRequestTask<T, LoadExecutorBase<T>>
-					submitTask = new SubmitRequestTask<>(dataItem, this, reqConfig);
+				final RequestSubmitTask<T, LoadExecutorBase<T>>
+					submitTask = new RequestSubmitTask<>(dataItem, this, reqConfig);
 				Future<AsyncIOTask<T>> futureSubmitResult = null;
 				int rejectCount = 0;
 				do {
@@ -418,7 +423,7 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final void submitResultHandling(final AsyncIOTask<T> ioTask) {
-		resultExecutor.submit(new GetRequestResultTask<>(this, ioTask));
+		resultExecutor.submit(new RequestResultTask<>(this, ioTask));
 	}
 	//
 	@Override
@@ -463,6 +468,12 @@ implements LoadExecutor<T> {
 		} catch(final RemoteException e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like a network failure");
 		}
+	}
+	//
+	private volatile int i = 0;
+	@Override
+	public final String getNextNodeAddr() {
+		return storageNodeAddrs[i ++ % storageNodeAddrs.length];
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	//private final static String FMT_EFF_SUM = "Load execution efficiency: %.1f[%%]";

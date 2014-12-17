@@ -22,9 +22,15 @@ implements AsyncIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static IOTaskBase POISON = new IOTaskBase();
+	public final static IOTaskBase POISON = new IOTaskBase() {
+		@Override
+		public final String toString() {
+			return "<POISON>";
+		}
+	};
 	//
 	protected volatile RequestConfig<T> reqConf = null;
+	protected volatile String nodeAddr = null;
 	protected volatile T dataItem = null;
 	protected volatile Result result = Result.FAIL_TIMEOUT;
 	//
@@ -75,8 +81,14 @@ implements AsyncIOTask<T> {
 	}
 	//
 	@Override
-	public final T getDataItem() {
-		return dataItem;
+	public AsyncIOTask<T> setNodeAddr(final String nodeAddr) {
+		this.nodeAddr = nodeAddr;
+		return this;
+	}
+	//
+	@Override
+	public final String getNodeAddr() {
+		return nodeAddr;
 	}
 	//
 	@Override
@@ -93,6 +105,11 @@ implements AsyncIOTask<T> {
 				transferSize = dataItem.getSize();
 		}
 		return this;
+	}
+	//
+	@Override
+	public final T getDataItem() {
+		return dataItem;
 	}
 	//
 	@Override
