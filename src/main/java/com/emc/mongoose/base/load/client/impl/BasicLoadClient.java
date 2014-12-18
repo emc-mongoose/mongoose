@@ -14,8 +14,8 @@ import com.emc.mongoose.base.load.client.DataItemBufferClient;
 import com.emc.mongoose.base.load.client.impl.tasks.CountLimitWaitTask;
 import com.emc.mongoose.base.load.client.impl.tasks.FrameFetchTask;
 import com.emc.mongoose.base.load.client.impl.tasks.GaugeValueTask;
+import com.emc.mongoose.base.load.client.impl.tasks.RemoteSubmitTask;
 import com.emc.mongoose.base.load.impl.tasks.LoadCloseHook;
-import com.emc.mongoose.base.load.impl.tasks.RequestSubmitTask;
 import com.emc.mongoose.base.load.client.LoadClient;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.run.Main;
@@ -1010,15 +1010,13 @@ implements LoadClient<T> {
 				final String addr = String.class.cast(
 					addrs[(int) submitExecutor.getTaskCount() % addrs.length]
 				);
-				final RequestSubmitTask<T, LoadSvc<T>> submTask = new RequestSubmitTask<>(
-					dataItem, remoteLoadMap.get(addr), reqConfig
-				);
-				boolean passed = false;
+				final RemoteSubmitTask<T> remoteSubmitTask = RemoteSubmitTask
+					.getInstanceFor(remoteLoadMap.get(addr), dataItem);
 				int rejectCount = 0;
 				do {
 					try {
-						submitExecutor.submit(submTask);
-						passed = true;
+						submitExecutor.submit(remoteSubmitTask);
+						break;
 					} catch(final RejectedExecutionException e) {
 						rejectCount ++;
 						try {
@@ -1027,7 +1025,7 @@ implements LoadClient<T> {
 							break;
 						}
 					}
-				} while(!passed && rejectCount < retryCountMax && !submitExecutor.isShutdown());
+				} while(rejectCount < retryCountMax && !submitExecutor.isShutdown());
 			}
 		} else {
 			LOG.debug(
@@ -1121,7 +1119,7 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void handleResult(final AsyncIOTask<T> task, final AsyncIOTask.Result result)
-	throws IOException {
+	throws RemoteException {
 		final Object addrs[] = remoteLoadMap.keySet().toArray();
 		final String addr = String.class.cast(
 			addrs[(int) submitExecutor.getTaskCount() % addrs.length]
@@ -1138,21 +1136,11 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final Future<AsyncIOTask.Result> submit(final AsyncIOTask<T> request)
-	throws IOException {
+	throws RemoteException {
 		final Object addrs[] = remoteLoadMap.keySet().toArray();
 		final String addr = String.class.cast(
 			addrs[(int) submitExecutor.getTaskCount() % addrs.length]
 		);
 		return remoteLoadMap.get(addr).submit(request);
-	}
-	//
-	@Override
-	public final void submitResultHandling(final AsyncIOTask<T> request)
-	throws IOException {
-		final Object addrs[] = remoteLoadMap.keySet().toArray();
-		final String addr = String.class.cast(
-			addrs[(int) submitExecutor.getTaskCount() % addrs.length]
-		);
-		remoteLoadMap.get(addr).submitResultHandling(request);
 	}
 }

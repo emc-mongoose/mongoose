@@ -1,0 +1,67 @@
+package com.emc.mongoose.base.load.client.impl.tasks;
+//
+import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.base.load.server.LoadSvc;
+//
+import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.pool.BasicInstancePool;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+//
+import java.io.Closeable;
+import java.rmi.RemoteException;
+/**
+ Created by kurila on 18.12.14.
+ */
+public class RemoteSubmitTask<T extends DataItem>
+implements Runnable, Closeable {
+	//
+	private final static Logger LOG = LogManager.getLogger();
+	//
+	private LoadSvc<T> loadSvc = null;
+	private T dataItem = null;
+	//
+	private final RunTimeConfig thrLocalConf = Main.RUN_TIME_CONFIG.get();
+	private final int
+		retryMaxCount = thrLocalConf.getRunRetryCountMax(),
+		retryDelayMilliSec = thrLocalConf.getRunRetryDelayMilliSec();
+	//
+	private final static BasicInstancePool<RemoteSubmitTask>
+		INSTANCE_POOL = new BasicInstancePool<>(RemoteSubmitTask.class);
+	//
+	@SuppressWarnings("unchecked")
+	public static <U extends DataItem> RemoteSubmitTask<U> getInstanceFor(
+		final LoadSvc<U> loadSvc, final U dataItem
+	) {
+		final RemoteSubmitTask<U> rsTask = (RemoteSubmitTask<U>) INSTANCE_POOL.take();
+		rsTask.loadSvc = loadSvc;
+		rsTask.dataItem = dataItem;
+		return rsTask;
+	}
+	//
+	@Override
+	public final void run() {
+		int rejectCount = 0;
+		do {
+			try {
+				try {
+					loadSvc.submit(dataItem);
+					break;
+				} catch(final RemoteException e) {
+					rejectCount ++;
+					Thread.sleep(retryDelayMilliSec);
+				}
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.MSG, "Interrupted");
+				break;
+			}
+		} while(rejectCount > retryMaxCount);
+	}
+	//
+	@Override
+	public final void close() {
+		INSTANCE_POOL.release(this);
+	}
+}

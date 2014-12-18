@@ -1,10 +1,10 @@
-package com.emc.mongoose.web.ui.websockets;
+package com.emc.mongoose.web.ui.websockets.impl;
 //
 import com.emc.mongoose.web.ui.logging.WebUIAppender;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.web.ui.websockets.interfaces.WebSocketLogListener;
 //
+import com.emc.mongoose.web.ui.websockets.WebSocketLogListener;
 import com.google.gson.Gson; // TODO migrate to jackson instead of gson
 //
 import org.apache.logging.log4j.Level;

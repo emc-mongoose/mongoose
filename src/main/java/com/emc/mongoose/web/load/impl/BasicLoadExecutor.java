@@ -177,7 +177,7 @@ implements WSLoadExecutor<T> {
 		//
 		try {
 			localIOReactor = new DefaultConnectingIOReactor(
-				ioReactorConfig, new WorkerFactory("ioReactor")
+				ioReactorConfig, new WorkerFactory(getName() + "-conn")
 			);
 			//
 			localConnPool = new BasicNIOConnPool(localIOReactor, connConfig);

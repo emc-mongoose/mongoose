@@ -97,7 +97,6 @@ implements Externalizable {
 			);
 		}
 		size *= 1L << 10 * degree;
-		LOG.trace(Markers.MSG, "\"{}\" is {} bytes", value, size);
 		return size;
 	}
 	//

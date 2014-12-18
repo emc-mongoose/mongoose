@@ -1,6 +1,6 @@
 package com.emc.mongoose.web.ui.logging;
 //
-import com.emc.mongoose.web.ui.websockets.interfaces.WebSocketLogListener;
+import com.emc.mongoose.web.ui.websockets.WebSocketLogListener;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;

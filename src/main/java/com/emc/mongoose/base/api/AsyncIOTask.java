@@ -60,9 +60,6 @@ extends Closeable {
 	//
 	long getRespTimeDone();
 	//
-	void join()
-	throws InterruptedException;
-	//
 	void reset();
 	//
 	void complete();

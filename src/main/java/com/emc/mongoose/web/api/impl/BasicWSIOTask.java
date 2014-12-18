@@ -64,9 +64,7 @@ implements WSIOTask<T> {
 			this.wsReqConf = (WSRequestConfig<T>) reqConf;
 			httpRequest = wsReqConf.createRequest();
 		} else { // cleanup
-			httpRequest.removeHeaders(HttpHeaders.RANGE);
-			httpRequest.removeHeaders(WSRequestConfig.KEY_EMC_SIG);
-			httpRequest.setEntity(MutableHTTPRequest.EMPTY_CONTENT_ENTITY);
+			reset();
 		}
 		super.setRequestConfig(reqConf);
 		return this;
@@ -97,23 +95,6 @@ implements WSIOTask<T> {
 		httpRequest.setUriAddr(tgtHost.toURI());
 		return this;
 	}
-	/*
-	@Override
-	public void execute()
-	throws InterruptedException {
-		//
-		wsReqConf.applyHeadersFinally(httpRequest);
-		//
-		final WSClient<T> client = wsReqConf.getClient();
-		final Future<AsyncIOTask.Result> futureResult = client.submit(this);
-		try {
-			futureResult.get();
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.ERR, "Interrupted");
-		} catch(final ExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Request execution failure");
-		}
-	}*/
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private volatile Exception exception = null;
 	@SuppressWarnings("FieldCanBeLocal")
@@ -157,12 +138,20 @@ implements WSIOTask<T> {
 	}
 	//
 	@Override
-	public final void resetRequest()
-	throws IOException {
+	public final void resetRequest() {
 		reset();
-		reqEntity = null;
+	}
+	//
+	@Override
+	public final void reset() {
+		super.reset();
 		respStatusCode = -1;
 		exception = null;
+		reqEntity = null;
+		httpRequest.setEntity(reqEntity);
+		httpRequest.removeHeaders(HttpHeaders.RANGE);
+		httpRequest.removeHeaders(WSRequestConfig.KEY_EMC_SIG);
+		httpRequest.removeHeaders(HttpHeaders.CONTENT_TYPE);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// HttpAsyncResponseConsumer implementation ////////////////////////////////////////////////////
@@ -268,6 +257,7 @@ implements WSIOTask<T> {
 	@Override
 	public final void failed(final Exception e) {
 		exception = e;
+		ExceptionHandler.trace(LOG, Level.DEBUG, e, "Response processing failure");
 	}
 	//
 	@Override

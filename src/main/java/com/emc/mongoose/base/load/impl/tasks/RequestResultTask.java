@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.Future;
 /**
  Created by kurila on 11.12.14.
  */
@@ -22,19 +23,23 @@ implements Runnable {
 	//
 	private final LoadExecutor<T> executor;
 	private final AsyncIOTask<T> ioTask;
+	private final Future<AsyncIOTask.Result> futureResult;
 	//
-	public RequestResultTask(final LoadExecutor<T> executor, final AsyncIOTask<T> ioTask) {
+	public RequestResultTask(
+		final LoadExecutor<T> executor, final AsyncIOTask<T> ioTask,
+		final Future<AsyncIOTask.Result> futureResult
+	) {
 		this.executor = executor;
 		this.ioTask = ioTask;
+		this.futureResult = futureResult;
 	}
 	//
 	@Override
 	public final void run() {
-		AsyncIOTask.Result result;
+		AsyncIOTask.Result ioTaskResult;
 		try {
-			ioTask.join();
-			result = ioTask.getResult();
-			executor.handleResult(ioTask, result);
+			ioTaskResult = futureResult.get(); // submit done
+			executor.handleResult(ioTask, ioTaskResult);
 		} catch(final CancellationException e) {
 			LOG.warn(Markers.ERR, "Request has been cancelled:", e);
 		} catch(final IOException e) {

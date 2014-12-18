@@ -74,8 +74,16 @@ implements Producer<T> {
 		//
 		do {
 			try {
-				nextSize = (long) (Math.pow(thrLocalRnd.nextDouble(), objSizeBias) * sizeRange);
-				nextSize += minObjSize;
+				if(minObjSize == maxObjSize) {
+					nextSize = minObjSize;
+				} else {
+					if(objSizeBias == 1) {
+						nextSize = (long) (thrLocalRnd.nextDouble() * sizeRange);
+					} else {
+						nextSize = (long) (Math.pow(thrLocalRnd.nextDouble(), objSizeBias) * sizeRange);
+					}
+					nextSize += minObjSize;
+				}
 				newDataConsumer.submit(produceSpecificDataItem(nextSize));
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(Markers.MSG, String.format(FMT_MSG_SUBMIT_NEXT, i, nextSize));

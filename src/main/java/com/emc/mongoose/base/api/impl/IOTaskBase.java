@@ -53,7 +53,7 @@ implements AsyncIOTask<T> {
 	}
 	//
 	@Override
-	public final void reset() {
+	public void reset() {
 		result = Result.FAIL_TIMEOUT;
 		reqTimeStart = 0;
 		reqTimeDone = 0;
@@ -64,13 +64,13 @@ implements AsyncIOTask<T> {
 	// END pool related things
 	@Override
 	public final void complete() {
-		if(lock.tryLock()) {
-			try {
-				condDone.signalAll();
-			} finally {
-				lock.unlock();
-			}
-		}
+		LOG.info(
+			Markers.PERF_TRACE, String.format(
+				FMT_PERF_TRACE, dataItem.getId(), dataItem.getSize(), result.code,
+				reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
+				respTimeDone - respTimeStart
+			)
+		);
 	}
 	//
 	@Override
@@ -140,25 +140,5 @@ implements AsyncIOTask<T> {
 	@Override
 	public final long getRespTimeDone() {
 		return respTimeDone;
-	}
-	//
-	@Override
-	public final void join() {
-		if(lock.tryLock()) {
-			try {
-				condDone.await();
-				LOG.info(
-					Markers.PERF_TRACE, String.format(
-						FMT_PERF_TRACE, dataItem.getId(), dataItem.getSize(), result.code,
-						reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
-						respTimeDone - respTimeStart
-					)
-				);
-			} catch(final InterruptedException e) {
-				LOG.debug(Markers.MSG, "Interrupted");
-			} finally {
-				lock.unlock();
-			}
-		}
 	}
 }

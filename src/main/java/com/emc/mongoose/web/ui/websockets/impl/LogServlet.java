@@ -1,4 +1,4 @@
-package com.emc.mongoose.web.ui.websockets;
+package com.emc.mongoose.web.ui.websockets.impl;
 //
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
