@@ -255,7 +255,7 @@ th:nth-child(5) {
 	text-align: left;
 }
 
-#base-config {
+#base {
 	margin-top: 10px;
 	margin-left: 10px;
 }
@@ -266,9 +266,13 @@ th:nth-child(5) {
 }
 
 .pre-select {
-	width: 90%;
+	width: 100px;
 }
 
 .submenu {
 	border: 1px dashed #ccc;
+}
+
+.modal-tabs {
+	margin-top: 15px;
 }

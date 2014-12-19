@@ -89,167 +89,534 @@
 					</div>
 
 					<div id="main-content">
-						<div id="base-config">
+						<div id="base">
 							<form class="form-horizontal" role="form">
-								<div>
+								<fieldset>
+									<legend>Auth</legend>
 									<div class="form-group">
-										<label for="auth.id" class="col-sm-2 control-label">auth.id</label>
+										<label for="fake-auth.id" class="col-sm-2 control-label">auth.id</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="auth.id" name="auth.id">
+											<input type="text" class="form-control" id="fake-auth.id"
+												value="${runTimeConfig.authId}" placeholder="Enter 'auth.id' property">
 										</div>
 									</div>
 
 									<div class="form-group">
-										<label for="auth.secret" class="col-sm-2 control-label">auth.secret</label>
+										<label for="fake-auth.secret" class="col-sm-2 control-label">auth.secret</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="auth.secret" name="auth.secret">
+											<input type="text" class="form-control" id="fake-auth.secret"
+												value="${runTimeConfig.authSecret}" placeholder="Enter 'auth.secret' property">
 										</div>
 									</div>
-								</div>
+								</fieldset>
 
-								<div>
+								<fieldset>
+									<legend>Data</legend>
 									<div class="form-group">
-										<label for="data" class="col-sm-2 control-label">data</label>
+										<label for="fake-data" class="col-sm-2 control-label">data</label>
 										<div class="col-sm-10">
-											<select id="data" class="form-select">
+											<select id="fake-data" class="form-select">
 												<option>time</option>
 												<option>objects</option>
 											</select>
 										</div>
 									</div>
-									<div class="form-group">
-										<label for="data.count" class="col-sm-2 control-label">data.count</label>
+
+									<div class="form-group objects">
+										<label for="fake-data.count" class="col-sm-2 control-label">data.count</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="data.count" name="data.count">
+											<input type="text" class="form-control" id="fake-data.count"
+												value="${runTimeConfig.dataCount}" placeholder="Enter 'data.count' property">
+										</div>
+									</div>
+
+									<div class="form-group time">
+										<c:set var="runTimeArray" value="${fn:split(runTimeConfig.runTime, '.')}"/>
+										<label for="fake-run.time" class="col-sm-2 control-label">run.time</label>
+										<div class="col-sm-10">
+											<input type="text" class="form-control pre-select" value="${runTimeArray[0]}">
+											<select class="form-select">
+												<option>days</option>
+												<option>hours</option>
+												<option>minutes</option>
+												<option>seconds</option>
+											</select>
 										</div>
 									</div>
 
 									<div class="form-group">
-										<label for="run.time" class="col-sm-2 control-label">run.time</label>
+										<label for="fake-data.size.min" class="col-sm-2 control-label">data.size.min</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control pre-select" id="run.time" name="run.time">
-											<select class="form-select">
-												<option>hours</option>
-											</select>
+											<input type="text" class="form-control" id="fake-data.size.min"
+												value="${rt:getString(runTimeConfig, 'data.size.min')}" placeholder="Enter 'data.size.min' property">
 										</div>
 									</div>
+
 									<div class="form-group">
-										<label for="data.size.min" class="col-sm-2 control-label">data.size.min</label>
+										<label for="fake-data.size.max" class="col-sm-2 control-label">data.size.max</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="data.size.min" name="data.size.min">
+											<input type="text" class="form-control" id="fake-data.size.max"
+												value="${rt:getString(runTimeConfig, 'data.size.max')}" placeholder="Enter 'data.size.max' property">
 										</div>
 									</div>
+
 									<div class="form-group">
-										<label for="data.size.max" class="col-sm-2 control-label">data.size.max</label>
+										<label for="fake-data.src.fpath" class="col-sm-2 control-label">data.src.fpath</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="data.size.max" name="data.size.max">
+											<input type="text" class="form-control" id="fake-data.src.fpath"
+												value="${rt:getString(runTimeConfig, 'data.src.fpath')}"
+												placeholder="Enter relative path to a list of object on remote host. Format: log/<run.mode>/<run.id>/<filename>">
 										</div>
 									</div>
+								</fieldset>
+
+								<fieldset>
+									<legend>Controller</legend>
 									<div class="form-group">
-										<label for="data.src.fpath" class="col-sm-2 control-label">data.src.fpath</label>
+										<label for="fake-remote.servers" class="col-sm-2 control-label">remote.servers</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="data.src.fpath" name="data.src.fpath">
+											<input type="text" class="form-control" id="fake-remote.servers"
+												value="${rt:getString(runTimeConfig, 'remote.servers')}" placeholder="Enter 'remote.servers' property">
 										</div>
 									</div>
+								</fieldset>
+
+								<fieldset>
+									<legend>Run</legend>
 									<div class="form-group">
-										<label for="remote.servers" class="col-sm-2 control-label">remote.servers</label>
+										<label for="fake-run.id" class="col-sm-2 control-label">run.id</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="remote.servers" name="remote.servers">
+											<input type="text" class="form-control" id="fake-run.id"
+												placeholder="Enter 'run.id' property. For example, ${runTimeConfig.runId}">
 										</div>
 									</div>
+
 									<div class="form-group">
-										<label for="run.id" class="col-sm-2 control-label">run.id</label>
+										<label for="fake-run.scenario.name" class="col-sm-2 control-label">run.scenario.name</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="run.id" name="run.id">
-										</div>
-									</div>
-									<div class="form-group">
-										<label for="remote.servers" class="col-sm-2 control-label">remote.servers</label>
-										<div class="col-sm-10">
-											<input type="text" class="form-control" id="remote.servers" name="remote.servers">
-										</div>
-									</div>
-									<div class="form-group">
-										<label for="run.scenario.name" class="col-sm-2 control-label">run.scenario.name</label>
-										<div class="col-sm-10">
-											<select class="form-select" id="fake-scenario">
+											<select id="fake-run.scenario.name" class="form-select">
+												<option value="fake-${runTimeConfig.runScenarioName}">${runTimeConfig.runScenarioName}</option>
 												<option value="fake-single">single</option>
-												<option value="fake-rampup">rampup</option>
 												<option value="fake-chain">chain</option>
+												<option value="fake-rampup">rampup</option>
 											</select>
-											<div class="submenu">
-												<div id="fake-single">
-													<label for="scenario.single.load">load</label>
-													<select id="scenario.single.load" name="scenario.single.load">
-														<option>create</option>
-														<option>read</option>
-														<option>update</option>
-														<option>delete</option>
-														<option>append</option>
-													</select>
+											<br/>
+
+											<button id="scenario-button" type="button" class="btn btn-primary" data-toggle="modal"
+												data-target="#fake-${runTimeConfig.runScenarioName}">
+													More...
+											</button>
+
+											<div class="modal fade" id="fake-single" tabindex="-1" role="dialog" aria-labelledby="singleLabel"
+												 aria-hidden="true">
+												<div class="modal-dialog">
+													<div class="modal-content">
+														<div class="modal-header">
+															<button type="button" class="close" data-dismiss="modal">
+																<span aria-hidden="true">&times;</span>
+																<span class="sr-only">Close</span>
+															</button>
+															<h4 class="modal-title" id="singleLabel">Single</h4>
+														</div>
+
+														<div class="modal-body">
+															<div class="form-group">
+																<label for="fake-scenario.single.load"
+																	   class="col-sm-6 control-label">scenario.single.load</label>
+																<div class="col-sm-6">
+																	<select id="fake-scenario.single.load" class="form-select">
+																		<option value="fake-${rt:getString(runTimeConfig, 'scenario.single.load')}">
+																			${rt:getString(runTimeConfig, 'scenario.single.load')}
+																		</option>
+																		<option value="fake-create">create</option>
+																		<option value="fake-read">read</option>
+																		<option value="fake-update">update</option>
+																		<option value="fake-delete">delete</option>
+																		<option value="fake-append">append</option>
+																	</select>
+																</div>
+															</div>
+
+															<hr/>
+
+															<div id="fake-create">
+																<fieldset>
+																	<legend>Create</legend>
+																	<div class="form-group">
+																		<label class="col-sm-6 control-label" for="fake-load.create.threads">
+																			load.create.threads
+																		</label>
+																		<div class="col-sm-6">
+																			<input type="text" class="form-control"
+																				id="fake-load.create.threads" value="${rt:getString(runTimeConfig, 'load.create.threads')}"
+																					placeholder="Enter 'load.create.threads' property">
+																		</div>
+																	</div>
+																</fieldset>
+															</div>
+
+															<div id="fake-read">
+																<fieldset>
+																	<legend>Read</legend>
+																	<div class="form-group">
+																		<label class="col-sm-6 control-label" for="fake-load.read.threads">
+																			load.read.threads
+																		</label>
+																		<div class="col-sm-6">
+																			<input type="text" class="form-control"
+																				id="fake-load.read.threads" value="${rt:getString(runTimeConfig, 'load.read.threads')}"
+																					placeholder="Enter 'load.read.threads' property">
+																		</div>
+																	</div>
+
+																	<div class="form-group">
+																		<label for="fake-load.read.verify.content"
+																			   class="col-sm-6 control-label">load.read.verify.content</label>
+																		<div class="col-sm-6">
+																			<select id="fake-load.read.verify.content" class="form-select">
+																				<option>${rt:getString(runTimeConfig, 'load.read.verify.content')}</option>
+																				<option>true</option>
+																				<option>false</option>
+																			</select>
+																		</div>
+																	</div>
+																</fieldset>
+															</div>
+
+															<div id="fake-update">
+																<fieldset>
+																	<legend>Update</legend>
+																	<div class="form-group">
+																		<label class="col-sm-6 control-label" for="fake-load.update.threads">
+																			load.update.threads
+																		</label>
+																		<div class="col-sm-6">
+																			<input type="text" class="form-control"
+																				id="fake-load.update.threads" value="${rt:getString(runTimeConfig, 'load.update.threads')}"
+																					placeholder="Enter 'load.update.threads' property">
+																		</div>
+																	</div>
+
+																	<div class="form-group">
+																		<label class="col-sm-6 control-label" for="fake-load.update.per.item">
+																			load.update.per.item
+																		</label>
+																		<div class="col-sm-6">
+																			<input type="text" class="form-control"
+																				id="fake-load.update.per.item" value="${rt:getString(runTimeConfig, 'load.update.per.item')}"
+																					placeholder="Enter 'load.update.per.item' property">
+																		</div>
+																	</div>
+																</fieldset>
+															</div>
+
+															<div id="fake-delete">
+																<fieldset>
+																	<legend>Delete</legend>
+																	<div class="form-group">
+																		<label class="col-sm-6 control-label" for="fake-load.delete.threads">load.delete.threads</label>
+																		<div class="col-sm-6">
+																			<input type="text" class="form-control"
+																				id="fake-load.delete.threads" value="${rt:getString(runTimeConfig, 'load.delete.threads')}"
+																					placeholder="Enter 'load.delete.threads' property">
+																		</div>
+																	</div>
+																</fieldset>
+															</div>
+
+															<div id="fake-append">
+																<fieldset id="fake-append">
+																	<legend>Append</legend>
+																	<div class="form-group">
+																		<label class="col-sm-6 control-label" for="fake-load.append.threads">load.append.threads</label>
+																		<div class="col-sm-6">
+																			<input type="text" class="form-control"
+																				id="fake-load.append.threads" value="${rt:getString(runTimeConfig, 'load.append,threads')}"
+																					placeholder="Enter 'load.append.threads' property">
+																		</div>
+																	</div>
+																</fieldset>
+															</div>
+														</div>
+
+														<div class="modal-footer">
+															<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+															<button type="button" class="btn btn-primary">Save changes</button>
+														</div>
+													</div>
 												</div>
-												<div id="fake-rampup">
-													<label for="scenario.chain.load">chain.load</label>
-													<input type="text" class="form-control" id="scenario.chain.load" name="scenario.chain.load">
-													<label for="scenario.rampup.thread.counts">thread.counts</label>
-													<input type="text" class="form-control" id="scenario.rampup.thread.counts" name="scenario.rampup.thread.counts">
-													<label for="scenario.rampup.sizes">sizes</label>
-													<input type="text" class="form-control" id="scenario.rampup.sizes" name="scenario.rampup.sizes">
+											</div>
+
+											<div class="modal fade" id="fake-chain" tabindex="-1" role="dialog" aria-labelledby="chainLabel"
+												 aria-hidden="true">
+												<div class="modal-dialog">
+													<div class="modal-content">
+														<div class="modal-header">
+															<button type="button" class="close" data-dismiss="modal">
+																<span aria-hidden="true">&times;</span>
+																<span class="sr-only">Close</span>
+															</button>
+															<h4 class="modal-title" id="chainLabel">Chain</h4>
+														</div>
+
+														<div class="modal-body">
+															<div class="form-group">
+																<label for="fake-scenario.chain.load" class="col-sm-6 control-label">
+																	scenario.chain.load
+																</label>
+																<div class="col-sm-6">
+																	<input type="text" class="form-control" id="fake-scenario.chain.load"
+																		value="${rt:getString(runTimeConfig, 'scenario.chain.load')}"
+																			placeholder="Enter 'scenario.chain.load' property">
+																</div>
+															</div>
+
+															<div role="tabpanel">
+																<ul class="nav nav-tabs" role="tablist">
+																	<li role="presentation" class="active">
+																		<a href="#faketab-create" aria-controls="faketab-create" role="tab" data-toggle="tab">
+																			Create
+																		</a>
+																	</li>
+																	<li role="presentation">
+																		<a href="#faketab-read" aria-controls="faketab-read" role="tab" data-toggle="tab">
+																			Read
+																		</a>
+																	</li>
+																	<li role="presentation">
+																		<a href="#faketab-update" aria-controls="faketab-update" role="tab" data-toggle="tab">
+																			Update
+																		</a>
+																	</li>
+																	<li role="presentation">
+																		<a href="#faketab-delete" aria-controls="faketab-delete" role="tab" data-toggle="tab">
+																			Delete
+																		</a>
+																	</li>
+																	<li role="presentation">
+																		<a href="#faketab-append" aria-controls="faketab-append" role="tab" data-toggle="tab">
+																			Append
+																		</a>
+																	</li>
+																</ul>
+
+																<div class="tab-content modal-tabs">
+																	<div role="tabpanel" class="tab-pane active" id="faketab-create">
+																		<div class="form-group">
+																			<label class="col-sm-6 control-label" for="faketab-load.create.threads">load.create.threads</label>
+																			<div class="col-sm-6">
+																				<input type="text" class="form-control" id="faketab-load.create.threads"
+																					value="$${rt:getString(runTimeConfig, 'load.create.threads')}"
+																						placeholder="Enter 'load.create.threads' property">
+																			</div>
+																		</div>
+																	</div>
+																	<div role="tabpanel" class="tab-pane" id="faketab-read">
+																		<div class="form-group">
+																			<label class="col-sm-6 control-label" for="faketab-load.read.threads">load.read.threads</label>
+																			<div class="col-sm-6">
+																				<input type="text" class="form-control" id="faketab-load.read.threads"
+																					value="$${rt:getString(runTimeConfig, 'load.read.threads')}"
+																						placeholder="Enter 'load.read.threads' property">
+																			</div>
+																		</div>
+
+																		<div class="form-group">
+																			<label for="faketab-load.read.verify.content"
+																				   class="col-sm-6 control-label">load.read.verify.content</label>
+																			<div class="col-sm-6">
+																				<select id="faketab-load.read.verify.content" class="form-select">
+																					<option>${rt:getString(runTimeConfig, 'load.read.verify.content')}</option>
+																					<option>true</option>
+																					<option>false</option>
+																				</select>
+																			</div>
+																		</div>
+																	</div>
+																	<div role="tabpanel" class="tab-pane" id="faketab-update">
+																		<div class="form-group">
+																			<label class="col-sm-6 control-label" for="faketab-load.update.threads">load.update.threads</label>
+																			<div class="col-sm-6">
+																				<input type="text" class="form-control" id="faketab-load.update.threads"
+																					value="${rt:getString(runTimeConfig, 'load.update.threads')}"
+																						placeholder="Enter 'load.update.threads' property">
+																			</div>
+																		</div>
+
+																		<div class="form-group">
+																			<label class="col-sm-6 control-label" for="faketab-load.update.per.item">load.update.per.item</label>
+																			<div class="col-sm-6">
+																				<input type="text" class="form-control" id="faketab-load.update.per.item"
+																					value="${rt:getString(runTimeConfig, 'load.update.per.item')}"
+																						placeholder="Enter 'load.update.per.item' property">
+																			</div>
+																		</div>
+																	</div>
+																	<div role="tabpanel" class="tab-pane" id="faketab-delete">
+																		<div class="form-group">
+																			<label class="col-sm-6 control-label" for="faketab-load.delete.threads">load.delete.threads</label>
+																			<div class="col-sm-6">
+																				<input type="text" class="form-control" id="faketab-load.delete.threads"
+																					value="${rt:getString(runTimeConfig, 'load.delete.threads')}"
+																						placeholder="Enter 'load.delete.threads' property">
+																			</div>
+																		</div>
+																	</div>
+																	<div role="tabpnale" class="tab-pane" id="faketab-append">
+																		<div class="form-group">
+																			<label class="col-sm-6 control-label" for="fake-load.append.threads">load.append.threads</label>
+																			<div class="col-sm-6">
+																				<input type="text" class="form-control" id="fake-load.append.threads"
+																					value="${rt:getString(runTimeConfig, 'load.append.threads')}"
+																						placeholder="Enter 'load.append.threads' property">
+																			</div>
+																		</div>
+																	</div>
+																</div>
+															</div>
+
+                                                            <hr/>
+
+															<div class="form-group">
+																<label for="fake-scenario.chain.simultaneous" class="col-sm-6 control-label">
+																	scenario.chain.simultaneous
+																</label>
+																<div class="col-sm-6">
+																	<select class='form-select'>
+																		<option>${rt:getString(runTimeConfig, 'scenario.chain.simultaneous')}</option>
+																		<option>true</option>
+																		<option>false</option>
+																	</select>
+																</div>
+															</div>
+														</div>
+
+														<div class="modal-footer">
+															<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+															<button type="button" class="btn btn-primary">Save changes</button>
+														</div>
+													</div>
 												</div>
-												<div id="fake-chain">
-													<label for="scenario.chain.load">load</label>
-													<input type="text" class="form-control" id="scenario.chain.load" name="scenario.chain.load">
-													<label for="scenario.chain.simultaneous">simultaneous</label>
-													<select id="scenario.chain.simultaneous" name="scenario.chain.simultaneous">
-														<option>true</option>
-														<option>false</option>
-													</select>
+											</div>
+
+											<div class="modal fade" id="fake-rampup" tabindex="-1" role="dialog" aria-labelledby="rampupLabel"
+												 aria-hidden="true">
+												<div class="modal-dialog">
+													<div class="modal-content">
+														<div class="modal-header">
+															<button type="button" class="close" data-dismiss="modal">
+																<span aria-hidden="true">&times;</span>
+																<span class="sr-only">Close</span>
+															</button>
+															<h4 class="modal-title" id="rampupLabel">Rampup</h4>
+														</div>
+
+														<div class="modal-body">
+
+															<div class="form-group">
+																<label class="col-sm-6 control-label" for="chain-button">
+																	You need to configure chain.load
+																</label>
+																<div class="col-sm-6">
+																	<button type="button" class="btn btn-default" id="chain-load">
+																		Configure
+																	</button>
+																</div>
+															</div>
+															<div class="form-group">
+																<label for="fake-load.rampup.thread.counts" class="col-sm-4 control-label">
+																	thread.counts
+																</label>
+																<div class="col-sm-8">
+																	<input type="text" class="form-control" id="fake-load.rampup.thread.counts"
+																		value="${rt:getString(runTimeConfig, 'load.rampup.thread.counts')}"
+																			placeholder="Enter 'load.rampup.thread.counts' property">
+																</div>
+															</div>
+
+															<div class="form-group">
+																<label for="fake-load.rampup.objectsizes" class="col-sm-4 control-label">
+																	load.rampup.objectsizes
+																</label>
+																<div class="col-sm-8">
+																	<input type="text" class="form-control" id="fake-load.rampup.objectsizes"
+																		value="${rt:getString(runTimeConfig, 'load.rampup.objectsizes')}"
+																			placeholder="Enter 'load.rampup.objectsizes' property">
+																</div>
+															</div>
+														</div>
+
+														<div class="modal-footer">
+															<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+															<button type="button" class="btn btn-primary">Save changes</button>
+														</div>
+													</div>
 												</div>
 											</div>
 										</div>
 									</div>
 
 									<div class="form-group">
-										<label for="run.request.retires" class="col-sm-2 control-label">run.request.retires</label>
+										<label for="fake-run.request.retries" class="col-sm-2 control-label">run.request.retries</label>
 										<div class="col-sm-10">
-											<select class="form-select">
+											<select id="fake-run.request.retries" class="form-control">
+												<option>${rt:getString(runTimeConfig, "run.request.retries")}</option>
 												<option>true</option>
 												<option>false</option>
 											</select>
 										</div>
 									</div>
+								</fieldset>
 
+								<fieldset>
+									<legend>Storage</legend>
 									<div class="form-group">
-										<label for="storage.addrs" class="col-sm-2 control-label">storage.addrs</label>
+										<label for="fake-storage.addrs" class="col-sm-2 control-label">storage.addrs(data nodes)</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="storage.addrs" name="storage.addrs">
+											<input type="text" class="form-control" id="fake-storage.addrs" value="${rt:getString(runTimeConfig, 'storage.addrs')}">
 										</div>
 									</div>
 
 									<div class="form-group">
-										<label for="storage.api" class="col-sm-2 control-label">storage.api</label>
+										<label for="fake-storage.api" class="col-sm-2 control-label">storage.api</label>
 										<div class="col-sm-10">
-											<select class="form-select">
+											<select class="form-control form-select" id="fake-storage.api">
+												<option>${runTimeConfig.storageApi}</option>
+												<option>swift</option>
 												<option>s3</option>
 												<option>atmos</option>
-												<option>swift</option>
 											</select>
-											<div class="submenu">
-												<div id="s3">
-													<label for="api.s3.bucket">bucket</label>
-													<input type="text" class="form-control" id="api.s3.bucket" name="api.s3.bucket">
-												</div>
-												<div id="atmos">
-													<label for="api.atmos.subtenant">subtenant</label>
-													<input type="text" class="form-control" id="api.atmos.subtenant" name="api.atmos.subtenant">
-												</div>
-												<div id="swift">
 
+											<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#apiModal">
+												More...
+											</button>
+
+											<div class="modal fade" id="apiModal" tabindex="-1" role="dialog" aria-labelledby="apiLabel"
+												 aria-hidden="true">
+												<div class="modal-dialog">
+													<div class="modal-content">
+														<div class="modal-header">
+															<button type="button" class="close" data-dismiss="modal">
+																<span aria-hidden="true">&times;</span>
+																<span class="sr-only">Close</span>
+															</button>
+															<h4 class="modal-title" id="apiLabel">Scenario settings</h4>
+														</div>
+
+														<div class="modal-body">
+
+														</div>
+
+														<div class="modal-footer">
+															<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+															<button type="button" class="btn btn-primary">Save changes</button>
+														</div>
+													</div>
 												</div>
 											</div>
 										</div>
 									</div>
-								</div>
+								</fieldset>
 							</form>
 						</div>
 						<div id="extended-config">

@@ -1,4 +1,7 @@
 $(document).ready(function() {
+	//
+	excludeDuplicateOptions();
+	//
 	var shortPropsMap = {};
 	var ul = $(".folders");
 	var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
@@ -9,15 +12,29 @@ $(document).ready(function() {
 	generatePropertyPage();
 	$(".folders").hide();
 	$("#extended-config").hide();
+	$("#objects").hide();
 
 	configureWebSocket(WEBSOCKET_URL, COUNT_OF_RECORDS).connect();
 
-	$("#fake-scenario").on("change", function(e) {
-		var notSelectedElements = $("#fake-scenario option:not(:selected)");
-		notSelectedElements.each(function() {
+	/*$("select").each(function() {
+		var valueSelected = this.value;
+		if ($("#" + valueSelected).is('div')) {
+			$("#" + valueSelected).show();
+		}
+	});*/
+
+	$("#fake-data").on("change", function() {
+		var valueSelected = this.value;
+		var notSelected = $("#fake-data option").not(":selected");
+		notSelected.each(function() {
 			$("#" + $(this).val()).hide();
 		});
-		$("#" + $(this).val()).show();
+		$("#" + valueSelected).show();
+	});
+
+	$("#fake-run\\.scenario\\.name").on("change", function() {
+		var valueSelected = this.value;
+		$("#scenario-button").attr("data-target", "#" + valueSelected);
 	});
 
 	$("#run\\.time").change(function() {
@@ -104,6 +121,10 @@ $(document).ready(function() {
 			e.preventDefault();
 		}
 		onFoldersElementClick($(this));
+	});
+
+	$("#chain-load").click(function() {
+		$("#fake-chain").modal('show').css("z-index", 5000);
 	});
 });
 
@@ -215,7 +236,7 @@ jQuery.fn.prependChild = function(html) {
 	return child;
 }
 
-/*function excludeDuplicateOptions() {
+function excludeDuplicateOptions() {
 	var found = [];
 	var selectArray = $("select");
 	selectArray.each(function() {
@@ -228,7 +249,7 @@ jQuery.fn.prependChild = function(html) {
 			found.push(this.value);
 		});
 	});
-}*/
+}
 
 function configureWebSocket(location, countOfRecords) {
 	var webSocketServer = {
