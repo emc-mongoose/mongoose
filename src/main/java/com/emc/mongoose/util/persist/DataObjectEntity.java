@@ -2,54 +2,45 @@ package com.emc.mongoose.util.persist;
 //
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
-import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
+import org.hibernate.annotations.NamedNativeQueries;
+import org.hibernate.annotations.NamedNativeQuery;
+import org.hibernate.annotations.NamedQueries;
+import org.hibernate.annotations.NamedQuery;
 //
-import static javax.persistence.GenerationType.IDENTITY;
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.IdClass;
+import javax.persistence.Table;
+import java.io.Serializable;
+//
 /**
  * Created by olga on 28.10.14.
  */
-@Entity(name="DataItem")
-@Table(name = "dataitems", uniqueConstraints = {
-	@UniqueConstraint(columnNames =	"identifier"),
-	@UniqueConstraint(columnNames = "ringOffset"),
-	@UniqueConstraint(columnNames = "size"),
-	@UniqueConstraint(columnNames = "layer"),
-	@UniqueConstraint(columnNames = "mask")})
+@Entity(name="DataObject")
+@IdClass(DataObjectEntityPK.class)
+@Table(name = "dataobject")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class DataObjectEntity
-implements Serializable{
+		implements Serializable{
 	@Id
-	@GeneratedValue(strategy = IDENTITY)
-	@Column(name = "id")
-	private long id;
 	@Column(name = "identifier")
 	private String identifier;
-	@Column(name = "ringOffset")
-	private String ringOffset;
+	@Id
 	@Column(name = "size")
 	private long size;
-	@Column(name = "layer")
+	@Column(name = "ringOffset", updatable = true)
+	private String ringOffset;
+	@Column(name = "layer", updatable = true)
 	private long layer;
-	@Column(name = "mask")
+	@Column(name = "mask", updatable = true)
 	private long mask;
-	@OneToMany(targetEntity=TraceEntity.class, fetch = FetchType.LAZY, mappedBy = "dataitem")
-	private Set<TraceEntity> traceSet = new HashSet<TraceEntity>();
 	//
 	public DataObjectEntity(){
 	}
 	public DataObjectEntity(final String identifier, final String ringOffset, final long size,
-			final long layer, final long mask){
+							final long layer, final long mask){
 		this.identifier = identifier;
 		this.ringOffset = ringOffset;
 		this.layer = layer;
@@ -61,12 +52,6 @@ implements Serializable{
 		this.size = size;
 	}
 	//
-	public final long getId() {
-		return id;
-	}
-	public final void setId(final long id) {
-		this.id = id;
-	}
 	public final long getSize() {
 		return size;
 	}
@@ -85,12 +70,6 @@ implements Serializable{
 	public final void setMask(final long mask) {
 		this.mask = mask;
 	}
-	public final Set<TraceEntity> getTraceSet() {
-		return traceSet;
-	}
-	public final void setTraceSet(final Set<TraceEntity> traceSet) {
-		this.traceSet = traceSet;
-	}
 	public final String getIdentifier() {
 		return identifier;
 	}
@@ -102,5 +81,27 @@ implements Serializable{
 	}
 	public final void setRingOffset(final String ringOffset) {
 		this.ringOffset = ringOffset;
+	}
+}
+/////////////////////////////////////////////
+@Embeddable
+class DataObjectEntityPK implements Serializable {
+	//
+	private String identifier;
+	private long size;
+	//
+	public DataObjectEntityPK(){}
+	//
+	public String getIdentifier() {
+		return identifier;
+	}
+	public void setIdentifier(String identifier) {
+		this.identifier = identifier;
+	}
+	public long getSize() {
+		return size;
+	}
+	public void setSize(long size) {
+		this.size = size;
 	}
 }

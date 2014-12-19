@@ -1,8 +1,5 @@
 package com.emc.mongoose.util.persist;
 //
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -22,19 +19,15 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 28.10.14.
  */
 @Entity(name="NodeEntity")
-@Table(name = "Nodes", uniqueConstraints = {
-	@UniqueConstraint(columnNames = "address")})
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@Table(name = "node")
 public final class NodeEntity
-implements Serializable{
+		implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
 	private long id;
-	@Column(name = "address")
+	@Column(name = "address", unique = true)
 	private String address;
-	@OneToMany(targetEntity=ThreadEntity.class, fetch = FetchType.LAZY, mappedBy = "node")
-	private Set<ThreadEntity> threadSet = new HashSet<ThreadEntity>();
 	//
 	public NodeEntity(){
 	}
@@ -53,11 +46,5 @@ implements Serializable{
 	}
 	public final void setAddress(final String address) {
 		this.address = address;
-	}
-	public final Set<ThreadEntity> getThreadSet() {
-		return threadSet;
-	}
-	public final void setThreadSet(final Set<ThreadEntity> threadSet) {
-		this.threadSet = threadSet;
 	}
 }

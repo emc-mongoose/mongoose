@@ -1,8 +1,5 @@
 package com.emc.mongoose.util.persist;
 //
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -22,19 +19,15 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 17.10.14.
  */
 @Entity(name="API")
-@Table(name = "API", uniqueConstraints = {
-	@UniqueConstraint(columnNames = "name")})
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@Table(name = "api")
 public final class ApiEntity
-implements Serializable {
+		implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
 	private long id;
-	@Column(name = "name")
+	@Column(name = "name", unique = true)
 	private String name;
-	@OneToMany(targetEntity=LoadEntity.class, fetch = FetchType.LAZY, mappedBy = "api")
-	private Set<LoadEntity> loadsSet = new HashSet<LoadEntity>();
 	//
 	public ApiEntity(){
 	}
@@ -53,11 +46,5 @@ implements Serializable {
 	}
 	public final void setName(final String name) {
 		this.name = name;
-	}
-	public final Set<LoadEntity> getLoadsSet() {
-		return loadsSet;
-	}
-	public final void setLoadsSet(final Set<LoadEntity> loadsSet) {
-		this.loadsSet = loadsSet;
 	}
 }

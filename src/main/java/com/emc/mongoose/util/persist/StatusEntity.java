@@ -19,19 +19,15 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 28.10.14.
  */
 @Entity(name="StatusEntity")
-@Table(name = "Statuses", uniqueConstraints = {
-	@UniqueConstraint(columnNames = "name")})
+@Table(name = "status")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class StatusEntity
-implements Serializable{
+		implements Serializable{
 	@Id
-	//@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "code")
 	private int code;
-	@Column(name = "name")
+	@Column(name = "name", unique = true)
 	private String name;
-	@OneToMany(targetEntity=TraceEntity.class, fetch = FetchType.LAZY, mappedBy = "status")
-	private Set<TraceEntity> traceSet = new HashSet<TraceEntity>();
 	//
 	public StatusEntity(){
 	}
@@ -51,11 +47,5 @@ implements Serializable{
 	}
 	public final void setName(final String name) {
 		this.name = name;
-	}
-	public final Set<TraceEntity> getTraceSet() {
-		return traceSet;
-	}
-	public final void setTraceSet(final Set<TraceEntity> traceSet) {
-		this.traceSet = traceSet;
 	}
 }

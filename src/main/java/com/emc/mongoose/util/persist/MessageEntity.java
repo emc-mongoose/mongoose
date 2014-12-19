@@ -1,13 +1,17 @@
 package com.emc.mongoose.util.persist;
 //
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.hibernate.annotations.ForeignKey;
 
+import javax.persistence.AttributeOverride;
+import javax.persistence.AttributeOverrides;
 import javax.persistence.Column;
+import javax.persistence.Embeddable;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
@@ -18,22 +22,26 @@ import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.Date;
 
-import static javax.persistence.GenerationType.IDENTITY;
+import static javax.persistence.GenerationType.AUTO;
 
 /**
  * Created by olga on 23.10.14.
  */
 @Entity(name = "MessageEntity")
-@Table(name = "messages")
+@IdClass(MessageEntityPK.class)
+@Table(name = "message")
 public final class MessageEntity
-implements Serializable{
+		implements Serializable{
+	//
 	@Id
-	@GeneratedValue(strategy = IDENTITY)
-	@Column(name = "id",unique = true)
+	@Column(name = "id", nullable = false)
+	@GeneratedValue(strategy = AUTO)
 	private long id;
+	@Id
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "run", nullable = false)
 	private RunEntity run;
+	//
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "level", nullable = false)
 	private LevelEntity level;
@@ -48,30 +56,15 @@ implements Serializable{
 	//
 	public MessageEntity(){
 	}
-	public MessageEntity(final RunEntity run, final MessageClassEntity classMessage, final LevelEntity level,
-			final String messsage, final Date tstamp){
-		this.run = run;
+	public MessageEntity(final RunEntity runEntity, final MessageClassEntity classMessage, final LevelEntity level,
+						 final String messsage, final Date tstamp){
+		this.run = runEntity;
 		this.classMessage = classMessage;
 		this.level = level;
 		this.message = messsage;
 		this.tstamp = tstamp;
-		run.getMessageSet().add(this);
-		classMessage.getMessageSet().add(this);
-		level.getMessageSet().add(this);
 	}
 	//
-	public final long getId() {
-		return id;
-	}
-	public final void setId(final long id) {
-		this.id = id;
-	}
-	public final RunEntity getRun() {
-		return run;
-	}
-	public final void setRun(final RunEntity run) {
-		this.run = run;
-	}
 	public final LevelEntity getLevel() {
 		return level;
 	}
@@ -95,5 +88,40 @@ implements Serializable{
 	}
 	public final void setMessage(final String message) {
 		this.message = message;
+	}
+	public long getId() {
+		return id;
+	}
+	public void setId(long id) {
+		this.id = id;
+	}
+	public RunEntity getRun() {
+		return run;
+	}
+	public void setRun(RunEntity run) {
+		this.run = run;
+	}
+}
+
+/////////////////////////////////////////////
+@Embeddable
+class MessageEntityPK implements Serializable {
+	//
+	private long id;
+	private RunEntity run;
+	//
+	public MessageEntityPK(){}
+	//
+	public long getId() {
+		return id;
+	}
+	public void setId(long id) {
+		this.id = id;
+	}
+	public RunEntity getRun() {
+		return run;
+	}
+	public void setRun(RunEntity run) {
+		this.run = run;
 	}
 }

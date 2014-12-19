@@ -76,11 +76,6 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
-								"marker": "perfTrace",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
 								"marker": "dataList",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"

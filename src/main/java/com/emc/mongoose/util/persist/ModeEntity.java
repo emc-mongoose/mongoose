@@ -20,18 +20,16 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 16.10.14.
  */
 @Entity(name="Modes")
-@Table(name = "modes")
+@Table(name = "mode")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class ModeEntity
-implements Serializable {
+		implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
-	@Column(name = "id", unique = true)
+	@Column(name = "id")
 	private long id;
 	@Column(name = "name", unique = true)
 	private String name;
-	@OneToMany(targetEntity=RunEntity.class, fetch = FetchType.LAZY, mappedBy = "mode")
-	private Set<RunEntity> runsSet = new HashSet<RunEntity>();
 	//
 	public ModeEntity(){
 	}
@@ -50,11 +48,5 @@ implements Serializable {
 	}
 	public final void setName(final String name) {
 		this.name = name;
-	}
-	public final Set<RunEntity> getRunsSet() {
-		return runsSet;
-	}
-	public final void setRunsSet(final Set<RunEntity> runsSet) {
-		this.runsSet = runsSet;
 	}
 }

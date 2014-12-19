@@ -22,19 +22,16 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 23.10.14.
  */
 @Entity(name = "LevelEntity")
-@Table(name = "levels", uniqueConstraints = {
-	@UniqueConstraint(columnNames = "name")})
+@Table(name = "level")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class LevelEntity
-implements Serializable{
+		implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
 	private long id;
-	@Column(name = "name")
+	@Column(name = "name", unique = true)
 	private String name;
-	@OneToMany(targetEntity=MessageEntity.class, fetch = FetchType.LAZY, mappedBy = "level")
-	private Set<MessageEntity> messageSet = new HashSet<MessageEntity>();
 	//
 	public LevelEntity(){
 	}
@@ -53,11 +50,5 @@ implements Serializable{
 	}
 	public final void setId(final long id) {
 		this.id = id;
-	}
-	public final Set<MessageEntity> getMessageSet() {
-		return messageSet;
-	}
-	public final void setMessageSet(final Set<MessageEntity> messageSet) {
-		this.messageSet = messageSet;
 	}
 }

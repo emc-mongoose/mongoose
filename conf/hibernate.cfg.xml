@@ -14,25 +14,27 @@
 		<property name="hibernate.connection.provider_class">org.hibernate.connection.C3P0ConnectionProvider</property>
 		<property name="hibernate.c3p0.testConnectionOnCheckin">true</property>
 		<property name="hibernate.c3p0.idleConnectionTestPeriod">300</property>
-		<property name="hibernate.c3p0.min_size">5</property>
-		<property name="hibernate.c3p0.max_size">50</property>
+		<property name="hibernate.c3p0.min_size">1</property>
+		<property name="hibernate.c3p0.max_size">300</property>
 		<property name="hibernate.c3p0.timeout">1800</property>
-		<property name="hibernate.c3p0.max_statements">200</property>
+		<property name="hibernate.c3p0.max_statements">500</property>
 		<property name="connection.autocommit">true</property>
-		<property name="show_sql">false</property>
+		<property name="show_sql">true</property>
+		<property name="format_sql">true</property>
 		<!--<property name="hibernate.temp.use_jdbc_metadata_defaults">false</property>!-->
+		<mapping class="com.emc.mongoose.util.persist.StatusEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.ModeEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.RunEntity"></mapping>
-		<mapping class="com.emc.mongoose.util.persist.ApiEntity"></mapping>
-		<mapping class="com.emc.mongoose.util.persist.LoadTypeEntity"></mapping>
-		<mapping class="com.emc.mongoose.util.persist.LoadEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.LevelEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.MessageClassEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.MessageEntity"></mapping>
-		<mapping class="com.emc.mongoose.util.persist.NodeEntity"></mapping>
-		<mapping class="com.emc.mongoose.util.persist.ThreadEntity"></mapping>
-		<mapping class="com.emc.mongoose.util.persist.StatusEntity"></mapping>
-		<mapping class="com.emc.mongoose.util.persist.TraceEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.DataObjectEntity"></mapping>
+		<!--<mapping class="com.emc.mongoose.util.persist.ApiEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.LoadTypeEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.LoadEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.NodeEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.ConectionEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.TraceEntity"></mapping>
+!-->
 	</session-factory>
 </hibernate-configuration>
