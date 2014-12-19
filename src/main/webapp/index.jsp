@@ -331,7 +331,7 @@
 																		<label class="col-sm-6 control-label" for="fake-load.append.threads">load.append.threads</label>
 																		<div class="col-sm-6">
 																			<input type="text" class="form-control"
-																				id="fake-load.append.threads" value="${rt:getString(runTimeConfig, 'load.append,threads')}"
+																				id="fake-load.append.threads" value="${rt:getString(runTimeConfig, 'load.append.threads')}"
 																					placeholder="Enter 'load.append.threads' property">
 																		</div>
 																	</div>
@@ -406,7 +406,7 @@
 																			<label class="col-sm-6 control-label" for="faketab-load.create.threads">load.create.threads</label>
 																			<div class="col-sm-6">
 																				<input type="text" class="form-control" id="faketab-load.create.threads"
-																					value="$${rt:getString(runTimeConfig, 'load.create.threads')}"
+																					value="${rt:getString(runTimeConfig, 'load.create.threads')}"
 																						placeholder="Enter 'load.create.threads' property">
 																			</div>
 																		</div>
@@ -416,7 +416,7 @@
 																			<label class="col-sm-6 control-label" for="faketab-load.read.threads">load.read.threads</label>
 																			<div class="col-sm-6">
 																				<input type="text" class="form-control" id="faketab-load.read.threads"
-																					value="$${rt:getString(runTimeConfig, 'load.read.threads')}"
+																					value="${rt:getString(runTimeConfig, 'load.read.threads')}"
 																						placeholder="Enter 'load.read.threads' property">
 																			</div>
 																		</div>
@@ -524,24 +524,24 @@
 																</div>
 															</div>
 															<div class="form-group">
-																<label for="fake-load.rampup.thread.counts" class="col-sm-4 control-label">
+																<label for="fake-scenario.rampup.thread.counts" class="col-sm-4 control-label">
 																	thread.counts
 																</label>
 																<div class="col-sm-8">
-																	<input type="text" class="form-control" id="fake-load.rampup.thread.counts"
-																		value="${rt:getString(runTimeConfig, 'load.rampup.thread.counts')}"
-																			placeholder="Enter 'load.rampup.thread.counts' property">
+																	<input type="text" class="form-control" id="fake-scenario.rampup.thread.counts"
+																		value="${rt:getString(runTimeConfig, 'scenario.rampup.thread.counts')}"
+																			placeholder="Enter 'scenario.rampup.thread.counts' property">
 																</div>
 															</div>
 
 															<div class="form-group">
-																<label for="fake-load.rampup.objectsizes" class="col-sm-4 control-label">
-																	load.rampup.objectsizes
+																<label for="fake-scenario.rampup.sizes" class="col-sm-4 control-label">
+																	load.rampup.sizes
 																</label>
 																<div class="col-sm-8">
-																	<input type="text" class="form-control" id="fake-load.rampup.objectsizes"
-																		value="${rt:getString(runTimeConfig, 'load.rampup.objectsizes')}"
-																			placeholder="Enter 'load.rampup.objectsizes' property">
+																	<input type="text" class="form-control" id="fake-scenario.rampup.sizes"
+																		value="${rt:getString(runTimeConfig, 'scenario.rampup.sizes')}"
+																			placeholder="Enter 'scenario.rampup.sizes' property">
 																</div>
 															</div>
 														</div>
@@ -559,7 +559,7 @@
 									<div class="form-group">
 										<label for="fake-run.request.retries" class="col-sm-2 control-label">run.request.retries</label>
 										<div class="col-sm-10">
-											<select id="fake-run.request.retries" class="form-control">
+											<select id="fake-run.request.retries" class="form-select">
 												<option>${rt:getString(runTimeConfig, "run.request.retries")}</option>
 												<option>true</option>
 												<option>false</option>
@@ -580,18 +580,18 @@
 									<div class="form-group">
 										<label for="fake-storage.api" class="col-sm-2 control-label">storage.api</label>
 										<div class="col-sm-10">
-											<select class="form-control form-select" id="fake-storage.api">
-												<option>${runTimeConfig.storageApi}</option>
-												<option>swift</option>
-												<option>s3</option>
-												<option>atmos</option>
+											<select class="form-select" id="fake-storage.api">
+												<option value="fake-${runTimeConfig.storageApi}">${runTimeConfig.storageApi}</option>
+												<option value="fake-swift">swift</option>
+												<option value="fake-s3">s3</option>
+												<option value="fake-atmos">atmos</option>
 											</select>
-
-											<button type="button" class="btn btn-primary" data-toggle="modal" data-target="#apiModal">
+											<br/>
+											<button id="api-button" type="button" class="btn btn-primary" data-toggle="modal" data-target="#fake-${runTimeConfig.storageApi}">
 												More...
 											</button>
 
-											<div class="modal fade" id="apiModal" tabindex="-1" role="dialog" aria-labelledby="apiLabel"
+											<div class="modal fade" id="fake-s3" tabindex="-1" role="dialog" aria-labelledby="s3Label"
 												 aria-hidden="true">
 												<div class="modal-dialog">
 													<div class="modal-content">
@@ -600,7 +600,38 @@
 																<span aria-hidden="true">&times;</span>
 																<span class="sr-only">Close</span>
 															</button>
-															<h4 class="modal-title" id="apiLabel">Scenario settings</h4>
+															<h4 class="modal-title" id="s3Label">S3</h4>
+														</div>
+
+														<div class="modal-body">
+															<div class="form-group">
+																<label for="fake-api.s3.bucket" class="col-sm-4 control-label">api.s3.bucket</label>
+																<div class="col-sm-8">
+																	<input type="text" class="form-control" id="fake-api.s3.bucket"
+																		value="${rt:getString(runTimeConfig, 'api.s3.bucket')}"
+																			placeholder="Enter 'api.s3.bucket' property">
+																</div>
+															</div>
+														</div>
+
+														<div class="modal-footer">
+															<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+															<button type="button" class="btn btn-primary">Save changes</button>
+														</div>
+													</div>
+												</div>
+											</div>
+
+											<div class="modal fade" id="fake-swift" tabindex="-1" role="dialog" aria-labelledby="swiftLabel"
+												aria-hidden="true">
+												<div class="modal-dialog">
+													<div class="modal-content">
+														<div class="modal-header">
+															<button type="button" class="close" data-dismiss="modal">
+																<span aria-hidden="true">&times;</span>
+																<span class="sr-only">Close</span>
+															</button>
+															<h4 class="modal-title" id="swiftLabel">Swift</h4>
 														</div>
 
 														<div class="modal-body">
@@ -611,6 +642,30 @@
 															<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
 															<button type="button" class="btn btn-primary">Save changes</button>
 														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+
+										<div class="modal fade" id="fake-atmos" tabindex="-1" role="dialog" aria-labelledby="atmosLabel"
+											aria-hidden="true">
+											<div class="modal-dialog">
+												<div class="modal-content">
+													<div class="modal-header">
+														<button type="button" class="close" data-dismiss="modal">
+															<span aria-hidden="true">&times;</span>
+															<span class="sr-only">Close</span>
+														</button>
+														<h4 class="modal-title" id="atmosLabel">Atmos</h4>
+													</div>
+
+													<div class="modal-body">
+
+													</div>
+
+													<div class="modal-footer">
+														<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+														<button type="button" class="btn btn-primary">Save changes</button>
 													</div>
 												</div>
 											</div>

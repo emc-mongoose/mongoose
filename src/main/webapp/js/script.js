@@ -37,6 +37,11 @@ $(document).ready(function() {
 		$("#scenario-button").attr("data-target", "#" + valueSelected);
 	});
 
+	$("#fake-storage\\.api").on("change", function() {
+		var valueSelected = this.value;
+		$("#api-button").attr("data-target", "#" + valueSelected);
+	});
+
 	$("#run\\.time").change(function() {
 		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
 	});
