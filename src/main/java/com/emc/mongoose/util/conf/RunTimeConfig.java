@@ -170,8 +170,8 @@ implements Externalizable {
 		return getInt("run.metrics.period.sec");
 	}
 	//
-	public final int getRunRequestQueueFactor() {
-		return getInt("run.request.queue.factor");
+	public final int getRunRequestQueueSize() {
+		return getInt("run.request.queue.size");
 	}
 	//
 	public final String getHttpContentType() {

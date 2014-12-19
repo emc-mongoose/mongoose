@@ -40,15 +40,9 @@ extends Producer<T>, Consumer<T> {
 	Producer<T> getProducer()
 	throws RemoteException;
 	//
-	void join(final long milliSecs)
-	throws RemoteException, InterruptedException;
-	//
 	Future<AsyncIOTask.Result> submit(final AsyncIOTask<T> request)
 	throws RemoteException;
 	//
 	void handleResult(final AsyncIOTask<T> task, AsyncIOTask.Result result)
-	throws RemoteException;
-	//
-	String getNextNodeAddr()
 	throws RemoteException;
 }

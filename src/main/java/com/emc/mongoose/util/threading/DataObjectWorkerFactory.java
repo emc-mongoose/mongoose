@@ -8,14 +8,12 @@ import com.emc.mongoose.run.ThreadContextMap;
 public final class DataObjectWorkerFactory
 extends WorkerFactory {
 	//
-	private final String addr;
 	private final String api;
 	private final int loadNumber;
 	private final AsyncIOTask.Type loadType;
 	//
 	private static final String
 			KEY_THREAD_NUM = "thread.number",
-			KEY_NODE_ADDR = "node.addr",
 			KEY_LOAD_NUM = "load.number",
 			KEY_LOAD_TYPE = "load.type",
 			KEY_API = "api";
@@ -24,13 +22,11 @@ extends WorkerFactory {
 	public DataObjectWorkerFactory(
 		final String threadNamePrefix,
 		final int loadNumber,
-		final String addr,
 		final String api,
 		final AsyncIOTask.Type loadType
 	) {
 		super(threadNamePrefix);
 		this.loadNumber = loadNumber;
-		this.addr = addr;
 		this.api = api;
 		this.loadType = loadType;
 		this.threadNumber = 0;
@@ -45,7 +41,6 @@ extends WorkerFactory {
 			threadNamePrefix + '#' + Integer.toString(threadNumber),
 			threadNumber,
 			loadNumber,
-			addr,
 			api,
 			loadType
 		);
@@ -54,7 +49,6 @@ extends WorkerFactory {
 	private static final class DataObjectWorker
 	extends Thread {
 		private final int threadNumber;
-		private final String addr;
 		private final String api;
 		private final int loadNumber;
 		private final AsyncIOTask.Type loadType;
@@ -64,14 +58,12 @@ extends WorkerFactory {
 			final String nameThread,
 			final int threadNumber,
 			final int loadNumber,
-			final String addr,
 			final String api,
 			final AsyncIOTask.Type loadType
 		){
 			super(runnable, nameThread);
 			this.threadNumber = threadNumber;
 			this.loadNumber = loadNumber;
-			this.addr = addr;
 			this.api = api;
 			this.loadType = loadType;
 		}
@@ -81,7 +73,6 @@ extends WorkerFactory {
 			ThreadContextMap.putValue(KEY_THREAD_NUM, String.valueOf(threadNumber));
 			ThreadContextMap.putValue(KEY_LOAD_NUM, String.valueOf(loadNumber));
 			ThreadContextMap.putValue(KEY_LOAD_TYPE, loadType.toString());
-			ThreadContextMap.putValue(KEY_NODE_ADDR, addr);
 			ThreadContextMap.putValue(KEY_API, api);
 			super.run();
 		}

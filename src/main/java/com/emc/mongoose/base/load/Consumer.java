@@ -4,6 +4,8 @@ import com.emc.mongoose.base.data.DataItem;
 //
 import java.io.Closeable;
 import java.rmi.RemoteException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 09.05.14.
  A data items consumer supporting the method to feed the data item to it.
@@ -16,9 +18,14 @@ extends Closeable {
 	void submit(final T data)
 	throws RemoteException, InterruptedException;
 	//
-	long getMaxCount()
+	void shutdown()
 	throws RemoteException;
 	//
-	void setMaxCount(final long maxCount)
+	boolean awaitTermination(final long timeOut, final TimeUnit timeUnit)
+	throws RemoteException, InterruptedException;
+	//
+	List<Runnable> shutdownNow();
+	//
+	long getMaxCount()
 	throws RemoteException;
 }

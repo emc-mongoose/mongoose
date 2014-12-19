@@ -33,4 +33,4 @@ request.retries:				false
 request.timeout.millisec:		1000000
 
 #
-request.queue.factor:			2
+request.queue.factor:			16384
