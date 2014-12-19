@@ -96,7 +96,7 @@
 									<div class="form-group">
 										<label for="fake-auth.id" class="col-sm-2 control-label">auth.id</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-auth.id"
+											<input type="text" class="form-control" pointer="auth.id" id="fake-auth.id"
 												value="${runTimeConfig.authId}" placeholder="Enter 'auth.id' property">
 										</div>
 									</div>
@@ -104,7 +104,7 @@
 									<div class="form-group">
 										<label for="fake-auth.secret" class="col-sm-2 control-label">auth.secret</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-auth.secret"
+											<input type="text" class="form-control" pointer="auth.secret" id="fake-auth.secret"
 												value="${runTimeConfig.authSecret}" placeholder="Enter 'auth.secret' property">
 										</div>
 									</div>
@@ -122,15 +122,15 @@
 										</div>
 									</div>
 
-									<div class="form-group objects">
+									<div id="objects" class="form-group">
 										<label for="fake-data.count" class="col-sm-2 control-label">data.count</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-data.count"
+											<input type="text" class="form-control" id="fake-data.count" pointer="data.count"
 												value="${runTimeConfig.dataCount}" placeholder="Enter 'data.count' property">
 										</div>
 									</div>
 
-									<div class="form-group time">
+									<div id="time" class="form-group">
 										<c:set var="runTimeArray" value="${fn:split(runTimeConfig.runTime, '.')}"/>
 										<label for="fake-run.time" class="col-sm-2 control-label">run.time</label>
 										<div class="col-sm-10">
@@ -674,7 +674,7 @@
 								</fieldset>
 							</form>
 						</div>
-						<div id="extended-config">
+						<div id="extended">
 							<!-- List of breadcrumbs from JS -->
 							<ol class="breadcrumb">
 

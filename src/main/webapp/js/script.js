@@ -11,25 +11,42 @@ $(document).ready(function() {
 	buildDivBlocksByFileNames(shortPropsMap);
 	generatePropertyPage();
 	$(".folders").hide();
-	$("#extended-config").hide();
-	$("#objects").hide();
-
-	configureWebSocket(WEBSOCKET_URL, COUNT_OF_RECORDS).connect();
-
-	/*$("select").each(function() {
+	//
+	$("select").each(function() {
 		var valueSelected = this.value;
-		if ($("#" + valueSelected).is('div')) {
+		var notSelected = $("option:not(:selected)", this);
+		notSelected.each(function() {
+			if ($("#" + $(this).val()).is("div")) {
+				$("#" + $(this).val()).hide();
+			}
+		});
+	});
+
+	$("select").on("change", function() {
+		var valueSelected = this.value;
+		var notSelected = $("option:not(:selected)", this);
+		notSelected.each(function() {
+			if ($("#" + $(this).val()).is("div")) {
+            	$("#" + $(this).val()).hide();
+            }
+		});
+		if ($("#" + valueSelected).is("div") && !$("#" + valueSelected).hasClass("modal")) {
 			$("#" + valueSelected).show();
 		}
-	});*/
+	});
 
-	$("#fake-data").on("change", function() {
+	$("#config-type").on("change", function() {
 		var valueSelected = this.value;
-		var notSelected = $("#fake-data option").not(":selected");
-		notSelected.each(function() {
-			$("#" + $(this).val()).hide();
-		});
-		$("#" + valueSelected).show();
+		if (valueSelected === "base") {
+			$(".folders").hide();
+		} else {
+			$(".folders").show();
+		}
+	});
+
+	$("#run-modes select").on("change", function() {
+		var valueSelected = this.value;
+		$("#run-mode").val(valueSelected);
 	});
 
 	$("#fake-run\\.scenario\\.name").on("change", function() {
@@ -50,6 +67,20 @@ $(document).ready(function() {
 		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
 	});
 
+	$("#base input, #base select").on("change", function() {
+		if ($(this).is("select")) {
+			$('select[pointer="'+$(this).attr("pointer")+'"]').val($(this).val());
+		} else {
+			$('input[pointer="'+$(this).attr("pointer")+'"]').val($(this).val());
+		}
+		element = document.getElementById($(this).attr("pointer"));
+		if (element.length !== 0) {
+			element.value = $(this).val();
+		}
+	});
+
+	configureWebSocket(WEBSOCKET_URL, COUNT_OF_RECORDS).connect();
+
 	/*$('a[href="#remote"]').hide();
 	$("#select").on("change", function() {
 		var valueSelected = this.value;
@@ -64,19 +95,6 @@ $(document).ready(function() {
 		}
 		$("#run-mode").val(valueSelected);
 	});*/
-
-	$("#config-type").on("change", function() {
-		var valueSelected = this.value;
-		if (valueSelected === "base") {
-			$(".folders").hide();
-			$("#extended-config").hide();
-			$("#base-config").show();
-		} else {
-			$(".folders").show();
-			$("#extended-config").show();
-			$("#base-config").hide();
-		}
-	});
 
 	$("#start").click(function(e) {
 		e.preventDefault();
