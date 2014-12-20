@@ -130,24 +130,26 @@
 										</div>
 									</div>
 
-									<div id="time" class="form-group">
+									<div id="time" class="form-group complex">
 										<c:set var="runTimeArray" value="${fn:split(runTimeConfig.runTime, '.')}"/>
 										<label for="fake-run.time" class="col-sm-2 control-label">run.time</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control pre-select" value="${runTimeArray[0]}">
-											<select class="form-select">
+											<input id="fake-run.time.input" type="text" class="form-control pre-select" value="${runTimeArray[0]}">
+											<select class="form-select" id="fake-run.time.select">
+												<option>${runTimeArray[1]}</option>
 												<option>days</option>
 												<option>hours</option>
 												<option>minutes</option>
 												<option>seconds</option>
 											</select>
 										</div>
+										<input id="fake-run.time" type="hidden" class="form-control" pointer="run.time" value="${runTimeArray[0]}.${runTimeArray[1]}">
 									</div>
 
 									<div class="form-group">
 										<label for="fake-data.size.min" class="col-sm-2 control-label">data.size.min</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-data.size.min"
+											<input type="text" class="form-control" id="fake-data.size.min" pointer="data.size.min"
 												value="${rt:getString(runTimeConfig, 'data.size.min')}" placeholder="Enter 'data.size.min' property">
 										</div>
 									</div>
@@ -155,7 +157,7 @@
 									<div class="form-group">
 										<label for="fake-data.size.max" class="col-sm-2 control-label">data.size.max</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-data.size.max"
+											<input type="text" class="form-control" id="fake-data.size.max" pointer="data.size.max"
 												value="${rt:getString(runTimeConfig, 'data.size.max')}" placeholder="Enter 'data.size.max' property">
 										</div>
 									</div>
@@ -163,7 +165,7 @@
 									<div class="form-group">
 										<label for="fake-data.src.fpath" class="col-sm-2 control-label">data.src.fpath</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-data.src.fpath"
+											<input type="text" class="form-control" id="fake-data.src.fpath" pointer="data.src.fpath"
 												value="${rt:getString(runTimeConfig, 'data.src.fpath')}"
 												placeholder="Enter relative path to a list of object on remote host. Format: log/<run.mode>/<run.id>/<filename>">
 										</div>
@@ -175,7 +177,7 @@
 									<div class="form-group">
 										<label for="fake-remote.servers" class="col-sm-2 control-label">remote.servers</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-remote.servers"
+											<input type="text" class="form-control" id="fake-remote.servers" pointer="remote.servers"
 												value="${rt:getString(runTimeConfig, 'remote.servers')}" placeholder="Enter 'remote.servers' property">
 										</div>
 									</div>
@@ -186,7 +188,7 @@
 									<div class="form-group">
 										<label for="fake-run.id" class="col-sm-2 control-label">run.id</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-run.id"
+											<input type="text" class="form-control" id="fake-run.id" pointer="run.id"
 												placeholder="Enter 'run.id' property. For example, ${runTimeConfig.runId}">
 										</div>
 									</div>
@@ -194,7 +196,7 @@
 									<div class="form-group">
 										<label for="fake-run.scenario.name" class="col-sm-2 control-label">run.scenario.name</label>
 										<div class="col-sm-10">
-											<select id="fake-run.scenario.name" class="form-select">
+											<select id="fake-run.scenario.name" class="form-select" pointer="run.scenario.name">
 												<option value="fake-${runTimeConfig.runScenarioName}">${runTimeConfig.runScenarioName}</option>
 												<option value="fake-single">single</option>
 												<option value="fake-chain">chain</option>
@@ -224,7 +226,7 @@
 																<label for="fake-scenario.single.load"
 																	   class="col-sm-6 control-label">scenario.single.load</label>
 																<div class="col-sm-6">
-																	<select id="fake-scenario.single.load" class="form-select">
+																	<select id="fake-scenario.single.load" class="form-select" pointer="scenario.single.load">
 																		<option value="fake-${rt:getString(runTimeConfig, 'scenario.single.load')}">
 																			${rt:getString(runTimeConfig, 'scenario.single.load')}
 																		</option>
@@ -247,7 +249,7 @@
 																			load.create.threads
 																		</label>
 																		<div class="col-sm-6">
-																			<input type="text" class="form-control"
+																			<input type="text" class="form-control" pointer="load.create.threads"
 																				id="fake-load.create.threads" value="${rt:getString(runTimeConfig, 'load.create.threads')}"
 																					placeholder="Enter 'load.create.threads' property">
 																		</div>
@@ -263,7 +265,7 @@
 																			load.read.threads
 																		</label>
 																		<div class="col-sm-6">
-																			<input type="text" class="form-control"
+																			<input type="text" class="form-control" pointer="load.read.threads"
 																				id="fake-load.read.threads" value="${rt:getString(runTimeConfig, 'load.read.threads')}"
 																					placeholder="Enter 'load.read.threads' property">
 																		</div>
@@ -273,7 +275,7 @@
 																		<label for="fake-load.read.verify.content"
 																			   class="col-sm-6 control-label">load.read.verify.content</label>
 																		<div class="col-sm-6">
-																			<select id="fake-load.read.verify.content" class="form-select">
+																			<select id="fake-load.read.verify.content" class="form-select" pointer="load.read.verify.content">
 																				<option>${rt:getString(runTimeConfig, 'load.read.verify.content')}</option>
 																				<option>true</option>
 																				<option>false</option>
@@ -293,7 +295,8 @@
 																		<div class="col-sm-6">
 																			<input type="text" class="form-control"
 																				id="fake-load.update.threads" value="${rt:getString(runTimeConfig, 'load.update.threads')}"
-																					placeholder="Enter 'load.update.threads' property">
+																					pointer="load.update.threads"
+																						placeholder="Enter 'load.update.threads' property">
 																		</div>
 																	</div>
 
@@ -304,7 +307,8 @@
 																		<div class="col-sm-6">
 																			<input type="text" class="form-control"
 																				id="fake-load.update.per.item" value="${rt:getString(runTimeConfig, 'load.update.per.item')}"
-																					placeholder="Enter 'load.update.per.item' property">
+																					pointer="load.update.per.item"
+																						placeholder="Enter 'load.update.per.item' property">
 																		</div>
 																	</div>
 																</fieldset>
@@ -318,7 +322,8 @@
 																		<div class="col-sm-6">
 																			<input type="text" class="form-control"
 																				id="fake-load.delete.threads" value="${rt:getString(runTimeConfig, 'load.delete.threads')}"
-																					placeholder="Enter 'load.delete.threads' property">
+																					pointer="load.delete.threads"
+																						placeholder="Enter 'load.delete.threads' property">
 																		</div>
 																	</div>
 																</fieldset>
@@ -332,7 +337,8 @@
 																		<div class="col-sm-6">
 																			<input type="text" class="form-control"
 																				id="fake-load.append.threads" value="${rt:getString(runTimeConfig, 'load.append.threads')}"
-																					placeholder="Enter 'load.append.threads' property">
+																					pointer="load.append.threads"
+																						placeholder="Enter 'load.append.threads' property">
 																		</div>
 																	</div>
 																</fieldset>
@@ -367,7 +373,8 @@
 																<div class="col-sm-6">
 																	<input type="text" class="form-control" id="fake-scenario.chain.load"
 																		value="${rt:getString(runTimeConfig, 'scenario.chain.load')}"
-																			placeholder="Enter 'scenario.chain.load' property">
+																			pointer="scenario.chain.load"
+																				placeholder="Enter 'scenario.chain.load' property">
 																</div>
 															</div>
 
@@ -407,7 +414,8 @@
 																			<div class="col-sm-6">
 																				<input type="text" class="form-control" id="faketab-load.create.threads"
 																					value="${rt:getString(runTimeConfig, 'load.create.threads')}"
-																						placeholder="Enter 'load.create.threads' property">
+																						pointer="load.create.threads"
+																							placeholder="Enter 'load.create.threads' property">
 																			</div>
 																		</div>
 																	</div>
@@ -417,7 +425,8 @@
 																			<div class="col-sm-6">
 																				<input type="text" class="form-control" id="faketab-load.read.threads"
 																					value="${rt:getString(runTimeConfig, 'load.read.threads')}"
-																						placeholder="Enter 'load.read.threads' property">
+																						pointer="load.read.threads"
+																							placeholder="Enter 'load.read.threads' property">
 																			</div>
 																		</div>
 
@@ -425,7 +434,7 @@
 																			<label for="faketab-load.read.verify.content"
 																				   class="col-sm-6 control-label">load.read.verify.content</label>
 																			<div class="col-sm-6">
-																				<select id="faketab-load.read.verify.content" class="form-select">
+																				<select id="faketab-load.read.verify.content" class="form-select" pointer="load.read.verify.content">
 																					<option>${rt:getString(runTimeConfig, 'load.read.verify.content')}</option>
 																					<option>true</option>
 																					<option>false</option>
@@ -439,7 +448,8 @@
 																			<div class="col-sm-6">
 																				<input type="text" class="form-control" id="faketab-load.update.threads"
 																					value="${rt:getString(runTimeConfig, 'load.update.threads')}"
-																						placeholder="Enter 'load.update.threads' property">
+																						pointer="load.update.threads"
+																							placeholder="Enter 'load.update.threads' property">
 																			</div>
 																		</div>
 
@@ -448,7 +458,8 @@
 																			<div class="col-sm-6">
 																				<input type="text" class="form-control" id="faketab-load.update.per.item"
 																					value="${rt:getString(runTimeConfig, 'load.update.per.item')}"
-																						placeholder="Enter 'load.update.per.item' property">
+																						pointer="load.update.per.item"
+																							placeholder="Enter 'load.update.per.item' property">
 																			</div>
 																		</div>
 																	</div>
@@ -458,17 +469,19 @@
 																			<div class="col-sm-6">
 																				<input type="text" class="form-control" id="faketab-load.delete.threads"
 																					value="${rt:getString(runTimeConfig, 'load.delete.threads')}"
-																						placeholder="Enter 'load.delete.threads' property">
+																						pointer="load.delete.threads"
+																							placeholder="Enter 'load.delete.threads' property">
 																			</div>
 																		</div>
 																	</div>
-																	<div role="tabpnale" class="tab-pane" id="faketab-append">
+																	<div role="tabpanel" class="tab-pane" id="faketab-append">
 																		<div class="form-group">
 																			<label class="col-sm-6 control-label" for="fake-load.append.threads">load.append.threads</label>
 																			<div class="col-sm-6">
 																				<input type="text" class="form-control" id="fake-load.append.threads"
 																					value="${rt:getString(runTimeConfig, 'load.append.threads')}"
-																						placeholder="Enter 'load.append.threads' property">
+																						pointer="load.append.threads"
+																							placeholder="Enter 'load.append.threads' property">
 																			</div>
 																		</div>
 																	</div>
@@ -482,7 +495,7 @@
 																	scenario.chain.simultaneous
 																</label>
 																<div class="col-sm-6">
-																	<select class='form-select'>
+																	<select class='form-select' pointer="scenario.chain.simultaneous">
 																		<option>${rt:getString(runTimeConfig, 'scenario.chain.simultaneous')}</option>
 																		<option>true</option>
 																		<option>false</option>
@@ -530,7 +543,8 @@
 																<div class="col-sm-8">
 																	<input type="text" class="form-control" id="fake-scenario.rampup.thread.counts"
 																		value="${rt:getString(runTimeConfig, 'scenario.rampup.thread.counts')}"
-																			placeholder="Enter 'scenario.rampup.thread.counts' property">
+																			pointer="scenario.rampup.thread.counts"
+																				placeholder="Enter 'scenario.rampup.thread.counts' property">
 																</div>
 															</div>
 
@@ -541,7 +555,8 @@
 																<div class="col-sm-8">
 																	<input type="text" class="form-control" id="fake-scenario.rampup.sizes"
 																		value="${rt:getString(runTimeConfig, 'scenario.rampup.sizes')}"
-																			placeholder="Enter 'scenario.rampup.sizes' property">
+																			pointer="scenario.rampup.sizes"
+																				placeholder="Enter 'scenario.rampup.sizes' property">
 																</div>
 															</div>
 														</div>
@@ -559,7 +574,7 @@
 									<div class="form-group">
 										<label for="fake-run.request.retries" class="col-sm-2 control-label">run.request.retries</label>
 										<div class="col-sm-10">
-											<select id="fake-run.request.retries" class="form-select">
+											<select id="fake-run.request.retries" class="form-select" pointer="run.request.retries">
 												<option>${rt:getString(runTimeConfig, "run.request.retries")}</option>
 												<option>true</option>
 												<option>false</option>
@@ -573,14 +588,16 @@
 									<div class="form-group">
 										<label for="fake-storage.addrs" class="col-sm-2 control-label">storage.addrs(data nodes)</label>
 										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-storage.addrs" value="${rt:getString(runTimeConfig, 'storage.addrs')}">
+											<input type="text" class="form-control" id="fake-storage.addrs"
+												pointer="storage.addrs"
+													value="${rt:getString(runTimeConfig, 'storage.addrs')}" placeholder="Enter 'storage.addrs' property">
 										</div>
 									</div>
 
 									<div class="form-group">
 										<label for="fake-storage.api" class="col-sm-2 control-label">storage.api</label>
 										<div class="col-sm-10">
-											<select class="form-select" id="fake-storage.api">
+											<select class="form-select" id="fake-storage.api" pointer="storage.api">
 												<option value="fake-${runTimeConfig.storageApi}">${runTimeConfig.storageApi}</option>
 												<option value="fake-swift">swift</option>
 												<option value="fake-s3">s3</option>
@@ -608,8 +625,9 @@
 																<label for="fake-api.s3.bucket" class="col-sm-4 control-label">api.s3.bucket</label>
 																<div class="col-sm-8">
 																	<input type="text" class="form-control" id="fake-api.s3.bucket"
-																		value="${rt:getString(runTimeConfig, 'api.s3.bucket')}"
-																			placeholder="Enter 'api.s3.bucket' property">
+																		pointer="api.s3.bucket"
+																			value="${rt:getString(runTimeConfig, 'api.s3.bucket')}"
+																				placeholder="Enter 'api.s3.bucket' property">
 																</div>
 															</div>
 														</div>

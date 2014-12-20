@@ -68,15 +68,30 @@ $(document).ready(function() {
 	});
 
 	$("#base input, #base select").on("change", function() {
-		if ($(this).is("select")) {
-			$('select[pointer="'+$(this).attr("pointer")+'"]').val($(this).val());
+		var currElement = $(this);
+		if (currElement.parents(".complex").length === 1) {
+			var input = $("#fake-run\\.time\\.input").val();
+			var select = $("#fake-run\\.time\\.select").val();
+			currElement = $("#fake-run\\.time").val(input + "." + select);
+		}
+		if (currElement.is("select")) {
+			var valueSelected = currElement.children("option").filter(":selected").text();
+			$('select[pointer="'+currElement.attr("pointer")+'"]').val(currElement.val());
+			var element = document.getElementById(currElement.attr("pointer"));
+			if (element) {
+				element.value = valueSelected;
+			}
 		} else {
-			$('input[pointer="'+$(this).attr("pointer")+'"]').val($(this).val());
+			$('input[pointer="'+currElement.attr("pointer")+'"]').val(currElement.val());
+			var element = document.getElementById(currElement.attr("pointer"));
+			if (element) {
+				element.value = currElement.val();
+			}
 		}
-		element = document.getElementById($(this).attr("pointer"));
-		if (element.length !== 0) {
-			element.value = $(this).val();
-		}
+	});
+
+	$("#extended input").on("change", function() {
+		$('input[pointer="' + $(this).attr("id") + '"]').val($(this).val());
 	});
 
 	configureWebSocket(WEBSOCKET_URL, COUNT_OF_RECORDS).connect();
