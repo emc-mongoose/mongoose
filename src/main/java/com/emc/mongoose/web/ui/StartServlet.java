@@ -55,7 +55,7 @@ public final class StartServlet extends HttpServlet {
 			}
 			return;
 		}
-		//TODO fix it
+		//
 		if (StopServlet.stoppedRunModes != null) {
 			StopServlet.stoppedRunModes.remove(request.getParameter(Main.KEY_RUN_ID));
 		}
