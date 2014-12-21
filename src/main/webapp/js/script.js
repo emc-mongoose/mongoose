@@ -1,4 +1,8 @@
 $(document).ready(function() {
+	var RUN_MODE_STANDALONE = "standalone";
+	var RUN_MODE_CLIENT = "client";
+	var RUN_MODE_SERVER = "server";
+	var RUN_MODE_WSMOCK = "wsmock";
 	//
 	excludeDuplicateOptions();
 	//
@@ -11,6 +15,7 @@ $(document).ready(function() {
 	buildDivBlocksByFileNames(shortPropsMap);
 	generatePropertyPage();
 	$(".folders").hide();
+	$(".client").hide();
 	//
 	$("select").each(function() {
 		var valueSelected = this.value;
@@ -22,6 +27,10 @@ $(document).ready(function() {
 		});
 	});
 
+	$("#run-modes").on("change", function() {
+		$(".client").show();
+	});
+	//
 	$("select").on("change", function() {
 		var valueSelected = this.value;
 		var notSelected = $("option:not(:selected)", this);
