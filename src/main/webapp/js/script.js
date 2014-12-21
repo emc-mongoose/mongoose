@@ -33,7 +33,10 @@ $(document).ready(function() {
 		var notSelected = $("option:not(:selected)", this);
 		notSelected.each(function() {
 			if (!$(this).hasClass(valueSelected)) {
-				$("." + $(this).val()).hide();
+				var element = $("." + $(this).val());
+				if (element.parents("#base").length) {
+					element.hide();
+				}
 			}
 		});
 		$("." + valueSelected).show();
@@ -44,7 +47,10 @@ $(document).ready(function() {
 		var notSelected = $("option:not(:selected)", this);
 		notSelected.each(function() {
 			if (!$(this).hasClass(valueSelected)) {
-				$("." + $(this).val()).hide();
+				var element = $("." + $(this).val());
+				if (element.parents("#base").length) {
+					element.hide();
+				}
 			}
 		});
 		$("." + valueSelected).show();
@@ -160,7 +166,7 @@ $(document).ready(function() {
 	$(".glyphicon-remove").click(function() {
 		var currentElement = $(this);
 		var currentRunId = $(this).attr("value");
-		if (confirm("Are you sure? This action will stop Mongoose which is running on this run.id") === true) {
+		if (confirm("Are you sure?") === true) {
 			$.post("/stop", { "run.id" : currentRunId.split("_").join("."), "type" : "remove" }, function() {
 				$("#" + currentRunId).remove();
 				currentElement.parent().remove();
