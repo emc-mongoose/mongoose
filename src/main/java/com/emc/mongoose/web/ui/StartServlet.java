@@ -182,7 +182,6 @@ public final class StartServlet extends HttpServlet {
 									.replace("]", "")
 									.replace(" ", "")
 									.trim();
-		// TODO fix it
 		if (key.equals("run.time"))
 			return resultString.replace(",", ".");
 		return resultString;
