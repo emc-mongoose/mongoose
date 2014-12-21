@@ -90,82 +90,114 @@
 						<div id="base">
 							<form class="form-horizontal" role="form">
 								<fieldset>
-									<legend>Auth</legend>
-									<div class="form-group">
-										<label for="fake-auth.id" class="col-sm-2 control-label">auth.id</label>
-										<div class="col-sm-10">
-											<input type="text" class="form-control" pointer="auth.id" id="fake-auth.id"
-												value="${runTimeConfig.authId}" placeholder="Enter 'auth.id' property">
+									<div class="standalone client">
+										<legend>Auth</legend>
+										<div class="form-group">
+											<label for="fake-auth.id" class="col-sm-2 control-label">auth.id</label>
+											<div class="col-sm-10">
+												<input type="text" class="form-control" pointer="auth.id" id="fake-auth.id"
+													value="${runTimeConfig.authId}" placeholder="Enter 'auth.id' property">
+											</div>
 										</div>
-									</div>
 
-									<div class="form-group">
-										<label for="fake-auth.secret" class="col-sm-2 control-label">auth.secret</label>
-										<div class="col-sm-10">
-											<input type="text" class="form-control" pointer="auth.secret" id="fake-auth.secret"
-												value="${runTimeConfig.authSecret}" placeholder="Enter 'auth.secret' property">
+										<div class="form-group">
+											<label for="fake-auth.secret" class="col-sm-2 control-label">auth.secret</label>
+											<div class="col-sm-10">
+												<input type="text" class="form-control" pointer="auth.secret" id="fake-auth.secret"
+													value="${runTimeConfig.authSecret}" placeholder="Enter 'auth.secret' property">
+											</div>
 										</div>
 									</div>
 								</fieldset>
 
 								<fieldset>
-									<legend>Storage</legend>
-									<div class="form-group">
-										<label for="fake-storage.addrs" class="col-sm-2 control-label">storage.addrs(data nodes)</label>
-										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-storage.addrs"
-												pointer="storage.addrs"
-													value="${rt:getString(runTimeConfig, 'storage.addrs')}" placeholder="Enter 'storage.addrs' property">
+									<div class="standalone client wsmock">
+										<legend>Storage</legend>
+									</div>
+									<div class="standalone client">
+										<div class="form-group">
+											<label for="fake-storage.addrs" class="col-sm-2 control-label">storage.addrs(data nodes)</label>
+											<div class="col-sm-10">
+												<input type="text" class="form-control" id="fake-storage.addrs"
+													pointer="storage.addrs"
+														value="${rt:getString(runTimeConfig, 'storage.addrs')}" placeholder="Enter 'storage.addrs' property">
+											</div>
 										</div>
 									</div>
 
-									<div class="form-group">
-										<label for="fake-storage.api" class="col-sm-2 control-label">storage.api</label>
-										<div class="col-sm-10">
-											<select class="form-select" id="fake-storage.api" pointer="storage.api">
-												<option value="fake-${runTimeConfig.storageApi}">${runTimeConfig.storageApi}</option>
-												<option value="fake-swift">swift</option>
-												<option value="fake-s3">s3</option>
-												<option value="fake-atmos">atmos</option>
-											</select>
-											<br/>
-											<button id="api-button" type="button" class="btn btn-primary" data-toggle="modal" data-target="#fake-${runTimeConfig.storageApi}">
-												More...
-											</button>
+									<div class="standalone client wsmock">
+										<div class="form-group">
+											<label for="fake-storage.api" class="col-sm-2 control-label">storage.api</label>
+											<div class="col-sm-10">
+												<select class="form-select" id="fake-storage.api" pointer="storage.api">
+													<option value="fake-${runTimeConfig.storageApi}">${runTimeConfig.storageApi}</option>
+													<option value="fake-swift">swift</option>
+													<option value="fake-s3">s3</option>
+													<option value="fake-atmos">atmos</option>
+												</select>
+												<br/>
+												<button id="api-button" type="button" class="btn btn-primary" data-toggle="modal" data-target="#fake-${runTimeConfig.storageApi}">
+													More...
+												</button>
 
-											<div class="modal fade" id="fake-s3" tabindex="-1" role="dialog" aria-labelledby="s3Label"
-												 aria-hidden="true">
-												<div class="modal-dialog">
-													<div class="modal-content">
-														<div class="modal-header">
-															<button type="button" class="close" data-dismiss="modal">
-																<span aria-hidden="true">&times;</span>
-																<span class="sr-only">Close</span>
-															</button>
-															<h4 class="modal-title" id="s3Label">S3</h4>
-														</div>
+												<div class="modal fade" id="fake-s3" tabindex="-1" role="dialog" aria-labelledby="s3Label"
+													 aria-hidden="true">
+													<div class="modal-dialog">
+														<div class="modal-content">
+															<div class="modal-header">
+																<button type="button" class="close" data-dismiss="modal">
+																	<span aria-hidden="true">&times;</span>
+																	<span class="sr-only">Close</span>
+																</button>
+																<h4 class="modal-title" id="s3Label">S3</h4>
+															</div>
 
-														<div class="modal-body">
-															<div class="form-group">
-																<label for="fake-api.s3.bucket" class="col-sm-4 control-label">api.s3.bucket</label>
-																<div class="col-sm-8">
-																	<input type="text" class="form-control" id="fake-api.s3.bucket"
-																		pointer="api.s3.bucket"
-																			value="${rt:getString(runTimeConfig, 'api.s3.bucket')}"
-																				placeholder="Enter 'api.s3.bucket' property">
+															<div class="modal-body">
+																<div class="form-group">
+																	<label for="fake-api.s3.bucket" class="col-sm-4 control-label">api.s3.bucket</label>
+																	<div class="col-sm-8">
+																		<input type="text" class="form-control" id="fake-api.s3.bucket"
+																			pointer="api.s3.bucket"
+																				value="${rt:getString(runTimeConfig, 'api.s3.bucket')}"
+																					placeholder="Enter 'api.s3.bucket' property">
+																	</div>
 																</div>
 															</div>
-														</div>
 
-														<div class="modal-footer">
-															<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-															<button type="button" class="btn btn-primary">Save changes</button>
+															<div class="modal-footer">
+																<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+																<button type="button" class="btn btn-primary">Save changes</button>
+															</div>
+														</div>
+													</div>
+												</div>
+
+												<div class="modal fade" id="fake-swift" tabindex="-1" role="dialog" aria-labelledby="swiftLabel"
+													aria-hidden="true">
+													<div class="modal-dialog">
+														<div class="modal-content">
+															<div class="modal-header">
+																<button type="button" class="close" data-dismiss="modal">
+																	<span aria-hidden="true">&times;</span>
+																	<span class="sr-only">Close</span>
+																</button>
+																<h4 class="modal-title" id="swiftLabel">Swift</h4>
+															</div>
+
+															<div class="modal-body">
+
+															</div>
+
+															<div class="modal-footer">
+																<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+																<button type="button" class="btn btn-primary">Save changes</button>
+															</div>
 														</div>
 													</div>
 												</div>
 											</div>
 
-											<div class="modal fade" id="fake-swift" tabindex="-1" role="dialog" aria-labelledby="swiftLabel"
+											<div class="modal fade" id="fake-atmos" tabindex="-1" role="dialog" aria-labelledby="atmosLabel"
 												aria-hidden="true">
 												<div class="modal-dialog">
 													<div class="modal-content">
@@ -174,7 +206,7 @@
 																<span aria-hidden="true">&times;</span>
 																<span class="sr-only">Close</span>
 															</button>
-															<h4 class="modal-title" id="swiftLabel">Swift</h4>
+															<h4 class="modal-title" id="atmosLabel">Atmos</h4>
 														</div>
 
 														<div class="modal-body">
@@ -189,35 +221,11 @@
 												</div>
 											</div>
 										</div>
-
-										<div class="modal fade" id="fake-atmos" tabindex="-1" role="dialog" aria-labelledby="atmosLabel"
-											aria-hidden="true">
-											<div class="modal-dialog">
-												<div class="modal-content">
-													<div class="modal-header">
-														<button type="button" class="close" data-dismiss="modal">
-															<span aria-hidden="true">&times;</span>
-															<span class="sr-only">Close</span>
-														</button>
-														<h4 class="modal-title" id="atmosLabel">Atmos</h4>
-													</div>
-
-													<div class="modal-body">
-
-													</div>
-
-													<div class="modal-footer">
-														<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-														<button type="button" class="btn btn-primary">Save changes</button>
-													</div>
-												</div>
-											</div>
-										</div>
 									</div>
 								</fieldset>
 
-								<div class="client">
-									<fieldset>
+								<fieldset>
+									<div class="client">
 										<legend>Controller</legend>
 										<div class="form-group">
 											<label for="fake-remote.servers" class="col-sm-2 control-label">remote.servers(drivers)</label>
@@ -226,82 +234,86 @@
 													value="${rt:getString(runTimeConfig, 'remote.servers')}" placeholder="Enter 'remote.servers' property">
 											</div>
 										</div>
-									</fieldset>
-								</div>
+									</div>
+								</fieldset>
 
 								<fieldset>
-									<legend>Data</legend>
-									<div class="form-group">
-										<label for="fake-data" class="col-sm-2 control-label">data</label>
-										<div class="col-sm-10">
-											<select id="fake-data" class="form-select">
-												<option>time</option>
-												<option>objects</option>
-											</select>
+									<div class="standalone client">
+										<legend>Data</legend>
+										<div class="form-group">
+											<label for="fake-data" class="col-sm-2 control-label">data</label>
+											<div class="col-sm-10">
+												<select id="fake-data" class="form-select">
+													<option>time</option>
+													<option>objects</option>
+												</select>
+											</div>
 										</div>
-									</div>
 
-									<div id="objects" class="form-group">
-										<label for="fake-data.count" class="col-sm-2 control-label">data.count</label>
-										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-data.count" pointer="data.count"
-												value="${runTimeConfig.dataCount}" placeholder="Enter 'data.count' property">
+										<div id="objects" class="form-group">
+											<label for="fake-data.count" class="col-sm-2 control-label">data.count</label>
+											<div class="col-sm-10">
+												<input type="text" class="form-control" id="fake-data.count" pointer="data.count"
+													value="${runTimeConfig.dataCount}" placeholder="Enter 'data.count' property">
+											</div>
 										</div>
-									</div>
 
-									<div id="time" class="form-group complex">
-										<c:set var="runTimeArray" value="${fn:split(runTimeConfig.runTime, '.')}"/>
-										<label for="fake-run.time" class="col-sm-2 control-label">run.time</label>
-										<div class="col-sm-10">
-											<input id="fake-run.time.input" type="text" class="form-control pre-select" value="${runTimeArray[0]}">
-											<select class="form-select" id="fake-run.time.select">
-												<option>${runTimeArray[1]}</option>
-												<option>days</option>
-												<option>hours</option>
-												<option>minutes</option>
-												<option>seconds</option>
-											</select>
+										<div id="time" class="form-group complex">
+											<c:set var="runTimeArray" value="${fn:split(runTimeConfig.runTime, '.')}"/>
+											<label for="fake-run.time" class="col-sm-2 control-label">run.time</label>
+											<div class="col-sm-10">
+												<input id="fake-run.time.input" type="text" class="form-control pre-select" value="${runTimeArray[0]}">
+												<select class="form-select" id="fake-run.time.select">
+													<option>${runTimeArray[1]}</option>
+													<option>days</option>
+													<option>hours</option>
+													<option>minutes</option>
+													<option>seconds</option>
+												</select>
+											</div>
+											<input id="fake-run.time" type="hidden" class="form-control" pointer="run.time" value="${runTimeArray[0]}.${runTimeArray[1]}">
 										</div>
-										<input id="fake-run.time" type="hidden" class="form-control" pointer="run.time" value="${runTimeArray[0]}.${runTimeArray[1]}">
-									</div>
 
-									<div class="form-group">
-										<label for="fake-data.size.min" class="col-sm-2 control-label">data.size.min</label>
-										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-data.size.min" pointer="data.size.min"
-												value="${rt:getString(runTimeConfig, 'data.size.min')}" placeholder="Enter 'data.size.min' property">
+										<div class="form-group">
+											<label for="fake-data.size.min" class="col-sm-2 control-label">data.size.min</label>
+											<div class="col-sm-10">
+												<input type="text" class="form-control" id="fake-data.size.min" pointer="data.size.min"
+													value="${rt:getString(runTimeConfig, 'data.size.min')}" placeholder="Enter 'data.size.min' property">
+											</div>
 										</div>
-									</div>
 
-									<div class="form-group">
-										<label for="fake-data.size.max" class="col-sm-2 control-label">data.size.max</label>
-										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-data.size.max" pointer="data.size.max"
-												value="${rt:getString(runTimeConfig, 'data.size.max')}" placeholder="Enter 'data.size.max' property">
+										<div class="form-group">
+											<label for="fake-data.size.max" class="col-sm-2 control-label">data.size.max</label>
+											<div class="col-sm-10">
+												<input type="text" class="form-control" id="fake-data.size.max" pointer="data.size.max"
+													value="${rt:getString(runTimeConfig, 'data.size.max')}" placeholder="Enter 'data.size.max' property">
+											</div>
 										</div>
-									</div>
 
-									<div class="form-group">
-										<label for="fake-data.src.fpath" class="col-sm-2 control-label">data.src.fpath</label>
-										<div class="col-sm-10">
-											<input type="text" class="form-control" id="fake-data.src.fpath" pointer="data.src.fpath"
-												value="${rt:getString(runTimeConfig, 'data.src.fpath')}"
-												placeholder="Enter relative path to the list of objects on remote host. Format: log/<run.mode>/<run.id>/<filename>">
+										<div class="form-group">
+											<label for="fake-data.src.fpath" class="col-sm-2 control-label">data.src.fpath</label>
+											<div class="col-sm-10">
+												<input type="text" class="form-control" id="fake-data.src.fpath" pointer="data.src.fpath"
+													value="${rt:getString(runTimeConfig, 'data.src.fpath')}"
+													placeholder="Enter relative path to the list of objects on remote host. Format: log/<run.mode>/<run.id>/<filename>">
+											</div>
 										</div>
 									</div>
 								</fieldset>
 
-								<div class="standalone wsmock driver">
-									<fieldset>
+								<fieldset>
+									<div class="standalone client wsmock server">
 										<legend>Run</legend>
-										<div class="form-group runid">
+										<div class="form-group">
 											<label for="fake-run.id" class="col-sm-2 control-label">run.id</label>
 											<div class="col-sm-10">
 												<input type="text" class="form-control" id="fake-run.id" pointer="run.id"
 													placeholder="Enter 'run.id' property. For example, ${runTimeConfig.runId}">
 											</div>
 										</div>
+									</div>
 
+									<div class="standalone client">
 										<div class="form-group">
 											<label for="fake-run.scenario.name" class="col-sm-2 control-label">run.scenario.name</label>
 											<div class="col-sm-10">
@@ -690,8 +702,8 @@
 												</select>
 											</div>
 										</div>
-									</fieldset>
-								</div>
+									</div>
+								</fieldset>
 							</form>
 						</div>
 						<div id="extended">

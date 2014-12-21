@@ -15,7 +15,8 @@ $(document).ready(function() {
 	buildDivBlocksByFileNames(shortPropsMap);
 	generatePropertyPage();
 	$(".folders").hide();
-	$(".client").hide();
+	//
+	configureWebSocket(WEBSOCKET_URL, COUNT_OF_RECORDS).connect();
 	//
 	$("select").each(function() {
 		var valueSelected = this.value;
@@ -26,9 +27,27 @@ $(document).ready(function() {
 			}
 		});
 	});
-
-	$("#run-modes").on("change", function() {
-		$(".client").show();
+	//
+	$("#run-modes select").each(function() {
+		var valueSelected = this.value;
+		var notSelected = $("option:not(:selected)", this);
+		notSelected.each(function() {
+			if (!$(this).hasClass(valueSelected)) {
+				$("." + $(this).val()).hide();
+			}
+		});
+		$("." + valueSelected).show();
+	});
+	//
+	$("#run-modes select").on("change", function() {
+		var valueSelected = this.value;
+		var notSelected = $("option:not(:selected)", this);
+		notSelected.each(function() {
+			if (!$(this).hasClass(valueSelected)) {
+				$("." + $(this).val()).hide();
+			}
+		});
+		$("." + valueSelected).show();
 	});
 	//
 	$("select").on("change", function() {
@@ -76,6 +95,17 @@ $(document).ready(function() {
 		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
 	});
 
+	$(".complex").change(function() {
+		$("#fake-data\\.count").val(document.getElementById("fake-data.count").defaultValue);
+		$("#run\\.time").change();
+	});
+
+	$("#fake-data\\.count").change(function() {
+		$(".complex input").val($(".complex input").get(0).defaultValue);
+		$(".complex select").val($(".complex select option:first").val());
+		$("#data\\.count").change();
+	});
+
 	$("#base input, #base select").on("change", function() {
 		var currElement = $(this);
 		if (currElement.parents(".complex").length === 1) {
@@ -83,6 +113,7 @@ $(document).ready(function() {
 			var select = $("#fake-run\\.time\\.select").val();
 			currElement = $("#fake-run\\.time").val(input + "." + select);
 		}
+		//
 		if (currElement.is("select")) {
 			var valueSelected = currElement.children("option").filter(":selected").text();
 			$('select[pointer="'+currElement.attr("pointer")+'"]').val(currElement.val());
@@ -91,7 +122,7 @@ $(document).ready(function() {
 				element.value = valueSelected;
 			}
 		} else {
-			$('input[pointer="'+currElement.attr("pointer")+'"]').val(currElement.val());
+			$('input[pointer="' + currElement.attr("pointer") + '"]').val(currElement.val());
 			var element = document.getElementById(currElement.attr("pointer"));
 			if (element) {
 				element.value = currElement.val();
@@ -100,25 +131,15 @@ $(document).ready(function() {
 	});
 
 	$("#extended input").on("change", function() {
-		$('input[pointer="' + $(this).attr("id") + '"]').val($(this).val());
-	});
-
-	configureWebSocket(WEBSOCKET_URL, COUNT_OF_RECORDS).connect();
-
-	/*$('a[href="#remote"]').hide();
-	$("#select").on("change", function() {
-		var valueSelected = this.value;
-		if (valueSelected === "client") {
-			$('a[href="#remote"]').show();
-		} else {
-			if ($("#remote").is(":visible")) {
-				$(".breadcrumb").empty();
-				generatePropertyPage();
-			}
-			$('a[href="#remote"]').hide();
+		if ($(this).attr("id") === "run.time") {
+			var resultArray = $(this).val().split(".");
+			$(".complex input").val(resultArray[0]);
+			$(".complex select option:contains(" + resultArray[1] + ")").attr("selected", "selected");
 		}
-		$("#run-mode").val(valueSelected);
-	});*/
+		$('input[pointer="' + $(this).attr("id") + '"]').val($(this).val());
+		$('select[pointer="' + $(this).attr("id") + '"] option:contains(' + $(this).val() + ')')
+			.attr('selected', 'selected');
+	});
 
 	$("#start").click(function(e) {
 		e.preventDefault();

@@ -118,6 +118,8 @@ li input:checked + ul > li:last-child {
 	float: left;
 	position: absolute;
 	min-width: 528px;
+	border-left: 1px solid #ccc;
+	margin-left: -1px;
 }
 
 #configuration-content {
