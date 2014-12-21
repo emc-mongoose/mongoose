@@ -93,23 +93,15 @@ $(document).ready(function() {
 		$("#api-button").attr("data-target", "#" + valueSelected);
 	});
 
-	$("#run\\.time").change(function() {
+	$(".complex, #run\\.time").change(function() {
+		$("#fake-data\\.count").val(document.getElementById("fake-data.count").defaultValue);
 		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
 	});
 
-	$("#data\\.count").change(function() {
-		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
-	});
-
-	$(".complex").change(function() {
-		$("#fake-data\\.count").val(document.getElementById("fake-data.count").defaultValue);
-		$("#run\\.time").change();
-	});
-
-	$("#fake-data\\.count").change(function() {
+	$("#fake-data\\.count, #data\\.count").change(function() {
 		$(".complex input").val($(".complex input").get(0).defaultValue);
 		$(".complex select").val($(".complex select option:first").val());
-		$("#data\\.count").change();
+		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
 	});
 
 	$("#base input, #base select").on("change", function() {
