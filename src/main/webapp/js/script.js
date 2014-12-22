@@ -104,6 +104,30 @@ $(document).ready(function() {
 		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
 	});
 
+	$("#base input, #base select").each(function() {
+		var currElement = $(this);
+		if (currElement.parents(".complex").length === 1) {
+			var input = $("#fake-run\\.time\\.input").val();
+			var select = $("#fake-run\\.time\\.select").val();
+			currElement = $("#fake-run\\.time").val(input + "." + select);
+		}
+		//
+		if (currElement.is("select")) {
+			var valueSelected = currElement.children("option").filter(":selected").text();
+			$('select[pointer="'+currElement.attr("pointer")+'"]').val(currElement.val());
+			var element = document.getElementById(currElement.attr("pointer"));
+			if (element) {
+				element.value = valueSelected;
+			}
+		} else {
+			$('input[pointer="' + currElement.attr("pointer") + '"]').val(currElement.val());
+			var element = document.getElementById(currElement.attr("pointer"));
+			if (element) {
+				element.value = currElement.val();
+			}
+		}
+	});
+
 	$("#base input, #base select").on("change", function() {
 		var currElement = $(this);
 		if (currElement.parents(".complex").length === 1) {

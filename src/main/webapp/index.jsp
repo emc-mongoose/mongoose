@@ -49,7 +49,7 @@
 					<li class="active"><a href="#configuration" data-toggle="tab">Configuration</a></li>
 					<c:forEach var="mode" items="${sessionScope.runmodes}">
 						<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
-						<li><a href="#${correctMode}" data-toggle="tab">
+						<li><a href="#tableTab-${correctMode}" data-toggle="tab">
 							${mode}
 							<span class="glyphicon glyphicon-remove" value="${correctMode}"></span>
 						</a></li>
@@ -719,7 +719,7 @@
 				</div>
 				<c:forEach var="mode" items="${sessionScope.runmodes}">
 					<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
-					<div class="tab-pane table-pane" id="${correctMode}">
+					<div class="tab-pane table-pane" id="tableTab-${correctMode}">
 						<div class="left-side">
 							<div class="menu-wrapper">
 								<div class="col-xs-8">
