@@ -395,4 +395,10 @@ implements Externalizable {
 				Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()));
 		return runTimeConfig;
 	}
+
+	public void overrideSystemProperties(Map<String, String> props){
+		for(Map.Entry<String, String> entry : props.entrySet()){
+			setProperty(entry.getKey(), entry.getValue());
+		}
+	}
 }
