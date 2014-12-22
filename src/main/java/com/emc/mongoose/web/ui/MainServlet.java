@@ -18,7 +18,7 @@ public final class MainServlet extends HttpServlet {
 
 	private final static Logger LOG = LogManager.getLogger();
 
-	public final void doGet(HttpServletRequest request, HttpServletResponse response)
+	public final void doGet(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
 		//TODO fix it
 		if (StartServlet.threadsMap != null) {
@@ -28,7 +28,7 @@ public final class MainServlet extends HttpServlet {
 			request.getSession(true).setAttribute("stopped", StopServlet.stoppedRunModes);
 		}
 		if (StartServlet.LAST_RUN_TIME_CONFIG != null) {
-			request.setAttribute("runTimeConfig", StartServlet.LAST_RUN_TIME_CONFIG);
+			request.setAttribute("runTimeConfig", StartServlet.LAST_RUN_TIME_CONFIG.clone());
 		}
 		request.getRequestDispatcher("index.jsp").forward(request, response);
 	}

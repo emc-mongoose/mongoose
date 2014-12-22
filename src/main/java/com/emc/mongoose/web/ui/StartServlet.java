@@ -161,14 +161,14 @@ public final class StartServlet extends HttpServlet {
 		threadsMap.put(runTimeConfig.getString("run.id"), thread);
 	}
 
-	public boolean isRunIdFree(String runId) {
+	public boolean isRunIdFree(final String runId) {
 		if (threadsMap.get(runId) != null)
 			return false;
 		return true;
 	}
 	//
 	private void setupRunTimeConfig(final HttpServletRequest request) {
-		for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
+		for (final Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
 			if (entry.getValue()[0].trim().isEmpty()) {
 				continue;
 			}
@@ -180,8 +180,8 @@ public final class StartServlet extends HttpServlet {
 		}
 	}
 	//
-	private String convertArrayToString(String key, String[] stringArray) {
-		String resultString = Arrays.toString(stringArray)
+	private String convertArrayToString(final String key, final String[] stringArray) {
+		final String resultString = Arrays.toString(stringArray)
 									.replace("[", "")
 									.replace("]", "")
 									.replace(" ", "")
