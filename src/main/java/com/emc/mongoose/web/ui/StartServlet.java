@@ -172,7 +172,7 @@ public final class StartServlet extends HttpServlet {
 				runTimeConfig.set(entry.getKey(), convertArrayToString(entry.getKey(), entry.getValue()));
 				continue;
 			}
-			runTimeConfig.set(entry.getKey(), entry.getValue()[0]);
+			runTimeConfig.set(entry.getKey(), entry.getValue()[0].trim());
 		}
 	}
 	//
