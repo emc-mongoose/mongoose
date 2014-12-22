@@ -4,7 +4,7 @@ import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.impl.RequestConfigBase;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
-import com.emc.mongoose.util.pool.BasicInstancePool;
+import com.emc.mongoose.util.pool.InstancePool;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
@@ -258,12 +258,12 @@ implements WSRequestConfig<T> {
 			LOG.debug(Markers.MSG, "Preparing poison request");
 			ioTask = (WSIOTask<T>) BasicWSIOTask.POISON;
 		} else {
-			BasicInstancePool pool;
+			InstancePool pool;
 			synchronized(AsyncIOTask.POOL_MAP) {
 				if(AsyncIOTask.POOL_MAP.containsKey(this)) {
 					pool = AsyncIOTask.POOL_MAP.get(this);
 				} else {
-					pool = new BasicInstancePool<>(BasicWSIOTask.class);
+					pool = new InstancePool<>(BasicWSIOTask.class);
 					AsyncIOTask.POOL_MAP.put(this, pool);
 				}
 			}

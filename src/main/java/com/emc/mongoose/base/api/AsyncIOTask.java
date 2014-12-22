@@ -1,7 +1,7 @@
 package com.emc.mongoose.base.api;
 //
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.util.pool.BasicInstancePool;
+import com.emc.mongoose.util.pool.InstancePool;
 //
 import java.io.Closeable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,7 +37,7 @@ extends Closeable {
 		}
 	}
 	//
-	ConcurrentHashMap<RequestConfig, BasicInstancePool<AsyncIOTask>>
+	ConcurrentHashMap<RequestConfig, InstancePool<AsyncIOTask>>
 		POOL_MAP = new ConcurrentHashMap<>();
 	//
 	AsyncIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);

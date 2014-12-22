@@ -46,7 +46,7 @@ implements WSLoadClient<T> {
 	throws RemoteException {
 		final Object addrs[] = remoteLoadMap.keySet().toArray();
 		final String addr = String.class.cast(
-			addrs[(int) submitExecutor.getTaskCount() % addrs.length]
+			addrs[(int) getTaskCount() % addrs.length]
 		);
 		return ((WSLoadSvc<T>) remoteLoadMap.get(addr)).execute(tgtHost, request);
 	}

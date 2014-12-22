@@ -1,6 +1,5 @@
 package com.emc.mongoose.base.data.persist;
 //
-import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.server.DataItemBufferSvc;
@@ -9,6 +8,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 //
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -23,22 +23,21 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.rmi.RemoteException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by andrey on 28.09.14.
  */
 public class TmpFileItemBuffer<T extends DataItem>
-extends Thread
+extends ThreadPoolExecutor
 implements DataItemBufferSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final File fBuff;
-	private final ExecutorService outPutExecutor;
 	private final AtomicLong writtenDataItems = new AtomicLong(0);
 	private volatile long maxCount;
 	private volatile ObjectOutput fBuffOut;
@@ -46,6 +45,10 @@ implements DataItemBufferSvc<T> {
 	//
 	public TmpFileItemBuffer(final long maxCount, final int threadCount)
 	throws IOException {
+		super(
+			threadCount, threadCount, 0, TimeUnit.SECONDS,
+			new LinkedBlockingQueue<Runnable>(), new WorkerFactory("tmpFileOutPutWorker")
+		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		//
 		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
@@ -55,7 +58,6 @@ implements DataItemBufferSvc<T> {
 		fBuff = Files.createTempFile(
 			String.format(FMT_THREAD_NAME, localRunTimeConfig.getRunName()), null
 		).toFile();
-		setName(fBuff.getName());
 		LOG.debug(Markers.MSG, "{}: created temp file", getName());
 		fBuff.deleteOnExit();
 		//
@@ -69,8 +71,6 @@ implements DataItemBufferSvc<T> {
 		} finally {
 			fBuffOut = fBuffOutTmp;
 		}
-		//
-		outPutExecutor = Executors.newFixedThreadPool(threadCount);
 		//
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,10 +101,10 @@ implements DataItemBufferSvc<T> {
 	public final void submit(T dataItem)
 	throws IllegalStateException {
 		//
-		if(outPutExecutor.isShutdown() || fBuffOut == null) {
+		if(isShutdown() || fBuffOut == null) {
 			throw new IllegalStateException();
 		} else if(dataItem == null) {
-			outPutExecutor.shutdown();
+			shutdown();
 		} else {
 			//
 			final DataItemOutPutTask<T> outPutTask = new DataItemOutPutTask<>(fBuffOut, dataItem);
@@ -112,10 +112,10 @@ implements DataItemBufferSvc<T> {
 			int rejectCount = 0;
 			while(
 				!passed && rejectCount < retryCountMax && writtenDataItems.get() < maxCount &&
-					!outPutExecutor.isShutdown()
-				) {
+				!isShutdown()
+			) {
 				try {
-					outPutExecutor.submit(outPutTask);
+					submit(outPutTask);
 					writtenDataItems.incrementAndGet();
 					passed = true;
 				} catch(final RejectedExecutionException e) {
@@ -130,8 +130,8 @@ implements DataItemBufferSvc<T> {
 			//
 			if(!passed) {
 				LOG.debug(
-					Markers.ERR, "data item \"{}\" has been rejected after {} tries",
-					getName(), dataItem, rejectCount
+					Markers.ERR, "Data item \"{}\" has been rejected after {} tries",
+					dataItem, rejectCount
 				);
 			}
 		}
@@ -140,10 +140,6 @@ implements DataItemBufferSvc<T> {
 	@Override
 	public final synchronized long getMaxCount() {
 		return maxCount;
-	}
-	@Override
-	public final synchronized void setMaxCount(final long maxCount) {
-		this.maxCount = maxCount;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Closeable implementation ////////////////////////////////////////////////////////////////////
@@ -155,9 +151,9 @@ implements DataItemBufferSvc<T> {
 			//
 			LOG.debug(Markers.MSG, "{}: output done, {} items", getName(), writtenDataItems.get());
 			//
-			outPutExecutor.shutdown();
+			shutdown();
 			try {
-				outPutExecutor.awaitTermination(
+				awaitTermination(
 					Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 				);
 			} catch(final InterruptedException e) {
@@ -165,7 +161,7 @@ implements DataItemBufferSvc<T> {
 					LOG, Level.DEBUG, e, "Interrupted while writing out the remaining data items"
 				);
 			} finally {
-				final int droppedTaskCount = outPutExecutor.shutdownNow().size();
+				final int droppedTaskCount = shutdownNow().size();
 				LOG.debug(
 					Markers.MSG, "{}: wrote {} data items, dropped {}", getName(),
 					writtenDataItems.addAndGet(-droppedTaskCount), droppedTaskCount

@@ -6,7 +6,7 @@ import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
 import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.pool.BasicInstancePool;
+import com.emc.mongoose.util.pool.InstancePool;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -47,7 +47,7 @@ implements AsyncIOTask<T> {
 	// BEGIN pool related things
 	@Override
 	public final void close() {
-		final BasicInstancePool<AsyncIOTask> pool = POOL_MAP.get(reqConf);
+		final InstancePool<AsyncIOTask> pool = POOL_MAP.get(reqConf);
 		reset();
 		pool.release(this);
 	}

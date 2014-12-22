@@ -146,7 +146,7 @@ implements LoadExecutor<T> {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
 			}
 		}
-		setConsumer(new LogConsumer<T>()); // by default, may be overriden later externally
+		setConsumer(new LogConsumer<T>(maxCount, threadsPerNode)); // by default, may be overriden later externally
 		LoadCloseHook.add(this);
 	}
 	//
@@ -418,7 +418,8 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public synchronized void close() {
+	public synchronized void close()
+	throws IOException {
 		try {
 			interrupt();
 			// provide summary metrics
@@ -435,8 +436,11 @@ implements LoadExecutor<T> {
 				LOG.debug(Markers.MSG, "{}: dropped {} tasks", name, shutdownNow().size());
 				// poison the consumer
 				consumer.submit(null);
-			} catch(final RemoteException | InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to feed the poison");
+			} catch(final InterruptedException e) {
+				ExceptionHandler.trace(
+					LOG, Level.DEBUG, e,
+					String.format("%s: interrupted on feeding the poison to the consumer", name)
+				);
 			} finally {
 				// close node executors
 				jmxReporter.close();
@@ -448,7 +452,11 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	protected final void finalize() {
-		close();
+		try {
+			close();
+		} catch(final IOException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, String.format("%s: failed to close", name));
+		}
 		super.finalize();
 	}
 	//

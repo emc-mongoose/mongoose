@@ -265,7 +265,7 @@ implements LoadClient<T> {
 			)
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
-		metaInfoLog = new LogConsumer<>();
+		metaInfoLog = new LogConsumer<>(maxCount, threadCountPerServer);
 		shutDownOnCountLimit = new Thread(
 			new CountLimitWaitTask(
 				this, mgmtConnExecutor, maxCount,

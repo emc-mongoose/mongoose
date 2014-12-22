@@ -1,6 +1,6 @@
 package com.emc.mongoose.util.io;
 //
-import com.emc.mongoose.util.pool.BasicInstancePool;
+import com.emc.mongoose.util.pool.InstancePool;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
 //
@@ -61,8 +61,8 @@ extends OutputStream {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Instances pooling ///////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static BasicInstancePool<HTTPContentOutputStream>
-		POOL = new BasicInstancePool<>(HTTPContentOutputStream.class);
+	private final static InstancePool<HTTPContentOutputStream>
+		POOL = new InstancePool<>(HTTPContentOutputStream.class);
 	//
 	public static HTTPContentOutputStream getInstance(
 		final ContentEncoder out, final IOControl ioCtl

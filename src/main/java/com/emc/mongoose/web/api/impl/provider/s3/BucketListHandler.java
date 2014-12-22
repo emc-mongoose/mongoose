@@ -126,7 +126,7 @@ extends DefaultHandler {
 	throws SAXException {
 		if(consumer != null) {
 			try {
-				consumer.setMaxCount(count);
+				consumer.shutdown();
 			} catch(final RemoteException e) {
 				ExceptionHandler.trace(
 					LOG, Level.WARN, e, "Failed to limit data items count for remote consumer"

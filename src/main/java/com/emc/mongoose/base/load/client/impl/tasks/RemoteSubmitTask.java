@@ -6,7 +6,7 @@ import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.pool.BasicInstancePool;
+import com.emc.mongoose.util.pool.InstancePool;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -28,8 +28,8 @@ implements Runnable, Closeable {
 		retryMaxCount = thrLocalConf.getRunRetryCountMax(),
 		retryDelayMilliSec = thrLocalConf.getRunRetryDelayMilliSec();
 	//
-	private final static BasicInstancePool<RemoteSubmitTask>
-		INSTANCE_POOL = new BasicInstancePool<>(RemoteSubmitTask.class);
+	private final static InstancePool<RemoteSubmitTask>
+		INSTANCE_POOL = new InstancePool<>(RemoteSubmitTask.class);
 	//
 	@SuppressWarnings("unchecked")
 	public static <U extends DataItem> RemoteSubmitTask<U> getInstanceFor(
