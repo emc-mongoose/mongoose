@@ -20,11 +20,15 @@ public final class MainServlet extends HttpServlet {
 
 	public final void doGet(HttpServletRequest request, HttpServletResponse response)
 	throws ServletException, IOException {
+		//TODO fix it
 		if (StartServlet.threadsMap != null) {
 			request.getSession(true).setAttribute("runmodes", StartServlet.threadsMap.keySet());
 		}
 		if (StopServlet.stoppedRunModes != null) {
 			request.getSession(true).setAttribute("stopped", StopServlet.stoppedRunModes);
+		}
+		if (StartServlet.LAST_RUN_TIME_CONFIG != null) {
+			request.setAttribute("runTimeConfig", StartServlet.LAST_RUN_TIME_CONFIG);
 		}
 		request.getRequestDispatcher("index.jsp").forward(request, response);
 	}
