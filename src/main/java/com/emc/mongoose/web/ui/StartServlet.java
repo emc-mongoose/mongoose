@@ -33,6 +33,7 @@ public final class StartServlet extends HttpServlet {
 	private final static Logger LOG = LogManager.getLogger();
 	private RunTimeConfig runTimeConfig;
 	public static ConcurrentHashMap<String, Thread> threadsMap;
+	public static RunTimeConfig LAST_RUN_TIME_CONFIG;
 
 	@Override
 	public final void init() throws ServletException {
@@ -61,6 +62,9 @@ public final class StartServlet extends HttpServlet {
 		}
 		//
 		runTimeConfig = runTimeConfig.clone();
+		//
+		LAST_RUN_TIME_CONFIG = runTimeConfig;
+		//
 		setupRunTimeConfig(request);
 		//
 		switch (RunModes.getRunModeConstantByRequest(request.getParameter("run.mode"))) {

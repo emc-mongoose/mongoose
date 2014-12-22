@@ -26,6 +26,9 @@ public final class MainServlet extends HttpServlet {
 		if (StopServlet.stoppedRunModes != null) {
 			request.getSession(true).setAttribute("stopped", StopServlet.stoppedRunModes);
 		}
+		if (StartServlet.LAST_RUN_TIME_CONFIG != null) {
+			request.setAttribute("runTimeConfig", StartServlet.LAST_RUN_TIME_CONFIG);
+		}
 		request.getRequestDispatcher("index.jsp").forward(request, response);
 	}
 
