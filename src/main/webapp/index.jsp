@@ -6,7 +6,7 @@
 <html>
 	<head>
 		<meta charset="utf-8">
-		<title>Run</title>
+		<title>Mongoose-Run</title>
 		<link href="css/bootstrap.min.css" rel="stylesheet">
 		<link href="css/styles.css" rel="stylesheet">
 		<link href="css/bootstrap.vertical-tabs.min.css" rel="stylesheet">
@@ -35,7 +35,7 @@
 					id="main-navbar">
 					<ul class="nav navbar-nav">
 						<li class="active"><a href="/">Run<span class="sr-only">(current)</span></a></li>
-						<li><a href="/charts">Charts</a></li>
+						<li><a href="charts.html">Charts</a></li>
 					</ul>
 
 					<p class="navbar-text navbar-right">v.${runTimeConfig.runVersion}</p>
