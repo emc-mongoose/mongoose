@@ -278,3 +278,16 @@ th:nth-child(5) {
 .modal-tabs {
 	margin-top: 15px;
 }
+
+.content {
+	background-color: #000;
+	height: 100%;
+}
+
+.content img {
+	margin:180px 50px 75px 450px;
+}
+
+.return-link {
+	font-size: 23px;
+}
