@@ -172,7 +172,7 @@ $(document).ready(function() {
 
 	$(".stop").click(function() {
 		var currentButton = $(this);
-		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".").replace("tableTab-", "");
+		var currentRunId = $(this).parent().parent().attr("tab-id");
 		$.post("/stop", { "run.id" : currentRunId, "type" : "stop" }, function() {
 			currentButton.remove();
 		}).fail(function() {
@@ -185,7 +185,7 @@ $(document).ready(function() {
 		var currentElement = $(this);
 		var currentRunId = $(this).attr("value");
 		if (confirm("Are you sure?") === true) {
-			$.post("/stop", { "run.id" : currentRunId.split("_").join("."), "type" : "remove" }, function() {
+			$.post("/stop", { "run.id" : currentRunId, "type" : "remove" }, function() {
 				$("#" + currentRunId).remove();
 				currentElement.parent().remove();
 				$('a[href="#configuration"]').tab('show');
