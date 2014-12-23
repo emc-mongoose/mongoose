@@ -10,19 +10,15 @@ import com.emc.mongoose.util.pool.InstancePool;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by andrey on 12.10.14.
  */
-public class IOTaskBase<T extends DataObject>
+public class BasicIOTask<T extends DataObject>
 implements AsyncIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static IOTaskBase POISON = new IOTaskBase() {
+	public final static BasicIOTask POISON = new BasicIOTask() {
 		@Override
 		public final String toString() {
 			return "<POISON>";
@@ -37,29 +33,40 @@ implements AsyncIOTask<T> {
 	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
 	private volatile long transferSize = 0;
 	private volatile Type type;
-	//
-	protected final Lock lock = new ReentrantLock();
-	protected final Condition condDone = lock.newCondition();
-	//
-	public IOTaskBase() {
-
-	}
 	// BEGIN pool related things
-	@Override
-	public final void close() {
-		final InstancePool<AsyncIOTask> pool = POOL_MAP.get(reqConf);
-		reset();
-		pool.release(this);
+	private final static InstancePool<BasicIOTask>
+		POOL_BASIC_IO_TASKS = new InstancePool<>(BasicIOTask.class);
+	//
+	@SuppressWarnings("unchecked")
+	public static <T extends DataObject> BasicIOTask<T> getInstanceFor(
+		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
+	) {
+		return (BasicIOTask<T>) POOL_BASIC_IO_TASKS.take(reqConf, dataItem, nodeAddr);
 	}
 	//
 	@Override
-	public void reset() {
+	public void close() {
+		POOL_BASIC_IO_TASKS.release(this);
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	public BasicIOTask<T> reuse(final Object... args) {
 		result = Result.FAIL_TIMEOUT;
 		reqTimeStart = 0;
 		reqTimeDone = 0;
 		respTimeStart = 0;
 		respTimeDone = 0;
 		transferSize = 0;
+		if(args.length > 0) {
+			setRequestConfig((RequestConfig<T>)args[0]);
+		}
+		if(args.length > 1) {
+			setDataItem((T) args[1]);
+		}
+		if(args.length > 2) {
+			setNodeAddr(String.class.cast(args[2]));
+		}
+		return this;
 	}
 	// END pool related things
 	@Override

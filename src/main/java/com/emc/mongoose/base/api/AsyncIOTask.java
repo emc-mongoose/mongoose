@@ -2,15 +2,15 @@ package com.emc.mongoose.base.api;
 //
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.util.pool.InstancePool;
+import com.emc.mongoose.util.pool.Reusable;
 //
-import java.io.Closeable;
 import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
  */
 public interface AsyncIOTask<T extends DataItem>
-extends Closeable {
+extends Reusable {
 	//
 	enum Type {
 		CREATE, READ, DELETE, UPDATE, APPEND
@@ -37,9 +37,6 @@ extends Closeable {
 		}
 	}
 	//
-	ConcurrentHashMap<RequestConfig, InstancePool<AsyncIOTask>>
-		POOL_MAP = new ConcurrentHashMap<>();
-	//
 	AsyncIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//
 	AsyncIOTask<T> setNodeAddr(final String nodeAddr);
@@ -59,8 +56,6 @@ extends Closeable {
 	long getRespTimeStart();
 	//
 	long getRespTimeDone();
-	//
-	void reset();
 	//
 	void complete();
 }

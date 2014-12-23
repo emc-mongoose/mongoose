@@ -7,6 +7,7 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.pool.InstancePool;
+import com.emc.mongoose.util.pool.Reusable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -16,7 +17,7 @@ import java.rmi.RemoteException;
  Created by kurila on 18.12.14.
  */
 public class RemoteSubmitTask<T extends DataItem>
-implements Runnable, Closeable {
+implements Runnable, Reusable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -35,10 +36,7 @@ implements Runnable, Closeable {
 	public static <U extends DataItem> RemoteSubmitTask<U> getInstanceFor(
 		final LoadSvc<U> loadSvc, final U dataItem
 	) {
-		final RemoteSubmitTask<U> rsTask = (RemoteSubmitTask<U>) INSTANCE_POOL.take();
-		rsTask.loadSvc = loadSvc;
-		rsTask.dataItem = dataItem;
-		return rsTask;
+		return INSTANCE_POOL.take(loadSvc, dataItem);
 	}
 	//
 	@Override
@@ -63,5 +61,16 @@ implements Runnable, Closeable {
 	@Override
 	public final void close() {
 		INSTANCE_POOL.release(this);
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	public final RemoteSubmitTask<T> reuse(final Object... args) {
+		if(args.length > 0) {
+			loadSvc = (LoadSvc<T>) args[0];
+		}
+		if(args.length > 1) {
+			dataItem = (T) args[1];
+		}
+		return this;
 	}
 }

@@ -24,7 +24,8 @@ extends Closeable {
 	boolean awaitTermination(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException;
 	//
-	List<Runnable> shutdownNow();
+	List<Runnable> shutdownNow()
+	throws RemoteException;
 	//
 	long getMaxCount()
 	throws RemoteException;

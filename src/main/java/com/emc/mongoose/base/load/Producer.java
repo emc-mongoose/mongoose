@@ -19,6 +19,12 @@ public interface Producer<T extends DataItem> {
 	void start()
 	throws RemoteException;
 	//
+	void join()
+	throws RemoteException, InterruptedException;
+	//
+	void join(final long ms)
+	throws RemoteException, InterruptedException;
+	//
 	void interrupt()
 	throws RemoteException;
 	//

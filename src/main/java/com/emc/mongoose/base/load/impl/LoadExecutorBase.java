@@ -41,7 +41,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 15.10.14.
  */
@@ -51,7 +50,6 @@ implements LoadExecutor<T> {
 	//
 	private final Logger LOG = LogManager.getLogger();
 	//
-	private final String name;
 	protected final int threadsPerNode, storageNodeCount, retryCountMax, retryDelayMilliSec;
 	protected final String storageNodeAddrs[];
 	//
@@ -73,8 +71,6 @@ implements LoadExecutor<T> {
 	//
 	protected final JmxReporter jmxReporter;
 	// METRICS section END
-	private final static AtomicInteger LAST_INSTANCE_NUM = new AtomicInteger(0);
-	//
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int threadsPerNode, final String listFile, final long maxCount,
@@ -94,9 +90,6 @@ implements LoadExecutor<T> {
 		this.reqConfig = reqConfig;
 		loadType = reqConfig.getLoadType();
 		final int loadNum = LAST_INSTANCE_NUM.getAndIncrement();
-		setThreadFactory(
-			new DataObjectWorkerFactory("loadWorker", loadNum, reqConfig.getAPI(), loadType)
-		);
 		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
@@ -107,11 +100,14 @@ implements LoadExecutor<T> {
 			.registerWith(mBeanServer)
 			.build();
 		//
-		name = Integer.toString(loadNum) + '-' +
+		final String name = Integer.toString(loadNum) + '-' +
 			StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
 			StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
 			(maxCount > 0? Long.toString(maxCount) : "") + '-' +
 			Integer.toString(threadsPerNode) + 'x' + Integer.toString(storageNodeCount);
+		setThreadFactory(
+			new DataObjectWorkerFactory(name, loadNum, reqConfig.getAPI(), loadType)
+		);
 		this.threadsPerNode = threadsPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// init metrics
@@ -157,7 +153,7 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final String getName() {
-		return name;
+		return getThreadFactory().toString();
 	}
 	//
 	@Override
@@ -167,20 +163,23 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final Thread metricDumpThread = new Thread(getName() + "-dumpMetrics") {
+	private final Thread metricDumpThread = new Thread() {
 		@Override
 		public final void run() {
 			final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
-			if(metricsUpdatePeriodSec > 0) {
-				while(isAlive()) {
-					logMetrics(Markers.PERF_AVG);
-				}
-			} else {
-				try {
+			try {
+				if(metricsUpdatePeriodSec > 0) {
+					while(isAlive()) {
+						logMetrics(Markers.PERF_AVG);
+						Thread.sleep(metricsUpdatePeriodSec * 1000);
+					}
+				} else {
 					Thread.sleep(Long.MAX_VALUE);
-				} catch(final InterruptedException e) {
-					LOG.debug(Markers.MSG, "Interrupted");
 				}
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.MSG, "Interrupted");
+			} finally {
+				logMetrics(Markers.PERF_SUM);
 			}
 		}
 	};
@@ -207,10 +206,10 @@ implements LoadExecutor<T> {
 				getName(),
 				countReqSucc, counterReqFail.getCount(),
 				//
-				(float) respLatencySnapshot.getMean() / BILLION,
-				(float) respLatencySnapshot.getMin() / BILLION,
-				(float) respLatencySnapshot.getMedian() / BILLION,
-				(float) respLatencySnapshot.getMax() / BILLION,
+				(float) respLatencySnapshot.getMean() / NANOSEC_SCALEDOWN,
+				(float) respLatencySnapshot.getMin() / NANOSEC_SCALEDOWN,
+				(float) respLatencySnapshot.getMedian() / NANOSEC_SCALEDOWN,
+				(float) respLatencySnapshot.getMax() / NANOSEC_SCALEDOWN,
 				//
 				avgSize==0 ? 0 : meanBW / avgSize,
 				avgSize==0 ? 0 : oneMinBW / avgSize,
@@ -227,10 +226,10 @@ implements LoadExecutor<T> {
 				//
 				countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
 				//
-				(float) respLatencySnapshot.getMean() / BILLION,
-				(float) respLatencySnapshot.getMin() / BILLION,
-				(float) respLatencySnapshot.getMedian() / BILLION,
-				(float) respLatencySnapshot.getMax() / BILLION,
+				(float) respLatencySnapshot.getMean() / NANOSEC_SCALEDOWN,
+				(float) respLatencySnapshot.getMin() / NANOSEC_SCALEDOWN,
+				(float) respLatencySnapshot.getMedian() / NANOSEC_SCALEDOWN,
+				(float) respLatencySnapshot.getMax() / NANOSEC_SCALEDOWN,
 				//
 				avgSize==0 ? 0 : meanBW / avgSize,
 				avgSize==0 ? 0 : oneMinBW / avgSize,
@@ -286,6 +285,7 @@ implements LoadExecutor<T> {
 				}
 			}
 			//
+			metricDumpThread.setName(getName());
 			metricDumpThread.start();
 			//
 			LOG.info(Markers.MSG, "Started \"{}\"", getName());
@@ -298,7 +298,7 @@ implements LoadExecutor<T> {
 			shutdown();
 		}
 		if(metricDumpThread.isAlive()) {
-			LOG.debug(Markers.MSG, "{}: interrupting...", name);
+			LOG.debug(Markers.MSG, "{}: interrupting...", getName());
 			metricDumpThread.interrupt();
 		}
 	}
@@ -323,7 +323,7 @@ implements LoadExecutor<T> {
 	throws RemoteException, InterruptedException {
 		if(maxCount > getTaskCount()) {
 			if(dataItem == null) {
-				LOG.debug(Markers.MSG, "{}: poison submitted, performing the shutdown", name);
+				LOG.debug(Markers.MSG, "{}: poison submitted, performing the shutdown", getName());
 				shutdown(); // stop further submitting
 			} else {
 				// round-robin node selection
@@ -422,24 +422,25 @@ implements LoadExecutor<T> {
 	throws IOException {
 		try {
 			interrupt();
-			// provide summary metrics
-			logMetrics(Markers.PERF_SUM);
+			// provide summary metrics logMetrics(Markers.PERF_SUM);
 			//
 			final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 			awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
-			LOG.debug(Markers.MSG, "{}: waiting the remaining tasks done", name);
+			LOG.debug(Markers.MSG, "{}: waiting the remaining tasks done", getName());
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.ERR, "{}: closing interrupted", name);
+			LOG.debug(Markers.ERR, "{}: closing interrupted", getName());
 		} finally {
 			try {
 				// force shutdown
-				LOG.debug(Markers.MSG, "{}: dropped {} tasks", name, shutdownNow().size());
+				LOG.debug(Markers.MSG, "{}: dropped {} tasks", getName(), shutdownNow().size());
 				// poison the consumer
 				consumer.submit(null);
 			} catch(final InterruptedException e) {
 				ExceptionHandler.trace(
 					LOG, Level.DEBUG, e,
-					String.format("%s: interrupted on feeding the poison to the consumer", name)
+					String.format(
+						"%s: interrupted on feeding the poison to the consumer", getName()
+					)
 				);
 			} finally {
 				// close node executors
@@ -455,7 +456,9 @@ implements LoadExecutor<T> {
 		try {
 			close();
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, String.format("%s: failed to close", name));
+			ExceptionHandler.trace(
+				LOG, Level.WARN, e, String.format("%s: failed to close", getName())
+			);
 		}
 		super.finalize();
 	}
@@ -468,5 +471,17 @@ implements LoadExecutor<T> {
 	@Override
 	public final long getMaxCount() {
 		return maxCount;
+	}
+	//
+	@Override
+	public final void join()
+	throws InterruptedException {
+		awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+	}
+	//
+	@Override
+	public final void join(final long timeOutMilliSec)
+	throws  InterruptedException {
+		awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
 	}
 }

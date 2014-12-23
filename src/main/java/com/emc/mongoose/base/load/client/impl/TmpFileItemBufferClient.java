@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -65,29 +66,30 @@ implements DataItemBufferClient<T> {
 	}
 	//
 	@Override
+	public final void shutdown()
+	throws RemoteException {
+		throw new RemoteException("The method is not supported in distributed mode currently");
+	}
+	//
+	@Override
+	public final boolean awaitTermination(
+		final long timeOut, final TimeUnit timeUnit
+	) throws RemoteException, InterruptedException {
+		throw new RemoteException("The method is not supported in distributed mode currently");
+	}
+	//
+	@Override
+	public final List<Runnable> shutdownNow()
+	throws RemoteException {
+		throw new RemoteException("The method is not supported in distributed mode currently");
+	}
+	//
+	@Override
 	public final long getMaxCount()
 	throws RemoteException {
 		return loadBuilderSvcMap.get(
 			loadBuilderSvcMap.keySet().iterator().next()
 		).getMaxCount();
-	}
-	//
-	@Override
-	public final void setMaxCount(final long maxCount) {
-		DataItemBuffer<T> nextDataItemBuffer;
-		for(final String addr: keySet()) {
-			try {
-				nextDataItemBuffer = get(addr);
-				nextDataItemBuffer.setMaxCount(maxCount);
-			} catch(final Exception e) {
-				ExceptionHandler.trace(
-					LOG, Level.WARN, e,
-					String.format(
-						"Failed to set the count limit for remote data items buffer @ %s", addr
-					)
-				);
-			}
-		}
 	}
 	//
 	@Override
@@ -220,6 +222,12 @@ implements DataItemBufferClient<T> {
 				);
 			}
 		}
+	}
+	//
+	@Override
+	public final void join()
+	throws InterruptedException {
+		join(Long.MAX_VALUE);
 	}
 	//
 	@Override

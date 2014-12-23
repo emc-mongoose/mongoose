@@ -1,9 +1,10 @@
 package com.emc.mongoose.web.api.impl;
 //
-import com.emc.mongoose.base.api.impl.IOTaskBase;
 import com.emc.mongoose.base.api.RequestConfig;
+import com.emc.mongoose.object.api.impl.BasicObjectIOTask;
 import com.emc.mongoose.util.io.HTTPContentInputStream;
 import com.emc.mongoose.util.io.HTTPContentOutputStream;
+import com.emc.mongoose.util.pool.InstancePool;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
@@ -40,23 +41,35 @@ import java.util.concurrent.ConcurrentHashMap;
  Created by kurila on 06.06.14.
  */
 public class BasicWSIOTask<T extends WSObject>
-extends IOTaskBase<T>
+extends BasicObjectIOTask<T>
 implements WSIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static WSIOTask<WSObject> POISON = new BasicWSIOTask<WSObject>() {
+	public final static BasicWSIOTask POISON = new BasicWSIOTask() {
 		@Override
 		public final String toString() {
 			return "<POISON>";
 		}
 	};
+	// BEGIN pool related things
+	private final static InstancePool<BasicWSIOTask>
+		POOL_WEB_IO_TASKS = new InstancePool<>(BasicWSIOTask.class);
 	//
+	@SuppressWarnings("unchecked")
+	public static <T extends WSObject> BasicWSIOTask<T> getInstanceFor(
+		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
+	) {
+		return (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
+	}
+	//
+	@Override
+	public void close() {
+		POOL_WEB_IO_TASKS.release(this);
+	}
+	// END pool related things
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	protected MutableHTTPRequest httpRequest = null;
-	public BasicWSIOTask() {
-		super();
-	}
 	//
 	@Override
 	public WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
@@ -64,7 +77,7 @@ implements WSIOTask<T> {
 			this.wsReqConf = (WSRequestConfig<T>) reqConf;
 			httpRequest = wsReqConf.createRequest();
 		} else { // cleanup
-			reset();
+			resetRequest();
 		}
 		super.setRequestConfig(reqConf);
 		return this;
@@ -139,12 +152,6 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final void resetRequest() {
-		reset();
-	}
-	//
-	@Override
-	public final void reset() {
-		super.reset();
 		respStatusCode = -1;
 		exception = null;
 		reqEntity = null;
@@ -153,6 +160,11 @@ implements WSIOTask<T> {
 		httpRequest.removeHeaders(WSRequestConfig.KEY_EMC_SIG);
 		httpRequest.removeHeaders(HttpHeaders.CONTENT_TYPE);
 	}
+	/*
+	@Override @SuppressWarnings("unchecked")
+	public final BasicWSIOTask<T> reuse(final Object... args) {
+		return (BasicWSIOTask<T>) super.reuse(args);
+	}*/
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// HttpAsyncResponseConsumer implementation ////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////

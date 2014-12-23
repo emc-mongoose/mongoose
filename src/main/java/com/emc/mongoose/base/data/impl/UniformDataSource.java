@@ -86,8 +86,8 @@ implements DataSource<T> {
 		}
 		//
 		LOG.debug(
-			Markers.MSG, "Pre-generating the data done in {} seconds",
-			(System.nanoTime() - d) / LoadExecutor.BILLION
+			Markers.MSG, "Pre-generating the data done in {}[us]",
+			(System.nanoTime() - d) / LoadExecutor.NANOSEC_SCALEDOWN
 		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

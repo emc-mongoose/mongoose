@@ -9,13 +9,4 @@ import com.emc.mongoose.object.data.DataObject;
  */
 public interface DataObjectIOTask<T extends DataObject>
 extends AsyncIOTask<T> {
-	//
-	@Override
-	DataObjectIOTask<T> setDataItem(final T dataItem);
-	//
-	@Override
-	DataObjectIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
-	//
-	@Override
-	DataObjectIOTask<T> setNodeAddr(final String nodeAddr);
 }

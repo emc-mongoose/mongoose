@@ -46,7 +46,7 @@ implements Consumer<T> {
 		DataItemLogTask.class
 	);
 	//
-	private final static class DataItemLogTask<T extends DataItem>
+	public final static class DataItemLogTask<T extends DataItem>
 	implements Runnable, Reusable {
 		//
 		public T dataItem = null;

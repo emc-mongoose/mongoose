@@ -39,7 +39,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 //
@@ -212,10 +211,10 @@ public final class MockServlet
 						//
 						counterAllSucc.getCount(), counterAllFail.getCount(),
 						//
-						(float) allDurSnapshot.getMean() / LoadExecutor.BILLION,
-						(float) allDurSnapshot.getMin() / LoadExecutor.BILLION,
-						(float) allDurSnapshot.getMedian() / LoadExecutor.BILLION,
-						(float) allDurSnapshot.getMax() / LoadExecutor.BILLION,
+						(float) allDurSnapshot.getMean() / LoadExecutor.NANOSEC_SCALEDOWN,
+						(float) allDurSnapshot.getMin() / LoadExecutor.NANOSEC_SCALEDOWN,
+						(float) allDurSnapshot.getMedian() / LoadExecutor.NANOSEC_SCALEDOWN,
+						(float) allDurSnapshot.getMax() / LoadExecutor.NANOSEC_SCALEDOWN,
 						//
 						allTP.getMeanRate(),
 						allTP.getOneMinuteRate(),

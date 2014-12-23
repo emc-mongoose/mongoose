@@ -5,6 +5,7 @@ import com.emc.mongoose.base.data.DataItem;
 //
 import java.rmi.RemoteException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 28.04.14.
  A mechanism of data items load execution.
@@ -14,9 +15,11 @@ import java.util.concurrent.Future;
 public interface LoadExecutor<T extends DataItem>
 extends Producer<T>, Consumer<T> {
 	//
-	static int BILLION = 1000000000, MIB = 0x100000;
+	AtomicInteger LAST_INSTANCE_NUM = new AtomicInteger(0);
 	//
-	static String
+	int NANOSEC_SCALEDOWN = 1000, MIB = 0x100000;
+	//
+	String
 		METRIC_NAME_SUCC = "succ",
 		METRIC_NAME_FAIL = "fail",
 		METRIC_NAME_SUBM = "subm",
@@ -28,10 +31,10 @@ extends Producer<T>, Consumer<T> {
 		METRIC_NAME_LAT = "lat",
 		NAME_SEP = "@";
 	//
-	static String
-		MSG_FMT_METRICS = "count=(%d/%d/%d); latency[s]=(%.6f/%.6f/%.6f/%.6f); " +
+	String
+		MSG_FMT_METRICS = "count=(%d/%d/%d); latency[us]=(%d/%d/%d/%d); " +
 			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)",
-		MSG_FMT_SUM_METRICS = "\"%s\" summary: count=(%d/%d); latency[s]=(%.6f/%.6f/%.6f/%.6f); " +
+		MSG_FMT_SUM_METRICS = "\"%s\" summary: count=(%d/%d); latency[us]=(%d/%d/%d/%d); " +
 			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
 	String getName()
@@ -45,4 +48,11 @@ extends Producer<T>, Consumer<T> {
 	//
 	void handleResult(final AsyncIOTask<T> task, AsyncIOTask.Result result)
 	throws RemoteException;
+	//
+	void join()
+	throws RemoteException, InterruptedException;
+	//
+	void join(final long timeOutMilliSec)
+	throws RemoteException, InterruptedException;
+	//
 }

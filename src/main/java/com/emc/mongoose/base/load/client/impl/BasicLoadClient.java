@@ -21,6 +21,7 @@ import com.emc.mongoose.base.load.client.impl.tasks.CountLimitWaitTask;
 import com.emc.mongoose.base.load.client.impl.tasks.FrameFetchTask;
 import com.emc.mongoose.base.load.client.impl.tasks.GaugeValueTask;
 import com.emc.mongoose.base.load.client.impl.tasks.InterruptSvcTask;
+import com.emc.mongoose.base.load.client.impl.tasks.RemoteJoinTask;
 import com.emc.mongoose.base.load.client.impl.tasks.RemoteSubmitTask;
 import com.emc.mongoose.base.load.impl.tasks.LoadCloseHook;
 import com.emc.mongoose.base.load.client.LoadClient;
@@ -445,8 +446,8 @@ implements LoadClient<T> {
 					name,
 					countReqSucc.get(), countReqFail.get(),
 					//
-					avgLatency.get() / BILLION, (double) minLatency.get() / BILLION,
-					medLatency.get() / BILLION, (double) maxLatency.get() / BILLION,
+					avgLatency.get() / NANOSEC_SCALEDOWN, (double) minLatency.get() / NANOSEC_SCALEDOWN,
+					medLatency.get() / NANOSEC_SCALEDOWN, (double) maxLatency.get() / NANOSEC_SCALEDOWN,
 					//
 					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
 					//
@@ -460,8 +461,8 @@ implements LoadClient<T> {
 					getQueue().size() + getActiveCount(),
 					countReqFail.get(),
 					//
-					avgLatency.get() / BILLION, (double) minLatency.get() / BILLION,
-					medLatency.get() / BILLION, (double) maxLatency.get() / BILLION,
+					avgLatency.get() / NANOSEC_SCALEDOWN, (double) minLatency.get() / NANOSEC_SCALEDOWN,
+					medLatency.get() / NANOSEC_SCALEDOWN, (double) maxLatency.get() / NANOSEC_SCALEDOWN,
 					//
 					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
 					//
@@ -736,5 +737,24 @@ implements LoadClient<T> {
 		return remoteLoadMap
 			.get(loadSvcAddrs[(int) getTaskCount() % loadSvcAddrs.length])
 			.submit(request);
+	}
+	//
+	@Override
+	public final void join()
+	throws InterruptedException {
+		join(Long.MAX_VALUE);
+	}
+	//
+	@Override
+	public final void join(final long timeOutMilliSec)
+	throws InterruptedException {
+		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
+			remoteLoadMap.size(), new WorkerFactory("joinLoadSvcWorker")
+		);
+		for(final String addr : remoteLoadMap.keySet()) {
+			joinExecutor.submit(new RemoteJoinTask(remoteLoadMap.get(addr), timeOutMilliSec));
+		}
+		joinExecutor.shutdown();
+		joinExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
 	}
 }

@@ -1,6 +1,7 @@
 package com.emc.mongoose.util.io;
 //
 import com.emc.mongoose.util.pool.InstancePool;
+import com.emc.mongoose.util.pool.Reusable;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
 //
@@ -11,7 +12,8 @@ import java.nio.ByteBuffer;
  Created by kurila on 09.12.14.
  */
 public final class HTTPContentInputStream
-extends InputStream {
+extends InputStream
+implements Reusable {
 	//
 	private volatile ByteBuffer bb = null;
 	private volatile byte[] bs = null; // Invoker's previous array
@@ -59,15 +61,23 @@ extends InputStream {
 	public static HTTPContentInputStream getInstance(
 		final ContentDecoder in, final IOControl ioCtl
 	) {
-		final HTTPContentInputStream instance = POOL.take();
-		instance.in = in;
-		instance.ioCtl = ioCtl;
-		return instance;
+		return POOL.take(in, ioCtl);
 	}
 	//
 	@Override
 	public final void close() {
 		POOL.release(this);
+	}
+	//
+	@Override
+	public final HTTPContentInputStream reuse(final Object... args) {
+		if(args.length > 0) {
+			in = ContentDecoder.class.cast(args[0]);
+		}
+		if(args.length > 1) {
+			ioCtl = IOControl.class.cast(args[1]);
+		}
+		return this;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }

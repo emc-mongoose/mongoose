@@ -1,6 +1,7 @@
 package com.emc.mongoose.web.load.server.impl;
 //
 import com.emc.mongoose.base.data.persist.TmpFileItemBuffer;
+import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.impl.LoadExecutorBase;
 import com.emc.mongoose.base.load.server.DataItemBufferSvc;
 import com.emc.mongoose.object.load.server.ObjectLoadSvc;
@@ -8,7 +9,6 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.impl.BasicLoadBuilder;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
-import com.emc.mongoose.web.load.server.WSLoadSvc;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -51,12 +51,12 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	@Override
 	public final int getLastInstanceNum() {
-		return LoadExecutorBase.getLastInstanceNum();
+		return LoadExecutor.LAST_INSTANCE_NUM.get();
 	}
 	//
 	@Override
 	public final void setLastInstanceNum(final int instanceN) {
-		LoadExecutorBase.setLastInstanceNum(instanceN);
+		LoadExecutorBase.LAST_INSTANCE_NUM.set(instanceN);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -97,9 +97,16 @@ implements WSLoadBuilderSvc<T, U> {
 		LOG.info(Markers.MSG, "Server started and waiting for the requests");
 	}
 	//
+	@Override
 	public final void join()
 	throws InterruptedException {
-		Thread.sleep(Long.MAX_VALUE);
+		join(Long.MAX_VALUE);
+	}
+	//
+	@Override
+	public final void join(final long ms)
+	throws InterruptedException {
+		Thread.sleep(ms);
 	}
 	//
 	@Override
