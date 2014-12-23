@@ -1,5 +1,7 @@
 package com.emc.mongoose.util.persist;
 
+import com.emc.mongoose.util.logging.Markers;
+import org.apache.logging.log4j.core.AbstractLifeCycle;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LogEvent;
@@ -15,6 +17,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginConfiguration;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
+import org.apache.logging.log4j.status.StatusLogger;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -25,6 +28,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.logging.Logger;
 
 /**
  * Created by olga on 09.12.14.
@@ -33,13 +37,18 @@ import java.util.concurrent.atomic.AtomicLong;
 public class HibernateAsyncAppender
 extends AbstractAppender {
 
+	//
+	public static final org.apache.logging.log4j.Logger LOGGER = StatusLogger.getLogger();
+	//
 	private static final long serialVersionUID = 1L;
 	private static final int DEFAULT_QUEUE_SIZE = 128,
-		POOL_SIZE=1000;
+		POOL_SIZE=1000,
+		DEFAULT_THREADS_FOR_QUEUE = 1;
 	private static final String SHUTDOWN = "Shutdown";
 	private final BlockingQueue<Serializable> queue;
 	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE,50, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(100));
 	private final int queueSize;
+	private final int threadsForQueue;
 	private final boolean blocking;
 	private final Configuration config;
 	private final AppenderRef[] appenderRefs;
@@ -54,10 +63,11 @@ extends AbstractAppender {
 	private HibernateAsyncAppender(final String name, final Filter filter, final AppenderRef[] appenderRefs,
 						  final String errorRef, final int queueSize, final boolean blocking,
 						  final boolean ignoreExceptions, final Configuration config,
-						  final boolean includeLocation) {
+						  final boolean includeLocation, final int threadsForQueue) {
 		super(name, filter, null, ignoreExceptions);
 		this.queue = new ArrayBlockingQueue<Serializable>(queueSize);
 		this.queueSize = queueSize;
+		this.threadsForQueue = threadsForQueue;
 		this.blocking = blocking;
 		this.config = config;
 		this.appenderRefs = appenderRefs;
@@ -67,6 +77,7 @@ extends AbstractAppender {
 	//
 	@Override
 	public void start() {
+		Runtime.getRuntime().addShutdownHook(new ShutDownThread(executor));
 		final Map<String, Appender> map = config.getAppenders();
 		final List<AppenderControl> appenders = new ArrayList<AppenderControl>();
 		for (final AppenderRef appenderRef : appenderRefs) {
@@ -84,7 +95,7 @@ extends AbstractAppender {
 				LOGGER.error("Unable to set up error Appender. No appender named {} was configured", errorRef);
 			}
 		}
-		for (int i=0; i<10; i++) {
+		for (int i=0; i<40; i++) {
 			executor.submit(new QueueProcessorTask(appenders, queue));
 		}
 		super.start();
@@ -154,14 +165,16 @@ extends AbstractAppender {
 	 */
 	@PluginFactory
 	public static HibernateAsyncAppender createAppender(@PluginElement("AppenderRef") final AppenderRef[] appenderRefs,
-											   @PluginAttribute("errorRef") @PluginAliases("error-ref") final String errorRef,
-											   @PluginAttribute(value = "blocking", defaultBoolean = true) final boolean blocking,
-											   @PluginAttribute(value = "bufferSize", defaultInt = DEFAULT_QUEUE_SIZE) final int size,
-											   @PluginAttribute("name") final String name,
-											   @PluginAttribute(value = "includeLocation", defaultBoolean = false) final boolean includeLocation,
-											   @PluginElement("Filter") final Filter filter,
-											   @PluginConfiguration final Configuration config,
-											   @PluginAttribute(value = "ignoreExceptions", defaultBoolean = true) final boolean ignoreExceptions) {
+    	@PluginAttribute("errorRef") @PluginAliases("error-ref") final String errorRef,
+    	@PluginAttribute(value = "blocking", defaultBoolean = true) final boolean blocking,
+    	@PluginAttribute(value = "bufferSize", defaultInt = DEFAULT_QUEUE_SIZE) final int size,
+    	@PluginAttribute(value = "threadsForQueue", defaultInt = DEFAULT_THREADS_FOR_QUEUE) final int threadsForQueue,
+    	@PluginAttribute("name") final String name,
+    	@PluginAttribute(value = "includeLocation", defaultBoolean = false) final boolean includeLocation,
+    	@PluginElement("Filter") final Filter filter,
+    	@PluginConfiguration final Configuration config,
+    	@PluginAttribute(value = "ignoreExceptions", defaultBoolean = true) final boolean ignoreExceptions)
+	{
 		if (name == null) {
 			LOGGER.error("No name provided for AsyncAppender");
 			return null;
@@ -171,9 +184,8 @@ extends AbstractAppender {
 		}
 
 		return new HibernateAsyncAppender(name, filter, appenderRefs, errorRef,
-				size, blocking, ignoreExceptions, config, includeLocation);
+				size, blocking, ignoreExceptions, config, includeLocation, threadsForQueue);
 	}
-
 	////////////////////
 	//Task for thread pool executor
 	///////////////////
@@ -261,14 +273,6 @@ extends AbstractAppender {
 			}
 			return success;
 		}
-
-		public void shutdown() {
-			shutdown = true;
-			if (queue.isEmpty()) {
-				queue.offer(SHUTDOWN);
-			}
-
-		}
 	}
 
 	/**
@@ -319,3 +323,37 @@ extends AbstractAppender {
 		return queue.remainingCapacity();
 	}
 }
+/////////////////////////////////////
+final class ShutDownThread
+		extends Thread
+{
+	private final ThreadPoolExecutor threadPoolExecutor;
+
+	//
+	public ShutDownThread(final ThreadPoolExecutor threadPoolExecutor)
+	{
+		super("HibernateShutDown");
+		this.threadPoolExecutor=threadPoolExecutor;
+	}
+
+	@Override
+	public final void run()
+	{
+		final int reqTimeOutMilliSec=15;
+		if(!threadPoolExecutor.isShutdown()) {
+			threadPoolExecutor.shutdown();
+		}
+		if(!threadPoolExecutor.isTerminated()) {
+			try {
+				threadPoolExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.SECONDS);
+			} catch(final InterruptedException e) {
+				HibernateAsyncAppender.LOGGER.debug("Interrupted waiting for submit executor to finish");
+			}
+		}
+		if(threadPoolExecutor.getTaskCount()!=threadPoolExecutor.getCompletedTaskCount()){
+			final long failed = threadPoolExecutor.getTaskCount() - threadPoolExecutor.getCompletedTaskCount();
+			HibernateAsyncAppender.LOGGER.debug("Failed tasks: ", failed);
+		}
+	}
+}
+//////////////////////////////////////

@@ -15,7 +15,7 @@ import java.util.Set;
 public class LoadEntity
 implements Serializable {
 	@Id
-	@Column(name = "number")
+	@Column(name = "num")
 	private long number;
 	@Id
 	@ManyToOne(fetch = FetchType.LAZY)
@@ -70,7 +70,11 @@ implements Serializable{
 	private long number;
 	private RunEntity run;
 	//
-	LoadEntityPK(){
+	public LoadEntityPK(){
+	}
+	public LoadEntityPK(final long number, final RunEntity runEntity){
+		this.number = number;
+		this.run = runEntity;
 	}
 	//
 	public long getNumber() {
@@ -84,5 +88,20 @@ implements Serializable{
 	}
 	public void setRun(RunEntity run) {
 		this.run = run;
+	}
+	@Override
+	public boolean equals(Object o) {
+		if(o == null) return false;
+		if(!(o instanceof LoadEntity)) return false;
+		LoadEntity other = (LoadEntity) o;
+		return (this.number == other.getNumber()) && (this.run.getId() == other.getRun().getId());
+
+	}
+	@Override
+	public int hashCode() {
+		int hsCode;
+		hsCode = Long.valueOf(this.number).hashCode();
+		hsCode = 19 * hsCode+ Long.valueOf(this.run.getId()).hashCode();
+		return hsCode;
 	}
 }

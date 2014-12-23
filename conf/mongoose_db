@@ -19,267 +19,276 @@ CREATE DATABASE mongoose
 		LC_CTYPE = 'en_US.UTF-8'
 		CONNECTION LIMIT = -1;
 
--- Table: API
+-- Table: status
 
--- DROP TABLE API;
+-- DROP TABLE status;
 
-CREATE TABLE API
+CREATE TABLE status
 (
-	id bigserial NOT NULL UNIQUE,
-	name text NOT NULL UNIQUE,
-	CONSTRAINT id_api PRIMARY KEY (id)
+  code integer NOT NULL,
+  name text NOT NULL,
+  CONSTRAINT code PRIMARY KEY (code),
+  CONSTRAINT status_name_key UNIQUE (name)
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE API
-	OWNER TO mongoose;
+ALTER TABLE status
+  OWNER TO mongoose;
 
--- Table: Classes
+-- Table: mode
 
--- DROP TABLE Classes;
+-- DROP TABLE mode;
 
-CREATE TABLE Classes
+CREATE TABLE mode
 (
-	id bigserial NOT NULL,
-	name text NOT NULL UNIQUE,
-	CONSTRAINT id_class PRIMARY KEY (id)
+  id bigserial NOT NULL,
+  name text NOT NULL,
+  CONSTRAINT id_mode PRIMARY KEY (id),
+  CONSTRAINT mode_name_key UNIQUE (name)
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE Classes
-	OWNER TO mongoose;
+ALTER TABLE mode
+  OWNER TO mongoose;
 
--- Table: DataItems
 
--- DROP TABLE DataItems;
+-- Table: run
 
-CREATE TABLE DataItems
+-- DROP TABLE run;
+
+CREATE TABLE run
 (
-	id bigserial NOT NULL,
-	identifier text NOT NULL,
-	ringOffset text,
-	size bigint NOT NULL,
-	layer bigint,
-	mask bigint,
-	UNIQUE(identifier,size),
-	CONSTRAINT id_data_item PRIMARY KEY (id)
+  id bigserial NOT NULL,
+  mode bigint NOT NULL,
+  name text NOT NULL,
+  CONSTRAINT id_run PRIMARY KEY (id),
+  CONSTRAINT mode FOREIGN KEY (mode)
+      REFERENCES mode (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT run_name_key UNIQUE (name)
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE DataItems
-	OWNER TO mongoose;
+ALTER TABLE run
+  OWNER TO mongoose;
 
--- Table: Levels
 
--- DROP TABLE Levels;
+-- Table: dataobject
 
-CREATE TABLE Levels
+-- DROP TABLE dataobject;
+
+CREATE TABLE dataobject
 (
-	id bigserial NOT NULL,
-	name text NOT NULL UNIQUE,
-	CONSTRAINT id_level PRIMARY KEY (id)
+  identifier text NOT NULL,
+  size bigint NOT NULL,
+  ringoffset text,
+  layer bigint,
+  mask bigint,
+  CONSTRAINT id_datao_bject PRIMARY KEY (identifier, size)
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE Levels
-	OWNER TO mongoose;
+ALTER TABLE dataobject
+  OWNER TO mongoose;
 
--- Table: LoadType
+-- Table: level
 
--- DROP TABLE LoadType;
+-- DROP TABLE level;
 
-CREATE TABLE LoadType
+CREATE TABLE level
 (
-	id bigserial NOT NULL,
-	name text NOT NULL UNIQUE,
-	CONSTRAINT id_loads_type PRIMARY KEY (id)
+  id bigserial NOT NULL,
+  name text NOT NULL,
+  CONSTRAINT id_level PRIMARY KEY (id),
+  CONSTRAINT level_name_key UNIQUE (name)
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE LoadType
-	OWNER TO mongoose;
+ALTER TABLE level
+  OWNER TO mongoose;
 
--- Table: Modes
 
--- DROP TABLE Modes;
+-- Table: class
 
-CREATE TABLE Modes
+-- DROP TABLE class;
+
+CREATE TABLE class
 (
-	id bigserial NOT NULL,
-	name text NOT NULL UNIQUE,
-	CONSTRAINT id_mode PRIMARY KEY (id)
+  id bigserial NOT NULL,
+  name text NOT NULL,
+  CONSTRAINT id_class PRIMARY KEY (id),
+  CONSTRAINT class_name_key UNIQUE (name)
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE Modes
-	OWNER TO mongoose;
+ALTER TABLE class
+  OWNER TO mongoose;
 
--- Table: Nodes
+-- Table: message
 
--- DROP TABLE Nodes;
+-- DROP TABLE message;
 
-CREATE TABLE Nodes
+CREATE TABLE message
 (
-	id bigserial NOT NULL,
-	address text NOT NULL UNIQUE,
-	CONSTRAINT id_node PRIMARY KEY (id)
+  id bigserial NOT NULL,
+  run bigint NOT NULL,
+  level bigint NOT NULL,
+  class bigint NOT NULL,
+  tstamp timestamp without time zone NOT NULL,
+  message text,
+  CONSTRAINT id_message PRIMARY KEY (id, run),
+  CONSTRAINT class FOREIGN KEY (class)
+      REFERENCES class (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT level FOREIGN KEY (level)
+      REFERENCES level (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT run FOREIGN KEY (run)
+      REFERENCES run (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE Nodes
-	OWNER TO mongoose;
+ALTER TABLE message
+  OWNER TO mongoose;
 
--- Table: Statuses
+-- Table: api
 
--- DROP TABLE Statuses;
+-- DROP TABLE api;
 
-CREATE TABLE Statuses
+CREATE TABLE api
 (
-	code integer NOT NULL,
-	name text NOT NULL UNIQUE,
-	CONSTRAINT code PRIMARY KEY (code)
+  id bigserial NOT NULL,
+  name text NOT NULL,
+  CONSTRAINT id_api PRIMARY KEY (id),
+  CONSTRAINT api_name_key UNIQUE (name)
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE Statuses
-	OWNER TO mongoose;
+ALTER TABLE api
+  OWNER TO mongoose;
 
--- Table: Runs
+-- Table: loadtype
 
--- DROP TABLE Runs;
+-- DROP TABLE loadtype;
 
-CREATE TABLE Runs
+CREATE TABLE loadtype
 (
-	id bigserial NOT NULL,
-	mode bigint NOT NULL,
-	name text NOT NULL UNIQUE,
-	CONSTRAINT id_run PRIMARY KEY (id),
-	CONSTRAINT mode FOREIGN KEY (mode)
-		REFERENCES Modes (id) MATCH SIMPLE
-		ON UPDATE CASCADE ON DELETE CASCADE
+  id bigserial NOT NULL,
+  name text NOT NULL,
+  CONSTRAINT id_loads_type PRIMARY KEY (id),
+  CONSTRAINT loadtype_name_key UNIQUE (name)
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE Runs
-	OWNER TO mongoose;
+ALTER TABLE loadtype
+  OWNER TO mongoose;
 
--- Table: Loads
+-- Table: load
 
--- DROP TABLE Loads;
+-- DROP TABLE load;
 
-CREATE TABLE Loads
+CREATE TABLE load
 (
-	id bigserial NOT NULL,
-	run bigint NOT NULL,
-	type bigint NOT NULL,
-	number bigint NOT NULL,
-	api bigint NOT NULL,
-	UNIQUE(run, number),
-	CONSTRAINT id_load PRIMARY KEY (id),
-	CONSTRAINT api FOREIGN KEY (api)
-		REFERENCES API (id) MATCH SIMPLE
-		ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT run FOREIGN KEY (run)
-		REFERENCES Runs (id) MATCH SIMPLE
-		ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT type FOREIGN KEY (type)
-		REFERENCES LoadType (id) MATCH SIMPLE
-		ON UPDATE CASCADE ON DELETE CASCADE
+  num bigint NOT NULL,
+  run bigint NOT NULL,
+  type bigint NOT NULL,
+  api bigint NOT NULL,
+  CONSTRAINT id_load PRIMARY KEY (num, run),
+  CONSTRAINT api FOREIGN KEY (api)
+      REFERENCES api (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT run FOREIGN KEY (run)
+      REFERENCES run (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT type FOREIGN KEY (type)
+      REFERENCES loadtype (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE Loads
-	OWNER TO mongoose;
+ALTER TABLE load
+  OWNER TO mongoose;
 
--- Table: Messages
+-- Table: node
 
--- DROP TABLE Messages;
+-- DROP TABLE node;
 
-CREATE TABLE Messages
+CREATE TABLE node
 (
-	id bigserial NOT NULL,
-	run bigint NOT NULL,
-	level bigint NOT NULL,
-	class bigint NOT NULL,
-	tstamp timestamp without time zone NOT NULL,
-	message text,
-	CONSTRAINT id_message PRIMARY KEY (id),
-	CONSTRAINT class FOREIGN KEY (class)
-		REFERENCES Classes (id) MATCH SIMPLE
-		ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT level FOREIGN KEY (level)
-		REFERENCES Levels (id) MATCH SIMPLE
-		ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT run FOREIGN KEY (run)
-		REFERENCES Runs (id) MATCH SIMPLE
-		ON UPDATE CASCADE ON DELETE CASCADE
+  id bigserial NOT NULL,
+  address text NOT NULL,
+  CONSTRAINT id_node PRIMARY KEY (id),
+  CONSTRAINT node_address_key UNIQUE (address)
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE Messages
-	OWNER TO mongoose;
+ALTER TABLE node
+  OWNER TO mongoose;
 
--- Table: Threads
+-- Table: connection
 
--- DROP TABLE Threads;
+-- DROP TABLE connection;
 
-CREATE TABLE Threads
+CREATE TABLE connection
 (
-	id bigserial NOT NULL,
-	load bigint NOT NULL,
-	node bigint NOT NULL,
-	num bigint NOT NULL,
-	UNIQUE(load, num),
-	CONSTRAINT id_thread PRIMARY KEY (id),
-	CONSTRAINT load FOREIGN KEY (load)
-		REFERENCES Loads (id) MATCH SIMPLE
-		ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT node FOREIGN KEY (node)
-		REFERENCES Nodes (id) MATCH SIMPLE
-		ON UPDATE CASCADE ON DELETE CASCADE
+  num bigint NOT NULL,
+  load bigint NOT NULL,
+  run bigint NOT NULL,
+  node bigint NOT NULL,
+  CONSTRAINT id_connection PRIMARY KEY (num, load, run),
+  CONSTRAINT load FOREIGN KEY (load, run)
+      REFERENCES load (num, run) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT node FOREIGN KEY (node)
+      REFERENCES node (id) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE Threads
-	OWNER TO mongoose;
+ALTER TABLE connection
+  OWNER TO mongoose;
 
--- Table: Traces
+-- Table: trace
 
--- DROP TABLE Traces;
+-- DROP TABLE trace;
 
-CREATE TABLE Traces
+CREATE TABLE trace
 (
-	id bigserial NOT NULL,
-	dataItem bigint NOT NULL,
-	thread bigint NOT NULL,
-	status integer NOT NULL,
-	tsReqStart bigint NOT NULL,
-	reqDur bigint NOT NULL,
-	CONSTRAINT id_trace PRIMARY KEY (id),
-	CONSTRAINT dataitem FOREIGN KEY (dataitem)
-		REFERENCES DataItems (id) MATCH SIMPLE
-		ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT status FOREIGN KEY (status)
-		REFERENCES Statuses (code) MATCH SIMPLE
-		ON UPDATE CASCADE ON DELETE CASCADE,
-	CONSTRAINT thread FOREIGN KEY (thread)
-		REFERENCES Threads (id) MATCH SIMPLE
-		ON UPDATE CASCADE ON DELETE CASCADE
+  dataobject_id text NOT NULL,
+  dataobject_size bigint NOT NULL,
+  connection bigint NOT NULL,
+  load bigint NOT NULL,
+  run bigint NOT NULL,
+  status integer NOT NULL,
+  tsreqstart bigint NOT NULL,
+  reqdur bigint NOT NULL,
+  CONSTRAINT id_trace PRIMARY KEY (dataobject_id, dataobject_size, connection, load, run),
+  CONSTRAINT connection FOREIGN KEY (connection, load, run)
+      REFERENCES connection (num, load, run) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT dataobject FOREIGN KEY (dataobject_id, dataobject_size)
+      REFERENCES dataobject (identifier, size) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE,
+  CONSTRAINT status FOREIGN KEY (status)
+      REFERENCES status (code) MATCH SIMPLE
+      ON UPDATE CASCADE ON DELETE CASCADE
 )
 WITH (
-	OIDS=FALSE
+  OIDS=FALSE
 );
-ALTER TABLE Traces
-	OWNER TO mongoose;
+ALTER TABLE trace
+  OWNER TO mongoose;
+

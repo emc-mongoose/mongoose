@@ -14,14 +14,6 @@
 			"appender" : [
 				{
 					"name": "WebUI",
-					"type": "Async",
-					"blocking": "false",
-					"bufferSize": "65536",
-					"AppenderRef": {
-						"ref": "WebUISync"
-					}
-				}, {
-					"name": "WebUISync",
 					"type": "WebUI",
 					"enabled": "false",
 					"Filters": {
@@ -54,6 +46,7 @@
 					"type": "HibernateAsync",
 					"blocking": "false",
 					"bufferSize": "65536",
+					"threadsForQueue": "40",
 					"AppenderRef": {
 						"ref": "hibernateSync"
 					}

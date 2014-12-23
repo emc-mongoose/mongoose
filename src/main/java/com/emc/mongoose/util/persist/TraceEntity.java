@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinColumns;
 import javax.persistence.ManyToOne;
@@ -14,17 +15,26 @@ import java.io.Serializable;
  * Created by olga on 28.10.14.
  */
 @Entity(name="TraceEntity")
-@Table(name = "Traces")
+@IdClass(TraceEntityPK.class)
+@Table(name = "trace")
 public final class TraceEntity
 		implements Serializable{
 	@Id
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumns({ @JoinColumn(name = "dataobjectsize", nullable = false), @JoinColumn(name = "size", nullable = false) })
+	@JoinColumns({
+			@JoinColumn(name = "dataobject_id", nullable = false),
+			@JoinColumn(name = "dataobject_size", nullable = false)
+	})
 	private DataObjectEntity dataobject;
 	@Id
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumns({ @JoinColumn(name = "num", nullable = false), @JoinColumn(name = "load", nullable = false) })
-	private ConectionEntity conection;
+	@JoinColumns({
+			@JoinColumn(name = "load", nullable = false),
+			@JoinColumn(name = "run", nullable = false),
+			@JoinColumn(name = "connection", nullable = false)
+	})
+	private ConnectionEntity connection;
+	//
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "status", nullable = false)
 	private StatusEntity status;
@@ -35,11 +45,11 @@ public final class TraceEntity
 	//
 	public TraceEntity(){
 	}
-	public TraceEntity(final DataObjectEntity dataobject, final ConectionEntity conection,
+	public TraceEntity(final DataObjectEntity dataobject, final ConnectionEntity connection,
 					   final StatusEntity status, final long tsReqStart,
 					   final long reqDur){
 		this.dataobject = dataobject;
-		this.conection = conection;
+		this.connection = connection;
 		this.status  = status;
 		this.tsReqStart = tsReqStart;
 		this.reqDur = reqDur;
@@ -51,11 +61,11 @@ public final class TraceEntity
 	public final void setDataobject(final DataObjectEntity dataobject) {
 		this.dataobject = dataobject;
 	}
-	public final ConectionEntity getThread() {
-		return conection;
+	public final ConnectionEntity getThread() {
+		return connection;
 	}
-	public final void setThread(final ConectionEntity conection) {
-		this.conection = conection;
+	public final void setThread(final ConnectionEntity connection) {
+		this.connection = connection;
 	}
 	public final StatusEntity getStatus() {
 		return status;
@@ -74,5 +84,31 @@ public final class TraceEntity
 	}
 	public final void setReqDur(final long reqDur) {
 		this.reqDur = reqDur;
+	}
+}
+/////////////////////////////////
+class TraceEntityPK
+implements Serializable{
+	private DataObjectEntity dataobject;
+	private ConnectionEntity connection;
+	//
+	public TraceEntityPK(){
+	}
+	public TraceEntityPK(final DataObjectEntity dataObjectEntity, final ConnectionEntity connectionEntity){
+		this.dataobject = dataObjectEntity;
+		this.connection = connectionEntity;
+	}
+	//
+	public DataObjectEntity getDataobject() {
+		return dataobject;
+	}
+	public void setDataobject(DataObjectEntity dataobject) {
+		this.dataobject = dataobject;
+	}
+	public ConnectionEntity getConnection() {
+		return connection;
+	}
+	public void setConnection(ConnectionEntity connection) {
+		this.connection = connection;
 	}
 }

@@ -11,10 +11,10 @@ import static javax.persistence.GenerationType.IDENTITY;
 /**
  * Created by olga on 28.10.14.
  */
-@Entity(name="Conection")
+@Entity(name="Connection")
 @IdClass(ConnectionEntityPK.class)
-@Table(name = "conection")
-public final class ConectionEntity
+@Table(name = "connection")
+public final class ConnectionEntity
 implements Serializable{
 	@Id
 	@Column(name = "num")
@@ -31,9 +31,9 @@ implements Serializable{
 	@JoinColumn(name = "node", nullable = false)
 	private NodeEntity node;
 	//
-	public ConectionEntity(){
+	public ConnectionEntity(){
 	}
-	public ConectionEntity(final LoadEntity load, final NodeEntity node, final long num){
+	public ConnectionEntity(final LoadEntity load, final NodeEntity node, final long num){
 		this.load = load;
 		this.node = node;
 		this.number = num;
@@ -63,7 +63,6 @@ class ConnectionEntityPK
 implements Serializable{
 	private long number;
 	private LoadEntity load;
-	//
 	ConnectionEntityPK(){
 	}
 	//
