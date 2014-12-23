@@ -1,15 +1,6 @@
 package com.emc.mongoose.util.persist;
 //
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.math.BigInteger;
 import java.util.HashSet;
@@ -21,19 +12,21 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 28.10.14.
  */
 @Entity(name="Conection")
+@IdClass(ConnectionEntityPK.class)
 @Table(name = "conection")
 public final class ConectionEntity
-		implements Serializable{
+implements Serializable{
 	@Id
 	@Column(name = "num")
 	private long number;
 	@Id
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "load", nullable = false)
+	@JoinColumns({
+			@JoinColumn(name = "load", nullable = false),
+			@JoinColumn(name = "run", nullable = false)
+	})
 	private LoadEntity load;
-	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "run", nullable = false)
-	private RunEntity run;
+	//
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "node", nullable = false)
 	private NodeEntity node;
@@ -64,10 +57,26 @@ public final class ConectionEntity
 	public void setNumber(long number) {
 		this.number = number;
 	}
-	public RunEntity getRun() {
-		return run;
+}
+/////////////////////////////////
+class ConnectionEntityPK
+implements Serializable{
+	private long number;
+	private LoadEntity load;
+	//
+	ConnectionEntityPK(){
 	}
-	public void setRun(RunEntity run) {
-		this.run = run;
+	//
+	public long getNumber() {
+		return number;
+	}
+	public void setNumber(long number) {
+		this.number = number;
+	}
+	public LoadEntity getLoad() {
+		return load;
+	}
+	public void setLoad(LoadEntity load) {
+		this.load = load;
 	}
 }

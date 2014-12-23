@@ -1,12 +1,6 @@
 package com.emc.mongoose.util.persist;
 //
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Set;
 //
@@ -16,16 +10,18 @@ import java.util.Set;
  * Created by olga on 21.10.14.
  */
 @Entity(name="Loads")
+@IdClass(LoadEntityPK.class)
 @Table(name = "load")
 public class LoadEntity
-		implements Serializable {
+implements Serializable {
 	@Id
-	@Column(name = "num")
+	@Column(name = "number")
 	private long number;
 	@Id
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "run", nullable = false)
 	private RunEntity run;
+	//
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "type", nullable = false)
 	private LoadTypeEntity type;
@@ -65,5 +61,28 @@ public class LoadEntity
 	}
 	public final void setApi(final ApiEntity api) {
 		this.api = api;
+	}
+}
+@Embeddable
+class LoadEntityPK
+implements Serializable{
+	//
+	private long number;
+	private RunEntity run;
+	//
+	LoadEntityPK(){
+	}
+	//
+	public long getNumber() {
+		return number;
+	}
+	public void setNumber(long number) {
+		this.number = number;
+	}
+	public RunEntity getRun() {
+		return run;
+	}
+	public void setRun(RunEntity run) {
+		this.run = run;
 	}
 }

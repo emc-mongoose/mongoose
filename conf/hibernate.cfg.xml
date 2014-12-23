@@ -29,10 +29,11 @@
 		<mapping class="com.emc.mongoose.util.persist.MessageClassEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.MessageEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.DataObjectEntity"></mapping>
-		<!--<mapping class="com.emc.mongoose.util.persist.ApiEntity"></mapping>
+		<mapping class="com.emc.mongoose.util.persist.ApiEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.LoadTypeEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.LoadEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.NodeEntity"></mapping>
+		<!--
 		<mapping class="com.emc.mongoose.util.persist.ConectionEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.TraceEntity"></mapping>
 !-->

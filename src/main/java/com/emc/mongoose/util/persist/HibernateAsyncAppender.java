@@ -84,7 +84,7 @@ extends AbstractAppender {
 				LOGGER.error("Unable to set up error Appender. No appender named {} was configured", errorRef);
 			}
 		}
-		for (int i=0; i<100; i++) {
+		for (int i=0; i<10; i++) {
 			executor.submit(new QueueProcessorTask(appenders, queue));
 		}
 		super.start();
@@ -267,6 +267,7 @@ extends AbstractAppender {
 			if (queue.isEmpty()) {
 				queue.offer(SHUTDOWN);
 			}
+
 		}
 	}
 

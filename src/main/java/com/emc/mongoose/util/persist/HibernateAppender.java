@@ -99,12 +99,12 @@ public final class HibernateAppender
 		}
 		final String url = String.format("jdbc:%s://%s:%s/%s", provider, addr, port, dbName);
 		try {
+			newAppender = new HibernateAppender(name, filter, DEFAULT_LAYOUT, ignoreExceptions);
 			if(ENABLED_FLAG) {
 				// init database session with username,password and url
-				buildSessionFactory(userName, passWord, url);
-				persistStatusEntity();
+				newAppender.buildSessionFactory(userName, passWord, url);
+				newAppender.persistStatusEntity();
 			}
-			newAppender = new HibernateAppender(name, filter, DEFAULT_LAYOUT, ignoreExceptions);
 		} catch (final Exception e) {
 			throw new IllegalStateException("Open DB session failed", e);
 		}
@@ -115,32 +115,25 @@ public final class HibernateAppender
 	public final void append(final LogEvent event)
 	{
 		if (ENABLED_FLAG){
-			Session session = SESSION_FACTORY.openSession();
 			final String marker = event.getMarker().toString();
 			final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
 			switch (marker) {
 				case MSG:
 				case ERR:
-					persistMessages(event, session);
-					session.flush();
-					session.close();
+					persistMessages(event);
 					break;
 				case DATA_LIST:
-					persistDataList(message, session);
-					session.flush();
-					session.close();
+					persistDataList(message);
 					break;
 				case PERF_TRACE:
-					//persistPerfTrace(message, session, event);
-					session.flush();
-					session.close();
+					persistPerfTrace(message, event);
 					break;
 			}
 
 		}
 	}
 	//
-	private static void buildSessionFactory(
+	private void buildSessionFactory(
 			final String username, final String password,
 			final String url)
 	{
@@ -164,60 +157,57 @@ public final class HibernateAppender
 		}
 	}
 	//
-	private static void persistStatusEntity()
+	private void persistStatusEntity()
 	{
-		final Session session = SESSION_FACTORY.openSession();
 		for (final Request.Result result:Request.Result.values()){
-			loadStatusEntity(session, result);
+			loadStatusEntity(result);
 		}
-		session.close();
 	}
 	//
-	private void persistMessages(final LogEvent event, final Session session)
+	private void persistMessages(final LogEvent event)
 	{
-		final ModeEntity modeEntity = loadModeEntity(session, event.getContextMap().get(KEY_RUN_MODE));
-		final RunEntity runEntity = loadRunEntity(session, event.getContextMap().get(KEY_RUN_ID), modeEntity);
-		final LevelEntity levelEntity = loadLevelEntity(session, event.getLevel().toString());
-		final MessageClassEntity messageClassEntity = loadClassOfMessage(session, event.getLoggerName());
-		loadMessageEntity(session, new Date(event.getTimeMillis()),
+		final ModeEntity modeEntity = loadModeEntity(event.getContextMap().get(KEY_RUN_MODE));
+		final RunEntity runEntity = loadRunEntity(event.getContextMap().get(KEY_RUN_ID), modeEntity);
+		final LevelEntity levelEntity = loadLevelEntity(event.getLevel().toString());
+		final MessageClassEntity messageClassEntity = loadClassOfMessage(event.getLoggerName());
+		loadMessageEntity(new Date(event.getTimeMillis()),
 				messageClassEntity, levelEntity, event.getMessage().getFormattedMessage(), runEntity);
 	}
 	//
-	private static void persistDataList(final String[] message, final Session session)
+	private void persistDataList(final String[] message)
 	{
 		DataObjectEntity dataObjectEntity = new DataObjectEntity( message[0], message[1],
 				Long.valueOf(message[2], 0x10), Long.valueOf(message[3], 0x10),
 				Long.valueOf(message[4], 0x10));
-		//loadDataObjectEntity(session, dataObjectEntity);
-		saveOrUpdate(session,dataObjectEntity);
+		loadDataObjectEntity(dataObjectEntity);
 
 	}
 	//
-	private static void persistPerfTrace(final String[] message, final Session session, final LogEvent event)
+	private void persistPerfTrace(final String[] message, final LogEvent event)
 	{
 		final DataObjectEntity dataObjectEntity = new DataObjectEntity(message[0], Integer.valueOf(message[1], 0x10));
-		saveOrUpdate(session,dataObjectEntity);
-		//loadDataObjectEntity(session, dataObjectEntity);
-		/*
-		final StatusEntity statusEntity = getStatusEntity(session, Integer.valueOf(message[2], 0x10));
-		final RunEntity runEntity = getRunEntity(session, event.getContextMap().get(KEY_RUN_ID));
-		final LoadTypeEntity loadTypeEntity = loadLoadTypeEntity(session,
-				event.getContextMap().get(KEY_LOAD_TYPE));
-		final ApiEntity apiEntity = loadApiEntity(session, event.getContextMap().get(KEY_API));
-		final LoadEntity loadEntity = loadLoadEntity(session, event.getContextMap().get(KEY_LOAD_NUM),
+		loadDataObjectEntity(dataObjectEntity);
+		final StatusEntity statusEntity = getStatusEntity(Integer.valueOf(message[2], 0x10));
+		final RunEntity runEntity = getRunEntity(event.getContextMap().get(KEY_RUN_ID));
+		final LoadTypeEntity loadTypeEntity = loadLoadTypeEntity(event.getContextMap().get(KEY_LOAD_TYPE));
+		final ApiEntity apiEntity = loadApiEntity(event.getContextMap().get(KEY_API));
+		final LoadEntity loadEntity = loadLoadEntity(event.getContextMap().get(KEY_LOAD_NUM),
 				runEntity, loadTypeEntity, apiEntity);
-		final NodeEntity nodeEntity = loadNodeEntity(session, event.getContextMap().get(KEY_NODE_ADDR));
-		final ConectionEntity conectionEntity = loadConnectionEntity(session,
-				event.getContextMap().get(KEY_THREAD_NUM), loadEntity, nodeEntity);
+		final NodeEntity nodeEntity = loadNodeEntity(event.getContextMap().get(KEY_NODE_ADDR));
+		final ConectionEntity conectionEntity = loadConnectionEntity(event.getContextMap().get(KEY_THREAD_NUM), loadEntity, nodeEntity);
+		/*
+
+
+
 		loadTraceEntity(session, dataObjectEntity, conectionEntity, statusEntity, Long.valueOf(message[3], 0x10), Long.valueOf(message[4], 0x10));
 		*/
 	}
 	// Load methods
-	private static ModeEntity loadModeEntity(final Session session, final String modeName)
+	private ModeEntity loadModeEntity(final String modeName)
 	{
-		ModeEntity modeEntity = null;
+		ModeEntity modeEntity = getModeEntity(modeName);
+		Session session = SESSION_FACTORY.openSession();
 		try {
-			modeEntity = getModeEntity(session, modeName);
 			if (modeEntity == null) {
 				modeEntity = new ModeEntity(modeName);
 				session.beginTransaction();
@@ -225,175 +215,240 @@ public final class HibernateAppender
 				session.getTransaction().commit();
 			}
 		}catch (final ConstraintViolationException e){
-			return getModeEntity(session, modeName);
+			session.getTransaction().rollback();
+			session.close();
+			return getModeEntity(modeName);
 		}catch (final Exception e){
 			session.getTransaction().rollback();
 			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
 		}
 		return modeEntity;
 	}
 	//
-	private static RunEntity loadRunEntity(final Session session, final String runName, final ModeEntity mode)
+	private RunEntity loadRunEntity(final String runName, final ModeEntity mode)
 	{
-
-		RunEntity runEntity = null;
+		RunEntity runEntity = getRunEntity(runName);
+		Session session = SESSION_FACTORY.openSession();
 		try {
-			runEntity = getRunEntity(session, runName);
 			if (runEntity == null){
 				runEntity = new RunEntity(mode, runName);
 				session.beginTransaction();
-				session.saveOrUpdate(runEntity);
+				session.save(runEntity);
 				session.getTransaction().commit();
 			}
 		}catch (final ConstraintViolationException e){
-			return getRunEntity(session, runName);
+			session.getTransaction().rollback();
+			session.close();
+			return getRunEntity(runName);
 		}catch (final Exception e){
 			session.getTransaction().rollback();
 			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
 		}
 		return runEntity;
 	}
 	//
-	private static ApiEntity loadApiEntity(final Session session, final String apiName)
+	private ApiEntity loadApiEntity(final String apiName)
 	{
 		ApiEntity apiEntity = null;
+		Session session = SESSION_FACTORY.openSession();
 		try {
 			apiEntity = getApiEntity(session, apiName);
 			if (apiEntity == null) {
 				apiEntity = new ApiEntity(apiName);
 				session.beginTransaction();
-				session.saveOrUpdate(apiEntity);
+				session.save(apiEntity);
 				session.getTransaction().commit();
 			}
 		}catch (final ConstraintViolationException e){
+			session.getTransaction().rollback();
 			return getApiEntity(session, apiName);
 		}catch (final Exception e){
 			session.getTransaction().rollback();
 			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
 		}
 		return apiEntity;
 	}
 	//
-	private static LoadTypeEntity loadLoadTypeEntity(final Session session, final String typeName)
+	private LoadTypeEntity loadLoadTypeEntity(final String typeName)
 	{
 		LoadTypeEntity loadTypeEntity = null;
+		Session session = SESSION_FACTORY.openSession();
 		try {
 			loadTypeEntity = getLoadTypeEntity(session, typeName);
 			if (loadTypeEntity == null) {
 				loadTypeEntity = new LoadTypeEntity(typeName);
 				session.beginTransaction();
-				session.saveOrUpdate(loadTypeEntity);
+				session.save(loadTypeEntity);
 				session.getTransaction().commit();
 			}
 		}catch (final ConstraintViolationException e){
+			session.getTransaction().rollback();
 			return getLoadTypeEntity(session, typeName);
 		}catch (final Exception e){
 			session.getTransaction().rollback();
 			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
 		}
 		return loadTypeEntity;
 	}
-	//???
-	private static LoadEntity loadLoadEntity(final Session session, final String loadNumberString, final RunEntity run,
-											 final LoadTypeEntity type, final ApiEntity api)
+	//
+	private LoadEntity loadLoadEntity(final String loadNumberString, final RunEntity run,
+		final LoadTypeEntity type, final ApiEntity api)
 	{
 		LoadEntity loadEntity = new LoadEntity(run, type, Long.valueOf(loadNumberString), api);
+		Session session = SESSION_FACTORY.openSession();
 		try {
 			session.beginTransaction();
-			session.saveOrUpdate(loadEntity);
+			session.save(loadEntity);
 			session.getTransaction().commit();
+		}catch (final ConstraintViolationException e){
+			session.getTransaction().rollback();
 		}catch (final Exception e){
 			session.getTransaction().rollback();
 			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
 		}
 		return loadEntity;
 	}
 	//
-	private static MessageClassEntity loadClassOfMessage(final Session session, final String className)
+	private MessageClassEntity loadClassOfMessage(final String className)
 	{
 		MessageClassEntity messageClassEntity = null;
+		Session session = SESSION_FACTORY.openSession();
 		try {
 			messageClassEntity = getMessageClassEntity(session, className);
 			if (messageClassEntity == null) {
 				messageClassEntity = new MessageClassEntity(className);
 				session.beginTransaction();
-				session.saveOrUpdate(messageClassEntity);
+				session.save(messageClassEntity);
 				session.getTransaction().commit();
 			}
 		}catch (final ConstraintViolationException e){
+			session.getTransaction().rollback();
 			return getMessageClassEntity(session, className);
 		}catch (final Exception e){
 			session.getTransaction().rollback();
 			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
 		}
 		return messageClassEntity;
 	}
 	//
-	private static LevelEntity loadLevelEntity(final Session session, final String levelName)
+	private LevelEntity loadLevelEntity(final String levelName)
 	{
 		LevelEntity levelEntity = null;
+		Session session = SESSION_FACTORY.openSession();
 		try {
 			levelEntity = getLevelEntity(session, levelName);
 			if (levelEntity == null) {
 				levelEntity = new LevelEntity(levelName);
 				session.beginTransaction();
-				session.saveOrUpdate(levelEntity);
+				session.save(levelEntity);
 				session.getTransaction().commit();
 			}
 		}catch (final ConstraintViolationException e){
+			session.getTransaction().rollback();
 			return getLevelEntity(session, levelName);
 		}catch (final Exception e){
 			session.getTransaction().rollback();
 			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
 		}
 		return levelEntity;
 	}
 	//
-	private static NodeEntity loadNodeEntity(final Session session, final String nodeAddr)
+	private NodeEntity loadNodeEntity(final String nodeAddr)
 	{
 		NodeEntity nodeEntity = null;
+		Session session = SESSION_FACTORY.openSession();
 		try {
 			nodeEntity = getNodeEntity(session, nodeAddr);
 			if (nodeEntity == null){
 				nodeEntity = new NodeEntity(nodeAddr);
 				session.beginTransaction();
-				session.saveOrUpdate(nodeEntity);
+				session.save(nodeEntity);
 				session.getTransaction().commit();
 			}
 		}catch (final ConstraintViolationException e){
+			session.getTransaction().rollback();
+			//??
+			session.close();
 			return getNodeEntity(session, nodeAddr);
 		}catch (final Exception e){
 			session.getTransaction().rollback();
 			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
 		}
 		return nodeEntity;
 	}
 	//If node is known
-	private static ConectionEntity loadConnectionEntity(final Session session, final String threadNumberString,
+	private ConectionEntity loadConnectionEntity(final String threadNumberString,
 														final LoadEntity load, final NodeEntity node)
 	{
 		ConectionEntity conectionEntity = new ConectionEntity(load, node, Long.valueOf(threadNumberString));
+		Session session = SESSION_FACTORY.openSession();
 		try {
 			session.beginTransaction();
-			session.saveOrUpdate(conectionEntity);
+			session.save(conectionEntity);
 			session.getTransaction().commit();
+		}catch (final ConstraintViolationException e){
+			session.getTransaction().rollback();
+			session.close();
+			return conectionEntity;
 		}catch (final Exception e){
 			session.getTransaction().rollback();
 			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
 		}
 		return conectionEntity;
 	}
 	//
-	private static DataObjectEntity loadDataObjectEntity(final Session session,
-														 final DataObjectEntity dataObjectEntity)
+	private DataObjectEntity loadDataObjectEntity(final DataObjectEntity dataObjectEntity)
 	{
-		saveOrUpdate(session, dataObjectEntity);
+		Session session = SESSION_FACTORY.openSession();
+		try{
+			session.beginTransaction();
+			session.saveOrUpdate(dataObjectEntity);
+			session.getTransaction().commit();
+		}catch(final ConstraintViolationException e) {
+			session.getTransaction().rollback();
+			session.close();
+			loadDataObjectEntity(dataObjectEntity);
+		}catch (final Exception e){
+			session.getTransaction().rollback();
+			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
+		}
 		return dataObjectEntity;
 	}
 	//
-	private static StatusEntity loadStatusEntity(final Session session, final Request.Result result)
+	private StatusEntity loadStatusEntity(final Request.Result result)
 	{
 		StatusEntity statusEntity = new StatusEntity(result.code, result.description);
+		Session session = SESSION_FACTORY.openSession();
 		try {
 			session.beginTransaction();
 			session.saveOrUpdate(statusEntity);
@@ -401,15 +456,18 @@ public final class HibernateAppender
 		}catch (Exception e){
 			session.getTransaction().rollback();
 			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
 		}
 		return statusEntity;
 	}
 	//
-	private static MessageEntity loadMessageEntity(final Session session, final Date tstamp,
-												   final MessageClassEntity messageClassEntity, final LevelEntity levelEntity,
-												   final String text, final RunEntity run)
+	private MessageEntity loadMessageEntity(final Date tstamp, final MessageClassEntity messageClassEntity,
+			final LevelEntity levelEntity, final String text, final RunEntity run)
 	{
 		MessageEntity messageEntity = new MessageEntity(run, messageClassEntity, levelEntity, text, tstamp);
+		Session session = SESSION_FACTORY.openSession();
 		try {
 			session.beginTransaction();
 			session.save(messageEntity);
@@ -417,46 +475,63 @@ public final class HibernateAppender
 		}catch (final Exception e){
 			session.getTransaction().rollback();
 			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
 		}
 		return messageEntity;
 	}
 	//
-	private static TraceEntity loadTraceEntity(final Session session, final DataObjectEntity dataObjectEntity,
-											   final ConectionEntity conectionEntity, final StatusEntity statusEntity, final long reqStart, final long reqDur)
+	private TraceEntity loadTraceEntity(final DataObjectEntity dataObjectEntity,
+			final ConectionEntity conectionEntity, final StatusEntity statusEntity,
+			final long reqStart, final long reqDur)
 	{
 		TraceEntity traceEntity = new TraceEntity(dataObjectEntity, conectionEntity, statusEntity, reqStart, reqDur);
+		Session session = SESSION_FACTORY.openSession();
 		try {
 			session.beginTransaction();
-			session.saveOrUpdate(traceEntity);
+			session.save(traceEntity);
 			session.getTransaction().commit();
 		}catch (final Exception e){
 			session.getTransaction().rollback();
 			e.printStackTrace();
+		}finally {
+			session.flush();
+			session.close();
 		}
 		return traceEntity;
 	}
 	//
-	private static RunEntity getRunEntity(final Session session,final String runName)
+	private RunEntity getRunEntity(final String runName)
 	{
-		return (RunEntity) session.createCriteria(RunEntity.class)
+		Session session = SESSION_FACTORY.openSession();
+		RunEntity runEntity = (RunEntity) session.createCriteria(RunEntity.class)
 				.setCacheable(true)
 				.add(Restrictions.eq("name", runName))
 				.uniqueResult();
+		session.close();
+		return runEntity;
 	}
-	private static StatusEntity getStatusEntity(final Session session, final int codeStatus)
+	private static StatusEntity getStatusEntity(final int codeStatus)
 	{
-		return (StatusEntity) session.get(StatusEntity.class, codeStatus);
+		Session session = SESSION_FACTORY.openSession();
+		StatusEntity statusEntity =(StatusEntity) session.get(StatusEntity.class, codeStatus);
+		session.close();
+		return statusEntity;
 	}
 	//
-	private static ModeEntity getModeEntity(final Session session, final String modeName)
+	private ModeEntity getModeEntity(final String modeName)
 	{
-		return (ModeEntity) session.createCriteria(ModeEntity.class)
+		Session session = SESSION_FACTORY.openSession();
+		ModeEntity modeEntity = (ModeEntity) session.createCriteria(ModeEntity.class)
 				.setCacheable(true)
 				.add(Restrictions.eq("name", modeName))
 				.uniqueResult();
+		session.close();
+		return modeEntity;
 	}
 	//
-	private static ApiEntity getApiEntity(final Session session, final String apiName)
+	private ApiEntity getApiEntity(final Session session, final String apiName)
 	{
 		return (ApiEntity) session.createCriteria(ApiEntity.class)
 				.setCacheable(true)
@@ -464,7 +539,7 @@ public final class HibernateAppender
 				.uniqueResult();
 	}
 	//
-	private static LoadTypeEntity getLoadTypeEntity(final Session session, final String typeName)
+	private LoadTypeEntity getLoadTypeEntity(final Session session, final String typeName)
 	{
 		return (LoadTypeEntity) session.createCriteria(LoadTypeEntity.class)
 				.setCacheable(true)
@@ -472,7 +547,7 @@ public final class HibernateAppender
 				.uniqueResult();
 	}
 	//
-	private static MessageClassEntity getMessageClassEntity(final Session session, final String className)
+	private MessageClassEntity getMessageClassEntity(final Session session, final String className)
 	{
 		return (MessageClassEntity) session.createCriteria(MessageClassEntity.class)
 				.setCacheable(true)
@@ -480,7 +555,7 @@ public final class HibernateAppender
 				.uniqueResult();
 	}
 	//
-	private static LevelEntity getLevelEntity(final Session session, final String levelName)
+	private LevelEntity getLevelEntity(final Session session, final String levelName)
 	{
 		return (LevelEntity) session.createCriteria(LevelEntity.class)
 				.setCacheable(true)
@@ -488,27 +563,12 @@ public final class HibernateAppender
 				.uniqueResult();
 	}
 	//
-	private static NodeEntity getNodeEntity(final Session session, final String nodeAddr)
+	private NodeEntity getNodeEntity(final Session session, final String nodeAddr)
 	{
 		return (NodeEntity) session.createCriteria(NodeEntity.class)
 				.setCacheable(true)
 				.add(Restrictions.eq("address", nodeAddr))
 				.uniqueResult();
-	}
-	private static void saveOrUpdate(final Session session, final DataObjectEntity dataObjectEntity){
-		try {
-			session.beginTransaction();
-			Query query = session.createQuery("select merge_do(:identifier,:size,:ringoffset,:layer,:mask)")
-				.setParameter("identifier", dataObjectEntity.getIdentifier())
-				.setParameter("size", dataObjectEntity.getSize())
-				.setString("ringoffset", dataObjectEntity.getRingOffset())
-				.setParameter("layer", dataObjectEntity.getLayer())
-				.setParameter("mask", dataObjectEntity.getMask());
-			session.getTransaction().commit();
-		}catch (final Exception e){
-			session.getTransaction().rollback();
-			e.printStackTrace();
-		}
 	}
 	/////////////////////////////////////
 	private final class ShutDownThread
