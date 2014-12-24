@@ -196,7 +196,7 @@ public final class MockServlet
 	}
 	//
 	private final static String
-		MSG_FMT_METRICS = "count=(%d/%d); duration[s]=(%.6f/%.6f/%.6f/%.6f); " +
+		MSG_FMT_METRICS = "count=(%d/%d); duration[s]=(%d/%d/%d/%d); " +
 			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
 	private void printMetrics(){
@@ -211,10 +211,10 @@ public final class MockServlet
 						//
 						counterAllSucc.getCount(), counterAllFail.getCount(),
 						//
-						(float) allDurSnapshot.getMean() / LoadExecutor.NANOSEC_SCALEDOWN,
-						(float) allDurSnapshot.getMin() / LoadExecutor.NANOSEC_SCALEDOWN,
-						(float) allDurSnapshot.getMedian() / LoadExecutor.NANOSEC_SCALEDOWN,
-						(float) allDurSnapshot.getMax() / LoadExecutor.NANOSEC_SCALEDOWN,
+						(int) (allDurSnapshot.getMean() / LoadExecutor.NANOSEC_SCALEDOWN),
+						(int) (allDurSnapshot.getMin() / LoadExecutor.NANOSEC_SCALEDOWN),
+						(int) (allDurSnapshot.getMedian() / LoadExecutor.NANOSEC_SCALEDOWN),
+						(int) (allDurSnapshot.getMax() / LoadExecutor.NANOSEC_SCALEDOWN),
 						//
 						allTP.getMeanRate(),
 						allTP.getOneMinuteRate(),

@@ -208,7 +208,13 @@ implements WSLoadExecutor<T> {
 	@Override
 	public final Future<AsyncIOTask.Result> submit(final AsyncIOTask<T> ioTask) {
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-		return client.execute(wsTask, wsTask, connPool);
+		Future<AsyncIOTask.Result> futureResult = null;
+		try {
+			futureResult = client.execute(wsTask, wsTask, connPool);
+		} catch(final IllegalStateException e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to submit the HTTP request");
+		}
+		return futureResult;
 	}
 	//
 	@Override

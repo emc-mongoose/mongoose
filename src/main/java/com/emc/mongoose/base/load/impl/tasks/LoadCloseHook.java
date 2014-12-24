@@ -62,8 +62,10 @@ implements Runnable {
 			try {
 				Runtime.getRuntime().removeShutdownHook(HOOKS_MAP.get(loadExecutor));
 				LOG.debug(Markers.MSG, "Shutdown hook for \"{}\" removed", loadExecutor);
-			} catch(final SecurityException | IllegalArgumentException | IllegalStateException e) {
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to remove the shutdown hook");
+			} catch(final IllegalStateException e) {
+				ExceptionHandler.trace(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
+			} catch(final SecurityException | IllegalArgumentException e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
 			}
 		} else {
 			LOG.trace(Markers.ERR, "No shutdown hook registered for \"{}\"", loadExecutor);

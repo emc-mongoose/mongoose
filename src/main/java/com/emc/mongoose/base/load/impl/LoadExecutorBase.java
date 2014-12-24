@@ -83,8 +83,8 @@ implements LoadExecutor<T> {
 		//
 		storageNodeCount = addrs.length;
 		final int totalThreadCount = threadsPerNode * storageNodeCount;
-		setCorePoolSize(totalThreadCount);
-		setMaximumPoolSize(totalThreadCount);
+		setCorePoolSize((int) Math.sqrt(totalThreadCount));
+		setMaximumPoolSize((int) Math.sqrt(totalThreadCount));
 		//
 		this.runTimeConfig = runTimeConfig;
 		this.reqConfig = reqConfig;
@@ -206,10 +206,10 @@ implements LoadExecutor<T> {
 				getName(),
 				countReqSucc, counterReqFail.getCount(),
 				//
-				(float) respLatencySnapshot.getMean() / NANOSEC_SCALEDOWN,
-				(float) respLatencySnapshot.getMin() / NANOSEC_SCALEDOWN,
-				(float) respLatencySnapshot.getMedian() / NANOSEC_SCALEDOWN,
-				(float) respLatencySnapshot.getMax() / NANOSEC_SCALEDOWN,
+				(int) (respLatencySnapshot.getMean() / NANOSEC_SCALEDOWN),
+				(int) (respLatencySnapshot.getMin() / NANOSEC_SCALEDOWN),
+				(int) (respLatencySnapshot.getMedian() / NANOSEC_SCALEDOWN),
+				(int) (respLatencySnapshot.getMax() / NANOSEC_SCALEDOWN),
 				//
 				avgSize==0 ? 0 : meanBW / avgSize,
 				avgSize==0 ? 0 : oneMinBW / avgSize,
@@ -226,10 +226,10 @@ implements LoadExecutor<T> {
 				//
 				countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
 				//
-				(float) respLatencySnapshot.getMean() / NANOSEC_SCALEDOWN,
-				(float) respLatencySnapshot.getMin() / NANOSEC_SCALEDOWN,
-				(float) respLatencySnapshot.getMedian() / NANOSEC_SCALEDOWN,
-				(float) respLatencySnapshot.getMax() / NANOSEC_SCALEDOWN,
+				(int) (respLatencySnapshot.getMean() / NANOSEC_SCALEDOWN),
+				(int) (respLatencySnapshot.getMin() / NANOSEC_SCALEDOWN),
+				(int) (respLatencySnapshot.getMedian() / NANOSEC_SCALEDOWN),
+				(int) (respLatencySnapshot.getMax() / NANOSEC_SCALEDOWN),
 				//
 				avgSize==0 ? 0 : meanBW / avgSize,
 				avgSize==0 ? 0 : oneMinBW / avgSize,

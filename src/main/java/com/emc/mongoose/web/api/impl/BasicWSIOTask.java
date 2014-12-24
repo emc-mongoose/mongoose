@@ -60,11 +60,14 @@ implements WSIOTask<T> {
 	public static <T extends WSObject> BasicWSIOTask<T> getInstanceFor(
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
 	) {
-		return (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
+		final BasicWSIOTask<T> ioTask = (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
+		LOG.trace(Markers.MSG, "{}: took instance", ioTask.hashCode());
+		return ioTask;
 	}
 	//
 	@Override
 	public void close() {
+		LOG.trace(Markers.MSG, "{}: release instance", hashCode());
 		POOL_WEB_IO_TASKS.release(this);
 	}
 	// END pool related things
@@ -178,7 +181,7 @@ implements WSIOTask<T> {
 		//
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				Markers.MSG, "{}/{} <- {} {}{}", respStatusCode, status.getReasonPhrase(),
+				Markers.MSG, "{}: {}/{} <- {} {}{}", hashCode(), respStatusCode, status.getReasonPhrase(),
 				httpRequest.getMethod(), httpRequest.getUriAddr(), httpRequest.getUriPath()
 			);
 		}

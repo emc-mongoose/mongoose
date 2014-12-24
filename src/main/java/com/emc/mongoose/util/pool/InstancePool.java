@@ -6,7 +6,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by andrey on 09.06.14.
  A pool for any reusable objects(instances).
@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  Such instances pool may improve the performance in some cases.
  */
 public final class InstancePool<T extends Reusable>
-extends ConcurrentLinkedQueue<T> {
+extends ConcurrentHashMap<Integer, T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -25,9 +25,11 @@ extends ConcurrentLinkedQueue<T> {
 	}
 	//
 	@SuppressWarnings({"unchecked", "ConstantConditions"})
-	public final T take(final Object... args) {
-		T item = poll();
-		if(item == null) {
+	public final synchronized T take(final Object... args) {
+		T item = null;
+		if(size() > 0) {
+			item = remove(keys().nextElement());
+		} else {
 			try {
 				item = itemCls.newInstance();
 			} catch(final NullPointerException|InstantiationException|IllegalAccessException e) {
@@ -38,6 +40,6 @@ extends ConcurrentLinkedQueue<T> {
 	}
 	//
 	public final void release(final T item) {
-		add(item);
+		putIfAbsent(item.hashCode(), item);
 	}
 }

@@ -446,8 +446,10 @@ implements LoadClient<T> {
 					name,
 					countReqSucc.get(), countReqFail.get(),
 					//
-					avgLatency.get() / NANOSEC_SCALEDOWN, (double) minLatency.get() / NANOSEC_SCALEDOWN,
-					medLatency.get() / NANOSEC_SCALEDOWN, (double) maxLatency.get() / NANOSEC_SCALEDOWN,
+					(int) (avgLatency.get() / NANOSEC_SCALEDOWN),
+					(int) (minLatency.get() / NANOSEC_SCALEDOWN),
+					(int) (medLatency.get() / NANOSEC_SCALEDOWN),
+					(int) (maxLatency.get() / NANOSEC_SCALEDOWN),
 					//
 					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
 					//
@@ -461,8 +463,10 @@ implements LoadClient<T> {
 					getQueue().size() + getActiveCount(),
 					countReqFail.get(),
 					//
-					avgLatency.get() / NANOSEC_SCALEDOWN, (double) minLatency.get() / NANOSEC_SCALEDOWN,
-					medLatency.get() / NANOSEC_SCALEDOWN, (double) maxLatency.get() / NANOSEC_SCALEDOWN,
+					(int) (avgLatency.get() / NANOSEC_SCALEDOWN),
+					(int) (minLatency.get() / NANOSEC_SCALEDOWN),
+					(int) (medLatency.get() / NANOSEC_SCALEDOWN),
+					(int) (maxLatency.get() / NANOSEC_SCALEDOWN),
 					//
 					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
 					//
