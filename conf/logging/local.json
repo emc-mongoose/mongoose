@@ -44,16 +44,17 @@
 				}, {
 					"name": "hibernate",
 					"type": "HibernateAsync",
+					"enabled": "false",
 					"blocking": "false",
 					"bufferSize": "65536",
-					"threadsForQueue": "40",
+					"threadsForQueue": "10",
 					"AppenderRef": {
 						"ref": "hibernateSync"
 					}
 				}, {
 					"name": "hibernateSync",
 					"type": "Hibernate",
-					"enabled": "true",
+					"enabled": "false",
 					"database": "postgresql",
 					"username": "mongoose",
 					"password": "mongoose",
