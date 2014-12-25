@@ -5,7 +5,7 @@ import java.util.Map;
 /**
  * Created by gusakk on 12/12/14.
  */
-public class DefaultEntry<K,V> implements Map.Entry<K,V> {
+public final class DefaultEntry<K,V> implements Map.Entry<K,V> {
 
 	private final K key;
 	private V value;
@@ -16,36 +16,36 @@ public class DefaultEntry<K,V> implements Map.Entry<K,V> {
 	}
 
 	@Override
-	public K getKey() {
+	public final K getKey() {
 		return key;
 	}
 
 	@Override
-	public V getValue() {
+	public final V getValue() {
 		return value;
 	}
 
 	@Override
-	public V setValue(V value) {
+	public final V setValue(final V value) {
 		V oldValue = this.value;
 		this.value = value;
 		return oldValue;
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public final boolean equals(final Object o) {
 		if (o == this) {
 			return true;
 		} else if (!(o instanceof Map.Entry)) {
 			return false;
 		}
-		Map.Entry<?,?> converted = (Map.Entry<?,?>) o;
+		final Map.Entry<?,?> converted = (Map.Entry<?,?>) o;
 		return (getKey() == null ? converted.getKey() == null : getKey().equals(converted.getKey()))
 				&& (getValue() == null ? converted.getValue() == null : getValue().equals(converted.getValue()));
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return (getKey() == null ? 0 : getKey().hashCode()) ^
 				(getValue() == null ? 0 : getValue().hashCode());
 	}
