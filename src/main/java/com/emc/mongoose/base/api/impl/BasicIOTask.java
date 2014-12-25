@@ -73,7 +73,7 @@ implements AsyncIOTask<T> {
 	public final void complete() {
 		LOG.info(
 			Markers.PERF_TRACE, String.format(
-				FMT_PERF_TRACE, dataItem.getId(), dataItem.getSize(), result.code,
+				FMT_PERF_TRACE, nodeAddr, dataItem.getId(), dataItem.getSize(), result.code,
 				reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
 				respTimeDone - respTimeStart
 			)

@@ -1,10 +1,7 @@
 package com.emc.mongoose.base.api;
 //
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.util.pool.InstancePool;
 import com.emc.mongoose.util.pool.Reusable;
-//
-import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
@@ -16,7 +13,7 @@ extends Reusable {
 		CREATE, READ, DELETE, UPDATE, APPEND
 	}
 	//
-	String FMT_PERF_TRACE = "%s,%x,%x,%x,%x,%x,%x";
+	String FMT_PERF_TRACE = "%s,%s,%x,%x,%x,%x,%x,%x";
 	//
 	enum Result {
 		SUCC(0, "Success"),
