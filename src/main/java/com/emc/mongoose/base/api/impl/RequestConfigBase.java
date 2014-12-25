@@ -114,7 +114,15 @@ implements RequestConfig<T> {
 	}
 	@Override
 	public final RequestConfigBase<T> setAddr(final String addr) {
-		this.addr = addr;
+		if(addr == null) {
+			throw new IllegalArgumentException("Attempted to set <null> address");
+		} else if(addr.contains(":")) {
+			final String[] hostAndPort = addr.split(":", 2);
+			setPort(Integer.parseInt(hostAndPort[1]));
+			this.addr = hostAndPort[0];
+		} else {
+			this.addr = addr;
+		}
 		uriTemplate = String.format(
 			FMT_URI_ADDR,
 			scheme == null ? "%s" : scheme, addr,

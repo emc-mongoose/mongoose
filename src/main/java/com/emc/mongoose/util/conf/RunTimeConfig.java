@@ -6,7 +6,6 @@ import com.emc.mongoose.util.logging.Markers;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -35,34 +34,16 @@ extends BaseConfiguration
 implements Externalizable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
-	public final static String
-		LIST_SEP = ",",
-		//
-		KEY_DATA_COUNT = "data.count",
-		KEY_DATA_SIZE = "data.size",
-		KEY_DATA_SIZE_BIAS = "data.size.bias",
-		KEY_DATA_RING_SEED = "data.ring.seed",
-		KEY_DATA_RING_SIZE = "data.ring.size",
-		//
-		KEY_LOAD_THREADS = "load.threads",
-		KEY_LOAD_TIME = "load.step.time",
-		//
-		KEY_RUN_ID = "run.id",
-		KEY_RUN_MODE = "run.mode",
-		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
-		KEY_RUN_TIME = "run.time",
-		KEY_RUN_VERSION = "run.version",
-		//
-		KEY_STORAGE_ADDRS = "storage.addrs",
-		KEY_STORAGE_API = "storage.api";
-	//
+	public final static String LIST_SEP = ",", KEY_VERSION = "run.version";
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
+	private final static DateFormat FMT_DT = new SimpleDateFormat(
+			"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
+	);
 	static {
-		MAP_OVERRIDE.put(KEY_DATA_SIZE, new String[] {"data.size.min", "data.size.max"});
-		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_RUN_TIME});
-		MAP_OVERRIDE.put(KEY_LOAD_THREADS, new String[] {"load.append.threads", "load.create.threads", "load.read.threads", "load.update.threads", "load.delete.threads"});
+		MAP_OVERRIDE.put("data.size", new String[] {"data.size.min", "data.size.max"});
+		MAP_OVERRIDE.put("load.step.time", new String[] { "run.time" });
+		MAP_OVERRIDE.put("load.threads", new String[] {"load.append.threads", "load.create.threads", "load.read.threads", "load.update.threads", "load.delete.threads"});
 		MAP_OVERRIDE.put("remote.drivers", new String[] {"remote.servers"});
 	}
 	//
@@ -97,6 +78,7 @@ implements Externalizable {
 			);
 		}
 		size *= 1L << 10 * degree;
+		LOG.trace(Markers.MSG, "\"{}\" is {} bytes", value, size);
 		return size;
 	}
 	//
@@ -135,7 +117,7 @@ implements Externalizable {
 	}
 	//
 	public final String getStorageApi() {
-		return getString(KEY_STORAGE_API);
+		return getString("storage.api");
 	}
 	//
 	public final int getApiPort(final String api) {
@@ -170,8 +152,8 @@ implements Externalizable {
 		return getInt("run.metrics.period.sec");
 	}
 	//
-	public final int getRunRequestQueueSize() {
-		return getInt("run.request.queue.size");
+	public final int getRunRequestQueueFactor() {
+		return getInt("run.request.queue.factor");
 	}
 	//
 	public final String getHttpContentType() {
@@ -207,19 +189,15 @@ implements Externalizable {
 	}
 	//
 	public final String getRunVersion() {
-		return getString(KEY_RUN_VERSION);
+		return getString(KEY_VERSION);
 	}
 	//
 	public final long getDataCount() {
-		return getLong(KEY_DATA_COUNT);
-	}
-	//
-	public final float getDataSizeBias() {
-		return getFloat(KEY_DATA_SIZE_BIAS);
+		return getLong("data.count");
 	}
 	//
 	public final String[] getStorageAddrs() {
-		return getStringArray(KEY_STORAGE_ADDRS);
+		return getStringArray("storage.addrs");
 	}
 	//
 	public final int getConnPoolTimeOut() {
@@ -263,7 +241,7 @@ implements Externalizable {
 	}
 	//
 	public final String getRunScenarioName() {
-		return getString(KEY_RUN_SCENARIO_NAME);
+		return getString("run.scenario.name");
 	}
 	//
 	public final String getRunScenarioDir() {
@@ -271,15 +249,15 @@ implements Externalizable {
 	}
 	//
 	public final String getRunId() {
-		return getString(KEY_RUN_ID);
+		return getString(Main.KEY_RUN_ID);
 	}
 	//
 	public final String getRunTime() {
-		return getString(KEY_RUN_TIME);
+		return getString("run.time");
 	}
 	//
 	public final String getRunMode() {
-		return getString(KEY_RUN_MODE);
+		return getString(Main.KEY_RUN_MODE);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -327,7 +305,7 @@ implements Externalizable {
 		//
 		final String
 			serverVersion = Main.RUN_TIME_CONFIG.get().getRunVersion(),
-			clientVersion = confMap.get(KEY_RUN_VERSION);
+			clientVersion = confMap.get(KEY_VERSION);
 		if(serverVersion.equals(clientVersion)) {
 			// put the properties into the System
 			Object nextPropValue;
@@ -353,8 +331,6 @@ implements Externalizable {
 					);
 				}
 			}
-			Main.RUN_TIME_CONFIG.set(this);
-			LOG.info(Markers.MSG, toString());
 		} else {
 			final String errMsg = String.format(
 				"%s, version mismatch, server: %s client: %s",
@@ -381,8 +357,9 @@ implements Externalizable {
 			);
 			keys2override = MAP_OVERRIDE.get(key);
 			sharedValue = sysProps.getProperty(key);
-			setProperty(key, sharedValue);
-			if(keys2override != null) {
+			if(keys2override==null) {
+				setProperty(key, sharedValue);
+			} else {
 				for(final String key2override: keys2override) {
 					setProperty(key2override, sharedValue);
 				}
@@ -390,57 +367,10 @@ implements Externalizable {
 		}
 	}
 	//
-	@Override
 	public synchronized RunTimeConfig clone() {
 		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
-		runTimeConfig.set(
-			KEY_RUN_ID, Main.FMT_DT.format(Main.CALENDAR_DEFAULT.getTime())
-		);
+		runTimeConfig.set(Main.KEY_RUN_ID, FMT_DT.format(
+				Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()));
 		return runTimeConfig;
-	}
-	//
-	private final static String
-		TABLE_BORDER = "\n+--------------------------------+----------------------------------------------------------------+",
-		TABLE_HEADER = "Configuration parameters:";
-	//
-	@Override
-	public final String toString() {
-		String nextKey;
-		Object nextVal;
-		final StrBuilder strBuilder = new StrBuilder()
-			.append(TABLE_HEADER).append(TABLE_BORDER)
-			.appendNewLine().append("| ").appendFixedWidthPadRight("Key", 31, ' ')
-			.append("| ").appendFixedWidthPadRight("Value", 63, ' ').append('|')
-			.append(TABLE_BORDER);
-		for(
-			final Iterator<String> keyIterator = getKeys();
-			keyIterator.hasNext();
-			) {
-			nextKey = keyIterator.next();
-			nextVal = getProperty(nextKey);
-			switch(nextKey) {
-				case RunTimeConfig.KEY_RUN_ID:
-				case RunTimeConfig.KEY_RUN_MODE:
-				case RunTimeConfig.KEY_RUN_SCENARIO_NAME:
-				case RunTimeConfig.KEY_RUN_TIME:
-				case RunTimeConfig.KEY_RUN_VERSION:
-				case RunTimeConfig.KEY_DATA_COUNT:
-				case RunTimeConfig.KEY_DATA_SIZE:
-				case RunTimeConfig.KEY_DATA_RING_SEED:
-				case RunTimeConfig.KEY_DATA_RING_SIZE:
-				case RunTimeConfig.KEY_LOAD_THREADS:
-				case RunTimeConfig.KEY_LOAD_TIME:
-				case RunTimeConfig.KEY_STORAGE_ADDRS:
-				case RunTimeConfig.KEY_STORAGE_API:
-					strBuilder
-						.appendNewLine().append("| ")
-						.appendFixedWidthPadRight(nextKey, 31, ' ')
-						.append("| ")
-						.appendFixedWidthPadRight(nextVal, 63, ' ')
-						.append('|');
-					break;
-			}
-		}
-		return strBuilder.append(TABLE_BORDER).toString();
 	}
 }

@@ -15,7 +15,7 @@
 				{
 					"name": "WebUI",
 					"type": "WebUI",
-					"enabled": "false",
+					"enabled": "true",
 					"Filters": {
 						"Filter": [
 							{

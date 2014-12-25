@@ -28,47 +28,46 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 //
 import javax.management.MBeanServer;
-//
 import javax.servlet.ServletException;
 import javax.servlet.ServletInputStream;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-//
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 //
 /**
  * Created by olga on 30.09.14.
  */
 public final class MockServlet
-		extends HttpServlet
-		implements Runnable {
+extends HttpServlet
+implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final int port;
 	private Server server;
-	private final Map<String, BasicWSObject> mapDataObject = new HashMap<>();
+	private final Map<String, BasicWSObject> mapDataObject = new ConcurrentHashMap<>();
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
 	private final static String
-			ALL_METHODS = "all",
-			METRIC_COUNT = "count";
+		ALL_METHODS = "all",
+		METRIC_COUNT = "count";
 	protected final Counter
-			counterAllSucc, counterAllFail,
-			counterGetSucc, counterGetFail,
-			counterPostSucc, counterPostFail,
-			counterPutSucc, counterPutFail,
-			counterDeleteSucc, counterDeleteFail,
-			counterHeadSucc, counterHeadFail;
+		counterAllSucc, counterAllFail,
+		counterGetSucc, counterGetFail,
+		counterPostSucc, counterPostFail,
+		counterPutSucc, counterPutFail,
+		counterDeleteSucc, counterDeleteFail,
+		counterHeadSucc, counterHeadFail;
 	protected final Histogram durAll, durGet, durPost, durPut, durDelete;
 	protected final Meter
-			allBW, getBW, postBW, putBW, deleteBW,
-			allTP, getTP, postTP, putTP, deleteTP;
+		allBW, getBW, postBW, putBW, deleteBW,
+		allTP, getTP, postTP, putTP, deleteTP;
 	//
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter metricsReporter;
@@ -82,21 +81,21 @@ public final class MockServlet
 		//Init bean server
 		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());
 		metricsReporter = JmxReporter.forRegistry(metrics)
-				.convertDurationsTo(TimeUnit.SECONDS)
-				.convertRatesTo(TimeUnit.SECONDS)
-				.registerWith(mBeanServer)
-				.build();
+			.convertDurationsTo(TimeUnit.SECONDS)
+			.convertRatesTo(TimeUnit.SECONDS)
+			.registerWith(mBeanServer)
+			.build();
 		// init metrics
 		counterAllSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
-				ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterAllFail = metrics.counter(MetricRegistry.name(MockServlet.class,
-				ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durAll = metrics.histogram(MetricRegistry.name(MockServlet.class,
-				ALL_METHODS, LoadExecutor.METRIC_NAME_DUR));
+			ALL_METHODS, LoadExecutor.METRIC_NAME_DUR));
 		allTP = metrics.meter(MetricRegistry.name(MockServlet.class,
-				ALL_METHODS, LoadExecutor.METRIC_NAME_TP));
+			ALL_METHODS, LoadExecutor.METRIC_NAME_TP));
 		allBW = metrics.meter(MetricRegistry.name(MockServlet.class,
-				ALL_METHODS, LoadExecutor.METRIC_NAME_BW));
+			ALL_METHODS, LoadExecutor.METRIC_NAME_BW));
 		//
 		counterGetSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
 			WSIOTask.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
@@ -151,11 +150,11 @@ public final class MockServlet
 		//
 		final String apiName = runTimeConfig.getStorageApi();
 		port = runTimeConfig.getInt("api." + apiName + ".port");
-		LOG.debug(Markers.MSG, "Setup Jetty Server instance");
+		LOG.info(Markers.MSG, "Set up Jetty Server instance");
 		server = new Server();
 		server.setDumpAfterStart(false);
 		server.setDumpBeforeStop(false);
-		LOG.debug(Markers.MSG, "Setup Http Connector Setup");
+		LOG.info(Markers.MSG, "Set up Http Connector");
 		try (final ServerConnector httpConnector = new ServerConnector(server)) {
 			httpConnector.setPort(port);
 			server.addConnector(httpConnector);
@@ -163,7 +162,7 @@ public final class MockServlet
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Creating of server connector failed");
 		}
 		LOG.debug(Markers.MSG, "Set up a new handler");
-		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
 		server.setHandler(context);
 		LOG.debug(Markers.MSG, "Add servlet");
@@ -178,7 +177,11 @@ public final class MockServlet
 			server.start();
 			LOG.info(Markers.MSG, "Listening on port #{}", port);
 			//Output metrics
-			printMetrics();
+			final long updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(metricsUpdatePeriodSec);
+			while (metricsUpdatePeriodSec > 0) {
+				printMetrics();
+				Thread.sleep(updatePeriodMilliSec);
+			}
 			//
 			server.join();
 		} catch (final InterruptedException e) {
@@ -196,41 +199,34 @@ public final class MockServlet
 	}
 	//
 	private final static String
-		MSG_FMT_METRICS = "count=(%d/%d); duration[s]=(%d/%d/%d/%d); " +
+		MSG_FMT_METRICS = "count=(%d/%d); duration[us]=(%d/%d/%d/%d); " +
 			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
 	private void printMetrics(){
-		try {
-			final long updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(metricsUpdatePeriodSec);
-			while (metricsUpdatePeriodSec > 0) {
-				final Snapshot allDurSnapshot = durAll.getSnapshot();
-				LOG.info(
-					Markers.PERF_AVG,
-					String.format(
-						Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
-						//
-						counterAllSucc.getCount(), counterAllFail.getCount(),
-						//
-						(int) (allDurSnapshot.getMean() / LoadExecutor.NANOSEC_SCALEDOWN),
-						(int) (allDurSnapshot.getMin() / LoadExecutor.NANOSEC_SCALEDOWN),
-						(int) (allDurSnapshot.getMedian() / LoadExecutor.NANOSEC_SCALEDOWN),
-						(int) (allDurSnapshot.getMax() / LoadExecutor.NANOSEC_SCALEDOWN),
-						//
-						allTP.getMeanRate(),
-						allTP.getOneMinuteRate(),
-						allTP.getFiveMinuteRate(),
-						allTP.getFifteenMinuteRate(),
-						//
-						allBW.getMeanRate() / LoadExecutor.MIB,
-						allBW.getOneMinuteRate() / LoadExecutor.MIB,
-						allBW.getFiveMinuteRate() / LoadExecutor.MIB,
-						allBW.getFifteenMinuteRate() / LoadExecutor.MIB
-					)
-				);
-				Thread.sleep(updatePeriodMilliSec);
-			}
-		} catch (final InterruptedException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupted");
+		final Snapshot allDurSnapshot = durAll.getSnapshot();
+			LOG.info(
+				Markers.PERF_AVG,
+				String.format(
+					Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
+					//
+					counterAllSucc.getCount(), counterAllFail.getCount(),
+					//
+					(int) (allDurSnapshot.getMean() / LoadExecutor.NANOSEC_SCALEDOWN),
+					(int) (allDurSnapshot.getMin() / LoadExecutor.NANOSEC_SCALEDOWN),
+					(int) (allDurSnapshot.getMedian() / LoadExecutor.NANOSEC_SCALEDOWN),
+					(int) (allDurSnapshot.getMax() / LoadExecutor.NANOSEC_SCALEDOWN),
+					//
+					allTP.getMeanRate(),
+					allTP.getOneMinuteRate(),
+					allTP.getFiveMinuteRate(),
+					allTP.getFifteenMinuteRate(),
+					//
+					allBW.getMeanRate() / LoadExecutor.MIB,
+					allBW.getOneMinuteRate() / LoadExecutor.MIB,
+					allBW.getFiveMinuteRate() / LoadExecutor.MIB,
+					allBW.getFifteenMinuteRate() / LoadExecutor.MIB
+				)
+			);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -242,7 +238,6 @@ public final class MockServlet
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Get ");
 		response.setStatus(HttpServletResponse.SC_OK);
-		LOG.trace(Markers.MSG, "   Response: OK");
 		try (final ServletOutputStream servletOutputStream = response.getOutputStream()) {
 			final String dataID = request.getRequestURI().split("/")[2];
 			if (mapDataObject.containsKey(dataID)) {
@@ -259,27 +254,34 @@ public final class MockServlet
 				allBW.mark(object.getSize());
 				getTP.mark();
 				allTP.mark();
+				LOG.trace(Markers.MSG, "   Response: OK");
 			} else {
 				counterAllFail.inc();
 				counterGetFail.inc();
-				throw new IllegalArgumentException(
-						String.format("No such object: \"%s\"", dataID)
-				);
+				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+				LOG.trace(Markers.ERR, String.format("No such object: \"%s\"", dataID));
 			}
 		} catch (final IOException e) {
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet output failed");
 		} catch (final ArrayIndexOutOfBoundsException e) {
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+		} catch(final Throwable t) {
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			counterAllFail.inc();
+			counterGetFail.inc();
+			ExceptionHandler.trace(LOG, Level.ERROR, t, "Unexpected failure");
 		}
 	}
 	//
 	@Override
 	protected final void doPost(
-			final HttpServletRequest request, final HttpServletResponse response
+		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Post ");
 		response.setStatus(HttpServletResponse.SC_OK);
@@ -298,15 +300,16 @@ public final class MockServlet
 			postTP.mark();
 			allTP.mark();
 		} catch (final IOException e) {
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPostFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
 		}
 	}
 	//
 	@Override
 	protected final void doPut(
-			final HttpServletRequest request, final HttpServletResponse response
+		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Put ");
 		response.setStatus(HttpServletResponse.SC_OK);
@@ -318,7 +321,6 @@ public final class MockServlet
 			final long bytes = calcInputByteCount(servletInputStream);
 			nanoTime = System.nanoTime() - nanoTime;
 			//
-			LOG.debug(Markers.MSG, "create new data object");
 			dataID = request.getRequestURI().split("/")[2];
 			if(Base64.isBase64(dataID) && dataID.length() < 12) {
 				final byte dataIdBytes[] = Base64.decodeBase64(dataID);
@@ -339,26 +341,29 @@ public final class MockServlet
 			allTP.mark();
 			//
 		} catch (final IOException e) {
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
 		}catch (final NumberFormatException e){
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
 			ExceptionHandler.trace(
-					LOG, Level.ERROR, e,
-					String.format("Unexpected object id format: \"%s\"", dataID)
+				LOG, Level.WARN, e,
+				String.format("Unexpected object id format: \"%s\"", dataID)
 			);
 		}catch (final ArrayIndexOutOfBoundsException e) {
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
 		}
 	}
 	//
 	@Override
 	protected final void doDelete(
-			final HttpServletRequest request, final HttpServletResponse response
+		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Delete ");
 		response.setStatus(HttpServletResponse.SC_OK);
@@ -377,15 +382,16 @@ public final class MockServlet
 			deleteTP.mark();
 			allTP.mark();
 		} catch (final IOException e) {
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterDeleteFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
 		}
 	}
 	//
 	@Override
 	protected final void doHead(
-			final HttpServletRequest request, final HttpServletResponse response
+		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Head ");
 		response.setStatus(HttpServletResponse.SC_OK);
@@ -394,7 +400,7 @@ public final class MockServlet
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private long calcInputByteCount(
-			final ServletInputStream servletInputStream
+		final ServletInputStream servletInputStream
 	) throws ServletException, IOException {
 		final byte buff[] = new byte[MAX_PAGE_SIZE];
 		long doneByteCountSum = 0, doneByteCount;

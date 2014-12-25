@@ -24,6 +24,7 @@ extends ObjectRequestConfig<T> {
 	//
 	String
 		KEY_EMC_ACCEPT = "x-emc-accept",
+		KEY_EMC_BUCKET_FS = "x-emc-file-system-access-enabled",
 		KEY_EMC_DATE = "x-emc-date",
 		KEY_EMC_NS = "x-emc-namespace",
 		KEY_EMC_RANGE = "x-emc-range",
@@ -39,7 +40,7 @@ extends ObjectRequestConfig<T> {
 		//
 	String[]
 		HEADERS_EMC = {
-			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_NS, KEY_EMC_SIG, KEY_EMC_UID
+			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_NS, KEY_EMC_SIG, KEY_EMC_UID, KEY_EMC_BUCKET_FS
 		};
 	//
 	MutableHTTPRequest createRequest();

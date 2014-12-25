@@ -1,9 +1,9 @@
 package com.emc.mongoose.util.conf;
 //
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.collections.Pair;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.text.StrBuilder;
@@ -17,8 +17,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 /**
  Created by kurila on 04.07.14.
  A property loader using some directory as a root of property tree.
@@ -29,13 +31,13 @@ extends SimpleFileVisitor<Path> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private LinkedList<String> prefixTokens = new LinkedList<>();
-	private final Configuration tgtConfig;
+	private final RunTimeConfig tgtConfig;
 	//
-	public DirectoryLoader(final Configuration tgtConfig) {
+	public DirectoryLoader(final RunTimeConfig tgtConfig) {
 		this.tgtConfig = tgtConfig;
 	}
 	//
-	public static void loadPropsFromDir(final Path rootDir, final Configuration tgtConfig) {
+	public static void loadPropsFromDir(final Path rootDir, final RunTimeConfig tgtConfig) {
 		final DirectoryLoader dirLoader = new DirectoryLoader(tgtConfig);
 		try {
 			LOG.debug(Markers.MSG, "Load system properties from directory \"{}\"", rootDir);
@@ -70,7 +72,16 @@ extends SimpleFileVisitor<Path> {
 			);
 		}
 		// set the properties
+		final List<Pair<String, Object>> props = new ArrayList<>();
 		if(currProps != null) {
+			if (file.getFileName().toString().equals("run")) {
+				props.add(
+					new Pair<String, Object>(
+						Main.KEY_RUN_ID,
+						new Pair<>("id", currProps.getProperty("id"))
+					)
+				);
+			}
 			String key;
 			for(final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext();) {
 				key = keyIter.next();
@@ -78,8 +89,11 @@ extends SimpleFileVisitor<Path> {
 					Markers.MSG, "File property: \"{}\" = \"{}\"",
 					currPrefix + key, currProps.getProperty(key)
 				);
+				props.add(new Pair<String, Object>(currPrefix + key,
+					new Pair<>(key, currProps.getProperty(key))));
 				tgtConfig.setProperty(currPrefix + key, currProps.getProperty(key));
 			}
+			tgtConfig.put(prefixTokens, file.getFileName().toString(), props);
 		}
 		//
 		return FileVisitResult.CONTINUE;
@@ -115,5 +129,4 @@ extends SimpleFileVisitor<Path> {
 			throw e;
 		}
 	}
-	//
 }

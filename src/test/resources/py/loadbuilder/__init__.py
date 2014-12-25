@@ -11,12 +11,12 @@ from com.emc.mongoose.util.logging import ExceptionHandler, Markers
 from java.lang import IllegalStateException
 from java.util import NoSuchElementException
 #
-LOCAL_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get()
 def loadbuilder_init():
+	local_run_time_config = Main.RUN_TIME_CONFIG.get()
 	#
 	mode = None
 	try:
-		mode = LOCAL_RUN_TIME_CONFIG.getRunMode()
+		mode = local_run_time_config.getRunMode()
 	except NoSuchElementException:
 		LOG.fatal(Markers.ERR, "Launch mode is not specified, use -Drun.mode=<VALUE> argument")
 		exit()
@@ -37,7 +37,7 @@ def loadbuilder_init():
 				LOG.fatal(Markers.ERR, "Servers address list not specified, try  arg -Dremote.servers=<LIST> to override")
 				exit()
 		except RemoteException as e:
-			ExceptionHandler(LOG, Level.FATAL, e, "Failed to create load builder client")
+			LOG.fatal(Markers.ERR, "Failed to create load builder client: {}", e)
 			exit()
 	else: # standalone
 		from com.emc.mongoose.web.load.impl import BasicLoadBuilder
@@ -51,5 +51,5 @@ def loadbuilder_init():
 	if INSTANCE is None:
 		LOG.fatal(Markers.ERR, "No load builder instanced")
 		exit()
-	INSTANCE.setProperties(LOCAL_RUN_TIME_CONFIG)
+	INSTANCE.setProperties(local_run_time_config)
 	return INSTANCE

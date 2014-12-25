@@ -12,7 +12,7 @@ public enum RunModes {
 
 	private final String value;
 
-	RunModes(String value) {
+	RunModes(final String value) {
 		this.value = value;
 	}
 
@@ -20,8 +20,8 @@ public enum RunModes {
 		return value;
 	}
 
-	public static RunModes getRunModeConstantByRequest(String runMode) {
-		for (RunModes runModeConstant : values()) {
+	public static RunModes getRunModeConstantByRequest(final String runMode) {
+		for (final RunModes runModeConstant : values()) {
 			if (runModeConstant.getValue().equals(runMode))
 				return runModeConstant;
 		}

@@ -16,6 +16,9 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -32,6 +35,11 @@ public class Bucket<T extends WSObject>
 implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static String VERSIONING_ENTITY_CONTENT =
+		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">\n" +
+		"	<Status>Enabled</Status>\n" +
+		"	<MfaDelete>Disabled</MfaDelete>\n" +
+		"</VersioningConfiguration>";
 	//
 	final RequestConfig<T> reqConf;
 	final String name;
@@ -65,6 +73,21 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		}
 		//
 		final MutableHTTPRequest httpReq = method.createRequest().setUriPath("/" + name);
+		//
+		if(WSIOTask.HTTPMethod.PUT.equals(method)) {
+			httpReq.setHeader(
+				new BasicHeader(
+					RequestConfig.KEY_EMC_BUCKET_FS,
+					Boolean.toString(reqConf.getBucketFileSystem())
+				)
+			);
+			if(reqConf.getBucketVersioning()) {
+				httpReq.setEntity(
+					new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
+				);
+			}
+		}
+		//
 		reqConf.applyHeadersFinally(httpReq);
 		return wsClient.execute(
 			new HttpHost(
