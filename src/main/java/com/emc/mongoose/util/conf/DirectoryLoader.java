@@ -77,7 +77,7 @@ extends SimpleFileVisitor<Path> {
 			if (file.getFileName().toString().equals("run")) {
 				props.add(
 					new Pair<String, Object>(
-						Main.KEY_RUN_ID,
+						RunTimeConfig.KEY_RUN_ID,
 						new Pair<>("id", currProps.getProperty("id"))
 					)
 				);

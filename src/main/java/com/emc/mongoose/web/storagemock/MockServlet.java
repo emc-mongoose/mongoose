@@ -202,32 +202,31 @@ implements Runnable {
 		MSG_FMT_METRICS = "count=(%d/%d); duration[us]=(%d/%d/%d/%d); " +
 			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
-	private void printMetrics(){
+	private void printMetrics() {
 		final Snapshot allDurSnapshot = durAll.getSnapshot();
-			LOG.info(
-				Markers.PERF_AVG,
-				String.format(
-					Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
-					//
-					counterAllSucc.getCount(), counterAllFail.getCount(),
-					//
-					(int) (allDurSnapshot.getMean() / LoadExecutor.NANOSEC_SCALEDOWN),
-					(int) (allDurSnapshot.getMin() / LoadExecutor.NANOSEC_SCALEDOWN),
-					(int) (allDurSnapshot.getMedian() / LoadExecutor.NANOSEC_SCALEDOWN),
-					(int) (allDurSnapshot.getMax() / LoadExecutor.NANOSEC_SCALEDOWN),
-					//
-					allTP.getMeanRate(),
-					allTP.getOneMinuteRate(),
-					allTP.getFiveMinuteRate(),
-					allTP.getFifteenMinuteRate(),
-					//
-					allBW.getMeanRate() / LoadExecutor.MIB,
-					allBW.getOneMinuteRate() / LoadExecutor.MIB,
-					allBW.getFiveMinuteRate() / LoadExecutor.MIB,
-					allBW.getFifteenMinuteRate() / LoadExecutor.MIB
-				)
-			);
-		}
+		LOG.info(
+			Markers.PERF_AVG,
+			String.format(
+				Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
+				//
+				counterAllSucc.getCount(), counterAllFail.getCount(),
+				//
+				(int) (allDurSnapshot.getMean() / LoadExecutor.NANOSEC_SCALEDOWN),
+				(int) (allDurSnapshot.getMin() / LoadExecutor.NANOSEC_SCALEDOWN),
+				(int) (allDurSnapshot.getMedian() / LoadExecutor.NANOSEC_SCALEDOWN),
+				(int) (allDurSnapshot.getMax() / LoadExecutor.NANOSEC_SCALEDOWN),
+				//
+				allTP.getMeanRate(),
+				allTP.getOneMinuteRate(),
+				allTP.getFiveMinuteRate(),
+				allTP.getFifteenMinuteRate(),
+				//
+				allBW.getMeanRate() / LoadExecutor.MIB,
+				allBW.getOneMinuteRate() / LoadExecutor.MIB,
+				allBW.getFiveMinuteRate() / LoadExecutor.MIB,
+				allBW.getFifteenMinuteRate() / LoadExecutor.MIB
+			)
+		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Request handling methods ////////////////////////////////////////////////////////////////////

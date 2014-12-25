@@ -1,11 +1,15 @@
 package com.emc.mongoose.util.conf;
 //
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.collections.Pair;
 import com.emc.mongoose.util.logging.Markers;
+//
+import com.google.gson.Gson;
 //
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -14,15 +18,12 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.file.Path;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Calendar;
-import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 /**
@@ -30,20 +31,38 @@ import java.util.regex.Pattern;
  A shared runtime configuration.
  */
 public final class RunTimeConfig
-extends BaseConfiguration
-implements Externalizable {
+	extends BaseConfiguration
+	implements Externalizable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	public final static String LIST_SEP = ",", KEY_VERSION = "run.version";
+	//
+	public final static String
+		LIST_SEP = ",",
+	//
+	KEY_DATA_COUNT = "data.count",
+		KEY_DATA_SIZE = "data.size",
+		KEY_DATA_SIZE_BIAS = "data.size.bias",
+		KEY_DATA_RING_SEED = "data.ring.seed",
+		KEY_DATA_RING_SIZE = "data.ring.size",
+	//
+	KEY_LOAD_THREADS = "load.threads",
+		KEY_LOAD_TIME = "load.step.time",
+	//
+	KEY_RUN_ID = "run.id",
+		KEY_RUN_MODE = "run.mode",
+		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
+		KEY_RUN_TIME = "run.time",
+		KEY_RUN_VERSION = "run.version",
+	//
+	KEY_STORAGE_ADDRS = "storage.addrs",
+		KEY_STORAGE_API = "storage.api";
+	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
-	private final static DateFormat FMT_DT = new SimpleDateFormat(
-			"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
-	);
 	static {
-		MAP_OVERRIDE.put("data.size", new String[] {"data.size.min", "data.size.max"});
-		MAP_OVERRIDE.put("load.step.time", new String[] { "run.time" });
-		MAP_OVERRIDE.put("load.threads", new String[] {"load.append.threads", "load.create.threads", "load.read.threads", "load.update.threads", "load.delete.threads"});
+		MAP_OVERRIDE.put(KEY_DATA_SIZE, new String[] {"data.size.min", "data.size.max"});
+		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_RUN_TIME});
+		MAP_OVERRIDE.put(KEY_LOAD_THREADS, new String[] {"load.append.threads", "load.create.threads", "load.read.threads", "load.update.threads", "load.delete.threads"});
 		MAP_OVERRIDE.put("remote.drivers", new String[] {"remote.servers"});
 	}
 	//
@@ -51,6 +70,8 @@ implements Externalizable {
 		SIZE_UNITS = "kmgtpe",
 		FMT_MSG_INVALID_SIZE = "The string \"%s\" doesn't match the pattern: \"%s\"";
 	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)b?");
+	//
+	private final Map<String, Object> properties = new HashMap<>();
 	//
 	public long getSizeBytes(final String key) {
 		return toSize(getString(key));
@@ -78,7 +99,6 @@ implements Externalizable {
 			);
 		}
 		size *= 1L << 10 * degree;
-		LOG.trace(Markers.MSG, "\"{}\" is {} bytes", value, size);
 		return size;
 	}
 	//
@@ -93,6 +113,22 @@ implements Externalizable {
 			x < 10 ? "%.3f%sb" : x < 100 ? "%.2f%sb" : "%.1f%sb",
 			x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
 		).toUpperCase();
+	}
+	public String getPropertiesMap() {
+		return new Gson().toJson(properties);
+	}
+	//
+	public final synchronized void put(List<String> dirs, String fileName, List<Pair<String, Object>> props) {
+		Map<String, Object> node = properties;
+		if (dirs != null) {
+			for (final String nextDir : dirs) {
+				if (!node.containsKey(nextDir)) {
+					node.put(nextDir, new LinkedHashMap<>());
+				}
+				node = (Map<String, Object>) node.get(nextDir);
+			}
+		}
+		node.put(fileName, props);
 	}
 	//
 	public final synchronized void set(final String key, final String value) {
@@ -117,7 +153,7 @@ implements Externalizable {
 	}
 	//
 	public final String getStorageApi() {
-		return getString("storage.api");
+		return getString(KEY_STORAGE_API);
 	}
 	//
 	public final int getApiPort(final String api) {
@@ -152,8 +188,8 @@ implements Externalizable {
 		return getInt("run.metrics.period.sec");
 	}
 	//
-	public final int getRunRequestQueueFactor() {
-		return getInt("run.request.queue.factor");
+	public final int getRunRequestQueueSize() {
+		return getInt("run.request.queue.size");
 	}
 	//
 	public final String getHttpContentType() {
@@ -189,15 +225,19 @@ implements Externalizable {
 	}
 	//
 	public final String getRunVersion() {
-		return getString(KEY_VERSION);
+		return getString(KEY_RUN_VERSION);
 	}
 	//
 	public final long getDataCount() {
-		return getLong("data.count");
+		return getLong(KEY_DATA_COUNT);
+	}
+	//
+	public final float getDataSizeBias() {
+		return getFloat(KEY_DATA_SIZE_BIAS);
 	}
 	//
 	public final String[] getStorageAddrs() {
-		return getStringArray("storage.addrs");
+		return getStringArray(KEY_STORAGE_ADDRS);
 	}
 	//
 	public final int getConnPoolTimeOut() {
@@ -241,7 +281,7 @@ implements Externalizable {
 	}
 	//
 	public final String getRunScenarioName() {
-		return getString("run.scenario.name");
+		return getString(KEY_RUN_SCENARIO_NAME);
 	}
 	//
 	public final String getRunScenarioDir() {
@@ -249,20 +289,20 @@ implements Externalizable {
 	}
 	//
 	public final String getRunId() {
-		return getString(Main.KEY_RUN_ID);
+		return getString(KEY_RUN_ID);
 	}
 	//
 	public final String getRunTime() {
-		return getString("run.time");
+		return getString(KEY_RUN_TIME);
 	}
 	//
 	public final String getRunMode() {
-		return getString(Main.KEY_RUN_MODE);
+		return getString(KEY_RUN_MODE);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)
-	throws IOException {
+		throws IOException {
 		LOG.debug(Markers.MSG, "Going to upload properties to a server");
 		String nextPropName;
 		Object nextPropValue;
@@ -298,14 +338,14 @@ implements Externalizable {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final synchronized void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
+		throws IOException, ClassNotFoundException {
 		LOG.debug(Markers.MSG, "Going to fetch the properties from client side");
 		final HashMap<String, String> confMap = HashMap.class.cast(in.readObject());
 		LOG.trace(Markers.MSG, "Got the properties from client side: {}", confMap);
 		//
 		final String
 			serverVersion = Main.RUN_TIME_CONFIG.get().getRunVersion(),
-			clientVersion = confMap.get(KEY_VERSION);
+			clientVersion = confMap.get(KEY_RUN_VERSION);
 		if(serverVersion.equals(clientVersion)) {
 			// put the properties into the System
 			Object nextPropValue;
@@ -331,6 +371,8 @@ implements Externalizable {
 					);
 				}
 			}
+			Main.RUN_TIME_CONFIG.set(this);
+			LOG.info(Markers.MSG, toString());
 		} else {
 			final String errMsg = String.format(
 				"%s, version mismatch, server: %s client: %s",
@@ -357,9 +399,8 @@ implements Externalizable {
 			);
 			keys2override = MAP_OVERRIDE.get(key);
 			sharedValue = sysProps.getProperty(key);
-			if(keys2override==null) {
-				setProperty(key, sharedValue);
-			} else {
+			setProperty(key, sharedValue);
+			if(keys2override != null) {
 				for(final String key2override: keys2override) {
 					setProperty(key2override, sharedValue);
 				}
@@ -367,10 +408,63 @@ implements Externalizable {
 		}
 	}
 	//
+	@Override
 	public synchronized RunTimeConfig clone() {
 		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
-		runTimeConfig.set(Main.KEY_RUN_ID, FMT_DT.format(
-				Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()));
+		runTimeConfig.set(
+			KEY_RUN_ID, Main.FMT_DT.format(Main.CALENDAR_DEFAULT.getTime())
+		);
 		return runTimeConfig;
+	}
+	//
+	public void overrideSystemProperties(Map<String, String> props){
+		for(Map.Entry<String, String> entry : props.entrySet()){
+			setProperty(entry.getKey(), entry.getValue());
+		}
+	}
+	//
+	private final static String
+		TABLE_BORDER = "\n+--------------------------------+----------------------------------------------------------------+",
+		TABLE_HEADER = "Configuration parameters:";
+	//
+	@Override
+	public final String toString() {
+		String nextKey;
+		Object nextVal;
+		final StrBuilder strBuilder = new StrBuilder()
+			.append(TABLE_HEADER).append(TABLE_BORDER)
+			.appendNewLine().append("| ").appendFixedWidthPadRight("Key", 31, ' ')
+			.append("| ").appendFixedWidthPadRight("Value", 63, ' ').append('|')
+			.append(TABLE_BORDER);
+		for(
+			final Iterator<String> keyIterator = getKeys();
+			keyIterator.hasNext();
+			) {
+			nextKey = keyIterator.next();
+			nextVal = getProperty(nextKey);
+			switch(nextKey) {
+				case RunTimeConfig.KEY_RUN_ID:
+				case RunTimeConfig.KEY_RUN_MODE:
+				case RunTimeConfig.KEY_RUN_SCENARIO_NAME:
+				case RunTimeConfig.KEY_RUN_TIME:
+				case RunTimeConfig.KEY_RUN_VERSION:
+				case RunTimeConfig.KEY_DATA_COUNT:
+				case RunTimeConfig.KEY_DATA_SIZE:
+				case RunTimeConfig.KEY_DATA_RING_SEED:
+				case RunTimeConfig.KEY_DATA_RING_SIZE:
+				case RunTimeConfig.KEY_LOAD_THREADS:
+				case RunTimeConfig.KEY_LOAD_TIME:
+				case RunTimeConfig.KEY_STORAGE_ADDRS:
+				case RunTimeConfig.KEY_STORAGE_API:
+					strBuilder
+						.appendNewLine().append("| ")
+						.appendFixedWidthPadRight(nextKey, 31, ' ')
+						.append("| ")
+						.appendFixedWidthPadRight(nextVal, 63, ' ')
+						.append('|');
+					break;
+			}
+		}
+		return strBuilder.append(TABLE_BORDER).toString();
 	}
 }
