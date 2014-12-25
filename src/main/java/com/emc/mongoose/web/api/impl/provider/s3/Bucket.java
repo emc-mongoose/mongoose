@@ -8,11 +8,15 @@ import com.emc.mongoose.util.logging.Markers;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
+import org.apache.http.client.entity.EntityBuilder;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.methods.RequestBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 //
+import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -30,6 +34,11 @@ public class Bucket<T extends WSObject>
 implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static String VERSIONING_ENTITY_CONTENT =
+		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">\n" +
+		"	<Status>Enabled</Status>\n" +
+		"	<MfaDelete>Disabled</MfaDelete>\n" +
+		"</VersioningConfiguration>";
 	//
 	final RequestConfig reqConf;
 	final String name;
@@ -62,10 +71,25 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 			throw new IllegalArgumentException(String.format(FMT_MSG_INVALID_METHOD, method));
 		}
 		//
-		final HttpUriRequest httpReq = RequestBuilder
-			.create(method.toUpperCase())
-			.setUri("/" + name)
-			.build();
+		final RequestBuilder reqBuilder = RequestBuilder.create(method.toUpperCase());
+		reqBuilder.setUri("/" + name);
+		//
+		if("put".equals(method)) {
+			reqBuilder.setHeader(
+				new BasicHeader(
+					RequestConfig.KEY_EMC_BUCKET_FS,
+					Boolean.toString(reqConf.getBucketFileSystem())
+				)
+			);
+			if(reqConf.getBucketVersioning()) {
+				reqBuilder.setEntity(
+					new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
+				);
+			}
+		}
+		//
+		final HttpUriRequest httpReq = reqBuilder.build();
+		//
 		reqConf.applyHeadersFinally(httpReq);
 		final CloseableHttpClient httpClient = reqConf.getClient();
 		//
