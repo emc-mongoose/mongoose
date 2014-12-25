@@ -35,6 +35,8 @@ extends AbstractAppender {
 	private final static Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
 	//
+	private static boolean ENABLED_FLAG;
+	//
 	private WebUIAppender(
 		final String name, final Filter filter, final Layout<? extends Serializable> layout,
 		final boolean ignoreExceptions
@@ -46,22 +48,28 @@ extends AbstractAppender {
 	public static WebUIAppender createAppender(
 		final @PluginAttribute("name") String name,
 		final @PluginAttribute("ignoreExceptions") boolean ignoreExceptions,
+		final @PluginAttribute("enabled") Boolean enabled,
 		final @PluginElement("Filters") Filter filter
 	) {
 		if (name == null) {
 			LOGGER.error("No name provided for CustomAppender");
 			return null;
 		}
+		ENABLED_FLAG = enabled;
 		return new WebUIAppender(name, filter, DEFAULT_LAYOUT, ignoreExceptions);
 	}
 	//
 	public static void register(final WebSocketLogListener listener) {
-		sendPreviousLogs(listener);
-		LISTENERS.add(listener);
+		if (ENABLED_FLAG) {
+			sendPreviousLogs(listener);
+			LISTENERS.add(listener);
+		}
 	}
 	//
 	public static void unregister(final WebSocketLogListener listener) {
-		LISTENERS.remove(listener);
+		if (ENABLED_FLAG) {
+			LISTENERS.remove(listener);
+		}
 	}
 	//
 	public synchronized static void sendPreviousLogs(final WebSocketLogListener listener) {
@@ -74,13 +82,15 @@ extends AbstractAppender {
 	//
 	@Override
 	public synchronized final void append(final LogEvent event) {
-		String currentRunId = event.getContextMap().get(Main.KEY_RUN_ID);
-		if (LOG_EVENTS_MAP.get(currentRunId) == null) {
-			LOG_EVENTS_MAP.put(currentRunId, new CircularQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST));
-		}
-		LOG_EVENTS_MAP.get(currentRunId).add(event);
-		for (WebSocketLogListener listener : LISTENERS) {
-			listener.sendMessage(event);
+		if (ENABLED_FLAG) {
+			String currentRunId = event.getContextMap().get(Main.KEY_RUN_ID);
+			if (LOG_EVENTS_MAP.get(currentRunId) == null) {
+				LOG_EVENTS_MAP.put(currentRunId, new CircularQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST));
+			}
+			LOG_EVENTS_MAP.get(currentRunId).add(event);
+			for (WebSocketLogListener listener : LISTENERS) {
+				listener.sendMessage(event);
+			}
 		}
 	}
 }
