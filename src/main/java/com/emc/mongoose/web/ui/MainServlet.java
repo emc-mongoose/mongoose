@@ -20,7 +20,7 @@ public final class MainServlet extends HttpServlet {
 
 	public final void doGet(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
-		//TODO fix it
+		//TODO fix null comparison. Make this piece of code clearer.
 		if (StartServlet.threadsMap != null) {
 			request.getSession(true).setAttribute("runmodes", StartServlet.threadsMap.keySet());
 		}
