@@ -170,7 +170,7 @@ $(document).ready(function() {
 
 	$(".stop").click(function() {
 		var currentButton = $(this);
-		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".");
+		var currentRunId = $(this).parent().parent().attr("id").split("_").join(".").replace("tableTab-", "");
 		$.post("/stop", { "run.id" : currentRunId, "type" : "stop" }, function() {
 			currentButton.remove();
 		}).fail(function() {
