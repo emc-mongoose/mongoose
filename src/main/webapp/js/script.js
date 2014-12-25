@@ -210,6 +210,7 @@ $(document).ready(function() {
 		if ($(this).is("a")) {
 			e.preventDefault();
 		}
+		//
 		onFoldersElementClick($(this));
 	});
 
