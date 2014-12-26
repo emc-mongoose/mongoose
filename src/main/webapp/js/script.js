@@ -165,6 +165,8 @@ $(document).ready(function() {
 
 	$("#start").click(function(e) {
 		e.preventDefault();
+		var runId = document.getElementById("fake-run.id");
+		runId.value = runId.defaultValue;
 		onStartButtonPressed();
 	});
 
