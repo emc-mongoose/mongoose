@@ -78,8 +78,10 @@ implements Producer<T> {
 					nextData = dataItemConstructor.newInstance(nextLine);
 					try {
 						consumer.submit(nextData);
+					} catch(final InterruptedException e) {
+						break;
 					} catch(final Exception e) {
-						ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to submit data item");
+						ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to submit data item");
 					}
 					dataItemsCount ++;
 				}
