@@ -19,6 +19,17 @@ CREATE DATABASE mongoose
 		LC_CTYPE = 'en_US.UTF-8'
 		CONNECTION LIMIT = -1;
 
+-- Create hibernate_sequence
+
+CREATE SEQUENCE hibernate_sequence
+  INCREMENT 1
+  MINVALUE 1
+  MAXVALUE 9223372036854775807
+  START 33
+  CACHE 1;
+ALTER TABLE hibernate_sequence OWNER TO mongoose;
+
+
 -- Table: status
 
 -- DROP TABLE status;

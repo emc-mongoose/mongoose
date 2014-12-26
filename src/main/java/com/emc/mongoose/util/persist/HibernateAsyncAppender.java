@@ -16,7 +16,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.impl.Log4jLogEvent;
 import org.apache.logging.log4j.status.StatusLogger;
-
+//
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,7 +26,6 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by olga on 09.12.14.
@@ -35,14 +34,13 @@ import java.util.concurrent.atomic.AtomicLong;
 public class HibernateAsyncAppender
 extends AbstractAppender {
 
-	//
-	private static boolean SHUTDOWN = false;
+	private static final String SHUTDOWN = "Shutdown";
 	public static final org.apache.logging.log4j.Logger LOGGER = StatusLogger.getLogger();
 	//
 	private static final long serialVersionUID = 1L;
 	private static final int DEFAULT_QUEUE_SIZE = 128,
 		POOL_SIZE=1000,
-		DEFAULT_THREADS_FOR_QUEUE = 1;
+		DEFAULT_THREADS_FOR_QUEUE = 10;
 		//REQ_TIME_OUT_SEC =60;
 	private final BlockingQueue<Serializable> queue;
 	private static Boolean ENABLED_FLAG;
@@ -58,7 +56,6 @@ extends AbstractAppender {
 	private final boolean includeLocation;
 	private AppenderControl errorAppender;
 	private static ThreadLocal<Boolean> isAppenderThread = new ThreadLocal<Boolean>();
-
 
 	private HibernateAsyncAppender(final String name, final Filter filter, final AppenderRef[] appenderRefs,
 						  final String errorRef, final int queueSize, final boolean blocking,
@@ -108,8 +105,9 @@ extends AbstractAppender {
 	@Override
 	public void stop() {
 		super.stop();
-		//System.out.println("Stop!");
-		SHUTDOWN = true;
+		//Poison Pill Shutdown
+		queue.offer(SHUTDOWN);
+		//
 		if (!executor.isShutdown()){
 			executor.shutdown();
 		}
@@ -118,14 +116,13 @@ extends AbstractAppender {
 				executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
 			} catch (final InterruptedException e) {
 				LOGGER.error("Interrupted waiting for submit executor to finish");
-				e.printStackTrace();
 			}
 		}
 	}
 	//
 	@Override
 	public void append(LogEvent logEvent) {
-		if(ENABLED_FLAG) {
+		//if(ENABLED_FLAG) {
 			if (!isStarted()) {
 				throw new IllegalStateException("AsyncAppender " + getName() + " is not active");
 			}
@@ -162,7 +159,7 @@ extends AbstractAppender {
 			if (!appendSuccessful && errorAppender != null) {
 				errorAppender.callAppender(coreEvent);
 			}
-		}
+		//}
 	}
 	/**
 	 * Create an AsyncAppender.
@@ -211,6 +208,7 @@ extends AbstractAppender {
 	implements Runnable{
 		private final List<AppenderControl> appenders;
 		private final BlockingQueue<Serializable> queue;
+		private boolean shutdown = false;
 
 		public QueueProcessorTask(final List<AppenderControl> appenders, final BlockingQueue<Serializable> queue) {
 			this.appenders = appenders;
@@ -220,10 +218,15 @@ extends AbstractAppender {
 		@Override
 		public void run() {
 			isAppenderThread.set(Boolean.TRUE); // LOG4J2-485
-			while (!HibernateAsyncAppender.SHUTDOWN) {
+			while (!shutdown) {
 				Serializable s;
 				try {
 					s = queue.take();
+					if (s != null && s instanceof String && SHUTDOWN.equals(s.toString())) {
+						shutdown = true;
+						queue.offer(SHUTDOWN);//notify other threads to stop
+						continue;
+					}
 				} catch (final InterruptedException ex) {
 					break; // LOG4J2-830
 				}
@@ -238,10 +241,9 @@ extends AbstractAppender {
 					}
 				}
 			}
-			//System.out.println("AsyncAppender.AsyncThread shutting down. Processing remaining "+queue.size()+" queue events.");
 			// Process any remaining items in the queue.
 			LOGGER.trace("AsyncAppender.AsyncThread shutting down. Processing remaining {} queue events.",
-					queue.size());
+				queue.size());
 			int count= 0;
 			int ignored = 0;
 			while (!queue.isEmpty()) {
@@ -255,17 +257,19 @@ extends AbstractAppender {
 					} else {
 						ignored++;
 						LOGGER.trace("Ignoring event of class {}", s.getClass().getName());
+						if (s instanceof String && SHUTDOWN.equals(s.toString())) {
+							queue.offer(SHUTDOWN);//notify other threads to stop
+							return;
+						}
 					}
 				} catch (final InterruptedException ex) {
 					// May have been interrupted to shut down.
 					// Here we ignore interrupts and try to process all remaining events.
 				}
 			}
-			//System.out.println("AsyncAppender.AsyncThread stopped. Queue has "+queue.size()+" events remaining. " +
-			//		"Processed "+count+" and ignored "+ignored+" events since shutdown started.");
 			LOGGER.trace("AsyncAppender.AsyncThread stopped. Queue has {} events remaining. " +
-							"Processed {} and ignored {} events since shutdown started.",
-					queue.size(), count, ignored);
+				"Processed {} and ignored {} events since shutdown started.",
+				queue.size(), count, ignored);
 		}
 
 		/**
@@ -296,7 +300,7 @@ final class ShutDownThread
 extends Thread
 {
 	private final HibernateAsyncAppender appender;
-	//
+
 	public ShutDownThread(final HibernateAsyncAppender appender)
 	{
 		super("HibernateShutDown");
