@@ -13,9 +13,11 @@ public final class ThreadContextMap {
 			final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
 			ThreadContext.put(Main.KEY_RUN_ID, localRunTimeConfig.getRunId());
 			ThreadContext.put(Main.KEY_RUN_MODE, localRunTimeConfig.getRunMode());
+			ThreadContext.put(Main.KEY_RUN_TIMESTAMP, localRunTimeConfig.getRunTimestamp());
 		} else {
 			ThreadContext.put(Main.KEY_RUN_ID, System.getProperty(Main.KEY_RUN_ID));
 			ThreadContext.put(Main.KEY_RUN_MODE, System.getProperty(Main.KEY_RUN_MODE));
+			ThreadContext.put(Main.KEY_RUN_TIMESTAMP, System.getProperty(Main.KEY_RUN_TIMESTAMP));
 		}
 	}
 	//

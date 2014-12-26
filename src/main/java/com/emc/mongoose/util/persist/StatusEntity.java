@@ -5,16 +5,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.Set;
-//
-import static javax.persistence.GenerationType.IDENTITY;
 /**
  * Created by olga on 28.10.14.
  */
@@ -22,7 +15,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Table(name = "status")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class StatusEntity
-		implements Serializable{
+implements Serializable{
 	@Id
 	@Column(name = "code")
 	private int code;

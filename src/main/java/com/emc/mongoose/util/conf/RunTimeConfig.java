@@ -259,6 +259,10 @@ implements Externalizable {
 	public final String getRunMode() {
 		return getString(Main.KEY_RUN_MODE);
 	}
+	//
+	public final String getRunTimestamp() {
+		return getString(Main.KEY_RUN_TIMESTAMP);
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)

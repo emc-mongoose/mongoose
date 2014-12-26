@@ -1,12 +1,7 @@
 package com.emc.mongoose.util.persist;
 //
-import org.hibernate.annotations.ForeignKey;
-
-import javax.persistence.AttributeOverride;
-import javax.persistence.AttributeOverrides;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
-import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -17,13 +12,10 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.Date;
-
+//
 import static javax.persistence.GenerationType.AUTO;
-
 /**
  * Created by olga on 23.10.14.
  */
@@ -31,7 +23,7 @@ import static javax.persistence.GenerationType.AUTO;
 @IdClass(MessageEntityPK.class)
 @Table(name = "message")
 public final class MessageEntity
-		implements Serializable{
+implements Serializable{
 	//
 	@Id
 	@Column(name = "id", nullable = false)
@@ -57,7 +49,8 @@ public final class MessageEntity
 	public MessageEntity(){
 	}
 	public MessageEntity(final RunEntity runEntity, final MessageClassEntity classMessage, final LevelEntity level,
-						 final String messsage, final Date tstamp){
+						 final String messsage, final Date tstamp)
+	{
 		this.run = runEntity;
 		this.classMessage = classMessage;
 		this.level = level;
@@ -105,7 +98,8 @@ public final class MessageEntity
 
 /////////////////////////////////////////////
 @Embeddable
-class MessageEntityPK implements Serializable {
+class MessageEntityPK
+implements Serializable {
 	//
 	private long id;
 	private RunEntity run;

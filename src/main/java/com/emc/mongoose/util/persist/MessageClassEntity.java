@@ -2,16 +2,10 @@ package com.emc.mongoose.util.persist;
 //
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.math.BigInteger;
-import java.util.HashSet;
-import java.util.Set;
 //
 import static javax.persistence.GenerationType.IDENTITY;
 /**
@@ -20,7 +14,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Entity(name = "MessageClassEntity")
 @Table(name = "class")
 public final class MessageClassEntity
-		implements Serializable{
+implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")

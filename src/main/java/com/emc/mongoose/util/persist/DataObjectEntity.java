@@ -2,10 +2,6 @@ package com.emc.mongoose.util.persist;
 //
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.hibernate.annotations.NamedNativeQueries;
-import org.hibernate.annotations.NamedNativeQuery;
-import org.hibernate.annotations.NamedQueries;
-import org.hibernate.annotations.NamedQuery;
 //
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
@@ -23,7 +19,7 @@ import java.io.Serializable;
 @Table(name = "dataobject")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class DataObjectEntity
-		implements Serializable{
+implements Serializable{
 	@Id
 	@Column(name = "identifier")
 	private String identifier;
@@ -40,7 +36,8 @@ public final class DataObjectEntity
 	public DataObjectEntity(){
 	}
 	public DataObjectEntity(final String identifier, final String ringOffset, final long size,
-							final long layer, final long mask){
+							final long layer, final long mask)
+	{
 		this.identifier = identifier;
 		this.ringOffset = ringOffset;
 		this.layer = layer;
@@ -85,7 +82,8 @@ public final class DataObjectEntity
 }
 /////////////////////////////////////////////
 @Embeddable
-class DataObjectEntityPK implements Serializable {
+class DataObjectEntityPK
+implements Serializable {
 	//
 	private String identifier;
 	private long size;

@@ -53,6 +53,8 @@ public final class Main {
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
 		//
+		KEY_RUN_TIMESTAMP = "run.timestamp",
+		//
 		RUN_MODE_STANDALONE = "standalone",
 		RUN_MODE_CLIENT = "client",
 		RUN_MODE_COMPAT_CLIENT = "controller",
@@ -176,14 +178,16 @@ public final class Main {
 		System.setProperty("isThreadContextMapInheritable", "true");
 		// set "dir.root" property
 		System.setProperty(KEY_DIR_ROOT, DIR_ROOT);
+		//set "run.timestamp" property
+		System.setProperty(
+			KEY_RUN_TIMESTAMP, FMT_DT.format(
+					Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()
+			)
+		);
 		// set "run.id" property with timestamp value if not set before
 		String runId = System.getProperty(KEY_RUN_ID);
 		if(runId==null || runId.length()==0) {
-			System.setProperty(
-				KEY_RUN_ID, FMT_DT.format(
-					Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()
-				)
-			);
+			System.setProperty(KEY_RUN_ID, System.getProperty(KEY_RUN_TIMESTAMP));
 		}
 		// make all used loggers asynchronous
 		/*System.setProperty(

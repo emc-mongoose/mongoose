@@ -1,40 +1,34 @@
 package com.emc.mongoose.util.persist;
-//
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.math.BigInteger;
-import java.util.HashSet;
-import java.util.Set;
 //
 import static javax.persistence.GenerationType.IDENTITY;
-//
+
 /**
  * Created by olga on 17.10.14.
  */
 @Entity(name="API")
 @Table(name = "api")
 public final class ApiEntity
-		implements Serializable {
+implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
 	private long id;
 	@Column(name = "name", unique = true)
 	private String name;
-	//
+
 	public ApiEntity(){
 	}
 	public ApiEntity(final String name){
 		this.name = name;
 	}
-	//
+
 	public final long getId() {
 		return id;
 	}

@@ -1,6 +1,8 @@
 package com.emc.mongoose.util.persist;
 //
 import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.logging.Markers;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -26,6 +28,8 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.logging.Level;
 //
@@ -51,9 +55,7 @@ public final class HibernateAppender
 			KEY_THREAD_NUM = "thread.number",
 			KEY_LOAD_NUM = "load.number",
 			KEY_LOAD_TYPE = "load.type",
-			KEY_API = "api",
-			KEY_RUN_ID = "run.id",
-			KEY_RUN_MODE = "run.mode";
+			KEY_API = "api";
 	//
 	@Override
 	public final void start()
@@ -164,8 +166,10 @@ public final class HibernateAppender
 	//
 	private void persistMessages(final LogEvent event)
 	{
-		final ModeEntity modeEntity = loadModeEntity(event.getContextMap().get(KEY_RUN_MODE));
-		final RunEntity runEntity = loadRunEntity(event.getContextMap().get(KEY_RUN_ID), modeEntity);
+		final ModeEntity modeEntity = loadModeEntity(event.getContextMap().get(Main.KEY_RUN_MODE));
+		final RunEntity runEntity = loadRunEntity(event.getContextMap().get(Main.KEY_RUN_ID),
+			modeEntity,getTimestamp(event.getContextMap().get(Main.KEY_RUN_TIMESTAMP))
+		);
 		final LevelEntity levelEntity = loadLevelEntity(event.getLevel().toString());
 		final MessageClassEntity messageClassEntity = loadClassOfMessage(event.getLoggerName());
 		loadMessageEntity(new Date(event.getTimeMillis()),
@@ -186,7 +190,7 @@ public final class HibernateAppender
 		final DataObjectEntity dataObjectEntity = new DataObjectEntity(message[0], Integer.valueOf(message[1], 0x10));
 		loadDataObjectEntity(dataObjectEntity);
 		final StatusEntity statusEntity = getStatusEntity(Integer.valueOf(message[2], 0x10));
-		final RunEntity runEntity = getRunEntity(event.getContextMap().get(KEY_RUN_ID));
+		final RunEntity runEntity = getRunEntity(getTimestamp(event.getContextMap().get(Main.KEY_RUN_TIMESTAMP)));
 		final LoadTypeEntity loadTypeEntity = loadLoadTypeEntity(event.getContextMap().get(KEY_LOAD_TYPE));
 		final ApiEntity apiEntity = loadApiEntity(event.getContextMap().get(KEY_API));
 		final LoadEntity loadEntity = loadLoadEntity(event.getContextMap().get(KEY_LOAD_NUM),
@@ -194,6 +198,16 @@ public final class HibernateAppender
 		final NodeEntity nodeEntity = loadNodeEntity(event.getContextMap().get(KEY_NODE_ADDR));
 		final ConnectionEntity connectionEntity = loadConnectionEntity(event.getContextMap().get(KEY_THREAD_NUM), loadEntity, nodeEntity);
 		loadTraceEntity(dataObjectEntity, connectionEntity, statusEntity, Long.valueOf(message[3], 0x10), Long.valueOf(message[4], 0x10));
+	}
+	//parse String to Date
+	private Date getTimestamp(final String stringTimestamp){
+		Date runTimestamp = null;
+		try {
+			runTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS").parse(stringTimestamp);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		return runTimestamp;
 	}
 	// Load methods
 	private ModeEntity loadModeEntity(final String modeName)
@@ -221,24 +235,24 @@ public final class HibernateAppender
 		return modeEntity;
 	}
 	//
-	private RunEntity loadRunEntity(final String runName, final ModeEntity mode)
+	private RunEntity loadRunEntity(final String runName, final ModeEntity mode, final Date timestamp)
 	{
-		RunEntity runEntity = getRunEntity(runName);
+		RunEntity runEntity = getRunEntity(timestamp);
 		Session session = SESSION_FACTORY.openSession();
 		try {
-			if (runEntity == null){
-				runEntity = new RunEntity(mode, runName);
+			if (runEntity == null) {
+				runEntity = new RunEntity(mode, runName, timestamp);
 				session.beginTransaction();
 				session.save(runEntity);
 				session.getTransaction().commit();
 				session.flush();
 				session.close();
 			}
-		}catch (final ConstraintViolationException e){
+		} catch (final ConstraintViolationException e) {
 			session.getTransaction().rollback();
 			session.close();
-			return getRunEntity(runName);
-		}catch (final HibernateException e){
+			return getRunEntity(timestamp);
+		} catch (final HibernateException e) {
 			session.getTransaction().rollback();
 			e.printStackTrace();
 			session.close();
@@ -496,17 +510,17 @@ public final class HibernateAppender
 		return traceEntity;
 	}
 	//
-	private RunEntity getRunEntity(final String runName)
+	private RunEntity getRunEntity(final Date timestamp)
 	{
 		Session session = SESSION_FACTORY.openSession();
 		RunEntity runEntity = null;
 		try {
 			runEntity = (RunEntity) session.createCriteria(RunEntity.class)
 					.setCacheable(true)
-					.add(Restrictions.eq("name", runName))
+					.add(Restrictions.eq("timestamp", timestamp))
 					.uniqueResult();
 			session.close();
-		}catch (final HibernateException e){
+		} catch (final HibernateException e) {
 			e.printStackTrace();
 			session.close();
 		}
@@ -627,56 +641,4 @@ public final class HibernateAppender
 		}
 		return  nodeEntity;
 	}
-	/////////////////////////////////////
-	private final class ShutDownThread
-			extends Thread
-	{
-		private final AbstractAppender appender;
-		//
-		public ShutDownThread(final HibernateAppender appender)
-		{
-			super("HibernateShutDown");
-			this.appender = appender;
-		}
-
-		@Override
-		public final void run()
-		{
-			try {
-				getThread("main").join(3000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-
-			appender.stop();
-		}
-
-		private Thread[] getAllThreads( )
-		{
-			final ThreadGroup tg = Thread.currentThread( ).getThreadGroup();
-			final ThreadGroup parentThread = tg.getParent();
-			final ThreadMXBean thbean = ManagementFactory.getThreadMXBean();
-			int nAlloc = thbean.getThreadCount( );
-			int n = 0;
-			Thread[] threads;
-			do {
-				nAlloc *= 2;
-				threads = new Thread[ nAlloc ];
-				n = parentThread.enumerate( threads, true );
-			} while ( n == nAlloc );
-			return java.util.Arrays.copyOf( threads, n );
-		}
-
-		private Thread getThread( final String name )
-		{
-			if ( name == null )
-				throw new NullPointerException( "Null name" );
-			final Thread[] threads = getAllThreads( );
-			for ( Thread thread : threads )
-				if ( thread.getName( ).equals( name ) )
-					return thread;
-			return null;
-		}
-	}
-	//////////////////////////////////////
 }

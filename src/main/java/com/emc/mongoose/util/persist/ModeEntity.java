@@ -2,19 +2,13 @@ package com.emc.mongoose.util.persist;
 //
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-
+//
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import javax.persistence.Id;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Column;
 import java.io.Serializable;
-import java.math.BigInteger;
-import java.util.HashSet;
-import java.util.Set;
 import static javax.persistence.GenerationType.IDENTITY;
 /**
  * Created by olga on 16.10.14.
@@ -23,7 +17,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Table(name = "mode")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class ModeEntity
-		implements Serializable {
+implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")

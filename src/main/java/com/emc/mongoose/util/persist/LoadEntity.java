@@ -2,9 +2,6 @@ package com.emc.mongoose.util.persist;
 //
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Set;
-//
-
 //
 /**
  * Created by olga on 21.10.14.

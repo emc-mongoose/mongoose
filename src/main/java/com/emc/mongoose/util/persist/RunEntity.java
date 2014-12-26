@@ -10,13 +10,9 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.math.BigInteger;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Date;
 import static javax.persistence.GenerationType.IDENTITY;
 /**
  * Created by olga on 17.10.14.
@@ -25,7 +21,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Table(name = "run")
 @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class RunEntity
-		implements Serializable {
+implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
@@ -33,17 +29,17 @@ public final class RunEntity
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "mode", nullable = false)
 	private ModeEntity mode;
-	@Column(name = "name", unique = true)
+	@Column(name = "name")
 	private String name;
+	@Column(name = "tstamp",  unique = true)
+	private Date timestamp;
 	//
 	public RunEntity(){
 	}
-	public RunEntity(ModeEntity mode, String name){
+	public RunEntity(final ModeEntity mode, final  String name, final Date tstamp){
 		this.mode = mode;
 		this.name = name;
-	}
-	public RunEntity(final String name){
-		this.name = name;
+		this.timestamp = tstamp;
 	}
 	//
 	public final long getId() {
@@ -63,5 +59,11 @@ public final class RunEntity
 	}
 	public final void setName(final String name) {
 		this.name = name;
+	}
+	public Date getTimestamp() {
+		return timestamp;
+	}
+	public void setTimestamp(Date timestamp) {
+		this.timestamp = timestamp;
 	}
 }

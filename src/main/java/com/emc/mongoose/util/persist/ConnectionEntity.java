@@ -1,13 +1,8 @@
 package com.emc.mongoose.util.persist;
-//
+
 import javax.persistence.*;
 import java.io.Serializable;
-import java.math.BigInteger;
-import java.util.HashSet;
-import java.util.Set;
-//
-import static javax.persistence.GenerationType.IDENTITY;
-//
+
 /**
  * Created by olga on 28.10.14.
  */
@@ -16,21 +11,22 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Table(name = "connection")
 public final class ConnectionEntity
 implements Serializable{
+
 	@Id
 	@Column(name = "num")
 	private long number;
 	@Id
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumns({
-			@JoinColumn(name = "load", nullable = false),
-			@JoinColumn(name = "run", nullable = false)
+		@JoinColumn(name = "load", nullable = false),
+		@JoinColumn(name = "run", nullable = false)
 	})
 	private LoadEntity load;
 	//
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "node", nullable = false)
 	private NodeEntity node;
-	//
+
 	public ConnectionEntity(){
 	}
 	public ConnectionEntity(final LoadEntity load, final NodeEntity node, final long num){
@@ -38,7 +34,7 @@ implements Serializable{
 		this.node = node;
 		this.number = num;
 	}
-	//
+
 	public final LoadEntity getLoad() {
 		return load;
 	}
@@ -65,7 +61,7 @@ implements Serializable{
 	private LoadEntity load;
 	ConnectionEntityPK(){
 	}
-	//
+
 	public long getNumber() {
 		return number;
 	}
