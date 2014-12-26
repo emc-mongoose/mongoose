@@ -19,6 +19,7 @@ import com.emc.mongoose.base.load.impl.tasks.LoadCloseHook;
 import com.emc.mongoose.base.load.impl.tasks.RequestResultTask;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.ConsoleColors;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
@@ -41,6 +42,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 15.10.14.
  */
@@ -95,8 +97,8 @@ implements LoadExecutor<T> {
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());
 		jmxReporter = JmxReporter.forRegistry(metrics)
-			.convertDurationsTo(TimeUnit.SECONDS)
-			.convertRatesTo(TimeUnit.SECONDS)
+			//.convertDurationsTo(TimeUnit.SECONDS)
+			//.convertRatesTo(TimeUnit.SECONDS)
 			.registerWith(mBeanServer)
 			.build();
 		//
@@ -178,8 +180,6 @@ implements LoadExecutor<T> {
 				}
 			} catch(final InterruptedException e) {
 				LOG.debug(Markers.MSG, "Interrupted");
-			} finally {
-				logMetrics(Markers.PERF_SUM);
 			}
 		}
 	};
@@ -188,6 +188,7 @@ implements LoadExecutor<T> {
 		//
 		final long
 			countReqSucc = counterReqSucc.getCount(),
+			countReqFail = counterReqFail.getCount(),
 			countBytes = reqBytes.getCount();
 		final double
 			avgSize = countReqSucc==0 ? 0 : (double) countBytes / countReqSucc,
@@ -197,19 +198,22 @@ implements LoadExecutor<T> {
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
 		final Snapshot respLatencySnapshot = respLatency.getSnapshot();
 		//
-		final int notCompletedTaskCount = getQueue().size() + getActiveCount();
-		//
 		final String message = Markers.PERF_SUM.equals(logMarker) ?
 			String.format(
 				Main.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 				//
 				getName(),
-				countReqSucc, counterReqFail.getCount(),
+				countReqSucc,
+				countReqFail == 0 ?
+					Long.toString(countReqFail) :
+					(float) countReqSucc / countReqFail > 100 ?
+						String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countReqFail) :
+						String.format(ConsoleColors.INT_RED_OVER_GREEN, countReqFail),
 				//
-				(int) (respLatencySnapshot.getMean() / NANOSEC_SCALEDOWN),
-				(int) (respLatencySnapshot.getMin() / NANOSEC_SCALEDOWN),
-				(int) (respLatencySnapshot.getMedian() / NANOSEC_SCALEDOWN),
-				(int) (respLatencySnapshot.getMax() / NANOSEC_SCALEDOWN),
+				(int) respLatencySnapshot.getMean(),
+				(int) respLatencySnapshot.getMin(),
+				(int) respLatencySnapshot.getMedian(),
+				(int) respLatencySnapshot.getMax(),
 				//
 				avgSize==0 ? 0 : meanBW / avgSize,
 				avgSize==0 ? 0 : oneMinBW / avgSize,
@@ -224,12 +228,17 @@ implements LoadExecutor<T> {
 			String.format(
 				Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
-				countReqSucc, notCompletedTaskCount, counterReqFail.getCount(),
+				countReqSucc, counterSubm.getCount() - countReqSucc,
+				countReqFail == 0 ?
+					Long.toString(countReqFail) :
+					(float) countReqSucc / countReqFail > 100 ?
+						String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countReqFail) :
+						String.format(ConsoleColors.INT_RED_OVER_GREEN, countReqFail),
 				//
-				(int) (respLatencySnapshot.getMean() / NANOSEC_SCALEDOWN),
-				(int) (respLatencySnapshot.getMin() / NANOSEC_SCALEDOWN),
-				(int) (respLatencySnapshot.getMedian() / NANOSEC_SCALEDOWN),
-				(int) (respLatencySnapshot.getMax() / NANOSEC_SCALEDOWN),
+				(int) respLatencySnapshot.getMean(),
+				(int) respLatencySnapshot.getMin(),
+				(int) respLatencySnapshot.getMedian(),
+				(int) respLatencySnapshot.getMax(),
 				//
 				avgSize==0 ? 0 : meanBW / avgSize,
 				avgSize==0 ? 0 : oneMinBW / avgSize,
@@ -318,17 +327,19 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	protected final AtomicLong countSubmCalls = new AtomicLong(0);
+	//
 	@Override @SuppressWarnings("unchecked")
 	public void submit(final T dataItem)
 	throws RemoteException, InterruptedException {
-		if(maxCount > getTaskCount()) {
+		if(maxCount > counterSubm.getCount()) {
 			if(dataItem == null) {
 				LOG.debug(Markers.MSG, "{}: poison submitted, performing the shutdown", getName());
 				shutdown(); // stop further submitting
 			} else {
 				// round-robin node selection
 				final String tgtNodeAddr = storageNodeAddrs[
-					(int) getTaskCount() % storageNodeCount
+					(int) countSubmCalls.getAndIncrement() % storageNodeCount
 				];
 				// prepare the I/O task instance (make the link between the data item and load type)
 				final AsyncIOTask<T> ioTask = reqConfig.getRequestFor(dataItem, tgtNodeAddr);
@@ -344,6 +355,7 @@ implements LoadExecutor<T> {
 				do {
 					try { // submit the result handling task
 						futureResult = submit(handleResultTask);
+						counterSubm.inc();
 					} catch(final RejectedExecutionException e) {
 						rejectCount ++;
 						try {
@@ -355,16 +367,15 @@ implements LoadExecutor<T> {
 					//
 				} while(futureResult == null && rejectCount < retryCountMax && !isShutdown());
 				//
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						futureResponse == null ? Markers.ERR : Markers.MSG,
-						"Data item \"{}\" submit {} after {} retries", dataItem,
-						futureResponse == null ? "failure" : "success", rejectCount
-					);
+				if(futureResponse == null) {
+					counterRej.inc();
 				}
 			}
 		} else {
 			shutdown();
+		}
+		//
+		if(isShutdown()) {
 			throw new InterruptedException(
 				String.format(
 					"%s: max data item count (%d) have been submitted, shutdown the submit executor",
@@ -383,13 +394,8 @@ implements LoadExecutor<T> {
 			} else if(result == AsyncIOTask.Result.SUCC) {
 				// update the metrics with success
 				counterReqSucc.inc();
-				final long
-					latency = ioTask.getRespTimeStart() - ioTask.getReqTimeDone(),
-					size = ioTask.getTransferSize();
-				reqBytes.mark(size);
-				//reqDur.update(duration);
-				//reqDurParent.update(duration);
-				respLatency.update(latency);
+				respLatency.update(ioTask.getLatency());
+				reqBytes.mark(ioTask.getTransferSize());
 				// feed to the consumer
 				if(consumer != null) {
 					consumer.submit(dataItem);
@@ -421,21 +427,13 @@ implements LoadExecutor<T> {
 	@Override
 	public synchronized void close()
 	throws IOException {
-		try {
+		if(!isTerminated()) {
 			interrupt();
-			// provide summary metrics logMetrics(Markers.PERF_SUM);
-			//
-			final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
-			awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
-			LOG.debug(Markers.MSG, "{}: waiting the remaining tasks done", getName());
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.ERR, "{}: closing interrupted", getName());
-		} finally {
+			logMetrics(Markers.PERF_SUM); // provide summary metrics
 			try {
 				// force shutdown
 				LOG.debug(Markers.MSG, "{}: dropped {} tasks", getName(), shutdownNow().size());
-				// poison the consumer
-				consumer.submit(null);
+				consumer.submit(null); // poison the consumer
 			} catch(final InterruptedException e) {
 				ExceptionHandler.trace(
 					LOG, Level.DEBUG, e,
@@ -444,9 +442,7 @@ implements LoadExecutor<T> {
 					)
 				);
 			} finally {
-				// close node executors
 				jmxReporter.close();
-				//
 				LoadCloseHook.del(this);
 			}
 		}

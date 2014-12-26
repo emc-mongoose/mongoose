@@ -13,7 +13,7 @@ extends Reusable {
 		CREATE, READ, DELETE, UPDATE, APPEND
 	}
 	//
-	String FMT_PERF_TRACE = "%s,%s,%x,%x,%x,%x,%x,%x";
+	String FMT_PERF_TRACE = "%s,%s,%d,%x,%x,%d,%d,%d";
 	//
 	enum Result {
 		SUCC(0, "Success"),
@@ -45,6 +45,8 @@ extends Reusable {
 	long getTransferSize();
 	//
 	Result getResult();
+	//
+	int getLatency();
 	//
 	long getReqTimeStart();
 	//

@@ -32,9 +32,9 @@ extends Producer<T>, Consumer<T> {
 		NAME_SEP = "@";
 	//
 	String
-		MSG_FMT_METRICS = "count=(%d/%d/%d); latency[us]=(%d/%d/%d/%d); " +
+		MSG_FMT_METRICS = "count=(%d/%d/%s); latency[us]=(%d/%d/%d/%d); " +
 			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)",
-		MSG_FMT_SUM_METRICS = "\"%s\" summary: count=(%d/%d); latency[us]=(%d/%d/%d/%d); " +
+		MSG_FMT_SUM_METRICS = "\"%s\" summary: count=(%d/%s); latency[us]=(%d/%d/%d/%d); " +
 			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
 	String getName()

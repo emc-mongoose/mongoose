@@ -131,6 +131,11 @@ implements AsyncIOTask<T> {
 	}
 	//
 	@Override
+	public final int getLatency() {
+		return (int) (respTimeStart - reqTimeDone);
+	}
+	//
+	@Override
 	public final long getReqTimeStart() {
 		return reqTimeStart;
 	}

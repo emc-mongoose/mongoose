@@ -61,13 +61,19 @@ implements WSIOTask<T> {
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
 	) {
 		final BasicWSIOTask<T> ioTask = (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
-		LOG.trace(Markers.MSG, "{}: took instance", ioTask.hashCode());
+		//LOG.trace(Markers.MSG, "{}: took instance for node @ {}", ioTask.hashCode(), ioTask.nodeAddr);
 		return ioTask;
 	}
 	//
 	@Override
 	public void close() {
-		LOG.trace(Markers.MSG, "{}: release instance", hashCode());
+		/*synchronized(LOG) {
+			LOG.trace(Markers.MSG, "{}: release instance", hashCode());
+			final StackTraceElement stackTrace[] = Thread.currentThread().getStackTrace();
+			for(final StackTraceElement ste: stackTrace) {
+				LOG.trace(Markers.MSG, ste.toString());
+			}
+		}*/
 		POOL_WEB_IO_TASKS.release(this);
 	}
 	// END pool related things
@@ -131,7 +137,7 @@ implements WSIOTask<T> {
 	throws IOException, HttpException {
 		wsReqConf.applyHeadersFinally(httpRequest);
 		reqEntity = httpRequest.getEntity();
-		reqTimeStart = System.nanoTime();
+		reqTimeStart = System.nanoTime() / 1000;
 		return httpRequest;
 	}
 	//
@@ -145,7 +151,7 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final void requestCompleted(final HttpContext context) {
-		reqTimeDone = System.nanoTime();
+		reqTimeDone = System.nanoTime() / 1000;
 	}
 	//
 	@Override
@@ -175,7 +181,7 @@ implements WSIOTask<T> {
 	public final void responseReceived(final HttpResponse response)
 	throws IOException, HttpException {
 		//
-		respTimeStart = System.nanoTime();
+		respTimeStart = System.nanoTime() / 1000;
 		final StatusLine status = response.getStatusLine();
 		respStatusCode = status.getStatusCode();
 		//
@@ -189,22 +195,22 @@ implements WSIOTask<T> {
 		if(respStatusCode < 200 || respStatusCode >= 300) {
 			switch(respStatusCode) {
 				case (400):
-					LOG.warn(Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine());
+					LOG.debug(Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine());
 					result = Result.FAIL_CLIENT;
 					break;
 				case (403):
-					LOG.warn(Markers.ERR, "Access failure");
+					LOG.debug(Markers.ERR, "Access failure");
 					result = Result.FAIL_AUTH;
 					break;
 				case (404):
-					LOG.warn(
+					LOG.debug(
 						Markers.ERR, "Not found: {}{}",
 						httpRequest.getUriAddr(), httpRequest.getUriPath()
 					);
 					result = Result.FAIL_NOT_FOUND;
 					break;
 				case (416):
-					LOG.warn(Markers.ERR, "Incorrect range");
+					LOG.debug(Markers.ERR, "Incorrect range");
 					if(LOG.isTraceEnabled(Markers.ERR)) {
 						for(final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)) {
 							LOG.trace(
@@ -216,7 +222,7 @@ implements WSIOTask<T> {
 					result = Result.FAIL_CLIENT;
 					break;
 				case (500):
-					LOG.warn(Markers.ERR, "Storage internal failure");
+					LOG.debug(Markers.ERR, "Storage internal failure");
 					result = Result.FAIL_SVC;
 					break;
 				case (503):
@@ -224,10 +230,10 @@ implements WSIOTask<T> {
 					result = Result.FAIL_SVC;
 					break;
 				case (507):
-					LOG.warn(Markers.ERR, "Not enough space is left on the storage");
+					LOG.debug(Markers.ERR, "Not enough space is left on the storage");
 					result = Result.FAIL_NO_SPACE;
 				default:
-					LOG.error(Markers.ERR, "Unsupported response code: {}", respStatusCode);
+					LOG.debug(Markers.ERR, "Unsupported response code: {}", respStatusCode);
 					result = Result.FAIL_UNKNOWN;
 			}
 		} else {
@@ -265,7 +271,7 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final void responseCompleted(final HttpContext context) {
-		respTimeDone = System.nanoTime();
+		respTimeDone = System.nanoTime() / 1000;
 		complete();
 	}
 	//

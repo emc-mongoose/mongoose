@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 /**
  Created by kurila on 11.12.14.
@@ -33,10 +34,12 @@ implements Runnable, Reusable {
 		try {
 			ioTaskResult = futureResult.get(); // submit done
 			executor.handleResult(ioTask, ioTaskResult);
-		} catch(final CancellationException e) {
-			LOG.warn(Markers.ERR, "Request has been cancelled:", e);
+		} catch(final InterruptedException|CancellationException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request has been cancelled");
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Request result handling failed");
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request result handling failed");
+		} catch(final ExecutionException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request execution failure");
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
 		}

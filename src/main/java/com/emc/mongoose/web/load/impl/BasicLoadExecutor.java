@@ -91,6 +91,8 @@ implements WSLoadExecutor<T> {
 				ExceptionHandler.trace(
 					LOG, Level.ERROR, e, "Failed to execute the web storage client"
 				);
+			} catch(final IllegalStateException e) {
+				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
 			} finally {
 				try {
 					executor.close();

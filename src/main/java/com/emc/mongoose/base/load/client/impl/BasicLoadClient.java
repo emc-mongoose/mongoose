@@ -28,6 +28,7 @@ import com.emc.mongoose.base.load.client.LoadClient;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.ConsoleColors;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
@@ -57,6 +58,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 20.10.14.
  */
@@ -138,8 +140,8 @@ implements LoadClient<T> {
 			runTimeConfig.getRemoteExportPort()
 		);
 		metricsReporter = JmxReporter.forRegistry(metrics)
-			.convertDurationsTo(TimeUnit.SECONDS)
-			.convertRatesTo(TimeUnit.SECONDS)
+			//.convertDurationsTo(TimeUnit.SECONDS)
+			//.convertRatesTo(TimeUnit.SECONDS)
 			.registerWith(mBeanServer)
 			.build();
 		////////////////////////////////////////////////////////////////////////////////////////////
@@ -272,8 +274,7 @@ implements LoadClient<T> {
 			new CountLimitWaitTask(
 				this, mgmtConnExecutor, maxCount,
 				new GaugeValueTask[] {taskGetCountSucc, taskGetCountFail, taskGetCountRej}
-			),
-			"shutDownOnCountLimit"
+			), "shutDownOnCountLimit"
 		);
 		shutDownOnCountLimit.start();
 		prestartAllCoreThreads();
@@ -441,19 +442,24 @@ implements LoadClient<T> {
 		}
 		//
 		try {
+			final long countSucc = countReqSucc.get(), countFail = countReqFail.get();
 			LOG.info(
 				logMarker,
 				Markers.PERF_SUM.equals(logMarker) ?
 				String.format(
 					Main.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 					//
-					name,
-					countReqSucc.get(), countReqFail.get(),
+					name, countSucc,
+					countFail == 0 ?
+						Long.toString(countFail) :
+						(float) countSucc / countFail > 100 ?
+							String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countFail) :
+							String.format(ConsoleColors.INT_RED_OVER_GREEN, countFail),
 					//
-					(int) (avgLatency.get() / NANOSEC_SCALEDOWN),
-					(int) (minLatency.get() / NANOSEC_SCALEDOWN),
-					(int) (medLatency.get() / NANOSEC_SCALEDOWN),
-					(int) (maxLatency.get() / NANOSEC_SCALEDOWN),
+					avgLatency.get().intValue(),
+					minLatency.get().intValue(),
+					medLatency.get().intValue(),
+					maxLatency.get().intValue(),
 					//
 					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
 					//
@@ -463,14 +469,17 @@ implements LoadClient<T> {
 				String.format(
 					Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
 					//
-					countReqSucc.get(),
-					getQueue().size() + getActiveCount(),
-					countReqFail.get(),
+					countSucc, countSubm.get() - countSucc,
+					countFail == 0 ?
+						Long.toString(countFail) :
+						(float) countSucc / countFail > 100 ?
+							String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countFail) :
+							String.format(ConsoleColors.INT_RED_OVER_GREEN, countFail),
 					//
-					(int) (avgLatency.get() / NANOSEC_SCALEDOWN),
-					(int) (minLatency.get() / NANOSEC_SCALEDOWN),
-					(int) (medLatency.get() / NANOSEC_SCALEDOWN),
-					(int) (maxLatency.get() / NANOSEC_SCALEDOWN),
+					avgLatency.get().intValue(),
+					minLatency.get().intValue(),
+					medLatency.get().intValue(),
+					maxLatency.get().intValue(),
 					//
 					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
 					//
@@ -592,10 +601,12 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	protected final AtomicLong countSubmCalls = new AtomicLong(0);
+	//
 	@Override
 	public final void submit(final T dataItem)
 	throws InterruptedException {
-		if(maxCount > getTaskCount()) {
+		if(maxCount > getTaskCount()) { // getTaskCount() is inaccurate
 			if(dataItem == null) {
 				LOG.debug(Markers.MSG, "{}: poison submitted, performing the shutdown", name);
 				// poison the remote load service instances
@@ -612,7 +623,7 @@ implements LoadClient<T> {
 				//
 				shutdown();
 			} else {
-				final String addr = loadSvcAddrs[(int) getTaskCount() % loadSvcAddrs.length];
+				final String addr = loadSvcAddrs[(int) countSubmCalls.get() % loadSvcAddrs.length];
 				final RemoteSubmitTask<T> remoteSubmitTask = RemoteSubmitTask
 					.getInstanceFor(remoteLoadMap.get(addr), dataItem);
 				int rejectCount = 0;
@@ -632,6 +643,9 @@ implements LoadClient<T> {
 			}
 		} else {
 			shutdown();
+		}
+		//
+		if(isShutdown()) {
 			throw new InterruptedException(
 				String.format(
 					"%s: max data item count (%d) have been submitted, shutdown the submit executor",
