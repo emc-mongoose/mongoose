@@ -2,11 +2,12 @@ package com.emc.mongoose.util.pool;
 //
 import com.emc.mongoose.util.logging.ExceptionHandler;
 //
+import com.emc.mongoose.util.logging.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.TreeSet;
 /**
  Created by andrey on 09.06.14.
  A pool for any reusable objects(instances).
@@ -14,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
  Such instances pool may improve the performance in some cases.
  */
 public final class InstancePool<T extends Reusable>
-extends ConcurrentHashMap<Integer, T> {
+extends TreeSet<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -24,22 +25,33 @@ extends ConcurrentHashMap<Integer, T> {
 		this.itemCls = itemCls;
 	}
 	//
-	@SuppressWarnings({"unchecked", "ConstantConditions"})
-	public final synchronized T take(final Object... args) {
+	@SuppressWarnings("unchecked")
+	public final synchronized T take(final Object... args)
+	throws IllegalStateException {
 		T item = null;
-		if(size() > 0) {
-			item = remove(keys().nextElement());
-		} else {
+		if(isEmpty()) {
 			try {
 				item = itemCls.newInstance();
 			} catch(final NullPointerException|InstantiationException|IllegalAccessException e) {
 				ExceptionHandler.trace(LOG, Level.ERROR, e, "Reusable instantiation failure");
 			}
+		} else {
+			item = first();
 		}
+		//
+		if(item == null) {
+			throw new IllegalStateException("No instance was taken");
+		}
+		remove(item);
+		//
 		return (T) item.reuse(args);
 	}
 	//
-	public final void release(final T item) {
-		putIfAbsent(item.hashCode(), item);
+	public final synchronized void release(final T item) {
+		if(item != null && !add(item) && LOG.isTraceEnabled(Markers.ERR)) {
+			LOG.trace(
+				Markers.ERR, "Releasing already existing in the pool instance: {}", item.hashCode()
+			);
+		}
 	}
 }

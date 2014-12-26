@@ -318,7 +318,7 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
+	@Override @SuppressWarnings("unchecked")
 	public void submit(final T dataItem)
 	throws RemoteException, InterruptedException {
 		if(maxCount > getTaskCount()) {
@@ -335,9 +335,10 @@ implements LoadExecutor<T> {
 				// submit the corresponding I/O task
 				final Future<AsyncIOTask.Result> futureResponse = submit(ioTask);
 				// prepare the corresponding result handling task
-				final RequestResultTask<T> handleResultTask = new RequestResultTask<>(
-					this, ioTask, futureResponse
-				);
+				final RequestResultTask<T>
+					handleResultTask = (RequestResultTask<T>) RequestResultTask.getInstance(
+						this, ioTask, futureResponse
+					);
 				Future futureResult = null;
 				int rejectCount = 0;
 				do {

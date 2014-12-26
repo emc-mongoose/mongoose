@@ -8,6 +8,7 @@ import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.pool.InstancePool;
 //
+import com.emc.mongoose.util.pool.Reusable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
@@ -147,5 +148,10 @@ implements AsyncIOTask<T> {
 	@Override
 	public final long getRespTimeDone() {
 		return respTimeDone;
+	}
+	//
+	@Override
+	public final int compareTo(final Reusable another) {
+		return hashCode() - another.hashCode();
 	}
 }

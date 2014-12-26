@@ -73,4 +73,9 @@ implements Runnable, Reusable {
 		}
 		return this;
 	}
+	//
+	@Override @SuppressWarnings("NullableProblems")
+	public final int compareTo(Reusable another) {
+		return another == null ? 1 : hashCode() - another.hashCode();
+	}
 }

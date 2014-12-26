@@ -5,6 +5,8 @@ import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.pool.InstancePool;
+import com.emc.mongoose.util.pool.Reusable;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -17,22 +19,13 @@ import java.util.concurrent.Future;
  Created by kurila on 11.12.14.
  */
 public final class RequestResultTask<T extends DataItem>
-implements Runnable {
+implements Runnable, Reusable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final LoadExecutor<T> executor;
-	private final AsyncIOTask<T> ioTask;
-	private final Future<AsyncIOTask.Result> futureResult;
-	//
-	public RequestResultTask(
-		final LoadExecutor<T> executor, final AsyncIOTask<T> ioTask,
-		final Future<AsyncIOTask.Result> futureResult
-	) {
-		this.executor = executor;
-		this.ioTask = ioTask;
-		this.futureResult = futureResult;
-	}
+	private volatile LoadExecutor<T> executor = null;
+	private volatile AsyncIOTask<T> ioTask = null;
+	private volatile Future<AsyncIOTask.Result> futureResult = null;
 	//
 	@Override
 	public final void run() {
@@ -47,6 +40,44 @@ implements Runnable {
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
 		}
-
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final static InstancePool<RequestResultTask>
+		POOL = new InstancePool<>(RequestResultTask.class);
+	//
+	public static RequestResultTask<? extends DataItem> getInstance(
+		final LoadExecutor<? extends DataItem> executor,
+		final AsyncIOTask<? extends DataItem> ioTask,
+		final Future<AsyncIOTask.Result> futureResult
+	) {
+		return (RequestResultTask<? extends DataItem>) POOL.take(executor, ioTask, futureResult);
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	public final RequestResultTask<T> reuse(final Object... args)
+	throws IllegalArgumentException {
+		if(args == null) {
+			throw new IllegalArgumentException("No arguments for reusing the instance");
+		}
+		if(args.length > 0) {
+			executor = (LoadExecutor<T>) args[0];
+		}
+		if(args.length > 1) {
+			ioTask = (AsyncIOTask<T>) args[1];
+		}
+		if(args.length > 2) {
+			futureResult = (Future<AsyncIOTask.Result>) args[2];
+		}
+		return this;
+	}
+	//
+	@Override
+	public final void close() {
+		POOL.release(this);
+	}
+	//
+	@Override @SuppressWarnings("NullableProblems")
+	public final int compareTo(Reusable another) {
+		return another == null ? 1 : hashCode() - another.hashCode();
 	}
 }

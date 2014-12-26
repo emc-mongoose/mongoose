@@ -17,8 +17,8 @@ extends ConcurrentLinkedQueue<E> {
 	//
 	@Override
 	public final boolean add(final E e) {
-		if (size() >= capacity) {
-			super.poll();
+		if(size() >= capacity) {
+			poll();
 		}
 		return super.add(e);
 	}

@@ -99,6 +99,7 @@ implements LoadClient<T> {
 	private final RequestConfig<T> reqConfig;
 	private final int retryCountMax, retryDelayMilliSec;
 	//
+	@SuppressWarnings("unchecked")
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig,
 		final Map<String, LoadSvc<T>> remoteLoadMap,
@@ -181,86 +182,86 @@ implements LoadClient<T> {
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_RATE_15MIN
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
-		taskGetCountSubm = new GaugeValueTask<>(
+		taskGetCountSubm = (GaugeValueTask<Long>) GaugeValueTask.getInstance(
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_SUBM, ATTR_COUNT)
 		);
-		taskGetCountRej = new GaugeValueTask<>(
+		taskGetCountRej = (GaugeValueTask<Long>) GaugeValueTask.getInstance(
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_REJ, ATTR_COUNT)
 		);
-		taskGetCountSucc = new GaugeValueTask<>(metricSuccCount);
-		taskGetCountFail = new GaugeValueTask<>(
+		taskGetCountSucc = (GaugeValueTask<Long>) GaugeValueTask.getInstance(metricSuccCount);
+		taskGetCountFail = (GaugeValueTask<Long>) GaugeValueTask.getInstance(
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_FAIL, ATTR_COUNT)
 		);
-		taskGetCountNanoSec = new GaugeValueTask<>(
+		taskGetCountNanoSec = (GaugeValueTask<Long>) GaugeValueTask.getInstance(
 			registerJmxGaugeSum(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_COUNT
 			)
 		);
-		taskGetCountBytes = new GaugeValueTask<>(metricByteCount);
-		/*taskGetDurMin = new GaugeValueTask<>(
+		taskGetCountBytes = (GaugeValueTask<Long>) GaugeValueTask.getInstance(metricByteCount);
+		/*taskGetDurMin = (GaugeValueTask<Long>) GaugeValueTask.getInstance(
 			registerJmxGaugeMinLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MIN
 			)
 		);
-		taskGetDurMax = new GaugeValueTask<>(
+		taskGetDurMax = (GaugeValueTask<Long>) GaugeValueTask.getInstance(
 			registerJmxGaugeMaxLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MAX
 			)
 		);*/
-		taskGetLatencyMin = new GaugeValueTask<>(
+		taskGetLatencyMin = (GaugeValueTask<Long>) GaugeValueTask.getInstance(
 			registerJmxGaugeMinLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MIN
 			)
 		);
-		taskGetLatencyMax = new GaugeValueTask<>(
+		taskGetLatencyMax = (GaugeValueTask<Long>) GaugeValueTask.getInstance(
 			registerJmxGaugeMaxLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MAX
 			)
 		);
-		taskGetBWMean = new GaugeValueTask<>(metricBWMean);
-		taskGetBW1Min = new GaugeValueTask<>(metricBW1Min);
-		taskGetBW5Min = new GaugeValueTask<>(metricBW5Min);
-		taskGetBW15Min = new GaugeValueTask<>(metricBW15Min);
-		taskGetTPMean = new GaugeValueTask<>(
+		taskGetBWMean = (GaugeValueTask<Double>) GaugeValueTask.getInstance(metricBWMean);
+		taskGetBW1Min = (GaugeValueTask<Double>) GaugeValueTask.getInstance(metricBW1Min);
+		taskGetBW5Min = (GaugeValueTask<Double>) GaugeValueTask.getInstance(metricBW5Min);
+		taskGetBW15Min = (GaugeValueTask<Double>) GaugeValueTask.getInstance(metricBW15Min);
+		taskGetTPMean = (GaugeValueTask<Double>) GaugeValueTask.getInstance(
 			metrics.register(
 				MetricRegistry.name(name, METRIC_NAME_TP + "." + ATTR_RATE_MEAN),
 				new ThroughPut(mgmtConnExecutor, taskGetBWMean, taskGetCountSucc, taskGetCountBytes)
 			)
 		);
-		taskGetTP1Min = new GaugeValueTask<>(
+		taskGetTP1Min = (GaugeValueTask<Double>) GaugeValueTask.getInstance(
 			metrics.register(
 				MetricRegistry.name(name, METRIC_NAME_TP + "." + ATTR_RATE_1MIN),
 				new ThroughPut(mgmtConnExecutor, taskGetBW1Min, taskGetCountSucc, taskGetCountBytes)
 			)
 		);
-		taskGetTP5Min = new GaugeValueTask<>(
+		taskGetTP5Min = (GaugeValueTask<Double>) GaugeValueTask.getInstance(
 			metrics.register(
 				MetricRegistry.name(name, METRIC_NAME_TP + "." + ATTR_RATE_5MIN),
 				new ThroughPut(mgmtConnExecutor, taskGetBW5Min, taskGetCountSucc, taskGetCountBytes)
 			)
 		);
-		taskGetTP15Min = new GaugeValueTask<>(
+		taskGetTP15Min = (GaugeValueTask<Double>) GaugeValueTask.getInstance(
 			metrics.register(
 				MetricRegistry.name(name, METRIC_NAME_TP + "." + ATTR_RATE_15MIN),
 				new ThroughPut(mgmtConnExecutor, taskGetBW15Min, taskGetCountSucc, taskGetCountBytes)
 			)
 		);
-		/*taskGetDurMed = new GaugeValueTask<>(
+		/*taskGetDurMed = (GaugeValueTask<Double>) GaugeValueTask.getInstance(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MED
 			)
 		);
-		taskGetDurAvg = new GaugeValueTask<>(
+		taskGetDurAvg = (GaugeValueTask<Double>) GaugeValueTask.getInstance(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_AVG
 			)
 		);*/
-		taskGetLatencyMed = new GaugeValueTask<>(
+		taskGetLatencyMed = (GaugeValueTask<Double>) GaugeValueTask.getInstance(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MED
 			)
 		);
-		taskGetLatencyAvg = new GaugeValueTask<>(
+		taskGetLatencyAvg = (GaugeValueTask<Double>) GaugeValueTask.getInstance(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_AVG
 			)
@@ -355,6 +356,7 @@ implements LoadClient<T> {
 		}
 	};
 	//
+	@SuppressWarnings("unchecked")
 	private void logMetaInfoFrames() {
 		final ArrayList<Future<List<T>>> nextMetaInfoFrameFutures = new ArrayList<>(
 			remoteLoadMap.size()
@@ -365,7 +367,9 @@ implements LoadClient<T> {
 			nextLoadSvc = remoteLoadMap.get(loadSvcAddr);
 			try {
 				nextMetaInfoFrameFutures.add(
-					mgmtConnExecutor.submit(new FrameFetchTask<List<T>>(nextLoadSvc))
+					mgmtConnExecutor.submit(
+						(FrameFetchTask<List<T>>) FrameFetchTask.getInstance(nextLoadSvc)
+					)
 				);
 			} catch(final RejectedExecutionException e) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Fetching metainfo frame task rejected");
