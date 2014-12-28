@@ -291,3 +291,8 @@ th:nth-child(5) {
 .return-link {
 	font-size: 23px;
 }
+
+#config-type {
+	margin-bottom: 10px;
+	display: block;
+}

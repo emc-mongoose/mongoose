@@ -12,16 +12,16 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 //
 
@@ -32,20 +32,34 @@ import java.util.List;
 public final class DirectoryLoader
 extends SimpleFileVisitor<Path> {
 	//
+	private final static Set<String> userKeys = new HashSet<>();
+	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private LinkedList<String> prefixTokens = new LinkedList<>();
 	private final RunTimeConfig tgtConfig;
+	private static boolean isLoadingFromDirs;
 	//
 	public DirectoryLoader(final RunTimeConfig tgtConfig) {
 		this.tgtConfig = tgtConfig;
 	}
 	//
 	public static void loadPropsFromDir(final Path rootDir, final RunTimeConfig tgtConfig) {
+		isLoadingFromDirs = true;
+		loadProps(rootDir, tgtConfig);
+	}
+	//
+	public static void loadPropsToDirsFromRunTimeConfig(final Path rootDir, final RunTimeConfig tgtConfig) {
+		isLoadingFromDirs = false;
+		loadProps(rootDir, tgtConfig);
+	}
+	//
+	private static void loadProps(final Path rootDir, final RunTimeConfig tgtConfig) {
 		final DirectoryLoader dirLoader = new DirectoryLoader(tgtConfig);
 		try {
 			LOG.debug(Markers.MSG, "Load system properties from directory \"{}\"", rootDir);
 			Files.walkFileTree(rootDir, dirLoader);
+			tgtConfig.setUserKeys(userKeys);
 		} catch(final IOException e) {
 			LOG.error(Markers.ERR, e.toString(), e.getCause());
 		}
@@ -78,20 +92,46 @@ extends SimpleFileVisitor<Path> {
 		// set the properties
 		final List<DefaultEntry<String, Object>> props = new ArrayList<>();
 		if(currProps!=null) {
-			if (file.getFileName().toString().equals("run")) {
-				props.add(new DefaultEntry<String, Object>(Main.KEY_RUN_ID,
-					new DefaultEntry<>("id", currProps.getProperty("id"))));
-			}
 			String key;
-			for(final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext();) {
-				key = keyIter.next();
-				LOG.trace(
-					Markers.MSG, "File property: \"{}\" = \"{}\"",
-					currPrefix + key, currProps.getProperty(key)
-				);
-				props.add(new DefaultEntry<String, Object>(currPrefix + key,
-					new DefaultEntry<>(key, currProps.getProperty(key))));
-				tgtConfig.setProperty(currPrefix + key, currProps.getProperty(key));
+			//
+			if (!isLoadingFromDirs) {
+				for (final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext(); ) {
+					key = keyIter.next();
+					final String fullKeyName = currPrefix + key;
+					userKeys.add(fullKeyName);
+					//
+					currProps.setProperty(key, tgtConfig.getProperty(fullKeyName));
+					//
+					props.add(new DefaultEntry<String, Object>(fullKeyName,
+						new DefaultEntry<>(key, tgtConfig.getProperty(fullKeyName))));
+				}
+				//
+				final FileWriter writer = new FileWriter(file.toFile());
+				try {
+					currProps.save(writer);
+				} catch (ConfigurationException e) {
+					ExceptionHandler.trace(LOG, Level.ERROR, e, "Some problems with configuration usage");
+				}
+				writer.close();
+			} else {
+				if (file.getFileName().toString().equals("run")) {
+					props.add(new DefaultEntry<String, Object>(Main.KEY_RUN_ID,
+						new DefaultEntry<>("id", currProps.getProperty("id"))));
+				}
+				//
+				for (final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext(); ) {
+					key = keyIter.next();
+					LOG.trace(
+						Markers.MSG, "File property: \"{}\" = \"{}\"",
+						currPrefix + key, currProps.getProperty(key)
+					);
+					final String fullKeyName = currPrefix + key;
+					userKeys.add(fullKeyName);
+					//
+					props.add(new DefaultEntry<String, Object>(fullKeyName,
+						new DefaultEntry<>(key, currProps.getProperty(key))));
+					tgtConfig.setProperty(currPrefix + key, currProps.getProperty(key));
+				}
 			}
 			tgtConfig.put(prefixTokens, file.getFileName().toString(), props);
 		}

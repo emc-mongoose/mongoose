@@ -219,6 +219,12 @@ $(document).ready(function() {
 	$("#chain-load").click(function() {
 		$("#fake-chain").modal('show').css("z-index", 5000);
 	});
+
+	$("#save-config").click(function() {
+		$.post("/save", $("#main-form").serialize(), function(data, status) {
+			alert("Config was successfully saved");
+		});
+	});
 });
 
 function generatePropertyPage() {

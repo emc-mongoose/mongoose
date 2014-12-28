@@ -2,7 +2,9 @@ package com.emc.mongoose.web.ui.logging;
 //
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.collections.CircularQueue;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.web.ui.websockets.interfaces.WebSocketLogListener;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -92,5 +94,9 @@ extends AbstractAppender {
 				listener.sendMessage(event);
 			}
 		}
+	}
+
+	public static void removeRunId(String runId) {
+		LOG_EVENTS_MAP.remove(runId);
 	}
 }

@@ -17,15 +17,8 @@ import java.io.ObjectOutput;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Calendar;
-import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,6 +29,7 @@ import java.util.regex.Pattern;
 public final class RunTimeConfig
 extends BaseConfiguration
 implements Externalizable {
+	private Set<String> userKeys;
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String LIST_SEP = ",", KEY_VERSION = "run.version";
@@ -121,6 +115,15 @@ implements Externalizable {
 		setProperty(key, value);
 		//System.setProperty(key, value);
 	}
+	//
+	public final synchronized void setUserKeys(final Set<String> userKeys) {
+		this.userKeys = userKeys;
+	}
+	//
+	public final Set<String> getUserKeys() {
+		return userKeys;
+	}
+	//
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final int getRunReqTimeOutMilliSec() {
 		return getInt("run.request.timeout.millisec");

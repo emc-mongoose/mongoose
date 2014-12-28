@@ -78,6 +78,8 @@
 								<option value="base">base</option>
 								<option value="extended">extended</option>
 							</select>
+							<button type="button" id="save-config">Save in default</button>
+							<!--<button type="button" id="save-config">Save in file</button>-->
 						</div>
 
 						<!-- List of folders from JS-->
