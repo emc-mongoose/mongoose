@@ -28,7 +28,7 @@ public class SaveServlet extends HttpServlet {
 	@Override
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
 		setupRunTimeConfig(request);
-		DirectoryLoader.loadPropsToDirsFromRunTimeConfig(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES), runTimeConfig);
+		//DirectoryLoader.loadPropsToDirsFromRunTimeConfig(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES), runTimeConfig);
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 

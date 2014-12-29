@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -35,7 +36,7 @@ implements Externalizable {
 	public final static String LIST_SEP = ",", KEY_VERSION = "run.version";
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
-	private final Map<String, Object> properties = new HashMap<>();
+	public final Map<String, Object> properties = new HashMap<>();
 	//
 	private final static DateFormat FMT_DT = new SimpleDateFormat(
 			"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
@@ -95,6 +96,7 @@ implements Externalizable {
 		).toUpperCase();
 	}
 	public String getPropertiesMap() {
+		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES), this);
 		return new Gson().toJson(properties);
 	}
 	//

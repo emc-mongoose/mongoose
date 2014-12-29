@@ -68,9 +68,8 @@ public final class StartServlet extends HttpServlet {
 		//
 		runTimeConfig = runTimeConfig.clone();
 		//
-		LAST_RUN_TIME_CONFIG = runTimeConfig;
-		//
 		setupRunTimeConfig(request);
+		LAST_RUN_TIME_CONFIG = runTimeConfig;
 		//
 		//DirectoryLoader.loadPropsToDirsFromRunTimeConfig(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES), runTimeConfig);
 		//File file = Paths.get(Main.DIR_ROOT, JettyRunner.DIR_WEBAPP, JettyRunner.DIR_CONF).toFile();
