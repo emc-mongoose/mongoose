@@ -11,6 +11,7 @@ import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.omg.SendingContext.RunTime;
 
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -21,7 +22,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 //
 
@@ -38,31 +45,39 @@ extends SimpleFileVisitor<Path> {
 	//
 	private LinkedList<String> prefixTokens = new LinkedList<>();
 	private final RunTimeConfig tgtConfig;
-	private static boolean isLoadingFromDirs;
 	//
+	private boolean isUpload;
+	private boolean isUpdate;
+
 	public DirectoryLoader(final RunTimeConfig tgtConfig) {
 		this.tgtConfig = tgtConfig;
 	}
 	//
 	public static void loadPropsFromDir(final Path rootDir, final RunTimeConfig tgtConfig) {
-		isLoadingFromDirs = true;
-		loadProps(rootDir, tgtConfig);
-	}
-	//
-	public static void loadPropsToDirsFromRunTimeConfig(final Path rootDir, final RunTimeConfig tgtConfig) {
-		isLoadingFromDirs = false;
-		loadProps(rootDir, tgtConfig);
-	}
-	//
-	private static void loadProps(final Path rootDir, final RunTimeConfig tgtConfig) {
 		final DirectoryLoader dirLoader = new DirectoryLoader(tgtConfig);
 		try {
 			LOG.debug(Markers.MSG, "Load system properties from directory \"{}\"", rootDir);
 			Files.walkFileTree(rootDir, dirLoader);
 			tgtConfig.setUserKeys(userKeys);
-		} catch(final IOException e) {
+		} catch (final IOException e) {
 			LOG.error(Markers.ERR, e.toString(), e.getCause());
 		}
+	}
+	//
+	public static void updatePropertiesFromDir(final Path rootDir, final RunTimeConfig tgtConfig) {
+		updatePropertiesFromDir(rootDir, tgtConfig, false);
+	}
+	//
+	public static void updatePropertiesFromDir(final Path rootDir, final RunTimeConfig tgtConfig, final boolean isUpload) {
+		final DirectoryLoader dirLoader = new DirectoryLoader(tgtConfig);
+		dirLoader.isUpload = isUpload;
+		dirLoader.isUpdate = true;
+		try {
+			Files.walkFileTree(rootDir, dirLoader);
+		} catch (final IOException e) {
+			LOG.error(Markers.ERR, e.toString(), e.getCause());
+		}
+		Map<String, Object> node = tgtConfig.properties;
 	}
 	//
 	@Override
@@ -94,25 +109,26 @@ extends SimpleFileVisitor<Path> {
 		if(currProps!=null) {
 			String key;
 			//
-			if (!isLoadingFromDirs) {
+			if (isUpdate) {
+				if (file.getFileName().toString().equals("run")) {
+					props.add(new DefaultEntry<String, Object>(Main.KEY_RUN_ID,
+						new DefaultEntry<>("id", tgtConfig.getProperty("run.id"))));
+				}
 				for (final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext(); ) {
 					key = keyIter.next();
 					final String fullKeyName = currPrefix + key;
-					userKeys.add(fullKeyName);
-					//
 					currProps.setProperty(key, tgtConfig.getProperty(fullKeyName));
-					//
 					props.add(new DefaultEntry<String, Object>(fullKeyName,
 						new DefaultEntry<>(key, tgtConfig.getProperty(fullKeyName))));
 				}
-				//
-				final FileWriter writer = new FileWriter(file.toFile());
-				try {
-					currProps.save(writer);
-				} catch (ConfigurationException e) {
-					ExceptionHandler.trace(LOG, Level.ERROR, e, "Some problems with configuration usage");
+				if (isUpload) {
+					try (final FileWriter writer = new FileWriter(file.toFile())) {
+						currProps.save(writer);
+					} catch (final Exception e) {
+						//TODO more work with exceptions
+						ExceptionHandler.trace(LOG, Level.ERROR, e, "Can't write in property file");
+					}
 				}
-				writer.close();
 			} else {
 				if (file.getFileName().toString().equals("run")) {
 					props.add(new DefaultEntry<String, Object>(Main.KEY_RUN_ID,
@@ -167,6 +183,15 @@ extends SimpleFileVisitor<Path> {
 		} else {
 			// directory iteration failed
 			throw e;
+		}
+	}
+
+	private void saveNewProps(final Path file, final PropertiesConfiguration currProps) {
+		//TODO more work with exceptions
+		try (final FileWriter writer = new FileWriter(file.toFile())) {
+			currProps.save(writer);
+		} catch (final Exception e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Can't write in property file");
 		}
 	}
 }

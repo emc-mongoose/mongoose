@@ -68,14 +68,8 @@ public final class StartServlet extends HttpServlet {
 		//
 		runTimeConfig = runTimeConfig.clone();
 		//
-		LAST_RUN_TIME_CONFIG = runTimeConfig;
-		//
 		setupRunTimeConfig(request);
-		//
-		//DirectoryLoader.loadPropsToDirsFromRunTimeConfig(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES), runTimeConfig);
-		//File file = Paths.get(Main.DIR_ROOT, JettyRunner.DIR_WEBAPP, JettyRunner.DIR_CONF).toFile();
-		//saveCurrentConfigToFile(runTimeConfig);
-		//readFromConfigFile(runTimeConfig, file);
+		LAST_RUN_TIME_CONFIG = runTimeConfig;
 		//
 		switch (RunModes.getRunModeConstantByRequest(request.getParameter("run.mode"))) {
 			case VALUE_RUN_MODE_SERVER:
@@ -127,7 +121,7 @@ public final class StartServlet extends HttpServlet {
 			}
 		};
 		thread.start();
-		threadsMap.put(runTimeConfig.getString("run.id"), thread);
+		threadsMap.put(runTimeConfig.getString(Main.KEY_RUN_ID), thread);
 	}
 	//
 	private void startStandaloneOrClient(final String message) {
@@ -147,7 +141,7 @@ public final class StartServlet extends HttpServlet {
 			}
 		};
 		thread.start();
-		threadsMap.put(runTimeConfig.getString("run.id"), thread);
+		threadsMap.put(runTimeConfig.getString(Main.KEY_RUN_ID), thread);
 	}
 	//
 	private void startWSMock(final String message) {
@@ -168,7 +162,7 @@ public final class StartServlet extends HttpServlet {
 		};
 
 		thread.start();
-		threadsMap.put(runTimeConfig.getString("run.id"), thread);
+		threadsMap.put(runTimeConfig.getString(Main.KEY_RUN_ID), thread);
 	}
 
 	public boolean isRunIdFree(final String runId) {
@@ -222,52 +216,4 @@ public final class StartServlet extends HttpServlet {
 				break;
 		}
 	}
-	//
-	/*private void saveCurrentConfigToFile(final RunTimeConfig runTimeConfig) {
-		//
-		final File file = Paths.get(Main.DIR_ROOT, JettyRunner.DIR_WEBAPP,
-				JettyRunner.DIR_CONF).toFile();
-		if (!file.mkdirs()) {
-			if (!file.exists()) {
-				LOG.warn(Markers.ERR, "Can't create folders for ui config");
-			}
-		}
-		try {
-			final FileOutputStream outputStream = new FileOutputStream(file.toString() + File.separator + "config");
-			final Properties props = new Properties();
-			final Set<String> keys = runTimeConfig.getUserKeys();
-			for (String key : keys) {
-				Object value = runTimeConfig.getProperty(key);
-				if (List.class.isInstance(value)) {
-					props.setProperty(key, StringUtils.join(List.class.cast(value), RunTimeConfig.LIST_SEP));
-				} else if (String.class.isInstance(value)) {
-					props.setProperty(key, String.class.cast(value));
-				}
-			}
-			try {
-				props.store(outputStream, null);
-			} catch (final IOException e) {
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Can't store properties in config file");
-			}
-		} catch (final FileNotFoundException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "File for saving configuration not found");
-		}
-	}
-
-	private void readFromConfigFile(final RunTimeConfig runTimeConfig, final File file) {
-		final Properties props = new Properties();
-		final Set<String> keys = runTimeConfig.getUserKeys();
-		try {
-			final FileInputStream inputStream = new FileInputStream(file + File.separator + "config");
-			props.load(inputStream);
-			for (String key : keys) {
-				runTimeConfig.setProperty(key, props.getProperty(key));
-			}
-		} catch (final FileNotFoundException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "File for reading configuration not found");
-		} catch (final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Can't read properties from file");
-		}
-	}*/
-
 }

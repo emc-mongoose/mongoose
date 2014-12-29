@@ -16,27 +16,23 @@ import java.util.Map;
  * Created by gusakk on 12/28/14.
  */
 public class SaveServlet extends HttpServlet {
-
+	//
 	private RunTimeConfig runTimeConfig;
-
+	//
 	@Override
 	public void init() throws ServletException {
 		super.init();
 		runTimeConfig = Main.RUN_TIME_CONFIG.get().clone();
 	}
-
+	//
 	@Override
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
 		setupRunTimeConfig(request);
-		DirectoryLoader.loadPropsToDirsFromRunTimeConfig(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES), runTimeConfig);
+		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES),
+			runTimeConfig, true);
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
-
-	@Override
-	public void doGet(final HttpServletRequest request, final HttpServletResponse response) {
-
-	}
-
+	//
 	private void setupRunTimeConfig(final HttpServletRequest request) {
 		for (final Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
 			if (entry.getValue()[0].trim().isEmpty()) {
@@ -49,7 +45,7 @@ public class SaveServlet extends HttpServlet {
 			runTimeConfig.set(entry.getKey(), entry.getValue()[0].trim());
 		}
 	}
-
+	//
 	private String convertArrayToString(final String key, final String[] stringArray) {
 		final String resultString = Arrays.toString(stringArray)
 				.replace("[", "")

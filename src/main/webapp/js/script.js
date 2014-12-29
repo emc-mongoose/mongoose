@@ -438,6 +438,9 @@ function onStartButtonPressed() {
 				//	do nothing
 			}
 		} else {
+			$('#config-type option').prop('selected', function() {
+				return this.defaultSelected;
+			});
 			location.reload();
 		}
 	});
