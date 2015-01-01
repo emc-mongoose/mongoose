@@ -67,7 +67,7 @@
 								<option value="server">driver</option>
 								<option value="wsmock">wsmock</option>
 							</select>
-							<button id="start" type="button">
+							<button  class="btn btn-default" id="start" type="button">
 								Start
 							</button>
 						</div>
@@ -79,9 +79,8 @@
 								<option value="extended">extended</option>
 							</select>
 							<br/>
-							<button id="save-config" type="button">Save</button>
-							<br/>
-							<a href="/save/props.txt">Save props</a>
+							<button class="btn btn-default" id="save-config" type="button">Save</button>
+							<button class="btn btn-default" id="save-file" type="button">Save file</button>
 						</div>
 
 						<!-- List of folders from JS-->
