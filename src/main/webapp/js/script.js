@@ -221,7 +221,13 @@ $(document).ready(function() {
 	});
 
 	$("#save-config").click(function() {
-		$.post("/save", $("#main-form").serialize(), function(data, status) {
+		$.post("/save", $("#main-form").serialize() + "&operation=update", function(data, status) {
+			alert("Config was successfully saved");
+		});
+	});
+
+	$("#save-file").click(function() {
+		$.post("/save", $("#main-form").serialize() + "&operation=save", function(data, status) {
 			alert("Config was successfully saved");
 		});
 	});

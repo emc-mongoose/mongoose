@@ -81,7 +81,7 @@
 							<br/>
 							<button id="save-config" type="button">Save</button>
 							<br/>
-							<input type="file">
+							<a href="/save/props.txt">Save props</a>
 						</div>
 
 						<!-- List of folders from JS-->

@@ -53,7 +53,7 @@
 
 	<servlet-mapping>
 		<servlet-name>SaveServlet</servlet-name>
-		<url-pattern>/save</url-pattern>
+		<url-pattern>/save/*</url-pattern>
 	</servlet-mapping>
 
 </web-app>
