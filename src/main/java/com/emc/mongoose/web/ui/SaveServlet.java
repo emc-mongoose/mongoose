@@ -32,6 +32,12 @@ import java.util.Scanner;
 public class SaveServlet extends HttpServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static String FILENAME = "config.txt";
+	private final static File FILE_PATH = Paths.get(Main.DIR_ROOT, JettyRunner.DIR_WEBAPP, JettyRunner.DIR_CONF).toFile();
+	//	HTTP Headers
+	private final static String CONTENT_TYPE = "Content-Type";
+	private final static String CONTENT_LENGTH = "Content-Length";
+	private final static String CONTENT_DISPOSITION = "Content-Disposition";
 	//
 	private RunTimeConfig runTimeConfig;
 	//
@@ -40,31 +46,47 @@ public class SaveServlet extends HttpServlet {
 		super.init();
 		runTimeConfig = Main.RUN_TIME_CONFIG.get().clone();
 	}
+	@Override
+	public void doGet(final HttpServletRequest request, final HttpServletResponse response) {
+		//
+		setupRunTimeConfig(request);
+		saveConfigInSeparateFile();
+		//
+		final File fullFileName = new File(FILE_PATH.toString() + File.separator + FILENAME);
+		try {
+			final PrintWriter writer = response.getWriter();
+			final Scanner scanner = new Scanner(fullFileName);
+			while (scanner.hasNextLine()) {
+				String s = scanner.nextLine();
+				writer.write(s + "\n");
+			}
+		} catch (final IOException e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "IOException");
+		}
+		response.setHeader(CONTENT_TYPE, getServletContext().getMimeType(fullFileName.getName()));
+		response.setHeader(CONTENT_LENGTH, String.valueOf(fullFileName.length()));
+		response.setHeader(CONTENT_DISPOSITION, "attachment;filename=\"" + fullFileName.getName() + "\"");
+	}
 	//
 	@Override
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
 		setupRunTimeConfig(request);
-		switch (request.getParameter("operation")) {
-			case "update":
-				DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES),
-					runTimeConfig, true);
-				break;
-			case "save":
-				saveConfigInSeparateFile();
-				break;
-		}
+		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES),
+				runTimeConfig, true);
+		//TODO fix this ugly code
+		StartServlet.LAST_RUN_TIME_CONFIG = runTimeConfig;
+		//
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 	//
 	private void saveConfigInSeparateFile() {
-		final File file = Paths.get(Main.DIR_ROOT, JettyRunner.DIR_WEBAPP, JettyRunner.DIR_CONF).toFile();
-		if (!file.mkdirs()) {
-			if (!file.exists()) {
+		if (!FILE_PATH.mkdirs()) {
+			if (!FILE_PATH.exists()) {
 				LOG.error(Markers.ERR, "Can't create folders for ui config");
 				return;
 			}
 		}
-		try (final FileWriter writer = new FileWriter(file.toString() + File.separator + "config.txt")) {
+		try (final FileWriter writer = new FileWriter(FILE_PATH + File.separator + FILENAME)) {
 			final PropertiesConfiguration props = new PropertiesConfiguration();
 			for (String key : runTimeConfig.getUserKeys()) {
 				props.setProperty(key, runTimeConfig.getProperty(key));
@@ -77,25 +99,6 @@ public class SaveServlet extends HttpServlet {
 		} catch (final IOException e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Can't write properties to ui config file");
 		}
-	}
-	//
-	@Override
-	public void doGet(final HttpServletRequest request, final HttpServletResponse response) {
-		final File file = Paths.get(Main.DIR_ROOT, JettyRunner.DIR_WEBAPP, JettyRunner.DIR_CONF).toFile();
-		final File newFile = new File(file.toString() + File.separator + "config.txt");
-		try {
-			final PrintWriter writer = response.getWriter();
-			final Scanner scanner = new Scanner(newFile);
-			while (scanner.hasNextLine()) {
-				String s = scanner.nextLine();
-				writer.write(s + "\n");
-			}
-		} catch (final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "IOException");
-		}
-		response.setHeader("Content-Type", getServletContext().getMimeType(newFile.getName()));
-		response.setHeader("Content-Length", String.valueOf(newFile.length()));
-		response.setHeader("Content-Disposition", "attachment;filename=\"" + newFile.getName() + "\"");
 	}
 	//
 	private void setupRunTimeConfig(final HttpServletRequest request) {

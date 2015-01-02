@@ -80,7 +80,7 @@
 							</select>
 							<br/>
 							<button class="btn btn-default" id="save-config" type="button">Save</button>
-							<button class="btn btn-default" id="save-file" type="button">Save file</button>
+							<a href="/save/config.txt" id="save-file" class="btn btn-default">Save in file</a>
 						</div>
 
 						<!-- List of folders from JS-->
