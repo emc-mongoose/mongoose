@@ -441,7 +441,10 @@ implements LoadExecutor<T> {
 			double eff = 1.e3 * durSumTasks.get() / ((System.nanoTime() - tsStart) * totalThreadCount);
 			LOG.debug(
 				Markers.PERF_SUM,
-				String.format("Calculated load execution efficiency: %3.3f[%%]", 100 * eff)
+				String.format(
+					Main.LOCALE_DEFAULT, "Calculated load execution efficiency: %3.3f[%%]",
+					100 * eff
+				)
 			);
 			try {
 				// force shutdown
