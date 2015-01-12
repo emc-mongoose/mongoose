@@ -244,7 +244,8 @@ implements WSRequest<T> {
 							httpResponse.getEntity().writeTo(bOutPut);
 							final String errMsg = bOutPut.toString();
 							LOG.debug(
-								Markers.ERR, "{}, cause request: {}/{}", errMsg, hashCode(), dataItem
+								Markers.ERR, "{} ({}), cause request: {}/{}",
+								statusCode, errMsg, hashCode(), dataItem
 							);
 						} catch(final IOException e) {
 							ExceptionHandler.trace(
