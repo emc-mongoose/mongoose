@@ -66,27 +66,27 @@ implements DataItem {
 		fromString(metaInfo);
 	}
 	//
-	public UniformData(final long size) {
+	public UniformData(final Long size) {
 		this(size, UniformDataSource.DEFAULT);
 	}
 	//
-	public UniformData(final long size, final UniformDataSource dataSrc) {
+	public UniformData(final Long size, final UniformDataSource dataSrc) {
 		this(
 			NEXT_OFFSET.getAndSet(Math.abs(UniformDataSource.nextWord(NEXT_OFFSET.get()))),
 			size, dataSrc
 		);
 	}
 	//
-	public UniformData(final long offset, final long size) {
+	public UniformData(final Long offset, final Long size) {
 		this(offset, size, UniformDataSource.DEFAULT);
 	}
 	//
-	public UniformData(final long offset, final long size, final UniformDataSource dataSrc) {
+	public UniformData(final Long offset, final Long size, final UniformDataSource dataSrc) {
 		this(offset, size, 0, dataSrc);
 	}
 	//
 	public UniformData(
-		final long offset, final long size, final int layerNum, final UniformDataSource dataSrc
+		final Long offset, final Long size, final Integer layerNum, final UniformDataSource dataSrc
 	) {
 		super(dataSrc.getBytes(layerNum));
 		try {

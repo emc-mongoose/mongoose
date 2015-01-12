@@ -63,6 +63,7 @@ implements LoadExecutor<T> {
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
 	private final long maxCount;
+	private final int totalThreadCount;
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
 	protected final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
@@ -84,7 +85,7 @@ implements LoadExecutor<T> {
 		);
 		//
 		storageNodeCount = addrs.length;
-		final int totalThreadCount = threadsPerNode * storageNodeCount;
+		totalThreadCount = threadsPerNode * storageNodeCount;
 		setCorePoolSize((int) Math.sqrt(totalThreadCount));
 		setMaximumPoolSize((int) Math.sqrt(totalThreadCount));
 		//
@@ -271,6 +272,8 @@ implements LoadExecutor<T> {
 		//
 	}
 	//
+	private long tsStart;
+	//
 	@Override
 	public void start() {
 		if(metricDumpThread.isAlive()) {
@@ -280,7 +283,7 @@ implements LoadExecutor<T> {
 			reqConfig.configureStorage(this);
 			prestartAllCoreThreads();
 			//
-			if(producer==null) {
+			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
 			} else {
 				try {
@@ -297,6 +300,7 @@ implements LoadExecutor<T> {
 			metricDumpThread.setName(getName());
 			metricDumpThread.start();
 			//
+			tsStart = System.nanoTime();
 			LOG.info(Markers.MSG, "Started \"{}\"", getName());
 		}
 	}
@@ -385,6 +389,8 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
+	private final AtomicLong durSumTasks = new AtomicLong(0);
+	//
 	@Override
 	public final void handleResult(final AsyncIOTask<T> ioTask, final AsyncIOTask.Result result) {
 		final T dataItem = ioTask.getDataItem();
@@ -396,6 +402,7 @@ implements LoadExecutor<T> {
 				counterReqSucc.inc();
 				respLatency.update(ioTask.getLatency());
 				reqBytes.mark(ioTask.getTransferSize());
+				durSumTasks.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
 				// feed to the consumer
 				if(consumer != null) {
 					consumer.submit(dataItem);
@@ -430,10 +437,17 @@ implements LoadExecutor<T> {
 		if(!isTerminated()) {
 			interrupt();
 			logMetrics(Markers.PERF_SUM); // provide summary metrics
+			// calculate the efficiency and report
+			double eff = 1.e3 * durSumTasks.get() / ((System.nanoTime() - tsStart) * totalThreadCount);
+			LOG.debug(
+				Markers.PERF_SUM,
+				String.format("Calculated load execution efficiency: %3.3f[%%]", 100 * eff)
+			);
 			try {
 				// force shutdown
 				LOG.debug(Markers.MSG, "{}: dropped {} tasks", getName(), shutdownNow().size());
-				consumer.submit(null); // poison the consumer
+				// poison the consumer
+				consumer.submit(null);
 			} catch(final InterruptedException e) {
 				ExceptionHandler.trace(
 					LOG, Level.DEBUG, e,

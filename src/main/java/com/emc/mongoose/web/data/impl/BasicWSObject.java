@@ -2,6 +2,7 @@ package com.emc.mongoose.web.data.impl;
 //
 import com.emc.mongoose.base.data.impl.UniformDataSource;
 import com.emc.mongoose.object.data.impl.BasicObject;
+import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.web.data.WSObject;
 //
 import org.apache.http.Header;
@@ -36,23 +37,23 @@ implements WSObject {
 		fromString(metaInfo);
 	}
 	//
-	public BasicWSObject(final long size) {
+	public BasicWSObject(final Long size) {
 		super(size);
 	}
 	//
-	public BasicWSObject(final long size, final UniformDataSource dataSrc) {
+	public BasicWSObject(final Long size, final UniformDataSource dataSrc) {
 		super(size, dataSrc);
 	}
 	//
-	public BasicWSObject(final String id, final long size) {
+	public BasicWSObject(final String id, final Long size) {
 		super(id, size);
 	}
 	//
-	public BasicWSObject(final String id, final long offset, final long size) {
+	public BasicWSObject(final String id, final Long offset, final Long size) {
 		super(id, offset, size);
 	}
 	//
-	public BasicWSObject(final String id, final long size, final UniformDataSource dataSrc) {
+	public BasicWSObject(final String id, final Long size, final UniformDataSource dataSrc) {
 		super(id, size, dataSrc);
 	}
 	//

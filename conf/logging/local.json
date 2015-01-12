@@ -455,7 +455,7 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.web.api.impl.provider.s3",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"

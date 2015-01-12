@@ -63,19 +63,19 @@ implements AppendableDataItem, UpdatableDataItem {
 		fromString(metaInfo); // invokes ranges initialization
 	}
 	//
-	public DataRanges(final long size) {
+	public DataRanges(final Long size) {
 		super(size);
 	}
 	//
-	public DataRanges(final long size, final UniformDataSource dataSrc) {
+	public DataRanges(final Long size, final UniformDataSource dataSrc) {
 		super(size, dataSrc);
 	}
 	//
-	public DataRanges(final long offset, final long size) {
+	public DataRanges(final Long offset, final Long size) {
 		super(offset, size);
 	}
 	//
-	public DataRanges(final long offset, final long size, final UniformDataSource dataSrc) {
+	public DataRanges(final Long offset, final Long size, final UniformDataSource dataSrc) {
 		super(offset, size, dataSrc);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

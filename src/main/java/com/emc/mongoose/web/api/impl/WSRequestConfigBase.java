@@ -438,13 +438,11 @@ implements WSRequestConfig<T> {
 	public final boolean consumeContent(
 		final InputStream contentStream, final IOControl ioCtl, T dataItem
 	) throws IOException {
-		boolean ok = false;
+		boolean ok = true;
 		if(dataItem != null) {
 			if(loadType == AsyncIOTask.Type.READ) { // read
 				if(verifyContentFlag) { // read and do verify
-					if(dataItem.compareWith(contentStream)) {
-						ok = true;
-					}
+					ok = dataItem.compareWith(contentStream);
 				} else { // read, verification is disabled - consume quetly
 					consumeContentQuetly(contentStream, ioCtl);
 				}

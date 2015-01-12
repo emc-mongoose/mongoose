@@ -27,31 +27,31 @@ implements DataObject {
 		fromString(metaInfo);
 	}
 	//
-	public BasicObject(final long size) {
+	public BasicObject(final Long size) {
 		super(size);
 	}
 	//
-	public BasicObject(final long size, final UniformDataSource dataSrc) {
+	public BasicObject(final Long size, final UniformDataSource dataSrc) {
 		super(size, dataSrc);
 	}
 	//
-	public BasicObject(final String id, final long size) {
+	public BasicObject(final String id, final Long size) {
 		super(size);
 		this.id = id;
 	}
 	//
-	public BasicObject(final String id, final long size, final UniformDataSource dataSrc) {
+	public BasicObject(final String id, final Long size, final UniformDataSource dataSrc) {
 		super(size, dataSrc);
 		this.id = id;
 	}
 	//
-	public BasicObject(final String id, final long offset, final long size) {
+	public BasicObject(final String id, final Long offset, final long size) {
 		super(offset, size);
 		this.id = id;
 	}
 	//
 	public BasicObject(
-		final String id, final long offset, final long size, final UniformDataSource dataSrc
+		final String id, final Long offset, final Long size, final UniformDataSource dataSrc
 	) {
 		super(offset, size, dataSrc);
 		this.id = id;

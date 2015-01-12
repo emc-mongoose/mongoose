@@ -49,7 +49,9 @@ implements Producer<T> {
 	) throws ClassCastException, NoSuchMethodException {
 		super("bucket-" + bucket.getName() + "-producer");
 		this.bucket = bucket;
-		this.dataConstructor = (Constructor<T>) dataCls.getConstructor(String.class, Long.class);
+		this.dataConstructor = (Constructor<T>) dataCls.getConstructor(
+			String.class, Long.class, Long.class
+		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		this.wsClient = wsClient;
 	}
