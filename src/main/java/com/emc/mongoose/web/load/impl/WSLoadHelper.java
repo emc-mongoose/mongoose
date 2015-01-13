@@ -9,6 +9,7 @@ import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 //
+import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.web.load.WSNodeExecutor;
 import org.apache.http.Header;
 import org.apache.http.client.config.RequestConfig;
@@ -88,10 +89,11 @@ public class WSLoadHelper {
 		return httpClientBuilder.build();
 	}
 	//
+	@SuppressWarnings("unchecked")
 	public static void initNodeExecutors(
-		final String addrs[], final RunTimeConfig runTimeConfig,
-		final WSRequestConfig<WSObject> reqConf, final int threadsPerNode,
-		final MetricRegistry parentMetrics, final String name,
+		final String addrs[],
+		final RunTimeConfig runTimeConfig, final WSRequestConfig<? extends WSObject> reqConf,
+		final int threadsPerNode, final MetricRegistry parentMetrics, final String name,
 		final StorageNodeExecutor[] nodes
 	) {
 		WSNodeExecutor nextNodeExecutor;

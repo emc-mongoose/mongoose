@@ -1,14 +1,15 @@
 package com.emc.mongoose.util.conf;
 //
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.collections.pairs.DefaultEntry;
 import com.emc.mongoose.util.logging.Markers;
-//
+import com.google.gson.Gson;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -16,8 +17,10 @@ import java.io.ObjectOutput;
 import java.nio.file.Path;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -25,6 +28,7 @@ import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 /**
  Created by kurila on 28.05.14.
  A shared runtime configuration.
@@ -36,6 +40,8 @@ implements Externalizable {
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String LIST_SEP = ",", KEY_VERSION = "run.version";
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
+	//
+	private final Map<String, Object> properties = new HashMap<>();
 	//
 	private final static DateFormat FMT_DT = new SimpleDateFormat(
 			"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
@@ -94,6 +100,23 @@ implements Externalizable {
 			x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
 		).toUpperCase();
 	}
+	public String getPropertiesMap() {
+		return new Gson().toJson(properties);
+	}
+	//
+	@SuppressWarnings("unchecked")
+	public final synchronized void put(List<String> dirs, String fileName, List<DefaultEntry<String, Object>> props) {
+		Map<String, Object> node = properties;
+		if (dirs != null) {
+			for (final String nextDir : dirs) {
+				if (!node.containsKey(nextDir)) {
+					node.put(nextDir, new LinkedHashMap<>());
+				}
+				node = (Map<String, Object>) node.get(nextDir);
+			}
+		}
+		node.put(fileName, props);
+	}
 	//
 	public final synchronized void set(final String key, final String value) {
 		setProperty(key, value);
@@ -114,6 +137,58 @@ implements Externalizable {
 	//
 	public final boolean getRunRequestRetries() {
 		return getBoolean("run.request.retries");
+	}
+	//
+	private final static String FMT_MSG_INVALID_THRESHOLD = "Invalid threshold value: %s, should be a non-negative integer or float from the range of [0; 1)";
+	//
+	public final float getRunFailThreshold()
+	throws IllegalArgumentException {
+		float threshold;
+		String valueSpec = getString("run.fail.threshold");
+		if(valueSpec != null && valueSpec.length() > 0) {
+			if(valueSpec.indexOf('%') == valueSpec.length() - 1) { // percents
+				valueSpec = valueSpec.substring(0, valueSpec.length() - 1);
+				try {
+					threshold = Float.parseFloat(valueSpec) / 100;
+					if(threshold < 0 || threshold > 1) {
+						throw new IllegalArgumentException(
+							String.format(FMT_MSG_INVALID_THRESHOLD, valueSpec)
+						);
+					}
+				} catch(final NumberFormatException e) {
+					throw new IllegalArgumentException(
+						String.format(FMT_MSG_INVALID_THRESHOLD, valueSpec)
+					);
+				}
+			} else { // integer count or float ratio
+				try {
+					threshold = Long.parseLong(valueSpec);
+					if(threshold < 0) {
+						throw new IllegalArgumentException(
+							String.format(FMT_MSG_INVALID_THRESHOLD, valueSpec)
+						);
+					}
+				} catch(final NumberFormatException e) {
+					try {
+						threshold = Float.parseFloat(valueSpec);
+						if(threshold < 0 || threshold > 1) {
+							throw new IllegalArgumentException(
+								String.format(FMT_MSG_INVALID_THRESHOLD, valueSpec)
+							);
+						}
+					} catch(final NumberFormatException ee) {
+						throw new IllegalArgumentException(
+							String.format(FMT_MSG_INVALID_THRESHOLD, valueSpec)
+						);
+					}
+				}
+			}
+		} else {
+			throw new IllegalArgumentException(
+				String.format(FMT_MSG_INVALID_THRESHOLD, valueSpec)
+			);
+		}
+		return threshold;
 	}
 	//
 	public final String getStorageApi() {
@@ -372,5 +447,11 @@ implements Externalizable {
 		runTimeConfig.set(Main.KEY_RUN_ID, FMT_DT.format(
 				Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()));
 		return runTimeConfig;
+	}
+
+	public void overrideSystemProperties(Map<String, String> props){
+		for(Map.Entry<String, String> entry : props.entrySet()){
+			setProperty(entry.getKey(), entry.getValue());
+		}
 	}
 }

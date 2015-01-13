@@ -14,10 +14,15 @@ import org.apache.logging.log4j.core.LogEvent;
 //
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketException;
-import org.eclipse.jetty.websocket.api.annotations.*;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
+import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
+import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 //
 import java.io.IOException;
 import java.util.List;
+
 /**
  * Created by gusakk on 10/24/14.
  */
@@ -46,19 +51,12 @@ implements WebSocketLogListener {
 		this.session = session;
 		//
 		WebUIAppender.register(this);
-		sendMessagesOnConnect(WebUIAppender.getLogEventsList());
 		LOG.trace(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
 	}
 	//
 	@OnWebSocketMessage
 	public final void onMessage(final String message) {
 		LOG.trace(Markers.MSG, "Message from Browser {}", message);
-	}
-	//
-	public final synchronized void sendMessagesOnConnect(final List<LogEvent> logEvents) {
-		for (final LogEvent logEvent : logEvents) {
-			sendMessage(logEvent);
-		}
 	}
 	//
 	@Override

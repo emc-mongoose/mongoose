@@ -5,6 +5,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.base.load.impl.StorageNodeExecutorBase;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
 import com.emc.mongoose.object.data.DataObject;
+import com.emc.mongoose.object.load.ObjectLoadExecutor;
 import com.emc.mongoose.object.load.ObjectNodeExecutor;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //

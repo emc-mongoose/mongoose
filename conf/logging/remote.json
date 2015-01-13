@@ -15,7 +15,7 @@
 				{
 					"name": "WebUI",
 					"type": "WebUI",
-					"enabled": "false",
+					"enabled": "true",
 					"Filters": {
 						"Filter": [
 							{
@@ -36,6 +36,11 @@
 							}, {
 								"type": "MarkerFilter",
 								"marker": "perfSum",
+								"onMatch": "NEUTRAL",
+								"onMismatch": "DENY"
+							}, {
+								"type": "ThresholdFilter",
+								"level": "INFO",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
 							}

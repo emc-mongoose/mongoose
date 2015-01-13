@@ -29,6 +29,8 @@ import java.rmi.RemoteException;
 import java.util.Locale;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -57,6 +59,7 @@ implements StorageNodeExecutor<T> {
 	private final Request.Type reqType;
 	//
 	private final int retryDelayMilliSec, retryCountMax;
+	private final float failThreshold;
 	//
 	private final Lock lock = new ReentrantLock();
 	private final Condition condDone = lock.newCondition();
@@ -67,21 +70,23 @@ implements StorageNodeExecutor<T> {
 		final MetricRegistry parentMetrics, final String parentName
 	) {
 		super(
-				threadsPerNode, threadsPerNode, 0, TimeUnit.SECONDS,
-				new LinkedBlockingQueue<Runnable>(
-						threadsPerNode * runTimeConfig.getRunRequestQueueFactor()
-				),
-				new DataObjectWorkerFactory(
-						parentName + '<' + localReqConf.getAddr() + '>',
-						localReqConf.getLoadNumber(),
-						localReqConf.getAddr(),
-						localReqConf.getAPI(),
-						localReqConf.getLoadType()
-				)
+			threadsPerNode, threadsPerNode, 0, TimeUnit.SECONDS,
+			new LinkedBlockingQueue<Runnable>(
+				threadsPerNode * runTimeConfig.getRunRequestQueueFactor()
+			),
+			new DataObjectWorkerFactory(
+				parentName + '<' + localReqConf.getAddr() + '>',
+				localReqConf.getLoadNumber(),
+				localReqConf.getAddr(),
+				localReqConf.getAPI(),
+				localReqConf.getLoadType()
+			)
 		);
 		//
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
+		failThreshold = runTimeConfig.getRunFailThreshold();
+		//
 		this.localReqConf = localReqConf;
 		reqType = localReqConf.getLoadType();
 		//
@@ -295,6 +300,32 @@ implements StorageNodeExecutor<T> {
 				counterReqFail.inc();
 				counterReqFailParent.inc();
 				ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
+			}
+		}
+		//
+		final float
+			countReqFail = counterReqFail.getCount(),
+			countSubm = counterSubm.getCount();
+		boolean reached = false;
+		if(failThreshold > 0) {
+			//
+			if(failThreshold < 1) { // ratio
+				if(countSubm > 0 && countReqFail / countSubm > failThreshold) {
+					reached = true;
+				}
+			} else if(countReqFail >= failThreshold) { // integer count
+				reached = true;
+			}
+			//
+			if(reached) {
+				final String msg = String.format(
+					"Failure threshold reached (%d fail/%d total), forcing the IMMEDIATE shutdown",
+					(long) countReqFail, (long) countSubm
+				);
+				LOG.warn(Markers.MSG, msg);
+				System.err.println(msg);
+				System.err.flush();
+				Runtime.getRuntime().halt(1);
 			}
 		}
 		//

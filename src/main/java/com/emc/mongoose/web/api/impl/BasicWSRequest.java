@@ -4,7 +4,7 @@ import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.base.api.impl.RequestBase;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.util.pool.BasicInstancePool;
+import com.emc.mongoose.util.collections.BasicInstancePool;
 import com.emc.mongoose.web.api.WSRequest;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
@@ -232,6 +232,9 @@ implements WSRequest<T> {
 							LOG.warn(Markers.ERR, "Storage prays about a mercy");
 							result = Result.FAIL_SVC;
 							break;
+						case (507):
+							LOG.warn(Markers.ERR, "Insufficient storage");
+							result = Result.FAIL_SVC;
 						default:
 							LOG.warn(Markers.ERR, "Response code: {}", result);
 							result = Result.FAIL_UNKNOWN;
@@ -241,7 +244,8 @@ implements WSRequest<T> {
 							httpResponse.getEntity().writeTo(bOutPut);
 							final String errMsg = bOutPut.toString();
 							LOG.debug(
-								Markers.ERR, "{}, cause request: {}/{}", errMsg, hashCode(), dataItem
+								Markers.ERR, "{} ({}), cause request: {}/{}",
+								statusCode, errMsg, hashCode(), dataItem
 							);
 						} catch(final IOException e) {
 							ExceptionHandler.trace(

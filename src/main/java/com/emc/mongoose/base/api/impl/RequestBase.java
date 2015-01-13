@@ -6,7 +6,7 @@ import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
 import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.pool.BasicInstancePool;
+import com.emc.mongoose.util.collections.BasicInstancePool;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
