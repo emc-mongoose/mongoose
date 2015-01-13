@@ -138,6 +138,7 @@ extends DefaultHandler {
 	@Override
 	public final void endDocument()
 	throws SAXException {
+		LOG.debug(Markers.MSG, "End of bucket listing, got {} items", count);
 		if(consumer != null) {
 			try {
 				consumer.shutdown();

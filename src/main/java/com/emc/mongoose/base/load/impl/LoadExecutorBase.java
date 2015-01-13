@@ -42,6 +42,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 15.10.14.
@@ -394,13 +395,14 @@ implements LoadExecutor<T> {
 	@Override
 	public final void handleResult(final AsyncIOTask<T> ioTask, final AsyncIOTask.Result result) {
 		final T dataItem = ioTask.getDataItem();
+		final int latency = ioTask.getLatency();
 		try {
 			if(dataItem == null) {
 				consumer.submit(null);
 			} else if(result == AsyncIOTask.Result.SUCC) {
 				// update the metrics with success
 				counterReqSucc.inc();
-				respLatency.update(ioTask.getLatency());
+				respLatency.update(latency < 0 ? 0 : latency);
 				reqBytes.mark(ioTask.getTransferSize());
 				durSumTasks.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
 				// feed to the consumer
@@ -427,14 +429,18 @@ implements LoadExecutor<T> {
 				LOG, Level.WARN, e,
 				String.format("Failed to stop the producer: %s", producer.toString())
 			);
-		}// stop the submitting
-		super.shutdown();
+		}
+		if(!isShutdown()) {
+			super.shutdown(); // stop the submitting
+		}
 	}
+	//
+	private final AtomicBoolean isClosed = new AtomicBoolean(false);
 	//
 	@Override
 	public synchronized void close()
 	throws IOException {
-		if(!isTerminated()) {
+		if(isClosed.compareAndSet(false, true)) {
 			interrupt();
 			logMetrics(Markers.PERF_SUM); // provide summary metrics
 			// calculate the efficiency and report

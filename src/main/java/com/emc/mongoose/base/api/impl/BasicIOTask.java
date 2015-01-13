@@ -72,13 +72,27 @@ implements AsyncIOTask<T> {
 	// END pool related things
 	@Override
 	public final void complete() {
-		LOG.info(
-			Markers.PERF_TRACE, String.format(
-				FMT_PERF_TRACE, nodeAddr, dataItem.getId(), dataItem.getSize(), result.code,
-				reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
-				respTimeDone - respTimeStart
-			)
-		);
+		if(
+			respTimeDone > respTimeStart &&
+			respTimeStart > reqTimeDone &&
+			reqTimeDone > reqTimeStart
+		) {
+			LOG.info(
+				Markers.PERF_TRACE, String.format(
+					FMT_PERF_TRACE, nodeAddr, dataItem.getId(), transferSize, result.code,
+					reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
+					respTimeDone - respTimeStart
+				)
+			);
+		} else {
+			LOG.debug(
+				Markers.ERR, String.format(
+					FMT_PERF_TRACE, nodeAddr, dataItem.getId(), transferSize, result.code,
+					reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
+					respTimeDone - respTimeStart
+				)
+			);
+		}
 	}
 	//
 	@Override
