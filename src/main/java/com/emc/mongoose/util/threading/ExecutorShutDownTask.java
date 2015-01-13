@@ -33,7 +33,9 @@ implements Runnable {
 	//
 	@Override
 	public final void run() {
-		executor.shutdown();
+		if (!executor.isShutdown()){
+			executor.shutdown();
+		}
 		//
 		final BlockingQueue<Runnable> submQueue = executor.getQueue();
 		final int submExecCoreThreads = executor.getCorePoolSize();
