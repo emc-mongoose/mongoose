@@ -3,8 +3,6 @@ package com.emc.mongoose.util.threading;
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
 //
-import com.emc.mongoose.run.ThreadContextMap;
-
 import java.util.concurrent.ThreadFactory;
 /**
  Created by kurila on 25.04.14.

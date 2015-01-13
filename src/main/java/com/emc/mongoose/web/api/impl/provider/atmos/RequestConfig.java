@@ -1,5 +1,9 @@
 package com.emc.mongoose.web.api.impl.provider.atmos;
 //
+import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.web.api.MutableHTTPRequest;
+import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.run.Main;
@@ -8,16 +12,13 @@ import com.emc.mongoose.util.logging.Markers;
 import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
 /**
@@ -28,11 +29,15 @@ extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static String
-		KEY_SUBTENANT = "api.atmos.subtenant",
-		OBJ_PATH =
-			"/" + Main.RUN_TIME_CONFIG.get().getString("api.atmos.path.rest") +
-			"/" + Main.RUN_TIME_CONFIG.get().getString("api.atmos.interface");
+	private final static String KEY_SUBTENANT = "api.atmos.subtenant";
+	//
+	private final RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
+	private final String
+		objPathPrefix = String.format(
+			"/%s/%s",
+			runTimeConfig.getString("api.atmos.path.rest"),
+			runTimeConfig.getString("api.atmos.interface")
+		), fmtObjPath = objPathPrefix + "/%s";
 	//
 	private SubTenant<T> subTenant;
 	//
@@ -59,6 +64,23 @@ extends WSRequestConfigBase<T> {
 			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
 		}
 		return copy;
+	}
+	//
+	@Override
+	public MutableHTTPRequest createRequest() {
+		MutableHTTPRequest r = null;
+		switch(loadType) {
+			case READ:
+			case DELETE:
+				r = super.createRequest();
+				break;
+			case APPEND:
+			case CREATE:
+			case UPDATE:
+				r = WSIOTask.HTTPMethod.POST.createRequest();
+				break;
+		}
+		return r;
 	}
 	//
 	public final SubTenant<T> getSubTenant() {
@@ -100,6 +122,12 @@ extends WSRequestConfigBase<T> {
 		return this;
 	}
 	//
+	@Override
+	public final Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> client) {
+		// TODO implement sub tenant listing producer
+		return null;
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
@@ -115,8 +143,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final HttpRequest httpRequest, final T dataItem)
-	throws URISyntaxException {
+	protected final void applyURI(final MutableHTTPRequest httpRequest, final T dataItem) {
 		if(httpRequest==null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
 		}
@@ -124,20 +151,11 @@ extends WSRequestConfigBase<T> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		final String objId = dataItem.getId();
-		synchronized(uriBuilder) {
-			HttpRequestBase.class
-				.cast(httpRequest)
-				.setURI(
-					uriBuilder
-						.setPath(
-							objId==null ? OBJ_PATH : OBJ_PATH + '/' + objId
-						).build()
-				);
-		}
+		httpRequest.setUriPath(String.format(fmtObjPath, objId));
 	}
 	//
 	@Override
-	protected final void applyDateHeader(final HttpRequest httpRequest) {
+	protected final void applyDateHeader(final MutableHTTPRequest httpRequest) {
 		super.applyDateHeader(httpRequest);
 		httpRequest.setHeader(
 			KEY_EMC_DATE,
@@ -146,7 +164,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyAuthHeader(final HttpRequest httpRequest) {
+	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
 		if(httpRequest.getLastHeader(HttpHeaders.RANGE)==null) {
 			httpRequest.addHeader(HttpHeaders.RANGE, ""); // temporary required for canonical form
 		}
@@ -165,7 +183,7 @@ extends WSRequestConfigBase<T> {
 	};
 	//
 	@Override
-	public final String getCanonical(final HttpRequest httpRequest) {
+	public final String getCanonical(final MutableHTTPRequest httpRequest) {
 		final StringBuilder buffer = new StringBuilder(httpRequest.getRequestLine().getMethod());
 		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
 		Header header;
@@ -179,7 +197,7 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		buffer.append('\n').append(HttpRequestBase.class.cast(httpRequest).getURI().getRawPath());
+		buffer.append('\n').append(httpRequest.getUriPath());
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
 			header = httpRequest.getFirstHeader(emcHeaderName);
@@ -208,10 +226,10 @@ extends WSRequestConfigBase<T> {
 			final String valueLocation = headerLocation.getValue();
 			if(
 				valueLocation != null &&
-				valueLocation.startsWith(OBJ_PATH) &&
-				valueLocation.length() - OBJ_PATH.length() > 1
+				valueLocation.startsWith(objPathPrefix) &&
+				valueLocation.length() - objPathPrefix.length() > 1
 			) {
-				final String id = valueLocation.substring(OBJ_PATH.length() + 1);
+				final String id = valueLocation.substring(objPathPrefix.length() + 1);
 				if(id.length() > 0) {
 					dataObject.setId(id);
 				} else {
@@ -226,17 +244,17 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public void configureStorage()
+	public void configureStorage(final LoadExecutor<T> client)
 	throws IllegalStateException {
 		if(subTenant == null) {
 			throw new IllegalStateException("Subtenant is not specified");
 		}
 		final String subTenantName = subTenant.getName();
-		if(subTenant.exists()) {
+		if(subTenant.exists(client)) {
 			LOG.debug(Markers.MSG, "Subtenant \"{}\" already exists", subTenantName);
 		} else {
-			subTenant.create();
-			if(subTenant.exists()) {
+			subTenant.create(client);
+			if(subTenant.exists(client)) {
 				runTimeConfig.set(KEY_SUBTENANT, subTenantName);
 			} else {
 				throw new IllegalStateException(
@@ -244,5 +262,10 @@ extends WSRequestConfigBase<T> {
 				);
 			}
 		}
+	}
+	//
+	@Override
+	public void receiveResponse(final HttpResponse response, final T dataItem) {
+		applyObjectId(dataItem, response);
 	}
 }

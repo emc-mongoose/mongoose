@@ -14,7 +14,6 @@ import org.apache.logging.log4j.core.LifeCycle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.logging.log4j.status.StatusConsoleListener;
 //
 import java.io.File;
 import java.io.IOException;
@@ -37,6 +36,15 @@ import java.util.TimeZone;
  */
 public final class Main {
 	//
+	public final static TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
+	public final static Locale LOCALE_DEFAULT = Locale.ROOT;
+	public final static Calendar CALENDAR_DEFAULT = Calendar.getInstance(Main.TZ_UTC, LOCALE_DEFAULT);
+	public final static DateFormat FMT_DT = new SimpleDateFormat(
+		"yyyy.MM.dd.HH.mm.ss.SSS", LOCALE_DEFAULT
+	) {
+		{ setTimeZone(TZ_UTC); }
+	};
+	//
 	public final static String
 		DOT = ".",
 		SEP = System.getProperty("file.separator"),
@@ -50,8 +58,6 @@ public final class Main {
 		//
 		KEY_DIR_ROOT = "dir.root",
 		KEY_POLICY = "java.security.policy",
-		KEY_RUN_ID = "run.id",
-		KEY_RUN_MODE = "run.mode",
 		//
 		KEY_RUN_TIMESTAMP = "run.timestamp",
 		//
@@ -62,10 +68,6 @@ public final class Main {
 		RUN_MODE_COMPAT_SERVER = "driver",
 		RUN_MODE_WEBUI = "webui",
 		RUN_MODE_WSMOCK = "wsmock";
-	//
-	private final static DateFormat FMT_DT = new SimpleDateFormat(
-		"yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT
-	);
 	//
 	public final static File JAR_SELF;
 	static {
@@ -94,7 +96,7 @@ public final class Main {
 		initSecurity();
 		//
 		final String runMode;
-		if(args==null || args.length==0 || args[0].startsWith("-")) {
+		if(args == null || args.length == 0 || args[0].startsWith("-")) {
 			runMode = RUN_MODE_STANDALONE;
 		} else {
 			runMode = args[0];
@@ -103,7 +105,7 @@ public final class Main {
 
 		Map<String, String> properties = HumanFriendlyCli.parseCli(args);
 
-		System.setProperty(KEY_RUN_MODE, runMode);
+		System.setProperty(RunTimeConfig.KEY_RUN_MODE, runMode);
 		final Logger rootLogger = initLogging(runMode);
 		if(rootLogger==null) {
 			System.err.println("Logging initialization failure");
@@ -111,19 +113,20 @@ public final class Main {
 		}
 		//
 		ThreadContextMap.initThreadContextMap();
-		//
+		/*
 		rootLogger.info(
 			Markers.MSG, "Run in mode \"{}\", id: \"{}\"",
-			System.getProperty(KEY_RUN_MODE), System.getProperty(KEY_RUN_ID)
-		);
+			System.getProperty(RunTimeConfig.KEY_RUN_MODE),
+			System.getProperty(RunTimeConfig.KEY_RUN_ID)
+		);*/
 		// load the properties
 		RUN_TIME_CONFIG.set(new RunTimeConfig());
 		//
 		RUN_TIME_CONFIG.get().loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RUN_TIME_CONFIG.get().loadSysProps();
-		rootLogger.debug(Markers.MSG, "Loaded the system properties");
-
+		rootLogger.info(Markers.MSG, RUN_TIME_CONFIG.get().toString());
+		//
 		if(!properties.isEmpty()) {
 			rootLogger.info(Markers.MSG, "Overriding properties {}", properties);
 
@@ -185,9 +188,11 @@ public final class Main {
 			)
 		);
 		// set "run.id" property with timestamp value if not set before
-		String runId = System.getProperty(KEY_RUN_ID);
+		String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 		if(runId==null || runId.length()==0) {
-			System.setProperty(KEY_RUN_ID, System.getProperty(KEY_RUN_TIMESTAMP));
+			System.setProperty(
+				RunTimeConfig.KEY_RUN_ID, FMT_DT.format(CALENDAR_DEFAULT.getTime())
+			);
 		}
 		// make all used loggers asynchronous
 		/*System.setProperty(
@@ -210,12 +215,11 @@ public final class Main {
 	}
 	//
 	public static void initSecurity() {
-        // load the security policy
-        final String secPolicyURL = "file:" + DIR_ROOT + SEP + DIR_CONF + SEP + FNAME_POLICY;
-        System.setProperty(KEY_POLICY, secPolicyURL);
-        Policy.getPolicy().refresh();
-        System.setSecurityManager(new SecurityManager());
-    }
-	//
+		// load the security policy
+		final String secPolicyURL = "file:" + DIR_ROOT + SEP + DIR_CONF + SEP + FNAME_POLICY;
+		System.setProperty(KEY_POLICY, secPolicyURL);
+		Policy.getPolicy().refresh();
+		System.setSecurityManager(new SecurityManager());
+	}
 }
 //

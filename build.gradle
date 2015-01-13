@@ -15,7 +15,6 @@ def loadProperties(String sourceFileName) {
 	if (propFile.canRead()) {
 		config.load(new FileInputStream(propFile))
 		for (Map.Entry property in config) {
-			//noinspection GroovyAssignabilityCheck
 			ext[property.key] = property.value;
 		}
 	}
@@ -26,16 +25,13 @@ loadProperties confDirName + '/properties/run'
 version = ext.version
 
 configurations {
-	//noinspection GroovyAssignabilityCheck
-	apacheCommonsConfiguration {
+	compileRMI {
 		transitive = true
 	}
-	//noinspection GroovyAssignabilityCheck
 	compile {
-		extendsFrom apacheCommonsConfiguration
+		extendsFrom compileRMI
 		transitive = true
 	}
-	//noinspection GroovyAssignabilityCheck
 	runtime {
 		extendsFrom compile
 	}
@@ -45,12 +41,7 @@ repositories {
     mavenCentral()
 }
 
-//noinspection GroovyAssignabilityCheck
 dependencies {
-
-	apacheCommonsConfiguration(
-		'commons-configuration:commons-configuration:1.10'
-	)
 
 	compile (
 		//
@@ -62,22 +53,30 @@ dependencies {
 		'org.apache.logging.log4j:log4j-core:2.1',
 		'org.apache.logging.log4j:log4j-web:2.1',
 		//
-		'org.apache.httpcomponents:httpclient:4.3.6',
-		'org.apache.httpcomponents:httpcore:4.3.3',
+		'org.apache.httpcomponents:httpcore-nio:4.3.3',
+		//
         'org.eclipse.jetty:jetty-server:9.2.3.v20140905',
 		'org.eclipse.jetty:jetty-webapp:9.2.3.v20140905',
-        'javax.servlet:javax.servlet-api:3.1.0',
-		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
+		//
+        'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
 		'org.eclipse.jetty.websocket:websocket-server:9.2.3.v20140905',
 		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
+		//
+		'javax.servlet:javax.servlet-api:3.1.0',
+		'jstl:jstl:1.2',
 		'com.google.code.gson:gson:2.3',
 		//hibernate
 		'org.hibernate:hibernate-core:4.3.6.Final',
 		'org.eclipse.persistence:javax.persistence:2.1.0',
 		//
-		'jstl:jstl:1.2',
 		'commons-cli:commons-cli:1.2'
 	)
+
+	compileRMI (
+		'commons-configuration:commons-configuration:1.10',
+		'org.apache.httpcomponents:httpcore:4.3.3',
+	)
+
 	runtime (
 		//
 		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
@@ -107,13 +106,9 @@ task rmic(dependsOn: compileJava) << {
 	String[] listClsRemote = [
 		'com.emc.mongoose.base.data.persist.TmpFileItemBuffer',
 		'com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc',
-		'com.emc.mongoose.web.load.server.impl.type.AppendSvc',
-		'com.emc.mongoose.web.load.server.impl.type.CreateSvc',
-		'com.emc.mongoose.web.load.server.impl.type.DeleteSvc',
-		'com.emc.mongoose.web.load.server.impl.type.ReadSvc',
-		'com.emc.mongoose.web.load.server.impl.type.UpdateSvc'
+		'com.emc.mongoose.web.load.server.impl.BasicWSLoadSvc'
 	]
-	String clsPath = """${sourceSets.main.output.classesDir}:${configurations.apacheCommonsConfiguration.asPath}"""
+	String clsPath = """${sourceSets.main.output.classesDir}${System.properties.'path.separator'}${configurations.compileRMI.asPath}"""
 	for(cls in listClsRemote) {
 		String command = """rmic -classpath ${clsPath} -d ${sourceSets.main.output.classesDir} ${cls}"""
 		//println command

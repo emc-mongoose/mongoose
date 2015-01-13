@@ -1,9 +1,11 @@
 package com.emc.mongoose.web.api.impl;
 //
-import com.emc.mongoose.base.api.Request;
-import com.emc.mongoose.base.api.impl.RequestConfigImpl;
+import com.emc.mongoose.base.api.AsyncIOTask;
+import com.emc.mongoose.base.api.impl.RequestConfigBase;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
+import com.emc.mongoose.web.api.MutableHTTPRequest;
+import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.run.Main;
@@ -17,14 +19,9 @@ import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpRequest;
-import org.apache.http.client.HttpRequestRetryHandler;
-import org.apache.http.client.utils.DateUtils;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.conn.BasicHttpClientConnectionManager;
+import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HttpContext;
+import org.apache.http.nio.IOControl;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -32,17 +29,19 @@ import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.LinkedList;
-import java.util.Locale;
+import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -50,7 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
  Created by kurila on 09.06.14.
  */
 public abstract class WSRequestConfigBase<T extends WSObject>
-extends RequestConfigImpl<T>
+extends RequestConfigBase<T>
 implements WSRequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -58,30 +57,13 @@ implements WSRequestConfig<T> {
 	public final static long serialVersionUID = 42L;
 	protected final String userAgent, signMethod;
 	//
-	private final HttpRequestRetryHandler retryHandler = new HttpRequestRetryHandler() {
-		//
-		private final String FMT_ERR_MSG = "Request failed, try #%d";
-		//
-		@Override
-		public final boolean retryRequest(
-			final IOException e, final int i, final HttpContext httpContext
-		) {
-			if(LOG.isTraceEnabled(Markers.ERR)) {
-				ExceptionHandler.trace(
-					LOG, Level.TRACE, e, String.format(Locale.ROOT, FMT_ERR_MSG, i)
-				);
-			}
-			return retryFlag;
-		}
-		//
-	};
-	//
 	public static WSRequestConfigBase getInstance() {
 		return newInstanceFor(Main.RUN_TIME_CONFIG.get().getStorageApi());
 	}
 	//
 	private final static String NAME_CLS_IMPL = "RequestConfig";
 	//
+	@SuppressWarnings("unchecked")
 	public static WSRequestConfigBase newInstanceFor(final String api) {
 		WSRequestConfigBase reqConf = null;
 		final String apiImplClsFQN =
@@ -89,31 +71,29 @@ implements WSRequestConfig<T> {
 				Main.DOT + REL_PKG_PROVIDERS + Main.DOT +
 				api.toLowerCase() + Main.DOT + NAME_CLS_IMPL;
 		try {
-			reqConf = WSRequestConfigBase.class.cast(
-				Class.forName(apiImplClsFQN).getConstructors()[0].newInstance()
-			);
+			final Class apiImplCls = Class.forName(apiImplClsFQN);
+			final Constructor<WSRequestConfigBase>
+				constructor = (Constructor<WSRequestConfigBase>) apiImplCls.getConstructors()[0];
+			reqConf = constructor.newInstance();
 		} catch(final ClassNotFoundException e) {
 			LOG.fatal(Markers.ERR, "API implementation not found: \"{}\"", apiImplClsFQN);
 		} catch(final ClassCastException e) {
 			LOG.fatal(Markers.ERR, "Class \"{}\" is not valid API implementation", apiImplClsFQN);
 		} catch(final Exception e) {
-			synchronized(LOG) {
-				LOG.fatal(Markers.ERR, "WS API config instantiation failure: {}", e.toString());
-				LOG.debug(Markers.ERR, "cause: {}", e.getCause());
-			}
+			ExceptionHandler.trace(LOG, Level.FATAL, e, "WS API config instantiation failure");
 		}
 		return reqConf;
 	}
 	//
 	protected ConcurrentHashMap<String, String> sharedHeadersMap;
 	protected final Mac mac;
-	protected volatile CloseableHttpClient httpClient;
 	//
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException {
 		this(null);
 	}
 	//
+	@SuppressWarnings("unchecked")
 	protected WSRequestConfigBase(final WSRequestConfig<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
@@ -125,22 +105,44 @@ implements WSRequestConfig<T> {
 			runVersion = runTimeConfig.getRunVersion(),
 			contentType = runTimeConfig.getHttpContentType();
 		userAgent = runName + '/' + runVersion;
-		sharedHeadersMap = new ConcurrentHashMap<String, String>() {
-			{
-				//put(HttpHeaders.USER_AGENT, userAgent);
-				put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
-				put(HttpHeaders.CONTENT_TYPE, contentType);
+		try {
+			sharedHeadersMap = new ConcurrentHashMap<String, String>() {
+				{
+					put(HttpHeaders.USER_AGENT, userAgent);
+					put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
+					put(HttpHeaders.CONTENT_TYPE, contentType);
+				}
+			};
+			if(reqConf2Clone != null) {
+				this
+					.setSecret(reqConf2Clone.getSecret())
+					.setScheme(reqConf2Clone.getScheme());
 			}
-		};
-		if(reqConf2Clone != null) {
-			this
-				.setSecret(reqConf2Clone.getSecret())
-				.setScheme(reqConf2Clone.getScheme())
-				.setClient(reqConf2Clone.getClient());
+			//
+			final String pkgSpec = getClass().getPackage().getName();
+			setAPI(pkgSpec.substring(pkgSpec.lastIndexOf('.') + 1));
+		} catch(final Exception e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request config instantiation failure");
 		}
-		//
-		final String pkgSpec = getClass().getPackage().getName();
-		setAPI(pkgSpec.substring(pkgSpec.lastIndexOf('.') + 1));
+	}
+	//
+	@Override
+	public MutableHTTPRequest createRequest() {
+		MutableHTTPRequest r = null;
+		switch(loadType) {
+			case READ:
+				r = WSIOTask.HTTPMethod.GET.createRequest();
+				break;
+			case DELETE:
+				r = WSIOTask.HTTPMethod.DELETE.createRequest();
+				break;
+			case APPEND:
+			case CREATE:
+			case UPDATE:
+				r = WSIOTask.HTTPMethod.PUT.createRequest();
+				break;
+		}
+		return r;
 	}
 	//
 	@Override
@@ -168,7 +170,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setLoadType(final Request.Type loadType) {
+	public final WSRequestConfigBase<T> setLoadType(final AsyncIOTask.Type loadType) {
 		super.setLoadType(loadType);
 		return this;
 	}
@@ -182,16 +184,6 @@ implements WSRequestConfig<T> {
 		} else {
 			sharedHeadersMap.put(KEY_EMC_NS, nameSpace);
 		}
-		return this;
-	}
-	//
-	@Override
-	public final String getScheme() {
-		return uriBuilder.getScheme();
-	}
-	@Override
-	public final WSRequestConfigBase<T> setScheme(final String scheme) {
-		uriBuilder.setScheme(scheme);
 		return this;
 	}
 	//
@@ -239,8 +231,9 @@ implements WSRequestConfig<T> {
 		return this;
 	}
 	//
-	public final LinkedList<BasicHeader> getSharedHeaders() {
-		final LinkedList<BasicHeader> headers = new LinkedList<>();
+	@Override
+	public final List<Header> getSharedHeaders() {
+		final LinkedList<Header> headers = new LinkedList<>();
 		for(final String headerName: sharedHeadersMap.keySet()) {
 			headers.add(new BasicHeader(headerName, sharedHeadersMap.get(headerName)));
 		}
@@ -257,39 +250,22 @@ implements WSRequestConfig<T> {
 		return userAgent;
 	}
 	//
-	@Override
-	public final CloseableHttpClient getClient() {
-		if(httpClient == null) {
-			httpClient = HttpClientBuilder
-				.create()
-				.setConnectionManager(new BasicHttpClientConnectionManager())
-				.setDefaultHeaders(getSharedHeaders())
-				.setRetryHandler(getRetryHandler())
-				.disableCookieManagement()
-				.setUserAgent(userAgent)
-				.build();
+	@Override @SuppressWarnings("unchecked")
+	public final WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr) {
+		WSIOTask<T> ioTask;
+		if(dataItem == null) {
+			LOG.debug(Markers.MSG, "Preparing poison request");
+			ioTask = (WSIOTask<T>) BasicWSIOTask.POISON;
+		} else {
+			ioTask = BasicWSIOTask.getInstanceFor(this, dataItem, nodeAddr);
 		}
-		return httpClient;
-	}
-	//
-	@Override
-	public WSRequestConfigBase<T> setClient(final Closeable httpClient)
-	throws ClassCastException {
-		this.httpClient = CloseableHttpClient.class.cast(httpClient);
-		return this;
-	}
-	//
-	@Override
-	public final HttpRequestRetryHandler getRetryHandler() {
-		return retryHandler;
+		return ioTask;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setScheme(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got scheme {}", uriBuilder.getScheme());
 		sharedHeadersMap = (ConcurrentHashMap<String,String>) in.readObject();
 		/*final int headersCount = in.readInt();
 		sharedHeadersMap = new ConcurrentHashMap<>(headersCount);
@@ -309,7 +285,6 @@ implements WSRequestConfig<T> {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(uriBuilder.getScheme());
 		out.writeObject(sharedHeadersMap);
 		/*out.writeInt(sharedHeadersMap.size());
 		for(final String key: sharedHeadersMap.keySet()) {
@@ -318,9 +293,12 @@ implements WSRequestConfig<T> {
 		}*/
 	}
 	//
+	protected abstract void applyObjectId(final T dataItem, final HttpResponse httpResponse);
+	//
 	@Override
-	public final void applyDataItem(final HttpRequest httpRequest, final T dataItem)
+	public final void applyDataItem(final MutableHTTPRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
+		applyObjectId(dataItem, null);
 		applyURI(httpRequest, dataItem);
 		switch(loadType) {
 			case CREATE:
@@ -338,7 +316,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final void applyHeadersFinally(final HttpRequest httpRequest) {
+	public final void applyHeadersFinally(final MutableHTTPRequest httpRequest) {
 		applyDateHeader(httpRequest);
 		applyAuthHeader(httpRequest);
 		if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -350,14 +328,12 @@ implements WSRequestConfig<T> {
 				for(final Header header: httpRequest.getAllHeaders()) {
 					LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
 				}
-				for(final String header: sharedHeadersMap.keySet()) {
-					LOG.trace(Markers.MSG, "\t{}: {}", header, sharedHeadersMap.get(header));
-				}
 				if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
 					LOG.trace(
 						Markers.MSG, "\tcontent: {} bytes",
-						HttpEntityEnclosingRequest.class.cast(httpRequest)
-								.getEntity().getContentLength()
+						HttpEntityEnclosingRequest.class.cast(
+							httpRequest
+						).getEntity().getContentLength()
 					);
 				} else {
 					LOG.trace(Markers.MSG, "\t---- no content ----");
@@ -366,25 +342,17 @@ implements WSRequestConfig<T> {
 		}
 	}
 	//
-	protected abstract void applyURI(final HttpRequest httpRequest, final T dataItem)
+	protected abstract void applyURI(final MutableHTTPRequest httpRequest, final T dataItem)
 	throws IllegalArgumentException, URISyntaxException;
 	//
-	protected final void applyPayLoad(final HttpRequest httpRequest, final HttpEntity httpEntity) {
-		HttpEntityEnclosingRequest httpReqWithPayLoad = null;
-		try {
-			httpReqWithPayLoad = HttpEntityEnclosingRequest.class.cast(httpRequest);
-		} catch(final ClassCastException e) {
-			LOG.error(
-				Markers.ERR, "\"{}\" HTTP request can't have a content entity",
-				httpRequest.getRequestLine().getMethod()
-			);
-		}
-		if(httpReqWithPayLoad != null) {
-			httpReqWithPayLoad.setEntity(httpEntity);
-		}
+	protected final void applyPayLoad(
+		final MutableHTTPRequest httpRequest, final HttpEntity httpEntity
+	) {
+		httpRequest.setEntity(httpEntity);
 	}
 	// merge subsequent updated ranges functionality is here
-	protected final void applyRangesHeaders(final HttpRequest httpRequest, final T dataItem) {
+	protected final void applyRangesHeaders(final MutableHTTPRequest httpRequest, final T dataItem) {
+		httpRequest.removeHeaders(HttpHeaders.RANGE); // cleanup
 		long rangeBeg = -1, rangeEnd = -1, rangeLen;
 		int rangeCount = dataItem.getCountRangesTotal();
 		for(int i = 0; i < rangeCount; i++) {
@@ -419,7 +387,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected final void applyAppendRangeHeader(
-		final HttpRequest httpRequest, final T dataItem
+		final MutableHTTPRequest httpRequest, final T dataItem
 	) {
 		httpRequest.addHeader(
 			HttpHeaders.RANGE,
@@ -427,12 +395,19 @@ implements WSRequestConfig<T> {
 		);
 	}
 	//
-	protected void applyDateHeader(final HttpRequest httpRequest) {
-		final String rfc1123date = DateUtils.formatDate(new Date());
-		httpRequest.setHeader(HttpHeaders.DATE, rfc1123date);
+	private final static DateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(
+		"EEE, dd MMM yyyy HH:mm:ss zzz", Main.LOCALE_DEFAULT
+	) {
+		{ setTimeZone(Main.TZ_UTC); }
+	};
+	//
+	protected void applyDateHeader(final MutableHTTPRequest httpRequest) {
+		httpRequest.setHeader(
+			HttpHeaders.DATE, FMT_DATE_RFC1123.format(Main.CALENDAR_DEFAULT.getTime())
+		);
 	}
 	//
-	protected abstract void applyAuthHeader(final HttpRequest httpRequest);
+	protected abstract void applyAuthHeader(final MutableHTTPRequest httpRequest);
 	//
 	//@Override
 	//public final int hashCode() {
@@ -454,5 +429,36 @@ implements WSRequestConfig<T> {
 		return signature64;
 	}
 	//
-
+	@Override
+	public void receiveResponse(final HttpResponse response, final T dataItem) {
+		// do nothing
+	}
+	//
+	@Override
+	public final boolean consumeContent(
+		final InputStream contentStream, final IOControl ioCtl, T dataItem
+	) throws IOException {
+		boolean ok = true;
+		if(dataItem != null) {
+			if(loadType == AsyncIOTask.Type.READ) { // read
+				if(verifyContentFlag) { // read and do verify
+					ok = dataItem.compareWith(contentStream);
+				} else { // read, verification is disabled - consume quetly
+					consumeContentQuetly(contentStream, ioCtl);
+				}
+			} else { // append | create | delete | update - consume quetly
+				consumeContentQuetly(contentStream, ioCtl);
+			}
+		} else { // poison or special request (e.g. bucket-related)? - consume quetly
+			consumeContentQuetly(contentStream, ioCtl);
+		}
+		return ok;
+	}
+	//
+	@SuppressWarnings("StatementWithEmptyBody")
+	private void consumeContentQuetly(final InputStream contentStream, final IOControl ioCtl)
+	throws IOException {
+		final byte buff[] = new byte[(int) runTimeConfig.getDataPageSize()];
+		while(contentStream.read(buff) != -1);
+	}
 }

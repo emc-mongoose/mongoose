@@ -1,5 +1,6 @@
 package com.emc.mongoose.object.api.provider.atmos;
 //
+import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.object.data.DataObject;
 //
 import java.util.List;
@@ -10,15 +11,15 @@ public interface SubTenant<T extends DataObject> {
 	//
 	String getName();
 	//
-	boolean exists()
+	boolean exists(final LoadExecutor<T> client)
 	throws IllegalStateException;
 	//
-	void create()
+	void create(final LoadExecutor<T> client)
 	throws IllegalStateException;
 	//
-	void delete()
+	void delete(final LoadExecutor<T> client)
 	throws IllegalStateException;
 	//
-	List<T> list()
+	List<T> list(final LoadExecutor<T> client)
 	throws IllegalStateException;
 }

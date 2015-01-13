@@ -1,8 +1,9 @@
 package com.emc.mongoose.util.persist;
 //
-import com.emc.mongoose.base.api.Request;
+
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.base.api.AsyncIOTask;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -24,8 +25,6 @@ import org.hibernate.exception.ConstraintViolationException;
 //
 import java.io.File;
 import java.io.Serializable;
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
@@ -158,15 +157,15 @@ public final class HibernateAppender
 	//
 	private void persistStatusEntity()
 	{
-		for (final Request.Result result:Request.Result.values()){
+		for (final AsyncIOTask.Result result:AsyncIOTask.Result.values()){
 			loadStatusEntity(result);
 		}
 	}
 	//
 	private void persistMessages(final LogEvent event)
 	{
-		final ModeEntity modeEntity = loadModeEntity(event.getContextMap().get(Main.KEY_RUN_MODE));
-		final RunEntity runEntity = loadRunEntity(event.getContextMap().get(Main.KEY_RUN_ID),
+		final ModeEntity modeEntity = loadModeEntity(event.getContextMap().get(RunTimeConfig.KEY_RUN_MODE));
+		final RunEntity runEntity = loadRunEntity(event.getContextMap().get(RunTimeConfig.KEY_RUN_ID),
 			modeEntity,getTimestamp(event.getContextMap().get(Main.KEY_RUN_TIMESTAMP))
 		);
 		final LevelEntity levelEntity = loadLevelEntity(event.getLevel().toString());
@@ -451,7 +450,7 @@ public final class HibernateAppender
 		return dataObjectEntity;
 	}
 	//
-	private StatusEntity loadStatusEntity(final Request.Result result)
+	private StatusEntity loadStatusEntity(final AsyncIOTask.Result result)
 	{
 		StatusEntity statusEntity = new StatusEntity(result.code, result.description);
 		Session session = SESSION_FACTORY.openSession();

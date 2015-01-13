@@ -6,19 +6,18 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
-import com.emc.mongoose.base.load.LoadExecutor;
-import com.emc.mongoose.util.conf.RunTimeConfig;
 //
+import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
+import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
+//
 import org.apache.commons.codec.binary.Base64;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -99,74 +98,74 @@ implements Runnable {
 			ALL_METHODS, LoadExecutor.METRIC_NAME_BW));
 		//
 		counterGetSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
-			HttpGet.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			WSIOTask.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterGetFail = metrics.counter(MetricRegistry.name(MockServlet.class,
-			HttpGet.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			WSIOTask.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durGet = metrics.histogram(MetricRegistry.name(MockServlet.class,
-			HttpGet.METHOD_NAME, LoadExecutor.METRIC_NAME_DUR));
+			WSIOTask.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_DUR));
 		getBW = metrics.meter(MetricRegistry.name(MockServlet.class,
-			HttpGet.METHOD_NAME, LoadExecutor.METRIC_NAME_BW));
+			WSIOTask.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_BW));
 		getTP = metrics.meter(MetricRegistry.name(MockServlet.class,
-			HttpGet.METHOD_NAME, LoadExecutor.METRIC_NAME_TP));
+			WSIOTask.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_TP));
 		//
 		counterPostSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
-			HttpPost.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			WSIOTask.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterPostFail = metrics.counter(MetricRegistry.name(MockServlet.class,
-			HttpPost.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			WSIOTask.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durPost = metrics.histogram(MetricRegistry.name(MockServlet.class,
-			HttpPost.METHOD_NAME, LoadExecutor.METRIC_NAME_DUR));
+			WSIOTask.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_DUR));
 		postBW = metrics.meter(MetricRegistry.name(MockServlet.class,
-			HttpPost.METHOD_NAME, LoadExecutor.METRIC_NAME_BW));
+			WSIOTask.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_BW));
 		postTP = metrics.meter(MetricRegistry.name(MockServlet.class,
-			HttpPost.METHOD_NAME, LoadExecutor.METRIC_NAME_TP));
+			WSIOTask.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_TP));
 		//
 		counterPutSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
-			HttpPut.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			WSIOTask.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterPutFail = metrics.counter(MetricRegistry.name(MockServlet.class,
-			HttpPut.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			WSIOTask.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durPut = metrics.histogram(MetricRegistry.name(MockServlet.class,
-			HttpPut.METHOD_NAME, LoadExecutor.METRIC_NAME_DUR));
+			WSIOTask.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_DUR));
 		putBW = metrics.meter(MetricRegistry.name(MockServlet.class,
-			HttpPut.METHOD_NAME, LoadExecutor.METRIC_NAME_BW));
+			WSIOTask.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_BW));
 		putTP = metrics.meter(MetricRegistry.name(MockServlet.class,
-			HttpPut.METHOD_NAME, LoadExecutor.METRIC_NAME_TP));
+			WSIOTask.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_TP));
 		//
 		counterDeleteSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
-			HttpDelete.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			WSIOTask.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterDeleteFail = metrics.counter(MetricRegistry.name(MockServlet.class,
-			HttpDelete.METHOD_NAME, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			WSIOTask.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		durDelete = metrics.histogram(MetricRegistry.name(MockServlet.class,
-			HttpDelete.METHOD_NAME, LoadExecutor.METRIC_NAME_DUR));
+			WSIOTask.HTTPMethod.DELETE.name(), LoadExecutor.METRIC_NAME_DUR));
 		deleteBW = metrics.meter(MetricRegistry.name(MockServlet.class,
-			HttpDelete.METHOD_NAME, LoadExecutor.METRIC_NAME_BW));
+			WSIOTask.HTTPMethod.DELETE.name(), LoadExecutor.METRIC_NAME_BW));
 		deleteTP = metrics.meter(MetricRegistry.name(MockServlet.class,
-			HttpDelete.METHOD_NAME, LoadExecutor.METRIC_NAME_TP));
+			WSIOTask.HTTPMethod.DELETE.name(), LoadExecutor.METRIC_NAME_TP));
 		//
 		counterHeadSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
-			HttpHead.METHOD_NAME, LoadExecutor.METRIC_NAME_SUCC));
+			WSIOTask.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_SUCC));
 		counterHeadFail = metrics.counter(MetricRegistry.name(MockServlet.class,
-			HttpHead.METHOD_NAME, LoadExecutor.METRIC_NAME_FAIL));
+			WSIOTask.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_FAIL));
 		//
 		metricsReporter.start();
 		//
 		final String apiName = runTimeConfig.getStorageApi();
 		port = runTimeConfig.getInt("api." + apiName + ".port");
-		LOG.info(Markers.MSG, "Setup Jetty Server instance");
+		LOG.info(Markers.MSG, "Set up Jetty Server instance");
 		server = new Server();
 		server.setDumpAfterStart(false);
 		server.setDumpBeforeStop(false);
-		LOG.info(Markers.MSG, "Setup Http Connector Setup");
+		LOG.info(Markers.MSG, "Set up Http Connector");
 		try (final ServerConnector httpConnector = new ServerConnector(server)) {
 			httpConnector.setPort(port);
 			server.addConnector(httpConnector);
 		} catch (final Exception e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Creating of server connector failed");
 		}
-		LOG.info(Markers.MSG, "Set up a new handler");
-		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+		LOG.debug(Markers.MSG, "Set up a new handler");
+		final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
 		server.setHandler(context);
-		LOG.info(Markers.MSG, "Add servlet");
+		LOG.debug(Markers.MSG, "Add servlet");
 		context.addServlet(new ServletHolder(this), "/*");
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -200,21 +199,22 @@ implements Runnable {
 	}
 	//
 	private final static String
-		MSG_FMT_METRICS = "count=(%d/%d); duration[s]=(%.6f/%.6f/%.6f/%.6f); " +
-		"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
+		MSG_FMT_METRICS = "count=(%d/%d); duration[us]=(%d/%d/%d/%d); " +
+			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
-	private void printMetrics(){
+	private void printMetrics() {
 		final Snapshot allDurSnapshot = durAll.getSnapshot();
 		LOG.info(
 			Markers.PERF_AVG,
-			String.format(Locale.ROOT, MSG_FMT_METRICS,
+			String.format(
+				Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
 				counterAllSucc.getCount(), counterAllFail.getCount(),
 				//
-				(float) allDurSnapshot.getMean() / LoadExecutor.BILLION,
-				(float) allDurSnapshot.getMin() / LoadExecutor.BILLION,
-				(float) allDurSnapshot.getMedian() / LoadExecutor.BILLION,
-				(float) allDurSnapshot.getMax() / LoadExecutor.BILLION,
+				(int) (allDurSnapshot.getMean() / LoadExecutor.NANOSEC_SCALEDOWN),
+				(int) (allDurSnapshot.getMin() / LoadExecutor.NANOSEC_SCALEDOWN),
+				(int) (allDurSnapshot.getMedian() / LoadExecutor.NANOSEC_SCALEDOWN),
+				(int) (allDurSnapshot.getMax() / LoadExecutor.NANOSEC_SCALEDOWN),
 				//
 				allTP.getMeanRate(),
 				allTP.getOneMinuteRate(),
@@ -236,6 +236,7 @@ implements Runnable {
 		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Get ");
+		response.setStatus(HttpServletResponse.SC_OK);
 		try (final ServletOutputStream servletOutputStream = response.getOutputStream()) {
 			final String dataID = request.getRequestURI().split("/")[2];
 			if (mapDataObject.containsKey(dataID)) {
@@ -252,7 +253,6 @@ implements Runnable {
 				allBW.mark(object.getSize());
 				getTP.mark();
 				allTP.mark();
-				response.setStatus(HttpServletResponse.SC_OK);
 				LOG.trace(Markers.MSG, "   Response: OK");
 			} else {
 				counterAllFail.inc();
@@ -264,12 +264,17 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet output stream failed");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet output failed");
 		} catch (final ArrayIndexOutOfBoundsException e) {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+		} catch(final Throwable t) {
+			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+			counterAllFail.inc();
+			counterGetFail.inc();
+			ExceptionHandler.trace(LOG, Level.ERROR, t, "Unexpected failure");
 		}
 	}
 	//
@@ -297,7 +302,7 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPostFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet input stream failed");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
 		}
 	}
 	//
@@ -338,20 +343,20 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet input stream failed");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
 		}catch (final NumberFormatException e){
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
 			ExceptionHandler.trace(
-				LOG, Level.ERROR, e,
+				LOG, Level.WARN, e,
 				String.format("Unexpected object id format: \"%s\"", dataID)
 			);
 		}catch (final ArrayIndexOutOfBoundsException e) {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
 		}
 	}
 	//
@@ -379,7 +384,7 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterDeleteFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Servlet input stream failed");
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
 		}
 	}
 	//

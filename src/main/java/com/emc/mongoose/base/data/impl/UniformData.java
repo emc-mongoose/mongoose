@@ -66,27 +66,27 @@ implements DataItem {
 		fromString(metaInfo);
 	}
 	//
-	public UniformData(final long size) {
+	public UniformData(final Long size) {
 		this(size, UniformDataSource.DEFAULT);
 	}
 	//
-	public UniformData(final long size, final UniformDataSource dataSrc) {
+	public UniformData(final Long size, final UniformDataSource dataSrc) {
 		this(
 			NEXT_OFFSET.getAndSet(Math.abs(UniformDataSource.nextWord(NEXT_OFFSET.get()))),
 			size, dataSrc
 		);
 	}
 	//
-	public UniformData(final long offset, final long size) {
+	public UniformData(final Long offset, final Long size) {
 		this(offset, size, UniformDataSource.DEFAULT);
 	}
 	//
-	public UniformData(final long offset, final long size, final UniformDataSource dataSrc) {
+	public UniformData(final Long offset, final Long size, final UniformDataSource dataSrc) {
 		this(offset, size, 0, dataSrc);
 	}
 	//
 	public UniformData(
-		final long offset, final long size, final int layerNum, final UniformDataSource dataSrc
+		final Long offset, final Long size, final Integer layerNum, final UniformDataSource dataSrc
 	) {
 		super(dataSrc.getBytes(layerNum));
 		try {
@@ -135,7 +135,7 @@ implements DataItem {
 	@Override
 	public final int read() {
 		int b = super.read();
-		if(b<0) { // end of file
+		if(b < 0) { // end of file
 			pos = 0;
 			b = super.read(); // re-read the byte
 		}
@@ -208,7 +208,7 @@ implements DataItem {
 		size = in.readLong();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final void writeTo(final OutputStream out)
+	public void writeTo(final OutputStream out)
 	throws IOException {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
@@ -221,7 +221,7 @@ implements DataItem {
 			setOffset(offset, 0); // resets the position in the ring to the beginning of the item
 			//
 			for(int i = 0; i < countPages; i++) {
-				if(read(buff)==buff.length) {
+				if(read(buff) == buff.length) {
 					out.write(buff);
 				} else {
 					throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
@@ -319,4 +319,5 @@ implements DataItem {
 		//
 		return contentEquals;
 	}
+	//
 }

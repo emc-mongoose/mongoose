@@ -10,13 +10,15 @@ import java.rmi.RemoteException;
 public interface Service
 extends Remote, Closeable/*, Runnable*/ {
 	//
+	String getName()
+	throws RemoteException;
+	//
 	void start()
 	throws RemoteException;
 	//
 	void join()
 	throws RemoteException, InterruptedException;
 	//
-	String getName()
-	throws RemoteException;
-	//
+	void join(final long ms)
+	throws RemoteException, InterruptedException;
 }

@@ -1,5 +1,6 @@
 package com.emc.mongoose.object.api.provider.s3;
 //
+import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.object.data.DataObject;
 /**
  Created by kurila on 02.10.14.
@@ -8,13 +9,13 @@ public interface Bucket<T extends DataObject> {
 	//
 	String getName();
 	//
-	boolean exists()
+	boolean exists(final LoadExecutor<T> client)
 	throws IllegalStateException;
 	//
-	void create()
+	void create(final LoadExecutor<T> client)
 	throws IllegalStateException;
 	//
-	void delete()
+	void delete(final LoadExecutor<T> client)
 	throws IllegalStateException;
 	//
 }

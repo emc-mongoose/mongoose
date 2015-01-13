@@ -78,7 +78,7 @@ implements WSLoadBuilderClient<T, U> {
 	throws RemoteException {
 		if(listFile!=null) {
 			try {
-				srcProducer = (FileProducer<T>) new FileProducer<>(listFile, BasicWSObject.class);
+				srcProducer = (FileProducer<T>) new FileProducer<>(getMaxCount(), listFile, BasicWSObject.class);
 				LOG.info(Markers.MSG, "Local data items will be read from file @ \"{}\"", listFile);
 			} catch(final NoSuchMethodException | IOException e) {
 				LOG.error(Markers.ERR, "Failure", e);
@@ -102,13 +102,6 @@ implements WSLoadBuilderClient<T, U> {
 		String svcJMXAddr;
 		JMXServiceURL nextJMXURL;
 		JMXConnector nextJMXConn;
-		//
-		try {
-			reqConf.configureStorage(); // should be done after configuring and before req conf upload
-		} catch(final IllegalStateException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to configure storage");
-		}
-		//
 		final int jmxImportPort = runTimeConfig.getRemoteImportPort();
 		//
 		for(final String addr : keySet()) {
@@ -116,7 +109,7 @@ implements WSLoadBuilderClient<T, U> {
 			nextBuilder = get(addr);
 			nextBuilder.setRequestConfig(reqConf); // should upload req conf right before instancing
 			nextLoad = (LoadSvc<T>) ServiceUtils.getRemoteSvc(
-				"//" + addr + "/" + nextBuilder.buildRemotely()
+				String.format("//%s/%s", addr, nextBuilder.buildRemotely())
 			);
 			remoteLoadMap.put(addr, nextLoad);
 			//

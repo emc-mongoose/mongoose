@@ -33,6 +33,7 @@ public final class StartServlet extends HttpServlet {
 	private final static Logger LOG = LogManager.getLogger();
 	private RunTimeConfig runTimeConfig;
 	public static ConcurrentHashMap<String, Thread> threadsMap;
+	public static RunTimeConfig LAST_RUN_TIME_CONFIG;
 
 	@Override
 	public final void init() throws ServletException {
@@ -43,10 +44,10 @@ public final class StartServlet extends HttpServlet {
 	//
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response)
 	throws ServletException, IOException {
-		if (!isRunIdFree(request.getParameter(Main.KEY_RUN_ID))) {
+		if (!isRunIdFree(request.getParameter(RunTimeConfig.KEY_RUN_ID))) {
 			String resultString;
-			if (threadsMap.get(request.getParameter(Main.KEY_RUN_ID)) != null) {
-				if (threadsMap.get(request.getParameter(Main.KEY_RUN_ID)).isAlive()) {
+			if (threadsMap.get(request.getParameter(RunTimeConfig.KEY_RUN_ID)) != null) {
+				if (threadsMap.get(request.getParameter(RunTimeConfig.KEY_RUN_ID)).isAlive()) {
 					resultString = "Mongoose with this run.id is running at the moment";
 				} else {
 					resultString = "Logs with the previous run.mode in the same run.id will be mixed";
@@ -55,12 +56,15 @@ public final class StartServlet extends HttpServlet {
 			}
 			return;
 		}
-		//TODO fix it
+		//
 		if (StopServlet.stoppedRunModes != null) {
-			StopServlet.stoppedRunModes.remove(request.getParameter(Main.KEY_RUN_ID));
+			StopServlet.stoppedRunModes.remove(request.getParameter(RunTimeConfig.KEY_RUN_ID));
 		}
 		//
 		runTimeConfig = runTimeConfig.clone();
+		//
+		LAST_RUN_TIME_CONFIG = runTimeConfig;
+		//
 		setupRunTimeConfig(request);
 		//
 		switch (RunModes.getRunModeConstantByRequest(request.getParameter("run.mode"))) {
@@ -157,14 +161,14 @@ public final class StartServlet extends HttpServlet {
 		threadsMap.put(runTimeConfig.getString("run.id"), thread);
 	}
 
-	public boolean isRunIdFree(String runId) {
+	public boolean isRunIdFree(final String runId) {
 		if (threadsMap.get(runId) != null)
 			return false;
 		return true;
 	}
 	//
 	private void setupRunTimeConfig(final HttpServletRequest request) {
-		for (Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
+		for (final Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
 			if (entry.getValue()[0].trim().isEmpty()) {
 				continue;
 			}
@@ -172,17 +176,16 @@ public final class StartServlet extends HttpServlet {
 				runTimeConfig.set(entry.getKey(), convertArrayToString(entry.getKey(), entry.getValue()));
 				continue;
 			}
-			runTimeConfig.set(entry.getKey(), entry.getValue()[0]);
+			runTimeConfig.set(entry.getKey(), entry.getValue()[0].trim());
 		}
 	}
 	//
-	private String convertArrayToString(String key, String[] stringArray) {
-		String resultString = Arrays.toString(stringArray)
+	private String convertArrayToString(final String key, final String[] stringArray) {
+		final String resultString = Arrays.toString(stringArray)
 									.replace("[", "")
 									.replace("]", "")
 									.replace(" ", "")
 									.trim();
-		// TODO fix it
 		if (key.equals("run.time"))
 			return resultString.replace(",", ".");
 		return resultString;

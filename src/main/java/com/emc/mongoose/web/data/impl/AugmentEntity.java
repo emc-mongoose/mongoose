@@ -1,7 +1,7 @@
 package com.emc.mongoose.web.data.impl;
 //
-//
 import com.emc.mongoose.web.data.WSObject;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;
@@ -51,9 +51,8 @@ implements HttpEntity {
 	//
 	@Override
 	public final InputStream getContent()
-	throws IOException, IllegalStateException {
-		throw new IllegalStateException("Shouldn't be invoked");
-		//return baseItem.getPendingUpdatesContent();
+	throws IOException {
+		return baseItem.getAugmentContent();
 	}
 	//
 	@Override
