@@ -42,6 +42,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -78,7 +79,7 @@ implements LoadExecutor<T> {
 	//
 	private final Lock lock = new ReentrantLock();
 	private final Condition condDone = lock.newCondition();
-	private volatile boolean isClosed = false;
+	private final AtomicBoolean isClosed = new AtomicBoolean(false);
 	//
 	public static int getLastInstanceNum() {
 		return instanceN;
@@ -262,49 +263,73 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public final synchronized void interrupt() {
+	public final void interrupt() {
 		// set maxCount equal to current count
 		maxCount = counterSubm.getCount() + counterRej.getCount();
 		LOG.trace(Markers.MSG, "Interrupting, max count is set to {}", maxCount);
 		//
 		final ExecutorService interruptExecutor = Executors.newFixedThreadPool(nodes.length);
 		//
-		interruptExecutor.submit(new InterruptProducerTask(producer));
-		interruptExecutor.submit(new ExecutorShutDownTask(submitExecutor, runTimeConfig));
+		try {
+			interruptExecutor.submit(new InterruptProducerTask(producer));
+		} catch(final Exception e) {
+			ExceptionHandler.trace(
+				LOG, Level.WARN, e, "Failed to submit the producer interruption task"
+			);
+		}
+		//
+		try {
+			interruptExecutor.submit(new ExecutorShutDownTask(submitExecutor, runTimeConfig));
+		} catch(final Exception e) {
+			ExceptionHandler.trace(
+				LOG, Level.WARN, e, "Failed to submit the executor shutdown task"
+			);
+		}
 		// interrupt node executors
 		for(final StorageNodeExecutor<T> nextNode: nodes) {
-			interruptExecutor.submit(
-				new Runnable() {
-					@Override
-					public final void run() {
-						ThreadPoolExecutor.class.cast(nextNode).shutdown();
+			try {
+				interruptExecutor.submit(
+					new Runnable() {
+						@Override
+						public final void run() {
+							ThreadPoolExecutor.class.cast(nextNode).shutdown();
+						}
 					}
-				}
-			);
+				);
+			} catch(final Exception e) {
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e, "Failed to submit the node executor interruption task"
+				);
+			}
 		}
 		//
 		interruptExecutor.shutdown();
 		try {
 			interruptExecutor.awaitTermination(
-				Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+				runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 			);
-		} catch(final InterruptedException e) {
-			LOG.debug(Markers.ERR, "Interrupted externally");
+		} catch(final Exception e) {
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Interrupting node executor failure");
 		}
 		// interrupt the monitoring thread
-		if(!isInterrupted()) {
+		try {
 			super.interrupt();
+		} catch(final Exception e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Thread interruption failure");
 		}
 	}
 	//
 	@Override
-	public synchronized void close()
-	throws IOException {
+	public void close() {
 		//
-		if(!isClosed) { // this is just not-closed-yet flag
+		if(!isClosed.getAndSet(true)) { // this is just not-closed-yet flag
 			LOG.debug(Markers.MSG, "{}: do invoking close", getName());
 			if(!isInterrupted()) {
-				interrupt();
+				try {
+					interrupt();
+				} catch(final Exception e) {
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to interrupt");
+				}
 			}
 			// poison the consumer
 			try {
@@ -313,31 +338,42 @@ implements LoadExecutor<T> {
 				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to feed the poison");
 			}
 			// provide summary metrics
-			logMetrics(Markers.PERF_SUM);
-			// close node executors
-			final ArrayList<Thread> nodeClosers = new ArrayList<>(nodes.length);
-			Thread nextShutDownThread;
-			for(final StorageNodeExecutor<T> nodeExecutor : nodes) {
-				nextShutDownThread = new Thread("closeNodeExecutor-" + nodeExecutor.toString()) {
-					@Override
-					public final void run() {
-						try {
-							nodeExecutor.close();
-						} catch(final IOException e) {
-							ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to close node executor");
-						}
-					}
-				};
-				nextShutDownThread.start();
-				nodeClosers.add(nextShutDownThread);
+			try {
+				logMetrics(Markers.PERF_SUM);
+			} catch(final Exception e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Logging the summary metrics failed");
 			}
-			//
-			for(final Thread nextClosingThread : nodeClosers) {
+			// close node executors
+			final ExecutorService nodeCloseExecutor = Executors.newFixedThreadPool(nodes.length);
+			for(final StorageNodeExecutor<T> nodeExecutor : nodes) {
 				try {
-					nextClosingThread.join(runTimeConfig.getRunReqTimeOutMilliSec());
-				} catch(final InterruptedException e) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Interrupted closing node executor");
+					nodeCloseExecutor.submit(
+						new Runnable() {
+							@Override
+							public final void run() {
+								try {
+									nodeExecutor.close();
+								} catch(final IOException e) {
+									ExceptionHandler.trace(
+										LOG, Level.WARN, e, "Failed to close node executor"
+									);
+								}
+							}
+						}
+					);
+				} catch(final Exception e) {
+					ExceptionHandler.trace(
+						LOG, Level.WARN, e, "Failed to submit the node executor closing task"
+					);
 				}
+			}
+			nodeCloseExecutor.shutdown();
+			try {
+				nodeCloseExecutor.awaitTermination(
+					runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+				);
+			} catch(final Exception e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Closing node executor failure");
 			}
 			//
 			metricsReporter.close();
@@ -346,13 +382,16 @@ implements LoadExecutor<T> {
 				try {
 					client.close();
 					LOG.debug(Markers.MSG, "Storage client closed");
-				} catch(final IOException e) {
+				} catch(final Exception e) {
 					ExceptionHandler.trace(LOG, Level.WARN, e, "Storage client closing failed");
 				}
 			}
 			//
-			LoadCloseHook.del(this);
-			isClosed = true;
+			try {
+				LoadCloseHook.del(this);
+			} catch(final Exception e) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
+			}
 			LOG.debug(Markers.MSG, "Closed {}", getName());
 		} else {
 			LOG.debug(Markers.ERR, "Closed already");
