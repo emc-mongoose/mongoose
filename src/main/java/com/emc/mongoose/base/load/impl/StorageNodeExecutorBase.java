@@ -305,14 +305,12 @@ implements StorageNodeExecutor<T> {
 		//
 		final float
 			countReqFail = counterReqFail.getCount(),
-			countReqSucc = counterReqSucc.getCount();
+			countSubm = counterSubm.getCount();
 		boolean reached = false;
 		if(failThreshold > 0) {
 			//
 			if(failThreshold < 1) { // ratio
-				if(countReqSucc > 0 && countReqFail / countReqSucc > failThreshold) {
-					reached = true;
-				} else if(countReqSucc==0 && countReqFail > 0) {
+				if(countSubm > 0 && countReqFail / countSubm > failThreshold) {
 					reached = true;
 				}
 			} else if(countReqFail >= failThreshold) { // integer count
@@ -321,8 +319,8 @@ implements StorageNodeExecutor<T> {
 			//
 			if(reached) {
 				final String msg = String.format(
-					"Failure threshold reached (%d fail/%d succ), forcing the IMMEDIATE shutdown",
-					(long) countReqFail, (long) countReqSucc
+					"Failure threshold reached (%d fail/%d total), forcing the IMMEDIATE shutdown",
+					(long) countReqFail, (long) countSubm
 				);
 				LOG.warn(Markers.MSG, msg);
 				System.err.println(msg);
