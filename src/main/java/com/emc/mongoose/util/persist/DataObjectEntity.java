@@ -1,8 +1,5 @@
 package com.emc.mongoose.util.persist;
 //
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-//
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
@@ -10,14 +7,13 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
 import java.io.Serializable;
-//
 /**
  * Created by olga on 28.10.14.
  */
 @Entity(name="DataObject")
 @IdClass(DataObjectEntityPK.class)
 @Table(name = "dataobject")
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class DataObjectEntity
 implements Serializable{
 	@Id

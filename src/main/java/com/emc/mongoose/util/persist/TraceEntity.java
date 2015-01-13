@@ -10,7 +10,6 @@ import javax.persistence.JoinColumns;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.io.Serializable;
-//
 /**
  * Created by olga on 28.10.14.
  */

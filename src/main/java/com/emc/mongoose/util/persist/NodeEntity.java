@@ -8,7 +8,6 @@ import javax.persistence.Table;
 import java.io.Serializable;
 //
 import static javax.persistence.GenerationType.IDENTITY;
-
 /**
  * Created by olga on 28.10.14.
  */

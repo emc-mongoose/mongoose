@@ -13,6 +13,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name="LoadType")
 @Table(name = "loadtype")
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class LoadTypeEntity
 implements Serializable {
 	@Id

@@ -44,7 +44,7 @@
 				}, {
 					"name": "hibernate",
 					"type": "HibernateAsync",
-					"enabled": "true",
+					"enabled": "false",
 					"blocking": "false",
 					"bufferSize": "65536",
 					"threadsForQueue": "10",
@@ -54,7 +54,7 @@
 				}, {
 					"name": "hibernateSync",
 					"type": "Hibernate",
-					"enabled": "true",
+					"enabled": "false",
 					"database": "postgresql",
 					"username": "mongoose",
 					"password": "mongoose",
@@ -83,14 +83,6 @@
 					}
 				}, {
 					"name": "stdout",
-					"type": "Async",
-					"blocking": "false",
-					"bufferSize": "65536",
-					"AppenderRef": {
-						"ref": "stdoutSync"
-					}
-				}, {
-					"name": "stdoutSync",
 					"type": "Console",
 					"PatternLayout": {
 						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t %m%n}"
@@ -117,14 +109,6 @@
 					}
 				}, {
 					"name": "msgFile",
-					"type": "Async",
-					"blocking": "false",
-					"bufferSize": "65536",
-					"AppenderRef": {
-						"ref": "msgFileSync"
-					}
-				}, {
-					"name": "msgFileSync",
 					"type": "File",
 					"append": "false",
 					"bufferedIO": "true",
@@ -144,14 +128,6 @@
 					}
 				}, {
 					"name": "3rdPartyFile",
-					"type": "Async",
-					"blocking": "false",
-					"bufferSize": "65536",
-					"AppenderRef": {
-						"ref": "3rdPartyFileSync"
-					}
-				}, {
-					"name": "3rdPartyFileSync",
 					"type": "File",
 					"append": "false",
 					"bufferedIO": "true",
@@ -200,14 +176,6 @@
 					}
 				}, {
 					"name": "errFile",
-					"type": "Async",
-					"blocking": "false",
-					"bufferSize": "65536",
-					"AppenderRef": {
-						"ref": "errFileSync"
-					}
-				}, {
-					"name": "errFileSync",
 					"type": "File",
 					"append": "false",
 					"bufferedIO": "true",
@@ -231,14 +199,6 @@
 					}
 				}, {
 					"name": "perfAvgFile",
-					"type": "Async",
-					"blocking": "false",
-					"bufferSize": "65536",
-					"AppenderRef": {
-						"ref": "perfAvgFileSync"
-					}
-				}, {
-					"name": "perfAvgFileSync",
 					"type": "File",
 					"append": "false",
 					"bufferedIO": "true",
@@ -258,14 +218,6 @@
 					}
 				}, {
 					"name": "perfSumFile",
-					"type": "Async",
-					"blocking": "false",
-					"bufferSize": "65536",
-					"AppenderRef": {
-						"ref": "perfSumFileSync"
-					}
-				}, {
-					"name": "perfSumFileSync",
 					"type": "File",
 					"append": "false",
 					"bufferedIO": "true",
@@ -280,14 +232,6 @@
 					}
 				}, {
 					"name": "perfTraceFile",
-					"type": "Async",
-					"blocking": "false",
-					"bufferSize": "65536",
-					"AppenderRef": {
-						"ref": "perfTraceFileSync"
-					}
-				}, {
-					"name": "perfTraceFileSync",
 					"type": "File",
 					"append": "false",
 					"bufferedIO": "true",
@@ -300,14 +244,6 @@
 					}
 				}, {
 					"name": "dataListFile",
-					"type": "Async",
-					"blocking": "false",
-					"bufferSize": "65536",
-					"AppenderRef": {
-						"ref": "dataListFileSync"
-					}
-				}, {
-					"name": "dataListFileSync",
 					"type": "File",
 					"append": "false",
 					"bufferedIO": "true",

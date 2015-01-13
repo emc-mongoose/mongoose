@@ -13,6 +13,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name = "MessageClassEntity")
 @Table(name = "class")
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class MessageClassEntity
 implements Serializable{
 	@Id

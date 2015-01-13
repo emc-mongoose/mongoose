@@ -1,5 +1,5 @@
 package com.emc.mongoose.util.persist;
-
+//
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -8,12 +8,12 @@ import javax.persistence.Table;
 import java.io.Serializable;
 //
 import static javax.persistence.GenerationType.IDENTITY;
-
 /**
  * Created by olga on 17.10.14.
  */
 @Entity(name="API")
 @Table(name = "api")
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class ApiEntity
 implements Serializable {
 	@Id

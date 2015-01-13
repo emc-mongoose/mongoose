@@ -249,6 +249,10 @@ extends AbstractAppender {
 			while (!queue.isEmpty()) {
 				try {
 					final Serializable s = queue.take();
+					if (s != null && s instanceof String && SHUTDOWN.equals(s.toString())) {
+						queue.offer(SHUTDOWN);//notify other threads to stop
+						break;
+					}
 					if (Log4jLogEvent.canDeserialize(s)) {
 						final Log4jLogEvent event = Log4jLogEvent.deserialize(s);
 						event.setEndOfBatch(queue.isEmpty());
@@ -257,10 +261,6 @@ extends AbstractAppender {
 					} else {
 						ignored++;
 						LOGGER.trace("Ignoring event of class {}", s.getClass().getName());
-						if (s instanceof String && SHUTDOWN.equals(s.toString())) {
-							queue.offer(SHUTDOWN);//notify other threads to stop
-							return;
-						}
 					}
 				} catch (final InterruptedException ex) {
 					// May have been interrupted to shut down.
