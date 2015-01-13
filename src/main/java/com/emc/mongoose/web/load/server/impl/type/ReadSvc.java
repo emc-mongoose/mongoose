@@ -40,8 +40,7 @@ implements ObjectLoadSvc<T> {
 	}
 	//
 	@Override
-	public final synchronized void close()
-	throws IOException {
+	public final void close() {
 		super.close();
 		// close the exposed network service, if any
 		final Service svc = ServiceUtils.getLocalSvc(getName());
