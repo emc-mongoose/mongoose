@@ -34,3 +34,6 @@ request.timeout.millisec:		1000000
 
 #
 request.queue.factor:			2
+
+#
+fail.threshold:					0

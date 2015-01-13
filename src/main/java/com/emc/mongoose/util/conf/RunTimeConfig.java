@@ -104,6 +104,7 @@ implements Externalizable {
 		return new Gson().toJson(properties);
 	}
 	//
+	@SuppressWarnings("unchecked")
 	public final synchronized void put(List<String> dirs, String fileName, List<DefaultEntry<String, Object>> props) {
 		Map<String, Object> node = properties;
 		if (dirs != null) {
@@ -136,6 +137,58 @@ implements Externalizable {
 	//
 	public final boolean getRunRequestRetries() {
 		return getBoolean("run.request.retries");
+	}
+	//
+	private final static String FMT_MSG_INVALID_THRESHOLD = "Invalid threshold value: %s, should be a non-negative integer or float from the range of [0; 1)";
+	//
+	public final float getRunFailThreshold()
+	throws IllegalArgumentException {
+		float threshold;
+		String valueSpec = getString("run.fail.threshold");
+		if(valueSpec != null && valueSpec.length() > 0) {
+			if(valueSpec.indexOf('%') == valueSpec.length() - 1) { // percents
+				valueSpec = valueSpec.substring(0, valueSpec.length() - 1);
+				try {
+					threshold = Float.parseFloat(valueSpec) / 100;
+					if(threshold < 0 || threshold > 1) {
+						throw new IllegalArgumentException(
+							String.format(FMT_MSG_INVALID_THRESHOLD, valueSpec)
+						);
+					}
+				} catch(final NumberFormatException e) {
+					throw new IllegalArgumentException(
+						String.format(FMT_MSG_INVALID_THRESHOLD, valueSpec)
+					);
+				}
+			} else { // integer count or float ratio
+				try {
+					threshold = Long.parseLong(valueSpec);
+					if(threshold < 0) {
+						throw new IllegalArgumentException(
+							String.format(FMT_MSG_INVALID_THRESHOLD, valueSpec)
+						);
+					}
+				} catch(final NumberFormatException e) {
+					try {
+						threshold = Float.parseFloat(valueSpec);
+						if(threshold < 0 || threshold > 1) {
+							throw new IllegalArgumentException(
+								String.format(FMT_MSG_INVALID_THRESHOLD, valueSpec)
+							);
+						}
+					} catch(final NumberFormatException ee) {
+						throw new IllegalArgumentException(
+							String.format(FMT_MSG_INVALID_THRESHOLD, valueSpec)
+						);
+					}
+				}
+			}
+		} else {
+			throw new IllegalArgumentException(
+				String.format(FMT_MSG_INVALID_THRESHOLD, valueSpec)
+			);
+		}
+		return threshold;
 	}
 	//
 	public final String getStorageApi() {

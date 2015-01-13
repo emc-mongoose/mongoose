@@ -2,9 +2,8 @@ package com.emc.mongoose.util.threading;
 
 import com.emc.mongoose.base.api.Request;
 import com.emc.mongoose.run.ThreadContextMap;
-
-import java.util.concurrent.ThreadFactory;
-
+//
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by olga on 12.11.14.
  */
@@ -17,43 +16,41 @@ extends WorkerFactory {
 	private final Request.Type loadType;
 	//
 	private static final String
-			KEY_THREAD_NUM = "thread.number",
-			KEY_NODE_ADDR = "node.addr",
-			KEY_LOAD_NUM = "load.number",
-			KEY_LOAD_TYPE = "load.type",
-			KEY_API = "api";
-	private volatile int threadNumber;
+		KEY_THREAD_NUM = "thread.number",
+		KEY_NODE_ADDR = "node.addr",
+		KEY_LOAD_NUM = "load.number",
+		KEY_LOAD_TYPE = "load.type",
+		KEY_API = "api";
+	private final AtomicInteger threadNumber = new AtomicInteger(0);
 	//
 	public DataObjectWorkerFactory(
-			final String threadNamePrefix,
-			final int loadNumber,
-			final String addr,
-			final String api,
-			final Request.Type loadType
+		final String threadNamePrefix,
+		final int loadNumber,
+		final String addr,
+		final String api,
+		final Request.Type loadType
 	) {
 		super(threadNamePrefix);
 		this.loadNumber = loadNumber;
 		this.addr = addr;
 		this.api = api;
 		this.loadType = loadType;
-		this.threadNumber = 0;
 	}
-
+	//
 	@Override @SuppressWarnings("NullableProblems")
 	public Thread newThread(final Runnable runnable) {
 		//LOG.trace(LogMark.MSG, "Handling new task \"{}\"", runnable.toString());
-		threadNumber ++;
 		return new DataObjectWorkerThread(
-				runnable,
-				threadNamePrefix + '#' + Integer.toString(threadNumber),
-				threadNumber,
-				loadNumber,
-				addr,
-				api,
-				loadType
+			runnable,
+			threadNamePrefix,
+			threadNumber.getAndIncrement(),
+			loadNumber,
+			addr,
+			api,
+			loadType
 		);
 	}
-
+	//
 	private static final class DataObjectWorkerThread
 	extends Thread {
 		private final int threadNumber;
@@ -63,15 +60,15 @@ extends WorkerFactory {
 		private final Request.Type loadType;
 		//
 		private DataObjectWorkerThread(
-				final Runnable runnable,
-				final String nameThread,
-				final int threadNumber,
-				final int loadNumber,
-				final String addr,
-				final String api,
-				final Request.Type loadType
-				){
-			super(runnable, nameThread);
+			final Runnable runnable,
+			final String threadNamePrefix,
+			final int threadNumber,
+			final int loadNumber,
+			final String addr,
+			final String api,
+			final Request.Type loadType
+		) {
+			super(runnable, String.format("%s#%d", threadNamePrefix, threadNumber));
 			this.threadNumber = threadNumber;
 			this.loadNumber = loadNumber;
 			this.addr = addr;

@@ -165,9 +165,8 @@ implements LoadExecutor<T> {
 	//
 	protected abstract void setFileBasedProducer(final String listFile);
 	protected abstract Closeable initClient(final String addrs[], final RequestConfig<T> reqConf);
-	protected abstract void initNodeExecutors(
-		final String addrs[], final RequestConfig<T> reqConf
-	) throws ClassCastException;
+	protected abstract void initNodeExecutors(final String addrs[], final RequestConfig<T> reqConf)
+	throws ClassCastException;
 	//
 	@Override
 	public void start() {
