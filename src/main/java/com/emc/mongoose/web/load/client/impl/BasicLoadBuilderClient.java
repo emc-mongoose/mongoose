@@ -125,7 +125,7 @@ implements WSLoadBuilderClient<T, U> {
 			}
 			//
 			nextJMXConn = null;
-			if(nextJMXURL!=null) {
+			if(nextJMXURL != null) {
 				try {
 					nextJMXConn = JMXConnectorFactory.connect(nextJMXURL, null);
 				} catch(final IOException e) {
@@ -145,10 +145,10 @@ implements WSLoadBuilderClient<T, U> {
 		newLoadClient = new BasicWSLoadClient<>(
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
 			runTimeConfig.getDataCount(),
-			nextLoad==null ? 1 : (int) Math.pow(nextLoad.getThreadCount(), 0.8)
+			nextLoad == null ? 1 : (int) Math.pow(nextLoad.getThreadCount(), 0.8)
 		);
 		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
-		if(srcProducer!=null && srcProducer.getConsumer()==null) {
+		if(srcProducer != null && srcProducer.getConsumer() == null) {
 			LOG.debug(
 				Markers.MSG, "Append consumer {} for producer {}",
 				newLoadClient.getName(), srcProducer.getName()

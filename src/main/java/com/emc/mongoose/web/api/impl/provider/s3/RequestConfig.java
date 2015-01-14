@@ -208,12 +208,14 @@ extends WSRequestConfigBase<T> {
 	@Override @SuppressWarnings("unchecked")
 	public final Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> client) {
 		Producer<T> producer = null;
-		try {
-			producer = new BucketProducer<>(
-				bucket, BasicWSObject.class, maxCount, (WSLoadExecutor<T>) client
-			);
-		} catch(final NoSuchMethodException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
+		if(anyDataProducerEnabled) {
+			try {
+				producer = new BucketProducer<>(
+					bucket, BasicWSObject.class, maxCount, (WSLoadExecutor<T>) client
+				);
+			} catch(final NoSuchMethodException e) {
+				ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
+			}
 		}
 		return producer;
 	}

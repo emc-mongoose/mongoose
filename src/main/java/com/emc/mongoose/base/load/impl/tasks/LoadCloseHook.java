@@ -43,7 +43,7 @@ implements Runnable {
 		final LoadCloseHook hookTask = new LoadCloseHook(loadExecutor);
 		try {
 			final Thread hookThread = new Thread(
-				hookTask, String.format("shutDownHook<%s>", hookTask.loadName)
+				hookTask, String.format("loadCloseHook<%s>", hookTask.loadName)
 			);
 			Runtime.getRuntime().addShutdownHook(hookThread);
 			HOOKS_MAP.put(loadExecutor, hookThread);
@@ -74,10 +74,10 @@ implements Runnable {
 	//
 	@Override
 	public final void run() {
-		LOG.info(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
+		LOG.debug(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
 		try {
 			loadExecutor.close();
-			LOG.info(Markers.MSG, "The load executor \"{}\"closed successfully", loadName);
+			LOG.debug(Markers.MSG, "The load executor \"{}\"closed successfully", loadName);
 		} catch(final Exception e) {
 			ExceptionHandler.trace(
 				LOG, Level.WARN, e,

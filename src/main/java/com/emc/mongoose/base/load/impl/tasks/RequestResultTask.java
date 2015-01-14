@@ -34,12 +34,12 @@ implements Runnable, Reusable {
 		try {
 			ioTaskResult = futureResult.get(); // submit done
 			executor.handleResult(ioTask, ioTaskResult);
-		} catch(final InterruptedException|CancellationException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request has been cancelled");
-		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request result handling failed");
+		} catch(final InterruptedException | CancellationException e) {
+			ExceptionHandler.trace(LOG, Level.TRACE, e, "Request has been cancelled");
 		} catch(final ExecutionException e) {
 			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request execution failure");
+		} catch(final IOException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request result handling failed");
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
 		}

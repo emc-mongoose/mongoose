@@ -50,7 +50,10 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.12.14.
  */
@@ -63,6 +66,7 @@ implements WSLoadExecutor<T> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
+	private final Thread clientThread;
 	//
 	private final static class ExecuteClientTask<T extends WSObject>
 	implements Runnable {
@@ -192,10 +196,11 @@ implements WSLoadExecutor<T> {
 			connPool = localConnPool;
 		}
 		//
-		new Thread(
+		clientThread = new Thread(
 			new ExecuteClientTask<>(this, ioEventDispatch, ioReactor),
 			this.getClass().getSimpleName()
-		).start();
+		);
+		clientThread.start();
 	}
 	//
 	@Override
@@ -203,8 +208,42 @@ implements WSLoadExecutor<T> {
 	throws IOException {
 		super.close();
 		LOG.debug(Markers.MSG, "Going to close the web storage client");
-		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
-		ioReactor.shutdown(thrLocalConfig.getRunReqTimeOutMilliSec());
+		final long timeOutMilliSec = Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec();
+		final ExecutorService closeExecutor = Executors.newFixedThreadPool(2);
+		closeExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {
+					try {
+						clientThread.join(timeOutMilliSec);
+					} catch(final InterruptedException e) {
+						ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interruption");
+					} finally {
+						clientThread.interrupt();
+					}
+				}
+			}
+		);
+		closeExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {
+					try {
+						ioReactor.shutdown(timeOutMilliSec);
+					} catch(final IOException e) {
+						ExceptionHandler.trace(LOG, Level.DEBUG, e, "I/O reactor shutdown failure");
+					}
+				}
+			}
+		);
+		closeExecutor.shutdown();
+		try {
+			closeExecutor.awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
+		} catch(final InterruptedException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interruption");
+		} finally {
+			closeExecutor.shutdownNow();
+		}
 	}
 	//
 	@Override
@@ -230,9 +269,13 @@ implements WSLoadExecutor<T> {
 				new BasicAsyncResponseConsumer(), connPool
 			).get();
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
+			if(clientThread.isAlive()) {
+				LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
+			}
 		} catch(final ExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
+			if(clientThread.isAlive()) {
+				ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
+			}
 		}
 		return response;
 	}

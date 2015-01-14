@@ -276,33 +276,47 @@ implements LoadExecutor<T> {
 	private long tsStart;
 	//
 	@Override
-	public void start() {
-		if(metricDumpThread.isAlive()) {
-			LOG.warn(Markers.ERR, "Second start attempt - skipped");
-		} else {
+	public synchronized void start() {
+		boolean pass = !metricDumpThread.isAlive(); // don't pass if started already
+		//
+		if(pass) {
 			//
-			reqConfig.configureStorage(this);
 			prestartAllCoreThreads();
 			//
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
 			} else {
+				//
 				try {
-					producer.start();
-					LOG.debug(
-						Markers.MSG, "Started object producer {}",
-						producer.getClass().getSimpleName()
-					);
-				} catch(final IOException e) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to start the producer");
+					reqConfig.configureStorage(this);
+				} catch(final IllegalStateException e) {
+					pass = false;
+					ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to configure the storage");
+				}
+				//
+				if(pass) {
+					try {
+						producer.start();
+						LOG.debug(Markers.MSG, "Started object producer {}", producer);
+					} catch(final IOException e) {
+						pass = false;
+						ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to start the producer");
+					}
 				}
 			}
+		} else {
+			LOG.warn(Markers.ERR, "Second start attempt - skipped");
+		}
+		//
+		if(pass) {
 			//
 			metricDumpThread.setName(getName());
 			metricDumpThread.start();
 			//
 			tsStart = System.nanoTime();
 			LOG.info(Markers.MSG, "Started \"{}\"", getName());
+		} else {
+			LOG.warn(Markers.MSG, "Not started \"{}\" due to failures", getName());
 		}
 	}
 	//
@@ -402,7 +416,9 @@ implements LoadExecutor<T> {
 			} else if(result == AsyncIOTask.Result.SUCC) {
 				// update the metrics with success
 				counterReqSucc.inc();
-				respLatency.update(latency < 0 ? 0 : latency);
+				if(latency > 0) {
+					respLatency.update(latency);
+				}
 				reqBytes.mark(ioTask.getTransferSize());
 				durSumTasks.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
 				// feed to the consumer
@@ -421,15 +437,18 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final synchronized void shutdown() {
-		// stop the producing
-		try {
-			producer.interrupt();
-		} catch(final IOException e) {
-			ExceptionHandler.trace(
-				LOG, Level.WARN, e,
-				String.format("Failed to stop the producer: %s", producer.toString())
-			);
+		if(producer != null) {
+			// stop the producing
+			try {
+				producer.interrupt();
+			} catch(final IOException e) {
+				ExceptionHandler.trace(
+					LOG, Level.WARN, e,
+					String.format("Failed to stop the producer: %s", producer.toString())
+				);
+			}
 		}
+		//
 		if(!isShutdown()) {
 			super.shutdown(); // stop the submitting
 		}

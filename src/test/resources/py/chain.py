@@ -37,7 +37,20 @@ LOG.info(
 	LOAD_CHAIN
 )
 #
-def build(flagSimultaneous=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPerNode=0):
+FLAG_USE_ITEMS_BUFFER = True
+try:
+	FLAG_USE_ITEMS_BUFFER = LOCAL_RUN_TIME_CONFIG.getBoolean("scenario.chain.itemsbuffer")
+except NoSuchElementException:
+	LOG.error(Markers.ERR, "No items buffer flag specified, try arg -Dscenario.chain.itemsbuffer=<VALUE> to override")
+LOG.info(
+	Markers.MSG, "Will use internal items buffer" if FLAG_USE_ITEMS_BUFFER else "Will use any specific intermediate consumer/producer"
+)
+#
+def build(flagSimultaneous=True, flagItemsBuffer=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPerNode=0):
+	#
+	if flagItemsBuffer:
+		LOAD_BUILDER.getRequestConfig().setAnyDataProducerEnabled(False)
+	#
 	chain = list()
 	prevLoad = None
 	for loadTypeStr in LOAD_CHAIN:
@@ -59,13 +72,16 @@ def build(flagSimultaneous=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPe
 					chain.append(load)
 				else:
 					if prevLoad is not None:
-						mediatorBuff = LOAD_BUILDER.newDataItemBuffer()
-						if mediatorBuff is not None:
-							prevLoad.setConsumer(mediatorBuff)
-							chain.append(mediatorBuff)
-							mediatorBuff.setConsumer(load)
+						if flagItemsBuffer:
+							mediatorBuff = LOAD_BUILDER.newDataItemBuffer()
+							if mediatorBuff is not None:
+								prevLoad.setConsumer(mediatorBuff)
+								chain.append(mediatorBuff)
+								mediatorBuff.setConsumer(load)
+							else:
+								LOG.error(Markers.ERR, "No mediator buffer instanced")
 						else:
-							LOG.error(Markers.ERR, "No mediator buffer instanced")
+							prevLoad.setConsumer(load)
 					chain.append(load)
 			else:
 				LOG.error(Markers.ERR, "No load executor instanced")
@@ -106,13 +122,12 @@ def execute(chain=(), flagSimultaneous=True):
 						)
 					finally:
 						prevLoad.interrupt()
-				else:
-					try:
-						nextLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
-					except Throwable as e:
-						ExceptionHandler.trace(
-							LOG, Level.ERROR, e, "Consumer \"{}\" execution failure", nextLoad
-						)
+				try:
+					nextLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
+				except Throwable as e:
+					ExceptionHandler.trace(
+						LOG, Level.ERROR, e, "Consumer \"{}\" execution failure", nextLoad
+					)
 				nextLoad.close()
 			prevLoad = nextLoad
 #
@@ -138,7 +153,7 @@ if __name__=="__builtin__":
 		LOG.debug(Markers.MSG, "No \"load.threads\" specified")
 	#
 	chain = build(
-		FLAG_SIMULTANEOUS,
+		FLAG_SIMULTANEOUS, FLAG_USE_ITEMS_BUFFER,
 		dataItemSizeMin if dataItemSize == 0 else dataItemSize,
 		dataItemSizeMax if dataItemSize == 0 else dataItemSize,
 		threadsPerNode

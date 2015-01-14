@@ -81,6 +81,10 @@ implements DataItemBufferSvc<T> {
 	public final String getName() {
 		return getThreadFactory().toString();
 	}
+	@Override
+	public final String toString() {
+		return getThreadFactory().toString();
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -270,8 +274,10 @@ implements DataItemBufferSvc<T> {
 		if(consumer != null) {
 			try {
 				consumer.submit(null); // feed the poison
-			} catch(final RemoteException|InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to submit");
+			} catch(final RemoteException | InterruptedException e) {
+				ExceptionHandler.trace(
+					LOG, Level.DEBUG, e, "Failed to submit the poison to the consumer"
+				);
 			}
 		}
 		producerThread.interrupt();
