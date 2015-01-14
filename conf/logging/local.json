@@ -222,20 +222,10 @@
 					"PatternLayout": {
 						"pattern": "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %t | %m%n"
 					},
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "perfSum",
-								"onMatch": "NEUTRAL",
-								"onMismatch": "DENY"
-							}, {
-								"type": "ThresholdFilter",
-								"level": "INFO",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
+					"MarkerFilter": {
+						"marker": "perfSum",
+						"onMatch": "ACCEPT",
+						"onMismatch": "DENY"
 					}
 				}, {
 					"name": "perfTraceFile",
