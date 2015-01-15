@@ -70,18 +70,17 @@ dependencies {
 		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
 		'org.eclipse.jetty.websocket:websocket-server:9.2.3.v20140905',
 		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
-		'com.google.code.gson:gson:2.3',
 		'org.hibernate:hibernate-core:4.3.6.Final',
 		'org.eclipse.persistence:javax.persistence:2.1.0',
 		'jstl:jstl:1.2',
 		'commons-cli:commons-cli:1.2',
-		'org.apache.commons:commons-collections4:4.0'
-	)
-	runtime (
+		'org.apache.commons:commons-collections4:4.0',
 		//
 		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
 		'com.fasterxml.jackson.core:jackson-core:2.4.1',
 		'com.fasterxml.jackson.core:jackson-databind:2.4.1',
+	)
+	runtime (
 		//
 		'com.github.rickyclarkson:jmdns:3.4.2-r353-1',
 		//

@@ -5,7 +5,7 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.web.ui.websockets.interfaces.WebSocketLogListener;
 //
-import com.google.gson.Gson; // TODO migrate to jackson instead of gson
+import com.fasterxml.jackson.databind.ObjectMapper;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -31,7 +31,7 @@ public final class LogSocket
 implements WebSocketLogListener {
 	//
 	private Session session;
-	private final static Gson gson = new Gson();
+	private final static ObjectMapper mapper = new ObjectMapper();
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	@OnWebSocketClose
@@ -62,9 +62,9 @@ implements WebSocketLogListener {
 	@Override
 	public final synchronized void sendMessage(final LogEvent message) {
 		try {
-			session.getRemote().sendString(gson.toJson(message));
+			session.getRemote().sendString(mapper.writeValueAsString(message));
 		} catch (final IOException|WebSocketException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "WebSocket failure");
+			ExceptionHandler.trace(LOG, Level.TRACE, e, "WebSocket failure");
 		}
 	}
 }

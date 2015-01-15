@@ -1,14 +1,18 @@
 package com.emc.mongoose.util.conf;
 //
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.jackson.Log4jJsonObjectMapper;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -18,8 +22,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -97,7 +108,13 @@ implements Externalizable {
 	}
 	public String getPropertiesMap() {
 		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES), this);
-		return new Gson().toJson(properties);
+		ObjectMapper mapper = new ObjectMapper();
+		try {
+			return mapper.writeValueAsString(properties);
+		} catch (final JsonProcessingException e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed json processing");
+		}
+		return null;
 	}
 	//
 	public final synchronized void put(List<String> dirs, String fileName, List<DefaultMapEntry<String, Object>> props) {

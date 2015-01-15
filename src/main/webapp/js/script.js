@@ -104,30 +104,6 @@ $(document).ready(function() {
 		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
 	});
 
-	$("#base input, #base select").each(function() {
-		var currElement = $(this);
-		if (currElement.parents(".complex").length === 1) {
-			var input = $("#fake-run\\.time\\.input").val();
-			var select = $("#fake-run\\.time\\.select").val();
-			currElement = $("#fake-run\\.time").val(input + "." + select);
-		}
-		//
-		if (currElement.is("select")) {
-			var valueSelected = currElement.children("option").filter(":selected").text();
-			$('select[pointer="'+currElement.attr("pointer")+'"]').val(currElement.val());
-			var element = document.getElementById(currElement.attr("pointer"));
-			if (element) {
-				element.value = valueSelected;
-			}
-		} else {
-			$('input[pointer="' + currElement.attr("pointer") + '"]').val(currElement.val());
-			var element = document.getElementById(currElement.attr("pointer"));
-			if (element) {
-				element.value = currElement.val();
-			}
-		}
-	});
-
 	$("#base input, #base select").on("change", function() {
 		var currElement = $(this);
 		if (currElement.parents(".complex").length === 1) {
@@ -137,7 +113,7 @@ $(document).ready(function() {
 		}
 		//
 		if (currElement.is("select")) {
-			var valueSelected = currElement.children("option").filter(":selected").text();
+			var valueSelected = currElement.children("option").filter(":selected").text().trim();
 			$('select[pointer="'+currElement.attr("pointer")+'"]').val(currElement.val());
 			var element = document.getElementById(currElement.attr("pointer"));
 			if (element) {
@@ -384,17 +360,19 @@ function configureWebSocket(location, countOfRecords) {
 				var json = JSON.parse(m.data);
 				var entry = json.contextMap["run.id"].split(".").join("_");
 				// fix later
-				if (!json.message.message) {
+				/*if (!json.message.message) {
 					str = json.message.messagePattern.split("{}");
 					resultString = "";
 					for (s = 0; s < str.length - 1; s++) {
 						resultString += str[s]+json.message.stringArgs[s];
 					}
 					json.message.message = resultString + str[str.length - 1];
-				}
+				}*/
 				if (!json.hasOwnProperty("marker"))
 					return;
 				if (!json.marker.hasOwnProperty("name"))
+					return;
+				if (!json.loggerName)
 					return;
 				//
 				switch (json.marker.name) {
@@ -435,11 +413,11 @@ function configureWebSocket(location, countOfRecords) {
 
 function appendStringToTable(json) {
 	html = '<tr>\
-			<td class="filterable-cell">' + json.level.name + '</td>\
+			<td class="filterable-cell">' + json.level.standardLevel + '</td>\
 			<td class="filterable-cell">' + json.loggerName + '</td>\
 			<td class="filterable-cell">' + json.threadName + '</td>\
 			<td class="filterable-cell">' + new Date(json.timeMillis) + '</td>\
-			<td class="filterable-cell">' + json.message.message + '</td>\
+			<td class="filterable-cell">' + json.message.formattedMessage + '</td>\
 			</tr>';
 	return html;
 }
