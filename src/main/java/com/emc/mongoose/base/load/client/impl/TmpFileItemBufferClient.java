@@ -12,6 +12,7 @@ import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 //
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -234,7 +235,9 @@ implements DataItemBufferClient<T> {
 	public final void join(final long milliSec)
 	throws InterruptedException {
 		//
-		final ExecutorService remoteJoinExecutor = Executors.newFixedThreadPool(size());
+		final ExecutorService remoteJoinExecutor = Executors.newFixedThreadPool(
+			size(), new WorkerFactory(toString() + "-joinWorker")
+		);
 		//
 		for(final String addr: keySet()) {
 			try {

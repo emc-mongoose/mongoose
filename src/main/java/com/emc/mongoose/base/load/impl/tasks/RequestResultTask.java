@@ -42,6 +42,8 @@ implements Runnable, Reusable {
 			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request result handling failed");
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
+		} finally {
+			close();
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

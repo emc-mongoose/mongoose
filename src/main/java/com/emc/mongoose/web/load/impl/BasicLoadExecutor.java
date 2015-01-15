@@ -198,9 +198,14 @@ implements WSLoadExecutor<T> {
 		//
 		clientThread = new Thread(
 			new ExecuteClientTask<>(this, ioEventDispatch, ioReactor),
-			this.getClass().getSimpleName()
+			getName() + "-asyncWebClient"
 		);
+	}
+	//
+	@Override
+	public synchronized void start() {
 		clientThread.start();
+		super.start();
 	}
 	//
 	@Override
@@ -208,8 +213,22 @@ implements WSLoadExecutor<T> {
 	throws IOException {
 		super.close();
 		LOG.debug(Markers.MSG, "Going to close the web storage client");
-		final long timeOutMilliSec = Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec();
-		final ExecutorService closeExecutor = Executors.newFixedThreadPool(2);
+		/*final long timeOutMilliSec = Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec();
+		final ExecutorService closeExecutor = Executors.newFixedThreadPool(
+			2, new WorkerFactory(getName()+"-closer")
+		);
+		closeExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {*/
+					try {
+						ioReactor.shutdown(/*timeOutMilliSec*/);
+					} catch(final IOException e) {
+						ExceptionHandler.trace(LOG, Level.DEBUG, e, "I/O reactor shutdown failure");
+					}
+				/*}
+			}
+		);
 		closeExecutor.submit(
 			new Runnable() {
 				@Override
@@ -218,21 +237,9 @@ implements WSLoadExecutor<T> {
 						clientThread.join(timeOutMilliSec);
 					} catch(final InterruptedException e) {
 						ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interruption");
-					} finally {
+					} finally {*/
 						clientThread.interrupt();
-					}
-				}
-			}
-		);
-		closeExecutor.submit(
-			new Runnable() {
-				@Override
-				public final void run() {
-					try {
-						ioReactor.shutdown(timeOutMilliSec);
-					} catch(final IOException e) {
-						ExceptionHandler.trace(LOG, Level.DEBUG, e, "I/O reactor shutdown failure");
-					}
+					/*}
 				}
 			}
 		);
@@ -243,7 +250,7 @@ implements WSLoadExecutor<T> {
 			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interruption");
 		} finally {
 			closeExecutor.shutdownNow();
-		}
+		}*/
 	}
 	//
 	@Override
@@ -269,11 +276,11 @@ implements WSLoadExecutor<T> {
 				new BasicAsyncResponseConsumer(), connPool
 			).get();
 		} catch(final InterruptedException e) {
-			if(clientThread.isAlive()) {
+			if(!isTerminating() && !isTerminated()) {
 				LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
 			}
 		} catch(final ExecutionException e) {
-			if(clientThread.isAlive()) {
+			if(!isTerminating() && !isTerminated()) {
 				ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
 			}
 		}

@@ -532,7 +532,7 @@ implements LoadClient<T> {
 		if(aggregateThread.isAlive()) {
 			LOG.debug(Markers.MSG, "{}: interrupting...", name);
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
-				remoteLoadMap.size()
+				remoteLoadMap.size(), new WorkerFactory(getName() + "-interrupter")
 			);
 			for(final String addr : loadSvcAddrs) {
 				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
@@ -771,7 +771,7 @@ implements LoadClient<T> {
 	public final void join(final long timeOutMilliSec)
 	throws InterruptedException {
 		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
-			remoteLoadMap.size(), new WorkerFactory("joinLoadSvcWorker")
+			remoteLoadMap.size(), new WorkerFactory(getName() + "-joinWorker")
 		);
 		for(final String addr : remoteLoadMap.keySet()) {
 			joinExecutor.submit(new RemoteJoinTask(remoteLoadMap.get(addr), timeOutMilliSec));

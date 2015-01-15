@@ -116,6 +116,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 					if(statusCode == HttpStatus.SC_OK) {
 						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
 						flagExists = true;
+					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
+						LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist", name);
 					} else {
 						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
@@ -124,10 +126,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 								msg.appendNewLine().append(buff.toString());
 							}
 						}
-						LOG.debug(
-							Markers.ERR, "Checking bucket \"{}\" response ({}): {}",
-							name, statusCode, msg.toString()
-						);
+						throw new IllegalStateException(msg.toString());
 					}
 				}
 				EntityUtils.consumeQuietly(httpEntity);

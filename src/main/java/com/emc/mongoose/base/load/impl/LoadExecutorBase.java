@@ -290,18 +290,16 @@ implements LoadExecutor<T> {
 				try {
 					reqConfig.configureStorage(this);
 				} catch(final IllegalStateException e) {
-					pass = false;
-					ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to configure the storage");
+					//pass = false;
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to configure the storage");
 				}
 				//
-				if(pass) {
-					try {
-						producer.start();
-						LOG.debug(Markers.MSG, "Started object producer {}", producer);
-					} catch(final IOException e) {
-						pass = false;
-						ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to start the producer");
-					}
+				try {
+					producer.start();
+					LOG.debug(Markers.MSG, "Started object producer {}", producer);
+				} catch(final IOException e) {
+					pass = false;
+					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to start the producer");
 				}
 			}
 		} else {
@@ -478,7 +476,7 @@ implements LoadExecutor<T> {
 				consumer.submit(null);
 			} catch(final InterruptedException e) {
 				ExceptionHandler.trace(
-					LOG, Level.DEBUG, e,
+					LOG, Level.TRACE, e,
 					String.format(
 						"%s: interrupted on feeding the poison to the consumer", getName()
 					)

@@ -53,7 +53,11 @@ implements Consumer<T> {
 		//
 		@Override
 		public final void run() {
-			LOG.info(Markers.DATA_LIST, dataItem.toString());
+			try {
+				LOG.info(Markers.DATA_LIST, dataItem.toString());
+			} finally {
+				close();
+			}
 		}
 		//
 		@Override
