@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.collections;
+package com.emc.mongoose.util.pool;
 //
 import com.emc.mongoose.util.logging.Markers;
 //
