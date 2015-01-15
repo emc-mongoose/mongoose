@@ -1,9 +1,9 @@
 package com.emc.mongoose.web.ui.logging;
 //
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.collections.CircularQueue;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.web.ui.websockets.interfaces.WebSocketLogListener;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
@@ -29,7 +29,7 @@ public final class WebUIAppender
 extends AbstractAppender {
 	private final static int MAX_ELEMENTS_IN_THE_LIST = 10000;
 	//
-	private final static ConcurrentHashMap<String, CircularQueue<LogEvent>>
+	private final static ConcurrentHashMap<String, CircularFifoQueue<LogEvent>>
 		LOG_EVENTS_MAP = new ConcurrentHashMap<>();
 	private final static List<WebSocketLogListener>
 		LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
@@ -75,7 +75,7 @@ extends AbstractAppender {
 	}
 	//
 	public synchronized static void sendPreviousLogs(final WebSocketLogListener listener) {
-		for (CircularQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
+		for (CircularFifoQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
 			for (LogEvent logEvent : queue) {
 				listener.sendMessage(logEvent);
 			}
@@ -87,7 +87,7 @@ extends AbstractAppender {
 		if (ENABLED_FLAG) {
 			String currentRunId = event.getContextMap().get(Main.KEY_RUN_ID);
 			if (LOG_EVENTS_MAP.get(currentRunId) == null) {
-				LOG_EVENTS_MAP.put(currentRunId, new CircularQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST));
+				LOG_EVENTS_MAP.put(currentRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST));
 			}
 			LOG_EVENTS_MAP.get(currentRunId).add(event);
 			for (WebSocketLogListener listener : LISTENERS) {

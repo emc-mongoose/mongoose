@@ -4,7 +4,7 @@ package com.emc.mongoose.util.conf;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.collections.pairs.DefaultEntry;
+import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.text.StrBuilder;
@@ -100,21 +100,21 @@ extends SimpleFileVisitor<Path> {
 			);
 		}
 		// set the properties
-		final List<DefaultEntry<String, Object>> props = new ArrayList<>();
+		final List<DefaultMapEntry<String, Object>> props = new ArrayList<>();
 		if(currProps!=null) {
 			String key;
 			//
 			if (isUpdate) {
 				if (file.getFileName().toString().equals("run")) {
-					props.add(new DefaultEntry<String, Object>(Main.KEY_RUN_ID,
-						new DefaultEntry<>("id", tgtConfig.getProperty("run.id"))));
+					props.add(new DefaultMapEntry<String, Object>(Main.KEY_RUN_ID,
+						new DefaultMapEntry<>("id", tgtConfig.getProperty("run.id"))));
 				}
 				for (final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext(); ) {
 					key = keyIter.next();
 					final String fullKeyName = currPrefix + key;
 					currProps.setProperty(key, tgtConfig.getProperty(fullKeyName));
-					props.add(new DefaultEntry<String, Object>(fullKeyName,
-						new DefaultEntry<>(key, tgtConfig.getProperty(fullKeyName))));
+					props.add(new DefaultMapEntry<String, Object>(fullKeyName,
+						new DefaultMapEntry<>(key, tgtConfig.getProperty(fullKeyName))));
 				}
 				if (isUpload) {
 					try (final FileWriter writer = new FileWriter(file.toFile())) {
@@ -126,8 +126,8 @@ extends SimpleFileVisitor<Path> {
 				}
 			} else {
 				if (file.getFileName().toString().equals("run")) {
-					props.add(new DefaultEntry<String, Object>(Main.KEY_RUN_ID,
-						new DefaultEntry<>("id", currProps.getProperty("id"))));
+					props.add(new DefaultMapEntry<String, Object>(Main.KEY_RUN_ID,
+						new DefaultMapEntry<>("id", currProps.getProperty("id"))));
 				}
 				//
 				for (final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext(); ) {
@@ -139,8 +139,8 @@ extends SimpleFileVisitor<Path> {
 					final String fullKeyName = currPrefix + key;
 					mongooseKeys.add(fullKeyName);
 					//
-					props.add(new DefaultEntry<String, Object>(fullKeyName,
-						new DefaultEntry<>(key, currProps.getProperty(key))));
+					props.add(new DefaultMapEntry<String, Object>(fullKeyName,
+						new DefaultMapEntry<>(key, currProps.getProperty(key))));
 					tgtConfig.setProperty(currPrefix + key, currProps.getProperty(key));
 				}
 			}

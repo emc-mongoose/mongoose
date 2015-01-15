@@ -1,9 +1,9 @@
 package com.emc.mongoose.util.conf;
 //
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.collections.pairs.DefaultEntry;
 import com.emc.mongoose.util.logging.Markers;
 import com.google.gson.Gson;
+import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
@@ -100,7 +100,7 @@ implements Externalizable {
 		return new Gson().toJson(properties);
 	}
 	//
-	public final synchronized void put(List<String> dirs, String fileName, List<DefaultEntry<String, Object>> props) {
+	public final synchronized void put(List<String> dirs, String fileName, List<DefaultMapEntry<String, Object>> props) {
 		Map<String, Object> node = properties;
 		if (dirs != null) {
 			for (final String nextDir : dirs) {
