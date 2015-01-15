@@ -226,10 +226,24 @@ $(document).ready(function() {
 		});
 	});
 
-	$("#save-file").click(function() {
-		$.get("/save/config.txt", $("#main-form").serialize(), function(data, status) {
-
+	$("#save-file").click(function(e) {
+		e.preventDefault();
+		$.get("/save", $("#main-form").serialize(), function(data, status) {
+			window.location.href = "/save/config.txt";
 		});
+	});
+
+	$("#config-file").change(function() {
+		var input = $(this).get(0);
+		loadPropertiesFromFile(input.files[0]);
+	});
+
+	$("#file-checkbox").change(function() {
+		if ($(this).is(":checked")) {
+			$("#config-file").show();
+		} else {
+			$("#config-file").hide();
+		}
 	});
 
 });
@@ -340,7 +354,7 @@ jQuery.fn.prependChild = function(html) {
 	var child = $(html);
 	child.prependTo(target);
 	return child;
-}
+};
 
 function excludeDuplicateOptions() {
 	var found = [];
@@ -466,7 +480,7 @@ function appendBreadcrumb(element, childrenFolders, childrenDocuments) {
 
 	if (!childrenFolders.length && !childrenDocuments.length) {
 		html = $("<li>").attr({
-			class: "active",
+			class: "active"
 		}).text(element.text());
 	} else {
 		var dropDownList = $("<ul>").addClass("dropdown-menu");
@@ -502,4 +516,29 @@ function iterateChildren(dropDownList, children, image) {
 					}))
 					.append($("<span>").text(currElement.text()));
 	});
+}
+
+function loadPropertiesFromFile(file) {
+	var reader = new FileReader();
+	reader.onload = function(e) {
+		var text = reader.result;
+		var lines = text.split("\n");
+		for (var i = 0;i < lines.length; i++) {
+			var splitLine = lines[i].split(" = ");
+			var elementId = "#" + splitLine[0].replace(/\./g, "\\.");
+			if ($(elementId).is("input:text")) {
+				$(elementId).val(splitLine[1]);
+				if ($(elementId).attr("id") === "run.time") {
+					var resultArray = $(elementId).val().split(".");
+					$(".complex input").val(resultArray[0]);
+					$(".complex select option:contains(" + resultArray[1] + ")").attr("selected", "selected");
+				}
+				$('input[pointer="' + $(elementId).attr("id") + '"]').val($(elementId).val());
+				$('select[pointer="' + $(elementId).attr("id") + '"] option:contains(' + $(elementId).val() + ')')
+					.attr('selected', 'selected');
+			}
+		}
+	};
+
+	reader.readAsText(file);
 }

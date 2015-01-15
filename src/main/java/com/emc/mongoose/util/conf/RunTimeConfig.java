@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 public final class RunTimeConfig
 extends BaseConfiguration
 implements Externalizable {
-	private Set<String> userKeys;
+	private Set<String> mongooseKeys;
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	public final static String LIST_SEP = ",", KEY_VERSION = "run.version";
@@ -118,12 +118,12 @@ implements Externalizable {
 		//System.setProperty(key, value);
 	}
 	//
-	public final synchronized void setUserKeys(final Set<String> userKeys) {
-		this.userKeys = userKeys;
+	public final synchronized void setMongooseKeys(final Set<String> mongooseKeys) {
+		this.mongooseKeys = mongooseKeys;
 	}
 	//
-	public final Set<String> getUserKeys() {
-		return userKeys;
+	public final Set<String> getMongooseKeys() {
+		return mongooseKeys;
 	}
 	//
 	////////////////////////////////////////////////////////////////////////////////////////////////

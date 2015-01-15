@@ -6,15 +6,11 @@ import com.emc.mongoose.util.conf.DirectoryLoader;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
-import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.core.util.FileUtils;
-import org.eclipse.jetty.util.Jetty;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -49,8 +45,12 @@ public class SaveServlet extends HttpServlet {
 	@Override
 	public void doGet(final HttpServletRequest request, final HttpServletResponse response) {
 		//
-		setupRunTimeConfig(request);
-		saveConfigInSeparateFile();
+		if (!request.getParameterMap().isEmpty()) {
+			setupRunTimeConfig(request);
+			saveConfigInSeparateFile();
+			response.setStatus(HttpServletResponse.SC_OK);
+			return;
+		}
 		//
 		final File fullFileName = new File(FILE_PATH.toString() + File.separator + FILENAME);
 		try {
@@ -88,7 +88,7 @@ public class SaveServlet extends HttpServlet {
 		}
 		try (final FileWriter writer = new FileWriter(FILE_PATH + File.separator + FILENAME)) {
 			final PropertiesConfiguration props = new PropertiesConfiguration();
-			for (String key : runTimeConfig.getUserKeys()) {
+			for (String key : runTimeConfig.getMongooseKeys()) {
 				props.setProperty(key, runTimeConfig.getProperty(key));
 			}
 			try {

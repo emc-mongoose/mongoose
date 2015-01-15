@@ -295,3 +295,22 @@ th:nth-child(5) {
 #config-type {
 	margin-bottom: 10px;
 }
+
+#config-file {
+	text-align: center;
+}
+
+#file-visibility {
+	margin-top: 10px;
+	text-align: center;
+}
+
+#file-visibility input, #file-visibility label {
+	display: inline;
+	vertical-align: top;
+}
+
+#config-file {
+	display: none;
+	margin-top: 10px;
+}

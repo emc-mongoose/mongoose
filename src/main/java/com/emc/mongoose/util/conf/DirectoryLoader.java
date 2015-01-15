@@ -11,10 +11,7 @@ import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.omg.SendingContext.RunTime;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -27,7 +24,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 //
@@ -39,7 +35,7 @@ import java.util.Set;
 public final class DirectoryLoader
 extends SimpleFileVisitor<Path> {
 	//
-	private final static Set<String> userKeys = new HashSet<>();
+	private final static Set<String> mongooseKeys = new HashSet<>();
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -58,7 +54,7 @@ extends SimpleFileVisitor<Path> {
 		try {
 			LOG.debug(Markers.MSG, "Load system properties from directory \"{}\"", rootDir);
 			Files.walkFileTree(rootDir, dirLoader);
-			tgtConfig.setUserKeys(userKeys);
+			tgtConfig.setMongooseKeys(mongooseKeys);
 		} catch (final IOException e) {
 			LOG.error(Markers.ERR, e.toString(), e.getCause());
 		}
@@ -77,7 +73,6 @@ extends SimpleFileVisitor<Path> {
 		} catch (final IOException e) {
 			LOG.error(Markers.ERR, e.toString(), e.getCause());
 		}
-		Map<String, Object> node = tgtConfig.properties;
 	}
 	//
 	@Override
@@ -142,7 +137,7 @@ extends SimpleFileVisitor<Path> {
 						currPrefix + key, currProps.getProperty(key)
 					);
 					final String fullKeyName = currPrefix + key;
-					userKeys.add(fullKeyName);
+					mongooseKeys.add(fullKeyName);
 					//
 					props.add(new DefaultEntry<String, Object>(fullKeyName,
 						new DefaultEntry<>(key, currProps.getProperty(key))));

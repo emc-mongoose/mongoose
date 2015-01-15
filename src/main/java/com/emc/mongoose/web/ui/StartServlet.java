@@ -69,9 +69,10 @@ public final class StartServlet extends HttpServlet {
 		runTimeConfig = runTimeConfig.clone();
 		//
 		setupRunTimeConfig(request);
+		//
 		LAST_RUN_TIME_CONFIG = runTimeConfig;
 		//
-		switch (RunModes.getRunModeConstantByRequest(request.getParameter("run.mode"))) {
+		switch (RunModes.getRunModeConstantByRequest(request.getParameter(Main.KEY_RUN_MODE))) {
 			case VALUE_RUN_MODE_SERVER:
 				startServer("Starting the server");
 				break;
@@ -95,7 +96,7 @@ public final class StartServlet extends HttpServlet {
 			WSLoadBuilderSvc loadBuilderSvc;
 			RunTimeConfig localRunTimeConfig;
 			@Override
-			public void run() {
+			 public void run() {
 				localRunTimeConfig = runTimeConfig;
 				Main.RUN_TIME_CONFIG.set(localRunTimeConfig);
 				ThreadContextMap.initThreadContextMap();

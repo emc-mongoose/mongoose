@@ -80,7 +80,14 @@
 							</select>
 							<br/>
 							<button class="btn btn-default" id="save-config" type="button">Save</button>
-							<a href="/save/config.txt" id="save-file" class="btn btn-default">Save in file</a>
+							<a href="/save" id="save-file" class="btn btn-default">Save in file</a>
+							<!-- -->
+							<br/>
+							<div id="file-visibility">
+								<input id="file-checkbox" type="checkbox">
+								<label for="file-checkbox">Read config from file</label>
+							</div>
+							<input id="config-file" type="file" accept=".txt">
 						</div>
 
 						<!-- List of folders from JS-->
