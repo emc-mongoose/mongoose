@@ -168,14 +168,10 @@ implements WSIOTask<T> {
 		respStatusCode = -1;
 		exception = null;
 		reqEntity = null;
-		httpRequest.setEntity(reqEntity);
-		if(httpRequest.getFirstHeader(HttpHeaders.RANGE) != null) {
+		if(httpRequest != null) {
+			httpRequest.setEntity(reqEntity);
 			httpRequest.removeHeaders(HttpHeaders.RANGE);
-		}
-		if(httpRequest.getFirstHeader(WSRequestConfig.KEY_EMC_SIG) != null) {
 			httpRequest.removeHeaders(WSRequestConfig.KEY_EMC_SIG);
-		}
-		if(httpRequest.getFirstHeader(HttpHeaders.CONTENT_ENCODING) != null) {
 			httpRequest.removeHeaders(HttpHeaders.CONTENT_TYPE);
 		}
 	}
