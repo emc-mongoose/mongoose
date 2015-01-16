@@ -1,7 +1,7 @@
 package com.emc.mongoose.base.load.impl.tasks;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
@@ -29,7 +29,7 @@ implements Runnable {
 		try {
 			ln = loadExecutor.getName();
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.WARN, e, "Failed to get the name of the remote load executor"
 			);
 		} finally {
@@ -51,7 +51,7 @@ implements Runnable {
 				Markers.MSG, "Registered shutdown hook \"{}\"", hookTask.loadName
 			);
 		} catch(final SecurityException | IllegalArgumentException | IllegalStateException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to add the shutdown hook");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to add the shutdown hook");
 		}
 	}
 	//
@@ -63,9 +63,9 @@ implements Runnable {
 				Runtime.getRuntime().removeShutdownHook(HOOKS_MAP.get(loadExecutor));
 				LOG.debug(Markers.MSG, "Shutdown hook for \"{}\" removed", loadExecutor);
 			} catch(final IllegalStateException e) {
-				ExceptionHandler.trace(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
+				TraceLogger.failure(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
 			} catch(final SecurityException | IllegalArgumentException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
+				TraceLogger.failure(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
 			}
 		} else {
 			LOG.trace(Markers.ERR, "No shutdown hook registered for \"{}\"", loadExecutor);
@@ -79,7 +79,7 @@ implements Runnable {
 			loadExecutor.close();
 			LOG.debug(Markers.MSG, "The load executor \"{}\"closed successfully", loadName);
 		} catch(final Exception e) {
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.WARN, e,
 				String.format("Failed to close the load executor \"%s\"", loadName)
 			);

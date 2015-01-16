@@ -3,7 +3,7 @@ package com.emc.mongoose.base.load.client.impl.gauges;
 import com.codahale.metrics.Gauge;
 //
 import com.emc.mongoose.base.load.client.impl.tasks.GaugeValueTask;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -51,10 +51,10 @@ implements Gauge<Double> {
 				x *= futureCountSucc.get();
 				y = futureCountBytes.get();
 			} catch(final InterruptedException | ExecutionException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Metric value fetching failed");
+				TraceLogger.failure(LOG, Level.DEBUG, e, "Metric value fetching failed");
 			}
 		} catch(final RejectedExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Metric value fetching failed due to reject");
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Metric value fetching failed due to reject");
 		}
 		return y == 0 ? 0 : x / y;
 	}

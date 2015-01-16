@@ -6,7 +6,7 @@ import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.object.load.impl.ObjectLoadExecutorBase;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.threading.WorkerFactory;
 import com.emc.mongoose.web.api.WSIOTask;
@@ -50,10 +50,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.12.14.
  */
@@ -92,16 +89,16 @@ implements WSLoadExecutor<T> {
 			} catch(final InterruptedIOException e) {
 				LOG.debug(Markers.MSG, "Interrupted");
 			} catch(final IOException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.ERROR, e, "Failed to execute the web storage client"
 				);
 			} catch(final IllegalStateException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
+				TraceLogger.failure(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
 			} finally {
 				try {
 					executor.close();
 				} catch(final IOException e) {
-					ExceptionHandler.trace(
+					TraceLogger.failure(
 						LOG, Level.WARN, e, "Failed to close the web storage client"
 					);
 				} finally {
@@ -190,7 +187,7 @@ implements WSLoadExecutor<T> {
 			localConnPool.setDefaultMaxPerRoute(threadCount);
 			localConnPool.setMaxTotal(threadCount);
 		} catch(final IOReactorException e) {
-			ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to build I/O reactor");
+			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
 		} finally {
 			ioReactor = localIOReactor;
 			connPool = localConnPool;
@@ -224,7 +221,7 @@ implements WSLoadExecutor<T> {
 					try {
 						ioReactor.shutdown(/*timeOutMilliSec*/);
 					} catch(final IOException e) {
-						ExceptionHandler.trace(LOG, Level.DEBUG, e, "I/O reactor shutdown failure");
+						TraceLogger.failure(LOG, Level.DEBUG, e, "I/O reactor shutdown failure");
 					}
 				/*}
 			}
@@ -236,7 +233,7 @@ implements WSLoadExecutor<T> {
 					try {
 						clientThread.join(timeOutMilliSec);
 					} catch(final InterruptedException e) {
-						ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interruption");
+						ExceptionHandler.failure(LOG, Level.DEBUG, e, "Interruption");
 					} finally {*/
 						clientThread.interrupt();
 					/*}
@@ -247,7 +244,7 @@ implements WSLoadExecutor<T> {
 		try {
 			closeExecutor.awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interruption");
+			ExceptionHandler.failure(LOG, Level.DEBUG, e, "Interruption");
 		} finally {
 			closeExecutor.shutdownNow();
 		}*/
@@ -260,7 +257,7 @@ implements WSLoadExecutor<T> {
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool);
 		} catch(final IllegalStateException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to submit the HTTP request");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit the HTTP request");
 		}
 		return futureResult;
 	}
@@ -281,7 +278,7 @@ implements WSLoadExecutor<T> {
 			}
 		} catch(final ExecutionException e) {
 			if(!isTerminating() && !isTerminated()) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
+				TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 			}
 		}
 		return response;
@@ -295,9 +292,9 @@ implements WSLoadExecutor<T> {
 				maxCount, listFile, BasicWSObject.class
 			);
 		} catch(final NoSuchMethodException e) {
-			ExceptionHandler.trace(LOG, Level.FATAL, e, "Unexpected failure");
+			TraceLogger.failure(LOG, Level.FATAL, e, "Unexpected failure");
 		} catch(final IOException e) {
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.ERROR, e,
 				String.format("Failed to read the data items file \"%s\"", listFile)
 			);

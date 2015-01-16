@@ -32,7 +32,7 @@ implements AsyncIOTask<T> {
 	protected volatile Result result = Result.FAIL_TIMEOUT;
 	//
 	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
-	private volatile long transferSize = 0;
+	protected volatile long transferSize = 0;
 	private volatile Type type;
 	// BEGIN pool related things
 	private final static InstancePool<BasicIOTask>
@@ -53,11 +53,7 @@ implements AsyncIOTask<T> {
 	@Override @SuppressWarnings("unchecked")
 	public BasicIOTask<T> reuse(final Object... args) {
 		result = Result.FAIL_TIMEOUT;
-		reqTimeStart = 0;
-		reqTimeDone = 0;
-		respTimeStart = 0;
-		respTimeDone = 0;
-		transferSize = 0;
+		reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
 		if(args.length > 0) {
 			setRequestConfig((RequestConfig<T>)args[0]);
 		}

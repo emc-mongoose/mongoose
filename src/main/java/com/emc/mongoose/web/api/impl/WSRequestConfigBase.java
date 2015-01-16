@@ -4,13 +4,13 @@ import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.impl.RequestConfigBase;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -80,7 +80,7 @@ implements WSRequestConfig<T> {
 		} catch(final ClassCastException e) {
 			LOG.fatal(Markers.ERR, "Class \"{}\" is not valid API implementation", apiImplClsFQN);
 		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.FATAL, e, "WS API config instantiation failure");
+			TraceLogger.failure(LOG, Level.FATAL, e, "WS API config instantiation failure");
 		}
 		return reqConf;
 	}
@@ -122,7 +122,7 @@ implements WSRequestConfig<T> {
 			final String pkgSpec = getClass().getPackage().getName();
 			setAPI(pkgSpec.substring(pkgSpec.lastIndexOf('.') + 1));
 		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Request config instantiation failure");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Request config instantiation failure");
 		}
 	}
 	//
@@ -422,7 +422,7 @@ implements WSRequestConfig<T> {
 				signature = mac.doFinal(canonicalForm.getBytes(DEFAULT_ENC));
 			}
 		} catch(UnsupportedEncodingException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to calculate the signature");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to calculate the signature");
 		}
 		final String signature64 = signature == null ? null : Base64.encodeBase64String(signature);
 		LOG.trace(Markers.MSG, "Calculated signature: \"{}\"", signature64);

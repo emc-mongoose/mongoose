@@ -20,7 +20,7 @@ import com.emc.mongoose.base.load.impl.tasks.RequestResultTask;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ConsoleColors;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
@@ -91,7 +91,14 @@ implements LoadExecutor<T> {
 		setMaximumPoolSize((int) Math.sqrt(totalThreadCount));
 		//
 		this.runTimeConfig = runTimeConfig;
-		this.reqConfig = reqConfig;
+		RequestConfig<T> reqConfigCopy = null;
+		try {
+			reqConfigCopy = reqConfig.clone();
+		} catch(final CloneNotSupportedException e) {
+			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to clone the request config");
+		} finally {
+			this.reqConfig = reqConfigCopy;
+		}
 		loadType = reqConfig.getLoadType();
 		final int loadNum = LAST_INSTANCE_NUM.getAndIncrement();
 		//
@@ -143,7 +150,7 @@ implements LoadExecutor<T> {
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
+				TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");
 			}
 		}
 		setConsumer(new LogConsumer<T>(maxCount, threadsPerNode)); // by default, may be overriden later externally
@@ -291,7 +298,7 @@ implements LoadExecutor<T> {
 					reqConfig.configureStorage(this);
 				} catch(final IllegalStateException e) {
 					//pass = false;
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to configure the storage");
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to configure the storage");
 				}
 				//
 				try {
@@ -299,7 +306,7 @@ implements LoadExecutor<T> {
 					LOG.debug(Markers.MSG, "Started object producer {}", producer);
 				} catch(final IOException e) {
 					pass = false;
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to start the producer");
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to start the producer");
 				}
 			}
 		} else {
@@ -429,7 +436,7 @@ implements LoadExecutor<T> {
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like a network failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "Looks like a network failure");
 		}
 	}
 	//
@@ -440,7 +447,7 @@ implements LoadExecutor<T> {
 			try {
 				producer.interrupt();
 			} catch(final IOException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.WARN, e,
 					String.format("Failed to stop the producer: %s", producer.toString())
 				);
@@ -457,6 +464,10 @@ implements LoadExecutor<T> {
 	@Override
 	public synchronized void close()
 	throws IOException {
+		TraceLogger.trace(
+			LOG, Level.DEBUG, Markers.MSG,
+			String.format("invoked close of %s", getName())
+		);
 		if(isClosed.compareAndSet(false, true)) {
 			interrupt();
 			logMetrics(Markers.PERF_SUM); // provide summary metrics
@@ -475,7 +486,7 @@ implements LoadExecutor<T> {
 				// poison the consumer
 				consumer.submit(null);
 			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.TRACE, e,
 					String.format(
 						"%s: interrupted on feeding the poison to the consumer", getName()
@@ -493,7 +504,7 @@ implements LoadExecutor<T> {
 		try {
 			close();
 		} catch(final IOException e) {
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.WARN, e, String.format("%s: failed to close", getName())
 			);
 		}

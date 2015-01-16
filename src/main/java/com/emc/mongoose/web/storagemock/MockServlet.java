@@ -10,7 +10,7 @@ import com.codahale.metrics.Snapshot;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.api.WSIOTask;
@@ -36,7 +36,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -159,7 +158,7 @@ implements Runnable {
 			httpConnector.setPort(port);
 			server.addConnector(httpConnector);
 		} catch (final Exception e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Creating of server connector failed");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Creating of server connector failed");
 		}
 		LOG.debug(Markers.MSG, "Set up a new handler");
 		final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
@@ -187,12 +186,12 @@ implements Runnable {
 		} catch (final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupting the WSMock servlet");
 		} catch (final Exception e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to start WSMock servlet");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to start WSMock servlet");
 		} finally {
 			try {
 				server.stop();
 			} catch (final Exception e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to stop jetty");
+				TraceLogger.failure(LOG, Level.WARN, e, "Failed to stop jetty");
 			}
 			metricsReporter.close();
 		}
@@ -264,17 +263,17 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet output failed");
+			TraceLogger.failure(LOG, Level.WARN, e, "Servlet output failed");
 		} catch (final ArrayIndexOutOfBoundsException e) {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+			TraceLogger.failure(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
 		} catch(final Throwable t) {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, t, "Unexpected failure");
+			TraceLogger.failure(LOG, Level.ERROR, t, "Unexpected failure");
 		}
 	}
 	//
@@ -302,7 +301,7 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPostFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
+			TraceLogger.failure(LOG, Level.WARN, e, "Servlet input stream failed");
 		}
 	}
 	//
@@ -343,12 +342,12 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
+			TraceLogger.failure(LOG, Level.WARN, e, "Servlet input stream failed");
 		}catch (final NumberFormatException e){
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.WARN, e,
 				String.format("Unexpected object id format: \"%s\"", dataID)
 			);
@@ -356,7 +355,7 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+			TraceLogger.failure(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
 		}
 	}
 	//
@@ -384,7 +383,7 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterDeleteFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
+			TraceLogger.failure(LOG, Level.WARN, e, "Servlet input stream failed");
 		}
 	}
 	//

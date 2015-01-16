@@ -3,8 +3,7 @@ package com.emc.mongoose.base.load.impl.tasks;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.LoadExecutor;
-import com.emc.mongoose.util.logging.ExceptionHandler;
-import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.pool.InstancePool;
 import com.emc.mongoose.util.pool.Reusable;
 //
@@ -35,13 +34,13 @@ implements Runnable, Reusable {
 			ioTaskResult = futureResult.get(); // submit done
 			executor.handleResult(ioTask, ioTaskResult);
 		} catch(final InterruptedException | CancellationException e) {
-			ExceptionHandler.trace(LOG, Level.TRACE, e, "Request has been cancelled");
+			TraceLogger.failure(LOG, Level.TRACE, e, "Request has been cancelled");
 		} catch(final ExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request execution failure");
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Request execution failure");
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request result handling failed");
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Request result handling failed");
 		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");
 		} finally {
 			close();
 		}

@@ -451,7 +451,7 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.web.api.impl",
-					"level": "trace",
+					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
@@ -494,7 +494,7 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.web.load.impl",
-					"level": "trace",
+					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"

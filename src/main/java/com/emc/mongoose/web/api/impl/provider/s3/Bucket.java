@@ -2,10 +2,10 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.data.WSObject;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import com.emc.mongoose.web.load.WSLoadExecutor;
@@ -132,7 +132,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 		return flagExists;
@@ -172,7 +172,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 	}
 	//
@@ -210,7 +210,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 	}

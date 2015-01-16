@@ -1,9 +1,8 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.Consumer;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.data.WSObject;
-import com.emc.mongoose.web.data.impl.BasicWSObject;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -16,7 +15,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 //
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.BufferOverflowException;
 import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
@@ -85,7 +83,7 @@ extends DefaultHandler {
 				try {
 					size = Long.parseLong(strSize);
 				} catch(final NumberFormatException e) {
-					ExceptionHandler.trace(
+					TraceLogger.failure(
 						LOG, Level.WARN, e, "Data object size should be a 64 bit number"
 					);
 				}
@@ -105,7 +103,7 @@ extends DefaultHandler {
 						endDocument();
 					}
 				} catch(final RemoteException e) {
-					ExceptionHandler.trace(
+					TraceLogger.failure(
 						LOG, Level.WARN, e, "Failed to submit new data object to remote consumer"
 					);
 				} catch(final InterruptedException e) {
@@ -113,7 +111,7 @@ extends DefaultHandler {
 				} catch(final BufferOverflowException e) {
 					LOG.debug(Markers.ERR, Arrays.toString(Base64.decodeBase64(strId)));
 				} catch(final Exception e) {
-					ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
+					TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
 				}
 			} else {
 				LOG.trace(Markers.ERR, "Invalid object id ({}) or size ({})", strId, strSize);
@@ -143,7 +141,7 @@ extends DefaultHandler {
 			try {
 				consumer.shutdown();
 			} catch(final RemoteException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.WARN, e, "Failed to limit data items count for remote consumer"
 				);
 			}

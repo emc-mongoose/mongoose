@@ -2,7 +2,7 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
@@ -214,7 +214,7 @@ extends WSRequestConfigBase<T> {
 					bucket, BasicWSObject.class, maxCount, (WSLoadExecutor<T>) client
 				);
 			} catch(final NoSuchMethodException e) {
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
+				TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		}
 		return producer;

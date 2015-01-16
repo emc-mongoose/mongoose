@@ -1,7 +1,7 @@
 package com.emc.mongoose.web.ui.websockets.impl;
 //
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.ui.logging.WebUIAppender;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import com.emc.mongoose.web.ui.websockets.WebSocketLogListener;
@@ -21,8 +21,6 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 //
 import java.io.IOException;
-import java.util.List;
-
 /**
  * Created by gusakk on 10/24/14.
  */
@@ -43,7 +41,7 @@ implements WebSocketLogListener {
 	@OnWebSocketError
 	public final void onError(final Throwable t) {
 		WebUIAppender.unregister(this);
-		ExceptionHandler.trace(LOG, Level.DEBUG, t, "WebSocket failure");
+		TraceLogger.failure(LOG, Level.DEBUG, t, "WebSocket failure");
 	}
 	//
 	@OnWebSocketConnect
@@ -64,7 +62,7 @@ implements WebSocketLogListener {
 		try {
 			session.getRemote().sendString(gson.toJson(message));
 		} catch (final IOException|WebSocketException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "WebSocket failure");
+			TraceLogger.failure(LOG, Level.DEBUG, e, "WebSocket failure");
 		}
 	}
 }

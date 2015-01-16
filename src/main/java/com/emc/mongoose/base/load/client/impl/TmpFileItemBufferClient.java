@@ -9,7 +9,7 @@ import com.emc.mongoose.base.load.client.LoadClient;
 import com.emc.mongoose.base.load.server.DataItemBufferSvc;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
 import com.emc.mongoose.base.load.server.LoadSvc;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 //
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.threading.WorkerFactory;
@@ -51,7 +51,7 @@ implements DataItemBufferClient<T> {
 			try {
 				nextDataItemBuffer = (DataItemBufferSvc<T>) nextLoadBuilderSvc.newDataItemBuffer();
 			} catch(final IOException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.ERROR, e,
 					String.format("Failed to create remote data items buffer @%s", addr)
 				);
@@ -105,7 +105,7 @@ implements DataItemBufferClient<T> {
 					addr, nextDataItemBuffer.toString()
 				);
 			} catch(final Exception e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.WARN, e,
 					String.format("Failed to close remote data items buffer @ %s", addr)
 				);
@@ -125,7 +125,7 @@ implements DataItemBufferClient<T> {
 					nextLoadSvc = loadSvcMap.get(addr);
 					nextDataItemBuffer.setConsumer(nextLoadSvc);
 				} catch(final Exception e) {
-					ExceptionHandler.trace(
+					TraceLogger.failure(
 						LOG, Level.WARN, e,
 						String.format(
 							"Failed to set the consumer %s for remote data items buffer @ %s",
@@ -160,7 +160,7 @@ implements DataItemBufferClient<T> {
 					addr, nextDataItemBuffer.toString()
 				);
 			} catch(final Exception e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.WARN, e,
 					String.format("Failed to start remote data items buffer @ %s", addr)
 				);
@@ -180,7 +180,7 @@ implements DataItemBufferClient<T> {
 					addr, nextDataItemBuffer.toString()
 				);
 			} catch(final Exception e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.WARN, e,
 					String.format("Failed to interrupt remote data items buffer @ %s", addr)
 				);
@@ -215,7 +215,7 @@ implements DataItemBufferClient<T> {
 			} catch(final InterruptedException e) {
 				LOG.debug(Markers.MSG, "Interrupted");
 			} catch(final IOException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.WARN, e,
 					String.format(
 						"Failed to await the remote data items buffer @%s", addr
@@ -244,7 +244,7 @@ implements DataItemBufferClient<T> {
 				final DataItemBuffer<T> nextDataItemBuffer = get(addr);
 				remoteJoinExecutor.submit(new RemoteJoinTask(addr, nextDataItemBuffer, milliSec));
 			} catch(final Exception e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.WARN, e,
 					String.format("Failed to wait for remote data items buffer @ %s", addr)
 				);

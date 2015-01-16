@@ -2,6 +2,7 @@ package com.emc.mongoose.web.load.client.impl;
 //
 import com.emc.mongoose.base.load.client.impl.LoadBuilderClientBase;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.remote.Service;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
@@ -9,7 +10,6 @@ import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.persist.FileProducer;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.util.remote.ServiceUtils;
@@ -121,7 +121,7 @@ implements WSLoadBuilderClient<T, U> {
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
 				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to generate JMX URL");
+				TraceLogger.failure(LOG, Level.ERROR, e, "Failed to generate JMX URL");
 			}
 			//
 			nextJMXConn = null;
@@ -129,7 +129,7 @@ implements WSLoadBuilderClient<T, U> {
 				try {
 					nextJMXConn = JMXConnectorFactory.connect(nextJMXURL, null);
 				} catch(final IOException e) {
-					ExceptionHandler.trace(
+					TraceLogger.failure(
 						LOG, Level.ERROR, e,
 						String.format("Failed to connect to \"%s\" via JMX", nextJMXURL)
 					);

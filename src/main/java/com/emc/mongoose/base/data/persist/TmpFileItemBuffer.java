@@ -5,7 +5,7 @@ import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.server.DataItemBufferSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 //
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.threading.WorkerFactory;
@@ -70,7 +70,7 @@ implements DataItemBufferSvc<T> {
 				new FileOutputStream(fBuff)
 			);
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "failed to open temporary file for output");
+			TraceLogger.failure(LOG, Level.ERROR, e, "failed to open temporary file for output");
 		} finally {
 			fBuffOut = fBuffOutTmp;
 		}
@@ -104,7 +104,7 @@ implements DataItemBufferSvc<T> {
 			try {
 				fBuffOut.writeObject(dataItem);
 			} catch(final IOException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "failed to write out the data item");
+				TraceLogger.failure(LOG, Level.WARN, e, "failed to write out the data item");
 			}
 		}
 	}
@@ -169,7 +169,7 @@ implements DataItemBufferSvc<T> {
 					Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 				);
 			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.DEBUG, e, "Interrupted while writing out the remaining data items"
 				);
 			} finally {
@@ -208,7 +208,7 @@ implements DataItemBufferSvc<T> {
 				try {
 					consumerMaxCount = consumer.getMaxCount();
 				} catch(final RemoteException e) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
+					TraceLogger.failure(LOG, Level.WARN, e, "Looks like network failure");
 				}
 				LOG.debug(
 					Markers.MSG, "{}: {} available data items to read, while consumer limit is {}",
@@ -226,14 +226,14 @@ implements DataItemBufferSvc<T> {
 					}
 					LOG.debug(Markers.MSG, "done producing");
 				} catch(final IOException|ClassNotFoundException|ClassCastException e) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to read a data item");
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to read a data item");
 				} catch(final InterruptedException e) {
 					LOG.debug(Markers.ERR, "Interrupted during submit the data item");
 				} finally {
 					try {
 						consumer.submit(null); // feed the poison
 					} catch(final RemoteException e) {
-						ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
+						TraceLogger.failure(LOG, Level.WARN, e, "Looks like network failure");
 					} catch(final InterruptedException e) {
 						LOG.debug(Markers.ERR, "Interrupted");
 					}
@@ -275,7 +275,7 @@ implements DataItemBufferSvc<T> {
 			try {
 				consumer.submit(null); // feed the poison
 			} catch(final RemoteException | InterruptedException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.DEBUG, e, "Failed to submit the poison to the consumer"
 				);
 			}

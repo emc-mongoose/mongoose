@@ -1,16 +1,15 @@
 package com.emc.mongoose.web.api.impl;
 //
 import com.emc.mongoose.base.api.RequestConfig;
-import com.emc.mongoose.base.api.impl.BasicIOTask;
 import com.emc.mongoose.object.api.impl.BasicObjectIOTask;
 import com.emc.mongoose.util.io.HTTPContentInputStream;
 import com.emc.mongoose.util.io.HTTPContentOutputStream;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.pool.InstancePool;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -62,21 +61,23 @@ implements WSIOTask<T> {
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
 	) {
 		final BasicWSIOTask<T> ioTask = (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "{}: took instance for node @ {}", ioTask.hashCode(), ioTask.nodeAddr);
-		}
+		TraceLogger.trace(
+			LOG, Level.TRACE, Markers.MSG,
+			String.format(
+				"get an instance for {reqConf=%s, dataItem=%s, nodeAddr=%s}",
+				reqConf, dataItem.getId(), nodeAddr
+			)
+		);
 		return ioTask;
 	}
 	//
 	@Override
 	public void close() {
-		/*synchronized(LOG) {
-			LOG.trace(Markers.MSG, "{}: release instance", hashCode());
-			final StackTraceElement stackTrace[] = Thread.currentThread().getStackTrace();
-			for(final StackTraceElement ste: stackTrace) {
-				LOG.trace(Markers.MSG, ste.toString());
-			}
-		}*/
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			TraceLogger.trace(
+				LOG, Level.TRACE, Markers.MSG, String.format("%d: release instance", hashCode())
+			);
+		}
 		POOL_WEB_IO_TASKS.release(this);
 	}
 	// END pool related things
@@ -101,7 +102,7 @@ implements WSIOTask<T> {
 			wsReqConf.applyDataItem(httpRequest, dataItem);
 			super.setDataItem(dataItem);
 		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to apply data item");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply data item");
 		}
 		return this;
 	}
@@ -281,7 +282,7 @@ implements WSIOTask<T> {
 	@Override
 	public final void failed(final Exception e) {
 		exception = e;
-		ExceptionHandler.trace(LOG, Level.DEBUG, e, "Response processing failure");
+		TraceLogger.failure(LOG, Level.DEBUG, e, "Response processing failure");
 	}
 	//
 	@Override

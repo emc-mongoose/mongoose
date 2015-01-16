@@ -3,7 +3,7 @@ package com.emc.mongoose.base.data.impl;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
@@ -33,7 +33,7 @@ implements DataItem {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final static String
-		FMT_META_INFO = "%x" + RunTimeConfig.LIST_SEP + "%x",
+		FMT_META_INFO = "%x" + RunTimeConfig.LIST_SEP + "%d",
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",
 		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: \"%s\"",
 		FMT_MSG_FAIL_CHANGE_OFFSET = "Failed to change offset to \"%x\"",
@@ -92,7 +92,7 @@ implements DataItem {
 		try {
 			setOffset(offset, 0);
 		} catch(final IOException e) {
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.ERROR, e, String.format(FMT_MSG_FAIL_SET_OFFSET, offset)
 			);
 		}
@@ -178,7 +178,7 @@ implements DataItem {
 				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[0]));
 			}
 			try {
-				size = Long.parseLong(tokens[1], 0x10);
+				size = Long.parseLong(tokens[1], 10);
 			} catch(final NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[1]));
 			}

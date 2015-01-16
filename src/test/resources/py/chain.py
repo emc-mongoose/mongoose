@@ -9,7 +9,7 @@ from org.apache.logging.log4j import Level, LogManager
 #
 from com.emc.mongoose.base.api import AsyncIOTask
 from com.emc.mongoose.run import Main
-from com.emc.mongoose.util.logging import ExceptionHandler, Markers
+from com.emc.mongoose.util.logging import TraceLogger, Markers
 from com.emc.mongoose.base.load import DataItemBuffer
 #
 from java.lang import Long, Throwable, IllegalArgumentException
@@ -91,7 +91,7 @@ def build(flagSimultaneous=True, flagItemsBuffer=True, dataItemSizeMin=0, dataIt
 		except IllegalArgumentException:
 			LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)
 		except Throwable as e:
-			ExceptionHandler.trace(LOG, Level.FATAL, e, "Unexpected failure")
+			TraceLogger.failure(LOG, Level.FATAL, e, "Unexpected failure")
 			e.printStackTrace()
 	return chain
 	#
@@ -117,7 +117,7 @@ def execute(chain=(), flagSimultaneous=True):
 					try:
 						prevLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
 					except Throwable as e:
-						ExceptionHandler.trace(
+						TraceLogger.failure(
 							LOG, Level.ERROR, e, "Producer \"{}\" execution failure", prevLoad
 						)
 					finally:
@@ -125,7 +125,7 @@ def execute(chain=(), flagSimultaneous=True):
 				try:
 					nextLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
 				except Throwable as e:
-					ExceptionHandler.trace(
+					TraceLogger.failure(
 						LOG, Level.ERROR, e, "Consumer \"{}\" execution failure", nextLoad
 					)
 				nextLoad.close()
