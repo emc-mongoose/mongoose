@@ -465,7 +465,7 @@ implements LoadExecutor<T> {
 	public synchronized void close()
 	throws IOException {
 		TraceLogger.trace(
-			LOG, Level.DEBUG, Markers.MSG,
+			LOG, Level.TRACE, Markers.MSG,
 			String.format("invoked close of %s", getName())
 		);
 		if(isClosed.compareAndSet(false, true)) {
@@ -524,7 +524,13 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join()
 	throws InterruptedException {
+		LOG.info(
+			Markers.MSG, "{} interrupted, waiting remaining {} tasks to complete",
+			getName(), getQueue().size() + getActiveCount()
+		);
 		awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+		LOG.info(Markers.MSG, "{} interrupted and done", getName());
+
 	}
 	//
 	@Override
