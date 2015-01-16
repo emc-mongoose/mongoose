@@ -287,11 +287,7 @@ function buildDivBlocksByFileNames(shortPropsMap) {
 					continue;
 				formGroupDiv = $("<div>").addClass("form-group");
 				var placeHolder = "";
-				if (obj[i].key === "data.count") {
-					placeHolder = "If you set this property, 'run.time' will reset to default";
-				} else if (obj[i].key === "run.time") {
-					placeHolder = "If you set this property, 'data.count' will reset to default";
-				} else if (obj[i].key === "data.src.fpath") {
+				if (obj[i].key === "data.src.fpath") {
 					placeHolder = "Format: log/<run.mode>/<run.id>/<filename>";
 				}
 				formGroupDiv.append($("<label>", {
