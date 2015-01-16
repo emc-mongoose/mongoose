@@ -76,15 +76,15 @@ implements AsyncIOTask<T> {
 			LOG.info(
 				Markers.PERF_TRACE, String.format(
 					FMT_PERF_TRACE, nodeAddr, dataItem.getId(), transferSize, result.code,
-					reqTimeStart / 1000, (reqTimeDone - reqTimeStart) / 1000,
-					(respTimeStart - reqTimeDone) /1000, (respTimeDone - respTimeStart) / 1000
+					reqTimeStart, reqTimeDone - reqTimeStart,
+					respTimeStart - reqTimeDone, respTimeDone - respTimeStart
 				)
 			);
 		} else {
 			LOG.debug(
 				Markers.ERR, String.format(
 					FMT_PERF_TRACE_INVALID, nodeAddr, dataItem.getId(), transferSize, result.code,
-					reqTimeStart / 1000, reqTimeDone / 1000, respTimeStart /1000, respTimeDone / 1000
+					reqTimeStart, reqTimeDone, respTimeStart, respTimeDone
 				)
 			);
 		}

@@ -85,7 +85,7 @@ implements WSIOTask<T> {
 	protected MutableHTTPRequest httpRequest = null;
 	//
 	@Override
-	public WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
+	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
 		if(this.wsReqConf == null) { // request instance has not been configured yet?
 			this.wsReqConf = (WSRequestConfig<T>) reqConf;
 			httpRequest = wsReqConf.createRequest();
@@ -163,7 +163,7 @@ implements WSIOTask<T> {
 		return reqEntity == null || reqEntity.isRepeatable();
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("SynchronizeOnNonFinalField")
 	public final void resetRequest() {
 		respStatusCode = -1;
 		exception = null;
