@@ -106,7 +106,7 @@ implements LoadExecutor<T> {
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());
 		jmxReporter = JmxReporter.forRegistry(metrics)
-			.convertDurationsTo(TimeUnit.MICROSECONDS)
+			//.convertDurationsTo(TimeUnit.MICROSECONDS)
 			//.convertRatesTo(TimeUnit.SECONDS)
 			.registerWith(mBeanServer)
 			.build();
