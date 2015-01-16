@@ -1,10 +1,8 @@
 package com.emc.mongoose.web.ui.logging;
 //
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.web.ui.websockets.interfaces.WebSocketLogListener;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -75,8 +73,8 @@ extends AbstractAppender {
 	}
 	//
 	public synchronized static void sendPreviousLogs(final WebSocketLogListener listener) {
-		for (CircularFifoQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
-			for (LogEvent logEvent : queue) {
+		for (final CircularFifoQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
+			for (final LogEvent logEvent : queue) {
 				listener.sendMessage(logEvent);
 			}
 		}
@@ -85,18 +83,18 @@ extends AbstractAppender {
 	@Override
 	public synchronized final void append(final LogEvent event) {
 		if (ENABLED_FLAG) {
-			String currentRunId = event.getContextMap().get(Main.KEY_RUN_ID);
+			final String currentRunId = event.getContextMap().get(Main.KEY_RUN_ID);
 			if (LOG_EVENTS_MAP.get(currentRunId) == null) {
 				LOG_EVENTS_MAP.put(currentRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST));
 			}
 			LOG_EVENTS_MAP.get(currentRunId).add(event);
-			for (WebSocketLogListener listener : LISTENERS) {
+			for (final WebSocketLogListener listener : LISTENERS) {
 				listener.sendMessage(event);
 			}
 		}
 	}
-
-	public static void removeRunId(String runId) {
+	//
+	public static void removeRunId(final String runId) {
 		LOG_EVENTS_MAP.remove(runId);
 	}
 }

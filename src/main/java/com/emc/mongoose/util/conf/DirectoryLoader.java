@@ -1,6 +1,5 @@
 package com.emc.mongoose.util.conf;
 //
-
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
@@ -25,9 +24,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-
 //
-
 /**
  Created by kurila on 04.07.14.
  A property loader using some directory as a root of property tree.
@@ -107,7 +104,7 @@ extends SimpleFileVisitor<Path> {
 			if (isUpdate) {
 				if (file.getFileName().toString().equals("run")) {
 					props.add(new DefaultMapEntry<String, Object>(Main.KEY_RUN_ID,
-						new DefaultMapEntry<>("id", tgtConfig.getProperty("run.id"))));
+						new DefaultMapEntry<>("id", tgtConfig.getProperty(Main.KEY_RUN_ID))));
 				}
 				for (final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext(); ) {
 					key = keyIter.next();
@@ -120,8 +117,8 @@ extends SimpleFileVisitor<Path> {
 					try (final FileWriter writer = new FileWriter(file.toFile())) {
 						currProps.save(writer);
 					} catch (final Exception e) {
-						//TODO more work with exceptions
-						ExceptionHandler.trace(LOG, Level.ERROR, e, "Can't write in property file");
+						ExceptionHandler.trace(LOG, Level.ERROR, e,
+							String.format("Failed to write in property file \"%s\"", file.getFileName()));
 					}
 				}
 			} else {
@@ -178,15 +175,6 @@ extends SimpleFileVisitor<Path> {
 		} else {
 			// directory iteration failed
 			throw e;
-		}
-	}
-
-	private void saveNewProps(final Path file, final PropertiesConfiguration currProps) {
-		//TODO more work with exceptions
-		try (final FileWriter writer = new FileWriter(file.toFile())) {
-			currProps.save(writer);
-		} catch (final Exception e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Can't write in property file");
 		}
 	}
 }

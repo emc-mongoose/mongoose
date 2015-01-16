@@ -1,7 +1,7 @@
 package com.emc.mongoose.web.ui;
 
-import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.web.ui.enums.RunModes;
+import com.emc.mongoose.util.logging.ExceptionHandler;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -15,22 +15,20 @@ import java.io.IOException;
  * Created by gusakk on 02/10/14.
  */
 public final class MainServlet extends HttpServlet {
-
+	//
 	private final static Logger LOG = LogManager.getLogger();
-
-	public final void doGet(final HttpServletRequest request, final HttpServletResponse response)
-	throws ServletException, IOException {
-		//TODO fix null comparison. Make this piece of code clearer.
-		if (StartServlet.threadsMap != null) {
-			request.getSession(true).setAttribute("runmodes", StartServlet.threadsMap.keySet());
+	//
+	@Override
+	public final void doGet(final HttpServletRequest request, final HttpServletResponse response) {
+		//
+		request.getSession(true).setAttribute("runmodes", CommonServlet.THREADS_MAP.keySet());
+		request.getSession(true).setAttribute("stopped", CommonServlet.STOPPED_RUN_MODES);
+		request.setAttribute("runTimeConfig", CommonServlet.getLastRunTimeConfig().clone());
+		try {
+			request.getRequestDispatcher("index.jsp").forward(request, response);
+		} catch (final IOException|ServletException e) {
+			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed forwarding to index.jsp");
 		}
-		if (StopServlet.stoppedRunModes != null) {
-			request.getSession(true).setAttribute("stopped", StopServlet.stoppedRunModes);
-		}
-		if (StartServlet.LAST_RUN_TIME_CONFIG != null) {
-			request.setAttribute("runTimeConfig", StartServlet.LAST_RUN_TIME_CONFIG.clone());
-		}
-		request.getRequestDispatcher("index.jsp").forward(request, response);
 	}
 
 }

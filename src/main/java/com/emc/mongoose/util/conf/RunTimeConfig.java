@@ -12,7 +12,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.jackson.Log4jJsonObjectMapper;
 
 import java.io.Externalizable;
 import java.io.IOException;
@@ -41,6 +40,7 @@ import java.util.regex.Pattern;
 public final class RunTimeConfig
 extends BaseConfiguration
 implements Externalizable {
+	//
 	private Set<String> mongooseKeys;
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -106,9 +106,10 @@ implements Externalizable {
 			x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
 		).toUpperCase();
 	}
+	//
 	public String getPropertiesMap() {
 		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES), this);
-		ObjectMapper mapper = new ObjectMapper();
+		final ObjectMapper mapper = new ObjectMapper();
 		try {
 			return mapper.writeValueAsString(properties);
 		} catch (final JsonProcessingException e) {
@@ -117,7 +118,7 @@ implements Externalizable {
 		return null;
 	}
 	//
-	public final synchronized void put(List<String> dirs, String fileName, List<DefaultMapEntry<String, Object>> props) {
+	public final synchronized void put(final List<String> dirs, final String fileName, final List<DefaultMapEntry<String, Object>> props) {
 		Map<String, Object> node = properties;
 		if (dirs != null) {
 			for (final String nextDir : dirs) {

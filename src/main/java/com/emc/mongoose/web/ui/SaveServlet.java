@@ -3,7 +3,6 @@ package com.emc.mongoose.web.ui;
 import com.emc.mongoose.run.JettyRunner;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.DirectoryLoader;
-import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import org.apache.commons.configuration.ConfigurationException;
@@ -12,20 +11,19 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Map;
 import java.util.Scanner;
 
 /**
  * Created by gusakk on 12/28/14.
  */
-public class SaveServlet extends HttpServlet {
+public class SaveServlet extends CommonServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String FILENAME = "config.txt";
@@ -35,13 +33,11 @@ public class SaveServlet extends HttpServlet {
 	private final static String CONTENT_LENGTH = "Content-Length";
 	private final static String CONTENT_DISPOSITION = "Content-Disposition";
 	//
-	private RunTimeConfig runTimeConfig;
-	//
 	@Override
-	public void init() throws ServletException {
+	public void init() {
 		super.init();
-		runTimeConfig = Main.RUN_TIME_CONFIG.get().clone();
 	}
+	//
 	@Override
 	public void doGet(final HttpServletRequest request, final HttpServletResponse response) {
 		//
@@ -73,16 +69,14 @@ public class SaveServlet extends HttpServlet {
 		setupRunTimeConfig(request);
 		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES),
 				runTimeConfig, true);
-		//TODO fix this ugly code
-		StartServlet.LAST_RUN_TIME_CONFIG = runTimeConfig;
-		//
+		CommonServlet.updateLastRunTimeConfig(runTimeConfig);
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 	//
 	private void saveConfigInSeparateFile() {
 		if (!FILE_PATH.mkdirs()) {
 			if (!FILE_PATH.exists()) {
-				LOG.error(Markers.ERR, "Can't create folders for ui config");
+				LOG.error(Markers.ERR, "Failed to create folders for ui config");
 				return;
 			}
 		}
@@ -97,32 +91,7 @@ public class SaveServlet extends HttpServlet {
 				ExceptionHandler.trace(LOG, Level.ERROR, e, "Configuration exception");
 			}
 		} catch (final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Can't write properties to ui config file");
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to write properties to ui config file");
 		}
 	}
-	//
-	private void setupRunTimeConfig(final HttpServletRequest request) {
-		for (final Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
-			if (entry.getValue()[0].trim().isEmpty()) {
-				continue;
-			}
-			if (entry.getValue().length > 1) {
-				runTimeConfig.set(entry.getKey(), convertArrayToString(entry.getKey(), entry.getValue()));
-				continue;
-			}
-			runTimeConfig.set(entry.getKey(), entry.getValue()[0].trim());
-		}
-	}
-	//
-	private String convertArrayToString(final String key, final String[] stringArray) {
-		final String resultString = Arrays.toString(stringArray)
-				.replace("[", "")
-				.replace("]", "")
-				.replace(" ", "")
-				.trim();
-		if (key.equals("run.time"))
-			return resultString.replace(",", ".");
-		return resultString;
-	}
-
 }
