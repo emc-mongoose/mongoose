@@ -93,12 +93,12 @@ $(document).ready(function() {
 		$("#api-button").attr("data-target", "#" + valueSelected);
 	});
 
-	$(".complex, #run\\.time").change(function() {
+	$(".complex").change(function() {
 		$("#fake-data\\.count").val(document.getElementById("fake-data.count").defaultValue);
 		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
 	});
 
-	$("#fake-data\\.count, #data\\.count").change(function() {
+	$("#fake-data\\.count").change(function() {
 		$(".complex input").val($(".complex input").get(0).defaultValue);
 		$(".complex select").val($(".complex select option:first").val());
 		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
@@ -129,10 +129,8 @@ $(document).ready(function() {
 	});
 
 	$("#extended input").on("change", function() {
-		if ($(this).attr("id") === "run.time") {
-			var resultArray = $(this).val().split(".");
-			$(".complex input").val(resultArray[0]);
-			$(".complex select option:contains(" + resultArray[1] + ")").attr("selected", "selected");
+		if (($(this).attr("id") === "run.time") || ($(this).attr("id") === "data.count")) {
+			return;
 		}
 		$('input[pointer="' + $(this).attr("id") + '"]').val($(this).val());
 		$('select[pointer="' + $(this).attr("id") + '"] option:contains(' + $(this).val() + ')')
