@@ -524,18 +524,22 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join()
 	throws InterruptedException {
-		LOG.info(
+		LOG.trace(
 			Markers.MSG, "{} interrupted, waiting remaining {} tasks to complete",
 			getName(), getQueue().size() + getActiveCount()
 		);
 		awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-		LOG.info(Markers.MSG, "{} interrupted and done", getName());
-
+		LOG.trace(Markers.MSG, "{} interrupted and done", getName());
 	}
 	//
 	@Override
 	public final void join(final long timeOutMilliSec)
 	throws  InterruptedException {
+		LOG.trace(
+			Markers.MSG, "{} interrupted, waiting remaining {} tasks to complete",
+			getName(), getQueue().size() + getActiveCount()
+		);
 		awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
+		LOG.trace(Markers.MSG, "{} interrupted and done", getName());
 	}
 }

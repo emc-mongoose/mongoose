@@ -170,9 +170,15 @@ implements WSIOTask<T> {
 		reqEntity = null;
 		if(httpRequest != null) {
 			httpRequest.setEntity(reqEntity);
-			httpRequest.removeHeaders(HttpHeaders.RANGE);
-			httpRequest.removeHeaders(WSRequestConfig.KEY_EMC_SIG);
-			httpRequest.removeHeaders(HttpHeaders.CONTENT_TYPE);
+			if(httpRequest.containsHeader(HttpHeaders.RANGE)) {
+				httpRequest.removeHeaders(HttpHeaders.RANGE);
+			}
+			if(httpRequest.containsHeader(WSRequestConfig.KEY_EMC_SIG)) {
+				httpRequest.removeHeaders(WSRequestConfig.KEY_EMC_SIG);
+			}
+			if(httpRequest.containsHeader(HttpHeaders.CONTENT_ENCODING)) {
+				httpRequest.removeHeaders(HttpHeaders.CONTENT_TYPE);
+			}
 		}
 	}
 	/*
