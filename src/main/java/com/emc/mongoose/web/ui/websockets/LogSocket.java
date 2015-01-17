@@ -21,7 +21,6 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 //
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Created by gusakk on 10/24/14.
