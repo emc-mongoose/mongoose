@@ -86,7 +86,7 @@ extends AbstractAppender {
 	@Override
 	public synchronized final void append(final LogEvent event) {
 		if (ENABLED_FLAG) {
-			final String currentRunId = event.getContextMap().get(Main.KEY_RUN_ID);
+			final String currentRunId = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
 			if (LOG_EVENTS_MAP.get(currentRunId) == null) {
 				LOG_EVENTS_MAP.put(currentRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST));
 			}
