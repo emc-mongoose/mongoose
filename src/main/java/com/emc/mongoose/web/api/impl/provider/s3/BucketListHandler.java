@@ -1,10 +1,12 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.Consumer;
+import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,11 +14,18 @@ import org.apache.logging.log4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+//
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
+import java.nio.LongBuffer;
 import java.rmi.RemoteException;
+import java.util.Arrays;
 /**
  Created by kurila on 09.10.14.
  */
-public final class BucketListHandler<T extends BasicWSObject>
+public final class BucketListHandler<T extends WSObject>
 extends DefaultHandler {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -27,7 +36,8 @@ extends DefaultHandler {
 		QNAME_ITEM_SIZE = "Size";
 	//
 	private final Consumer<T> consumer;
-	@SuppressWarnings("FieldCanBeLocal")
+	private final Constructor<T> dataConstructor;
+	private final long maxCount;
 	private volatile long count = 0;
 	private volatile boolean
 		isInsideItem = false,
@@ -36,8 +46,13 @@ extends DefaultHandler {
 	private volatile String
 		strId = null, strSize = null;
 	//
-	BucketListHandler(final Consumer<T> consumer) {
+	@SuppressWarnings("unchecked")
+	BucketListHandler(
+		final Consumer<T> consumer, final Constructor<T> dataConstructor, final long maxCount
+	) {
 		this.consumer = consumer;
+		this.dataConstructor = dataConstructor;
+		this.maxCount = maxCount;
 	}
 	//
 	@Override
@@ -50,6 +65,9 @@ extends DefaultHandler {
 		super.startElement(uri, localName, qName, attrs);
 	}
 	//
+	private final ByteBuffer offsetValueBytes = ByteBuffer.allocate(Long.SIZE / Byte.SIZE);
+	private final LongBuffer offsetValueView = offsetValueBytes.asLongBuffer();
+	//
 	@Override @SuppressWarnings("unchecked")
 	public final void endElement(
 		final String uri, final String localName, final String qName
@@ -61,7 +79,8 @@ extends DefaultHandler {
 		if(isInsideItem && QNAME_ITEM.equals(qName)) {
 			isInsideItem = false;
 			//
-			long size = 0;
+			long offset, size = 0;
+			//
 			if(strSize != null && strSize.length() > 0) {
 				try {
 					size = Long.parseLong(strSize);
@@ -74,15 +93,27 @@ extends DefaultHandler {
 				LOG.trace(Markers.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
 			}
 			//
-			if(strId !=null && strId.length() > 0 && size > 0) {
+			if(strId != null && strId.length() > 0 && Base64.isBase64(strId) && size > 0) {
 				try {
-					consumer.submit((T) new BasicWSObject(strId, size));
+					offsetValueBytes.put(Base64.decodeBase64(strId));
+					offset = offsetValueView.get(0);
+					offsetValueBytes.clear();
+					if(count < maxCount) {
+						consumer.submit(dataConstructor.newInstance(strId, offset, size));
+						count ++;
+					} else {
+						endDocument();
+					}
 				} catch(final RemoteException e) {
 					ExceptionHandler.trace(
 						LOG, Level.WARN, e, "Failed to submit new data object to remote consumer"
 					);
 				} catch(final InterruptedException e) {
 					endDocument();
+				} catch(final BufferOverflowException e) {
+					LOG.debug(Markers.ERR, Arrays.toString(Base64.decodeBase64(strId)));
+				} catch(final Exception e) {
+					ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
 				}
 			} else {
 				LOG.trace(Markers.ERR, "Invalid object id ({}) or size ({})", strId, strSize);
@@ -109,7 +140,7 @@ extends DefaultHandler {
 	throws SAXException {
 		if(consumer != null) {
 			try {
-				consumer.setMaxCount(count);
+				consumer.shutdown();
 			} catch(final RemoteException e) {
 				ExceptionHandler.trace(
 					LOG, Level.WARN, e, "Failed to limit data items count for remote consumer"

@@ -43,10 +43,10 @@ public final class StartServlet extends CommonServlet {
 	@Override
 	public final void doPost(final HttpServletRequest request, final HttpServletResponse response) {
 		//
-		if (!isRunIdFree(request.getParameter(Main.KEY_RUN_ID))) {
+		if (!isRunIdFree(request.getParameter(RunTimeConfig.KEY_RUN_ID))) {
 			String resultString;
-			if (threadsMap.get(request.getParameter(Main.KEY_RUN_ID)) != null) {
-				if (threadsMap.get(request.getParameter(Main.KEY_RUN_ID)).isAlive()) {
+			if (threadsMap.get(request.getParameter(RunTimeConfig.KEY_RUN_ID)) != null) {
+				if (threadsMap.get(request.getParameter(RunTimeConfig.KEY_RUN_ID)).isAlive()) {
 					resultString = "Mongoose with this run.id is running at the moment";
 				} else {
 					resultString = "Tab with the same run.id will be closed";
@@ -61,7 +61,7 @@ public final class StartServlet extends CommonServlet {
 		}
 		//
 		if (!stoppedRunModes.isEmpty()) {
-			stoppedRunModes.remove(request.getParameter(Main.KEY_RUN_ID));
+			stoppedRunModes.remove(request.getParameter(RunTimeConfig.KEY_RUN_ID));
 		}
 		//
 		runTimeConfig = runTimeConfig.clone();
@@ -117,7 +117,7 @@ public final class StartServlet extends CommonServlet {
 			}
 		};
 		thread.start();
-		threadsMap.put(runTimeConfig.getString(Main.KEY_RUN_ID), thread);
+		threadsMap.put(runTimeConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
 	}
 	//
 	private void startStandaloneOrClient(final String message) {
@@ -137,7 +137,7 @@ public final class StartServlet extends CommonServlet {
 			}
 		};
 		thread.start();
-		threadsMap.put(runTimeConfig.getString(Main.KEY_RUN_ID), thread);
+		threadsMap.put(runTimeConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
 	}
 	//
 	private void startWSMock(final String message) {
@@ -158,7 +158,7 @@ public final class StartServlet extends CommonServlet {
 		};
 
 		thread.start();
-		threadsMap.put(runTimeConfig.getString(Main.KEY_RUN_ID), thread);
+		threadsMap.put(runTimeConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
 	}
 	//
 	public final boolean isRunIdFree(final String runId) {

@@ -11,9 +11,5 @@ import java.io.IOException;
  */
 public interface DataItemBuffer<T extends DataItem>
 extends Consumer<T>, Producer<T>, Closeable {
-	//
 	String FMT_THREAD_NAME = "%sDataItemsBuffer";
-	//
-	public void join(final long milliSeconds)
-	throws IOException, InterruptedException;
 }

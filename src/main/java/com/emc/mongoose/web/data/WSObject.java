@@ -6,6 +6,8 @@ import com.emc.mongoose.run.Main;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.HTTP;
 /**
  Created by kurila on 29.09.14.
@@ -25,4 +27,5 @@ extends DataObject, HttpEntity {
 	//
 	HttpEntity getPendingAugmentContentEntity();
 	//
+	boolean compareWith(final ContentDecoder in, final IOControl ioCtl);
 }

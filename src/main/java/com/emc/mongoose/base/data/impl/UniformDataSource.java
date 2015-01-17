@@ -55,7 +55,7 @@ implements DataSource<T> {
 	static {
 		try {
 			DEFAULT = new UniformDataSource();
-			LOG.info(Markers.MSG, "Default data source: {}", DEFAULT.toString());
+			//LOG.info(Markers.MSG, "Default data source: {}", DEFAULT.toString());
 		} catch(final Exception e) {
 			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create default data source");
 		}
@@ -86,8 +86,8 @@ implements DataSource<T> {
 		}
 		//
 		LOG.debug(
-			Markers.MSG, "Pre-generating the data done in {} seconds",
-			(System.nanoTime() - d) / LoadExecutor.BILLION
+			Markers.MSG, "Pre-generating the data done in {}[us]",
+			(System.nanoTime() - d) / LoadExecutor.NANOSEC_SCALEDOWN
 		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

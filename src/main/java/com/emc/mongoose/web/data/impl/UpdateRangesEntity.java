@@ -51,8 +51,7 @@ implements HttpEntity {
 	@Override
 	public final InputStream getContent()
 	throws IOException, IllegalStateException {
-		throw new IllegalStateException("Shouldn't be invoked");
-		//return baseItem.getPendingUpdatesContent();
+		return baseItem.getPendingUpdatesContent();
 	}
 	//
 	@Override

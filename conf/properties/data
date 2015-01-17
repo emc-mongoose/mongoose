@@ -2,6 +2,7 @@
 count:			0
 size.min:		1MB
 size.max:		1MB
+size.bias:		1
 
 # should be overriden
 src.fpath:

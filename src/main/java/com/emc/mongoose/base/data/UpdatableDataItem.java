@@ -10,6 +10,8 @@ import java.io.OutputStream;
 public interface UpdatableDataItem
 extends DataItem {
 	//
+	int getLayerNum();
+	//
 	boolean isRangeUpdatePending(final int i);
 	//
 	void updateRandomRange();
@@ -21,6 +23,9 @@ extends DataItem {
 	long getPendingRangesSize();
 	//
 	void writePendingUpdatesTo(final OutputStream out)
+	throws IOException;
+	//
+	InputStream getPendingUpdatesContent()
 	throws IOException;
 	//
 	boolean compareWith(final InputStream in)

@@ -1,6 +1,6 @@
 package com.emc.mongoose.base.load.client.impl;
 //
-import com.emc.mongoose.base.api.Request;
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.persist.FileProducer;
@@ -92,14 +92,14 @@ implements LoadBuilderClient<T, U> {
 			LOG.debug(Markers.MSG, "Applying the configuration to server @ \"{}\"...", addr);
 			nextBuilder.setProperties(runTimeConfig);
 		}
-		//
+		/*
 		final String firstNodeAddr = reqConf.getAddr();
 		if(firstNodeAddr == null || firstNodeAddr.length() == 0) {
 			final String nodeAddrs[] = runTimeConfig.getStorageAddrs();
 			if(nodeAddrs != null && nodeAddrs.length > 0) {
 				reqConf.setAddr(nodeAddrs[0]);
 			}
-		}
+		}*/
 		//
 		String dataMetaInfoFile = null;
 		try {
@@ -133,7 +133,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setLoadType(final Request.Type loadType)
+	public final LoadBuilderClient<T, U> setLoadType(final AsyncIOTask.Type loadType)
 	throws IllegalStateException, RemoteException {
 		reqConf.setLoadType(loadType);
 		LoadBuilderSvc<T, U> nextBuilder;
@@ -167,6 +167,17 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
+	public final LoadBuilderClient<T, U> setObjSizeBias(final float objSizeBias)
+		throws IllegalArgumentException, RemoteException {
+		LoadBuilderSvc<T, U> nextBuilder;
+		for(final String addr: keySet()) {
+			nextBuilder = get(addr);
+			nextBuilder.setObjSizeBias(objSizeBias);
+		}
+		return this;
+	}
+	//
+	@Override
 	public final LoadBuilderClient<T, U> setMaxObjSize(final long maxObjSize)
 	throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
@@ -190,7 +201,7 @@ implements LoadBuilderClient<T, U> {
 	//
 	@Override
 	public final LoadBuilderClient<T, U> setThreadsPerNodeFor(
-		final short threadCount, final Request.Type loadType
+		final short threadCount, final AsyncIOTask.Type loadType
 	) throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {
@@ -203,13 +214,13 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public final LoadBuilderClient<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException {
-		// need to remember 1st storage node address to configure later
+		/* need to remember 1st storage node address to configure later
 		final String firstNodeAddr = reqConf.getAddr();
 		if(firstNodeAddr == null || firstNodeAddr.length() == 0) {
 			if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
 				reqConf.setAddr(dataNodeAddrs[0]);
 			}
-		}
+		}*/
 		//
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr: keySet()) {

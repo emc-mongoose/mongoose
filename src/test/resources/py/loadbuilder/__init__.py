@@ -2,12 +2,13 @@
 from __future__ import print_function, absolute_import, with_statement
 from sys import exit
 #
-from org.apache.logging.log4j import LogManager
+from org.apache.logging.log4j import Level, LogManager
 LOG = LogManager.getLogger()
 #
 from com.emc.mongoose.run import Main
-from com.emc.mongoose.util.logging import Markers
+from com.emc.mongoose.util.logging import ExceptionHandler, Markers
 #
+from java.lang import IllegalStateException
 from java.util import NoSuchElementException
 #
 def loadbuilder_init():
@@ -41,7 +42,11 @@ def loadbuilder_init():
 	else: # standalone
 		from com.emc.mongoose.web.load.impl import BasicLoadBuilder
 		#
-		INSTANCE = BasicLoadBuilder()
+		try:
+			INSTANCE = BasicLoadBuilder()
+		except IllegalStateException as e:
+			ExceptionHandler(LOG, Level.FATAL, e, "Failed to create load builder client")
+			exit()
 	#
 	if INSTANCE is None:
 		LOG.fatal(Markers.ERR, "No load builder instanced")

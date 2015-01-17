@@ -1,8 +1,11 @@
 package com.emc.mongoose.web.ui.logging;
 //
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.web.ui.websockets.interfaces.WebSocketLogListener;
+import com.emc.mongoose.web.ui.websockets.WebSocketLogListener;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
+import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.web.ui.websockets.WebSocketLogListener;
+//
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -41,7 +44,7 @@ extends AbstractAppender {
 		final String name, final Filter filter, final Layout<? extends Serializable> layout,
 		final boolean ignoreExceptions
 	) {
-		super(name, filter, layout);
+		super(name, filter, layout, ignoreExceptions);
 	}
 	//
 	@PluginFactory
@@ -51,7 +54,7 @@ extends AbstractAppender {
 		final @PluginAttribute("enabled") Boolean enabled,
 		final @PluginElement("Filters") Filter filter
 	) {
-		if (name == null) {
+		if(name == null) {
 			LOGGER.error("No name provided for CustomAppender");
 			return null;
 		}
@@ -60,14 +63,14 @@ extends AbstractAppender {
 	}
 	//
 	public static void register(final WebSocketLogListener listener) {
-		if (ENABLED_FLAG) {
+		if(ENABLED_FLAG) {
 			sendPreviousLogs(listener);
 			LISTENERS.add(listener);
 		}
 	}
 	//
 	public static void unregister(final WebSocketLogListener listener) {
-		if (ENABLED_FLAG) {
+		if(ENABLED_FLAG) {
 			LISTENERS.remove(listener);
 		}
 	}

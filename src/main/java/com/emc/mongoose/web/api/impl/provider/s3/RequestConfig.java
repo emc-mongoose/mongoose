@@ -1,17 +1,20 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
+import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.web.data.impl.BasicWSObject;
 //
+import com.emc.mongoose.web.load.WSLoadExecutor;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -35,11 +38,14 @@ extends WSRequestConfigBase<T> {
 	public final static String
 		FMT_PATH = "/%s/%s",
 		KEY_BUCKET = "api.s3.bucket",
+		KEY_BUCKET_FILESYSTEM = KEY_BUCKET + ".filesystem",
+		KEY_BUCKET_VERSIONING = KEY_BUCKET + ".versioning",
 		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
 	private final String fmtAuthValue;
 	//
 	private Bucket<T> bucket;
+	private boolean bucketFileSystem = false, bucketVersioning = false;
 	//
 	public RequestConfig()
 	throws NoSuchAlgorithmException {
@@ -76,10 +82,30 @@ extends WSRequestConfigBase<T> {
 		return this;
 	}
 	//
+	public final boolean getBucketFileSystem() {
+		return bucketFileSystem;
+	}
+	//
+	public final RequestConfig<T> setBucketFileSystem(final boolean flag) {
+		this.bucketFileSystem = flag;
+		return this;
+	}
+	//
+	public final boolean getBucketVersioning() {
+		return bucketVersioning;
+	}
+	//
+	public final RequestConfig<T> setBucketVersioning(final boolean flag) {
+		this.bucketVersioning = flag;
+		return this;
+	}
+	//
 	@Override
 	public final RequestConfig<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//
+		setBucketFileSystem(runTimeConfig.getBoolean(KEY_BUCKET_FILESYSTEM));
+		setBucketVersioning(runTimeConfig.getBoolean(KEY_BUCKET_VERSIONING));
 		//
 		try {
 			setBucket(new Bucket<T>(this, this.runTimeConfig.getString(KEY_BUCKET)));
@@ -106,7 +132,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final HttpRequest httpRequest, final T dataItem)
+	protected final void applyURI(final MutableHTTPRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
 		if(httpRequest == null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
@@ -117,22 +143,11 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		applyObjectId(dataItem, null); // S3 REST doesn't require http response
-		synchronized(uriBuilder) {
-			try {
-				HttpRequestBase.class.cast(httpRequest).setURI(
-					uriBuilder.setPath(
-						String.format(FMT_PATH, bucket.getName(), dataItem.getId())
-					).build()
-				);
-			} catch(final Exception e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI setting failure");
-			}
-		}
+		httpRequest.setUriPath(String.format(FMT_PATH, bucket.getName(), dataItem.getId()));
 	}
 	//
 	@Override
-	protected final void applyAuthHeader(final HttpRequest httpRequest) {
+	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
 		httpRequest.addHeader(HttpHeaders.CONTENT_MD5, ""); // checksum of the data item is not avalable before streaming
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
@@ -146,10 +161,10 @@ extends WSRequestConfigBase<T> {
 	};
 	//
 	@Override
-	public final String getCanonical(final HttpRequest httpRequest) {
-		StringBuffer buffer = new StringBuffer(httpRequest.getRequestLine().getMethod());
+	public final String getCanonical(final MutableHTTPRequest httpRequest) {
+		final StringBuffer buffer = new StringBuffer(httpRequest.getRequestLine().getMethod());
 		//
-		for(String headerName: HEADERS4CANONICAL) {
+		for(final String headerName: HEADERS4CANONICAL) {
 			// support for multiple non-unique header keys
 			for(final Header header: httpRequest.getHeaders(headerName)) {
 				buffer.append('\n').append(header.getValue());
@@ -159,7 +174,7 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		for(String emcHeaderName: HEADERS_EMC) {
+		for(final String emcHeaderName: HEADERS_EMC) {
 			for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
 				buffer
 					.append('\n').append(emcHeaderName.toLowerCase())
@@ -172,15 +187,14 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		buffer.append('\n').append(HttpRequestBase.class.cast(httpRequest).getURI().getRawPath());
+		buffer.append('\n').append(httpRequest.getUriPath());
 		//
 		LOG.trace(Markers.MSG, "Canonical request representation:\n{}", buffer);
 		//
 		return buffer.toString();
 	}
 	//
-	@Override
-	public final void applyObjectId(final T dataObject, final HttpResponse unused) {
+	protected final void applyObjectId(final T dataObject, final HttpResponse unused) {
 		dataObject.setId(
 			Base64.encodeBase64URLSafeString(
 				ByteBuffer
@@ -191,18 +205,31 @@ extends WSRequestConfigBase<T> {
 		);
 	}
 	//
+	@Override @SuppressWarnings("unchecked")
+	public final Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> client) {
+		Producer<T> producer = null;
+		try {
+			producer = new BucketProducer<>(
+				bucket, BasicWSObject.class, maxCount, (WSLoadExecutor<T>) client
+			);
+		} catch(final NoSuchMethodException e) {
+			ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
+		}
+		return producer;
+	}
+	//
 	@Override
-	public final void configureStorage()
+	public final void configureStorage(final LoadExecutor<T> loadExecutor)
 	throws IllegalStateException {
 		if(bucket == null) {
 			throw new IllegalStateException("Bucket is not specified");
 		}
 		final String bucketName = bucket.getName();
-		if(bucket.exists()) {
+		if(bucket.exists(loadExecutor)) {
 			LOG.debug(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
 		} else {
-			bucket.create();
-			if(bucket.exists()) {
+			bucket.create(loadExecutor);
+			if(bucket.exists(loadExecutor)) {
 				runTimeConfig.set(KEY_BUCKET, bucketName);
 			} else {
 				throw new IllegalStateException(
