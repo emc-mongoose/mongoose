@@ -104,8 +104,8 @@ extends SimpleFileVisitor<Path> {
 			//
 			if (isUpdate) {
 				if (file.getFileName().toString().equals("run")) {
-					props.add(new DefaultMapEntry<String, Object>(Main.KEY_RUN_ID,
-						new DefaultMapEntry<>("id", tgtConfig.getProperty(Main.KEY_RUN_ID))));
+					props.add(new DefaultMapEntry<String, Object>(RunTimeConfig.KEY_RUN_ID,
+						new DefaultMapEntry<>("id", tgtConfig.getProperty(RunTimeConfig.KEY_RUN_ID))));
 				}
 				for (final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext(); ) {
 					key = keyIter.next();
@@ -124,7 +124,7 @@ extends SimpleFileVisitor<Path> {
 				}
 			} else {
 				if (file.getFileName().toString().equals("run")) {
-					props.add(new DefaultMapEntry<String, Object>(Main.KEY_RUN_ID,
+					props.add(new DefaultMapEntry<String, Object>(RunTimeConfig.KEY_RUN_ID,
 						new DefaultMapEntry<>("id", currProps.getProperty("id"))));
 				}
 				//

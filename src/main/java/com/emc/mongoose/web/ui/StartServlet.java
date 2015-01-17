@@ -67,7 +67,7 @@ public final class StartServlet extends CommonServlet {
 		runTimeConfig = runTimeConfig.clone();
 		setupRunTimeConfig(request);
 		CommonServlet.updateLastRunTimeConfig(runTimeConfig);
-		switch (RunModes.getRunModeConstantByRequest(request.getParameter(Main.KEY_RUN_MODE))) {
+		switch (RunModes.getRunModeConstantByRequest(request.getParameter(RunTimeConfig.KEY_RUN_MODE))) {
 			case VALUE_RUN_MODE_SERVER:
 				startServer("Starting the server");
 				break;
