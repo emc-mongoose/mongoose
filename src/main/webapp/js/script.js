@@ -220,6 +220,16 @@ $(document).ready(function() {
 		}
 	});
 
+	$(".property").click(function() {
+		var id = $(this).attr("href").replace(/\./g, "\\.");
+		var name = $(this).parents(".file").find(".props").text();
+		$("#" + name).show();
+		var element = $("#" + name).find($(id));
+		var parent = element.parents(".form-group");
+		$("#" + name).children().hide();
+		parent.show();
+	});
+
 });
 
 function generatePropertyPage() {
@@ -232,6 +242,9 @@ function generatePropertyPage() {
 function onFoldersElementClick(element) {
 	resetParams();
 	$($(element).attr("href")).show();
+	//
+	$($(element).attr("href")).children().show();
+	//
 	var childrenFolders = "";
 	var childrenDocuments = "";
 	var parentsArray = $(element).parent().parents("li").find("label:first");
@@ -253,9 +266,27 @@ function walkTreeMap(map, ul, shortsPropsMap) {
 		if (jQuery.isArray(value)) {
 			element = ul.addChild("<li>")
 					.addClass("file")
-					.addChild("<a>")
-					.attr("href", "#" + key)
-					.text(key);
+					.append($("<a>", {
+						class: "props",
+						href: "#" + key,
+						text: key
+					}))
+					.append($("<input>", {
+						type: "checkbox"
+					}))
+					.addChild($("<ul>"));
+			var array = value;
+			for (var i = 0;i < array.length; i++) {
+				if (array[i].key === "run.mode") {
+					continue;
+				}
+				element.addChild($("<li>"))
+					.addChild($("<a>", {
+						href: "#" + array[i].key,
+						class: "property",
+						text: array[i].value.key
+					}));
+			}
 			shortsPropsMap[key] = value;
 			return;
 		} else {

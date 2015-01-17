@@ -44,7 +44,10 @@ label {
 }
 
 .folders {
+	border-bottom: 1px solid #ccc;
 	margin-top: 15px;
+	height: 600px;
+	overflow: scroll;
 }
 
 .file {
@@ -52,11 +55,17 @@ label {
 	padding-left: 3px;
 }
 
-.file a {
-	background: url('../images/document.png') 0 0 no-repeat;
-	padding-left: 21px;
+.props {
+	background: url('../images/document.png') 15px 1px no-repeat;
+	padding-left: 37px;
 	text-decoration: none;
 	display: block;
+	margin-bottom: 5px;
+}
+
+.property {
+	display: block;
+	margin-left: 20px;
 }
 
 #menu li input {
@@ -73,7 +82,7 @@ label {
 
 .breadcrumb {
 	padding-bottom: 20px;
-	border-radius: none;
+	border-radius: 0;
 }
 
 li input + ul {
