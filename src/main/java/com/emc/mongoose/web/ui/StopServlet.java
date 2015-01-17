@@ -1,6 +1,7 @@
 package com.emc.mongoose.web.ui;
 
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.web.ui.logging.WebUIAppender;
 
 import javax.servlet.http.HttpServletRequest;
@@ -28,7 +29,7 @@ public final class StopServlet extends CommonServlet {
 	//
 	@Override
 	public final void doPost(final HttpServletRequest request, final HttpServletResponse response) {
-		final String currentRunId = request.getParameter(Main.KEY_RUN_ID);
+		final String currentRunId = request.getParameter(RunTimeConfig.KEY_RUN_ID);
 		interruptMongoose(currentRunId, request.getParameter(STOP_TYPE));
 		stoppedRunModes.put(currentRunId, true);
 		request.getSession(true).setAttribute("stopped", stoppedRunModes);
