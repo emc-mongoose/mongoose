@@ -250,11 +250,11 @@ function onFoldersElementClick(element) {
 	var parentsArray = $(element).parent().parents("li").find("label:first");
 	parentsArray.each(function() {
 		childrenFolders = $(this).siblings("ul").find("label");
-		childrenDocuments = $(this).siblings("ul").children(".file");
+		childrenDocuments = $(this).siblings("ul").children(".file").find(".props");
 		$(".breadcrumb").append(appendBreadcrumb($(this), childrenFolders, childrenDocuments));
 	});
 	childrenFolders = $(element).siblings("ul").find("label");
-	childrenDocuments = $(element).siblings("ul").children(".file");
+	childrenDocuments = $(element).siblings("ul").children(".file").find(".props");
 	$(".breadcrumb").append(appendBreadcrumb($(element), childrenFolders, childrenDocuments));
 	$(element).css("color", "#CC0033");
 	$("a[href='#" + $(element).text() + "']").css("color", "#CC0033");

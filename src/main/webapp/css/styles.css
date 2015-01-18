@@ -50,10 +50,10 @@ label {
 	overflow: scroll;
 }
 
-.file {
+/*.file {
 	margin-left: -1px !important;
 	padding-left: 3px;
-}
+}*/
 
 .props {
 	background: url('../images/document.png') 15px 1px no-repeat;
