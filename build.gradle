@@ -55,12 +55,12 @@ dependencies {
 		//
 		'org.apache.httpcomponents:httpcore-nio:4.3.3',
 		//
-        'org.eclipse.jetty:jetty-server:9.2.3.v20140905',
-		'org.eclipse.jetty:jetty-webapp:9.2.3.v20140905',
+        'org.eclipse.jetty:jetty-server:9.3.0.M1',
+		'org.eclipse.jetty:jetty-webapp:9.3.0.M1',
 		//
 		'javax.servlet:javax.servlet-api:3.1.0',
         'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
-		'org.eclipse.jetty.websocket:websocket-server:9.2.3.v20140905',
+		'org.eclipse.jetty.websocket:websocket-server:9.3.0.M1',
 		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
 
 		'org.hibernate:hibernate-core:4.3.6.Final',
