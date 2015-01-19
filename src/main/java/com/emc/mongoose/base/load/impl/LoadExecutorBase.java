@@ -525,7 +525,7 @@ implements LoadExecutor<T> {
 	public final void join()
 	throws InterruptedException {
 		LOG.trace(
-			Markers.MSG, "{} interrupted, waiting remaining {} tasks to complete",
+			Markers.MSG, "{}: waiting remaining {} tasks to complete",
 			getName(), getQueue().size() + getActiveCount()
 		);
 		awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
@@ -534,9 +534,9 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final void join(final long timeOutMilliSec)
-	throws  InterruptedException {
+	throws InterruptedException {
 		LOG.trace(
-			Markers.MSG, "{} interrupted, waiting remaining {} tasks to complete",
+			Markers.MSG, "{}: waiting remaining {} tasks to complete",
 			getName(), getQueue().size() + getActiveCount()
 		);
 		awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);

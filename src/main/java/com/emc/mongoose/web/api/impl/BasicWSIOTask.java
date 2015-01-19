@@ -80,9 +80,24 @@ implements WSIOTask<T> {
 		}
 		POOL_WEB_IO_TASKS.release(this);
 	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	public BasicWSIOTask<T> reuse(final Object... args) {
+		super.reuse(args);
+		if(args.length > 0) {
+			setRequestConfig((WSRequestConfig<T>) args[0]);
+		}
+		if(args.length > 1) {
+			setDataItem((T) args[1]);
+		}
+		if(args.length > 2) {
+			setNodeAddr(String.class.cast(args[2]));
+		}
+		return this;
+	}
 	// END pool related things
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
-	protected MutableHTTPRequest httpRequest = null;
+	protected MutableHTTPRequest httpRequest;
 	//
 	@Override
 	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
