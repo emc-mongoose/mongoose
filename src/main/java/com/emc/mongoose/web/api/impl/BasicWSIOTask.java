@@ -61,11 +61,11 @@ implements WSIOTask<T> {
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
 	) {
 		final BasicWSIOTask<T> ioTask = (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
-		TraceLogger.trace(
-			LOG, Level.TRACE, Markers.MSG,
+		LOG.trace(
+			Markers.MSG,
 			String.format(
-				"get an instance for {reqConf=%s, dataItem=%s, nodeAddr=%s}",
-				reqConf, dataItem.getId(), nodeAddr
+				"linked task #%d to {%s, %s, %s}",
+				ioTask.hashCode(), reqConf, dataItem.getId(), nodeAddr
 			)
 		);
 		return ioTask;
@@ -80,32 +80,21 @@ implements WSIOTask<T> {
 		}
 		POOL_WEB_IO_TASKS.release(this);
 	}
-	//
+	/*
 	@Override @SuppressWarnings("unchecked")
 	public BasicWSIOTask<T> reuse(final Object... args) {
 		super.reuse(args);
-		if(args.length > 0) {
-			setRequestConfig((WSRequestConfig<T>) args[0]);
-		}
-		if(args.length > 1) {
-			setDataItem((T) args[1]);
-		}
-		if(args.length > 2) {
-			setNodeAddr(String.class.cast(args[2]));
-		}
 		return this;
-	}
+	}*/
 	// END pool related things
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
-	protected MutableHTTPRequest httpRequest;
+	protected final MutableHTTPRequest httpRequest = HTTPMethod.GET.createRequest();
 	//
 	@Override
 	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
-		if(this.wsReqConf == null) { // request instance has not been configured yet?
-			this.wsReqConf = (WSRequestConfig<T>) reqConf;
-			httpRequest = wsReqConf.createRequest();
-		} else { // cleanup
-			resetRequest();
+		this.wsReqConf = (WSRequestConfig<T>) reqConf;
+		if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
+			httpRequest.setMethod(wsReqConf.getHTTPMethod());
 		}
 		super.setRequestConfig(reqConf);
 		return this;
@@ -154,8 +143,16 @@ implements WSIOTask<T> {
 	@Override
 	public final HttpRequest generateRequest()
 	throws IOException, HttpException {
-		wsReqConf.applyHeadersFinally(httpRequest);
-		reqEntity = httpRequest.getEntity();
+		try {
+			wsReqConf.applyHeadersFinally(httpRequest);
+		} catch(final Exception e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply the final headers");
+		}
+		try {
+			reqEntity = httpRequest.getEntity();
+		} catch(final Exception e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to get the request entity");
+		}
 		reqTimeStart = System.nanoTime() / 1000;
 		return httpRequest;
 	}

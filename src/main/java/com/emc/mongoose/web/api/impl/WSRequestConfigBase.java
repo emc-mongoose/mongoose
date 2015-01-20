@@ -127,22 +127,20 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public MutableHTTPRequest createRequest() {
-		MutableHTTPRequest r = null;
+	public WSIOTask.HTTPMethod getHTTPMethod() {
+		WSIOTask.HTTPMethod method;
 		switch(loadType) {
 			case READ:
-				r = WSIOTask.HTTPMethod.GET.createRequest();
+				method = WSIOTask.HTTPMethod.GET;
 				break;
 			case DELETE:
-				r = WSIOTask.HTTPMethod.DELETE.createRequest();
+				method = WSIOTask.HTTPMethod.DELETE;
 				break;
-			case APPEND:
-			case CREATE:
-			case UPDATE:
-				r = WSIOTask.HTTPMethod.PUT.createRequest();
+			default:
+				method = WSIOTask.HTTPMethod.PUT;
 				break;
 		}
-		return r;
+		return method;
 	}
 	//
 	@Override
@@ -298,7 +296,7 @@ implements WSRequestConfig<T> {
 	@Override
 	public final void applyDataItem(final MutableHTTPRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
-		applyObjectId(dataItem, null);
+		//applyObjectId(dataItem, null);
 		applyURI(httpRequest, dataItem);
 		switch(loadType) {
 			case CREATE:
@@ -317,8 +315,16 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public final void applyHeadersFinally(final MutableHTTPRequest httpRequest) {
-		applyDateHeader(httpRequest);
-		applyAuthHeader(httpRequest);
+		try {
+			applyDateHeader(httpRequest);
+		} catch(final Exception e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply date header");
+		}
+		try {
+			applyAuthHeader(httpRequest);
+		} catch(final Exception e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply auth header");
+		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			synchronized(LOG) {
 				LOG.trace(
@@ -395,7 +401,7 @@ implements WSRequestConfig<T> {
 		);
 	}
 	//
-	private final static DateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(
+	protected final static DateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(
 		"EEE, dd MMM yyyy HH:mm:ss zzz", Main.LOCALE_DEFAULT
 	) {
 		{ setTimeZone(Main.TZ_UTC); }

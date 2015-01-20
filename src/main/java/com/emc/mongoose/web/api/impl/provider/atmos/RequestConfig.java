@@ -9,6 +9,7 @@ import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
@@ -16,9 +17,11 @@ import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
 /**
@@ -33,11 +36,9 @@ extends WSRequestConfigBase<T> {
 	//
 	private final RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	private final String
-		objPathPrefix = String.format(
-			"/%s/%s",
-			runTimeConfig.getString("api.atmos.path.rest"),
-			runTimeConfig.getString("api.atmos.interface")
-		), fmtObjPath = objPathPrefix + "/%s";
+		apiPathRest = runTimeConfig.getString("api.atmos.path.rest"),
+		apiPathInterface = runTimeConfig.getString("api.atmos.interface"),
+		objPath = String.format("/%s/%s", apiPathRest, apiPathInterface);
 	//
 	private SubTenant<T> subTenant;
 	//
@@ -67,20 +68,20 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public MutableHTTPRequest createRequest() {
-		MutableHTTPRequest r = null;
+	public WSIOTask.HTTPMethod getHTTPMethod() {
+		WSIOTask.HTTPMethod method;
 		switch(loadType) {
 			case READ:
-			case DELETE:
-				r = super.createRequest();
+				method = WSIOTask.HTTPMethod.GET;
 				break;
-			case APPEND:
-			case CREATE:
-			case UPDATE:
-				r = WSIOTask.HTTPMethod.POST.createRequest();
+			case DELETE:
+				method = WSIOTask.HTTPMethod.DELETE;
+				break;
+			default:
+				method = WSIOTask.HTTPMethod.POST;
 				break;
 		}
-		return r;
+		return method;
 	}
 	//
 	public final SubTenant<T> getSubTenant() {
@@ -109,6 +110,23 @@ extends WSRequestConfigBase<T> {
 		return this;
 	}
 	//
+	@Override
+	public WSRequestConfigBase<T> setSecret(final String secret) {
+		SecretKeySpec keySpec;
+		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
+		try {
+			keySpec = new SecretKeySpec(Base64.decodeBase64(secret), signMethod);
+			synchronized(mac) {
+				mac.init(keySpec);
+			}
+		} catch(InvalidKeyException e) {
+			LOG.error(Markers.ERR, "Invalid secret key", e);
+		}
+		//
+		super.setSecret(secret);
+		//
+		return this;
+	}
 	@Override
 	public final RequestConfig<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
@@ -144,22 +162,21 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	protected final void applyURI(final MutableHTTPRequest httpRequest, final T dataItem) {
-		if(httpRequest==null) {
+		if(httpRequest == null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
 		}
-		if(dataItem==null) {
+		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		final String objId = dataItem.getId();
-		httpRequest.setUriPath(String.format(fmtObjPath, objId));
+		httpRequest.setUriPath(objPath);
 	}
 	//
 	@Override
 	protected final void applyDateHeader(final MutableHTTPRequest httpRequest) {
-		super.applyDateHeader(httpRequest);
+		//super.applyDateHeader(httpRequest);
 		httpRequest.setHeader(
 			KEY_EMC_DATE,
-			httpRequest.getFirstHeader(HttpHeaders.DATE).getValue()
+			FMT_DATE_RFC1123.format(Main.CALENDAR_DEFAULT.getTime())
 		);
 	}
 	//
@@ -172,13 +189,13 @@ extends WSRequestConfigBase<T> {
 		httpRequest.addHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
 		//
 		final Header headerLastRange = httpRequest.getLastHeader(HttpHeaders.RANGE);
-		if(headerLastRange!=null && headerLastRange.getValue().length()==0) { // the header is temp
+		if(headerLastRange != null && headerLastRange.getValue().length()==0) { // the header is temp
 			httpRequest.removeHeader(headerLastRange);
 		}
 
 	}
 	//
-	private final String HEADERS4CANONICAL[] = {
+	private static String HEADERS4CANONICAL[] = {
 		HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.RANGE, HttpHeaders.DATE
 	};
 	//
@@ -186,10 +203,9 @@ extends WSRequestConfigBase<T> {
 	public final String getCanonical(final MutableHTTPRequest httpRequest) {
 		final StringBuilder buffer = new StringBuilder(httpRequest.getRequestLine().getMethod());
 		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
-		Header header;
 		for(final String headerName: HEADERS4CANONICAL) {
-			header = httpRequest.getFirstHeader(headerName);
-			if(header!=null) {
+			// support for multiple non-unique header keys
+			for(final Header header: httpRequest.getHeaders(headerName)) {
 				buffer.append('\n').append(header.getValue());
 			}
 			if(sharedHeadersMap.containsKey(headerName)) {
@@ -197,20 +213,23 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		buffer.append('\n').append(httpRequest.getUriPath());
+		buffer.append('\n').append('\n').append(httpRequest.getUriPath());
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
-			header = httpRequest.getFirstHeader(emcHeaderName);
-			if(header!=null) {
+			for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
 				buffer
-					.append('\n').append(emcHeaderName)
-					.append(':').append(header.getValue());
+					.append('\n').append(emcHeaderName.toLowerCase())
+					.append(':').append(emcHeader.getValue());
 			}
 			if(sharedHeadersMap.containsKey(emcHeaderName)) {
 				buffer
-					.append('\n').append(emcHeaderName)
+					.append('\n').append(emcHeaderName.toLowerCase())
 					.append(':').append(sharedHeadersMap.get(emcHeaderName));
 			}
+		}
+		//
+		if(LOG.isTraceEnabled()) {
+			LOG.trace(Markers.MSG, "Canonical request form:\n{}", buffer.toString());
 		}
 		//
 		return buffer.toString();
@@ -226,10 +245,10 @@ extends WSRequestConfigBase<T> {
 			final String valueLocation = headerLocation.getValue();
 			if(
 				valueLocation != null &&
-				valueLocation.startsWith(objPathPrefix) &&
-				valueLocation.length() - objPathPrefix.length() > 1
+				valueLocation.startsWith(objPath) &&
+				valueLocation.length() - objPath.length() > 1
 			) {
-				final String id = valueLocation.substring(objPathPrefix.length() + 1);
+				final String id = valueLocation.substring(objPath.length() + 1);
 				if(id.length() > 0) {
 					dataObject.setId(id);
 				} else {

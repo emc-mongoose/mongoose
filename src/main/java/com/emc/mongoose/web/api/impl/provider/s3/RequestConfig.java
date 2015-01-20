@@ -156,7 +156,7 @@ extends WSRequestConfigBase<T> {
 		httpRequest.removeHeader(httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5)); // remove temporary header
 	}
 	//
-	private final String HEADERS4CANONICAL[] = {
+	private static String HEADERS4CANONICAL[] = {
 		HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.DATE
 	};
 	//

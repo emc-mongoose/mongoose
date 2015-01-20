@@ -29,18 +29,21 @@ implements Runnable, Reusable {
 	//
 	@Override
 	public final void run() {
-		AsyncIOTask.Result ioTaskResult;
+		AsyncIOTask.Result ioTaskResult = AsyncIOTask.Result.FAIL_UNKNOWN;
 		try {
 			ioTaskResult = futureResult.get(); // submit done
-			executor.handleResult(ioTask, ioTaskResult);
 		} catch(final InterruptedException | CancellationException e) {
 			TraceLogger.failure(LOG, Level.TRACE, e, "Request has been cancelled");
 		} catch(final ExecutionException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "Request execution failure");
-		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.DEBUG, e, "Request result handling failed");
 		} catch(final Exception e) {
 			TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");
+		}
+		//
+		try {
+			executor.handleResult(ioTask, ioTaskResult);
+		} catch(final IOException e) {
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Request result handling failed");
 		} finally {
 			close();
 		}

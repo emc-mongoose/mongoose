@@ -29,7 +29,7 @@ implements AsyncIOTask<T> {
 	protected volatile RequestConfig<T> reqConf = null;
 	protected volatile String nodeAddr = null;
 	protected volatile T dataItem = null;
-	protected volatile Result result = Result.FAIL_TIMEOUT;
+	protected volatile Result result = Result.FAIL_UNKNOWN;
 	//
 	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
 	protected volatile long transferSize = 0;
@@ -52,7 +52,7 @@ implements AsyncIOTask<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public BasicIOTask<T> reuse(final Object... args) {
-		result = Result.FAIL_TIMEOUT;
+		result = Result.FAIL_UNKNOWN;
 		reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
 		if(args.length > 0) {
 			setRequestConfig((RequestConfig<T>)args[0]);
