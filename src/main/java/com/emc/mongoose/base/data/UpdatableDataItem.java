@@ -3,6 +3,8 @@ package com.emc.mongoose.base.data;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.List;
+
 /**
  Created by kurila on 29.09.14.
  A data item which supports update operation.
@@ -14,6 +16,8 @@ extends DataItem {
 	//
 	boolean isRangeUpdatePending(final int i);
 	//
+	void updateRanges(final List<Long> ranges);
+	//
 	void updateRandomRange();
 	//
 	void updateRandomRanges(final int count);
@@ -23,6 +27,9 @@ extends DataItem {
 	long getPendingRangesSize();
 	//
 	void writePendingUpdatesTo(final OutputStream out)
+	throws IOException;
+	//
+	void writeWithPendingMaskTo(final OutputStream out)
 	throws IOException;
 	//
 	InputStream getPendingUpdatesContent()

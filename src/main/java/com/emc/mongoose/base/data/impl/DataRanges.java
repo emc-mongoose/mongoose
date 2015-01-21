@@ -20,7 +20,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.io.SequenceInputStream;
+import java.util.ArrayList;
 import java.util.BitSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ThreadLocalRandom;
 /**
@@ -242,6 +245,50 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
+	public final void updateRanges(final List<Long> ranges){
+		final int countRangesTotal = getRangeCount(size);
+		int startCellPos,
+			finishCellPos;
+		for (int i = 0; i < ranges.size(); i++){
+			startCellPos = getRangeCount(ranges.get(i));
+			finishCellPos = getRangeCount(ranges.get(i++))+1;
+			maskRangesPending.set(startCellPos, finishCellPos);
+		}
+		//return true if mask is full -> inc layer
+		if (maskRangesPending.cardinality() == countRangesTotal){
+			switchToNextLayer();
+		}
+	}
+	//
+	@Override
+	public final void writeWithPendingMaskTo(final OutputStream out)
+	throws IOException {
+		final int countRangesTotal = getRangeCount(size);
+		long rangeOffset, rangeSize;
+		UniformData updatedRange;
+		synchronized (this) {
+			if (maskRangesPending.isEmpty()) {
+				super.writeTo(out);
+			} else {
+				for (int i = 0; i < countRangesTotal; i++) {
+					rangeOffset = getRangeOffset(i);
+					rangeSize = getRangeSize(i);
+					if (maskRangesPending.get(i)) { // range have been modified
+						updatedRange = new UniformData(
+								offset + rangeOffset, rangeSize, layerNum + 1, UniformDataSource.DEFAULT
+						);
+						updatedRange.writeTo(out);
+					} else { // previous layer of updated ranges
+						updatedRange = new UniformData(
+								offset + rangeOffset, rangeSize, layerNum, UniformDataSource.DEFAULT
+						);
+						updatedRange.writeTo(out);
+					}
+				}
+			}
+		}
+	}
+	@Override
 	public final void updateRandomRange()
 	throws IllegalStateException {
 		final int
@@ -379,10 +426,10 @@ implements AppendableDataItem, UpdatableDataItem {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
 			final int
-				lastCellPos = getRangeCount(size) - 1,
-				nextCellPos = getRangeCount(size + augmentSize) - 1;
+				lastCellPos = getRangeCount(size),
+				nextCellPos = getRangeCount(size + augmentSize) + 1;
 			if(lastCellPos < nextCellPos && maskRangesHistory.get(lastCellPos)) {
-				maskRangesPending.set(lastCellPos + 1, nextCellPos);
+				maskRangesPending.set(lastCellPos, nextCellPos);
 			}
 		} else {
 			throw new IllegalArgumentException(

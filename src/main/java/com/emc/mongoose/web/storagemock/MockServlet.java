@@ -14,6 +14,7 @@ import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.api.WSIOTask;
+import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -36,7 +37,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -51,12 +53,15 @@ implements Runnable {
 	private final static Logger LOG = LogManager.getLogger();
 	private final int port;
 	private Server server;
-	private final Map<String, BasicWSObject> mapDataObject = new ConcurrentHashMap<>();
+	private final static Map<String, WSObject> MAP_DATA_OBJECT = new ConcurrentHashMap<>();
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
 	private final static String
 		ALL_METHODS = "all",
-		METRIC_COUNT = "count";
+		METRIC_COUNT = "count",
+		//
+		RANGE = "Range",
+		COMTENT_LENGTH ="Content-Length";
 	protected final Counter
 		counterAllSucc, counterAllFail,
 		counterGetSucc, counterGetFail,
@@ -236,14 +241,15 @@ implements Runnable {
 		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Get ");
+		System.out.println(" Request  method Get ");
 		response.setStatus(HttpServletResponse.SC_OK);
 		try (final ServletOutputStream servletOutputStream = response.getOutputStream()) {
 			final String dataID = request.getRequestURI().split("/")[2];
-			if (mapDataObject.containsKey(dataID)) {
+			if (MAP_DATA_OBJECT.containsKey(dataID)) {
 				LOG.trace(Markers.MSG, "   Send data object ", dataID);
-				final BasicWSObject object = mapDataObject.get(dataID);
+				final WSObject object = MAP_DATA_OBJECT.get(dataID);
 				long nanoTime = System.nanoTime();
-				object.writeTo(servletOutputStream);
+				object.writeWithPendingMaskTo(servletOutputStream);
 				nanoTime = System.nanoTime() - nanoTime;
 				durGet.update(nanoTime);
 				durAll.update(nanoTime);
@@ -260,6 +266,7 @@ implements Runnable {
 				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 				LOG.trace(Markers.ERR, String.format("No such object: \"%s\"", dataID));
 			}
+			System.out.println(" End get");
 		} catch (final IOException e) {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
@@ -314,10 +321,11 @@ implements Runnable {
 		response.setStatus(HttpServletResponse.SC_OK);
 		long offset;
 		String dataID = "";
+		WSObject dataObject = null;
 		try (final ServletInputStream servletInputStream = request.getInputStream()) {
 			//
 			long nanoTime = System.nanoTime();
-			final long bytes = calcInputByteCount(servletInputStream);
+			long bytes = calcInputByteCount(servletInputStream);
 			nanoTime = System.nanoTime() - nanoTime;
 			//
 			dataID = request.getRequestURI().split("/")[2];
@@ -327,8 +335,42 @@ implements Runnable {
 			} else {
 				offset = Long.valueOf(dataID, 0x10);
 			}
-			final BasicWSObject dataObject = new BasicWSObject(dataID, offset, bytes);
-			mapDataObject.put(dataID,dataObject);
+			//create data object or get it for append or update
+			if(MAP_DATA_OBJECT.containsKey(dataID)) {
+				dataObject = MAP_DATA_OBJECT.get(dataID);
+			} else {
+				dataObject = new BasicWSObject(dataID, offset, bytes);
+			}
+			//
+			if (request.getHeader(RANGE) != null) {
+				//Parse string of ranges information
+				final String[] rangeStringArray = request.getHeader(RANGE).split("\\s*[=,-]\\s*");
+				final List<Long> ranges = new ArrayList<>();
+				for (int i = 1; i < rangeStringArray.length; i++){
+					ranges.add(Long.valueOf(rangeStringArray[i]));
+				}
+				if (ranges.size() % 2 != 0){
+					ranges.add(ranges.get(ranges.size()-1) + bytes);
+				}
+				// Switch append or update or exception
+				//
+				//if append
+				if (ranges.get(0) == dataObject.getSize()) {
+					//resize data object
+					dataObject.setSize(dataObject.getSize() + bytes);
+					//append data object
+					dataObject.append(bytes);
+					//end append
+					//if update
+				} else if (ranges.get(ranges.size() - 1) <= dataObject.getSize()){
+					//update data object
+					dataObject.updateRanges(ranges);
+				} else {
+					throw new Exception();
+				}
+			}
+			//
+			MAP_DATA_OBJECT.put(dataID, dataObject);
 			//
 			durPut.update(nanoTime);
 			durAll.update(nanoTime);
@@ -338,7 +380,7 @@ implements Runnable {
 			allBW.mark(bytes);
 			putTP.mark();
 			allTP.mark();
-			//
+
 		} catch (final IOException e) {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
@@ -357,6 +399,11 @@ implements Runnable {
 			counterAllFail.inc();
 			counterPutFail.inc();
 			ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+		} catch (Exception e) {
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			counterAllFail.inc();
+			counterPutFail.inc();
+			ExceptionHandler.trace(LOG, Level.WARN, e, "Ranges have not correct form.");
 		}
 	}
 	//
@@ -409,5 +456,4 @@ implements Runnable {
 		} while (doneByteCount >= 0);
 		return doneByteCountSum;
 	}
-	//
 }
