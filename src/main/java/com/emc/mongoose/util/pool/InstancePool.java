@@ -80,7 +80,7 @@ extends TreeSet<T> {
 	public final synchronized void release(final T instance) {
 		if(instance != null) {
 			if(!add(instance)) {
-				LOG.trace(
+				LOG.debug(
 					Markers.ERR, "The \"{}\" already contains instance \"{}\"",
 					toString(), instance.hashCode()
 				);

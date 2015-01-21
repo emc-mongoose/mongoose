@@ -39,6 +39,7 @@ import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
+import org.apache.http.protocol.RequestExpectContinue;
 import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
 //
@@ -154,7 +155,7 @@ implements WSLoadExecutor<T> {
 			.build();
 		client = new HttpAsyncRequester(httpProcessor);
 		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
-		//
+		//IOII
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
 		final ConnectionConfig connConfig = ConnectionConfig

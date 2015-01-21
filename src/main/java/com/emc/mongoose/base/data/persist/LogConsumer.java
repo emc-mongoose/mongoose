@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 12.05.14.
@@ -60,14 +61,22 @@ implements Consumer<T> {
 			}
 		}
 		//
+		private final AtomicBoolean isClosed = new AtomicBoolean(true);
+		//
 		@Override
 		public final void close() {
-			TASK_POOL.release(this);
+			if(isClosed.compareAndSet(false, true)) {
+				TASK_POOL.release(this);
+			}
 		}
 		//
 		@Override @SuppressWarnings("unchecked")
 		public final DataItemLogTask<T> reuse(final Object... args) {
-			this.dataItem = (T) args[0];
+			if(isClosed.compareAndSet(true, false)) {
+				this.dataItem = (T) args[0];
+			} else {
+				throw new IllegalStateException("Not yet released instance reuse attempt");
+			}
 			return this;
 		}
 		//

@@ -3,6 +3,7 @@ package com.emc.mongoose.base.load.impl.tasks;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.pool.InstancePool;
 import com.emc.mongoose.util.pool.Reusable;
@@ -15,6 +16,7 @@ import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 11.12.14.
  */
@@ -60,27 +62,35 @@ implements Runnable, Reusable {
 		return (RequestResultTask<? extends DataItem>) POOL.take(executor, ioTask, futureResult);
 	}
 	//
+	private final AtomicBoolean isClosed = new AtomicBoolean(true);
+	//
 	@Override @SuppressWarnings("unchecked")
 	public final RequestResultTask<T> reuse(final Object... args)
-	throws IllegalArgumentException {
-		if(args == null) {
-			throw new IllegalArgumentException("No arguments for reusing the instance");
-		}
-		if(args.length > 0) {
-			executor = (LoadExecutor<T>) args[0];
-		}
-		if(args.length > 1) {
-			ioTask = (AsyncIOTask<T>) args[1];
-		}
-		if(args.length > 2) {
-			futureResult = (Future<AsyncIOTask.Result>) args[2];
+	throws IllegalArgumentException, IllegalStateException {
+		if(isClosed.compareAndSet(true, false)) {
+			if(args==null) {
+				throw new IllegalArgumentException("No arguments for reusing the instance");
+			}
+			if(args.length > 0) {
+				executor = (LoadExecutor<T>) args[0];
+			}
+			if(args.length > 1) {
+				ioTask = (AsyncIOTask<T>) args[1];
+			}
+			if(args.length > 2) {
+				futureResult = (Future<AsyncIOTask.Result>) args[2];
+			}
+		} else {
+			throw new IllegalStateException("Not yet released instance reuse attempt");
 		}
 		return this;
 	}
 	//
 	@Override
 	public final void close() {
-		POOL.release(this);
+		if(isClosed.compareAndSet(false, true)) {
+			POOL.release(this);
+		}
 	}
 	//
 	@Override @SuppressWarnings("NullableProblems")

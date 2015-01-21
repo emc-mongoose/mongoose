@@ -13,6 +13,7 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 //
+import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.http.Header;
@@ -36,6 +37,7 @@ import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
@@ -86,7 +88,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected ConcurrentHashMap<String, String> sharedHeadersMap;
-	protected final Mac mac;
+	protected Mac mac;
 	//
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException {
@@ -211,20 +213,19 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public WSRequestConfigBase<T> setSecret(final String secret) {
+		//
+		super.setSecret(secret);
+		//
 		SecretKeySpec keySpec;
 		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
 		try {
 			keySpec = new SecretKeySpec(secret.getBytes(DEFAULT_ENC), signMethod);
-			synchronized(mac) {
-				mac.init(keySpec);
-			}
+			mac.init(keySpec);
 		} catch(UnsupportedEncodingException e) {
 			LOG.fatal(Markers.ERR, "Configuration error", e);
 		} catch(InvalidKeyException e) {
 			LOG.error(Markers.ERR, "Invalid secret key", e);
 		}
-		//
-		super.setSecret(secret);
 		//
 		return this;
 	}
@@ -291,12 +292,16 @@ implements WSRequestConfig<T> {
 		}*/
 	}
 	//
-	protected abstract void applyObjectId(final T dataItem, final HttpResponse httpResponse);
+	private final static int RADIX = 36;
+	//
+	protected void applyObjectId(final T dataItem, final HttpResponse httpResponse) {
+		dataItem.setId(Long.toString(dataItem.getOffset(), RADIX));
+	}
 	//
 	@Override
 	public final void applyDataItem(final MutableHTTPRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
-		//applyObjectId(dataItem, null);
+		applyObjectId(dataItem, null);
 		applyURI(httpRequest, dataItem);
 		switch(loadType) {
 			case CREATE:
@@ -314,7 +319,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final void applyHeadersFinally(final MutableHTTPRequest httpRequest) {
+	public void applyHeadersFinally(final MutableHTTPRequest httpRequest) {
 		try {
 			applyDateHeader(httpRequest);
 		} catch(final Exception e) {
@@ -421,15 +426,9 @@ implements WSRequestConfig<T> {
 	//}
 	//
 	@Override
-	public String getSignature(final String canonicalForm) {
-		byte[] signature = null;
-		try {
-			synchronized(mac) {
-				signature = mac.doFinal(canonicalForm.getBytes(DEFAULT_ENC));
-			}
-		} catch(UnsupportedEncodingException e) {
-			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to calculate the signature");
-		}
+	public synchronized String getSignature(final String canonicalForm) {
+		mac.reset();
+		final byte signature[] = mac.doFinal(canonicalForm.getBytes());
 		final String signature64 = signature == null ? null : Base64.encodeBase64String(signature);
 		LOG.trace(Markers.MSG, "Calculated signature: \"{}\"", signature64);
 		return signature64;
@@ -437,7 +436,7 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public void receiveResponse(final HttpResponse response, final T dataItem) {
-		// do nothing
+		// may invoke applyObjectId in some implementations
 	}
 	//
 	@Override

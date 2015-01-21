@@ -35,8 +35,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 06.06.14.
  */
@@ -73,12 +75,9 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public void close() {
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			TraceLogger.trace(
-				LOG, Level.TRACE, Markers.MSG, String.format("%d: release instance", hashCode())
-			);
+		if(isClosed.compareAndSet(false, true)) {
+			POOL_WEB_IO_TASKS.release(this);
 		}
-		POOL_WEB_IO_TASKS.release(this);
 	}
 	/*
 	@Override @SuppressWarnings("unchecked")
@@ -183,14 +182,12 @@ implements WSIOTask<T> {
 		if(httpRequest != null) {
 			synchronized(httpRequest) {
 				httpRequest.setEntity(reqEntity);
-				if(httpRequest.containsHeader(HttpHeaders.RANGE)) {
-					httpRequest.removeHeaders(HttpHeaders.RANGE);
-				}
-				if(httpRequest.containsHeader(WSRequestConfig.KEY_EMC_SIG)) {
-					httpRequest.removeHeaders(WSRequestConfig.KEY_EMC_SIG);
-				}
-				if(httpRequest.containsHeader(HttpHeaders.CONTENT_ENCODING)) {
-					httpRequest.removeHeaders(HttpHeaders.CONTENT_TYPE);
+				final Map<String, String> sharedHeadersMap = wsReqConf.getSharedHeadersMap();
+				final Header headers[] = httpRequest.getAllHeaders().clone();
+				for(final Header header : headers) {
+					if(!sharedHeadersMap.containsKey(header.getName())) {
+						httpRequest.removeHeaders(header.getName());
+					}
 				}
 			}
 		}
@@ -221,11 +218,23 @@ implements WSIOTask<T> {
 		if(respStatusCode < 200 || respStatusCode >= 300) {
 			switch(respStatusCode) {
 				case (400):
-					LOG.debug(Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine());
+					synchronized(LOG) {
+						LOG.debug(
+							Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine()
+						);
+						if(LOG.isTraceEnabled(Markers.ERR)) {
+							for(final Header rangeHeader : httpRequest.getAllHeaders()) {
+								LOG.trace(
+									Markers.ERR, "{}: \"{}\"",
+									rangeHeader.getName(), rangeHeader.getValue()
+								);
+							}
+						}
+					}
 					result = Result.FAIL_CLIENT;
 					break;
 				case (403):
-					LOG.debug(Markers.ERR, "Access failure");
+					LOG.debug(Markers.ERR, "Access failure for data item \"{}\"", dataItem.getId());
 					result = Result.FAIL_AUTH;
 					break;
 				case (404):
@@ -236,13 +245,17 @@ implements WSIOTask<T> {
 					result = Result.FAIL_NOT_FOUND;
 					break;
 				case (416):
-					LOG.debug(Markers.ERR, "Incorrect range");
-					if(LOG.isTraceEnabled(Markers.ERR)) {
-						for(final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)) {
-							LOG.trace(
-								Markers.ERR, "Incorrect range \"{}\" for data item: \"{}\"",
-								rangeHeader.getValue(), dataItem
-							);
+					synchronized(LOG) {
+						LOG.debug(Markers.ERR, "Incorrect range");
+						if(LOG.isTraceEnabled(Markers.ERR)) {
+							for(
+								final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)
+							) {
+								LOG.trace(
+									Markers.ERR, "Incorrect range \"{}\" for data item: \"{}\"",
+									rangeHeader.getValue(), dataItem
+								);
+							}
 						}
 					}
 					result = Result.FAIL_CLIENT;

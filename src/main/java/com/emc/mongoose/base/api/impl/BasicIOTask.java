@@ -11,6 +11,8 @@ import com.emc.mongoose.util.pool.InstancePool;
 import com.emc.mongoose.util.pool.Reusable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by andrey on 12.10.14.
  */
@@ -45,23 +47,31 @@ implements AsyncIOTask<T> {
 		return (BasicIOTask<T>) POOL_BASIC_IO_TASKS.take(reqConf, dataItem, nodeAddr);
 	}
 	//
+	protected final AtomicBoolean isClosed = new AtomicBoolean(true);
+	//
 	@Override
 	public void close() {
-		POOL_BASIC_IO_TASKS.release(this);
+		if(isClosed.compareAndSet(false, true)) {
+			POOL_BASIC_IO_TASKS.release(this);
+		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public BasicIOTask<T> reuse(final Object... args) {
-		result = Result.FAIL_UNKNOWN;
-		reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
-		if(args.length > 0) {
-			setRequestConfig((RequestConfig<T>)args[0]);
-		}
-		if(args.length > 1) {
-			setDataItem((T) args[1]);
-		}
-		if(args.length > 2) {
-			setNodeAddr(String.class.cast(args[2]));
+		if(isClosed.compareAndSet(true, false)) {
+			result = Result.FAIL_UNKNOWN;
+			reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
+			if(args.length > 0) {
+				setRequestConfig((RequestConfig<T>) args[0]);
+			}
+			if(args.length > 1) {
+				setDataItem((T) args[1]);
+			}
+			if(args.length > 2) {
+				setNodeAddr(String.class.cast(args[2]));
+			}
+		} else {
+			throw new IllegalStateException("Not yet released instance reuse attempt");
 		}
 		return this;
 	}

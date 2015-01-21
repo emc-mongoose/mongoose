@@ -379,10 +379,10 @@ implements AppendableDataItem, UpdatableDataItem {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
 			final int
-				lastCellPos = getRangeCount(size) - 1,
-				nextCellPos = getRangeCount(size + augmentSize) - 1;
+				lastCellPos = getRangeCount(size),
+				nextCellPos = getRangeCount(size + augmentSize) + 1;
 			if(lastCellPos < nextCellPos && maskRangesHistory.get(lastCellPos)) {
-				maskRangesPending.set(lastCellPos + 1, nextCellPos);
+				maskRangesPending.set(lastCellPos, nextCellPos);
 			}
 		} else {
 			throw new IllegalArgumentException(
@@ -405,6 +405,7 @@ implements AppendableDataItem, UpdatableDataItem {
 					new UniformData(
 						offset + size, pendingAugmentSize, layerNum + 1, UniformDataSource.DEFAULT
 					).writeTo(out);
+					size += pendingAugmentSize;
 				} else { // write from current layer
 					setOffset(offset, size);
 					// change the size

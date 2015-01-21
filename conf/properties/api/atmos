@@ -4,4 +4,4 @@ port:		9022
 # .../tools/cli/python # BOURNE_IPADDR=<DATA_NODE_ADDR> ./atmossubtenant create <NS> <PROJECT> <COS> --uid <UID> --secret <SECRET>
 subtenant:	57816222555d43e68c4f4197110bff24
 path.rest:	rest
-interface:	objects
+interface:	namespace

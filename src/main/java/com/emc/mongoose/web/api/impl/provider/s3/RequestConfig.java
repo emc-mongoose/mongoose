@@ -148,12 +148,17 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
-		httpRequest.addHeader(HttpHeaders.CONTENT_MD5, ""); // checksum of the data item is not avalable before streaming
+		if(!httpRequest.containsHeader(HttpHeaders.CONTENT_MD5)) {
+			httpRequest.addHeader(HttpHeaders.CONTENT_MD5, "");
+		}
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
 			String.format(fmtAuthValue, userName, getSignature(getCanonical(httpRequest)))
 		);
-		httpRequest.removeHeader(httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5)); // remove temporary header
+		final Header lastContentMD5Header = httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5);
+		if(lastContentMD5Header != null && lastContentMD5Header.getValue().length() == 0) {
+			httpRequest.removeHeader(lastContentMD5Header);
+		}
 	}
 	//
 	private static String HEADERS4CANONICAL[] = {
@@ -192,17 +197,6 @@ extends WSRequestConfigBase<T> {
 		LOG.trace(Markers.MSG, "Canonical request representation:\n{}", buffer);
 		//
 		return buffer.toString();
-	}
-	//
-	protected final void applyObjectId(final T dataObject, final HttpResponse unused) {
-		dataObject.setId(
-			Base64.encodeBase64URLSafeString(
-				ByteBuffer
-					.allocate(Long.SIZE / Byte.SIZE)
-					.putLong(dataObject.getOffset())
-					.array()
-			)
-		);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

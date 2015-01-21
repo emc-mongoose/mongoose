@@ -92,6 +92,8 @@ implements Producer<T> {
 			try {
 				LOG.debug(Markers.MSG, "Feeding poison to consumer \"{}\"", consumer.toString());
 				consumer.submit(null); // or: consumer.setMaxCount(dataItemsCount);
+			} catch(final InterruptedException e) {
+				TraceLogger.trace(LOG, Level.DEBUG, Markers.MSG, "Consumer is already shutdown");
 			} catch(final Exception e) {
 				TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit the poison to remote consumer");
 			}

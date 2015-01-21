@@ -38,7 +38,7 @@ extends WSRequestConfigBase<T> {
 	private final String
 		apiPathRest = runTimeConfig.getString("api.atmos.path.rest"),
 		apiPathInterface = runTimeConfig.getString("api.atmos.interface"),
-		objPath = String.format("/%s/%s", apiPathRest, apiPathInterface);
+		objPathPrefix = String.format("/%s/%s", apiPathRest, apiPathInterface);
 	//
 	private SubTenant<T> subTenant;
 	//
@@ -111,19 +111,18 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public WSRequestConfigBase<T> setSecret(final String secret) {
+	public final WSRequestConfigBase<T> setSecret(final String secret) {
+		//
+		this.secret = secret;
+		//
 		SecretKeySpec keySpec;
 		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
 		try {
 			keySpec = new SecretKeySpec(Base64.decodeBase64(secret), signMethod);
-			synchronized(mac) {
-				mac.init(keySpec);
-			}
+			mac.init(keySpec);
 		} catch(InvalidKeyException e) {
 			LOG.error(Markers.ERR, "Invalid secret key", e);
 		}
-		//
-		super.setSecret(secret);
 		//
 		return this;
 	}
@@ -160,6 +159,8 @@ extends WSRequestConfigBase<T> {
 		out.writeObject(subTenant.getName());
 	}
 	//
+	private final String FMT_OBJ_PATH = "%s/%s";
+	//
 	@Override
 	protected final void applyURI(final MutableHTTPRequest httpRequest, final T dataItem) {
 		if(httpRequest == null) {
@@ -168,7 +169,15 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		httpRequest.setUriPath(objPath);
+		httpRequest.setUriPath(String.format(FMT_OBJ_PATH, objPathPrefix, dataItem.getId()));
+	}
+	//
+	private final static String DEFAULT_ACCEPT_VALUE = "*/*";
+	//
+	@Override
+	public final void applyHeadersFinally(final MutableHTTPRequest httpRequest) {
+		httpRequest.addHeader(HttpHeaders.ACCEPT, DEFAULT_ACCEPT_VALUE);
+		super.applyHeadersFinally(httpRequest);
 	}
 	//
 	@Override
@@ -182,21 +191,28 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
-		if(httpRequest.getLastHeader(HttpHeaders.RANGE)==null) {
+		if(!httpRequest.containsHeader(HttpHeaders.CONTENT_RANGE)) {
+			httpRequest.addHeader(HttpHeaders.CONTENT_RANGE, "");
+		}
+		if(!httpRequest.containsHeader(HttpHeaders.RANGE)) {
 			httpRequest.addHeader(HttpHeaders.RANGE, ""); // temporary required for canonical form
 		}
 		//
 		httpRequest.addHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
 		//
-		final Header headerLastRange = httpRequest.getLastHeader(HttpHeaders.RANGE);
-		if(headerLastRange != null && headerLastRange.getValue().length()==0) { // the header is temp
-			httpRequest.removeHeader(headerLastRange);
+		Header tmpHeader = httpRequest.getLastHeader(HttpHeaders.CONTENT_RANGE);
+		if(tmpHeader != null && tmpHeader.getValue().length() == 0) { // the header is temp
+			httpRequest.removeHeader(tmpHeader);
+		}
+		tmpHeader = httpRequest.getLastHeader(HttpHeaders.RANGE);
+		if(tmpHeader != null && tmpHeader.getValue().length() == 0) { // the header is temp
+			httpRequest.removeHeader(tmpHeader);
 		}
 
 	}
 	//
 	private static String HEADERS4CANONICAL[] = {
-		HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.RANGE, HttpHeaders.DATE
+		HttpHeaders.CONTENT_TYPE, HttpHeaders.CONTENT_RANGE, HttpHeaders.RANGE, HttpHeaders.DATE
 	};
 	//
 	@Override
@@ -213,7 +229,7 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		buffer.append('\n').append('\n').append(httpRequest.getUriPath());
+		buffer.append('\n').append(httpRequest.getUriPath());
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
 			for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
@@ -234,7 +250,7 @@ extends WSRequestConfigBase<T> {
 		//
 		return buffer.toString();
 	}
-	//
+	/*
 	private final static String
 		FMT_MSG_ERR_LOCATION_HEADER_VALUE = "Invalid response location header value: \"%s\"";
 	//
@@ -245,10 +261,10 @@ extends WSRequestConfigBase<T> {
 			final String valueLocation = headerLocation.getValue();
 			if(
 				valueLocation != null &&
-				valueLocation.startsWith(objPath) &&
-				valueLocation.length() - objPath.length() > 1
+				valueLocation.startsWith(objPathPrefix) &&
+				valueLocation.length() - objPathPrefix.length() > 1
 			) {
-				final String id = valueLocation.substring(objPath.length() + 1);
+				final String id = valueLocation.substring(objPathPrefix.length() + 1);
 				if(id.length() > 0) {
 					dataObject.setId(id);
 				} else {
@@ -260,7 +276,7 @@ extends WSRequestConfigBase<T> {
 		} else {
 			LOG.trace(Markers.ERR, "No location header in the http response");
 		}
-	}
+	}*/
 	//
 	@Override
 	public void configureStorage(final LoadExecutor<T> client)
@@ -282,9 +298,9 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 	}
-	//
+	/*
 	@Override
 	public void receiveResponse(final HttpResponse response, final T dataItem) {
-		applyObjectId(dataItem, response);
-	}
+		// applyObjectId(dataItem, response);
+	}*/
 }
