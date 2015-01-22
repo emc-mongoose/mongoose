@@ -379,8 +379,8 @@ implements AppendableDataItem, UpdatableDataItem {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
 			final int
-				lastCellPos = getRangeCount(size),
-				nextCellPos = getRangeCount(size + augmentSize) + 1;
+				lastCellPos = getRangeCount(size) - 1,
+				nextCellPos = getRangeCount(size + augmentSize);
 			if(lastCellPos < nextCellPos && maskRangesHistory.get(lastCellPos)) {
 				maskRangesPending.set(lastCellPos, nextCellPos);
 			}

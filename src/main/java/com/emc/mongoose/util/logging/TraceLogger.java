@@ -43,8 +43,10 @@ public final class TraceLogger {
 	) {
 		final StrBuilder msgBuilder = new StrBuilder(msg);
 		final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-		for(final StackTraceElement ste : stackTrace) {
-			msgBuilder.append("\n\t").append(ste.toString());
+		if(stackTrace.length > 2) {
+			for(int i = 2; i < stackTrace.length; i ++) {
+				msgBuilder.append("\n\t").append(stackTrace[i]);
+			}
 		}
 		logger.log(level, marker, msgBuilder.toString());
 	}
