@@ -1,0 +1,4 @@
+size			6000
+minThreads		10
+maxThreads		200
+detailedDump	false

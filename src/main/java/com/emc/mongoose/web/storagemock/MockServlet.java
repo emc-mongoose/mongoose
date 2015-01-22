@@ -27,6 +27,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 //
 import javax.management.MBeanServer;
 import javax.servlet.ServletException;
@@ -40,6 +41,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 //
@@ -52,6 +54,10 @@ implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final int port;
+	private final int size;
+	private final int minThreads;
+	private final int maxThreads;
+	private final boolean detailedDump;
 	private Server server;
 	private final static Map<String, WSObject> MAP_DATA_OBJECT = new ConcurrentHashMap<>();
 	// METRICS section BEGIN
@@ -60,8 +66,7 @@ implements Runnable {
 		ALL_METHODS = "all",
 		METRIC_COUNT = "count",
 		//
-		RANGE = "Range",
-		COMTENT_LENGTH ="Content-Length";
+		RANGE = "Range";
 	protected final Counter
 		counterAllSucc, counterAllFail,
 		counterGetSucc, counterGetFail,
@@ -155,8 +160,15 @@ implements Runnable {
 		//
 		final String apiName = runTimeConfig.getStorageApi();
 		port = runTimeConfig.getInt("api." + apiName + ".port");
+		//for QueuedThreadPool
+		size = runTimeConfig.getInt("wsmock.size", 6000);
+		minThreads = runTimeConfig.getInt("wsmock.minThreads", 10);
+		maxThreads = runTimeConfig.getInt("wsmock.maxThreads", 200);
+		detailedDump = runTimeConfig.getBoolean("wsmock.detailedDump", false);
+		final QueuedThreadPool queuedThreadPool = new QueuedThreadPool(maxThreads, minThreads, 50, new ArrayBlockingQueue<Runnable>(size));
+		//
 		LOG.info(Markers.MSG, "Set up Jetty Server instance");
-		server = new Server();
+		server = new Server(queuedThreadPool);
 		server.setDumpAfterStart(false);
 		server.setDumpBeforeStop(false);
 		LOG.info(Markers.MSG, "Set up Http Connector");
@@ -247,6 +259,7 @@ implements Runnable {
 			final String dataID = request.getRequestURI().split("/")[2];
 			if (MAP_DATA_OBJECT.containsKey(dataID)) {
 				LOG.trace(Markers.MSG, "   Send data object ", dataID);
+				System.out.println("   Send data object " + dataID);
 				final WSObject object = MAP_DATA_OBJECT.get(dataID);
 				long nanoTime = System.nanoTime();
 				object.writeWithPendingMaskTo(servletOutputStream);
