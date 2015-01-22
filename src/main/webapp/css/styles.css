@@ -28,15 +28,6 @@ label {
 	border-bottom: 1px solid #ccc;
 }
 
-#menu {
-	width: 20%;
-	border-right: 1px solid #ccc;
-	display: inline-block;
-	height: 100vh;
-	float: left;
-	min-width: 160px;
-}
-
 #menu li {
 	position: relative;
 	margin-left: -15px;
@@ -44,10 +35,12 @@ label {
 }
 
 .folders {
+	display: none;
 	border-bottom: 1px solid #ccc;
 	margin-top: 15px;
-	height: 600px;
-	overflow: scroll;
+	padding-bottom: 15px;
+	height: calc(100vh - 324px);
+	overflow: auto;
 }
 
 /*.file {
@@ -121,14 +114,16 @@ li input:checked + ul > li:last-child {
 }
 
 #main-content {
-	display: inline-block;
-	width: 80%;
-	vertical-align: top;
-	float: left;
-	position: absolute;
-	min-width: 528px;
 	border-left: 1px solid #ccc;
-	margin-left: -1px;
+	height: calc(100vh - 114px);
+	overflow: auto;
+}
+
+@media (max-width: 768px) {
+	#main-content {
+		overflow: visible;
+		height: auto;
+	}
 }
 
 #configuration-content {
@@ -322,4 +317,18 @@ th:nth-child(5) {
 #config-file {
 	display: none;
 	margin-top: 10px;
+}
+
+.no-padding {
+	padding: 0;
+}
+
+.form-horizontal .form-group {
+	margin-top: 15px;
+	margin-left: 0;
+	margin-right: 0;
+}
+
+.client {
+	display: none;
 }
