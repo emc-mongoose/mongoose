@@ -1,25 +1,17 @@
 $(document).ready(function() {
-	var RUN_MODE_STANDALONE = "standalone";
-	var RUN_MODE_CLIENT = "client";
-	var RUN_MODE_SERVER = "server";
-	var RUN_MODE_WSMOCK = "wsmock";
-	//
+	var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
+	var TABLE_ROWS_COUNT = 2050;
 	excludeDuplicateOptions();
 	//
 	var shortPropsMap = {};
 	var ul = $(".folders");
-	var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
-	var COUNT_OF_RECORDS = 2050;
-
+	//
 	walkTreeMap(propertiesMap, ul, shortPropsMap);
 	buildDivBlocksByFileNames(shortPropsMap);
 	generatePropertyPage();
-	$(".folders").hide();
-	//
-	configureWebSocket(WEBSOCKET_URL, COUNT_OF_RECORDS).connect();
+	configureWebSocketConnection(WEBSOCKET_URL, TABLE_ROWS_COUNT).connect();
 	//
 	$("select").each(function() {
-		var valueSelected = this.value;
 		var notSelected = $("option:not(:selected)", this);
 		notSelected.each(function() {
 			if ($("#" + $(this).val()).is("div")) {
@@ -42,7 +34,7 @@ $(document).ready(function() {
 		$("." + valueSelected).show();
 	});
 	//
-	$("#run-modes select").on("change", function() {
+	$('#run-modes select').on("change", function() {
 		var valueSelected = this.value;
 		var notSelected = $("option:not(:selected)", this);
 		notSelected.each(function() {
@@ -83,22 +75,22 @@ $(document).ready(function() {
 		$("#run-mode").val(valueSelected);
 	});
 
-	$("#fake-run\\.scenario\\.name").on("change", function() {
+	$("#backup-run\\.scenario\\.name").on("change", function() {
 		var valueSelected = this.value;
 		$("#scenario-button").attr("data-target", "#" + valueSelected);
 	});
 
-	$("#fake-storage\\.api").on("change", function() {
+	$("#backup-storage\\.api").on("change", function() {
 		var valueSelected = this.value;
 		$("#api-button").attr("data-target", "#" + valueSelected);
 	});
 
 	$(".complex").change(function() {
-		$("#fake-data\\.count").val(document.getElementById("fake-data.count").defaultValue);
+		$("#backup-data\\.count").val(document.getElementById("backup-data.count").defaultValue);
 		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
 	});
 
-	$("#fake-data\\.count").change(function() {
+	$("#backup-data\\.count").change(function() {
 		$(".complex input").val($(".complex input").get(0).defaultValue);
 		$(".complex select").val($(".complex select option:first").val());
 		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
@@ -107,21 +99,21 @@ $(document).ready(function() {
 	$("#base input, #base select").on("change", function() {
 		var currElement = $(this);
 		if (currElement.parents(".complex").length === 1) {
-			var input = $("#fake-run\\.time\\.input").val();
-			var select = $("#fake-run\\.time\\.select").val();
-			currElement = $("#fake-run\\.time").val(input + "." + select);
+			var input = $("#backup-run\\.time\\.input").val();
+			var select = $("#backup-run\\.time\\.select").val();
+			currElement = $("#backup-run\\.time").val(input + "." + select);
 		}
 		//
 		if (currElement.is("select")) {
 			var valueSelected = currElement.children("option").filter(":selected").text().trim();
-			$('select[pointer="'+currElement.attr("pointer")+'"]').val(currElement.val());
-			var element = document.getElementById(currElement.attr("pointer"));
+			$('select[data-pointer="'+currElement.attr("data-pointer")+'"]').val(currElement.val());
+			var element = document.getElementById(currElement.attr("data-pointer"));
 			if (element) {
 				element.value = valueSelected;
 			}
 		} else {
-			$('input[pointer="' + currElement.attr("pointer") + '"]').val(currElement.val());
-			var element = document.getElementById(currElement.attr("pointer"));
+			$('input[data-pointer="' + currElement.attr("data-pointer") + '"]').val(currElement.val());
+			var element = document.getElementById(currElement.attr("data-pointer"));
 			if (element) {
 				element.value = currElement.val();
 			}
@@ -132,14 +124,14 @@ $(document).ready(function() {
 		if (($(this).attr("id") === "run.time") || ($(this).attr("id") === "data.count")) {
 			return;
 		}
-		$('input[pointer="' + $(this).attr("id") + '"]').val($(this).val());
-		$('select[pointer="' + $(this).attr("id") + '"] option:contains(' + $(this).val() + ')')
+		$('input[data-pointer="' + $(this).attr("id") + '"]').val($(this).val());
+		$('select[data-pointer="' + $(this).attr("id") + '"] option:contains(' + $(this).val() + ')')
 			.attr('selected', 'selected');
 	});
 
 	$("#start").click(function(e) {
 		e.preventDefault();
-		var runId = document.getElementById("fake-run.id");
+		var runId = document.getElementById("backup-run.id");
 		runId.value = runId.defaultValue;
 		onStartButtonPressed();
 	});
@@ -171,27 +163,16 @@ $(document).ready(function() {
 		$(this).parent().find("tbody tr").remove();
 	});
 
-
-	$(document).on('click', '.breadcrumb ul a', function(e) {
-		e.preventDefault();
-		var sameElement = $(this).attr("href").replace("#", "");
-		var element = $(".folders a[href='#" + sameElement + "']");
-		if (!element.length) {
-			element = $('label[for="' + sameElement + '"]');
-		}
-		element.trigger('click');
-	});
-
 	$(".folders a, .folders label").click(function(e) {
 		if ($(this).is("a")) {
 			e.preventDefault();
 		}
 		//
-		onFoldersElementClick($(this));
+		onMenuItemClick($(this));
 	});
 
 	$("#chain-load").click(function() {
-		$("#fake-chain").modal('show').css("z-index", 5000);
+		$("#backup-chain").modal('show').css("z-index", 5000);
 	});
 
 	$("#save-config").click(function() {
@@ -232,32 +213,19 @@ $(document).ready(function() {
 
 });
 
-function generatePropertyPage() {
-	if (!$("#properties").is(":checked")) {
-		$("#properties").trigger("click");
-	}
-	onFoldersElementClick($('a[href="#auth"]'));
-}
-
-function onFoldersElementClick(element) {
-	resetParams();
-	$($(element).attr("href")).show();
-	//
-	$($(element).attr("href")).children().show();
-	//
-	var childrenFolders = "";
-	var childrenDocuments = "";
-	var parentsArray = $(element).parent().parents("li").find("label:first");
-	parentsArray.each(function() {
-		childrenFolders = $(this).siblings("ul").find("label");
-		childrenDocuments = $(this).siblings("ul").children(".file").find(".props");
-		$(".breadcrumb").append(appendBreadcrumb($(this), childrenFolders, childrenDocuments));
+function excludeDuplicateOptions() {
+	var found = [];
+	var selectArray = $("select");
+	selectArray.each(function() {
+		found = [];
+		var currentSelect = $(this).children();
+		currentSelect.each(function() {
+			if ($.inArray(this.value, found) != -1) {
+				$(this).remove();
+			}
+			found.push(this.value);
+		});
 	});
-	childrenFolders = $(element).siblings("ul").find("label");
-	childrenDocuments = $(element).siblings("ul").children(".file").find(".props");
-	$(".breadcrumb").append(appendBreadcrumb($(element), childrenFolders, childrenDocuments));
-	$(element).css("color", "#CC0033");
-	$("a[href='#" + $(element).text() + "']").css("color", "#CC0033");
 }
 
 function walkTreeMap(map, ul, shortsPropsMap) {
@@ -265,16 +233,16 @@ function walkTreeMap(map, ul, shortsPropsMap) {
 		var element;
 		if (jQuery.isArray(value)) {
 			element = ul.addChild("<li>")
-					.addClass("file")
-					.append($("<a>", {
-						class: "props",
-						href: "#" + key,
-						text: key
-					}))
-					.append($("<input>", {
-						type: "checkbox"
-					}))
-					.addChild($("<ul>"));
+				.addClass("file")
+				.append($("<a>", {
+					class: "props",
+					href: "#" + key,
+					text: key
+				}))
+				.append($("<input>", {
+					type: "checkbox"
+				}))
+				.addChild($("<ul>"));
 			var array = value;
 			for (var i = 0;i < array.length; i++) {
 				if (array[i].key === "run.mode") {
@@ -291,15 +259,15 @@ function walkTreeMap(map, ul, shortsPropsMap) {
 			return;
 		} else {
 			element = ul.prependChild("<li>")
-					.append($("<label>", {
-						for: key,
-						text: key
-					}))
-					.append($("<input>", {
-						type: "checkbox",
-						id: key
-					}))
-					.addChild("<ul>");
+				.append($("<label>", {
+					for: key,
+					text: key
+				}))
+				.append($("<input>", {
+					type: "checkbox",
+					id: key
+				}))
+				.addChild("<ul>");
 
 		}
 		walkTreeMap(value, element, shortsPropsMap);
@@ -322,20 +290,20 @@ function buildDivBlocksByFileNames(shortPropsMap) {
 					placeHolder = "Format: log/<run.mode>/<run.id>/<filename>";
 				}
 				formGroupDiv.append($("<label>", {
-							for: obj[i].key,
-							class: "col-sm-2 control-label",
-							text: obj[i].value.key
-						}))
-						.append($("<div>", {
-							class: "col-sm-10"
-						}).append($("<input>", {
-							type: "text",
-							class: "form-control",
-							name: obj[i].key,
-							id: obj[i].key,
-							value: obj[i].value.value,
-							placeholder: "Enter '" + obj[i].key + "' property. " + placeHolder
-						})));
+					for: obj[i].key,
+					class: "col-sm-3 control-label",
+					text: obj[i].value.key
+				}))
+					.append($("<div>", {
+						class: "col-sm-9"
+					}).append($("<input>", {
+						type: "text",
+						class: "form-control",
+						name: obj[i].key,
+						id: obj[i].key,
+						value: obj[i].value.value,
+						placeholder: "Enter '" + obj[i].key + "' property. " + placeHolder
+					})));
 				keyDiv.append(formGroupDiv);
 			}
 			keyDiv.appendTo("#configuration-content");
@@ -357,86 +325,92 @@ jQuery.fn.prependChild = function(html) {
 	return child;
 };
 
-function excludeDuplicateOptions() {
-	var found = [];
-	var selectArray = $("select");
-	selectArray.each(function() {
-		found = [];
-		var currentSelect = $(this).children();
-		currentSelect.each(function() {
-			if ($.inArray(this.value, found) != -1) {
-				$(this).remove();
-			}
-			found.push(this.value);
-		});
-	});
+function generatePropertyPage() {
+	if (!$("#properties").is(":checked")) {
+		$("#properties").trigger("click");
+	}
+	onMenuItemClick($('a[href="#auth"]'));
 }
 
-function configureWebSocket(location, countOfRecords) {
+function onMenuItemClick(element) {
+	resetParams();
+	element.css("color", "#CC0033");
+	if (element.is("a")) {
+		var block = $(element.attr("href"));
+		block.show();
+		block.children().show();
+	}
+}
+
+function resetParams() {
+	$("a, label").css("color", "");
+	$("#configuration-content").children().hide();
+}
+
+function configureWebSocketConnection(location, countOfRecords) {
+	var MARKERS = {
+		ERR: "err",
+		MSG: "msg",
+		PERF_SUM: "perfSum",
+		PERF_AVG: "perfAvg"
+	};
+	//
+	var LOG_FILES = {
+		ERR: "errors-log",
+		MSG: "messages-csv",
+		PERF_SUM: "perf-sum-csv",
+		PERF_AVG: "perf-avg-csv"
+	};
 	var webSocketServer = {
 		connect: function() {
 			this.ws = new WebSocket(location);
 			//
 			this.ws.onopen = function() {
-				// empty
-			}
+				//  empty
+			};
 			//
-			this.ws.onmessage = function(m) {
-				var json = JSON.parse(m.data);
+			this.ws.onmessage = function(message) {
+				var json = JSON.parse(message.data);
 				var entry = json.contextMap["run.id"].split(".").join("_");
-				// fix later
-				/*if (!json.message.message) {
-					str = json.message.messagePattern.split("{}");
-					resultString = "";
-					for (s = 0; s < str.length - 1; s++) {
-						resultString += str[s]+json.message.stringArgs[s];
-					}
-					json.message.message = resultString + str[str.length - 1];
-				}*/
-				if (!json.hasOwnProperty("marker"))
+				if (!json.hasOwnProperty("marker") || !json.loggerName) {
 					return;
-				if (!json.marker.hasOwnProperty("name"))
+				} else if (!json.marker.hasOwnProperty("name")) {
 					return;
-				if (!json.loggerName)
-					return;
+				}
 				//
 				switch (json.marker.name) {
-					case "err":
-						if ($("#"+entry+"errors-log table tbody tr").length > countOfRecords) {
-							$("#"+entry+"errors-log table tbody tr:first-child").remove();
-						}
-						$("#"+entry+"errors-log table tbody").append(appendStringToTable(json));
+					case MARKERS.ERR:
+						appendMessageToTable(entry, LOG_FILES.ERR, countOfRecords, json);
 						break;
-					case "msg":
-						if ($("#"+entry+"messages-csv table tbody tr").length > countOfRecords) {
-							$("#"+entry+"messages-csv table tbody tr:first-child").remove();
-						}
-						$("#"+entry+"messages-csv table tbody").append(appendStringToTable(json));
+					case MARKERS.MSG:
+						appendMessageToTable(entry, LOG_FILES.MSG, countOfRecords, json);
 						break;
-					case "perfSum":
-						if ($("#"+entry+"perf-sum-csv table tbody tr").length > countOfRecords) {
-							$("#"+entry+"perf-sum-csv table tbody tr:first-child").remove();
-						}
-						$("#"+entry+"perf-sum-csv table tbody").append(appendStringToTable(json));
+					case MARKERS.PERF_SUM:
+						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
 						break;
-					case "perfAvg":
-						if ($("#"+entry+"perf-avg-csv table tbody tr").length > countOfRecords) {
-							$("#"+entry+"perf-avg-csv table tbody tr:first-child").remove();
-						}
-						$("#"+entry+"perf-avg-csv table tbody").append(appendStringToTable(json));
+					case MARKERS.PERF_AVG:
+						appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
 						break;
 				}
-			}
+			};
 			//
 			this.ws.onclose = function() {
-				this.ws = null;
-			}
+				//  empty
+			};
 		}
 	};
 	return webSocketServer;
 }
 
-function appendStringToTable(json) {
+function appendMessageToTable(entry, tableName, countOfRows, message) {
+	if ($("#" + entry + tableName + " table tbody tr").length > countOfRows) {
+		$("#" + entry + tableName + " table tbody tr:first-child").remove();
+	}
+	$("#" + entry + tableName +" table tbody").append(getTableRowByMessage(message));
+}
+
+//  Fix it later
+function getTableRowByMessage(json) {
 	html = '<tr>\
 			<td class="filterable-cell">' + json.level.standardLevel + '</td>\
 			<td class="filterable-cell">' + json.loggerName + '</td>\
@@ -467,57 +441,6 @@ function onStartButtonPressed() {
 			});
 			location.reload();
 		}
-	});
-}
-
-function resetParams() {
-	$("a, label").css("color", "");
-	$(".breadcrumb").empty();
-	$("#configuration-content").children().hide();
-}
-
-function appendBreadcrumb(element, childrenFolders, childrenDocuments) {
-	var html;
-	var folderImagePath = "../images/folder.png";
-	var documentImagePath = "../images/document.png";
-
-	if (!childrenFolders.length && !childrenDocuments.length) {
-		html = $("<li>").attr({
-			class: "active"
-		}).text(element.text());
-	} else {
-		var dropDownList = $("<ul>").addClass("dropdown-menu");
-		if (childrenFolders.length) {
-			iterateChildren(dropDownList, childrenFolders, folderImagePath);
-			dropDownList.append("<hr/>");
-		}
-		iterateChildren(dropDownList, childrenDocuments, documentImagePath);
-
-		html = $("<li>").addClass("dropdown")
-						.append($("<a>", {
-							class: "dropdown-toggle",
-							"data-toggle": "dropdown",
-							href: "#",
-							text: element.text()
-						}))
-						.append(dropDownList);
-    }
-    return html;
-}
-
-function iterateChildren(dropDownList, children, image) {
-	children.each(function() {
-		var currElement = $(this);
-		dropDownList.addChild("<li>")
-					.addChild($("<a>", {
-						tabindex: -1,
-						href: "#" + currElement.text()
-					}))
-					.append($("<img>", {
-						class: "dropdown-image",
-						src: image
-					}))
-					.append($("<span>").text(currElement.text()));
 	});
 }
 
