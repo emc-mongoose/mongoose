@@ -29,7 +29,7 @@ import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ConsoleColors;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.util.threading.WorkerFactory;
@@ -154,7 +154,7 @@ implements LoadClient<T> {
 			try {
 				mBeanSrvConnMap.put(addr, remoteJMXConnMap.get(addr).getMBeanServerConnection());
 			} catch(final IOException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.ERROR, e,
 					String.format("Failed to obtain MBean server connection for %s", addr)
 				);
@@ -373,7 +373,7 @@ implements LoadClient<T> {
 					)
 				);
 			} catch(final RejectedExecutionException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Fetching metainfo frame task rejected");
+				TraceLogger.failure(LOG, Level.WARN, e, "Fetching metainfo frame task rejected");
 			}
 		}
 		//
@@ -386,10 +386,10 @@ implements LoadClient<T> {
 				try {
 					nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
 				} catch(final InterruptedException|ExecutionException ee) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
 				}
 			} catch(final Exception e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
+				TraceLogger.failure(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
 			}
 			//
 			if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
@@ -437,7 +437,7 @@ implements LoadClient<T> {
 				medLatency = mgmtConnExecutor.submit(taskGetLatencyMed);
 				avgLatency = mgmtConnExecutor.submit(taskGetLatencyAvg);
 			} catch(final RejectedExecutionException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Log remote metrics failed due to reject");
+				TraceLogger.failure(LOG, Level.WARN, e, "Log remote metrics failed due to reject");
 			}
 		}
 		//
@@ -488,9 +488,9 @@ implements LoadClient<T> {
 				)
 			);
 		} catch(final ExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to fetch the metrics");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to fetch the metrics");
 		} catch(final InterruptedException | NullPointerException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Unexpected failure");
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Unexpected failure");
 		}
 		//
 	}
@@ -532,7 +532,7 @@ implements LoadClient<T> {
 		if(aggregateThread.isAlive()) {
 			LOG.debug(Markers.MSG, "{}: interrupting...", name);
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
-				remoteLoadMap.size()
+				remoteLoadMap.size(), new WorkerFactory(getName() + "-interrupter")
 			);
 			for(final String addr : loadSvcAddrs) {
 				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
@@ -541,7 +541,7 @@ implements LoadClient<T> {
 			try {
 				interruptExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Interrupting was interrupted");
+				TraceLogger.failure(LOG, Level.DEBUG, e, "Interrupting was interrupted");
 			}
 			aggregateThread.interrupt();
 			LOG.debug(Markers.MSG, "{}: interrupted", name);
@@ -568,7 +568,7 @@ implements LoadClient<T> {
 					remoteLoadMap.get(addr).setConsumer(consumeMap.get(addr));
 				}
 			} catch(final ClassCastException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Data item class mismatch");
+				TraceLogger.failure(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else if(LoadSvc.class.isInstance(consumer)) {
 			// single consumer for all these producers
@@ -579,7 +579,7 @@ implements LoadClient<T> {
 					remoteLoadMap.get(addr).setConsumer(loadSvc);
 				}
 			} catch(final ClassCastException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Data item class mismatch");
+				TraceLogger.failure(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else if(DataItemBufferClient.class.isInstance(consumer)) {
 			try {
@@ -589,7 +589,7 @@ implements LoadClient<T> {
 					remoteLoadMap.get(addr).setConsumer(mediator.get(addr));
 				}
 			} catch(final ClassCastException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Data item class mismatch");
+				TraceLogger.failure(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else {
 			LOG.error(
@@ -614,7 +614,7 @@ implements LoadClient<T> {
 					try {
 						remoteLoadMap.get(addr).submit((T) null); // feed the poison
 					} catch(final Exception e) {
-						ExceptionHandler.trace(
+						TraceLogger.failure(
 							LOG, Level.WARN, e,
 							String.format("Failed to submit the poison to @%s", addr)
 						);
@@ -707,7 +707,7 @@ implements LoadClient<T> {
 					} catch(final NoSuchElementException e) {
 						LOG.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
 					} catch(final IOException e) {
-						ExceptionHandler.trace(
+						TraceLogger.failure(
 							LOG, Level.WARN, e,
 							String.format("Failed to close JMX connection to %s", addr)
 						);
@@ -735,7 +735,7 @@ implements LoadClient<T> {
 		try {
 			producer = remoteLoadMap.entrySet().iterator().next().getValue().getProducer();
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to get remote producer");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to get remote producer");
 		}
 		return producer;
 	}
@@ -771,7 +771,7 @@ implements LoadClient<T> {
 	public final void join(final long timeOutMilliSec)
 	throws InterruptedException {
 		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
-			remoteLoadMap.size(), new WorkerFactory("joinLoadSvcWorker")
+			remoteLoadMap.size(), new WorkerFactory(getName() + "-joinWorker")
 		);
 		for(final String addr : remoteLoadMap.keySet()) {
 			joinExecutor.submit(new RemoteJoinTask(remoteLoadMap.get(addr), timeOutMilliSec));

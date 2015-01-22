@@ -3,8 +3,8 @@ package com.emc.mongoose.base.load.impl.tasks;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.LoadExecutor;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.pool.InstancePool;
 import com.emc.mongoose.util.pool.Reusable;
 //
@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 11.12.14.
  */
@@ -30,18 +31,23 @@ implements Runnable, Reusable {
 	//
 	@Override
 	public final void run() {
-		AsyncIOTask.Result ioTaskResult;
+		AsyncIOTask.Result ioTaskResult = AsyncIOTask.Result.FAIL_UNKNOWN;
 		try {
 			ioTaskResult = futureResult.get(); // submit done
-			executor.handleResult(ioTask, ioTaskResult);
-		} catch(final InterruptedException|CancellationException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request has been cancelled");
-		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request result handling failed");
+		} catch(final InterruptedException | CancellationException e) {
+			TraceLogger.failure(LOG, Level.TRACE, e, "Request has been cancelled");
 		} catch(final ExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Request execution failure");
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Request execution failure");
 		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");
+		}
+		//
+		try {
+			executor.handleResult(ioTask, ioTaskResult);
+		} catch(final IOException e) {
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Request result handling failed");
+		} finally {
+			close();
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -56,27 +62,35 @@ implements Runnable, Reusable {
 		return (RequestResultTask<? extends DataItem>) POOL.take(executor, ioTask, futureResult);
 	}
 	//
+	private final AtomicBoolean isClosed = new AtomicBoolean(true);
+	//
 	@Override @SuppressWarnings("unchecked")
 	public final RequestResultTask<T> reuse(final Object... args)
-	throws IllegalArgumentException {
-		if(args == null) {
-			throw new IllegalArgumentException("No arguments for reusing the instance");
-		}
-		if(args.length > 0) {
-			executor = (LoadExecutor<T>) args[0];
-		}
-		if(args.length > 1) {
-			ioTask = (AsyncIOTask<T>) args[1];
-		}
-		if(args.length > 2) {
-			futureResult = (Future<AsyncIOTask.Result>) args[2];
+	throws IllegalArgumentException, IllegalStateException {
+		if(isClosed.compareAndSet(true, false)) {
+			if(args==null) {
+				throw new IllegalArgumentException("No arguments for reusing the instance");
+			}
+			if(args.length > 0) {
+				executor = (LoadExecutor<T>) args[0];
+			}
+			if(args.length > 1) {
+				ioTask = (AsyncIOTask<T>) args[1];
+			}
+			if(args.length > 2) {
+				futureResult = (Future<AsyncIOTask.Result>) args[2];
+			}
+		} else {
+			throw new IllegalStateException("Not yet released instance reuse attempt");
 		}
 		return this;
 	}
 	//
 	@Override
 	public final void close() {
-		POOL.release(this);
+		if(isClosed.compareAndSet(false, true)) {
+			POOL.release(this);
+		}
 	}
 	//
 	@Override @SuppressWarnings("NullableProblems")

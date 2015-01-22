@@ -1,12 +1,13 @@
 package com.emc.mongoose.run;
 //
+import com.emc.mongoose.util.logging.TraceLogger;
+import com.emc.mongoose.util.pool.InstancePool;
 import com.emc.mongoose.web.storagemock.MockServlet;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
@@ -142,21 +143,21 @@ public final class Main {
 					loadBuilderSvc.start();
 					loadBuilderSvc.join();
 				} catch(final IOException e) {
-					ExceptionHandler.trace(rootLogger, Level.ERROR, e, "Load builder service failure");
+					TraceLogger.failure(rootLogger, Level.ERROR, e, "Load builder service failure");
 				} catch(InterruptedException e) {
 					rootLogger.debug(Markers.MSG, "Interrupted load builder service");
 				}
 				break;
 			case RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-                    new JettyRunner(RUN_TIME_CONFIG.get()).run();
+				new JettyRunner(RUN_TIME_CONFIG.get()).run();
 				break;
 			case RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
 				try {
 					new MockServlet(RUN_TIME_CONFIG.get()).run();
 				} catch (final Exception e) {
-					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
+					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
 				}
 				break;
 			case RUN_MODE_CLIENT:
@@ -170,8 +171,10 @@ public final class Main {
 				);
 		}
 		//
+		InstancePool.dumpStats();
+		//
 		((LifeCycle) LogManager.getContext()).stop();
-		System.exit(0);
+		System.exit(0); // ????!!
 	}
 	//
 	public static Logger initLogging(final String runMode) {

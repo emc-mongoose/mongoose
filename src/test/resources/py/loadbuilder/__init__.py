@@ -6,7 +6,7 @@ from org.apache.logging.log4j import Level, LogManager
 LOG = LogManager.getLogger()
 #
 from com.emc.mongoose.run import Main
-from com.emc.mongoose.util.logging import ExceptionHandler, Markers
+from com.emc.mongoose.util.logging import TraceLogger, Markers
 #
 from java.lang import IllegalStateException
 from java.util import NoSuchElementException
@@ -45,7 +45,7 @@ def loadbuilder_init():
 		try:
 			INSTANCE = BasicLoadBuilder()
 		except IllegalStateException as e:
-			ExceptionHandler(LOG, Level.FATAL, e, "Failed to create load builder client")
+			TraceLogger(LOG, Level.FATAL, e, "Failed to create load builder client")
 			exit()
 	#
 	if INSTANCE is None:

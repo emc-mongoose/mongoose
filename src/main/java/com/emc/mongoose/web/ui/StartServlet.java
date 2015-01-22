@@ -3,12 +3,11 @@ package com.emc.mongoose.web.ui;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.run.Scenario;
 import com.emc.mongoose.run.ThreadContextMap;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.web.storagemock.MockServlet;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
-
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.ui.enums.RunModes;
@@ -104,7 +103,7 @@ public final class StartServlet extends HttpServlet {
 					loadBuilderSvc.setProperties(runTimeConfig);
 					loadBuilderSvc.start();
 				} catch (final RemoteException e) {
-					ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to start load builder service");
+					TraceLogger.failure(LOG, Level.ERROR, e, "Failed to start load builder service");
 				}
 			}
 			@Override

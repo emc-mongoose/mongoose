@@ -1,7 +1,7 @@
 package com.emc.mongoose.base.load.client.impl.tasks;
 //
 import com.emc.mongoose.base.load.client.LoadClient;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
@@ -54,11 +54,11 @@ implements Runnable {
 						LOG.debug(Markers.MSG, "Interrupted");
 						return; // break will cause the recursion
 					} catch(final ExecutionException e) {
-						ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to get metric value");
+						TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to get metric value");
 					}
 				}
 			} catch(final RejectedExecutionException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to submit the task");
+				TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to submit the task");
 				Thread.yield();
 			}
 		} while(maxCount > processedCount);
@@ -66,7 +66,7 @@ implements Runnable {
 		try {
 			loadClient.shutdown();
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to shut down the load client");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to shut down the load client");
 		}
 	}
 }

@@ -1,7 +1,7 @@
 package com.emc.mongoose.run;
 
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -59,7 +59,7 @@ public class JettyRunner {
             server.start();
             server.join();
         } catch (final Exception e) {
-            ExceptionHandler.trace(LOG, Level.FATAL, e, "Web UI service failure");
+            TraceLogger.failure(LOG, Level.FATAL, e, "Web UI service failure");
         }
     }
 

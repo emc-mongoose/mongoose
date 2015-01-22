@@ -452,6 +452,7 @@ implements AppendableDataItem, UpdatableDataItem {
 					new UniformData(
 						offset + size, pendingAugmentSize, layerNum + 1, UniformDataSource.DEFAULT
 					).writeTo(out);
+					size += pendingAugmentSize;
 				} else { // write from current layer
 					setOffset(offset, size);
 					// change the size

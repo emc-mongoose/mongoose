@@ -9,6 +9,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.IOControl;
+import org.hibernate.event.spi.LoadEventListener;
 //
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,7 +44,7 @@ extends ObjectRequestConfig<T> {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_NS, KEY_EMC_SIG, KEY_EMC_UID, KEY_EMC_BUCKET_FS
 		};
 	//
-	MutableHTTPRequest createRequest();
+	WSIOTask.HTTPMethod getHTTPMethod();
 	//
 	@Override
 	WSRequestConfig<T> setAPI(final String api);

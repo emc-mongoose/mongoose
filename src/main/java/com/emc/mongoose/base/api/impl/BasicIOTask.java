@@ -11,6 +11,8 @@ import com.emc.mongoose.util.pool.InstancePool;
 import com.emc.mongoose.util.pool.Reusable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by andrey on 12.10.14.
  */
@@ -29,10 +31,10 @@ implements AsyncIOTask<T> {
 	protected volatile RequestConfig<T> reqConf = null;
 	protected volatile String nodeAddr = null;
 	protected volatile T dataItem = null;
-	protected volatile Result result = Result.FAIL_TIMEOUT;
+	protected volatile Result result = Result.FAIL_UNKNOWN;
 	//
 	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
-	private volatile long transferSize = 0;
+	protected volatile long transferSize = 0;
 	private volatile Type type;
 	// BEGIN pool related things
 	private final static InstancePool<BasicIOTask>
@@ -45,40 +47,57 @@ implements AsyncIOTask<T> {
 		return (BasicIOTask<T>) POOL_BASIC_IO_TASKS.take(reqConf, dataItem, nodeAddr);
 	}
 	//
+	protected final AtomicBoolean isClosed = new AtomicBoolean(true);
+	//
 	@Override
 	public void close() {
-		POOL_BASIC_IO_TASKS.release(this);
+		if(isClosed.compareAndSet(false, true)) {
+			POOL_BASIC_IO_TASKS.release(this);
+		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public BasicIOTask<T> reuse(final Object... args) {
-		result = Result.FAIL_TIMEOUT;
-		reqTimeStart = 0;
-		reqTimeDone = 0;
-		respTimeStart = 0;
-		respTimeDone = 0;
-		transferSize = 0;
-		if(args.length > 0) {
-			setRequestConfig((RequestConfig<T>)args[0]);
-		}
-		if(args.length > 1) {
-			setDataItem((T) args[1]);
-		}
-		if(args.length > 2) {
-			setNodeAddr(String.class.cast(args[2]));
+		if(isClosed.compareAndSet(true, false)) {
+			result = Result.FAIL_UNKNOWN;
+			reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
+			if(args.length > 0) {
+				setRequestConfig((RequestConfig<T>) args[0]);
+			}
+			if(args.length > 1) {
+				setDataItem((T) args[1]);
+			}
+			if(args.length > 2) {
+				setNodeAddr(String.class.cast(args[2]));
+			}
+		} else {
+			throw new IllegalStateException("Not yet released instance reuse attempt");
 		}
 		return this;
 	}
 	// END pool related things
 	@Override
 	public final void complete() {
-		LOG.info(
-			Markers.PERF_TRACE, String.format(
-				FMT_PERF_TRACE, nodeAddr, dataItem.getId(), dataItem.getSize(), result.code,
-				reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
-				respTimeDone - respTimeStart
-			)
-		);
+		if(
+			respTimeDone > respTimeStart &&
+			respTimeStart > reqTimeDone &&
+			reqTimeDone > reqTimeStart
+		) {
+			LOG.info(
+				Markers.PERF_TRACE, String.format(
+					FMT_PERF_TRACE, nodeAddr, dataItem.getId(), transferSize, result.code,
+					reqTimeStart, reqTimeDone - reqTimeStart,
+					respTimeStart - reqTimeDone, respTimeDone - respTimeStart
+				)
+			);
+		} else {
+			LOG.debug(
+				Markers.ERR, String.format(
+					FMT_PERF_TRACE_INVALID, nodeAddr, dataItem.getId(), transferSize, result.code,
+					reqTimeStart, reqTimeDone, respTimeStart, respTimeDone
+				)
+			);
+		}
 	}
 	//
 	@Override

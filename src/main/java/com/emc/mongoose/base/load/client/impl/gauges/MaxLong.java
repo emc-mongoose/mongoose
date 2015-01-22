@@ -4,7 +4,7 @@ package com.emc.mongoose.base.load.client.impl.gauges;
  */
 import com.codahale.metrics.Gauge;
 import com.emc.mongoose.base.load.client.LoadClient;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -53,7 +53,7 @@ public final class MaxLong
 			try {
 				objectName = new ObjectName(domain, LoadClient.KEY_NAME, fqMBeanName);
 			} catch(final MalformedObjectNameException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "No such remote object");
+				TraceLogger.failure(LOG, Level.WARN, e, "No such remote object");
 			}
 			//
 			if(objectName != null) {
@@ -68,7 +68,7 @@ public final class MaxLong
 						attrName, objectName.getCanonicalName(), addr
 					);
 				} catch(final IOException |MBeanException |InstanceNotFoundException |ReflectionException e) {
-					ExceptionHandler.trace(
+					TraceLogger.failure(
 						LOG, Level.DEBUG, e,
 						String.format(
 							LoadClient.FMT_MSG_FAIL_FETCH_VALUE,

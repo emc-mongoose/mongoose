@@ -10,7 +10,7 @@ import com.codahale.metrics.Snapshot;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.api.WSIOTask;
@@ -54,10 +54,6 @@ implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final int port;
-	private final int size;
-	private final int minThreads;
-	private final int maxThreads;
-	private final boolean detailedDump;
 	private Server server;
 	private final static Map<String, WSObject> MAP_DATA_OBJECT = new ConcurrentHashMap<>();
 	// METRICS section BEGIN
@@ -161,10 +157,10 @@ implements Runnable {
 		final String apiName = runTimeConfig.getStorageApi();
 		port = runTimeConfig.getInt("api." + apiName + ".port");
 		//for QueuedThreadPool
-		size = runTimeConfig.getInt("wsmock.size", 6000);
-		minThreads = runTimeConfig.getInt("wsmock.minThreads", 10);
-		maxThreads = runTimeConfig.getInt("wsmock.maxThreads", 200);
-		detailedDump = runTimeConfig.getBoolean("wsmock.detailedDump", false);
+		final int size = runTimeConfig.getInt("wsmock.size", 6000);
+		final int minThreads = runTimeConfig.getInt("wsmock.minThreads", 10);
+		final int maxThreads = runTimeConfig.getInt("wsmock.maxThreads", 200);
+		final boolean detailedDump = runTimeConfig.getBoolean("wsmock.detailedDump", false);
 		final QueuedThreadPool queuedThreadPool = new QueuedThreadPool(maxThreads, minThreads, 50, new ArrayBlockingQueue<Runnable>(size));
 		//
 		LOG.info(Markers.MSG, "Set up Jetty Server instance");
@@ -176,7 +172,7 @@ implements Runnable {
 			httpConnector.setPort(port);
 			server.addConnector(httpConnector);
 		} catch (final Exception e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Creating of server connector failed");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Creating of server connector failed");
 		}
 		LOG.debug(Markers.MSG, "Set up a new handler");
 		final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
@@ -204,12 +200,12 @@ implements Runnable {
 		} catch (final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupting the WSMock servlet");
 		} catch (final Exception e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to start WSMock servlet");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to start WSMock servlet");
 		} finally {
 			try {
 				server.stop();
 			} catch (final Exception e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to stop jetty");
+				TraceLogger.failure(LOG, Level.WARN, e, "Failed to stop jetty");
 			}
 			metricsReporter.close();
 		}
@@ -284,17 +280,17 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet output failed");
+			TraceLogger.failure(LOG, Level.WARN, e, "Servlet output failed");
 		} catch (final ArrayIndexOutOfBoundsException e) {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+			TraceLogger.failure(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
 		} catch(final Throwable t) {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, t, "Unexpected failure");
+			TraceLogger.failure(LOG, Level.ERROR, t, "Unexpected failure");
 		}
 	}
 	//
@@ -322,7 +318,7 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPostFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
+			TraceLogger.failure(LOG, Level.WARN, e, "Servlet input stream failed");
 		}
 	}
 	//
@@ -398,12 +394,12 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
+			TraceLogger.failure(LOG, Level.WARN, e, "Servlet input stream failed");
 		}catch (final NumberFormatException e){
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.WARN, e,
 				String.format("Unexpected object id format: \"%s\"", dataID)
 			);
@@ -411,12 +407,12 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+			TraceLogger.failure(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
 		} catch (Exception e) {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Ranges have not correct form.");
+			TraceLogger.failure(LOG, Level.WARN, e, "Ranges have not correct form.");
 		}
 	}
 	//
@@ -444,7 +440,7 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterDeleteFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
+			TraceLogger.failure(LOG, Level.WARN, e, "Servlet input stream failed");
 		}
 	}
 	//
