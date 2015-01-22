@@ -7,7 +7,9 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
+import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
@@ -55,7 +57,7 @@ implements Runnable {
 	private final static Logger LOG = LogManager.getLogger();
 	private final int port;
 	private Server server;
-	private final static Map<String, WSObject> MAP_DATA_OBJECT = new ConcurrentHashMap<>();
+	private final static Map<String, DataServlet> MAP_DATA_OBJECT = new ConcurrentHashMap<>();
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
 	private final static String
@@ -249,16 +251,14 @@ implements Runnable {
 		final HttpServletRequest request, final HttpServletResponse response
 	) throws ServletException, IOException {
 		LOG.trace(Markers.MSG, " Request  method Get ");
-		System.out.println(" Request  method Get ");
 		response.setStatus(HttpServletResponse.SC_OK);
 		try (final ServletOutputStream servletOutputStream = response.getOutputStream()) {
 			final String dataID = request.getRequestURI().split("/")[2];
 			if (MAP_DATA_OBJECT.containsKey(dataID)) {
 				LOG.trace(Markers.MSG, "   Send data object ", dataID);
-				System.out.println("   Send data object " + dataID);
-				final WSObject object = MAP_DATA_OBJECT.get(dataID);
+				final DataItem object = MAP_DATA_OBJECT.get(dataID);
 				long nanoTime = System.nanoTime();
-				object.writeWithPendingMaskTo(servletOutputStream);
+				object.writeTo(servletOutputStream);
 				nanoTime = System.nanoTime() - nanoTime;
 				durGet.update(nanoTime);
 				durAll.update(nanoTime);
@@ -275,7 +275,6 @@ implements Runnable {
 				response.setStatus(HttpServletResponse.SC_NOT_FOUND);
 				LOG.trace(Markers.ERR, String.format("No such object: \"%s\"", dataID));
 			}
-			System.out.println(" End get");
 		} catch (final IOException e) {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
@@ -330,7 +329,7 @@ implements Runnable {
 		response.setStatus(HttpServletResponse.SC_OK);
 		long offset;
 		String dataID = "";
-		WSObject dataObject = null;
+		DataServlet dataObject = null;
 		try (final ServletInputStream servletInputStream = request.getInputStream()) {
 			//
 			long nanoTime = System.nanoTime();
@@ -338,17 +337,19 @@ implements Runnable {
 			nanoTime = System.nanoTime() - nanoTime;
 			//
 			dataID = request.getRequestURI().split("/")[2];
+			//???12???
 			if(Base64.isBase64(dataID) && dataID.length() < 12) {
 				final byte dataIdBytes[] = Base64.decodeBase64(dataID);
 				offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
 			} else {
-				offset = Long.valueOf(dataID, 0x10);
+				//0x10
+				offset = Long.valueOf(dataID, 36);
 			}
 			//create data object or get it for append or update
 			if(MAP_DATA_OBJECT.containsKey(dataID)) {
 				dataObject = MAP_DATA_OBJECT.get(dataID);
 			} else {
-				dataObject = new BasicWSObject(dataID, offset, bytes);
+				dataObject = new DataServlet(dataID, offset, bytes);
 			}
 			//
 			if (request.getHeader(RANGE) != null) {
@@ -365,10 +366,10 @@ implements Runnable {
 				//
 				//if append
 				if (ranges.get(0) == dataObject.getSize()) {
-					//resize data object
-					dataObject.setSize(dataObject.getSize() + bytes);
 					//append data object
 					dataObject.append(bytes);
+					//resize data object
+					dataObject.setSize(dataObject.getSize() + bytes);
 					//end append
 					//if update
 				} else if (ranges.get(ranges.size() - 1) <= dataObject.getSize()){
@@ -399,9 +400,10 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
+			e.printStackTrace();
 			TraceLogger.failure(
-				LOG, Level.WARN, e,
-				String.format("Unexpected object id format: \"%s\"", dataID)
+					LOG, Level.WARN, e,
+					String.format("Unexpected object id format: \"%s\"", dataID)
 			);
 		}catch (final ArrayIndexOutOfBoundsException e) {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);

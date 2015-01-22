@@ -16,8 +16,6 @@ extends DataItem {
 	//
 	boolean isRangeUpdatePending(final int i);
 	//
-	void updateRanges(final List<Long> ranges);
-	//
 	void updateRandomRange();
 	//
 	void updateRandomRanges(final int count);
@@ -27,9 +25,6 @@ extends DataItem {
 	long getPendingRangesSize();
 	//
 	void writePendingUpdatesTo(final OutputStream out)
-	throws IOException;
-	//
-	void writeWithPendingMaskTo(final OutputStream out)
 	throws IOException;
 	//
 	InputStream getPendingUpdatesContent()

@@ -20,10 +20,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
 import java.io.SequenceInputStream;
-import java.util.ArrayList;
 import java.util.BitSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.ThreadLocalRandom;
 /**
@@ -38,7 +35,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	//
 	private final static char LAYER_MASK_SEP = '/';
 	//
-	private final static String
+	protected final static String
 		FMT_META_INFO = "%s" + RunTimeConfig.LIST_SEP + "%x" + LAYER_MASK_SEP + "%s",
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
 		FMT_MSG_WRONG_RANGE_COUNT = "Range count should be more than 0 and less than the object size = %s",
@@ -54,9 +51,9 @@ implements AppendableDataItem, UpdatableDataItem {
 	protected final BitSet
 		maskRangesHistory = new BitSet(),
 		maskRangesPending = new BitSet();
-	private volatile int layerNum = 0;
+	protected volatile int layerNum = 0;
 	//
-	private long pendingAugmentSize = 0;
+	protected long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public DataRanges() {
 		super(); // ranges remain uninitialized
@@ -237,57 +234,13 @@ implements AppendableDataItem, UpdatableDataItem {
 		return maskRangesPending.get(i);
 	}
 	//
-	private synchronized void switchToNextLayer() {
+	protected synchronized void switchToNextLayer() {
 		layerNum ++; // increment layerNum
 		maskRangesHistory.clear();
 		maskRangesPending.clear(); // clear the masks
 		setDataSource(UniformDataSource.DEFAULT, layerNum);
 	}
 	//
-	@Override
-	public final void updateRanges(final List<Long> ranges){
-		final int countRangesTotal = getRangeCount(size);
-		int startCellPos,
-			finishCellPos;
-		for (int i = 0; i < ranges.size(); i++){
-			startCellPos = getRangeCount(ranges.get(i));
-			finishCellPos = getRangeCount(ranges.get(i++))+1;
-			maskRangesPending.set(startCellPos, finishCellPos);
-		}
-		//return true if mask is full -> inc layer
-		if (maskRangesPending.cardinality() == countRangesTotal){
-			switchToNextLayer();
-		}
-	}
-	//
-	@Override
-	public final void writeWithPendingMaskTo(final OutputStream out)
-	throws IOException {
-		final int countRangesTotal = getRangeCount(size);
-		long rangeOffset, rangeSize;
-		UniformData updatedRange;
-		synchronized (this) {
-			if (maskRangesPending.isEmpty()) {
-				super.writeTo(out);
-			} else {
-				for (int i = 0; i < countRangesTotal; i++) {
-					rangeOffset = getRangeOffset(i);
-					rangeSize = getRangeSize(i);
-					if (maskRangesPending.get(i)) { // range have been modified
-						updatedRange = new UniformData(
-								offset + rangeOffset, rangeSize, layerNum + 1, UniformDataSource.DEFAULT
-						);
-						updatedRange.writeTo(out);
-					} else { // previous layer of updated ranges
-						updatedRange = new UniformData(
-								offset + rangeOffset, rangeSize, layerNum, UniformDataSource.DEFAULT
-						);
-						updatedRange.writeTo(out);
-					}
-				}
-			}
-		}
-	}
 	@Override
 	public final void updateRandomRange()
 	throws IllegalStateException {
@@ -421,13 +374,13 @@ implements AppendableDataItem, UpdatableDataItem {
 	// APPEND //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void append(final long augmentSize)
+	public void append(final long augmentSize)
 	throws IllegalArgumentException {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
 			final int
-				lastCellPos = getRangeCount(size),
-				nextCellPos = getRangeCount(size + augmentSize) + 1;
+				lastCellPos = getRangeCount(size) - 1,
+				nextCellPos = getRangeCount(size + augmentSize);
 			if(lastCellPos < nextCellPos && maskRangesHistory.get(lastCellPos)) {
 				maskRangesPending.set(lastCellPos, nextCellPos);
 			}
