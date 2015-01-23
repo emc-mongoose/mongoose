@@ -292,8 +292,6 @@ implements WSRequestConfig<T> {
 		}*/
 	}
 	//
-	public final static int RADIX = 36;
-	//
 	protected void applyObjectId(final T dataItem, final HttpResponse httpResponse) {
 		dataItem.setId(Long.toString(dataItem.getOffset(), RADIX));
 	}

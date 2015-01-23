@@ -19,6 +19,7 @@ import com.emc.mongoose.web.data.WSObject;
 //
 import org.apache.commons.codec.binary.Base64;
 //
+import org.apache.http.HttpHeaders;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -55,13 +56,11 @@ implements Runnable {
 	private final static Logger LOG = LogManager.getLogger();
 	private final int port;
 	private Server server;
-	private final static Map<String, WSObject> MAP_DATA_OBJECT = new ConcurrentHashMap<>();
+	private final static Map<String, WSObjectMock> MAP_DATA_OBJECT = new ConcurrentHashMap<>();
 	//
 	private final static String
 		ALL_METHODS = "all",
-		METRIC_COUNT = "count",
-		//
-		RANGE = "Range";
+		METRIC_COUNT = "count";
 	private final Counter
 		counterAllSucc, counterAllFail,
 		counterGetSucc, counterGetFail,
@@ -155,10 +154,10 @@ implements Runnable {
 		final String apiName = runTimeConfig.getStorageApi();
 		port = runTimeConfig.getInt("api." + apiName + ".port");
 		//for QueuedThreadPool
-		final int size = runTimeConfig.getInt("wsmock.size");
-		final int minThreads = runTimeConfig.getInt("wsmock.minThreads");
-		final int maxThreads = runTimeConfig.getInt("wsmock.maxThreads");
-		final int idleTimeout = runTimeConfig.getInt("wsmock.idleTimeout");
+		final int size = runTimeConfig.getInt("wsmock.queue.size");
+		final int minThreads = runTimeConfig.getInt("wsmock.thread.count.min");
+		final int maxThreads = runTimeConfig.getInt("wsmock.thread.count.max");
+		final int idleTimeout = runTimeConfig.getInt("wsmock.timeout.idle.ms");
 		final QueuedThreadPool queuedThreadPool = new QueuedThreadPool(maxThreads, minThreads, idleTimeout, new ArrayBlockingQueue<Runnable>(size));
 		//
 		LOG.info(Markers.MSG, "Set up Jetty Server instance");
@@ -252,7 +251,7 @@ implements Runnable {
 			final String dataID = request.getRequestURI().split("/")[2];
 			if (MAP_DATA_OBJECT.containsKey(dataID)) {
 				LOG.trace(Markers.MSG, "   Send data object ", dataID);
-				final WSObject object = MAP_DATA_OBJECT.get(dataID);
+				final WSObjectMock object = MAP_DATA_OBJECT.get(dataID);
 				long nanoTime = System.nanoTime();
 				object.writeTo(servletOutputStream);
 				nanoTime = System.nanoTime() - nanoTime;
@@ -326,7 +325,7 @@ implements Runnable {
 		response.setStatus(HttpServletResponse.SC_OK);
 		long offset;
 		String dataID = "";
-		WSObject dataObject = null;
+		WSObjectMock dataObject = null;
 		try (final ServletInputStream servletInputStream = request.getInputStream()) {
 			//
 			long nanoTime = System.nanoTime();
@@ -349,12 +348,12 @@ implements Runnable {
 			if(MAP_DATA_OBJECT.containsKey(dataID)) {
 				dataObject = MAP_DATA_OBJECT.get(dataID);
 			} else {
-				dataObject = new WSObjectMock(dataID, offset, bytes);
+				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 			}
 			//
-			if (request.getHeader(RANGE) != null) {
+			if (request.getHeader(HttpHeaders.RANGE) != null) {
 				//Parse string of ranges information
-				final String[] rangeStringArray = request.getHeader(RANGE).split("\\s*[=,-]\\s*");
+				final String[] rangeStringArray = request.getHeader(HttpHeaders.RANGE).split("\\s*[=,-]\\s*");
 				final List<Long> ranges = new ArrayList<>();
 				for (int i = 1; i < rangeStringArray.length; i++){
 					ranges.add(Long.valueOf(rangeStringArray[i]));
