@@ -112,7 +112,7 @@ implements WSObject {
 	public final boolean compareWith(final ContentDecoder in, final IOControl ioCtl) {
 		return true;
 	}
-
+	//
 	@Override
 	public void updateRanges(List<Long> ranges) {
 	}

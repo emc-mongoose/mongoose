@@ -3,8 +3,6 @@ package com.emc.mongoose.base.data;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.List;
-
 /**
  Created by kurila on 29.09.14.
  A data item which supports update operation.

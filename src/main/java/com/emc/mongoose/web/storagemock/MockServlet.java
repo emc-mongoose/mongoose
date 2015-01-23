@@ -399,7 +399,6 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			e.printStackTrace();
 			TraceLogger.failure(
 				LOG, Level.WARN, e,
 				String.format("Unexpected object id format: \"%s\"", dataID)
