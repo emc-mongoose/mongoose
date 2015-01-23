@@ -93,10 +93,14 @@ extends WSRequestConfigBase<T> {
 	public final RequestConfig<T> setSubTenant(final SubTenant<T> subTenant)
 	throws IllegalStateException {
 		this.subTenant = subTenant;
-		if(subTenant == null) {
-			throw new IllegalStateException("Subtenant is not specified for Atmos REST API");
-		} else if(userName != null) {
-			sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
+		if(userName == null) {
+			throw new IllegalStateException("User name is not specified for Atmos REST API");
+		} else {
+			if(subTenant == null || subTenant.getName() == null || subTenant.getName().length() > 0) {
+				sharedHeadersMap.put(KEY_EMC_UID, userName);
+			} else {
+				sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
+			}
 		}
 		return this;
 	}
@@ -104,10 +108,14 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final RequestConfig<T> setUserName(final String userName) {
 		super.setUserName(userName);
-		if(userName==null) {
+		if(userName == null) {
 			throw new IllegalStateException("User name is not specified for Atmos REST API");
-		} else if(subTenant!=null) {
-			sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
+		} else {
+			if(subTenant == null || subTenant.getName() == null || subTenant.getName().length() > 0) {
+				sharedHeadersMap.put(KEY_EMC_UID, userName);
+			} else {
+				sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
+			}
 		}
 		return this;
 	}
