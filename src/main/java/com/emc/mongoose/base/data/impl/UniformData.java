@@ -121,6 +121,11 @@ implements DataItem {
 	}
 	//
 	@Override
+	public final void setSize(final long size) {
+		this.size = size;
+	}
+	//
+	@Override
 	public final void setDataSource(final UniformDataSource dataSrc, final int layerNum) {
 		buf = dataSrc.getBytes(layerNum);
 	}

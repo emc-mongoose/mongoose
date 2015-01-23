@@ -43,6 +43,8 @@ extends ObjectRequestConfig<T> {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_NS, KEY_EMC_SIG, KEY_EMC_UID, KEY_EMC_FS_ACCESS
 		};
 	//
+	int RADIX = 36;
+	//
 	WSIOTask.HTTPMethod getHTTPMethod();
 	//
 	@Override
