@@ -71,14 +71,17 @@ extends WSRequestConfigBase<T> {
 	public WSIOTask.HTTPMethod getHTTPMethod() {
 		WSIOTask.HTTPMethod method;
 		switch(loadType) {
+			case CREATE:
+				method = WSIOTask.HTTPMethod.POST;
+				break;
 			case READ:
 				method = WSIOTask.HTTPMethod.GET;
 				break;
 			case DELETE:
 				method = WSIOTask.HTTPMethod.DELETE;
 				break;
-			default:
-				method = WSIOTask.HTTPMethod.POST;
+			default: // UPDATE, APPEND
+				method = WSIOTask.HTTPMethod.PUT;
 				break;
 		}
 		return method;
@@ -179,32 +182,24 @@ extends WSRequestConfigBase<T> {
 		httpRequest.addHeader(HttpHeaders.ACCEPT, DEFAULT_ACCEPT_VALUE);
 		super.applyHeadersFinally(httpRequest);
 	}
-	//
+	/*
 	@Override
 	protected final void applyDateHeader(final MutableHTTPRequest httpRequest) {
 		//super.applyDateHeader(httpRequest);
 		httpRequest.setHeader(
-			KEY_EMC_DATE,
-			FMT_DATE_RFC1123.format(Main.CALENDAR_DEFAULT.getTime())
+			HttpHeaders.DATE, FMT_DATE_RFC1123.format(Main.CALENDAR_DEFAULT.getTime())
 		);
-	}
+	}*/
 	//
 	@Override
 	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
-		if(!httpRequest.containsHeader(HttpHeaders.CONTENT_RANGE)) {
-			httpRequest.addHeader(HttpHeaders.CONTENT_RANGE, "");
-		}
 		if(!httpRequest.containsHeader(HttpHeaders.RANGE)) {
 			httpRequest.addHeader(HttpHeaders.RANGE, ""); // temporary required for canonical form
 		}
 		//
 		httpRequest.addHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
 		//
-		Header tmpHeader = httpRequest.getLastHeader(HttpHeaders.CONTENT_RANGE);
-		if(tmpHeader != null && tmpHeader.getValue().length() == 0) { // the header is temp
-			httpRequest.removeHeader(tmpHeader);
-		}
-		tmpHeader = httpRequest.getLastHeader(HttpHeaders.RANGE);
+		Header tmpHeader = httpRequest.getLastHeader(HttpHeaders.RANGE);
 		if(tmpHeader != null && tmpHeader.getValue().length() == 0) { // the header is temp
 			httpRequest.removeHeader(tmpHeader);
 		}
@@ -212,7 +207,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	private static String HEADERS4CANONICAL[] = {
-		HttpHeaders.CONTENT_TYPE, HttpHeaders.CONTENT_RANGE, HttpHeaders.RANGE, HttpHeaders.DATE
+		HttpHeaders.CONTENT_TYPE, HttpHeaders.RANGE, HttpHeaders.DATE
 	};
 	//
 	@Override
