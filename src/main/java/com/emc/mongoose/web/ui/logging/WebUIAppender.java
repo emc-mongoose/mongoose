@@ -75,7 +75,7 @@ extends AbstractAppender {
 		}
 	}
 	//
-	public synchronized static void sendPreviousLogs(final WebSocketLogListener listener) {
+	public static void sendPreviousLogs(final WebSocketLogListener listener) {
 		for (final CircularFifoQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
 			for (final LogEvent logEvent : queue) {
 				listener.sendMessage(logEvent);
@@ -84,7 +84,7 @@ extends AbstractAppender {
 	}
 	//
 	@Override
-	public synchronized final void append(final LogEvent event) {
+	public final void append(final LogEvent event) {
 		if (ENABLED_FLAG) {
 			final String currentRunId = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
 			if (LOG_EVENTS_MAP.get(currentRunId) == null) {
