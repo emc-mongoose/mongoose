@@ -15,7 +15,6 @@ import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
-import com.emc.mongoose.web.data.WSObject;
 //
 import org.apache.commons.codec.binary.Base64;
 //

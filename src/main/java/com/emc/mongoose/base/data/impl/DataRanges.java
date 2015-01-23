@@ -237,10 +237,9 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	protected synchronized void switchToNextLayer() {
-		layerNum.incrementAndGet(); // increment layerNum
 		maskRangesHistory.clear();
 		maskRangesPending.clear(); // clear the masks
-		setDataSource(UniformDataSource.DEFAULT, layerNum.get());
+		setDataSource(UniformDataSource.DEFAULT, layerNum.incrementAndGet()); // increment layerNum
 	}
 	//
 	@Override
