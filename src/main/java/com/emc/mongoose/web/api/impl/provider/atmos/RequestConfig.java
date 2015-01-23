@@ -13,7 +13,6 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -35,10 +34,10 @@ extends WSRequestConfigBase<T> {
 	private final static String KEY_SUBTENANT = "api.atmos.subtenant";
 	//
 	private final RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
-	private final String
-		apiPathRest = runTimeConfig.getString("api.atmos.path.rest"),
-		apiPathInterface = runTimeConfig.getString("api.atmos.interface"),
-		objPathPrefix = String.format("/%s/%s", apiPathRest, apiPathInterface);
+	public final static String
+		API_PATH_REST = Main.RUN_TIME_CONFIG.get().getString("api.atmos.path.rest"),
+		API_PATH_INTERFACE = Main.RUN_TIME_CONFIG.get().getString("api.atmos.interface"),
+		URI_PREFIX = String.format("/%s/%s", API_PATH_REST, API_PATH_INTERFACE);
 	//
 	private SubTenant<T> subTenant;
 	//
@@ -172,7 +171,7 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		httpRequest.setUriPath(String.format(FMT_OBJ_PATH, objPathPrefix, dataItem.getId()));
+		httpRequest.setUriPath(String.format(FMT_OBJ_PATH, URI_PREFIX, dataItem.getId()));
 	}
 	//
 	private final static String DEFAULT_ACCEPT_VALUE = "*/*";
@@ -256,10 +255,10 @@ extends WSRequestConfigBase<T> {
 			final String valueLocation = headerLocation.getValue();
 			if(
 				valueLocation != null &&
-				valueLocation.startsWith(objPathPrefix) &&
-				valueLocation.length() - objPathPrefix.length() > 1
+				valueLocation.startsWith(URI_PREFIX) &&
+				valueLocation.length() - URI_PREFIX.length() > 1
 			) {
-				final String id = valueLocation.substring(objPathPrefix.length() + 1);
+				final String id = valueLocation.substring(URI_PREFIX.length() + 1);
 				if(id.length() > 0) {
 					dataObject.setId(id);
 				} else {

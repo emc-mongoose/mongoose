@@ -13,7 +13,6 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 //
-import org.apache.commons.codec.binary.Base32;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.http.Header;
@@ -37,7 +36,6 @@ import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.text.DateFormat;
@@ -58,6 +56,7 @@ implements WSRequestConfig<T> {
 	//
 	public final static long serialVersionUID = 42L;
 	protected final String userAgent, signMethod;
+	protected boolean fsAccess = false;
 	//
 	public static WSRequestConfigBase getInstance() {
 		return newInstanceFor(Main.RUN_TIME_CONFIG.get().getStorageApi());
@@ -190,20 +189,24 @@ implements WSRequestConfig<T> {
 	@Override
 	public WSRequestConfigBase<T> setProperties(final RunTimeConfig runTimeConfig) {
 		//
-		String paramName = "storage.scheme";
 		try {
 			setScheme(this.runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "storage.scheme");
 		}
 		//
-		paramName = "data.namespace";
 		try {
 			setNameSpace(this.runTimeConfig.getDataNameSpace());
 		} catch(final NoSuchElementException e) {
-			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "data.namespace");
 		} catch(final IllegalStateException e) {
 			LOG.debug(Markers.ERR, "Failed to set the namespace", e);
+		}
+		//
+		try {
+			setFileSystemAccessEnabled(runTimeConfig.getHttpFileSystemAccessEnabled());
+		} catch(final NoSuchElementException e) {
+			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "http.emc.fs.access");
 		}
 		//
 		super.setProperties(runTimeConfig);
@@ -229,6 +232,18 @@ implements WSRequestConfig<T> {
 		//
 		return this;
 	}
+	//
+	@Override
+	public final boolean getFileSystemAccessEnabled() {
+		return fsAccess;
+	}
+	//
+	@Override
+	public final WSRequestConfigBase<T> setFileSystemAccessEnabled(final boolean flag) {
+		this.fsAccess = flag;
+		return this;
+	}
+	//
 	//
 	@Override
 	public final List<Header> getSharedHeaders() {
