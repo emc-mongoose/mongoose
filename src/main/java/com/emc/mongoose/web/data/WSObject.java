@@ -9,6 +9,9 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.HTTP;
+
+import java.util.List;
+
 /**
  Created by kurila on 29.09.14.
  Web storage data object.
@@ -28,4 +31,6 @@ extends DataObject, HttpEntity {
 	HttpEntity getPendingAugmentContentEntity();
 	//
 	boolean compareWith(final ContentDecoder in, final IOControl ioCtl);
+	//
+	public void updateRanges(final List<Long> ranges);
 }

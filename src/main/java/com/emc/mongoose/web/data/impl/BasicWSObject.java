@@ -13,6 +13,7 @@ import org.apache.http.util.EntityUtils;
 //
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 //
 //import org.apache.logging.log4j.Level;
 //import org.apache.logging.log4j.LogManager;
@@ -22,7 +23,7 @@ import java.io.InputStream;
  Created by kurila on 29.04.14.
  Basic web storage data object implementation.
  */
-public final class BasicWSObject
+public class BasicWSObject
 extends BasicObject
 implements WSObject {
 	//
@@ -110,6 +111,10 @@ implements WSObject {
 	@Override
 	public final boolean compareWith(final ContentDecoder in, final IOControl ioCtl) {
 		return true;
+	}
+
+	@Override
+	public void updateRanges(List<Long> ranges) {
 	}
 }
 //

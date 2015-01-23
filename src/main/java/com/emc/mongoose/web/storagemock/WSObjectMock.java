@@ -2,7 +2,7 @@ package com.emc.mongoose.web.storagemock;
 //
 import com.emc.mongoose.base.data.impl.UniformData;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
-import com.emc.mongoose.object.data.impl.BasicObject;
+import com.emc.mongoose.web.data.impl.BasicWSObject;
 //
 import java.io.IOException;
 import java.io.OutputStream;
@@ -11,39 +11,40 @@ import java.util.List;
 /**
  * Created by olga on 22.01.15.
  */
-public class DataServlet
-extends BasicObject{
+public class WSObjectMock
+extends BasicWSObject {
 	//////////////////////////////////
-	public DataServlet() {
+	public WSObjectMock() {
 		super();
 	}
 	//
-	public DataServlet(final String id, final Long offset, final long size) {
+	public WSObjectMock(final String id, final Long offset, final long size) {
 		super(id, offset, size);
 	}
 	//////////////////////////////////
 	@Override
 	public final void append(final long augmentSize)
-			throws IllegalArgumentException {
+	throws IllegalArgumentException {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
 			final int
-					lastCellPos = getRangeCount(size)-1,
-					nextCellPos = getRangeCount(size + augmentSize);
+				lastCellPos = getRangeCount(size)-1,
+				nextCellPos = getRangeCount(size + augmentSize);
 			if(lastCellPos < nextCellPos && maskRangesPending.get(lastCellPos)) {
 				maskRangesPending.set(lastCellPos, nextCellPos);
 			}
 		} else {
 			throw new IllegalArgumentException(
-					String.format(FMT_MSG_ILLEGAL_APPEND_SIZE, augmentSize)
+				String.format(FMT_MSG_ILLEGAL_APPEND_SIZE, augmentSize)
 			);
 		}
 	}
 	//
+	@Override
 	public final void updateRanges(final List<Long> ranges){
 		final int countRangesTotal = getRangeCount(size);
 		int startCellPos,
-				finishCellPos;
+			finishCellPos;
 		for (int i = 0; i < ranges.size(); i++){
 			startCellPos = getRangeCount(ranges.get(i));
 			finishCellPos = getRangeCount(ranges.get(i++))+1;
@@ -57,7 +58,7 @@ extends BasicObject{
 	//
 	@Override
 	public void writeTo(final OutputStream out)
-			throws IOException {
+	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
@@ -70,18 +71,17 @@ extends BasicObject{
 					rangeSize = getRangeSize(i);
 					if (maskRangesPending.get(i)) { // range have been modified
 						updatedRange = new UniformData(
-								offset + rangeOffset, rangeSize, layerNum + 1, UniformDataSource.DEFAULT
+							offset + rangeOffset, rangeSize, layerNum + 1, UniformDataSource.DEFAULT
 						);
 						updatedRange.writeTo(out);
 					} else { // previous layer of updated ranges
 						updatedRange = new UniformData(
-								offset + rangeOffset, rangeSize, layerNum, UniformDataSource.DEFAULT
+							offset + rangeOffset, rangeSize, layerNum, UniformDataSource.DEFAULT
 						);
 						updatedRange.writeTo(out);
 					}
 				}
 			}
 		}
-
 	}
 }
