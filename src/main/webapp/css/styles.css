@@ -39,8 +39,8 @@ label {
 	border-bottom: 1px solid #ccc;
 	margin-top: 15px;
 	padding-bottom: 15px;
-	height: calc(100vh - 324px);
 	overflow: auto;
+	height: calc(100vh - 370px);
 }
 
 /*.file {
@@ -114,8 +114,8 @@ li input:checked + ul > li:last-child {
 }
 
 #main-content {
-	border-left: 1px solid #ccc;
 	height: calc(100vh - 114px);
+	border-left: 1px solid #ccc;
 	overflow: auto;
 }
 
@@ -133,6 +133,7 @@ li input:checked + ul > li:last-child {
 .dropdown-menu li {
 	display: block;
 }
+
 
 .dropdown-image {
 	margin-right: 6px;
