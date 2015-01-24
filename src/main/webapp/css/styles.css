@@ -124,6 +124,10 @@ li input:checked + ul > li:last-child {
 		overflow: visible;
 		height: auto;
 	}
+	.folders {
+		overflow: auto;
+		height: 300px;
+	}
 }
 
 #configuration-content {
