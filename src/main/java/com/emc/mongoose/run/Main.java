@@ -138,7 +138,7 @@ public final class Main {
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
 					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
-						loadBuilderSvc = new BasicLoadBuilderSvc<>()
+						loadBuilderSvc = new BasicLoadBuilderSvc<>(RUN_TIME_CONFIG.get())
 				) {
 					loadBuilderSvc.start();
 					loadBuilderSvc.join();

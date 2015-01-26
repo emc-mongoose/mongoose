@@ -2,6 +2,7 @@ package com.emc.mongoose.web.api.impl.provider.atmos;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
@@ -13,6 +14,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -50,8 +52,9 @@ extends WSRequestConfigBase<T> {
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		if(reqConf2Clone != null) {
-			setNameSpace(reqConf2Clone.getNameSpace());
 			setSubTenant(reqConf2Clone.getSubTenant());
+			setUserName(reqConf2Clone.getUserName());
+			setSecret(reqConf2Clone.getSecret());
 		}
 	}
 	//
@@ -93,9 +96,7 @@ extends WSRequestConfigBase<T> {
 	public final RequestConfig<T> setSubTenant(final SubTenant<T> subTenant)
 	throws IllegalStateException {
 		this.subTenant = subTenant;
-		if(userName == null) {
-			throw new IllegalStateException("User name is not specified for Atmos REST API");
-		} else {
+		if(sharedHeadersMap != null && userName != null) {
 			if(subTenant == null || subTenant.getName() == null || subTenant.getName().length() > 0) {
 				sharedHeadersMap.put(KEY_EMC_UID, userName);
 			} else {
@@ -106,15 +107,20 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final RequestConfig<T> setUserName(final String userName) {
-		super.setUserName(userName);
+	public final RequestConfig<T> setUserName(final String userName)
+	throws IllegalStateException {
 		if(userName == null) {
 			throw new IllegalStateException("User name is not specified for Atmos REST API");
 		} else {
-			if(subTenant == null || subTenant.getName() == null || subTenant.getName().length() > 0) {
-				sharedHeadersMap.put(KEY_EMC_UID, userName);
-			} else {
-				sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
+			super.setUserName(userName);
+			if(sharedHeadersMap != null) {
+				if(
+					subTenant==null || subTenant.getName()==null || subTenant.getName().length() > 0
+				) {
+					sharedHeadersMap.put(KEY_EMC_UID, userName);
+				} else {
+					sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
+				}
 			}
 		}
 		return this;
@@ -141,10 +147,22 @@ extends WSRequestConfigBase<T> {
 		super.setProperties(runTimeConfig);
 		//
 		try {
-			setSubTenant(new SubTenant<>(this, this.runTimeConfig.getString(KEY_SUBTENANT)));
+			setSubTenant(new SubTenant<>(this, runTimeConfig.getString(KEY_SUBTENANT)));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_SUBTENANT);
 		}
+		/*
+		try {
+			setUserName(runTimeConfig.getAuthId());
+		} catch(final NoSuchElementException e) {
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "auth.id");
+		}
+		//
+		try {
+			setSecret(runTimeConfig.getAuthSecret());
+		} catch(final NoSuchElementException e) {
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "auth.secret");
+		}*/
 		//
 		return this;
 	}

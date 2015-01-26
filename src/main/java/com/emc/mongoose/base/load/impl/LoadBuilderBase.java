@@ -48,6 +48,10 @@ implements LoadBuilder<T, U> {
 	}
 	protected abstract RequestConfig<T> getDefaultRequestConfig();
 	//
+	public LoadBuilderBase(final RunTimeConfig runTimeConfig) {
+		setProperties(runTimeConfig);
+	}
+	//
 	@Override
 	public LoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig)
 	throws IllegalStateException {

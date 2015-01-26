@@ -24,6 +24,11 @@ implements WSLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	public BasicLoadBuilder(final RunTimeConfig runTimeConfig) {
+		super(runTimeConfig);
+		setProperties(runTimeConfig);
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	protected WSRequestConfig<T> getDefaultRequestConfig() {
 		return (WSRequestConfig<T>) WSRequestConfigBase.getInstance();

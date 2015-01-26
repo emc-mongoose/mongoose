@@ -97,7 +97,7 @@ public final class StartServlet extends HttpServlet {
 				//
 				LOG.debug(Markers.MSG, message);
 				//
-				loadBuilderSvc = new BasicLoadBuilderSvc();
+				loadBuilderSvc = new BasicLoadBuilderSvc(localRunTimeConfig);
 				//
 				try {
 					loadBuilderSvc.setProperties(runTimeConfig);

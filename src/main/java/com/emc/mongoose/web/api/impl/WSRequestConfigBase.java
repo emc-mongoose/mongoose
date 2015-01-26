@@ -86,7 +86,7 @@ implements WSRequestConfig<T> {
 		return reqConf;
 	}
 	//
-	protected ConcurrentHashMap<String, String> sharedHeadersMap;
+	protected Map<String, String> sharedHeadersMap = new ConcurrentHashMap<>();
 	protected Mac mac;
 	//
 	public WSRequestConfigBase()
@@ -107,13 +107,9 @@ implements WSRequestConfig<T> {
 			contentType = runTimeConfig.getHttpContentType();
 		userAgent = runName + '/' + runVersion;
 		try {
-			sharedHeadersMap = new ConcurrentHashMap<String, String>() {
-				{
-					put(HttpHeaders.USER_AGENT, userAgent);
-					put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
-					put(HttpHeaders.CONTENT_TYPE, contentType);
-				}
-			};
+			sharedHeadersMap.put(HttpHeaders.USER_AGENT, userAgent);
+			sharedHeadersMap.put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
+			sharedHeadersMap.put(HttpHeaders.CONTENT_TYPE, contentType);
 			if(reqConf2Clone != null) {
 				this
 					.setSecret(reqConf2Clone.getSecret())
@@ -280,7 +276,7 @@ implements WSRequestConfig<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		sharedHeadersMap = (ConcurrentHashMap<String,String>) in.readObject();
+		sharedHeadersMap = (Map<String,String>) in.readObject();
 		/*final int headersCount = in.readInt();
 		sharedHeadersMap = new ConcurrentHashMap<>(headersCount);
 		LOG.trace(Markers.MSG, "Got headers count {}", headersCount);

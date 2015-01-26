@@ -208,73 +208,88 @@ implements WSIOTask<T> {
 		final StatusLine status = response.getStatusLine();
 		respStatusCode = status.getStatusCode();
 		//
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "{}: {}/{} <- {} {}{}", hashCode(), respStatusCode, status.getReasonPhrase(),
-				httpRequest.getMethod(), httpRequest.getUriAddr(), httpRequest.getUriPath()
-			);
-		}
-		//
 		if(respStatusCode < 200 || respStatusCode >= 300) {
+			//
+			final StringBuilder msgBuff = new StringBuilder();
+			//
 			switch(respStatusCode) {
 				case (400):
 					synchronized(LOG) {
-						LOG.debug(
-							Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine()
-						);
+						msgBuff
+							.append("Incorrect request: \"")
+							.append(httpRequest.getRequestLine())
+							.append("\"\n");
 						if(LOG.isTraceEnabled(Markers.ERR)) {
 							for(final Header rangeHeader : httpRequest.getAllHeaders()) {
-								LOG.trace(
-									Markers.ERR, "{}: \"{}\"",
-									rangeHeader.getName(), rangeHeader.getValue()
-								);
+								msgBuff
+									.append(rangeHeader.getName())
+									.append(": ")
+									.append(rangeHeader.getValue())
+									.append('\n');
 							}
 						}
 					}
 					result = Result.FAIL_CLIENT;
 					break;
 				case (403):
-					LOG.debug(Markers.ERR, "Access failure for data item \"{}\"", dataItem.getId());
+					msgBuff
+						.append("Access  failure for data item ")
+						.append(dataItem.getId())
+						.append('\n');
 					result = Result.FAIL_AUTH;
 					break;
 				case (404):
-					LOG.debug(
-						Markers.ERR, "Not found: {}{}",
-						httpRequest.getUriAddr(), httpRequest.getUriPath()
-					);
+					msgBuff
+						.append("Not found: ")
+						.append(httpRequest.getUriAddr())
+						.append(httpRequest.getUriPath())
+						.append('\n');
 					result = Result.FAIL_NOT_FOUND;
 					break;
 				case (416):
 					synchronized(LOG) {
-						LOG.debug(Markers.ERR, "Incorrect range");
+						msgBuff.append("Incorrect range\n");
 						if(LOG.isTraceEnabled(Markers.ERR)) {
 							for(
 								final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)
 							) {
-								LOG.trace(
-									Markers.ERR, "Incorrect range \"{}\" for data item: \"{}\"",
-									rangeHeader.getValue(), dataItem
-								);
+								msgBuff
+									.append("Incorrect range ")
+									.append(rangeHeader.getValue())
+									.append(" for data item ")
+									.append(dataItem.getId())
+									.append('\n');
 							}
 						}
 					}
 					result = Result.FAIL_CLIENT;
 					break;
 				case (500):
-					LOG.debug(Markers.ERR, "Storage internal failure");
+					msgBuff.append("Storage internal failure\n");
 					result = Result.FAIL_SVC;
 					break;
 				case (503):
-					LOG.warn(Markers.ERR, "Storage prays about a mercy");
+					msgBuff.append("Storage prays about a mercy\n");
 					result = Result.FAIL_SVC;
 					break;
 				case (507):
-					LOG.debug(Markers.ERR, "Not enough space is left on the storage");
+					msgBuff.append("Not enough space is left on the storage\n");
 					result = Result.FAIL_NO_SPACE;
+					break;
 				default:
-					LOG.debug(Markers.ERR, "Unsupported response code: {}", respStatusCode);
+					msgBuff
+						.append("Unsupported response code: ")
+						.append(respStatusCode)
+						.append('\n');
 					result = Result.FAIL_UNKNOWN;
+					break;
 			}
+			//
+			LOG.debug(
+				Markers.ERR, "{}{}/{} <- {} {}{}",
+				msgBuff, respStatusCode, status.getReasonPhrase(), httpRequest.getMethod(),
+				httpRequest.getUriAddr(), httpRequest.getUriPath()
+			);
 		} else {
 			result = Result.SUCC;
 			wsReqConf.receiveResponse(response, dataItem);
@@ -293,8 +308,8 @@ implements WSIOTask<T> {
 				String nextLine;
 				do {
 					nextLine = contentStreamBuff.readLine();
-					if(nextLine == null) {
-						LOG.debug(
+					if(nextLine == null && LOG.isTraceEnabled(Markers.ERR)) {
+						LOG.trace(
 							Markers.ERR, "Response failure code \"{}\", content: \"{}\"",
 							respStatusCode, msgBuilder.toString()
 						);
