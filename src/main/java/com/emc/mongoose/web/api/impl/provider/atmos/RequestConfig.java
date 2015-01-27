@@ -301,7 +301,8 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public void configureStorage(final LoadExecutor<T> client)
 	throws IllegalStateException {
-		if(subTenant == null) {
+		// TODO issue #148
+		/*if(subTenant == null) {
 			throw new IllegalStateException("Subtenant is not specified");
 		}
 		final String subTenantName = subTenant.getName();
@@ -316,7 +317,7 @@ extends WSRequestConfigBase<T> {
 					String.format("Created subtenant \"%s\" doesn't exist", subTenantName)
 				);
 			}
-		}
+		}*/
 	}
 	/*
 	@Override
