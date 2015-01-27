@@ -52,7 +52,9 @@ implements com.emc.mongoose.object.api.provider.atmos.SubTenant<T> {
 		return name;
 	}
 	//
-	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
+	private final static String
+		MSG_INVALID_METHOD = "<NULL> is invalid HTTP method",
+		SUBTENANT = "subtenant";
 	//
 	final HttpResponse execute(final WSLoadExecutor<T> wsClient, final WSIOTask.HTTPMethod method)
 	throws IOException {
@@ -67,7 +69,7 @@ implements com.emc.mongoose.object.api.provider.atmos.SubTenant<T> {
 		final MutableHTTPRequest httpReq = method.createRequest();
 		//
 		if(WSIOTask.HTTPMethod.PUT.equals(method)) {
-			httpReq.setUriPath(RequestConfig.API_PATH_REST + "/subtenant");
+			httpReq.setUriPath(String.format(RequestConfig.FMT_URI, SUBTENANT));
 			httpReq.setHeader(
 				new BasicHeader(
 					RequestConfig.KEY_EMC_FS_ACCESS,
@@ -75,7 +77,11 @@ implements com.emc.mongoose.object.api.provider.atmos.SubTenant<T> {
 				)
 			);
 		} else {
-			httpReq.setUriPath(RequestConfig.URI_PREFIX);
+			httpReq.setUriPath(
+				String.format(
+					RequestConfig.FMT_SLASH, String.format(RequestConfig.FMT_URI, SUBTENANT), name
+				)
+			);
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);

@@ -200,7 +200,7 @@ implements WSRequestConfig<T> {
 		}
 		//
 		try {
-			setFileSystemAccessEnabled(runTimeConfig.getHttpFileSystemAccessEnabled());
+			setFileSystemAccessEnabled(runTimeConfig.getEmcFileSystemAccessEnabled());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "http.emc.fs.access");
 		}
@@ -308,7 +308,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final void applyDataItem(final MutableHTTPRequest httpRequest, final T dataItem)
+	public void applyDataItem(final MutableHTTPRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
 		applyObjectId(dataItem, null);
 		applyURI(httpRequest, dataItem);

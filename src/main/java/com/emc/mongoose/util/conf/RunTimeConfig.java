@@ -220,8 +220,8 @@ public final class RunTimeConfig
 		return getString("http.sign.method");
 	}
 	//
-	public final boolean getHttpFileSystemAccessEnabled() {
-		return getBoolean("http.emc.fs.access");
+	public final boolean getEmcFileSystemAccessEnabled() {
+		return getBoolean("emc.fs.access");
 	}
 	//
 	public final String getRunName() {

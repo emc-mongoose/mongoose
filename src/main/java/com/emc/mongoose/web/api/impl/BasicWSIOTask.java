@@ -2,6 +2,7 @@ package com.emc.mongoose.web.api.impl;
 //
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.object.api.impl.BasicObjectIOTask;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.io.HTTPContentInputStream;
 import com.emc.mongoose.util.io.HTTPContentOutputStream;
 import com.emc.mongoose.util.logging.TraceLogger;
@@ -35,10 +36,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 06.06.14.
  */
@@ -213,6 +212,10 @@ implements WSIOTask<T> {
 			final StringBuilder msgBuff = new StringBuilder();
 			//
 			switch(respStatusCode) {
+				case (100):
+					msgBuff.append("\"100/continue\" response is not supported\n");
+					result = Result.FAIL_CLIENT;
+					break;
 				case (400):
 					synchronized(LOG) {
 						msgBuff
@@ -233,7 +236,7 @@ implements WSIOTask<T> {
 					break;
 				case (403):
 					msgBuff
-						.append("Access  failure for data item ")
+						.append("Access failure for data item ")
 						.append(dataItem.getId())
 						.append('\n');
 					result = Result.FAIL_AUTH;
@@ -245,6 +248,46 @@ implements WSIOTask<T> {
 						.append(httpRequest.getUriPath())
 						.append('\n');
 					result = Result.FAIL_NOT_FOUND;
+					break;
+				case (405):
+					msgBuff
+						.append("The operation is not allowed: \"")
+						.append(httpRequest.getRequestLine())
+						.append("\"\n");
+					result = Result.FAIL_CLIENT;
+					break;
+				case (409):
+					msgBuff
+						.append("Conflicting resource modification on \"")
+						.append(httpRequest.getUriPath())
+						.append("\"\n");
+					result = Result.FAIL_CLIENT;
+					break;
+				case (411):
+					msgBuff
+						.append("Content length is required\n");
+					result = Result.FAIL_CLIENT;
+					break;
+				case (413):
+					msgBuff
+						.append("Content is too large: ")
+						.append(RunTimeConfig.formatSize(transferSize))
+						.append('\n');
+					result = Result.FAIL_SVC;
+					break;
+				case (414):
+					msgBuff
+						.append("URI is too long: \"")
+						.append(httpRequest.getUriPath())
+						.append("\"\n");
+					result = Result.FAIL_CLIENT;
+					break;
+				case (415):
+					msgBuff
+						.append("Unsupported media type: \"")
+						.append(httpRequest.getEntity().getContentType())
+						.append("\"\n");
+					result = Result.FAIL_SVC;
 					break;
 				case (416):
 					synchronized(LOG) {
@@ -264,13 +307,36 @@ implements WSIOTask<T> {
 					}
 					result = Result.FAIL_CLIENT;
 					break;
+				case (429):
+					msgBuff.append("Storage prays about a mercy\n");
+					result = Result.FAIL_SVC;
+					break;
 				case (500):
 					msgBuff.append("Storage internal failure\n");
+					result = Result.FAIL_SVC;
+					break;
+				case (501):
+					msgBuff.append("Not implemented\n");
+					result = Result.FAIL_SVC;
+					break;
+				case (502):
+					msgBuff.append("Bad gateway\n");
 					result = Result.FAIL_SVC;
 					break;
 				case (503):
 					msgBuff.append("Storage prays about a mercy\n");
 					result = Result.FAIL_SVC;
+					break;
+				case (504):
+					msgBuff.append("Gateway timeout\n");
+					result = Result.FAIL_TIMEOUT;
+					break;
+				case (505):
+					msgBuff
+						.append("HTTP version is not supported: ")
+						.append(httpRequest.getProtocolVersion())
+						.append("\n");
+					result = Result.FAIL_TIMEOUT;
 					break;
 				case (507):
 					msgBuff.append("Not enough space is left on the storage\n");

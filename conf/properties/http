@@ -6,4 +6,3 @@ content.repeatable:			true
 connection.stalecheck:		false
 socket.timeout:				0
 #
-emc.fs.access:				false

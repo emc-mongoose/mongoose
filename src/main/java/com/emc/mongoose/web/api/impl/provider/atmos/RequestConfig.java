@@ -1,20 +1,19 @@
 package com.emc.mongoose.web.api.impl.provider.atmos;
 //
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
-import org.apache.logging.log4j.Level;
+import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -22,6 +21,7 @@ import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -35,13 +35,13 @@ extends WSRequestConfigBase<T> {
 	//
 	private final static String KEY_SUBTENANT = "api.atmos.subtenant";
 	//
-	private final RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	public final static String
-		API_PATH_REST = Main.RUN_TIME_CONFIG.get().getString("api.atmos.path.rest"),
-		API_PATH_INTERFACE = Main.RUN_TIME_CONFIG.get().getString("api.atmos.interface"),
-		URI_PREFIX = String.format("/%s/%s", API_PATH_REST, API_PATH_INTERFACE);
+		FMT_SLASH = "%s/%s", FMT_URI ="/rest/%s",
+		API_TYPE_OBJ = "objects", API_TYPE_FS = "interface",
+		DEFAULT_ACCEPT_VALUE = "*/*";
 	//
 	private SubTenant<T> subTenant;
+	private String uriBasePath;
 	//
 	public RequestConfig()
 	throws NoSuchAlgorithmException {
@@ -51,10 +51,21 @@ extends WSRequestConfigBase<T> {
 	protected RequestConfig(final RequestConfig<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
+		//
+		if(fsAccess) {
+			uriBasePath = String.format(FMT_URI, API_TYPE_FS);
+		} else {
+			uriBasePath = String.format(FMT_URI, API_TYPE_OBJ);
+		}
+		//
 		if(reqConf2Clone != null) {
 			setSubTenant(reqConf2Clone.getSubTenant());
 			setUserName(reqConf2Clone.getUserName());
 			setSecret(reqConf2Clone.getSecret());
+		}
+		//
+		if(!sharedHeadersMap.containsKey(HttpHeaders.ACCEPT)) {
+			sharedHeadersMap.put(HttpHeaders.ACCEPT, DEFAULT_ACCEPT_VALUE);
 		}
 	}
 	//
@@ -97,7 +108,9 @@ extends WSRequestConfigBase<T> {
 	throws IllegalStateException {
 		this.subTenant = subTenant;
 		if(sharedHeadersMap != null && userName != null) {
-			if(subTenant == null || subTenant.getName() == null || subTenant.getName().length() > 0) {
+			if(
+				subTenant == null || subTenant.getName() == null || subTenant.getName().length() < 1
+			) {
 				sharedHeadersMap.put(KEY_EMC_UID, userName);
 			} else {
 				sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
@@ -115,11 +128,13 @@ extends WSRequestConfigBase<T> {
 			super.setUserName(userName);
 			if(sharedHeadersMap != null) {
 				if(
-					subTenant==null || subTenant.getName()==null || subTenant.getName().length() > 0
+					subTenant==null || subTenant.getName()==null || subTenant.getName().length() < 1
 				) {
 					sharedHeadersMap.put(KEY_EMC_UID, userName);
 				} else {
-					sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
+					sharedHeadersMap.put(
+						KEY_EMC_UID, String.format(FMT_SLASH, subTenant.getName(), userName)
+					);
 				}
 			}
 		}
@@ -151,18 +166,12 @@ extends WSRequestConfigBase<T> {
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_SUBTENANT);
 		}
-		/*
-		try {
-			setUserName(runTimeConfig.getAuthId());
-		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "auth.id");
-		}
 		//
-		try {
-			setSecret(runTimeConfig.getAuthSecret());
-		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "auth.secret");
-		}*/
+		if(fsAccess) {
+			uriBasePath = String.format(FMT_URI, API_TYPE_FS);
+		} else {
+			uriBasePath = String.format(FMT_URI, API_TYPE_OBJ);
+		}
 		//
 		return this;
 	}
@@ -178,6 +187,7 @@ extends WSRequestConfigBase<T> {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		setSubTenant(new SubTenant<>(this, String.class.cast(in.readObject())));
+		uriBasePath = String.class.cast(in.readObject());
 	}
 	//
 	@Override
@@ -185,9 +195,8 @@ extends WSRequestConfigBase<T> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeObject(subTenant.getName());
+		out.writeObject(uriBasePath);
 	}
-	//
-	private final String FMT_OBJ_PATH = "%s/%s";
 	//
 	@Override
 	protected final void applyURI(final MutableHTTPRequest httpRequest, final T dataItem) {
@@ -197,41 +206,32 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		httpRequest.setUriPath(String.format(FMT_OBJ_PATH, URI_PREFIX, dataItem.getId()));
+		if(fsAccess || !AsyncIOTask.Type.CREATE.equals(loadType)) {
+			httpRequest.setUriPath(String.format(FMT_SLASH, uriBasePath, dataItem.getId()));
+		} else if(!uriBasePath.equals(httpRequest.getUriPath())) { // "/rest/objects"
+			httpRequest.setUriPath(uriBasePath);
+		} // else do nothing, uri is "/rest/objects" already
+
 	}
 	//
-	private final static String DEFAULT_ACCEPT_VALUE = "*/*";
-	//
-	@Override
-	public final void applyHeadersFinally(final MutableHTTPRequest httpRequest) {
-		httpRequest.addHeader(HttpHeaders.ACCEPT, DEFAULT_ACCEPT_VALUE);
-		super.applyHeadersFinally(httpRequest);
-	}
-	/*
-	@Override
-	protected final void applyDateHeader(final MutableHTTPRequest httpRequest) {
-		//super.applyDateHeader(httpRequest);
-		httpRequest.setHeader(
-			HttpHeaders.DATE, FMT_DATE_RFC1123.format(Main.CALENDAR_DEFAULT.getTime())
-		);
-	}*/
+	private final static String EMPTY = "";
 	//
 	@Override
 	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
 		if(!httpRequest.containsHeader(HttpHeaders.RANGE)) {
-			httpRequest.addHeader(HttpHeaders.RANGE, ""); // temporary required for canonical form
+			httpRequest.addHeader(HttpHeaders.RANGE, EMPTY); // temporary required for canonical form
 		}
 		//
 		httpRequest.addHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
 		//
-		Header tmpHeader = httpRequest.getLastHeader(HttpHeaders.RANGE);
+		final Header tmpHeader = httpRequest.getLastHeader(HttpHeaders.RANGE);
 		if(tmpHeader != null && tmpHeader.getValue().length() == 0) { // the header is temp
 			httpRequest.removeHeader(tmpHeader);
 		}
 
 	}
 	//
-	private static String HEADERS4CANONICAL[] = {
+	private final static String HEADERS4CANONICAL[] = {
 		HttpHeaders.CONTENT_TYPE, HttpHeaders.RANGE, HttpHeaders.DATE
 	};
 	//
@@ -270,33 +270,56 @@ extends WSRequestConfigBase<T> {
 		//
 		return buffer.toString();
 	}
-	/*
+	//
 	private final static String
 		FMT_MSG_ERR_LOCATION_HEADER_VALUE = "Invalid response location header value: \"%s\"";
 	//
 	@Override
-	public final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
-		final Header headerLocation = httpResponse.getFirstHeader(HttpHeaders.LOCATION);
-		if(headerLocation != null) {
-			final String valueLocation = headerLocation.getValue();
+	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
+		if(
+			AsyncIOTask.Type.CREATE.equals(loadType) &&
+			httpResponse.containsHeader(HttpHeaders.LOCATION)
+		) {
+			final String valueLocation = httpResponse
+				.getFirstHeader(HttpHeaders.LOCATION)
+				.getValue();
 			if(
 				valueLocation != null &&
-				valueLocation.startsWith(URI_PREFIX) &&
-				valueLocation.length() - URI_PREFIX.length() > 1
+				valueLocation.startsWith(uriBasePath) &&
+				valueLocation.length() - uriBasePath.length() > 1
 			) {
-				final String id = valueLocation.substring(URI_PREFIX.length() + 1);
+				final String id = valueLocation.substring(uriBasePath.length() + 1);
 				if(id.length() > 0) {
 					dataObject.setId(id);
 				} else {
 					LOG.trace(Markers.ERR, "Got empty object id");
 				}
-			} else {
-				LOG.trace(Markers.ERR, String.format(FMT_MSG_ERR_LOCATION_HEADER_VALUE, valueLocation));
+			} else if(LOG.isTraceEnabled(Markers.ERR)) {
+				LOG.trace(
+					Markers.ERR, String.format(FMT_MSG_ERR_LOCATION_HEADER_VALUE, valueLocation)
+				);
 			}
-		} else {
-			LOG.trace(Markers.ERR, "No location header in the http response");
 		}
-	}*/
+	}
+	//
+	@Override
+	public final void applyDataItem(final MutableHTTPRequest httpRequest, final T dataItem)
+	throws IllegalStateException, URISyntaxException {
+		applyURI(httpRequest, dataItem);
+		switch(loadType) {
+			case CREATE:
+				applyPayLoad(httpRequest, dataItem);
+				break;
+			case UPDATE:
+				applyRangesHeaders(httpRequest, dataItem);
+				applyPayLoad(httpRequest, dataItem.getPendingUpdatesContentEntity());
+				break;
+			case APPEND:
+				applyAppendRangeHeader(httpRequest, dataItem);
+				applyPayLoad(httpRequest, dataItem.getPendingAugmentContentEntity());
+				break;
+		}
+	}
 	//
 	@Override
 	public void configureStorage(final LoadExecutor<T> client)
@@ -319,9 +342,9 @@ extends WSRequestConfigBase<T> {
 			}
 		}*/
 	}
-	/*
+	//
 	@Override
 	public void receiveResponse(final HttpResponse response, final T dataItem) {
-		// applyObjectId(dataItem, response);
-	}*/
+		applyObjectId(dataItem, response);
+	}
 }
