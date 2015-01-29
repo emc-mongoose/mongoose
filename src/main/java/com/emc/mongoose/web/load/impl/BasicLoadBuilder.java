@@ -74,7 +74,7 @@ implements WSLoadBuilder<T, U> {
 					") should be less than upper bound "+Long.toString(maxObjSize)
 			);
 		}
-		return (U) new BasicLoadExecutor<T>(
+		return (U) new BasicLoadExecutor<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
 			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem
 		);

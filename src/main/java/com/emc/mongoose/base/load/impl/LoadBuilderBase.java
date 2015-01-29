@@ -263,7 +263,7 @@ implements LoadBuilder<T, U> {
 		final String[] dataNodeAddrs
 	) throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set storage nodes: {}", Arrays.toString(dataNodeAddrs));
-		if(dataNodeAddrs==null || dataNodeAddrs.length==0) {
+		if(dataNodeAddrs == null || dataNodeAddrs.length == 0) {
 			throw new IllegalArgumentException("Data node address list should not be empty");
 		}
 		this.dataNodeAddrs = dataNodeAddrs;

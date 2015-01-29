@@ -52,7 +52,7 @@ extends TreeSet<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public final synchronized T take(final Object... args)
-	throws IllegalStateException {
+	throws IllegalStateException, IllegalArgumentException, InterruptedException {
 		T instance = null;
 		if(isEmpty()) {
 			try {

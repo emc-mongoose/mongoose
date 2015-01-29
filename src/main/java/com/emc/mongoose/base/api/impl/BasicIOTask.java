@@ -43,7 +43,7 @@ implements AsyncIOTask<T> {
 	@SuppressWarnings("unchecked")
 	public static <T extends DataObject> BasicIOTask<T> getInstanceFor(
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
-	) {
+	) throws InterruptedException {
 		return (BasicIOTask<T>) POOL_BASIC_IO_TASKS.take(reqConf, dataItem, nodeAddr);
 	}
 	//
@@ -58,7 +58,7 @@ implements AsyncIOTask<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public BasicIOTask<T> reuse(final Object... args)
-	throws IllegalStateException {
+	throws IllegalStateException, InterruptedException {
 		if(isAvailable.compareAndSet(true, false)) {
 			status = Status.FAIL_UNKNOWN;
 			reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
@@ -109,7 +109,8 @@ implements AsyncIOTask<T> {
 	}
 	//
 	@Override
-	public AsyncIOTask<T> setNodeAddr(final String nodeAddr) {
+	public AsyncIOTask<T> setNodeAddr(final String nodeAddr)
+	throws InterruptedException {
 		this.nodeAddr = nodeAddr;
 		return this;
 	}

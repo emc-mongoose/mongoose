@@ -64,7 +64,7 @@ implements Runnable, Reusable {
 		final LoadExecutor<? extends DataItem> executor,
 		final AsyncIOTask<? extends DataItem> ioTask,
 		final Future<AsyncIOTask.Status> futureResult
-	) {
+	) throws InterruptedException {
 		return (RequestResultTask<? extends DataItem>) POOL.take(executor, ioTask, futureResult);
 	}
 	//

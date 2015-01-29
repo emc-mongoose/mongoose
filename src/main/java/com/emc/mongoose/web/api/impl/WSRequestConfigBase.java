@@ -261,7 +261,8 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr) {
+	public final WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr)
+	throws InterruptedException {
 		WSIOTask<T> ioTask;
 		if(dataItem == null) {
 			LOG.debug(Markers.MSG, "Preparing poison request");

@@ -27,7 +27,8 @@ implements Callable<T>, Reusable {
 	private final static InstancePool<FrameFetchTask>
 		POOL = new InstancePool<>(FrameFetchTask.class);
 	//
-	public static FrameFetchTask getInstance(final LoadSvc<?> loadSvc) {
+	public static FrameFetchTask getInstance(final LoadSvc<?> loadSvc)
+	throws InterruptedException {
 		return POOL.take(loadSvc);
 	}
 	//

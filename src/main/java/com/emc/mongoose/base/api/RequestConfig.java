@@ -57,7 +57,8 @@ extends Externalizable, Cloneable, Closeable {
 	int getLoadNumber();
 	RequestConfig<T> setLoadNumber(final int loadNumber);
 	//
-	AsyncIOTask<T> getRequestFor(final T dataItem, final String nodeAddr);
+	AsyncIOTask<T> getRequestFor(final T dataItem, final String nodeAddr)
+	throws InterruptedException;
 	//
 	RequestConfig<T> setAnyDataProducerEnabled(final boolean enabled);
 	Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> loadExecutor);

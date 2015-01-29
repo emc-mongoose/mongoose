@@ -64,7 +64,7 @@ implements WSIOTask<T> {
 	@SuppressWarnings("unchecked")
 	public static <T extends WSObject> BasicWSIOTask<T> getInstanceFor(
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
-	) {
+	) throws InterruptedException {
 		final BasicWSIOTask<T> ioTask = (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
 		LOG.trace(
 			Markers.MSG,
@@ -130,14 +130,37 @@ implements WSIOTask<T> {
 	}
 	//
 	private final static Map<String, HttpHost> HTTP_HOST_MAP = new ConcurrentHashMap<>();
+	private final static String HOST_PORT_SEP = ":";
 	@Override
-	public final WSIOTask<T> setNodeAddr(final String nodeAddr) {
+	public final WSIOTask<T> setNodeAddr(final String nodeAddr)
+	throws InterruptedException {
 		super.setNodeAddr(nodeAddr);
-		HttpHost tgtHost;
+		HttpHost tgtHost = null;
 		if(HTTP_HOST_MAP.containsKey(nodeAddr)) {
 			tgtHost = HTTP_HOST_MAP.get(nodeAddr);
-		} else {
-			tgtHost = new HttpHost(nodeAddr, wsReqConf.getPort(), wsReqConf.getScheme());
+		} else if(nodeAddr != null) {
+			if(nodeAddr.contains(HOST_PORT_SEP)) {
+				try {
+					final String nodeAddrParts[] = nodeAddr.split(HOST_PORT_SEP);
+					if(nodeAddrParts.length == 2) {
+						tgtHost = new HttpHost(
+							nodeAddrParts[0], Integer.valueOf(nodeAddrParts[1]), wsReqConf.getScheme()
+						);
+					} else {
+						throw new InterruptedException("Stop due to irrecoverable failure");
+					}
+				} catch(final Exception e) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e,
+						String.format("Invalid syntax of storage address \"%s\"", nodeAddr)
+					);
+					throw new InterruptedException("Stop due to unrecoverable failure");
+				}
+			} else {
+				tgtHost = new HttpHost(
+					nodeAddr, wsReqConf.getPort(), wsReqConf.getScheme()
+				);
+			}
 			HTTP_HOST_MAP.put(nodeAddr, tgtHost);
 		}
 		httpRequest.setUriAddr(tgtHost.toURI());
@@ -194,6 +217,8 @@ implements WSIOTask<T> {
 				}
 				reqEntity.writeTo(outStream);
 			}
+		} catch(final InterruptedException e) {
+			// do nothing
 		}
 	}
 	//
@@ -431,6 +456,8 @@ implements WSIOTask<T> {
 			} else {
 				wsReqConf.consumeContent(contentStream, ioCtl, dataItem);
 			}
+		} catch(final InterruptedException e) {
+			// do nothing
 		}
 	}
 	//

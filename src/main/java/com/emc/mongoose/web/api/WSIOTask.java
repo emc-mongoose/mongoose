@@ -35,5 +35,6 @@ extends
 	WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//
 	@Override
-	WSIOTask<T> setNodeAddr(final String nodeAddr);
+	WSIOTask<T> setNodeAddr(final String nodeAddr)
+	throws InterruptedException;
 }

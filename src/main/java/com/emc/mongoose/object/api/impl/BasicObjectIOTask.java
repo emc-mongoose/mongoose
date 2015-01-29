@@ -25,7 +25,7 @@ implements DataObjectIOTask<T> {
 	@SuppressWarnings("unchecked")
 	public static <T extends DataObject> BasicIOTask<T> getInstanceFor(
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
-	) {
+	) throws InterruptedException {
 		return (BasicIOTask<T>) POOL_OBJ_TASKS.take(reqConf, dataItem, nodeAddr);
 	}
 	//

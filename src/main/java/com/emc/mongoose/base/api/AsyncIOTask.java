@@ -37,7 +37,9 @@ extends Reusable {
 	//
 	AsyncIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//
-	AsyncIOTask<T> setNodeAddr(final String nodeAddr);
+	AsyncIOTask<T> setNodeAddr(final String nodeAddr)
+	throws InterruptedException;
+	//
 	String getNodeAddr();
 	//
 	AsyncIOTask<T> setDataItem(final T dataItem);

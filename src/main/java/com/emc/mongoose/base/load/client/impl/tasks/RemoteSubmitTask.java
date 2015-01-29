@@ -35,7 +35,7 @@ implements Runnable, Reusable {
 	@SuppressWarnings("unchecked")
 	public static <U extends DataItem> RemoteSubmitTask<U> getInstanceFor(
 		final LoadSvc<U> loadSvc, final U dataItem
-	) {
+	) throws InterruptedException {
 		return INSTANCE_POOL.take(loadSvc, dataItem);
 	}
 	//

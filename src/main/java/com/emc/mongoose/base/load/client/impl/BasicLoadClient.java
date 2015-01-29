@@ -374,6 +374,8 @@ implements LoadClient<T> {
 				);
 			} catch(final RejectedExecutionException e) {
 				TraceLogger.failure(LOG, Level.WARN, e, "Fetching metainfo frame task rejected");
+			} catch(final InterruptedException e) {
+				// do nothing
 			}
 		}
 		//
@@ -392,12 +394,15 @@ implements LoadClient<T> {
 				TraceLogger.failure(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
 			}
 			//
-			if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
-				for(final T nextMetaInfoRec: nextMetaInfoFrame) {
-					metaInfoLog.submit(nextMetaInfoRec);
+			try {
+				if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
+					for(final T nextMetaInfoRec: nextMetaInfoFrame) {
+						metaInfoLog.submit(nextMetaInfoRec);
+					}
 				}
+			} catch(final InterruptedException e) {
+				// do nothing
 			}
-			//
 		}
 	}
 	//

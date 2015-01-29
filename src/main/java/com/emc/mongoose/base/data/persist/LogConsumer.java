@@ -87,7 +87,8 @@ implements Consumer<T> {
 	}
 	//
 	@Override
-	public void submit(final T data) {
+	public void submit(final T data)
+	throws InterruptedException {
 		if(data != null && count.get() < maxCount) {
 			super.submit(TASK_POOL.take(data));
 			count.incrementAndGet();

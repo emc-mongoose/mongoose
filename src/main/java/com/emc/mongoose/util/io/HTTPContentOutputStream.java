@@ -77,7 +77,7 @@ implements Reusable {
 	//
 	public static HTTPContentOutputStream getInstance(
 		final ContentEncoder out, final IOControl ioCtl
-	) {
+	) throws InterruptedException {
 		return POOL.take(out, ioCtl);
 	}
 	//
