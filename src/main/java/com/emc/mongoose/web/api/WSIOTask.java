@@ -17,7 +17,7 @@ public interface
 extends
 	DataObjectIOTask<T>,
 	HttpAsyncRequestProducer,
-	HttpAsyncResponseConsumer<AsyncIOTask.Result> {
+	HttpAsyncResponseConsumer<AsyncIOTask.Status> {
 	//
 	enum HTTPMethod {
 		//

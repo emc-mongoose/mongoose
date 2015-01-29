@@ -4,9 +4,7 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.api.impl.BasicIOTask;
 import com.emc.mongoose.object.api.DataObjectIOTask;
 import com.emc.mongoose.object.data.DataObject;
-import com.emc.mongoose.util.pool.InstancePool;
-
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.emc.mongoose.util.collections.InstancePool;
 /**
  Created by kurila on 23.12.14.
  */
@@ -32,8 +30,8 @@ implements DataObjectIOTask<T> {
 	}
 	//
 	@Override
-	public void close() {
-		if(isClosed.compareAndSet(false, true)) {
+	public void release() {
+		if(isAvailable.compareAndSet(false, true)) {
 			POOL_OBJ_TASKS.release(this);
 		}
 	}

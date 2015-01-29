@@ -3,6 +3,7 @@ package com.emc.mongoose.web.api.impl.provider.atmos;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
@@ -14,6 +15,7 @@ import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -222,7 +224,7 @@ extends WSRequestConfigBase<T> {
 			httpRequest.addHeader(HttpHeaders.RANGE, EMPTY); // temporary required for canonical form
 		}
 		//
-		httpRequest.addHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
+		httpRequest.setHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
 		//
 		final Header tmpHeader = httpRequest.getLastHeader(HttpHeaders.RANGE);
 		if(tmpHeader != null && tmpHeader.getValue().length() == 0) { // the header is temp
@@ -284,10 +286,10 @@ extends WSRequestConfigBase<T> {
 				.getFirstHeader(HttpHeaders.LOCATION)
 				.getValue();
 			if(
-				valueLocation != null &&
-				valueLocation.startsWith(uriBasePath) &&
-				valueLocation.length() - uriBasePath.length() > 1
-			) {
+				valueLocation!=null &&
+					valueLocation.startsWith(uriBasePath) &&
+					valueLocation.length() - uriBasePath.length() > 1
+				) {
 				final String id = valueLocation.substring(uriBasePath.length() + 1);
 				if(id.length() > 0) {
 					dataObject.setId(id);
@@ -299,6 +301,14 @@ extends WSRequestConfigBase<T> {
 					Markers.ERR, String.format(FMT_MSG_ERR_LOCATION_HEADER_VALUE, valueLocation)
 				);
 			}
+		}
+		//
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "Applied object \"{}\" id \"{}\" from the source \"{}\"",
+				Long.toHexString(dataObject.getOffset()), dataObject.getId(),
+				httpResponse.getFirstHeader(HttpHeaders.LOCATION)
+			);
 		}
 	}
 	//

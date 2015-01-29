@@ -19,4 +19,6 @@ extends HttpEntityEnclosingRequest {
 	//
 	String getUriPath();
 	MutableHTTPRequest setUriPath(final String path);
+	//
+	void clearHeaders();
 }

@@ -1,7 +1,7 @@
 package com.emc.mongoose.util.io;
 //
-import com.emc.mongoose.util.pool.InstancePool;
-import com.emc.mongoose.util.pool.Reusable;
+import com.emc.mongoose.util.collections.InstancePool;
+import com.emc.mongoose.util.collections.Reusable;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
 //
@@ -65,18 +65,18 @@ implements Reusable {
 		return POOL.take(in, ioCtl);
 	}
 	//
-	private final AtomicBoolean isClosed = new AtomicBoolean(true);
+	private final AtomicBoolean isAvailable = new AtomicBoolean(true);
 	//
 	@Override
-	public final void close() {
-		if(isClosed.compareAndSet(false, true)) {
+	public final void release() {
+		if(isAvailable.compareAndSet(false, true)) {
 			POOL.release(this);
 		}
 	}
 	//
 	@Override
 	public final HTTPContentInputStream reuse(final Object... args) {
-		if(isClosed.compareAndSet(true, false)) {
+		if(isAvailable.compareAndSet(true, false)) {
 			if(args.length > 0) {
 				in = ContentDecoder.class.cast(args[0]);
 			}
@@ -94,4 +94,12 @@ implements Reusable {
 		return another == null ? 1 : hashCode() - another.hashCode();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	/**
+	 * Does not close the stream actually.
+	 * Puts the instance back to the pool for further reusing
+	 */
+	@Override
+	public final void close() {
+		release();
+	}
 }

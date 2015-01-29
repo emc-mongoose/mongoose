@@ -1,12 +1,13 @@
 package com.emc.mongoose.web.api.impl;
 //
+import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.object.api.impl.BasicObjectIOTask;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.io.HTTPContentInputStream;
 import com.emc.mongoose.util.io.HTTPContentOutputStream;
 import com.emc.mongoose.util.logging.TraceLogger;
-import com.emc.mongoose.util.pool.InstancePool;
+import com.emc.mongoose.util.collections.InstancePool;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
@@ -14,6 +15,7 @@ import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.lang.text.StrBuilder;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
@@ -22,6 +24,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
@@ -36,6 +39,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 /**
@@ -65,44 +69,60 @@ implements WSIOTask<T> {
 		LOG.trace(
 			Markers.MSG,
 			String.format(
-				"linked task #%d to {%s, %s, %s}",
-				ioTask.hashCode(), reqConf, dataItem.getId(), nodeAddr
+				"linked task #%d to {%s, %x, %s}",
+				ioTask.hashCode(), reqConf, dataItem.getOffset(), nodeAddr
 			)
 		);
 		return ioTask;
 	}
 	//
 	@Override
-	public void close() {
-		if(isClosed.compareAndSet(false, true)) {
+	public void release() {
+		if(isAvailable.compareAndSet(false, true)) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				TraceLogger.trace(
+					LOG, Level.TRACE, Markers.MSG,
+					String.format("Releasing the task #%d", hashCode())
+				);
+			}
+			resetRequest();
 			POOL_WEB_IO_TASKS.release(this);
+		} else {
+			LOG.warn(Markers.ERR, "Not closing already closed task #{}", hashCode());
 		}
 	}
-	/*
-	@Override @SuppressWarnings("unchecked")
-	public BasicWSIOTask<T> reuse(final Object... args) {
-		super.reuse(args);
-		return this;
-	}*/
 	// END pool related things
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
+	protected Map<String, Header> sharedHeadersMap = null;
 	protected final MutableHTTPRequest httpRequest = HTTPMethod.GET.createRequest();
+	protected volatile HttpEntity reqEntity = null;
 	//
 	@Override
 	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
-		this.wsReqConf = (WSRequestConfig<T>) reqConf;
-		if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
-			httpRequest.setMethod(wsReqConf.getHTTPMethod());
+		if(reqConf != null && !reqConf.equals(wsReqConf)) {
+			this.wsReqConf = (WSRequestConfig<T>) reqConf;
+			//
+			final Map<String, String> _headersMap = wsReqConf.getSharedHeadersMap();
+			sharedHeadersMap = new ConcurrentHashMap<>();
+			for(final String headerKey : _headersMap.keySet()) {
+				sharedHeadersMap.put(
+					headerKey, new BasicHeader(headerKey, _headersMap.get(headerKey))
+				);
+			}
+			//
+			if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
+				httpRequest.setMethod(wsReqConf.getHTTPMethod());
+			}
+			super.setRequestConfig(reqConf);
 		}
-		super.setRequestConfig(reqConf);
 		return this;
 	}
 	//
 	@Override
 	public final WSIOTask<T> setDataItem(final T dataItem) {
 		try {
-			wsReqConf.applyDataItem(httpRequest, dataItem);
 			super.setDataItem(dataItem);
+			wsReqConf.applyDataItem(httpRequest, dataItem);
 		} catch(final Exception e) {
 			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply data item");
 		}
@@ -123,6 +143,12 @@ implements WSIOTask<T> {
 		httpRequest.setUriAddr(tgtHost.toURI());
 		return this;
 	}
+	/**
+	 * Warning: invoked implicitly and untimely in the depths of HttpCore lib.
+	 * So does nothing
+	 */
+	@Override
+	public final void close() {}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private volatile Exception exception = null;
 	@SuppressWarnings("FieldCanBeLocal")
@@ -136,20 +162,20 @@ implements WSIOTask<T> {
 		return HTTP_HOST_MAP.get(nodeAddr);
 	}
 	//
-	private volatile HttpEntity reqEntity = null;
-	//
 	@Override
 	public final HttpRequest generateRequest()
 	throws IOException, HttpException {
 		try {
 			wsReqConf.applyHeadersFinally(httpRequest);
+			reqEntity = httpRequest.getEntity();
+			if(LOG.isTraceEnabled()) {
+				LOG.trace(
+					Markers.MSG, "Task #{}: generating the request w/ {} bytes of content",
+					hashCode(), reqEntity == null ? "NO" : reqEntity.getContentLength()
+				);
+			}
 		} catch(final Exception e) {
 			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply the final headers");
-		}
-		try {
-			reqEntity = httpRequest.getEntity();
-		} catch(final Exception e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to get the request entity");
 		}
 		reqTimeStart = System.nanoTime() / 1000;
 		return httpRequest;
@@ -159,13 +185,24 @@ implements WSIOTask<T> {
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
 		try(final OutputStream outStream = HTTPContentOutputStream.getInstance(out, ioCtl)) {
-			reqEntity.writeTo(outStream);
+			if(reqEntity != null) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "Task #{}, write out {} bytes",
+						hashCode(), reqEntity.getContentLength()
+					);
+				}
+				reqEntity.writeTo(outStream);
+			}
 		}
 	}
 	//
 	@Override
 	public final void requestCompleted(final HttpContext context) {
 		reqTimeDone = System.nanoTime() / 1000;
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Task #{}: request sent completely", hashCode());
+		}
 	}
 	//
 	@Override
@@ -180,13 +217,17 @@ implements WSIOTask<T> {
 		reqEntity = null;
 		if(httpRequest != null) {
 			synchronized(httpRequest) {
+				httpRequest.clearHeaders();
+				for(final String headerKey : sharedHeadersMap.keySet()) {
+					httpRequest.setHeader(sharedHeadersMap.get(headerKey));
+				}
 				httpRequest.setEntity(reqEntity);
-				final Map<String, String> sharedHeadersMap = wsReqConf.getSharedHeadersMap();
-				final Header headers[] = httpRequest.getAllHeaders().clone();
-				for(final Header header : headers) {
-					if(!sharedHeadersMap.containsKey(header.getName())) {
-						httpRequest.removeHeaders(header.getName());
-					}
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "Task #{}: reset the request, left headers: {}, shared headers: {}",
+						hashCode(), Arrays.toString(httpRequest.getAllHeaders()),
+						Arrays.toString(sharedHeadersMap.keySet().toArray())
+					);
 				}
 			}
 		}
@@ -214,80 +255,84 @@ implements WSIOTask<T> {
 			switch(respStatusCode) {
 				case (100):
 					msgBuff.append("\"100/continue\" response is not supported\n");
-					result = Result.FAIL_CLIENT;
+					this.status = Status.FAIL_CLIENT;
 					break;
 				case (400):
 					synchronized(LOG) {
 						msgBuff
 							.append("Incorrect request: \"")
-							.append(httpRequest.getRequestLine())
-							.append("\"\n");
+							.append(httpRequest.getRequestLine()).append("\"\n");
 						if(LOG.isTraceEnabled(Markers.ERR)) {
 							for(final Header rangeHeader : httpRequest.getAllHeaders()) {
 								msgBuff
-									.append(rangeHeader.getName())
-									.append(": ")
-									.append(rangeHeader.getValue())
-									.append('\n');
+									.append('\t').append(rangeHeader.getName()).append(": ")
+									.append(rangeHeader.getValue()).append('\n');
 							}
 						}
 					}
-					result = Result.FAIL_CLIENT;
+					this.status = Status.FAIL_CLIENT;
 					break;
 				case (403):
 					msgBuff
-						.append("Access failure for data item ")
-						.append(dataItem.getId())
-						.append('\n');
-					result = Result.FAIL_AUTH;
+						.append("Access failure for data item: \"").append(dataItem)
+						.append("\"\nSource request headers:\n");
+					if(LOG.isTraceEnabled(Markers.ERR)) {
+						for(final Header rangeHeader : httpRequest.getAllHeaders()) {
+							msgBuff
+								.append('\t').append(rangeHeader.getName()).append(": ")
+								.append(rangeHeader.getValue()).append('\n');
+						}
+						msgBuff
+							.append("Canonical request view:\n")
+							.append(wsReqConf.getCanonical(httpRequest))
+							.append('\n');
+					}
+					this.status = Status.FAIL_AUTH;
 					break;
 				case (404):
 					msgBuff
-						.append("Not found: ")
-						.append(httpRequest.getUriAddr())
-						.append(httpRequest.getUriPath())
-						.append('\n');
-					result = Result.FAIL_NOT_FOUND;
+						.append("Not found: ").append(httpRequest.getUriAddr())
+						.append(httpRequest.getUriPath()).append('\n');
+					this.status = Status.FAIL_NOT_FOUND;
 					break;
 				case (405):
 					msgBuff
 						.append("The operation is not allowed: \"")
 						.append(httpRequest.getRequestLine())
 						.append("\"\n");
-					result = Result.FAIL_CLIENT;
+					this.status = Status.FAIL_CLIENT;
 					break;
 				case (409):
 					msgBuff
 						.append("Conflicting resource modification on \"")
 						.append(httpRequest.getUriPath())
 						.append("\"\n");
-					result = Result.FAIL_CLIENT;
+					this.status = Status.FAIL_CLIENT;
 					break;
 				case (411):
 					msgBuff
 						.append("Content length is required\n");
-					result = Result.FAIL_CLIENT;
+					this.status = Status.FAIL_CLIENT;
 					break;
 				case (413):
 					msgBuff
 						.append("Content is too large: ")
 						.append(RunTimeConfig.formatSize(transferSize))
 						.append('\n');
-					result = Result.FAIL_SVC;
+					this.status = Status.FAIL_SVC;
 					break;
 				case (414):
 					msgBuff
 						.append("URI is too long: \"")
-						.append(httpRequest.getUriPath())
-						.append("\"\n");
-					result = Result.FAIL_CLIENT;
+						.append(httpRequest.getUriPath()).append("\"\n");
+					this.status = Status.FAIL_CLIENT;
 					break;
 				case (415):
 					msgBuff
 						.append("Unsupported media type: \"")
 						.append(httpRequest.getEntity().getContentType())
 						.append("\"\n");
-					result = Result.FAIL_SVC;
+					this.status = Status.FAIL_SVC;
 					break;
 				case (416):
 					synchronized(LOG) {
@@ -297,67 +342,67 @@ implements WSIOTask<T> {
 								final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)
 							) {
 								msgBuff
-									.append("Incorrect range ")
-									.append(rangeHeader.getValue())
-									.append(" for data item ")
-									.append(dataItem.getId())
+									.append("Incorrect range ").append(rangeHeader.getValue())
+									.append(" for data item ").append(dataItem.getId())
 									.append('\n');
 							}
 						}
 					}
-					result = Result.FAIL_CLIENT;
+					this.status = Status.FAIL_CLIENT;
 					break;
 				case (429):
 					msgBuff.append("Storage prays about a mercy\n");
-					result = Result.FAIL_SVC;
+					this.status = Status.FAIL_SVC;
 					break;
 				case (500):
 					msgBuff.append("Storage internal failure\n");
-					result = Result.FAIL_SVC;
+					this.status = Status.FAIL_SVC;
 					break;
 				case (501):
 					msgBuff.append("Not implemented\n");
-					result = Result.FAIL_SVC;
+					this.status = Status.FAIL_SVC;
 					break;
 				case (502):
 					msgBuff.append("Bad gateway\n");
-					result = Result.FAIL_SVC;
+					this.status = Status.FAIL_SVC;
 					break;
 				case (503):
 					msgBuff.append("Storage prays about a mercy\n");
-					result = Result.FAIL_SVC;
+					this.status = Status.FAIL_SVC;
 					break;
 				case (504):
 					msgBuff.append("Gateway timeout\n");
-					result = Result.FAIL_TIMEOUT;
+					this.status = Status.FAIL_TIMEOUT;
 					break;
 				case (505):
 					msgBuff
 						.append("HTTP version is not supported: ")
 						.append(httpRequest.getProtocolVersion())
 						.append("\n");
-					result = Result.FAIL_TIMEOUT;
+					this.status = Status.FAIL_TIMEOUT;
 					break;
 				case (507):
 					msgBuff.append("Not enough space is left on the storage\n");
-					result = Result.FAIL_NO_SPACE;
+					this.status = Status.FAIL_NO_SPACE;
 					break;
 				default:
 					msgBuff
-						.append("Unsupported response code: ")
-						.append(respStatusCode)
+						.append("Unsupported response code: ").append(respStatusCode)
 						.append('\n');
-					result = Result.FAIL_UNKNOWN;
+					this.status = Status.FAIL_UNKNOWN;
 					break;
 			}
 			//
 			LOG.debug(
-				Markers.ERR, "{}{}/{} <- {} {}{}",
-				msgBuff, respStatusCode, status.getReasonPhrase(), httpRequest.getMethod(),
-				httpRequest.getUriAddr(), httpRequest.getUriPath()
+				Markers.ERR, "Task #{}: {}{}/{} <- {} {}{}",
+				hashCode(), msgBuff, respStatusCode, status.getReasonPhrase(),
+				httpRequest.getMethod(), httpRequest.getUriAddr(), httpRequest.getUriPath()
 			);
 		} else {
-			result = Result.SUCC;
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Task #{} is successful", hashCode());
+			}
+			this.status = Status.SUCC;
 			wsReqConf.receiveResponse(response, dataItem);
 		}
 	}
@@ -399,6 +444,11 @@ implements WSIOTask<T> {
 	public final void failed(final Exception e) {
 		exception = e;
 		TraceLogger.failure(LOG, Level.DEBUG, e, "Response processing failure");
+	}
+	//
+	@Override
+	public final AsyncIOTask.Status getResult() {
+		return status;
 	}
 	//
 	@Override
