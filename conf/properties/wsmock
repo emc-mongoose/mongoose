@@ -1,4 +1,4 @@
-queue.size:			6000
-thread.count.min:	10
-thread.count.max:	200
-timeout.idle.ms:	50
+threadpool.queue.size:			1000000
+queue.dataobject.size:			10000000
+timeout.idle.ms:				0
+

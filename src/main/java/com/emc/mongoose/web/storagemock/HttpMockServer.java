@@ -4,7 +4,8 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.threading.WorkerFactory;
-import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
+//
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
@@ -37,6 +38,7 @@ import org.apache.http.protocol.ResponseContent;
 import org.apache.http.protocol.ResponseDate;
 import org.apache.http.protocol.ResponseServer;
 import org.apache.http.util.EntityUtils;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,12 +46,12 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 //
@@ -59,18 +61,23 @@ import java.util.concurrent.TimeUnit;
 public class HttpMockServer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static Map<String, WSObjectMock> MAP_DATA_OBJECT = new ConcurrentHashMap<>();
-	private final static Queue<String> QUEUE_DATA_ID = new ConcurrentLinkedQueue<>();
-	private static int MAX_PAGE_SIZE;
+	private static Map<String, WSObjectMock> MAP_DATA_OBJECT;
+	private static Queue<String> QUEUE_DATA_ID;
 	//
 	public HttpMockServer(final RunTimeConfig runTimeConfig)
 	throws IOException {
+		//queue size for data object
+		final int queueDataIdSize = runTimeConfig.getInt("wsmock.queue.dataobject.size");
+		QUEUE_DATA_ID = new ArrayBlockingQueue<>(queueDataIdSize);
+		MAP_DATA_OBJECT = new ConcurrentHashMap<>(queueDataIdSize);
 		// count of ports = Count of kernel-1 or 1.
 		final int portCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
-		LOG.info(Markers.MSG, " WSMock can listen {} ports.",portCount);
+		LOG.trace(Markers.MSG, " There are {} processors.", portCount);
 		final String apiName = runTimeConfig.getStorageApi();
 		final int portStart = runTimeConfig.getInt("api." + apiName + ".port");
-		MAX_PAGE_SIZE = (int) runTimeConfig.getDataPageSize();
+		//for QueuedThreadPool
+		final int size = runTimeConfig.getInt("wsmock.threadpool.queue.size");
+		final int idleTimeout = runTimeConfig.getInt("wsmock.timeout.idle.ms");
 		// Set up the HTTP protocol processor
 		final HttpProcessor httpproc = HttpProcessorBuilder.create()
 			.add(new ResponseDate())
@@ -93,14 +100,15 @@ public class HttpMockServer {
 				super.closed(conn);
 			}
 		};
-		final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(portCount, portCount, 0, TimeUnit.MILLISECONDS,
-			new ArrayBlockingQueue<Runnable>(1000000), new WorkerFactory("workerWSMock"));
+		final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(portCount, portCount, idleTimeout,
+			TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(size), new WorkerFactory("workerWSMock"));
 		// Create HTTP connection factory
 		final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory = new DefaultNHttpServerConnectionFactory(
 			ConnectionConfig.DEFAULT);
 		//
 		for (int i = 0; i < portCount; i++){
-			threadPool.execute(new WorkerTask(protocolHandler,connFactory,portStart+i));
+			threadPool.execute( new WorkerTask(protocolHandler, connFactory, portStart + i));
+			LOG.info(Markers.MSG, " WSMock can listen {} port.", portStart + i);
 		}
 		threadPool.shutdown();
 		try {
@@ -111,6 +119,8 @@ public class HttpMockServer {
 		// Create server-side I/O event dispatch
 		LOG.info(Markers.MSG, "Shutdown");
 	}
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	//Mock Handler
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	class HttpMockHandler
 	implements HttpAsyncRequestHandler<HttpRequest>{
@@ -133,99 +143,110 @@ public class HttpMockServer {
 			final HttpContext context)
 		throws HttpException, IOException
 		{
-			HttpResponse response = httpexchange.getResponse();
+			final HttpResponse response = httpexchange.getResponse();
 			//HttpCoreContext coreContext = HttpCoreContext.adapt(context);
-			String method = request.getRequestLine().getMethod().toUpperCase(Locale.ENGLISH);
+			String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
+			String dataID = "";
+			//Get data Id
+			try {
+				final String[] requestUri = request.getRequestLine().getUri().split("/");
+				if (requestUri.length >= 3) {
+					dataID = requestUri[2];
+				} else {
+					method = "head";
+				}
+			} catch (final NumberFormatException e){
+				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+				TraceLogger.failure(
+					LOG, Level.WARN, e,
+					String.format("Unexpected object id format: \"%s\"", dataID)
+				);
+			} catch (final ArrayIndexOutOfBoundsException e) {
+				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+				TraceLogger.failure(LOG, Level.WARN, e,
+					"Request URI is not correct. Data object ID doesn't exist in request URI");
+			}
 			//
 			switch (method){
-				case ("PUT"):
-					doPut(request, response);
-				case ("HEAD"):
-					doHead(request, response);
-				case ("GET"):
-					doGet(request,response);
+				case ("put"):
+					doPut(request, response, dataID);
+					break;
+				case ("head"):
+					doHead(response);
+					break;
+				case ("get"):
+					doGet(response, dataID);
+					break;
 			}
 			httpexchange.submitResponse(new BasicAsyncResponseProducer(response));
 		}
 	}
 	//
-	private void doGet(
-		final HttpRequest request, final HttpResponse response
-	) throws  HttpException,IOException {
+	private void doGet(final HttpResponse response, final String dataID)
+	throws  HttpException, IOException
+	{
 		LOG.trace(Markers.MSG, " Request  method Get ");
 		response.setStatusCode(HttpStatus.SC_OK);
-		String dataID = "";
-		try{
-			dataID = request.getRequestLine().getUri().split("/")[2];
-			if (MAP_DATA_OBJECT.containsKey(dataID)) {
-				LOG.trace(Markers.MSG, "   Send data object ", dataID);
-				final WSObjectMock object = MAP_DATA_OBJECT.get(dataID);
-				response.setEntity(object);
-				//object.writeTo(servletOutputStream);
-				LOG.trace(Markers.MSG, "   Response: OK");
-			} else {
-				response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-				LOG.trace(Markers.ERR, String.format("No such object: \"%s\"", dataID));
-			}
-		}catch (final NumberFormatException e){
-			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-			TraceLogger.failure(
-				LOG, Level.WARN, e,
-				String.format("Unexpected object id format: \"%s\"", dataID)
-			);
-		}catch (final ArrayIndexOutOfBoundsException e) {
-			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-			TraceLogger.failure(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+		if (MAP_DATA_OBJECT.containsKey(dataID)) {
+			LOG.trace(Markers.MSG, "   Send data object ", dataID);
+			final WSObjectMock object = MAP_DATA_OBJECT.get(dataID);
+			response.setEntity(object);
+			LOG.trace(Markers.MSG, "   Response: OK");
+		} else {
+			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+			LOG.trace(Markers.ERR, String.format("No such object: \"%s\"", dataID));
 		}
 	}
 	//
-	private void doPut(
-		final HttpRequest request, final HttpResponse response
-	) throws  HttpException,IOException {
+	/*
+	offset for mongoose versions since v0.6:
+		final long offset = Long.valueOf(dataID, WSRequestConfigBase.RADIX);
+	offset for mongoose v0.4x and 0.5x:
+		final byte dataIdBytes[] = Base64.decodeBase64(dataID);
+		final long offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
+	offset for mongoose versions prior to v.0.4:
+		final long offset = Long.valueOf(dataID, 0x10);
+	 */
+	private void doPut(final HttpRequest request, final HttpResponse response, final String dataID)
+	throws  HttpException, IOException
+	{
 		LOG.trace(Markers.MSG, " Request  method Put ");
 		response.setStatusCode(HttpStatus.SC_OK);
 		WSObjectMock dataObject = null;
-		String dataID = "";
-		try{
+		try {
 			final HttpEntity entity =  ((HttpEntityEnclosingRequest)request).getEntity();
 			final long bytes = EntityUtils.toByteArray(entity).length;
-			dataID = request.getRequestLine().getUri().split("/")[2];
-			System.out.println(dataID);
 			//create data object or get it for append or update
 			if(MAP_DATA_OBJECT.containsKey(dataID)) {
 				dataObject = MAP_DATA_OBJECT.get(dataID);
 			} else {
-				final long offset = Long.valueOf(dataID, WSRequestConfigBase.RADIX);
+				final byte dataIdBytes[] = Base64.decodeBase64(dataID);
+				final long offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
 				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 			}
-			//
-			MAP_DATA_OBJECT.put(dataID, dataObject);
-			//
+			try {
+				MAP_DATA_OBJECT.put(dataID, dataObject);
+				QUEUE_DATA_ID.add(dataID);
+			} catch (final OutOfMemoryError e) {
+				MAP_DATA_OBJECT.remove(QUEUE_DATA_ID.poll());
+				MAP_DATA_OBJECT.put(dataID, dataObject);
+				QUEUE_DATA_ID.add(dataID);
+			}
 		} catch (final IOException e) {
 			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			TraceLogger.failure(LOG, Level.WARN, e, "Input stream failed");
-		}catch (final NumberFormatException e){
-			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-			TraceLogger.failure(
-				LOG, Level.WARN, e,
-				String.format("Unexpected object id format: \"%s\"", dataID)
-			);
-		}catch (final ArrayIndexOutOfBoundsException e) {
-			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-			TraceLogger.failure(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
-		} catch (final Exception e) {
-			response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-			TraceLogger.failure(LOG, Level.WARN, e, "Ranges have not correct form.");
 		}
 	}
 	//
-	private void doHead(
-		final HttpRequest request, final HttpResponse response
-	) throws  HttpException,IOException {
+	private void doHead(final HttpResponse response)
+	throws  HttpException, IOException
+	{
 		LOG.trace(Markers.MSG, " Request  method Head ");
 		response.setStatusCode(HttpStatus.SC_OK);
 	}
-	///////////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////////////////////////
+	//WorkerTask
+	///////////////////////////////////////////////////////////////////////////////////////////////////
 	class WorkerTask
 	implements Runnable{
 		//
