@@ -16,6 +16,9 @@ LOCAL_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get()
 listSizes = LOCAL_RUN_TIME_CONFIG.getStringArray("scenario.rampup.sizes")
 listThreadCounts = LOCAL_RUN_TIME_CONFIG.getStringArray("scenario.rampup.thread.counts")
 #
+LOG.info(Markers.MSG, "Overriding chain properties by rampup scenario defaults")
+LOCAL_RUN_TIME_CONFIG.set("run.metrics.period.sec", 0)
+#
 if __name__=="__builtin__":
 	LOG.info(Markers.MSG, "Data sizes: {}", listSizes)
 	LOG.info(Markers.MSG, "Thread counts: {}", listThreadCounts)
@@ -30,9 +33,9 @@ if __name__=="__builtin__":
 				try:
 					LOG.info(Markers.MSG, "---- Rampup step: {}x{} ----", threadCount, dataItemSizeStr)
 					nextChain = chain.build(
-						chain.FLAG_SIMULTANEOUS, dataItemSize, dataItemSize, threadCount
+						False, True, dataItemSize, dataItemSize, threadCount
 					)
-					chain.execute(nextChain, chain.FLAG_SIMULTANEOUS)
+					chain.execute(nextChain, False)
 				except Throwable as e:
 					TraceLogger.failure(LOG, Level.ERROR, e, "Chain execution failure")
 					e.printStackTrace()

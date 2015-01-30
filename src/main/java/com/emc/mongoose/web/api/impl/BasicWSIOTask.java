@@ -28,8 +28,10 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
+import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 //
+import org.apache.http.protocol.HttpCoreContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -92,6 +94,12 @@ implements WSIOTask<T> {
 		}
 	}
 	// END pool related things
+	protected final HttpCoreContext httpContext = new HttpCoreContext();
+	@Override
+	public final HttpContext getHttpContext() {
+		return httpContext;
+	}
+	//
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	protected Map<String, Header> sharedHeadersMap = null;
 	protected final MutableHTTPRequest httpRequest = HTTPMethod.GET.createRequest();
@@ -163,7 +171,10 @@ implements WSIOTask<T> {
 			}
 			HTTP_HOST_MAP.put(nodeAddr, tgtHost);
 		}
-		httpRequest.setUriAddr(tgtHost.toURI());
+		if(tgtHost != null) {
+			httpRequest.setUriAddr(tgtHost.toURI());
+			httpContext.setTargetHost(tgtHost);
+		}
 		return this;
 	}
 	/**

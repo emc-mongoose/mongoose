@@ -3,7 +3,7 @@ package com.emc.mongoose.web.api.impl.provider.atmos;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.util.logging.TraceLogger;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
@@ -15,7 +15,6 @@ import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -216,12 +215,10 @@ extends WSRequestConfigBase<T> {
 
 	}
 	//
-	private final static String EMPTY = "";
-	//
 	@Override
 	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
 		if(!httpRequest.containsHeader(HttpHeaders.RANGE)) {
-			httpRequest.addHeader(HttpHeaders.RANGE, EMPTY); // temporary required for canonical form
+			httpRequest.addHeader(HttpHeaders.RANGE, Main.EMPTY); // temporary required for canonical form
 		}
 		//
 		httpRequest.setHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
@@ -315,6 +312,9 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final void applyDataItem(final MutableHTTPRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
+		if(fsAccess) {
+			super.applyObjectId(dataItem, null);
+		}
 		applyURI(httpRequest, dataItem);
 		switch(loadType) {
 			case CREATE:

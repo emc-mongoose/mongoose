@@ -42,9 +42,8 @@ try:
 	FLAG_USE_ITEMS_BUFFER = LOCAL_RUN_TIME_CONFIG.getBoolean("scenario.chain.itemsbuffer")
 except NoSuchElementException:
 	LOG.error(Markers.ERR, "No items buffer flag specified, try arg -Dscenario.chain.itemsbuffer=<VALUE> to override")
-LOG.info(
-	Markers.MSG, "Will use internal items buffer" if FLAG_USE_ITEMS_BUFFER else "Will use any specific intermediate consumer/producer"
-)
+if FLAG_USE_ITEMS_BUFFER:
+	LOG.info(Markers.MSG, "Going to use persistent internal items buffer")
 #
 def build(flagSimultaneous=True, flagItemsBuffer=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPerNode=0):
 	#

@@ -93,7 +93,7 @@ extends TreeSet<T> {
 	@Override
 	public final String toString() {
 		return String.format(
-			Main.LOCALE_DEFAULT, "instancePool<%s, %d>)",
+			Main.LOCALE_DEFAULT, "pool<%s> instances: %d",
 			instanceCls.getCanonicalName(), instanceUsageMap.size()
 		);
 	}

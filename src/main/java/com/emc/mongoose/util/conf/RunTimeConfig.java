@@ -31,8 +31,8 @@ import java.util.regex.Pattern;
  A shared runtime configuration.
  */
 public final class RunTimeConfig
-	extends BaseConfiguration
-	implements Externalizable {
+extends BaseConfiguration
+implements Externalizable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -118,6 +118,7 @@ public final class RunTimeConfig
 		return new Gson().toJson(properties);
 	}
 	//
+	@SuppressWarnings("unchecked")
 	public final synchronized void put(List<String> dirs, String fileName, List<Pair<String, Object>> props) {
 		Map<String, Object> node = properties;
 		if (dirs != null) {
@@ -131,7 +132,7 @@ public final class RunTimeConfig
 		node.put(fileName, props);
 	}
 	//
-	public final synchronized void set(final String key, final String value) {
+	public final synchronized void set(final String key, final Object value) {
 		setProperty(key, value);
 		//System.setProperty(key, value);
 	}
@@ -415,9 +416,11 @@ public final class RunTimeConfig
 	@Override
 	public synchronized RunTimeConfig clone() {
 		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
-		runTimeConfig.set(
-			KEY_RUN_ID, Main.FMT_DT.format(Main.CALENDAR_DEFAULT.getTime())
-		);
+		if(runTimeConfig != null) {
+			runTimeConfig.set(
+				KEY_RUN_ID, Main.FMT_DT.format(Main.CALENDAR_DEFAULT.getTime())
+			);
+		}
 		return runTimeConfig;
 	}
 	//

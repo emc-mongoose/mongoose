@@ -15,11 +15,12 @@ import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 //
+import com.emc.mongoose.web.load.impl.reqproc.SharedHeaders;
+import com.emc.mongoose.web.load.impl.reqproc.TargetHost;
+import com.emc.mongoose.web.load.impl.tasks.ExecuteClientTask;
 import org.apache.http.Header;
-import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
@@ -34,7 +35,7 @@ import org.apache.http.nio.protocol.HttpAsyncRequester;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -47,7 +48,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.io.InterruptedIOException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -65,70 +65,6 @@ implements WSLoadExecutor<T> {
 	private final BasicNIOConnPool connPool;
 	private final Thread clientThread;
 	//
-	private final static class ExecuteClientTask<T extends WSObject>
-	implements Runnable {
-		//
-		private final WSLoadExecutor<T> executor;
-		private final IOEventDispatch ioEventDispatch;
-		private final ConnectingIOReactor ioReactor;
-		//
-		protected ExecuteClientTask(
-			final WSLoadExecutor<T> executor,
-			final IOEventDispatch ioEventDispatch, final ConnectingIOReactor ioReactor
-		) {
-			this.executor = executor;
-			this.ioEventDispatch = ioEventDispatch;
-			this.ioReactor = ioReactor;
-		}
-		//
-		@Override
-		public final void run() {
-			LOG.debug(Markers.MSG, "Running the web storage client");
-			try {
-				ioReactor.execute(ioEventDispatch);
-			} catch(final InterruptedIOException e) {
-				LOG.debug(Markers.MSG, "Interrupted");
-			} catch(final IOException e) {
-				TraceLogger.failure(
-					LOG, Level.ERROR, e, "Failed to execute the web storage client"
-				);
-			} catch(final IllegalStateException e) {
-				TraceLogger.failure(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
-			} finally {
-				try {
-					executor.close();
-				} catch(final IOException e) {
-					TraceLogger.failure(
-						LOG, Level.WARN, e, "Failed to close the web storage client"
-					);
-				} finally {
-					LOG.debug(Markers.MSG, "Closed the web storage client");
-				}
-			}
-		}
-	}
-	//
-	private final static class ReqHeadersInterceptor
-	implements HttpRequestInterceptor {
-		//
-		private final List<Header> sharedHeaders;
-		//
-		protected ReqHeadersInterceptor(final List<Header> sharedHeaders) {
-			this.sharedHeaders = sharedHeaders;
-		}
-		//
-		@Override
-		public final void process(
-			final HttpRequest request, final HttpContext context
-		) throws HttpException, IOException {
-			for(final Header nextHeader: sharedHeaders) {
-				if(request.getFirstHeader(nextHeader.getName()) == null) {
-					request.addHeader(nextHeader);
-				}
-			}
-		}
-	}
-	//
 	public BasicLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int threadsPerNode, final String listFile, final long maxCount,
@@ -145,16 +81,17 @@ implements WSLoadExecutor<T> {
 		//
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
 			.create()
-			.add(new ReqHeadersInterceptor(sharedHeaders))
-			.add(new RequestTargetHost())
+			.add(new SharedHeaders(sharedHeaders))
+			.add(new TargetHost())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
 			//.add(new RequestExpectContinue(true))
 			.add(new RequestContent(true))
 			.build();
 		client = new HttpAsyncRequester(httpProcessor);
+		//
 		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
-		//IOII
+		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
@@ -255,7 +192,7 @@ implements WSLoadExecutor<T> {
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
 		Future<AsyncIOTask.Status> futureResult = null;
 		try {
-			futureResult = client.execute(wsTask, wsTask, connPool);
+			futureResult = client.execute(wsTask, wsTask, connPool, wsTask.getHttpContext());
 		} catch(final IllegalStateException e) {
 			TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit the HTTP request");
 		}
@@ -267,10 +204,12 @@ implements WSLoadExecutor<T> {
 		final HttpHost tgtHost, final HttpRequest request
 	) {
 		HttpResponse response = null;
+		final HttpCoreContext ctx = new HttpCoreContext();
+		ctx.setTargetHost(tgtHost);
 		try {
 			response = client.execute(
 				new BasicAsyncRequestProducer(tgtHost, request),
-				new BasicAsyncResponseConsumer(), connPool
+				new BasicAsyncResponseConsumer(), connPool, ctx
 			).get();
 		} catch(final InterruptedException e) {
 			if(!isTerminating() && !isTerminated()) {

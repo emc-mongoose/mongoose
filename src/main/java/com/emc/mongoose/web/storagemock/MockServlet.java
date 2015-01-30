@@ -8,6 +8,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
@@ -338,7 +339,7 @@ implements Runnable {
 				offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
 			} else {
 				try {
-					offset = Long.valueOf(dataID, WSRequestConfigBase.RADIX); // versions since v0.6
+					offset = Long.valueOf(dataID, DataObject.ID_RADIX); // versions since v0.6
 				} catch (final NumberFormatException e) {
 					offset = Long.valueOf(dataID, 0x10); // versions prior to 0.4
 				}

@@ -17,7 +17,6 @@ public interface RequestConfig<T extends DataItem>
 extends Externalizable, Cloneable, Closeable {
 	//
 	long serialVersionUID = 42L;
-	String DEFAULT_ENC = StandardCharsets.UTF_8.name();
 	//
 	RequestConfig<T> clone()
 	throws CloneNotSupportedException;

@@ -4,6 +4,7 @@ import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.impl.RequestConfigBase;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
@@ -218,7 +219,7 @@ implements WSRequestConfig<T> {
 		SecretKeySpec keySpec;
 		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
 		try {
-			keySpec = new SecretKeySpec(secret.getBytes(DEFAULT_ENC), signMethod);
+			keySpec = new SecretKeySpec(secret.getBytes(Main.DEFAULT_ENC), signMethod);
 			mac.init(keySpec);
 		} catch(UnsupportedEncodingException e) {
 			LOG.fatal(Markers.ERR, "Configuration error", e);
@@ -305,7 +306,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse httpResponse) {
-		dataItem.setId(Long.toString(dataItem.getOffset(), RADIX));
+		dataItem.setId(Long.toString(dataItem.getOffset(), DataObject.ID_RADIX));
 	}
 	//
 	@Override
@@ -438,10 +439,7 @@ implements WSRequestConfig<T> {
 	@Override
 	public synchronized String getSignature(final String canonicalForm) {
 		mac.reset();
-		final byte signature[] = mac.doFinal(canonicalForm.getBytes());
-		final String signature64 = signature == null ? null : Base64.encodeBase64String(signature);
-		LOG.trace(Markers.MSG, "Calculated signature: \"{}\"", signature64);
-		return signature64;
+		return Base64.encodeBase64String(mac.doFinal(canonicalForm.getBytes()));
 	}
 	//
 	@Override

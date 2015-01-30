@@ -50,8 +50,10 @@ implements Runnable {
 			LOG.debug(
 				Markers.MSG, "Registered shutdown hook \"{}\"", hookTask.loadName
 			);
-		} catch(final SecurityException | IllegalArgumentException | IllegalStateException e) {
+		} catch(final SecurityException | IllegalArgumentException e) {
 			TraceLogger.failure(LOG, Level.WARN, e, "Failed to add the shutdown hook");
+		} catch(final IllegalStateException e) { // shutdown is in progress
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to add the shutdown hook");
 		}
 	}
 	//

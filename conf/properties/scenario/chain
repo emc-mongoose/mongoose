@@ -1,5 +1,5 @@
 # comma-separated list of operations
 # weights are specified by specific operation properties, e.g. conf/properties/{create,read,...}
 load:			create,update,append,read,delete
-simultaneous:	false
-itemsbuffer:	true
+simultaneous:	true
+itemsbuffer:	false

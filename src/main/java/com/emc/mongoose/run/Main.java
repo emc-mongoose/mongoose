@@ -66,7 +66,11 @@ public final class Main {
 		RUN_MODE_SERVER = "server",
 		RUN_MODE_COMPAT_SERVER = "driver",
 		RUN_MODE_WEBUI = "webui",
-		RUN_MODE_WSMOCK = "wsmock";
+		RUN_MODE_WSMOCK = "wsmock",
+		//
+		DEFAULT_ENC = StandardCharsets.UTF_8.name(),
+		EMPTY = "";
+
 	//
 	public final static File JAR_SELF;
 	static {
