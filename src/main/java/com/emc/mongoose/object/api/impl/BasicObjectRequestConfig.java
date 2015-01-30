@@ -11,7 +11,8 @@ extends RequestConfigBase<T>
 implements ObjectRequestConfig<T> {
 	//
 	@Override
-	public BasicObjectIOTask<T> getRequestFor(T dataItem, String nodeAddr) {
+	public BasicObjectIOTask<T> getRequestFor(T dataItem, String nodeAddr)
+	throws InterruptedException {
 		return (BasicObjectIOTask<T>) BasicObjectIOTask.getInstanceFor(this, dataItem, nodeAddr);
 	}
 	//

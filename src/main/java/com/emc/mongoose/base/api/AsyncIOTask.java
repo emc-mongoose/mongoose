@@ -1,7 +1,7 @@
 package com.emc.mongoose.base.api;
 //
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.util.pool.Reusable;
+import com.emc.mongoose.util.collections.Reusable;
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
@@ -16,7 +16,7 @@ extends Reusable {
 	String FMT_PERF_TRACE = "%s,%s,%d,%x,%d,%d,%d,%d";
 	String FMT_PERF_TRACE_INVALID = "Invalid trace: %s,%s,%d,%x,%d,%d,%d,%d";
 	//
-	enum Result {
+	enum Status {
 		SUCC(0, "Success"),
 		FAIL_CLIENT(1, "Client failure/invalid request"),
 		FAIL_SVC(2, "Storage failure"),
@@ -29,7 +29,7 @@ extends Reusable {
 		FAIL_NO_SPACE(9, "Not enough space on the storage");
 		public final int code;
 		public final String description;
-		Result(final int code, final String description) {
+		Status(final int code, final String description) {
 			this.code = code;
 			this.description = description;
 		}
@@ -37,7 +37,9 @@ extends Reusable {
 	//
 	AsyncIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//
-	AsyncIOTask<T> setNodeAddr(final String nodeAddr);
+	AsyncIOTask<T> setNodeAddr(final String nodeAddr)
+	throws InterruptedException;
+	//
 	String getNodeAddr();
 	//
 	AsyncIOTask<T> setDataItem(final T dataItem);
@@ -45,7 +47,7 @@ extends Reusable {
 	//
 	long getTransferSize();
 	//
-	Result getResult();
+	Status getStatus();
 	//
 	int getLatency();
 	//

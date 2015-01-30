@@ -19,7 +19,4 @@ public interface SubTenant<T extends DataObject> {
 	//
 	void delete(final LoadExecutor<T> client)
 	throws IllegalStateException;
-	//
-	List<T> list(final LoadExecutor<T> client)
-	throws IllegalStateException;
 }

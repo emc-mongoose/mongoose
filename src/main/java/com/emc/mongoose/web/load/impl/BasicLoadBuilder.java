@@ -24,6 +24,11 @@ implements WSLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	public BasicLoadBuilder(final RunTimeConfig runTimeConfig) {
+		super(runTimeConfig);
+		setProperties(runTimeConfig);
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	protected WSRequestConfig<T> getDefaultRequestConfig() {
 		return (WSRequestConfig<T>) WSRequestConfigBase.getInstance();
@@ -69,7 +74,7 @@ implements WSLoadBuilder<T, U> {
 					") should be less than upper bound "+Long.toString(maxObjSize)
 			);
 		}
-		return (U) new BasicLoadExecutor<T>(
+		return (U) new BasicLoadExecutor<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
 			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem
 		);

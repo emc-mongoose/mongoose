@@ -270,13 +270,13 @@ extends AbstractAppender {
 		return dataObject;
 	}
 	//
-	private static StatusEntity loadStatusEntity(final AsyncIOTask.Result result){
-		StatusEntity statusEntity = getStatusEntity(result.code);
-		if (SESSION.get(StatusEntity.class, result.code) == null){
-			statusEntity = new StatusEntity(result.code, result.description);
+	private static StatusEntity loadStatusEntity(final AsyncIOTask.Status status){
+		StatusEntity statusEntity = getStatusEntity(status.code);
+		if (SESSION.get(StatusEntity.class, status.code) == null){
+			statusEntity = new StatusEntity(status.code, status.description);
 		}else{
-			if (!statusEntity.getName().equals(result.description)){
-				statusEntity.setName(result.description);
+			if (!statusEntity.getName().equals(status.description)){
+				statusEntity.setName(status.description);
 			}
 		}
 		SESSION.saveOrUpdate(statusEntity);
@@ -301,8 +301,8 @@ extends AbstractAppender {
 	//
 	private static void setStatusEntity(){
 		SESSION.beginTransaction();
-		for (final AsyncIOTask.Result result: AsyncIOTask.Result.values()){
-			StatusEntity statusEntity = loadStatusEntity(result);
+		for (final AsyncIOTask.Status status : AsyncIOTask.Status.values()){
+			StatusEntity statusEntity = loadStatusEntity(status);
 		}
 		SESSION.getTransaction().commit();
 	}

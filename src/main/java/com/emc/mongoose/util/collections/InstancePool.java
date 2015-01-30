@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.pool;
+package com.emc.mongoose.util.collections;
 //
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.TraceLogger;
@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by andrey on 09.06.14.
  A pool for any reusable objects(instances).
- Pooled objects should define "close()" method which will invoke "release" method putting the object(instance) back into a pool.
+ Pooled objects should define "release()" method which will invoke the "release" method putting the object(instance) back into a pool.
  Such instances pool may improve the performance in some cases.
  */
 public final class InstancePool<T extends Reusable>
@@ -52,7 +52,7 @@ extends TreeSet<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public final synchronized T take(final Object... args)
-	throws IllegalStateException {
+	throws IllegalStateException, IllegalArgumentException, InterruptedException {
 		T instance = null;
 		if(isEmpty()) {
 			try {

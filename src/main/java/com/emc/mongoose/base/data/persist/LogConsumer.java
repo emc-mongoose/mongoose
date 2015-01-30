@@ -5,8 +5,8 @@ import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.pool.InstancePool;
-import com.emc.mongoose.util.pool.Reusable;
+import com.emc.mongoose.util.collections.InstancePool;
+import com.emc.mongoose.util.collections.Reusable;
 import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -57,22 +57,22 @@ implements Consumer<T> {
 			try {
 				LOG.info(Markers.DATA_LIST, dataItem.toString());
 			} finally {
-				close();
+				release();
 			}
 		}
 		//
-		private final AtomicBoolean isClosed = new AtomicBoolean(true);
+		private final AtomicBoolean isAvailable = new AtomicBoolean(true);
 		//
 		@Override
-		public final void close() {
-			if(isClosed.compareAndSet(false, true)) {
+		public final void release() {
+			if(isAvailable.compareAndSet(false, true)) {
 				TASK_POOL.release(this);
 			}
 		}
 		//
 		@Override @SuppressWarnings("unchecked")
 		public final DataItemLogTask<T> reuse(final Object... args) {
-			if(isClosed.compareAndSet(true, false)) {
+			if(isAvailable.compareAndSet(true, false)) {
 				this.dataItem = (T) args[0];
 			} else {
 				throw new IllegalStateException("Not yet released instance reuse attempt");
@@ -87,7 +87,8 @@ implements Consumer<T> {
 	}
 	//
 	@Override
-	public void submit(final T data) {
+	public void submit(final T data)
+	throws InterruptedException {
 		if(data != null && count.get() < maxCount) {
 			super.submit(TASK_POOL.take(data));
 			count.incrementAndGet();

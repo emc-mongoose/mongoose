@@ -39,7 +39,6 @@ import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestExpectContinue;
 import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
 //
@@ -252,9 +251,9 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final Future<AsyncIOTask.Result> submit(final AsyncIOTask<T> ioTask) {
+	public final Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> ioTask) {
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-		Future<AsyncIOTask.Result> futureResult = null;
+		Future<AsyncIOTask.Status> futureResult = null;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool);
 		} catch(final IllegalStateException e) {
