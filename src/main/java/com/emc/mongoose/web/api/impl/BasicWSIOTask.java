@@ -309,10 +309,9 @@ implements WSIOTask<T> {
 					this.status = Status.FAIL_CLIENT;
 					break;
 				case (403):
-					msgBuff
-						.append("Access failure for data item: \"").append(dataItem)
-						.append("\"\nSource request headers:\n");
+					msgBuff.append("Access failure for data item: \"").append(dataItem);
 					if(LOG.isTraceEnabled(Markers.ERR)) {
+						msgBuff.append("\"\nSource request headers:\n");
 						for(final Header rangeHeader : httpRequest.getAllHeaders()) {
 							msgBuff
 								.append('\t').append(rangeHeader.getName()).append(": ")
