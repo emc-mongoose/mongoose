@@ -23,7 +23,8 @@ public class JettyRunner {
 
     public final static String
         DIR_WEBAPP = "webapp",
-        DIR_WEBINF = "WEB-INF";
+        DIR_WEBINF = "WEB-INF",
+		DIR_CONF = "conf";
 
     public final static String
             webResourceBaseDir,

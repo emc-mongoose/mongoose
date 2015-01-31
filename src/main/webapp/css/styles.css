@@ -28,15 +28,6 @@ label {
 	border-bottom: 1px solid #ccc;
 }
 
-#menu {
-	width: 20%;
-	border-right: 1px solid #ccc;
-	display: inline-block;
-	height: 100vh;
-	float: left;
-	min-width: 160px;
-}
-
 #menu li {
 	position: relative;
 	margin-left: -15px;
@@ -44,19 +35,30 @@ label {
 }
 
 .folders {
+	display: none;
+	border-bottom: 1px solid #ccc;
 	margin-top: 15px;
+	padding-bottom: 15px;
+	overflow: auto;
+	height: calc(100vh - 370px);
 }
 
-.file {
+/*.file {
 	margin-left: -1px !important;
 	padding-left: 3px;
-}
+}*/
 
-.file a {
-	background: url('../images/document.png') 0 0 no-repeat;
-	padding-left: 21px;
+.props {
+	background: url('../images/document.png') 15px 1px no-repeat;
+	padding-left: 37px;
 	text-decoration: none;
 	display: block;
+	margin-bottom: 5px;
+}
+
+.property {
+	display: block;
+	margin-left: 20px;
 }
 
 #menu li input {
@@ -73,7 +75,7 @@ label {
 
 .breadcrumb {
 	padding-bottom: 20px;
-	border-radius: none;
+	border-radius: 0;
 }
 
 li input + ul {
@@ -112,14 +114,20 @@ li input:checked + ul > li:last-child {
 }
 
 #main-content {
-	display: inline-block;
-	width: 80%;
-	vertical-align: top;
-	float: left;
-	position: absolute;
-	min-width: 528px;
+	height: calc(100vh - 114px);
 	border-left: 1px solid #ccc;
-	margin-left: -1px;
+	overflow: auto;
+}
+
+@media (max-width: 768px) {
+	#main-content {
+		overflow: visible;
+		height: auto;
+	}
+	.folders {
+		overflow: auto;
+		height: 300px;
+	}
 }
 
 #configuration-content {
@@ -129,6 +137,7 @@ li input:checked + ul > li:last-child {
 .dropdown-menu li {
 	display: block;
 }
+
 
 .dropdown-image {
 	margin-right: 6px;
@@ -168,7 +177,7 @@ li input:checked + ul > li:last-child {
 	margin-bottom: 15px;
 }
 
-table {
+/*table {
 	width: 100%;
 }
 
@@ -193,7 +202,7 @@ tbody {
 }
 
 thead {
-	/* fallback */
+
 }
 
 th, td {
@@ -230,7 +239,7 @@ th:nth-child(2) {
 
 th:nth-child(5) {
 	width: 46%;
-}
+}*/
 
 .tab-content {
 	width: 100%;
@@ -290,4 +299,94 @@ th:nth-child(5) {
 
 .return-link {
 	font-size: 23px;
+}
+
+#config-type {
+	margin-bottom: 10px;
+}
+
+#config-file {
+	text-align: center;
+}
+
+#file-visibility {
+	margin-top: 10px;
+	text-align: center;
+}
+
+#file-visibility input, #file-visibility label {
+	display: inline;
+	vertical-align: top;
+}
+
+#config-file {
+	display: none;
+	margin-top: 10px;
+}
+
+.no-padding {
+	padding: 0;
+}
+
+.form-horizontal .form-group {
+	margin-top: 15px;
+	margin-left: 0;
+	margin-right: 0;
+}
+
+.client {
+	display: none;
+}
+
+body svg {
+	font: 12px sans-serif;
+}
+
+text.shadow {
+	stroke: #fff;
+	stroke-width: 2.5px;
+	opacity: 0.9;
+}
+
+/*path {
+	stroke: steelblue;
+	stroke-width: 2;
+	fill: none;
+}*/
+
+.axis path,
+.axis line {
+	fill: none;
+	stroke: grey;
+	stroke-width: 1;
+	shape-rendering: crispEdges;
+}
+
+.grid .tick {
+	stroke: lightgrey;
+	stroke-opacity: 0.7;
+	shape-rendering: crispEdges;
+}
+.grid path {
+	stroke-width: 0;
+}
+
+.area {
+	fill: lightsteelblue;
+	stroke-width: 0;
+}
+
+#scenario-tab {
+	margin-top: 20px;
+	text-align: center;
+}
+
+#scenario-tab > li {
+	float: none;
+	display: inline-block;
+}
+
+#log-pills {
+	margin-top: 20px;
+	border-right: 1px solid #ccc;
 }

@@ -1,15 +1,18 @@
 package com.emc.mongoose.util.conf;
 //
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.collections.Pair;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.logging.TraceLogger;
 //
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 //
+import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -18,14 +21,20 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 /**
  Created by kurila on 28.05.14.
  A shared runtime configuration.
@@ -33,6 +42,8 @@ import java.util.regex.Pattern;
 public final class RunTimeConfig
 extends BaseConfiguration
 implements Externalizable {
+	//
+	private Set<String> mongooseKeys;
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -114,12 +125,23 @@ implements Externalizable {
 			x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
 		).toUpperCase();
 	}
+	//
 	public String getPropertiesMap() {
-		return new Gson().toJson(properties);
+		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES), this);
+		final ObjectMapper mapper = new ObjectMapper();
+		try {
+			return mapper.writeValueAsString(properties);
+		} catch (final JsonProcessingException e) {
+			TraceLogger.failure(LOG, Level.ERROR, e, "Failed json processing");
+		}
+		return null;
 	}
 	//
 	@SuppressWarnings("unchecked")
-	public final synchronized void put(List<String> dirs, String fileName, List<Pair<String, Object>> props) {
+	public final synchronized void put(
+		final List<String> dirs, final String fileName,
+		final List<DefaultMapEntry<String, Object>> props
+	) {
 		Map<String, Object> node = properties;
 		if (dirs != null) {
 			for (final String nextDir : dirs) {
@@ -136,6 +158,15 @@ implements Externalizable {
 		setProperty(key, value);
 		//System.setProperty(key, value);
 	}
+	//
+	public final synchronized void setMongooseKeys(final Set<String> mongooseKeys) {
+		this.mongooseKeys = mongooseKeys;
+	}
+	//
+	public final Set<String> getMongooseKeys() {
+		return mongooseKeys;
+	}
+	//
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final int getRunReqTimeOutMilliSec() {
 		return getInt("run.request.timeout.millisec");
