@@ -8,6 +8,7 @@ import com.emc.mongoose.util.pool.Reusable;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 17.12.14.
  */
@@ -29,21 +30,29 @@ implements Callable<T>, Reusable {
 		return POOL.take(loadSvc);
 	}
 	//
+	private final AtomicBoolean isClosed = new AtomicBoolean(true);
+	//
 	@Override
 	public final FrameFetchTask<T> reuse(final Object... args)
 	throws IllegalArgumentException {
-		if(args == null) {
-			throw new IllegalArgumentException("No arguments for reusing the instance");
-		}
-		if(args.length > 0) {
-			loadSvc = LoadSvc.class.cast(args[0]);
+		if(isClosed.compareAndSet(true, false)) {
+			if(args==null) {
+				throw new IllegalArgumentException("No arguments for reusing the instance");
+			}
+			if(args.length > 0) {
+				loadSvc = LoadSvc.class.cast(args[0]);
+			}
+		} else {
+			throw new IllegalStateException("Not yet released instance reuse attempt");
 		}
 		return this;
 	}
 	//
 	@Override
 	public final void close() {
-		POOL.release(this);
+		if(isClosed.compareAndSet(false, true)) {
+			POOL.release(this);
+		}
 	}
 	//
 	@Override @SuppressWarnings("NullableProblems")

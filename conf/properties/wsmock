@@ -1,0 +1,4 @@
+queue.size:			6000
+thread.count.min:		10
+thread.count.max:		200
+timeout.idle.ms:	50

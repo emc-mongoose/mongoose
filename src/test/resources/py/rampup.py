@@ -8,7 +8,7 @@ from org.apache.logging.log4j import Level, LogManager
 #
 from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.conf import RunTimeConfig
-from com.emc.mongoose.util.logging import ExceptionHandler, Markers
+from com.emc.mongoose.util.logging import TraceLogger, Markers
 #
 LOG = LogManager.getLogger()
 LOCAL_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get()
@@ -34,9 +34,9 @@ if __name__=="__builtin__":
 					)
 					chain.execute(nextChain, chain.FLAG_SIMULTANEOUS)
 				except Throwable as e:
-					ExceptionHandler.trace(LOG, Level.ERROR, e, "Chain execution failure")
+					TraceLogger.failure(LOG, Level.ERROR, e, "Chain execution failure")
 					e.printStackTrace()
 		except Throwable as e:
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Determining the next data item size failure")
+			TraceLogger.failure(LOG, Level.ERROR, e, "Determining the next data item size failure")
 			e.printStackTrace()
 	LOG.info(Markers.MSG, "Scenario end")

@@ -7,5 +7,5 @@ import java.io.Closeable;
 public interface Reusable
 extends Closeable, Comparable<Reusable> {
 	Reusable reuse(final Object... args)
-	throws IllegalArgumentException;
+	throws IllegalArgumentException, IllegalStateException;
 }

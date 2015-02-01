@@ -1,7 +1,7 @@
 package com.emc.mongoose.base.load.client.impl.tasks;
 //
 import com.emc.mongoose.base.load.server.LoadSvc;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
@@ -31,7 +31,7 @@ implements Runnable {
 			loadSvc.interrupt();
 			LOG.trace(Markers.MSG, "Interrupted remote service @ {}", addr);
 		} catch(final IOException e) {
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.DEBUG, e,
 				String.format(
 					"Failed to interrupt remote load service @ %s", addr

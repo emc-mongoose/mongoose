@@ -27,20 +27,29 @@ implements RequestConfig<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//protected final static String FMT_URI_ADDR = "%s://%s:%s";
 	//
-	protected String api, secret, userName;
-	protected AsyncIOTask.Type loadType;
-	protected DataSource<T> dataSrc;
-	protected volatile boolean retryFlag, verifyContentFlag, closeFlag = false;
-	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
-	protected volatile String /*addr, */scheme/*, uriTemplate*/;
-	protected volatile int port;
-	protected int loadNumber;
+	protected String
+		api, secret, userName;
+	protected AsyncIOTask.Type
+		loadType;
+	protected DataSource<T>
+		dataSrc;
+	protected volatile boolean
+		retryFlag, verifyContentFlag, anyDataProducerEnabled, closeFlag = false;
+	protected volatile RunTimeConfig
+		runTimeConfig = Main.RUN_TIME_CONFIG.get();
+	protected volatile String
+		/*addr, */scheme/*, uriTemplate*/;
+	protected volatile int
+		port;
+	protected int
+		loadNumber;
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
 		dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
 		retryFlag = runTimeConfig.getRunRequestRetries();
 		verifyContentFlag = runTimeConfig.getReadVerifyContent();
+		anyDataProducerEnabled = true;
 	}
 	//
 	protected RequestConfigBase(final RequestConfig<T> reqConf2Clone) {
@@ -200,6 +209,12 @@ implements RequestConfig<T> {
 	@Override
 	public final RequestConfigBase<T> setVerifyContentFlag(final boolean verifyContentFlag) {
 		this.verifyContentFlag = verifyContentFlag;
+		return this;
+	}
+	//
+	@Override
+	public final RequestConfigBase<T> setAnyDataProducerEnabled(final boolean enabledFlag) {
+		this.anyDataProducerEnabled = enabledFlag;
 		return this;
 	}
 	//

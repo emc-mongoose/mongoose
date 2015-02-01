@@ -2,7 +2,7 @@ package com.emc.mongoose.util.conf;
 //
 
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.ConfigurationException;
@@ -92,9 +92,9 @@ extends SimpleFileVisitor<Path> {
 			currProps = new PropertiesConfiguration(file.toFile());
 			LOG.trace(Markers.MSG, "Loaded the properties {} from file {}", currProps, file);
 		} catch(final ConfigurationException e) {
-			ExceptionHandler.trace(
-				LOG, Level.ERROR, e,
-				String.format("Failed to load the properties from file \"%s\"", file.toString())
+			TraceLogger.failure(
+					LOG, Level.ERROR, e,
+					String.format("Failed to load the properties from file \"%s\"", file.toString())
 			);
 		}
 		// set the properties
@@ -118,7 +118,7 @@ extends SimpleFileVisitor<Path> {
 					try (final FileWriter writer = new FileWriter(file.toFile())) {
 						currProps.save(writer);
 					} catch (final Exception e) {
-						ExceptionHandler.trace(LOG, Level.ERROR, e,
+						TraceLogger.failure(LOG, Level.ERROR, e,
 							String.format("Failed to write in property file \"%s\"", file.getFileName()));
 					}
 				}

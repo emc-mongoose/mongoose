@@ -15,6 +15,8 @@ extends Externalizable, Closeable {
 	//
 	long getSize();
 	//
+	void setSize(final long size);
+	//
 	long getOffset();
 	//
 	void setDataSource(final UniformDataSource dataSrc, final int layerNum);

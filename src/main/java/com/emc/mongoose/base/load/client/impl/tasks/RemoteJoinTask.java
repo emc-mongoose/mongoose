@@ -1,6 +1,6 @@
 package com.emc.mongoose.base.load.client.impl.tasks;
 import com.emc.mongoose.base.load.server.LoadSvc;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +34,7 @@ implements Runnable {
 				);
 			}
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Remote join task failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "Remote join task failure");
 		}
 	}
 }

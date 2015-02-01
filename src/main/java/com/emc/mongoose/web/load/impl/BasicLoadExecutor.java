@@ -6,7 +6,7 @@ import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.object.load.impl.ObjectLoadExecutorBase;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.threading.WorkerFactory;
 import com.emc.mongoose.web.api.WSIOTask;
@@ -39,6 +39,7 @@ import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
+import org.apache.http.protocol.RequestExpectContinue;
 import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
 //
@@ -63,6 +64,7 @@ implements WSLoadExecutor<T> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
+	private final Thread clientThread;
 	//
 	private final static class ExecuteClientTask<T extends WSObject>
 	implements Runnable {
@@ -88,16 +90,16 @@ implements WSLoadExecutor<T> {
 			} catch(final InterruptedIOException e) {
 				LOG.debug(Markers.MSG, "Interrupted");
 			} catch(final IOException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.ERROR, e, "Failed to execute the web storage client"
 				);
 			} catch(final IllegalStateException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
+				TraceLogger.failure(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
 			} finally {
 				try {
 					executor.close();
 				} catch(final IOException e) {
-					ExceptionHandler.trace(
+					TraceLogger.failure(
 						LOG, Level.WARN, e, "Failed to close the web storage client"
 					);
 				} finally {
@@ -153,7 +155,7 @@ implements WSLoadExecutor<T> {
 			.build();
 		client = new HttpAsyncRequester(httpProcessor);
 		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
-		//
+		//IOII
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
@@ -179,23 +181,29 @@ implements WSLoadExecutor<T> {
 		//
 		try {
 			localIOReactor = new DefaultConnectingIOReactor(
-				ioReactorConfig, new WorkerFactory(getName() + "-conn")
+				ioReactorConfig, new WorkerFactory(getName() + "-worker")
 			);
 			//
 			localConnPool = new BasicNIOConnPool(localIOReactor, connConfig);
 			localConnPool.setDefaultMaxPerRoute(threadCount);
 			localConnPool.setMaxTotal(threadCount);
 		} catch(final IOReactorException e) {
-			ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to build I/O reactor");
+			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
 		} finally {
 			ioReactor = localIOReactor;
 			connPool = localConnPool;
 		}
 		//
-		new Thread(
+		clientThread = new Thread(
 			new ExecuteClientTask<>(this, ioEventDispatch, ioReactor),
-			this.getClass().getSimpleName()
-		).start();
+			getName() + "-asyncWebClient"
+		);
+	}
+	//
+	@Override
+	public synchronized void start() {
+		clientThread.start();
+		super.start();
 	}
 	//
 	@Override
@@ -203,8 +211,44 @@ implements WSLoadExecutor<T> {
 	throws IOException {
 		super.close();
 		LOG.debug(Markers.MSG, "Going to close the web storage client");
-		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
-		ioReactor.shutdown(thrLocalConfig.getRunReqTimeOutMilliSec());
+		/*final long timeOutMilliSec = Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec();
+		final ExecutorService closeExecutor = Executors.newFixedThreadPool(
+			2, new WorkerFactory(getName()+"-closer")
+		);
+		closeExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {*/
+					try {
+						ioReactor.shutdown(/*timeOutMilliSec*/);
+					} catch(final IOException e) {
+						TraceLogger.failure(LOG, Level.DEBUG, e, "I/O reactor shutdown failure");
+					}
+				/*}
+			}
+		);
+		closeExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {
+					try {
+						clientThread.join(timeOutMilliSec);
+					} catch(final InterruptedException e) {
+						ExceptionHandler.failure(LOG, Level.DEBUG, e, "Interruption");
+					} finally {*/
+						clientThread.interrupt();
+					/*}
+				}
+			}
+		);
+		closeExecutor.shutdown();
+		try {
+			closeExecutor.awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
+		} catch(final InterruptedException e) {
+			ExceptionHandler.failure(LOG, Level.DEBUG, e, "Interruption");
+		} finally {
+			closeExecutor.shutdownNow();
+		}*/
 	}
 	//
 	@Override
@@ -214,7 +258,7 @@ implements WSLoadExecutor<T> {
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool);
 		} catch(final IllegalStateException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to submit the HTTP request");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit the HTTP request");
 		}
 		return futureResult;
 	}
@@ -230,9 +274,13 @@ implements WSLoadExecutor<T> {
 				new BasicAsyncResponseConsumer(), connPool
 			).get();
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
+			if(!isTerminating() && !isTerminated()) {
+				LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
+			}
 		} catch(final ExecutionException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
+			if(!isTerminating() && !isTerminated()) {
+				TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			}
 		}
 		return response;
 	}
@@ -245,9 +293,9 @@ implements WSLoadExecutor<T> {
 				maxCount, listFile, BasicWSObject.class
 			);
 		} catch(final NoSuchMethodException e) {
-			ExceptionHandler.trace(LOG, Level.FATAL, e, "Unexpected failure");
+			TraceLogger.failure(LOG, Level.FATAL, e, "Unexpected failure");
 		} catch(final IOException e) {
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.ERROR, e,
 				String.format("Failed to read the data items file \"%s\"", listFile)
 			);

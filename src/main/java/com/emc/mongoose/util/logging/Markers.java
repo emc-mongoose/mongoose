@@ -13,6 +13,7 @@ public final class Markers {
 		DATA_LIST = MarkerManager.getMarker("dataList"),
 		PERF_AVG = MarkerManager.getMarker("perfAvg"),
 		PERF_SUM = MarkerManager.getMarker("perfSum"),
-		PERF_TRACE = MarkerManager.getMarker("perfTrace");
+		PERF_TRACE = MarkerManager.getMarker("perfTrace"),
+		INSTANCE_POOL_STATS = MarkerManager.getMarker("instancePoolStats");
 	//
 }

@@ -4,7 +4,7 @@ import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.http.annotation.ThreadSafe;
@@ -57,7 +57,7 @@ implements DataSource<T> {
 			DEFAULT = new UniformDataSource();
 			//LOG.info(Markers.MSG, "Default data source: {}", DEFAULT.toString());
 		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to create default data source");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to create default data source");
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

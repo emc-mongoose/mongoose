@@ -1,8 +1,8 @@
 package com.emc.mongoose.util.conf;
 //
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
@@ -131,7 +131,7 @@ implements Externalizable {
 		try {
 			return mapper.writeValueAsString(properties);
 		} catch (final JsonProcessingException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed json processing");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Failed json processing");
 		}
 		return null;
 	}
