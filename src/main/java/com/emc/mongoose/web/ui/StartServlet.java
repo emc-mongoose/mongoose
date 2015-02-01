@@ -53,7 +53,7 @@ public final class StartServlet extends CommonServlet {
 				try {
 					response.getWriter().write(resultString);
 				} catch (final IOException e) {
-					ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to write in servlet response");
+					TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to write in servlet response");
 				}
 			}
 			return;

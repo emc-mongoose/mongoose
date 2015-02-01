@@ -3,8 +3,8 @@ package com.emc.mongoose.web.ui;
 import com.emc.mongoose.run.JettyRunner;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.DirectoryLoader;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.logging.TraceLogger;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.Level;
@@ -57,7 +57,7 @@ public class SaveServlet extends CommonServlet {
 				writer.write(s + "\n");
 			}
 		} catch (final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "IOException");
+			TraceLogger.failure(LOG, Level.ERROR, e, "IOException");
 		}
 		response.setHeader(CONTENT_TYPE, getServletContext().getMimeType(fullFileName.getName()));
 		response.setHeader(CONTENT_LENGTH, String.valueOf(fullFileName.length()));
@@ -88,10 +88,10 @@ public class SaveServlet extends CommonServlet {
 			try {
 				props.save(writer);
 			} catch (final ConfigurationException e) {
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Configuration exception");
+				TraceLogger.failure(LOG, Level.ERROR, e, "Configuration exception");
 			}
 		} catch (final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to write properties to ui config file");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to write properties to ui config file");
 		}
 	}
 }

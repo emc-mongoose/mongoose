@@ -1,6 +1,6 @@
 package com.emc.mongoose.web.ui;
 
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,7 +27,7 @@ public final class MainServlet extends HttpServlet {
 		try {
 			request.getRequestDispatcher("index.jsp").forward(request, response);
 		} catch (final IOException|ServletException e) {
-			ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed forwarding to index.jsp");
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Failed forwarding to index.jsp");
 		}
 	}
 

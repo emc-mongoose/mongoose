@@ -2,7 +2,7 @@ package com.emc.mongoose.web.ui;
 
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +39,7 @@ public abstract class CommonServlet extends HttpServlet {
 			super.init();
 			runTimeConfig = (RunTimeConfig) getServletContext().getAttribute("runTimeConfig");
 		} catch (final ServletException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Interrupted servlet init method");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Interrupted servlet init method");
 		}
 	}
 	//
