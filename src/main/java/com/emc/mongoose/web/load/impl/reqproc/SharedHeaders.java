@@ -23,9 +23,9 @@ implements HttpRequestInterceptor {
 	public final void process(
 		final HttpRequest request, final HttpContext context
 	) throws HttpException, IOException {
-		for(final Header nextHeader: sharedHeaders) {
-			if(request.getFirstHeader(nextHeader.getName()) == null) {
-				request.addHeader(nextHeader);
+		for(final Header nextHeader : sharedHeaders) {
+			if(!request.containsHeader(nextHeader.getName())) {
+				request.setHeader(nextHeader);
 			}
 		}
 	}

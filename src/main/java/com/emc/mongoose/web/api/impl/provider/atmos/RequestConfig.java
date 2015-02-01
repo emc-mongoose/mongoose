@@ -110,7 +110,7 @@ extends WSRequestConfigBase<T> {
 		this.subTenant = subTenant;
 		if(sharedHeadersMap != null && userName != null) {
 			if(
-				subTenant == null || subTenant.getName() == null || subTenant.getName().length() < 1
+				subTenant == null || subTenant.getName().length() < 1
 			) {
 				sharedHeadersMap.put(KEY_EMC_UID, userName);
 			} else {
@@ -129,7 +129,7 @@ extends WSRequestConfigBase<T> {
 			super.setUserName(userName);
 			if(sharedHeadersMap != null) {
 				if(
-					subTenant==null || subTenant.getName()==null || subTenant.getName().length() < 1
+					subTenant==null || subTenant.getName().length() < 1
 				) {
 					sharedHeadersMap.put(KEY_EMC_UID, userName);
 				} else {
@@ -240,26 +240,28 @@ extends WSRequestConfigBase<T> {
 		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
 		for(final String headerName: HEADERS4CANONICAL) {
 			// support for multiple non-unique header keys
-			for(final Header header: httpRequest.getHeaders(headerName)) {
-				buffer.append('\n').append(header.getValue());
-			}
 			if(sharedHeadersMap.containsKey(headerName)) {
 				buffer.append('\n').append(sharedHeadersMap.get(headerName));
+			} else {
+				for(final Header header: httpRequest.getHeaders(headerName)) {
+					buffer.append('\n').append(header.getValue());
+				}
 			}
 		}
 		//
 		buffer.append('\n').append(httpRequest.getUriPath());
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
-			for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
-				buffer
-					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(emcHeader.getValue());
-			}
 			if(sharedHeadersMap.containsKey(emcHeaderName)) {
 				buffer
 					.append('\n').append(emcHeaderName.toLowerCase())
 					.append(':').append(sharedHeadersMap.get(emcHeaderName));
+			} else {
+				for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
+					buffer.append('\n').append(emcHeaderName.toLowerCase()).append(':').append(
+						emcHeader.getValue()
+					);
+				}
 			}
 		}
 		//

@@ -2,8 +2,10 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
+import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -135,7 +137,7 @@ extends WSRequestConfigBase<T> {
 	@Override
 	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
 		if(!httpRequest.containsHeader(HttpHeaders.CONTENT_MD5)) {
-			httpRequest.addHeader(HttpHeaders.CONTENT_MD5, "");
+			httpRequest.addHeader(HttpHeaders.CONTENT_MD5, Main.EMPTY);
 		}
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
@@ -155,26 +157,28 @@ extends WSRequestConfigBase<T> {
 	public final String getCanonical(final MutableHTTPRequest httpRequest) {
 		final StringBuffer buffer = new StringBuffer(httpRequest.getRequestLine().getMethod());
 		//
-		for(final String headerName: HEADERS4CANONICAL) {
+		for(final String headerName : HEADERS4CANONICAL) {
 			// support for multiple non-unique header keys
-			for(final Header header: httpRequest.getHeaders(headerName)) {
-				buffer.append('\n').append(header.getValue());
-			}
 			if(sharedHeadersMap.containsKey(headerName)) {
 				buffer.append('\n').append(sharedHeadersMap.get(headerName));
+			} else {
+				for(final Header header : httpRequest.getHeaders(headerName)) {
+					buffer.append('\n').append(header.getValue());
+				}
 			}
 		}
 		//
-		for(final String emcHeaderName: HEADERS_EMC) {
-			for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
-				buffer
-					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(emcHeader.getValue());
-			}
+		for(final String emcHeaderName : HEADERS_EMC) {
 			if(sharedHeadersMap.containsKey(emcHeaderName)) {
 				buffer
 					.append('\n').append(emcHeaderName.toLowerCase())
 					.append(':').append(sharedHeadersMap.get(emcHeaderName));
+			} else {
+				for(final Header emcHeader : httpRequest.getHeaders(emcHeaderName)) {
+					buffer
+						.append('\n').append(emcHeaderName.toLowerCase())
+						.append(':').append(emcHeader.getValue());
+				}
 			}
 		}
 		//
