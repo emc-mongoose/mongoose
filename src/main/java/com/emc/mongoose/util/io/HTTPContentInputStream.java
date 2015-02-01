@@ -8,6 +8,7 @@ import org.apache.http.nio.IOControl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 09.12.14.
  */
@@ -64,18 +65,26 @@ implements Reusable {
 		return POOL.take(in, ioCtl);
 	}
 	//
+	private final AtomicBoolean isClosed = new AtomicBoolean(true);
+	//
 	@Override
 	public final void close() {
-		POOL.release(this);
+		if(isClosed.compareAndSet(false, true)) {
+			POOL.release(this);
+		}
 	}
 	//
 	@Override
 	public final HTTPContentInputStream reuse(final Object... args) {
-		if(args.length > 0) {
-			in = ContentDecoder.class.cast(args[0]);
-		}
-		if(args.length > 1) {
-			ioCtl = IOControl.class.cast(args[1]);
+		if(isClosed.compareAndSet(true, false)) {
+			if(args.length > 0) {
+				in = ContentDecoder.class.cast(args[0]);
+			}
+			if(args.length > 1) {
+				ioCtl = IOControl.class.cast(args[1]);
+			}
+		} else {
+			throw new IllegalStateException("Not yet released instance reuse attempt");
 		}
 		return this;
 	}

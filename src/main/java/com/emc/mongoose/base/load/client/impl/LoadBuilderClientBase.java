@@ -10,7 +10,7 @@ import com.emc.mongoose.base.load.client.LoadBuilderClient;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
@@ -267,7 +267,7 @@ implements LoadBuilderClient<T, U> {
 		try {
 			strBuilder.append('-').append(get(keySet().iterator().next()).getLastInstanceNum());
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to make load builder string");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to make load builder string");
 		}
 		return strBuilder.toString();
 	}

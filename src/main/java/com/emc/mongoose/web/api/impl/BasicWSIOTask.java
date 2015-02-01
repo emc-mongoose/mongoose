@@ -4,12 +4,12 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.object.api.impl.BasicObjectIOTask;
 import com.emc.mongoose.util.io.HTTPContentInputStream;
 import com.emc.mongoose.util.io.HTTPContentOutputStream;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.pool.InstancePool;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -35,8 +35,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 06.06.14.
  */
@@ -61,32 +63,37 @@ implements WSIOTask<T> {
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
 	) {
 		final BasicWSIOTask<T> ioTask = (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
-		//LOG.trace(Markers.MSG, "{}: took instance for node @ {}", ioTask.hashCode(), ioTask.nodeAddr);
+		LOG.trace(
+			Markers.MSG,
+			String.format(
+				"linked task #%d to {%s, %s, %s}",
+				ioTask.hashCode(), reqConf, dataItem.getId(), nodeAddr
+			)
+		);
 		return ioTask;
 	}
 	//
 	@Override
 	public void close() {
-		/*synchronized(LOG) {
-			LOG.trace(Markers.MSG, "{}: release instance", hashCode());
-			final StackTraceElement stackTrace[] = Thread.currentThread().getStackTrace();
-			for(final StackTraceElement ste: stackTrace) {
-				LOG.trace(Markers.MSG, ste.toString());
-			}
-		}*/
-		POOL_WEB_IO_TASKS.release(this);
+		if(isClosed.compareAndSet(false, true)) {
+			POOL_WEB_IO_TASKS.release(this);
+		}
 	}
+	/*
+	@Override @SuppressWarnings("unchecked")
+	public BasicWSIOTask<T> reuse(final Object... args) {
+		super.reuse(args);
+		return this;
+	}*/
 	// END pool related things
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
-	protected MutableHTTPRequest httpRequest = null;
+	protected final MutableHTTPRequest httpRequest = HTTPMethod.GET.createRequest();
 	//
 	@Override
-	public WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
-		if(this.wsReqConf == null) { // request instance has not been configured yet?
-			this.wsReqConf = (WSRequestConfig<T>) reqConf;
-			httpRequest = wsReqConf.createRequest();
-		} else { // cleanup
-			resetRequest();
+	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
+		this.wsReqConf = (WSRequestConfig<T>) reqConf;
+		if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
+			httpRequest.setMethod(wsReqConf.getHTTPMethod());
 		}
 		super.setRequestConfig(reqConf);
 		return this;
@@ -98,7 +105,7 @@ implements WSIOTask<T> {
 			wsReqConf.applyDataItem(httpRequest, dataItem);
 			super.setDataItem(dataItem);
 		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to apply data item");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply data item");
 		}
 		return this;
 	}
@@ -135,8 +142,16 @@ implements WSIOTask<T> {
 	@Override
 	public final HttpRequest generateRequest()
 	throws IOException, HttpException {
-		wsReqConf.applyHeadersFinally(httpRequest);
-		reqEntity = httpRequest.getEntity();
+		try {
+			wsReqConf.applyHeadersFinally(httpRequest);
+		} catch(final Exception e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply the final headers");
+		}
+		try {
+			reqEntity = httpRequest.getEntity();
+		} catch(final Exception e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to get the request entity");
+		}
 		reqTimeStart = System.nanoTime() / 1000;
 		return httpRequest;
 	}
@@ -159,15 +174,23 @@ implements WSIOTask<T> {
 		return reqEntity == null || reqEntity.isRepeatable();
 	}
 	//
-	@Override
+	@Override @SuppressWarnings("SynchronizeOnNonFinalField")
 	public final void resetRequest() {
 		respStatusCode = -1;
 		exception = null;
 		reqEntity = null;
-		httpRequest.setEntity(reqEntity);
-		httpRequest.removeHeaders(HttpHeaders.RANGE);
-		httpRequest.removeHeaders(WSRequestConfig.KEY_EMC_SIG);
-		httpRequest.removeHeaders(HttpHeaders.CONTENT_TYPE);
+		if(httpRequest != null) {
+			synchronized(httpRequest) {
+				httpRequest.setEntity(reqEntity);
+				final Map<String, String> sharedHeadersMap = wsReqConf.getSharedHeadersMap();
+				final Header headers[] = httpRequest.getAllHeaders().clone();
+				for(final Header header : headers) {
+					if(!sharedHeadersMap.containsKey(header.getName())) {
+						httpRequest.removeHeaders(header.getName());
+					}
+				}
+			}
+		}
 	}
 	/*
 	@Override @SuppressWarnings("unchecked")
@@ -195,11 +218,23 @@ implements WSIOTask<T> {
 		if(respStatusCode < 200 || respStatusCode >= 300) {
 			switch(respStatusCode) {
 				case (400):
-					LOG.debug(Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine());
+					synchronized(LOG) {
+						LOG.debug(
+							Markers.ERR, "Incorrect request: \"{}\"", httpRequest.getRequestLine()
+						);
+						if(LOG.isTraceEnabled(Markers.ERR)) {
+							for(final Header rangeHeader : httpRequest.getAllHeaders()) {
+								LOG.trace(
+									Markers.ERR, "{}: \"{}\"",
+									rangeHeader.getName(), rangeHeader.getValue()
+								);
+							}
+						}
+					}
 					result = Result.FAIL_CLIENT;
 					break;
 				case (403):
-					LOG.debug(Markers.ERR, "Access failure");
+					LOG.debug(Markers.ERR, "Access failure for data item \"{}\"", dataItem.getId());
 					result = Result.FAIL_AUTH;
 					break;
 				case (404):
@@ -210,13 +245,17 @@ implements WSIOTask<T> {
 					result = Result.FAIL_NOT_FOUND;
 					break;
 				case (416):
-					LOG.debug(Markers.ERR, "Incorrect range");
-					if(LOG.isTraceEnabled(Markers.ERR)) {
-						for(final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)) {
-							LOG.trace(
-								Markers.ERR, "Incorrect range \"{}\" for data item: \"{}\"",
-								rangeHeader.getValue(), dataItem
-							);
+					synchronized(LOG) {
+						LOG.debug(Markers.ERR, "Incorrect range");
+						if(LOG.isTraceEnabled(Markers.ERR)) {
+							for(
+								final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)
+							) {
+								LOG.trace(
+									Markers.ERR, "Incorrect range \"{}\" for data item: \"{}\"",
+									rangeHeader.getValue(), dataItem
+								);
+							}
 						}
 					}
 					result = Result.FAIL_CLIENT;
@@ -278,7 +317,7 @@ implements WSIOTask<T> {
 	@Override
 	public final void failed(final Exception e) {
 		exception = e;
-		ExceptionHandler.trace(LOG, Level.DEBUG, e, "Response processing failure");
+		TraceLogger.failure(LOG, Level.DEBUG, e, "Response processing failure");
 	}
 	//
 	@Override

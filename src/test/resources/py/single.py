@@ -32,12 +32,12 @@ except IllegalArgumentException:
 	exit()
 #
 from java.lang import Exception
-from com.emc.mongoose.util.logging import ExceptionHandler
+from com.emc.mongoose.util.logging import TraceLogger
 load = None
 try:
 	load = LOAD_BUILDER.build()
 except Exception as e:
-	ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
+	TraceLogger.failure(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
 	e.printStackTrace()
 #
 if load is None:

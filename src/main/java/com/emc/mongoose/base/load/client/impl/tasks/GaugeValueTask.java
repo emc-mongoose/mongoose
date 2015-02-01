@@ -6,6 +6,7 @@ import com.emc.mongoose.util.pool.InstancePool;
 import com.emc.mongoose.util.pool.Reusable;
 //
 import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 17.12.14.
  */
@@ -27,21 +28,29 @@ implements Callable<V>, Reusable {
 		return (GaugeValueTask<? extends Number>) POOL.take(gauge);
 	}
 	//
+	private final AtomicBoolean isClosed = new AtomicBoolean(true);
+	//
 	@Override @SuppressWarnings("unchecked")
 	public final GaugeValueTask<V> reuse(final Object... args)
-		throws IllegalArgumentException {
-		if(args == null) {
-			throw new IllegalArgumentException("No arguments for reusing the instance");
-		}
-		if(args.length > 0) {
-			gauge = (Gauge<V>) args[0];
+	throws IllegalArgumentException {
+		if(isClosed.compareAndSet(true, false)) {
+			if(args==null) {
+				throw new IllegalArgumentException("No arguments for reusing the instance");
+			}
+			if(args.length > 0) {
+				gauge = (Gauge<V>) args[0];
+			}
+		} else {
+			throw new IllegalStateException("Not yet released instance reuse attempt");
 		}
 		return this;
 	}
 	//
 	@Override
 	public final void close() {
-		POOL.release(this);
+		if(isClosed.compareAndSet(false, true)) {
+			POOL.release(this);
+		}
 	}
 	//
 	@Override @SuppressWarnings("NullableProblems")

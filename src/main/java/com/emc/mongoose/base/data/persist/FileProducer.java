@@ -3,7 +3,7 @@ package com.emc.mongoose.base.data.persist;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
@@ -79,21 +79,23 @@ implements Producer<T> {
 						consumer.submit(nextData);
 						dataItemsCount ++;
 					} catch(final Exception e) {
-						ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to submit data item");
+						TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit data item");
 					}
 				}
 			} while(!isInterrupted() && dataItemsCount < maxCount);
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to read line from the file");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
 		} finally {
 			LOG.debug(Markers.MSG, "Produced {} data items", dataItemsCount);
 			try {
 				LOG.debug(Markers.MSG, "Feeding poison to consumer \"{}\"", consumer.toString());
 				consumer.submit(null); // or: consumer.setMaxCount(dataItemsCount);
+			} catch(final InterruptedException e) {
+				TraceLogger.trace(LOG, Level.DEBUG, Markers.MSG, "Consumer is already shutdown");
 			} catch(final Exception e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to submit the poison to remote consumer");
+				TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit the poison to remote consumer");
 			}
 			LOG.debug(Markers.MSG, "Exiting");
 		}

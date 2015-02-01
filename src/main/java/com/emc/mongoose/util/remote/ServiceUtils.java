@@ -1,6 +1,6 @@
 package com.emc.mongoose.util.remote;
 //
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.run.Main;
 //
@@ -44,7 +44,7 @@ public final class ServiceUtils {
 		try {
 			tmpPort = Main.RUN_TIME_CONFIG.get().getRemoteControlPort();
 		} catch(final Exception e) {
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.WARN, e,
 				String.format(
 					"Failed to take remote control port value, will use the default value \"%d\"",
@@ -103,7 +103,7 @@ public final class ServiceUtils {
 			stub = UnicastRemoteObject.exportObject(svc);
 			LOG.debug(Markers.MSG, "Exported service object successfully");
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to export service object");
+			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to export service object");
 		}
 		//
 		if(stub!=null) {
@@ -153,7 +153,7 @@ public final class ServiceUtils {
 		} catch(final NotBoundException e) {
 			LOG.error(Markers.ERR, "No service bound with url \"{}\"", url);
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "Looks like network failure");
 		}
 		return remoteSvc;
 	}
@@ -163,7 +163,7 @@ public final class ServiceUtils {
             UnicastRemoteObject.unexportObject(svc, true);
 			LOG.debug(Markers.MSG, "Unexported service object");
 		} catch(NoSuchObjectException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to unexport service object");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to unexport service object");
 		}
 		//
 		try {
@@ -236,7 +236,7 @@ public final class ServiceUtils {
 				);
 				LOG.debug(Markers.MSG, "Created JMX service URL {}", jmxSvcURL.toString());
 			} catch(final MalformedURLException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.WARN, e,
 					String.format("Failed to create JMX service URL for port #%d", portJmxRmi)
 				);
@@ -251,7 +251,7 @@ public final class ServiceUtils {
 					);
 					LOG.debug(Markers.MSG, "Created JMX connector");
 				} catch(final IOException e) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to create JMX connector");
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to create JMX connector");
 				}
 			}
 			//
@@ -260,7 +260,7 @@ public final class ServiceUtils {
 					connectorServer.start();
 					LOG.debug(Markers.MSG, "JMX connector started", portJmxRmi);
 				} catch(final IOException e) {
-					ExceptionHandler.trace(
+					TraceLogger.failure(
 						LOG, Level.WARN, e,
 						"Failed to start JMX connector, please check that there's no another instance running"
 					);

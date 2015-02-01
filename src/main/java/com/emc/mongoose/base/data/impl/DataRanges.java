@@ -23,6 +23,8 @@ import java.io.SequenceInputStream;
 import java.util.BitSet;
 import java.util.Vector;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  Created by kurila on 15.09.14.
  A uniform data extension which may be logically split into isolated ranges for appends and updates.
@@ -35,7 +37,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	//
 	private final static char LAYER_MASK_SEP = '/';
 	//
-	private final static String
+	protected final static String
 		FMT_META_INFO = "%s" + RunTimeConfig.LIST_SEP + "%x" + LAYER_MASK_SEP + "%s",
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
 		FMT_MSG_WRONG_RANGE_COUNT = "Range count should be more than 0 and less than the object size = %s",
@@ -51,9 +53,9 @@ implements AppendableDataItem, UpdatableDataItem {
 	protected final BitSet
 		maskRangesHistory = new BitSet(),
 		maskRangesPending = new BitSet();
-	private volatile int layerNum = 0;
+	protected AtomicInteger layerNum = new AtomicInteger();
 	//
-	private long pendingAugmentSize = 0;
+	protected long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public DataRanges() {
 		super(); // ranges remain uninitialized
@@ -84,7 +86,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	@Override
 	public String toString() {
 		return String.format(
-			FMT_META_INFO, super.toString(), layerNum,
+			FMT_META_INFO, super.toString(), layerNum.get(),
 			maskRangesHistory.isEmpty() ?
 				STR_EMPTY_MASK : Hex.encodeHexString(maskRangesHistory.toByteArray())
 		);
@@ -102,8 +104,8 @@ implements AppendableDataItem, UpdatableDataItem {
 			final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
 			try {
 				// extract hexadecimal layer number
-				layerNum = Integer.valueOf(rangesInfo.substring(0, sepPos), 0x10);
-				setDataSource(UniformDataSource.DEFAULT, layerNum);
+				layerNum.set(Integer.valueOf(rangesInfo.substring(0, sepPos), 0x10));
+				setDataSource(UniformDataSource.DEFAULT, layerNum.get());
 				// extract hexadecimal mask, convert into bit set and add to the existing mask
 				String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
 				while(rangesMask.length() == 0 || rangesMask.length() % 2 == 1) {
@@ -133,7 +135,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeInt(layerNum);
+		out.writeInt(layerNum.get());
 		out.writeObject(maskRangesHistory);
 		out.writeObject(maskRangesPending);
 	}
@@ -142,7 +144,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		layerNum = in.readInt();
+		layerNum.set(in.readInt());
 		maskRangesHistory.or(BitSet.class.cast(in.readObject()));
 		maskRangesPending.or(BitSet.class.cast(in.readObject()));
 	}
@@ -160,7 +162,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	//
 	@Override
 	public final int getLayerNum() {
-		return layerNum;
+		return layerNum.get();
 	}
 	//
 	private static final double LOG2 = Math.log(2);
@@ -195,7 +197,7 @@ implements AppendableDataItem, UpdatableDataItem {
 			rangeSize = getRangeSize(i);
 			if(maskRangesHistory.get(i)) { // range have been modified
 				updatedRange = new UniformData(
-					offset + rangeOffset, rangeSize, layerNum + 1, UniformDataSource.DEFAULT
+					offset + rangeOffset, rangeSize, layerNum.get() + 1, UniformDataSource.DEFAULT
 				);
 				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
 				if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -204,13 +206,13 @@ implements AppendableDataItem, UpdatableDataItem {
 					LOG.trace(
 						Markers.MSG, FMT_MSG_RANGE_MODIFIED,
 						Long.toHexString(offset), i, rangeOffset, rangeOffset + rangeSize - 1,
-						layerNum + 1,
+						layerNum.get() + 1,
 						Base64.encodeBase64URLSafeString(contentRangeStream.toByteArray())
 					);
 				}
-			} else if(layerNum > 1) { // previous layer of updated ranges
+			} else if(layerNum.get() > 1) { // previous layer of updated ranges
 				updatedRange = new UniformData(
-					offset + rangeOffset, rangeSize, layerNum, UniformDataSource.DEFAULT
+					offset + rangeOffset, rangeSize, layerNum.get(), UniformDataSource.DEFAULT
 				);
 				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
 			} else {
@@ -234,11 +236,10 @@ implements AppendableDataItem, UpdatableDataItem {
 		return maskRangesPending.get(i);
 	}
 	//
-	private synchronized void switchToNextLayer() {
-		layerNum ++; // increment layerNum
+	protected synchronized void switchToNextLayer() {
 		maskRangesHistory.clear();
 		maskRangesPending.clear(); // clear the masks
-		setDataSource(UniformDataSource.DEFAULT, layerNum);
+		setDataSource(UniformDataSource.DEFAULT, layerNum.incrementAndGet()); // increment layerNum
 	}
 	//
 	@Override
@@ -311,7 +312,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				rangeSize = getRangeSize(i);
 				if(maskRangesPending.get(i)) {
 					nextRangeData = new UniformData(
-						offset + rangeOffset, rangeSize, layerNum + 1, UniformDataSource.DEFAULT
+						offset + rangeOffset, rangeSize, layerNum.get() + 1, UniformDataSource.DEFAULT
 					);
 					nextRangeData.writeTo(out);
 					if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -319,7 +320,7 @@ implements AppendableDataItem, UpdatableDataItem {
 						nextRangeData.writeTo(rangeContentStream);
 						LOG.trace(
 							Markers.MSG, FMT_MSG_UPD_RANGE,
-							toString(), i, rangeSize, offset + rangeOffset, layerNum + 1,
+							toString(), i, rangeSize, offset + rangeOffset, layerNum.get() + 1,
 							Base64.encodeBase64URLSafeString(rangeContentStream.toByteArray())
 						);
 					}
@@ -351,7 +352,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				if(maskRangesPending.get(i)) {
 					updatedRangesData.add(
 						new UniformData(
-							offset + rangeOffset, rangeSize, layerNum + 1, UniformDataSource.DEFAULT
+							offset + rangeOffset, rangeSize, layerNum.get() + 1, UniformDataSource.DEFAULT
 						)
 					);
 				}
@@ -374,15 +375,15 @@ implements AppendableDataItem, UpdatableDataItem {
 	// APPEND //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void append(final long augmentSize)
+	public void append(final long augmentSize)
 	throws IllegalArgumentException {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
 			final int
 				lastCellPos = getRangeCount(size) - 1,
-				nextCellPos = getRangeCount(size + augmentSize) - 1;
+				nextCellPos = getRangeCount(size + augmentSize);
 			if(lastCellPos < nextCellPos && maskRangesHistory.get(lastCellPos)) {
-				maskRangesPending.set(lastCellPos + 1, nextCellPos);
+				maskRangesPending.set(lastCellPos, nextCellPos);
 			}
 		} else {
 			throw new IllegalArgumentException(
@@ -403,8 +404,9 @@ implements AppendableDataItem, UpdatableDataItem {
 			synchronized(this) {
 				if(maskRangesHistory.get(getRangeCount(size) - 1)) { // write from next layer
 					new UniformData(
-						offset + size, pendingAugmentSize, layerNum + 1, UniformDataSource.DEFAULT
+						offset + size, pendingAugmentSize, layerNum.get() + 1, UniformDataSource.DEFAULT
 					).writeTo(out);
+					size += pendingAugmentSize;
 				} else { // write from current layer
 					setOffset(offset, size);
 					// change the size
@@ -449,7 +451,7 @@ implements AppendableDataItem, UpdatableDataItem {
 			synchronized(this) {
 				if(maskRangesHistory.get(getRangeCount(size) - 1)) { // write from next layer
 					augment = new UniformData(
-						offset + size, pendingAugmentSize, layerNum + 1, UniformDataSource.DEFAULT
+						offset + size, pendingAugmentSize, layerNum.get() + 1, UniformDataSource.DEFAULT
 					);
 				} else { // write from current layer
 					setOffset(offset, size);

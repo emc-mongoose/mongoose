@@ -9,7 +9,7 @@ import com.emc.mongoose.base.load.LoadBuilder;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.configuration.ConversionException;
@@ -43,7 +43,7 @@ implements LoadBuilder<T, U> {
 			reqConf = getDefaultRequestConfig();
 			setProperties(Main.RUN_TIME_CONFIG.get());
 		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to apply configuration");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to apply configuration");
 		}
 	}
 	protected abstract RequestConfig<T> getDefaultRequestConfig();

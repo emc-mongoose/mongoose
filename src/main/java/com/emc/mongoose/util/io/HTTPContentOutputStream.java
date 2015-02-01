@@ -8,6 +8,7 @@ import org.apache.http.nio.IOControl;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 09.12.14.
  */
@@ -72,20 +73,26 @@ implements Reusable {
 		return POOL.take(out, ioCtl);
 	}
 	//
+	private final AtomicBoolean isClosed = new AtomicBoolean(true);
+	//
 	@Override
 	public final void close()
 	throws IOException {
-		out.complete();
-		POOL.release(this);
+		if(isClosed.compareAndSet(false, true)) {
+			out.complete();
+			POOL.release(this);
+		}
 	}
 	//
 	@Override
 	public final HTTPContentOutputStream reuse(final Object... args) {
-		if(args.length > 0) {
-			out = ContentEncoder.class.cast(args[0]);
-		}
-		if(args.length > 1) {
-			ioCtl = IOControl.class.cast(args[1]);
+		if(isClosed.compareAndSet(true, false)) {
+			if(args.length > 0) {
+				out = ContentEncoder.class.cast(args[0]);
+			}
+			if(args.length > 1) {
+				ioCtl = IOControl.class.cast(args[1]);
+			}
 		}
 		return this;
 	}

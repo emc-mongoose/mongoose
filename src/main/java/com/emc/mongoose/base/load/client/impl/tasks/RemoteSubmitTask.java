@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.Closeable;
 import java.rmi.RemoteException;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 18.12.14.
  */
@@ -58,18 +59,26 @@ implements Runnable, Reusable {
 		} while(rejectCount > retryMaxCount);
 	}
 	//
+	private final AtomicBoolean isClosed = new AtomicBoolean(true);
+	//
 	@Override
 	public final void close() {
-		INSTANCE_POOL.release(this);
+		if(isClosed.compareAndSet(false, true)) {
+			INSTANCE_POOL.release(this);
+		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final RemoteSubmitTask<T> reuse(final Object... args) {
-		if(args.length > 0) {
-			loadSvc = (LoadSvc<T>) args[0];
-		}
-		if(args.length > 1) {
-			dataItem = (T) args[1];
+		if(isClosed.compareAndSet(true, false)) {
+			if(args.length > 0) {
+				loadSvc = (LoadSvc<T>) args[0];
+			}
+			if(args.length > 1) {
+				dataItem = (T) args[1];
+			}
+		} else {
+			throw new IllegalStateException("Not yet released instance reuse attempt");
 		}
 		return this;
 	}

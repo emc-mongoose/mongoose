@@ -2,7 +2,7 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
@@ -148,15 +148,20 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
-		httpRequest.addHeader(HttpHeaders.CONTENT_MD5, ""); // checksum of the data item is not avalable before streaming
+		if(!httpRequest.containsHeader(HttpHeaders.CONTENT_MD5)) {
+			httpRequest.addHeader(HttpHeaders.CONTENT_MD5, "");
+		}
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
 			String.format(fmtAuthValue, userName, getSignature(getCanonical(httpRequest)))
 		);
-		httpRequest.removeHeader(httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5)); // remove temporary header
+		final Header lastContentMD5Header = httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5);
+		if(lastContentMD5Header != null && lastContentMD5Header.getValue().length() == 0) {
+			httpRequest.removeHeader(lastContentMD5Header);
+		}
 	}
 	//
-	private final String HEADERS4CANONICAL[] = {
+	private static String HEADERS4CANONICAL[] = {
 		HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.DATE
 	};
 	//
@@ -194,26 +199,17 @@ extends WSRequestConfigBase<T> {
 		return buffer.toString();
 	}
 	//
-	protected final void applyObjectId(final T dataObject, final HttpResponse unused) {
-		dataObject.setId(
-			Base64.encodeBase64URLSafeString(
-				ByteBuffer
-					.allocate(Long.SIZE / Byte.SIZE)
-					.putLong(dataObject.getOffset())
-					.array()
-			)
-		);
-	}
-	//
 	@Override @SuppressWarnings("unchecked")
 	public final Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> client) {
 		Producer<T> producer = null;
-		try {
-			producer = new BucketProducer<>(
-				bucket, BasicWSObject.class, maxCount, (WSLoadExecutor<T>) client
-			);
-		} catch(final NoSuchMethodException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
+		if(anyDataProducerEnabled) {
+			try {
+				producer = new BucketProducer<>(
+					bucket, BasicWSObject.class, maxCount, (WSLoadExecutor<T>) client
+				);
+			} catch(final NoSuchMethodException e) {
+				TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
+			}
 		}
 		return producer;
 	}
