@@ -40,6 +40,7 @@
 		<div class="content-wrapper">
 			<div class="tabs-wrapper">
 				<ul class="nav nav-tabs" role="presentation">
+					<li><a href="#chart" data-toggle="tab">Chart</a></li>
 					<li class="active"><a href="#configuration" data-toggle="tab">Configuration</a></li>
 					<c:forEach var="mode" items="${sessionScope.runmodes}">
 						<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
@@ -54,6 +55,9 @@
 			</div>
 
 			<div class="tab-content">
+				<div id="chart" class="tab-pane">
+
+				</div>
 				<div id="configuration" class="tab-pane active">
 					<div class="container-fluid">
 						<div class="row">
@@ -895,6 +899,7 @@
 				</c:forEach>
 			</div>
 		</div>
+		<script type="text/javascript" src="js/d3.min.js"></script>
 		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
 		<script type="text/javascript" src="js/bootstrap.min.js"></script>

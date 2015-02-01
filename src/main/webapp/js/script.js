@@ -1,4 +1,233 @@
+//  single charts (BW and TP)
+function chart(data, runId) {
+	var margin = {top: 40, right: 120, bottom: 60, left: 60},
+		width = 960 - margin.left - margin.right,
+		height = 500 - margin.top - margin.bottom;
+
+	return {
+		single: function() {
+			var AVG = "avg";
+			var MIN_1 = "1min";
+			var MIN_5 = "5min";
+			var MIN_15 = "15min";
+			//  Throughput
+			//
+			function drawChart(data, chartTitle, xAxisLabel, yAxisLabel) {
+				var x = d3.scale.linear()
+					.domain([
+						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
+						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; })  })
+					])
+					.range([0, width]);
+
+				var y = d3.scale.linear()
+					.domain([
+						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
+						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; })  })
+					])
+					.range([height, 0]);
+				//
+				var color = d3.scale.category10();
+				color.domain(data.map(function(d) { return d.name; }));
+				//
+				var xAxis = d3.svg.axis()
+					.scale(x)
+					.orient("bottom");
+				var yAxis = d3.svg.axis()
+					.scale(y)
+					.orient("left");
+
+				function makeXAxis() {
+					return d3.svg.axis()
+						.scale(x)
+						.orient("bottom");
+				}
+
+				function makeYAxis() {
+					return d3.svg.axis()
+						.scale(y)
+						.orient("left");
+				}
+				//
+				var line = d3.svg.line()
+					.x(function (d) {
+						return x(d.x);
+					})
+					.y(function (d) {
+						return y(d.y);
+					});
+				//
+				var svg = d3.select("#chart") // need replace
+					.append("svg")
+					.attr("width", width + margin.left + margin.right)
+					.attr("height", height + margin.top + margin.bottom)
+					.append("g")
+					.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+				var xAxisGroup = svg.append("g")
+					.attr("class", "x axis")
+					.attr("transform", "translate(0," + height + ")")
+					.call(xAxis);
+
+				var yAxisGroup = svg.append("g")
+					.attr("class", "y axis")
+					.call(yAxis);
+
+				var xGrid = svg.append("g")
+					.attr("class", "grid")
+					.attr("transform", "translate(0," + height + ")")
+					.call(makeXAxis()
+						.tickSize(-height, 0, 0)
+						.tickFormat(""));
+
+				var yGrid = svg.append("g")
+					.attr("class", "grid")
+					.call(makeYAxis()
+						.tickSize(-width, 0, 0)
+						.tickFormat(""));
+
+				var levels = svg.selectAll(".level")
+					.data(data).enter()
+					.append("g")
+					.attr("class", "level")
+					.attr("id", function(d, i) { return d.name; })
+					.attr("visibility", function(d) { if (d.name === MIN_1) { return "visible"; } else { return "hidden"; }})
+					.append("path")
+					.attr("class", "line")
+					.attr("d", function(d)  { return line(d.values); })
+					.attr("stroke", function(d) { return color(d.name); });
+				//  Axis X Label
+				svg.append("text")
+					.attr("x", width - 2)
+					.attr("y", height - 2)
+					.style("text-anchor", "end")
+					.text(xAxisLabel);
+
+				//  Axis Y Label
+				svg.append("text")
+					.attr("transform", "rotate(-90)")
+					.attr("y", 6)
+					.attr("x", 0)
+					.attr("dy", ".71em")
+					.style("text-anchor", "end")
+					.text(yAxisLabel);
+				//
+				svg.selectAll("foreignObject")
+					.data(data).enter()
+					.append("foreignObject")
+					.attr("x", width + 3)
+					.attr("width", 18)
+					.attr("height", 18)
+					.attr("transform", function(d, i) {
+						return "translate(0," + i * 20 + ")";
+					})
+					.append("xhtml:body")
+					.append("input")
+					.attr("type", "checkbox")
+					.attr("value", function(d) { return d.name; })
+					.attr("checked", function(d) { if (d.name === MIN_1) { return "checked"; } })
+					.on("click", function(d, i) {
+						var element = $("#" + d.name);
+						if ($(this).is(":checked")) {
+							element.css("visibility", "visible")
+						} else {
+							element.css("visibility", "hidden");
+						}
+					});
+				//
+				var legend = svg.selectAll(".legend")
+					.data(data).enter()
+					.append("g")
+					.attr("class", "legend")
+					.attr("transform", function(d, i) {
+						return "translate(0," + i * 20 + ")";
+					});
+
+				legend.append("rect")
+					.attr("x", width + 18)
+					.attr("width", 18)
+					.attr("height", 18)
+					.style("fill", function(d) { return color(d.name); });
+
+				legend.append("text")
+					.attr("x", width + 80)
+					.attr("y", 9)
+					.attr("dy", ".35em")
+					.style("text-anchor", "end")
+					.text(function(d) { return d.name; });
+
+				svg.append("text")
+					.attr("x", (width / 2))
+					.attr("y", 0 - (margin.top / 2))
+					.attr("text-anchor", "middle")
+					.style("font-size", "16px")
+					.style("text-decoration", "underline")
+					.text(chartTitle);
+				return {
+					update: function (value) {
+						data.forEach(function(d, i) {
+							d.values.push({x: d.values.length * 10, y: parseFloat(value[i])});
+						});
+						//
+						x.domain([
+							d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
+							d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; }); })
+						]);
+						y.domain([
+							d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
+							d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; }); })
+						]);
+						//
+						xAxisGroup.transition().call(xAxis);
+						yAxisGroup.transition().call(yAxis);
+						xGrid.call(makeXAxis()
+							.tickSize(-height, 0, 0)
+							.tickFormat(""));
+						yGrid.call(makeYAxis()
+							.tickSize(-width, 0, 0)
+							.tickFormat(""));
+						//  Update old charts
+						var paths = svg.selectAll(".level path")
+							.data(data)
+							.attr("d", function(d) { return line(d.values); })
+							.attr("stroke", function(d) { return color(d.name); })
+							.attr("fill", "none");
+					}
+				}
+			}
+			//
+			return drawChart(data, "Throughput[obj/s]", "seconds", "throughput[obj/s]");
+		},
+		chain: {
+
+		},
+		rampup: {
+
+		}
+	}
+}
+var data = [
+	{
+		name: "avg",
+		values: []
+	}, {
+		name: "1min",
+		values: []
+	}, {
+		name: "5min",
+		values: []
+	}, {
+		name: "15min",
+		values: []
+	}
+];
+
+
+
+var singleChart = chart(data).single();
+
 $(document).ready(function() {
+	//
 	var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
 	var TABLE_ROWS_COUNT = 2050;
 	excludeDuplicateOptions();
@@ -398,6 +627,11 @@ function configureWebSocketConnection(location, countOfRecords) {
 						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
 						break;
 					case MARKERS.PERF_AVG:
+						var parsed = json.message.formattedMessage.split(";")[2];
+						var first = parsed.indexOf("(") + 1;
+						var second = parsed.lastIndexOf(")");
+						singleChart.update(parsed.substring(first, second).split("/"));
+						//
 						appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
 						break;
 				}
