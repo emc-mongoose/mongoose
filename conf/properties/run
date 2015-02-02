@@ -17,7 +17,6 @@ scenario.lang:					py
 # name of the scenario to launch w/o path and filename extension
 scenario.name:					single
 
-
 #
 metrics.period.sec:				10
 
