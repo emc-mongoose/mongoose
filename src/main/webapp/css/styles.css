@@ -177,7 +177,7 @@ li input:checked + ul > li:last-child {
 	margin-bottom: 15px;
 }
 
-table {
+/*table {
 	width: 100%;
 }
 
@@ -202,7 +202,7 @@ tbody {
 }
 
 thead {
-	/* fallback */
+
 }
 
 th, td {
@@ -239,7 +239,7 @@ th:nth-child(2) {
 
 th:nth-child(5) {
 	width: 46%;
-}
+}*/
 
 .tab-content {
 	width: 100%;
@@ -374,4 +374,19 @@ text.shadow {
 .area {
 	fill: lightsteelblue;
 	stroke-width: 0;
+}
+
+#scenario-tab {
+	margin-top: 20px;
+	text-align: center;
+}
+
+#scenario-tab > li {
+	float: none;
+	display: inline-block;
+}
+
+#log-pills {
+	margin-top: 20px;
+	border-right: 1px solid #ccc;
 }

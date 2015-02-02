@@ -45,7 +45,7 @@
 					<c:forEach var="mode" items="${sessionScope.runmodes}">
 						<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
 						<li>
-							<a href="#tableTab-${correctMode}" data-toggle="tab">
+							<a href="#scenarioTab-${correctMode}" data-toggle="tab">
 									${mode}
 								<span class="glyphicon glyphicon-remove" value="${mode}"></span>
 							</a>
@@ -56,7 +56,18 @@
 
 			<div class="tab-content">
 				<div id="chart" class="tab-pane">
+					<ul class="nav nav-tabs" role="presentation">
+						<li class="active"><a href="#tp" data-toggle="tab">tp</a></li>
+						<li><a href="#bw" data-toggle="tab">bw</a></li>
+					</ul>
+					<div class="tab-content">
+						<div id="tp" class="tab-pane active">
 
+						</div>
+						<div id="bw" class="tab-pane">
+
+						</div>
+					</div>
 				</div>
 				<div id="configuration" class="tab-pane active">
 					<div class="container-fluid">
@@ -809,88 +820,45 @@
 				</div>
 				<c:forEach var="mode" items="${sessionScope.runmodes}">
 					<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
-					<div class="tab-pane table-pane" id="tableTab-${correctMode}" tab-id="${mode}">
-						<div class="left-side">
-							<div class="menu-wrapper">
-								<div class="col-xs-8">
-									<ul class="nav nav-tabs tabs-left">
-										<li class="active"><a href="#${correctMode}messages-csv" data-toggle="tab">messages.csv</a></li>
-										<li><a href="#${correctMode}errors-log" data-toggle="tab">errors.log</a></li>
-										<li><a href="#${correctMode}perf-avg-csv" data-toggle="tab">perf.avg.csv</a></li>
-										<li><a href="#${correctMode}perf-sum-csv" data-toggle="tab">perf.sum.csv</a></li>
-									</ul>
-								</div>
-							</div>
-						</div>
-						<div class="right-side">
-							<c:if test="${empty sessionScope.stopped[mode]}">
-								<button type="button" class="default stop"><span>Stop</span></button>
-							</c:if>
-							<div class="log-wrapper">
-								<div class="tab-content">
-									<div class="tab-pane active" id="${correctMode}messages-csv">
-										<table class="table">
-											<thead>
-											<tr>
-												<th>Level</th>
-												<th>LoggerName</th>
-												<th>ThreadName</th>
-												<th>TimeMillis</th>
-												<th>Message</th>
-											</tr>
-											</thead>
-											<tbody>
-											</tbody>
-										</table>
-										<button type="button" class="default clear">Clear</button>
-									</div>
-									<div class="tab-pane" id="${correctMode}errors-log">
-										<table class="table">
-											<thead>
-											<tr>
-												<th>Level</th>
-												<th>LoggerName</th>
-												<th>ThreadName</th>
-												<th>TimeMillis</th>
-												<th>Message</th>
-											</tr>
-											</thead>
-											<tbody>
-											</tbody>
-										</table>
-										<button type="button" class="default clear">Clear</button>
-									</div>
-									<div class="tab-pane" id="${correctMode}perf-avg-csv">
-										<table class="table">
-											<thead>
-											<tr>
-												<th>Level</th>
-												<th>LoggerName</th>
-												<th>ThreadName</th>
-												<th>TimeMillis</th>
-												<th>Message</th>
-											</tr>
-											</thead>
-											<tbody>
-											</tbody>
-										</table>
-										<button type="button" class="default clear">Clear</button>
-									</div>
-									<div class="tab-pane" id="${correctMode}perf-sum-csv">
-										<table class="table">
-											<thead>
-											<tr>
-												<th>Level</th>
-												<th>LoggerName</th>
-												<th>ThreadName</th>
-												<th>TimeMillis</th>
-												<th>Message</th>
-											</tr>
-											</thead>
-											<tbody>
-											</tbody>
-										</table>
-										<button type="button" class="default clear">Clear</button>
+					<div class="tab-pane" id="scenarioTab-${correctMode}">
+						<ul id="scenario-tab" class="nav nav-tabs" role="presentation">
+							<li class="active"><a href="#logs">Logs</a></li>
+							<li><a href="#charts">Charts</a></li>
+						</ul>
+						<div class="tab-content">
+							<div class="tab-pane active" id="logs">
+								<div class="container-fluid">
+									<div class="row">
+										<div id="log-pills" class="col-xs-5 col-sm-4 col-md-2">
+											<ul class="nav nav-pills nav-stacked">
+												<li class="active"><a href="#">messages.csv</a></li>
+												<li><a href="#">errors.log</a></li>
+												<li><a href="#">perf.avg.csv</a></li>
+												<li><a href="#">perf.sum.csv</a></li>
+											</ul>
+										</div>
+										<div class="col-xs-7 col-sm-8 col-md-10">
+											<div class="table-responsive">
+												<table class="table">
+													<thead>
+														<th>Level</th>
+														<th>LoggerName</th>
+														<th>ThreadName</th>
+														<th>TimeMillis</th>
+														<th>Message</th>
+													</thead>
+													<tbody>
+														<tr>
+															<td>ThreadNameThreadNameThreadNameThreadNameThreadName</td>
+															<td>ThreadNameThreadName</td>
+															<td>ThreadNameThreadNameThreadName</td>
+															<td>ThreadName</td>
+															<td>ThreadName</td>
+														</tr>
+													</tbody>
+												</table>
+											</div>
+										</div>
 									</div>
 								</div>
 							</div>

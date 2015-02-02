@@ -1,18 +1,105 @@
 //  single charts (BW and TP)
-function chart(data, runId) {
+var chartsArray = [];
+//
+function charts() {
 	var margin = {top: 40, right: 120, bottom: 60, left: 60},
 		width = 960 - margin.left - margin.right,
 		height = 500 - margin.top - margin.bottom;
 
+	var SCENARIO = {
+		single: "single",
+		chain: "chain",
+		rampup: "rampup"
+	};
+
 	return {
-		single: function() {
+		single: function(runId) {
+			//
 			var AVG = "avg";
 			var MIN_1 = "1min";
 			var MIN_5 = "5min";
 			var MIN_15 = "15min";
-			//  Throughput
 			//
-			function drawChart(data, chartTitle, xAxisLabel, yAxisLabel) {
+			var CHART_TYPES = {
+				TP: "throughput",
+				BW: "bandwidth"
+			};
+			//
+			chartsArray.push({
+				"run.id": runId,
+				"run.scenario.name": SCENARIO.single,
+				"charts": [
+					drawThroughputChart(),
+					drawBandwidthChart()
+				]
+			});
+			//
+			function drawThroughputChart() {
+				var data = [
+					{
+						name: AVG,
+						values: [
+							{x: 0, y: 0}
+						]
+					}, {
+						name: MIN_1,
+						values: [
+							{x: 0, y: 0}
+						]
+					}, {
+						name: MIN_5,
+						values: [
+							{x: 0, y: 0}
+						]
+					}, {
+						name: MIN_15,
+						values: [
+							{x: 0, y: 0}
+						]
+					}
+				];
+				var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds", "throughput[obj/s]", "#chart #tp");
+				return {
+					update: function(value) {
+						updateFunction(CHART_TYPES.TP, value);
+					}
+				};
+			}
+			//
+			function drawBandwidthChart() {
+				var data = [
+					{
+						name: AVG,
+						values: [
+							{x: 0, y: 0}
+						]
+					}, {
+						name: MIN_1,
+						values: [
+							{x: 0, y: 0}
+						]
+					}, {
+						name: MIN_5,
+						values: [
+							{x: 0, y: 0}
+						]
+					}, {
+						name: MIN_15,
+						values: [
+							{x: 0, y: 0}
+						]
+					}
+				];
+				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds", "bandwidth[mb/s]", "#chart #bw");
+				return {
+					update: function(value) {
+						updateFunction(CHART_TYPES.BW, value);
+					}
+				}
+
+			}
+			//
+			function drawChart(data, chartTitle, xAxisLabel, yAxisLabel, path) {
 				var x = d3.scale.linear()
 					.domain([
 						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
@@ -57,7 +144,7 @@ function chart(data, runId) {
 						return y(d.y);
 					});
 				//
-				var svg = d3.select("#chart") // need replace
+				var svg = d3.select(path) // need replace
 					.append("svg")
 					.attr("width", width + margin.left + margin.right)
 					.attr("height", height + margin.top + margin.bottom)
@@ -163,40 +250,51 @@ function chart(data, runId) {
 					.style("font-size", "16px")
 					.style("text-decoration", "underline")
 					.text(chartTitle);
-				return {
-					update: function (value) {
-						data.forEach(function(d, i) {
-							d.values.push({x: d.values.length * 10, y: parseFloat(value[i])});
-						});
-						//
-						x.domain([
-							d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
-							d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; }); })
-						]);
-						y.domain([
-							d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
-							d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; }); })
-						]);
-						//
-						xAxisGroup.transition().call(xAxis);
-						yAxisGroup.transition().call(yAxis);
-						xGrid.call(makeXAxis()
-							.tickSize(-height, 0, 0)
-							.tickFormat(""));
-						yGrid.call(makeYAxis()
-							.tickSize(-width, 0, 0)
-							.tickFormat(""));
-						//  Update old charts
-						var paths = svg.selectAll(".level path")
-							.data(data)
-							.attr("d", function(d) { return line(d.values); })
-							.attr("stroke", function(d) { return color(d.name); })
-							.attr("fill", "none");
+				return function(chartType, value) {
+					var splitIndex = 0;
+					switch(chartType) {
+						case CHART_TYPES.TP:
+							splitIndex = 2;
+							break;
+						case CHART_TYPES.BW:
+							splitIndex = 3;
+							break;
 					}
-				}
+					//
+					var parsedString = value.split(";")[splitIndex];
+					var first = parsedString.indexOf("(") + 1;
+					var second = parsedString.lastIndexOf(")");
+					value = parsedString.substring(first, second).split("/");
+					//
+					data.forEach(function(d, i) {
+						d.values.push({x: d.values.length * 10, y: parseFloat(value[i])});
+					});
+					//
+					x.domain([
+						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
+						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; }); })
+					]);
+					y.domain([
+						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
+						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; }); })
+					]);
+					//
+					xAxisGroup.transition().call(xAxis);
+					yAxisGroup.transition().call(yAxis);
+					xGrid.call(makeXAxis()
+						.tickSize(-height, 0, 0)
+						.tickFormat(""));
+					yGrid.call(makeYAxis()
+						.tickSize(-width, 0, 0)
+						.tickFormat(""));
+					//  Update old charts
+					var paths = svg.selectAll(".level path")
+						.data(data)
+						.attr("d", function(d) { return line(d.values); })
+						.attr("stroke", function(d) { return color(d.name); })
+						.attr("fill", "none");
+				};
 			}
-			//
-			return drawChart(data, "Throughput[obj/s]", "seconds", "throughput[obj/s]");
 		},
 		chain: {
 
@@ -206,25 +304,6 @@ function chart(data, runId) {
 		}
 	}
 }
-var data = [
-	{
-		name: "avg",
-		values: []
-	}, {
-		name: "1min",
-		values: []
-	}, {
-		name: "5min",
-		values: []
-	}, {
-		name: "15min",
-		values: []
-	}
-];
-
-
-
-var singleChart = chart(data).single();
 
 $(document).ready(function() {
 	//
@@ -586,6 +665,12 @@ function resetParams() {
 }
 
 function configureWebSocketConnection(location, countOfRecords) {
+	var RUN_SCENARIO_NAME = {
+		single: "single",
+		chain: "chain",
+		rampup: "rampup"
+	};
+	//
 	var MARKERS = {
 		ERR: "err",
 		MSG: "msg",
@@ -609,7 +694,8 @@ function configureWebSocketConnection(location, countOfRecords) {
 			//
 			this.ws.onmessage = function(message) {
 				var json = JSON.parse(message.data);
-				var entry = json.contextMap["run.id"].split(".").join("_");
+				var runId = json.contextMap["run.id"];
+				var entry = runId.split(".").join("_");
 				if (!json.hasOwnProperty("marker") || !json.loggerName) {
 					return;
 				} else if (!json.marker.hasOwnProperty("name")) {
@@ -627,10 +713,26 @@ function configureWebSocketConnection(location, countOfRecords) {
 						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
 						break;
 					case MARKERS.PERF_AVG:
-						var parsed = json.message.formattedMessage.split(";")[2];
-						var first = parsed.indexOf("(") + 1;
-						var second = parsed.lastIndexOf(")");
-						singleChart.update(parsed.substring(first, second).split("/"));
+						var isFound = false;
+						chartsArray.forEach(function(d) {
+							if (d["run.id"] === runId) {
+								isFound = true;
+								d.charts.forEach(function(c) {
+									c.update(json.message.formattedMessage);
+								})
+							}
+						});
+						if (!isFound) {
+							switch(json.contextMap["run.scenario.name"]) {
+								case RUN_SCENARIO_NAME.single:
+									charts().single(runId);
+									break;
+								case RUN_SCENARIO_NAME.chain:
+									break;
+								case RUN_SCENARIO_NAME.rampup:
+									break;
+							}
+						}
 						//
 						appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
 						break;
