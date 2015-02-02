@@ -217,17 +217,7 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
-		if(!httpRequest.containsHeader(HttpHeaders.RANGE)) {
-			httpRequest.addHeader(HttpHeaders.RANGE, Main.EMPTY); // temporary required for canonical form
-		}
-		//
 		httpRequest.setHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
-		//
-		final Header tmpHeader = httpRequest.getLastHeader(HttpHeaders.RANGE);
-		if(tmpHeader != null && tmpHeader.getValue().length() == 0) { // the header is temp
-			httpRequest.removeHeader(tmpHeader);
-		}
-
 	}
 	//
 	private final static String HEADERS4CANONICAL[] = {
@@ -238,14 +228,16 @@ extends WSRequestConfigBase<T> {
 	public final String getCanonical(final MutableHTTPRequest httpRequest) {
 		final StringBuilder buffer = new StringBuilder(httpRequest.getRequestLine().getMethod());
 		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
-		for(final String headerName: HEADERS4CANONICAL) {
+		for(final String headerName : HEADERS4CANONICAL) {
 			// support for multiple non-unique header keys
 			if(sharedHeadersMap.containsKey(headerName)) {
 				buffer.append('\n').append(sharedHeadersMap.get(headerName));
-			} else {
+			} else if(httpRequest.containsHeader(headerName)) {
 				for(final Header header: httpRequest.getHeaders(headerName)) {
 					buffer.append('\n').append(header.getValue());
 				}
+			} else {
+				buffer.append('\n');
 			}
 		}
 		//

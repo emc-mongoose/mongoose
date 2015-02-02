@@ -136,17 +136,10 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
-		if(!httpRequest.containsHeader(HttpHeaders.CONTENT_MD5)) {
-			httpRequest.addHeader(HttpHeaders.CONTENT_MD5, Main.EMPTY);
-		}
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
 			String.format(fmtAuthValue, userName, getSignature(getCanonical(httpRequest)))
 		);
-		final Header lastContentMD5Header = httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5);
-		if(lastContentMD5Header != null && lastContentMD5Header.getValue().length() == 0) {
-			httpRequest.removeHeader(lastContentMD5Header);
-		}
 	}
 	//
 	private static String HEADERS4CANONICAL[] = {
@@ -158,13 +151,14 @@ extends WSRequestConfigBase<T> {
 		final StringBuffer buffer = new StringBuffer(httpRequest.getRequestLine().getMethod());
 		//
 		for(final String headerName : HEADERS4CANONICAL) {
-			// support for multiple non-unique header keys
 			if(sharedHeadersMap.containsKey(headerName)) {
 				buffer.append('\n').append(sharedHeadersMap.get(headerName));
-			} else {
-				for(final Header header : httpRequest.getHeaders(headerName)) {
+			} else if(httpRequest.containsHeader(headerName)) {
+				for(final Header header: httpRequest.getHeaders(headerName)) {
 					buffer.append('\n').append(header.getValue());
 				}
+			} else {
+				buffer.append('\n');
 			}
 		}
 		//
@@ -184,7 +178,9 @@ extends WSRequestConfigBase<T> {
 		//
 		buffer.append('\n').append(httpRequest.getUriPath());
 		//
-		LOG.trace(Markers.MSG, "Canonical request representation:\n{}", buffer);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffer);
+		}
 		//
 		return buffer.toString();
 	}

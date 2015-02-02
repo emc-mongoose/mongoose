@@ -68,12 +68,11 @@ implements LoadExecutor<T> {
 	private final int totalThreadCount;
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
-	protected final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
-	protected final Meter reqBytes;
+	protected Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
+	protected Meter reqBytes;
 	protected Histogram respLatency;
 	//
 	protected final MBeanServer mBeanServer;
-	//
 	protected final JmxReporter jmxReporter;
 	// METRICS section END
 	protected LoadExecutorBase(
@@ -123,15 +122,6 @@ implements LoadExecutor<T> {
 		);
 		this.threadsPerNode = threadsPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		// init metrics
-		counterSubm = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUBM));
-		counterRej = metrics.counter(MetricRegistry.name(name, METRIC_NAME_REJ));
-		counterReqSucc = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUCC));
-		counterReqFail = metrics.counter(MetricRegistry.name(name, METRIC_NAME_FAIL));
-		reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));
-		//reqDur = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR));
-		respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
-		jmxReporter.start();
 		// prepare the node executors array
 		storageNodeAddrs = addrs.clone();
 		// create and configure the connection manager
@@ -316,6 +306,16 @@ implements LoadExecutor<T> {
 		}
 		//
 		if(pass) {
+			final String name = getName();
+			// init metrics
+			counterSubm = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUBM));
+			counterRej = metrics.counter(MetricRegistry.name(name, METRIC_NAME_REJ));
+			counterReqSucc = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUCC));
+			counterReqFail = metrics.counter(MetricRegistry.name(name, METRIC_NAME_FAIL));
+			reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));
+			//reqDur = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR));
+			respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
+			jmxReporter.start();
 			//
 			metricDumpThread.setName(getName());
 			metricDumpThread.start();
@@ -478,12 +478,15 @@ implements LoadExecutor<T> {
 			interrupt();
 			logMetrics(Markers.PERF_SUM); // provide summary metrics
 			// calculate the efficiency and report
-			double eff = 1.e3 * durSumTasks.get() / ((System.nanoTime() - tsStart) * totalThreadCount);
+			final float
+				loadDurMicroSec = (float) (System.nanoTime() - tsStart ) / 1000,
+				eff = durSumTasks.get() / (loadDurMicroSec * totalThreadCount);
 			LOG.debug(
 				Markers.PERF_SUM,
 				String.format(
-					Main.LOCALE_DEFAULT, "Calculated load execution efficiency: %3.3f[%%]",
-					100 * eff
+					Main.LOCALE_DEFAULT,
+					"Load execution duration: %3.3f[sec], efficiency: %3.3f[%%]",
+					loadDurMicroSec / 1e6, 100 * eff
 				)
 			);
 			try {

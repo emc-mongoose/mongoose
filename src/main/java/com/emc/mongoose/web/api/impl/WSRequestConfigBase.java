@@ -24,6 +24,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.nio.IOControl;
 //
+import org.apache.http.protocol.HttpDateGenerator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -416,17 +417,23 @@ implements WSRequestConfig<T> {
 			String.format(MSG_TMPL_RANGE_BYTES_APPEND, dataItem.getSize())
 		);
 	}
-	//
+	/*
 	protected final static DateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(
 		"EEE, dd MMM yyyy HH:mm:ss zzz", Main.LOCALE_DEFAULT
 	) {
 		{ setTimeZone(Main.TZ_UTC); }
-	};
+	};*/
+	//
+	private final static HttpDateGenerator DATE_GENERATOR = new HttpDateGenerator();
 	//
 	protected void applyDateHeader(final MutableHTTPRequest httpRequest) {
-		httpRequest.setHeader(
-			HttpHeaders.DATE, FMT_DATE_RFC1123.format(Main.CALENDAR_DEFAULT.getTime())
-		);
+		httpRequest.setHeader(HttpHeaders.DATE, DATE_GENERATOR.getCurrentDate());
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "Apply date header \"{}\" to the request: \"{}\"",
+				httpRequest.getLastHeader(HttpHeaders.DATE), httpRequest
+			);
+		}
 	}
 	//
 	protected abstract void applyAuthHeader(final MutableHTTPRequest httpRequest);

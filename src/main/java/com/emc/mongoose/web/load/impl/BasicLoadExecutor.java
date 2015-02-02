@@ -194,7 +194,7 @@ implements WSLoadExecutor<T> {
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask.getHttpContext());
 		} catch(final IllegalStateException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit the HTTP request");
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to submit the HTTP request");
 		}
 		return futureResult;
 	}

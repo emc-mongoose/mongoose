@@ -82,24 +82,24 @@ implements AsyncIOTask<T> {
 	public final void complete() {
 		final String dataItemId = dataItem.getId();
 		if(
-			respTimeDone > respTimeStart &&
-			respTimeStart > reqTimeDone &&
-			reqTimeDone > reqTimeStart
+			respTimeDone < respTimeStart ||
+			respTimeStart < reqTimeDone ||
+			reqTimeDone < reqTimeStart
 		) {
+			LOG.debug(
+				Markers.ERR, String.format(
+					FMT_PERF_TRACE_INVALID, nodeAddr, dataItemId == null ? Main.EMPTY : dataItemId,
+					transferSize, status.code,
+					reqTimeStart, reqTimeDone, respTimeStart, respTimeDone
+				)
+			);
+		} else {
 			LOG.info(
 				Markers.PERF_TRACE, String.format(
 					FMT_PERF_TRACE, nodeAddr, dataItemId == null ? Main.EMPTY : dataItemId,
 					transferSize, status.code,
 					reqTimeStart, reqTimeDone - reqTimeStart,
 					respTimeStart - reqTimeDone, respTimeDone - respTimeStart
-				)
-			);
-		} else {
-			LOG.debug(
-				Markers.ERR, String.format(
-					FMT_PERF_TRACE_INVALID, nodeAddr, dataItemId == null ? Main.EMPTY : dataItemId,
-					transferSize, status.code,
-					reqTimeStart, reqTimeDone, respTimeStart, respTimeDone
 				)
 			);
 		}
