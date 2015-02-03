@@ -109,8 +109,7 @@ implements Runnable{
 		}
 		multiSocketSvc.shutdown();
 		try {
-			final String[] runTimeout = runTimeConfig.getRunTime().split("\\.");
-			multiSocketSvc.awaitTermination(Long.valueOf(runTimeout[0]), TimeUnit.valueOf(runTimeout[1].toUpperCase()));
+			multiSocketSvc.awaitTermination(runTimeConfig.getRunTimeValue(), runTimeConfig.getRunTimeUnit());
 		} catch (final InterruptedException e) {
 			// do nothing
 			LOG.info(Markers.MSG, "Finish work.");

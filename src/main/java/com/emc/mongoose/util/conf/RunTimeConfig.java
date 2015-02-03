@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 /**
@@ -299,6 +300,12 @@ public final class RunTimeConfig
 	public final String getRunTime() {
 		return getString(KEY_RUN_TIME);
 	}
+	//
+	private String getFromRunTime(final int index) { return getRunTime().split("\\.")[index];}
+	//
+	public final TimeUnit getRunTimeUnit() { return TimeUnit.valueOf(getFromRunTime(1).toUpperCase());}
+	//
+	public final long getRunTimeValue() {return Long.valueOf(getFromRunTime(0));}
 	//
 	public final String getRunMode() {
 		return getString(KEY_RUN_MODE);
