@@ -1,4 +1,4 @@
-threadpool.queue.size:			1000000
+iothreads.persocket:			10
 queue.dataobject.size:			10000000
-timeout.idle.ms:				0
+
 

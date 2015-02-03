@@ -19,7 +19,6 @@ import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
 import org.apache.http.impl.nio.reactor.DefaultListeningIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpConnectionFactory;
-import org.apache.http.nio.NHttpServerConnection;
 import org.apache.http.nio.protocol.BasicAsyncRequestConsumer;
 import org.apache.http.nio.protocol.BasicAsyncResponseProducer;
 import org.apache.http.nio.protocol.HttpAsyncExchange;
@@ -52,73 +51,72 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 //
 /**
  * Created by olga on 28.01.15.
  */
-public class HttpMockServer {
+public class HttpMockServer
+implements Runnable{
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private static Map<String, WSObjectMock> MAP_DATA_OBJECT;
-	private static Queue<String> QUEUE_DATA_ID;
+	private final Map<String, WSObjectMock> mapDataObject;
+	private final Queue<String> queueDataId;
+	private final ExecutorService multiSocketSvc;
+	private final HttpAsyncService protocolHandler;
+	final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory = new DefaultNHttpServerConnectionFactory(
+		ConnectionConfig.DEFAULT);
+	//
+	private final static String NAME_SERVER = "StorageMock/0.1";
+	private final int portCount;
+	private final int portStart;
+	//
+	private final RunTimeConfig runTimeConfig;
 	//
 	public HttpMockServer(final RunTimeConfig runTimeConfig)
 	throws IOException {
+		this.runTimeConfig = runTimeConfig;
 		//queue size for data object
 		final int queueDataIdSize = runTimeConfig.getInt("wsmock.queue.dataobject.size");
-		QUEUE_DATA_ID = new ArrayBlockingQueue<>(queueDataIdSize);
-		MAP_DATA_OBJECT = new ConcurrentHashMap<>(queueDataIdSize);
+		queueDataId = new ArrayBlockingQueue<>(queueDataIdSize);
+		mapDataObject = new ConcurrentHashMap<>(queueDataIdSize);
 		// count of ports = Count of kernel-1 or 1.
-		final int portCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
+		portCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
 		LOG.trace(Markers.MSG, " There are {} processors.", portCount);
 		final String apiName = runTimeConfig.getStorageApi();
-		final int portStart = runTimeConfig.getInt("api." + apiName + ".port");
-		//for QueuedThreadPool
-		final int size = runTimeConfig.getInt("wsmock.threadpool.queue.size");
-		final int idleTimeout = runTimeConfig.getInt("wsmock.timeout.idle.ms");
+		portStart = runTimeConfig.getInt("api." + apiName + ".port");
 		// Set up the HTTP protocol processor
 		final HttpProcessor httpproc = HttpProcessorBuilder.create()
 			.add(new ResponseDate())
-			.add(new ResponseServer("Test/1.1"))
+			.add(new ResponseServer(NAME_SERVER))
 			.add(new ResponseContent())
 			.add(new ResponseConnControl()).build();
 		// Create request handler registry
 		final UriHttpAsyncRequestHandlerMapper reqistry = new UriHttpAsyncRequestHandlerMapper();
 		// Register the default handler for all URIs
 		reqistry.register("*", new HttpMockHandler());
-		final HttpAsyncService protocolHandler = new HttpAsyncService(httpproc, reqistry) {
-			//
-			@Override
-			public void connected(final NHttpServerConnection conn) {
-				super.connected(conn);
-			}
-			//
-			@Override
-			public void closed(final NHttpServerConnection conn) {
-				super.closed(conn);
-			}
-		};
-		final ThreadPoolExecutor threadPool = new ThreadPoolExecutor(portCount, portCount, idleTimeout,
-			TimeUnit.MILLISECONDS, new ArrayBlockingQueue<Runnable>(size), new WorkerFactory("workerWSMock"));
-		// Create HTTP connection factory
-		final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory = new DefaultNHttpServerConnectionFactory(
-			ConnectionConfig.DEFAULT);
-		//
+		protocolHandler = new HttpAsyncService(httpproc, reqistry);
+		multiSocketSvc = Executors.newFixedThreadPool(portCount, new WorkerFactory("workerWSMock"));
+	}
+
+	@Override
+	public void run() {
 		for (int i = 0; i < portCount; i++){
-			threadPool.execute( new WorkerTask(protocolHandler, connFactory, portStart + i));
+			multiSocketSvc.submit(new WorkerTask(protocolHandler, connFactory, portStart + i));
 			LOG.info(Markers.MSG, " WSMock can listen {} port.", portStart + i);
 		}
-		threadPool.shutdown();
+		multiSocketSvc.shutdown();
 		try {
-			threadPool.awaitTermination(1000, TimeUnit.DAYS);
+			final String[] runTimeout = runTimeConfig.getRunTime().split("\\.");
+			multiSocketSvc.awaitTermination(Long.valueOf(runTimeout[0]), TimeUnit.valueOf(runTimeout[1].toUpperCase()));
 		} catch (final InterruptedException e) {
 			// do nothing
+			LOG.info(Markers.MSG, "Finish work.");
 		}
-		// Create server-side I/O event dispatch
-		LOG.info(Markers.MSG, "Shutdown");
 	}
+
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	//Mock Handler
 	///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -187,9 +185,9 @@ public class HttpMockServer {
 	{
 		LOG.trace(Markers.MSG, " Request  method Get ");
 		response.setStatusCode(HttpStatus.SC_OK);
-		if (MAP_DATA_OBJECT.containsKey(dataID)) {
+		if (mapDataObject.containsKey(dataID)) {
 			LOG.trace(Markers.MSG, "   Send data object ", dataID);
-			final WSObjectMock object = MAP_DATA_OBJECT.get(dataID);
+			final WSObjectMock object = mapDataObject.get(dataID);
 			response.setEntity(object);
 			LOG.trace(Markers.MSG, "   Response: OK");
 		} else {
@@ -217,20 +215,20 @@ public class HttpMockServer {
 			final HttpEntity entity =  ((HttpEntityEnclosingRequest)request).getEntity();
 			final long bytes = EntityUtils.toByteArray(entity).length;
 			//create data object or get it for append or update
-			if(MAP_DATA_OBJECT.containsKey(dataID)) {
-				dataObject = MAP_DATA_OBJECT.get(dataID);
+			if(mapDataObject.containsKey(dataID)) {
+				dataObject = mapDataObject.get(dataID);
 			} else {
 				final byte dataIdBytes[] = Base64.decodeBase64(dataID);
 				final long offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
 				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 			}
 			try {
-				MAP_DATA_OBJECT.put(dataID, dataObject);
-				QUEUE_DATA_ID.add(dataID);
+				mapDataObject.put(dataID, dataObject);
+				queueDataId.add(dataID);
 			} catch (final OutOfMemoryError e) {
-				MAP_DATA_OBJECT.remove(QUEUE_DATA_ID.poll());
-				MAP_DATA_OBJECT.put(dataID, dataObject);
-				QUEUE_DATA_ID.add(dataID);
+				mapDataObject.remove(queueDataId.poll());
+				mapDataObject.put(dataID, dataObject);
+				queueDataId.add(dataID);
 			}
 		} catch (final IOException e) {
 			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -268,9 +266,9 @@ public class HttpMockServer {
 			final IOEventDispatch ioEventDispatch = new DefaultHttpServerIODispatch(protocolHandler, connFactory);
 			// Set I/O reactor defaults
 			final IOReactorConfig config = IOReactorConfig.custom()
-				.setIoThreadCount(10)
-				.setSoTimeout(3000)
-				.setConnectTimeout(3000)
+				.setIoThreadCount(runTimeConfig.getInt("wsmock.iothreads.persocket"))
+				.setSoTimeout(runTimeConfig.getSocketTimeOut())
+				.setConnectTimeout(runTimeConfig.getConnTimeOut())
 				.build();
 			// Create server-side I/O reactor
 			ListeningIOReactor ioReactor = null;
