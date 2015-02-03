@@ -169,11 +169,6 @@
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "instancePoolStats",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
 								"type": "ThresholdFilter",
 								"level": "INFO",
 								"onMatch": "NEUTRAL",

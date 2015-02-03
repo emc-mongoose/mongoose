@@ -24,30 +24,10 @@ extends TreeSet<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static class InstanceUsageStats {
-		private final static String FMT = "taken/released: %d/%d times";
-		private final AtomicLong
-			countTaken = new AtomicLong(0),
-			countReleased = new AtomicLong(0);
-		protected final void markTaken() {
-			countTaken.incrementAndGet();
-		}
-		protected final void markReleased() {
-			countReleased.incrementAndGet();
-		}
-		@Override
-		public final String toString() {
-			return String.format(FMT, countTaken.get(), countReleased.get());
-		}
-	}
-	public final static Map<Class, InstancePool> USAGE_STATS = new ConcurrentHashMap<>();
-	//
 	private final Class<T> instanceCls;
-	private final Map<Integer, InstanceUsageStats> instanceUsageMap = new ConcurrentHashMap<>();
 	//
 	public InstancePool(final Class<T> instanceCls) {
 		this.instanceCls = instanceCls;
-		USAGE_STATS.put(instanceCls, this);
 	}
 	//
 	@SuppressWarnings("unchecked")
@@ -69,11 +49,6 @@ extends TreeSet<T> {
 		}
 		remove(instance);
 		//
-		if(!instanceUsageMap.containsKey(instance.hashCode())) {
-			instanceUsageMap.put(instance.hashCode(), new InstanceUsageStats());
-		}
-		instanceUsageMap.get(instance.hashCode()).markTaken();
-		//
 		return (T) instance.reuse(args);
 	}
 	//
@@ -84,8 +59,6 @@ extends TreeSet<T> {
 					Markers.ERR, "The \"{}\" already contains instance \"{}\"",
 					toString(), instance.hashCode()
 				);
-			} else {
-				instanceUsageMap.get(instance.hashCode()).markReleased();
 			}
 		}
 	}
@@ -93,27 +66,8 @@ extends TreeSet<T> {
 	@Override
 	public final String toString() {
 		return String.format(
-			Main.LOCALE_DEFAULT, "pool<%s> instances: %d",
-			instanceCls.getCanonicalName(), instanceUsageMap.size()
+			Main.LOCALE_DEFAULT, "%s: %d instances are in the pool",
+			instanceCls.getCanonicalName(), size()
 		);
-	}
-	//
-	@SuppressWarnings("unchecked")
-	public static void dumpStats() {
-		InstancePool instancePool;
-		Set<Integer> poolInstances;
-		for(final Class cls : USAGE_STATS.keySet()) {
-			instancePool = USAGE_STATS.get(cls);
-			LOG.debug(Markers.INSTANCE_POOL_STATS, instancePool);
-			if(LOG.isTraceEnabled(Markers.INSTANCE_POOL_STATS)) {
-				poolInstances = (Set<Integer>) instancePool.instanceUsageMap.keySet();
-				for(final Integer hashCode : poolInstances) {
-					LOG.trace(
-						Markers.INSTANCE_POOL_STATS, "\t{}: {}",
-						hashCode, instancePool.instanceUsageMap.get(hashCode).toString()
-					);
-				}
-			}
-		}
 	}
 }

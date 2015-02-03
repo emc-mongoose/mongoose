@@ -165,11 +165,6 @@
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "instancePoolStats",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
 								"type": "ThresholdFilter",
 								"level": "INFO",
 								"onMatch": "NEUTRAL",
@@ -258,18 +253,6 @@
 					"PatternLayout": { "pattern": "%m%n" },
 					"MarkerFilter": {
 						"marker": "dataList",
-						"onMatch": "ACCEPT",
-						"onMismatch": "DENY"
-					}
-				}, {
-					"name": "instancePoolDumpFile",
-					"type": "File",
-					"append": "False",
-					"bufferedIO": "true",
-					"fileName": "${path.log}instance.pool.stats",
-					"PatternLayout": { "pattern": "%m%n" },
-					"MarkerFilter": {
-						"marker": "instancePoolStats",
 						"onMatch": "ACCEPT",
 						"onMismatch": "DENY"
 					}

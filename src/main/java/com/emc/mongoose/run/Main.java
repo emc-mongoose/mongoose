@@ -175,8 +175,6 @@ public final class Main {
 				);
 		}
 		//
-		InstancePool.dumpStats();
-		//
 		((LifeCycle) LogManager.getContext()).stop();
 		System.exit(0); // ????!!
 	}
