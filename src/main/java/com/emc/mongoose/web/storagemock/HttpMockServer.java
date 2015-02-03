@@ -1,10 +1,14 @@
 package com.emc.mongoose.web.storagemock;
 //
+import com.codahale.metrics.JmxReporter;
+import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
+import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
+import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -42,6 +46,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import javax.management.MBeanServer;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
@@ -70,18 +75,37 @@ implements Runnable{
 		ConnectionConfig.DEFAULT);
 	//
 	private final static String NAME_SERVER = "StorageMock/0.1";
+	private final static int BASE_16 = 16,
+		BASE_36 = 36,
+		BASE_64 = 64;
+	private final int baseDataID;
 	private final int portCount;
 	private final int portStart;
 	//
 	private final RunTimeConfig runTimeConfig;
 	//
+	private final JmxReporter metricsReporter;
+	//
 	public HttpMockServer(final RunTimeConfig runTimeConfig)
 	throws IOException {
 		this.runTimeConfig = runTimeConfig;
+		//
+		final MetricRegistry metrics = new MetricRegistry();
+		final MBeanServer mBeanServer;
+		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());
+		metricsReporter = JmxReporter.forRegistry(metrics)
+			.convertDurationsTo(TimeUnit.SECONDS)
+			.convertRatesTo(TimeUnit.SECONDS)
+			.registerWith(mBeanServer)
+			.build();
+		//
+		metricsReporter.start();
 		//queue size for data object
 		final int queueDataIdSize = runTimeConfig.getInt("wsmock.queue.dataobject.size");
 		queueDataId = new ArrayBlockingQueue<>(queueDataIdSize);
 		mapDataObject = new ConcurrentHashMap<>(queueDataIdSize);
+		//
+		baseDataID = runTimeConfig.getInt("wsmock.data.id.base");
 		// count of ports = Count of kernel-1 or 1.
 		portCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
 		LOG.trace(Markers.MSG, " There are {} processors.", portCount);
@@ -112,7 +136,9 @@ implements Runnable{
 			multiSocketSvc.awaitTermination(runTimeConfig.getRunTimeValue(), runTimeConfig.getRunTimeUnit());
 		} catch (final InterruptedException e) {
 			// do nothing
-			LOG.info(Markers.MSG, "Finish work.");
+			LOG.info(Markers.MSG, "Interrupting the WSMock");
+		} finally {
+			metricsReporter.close();
 		}
 	}
 
@@ -217,17 +243,33 @@ implements Runnable{
 			if(mapDataObject.containsKey(dataID)) {
 				dataObject = mapDataObject.get(dataID);
 			} else {
-				final byte dataIdBytes[] = Base64.decodeBase64(dataID);
-				final long offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
+				long offset = 0;
+				switch (baseDataID){
+					case BASE_64:
+						final byte dataIdBytes[] = Base64.decodeBase64(dataID);
+						offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
+						break;
+					case BASE_36:
+						offset = Long.valueOf(dataID, WSRequestConfigBase.RADIX);
+						break;
+					case BASE_16:
+						offset = Long.valueOf(dataID, 0x10);
+						break;
+				}
 				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 			}
 			try {
-				mapDataObject.put(dataID, dataObject);
-				queueDataId.add(dataID);
-			} catch (final OutOfMemoryError e) {
-				mapDataObject.remove(queueDataId.poll());
-				mapDataObject.put(dataID, dataObject);
-				queueDataId.add(dataID);
+				synchronized (queueDataId) {
+					if (!queueDataId.offer(dataID)) {
+						LOG.trace(Markers.MSG, " Queue is full");
+						mapDataObject.remove(queueDataId.remove());
+						queueDataId.add(dataID);
+					}
+					mapDataObject.put(dataID, dataObject);
+				}
+			}catch (final IllegalStateException  e){
+				//response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				TraceLogger.failure(LOG, Level.WARN, e, "Memory is full");
 			}
 		} catch (final IOException e) {
 			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
