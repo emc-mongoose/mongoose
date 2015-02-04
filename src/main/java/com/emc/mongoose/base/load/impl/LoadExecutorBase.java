@@ -272,40 +272,14 @@ implements LoadExecutor<T> {
 		//
 	}
 	//
-	private long tsStart;
+	private final AtomicLong tsStart = new AtomicLong(-1);
 	//
 	@Override
-	public synchronized void start() {
-		boolean pass = !metricDumpThread.isAlive(); // don't pass if started already
-		//
-		if(pass) {
+	public void start() {
+		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			//
 			prestartAllCoreThreads();
 			//
-			if(producer == null) {
-				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
-			} else {
-				//
-				try {
-					reqConfig.configureStorage(this);
-				} catch(final IllegalStateException e) {
-					//pass = false;
-					TraceLogger.failure(LOG, Level.WARN, e, "Failed to configure the storage");
-				}
-				//
-				try {
-					producer.start();
-					LOG.debug(Markers.MSG, "Started object producer {}", producer);
-				} catch(final IOException e) {
-					pass = false;
-					TraceLogger.failure(LOG, Level.WARN, e, "Failed to start the producer");
-				}
-			}
-		} else {
-			LOG.warn(Markers.ERR, "Second start attempt - skipped");
-		}
-		//
-		if(pass) {
 			final String name = getName();
 			// init metrics
 			counterSubm = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUBM));
@@ -320,10 +294,27 @@ implements LoadExecutor<T> {
 			metricDumpThread.setName(getName());
 			metricDumpThread.start();
 			//
-			tsStart = System.nanoTime();
+			if(producer == null) {
+				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
+			} else {
+				//
+				try {
+					reqConfig.configureStorage(this);
+				} catch(final IllegalStateException e) {
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to configure the storage");
+				}
+				//
+				try {
+					producer.start();
+					LOG.debug(Markers.MSG, "Started object producer {}", producer);
+				} catch(final IOException e) {
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to start the producer");
+				}
+			}
+			//
 			LOG.info(Markers.MSG, "Started \"{}\"", getName());
 		} else {
-			LOG.warn(Markers.MSG, "Not started \"{}\" due to failures", getName());
+			LOG.warn(Markers.ERR, "Second start attempt - skipped");
 		}
 	}
 	//
@@ -358,7 +349,11 @@ implements LoadExecutor<T> {
 	@Override @SuppressWarnings("unchecked")
 	public void submit(final T dataItem)
 	throws RemoteException, InterruptedException {
-		if(maxCount > counterSubm.getCount()) {
+		if(tsStart.get() < 0) {
+			throw new RejectedExecutionException(
+				"Not started yet, rejecting the submit of the data item"
+			);
+		} else if(maxCount > counterSubm.getCount()) {
 			if(dataItem == null) {
 				LOG.debug(Markers.MSG, "{}: poison submitted, performing the shutdown", getName());
 				shutdown(); // stop further submitting
@@ -479,7 +474,7 @@ implements LoadExecutor<T> {
 			logMetrics(Markers.PERF_SUM); // provide summary metrics
 			// calculate the efficiency and report
 			final float
-				loadDurMicroSec = (float) (System.nanoTime() - tsStart ) / 1000,
+				loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
 				eff = durSumTasks.get() / (loadDurMicroSec * totalThreadCount);
 			LOG.debug(
 				Markers.PERF_SUM,

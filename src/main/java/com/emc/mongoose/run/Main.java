@@ -39,7 +39,6 @@ public final class Main {
 	//
 	public final static TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
 	public final static Locale LOCALE_DEFAULT = Locale.ROOT;
-	public final static Calendar CALENDAR_DEFAULT = Calendar.getInstance(Main.TZ_UTC, LOCALE_DEFAULT);
 	public final static DateFormat FMT_DT = new SimpleDateFormat(
 		"yyyy.MM.dd.HH.mm.ss.SSS", LOCALE_DEFAULT
 	) {
@@ -188,7 +187,8 @@ public final class Main {
 		String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 		if(runId==null || runId.length()==0) {
 			System.setProperty(
-				RunTimeConfig.KEY_RUN_ID, FMT_DT.format(CALENDAR_DEFAULT.getTime())
+				RunTimeConfig.KEY_RUN_ID,
+				FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
 			);
 		}
 		// make all used loggers asynchronous

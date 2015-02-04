@@ -49,23 +49,23 @@ implements Externalizable {
 	//
 	public final static String
 		LIST_SEP = ",",
-	//
-	KEY_DATA_COUNT = "data.count",
+		//
+		KEY_DATA_COUNT = "data.count",
 		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_SIZE_BIAS = "data.size.bias",
 		KEY_DATA_RING_SEED = "data.ring.seed",
 		KEY_DATA_RING_SIZE = "data.ring.size",
-	//
-	KEY_LOAD_THREADS = "load.threads",
+		//
+		KEY_LOAD_THREADS = "load.threads",
 		KEY_LOAD_TIME = "load.step.time",
-	//
-	KEY_RUN_ID = "run.id",
+		//
+		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
 		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
 		KEY_RUN_TIME = "run.time",
 		KEY_RUN_VERSION = "run.version",
-	//
-	KEY_STORAGE_ADDRS = "storage.addrs",
+		//
+		KEY_STORAGE_ADDRS = "storage.addrs",
 		KEY_STORAGE_API = "storage.api";
 	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
@@ -449,7 +449,8 @@ implements Externalizable {
 		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
 		if(runTimeConfig != null) {
 			runTimeConfig.set(
-				KEY_RUN_ID, Main.FMT_DT.format(Main.CALENDAR_DEFAULT.getTime())
+				KEY_RUN_ID,
+				Main.FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
 			);
 		}
 		return runTimeConfig;

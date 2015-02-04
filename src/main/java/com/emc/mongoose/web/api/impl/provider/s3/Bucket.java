@@ -27,6 +27,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 /**
  Created by kurila on 02.10.14.
@@ -48,7 +49,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
-			final Date dt = Main.CALENDAR_DEFAULT.getTime();
+			final Date dt = Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime();
 			this.name = "mongoose-" + Main.FMT_DT.format(dt);
 		} else {
 			this.name = name;
