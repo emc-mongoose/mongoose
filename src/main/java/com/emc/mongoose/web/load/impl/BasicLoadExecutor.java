@@ -48,6 +48,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -188,13 +189,16 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> ioTask) {
+	public final Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> ioTask)
+	throws RemoteException {
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-		Future<AsyncIOTask.Status> futureResult = null;
+		Future<WSIOTask.Status> futureResult;
 		try {
-			futureResult = client.execute(wsTask, wsTask, connPool, wsTask.getHttpContext());
+			futureResult = client.execute(
+				wsTask, wsTask, connPool, wsTask.getHttpContext()
+			);
 		} catch(final IllegalStateException e) {
-			TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to submit the HTTP request");
+			throw new RemoteException("I/O task submit failure", e);
 		}
 		return futureResult;
 	}

@@ -487,6 +487,13 @@
 						"ref": "async"
 					}
 				}, {
+					"name": "com.emc.mongoose.web.load.impl.tasks",
+					"level": "trace",
+					"additivity": "false",
+					"AppenderRef": {
+					  "ref": "async"
+					}
+				}, {
 					"name": "com.emc.mongoose.web.load.client.impl",
 					"level": "debug",
 					"additivity": "false",

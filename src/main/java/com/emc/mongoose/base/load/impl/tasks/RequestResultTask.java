@@ -34,7 +34,7 @@ implements Runnable, Reusable {
 		AsyncIOTask.Status ioTaskStatus = AsyncIOTask.Status.FAIL_UNKNOWN;
 		try {
 			ioTaskStatus = futureResult.get(); // submit done
-			if(ioTask != null && LOG.isTraceEnabled(Markers.MSG)) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Task #{} done w/ result {}",
 					ioTask.hashCode(), ioTaskStatus.name()
@@ -48,13 +48,15 @@ implements Runnable, Reusable {
 			TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");
 		}
 		//
-		try {
-			executor.handleResult(ioTask, ioTaskStatus);
-		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.DEBUG, e, "Request result handling failed");
-		} finally {
-			release();
+		if(executor != null) {
+			try {
+				executor.handleResult(ioTask, ioTaskStatus);
+			} catch(final IOException e) {
+				TraceLogger.failure(LOG, Level.DEBUG, e, "Request result handling failed");
+			}
 		}
+		//
+		release();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static InstancePool<RequestResultTask>
@@ -82,9 +84,15 @@ implements Runnable, Reusable {
 			}
 			if(args.length > 1) {
 				ioTask = (AsyncIOTask<T>) args[1];
+				if(ioTask == null) {
+					throw new IllegalArgumentException("I/O task shouldn't be null");
+				}
 			}
 			if(args.length > 2) {
 				futureResult = (Future<AsyncIOTask.Status>) args[2];
+				if(futureResult == null) {
+					throw new IllegalArgumentException("I/O task future result shouldn't be null");
+				}
 			}
 		} else {
 			throw new IllegalStateException("Not yet released instance reuse attempt");

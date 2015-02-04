@@ -16,7 +16,10 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
 import java.net.MalformedURLException;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.URLDecoder;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +32,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RemoteStub;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 /**
@@ -84,12 +88,45 @@ public final class ServiceUtils {
 	}
 	//
 	public static String getHostAddr() {
-		InetAddress addr;
+		InetAddress addr = null;
+		//
 		try {
-			addr = InetAddress.getLocalHost();
-		} catch(final UnknownHostException e) {
+			final Enumeration<NetworkInterface> netIfaces = NetworkInterface.getNetworkInterfaces();
+			NetworkInterface nextNetIface;
+			while(netIfaces.hasMoreElements()) {
+				nextNetIface = netIfaces.nextElement();
+				if(!nextNetIface.isLoopback() && nextNetIface.isUp()) {
+					if(nextNetIface.getInetAddresses().hasMoreElements()) {
+						addr = nextNetIface.getInetAddresses().nextElement();
+						LOG.debug(
+							Markers.MSG, "Resolved external interface \"{}\" address: {}",
+							nextNetIface.getDisplayName(), addr.getHostAddress()
+						);
+						break;
+					} else {
+						LOG.debug(
+							Markers.MSG, "Interface \"{}\" has no assigned address, skipping",
+							nextNetIface.getDisplayName()
+						);
+					}
+				} else {
+					LOG.debug(
+						Markers.MSG, "Interface \"{}\" is loopback or is not up, skipping",
+						nextNetIface.getDisplayName()
+					);
+				}
+			}
+		} catch(final SocketException e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to get an external interface address");
+		}
+		//
+		if(addr == null) {
+			LOG.warn(
+				Markers.ERR, "No valid external interface have been found, falling to loopback"
+			);
 			addr = InetAddress.getLoopbackAddress();
 		}
+		//
 		return addr.getHostAddress();
 	}
 	//

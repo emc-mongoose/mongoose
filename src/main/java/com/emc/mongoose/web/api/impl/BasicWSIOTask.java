@@ -16,6 +16,7 @@ import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.lang.text.StrBuilder;
 //
+import org.apache.http.ConnectionClosedException;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
@@ -480,7 +481,15 @@ implements WSIOTask<T> {
 	@Override
 	public final void failed(final Exception e) {
 		exception = e;
-		TraceLogger.failure(LOG, Level.DEBUG, e, "Response processing failure");
+		if(wsReqConf != null && !wsReqConf.isClosed()) {
+			if(ConnectionClosedException.class.isInstance(e)) {
+				TraceLogger.failure(
+					LOG, Level.WARN, e, "I/O task failed due to unexpectedly closed connection"
+				);
+			} else {
+				TraceLogger.failure(LOG, Level.WARN, e, "I/O task failed");
+			}
+		}
 	}
 	//
 	@Override
