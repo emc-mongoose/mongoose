@@ -464,7 +464,11 @@ implements WSRequestConfig<T> {
 						ok = dataItem.isContentEqualTo(contentStream);
 					} catch(final IOException e) {
 						ok = false;
-						TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
+						if(isClosed()) {
+							TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
+						} else {
+							TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
+						}
 					}
 				} else { // read, verification is disabled - consume quietly
 					playStreamQuetly(contentStream);
