@@ -2,6 +2,7 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
@@ -95,11 +96,28 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
+		//
+		String nodeAddr = null;
+		int port = reqConf.getPort();
+		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
+		try {
+			nodeAddr = localRunTimeConfig.getStorageAddrs()[0];
+			if(nodeAddr != null) {
+				if(nodeAddr.contains(RequestConfig.HOST_PORT_SEP)) {
+					final String nodeAddrParts[] = nodeAddr.split(RequestConfig.HOST_PORT_SEP);
+					if(nodeAddrParts.length == 2) {
+						nodeAddr = nodeAddrParts[0];
+						port = Integer.valueOf(nodeAddrParts[1]);
+					}
+				}
+			}
+		} catch(final Exception e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to determine the target node address");
+		}
+		//
 		return wsClient.execute(
-			new HttpHost(
-				Main.RUN_TIME_CONFIG.get().getStorageAddrs()[0],
-				reqConf.getPort(), reqConf.getScheme()
-			), httpReq
+			new HttpHost(nodeAddr, port, reqConf.getScheme()),
+			httpReq
 		);
 	}
 	//

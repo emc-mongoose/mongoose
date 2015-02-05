@@ -17,6 +17,7 @@ public interface RequestConfig<T extends DataItem>
 extends Externalizable, Cloneable, Closeable {
 	//
 	long serialVersionUID = 42L;
+	String HOST_PORT_SEP = ":";
 	//
 	RequestConfig<T> clone()
 	throws CloneNotSupportedException;

@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 06.06.14.
  The most common implementation of the shared request configuration.
@@ -34,7 +35,7 @@ implements RequestConfig<T> {
 	protected DataSource<T>
 		dataSrc;
 	protected volatile boolean
-		retryFlag, verifyContentFlag, anyDataProducerEnabled, closeFlag = false;
+		retryFlag, verifyContentFlag, anyDataProducerEnabled, closeFlag = true;
 	protected volatile RunTimeConfig
 		runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	protected volatile String

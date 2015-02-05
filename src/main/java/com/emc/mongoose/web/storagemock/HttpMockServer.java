@@ -2,12 +2,14 @@ package com.emc.mongoose.web.storagemock;
 //
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
+import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
@@ -250,7 +252,7 @@ implements Runnable{
 						offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
 						break;
 					case BASE_36:
-						offset = Long.valueOf(dataID, WSRequestConfigBase.RADIX);
+						offset = Long.valueOf(dataID, DataObject.ID_RADIX);
 						break;
 					case BASE_16:
 						offset = Long.valueOf(dataID, 0x10);

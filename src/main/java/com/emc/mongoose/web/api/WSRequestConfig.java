@@ -3,6 +3,7 @@ package com.emc.mongoose.web.api;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //

@@ -489,6 +489,7 @@ implements LoadExecutor<T> {
 			}
 			try {
 				// force shutdown
+				reqConfig.close(); // disables connection drop failures
 				LOG.debug(Markers.MSG, "{}: dropped {} tasks", getName(), shutdownNow().size());
 				// poison the consumer
 				consumer.submit(null);

@@ -139,7 +139,6 @@ implements WSIOTask<T> {
 	}
 	//
 	private final static Map<String, HttpHost> HTTP_HOST_MAP = new ConcurrentHashMap<>();
-	private final static String HOST_PORT_SEP = ":";
 	@Override
 	public final WSIOTask<T> setNodeAddr(final String nodeAddr)
 	throws InterruptedException {
@@ -148,12 +147,13 @@ implements WSIOTask<T> {
 		if(HTTP_HOST_MAP.containsKey(nodeAddr)) {
 			tgtHost = HTTP_HOST_MAP.get(nodeAddr);
 		} else if(nodeAddr != null) {
-			if(nodeAddr.contains(HOST_PORT_SEP)) {
+			if(nodeAddr.contains(RequestConfig.HOST_PORT_SEP)) {
 				try {
-					final String nodeAddrParts[] = nodeAddr.split(HOST_PORT_SEP);
+					final String nodeAddrParts[] = nodeAddr.split(RequestConfig.HOST_PORT_SEP);
 					if(nodeAddrParts.length == 2) {
 						tgtHost = new HttpHost(
-							nodeAddrParts[0], Integer.valueOf(nodeAddrParts[1]), wsReqConf.getScheme()
+							nodeAddrParts[0],
+							Integer.valueOf(nodeAddrParts[1]), wsReqConf.getScheme()
 						);
 					} else {
 						throw new InterruptedException("Stop due to irrecoverable failure");
@@ -481,7 +481,7 @@ implements WSIOTask<T> {
 	@Override
 	public final void failed(final Exception e) {
 		exception = e;
-		if(wsReqConf != null && !wsReqConf.isClosed()) {
+		/*if(wsReqConf != null && !wsReqConf.isClosed()) {
 			TraceLogger.failure(LOG, Level.WARN, e, "I/O task failure");
 		} else if(
 			ConnectionClosedException.class.isInstance(e) ||
@@ -490,7 +490,7 @@ implements WSIOTask<T> {
 			TraceLogger.failure(LOG, Level.TRACE, e, "Looks like dropped I/O task");
 		} else {
 			TraceLogger.failure(LOG, Level.WARN, e, "I/O task failure");
-		}
+		}*/
 	}
 	//
 	@Override
