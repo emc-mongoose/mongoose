@@ -90,7 +90,7 @@ implements Reusable {
 	}
 	//
 	@Override @SuppressWarnings("NullableProblems")
-	public final int compareTo(Reusable another) {
+	public final int compareTo(final Reusable another) {
 		return another == null ? 1 : hashCode() - another.hashCode();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

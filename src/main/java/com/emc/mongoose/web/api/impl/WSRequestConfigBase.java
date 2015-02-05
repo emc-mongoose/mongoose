@@ -40,8 +40,6 @@ import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -462,7 +460,7 @@ implements WSRequestConfig<T> {
 		if(dataItem != null) {
 			if(loadType == AsyncIOTask.Type.READ) { // read
 				if(verifyContentFlag) { // read and do verify
-					ok = dataItem.compareWith(contentStream);
+					ok = dataItem.isContentEqualTo(contentStream);
 				} else { // read, verification is disabled - consume quetly
 					consumeContentQuetly(contentStream, ioCtl);
 				}

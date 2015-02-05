@@ -40,7 +40,6 @@ import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
 //
 import org.apache.logging.log4j.Level;
@@ -105,7 +104,6 @@ implements WSLoadExecutor<T> {
 		);
 		//
 		ConnectingIOReactor localIOReactor = null;
-		BasicNIOConnPool localConnPool = null;
 		final IOReactorConfig ioReactorConfig = IOReactorConfig
 			.custom()
 			.setIoThreadCount(threadCount)
@@ -120,27 +118,38 @@ implements WSLoadExecutor<T> {
 			localIOReactor = new DefaultConnectingIOReactor(
 				ioReactorConfig, new WorkerFactory(getName() + "-worker")
 			);
-			//
-			localConnPool = new BasicNIOConnPool(localIOReactor, connConfig);
-			localConnPool.setDefaultMaxPerRoute(threadCount);
-			localConnPool.setMaxTotal(threadCount);
 		} catch(final IOReactorException e) {
 			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
 		} finally {
 			ioReactor = localIOReactor;
-			connPool = localConnPool;
 		}
 		//
-		clientThread = new Thread(
-			new ExecuteClientTask<>(this, ioEventDispatch, ioReactor),
-			getName() + "-asyncWebClient"
-		);
+		if(ioReactor != null) {
+			connPool = new BasicNIOConnPool(ioReactor, connConfig);
+			connPool.setDefaultMaxPerRoute(threadCount);
+			connPool.setMaxTotal(threadCount);
+		} else {
+			connPool = null;
+		}
+		//
+		if(ioReactor == null) {
+			clientThread = null;
+		} else {
+			clientThread = new Thread(
+				new ExecuteClientTask<>(this, ioEventDispatch, ioReactor),
+				getName() + "-asyncWebClient"
+			);
+		}
 	}
 	//
 	@Override
 	public synchronized void start() {
-		clientThread.start();
-		super.start();
+		if(clientThread == null) {
+			LOG.debug(Markers.ERR, "Not starting web load client due to initialization failures");
+		} else {
+			clientThread.start();
+			super.start();
+		}
 	}
 	//
 	@Override
@@ -156,10 +165,14 @@ implements WSLoadExecutor<T> {
 			new Runnable() {
 				@Override
 				public final void run() {*/
-					try {
-						ioReactor.shutdown(/*timeOutMilliSec*/);
-					} catch(final IOException e) {
-						TraceLogger.failure(LOG, Level.DEBUG, e, "I/O reactor shutdown failure");
+					if(ioReactor != null) {
+						try {
+							ioReactor.shutdown(/*timeOutMilliSec*/);
+						} catch(final IOException e) {
+							TraceLogger.failure(
+								LOG, Level.DEBUG, e, "I/O reactor shutdown failure"
+							);
+						}
 					}
 				/*}
 			}
@@ -173,7 +186,9 @@ implements WSLoadExecutor<T> {
 					} catch(final InterruptedException e) {
 						ExceptionHandler.failure(LOG, Level.DEBUG, e, "Interruption");
 					} finally {*/
-						clientThread.interrupt();
+						if(clientThread != null) {
+							clientThread.interrupt();
+						}
 					/*}
 				}
 			}
@@ -191,6 +206,11 @@ implements WSLoadExecutor<T> {
 	@Override
 	public final Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> ioTask)
 	throws RemoteException {
+		if(connPool == null) {
+			throw new RemoteException(
+				"Unable to submit the I/O task due to client initialization failure"
+			);
+		}
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
 		Future<WSIOTask.Status> futureResult;
 		try {

@@ -122,7 +122,7 @@ public final class ServiceUtils {
 		//
 		if(addr == null) {
 			LOG.warn(
-				Markers.ERR, "No valid external interface have been found, falling to loopback"
+				Markers.ERR, "No valid external interface have been found, falling back to loopback"
 			);
 			addr = InetAddress.getLoopbackAddress();
 		}

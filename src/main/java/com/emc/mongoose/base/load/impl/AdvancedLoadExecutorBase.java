@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.rmi.RemoteException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 15.12.14.
@@ -79,7 +80,7 @@ extends LoadExecutorBase<T> {
 	// intercepts the data items which should be scheduled for update or append
 	@Override
 	public final void submit(final T dataItem)
-	throws InterruptedException, RemoteException {
+	throws InterruptedException, RemoteException, RejectedExecutionException {
 		if(dataItem != null) {
 			switch(loadType) {
 				case APPEND:

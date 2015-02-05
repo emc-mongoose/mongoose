@@ -348,7 +348,7 @@ implements LoadExecutor<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void submit(final T dataItem)
-	throws RemoteException, InterruptedException {
+	throws RemoteException, RejectedExecutionException, InterruptedException {
 		if(tsStart.get() < 0) {
 			throw new RejectedExecutionException(
 				"Not started yet, rejecting the submit of the data item"
@@ -436,8 +436,8 @@ implements LoadExecutor<T> {
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
-		} catch(final RemoteException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Looks like a network failure");
+		} catch(final RemoteException | RejectedExecutionException e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Passing the data item to consumer failed");
 		}
 	}
 	//
@@ -470,20 +470,23 @@ implements LoadExecutor<T> {
 			String.format("invoked close of %s", getName())
 		);
 		if(isClosed.compareAndSet(false, true)) {
-			interrupt();
-			logMetrics(Markers.PERF_SUM); // provide summary metrics
-			// calculate the efficiency and report
-			final float
-				loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
-				eff = durSumTasks.get() / (loadDurMicroSec * totalThreadCount);
-			LOG.debug(
-				Markers.PERF_SUM,
-				String.format(
-					Main.LOCALE_DEFAULT,
-					"Load execution duration: %3.3f[sec], efficiency: %3.3f[%%]",
-					loadDurMicroSec / 1e6, 100 * eff
-				)
-			);
+			final long tsStartNanoSec = tsStart.get();
+			if(tsStartNanoSec > 0) {
+				interrupt();
+				logMetrics(Markers.PERF_SUM); // provide summary metrics
+				// calculate the efficiency and report
+				final float
+					loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
+					eff = durSumTasks.get() / (loadDurMicroSec * totalThreadCount);
+				LOG.debug(
+					Markers.PERF_SUM,
+					String.format(
+						Main.LOCALE_DEFAULT,
+						"Load execution duration: %3.3f[sec], efficiency estimation: %3.3f[%%]",
+						loadDurMicroSec / 1e6, 100 * eff
+					)
+				);
+			}
 			try {
 				// force shutdown
 				LOG.debug(Markers.MSG, "{}: dropped {} tasks", getName(), shutdownNow().size());
@@ -496,6 +499,8 @@ implements LoadExecutor<T> {
 						"%s: interrupted on feeding the poison to the consumer", getName()
 					)
 				);
+			} catch(final IllegalStateException | RejectedExecutionException e) {
+				TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
 				jmxReporter.close();
 				LoadCloseHook.del(this);

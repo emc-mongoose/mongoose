@@ -49,7 +49,7 @@ implements Runnable, Reusable {
 						loadSvc.submit(dataItem);
 						break;
 					} catch(final RemoteException e) {
-						rejectCount++;
+						rejectCount ++;
 						Thread.sleep(retryDelayMilliSec);
 					}
 				} catch(final InterruptedException e) {

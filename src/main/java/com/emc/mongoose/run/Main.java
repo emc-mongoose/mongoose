@@ -206,6 +206,8 @@ public final class Main {
 			) ?
 				FNAME_LOGGING_LOCAL : FNAME_LOGGING_REMOTE
 		);
+		// connect JUL to Log4J2
+		System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
 		// go
 		Configurator.initialize(null, logConfPath.toUri().toString());
 		return LogManager.getRootLogger();

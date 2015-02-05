@@ -21,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.concurrent.RejectedExecutionException;
 /**
  Created by kurila on 09.10.14.
  */
@@ -102,9 +103,9 @@ extends DefaultHandler {
 					} else {
 						endDocument();
 					}
-				} catch(final RemoteException e) {
+				} catch(final RemoteException | RejectedExecutionException e) {
 					TraceLogger.failure(
-						LOG, Level.WARN, e, "Failed to submit new data object to remote consumer"
+						LOG, Level.WARN, e, "Failed to submit new data object to the consumer"
 					);
 				} catch(final InterruptedException e) {
 					endDocument();

@@ -8,12 +8,14 @@ import com.emc.mongoose.web.load.WSLoadExecutor;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 //
+import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.net.SocketException;
 /**
 Created by kurila on 30.01.15.
 */ //
@@ -40,6 +42,11 @@ implements Runnable {
 		LOG.debug(Markers.MSG, "Running the web storage client");
 		try {
 			ioReactor.execute(ioEventDispatch);
+		} catch(final IOReactorException e) {
+			TraceLogger.failure(
+				LOG, Level.ERROR, e,
+				"Possible max open files limit exceeded, please check the environment configuration"
+			);
 		} catch(final InterruptedIOException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
 		} catch(final IOException e) {

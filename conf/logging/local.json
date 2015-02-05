@@ -271,8 +271,7 @@
 						{ "ref": "perfSumFile" },
 						{ "ref": "perfTraceFile" },
 						{ "ref": "hibernate" },
-						{ "ref": "WebUI" },
-						{ "ref": "instancePoolDumpFile" }
+						{ "ref": "WebUI" }
 					]
 				}
 			]

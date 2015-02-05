@@ -400,8 +400,10 @@ implements LoadClient<T> {
 						metaInfoLog.submit(nextMetaInfoRec);
 					}
 				}
-			} catch(final InterruptedException e) {
-				// do nothing
+			} catch(final InterruptedException | RejectedExecutionException e) {
+				if(LOG.isTraceEnabled(Markers.ERR)) {
+					TraceLogger.failure(LOG, Level.TRACE, e, "Failed to log the metainfo frame");
+				}
 			}
 		}
 	}

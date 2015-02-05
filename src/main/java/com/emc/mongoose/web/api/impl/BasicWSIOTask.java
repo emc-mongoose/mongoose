@@ -482,13 +482,14 @@ implements WSIOTask<T> {
 	public final void failed(final Exception e) {
 		exception = e;
 		if(wsReqConf != null && !wsReqConf.isClosed()) {
-			if(ConnectionClosedException.class.isInstance(e)) {
-				TraceLogger.failure(
-					LOG, Level.WARN, e, "I/O task failed due to unexpectedly closed connection"
-				);
-			} else {
-				TraceLogger.failure(LOG, Level.WARN, e, "I/O task failed");
-			}
+			TraceLogger.failure(LOG, Level.WARN, e, "I/O task failure");
+		} else if(
+			ConnectionClosedException.class.isInstance(e) ||
+			IllegalStateException.class.isInstance(e)
+		) {
+			TraceLogger.failure(LOG, Level.TRACE, e, "Looks like dropped I/O task");
+		} else {
+			TraceLogger.failure(LOG, Level.WARN, e, "I/O task failure");
 		}
 	}
 	//

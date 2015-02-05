@@ -186,7 +186,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final boolean compareWith(final InputStream in)
+	public final boolean isContentEqualTo(final InputStream in)
 	throws IOException {
 		boolean contentEquals = true;
 		final int countRangesTotal = getRangeCount(size);
@@ -199,7 +199,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				updatedRange = new UniformData(
 					offset + rangeOffset, rangeSize, layerNum.get() + 1, UniformDataSource.DEFAULT
 				);
-				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
+				contentEquals = updatedRange.isContentEqualTo(in, 0, rangeSize);
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					final ByteArrayOutputStream contentRangeStream = new ByteArrayOutputStream();
 					updatedRange.writeTo(contentRangeStream);
@@ -214,9 +214,9 @@ implements AppendableDataItem, UpdatableDataItem {
 				updatedRange = new UniformData(
 					offset + rangeOffset, rangeSize, layerNum.get(), UniformDataSource.DEFAULT
 				);
-				contentEquals = updatedRange.compareWith(in, 0, rangeSize);
+				contentEquals = updatedRange.isContentEqualTo(in, 0, rangeSize);
 			} else {
-				contentEquals = compareWith(in, rangeOffset, rangeSize);
+				contentEquals = isContentEqualTo(in, rangeOffset, rangeSize);
 			}
 			if(!contentEquals) {
 				LOG.debug(
