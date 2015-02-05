@@ -1,12 +1,12 @@
 package com.emc.mongoose.web.ui;
-
+//
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -24,12 +24,14 @@ public abstract class CommonServlet extends HttpServlet {
 	//
 	public static volatile ConcurrentHashMap<String, Thread> THREADS_MAP;
 	public static volatile ConcurrentHashMap<String, Boolean> STOPPED_RUN_MODES;
+	public static volatile ConcurrentHashMap<String, String> CHARTS_MAP;
 	//
 	protected RunTimeConfig runTimeConfig;
 	//
 	static {
 		THREADS_MAP = new ConcurrentHashMap<>();
 		STOPPED_RUN_MODES = new ConcurrentHashMap<>();
+		CHARTS_MAP = new ConcurrentHashMap<>();
 		LAST_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get();
 	}
 	//
@@ -37,7 +39,7 @@ public abstract class CommonServlet extends HttpServlet {
 	public void init() {
 		try {
 			super.init();
-			runTimeConfig = (RunTimeConfig) getServletContext().getAttribute("runTimeConfig");
+			runTimeConfig = ((RunTimeConfig) getServletContext().getAttribute("runTimeConfig")).clone();
 		} catch (final ServletException e) {
 			TraceLogger.failure(LOG, Level.ERROR, e, "Interrupted servlet init method");
 		}
@@ -68,7 +70,7 @@ public abstract class CommonServlet extends HttpServlet {
 	}
 	//
 	public static void updateLastRunTimeConfig(final RunTimeConfig runTimeConfig) {
-		LAST_RUN_TIME_CONFIG = runTimeConfig;
+		LAST_RUN_TIME_CONFIG = runTimeConfig.clone();
 	}
 	//
 	public static RunTimeConfig getLastRunTimeConfig() {

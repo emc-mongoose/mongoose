@@ -1,5 +1,5 @@
 package com.emc.mongoose.web.ui;
-
+//
 import com.emc.mongoose.run.JettyRunner;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.DirectoryLoader;
@@ -10,7 +10,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -27,27 +27,20 @@ public class SaveServlet extends CommonServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String FILENAME = "config.txt";
-	private final static File FILE_PATH = Paths.get(Main.DIR_ROOT, JettyRunner.DIR_WEBAPP, JettyRunner.DIR_CONF).toFile();
+	private final static File FILE_PATH = Paths.get(Main.DIR_ROOT, JettyRunner.DIR_WEBAPP, Main.DIR_CONF).toFile();
 	//	HTTP Headers
 	private final static String CONTENT_TYPE = "Content-Type";
 	private final static String CONTENT_LENGTH = "Content-Length";
 	private final static String CONTENT_DISPOSITION = "Content-Disposition";
 	//
 	@Override
-	public void init() {
-		super.init();
-	}
-	//
-	@Override
 	public void doGet(final HttpServletRequest request, final HttpServletResponse response) {
-		//
 		if (!request.getParameterMap().isEmpty()) {
 			setupRunTimeConfig(request);
 			saveConfigInSeparateFile();
 			response.setStatus(HttpServletResponse.SC_OK);
 			return;
 		}
-		//
 		final File fullFileName = new File(FILE_PATH.toString() + File.separator + FILENAME);
 		try {
 			final PrintWriter writer = response.getWriter();

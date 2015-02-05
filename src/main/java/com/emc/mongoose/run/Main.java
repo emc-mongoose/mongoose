@@ -2,7 +2,7 @@ package com.emc.mongoose.run;
 //
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.collections.InstancePool;
-import com.emc.mongoose.web.storagemock.MockServlet;
+import com.emc.mongoose.web.storagemock.HttpMockServer;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
@@ -158,7 +158,7 @@ public final class Main {
 			case RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
 				try {
-					new MockServlet(RUN_TIME_CONFIG.get()).run();
+					new HttpMockServer(RUN_TIME_CONFIG.get()).run();
 				} catch (final Exception e) {
 					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
 				}

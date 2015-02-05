@@ -49,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by olga on 30.09.14.
  */
+@Deprecated
 public final class MockServlet
 extends HttpServlet
 implements Runnable {

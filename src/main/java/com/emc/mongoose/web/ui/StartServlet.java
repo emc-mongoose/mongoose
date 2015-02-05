@@ -6,7 +6,7 @@ import com.emc.mongoose.run.ThreadContextMap;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
-import com.emc.mongoose.web.storagemock.MockServlet;
+import com.emc.mongoose.web.storagemock.HttpMockServer;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
@@ -31,12 +31,14 @@ public final class StartServlet extends CommonServlet {
 	//
 	private ConcurrentHashMap<String, Thread> threadsMap;
 	private ConcurrentHashMap<String, Boolean> stoppedRunModes;
+	private ConcurrentHashMap<String, String> chartsMap;
 	//
 	@Override
 	public final void init() {
 		super.init();
 		threadsMap = CommonServlet.THREADS_MAP;
 		stoppedRunModes = CommonServlet.STOPPED_RUN_MODES;
+		chartsMap = CommonServlet.CHARTS_MAP;
 	}
 	//
 	@Override
@@ -127,6 +129,7 @@ public final class StartServlet extends CommonServlet {
 				ThreadContextMap.initThreadContextMap();
 				ThreadContextMap.putValue("run.scenario.name", runTimeConfig.getRunScenarioName());
 				ThreadContextMap.putValue("run.metrics.period.sec", String.valueOf(runTimeConfig.getRunMetricsPeriodSec()));
+				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getRunScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);
 				new Scenario().run();
@@ -149,7 +152,11 @@ public final class StartServlet extends CommonServlet {
 				ThreadContextMap.initThreadContextMap();
 				//
 				LOG.debug(Markers.MSG, message);
-				new MockServlet(runTimeConfig).run();
+				try {
+					new HttpMockServer(runTimeConfig).run();
+				} catch (final IOException e) {
+					TraceLogger.failure(LOG, Level.FATAL, e, "Failed");
+				}
 			}
 
 			@Override
