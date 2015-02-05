@@ -19,6 +19,11 @@ implements WSObjectMock{
 		super();
 	}
 	//
+	public BasicWSObjectMock(final String metaInfo) {
+		super();
+		fromString(metaInfo);
+	}
+	//
 	public BasicWSObjectMock(final String id, final Long offset, final long size) {
 		super(id, offset, size);
 	}

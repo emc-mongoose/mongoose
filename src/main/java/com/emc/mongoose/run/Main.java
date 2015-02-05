@@ -3,7 +3,6 @@ package com.emc.mongoose.run;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.collections.InstancePool;
 import com.emc.mongoose.web.storagemock.HttpMockServer;
-import com.emc.mongoose.web.storagemock.MockServlet;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;

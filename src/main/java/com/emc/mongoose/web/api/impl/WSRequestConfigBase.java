@@ -471,7 +471,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@SuppressWarnings("StatementWithEmptyBody")
-	private void consumeContentQuetly(final InputStream contentStream, final IOControl ioCtl)
+	public static void consumeContentQuetly(final InputStream contentStream, final IOControl ioCtl)
 	throws IOException {
 		final byte buff[] = new byte[(int) runTimeConfig.getDataPageSize()];
 		while(contentStream.read(buff) != -1);

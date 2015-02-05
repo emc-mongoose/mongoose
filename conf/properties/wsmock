@@ -1,5 +1,7 @@
 iothreads.persocket:			10
 queue.dataobject.size:			10000000
-data.id.base:					36
+radix:							36
+fault.period:					100
+fault.sleep.msec:				1000
 
 
