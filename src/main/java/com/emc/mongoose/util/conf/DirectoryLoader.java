@@ -1,16 +1,18 @@
 package com.emc.mongoose.util.conf;
 //
+
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.collections.Pair;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
+import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
+
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -18,9 +20,12 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+//
 /**
  Created by kurila on 04.07.14.
  A property loader using some directory as a root of property tree.
@@ -28,11 +33,16 @@ import java.util.List;
 public final class DirectoryLoader
 extends SimpleFileVisitor<Path> {
 	//
+	private final static Set<String> mongooseKeys = new HashSet<>();
+	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private LinkedList<String> prefixTokens = new LinkedList<>();
 	private final RunTimeConfig tgtConfig;
 	//
+	private boolean isUpload;
+	private boolean isUpdate;
+
 	public DirectoryLoader(final RunTimeConfig tgtConfig) {
 		this.tgtConfig = tgtConfig;
 	}
@@ -42,7 +52,23 @@ extends SimpleFileVisitor<Path> {
 		try {
 			LOG.debug(Markers.MSG, "Load system properties from directory \"{}\"", rootDir);
 			Files.walkFileTree(rootDir, dirLoader);
-		} catch(final IOException e) {
+			tgtConfig.setMongooseKeys(mongooseKeys);
+		} catch (final IOException e) {
+			LOG.error(Markers.ERR, e.toString(), e.getCause());
+		}
+	}
+	//
+	public static void updatePropertiesFromDir(final Path rootDir, final RunTimeConfig tgtConfig) {
+		updatePropertiesFromDir(rootDir, tgtConfig, false);
+	}
+	//
+	public static void updatePropertiesFromDir(final Path rootDir, final RunTimeConfig tgtConfig, final boolean isUpload) {
+		final DirectoryLoader dirLoader = new DirectoryLoader(tgtConfig);
+		dirLoader.isUpload = isUpload;
+		dirLoader.isUpdate = true;
+		try {
+			Files.walkFileTree(rootDir, dirLoader);
+		} catch (final IOException e) {
 			LOG.error(Markers.ERR, e.toString(), e.getCause());
 		}
 	}
@@ -67,31 +93,54 @@ extends SimpleFileVisitor<Path> {
 			LOG.trace(Markers.MSG, "Loaded the properties {} from file {}", currProps, file);
 		} catch(final ConfigurationException e) {
 			TraceLogger.failure(
-				LOG, Level.ERROR, e,
-				String.format("Failed to load the properties from file \"%s\"", file.toString())
+					LOG, Level.ERROR, e,
+					String.format("Failed to load the properties from file \"%s\"", file.toString())
 			);
 		}
 		// set the properties
-		final List<Pair<String, Object>> props = new ArrayList<>();
-		if(currProps != null) {
-			if (file.getFileName().toString().equals("run")) {
-				props.add(
-					new Pair<String, Object>(
-						RunTimeConfig.KEY_RUN_ID,
-						new Pair<>("id", currProps.getProperty("id"))
-					)
-				);
-			}
+		final List<DefaultMapEntry<String, Object>> props = new ArrayList<>();
+		if(currProps!=null) {
 			String key;
-			for(final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext();) {
-				key = keyIter.next();
-				LOG.trace(
-					Markers.MSG, "File property: \"{}\" = \"{}\"",
-					currPrefix + key, currProps.getProperty(key)
-				);
-				props.add(new Pair<String, Object>(currPrefix + key,
-					new Pair<>(key, currProps.getProperty(key))));
-				tgtConfig.setProperty(currPrefix + key, currProps.getProperty(key));
+			//
+			if (isUpdate) {
+				if (file.getFileName().toString().equals("run")) {
+					props.add(new DefaultMapEntry<String, Object>(RunTimeConfig.KEY_RUN_ID,
+						new DefaultMapEntry<>("id", tgtConfig.getProperty(RunTimeConfig.KEY_RUN_ID))));
+				}
+				for (final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext(); ) {
+					key = keyIter.next();
+					final String fullKeyName = currPrefix + key;
+					currProps.setProperty(key, tgtConfig.getProperty(fullKeyName));
+					props.add(new DefaultMapEntry<String, Object>(fullKeyName,
+						new DefaultMapEntry<>(key, tgtConfig.getProperty(fullKeyName))));
+				}
+				if (isUpload) {
+					try (final FileWriter writer = new FileWriter(file.toFile())) {
+						currProps.save(writer);
+					} catch (final Exception e) {
+						TraceLogger.failure(LOG, Level.ERROR, e,
+							String.format("Failed to write in property file \"%s\"", file.getFileName()));
+					}
+				}
+			} else {
+				if (file.getFileName().toString().equals("run")) {
+					props.add(new DefaultMapEntry<String, Object>(RunTimeConfig.KEY_RUN_ID,
+						new DefaultMapEntry<>("id", currProps.getProperty("id"))));
+				}
+				//
+				for (final Iterator<String> keyIter = currProps.getKeys(); keyIter.hasNext(); ) {
+					key = keyIter.next();
+					LOG.trace(
+						Markers.MSG, "File property: \"{}\" = \"{}\"",
+						currPrefix + key, currProps.getProperty(key)
+					);
+					final String fullKeyName = currPrefix + key;
+					mongooseKeys.add(fullKeyName);
+					//
+					props.add(new DefaultMapEntry<String, Object>(fullKeyName,
+						new DefaultMapEntry<>(key, currProps.getProperty(key))));
+					tgtConfig.setProperty(currPrefix + key, currProps.getProperty(key));
+				}
 			}
 			tgtConfig.put(prefixTokens, file.getFileName().toString(), props);
 		}

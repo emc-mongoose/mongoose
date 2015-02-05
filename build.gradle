@@ -55,20 +55,23 @@ dependencies {
 		//
 		'org.apache.httpcomponents:httpcore-nio:4.4',
 		//
-        'org.eclipse.jetty:jetty-server:9.2.3.v20140905',
-		'org.eclipse.jetty:jetty-webapp:9.2.3.v20140905',
-		//
-        'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
-		'org.eclipse.jetty.websocket:websocket-server:9.2.3.v20140905',
-		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
+        'org.eclipse.jetty:jetty-server:9.3.0.M1',
+		'org.eclipse.jetty:jetty-webapp:9.3.0.M1',
 		//
 		'javax.servlet:javax.servlet-api:3.1.0',
-		'jstl:jstl:1.2',
-		'com.google.code.gson:gson:2.3',
-		//
+        'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
+		'org.eclipse.jetty.websocket:websocket-server:9.3.0.M1',
+		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
+
 		'org.hibernate:hibernate-core:4.3.6.Final',
 		'org.eclipse.persistence:javax.persistence:2.1.0',
-		'commons-cli:commons-cli:1.2'
+		'jstl:jstl:1.2',
+		'org.apache.commons:commons-collections4:4.0',
+		'commons-cli:commons-cli:1.2',
+
+		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
+		'com.fasterxml.jackson.core:jackson-core:2.4.1',
+		'com.fasterxml.jackson.core:jackson-databind:2.4.1',
 	)
 
 	compileRMI (
@@ -77,10 +80,6 @@ dependencies {
 	)
 
 	runtime (
-		//
-		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
-		'com.fasterxml.jackson.core:jackson-core:2.4.1',
-		'com.fasterxml.jackson.core:jackson-databind:2.4.1',
 		//
 		'com.github.rickyclarkson:jmdns:3.4.2-r353-1',
 		//

@@ -1,6 +1,8 @@
 package com.emc.mongoose.web.ui.logging;
 //
-import com.emc.mongoose.util.collections.CircularQueue;
+import com.emc.mongoose.run.Main;
+import com.emc.mongoose.web.ui.websockets.WebSocketLogListener;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.web.ui.websockets.WebSocketLogListener;
 //
@@ -28,7 +30,7 @@ public final class WebUIAppender
 extends AbstractAppender {
 	private final static int MAX_ELEMENTS_IN_THE_LIST = 10000;
 	//
-	private final static ConcurrentHashMap<String, CircularQueue<LogEvent>>
+	private final static ConcurrentHashMap<String, CircularFifoQueue<LogEvent>>
 		LOG_EVENTS_MAP = new ConcurrentHashMap<>();
 	private final static List<WebSocketLogListener>
 		LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
@@ -73,27 +75,29 @@ extends AbstractAppender {
 		}
 	}
 	//
-	public static synchronized void sendPreviousLogs(final WebSocketLogListener listener) {
-		for(final CircularQueue<LogEvent> queue: LOG_EVENTS_MAP.values()) {
-			for(final LogEvent logEvent: queue) {
+	public static void sendPreviousLogs(final WebSocketLogListener listener) {
+		for (final CircularFifoQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
+			for (final LogEvent logEvent : queue) {
 				listener.sendMessage(logEvent);
 			}
 		}
 	}
 	//
 	@Override
-	public final synchronized void append(final LogEvent event) {
-		if(ENABLED_FLAG) {
+	public final void append(final LogEvent event) {
+		if (ENABLED_FLAG) {
 			final String currentRunId = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
-			if(LOG_EVENTS_MAP.get(currentRunId) == null) {
-				LOG_EVENTS_MAP.put(
-					currentRunId, new CircularQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST)
-				);
+			if (LOG_EVENTS_MAP.get(currentRunId) == null) {
+				LOG_EVENTS_MAP.put(currentRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST));
 			}
 			LOG_EVENTS_MAP.get(currentRunId).add(event);
-			for(final WebSocketLogListener listener: LISTENERS) {
+			for (final WebSocketLogListener listener : LISTENERS) {
 				listener.sendMessage(event);
 			}
 		}
+	}
+	//
+	public static void removeRunId(final String runId) {
+		LOG_EVENTS_MAP.remove(runId);
 	}
 }

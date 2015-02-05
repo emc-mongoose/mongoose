@@ -1,11 +1,11 @@
 package com.emc.mongoose.web.ui.websockets.impl;
 //
 import com.emc.mongoose.util.logging.TraceLogger;
+import com.emc.mongoose.web.ui.websockets.WebSocketLogListener;
 import com.emc.mongoose.web.ui.logging.WebUIAppender;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.web.ui.websockets.WebSocketLogListener;
-import com.google.gson.Gson; // TODO migrate to jackson instead of gson
+import com.fasterxml.jackson.databind.ObjectMapper;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -21,6 +21,7 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 //
 import java.io.IOException;
+
 /**
  * Created by gusakk on 10/24/14.
  */
@@ -29,7 +30,7 @@ public final class LogSocket
 implements WebSocketLogListener {
 	//
 	private Session session;
-	private final static Gson gson = new Gson();
+	private final static ObjectMapper mapper = new ObjectMapper();
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	@OnWebSocketClose
@@ -60,7 +61,7 @@ implements WebSocketLogListener {
 	@Override
 	public final synchronized void sendMessage(final LogEvent message) {
 		try {
-			session.getRemote().sendString(gson.toJson(message));
+			session.getRemote().sendString(mapper.writeValueAsString(message));
 		} catch (final IOException|WebSocketException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "WebSocket failure");
 		}
