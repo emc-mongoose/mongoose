@@ -9,7 +9,6 @@
 		<title>Mongoose-Run</title>
 		<link href="css/bootstrap.min.css" rel="stylesheet">
 		<link href="css/styles.css" rel="stylesheet">
-		<link href="css/bootstrap.vertical-tabs.min.css" rel="stylesheet">
 	</head>
 	<body>
 		<nav class="navbar navbar-default" role="navigation">
@@ -40,7 +39,6 @@
 		<div class="content-wrapper">
 			<div class="tabs-wrapper">
 				<ul class="nav nav-tabs" role="presentation">
-					<li><a href="#chart" data-toggle="tab">Chart</a></li>
 					<li class="active"><a href="#configuration" data-toggle="tab">Configuration</a></li>
 					<c:forEach var="mode" items="${sessionScope.runmodes}">
 						<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
@@ -55,20 +53,6 @@
 			</div>
 
 			<div class="tab-content">
-				<div id="chart" class="tab-pane">
-					<ul class="nav nav-tabs" role="presentation">
-						<li class="active"><a href="#tp" data-toggle="tab">tp</a></li>
-						<li><a href="#bw" data-toggle="tab">bw</a></li>
-					</ul>
-					<div class="tab-content">
-						<div id="tp" class="tab-pane active">
-
-						</div>
-						<div id="bw" class="tab-pane">
-
-						</div>
-					</div>
-				</div>
 				<div id="configuration" class="tab-pane active">
 					<div class="container-fluid">
 						<div class="row">
@@ -822,46 +806,114 @@
 					<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
 					<div class="tab-pane" id="scenarioTab-${correctMode}">
 						<ul id="scenario-tab" class="nav nav-tabs" role="presentation">
-							<li class="active"><a href="#logs">Logs</a></li>
-							<li><a href="#charts">Charts</a></li>
+							<li class="active"><a href="#${correctMode}-logs" data-toggle="tab">Logs</a></li>
+							<c:if test="${not empty chartsMap[mode]}">
+								<li><a href="#${correctMode}-charts" data-toggle="tab">Charts</a></li>
+							</c:if>
 						</ul>
 						<div class="tab-content">
-							<div class="tab-pane active" id="logs">
-								<div class="container-fluid">
-									<div class="row">
-										<div id="log-pills" class="col-xs-5 col-sm-4 col-md-2">
-											<ul class="nav nav-pills nav-stacked">
-												<li class="active"><a href="#">messages.csv</a></li>
-												<li><a href="#">errors.log</a></li>
-												<li><a href="#">perf.avg.csv</a></li>
-												<li><a href="#">perf.sum.csv</a></li>
-											</ul>
-										</div>
-										<div class="col-xs-7 col-sm-8 col-md-10">
-											<div class="table-responsive">
-												<table class="table">
-													<thead>
+							<div class="tab-pane active" id="${correctMode}-logs">
+								<ul id="log-pills" class="nav nav-pills">
+									<li class="active"><a href="#${correctMode}-messages-csv" data-toggle="pill">messages.csv</a></li>
+									<li><a href="#${correctMode}-errors-log" data-toggle="pill">errors.log</a></li>
+									<li><a href="#${correctMode}-perf-avg-csv" data-toggle="pill">perf.avg.csv</a></li>
+									<li><a href="#${correctMode}-perf-sum-csv" data-toggle="pill">perf.sum.csv</a></li>
+								</ul>
+								<div id="log-wrapper" class="tab-content">
+									<div class="tab-pane active" id="${correctMode}-messages-csv">
+										<div class="table-responsive">
+											<table class="table table-condenced scroll">
+												<thead>
+													<tr>
 														<th>Level</th>
 														<th>LoggerName</th>
 														<th>ThreadName</th>
 														<th>TimeMillis</th>
 														<th>Message</th>
-													</thead>
-													<tbody>
-														<tr>
-															<td>ThreadNameThreadNameThreadNameThreadNameThreadName</td>
-															<td>ThreadNameThreadName</td>
-															<td>ThreadNameThreadNameThreadName</td>
-															<td>ThreadName</td>
-															<td>ThreadName</td>
-														</tr>
-													</tbody>
-												</table>
-											</div>
+													</tr>
+												</thead>
+												<tbody>
+												</tbody>
+											</table>
+										</div>
+									</div>
+									<div class="tab-pane" id="${correctMode}-errors-log">
+										<div class="table-responsive">
+											<table class="table table-condenced">
+												<thead>
+													<tr>
+														<th>Level</th>
+														<th>LoggerName</th>
+														<th>ThreadName</th>
+														<th>TimeMillis</th>
+														<th>Message</th>
+													</tr>
+												</thead>
+												<tbody>
+												</tbody>
+											</table>
+										</div>
+									</div>
+									<div class="tab-pane" id="${correctMode}-perf-avg-csv">
+										<div class="table-responsive">
+											<table class="table table-condenced">
+												<thead>
+													<tr>
+														<th>Level</th>
+														<th>LoggerName</th>
+														<th>ThreadName</th>
+														<th>TimeMillis</th>
+														<th>Message</th>
+													</tr>
+												</thead>
+												<tbody>
+												</tbody>
+											</table>
+										</div>
+									</div>
+									<div class="tab-pane" id="${correctMode}-perf-sum-csv">
+										<div class="table-responsive">
+											<table class="table table-condenced">
+												<thead>
+													<tr>
+														<th>Level</th>
+														<th>LoggerName</th>
+														<th>ThreadName</th>
+														<th>TimeMillis</th>
+														<th>Message</th>
+													</tr>
+												</thead>
+												<tbody>
+												</tbody>
+											</table>
 										</div>
 									</div>
 								</div>
 							</div>
+							<c:if test="${not empty chartsMap[mode]}">
+								<div class="tab-pane" id="${correctMode}-charts">
+									<ul id="chart-pills" class="nav nav-pills">
+										<c:choose>
+											<c:when test="${chartsMap[mode] eq 'single'}">
+												<li class="active"><a href="#tp-${correctMode}" data-toggle="pill">Throughput[obj/s]</a></li>
+												<li><a href="#bw-${correctMode}" data-toggle="pill">Bandwidth[mb/s]</a></li>
+											</c:when>
+										</c:choose>
+									</ul>
+									<div class="tab-content">
+										<c:choose>
+											<c:when test="${chartsMap[mode] eq 'single'}">
+												<div class="tab-pane active" id="tp-${correctMode}">
+
+												</div>
+												<div class="tab-pane" id="bw-${correctMode}">
+
+												</div>
+											</c:when>
+										</c:choose>
+									</div>
+								</div>
+							</c:if>
 						</div>
 					</div>
 				</c:forEach>

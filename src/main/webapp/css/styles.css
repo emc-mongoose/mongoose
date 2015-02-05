@@ -128,6 +128,9 @@ li input:checked + ul > li:last-child {
 		overflow: auto;
 		height: 300px;
 	}
+    #log-pills li {
+	    width: 90%;
+    }
 }
 
 #configuration-content {
@@ -144,34 +147,6 @@ li input:checked + ul > li:last-child {
 }
 
 /*border*/
-
-.left-side, .right-side {
-	display: inline-block;
-	vertical-align: top;
-}
-
-.left-side {
-	width: 15%;
-}
-
-.right-side {
-	width: 84%;
-}
-
-.right-side .log-wrapper {
-	border: 8px solid #ccc;
-	border-radius: 5px;
-}
-
-.log-wrapper {
-	min-width: 1200px;
-}
-
-.right-side .tab-content {
-	word-wrap: break-word;
-	height: 800px;
-	margin: 15px;
-}
 
 .stop {
 	margin-bottom: 15px;
@@ -340,6 +315,7 @@ th:nth-child(5) {
 
 body svg {
 	font: 12px sans-serif;
+	overflow-x: auto;
 }
 
 text.shadow {
@@ -376,17 +352,73 @@ text.shadow {
 	stroke-width: 0;
 }
 
-#scenario-tab {
+#scenario-tab,
+#log-pills,
+#chart-pills {
 	margin-top: 20px;
 	text-align: center;
 }
 
-#scenario-tab > li {
+#scenario-tab > li,
+#log-pills > li,
+#chart-pills > li {
 	float: none;
 	display: inline-block;
 }
 
 #log-pills {
-	margin-top: 20px;
-	border-right: 1px solid #ccc;
+	padding-bottom: 5px;
+}
+
+.table-responsive table {
+	font: 14px sans-serif;
+}
+
+/*.table-responsive thead,
+.table-responsive tbody {
+	display: block;
+}
+
+.table-responsive tbody {
+	height: calc(100vh - 310px);
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+#log-wrapper {
+	border: 5px solid #ccc;
+	border-radius: 5px;
+}*/
+table.scroll {
+	/* width: 100%; */ /* Optional */
+	/* border-collapse: collapse; */
+	border-spacing: 0;
+	border: 2px solid black;
+}
+
+table.scroll tbody,
+table.scroll thead { display: block; }
+
+thead tr th {
+	height: 30px;
+	line-height: 30px;
+	/* text-align: left; */
+}
+
+table.scroll tbody {
+	height: 100px;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+tbody { border-top: 2px solid black; }
+
+tbody td, thead th {
+	/* width: 20%; */ /* Optional */
+	border-right: 1px solid black;
+	/* white-space: nowrap; */
+}
+
+tbody td:last-child, thead th:last-child {
+	border-right: none;
 }

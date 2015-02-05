@@ -10,6 +10,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by gusakk on 02/10/14.
@@ -23,6 +25,7 @@ public final class MainServlet extends HttpServlet {
 		//
 		request.getSession(true).setAttribute("runmodes", CommonServlet.THREADS_MAP.keySet());
 		request.getSession(true).setAttribute("stopped", CommonServlet.STOPPED_RUN_MODES);
+		request.getSession(true).setAttribute("chartsMap", CommonServlet.CHARTS_MAP);
 		request.setAttribute("runTimeConfig", CommonServlet.getLastRunTimeConfig().clone());
 		try {
 			request.getRequestDispatcher("index.jsp").forward(request, response);

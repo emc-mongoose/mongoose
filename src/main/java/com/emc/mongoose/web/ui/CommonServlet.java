@@ -24,12 +24,14 @@ public abstract class CommonServlet extends HttpServlet {
 	//
 	public static volatile ConcurrentHashMap<String, Thread> THREADS_MAP;
 	public static volatile ConcurrentHashMap<String, Boolean> STOPPED_RUN_MODES;
+	public static volatile ConcurrentHashMap<String, String> CHARTS_MAP;
 	//
 	protected RunTimeConfig runTimeConfig;
 	//
 	static {
 		THREADS_MAP = new ConcurrentHashMap<>();
 		STOPPED_RUN_MODES = new ConcurrentHashMap<>();
+		CHARTS_MAP = new ConcurrentHashMap<>();
 		LAST_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get();
 	}
 	//

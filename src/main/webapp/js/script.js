@@ -58,7 +58,7 @@ function charts() {
 						]
 					}
 				];
-				var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds", "throughput[obj/s]", "#chart #tp");
+				var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
 				return {
 					update: function(value) {
 						updateFunction(CHART_TYPES.TP, value);
@@ -90,7 +90,7 @@ function charts() {
 						]
 					}
 				];
-				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds", "bandwidth[mb/s]", "#chart #bw");
+				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds", "bandwidth[mb/s]", "#bw-" + runId.split(".").join("_"));
 				return {
 					update: function(value) {
 						updateFunction(CHART_TYPES.BW, value);
@@ -144,7 +144,7 @@ function charts() {
 						return y(d.y);
 					});
 				//
-				var svg = d3.select(path) // need replace
+				var svg = d3.select(path)
 					.append("svg")
 					.attr("width", width + margin.left + margin.right)
 					.attr("height", height + margin.top + margin.bottom)
@@ -177,7 +177,7 @@ function charts() {
 					.data(data).enter()
 					.append("g")
 					.attr("class", "level")
-					.attr("id", function(d, i) { return d.name; })
+					.attr("id", function(d, i) { return path.replace("#", "") + d.name; })
 					.attr("visibility", function(d) { if (d.name === MIN_1) { return "visible"; } else { return "hidden"; }})
 					.append("path")
 					.attr("class", "line")
@@ -214,7 +214,7 @@ function charts() {
 					.attr("value", function(d) { return d.name; })
 					.attr("checked", function(d) { if (d.name === MIN_1) { return "checked"; } })
 					.on("click", function(d, i) {
-						var element = $("#" + d.name);
+						var element = $(path + d.name);
 						if ($(this).is(":checked")) {
 							element.css("visibility", "visible")
 						} else {
@@ -307,6 +307,32 @@ function charts() {
 
 $(document).ready(function() {
 	//
+	// Change the selector if needed
+
+// Adjust the width of thead cells when window resizes
+	$(window).resize(function() {
+		var $table = $('table.scroll'),
+			$bodyCells = $table.find('tbody tr:first').children(),
+			colWidth;
+		// Get the tbody columns width array
+		colWidth = $bodyCells.map(function() {
+			return $(this).width();
+		}).get();
+
+		// Set the width of thead columns
+		$table.find('thead tr').children().each(function(i, v) {
+			$(v).width(colWidth[i]);
+		});
+		var $headCells = $table.find("thead tr:first").children();
+		var headerColWidth;
+		headerColWidth = $headCells.map(function() {
+			return $(this).width();
+		}).get();
+		$table.find('tbody tr').children().each(function(i, v) {
+			$(v).width(headerColWidth[i]);
+		})
+	}).resize(); // Trigger resize handler
+	//
 	var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
 	var TABLE_ROWS_COUNT = 2050;
 	excludeDuplicateOptions();
@@ -318,15 +344,6 @@ $(document).ready(function() {
 	buildDivBlocksByFileNames(shortPropsMap);
 	generatePropertyPage();
 	configureWebSocketConnection(WEBSOCKET_URL, TABLE_ROWS_COUNT).connect();
-	//
-	//  Prevent default page scrolling
-	/*$('.scrollable').bind('mousewheel DOMMouseScroll', function (e) {
-		var e0 = e.originalEvent,
-			delta = e0.wheelDelta || -e0.detail;
-
-		this.scrollTop += (delta < 0 ? 1 : -1) * 30;
-		e.preventDefault();
-	});*/
 	//
 	$("select").each(function() {
 		var notSelected = $("option:not(:selected)", this);
@@ -748,20 +765,32 @@ function configureWebSocketConnection(location, countOfRecords) {
 }
 
 function appendMessageToTable(entry, tableName, countOfRows, message) {
-	if ($("#" + entry + tableName + " table tbody tr").length > countOfRows) {
-		$("#" + entry + tableName + " table tbody tr:first-child").remove();
+	if ($("#" + entry + "-" +tableName + " .table-content tbody tr").length > countOfRows) {
+		$("#" + entry + "-" + tableName + " table tbody tr:first-child").remove();
 	}
-	$("#" + entry + tableName +" table tbody").append(getTableRowByMessage(message));
+	$("#" + entry + "-" + tableName +" table tbody").append(getTableRowByMessage(message));
+	/*var $table = $("#" + entry + "-" + tableName +" table"),
+		$bodyCells = $table.find('tbody tr:first').children(),
+		colWidth;
+	// Get the tbody columns width array
+	colWidth = $bodyCells.map(function() {
+		return $(this).width();
+	}).get();
+
+	// Set the width of thead columns
+	$table.find('thead tr').children().each(function(i, v) {
+		$(v).width(colWidth[i]);
+	});*/
 }
 
 //  Fix it later
 function getTableRowByMessage(json) {
 	html = '<tr>\
-			<td class="filterable-cell">' + json.level.standardLevel + '</td>\
-			<td class="filterable-cell">' + json.loggerName + '</td>\
-			<td class="filterable-cell">' + json.threadName + '</td>\
-			<td class="filterable-cell">' + new Date(json.timeMillis) + '</td>\
-			<td class="filterable-cell">' + json.message.formattedMessage + '</td>\
+			<td>' + json.level.standardLevel + '</td>\
+			<td>' + json.loggerName + '</td>\
+			<td>' + json.threadName + '</td>\
+			<td>' + new Date(json.timeMillis) + '</td>\
+			<td>' + json.message.formattedMessage + '</td>\
 			</tr>';
 	return html;
 }

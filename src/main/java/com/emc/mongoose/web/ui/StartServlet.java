@@ -31,12 +31,14 @@ public final class StartServlet extends CommonServlet {
 	//
 	private ConcurrentHashMap<String, Thread> threadsMap;
 	private ConcurrentHashMap<String, Boolean> stoppedRunModes;
+	private ConcurrentHashMap<String, String> chartsMap;
 	//
 	@Override
 	public final void init() {
 		super.init();
 		threadsMap = CommonServlet.THREADS_MAP;
 		stoppedRunModes = CommonServlet.STOPPED_RUN_MODES;
+		chartsMap = CommonServlet.CHARTS_MAP;
 	}
 	//
 	@Override
@@ -127,6 +129,7 @@ public final class StartServlet extends CommonServlet {
 				ThreadContextMap.initThreadContextMap();
 				ThreadContextMap.putValue("run.scenario.name", runTimeConfig.getRunScenarioName());
 				ThreadContextMap.putValue("run.metrics.period.sec", String.valueOf(runTimeConfig.getRunMetricsPeriodSec()));
+				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getRunScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);
 				new Scenario().run();
