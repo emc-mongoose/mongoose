@@ -455,32 +455,41 @@ implements WSRequestConfig<T> {
 	@Override
 	public final boolean consumeContent(
 		final InputStream contentStream, final IOControl ioCtl, T dataItem
-	) throws IOException {
-		boolean ok = false;
-		try {
-			if(dataItem != null) {
-				if(loadType == AsyncIOTask.Type.READ) { // read
-					if(verifyContentFlag) { // read and do verify
+	) {
+		boolean ok = true;
+		if(dataItem != null) {
+			if(loadType == AsyncIOTask.Type.READ) { // read
+				if(verifyContentFlag) { // read and do verify
+					try {
 						ok = dataItem.isContentEqualTo(contentStream);
-					} else { // read, verification is disabled - consume quietly
-						consumeContentQuietly(contentStream, ioCtl);
+					} catch(final IOException e) {
+						ok = false;
+						TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
 					}
-				} else { // append | create | delete | update - consume quietly
-					consumeContentQuietly(contentStream, ioCtl);
+				} else { // read, verification is disabled - consume quietly
+					playStreamQuetly(contentStream);
 				}
-			} else { // poison or special request (e.g. bucket-related)? - consume quietly
-				consumeContentQuietly(contentStream, ioCtl);
+			} else { // append | create | delete | update - consume quietly
+				playStreamQuetly(contentStream);
 			}
-		} finally {
+		} else { // poison or special request (e.g. bucket-related)? - consume quietly
+			playStreamQuetly(contentStream);
+		}
+		//
+		try {
 			ioCtl.shutdown();
+		} catch(final IOException e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Input channel closing failure");
 		}
 		return ok;
 	}
 	//
-	@SuppressWarnings("StatementWithEmptyBody")
-	private void consumeContentQuietly(final InputStream contentStream, final IOControl ioCtl)
-	throws IOException {
+	private void playStreamQuetly(final InputStream contentStream) {
 		final byte buff[] = new byte[(int) runTimeConfig.getDataPageSize()];
-		while(contentStream.read(buff) != -1);
+		try {
+			while(contentStream.read(buff) != -1);
+		} catch(final IOException e) {
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
+		}
 	}
 }

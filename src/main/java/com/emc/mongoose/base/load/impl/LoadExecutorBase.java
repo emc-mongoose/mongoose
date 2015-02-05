@@ -436,8 +436,10 @@ implements LoadExecutor<T> {
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
-		} catch(final RemoteException | RejectedExecutionException e) {
+		} catch(final RemoteException e) {
 			TraceLogger.failure(LOG, Level.WARN, e, "Passing the data item to consumer failed");
+		} catch(final RejectedExecutionException e) {
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Consumer rejected the data item");
 		}
 	}
 	//

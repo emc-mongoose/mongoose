@@ -91,6 +91,5 @@ extends ObjectRequestConfig<T> {
 	//
 	void receiveResponse(final HttpResponse response, final T dataItem);
 	//
-	boolean consumeContent(final InputStream contentStream, final IOControl ioCtl, T dataItem)
-	throws IOException;
+	boolean consumeContent(final InputStream contentStream, final IOControl ioCtl, T dataItem);
 }
