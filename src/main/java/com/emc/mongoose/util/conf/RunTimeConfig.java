@@ -22,15 +22,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -439,7 +431,7 @@ implements Externalizable {
 	public synchronized RunTimeConfig clone() {
 		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
 		runTimeConfig.set(
-			KEY_RUN_ID, Main.FMT_DT.format(Main.CALENDAR_DEFAULT.getTime())
+			KEY_RUN_ID, Main.FMT_DT.format(new Date())
 		);
 		return runTimeConfig;
 	}
