@@ -19,6 +19,6 @@ socket.keepalive:					true
 socket.tcp.nodelay:					true
 
 #
-mock.iothreads.persocket:			true
+mock.iothreads.persocket:			10
 mock.capacity:						10000000
 mock.data.offset.radix:			    36
