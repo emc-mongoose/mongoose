@@ -1,5 +1,6 @@
 package com.emc.mongoose.web.ui;
 
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.TraceLogger;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -26,7 +27,7 @@ public final class MainServlet extends HttpServlet {
 		request.getSession(true).setAttribute("runmodes", CommonServlet.THREADS_MAP.keySet());
 		request.getSession(true).setAttribute("stopped", CommonServlet.STOPPED_RUN_MODES);
 		request.getSession(true).setAttribute("chartsMap", CommonServlet.CHARTS_MAP);
-		request.setAttribute("runTimeConfig", CommonServlet.getLastRunTimeConfig().clone());
+		request.setAttribute("runTimeConfig", CommonServlet.getLastRunTimeConfig());
 		try {
 			request.getRequestDispatcher("index.jsp").forward(request, response);
 		} catch (final IOException|ServletException e) {
