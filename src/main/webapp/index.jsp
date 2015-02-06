@@ -28,7 +28,6 @@
 					id="main-navbar">
 					<ul class="nav navbar-nav">
 						<li class="active"><a href="/">Run<span class="sr-only">(current)</span></a></li>
-						<li><a href="charts.html">Charts</a></li>
 					</ul>
 
 					<p class="navbar-text navbar-right">v.${runTimeConfig.runVersion}</p>
@@ -45,7 +44,7 @@
 						<li>
 							<a href="#scenarioTab-${correctMode}" data-toggle="tab">
 									${mode}
-								<span class="glyphicon glyphicon-remove" value="${mode}"></span>
+								<span class="glyphicon glyphicon-remove kill" value="${mode}"></span>
 							</a>
 						</li>
 					</c:forEach>
@@ -812,6 +811,15 @@
 							</c:if>
 						</ul>
 						<div class="tab-content">
+							<c:if test="${empty sessionScope.stopped[mode]}">
+								<div class="container">
+									<div class="row">
+										<div class="col-xs-offset-4 col-xs-4">
+											<button type="button" class="btn btn-danger stop" value="${mode}">Stop</button>
+										</div>
+									</div>
+								</div>
+							</c:if>
 							<div class="tab-pane active" id="${correctMode}-logs">
 								<ul id="log-pills" class="nav nav-pills">
 									<li class="active"><a href="#${correctMode}-messages-csv" data-toggle="pill">messages.csv</a></li>
@@ -821,26 +829,29 @@
 								</ul>
 								<div id="log-wrapper" class="tab-content">
 									<div class="tab-pane active" id="${correctMode}-messages-csv">
-										<div class="table-responsive">
-											<table class="table table-condenced scroll">
-												<thead>
-													<tr>
-														<th>Level</th>
-														<th>LoggerName</th>
-														<th>ThreadName</th>
-														<th>TimeMillis</th>
-														<th>Message</th>
-													</tr>
-												</thead>
-												<tbody>
-												</tbody>
-											</table>
+										<div class="table-content">
+											<div class="table-responsive">
+												<table class="table table-condenced">
+													<thead>
+														<tr>
+															<th>Level</th>
+															<th>LoggerName</th>
+															<th>ThreadName</th>
+															<th>TimeMillis</th>
+															<th>Message</th>
+														</tr>
+													</thead>
+													<tbody>
+													</tbody>
+												</table>
+											</div>
 										</div>
 									</div>
 									<div class="tab-pane" id="${correctMode}-errors-log">
-										<div class="table-responsive">
-											<table class="table table-condenced">
-												<thead>
+										<div class="table-content">
+											<div class="table-responsive">
+												<table class="table table-condenced">
+													<thead>
 													<tr>
 														<th>Level</th>
 														<th>LoggerName</th>
@@ -848,16 +859,18 @@
 														<th>TimeMillis</th>
 														<th>Message</th>
 													</tr>
-												</thead>
-												<tbody>
-												</tbody>
-											</table>
+													</thead>
+													<tbody>
+													</tbody>
+												</table>
+											</div>
 										</div>
 									</div>
 									<div class="tab-pane" id="${correctMode}-perf-avg-csv">
-										<div class="table-responsive">
-											<table class="table table-condenced">
-												<thead>
+										<div class="table-content">
+											<div class="table-responsive">
+												<table class="table table-condenced">
+													<thead>
 													<tr>
 														<th>Level</th>
 														<th>LoggerName</th>
@@ -865,16 +878,18 @@
 														<th>TimeMillis</th>
 														<th>Message</th>
 													</tr>
-												</thead>
-												<tbody>
-												</tbody>
-											</table>
+													</thead>
+													<tbody>
+													</tbody>
+												</table>
+											</div>
 										</div>
 									</div>
 									<div class="tab-pane" id="${correctMode}-perf-sum-csv">
-										<div class="table-responsive">
-											<table class="table table-condenced">
-												<thead>
+										<div class="table-content">
+											<div class="table-responsive">
+												<table class="table table-condenced">
+													<thead>
 													<tr>
 														<th>Level</th>
 														<th>LoggerName</th>
@@ -882,10 +897,11 @@
 														<th>TimeMillis</th>
 														<th>Message</th>
 													</tr>
-												</thead>
-												<tbody>
-												</tbody>
-											</table>
+													</thead>
+													<tbody>
+													</tbody>
+												</table>
+											</div>
 										</div>
 									</div>
 								</div>
