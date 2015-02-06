@@ -1,8 +1,7 @@
 package com.emc.mongoose.run;
 //
 import com.emc.mongoose.util.logging.TraceLogger;
-import com.emc.mongoose.util.collections.InstancePool;
-import com.emc.mongoose.web.storagemock.HttpMockServer;
+import com.emc.mongoose.web.mock.Cinderella;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
@@ -65,7 +64,7 @@ public final class Main {
 		RUN_MODE_SERVER = "server",
 		RUN_MODE_COMPAT_SERVER = "driver",
 		RUN_MODE_WEBUI = "webui",
-		RUN_MODE_WSMOCK = "wsmock",
+		RUN_MODE_CINDERELLA = "cinderella",
 		//
 		DEFAULT_ENC = StandardCharsets.UTF_8.name(),
 		EMPTY = "";
@@ -155,10 +154,10 @@ public final class Main {
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
 				new JettyRunner(RUN_TIME_CONFIG.get()).run();
 				break;
-			case RUN_MODE_WSMOCK:
-				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
+			case RUN_MODE_CINDERELLA:
+				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
-					new HttpMockServer(RUN_TIME_CONFIG.get()).run();
+					new Cinderella(RUN_TIME_CONFIG.get()).run();
 				} catch (final Exception e) {
 					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
 				}

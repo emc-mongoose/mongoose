@@ -98,8 +98,7 @@ implements AsyncIOTask<T> {
 				Markers.PERF_TRACE, String.format(
 					FMT_PERF_TRACE, nodeAddr, dataItemId == null ? Main.EMPTY : dataItemId,
 					transferSize, status.code,
-					reqTimeStart, reqTimeDone - reqTimeStart,
-					respTimeStart - reqTimeDone, respTimeDone - respTimeStart
+					reqTimeStart, respTimeStart - reqTimeDone, respTimeDone - reqTimeStart
 				)
 			);
 		}

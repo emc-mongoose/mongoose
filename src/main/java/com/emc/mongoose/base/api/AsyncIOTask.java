@@ -14,7 +14,7 @@ extends Reusable {
 	}
 	//
 	String
-		FMT_PERF_TRACE = "%s,%s,%d,%x,%d,%d,%d,%d",
+		FMT_PERF_TRACE = "%s,%s,%d,%x,%d,%d,%d",
 		FMT_PERF_TRACE_INVALID = "Invalid trace: %s,%s,%d,%x,%d,%d,%d,%d";
 	//
 	enum Status {

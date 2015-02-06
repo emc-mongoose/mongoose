@@ -1,5 +1,0 @@
-iothreads.persocket:			10
-queue.dataobject.size:			10000000
-data.id.base:					36
-
-

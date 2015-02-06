@@ -1,4 +1,4 @@
-package com.emc.mongoose.web.storagemock;
+package com.emc.mongoose.web.mock;
 //
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
@@ -15,7 +15,6 @@ import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.api.WSIOTask;
-import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 //
 import org.apache.commons.codec.binary.Base64;
 //

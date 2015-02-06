@@ -6,11 +6,11 @@ import com.emc.mongoose.run.ThreadContextMap;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
-import com.emc.mongoose.web.storagemock.HttpMockServer;
+import com.emc.mongoose.web.mock.Cinderella;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
-import com.emc.mongoose.web.ui.enums.RunModes;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -68,19 +68,26 @@ public final class StartServlet extends CommonServlet {
 		runTimeConfig = runTimeConfig.clone();
 		setupRunTimeConfig(request);
 		CommonServlet.updateLastRunTimeConfig(runTimeConfig);
-		switch (RunModes.getRunModeConstantByRequest(request.getParameter(RunTimeConfig.KEY_RUN_MODE))) {
-			case VALUE_RUN_MODE_SERVER:
-				startServer("Starting the server");
+		switch(request.getParameter(RunTimeConfig.KEY_RUN_MODE)) {
+			case Main.RUN_MODE_SERVER:
+			case Main.RUN_MODE_COMPAT_SERVER:
+				startServer("Starting the distributed load server");
 				break;
-			case VALUE_RUN_MODE_WSMOCK:
-				startWSMock("Starting the wsmock");
+			case Main.RUN_MODE_CINDERELLA:
+				startCinderella("Starting the cinderella");
 				break;
-			case VALUE_RUN_MODE_CLIENT:
-				startStandaloneOrClient("Starting the client");
+			case Main.RUN_MODE_CLIENT:
+			case Main.RUN_MODE_COMPAT_CLIENT:
+				startStandaloneOrClient("Starting the distributed load client");
 				break;
-			case VALUE_RUN_MODE_STANDALONE:
-				startStandaloneOrClient("Starting the standalone");
+			case Main.RUN_MODE_STANDALONE:
+				startStandaloneOrClient("Starting in the standalone mode");
 				break;
+			default:
+				LOG.warn(
+					Markers.ERR, "Unsupported run mode \"{}\"",
+					request.getParameter(RunTimeConfig.KEY_RUN_MODE)
+				);
 		}
 		//  Add runModes to http session
 		request.getSession(true).setAttribute(RUN_MODES, threadsMap.keySet());
@@ -144,7 +151,7 @@ public final class StartServlet extends CommonServlet {
 		threadsMap.put(runTimeConfig.getString(RunTimeConfig.KEY_RUN_ID), thread);
 	}
 	//
-	private void startWSMock(final String message) {
+	private void startCinderella(final String message) {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {
@@ -153,7 +160,7 @@ public final class StartServlet extends CommonServlet {
 				//
 				LOG.debug(Markers.MSG, message);
 				try {
-					new HttpMockServer(runTimeConfig).run();
+					new Cinderella(runTimeConfig).run();
 				} catch (final IOException e) {
 					TraceLogger.failure(LOG, Level.FATAL, e, "Failed");
 				}
