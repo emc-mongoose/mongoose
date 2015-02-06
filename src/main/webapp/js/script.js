@@ -10,7 +10,7 @@ $(document).ready(function() {
 	walkTreeMap(propertiesMap, ul, shortPropsMap);
 	buildDivBlocksByFileNames(shortPropsMap);
 	generatePropertyPage();
-	configureWebSocketConnection(WEBSOCKET_URL, TABLE_ROWS_COUNT).connect();
+	configureWebSocketConnection(WEBSOCKET_URL, TABLE_ROWS_COUNT).connect(chartsArray);
 	//
 	$("select").each(function() {
 		var notSelected = $("option:not(:selected)", this);
@@ -364,7 +364,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 		PERF_AVG: "perf-avg-csv"
 	};
 	return {
-		connect: function() {
+		connect: function(chartsArray) {
 			this.ws = new WebSocket(location);
 			this.ws.onmessage = function(message) {
 				var json = JSON.parse(message.data);
@@ -398,7 +398,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 						if (!isFound) {
 							switch(json.contextMap["run.scenario.name"]) {
 								case RUN_SCENARIO_NAME.single:
-									charts().single(runId);
+									charts(chartsArray).single(runId);
 									break;
 								case RUN_SCENARIO_NAME.chain:
 									break;
@@ -477,7 +477,7 @@ function loadPropertiesFromFile(file) {
 }
 //
 //  Charts
-function charts() {
+function charts(chartsArray) {
 	var margin = {top: 40, right: 120, bottom: 60, left: 60},
 		width = 960 - margin.left - margin.right,
 		height = 500 - margin.top - margin.bottom;
