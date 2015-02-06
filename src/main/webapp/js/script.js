@@ -369,12 +369,13 @@ function configureWebSocketConnection(location, countOfRecords) {
 			this.ws.onmessage = function(message) {
 				var json = JSON.parse(message.data);
 				var runId = json.contextMap["run.id"];
+				var runMetricsPeriodSec = json.contextMap["run.metrics.period.sec"];
 				var entry = runId.split(".").join("_");
 				if (!json.hasOwnProperty("marker") || !json.loggerName) {
 					return;
-				} else if (!json.marker.hasOwnProperty("name")) {
-					return;
 				}
+				if (json.marker === null)
+					return;
 				switch (json.marker.name) {
 					case MARKERS.ERR:
 						appendMessageToTable(entry, LOG_FILES.ERR, countOfRecords, json);
@@ -398,7 +399,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 						if (!isFound) {
 							switch(json.contextMap["run.scenario.name"]) {
 								case RUN_SCENARIO_NAME.single:
-									charts(chartsArray).single(runId);
+									charts(chartsArray).single(runId, runMetricsPeriodSec);
 									break;
 								case RUN_SCENARIO_NAME.chain:
 									break;
@@ -489,7 +490,7 @@ function charts(chartsArray) {
 	};
 
 	return {
-		single: function(runId) {
+		single: function(runId, runMetricsPeriodSec) {
 			//
 			var AVG = "avg";
 			var MIN_1 = "1min";
@@ -743,7 +744,7 @@ function charts(chartsArray) {
 					value = parsedString.substring(first, second).split("/");
 					//
 					data.forEach(function(d, i) {
-						d.values.push({x: d.values.length * 10, y: parseFloat(value[i])});
+						d.values.push({x: d.values.length * runMetricsPeriodSec, y: parseFloat(value[i])});
 					});
 					//
 					x.domain([
