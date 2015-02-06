@@ -20,11 +20,6 @@
 						"Filter": [
 							{
 								"type": "MarkerFilter",
-								"marker": "err",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
 								"marker": "msg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
@@ -37,7 +32,12 @@
 								"type": "MarkerFilter",
 								"marker": "perfSum",
 								"onMatch": "NEUTRAL",
-								"onMismatch": "DENY"
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "err",
+								"onMatch": "NEUTRAL",
+								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "ThresholdFilter",
 								"level": "INFO",
