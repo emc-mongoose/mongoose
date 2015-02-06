@@ -50,7 +50,7 @@ implements LoadBuilderClient<T, U> {
 	throws IOException {
 		//
 		super(runTimeConfig.getRemoteServers().length);
-		this.runTimeConfig = runTimeConfig;
+		setProperties(runTimeConfig);
 		final String remoteServers[] = runTimeConfig.getRemoteServers();
 		//
 		LoadBuilderSvc<T, U> loadBuilderSvc;

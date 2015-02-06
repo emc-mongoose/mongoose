@@ -61,7 +61,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-//
 /**
  * Created by olga on 28.01.15.
  */
@@ -75,7 +74,7 @@ implements Runnable {
 		connFactory = new DefaultNHttpServerConnectionFactory(ConnectionConfig.DEFAULT);
 	//
 	public final static String NAME_SERVER = String.format(
-		"%s/%s", Cinderella.class.getName(), Main.RUN_TIME_CONFIG.get().getRunVersion()
+		"%s/%s", Cinderella.class.getSimpleName(), Main.RUN_TIME_CONFIG.get().getRunVersion()
 	);
 	private final int portCount;
 	private final int portStart;
@@ -262,7 +261,7 @@ implements Runnable {
 							.allocate(Long.SIZE / Byte.SIZE)
 							.put(Base64.decodeBase64(dataID))
 							.getLong(0);
-					} else if(ringOffsetRadix > 1 && ringOffsetRadix < Character.MAX_RADIX) {
+					} else if(ringOffsetRadix > 1 && ringOffsetRadix <= Character.MAX_RADIX) {
 						offset = Long.valueOf(dataID, ringOffsetRadix);
 					} else {
 						throw new HttpException(

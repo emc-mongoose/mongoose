@@ -187,7 +187,12 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setSubTenant(new SubTenant<>(this, String.class.cast(in.readObject())));
+		final Object t = in.readObject();
+		if(t == null) {
+			setSubTenant(null);
+		} else {
+			setSubTenant(new SubTenant<>(this, String.class.cast(t)));
+		}
 		uriBasePath = String.class.cast(in.readObject());
 	}
 	//
@@ -195,7 +200,7 @@ extends WSRequestConfigBase<T> {
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(subTenant.getName());
+		out.writeObject(subTenant == null ? null : subTenant.getName());
 		out.writeObject(uriBasePath);
 	}
 	//

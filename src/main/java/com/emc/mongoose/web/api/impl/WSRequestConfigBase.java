@@ -98,7 +98,6 @@ implements WSRequestConfig<T> {
 	protected WSRequestConfigBase(final WSRequestConfig<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		//
 		signMethod = runTimeConfig.getHttpSignMethod();
 		mac = Mac.getInstance(signMethod);
 		final String
@@ -106,6 +105,7 @@ implements WSRequestConfig<T> {
 			runVersion = runTimeConfig.getRunVersion(),
 			contentType = runTimeConfig.getHttpContentType();
 		userAgent = runName + '/' + runVersion;
+		//
 		try {
 			sharedHeadersMap.put(HttpHeaders.USER_AGENT, userAgent);
 			sharedHeadersMap.put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
@@ -216,7 +216,6 @@ implements WSRequestConfig<T> {
 		super.setSecret(secret);
 		//
 		SecretKeySpec keySpec;
-		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
 		try {
 			keySpec = new SecretKeySpec(secret.getBytes(Main.DEFAULT_ENC), signMethod);
 			mac.init(keySpec);

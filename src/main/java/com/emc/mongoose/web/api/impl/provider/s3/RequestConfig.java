@@ -108,15 +108,20 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setBucket(new Bucket<T>(this, String.class.cast(in.readObject())));
-		LOG.trace(Markers.MSG, "Got bucket {}", bucket);
+		final Object t = in.readObject();
+		if(t == null) {
+			bucket = null;
+		} else {
+			setBucket(new Bucket<>(this, String.class.cast(t)));
+			LOG.trace(Markers.MSG, "Got bucket {}", bucket);
+		}
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(bucket.toString());
+		out.writeObject(bucket == null ? null : bucket.toString());
 	}
 	//
 	@Override

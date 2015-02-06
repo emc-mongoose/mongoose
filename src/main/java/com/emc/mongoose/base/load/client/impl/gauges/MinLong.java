@@ -31,12 +31,12 @@ public final class MinLong
 	private final Map<String, MBeanServerConnection> mBeanSrvConnMap;
 	//
 	public MinLong(
-		final String domain, final String name, final String attrName,
+		final String loadName, final String domain, final String name, final String attrName,
 		final Map<String, MBeanServerConnection> mBeanSrvConnMap
 	) {
 		this.domain = domain;
 		this.attrName = attrName;
-		fqMBeanName = domain.substring(0, domain.lastIndexOf('x')) + '.' + name;
+		fqMBeanName = loadName.split("x")[0] + '.' + name;
 		this.mBeanSrvConnMap = mBeanSrvConnMap;
 	}
 	//

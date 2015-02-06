@@ -312,7 +312,7 @@ implements LoadExecutor<T> {
 				}
 			}
 			//
-			LOG.info(Markers.MSG, "Started \"{}\"", getName());
+			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
 		} else {
 			LOG.warn(Markers.ERR, "Second start attempt - skipped");
 		}

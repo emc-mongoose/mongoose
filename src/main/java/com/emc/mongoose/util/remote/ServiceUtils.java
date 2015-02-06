@@ -15,6 +15,8 @@ import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.InterfaceAddress;
 import java.net.MalformedURLException;
@@ -96,18 +98,16 @@ public final class ServiceUtils {
 			while(netIfaces.hasMoreElements()) {
 				nextNetIface = netIfaces.nextElement();
 				if(!nextNetIface.isLoopback() && nextNetIface.isUp()) {
-					if(nextNetIface.getInetAddresses().hasMoreElements()) {
-						addr = nextNetIface.getInetAddresses().nextElement();
-						LOG.debug(
-							Markers.MSG, "Resolved external interface \"{}\" address: {}",
-							nextNetIface.getDisplayName(), addr.getHostAddress()
-						);
-						break;
-					} else {
-						LOG.debug(
-							Markers.MSG, "Interface \"{}\" has no assigned address, skipping",
-							nextNetIface.getDisplayName()
-						);
+					final Enumeration<InetAddress> addrs = nextNetIface.getInetAddresses();
+					while(addrs.hasMoreElements()) {
+						addr = addrs.nextElement();
+						if(Inet4Address.class.isInstance(addr)) {
+							LOG.debug(
+								Markers.MSG, "Resolved external interface \"{}\" address: {}",
+								nextNetIface.getDisplayName(), addr.getHostAddress()
+							);
+							break;
+						}
 					}
 				} else {
 					LOG.debug(

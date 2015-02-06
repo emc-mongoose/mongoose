@@ -101,7 +101,35 @@ implements LoadClient<T> {
 	private final RequestConfig<T> reqConfig;
 	private final int retryCountMax, retryDelayMilliSec;
 	//
-	@SuppressWarnings("unchecked")
+	private final static class PeriodicLogTask
+		implements Runnable {
+		//
+		private final BasicLoadClient loadClient;
+		private final int metricsUpdatePeriodSec;
+		//
+		private PeriodicLogTask(final BasicLoadClient loadClient, final int metricsUpdatePeriodSec) {
+			this.loadClient = loadClient;
+			this.metricsUpdatePeriodSec = metricsUpdatePeriodSec;
+		}
+		//
+		@Override
+		public final void run() {
+			if(metricsUpdatePeriodSec > 0) {
+				while(true) {
+					loadClient.logMetaInfoFrames();
+					loadClient.logMetrics(Markers.PERF_AVG);
+				}
+			} else {
+				try {
+					Thread.sleep(Long.MAX_VALUE);
+				} catch(final InterruptedException e) {
+					LOG.debug(Markers.MSG, "Interrupted");
+				}
+			}
+		}
+	}
+	private final Thread periodicLogThread;
+	//@SuppressWarnings("unchecked")
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig,
 		final Map<String, LoadSvc<T>> remoteLoadMap,
@@ -136,6 +164,10 @@ implements LoadClient<T> {
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		//
+		periodicLogThread = new Thread(
+			new PeriodicLogTask(this, runTimeConfig.getRunMetricsPeriodSec())
+		);
+		//
 		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
 			runTimeConfig.getRemoteExportPort()
 		);
@@ -146,7 +178,8 @@ implements LoadClient<T> {
 			.build();
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
-		this.loadSvcAddrs = (String[]) remoteLoadMap.keySet().toArray();
+		this.loadSvcAddrs = new String[remoteLoadMap.size()];
+		remoteLoadMap.keySet().toArray(this.loadSvcAddrs);
 		this.remoteJMXConnMap = remoteJMXConnMap;
 		////////////////////////////////////////////////////////////////////////////////////////////
 		mBeanSrvConnMap = new HashMap<>();
@@ -286,7 +319,7 @@ implements LoadClient<T> {
 	) {
 		return metrics.register(
 			MetricRegistry.name(name, mBeanName + "." + attrName),
-			new SumLong(domain, mBeanName, attrName, mBeanSrvConnMap)
+			new SumLong(name, domain, mBeanName, attrName, mBeanSrvConnMap)
 		);
 	}
 	//
@@ -295,7 +328,7 @@ implements LoadClient<T> {
 	) {
 		return metrics.register(
 			MetricRegistry.name(name, mBeanName+"."+attrName),
-			new MinLong(domain, mBeanName, attrName, mBeanSrvConnMap)
+			new MinLong(name, domain, mBeanName, attrName, mBeanSrvConnMap)
 		);
 	}
 	//
@@ -304,7 +337,7 @@ implements LoadClient<T> {
 	) {
 		return metrics.register(
 			MetricRegistry.name(name, mBeanName+"."+attrName),
-			new MaxLong(domain, mBeanName, attrName, mBeanSrvConnMap)
+			new MaxLong(name, domain, mBeanName, attrName, mBeanSrvConnMap)
 		);
 	}
 	//
@@ -313,7 +346,7 @@ implements LoadClient<T> {
 	) {
 		return metrics.register(
 			MetricRegistry.name(name, mBeanName+"."+attrName),
-			new SumDouble(domain, mBeanName, attrName, mBeanSrvConnMap)
+			new SumDouble(name, domain, mBeanName, attrName, mBeanSrvConnMap)
 		);
 	}
 	//
@@ -322,7 +355,7 @@ implements LoadClient<T> {
 	) {
 		return metrics.register(
 			MetricRegistry.name(name, mBeanName+"."+attrName),
-			new AvgDouble(domain, mBeanName, attrName, mBeanSrvConnMap)
+			new AvgDouble(name, domain, mBeanName, attrName, mBeanSrvConnMap)
 		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -338,25 +371,6 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final Thread aggregateThread = new Thread(getName() + "-dumpMetrics") {
-		@Override
-		public final void run() {
-			final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
-			if(metricsUpdatePeriodSec > 0) {
-				while(isAlive()) {
-					logMetaInfoFrames();
-					logMetrics(Markers.PERF_AVG);
-				}
-			} else {
-				try {
-					Thread.sleep(Long.MAX_VALUE);
-				} catch(final InterruptedException e) {
-					LOG.debug(Markers.MSG, "Interrupted");
-				}
-			}
-		}
-	};
-	//
 	@SuppressWarnings("unchecked")
 	private void logMetaInfoFrames() {
 		final ArrayList<Future<List<T>>> nextMetaInfoFrameFutures = new ArrayList<>(
@@ -504,7 +518,7 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final void start() {
-		if(aggregateThread.isAlive()) {
+		if(periodicLogThread.isAlive()) {
 			LOG.warn(Markers.ERR, "{}: already started");
 		} else {
 			LoadSvc nextLoadSvc;
@@ -523,7 +537,7 @@ implements LoadClient<T> {
 			//
 			LoadCloseHook.add(this);
 			//
-			aggregateThread.start();
+			periodicLogThread.start();
 			LOG.info(Markers.MSG, "{}: started", name);
 		}
 	}
@@ -536,7 +550,7 @@ implements LoadClient<T> {
 			shutdown();
 		}
 		//
-		if(aggregateThread.isAlive()) {
+		if(periodicLogThread.isAlive()) {
 			LOG.debug(Markers.MSG, "{}: interrupting...", name);
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 				remoteLoadMap.size(), new WorkerFactory(getName() + "-interrupter")
@@ -550,7 +564,7 @@ implements LoadClient<T> {
 			} catch(final InterruptedException e) {
 				TraceLogger.failure(LOG, Level.DEBUG, e, "Interrupting was interrupted");
 			}
-			aggregateThread.interrupt();
+			periodicLogThread.interrupt();
 			LOG.debug(Markers.MSG, "{}: interrupted", name);
 		}
 	}
