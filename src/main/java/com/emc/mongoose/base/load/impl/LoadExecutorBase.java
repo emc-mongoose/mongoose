@@ -25,6 +25,7 @@ import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
 //
+import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -82,7 +83,8 @@ implements LoadExecutor<T> {
 	) {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(runTimeConfig.getRunRequestQueueSize())
+			new LinkedBlockingQueue<Runnable>(runTimeConfig.getRunRequestQueueSize()),
+			new WorkerFactory("submitWorker")
 		);
 		//
 		storageNodeCount = addrs.length;
@@ -368,7 +370,7 @@ implements LoadExecutor<T> {
 				// prepare the I/O task instance (make the link between the data item and load type)
 				final AsyncIOTask<T> ioTask = reqConfig.getRequestFor(dataItem, tgtNodeAddr);
 				// submit the corresponding I/O task
-				final Future<AsyncIOTask.Result> futureResponse = submit(ioTask);
+				final Future<AsyncIOTask.Status> futureResponse = submit(ioTask);
 				// prepare the corresponding result handling task
 				final RequestResultTask<T>
 					handleResultTask = (RequestResultTask<T>) RequestResultTask.getInstance(
@@ -385,7 +387,11 @@ implements LoadExecutor<T> {
 						try {
 							Thread.sleep(rejectCount * retryDelayMilliSec);
 						} catch(final InterruptedException ee) {
-							break;
+							LOG.debug(
+								Markers.ERR,
+								"Got interruption, won't submit result handling for task #{}",
+								ioTask.hashCode()
+							);
 						}
 					}
 					//
@@ -412,13 +418,13 @@ implements LoadExecutor<T> {
 	private final AtomicLong durSumTasks = new AtomicLong(0);
 	//
 	@Override
-	public final void handleResult(final AsyncIOTask<T> ioTask, final AsyncIOTask.Result result) {
+	public final void handleResult(final AsyncIOTask<T> ioTask, final AsyncIOTask.Status status) {
 		final T dataItem = ioTask.getDataItem();
 		final int latency = ioTask.getLatency();
 		try {
 			if(dataItem == null) {
 				consumer.submit(null);
-			} else if(result == AsyncIOTask.Result.SUCC) {
+			} else if(status== AsyncIOTask.Status.SUCC) {
 				// update the metrics with success
 				counterReqSucc.inc();
 				if(latency > 0) {

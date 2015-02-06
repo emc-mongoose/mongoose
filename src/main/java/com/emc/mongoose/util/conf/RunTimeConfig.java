@@ -239,6 +239,10 @@ implements Externalizable {
 		return getString("http.sign.method");
 	}
 	//
+	public final boolean getEmcFileSystemAccessEnabled() {
+		return getBoolean("emc.fs.access");
+	}
+	//
 	public final String getRunName() {
 		return getString("run.name");
 	}

@@ -1,7 +1,7 @@
 package com.emc.mongoose.run;
 //
 import com.emc.mongoose.util.logging.TraceLogger;
-import com.emc.mongoose.util.pool.InstancePool;
+import com.emc.mongoose.util.collections.InstancePool;
 import com.emc.mongoose.web.storagemock.MockServlet;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
@@ -138,7 +138,7 @@ public final class Main {
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
 					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
-						loadBuilderSvc = new BasicLoadBuilderSvc<>()
+						loadBuilderSvc = new BasicLoadBuilderSvc<>(RUN_TIME_CONFIG.get())
 				) {
 					loadBuilderSvc.start();
 					loadBuilderSvc.join();

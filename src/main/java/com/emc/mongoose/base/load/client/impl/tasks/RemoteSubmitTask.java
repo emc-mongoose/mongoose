@@ -6,12 +6,11 @@ import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.pool.InstancePool;
-import com.emc.mongoose.util.pool.Reusable;
+import com.emc.mongoose.util.collections.InstancePool;
+import com.emc.mongoose.util.collections.Reusable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.Closeable;
 import java.rmi.RemoteException;
 import java.util.concurrent.atomic.AtomicBoolean;
 /**
@@ -36,41 +35,45 @@ implements Runnable, Reusable {
 	@SuppressWarnings("unchecked")
 	public static <U extends DataItem> RemoteSubmitTask<U> getInstanceFor(
 		final LoadSvc<U> loadSvc, final U dataItem
-	) {
+	) throws InterruptedException {
 		return INSTANCE_POOL.take(loadSvc, dataItem);
 	}
 	//
 	@Override
 	public final void run() {
 		int rejectCount = 0;
-		do {
-			try {
+		try {
+			do {
 				try {
-					loadSvc.submit(dataItem);
+					try {
+						loadSvc.submit(dataItem);
+						break;
+					} catch(final RemoteException e) {
+						rejectCount++;
+						Thread.sleep(retryDelayMilliSec);
+					}
+				} catch(final InterruptedException e) {
+					LOG.debug(Markers.MSG, "Interrupted");
 					break;
-				} catch(final RemoteException e) {
-					rejectCount ++;
-					Thread.sleep(retryDelayMilliSec);
 				}
-			} catch(final InterruptedException e) {
-				LOG.debug(Markers.MSG, "Interrupted");
-				break;
-			}
-		} while(rejectCount > retryMaxCount);
+			} while(rejectCount > retryMaxCount);
+		} finally {
+			release();
+		}
 	}
 	//
-	private final AtomicBoolean isClosed = new AtomicBoolean(true);
+	private final AtomicBoolean isAvailable = new AtomicBoolean(true);
 	//
 	@Override
-	public final void close() {
-		if(isClosed.compareAndSet(false, true)) {
+	public final void release() {
+		if(isAvailable.compareAndSet(false, true)) {
 			INSTANCE_POOL.release(this);
 		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final RemoteSubmitTask<T> reuse(final Object... args) {
-		if(isClosed.compareAndSet(true, false)) {
+		if(isAvailable.compareAndSet(true, false)) {
 			if(args.length > 0) {
 				loadSvc = (LoadSvc<T>) args[0];
 			}

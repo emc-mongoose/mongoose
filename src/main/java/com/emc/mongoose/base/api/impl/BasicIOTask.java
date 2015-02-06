@@ -6,9 +6,9 @@ import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
 import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.pool.InstancePool;
+import com.emc.mongoose.util.collections.InstancePool;
 //
-import com.emc.mongoose.util.pool.Reusable;
+import com.emc.mongoose.util.collections.Reusable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -31,7 +31,7 @@ implements AsyncIOTask<T> {
 	protected volatile RequestConfig<T> reqConf = null;
 	protected volatile String nodeAddr = null;
 	protected volatile T dataItem = null;
-	protected volatile Result result = Result.FAIL_UNKNOWN;
+	protected volatile Status status = Status.FAIL_UNKNOWN;
 	//
 	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
 	protected volatile long transferSize = 0;
@@ -43,23 +43,24 @@ implements AsyncIOTask<T> {
 	@SuppressWarnings("unchecked")
 	public static <T extends DataObject> BasicIOTask<T> getInstanceFor(
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
-	) {
+	) throws InterruptedException {
 		return (BasicIOTask<T>) POOL_BASIC_IO_TASKS.take(reqConf, dataItem, nodeAddr);
 	}
 	//
-	protected final AtomicBoolean isClosed = new AtomicBoolean(true);
+	protected final AtomicBoolean isAvailable = new AtomicBoolean(true);
 	//
 	@Override
-	public void close() {
-		if(isClosed.compareAndSet(false, true)) {
+	public void release() {
+		if(isAvailable.compareAndSet(false, true)) {
 			POOL_BASIC_IO_TASKS.release(this);
 		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public BasicIOTask<T> reuse(final Object... args) {
-		if(isClosed.compareAndSet(true, false)) {
-			result = Result.FAIL_UNKNOWN;
+	public BasicIOTask<T> reuse(final Object... args)
+	throws IllegalStateException, InterruptedException {
+		if(isAvailable.compareAndSet(true, false)) {
+			status = Status.FAIL_UNKNOWN;
 			reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
 			if(args.length > 0) {
 				setRequestConfig((RequestConfig<T>) args[0]);
@@ -85,7 +86,7 @@ implements AsyncIOTask<T> {
 		) {
 			LOG.info(
 				Markers.PERF_TRACE, String.format(
-					FMT_PERF_TRACE, nodeAddr, dataItem.getId(), transferSize, result.code,
+					FMT_PERF_TRACE, nodeAddr, dataItem.getId(), transferSize, status.code,
 					reqTimeStart, reqTimeDone - reqTimeStart,
 					respTimeStart - reqTimeDone, respTimeDone - respTimeStart
 				)
@@ -93,7 +94,7 @@ implements AsyncIOTask<T> {
 		} else {
 			LOG.debug(
 				Markers.ERR, String.format(
-					FMT_PERF_TRACE_INVALID, nodeAddr, dataItem.getId(), transferSize, result.code,
+					FMT_PERF_TRACE_INVALID, nodeAddr, dataItem.getId(), transferSize, status.code,
 					reqTimeStart, reqTimeDone, respTimeStart, respTimeDone
 				)
 			);
@@ -108,7 +109,8 @@ implements AsyncIOTask<T> {
 	}
 	//
 	@Override
-	public AsyncIOTask<T> setNodeAddr(final String nodeAddr) {
+	public AsyncIOTask<T> setNodeAddr(final String nodeAddr)
+	throws InterruptedException {
 		this.nodeAddr = nodeAddr;
 		return this;
 	}
@@ -145,8 +147,8 @@ implements AsyncIOTask<T> {
 	}
 	//
 	@Override
-	public final Result getResult() {
-		return result;
+	public final Status getStatus() {
+		return status;
 	}
 	//
 	@Override

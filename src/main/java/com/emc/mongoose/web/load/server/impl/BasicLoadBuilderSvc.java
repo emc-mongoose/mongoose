@@ -29,6 +29,10 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	public BasicLoadBuilderSvc(final RunTimeConfig runTimeConfig) {
+		super(runTimeConfig);
+	}
+	//
 	@Override
 	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
 		super.setProperties(clientConfig);

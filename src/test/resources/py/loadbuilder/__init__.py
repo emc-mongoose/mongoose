@@ -12,11 +12,11 @@ from java.lang import IllegalStateException
 from java.util import NoSuchElementException
 #
 def loadbuilder_init():
-	local_run_time_config = Main.RUN_TIME_CONFIG.get()
+	localRunTimeConfig = Main.RUN_TIME_CONFIG.get()
 	#
 	mode = None
 	try:
-		mode = local_run_time_config.getRunMode()
+		mode = localRunTimeConfig.getRunMode()
 	except NoSuchElementException:
 		LOG.fatal(Markers.ERR, "Launch mode is not specified, use -Drun.mode=<VALUE> argument")
 		exit()
@@ -29,7 +29,7 @@ def loadbuilder_init():
 		from java.rmi import RemoteException
 		try:
 			try:
-				INSTANCE = BasicLoadBuilderClient()
+				INSTANCE = BasicLoadBuilderClient(localRunTimeConfig)
 			except ConversionException:
 				LOG.fatal(Markers.ERR, "Servers address list should be comma delimited")
 				exit()
@@ -43,7 +43,7 @@ def loadbuilder_init():
 		from com.emc.mongoose.web.load.impl import BasicLoadBuilder
 		#
 		try:
-			INSTANCE = BasicLoadBuilder()
+			INSTANCE = BasicLoadBuilder(localRunTimeConfig)
 		except IllegalStateException as e:
 			TraceLogger(LOG, Level.FATAL, e, "Failed to create load builder client")
 			exit()
@@ -51,5 +51,4 @@ def loadbuilder_init():
 	if INSTANCE is None:
 		LOG.fatal(Markers.ERR, "No load builder instanced")
 		exit()
-	INSTANCE.setProperties(local_run_time_config)
 	return INSTANCE

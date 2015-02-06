@@ -57,6 +57,11 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	//
 	@Override
 	public final String getName() {
+		return toString();
+	}
+	//
+	@Override
+	public final String toString() {
 		return name;
 	}
 	//
@@ -77,8 +82,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		if(WSIOTask.HTTPMethod.PUT.equals(method)) {
 			httpReq.setHeader(
 				new BasicHeader(
-					RequestConfig.KEY_EMC_BUCKET_FS,
-					Boolean.toString(reqConf.getBucketFileSystem())
+					RequestConfig.KEY_EMC_FS_ACCESS,
+					Boolean.toString(reqConf.getFileSystemAccessEnabled())
 				)
 			);
 			if(reqConf.getBucketVersioning()) {
