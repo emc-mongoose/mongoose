@@ -399,7 +399,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 						if (!isFound) {
 							switch(json.contextMap["run.scenario.name"]) {
 								case RUN_SCENARIO_NAME.single:
-									charts(chartsArray).single(runId, runMetricsPeriodSec);
+									charts(chartsArray).single(runId, runMetricsPeriodSec, json.threadName);
 									break;
 								case RUN_SCENARIO_NAME.chain:
 									break;
@@ -490,7 +490,7 @@ function charts(chartsArray) {
 	};
 
 	return {
-		single: function(runId, runMetricsPeriodSec) {
+		single: function(runId, runMetricsPeriodSec, chartTitle) {
 			//
 			var AVG = "avg";
 			var MIN_1 = "1min";
@@ -535,7 +535,7 @@ function charts(chartsArray) {
 						]
 					}
 				];
-				var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
+				var updateFunction = drawChart(data, chartTitle, "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
 				return {
 					update: function(value) {
 						updateFunction(CHART_TYPES.TP, value);
@@ -567,7 +567,7 @@ function charts(chartsArray) {
 						]
 					}
 				];
-				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds", "bandwidth[mb/s]", "#bw-" + runId.split(".").join("_"));
+				var updateFunction = drawChart(data, chartTitle, "seconds", "bandwidth[mb/s]", "#bw-" + runId.split(".").join("_"));
 				return {
 					update: function(value) {
 						updateFunction(CHART_TYPES.BW, value);
