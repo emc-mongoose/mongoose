@@ -259,3 +259,18 @@ text.shadow {
 	border: 5px solid #ccc;
 	border-radius: 5px;
 }
+
+/*  Media Selectors */
+@media (max-width: 768px) {
+	#main-content {
+		overflow: visible;
+		height: auto;
+	}
+	.folders {
+		overflow: auto;
+		height: 300px;
+	}
+	#log-pills li {
+		width: 90%;
+	}
+}
