@@ -27,7 +27,7 @@ public class SaveServlet extends CommonServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String FILENAME = "config.txt";
-	private final static File FILE_PATH = Paths.get(Main.DIR_ROOT, JettyRunner.DIR_WEBAPP, JettyRunner.DIR_CONF).toFile();
+	private final static File FILE_PATH = Paths.get(Main.DIR_ROOT, JettyRunner.DIR_WEBAPP, Main.DIR_CONF).toFile();
 	//	HTTP Headers
 	private final static String CONTENT_TYPE = "Content-Type";
 	private final static String CONTENT_LENGTH = "Content-Length";
