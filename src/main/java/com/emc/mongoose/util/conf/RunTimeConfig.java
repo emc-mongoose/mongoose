@@ -19,14 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.file.Path;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.nio.file.Paths;
 import java.util.regex.Matcher;
@@ -447,7 +440,7 @@ implements Externalizable {
 	public synchronized RunTimeConfig clone() {
 		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
 		runTimeConfig.set(
-			KEY_RUN_ID, Main.FMT_DT.format(new Date())
+			KEY_RUN_ID, Main.FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
 		);
 		return runTimeConfig;
 	}
