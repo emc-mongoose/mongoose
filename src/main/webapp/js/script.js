@@ -363,7 +363,6 @@ function configureWebSocketConnection(location, countOfRecords) {
 		PERF_SUM: "perf-sum-csv",
 		PERF_AVG: "perf-avg-csv"
 	};
-	var chainLoadTypes = [];
 	return {
 		connect: function(chartsArray) {
 			this.ws = new WebSocket(location);
@@ -391,13 +390,9 @@ function configureWebSocketConnection(location, countOfRecords) {
 						var isFound = false;
 						chartsArray.forEach(function(d) {
 							if (d["run.id"] === runId) {
+								isFound = true;
 								d.charts.forEach(function(c) {
-									if (c.threadName === json.threadName) {
-										isFound = true;
-										c.values.forEach(function(element) {
-											element.update(json.message.formattedMessage);
-										});
-									}
+									c.update(json);
 								});
 							}
 						});
@@ -407,9 +402,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 									charts(chartsArray).single(runId, runMetricsPeriodSec, json.threadName);
 									break;
 								case RUN_SCENARIO_NAME.chain:
-									var ch = charts(chartsArray).chain(runId);
-									ch(json.threadName);
-									//
+									charts(chartsArray).chain(runId, json.threadName);
 									break;
 								case RUN_SCENARIO_NAME.rampup:
 									break;
@@ -514,10 +507,8 @@ function charts(chartsArray) {
 				"run.id": runId,
 				"run.scenario.name": SCENARIO.single,
 				"charts": [
-					{
-						threadName: chartTitle,
-						values: [drawThroughputChart(), drawBandwidthChart()]
-					}
+					drawThroughputChart(),
+					drawBandwidthChart()
 				]
 			});
 			//
@@ -547,8 +538,8 @@ function charts(chartsArray) {
 				];
 				var updateFunction = drawChart(data, chartTitle, "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
 				return {
-					update: function(value) {
-						updateFunction(CHART_TYPES.TP, value);
+					update: function(json) {
+						updateFunction(CHART_TYPES.TP, json.message.formattedMessage);
 					}
 				};
 			}
@@ -579,8 +570,8 @@ function charts(chartsArray) {
 				];
 				var updateFunction = drawChart(data, chartTitle, "seconds", "bandwidth[mb/s]", "#bw-" + runId.split(".").join("_"));
 				return {
-					update: function(value) {
-						updateFunction(CHART_TYPES.BW, value);
+					update: function(json) {
+						updateFunction(CHART_TYPES.BW, json.message.formattedMessage);
 					}
 				}
 
@@ -783,7 +774,8 @@ function charts(chartsArray) {
 				};
 			}
 		},
-		chain: function(runId) {
+		chain: function(runId, loadType) {
+			alert("chain");
 			var AVG = "avg";
 			var MIN_1 = "1min";
 			var MIN_5 = "5min";
@@ -793,62 +785,76 @@ function charts(chartsArray) {
 				TP: "throughput",
 				BW: "bandwidth"
 			};
+			//
 			chartsArray.push({
 				"run.id": runId,
 				"run.scenario.name": SCENARIO.chain,
-				"charts": []
+				"charts": [
+					drawThroughputChart()
+				]
 			});
 			//
-			function drawThroughputChart(chartTitle) {
+			function drawThroughputChart() {
 				var data = [
 					{
-						name: AVG,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_1,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_5,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_15,
-						values: [
-							{x: 0, y: 0}
+						loadType: loadType,
+						charts: [
+							{
+								name: AVG,
+								values: [
+									{x: 0, y: 0}
+								]
+							}, {
+								name: MIN_1,
+								values: [
+									{x: 0, y: 0}
+								]
+							}, {
+								name: MIN_5,
+								values: [
+									{x: 0, y: 0}
+								]
+							}, {
+								name: MIN_15,
+								values: [
+									{x: 0, y: 0}
+								]
+							}
 						]
 					}
 				];
-				var updateFunction = drawChart(data, chartTitle, "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
+				var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
 				return {
-					update: function(value) {
-						//updateFunction(CHART_TYPES.TP, value);
+					update: function(json) {
+						updateFunction(CHART_TYPES.TP, json);
 					}
 				};
 			}
-			//
 			function drawChart(data, chartTitle, xAxisLabel, yAxisLabel, path) {
-				//
 				var x = d3.scale.linear()
 					.domain([
-						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
-						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; })  })
+						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+							return d3.min(c.values, function(v) { return v.x; }); });
+						}),
+						d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+							return d3.max(c.values, function(v) { return v.x; }); });
+						})
 					])
 					.range([0, width]);
 
 				var y = d3.scale.linear()
 					.domain([
-						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
-						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; })  })
+						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+							return d3.min(c.values, function(v) { return v.y; }); });
+						}),
+						d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+							return d3.max(c.values, function(v) { return v.y; }); });
+						})
 					])
 					.range([height, 0]);
 				//
 				var color = d3.scale.category10();
-				color.domain(data.map(function(d) { return d.name; }));
+				color.domain(data.map(function(d) { return d.loadType; }));
 				//
 				var xAxis = d3.svg.axis()
 					.scale(x)
@@ -906,16 +912,21 @@ function charts(chartsArray) {
 						.tickSize(-width, 0, 0)
 						.tickFormat(""));
 
+				var currentColor;
+
 				var levels = svg.selectAll(".level")
 					.data(data).enter()
 					.append("g")
 					.attr("class", "level")
-					.attr("id", function(d, i) { return path.replace("#", "") + d.name; })
-					.attr("visibility", function(d) { if (d.name === MIN_1) { return "visible"; } else { return "hidden"; }})
+					//.attr("id", function(d) { return path.replace("#", "") + d.loadType; })
+					.selectAll("path")
+					.data(function(d) {
+						currentColor = color(d.loadType); return d.charts;
+					}).enter()
 					.append("path")
 					.attr("class", "line")
-					.attr("d", function(d)  { return line(d.values); })
-					.attr("stroke", function(d) { return color(d.name); });
+					.attr("d", function(c) { return line(c.values); })
+					.attr("stroke", currentColor);
 				//  Axis X Label
 				svg.append("text")
 					.attr("x", width - 2)
@@ -932,50 +943,6 @@ function charts(chartsArray) {
 					.style("text-anchor", "end")
 					.text(yAxisLabel);
 				//
-				svg.selectAll("foreignObject")
-					.data(data).enter()
-					.append("foreignObject")
-					.attr("x", width + 3)
-					.attr("width", 18)
-					.attr("height", 18)
-					.attr("transform", function(d, i) {
-						return "translate(0," + i * 20 + ")";
-					})
-					.append("xhtml:body")
-					.append("input")
-					.attr("type", "checkbox")
-					.attr("value", function(d) { return d.name; })
-					.attr("checked", function(d) { if (d.name === MIN_1) { return "checked"; } })
-					.on("click", function(d, i) {
-						var element = $(path + d.name);
-						if ($(this).is(":checked")) {
-							element.css("visibility", "visible")
-						} else {
-							element.css("visibility", "hidden");
-						}
-					});
-				//
-				var legend = svg.selectAll(".legend")
-					.data(data).enter()
-					.append("g")
-					.attr("class", "legend")
-					.attr("transform", function(d, i) {
-						return "translate(0," + i * 20 + ")";
-					});
-
-				legend.append("rect")
-					.attr("x", width + 18)
-					.attr("width", 18)
-					.attr("height", 18)
-					.style("fill", function(d) { return color(d.name); });
-
-				legend.append("text")
-					.attr("x", width + 80)
-					.attr("y", 9)
-					.attr("dy", ".35em")
-					.style("text-anchor", "end")
-					.text(function(d) { return d.name; });
-
 				svg.append("text")
 					.attr("x", (width / 2))
 					.attr("y", 0 - (margin.top / 2))
@@ -983,9 +950,9 @@ function charts(chartsArray) {
 					.style("font-size", "16px")
 					.style("text-decoration", "underline")
 					.text(chartTitle);
-				//
-				margin.top = margin.top + height + 40;
-				return function(chartType, value) {
+				return function(chartType, json) {
+					var loadType = json.threadName;
+					//
 					var splitIndex = 0;
 					switch(chartType) {
 						case CHART_TYPES.TP:
@@ -996,22 +963,82 @@ function charts(chartsArray) {
 							break;
 					}
 					//
-					var parsedString = value.split(";")[splitIndex];
+					var parsedString = json.message.formattedMessage.split(";")[splitIndex];
 					var first = parsedString.indexOf("(") + 1;
 					var second = parsedString.lastIndexOf(")");
-					value = parsedString.substring(first, second).split("/");
+					var value = parsedString.substring(first, second).split("/");
 					//
-					data.forEach(function(d, i) {
-						d.values.push({x: d.values.length * 10, y: parseFloat(value[i])});
+					var isFound = false;
+					data.forEach(function(d) {
+						if (d.loadType === loadType) {
+							isFound = true;
+							d.charts.forEach(function(c, i) {
+								c.values.push({x: c.values.length * 10, y: parseFloat(value[i])});
+							})
+						}
 					});
+					if (!isFound) {
+						var d = {
+							loadType: loadType,
+							charts: [
+								{
+									name: AVG,
+									values: [
+										{x: 0, y: 0}
+									]
+								}, {
+									name: MIN_1,
+									values: [
+										{x: 0, y: 0}
+									]
+								}, {
+									name: MIN_5,
+									values: [
+										{x: 0, y: 0}
+									]
+								}, {
+									name: MIN_15,
+									values: [
+										{x: 0, y: 0}
+									]
+								}
+							]
+						};
+						d.charts.forEach(function(c, i) {
+							c.values.push({x: (c.values.length - 1) * 10, y: parseFloat(value[i])})
+						});
+						data.push(d);
+
+						var levels = svg.selectAll(".level")
+							.data(data).enter()
+							.append("g")
+							.attr("class", "level")
+							//.attr("id", function(d) { return path.replace("#", "") + d.loadType; })
+							.selectAll("path")
+							.data(function(d) {
+								currentColor = color(d.loadType); return d.charts;
+							}).enter()
+							.append("path")
+							.attr("class", "line")
+							.attr("d", function(c) { return line(c.values); })
+							.attr("stroke", currentColor);
+					}
 					//
 					x.domain([
-						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
-						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; }); })
+						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+							return d3.min(c.values, function(v) { return v.x; }); });
+						}),
+						d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+							return d3.max(c.values, function(v) { return v.x; }); });
+						})
 					]);
 					y.domain([
-						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
-						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; }); })
+						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+							return d3.min(c.values, function(v) { return v.y; }); });
+						}),
+						d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+							return d3.max(c.values, function(v) { return v.y; }); });
+						})
 					]);
 					//
 					xAxisGroup.transition().call(xAxis);
@@ -1023,22 +1050,23 @@ function charts(chartsArray) {
 						.tickSize(-width, 0, 0)
 						.tickFormat(""));
 					//  Update old charts
-					var paths = svg.selectAll(".level path")
+					/*var paths = svg.selectAll(".level path")
 						.data(data)
 						.attr("d", function(d) { return line(d.values); })
 						.attr("stroke", function(d) { return color(d.name); })
+						.attr("fill", "none");*/
+					var currentColor;
+
+					var paths = svg.selectAll(".level")
+						.data(data)
+						.selectAll("path")
+						.data(function(d) {
+							currentColor = color(d.loadType); return d.charts;
+						})
+						.attr("d", function(c) { return line(c.values); })
+						//.attr("stroke", currentColor)
 						.attr("fill", "none");
 				};
-			}
-			return function(chartTitle) {
-				chartsArray.forEach(function(d) {
-					if (d["run.id"] === runId) {
-						d.charts.push({
-							threadName: chartTitle,
-							values: [drawThroughputChart(chartTitle)]
-						});
-					}
-				});
 			}
 		},
 		rampup: {
