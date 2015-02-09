@@ -80,7 +80,7 @@ implements WSLoadBuilderSvc<T, U> {
 				)
 			);
 		}
-		return (U) new BasicWSLoadSvc<T>(
+		return (U) new BasicWSLoadSvc<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
 			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem
 		);

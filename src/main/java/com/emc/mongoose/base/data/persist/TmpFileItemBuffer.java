@@ -67,7 +67,6 @@ implements DataItemBufferSvc<T> {
 		LOG.debug(Markers.MSG, "{}: created temp file", getName());
 		//
 		if(fBuff != null) {
-			fBuff.deleteOnExit();
 			setThreadFactory(
 				new WorkerFactory(String.format("itemsBuffer<%s>", fBuff.getName()))
 			);
@@ -228,7 +227,7 @@ implements DataItemBufferSvc<T> {
 						final ObjectInput
 							fBuffIn = new ObjectInputStream(new FileInputStream(fBuff))
 					) {
-						while(availDataItems-- > 0 && consumerMaxCount-- > 0) {
+						while(availDataItems -- > 0 && consumerMaxCount -- > 0) {
 							nextDataItem = (T) fBuffIn.readObject();
 							consumer.submit(nextDataItem);
 							if(nextDataItem == null) {
@@ -245,6 +244,17 @@ implements DataItemBufferSvc<T> {
 					} finally {
 						try {
 							consumer.submit(null); // feed the poison
+							if(fBuff.delete()) {
+								LOG.debug(
+									Markers.MSG, "File \"{}\" succesfully deleted",
+									fBuff.getAbsolutePath()
+								);
+							} else {
+								LOG.debug(
+									Markers.ERR, "Failed to delete the file \"{}\"",
+									fBuff.getAbsolutePath()
+								);
+							}
 						} catch(final RemoteException e) {
 							TraceLogger.failure(LOG, Level.WARN, e, "Looks like network failure");
 						} catch(final InterruptedException e) {

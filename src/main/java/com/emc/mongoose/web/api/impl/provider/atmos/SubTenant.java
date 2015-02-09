@@ -85,12 +85,7 @@ implements com.emc.mongoose.object.api.provider.atmos.SubTenant<T> {
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
-		return wsClient.execute(
-			new HttpHost(
-				Main.RUN_TIME_CONFIG.get().getStorageAddrs()[0],
-				reqConf.getPort(), reqConf.getScheme()
-			), httpReq
-		);
+		return wsClient.execute(httpReq);
 	}
 	//
 	@Override

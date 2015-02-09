@@ -36,7 +36,7 @@ implements Gauge<Long> {
 	) {
 		this.domain = domain;
 		this.attrName = attrName;
-		fqMBeanName = loadName.split("x")[0] + '.' + name;
+		fqMBeanName = loadName.substring(0, loadName.lastIndexOf('x')) + '.' + name;
 		this.mBeanSrvConnMap = mBeanSrvConnMap;
 	}
 	//

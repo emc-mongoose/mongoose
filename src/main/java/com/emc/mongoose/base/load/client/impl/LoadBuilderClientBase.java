@@ -50,7 +50,6 @@ implements LoadBuilderClient<T, U> {
 	throws IOException {
 		//
 		super(runTimeConfig.getRemoteServers().length);
-		setProperties(runTimeConfig);
 		final String remoteServers[] = runTimeConfig.getRemoteServers();
 		//
 		LoadBuilderSvc<T, U> loadBuilderSvc;
@@ -64,6 +63,8 @@ implements LoadBuilderClient<T, U> {
 			}
 			put(serverAddr, loadBuilderSvc);
 		}
+		// set properties should be invoked only after the map is filled already
+		setProperties(runTimeConfig);
 		//
 		for(final String serverAddr : remoteServers) {
 			get(serverAddr).setLastInstanceNum(maxLastInstanceN);
@@ -80,14 +81,14 @@ implements LoadBuilderClient<T, U> {
 	throws IllegalStateException, RemoteException {
 		//
 		this.runTimeConfig = runTimeConfig;
-		if(reqConf != null) {
-			reqConf.setProperties(runTimeConfig);
-		} else {
+		if(reqConf == null) {
 			throw new IllegalStateException("Shared request config is not initialized");
+		} else {
+			reqConf.setProperties(runTimeConfig);
 		}
 		//
 		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr: keySet()) {
+		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			LOG.debug(Markers.MSG, "Applying the configuration to server @ \"{}\"...", addr);
 			nextBuilder.setProperties(runTimeConfig);
@@ -137,7 +138,7 @@ implements LoadBuilderClient<T, U> {
 	throws IllegalStateException, RemoteException {
 		reqConf.setLoadType(loadType);
 		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr: keySet()) {
+		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setLoadType(loadType);
 		}
@@ -148,7 +149,7 @@ implements LoadBuilderClient<T, U> {
 	public final LoadBuilderClient<T, U> setMaxCount(final long maxCount)
 	throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr: keySet()) {
+		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setMaxCount(maxCount);
 		}
@@ -159,7 +160,7 @@ implements LoadBuilderClient<T, U> {
 	public final LoadBuilderClient<T, U> setMinObjSize(final long minObjSize)
 	throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr: keySet()) {
+		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setMinObjSize(minObjSize);
 		}
@@ -170,7 +171,7 @@ implements LoadBuilderClient<T, U> {
 	public final LoadBuilderClient<T, U> setObjSizeBias(final float objSizeBias)
 		throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr: keySet()) {
+		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setObjSizeBias(objSizeBias);
 		}
@@ -181,7 +182,7 @@ implements LoadBuilderClient<T, U> {
 	public final LoadBuilderClient<T, U> setMaxObjSize(final long maxObjSize)
 	throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr: keySet()) {
+		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setMaxObjSize(maxObjSize);
 		}
@@ -192,7 +193,7 @@ implements LoadBuilderClient<T, U> {
 	public final LoadBuilderClient<T, U> setThreadsPerNodeDefault(final short threadCount)
 	throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr: keySet()) {
+		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setThreadsPerNodeDefault(threadCount);
 		}
@@ -204,7 +205,7 @@ implements LoadBuilderClient<T, U> {
 		final short threadCount, final AsyncIOTask.Type loadType
 	) throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr: keySet()) {
+		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setThreadsPerNodeFor(threadCount, loadType);
 		}
@@ -223,7 +224,7 @@ implements LoadBuilderClient<T, U> {
 		}*/
 		//
 		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr: keySet()) {
+		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setDataNodeAddrs(dataNodeAddrs);
 		}
@@ -234,7 +235,7 @@ implements LoadBuilderClient<T, U> {
 	public final LoadBuilderClient<T, U> setUpdatesPerItem(int count)
 	throws RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr: keySet()) {
+		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
 			nextBuilder.setUpdatesPerItem(count);
 		}

@@ -224,26 +224,59 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final HttpResponse execute(
-		final HttpHost tgtHost, final HttpRequest request
-	) {
+	public final HttpResponse execute(final HttpRequest request) {
+		//
 		HttpResponse response = null;
+		//
 		final HttpCoreContext ctx = new HttpCoreContext();
-		ctx.setTargetHost(tgtHost);
-		try {
-			response = client.execute(
-				new BasicAsyncRequestProducer(tgtHost, request),
-				new BasicAsyncResponseConsumer(), connPool, ctx
-			).get();
-		} catch(final InterruptedException e) {
-			if(!isTerminating() && !isTerminated()) {
-				LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
+		final String nodeAddr = storageNodeAddrs[0];
+		HttpHost tgtHost = null;
+		if(nodeAddr != null) {
+			if(nodeAddr.contains(":")) {
+				final String t[] = nodeAddr.split(":");
+				try {
+					tgtHost = new HttpHost(
+						t[0], Integer.parseInt(t[1]), runTimeConfig.getStorageProto()
+					);
+				} catch(final Exception e) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e, "Failed to determine the request target host"
+					);
+				}
+			} else {
+				tgtHost = new HttpHost(
+					nodeAddr, runTimeConfig.getApiPort(runTimeConfig.getStorageApi()),
+					runTimeConfig.getStorageProto()
+				);
 			}
-		} catch(final ExecutionException e) {
-			if(!isTerminating() && !isTerminated()) {
-				TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+		} else {
+			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");
+		}
+		//
+		if(tgtHost != null) {
+			ctx.setTargetHost(tgtHost);
+			//
+			try {
+				response = client.execute(
+					new BasicAsyncRequestProducer(tgtHost, request),
+					new BasicAsyncResponseConsumer(), connPool, ctx
+				).get();
+			} catch(final InterruptedException e) {
+				if(!isTerminating() && !isTerminated()) {
+					LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
+				}
+			} catch(final ExecutionException e) {
+				if(!isTerminating() && !isTerminated()) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e,
+						String.format(
+							"HTTP request \"%s\" execution failure @ \"%s\"", request, tgtHost
+						)
+					);
+				}
 			}
 		}
+		//
 		return response;
 	}
 	//

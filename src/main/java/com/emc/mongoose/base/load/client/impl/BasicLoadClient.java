@@ -58,6 +58,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 20.10.14.
@@ -114,17 +115,18 @@ implements LoadClient<T> {
 		//
 		@Override
 		public final void run() {
-			if(metricsUpdatePeriodSec > 0) {
-				while(true) {
-					loadClient.logMetaInfoFrames();
-					loadClient.logMetrics(Markers.PERF_AVG);
-				}
-			} else {
-				try {
+			try {
+				if(metricsUpdatePeriodSec > 0) {
+					while(true) {
+						loadClient.logMetaInfoFrames(metricsUpdatePeriodSec);
+						loadClient.logMetrics(Markers.PERF_AVG, metricsUpdatePeriodSec);
+						Thread.sleep(metricsUpdatePeriodSec * 1000);
+					}
+				} else {
 					Thread.sleep(Long.MAX_VALUE);
-				} catch(final InterruptedException e) {
-					LOG.debug(Markers.MSG, "Interrupted");
 				}
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.MSG, "Interrupted");
 			}
 		}
 	}
@@ -165,7 +167,7 @@ implements LoadClient<T> {
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		//
 		periodicLogThread = new Thread(
-			new PeriodicLogTask(this, runTimeConfig.getRunMetricsPeriodSec())
+			new PeriodicLogTask(this, runTimeConfig.getRunMetricsPeriodSec()), "periodicLogger"
 		);
 		//
 		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
@@ -195,7 +197,7 @@ implements LoadClient<T> {
 		}
 		//
 		mgmtConnExecutor = Executors.newFixedThreadPool(
-			totalThreadCount, new WorkerFactory(name + "-mgmtConnWorker")
+			Math.max(20, totalThreadCount), new WorkerFactory(name + "-mgmtConnWorker")
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricSuccCount = registerJmxGaugeSum(
@@ -306,7 +308,7 @@ implements LoadClient<T> {
 		shutDownOnCountLimit = new Thread(
 			new CountLimitWaitTask(
 				this, mgmtConnExecutor, maxCount,
-				new GaugeValueTask[] {taskGetCountSucc, taskGetCountFail, taskGetCountRej}
+				new GaugeValueTask[] { taskGetCountSucc, taskGetCountFail, taskGetCountRej }
 			), "shutDownOnCountLimit"
 		);
 		shutDownOnCountLimit.start();
@@ -372,7 +374,7 @@ implements LoadClient<T> {
 	// Producer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@SuppressWarnings("unchecked")
-	private void logMetaInfoFrames() {
+	private void logMetaInfoFrames(final int timeOutSeconds) {
 		final ArrayList<Future<List<T>>> nextMetaInfoFrameFutures = new ArrayList<>(
 			remoteLoadMap.size()
 		);
@@ -387,9 +389,11 @@ implements LoadClient<T> {
 					)
 				);
 			} catch(final RejectedExecutionException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Fetching metainfo frame task rejected");
+				if(!mgmtConnExecutor.isShutdown() && !isShutdown()) {
+					TraceLogger.failure(LOG, Level.WARN, e, "Fetching metainfo frame task rejected");
+				}
 			} catch(final InterruptedException e) {
-				// do nothing
+				LOG.debug(Markers.MSG, "Fetching metainfo frame task interrupted");
 			}
 		}
 		//
@@ -397,15 +401,23 @@ implements LoadClient<T> {
 		for(final Future<List<T>> nextMetaInfoFrameFuture : nextMetaInfoFrameFutures) {
 			//
 			try {
-				nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
-			} catch(final InterruptedException e) {
-				try {
-					nextMetaInfoFrame = nextMetaInfoFrameFuture.get();
-				} catch(final InterruptedException|ExecutionException ee) {
-					TraceLogger.failure(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
-				}
-			} catch(final Exception e) {
+				nextMetaInfoFrame = nextMetaInfoFrameFuture.get(timeOutSeconds, TimeUnit.SECONDS);
+			} catch(final ExecutionException e) {
 				TraceLogger.failure(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
+			} catch(final InterruptedException | TimeoutException e) {
+				TraceLogger.failure(
+					LOG, Level.TRACE, e,
+					"Interrupted while fetching the metainfo frame, retry"
+				);
+				try {
+					nextMetaInfoFrame = nextMetaInfoFrameFuture.get(
+						timeOutSeconds, TimeUnit.SECONDS
+					);
+				} catch(final Exception ee) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e, "Failed to retry the fetching of the metainfo frame"
+					);
+				}
 			}
 			//
 			try {
@@ -431,9 +443,9 @@ implements LoadClient<T> {
 		meanBW, oneMinBW, fiveMinBW, fifteenMinBW,
 		/*medDur, avgDur,*/ medLatency, avgLatency;
 	//
-	private void logMetrics(final Marker logMarker) {
+	private void logMetrics(final Marker logMarker, final int timeOutSeconds) {
 		//
-		if(!isShutdown()) {
+		if(!isShutdown() && !mgmtConnExecutor.isShutdown()) {
 			try {
 				countSubm = mgmtConnExecutor.submit(taskGetCountSubm);
 				countRej = mgmtConnExecutor.submit(taskGetCountRej);
@@ -463,11 +475,17 @@ implements LoadClient<T> {
 		}
 		//
 		try {
-			final long countSucc = countReqSucc.get(), countFail = countReqFail.get();
-			LOG.info(
-				logMarker,
-				Markers.PERF_SUM.equals(logMarker) ?
-				String.format(
+			final long
+				countSucc = countReqSucc.get(timeOutSeconds, TimeUnit.SECONDS),
+				countFail = countReqFail.get(timeOutSeconds, TimeUnit.SECONDS),
+				avgLat = avgLatency.get(timeOutSeconds, TimeUnit.SECONDS).intValue(),
+				minLat = minLatency.get(timeOutSeconds, TimeUnit.SECONDS).intValue(),
+				medLat = medLatency.get(timeOutSeconds, TimeUnit.SECONDS).intValue(),
+				maxLat = maxLatency.get(timeOutSeconds, TimeUnit.SECONDS).intValue();
+			final boolean isSummary = Markers.PERF_SUM.equals(logMarker);
+			final String msg;
+			if(isSummary) {
+				msg = String.format(
 					Main.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 					//
 					name, countSucc,
@@ -477,17 +495,15 @@ implements LoadClient<T> {
 							String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countFail) :
 							String.format(ConsoleColors.INT_RED_OVER_GREEN, countFail),
 					//
-					avgLatency.get().intValue(),
-					minLatency.get().intValue(),
-					medLatency.get().intValue(),
-					maxLatency.get().intValue(),
+					avgLat, minLat, medLat, maxLat,
 					//
 					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
 					//
 					meanBW.get() / MIB, oneMinBW.get() / MIB, fiveMinBW.get() / MIB,
 					fifteenMinBW.get() / MIB
-				) :
-				String.format(
+				);
+			} else {
+				msg = String.format(
 					Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
 					//
 					countSucc, countSubm.get() - countSucc,
@@ -497,21 +513,21 @@ implements LoadClient<T> {
 							String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countFail) :
 							String.format(ConsoleColors.INT_RED_OVER_GREEN, countFail),
 					//
-					avgLatency.get().intValue(),
-					minLatency.get().intValue(),
-					medLatency.get().intValue(),
-					maxLatency.get().intValue(),
+					avgLat, minLat, medLat, maxLat,
 					//
 					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
 					//
 					meanBW.get() / MIB, oneMinBW.get() / MIB, fiveMinBW.get() / MIB,
 					fifteenMinBW.get() / MIB
-				)
-			);
+				);
+			}
+			LOG.info(logMarker, msg);
 		} catch(final ExecutionException e) {
 			TraceLogger.failure(LOG, Level.WARN, e, "Failed to fetch the metrics");
 		} catch(final InterruptedException | NullPointerException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "Unexpected failure");
+		} catch(final TimeoutException e) {
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Distributed metrics aggregation timeout");
 		}
 		//
 	}
@@ -687,61 +703,60 @@ implements LoadClient<T> {
 	@Override
 	public final void close()
 	throws IOException {
-		synchronized(remoteLoadMap) {
-			if(!remoteLoadMap.isEmpty()) {
-				interrupt();
+		if(!remoteLoadMap.isEmpty()) {
+			interrupt();
+			//
+			LOG.debug(Markers.MSG, "log summary metrics");
+			logMetrics(Markers.PERF_SUM, runTimeConfig.getRunMetricsPeriodSec());
+			LOG.debug(Markers.MSG, "log metainfo frames");
+			logMetaInfoFrames(runTimeConfig.getRunReqTimeOutMilliSec());
+			//
+			LoadSvc<T> nextLoadSvc;
+			JMXConnector nextJMXConn;
+			//
+			mgmtConnExecutor.shutdownNow();
+			//
+			metricsReporter.close();
+			//
+			LOG.debug(Markers.MSG, "Closing the remote services...");
+			for(final String addr : remoteLoadMap.keySet()) {
 				//
-				LOG.debug(Markers.MSG, "log summary metrics");
-				logMetrics(Markers.PERF_SUM);
-				LOG.debug(Markers.MSG, "log metainfo frames");
-				logMetaInfoFrames();
-				//
-				LoadSvc<T> nextLoadSvc;
-				JMXConnector nextJMXConn;
-				//
-				mgmtConnExecutor.shutdownNow();
-				//
-				metricsReporter.close();
-				//
-				LOG.debug(Markers.MSG, "Closing the remote services...");
-				for(final String addr : remoteLoadMap.keySet()) {
-					//
-					try {
-						nextLoadSvc = remoteLoadMap.get(addr);
-						nextLoadSvc.close();
-						LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
-					} catch(final NoSuchElementException e) {
-						LOG.debug(
-							Markers.ERR, "Looks like the remote load service is already shut down"
-						);
-					} catch(final IOException e) {
-						LOG.warn(Markers.ERR, "Failed to close remote load executor service");
-						LOG.trace(Markers.ERR, e.toString(), e.getCause());
-					}
-					//
-					try {
-						nextJMXConn = remoteJMXConnMap.get(addr);
-						if(nextJMXConn!=null) {
-							nextJMXConn.close();
-							LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
-						}
-					} catch(final NoSuchElementException e) {
-						LOG.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
-					} catch(final IOException e) {
-						TraceLogger.failure(
-							LOG, Level.WARN, e,
-							String.format("Failed to close JMX connection to %s", addr)
-						);
-					}
-					//
+				try {
+					nextLoadSvc = remoteLoadMap.get(addr);
+					nextLoadSvc.close();
+					LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
+				} catch(final NoSuchElementException e) {
+					LOG.debug(
+						Markers.ERR, "Looks like the remote load service is already shut down"
+					);
+				} catch(final IOException e) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e, "Failed to close remote load executor service"
+					);
 				}
-				LoadCloseHook.del(this);
-				LOG.debug(Markers.MSG, "Clear the servers map");
-				remoteLoadMap.clear();
-				LOG.debug(Markers.MSG, "Closed {}", getName());
-			} else {
-				LOG.debug(Markers.ERR, "Closed already");
+				//
+				try {
+					nextJMXConn = remoteJMXConnMap.get(addr);
+					if(nextJMXConn!=null) {
+						nextJMXConn.close();
+						LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
+					}
+				} catch(final NoSuchElementException e) {
+					LOG.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
+				} catch(final IOException e) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e,
+						String.format("Failed to close JMX connection to %s", addr)
+					);
+				}
+				//
 			}
+			LoadCloseHook.del(this);
+			LOG.debug(Markers.MSG, "Clear the servers map");
+			remoteLoadMap.clear();
+			LOG.debug(Markers.MSG, "Closed {}", getName());
+		} else {
+			LOG.debug(Markers.ERR, "Closed already");
 		}
 	}
 	//
