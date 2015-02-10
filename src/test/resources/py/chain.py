@@ -91,7 +91,6 @@ def build(flagSimultaneous=True, flagItemsBuffer=True, dataItemSizeMin=0, dataIt
 			LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)
 		except Throwable as e:
 			TraceLogger.failure(LOG, Level.FATAL, e, "Unexpected failure")
-			e.printStackTrace()
 	return chain
 	#
 def execute(chain=(), flagSimultaneous=True):
@@ -158,6 +157,6 @@ if __name__=="__builtin__":
 	try:
 		execute(chain, FLAG_SIMULTANEOUS)
 	except Throwable as e:
-		e.printStackTrace()
+		TraceLogger.failure(LOG, Level.WARN, e, "Chain execution failure")
 	#
 	LOG.info(Markers.MSG, "Scenario end")

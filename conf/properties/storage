@@ -17,6 +17,7 @@ socket.timeout.millisec:			1000000
 socket.reuse.addr:					true
 socket.keepalive:					true
 socket.tcp.nodelay:					true
+socket.linger:						0
 
 #
 mock.iothreads.persocket:			10

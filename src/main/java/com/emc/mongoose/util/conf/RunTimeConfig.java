@@ -303,6 +303,10 @@ implements Externalizable {
 		return getBoolean("storage.socket.tcp.nodelay");
 	}
 	//
+	public final int getSocketLinger() {
+		return getInt("storage.socket.linger");
+	}
+	//
 	public final String[] getRemoteServers() {
 		return getStringArray("remote.servers");
 	}

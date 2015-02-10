@@ -38,8 +38,6 @@ if __name__=="__builtin__":
 					chain.execute(nextChain, False)
 				except Throwable as e:
 					TraceLogger.failure(LOG, Level.ERROR, e, "Chain execution failure")
-					e.printStackTrace()
 		except Throwable as e:
 			TraceLogger.failure(LOG, Level.ERROR, e, "Determining the next data item size failure")
-			e.printStackTrace()
 	LOG.info(Markers.MSG, "Scenario end")

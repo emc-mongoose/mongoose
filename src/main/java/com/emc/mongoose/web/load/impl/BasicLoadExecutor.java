@@ -108,8 +108,10 @@ implements WSLoadExecutor<T> {
 			.custom()
 			.setIoThreadCount(threadCount)
 			.setSoKeepAlive(thrLocalConfig.getSocketKeepAliveFlag())
-			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
+			.setSoLinger(thrLocalConfig.getSocketLinger())
 			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
+			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
+			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
 			.setRcvBufSize((int) thrLocalConfig.getDataPageSize())
 			.setSndBufSize((int) thrLocalConfig.getDataPageSize())
 			.build();

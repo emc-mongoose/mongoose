@@ -6,12 +6,14 @@ import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
+import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 //
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -93,37 +95,39 @@ implements com.emc.mongoose.object.api.provider.atmos.SubTenant<T> {
 	throws IllegalStateException {
 		boolean flagExists = false;
 		//
-		try {
-			final HttpResponse httpResp = execute(
-				(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.HEAD
-			);
-			if(httpResp != null) {
-				final HttpEntity httpEntity = httpResp.getEntity();
-				final StatusLine statusLine = httpResp.getStatusLine();
-				if(statusLine == null) {
-					LOG.warn(Markers.MSG, "No response status");
-				} else {
-					final int statusCode = statusLine.getStatusCode();
-					if(statusCode == HttpStatus.SC_OK) {
-						LOG.debug(Markers.MSG, "Subtenant \"{}\" exists", name);
-						flagExists = true;
-					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
-						LOG.debug(Markers.MSG, "Subtenant \"{}\" doesn't exist", name);
+		if(name != null && name.length() > 0) {
+			try {
+				final HttpResponse httpResp = execute(
+					(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.GET
+				);
+				if(httpResp != null) {
+					final HttpEntity httpEntity = httpResp.getEntity();
+					final StatusLine statusLine = httpResp.getStatusLine();
+					if(statusLine == null) {
+						LOG.warn(Markers.MSG, "No response status");
 					} else {
-						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
-						if(httpEntity != null) {
-							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
-								httpEntity.writeTo(buff);
-								msg.appendNewLine().append(buff.toString());
+						final int statusCode = statusLine.getStatusCode();
+						if(statusCode == HttpStatus.SC_OK) {
+							LOG.debug(Markers.MSG, "Subtenant \"{}\" exists", name);
+							flagExists = true;
+						} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
+							LOG.debug(Markers.MSG, "Subtenant \"{}\" doesn't exist", name);
+						} else {
+							final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+							if(httpEntity != null) {
+								try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
+									httpEntity.writeTo(buff);
+									msg.appendNewLine().append(buff.toString());
+								}
 							}
+							throw new IllegalStateException(msg.toString());
 						}
-						throw new IllegalStateException(msg.toString());
 					}
+					EntityUtils.consumeQuietly(httpEntity);
 				}
-				EntityUtils.consumeQuietly(httpEntity);
+			} catch(final IOException e) {
+				TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 			}
-		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 		return flagExists;
