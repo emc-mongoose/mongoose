@@ -46,8 +46,8 @@ implements Runnable, Reusable {
 			TraceLogger.failure(
 				LOG, Level.DEBUG, e,
 				String.format(
-					"Request \"%s\" to \"%s\" execution failure",
-					ioTask, ioTask.getNodeAddr()
+					"Task #%d @ \"%s\" execution failure",
+					ioTask.hashCode(), ioTask.getNodeAddr()
 				)
 			);
 		} catch(final Exception e) {

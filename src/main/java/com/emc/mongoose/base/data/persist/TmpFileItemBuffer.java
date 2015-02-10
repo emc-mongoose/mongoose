@@ -68,7 +68,7 @@ implements DataItemBufferSvc<T> {
 		//
 		if(fBuff != null) {
 			setThreadFactory(
-				new WorkerFactory(String.format("itemsBuffer<%s>", fBuff.getName()))
+				new WorkerFactory(fBuff.getName()) // the name should be URL-safe
 			);
 		}
 		//
