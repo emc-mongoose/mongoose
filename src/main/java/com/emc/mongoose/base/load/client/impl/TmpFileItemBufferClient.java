@@ -236,7 +236,7 @@ implements DataItemBufferClient<T> {
 	throws InterruptedException {
 		//
 		final ExecutorService remoteJoinExecutor = Executors.newFixedThreadPool(
-			size(), new WorkerFactory(toString() + "-joinWorker")
+			size(), new WorkerFactory("itemBufferClientJoin")
 		);
 		//
 		for(final String addr: keySet()) {

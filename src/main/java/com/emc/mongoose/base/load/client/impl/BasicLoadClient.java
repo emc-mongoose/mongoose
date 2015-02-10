@@ -123,7 +123,12 @@ implements LoadClient<T> {
 						Thread.sleep(metricsUpdatePeriodSec * 1000);
 					}
 				} else {
-					Thread.sleep(Long.MAX_VALUE);
+					final RunTimeConfig thrLocalRunTimeConfig = Main.RUN_TIME_CONFIG.get();
+					Thread.sleep(
+						thrLocalRunTimeConfig.getRunTimeUnit().toMillis(
+							thrLocalRunTimeConfig.getRunTimeValue()
+						)
+					);
 				}
 			} catch(final InterruptedException e) {
 				LOG.debug(Markers.MSG, "Interrupted");
@@ -356,7 +361,7 @@ implements LoadClient<T> {
 		final String domain, final String mBeanName, final String attrName
 	) {
 		return metrics.register(
-			MetricRegistry.name(name, mBeanName+"."+attrName),
+			MetricRegistry.name(name, mBeanName + "." + attrName),
 			new AvgDouble(name, domain, mBeanName, attrName, mBeanSrvConnMap)
 		);
 	}
