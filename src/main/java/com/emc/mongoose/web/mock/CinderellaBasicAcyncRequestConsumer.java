@@ -1,4 +1,4 @@
-package com.emc.mongoose.web.storagemock;
+package com.emc.mongoose.web.mock;
 
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.io.HTTPContentInputStream;
@@ -23,7 +23,7 @@ import java.io.InputStream;
 /**
  * Created by olga on 04.02.15.
  */
-public class WSMockBasicAcyncRequestConsumer
+public class CinderellaBasicAcyncRequestConsumer
 extends BasicAsyncRequestConsumer {
 	//
 	private volatile HttpRequest request;
@@ -31,7 +31,7 @@ extends BasicAsyncRequestConsumer {
 	private static int MAX_PAGE_SIZE;
 	private final RunTimeConfig runTimeConfig;
 	//
-	public WSMockBasicAcyncRequestConsumer(final RunTimeConfig runTimeConfig) {
+	public CinderellaBasicAcyncRequestConsumer(final RunTimeConfig runTimeConfig) {
 		super();
 		MAX_PAGE_SIZE = (int) runTimeConfig.getDataPageSize();
 		this.runTimeConfig = runTimeConfig;
@@ -61,7 +61,7 @@ extends BasicAsyncRequestConsumer {
 		Asserts.notNull(this.buf, "Content buffer");
 		//this.buf.consumeContent(decoder);
 		try (final InputStream contentStream = HTTPContentInputStream.getInstance(decoder, ioctrl)) {
-			WSRequestConfigBase.consumeContentQuetly(contentStream, ioctrl);
+			WSRequestConfigBase.playStreamQuetly(contentStream);
 			this.buf.shutdown();
 		} catch (InterruptedException e) {
 			e.printStackTrace();

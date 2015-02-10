@@ -237,7 +237,7 @@ extends AbstractAppender {
 	//If node is known
 	private static ThreadEntity loadThreadEntity(final String threadNumberString, final LoadEntity load, final NodeEntity node){
 		ThreadEntity threadEntity = getThreadEntity(Long.valueOf(threadNumberString), load);
-		if (threadEntity == null){
+		if(threadEntity == null) {
 			threadEntity = new ThreadEntity(load, node, Long.valueOf(threadNumberString));
 		}
 		SESSION.save(threadEntity);

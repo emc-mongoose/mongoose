@@ -3,7 +3,7 @@ package com.emc.mongoose.web.api.impl.provider.atmos;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.util.logging.TraceLogger;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
@@ -15,7 +15,6 @@ import org.apache.http.Header;
 //
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -111,7 +110,7 @@ extends WSRequestConfigBase<T> {
 		this.subTenant = subTenant;
 		if(sharedHeadersMap != null && userName != null) {
 			if(
-				subTenant == null || subTenant.getName() == null || subTenant.getName().length() < 1
+				subTenant == null || subTenant.getName().length() < 1
 			) {
 				sharedHeadersMap.put(KEY_EMC_UID, userName);
 			} else {
@@ -130,7 +129,7 @@ extends WSRequestConfigBase<T> {
 			super.setUserName(userName);
 			if(sharedHeadersMap != null) {
 				if(
-					subTenant==null || subTenant.getName()==null || subTenant.getName().length() < 1
+					subTenant==null || subTenant.getName().length() < 1
 				) {
 					sharedHeadersMap.put(KEY_EMC_UID, userName);
 				} else {
@@ -188,7 +187,12 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setSubTenant(new SubTenant<>(this, String.class.cast(in.readObject())));
+		final Object t = in.readObject();
+		if(t == null) {
+			setSubTenant(null);
+		} else {
+			setSubTenant(new SubTenant<>(this, String.class.cast(t)));
+		}
 		uriBasePath = String.class.cast(in.readObject());
 	}
 	//
@@ -196,7 +200,7 @@ extends WSRequestConfigBase<T> {
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(subTenant.getName());
+		out.writeObject(subTenant == null ? null : subTenant.getName());
 		out.writeObject(uriBasePath);
 	}
 	//
@@ -216,21 +220,9 @@ extends WSRequestConfigBase<T> {
 
 	}
 	//
-	private final static String EMPTY = "";
-	//
 	@Override
 	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
-		if(!httpRequest.containsHeader(HttpHeaders.RANGE)) {
-			httpRequest.addHeader(HttpHeaders.RANGE, EMPTY); // temporary required for canonical form
-		}
-		//
 		httpRequest.setHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
-		//
-		final Header tmpHeader = httpRequest.getLastHeader(HttpHeaders.RANGE);
-		if(tmpHeader != null && tmpHeader.getValue().length() == 0) { // the header is temp
-			httpRequest.removeHeader(tmpHeader);
-		}
-
 	}
 	//
 	private final static String HEADERS4CANONICAL[] = {
@@ -241,28 +233,32 @@ extends WSRequestConfigBase<T> {
 	public final String getCanonical(final MutableHTTPRequest httpRequest) {
 		final StringBuilder buffer = new StringBuilder(httpRequest.getRequestLine().getMethod());
 		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
-		for(final String headerName: HEADERS4CANONICAL) {
+		for(final String headerName : HEADERS4CANONICAL) {
 			// support for multiple non-unique header keys
-			for(final Header header: httpRequest.getHeaders(headerName)) {
-				buffer.append('\n').append(header.getValue());
-			}
 			if(sharedHeadersMap.containsKey(headerName)) {
 				buffer.append('\n').append(sharedHeadersMap.get(headerName));
+			} else if(httpRequest.containsHeader(headerName)) {
+				for(final Header header: httpRequest.getHeaders(headerName)) {
+					buffer.append('\n').append(header.getValue());
+				}
+			} else {
+				buffer.append('\n');
 			}
 		}
 		//
 		buffer.append('\n').append(httpRequest.getUriPath());
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
-			for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
-				buffer
-					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(emcHeader.getValue());
-			}
 			if(sharedHeadersMap.containsKey(emcHeaderName)) {
 				buffer
 					.append('\n').append(emcHeaderName.toLowerCase())
 					.append(':').append(sharedHeadersMap.get(emcHeaderName));
+			} else {
+				for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
+					buffer.append('\n').append(emcHeaderName.toLowerCase()).append(':').append(
+						emcHeader.getValue()
+					);
+				}
 			}
 		}
 		//
@@ -315,6 +311,9 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final void applyDataItem(final MutableHTTPRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
+		if(fsAccess) {
+			super.applyObjectId(dataItem, null);
+		}
 		applyURI(httpRequest, dataItem);
 		switch(loadType) {
 			case CREATE:

@@ -50,8 +50,10 @@ implements Runnable {
 			LOG.debug(
 				Markers.MSG, "Registered shutdown hook \"{}\"", hookTask.loadName
 			);
-		} catch(final SecurityException | IllegalArgumentException | IllegalStateException e) {
+		} catch(final SecurityException | IllegalArgumentException e) {
 			TraceLogger.failure(LOG, Level.WARN, e, "Failed to add the shutdown hook");
+		} catch(final IllegalStateException e) { // shutdown is in progress
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to add the shutdown hook");
 		}
 	}
 	//
@@ -80,7 +82,7 @@ implements Runnable {
 			LOG.debug(Markers.MSG, "The load executor \"{}\"closed successfully", loadName);
 		} catch(final Exception e) {
 			TraceLogger.failure(
-				LOG, Level.WARN, e,
+				LOG, Level.DEBUG, e,
 				String.format("Failed to close the load executor \"%s\"", loadName)
 			);
 		}

@@ -1,6 +1,7 @@
 package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.Consumer;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.logging.Markers;
@@ -20,6 +21,7 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.concurrent.RejectedExecutionException;
 /**
  Created by kurila on 09.10.14.
  */
@@ -90,25 +92,25 @@ extends DefaultHandler {
 				LOG.trace(Markers.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
 			}
 			//
-			if(strId != null && strId.length() > 0 && Base64.isBase64(strId) && size > 0) {
+			if(strId != null && strId.length() > 0 && size > 0) {
 				try {
-					offsetValueBytes.put(Base64.decodeBase64(strId));
-					offset = offsetValueView.get(0);
-					offsetValueBytes.clear();
-					if(count < maxCount) {
+					offset = Long.parseLong(strId, DataObject.ID_RADIX);
+					if(offset < 0) {
+						LOG.warn(Markers.ERR, "Calculated from id ring offset is negative");
+					} else if(count < maxCount) {
 						consumer.submit(dataConstructor.newInstance(strId, offset, size));
 						count ++;
 					} else {
 						endDocument();
 					}
-				} catch(final RemoteException e) {
+				} catch(final RemoteException | RejectedExecutionException e) {
 					TraceLogger.failure(
-						LOG, Level.WARN, e, "Failed to submit new data object to remote consumer"
+						LOG, Level.WARN, e, "Failed to submit new data object to the consumer"
 					);
 				} catch(final InterruptedException e) {
 					endDocument();
-				} catch(final BufferOverflowException e) {
-					LOG.debug(Markers.ERR, Arrays.toString(Base64.decodeBase64(strId)));
+				} catch(final NumberFormatException e) {
+					LOG.debug(Markers.ERR, "Invalid id: {}", strId);
 				} catch(final Exception e) {
 					TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
 				}

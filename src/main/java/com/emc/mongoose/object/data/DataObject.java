@@ -10,8 +10,9 @@ import com.emc.mongoose.base.data.UpdatableDataItem;
 public interface DataObject
 extends AppendableDataItem, UpdatableDataItem {
 	//
-	String getId();
-	//
-	void setId(final String id);
-	//
+	int ID_RADIX = Character.MAX_RADIX;
+    //
+    String getId();
+    //
+    void setId(final String id);
 }

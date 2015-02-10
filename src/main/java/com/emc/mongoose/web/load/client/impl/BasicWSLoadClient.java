@@ -2,14 +2,12 @@ package com.emc.mongoose.web.load.client.impl;
 //
 import com.emc.mongoose.base.load.client.impl.BasicLoadClient;
 import com.emc.mongoose.base.load.server.LoadSvc;
-//import com.emc.mongoose.util.logging.ExceptionHandler;
-//import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.web.load.client.WSLoadClient;
 import com.emc.mongoose.web.load.server.WSLoadSvc;
-import org.apache.http.HttpHost;
+//
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 //
@@ -17,7 +15,7 @@ import org.apache.http.HttpResponse;
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
 //
-import java.rmi.RemoteException;
+import java.io.IOException;
 import java.util.Map;
 import javax.management.remote.JMXConnector;
 /**
@@ -42,12 +40,12 @@ implements WSLoadClient<T> {
 	}
 	//
 	@Override
-	public final HttpResponse execute(final HttpHost tgtHost, final HttpRequest request)
-	throws RemoteException {
+	public final HttpResponse execute(final HttpRequest request)
+	throws IOException {
 		final Object addrs[] = remoteLoadMap.keySet().toArray();
 		final String addr = String.class.cast(
 			addrs[(int) getTaskCount() % addrs.length]
 		);
-		return ((WSLoadSvc<T>) remoteLoadMap.get(addr)).execute(tgtHost, request);
+		return ((WSLoadSvc<T>) remoteLoadMap.get(addr)).execute(request);
 	}
 }

@@ -3,6 +3,7 @@ package com.emc.mongoose.web.api;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
@@ -42,8 +43,6 @@ extends ObjectRequestConfig<T> {
 		HEADERS_EMC = {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_NS, KEY_EMC_SIG, KEY_EMC_UID, KEY_EMC_FS_ACCESS
 		};
-	//
-	int RADIX = 36;
 	//
 	WSIOTask.HTTPMethod getHTTPMethod();
 	//
@@ -92,6 +91,5 @@ extends ObjectRequestConfig<T> {
 	//
 	void receiveResponse(final HttpResponse response, final T dataItem);
 	//
-	boolean consumeContent(final InputStream contentStream, final IOControl ioCtl, T dataItem)
-	throws IOException;
+	boolean consumeContent(final InputStream contentStream, final IOControl ioCtl, T dataItem);
 }

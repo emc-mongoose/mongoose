@@ -31,12 +31,12 @@ implements Gauge<Long> {
 	private final Map<String, MBeanServerConnection> mBeanSrvConnMap;
 	//
 	public SumLong(
-		final String domain, final String name, final String attrName,
+		final String loadName, final String domain, final String name, final String attrName,
 		final Map<String, MBeanServerConnection> mBeanSrvConnMap
 	) {
 		this.domain = domain;
 		this.attrName = attrName;
-		fqMBeanName = domain.substring(0, domain.lastIndexOf('x')) + '.' + name;
+		fqMBeanName = loadName.substring(0, loadName.lastIndexOf('x')) + '.' + name;
 		this.mBeanSrvConnMap = mBeanSrvConnMap;
 	}
 	//
@@ -47,7 +47,7 @@ implements Gauge<Long> {
 		MBeanServerConnection nextMBeanConn;
 		ObjectName objectName;
 		//
-		for(final String addr: mBeanSrvConnMap.keySet()) {
+		for(final String addr : mBeanSrvConnMap.keySet()) {
 			nextMBeanConn = mBeanSrvConnMap.get(addr);
 			objectName = null;
 			try {

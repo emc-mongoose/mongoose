@@ -68,12 +68,11 @@ implements LoadExecutor<T> {
 	private final int totalThreadCount;
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
-	protected final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
-	protected final Meter reqBytes;
+	protected Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
+	protected Meter reqBytes;
 	protected Histogram respLatency;
 	//
 	protected final MBeanServer mBeanServer;
-	//
 	protected final JmxReporter jmxReporter;
 	// METRICS section END
 	protected LoadExecutorBase(
@@ -123,15 +122,6 @@ implements LoadExecutor<T> {
 		);
 		this.threadsPerNode = threadsPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		// init metrics
-		counterSubm = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUBM));
-		counterRej = metrics.counter(MetricRegistry.name(name, METRIC_NAME_REJ));
-		counterReqSucc = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUCC));
-		counterReqFail = metrics.counter(MetricRegistry.name(name, METRIC_NAME_FAIL));
-		reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));
-		//reqDur = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR));
-		respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
-		jmxReporter.start();
 		// prepare the node executors array
 		storageNodeAddrs = addrs.clone();
 		// create and configure the connection manager
@@ -282,15 +272,27 @@ implements LoadExecutor<T> {
 		//
 	}
 	//
-	private long tsStart;
+	private final AtomicLong tsStart = new AtomicLong(-1);
 	//
 	@Override
-	public synchronized void start() {
-		boolean pass = !metricDumpThread.isAlive(); // don't pass if started already
-		//
-		if(pass) {
+	public void start() {
+		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			//
 			prestartAllCoreThreads();
+			//
+			final String name = getName();
+			// init metrics
+			counterSubm = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUBM));
+			counterRej = metrics.counter(MetricRegistry.name(name, METRIC_NAME_REJ));
+			counterReqSucc = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUCC));
+			counterReqFail = metrics.counter(MetricRegistry.name(name, METRIC_NAME_FAIL));
+			reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));
+			//reqDur = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR));
+			respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
+			jmxReporter.start();
+			//
+			metricDumpThread.setName(getName());
+			metricDumpThread.start();
 			//
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
@@ -299,7 +301,6 @@ implements LoadExecutor<T> {
 				try {
 					reqConfig.configureStorage(this);
 				} catch(final IllegalStateException e) {
-					//pass = false;
 					TraceLogger.failure(LOG, Level.WARN, e, "Failed to configure the storage");
 				}
 				//
@@ -307,23 +308,13 @@ implements LoadExecutor<T> {
 					producer.start();
 					LOG.debug(Markers.MSG, "Started object producer {}", producer);
 				} catch(final IOException e) {
-					pass = false;
 					TraceLogger.failure(LOG, Level.WARN, e, "Failed to start the producer");
 				}
 			}
+			//
+			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
 		} else {
 			LOG.warn(Markers.ERR, "Second start attempt - skipped");
-		}
-		//
-		if(pass) {
-			//
-			metricDumpThread.setName(getName());
-			metricDumpThread.start();
-			//
-			tsStart = System.nanoTime();
-			LOG.info(Markers.MSG, "Started \"{}\"", getName());
-		} else {
-			LOG.warn(Markers.MSG, "Not started \"{}\" due to failures", getName());
 		}
 	}
 	//
@@ -357,8 +348,12 @@ implements LoadExecutor<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void submit(final T dataItem)
-	throws RemoteException, InterruptedException {
-		if(maxCount > counterSubm.getCount()) {
+	throws RemoteException, RejectedExecutionException, InterruptedException {
+		if(tsStart.get() < 0) {
+			throw new RejectedExecutionException(
+				"Not started yet, rejecting the submit of the data item"
+			);
+		} else if(maxCount > counterSubm.getCount()) {
 			if(dataItem == null) {
 				LOG.debug(Markers.MSG, "{}: poison submitted, performing the shutdown", getName());
 				shutdown(); // stop further submitting
@@ -442,7 +437,9 @@ implements LoadExecutor<T> {
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
 		} catch(final RemoteException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Looks like a network failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "Passing the data item to consumer failed");
+		} catch(final RejectedExecutionException e) {
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Consumer rejected the data item");
 		}
 	}
 	//
@@ -475,19 +472,26 @@ implements LoadExecutor<T> {
 			String.format("invoked close of %s", getName())
 		);
 		if(isClosed.compareAndSet(false, true)) {
-			interrupt();
-			logMetrics(Markers.PERF_SUM); // provide summary metrics
-			// calculate the efficiency and report
-			double eff = 1.e3 * durSumTasks.get() / ((System.nanoTime() - tsStart) * totalThreadCount);
-			LOG.debug(
-				Markers.PERF_SUM,
-				String.format(
-					Main.LOCALE_DEFAULT, "Calculated load execution efficiency: %3.3f[%%]",
-					100 * eff
-				)
-			);
+			final long tsStartNanoSec = tsStart.get();
+			if(tsStartNanoSec > 0) {
+				interrupt();
+				logMetrics(Markers.PERF_SUM); // provide summary metrics
+				// calculate the efficiency and report
+				final float
+					loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
+					eff = durSumTasks.get() / (loadDurMicroSec * totalThreadCount);
+				LOG.debug(
+					Markers.PERF_SUM,
+					String.format(
+						Main.LOCALE_DEFAULT,
+						"Load execution duration: %3.3f[sec], efficiency estimation: %3.3f[%%]",
+						loadDurMicroSec / 1e6, 100 * eff
+					)
+				);
+			}
 			try {
 				// force shutdown
+				reqConfig.close(); // disables connection drop failures
 				LOG.debug(Markers.MSG, "{}: dropped {} tasks", getName(), shutdownNow().size());
 				// poison the consumer
 				consumer.submit(null);
@@ -498,6 +502,8 @@ implements LoadExecutor<T> {
 						"%s: interrupted on feeding the poison to the consumer", getName()
 					)
 				);
+			} catch(final IllegalStateException | RejectedExecutionException e) {
+				TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
 				jmxReporter.close();
 				LoadCloseHook.del(this);

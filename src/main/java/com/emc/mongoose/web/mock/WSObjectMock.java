@@ -1,4 +1,4 @@
-package com.emc.mongoose.web.storagemock;
+package com.emc.mongoose.web.mock;
 
 import com.emc.mongoose.web.data.WSObject;
 

@@ -13,6 +13,6 @@ import java.io.IOException;
  */
 public interface WSLoadExecutor<T extends WSObject>
 extends ObjectLoadExecutor<T> {
-	HttpResponse execute(final HttpHost tgtHost, final HttpRequest request)
+	HttpResponse execute(final HttpRequest request)
 	throws IOException;
 }

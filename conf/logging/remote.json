@@ -169,11 +169,6 @@
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "instancePoolStats",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
 								"type": "ThresholdFilter",
 								"level": "INFO",
 								"onMatch": "NEUTRAL",
@@ -265,7 +260,7 @@
 					"name": "async",
 					"type": "Async",
 					"blocking": "false",
-					"bufferSize": "1048576",
+					"bufferSize": "131072",
 					"AppenderRef": [
 						{ "ref": "stdout" },
 						{ "ref": "msgFile" },
@@ -490,6 +485,13 @@
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.load.impl.tasks",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+					  "ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.web.load.client.impl",

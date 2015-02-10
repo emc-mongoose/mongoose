@@ -1,4 +1,4 @@
-package com.emc.mongoose.web.storagemock;
+package com.emc.mongoose.web.mock;
 
 import com.codahale.metrics.Counter;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by olga on 04.02.15.
  */
-public class WSMockConnectionFactory
+public class CinderellaConnectionFactory
 extends DefaultNHttpServerConnectionFactory {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -34,11 +34,10 @@ extends DefaultNHttpServerConnectionFactory {
 	private final int faultSleepMsec;
 	private final int faultPeriod;
 	//
-	public WSMockConnectionFactory(final ConnectionConfig config, final RunTimeConfig runTimeConfig,
-								   final Counter counterAllFail){
+	public CinderellaConnectionFactory(final ConnectionConfig config, final RunTimeConfig runTimeConfig){
 		super(config);
-		this.faultSleepMsec =  runTimeConfig.getInt("wsmock.fault.sleep.msec");
-		faultPeriod = runTimeConfig.getInt("wsmock.fault.period");
+		this.faultSleepMsec =  runTimeConfig.getInt("storage.mock.fault.sleep.msec");
+		faultPeriod = runTimeConfig.getInt("storage.mock.fault.period");
 
 	}
 

@@ -12,7 +12,6 @@ public final class TraceLogger {
 	//
 	private static final String FMT_MSG = "%s: %s";
 	//
-	@SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
 	public static void failure(
 		final Logger logger, final Level level, final Throwable thrown, final String msg
 	) {

@@ -17,7 +17,6 @@ scenario.lang:					py
 # name of the scenario to launch w/o path and filename extension
 scenario.name:					single
 
-
 #
 metrics.period.sec:				10
 
@@ -34,4 +33,4 @@ request.retries:				false
 request.timeout.millisec:		1000000
 
 #
-request.queue.size:				16384
+request.queue.size:				1024
