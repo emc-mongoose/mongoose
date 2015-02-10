@@ -16,6 +16,7 @@ import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
 import com.emc.mongoose.web.api.WSIOTask;
+import com.emc.mongoose.web.data.WSObject;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.http.HttpEntity;
@@ -53,6 +54,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.management.MBeanServer;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
@@ -75,6 +79,9 @@ implements Runnable {
 	private final ExecutorService multiSocketSvc;
 	private final HttpAsyncService protocolHandler;
 	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
+	//
+	private final Map<String, WSObjectMock> sharedStorage;
+	private final BlockingQueue<String> sharedStorageIndex;
 	//
 	public final static String NAME_SERVER = String.format(
 		"%s/%s", Cinderella.class.getSimpleName(), Main.RUN_TIME_CONFIG.get().getRunVersion()
@@ -107,7 +114,7 @@ implements Runnable {
 	throws IOException {
 		this.runTimeConfig = runTimeConfig;
 		metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
-		this.connFactory = new CinderellaConnectionFactory(ConnectionConfig.DEFAULT, runTimeConfig);
+		connFactory = new CinderellaConnectionFactory(ConnectionConfig.DEFAULT, runTimeConfig);
 		//
 		final MetricRegistry metrics = new MetricRegistry();
 		final MBeanServer mBeanServer;
@@ -179,8 +186,8 @@ implements Runnable {
 		metricsReporter.start();
 		//queue size for data object
 		final int queueDataIdSize = runTimeConfig.getInt("storage.mock.capacity");
-		final BlockingQueue<String> sharedStorageIndex = new ArrayBlockingQueue<>(queueDataIdSize);
-		final Map<String, WSObjectMock> sharedStorage = new ConcurrentHashMap<>(queueDataIdSize);
+		sharedStorageIndex = new ArrayBlockingQueue<>(queueDataIdSize);
+		sharedStorage = new ConcurrentHashMap<>(queueDataIdSize);
 		// count of heads = count of cores - 1
 		portCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
 		LOG.debug(Markers.MSG, "Starting w/ {} heads", portCount);
@@ -195,7 +202,7 @@ implements Runnable {
 		// Create request handler registry
 		final UriHttpAsyncRequestHandlerMapper reqistry = new UriHttpAsyncRequestHandlerMapper();
 		// Register the default handler for all URIs
-		reqistry.register("*", new RequestHandler(sharedStorage, sharedStorageIndex));
+		reqistry.register("*", new RequestHandler());
 		protocolHandler = new HttpAsyncService(httpproc, reqistry);
 		multiSocketSvc = Executors.newFixedThreadPool(
 			portCount, new WorkerFactory("cinderellaWorker")
@@ -205,7 +212,6 @@ implements Runnable {
 	@Override
 	public void run() {
 		//if there is data src file path
-		/*
 		final String dataFilePath = runTimeConfig.getDataSrcFPath();
 		if (!dataFilePath.isEmpty()){
 			try {
@@ -214,7 +220,12 @@ implements Runnable {
 				String s;
 				while((s = bufferReader.readLine()) != null) {
 					WSObjectMock dataObject = new BasicWSObjectMock(s) ;
-					sharedStorage.put(dataObject.getId(), dataObject);
+					try {
+						putDataObject(dataObject.getId(),dataObject);
+					} catch(final IllegalStateException e) {
+						reader.close();
+						TraceLogger.failure(LOG, Level.WARN, e, "Memory is full");
+					}
 				}
 				reader.close();
 			} catch (final FileNotFoundException e) {
@@ -225,7 +236,7 @@ implements Runnable {
 					"Read line is fault.");
 			}
 		}
-		*/
+
 		//
 		for(int nextPort = portStart; nextPort < portStart + portCount; nextPort ++){
 			try {
@@ -258,11 +269,12 @@ implements Runnable {
 	}
 	//
 	private final static String
-		MSG_FMT_METRICS = "count=(%d/%d); duration[us]=(%d/%d/%d/%d); " +
+		//MSG_FMT_METRICS = "count=(%d/%d); duration[us]=(%d/%d/%d/%d); " +
+		MSG_FMT_METRICS = "count=(%d/%d); " +
 		"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
 	private void printMetrics() {
-		final Snapshot allDurSnapshot = durAll.getSnapshot();
+		//final Snapshot allDurSnapshot = durAll.getSnapshot();
 		LOG.info(
 			Markers.PERF_AVG,
 			String.format(
@@ -270,10 +282,12 @@ implements Runnable {
 				//
 				counterAllSucc.getCount(), counterAllFail.getCount(),
 				//
+				/*
 				(int) (allDurSnapshot.getMean() / LoadExecutor.NANOSEC_SCALEDOWN),
 				(int) (allDurSnapshot.getMin() / LoadExecutor.NANOSEC_SCALEDOWN),
 				(int) (allDurSnapshot.getMedian() / LoadExecutor.NANOSEC_SCALEDOWN),
 				(int) (allDurSnapshot.getMax() / LoadExecutor.NANOSEC_SCALEDOWN),
+				*/
 				//
 				allTP.getMeanRate(),
 				allTP.getOneMinuteRate(),
@@ -287,25 +301,44 @@ implements Runnable {
 			)
 		);
 	}
+	//
+	private void putDataObject(final String dataID, final WSObjectMock dataObject){
+		synchronized(sharedStorageIndex) {
+			/* - ???
+			if(sharedStorageIndex.offer(dataID)) {
+				LOG.trace(
+					Markers.MSG, "Appended \"{}\" to shared storage index", dataID
+				);
+			} else {
+				sharedStorageIndex.remove();
+				if(!sharedStorageIndex.offer(dataID)) {
+					LOG.warn(Markers.ERR, "Failed to add \"{}\" to the storage", dataID);
+				} else {
+					LOG.trace(Markers.MSG, "\"{}\" replaced another object", dataID);
+				}
+			}
+			sharedStorage.put(dataID, dataObject);
+			*/
+			if (!sharedStorageIndex.offer(dataID)) {
+				LOG.trace(Markers.MSG, " Queue is full");
+				sharedStorage.remove(sharedStorageIndex.remove());
+				sharedStorageIndex.add(dataID);
+			}
+			sharedStorage.put(dataID, dataObject);
+		}
+	}
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	//Mock Handler
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	private final class RequestHandler
 	implements HttpAsyncRequestHandler<HttpRequest> {
 		//
-		private final Map<String, WSObjectMock> sharedStorage;
-		private final BlockingQueue<String> sharedStorageIndex;
 		private final int ringOffsetRadix = runTimeConfig.getInt(
 			"storage.mock.data.offset.radix"
 		);
 		//
-		public RequestHandler(
-			final Map<String, WSObjectMock> sharedStorage,
-			final BlockingQueue<String> sharedStorageIndex
-		) {
+		public RequestHandler() {
 			super();
-			this.sharedStorage = sharedStorage;
-			this.sharedStorageIndex = sharedStorageIndex;
 		}
 		//
 		@Override
@@ -398,61 +431,40 @@ implements Runnable {
 			LOG.trace(Markers.MSG, " Request  method Put ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			WSObjectMock dataObject = null;
-			try {
-				final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-				final long bytes = EntityUtils.toByteArray(entity).length;
-				//create data object or get it for append or update
-				if(sharedStorage.containsKey(dataID)) {
-					dataObject = sharedStorage.get(dataID);
+			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+			final long bytes = entity.getContentLength();
+			//create data object or get it for append or update
+			if(sharedStorage.containsKey(dataID)) {
+				dataObject = sharedStorage.get(dataID);
+			} else {
+				final long offset;
+				if(ringOffsetRadix == 0x40) { // base64
+					offset = ByteBuffer
+						.allocate(Long.SIZE / Byte.SIZE)
+						.put(Base64.decodeBase64(dataID))
+						.getLong(0);
+				} else if(ringOffsetRadix > 1 && ringOffsetRadix <= Character.MAX_RADIX) {
+					offset = Long.valueOf(dataID, ringOffsetRadix);
 				} else {
-					final long offset;
-					if(ringOffsetRadix == 0x40) { // base64
-						offset = ByteBuffer
-							.allocate(Long.SIZE / Byte.SIZE)
-							.put(Base64.decodeBase64(dataID))
-							.getLong(0);
-					} else if(ringOffsetRadix > 1 && ringOffsetRadix <= Character.MAX_RADIX) {
-						offset = Long.valueOf(dataID, ringOffsetRadix);
-					} else {
-						throw new HttpException(
-							String.format(
-								"Unsupported data ring offset radix: %d", ringOffsetRadix
-							)
-						);
-					}
-					dataObject = new BasicWSObjectMock(dataID, offset, bytes);
+					throw new HttpException(
+						String.format(
+							"Unsupported data ring offset radix: %d", ringOffsetRadix
+						)
+					);
 				}
-				try {
-					synchronized(sharedStorageIndex) {
-						if(sharedStorageIndex.offer(dataID)) {
-							LOG.trace(
-								Markers.MSG, "Appended \"{}\" to shared storage index", dataID
-							);
-						} else {
-							sharedStorageIndex.remove();
-							if(!sharedStorageIndex.offer(dataID)) {
-								LOG.warn(Markers.ERR, "Failed to add \"{}\" to the storage", dataID);
-							} else {
-								LOG.trace(Markers.MSG, "\"{}\" replaced another object", dataID);
-							}
-						}
-						sharedStorage.put(dataID, dataObject);
-					}
-					counterAllSucc.inc();
-					counterPutSucc.inc();
-					putBW.mark(bytes);
-					allBW.mark(bytes);
-					putTP.mark();
-					allTP.mark();
-				} catch(final IllegalStateException e) {
-					response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-					TraceLogger.failure(LOG, Level.WARN, e, "Memory is full");
-					counterAllFail.inc();
-					counterPutFail.inc();
-				}
-			} catch(final IOException e) {
+				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
+			}
+			try {
+				putDataObject(dataID,dataObject);
+				counterAllSucc.inc();
+				counterPutSucc.inc();
+				putBW.mark(bytes);
+				allBW.mark(bytes);
+				putTP.mark();
+				allTP.mark();
+			} catch(final IllegalStateException e) {
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.WARN, e, "Input stream failed");
+				TraceLogger.failure(LOG, Level.WARN, e, "Memory is full");
 				counterAllFail.inc();
 				counterPutFail.inc();
 			}
