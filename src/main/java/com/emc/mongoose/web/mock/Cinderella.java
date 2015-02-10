@@ -19,6 +19,7 @@ import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.data.WSObject;
 import org.apache.commons.codec.binary.Base64;
 //
+import org.apache.commons.collections4.map.LRUMap;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
@@ -61,6 +62,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -81,7 +83,6 @@ implements Runnable {
 	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
 	//
 	private final Map<String, WSObjectMock> sharedStorage;
-	private final BlockingQueue<String> sharedStorageIndex;
 	//
 	public final static String NAME_SERVER = String.format(
 		"%s/%s", Cinderella.class.getSimpleName(), Main.RUN_TIME_CONFIG.get().getRunVersion()
@@ -186,8 +187,7 @@ implements Runnable {
 		metricsReporter.start();
 		//queue size for data object
 		final int queueDataIdSize = runTimeConfig.getInt("storage.mock.capacity");
-		sharedStorageIndex = new ArrayBlockingQueue<>(queueDataIdSize);
-		sharedStorage = new ConcurrentHashMap<>(queueDataIdSize);
+		sharedStorage = Collections.synchronizedMap(new LRUMap<String, WSObjectMock>(queueDataIdSize));
 		// count of heads = count of cores - 1
 		portCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
 		LOG.debug(Markers.MSG, "Starting w/ {} heads", portCount);
@@ -213,30 +213,42 @@ implements Runnable {
 	public void run() {
 		//if there is data src file path
 		final String dataFilePath = runTimeConfig.getDataSrcFPath();
+		FileReader reader = null;
 		if (!dataFilePath.isEmpty()){
 			try {
-				final FileReader reader = new FileReader(dataFilePath);
+				reader = new FileReader(dataFilePath);
 				final BufferedReader bufferReader = new BufferedReader(reader);
 				String s;
 				while((s = bufferReader.readLine()) != null) {
 					WSObjectMock dataObject = new BasicWSObjectMock(s) ;
 					try {
-						putDataObject(dataObject.getId(),dataObject);
-					} catch(final IllegalStateException e) {
-						reader.close();
-						TraceLogger.failure(LOG, Level.WARN, e, "Memory is full");
+						sharedStorage.put(dataObject.getId(),dataObject);
+					} catch(final NullPointerException e) {
+						TraceLogger.failure(LOG, Level.WARN, e, "Fail to put object in map");
+					} catch(final UnsupportedOperationException e){
+						TraceLogger.failure(LOG, Level.WARN, e, "Put operation is not supported by this map");
+					} catch(final ClassCastException e){
+						TraceLogger.failure(LOG, Level.WARN, e, "The class of the specified key " +
+							"or value prevents it from being stored in this map");
+					} catch(final IllegalArgumentException e){
+						TraceLogger.failure(LOG, Level.WARN, e, "Some property of the specified key " +
+							"or value prevents it from being stored in this map");
 					}
 				}
-				reader.close();
 			} catch (final FileNotFoundException e) {
 				TraceLogger.failure(LOG, Level.WARN, e,
 					"File not found.");
 			} catch (final IOException e) {
 				TraceLogger.failure(LOG, Level.WARN, e,
 					"Read line is fault.");
+			} finally {
+				try {
+					reader.close();
+				} catch (final IOException e) {
+					TraceLogger.failure(LOG, Level.WARN, e, "Fault to close reader");
+				}
 			}
 		}
-
 		//
 		for(int nextPort = portStart; nextPort < portStart + portCount; nextPort ++){
 			try {
@@ -300,32 +312,6 @@ implements Runnable {
 				allBW.getFifteenMinuteRate() / LoadExecutor.MIB
 			)
 		);
-	}
-	//
-	private void putDataObject(final String dataID, final WSObjectMock dataObject){
-		synchronized(sharedStorageIndex) {
-			/* - ???
-			if(sharedStorageIndex.offer(dataID)) {
-				LOG.trace(
-					Markers.MSG, "Appended \"{}\" to shared storage index", dataID
-				);
-			} else {
-				sharedStorageIndex.remove();
-				if(!sharedStorageIndex.offer(dataID)) {
-					LOG.warn(Markers.ERR, "Failed to add \"{}\" to the storage", dataID);
-				} else {
-					LOG.trace(Markers.MSG, "\"{}\" replaced another object", dataID);
-				}
-			}
-			sharedStorage.put(dataID, dataObject);
-			*/
-			if (!sharedStorageIndex.offer(dataID)) {
-				LOG.trace(Markers.MSG, " Queue is full");
-				sharedStorage.remove(sharedStorageIndex.remove());
-				sharedStorageIndex.add(dataID);
-			}
-			sharedStorage.put(dataID, dataObject);
-		}
 	}
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	//Mock Handler
@@ -455,16 +441,33 @@ implements Runnable {
 				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 			}
 			try {
-				putDataObject(dataID,dataObject);
+				sharedStorage.put(dataID,dataObject);
 				counterAllSucc.inc();
 				counterPutSucc.inc();
 				putBW.mark(bytes);
 				allBW.mark(bytes);
 				putTP.mark();
 				allTP.mark();
-			} catch(final IllegalStateException e) {
+			} catch(final NullPointerException e) {
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.WARN, e, "Memory is full");
+				TraceLogger.failure(LOG, Level.WARN, e, "Fail to put object in map");
+				counterAllFail.inc();
+				counterPutFail.inc();
+			} catch(final UnsupportedOperationException e){
+				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				TraceLogger.failure(LOG, Level.WARN, e, "Put operation is not supported by this map");
+				counterAllFail.inc();
+				counterPutFail.inc();
+			} catch(final ClassCastException e){
+				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				TraceLogger.failure(LOG, Level.WARN, e, "The class of the specified key " +
+					"or value prevents it from being stored in this map");
+				counterAllFail.inc();
+				counterPutFail.inc();
+			} catch(final IllegalArgumentException e){
+				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				TraceLogger.failure(LOG, Level.WARN, e, "Some property of the specified key " +
+					"or value prevents it from being stored in this map");
 				counterAllFail.inc();
 				counterPutFail.inc();
 			}
