@@ -45,7 +45,7 @@ extends DefaultNHttpServerConnectionFactory {
 	@Override
 	public final DefaultNHttpServerConnection createConnection(final IOSession session) {
 		DefaultNHttpServerConnection connection = super.createConnection(session);
-		if ((counter.incrementAndGet() % faultPeriod) == 0 && faultPeriod > 0){
+		if (faultPeriod > 0 && (counter.incrementAndGet() % faultPeriod) == 0 ){
 			LOG.info(Markers.MSG, "Connection ready to fault!");
 			connectionPool.submit(new ConnectionFaultWorker(connection));
 		}

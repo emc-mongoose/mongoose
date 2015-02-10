@@ -517,7 +517,7 @@ implements Runnable{
 			} catch (final InterruptedIOException ex) {
 				TraceLogger.failure(LOG, Level.ERROR, ex, "Interrupted.");
 			} catch (final IOReactorException ex) {
-				TraceLogger.failure(LOG, Level.ERROR, ex, "IO Reactor failed.");
+				TraceLogger.failure(LOG, Level.ERROR, ex, "I/O Reactor failed.");
 			} catch (final IOException ex) {
 				TraceLogger.failure(LOG, Level.ERROR, ex, "I/O error");
 			}
