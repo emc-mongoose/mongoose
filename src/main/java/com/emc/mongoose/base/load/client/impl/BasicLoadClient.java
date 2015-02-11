@@ -769,9 +769,11 @@ implements LoadClient<T> {
 					nextLoadSvc.close();
 					LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
 				} catch(final NoSuchElementException e) {
-					LOG.debug(
-						Markers.ERR, "Looks like the remote load service is already shut down"
-					);
+					if(!isTerminating() && !isTerminated()) {
+						LOG.debug(
+							Markers.ERR, "Looks like the remote load service is already shut down"
+						);
+					}
 				} catch(final IOException e) {
 					TraceLogger.failure(
 						LOG, Level.WARN, e, "Failed to close remote load executor service"
