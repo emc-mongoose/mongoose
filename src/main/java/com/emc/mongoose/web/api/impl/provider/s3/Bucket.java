@@ -2,10 +2,11 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.data.WSObject;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import com.emc.mongoose.web.load.WSLoadExecutor;
@@ -27,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 /**
  Created by kurila on 02.10.14.
@@ -48,7 +50,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
-			final Date dt = Main.CALENDAR_DEFAULT.getTime();
+			final Date dt = Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime();
 			this.name = "mongoose-" + Main.FMT_DT.format(dt);
 		} else {
 			this.name = name;
@@ -57,6 +59,11 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	//
 	@Override
 	public final String getName() {
+		return toString();
+	}
+	//
+	@Override
+	public final String toString() {
 		return name;
 	}
 	//
@@ -77,8 +84,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		if(WSIOTask.HTTPMethod.PUT.equals(method)) {
 			httpReq.setHeader(
 				new BasicHeader(
-					RequestConfig.KEY_EMC_BUCKET_FS,
-					Boolean.toString(reqConf.getBucketFileSystem())
+					RequestConfig.KEY_EMC_FS_ACCESS,
+					Boolean.toString(reqConf.getFileSystemAccessEnabled())
 				)
 			);
 			if(reqConf.getBucketVersioning()) {
@@ -89,12 +96,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
-		return wsClient.execute(
-			new HttpHost(
-				Main.RUN_TIME_CONFIG.get().getStorageAddrs()[0],
-				reqConf.getPort(), reqConf.getScheme()
-			), httpReq
-		);
+		//
+		return wsClient.execute(httpReq);
 	}
 	//
 	@Override
@@ -116,6 +119,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 					if(statusCode == HttpStatus.SC_OK) {
 						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
 						flagExists = true;
+					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
+						LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist", name);
 					} else {
 						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
@@ -124,16 +129,13 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 								msg.appendNewLine().append(buff.toString());
 							}
 						}
-						LOG.debug(
-							Markers.ERR, "Checking bucket \"{}\" response ({}): {}",
-							name, statusCode, msg.toString()
-						);
+						throw new IllegalStateException(msg.toString());
 					}
 				}
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 		return flagExists;
@@ -173,7 +175,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 	}
 	//
@@ -211,7 +213,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "HTTP request execution failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 	}

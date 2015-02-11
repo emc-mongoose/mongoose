@@ -2,8 +2,10 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
+import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -11,10 +13,8 @@ import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 //
 import com.emc.mongoose.web.load.WSLoadExecutor;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
-import org.apache.http.HttpResponse;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
 /**
@@ -38,14 +37,13 @@ extends WSRequestConfigBase<T> {
 	public final static String
 		FMT_PATH = "/%s/%s",
 		KEY_BUCKET = "api.s3.bucket",
-		KEY_BUCKET_FILESYSTEM = KEY_BUCKET + ".filesystem",
 		KEY_BUCKET_VERSIONING = KEY_BUCKET + ".versioning",
 		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
 	private final String fmtAuthValue;
 	//
 	private Bucket<T> bucket;
-	private boolean bucketFileSystem = false, bucketVersioning = false;
+	private boolean bucketVersioning = false;
 	//
 	public RequestConfig()
 	throws NoSuchAlgorithmException {
@@ -82,15 +80,6 @@ extends WSRequestConfigBase<T> {
 		return this;
 	}
 	//
-	public final boolean getBucketFileSystem() {
-		return bucketFileSystem;
-	}
-	//
-	public final RequestConfig<T> setBucketFileSystem(final boolean flag) {
-		this.bucketFileSystem = flag;
-		return this;
-	}
-	//
 	public final boolean getBucketVersioning() {
 		return bucketVersioning;
 	}
@@ -104,11 +93,10 @@ extends WSRequestConfigBase<T> {
 	public final RequestConfig<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//
-		setBucketFileSystem(runTimeConfig.getBoolean(KEY_BUCKET_FILESYSTEM));
 		setBucketVersioning(runTimeConfig.getBoolean(KEY_BUCKET_VERSIONING));
 		//
 		try {
-			setBucket(new Bucket<T>(this, this.runTimeConfig.getString(KEY_BUCKET)));
+			setBucket(new Bucket<>(this, this.runTimeConfig.getString(KEY_BUCKET)));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET);
 		}
@@ -120,15 +108,20 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setBucket(new Bucket<T>(this, String.class.cast(in.readObject())));
-		LOG.trace(Markers.MSG, "Got bucket {}", bucket.getName());
+		final Object t = in.readObject();
+		if(t == null) {
+			bucket = null;
+		} else {
+			setBucket(new Bucket<>(this, String.class.cast(t)));
+			LOG.trace(Markers.MSG, "Got bucket {}", bucket);
+		}
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(bucket.getName());
+		out.writeObject(bucket == null ? null : bucket.toString());
 	}
 	//
 	@Override
@@ -143,20 +136,18 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		httpRequest.setUriPath(String.format(FMT_PATH, bucket.getName(), dataItem.getId()));
+		httpRequest.setUriPath(String.format(FMT_PATH, bucket, dataItem.getId()));
 	}
 	//
 	@Override
 	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
-		httpRequest.addHeader(HttpHeaders.CONTENT_MD5, ""); // checksum of the data item is not avalable before streaming
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
 			String.format(fmtAuthValue, userName, getSignature(getCanonical(httpRequest)))
 		);
-		httpRequest.removeHeader(httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5)); // remove temporary header
 	}
 	//
-	private final String HEADERS4CANONICAL[] = {
+	private static String HEADERS4CANONICAL[] = {
 		HttpHeaders.CONTENT_MD5, HttpHeaders.CONTENT_TYPE, HttpHeaders.DATE
 	};
 	//
@@ -164,56 +155,52 @@ extends WSRequestConfigBase<T> {
 	public final String getCanonical(final MutableHTTPRequest httpRequest) {
 		final StringBuffer buffer = new StringBuffer(httpRequest.getRequestLine().getMethod());
 		//
-		for(final String headerName: HEADERS4CANONICAL) {
-			// support for multiple non-unique header keys
-			for(final Header header: httpRequest.getHeaders(headerName)) {
-				buffer.append('\n').append(header.getValue());
-			}
+		for(final String headerName : HEADERS4CANONICAL) {
 			if(sharedHeadersMap.containsKey(headerName)) {
 				buffer.append('\n').append(sharedHeadersMap.get(headerName));
+			} else if(httpRequest.containsHeader(headerName)) {
+				for(final Header header: httpRequest.getHeaders(headerName)) {
+					buffer.append('\n').append(header.getValue());
+				}
+			} else {
+				buffer.append('\n');
 			}
 		}
 		//
-		for(final String emcHeaderName: HEADERS_EMC) {
-			for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
-				buffer
-					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(emcHeader.getValue());
-			}
+		for(final String emcHeaderName : HEADERS_EMC) {
 			if(sharedHeadersMap.containsKey(emcHeaderName)) {
 				buffer
 					.append('\n').append(emcHeaderName.toLowerCase())
 					.append(':').append(sharedHeadersMap.get(emcHeaderName));
+			} else {
+				for(final Header emcHeader : httpRequest.getHeaders(emcHeaderName)) {
+					buffer
+						.append('\n').append(emcHeaderName.toLowerCase())
+						.append(':').append(emcHeader.getValue());
+				}
 			}
 		}
 		//
 		buffer.append('\n').append(httpRequest.getUriPath());
 		//
-		LOG.trace(Markers.MSG, "Canonical request representation:\n{}", buffer);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffer);
+		}
 		//
 		return buffer.toString();
-	}
-	//
-	protected final void applyObjectId(final T dataObject, final HttpResponse unused) {
-		dataObject.setId(
-			Base64.encodeBase64URLSafeString(
-				ByteBuffer
-					.allocate(Long.SIZE / Byte.SIZE)
-					.putLong(dataObject.getOffset())
-					.array()
-			)
-		);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> client) {
 		Producer<T> producer = null;
-		try {
-			producer = new BucketProducer<>(
-				bucket, BasicWSObject.class, maxCount, (WSLoadExecutor<T>) client
-			);
-		} catch(final NoSuchMethodException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Unexpected failure");
+		if(anyDataProducerEnabled) {
+			try {
+				producer = new BucketProducer<>(
+					bucket, BasicWSObject.class, maxCount, (WSLoadExecutor<T>) client
+				);
+			} catch(final NoSuchMethodException e) {
+				TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
+			}
 		}
 		return producer;
 	}

@@ -29,6 +29,10 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	public BasicLoadBuilderSvc(final RunTimeConfig runTimeConfig) {
+		super(runTimeConfig);
+	}
+	//
 	@Override
 	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
 		super.setProperties(clientConfig);
@@ -76,7 +80,7 @@ implements WSLoadBuilderSvc<T, U> {
 				)
 			);
 		}
-		return (U) new BasicWSLoadSvc<T>(
+		return (U) new BasicWSLoadSvc<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
 			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem
 		);

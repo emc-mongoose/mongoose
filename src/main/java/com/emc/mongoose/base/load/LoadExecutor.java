@@ -43,10 +43,10 @@ extends Producer<T>, Consumer<T> {
 	Producer<T> getProducer()
 	throws RemoteException;
 	//
-	Future<AsyncIOTask.Result> submit(final AsyncIOTask<T> request)
+	Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> request)
 	throws RemoteException;
 	//
-	void handleResult(final AsyncIOTask<T> task, AsyncIOTask.Result result)
+	void handleResult(final AsyncIOTask<T> task, AsyncIOTask.Status status)
 	throws RemoteException;
 	//
 	void join()

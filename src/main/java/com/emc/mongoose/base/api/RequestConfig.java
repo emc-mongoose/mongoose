@@ -17,7 +17,7 @@ public interface RequestConfig<T extends DataItem>
 extends Externalizable, Cloneable, Closeable {
 	//
 	long serialVersionUID = 42L;
-	String DEFAULT_ENC = StandardCharsets.UTF_8.name();
+	String HOST_PORT_SEP = ":";
 	//
 	RequestConfig<T> clone()
 	throws CloneNotSupportedException;
@@ -57,8 +57,10 @@ extends Externalizable, Cloneable, Closeable {
 	int getLoadNumber();
 	RequestConfig<T> setLoadNumber(final int loadNumber);
 	//
-	AsyncIOTask<T> getRequestFor(final T dataItem, final String nodeAddr);
+	AsyncIOTask<T> getRequestFor(final T dataItem, final String nodeAddr)
+	throws InterruptedException;
 	//
+	RequestConfig<T> setAnyDataProducerEnabled(final boolean enabled);
 	Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> loadExecutor);
 	//
 	void configureStorage(final LoadExecutor<T> loadExecutor)

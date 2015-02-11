@@ -1,7 +1,7 @@
 package com.emc.mongoose.run;
 //
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
@@ -135,7 +135,7 @@ public final class Scenario
 						scriptEngine.eval(Files.newBufferedReader(scriptPath, Charset.defaultCharset()));
 						LOG.debug(Markers.MSG, "Script from \"{}\" done", scriptPath);
 					} catch(final ScriptException e) {
-						ExceptionHandler.trace(LOG, Level.WARN, e, "Script failure");
+						TraceLogger.failure(LOG, Level.WARN, e, "Script failure");
 					} catch(final FileNotFoundException e) {
 						LOG.error(Markers.ERR, "Script file not found at \"{}\"", scriptPath);
 					} catch(final IOException e) {

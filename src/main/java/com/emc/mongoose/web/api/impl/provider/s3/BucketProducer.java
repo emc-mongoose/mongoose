@@ -2,10 +2,9 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.data.WSObject;
-import com.emc.mongoose.web.data.impl.BasicWSObject;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import com.emc.mongoose.web.load.WSLoadExecutor;
@@ -47,7 +46,7 @@ implements Producer<T> {
 		final Bucket<T> bucket, final Class<U> dataCls, final long maxCount,
 		final WSLoadExecutor<T> wsClient
 	) throws ClassCastException, NoSuchMethodException {
-		super("bucket-" + bucket.getName() + "-producer");
+		super("bucket-" + bucket + "-producer");
 		this.bucket = bucket;
 		this.dataConstructor = (Constructor<T>) dataCls.getConstructor(
 			String.class, Long.class, Long.class
@@ -89,10 +88,10 @@ implements Producer<T> {
 										new BucketListHandler<>(consumer, dataConstructor, maxCount)
 									);
 								} catch(final SAXException e) {
-									ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to parse");
+									TraceLogger.failure(LOG, Level.WARN, e, "Failed to parse");
 								}
 							} catch(final ParserConfigurationException | SAXException e) {
-								ExceptionHandler.trace(
+								TraceLogger.failure(
 									LOG, Level.ERROR, e, "Failed to create SAX parser"
 								);
 							}
@@ -106,16 +105,16 @@ implements Producer<T> {
 						final String statusMsg = statusLine.getReasonPhrase();
 						LOG.debug(
 							Markers.MSG, "Listing bucket \"{}\" response: {}/{}",
-							bucket.getName(), statusCode, statusMsg
+							bucket, statusCode, statusMsg
 						);
 					}
 				}
 				EntityUtils.consumeQuietly(httpResp.getEntity());
 			}
 		} catch(final IOException e) {
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.ERROR, e,
-				String.format("Failed to list the bucket \"%s\"", bucket.getName())
+				String.format("Failed to list the bucket \"%s\"", bucket)
 			);
 		}
 	}

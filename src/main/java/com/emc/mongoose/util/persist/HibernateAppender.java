@@ -153,7 +153,7 @@ public final class HibernateAppender
 	//
 	private void persistStatusEntity()
 	{
-		for (final AsyncIOTask.Result result:AsyncIOTask.Result.values()){
+		for (final AsyncIOTask.Status result:AsyncIOTask.Status.values()){
 			loadStatusEntity(result);
 		}
 	}
@@ -462,7 +462,7 @@ public final class HibernateAppender
 		return dataObjectEntity;
 	}
 	//
-	private StatusEntity loadStatusEntity(final AsyncIOTask.Result result)
+	private StatusEntity loadStatusEntity(final AsyncIOTask.Status result)
 	{
 		StatusEntity statusEntity = new StatusEntity(result.code, result.description);
 		Session session = SESSION_FACTORY.openSession();

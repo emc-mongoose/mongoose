@@ -1,4 +1,4 @@
-package com.emc.mongoose.web.storagemock;
+package com.emc.mongoose.web.mock;
 //
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
@@ -8,16 +8,17 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.api.WSIOTask;
-import com.emc.mongoose.web.data.impl.BasicWSObject;
 //
 import org.apache.commons.codec.binary.Base64;
 //
+import org.apache.http.HttpHeaders;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +27,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.thread.QueuedThreadPool;
 //
 import javax.management.MBeanServer;
 import javax.servlet.ServletException;
@@ -36,14 +38,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 //
 /**
  * Created by olga on 30.09.14.
  */
+@Deprecated
 public final class MockServlet
 extends HttpServlet
 implements Runnable {
@@ -51,31 +56,31 @@ implements Runnable {
 	private final static Logger LOG = LogManager.getLogger();
 	private final int port;
 	private Server server;
-	private final Map<String, BasicWSObject> mapDataObject = new ConcurrentHashMap<>();
-	// METRICS section BEGIN
-	protected final MetricRegistry metrics = new MetricRegistry();
+	private final static Map<String, WSObjectMock> MAP_DATA_OBJECT = new ConcurrentHashMap<>();
+	//
 	private final static String
 		ALL_METHODS = "all",
 		METRIC_COUNT = "count";
-	protected final Counter
+	private final Counter
 		counterAllSucc, counterAllFail,
 		counterGetSucc, counterGetFail,
 		counterPostSucc, counterPostFail,
 		counterPutSucc, counterPutFail,
 		counterDeleteSucc, counterDeleteFail,
-		counterHeadSucc, counterHeadFail;
-	protected final Histogram durAll, durGet, durPost, durPut, durDelete;
-	protected final Meter
+		counterHeadSucc;
+	private final Histogram durAll, durGet, durPost, durPut, durDelete;
+	private final Meter
 		allBW, getBW, postBW, putBW, deleteBW,
 		allTP, getTP, postTP, putTP, deleteTP;
 	//
-	protected final MBeanServer mBeanServer;
-	protected final JmxReporter metricsReporter;
+	private final JmxReporter metricsReporter;
 	private static int MAX_PAGE_SIZE;
-	// METRICS section END
 	private long metricsUpdatePeriodSec;
+	//
 	public MockServlet(final RunTimeConfig runTimeConfig) {
 		//
+		final MetricRegistry metrics = new MetricRegistry();
+		final MBeanServer mBeanServer;
 		metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 		MAX_PAGE_SIZE = (int) runTimeConfig.getDataPageSize();
 		//Init bean server
@@ -143,15 +148,20 @@ implements Runnable {
 		//
 		counterHeadSucc = metrics.counter(MetricRegistry.name(MockServlet.class,
 			WSIOTask.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_SUCC));
-		counterHeadFail = metrics.counter(MetricRegistry.name(MockServlet.class,
-			WSIOTask.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_FAIL));
 		//
 		metricsReporter.start();
 		//
 		final String apiName = runTimeConfig.getStorageApi();
 		port = runTimeConfig.getInt("api." + apiName + ".port");
+		//for QueuedThreadPool
+		final int size = runTimeConfig.getInt("wsmock.queue.size");
+		final int minThreads = runTimeConfig.getInt("wsmock.thread.count.min");
+		final int maxThreads = runTimeConfig.getInt("wsmock.thread.count.max");
+		final int idleTimeout = runTimeConfig.getInt("wsmock.timeout.idle.ms");
+		final QueuedThreadPool queuedThreadPool = new QueuedThreadPool(maxThreads, minThreads, idleTimeout, new ArrayBlockingQueue<Runnable>(size));
+		//
 		LOG.info(Markers.MSG, "Set up Jetty Server instance");
-		server = new Server();
+		server = new Server(queuedThreadPool);
 		server.setDumpAfterStart(false);
 		server.setDumpBeforeStop(false);
 		LOG.info(Markers.MSG, "Set up Http Connector");
@@ -159,7 +169,7 @@ implements Runnable {
 			httpConnector.setPort(port);
 			server.addConnector(httpConnector);
 		} catch (final Exception e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Creating of server connector failed");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Creating of server connector failed");
 		}
 		LOG.debug(Markers.MSG, "Set up a new handler");
 		final ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
@@ -187,12 +197,12 @@ implements Runnable {
 		} catch (final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupting the WSMock servlet");
 		} catch (final Exception e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to start WSMock servlet");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to start WSMock servlet");
 		} finally {
 			try {
 				server.stop();
 			} catch (final Exception e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to stop jetty");
+				TraceLogger.failure(LOG, Level.WARN, e, "Failed to stop jetty");
 			}
 			metricsReporter.close();
 		}
@@ -239,9 +249,9 @@ implements Runnable {
 		response.setStatus(HttpServletResponse.SC_OK);
 		try (final ServletOutputStream servletOutputStream = response.getOutputStream()) {
 			final String dataID = request.getRequestURI().split("/")[2];
-			if (mapDataObject.containsKey(dataID)) {
+			if (MAP_DATA_OBJECT.containsKey(dataID)) {
 				LOG.trace(Markers.MSG, "   Send data object ", dataID);
-				final BasicWSObject object = mapDataObject.get(dataID);
+				final WSObjectMock object = MAP_DATA_OBJECT.get(dataID);
 				long nanoTime = System.nanoTime();
 				object.writeTo(servletOutputStream);
 				nanoTime = System.nanoTime() - nanoTime;
@@ -264,17 +274,18 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet output failed");
+			TraceLogger.failure(LOG, Level.WARN, e, "Servlet output failed");
 		} catch (final ArrayIndexOutOfBoundsException e) {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+			TraceLogger.failure(LOG, Level.WARN, e, "Request URI is not correct. " +
+				"Data object ID doesn't exist in request URI");
 		} catch(final Throwable t) {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterGetFail.inc();
-			ExceptionHandler.trace(LOG, Level.ERROR, t, "Unexpected failure");
+			TraceLogger.failure(LOG, Level.ERROR, t, "Unexpected failure");
 		}
 	}
 	//
@@ -302,7 +313,7 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPostFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
+			TraceLogger.failure(LOG, Level.WARN, e, "Servlet input stream failed");
 		}
 	}
 	//
@@ -314,21 +325,61 @@ implements Runnable {
 		response.setStatus(HttpServletResponse.SC_OK);
 		long offset;
 		String dataID = "";
+		WSObjectMock dataObject = null;
 		try (final ServletInputStream servletInputStream = request.getInputStream()) {
 			//
 			long nanoTime = System.nanoTime();
-			final long bytes = calcInputByteCount(servletInputStream);
+			long bytes = calcInputByteCount(servletInputStream);
 			nanoTime = System.nanoTime() - nanoTime;
 			//
 			dataID = request.getRequestURI().split("/")[2];
-			if(Base64.isBase64(dataID) && dataID.length() < 12) {
+			//
+			if(Base64.isBase64(dataID) && dataID.length() < 12) { // v0.4x and 0.5x
 				final byte dataIdBytes[] = Base64.decodeBase64(dataID);
 				offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
 			} else {
-				offset = Long.valueOf(dataID, 0x10);
+				try {
+					offset = Long.valueOf(dataID, DataObject.ID_RADIX); // versions since v0.6
+				} catch (final NumberFormatException e) {
+					offset = Long.valueOf(dataID, 0x10); // versions prior to 0.4
+				}
 			}
-			final BasicWSObject dataObject = new BasicWSObject(dataID, offset, bytes);
-			mapDataObject.put(dataID,dataObject);
+			//create data object or get it for append or update
+			if(MAP_DATA_OBJECT.containsKey(dataID)) {
+				dataObject = MAP_DATA_OBJECT.get(dataID);
+			} else {
+				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
+			}
+			//
+			if (request.getHeader(HttpHeaders.RANGE) != null) {
+				//Parse string of ranges information
+				final String[] rangeStringArray = request.getHeader(HttpHeaders.RANGE).split("\\s*[=,-]\\s*");
+				final List<Long> ranges = new ArrayList<>();
+				for (int i = 1; i < rangeStringArray.length; i++){
+					ranges.add(Long.valueOf(rangeStringArray[i]));
+				}
+				if (ranges.size() % 2 != 0){
+					ranges.add(ranges.get(ranges.size()-1) + bytes);
+				}
+				// Switch append or update or exception
+				//
+				//if append
+				if (ranges.get(0) == dataObject.getSize()) {
+					//append data object
+					dataObject.append(bytes);
+					//resize data object
+					dataObject.setSize(dataObject.getSize() + bytes);
+					//end append
+					//if update
+				} else if (ranges.get(ranges.size() - 1) <= dataObject.getSize()){
+					//update data object
+					dataObject.updateRanges(ranges);
+				} else {
+					throw new Exception();
+				}
+			}
+			//
+			MAP_DATA_OBJECT.put(dataID, dataObject);
 			//
 			durPut.update(nanoTime);
 			durAll.update(nanoTime);
@@ -338,17 +389,16 @@ implements Runnable {
 			allBW.mark(bytes);
 			putTP.mark();
 			allTP.mark();
-			//
 		} catch (final IOException e) {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
+			TraceLogger.failure(LOG, Level.WARN, e, "Servlet input stream failed");
 		}catch (final NumberFormatException e){
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.WARN, e,
 				String.format("Unexpected object id format: \"%s\"", dataID)
 			);
@@ -356,7 +406,12 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
 			counterAllFail.inc();
 			counterPutFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+			TraceLogger.failure(LOG, Level.WARN, e, "Request URI is not correct. Data object ID doesn't exist in request URI");
+		} catch (final Exception e) {
+			response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+			counterAllFail.inc();
+			counterPutFail.inc();
+			TraceLogger.failure(LOG, Level.WARN, e, "Ranges have not correct form.");
 		}
 	}
 	//
@@ -384,7 +439,7 @@ implements Runnable {
 			response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 			counterAllFail.inc();
 			counterDeleteFail.inc();
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Servlet input stream failed");
+			TraceLogger.failure(LOG, Level.WARN, e, "Servlet input stream failed");
 		}
 	}
 	//
@@ -409,5 +464,4 @@ implements Runnable {
 		} while (doneByteCount >= 0);
 		return doneByteCountSum;
 	}
-	//
 }

@@ -1,12 +1,12 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.web.storagemock.MockServlet;
+import com.emc.mongoose.util.logging.TraceLogger;
+import com.emc.mongoose.web.mock.Cinderella;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
@@ -38,7 +38,6 @@ public final class Main {
 	//
 	public final static TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
 	public final static Locale LOCALE_DEFAULT = Locale.ROOT;
-	public final static Calendar CALENDAR_DEFAULT = Calendar.getInstance(Main.TZ_UTC, LOCALE_DEFAULT);
 	public final static DateFormat FMT_DT = new SimpleDateFormat(
 		"yyyy.MM.dd.HH.mm.ss.SSS", LOCALE_DEFAULT
 	) {
@@ -67,7 +66,11 @@ public final class Main {
 		RUN_MODE_SERVER = "server",
 		RUN_MODE_COMPAT_SERVER = "driver",
 		RUN_MODE_WEBUI = "webui",
-		RUN_MODE_WSMOCK = "wsmock";
+		RUN_MODE_CINDERELLA = "cinderella",
+		//
+		DEFAULT_ENC = StandardCharsets.UTF_8.name(),
+		EMPTY = "";
+
 	//
 	public final static File JAR_SELF;
 	static {
@@ -139,26 +142,26 @@ public final class Main {
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
 					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
-						loadBuilderSvc = new BasicLoadBuilderSvc<>()
+						loadBuilderSvc = new BasicLoadBuilderSvc<>(RUN_TIME_CONFIG.get())
 				) {
 					loadBuilderSvc.start();
 					loadBuilderSvc.join();
 				} catch(final IOException e) {
-					ExceptionHandler.trace(rootLogger, Level.ERROR, e, "Load builder service failure");
+					TraceLogger.failure(rootLogger, Level.ERROR, e, "Load builder service failure");
 				} catch(InterruptedException e) {
 					rootLogger.debug(Markers.MSG, "Interrupted load builder service");
 				}
 				break;
 			case RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-                    new JettyRunner(RUN_TIME_CONFIG.get()).run();
+				new JettyRunner(RUN_TIME_CONFIG.get()).run();
 				break;
-			case RUN_MODE_WSMOCK:
-				rootLogger.debug(Markers.MSG, "Starting the web storage mock");
+			case RUN_MODE_CINDERELLA:
+				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
-					new MockServlet(RUN_TIME_CONFIG.get()).run();
+					new Cinderella(RUN_TIME_CONFIG.get()).run();
 				} catch (final Exception e) {
-					ExceptionHandler.trace(rootLogger, Level.FATAL, e, "Failed");
+					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
 				}
 				break;
 			case RUN_MODE_CLIENT:
@@ -173,7 +176,7 @@ public final class Main {
 		}
 		//
 		((LifeCycle) LogManager.getContext()).stop();
-		System.exit(0);
+		System.exit(0); // ????!!
 	}
 	//
 	public static Logger initLogging(final String runMode) {
@@ -191,7 +194,8 @@ public final class Main {
 		String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 		if(runId==null || runId.length()==0) {
 			System.setProperty(
-				RunTimeConfig.KEY_RUN_ID, FMT_DT.format(CALENDAR_DEFAULT.getTime())
+				RunTimeConfig.KEY_RUN_ID,
+				FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
 			);
 		}
 		// make all used loggers asynchronous
@@ -209,6 +213,8 @@ public final class Main {
 			) ?
 				FNAME_LOGGING_LOCAL : FNAME_LOGGING_REMOTE
 		);
+		// connect JUL to Log4J2
+		System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
 		// go
 		Configurator.initialize(null, logConfPath.toUri().toString());
 		return LogManager.getRootLogger();

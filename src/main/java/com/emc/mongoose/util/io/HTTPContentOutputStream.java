@@ -1,19 +1,28 @@
 package com.emc.mongoose.util.io;
 //
-import com.emc.mongoose.util.pool.InstancePool;
-import com.emc.mongoose.util.pool.Reusable;
+import com.emc.mongoose.util.collections.InstancePool;
+import com.emc.mongoose.util.collections.Reusable;
+import com.emc.mongoose.util.logging.TraceLogger;
+//
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
+//
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 09.12.14.
  */
 public final class HTTPContentOutputStream
 extends OutputStream
 implements Reusable {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile ByteBuffer bb = null;
 	private volatile byte[] bs = null; // Invoker's previous array
@@ -68,24 +77,33 @@ implements Reusable {
 	//
 	public static HTTPContentOutputStream getInstance(
 		final ContentEncoder out, final IOControl ioCtl
-	) {
+	) throws InterruptedException {
 		return POOL.take(out, ioCtl);
 	}
 	//
+	private final AtomicBoolean isClosed = new AtomicBoolean(true);
+	//
 	@Override
-	public final void close()
-	throws IOException {
-		out.complete();
-		POOL.release(this);
+	public final void release() {
+		if(isClosed.compareAndSet(false, true)) {
+			try {
+				out.complete();
+			} catch(final IOException e) {
+				TraceLogger.failure(LOG, Level.WARN, e, "Failed to finish the output stream");
+			}
+			POOL.release(this);
+		}
 	}
 	//
 	@Override
 	public final HTTPContentOutputStream reuse(final Object... args) {
-		if(args.length > 0) {
-			out = ContentEncoder.class.cast(args[0]);
-		}
-		if(args.length > 1) {
-			ioCtl = IOControl.class.cast(args[1]);
+		if(isClosed.compareAndSet(true, false)) {
+			if(args.length > 0) {
+				out = ContentEncoder.class.cast(args[0]);
+			}
+			if(args.length > 1) {
+				ioCtl = IOControl.class.cast(args[1]);
+			}
 		}
 		return this;
 	}
@@ -95,4 +113,12 @@ implements Reusable {
 		return another == null ? 1 : hashCode() - another.hashCode();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	/**
+	 * Does not close the stream actually.
+	 * Puts the instance back to the pool for further reusing
+	 */
+	@Override
+	public final void close() {
+		release();
+	}
 }

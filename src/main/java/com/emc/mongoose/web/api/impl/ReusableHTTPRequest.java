@@ -1,9 +1,11 @@
 package com.emc.mongoose.web.api.impl;
 //
+import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 //
 import com.emc.mongoose.web.api.WSIOTask;
 import org.apache.http.Header;
+import org.apache.http.HeaderIterator;
 import org.apache.http.HttpEntity;
 import org.apache.http.message.AbstractHttpMessage;
 import org.apache.http.HttpVersion;
@@ -13,8 +15,8 @@ import org.apache.http.annotation.NotThreadSafe;
 import org.apache.http.message.BasicRequestLine;
 import org.apache.http.protocol.HTTP;
 //
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 /**
  Created by kurila on 04.12.14.
  */
@@ -23,7 +25,7 @@ public final class ReusableHTTPRequest
 extends AbstractHttpMessage
 implements MutableHTTPRequest {
 	//
-	//private final static Logger LOG = LogManager.getLogger();
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile WSIOTask.HTTPMethod method;
 	private volatile String uriAddr, uriPath;
@@ -128,5 +130,12 @@ implements MutableHTTPRequest {
 	@Override
 	public final HttpEntity getEntity() {
 		return contentEntity;
+	}
+	//
+	@Override
+	public final void clearHeaders() {
+		for(final HeaderIterator i = headergroup.iterator(); i.hasNext(); i.nextHeader()) {
+			i.remove();
+		}
 	}
 }

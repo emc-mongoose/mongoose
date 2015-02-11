@@ -3,6 +3,7 @@ package com.emc.mongoose.web.api;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.object.api.ObjectRequestConfig;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
@@ -24,7 +25,7 @@ extends ObjectRequestConfig<T> {
 	//
 	String
 		KEY_EMC_ACCEPT = "x-emc-accept",
-		KEY_EMC_BUCKET_FS = "x-emc-file-system-access-enabled",
+		KEY_EMC_FS_ACCESS = "x-emc-file-system-access-enabled",
 		KEY_EMC_DATE = "x-emc-date",
 		KEY_EMC_NS = "x-emc-namespace",
 		KEY_EMC_RANGE = "x-emc-range",
@@ -40,10 +41,10 @@ extends ObjectRequestConfig<T> {
 		//
 	String[]
 		HEADERS_EMC = {
-			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_NS, KEY_EMC_SIG, KEY_EMC_UID, KEY_EMC_BUCKET_FS
+			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_NS, KEY_EMC_SIG, KEY_EMC_UID, KEY_EMC_FS_ACCESS
 		};
 	//
-	MutableHTTPRequest createRequest();
+	WSIOTask.HTTPMethod getHTTPMethod();
 	//
 	@Override
 	WSRequestConfig<T> setAPI(final String api);
@@ -63,11 +64,15 @@ extends ObjectRequestConfig<T> {
 	@Override
 	WSRequestConfig<T> setRetries(final boolean retryFlag);
 	//
+	WSRequestConfig<T> setFileSystemAccessEnabled(final boolean fsAccessFlag);
+	boolean getFileSystemAccessEnabled();
+	//
 	@Override
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
 	@Override
-	WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr);
+	WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr)
+	throws InterruptedException;
 	//
 	List<Header> getSharedHeaders();
 	//
@@ -86,6 +91,5 @@ extends ObjectRequestConfig<T> {
 	//
 	void receiveResponse(final HttpResponse response, final T dataItem);
 	//
-	boolean consumeContent(final InputStream contentStream, final IOControl ioCtl, T dataItem)
-	throws IOException;
+	boolean consumeContent(final InputStream contentStream, final IOControl ioCtl, T dataItem);
 }

@@ -1,15 +1,18 @@
 package com.emc.mongoose.util.conf;
 //
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.collections.Pair;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.logging.TraceLogger;
 //
-import com.google.gson.Gson;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 //
+import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -18,43 +21,50 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.file.Path;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 /**
  Created by kurila on 28.05.14.
  A shared runtime configuration.
  */
 public final class RunTimeConfig
-	extends BaseConfiguration
-	implements Externalizable {
+extends BaseConfiguration
+implements Externalizable {
+	//
+	private Set<String> mongooseKeys;
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static String
 		LIST_SEP = ",",
-	//
-	KEY_DATA_COUNT = "data.count",
+		//
+		KEY_DATA_COUNT = "data.count",
 		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_SIZE_BIAS = "data.size.bias",
 		KEY_DATA_RING_SEED = "data.ring.seed",
 		KEY_DATA_RING_SIZE = "data.ring.size",
-	//
-	KEY_LOAD_THREADS = "load.threads",
+		//
+		KEY_LOAD_THREADS = "load.threads",
 		KEY_LOAD_TIME = "load.step.time",
-	//
-	KEY_RUN_ID = "run.id",
+		//
+		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
 		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
 		KEY_RUN_TIME = "run.time",
 		KEY_RUN_VERSION = "run.version",
-	//
-	KEY_STORAGE_ADDRS = "storage.addrs",
+		//
+		KEY_STORAGE_ADDRS = "storage.addrs",
 		KEY_STORAGE_API = "storage.api";
 	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
@@ -114,11 +124,23 @@ public final class RunTimeConfig
 			x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
 		).toUpperCase();
 	}
+	//
 	public String getPropertiesMap() {
-		return new Gson().toJson(properties);
+		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES), this);
+		final ObjectMapper mapper = new ObjectMapper();
+		try {
+			return mapper.writeValueAsString(properties);
+		} catch (final JsonProcessingException e) {
+			TraceLogger.failure(LOG, Level.ERROR, e, "Failed json processing");
+		}
+		return null;
 	}
 	//
-	public final synchronized void put(List<String> dirs, String fileName, List<Pair<String, Object>> props) {
+	@SuppressWarnings("unchecked")
+	public final synchronized void put(
+		final List<String> dirs, final String fileName,
+		final List<DefaultMapEntry<String, Object>> props
+	) {
 		Map<String, Object> node = properties;
 		if (dirs != null) {
 			for (final String nextDir : dirs) {
@@ -131,10 +153,19 @@ public final class RunTimeConfig
 		node.put(fileName, props);
 	}
 	//
-	public final synchronized void set(final String key, final String value) {
+	public final synchronized void set(final String key, final Object value) {
 		setProperty(key, value);
 		//System.setProperty(key, value);
 	}
+	//
+	public final synchronized void setMongooseKeys(final Set<String> mongooseKeys) {
+		this.mongooseKeys = mongooseKeys;
+	}
+	//
+	public final Set<String> getMongooseKeys() {
+		return mongooseKeys;
+	}
+	//
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final int getRunReqTimeOutMilliSec() {
 		return getInt("run.request.timeout.millisec");
@@ -220,6 +251,10 @@ public final class RunTimeConfig
 		return getString("http.sign.method");
 	}
 	//
+	public final boolean getEmcFileSystemAccessEnabled() {
+		return getBoolean("emc.fs.access");
+	}
+	//
 	public final String getRunName() {
 		return getString("run.name");
 	}
@@ -268,6 +303,10 @@ public final class RunTimeConfig
 		return getBoolean("storage.socket.tcp.nodelay");
 	}
 	//
+	public final int getSocketLinger() {
+		return getInt("storage.socket.linger");
+	}
+	//
 	public final String[] getRemoteServers() {
 		return getStringArray("remote.servers");
 	}
@@ -295,6 +334,12 @@ public final class RunTimeConfig
 	public final String getRunTime() {
 		return getString(KEY_RUN_TIME);
 	}
+	//
+	private String getFromRunTime(final int index) { return getRunTime().split("\\.")[index];}
+	//
+	public final TimeUnit getRunTimeUnit() { return TimeUnit.valueOf(getFromRunTime(1).toUpperCase());}
+	//
+	public final long getRunTimeValue() {return Long.valueOf(getFromRunTime(0));}
 	//
 	public final String getRunMode() {
 		return getString(KEY_RUN_MODE);
@@ -415,9 +460,12 @@ public final class RunTimeConfig
 	@Override
 	public synchronized RunTimeConfig clone() {
 		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
-		runTimeConfig.set(
-			KEY_RUN_ID, Main.FMT_DT.format(Main.CALENDAR_DEFAULT.getTime())
-		);
+		if(runTimeConfig != null) {
+			runTimeConfig.set(
+				KEY_RUN_ID,
+				Main.FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
+			);
+		}
 		return runTimeConfig;
 	}
 	//

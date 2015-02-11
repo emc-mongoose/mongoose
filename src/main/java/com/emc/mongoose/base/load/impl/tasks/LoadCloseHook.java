@@ -1,7 +1,7 @@
 package com.emc.mongoose.base.load.impl.tasks;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
@@ -29,7 +29,7 @@ implements Runnable {
 		try {
 			ln = loadExecutor.getName();
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.WARN, e, "Failed to get the name of the remote load executor"
 			);
 		} finally {
@@ -43,15 +43,17 @@ implements Runnable {
 		final LoadCloseHook hookTask = new LoadCloseHook(loadExecutor);
 		try {
 			final Thread hookThread = new Thread(
-				hookTask, String.format("shutDownHook<%s>", hookTask.loadName)
+				hookTask, String.format("loadCloseHook<%s>", hookTask.loadName)
 			);
 			Runtime.getRuntime().addShutdownHook(hookThread);
 			HOOKS_MAP.put(loadExecutor, hookThread);
 			LOG.debug(
 				Markers.MSG, "Registered shutdown hook \"{}\"", hookTask.loadName
 			);
-		} catch(final SecurityException | IllegalArgumentException | IllegalStateException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to add the shutdown hook");
+		} catch(final SecurityException | IllegalArgumentException e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to add the shutdown hook");
+		} catch(final IllegalStateException e) { // shutdown is in progress
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to add the shutdown hook");
 		}
 	}
 	//
@@ -63,9 +65,9 @@ implements Runnable {
 				Runtime.getRuntime().removeShutdownHook(HOOKS_MAP.get(loadExecutor));
 				LOG.debug(Markers.MSG, "Shutdown hook for \"{}\" removed", loadExecutor);
 			} catch(final IllegalStateException e) {
-				ExceptionHandler.trace(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
+				TraceLogger.failure(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
 			} catch(final SecurityException | IllegalArgumentException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
+				TraceLogger.failure(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
 			}
 		} else {
 			LOG.trace(Markers.ERR, "No shutdown hook registered for \"{}\"", loadExecutor);
@@ -74,13 +76,13 @@ implements Runnable {
 	//
 	@Override
 	public final void run() {
-		LOG.info(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
+		LOG.debug(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
 		try {
 			loadExecutor.close();
-			LOG.info(Markers.MSG, "The load executor \"{}\"closed successfully", loadName);
+			LOG.debug(Markers.MSG, "The load executor \"{}\"closed successfully", loadName);
 		} catch(final Exception e) {
-			ExceptionHandler.trace(
-				LOG, Level.WARN, e,
+			TraceLogger.failure(
+				LOG, Level.DEBUG, e,
 				String.format("Failed to close the load executor \"%s\"", loadName)
 			);
 		}

@@ -5,7 +5,7 @@ import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.server.DataItemBufferSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 //
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.threading.WorkerFactory;
@@ -21,6 +21,7 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.rmi.RemoteException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -31,7 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by andrey on 28.09.14.
  */
-public class TmpFileItemBuffer<T extends DataItem>
+public final class TmpFileItemBuffer<T extends DataItem>
 extends ThreadPoolExecutor
 implements DataItemBufferSvc<T> {
 	//
@@ -43,8 +44,7 @@ implements DataItemBufferSvc<T> {
 	private volatile ObjectOutput fBuffOut;
 	private volatile int retryCountMax, retryDelayMilliSec;
 	//
-	public TmpFileItemBuffer(final long maxCount, final int threadCount)
-	throws IOException {
+	public TmpFileItemBuffer(final long maxCount, final int threadCount) {
 		super(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>()
@@ -55,30 +55,44 @@ implements DataItemBufferSvc<T> {
 		retryCountMax = localRunTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = localRunTimeConfig.getRunRetryDelayMilliSec();
 		//
-		fBuff = Files.createTempFile(
-			String.format(FMT_THREAD_NAME, localRunTimeConfig.getRunName()), null
-		).toFile();
-		LOG.debug(Markers.MSG, "{}: created temp file", getName());
-		fBuff.deleteOnExit();
-		setThreadFactory(
-			new WorkerFactory(String.format("itemsBuffer<%s>", fBuff.getName()))
-		);
-		//
-		ObjectOutput fBuffOutTmp = null;
+		File localFBuff = null;
 		try {
-			fBuffOutTmp = new ObjectOutputStream(
-				new FileOutputStream(fBuff)
-			);
+			localFBuff = Files.createTempFile(
+				String.format(FMT_THREAD_NAME, localRunTimeConfig.getRunName()), null
+			).toFile();
 		} catch(final IOException e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "failed to open temporary file for output");
-		} finally {
-			fBuffOut = fBuffOutTmp;
+			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to create temporary file for output");
+		}
+		fBuff = localFBuff;
+		LOG.debug(Markers.MSG, "{}: created temp file", getName());
+		//
+		if(fBuff != null) {
+			setThreadFactory(
+				new WorkerFactory(fBuff.getName()) // the name should be URL-safe
+			);
 		}
 		//
+		ObjectOutput fBuffOutTmp = null;
+		if(fBuff != null) {
+			try {
+				fBuffOutTmp = new ObjectOutputStream(
+					new FileOutputStream(fBuff)
+				);
+			} catch(final IOException e) {
+				TraceLogger.failure(
+					LOG, Level.ERROR, e, "Failed to open temporary file for output"
+				);
+			}
+		}
+		fBuffOut = fBuffOutTmp;
 	}
 	//
 	@Override
 	public final String getName() {
+		return getThreadFactory().toString();
+	}
+	@Override
+	public final String toString() {
 		return getThreadFactory().toString();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,10 +111,12 @@ implements DataItemBufferSvc<T> {
 		//
 		@Override
 		public final void run() {
-			try {
-				fBuffOut.writeObject(dataItem);
-			} catch(final IOException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "failed to write out the data item");
+			if(fBuffOut != null) {
+				try {
+					fBuffOut.writeObject(dataItem);
+				} catch(final IOException e) {
+					TraceLogger.failure(LOG, Level.WARN, e, "failed to write out the data item");
+				}
 			}
 		}
 	}
@@ -165,7 +181,7 @@ implements DataItemBufferSvc<T> {
 					Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 				);
 			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.DEBUG, e, "Interrupted while writing out the remaining data items"
 				);
 			} finally {
@@ -184,19 +200,11 @@ implements DataItemBufferSvc<T> {
 	// Producer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private volatile Consumer<T> consumer = null;
-	private final Thread producerThread = new Thread(
-		new Runnable() {
-			@Override
-			public final void run() {
-				if(!TmpFileItemBuffer.super.isTerminated()) {
-					throw new IllegalStateException(
-						String.format(
-							"%s: output has not been closed yet", getThreadFactory().toString()
-						)
-					);
-				} else {
-					LOG.debug(Markers.MSG, "{}: started", getThreadFactory().toString());
-				}
+	private final Thread producerThread = new Thread("tmpFileProducer") {
+		@Override
+		public final void run() {
+			if(TmpFileItemBuffer.super.isTerminated()) {
+				LOG.debug(Markers.MSG, "{}: started", getThreadFactory().toString());
 				//
 				long
 					availDataItems = writtenDataItems.get(),
@@ -204,39 +212,67 @@ implements DataItemBufferSvc<T> {
 				try {
 					consumerMaxCount = consumer.getMaxCount();
 				} catch(final RemoteException e) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
+					TraceLogger.failure(LOG, Level.WARN, e, "Looks like network failure");
 				}
 				LOG.debug(
 					Markers.MSG, "{}: {} available data items to read, while consumer limit is {}",
 					getThreadFactory().toString(), availDataItems, consumerMaxCount
 				);
 				//
-				T nextDataItem;
-				try(final ObjectInput fBuffIn = new ObjectInputStream(new FileInputStream(fBuff))) {
-					while(availDataItems --> 0 && consumerMaxCount --> 0) {
-						nextDataItem = (T) fBuffIn.readObject();
-						consumer.submit(nextDataItem);
-						if(nextDataItem == null) {
-							break;
+				if(fBuff == null) {
+					LOG.warn(Markers.ERR, "No temporary file is available for producing");
+				} else {
+					T nextDataItem;
+					try(
+						final ObjectInput
+							fBuffIn = new ObjectInputStream(new FileInputStream(fBuff))
+					) {
+						while(availDataItems -- > 0 && consumerMaxCount -- > 0) {
+							nextDataItem = (T) fBuffIn.readObject();
+							consumer.submit(nextDataItem);
+							if(nextDataItem == null) {
+								break;
+							}
+						}
+						LOG.debug(Markers.MSG, "done producing");
+					} catch(final IOException | ClassNotFoundException | ClassCastException e) {
+						TraceLogger.failure(LOG, Level.WARN, e, "Failed to read a data item");
+					} catch(final InterruptedException e) {
+						LOG.debug(Markers.ERR, "Interrupted during submit the data item");
+					} catch(final RejectedExecutionException e) {
+						LOG.debug(Markers.ERR, "Consumer rejected the data item");
+					} finally {
+						try {
+							consumer.submit(null); // feed the poison
+							if(fBuff.delete()) {
+								LOG.debug(
+									Markers.MSG, "File \"{}\" succesfully deleted",
+									fBuff.getAbsolutePath()
+								);
+							} else {
+								LOG.debug(
+									Markers.ERR, "Failed to delete the file \"{}\"",
+									fBuff.getAbsolutePath()
+								);
+							}
+						} catch(final RemoteException e) {
+							TraceLogger.failure(LOG, Level.WARN, e, "Looks like network failure");
+						} catch(final InterruptedException e) {
+							LOG.debug(Markers.ERR, "Interrupted");
+						} catch(final RejectedExecutionException e) {
+							LOG.debug(Markers.ERR, "Consumer rejected the poison");
 						}
 					}
-					LOG.debug(Markers.MSG, "done producing");
-				} catch(final IOException|ClassNotFoundException|ClassCastException e) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to read a data item");
-				} catch(final InterruptedException e) {
-					LOG.debug(Markers.ERR, "Interrupted during submit the data item");
-				} finally {
-					try {
-						consumer.submit(null); // feed the poison
-					} catch(final RemoteException e) {
-						ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
-					} catch(final InterruptedException e) {
-						LOG.debug(Markers.ERR, "Interrupted");
-					}
 				}
+			} else {
+				LOG.warn(
+					Markers.ERR,
+					"Failed to start \"{}\" producing: illegal state: output isn't closed yet",
+					getThreadFactory().toString()
+				);
 			}
-		}, "TmpFileBufferProducer"
-	);
+		}
+	};
 	//
 	@Override
 	public final void setConsumer(Consumer<T> consumer) {
@@ -270,8 +306,10 @@ implements DataItemBufferSvc<T> {
 		if(consumer != null) {
 			try {
 				consumer.submit(null); // feed the poison
-			} catch(final RemoteException|InterruptedException e) {
-				ExceptionHandler.trace(LOG, Level.DEBUG, e, "Failed to submit");
+			} catch(final RemoteException | InterruptedException | RejectedExecutionException e) {
+				TraceLogger.failure(
+					LOG, Level.DEBUG, e, "Failed to submit the poison to the consumer"
+				);
 			}
 		}
 		producerThread.interrupt();

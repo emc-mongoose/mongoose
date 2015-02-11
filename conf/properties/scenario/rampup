@@ -1,2 +1,2 @@
-thread.counts:	20
-sizes:			1Mb
+thread.counts:	1,10,20,50,100,120,150,200
+sizes:			1KB,16KB,256KB,4MB,64MB,1GB

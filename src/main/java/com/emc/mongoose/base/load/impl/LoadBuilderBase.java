@@ -9,7 +9,7 @@ import com.emc.mongoose.base.load.LoadBuilder;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.configuration.ConversionException;
@@ -43,10 +43,14 @@ implements LoadBuilder<T, U> {
 			reqConf = getDefaultRequestConfig();
 			setProperties(Main.RUN_TIME_CONFIG.get());
 		} catch(final Exception e) {
-			ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to apply configuration");
+			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to apply configuration");
 		}
 	}
 	protected abstract RequestConfig<T> getDefaultRequestConfig();
+	//
+	public LoadBuilderBase(final RunTimeConfig runTimeConfig) {
+		setProperties(runTimeConfig);
+	}
 	//
 	@Override
 	public LoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig)
@@ -259,7 +263,7 @@ implements LoadBuilder<T, U> {
 		final String[] dataNodeAddrs
 	) throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set storage nodes: {}", Arrays.toString(dataNodeAddrs));
-		if(dataNodeAddrs==null || dataNodeAddrs.length==0) {
+		if(dataNodeAddrs == null || dataNodeAddrs.length == 0) {
 			throw new IllegalArgumentException("Data node address list should not be empty");
 		}
 		this.dataNodeAddrs = dataNodeAddrs;

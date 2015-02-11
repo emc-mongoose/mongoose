@@ -1,6 +1,6 @@
 package com.emc.mongoose.util.remote;
 //
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.run.Main;
 //
@@ -15,8 +15,13 @@ import javax.management.remote.JMXServiceURL;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
+import java.net.InterfaceAddress;
 import java.net.MalformedURLException;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.net.URLDecoder;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -29,6 +34,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RemoteStub;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 /**
@@ -44,7 +50,7 @@ public final class ServiceUtils {
 		try {
 			tmpPort = Main.RUN_TIME_CONFIG.get().getRemoteControlPort();
 		} catch(final Exception e) {
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.WARN, e,
 				String.format(
 					"Failed to take remote control port value, will use the default value \"%d\"",
@@ -84,12 +90,43 @@ public final class ServiceUtils {
 	}
 	//
 	public static String getHostAddr() {
-		InetAddress addr;
+		InetAddress addr = null;
+		//
 		try {
-			addr = InetAddress.getLocalHost();
-		} catch(final UnknownHostException e) {
+			final Enumeration<NetworkInterface> netIfaces = NetworkInterface.getNetworkInterfaces();
+			NetworkInterface nextNetIface;
+			while(netIfaces.hasMoreElements()) {
+				nextNetIface = netIfaces.nextElement();
+				if(!nextNetIface.isLoopback() && nextNetIface.isUp()) {
+					final Enumeration<InetAddress> addrs = nextNetIface.getInetAddresses();
+					while(addrs.hasMoreElements()) {
+						addr = addrs.nextElement();
+						if(Inet4Address.class.isInstance(addr)) {
+							LOG.debug(
+								Markers.MSG, "Resolved external interface \"{}\" address: {}",
+								nextNetIface.getDisplayName(), addr.getHostAddress()
+							);
+							break;
+						}
+					}
+				} else {
+					LOG.debug(
+						Markers.MSG, "Interface \"{}\" is loopback or is not up, skipping",
+						nextNetIface.getDisplayName()
+					);
+				}
+			}
+		} catch(final SocketException e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to get an external interface address");
+		}
+		//
+		if(addr == null) {
+			LOG.warn(
+				Markers.ERR, "No valid external interface have been found, falling back to loopback"
+			);
 			addr = InetAddress.getLoopbackAddress();
 		}
+		//
 		return addr.getHostAddress();
 	}
 	//
@@ -103,7 +140,7 @@ public final class ServiceUtils {
 			stub = UnicastRemoteObject.exportObject(svc);
 			LOG.debug(Markers.MSG, "Exported service object successfully");
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(LOG, Level.FATAL, e, "Failed to export service object");
+			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to export service object");
 		}
 		//
 		if(stub!=null) {
@@ -153,7 +190,7 @@ public final class ServiceUtils {
 		} catch(final NotBoundException e) {
 			LOG.error(Markers.ERR, "No service bound with url \"{}\"", url);
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like network failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "Looks like network failure");
 		}
 		return remoteSvc;
 	}
@@ -163,7 +200,7 @@ public final class ServiceUtils {
             UnicastRemoteObject.unexportObject(svc, true);
 			LOG.debug(Markers.MSG, "Unexported service object");
 		} catch(NoSuchObjectException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to unexport service object");
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to unexport service object");
 		}
 		//
 		try {
@@ -236,7 +273,7 @@ public final class ServiceUtils {
 				);
 				LOG.debug(Markers.MSG, "Created JMX service URL {}", jmxSvcURL.toString());
 			} catch(final MalformedURLException e) {
-				ExceptionHandler.trace(
+				TraceLogger.failure(
 					LOG, Level.WARN, e,
 					String.format("Failed to create JMX service URL for port #%d", portJmxRmi)
 				);
@@ -251,7 +288,7 @@ public final class ServiceUtils {
 					);
 					LOG.debug(Markers.MSG, "Created JMX connector");
 				} catch(final IOException e) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to create JMX connector");
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to create JMX connector");
 				}
 			}
 			//
@@ -260,7 +297,7 @@ public final class ServiceUtils {
 					connectorServer.start();
 					LOG.debug(Markers.MSG, "JMX connector started", portJmxRmi);
 				} catch(final IOException e) {
-					ExceptionHandler.trace(
+					TraceLogger.failure(
 						LOG, Level.WARN, e,
 						"Failed to start JMX connector, please check that there's no another instance running"
 					);

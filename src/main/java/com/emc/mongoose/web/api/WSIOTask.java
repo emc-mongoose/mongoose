@@ -8,6 +8,7 @@ import com.emc.mongoose.web.data.WSObject;
 //
 import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
 import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
+import org.apache.http.protocol.HttpContext;
 /**
  Created by kurila on 29.09.14.
  A HTTP request for performing an operation on data object.
@@ -17,7 +18,7 @@ public interface
 extends
 	DataObjectIOTask<T>,
 	HttpAsyncRequestProducer,
-	HttpAsyncResponseConsumer<AsyncIOTask.Result> {
+	HttpAsyncResponseConsumer<AsyncIOTask.Status> {
 	//
 	enum HTTPMethod {
 		//
@@ -35,5 +36,8 @@ extends
 	WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//
 	@Override
-	WSIOTask<T> setNodeAddr(final String nodeAddr);
+	WSIOTask<T> setNodeAddr(final String nodeAddr)
+	throws InterruptedException;
+	//
+	HttpContext getHttpContext();
 }

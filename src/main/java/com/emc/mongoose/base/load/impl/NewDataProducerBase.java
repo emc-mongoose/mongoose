@@ -4,7 +4,7 @@ import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
@@ -92,7 +92,7 @@ implements Producer<T> {
 			} catch(final RejectedExecutionException e) {
 				LOG.trace(Markers.ERR, MSG_SUBMIT_REJECTED);
 			} catch(final IOException e) {
-				ExceptionHandler.trace(LOG, Level.TRACE, e, MSG_SUBMIT_FAILED);
+				TraceLogger.failure(LOG, Level.TRACE, e, MSG_SUBMIT_FAILED);
 			} catch(final InterruptedException e) {
 				LOG.debug(Markers.MSG, MSG_INTERRUPTED);
 				break;

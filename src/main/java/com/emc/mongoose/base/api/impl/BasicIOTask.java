@@ -5,12 +5,15 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
 import com.emc.mongoose.object.data.DataObject;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.pool.InstancePool;
+import com.emc.mongoose.util.collections.InstancePool;
 //
-import com.emc.mongoose.util.pool.Reusable;
+import com.emc.mongoose.util.collections.Reusable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by andrey on 12.10.14.
  */
@@ -29,10 +32,10 @@ implements AsyncIOTask<T> {
 	protected volatile RequestConfig<T> reqConf = null;
 	protected volatile String nodeAddr = null;
 	protected volatile T dataItem = null;
-	protected volatile Result result = Result.FAIL_TIMEOUT;
+	protected volatile Status status = Status.FAIL_UNKNOWN;
 	//
 	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
-	private volatile long transferSize = 0;
+	protected volatile long transferSize = 0;
 	private volatile Type type;
 	// BEGIN pool related things
 	private final static InstancePool<BasicIOTask>
@@ -41,44 +44,64 @@ implements AsyncIOTask<T> {
 	@SuppressWarnings("unchecked")
 	public static <T extends DataObject> BasicIOTask<T> getInstanceFor(
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
-	) {
+	) throws InterruptedException {
 		return (BasicIOTask<T>) POOL_BASIC_IO_TASKS.take(reqConf, dataItem, nodeAddr);
 	}
 	//
+	protected final AtomicBoolean isAvailable = new AtomicBoolean(true);
+	//
 	@Override
-	public void close() {
-		POOL_BASIC_IO_TASKS.release(this);
+	public void release() {
+		if(isAvailable.compareAndSet(false, true)) {
+			POOL_BASIC_IO_TASKS.release(this);
+		}
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public BasicIOTask<T> reuse(final Object... args) {
-		result = Result.FAIL_TIMEOUT;
-		reqTimeStart = 0;
-		reqTimeDone = 0;
-		respTimeStart = 0;
-		respTimeDone = 0;
-		transferSize = 0;
-		if(args.length > 0) {
-			setRequestConfig((RequestConfig<T>)args[0]);
-		}
-		if(args.length > 1) {
-			setDataItem((T) args[1]);
-		}
-		if(args.length > 2) {
-			setNodeAddr(String.class.cast(args[2]));
+	public BasicIOTask<T> reuse(final Object... args)
+	throws IllegalStateException, InterruptedException {
+		if(isAvailable.compareAndSet(true, false)) {
+			status = Status.FAIL_UNKNOWN;
+			reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
+			if(args.length > 0) {
+				setRequestConfig((RequestConfig<T>) args[0]);
+			}
+			if(args.length > 1) {
+				setDataItem((T) args[1]);
+			}
+			if(args.length > 2) {
+				setNodeAddr(String.class.cast(args[2]));
+			}
+		} else {
+			throw new IllegalStateException("Not yet released instance reuse attempt");
 		}
 		return this;
 	}
 	// END pool related things
 	@Override
 	public final void complete() {
-		LOG.info(
-			Markers.PERF_TRACE, String.format(
-				FMT_PERF_TRACE, nodeAddr, dataItem.getId(), dataItem.getSize(), result.code,
-				reqTimeStart, reqTimeDone - reqTimeStart, respTimeStart - reqTimeDone,
-				respTimeDone - respTimeStart
-			)
-		);
+		final String dataItemId = dataItem.getId();
+		if(
+			respTimeDone < respTimeStart ||
+			respTimeStart < reqTimeDone ||
+			reqTimeDone < reqTimeStart
+		) {
+			LOG.debug(
+				Markers.ERR, String.format(
+					FMT_PERF_TRACE_INVALID, nodeAddr, dataItemId == null ? Main.EMPTY : dataItemId,
+					transferSize, status.code,
+					reqTimeStart, reqTimeDone, respTimeStart, respTimeDone
+				)
+			);
+		} else {
+			LOG.info(
+				Markers.PERF_TRACE, String.format(
+					FMT_PERF_TRACE, nodeAddr, dataItemId == null ? Main.EMPTY : dataItemId,
+					transferSize, status.code,
+					reqTimeStart, respTimeStart - reqTimeDone, respTimeDone - reqTimeStart
+				)
+			);
+		}
 	}
 	//
 	@Override
@@ -89,7 +112,8 @@ implements AsyncIOTask<T> {
 	}
 	//
 	@Override
-	public AsyncIOTask<T> setNodeAddr(final String nodeAddr) {
+	public AsyncIOTask<T> setNodeAddr(final String nodeAddr)
+	throws InterruptedException {
 		this.nodeAddr = nodeAddr;
 		return this;
 	}
@@ -126,8 +150,8 @@ implements AsyncIOTask<T> {
 	}
 	//
 	@Override
-	public final Result getResult() {
-		return result;
+	public final Status getStatus() {
+		return status;
 	}
 	//
 	@Override

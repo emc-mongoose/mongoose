@@ -5,8 +5,8 @@ import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
 //
-import com.emc.mongoose.util.pool.InstancePool;
-import com.emc.mongoose.util.pool.Reusable;
+import com.emc.mongoose.util.collections.InstancePool;
+import com.emc.mongoose.util.collections.Reusable;
 import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,6 +14,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 12.05.14.
@@ -53,17 +54,29 @@ implements Consumer<T> {
 		//
 		@Override
 		public final void run() {
-			LOG.info(Markers.DATA_LIST, dataItem.toString());
+			try {
+				LOG.info(Markers.DATA_LIST, dataItem.toString());
+			} finally {
+				release();
+			}
 		}
 		//
+		private final AtomicBoolean isAvailable = new AtomicBoolean(true);
+		//
 		@Override
-		public final void close() {
-			TASK_POOL.release(this);
+		public final void release() {
+			if(isAvailable.compareAndSet(false, true)) {
+				TASK_POOL.release(this);
+			}
 		}
 		//
 		@Override @SuppressWarnings("unchecked")
 		public final DataItemLogTask<T> reuse(final Object... args) {
-			this.dataItem = (T) args[0];
+			if(isAvailable.compareAndSet(true, false)) {
+				this.dataItem = (T) args[0];
+			} else {
+				throw new IllegalStateException("Not yet released instance reuse attempt");
+			}
 			return this;
 		}
 		//
@@ -74,7 +87,8 @@ implements Consumer<T> {
 	}
 	//
 	@Override
-	public void submit(final T data) {
+	public void submit(final T data)
+	throws InterruptedException {
 		if(data != null && count.get() < maxCount) {
 			super.submit(TASK_POOL.take(data));
 			count.incrementAndGet();

@@ -20,7 +20,7 @@ import com.emc.mongoose.base.load.impl.tasks.RequestResultTask;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ConsoleColors;
-import com.emc.mongoose.util.logging.ExceptionHandler;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
@@ -43,6 +43,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 15.10.14.
@@ -67,12 +68,11 @@ implements LoadExecutor<T> {
 	private final int totalThreadCount;
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
-	protected final Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
-	protected final Meter reqBytes;
+	protected Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
+	protected Meter reqBytes;
 	protected Histogram respLatency;
 	//
 	protected final MBeanServer mBeanServer;
-	//
 	protected final JmxReporter jmxReporter;
 	// METRICS section END
 	protected LoadExecutorBase(
@@ -82,7 +82,8 @@ implements LoadExecutor<T> {
 	) {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(runTimeConfig.getRunRequestQueueSize())
+			new LinkedBlockingQueue<Runnable>(runTimeConfig.getRunRequestQueueSize()),
+			new WorkerFactory("submitWorker")
 		);
 		//
 		storageNodeCount = addrs.length;
@@ -91,7 +92,14 @@ implements LoadExecutor<T> {
 		setMaximumPoolSize((int) Math.sqrt(totalThreadCount));
 		//
 		this.runTimeConfig = runTimeConfig;
-		this.reqConfig = reqConfig;
+		RequestConfig<T> reqConfigCopy = null;
+		try {
+			reqConfigCopy = reqConfig.clone();
+		} catch(final CloneNotSupportedException e) {
+			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to clone the request config");
+		} finally {
+			this.reqConfig = reqConfigCopy;
+		}
 		loadType = reqConfig.getLoadType();
 		final int loadNum = LAST_INSTANCE_NUM.getAndIncrement();
 		//
@@ -99,7 +107,7 @@ implements LoadExecutor<T> {
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());
 		jmxReporter = JmxReporter.forRegistry(metrics)
-			//.convertDurationsTo(TimeUnit.SECONDS)
+			//.convertDurationsTo(TimeUnit.MICROSECONDS)
 			//.convertRatesTo(TimeUnit.SECONDS)
 			.registerWith(mBeanServer)
 			.build();
@@ -115,15 +123,6 @@ implements LoadExecutor<T> {
 		);
 		this.threadsPerNode = threadsPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		// init metrics
-		counterSubm = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUBM));
-		counterRej = metrics.counter(MetricRegistry.name(name, METRIC_NAME_REJ));
-		counterReqSucc = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUCC));
-		counterReqFail = metrics.counter(MetricRegistry.name(name, METRIC_NAME_FAIL));
-		reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));
-		//reqDur = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR));
-		respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
-		jmxReporter.start();
 		// prepare the node executors array
 		storageNodeAddrs = addrs.clone();
 		// create and configure the connection manager
@@ -144,7 +143,7 @@ implements LoadExecutor<T> {
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
-				ExceptionHandler.trace(LOG, Level.WARN, e, "Unexpected failure");
+				TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");
 			}
 		}
 		setConsumer(new LogConsumer<T>(maxCount, threadsPerNode)); // by default, may be overriden later externally
@@ -274,36 +273,49 @@ implements LoadExecutor<T> {
 		//
 	}
 	//
-	private long tsStart;
+	private final AtomicLong tsStart = new AtomicLong(-1);
 	//
 	@Override
 	public void start() {
-		if(metricDumpThread.isAlive()) {
-			LOG.warn(Markers.ERR, "Second start attempt - skipped");
-		} else {
+		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			//
-			reqConfig.configureStorage(this);
 			prestartAllCoreThreads();
 			//
-			if(producer == null) {
-				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
-			} else {
-				try {
-					producer.start();
-					LOG.debug(
-						Markers.MSG, "Started object producer {}",
-						producer.getClass().getSimpleName()
-					);
-				} catch(final IOException e) {
-					ExceptionHandler.trace(LOG, Level.WARN, e, "Failed to start the producer");
-				}
-			}
+			final String name = getName();
+			// init metrics
+			counterSubm = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUBM));
+			counterRej = metrics.counter(MetricRegistry.name(name, METRIC_NAME_REJ));
+			counterReqSucc = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUCC));
+			counterReqFail = metrics.counter(MetricRegistry.name(name, METRIC_NAME_FAIL));
+			reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));
+			//reqDur = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR));
+			respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
+			jmxReporter.start();
 			//
 			metricDumpThread.setName(getName());
 			metricDumpThread.start();
 			//
-			tsStart = System.nanoTime();
-			LOG.info(Markers.MSG, "Started \"{}\"", getName());
+			if(producer == null) {
+				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
+			} else {
+				//
+				try {
+					reqConfig.configureStorage(this);
+				} catch(final IllegalStateException e) {
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to configure the storage");
+				}
+				//
+				try {
+					producer.start();
+					LOG.debug(Markers.MSG, "Started object producer {}", producer);
+				} catch(final IOException e) {
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to start the producer");
+				}
+			}
+			//
+			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
+		} else {
+			LOG.warn(Markers.ERR, "Second start attempt - skipped");
 		}
 	}
 	//
@@ -337,8 +349,12 @@ implements LoadExecutor<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void submit(final T dataItem)
-	throws RemoteException, InterruptedException {
-		if(maxCount > counterSubm.getCount()) {
+	throws RemoteException, RejectedExecutionException, InterruptedException {
+		if(tsStart.get() < 0) {
+			throw new RejectedExecutionException(
+				"Not started yet, rejecting the submit of the data item"
+			);
+		} else if(maxCount > counterSubm.getCount()) {
 			if(dataItem == null) {
 				LOG.debug(Markers.MSG, "{}: poison submitted, performing the shutdown", getName());
 				shutdown(); // stop further submitting
@@ -350,7 +366,7 @@ implements LoadExecutor<T> {
 				// prepare the I/O task instance (make the link between the data item and load type)
 				final AsyncIOTask<T> ioTask = reqConfig.getRequestFor(dataItem, tgtNodeAddr);
 				// submit the corresponding I/O task
-				final Future<AsyncIOTask.Result> futureResponse = submit(ioTask);
+				final Future<AsyncIOTask.Status> futureResponse = submit(ioTask);
 				// prepare the corresponding result handling task
 				final RequestResultTask<T>
 					handleResultTask = (RequestResultTask<T>) RequestResultTask.getInstance(
@@ -367,7 +383,11 @@ implements LoadExecutor<T> {
 						try {
 							Thread.sleep(rejectCount * retryDelayMilliSec);
 						} catch(final InterruptedException ee) {
-							break;
+							LOG.debug(
+								Markers.ERR,
+								"Got interruption, won't submit result handling for task #{}",
+								ioTask.hashCode()
+							);
 						}
 					}
 					//
@@ -394,15 +414,18 @@ implements LoadExecutor<T> {
 	private final AtomicLong durSumTasks = new AtomicLong(0);
 	//
 	@Override
-	public final void handleResult(final AsyncIOTask<T> ioTask, final AsyncIOTask.Result result) {
+	public final void handleResult(final AsyncIOTask<T> ioTask, final AsyncIOTask.Status status) {
 		final T dataItem = ioTask.getDataItem();
+		final int latency = ioTask.getLatency();
 		try {
 			if(dataItem == null) {
 				consumer.submit(null);
-			} else if(result == AsyncIOTask.Result.SUCC) {
+			} else if(status== AsyncIOTask.Status.SUCC) {
 				// update the metrics with success
 				counterReqSucc.inc();
-				respLatency.update(ioTask.getLatency());
+				if(latency > 0) {
+					respLatency.update(latency);
+				}
 				reqBytes.mark(ioTask.getTransferSize());
 				durSumTasks.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
 				// feed to the consumer
@@ -415,48 +438,73 @@ implements LoadExecutor<T> {
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
 		} catch(final RemoteException e) {
-			ExceptionHandler.trace(LOG, Level.WARN, e, "Looks like a network failure");
+			TraceLogger.failure(LOG, Level.WARN, e, "Passing the data item to consumer failed");
+		} catch(final RejectedExecutionException e) {
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Consumer rejected the data item");
 		}
 	}
 	//
 	@Override
 	public final synchronized void shutdown() {
-		// stop the producing
-		try {
-			producer.interrupt();
-		} catch(final IOException e) {
-			ExceptionHandler.trace(
-				LOG, Level.WARN, e,
-				String.format("Failed to stop the producer: %s", producer.toString())
-			);
-		}// stop the submitting
-		super.shutdown();
+		if(producer != null) {
+			// stop the producing
+			try {
+				producer.interrupt();
+			} catch(final IOException e) {
+				TraceLogger.failure(
+					LOG, Level.WARN, e,
+					String.format("Failed to stop the producer: %s", producer.toString())
+				);
+			}
+		}
+		//
+		if(!isShutdown()) {
+			super.shutdown(); // stop the submitting
+		}
 	}
+	//
+	private final AtomicBoolean isClosed = new AtomicBoolean(false);
 	//
 	@Override
 	public synchronized void close()
 	throws IOException {
-		if(!isTerminated()) {
-			interrupt();
-			logMetrics(Markers.PERF_SUM); // provide summary metrics
-			// calculate the efficiency and report
-			double eff = 1.e3 * durSumTasks.get() / ((System.nanoTime() - tsStart) * totalThreadCount);
-			LOG.debug(
-				Markers.PERF_SUM,
-				String.format("Calculated load execution efficiency: %3.3f[%%]", 100 * eff)
-			);
+		TraceLogger.trace(
+			LOG, Level.TRACE, Markers.MSG,
+			String.format("invoked close of %s", getName())
+		);
+		if(isClosed.compareAndSet(false, true)) {
+			final long tsStartNanoSec = tsStart.get();
+			if(tsStartNanoSec > 0) {
+				interrupt();
+				logMetrics(Markers.PERF_SUM); // provide summary metrics
+				// calculate the efficiency and report
+				final float
+					loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
+					eff = durSumTasks.get() / (loadDurMicroSec * totalThreadCount);
+				LOG.debug(
+					Markers.PERF_SUM,
+					String.format(
+						Main.LOCALE_DEFAULT,
+						"Load execution duration: %3.3f[sec], efficiency estimation: %3.3f[%%]",
+						loadDurMicroSec / 1e6, 100 * eff
+					)
+				);
+			}
 			try {
 				// force shutdown
+				reqConfig.close(); // disables connection drop failures
 				LOG.debug(Markers.MSG, "{}: dropped {} tasks", getName(), shutdownNow().size());
 				// poison the consumer
 				consumer.submit(null);
 			} catch(final InterruptedException e) {
-				ExceptionHandler.trace(
-					LOG, Level.DEBUG, e,
+				TraceLogger.failure(
+					LOG, Level.TRACE, e,
 					String.format(
 						"%s: interrupted on feeding the poison to the consumer", getName()
 					)
 				);
+			} catch(final IllegalStateException | RejectedExecutionException e) {
+				TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
 				jmxReporter.close();
 				LoadCloseHook.del(this);
@@ -469,7 +517,7 @@ implements LoadExecutor<T> {
 		try {
 			close();
 		} catch(final IOException e) {
-			ExceptionHandler.trace(
+			TraceLogger.failure(
 				LOG, Level.WARN, e, String.format("%s: failed to close", getName())
 			);
 		}
@@ -489,12 +537,22 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join()
 	throws InterruptedException {
+		LOG.trace(
+			Markers.MSG, "{}: waiting remaining {} tasks to complete",
+			getName(), getQueue().size() + getActiveCount()
+		);
 		awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+		LOG.trace(Markers.MSG, "{} interrupted and done", getName());
 	}
 	//
 	@Override
 	public final void join(final long timeOutMilliSec)
-	throws  InterruptedException {
+	throws InterruptedException {
+		LOG.trace(
+			Markers.MSG, "{}: waiting remaining {} tasks to complete",
+			getName(), getQueue().size() + getActiveCount()
+		);
 		awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
+		LOG.trace(Markers.MSG, "{} interrupted and done", getName());
 	}
 }

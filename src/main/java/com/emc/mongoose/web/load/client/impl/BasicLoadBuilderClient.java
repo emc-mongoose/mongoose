@@ -2,6 +2,7 @@ package com.emc.mongoose.web.load.client.impl;
 //
 import com.emc.mongoose.base.load.client.impl.LoadBuilderClientBase;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.remote.Service;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
@@ -9,7 +10,6 @@ import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.persist.FileProducer;
-import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.util.remote.ServiceUtils;
@@ -56,7 +56,7 @@ implements WSLoadBuilderClient<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected WSLoadBuilderSvc<T, U> resolve(final String serverAddr)
 	throws IOException {
-		WSLoadBuilderSvc<T, U> rlb = null;
+		WSLoadBuilderSvc<T, U> rlb;
 		final Service remoteSvc = ServiceUtils.getRemoteSvc(
 			"//" + serverAddr + '/' + getClass().getPackage().getName().replace("client", "server")
 		);
@@ -91,12 +91,12 @@ implements WSLoadBuilderClient<T, U> {
 	public final U build()
 	throws RemoteException {
 		//
-		WSLoadClient newLoadClient = null;
+		WSLoadClient newLoadClient;
 		//
 		final Map<String, LoadSvc<T>> remoteLoadMap = new ConcurrentHashMap<>();
 		final Map<String, JMXConnector> remoteJMXConnMap = new ConcurrentHashMap<>();
 		//
-		LoadBuilderSvc<T, U> nextBuilder = null;
+		LoadBuilderSvc<T, U> nextBuilder;
 		LoadSvc<T> nextLoad = null;
 		//
 		String svcJMXAddr;
@@ -121,15 +121,15 @@ implements WSLoadBuilderClient<T, U> {
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
 				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
-				ExceptionHandler.trace(LOG, Level.ERROR, e, "Failed to generate JMX URL");
+				TraceLogger.failure(LOG, Level.ERROR, e, "Failed to generate JMX URL");
 			}
 			//
 			nextJMXConn = null;
-			if(nextJMXURL!=null) {
+			if(nextJMXURL != null) {
 				try {
 					nextJMXConn = JMXConnectorFactory.connect(nextJMXURL, null);
 				} catch(final IOException e) {
-					ExceptionHandler.trace(
+					TraceLogger.failure(
 						LOG, Level.ERROR, e,
 						String.format("Failed to connect to \"%s\" via JMX", nextJMXURL)
 					);
@@ -145,10 +145,10 @@ implements WSLoadBuilderClient<T, U> {
 		newLoadClient = new BasicWSLoadClient<>(
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
 			runTimeConfig.getDataCount(),
-			nextLoad==null ? 1 : (int) Math.pow(nextLoad.getThreadCount(), 0.8)
+			nextLoad == null ? 1 : (int) Math.pow(nextLoad.getThreadCount(), 0.8)
 		);
 		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
-		if(srcProducer!=null && srcProducer.getConsumer()==null) {
+		if(srcProducer != null && srcProducer.getConsumer() == null) {
 			LOG.debug(
 				Markers.MSG, "Append consumer {} for producer {}",
 				newLoadClient.getName(), srcProducer.getName()

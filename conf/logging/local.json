@@ -20,11 +20,6 @@
 						"Filter": [
 							{
 								"type": "MarkerFilter",
-								"marker": "err",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
 								"marker": "msg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
@@ -36,8 +31,18 @@
 							}, {
 								"type": "MarkerFilter",
 								"marker": "perfSum",
-								"onMatch": "ACCEPT",
+								"onMatch": "NEUTRAL",
 								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "err",
+								"onMatch": "NEUTRAL",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
 							}
 						]
 					}
@@ -263,7 +268,7 @@
 					"name": "async",
 					"type": "Async",
 					"blocking": "false",
-					"bufferSize": "1048576",
+					"bufferSize": "131072",
 					"AppenderRef": [
 						{ "ref": "stdout" },
 						{ "ref": "msgFile" },
@@ -381,6 +386,13 @@
 						"ref": "async"
 					}
 				}, {
+					"name": "com.emc.mongoose.util.collections",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+					  "ref": "async"
+					}
+				}, {
 					"name": "com.emc.mongoose.util.conf",
 					"level": "debug",
 					"additivity": "false",
@@ -403,13 +415,6 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.util.persist",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				}, {
-					"name": "com.emc.mongoose.util.pool",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
@@ -446,7 +451,6 @@
 					"AppenderRef": {
 						"ref": "async"
 					}
-
 				}, {
 					"name": "com.emc.mongoose.web.api.impl.provider",
 					"level": "debug",
@@ -463,7 +467,7 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.web.api.impl.provider.s3",
-					"level": "trace",
+					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
@@ -488,6 +492,13 @@
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.load.impl.tasks",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+					  "ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.web.load.client.impl",
