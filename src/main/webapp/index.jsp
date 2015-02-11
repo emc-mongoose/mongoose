@@ -59,9 +59,9 @@
 								<div id="run-modes">
 									<select>
 										<option value="standalone">standalone</option>
-										<option value="client">controller</option>
-										<option value="server">driver</option>
-										<option value="wsmock">wsmock</option>
+										<option value="client">load client</option>
+										<option value="server">load server</option>
+										<option value="cinderella">cinderella</option>
 									</select>
 									<button type="button" id="start" class="btn btn-default">
 										Start
@@ -115,7 +115,7 @@
 											</fieldset>
 										</div>
 
-										<div class="standalone client wsmock">
+										<div class="standalone client cinderella">
 											<fieldset>
 												<legend>Storage</legend>
 												<div class="standalone client">
@@ -129,7 +129,7 @@
 														</div>
 													</div>
 												</div>
-												<div class="standalone client wsmock">
+												<div class="standalone client cinderella">
 													<div class="form-group">
 														<label for="backup-storage.api" class="col-sm-3 control-label">storage.api</label>
 														<div class="col-sm-9">
@@ -321,7 +321,7 @@
 											</fieldset>
 										</div>
 
-										<div class="standalone client wsmock server">
+										<div class="standalone client cinderella server">
 											<fieldset>
 												<legend>Run</legend>
 												<div class="form-group">
