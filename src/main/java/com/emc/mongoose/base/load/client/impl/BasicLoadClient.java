@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -67,6 +68,8 @@ public class BasicLoadClient<T extends DataItem>
 extends ThreadPoolExecutor
 implements LoadClient<T> {
 	private final static Logger LOG = LogManager.getLogger();
+	//
+	private final static int MGMT_THREADS_PER_CLIENT = 20, MGMT_TASKS_PER_CLIENT = 50;
 	//
 	protected final Map<String, LoadSvc<T>> remoteLoadMap;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -102,13 +105,13 @@ implements LoadClient<T> {
 	private final RequestConfig<T> reqConfig;
 	private final int retryCountMax, retryDelayMilliSec;
 	//
-	private final static class PeriodicLogTask
-		implements Runnable {
+	private final static class LogMetricsTask
+	implements Runnable {
 		//
 		private final BasicLoadClient loadClient;
 		private final int metricsUpdatePeriodSec;
 		//
-		private PeriodicLogTask(final BasicLoadClient loadClient, final int metricsUpdatePeriodSec) {
+		private LogMetricsTask(final BasicLoadClient loadClient, final int metricsUpdatePeriodSec) {
 			this.loadClient = loadClient;
 			this.metricsUpdatePeriodSec = metricsUpdatePeriodSec;
 		}
@@ -118,7 +121,6 @@ implements LoadClient<T> {
 			try {
 				if(metricsUpdatePeriodSec > 0) {
 					while(true) {
-						loadClient.logMetaInfoFrames(metricsUpdatePeriodSec);
 						loadClient.logMetrics(Markers.PERF_AVG, metricsUpdatePeriodSec);
 						Thread.sleep(metricsUpdatePeriodSec * 1000);
 					}
@@ -135,7 +137,32 @@ implements LoadClient<T> {
 			}
 		}
 	}
-	private final Thread periodicLogThread;
+	//
+	private final static class LogMetaInfoTask
+	implements Runnable {
+		//
+		private final static int PERIOD_MIN_SEC = 10;
+		//
+		private final BasicLoadClient loadClient;
+		//
+		private LogMetaInfoTask(final BasicLoadClient loadClient) {
+			this.loadClient = loadClient;
+		}
+		//
+		@Override
+		public final void run() {
+			try {
+				while(true) {
+					loadClient.logMetaInfoFrames(PERIOD_MIN_SEC); // 1 seconds
+					Thread.sleep(PERIOD_MIN_SEC * 1000); // 1000 milliseconds
+				}
+			} catch(final InterruptedException e) {
+				LOG.debug(Markers.MSG, "Interrupted");
+			}
+		}
+	}
+	//
+	private final Thread logMetricsThread, logMetaInfoThread;
 	//@SuppressWarnings("unchecked")
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig,
@@ -171,9 +198,10 @@ implements LoadClient<T> {
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		//
-		periodicLogThread = new Thread(
-			new PeriodicLogTask(this, runTimeConfig.getRunMetricsPeriodSec()), "periodicLogger"
+		logMetricsThread = new Thread(
+			new LogMetricsTask(this, runTimeConfig.getRunMetricsPeriodSec()), "logMetrics"
 		);
+		logMetaInfoThread = new Thread(new LogMetaInfoTask(this), "logMetaInfo");
 		//
 		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
 			runTimeConfig.getRemoteExportPort()
@@ -201,8 +229,13 @@ implements LoadClient<T> {
 			}
 		}
 		//
-		mgmtConnExecutor = Executors.newFixedThreadPool(
-			Math.max(20, totalThreadCount), new WorkerFactory(name + "-mgmtConnWorker")
+		final int
+			countLoadServers = remoteLoadMap.size(),
+			countMgmtThreads = MGMT_THREADS_PER_CLIENT * countLoadServers;
+		mgmtConnExecutor = new ThreadPoolExecutor(
+			countMgmtThreads, countMgmtThreads, 0, TimeUnit.SECONDS,
+			new ArrayBlockingQueue<Runnable>(MGMT_TASKS_PER_CLIENT * countLoadServers),
+			new WorkerFactory(name + "-mgmtConnWorker")
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricSuccCount = registerJmxGaugeSum(
@@ -316,9 +349,6 @@ implements LoadClient<T> {
 				new GaugeValueTask[] { taskGetCountSucc, taskGetCountFail, taskGetCountRej }
 			), "shutDownOnCountLimit"
 		);
-		shutDownOnCountLimit.start();
-		prestartAllCoreThreads();
-		metricsReporter.start();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private Gauge<Long> registerJmxGaugeSum(
@@ -380,6 +410,7 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@SuppressWarnings("unchecked")
 	private void logMetaInfoFrames(final int timeOutSeconds) {
+		//
 		final ArrayList<Future<List<T>>> nextMetaInfoFrameFutures = new ArrayList<>(
 			remoteLoadMap.size()
 		);
@@ -402,26 +433,30 @@ implements LoadClient<T> {
 			}
 		}
 		//
-		List<T> nextMetaInfoFrame = null;
+		List<T> nextMetaInfoFrame;
 		for(final Future<List<T>> nextMetaInfoFrameFuture : nextMetaInfoFrameFutures) {
 			//
-			try {
-				nextMetaInfoFrame = nextMetaInfoFrameFuture.get(timeOutSeconds, TimeUnit.SECONDS);
-			} catch(final ExecutionException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
-			} catch(final InterruptedException | TimeoutException e) {
-				TraceLogger.failure(
-					LOG, Level.TRACE, e,
-					"Interrupted while fetching the metainfo frame, retry"
-				);
+			nextMetaInfoFrame = null;
+			if(!isTerminating() && !isTerminated()) {
+				//
 				try {
-					nextMetaInfoFrame = nextMetaInfoFrameFuture.get(
-						timeOutSeconds, TimeUnit.SECONDS
-					);
-				} catch(final Exception ee) {
+					nextMetaInfoFrame = nextMetaInfoFrameFuture.get(timeOutSeconds, TimeUnit.SECONDS);
+				} catch(final ExecutionException e) {
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to fetch the metainfo frame");
+				} catch(final InterruptedException | TimeoutException e) {
 					TraceLogger.failure(
-						LOG, Level.WARN, e, "Failed to retry the fetching of the metainfo frame"
+						LOG, Level.TRACE, e,
+						"Interrupted while fetching the metainfo frame, retry"
 					);
+					try {
+						nextMetaInfoFrame = nextMetaInfoFrameFuture.get(
+							timeOutSeconds, TimeUnit.SECONDS
+						);
+					} catch(final Exception ee) {
+						TraceLogger.failure(
+							LOG, Level.WARN, e, "Failed to retry the fetching of the metainfo frame"
+						);
+					}
 				}
 			}
 			//
@@ -450,7 +485,9 @@ implements LoadClient<T> {
 	//
 	private void logMetrics(final Marker logMarker, final int timeOutSeconds) {
 		//
-		if(!isShutdown() && !mgmtConnExecutor.isShutdown()) {
+		if(mgmtConnExecutor.isShutdown()) {
+			LOG.warn(Markers.ERR, "Can not aggregate the metrics, management connections are closed");
+		} else {
 			try {
 				countSubm = mgmtConnExecutor.submit(taskGetCountSubm);
 				countRej = mgmtConnExecutor.submit(taskGetCountRej);
@@ -477,69 +514,68 @@ implements LoadClient<T> {
 			} catch(final RejectedExecutionException e) {
 				TraceLogger.failure(LOG, Level.WARN, e, "Log remote metrics failed due to reject");
 			}
+			//
+			try {
+				final long
+					countSucc = countReqSucc.get(),
+					countFail = countReqFail.get(),
+					avgLat = avgLatency.get().intValue(),
+					minLat = minLatency.get().intValue(),
+					medLat = medLatency.get().intValue(),
+					maxLat = maxLatency.get().intValue();
+				final boolean isSummary = Markers.PERF_SUM.equals(logMarker);
+				final String msg;
+				if(isSummary) {
+					msg = String.format(
+						Main.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
+						//
+						name, countSucc,
+						countFail==0 ?
+							Long.toString(countFail) :
+							(float) countSucc / countFail > 100 ?
+								String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countFail) :
+								String.format(ConsoleColors.INT_RED_OVER_GREEN, countFail),
+						//
+						avgLat, minLat, medLat, maxLat,
+						//
+						meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
+						//
+						meanBW.get() / MIB, oneMinBW.get() / MIB, fiveMinBW.get() / MIB,
+						fifteenMinBW.get() / MIB
+					);
+				} else {
+					msg = String.format(
+						Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
+						//
+						countSucc, countSubm.get() - countSucc,
+						countFail==0 ?
+							Long.toString(countFail) :
+							(float) countSucc / countFail > 100 ?
+								String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countFail) :
+								String.format(ConsoleColors.INT_RED_OVER_GREEN, countFail),
+						//
+						avgLat, minLat, medLat, maxLat,
+						//
+						meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
+						//
+						meanBW.get() / MIB, oneMinBW.get() / MIB, fiveMinBW.get() / MIB,
+						fifteenMinBW.get() / MIB
+					);
+				}
+				LOG.info(logMarker, msg);
+			} catch(final ExecutionException e) {
+				TraceLogger.failure(LOG, Level.WARN, e, "Failed to fetch the metrics");
+			} catch(final InterruptedException | NullPointerException e) {
+				TraceLogger.failure(LOG, Level.DEBUG, e, "Unexpected failure");
+			}/* catch(final TimeoutException e) {
+				TraceLogger.failure(LOG, Level.DEBUG, e, "Distributed metrics aggregation timeout");
+			}*/
 		}
-		//
-		try {
-			final long
-				countSucc = countReqSucc.get(timeOutSeconds, TimeUnit.SECONDS),
-				countFail = countReqFail.get(timeOutSeconds, TimeUnit.SECONDS),
-				avgLat = avgLatency.get(timeOutSeconds, TimeUnit.SECONDS).intValue(),
-				minLat = minLatency.get(timeOutSeconds, TimeUnit.SECONDS).intValue(),
-				medLat = medLatency.get(timeOutSeconds, TimeUnit.SECONDS).intValue(),
-				maxLat = maxLatency.get(timeOutSeconds, TimeUnit.SECONDS).intValue();
-			final boolean isSummary = Markers.PERF_SUM.equals(logMarker);
-			final String msg;
-			if(isSummary) {
-				msg = String.format(
-					Main.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
-					//
-					name, countSucc,
-					countFail == 0 ?
-						Long.toString(countFail) :
-						(float) countSucc / countFail > 100 ?
-							String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countFail) :
-							String.format(ConsoleColors.INT_RED_OVER_GREEN, countFail),
-					//
-					avgLat, minLat, medLat, maxLat,
-					//
-					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
-					//
-					meanBW.get() / MIB, oneMinBW.get() / MIB, fiveMinBW.get() / MIB,
-					fifteenMinBW.get() / MIB
-				);
-			} else {
-				msg = String.format(
-					Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
-					//
-					countSucc, countSubm.get() - countSucc,
-					countFail == 0 ?
-						Long.toString(countFail) :
-						(float) countSucc / countFail > 100 ?
-							String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countFail) :
-							String.format(ConsoleColors.INT_RED_OVER_GREEN, countFail),
-					//
-					avgLat, minLat, medLat, maxLat,
-					//
-					meanTP.get(), oneMinTP.get(), fiveMinTP.get(), fifteenMinTP.get(),
-					//
-					meanBW.get() / MIB, oneMinBW.get() / MIB, fiveMinBW.get() / MIB,
-					fifteenMinBW.get() / MIB
-				);
-			}
-			LOG.info(logMarker, msg);
-		} catch(final ExecutionException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to fetch the metrics");
-		} catch(final InterruptedException | NullPointerException e) {
-			TraceLogger.failure(LOG, Level.DEBUG, e, "Unexpected failure");
-		} catch(final TimeoutException e) {
-			TraceLogger.failure(LOG, Level.DEBUG, e, "Distributed metrics aggregation timeout");
-		}
-		//
 	}
 	//
 	@Override
 	public final void start() {
-		if(periodicLogThread.isAlive()) {
+		if(logMetricsThread.isAlive() || logMetaInfoThread.isAlive()) {
 			LOG.warn(Markers.ERR, "{}: already started");
 		} else {
 			LoadSvc nextLoadSvc;
@@ -556,9 +592,12 @@ implements LoadClient<T> {
 				}
 			}
 			//
+			logMetaInfoThread.start();
+			logMetricsThread.start();
+			metricsReporter.start();
+			shutDownOnCountLimit.start();
 			LoadCloseHook.add(this);
-			//
-			periodicLogThread.start();
+			prestartAllCoreThreads();
 			LOG.info(Markers.MSG, "{}: started", name);
 		}
 	}
@@ -568,11 +607,8 @@ implements LoadClient<T> {
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
 		if(!isShutdown()) {
-			shutdown();
-		}
-		//
-		if(periodicLogThread.isAlive()) {
 			LOG.debug(Markers.MSG, "{}: interrupting...", name);
+			shutdown();
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 				remoteLoadMap.size(), new WorkerFactory(getName() + "-interrupter")
 			);
@@ -583,9 +619,8 @@ implements LoadClient<T> {
 			try {
 				interruptExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 			} catch(final InterruptedException e) {
-				TraceLogger.failure(LOG, Level.DEBUG, e, "Interrupting was interrupted");
+				TraceLogger.failure(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
 			}
-			periodicLogThread.interrupt();
 			LOG.debug(Markers.MSG, "{}: interrupted", name);
 		}
 	}
@@ -712,6 +747,7 @@ implements LoadClient<T> {
 		if(!remoteLoadMap.isEmpty()) {
 			LOG.debug(Markers.MSG, "do performing close");
 			interrupt();
+			logMetricsThread.interrupt();
 			//
 			LOG.debug(Markers.MSG, "log summary metrics");
 			logMetrics(Markers.PERF_SUM, runTimeConfig.getRunMetricsPeriodSec());

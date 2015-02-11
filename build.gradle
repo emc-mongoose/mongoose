@@ -86,7 +86,7 @@ dependencies {
 		'commons-lang:commons-lang:2.6',
 		'commons-logging:commons-logging:1.2',
 		//
-		'org.apache.logging.log4j:log4j-slf4j-impl:2.1',
+		//'org.apache.logging.log4j:log4j-slf4j-impl:2.1',
 		'org.apache.logging.log4j:log4j-jcl:2.1',
 		'org.apache.logging.log4j:log4j-jul:2.1',
 		'org.slf4j:slf4j-api:1.7.7',

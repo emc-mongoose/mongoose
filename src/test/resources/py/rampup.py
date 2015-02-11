@@ -18,7 +18,6 @@ listThreadCounts = LOCAL_RUN_TIME_CONFIG.getStringArray("scenario.rampup.thread.
 #
 LOG.debug(Markers.MSG, "Setting the metric update period to zero for chain scenario")
 LOCAL_RUN_TIME_CONFIG.set("run.metrics.period.sec", 0)
-chain.LOAD_BUILDER.setProperties(LOCAL_RUN_TIME_CONFIG) # apply the overriden properties for chain
 #
 if __name__=="__builtin__":
 	LOG.info(Markers.MSG, "Data sizes: {}", listSizes)

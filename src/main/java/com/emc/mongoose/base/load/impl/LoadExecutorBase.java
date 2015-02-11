@@ -468,8 +468,7 @@ implements LoadExecutor<T> {
 	public synchronized void close()
 	throws IOException {
 		TraceLogger.trace(
-			LOG, Level.TRACE, Markers.MSG,
-			String.format("invoked close of %s", getName())
+			LOG, Level.TRACE, Markers.MSG, String.format("invoked close of %s", getName())
 		);
 		if(isClosed.compareAndSet(false, true)) {
 			final long tsStartNanoSec = tsStart.get();

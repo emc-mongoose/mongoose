@@ -10,29 +10,26 @@ import org.apache.logging.log4j.Marker;
  */
 public final class TraceLogger {
 	//
-	private static final String FMT_MSG = "%s: %s";
-	//
 	public static void failure(
 		final Logger logger, final Level level, final Throwable thrown, final String msg
 	) {
-		final StrBuilder msgBuilder = new StrBuilder(
-			String.format(FMT_MSG, msg, thrown.toString())
-		);
+		final StrBuilder msgBuilder = new StrBuilder();
 		synchronized(logger) {
-			logger.log(level, Markers.ERR, msgBuilder.toString());
-			if(logger.isTraceEnabled(Markers.ERR)) {
-				msgBuilder.clear();
-				Throwable cause = thrown.getCause();
-				while(cause != null) {
-					msgBuilder.append("\n\t").append(cause.toString());
-					for(final StackTraceElement ste : thrown.getStackTrace()) {
-						msgBuilder.append("\n\t\t").append(ste.toString());
-					}
-					cause = cause.getCause();
+			logger.log(
+				level, Markers.ERR,
+				String.format("%s: %s", msg, thrown == null ? null : thrown.toString())
+			);
+			for(Throwable cause = thrown; cause != null; cause = cause.getCause()) {
+				msgBuilder.append("\n\t").append(cause.toString());
+				if(!logger.isTraceEnabled(Markers.ERR)) {
+					break;
 				}
-				if(msgBuilder.size() > 0) {
-					logger.log(Level.TRACE, Markers.ERR, msgBuilder.toString());
+				for(final StackTraceElement ste : thrown.getStackTrace()) {
+					msgBuilder.append("\n\t\t").append(ste.toString());
 				}
+			}
+			if(msgBuilder.size() > 0) {
+				logger.log(Level.TRACE, Markers.ERR, msgBuilder.toString());
 			}
 		}
 	}

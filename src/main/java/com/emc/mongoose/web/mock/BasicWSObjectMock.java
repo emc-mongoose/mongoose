@@ -63,7 +63,7 @@ implements WSObjectMock{
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
-		synchronized (this) {
+		synchronized (this) { // stream position protection
 			if (maskRangesPending.isEmpty()) {
 				super.writeTo(out);
 			} else {
