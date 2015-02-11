@@ -68,6 +68,8 @@ dependencies {
 		//hibernate
 		'org.hibernate:hibernate-core:4.3.6.Final',
 		'org.eclipse.persistence:javax.persistence:2.1.0',
+		//'org.hibernate:hibernate-c3p0:4.3.7.Final',
+		'org.hibernate:hibernate-ehcache:4.3.7.Final',
 		//
 		'commons-cli:commons-cli:1.2'
 	)

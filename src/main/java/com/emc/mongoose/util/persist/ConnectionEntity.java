@@ -1,6 +1,18 @@
 package com.emc.mongoose.util.persist;
 
-import javax.persistence.*;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.IdClass;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinColumns;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 import java.io.Serializable;
 
 /**
@@ -9,6 +21,7 @@ import java.io.Serializable;
 @Entity(name="Connection")
 @IdClass(ConnectionEntityPK.class)
 @Table(name = "connection")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class ConnectionEntity
 implements Serializable{
 
@@ -59,7 +72,11 @@ class ConnectionEntityPK
 implements Serializable{
 	private long number;
 	private LoadEntity load;
-	ConnectionEntityPK(){
+	public ConnectionEntityPK(){
+	}
+	public ConnectionEntityPK( final long number, final LoadEntity loadEntity){
+		this.number = number;
+		this.load = loadEntity;
 	}
 
 	public long getNumber() {
@@ -73,5 +90,23 @@ implements Serializable{
 	}
 	public void setLoad(LoadEntity load) {
 		this.load = load;
+	}
+
+	@Override
+	public boolean equals(Object o) {
+		if(o == null) return false;
+		if(!(o instanceof ConnectionEntity)) return false;
+		ConnectionEntity other = (ConnectionEntity) o;
+		return (this.number == other.getNumber()) && (this.load.getNumber() == other.getLoad().getNumber())
+			&& (this.load.getRun().getId() == other.getLoad().getRun().getId());
+
+	}
+	@Override
+	public int hashCode() {
+		int hsCode;
+		hsCode = Long.valueOf(this.number).hashCode();
+		hsCode = 19 * hsCode + Long.valueOf(this.load.getNumber()).hashCode();
+		hsCode = 19 * hsCode + Long.valueOf(this.load.getRun().getId()).hashCode();
+		return hsCode;
 	}
 }

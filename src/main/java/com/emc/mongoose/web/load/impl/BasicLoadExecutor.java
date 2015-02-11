@@ -8,6 +8,7 @@ import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ExceptionHandler;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
 import com.emc.mongoose.util.threading.WorkerFactory;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
@@ -179,7 +180,8 @@ implements WSLoadExecutor<T> {
 		//
 		try {
 			localIOReactor = new DefaultConnectingIOReactor(
-				ioReactorConfig, new WorkerFactory(getName() + "-conn")
+				ioReactorConfig, new DataObjectWorkerFactory(getName() + "-conn", reqConfig.getLoadNumber(),
+				reqConfig.getAPI(), reqConfig.getLoadType())
 			);
 			//
 			localConnPool = new BasicNIOConnPool(localIOReactor, connConfig);

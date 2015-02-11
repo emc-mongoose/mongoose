@@ -25,6 +25,7 @@ import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
 //
+import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -109,7 +110,8 @@ implements LoadExecutor<T> {
 			(maxCount > 0? Long.toString(maxCount) : "") + '-' +
 			Integer.toString(threadsPerNode) + 'x' + Integer.toString(storageNodeCount);
 		setThreadFactory(
-			new DataObjectWorkerFactory(name, loadNum, reqConfig.getAPI(), loadType)
+			//new DataObjectWorkerFactory(name, loadNum, reqConfig.getAPI(), loadType)
+			new WorkerFactory(name)
 		);
 		this.threadsPerNode = threadsPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;

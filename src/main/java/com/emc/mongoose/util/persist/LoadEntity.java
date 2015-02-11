@@ -87,7 +87,7 @@ implements Serializable{
 		this.run = run;
 	}
 	//for load entity from database
-	/*
+
 	@Override
 	public boolean equals(Object o) {
 		if(o == null) return false;
@@ -100,8 +100,8 @@ implements Serializable{
 	public int hashCode() {
 		int hsCode;
 		hsCode = Long.valueOf(this.number).hashCode();
-		hsCode = 19 * hsCode+ Long.valueOf(this.run.getId()).hashCode();
+		hsCode = 19 * hsCode + Long.valueOf(this.run.getId()).hashCode();
 		return hsCode;
 	}
-	*/
+
 }

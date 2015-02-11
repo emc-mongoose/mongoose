@@ -47,7 +47,7 @@
 					"enabled": "false",
 					"blocking": "false",
 					"bufferSize": "65536",
-					"threadsForQueue": "10",
+					"threadsForQueue": "20",
 					"AppenderRef": [
 						{ "ref": "hibernateSync" }
 					]

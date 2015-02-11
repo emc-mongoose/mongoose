@@ -1,5 +1,8 @@
 package com.emc.mongoose.util.persist;
 //
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 import javax.persistence.Entity;
@@ -13,7 +16,7 @@ import java.io.Serializable;
 @Entity(name="DataObject")
 @IdClass(DataObjectEntityPK.class)
 @Table(name = "dataobject")
-//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class DataObjectEntity
 implements Serializable{
 	@Id
@@ -85,6 +88,10 @@ implements Serializable {
 	private long size;
 	//
 	public DataObjectEntityPK(){}
+	public DataObjectEntityPK(final String identifier, final long size){
+		this.identifier = identifier;
+		this.size = size;
+	}
 	//
 	public String getIdentifier() {
 		return identifier;
@@ -97,5 +104,21 @@ implements Serializable {
 	}
 	public void setSize(long size) {
 		this.size = size;
+	}
+	//
+	@Override
+	public boolean equals(Object o) {
+		if(o == null) return false;
+		if(!(o instanceof DataObjectEntity)) return false;
+		DataObjectEntity other = (DataObjectEntity) o;
+		return (this.identifier.equals(other.getIdentifier())) && (this.size == other.getSize());
+
+	}
+	@Override
+	public int hashCode() {
+		int hsCode;
+		hsCode = Long.valueOf(this.size).hashCode();
+		hsCode = 19 * hsCode + this.identifier.hashCode();
+		return hsCode;
 	}
 }

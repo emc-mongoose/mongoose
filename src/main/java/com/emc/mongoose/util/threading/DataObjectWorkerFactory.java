@@ -12,11 +12,11 @@ extends WorkerFactory {
 	private final int loadNumber;
 	private final AsyncIOTask.Type loadType;
 	//
-	private static final String
-			KEY_THREAD_NUM = "thread.number",
-			KEY_LOAD_NUM = "load.number",
-			KEY_LOAD_TYPE = "load.type",
-			KEY_API = "api";
+	public static final String
+		KEY_THREAD_NUM = "thread.number",
+		KEY_LOAD_NUM = "load.number",
+		KEY_LOAD_TYPE = "load.type",
+		KEY_API = "api";
 	private volatile int threadNumber;
 	//
 	public DataObjectWorkerFactory(

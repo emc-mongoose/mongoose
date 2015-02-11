@@ -8,23 +8,25 @@
 		<property name="hibernate.connection.driver_class">org.postgresql.Driver</property>
 		<property name="hibernate.dialect">org.hibernate.dialect.PostgreSQL9Dialect</property>
 		<property name="transaction.factory_class">org.hibernate.transaction.JDBCTransactionFactory</property>
-		<!--
+
+		<!--property name="hibernate.connection.provider_class">org.hibernate.connection.C3P0ConnectionProvider</property>
+		<property name="hibernate.c3p0.acquire_increment">1</property>
+		<property name="hibernate.c3p0.idle_test_period">60</property>
+		<property name="hibernate.c3p0.min_size">5</property>
+		<property name="hibernate.c3p0.max_size">20</property>
+		<property name="hibernate.c3p0.max_statements_per_connection">1000</property>
+		<property name="hibernate.c3p0.timeout">0</property>
+		<property name="hibernate.c3p0.acquireRetryAttempts">1</property>
+		<property name="hibernate.c3p0.acquireRetryDelay">1</property-->
+
 		<property name="hibernate.cache.region.factory_class">org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory</property>
 		<property name="hibernate.cache.use_second_level_cache">true</property>
 		<property name="hibernate.cache.use_query_cache">true</property>
-		<property name="hibernate.connection.provider_class">org.hibernate.connection.C3P0ConnectionProvider</property>
-		<property name="hibernate.c3p0.testConnectionOnCheckin">true</property>
-		<property name="hibernate.c3p0.acquire_increment">2</property>
-		<property name="hibernate.c3p0.idleConnectionTestPeriod">300</property>
-		<property name="hibernate.c3p0.min_size">50</property>
-		<property name="hibernate.c3p0.max_size">1000</property>
-		<property name="hibernate.c3p0.timeout">1800</property>
-		<property name="hibernate.c3p0.max_statements">10000</property>
-		<property name="connection.autocommit">true</property>
 
+		<property name="hibernate.current_session_context_class">thread</property>
 		<property name="show_sql">false</property>
 		<property name="format_sql">false</property>
-		!-->
+		<!--<property name="hibernate.temp.use_jdbc_metadata_defaults">false</property>!-->
 		<mapping class="com.emc.mongoose.util.persist.StatusEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.ModeEntity"></mapping>
 		<mapping class="com.emc.mongoose.util.persist.RunEntity"></mapping>
