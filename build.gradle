@@ -47,7 +47,7 @@ dependencies {
 		//
 		'io.dropwizard.metrics:metrics-core:3.1.0',
 		//
-		'commons-codec:commons-codec:1.9',
+		'commons-codec:commons-codec:1.10',
 		//
 		'org.apache.logging.log4j:log4j-api:2.1',
 		'org.apache.logging.log4j:log4j-core:2.1',
@@ -63,20 +63,20 @@ dependencies {
 		'org.eclipse.jetty.websocket:websocket-server:9.3.0.M1',
 		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
 
-		'org.hibernate:hibernate-core:4.3.6.Final',
+		'org.hibernate:hibernate-core:4.3.8.Final',
 		'org.eclipse.persistence:javax.persistence:2.1.0',
 		'jstl:jstl:1.2',
 		'org.apache.commons:commons-collections4:4.0',
 		'commons-cli:commons-cli:1.2',
 
-		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
-		'com.fasterxml.jackson.core:jackson-core:2.4.1',
-		'com.fasterxml.jackson.core:jackson-databind:2.4.1',
+		'com.fasterxml.jackson.core:jackson-annotations:2.5.1',
+		'com.fasterxml.jackson.core:jackson-core:2.5.1',
+		'com.fasterxml.jackson.core:jackson-databind:2.5.1',
 	)
 
 	compileRMI (
 		'commons-configuration:commons-configuration:1.10',
-		'org.apache.httpcomponents:httpcore:4.3.3',
+		'org.apache.httpcomponents:httpcore:4.4',
 	)
 
 	runtime (
@@ -84,7 +84,7 @@ dependencies {
 		'com.github.rickyclarkson:jmdns:3.4.2-r353-1',
 		//
 		'commons-lang:commons-lang:2.6',
-		'commons-logging:commons-logging:1.1.3',
+		'commons-logging:commons-logging:1.2',
 		//
 		'org.apache.logging.log4j:log4j-slf4j-impl:2.1',
 		'org.apache.logging.log4j:log4j-jcl:2.1',
@@ -93,7 +93,7 @@ dependencies {
 		'com.lmax:disruptor:3.3.0',
 		//
 		'org.python:jython-standalone:2.7-b3',
-		'org.postgresql:postgresql:9.3-1102-jdbc3',
+		'org.postgresql:postgresql:9.4-1200-jdbc41',
 		'org.fusesource.jansi:jansi:1.11'
 	)
 
@@ -116,7 +116,6 @@ task rmic(dependsOn: compileJava) << {
 	}
 }
 
-//noinspection GroovyAssignabilityCheck
 jar {
 	dependsOn(rmic)
 	archiveName "${baseName}.${extension}"
@@ -132,7 +131,6 @@ jar {
 }
 
 distributions {
-	//noinspection GroovyAssignabilityCheck
 	main {
 		baseName = rootProject.name
 		contents {
