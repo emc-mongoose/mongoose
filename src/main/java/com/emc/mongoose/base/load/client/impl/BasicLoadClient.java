@@ -708,7 +708,9 @@ implements LoadClient<T> {
 	@Override
 	public final void close()
 	throws IOException {
+		LOG.debug(Markers.MSG, "trying to close");
 		if(!remoteLoadMap.isEmpty()) {
+			LOG.debug(Markers.MSG, "do performing close");
 			interrupt();
 			//
 			LOG.debug(Markers.MSG, "log summary metrics");
