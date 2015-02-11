@@ -2,6 +2,7 @@ package com.emc.mongoose.web.mock;
 
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.io.HTTPContentInputStream;
+import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import org.apache.http.ContentTooLongException;
 import org.apache.http.HttpEntity;
@@ -16,6 +17,9 @@ import org.apache.http.nio.util.HeapByteBufferAllocator;
 import org.apache.http.nio.util.SimpleInputBuffer;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.util.Asserts;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,15 +30,15 @@ import java.io.InputStream;
 public class CinderellaBasicAcyncRequestConsumer
 extends BasicAsyncRequestConsumer {
 	//
+	private final static Logger LOG = LogManager.getLogger();
+	//
 	private volatile HttpRequest request;
 	private volatile SimpleInputBuffer buf;
 	private static int MAX_PAGE_SIZE;
-	private final RunTimeConfig runTimeConfig;
 	//
 	public CinderellaBasicAcyncRequestConsumer(final RunTimeConfig runTimeConfig) {
 		super();
 		MAX_PAGE_SIZE = (int) runTimeConfig.getDataPageSize();
-		this.runTimeConfig = runTimeConfig;
 	}
 	//
 	@Override
@@ -57,14 +61,15 @@ extends BasicAsyncRequestConsumer {
 	//
 	@Override
 	protected void onContentReceived(
-		final ContentDecoder decoder, final IOControl ioctrl) throws IOException {
+		final ContentDecoder decoder, final IOControl ioctrl)
+	throws IOException {
 		Asserts.notNull(this.buf, "Content buffer");
 		//this.buf.consumeContent(decoder);
 		try (final InputStream contentStream = HTTPContentInputStream.getInstance(decoder, ioctrl)) {
 			WSRequestConfigBase.playStreamQuetly(contentStream);
 			this.buf.shutdown();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		} catch (final InterruptedException e) {
+			TraceLogger.failure(LOG, Level.ERROR, e, "Buffer interrupted fault");
 		}
 	}
 		//

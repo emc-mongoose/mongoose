@@ -102,14 +102,11 @@ implements Runnable {
 	private final Counter
 		counterAllSucc, counterAllFail,
 		counterGetSucc, counterGetFail,
-		counterPostSucc, counterPostFail,
 		counterPutSucc, counterPutFail,
-		counterDeleteSucc, counterDeleteFail,
-		counterHeadSucc;
-	private final Histogram durAll, durGet, durPost, durPut, durDelete;
+		counterDeleteSucc, counterHeadSucc;
 	private final Meter
-		allBW, getBW, postBW, putBW, deleteBW,
-		allTP, getTP, postTP, putTP, deleteTP;
+		allBW, getBW, putBW,
+		allTP, getTP, putTP;
 	//
 	public Cinderella(final RunTimeConfig runTimeConfig)
 	throws IOException {
@@ -130,8 +127,6 @@ implements Runnable {
 			ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterAllFail = metrics.counter(MetricRegistry.name(Cinderella.class,
 			ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		durAll = metrics.histogram(MetricRegistry.name(Cinderella.class,
-			ALL_METHODS, LoadExecutor.METRIC_NAME_DUR));
 		allTP = metrics.meter(MetricRegistry.name(Cinderella.class,
 			ALL_METHODS, LoadExecutor.METRIC_NAME_TP));
 		allBW = metrics.meter(MetricRegistry.name(Cinderella.class,
@@ -141,30 +136,15 @@ implements Runnable {
 			WSIOTask.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterGetFail = metrics.counter(MetricRegistry.name(Cinderella.class,
 			WSIOTask.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		durGet = metrics.histogram(MetricRegistry.name(Cinderella.class,
-			WSIOTask.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_DUR));
 		getBW = metrics.meter(MetricRegistry.name(Cinderella.class,
 			WSIOTask.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_BW));
 		getTP = metrics.meter(MetricRegistry.name(Cinderella.class,
 			WSIOTask.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_TP));
 		//
-		counterPostSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
-			WSIOTask.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterPostFail = metrics.counter(MetricRegistry.name(Cinderella.class,
-			WSIOTask.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		durPost = metrics.histogram(MetricRegistry.name(Cinderella.class,
-			WSIOTask.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_DUR));
-		postBW = metrics.meter(MetricRegistry.name(Cinderella.class,
-			WSIOTask.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_BW));
-		postTP = metrics.meter(MetricRegistry.name(Cinderella.class,
-			WSIOTask.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_TP));
-		//
 		counterPutSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			WSIOTask.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterPutFail = metrics.counter(MetricRegistry.name(Cinderella.class,
 			WSIOTask.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		durPut = metrics.histogram(MetricRegistry.name(Cinderella.class,
-			WSIOTask.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_DUR));
 		putBW = metrics.meter(MetricRegistry.name(Cinderella.class,
 			WSIOTask.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_BW));
 		putTP = metrics.meter(MetricRegistry.name(Cinderella.class,
@@ -172,14 +152,6 @@ implements Runnable {
 		//
 		counterDeleteSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			WSIOTask.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterDeleteFail = metrics.counter(MetricRegistry.name(Cinderella.class,
-			WSIOTask.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		durDelete = metrics.histogram(MetricRegistry.name(Cinderella.class,
-			WSIOTask.HTTPMethod.DELETE.name(), LoadExecutor.METRIC_NAME_DUR));
-		deleteBW = metrics.meter(MetricRegistry.name(Cinderella.class,
-			WSIOTask.HTTPMethod.DELETE.name(), LoadExecutor.METRIC_NAME_BW));
-		deleteTP = metrics.meter(MetricRegistry.name(Cinderella.class,
-			WSIOTask.HTTPMethod.DELETE.name(), LoadExecutor.METRIC_NAME_TP));
 		//
 		counterHeadSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			WSIOTask.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_SUCC));
@@ -224,28 +196,28 @@ implements Runnable {
 					try {
 						sharedStorage.put(dataObject.getId(),dataObject);
 					} catch(final NullPointerException e) {
-						TraceLogger.failure(LOG, Level.WARN, e, "Fail to put object in map");
+						TraceLogger.failure(LOG, Level.ERROR, e, "Fail to put object in map");
 					} catch(final UnsupportedOperationException e){
-						TraceLogger.failure(LOG, Level.WARN, e, "Put operation is not supported by this map");
+						TraceLogger.failure(LOG, Level.ERROR, e, "Put operation is not supported by this map");
 					} catch(final ClassCastException e){
-						TraceLogger.failure(LOG, Level.WARN, e, "The class of the specified key " +
+						TraceLogger.failure(LOG, Level.ERROR, e, "The class of the specified key " +
 							"or value prevents it from being stored in this map");
 					} catch(final IllegalArgumentException e){
-						TraceLogger.failure(LOG, Level.WARN, e, "Some property of the specified key " +
+						TraceLogger.failure(LOG, Level.ERROR, e, "Some property of the specified key " +
 							"or value prevents it from being stored in this map");
 					}
 				}
 			} catch (final FileNotFoundException e) {
-				TraceLogger.failure(LOG, Level.WARN, e,
+				TraceLogger.failure(LOG, Level.ERROR, e,
 					"File not found.");
 			} catch (final IOException e) {
-				TraceLogger.failure(LOG, Level.WARN, e,
+				TraceLogger.failure(LOG, Level.ERROR, e,
 					"Read line is fault.");
 			} finally {
 				try {
 					reader.close();
 				} catch (final IOException e) {
-					TraceLogger.failure(LOG, Level.WARN, e, "Fault to close reader");
+					TraceLogger.failure(LOG, Level.ERROR, e, "Fault to close reader");
 				}
 			}
 		}
@@ -256,7 +228,7 @@ implements Runnable {
 				LOG.info(Markers.MSG, "Listening the port #{}", nextPort);
 			} catch(final IOReactorException e) {
 				TraceLogger.failure(
-					LOG, Level.WARN, e,
+					LOG, Level.ERROR, e,
 					String.format("Failed to start the head at port #%d", nextPort)
 				);
 			}
@@ -281,25 +253,16 @@ implements Runnable {
 	}
 	//
 	private final static String
-		//MSG_FMT_METRICS = "count=(%d/%d); duration[us]=(%d/%d/%d/%d); " +
 		MSG_FMT_METRICS = "count=(%d/%d); " +
 		"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
 	private void printMetrics() {
-		//final Snapshot allDurSnapshot = durAll.getSnapshot();
 		LOG.info(
 			Markers.PERF_AVG,
 			String.format(
 				Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
 				counterAllSucc.getCount(), counterAllFail.getCount(),
-				//
-				/*
-				(int) (allDurSnapshot.getMean() / LoadExecutor.NANOSEC_SCALEDOWN),
-				(int) (allDurSnapshot.getMin() / LoadExecutor.NANOSEC_SCALEDOWN),
-				(int) (allDurSnapshot.getMedian() / LoadExecutor.NANOSEC_SCALEDOWN),
-				(int) (allDurSnapshot.getMax() / LoadExecutor.NANOSEC_SCALEDOWN),
-				*/
 				//
 				allTP.getMeanRate(),
 				allTP.getOneMinuteRate(),
@@ -390,6 +353,7 @@ implements Runnable {
 				response.setEntity(object);
 				LOG.trace(Markers.MSG, "   Response: OK");
 				counterAllSucc.inc();
+				counterGetSucc.inc();
 				getBW.mark(object.getSize());
 				allBW.mark(object.getSize());
 				getTP.mark();
@@ -450,23 +414,23 @@ implements Runnable {
 				allTP.mark();
 			} catch(final NullPointerException e) {
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.WARN, e, "Fail to put object in map");
+				TraceLogger.failure(LOG, Level.ERROR, e, "Fail to put object in map");
 				counterAllFail.inc();
 				counterPutFail.inc();
 			} catch(final UnsupportedOperationException e){
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.WARN, e, "Put operation is not supported by this map");
+				TraceLogger.failure(LOG, Level.ERROR, e, "Put operation is not supported by this map");
 				counterAllFail.inc();
 				counterPutFail.inc();
 			} catch(final ClassCastException e){
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.WARN, e, "The class of the specified key " +
+				TraceLogger.failure(LOG, Level.ERROR, e, "The class of the specified key " +
 					"or value prevents it from being stored in this map");
 				counterAllFail.inc();
 				counterPutFail.inc();
 			} catch(final IllegalArgumentException e){
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.WARN, e, "Some property of the specified key " +
+				TraceLogger.failure(LOG, Level.ERROR, e, "Some property of the specified key " +
 					"or value prevents it from being stored in this map");
 				counterAllFail.inc();
 				counterPutFail.inc();

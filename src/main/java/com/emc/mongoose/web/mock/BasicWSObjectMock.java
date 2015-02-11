@@ -63,7 +63,7 @@ implements WSObjectMock{
 	}
 	//
 	@Override
-	public void writeTo(final OutputStream out)
+	public final void writeTo(final OutputStream out)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
