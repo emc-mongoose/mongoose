@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -265,7 +266,7 @@ implements DataItem {
 							buff2, doneByteCountSum, pageSize - doneByteCountSum
 						);
 						if(doneByteCount < 0) {
-							break;
+							throw new EOFException("Unexpected end of stream");
 						} else {
 							doneByteCountSum += doneByteCount;
 						}
@@ -294,7 +295,7 @@ implements DataItem {
 							buff2, doneByteCountSum, countTailBytes - doneByteCountSum
 						);
 						if(doneByteCount < 0) {
-							break;
+							throw new EOFException("Unexpected end of stream");
 						} else {
 							doneByteCountSum += doneByteCount;
 						}
