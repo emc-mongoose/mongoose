@@ -465,7 +465,7 @@ implements LoadExecutor<T> {
 	private final AtomicBoolean isClosed = new AtomicBoolean(false);
 	//
 	@Override
-	public synchronized void close()
+	public void close()
 	throws IOException {
 		TraceLogger.trace(
 			LOG, Level.TRACE, Markers.MSG, String.format("invoked close of %s", getName())

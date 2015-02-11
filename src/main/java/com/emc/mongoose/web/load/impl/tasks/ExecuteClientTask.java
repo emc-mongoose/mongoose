@@ -55,16 +55,6 @@ implements Runnable {
 			);
 		} catch(final IllegalStateException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
-		} finally {
-			try {
-				executor.close();
-			} catch(final IOException e) {
-				TraceLogger.failure(
-					LOG, Level.WARN, e, "Failed to close the web storage client"
-				);
-			} finally {
-				LOG.debug(Markers.MSG, "Closed the web storage client");
-			}
 		}
 	}
 }

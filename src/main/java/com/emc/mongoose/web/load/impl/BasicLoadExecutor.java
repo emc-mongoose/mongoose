@@ -158,51 +158,24 @@ implements WSLoadExecutor<T> {
 	public void close()
 	throws IOException {
 		super.close();
+		//
 		LOG.debug(Markers.MSG, "Going to close the web storage client");
-		/*final long timeOutMilliSec = Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec();
-		final ExecutorService closeExecutor = Executors.newFixedThreadPool(
-			2, new WorkerFactory(getName()+"-closer")
-		);
-		closeExecutor.submit(
-			new Runnable() {
-				@Override
-				public final void run() {*/
-					if(ioReactor != null) {
-						try {
-							ioReactor.shutdown(/*timeOutMilliSec*/);
-						} catch(final IOException e) {
-							TraceLogger.failure(
-								LOG, Level.DEBUG, e, "I/O reactor shutdown failure"
-							);
-						}
-					}
-				/*}
+		//
+		if(ioReactor != null) {
+			try {
+				ioReactor.shutdown(/*timeOutMilliSec*/);
+			} catch(final IOException e) {
+				TraceLogger.failure(
+					LOG, Level.DEBUG, e, "I/O reactor shutdown failure"
+				);
 			}
-		);
-		closeExecutor.submit(
-			new Runnable() {
-				@Override
-				public final void run() {
-					try {
-						clientThread.join(timeOutMilliSec);
-					} catch(final InterruptedException e) {
-						ExceptionHandler.failure(LOG, Level.DEBUG, e, "Interruption");
-					} finally {*/
-						if(clientThread != null) {
-							clientThread.interrupt();
-						}
-					/*}
-				}
-			}
-		);
-		closeExecutor.shutdown();
-		try {
-			closeExecutor.awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
-		} catch(final InterruptedException e) {
-			ExceptionHandler.failure(LOG, Level.DEBUG, e, "Interruption");
-		} finally {
-			closeExecutor.shutdownNow();
-		}*/
+		}
+		//
+		connPool.shutdown(0);
+		//
+		if(clientThread != null) {
+			clientThread.interrupt();
+		}
 	}
 	//
 	@Override
