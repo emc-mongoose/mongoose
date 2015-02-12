@@ -464,7 +464,9 @@ implements WSRequestConfig<T> {
 					} catch(final IOException e) {
 						ok = false;
 						if(isClosed()) {
-							TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
+							TraceLogger.failure(
+								LOG, Level.DEBUG, e, "Failed to read the content after closing"
+							);
 						} else {
 							TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
 						}

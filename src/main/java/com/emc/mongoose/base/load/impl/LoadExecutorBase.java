@@ -431,7 +431,7 @@ implements LoadExecutor<T> {
 				if(consumer != null) {
 					consumer.submit(dataItem);
 				}
-			} else {
+			} else if(!isClosed.get()) {
 				counterReqFail.inc();
 			}
 		} catch(final InterruptedException e) {
