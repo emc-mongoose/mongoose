@@ -42,6 +42,7 @@ import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.reactor.ListeningIOReactor;
 import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.ResponseConnControl;
@@ -183,44 +184,6 @@ implements Runnable {
 
 	@Override
 	public void run() {
-		//if there is data src file path
-		final String dataFilePath = runTimeConfig.getDataSrcFPath();
-		FileReader reader = null;
-		if (!dataFilePath.isEmpty()){
-			try {
-				reader = new FileReader(dataFilePath);
-				final BufferedReader bufferReader = new BufferedReader(reader);
-				String s;
-				while((s = bufferReader.readLine()) != null) {
-					WSObjectMock dataObject = new BasicWSObjectMock(s) ;
-					try {
-						sharedStorage.put(dataObject.getId(),dataObject);
-					} catch(final NullPointerException e) {
-						TraceLogger.failure(LOG, Level.ERROR, e, "Fail to put object in map");
-					} catch(final UnsupportedOperationException e){
-						TraceLogger.failure(LOG, Level.ERROR, e, "Put operation is not supported by this map");
-					} catch(final ClassCastException e){
-						TraceLogger.failure(LOG, Level.ERROR, e, "The class of the specified key " +
-							"or value prevents it from being stored in this map");
-					} catch(final IllegalArgumentException e){
-						TraceLogger.failure(LOG, Level.ERROR, e, "Some property of the specified key " +
-							"or value prevents it from being stored in this map");
-					}
-				}
-			} catch (final FileNotFoundException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e,
-					"File not found.");
-			} catch (final IOException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e,
-					"Read line is fault.");
-			} finally {
-				try {
-					reader.close();
-				} catch (final IOException e) {
-					TraceLogger.failure(LOG, Level.ERROR, e, "Fault to close reader");
-				}
-			}
-		}
 		//
 		for(int nextPort = portStart; nextPort < portStart + portCount; nextPort ++){
 			try {
@@ -405,7 +368,8 @@ implements Runnable {
 				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 			}
 			try {
-				sharedStorage.put(dataID,dataObject);
+				LOG.debug(Markers.DATA_LIST,dataObject.toString());
+				sharedStorage.put(dataID, dataObject);
 				counterAllSucc.inc();
 				counterPutSucc.inc();
 				putBW.mark(bytes);
