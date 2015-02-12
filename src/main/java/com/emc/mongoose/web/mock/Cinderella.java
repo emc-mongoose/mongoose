@@ -101,7 +101,7 @@ implements Runnable {
 	throws IOException {
 		this.runTimeConfig = runTimeConfig;
 		metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
-		connFactory = new CinderellaConnectionFactory(ConnectionConfig.DEFAULT, runTimeConfig);
+		connFactory = new FaultingConnectionFactory(ConnectionConfig.DEFAULT, runTimeConfig);
 		//
 		final MetricRegistry metrics = new MetricRegistry();
 		final MBeanServer mBeanServer;
@@ -338,57 +338,39 @@ implements Runnable {
 			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 			final long bytes = entity.getContentLength();
 			//create data object or get it for append or update
-			if(sharedStorage.containsKey(dataID)) {
-				dataObject = sharedStorage.get(dataID);
-			} else {
-				final long offset;
-				if(ringOffsetRadix == 0x40) { // base64
-					offset = ByteBuffer
-						.allocate(Long.SIZE / Byte.SIZE)
-						.put(Base64.decodeBase64(dataID))
-						.getLong(0);
-				} else if(ringOffsetRadix > 1 && ringOffsetRadix <= Character.MAX_RADIX) {
-					offset = Long.valueOf(dataID, ringOffsetRadix);
-				} else {
-					throw new HttpException(
-						String.format(
-							"Unsupported data ring offset radix: %d", ringOffsetRadix
-						)
-					);
-				}
-				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
-			}
 			try {
-				LOG.debug(Markers.DATA_LIST,dataObject.toString());
-				sharedStorage.put(dataID, dataObject);
+				if (sharedStorage.containsKey(dataID)) {
+					dataObject = sharedStorage.get(dataID);
+				} else {
+					final long offset;
+					if (ringOffsetRadix == 0x40) { // base64
+						offset = ByteBuffer
+							.allocate(Long.SIZE / Byte.SIZE)
+							.put(Base64.decodeBase64(dataID))
+							.getLong(0);
+					} else if (ringOffsetRadix > 1 && ringOffsetRadix <= Character.MAX_RADIX) {
+						offset = Long.valueOf(dataID, ringOffsetRadix);
+					} else {
+						throw new HttpException(
+							String.format(
+								"Unsupported data ring offset radix: %d", ringOffsetRadix
+							)
+						);
+					}
+					dataObject = new BasicWSObjectMock(dataID, offset, bytes);
+				}
+				LOG.debug(Markers.DATA_LIST, dataObject.toString());
+				synchronized (sharedStorage) {
+					sharedStorage.put(dataID, dataObject);
+				}
 				counterAllSucc.inc();
 				counterPutSucc.inc();
 				putBW.mark(bytes);
 				allBW.mark(bytes);
 				putTP.mark();
 				allTP.mark();
-			} catch(final NullPointerException e) {
-				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.ERROR, e, "Fail to put object in map");
-				counterAllFail.inc();
-				counterPutFail.inc();
-			} catch(final UnsupportedOperationException e){
-				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.ERROR, e, "Put operation is not supported by this map");
-				counterAllFail.inc();
-				counterPutFail.inc();
-			} catch(final ClassCastException e){
-				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.ERROR, e, "The class of the specified key " +
-					"or value prevents it from being stored in this map");
-				counterAllFail.inc();
-				counterPutFail.inc();
-			} catch(final IllegalArgumentException e){
-				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.ERROR, e, "Some property of the specified key " +
-					"or value prevents it from being stored in this map");
-				counterAllFail.inc();
-				counterPutFail.inc();
+			} catch (final HttpException e){
+				TraceLogger.failure(LOG, Level.ERROR, e, "Method put failure");
 			}
 		}
 		//

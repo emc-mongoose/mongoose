@@ -26,32 +26,33 @@ import java.io.InputStream;
 /**
  * Created by olga on 04.02.15.
  */
-public class CinderellaBasicAcyncRequestConsumer
+public final class CinderellaBasicAcyncRequestConsumer
 extends BasicAsyncRequestConsumer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile HttpRequest request;
 	private volatile SimpleInputBuffer buf;
-	private static int MAX_PAGE_SIZE;
+	private final int maxPageSize;
+	private final static int STANDART_PAGE_SIZE = 4096;
 	//
 	public CinderellaBasicAcyncRequestConsumer(final RunTimeConfig runTimeConfig) {
 		super();
-		MAX_PAGE_SIZE = (int) runTimeConfig.getDataPageSize();
+		maxPageSize = (int) runTimeConfig.getDataPageSize();
 	}
 	//
 	@Override
-	protected void onRequestReceived(final HttpRequest request) throws IOException {
+	protected final void onRequestReceived(final HttpRequest request) throws IOException {
 		this.request = request;
 	}
 	//
 	@Override
-	protected void onEntityEnclosed(
+	protected final void onEntityEnclosed(
 		final HttpEntity entity, final ContentType contentType) throws IOException {
 		long len = entity.getContentLength();
 		//
-		if (len < 0 || len > MAX_PAGE_SIZE) {
-			len = 4096;
+		if (len < 0 || len > maxPageSize) {
+			len = STANDART_PAGE_SIZE;
 		}
 		this.buf = new SimpleInputBuffer((int) len, new HeapByteBufferAllocator());
 		((HttpEntityEnclosingRequest) this.request).setEntity(
@@ -59,7 +60,7 @@ extends BasicAsyncRequestConsumer {
 	}
 	//
 	@Override
-	protected void onContentReceived(
+	protected final void onContentReceived(
 		final ContentDecoder decoder, final IOControl ioctrl)
 	throws IOException {
 		Asserts.notNull(this.buf, "Content buffer");
@@ -73,13 +74,13 @@ extends BasicAsyncRequestConsumer {
 	}
 		//
 	@Override
-	protected void releaseResources() {
+	protected final void releaseResources() {
 		this.request = null;
 		this.buf = null;
 	}
 	//
 	@Override
-	protected HttpRequest buildResult(final HttpContext context) {
+	protected final  HttpRequest buildResult(final HttpContext context) {
 		return this.request;
 	}
 }

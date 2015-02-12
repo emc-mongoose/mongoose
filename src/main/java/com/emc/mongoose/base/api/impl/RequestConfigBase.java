@@ -36,7 +36,7 @@ implements RequestConfig<T> {
 		dataSrc;
 	protected volatile boolean
 		retryFlag, verifyContentFlag, anyDataProducerEnabled, closeFlag = false;
-	protected static volatile RunTimeConfig
+	protected volatile RunTimeConfig
 		runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	protected volatile String
 		/*addr, */scheme/*, uriTemplate*/;

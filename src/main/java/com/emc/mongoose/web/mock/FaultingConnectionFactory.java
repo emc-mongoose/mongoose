@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by olga on 04.02.15.
  */
-public class CinderellaConnectionFactory
+public class FaultingConnectionFactory
 extends DefaultNHttpServerConnectionFactory {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -31,7 +31,7 @@ extends DefaultNHttpServerConnectionFactory {
 	private final int faultSleepMsec;
 	private final int faultPeriod;
 	//
-	public CinderellaConnectionFactory(final ConnectionConfig config, final RunTimeConfig runTimeConfig){
+	public FaultingConnectionFactory(final ConnectionConfig config, final RunTimeConfig runTimeConfig){
 		super(config);
 		this.faultSleepMsec =  runTimeConfig.getInt("storage.mock.fault.sleep.msec");
 		faultPeriod = runTimeConfig.getInt("storage.mock.fault.period");
@@ -43,20 +43,22 @@ extends DefaultNHttpServerConnectionFactory {
 		DefaultNHttpServerConnection connection = super.createConnection(session);
 		if (faultPeriod > 0 && (counter.incrementAndGet() % faultPeriod) == 0 ){
 			LOG.info(Markers.MSG, "Connection ready to fault!");
-			connectionPool.submit(new ConnectionFaultWorker(connection));
+			connectionPool.submit(new ConnectionFaultWorker(connection, faultSleepMsec));
 		}
 		return connection;
 	}
 	///////////////////////////////////////////////////////////////////////////////
 	//ConnectionFaultWorker
 	///////////////////////////////////////////////////////////////////////////////
-	class ConnectionFaultWorker
+	private final static class ConnectionFaultWorker
 	implements Runnable{
 		//
 		private final DefaultNHttpServerConnection connection;
+		private final int faultSleepMsec;
 		//
-		public ConnectionFaultWorker(final DefaultNHttpServerConnection connection){
+		public ConnectionFaultWorker(final DefaultNHttpServerConnection connection, final int faultSleepMsec){
 			this.connection = connection;
+			this.faultSleepMsec = faultSleepMsec;
 		}
 		//
 		@Override
