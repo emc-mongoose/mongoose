@@ -51,6 +51,7 @@ import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.12.14.
  */
@@ -59,6 +60,8 @@ extends ObjectLoadExecutorBase<T>
 implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
+	private final static int SHUTDOWN_GRACE_PERIOD_MILLISEC = 10000;
 	//
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
@@ -106,6 +109,7 @@ implements WSLoadExecutor<T> {
 		ConnectingIOReactor localIOReactor = null;
 		final IOReactorConfig ioReactorConfig = IOReactorConfig
 			.custom()
+			.setShutdownGracePeriod(SHUTDOWN_GRACE_PERIOD_MILLISEC)
 			.setIoThreadCount(threadCount)
 			.setSoKeepAlive(thrLocalConfig.getSocketKeepAliveFlag())
 			.setSoLinger(thrLocalConfig.getSocketLinger())
@@ -169,7 +173,7 @@ implements WSLoadExecutor<T> {
 				public final void run() {*/
 					if(ioReactor != null) {
 						try {
-							ioReactor.shutdown(/*timeOutMilliSec*/);
+							ioReactor.shutdown(SHUTDOWN_GRACE_PERIOD_MILLISEC);
 						} catch(final IOException e) {
 							TraceLogger.failure(
 								LOG, Level.DEBUG, e, "I/O reactor shutdown failure"
@@ -203,6 +207,9 @@ implements WSLoadExecutor<T> {
 		} finally {
 			closeExecutor.shutdownNow();
 		}*/
+		connPool.closeExpired();
+		connPool.closeIdle(SHUTDOWN_GRACE_PERIOD_MILLISEC, TimeUnit.MILLISECONDS);
+		connPool.shutdown(SHUTDOWN_GRACE_PERIOD_MILLISEC);
 	}
 	//
 	@Override
