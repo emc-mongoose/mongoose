@@ -52,6 +52,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.management.MBeanServer;
+import javax.xml.ws.http.HTTPException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
@@ -255,7 +256,7 @@ implements Runnable {
 		public final void handle(
 			final HttpRequest request, final HttpAsyncExchange httpexchange,
 			final HttpContext context
-		) throws HttpException, IOException {
+		){
 			final HttpResponse response = httpexchange.getResponse();
 			//HttpCoreContext coreContext = HttpCoreContext.adapt(context);
 			String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
@@ -297,8 +298,7 @@ implements Runnable {
 			httpexchange.submitResponse(new BasicAsyncResponseProducer(response));
 		}
 		//
-		private void doGet(final HttpResponse response, final String dataID)
-			throws HttpException, IOException {
+		private void doGet(final HttpResponse response, final String dataID){
 			LOG.trace(Markers.MSG, " Request  method Get ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			if(sharedStorage.containsKey(dataID)) {
@@ -331,14 +331,14 @@ implements Runnable {
 		 */
 		private void doPut(
 			final HttpRequest request, final HttpResponse response, final String dataID
-		) throws HttpException, IOException {
-			LOG.trace(Markers.MSG, " Request  method Put ");
-			response.setStatusCode(HttpStatus.SC_OK);
-			WSObjectMock dataObject = null;
-			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-			final long bytes = entity.getContentLength();
-			//create data object or get it for append or update
+		){
 			try {
+				LOG.trace(Markers.MSG, " Request  method Put ");
+				response.setStatusCode(HttpStatus.SC_OK);
+				WSObjectMock dataObject = null;
+				final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+				final long bytes = entity.getContentLength();
+				//create data object or get it for append or update
 				if (sharedStorage.containsKey(dataID)) {
 					dataObject = sharedStorage.get(dataID);
 				} else {
@@ -370,20 +370,21 @@ implements Runnable {
 				putTP.mark();
 				allTP.mark();
 			} catch (final HttpException e){
-				TraceLogger.failure(LOG, Level.ERROR, e, "Method put failure");
+				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				TraceLogger.failure(LOG, Level.ERROR, e, "Put method failure");
+				counterAllFail.inc();
+				counterPutFail.inc();
 			}
 		}
 		//
-		private void doHead(final HttpResponse response)
-			throws HttpException, IOException {
+		private void doHead(final HttpResponse response){
 			LOG.trace(Markers.MSG, " Request  method Head ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			counterAllSucc.inc();
 			counterHeadSucc.inc();
 		}
 		//
-		private void doDelete(final HttpResponse response)
-			throws HttpException, IOException {
+		private void doDelete(final HttpResponse response){
 			LOG.trace(Markers.MSG, " Request  method Delete ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			counterAllSucc.inc();

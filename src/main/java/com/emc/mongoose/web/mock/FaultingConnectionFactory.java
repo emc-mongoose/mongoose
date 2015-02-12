@@ -1,5 +1,5 @@
 package com.emc.mongoose.web.mock;
-
+//
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
@@ -11,12 +11,12 @@ import org.apache.http.nio.reactor.IOSession;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
-
+//
 /**
  * Created by olga on 04.02.15.
  */
@@ -35,9 +35,8 @@ extends DefaultNHttpServerConnectionFactory {
 		super(config);
 		this.faultSleepMsec =  runTimeConfig.getInt("storage.mock.fault.sleep.msec");
 		faultPeriod = runTimeConfig.getInt("storage.mock.fault.period");
-
 	}
-
+	//
 	@Override
 	public final DefaultNHttpServerConnection createConnection(final IOSession session) {
 		DefaultNHttpServerConnection connection = super.createConnection(session);
