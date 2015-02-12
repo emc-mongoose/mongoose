@@ -4,7 +4,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.io.HTTPContentInputStream;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
-import org.apache.http.ContentTooLongException;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpRequest;

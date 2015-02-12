@@ -1,15 +1,12 @@
 package com.emc.mongoose.web.mock;
 
-import com.codahale.metrics.Counter;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.http.config.ConnectionConfig;
-import org.apache.http.impl.ConnSupport;
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
 import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
-import org.apache.http.nio.NHttpConnectionFactory;
 import org.apache.http.nio.reactor.IOSession;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

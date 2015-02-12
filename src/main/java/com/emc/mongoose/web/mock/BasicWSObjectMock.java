@@ -1,20 +1,14 @@
 package com.emc.mongoose.web.mock;
 //
-import com.emc.mongoose.base.data.impl.DataRanges;
 import com.emc.mongoose.base.data.impl.UniformData;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Hex;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+//import com.emc.mongoose.util.logging.Markers;
+//import org.apache.logging.log4j.LogManager;
+//import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.BitSet;
 import java.util.List;
 //
 /**
@@ -23,7 +17,7 @@ import java.util.List;
 public class BasicWSObjectMock
 extends BasicWSObject
 implements WSObjectMock{
-	private final static Logger LOG = LogManager.getLogger();
+	//private final static Logger LOG = LogManager.getLogger();
 	//////////////////////////////////
 	public BasicWSObjectMock() {
 		super();
@@ -74,8 +68,6 @@ implements WSObjectMock{
 	@Override
 	public final void writeTo(final OutputStream out)
 	throws IOException {
-		LOG.info(Markers.MSG,"WriteTo!!!");
-		System.out.println("WriteTo!!!");
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
