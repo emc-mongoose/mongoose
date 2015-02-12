@@ -249,7 +249,7 @@ implements Runnable {
 		public HttpAsyncRequestConsumer<HttpRequest> processRequest(
 			final HttpRequest request, final HttpContext context
 		) throws HttpException, IOException {
-			return new CinderellaBasicAcyncRequestConsumer(runTimeConfig);
+			return new CinderellaBasicAsyncRequestConsumer(runTimeConfig);
 		}
 		//
 		@Override
@@ -295,7 +295,8 @@ implements Runnable {
 					doDelete(response);
 					break;
 			}
-			httpexchange.submitResponse(new BasicAsyncResponseProducer(response));
+			//httpexchange.submitResponse(new BasicAsyncResponseProducer(response));
+			httpexchange.submitResponse(new CinderellaResponseProducer(response));
 		}
 		//
 		private void doGet(final HttpResponse response, final String dataID){
