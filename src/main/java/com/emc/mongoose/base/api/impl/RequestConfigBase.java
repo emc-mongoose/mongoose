@@ -35,7 +35,8 @@ implements RequestConfig<T> {
 	protected DataSource<T>
 		dataSrc;
 	protected volatile boolean
-		retryFlag, verifyContentFlag, anyDataProducerEnabled, closeFlag = true;
+		retryFlag, verifyContentFlag, anyDataProducerEnabled;
+	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 	protected volatile RunTimeConfig
 		runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	protected volatile String
@@ -288,12 +289,14 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final synchronized void close() {
-		closeFlag = true;
+	public final void close() {
+		if(closeFlag.compareAndSet(false, true)) {
+			LOG.trace(Markers.MSG, "Request config instance #{} marked as closed", hashCode());
+		}
 	}
 	//
 	@Override
-	public final synchronized boolean isClosed() {
-		return closeFlag;
+	public final boolean isClosed() {
+		return closeFlag.get();
 	}
 }
