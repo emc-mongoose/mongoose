@@ -472,13 +472,13 @@ implements WSRequestConfig<T> {
 						}
 					}
 				} else { // read, verification is disabled - consume quietly
-					playStreamQuetly(contentStream);
+					playStreamQuietly(contentStream);
 				}
 			} else { // append | create | delete | update - consume quietly
-				playStreamQuetly(contentStream);
+				playStreamQuietly(contentStream);
 			}
 		} else { // poison or special request (e.g. bucket-related)? - consume quietly
-			playStreamQuetly(contentStream);
+			playStreamQuietly(contentStream);
 		}
 		//
 		try {
@@ -490,7 +490,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@SuppressWarnings("StatementWithEmptyBody")
-	public static void playStreamQuetly(final InputStream contentStream) {
+	public static void playStreamQuietly(final InputStream contentStream) {
 		final byte buff[] = new byte[(int) Main.RUN_TIME_CONFIG.get().getDataPageSize()];
 		try {
 			while(contentStream.read(buff) != -1);

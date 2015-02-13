@@ -32,8 +32,8 @@ extends BasicAsyncRequestConsumer {
 	//
 	private volatile HttpRequest request;
 	private volatile SimpleInputBuffer buf;
+	//
 	private final int maxPageSize;
-	private final static int STANDART_PAGE_SIZE = 4096;
 	//
 	public CinderellaBasicAsyncRequestConsumer(final RunTimeConfig runTimeConfig) {
 		super();
@@ -52,7 +52,7 @@ extends BasicAsyncRequestConsumer {
 		long len = entity.getContentLength();
 		//
 		if (len < 0 || len > maxPageSize) {
-			len = STANDART_PAGE_SIZE;
+			len = maxPageSize;
 		}
 		this.buf = new SimpleInputBuffer((int) len, new HeapByteBufferAllocator());
 		((HttpEntityEnclosingRequest) this.request).setEntity(
