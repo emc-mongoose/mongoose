@@ -775,7 +775,6 @@ function charts(chartsArray) {
 			}
 		},
 		chain: function(runId, loadType) {
-			alert("chain");
 			var AVG = "avg";
 			var MIN_1 = "1min";
 			var MIN_5 = "5min";
@@ -1004,9 +1003,9 @@ function charts(chartsArray) {
 								}
 							]
 						};
-						d.charts.forEach(function(c, i) {
-							c.values.push({x: (c.values.length - 1) * 10, y: parseFloat(value[i])})
-						});
+						/*d.charts.forEach(function(c, i) {
+							c.values.push({x: c.values.length * 10, y: parseFloat(value[i])})
+						});*/
 						data.push(d);
 
 						var levels = svg.selectAll(".level")
