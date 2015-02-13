@@ -39,8 +39,8 @@ import java.util.regex.Pattern;
  A shared runtime configuration.
  */
 public final class RunTimeConfig
-	extends BaseConfiguration
-	implements Externalizable {
+extends BaseConfiguration
+implements Externalizable {
 	//
 	private Set<String> mongooseKeys;
 	//
