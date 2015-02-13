@@ -176,7 +176,7 @@ public final class Main {
 		}
 		//
 		((LifeCycle) LogManager.getContext()).stop();
-		System.exit(0); // ????!!
+		//System.exit(0); // ????!!
 	}
 	//
 	public static Logger initLogging(final String runMode) {
@@ -186,9 +186,7 @@ public final class Main {
 		System.setProperty(KEY_DIR_ROOT, DIR_ROOT);
 		//set "run.timestamp" property
 		System.setProperty(
-			KEY_RUN_TIMESTAMP, FMT_DT.format(
-					Calendar.getInstance(TimeZone.getTimeZone("GMT+0")).getTime()
-			)
+			KEY_RUN_TIMESTAMP, FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
 		);
 		// set "run.id" property with timestamp value if not set before
 		String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
@@ -217,6 +215,12 @@ public final class Main {
 		System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
 		// go
 		Configurator.initialize(null, logConfPath.toUri().toString());
+		final Logger rootLogger = LogManager.getRootLogger();
+		if(rootLogger == null) {
+			System.err.println("FATAL: failed to configure the logging");
+		} else {
+			rootLogger.debug(Markers.MSG, "Used configuration from {}", logConfPath);
+		}
 		return LogManager.getRootLogger();
 	}
 	//

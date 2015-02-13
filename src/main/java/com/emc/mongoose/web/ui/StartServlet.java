@@ -162,7 +162,7 @@ public final class StartServlet extends CommonServlet {
 				try {
 					new Cinderella(runTimeConfig).run();
 				} catch (final IOException e) {
-					TraceLogger.failure(LOG, Level.FATAL, e, "Failed");
+					TraceLogger.failure(LOG, Level.FATAL, e, "Failed run Cinderella");
 				}
 			}
 

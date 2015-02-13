@@ -52,6 +52,7 @@ import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.12.14.
  */
@@ -60,6 +61,8 @@ extends ObjectLoadExecutorBase<T>
 implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
+	private final static int SHUTDOWN_GRACE_PERIOD_MILLISEC = 1000;
 	//
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
@@ -107,6 +110,7 @@ implements WSLoadExecutor<T> {
 		ConnectingIOReactor localIOReactor = null;
 		final IOReactorConfig ioReactorConfig = IOReactorConfig
 			.custom()
+			.setShutdownGracePeriod(thrLocalConfig.getSocketTimeOut())
 			.setIoThreadCount(threadCount)
 			.setSoKeepAlive(thrLocalConfig.getSocketKeepAliveFlag())
 			.setSoLinger(thrLocalConfig.getSocketLinger())
@@ -159,52 +163,40 @@ implements WSLoadExecutor<T> {
 	@Override
 	public void close()
 	throws IOException {
-		super.close();
-		LOG.debug(Markers.MSG, "Going to close the web storage client");
-		/*final long timeOutMilliSec = Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec();
-		final ExecutorService closeExecutor = Executors.newFixedThreadPool(
-			2, new WorkerFactory(getName()+"-closer")
-		);
-		closeExecutor.submit(
-			new Runnable() {
-				@Override
-				public final void run() {*/
-					if(ioReactor != null) {
-						try {
-							ioReactor.shutdown(/*timeOutMilliSec*/);
-						} catch(final IOException e) {
-							TraceLogger.failure(
-								LOG, Level.DEBUG, e, "I/O reactor shutdown failure"
-							);
-						}
-					}
-				/*}
-			}
-		);
-		closeExecutor.submit(
-			new Runnable() {
-				@Override
-				public final void run() {
-					try {
-						clientThread.join(timeOutMilliSec);
-					} catch(final InterruptedException e) {
-						ExceptionHandler.failure(LOG, Level.DEBUG, e, "Interruption");
-					} finally {*/
-						if(clientThread != null) {
-							clientThread.interrupt();
-						}
-					/*}
-				}
-			}
-		);
-		closeExecutor.shutdown();
 		try {
-			closeExecutor.awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
-		} catch(final InterruptedException e) {
-			ExceptionHandler.failure(LOG, Level.DEBUG, e, "Interruption");
-		} finally {
-			closeExecutor.shutdownNow();
-		}*/
+			super.close();
+		} catch(final IOException e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Closing failure");
+		}
+		//
+		LOG.debug(Markers.MSG, "Going to close the web storage client");
+		//
+		connPool.closeExpired();
+		LOG.debug(Markers.MSG, "Closed expired connections");
+		connPool.closeIdle(SHUTDOWN_GRACE_PERIOD_MILLISEC, TimeUnit.MILLISECONDS);
+		LOG.debug(Markers.MSG, "Closed idle connections");
+		try {
+			connPool.shutdown(SHUTDOWN_GRACE_PERIOD_MILLISEC);
+			LOG.debug(Markers.MSG, "Connection pool have been shut down");
+		} catch(final IOException e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Connection pool shutdown failure");
+		}
+		//
+		if(ioReactor != null) {
+			try {
+				ioReactor.shutdown(SHUTDOWN_GRACE_PERIOD_MILLISEC);
+				LOG.debug(Markers.MSG, "I/O reactor have been shut down");
+			} catch(final IOException e) {
+				TraceLogger.failure(
+					LOG, Level.WARN, e, "I/O reactor shutdown failure"
+				);
+			}
+		}
+		//
+		if(clientThread != null) {
+			clientThread.interrupt();
+		}
+		LOG.debug(Markers.MSG, "Closed web storage client");
 	}
 	//
 	@Override

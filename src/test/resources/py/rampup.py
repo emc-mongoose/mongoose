@@ -16,7 +16,7 @@ LOCAL_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get()
 listSizes = LOCAL_RUN_TIME_CONFIG.getStringArray("scenario.rampup.sizes")
 listThreadCounts = LOCAL_RUN_TIME_CONFIG.getStringArray("scenario.rampup.thread.counts")
 #
-LOG.info(Markers.MSG, "Overriding chain properties by rampup scenario defaults")
+LOG.debug(Markers.MSG, "Setting the metric update period to zero for chain scenario")
 LOCAL_RUN_TIME_CONFIG.set("run.metrics.period.sec", 0)
 #
 if __name__=="__builtin__":

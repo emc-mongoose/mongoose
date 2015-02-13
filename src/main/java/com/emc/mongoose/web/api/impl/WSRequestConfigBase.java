@@ -464,7 +464,9 @@ implements WSRequestConfig<T> {
 					} catch(final IOException e) {
 						ok = false;
 						if(isClosed()) {
-							TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
+							TraceLogger.failure(
+								LOG, Level.DEBUG, e, "Failed to read the content after closing"
+							);
 						} else {
 							TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
 						}
@@ -487,8 +489,9 @@ implements WSRequestConfig<T> {
 		return ok;
 	}
 	//
-	private void playStreamQuetly(final InputStream contentStream) {
-		final byte buff[] = new byte[(int) runTimeConfig.getDataPageSize()];
+	@SuppressWarnings("StatementWithEmptyBody")
+	public static void playStreamQuetly(final InputStream contentStream) {
+		final byte buff[] = new byte[(int) Main.RUN_TIME_CONFIG.get().getDataPageSize()];
 		try {
 			while(contentStream.read(buff) != -1);
 		} catch(final IOException e) {

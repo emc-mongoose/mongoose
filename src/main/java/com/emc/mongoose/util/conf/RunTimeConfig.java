@@ -39,8 +39,8 @@ import java.util.regex.Pattern;
  A shared runtime configuration.
  */
 public final class RunTimeConfig
-extends BaseConfiguration
-implements Externalizable {
+	extends BaseConfiguration
+	implements Externalizable {
 	//
 	private Set<String> mongooseKeys;
 	//
@@ -344,10 +344,6 @@ implements Externalizable {
 	public final String getRunMode() {
 		return getString(KEY_RUN_MODE);
 	}
-	//
-	public final String getRunTimestamp() {
-		return getString(Main.KEY_RUN_TIMESTAMP);
-	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)
@@ -369,7 +365,9 @@ implements Externalizable {
 				);
 			} else if(String.class.isInstance(nextPropValue)) {
 				propsMap.put(nextPropName, String.class.cast(nextPropValue));
-			} else if(nextPropValue==null) {
+			} else if(Number.class.isInstance(nextPropValue)) {
+				propsMap.put(nextPropName, Number.class.cast(nextPropValue).toString());
+			} else if(nextPropValue == null) {
 				LOG.warn(Markers.ERR, "Property \"{}\" is null");
 			} else {
 				LOG.error(

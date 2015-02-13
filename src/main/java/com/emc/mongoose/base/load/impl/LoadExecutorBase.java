@@ -432,7 +432,7 @@ implements LoadExecutor<T> {
 				if(consumer != null) {
 					consumer.submit(dataItem);
 				}
-			} else {
+			} else if(!isClosed.get()) {
 				counterReqFail.inc();
 			}
 		} catch(final InterruptedException e) {
@@ -466,11 +466,10 @@ implements LoadExecutor<T> {
 	private final AtomicBoolean isClosed = new AtomicBoolean(false);
 	//
 	@Override
-	public synchronized void close()
+	public void close()
 	throws IOException {
 		TraceLogger.trace(
-			LOG, Level.TRACE, Markers.MSG,
-			String.format("invoked close of %s", getName())
+			LOG, Level.TRACE, Markers.MSG, String.format("invoked close of %s", getName())
 		);
 		if(isClosed.compareAndSet(false, true)) {
 			final long tsStartNanoSec = tsStart.get();
