@@ -58,8 +58,6 @@ public final class Main {
 		KEY_DIR_ROOT = "dir.root",
 		KEY_POLICY = "java.security.policy",
 		//
-		KEY_RUN_TIMESTAMP = "run.timestamp",
-		//
 		RUN_MODE_STANDALONE = "standalone",
 		RUN_MODE_CLIENT = "client",
 		RUN_MODE_COMPAT_CLIENT = "controller",
@@ -186,7 +184,7 @@ public final class Main {
 		System.setProperty(KEY_DIR_ROOT, DIR_ROOT);
 		//set "run.timestamp" property
 		System.setProperty(
-			KEY_RUN_TIMESTAMP, FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
+			RunTimeConfig.KEY_RUN_TIMESTAMP, FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
 		);
 		// set "run.id" property with timestamp value if not set before
 		String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);

@@ -162,7 +162,7 @@ public final class HibernateAppender
 	{
 		final ModeEntity modeEntity = loadModeEntity(event.getContextMap().get(RunTimeConfig.KEY_RUN_MODE));
 		final RunEntity runEntity = loadRunEntity(event.getContextMap().get(RunTimeConfig.KEY_RUN_ID),
-			modeEntity,getTimestamp(event.getContextMap().get(Main.KEY_RUN_TIMESTAMP))
+			modeEntity,getTimestamp(event.getContextMap().get(RunTimeConfig.KEY_RUN_TIMESTAMP))
 		);
 		final LevelEntity levelEntity = loadLevelEntity(event.getLevel().toString());
 		final MessageClassEntity messageClassEntity = loadClassOfMessage(event.getLoggerName());
@@ -186,7 +186,7 @@ public final class HibernateAppender
 		loadDataObjectEntity(dataObjectEntity);
 		final StatusEntity statusEntity = getStatusEntity(Integer.valueOf(message[3], 0x10));
 		final RunEntity runEntity = getRunEntity(getTimestamp(
-			event.getContextMap().get(Main.KEY_RUN_TIMESTAMP)));
+			event.getContextMap().get(RunTimeConfig.KEY_RUN_TIMESTAMP)));
 		final LoadTypeEntity loadTypeEntity = loadLoadTypeEntity(
 			event.getContextMap().get(DataObjectWorkerFactory.KEY_LOAD_TYPE));
 		final ApiEntity apiEntity = loadApiEntity(

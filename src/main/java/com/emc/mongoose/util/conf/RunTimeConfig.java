@@ -63,6 +63,7 @@ implements Externalizable {
 		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
 		KEY_RUN_TIME = "run.time",
 		KEY_RUN_VERSION = "run.version",
+		KEY_RUN_TIMESTAMP = "run.timestamp",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
 		KEY_STORAGE_API = "storage.api";
@@ -343,6 +344,10 @@ implements Externalizable {
 	//
 	public final String getRunMode() {
 		return getString(KEY_RUN_MODE);
+	}
+	//
+	public final String getRunTimestamp() {
+		return getString(KEY_RUN_TIMESTAMP);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

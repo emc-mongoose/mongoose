@@ -65,7 +65,7 @@ extends BasicAsyncRequestConsumer {
 	{
 		//this.buf.consumeContent(decoder);
 		try (final InputStream contentStream = HTTPContentInputStream.getInstance(decoder, ioctrl)) {
-			WSRequestConfigBase.playStreamQuietly(contentStream);
+			WSRequestConfigBase.playStreamQuetly(contentStream);
 			this.buf.shutdown();
 		} catch (final InterruptedException e) {
 			TraceLogger.failure(LOG, Level.ERROR, e, "Buffer interrupted fault");
