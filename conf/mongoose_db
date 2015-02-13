@@ -285,6 +285,7 @@ CREATE TABLE trace
   run bigint NOT NULL,
   status integer NOT NULL,
   tsreqstart bigint NOT NULL,
+  latency bigint NOT NULL,
   reqdur bigint NOT NULL,
   CONSTRAINT id_trace PRIMARY KEY (dataobject_id, dataobject_size, connection, load, run),
   CONSTRAINT connection FOREIGN KEY (connection, load, run)

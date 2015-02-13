@@ -198,7 +198,7 @@ public final class HibernateAppender
 		final ConnectionEntity connectionEntity = loadConnectionEntity(
 			event.getContextMap().get(DataObjectWorkerFactory.KEY_THREAD_NUM), loadEntity, nodeEntity);
 		loadTraceEntity(dataObjectEntity, connectionEntity, statusEntity,
-			Long.valueOf(message[5]), Long.valueOf(message[6]));
+			Long.valueOf(message[5]), Long.valueOf(message[6]), Long.valueOf(message[7]));
 	}
 	//parse String to Date
 	private Date getTimestamp(final String stringTimestamp){
@@ -501,9 +501,9 @@ public final class HibernateAppender
 	//
 	private TraceEntity loadTraceEntity(final DataObjectEntity dataObjectEntity,
 			final ConnectionEntity connectionEntity, final StatusEntity statusEntity,
-			final long reqStart, final long reqDur)
+			final long reqStart, final long latency, final long reqDur)
 	{
-		TraceEntity traceEntity = new TraceEntity(dataObjectEntity, connectionEntity, statusEntity, reqStart, reqDur);
+		TraceEntity traceEntity = new TraceEntity(dataObjectEntity, connectionEntity, statusEntity, reqStart, latency, reqDur);
 		Session session = SESSION_FACTORY.openSession();
 		try {
 			session.beginTransaction();

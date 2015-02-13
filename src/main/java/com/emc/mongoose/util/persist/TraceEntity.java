@@ -39,6 +39,8 @@ public final class TraceEntity
 	private StatusEntity status;
 	@Column(name = "tsReqStart")
 	private long tsReqStart;
+	@Column(name = "latency")
+	private long latency;
 	@Column(name = "reqDur")
 	private long reqDur;
 	//
@@ -46,11 +48,12 @@ public final class TraceEntity
 	}
 	public TraceEntity(final DataObjectEntity dataobject, final ConnectionEntity connection,
 					   final StatusEntity status, final long tsReqStart,
-					   final long reqDur){
+					   final long latency, final long reqDur){
 		this.dataobject = dataobject;
 		this.connection = connection;
 		this.status  = status;
 		this.tsReqStart = tsReqStart;
+		this.latency = latency;
 		this.reqDur = reqDur;
 	}
 	//
@@ -77,6 +80,12 @@ public final class TraceEntity
 	}
 	public final void setTsReqStart(final long tsReqStart) {
 		this.tsReqStart = tsReqStart;
+	}
+	public long getLatency() {
+		return latency;
+	}
+	public void setLatency(final long latency) {
+		this.latency = latency;
 	}
 	public final long getReqDur() {
 		return reqDur;
