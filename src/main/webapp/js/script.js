@@ -911,21 +911,22 @@ function charts(chartsArray) {
 						.tickSize(-width, 0, 0)
 						.tickFormat(""));
 
-				var currentColor;
-
 				var levels = svg.selectAll(".level")
 					.data(data).enter()
 					.append("g")
+					.attr("stroke", function(d) { return color(d.loadType); })
 					.attr("class", "level")
 					//.attr("id", function(d) { return path.replace("#", "") + d.loadType; })
 					.selectAll("path")
 					.data(function(d) {
-						currentColor = color(d.loadType); return d.charts;
+				        return d.charts;
 					}).enter()
 					.append("path")
 					.attr("class", "line")
 					.attr("d", function(c) { return line(c.values); })
-					.attr("stroke", currentColor);
+					.attr("stroke-dasharray", function(c, i) {
+						return i*15 + "," + i*15;
+					});
 				//  Axis X Label
 				svg.append("text")
 					.attr("x", width - 2)
@@ -1011,16 +1012,19 @@ function charts(chartsArray) {
 						var levels = svg.selectAll(".level")
 							.data(data).enter()
 							.append("g")
+							.attr("stroke", function(d) { return color(d.loadType); })
 							.attr("class", "level")
 							//.attr("id", function(d) { return path.replace("#", "") + d.loadType; })
 							.selectAll("path")
 							.data(function(d) {
-								currentColor = color(d.loadType); return d.charts;
+								return d.charts;
 							}).enter()
 							.append("path")
 							.attr("class", "line")
 							.attr("d", function(c) { return line(c.values); })
-							.attr("stroke", currentColor);
+							.attr("stroke-dasharray", function(c, i) {
+								return i*15 + "," + i*15;
+							});
 					}
 					//
 					x.domain([
@@ -1054,16 +1058,20 @@ function charts(chartsArray) {
 						.attr("d", function(d) { return line(d.values); })
 						.attr("stroke", function(d) { return color(d.name); })
 						.attr("fill", "none");*/
-					var currentColor;
 
 					var paths = svg.selectAll(".level")
 						.data(data)
 						.selectAll("path")
 						.data(function(d) {
-							currentColor = color(d.loadType); return d.charts;
+							return d.charts;
 						})
 						.attr("d", function(c) { return line(c.values); })
-						//.attr("stroke", currentColor)
+						.attr("stroke-dasharray", function(c, i) {
+							if (i === 3) {
+								return "20,10,5,5,5,10";
+							}
+							return i*15 + "," + i*15;
+						})
 						.attr("fill", "none");
 				};
 			}
