@@ -39,6 +39,11 @@
 								"onMatch": "NEUTRAL",
 								"onMismatch": "NEUTRAL"
 							}, {
+								"type": "MarkerFilter",
+								"marker": "perfTrace",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
 								"type": "ThresholdFilter",
 								"level": "INFO",
 								"onMatch": "ACCEPT",
