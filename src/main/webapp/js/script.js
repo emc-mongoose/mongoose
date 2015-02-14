@@ -387,7 +387,8 @@ function configureWebSocketConnection(location, countOfRecords) {
 						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
 						break;
 					case MARKERS.PERF_AVG:
-						var isFound = false;
+						appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
+						/*var isFound = false;
 						chartsArray.forEach(function(d) {
 							if (d["run.id"] === runId) {
 								isFound = true;
@@ -407,8 +408,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 								case RUN_SCENARIO_NAME.rampup:
 									break;
 							}
-						}
-						appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
+						}*/
 						break;
 				}
 			};
@@ -480,8 +480,8 @@ function loadPropertiesFromFile(file) {
 //
 //  Charts
 function charts(chartsArray) {
-	var margin = {top: 40, right: 120, bottom: 60, left: 60},
-		width = 960 - margin.left - margin.right,
+	var margin = {top: 40, right: 200, bottom: 60, left: 60},
+		width = 1070 - margin.left - margin.right,
 		height = 500 - margin.top - margin.bottom;
 
 	var SCENARIO = {
@@ -799,11 +799,6 @@ function charts(chartsArray) {
 						loadType: loadType,
 						charts: [
 							{
-								name: AVG,
-								values: [
-									{x: 0, y: 0}
-								]
-							}, {
 								name: MIN_1,
 								values: [
 									{x: 0, y: 0}
@@ -815,6 +810,11 @@ function charts(chartsArray) {
 								]
 							}, {
 								name: MIN_15,
+								values: [
+									{x: 0, y: 0}
+								]
+							}, {
+								name: AVG,
 								values: [
 									{x: 0, y: 0}
 								]
@@ -911,14 +911,16 @@ function charts(chartsArray) {
 						.tickSize(-width, 0, 0)
 						.tickFormat(""));
 
+				var loadType;
+
 				var levels = svg.selectAll(".level")
 					.data(data).enter()
 					.append("g")
 					.attr("stroke", function(d) { return color(d.loadType); })
 					.attr("class", "level")
-					//.attr("id", function(d) { return path.replace("#", "") + d.loadType; })
 					.selectAll("path")
 					.data(function(d) {
+						loadType = d.loadType;
 				        return d.charts;
 					}).enter()
 					.append("path")
@@ -926,7 +928,32 @@ function charts(chartsArray) {
 					.attr("d", function(c) { return line(c.values); })
 					.attr("stroke-dasharray", function(c, i) {
 						return i*15 + "," + i*15;
+					})
+					.attr("id", function(c) {
+						return path.replace("#", "") + loadType + c.name;
+					})
+					.attr("visibility", function(c) { if (c.name === MIN_1) { return "visible"; } else { return "hidden"; }});
+
+				var legend = svg.selectAll(".legend")
+					.data(data).enter()
+					.append("g")
+					.attr("class", "legend")
+					.attr("transform", function(d, i) {
+						return "translate(0," + i * 20 + ")";
 					});
+
+				legend.append("rect")
+					.attr("x", width + 18)
+					.attr("width", 18)
+					.attr("height", 18)
+					.style("fill", function(d) { return color(d.loadType); });
+
+				legend.append("text")
+					.attr("x", width + 135)
+					.attr("y", 9)
+					.attr("dy", ".35em")
+					.style("text-anchor", "end")
+					.text(function(d) { return d.loadType; });
 				//  Axis X Label
 				svg.append("text")
 					.attr("x", width - 2)
@@ -982,11 +1009,6 @@ function charts(chartsArray) {
 							loadType: loadType,
 							charts: [
 								{
-									name: AVG,
-									values: [
-										{x: 0, y: 0}
-									]
-								}, {
 									name: MIN_1,
 									values: [
 										{x: 0, y: 0}
@@ -998,6 +1020,11 @@ function charts(chartsArray) {
 									]
 								}, {
 									name: MIN_15,
+									values: [
+										{x: 0, y: 0}
+									]
+								}, {
+									name: AVG,
 									values: [
 										{x: 0, y: 0}
 									]
@@ -1017,6 +1044,7 @@ function charts(chartsArray) {
 							//.attr("id", function(d) { return path.replace("#", "") + d.loadType; })
 							.selectAll("path")
 							.data(function(d) {
+								loadType = d.loadType;
 								return d.charts;
 							}).enter()
 							.append("path")
@@ -1024,7 +1052,9 @@ function charts(chartsArray) {
 							.attr("d", function(c) { return line(c.values); })
 							.attr("stroke-dasharray", function(c, i) {
 								return i*15 + "," + i*15;
-							});
+							})
+							.attr("id", function(c) { return path.replace("#", "") + loadType + c.name; })
+							.attr("visibility", function(c) { if (c.name === MIN_1) { return "visible"; } else { return "hidden"; }});
 					}
 					//
 					x.domain([
@@ -1073,6 +1103,28 @@ function charts(chartsArray) {
 							return i*15 + "," + i*15;
 						})
 						.attr("fill", "none");
+
+					//  Test
+					var legend = svg.selectAll(".legend")
+						.data(data).enter()
+						.append("g")
+						.attr("class", "legend")
+						.attr("transform", function(d, i) {
+							return "translate(0," + i * 20 + ")";
+						});
+
+					legend.append("rect")
+						.attr("x", width + 18)
+						.attr("width", 18)
+						.attr("height", 18)
+						.style("fill", function(d) { return color(d.loadType); });
+
+					legend.append("text")
+						.attr("x", width + 135)
+						.attr("y", 9)
+						.attr("dy", ".35em")
+						.style("text-anchor", "end")
+						.text(function(d) { return d.loadType; });
 				};
 			}
 		},
