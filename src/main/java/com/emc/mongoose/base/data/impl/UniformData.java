@@ -13,6 +13,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayInputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InterruptedIOException;
@@ -246,7 +247,7 @@ implements DataItem {
 		}
 	}
 	// checks that data read from input equals the specified range
-	protected final boolean compareWith(
+	protected final boolean isContentEqualTo(
 		final InputStream in, final long rangeOffset, final long rangeLength
 	) throws IOException {
 		//
@@ -270,7 +271,7 @@ implements DataItem {
 							buff2, doneByteCountSum, pageSize - doneByteCountSum
 						);
 						if(doneByteCount < 0) {
-							break;
+							throw new EOFException("Unexpected end of data");
 						} else {
 							doneByteCountSum += doneByteCount;
 						}
@@ -301,7 +302,7 @@ implements DataItem {
 							buff2, doneByteCountSum, countTailBytes - doneByteCountSum
 						);
 						if(doneByteCount < 0) {
-							break;
+							throw new EOFException("Unexpected end of data");
 						} else {
 							doneByteCountSum += doneByteCount;
 						}

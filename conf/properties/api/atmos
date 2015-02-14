@@ -2,4 +2,4 @@ port:		9022
 # should be overriden with -Datmos.subtenant=<VALUE> argument
 # CLI to generate:
 # .../tools/cli/python # BOURNE_IPADDR=<DATA_NODE_ADDR> ./atmossubtenant create <NS> <PROJECT> <COS> --uid <UID> --secret <SECRET>
-subtenant:	8f86df3f778b4879b80f8c826909a735
+subtenant:	6cf96388299748e1acfd47b71ab001c8

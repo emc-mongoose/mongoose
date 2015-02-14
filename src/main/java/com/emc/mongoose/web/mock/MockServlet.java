@@ -1,4 +1,4 @@
-package com.emc.mongoose.web.storagemock;
+package com.emc.mongoose.web.mock;
 //
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
@@ -8,13 +8,13 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.api.WSIOTask;
-import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 //
 import org.apache.commons.codec.binary.Base64;
 //
@@ -48,6 +48,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by olga on 30.09.14.
  */
+@Deprecated
 public final class MockServlet
 extends HttpServlet
 implements Runnable {
@@ -338,7 +339,7 @@ implements Runnable {
 				offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
 			} else {
 				try {
-					offset = Long.valueOf(dataID, WSRequestConfigBase.RADIX); // versions since v0.6
+					offset = Long.valueOf(dataID, DataObject.ID_RADIX); // versions since v0.6
 				} catch (final NumberFormatException e) {
 					offset = Long.valueOf(dataID, 0x10); // versions prior to 0.4
 				}

@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 06.06.14.
  The most common implementation of the shared request configuration.
@@ -34,7 +35,7 @@ implements RequestConfig<T> {
 	protected DataSource<T>
 		dataSrc;
 	protected volatile boolean
-		retryFlag, verifyContentFlag, anyDataProducerEnabled, closeFlag = false;
+		retryFlag, verifyContentFlag, anyDataProducerEnabled, closeFlag = true;
 	protected volatile RunTimeConfig
 		runTimeConfig = Main.RUN_TIME_CONFIG.get();
 	protected volatile String
@@ -46,10 +47,16 @@ implements RequestConfig<T> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
+		api = runTimeConfig.getStorageApi();
+		secret = runTimeConfig.getAuthSecret();
+		userName = runTimeConfig.getAuthId();
+		loadType = AsyncIOTask.Type.CREATE;
 		dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
 		retryFlag = runTimeConfig.getRunRequestRetries();
 		verifyContentFlag = runTimeConfig.getReadVerifyContent();
 		anyDataProducerEnabled = true;
+		scheme = runTimeConfig.getStorageProto();
+		port = runTimeConfig.getApiPort(api);
 	}
 	//
 	protected RequestConfigBase(final RequestConfig<T> reqConf2Clone) {
@@ -246,7 +253,6 @@ implements RequestConfig<T> {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		out.writeObject(getAPI());
-		//out.writeObject(getAddr());
 		out.writeObject(getLoadType());
 		out.writeInt(getPort());
 		out.writeObject(getUserName());
@@ -260,8 +266,6 @@ implements RequestConfig<T> {
 	throws IOException, ClassNotFoundException {
 		setAPI(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got API {}", api);
-		//setAddr(String.class.cast(in.readObject()));
-		//LOG.trace(Markers.MSG, "Got address {}", addr);
 		setLoadType(AsyncIOTask.Type.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got load type {}", loadType);
 		setPort(in.readInt());

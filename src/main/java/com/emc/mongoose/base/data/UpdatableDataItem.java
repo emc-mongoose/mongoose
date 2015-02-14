@@ -28,7 +28,7 @@ extends DataItem {
 	InputStream getPendingUpdatesContent()
 	throws IOException;
 	//
-	boolean compareWith(final InputStream in)
+	boolean isContentEqualTo(final InputStream in)
 	throws IOException;
 	//
 	public long getRangeSize(final int i);

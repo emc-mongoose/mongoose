@@ -2,8 +2,10 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
+import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
@@ -106,15 +108,20 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		setBucket(new Bucket<T>(this, String.class.cast(in.readObject())));
-		LOG.trace(Markers.MSG, "Got bucket {}", bucket);
+		final Object t = in.readObject();
+		if(t == null) {
+			bucket = null;
+		} else {
+			setBucket(new Bucket<>(this, String.class.cast(t)));
+			LOG.trace(Markers.MSG, "Got bucket {}", bucket);
+		}
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(bucket.toString());
+		out.writeObject(bucket == null ? null : bucket.toString());
 	}
 	//
 	@Override
@@ -134,17 +141,10 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	protected final void applyAuthHeader(final MutableHTTPRequest httpRequest) {
-		if(!httpRequest.containsHeader(HttpHeaders.CONTENT_MD5)) {
-			httpRequest.addHeader(HttpHeaders.CONTENT_MD5, "");
-		}
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
 			String.format(fmtAuthValue, userName, getSignature(getCanonical(httpRequest)))
 		);
-		final Header lastContentMD5Header = httpRequest.getLastHeader(HttpHeaders.CONTENT_MD5);
-		if(lastContentMD5Header != null && lastContentMD5Header.getValue().length() == 0) {
-			httpRequest.removeHeader(lastContentMD5Header);
-		}
 	}
 	//
 	private static String HEADERS4CANONICAL[] = {
@@ -155,32 +155,37 @@ extends WSRequestConfigBase<T> {
 	public final String getCanonical(final MutableHTTPRequest httpRequest) {
 		final StringBuffer buffer = new StringBuffer(httpRequest.getRequestLine().getMethod());
 		//
-		for(final String headerName: HEADERS4CANONICAL) {
-			// support for multiple non-unique header keys
-			for(final Header header: httpRequest.getHeaders(headerName)) {
-				buffer.append('\n').append(header.getValue());
-			}
+		for(final String headerName : HEADERS4CANONICAL) {
 			if(sharedHeadersMap.containsKey(headerName)) {
 				buffer.append('\n').append(sharedHeadersMap.get(headerName));
+			} else if(httpRequest.containsHeader(headerName)) {
+				for(final Header header: httpRequest.getHeaders(headerName)) {
+					buffer.append('\n').append(header.getValue());
+				}
+			} else {
+				buffer.append('\n');
 			}
 		}
 		//
-		for(final String emcHeaderName: HEADERS_EMC) {
-			for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
-				buffer
-					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(emcHeader.getValue());
-			}
+		for(final String emcHeaderName : HEADERS_EMC) {
 			if(sharedHeadersMap.containsKey(emcHeaderName)) {
 				buffer
 					.append('\n').append(emcHeaderName.toLowerCase())
 					.append(':').append(sharedHeadersMap.get(emcHeaderName));
+			} else {
+				for(final Header emcHeader : httpRequest.getHeaders(emcHeaderName)) {
+					buffer
+						.append('\n').append(emcHeaderName.toLowerCase())
+						.append(':').append(emcHeader.getValue());
+				}
 			}
 		}
 		//
 		buffer.append('\n').append(httpRequest.getUriPath());
 		//
-		LOG.trace(Markers.MSG, "Canonical request representation:\n{}", buffer);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffer);
+		}
 		//
 		return buffer.toString();
 	}

@@ -165,11 +165,6 @@
 								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "instancePoolStats",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
 								"type": "ThresholdFilter",
 								"level": "INFO",
 								"onMatch": "NEUTRAL",
@@ -262,22 +257,10 @@
 						"onMismatch": "DENY"
 					}
 				}, {
-					"name": "instancePoolDumpFile",
-					"type": "File",
-					"append": "False",
-					"bufferedIO": "true",
-					"fileName": "${path.log}instance.pool.stats",
-					"PatternLayout": { "pattern": "%m%n" },
-					"MarkerFilter": {
-						"marker": "instancePoolStats",
-						"onMatch": "ACCEPT",
-						"onMismatch": "DENY"
-					}
-				}, {
 					"name": "async",
 					"type": "Async",
 					"blocking": "false",
-					"bufferSize": "1048576",
+					"bufferSize": "131072",
 					"AppenderRef": [
 						{ "ref": "stdout" },
 						{ "ref": "msgFile" },
@@ -288,8 +271,7 @@
 						{ "ref": "perfSumFile" },
 						{ "ref": "perfTraceFile" },
 						{ "ref": "hibernate" },
-						{ "ref": "WebUI" },
-						{ "ref": "instancePoolDumpFile" }
+						{ "ref": "WebUI" }
 					]
 				}
 			]
@@ -502,6 +484,13 @@
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.web.load.impl.tasks",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+					  "ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.web.load.client.impl",

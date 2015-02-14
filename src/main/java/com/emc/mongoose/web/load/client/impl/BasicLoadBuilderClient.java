@@ -56,7 +56,7 @@ implements WSLoadBuilderClient<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	protected WSLoadBuilderSvc<T, U> resolve(final String serverAddr)
 	throws IOException {
-		WSLoadBuilderSvc<T, U> rlb = null;
+		WSLoadBuilderSvc<T, U> rlb;
 		final Service remoteSvc = ServiceUtils.getRemoteSvc(
 			"//" + serverAddr + '/' + getClass().getPackage().getName().replace("client", "server")
 		);
@@ -91,12 +91,12 @@ implements WSLoadBuilderClient<T, U> {
 	public final U build()
 	throws RemoteException {
 		//
-		WSLoadClient newLoadClient = null;
+		WSLoadClient newLoadClient;
 		//
 		final Map<String, LoadSvc<T>> remoteLoadMap = new ConcurrentHashMap<>();
 		final Map<String, JMXConnector> remoteJMXConnMap = new ConcurrentHashMap<>();
 		//
-		LoadBuilderSvc<T, U> nextBuilder = null;
+		LoadBuilderSvc<T, U> nextBuilder;
 		LoadSvc<T> nextLoad = null;
 		//
 		String svcJMXAddr;

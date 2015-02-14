@@ -5,6 +5,7 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.AppendableDataItem;
 import com.emc.mongoose.base.data.UpdatableDataItem;
 import com.emc.mongoose.object.data.DataObject;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.collections.InstancePool;
 //
@@ -79,23 +80,25 @@ implements AsyncIOTask<T> {
 	// END pool related things
 	@Override
 	public final void complete() {
+		final String dataItemId = dataItem.getId();
 		if(
-			respTimeDone > respTimeStart &&
-			respTimeStart > reqTimeDone &&
-			reqTimeDone > reqTimeStart
+			respTimeDone < respTimeStart ||
+			respTimeStart < reqTimeDone ||
+			reqTimeDone < reqTimeStart
 		) {
-			LOG.info(
-				Markers.PERF_TRACE, String.format(
-					FMT_PERF_TRACE, nodeAddr, dataItem.getId(), transferSize, status.code,
-					reqTimeStart, reqTimeDone - reqTimeStart,
-					respTimeStart - reqTimeDone, respTimeDone - respTimeStart
+			LOG.debug(
+				Markers.ERR, String.format(
+					FMT_PERF_TRACE_INVALID, nodeAddr, dataItemId == null ? Main.EMPTY : dataItemId,
+					transferSize, status.code,
+					reqTimeStart, reqTimeDone, respTimeStart, respTimeDone
 				)
 			);
 		} else {
-			LOG.debug(
-				Markers.ERR, String.format(
-					FMT_PERF_TRACE_INVALID, nodeAddr, dataItem.getId(), transferSize, status.code,
-					reqTimeStart, reqTimeDone, respTimeStart, respTimeDone
+			LOG.info(
+				Markers.PERF_TRACE, String.format(
+					FMT_PERF_TRACE, nodeAddr, dataItemId == null ? Main.EMPTY : dataItemId,
+					transferSize, status.code,
+					reqTimeStart, respTimeStart - reqTimeDone, respTimeDone - reqTimeStart
 				)
 			);
 		}

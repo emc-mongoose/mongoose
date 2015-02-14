@@ -3,8 +3,10 @@ package com.emc.mongoose.util.conf;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
+//
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+//
 import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
@@ -46,23 +48,23 @@ implements Externalizable {
 	//
 	public final static String
 		LIST_SEP = ",",
-	//
-	KEY_DATA_COUNT = "data.count",
+		//
+		KEY_DATA_COUNT = "data.count",
 		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_SIZE_BIAS = "data.size.bias",
 		KEY_DATA_RING_SEED = "data.ring.seed",
 		KEY_DATA_RING_SIZE = "data.ring.size",
-	//
-	KEY_LOAD_THREADS = "load.threads",
+		//
+		KEY_LOAD_THREADS = "load.threads",
 		KEY_LOAD_TIME = "load.step.time",
-	//
-	KEY_RUN_ID = "run.id",
+		//
+		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
 		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
 		KEY_RUN_TIME = "run.time",
 		KEY_RUN_VERSION = "run.version",
-	//
-	KEY_STORAGE_ADDRS = "storage.addrs",
+		//
+		KEY_STORAGE_ADDRS = "storage.addrs",
 		KEY_STORAGE_API = "storage.api";
 	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
@@ -134,7 +136,11 @@ implements Externalizable {
 		return null;
 	}
 	//
-	public final synchronized void put(final List<String> dirs, final String fileName, final List<DefaultMapEntry<String, Object>> props) {
+	@SuppressWarnings("unchecked")
+	public final synchronized void put(
+		final List<String> dirs, final String fileName,
+		final List<DefaultMapEntry<String, Object>> props
+	) {
 		Map<String, Object> node = properties;
 		if (dirs != null) {
 			for (final String nextDir : dirs) {
@@ -147,7 +153,7 @@ implements Externalizable {
 		node.put(fileName, props);
 	}
 	//
-	public final synchronized void set(final String key, final String value) {
+	public final synchronized void set(final String key, final Object value) {
 		setProperty(key, value);
 		//System.setProperty(key, value);
 	}
@@ -295,6 +301,10 @@ implements Externalizable {
 	//
 	public final boolean getSocketTCPNoDelayFlag() {
 		return getBoolean("storage.socket.tcp.nodelay");
+	}
+	//
+	public final int getSocketLinger() {
+		return getInt("storage.socket.linger");
 	}
 	//
 	public final String[] getRemoteServers() {
@@ -446,9 +456,12 @@ implements Externalizable {
 	@Override
 	public synchronized RunTimeConfig clone() {
 		final RunTimeConfig runTimeConfig = RunTimeConfig.class.cast(super.clone());
-		runTimeConfig.set(
-			KEY_RUN_ID, Main.FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
-		);
+		if(runTimeConfig != null) {
+			runTimeConfig.set(
+				KEY_RUN_ID,
+				Main.FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
+			);
+		}
 		return runTimeConfig;
 	}
 	//

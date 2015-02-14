@@ -15,11 +15,12 @@ import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
 //
+import com.emc.mongoose.web.load.impl.reqproc.SharedHeaders;
+import com.emc.mongoose.web.load.impl.reqproc.TargetHost;
+import com.emc.mongoose.web.load.impl.tasks.ExecuteClientTask;
 import org.apache.http.Header;
-import org.apache.http.HttpException;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
@@ -34,12 +35,11 @@ import org.apache.http.nio.protocol.HttpAsyncRequester;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.protocol.HttpContext;
+import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestTargetHost;
 import org.apache.http.protocol.RequestUserAgent;
 //
 import org.apache.logging.log4j.Level;
@@ -47,7 +47,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.io.InterruptedIOException;
+import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -65,70 +65,6 @@ implements WSLoadExecutor<T> {
 	private final BasicNIOConnPool connPool;
 	private final Thread clientThread;
 	//
-	private final static class ExecuteClientTask<T extends WSObject>
-	implements Runnable {
-		//
-		private final WSLoadExecutor<T> executor;
-		private final IOEventDispatch ioEventDispatch;
-		private final ConnectingIOReactor ioReactor;
-		//
-		protected ExecuteClientTask(
-			final WSLoadExecutor<T> executor,
-			final IOEventDispatch ioEventDispatch, final ConnectingIOReactor ioReactor
-		) {
-			this.executor = executor;
-			this.ioEventDispatch = ioEventDispatch;
-			this.ioReactor = ioReactor;
-		}
-		//
-		@Override
-		public final void run() {
-			LOG.debug(Markers.MSG, "Running the web storage client");
-			try {
-				ioReactor.execute(ioEventDispatch);
-			} catch(final InterruptedIOException e) {
-				LOG.debug(Markers.MSG, "Interrupted");
-			} catch(final IOException e) {
-				TraceLogger.failure(
-					LOG, Level.ERROR, e, "Failed to execute the web storage client"
-				);
-			} catch(final IllegalStateException e) {
-				TraceLogger.failure(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
-			} finally {
-				try {
-					executor.close();
-				} catch(final IOException e) {
-					TraceLogger.failure(
-						LOG, Level.WARN, e, "Failed to close the web storage client"
-					);
-				} finally {
-					LOG.debug(Markers.MSG, "Closed the web storage client");
-				}
-			}
-		}
-	}
-	//
-	private final static class ReqHeadersInterceptor
-	implements HttpRequestInterceptor {
-		//
-		private final List<Header> sharedHeaders;
-		//
-		protected ReqHeadersInterceptor(final List<Header> sharedHeaders) {
-			this.sharedHeaders = sharedHeaders;
-		}
-		//
-		@Override
-		public final void process(
-			final HttpRequest request, final HttpContext context
-		) throws HttpException, IOException {
-			for(final Header nextHeader: sharedHeaders) {
-				if(request.getFirstHeader(nextHeader.getName()) == null) {
-					request.addHeader(nextHeader);
-				}
-			}
-		}
-	}
-	//
 	public BasicLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int threadsPerNode, final String listFile, final long maxCount,
@@ -145,16 +81,17 @@ implements WSLoadExecutor<T> {
 		//
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
 			.create()
-			.add(new ReqHeadersInterceptor(sharedHeaders))
-			.add(new RequestTargetHost())
+			.add(new SharedHeaders(sharedHeaders))
+			.add(new TargetHost())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
 			//.add(new RequestExpectContinue(true))
 			.add(new RequestContent(true))
 			.build();
 		client = new HttpAsyncRequester(httpProcessor);
+		//
 		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
-		//IOII
+		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
@@ -167,13 +104,14 @@ implements WSLoadExecutor<T> {
 		);
 		//
 		ConnectingIOReactor localIOReactor = null;
-		BasicNIOConnPool localConnPool = null;
 		final IOReactorConfig ioReactorConfig = IOReactorConfig
 			.custom()
 			.setIoThreadCount(threadCount)
 			.setSoKeepAlive(thrLocalConfig.getSocketKeepAliveFlag())
-			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
+			.setSoLinger(thrLocalConfig.getSocketLinger())
 			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
+			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
+			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
 			.setRcvBufSize((int) thrLocalConfig.getDataPageSize())
 			.setSndBufSize((int) thrLocalConfig.getDataPageSize())
 			.build();
@@ -182,27 +120,38 @@ implements WSLoadExecutor<T> {
 			localIOReactor = new DefaultConnectingIOReactor(
 				ioReactorConfig, new WorkerFactory(getName() + "-worker")
 			);
-			//
-			localConnPool = new BasicNIOConnPool(localIOReactor, connConfig);
-			localConnPool.setDefaultMaxPerRoute(threadCount);
-			localConnPool.setMaxTotal(threadCount);
 		} catch(final IOReactorException e) {
 			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
 		} finally {
 			ioReactor = localIOReactor;
-			connPool = localConnPool;
 		}
 		//
-		clientThread = new Thread(
-			new ExecuteClientTask<>(this, ioEventDispatch, ioReactor),
-			getName() + "-asyncWebClient"
-		);
+		if(ioReactor != null) {
+			connPool = new BasicNIOConnPool(ioReactor, connConfig);
+			connPool.setDefaultMaxPerRoute(threadCount);
+			connPool.setMaxTotal(threadCount);
+		} else {
+			connPool = null;
+		}
+		//
+		if(ioReactor == null) {
+			clientThread = null;
+		} else {
+			clientThread = new Thread(
+				new ExecuteClientTask<>(this, ioEventDispatch, ioReactor),
+				getName() + "-asyncWebClient"
+			);
+		}
 	}
 	//
 	@Override
 	public synchronized void start() {
-		clientThread.start();
-		super.start();
+		if(clientThread == null) {
+			LOG.debug(Markers.ERR, "Not starting web load client due to initialization failures");
+		} else {
+			clientThread.start();
+			super.start();
+		}
 	}
 	//
 	@Override
@@ -218,10 +167,14 @@ implements WSLoadExecutor<T> {
 			new Runnable() {
 				@Override
 				public final void run() {*/
-					try {
-						ioReactor.shutdown(/*timeOutMilliSec*/);
-					} catch(final IOException e) {
-						TraceLogger.failure(LOG, Level.DEBUG, e, "I/O reactor shutdown failure");
+					if(ioReactor != null) {
+						try {
+							ioReactor.shutdown(/*timeOutMilliSec*/);
+						} catch(final IOException e) {
+							TraceLogger.failure(
+								LOG, Level.DEBUG, e, "I/O reactor shutdown failure"
+							);
+						}
 					}
 				/*}
 			}
@@ -235,7 +188,9 @@ implements WSLoadExecutor<T> {
 					} catch(final InterruptedException e) {
 						ExceptionHandler.failure(LOG, Level.DEBUG, e, "Interruption");
 					} finally {*/
-						clientThread.interrupt();
+						if(clientThread != null) {
+							clientThread.interrupt();
+						}
 					/*}
 				}
 			}
@@ -251,36 +206,79 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> ioTask) {
+	public final Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> ioTask)
+	throws RemoteException {
+		if(connPool == null) {
+			throw new RemoteException(
+				"Unable to submit the I/O task due to client initialization failure"
+			);
+		}
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-		Future<AsyncIOTask.Status> futureResult = null;
+		Future<WSIOTask.Status> futureResult;
 		try {
-			futureResult = client.execute(wsTask, wsTask, connPool);
+			futureResult = client.execute(
+				wsTask, wsTask, connPool, wsTask.getHttpContext()
+			);
 		} catch(final IllegalStateException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit the HTTP request");
+			throw new RemoteException("I/O task submit failure", e);
 		}
 		return futureResult;
 	}
 	//
 	@Override
-	public final HttpResponse execute(
-		final HttpHost tgtHost, final HttpRequest request
-	) {
+	public final HttpResponse execute(final HttpRequest request) {
+		//
 		HttpResponse response = null;
-		try {
-			response = client.execute(
-				new BasicAsyncRequestProducer(tgtHost, request),
-				new BasicAsyncResponseConsumer(), connPool
-			).get();
-		} catch(final InterruptedException e) {
-			if(!isTerminating() && !isTerminated()) {
-				LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
+		//
+		final HttpCoreContext ctx = new HttpCoreContext();
+		final String nodeAddr = storageNodeAddrs[0];
+		HttpHost tgtHost = null;
+		if(nodeAddr != null) {
+			if(nodeAddr.contains(":")) {
+				final String t[] = nodeAddr.split(":");
+				try {
+					tgtHost = new HttpHost(
+						t[0], Integer.parseInt(t[1]), runTimeConfig.getStorageProto()
+					);
+				} catch(final Exception e) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e, "Failed to determine the request target host"
+					);
+				}
+			} else {
+				tgtHost = new HttpHost(
+					nodeAddr, runTimeConfig.getApiPort(runTimeConfig.getStorageApi()),
+					runTimeConfig.getStorageProto()
+				);
 			}
-		} catch(final ExecutionException e) {
-			if(!isTerminating() && !isTerminated()) {
-				TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+		} else {
+			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");
+		}
+		//
+		if(tgtHost != null) {
+			ctx.setTargetHost(tgtHost);
+			//
+			try {
+				response = client.execute(
+					new BasicAsyncRequestProducer(tgtHost, request),
+					new BasicAsyncResponseConsumer(), connPool, ctx
+				).get();
+			} catch(final InterruptedException e) {
+				if(!isTerminating() && !isTerminated()) {
+					LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
+				}
+			} catch(final ExecutionException e) {
+				if(!isTerminating() && !isTerminated()) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e,
+						String.format(
+							"HTTP request \"%s\" execution failure @ \"%s\"", request, tgtHost
+						)
+					);
+				}
 			}
 		}
+		//
 		return response;
 	}
 	//

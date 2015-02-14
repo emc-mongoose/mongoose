@@ -4,6 +4,7 @@ import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.impl.RequestConfigBase;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
+import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
@@ -23,6 +24,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.nio.IOControl;
 //
+import org.apache.http.protocol.HttpDateGenerator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,8 +40,6 @@ import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +98,6 @@ implements WSRequestConfig<T> {
 	protected WSRequestConfigBase(final WSRequestConfig<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		//
 		signMethod = runTimeConfig.getHttpSignMethod();
 		mac = Mac.getInstance(signMethod);
 		final String
@@ -106,6 +105,7 @@ implements WSRequestConfig<T> {
 			runVersion = runTimeConfig.getRunVersion(),
 			contentType = runTimeConfig.getHttpContentType();
 		userAgent = runName + '/' + runVersion;
+		//
 		try {
 			sharedHeadersMap.put(HttpHeaders.USER_AGENT, userAgent);
 			sharedHeadersMap.put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
@@ -216,9 +216,8 @@ implements WSRequestConfig<T> {
 		super.setSecret(secret);
 		//
 		SecretKeySpec keySpec;
-		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
 		try {
-			keySpec = new SecretKeySpec(secret.getBytes(DEFAULT_ENC), signMethod);
+			keySpec = new SecretKeySpec(secret.getBytes(Main.DEFAULT_ENC), signMethod);
 			mac.init(keySpec);
 		} catch(UnsupportedEncodingException e) {
 			LOG.fatal(Markers.ERR, "Configuration error", e);
@@ -305,7 +304,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse httpResponse) {
-		dataItem.setId(Long.toString(dataItem.getOffset(), RADIX));
+		dataItem.setId(Long.toString(dataItem.getOffset(), DataObject.ID_RADIX));
 	}
 	//
 	@Override
@@ -415,17 +414,23 @@ implements WSRequestConfig<T> {
 			String.format(MSG_TMPL_RANGE_BYTES_APPEND, dataItem.getSize())
 		);
 	}
-	//
+	/*
 	protected final static DateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(
 		"EEE, dd MMM yyyy HH:mm:ss zzz", Main.LOCALE_DEFAULT
 	) {
 		{ setTimeZone(Main.TZ_UTC); }
-	};
+	};*/
+	//
+	private final static HttpDateGenerator DATE_GENERATOR = new HttpDateGenerator();
 	//
 	protected void applyDateHeader(final MutableHTTPRequest httpRequest) {
-		httpRequest.setHeader(
-			HttpHeaders.DATE, FMT_DATE_RFC1123.format(Main.CALENDAR_DEFAULT.getTime())
-		);
+		httpRequest.setHeader(HttpHeaders.DATE, DATE_GENERATOR.getCurrentDate());
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "Apply date header \"{}\" to the request: \"{}\"",
+				httpRequest.getLastHeader(HttpHeaders.DATE), httpRequest
+			);
+		}
 	}
 	//
 	protected abstract void applyAuthHeader(final MutableHTTPRequest httpRequest);
@@ -438,10 +443,7 @@ implements WSRequestConfig<T> {
 	@Override
 	public synchronized String getSignature(final String canonicalForm) {
 		mac.reset();
-		final byte signature[] = mac.doFinal(canonicalForm.getBytes());
-		final String signature64 = signature == null ? null : Base64.encodeBase64String(signature);
-		LOG.trace(Markers.MSG, "Calculated signature: \"{}\"", signature64);
-		return signature64;
+		return Base64.encodeBase64String(mac.doFinal(canonicalForm.getBytes()));
 	}
 	//
 	@Override
@@ -452,28 +454,45 @@ implements WSRequestConfig<T> {
 	@Override
 	public final boolean consumeContent(
 		final InputStream contentStream, final IOControl ioCtl, T dataItem
-	) throws IOException {
+	) {
 		boolean ok = true;
 		if(dataItem != null) {
 			if(loadType == AsyncIOTask.Type.READ) { // read
 				if(verifyContentFlag) { // read and do verify
-					ok = dataItem.compareWith(contentStream);
-				} else { // read, verification is disabled - consume quetly
-					consumeContentQuetly(contentStream, ioCtl);
+					try {
+						ok = dataItem.isContentEqualTo(contentStream);
+					} catch(final IOException e) {
+						ok = false;
+						if(isClosed()) {
+							TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
+						} else {
+							TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
+						}
+					}
+				} else { // read, verification is disabled - consume quietly
+					playStreamQuetly(contentStream);
 				}
-			} else { // append | create | delete | update - consume quetly
-				consumeContentQuetly(contentStream, ioCtl);
+			} else { // append | create | delete | update - consume quietly
+				playStreamQuetly(contentStream);
 			}
-		} else { // poison or special request (e.g. bucket-related)? - consume quetly
-			consumeContentQuetly(contentStream, ioCtl);
+		} else { // poison or special request (e.g. bucket-related)? - consume quietly
+			playStreamQuetly(contentStream);
+		}
+		//
+		try {
+			ioCtl.shutdown();
+		} catch(final IOException e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Input channel closing failure");
 		}
 		return ok;
 	}
 	//
-	@SuppressWarnings("StatementWithEmptyBody")
-	private void consumeContentQuetly(final InputStream contentStream, final IOControl ioCtl)
-	throws IOException {
+	private void playStreamQuetly(final InputStream contentStream) {
 		final byte buff[] = new byte[(int) runTimeConfig.getDataPageSize()];
-		while(contentStream.read(buff) != -1);
+		try {
+			while(contentStream.read(buff) != -1);
+		} catch(final IOException e) {
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
+		}
 	}
 }

@@ -42,9 +42,8 @@ try:
 	FLAG_USE_ITEMS_BUFFER = LOCAL_RUN_TIME_CONFIG.getBoolean("scenario.chain.itemsbuffer")
 except NoSuchElementException:
 	LOG.error(Markers.ERR, "No items buffer flag specified, try arg -Dscenario.chain.itemsbuffer=<VALUE> to override")
-LOG.info(
-	Markers.MSG, "Will use internal items buffer" if FLAG_USE_ITEMS_BUFFER else "Will use any specific intermediate consumer/producer"
-)
+if FLAG_USE_ITEMS_BUFFER:
+	LOG.info(Markers.MSG, "Going to use persistent internal items buffer")
 #
 def build(flagSimultaneous=True, flagItemsBuffer=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPerNode=0):
 	#
@@ -92,7 +91,6 @@ def build(flagSimultaneous=True, flagItemsBuffer=True, dataItemSizeMin=0, dataIt
 			LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)
 		except Throwable as e:
 			TraceLogger.failure(LOG, Level.FATAL, e, "Unexpected failure")
-			e.printStackTrace()
 	return chain
 	#
 def execute(chain=(), flagSimultaneous=True):
@@ -159,6 +157,6 @@ if __name__=="__builtin__":
 	try:
 		execute(chain, FLAG_SIMULTANEOUS)
 	except Throwable as e:
-		e.printStackTrace()
+		TraceLogger.failure(LOG, Level.WARN, e, "Chain execution failure")
 	#
 	LOG.info(Markers.MSG, "Scenario end")

@@ -2,6 +2,7 @@ package com.emc.mongoose.web.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
@@ -27,6 +28,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Calendar;
 import java.util.Date;
 /**
  Created by kurila on 02.10.14.
@@ -48,7 +50,7 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
-			final Date dt = Main.CALENDAR_DEFAULT.getTime();
+			final Date dt = Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime();
 			this.name = "mongoose-" + Main.FMT_DT.format(dt);
 		} else {
 			this.name = name;
@@ -94,12 +96,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
-		return wsClient.execute(
-			new HttpHost(
-				Main.RUN_TIME_CONFIG.get().getStorageAddrs()[0],
-				reqConf.getPort(), reqConf.getScheme()
-			), httpReq
-		);
+		//
+		return wsClient.execute(httpReq);
 	}
 	//
 	@Override

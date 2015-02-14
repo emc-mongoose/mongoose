@@ -5,6 +5,7 @@ import com.emc.mongoose.base.data.DataItem;
 import java.io.Closeable;
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 09.05.14.
@@ -16,7 +17,7 @@ public interface Consumer<T extends DataItem>
 extends Closeable {
 	//
 	void submit(final T data)
-	throws RemoteException, InterruptedException;
+	throws RemoteException, InterruptedException, RejectedExecutionException;
 	//
 	void shutdown()
 	throws RemoteException;
