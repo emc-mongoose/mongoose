@@ -388,7 +388,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 						break;
 					case MARKERS.PERF_AVG:
 						appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
-						/*var isFound = false;
+						var isFound = false;
 						chartsArray.forEach(function(d) {
 							if (d["run.id"] === runId) {
 								isFound = true;
@@ -408,7 +408,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 								case RUN_SCENARIO_NAME.rampup:
 									break;
 							}
-						}*/
+						}
 						break;
 				}
 			};
