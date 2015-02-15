@@ -3,6 +3,9 @@ package com.emc.mongoose.web.mock;
 import com.emc.mongoose.base.data.impl.UniformData;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
+//import com.emc.mongoose.util.logging.Markers;
+//import org.apache.logging.log4j.LogManager;
+//import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.OutputStream;
@@ -14,9 +17,14 @@ import java.util.List;
 public class BasicWSObjectMock
 extends BasicWSObject
 implements WSObjectMock{
+	//private final static Logger LOG = LogManager.getLogger();
 	//////////////////////////////////
 	public BasicWSObjectMock() {
 		super();
+	}
+	//
+	public BasicWSObjectMock(final String metaInfo) {
+		super(metaInfo);
 	}
 	//
 	public BasicWSObjectMock(final String id, final Long offset, final long size) {
@@ -58,12 +66,12 @@ implements WSObjectMock{
 	}
 	//
 	@Override
-	public void writeTo(final OutputStream out)
+	public final void writeTo(final OutputStream out)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
-		synchronized (this) {
+		synchronized (this) { // stream position protection
 			if (maskRangesPending.isEmpty()) {
 				super.writeTo(out);
 			} else {

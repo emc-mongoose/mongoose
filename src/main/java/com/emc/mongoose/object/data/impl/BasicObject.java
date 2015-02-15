@@ -99,7 +99,9 @@ implements DataObject {
 		if(posSep > 0 && posSep < v.length() - 1) {
 			id = v.substring(0, posSep);
 		} else {
-			throw new IllegalArgumentException();
+			throw new IllegalArgumentException(
+				String.format("Failed to get an object id from the string \"%s\"", v)
+			);
 		}
 		super.fromString(v.substring(posSep + 1));
 	}

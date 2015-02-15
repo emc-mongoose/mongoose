@@ -365,7 +365,9 @@ implements Externalizable {
 				);
 			} else if(String.class.isInstance(nextPropValue)) {
 				propsMap.put(nextPropName, String.class.cast(nextPropValue));
-			} else if(nextPropValue==null) {
+			} else if(Number.class.isInstance(nextPropValue)) {
+				propsMap.put(nextPropName, Number.class.cast(nextPropValue).toString());
+			} else if(nextPropValue == null) {
 				LOG.warn(Markers.ERR, "Property \"{}\" is null");
 			} else {
 				LOG.error(

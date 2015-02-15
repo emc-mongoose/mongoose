@@ -77,29 +77,33 @@ implements Producer<T> {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode == HttpStatus.SC_OK) {
 						final HttpEntity respEntity = httpResp.getEntity();
-						final String respContentType = respEntity.getContentType().getValue();
-						if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
-							try {
-								final SAXParser parser = SAXParserFactory
-									.newInstance().newSAXParser();
-								try(final InputStream in = respEntity.getContent()) {
-									parser.parse(
-										in,
-										new BucketListHandler<>(consumer, dataConstructor, maxCount)
+						if(respEntity != null && respEntity.getContentType() != null) {
+							final String respContentType = respEntity.getContentType().getValue();
+							if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
+								try {
+									final SAXParser parser = SAXParserFactory
+										.newInstance().newSAXParser();
+									try(final InputStream in = respEntity.getContent()) {
+										parser.parse(
+											in,
+											new BucketListHandler<>(
+												consumer, dataConstructor, maxCount
+											)
+										);
+									} catch(final SAXException e) {
+										TraceLogger.failure(LOG, Level.WARN, e, "Failed to parse");
+									}
+								} catch(final ParserConfigurationException | SAXException e) {
+									TraceLogger.failure(
+										LOG, Level.ERROR, e, "Failed to create SAX parser"
 									);
-								} catch(final SAXException e) {
-									TraceLogger.failure(LOG, Level.WARN, e, "Failed to parse");
 								}
-							} catch(final ParserConfigurationException | SAXException e) {
-								TraceLogger.failure(
-									LOG, Level.ERROR, e, "Failed to create SAX parser"
+							} else {
+								LOG.warn(
+									Markers.MSG, "Unexpected response content type: \"{}\"",
+									respContentType
 								);
 							}
-						} else {
-							LOG.warn(
-								Markers.MSG, "Unexpected response content type: \"{}\"",
-								respContentType
-							);
 						}
 					} else {
 						final String statusMsg = statusLine.getReasonPhrase();

@@ -124,7 +124,8 @@ def execute(chain=(), flagSimultaneous=True):
 					TraceLogger.failure(
 						LOG, Level.ERROR, e, "Consumer \"{}\" execution failure", nextLoad
 					)
-				nextLoad.close()
+				finally:
+					nextLoad.close()
 			prevLoad = nextLoad
 #
 if __name__=="__builtin__":

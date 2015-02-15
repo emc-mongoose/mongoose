@@ -244,6 +244,13 @@ implements DataItemBufferSvc<T> {
 					} finally {
 						try {
 							consumer.submit(null); // feed the poison
+						} catch(final RemoteException e) {
+							TraceLogger.failure(LOG, Level.WARN, e, "Looks like network failure");
+						} catch(final InterruptedException e) {
+							LOG.debug(Markers.ERR, "Interrupted");
+						} catch(final RejectedExecutionException e) {
+							LOG.debug(Markers.ERR, "Consumer rejected the poison");
+						} finally {
 							if(fBuff.delete()) {
 								LOG.debug(
 									Markers.MSG, "File \"{}\" succesfully deleted",
@@ -255,12 +262,6 @@ implements DataItemBufferSvc<T> {
 									fBuff.getAbsolutePath()
 								);
 							}
-						} catch(final RemoteException e) {
-							TraceLogger.failure(LOG, Level.WARN, e, "Looks like network failure");
-						} catch(final InterruptedException e) {
-							LOG.debug(Markers.ERR, "Interrupted");
-						} catch(final RejectedExecutionException e) {
-							LOG.debug(Markers.ERR, "Consumer rejected the poison");
 						}
 					}
 				}
