@@ -780,6 +780,8 @@ function charts(chartsArray) {
 			var MIN_5 = "5min";
 			var MIN_15 = "15min";
 			//
+			var TP_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+			//
 			var CHART_TYPES = {
 				TP: "throughput",
 				BW: "bandwidth"
@@ -918,6 +920,7 @@ function charts(chartsArray) {
 					.append("g")
 					.attr("stroke", function(d) { return color(d.loadType); })
 					.attr("class", "level")
+					.attr("id", function(d) { return path.replace("#", "") + d.loadType; })
 					.selectAll("path")
 					.data(function(d) {
 						loadType = d.loadType;
@@ -933,27 +936,114 @@ function charts(chartsArray) {
 						return path.replace("#", "") + loadType + c.name;
 					})
 					.attr("visibility", function(c) { if (c.name === MIN_1) { return "visible"; } else { return "hidden"; }});
-
-				var legend = svg.selectAll(".legend")
+				//
+				svg.selectAll(".right-foreign")
+					.data(data).enter()
+					.append("foreignObject")
+					.attr("class", "right-foreign")
+					.attr("x", width + 3)
+					.attr("width", 18)
+					.attr("height", 18)
+					.attr("transform", function(d, i) {
+						return "translate(0," + i * 20 + ")";
+					})
+					.append("xhtml:body")
+					.append("input")
+					.attr("type", "checkbox")
+					.attr("value", function(d) { return d.name; })
+					.attr("checked", "checked")
+					.on("click", function(d, i) {
+						var element = $(path + d.loadType);
+						if ($(this).is(":checked")) {
+							element.css("opacity", "1")
+						} else {
+							element.css("opacity", "0");
+						}
+					});
+				//
+				svg.selectAll(".bottom-foreign")
+					.data(TP_MODES).enter()
+					.append("foreignObject")
+					.attr("class", "bottom-foreign")
+					.attr("width", 18)
+					.attr("height", 18)
+					.attr("transform", function(d, i) {
+						return "translate(" + (i*210 + 20) + "," + (height + (margin.bottom/2) + 4) + ")";
+					})
+					.append("xhtml:body")
+					.append("input")
+					.attr("type", "checkbox")
+					.attr("value", function(d) { return d; })
+					.attr("checked", function(d) { if (d === MIN_1) { return "checked"; } })
+					.on("click", function(d, i) {
+						var currentVal = $(this).val();
+						var elements = $(".line");
+						if (!String.prototype.includes) {
+							String.prototype.includes = function() {'use strict';
+								return String.prototype.indexOf.apply(this, arguments) !== -1;
+							};
+						}
+						if ($(this).is(":checked")) {
+							elements.each(function() {
+								if ($(this).attr("id").includes(currentVal)) {
+									$(this).css("visibility", "visible");
+								}
+							});
+						} else {
+							elements.each(function() {
+								if ($(this).attr("id").includes(currentVal)) {
+									$(this).css("visibility", "hidden");
+								}
+							});
+						}
+					});
+				//
+				var rightLegend = svg.selectAll(".right-legend")
 					.data(data).enter()
 					.append("g")
-					.attr("class", "legend")
+					.attr("class", "right-legend")
 					.attr("transform", function(d, i) {
 						return "translate(0," + i * 20 + ")";
 					});
 
-				legend.append("rect")
-					.attr("x", width + 18)
+				rightLegend.append("rect")
+					.attr("x", width + 21)
 					.attr("width", 18)
 					.attr("height", 18)
 					.style("fill", function(d) { return color(d.loadType); });
 
-				legend.append("text")
+				rightLegend.append("text")
 					.attr("x", width + 135)
 					.attr("y", 9)
 					.attr("dy", ".35em")
 					.style("text-anchor", "end")
 					.text(function(d) { return d.loadType; });
+				//
+				var bottomLegend = svg.selectAll(".bottom-legend")
+					.data(TP_MODES).enter()
+					.append("g")
+					.attr("class", "bottom-legend")
+					.attr("stroke", "black")
+					.attr("transform", function(d, i) {
+						return "translate(" + i*210 + "," + (height + (margin.bottom/2)) + ")";
+					});
+
+				bottomLegend.append("path")
+					.attr("d", "M0 0 L100 0")
+					.attr("stroke-dasharray", function(d, i) {
+						if (i === 3) {
+							return "20,10,5,5,5,10";
+						}
+						return i*15 + "," + i*15;
+					});
+				bottomLegend.append("text")
+					.attr("x", 50)
+					.attr("y", 15)
+					.attr("dy", ".35em")
+					.style("text-anchor", "middle")
+					.attr("stroke", "none")
+					.attr("stroke-width", "none")
+					.text(function(d) { return d; });
 				//  Axis X Label
 				svg.append("text")
 					.attr("x", width - 2)
@@ -1105,26 +1195,50 @@ function charts(chartsArray) {
 						.attr("fill", "none");
 
 					//  Test
-					var legend = svg.selectAll(".legend")
+					var rightLegend = svg.selectAll(".right-legend")
 						.data(data).enter()
 						.append("g")
-						.attr("class", "legend")
+						.attr("class", "right-legend")
 						.attr("transform", function(d, i) {
 							return "translate(0," + i * 20 + ")";
 						});
 
-					legend.append("rect")
-						.attr("x", width + 18)
+					rightLegend.append("rect")
+						.attr("x", width + 21)
 						.attr("width", 18)
 						.attr("height", 18)
 						.style("fill", function(d) { return color(d.loadType); });
 
-					legend.append("text")
+					rightLegend.append("text")
 						.attr("x", width + 135)
 						.attr("y", 9)
 						.attr("dy", ".35em")
 						.style("text-anchor", "end")
 						.text(function(d) { return d.loadType; });
+					//
+					svg.selectAll(".right-foreign")
+						.data(data).enter()
+						.append("foreignObject")
+						.attr("class", "right-foreign")
+						.attr("x", width + 3)
+						.attr("width", 18)
+						.attr("height", 18)
+						.attr("transform", function(d, i) {
+							return "translate(0," + i * 20 + ")";
+						})
+						.append("xhtml:body")
+						.append("input")
+						.attr("type", "checkbox")
+						.attr("value", function(d) { return d.name; })
+						.attr("checked", "checked")
+						.on("click", function(d, i) {
+							var element = $(path + d.loadType);
+							if ($(this).is(":checked")) {
+								element.css("visibility", "visible")
+							} else {
+								element.css("visibility", "hidden");
+							}
+						});
 				};
 			}
 		},
