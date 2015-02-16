@@ -23,5 +23,6 @@ socket.linger:						0
 mock.iothreads.persocket:			10
 mock.capacity:						10000000
 mock.data.offset.radix:				36
+mock.data.size.radix:				10
 mock.fault.period:					0
 mock.fault.sleep.msec:				1000
