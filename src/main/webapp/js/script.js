@@ -801,6 +801,11 @@ function charts(chartsArray) {
 						loadType: loadType,
 						charts: [
 							{
+								name: AVG,
+								values: [
+									{x: 0, y: 0}
+								]
+							}, {
 								name: MIN_1,
 								values: [
 									{x: 0, y: 0}
@@ -812,11 +817,6 @@ function charts(chartsArray) {
 								]
 							}, {
 								name: MIN_15,
-								values: [
-									{x: 0, y: 0}
-								]
-							}, {
-								name: AVG,
 								values: [
 									{x: 0, y: 0}
 								]
@@ -930,12 +930,15 @@ function charts(chartsArray) {
 					.attr("class", "line")
 					.attr("d", function(c) { return line(c.values); })
 					.attr("stroke-dasharray", function(c, i) {
+						if (i === 3) {
+							return "20,10,5,5,5,10";
+						}
 						return i*15 + "," + i*15;
 					})
 					.attr("id", function(c) {
-						return path.replace("#", "") + loadType + c.name;
+						return path.replace("#", "") + loadType + "-" + c.name;
 					})
-					.attr("visibility", function(c) { if (c.name === MIN_1) { return "visible"; } else { return "hidden"; }});
+					.attr("visibility", function(c) { if (c.name === AVG) { return "visible"; } else { return "hidden"; }});
 				//
 				svg.selectAll(".right-foreign")
 					.data(data).enter()
@@ -973,25 +976,23 @@ function charts(chartsArray) {
 					.append("xhtml:body")
 					.append("input")
 					.attr("type", "checkbox")
+					.attr("class", "bottom-checkbox")
 					.attr("value", function(d) { return d; })
-					.attr("checked", function(d) { if (d === MIN_1) { return "checked"; } })
+					.attr("checked", function(d) { if (d === AVG) { return "checked"; } })
 					.on("click", function(d, i) {
 						var currentVal = $(this).val();
 						var elements = $(".line");
-						if (!String.prototype.includes) {
-							String.prototype.includes = function() {'use strict';
-								return String.prototype.indexOf.apply(this, arguments) !== -1;
-							};
-						}
 						if ($(this).is(":checked")) {
 							elements.each(function() {
-								if ($(this).attr("id").includes(currentVal)) {
+								var splittedString = $(this).attr("id").split("-");
+								if (splittedString[splittedString.length - 1] === currentVal) {
 									$(this).css("visibility", "visible");
 								}
 							});
 						} else {
 							elements.each(function() {
-								if ($(this).attr("id").includes(currentVal)) {
+								var splittedString = $(this).attr("id").split("-");
+								if (splittedString[splittedString.length - 1] === currentVal) {
 									$(this).css("visibility", "hidden");
 								}
 							});
@@ -1013,7 +1014,7 @@ function charts(chartsArray) {
 					.style("fill", function(d) { return color(d.loadType); });
 
 				rightLegend.append("text")
-					.attr("x", width + 135)
+					.attr("x", width + 150)
 					.attr("y", 9)
 					.attr("dy", ".35em")
 					.style("text-anchor", "end")
@@ -1099,6 +1100,11 @@ function charts(chartsArray) {
 							loadType: loadType,
 							charts: [
 								{
+									name: AVG,
+									values: [
+										{x: 0, y: 0}
+									]
+								}, {
 									name: MIN_1,
 									values: [
 										{x: 0, y: 0}
@@ -1110,11 +1116,6 @@ function charts(chartsArray) {
 									]
 								}, {
 									name: MIN_15,
-									values: [
-										{x: 0, y: 0}
-									]
-								}, {
-									name: AVG,
 									values: [
 										{x: 0, y: 0}
 									]
@@ -1131,7 +1132,7 @@ function charts(chartsArray) {
 							.append("g")
 							.attr("stroke", function(d) { return color(d.loadType); })
 							.attr("class", "level")
-							//.attr("id", function(d) { return path.replace("#", "") + d.loadType; })
+							.attr("id", function(d) { return path.replace("#", "") + d.loadType; })
 							.selectAll("path")
 							.data(function(d) {
 								loadType = d.loadType;
@@ -1141,10 +1142,25 @@ function charts(chartsArray) {
 							.attr("class", "line")
 							.attr("d", function(c) { return line(c.values); })
 							.attr("stroke-dasharray", function(c, i) {
+								if (i === 3) {
+									return "20,10,5,5,5,10";
+								}
 								return i*15 + "," + i*15;
 							})
-							.attr("id", function(c) { return path.replace("#", "") + loadType + c.name; })
-							.attr("visibility", function(c) { if (c.name === MIN_1) { return "visible"; } else { return "hidden"; }});
+							.attr("id", function(c) { return path.replace("#", "") + loadType + "-" + c.name; })
+							.attr("visibility", function(c) {
+								var elements = $(".bottom-checkbox:checked");
+								var isFound = false;
+								elements.each(function() {
+									if (c.name === $(this).val()) {
+										isFound = true;
+									}
+								});
+								if (isFound) {
+									return "visible";
+								}
+								return "hidden";
+							});
 					}
 					//
 					x.domain([
@@ -1210,7 +1226,7 @@ function charts(chartsArray) {
 						.style("fill", function(d) { return color(d.loadType); });
 
 					rightLegend.append("text")
-						.attr("x", width + 135)
+						.attr("x", width + 150)
 						.attr("y", 9)
 						.attr("dy", ".35em")
 						.style("text-anchor", "end")
@@ -1234,9 +1250,9 @@ function charts(chartsArray) {
 						.on("click", function(d, i) {
 							var element = $(path + d.loadType);
 							if ($(this).is(":checked")) {
-								element.css("visibility", "visible")
+								element.css("opacity", "1")
 							} else {
-								element.css("visibility", "hidden");
+								element.css("opacity", "0");
 							}
 						});
 				};
