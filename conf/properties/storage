@@ -18,6 +18,9 @@ socket.reuse.addr:					true
 socket.keepalive:					true
 socket.tcp.nodelay:					true
 socket.linger:						0
+socket.bind.backlog.size:			0
+socket.interest.op.queued:			false
+socket.select.interval:				100
 
 #
 mock.iothreads.persocket:			10

@@ -248,7 +248,7 @@ implements Runnable {
 		public HttpAsyncRequestConsumer<HttpRequest> processRequest(
 			final HttpRequest request, final HttpContext context
 		) throws HttpException, IOException {
-			return new CinderellaBasicAsyncRequestConsumer(runTimeConfig);
+			return new DummyAsyncRequestConsumer(runTimeConfig);
 		}
 		//
 		@Override

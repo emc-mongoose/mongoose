@@ -25,7 +25,7 @@ import java.io.InputStream;
 /**
  * Created by olga on 04.02.15.
  */
-public final class CinderellaBasicAsyncRequestConsumer
+public final class DummyAsyncRequestConsumer
 extends BasicAsyncRequestConsumer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -35,7 +35,7 @@ extends BasicAsyncRequestConsumer {
 	//
 	private final int maxPageSize;
 	//
-	public CinderellaBasicAsyncRequestConsumer(final RunTimeConfig runTimeConfig) {
+	public DummyAsyncRequestConsumer(final RunTimeConfig runTimeConfig) {
 		super();
 		maxPageSize = (int) runTimeConfig.getDataPageSize();
 	}
@@ -65,7 +65,7 @@ extends BasicAsyncRequestConsumer {
 	{
 		//this.buf.consumeContent(decoder);
 		try (final InputStream contentStream = HTTPContentInputStream.getInstance(decoder, ioctrl)) {
-			WSRequestConfigBase.playStreamQuetly(contentStream);
+			WSRequestConfigBase.playStreamQuietly(contentStream);
 			this.buf.shutdown();
 		} catch (final InterruptedException e) {
 			TraceLogger.failure(LOG, Level.ERROR, e, "Buffer interrupted fault");

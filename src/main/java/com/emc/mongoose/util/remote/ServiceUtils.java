@@ -16,14 +16,11 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
 import java.net.Inet4Address;
-import java.net.Inet6Address;
 import java.net.InetAddress;
-import java.net.InterfaceAddress;
 import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.URLDecoder;
-import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.rmi.Naming;
 import java.rmi.NoSuchObjectException;
@@ -34,9 +31,13 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RemoteStub;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 /**
  Created by kurila on 05.05.14.
  */
@@ -62,17 +63,17 @@ public final class ServiceUtils {
 		}
 	}
 	//
-	private final static HashMap<String, Service> SVC_MAP;
+	private final static Map<String, Service> SVC_MAP;
 	//private final static Registry REGISTRY;
 	static {
 		// set up security manager
-		if(System.getSecurityManager()==null) {
+		if(System.getSecurityManager() == null) {
 			final SecurityManager sm = new SecurityManager();
 			LOG.trace(Markers.MSG, "New security manager instance created");
 			System.setSecurityManager(sm);
 		}
 		//
-		SVC_MAP = new HashMap<>();
+		SVC_MAP = new ConcurrentHashMap<>();
 		// create or use existing registry
 		//Registry registry = null;
 		try {
@@ -225,7 +226,10 @@ public final class ServiceUtils {
 		JMXRMI_URL_PREFIX = "service:jmx:rmi:///jndi/rmi://",
 		JMXRMI_URL_PATH = "/jmxrmi";
 	//
-	private final static Map<Integer,MBeanServer> MBEAN_SERVERS = new HashMap<>();
+	private final static Map<Integer, MBeanServer>
+		MBEAN_SERVERS = new ConcurrentHashMap<>();
+	private final static Queue<JMXConnectorServer>
+		JMX_CONNECTOR_SERVERS = new LinkedBlockingQueue<>();
 	public static MBeanServer getMBeanServer(final int portJmxRmi) {
 		//
 		MBeanServer mBeanServer;
@@ -241,7 +245,7 @@ public final class ServiceUtils {
 					)
 				);
 			} catch(final UnsupportedEncodingException e) {
-				LOG.warn(Markers.ERR, e.toString(), e.getCause());
+				TraceLogger.failure(LOG, Level.WARN, e, "Setting system property failure");
 			}
 			LOG.debug(Markers.MSG, "RMI codebase: {}", System.getProperty(KEY_RMI_CODEBASE));
 			//
@@ -254,14 +258,13 @@ public final class ServiceUtils {
 				LocateRegistry.createRegistry(portJmxRmi);
 				LOG.debug(Markers.MSG, "Created locate registry for port {}", portJmxRmi);
 			} catch(final RemoteException e) {
-				synchronized(LOG) {
-					LOG.debug(
-						Markers.ERR, "Failed to create registry for port {}: ", portJmxRmi, e.toString()
-					);
-				}
+				TraceLogger.failure(
+					LOG, Level.WARN, e,
+					String.format("Failed to create registry for port %d", portJmxRmi)
+				);
 			}
 			//
-			final HashMap<String, Object> env = new HashMap<>();
+			final Map<String, Object> env = new HashMap<>();
 			env.put(KEY_JMX_AUTH, String.valueOf(false));
 			env.put(KEY_JMX_SSL, String.valueOf(false));
 			//
@@ -286,6 +289,7 @@ public final class ServiceUtils {
 					connectorServer = JMXConnectorServerFactory.newJMXConnectorServer(
 						jmxSvcURL, env, mBeanServer
 					);
+					JMX_CONNECTOR_SERVERS.add(connectorServer); // remember for shutdown
 					LOG.debug(Markers.MSG, "Created JMX connector");
 				} catch(final IOException e) {
 					TraceLogger.failure(LOG, Level.WARN, e, "Failed to create JMX connector");
@@ -310,5 +314,50 @@ public final class ServiceUtils {
 		return mBeanServer;
 	}
 	//
-	
+	public static void shutdown() {
+		//
+		try {
+			for(final Service svc : SVC_MAP.values()) {
+				close(svc);
+			}
+			//
+			final Registry registry = LocateRegistry.getRegistry(PORT_RMI_CONTROL);
+			final String names[] = registry.list();
+			if(names.length > 0) {
+				LOG.debug(Markers.MSG, "Not closed services: {}", Arrays.toString(names));
+				for(final String name : names) {
+					try{
+						registry.unbind(name);
+					} catch(final NotBoundException e) {
+						TraceLogger.failure(
+							LOG, Level.DEBUG, e,
+							String.format("Service \"%s\" is not bound", name)
+						);
+					}
+				}
+			}
+			//
+		} catch(final RemoteException e) {
+			TraceLogger.failure(
+				LOG, Level.WARN, e,
+				String.format("Failed to get a registry for port #%d", PORT_RMI_CONTROL)
+			);
+		}
+		//
+		for(final JMXConnectorServer jmxConnectorServer : JMX_CONNECTOR_SERVERS) {
+			if(jmxConnectorServer.isActive()) {
+				try {
+					jmxConnectorServer.stop();
+				} catch(final IOException e) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e,
+						String.format(
+							"Failed to stop JMX connector server @%s",
+							jmxConnectorServer.getAddress()
+						)
+					);
+				}
+			}
+		}
+	}
 }

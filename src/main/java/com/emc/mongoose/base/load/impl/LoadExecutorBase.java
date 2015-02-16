@@ -88,8 +88,8 @@ implements LoadExecutor<T> {
 		//
 		storageNodeCount = addrs.length;
 		totalThreadCount = threadsPerNode * storageNodeCount;
-		setCorePoolSize((int) Math.sqrt(totalThreadCount));
-		setMaximumPoolSize((int) Math.sqrt(totalThreadCount));
+		setCorePoolSize((int) Math.pow(totalThreadCount, 0.4));
+		setMaximumPoolSize(getCorePoolSize());
 		//
 		this.runTimeConfig = runTimeConfig;
 		RequestConfig<T> reqConfigCopy = null;

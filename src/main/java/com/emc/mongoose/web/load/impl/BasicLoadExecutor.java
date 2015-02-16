@@ -50,8 +50,6 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 /**
@@ -63,12 +61,9 @@ implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static int
-		COUNT_CORES2USE = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
-	//
 	private final HttpAsyncRequester client;
-	private final ExecutorService clientExecutor;
-	private final BasicNIOConnPool connPools[] = new BasicNIOConnPool[COUNT_CORES2USE];
+	private final BasicNIOConnPool connPool;
+	private final Thread clientThread;
 	//
 	public BasicLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
@@ -80,7 +75,7 @@ implements WSLoadExecutor<T> {
 			sizeMin, sizeMax, sizeBias, countUpdPerReq
 		);
 		//
-		final int threadCount = threadsPerNode * addrs.length;
+		final int totalThreadCount = threadsPerNode * addrs.length;
 		final List<Header> sharedHeaders = reqConfig.getSharedHeaders();
 		final String userAgent = runTimeConfig.getRunName() + "/" + runTimeConfig.getRunVersion();
 		//
@@ -100,65 +95,62 @@ implements WSLoadExecutor<T> {
 			.custom()
 			.setBufferSize((int) thrLocalConfig.getDataPageSize())
 			.build();
-		final IOReactorConfig ioReactorConfig = IOReactorConfig
+		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
+			.setBacklogSize((int) thrLocalConfig.getSocketBindBackLogSize())
+			.setInterestOpQueued(thrLocalConfig.getSocketInterestOpQueued())
+			.setSelectInterval(thrLocalConfig.getSocketSelectInterval())
 			.setShutdownGracePeriod(thrLocalConfig.getSocketTimeOut())
-			.setIoThreadCount(threadCount)
 			.setSoKeepAlive(thrLocalConfig.getSocketKeepAliveFlag())
 			.setSoLinger(thrLocalConfig.getSocketLinger())
 			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
 			.setRcvBufSize((int) thrLocalConfig.getDataPageSize())
-			.setSndBufSize((int) thrLocalConfig.getDataPageSize())
-			.build();
+			.setSndBufSize((int) thrLocalConfig.getDataPageSize());
 		//
-		clientExecutor = Executors.newFixedThreadPool(
-			COUNT_CORES2USE, new WorkerFactory("webClientCoreWorker")
+		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
+		//
+		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
+			reqExecutor, connConfig
 		);
 		//
-		for(int i = 0; i < COUNT_CORES2USE; i ++) {
-			final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
-			//
-			final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
-				reqExecutor, connConfig
+		ConnectingIOReactor ioReactor = null;
+		try {
+			ioReactorConfigBuilder.setIoThreadCount(totalThreadCount);
+			ioReactor = new BasicConnectingIOReactor(
+				ioReactorConfigBuilder.build(),
+				new WorkerFactory(String.format("%s-ioWorker", getName()))
 			);
-			//
-			ConnectingIOReactor ioReactor = null;
-			try {
-				ioReactor = new DefaultConnectingIOReactor(
-					ioReactorConfig, new WorkerFactory(getName() + "-worker")
-				);
-			} catch(final IOReactorException e) {
-				TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
-			}
-			//
-			final BasicNIOConnPool connPool;
-			if(ioReactor != null) {
-				//
-				connPool = new BasicNIOConnPool(ioReactor, connConfig);
-				connPool.setDefaultMaxPerRoute(threadCount);
-				connPool.setMaxTotal(threadCount);
-				connPools[i] = connPool;
-				//
-				clientExecutor.submit(
-					new ExecuteClientTask<>(ioEventDispatch, ioReactor)
-				);
-			}
+		} catch(final IOReactorException e) {
+			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
 		}
 		//
-		clientExecutor.shutdown(); // prevent further tasks submitting
+		if(ioReactor != null) {
+			//
+			connPool = new BasicNIOConnPool(ioReactor, connConfig);
+			connPool.setDefaultMaxPerRoute(totalThreadCount);
+			connPool.setMaxTotal(totalThreadCount);
+			//
+			clientThread = new Thread(
+				new ExecuteClientTask<>(ioEventDispatch, ioReactor),
+				String.format("%s-webClientThread", getName())
+			);
+		} else {
+			connPool = null;
+			clientThread = null;
+		}
 	}
-	/*
+	//
 	@Override
 	public synchronized void start() {
-		if(clientThread == null) {
+		if(clientThread== null) {
 			LOG.debug(Markers.ERR, "Not starting web load client due to initialization failures");
 		} else {
 			clientThread.start();
 			super.start();
 		}
-	}*/
+	}
 	//
 	private final static int SHUTDOWN_TIMEOUT_MILLISEC = 1000;
 	@Override
@@ -172,47 +164,26 @@ implements WSLoadExecutor<T> {
 		//
 		LOG.debug(Markers.MSG, "Going to close the web storage client");
 		//
-		clientExecutor.shutdownNow();
+		clientThread.interrupt();
 		//
-		final ExecutorService poolCloseExecutor = Executors.newFixedThreadPool(
-			connPools.length, new WorkerFactory("connPoolCloseWorker")
-		);
-		for(final BasicNIOConnPool connPool : connPools) {
-			if(connPool != null) {
-				poolCloseExecutor.submit(
-					new Runnable() {
-						@Override
-						public final void run() {
-							connPool.closeExpired();
-							try {
-								connPool.closeIdle(
-									SHUTDOWN_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
-								);
-							} finally {
-								try {
-									connPool.shutdown(SHUTDOWN_TIMEOUT_MILLISEC);
-								} catch(final IOException e) {
-									TraceLogger.failure(
-										LOG, Level.WARN, e, "Connection pool shutdown failure"
-									);
-								}
-							}
-						}
-					}
+		if(connPool != null) {
+			connPool.closeExpired();
+			try {
+				connPool.closeIdle(
+					SHUTDOWN_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
 				);
+			} finally {
+				try {
+					connPool.shutdown(SHUTDOWN_TIMEOUT_MILLISEC);
+				} catch(final IOException e) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e, "Connection pool shutdown failure"
+					);
+				}
 			}
 		}
-		poolCloseExecutor.shutdown();
-		try {
-			poolCloseExecutor.awaitTermination(
-				Math.max(3, COUNT_CORES2USE) * SHUTDOWN_TIMEOUT_MILLISEC, TimeUnit.SECONDS
-			);
-		} catch(InterruptedException e) {
-			LOG.debug(Markers.ERR, "Interrupted while waiting the connection pools to shutdown");
-		} finally {
-			poolCloseExecutor.shutdownNow();
-			LOG.debug(Markers.MSG, "Closed web storage client");
-		}
+		//
+		LOG.debug(Markers.MSG, "Closed web storage client");
 	}
 	//
 	@Override
@@ -221,11 +192,7 @@ implements WSLoadExecutor<T> {
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
 		Future<WSIOTask.Status> futureResult;
 		try {
-			futureResult = client.execute(
-				wsTask, wsTask,
-				connPools[(int) countSubmCalls.get() % connPools.length],
-				wsTask.getHttpContext()
-			);
+			futureResult = client.execute(wsTask, wsTask, connPool, wsTask.getHttpContext());
 		} catch(final IllegalStateException e) {
 			throw new RemoteException("I/O task submit failure", e);
 		}
@@ -262,13 +229,13 @@ implements WSLoadExecutor<T> {
 			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");
 		}
 		//
-		if(tgtHost != null && connPools[0] != null) {
+		if(tgtHost != null && connPool != null) {
 			ctx.setTargetHost(tgtHost);
 			//
 			try {
 				response = client.execute(
 					new BasicAsyncRequestProducer(tgtHost, request),
-					new BasicAsyncResponseConsumer(), connPools[0], ctx
+					new BasicAsyncResponseConsumer(), connPool, ctx
 				).get();
 			} catch(final InterruptedException e) {
 				if(!isTerminating() && !isTerminated()) {

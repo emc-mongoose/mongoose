@@ -307,6 +307,18 @@ implements Externalizable {
 		return getInt("storage.socket.linger");
 	}
 	//
+	public final long getSocketBindBackLogSize() {
+		return getLong("storage.socket.bind.backlog.size");
+	}
+	//
+	public final boolean getSocketInterestOpQueued() {
+		return getBoolean("storage.socket.interest.op.queued");
+	}
+	//
+	public final long getSocketSelectInterval() {
+		return getLong("storage.socket.select.interval");
+	}
+	//
 	public final String[] getRemoteServers() {
 		return getStringArray("remote.servers");
 	}
