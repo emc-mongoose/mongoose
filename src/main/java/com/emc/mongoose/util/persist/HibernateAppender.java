@@ -62,7 +62,9 @@ public final class HibernateAppender
 	public final void stop()
 	{
 		super.stop();
-		SESSION_FACTORY.close();
+		if(ENABLED_FLAG) {
+			SESSION_FACTORY.close();
+		}
 	}
 	//
 	private HibernateAppender(
@@ -173,7 +175,7 @@ public final class HibernateAppender
 	private void persistDataList(final String[] message)
 	{
 		DataObjectEntity dataObjectEntity = new DataObjectEntity( message[0], message[1],
-				Long.valueOf(message[2], 0x10), Long.valueOf(message[3], 0x10),
+				Long.valueOf(message[2]), Long.valueOf(message[3], 0x10),
 				Long.valueOf(message[4], 0x10));
 		loadDataObjectEntity(dataObjectEntity);
 

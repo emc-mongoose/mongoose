@@ -1,5 +1,6 @@
 package com.emc.mongoose.util.persist;
 
+import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LogEvent;
@@ -34,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 public class HibernateAsyncAppender
 extends AbstractAppender {
 
-	private static final String SHUTDOWN = "Shutdown";
+	private static final String POISON = "POISON";
 	public static final org.apache.logging.log4j.Logger LOGGER = StatusLogger.getLogger();
 	//
 	private static final long serialVersionUID = 1L;
@@ -44,7 +45,8 @@ extends AbstractAppender {
 		//REQ_TIME_OUT_SEC =60;
 	private final BlockingQueue<Serializable> queue;
 	private static Boolean ENABLED_FLAG;
-	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE,50, TimeUnit.SECONDS,new ArrayBlockingQueue<Runnable>(100));
+	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE, 50, TimeUnit.SECONDS,
+		new ArrayBlockingQueue<Runnable>(100),new WorkerFactory("hibernate-appender-worker"));
 	//
 	private final int threadsForQueue;
 	List<Callable<Object>> tasks;
@@ -106,7 +108,7 @@ extends AbstractAppender {
 	public void stop() {
 		super.stop();
 		//Poison Pill Shutdown
-		queue.offer(SHUTDOWN);
+		queue.offer(POISON);
 		//
 		if (!executor.isShutdown()){
 			executor.shutdown();
@@ -222,9 +224,9 @@ extends AbstractAppender {
 				Serializable s;
 				try {
 					s = queue.take();
-					if (s != null && s instanceof String && SHUTDOWN.equals(s.toString())) {
+					if (s != null && s instanceof String && POISON.equals(s.toString())) {
 						shutdown = true;
-						queue.offer(SHUTDOWN);//notify other threads to stop
+						queue.offer(POISON);//notify other threads to stop
 						continue;
 					}
 				} catch (final InterruptedException ex) {
@@ -249,8 +251,8 @@ extends AbstractAppender {
 			while (!queue.isEmpty()) {
 				try {
 					final Serializable s = queue.take();
-					if (s != null && s instanceof String && SHUTDOWN.equals(s.toString())) {
-						queue.offer(SHUTDOWN);//notify other threads to stop
+					if (s != null && s instanceof String && POISON.equals(s.toString())) {
+						queue.offer(POISON);//notify other threads to stop
 						break;
 					}
 					if (Log4jLogEvent.canDeserialize(s)) {
