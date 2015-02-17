@@ -14,10 +14,10 @@ import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
-//
 import com.emc.mongoose.web.load.impl.reqproc.SharedHeaders;
 import com.emc.mongoose.web.load.impl.reqproc.TargetHost;
 import com.emc.mongoose.web.load.impl.tasks.ExecuteClientTask;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
@@ -25,6 +25,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpClientEventHandler;
 import org.apache.http.nio.protocol.BasicAsyncRequestProducer;
@@ -66,15 +67,15 @@ implements WSLoadExecutor<T> {
 	//
 	public BasicLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
-		final int threadsPerNode, final String listFile, final long maxCount,
+		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
 	) {
 		super(
-			runTimeConfig, reqConfig, addrs, threadsPerNode, listFile, maxCount,
+			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias, countUpdPerReq
 		);
 		//
-		final int totalThreadCount = threadsPerNode * addrs.length;
+		final int totalConnCount = connCountPerNode * storageNodeCount;
 		final List<Header> sharedHeaders = reqConfig.getSharedHeaders();
 		final String userAgent = runTimeConfig.getRunName() + "/" + runTimeConfig.getRunVersion();
 		//
@@ -115,9 +116,11 @@ implements WSLoadExecutor<T> {
 		);
 		//
 		ConnectingIOReactor ioReactor = null;
+		final int ioThreadCount = runTimeConfig.getRunIOWorkersPerCore() *
+			Runtime.getRuntime().availableProcessors() - 1;
 		try {
-			ioReactorConfigBuilder.setIoThreadCount(totalThreadCount);
-			ioReactor = new BasicConnectingIOReactor(
+			ioReactorConfigBuilder.setIoThreadCount(ioThreadCount);
+			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
 				new WorkerFactory(String.format("%s-ioWorker", getName()))
 			);
@@ -128,8 +131,8 @@ implements WSLoadExecutor<T> {
 		if(ioReactor != null) {
 			//
 			connPool = new BasicNIOConnPool(ioReactor, connConfig);
-			connPool.setDefaultMaxPerRoute(totalThreadCount);
-			connPool.setMaxTotal(totalThreadCount);
+			connPool.setDefaultMaxPerRoute(totalConnCount);
+			connPool.setMaxTotal(totalConnCount);
 			//
 			clientThread = new Thread(
 				new ExecuteClientTask<>(ioEventDispatch, ioReactor),

@@ -171,6 +171,8 @@ public final class Main {
 					String.format("Incorrect run mode: \"%s\"", runMode)
 				);
 		}
+		//
+		shutdown();
 	}
 	//
 	public static Logger initLogging(final String runMode) {
@@ -220,6 +222,11 @@ public final class Main {
 		System.setProperty(KEY_POLICY, secPolicyURL);
 		Policy.getPolicy().refresh();
 		System.setSecurityManager(new SecurityManager());
+	}
+	//
+	public static void shutdown() {
+		((LifeCycle) LogManager.getContext()).stop();
+		ServiceUtils.shutdown();
 	}
 }
 //

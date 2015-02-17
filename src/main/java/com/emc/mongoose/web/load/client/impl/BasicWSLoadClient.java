@@ -28,14 +28,12 @@ implements WSLoadClient<T> {
 	//private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicWSLoadClient(
-		final RunTimeConfig runTimeConfig,
-		final Map<String, LoadSvc<T>> remoteLoadMap,
-		final Map<String, JMXConnector> remoteJMXConnMap,
-		final WSRequestConfig<T> reqConf,
-		final long maxCount, final int threadCountPerServer
+		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
+		final Map<String, JMXConnector> remoteJMXConnMap, final WSRequestConfig<T> reqConf,
+		final long maxCount, final int countWorkers
 	) {
 		super(
-			runTimeConfig, remoteLoadMap, remoteJMXConnMap, reqConf, maxCount, threadCountPerServer
+			runTimeConfig, remoteLoadMap, remoteJMXConnMap, reqConf, maxCount, countWorkers
 		);
 	}
 	//

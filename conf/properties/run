@@ -34,3 +34,6 @@ request.timeout.millisec:		1000000
 
 #
 request.queue.size:				8192
+
+#
+ioworkers.per.core:				2

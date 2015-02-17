@@ -61,16 +61,6 @@ public final class ServiceUtils {
 		} finally {
 			PORT_RMI_CONTROL = tmpPort;
 		}
-		//
-		Runtime.getRuntime().addShutdownHook(
-			new Thread("svcShutDownHook") {
-				@Override
-				public final void run() {
-					ServiceUtils.shutdown();
-				}
-			}
-		);
-
 	}
 	//
 	private final static Map<String, Service> SVC_MAP;
@@ -154,7 +144,7 @@ public final class ServiceUtils {
 			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to export service object");
 		}
 		//
-		if(stub!=null) {
+		if(stub != null) {
 			try {
 				final String svcName = svc.getName();
 				Naming.rebind(svcName, svc);
