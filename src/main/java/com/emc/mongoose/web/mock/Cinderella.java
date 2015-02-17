@@ -52,7 +52,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.management.MBeanServer;
-import javax.xml.ws.http.HTTPException;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
@@ -249,7 +248,7 @@ implements Runnable {
 		public HttpAsyncRequestConsumer<HttpRequest> processRequest(
 			final HttpRequest request, final HttpContext context
 		) throws HttpException, IOException {
-			return new CinderellaBasicAsyncRequestConsumer(runTimeConfig);
+			return new DummyAsyncRequestConsumer(runTimeConfig);
 		}
 		//
 		@Override

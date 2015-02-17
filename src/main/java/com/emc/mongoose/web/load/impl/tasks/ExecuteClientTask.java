@@ -3,11 +3,9 @@ package com.emc.mongoose.web.load.impl.tasks;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.data.WSObject;
-import com.emc.mongoose.web.load.WSLoadExecutor;
 //
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
-//
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -15,24 +13,20 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.net.SocketException;
 /**
 Created by kurila on 30.01.15.
-*/ //
+*/
 public final class ExecuteClientTask<T extends WSObject>
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final WSLoadExecutor<T> executor;
 	private final IOEventDispatch ioEventDispatch;
 	private final ConnectingIOReactor ioReactor;
 	//
 	public ExecuteClientTask(
-		final WSLoadExecutor<T> executor,
 		final IOEventDispatch ioEventDispatch, final ConnectingIOReactor ioReactor
 	) {
-		this.executor = executor;
 		this.ioEventDispatch = ioEventDispatch;
 		this.ioReactor = ioReactor;
 	}
@@ -55,6 +49,12 @@ implements Runnable {
 			);
 		} catch(final IllegalStateException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
+		} finally {
+			try {
+				ioReactor.shutdown();
+			} catch(final IOException e) {
+				TraceLogger.failure(LOG, Level.DEBUG, e, "I/O reactor shutdown failure");
+			}
 		}
 	}
 }

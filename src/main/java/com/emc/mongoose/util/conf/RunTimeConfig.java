@@ -184,6 +184,10 @@ implements Externalizable {
 		return getBoolean("run.request.retries");
 	}
 	//
+	public final int getRunIOWorkersPerCore() {
+		return getInt("run.ioworkers.per.core");
+	}
+	//
 	public final String getStorageApi() {
 		return getString(KEY_STORAGE_API);
 	}
@@ -306,6 +310,18 @@ implements Externalizable {
 	//
 	public final int getSocketLinger() {
 		return getInt("storage.socket.linger");
+	}
+	//
+	public final long getSocketBindBackLogSize() {
+		return getLong("storage.socket.bind.backlog.size");
+	}
+	//
+	public final boolean getSocketInterestOpQueued() {
+		return getBoolean("storage.socket.interest.op.queued");
+	}
+	//
+	public final long getSocketSelectInterval() {
+		return getLong("storage.socket.select.interval");
 	}
 	//
 	public final String[] getRemoteServers() {

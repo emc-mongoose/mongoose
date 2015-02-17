@@ -44,60 +44,59 @@ repositories {
 dependencies {
 
 	compile (
-			//
-			'io.dropwizard.metrics:metrics-core:3.1.0',
-			//
-			'commons-codec:commons-codec:1.10',
-			//
-			'org.apache.logging.log4j:log4j-api:2.1',
-			'org.apache.logging.log4j:log4j-core:2.1',
-			'org.apache.logging.log4j:log4j-web:2.1',
-			//
-			'org.apache.httpcomponents:httpcore-nio:4.4',
-			//
-			'org.eclipse.jetty:jetty-server:9.3.0.M1',
-			'org.eclipse.jetty:jetty-webapp:9.3.0.M1',
-			//
-			'javax.servlet:javax.servlet-api:3.1.0',
-			'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
-			'org.eclipse.jetty.websocket:websocket-server:9.3.0.M1',
-			'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
+		//
+		'io.dropwizard.metrics:metrics-core:3.1.0',
+		//
+		'commons-codec:commons-codec:1.10',
+		//
+		'org.apache.logging.log4j:log4j-api:2.1',
+		'org.apache.logging.log4j:log4j-core:2.1',
+		'org.apache.logging.log4j:log4j-web:2.1',
+		//
+		'org.apache.httpcomponents:httpcore-nio:4.4',
+		//
+		'org.eclipse.jetty:jetty-server:9.3.0.M1',
+		'org.eclipse.jetty:jetty-webapp:9.3.0.M1',
+		//
+		'javax.servlet:javax.servlet-api:3.1.0',
+		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
+		'org.eclipse.jetty.websocket:websocket-server:9.3.0.M1',
+		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
 
-			'org.hibernate:hibernate-core:4.3.6.Final',
-			'org.eclipse.persistence:javax.persistence:2.1.0',
-			'jstl:jstl:1.2',
-			'org.apache.commons:commons-collections4:4.0',
-			'commons-cli:commons-cli:1.2',
+		'org.hibernate:hibernate-core:4.3.6.Final',
+		'org.eclipse.persistence:javax.persistence:2.1.0',
+		'jstl:jstl:1.2',
+		'org.apache.commons:commons-collections4:4.0',
+		'commons-cli:commons-cli:1.2',
 
-			'com.fasterxml.jackson.core:jackson-annotations:2.5.1',
-			'com.fasterxml.jackson.core:jackson-core:2.5.1',
-			'com.fasterxml.jackson.core:jackson-databind:2.5.1',
+		'com.fasterxml.jackson.core:jackson-annotations:2.5.1',
+		'com.fasterxml.jackson.core:jackson-core:2.5.1',
+		'com.fasterxml.jackson.core:jackson-databind:2.5.1',
 	)
 
 	compileRMI (
-			'commons-configuration:commons-configuration:1.10',
-			'org.apache.httpcomponents:httpcore:4.4',
+		'commons-configuration:commons-configuration:1.10',
+		'org.apache.httpcomponents:httpcore:4.4',
 	)
 
 	runtime (
-			//
-			'com.github.rickyclarkson:jmdns:3.4.2-r353-1',
-			//
-			'commons-lang:commons-lang:2.6',
-			'commons-logging:commons-logging:1.2',
-			//
-			'org.apache.logging.log4j:log4j-slf4j-impl:2.1',
-			'org.apache.logging.log4j:log4j-jcl:2.1',
-			//'org.apache.logging.log4j:log4j-jul:2.1',
-			//'org.slf4j:slf4j-api:1.7.7',
-			'com.lmax:disruptor:3.3.0',
-			//
-			'org.python:jython-standalone:2.7-b3',
-			'org.postgresql:postgresql:9.3-1102-jdbc3',
-			'org.fusesource.jansi:jansi:1.11',
-			//
-			//'org.slf4j:slf4j-log4j12:1.7.10',
-			'org.hibernate:hibernate-ehcache:4.3.7.Final'
+		//
+		'com.github.rickyclarkson:jmdns:3.4.2-r353-1',
+		//
+		'commons-lang:commons-lang:2.6',
+		'commons-logging:commons-logging:1.2',
+		//
+		'org.apache.logging.log4j:log4j-slf4j-impl:2.1',
+		'org.apache.logging.log4j:log4j-jcl:2.1',
+		//'org.apache.logging.log4j:log4j-jul:2.1',
+		//'org.slf4j:slf4j-api:1.7.7',
+		'com.lmax:disruptor:3.3.0',
+		//
+		'org.python:jython-standalone:2.7-b3',
+		'org.postgresql:postgresql:9.3-1102-jdbc3',
+		'org.fusesource.jansi:jansi:1.11',
+		//
+		'org.hibernate:hibernate-ehcache:4.3.7.Final'
 	)
 
 

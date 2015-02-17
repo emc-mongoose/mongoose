@@ -69,8 +69,6 @@ extends ThreadPoolExecutor
 implements LoadClient<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static int MGMT_THREADS_PER_CLIENT = 20, MGMT_TASKS_PER_CLIENT = 50;
-	//
 	protected final Map<String, LoadSvc<T>> remoteLoadMap;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final Map<String, JMXConnector> remoteJMXConnMap;
@@ -169,15 +167,12 @@ implements LoadClient<T> {
 		final Map<String, LoadSvc<T>> remoteLoadMap,
 		final Map<String, JMXConnector> remoteJMXConnMap,
 		final RequestConfig<T> reqConfig,
-		final long maxCount, final int threadCountPerServer
+		final long maxCount, final int countWorkers
 	) {
 		super(
-			1, 1, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(runTimeConfig.getRunRequestQueueSize())
+			countWorkers, countWorkers, 0, TimeUnit.SECONDS,
+			new ArrayBlockingQueue<Runnable>(runTimeConfig.getRunRequestQueueSize())
 		);
-		final int totalThreadCount = threadCountPerServer * remoteLoadMap.size();
-		setCorePoolSize(totalThreadCount);
-		setMaximumPoolSize(totalThreadCount);
 		//
 		String t = null;
 		try {
@@ -229,13 +224,10 @@ implements LoadClient<T> {
 			}
 		}
 		//
-		final int
-			countLoadServers = remoteLoadMap.size(),
-			countMgmtThreads = MGMT_THREADS_PER_CLIENT * countLoadServers;
 		mgmtConnExecutor = new ThreadPoolExecutor(
-			countMgmtThreads, countMgmtThreads, 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(MGMT_TASKS_PER_CLIENT * countLoadServers),
-			new WorkerFactory(name + "-mgmtConnWorker")
+			getCorePoolSize(), getMaximumPoolSize(), 0, TimeUnit.SECONDS,
+			new ArrayBlockingQueue<Runnable>(remoteLoadMap.size() * getMaximumPoolSize()),
+			new WorkerFactory(name + "MgmtConnWorker")
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricSuccCount = registerJmxGaugeSum(
@@ -342,7 +334,7 @@ implements LoadClient<T> {
 			)
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
-		metaInfoLog = new LogConsumer<>(maxCount, threadCountPerServer);
+		metaInfoLog = new LogConsumer<>(maxCount, remoteLoadMap.size() * countWorkers);
 		shutDownOnCountLimit = new Thread(
 			new CountLimitWaitTask(
 				this, mgmtConnExecutor, maxCount,

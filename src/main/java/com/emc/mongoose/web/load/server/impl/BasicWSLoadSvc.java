@@ -87,9 +87,9 @@ implements WSLoadSvc<T> {
 	}
 	//
 	@Override
-	public final int getThreadCount()
+	public final int getTotalConnCount()
 	throws RemoteException {
-		return threadsPerNode * storageNodeAddrs.length;
+		return connCountPerNode * storageNodeAddrs.length;
 	}
 	//
 

@@ -1,6 +1,7 @@
 package com.emc.mongoose.run;
 //
 import com.emc.mongoose.util.logging.TraceLogger;
+import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.web.mock.Cinderella;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
@@ -102,11 +103,10 @@ public final class Main {
 		} else {
 			runMode = args[0];
 		}
-		//
-
-		Map<String, String> properties = HumanFriendlyCli.parseCli(args);
-
 		System.setProperty(RunTimeConfig.KEY_RUN_MODE, runMode);
+		//
+		final Map<String, String> properties = HumanFriendlyCli.parseCli(args);
+		//
 		final Logger rootLogger = initLogging(runMode);
 		if(rootLogger==null) {
 			System.err.println("Logging initialization failure");
@@ -130,7 +130,6 @@ public final class Main {
 		//
 		if(!properties.isEmpty()) {
 			rootLogger.info(Markers.MSG, "Overriding properties {}", properties);
-
 			RUN_TIME_CONFIG.get().overrideSystemProperties(properties);
 		}
 		//
@@ -173,8 +172,7 @@ public final class Main {
 				);
 		}
 		//
-		((LifeCycle) LogManager.getContext()).stop();
-		//System.exit(0); // ????!!
+		shutdown();
 	}
 	//
 	public static Logger initLogging(final String runMode) {
@@ -228,6 +226,11 @@ public final class Main {
 		System.setProperty(KEY_POLICY, secPolicyURL);
 		Policy.getPolicy().refresh();
 		System.setSecurityManager(new SecurityManager());
+	}
+	//
+	public static void shutdown() {
+		((LifeCycle) LogManager.getContext()).stop();
+		ServiceUtils.shutdown();
 	}
 }
 //

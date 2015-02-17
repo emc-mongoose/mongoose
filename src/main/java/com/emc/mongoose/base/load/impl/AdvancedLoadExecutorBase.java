@@ -28,11 +28,11 @@ extends LoadExecutorBase<T> {
 	//
 	protected AdvancedLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int threadsPerNode, final String listFile, final long maxCount,
+		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
 	) throws ClassCastException {
 		super(
-			runTimeConfig, reqConfig, addrs, threadsPerNode, listFile, maxCount,
+			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias
 		);
 		//

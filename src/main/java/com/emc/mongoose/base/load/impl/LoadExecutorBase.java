@@ -54,7 +54,7 @@ implements LoadExecutor<T> {
 	//
 	private final Logger LOG = LogManager.getLogger();
 	//
-	protected final int threadsPerNode, storageNodeCount, retryCountMax, retryDelayMilliSec;
+	protected final int connCountPerNode, storageNodeCount, retryCountMax, retryDelayMilliSec;
 	protected final String storageNodeAddrs[];
 	//
 	protected final DataSource<T> dataSrc;
@@ -65,7 +65,7 @@ implements LoadExecutor<T> {
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
 	private final long maxCount;
-	private final int totalThreadCount;
+	private final int totalConnCount;
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
 	protected Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
@@ -77,7 +77,7 @@ implements LoadExecutor<T> {
 	// METRICS section END
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
-		final int threadsPerNode, final String listFile, final long maxCount,
+		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
 		super(
@@ -87,9 +87,9 @@ implements LoadExecutor<T> {
 		);
 		//
 		storageNodeCount = addrs.length;
-		totalThreadCount = threadsPerNode * storageNodeCount;
-		setCorePoolSize((int) Math.sqrt(totalThreadCount));
-		setMaximumPoolSize((int) Math.sqrt(totalThreadCount));
+		totalConnCount = connCountPerNode * storageNodeCount;
+		setCorePoolSize(Math.min(COUNT_THREADS_MIN, storageNodeCount));
+		setMaximumPoolSize(getCorePoolSize());
 		//
 		this.runTimeConfig = runTimeConfig;
 		RequestConfig<T> reqConfigCopy = null;
@@ -116,11 +116,11 @@ implements LoadExecutor<T> {
 			StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
 			StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
 			(maxCount > 0? Long.toString(maxCount) : "") + '-' +
-			Integer.toString(threadsPerNode) + 'x' + Integer.toString(storageNodeCount);
+			Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount);
 		setThreadFactory(
 			new WorkerFactory(name)
 		);
-		this.threadsPerNode = threadsPerNode;
+		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the node executors array
 		storageNodeAddrs = addrs.clone();
@@ -145,7 +145,7 @@ implements LoadExecutor<T> {
 				TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");
 			}
 		}
-		setConsumer(new LogConsumer<T>(maxCount, threadsPerNode)); // by default, may be overriden later externally
+		setConsumer(new LogConsumer<T>(maxCount, getCorePoolSize())); // by default, may be overriden later externally
 		LoadCloseHook.add(this);
 	}
 	//
@@ -259,7 +259,7 @@ implements LoadExecutor<T> {
 				Markers.PERF_SUM,
 				String.format(
 					Main.LOCALE_DEFAULT, FMT_EFF_SUM,
-					100 * totalReqNanoSeconds / ((System.nanoTime() - tsStart) * getThreadCount())
+					100 * totalReqNanoSeconds / ((System.nanoTime() - tsStart) * getTotalConnCount())
 				)
 			);
 		}
@@ -478,7 +478,7 @@ implements LoadExecutor<T> {
 				// calculate the efficiency and report
 				final float
 					loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
-					eff = durSumTasks.get() / (loadDurMicroSec * totalThreadCount);
+					eff = durSumTasks.get() / (loadDurMicroSec * totalConnCount);
 				LOG.debug(
 					Markers.PERF_SUM,
 					String.format(
