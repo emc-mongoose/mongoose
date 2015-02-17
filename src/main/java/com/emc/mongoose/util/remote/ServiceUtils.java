@@ -61,6 +61,16 @@ public final class ServiceUtils {
 		} finally {
 			PORT_RMI_CONTROL = tmpPort;
 		}
+		//
+		Runtime.getRuntime().addShutdownHook(
+			new Thread("svcShutDownHook") {
+				@Override
+				public final void run() {
+					ServiceUtils.shutdown();
+				}
+			}
+		);
+
 	}
 	//
 	private final static Map<String, Service> SVC_MAP;

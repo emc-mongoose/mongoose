@@ -25,7 +25,6 @@ import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
-import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpClientEventHandler;
 import org.apache.http.nio.protocol.BasicAsyncRequestProducer;
