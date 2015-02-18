@@ -23,7 +23,6 @@ import com.emc.mongoose.util.logging.ConsoleColors;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
-import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
 //
 import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.commons.lang.StringUtils;
