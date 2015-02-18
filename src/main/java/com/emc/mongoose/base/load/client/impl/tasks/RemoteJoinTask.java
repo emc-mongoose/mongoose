@@ -6,6 +6,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 /**
  Created by kurila on 23.12.14.
@@ -33,6 +34,8 @@ implements Runnable {
 					Markers.MSG, "Remote join task for \"{}\" was interrupted", loadSvc.getName()
 				);
 			}
+		} catch(final NoSuchObjectException e) {
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Remote join failed, no such service");
 		} catch(final RemoteException e) {
 			TraceLogger.failure(LOG, Level.WARN, e, "Remote join task failure");
 		}

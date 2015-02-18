@@ -116,13 +116,16 @@ implements WSLoadExecutor<T> {
 		);
 		//
 		ConnectingIOReactor ioReactor = null;
-		final int ioThreadCount = runTimeConfig.getRunIOWorkersPerCore() *
-			Runtime.getRuntime().availableProcessors() - 1;
+
+		final int
+			coreCount = Runtime.getRuntime().availableProcessors(),
+			ioThreadCount = totalConnCount <= coreCount ?
+				totalConnCount : coreCount;
 		try {
 			ioReactorConfigBuilder.setIoThreadCount(ioThreadCount);
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new WorkerFactory(String.format("%s-ioWorker", getName()))
+				new WorkerFactory(String.format("IOWorker<%s>", getName()))
 			);
 		} catch(final IOReactorException e) {
 			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");

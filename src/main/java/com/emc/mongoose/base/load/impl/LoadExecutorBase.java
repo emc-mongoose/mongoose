@@ -82,8 +82,8 @@ implements LoadExecutor<T> {
 	) {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(runTimeConfig.getRunRequestQueueSize()),
-			new WorkerFactory("submitWorker")
+			new LinkedBlockingQueue<Runnable>(runTimeConfig.getRunRequestQueueSize())//,
+			//new WorkerFactory("submitWorker")
 		);
 		//
 		storageNodeCount = addrs.length;
@@ -118,7 +118,7 @@ implements LoadExecutor<T> {
 			(maxCount > 0? Long.toString(maxCount) : "") + '-' +
 			Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount);
 		setThreadFactory(
-			new DataObjectWorkerFactory(name, loadNum, reqConfig.getAPI(), loadType)
+			new DataObjectWorkerFactory(loadNum, reqConfig.getAPI(), loadType, name)
 		);
 		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
@@ -185,7 +185,8 @@ implements LoadExecutor<T> {
 		}
 	};
 	//
-	protected final void logMetrics(final Marker logMarker) {
+	@Override
+	public final void logMetrics(final Marker logMarker) {
 		//
 		final long
 			countReqSucc = counterReqSucc.getCount(),
@@ -382,7 +383,7 @@ implements LoadExecutor<T> {
 						try {
 							Thread.sleep(rejectCount * retryDelayMilliSec);
 						} catch(final InterruptedException ee) {
-							LOG.debug(
+							LOG.trace(
 								Markers.ERR,
 								"Got interruption, won't submit result handling for task #{}",
 								ioTask.hashCode()

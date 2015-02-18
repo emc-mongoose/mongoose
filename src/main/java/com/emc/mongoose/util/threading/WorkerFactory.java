@@ -4,6 +4,7 @@ package com.emc.mongoose.util.threading;
 //import org.apache.logging.log4j.Logger;
 //
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 25.04.14.
  */
@@ -11,21 +12,21 @@ public class WorkerFactory
 implements ThreadFactory {
 	//
 	//private static final Logger LOG = LogManager.getLogger();
+	protected static final String FMT_NAME_THREAD = "%s#%s";
 	//
 	protected final String threadNamePrefix;
-	private volatile int threadNumber;
+	protected final AtomicInteger threadNumber = new AtomicInteger(0);
 	//
 	public WorkerFactory(final String threadNamePrefix) {
-		//LOG.trace(Markers.MSG, "New worker factory: \"{}\"", threadNamePrefix);
 		this.threadNamePrefix = threadNamePrefix;
-		this.threadNumber = 0;
 	}
 	//
-	@Override @SuppressWarnings("NullableProblems")
+	@Override
 	public Thread newThread(final Runnable runnable) {
 		//LOG.trace(LogMark.MSG, "Handling new task \"{}\"", runnable.toString());
 		return new Thread(
-			runnable, threadNamePrefix + '#' + Integer.toString(threadNumber++)
+			runnable,
+			String.format(FMT_NAME_THREAD, threadNamePrefix, threadNumber.incrementAndGet())
 		);
 	}
 	//

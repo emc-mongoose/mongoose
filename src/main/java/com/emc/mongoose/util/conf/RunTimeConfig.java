@@ -183,10 +183,6 @@ implements Externalizable {
 		return getBoolean("run.request.retries");
 	}
 	//
-	public final int getRunIOWorkersPerCore() {
-		return getInt("run.ioworkers.per.core");
-	}
-	//
 	public final String getStorageApi() {
 		return getString(KEY_STORAGE_API);
 	}
