@@ -29,18 +29,18 @@
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "perfSum",
+								"type": "ThresholdFilter",
+								"level": "INFO",
 								"onMatch": "NEUTRAL",
-								"onMismatch": "NEUTRAL"
+								"onMismatch": "DENY"
 							}, {
 								"type": "MarkerFilter",
 								"marker": "err",
-								"onMatch": "NEUTRAL",
+								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
 							}, {
-								"type": "ThresholdFilter",
-								"level": "INFO",
+								"type": "MarkerFilter",
+								"marker": "perfSum",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
 							}
