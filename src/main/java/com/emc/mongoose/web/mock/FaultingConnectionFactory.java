@@ -20,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by olga on 04.02.15.
  */
-public class FaultingConnectionFactory
+public final class FaultingConnectionFactory
 extends DefaultNHttpServerConnectionFactory {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -41,7 +41,7 @@ extends DefaultNHttpServerConnectionFactory {
 	public final DefaultNHttpServerConnection createConnection(final IOSession session) {
 		DefaultNHttpServerConnection connection = super.createConnection(session);
 		if (faultPeriod > 0 && (counter.incrementAndGet() % faultPeriod) == 0 ){
-			LOG.info(Markers.MSG, "Connection ready to fault!");
+			LOG.debug(Markers.MSG, "Connection ready to fault!");
 			connectionPool.submit(new ConnectionFaultWorker(connection, faultSleepMsec));
 		}
 		return connection;
@@ -66,9 +66,9 @@ extends DefaultNHttpServerConnectionFactory {
 				Thread.sleep(faultSleepMsec);
 				if (connection.isOpen()){
 					connection.close();
-					LOG.info(Markers.MSG, " Connection close");
+					LOG.debug(Markers.MSG, " Connection close");
 				} else {
-					LOG.info(Markers.MSG, " Connection already close");
+					LOG.debug(Markers.MSG, " Connection already close");
 				}
 			}catch (final IOException e) {
 				TraceLogger.failure(LOG, Level.ERROR, e, "Fault thread");
