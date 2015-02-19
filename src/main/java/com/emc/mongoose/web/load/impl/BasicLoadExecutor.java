@@ -25,8 +25,10 @@ import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
+import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
 import org.apache.http.nio.protocol.BasicAsyncRequestProducer;
 import org.apache.http.nio.protocol.BasicAsyncResponseConsumer;
@@ -49,9 +51,12 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 02.12.14.
  */
@@ -132,7 +137,65 @@ implements WSLoadExecutor<T> {
 			//
 			connPool = new BasicNIOConnPool(
 				ioReactor, runTimeConfig.getConnPoolTimeOut(), connConfig
-			);
+			) {
+				//
+				private final Map<NHttpClientConnection, AtomicInteger>
+					leaseStats = new ConcurrentHashMap<>(),
+					releaseStats = new ConcurrentHashMap<>(),
+					reuseStats = new ConcurrentHashMap<>();
+				//
+				@Override
+				protected final BasicNIOPoolEntry createEntry(
+					final HttpHost host, final NHttpClientConnection conn
+				) {
+					if(!leaseStats.containsKey(conn)) {
+						leaseStats.put(conn, new AtomicInteger(0));
+					}
+					if(!releaseStats.containsKey(conn)) {
+						releaseStats.put(conn, new AtomicInteger(0));
+					}
+					if(!reuseStats.containsKey(conn)) {
+						reuseStats.put(conn, new AtomicInteger(0));
+					}
+					return super.createEntry(host, conn);
+				}
+				//
+				@Override
+				protected final void onLease(final BasicNIOPoolEntry entry) {
+					leaseStats.get(entry.getConnection()).incrementAndGet();
+					super.onLease(entry);
+				}
+				//
+				@Override
+				protected final void onRelease(final BasicNIOPoolEntry entry) {
+					releaseStats.get(entry.getConnection()).incrementAndGet();
+					super.onRelease(entry);
+				}
+				//
+				@Override
+				protected final void onReuse(final BasicNIOPoolEntry entry) {
+					reuseStats.get(entry.getConnection()).incrementAndGet();
+					super.onReuse(entry);
+				}
+				//
+				@Override
+				public final void shutdown(final long waitMilliSec)
+				throws IOException {
+					super.shutdown(waitMilliSec);
+					synchronized(LOG) {
+						LOG.info(
+							Markers.MSG, "Total created connection count: {}", leaseStats.size()
+						);
+						for(final NHttpClientConnection conn : leaseStats.keySet()) {
+							LOG.debug(
+								Markers.MSG, "Connection \"{}\": leased={}, released={}, reused={}",
+								conn, leaseStats.get(conn).get(), releaseStats.get(conn).get(),
+								reuseStats.get(conn).get()
+							);
+						}
+					}
+				}
+			};
 			connPool.setDefaultMaxPerRoute(totalConnCount);
 			connPool.setMaxTotal(totalConnCount);
 			//
