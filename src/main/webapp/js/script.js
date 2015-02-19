@@ -403,7 +403,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 									charts(chartsArray).single(runId, runMetricsPeriodSec, json.threadName);
 									break;
 								case RUN_SCENARIO_NAME.chain:
-									charts(chartsArray).chain(runId, json.threadName);
+									charts(chartsArray).chain(runId, runMetricsPeriodSec, json.threadName);
 									break;
 								case RUN_SCENARIO_NAME.rampup:
 									break;
@@ -466,12 +466,12 @@ function loadPropertiesFromFile(file) {
 				$(elementId).val(splitLine[1]);
 				if ($(elementId).attr("id") === "run.time") {
 					var resultArray = $(elementId).val().split(".");
-					$(".complex input").val(resultArray[0]);
-					$(".complex select option:contains(" + resultArray[1] + ")").attr("selected", "selected");
+					$(".complex input").val(resultArray[0]).change();
+					$(".complex select option:contains(" + resultArray[1] + ")").attr("selected", "selected").change();
 				}
-				$('input[data-pointer="' + $(elementId).attr("id") + '"]').val($(elementId).val());
+				$('input[data-pointer="' + $(elementId).attr("id") + '"]').val($(elementId).val()).change();
 				$('select[data-pointer="' + $(elementId).attr("id") + '"] option:contains(' + $(elementId).val() + ')')
-					.attr('selected', 'selected');
+					.attr('selected', 'selected').change();
 			}
 		}
 	};
@@ -774,7 +774,7 @@ function charts(chartsArray) {
 				};
 			}
 		},
-		chain: function(runId, loadType) {
+		chain: function(runId, runMetricsPeriodSec, loadType) {
 			var AVG = "avg";
 			var MIN_1 = "1min";
 			var MIN_5 = "5min";
@@ -791,7 +791,8 @@ function charts(chartsArray) {
 				"run.id": runId,
 				"run.scenario.name": SCENARIO.chain,
 				"charts": [
-					drawThroughputChart()
+					drawThroughputChart(),
+					drawBandwidthChart()
 				]
 			});
 			//
@@ -831,6 +832,44 @@ function charts(chartsArray) {
 					}
 				};
 			}
+			//
+			function drawBandwidthChart() {
+				var data = [
+					{
+						loadType: loadType,
+						charts: [
+							{
+								name: AVG,
+								values: [
+									{x: 0, y: 0}
+								]
+							}, {
+								name: MIN_1,
+								values: [
+									{x: 0, y: 0}
+								]
+							}, {
+								name: MIN_5,
+								values: [
+									{x: 0, y: 0}
+								]
+							}, {
+								name: MIN_15,
+								values: [
+									{x: 0, y: 0}
+								]
+							}
+						]
+					}
+				];
+				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds", "bandwidth[obj/s]", "#bw-" + runId.split(".").join("_"));
+				return {
+					update: function(json) {
+						updateFunction(CHART_TYPES.BW, json);
+					}
+				};
+			}
+			//
 			function drawChart(data, chartTitle, xAxisLabel, yAxisLabel, path) {
 				var x = d3.scale.linear()
 					.domain([
@@ -981,7 +1020,7 @@ function charts(chartsArray) {
 					.attr("checked", function(d) { if (d === AVG) { return "checked"; } })
 					.on("click", function(d, i) {
 						var currentVal = $(this).val();
-						var elements = $(".line");
+						var elements = $(path + " " + ".line");
 						if ($(this).is(":checked")) {
 							elements.each(function() {
 								var splittedString = $(this).attr("id").split("-");
@@ -1091,7 +1130,7 @@ function charts(chartsArray) {
 						if (d.loadType === loadType) {
 							isFound = true;
 							d.charts.forEach(function(c, i) {
-								c.values.push({x: c.values.length * 10, y: parseFloat(value[i])});
+								c.values.push({x: c.values.length * runMetricsPeriodSec, y: parseFloat(value[i])});
 							})
 						}
 					});
