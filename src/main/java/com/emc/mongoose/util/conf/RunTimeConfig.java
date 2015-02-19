@@ -61,6 +61,7 @@ implements Externalizable {
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
 		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
+		KEY_RUN_METRICS_PERIOD_SEC = "run.metrics.period.sec",
 		KEY_RUN_TIME = "run.time",
 		KEY_RUN_VERSION = "run.version",
 		//
@@ -287,10 +288,6 @@ implements Externalizable {
 		return getInt("storage.socket.timeout.millisec");
 	}
 	//
-	public final boolean getStaleConnCheckFlag() {
-		return getBoolean("storage.connection.stale.check");
-	}
-	//
 	public final boolean getSocketReuseAddrFlag() {
 		return getBoolean("storage.socket.reuse.addr");
 	}
@@ -305,6 +302,18 @@ implements Externalizable {
 	//
 	public final int getSocketLinger() {
 		return getInt("storage.socket.linger");
+	}
+	//
+	public final long getSocketBindBackLogSize() {
+		return getLong("storage.socket.bind.backlog.size");
+	}
+	//
+	public final boolean getSocketInterestOpQueued() {
+		return getBoolean("storage.socket.interest.op.queued");
+	}
+	//
+	public final long getSocketSelectInterval() {
+		return getLong("storage.socket.select.interval");
 	}
 	//
 	public final String[] getRemoteServers() {

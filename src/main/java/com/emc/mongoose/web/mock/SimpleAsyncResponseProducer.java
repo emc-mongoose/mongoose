@@ -18,7 +18,7 @@ import java.io.OutputStream;
 /**
  * Created by olga on 12.02.15.
  */
-public final class CinderellaResponseProducer
+public final class SimpleAsyncResponseProducer
 extends BasicAsyncResponseProducer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -26,7 +26,7 @@ extends BasicAsyncResponseProducer {
 	private final HttpResponse response;
 	private final HttpAsyncContentProducer producer;
 	//
-	public CinderellaResponseProducer(HttpResponse response) {
+	public SimpleAsyncResponseProducer(HttpResponse response) {
 		super(response);
 		this.response = response;
 		final HttpEntity entity = response.getEntity();

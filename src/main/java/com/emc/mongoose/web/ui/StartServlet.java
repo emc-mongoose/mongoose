@@ -134,8 +134,9 @@ public final class StartServlet extends CommonServlet {
 			public void run() {
 				Main.RUN_TIME_CONFIG.set(runTimeConfig);
 				ThreadContextMap.initThreadContextMap();
-				ThreadContextMap.putValue("run.scenario.name", runTimeConfig.getRunScenarioName());
-				ThreadContextMap.putValue("run.metrics.period.sec", String.valueOf(runTimeConfig.getRunMetricsPeriodSec()));
+				ThreadContextMap.putValue(RunTimeConfig.KEY_RUN_SCENARIO_NAME, runTimeConfig.getRunScenarioName());
+				ThreadContextMap.putValue(RunTimeConfig.KEY_RUN_METRICS_PERIOD_SEC,
+						String.valueOf(runTimeConfig.getRunMetricsPeriodSec()));
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getRunScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);

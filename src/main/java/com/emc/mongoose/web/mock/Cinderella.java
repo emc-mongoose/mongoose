@@ -39,7 +39,6 @@ import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.reactor.ListeningIOReactor;
 import org.apache.http.protocol.HttpContext;
-//import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.ResponseConnControl;
@@ -52,10 +51,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.management.MBeanServer;
-import javax.xml.ws.http.HTTPException;
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
@@ -76,7 +71,6 @@ implements Runnable {
 	private final ExecutorService multiSocketSvc;
 	private final HttpAsyncService protocolHandler;
 	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
-	private final Map<String, WSObjectMock> sharedStorage;
 	//
 	public final static String NAME_SERVER = String.format(
 		"%s/%s", Cinderella.class.getSimpleName(), Main.RUN_TIME_CONFIG.get().getRunVersion()
@@ -153,7 +147,7 @@ implements Runnable {
 		metricsReporter.start();
 		//queue size for data object
 		final int queueDataIdSize = runTimeConfig.getInt("storage.mock.capacity");
-		sharedStorage = Collections.synchronizedMap(new LRUMap<String, WSObjectMock>(queueDataIdSize));
+		final Map<String, WSObjectMock> sharedStorage = Collections.synchronizedMap(new LRUMap<String, WSObjectMock>(queueDataIdSize));
 		// count of heads = count of cores - 1
 		portCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
 		LOG.debug(Markers.MSG, "Starting w/ {} heads", portCount);
@@ -168,7 +162,7 @@ implements Runnable {
 		// Create request handler registry
 		final UriHttpAsyncRequestHandlerMapper reqistry = new UriHttpAsyncRequestHandlerMapper();
 		// Register the default handler for all URIs
-		reqistry.register("*", new RequestHandler());
+		reqistry.register("*", new RequestHandler(sharedStorage));
 		protocolHandler = new HttpAsyncService(httpproc, reqistry);
 		multiSocketSvc = Executors.newFixedThreadPool(
 			portCount, new WorkerFactory("cinderellaWorker")
@@ -177,35 +171,6 @@ implements Runnable {
 
 	@Override
 	public void run() {
-		//if there is data src file path
-		final String dataFilePath = runTimeConfig.getDataSrcFPath();
-		final int dataSizeRadix = runTimeConfig.getInt("storage.mock.data.size.radix");
-		if (!dataFilePath.isEmpty()){
-			try {
-				final FileReader reader = new FileReader(dataFilePath);
-				final BufferedReader bufferReader = new BufferedReader(reader);
-				String s;
-				while((s = bufferReader.readLine()) != null) {
-					final WSObjectMock dataObject = new BasicWSObjectMock(s) ;
-					//if mongoose v.0.5.0
-					if (dataSizeRadix == 16) {
-						dataObject.setSize(Long.valueOf(String.valueOf(dataObject.getSize()), 0x10));
-					}
-					//
-					LOG.debug(Markers.DATA_LIST,dataObject.toString());
-					synchronized (sharedStorage){
-						sharedStorage.put(dataObject.getId(),dataObject);
-					}
-				}
-				reader.close();
-			} catch (final FileNotFoundException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e,
-					"File not found.");
-			} catch (final IOException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e,
-					"Read line is fault.");
-			}
-		}
 		//
 		for(int nextPort = portStart; nextPort < portStart + portCount; nextPort ++){
 			try {
@@ -267,19 +232,22 @@ implements Runnable {
 	private final class RequestHandler
 	implements HttpAsyncRequestHandler<HttpRequest> {
 		//
+		final Map<String, WSObjectMock> sharedStorage;
+		//
 		private final int ringOffsetRadix = runTimeConfig.getInt(
 			"storage.mock.data.offset.radix"
 		);
 		//
-		public RequestHandler() {
+		public RequestHandler(final Map<String, WSObjectMock> sharedStorage) {
 			super();
+			this.sharedStorage = sharedStorage;
 		}
 		//
 		@Override
 		public HttpAsyncRequestConsumer<HttpRequest> processRequest(
 			final HttpRequest request, final HttpContext context
 		) throws HttpException, IOException {
-			return new CinderellaBasicAsyncRequestConsumer(runTimeConfig);
+			return new DummyAsyncRequestConsumer(runTimeConfig);
 		}
 		//
 		@Override
@@ -325,8 +293,7 @@ implements Runnable {
 					doDelete(response);
 					break;
 			}
-			//httpexchange.submitResponse(new BasicAsyncResponseProducer(response));
-			httpexchange.submitResponse(new CinderellaResponseProducer(response));
+			httpexchange.submitResponse(new BasicAsyncResponseProducer(response));
 		}
 		//
 		private void doGet(final HttpResponse response, final String dataID){

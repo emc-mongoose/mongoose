@@ -26,8 +26,8 @@ extends DefaultNHttpServerConnectionFactory {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final AtomicInteger counter = new AtomicInteger(0);
-	private final ExecutorService connectionPool = Executors.newFixedThreadPool(100000,
-		new WorkerFactory("connection-fault"));
+	private final ExecutorService
+		connectionPool = Executors.newFixedThreadPool(100000, new WorkerFactory("connKiller"));
 	private final int faultSleepMsec;
 	private final int faultPeriod;
 	//
