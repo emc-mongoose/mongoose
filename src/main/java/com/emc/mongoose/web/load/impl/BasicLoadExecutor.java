@@ -93,8 +93,9 @@ implements WSLoadExecutor<T> {
 		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int) thrLocalConfig.getDataPageSize())
+			.setBufferSize((int)thrLocalConfig.getDataPageSize())
 			.build();
+		final int ioThreadCount = (int) Math.sqrt(totalConnCount);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setBacklogSize((int) thrLocalConfig.getSocketBindBackLogSize())
@@ -107,7 +108,8 @@ implements WSLoadExecutor<T> {
 			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
 			.setRcvBufSize((int) thrLocalConfig.getDataPageSize())
-			.setSndBufSize((int) thrLocalConfig.getDataPageSize());
+			.setSndBufSize((int) thrLocalConfig.getDataPageSize())
+			.setIoThreadCount(ioThreadCount);
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
@@ -116,13 +118,7 @@ implements WSLoadExecutor<T> {
 		);
 		//
 		ConnectingIOReactor ioReactor = null;
-
-		final int
-			coreCount = Runtime.getRuntime().availableProcessors(),
-			ioThreadCount = totalConnCount <= coreCount ?
-				totalConnCount : coreCount;
 		try {
-			ioReactorConfigBuilder.setIoThreadCount(ioThreadCount);
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
 				new WorkerFactory(String.format("IOWorker<%s>", getName()))
