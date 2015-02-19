@@ -98,6 +98,7 @@ implements WSLoadExecutor<T> {
 		final int ioThreadCount = (int) Math.sqrt(totalConnCount);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
+			.setIoThreadCount(ioThreadCount)
 			.setBacklogSize((int) thrLocalConfig.getSocketBindBackLogSize())
 			.setInterestOpQueued(thrLocalConfig.getSocketInterestOpQueued())
 			.setSelectInterval(thrLocalConfig.getSocketSelectInterval())
@@ -109,7 +110,7 @@ implements WSLoadExecutor<T> {
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
 			.setRcvBufSize((int) thrLocalConfig.getDataPageSize())
 			.setSndBufSize((int) thrLocalConfig.getDataPageSize())
-			.setIoThreadCount(ioThreadCount);
+			.setConnectTimeout(thrLocalConfig.getConnTimeOut());
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
@@ -129,7 +130,9 @@ implements WSLoadExecutor<T> {
 		//
 		if(ioReactor != null) {
 			//
-			connPool = new BasicNIOConnPool(ioReactor, connConfig);
+			connPool = new BasicNIOConnPool(
+				ioReactor, runTimeConfig.getConnPoolTimeOut(), connConfig
+			);
 			connPool.setDefaultMaxPerRoute(totalConnCount);
 			connPool.setMaxTotal(totalConnCount);
 			//

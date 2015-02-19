@@ -12,7 +12,7 @@ from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.logging import TraceLogger, Markers
 from com.emc.mongoose.base.load import DataItemBuffer
 #
-from java.lang import Long, Throwable, IllegalArgumentException
+from java.lang import Long, String, Throwable, IllegalArgumentException
 from java.util import NoSuchElementException
 #
 RUN_TIME = timeout_init()
@@ -106,6 +106,7 @@ def execute(chain=(), flagSimultaneous=True):
 		prevLoad, nextLoad = None, None
 		for nextLoad in chain:
 			if not isinstance(nextLoad, DataItemBuffer):
+				LOG.debug(Markers.MSG, "Starting next chain element: \"{}\"", nextLoad)
 				nextLoad.start()
 				if prevLoad is not None and isinstance(prevLoad, DataItemBuffer):
 					prevLoad.close()
@@ -114,7 +115,8 @@ def execute(chain=(), flagSimultaneous=True):
 						prevLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
 					except Throwable as e:
 						TraceLogger.failure(
-							LOG, Level.ERROR, e, "Producer \"{}\" execution failure", prevLoad
+							LOG, Level.ERROR, e,
+							String.format("Producer \"%s\" execution failure", prevLoad)
 						)
 					finally:
 						prevLoad.interrupt()
@@ -122,7 +124,8 @@ def execute(chain=(), flagSimultaneous=True):
 					nextLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
 				except Throwable as e:
 					TraceLogger.failure(
-						LOG, Level.ERROR, e, "Consumer \"{}\" execution failure", nextLoad
+						LOG, Level.ERROR, e,
+						String.format("Consumer \"%s\" execution failure", nextLoad)
 					)
 				finally:
 					nextLoad.close()

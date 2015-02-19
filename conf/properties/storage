@@ -10,7 +10,6 @@ scheme:								http
 #
 connection.timeout.millisec:		1000000
 connection.pool.timeout.millisec:	1000000
-connection.stale.check:				false
 
 #
 socket.timeout.millisec:			1000000

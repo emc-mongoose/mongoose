@@ -61,6 +61,7 @@ implements Externalizable {
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
 		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
+		KEY_RUN_METRICS_PERIOD_SEC = "run.metrics.period.sec",
 		KEY_RUN_TIME = "run.time",
 		KEY_RUN_VERSION = "run.version",
 		//
@@ -285,10 +286,6 @@ implements Externalizable {
 	//
 	public final int getSocketTimeOut() {
 		return getInt("storage.socket.timeout.millisec");
-	}
-	//
-	public final boolean getStaleConnCheckFlag() {
-		return getBoolean("storage.connection.stale.check");
 	}
 	//
 	public final boolean getSocketReuseAddrFlag() {
