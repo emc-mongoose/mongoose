@@ -145,10 +145,7 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		newLoadClient = new BasicWSLoadClient<>(
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
-			runTimeConfig.getDataCount(),
-			nextLoad == null ?
-				1 :
-				Math.min(LoadExecutor.COUNT_THREADS_MIN, Runtime.getRuntime().availableProcessors())
+			runTimeConfig.getDataCount()
 		);
 		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer != null && srcProducer.getConsumer() == null) {

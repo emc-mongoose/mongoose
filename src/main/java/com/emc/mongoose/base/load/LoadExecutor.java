@@ -2,6 +2,7 @@ package com.emc.mongoose.base.load;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataItem;
+import org.apache.logging.log4j.Marker;
 //
 import java.rmi.RemoteException;
 import java.util.concurrent.Future;
@@ -55,4 +56,6 @@ extends Producer<T>, Consumer<T> {
 	void join(final long timeOutMilliSec)
 	throws RemoteException, InterruptedException;
 	//
+	void logMetrics(Marker marker)
+	throws RemoteException;
 }

@@ -39,7 +39,6 @@ import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.reactor.ListeningIOReactor;
 import org.apache.http.protocol.HttpContext;
-//import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.ResponseConnControl;

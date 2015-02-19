@@ -185,10 +185,6 @@ implements Externalizable {
 		return getBoolean("run.request.retries");
 	}
 	//
-	public final int getRunIOWorkersPerCore() {
-		return getInt("run.ioworkers.per.core");
-	}
-	//
 	public final String getStorageApi() {
 		return getString(KEY_STORAGE_API);
 	}
@@ -291,10 +287,6 @@ implements Externalizable {
 	//
 	public final int getSocketTimeOut() {
 		return getInt("storage.socket.timeout.millisec");
-	}
-	//
-	public final boolean getStaleConnCheckFlag() {
-		return getBoolean("storage.connection.stale.check");
 	}
 	//
 	public final boolean getSocketReuseAddrFlag() {

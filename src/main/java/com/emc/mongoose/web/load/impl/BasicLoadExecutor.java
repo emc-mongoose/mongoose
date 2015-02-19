@@ -93,10 +93,12 @@ implements WSLoadExecutor<T> {
 		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int) thrLocalConfig.getDataPageSize())
+			.setBufferSize((int)thrLocalConfig.getDataPageSize())
 			.build();
+		final int ioThreadCount = (int) Math.sqrt(totalConnCount);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
+			.setIoThreadCount(ioThreadCount)
 			.setBacklogSize((int) thrLocalConfig.getSocketBindBackLogSize())
 			.setInterestOpQueued(thrLocalConfig.getSocketInterestOpQueued())
 			.setSelectInterval(thrLocalConfig.getSocketSelectInterval())
@@ -107,7 +109,8 @@ implements WSLoadExecutor<T> {
 			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
 			.setRcvBufSize((int) thrLocalConfig.getDataPageSize())
-			.setSndBufSize((int) thrLocalConfig.getDataPageSize());
+			.setSndBufSize((int) thrLocalConfig.getDataPageSize())
+			.setConnectTimeout(thrLocalConfig.getConnTimeOut());
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
@@ -116,22 +119,12 @@ implements WSLoadExecutor<T> {
 		);
 		//
 		ConnectingIOReactor ioReactor = null;
-		final int ioThreadCount = runTimeConfig.getRunIOWorkersPerCore() *
-			Runtime.getRuntime().availableProcessors() - 1;
 		try {
-				/*
-			localIOReactor = new DefaultConnectingIOReactor(
-				ioReactorConfig,
-				new DataObjectWorkerFactory(getName() + "-worker", reqConfig.getLoadNumber(),
-				reqConfig.getAPI(), reqConfig.getLoadType())
-				//
-				new WorkerFactory(String.format("%s-ioWorker", getName()))
-				*/
-			ioReactorConfigBuilder.setIoThreadCount(ioThreadCount);
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new DataObjectWorkerFactory(String.format("%s-ioWorker", getName()), reqConfig.getLoadNumber(),
-					reqConfig.getAPI(), reqConfig.getLoadType())
+				//new WorkerFactory(String.format("IOWorker<%s>", getName()))
+				new DataObjectWorkerFactory(reqConfig.getLoadNumber(),
+					reqConfig.getAPI(), reqConfig.getLoadType(), String.format("IOWorker<%s>", getName()))
 			);
 		} catch(final IOReactorException e) {
 			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
@@ -139,7 +132,9 @@ implements WSLoadExecutor<T> {
 		//
 		if(ioReactor != null) {
 			//
-			connPool = new BasicNIOConnPool(ioReactor, connConfig);
+			connPool = new BasicNIOConnPool(
+				ioReactor, runTimeConfig.getConnPoolTimeOut(), connConfig
+			);
 			connPool.setDefaultMaxPerRoute(totalConnCount);
 			connPool.setMaxTotal(totalConnCount);
 			//

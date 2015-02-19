@@ -30,10 +30,10 @@ implements WSLoadClient<T> {
 	public BasicWSLoadClient(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
 		final Map<String, JMXConnector> remoteJMXConnMap, final WSRequestConfig<T> reqConf,
-		final long maxCount, final int countWorkers
+		final long maxCount
 	) {
 		super(
-			runTimeConfig, remoteLoadMap, remoteJMXConnMap, reqConf, maxCount, countWorkers
+			runTimeConfig, remoteLoadMap, remoteJMXConnMap, reqConf, maxCount
 		);
 	}
 	//

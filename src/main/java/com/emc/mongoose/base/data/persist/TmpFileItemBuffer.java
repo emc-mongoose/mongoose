@@ -238,7 +238,7 @@ implements DataItemBufferSvc<T> {
 					} catch(final IOException | ClassNotFoundException | ClassCastException e) {
 						TraceLogger.failure(LOG, Level.WARN, e, "Failed to read a data item");
 					} catch(final InterruptedException e) {
-						LOG.debug(Markers.ERR, "Interrupted during submit the data item");
+						LOG.trace(Markers.ERR, "Interrupted during submit the data item");
 					} catch(final RejectedExecutionException e) {
 						LOG.debug(Markers.ERR, "Consumer rejected the data item");
 					} finally {
@@ -247,7 +247,7 @@ implements DataItemBufferSvc<T> {
 						} catch(final RemoteException e) {
 							TraceLogger.failure(LOG, Level.WARN, e, "Looks like network failure");
 						} catch(final InterruptedException e) {
-							LOG.debug(Markers.ERR, "Interrupted");
+							LOG.trace(Markers.ERR, "Interrupted");
 						} catch(final RejectedExecutionException e) {
 							LOG.debug(Markers.ERR, "Consumer rejected the poison");
 						} finally {
