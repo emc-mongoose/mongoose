@@ -675,61 +675,67 @@ implements LoadClient<T> {
 	public final void close()
 	throws IOException {
 		LOG.debug(Markers.MSG, "trying to close");
-		if(!remoteLoadMap.isEmpty()) {
-			LOG.debug(Markers.MSG, "do performing close");
-			interrupt();
-			mgmtConnExecutor.shutdownNow();
-			LOG.debug(Markers.MSG, "log summary metrics");
-			logMetrics(Markers.PERF_SUM);
-			LOG.debug(Markers.MSG, "log metainfo frames");
-			logMetaInfoFrames();
-			metricsReporter.close();
-			//
-			LOG.debug(Markers.MSG, "Closing the remote services...");
-			LoadSvc<T> nextLoadSvc;
-			JMXConnector nextJMXConn;
-			for(final String addr : remoteLoadMap.keySet()) {
+		synchronized(remoteLoadMap) {
+			if(!remoteLoadMap.isEmpty()) {
+				LOG.debug(Markers.MSG, "do performing close");
+				interrupt();
+				mgmtConnExecutor.shutdownNow();
+				LOG.debug(Markers.MSG, "log summary metrics");
+				logMetrics(Markers.PERF_SUM);
+				LOG.debug(Markers.MSG, "log metainfo frames");
+				logMetaInfoFrames();
+				metricsReporter.close();
 				//
-				try {
-					nextLoadSvc = remoteLoadMap.get(addr);
-					nextLoadSvc.close();
-					LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
-				} catch(final NoSuchElementException e) {
-					if(!isTerminating() && !isTerminated()) {
-						LOG.debug(
-							Markers.ERR, "Looks like the remote load service is already shut down"
+				LOG.debug(Markers.MSG, "Closing the remote services...");
+				LoadSvc<T> nextLoadSvc;
+				JMXConnector nextJMXConn;
+				for(final String addr : remoteLoadMap.keySet()) {
+					//
+					try {
+						nextLoadSvc = remoteLoadMap.get(addr);
+						nextLoadSvc.close();
+						LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
+					} catch(final NoSuchElementException e) {
+						if(!isTerminating() && !isTerminated()) {
+							LOG.debug(
+								Markers.ERR,
+								"Looks like the remote load service is already shut down"
+							);
+						}
+					} catch(final NoSuchObjectException e) {
+						TraceLogger.failure(
+							LOG, Level.DEBUG, e, "No remote service found for closing"
+						);
+					} catch(final IOException e) {
+						TraceLogger.failure(
+							LOG, Level.WARN, e, "Failed to close remote load executor service"
 						);
 					}
-				} catch(final NoSuchObjectException e) {
-					TraceLogger.failure(LOG, Level.DEBUG, e, "No remote service found for closing");
-				} catch(final IOException e) {
-					TraceLogger.failure(
-						LOG, Level.WARN, e, "Failed to close remote load executor service"
-					);
-				}
-				//
-				try {
-					nextJMXConn = remoteJMXConnMap.get(addr);
-					if(nextJMXConn!=null) {
-						nextJMXConn.close();
-						LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
+					//
+					try {
+						nextJMXConn = remoteJMXConnMap.get(addr);
+						if(nextJMXConn!=null) {
+							nextJMXConn.close();
+							LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
+						}
+					} catch(final NoSuchElementException e) {
+						LOG.debug(
+							Markers.ERR, "Remote JMX connection had been interrupted earlier"
+						);
+					} catch(final IOException e) {
+						TraceLogger.failure(
+							LOG, Level.WARN, e,
+							String.format("Failed to close JMX connection to %s", addr)
+						);
 					}
-				} catch(final NoSuchElementException e) {
-					LOG.debug(Markers.ERR, "Remote JMX connection had been interrupted earlier");
-				} catch(final IOException e) {
-					TraceLogger.failure(
-						LOG, Level.WARN, e,
-						String.format("Failed to close JMX connection to %s", addr)
-					);
 				}
-				//
+				LoadCloseHook.del(this);
+				LOG.debug(Markers.MSG, "Clear the servers map");
+				remoteLoadMap.clear();
+				LOG.debug(Markers.MSG, "Closed {}", getName());
+			} else {
+				LOG.debug(Markers.ERR, "Closed already");
 			}
-			LoadCloseHook.del(this);
-			LOG.debug(Markers.MSG, "Clear the servers map");
-			remoteLoadMap.clear();
-			LOG.debug(Markers.MSG, "Closed {}", getName());
-		} else {
-			LOG.debug(Markers.ERR, "Closed already");
 		}
 	}
 	//
