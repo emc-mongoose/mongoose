@@ -6,8 +6,6 @@ import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.object.load.impl.ObjectLoadExecutorBase;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.io.http.BasicNIOClientConnection;
-import com.emc.mongoose.util.io.http.BasicNIOConnPool;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.threading.WorkerFactory;
@@ -26,6 +24,8 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
+import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
+import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpClientConnection;
@@ -96,7 +96,7 @@ implements WSLoadExecutor<T> {
 		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int)thrLocalConfig.getDataPageSize())
+			.setBufferSize((int) thrLocalConfig.getDataPageSize())
 			.build();
 		final int ioThreadCount = (int) Math.sqrt(totalConnCount);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
@@ -132,11 +132,11 @@ implements WSLoadExecutor<T> {
 		}
 		//
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
-			connFactory = new BasicNIOClientConnection.Factory(connConfig);
+			connFactory = new BasicNIOConnFactory(connConfig);
 		if(ioReactor != null) {
 			//
 			connPool = new BasicNIOConnPool(
-				ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut(), totalConnCount
+				ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
 			);
 			clientThread = new Thread(
 				new ExecuteClientTask<>(ioEventDispatch, ioReactor),
