@@ -49,7 +49,7 @@
 				}, {
 					"name": "hibernate",
 					"type": "HibernateAsync",
-					"enabled": "false",
+					"enabled": "true",
 					"blocking": "false",
 					"bufferSize": "65536",
 					"threadsForQueue": "20",
@@ -59,7 +59,7 @@
 				}, {
 					"name": "hibernateSync",
 					"type": "Hibernate",
-					"enabled": "false",
+					"enabled": "true",
 					"database": "postgresql",
 					"username": "mongoose",
 					"password": "mongoose",

@@ -40,16 +40,15 @@ extends AbstractAppender {
 	//
 	private static final long serialVersionUID = 1L;
 	private static final int DEFAULT_QUEUE_SIZE = 128,
-		POOL_SIZE=1000,
-		DEFAULT_THREADS_FOR_QUEUE = 10;
-		//REQ_TIME_OUT_SEC =60;
+		POOL_SIZE = 1000,
+		DEFAULT_THREADS_FOR_QUEUE = 10,
+		TIME_OUT_SEC = 50;
 	private final BlockingQueue<Serializable> queue;
 	private static Boolean ENABLED_FLAG;
-	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE, 50, TimeUnit.SECONDS,
+	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE, TIME_OUT_SEC, TimeUnit.SECONDS,
 		new ArrayBlockingQueue<Runnable>(100),new WorkerFactory("hibernate-appender-worker"));
 	//
 	private final int threadsForQueue;
-	List<Callable<Object>> tasks;
 	//
 	private final boolean blocking;
 	private final Configuration config;
@@ -67,7 +66,6 @@ extends AbstractAppender {
 		this.queue = new ArrayBlockingQueue<Serializable>(queueSize);
 		//
 		this.threadsForQueue = threadsForQueue;
-		this.tasks = new ArrayList<Callable<Object>>(threadsForQueue);
 		//
 		this.blocking = blocking;
 		this.config = config;
@@ -78,7 +76,6 @@ extends AbstractAppender {
 	//
 	@Override
 	public void start() {
-		Runtime.getRuntime().addShutdownHook(new ShutDownThread(this));
 		final Map<String, Appender> map = config.getAppenders();
 		final List<AppenderControl> appenders = new ArrayList<AppenderControl>();
 		for (final AppenderRef appenderRef : appenderRefs) {
@@ -115,6 +112,7 @@ extends AbstractAppender {
 		}
 		if (!executor.isTerminated()){
 			try {
+				//add comment
 				executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
 			} catch (final InterruptedException e) {
 				LOGGER.error("Interrupted waiting for submit executor to finish");
@@ -124,7 +122,7 @@ extends AbstractAppender {
 	//
 	@Override
 	public void append(LogEvent logEvent) {
-		//if(ENABLED_FLAG) {
+		if(ENABLED_FLAG) {
 			if (!isStarted()) {
 				throw new IllegalStateException("AsyncAppender " + getName() + " is not active");
 			}
@@ -139,8 +137,6 @@ extends AbstractAppender {
 			boolean appendSuccessful = false;
 			if (blocking) {
 				if (isAppenderThread.get() == Boolean.TRUE && queue.remainingCapacity() == 0) {
-					// LOG4J2-485: avoid deadlock that would result from trying
-					// to add to a full queue from appender thread
 					coreEvent.setEndOfBatch(false); // queue is definitely not empty!
 				} else {
 					try {
@@ -161,7 +157,7 @@ extends AbstractAppender {
 			if (!appendSuccessful && errorAppender != null) {
 				errorAppender.callAppender(coreEvent);
 			}
-		//}
+		}
 	}
 	/**
 	 * Create an AsyncAppender.
@@ -199,9 +195,8 @@ extends AbstractAppender {
 		if (appenderRefs == null) {
 			LOGGER.error("No appender references provided to AsyncAppender {}", name);
 		}
-
 		return new HibernateAsyncAppender(name, filter, appenderRefs, errorRef,
-				size, blocking, ignoreExceptions, config, includeLocation, threadsForQueue);
+			size, blocking, ignoreExceptions, config, includeLocation, threadsForQueue);
 	}
 	////////////////////
 	//Task for thread pool executor
@@ -297,24 +292,3 @@ extends AbstractAppender {
 		}
 	}
 }
-/////////////////////////////////////
-final class ShutDownThread
-extends Thread
-{
-	private final HibernateAsyncAppender appender;
-
-	public ShutDownThread(final HibernateAsyncAppender appender)
-	{
-		super("HibernateShutDown");
-		this.appender = appender;
-	}
-
-	@Override
-	public final void run()
-	{
-		if (!appender.isStopped()){
-			appender.stop();
-		}
-	}
-}
-//////////////////////////////////////

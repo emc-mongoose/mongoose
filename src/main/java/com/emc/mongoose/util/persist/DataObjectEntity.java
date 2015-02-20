@@ -16,7 +16,7 @@ import java.io.Serializable;
 @Entity(name="DataObject")
 @IdClass(DataObjectEntityPK.class)
 @Table(name = "dataobject")
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+//@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
 public final class DataObjectEntity
 implements Serializable{
 	@Id

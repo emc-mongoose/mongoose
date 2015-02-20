@@ -9,6 +9,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
+import com.emc.mongoose.util.threading.WorkerFactory;
 import com.emc.mongoose.web.api.WSIOTask;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
@@ -122,9 +123,9 @@ implements WSLoadExecutor<T> {
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				//new WorkerFactory(String.format("IOWorker<%s>", getName()))
-				new DataObjectWorkerFactory(reqConfig.getLoadNumber(),
-					reqConfig.getAPI(), reqConfig.getLoadType(), String.format("IOWorker<%s>", getName()))
+				new WorkerFactory(String.format("IOWorker<%s>", getName()))
+				//new DataObjectWorkerFactory(reqConfig.getLoadNumber(),
+				//	reqConfig.getAPI(), reqConfig.getLoadType(), String.format("IOWorker<%s>", getName()))
 			);
 		} catch(final IOReactorException e) {
 			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");

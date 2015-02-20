@@ -52,6 +52,8 @@ public final class HibernateAppender
 			ERR = "err",
 			DATA_LIST = "dataList";
 	//
+	private final static int TRANSACTION_TIMEOUT = 3;
+	//
 	@Override
 	public final void start()
 	{
@@ -220,6 +222,7 @@ public final class HibernateAppender
 		try {
 			if (modeEntity == null) {
 				modeEntity = new ModeEntity(modeName);
+				session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 				session.beginTransaction();
 				session.save(modeEntity);
 				session.getTransaction().commit();
@@ -244,6 +247,7 @@ public final class HibernateAppender
 		try {
 			if (runEntity == null) {
 				runEntity = new RunEntity(mode, runName, timestamp);
+				session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 				session.beginTransaction();
 				session.save(runEntity);
 				session.getTransaction().commit();
@@ -269,6 +273,7 @@ public final class HibernateAppender
 		try {
 			if (apiEntity == null) {
 				apiEntity = new ApiEntity(apiName);
+				session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 				session.beginTransaction();
 				session.save(apiEntity);
 				session.getTransaction().commit();
@@ -294,6 +299,7 @@ public final class HibernateAppender
 		try {
 			if (loadTypeEntity == null) {
 				loadTypeEntity = new LoadTypeEntity(typeName);
+				session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 				session.beginTransaction();
 				session.save(loadTypeEntity);
 				session.getTransaction().commit();
@@ -318,6 +324,7 @@ public final class HibernateAppender
 		LoadEntity loadEntity = new LoadEntity(run, type, Long.valueOf(loadNumberString), api);
 		Session session = SESSION_FACTORY.openSession();
 		try {
+			session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 			session.beginTransaction();
 			session.save(loadEntity);
 			session.getTransaction().commit();
@@ -342,6 +349,7 @@ public final class HibernateAppender
 		try {
 			if (messageClassEntity == null) {
 				messageClassEntity = new MessageClassEntity(className);
+				session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 				session.beginTransaction();
 				session.save(messageClassEntity);
 				session.getTransaction().commit();
@@ -367,6 +375,7 @@ public final class HibernateAppender
 		try {
 			if (levelEntity == null) {
 				levelEntity = new LevelEntity(levelName);
+				session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 				session.beginTransaction();
 				session.save(levelEntity);
 				session.getTransaction().commit();
@@ -392,6 +401,7 @@ public final class HibernateAppender
 		try {
 			if (nodeEntity == null){
 				nodeEntity = new NodeEntity(nodeAddr);
+				session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 				session.beginTransaction();
 				session.save(nodeEntity);
 				session.getTransaction().commit();
@@ -416,6 +426,7 @@ public final class HibernateAppender
 		ConnectionEntity connectionEntity = new ConnectionEntity(load, node, Long.valueOf(threadNumberString));
 		Session session = SESSION_FACTORY.openSession();
 		try {
+			session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 			session.beginTransaction();
 			session.save(connectionEntity);
 			session.getTransaction().commit();
@@ -439,6 +450,7 @@ public final class HibernateAppender
 		final DataObjectEntityPK dataObjectEntityPK = new DataObjectEntityPK(
 			dataObjectEntity.getIdentifier(),dataObjectEntity.getSize());
 		try{
+			session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 			session.beginTransaction();
 			final DataObjectEntity equalDataObject =(DataObjectEntity) session.get(
 				DataObjectEntity.class, dataObjectEntityPK);
@@ -469,6 +481,7 @@ public final class HibernateAppender
 		StatusEntity statusEntity = new StatusEntity(result.code, result.description);
 		Session session = SESSION_FACTORY.openSession();
 		try {
+			session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 			session.beginTransaction();
 			session.saveOrUpdate(statusEntity);
 			session.getTransaction().commit();
@@ -488,6 +501,7 @@ public final class HibernateAppender
 		MessageEntity messageEntity = new MessageEntity(run, messageClassEntity, levelEntity, text, tstamp);
 		Session session = SESSION_FACTORY.openSession();
 		try {
+			session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 			session.beginTransaction();
 			session.save(messageEntity);
 			session.getTransaction().commit();
@@ -508,6 +522,7 @@ public final class HibernateAppender
 		TraceEntity traceEntity = new TraceEntity(dataObjectEntity, connectionEntity, statusEntity, reqStart, latency, reqDur);
 		Session session = SESSION_FACTORY.openSession();
 		try {
+			session.getTransaction().setTimeout(TRANSACTION_TIMEOUT);
 			session.beginTransaction();
 			session.save(traceEntity);
 			session.getTransaction().commit();

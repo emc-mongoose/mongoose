@@ -8,7 +8,7 @@ import com.emc.mongoose.run.ThreadContextMap;
 public final class DataObjectWorkerFactory
 extends WorkerFactory {
 	//
-	private static final String
+	public static final String
 		KEY_LOAD_NUM = "load.number",
 		KEY_API = "api",
 		KEY_LOAD_TYPE = "load.type",

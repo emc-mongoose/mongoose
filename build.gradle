@@ -97,7 +97,8 @@ dependencies {
 		'org.postgresql:postgresql:9.3-1102-jdbc3',
 		'org.fusesource.jansi:jansi:1.11',
 		//
-		'org.hibernate:hibernate-ehcache:4.3.7.Final'
+		'org.hibernate:hibernate-ehcache:4.3.7.Final',
+		//'org.hibernate:hibernate-c3p0:4.3.7.Final'//pool connection for hibernate
 	)
 
 
