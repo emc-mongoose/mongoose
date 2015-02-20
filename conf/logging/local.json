@@ -399,6 +399,13 @@
 						"ref": "async"
 					}
 				}, {
+					"name": "com.emc.mongoose.util.io.http",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
 					"name": "com.emc.mongoose.util.logging",
 					"level": "debug",
 					"additivity": "false",
