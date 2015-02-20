@@ -388,6 +388,9 @@ function configureWebSocketConnection(location, countOfRecords) {
 						break;
 					case MARKERS.PERF_SUM:
 						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
+						if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+							charts(chartsArray).rampup(runId, rampupThreadCounts, loadRampupSizes);
+						}
 						break;
 					case MARKERS.PERF_AVG:
 						appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
@@ -407,9 +410,6 @@ function configureWebSocketConnection(location, countOfRecords) {
 									break;
 								case RUN_SCENARIO_NAME.chain:
 									charts(chartsArray).chain(runId, runMetricsPeriodSec, json.threadName);
-									break;
-								case RUN_SCENARIO_NAME.rampup:
-									charts(chartsArray).rampup(runId, rampupThreadCounts, loadRampupSizes);
 									break;
 							}
 						}
@@ -1192,7 +1192,7 @@ function charts(chartsArray) {
 							})
 							.attr("id", function(c) { return path.replace("#", "") + loadType + "-" + c.name; })
 							.attr("visibility", function(c) {
-								var elements = $(".bottom-checkbox:checked");
+								var elements = $(path + " " + ".bottom-checkbox:checked");
 								var isFound = false;
 								elements.each(function() {
 									if (c.name === $(this).val()) {
