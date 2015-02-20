@@ -150,7 +150,8 @@ implements Runnable {
 		final Map<String, WSObjectMock> sharedStorage = Collections.synchronizedMap(new LRUMap<String, WSObjectMock>(queueDataIdSize));
 		// count of heads = count of cores - 1
 		portCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
-		LOG.debug(Markers.MSG, "Starting w/ {} heads", portCount);
+		//portCount = Math.max(1, Runtime.getRuntime().availableProcessors());
+		LOG.info(Markers.MSG, "Starting with {} heads", portCount);
 		final String apiName = runTimeConfig.getStorageApi();
 		portStart = runTimeConfig.getInt("api." + apiName + ".port");
 		// Set up the HTTP protocol processor
@@ -175,7 +176,6 @@ implements Runnable {
 		for(int nextPort = portStart; nextPort < portStart + portCount; nextPort ++){
 			try {
 				multiSocketSvc.submit(new WorkerTask(protocolHandler, connFactory, nextPort));
-				LOG.info(Markers.MSG, "Listening the port #{}", nextPort);
 			} catch(final IOReactorException e) {
 				TraceLogger.failure(
 					LOG, Level.ERROR, e,
@@ -183,6 +183,7 @@ implements Runnable {
 				);
 			}
 		}
+		LOG.info(Markers.MSG, "Listening the port from {} to {}", portStart, portStart + portCount -1);
 		multiSocketSvc.shutdown();
 		try {
 			//output metrics
@@ -357,7 +358,7 @@ implements Runnable {
 					}
 					dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 				}
-				LOG.debug(Markers.DATA_LIST, dataObject.toString());
+				LOG.trace(Markers.DATA_LIST, dataObject.toString());
 				synchronized (sharedStorage) {
 					sharedStorage.put(dataID, dataObject);
 				}
