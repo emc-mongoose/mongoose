@@ -141,6 +141,7 @@ public final class StartServlet extends CommonServlet {
 					ThreadContextMap.putValue("scenario.rampup.sizes", runTimeConfig.getProperty("scenario.rampup.sizes").toString());
 					ThreadContextMap.putValue("scenario.rampup.thread.counts",
 							runTimeConfig.getProperty("scenario.rampup.thread.counts").toString());
+					ThreadContextMap.putValue("scenario.chain.load", runTimeConfig.getProperty("scenario.chain.load").toString());
 				}
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getRunScenarioName());
 				//

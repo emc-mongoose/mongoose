@@ -370,6 +370,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 				var json = JSON.parse(message.data);
 				var runId = json.contextMap["run.id"];
 				var runMetricsPeriodSec = json.contextMap["run.metrics.period.sec"];
+				var scenarioChainLoad = json.contextMap["scenario.chain.load"];
 				var rampupThreadCounts = json.contextMap["scenario.rampup.thread.counts"];
 				var loadRampupSizes = json.contextMap["scenario.rampup.sizes"];
 				//
@@ -389,7 +390,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 					case MARKERS.PERF_SUM:
 						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
 						if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
-							charts(chartsArray).rampup(runId, rampupThreadCounts, loadRampupSizes);
+							charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
 						}
 						break;
 					case MARKERS.PERF_AVG:
@@ -470,12 +471,17 @@ function loadPropertiesFromFile(file) {
 				$(elementId).val(splitLine[1]);
 				if ($(elementId).attr("id") === "run.time") {
 					var resultArray = $(elementId).val().split(".");
-					$(".complex input").val(resultArray[0]).change();
-					$(".complex select option:contains(" + resultArray[1] + ")").attr("selected", "selected").change();
+					$(".complex input").val(resultArray[0]);
+					$(".complex select option:contains(" + resultArray[1] + ")").attr("selected", "selected");
+				} else {
+					var input = $('input[data-pointer="' + $(elementId).attr("id") + '"]').val($(elementId).val());
+					var select = $('select[data-pointer="' + $(elementId).attr("id") + '"] option:contains(' + $(elementId).val() + ')')
+						.attr('selected', 'selected');
+					if ($(elementId).attr("id") !== "data.count") {
+						input.change();
+						select.change();
+					}
 				}
-				$('input[data-pointer="' + $(elementId).attr("id") + '"]').val($(elementId).val()).change();
-				$('select[data-pointer="' + $(elementId).attr("id") + '"] option:contains(' + $(elementId).val() + ')')
-					.attr('selected', 'selected').change();
 			}
 		}
 	};
@@ -1301,9 +1307,236 @@ function charts(chartsArray) {
 				};
 			}
 		},
-		rampup: function(runId, rampupThreadCounts, loadRampupSizes) {
+		rampup: function(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes) {
 			//
-			console.log(rampupThreadCounts + " " + loadRampupSizes);
+			var loadTypes = scenarioChainLoad.slice(1, -1).split(",");
+			var rampupThreadCountsArray = rampupThreadCounts.slice(1, -1).split(",");
+			var loadRampupSizesArray = loadRampupSizes.slice(1, -1).split(",");
+			//
+			var CHART_TYPES = {
+				TP: "throughput",
+				BW: "bandwidth"
+			};
+
+			chartsArray.push({
+				"run.id": runId,
+				"run.scenario.name": SCENARIO.rampup,
+				"charts": [
+					drawThroughputCharts()
+				]
+			});
+
+			function drawThroughputCharts() {
+				var AVG = "avg";
+				var MIN_1 = "1min";
+				var MIN_5 = "5min";
+				var MIN_15 = "15min";
+				//
+				var data = [];
+				loadTypes.forEach(function(d) {
+					data.push({
+						"loadType": d.trim(),
+						/*"sizes": (function() {
+							var sizesArray = [];
+							loadRampupSizesArray.forEach(function(d, i) {
+								sizesArray[i] = {
+									"size": d,
+									"charts": [
+										{
+											"name": AVG,
+											"values": { x: 12, y: 0 }
+										}, {
+											"name": MIN_1,
+											"values": { x: 13, y: 0 }
+										}, {
+											"name": MIN_5,
+											"values": { x: 14, y: 15 }
+										}, {
+											"name": MIN_15,
+											"values": { x: 17, y: 0 }
+										}
+									]
+								}
+							});
+							return sizesArray;
+						})()*/
+						"sizes": [
+							{
+								"charts": [
+									{
+										"name": AVG,
+										"values": { x: 12, y: 0 }
+									}, {
+										"name": MIN_1,
+										"values": { x: 13, y: 0 }
+									}, {
+										"name": MIN_5,
+										"values": { x: 14, y: 15 }
+									}, {
+										"name": MIN_15,
+										"values": { x: 17, y: 0 }
+									}
+								]
+							}
+						]
+					});
+				});
+				var updateFunction = drawCharts(data, "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
+				return {
+					update: function(json) {
+						updateFunction();
+					}
+				};
+			}
+
+			function drawCharts(data, xAxisLabel, yAxisLabel, path) {
+				var ddd = {
+					"loadType": "a",
+					"charts": [
+						{
+							"name": "a",
+							"values": { x: 12, y: 0 }
+						}, {
+							"name": "a",
+							"values": { x: 13, y: 0 }
+						}, {
+							"name": "a",
+							"values": { x: 14, y: 15 }
+						}, {
+							"name": "a",
+							"values": { x: 17, y: 0 }
+						}
+					]
+				};
+				data.forEach(function(d) {
+					/*var x = d3.scale.linear()
+						.domain([
+							d3.min(d.sizes, function(c) { return d3.min(c.charts, function(v) {
+								return d3.min(v.values, function(val) { return val.x; }); });
+							}),
+							d3.max(d.sizes, function(c) { return d3.max(c.charts, function(v) {
+								return d3.max(v.values, function(val) { return val.x; }); });
+							})
+						])
+						.range([0, width]);*/
+					var x = d3.scale.linear()
+						.domain([
+							d3.min(ddd.charts, function(c) { return d3.min(c.values, function(v) { return v.x; }); }),
+							d3.max(ddd.charts, function(c) { return d3.max(c.values, function(v) { return v.x; }); })
+						])
+						.range([0, width]);
+					//
+					var dd = [0, 1, 2, 3, 4, 5, 6];
+					var y = d3.scale.linear()
+						.domain([
+							d3.min(dd, function(d) { return d; }),
+							d3.max(dd, function(d) { return d; })
+						])
+						.range([height, 0]);
+					//
+					var color = d3.scale.category10();
+					color.domain(loadRampupSizesArray.map(function(d) { return d; }));
+					//
+					var xAxis = d3.svg.axis()
+						.scale(x)
+						.orient("bottom");
+					var yAxis = d3.svg.axis()
+						.scale(y)
+						.orient("left");
+					function makeXAxis() {
+						return d3.svg.axis()
+							.scale(x)
+							.orient("bottom");
+					}
+					function makeYAxis() {
+						return d3.svg.axis()
+							.scale(y)
+							.orient("left");
+					}
+					//
+					var line = d3.svg.line()
+						.x(function(d) {
+							return d.x;
+						})
+						.y(function(d) {
+							return d.y;
+						});
+					var svg = d3.select(path).append("svg")
+						.attr("width", width + margin.left + margin.right)
+						.attr("height", height + margin.top + margin.bottom)
+						.append("g")
+						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+					var xAxisGroup = svg.append("g")
+						.attr("class", "x axis")
+						.attr("transform", "translate(0," + height + ")")
+						.call(xAxis);
+					var yAxisGroup = svg.append("g")
+						.attr("class", "y axis")
+						.call(yAxis);
+					var xGrid = svg.append("g")
+						.attr("class", "grid")
+						.attr("transform", "translate(0," + height + ")")
+						.call(makeXAxis()
+							.tickSize(-height, 0, 0)
+							.tickFormat(""));
+					var yGrid = svg.append("g")
+						.attr("class", "grid")
+						.call(makeYAxis()
+							.tickSize(-width, 0, 0)
+							.tickFormat(""));
+					//  Axis Y Label
+					svg.append("text")
+						.attr("x", width - 2)
+						.attr("y", height - 2)
+						.style("text-anchor", "end")
+						.text(xAxisLabel);
+					//  Axis Y Label
+					svg.append("text")
+						.attr("transform", "rotate(-90)")
+						.attr("y", 6)
+						.attr("x", 0)
+						.attr("dy", ".71em")
+						.style("text-anchor", "end")
+						.text(yAxisLabel);
+					svg.append("text")
+						.attr("x", (width / 2))
+						.attr("y", 0 - (margin.top / 2))
+						.attr("text-anchor", "middle")
+						.style("font-size", "16px")
+						.style("text-decoration", "underline")
+						.text(d.loadType);
+					//
+					var legend = svg.selectAll(".legend")
+						.data(loadRampupSizesArray).enter()
+						.append("g")
+						.attr("class", "legend")
+						.attr("transform", function(d, i) {
+							return "translate(0," + i * 20 + ")";
+						});
+
+					legend.append("rect")
+						.attr("x", width + 18)
+						.attr("width", 18)
+						.attr("height", 18)
+						.style("fill", function(d) { return color(d); });
+
+					legend.append("text")
+						.attr("x", width + 80)
+						.attr("y", 9)
+						.attr("dy", ".35em")
+						.style("text-anchor", "end")
+						.text(function(d) { return d; });
+					/*var levels = d3.selectAll(".level")
+						.data(d.charts).enter()
+						.append("g")
+						.attr("class", "level")
+						.attr("d", function(c) { return line(c.values); })
+						.attr("stroke", function(c) { return color()})*/
+				});
+				//
+
+
+			}
 			/*var CHART_TYPES = {
 				TP: "throughput",
 				BW: "bandwidth"
