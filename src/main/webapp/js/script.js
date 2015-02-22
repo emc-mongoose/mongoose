@@ -380,6 +380,9 @@ function configureWebSocketConnection(location, countOfRecords) {
 				}
 				if (json.marker === null)
 					return;
+				/*if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+					charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
+				}*/
 				switch (json.marker.name) {
 					case MARKERS.ERR:
 						appendMessageToTable(entry, LOG_FILES.ERR, countOfRecords, json);
@@ -390,8 +393,8 @@ function configureWebSocketConnection(location, countOfRecords) {
 					case MARKERS.PERF_SUM:
 						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
 						if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
-							charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
-						}
+					        charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
+					    }
 						break;
 					case MARKERS.PERF_AVG:
 						appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
@@ -1310,14 +1313,24 @@ function charts(chartsArray) {
 		rampup: function(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes) {
 			//
 			var loadTypes = scenarioChainLoad.slice(1, -1).split(",");
-			var rampupThreadCountsArray = rampupThreadCounts.slice(1, -1).split(",");
-			var loadRampupSizesArray = loadRampupSizes.slice(1, -1).split(",");
+			var rampupThreadCountsArray = rampupThreadCounts.slice(1, -1).split(",").map(function(item) {
+				return parseInt(item, 10);
+			});
+			var loadRampupSizesArray = loadRampupSizes.slice(1, -1).split(",").map(function(item) {
+				return item.trim();
+			});
+			var AVG = "avg";
+			var MIN_1 = "1min";
+			var MIN_5 = "5min";
+			var MIN_15 = "15min";
 			//
 			var CHART_TYPES = {
 				TP: "throughput",
 				BW: "bandwidth"
 			};
-
+			//
+			var TP_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+			//
 			chartsArray.push({
 				"run.id": runId,
 				"run.scenario.name": SCENARIO.rampup,
@@ -1327,16 +1340,12 @@ function charts(chartsArray) {
 			});
 
 			function drawThroughputCharts() {
-				var AVG = "avg";
-				var MIN_1 = "1min";
-				var MIN_5 = "5min";
-				var MIN_15 = "15min";
 				//
 				var data = [];
 				loadTypes.forEach(function(d) {
 					data.push({
 						"loadType": d.trim(),
-						/*"sizes": (function() {
+						"sizes": (function() {
 							var sizesArray = [];
 							loadRampupSizesArray.forEach(function(d, i) {
 								sizesArray[i] = {
@@ -1344,96 +1353,58 @@ function charts(chartsArray) {
 									"charts": [
 										{
 											"name": AVG,
-											"values": { x: 12, y: 0 }
+											"values": [
+												{ x: 12, y: 0 }
+											]
 										}, {
 											"name": MIN_1,
-											"values": { x: 13, y: 0 }
+											"values": [
+												{ x: 13, y: 0 }
+											]
 										}, {
 											"name": MIN_5,
-											"values": { x: 14, y: 15 }
+											"values": [
+												{ x: 14, y: 0 }
+											]
 										}, {
 											"name": MIN_15,
-											"values": { x: 17, y: 0 }
+											"values": [
+												{ x: 17, y: 0 }
+											]
 										}
 									]
 								}
 							});
 							return sizesArray;
-						})()*/
-						"sizes": [
-							{
-								"charts": [
-									{
-										"name": AVG,
-										"values": { x: 12, y: 0 }
-									}, {
-										"name": MIN_1,
-										"values": { x: 13, y: 0 }
-									}, {
-										"name": MIN_5,
-										"values": { x: 14, y: 15 }
-									}, {
-										"name": MIN_15,
-										"values": { x: 17, y: 0 }
-									}
-								]
-							}
-						]
+						})()
 					});
 				});
 				var updateFunction = drawCharts(data, "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
-						updateFunction();
+						updateFunction(CHART_TYPES.TP, json);
 					}
 				};
 			}
 
 			function drawCharts(data, xAxisLabel, yAxisLabel, path) {
-				var ddd = {
-					"loadType": "a",
-					"charts": [
-						{
-							"name": "a",
-							"values": { x: 12, y: 0 }
-						}, {
-							"name": "a",
-							"values": { x: 13, y: 0 }
-						}, {
-							"name": "a",
-							"values": { x: 14, y: 15 }
-						}, {
-							"name": "a",
-							"values": { x: 17, y: 0 }
-						}
-					]
-				};
 				data.forEach(function(d) {
-					/*var x = d3.scale.linear()
-						.domain([
-							d3.min(d.sizes, function(c) { return d3.min(c.charts, function(v) {
-								return d3.min(v.values, function(val) { return val.x; }); });
-							}),
-							d3.max(d.sizes, function(c) { return d3.max(c.charts, function(v) {
-								return d3.max(v.values, function(val) { return val.x; }); });
-							})
-						])
-						.range([0, width]);*/
 					var x = d3.scale.linear()
 						.domain([
-							d3.min(ddd.charts, function(c) { return d3.min(c.values, function(v) { return v.x; }); }),
-							d3.max(ddd.charts, function(c) { return d3.max(c.values, function(v) { return v.x; }); })
+							d3.min(rampupThreadCountsArray, function(c) { return c; }),
+							d3.max(rampupThreadCountsArray, function(c) { return c; })
 						])
 						.range([0, width]);
-					//
-					var dd = [0, 1, 2, 3, 4, 5, 6];
 					var y = d3.scale.linear()
 						.domain([
-							d3.min(dd, function(d) { return d; }),
-							d3.max(dd, function(d) { return d; })
+							d3.min(d.sizes, function(c) { return d3.min(c.charts, function(v) {
+								return d3.min(v.values, function(val) { return val.y; });
+							}); }),
+							d3.max(d.sizes, function(c) { return d3.max(c.charts, function(v) {
+								return d3.max(v.values, function(val) { return val.y; });
+							}); })
 						])
 						.range([height, 0]);
-					//
 					var color = d3.scale.category10();
 					color.domain(loadRampupSizesArray.map(function(d) { return d; }));
 					//
@@ -1464,6 +1435,7 @@ function charts(chartsArray) {
 					var svg = d3.select(path).append("svg")
 						.attr("width", width + margin.left + margin.right)
 						.attr("height", height + margin.top + margin.bottom)
+						.attr("id", path.replace("#", "") + "-" + d.loadType)
 						.append("g")
 						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 					var xAxisGroup = svg.append("g")
@@ -1526,16 +1498,24 @@ function charts(chartsArray) {
 						.attr("dy", ".35em")
 						.style("text-anchor", "end")
 						.text(function(d) { return d; });
-					/*var levels = d3.selectAll(".level")
-						.data(d.charts).enter()
+					//
+					var levels = svg.selectAll(".level")
+						.data(d.sizes).enter()
 						.append("g")
 						.attr("class", "level")
-						.attr("d", function(c) { return line(c.values); })
-						.attr("stroke", function(c) { return color()})*/
+						.attr("id", function(c) { return c.size + "-" + path.replace("#", "") + "-" + d.loadType; })
+						.attr("stroke", function(c) { return color(c.size); })
+						.selectAll("path")
+						.data(function(c) { return c.charts; }).enter()
+						.append("path")
+						.attr("class", "line")
+						.attr("d", function(v) { return line(v.values); })
+						.attr("id", function(v, i) { return TP_MODES[i] + "-" + path.replace("#", "") + "-" + d.loadType + "-" + v.name; });
 				});
 				//
+				return function(chartType, json) {
 
-
+				}
 			}
 			/*var CHART_TYPES = {
 				TP: "throughput",
