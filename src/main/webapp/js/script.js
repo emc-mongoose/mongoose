@@ -380,9 +380,17 @@ function configureWebSocketConnection(location, countOfRecords) {
 				}
 				if (json.marker === null)
 					return;
-				/*if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
-					charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
-				}*/
+				var is = false;
+				chartsArray.forEach(function(d) {
+					if (d["run.id"] === runId) {
+						is = true;
+					}
+				});
+				if (!is) {
+					if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+						charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
+					}
+				}
 				switch (json.marker.name) {
 					case MARKERS.ERR:
 						appendMessageToTable(entry, LOG_FILES.ERR, countOfRecords, json);
@@ -393,8 +401,19 @@ function configureWebSocketConnection(location, countOfRecords) {
 					case MARKERS.PERF_SUM:
 						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
 						if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+							//alert(json.contextMap["currentSize"]);
+							chartsArray.forEach(function(d) {
+								//console.log(d);
+								if (d["run.id"] === runId) {
+									d.charts.forEach(function(c) {
+										c.update(json);
+									});
+								}
+							});
+						}
+						/*if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
 					        charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
-					    }
+					    }*/
 						break;
 					case MARKERS.PERF_AVG:
 						appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
@@ -1349,27 +1368,27 @@ function charts(chartsArray) {
 							var sizesArray = [];
 							loadRampupSizesArray.forEach(function(d, i) {
 								sizesArray[i] = {
-									"size": d,
+									"size": d + "-" + i,
 									"charts": [
 										{
 											"name": AVG,
 											"values": [
-												{ x: 12, y: 0 }
+												//{ x: 1, y: 1 }
 											]
 										}, {
 											"name": MIN_1,
 											"values": [
-												{ x: 13, y: 0 }
+												//{ x: 1, y: 1 }
 											]
 										}, {
 											"name": MIN_5,
 											"values": [
-												{ x: 14, y: 0 }
+												//{ x: 1, y: 1 }
 											]
 										}, {
 											"name": MIN_15,
 											"values": [
-												{ x: 17, y: 0 }
+												//{ x: 1, y: 1 }
 											]
 										}
 									]
@@ -1388,13 +1407,13 @@ function charts(chartsArray) {
 			}
 
 			function drawCharts(data, xAxisLabel, yAxisLabel, path) {
+				var yAxis;
+				var yAxisGroup;
+				var yGrid;
 				data.forEach(function(d) {
-					var x = d3.scale.linear()
-						.domain([
-							d3.min(rampupThreadCountsArray, function(c) { return c; }),
-							d3.max(rampupThreadCountsArray, function(c) { return c; })
-						])
-						.range([0, width]);
+					var x = d3.scale.ordinal()
+						.domain(rampupThreadCountsArray)
+						.rangePoints([0, width]);
 					var y = d3.scale.linear()
 						.domain([
 							d3.min(d.sizes, function(c) { return d3.min(c.charts, function(v) {
@@ -1411,9 +1430,10 @@ function charts(chartsArray) {
 					var xAxis = d3.svg.axis()
 						.scale(x)
 						.orient("bottom");
-					var yAxis = d3.svg.axis()
+					yAxis = d3.svg.axis()
 						.scale(y)
 						.orient("left");
+					//
 					function makeXAxis() {
 						return d3.svg.axis()
 							.scale(x)
@@ -1424,13 +1444,12 @@ function charts(chartsArray) {
 							.scale(y)
 							.orient("left");
 					}
-					//
 					var line = d3.svg.line()
 						.x(function(d) {
-							return d.x;
+							return x(d.x);
 						})
 						.y(function(d) {
-							return d.y;
+							return y(d.y);
 						});
 					var svg = d3.select(path).append("svg")
 						.attr("width", width + margin.left + margin.right)
@@ -1442,7 +1461,7 @@ function charts(chartsArray) {
 						.attr("class", "x axis")
 						.attr("transform", "translate(0," + height + ")")
 						.call(xAxis);
-					var yAxisGroup = svg.append("g")
+					yAxisGroup = svg.append("g")
 						.attr("class", "y axis")
 						.call(yAxis);
 					var xGrid = svg.append("g")
@@ -1451,7 +1470,7 @@ function charts(chartsArray) {
 						.call(makeXAxis()
 							.tickSize(-height, 0, 0)
 							.tickFormat(""));
-					var yGrid = svg.append("g")
+					yGrid = svg.append("g")
 						.attr("class", "grid")
 						.call(makeYAxis()
 							.tickSize(-width, 0, 0)
@@ -1503,18 +1522,98 @@ function charts(chartsArray) {
 						.data(d.sizes).enter()
 						.append("g")
 						.attr("class", "level")
-						.attr("id", function(c) { return c.size + "-" + path.replace("#", "") + "-" + d.loadType; })
-						.attr("stroke", function(c) { return color(c.size); })
+						.attr("id", function(c, i) { return c.size + "-" + i + "-" + path.replace("#", "") + "-" + d.loadType; })
+						.attr("stroke", function(c, i) { return color(loadRampupSizesArray[i]); })
 						.selectAll("path")
 						.data(function(c) { return c.charts; }).enter()
 						.append("path")
 						.attr("class", "line")
-						.attr("d", function(v) { return line(v.values); })
-						.attr("id", function(v, i) { return TP_MODES[i] + "-" + path.replace("#", "") + "-" + d.loadType + "-" + v.name; });
+						.attr("d", function(v) { return line(v.values); });
+						//.attr("id", function(v, i) { return loadRampupSizesArray[i] + "-" + i + "-" + path.replace("#", "") + "-"
+						//	+ d.loadType + "-" + v.name; });
 				});
 				//
 				return function(chartType, json) {
+					var isFound = false;
+					data.forEach(function(d) {
+						if (json.message.formattedMessage.split(" ")[0].slice(1, -1).toLowerCase().indexOf(d.loadType) > -1) {
+							var loadTypeSvg = d3.select(path + "-" + d.loadType);
+							//
+							var splitIndex;
+							switch(chartType) {
+								case CHART_TYPES.TP:
+									splitIndex = 2;
+									break;
+								case CHART_TYPES.BW:
+									splitIndex = 3;
+									break;
+							}
+							//
+							var parsedString = json.message.formattedMessage.split(";")[splitIndex];
+							var first = parsedString.indexOf("(") + 1;
+							var second = parsedString.lastIndexOf(")");
+							var value = parsedString.substring(first, second).split("/");
 
+							var x = d3.scale.ordinal()
+								.domain(rampupThreadCountsArray)
+								.rangePoints([0, width]);
+							var y = d3.scale.linear()
+								.domain([
+									d3.min(d.sizes, function(c) { return d3.min(c.charts, function(v) {
+										return d3.min(v.values, function(val) { return val.y; });
+									}); }),
+									d3.max(d.sizes, function(c) { return d3.max(c.charts, function(v) {
+										return d3.max(v.values, function(val) { return val.y; });
+									}); })
+								])
+								.range([height, 0]);
+
+							d.sizes.forEach(function(d) {
+								if (d.size === json.contextMap["currentSize"]) {
+									d.charts.forEach(function(c, i) {
+										//c.values.push({ x: parseInt(json.contextMap["currentThreadCount"]), y: parseFloat(value[i]) });
+										c.values.push({ x: 1, y: 1 });
+									});
+								}
+							});
+
+							function makeYAxis() {
+								return d3.svg.axis()
+									.scale(y)
+									.orient("left");
+							}
+							yAxisGroup.transition().call(yAxis);
+							yGrid.call(makeYAxis()
+								.tickSize(-width, 0, 0)
+								.tickFormat(""));
+							var line = d3.svg.line()
+								.x(function(d) {
+									if (d.length) {
+										return x(d.x);
+									} else {
+										alert("AAAA");
+									}
+								})
+								.y(function(d) {
+									if (d.length) {
+										return y(d.y);
+									} else {
+										alert("AAAA");
+									}
+								});
+
+							//
+							var paths = loadTypeSvg.selectAll(".level")
+								.data(d.sizes)
+								.selectAll("path")
+								.data(function(c) {
+									return c.charts;
+								})
+								.attr("d", function(v) { return line(v.values); })
+								.attr("fill", "none");
+						}
+					});
+					//console.log(data);
 				}
 			}
 			/*var CHART_TYPES = {
