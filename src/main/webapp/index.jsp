@@ -21,8 +21,12 @@
 						<span class="icon-bar"></span>
 						<span class="icon-bar"></span>
 					</button>
-					<a id="logo" href="/"><img width="120" height="40" src="images/mongooselogo.svg"></a>
-					<a class="navbar-brand" href="/">Mongoose</a>
+					<a id="logo" href="/">
+						<img width="120" height="40" src="images/mongooselogo.svg"/>
+					</a>
+					<a class="navbar-brand" href="/">
+						Mongoose
+					</a>
 				</div>
 				<div class="collapse navbar-collapse"
 					id="main-navbar">
