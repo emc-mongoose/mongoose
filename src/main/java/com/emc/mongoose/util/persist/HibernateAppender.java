@@ -202,7 +202,7 @@ public final class HibernateAppender
 		final ConnectionEntity connectionEntity = loadConnectionEntity(
 			event.getContextMap().get(DataObjectWorkerFactory.KEY_THREAD_NUM), loadEntity, nodeEntity);
 		loadTraceEntity(dataObjectEntity, connectionEntity, statusEntity,
-			Long.valueOf(message[5]), Long.valueOf(message[6]), Long.valueOf(message[7]));
+			Long.valueOf(message[4]), Long.valueOf(message[5]), Long.valueOf(message[6]));
 	}
 	//parse String to Date
 	private Date getTimestamp(final String stringTimestamp){

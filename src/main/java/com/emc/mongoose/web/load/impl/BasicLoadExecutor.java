@@ -123,9 +123,9 @@ implements WSLoadExecutor<T> {
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new WorkerFactory(String.format("IOWorker<%s>", getName()))
-				//new DataObjectWorkerFactory(reqConfig.getLoadNumber(),
-				//	reqConfig.getAPI(), reqConfig.getLoadType(), String.format("IOWorker<%s>", getName()))
+				//new WorkerFactory(String.format("IOWorker<%s>", getName()))
+				new DataObjectWorkerFactory(reqConfig.getLoadNumber(),
+					reqConfig.getAPI(), reqConfig.getLoadType(), String.format("IOWorker<%s>", getName()))
 			);
 		} catch(final IOReactorException e) {
 			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");

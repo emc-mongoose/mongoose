@@ -1,4 +1,6 @@
-﻿--User: mongoose
+﻿--for drop all: Drop table api,class,connection,level,dataobject,load,loadtype,message,mode,node,run,status,trace CASCADE;
+
+--User: mongoose
 
 --CREATE NEW USER mongoose
 
@@ -74,11 +76,12 @@ CREATE TABLE run
   id bigserial NOT NULL,
   mode bigint NOT NULL,
   name text NOT NULL,
+  tstamp timestamp without time zone NOT NULL,
   CONSTRAINT id_run PRIMARY KEY (id),
   CONSTRAINT mode FOREIGN KEY (mode)
       REFERENCES mode (id) MATCH SIMPLE
       ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT run_name_key UNIQUE (name)
+  CONSTRAINT run_name_key UNIQUE (name,tstamp)
 )
 WITH (
   OIDS=FALSE

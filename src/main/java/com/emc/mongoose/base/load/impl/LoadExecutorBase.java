@@ -118,8 +118,8 @@ implements LoadExecutor<T> {
 			(maxCount > 0? Long.toString(maxCount) : "") + '-' +
 			Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount);
 		setThreadFactory(
-			new DataObjectWorkerFactory(loadNum, reqConfig.getAPI(), loadType, name)
-			//new WorkerFactory(name)
+			//new DataObjectWorkerFactory(loadNum, reqConfig.getAPI(), loadType, name)
+			new WorkerFactory(name)
 		);
 		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
