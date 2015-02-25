@@ -164,7 +164,7 @@ implements LoadClient<T> {
 		}
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			20 + remoteLoadMap.size(), new WorkerFactory(String.format("mgmtConnWorker<%s>", name))
+			20 + remoteLoadMap.size(), new WorkerFactory(String.format("%s-remoteMonitor", name))
 		) { // make the shutdown method synchronized
 			@Override
 			public final synchronized void shutdown() {
@@ -729,6 +729,9 @@ implements LoadClient<T> {
 						);
 					}
 				}
+				//
+				metaInfoLog.close();
+				LOG.debug(Markers.MSG, "Metainfo logger closed");
 				LoadCloseHook.del(this);
 				LOG.debug(Markers.MSG, "Clear the servers map");
 				remoteLoadMap.clear();
