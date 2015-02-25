@@ -2,7 +2,7 @@ from __future__ import print_function, absolute_import, with_statement
 #
 import chain
 #
-from java.lang import Long, Short, Throwable, NumberFormatException
+from java.lang import InterruptedException, Long, Short, Throwable, NumberFormatException
 #
 from org.apache.logging.log4j import Level, LogManager
 #
@@ -40,8 +40,12 @@ if __name__=="__builtin__":
 					)
 					chain.execute(nextChain, False)
 					LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
+				except InterruptedException as e:
+					raise e
 				except Throwable as e:
 					TraceLogger.failure(LOG, Level.ERROR, e, "Chain execution failure")
+		except InterruptedException:
+			break
 		except Throwable as e:
 			TraceLogger.failure(LOG, Level.ERROR, e, "Determining the next data item size failure")
 	LOG.info(Markers.MSG, "Scenario end")
