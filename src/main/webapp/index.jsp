@@ -229,7 +229,17 @@
 																		</div>
 
 																		<div class="modal-body">
-
+																			<div class="form-group">
+																				<label for="backup-api.atmos.subtenant" class="col-sm-4 control-label">
+																					api.atmos.subtenant
+																				</label>
+																				<div class="col-sm-8">
+																					<input type="text" id="backup-api.atmos.subtenant" class="form-control"
+																					       data-pointer="api.atmos.subtenant"
+																					       value="${rt:getString(runTimeConfig, 'api.atmos.subtenant')}"
+																					       placeholder="Enter 'api.atmos.subtenant' property">
+																				</div>
+																			</div>
 																		</div>
 
 																		<div class="modal-footer">
