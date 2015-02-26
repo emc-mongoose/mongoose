@@ -14,6 +14,9 @@ public class Functions {
 		if (runTimeConfig.getStringArray(key).length > 1) {
 			return convertArrayToString(stringArray);
 		}
+		if (stringArray.length == 0) {
+			return "";
+		}
 		return stringArray[0];
     }
 
