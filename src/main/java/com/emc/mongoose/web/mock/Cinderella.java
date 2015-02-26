@@ -57,7 +57,9 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -79,7 +81,7 @@ implements Runnable {
 	public final static String NAME_SERVER = String.format(
 		"%s/%s", Cinderella.class.getSimpleName(), Main.RUN_TIME_CONFIG.get().getRunVersion()
 	);
-	private final int portCount;
+	private final int countHeads;
 	private final int portStart;
 	//
 	private final RunTimeConfig runTimeConfig;
@@ -152,11 +154,10 @@ implements Runnable {
 		//queue size for data object
 		final int queueDataIdSize = runTimeConfig.getInt("storage.mock.capacity");
 		sharedStorage = Collections.synchronizedMap(new LRUMap<String, WSObjectMock>(queueDataIdSize));
-		// count of heads = count of cores - 1 or config count(if it has optimal count)
-		final int configCount = runTimeConfig.getInt("storage.mock.head.count");
-		final int optimalCont = Math.max(1, Runtime.getRuntime().availableProcessors());
-		portCount = (configCount < optimalCont ? configCount : optimalCont);
-		LOG.info(Markers.MSG, "Starting with {} heads", portCount);
+		// count of heads = count of cores or config count(if it has optimal count)
+		final int countHeadsMax = runTimeConfig.getInt("storage.mock.head.count");
+		countHeads = Math.min(countHeadsMax, Runtime.getRuntime().availableProcessors());
+		LOG.info(Markers.MSG, "Starting with {} heads", countHeads);
 		final String apiName = runTimeConfig.getStorageApi();
 		portStart = runTimeConfig.getInt("api." + apiName + ".port");
 		// Set up the HTTP protocol processor
@@ -171,7 +172,7 @@ implements Runnable {
 		reqistry.register("*", new RequestHandler(sharedStorage));
 		protocolHandler = new HttpAsyncService(httpproc, reqistry);
 		multiSocketSvc = Executors.newFixedThreadPool(
-			portCount, new WorkerFactory("cinderellaWorker")
+			countHeads, new WorkerFactory("cinderellaWorker")
 		);
 	}
 
@@ -207,9 +208,11 @@ implements Runnable {
 			}
 		}
 		//
-		for(int nextPort = portStart; nextPort < portStart + portCount; nextPort ++){
+		final List<Integer> heads = new ArrayList<>(countHeads);
+		for(int nextPort = portStart; nextPort < portStart + countHeads; nextPort ++){
 			try {
 				multiSocketSvc.submit(new WorkerTask(protocolHandler, connFactory, nextPort));
+				heads.add(nextPort);
 			} catch(final IOReactorException e) {
 				TraceLogger.failure(
 					LOG, Level.ERROR, e,
@@ -217,7 +220,7 @@ implements Runnable {
 				);
 			}
 		}
-		LOG.info(Markers.MSG, "Listening the port from {} to {}", portStart, portStart + portCount -1);
+		LOG.info(Markers.MSG, "Listening the ports: {}", heads.toString());
 		multiSocketSvc.shutdown();
 		try {
 			//output metrics
