@@ -9,6 +9,7 @@ from org.apache.logging.log4j import Level, LogManager
 from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.conf import RunTimeConfig
 from com.emc.mongoose.util.logging import TraceLogger, Markers
+from com.emc.mongoose.run import ThreadContextMap
 #
 LOG = LogManager.getLogger()
 LOCAL_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get()
@@ -22,7 +23,7 @@ LOCAL_RUN_TIME_CONFIG.set("run.metrics.period.sec", 0)
 if __name__=="__builtin__":
 	LOG.info(Markers.MSG, "Data sizes: {}", listSizes)
 	LOG.info(Markers.MSG, "Thread counts: {}", listThreadCounts)
-	for dataItemSizeStr in listSizes:
+	for index, dataItemSizeStr in enumerate(listSizes):
 		try:
 			dataItemSize = Long(RunTimeConfig.toSize(dataItemSizeStr))
 			for threadCountStr in listThreadCounts:
@@ -32,6 +33,8 @@ if __name__=="__builtin__":
 					LOG.error(Markers.ERR, "")
 				try:
 					LOG.info(Markers.MSG, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
+					ThreadContextMap.putValue("currentSize", dataItemSizeStr + "-" + str(index))
+					ThreadContextMap.putValue("currentThreadCount", str(threadCount))
 					nextChain = chain.build(
 						False, True, dataItemSize, dataItemSize, threadCount
 					)

@@ -12,7 +12,7 @@ from com.emc.mongoose.run import Main
 from com.emc.mongoose.util.logging import TraceLogger, Markers
 from com.emc.mongoose.base.load import DataItemBuffer
 #
-from java.lang import Long, String, Throwable, IllegalArgumentException
+from java.lang import Long, String, Throwable, IllegalArgumentException, InterruptedException
 from java.util import NoSuchElementException
 #
 RUN_TIME = timeout_init()
@@ -95,11 +95,13 @@ def build(flagSimultaneous=True, flagItemsBuffer=True, dataItemSizeMin=0, dataIt
 	#
 def execute(chain=(), flagSimultaneous=True):
 	if flagSimultaneous:
-		for load in chain:
+		for load in reversed(chain):
 			load.start()
 		for load in chain:
 			try:
 				load.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
+			except InterruptedException:
+				pass
 			finally:
 				load.close()
 	else:
@@ -113,6 +115,8 @@ def execute(chain=(), flagSimultaneous=True):
 					prevLoad.start()
 					try:
 						prevLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
+					except InterruptedException:
+						pass
 					except Throwable as e:
 						TraceLogger.failure(
 							LOG, Level.ERROR, e,
@@ -122,6 +126,8 @@ def execute(chain=(), flagSimultaneous=True):
 						prevLoad.interrupt()
 				try:
 					nextLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
+				except InterruptedException:
+					pass
 				except Throwable as e:
 					TraceLogger.failure(
 						LOG, Level.ERROR, e,

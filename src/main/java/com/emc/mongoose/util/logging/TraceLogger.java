@@ -19,10 +19,9 @@ public final class TraceLogger {
 				level, Markers.ERR,
 				String.format("%s: %s", msg, thrown == null ? null : thrown.toString())
 			);
-			for(Throwable cause = thrown; cause != null; cause = cause.getCause()) {
-				msgBuilder.append("\n\t").append(cause.toString());
-				if(!logger.isTraceEnabled(Markers.ERR)) {
-					break;
+			if(logger.isTraceEnabled(Markers.ERR)) {
+				for(Throwable cause = thrown; cause != null; cause = cause.getCause()) {
+					msgBuilder.append("\n\t").append(cause.toString());
 				}
 				for(final StackTraceElement ste : thrown.getStackTrace()) {
 					msgBuilder.append("\n\t\t").append(ste.toString());

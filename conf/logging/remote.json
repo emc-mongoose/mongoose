@@ -20,11 +20,6 @@
 						"Filter": [
 							{
 								"type": "MarkerFilter",
-								"marker": "msg",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
 								"marker": "perfAvg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
@@ -36,6 +31,11 @@
 							}, {
 								"type": "MarkerFilter",
 								"marker": "err",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "msg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
 							}, {
@@ -386,6 +386,13 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.util.io",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.io.http",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {

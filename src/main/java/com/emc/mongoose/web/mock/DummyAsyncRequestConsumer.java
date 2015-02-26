@@ -1,7 +1,7 @@
 package com.emc.mongoose.web.mock;
 //
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.io.HTTPContentInputStream;
+import com.emc.mongoose.util.io.http.ContentInputStream;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import org.apache.http.HttpEntity;
@@ -64,7 +64,7 @@ extends BasicAsyncRequestConsumer {
 		final ContentDecoder decoder, final IOControl ioctrl)
 	{
 		//this.buf.consumeContent(decoder);
-		try (final InputStream contentStream = HTTPContentInputStream.getInstance(decoder, ioctrl)) {
+		try (final InputStream contentStream = ContentInputStream.getInstance(decoder, ioctrl)) {
 			WSRequestConfigBase.playStreamQuietly(contentStream);
 			this.buf.shutdown();
 		} catch (final InterruptedException e) {

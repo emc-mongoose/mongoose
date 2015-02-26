@@ -137,6 +137,12 @@ public final class StartServlet extends CommonServlet {
 				ThreadContextMap.putValue(RunTimeConfig.KEY_RUN_SCENARIO_NAME, runTimeConfig.getRunScenarioName());
 				ThreadContextMap.putValue(RunTimeConfig.KEY_RUN_METRICS_PERIOD_SEC,
 						String.valueOf(runTimeConfig.getRunMetricsPeriodSec()));
+				if (runTimeConfig.getRunScenarioName().equals("rampup")) {
+					ThreadContextMap.putValue("scenario.rampup.sizes", runTimeConfig.getProperty("scenario.rampup.sizes").toString());
+					ThreadContextMap.putValue("scenario.rampup.thread.counts",
+							runTimeConfig.getProperty("scenario.rampup.thread.counts").toString());
+					ThreadContextMap.putValue("scenario.chain.load", runTimeConfig.getProperty("scenario.chain.load").toString());
+				}
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getRunScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);

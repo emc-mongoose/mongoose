@@ -24,10 +24,13 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
+import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
+import org.apache.http.nio.pool.NIOConnFactory;
 import org.apache.http.nio.protocol.BasicAsyncRequestProducer;
 import org.apache.http.nio.protocol.BasicAsyncResponseConsumer;
 import org.apache.http.nio.protocol.HttpAsyncRequestExecutor;
@@ -93,12 +96,11 @@ implements WSLoadExecutor<T> {
 		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int)thrLocalConfig.getDataPageSize())
+			.setBufferSize((int) thrLocalConfig.getDataPageSize())
 			.build();
-		final int ioThreadCount = (int) Math.sqrt(totalConnCount);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
-			.setIoThreadCount(ioThreadCount)
+			.setIoThreadCount(totalConnCount)
 			.setBacklogSize((int) thrLocalConfig.getSocketBindBackLogSize())
 			.setInterestOpQueued(thrLocalConfig.getSocketInterestOpQueued())
 			.setSelectInterval(thrLocalConfig.getSocketSelectInterval())
@@ -128,14 +130,15 @@ implements WSLoadExecutor<T> {
 			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
 		}
 		//
+		final NIOConnFactory<HttpHost, NHttpClientConnection>
+			connFactory = new BasicNIOConnFactory(connConfig);
 		if(ioReactor != null) {
 			//
 			connPool = new BasicNIOConnPool(
-				ioReactor, runTimeConfig.getConnPoolTimeOut(), connConfig
+				ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
 			);
-			connPool.setDefaultMaxPerRoute(totalConnCount);
 			connPool.setMaxTotal(totalConnCount);
-			//
+			connPool.setDefaultMaxPerRoute(totalConnCount);
 			clientThread = new Thread(
 				new ExecuteClientTask<>(ioEventDispatch, ioReactor),
 				String.format("%s-webClientThread", getName())

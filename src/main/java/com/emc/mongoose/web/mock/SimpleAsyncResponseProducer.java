@@ -1,6 +1,6 @@
 package com.emc.mongoose.web.mock;
 
-import com.emc.mongoose.util.io.HTTPContentOutputStream;
+import com.emc.mongoose.util.io.http.ContentOutputStream;
 import com.emc.mongoose.util.logging.Markers;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -45,7 +45,7 @@ extends BasicAsyncResponseProducer {
 	public final void produceContent(
 		final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
-		try(final OutputStream outStream = HTTPContentOutputStream.getInstance(encoder, ioctrl)) {
+		try(final OutputStream outStream = ContentOutputStream.getInstance(encoder, ioctrl)) {
 			final HttpEntity entity = this.response.getEntity();
 			if( entity != null) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
