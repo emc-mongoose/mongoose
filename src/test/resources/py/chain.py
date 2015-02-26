@@ -126,7 +126,8 @@ def execute(chain=(), flagSimultaneous=True):
 						prevLoad.interrupt()
 				try:
 					nextLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
-				except InterruptedException:
+				except InterruptedException as e:
+					nextLoad.close()
 					raise e
 				except Throwable as e:
 					TraceLogger.failure(

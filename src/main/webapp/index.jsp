@@ -34,7 +34,7 @@
 						<li class="active"><a href="/">Run<span class="sr-only">(current)</span></a></li>
 					</ul>
 
-					<p class="navbar-text navbar-right">v.${runTimeConfig.runVersion}</p>
+					<p class="navbar-text navbar-right">v${runTimeConfig.runVersion}</p>
 				</div>
 			</div>
 		</nav>
