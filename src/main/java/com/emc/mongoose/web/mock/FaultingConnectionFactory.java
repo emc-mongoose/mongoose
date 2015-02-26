@@ -39,9 +39,9 @@ extends DefaultNHttpServerConnectionFactory {
 	//
 	@Override
 	public final DefaultNHttpServerConnection createConnection(final IOSession session) {
-		DefaultNHttpServerConnection connection = super.createConnection(session);
+		final DefaultNHttpServerConnection connection = super.createConnection(session);
 		if (faultPeriod > 0 && (counter.incrementAndGet() % faultPeriod) == 0 ){
-			LOG.trace(Markers.MSG, "Connection ready to fault!");
+			LOG.trace(Markers.MSG, "The connection {} is submitted to be possibly broken", connection);
 			connectionPool.submit(new ConnectionFaultWorker(connection, faultSleepMsec));
 		}
 		return connection;
@@ -66,9 +66,9 @@ extends DefaultNHttpServerConnectionFactory {
 				Thread.sleep(faultSleepMsec);
 				if (connection.isOpen()){
 					connection.close();
-					LOG.trace(Markers.MSG, " Connection close");
+					LOG.trace(Markers.MSG, "The connection {} is closed", connection);
 				} else {
-					LOG.trace(Markers.MSG, " Connection already close");
+					LOG.trace(Markers.MSG, "The connection {} is already closed", connection);
 				}
 			}catch (final IOException e) {
 				TraceLogger.failure(LOG, Level.ERROR, e, "Fault thread");

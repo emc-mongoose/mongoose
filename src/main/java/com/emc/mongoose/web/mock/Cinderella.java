@@ -395,7 +395,7 @@ implements Runnable {
 					}
 					dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 				}
-				LOG.trace(Markers.DATA_LIST, dataObject.toString());
+				LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject));
 				synchronized (sharedStorage) {
 					sharedStorage.put(dataID, dataObject);
 				}
