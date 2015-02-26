@@ -23,6 +23,7 @@ import com.emc.mongoose.util.logging.ConsoleColors;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
+import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
 //
 import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.commons.lang.StringUtils;
@@ -117,7 +118,7 @@ implements LoadExecutor<T> {
 			(maxCount > 0? Long.toString(maxCount) : "") + '-' +
 			Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount);
 		setThreadFactory(
-			new WorkerFactory(name)
+			new DataObjectWorkerFactory(loadNum, reqConfig.getAPI(), loadType, name)
 		);
 		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;

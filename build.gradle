@@ -62,12 +62,11 @@ dependencies {
         'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
 		'org.eclipse.jetty.websocket:websocket-server:9.3.0.M1',
 		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
-
-		'org.eclipse.persistence:javax.persistence:2.1.0',
+		//
 		'jstl:jstl:1.2',
 		'org.apache.commons:commons-collections4:4.0',
 		'commons-cli:commons-cli:1.2',
-
+		//
 		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
 		'com.fasterxml.jackson.core:jackson-core:2.4.1',
 		'com.fasterxml.jackson.core:jackson-databind:2.4.1',
