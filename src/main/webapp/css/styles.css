@@ -21,7 +21,6 @@ label {
 
 #run-modes, #config {
 	margin-top: 15px;
-	text-align: center;
 	padding-bottom: 5px;
 	border-bottom: 1px solid #ccc;
 }
@@ -38,7 +37,7 @@ label {
 	margin-top: 15px;
 	padding-bottom: 15px;
 	overflow: auto;
-	height: calc(100vh - 370px);
+	height: calc(100vh - 430px);
 }
 
 .props {
@@ -256,6 +255,27 @@ text.shadow {
 #log-wrapper {
 	border: 5px solid #ccc;
 	border-radius: 5px;
+}
+
+#run-modes div, #config div {
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 10px;
+}
+
+#start {
+	margin-left: 15px;
+	width: 130px;
+	height: 40px;
+	float: right;
+}
+
+#save-config {
+	margin-bottom: 5px;
+}
+
+.save-buttons {
+	margin-left: 30px !important;
 }
 
 /*  Media Selectors */
