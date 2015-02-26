@@ -9,7 +9,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 //

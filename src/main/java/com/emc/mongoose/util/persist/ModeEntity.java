@@ -9,7 +9,6 @@ import javax.persistence.Id;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Column;
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 import static javax.persistence.GenerationType.IDENTITY;
@@ -18,7 +17,6 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name="Modes")
 @Table(name = "modes", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "id"),
 		@UniqueConstraint(columnNames = "name")})
 public final class ModeEntity
 implements Serializable {

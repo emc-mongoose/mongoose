@@ -9,9 +9,7 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 import static javax.persistence.GenerationType.IDENTITY;
@@ -19,9 +17,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 17.10.14.
  */
 @Entity(name = "Runs")
-@Table(name = "runs", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "mode"),
-		@UniqueConstraint(columnNames = "name")})
+@Table(name = "runs")
 public final class RunEntity
 implements Serializable {
 	@Id

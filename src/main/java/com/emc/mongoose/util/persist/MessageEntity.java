@@ -10,23 +10,16 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
-import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.Date;
-
+//
 import static javax.persistence.GenerationType.IDENTITY;
-
+//
 /**
  * Created by olga on 23.10.14.
  */
 @Entity(name = "MessageEntity")
-@Table(name = "messages", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "run"),
-		@UniqueConstraint(columnNames = "level"),
-		@UniqueConstraint(columnNames = "class"),
-		@UniqueConstraint(columnNames = "tstamp"),
-		@UniqueConstraint(columnNames = "message")})
+@Table(name = "messages")
 public final class MessageEntity
 implements Serializable{
 	@Id

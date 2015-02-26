@@ -8,21 +8,14 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.math.BigInteger;
 //
 import static javax.persistence.GenerationType.IDENTITY;
 /**
  * Created by olga on 28.10.14.
  */
 @Entity(name="TraceEntity")
-@Table(name = "Traces", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "dataItem"),
-		@UniqueConstraint(columnNames = "thread"),
-		@UniqueConstraint(columnNames = "status"),
-		@UniqueConstraint(columnNames = "tsReqStart"),
-		@UniqueConstraint(columnNames = "reqDur")})
+@Table(name = "Traces")
 public final class TraceEntity
 implements Serializable{
 	@Id

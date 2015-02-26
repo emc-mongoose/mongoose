@@ -11,7 +11,6 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 //
-import static javax.persistence.GenerationType.IDENTITY;
 /**
  * Created by olga on 28.10.14.
  */

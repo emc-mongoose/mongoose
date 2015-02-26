@@ -22,10 +22,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity(name="Loads")
 @Table(name = "Loads", uniqueConstraints = {
-		@UniqueConstraint(columnNames = "run"),
-		@UniqueConstraint(columnNames = "type"),
-		@UniqueConstraint(columnNames = "number"),
-		@UniqueConstraint(columnNames = "api")})
+		@UniqueConstraint(columnNames = "run")})
 public class LoadEntity
 implements Serializable {
 	@Id

@@ -1,8 +1,5 @@
 package com.emc.mongoose.util.persist;
 //
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -10,9 +7,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-import java.math.BigInteger;
 import java.util.HashSet;
 import java.util.Set;
 //
@@ -21,12 +16,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 28.10.14.
  */
 @Entity(name="DataItem")
-@Table(name = "dataitems", uniqueConstraints = {
-		@UniqueConstraint(columnNames =	"identifier"),
-		@UniqueConstraint(columnNames = "ringOffset"),
-		@UniqueConstraint(columnNames = "size"),
-		@UniqueConstraint(columnNames = "layer"),
-		@UniqueConstraint(columnNames = "mask")})
+@Table(name = "dataitems")
 public final class DataObjectEntity
 implements Serializable{
 	@Id
