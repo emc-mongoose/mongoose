@@ -47,38 +47,6 @@
 						]
 					}
 				}, {
-					"name": "hibernate",
-					"type": "Hibernate",
-					"enabled": "false",
-					"runid": "${sys:run.id}",
-					"runmode": "${sys:run.mode}",
-					"database": "postgresql",
-					"username": "mongoose",
-					"password": "mongoose",
-					"addr": "localhost",
-					"port": "5432",
-					"namedatabase": "mongoose",
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "err",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "perfTrace",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "msg",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
-					}
-				}, {
 					"name": "stdout",
 					"type": "Console",
 					"PatternLayout": {
@@ -270,7 +238,6 @@
 						{ "ref": "perfAvgFile" },
 						{ "ref": "perfSumFile" },
 						{ "ref": "perfTraceFile" },
-						{ "ref": "hibernate" },
 						{ "ref": "WebUI" }
 					]
 				}
