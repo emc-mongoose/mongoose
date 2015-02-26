@@ -79,7 +79,17 @@ $(document).ready(function() {
 	$("#backup-run\\.scenario\\.name").on("change", function() {
 		var valueSelected = this.value;
 		$("#scenario-button").attr("data-target", "#" + valueSelected);
+		switch(valueSelected) {
+			case "backup-single":
+				$("#scenario-load").text("Load: [" + $("#scenario\\.single\\.load").val() + "]");
+				break;
+			case "backup-chain":
+			case "backup-rampup":
+				$("#scenario-load").text("Load: [" + $("#scenario\\.chain\\.load").val() + "]");
+				break;
+		}
 	});
+	$("#backup-run\\.scenario\\.name").change();
 	//
 	$("#backup-storage\\.api").on("change", function() {
 		var valueSelected = this.value;
@@ -107,6 +117,10 @@ $(document).ready(function() {
 				element.value = currElement.val();
 			}
 		}
+		if ((currElement.attr("id") === "backup-scenario.single.load")
+			|| (currElement.attr("id") === "backup-scenario.chain.load")) {
+			$("#backup-run\\.scenario\\.name").change();
+		}
 	});
 	//
 	$("#extended input").on("change", function() {
@@ -122,6 +136,20 @@ $(document).ready(function() {
 	$("#data-size").on("change", function() {
 		$("#data\\.size\\.min").val($(this).val());
 		$("#data\\.size\\.max").val($(this).val());
+	});
+	//
+	$("#load-threads").on("change", function() {
+		var currentValue = this.value;
+		var keys2Override = [
+			"#backup-load\\.append\\.threads",
+			"#backup-load\\.create\\.threads",
+			"#backup-load\\.read\\.threads",
+			"#backup-load\\.update\\.threads",
+			"#backup-load\\.delete\\.threads"
+		];
+		keys2Override.forEach(function(d) {
+			$(d).val(currentValue).change();
+		})
 	});
 	//
 	$("#start").click(function(e) {
@@ -423,7 +451,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 						if (!isFound) {
 							switch(json.contextMap["run.scenario.name"]) {
 								case RUN_SCENARIO_NAME.single:
-									charts(chartsArray).single(runId, runMetricsPeriodSec);
+									charts(chartsArray).single(json);
 									break;
 								case RUN_SCENARIO_NAME.chain:
 									if (json.threadName.indexOf("remote") > -1) {
@@ -496,10 +524,8 @@ function loadPropertiesFromFile(file) {
 					var input = $('input[data-pointer="' + $(elementId).attr("id") + '"]').val($(elementId).val());
 					var select = $('select[data-pointer="' + $(elementId).attr("id") + '"] option:contains(' + $(elementId).val() + ')')
 						.attr('selected', 'selected');
-					if ($(elementId).attr("id") !== "data.count") {
-						input.change();
-						select.change();
-					}
+					input.change();
+					select.change();
 				}
 			}
 		}
@@ -512,296 +538,302 @@ function charts(chartsArray) {
 	var margin = {top: 40, right: 200, bottom: 60, left: 60},
 		width = 1070 - margin.left - margin.right,
 		height = 500 - margin.top - margin.bottom;
-
+	//  Some constants
 	var SCENARIO = {
 		single: "single",
 		chain: "chain",
 		rampup: "rampup"
 	};
+	var CHART_TYPES = {
+		TP: "throughput",
+		BW: "bandwidth"
+	};
+	var AVG = "avg",
+		MIN_1 = "1min",
+		MIN_5 = "5min",
+		MIN_15 = "15min";
+	//  Some constants from runTimeConfig
+	var RUN_TIME_CONFIG_CONSTANTS = {
+		runId: "run.id",
+		runMetricsPeriodSec: "run.metrics.period.sec",
+		runScenarioName: "run.scenario.name"
+	};
+	var CHART_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+	/*var color = d3.scale.ordinal()
+		.domain([
+			"#FF0000",
+			"#0000FF",
+			"#00FF00",
+			"#FF00FF",
+			"#FFFF00",
+			"#000000",
+			"#C66734",
+			"#8c564b",
+			"#7f7f7f",
+			"#8c6d31"
+		]);*/
+	//  Common functions for charts
+	function getScenarioChartObject(runId, runScenarioName, scenarioCharts) {
+		return {
+			"run.id": runId,
+			"run.scenario.name": runScenarioName,
+			"charts": scenarioCharts
+		};
+	}
+	//
+	function drawThroughputCharts(data, json) {
+		var updateFunction = drawChart(data, json, "seconds[s]", "TP[obj/s]",
+				"#tp-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"));
+		return {
+			update: function(json) {
+				updateFunction(CHART_TYPES.TP, json.message.formattedMessage);
+			}
+		};
+	}
+	//
+	function drawBandwidthCharts(data, json) {
+		var updateFunction = drawChart(data, json, "seconds[s]", "BW[MB/s]",
+				"#bw-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"));
+		return {
+			update: function(json) {
+				updateFunction(CHART_TYPES.BW, json.message.formattedMessage);
+			}
+		};
+	}
+	//
+	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath) {
+		//  get some fields from runTimeConfig
+		var runMetricsPeriodSec = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec];
+		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
+		//
+		var x = d3.scale.linear()
+			.domain([
+				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
+				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; })  })
+			])
+			.range([0, width]);
 
-	return {
-		single: function(runId, runMetricsPeriodSec, chartTitle) {
+		var y = d3.scale.linear()
+			.domain([
+				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
+				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; })  })
+			])
+			.range([height, 0]);
+		//
+		var color = d3.scale.category10();
+		color.domain(data.map(function(d) { return d.name; }));
+		//
+		var xAxis = d3.svg.axis()
+			.scale(x)
+			.orient("bottom");
+		var yAxis = d3.svg.axis()
+			.scale(y)
+			.orient("left");
+
+		function makeXAxis() {
+			return d3.svg.axis()
+				.scale(x)
+				.orient("bottom");
+		}
+
+		function makeYAxis() {
+			return d3.svg.axis()
+				.scale(y)
+				.orient("left");
+		}
+		//
+		var line = d3.svg.line()
+			.x(function (d) {
+				return x(d.x);
+			})
+			.y(function (d) {
+				return y(d.y);
+			});
+		//
+		var svg = d3.select(chartDOMPath)
+			.append("svg")
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		var xAxisGroup = svg.append("g")
+			.attr("class", "x axis")
+			.attr("transform", "translate(0," + height + ")")
+			.call(xAxis);
+
+		var yAxisGroup = svg.append("g")
+			.attr("class", "y axis")
+			.call(yAxis);
+
+		var xGrid = svg.append("g")
+			.attr("class", "grid")
+			.attr("transform", "translate(0," + height + ")")
+			.call(makeXAxis()
+				.tickSize(-height, 0, 0)
+				.tickFormat(""));
+
+		var yGrid = svg.append("g")
+			.attr("class", "grid")
+			.call(makeYAxis()
+				.tickSize(-width, 0, 0)
+				.tickFormat(""));
+
+		var levels = svg.selectAll(".level")
+			.data(data).enter()
+			.append("g")
+			.attr("class", "level")
+			.attr("id", function(d, i) { return chartDOMPath.replace("#", "") + d.name; })
+			.attr("visibility", function(d) { if (d.name === AVG) { return "visible"; } else { return "hidden"; }})
+			.append("path")
+			.attr("class", "line")
+			.attr("d", function(d)  { return line(d.values); })
+			.attr("stroke", function(d) { return color(d.name); });
+		//  Axis X Label
+		svg.append("text")
+			.attr("x", width - 2)
+			.attr("y", height - 2)
+			.style("text-anchor", "end")
+			.text(xAxisLabel);
+
+		//  Axis Y Label
+		svg.append("text")
+			.attr("transform", "rotate(-90)")
+			.attr("y", 6)
+			.attr("x", 0)
+			.attr("dy", ".71em")
+			.style("text-anchor", "end")
+			.text(yAxisLabel);
+		//
+		svg.selectAll("foreignObject")
+			.data(data).enter()
+			.append("foreignObject")
+			.attr("x", width + 3)
+			.attr("width", 18)
+			.attr("height", 18)
+			.attr("transform", function(d, i) {
+				return "translate(0," + i * 20 + ")";
+			})
+			.append("xhtml:body")
+			.append("input")
+			.attr("type", "checkbox")
+			.attr("value", function(d) { return d.name; })
+			.attr("checked", function(d) { if (d.name === AVG) { return "checked"; } })
+			.on("click", function(d, i) {
+				var element = $(chartDOMPath + d.name);
+				if ($(this).is(":checked")) {
+					element.css("visibility", "visible")
+				} else {
+					element.css("visibility", "hidden");
+				}
+			});
+		//
+		var legend = svg.selectAll(".legend")
+			.data(data).enter()
+			.append("g")
+			.attr("class", "legend")
+			.attr("transform", function(d, i) {
+				return "translate(0," + i * 20 + ")";
+			});
+
+		legend.append("rect")
+			.attr("x", width + 18)
+			.attr("width", 18)
+			.attr("height", 18)
+			.style("fill", function(d) { return color(d.name); });
+
+		legend.append("text")
+			.attr("x", width + 100)
+			.attr("y", 9)
+			.attr("dy", ".35em")
+			.style("text-anchor", "end")
+			.text(function(d) { return d.name; });
+
+		svg.append("text")
+			.attr("x", (width / 2))
+			.attr("y", 0 - (margin.top / 2))
+			.attr("text-anchor", "middle")
+			.style("font-size", "16px")
+			.style("text-decoration", "underline")
+			.text("Throughput[obj/s]");
+		return function(chartType, value) {
+			var splitIndex = 0;
+			switch(chartType) {
+				case CHART_TYPES.TP:
+					splitIndex = 2;
+					break;
+				case CHART_TYPES.BW:
+					splitIndex = 3;
+					break;
+			}
 			//
-			var AVG = "avg";
-			var MIN_1 = "1min";
-			var MIN_5 = "5min";
-			var MIN_15 = "15min";
+			var parsedString = value.split(";")[splitIndex];
+			var first = parsedString.indexOf("(") + 1;
+			var second = parsedString.lastIndexOf(")");
+			value = parsedString.substring(first, second).split("/");
 			//
-			var CHART_TYPES = {
-				TP: "throughput",
-				BW: "bandwidth"
-			};
-			//
-			chartsArray.push({
-				"run.id": runId,
-				"run.scenario.name": SCENARIO.single,
-				"charts": [
-					drawThroughputChart(),
-					drawBandwidthChart()
-				]
+			data.forEach(function(d, i) {
+				d.values.push({x: d.values.length * runMetricsPeriodSec, y: parseFloat(value[i])});
 			});
 			//
-			function drawThroughputChart() {
-				var data = [
-					{
-						name: AVG,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_1,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_5,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_15,
-						values: [
-							{x: 0, y: 0}
-						]
-					}
-				];
-				var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
-				return {
-					update: function(json) {
-						updateFunction(CHART_TYPES.TP, json.message.formattedMessage);
-					}
-				};
-			}
+			x.domain([
+				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
+				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; }); })
+			]);
+			y.domain([
+				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
+				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; }); })
+			]);
 			//
-			function drawBandwidthChart() {
-				var data = [
-					{
-						name: AVG,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_1,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_5,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_15,
-						values: [
-							{x: 0, y: 0}
-						]
-					}
-				];
-				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds", "bandwidth[mb/s]", "#bw-" + runId.split(".").join("_"));
-				return {
-					update: function(json) {
-						updateFunction(CHART_TYPES.BW, json.message.formattedMessage);
-					}
-				}
-
-			}
+			xAxisGroup.transition().call(xAxis);
+			yAxisGroup.transition().call(yAxis);
+			xGrid.call(makeXAxis()
+				.tickSize(-height, 0, 0)
+				.tickFormat(""));
+			yGrid.call(makeYAxis()
+				.tickSize(-width, 0, 0)
+				.tickFormat(""));
+			//  Update old charts
+			var paths = svg.selectAll(".level path")
+				.data(data)
+				.attr("d", function(d) { return line(d.values); })
+				.attr("stroke", function(d) { return color(d.name); })
+				.attr("fill", "none");
+		};
+	}
+	//
+	return {
+		single: function(json) {
+			//  get some fields from runTimeConfig
+			var runId = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId];
+			var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
 			//
-			function drawChart(data, chartTitle, xAxisLabel, yAxisLabel, path) {
-				var x = d3.scale.linear()
-					.domain([
-						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
-						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; })  })
-					])
-					.range([0, width]);
-
-				var y = d3.scale.linear()
-					.domain([
-						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
-						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; })  })
-					])
-					.range([height, 0]);
-				//
-				var color = d3.scale.category10();
-				color.domain(data.map(function(d) { return d.name; }));
-				//
-				var xAxis = d3.svg.axis()
-					.scale(x)
-					.orient("bottom");
-				var yAxis = d3.svg.axis()
-					.scale(y)
-					.orient("left");
-
-				function makeXAxis() {
-					return d3.svg.axis()
-						.scale(x)
-						.orient("bottom");
+			var data = [
+				{
+					name: AVG,
+					values: [
+						{x: 0, y: 0}
+					]
+				}, {
+					name: MIN_1,
+					values: [
+						{x: 0, y: 0}
+					]
+				}, {
+					name: MIN_5,
+					values: [
+						{x: 0, y: 0}
+					]
+				}, {
+					name: MIN_15,
+					values: [
+						{x: 0, y: 0}
+					]
 				}
-
-				function makeYAxis() {
-					return d3.svg.axis()
-						.scale(y)
-						.orient("left");
-				}
-				//
-				var line = d3.svg.line()
-					.x(function (d) {
-						return x(d.x);
-					})
-					.y(function (d) {
-						return y(d.y);
-					});
-				//
-				var svg = d3.select(path)
-					.append("svg")
-					.attr("width", width + margin.left + margin.right)
-					.attr("height", height + margin.top + margin.bottom)
-					.append("g")
-					.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-				var xAxisGroup = svg.append("g")
-					.attr("class", "x axis")
-					.attr("transform", "translate(0," + height + ")")
-					.call(xAxis);
-
-				var yAxisGroup = svg.append("g")
-					.attr("class", "y axis")
-					.call(yAxis);
-
-				var xGrid = svg.append("g")
-					.attr("class", "grid")
-					.attr("transform", "translate(0," + height + ")")
-					.call(makeXAxis()
-						.tickSize(-height, 0, 0)
-						.tickFormat(""));
-
-				var yGrid = svg.append("g")
-					.attr("class", "grid")
-					.call(makeYAxis()
-						.tickSize(-width, 0, 0)
-						.tickFormat(""));
-
-				var levels = svg.selectAll(".level")
-					.data(data).enter()
-					.append("g")
-					.attr("class", "level")
-					.attr("id", function(d, i) { return path.replace("#", "") + d.name; })
-					.attr("visibility", function(d) { if (d.name === AVG) { return "visible"; } else { return "hidden"; }})
-					.append("path")
-					.attr("class", "line")
-					.attr("d", function(d)  { return line(d.values); })
-					.attr("stroke", function(d) { return color(d.name); });
-				//  Axis X Label
-				svg.append("text")
-					.attr("x", width - 2)
-					.attr("y", height - 2)
-					.style("text-anchor", "end")
-					.text(xAxisLabel);
-
-				//  Axis Y Label
-				svg.append("text")
-					.attr("transform", "rotate(-90)")
-					.attr("y", 6)
-					.attr("x", 0)
-					.attr("dy", ".71em")
-					.style("text-anchor", "end")
-					.text(yAxisLabel);
-				//
-				svg.selectAll("foreignObject")
-					.data(data).enter()
-					.append("foreignObject")
-					.attr("x", width + 3)
-					.attr("width", 18)
-					.attr("height", 18)
-					.attr("transform", function(d, i) {
-						return "translate(0," + i * 20 + ")";
-					})
-					.append("xhtml:body")
-					.append("input")
-					.attr("type", "checkbox")
-					.attr("value", function(d) { return d.name; })
-					.attr("checked", function(d) { if (d.name === AVG) { return "checked"; } })
-					.on("click", function(d, i) {
-						var element = $(path + d.name);
-						if ($(this).is(":checked")) {
-							element.css("visibility", "visible")
-						} else {
-							element.css("visibility", "hidden");
-						}
-					});
-				//
-				var legend = svg.selectAll(".legend")
-					.data(data).enter()
-					.append("g")
-					.attr("class", "legend")
-					.attr("transform", function(d, i) {
-						return "translate(0," + i * 20 + ")";
-					});
-
-				legend.append("rect")
-					.attr("x", width + 18)
-					.attr("width", 18)
-					.attr("height", 18)
-					.style("fill", function(d) { return color(d.name); });
-
-				legend.append("text")
-					.attr("x", width + 100)
-					.attr("y", 9)
-					.attr("dy", ".35em")
-					.style("text-anchor", "end")
-					.text(function(d) { return d.name; });
-
-				svg.append("text")
-					.attr("x", (width / 2))
-					.attr("y", 0 - (margin.top / 2))
-					.attr("text-anchor", "middle")
-					.style("font-size", "16px")
-					.style("text-decoration", "underline")
-					.text(chartTitle);
-				return function(chartType, value) {
-					var splitIndex = 0;
-					switch(chartType) {
-						case CHART_TYPES.TP:
-							splitIndex = 2;
-							break;
-						case CHART_TYPES.BW:
-							splitIndex = 3;
-							break;
-					}
-					//
-					var parsedString = value.split(";")[splitIndex];
-					var first = parsedString.indexOf("(") + 1;
-					var second = parsedString.lastIndexOf(")");
-					value = parsedString.substring(first, second).split("/");
-					//
-					data.forEach(function(d, i) {
-						d.values.push({x: d.values.length * runMetricsPeriodSec, y: parseFloat(value[i])});
-					});
-					//
-					x.domain([
-						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
-						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; }); })
-					]);
-					y.domain([
-						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
-						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; }); })
-					]);
-					//
-					xAxisGroup.transition().call(xAxis);
-					yAxisGroup.transition().call(yAxis);
-					xGrid.call(makeXAxis()
-						.tickSize(-height, 0, 0)
-						.tickFormat(""));
-					yGrid.call(makeYAxis()
-						.tickSize(-width, 0, 0)
-						.tickFormat(""));
-					//  Update old charts
-					var paths = svg.selectAll(".level path")
-						.data(data)
-						.attr("d", function(d) { return line(d.values); })
-						.attr("stroke", function(d) { return color(d.name); })
-						.attr("fill", "none");
-				};
-			}
+			];
+			chartsArray.push(getScenarioChartObject(runId, runScenarioName,
+					[drawThroughputCharts($.extend(true, [], data), json),
+						drawBandwidthCharts($.extend(true, [], data), json)]));
 		},
 		chain: function(runId, runMetricsPeriodSec, loadType) {
 			var AVG = "avg";
@@ -1412,7 +1444,7 @@ function charts(chartsArray) {
 						})()
 					});
 				});
-				var updateFunction = drawCharts(data, "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
+				var updateFunction = drawCharts(data, "thread count", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.TP, json);
@@ -1442,7 +1474,7 @@ function charts(chartsArray) {
 						})()
 					});
 				});
-				var updateFunction = drawCharts(data, "seconds", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
+				var updateFunction = drawCharts(data, "thread count", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.BW, json);
@@ -1498,6 +1530,7 @@ function charts(chartsArray) {
 						.attr("id", path.replace("#", "") + "-" + d.loadType)
 						.append("g")
 						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+					//
 					var xAxisGroup = svg.append("g")
 						.attr("class", "axis x-axis")
 						.attr("transform", "translate(0," + height + ")")
