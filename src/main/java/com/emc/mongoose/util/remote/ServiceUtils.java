@@ -32,12 +32,12 @@ import java.rmi.registry.Registry;
 import java.rmi.server.RemoteStub;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  Created by kurila on 05.05.14.
  */
@@ -228,8 +228,8 @@ public final class ServiceUtils {
 	//
 	private final static Map<Integer, MBeanServer>
 		MBEAN_SERVERS = new ConcurrentHashMap<>();
-	private final static Queue<JMXConnectorServer>
-		JMX_CONNECTOR_SERVERS = new LinkedBlockingQueue<>();
+	private final static Collection<JMXConnectorServer>
+		JMX_CONNECTOR_SERVERS = new ConcurrentLinkedQueue<>();
 	public static MBeanServer getMBeanServer(final int portJmxRmi) {
 		//
 		MBeanServer mBeanServer;

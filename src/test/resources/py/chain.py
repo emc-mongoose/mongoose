@@ -87,7 +87,8 @@ def build(flagSimultaneous=True, flagItemsBuffer=True, dataItemSizeMin=0, dataIt
 			if prevLoad is None:
 				LOAD_BUILDER.setInputFile(None) # prevent the file list producer creation for next loads
 			prevLoad = load
-		except IllegalArgumentException:
+		except IllegalArgumentException as e:
+			e.printStackTrace()
 			LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)
 		except Throwable as e:
 			TraceLogger.failure(LOG, Level.FATAL, e, "Unexpected failure")

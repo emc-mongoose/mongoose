@@ -32,7 +32,7 @@ if __name__=="__builtin__":
 				except NumberFormatException as e:
 					LOG.error(Markers.ERR, "")
 				try:
-					LOG.info(Markers.MSG, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
+					LOG.info(Markers.PERF_SUM, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
 					ThreadContextMap.putValue("currentSize", dataItemSizeStr + "-" + str(index))
 					ThreadContextMap.putValue("currentThreadCount", str(threadCount))
 					nextChain = chain.build(

@@ -9,6 +9,10 @@ public interface DataSource<T extends DataItem>
 extends Externalizable {
 	//
 	int getSize();
+	void setSize(final int size);
+	//
+	long getSeed();
+	void setSeed(final long seed);
 	//
 	void fromString(final String v)
 	throws IOException;

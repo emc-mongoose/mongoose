@@ -54,7 +54,9 @@ extends BasicAsyncRequestConsumer {
 		if (len < 0 || len > maxPageSize) {
 			len = maxPageSize;
 		}
-		this.buf = new SimpleInputBuffer((int) len, new HeapByteBufferAllocator());
+		this.buf = new SimpleInputBuffer(
+			len > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) len, new HeapByteBufferAllocator()
+		);
 		((HttpEntityEnclosingRequest) this.request).setEntity(
 			new ContentBufferEntity(entity, this.buf));
 	}

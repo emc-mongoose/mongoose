@@ -417,8 +417,8 @@ implements AppendableDataItem, UpdatableDataItem {
 							(int) pendingAugmentSize : MAX_PAGE_SIZE
 						];
 					final int
-						countPages = (int) pendingAugmentSize / buff.length,
-						countTailBytes = (int) pendingAugmentSize % buff.length;
+						countPages = (int) (pendingAugmentSize / buff.length),
+						countTailBytes = (int) (pendingAugmentSize % buff.length);
 					//
 					for(int i = 0; i < countPages; i++) {
 						if(read(buff)==buff.length) {

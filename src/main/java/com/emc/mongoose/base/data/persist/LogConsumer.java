@@ -31,7 +31,15 @@ implements Consumer<T> {
 	public LogConsumer(final long maxCount, final int threadCount) {
 		super(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(), new WorkerFactory("dataItemLogWorker")
+			new LinkedBlockingQueue<Runnable>(
+				maxCount > 0 ?
+					Math.min(
+						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
+						Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize())
+					:
+					Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize()
+			),
+			new WorkerFactory("dataItemLogWorker")
 		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 	}

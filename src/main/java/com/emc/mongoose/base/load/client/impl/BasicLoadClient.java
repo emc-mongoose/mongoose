@@ -52,10 +52,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -113,7 +113,14 @@ implements LoadClient<T> {
 	) {
 		super(
 			remoteLoadMap.size(), remoteLoadMap.size(), 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(runTimeConfig.getRunRequestQueueSize())
+			new LinkedBlockingQueue<Runnable>(
+				maxCount > 0 ?
+					Math.min(
+						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
+						Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize())
+					:
+					Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize()
+			)
 		);
 		//
 		String t = null;
@@ -639,7 +646,7 @@ implements LoadClient<T> {
 				//
 				shutdown();
 			} else {
-				final String addr = loadSvcAddrs[(int) countSubmCalls.get() % loadSvcAddrs.length];
+				final String addr = loadSvcAddrs[(int) (countSubmCalls.get() % loadSvcAddrs.length)];
 				final RemoteSubmitTask<T> remoteSubmitTask = RemoteSubmitTask
 					.getInstanceFor(remoteLoadMap.get(addr), dataItem);
 				int rejectCount = 0;
@@ -767,7 +774,7 @@ implements LoadClient<T> {
 	public final void handleResult(final AsyncIOTask<T> task, final AsyncIOTask.Status status)
 	throws RemoteException {
 		remoteLoadMap
-			.get(loadSvcAddrs[(int) getTaskCount() % loadSvcAddrs.length])
+			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
 			.handleResult(task, status);
 	}
 	//
@@ -775,7 +782,7 @@ implements LoadClient<T> {
 	public final Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> request)
 	throws RemoteException {
 		return remoteLoadMap
-			.get(loadSvcAddrs[(int) getTaskCount() % loadSvcAddrs.length])
+			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
 			.submit(request);
 	}
 	//

@@ -21,7 +21,6 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
-import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.rmi.RemoteException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -47,7 +46,14 @@ implements DataItemBufferSvc<T> {
 	public TmpFileItemBuffer(final long maxCount, final int threadCount) {
 		super(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>()
+			new LinkedBlockingQueue<Runnable>(
+				maxCount > 0 ?
+					Math.min(
+						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
+						Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize())
+					:
+					Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize()
+			)
 		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		//
