@@ -1332,6 +1332,7 @@ function charts(chartsArray) {
 			var loadRampupSizesArray = loadRampupSizes.slice(1, -1).split(",").map(function(item) {
 				return item.trim();
 			});
+			console.log(loadRampupSizesArray);
 			var AVG = "avg";
 			var MIN_1 = "1min";
 			var MIN_5 = "5min";

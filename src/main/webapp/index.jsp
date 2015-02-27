@@ -727,12 +727,9 @@
 																	<div class="modal-body">
 
 																		<div class="form-group">
-																			<label class="col-sm-6 control-label" for="chain-load">
-																				You need to configure chain.load
-																			</label>
 																			<div class="col-sm-6">
 																				<button type="button" class="btn btn-default" id="chain-load">
-																					Configure
+																					Chain load details
 																				</button>
 																			</div>
 																		</div>
