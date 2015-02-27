@@ -29,4 +29,5 @@ extends LoadExecutor<T> {
 		ATTR_RATE_5MIN = "FiveMinuteRate",
 		ATTR_RATE_15MIN = "FifteenMinuteRate";
 	Map<String, LoadSvc<T>> getRemoteLoadMap();
+	void logMetaInfoFrames();
 }

@@ -14,20 +14,23 @@ import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.data.WSObject;
 import com.emc.mongoose.web.data.impl.BasicWSObject;
 import com.emc.mongoose.web.load.WSLoadExecutor;
-//
 import com.emc.mongoose.web.load.impl.reqproc.SharedHeaders;
 import com.emc.mongoose.web.load.impl.reqproc.TargetHost;
 import com.emc.mongoose.web.load.impl.tasks.ExecuteClientTask;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
+import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
+import org.apache.http.nio.pool.NIOConnFactory;
 import org.apache.http.nio.protocol.BasicAsyncRequestProducer;
 import org.apache.http.nio.protocol.BasicAsyncResponseConsumer;
 import org.apache.http.nio.protocol.HttpAsyncRequestExecutor;
@@ -61,24 +64,21 @@ implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static int SHUTDOWN_GRACE_PERIOD_MILLISEC = 1000;
-	//
 	private final HttpAsyncRequester client;
-	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
 	private final Thread clientThread;
 	//
 	public BasicLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
-		final int threadsPerNode, final String listFile, final long maxCount,
+		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
 	) {
 		super(
-			runTimeConfig, reqConfig, addrs, threadsPerNode, listFile, maxCount,
+			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias, countUpdPerReq
 		);
 		//
-		final int threadCount = threadsPerNode * addrs.length;
+		final int totalConnCount = connCountPerNode * storageNodeCount;
 		final List<Header> sharedHeaders = reqConfig.getSharedHeaders();
 		final String userAgent = runTimeConfig.getRunName() + "/" + runTimeConfig.getRunVersion();
 		//
@@ -94,23 +94,17 @@ implements WSLoadExecutor<T> {
 		client = new HttpAsyncRequester(httpProcessor);
 		//
 		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
-		//
-		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
-		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
 			.setBufferSize((int) thrLocalConfig.getDataPageSize())
 			.build();
-		//
-		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
-			reqExecutor, connConfig
-		);
-		//
-		ConnectingIOReactor localIOReactor = null;
-		final IOReactorConfig ioReactorConfig = IOReactorConfig
+		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
+			.setIoThreadCount(totalConnCount)
+			.setBacklogSize((int) thrLocalConfig.getSocketBindBackLogSize())
+			.setInterestOpQueued(thrLocalConfig.getSocketInterestOpQueued())
+			.setSelectInterval(thrLocalConfig.getSocketSelectInterval())
 			.setShutdownGracePeriod(thrLocalConfig.getSocketTimeOut())
-			.setIoThreadCount(threadCount)
 			.setSoKeepAlive(thrLocalConfig.getSocketKeepAliveFlag())
 			.setSoLinger(thrLocalConfig.getSocketLinger())
 			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
@@ -118,39 +112,46 @@ implements WSLoadExecutor<T> {
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
 			.setRcvBufSize((int) thrLocalConfig.getDataPageSize())
 			.setSndBufSize((int) thrLocalConfig.getDataPageSize())
-			.build();
+			.setConnectTimeout(thrLocalConfig.getConnTimeOut());
 		//
+		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
+		//
+		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
+			reqExecutor, connConfig
+		);
+		//
+		ConnectingIOReactor ioReactor = null;
 		try {
-			localIOReactor = new DefaultConnectingIOReactor(
-				ioReactorConfig, new WorkerFactory(getName() + "-worker")
+			ioReactor = new DefaultConnectingIOReactor(
+				ioReactorConfigBuilder.build(),
+				new WorkerFactory(String.format("IOWorker<%s>", getName()))
 			);
 		} catch(final IOReactorException e) {
 			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
-		} finally {
-			ioReactor = localIOReactor;
 		}
 		//
+		final NIOConnFactory<HttpHost, NHttpClientConnection>
+			connFactory = new BasicNIOConnFactory(connConfig);
 		if(ioReactor != null) {
-			connPool = new BasicNIOConnPool(ioReactor, connConfig);
-			connPool.setDefaultMaxPerRoute(threadCount);
-			connPool.setMaxTotal(threadCount);
+			//
+			connPool = new BasicNIOConnPool(
+				ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
+			);
+			connPool.setMaxTotal(totalConnCount);
+			connPool.setDefaultMaxPerRoute(totalConnCount);
+			clientThread = new Thread(
+				new ExecuteClientTask<>(ioEventDispatch, ioReactor),
+				String.format("%s-webClientThread", getName())
+			);
 		} else {
 			connPool = null;
-		}
-		//
-		if(ioReactor == null) {
 			clientThread = null;
-		} else {
-			clientThread = new Thread(
-				new ExecuteClientTask<>(this, ioEventDispatch, ioReactor),
-				getName() + "-asyncWebClient"
-			);
 		}
 	}
 	//
 	@Override
 	public synchronized void start() {
-		if(clientThread == null) {
+		if(clientThread== null) {
 			LOG.debug(Markers.ERR, "Not starting web load client due to initialization failures");
 		} else {
 			clientThread.start();
@@ -158,6 +159,7 @@ implements WSLoadExecutor<T> {
 		}
 	}
 	//
+	private final static int SHUTDOWN_TIMEOUT_MILLISEC = 1000;
 	@Override
 	public void close()
 	throws IOException {
@@ -169,48 +171,35 @@ implements WSLoadExecutor<T> {
 		//
 		LOG.debug(Markers.MSG, "Going to close the web storage client");
 		//
-		connPool.closeExpired();
-		LOG.debug(Markers.MSG, "Closed expired connections");
-		connPool.closeIdle(SHUTDOWN_GRACE_PERIOD_MILLISEC, TimeUnit.MILLISECONDS);
-		LOG.debug(Markers.MSG, "Closed idle connections");
-		try {
-			connPool.shutdown(SHUTDOWN_GRACE_PERIOD_MILLISEC);
-			LOG.debug(Markers.MSG, "Connection pool have been shut down");
-		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Connection pool shutdown failure");
-		}
+		clientThread.interrupt();
 		//
-		if(ioReactor != null) {
+		if(connPool != null) {
+			connPool.closeExpired();
 			try {
-				ioReactor.shutdown(SHUTDOWN_GRACE_PERIOD_MILLISEC);
-				LOG.debug(Markers.MSG, "I/O reactor have been shut down");
-			} catch(final IOException e) {
-				TraceLogger.failure(
-					LOG, Level.WARN, e, "I/O reactor shutdown failure"
+				connPool.closeIdle(
+					SHUTDOWN_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
 				);
+			} finally {
+				try {
+					connPool.shutdown(SHUTDOWN_TIMEOUT_MILLISEC);
+				} catch(final IOException e) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e, "Connection pool shutdown failure"
+					);
+				}
 			}
 		}
 		//
-		if(clientThread != null) {
-			clientThread.interrupt();
-		}
 		LOG.debug(Markers.MSG, "Closed web storage client");
 	}
 	//
 	@Override
 	public final Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> ioTask)
 	throws RemoteException {
-		if(connPool == null) {
-			throw new RemoteException(
-				"Unable to submit the I/O task due to client initialization failure"
-			);
-		}
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
 		Future<WSIOTask.Status> futureResult;
 		try {
-			futureResult = client.execute(
-				wsTask, wsTask, connPool, wsTask.getHttpContext()
-			);
+			futureResult = client.execute(wsTask, wsTask, connPool, wsTask.getHttpContext());
 		} catch(final IllegalStateException e) {
 			throw new RemoteException("I/O task submit failure", e);
 		}
@@ -247,7 +236,7 @@ implements WSLoadExecutor<T> {
 			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");
 		}
 		//
-		if(tgtHost != null) {
+		if(tgtHost != null && connPool != null) {
 			ctx.setTargetHost(tgtHost);
 			//
 			try {

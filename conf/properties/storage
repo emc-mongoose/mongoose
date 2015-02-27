@@ -10,7 +10,6 @@ scheme:								http
 #
 connection.timeout.millisec:		1000000
 connection.pool.timeout.millisec:	1000000
-connection.stale.check:				false
 
 #
 socket.timeout.millisec:			1000000
@@ -18,10 +17,14 @@ socket.reuse.addr:					true
 socket.keepalive:					true
 socket.tcp.nodelay:					true
 socket.linger:						0
+socket.bind.backlog.size:			0
+socket.interest.op.queued:			false
+socket.select.interval:				100
 
 #
 mock.iothreads.persocket:			10
 mock.capacity:						10000000
 mock.data.offset.radix:				36
+mock.data.size.radix:				10
 mock.fault.period:					0
 mock.fault.sleep.msec:				1000

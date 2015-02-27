@@ -20,16 +20,6 @@
 						"Filter": [
 							{
 								"type": "MarkerFilter",
-								"marker": "perfTrace",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "dataList",
-								"onMatch": "DENY",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
 								"marker": "msg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
@@ -39,18 +29,18 @@
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
 							}, {
-								"type": "MarkerFilter",
-								"marker": "perfSum",
+								"type": "ThresholdFilter",
+								"level": "INFO",
 								"onMatch": "NEUTRAL",
-								"onMismatch": "NEUTRAL"
+								"onMismatch": "DENY"
 							}, {
 								"type": "MarkerFilter",
 								"marker": "err",
-								"onMatch": "NEUTRAL",
+								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
 							}, {
-								"type": "ThresholdFilter",
-								"level": "INFO",
+								"type": "MarkerFilter",
+								"marker": "perfSum",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
 							}
@@ -396,6 +386,13 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.util.io",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.io.http",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {

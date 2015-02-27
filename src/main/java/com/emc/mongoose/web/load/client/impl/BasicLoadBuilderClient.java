@@ -1,5 +1,6 @@
 package com.emc.mongoose.web.load.client.impl;
 //
+import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.client.impl.LoadBuilderClientBase;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
 import com.emc.mongoose.util.logging.TraceLogger;
@@ -144,8 +145,7 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		newLoadClient = new BasicWSLoadClient<>(
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
-			runTimeConfig.getDataCount(),
-			nextLoad == null ? 1 : (int) Math.pow(nextLoad.getThreadCount(), 0.8)
+			runTimeConfig.getDataCount()
 		);
 		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer != null && srcProducer.getConsumer() == null) {
