@@ -216,6 +216,10 @@ implements Externalizable {
 		return getInt("remote.import.port");
 	}
 	//
+	public final int getWUISvcPort() {
+		return getInt("remote.wuisvc.port");
+	}
+	//
 	public final int getRunMetricsPeriodSec() {
 		return getInt("run.metrics.period.sec");
 	}

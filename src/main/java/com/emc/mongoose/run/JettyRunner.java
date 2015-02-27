@@ -17,13 +17,10 @@ public class JettyRunner {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-    private final RunTimeConfig runTimeConfig;
-
-    public final static int JETTY_PORT = 800;
-
     public final static String
         DIR_WEBAPP = "webapp",
         DIR_WEBINF = "WEB-INF";
+    private final RunTimeConfig runTimeConfig;
 
     public final static String
             webResourceBaseDir,
@@ -43,7 +40,7 @@ public class JettyRunner {
     }
 
     public void run() {
-        final Server server = new Server(JETTY_PORT);
+        final Server server = new Server(runTimeConfig.getWUISvcPort());
         //
         final WebAppContext webAppContext = new WebAppContext();
         webAppContext.setContextPath("/");

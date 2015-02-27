@@ -3,3 +3,4 @@ servers:		127.0.0.1
 control.port:	1099
 export.port:	1199
 import.port:	1199
+wuisvc.port:	800
