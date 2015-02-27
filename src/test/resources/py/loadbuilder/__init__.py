@@ -1,27 +1,27 @@
 #!/usr/bin/env python
 from __future__ import print_function, absolute_import, with_statement
-from sys import exit
 #
 from org.apache.logging.log4j import Level, LogManager
-LOG = LogManager.getLogger()
 #
 from com.emc.mongoose.run import Main
+from com.emc.mongoose.util.conf import RunTimeConfig
 from com.emc.mongoose.util.logging import TraceLogger, Markers
 #
 from java.lang import IllegalStateException
 from java.util import NoSuchElementException
 #
-def loadbuilder_init():
-	localRunTimeConfig = Main.RUN_TIME_CONFIG.get()
+LOG = LogManager.getLogger()
+#
+def init():
+	localRunTimeConfig = RunTimeConfig.getContext()
 	#
 	mode = None
 	try:
 		mode = localRunTimeConfig.getRunMode()
 	except NoSuchElementException:
 		LOG.fatal(Markers.ERR, "Launch mode is not specified, use -Drun.mode=<VALUE> argument")
-		exit()
 	#
-	INSTANCE = None
+	loadBuilderInstance = None
 	#
 	from org.apache.commons.configuration import ConversionException
 	if mode == Main.RUN_MODE_CLIENT or mode == Main.RUN_MODE_COMPAT_CLIENT:
@@ -29,26 +29,21 @@ def loadbuilder_init():
 		from java.rmi import RemoteException
 		try:
 			try:
-				INSTANCE = BasicLoadBuilderClient(localRunTimeConfig)
+				loadBuilderInstance = BasicLoadBuilderClient(localRunTimeConfig)
 			except ConversionException:
 				LOG.fatal(Markers.ERR, "Servers address list should be comma delimited")
-				exit()
 			except NoSuchElementException:  # no one server addr not specified, try 127.0.0.1
 				LOG.fatal(Markers.ERR, "Servers address list not specified, try  arg -Dremote.servers=<LIST> to override")
-				exit()
 		except RemoteException as e:
 			LOG.fatal(Markers.ERR, "Failed to create load builder client: {}", e)
-			exit()
 	else: # standalone
 		from com.emc.mongoose.web.load.impl import BasicLoadBuilder
 		#
 		try:
-			INSTANCE = BasicLoadBuilder(localRunTimeConfig)
+			loadBuilderInstance = BasicLoadBuilder(localRunTimeConfig)
 		except IllegalStateException as e:
 			TraceLogger(LOG, Level.FATAL, e, "Failed to create load builder client")
-			exit()
 	#
-	if INSTANCE is None:
+	if loadBuilderInstance is None:
 		LOG.fatal(Markers.ERR, "No load builder instanced")
-		exit()
-	return INSTANCE
+	return loadBuilderInstance

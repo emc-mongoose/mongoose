@@ -1,68 +1,40 @@
 from __future__ import print_function, absolute_import, with_statement
-from sys import exit
-from timeout import timeout_init
-from loadbuilder import loadbuilder_init
-#from loadbuilder import INSTANCE as LOAD_BUILDER
-#from timeout import INSTANCE as RUN_TIME
+#
+from timeout import init as timeOutInit
+from loadbuilder import init as loadBuilderInit
 #
 from org.apache.logging.log4j import Level, LogManager
 #
 from com.emc.mongoose.base.api import AsyncIOTask
-from com.emc.mongoose.run import Main
+from com.emc.mongoose.util.conf import RunTimeConfig
 from com.emc.mongoose.util.logging import TraceLogger, Markers
 from com.emc.mongoose.base.load import DataItemBuffer
 #
 from java.lang import Long, String, Throwable, IllegalArgumentException, InterruptedException
-from java.util import NoSuchElementException
 #
-RUN_TIME = timeout_init()
-LOCAL_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get()
-LOAD_BUILDER = loadbuilder_init()
 LOG = LogManager.getLogger()
 #
-LOAD_CHAIN = None
-try:
-	LOAD_CHAIN = LOCAL_RUN_TIME_CONFIG.getStringArray("scenario.chain.load")
-except NoSuchElementException:
-	LOG.error(Markers.ERR, "No load type specified, try arg -Dscenario.chain.load=<VALUE> to override")
-#
-FLAG_SIMULTANEOUS = False
-try:
-	FLAG_SIMULTANEOUS = LOCAL_RUN_TIME_CONFIG.getBoolean("scenario.chain.simultaneous")
-except NoSuchElementException:
-	LOG.error(Markers.ERR, "No chain simultaneous flag specified, try arg -Dscenario.chain.simultaneous=<VALUE> to override")
-LOG.info(
-	Markers.MSG,
-	("Simultaneous" if FLAG_SIMULTANEOUS else "Sequential") + " load chain: {}",
-	LOAD_CHAIN
-)
-#
-FLAG_USE_ITEMS_BUFFER = True
-try:
-	FLAG_USE_ITEMS_BUFFER = LOCAL_RUN_TIME_CONFIG.getBoolean("scenario.chain.itemsbuffer")
-except NoSuchElementException:
-	LOG.error(Markers.ERR, "No items buffer flag specified, try arg -Dscenario.chain.itemsbuffer=<VALUE> to override")
-if FLAG_USE_ITEMS_BUFFER:
-	LOG.info(Markers.MSG, "Going to use persistent internal items buffer")
-#
-def build(flagSimultaneous=True, flagItemsBuffer=True, dataItemSizeMin=0, dataItemSizeMax=0, threadsPerNode=0):
+def build(
+	loadBuilder, loadTypesChain, flagSimultaneous=True, flagItemsBuffer=True,
+	dataItemSizeMin=0, dataItemSizeMax=0, threadsPerNode=0
+):
 	#
 	if flagItemsBuffer:
-		LOAD_BUILDER.getRequestConfig().setAnyDataProducerEnabled(False)
+		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(False)
 	#
 	chain = list()
 	prevLoad = None
-	for loadTypeStr in LOAD_CHAIN:
+	for loadTypeStr in loadTypesChain:
 		LOG.debug(Markers.MSG, "Next load type is \"{}\"", loadTypeStr)
 		try:
-			LOAD_BUILDER.setLoadType(AsyncIOTask.Type.valueOf(loadTypeStr.upper()))
+			loadBuilder.setLoadType(AsyncIOTask.Type.valueOf(loadTypeStr.upper()))
 			if dataItemSizeMin > 0:
-				LOAD_BUILDER.setMinObjSize(dataItemSizeMin)
+				loadBuilder.setMinObjSize(dataItemSizeMin)
 			if dataItemSizeMax > 0:
-				LOAD_BUILDER.setMaxObjSize(dataItemSizeMax)
+				loadBuilder.setMaxObjSize(dataItemSizeMax)
 			if threadsPerNode > 0:
-				LOAD_BUILDER.setThreadsPerNodeDefault(threadsPerNode)
-			load = LOAD_BUILDER.build()
+				loadBuilder.setThreadsPerNodeDefault(threadsPerNode)
+			load = loadBuilder.build()
 			#
 			if load is not None:
 				if flagSimultaneous:
@@ -72,7 +44,7 @@ def build(flagSimultaneous=True, flagItemsBuffer=True, dataItemSizeMin=0, dataIt
 				else:
 					if prevLoad is not None:
 						if flagItemsBuffer:
-							mediatorBuff = LOAD_BUILDER.newDataItemBuffer()
+							mediatorBuff = loadBuilder.newDataItemBuffer()
 							if mediatorBuff is not None:
 								prevLoad.setConsumer(mediatorBuff)
 								chain.append(mediatorBuff)
@@ -85,7 +57,7 @@ def build(flagSimultaneous=True, flagItemsBuffer=True, dataItemSizeMin=0, dataIt
 			else:
 				LOG.error(Markers.ERR, "No load executor instanced")
 			if prevLoad is None:
-				LOAD_BUILDER.setInputFile(None) # prevent the file list producer creation for next loads
+				loadBuilder.setInputFile(None) # prevent the file list producer creation for next loads
 			prevLoad = load
 		except IllegalArgumentException as e:
 			e.printStackTrace()
@@ -95,12 +67,13 @@ def build(flagSimultaneous=True, flagItemsBuffer=True, dataItemSizeMin=0, dataIt
 	return chain
 	#
 def execute(chain=(), flagSimultaneous=True):
+	runTimeOut = timeOutInit()
 	if flagSimultaneous:
 		for load in reversed(chain):
 			load.start()
 		for load in chain:
 			try:
-				load.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
+				load.join(runTimeOut[1].toMillis(runTimeOut[0]))
 			except InterruptedException:
 				pass
 			finally:
@@ -115,7 +88,7 @@ def execute(chain=(), flagSimultaneous=True):
 					prevLoad.close()
 					prevLoad.start()
 					try:
-						prevLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
+						prevLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
 					except InterruptedException:
 						pass
 					except Throwable as e:
@@ -126,7 +99,7 @@ def execute(chain=(), flagSimultaneous=True):
 					finally:
 						prevLoad.interrupt()
 				try:
-					nextLoad.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
+					nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
 				except InterruptedException as e:
 					nextLoad.close()
 					raise e
@@ -139,35 +112,54 @@ def execute(chain=(), flagSimultaneous=True):
 					nextLoad.close()
 			prevLoad = nextLoad
 #
-if __name__=="__builtin__":
+if __name__ == "__builtin__":
 	#
 	dataItemSize, dataItemSizeMin, dataItemSizeMax, threadsPerNode = 0, 0, 0, 0
+	runTimeConfig = RunTimeConfig.getContext()
 	#
 	try:
-		dataItemSize = Long(LOCAL_RUN_TIME_CONFIG.getSizeBytes("data.size"))
+		dataItemSize = Long(runTimeConfig.getSizeBytes("data.size"))
 	except:
 		LOG.debug(Markers.MSG, "No \"data.size\" specified")
 	try:
-		dataItemSizeMin = Long(LOCAL_RUN_TIME_CONFIG.getSizeBytes("data.size.min"))
+		dataItemSizeMin = Long(runTimeConfig.getSizeBytes("data.size.min"))
 	except:
 		LOG.debug(Markers.MSG, "No \"data.size\" specified")
 	try:
-		dataItemSizeMax = Long(LOCAL_RUN_TIME_CONFIG.getSizeBytes("data.size.max"))
+		dataItemSizeMax = Long(runTimeConfig.getSizeBytes("data.size.max"))
 	except:
 		LOG.debug(Markers.MSG, "No \"data.size\" specified")
 	try:
-		threadsPerNode = Long(LOCAL_RUN_TIME_CONFIG.getShort("load.threads"))
+		threadsPerNode = Long(runTimeConfig.getShort("load.threads"))
 	except:
 		LOG.debug(Markers.MSG, "No \"load.threads\" specified")
 	#
+	loadTypesChain = ()
+	try:
+		loadTypesChain = RunTimeConfig.getStringArray("scenario.chain.load")
+	except:
+		LOG.debug(Markers.MSG, "No \"scenario.load.chain\" specified")
+	#
+	flagSimultaneous, flagItemsBuffer = True, False
+	try:
+		flagSimultaneous = RunTimeConfig.getBoolean("scenario.chain.simultaneous")
+	except:
+		LOG.debug(Markers.MSG, "No \"scenario.load.simultaneous\" specified")
+	try:
+		flagItemsBuffer = RunTimeConfig.getBoolean("scenario.chain.itemsbuffer")
+	except:
+		LOG.debug(Markers.MSG, "No \"scenario.load.itemsbuffer\" specified")
+	#
+	loadBuilder = loadBuilderInit()
+	#
 	chain = build(
-		FLAG_SIMULTANEOUS, FLAG_USE_ITEMS_BUFFER,
+		loadBuilder, loadTypesChain, flagSimultaneous, flagItemsBuffer,
 		dataItemSizeMin if dataItemSize == 0 else dataItemSize,
 		dataItemSizeMax if dataItemSize == 0 else dataItemSize,
 		threadsPerNode
 	)
 	try:
-		execute(chain, FLAG_SIMULTANEOUS)
+		execute(chain, flagSimultaneous)
 	except Throwable as e:
 		TraceLogger.failure(LOG, Level.WARN, e, "Chain execution failure")
 	#

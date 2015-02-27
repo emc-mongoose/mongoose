@@ -8,7 +8,6 @@ import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.client.DataItemBufferClient;
 import com.emc.mongoose.base.load.client.LoadBuilderClient;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
@@ -43,7 +42,7 @@ implements LoadBuilderClient<T, U> {
 	//
 	public LoadBuilderClientBase()
 	throws IOException {
-		this(Main.RUN_TIME_CONFIG.get());
+		this(RunTimeConfig.getContext());
 	}
 	//
 	public LoadBuilderClientBase(final RunTimeConfig runTimeConfig)

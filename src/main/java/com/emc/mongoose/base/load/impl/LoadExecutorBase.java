@@ -57,7 +57,7 @@ implements LoadExecutor<T> {
 	protected final String storageNodeAddrs[];
 	//
 	protected final DataSource<T> dataSrc;
-	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
+	protected volatile RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
 	protected final RequestConfig<T> reqConfig;
 	protected final AsyncIOTask.Type loadType;
 	//
@@ -85,9 +85,9 @@ implements LoadExecutor<T> {
 				maxCount > 0 ?
 					Math.min(
 						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
-						Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize())
+						RunTimeConfig.getContext().getRunRequestQueueSize())
 					:
-					Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize()
+					RunTimeConfig.getContext().getRunRequestQueueSize()
 			)//,
 			//new WorkerFactory("submitWorker")
 		);

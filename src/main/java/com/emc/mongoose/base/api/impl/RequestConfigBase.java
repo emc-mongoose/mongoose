@@ -4,7 +4,6 @@ import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.data.DataSource;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
 import com.emc.mongoose.util.logging.Markers;
@@ -37,8 +36,7 @@ implements RequestConfig<T> {
 	protected volatile boolean
 		retryFlag, verifyContentFlag, anyDataProducerEnabled;
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
-	protected volatile RunTimeConfig
-		runTimeConfig = Main.RUN_TIME_CONFIG.get();
+	protected volatile RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
 	protected volatile String
 		/*addr, */scheme/*, uriTemplate*/;
 	protected volatile int

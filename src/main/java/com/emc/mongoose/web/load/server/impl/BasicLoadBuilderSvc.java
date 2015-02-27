@@ -36,7 +36,7 @@ implements WSLoadBuilderSvc<T, U> {
 	@Override
 	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
 		super.setProperties(clientConfig);
-		Main.RUN_TIME_CONFIG.set(clientConfig);
+		RunTimeConfig.getContext();
 		return this;
 	}
 	//
@@ -71,7 +71,7 @@ implements WSLoadBuilderSvc<T, U> {
 		}
 		//
 		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(reqConf);
-		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
+		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 		if(minObjSize > maxObjSize) {
 			throw new IllegalStateException(
 				String.format(

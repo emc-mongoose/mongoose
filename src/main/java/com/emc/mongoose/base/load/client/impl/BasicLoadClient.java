@@ -117,9 +117,9 @@ implements LoadClient<T> {
 				maxCount > 0 ?
 					Math.min(
 						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
-						Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize())
+						RunTimeConfig.getContext().getRunRequestQueueSize())
 					:
-					Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize()
+					RunTimeConfig.getContext().getRunRequestQueueSize()
 			)
 		);
 		//

@@ -1,5 +1,6 @@
 package com.emc.mongoose.util.remote;
 //
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.run.Main;
@@ -49,7 +50,7 @@ public final class ServiceUtils {
 	static {
 		int tmpPort = Registry.REGISTRY_PORT;
 		try {
-			tmpPort = Main.RUN_TIME_CONFIG.get().getRemoteControlPort();
+			tmpPort = RunTimeConfig.getContext().getRemoteControlPort();
 		} catch(final Exception e) {
 			TraceLogger.failure(
 				LOG, Level.WARN, e,

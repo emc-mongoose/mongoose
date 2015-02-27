@@ -3,7 +3,6 @@ package com.emc.mongoose.base.data.persist;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.server.DataItemBufferSvc;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 //
@@ -50,14 +49,14 @@ implements DataItemBufferSvc<T> {
 				maxCount > 0 ?
 					Math.min(
 						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
-						Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize())
+						RunTimeConfig.getContext().getRunRequestQueueSize())
 					:
-					Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize()
+					RunTimeConfig.getContext().getRunRequestQueueSize()
 			)
 		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		//
-		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
+		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 		retryCountMax = localRunTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = localRunTimeConfig.getRunRetryDelayMilliSec();
 		//
@@ -184,7 +183,7 @@ implements DataItemBufferSvc<T> {
 			shutdown();
 			try {
 				awaitTermination(
-					Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+					RunTimeConfig.getContext().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 				);
 			} catch(final InterruptedException e) {
 				TraceLogger.failure(

@@ -4,7 +4,6 @@ import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.persist.FileProducer;
 import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.object.load.impl.ObjectLoadExecutorBase;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
@@ -93,7 +92,7 @@ implements WSLoadExecutor<T> {
 			.build();
 		client = new HttpAsyncRequester(httpProcessor);
 		//
-		final RunTimeConfig thrLocalConfig = Main.RUN_TIME_CONFIG.get();
+		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
 			.setBufferSize((int) thrLocalConfig.getDataPageSize())

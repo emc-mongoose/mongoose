@@ -2,7 +2,7 @@ package com.emc.mongoose.base.data.persist;
 //
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 //
 import com.emc.mongoose.util.collections.InstancePool;
@@ -35,9 +35,9 @@ implements Consumer<T> {
 				maxCount > 0 ?
 					Math.min(
 						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
-						Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize())
+						RunTimeConfig.getContext().getRunRequestQueueSize())
 					:
-					Main.RUN_TIME_CONFIG.get().getRunRequestQueueSize()
+					RunTimeConfig.getContext().getRunRequestQueueSize()
 			),
 			new WorkerFactory("dataItemLogWorker")
 		);
@@ -112,7 +112,7 @@ implements Consumer<T> {
 		}
 		try {
 			awaitTermination(
-				Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+				RunTimeConfig.getContext().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 			);
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted while waiting the remaining tasks to complete");
