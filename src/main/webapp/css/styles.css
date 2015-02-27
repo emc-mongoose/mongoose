@@ -111,8 +111,8 @@ li input:checked + ul > li:last-child {
 }
 
 .stop {
-	margin-top: 10px;
 	width: 100%;
+	padding: 10px 15px;
 }
 
 .tab-content {
@@ -225,6 +225,10 @@ text.shadow {
 	stroke-width: 0;
 }
 
+.dot {
+	stroke-width: 1.5px;
+}
+
 #scenario-tab,
 #log-pills,
 #chart-pills {
@@ -248,7 +252,7 @@ text.shadow {
 }
 
 .table-content {
-	height: calc(100vh - 310px);
+	height: calc(100vh - 255px);
 	overflow-y: auto;
 }
 

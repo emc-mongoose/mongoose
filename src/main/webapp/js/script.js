@@ -1,6 +1,6 @@
 $(document).ready(function() {
 	var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
-	var TABLE_ROWS_COUNT = 2050;
+	var TABLE_ROWS_COUNT = 100;
 	excludeDuplicateOptions();
 	//
 	var chartsArray = [];
@@ -79,7 +79,11 @@ $(document).ready(function() {
 	$("#backup-run\\.scenario\\.name").on("change", function() {
 		var valueSelected = this.value;
 		$("#scenario-button").attr("data-target", "#" + valueSelected);
-		switch(valueSelected) {
+		changeLoadHint(valueSelected);
+	});
+	//
+	function changeLoadHint(value) {
+		switch (value) {
 			case "backup-single":
 				$("#scenario-load").text("Load: [" + $("#scenario\\.single\\.load").val() + "]");
 				break;
@@ -88,7 +92,7 @@ $(document).ready(function() {
 				$("#scenario-load").text("Load: [" + $("#scenario\\.chain\\.load").val() + "]");
 				break;
 		}
-	});
+	}
 	$("#backup-run\\.scenario\\.name").change();
 	//
 	$("#backup-storage\\.api").on("change", function() {
@@ -119,7 +123,7 @@ $(document).ready(function() {
 		}
 		if ((currElement.attr("id") === "backup-scenario.single.load")
 			|| (currElement.attr("id") === "backup-scenario.chain.load")) {
-			$("#backup-run\\.scenario\\.name").change();
+			changeLoadHint($("#backup-run\\.scenario\\.name").val());
 		}
 	});
 	//
@@ -129,16 +133,16 @@ $(document).ready(function() {
 			$("#backup-run\\.time\\.input").val(splittedTimeString[0]);
 			$("#backup-run\\.time\\.select").val(splittedTimeString[1]);
 		}
-		$('input[data-pointer="' + $(this).attr("id") + '"]').val($(this).val());
+		$('input[data-pointer="' + $(this).attr("id") + '"]').val($(this).val()).change();
 		$('select[data-pointer="' + $(this).attr("id") + '"] option:contains(' + $(this).val() + ')')
-			.attr('selected', 'selected');
+			.attr('selected', 'selected').change();
 	});
-	$("#data-size").on("change", function() {
+	$("#backup-data\\.size").on("change", function() {
 		$("#data\\.size\\.min").val($(this).val());
 		$("#data\\.size\\.max").val($(this).val());
 	});
 	//
-	$("#load-threads").on("change", function() {
+	$("#backup-load\\.threads").on("change", function() {
 		var currentValue = this.value;
 		var keys2Override = [
 			"#backup-load\\.append\\.threads",
@@ -1597,6 +1601,7 @@ function charts(chartsArray) {
 						.append("g")
 						.attr("class", "level")
 						.attr("id", function(c, i) { return path.replace("#", "") + "-" + d.loadType + "-" + c.size + "-" + i; })
+						.attr("fill", function(c, i) { return color(loadRampupSizesArray[i]); })
 						.attr("stroke", function(c, i) { return color(loadRampupSizesArray[i]); })
 						.selectAll("path")
 						.data(function(c) { return c.charts; }).enter()
@@ -1700,6 +1705,20 @@ function charts(chartsArray) {
 										.selectAll("path").data(d.charts)
 										.attr("d", function(v) { return line(v.values); })
 										.attr("fill", "none");
+									//
+									var dots = loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
+										.data(d.charts)
+										.selectAll(".dot").data(function(v) { return v.values; })
+										.enter().append("circle")
+										.attr("class", "dot")
+										.attr("cx", function(coord) { return x(coord.x); })
+										.attr("cy", function(coord) { return y(coord.y); })
+										.attr("r", 2)
+									//  Update dots
+									loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
+										.selectAll(".dot").data(function(v) { return v.values; })
+										.attr("cx", function(coord) { return x(coord.x); })
+										.attr("cy", function(coord) { return y(coord.y); });
 								}
 							});
 						}
