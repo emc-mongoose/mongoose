@@ -86,17 +86,6 @@ $(document).ready(function() {
 		$("#api-button").attr("data-target", "#" + valueSelected);
 	});
 	//
-	$(".complex").change(function() {
-		$("#backup-data\\.count").val(document.getElementById("backup-data.count").defaultValue);
-		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
-	});
-	//
-	$("#backup-data\\.count").change(function() {
-		$(".complex input").val($(".complex input").get(0).defaultValue);
-		$(".complex select").val($(".complex select option:first").val());
-		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
-	});
-	//
 	$("#base input, #base select").on("change", function() {
 		var currElement = $(this);
 		if (currElement.parents(".complex").length === 1) {
@@ -121,13 +110,18 @@ $(document).ready(function() {
 	});
 	//
 	$("#extended input").on("change", function() {
-		if (($(this).attr("id") === "run.time")
-			|| ($(this).attr("id") === "data.count")) {
-				return;
+		if ($(this).attr("id") === "run.time") {
+			var splittedTimeString = $(this).val().split(".");
+			$("#backup-run\\.time\\.input").val(splittedTimeString[0]);
+			$("#backup-run\\.time\\.select").val(splittedTimeString[1]);
 		}
 		$('input[data-pointer="' + $(this).attr("id") + '"]').val($(this).val());
 		$('select[data-pointer="' + $(this).attr("id") + '"] option:contains(' + $(this).val() + ')')
 			.attr('selected', 'selected');
+	});
+	$("#data-size").on("change", function() {
+		$("#data\\.size\\.min").val($(this).val());
+		$("#data\\.size\\.max").val($(this).val());
 	});
 	//
 	$("#start").click(function(e) {

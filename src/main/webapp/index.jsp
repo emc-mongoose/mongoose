@@ -71,7 +71,7 @@
 								<div id="config">
 									<label for="config-type">Config type</label>
 									<select id="config-type">
-										<option value="base">base</option>
+										<option value="base">basic</option>
 										<option value="extended">extended</option>
 									</select>
 									<br/>
@@ -97,7 +97,9 @@
 											<fieldset>
 												<legend>Auth</legend>
 												<div class="form-group">
-													<label for="backup-auth.id" class="col-sm-3 control-label">auth.id</label>
+													<label for="backup-auth.id" class="col-sm-3 control-label">
+														access identifier
+													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-auth.id" class="form-control"
 												            data-pointer="auth.id" value="${runTimeConfig.authId}"
@@ -105,7 +107,9 @@
 													</div>
 												</div>
 												<div class="form-group">
-													<label for="backup-auth.secret" class="col-sm-3 control-label">auth.secret</label>
+													<label for="backup-auth.secret" class="col-sm-3 control-label">
+														access secret
+													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-auth.secret" class="form-control"
 									                        data-pointer="auth.secret" value="${runTimeConfig.authSecret}"
@@ -120,7 +124,9 @@
 												<legend>Storage</legend>
 												<div class="standalone client">
 													<div class="form-group">
-														<label for="backup-storage.addrs" class="col-sm-3 control-label">storage.addrs(data nodes)</label>
+														<label for="backup-storage.addrs" class="col-sm-3 control-label">
+															storage target hosts
+														</label>
 														<div class="col-sm-9">
 															<input type="text" id="backup-storage.addrs" class="form-control"
 																data-pointer="storage.addrs"
@@ -131,7 +137,9 @@
 												</div>
 												<div class="standalone client cinderella">
 													<div class="form-group">
-														<label for="backup-storage.api" class="col-sm-3 control-label">storage.api</label>
+														<label for="backup-storage.api" class="col-sm-3 control-label">
+															storage API
+														</label>
 														<div class="col-sm-9">
 															<select id="backup-storage.api" class="form-select" data-pointer="storage.api">
 																<option value="backup-${runTimeConfig.storageApi}">${runTimeConfig.storageApi}</option>
@@ -236,7 +244,9 @@
 											<fieldset>
 												<legend>Controller</legend>
 												<div class="form-group">
-													<label for="backup-remote.servers" class="col-sm-3 control-label">remote.servers(drivers)</label>
+													<label for="backup-remote.servers" class="col-sm-3 control-label">
+														load servers
+													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-remote.servers" class="form-control"
 												            data-pointer="remote.servers"
@@ -250,18 +260,11 @@
 										<div class="standalone client">
 											<fieldset>
 												<legend>Data</legend>
-												<div class="form-group">
-													<label for="backup-data" class="col-sm-3 control-label">data</label>
-													<div class="col-sm-9">
-														<select id="backup-data" class="form-select">
-															<option>time</option>
-															<option>objects</option>
-														</select>
-													</div>
-												</div>
 
 												<div id="objects" class="form-group">
-													<label for="backup-data.count" class="col-sm-3 control-label">data.count</label>
+													<label for="backup-data.count" class="col-sm-3 control-label">
+														count limit per load
+													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-data.count" class="form-control"
 									                        data-pointer="data.count"
@@ -270,47 +273,21 @@
 													</div>
 												</div>
 
-												<div id="time" class="form-group complex">
-													<c:set var="runTimeArray" value="${fn:split(runTimeConfig.runTime, '.')}"/>
-													<label for="backup-run.time.input" class="col-sm-3 control-label">run.time</label>
-													<div class="col-sm-9">
-														<input type="text" id="backup-run.time.input" class="form-control pre-select"
-												            value="${runTimeArray[0]}">
-														<select class="form-select" id="backup-run.time.select">
-															<option>${runTimeArray[1]}</option>
-															<option>days</option>
-															<option>hours</option>
-															<option>minutes</option>
-															<option>seconds</option>
-														</select>
-													</div>
-													<input type="hidden" id="backup-run.time" class="form-control"
-											            data-pointer="run.time"
-											            value="${runTimeArray[0]}.${runTimeArray[1]}">
-												</div>
-
 												<div class="form-group">
-													<label for="backup-data.size.min" class="col-sm-3 control-label">data.size.min</label>
+													<label for="data-size" class="col-sm-3 control-label">
+														data items size
+													</label>
 													<div class="col-sm-9">
-														<input type="text" id="backup-data.size.min" class="form-control"
-											                data-pointer="data.size.min"
+														<input type="text" id="data-size" class="form-control"
 												            value="${rt:getString(runTimeConfig, 'data.size.min')}"
-												            placeholder="Enter 'data.size.min' property">
+												            placeholder="Enter 'data.size' property">
 													</div>
 												</div>
 
 												<div class="form-group">
-													<label for="backup-data.size.max" class="col-sm-3 control-label">data.size.max</label>
-													<div class="col-sm-9">
-														<input type="text" id="backup-data.size.max" class="form-control"
-												            data-pointer="data.size.max"
-												            value="${rt:getString(runTimeConfig, 'data.size.max')}"
-												            placeholder="Enter 'data.size.max' property">
-													</div>
-												</div>
-
-												<div class="form-group">
-													<label for="backup-data.src.fpath" class="col-sm-3 control-label">data.src.fpath</label>
+													<label for="backup-data.src.fpath" class="col-sm-3 control-label">
+														path to data items list
+													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-data.src.fpath" class="form-control"
 												            data-pointer="data.src.fpath"
@@ -325,7 +302,7 @@
 											<fieldset>
 												<legend>Run</legend>
 												<div class="form-group">
-													<label for="backup-run.id" class="col-sm-3 control-label">run.id</label>
+													<label for="backup-run.id" class="col-sm-3 control-label">run id</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-run.id" class="form-control"
 												            data-pointer="run.id"
@@ -335,8 +312,31 @@
 											</fieldset>
 
 											<div class="standalone client">
+												<div id="time" class="form-group complex">
+													<c:set var="runTimeArray" value="${fn:split(runTimeConfig.runTime, '.')}"/>
+													<label for="backup-run.time.input" class="col-sm-3 control-label">
+														time limit per load
+													</label>
+													<div class="col-sm-9">
+														<input type="text" id="backup-run.time.input" class="form-control pre-select"
+														       value="${runTimeArray[0]}">
+														<select class="form-select" id="backup-run.time.select">
+															<option>${runTimeArray[1]}</option>
+															<option>days</option>
+															<option>hours</option>
+															<option>minutes</option>
+															<option>seconds</option>
+														</select>
+													</div>
+													<input type="hidden" id="backup-run.time" class="form-control"
+													       data-pointer="run.time"
+													       value="${runTimeArray[0]}.${runTimeArray[1]}">
+												</div>
+
 												<div class="form-group">
-													<label for="backup-run.scenario.name" class="col-sm-3 control-label">run.scenario.name</label>
+													<label for="backup-run.scenario.name" class="col-sm-3 control-label">
+														the scenario to run
+													</label>
 													<div class="col-sm-9">
 														<select id="backup-run.scenario.name" class="form-select" data-pointer="run.scenario.name">
 															<option value="backup-${runTimeConfig.runScenarioName}">
@@ -765,22 +765,6 @@
 																</div>
 															</div>
 														</div>
-													</div>
-												</div>
-
-												<div class="form-group">
-													<label for="backup-run.request.retries" class="col-sm-3 control-label">
-														run.request.retries
-													</label>
-													<div class="col-sm-9">
-														<select id="backup-run.request.retries" class="form-select"
-												            data-pointer="run.request.retries">
-															<option>
-																${rt:getString(runTimeConfig, "run.request.retries")}
-															</option>
-															<option>true</option>
-															<option>false</option>
-														</select>
 													</div>
 												</div>
 											</div>
