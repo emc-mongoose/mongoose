@@ -44,7 +44,8 @@ implements WSLoadSvc<T> {
 	}
 	//
 	@Override
-	public final void close() {
+	public final void close()
+	throws IOException {
 		super.close();
 		// close the exposed network service, if any
 		final Service svc = ServiceUtils.getLocalSvc(getName());
