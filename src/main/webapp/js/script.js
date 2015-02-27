@@ -380,13 +380,13 @@ function configureWebSocketConnection(location, countOfRecords) {
 				}
 				if (json.marker === null)
 					return;
-				var is = false;
+				var isContains = false;
 				chartsArray.forEach(function(d) {
 					if (d["run.id"] === runId) {
-						is = true;
+						isContains = true;
 					}
 				});
-				if (!is) {
+				if (!isContains) {
 					if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
 						charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
 					}
@@ -1354,7 +1354,8 @@ function charts(chartsArray) {
 				"run.id": runId,
 				"run.scenario.name": SCENARIO.rampup,
 				"charts": [
-					drawThroughputCharts()
+					drawThroughputCharts(),
+					drawBandwidthCharts()
 				]
 			});
 
@@ -1385,6 +1386,36 @@ function charts(chartsArray) {
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.TP, json);
+					}
+				};
+			}
+			//
+			function drawBandwidthCharts() {
+				var data = [];
+				loadTypes.forEach(function(d) {
+					data.push({
+						"loadType": d.trim(),
+						"sizes": (function() {
+							var sizesArray = [];
+							loadRampupSizesArray.forEach(function(d, i) {
+								sizesArray[i] = {
+									"size": d + "-" + i,
+									"charts": [
+										{
+											"name": AVG,
+											"values": []
+										}
+									]
+								}
+							});
+							return sizesArray;
+						})()
+					});
+				});
+				var updateFunction = drawCharts(data, "seconds", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
+				return {
+					update: function(json) {
+						updateFunction(CHART_TYPES.BW, json);
 					}
 				};
 			}
