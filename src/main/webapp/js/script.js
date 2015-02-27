@@ -86,17 +86,6 @@ $(document).ready(function() {
 		$("#api-button").attr("data-target", "#" + valueSelected);
 	});
 	//
-	$(".complex").change(function() {
-		$("#backup-data\\.count").val(document.getElementById("backup-data.count").defaultValue);
-		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
-	});
-	//
-	$("#backup-data\\.count").change(function() {
-		$(".complex input").val($(".complex input").get(0).defaultValue);
-		$(".complex select").val($(".complex select option:first").val());
-		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
-	});
-	//
 	$("#base input, #base select").on("change", function() {
 		var currElement = $(this);
 		if (currElement.parents(".complex").length === 1) {
@@ -121,13 +110,18 @@ $(document).ready(function() {
 	});
 	//
 	$("#extended input").on("change", function() {
-		if (($(this).attr("id") === "run.time")
-			|| ($(this).attr("id") === "data.count")) {
-				return;
+		if ($(this).attr("id") === "run.time") {
+			var splittedTimeString = $(this).val().split(".");
+			$("#backup-run\\.time\\.input").val(splittedTimeString[0]);
+			$("#backup-run\\.time\\.select").val(splittedTimeString[1]);
 		}
 		$('input[data-pointer="' + $(this).attr("id") + '"]').val($(this).val());
 		$('select[data-pointer="' + $(this).attr("id") + '"] option:contains(' + $(this).val() + ')')
 			.attr('selected', 'selected');
+	});
+	$("#data-size").on("change", function() {
+		$("#data\\.size\\.min").val($(this).val());
+		$("#data\\.size\\.max").val($(this).val());
 	});
 	//
 	$("#start").click(function(e) {
@@ -380,13 +374,13 @@ function configureWebSocketConnection(location, countOfRecords) {
 				}
 				if (json.marker === null)
 					return;
-				var is = false;
+				var isContains = false;
 				chartsArray.forEach(function(d) {
 					if (d["run.id"] === runId) {
-						is = true;
+						isContains = true;
 					}
 				});
-				if (!is) {
+				if (!isContains) {
 					if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
 						charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
 					}
@@ -1338,6 +1332,7 @@ function charts(chartsArray) {
 			var loadRampupSizesArray = loadRampupSizes.slice(1, -1).split(",").map(function(item) {
 				return item.trim();
 			});
+			console.log(loadRampupSizesArray);
 			var AVG = "avg";
 			var MIN_1 = "1min";
 			var MIN_5 = "5min";
@@ -1354,7 +1349,8 @@ function charts(chartsArray) {
 				"run.id": runId,
 				"run.scenario.name": SCENARIO.rampup,
 				"charts": [
-					drawThroughputCharts()
+					drawThroughputCharts(),
+					drawBandwidthCharts()
 				]
 			});
 
@@ -1385,6 +1381,36 @@ function charts(chartsArray) {
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.TP, json);
+					}
+				};
+			}
+			//
+			function drawBandwidthCharts() {
+				var data = [];
+				loadTypes.forEach(function(d) {
+					data.push({
+						"loadType": d.trim(),
+						"sizes": (function() {
+							var sizesArray = [];
+							loadRampupSizesArray.forEach(function(d, i) {
+								sizesArray[i] = {
+									"size": d + "-" + i,
+									"charts": [
+										{
+											"name": AVG,
+											"values": []
+										}
+									]
+								}
+							});
+							return sizesArray;
+						})()
+					});
+				});
+				var updateFunction = drawCharts(data, "seconds", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
+				return {
+					update: function(json) {
+						updateFunction(CHART_TYPES.BW, json);
 					}
 				};
 			}
