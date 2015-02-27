@@ -19,7 +19,7 @@ public class JettyRunner {
 	//
     private final RunTimeConfig runTimeConfig;
 
-    public final static int JETTY_PORT = 8080;
+    public final static int JETTY_PORT = 800;
 
     public final static String
         DIR_WEBAPP = "webapp",
