@@ -112,8 +112,8 @@ extends AbstractAppender {
 		}
 		if (!executor.isTerminated()){
 			try {
-				LOGGER.debug(String.format("There are %d tasks from hibernate queue",
-					executor.getQueue().size()));
+				System.out.println(String.format("There are %d tasks from hibernate apender queue",
+					queue.size()));
 				//add comment
 				executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
 			} catch (final InterruptedException e) {

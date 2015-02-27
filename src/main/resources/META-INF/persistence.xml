@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<persistence version="2.0" xmlns="http://java.sun.com/xml/ns/persistence"
+			 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			 xsi:schemaLocation="http://java.sun.com/xml/ns/persistence
+             http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+	<persistence-unit name="openjpa">
+		<provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
+		<class>com.emc.mongoose.util.persist.Mode</class>
+		<properties>
+			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+			<property name="openjpa.ConnectionURL" value="jdbc:postgresql://localhost:5432/mongoose"/>
+			<property name="openjpa.ConnectionDriverName" value="org.postgresql.Driver"/>
+			<property name="openjpa.ConnectionUserName" value="mongoose"/>
+			<property name="openjpa.ConnectionPassword" value="mongoose"/>
+			<property name="openjpa.Log" value="DefaultLevel=WARN, Tool=INFO"/>
+		</properties>
+
+	</persistence-unit>
+</persistence>
