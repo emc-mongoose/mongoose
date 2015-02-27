@@ -32,13 +32,14 @@ if __name__=="__builtin__":
 				except NumberFormatException as e:
 					LOG.error(Markers.ERR, "")
 				try:
-					LOG.info(Markers.MSG, "---- Rampup step: {}x{} ----", threadCount, dataItemSizeStr)
+					LOG.info(Markers.MSG, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
 					ThreadContextMap.putValue("currentSize", dataItemSizeStr + "-" + str(index))
 					ThreadContextMap.putValue("currentThreadCount", str(threadCount))
 					nextChain = chain.build(
 						False, True, dataItemSize, dataItemSize, threadCount
 					)
 					chain.execute(nextChain, False)
+					LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
 				except Throwable as e:
 					TraceLogger.failure(LOG, Level.ERROR, e, "Chain execution failure")
 		except Throwable as e:

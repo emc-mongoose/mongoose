@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="300"
+   height="100"
+   id="svg3815">
+  <defs
+     id="defs3817" />
+  <metadata
+     id="metadata3820">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(0,-952.36218)"
+     id="layer1">
+    <g
+       transform="matrix(0.09374999,0,0,-0.12500021,-210.86641,1116.4251)"
+       id="g3798">
+      <path
+         d="m 2837.8977,514.6892 c 283.8113,41.3124 350.906,430.73647 757.3341,433.25688 362.796,2.26572 530.3355,-174.72859 666.9464,-435.4439 m 75.3415,2.98042 -87.5757,232.41271 c 0,0 170.6029,-130.92614 262.4276,-127.15647 254.8953,6.78496 355.4729,165.73149 580.1152,187.48967 121.7638,-8.02687 166.6482,-26.25957 356.7554,-92.77828 -73.5235,22.37071 -164.5,142.66332 -333.0419,152.34885 -284.1017,-9.04824 -456.3714,-205.68007 -575.5314,-205.68007 -324.887,9.05066 -308.329,636.52739 -857.9698,650.09489 -506.2414,12.4807 -460.8373,-386.3644 -877.8104,-388.63006 -104.8388,22.99899 -140.1334,168.52746 -277.9723,200.71786 -160.5031,-18.2052 -154.325,-97.3021 -227.5138,-132.46317 -153.456,-106.79496 85.2339,-39.75613 181.4708,-37.11718 171.042,-19.56652 273.4116,-198.76272 549.583,-194.25317 C 2976.2213,607.1504 2800.071,534.48183 2783.8034,516.39992"
+         id="path3018"
+         style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none" />
+      <path
+         d="m 455.02323,343.75281 a 2.032932,1.8561553 0 1 1 -4.06587,0 2.032932,1.8561553 0 1 1 4.06587,0 z"
+         transform="matrix(23.239403,0,0,-19.406395,-8092.6556,7698.5912)"
+         id="path3796"
+         style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
+    </g>
+  </g>
+</svg>

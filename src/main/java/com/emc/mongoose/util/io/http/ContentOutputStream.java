@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.io;
+package com.emc.mongoose.util.io.http;
 //
 import com.emc.mongoose.util.collections.InstancePool;
 import com.emc.mongoose.util.collections.Reusable;
@@ -18,7 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 09.12.14.
  */
-public final class HTTPContentOutputStream
+public final class ContentOutputStream
 extends OutputStream
 implements Reusable {
 	//
@@ -72,10 +72,10 @@ implements Reusable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Instances pooling ///////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static InstancePool<HTTPContentOutputStream>
-		POOL = new InstancePool<>(HTTPContentOutputStream.class);
+	private final static InstancePool<ContentOutputStream>
+		POOL = new InstancePool<>(ContentOutputStream.class);
 	//
-	public static HTTPContentOutputStream getInstance(
+	public static ContentOutputStream getInstance(
 		final ContentEncoder out, final IOControl ioCtl
 	) throws InterruptedException {
 		return POOL.take(out, ioCtl);
@@ -96,7 +96,7 @@ implements Reusable {
 	}
 	//
 	@Override
-	public final HTTPContentOutputStream reuse(final Object... args) {
+	public final ContentOutputStream reuse(final Object... args) {
 		if(isClosed.compareAndSet(true, false)) {
 			if(args.length > 0) {
 				out = ContentEncoder.class.cast(args[0]);

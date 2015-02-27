@@ -2,7 +2,3 @@ sign.method:				HmacSHA1
 content.chunked:			false
 content.type:				application/octet-stream
 content.repeatable:			true
-#
-connection.stalecheck:		false
-socket.timeout:				0
-#

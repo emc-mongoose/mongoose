@@ -106,6 +106,7 @@ def execute(chain=(), flagSimultaneous=True):
 		prevLoad, nextLoad = None, None
 		for nextLoad in chain:
 			if not isinstance(nextLoad, DataItemBuffer):
+				LOG.debug(Markers.MSG, "Starting next chain element: \"{}\"", nextLoad)
 				nextLoad.start()
 				if prevLoad is not None and isinstance(prevLoad, DataItemBuffer):
 					prevLoad.close()

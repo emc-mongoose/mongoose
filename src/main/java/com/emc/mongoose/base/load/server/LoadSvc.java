@@ -11,7 +11,7 @@ import java.rmi.RemoteException;
  */
 public interface LoadSvc<T extends DataItem>
 extends LoadExecutor<T>, ConsumerSvc<T>, ProducerSvc<T>, RecordFrameBuffer<T> {
-	int getThreadCount()
+	int getTotalConnCount()
 	throws RemoteException;
 }
 

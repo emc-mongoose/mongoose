@@ -1,7 +1,7 @@
 package com.emc.mongoose.web.mock;
 //
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.io.HTTPContentInputStream;
+import com.emc.mongoose.util.io.http.ContentInputStream;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import org.apache.http.HttpEntity;
@@ -25,17 +25,17 @@ import java.io.InputStream;
 /**
  * Created by olga on 04.02.15.
  */
-public final class CinderellaBasicAsyncRequestConsumer
+public final class DummyAsyncRequestConsumer
 extends BasicAsyncRequestConsumer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile HttpRequest request;
 	private volatile SimpleInputBuffer buf;
-	private final int maxPageSize;
-	private final static int STANDART_PAGE_SIZE = 4096;
 	//
-	public CinderellaBasicAsyncRequestConsumer(final RunTimeConfig runTimeConfig) {
+	private final int maxPageSize;
+	//
+	public DummyAsyncRequestConsumer(final RunTimeConfig runTimeConfig) {
 		super();
 		maxPageSize = (int) runTimeConfig.getDataPageSize();
 	}
@@ -52,7 +52,7 @@ extends BasicAsyncRequestConsumer {
 		long len = entity.getContentLength();
 		//
 		if (len < 0 || len > maxPageSize) {
-			len = STANDART_PAGE_SIZE;
+			len = maxPageSize;
 		}
 		this.buf = new SimpleInputBuffer((int) len, new HeapByteBufferAllocator());
 		((HttpEntityEnclosingRequest) this.request).setEntity(
@@ -64,7 +64,7 @@ extends BasicAsyncRequestConsumer {
 		final ContentDecoder decoder, final IOControl ioctrl)
 	{
 		//this.buf.consumeContent(decoder);
-		try (final InputStream contentStream = HTTPContentInputStream.getInstance(decoder, ioctrl)) {
+		try (final InputStream contentStream = ContentInputStream.getInstance(decoder, ioctrl)) {
 			WSRequestConfigBase.playStreamQuietly(contentStream);
 			this.buf.shutdown();
 		} catch (final InterruptedException e) {

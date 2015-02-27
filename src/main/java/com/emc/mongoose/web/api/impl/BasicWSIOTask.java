@@ -4,8 +4,8 @@ import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.object.api.impl.BasicObjectIOTask;
 import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.io.HTTPContentInputStream;
-import com.emc.mongoose.util.io.HTTPContentOutputStream;
+import com.emc.mongoose.util.io.http.ContentInputStream;
+import com.emc.mongoose.util.io.http.ContentOutputStream;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.collections.InstancePool;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
@@ -16,7 +16,6 @@ import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.lang.text.StrBuilder;
 //
-import org.apache.http.ConnectionClosedException;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
@@ -29,7 +28,6 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
-import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 //
 import org.apache.http.protocol.HttpCoreContext;
@@ -219,7 +217,7 @@ implements WSIOTask<T> {
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		try(final OutputStream outStream = HTTPContentOutputStream.getInstance(out, ioCtl)) {
+		try(final OutputStream outStream = ContentOutputStream.getInstance(out, ioCtl)) {
 			if(reqEntity != null) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
@@ -446,7 +444,7 @@ implements WSIOTask<T> {
 	@Override
 	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
 	throws IOException {
-		try(final InputStream contentStream = HTTPContentInputStream.getInstance(in, ioCtl)) {
+		try(final InputStream contentStream = ContentInputStream.getInstance(in, ioCtl)) {
 			if(respStatusCode < 200 || respStatusCode >= 300) { // failure
 				final BufferedReader contentStreamBuff = new BufferedReader(
 					new InputStreamReader(contentStream)

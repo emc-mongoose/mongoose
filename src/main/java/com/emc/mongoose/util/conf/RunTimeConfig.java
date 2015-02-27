@@ -288,10 +288,6 @@ implements Externalizable {
 		return getInt("storage.socket.timeout.millisec");
 	}
 	//
-	public final boolean getStaleConnCheckFlag() {
-		return getBoolean("storage.connection.stale.check");
-	}
-	//
 	public final boolean getSocketReuseAddrFlag() {
 		return getBoolean("storage.socket.reuse.addr");
 	}
@@ -306,6 +302,18 @@ implements Externalizable {
 	//
 	public final int getSocketLinger() {
 		return getInt("storage.socket.linger");
+	}
+	//
+	public final long getSocketBindBackLogSize() {
+		return getLong("storage.socket.bind.backlog.size");
+	}
+	//
+	public final boolean getSocketInterestOpQueued() {
+		return getBoolean("storage.socket.interest.op.queued");
+	}
+	//
+	public final long getSocketSelectInterval() {
+		return getLong("storage.socket.select.interval");
 	}
 	//
 	public final String[] getRemoteServers() {
