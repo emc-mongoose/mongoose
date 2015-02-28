@@ -88,9 +88,9 @@ def execute(chain=(), flagSimultaneous=True):
 					prevLoad.close()
 					prevLoad.start()
 					try:
-						prevLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
-					except InterruptedException:
-						pass
+						nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
+					except InterruptedException as e:
+						raise e
 					except Throwable as e:
 						TraceLogger.failure(
 							LOG, Level.ERROR, e,
@@ -98,18 +98,19 @@ def execute(chain=(), flagSimultaneous=True):
 						)
 					finally:
 						prevLoad.interrupt()
-				try:
-					nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
-				except InterruptedException as e:
-					nextLoad.close()
-					raise e
-				except Throwable as e:
-					TraceLogger.failure(
-						LOG, Level.ERROR, e,
-						String.format("Consumer \"%s\" execution failure", nextLoad)
-					)
-				finally:
-					nextLoad.close()
+						nextLoad.close()
+				else:
+					try:
+						nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
+					except InterruptedException as e:
+						raise e
+					except Throwable as e:
+						TraceLogger.failure(
+							LOG, Level.ERROR, e,
+							String.format("Consumer \"%s\" execution failure", nextLoad)
+						)
+					finally:
+						nextLoad.close()
 			prevLoad = nextLoad
 #
 if __name__ == "__builtin__":
