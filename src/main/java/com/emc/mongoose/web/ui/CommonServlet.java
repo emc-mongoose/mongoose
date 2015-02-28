@@ -1,6 +1,5 @@
 package com.emc.mongoose.web.ui;
 //
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import org.apache.logging.log4j.Level;
@@ -32,7 +31,7 @@ public abstract class CommonServlet extends HttpServlet {
 		THREADS_MAP = new ConcurrentHashMap<>();
 		STOPPED_RUN_MODES = new ConcurrentHashMap<>();
 		CHARTS_MAP = new ConcurrentHashMap<>();
-		LAST_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get();
+		LAST_RUN_TIME_CONFIG = RunTimeConfig.getContext();
 	}
 	//
 	@Override

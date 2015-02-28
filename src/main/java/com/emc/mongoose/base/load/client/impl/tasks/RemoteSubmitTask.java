@@ -3,7 +3,6 @@ package com.emc.mongoose.base.load.client.impl.tasks;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.server.LoadSvc;
 //
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.collections.InstancePool;
@@ -24,7 +23,7 @@ implements Runnable, Reusable {
 	private LoadSvc<T> loadSvc = null;
 	private T dataItem = null;
 	//
-	private final RunTimeConfig thrLocalConf = Main.RUN_TIME_CONFIG.get();
+	private final RunTimeConfig thrLocalConf = RunTimeConfig.getContext();
 	private final int
 		retryMaxCount = thrLocalConf.getRunRetryCountMax(),
 		retryDelayMilliSec = thrLocalConf.getRunRetryDelayMilliSec();

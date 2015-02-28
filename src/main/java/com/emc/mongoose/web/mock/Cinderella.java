@@ -79,7 +79,7 @@ implements Runnable {
 	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
 	//
 	public final static String NAME_SERVER = String.format(
-		"%s/%s", Cinderella.class.getSimpleName(), Main.RUN_TIME_CONFIG.get().getRunVersion()
+		"%s/%s", Cinderella.class.getSimpleName(), RunTimeConfig.getContext().getRunVersion()
 	);
 	private final int countHeads;
 	private final int portStart;
@@ -445,7 +445,7 @@ implements Runnable {
 			this.port = port;
 			ioEventDispatch = new DefaultHttpServerIODispatch(protocolHandler, connFactory);
 			// Set I/O reactor defaults
-			final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
+			final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 			final IOReactorConfig config = IOReactorConfig.custom()
 				.setIoThreadCount(localRunTimeConfig.getInt("storage.mock.iothreads.persocket"))
 				.setSoTimeout(localRunTimeConfig.getSocketTimeOut())

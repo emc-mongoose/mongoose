@@ -1,8 +1,8 @@
 package com.emc.mongoose.web.data;
 //
 import com.emc.mongoose.object.data.DataObject;
-import com.emc.mongoose.run.Main;
 //
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.message.BasicHeader;
@@ -18,11 +18,11 @@ public interface WSObject
 extends DataObject, HttpEntity {
 	//
 	public final static Header HEADER_CONTENT_TYPE = new BasicHeader(
-		HTTP.CONTENT_TYPE, Main.RUN_TIME_CONFIG.get().getHttpContentType()
+		HTTP.CONTENT_TYPE, RunTimeConfig.getContext().getHttpContentType()
 	);
 	public final static boolean
-		IS_CONTENT_CHUNKED = Main.RUN_TIME_CONFIG.get().getHttpContentChunked(),
-		IS_CONTENT_REPEATABLE = Main.RUN_TIME_CONFIG.get().getHttpContentRepeatable();
+		IS_CONTENT_CHUNKED = RunTimeConfig.getContext().getHttpContentChunked(),
+		IS_CONTENT_REPEATABLE = RunTimeConfig.getContext().getHttpContentRepeatable();
 	//
 	HttpEntity getPendingUpdatesContentEntity();
 	//

@@ -2,7 +2,6 @@ package com.emc.mongoose.web.load.impl;
 //
 import com.emc.mongoose.base.load.impl.LoadBuilderBase;
 import com.emc.mongoose.object.load.ObjectLoadBuilder;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.web.api.WSRequestConfig;
 import com.emc.mongoose.web.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.web.data.WSObject;
@@ -67,7 +66,7 @@ implements WSLoadBuilder<T, U> {
 		}
 		//
 		final WSRequestConfig wsReqConf = WSRequestConfig.class.cast(reqConf);
-		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
+		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 		if(minObjSize > maxObjSize) {
 			throw new IllegalStateException(
 				"Min object size ("+Long.toString(minObjSize)+

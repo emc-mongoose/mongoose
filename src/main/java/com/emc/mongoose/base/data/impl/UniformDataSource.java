@@ -2,7 +2,6 @@ package com.emc.mongoose.base.data.impl;
 //
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.load.LoadExecutor;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
@@ -17,8 +16,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 23.07.14.
  A uniform data source for producing uniform data items.
@@ -41,8 +38,8 @@ implements DataSource<T> {
 	public UniformDataSource()
 	throws NumberFormatException {
 		this(
-			Long.parseLong(Main.RUN_TIME_CONFIG.get().getString("data.ring.seed"), 0x10),
-			(int) Main.RUN_TIME_CONFIG.get().getSizeBytes("data.ring.size")
+			Long.parseLong(RunTimeConfig.getContext().getString("data.ring.seed"), 0x10),
+			(int) RunTimeConfig.getContext().getSizeBytes("data.ring.size")
 		);
 	}
 	//

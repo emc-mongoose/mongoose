@@ -7,7 +7,6 @@ import com.emc.mongoose.base.data.persist.TmpFileItemBuffer;
 import com.emc.mongoose.base.load.DataItemBuffer;
 import com.emc.mongoose.base.load.LoadBuilder;
 import com.emc.mongoose.base.load.LoadExecutor;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
@@ -41,7 +40,7 @@ implements LoadBuilder<T, U> {
 		threadsPerNodeMap = new HashMap<>();
 		try {
 			reqConf = getDefaultRequestConfig();
-			setProperties(Main.RUN_TIME_CONFIG.get());
+			setProperties(RunTimeConfig.getContext());
 		} catch(final Exception e) {
 			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to apply configuration");
 		}
@@ -55,7 +54,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setProperties(final RunTimeConfig runTimeConfig)
 	throws IllegalStateException {
-		Main.RUN_TIME_CONFIG.set(runTimeConfig);
+		RunTimeConfig.setContext(runTimeConfig);
 		if(reqConf != null) {
 			reqConf.setProperties(runTimeConfig);
 		} else {

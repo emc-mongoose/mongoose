@@ -42,6 +42,17 @@ public final class RunTimeConfig
 extends BaseConfiguration
 implements Externalizable {
 	//
+	private static InheritableThreadLocal<RunTimeConfig>
+		INHERITABLE_CONTEXT = new InheritableThreadLocal<>();
+	//
+	public static RunTimeConfig getContext() {
+		return INHERITABLE_CONTEXT.get();
+	}
+	//
+	public static void setContext(final RunTimeConfig instance) {
+		INHERITABLE_CONTEXT.set(instance);
+	}
+	//
 	private Set<String> mongooseKeys;
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -404,12 +415,12 @@ implements Externalizable {
 		LOG.trace(Markers.MSG, "Got the properties from client side: {}", confMap);
 		//
 		final String
-			serverVersion = Main.RUN_TIME_CONFIG.get().getRunVersion(),
+			serverVersion = INHERITABLE_CONTEXT.get().getRunVersion(),
 			clientVersion = confMap.get(KEY_RUN_VERSION);
 		if(serverVersion.equals(clientVersion)) {
 			// put the properties into the System
 			Object nextPropValue;
-			final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
+			final RunTimeConfig localRunTimeConfig = INHERITABLE_CONTEXT.get();
 			for(final String nextPropName: confMap.keySet()) {
 				nextPropValue = nextPropName.startsWith("remote") ?
 					localRunTimeConfig.getString(nextPropName) :
@@ -431,7 +442,7 @@ implements Externalizable {
 					);
 				}
 			}
-			Main.RUN_TIME_CONFIG.set(this);
+			INHERITABLE_CONTEXT.set(this);
 			LOG.info(Markers.MSG, toString());
 		} else {
 			final String errMsg = String.format(
