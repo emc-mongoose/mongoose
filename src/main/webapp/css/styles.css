@@ -38,7 +38,7 @@ label {
 	margin-top: 15px;
 	padding-bottom: 15px;
 	overflow: auto;
-	height: calc(100vh - 370px);
+	height: calc(100vh - 430px);
 }
 
 .props {
@@ -256,6 +256,17 @@ text.shadow {
 #log-wrapper {
 	border: 5px solid #ccc;
 	border-radius: 5px;
+}
+
+#start {
+	border-radius: 0;
+	margin-top: 10px;
+	padding-left: 20%;
+	padding-right: 20%;
+}
+
+.complex {
+	margin-top: 0;
 }
 
 /*  Media Selectors */

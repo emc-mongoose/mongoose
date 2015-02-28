@@ -1405,7 +1405,7 @@ function charts(chartsArray) {
 						})()
 					});
 				});
-				var updateFunction = drawCharts(data, "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
+				var updateFunction = drawCharts(data, "thread count", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.TP, json);
@@ -1435,7 +1435,7 @@ function charts(chartsArray) {
 						})()
 					});
 				});
-				var updateFunction = drawCharts(data, "seconds", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
+				var updateFunction = drawCharts(data, "thread count", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.BW, json);
@@ -1491,6 +1491,7 @@ function charts(chartsArray) {
 						.attr("id", path.replace("#", "") + "-" + d.loadType)
 						.append("g")
 						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+					//
 					var xAxisGroup = svg.append("g")
 						.attr("class", "axis x-axis")
 						.attr("transform", "translate(0," + height + ")")
