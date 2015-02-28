@@ -29,7 +29,6 @@ public class UniformDataSource<T extends UniformData>
 implements DataSource<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static AtomicInteger INSTANCE_COUNT = new AtomicInteger(0);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static int A = 21, B = 35, C = 4;
 	private final static String
@@ -53,9 +52,6 @@ implements DataSource<T> {
 		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.add(0, zeroByteLayer);
-		LOG.debug(
-			Markers.MSG, "Data ring buffer instance #{} created", INSTANCE_COUNT.incrementAndGet()
-		);
 	}
 	//
 	public static UniformDataSource DEFAULT = null;
