@@ -685,7 +685,7 @@ function charts(chartsArray) {
 					.append("g")
 					.attr("class", "level")
 					.attr("id", function(d, i) { return path.replace("#", "") + d.name; })
-					.attr("visibility", function(d) { if (d.name === MIN_1) { return "visible"; } else { return "hidden"; }})
+					.attr("visibility", function(d) { if (d.name === AVG) { return "visible"; } else { return "hidden"; }})
 					.append("path")
 					.attr("class", "line")
 					.attr("d", function(d)  { return line(d.values); })
@@ -719,7 +719,7 @@ function charts(chartsArray) {
 					.append("input")
 					.attr("type", "checkbox")
 					.attr("value", function(d) { return d.name; })
-					.attr("checked", function(d) { if (d.name === MIN_1) { return "checked"; } })
+					.attr("checked", function(d) { if (d.name === AVG) { return "checked"; } })
 					.on("click", function(d, i) {
 						var element = $(path + d.name);
 						if ($(this).is(":checked")) {
@@ -744,7 +744,7 @@ function charts(chartsArray) {
 					.style("fill", function(d) { return color(d.name); });
 
 				legend.append("text")
-					.attr("x", width + 80)
+					.attr("x", width + 100)
 					.attr("y", 9)
 					.attr("dy", ".35em")
 					.style("text-anchor", "end")
@@ -998,10 +998,20 @@ function charts(chartsArray) {
 					.attr("class", "line")
 					.attr("d", function(c) { return line(c.values); })
 					.attr("stroke-dasharray", function(c, i) {
-						if (i === 3) {
-							return "20,10,5,5,5,10";
+						switch (c.name) {
+							case AVG:
+								return "0,0";
+								break;
+							case MIN_1:
+								return "3,3";
+								break;
+							case MIN_5:
+								return "10,10";
+								break;
+							case MIN_15:
+								return "20,10,5,5,5,10";
+								break;
 						}
-						return i*15 + "," + i*15;
 					})
 					.attr("id", function(c) {
 						return path.replace("#", "") + loadType + "-" + c.name;
@@ -1082,7 +1092,7 @@ function charts(chartsArray) {
 					.style("fill", function(d) { return color(d.loadType); });
 
 				rightLegend.append("text")
-					.attr("x", width + 150)
+					.attr("x", width + 170)
 					.attr("y", 9)
 					.attr("dy", ".35em")
 					.style("text-anchor", "end")
@@ -1100,13 +1110,23 @@ function charts(chartsArray) {
 				bottomLegend.append("path")
 					.attr("d", "M0 0 L100 0")
 					.attr("stroke-dasharray", function(d, i) {
-						if (i === 3) {
-							return "20,10,5,5,5,10";
+						switch (d) {
+							case AVG:
+								return "0,0";
+								break;
+							case MIN_1:
+								return "3,3";
+								break;
+							case MIN_5:
+								return "10,10";
+								break;
+							case MIN_15:
+								return "20,10,5,5,5,10";
+								break;
 						}
-						return i*15 + "," + i*15;
 					});
 				bottomLegend.append("text")
-					.attr("x", 50)
+					.attr("x", 70)
 					.attr("y", 15)
 					.attr("dy", ".35em")
 					.style("text-anchor", "middle")
@@ -1274,10 +1294,20 @@ function charts(chartsArray) {
 						})
 						.attr("d", function(c) { return line(c.values); })
 						.attr("stroke-dasharray", function(c, i) {
-							if (i === 3) {
-								return "20,10,5,5,5,10";
+							switch (c.name) {
+								case AVG:
+									return "0,0";
+									break;
+								case MIN_1:
+									return "3,3";
+									break;
+								case MIN_5:
+									return "10,10";
+									break;
+								case MIN_15:
+									return "20,10,5,5,5,10";
+									break;
 							}
-							return i*15 + "," + i*15;
 						})
 						.attr("fill", "none");
 
@@ -1297,7 +1327,7 @@ function charts(chartsArray) {
 						.style("fill", function(d) { return color(d.loadType); });
 
 					rightLegend.append("text")
-						.attr("x", width + 150)
+						.attr("x", width + 170)
 						.attr("y", 9)
 						.attr("dy", ".35em")
 						.style("text-anchor", "end")
@@ -1338,7 +1368,6 @@ function charts(chartsArray) {
 			var loadRampupSizesArray = loadRampupSizes.slice(1, -1).split(",").map(function(item) {
 				return item.trim();
 			});
-			console.log(loadRampupSizesArray);
 			var AVG = "avg";
 			var MIN_1 = "1min";
 			var MIN_5 = "5min";
@@ -1524,7 +1553,7 @@ function charts(chartsArray) {
 						.style("fill", function(d) { return color(d); });
 
 					legend.append("text")
-						.attr("x", width + 80)
+						.attr("x", width + 100)
 						.attr("y", 9)
 						.attr("dy", ".35em")
 						.style("text-anchor", "end")
