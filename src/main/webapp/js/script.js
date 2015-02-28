@@ -565,6 +565,7 @@ function charts(chartsArray) {
 	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath) {
 		//  get some fields from runTimeConfig
 		var runMetricsPeriodSec = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec];
+		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
 		//
 		var x = d3.scale.linear()
 			.domain([
