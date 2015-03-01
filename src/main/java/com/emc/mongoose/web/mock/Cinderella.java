@@ -29,7 +29,6 @@ import org.apache.http.impl.nio.DefaultNHttpServerConnection;
 import org.apache.http.impl.nio.reactor.DefaultListeningIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpConnectionFactory;
-import org.apache.http.nio.protocol.BasicAsyncResponseProducer;
 import org.apache.http.nio.protocol.HttpAsyncExchange;
 import org.apache.http.nio.protocol.HttpAsyncRequestConsumer;
 import org.apache.http.nio.protocol.HttpAsyncRequestHandler;
@@ -51,11 +50,16 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.management.MBeanServer;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -67,6 +71,8 @@ import java.util.concurrent.TimeUnit;
 public final class Cinderella
 implements Runnable {
 	//
+	private final Map<String, WSObjectMock> sharedStorage;
+	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final ExecutorService multiSocketSvc;
 	private final HttpAsyncService protocolHandler;
@@ -75,7 +81,7 @@ implements Runnable {
 	public final static String NAME_SERVER = String.format(
 		"%s/%s", Cinderella.class.getSimpleName(), Main.RUN_TIME_CONFIG.get().getRunVersion()
 	);
-	private final int portCount;
+	private final int countHeads;
 	private final int portStart;
 	//
 	private final RunTimeConfig runTimeConfig;
@@ -147,10 +153,11 @@ implements Runnable {
 		metricsReporter.start();
 		//queue size for data object
 		final int queueDataIdSize = runTimeConfig.getInt("storage.mock.capacity");
-		final Map<String, WSObjectMock> sharedStorage = Collections.synchronizedMap(new LRUMap<String, WSObjectMock>(queueDataIdSize));
-		// count of heads = count of cores - 1
-		portCount = Math.max(1, Runtime.getRuntime().availableProcessors() - 1);
-		LOG.debug(Markers.MSG, "Starting w/ {} heads", portCount);
+		sharedStorage = Collections.synchronizedMap(new LRUMap<String, WSObjectMock>(queueDataIdSize));
+		// count of heads = count of cores or config count(if it has optimal count)
+		final int countHeadsMax = runTimeConfig.getInt("storage.mock.head.count");
+		countHeads = Math.min(countHeadsMax, Runtime.getRuntime().availableProcessors());
+		LOG.info(Markers.MSG, "Starting with {} heads", countHeads);
 		final String apiName = runTimeConfig.getStorageApi();
 		portStart = runTimeConfig.getInt("api." + apiName + ".port");
 		// Set up the HTTP protocol processor
@@ -165,17 +172,47 @@ implements Runnable {
 		reqistry.register("*", new RequestHandler(sharedStorage));
 		protocolHandler = new HttpAsyncService(httpproc, reqistry);
 		multiSocketSvc = Executors.newFixedThreadPool(
-			portCount, new WorkerFactory("cinderellaWorker")
+			countHeads, new WorkerFactory("cinderellaWorker")
 		);
 	}
 
 	@Override
 	public void run() {
+		//if there is data src file path
+		final String dataFilePath = runTimeConfig.getDataSrcFPath();
+		final int dataSizeRadix = runTimeConfig.getInt("storage.mock.data.size.radix");
+		if (!dataFilePath.isEmpty()){
+			try {
+				final FileReader reader = new FileReader(dataFilePath);
+				final BufferedReader bufferReader = new BufferedReader(reader);
+				String s;
+				while((s = bufferReader.readLine()) != null) {
+					final WSObjectMock dataObject = new BasicWSObjectMock(s) ;
+					//if mongoose v.0.5.0
+					if (dataSizeRadix == 16) {
+						dataObject.setSize(Long.valueOf(String.valueOf(dataObject.getSize()), 0x10));
+					}
+					//
+					LOG.trace(Markers.DATA_LIST, dataObject.toString());
+					synchronized (sharedStorage){
+						sharedStorage.put(dataObject.getId(),dataObject);
+					}
+				}
+				reader.close();
+			} catch (final FileNotFoundException e) {
+				TraceLogger.failure(LOG, Level.ERROR, e,
+					"File not found.");
+			} catch (final IOException e) {
+				TraceLogger.failure(LOG, Level.ERROR, e,
+					"Read line is fault.");
+			}
+		}
 		//
-		for(int nextPort = portStart; nextPort < portStart + portCount; nextPort ++){
+		final List<Integer> heads = new ArrayList<>(countHeads);
+		for(int nextPort = portStart; nextPort < portStart + countHeads; nextPort ++){
 			try {
 				multiSocketSvc.submit(new WorkerTask(protocolHandler, connFactory, nextPort));
-				LOG.info(Markers.MSG, "Listening the port #{}", nextPort);
+				heads.add(nextPort);
 			} catch(final IOReactorException e) {
 				TraceLogger.failure(
 					LOG, Level.ERROR, e,
@@ -183,6 +220,7 @@ implements Runnable {
 				);
 			}
 		}
+		LOG.info(Markers.MSG, "Listening the ports: {}", heads.toString());
 		multiSocketSvc.shutdown();
 		try {
 			//output metrics
@@ -293,7 +331,7 @@ implements Runnable {
 					doDelete(response);
 					break;
 			}
-			httpexchange.submitResponse(new BasicAsyncResponseProducer(response));
+			httpexchange.submitResponse(new DummyAsyncResponseProducer(response));
 		}
 		//
 		private void doGet(final HttpResponse response, final String dataID){
@@ -357,7 +395,7 @@ implements Runnable {
 					}
 					dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 				}
-				LOG.debug(Markers.DATA_LIST, dataObject.toString());
+				LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject));
 				synchronized (sharedStorage) {
 					sharedStorage.put(dataID, dataObject);
 				}
@@ -418,7 +456,7 @@ implements Runnable {
 		}
 		//
 		@Override
-		public void run() {
+		public final void run() {
 			try {
 				// Listen of the given port
 				ioReactor.listen(new InetSocketAddress(port));

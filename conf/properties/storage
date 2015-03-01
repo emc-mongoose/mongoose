@@ -22,6 +22,7 @@ socket.interest.op.queued:			false
 socket.select.interval:				100
 
 #
+mock.head.count:					8
 mock.iothreads.persocket:			10
 mock.capacity:						10000000
 mock.data.offset.radix:				36
