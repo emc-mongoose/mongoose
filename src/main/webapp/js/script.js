@@ -79,7 +79,17 @@ $(document).ready(function() {
 	$("#backup-run\\.scenario\\.name").on("change", function() {
 		var valueSelected = this.value;
 		$("#scenario-button").attr("data-target", "#" + valueSelected);
+		switch(valueSelected) {
+			case "backup-single":
+				$("#scenario-load").text("Load: [" + $("#scenario\\.single\\.load").val() + "]");
+				break;
+			case "backup-chain":
+			case "backup-rampup":
+				$("#scenario-load").text("Load: [" + $("#scenario\\.chain\\.load").val() + "]");
+				break;
+		}
 	});
+	$("#backup-run\\.scenario\\.name").change();
 	//
 	$("#backup-storage\\.api").on("change", function() {
 		var valueSelected = this.value;
@@ -107,6 +117,10 @@ $(document).ready(function() {
 				element.value = currElement.val();
 			}
 		}
+		if ((currElement.attr("id") === "backup-scenario.single.load")
+			|| (currElement.attr("id") === "backup-scenario.chain.load")) {
+			$("#backup-run\\.scenario\\.name").change();
+		}
 	});
 	//
 	$("#extended input").on("change", function() {
@@ -122,6 +136,20 @@ $(document).ready(function() {
 	$("#data-size").on("change", function() {
 		$("#data\\.size\\.min").val($(this).val());
 		$("#data\\.size\\.max").val($(this).val());
+	});
+	//
+	$("#load-threads").on("change", function() {
+		var currentValue = this.value;
+		var keys2Override = [
+			"#backup-load\\.append\\.threads",
+			"#backup-load\\.create\\.threads",
+			"#backup-load\\.read\\.threads",
+			"#backup-load\\.update\\.threads",
+			"#backup-load\\.delete\\.threads"
+		];
+		keys2Override.forEach(function(d) {
+			$(d).val(currentValue).change();
+		})
 	});
 	//
 	$("#start").click(function(e) {
@@ -533,6 +561,19 @@ function charts(chartsArray) {
 		runScenarioName: "run.scenario.name"
 	};
 	var CHART_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+	/*var color = d3.scale.ordinal()
+		.domain([
+			"#FF0000",
+			"#0000FF",
+			"#00FF00",
+			"#FF00FF",
+			"#FFFF00",
+			"#000000",
+			"#C66734",
+			"#8c564b",
+			"#7f7f7f",
+			"#8c6d31"
+		]);*/
 	//  Common functions for charts
 	function getScenarioChartObject(runId, runScenarioName, scenarioCharts) {
 		return {

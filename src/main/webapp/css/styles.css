@@ -21,7 +21,6 @@ label {
 
 #run-modes, #config {
 	margin-top: 15px;
-	text-align: center;
 	padding-bottom: 5px;
 	border-bottom: 1px solid #ccc;
 }
@@ -258,15 +257,25 @@ text.shadow {
 	border-radius: 5px;
 }
 
-#start {
-	border-radius: 0;
-	margin-top: 10px;
-	padding-left: 20%;
-	padding-right: 20%;
+#run-modes div, #config div {
+	display: inline-block;
+	vertical-align: middle;
+	margin-left: 10px;
 }
 
-.complex {
-	margin-top: 0;
+#start {
+	margin-left: 15px;
+	width: 130px;
+	height: 40px;
+	float: right;
+}
+
+#save-config {
+	margin-bottom: 5px;
+}
+
+.save-buttons {
+	margin-left: 30px !important;
 }
 
 /*  Media Selectors */

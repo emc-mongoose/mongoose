@@ -59,36 +59,44 @@
 				<div id="configuration" class="tab-pane active">
 					<div class="container-fluid">
 						<div class="row">
-							<div id="menu" class="col-xs-12 col-sm-4 col-md-3 no-padding">
+							<div id="menu" class="col-xs-12 col-sm-5 col-md-4 col-lg-3 no-padding">
 								<div id="run-modes">
-									<label for="config-type">Run mode</label>
-									<select>
-										<option value="standalone">standalone</option>
-										<option value="client">load client</option>
-										<option value="server">load server</option>
-										<option value="cinderella">cinderella</option>
-									</select>
+									<div>
+										<label for="config-type">Run mode</label>
+										<select>
+											<option value="standalone">standalone</option>
+											<option value="client">load client</option>
+											<option value="server">load server</option>
+											<option value="cinderella">cinderella</option>
+										</select>
+									</div>
+									<div>
+										<button type="button" id="start" class="btn btn-success">
+											Start
+										</button>
+									</div>
 								</div>
 
 								<div id="config">
-									<label for="config-type">Config mode</label>
-									<select id="config-type">
-										<option value="base">basic</option>
-										<option value="extended">extended</option>
-									</select>
-									<br/>
-									<button class="btn btn-default" id="save-config" type="button">Save</button>
-									<a href="/save" id="save-file" class="btn btn-default">Save in file</a>
+									<div>
+										<label for="config-type">Config mode</label>
+										<select id="config-type">
+											<option value="base">basic</option>
+											<option value="extended">extended</option>
+										</select>
+									</div>
+									<div class="save-buttons">
+										<button class="btn btn-default" id="save-config" type="button">Save</button>
+										<br/>
+										<a href="/save" id="save-file" class="btn btn-default">Save in file</a>
+									</div>
 									<br/>
 									<div id="file-visibility">
 										<input id="file-checkbox" type="checkbox">
 										<label for="file-checkbox">Read config from file</label>
 									</div>
-									<input id="config-file" type="file" accept=".txt">
 									<br/>
-									<button type="button" id="start" class="btn btn-success">
-										Start
-									</button>
+									<input id="config-file" type="file" accept=".txt">
 								</div>
 
 								<ul class="folders">
@@ -96,7 +104,7 @@
 								</ul>
 							</div>
 
-							<div id="main-content" class="col-xs-12 col-sm-8 col-md-9 no-padding">
+							<div id="main-content" class="col-xs-12 col-sm-7 col-md-8 col-lg-9 no-padding">
 								<div id="base">
 									<form class="form-horizontal" role="form">
 										<div class="standalone client cinderella server">
@@ -151,6 +159,8 @@
 														        data-target="#backup-${runTimeConfig.runScenarioName}">
 															Details...
 														</button>
+
+														<i id="scenario-load"></i>
 
 														<div class="modal fade" id="backup-single" tabindex="-1" role="dialog" aria-labelledby="singleLabel"
 														     aria-hidden="true">
@@ -743,6 +753,17 @@
 											<fieldset>
 												<legend>Data</legend>
 
+												<div class="form-group">
+													<label for="load-threads" class="col-sm-3 control-label">
+														Load threads
+													</label>
+													<div class="col-sm-9">
+														<input type="text" id="load-threads" class="form-control"
+														       value="${rt:getString(runTimeConfig, 'load.threads')}"
+														       placeholder="Enter 'load.threads' property">
+													</div>
+												</div>
+
 												<div id="objects" class="form-group">
 													<label for="backup-data.count" class="col-sm-3 control-label">
 														Items count limit
@@ -761,7 +782,7 @@
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="data-size" class="form-control"
-												            value="${rt:getString(runTimeConfig, 'data.size.min')}"
+												            value="${rt:getString(runTimeConfig, 'data.size')}"
 												            placeholder="Enter 'data.size' property">
 													</div>
 												</div>
@@ -781,7 +802,7 @@
 												<div class="form-group">
 													<label class="col-sm-3 control-label">Output directory for logs</label>
 													<div class="col-sm-9">
-														<input type="text" class="form-control" value="log/webui" readonly>
+														<input type="text" class="form-control" value="log/webui/" readonly>
 													</div>
 												</div>
 											</fieldset>
