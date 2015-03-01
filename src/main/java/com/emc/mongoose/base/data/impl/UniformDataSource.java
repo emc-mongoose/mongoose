@@ -33,7 +33,7 @@ implements DataSource<T> {
 	//
 	private long seed;
 	private int size;
-	private ArrayList<ByteBuffer> byteLayers = new ArrayList<>(1);
+	private final ArrayList<ByteBuffer> byteLayers = new ArrayList<>(1);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformDataSource()
 	throws NumberFormatException {
@@ -48,7 +48,7 @@ implements DataSource<T> {
 		this.size = size;
 		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
 		generateData(zeroByteLayer, seed);
-		byteLayers.add(0, zeroByteLayer);
+		byteLayers.add(zeroByteLayer);
 	}
 	//
 	public static UniformDataSource DEFAULT = null;
@@ -128,10 +128,10 @@ implements DataSource<T> {
 			throw new IllegalArgumentException(String.format("Illegal ring size: %d", size));
 		}
 		this.size = size;
-		byteLayers.clear();
 		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
 		generateData(zeroByteLayer, seed);
-		byteLayers.add(0, zeroByteLayer);
+		byteLayers.clear();
+		byteLayers.add(zeroByteLayer);
 	}
 	//
 	@Override
@@ -142,10 +142,10 @@ implements DataSource<T> {
 	@Override
 	public final void setSeed(final long seed) {
 		this.seed = seed;
-		byteLayers.clear();
 		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
 		generateData(zeroByteLayer, seed);
-		byteLayers.add(0, zeroByteLayer);
+		byteLayers.clear();
+		byteLayers.add(zeroByteLayer);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
