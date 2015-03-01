@@ -524,10 +524,8 @@ function loadPropertiesFromFile(file) {
 					var input = $('input[data-pointer="' + $(elementId).attr("id") + '"]').val($(elementId).val());
 					var select = $('select[data-pointer="' + $(elementId).attr("id") + '"] option:contains(' + $(elementId).val() + ')')
 						.attr('selected', 'selected');
-					if ($(elementId).attr("id") !== "data.count") {
-						input.change();
-						select.change();
-					}
+					input.change();
+					select.change();
 				}
 			}
 		}
