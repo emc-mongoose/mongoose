@@ -3,6 +3,7 @@ package com.emc.mongoose.web.load.server.impl;
 import com.emc.mongoose.base.data.persist.FrameBuffConsumer;
 import com.emc.mongoose.base.load.server.ConsumerSvc;
 import com.emc.mongoose.object.load.ObjectLoadExecutor;
+import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.RecordFrameBuffer;
@@ -43,7 +44,7 @@ implements WSLoadSvc<T> {
 	}
 	//
 	@Override
-	public final synchronized void close()
+	public final void close()
 	throws IOException {
 		super.close();
 		// close the exposed network service, if any

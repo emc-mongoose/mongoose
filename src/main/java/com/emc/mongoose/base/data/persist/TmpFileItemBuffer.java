@@ -3,7 +3,6 @@ package com.emc.mongoose.base.data.persist;
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.server.DataItemBufferSvc;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 //
@@ -21,7 +20,6 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
-import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.rmi.RemoteException;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -47,11 +45,18 @@ implements DataItemBufferSvc<T> {
 	public TmpFileItemBuffer(final long maxCount, final int threadCount) {
 		super(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>()
+			new LinkedBlockingQueue<Runnable>(
+				maxCount > 0 ?
+					Math.min(
+						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
+						RunTimeConfig.getContext().getRunRequestQueueSize())
+					:
+					RunTimeConfig.getContext().getRunRequestQueueSize()
+			)
 		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		//
-		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
+		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 		retryCountMax = localRunTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = localRunTimeConfig.getRunRetryDelayMilliSec();
 		//
@@ -178,7 +183,7 @@ implements DataItemBufferSvc<T> {
 			shutdown();
 			try {
 				awaitTermination(
-					Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+					RunTimeConfig.getContext().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 				);
 			} catch(final InterruptedException e) {
 				TraceLogger.failure(

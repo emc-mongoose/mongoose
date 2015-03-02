@@ -40,7 +40,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	protected final static String
 		FMT_META_INFO = "%s" + RunTimeConfig.LIST_SEP + "%x" + LAYER_MASK_SEP + "%s",
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
-		FMT_MSG_WRONG_RANGE_COUNT = "Range count should be more than 0 and less than the object size = %s",
+		FMT_MSG_WRONG_RANGE_COUNT = "Range count should be more than 0 and less than max %d for the item size",
 		FMT_MSG_ILLEGAL_APPEND_SIZE = "Append tail size should be more than 0, but got %D",
 		FMT_MASK = "0%s",
 		FMT_MSG_RANGE_CORRUPT = "{}: range #{}(offset {}) of \"{}\" corrupted",
@@ -279,7 +279,7 @@ implements AppendableDataItem, UpdatableDataItem {
 		if(count < 1 || count > countRangesTotal) {
 			throw new IllegalArgumentException(
 				String.format(
-					FMT_MSG_WRONG_RANGE_COUNT, RunTimeConfig.formatSize(countRangesTotal)
+					FMT_MSG_WRONG_RANGE_COUNT, countRangesTotal
 				)
 			);
 		}
@@ -417,8 +417,8 @@ implements AppendableDataItem, UpdatableDataItem {
 							(int) pendingAugmentSize : MAX_PAGE_SIZE
 						];
 					final int
-						countPages = (int) pendingAugmentSize / buff.length,
-						countTailBytes = (int) pendingAugmentSize % buff.length;
+						countPages = (int) (pendingAugmentSize / buff.length),
+						countTailBytes = (int) (pendingAugmentSize % buff.length);
 					//
 					for(int i = 0; i < countPages; i++) {
 						if(read(buff)==buff.length) {

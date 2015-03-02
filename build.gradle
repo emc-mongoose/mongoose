@@ -62,13 +62,12 @@ dependencies {
 		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
 		'org.eclipse.jetty.websocket:websocket-server:9.3.0.M1',
 		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
-
-		'org.hibernate:hibernate-core:4.3.6.Final',
 		'org.eclipse.persistence:javax.persistence:2.1.0',
+		//
 		'jstl:jstl:1.2',
 		'org.apache.commons:commons-collections4:4.0',
 		'commons-cli:commons-cli:1.2',
-
+		//
 		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
 		'com.fasterxml.jackson.core:jackson-core:2.4.1',
 		'com.fasterxml.jackson.core:jackson-databind:2.4.1',
@@ -96,12 +95,9 @@ dependencies {
 		'com.lmax:disruptor:3.3.0',
 		//
 		'org.python:jython-standalone:2.7-b3',
-		'org.postgresql:postgresql:9.3-1102-jdbc3',
-		'org.fusesource.jansi:jansi:1.11',
-		//
-		'org.hibernate:hibernate-ehcache:4.3.7.Final'
-		//'org.hibernate:hibernate-c3p0:4.3.7.Final'//pool connection for hibernate
 
+		'org.postgresql:postgresql:9.3-1102-jdbc3',
+		'org.fusesource.jansi:jansi:1.11'
 	)
 
 

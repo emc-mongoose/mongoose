@@ -20,11 +20,6 @@
 						"Filter": [
 							{
 								"type": "MarkerFilter",
-								"marker": "msg",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
 								"marker": "perfAvg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
@@ -40,54 +35,14 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
-								"marker": "perfSum",
-								"onMatch": "ACCEPT",
-								"onMismatch": "DENY"
-							}
-						]
-					}
-				}, {
-					"name": "hibernate",
-					"type": "Async",
-					"enabled": "false",
-					"blocking": "false",
-					"bufferSize": "65536",
-					"threadsForQueue": "20",
-					"AppenderRef": [
-						{ "ref": "hibernateSync" }
-					]
-				}, {
-					"name": "hibernateSync",
-					"type": "Hibernate",
-					"enabled": "false",
-					"database": "postgresql",
-					"username": "mongoose",
-					"password": "mongoose",
-					"addr": "localhost",
-					"port": "5432",
-					"namedatabase": "mongoose",
-					"Filters": {
-						"Filter": [
-							{
-								"type": "MarkerFilter",
-								"marker": "err",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "perfTrace",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "dataList",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
 								"marker": "msg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfSum",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
 							}
 						]
 					}
@@ -283,7 +238,6 @@
 						{ "ref": "perfAvgFile" },
 						{ "ref": "perfSumFile" },
 						{ "ref": "perfTraceFile" },
-						{ "ref": "hibernate" },
 						{ "ref": "WebUI" }
 					]
 				}
@@ -399,6 +353,13 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.util.io",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.io.http",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {

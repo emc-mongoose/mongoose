@@ -1,56 +1,60 @@
 #!/usr/bin/env python
 from __future__ import print_function, absolute_import, with_statement
-from sys import exit
 #
-from timeout import timeout_init
-from loadbuilder import loadbuilder_init
-#from loadbuilder import INSTANCE as LOAD_BUILDER
-#from timeout import INSTANCE as RUN_TIME
+from timeout import init as timeOutInit
+from loadbuilder import init as loadBuilderInit
 #
 from com.emc.mongoose.base.api import AsyncIOTask
-from com.emc.mongoose.run import Main
-from com.emc.mongoose.util.logging import Markers
+from com.emc.mongoose.util.conf import RunTimeConfig
+from com.emc.mongoose.util.logging import Markers, TraceLogger
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from java.lang import IllegalArgumentException
+from java.lang import Exception, IllegalArgumentException, InterruptedException
 from java.util import NoSuchElementException
 #
-RUN_TIME = timeout_init()
-LOCAL_RUN_TIME_CONFIG = Main.RUN_TIME_CONFIG.get()
-LOAD_BUILDER = loadbuilder_init()
 LOG = LogManager.getLogger()
 #
-try:
-	loadType = AsyncIOTask.Type.valueOf(LOCAL_RUN_TIME_CONFIG.getString("scenario.single.load").upper())
-	LOG.debug(Markers.MSG, "Using load type: {}", loadType.name())
-	LOAD_BUILDER.setLoadType(loadType)
-except NoSuchElementException:
-	LOG.error(Markers.ERR, "No load type specified, try arg -Dscenario.single.load=<VALUE> to override")
-except IllegalArgumentException:
-	LOG.error(Markers.ERR, "No such load type, it should be a constant from Load.Type enumeration")
-	exit()
-#
-from java.lang import Exception
-from com.emc.mongoose.util.logging import TraceLogger
-load = None
-try:
-	load = LOAD_BUILDER.build()
-except Exception as e:
-	TraceLogger.failure(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
-	e.printStackTrace()
-#
-if load is None:
-	LOG.fatal(Markers.ERR, "No load executor instanced")
-	exit()
-#
-from java.lang import InterruptedException
-if __name__=="__builtin__":
-	load.start()
+def init():
+	loadBuilder = loadBuilderInit()
 	try:
-		load.join(RUN_TIME[1].toMillis(RUN_TIME[0]))
-	except InterruptedException:
-		pass
-	finally:
-		load.close()
-		LOG.info(Markers.MSG, "Scenario end")
+		loadType = AsyncIOTask.Type.valueOf(
+			RunTimeConfig.getContext().getString("scenario.single.load").upper()
+		)
+		LOG.debug(Markers.MSG, "Using load type: {}", loadType.name())
+		loadBuilder.setLoadType(loadType)
+	except NoSuchElementException:
+		LOG.error(Markers.ERR, "No load type specified, try arg -Dscenario.single.load=<VALUE> to override")
+	except IllegalArgumentException:
+		LOG.error(Markers.ERR, "No such load type, it should be a constant from Load.Type enumeration")
+	return loadBuilder
+#
+def build(loadBuilder):
+	load = None
+	if loadBuilder is None:
+		LOG.fatal(Markers.ERR, "No load builder specified")
+	else:
+		try:
+			load = loadBuilder.build()
+		except Exception as e:
+			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
+	return load
+#
+def execute(load):
+	if load is None:
+		LOG.fatal(Markers.ERR, "No load job specified")
+	else:
+		runTimeOut = timeOutInit()
+		load.start()
+		try:
+			load.join(runTimeOut[1].toMillis(runTimeOut[0]))
+		except InterruptedException:
+			pass
+		finally:
+			load.close()
+#
+if __name__ == "__builtin__":
+	loadBuilder = init()
+	load = build(loadBuilder)
+	execute(load)
+	LOG.info(Markers.MSG, "Scenario end")

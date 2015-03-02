@@ -9,8 +9,8 @@ import org.apache.logging.log4j.ThreadContext;
 public final class ThreadContextMap {
 	//
 	public static void initThreadContextMap() {
-		if (Main.RUN_TIME_CONFIG.get() != null) {
-			final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
+		if (RunTimeConfig.getContext() != null) {
+			final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 			ThreadContext.put(RunTimeConfig.KEY_RUN_ID, localRunTimeConfig.getRunId());
 			ThreadContext.put(RunTimeConfig.KEY_RUN_MODE, localRunTimeConfig.getRunMode());
 			ThreadContext.put(RunTimeConfig.KEY_RUN_TIMESTAMP, localRunTimeConfig.getRunTimestamp());

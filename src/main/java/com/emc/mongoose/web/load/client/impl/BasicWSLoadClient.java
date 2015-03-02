@@ -42,7 +42,7 @@ implements WSLoadClient<T> {
 	throws IOException {
 		final Object addrs[] = remoteLoadMap.keySet().toArray();
 		final String addr = String.class.cast(
-			addrs[(int) getTaskCount() % addrs.length]
+			addrs[(int) (getTaskCount() % addrs.length)]
 		);
 		return ((WSLoadSvc<T>) remoteLoadMap.get(addr)).execute(request);
 	}

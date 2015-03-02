@@ -1,5 +1,6 @@
 package com.emc.mongoose.util.remote;
 //
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.run.Main;
@@ -32,12 +33,12 @@ import java.rmi.registry.Registry;
 import java.rmi.server.RemoteStub;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  Created by kurila on 05.05.14.
  */
@@ -49,7 +50,7 @@ public final class ServiceUtils {
 	static {
 		int tmpPort = Registry.REGISTRY_PORT;
 		try {
-			tmpPort = Main.RUN_TIME_CONFIG.get().getRemoteControlPort();
+			tmpPort = RunTimeConfig.getContext().getRemoteControlPort();
 		} catch(final Exception e) {
 			TraceLogger.failure(
 				LOG, Level.WARN, e,
@@ -228,8 +229,8 @@ public final class ServiceUtils {
 	//
 	private final static Map<Integer, MBeanServer>
 		MBEAN_SERVERS = new ConcurrentHashMap<>();
-	private final static Queue<JMXConnectorServer>
-		JMX_CONNECTOR_SERVERS = new LinkedBlockingQueue<>();
+	private final static Collection<JMXConnectorServer>
+		JMX_CONNECTOR_SERVERS = new ConcurrentLinkedQueue<>();
 	public static MBeanServer getMBeanServer(final int portJmxRmi) {
 		//
 		MBeanServer mBeanServer;

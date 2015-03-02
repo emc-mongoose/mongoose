@@ -20,11 +20,6 @@
 						"Filter": [
 							{
 								"type": "MarkerFilter",
-								"marker": "msg",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
 								"marker": "perfAvg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
@@ -40,6 +35,11 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
+								"marker": "msg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
 								"marker": "perfSum",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
@@ -47,19 +47,19 @@
 						]
 					}
 				}, {
-					"name": "hibernate",
-					"type": "HibernateAsync",
-					"enabled": "false",
+					"name": "openJPA",
+					"type": "OpenJpaAsync",
+					"enabled": "true",
 					"blocking": "false",
 					"bufferSize": "65536",
 					"threadsForQueue": "20",
 					"AppenderRef": {
-						"ref": "hibernateSync"
+						"ref": "openJPASync"
 					}
 				}, {
-					"name": "hibernateSync",
-					"type": "Hibernate",
-					"enabled": "false",
+					"name": "openJPASync",
+					"type": "OpenJPA",
+					"enabled": "true",
 					"database": "postgresql",
 					"username": "mongoose",
 					"password": "mongoose",
@@ -284,7 +284,7 @@
 						{ "ref": "perfSumFile" },
 						{ "ref": "perfTraceFile" },
 						{ "ref": "WebUI" },
-						{ "ref": "hibernate" }
+						{ "ref": "openJPA" }
 					]
 				}
 			]
@@ -406,6 +406,13 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.util.io",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.util.io.http",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {

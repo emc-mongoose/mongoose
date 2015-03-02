@@ -101,7 +101,7 @@ public final class StartServlet extends CommonServlet {
 			@Override
 			 public void run() {
 				localRunTimeConfig = runTimeConfig;
-				Main.RUN_TIME_CONFIG.set(localRunTimeConfig);
+				RunTimeConfig.setContext(localRunTimeConfig);
 				ThreadContextMap.initThreadContextMap();
 				//
 				LOG.debug(Markers.MSG, message);
@@ -117,7 +117,7 @@ public final class StartServlet extends CommonServlet {
 			}
 			@Override
 			public void interrupt() {
-				Main.RUN_TIME_CONFIG.set(localRunTimeConfig);
+				RunTimeConfig.setContext(localRunTimeConfig);
 				ThreadContextMap.initThreadContextMap();
 				//
 				ServiceUtils.close(loadBuilderSvc);
@@ -132,11 +132,17 @@ public final class StartServlet extends CommonServlet {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {
-				Main.RUN_TIME_CONFIG.set(runTimeConfig);
+				RunTimeConfig.setContext(runTimeConfig);
 				ThreadContextMap.initThreadContextMap();
 				ThreadContextMap.putValue(RunTimeConfig.KEY_RUN_SCENARIO_NAME, runTimeConfig.getRunScenarioName());
 				ThreadContextMap.putValue(RunTimeConfig.KEY_RUN_METRICS_PERIOD_SEC,
 						String.valueOf(runTimeConfig.getRunMetricsPeriodSec()));
+				if (runTimeConfig.getRunScenarioName().equals("rampup")) {
+					ThreadContextMap.putValue("scenario.rampup.sizes", runTimeConfig.getProperty("scenario.rampup.sizes").toString());
+					ThreadContextMap.putValue("scenario.rampup.thread.counts",
+							runTimeConfig.getProperty("scenario.rampup.thread.counts").toString());
+					ThreadContextMap.putValue("scenario.chain.load", runTimeConfig.getProperty("scenario.chain.load").toString());
+				}
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getRunScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);
@@ -156,7 +162,7 @@ public final class StartServlet extends CommonServlet {
 		final Thread thread = new Thread() {
 			@Override
 			public void run() {
-				Main.RUN_TIME_CONFIG.set(runTimeConfig);
+				RunTimeConfig.setContext(runTimeConfig);
 				ThreadContextMap.initThreadContextMap();
 				//
 				LOG.debug(Markers.MSG, message);

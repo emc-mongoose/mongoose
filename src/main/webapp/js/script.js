@@ -1,6 +1,6 @@
 $(document).ready(function() {
 	var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
-	var TABLE_ROWS_COUNT = 2050;
+	var TABLE_ROWS_COUNT = 100;
 	excludeDuplicateOptions();
 	//
 	var chartsArray = [];
@@ -79,22 +79,25 @@ $(document).ready(function() {
 	$("#backup-run\\.scenario\\.name").on("change", function() {
 		var valueSelected = this.value;
 		$("#scenario-button").attr("data-target", "#" + valueSelected);
+		changeLoadHint(valueSelected);
 	});
+	//
+	function changeLoadHint(value) {
+		switch (value) {
+			case "backup-single":
+				$("#scenario-load").text("Load: [" + $("#scenario\\.single\\.load").val() + "]");
+				break;
+			case "backup-chain":
+			case "backup-rampup":
+				$("#scenario-load").text("Load: [" + $("#scenario\\.chain\\.load").val() + "]");
+				break;
+		}
+	}
+	$("#backup-run\\.scenario\\.name").change();
 	//
 	$("#backup-storage\\.api").on("change", function() {
 		var valueSelected = this.value;
 		$("#api-button").attr("data-target", "#" + valueSelected);
-	});
-	//
-	$(".complex").change(function() {
-		$("#backup-data\\.count").val(document.getElementById("backup-data.count").defaultValue);
-		$("#data\\.count").val(document.getElementById("data.count").defaultValue);
-	});
-	//
-	$("#backup-data\\.count").change(function() {
-		$(".complex input").val($(".complex input").get(0).defaultValue);
-		$(".complex select").val($(".complex select option:first").val());
-		$("#run\\.time").val(document.getElementById("run.time").defaultValue);
 	});
 	//
 	$("#base input, #base select").on("change", function() {
@@ -118,16 +121,39 @@ $(document).ready(function() {
 				element.value = currElement.val();
 			}
 		}
+		if ((currElement.attr("id") === "backup-scenario.single.load")
+			|| (currElement.attr("id") === "backup-scenario.chain.load")) {
+			changeLoadHint($("#backup-run\\.scenario\\.name").val());
+		}
 	});
 	//
 	$("#extended input").on("change", function() {
-		if (($(this).attr("id") === "run.time")
-			|| ($(this).attr("id") === "data.count")) {
-				return;
+		if ($(this).attr("id") === "run.time") {
+			var splittedTimeString = $(this).val().split(".");
+			$("#backup-run\\.time\\.input").val(splittedTimeString[0]);
+			$("#backup-run\\.time\\.select").val(splittedTimeString[1]);
 		}
-		$('input[data-pointer="' + $(this).attr("id") + '"]').val($(this).val());
+		$('input[data-pointer="' + $(this).attr("id") + '"]').val($(this).val()).change();
 		$('select[data-pointer="' + $(this).attr("id") + '"] option:contains(' + $(this).val() + ')')
-			.attr('selected', 'selected');
+			.attr('selected', 'selected').change();
+	});
+	$("#backup-data\\.size").on("change", function() {
+		$("#data\\.size\\.min").val($(this).val());
+		$("#data\\.size\\.max").val($(this).val());
+	});
+	//
+	$("#backup-load\\.threads").on("change", function() {
+		var currentValue = this.value;
+		var keys2Override = [
+			"#backup-load\\.append\\.threads",
+			"#backup-load\\.create\\.threads",
+			"#backup-load\\.read\\.threads",
+			"#backup-load\\.update\\.threads",
+			"#backup-load\\.delete\\.threads"
+		];
+		keys2Override.forEach(function(d) {
+			$(d).val(currentValue).change();
+		})
 	});
 	//
 	$("#start").click(function(e) {
@@ -370,12 +396,27 @@ function configureWebSocketConnection(location, countOfRecords) {
 				var json = JSON.parse(message.data);
 				var runId = json.contextMap["run.id"];
 				var runMetricsPeriodSec = json.contextMap["run.metrics.period.sec"];
+				var scenarioChainLoad = json.contextMap["scenario.chain.load"];
+				var rampupThreadCounts = json.contextMap["scenario.rampup.thread.counts"];
+				var loadRampupSizes = json.contextMap["scenario.rampup.sizes"];
+				//
 				var entry = runId.split(".").join("_");
 				if (!json.hasOwnProperty("marker") || !json.loggerName) {
 					return;
 				}
 				if (json.marker === null)
 					return;
+				var isContains = false;
+				chartsArray.forEach(function(d) {
+					if (d["run.id"] === runId) {
+						isContains = true;
+					}
+				});
+				if (!isContains) {
+					if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+						charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
+					}
+				}
 				switch (json.marker.name) {
 					case MARKERS.ERR:
 						appendMessageToTable(entry, LOG_FILES.ERR, countOfRecords, json);
@@ -385,6 +426,20 @@ function configureWebSocketConnection(location, countOfRecords) {
 						break;
 					case MARKERS.PERF_SUM:
 						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
+						if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+							//alert(json.contextMap["currentSize"]);
+							chartsArray.forEach(function(d) {
+								//console.log(d);
+								if (d["run.id"] === runId) {
+									d.charts.forEach(function(c) {
+										c.update(json);
+									});
+								}
+							});
+						}
+						/*if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+					        charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
+					    }*/
 						break;
 					case MARKERS.PERF_AVG:
 						appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
@@ -400,12 +455,13 @@ function configureWebSocketConnection(location, countOfRecords) {
 						if (!isFound) {
 							switch(json.contextMap["run.scenario.name"]) {
 								case RUN_SCENARIO_NAME.single:
-									charts(chartsArray).single(runId, runMetricsPeriodSec, json.threadName);
+									charts(chartsArray).single(json);
 									break;
 								case RUN_SCENARIO_NAME.chain:
+									if (json.threadName.indexOf("remote") > -1) {
+										json.threadName = json.threadName.substring(0, json.threadName.lastIndexOf("-"));
+									}
 									charts(chartsArray).chain(runId, runMetricsPeriodSec, json.threadName);
-									break;
-								case RUN_SCENARIO_NAME.rampup:
 									break;
 							}
 						}
@@ -466,12 +522,15 @@ function loadPropertiesFromFile(file) {
 				$(elementId).val(splitLine[1]);
 				if ($(elementId).attr("id") === "run.time") {
 					var resultArray = $(elementId).val().split(".");
-					$(".complex input").val(resultArray[0]).change();
-					$(".complex select option:contains(" + resultArray[1] + ")").attr("selected", "selected").change();
+					$(".complex input").val(resultArray[0]);
+					$(".complex select option:contains(" + resultArray[1] + ")").attr("selected", "selected");
+				} else {
+					var input = $('input[data-pointer="' + $(elementId).attr("id") + '"]').val($(elementId).val());
+					var select = $('select[data-pointer="' + $(elementId).attr("id") + '"] option:contains(' + $(elementId).val() + ')')
+						.attr('selected', 'selected');
+					input.change();
+					select.change();
 				}
-				$('input[data-pointer="' + $(elementId).attr("id") + '"]').val($(elementId).val()).change();
-				$('select[data-pointer="' + $(elementId).attr("id") + '"] option:contains(' + $(elementId).val() + ')')
-					.attr('selected', 'selected').change();
 			}
 		}
 	};
@@ -483,296 +542,302 @@ function charts(chartsArray) {
 	var margin = {top: 40, right: 200, bottom: 60, left: 60},
 		width = 1070 - margin.left - margin.right,
 		height = 500 - margin.top - margin.bottom;
-
+	//  Some constants
 	var SCENARIO = {
 		single: "single",
 		chain: "chain",
 		rampup: "rampup"
 	};
+	var CHART_TYPES = {
+		TP: "throughput",
+		BW: "bandwidth"
+	};
+	var AVG = "avg",
+		MIN_1 = "1min",
+		MIN_5 = "5min",
+		MIN_15 = "15min";
+	//  Some constants from runTimeConfig
+	var RUN_TIME_CONFIG_CONSTANTS = {
+		runId: "run.id",
+		runMetricsPeriodSec: "run.metrics.period.sec",
+		runScenarioName: "run.scenario.name"
+	};
+	var CHART_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+	/*var color = d3.scale.ordinal()
+		.domain([
+			"#FF0000",
+			"#0000FF",
+			"#00FF00",
+			"#FF00FF",
+			"#FFFF00",
+			"#000000",
+			"#C66734",
+			"#8c564b",
+			"#7f7f7f",
+			"#8c6d31"
+		]);*/
+	//  Common functions for charts
+	function getScenarioChartObject(runId, runScenarioName, scenarioCharts) {
+		return {
+			"run.id": runId,
+			"run.scenario.name": runScenarioName,
+			"charts": scenarioCharts
+		};
+	}
+	//
+	function drawThroughputCharts(data, json) {
+		var updateFunction = drawChart(data, json, "seconds[s]", "TP[obj/s]",
+				"#tp-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"));
+		return {
+			update: function(json) {
+				updateFunction(CHART_TYPES.TP, json.message.formattedMessage);
+			}
+		};
+	}
+	//
+	function drawBandwidthCharts(data, json) {
+		var updateFunction = drawChart(data, json, "seconds[s]", "BW[MB/s]",
+				"#bw-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"));
+		return {
+			update: function(json) {
+				updateFunction(CHART_TYPES.BW, json.message.formattedMessage);
+			}
+		};
+	}
+	//
+	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath) {
+		//  get some fields from runTimeConfig
+		var runMetricsPeriodSec = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec];
+		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
+		//
+		var x = d3.scale.linear()
+			.domain([
+				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
+				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; })  })
+			])
+			.range([0, width]);
 
-	return {
-		single: function(runId, runMetricsPeriodSec, chartTitle) {
+		var y = d3.scale.linear()
+			.domain([
+				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
+				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; })  })
+			])
+			.range([height, 0]);
+		//
+		var color = d3.scale.category10();
+		color.domain(data.map(function(d) { return d.name; }));
+		//
+		var xAxis = d3.svg.axis()
+			.scale(x)
+			.orient("bottom");
+		var yAxis = d3.svg.axis()
+			.scale(y)
+			.orient("left");
+
+		function makeXAxis() {
+			return d3.svg.axis()
+				.scale(x)
+				.orient("bottom");
+		}
+
+		function makeYAxis() {
+			return d3.svg.axis()
+				.scale(y)
+				.orient("left");
+		}
+		//
+		var line = d3.svg.line()
+			.x(function (d) {
+				return x(d.x);
+			})
+			.y(function (d) {
+				return y(d.y);
+			});
+		//
+		var svg = d3.select(chartDOMPath)
+			.append("svg")
+			.attr("width", width + margin.left + margin.right)
+			.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		var xAxisGroup = svg.append("g")
+			.attr("class", "x axis")
+			.attr("transform", "translate(0," + height + ")")
+			.call(xAxis);
+
+		var yAxisGroup = svg.append("g")
+			.attr("class", "y axis")
+			.call(yAxis);
+
+		var xGrid = svg.append("g")
+			.attr("class", "grid")
+			.attr("transform", "translate(0," + height + ")")
+			.call(makeXAxis()
+				.tickSize(-height, 0, 0)
+				.tickFormat(""));
+
+		var yGrid = svg.append("g")
+			.attr("class", "grid")
+			.call(makeYAxis()
+				.tickSize(-width, 0, 0)
+				.tickFormat(""));
+
+		var levels = svg.selectAll(".level")
+			.data(data).enter()
+			.append("g")
+			.attr("class", "level")
+			.attr("id", function(d, i) { return chartDOMPath.replace("#", "") + d.name; })
+			.attr("visibility", function(d) { if (d.name === AVG) { return "visible"; } else { return "hidden"; }})
+			.append("path")
+			.attr("class", "line")
+			.attr("d", function(d)  { return line(d.values); })
+			.attr("stroke", function(d) { return color(d.name); });
+		//  Axis X Label
+		svg.append("text")
+			.attr("x", width - 2)
+			.attr("y", height - 2)
+			.style("text-anchor", "end")
+			.text(xAxisLabel);
+
+		//  Axis Y Label
+		svg.append("text")
+			.attr("transform", "rotate(-90)")
+			.attr("y", 6)
+			.attr("x", 0)
+			.attr("dy", ".71em")
+			.style("text-anchor", "end")
+			.text(yAxisLabel);
+		//
+		svg.selectAll("foreignObject")
+			.data(data).enter()
+			.append("foreignObject")
+			.attr("x", width + 3)
+			.attr("width", 18)
+			.attr("height", 18)
+			.attr("transform", function(d, i) {
+				return "translate(0," + i * 20 + ")";
+			})
+			.append("xhtml:body")
+			.append("input")
+			.attr("type", "checkbox")
+			.attr("value", function(d) { return d.name; })
+			.attr("checked", function(d) { if (d.name === AVG) { return "checked"; } })
+			.on("click", function(d, i) {
+				var element = $(chartDOMPath + d.name);
+				if ($(this).is(":checked")) {
+					element.css("visibility", "visible")
+				} else {
+					element.css("visibility", "hidden");
+				}
+			});
+		//
+		var legend = svg.selectAll(".legend")
+			.data(data).enter()
+			.append("g")
+			.attr("class", "legend")
+			.attr("transform", function(d, i) {
+				return "translate(0," + i * 20 + ")";
+			});
+
+		legend.append("rect")
+			.attr("x", width + 18)
+			.attr("width", 18)
+			.attr("height", 18)
+			.style("fill", function(d) { return color(d.name); });
+
+		legend.append("text")
+			.attr("x", width + 100)
+			.attr("y", 9)
+			.attr("dy", ".35em")
+			.style("text-anchor", "end")
+			.text(function(d) { return d.name; });
+
+		svg.append("text")
+			.attr("x", (width / 2))
+			.attr("y", 0 - (margin.top / 2))
+			.attr("text-anchor", "middle")
+			.style("font-size", "16px")
+			.style("text-decoration", "underline")
+			.text("Throughput[obj/s]");
+		return function(chartType, value) {
+			var splitIndex = 0;
+			switch(chartType) {
+				case CHART_TYPES.TP:
+					splitIndex = 2;
+					break;
+				case CHART_TYPES.BW:
+					splitIndex = 3;
+					break;
+			}
 			//
-			var AVG = "avg";
-			var MIN_1 = "1min";
-			var MIN_5 = "5min";
-			var MIN_15 = "15min";
+			var parsedString = value.split(";")[splitIndex];
+			var first = parsedString.indexOf("(") + 1;
+			var second = parsedString.lastIndexOf(")");
+			value = parsedString.substring(first, second).split("/");
 			//
-			var CHART_TYPES = {
-				TP: "throughput",
-				BW: "bandwidth"
-			};
-			//
-			chartsArray.push({
-				"run.id": runId,
-				"run.scenario.name": SCENARIO.single,
-				"charts": [
-					drawThroughputChart(),
-					drawBandwidthChart()
-				]
+			data.forEach(function(d, i) {
+				d.values.push({x: d.values.length * runMetricsPeriodSec, y: parseFloat(value[i])});
 			});
 			//
-			function drawThroughputChart() {
-				var data = [
-					{
-						name: AVG,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_1,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_5,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_15,
-						values: [
-							{x: 0, y: 0}
-						]
-					}
-				];
-				var updateFunction = drawChart(data, chartTitle, "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
-				return {
-					update: function(json) {
-						updateFunction(CHART_TYPES.TP, json.message.formattedMessage);
-					}
-				};
-			}
+			x.domain([
+				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
+				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; }); })
+			]);
+			y.domain([
+				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
+				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; }); })
+			]);
 			//
-			function drawBandwidthChart() {
-				var data = [
-					{
-						name: AVG,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_1,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_5,
-						values: [
-							{x: 0, y: 0}
-						]
-					}, {
-						name: MIN_15,
-						values: [
-							{x: 0, y: 0}
-						]
-					}
-				];
-				var updateFunction = drawChart(data, chartTitle, "seconds", "bandwidth[mb/s]", "#bw-" + runId.split(".").join("_"));
-				return {
-					update: function(json) {
-						updateFunction(CHART_TYPES.BW, json.message.formattedMessage);
-					}
-				}
-
-			}
+			xAxisGroup.transition().call(xAxis);
+			yAxisGroup.transition().call(yAxis);
+			xGrid.call(makeXAxis()
+				.tickSize(-height, 0, 0)
+				.tickFormat(""));
+			yGrid.call(makeYAxis()
+				.tickSize(-width, 0, 0)
+				.tickFormat(""));
+			//  Update old charts
+			var paths = svg.selectAll(".level path")
+				.data(data)
+				.attr("d", function(d) { return line(d.values); })
+				.attr("stroke", function(d) { return color(d.name); })
+				.attr("fill", "none");
+		};
+	}
+	//
+	return {
+		single: function(json) {
+			//  get some fields from runTimeConfig
+			var runId = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId];
+			var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
 			//
-			function drawChart(data, chartTitle, xAxisLabel, yAxisLabel, path) {
-				var x = d3.scale.linear()
-					.domain([
-						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
-						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; })  })
-					])
-					.range([0, width]);
-
-				var y = d3.scale.linear()
-					.domain([
-						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
-						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; })  })
-					])
-					.range([height, 0]);
-				//
-				var color = d3.scale.category10();
-				color.domain(data.map(function(d) { return d.name; }));
-				//
-				var xAxis = d3.svg.axis()
-					.scale(x)
-					.orient("bottom");
-				var yAxis = d3.svg.axis()
-					.scale(y)
-					.orient("left");
-
-				function makeXAxis() {
-					return d3.svg.axis()
-						.scale(x)
-						.orient("bottom");
+			var data = [
+				{
+					name: AVG,
+					values: [
+						{x: 0, y: 0}
+					]
+				}, {
+					name: MIN_1,
+					values: [
+						{x: 0, y: 0}
+					]
+				}, {
+					name: MIN_5,
+					values: [
+						{x: 0, y: 0}
+					]
+				}, {
+					name: MIN_15,
+					values: [
+						{x: 0, y: 0}
+					]
 				}
-
-				function makeYAxis() {
-					return d3.svg.axis()
-						.scale(y)
-						.orient("left");
-				}
-				//
-				var line = d3.svg.line()
-					.x(function (d) {
-						return x(d.x);
-					})
-					.y(function (d) {
-						return y(d.y);
-					});
-				//
-				var svg = d3.select(path)
-					.append("svg")
-					.attr("width", width + margin.left + margin.right)
-					.attr("height", height + margin.top + margin.bottom)
-					.append("g")
-					.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-				var xAxisGroup = svg.append("g")
-					.attr("class", "x axis")
-					.attr("transform", "translate(0," + height + ")")
-					.call(xAxis);
-
-				var yAxisGroup = svg.append("g")
-					.attr("class", "y axis")
-					.call(yAxis);
-
-				var xGrid = svg.append("g")
-					.attr("class", "grid")
-					.attr("transform", "translate(0," + height + ")")
-					.call(makeXAxis()
-						.tickSize(-height, 0, 0)
-						.tickFormat(""));
-
-				var yGrid = svg.append("g")
-					.attr("class", "grid")
-					.call(makeYAxis()
-						.tickSize(-width, 0, 0)
-						.tickFormat(""));
-
-				var levels = svg.selectAll(".level")
-					.data(data).enter()
-					.append("g")
-					.attr("class", "level")
-					.attr("id", function(d, i) { return path.replace("#", "") + d.name; })
-					.attr("visibility", function(d) { if (d.name === MIN_1) { return "visible"; } else { return "hidden"; }})
-					.append("path")
-					.attr("class", "line")
-					.attr("d", function(d)  { return line(d.values); })
-					.attr("stroke", function(d) { return color(d.name); });
-				//  Axis X Label
-				svg.append("text")
-					.attr("x", width - 2)
-					.attr("y", height - 2)
-					.style("text-anchor", "end")
-					.text(xAxisLabel);
-
-				//  Axis Y Label
-				svg.append("text")
-					.attr("transform", "rotate(-90)")
-					.attr("y", 6)
-					.attr("x", 0)
-					.attr("dy", ".71em")
-					.style("text-anchor", "end")
-					.text(yAxisLabel);
-				//
-				svg.selectAll("foreignObject")
-					.data(data).enter()
-					.append("foreignObject")
-					.attr("x", width + 3)
-					.attr("width", 18)
-					.attr("height", 18)
-					.attr("transform", function(d, i) {
-						return "translate(0," + i * 20 + ")";
-					})
-					.append("xhtml:body")
-					.append("input")
-					.attr("type", "checkbox")
-					.attr("value", function(d) { return d.name; })
-					.attr("checked", function(d) { if (d.name === MIN_1) { return "checked"; } })
-					.on("click", function(d, i) {
-						var element = $(path + d.name);
-						if ($(this).is(":checked")) {
-							element.css("visibility", "visible")
-						} else {
-							element.css("visibility", "hidden");
-						}
-					});
-				//
-				var legend = svg.selectAll(".legend")
-					.data(data).enter()
-					.append("g")
-					.attr("class", "legend")
-					.attr("transform", function(d, i) {
-						return "translate(0," + i * 20 + ")";
-					});
-
-				legend.append("rect")
-					.attr("x", width + 18)
-					.attr("width", 18)
-					.attr("height", 18)
-					.style("fill", function(d) { return color(d.name); });
-
-				legend.append("text")
-					.attr("x", width + 80)
-					.attr("y", 9)
-					.attr("dy", ".35em")
-					.style("text-anchor", "end")
-					.text(function(d) { return d.name; });
-
-				svg.append("text")
-					.attr("x", (width / 2))
-					.attr("y", 0 - (margin.top / 2))
-					.attr("text-anchor", "middle")
-					.style("font-size", "16px")
-					.style("text-decoration", "underline")
-					.text(chartTitle);
-				return function(chartType, value) {
-					var splitIndex = 0;
-					switch(chartType) {
-						case CHART_TYPES.TP:
-							splitIndex = 2;
-							break;
-						case CHART_TYPES.BW:
-							splitIndex = 3;
-							break;
-					}
-					//
-					var parsedString = value.split(";")[splitIndex];
-					var first = parsedString.indexOf("(") + 1;
-					var second = parsedString.lastIndexOf(")");
-					value = parsedString.substring(first, second).split("/");
-					//
-					data.forEach(function(d, i) {
-						d.values.push({x: d.values.length * runMetricsPeriodSec, y: parseFloat(value[i])});
-					});
-					//
-					x.domain([
-						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
-						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; }); })
-					]);
-					y.domain([
-						d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
-						d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; }); })
-					]);
-					//
-					xAxisGroup.transition().call(xAxis);
-					yAxisGroup.transition().call(yAxis);
-					xGrid.call(makeXAxis()
-						.tickSize(-height, 0, 0)
-						.tickFormat(""));
-					yGrid.call(makeYAxis()
-						.tickSize(-width, 0, 0)
-						.tickFormat(""));
-					//  Update old charts
-					var paths = svg.selectAll(".level path")
-						.data(data)
-						.attr("d", function(d) { return line(d.values); })
-						.attr("stroke", function(d) { return color(d.name); })
-						.attr("fill", "none");
-				};
-			}
+			];
+			chartsArray.push(getScenarioChartObject(runId, runScenarioName,
+					[drawThroughputCharts($.extend(true, [], data), json),
+						drawBandwidthCharts($.extend(true, [], data), json)]));
 		},
 		chain: function(runId, runMetricsPeriodSec, loadType) {
 			var AVG = "avg";
@@ -969,10 +1034,20 @@ function charts(chartsArray) {
 					.attr("class", "line")
 					.attr("d", function(c) { return line(c.values); })
 					.attr("stroke-dasharray", function(c, i) {
-						if (i === 3) {
-							return "20,10,5,5,5,10";
+						switch (c.name) {
+							case AVG:
+								return "0,0";
+								break;
+							case MIN_1:
+								return "3,3";
+								break;
+							case MIN_5:
+								return "10,10";
+								break;
+							case MIN_15:
+								return "20,10,5,5,5,10";
+								break;
 						}
-						return i*15 + "," + i*15;
 					})
 					.attr("id", function(c) {
 						return path.replace("#", "") + loadType + "-" + c.name;
@@ -1053,7 +1128,7 @@ function charts(chartsArray) {
 					.style("fill", function(d) { return color(d.loadType); });
 
 				rightLegend.append("text")
-					.attr("x", width + 150)
+					.attr("x", width + 170)
 					.attr("y", 9)
 					.attr("dy", ".35em")
 					.style("text-anchor", "end")
@@ -1071,13 +1146,23 @@ function charts(chartsArray) {
 				bottomLegend.append("path")
 					.attr("d", "M0 0 L100 0")
 					.attr("stroke-dasharray", function(d, i) {
-						if (i === 3) {
-							return "20,10,5,5,5,10";
+						switch (d) {
+							case AVG:
+								return "0,0";
+								break;
+							case MIN_1:
+								return "3,3";
+								break;
+							case MIN_5:
+								return "10,10";
+								break;
+							case MIN_15:
+								return "20,10,5,5,5,10";
+								break;
 						}
-						return i*15 + "," + i*15;
 					});
 				bottomLegend.append("text")
-					.attr("x", 50)
+					.attr("x", 70)
 					.attr("y", 15)
 					.attr("dy", ".35em")
 					.style("text-anchor", "middle")
@@ -1108,6 +1193,9 @@ function charts(chartsArray) {
 					.style("text-decoration", "underline")
 					.text(chartTitle);
 				return function(chartType, json) {
+					if (json.threadName.indexOf("remote") > -1) {
+						json.threadName = json.threadName.substring(0, json.threadName.lastIndexOf("-"));
+					}
 					var loadType = json.threadName;
 					//
 					var splitIndex = 0;
@@ -1188,7 +1276,7 @@ function charts(chartsArray) {
 							})
 							.attr("id", function(c) { return path.replace("#", "") + loadType + "-" + c.name; })
 							.attr("visibility", function(c) {
-								var elements = $(".bottom-checkbox:checked");
+								var elements = $(path + " " + ".bottom-checkbox:checked");
 								var isFound = false;
 								elements.each(function() {
 									if (c.name === $(this).val()) {
@@ -1242,10 +1330,20 @@ function charts(chartsArray) {
 						})
 						.attr("d", function(c) { return line(c.values); })
 						.attr("stroke-dasharray", function(c, i) {
-							if (i === 3) {
-								return "20,10,5,5,5,10";
+							switch (c.name) {
+								case AVG:
+									return "0,0";
+									break;
+								case MIN_1:
+									return "3,3";
+									break;
+								case MIN_5:
+									return "10,10";
+									break;
+								case MIN_15:
+									return "20,10,5,5,5,10";
+									break;
 							}
-							return i*15 + "," + i*15;
 						})
 						.attr("fill", "none");
 
@@ -1265,7 +1363,7 @@ function charts(chartsArray) {
 						.style("fill", function(d) { return color(d.loadType); });
 
 					rightLegend.append("text")
-						.attr("x", width + 150)
+						.attr("x", width + 170)
 						.attr("y", 9)
 						.attr("dy", ".35em")
 						.style("text-anchor", "end")
@@ -1297,8 +1395,336 @@ function charts(chartsArray) {
 				};
 			}
 		},
-		rampup: {
+		rampup: function(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes) {
+			//
+			var loadTypes = scenarioChainLoad.slice(1, -1).split(",");
+			var rampupThreadCountsArray = rampupThreadCounts.slice(1, -1).split(",").map(function(item) {
+				return parseInt(item, 10);
+			});
+			var loadRampupSizesArray = loadRampupSizes.slice(1, -1).split(",").map(function(item) {
+				return item.trim();
+			});
+			var AVG = "avg";
+			var MIN_1 = "1min";
+			var MIN_5 = "5min";
+			var MIN_15 = "15min";
+			//
+			var CHART_TYPES = {
+				TP: "throughput",
+				BW: "bandwidth"
+			};
+			//
+			var TP_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+			//
+			chartsArray.push({
+				"run.id": runId,
+				"run.scenario.name": SCENARIO.rampup,
+				"charts": [
+					drawThroughputCharts(),
+					drawBandwidthCharts()
+				]
+			});
 
+			function drawThroughputCharts() {
+				//
+				var data = [];
+				loadTypes.forEach(function(d) {
+					data.push({
+						"loadType": d.trim(),
+						"sizes": (function() {
+							var sizesArray = [];
+							loadRampupSizesArray.forEach(function(d, i) {
+								sizesArray[i] = {
+									"size": d + "-" + i,
+									"charts": [
+										{
+											"name": AVG,
+											"values": []
+										}
+									]
+								}
+							});
+							return sizesArray;
+						})()
+					});
+				});
+				var updateFunction = drawCharts(data, "thread count", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
+				return {
+					update: function(json) {
+						updateFunction(CHART_TYPES.TP, json);
+					}
+				};
+			}
+			//
+			function drawBandwidthCharts() {
+				var data = [];
+				loadTypes.forEach(function(d) {
+					data.push({
+						"loadType": d.trim(),
+						"sizes": (function() {
+							var sizesArray = [];
+							loadRampupSizesArray.forEach(function(d, i) {
+								sizesArray[i] = {
+									"size": d + "-" + i,
+									"charts": [
+										{
+											"name": AVG,
+											"values": []
+										}
+									]
+								}
+							});
+							return sizesArray;
+						})()
+					});
+				});
+				var updateFunction = drawCharts(data, "thread count", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
+				return {
+					update: function(json) {
+						updateFunction(CHART_TYPES.BW, json);
+					}
+				};
+			}
+
+			function drawCharts(data, xAxisLabel, yAxisLabel, path) {
+				data.forEach(function(d) {
+					var x = d3.scale.ordinal()
+						.domain(rampupThreadCountsArray)
+						.rangePoints([0, width]);
+					var y = d3.scale.linear()
+						.domain([
+							d3.min(d.sizes, function(c) { return d3.min(c.charts, function(v) {
+								return d3.min(v.values, function(val) { return val.y; });
+							}); }),
+							d3.max(d.sizes, function(c) { return d3.max(c.charts, function(v) {
+								return d3.max(v.values, function(val) { return val.y; });
+							}); })
+						])
+						.range([height, 0]);
+					var color = d3.scale.category10();
+					color.domain(loadRampupSizesArray.map(function(d) { return d; }));
+					//
+					var xAxis = d3.svg.axis()
+						.scale(x)
+						.orient("bottom");
+					var yAxis = d3.svg.axis()
+						.scale(y)
+						.orient("left");
+					//
+					function makeXAxis() {
+						return d3.svg.axis()
+							.scale(x)
+							.orient("bottom");
+					}
+					function makeYAxis() {
+						return d3.svg.axis()
+							.scale(y)
+							.orient("left");
+					}
+					var line = d3.svg.line()
+						.x(function(d) {
+							return x(d.x);
+						})
+						.y(function(d) {
+							return y(d.y);
+						});
+					var svg = d3.select(path).append("svg")
+						.attr("width", width + margin.left + margin.right)
+						.attr("height", height + margin.top + margin.bottom)
+						.attr("id", path.replace("#", "") + "-" + d.loadType)
+						.append("g")
+						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+					//
+					var xAxisGroup = svg.append("g")
+						.attr("class", "axis x-axis")
+						.attr("transform", "translate(0," + height + ")")
+						.call(xAxis);
+					var yAxisGroup = svg.append("g")
+						.attr("class", "axis y-axis")
+						.call(yAxis);
+					var xGrid = svg.append("g")
+						.attr("class", "grid x-grid")
+						.attr("transform", "translate(0," + height + ")")
+						.call(makeXAxis()
+							.tickSize(-height, 0, 0)
+							.tickFormat(""));
+					var yGrid = svg.append("g")
+						.attr("class", "grid y-grid")
+						.call(makeYAxis()
+							.tickSize(-width, 0, 0)
+							.tickFormat(""));
+					//  Axis Y Label
+					svg.append("text")
+						.attr("x", width - 2)
+						.attr("y", height - 2)
+						.style("text-anchor", "end")
+						.text(xAxisLabel);
+					//  Axis Y Label
+					svg.append("text")
+						.attr("transform", "rotate(-90)")
+						.attr("y", 6)
+						.attr("x", 0)
+						.attr("dy", ".71em")
+						.style("text-anchor", "end")
+						.text(yAxisLabel);
+					svg.append("text")
+						.attr("x", (width / 2))
+						.attr("y", 0 - (margin.top / 2))
+						.attr("text-anchor", "middle")
+						.style("font-size", "16px")
+						.style("text-decoration", "underline")
+						.text(d.loadType);
+					//
+					var legend = svg.selectAll(".legend")
+						.data(loadRampupSizesArray).enter()
+						.append("g")
+						.attr("class", "legend")
+						.attr("transform", function(d, i) {
+							return "translate(0," + i * 20 + ")";
+						});
+
+					legend.append("rect")
+						.attr("x", width + 20)
+						.attr("width", 18)
+						.attr("height", 18)
+						.style("fill", function(d) { return color(d); });
+
+					legend.append("text")
+						.attr("x", width + 100)
+						.attr("y", 9)
+						.attr("dy", ".35em")
+						.style("text-anchor", "end")
+						.text(function(d) { return d; });
+					//
+					var levels = svg.selectAll(".level")
+						.data(d.sizes).enter()
+						.append("g")
+						.attr("class", "level")
+						.attr("id", function(c, i) { return path.replace("#", "") + "-" + d.loadType + "-" + c.size + "-" + i; })
+						.attr("fill", function(c, i) { return color(loadRampupSizesArray[i]); })
+						.attr("stroke", function(c, i) { return color(loadRampupSizesArray[i]); })
+						.selectAll("path")
+						.data(function(c) { return c.charts; }).enter()
+						.append("path")
+						.attr("class", "line")
+						.attr("d", function(v) { return line(v.values); });
+					svg.selectAll(".right-foreign")
+						.data(d.sizes).enter()
+						.append("foreignObject")
+						.attr("class", "right-foreign")
+						.attr("x", width + 3)
+						.attr("width", 18)
+						.attr("height", 18)
+						.attr("transform", function(d, i) {
+							return "translate(0," + i * 20 + ")";
+						})
+						.append("xhtml:body")
+						.append("input")
+						.attr("type", "checkbox")
+						.attr("value", function(d) { return d.size; })
+						.attr("checked", "checked")
+						.on("click", function(c, i) {
+							var element = $(path + "-" + d.loadType + "-" + c.size + "-" + i);
+							if ($(this).is(":checked")) {
+								element.css("opacity", "1");
+							} else {
+								element.css("opacity", "0");
+							}
+						});
+				});
+				//
+				return function(chartType, json) {
+					var isFound = false;
+					data.forEach(function(d, i) {
+						if (json.message.formattedMessage.split(" ")[0].slice(1, -1).toLowerCase().indexOf(d.loadType) > -1) {
+							var loadTypeSvg = d3.select(path + "-" + d.loadType);
+							//
+							var currentLoadType = d.loadType;
+							var currentSizes = d.sizes;
+							var splitIndex;
+							switch(chartType) {
+								case CHART_TYPES.TP:
+									splitIndex = 2;
+									break;
+								case CHART_TYPES.BW:
+									splitIndex = 3;
+									break;
+							}
+							//
+							var parsedString = json.message.formattedMessage.split(";")[splitIndex];
+							var first = parsedString.indexOf("(") + 1;
+							var second = parsedString.lastIndexOf(")");
+							var value = parsedString.substring(first, second).split("/");
+
+							var x = d3.scale.ordinal()
+								.domain(rampupThreadCountsArray)
+								.rangePoints([0, width]);
+
+							d.sizes.forEach(function(d, i) {
+								if (d.size === json.contextMap["currentSize"]) {
+									d.charts.forEach(function(c, i) {
+										c.values.push({ x: parseInt(json.contextMap["currentThreadCount"]), y: parseFloat(value[i]) });
+									});
+									//
+									var y = d3.scale.linear()
+										.domain([
+											0,
+											d3.max(currentSizes, function(c) { return d3.max(c.charts, function(v) {
+												return d3.max(v.values, function(val) { return val.y; });
+											}); })
+										]).range([height, 0]);
+									var line = d3.svg.line()
+										.x(function(d) {
+											return x(d.x);
+										})
+										.y(function(d) {
+											return y(d.y);
+										});
+									function makeYAxis() {
+										return d3.svg.axis()
+											.scale(y)
+											.orient("left");
+									}
+									var yAxis = d3.svg.axis()
+										.scale(y)
+										.orient("left");
+									var yAxisGroup = loadTypeSvg.select(".y-axis")
+										.call(yAxis);
+
+									var yGrid = loadTypeSvg.select(".y-grid")
+										.call(makeYAxis()
+											.tickSize(-width, 0, 0)
+											.tickFormat(""));
+
+									yAxisGroup.transition().call(yAxis);
+									yGrid.call(makeYAxis()
+										.tickSize(-width, 0, 0)
+										.tickFormat(""));
+									//
+									var paths = loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
+										.selectAll("path").data(d.charts)
+										.attr("d", function(v) { return line(v.values); })
+										.attr("fill", "none");
+									//
+									var dots = loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
+										.data(d.charts)
+										.selectAll(".dot").data(function(v) { return v.values; })
+										.enter().append("circle")
+										.attr("class", "dot")
+										.attr("cx", function(coord) { return x(coord.x); })
+										.attr("cy", function(coord) { return y(coord.y); })
+										.attr("r", 2)
+									//  Update dots
+									loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
+										.selectAll(".dot").data(function(v) { return v.values; })
+										.attr("cx", function(coord) { return x(coord.x); })
+										.attr("cy", function(coord) { return y(coord.y); });
+								}
+							});
+						}
+					});
+				}
+			}
 		}
 	}
 }

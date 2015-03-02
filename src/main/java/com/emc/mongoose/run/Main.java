@@ -91,8 +91,6 @@ public final class Main {
 		}
 	}
 	//
-	public static InheritableThreadLocal<RunTimeConfig> RUN_TIME_CONFIG = new InheritableThreadLocal<>();
-	//
 	public static void main(final String args[]) {
 		//
 		initSecurity();
@@ -121,16 +119,16 @@ public final class Main {
 			System.getProperty(RunTimeConfig.KEY_RUN_ID)
 		);*/
 		// load the properties
-		RUN_TIME_CONFIG.set(new RunTimeConfig());
+		RunTimeConfig.setContext(new RunTimeConfig());
 		//
-		RUN_TIME_CONFIG.get().loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
+		RunTimeConfig.getContext().loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
-		RUN_TIME_CONFIG.get().loadSysProps();
-		rootLogger.info(Markers.MSG, RUN_TIME_CONFIG.get().toString());
+		RunTimeConfig.getContext().loadSysProps();
+		rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
 		if(!properties.isEmpty()) {
 			rootLogger.info(Markers.MSG, "Overriding properties {}", properties);
-			RUN_TIME_CONFIG.get().overrideSystemProperties(properties);
+			RunTimeConfig.getContext().overrideSystemProperties(properties);
 		}
 		//
 		switch (runMode) {
@@ -139,7 +137,7 @@ public final class Main {
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
 					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
-						loadBuilderSvc = new BasicLoadBuilderSvc<>(RUN_TIME_CONFIG.get())
+						loadBuilderSvc = new BasicLoadBuilderSvc<>(RunTimeConfig.getContext())
 				) {
 					loadBuilderSvc.start();
 					loadBuilderSvc.join();
@@ -151,12 +149,12 @@ public final class Main {
 				break;
 			case RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-				new JettyRunner(RUN_TIME_CONFIG.get()).run();
+				new JettyRunner(RunTimeConfig.getContext()).run();
 				break;
 			case RUN_MODE_CINDERELLA:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
-					new Cinderella(RUN_TIME_CONFIG.get()).run();
+					new Cinderella(RunTimeConfig.getContext()).run();
 				} catch (final Exception e) {
 					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
 				}

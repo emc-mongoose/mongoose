@@ -42,7 +42,7 @@ public final class Scenario
 	}
 	//
 	public void run() {
-		final RunTimeConfig localRunTimeConfig = Main.RUN_TIME_CONFIG.get();
+		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 		// get scenario language
 		String scriptLangKey = null;
 		try {

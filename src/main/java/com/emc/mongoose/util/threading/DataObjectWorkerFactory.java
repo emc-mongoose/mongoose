@@ -6,7 +6,7 @@ import com.emc.mongoose.run.ThreadContextMap;
  * Created by olga on 12.11.14.
  */
 public final class DataObjectWorkerFactory
-extends WorkerFactory {
+	extends WorkerFactory {
 	//
 	public static final String
 		KEY_LOAD_NUM = "load.number",
@@ -36,7 +36,7 @@ extends WorkerFactory {
 	}
 	//
 	private static final class DataObjectWorker
-	extends Thread {
+		extends Thread {
 		//
 		private final int loadNumber;
 		private final String api;

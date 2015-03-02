@@ -1,8 +1,5 @@
 package com.emc.mongoose.util.persist;
 //
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -17,17 +14,17 @@ import static javax.persistence.GenerationType.IDENTITY;
 /**
  * Created by olga on 17.10.14.
  */
-@Entity(name = "Runs")
+@Entity(name = "Run")
 @Table(name = "run")
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public final class RunEntity
-implements Serializable {
+public class RunEntity
+	implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
 	private long id;
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "mode", nullable = false)
+
 	private ModeEntity mode;
 	@Column(name = "name")
 	private String name;
@@ -37,9 +34,9 @@ implements Serializable {
 	public RunEntity(){
 	}
 	public RunEntity(final ModeEntity mode, final  String name, final Date tstamp){
-		this.mode = mode;
-		this.name = name;
-		this.timestamp = tstamp;
+			this.mode = mode;
+			this.name = name;
+			this.timestamp = tstamp;
 	}
 	//
 	public final long getId() {

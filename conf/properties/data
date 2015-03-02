@@ -14,7 +14,7 @@ src.separator:	,
 #namespace:		s3
 
 #
-page.size:		8KB
+page.size:		4KB
 
 ring.seed:		7a42d9c483244167
 ring.size:		1MB

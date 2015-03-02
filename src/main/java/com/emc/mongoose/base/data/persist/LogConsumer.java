@@ -2,7 +2,7 @@ package com.emc.mongoose.base.data.persist;
 //
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 //
 import com.emc.mongoose.util.collections.InstancePool;
@@ -31,7 +31,15 @@ implements Consumer<T> {
 	public LogConsumer(final long maxCount, final int threadCount) {
 		super(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(), new WorkerFactory("dataItemLogWorker")
+			new LinkedBlockingQueue<Runnable>(
+				maxCount > 0 ?
+					Math.min(
+						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
+						RunTimeConfig.getContext().getRunRequestQueueSize())
+					:
+					RunTimeConfig.getContext().getRunRequestQueueSize()
+			),
+			new WorkerFactory("dataItemLogWorker")
 		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 	}
@@ -104,7 +112,7 @@ implements Consumer<T> {
 		}
 		try {
 			awaitTermination(
-				Main.RUN_TIME_CONFIG.get().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+				RunTimeConfig.getContext().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 			);
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted while waiting the remaining tasks to complete");

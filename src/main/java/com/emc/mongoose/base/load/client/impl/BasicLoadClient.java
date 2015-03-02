@@ -52,10 +52,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -113,7 +113,14 @@ implements LoadClient<T> {
 	) {
 		super(
 			remoteLoadMap.size(), remoteLoadMap.size(), 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(runTimeConfig.getRunRequestQueueSize())
+			new LinkedBlockingQueue<Runnable>(
+				maxCount > 0 ?
+					Math.min(
+						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
+						RunTimeConfig.getContext().getRunRequestQueueSize())
+					:
+					RunTimeConfig.getContext().getRunRequestQueueSize()
+			)
 		);
 		//
 		String t = null;
@@ -164,7 +171,7 @@ implements LoadClient<T> {
 		}
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			20 + remoteLoadMap.size(), new WorkerFactory(String.format("mgmtConnWorker<%s>", name))
+			20 + remoteLoadMap.size(), new WorkerFactory(String.format("%s-remoteMonitor", name))
 		) { // make the shutdown method synchronized
 			@Override
 			public final synchronized void shutdown() {
@@ -639,7 +646,7 @@ implements LoadClient<T> {
 				//
 				shutdown();
 			} else {
-				final String addr = loadSvcAddrs[(int) countSubmCalls.get() % loadSvcAddrs.length];
+				final String addr = loadSvcAddrs[(int) (countSubmCalls.get() % loadSvcAddrs.length)];
 				final RemoteSubmitTask<T> remoteSubmitTask = RemoteSubmitTask
 					.getInstanceFor(remoteLoadMap.get(addr), dataItem);
 				int rejectCount = 0;
@@ -729,6 +736,9 @@ implements LoadClient<T> {
 						);
 					}
 				}
+				//
+				metaInfoLog.close();
+				LOG.debug(Markers.MSG, "Metainfo logger closed");
 				LoadCloseHook.del(this);
 				LOG.debug(Markers.MSG, "Clear the servers map");
 				remoteLoadMap.clear();
@@ -764,7 +774,7 @@ implements LoadClient<T> {
 	public final void handleResult(final AsyncIOTask<T> task, final AsyncIOTask.Status status)
 	throws RemoteException {
 		remoteLoadMap
-			.get(loadSvcAddrs[(int) getTaskCount() % loadSvcAddrs.length])
+			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
 			.handleResult(task, status);
 	}
 	//
@@ -772,7 +782,7 @@ implements LoadClient<T> {
 	public final Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> request)
 	throws RemoteException {
 		return remoteLoadMap
-			.get(loadSvcAddrs[(int) getTaskCount() % loadSvcAddrs.length])
+			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
 			.submit(request);
 	}
 	//

@@ -1,7 +1,6 @@
 package com.emc.mongoose.base.data.impl;
 //
 import com.emc.mongoose.base.data.DataItem;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
@@ -54,7 +53,7 @@ implements DataItem {
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
 	//
-	public final static int MAX_PAGE_SIZE = (int) Main.RUN_TIME_CONFIG.get().getDataPageSize();
+	public final static int MAX_PAGE_SIZE = (int) RunTimeConfig.getContext().getDataPageSize();
 	protected long offset = 0;
 	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -109,7 +108,7 @@ implements DataItem {
 	throws IOException {
 		pos = 0;
 		offset = offset0 + offset1; // temporary offset
-		if(skip(offset % count)==offset % count) {
+		if(skip(offset % count) == offset % count) {
 			offset = offset0;
 		} else {
 			throw new IOException(String.format(FMT_MSG_FAIL_CHANGE_OFFSET, offset));
@@ -135,7 +134,7 @@ implements DataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final int available() {
-		return (int) size;
+		return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
 	}
 	//
 	@Override
@@ -158,7 +157,7 @@ implements DataItem {
 	public final int read(final byte buff[], final int offset, final int length) {
 		int doneByteCount = super.read(buff, offset, length);
 		if(doneByteCount < length) {
-			if(doneByteCount==-1) {
+			if(doneByteCount == -1) {
 				doneByteCount = 0;
 			}
 			pos = 0;
@@ -254,8 +253,8 @@ implements DataItem {
 		boolean contentEquals = true;
 		final int
 			pageSize = (int) (rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE),
-			countPages = (int) rangeLength / pageSize,
-			countTailBytes = (int) rangeLength % pageSize;
+			countPages = (int) (rangeLength / pageSize),
+			countTailBytes = (int) (rangeLength % pageSize);
 		final byte
 			buff1[] = new byte[pageSize],
 			buff2[] = new byte[pageSize];

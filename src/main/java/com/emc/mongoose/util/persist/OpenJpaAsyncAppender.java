@@ -1,5 +1,5 @@
 package com.emc.mongoose.util.persist;
-
+//
 import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.Filter;
@@ -24,15 +24,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
+//
 /**
  * Created by olga on 09.12.14.
  */
-@Plugin(name = "HibernateAsync", category = "Core", elementType = "appender", printObject = true)
-public class HibernateAsyncAppender
+@Plugin(name = "OpenJpaAsync", category = "Core", elementType = "appender", printObject = true)
+public final class OpenJpaAsyncAppender
 extends AbstractAppender {
 
 	private static final String POISON = "POISON";
@@ -58,10 +57,10 @@ extends AbstractAppender {
 	private AppenderControl errorAppender;
 	private static ThreadLocal<Boolean> isAppenderThread = new ThreadLocal<Boolean>();
 
-	private HibernateAsyncAppender(final String name, final Filter filter, final AppenderRef[] appenderRefs,
-						  final String errorRef, final int queueSize, final boolean blocking,
-						  final boolean ignoreExceptions, final Configuration config,
-						  final boolean includeLocation, final int threadsForQueue) {
+	private OpenJpaAsyncAppender(final String name, final Filter filter, final AppenderRef[] appenderRefs,
+								   final String errorRef, final int queueSize, final boolean blocking,
+								   final boolean ignoreExceptions, final Configuration config,
+								   final boolean includeLocation, final int threadsForQueue) {
 		super(name, filter, null, ignoreExceptions);
 		this.queue = new ArrayBlockingQueue<Serializable>(queueSize);
 		//
@@ -75,13 +74,13 @@ extends AbstractAppender {
 	}
 	//
 	@Override
-	public void start() {
+	public final void start() {
 		final Map<String, Appender> map = config.getAppenders();
 		final List<AppenderControl> appenders = new ArrayList<AppenderControl>();
 		for (final AppenderRef appenderRef : appenderRefs) {
 			if (map.containsKey(appenderRef.getRef())) {
 				appenders.add(new AppenderControl(map.get(appenderRef.getRef()), appenderRef.getLevel(),
-						appenderRef.getFilter()));
+					appenderRef.getFilter()));
 			} else {
 				LOGGER.error("No appender named {} was configured", appenderRef);
 			}
@@ -102,7 +101,7 @@ extends AbstractAppender {
 	}
 	//
 	@Override
-	public void stop() {
+	public final void stop() {
 		super.stop();
 		//Poison Pill Shutdown
 		queue.offer(POISON);
@@ -114,7 +113,6 @@ extends AbstractAppender {
 			try {
 				System.out.println(String.format("There are %d tasks from hibernate apender queue",
 					queue.size()));
-				//add comment
 				executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
 			} catch (final InterruptedException e) {
 				LOGGER.error("Interrupted waiting for submit executor to finish");
@@ -123,7 +121,7 @@ extends AbstractAppender {
 	}
 	//
 	@Override
-	public void append(LogEvent logEvent) {
+	public final void append(LogEvent logEvent) {
 		if(ENABLED_FLAG) {
 			if (!isStarted()) {
 				throw new IllegalStateException("AsyncAppender " + getName() + " is not active");
@@ -147,7 +145,7 @@ extends AbstractAppender {
 						appendSuccessful = true;
 					} catch (final InterruptedException e) {
 						LOGGER.warn("Interrupted while waiting for a free slot in the AsyncAppender LogEvent-queue {}",
-								getName());
+							getName());
 					}
 				}
 			} else {
@@ -176,18 +174,18 @@ extends AbstractAppender {
 	 * @return The AsyncAppender.
 	 */
 	@PluginFactory
-	public static HibernateAsyncAppender createAppender(
+	public static OpenJpaAsyncAppender createAppender(
 		@PluginElement("AppenderRef") final AppenderRef[] appenderRefs,
-    	@PluginAttribute("errorRef") @PluginAliases("error-ref") final String errorRef,
+		@PluginAttribute("errorRef") @PluginAliases("error-ref") final String errorRef,
 		@PluginAttribute(value = "enabled", defaultBoolean = false) final Boolean enabled,
-    	@PluginAttribute(value = "blocking", defaultBoolean = true) final boolean blocking,
-    	@PluginAttribute(value = "bufferSize", defaultInt = DEFAULT_QUEUE_SIZE) final int size,
-    	@PluginAttribute(value = "threadsForQueue", defaultInt = DEFAULT_THREADS_FOR_QUEUE) final int threadsForQueue,
-    	@PluginAttribute("name") final String name,
-    	@PluginAttribute(value = "includeLocation", defaultBoolean = false) final boolean includeLocation,
-    	@PluginElement("Filter") final Filter filter,
-    	@PluginConfiguration final Configuration config,
-    	@PluginAttribute(value = "ignoreExceptions", defaultBoolean = true) final boolean ignoreExceptions)
+		@PluginAttribute(value = "blocking", defaultBoolean = true) final boolean blocking,
+		@PluginAttribute(value = "bufferSize", defaultInt = DEFAULT_QUEUE_SIZE) final int size,
+		@PluginAttribute(value = "threadsForQueue", defaultInt = DEFAULT_THREADS_FOR_QUEUE) final int threadsForQueue,
+		@PluginAttribute("name") final String name,
+		@PluginAttribute(value = "includeLocation", defaultBoolean = false) final boolean includeLocation,
+		@PluginElement("Filter") final Filter filter,
+		@PluginConfiguration final Configuration config,
+		@PluginAttribute(value = "ignoreExceptions", defaultBoolean = true) final boolean ignoreExceptions)
 	{
 		ENABLED_FLAG = enabled;
 		if (name == null) {
@@ -197,7 +195,7 @@ extends AbstractAppender {
 		if (appenderRefs == null) {
 			LOGGER.error("No appender references provided to AsyncAppender {}", name);
 		}
-		return new HibernateAsyncAppender(name, filter, appenderRefs, errorRef,
+		return new OpenJpaAsyncAppender(name, filter, appenderRefs, errorRef,
 			size, blocking, ignoreExceptions, config, includeLocation, threadsForQueue);
 	}
 	////////////////////
@@ -215,7 +213,7 @@ extends AbstractAppender {
 		}
 
 		@Override
-		public void run() {
+		public final void run() {
 			isAppenderThread.set(Boolean.TRUE); // LOG4J2-485
 			while (!shutdown) {
 				Serializable s;
@@ -267,7 +265,7 @@ extends AbstractAppender {
 				}
 			}
 			LOGGER.trace("AsyncAppender.AsyncThread stopped. Queue has {} events remaining. " +
-				"Processed {} and ignored {} events since shutdown started.",
+					"Processed {} and ignored {} events since shutdown started.",
 				queue.size(), count, ignored);
 		}
 
@@ -280,7 +278,7 @@ extends AbstractAppender {
 		 * @param event the event to forward to the registered appenders
 		 * @return {@code true} if at least one appender call succeeded, {@code false} otherwise
 		 */
-		boolean callAppenders(final Log4jLogEvent event) {
+		private boolean callAppenders(final Log4jLogEvent event) {
 			boolean success = false;
 			for (final AppenderControl control : appenders) {
 				try {

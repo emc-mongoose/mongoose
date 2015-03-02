@@ -59,7 +59,7 @@ implements WSRequestConfig<T> {
 	protected boolean fsAccess = false;
 	//
 	public static WSRequestConfigBase getInstance() {
-		return newInstanceFor(Main.RUN_TIME_CONFIG.get().getStorageApi());
+		return newInstanceFor(RunTimeConfig.getContext().getStorageApi());
 	}
 	//
 	private final static String NAME_CLS_IMPL = "RequestConfig";
@@ -480,18 +480,12 @@ implements WSRequestConfig<T> {
 		} else { // poison or special request (e.g. bucket-related)? - consume quietly
 			playStreamQuietly(contentStream);
 		}
-		//
-		try {
-			ioCtl.shutdown();
-		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Input channel closing failure");
-		}
 		return ok;
 	}
 	//
 	@SuppressWarnings("StatementWithEmptyBody")
 	public static void playStreamQuietly(final InputStream contentStream) {
-		final byte buff[] = new byte[(int) Main.RUN_TIME_CONFIG.get().getDataPageSize()];
+		final byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataPageSize()];
 		try {
 			while(contentStream.read(buff) != -1);
 		} catch(final IOException e) {

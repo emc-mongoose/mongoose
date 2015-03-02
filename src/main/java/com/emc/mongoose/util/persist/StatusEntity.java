@@ -1,8 +1,5 @@
 package com.emc.mongoose.util.persist;
 //
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -11,11 +8,11 @@ import java.io.Serializable;
 /**
  * Created by olga on 28.10.14.
  */
-@Entity(name="StatusEntity")
+@Entity(name="Status")
 @Table(name = "status")
-@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
-public final class StatusEntity
-implements Serializable{
+//not final because catch: "OpenJPA cannot dynamically subclass final types."
+public class StatusEntity
+	implements Serializable{
 	@Id
 	@Column(name = "code")
 	private int code;
@@ -42,3 +39,4 @@ implements Serializable{
 		this.name = name;
 	}
 }
+

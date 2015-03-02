@@ -2,7 +2,6 @@ package com.emc.mongoose.base.data.impl;
 //
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.load.LoadExecutor;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
@@ -17,7 +16,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.List;
 /**
  Created by kurila on 23.07.14.
  A uniform data source for producing uniform data items.
@@ -34,18 +32,20 @@ implements DataSource<T> {
 		MSG_FMT_NEW_LAYER = "Generate new byte layer #%d, previous seed: \"%x\", next one: \"%x\"";
 	//
 	private long seed;
-	private List<ByteBuffer> byteLayers = new ArrayList<>(1);
+	private int size;
+	private final ArrayList<ByteBuffer> byteLayers = new ArrayList<>(1);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformDataSource()
 	throws NumberFormatException {
 		this(
-			Long.parseLong(Main.RUN_TIME_CONFIG.get().getString("data.ring.seed"), 0x10),
-			(int) Main.RUN_TIME_CONFIG.get().getSizeBytes("data.ring.size")
+			Long.parseLong(RunTimeConfig.getContext().getString("data.ring.seed"), 0x10),
+			(int) RunTimeConfig.getContext().getSizeBytes("data.ring.size")
 		);
 	}
 	//
 	protected UniformDataSource(final long seed, final int size) {
 		this.seed = seed;
+		this.size = size;
 		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.add(zeroByteLayer);
@@ -111,22 +111,41 @@ implements DataSource<T> {
 	//
 	@Override
 	public final void readExternal(final ObjectInput in)
-		throws IOException, ClassNotFoundException {
-		final ByteBuffer ringZeroLayer = ByteBuffer.allocate(in.readInt());
-		seed = in.readLong();
-		generateData(ringZeroLayer, seed);
-		byteLayers.clear();
-		byteLayers.add(ringZeroLayer);
-		DEFAULT = this;
+	throws IOException, ClassNotFoundException {
+		DEFAULT.setSeed(in.readInt());
+		DEFAULT.setSeed(in.readLong());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final int getSize() {
-		return byteLayers.get(0).array().length;
+		return size;
 	}
 	//
+	@Override
+	public final void setSize(final int size)
+	throws IllegalArgumentException {
+		if(size < 1) {
+			throw new IllegalArgumentException(String.format("Illegal ring size: %d", size));
+		}
+		this.size = size;
+		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
+		generateData(zeroByteLayer, seed);
+		byteLayers.clear();
+		byteLayers.add(zeroByteLayer);
+	}
+	//
+	@Override
 	public final long getSeed() {
 		return seed;
+	}
+	//
+	@Override
+	public final void setSeed(final long seed) {
+		this.seed = seed;
+		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
+		generateData(zeroByteLayer, seed);
+		byteLayers.clear();
+		byteLayers.add(zeroByteLayer);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
@@ -142,7 +161,7 @@ implements DataSource<T> {
 	public void fromString(final String metaInfo)
 		throws IllegalArgumentException, IOException {
 		final String values[] = metaInfo.split(RunTimeConfig.LIST_SEP);
-		if(values.length==2) {
+		if(values.length == 2) {
 			DEFAULT = new UniformDataSource(
 				Long.parseLong(values[0], 0x10), Integer.parseInt(values[1], 0x10)
 			);

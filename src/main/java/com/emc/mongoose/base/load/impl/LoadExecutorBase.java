@@ -24,7 +24,6 @@ import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
-import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
 import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.commons.lang.StringUtils;
 //
@@ -58,7 +57,7 @@ implements LoadExecutor<T> {
 	protected final String storageNodeAddrs[];
 	//
 	protected final DataSource<T> dataSrc;
-	protected volatile RunTimeConfig runTimeConfig = Main.RUN_TIME_CONFIG.get();
+	protected volatile RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
 	protected final RequestConfig<T> reqConfig;
 	protected final AsyncIOTask.Type loadType;
 	//
@@ -82,7 +81,14 @@ implements LoadExecutor<T> {
 	) {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(runTimeConfig.getRunRequestQueueSize())//,
+			new LinkedBlockingQueue<Runnable>(
+				maxCount > 0 ?
+					Math.min(
+						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
+						RunTimeConfig.getContext().getRunRequestQueueSize())
+					:
+					RunTimeConfig.getContext().getRunRequestQueueSize()
+			)//,
 			//new WorkerFactory("submitWorker")
 		);
 		//
@@ -115,7 +121,7 @@ implements LoadExecutor<T> {
 		final String name = Integer.toString(loadNum) + '-' +
 			StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
 			StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
-			(maxCount > 0? Long.toString(maxCount) : "") + '-' +
+			(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
 			Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount);
 		setThreadFactory(
 			//new DataObjectWorkerFactory(loadNum, reqConfig.getAPI(), loadType, name)
@@ -362,7 +368,7 @@ implements LoadExecutor<T> {
 			} else {
 				// round-robin node selection
 				final String tgtNodeAddr = storageNodeAddrs[
-					(int) countSubmCalls.getAndIncrement() % storageNodeCount
+					(int) (countSubmCalls.getAndIncrement() % storageNodeCount)
 				];
 				// prepare the I/O task instance (make the link between the data item and load type)
 				final AsyncIOTask<T> ioTask = reqConfig.getRequestFor(dataItem, tgtNodeAddr);

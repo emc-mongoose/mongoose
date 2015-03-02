@@ -5,14 +5,16 @@
              http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
 	<persistence-unit name="openjpa">
 		<provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
-		<class>com.emc.mongoose.util.persist.Mode</class>
+		<class>com.emc.mongoose.util.persist.StatusEntity</class>
+		<class>com.emc.mongoose.util.persist.ModeEntity</class>
+
 		<properties>
 			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
 			<property name="openjpa.ConnectionURL" value="jdbc:postgresql://localhost:5432/mongoose"/>
 			<property name="openjpa.ConnectionDriverName" value="org.postgresql.Driver"/>
 			<property name="openjpa.ConnectionUserName" value="mongoose"/>
 			<property name="openjpa.ConnectionPassword" value="mongoose"/>
-			<property name="openjpa.Log" value="DefaultLevel=WARN, Tool=INFO"/>
+			<property name="openjpa.Log" value="DefaultLevel=TRACE, Tool=INFO"/>
 		</properties>
 
 	</persistence-unit>
