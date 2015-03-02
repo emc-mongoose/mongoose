@@ -463,10 +463,8 @@ implements WSIOTask<T> {
 					}
 				} while(nextLine != null);
 			} else {
-				if(Type.READ.equals(wsReqConf.getLoadType())) {
-					if(!wsReqConf.consumeContent(contentStream, ioCtl, dataItem)) {
-						status = Status.FAIL_CORRUPT;
-					}
+				if(!wsReqConf.consumeContent(contentStream, ioCtl, dataItem)) { // content corruption
+					status = Status.FAIL_CORRUPT;
 				}
 			}
 		} catch(final InterruptedException e) {

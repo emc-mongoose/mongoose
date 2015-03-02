@@ -480,12 +480,6 @@ implements WSRequestConfig<T> {
 		} else { // poison or special request (e.g. bucket-related)? - consume quietly
 			playStreamQuietly(contentStream);
 		}
-		/*
-		try {
-			ioCtl.shutdown(); // suspected to be the cause of closing connections
-		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Input channel closing failure");
-		}*/
 		return ok;
 	}
 	//
