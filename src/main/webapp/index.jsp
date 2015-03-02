@@ -811,19 +811,12 @@
 							</c:if>
 						</ul>
 						<div class="tab-content">
-							<c:if test="${empty sessionScope.stopped[mode]}">
-								<div class="container">
-									<div class="row">
-										<div class="col-xs-offset-4 col-xs-4">
-											<button type="button" class="btn btn-danger stop" value="${mode}">Stop</button>
-										</div>
-									</div>
-								</div>
-							</c:if>
 							<div class="tab-pane active" id="${correctMode}-logs">
-								<button type="button" class="btn btn-danger stop" value="${mode}">
-									Stop
-								</button>
+								<c:if test="${empty sessionScope.stopped[mode]}">
+									<button type="button" class="btn btn-danger stop" value="${mode}">
+										Stop
+									</button>
+								</c:if>
 								<ul id="log-pills" class="nav nav-pills">
 									<li class="active"><a href="#${correctMode}-messages-csv" data-toggle="pill">messages.csv</a></li>
 									<li><a href="#${correctMode}-errors-log" data-toggle="pill">errors.log</a></li>

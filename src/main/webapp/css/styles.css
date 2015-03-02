@@ -225,6 +225,10 @@ text.shadow {
 	stroke-width: 0;
 }
 
+.dot {
+	stroke-width: 1.5px;
+}
+
 #scenario-tab,
 #log-pills,
 #chart-pills {

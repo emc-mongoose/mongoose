@@ -1601,6 +1601,7 @@ function charts(chartsArray) {
 						.append("g")
 						.attr("class", "level")
 						.attr("id", function(c, i) { return path.replace("#", "") + "-" + d.loadType + "-" + c.size + "-" + i; })
+						.attr("fill", function(c, i) { return color(loadRampupSizesArray[i]); })
 						.attr("stroke", function(c, i) { return color(loadRampupSizesArray[i]); })
 						.selectAll("path")
 						.data(function(c) { return c.charts; }).enter()
@@ -1704,6 +1705,20 @@ function charts(chartsArray) {
 										.selectAll("path").data(d.charts)
 										.attr("d", function(v) { return line(v.values); })
 										.attr("fill", "none");
+									//
+									var dots = loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
+										.data(d.charts)
+										.selectAll(".dot").data(function(v) { return v.values; })
+										.enter().append("circle")
+										.attr("class", "dot")
+										.attr("cx", function(coord) { return x(coord.x); })
+										.attr("cy", function(coord) { return y(coord.y); })
+										.attr("r", 2)
+									//  Update dots
+									loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
+										.selectAll(".dot").data(function(v) { return v.values; })
+										.attr("cx", function(coord) { return x(coord.x); })
+										.attr("cy", function(coord) { return y(coord.y); });
 								}
 							});
 						}
