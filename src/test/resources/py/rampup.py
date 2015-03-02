@@ -1,5 +1,8 @@
 from __future__ import print_function, absolute_import, with_statement
 #
+from loadbuilder import loadbuilder_init
+loadbuilder_init()
+#
 import chain
 #
 from java.lang import InterruptedException, Long, Short, Throwable, NumberFormatException
