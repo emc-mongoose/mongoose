@@ -88,7 +88,7 @@
 									<div class="save-buttons">
 										<button class="btn btn-default" id="save-config" type="button">Save</button>
 										<br/>
-										<a href="/save" id="save-file" class="btn btn-default">Save in file</a>
+										<a href="/save" id="save-file" class="btn btn-default">Save As...</a>
 									</div>
 									<br/>
 									<div id="file-visibility">
