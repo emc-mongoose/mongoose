@@ -137,12 +137,12 @@ $(document).ready(function() {
 		$('select[data-pointer="' + $(this).attr("id") + '"] option:contains(' + $(this).val() + ')')
 			.attr('selected', 'selected').change();
 	});
-	$("#data-size").on("change", function() {
+	$("#backup-data\\.size").on("change", function() {
 		$("#data\\.size\\.min").val($(this).val());
 		$("#data\\.size\\.max").val($(this).val());
 	});
 	//
-	$("#load-threads").on("change", function() {
+	$("#backup-load\\.threads").on("change", function() {
 		var currentValue = this.value;
 		var keys2Override = [
 			"#backup-load\\.append\\.threads",

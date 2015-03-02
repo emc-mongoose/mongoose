@@ -734,12 +734,11 @@
 												<legend>Data</legend>
 
 												<div class="form-group">
-													<label for="load-threads" class="col-sm-3 control-label">
+													<label for="backup-load.threads" class="col-sm-3 control-label">
 														Load threads
 													</label>
 													<div class="col-sm-9">
-														<input type="text" id="load-threads" class="form-control"
-														       value="${rt:getString(runTimeConfig, 'load.threads')}">
+														<input type="text" id="backup-load.threads" data-pointer="load.threads" class="form-control">
 													</div>
 												</div>
 
@@ -755,12 +754,11 @@
 												</div>
 
 												<div class="form-group">
-													<label for="data-size" class="col-sm-3 control-label">
+													<label for="backup-data.size" class="col-sm-3 control-label">
 														Items size
 													</label>
 													<div class="col-sm-9">
-														<input type="text" id="data-size" class="form-control"
-												            value="${rt:getString(runTimeConfig, 'data.size')}">
+														<input type="text" id="backup-data.size" data-pointer="data.size" class="form-control">
 													</div>
 												</div>
 
@@ -790,7 +788,8 @@
 								<div id="extended">
 									<form class="form-horizontal" id="main-form" role="form">
 										<input type="hidden" name="run.mode" id="run-mode" value="standalone">
-
+										<input type="hidden" id="data.size" name="data.size">
+										<input type="hidden" id="load.threads" name="load.threads">
 										<!-- Input fields with labels from JS -->
 										<div id="configuration-content">
 
@@ -812,12 +811,14 @@
 						</ul>
 						<div class="tab-content">
 							<div class="tab-pane active" id="${correctMode}-logs">
-								<c:if test="${empty sessionScope.stopped[mode]}">
-									<button type="button" class="btn btn-danger stop" value="${mode}">
-										Stop
-									</button>
-								</c:if>
 								<ul id="log-pills" class="nav nav-pills">
+									<li>
+										<c:if test="${empty sessionScope.stopped[mode]}">
+											<button type="button" class="btn btn-danger stop" value="${mode}">
+												Stop
+											</button>
+										</c:if>
+									</li>
 									<li class="active"><a href="#${correctMode}-messages-csv" data-toggle="pill">messages.csv</a></li>
 									<li><a href="#${correctMode}-errors-log" data-toggle="pill">errors.log</a></li>
 									<li><a href="#${correctMode}-perf-avg-csv" data-toggle="pill">perf.avg.csv</a></li>
