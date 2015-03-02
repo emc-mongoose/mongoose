@@ -402,120 +402,24 @@
 					}
 				},
 
-				// Mongoose web-related things
-				{
-					"name": "com.emc.mongoose.web",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				}, {
-					"name": "com.emc.mongoose.web.api.impl",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				}, {
-					"name": "com.emc.mongoose.web.api.impl.provider",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				}, {
-					"name": "com.emc.mongoose.web.api.impl.provider.atmos",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				}, {
-					"name": "com.emc.mongoose.web.api.impl.provider.s3",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				}, {
-					"name": "com.emc.mongoose.web.api.impl.provider.swift",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				}, {
-					"name": "com.emc.mongoose.web.data.impl",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				}, {
-					"name": "com.emc.mongoose.web.load.impl",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				}, {
-					"name": "com.emc.mongoose.web.load.impl.tasks",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-					  "ref": "async"
-					}
-				}, {
-					"name": "com.emc.mongoose.web.load.client.impl",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				}, {
-					"name": "com.emc.mongoose.web.load.server.impl",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				}, {
-					"name": "com.emc.mongoose.web.load.server.impl.type",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				},
-
-				// WebStorage mock
-				{
-					"name": "com.emc.mongoose.web.storagemock",
-					"level": "debug",
-					"additivity": "false",
-					"AppenderRef": {
-						"ref": "async"
-					}
-				},
 
 				// Mongoose web UI
 				{
-					"name": "com.emc.mongoose.web.ui",
+					"name": "com.emc.mongoose.webui",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.web.ui.expressions",
+					"name": "com.emc.mongoose.webui.expressions",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
-					"name": "com.emc.mongoose.web.ui.websockets",
+					"name": "com.emc.mongoose.webui.websockets",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {

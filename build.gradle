@@ -25,6 +25,9 @@ loadProperties confDirName + '/properties/run'
 version = ext.version
 
 configurations {
+	//all {
+	//	exclude module: 'ant'
+	//}
 	compileRMI {
 		transitive = true
 	}
@@ -55,11 +58,11 @@ dependencies {
 		//
 		'org.apache.httpcomponents:httpcore-nio:4.4',
 		//
-        'org.eclipse.jetty:jetty-server:9.3.0.M1',
+		'org.eclipse.jetty:jetty-server:9.3.0.M1',
 		'org.eclipse.jetty:jetty-webapp:9.3.0.M1',
 		//
 		'javax.servlet:javax.servlet-api:3.1.0',
-        'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
+		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
 		'org.eclipse.jetty.websocket:websocket-server:9.3.0.M1',
 		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
 		//
@@ -102,8 +105,8 @@ dependencies {
 task rmic(dependsOn: compileJava) << {
 	String[] listClsRemote = [
 		'com.emc.mongoose.base.data.persist.TmpFileItemBuffer',
-		'com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc',
-		'com.emc.mongoose.web.load.server.impl.BasicWSLoadSvc'
+		'com.emc.mongoose.object.load.server.impl.BasicWSLoadBuilderSvc',
+		'com.emc.mongoose.object.load.server.impl.BasicWSLoadSvc'
 	]
 	String clsPath = """${sourceSets.main.output.classesDir}${System.properties.'path.separator'}${configurations.compileRMI.asPath}"""
 	for(cls in listClsRemote) {
