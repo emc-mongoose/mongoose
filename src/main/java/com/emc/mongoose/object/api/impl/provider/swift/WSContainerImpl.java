@@ -149,7 +149,7 @@ implements Container<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					if(statusCode==HttpStatus.SC_OK) {
+					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(Markers.MSG, "Container \"{}\" deleted", name);
 					} else {
 						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());

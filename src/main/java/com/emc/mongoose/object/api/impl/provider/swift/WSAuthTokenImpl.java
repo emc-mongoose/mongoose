@@ -11,6 +11,7 @@ import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -55,7 +56,7 @@ implements AuthToken<T> {
 	throws IllegalStateException {
 		try {
 			final HttpResponse httpResp = execute(
-				(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.PUT
+				(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.GET
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -64,11 +65,12 @@ implements AuthToken<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					if(statusCode == HttpStatus.SC_OK) {
+					if(statusCode >= 200 && statusCode < 300) {
 						if(httpResp.containsHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN)) {
 							value = httpResp
 								.getFirstHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN)
 								.getValue();
+							LOG.info(Markers.MSG, "Created auth token \"{}\"", value);
 						} else {
 							LOG.warn(Markers.ERR, "Server hasn't returned auth token header");
 						}
@@ -112,6 +114,7 @@ implements AuthToken<T> {
 		//
 		httpReq.setHeader(WSRequestConfigImpl.KEY_X_AUTH_USER, reqConf.getUserName());
 		httpReq.setHeader(WSRequestConfigImpl.KEY_X_AUTH_KEY, reqConf.getSecret());
+		httpReq.setHeader(HttpHeaders.ACCEPT, "*/*");
 		//
 		return wsClient.execute(httpReq);
 	}

@@ -178,7 +178,7 @@ implements WSRequestConfig<T> {
 		return this;
 	}
 	//
-	public final String getNameSpace() {
+	public String getNameSpace() {
 		return sharedHeadersMap.get(KEY_EMC_NS);
 	}
 	public WSRequestConfigBase<T> setNameSpace(final String nameSpace) {

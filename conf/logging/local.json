@@ -245,7 +245,7 @@
 		},
 		"loggers": {
 			"root": {
-				"level": "debug",
+				"level": "trace",
 				"additivity": "false",
 				"AppenderRef": {
 					"ref": "async"
@@ -255,49 +255,49 @@
 				// Mongoose basic load generation functionality
 				{
 					"name": "com.emc.mongoose.base.api.impl",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.base.data.impl",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.base.data.persist",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.base.load.impl",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.base.load.impl.tasks",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.base.load.client.impl",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.base.load.client.impl.tasks",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
@@ -307,14 +307,14 @@
 				// Mongoose data object-related functionality
 				{
 					"name": "com.emc.mongoose.object.data.impl",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.object.load.impl",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
@@ -324,14 +324,14 @@
 				// Mongoose runners and scenarios
 				{
 					"name": "com.emc.mongoose.run",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "sun.reflect.PyReflectedFunction",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": { "ref": "async" }
 				},
@@ -339,63 +339,63 @@
 				// Mongoose utils
 				{
 					"name": "com.emc.mongoose.util",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.util.collections",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 					  "ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.util.conf",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.util.io",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.util.io.http",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.util.logging",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.util.persist",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.util.remote",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.util.threading",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
@@ -406,21 +406,21 @@
 				// Mongoose web UI
 				{
 					"name": "com.emc.mongoose.webui",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.webui.expressions",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"
 					}
 				}, {
 					"name": "com.emc.mongoose.webui.websockets",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"

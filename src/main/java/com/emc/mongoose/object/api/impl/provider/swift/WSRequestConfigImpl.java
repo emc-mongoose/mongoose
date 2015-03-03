@@ -8,8 +8,10 @@ import com.emc.mongoose.object.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
+import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 //
+import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -39,7 +41,7 @@ extends WSRequestConfigBase<T> {
 		FMT_URI_CONTAINER_PATH = "/%s/%s/%s",
 		FMT_URI_OBJECT_PATH = "%s/%s";
 	//
-	private String uriSvcBasePath = null, uriSvcBaseContainerPath = null;
+	private String nameSpace = null, uriSvcBasePath = null, uriSvcBaseContainerPath = null;
 	private WSAuthTokenImpl<T> authToken = null;
 	private WSContainerImpl<T> container = null;
 	//
@@ -127,8 +129,13 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
+	public final String getNameSpace() {
+		return nameSpace;
+	}
+	//
+	@Override
 	public final WSRequestConfigImpl<T> setNameSpace(final String nameSpace) {
-		super.setNameSpace(nameSpace);
+		this.nameSpace = nameSpace;
 		refreshContainerPath();
 		return this;
 	}
@@ -208,20 +215,25 @@ extends WSRequestConfigBase<T> {
 		);
 	}
 	//
+	private Header headerAuthToken = null;
+	//
 	@Override
 	protected final void applyAuthHeader(final MutableWSRequest httpRequest) {
-		// TODO swift specific things
+		final String authTokenValue = authToken == null ? null : authToken.getValue();
+		if(authTokenValue != null) {
+			if(!httpRequest.containsHeader(KEY_X_AUTH_TOKEN)) {
+				if(headerAuthToken == null || headerAuthToken.getValue() != authTokenValue) {
+					headerAuthToken = new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue);
+				}
+				httpRequest.setHeader(headerAuthToken);
+			}
+		}
 	}
 	//
 	@Override
 	public final String getCanonical(final MutableWSRequest httpRequest) {
 		// TODO swift specific things
 		return null;
-	}
-	//
-	@Override
-	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
-		// TODO swift specific things
 	}
 	//
 	@Override

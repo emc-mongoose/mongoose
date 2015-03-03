@@ -67,7 +67,7 @@ implements Bucket<T> {
 	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	private HttpResponse execute(
+	HttpResponse execute(
 		final WSLoadExecutor<T> wsClient, final WSIOTask.HTTPMethod method
 	) throws IOException {
 		//

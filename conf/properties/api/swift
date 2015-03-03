@@ -1,3 +1,8 @@
+# note that secret key for swift should be created manually:
+# ./security login root <PASSWORD>
+# ...
+# ./password.py create wuser1@SANITY.LOCAL <SAME_SECRET_KEY> s3 --groups=admin
+# ...
 port:				9024
 service.basepath:	v1
 auth.token:

@@ -87,7 +87,7 @@ implements WSLoadExecutor<T> {
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
 			//.add(new RequestExpectContinue(true))
-			.add(new RequestContent(true))
+			.add(new RequestContent(false))
 			.build();
 		client = new HttpAsyncRequester(httpProcessor);
 		//
