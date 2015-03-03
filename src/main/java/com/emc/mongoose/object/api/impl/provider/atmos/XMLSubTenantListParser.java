@@ -1,4 +1,4 @@
-package com.emc.mongoose.object.api.provider.atmos;
+package com.emc.mongoose.object.api.impl.provider.atmos;
 //
 import com.emc.mongoose.base.load.Consumer;
 import com.emc.mongoose.util.logging.Markers;

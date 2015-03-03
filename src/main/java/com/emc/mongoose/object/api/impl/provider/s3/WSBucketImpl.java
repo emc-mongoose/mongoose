@@ -1,4 +1,4 @@
-package com.emc.mongoose.object.api.provider.s3;
+package com.emc.mongoose.object.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
@@ -7,8 +7,8 @@ import com.emc.mongoose.object.api.MutableWSRequest;
 import com.emc.mongoose.object.api.WSIOTask;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.logging.Markers;
-//
 import com.emc.mongoose.object.load.WSLoadExecutor;
+//
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.http.HttpEntity;
@@ -32,7 +32,7 @@ import java.util.Date;
  Created by kurila on 02.10.14.
  */
 public class WSBucketImpl<T extends WSObject>
-implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
+implements Bucket<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String VERSIONING_ENTITY_CONTENT =
@@ -41,8 +41,8 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 		"	<MfaDelete>Disabled</MfaDelete>\n" +
 		"</VersioningConfiguration>";
 	//
-	final WSRequestConfigImpl<T> reqConf;
-	final String name;
+	private final WSRequestConfigImpl<T> reqConf;
+	private final String name;
 	//
 	public WSBucketImpl(final WSRequestConfigImpl<T> reqConf, final String name) {
 		this.reqConf = reqConf;
@@ -67,8 +67,9 @@ implements com.emc.mongoose.object.api.provider.s3.Bucket<T> {
 	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	final HttpResponse execute(final WSLoadExecutor<T> wsClient, final WSIOTask.HTTPMethod method)
-	throws IOException {
+	private HttpResponse execute(
+		final WSLoadExecutor<T> wsClient, final WSIOTask.HTTPMethod method
+	) throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);

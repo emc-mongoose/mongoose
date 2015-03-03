@@ -1,4 +1,4 @@
-package com.emc.mongoose.object.api.provider.s3;
+package com.emc.mongoose.object.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;

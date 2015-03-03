@@ -1,9 +1,8 @@
-package com.emc.mongoose.object.api.provider.atmos;
+package com.emc.mongoose.object.api.impl.provider.atmos;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.object.data.DataObject;
 //
-import java.util.List;
 /**
  Created by kurila on 02.10.14.
  */

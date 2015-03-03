@@ -4,7 +4,7 @@ from loadbuilder import init as loadBuilderInit
 from chain import build as chainBuild
 from chain import execute as chainExecute
 #
-from java.lang import InterruptedException, Long, Short, Throwable, NumberFormatException
+from java.lang import InterruptedException, Long, Short, Thread, Throwable, NumberFormatException
 #
 from org.apache.logging.log4j import Level, LogManager
 #
@@ -35,10 +35,11 @@ def execute(loadBuilder, rampupParams=((),(),())):
 		try:
 			dataItemSize = Long(RunTimeConfig.toSize(dataItemSizeStr))
 			for threadCountStr in listThreadCounts:
+				nextChain = None
 				try:
 					threadCount = Short.valueOf(threadCountStr)
 				except NumberFormatException as e:
-					LOG.error(Markers.ERR, "")
+					TraceLogger.failure(Markers.ERR, Level.WARN, e, "Failed to parse the next thread count")
 				try:
 					LOG.info(Markers.PERF_SUM, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
 					ThreadContextMap.putValue("currentSize", dataItemSizeStr + "-" + str(index))
@@ -48,6 +49,8 @@ def execute(loadBuilder, rampupParams=((),(),())):
 					)
 					chainExecute(nextChain, False)
 					LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
+					LOG.info(Markers.MSG, "Sleep for 50 seconds before next step...")
+					Thread.sleep(50000)
 				except InterruptedException as e:
 					raise e
 				except Throwable as e:

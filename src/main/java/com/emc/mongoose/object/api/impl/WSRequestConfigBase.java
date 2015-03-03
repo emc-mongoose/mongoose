@@ -77,9 +77,17 @@ implements WSRequestConfig<T> {
 				constructor = (Constructor<WSRequestConfigBase>) apiImplCls.getConstructors()[0];
 			reqConf = constructor.newInstance();
 		} catch(final ClassNotFoundException e) {
-			LOG.fatal(Markers.ERR, "API implementation not found: \"{}\"", apiImplClsFQN);
+			TraceLogger.failure(
+				LOG, Level.FATAL, e,
+				String.format("API implementation \"%s\" is not found", api)
+			);
 		} catch(final ClassCastException e) {
-			LOG.fatal(Markers.ERR, "Class \"{}\" is not valid API implementation", apiImplClsFQN);
+			TraceLogger.failure(
+				LOG, Level.FATAL, e,
+				String.format(
+					"Class \"%s\" is not valid API implementation for \"%s\"", apiImplClsFQN, api
+				)
+			);
 		} catch(final Exception e) {
 			TraceLogger.failure(LOG, Level.FATAL, e, "WS API config instantiation failure");
 		}
@@ -173,7 +181,7 @@ implements WSRequestConfig<T> {
 	public final String getNameSpace() {
 		return sharedHeadersMap.get(KEY_EMC_NS);
 	}
-	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
+	public WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
 		if(nameSpace==null) {
 			LOG.debug(Markers.MSG, "Using empty namespace");
 		} else {
@@ -192,7 +200,7 @@ implements WSRequestConfig<T> {
 		}
 		//
 		try {
-			setNameSpace(this.runTimeConfig.getDataNameSpace());
+			setNameSpace(this.runTimeConfig.getStorageNameSpace());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "data.namespace");
 		} catch(final IllegalStateException e) {

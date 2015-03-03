@@ -1,1 +1,4 @@
-port:		9024
+port:				9024
+service.basepath:	v1
+auth.token:
+container:

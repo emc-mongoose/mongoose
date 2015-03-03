@@ -1,4 +1,4 @@
-package com.emc.mongoose.object.api.provider.atmos;
+package com.emc.mongoose.object.api.impl.provider.atmos;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.load.LoadExecutor;
@@ -281,10 +281,10 @@ extends WSRequestConfigBase<T> {
 				.getFirstHeader(HttpHeaders.LOCATION)
 				.getValue();
 			if(
-				valueLocation!=null &&
-					valueLocation.startsWith(uriBasePath) &&
-					valueLocation.length() - uriBasePath.length() > 1
-				) {
+				valueLocation != null &&
+				valueLocation.startsWith(uriBasePath) &&
+				valueLocation.length() - uriBasePath.length() > 1
+			) {
 				final String id = valueLocation.substring(uriBasePath.length() + 1);
 				if(id.length() > 0) {
 					dataObject.setId(id);
@@ -332,6 +332,7 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public void configureStorage(final LoadExecutor<T> client)
 	throws IllegalStateException {
+		// TODO issue
 		// TODO issue #148
 		/*if(subTenant == null) {
 			throw new IllegalStateException("Subtenant is not specified");
