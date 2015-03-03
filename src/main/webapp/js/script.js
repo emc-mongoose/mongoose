@@ -1,4 +1,5 @@
 $(document).ready(function() {
+	$("#backup-run\\.mode").val($("#run\\.mode").val());
 	var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
 	var TABLE_ROWS_COUNT = 100;
 	excludeDuplicateOptions();
@@ -100,6 +101,11 @@ $(document).ready(function() {
 		$("#api-button").attr("data-target", "#" + valueSelected);
 	});
 	//
+	$("#backup-run\\.mode").on("change", function() {
+		var currElement = $(this);
+		$("#run\\.mode").val(currElement.val());
+	});
+	//
 	$("#base input, #base select").on("change", function() {
 		var currElement = $(this);
 		if (currElement.parents(".complex").length === 1) {
@@ -167,17 +173,17 @@ $(document).ready(function() {
 		var currentRunId = $(this).val();
 		var currentButton = $(this);
 		$.post("/stop", { "run.id" : currentRunId, "type" : "stop" }, function() {
-			currentButton.remove();
+			$("#scenarioTab-" + currentRunId.split(".").join("_") + " .stop").remove();
 		}).fail(function() {
 			alert("Internal Server Error");
-			currentButton.remove();
+			$("#scenarioTab-" + currentRunId.split(".").join("_") + " .stop").remove();
 		});
 	});
 	//
 	$(".kill").click(function() {
 		var currentElement = $(this);
 		var currentRunId = $(this).attr("value");
-		if (confirm("Are you sure?") === true) {
+		if (confirm("Please note that the test will be shut down if it's running.") === true) {
 			$.post("/stop", { "run.id" : currentRunId, "type" : "remove" }, function() {
 				$("#" + currentRunId).remove();
 				currentElement.parent().remove();
@@ -541,7 +547,7 @@ function loadPropertiesFromFile(file) {
 function charts(chartsArray) {
 	var margin = {top: 40, right: 200, bottom: 60, left: 60},
 		width = 1070 - margin.left - margin.right,
-		height = 500 - margin.top - margin.bottom;
+		height = 460 - margin.top - margin.bottom;
 	//  Some constants
 	var SCENARIO = {
 		single: "single",
@@ -562,20 +568,28 @@ function charts(chartsArray) {
 		runMetricsPeriodSec: "run.metrics.period.sec",
 		runScenarioName: "run.scenario.name"
 	};
+	//
+	var colorsList18 = [
+		"#0000CD",
+		"#006400",
+		"#8B0000",
+		"#8B008B",
+		"#008B8B",
+		"#808000",
+		"#FF8C00",
+		"#556B2F",
+		"#8A2BE2",
+		"#00FA9A",
+		"#C71585",
+		"#8B4513",
+		"#00CED1",
+		"#191970",
+		"#2F4F4F",
+		"#FF00FF",
+		"#BDB76B",
+		"#BC8F8F"
+	];
 	var CHART_MODES = [AVG, MIN_1, MIN_5, MIN_15];
-	/*var color = d3.scale.ordinal()
-		.domain([
-			"#FF0000",
-			"#0000FF",
-			"#00FF00",
-			"#FF00FF",
-			"#FFFF00",
-			"#000000",
-			"#C66734",
-			"#8c564b",
-			"#7f7f7f",
-			"#8c6d31"
-		]);*/
 	//  Common functions for charts
 	function getScenarioChartObject(runId, runScenarioName, scenarioCharts) {
 		return {
@@ -624,7 +638,8 @@ function charts(chartsArray) {
 			])
 			.range([height, 0]);
 		//
-		var color = d3.scale.category10();
+		var color = d3.scale.ordinal().
+			range(colorsList18);
 		color.domain(data.map(function(d) { return d.name; }));
 		//
 		var xAxis = d3.svg.axis()
@@ -759,7 +774,7 @@ function charts(chartsArray) {
 			.attr("text-anchor", "middle")
 			.style("font-size", "16px")
 			.style("text-decoration", "underline")
-			.text("Throughput[obj/s]");
+			.text(json.threadName);
 		return function(chartType, value) {
 			var splitIndex = 0;
 			switch(chartType) {
@@ -958,7 +973,7 @@ function charts(chartsArray) {
 					])
 					.range([height, 0]);
 				//
-				var color = d3.scale.category10();
+				var color = d3.scale.ordinal().range(colorsList18);
 				color.domain(data.map(function(d) { return d.loadType; }));
 				//
 				var xAxis = d3.svg.axis()
@@ -1397,6 +1412,9 @@ function charts(chartsArray) {
 		},
 		rampup: function(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes) {
 			//
+			// change default width
+			width = 480;
+			//
 			var loadTypes = scenarioChainLoad.slice(1, -1).split(",");
 			var rampupThreadCountsArray = rampupThreadCounts.slice(1, -1).split(",").map(function(item) {
 				return parseInt(item, 10);
@@ -1501,7 +1519,8 @@ function charts(chartsArray) {
 							}); })
 						])
 						.range([height, 0]);
-					var color = d3.scale.category10();
+					var color = d3.scale.ordinal()
+						.range(colorsList18);
 					color.domain(loadRampupSizesArray.map(function(d) { return d; }));
 					//
 					var xAxis = d3.svg.axis()
@@ -1713,7 +1732,7 @@ function charts(chartsArray) {
 										.attr("class", "dot")
 										.attr("cx", function(coord) { return x(coord.x); })
 										.attr("cy", function(coord) { return y(coord.y); })
-										.attr("r", 2)
+										.attr("r", 2);
 									//  Update dots
 									loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
 										.selectAll(".dot").data(function(v) { return v.values; })
