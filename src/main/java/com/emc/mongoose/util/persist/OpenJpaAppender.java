@@ -12,15 +12,23 @@ import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
+import org.apache.openjpa.persistence.RollbackException;
+import org.apache.openjpa.util.StoreException;
 //
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
+import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 //
@@ -77,7 +85,6 @@ extends AbstractAppender {
 		final @PluginAttribute("addr") String addr,
 		final @PluginAttribute("port") String port,
 		final @PluginAttribute("namedatabase") String dbName) {
-		java.util.logging.Logger.getLogger("org.hibernate").setLevel(Level.OFF);
 		OpenJpaAppender newAppender = null;
 		ENABLED_FLAG = enabled;
 		if (name == null) {
@@ -90,7 +97,6 @@ extends AbstractAppender {
 				// init database session with username,password and url
 				newAppender.buildSessionFactory(userName, passWord, url);
 				newAppender.persistStatusEntity();
-				System.out.println("persist status");
 			}
 		} catch (final Exception e) {
 			throw new IllegalStateException("Open DB session failed", e);
@@ -107,8 +113,10 @@ extends AbstractAppender {
 			switch (marker) {
 				case MSG:
 				case ERR:
-					System.out.println("!");
-					persistMessages(event);
+					if (!event.getContextMap().isEmpty()) {
+						//System.out.println(event.getMessage().getFormattedMessage()+"     "+ event.getContextMap());
+						persistMessages(event);
+					}
 					break;
 				case DATA_LIST:
 					//persistDataList(message);
@@ -124,7 +132,6 @@ extends AbstractAppender {
 	private void persistMessages(final LogEvent event)
 	{
 		final ModeEntity modeEntity = loadModeEntity(event.getContextMap().get(RunTimeConfig.KEY_RUN_MODE));
-		System.out.println("-");
 		/*
 			final RunEntity runEntity = loadRunEntity(event.getContextMap().get(RunTimeConfig.KEY_RUN_ID),
 				modeEntity, getTimestamp(event.getContextMap().get(RunTimeConfig.KEY_RUN_TIMESTAMP))
@@ -161,11 +168,11 @@ extends AbstractAppender {
 		try {
 			runTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS").parse(stringTimestamp);
 		} catch (final ParseException e) {
-			e.printStackTrace();
+			throw new IllegalStateException("Parse run timestamp is failed", e);
 		}
 		return runTimestamp;
 	}
-	////////////////////////////////////////////Loads methods////////////////////////////////////////
+	////////////////////////////////////////////Load methods////////////////////////////////////////
 	private StatusEntity loadStatusEntity(final AsyncIOTask.Status result)
 	{
 		final StatusEntity statusEntity = new StatusEntity(result.code, result.description);
@@ -179,17 +186,25 @@ extends AbstractAppender {
 	//
 	private ModeEntity loadModeEntity(final String modeName)
 	{
+		ModeEntity modeEntity = (ModeEntity) getEntity("name", modeName, ModeEntity.class);
 		final EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
-		final ModeEntity modeEntity = new ModeEntity(modeName);
-		if(!entityManager.contains(modeEntity)){
-			entityManager.getTransaction().begin();
-			entityManager.merge(modeEntity);
-			entityManager.getTransaction().commit();
+		try {
+			if (modeEntity == null) {
+				modeEntity = new ModeEntity(modeName);
+				entityManager.getTransaction().begin();
+				entityManager.merge(modeEntity);
+				entityManager.getTransaction().commit();
+			}
 			entityManager.close();
+		}catch (final RollbackException exception){
+			entityManager.close();
+			loadModeEntity(modeName);
+			System.out.println("Try one more time: " + Thread.currentThread().getName());
 		}
 		return modeEntity;
 	}
 	//
+	/*
 	private RunEntity loadRunEntity(final String runName, final ModeEntity mode, final Date timestamp)
 	{
 		final RunEntity runEntity = new RunEntity(mode, runName, timestamp);
@@ -199,6 +214,22 @@ extends AbstractAppender {
 		entityManager.getTransaction().commit();
 		entityManager.close();
 		return runEntity;
+	}
+	*/
+	///////////////////////////// Getters ////////////////////////////////////////////////////////
+	private Object getEntity(final String colomnName, final String value, final Class classEntity){
+		final EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
+		CriteriaBuilder queryBuilder = entityManager.getCriteriaBuilder();
+		CriteriaQuery criteriaQuery = queryBuilder.createQuery();
+		Root modeRoot = criteriaQuery.from(classEntity);
+		criteriaQuery.select(modeRoot);
+		Predicate predicate= queryBuilder.equal(modeRoot.get(colomnName), value);
+		criteriaQuery.where(predicate);
+		List result = entityManager.createQuery(criteriaQuery).getResultList();
+		if (result.isEmpty()){
+			return null;
+		} else  return result.get(0);
+
 	}
 }
 //

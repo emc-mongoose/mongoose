@@ -111,7 +111,7 @@ public final class Main {
 			System.exit(1);
 		}
 		//
-		ThreadContextMap.initThreadContextMap();
+		//ThreadContextMap.initThreadContextMap();
 		/*
 		rootLogger.info(
 			Markers.MSG, "Run in mode \"{}\", id: \"{}\"",
@@ -210,6 +210,9 @@ public final class Main {
 		// go
 		Configurator.initialize(null, logConfPath.toUri().toString());
 		final Logger rootLogger = LogManager.getRootLogger();
+		//
+		ThreadContextMap.initThreadContextMap();
+		//
 		if(rootLogger == null) {
 			System.err.println("FATAL: failed to configure the logging");
 		} else {
