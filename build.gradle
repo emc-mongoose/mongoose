@@ -105,8 +105,8 @@ dependencies {
 task rmic(dependsOn: compileJava) << {
 	String[] listClsRemote = [
 		'com.emc.mongoose.base.data.persist.TmpFileItemBuffer',
-		'com.emc.mongoose.object.load.server.impl.BasicWSLoadBuilderSvc',
-		'com.emc.mongoose.object.load.server.impl.BasicWSLoadSvc'
+		'com.emc.mongoose.object.load.server.impl.WSLoadBuilderSvcImpl',
+		'com.emc.mongoose.object.load.server.impl.WSLoadSvcImpl'
 	]
 	String clsPath = """${sourceSets.main.output.classesDir}${System.properties.'path.separator'}${configurations.compileRMI.asPath}"""
 	for(cls in listClsRemote) {

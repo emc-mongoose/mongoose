@@ -23,13 +23,13 @@ import java.util.List;
 /**
  Created by kurila on 16.12.14.
  */
-public final class LoadSvcImpl<T extends WSObject>
+public final class WSLoadSvcImpl<T extends WSObject>
 extends LoadExecutorImpl<T>
 implements WSLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public LoadSvcImpl(
+	public WSLoadSvcImpl(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int threadsPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq

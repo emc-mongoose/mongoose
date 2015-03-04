@@ -23,13 +23,13 @@ import java.rmi.RemoteException;
 /**
  Created by kurila on 30.05.14.
  */
-public class LoadBuilderSvcImpl<T extends WSObject, U extends WSLoadExecutor<T>>
+public class WSLoadBuilderSvcImpl<T extends WSObject, U extends WSLoadExecutor<T>>
 extends LoadBuilderImpl<T, U>
 implements WSLoadBuilderSvc<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public LoadBuilderSvcImpl(final RunTimeConfig runTimeConfig) {
+	public WSLoadBuilderSvcImpl(final RunTimeConfig runTimeConfig) {
 		super(runTimeConfig);
 	}
 	//
@@ -80,7 +80,7 @@ implements WSLoadBuilderSvc<T, U> {
 				)
 			);
 		}
-		return (U) new LoadSvcImpl<>(
+		return (U) new WSLoadSvcImpl<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
 			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem
 		);

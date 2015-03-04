@@ -5,7 +5,7 @@ import com.emc.mongoose.run.Scenario;
 import com.emc.mongoose.run.ThreadContextMap;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.object.load.server.WSLoadBuilderSvc;
-import com.emc.mongoose.object.load.server.impl.LoadBuilderSvcImpl;
+import com.emc.mongoose.object.load.server.impl.WSLoadBuilderSvcImpl;
 import com.emc.mongoose.object.storagemock.Cinderella;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
@@ -106,7 +106,7 @@ public final class StartServlet extends CommonServlet {
 				//
 				LOG.debug(Markers.MSG, message);
 				//
-				loadBuilderSvc = new LoadBuilderSvcImpl(localRunTimeConfig);
+				loadBuilderSvc = new WSLoadBuilderSvcImpl(localRunTimeConfig);
 				//
 				try {
 					loadBuilderSvc.setProperties(runTimeConfig);
