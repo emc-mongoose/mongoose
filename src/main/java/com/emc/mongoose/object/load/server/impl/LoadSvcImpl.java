@@ -10,7 +10,7 @@ import com.emc.mongoose.util.remote.Service;
 import com.emc.mongoose.util.remote.ServiceUtils;
 import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.data.WSObject;
-import com.emc.mongoose.object.load.impl.BasicWSLoadExecutor;
+import com.emc.mongoose.object.load.impl.ws.LoadExecutorImpl;
 import com.emc.mongoose.object.load.server.WSLoadSvc;
 //
 import org.apache.logging.log4j.LogManager;
@@ -23,13 +23,13 @@ import java.util.List;
 /**
  Created by kurila on 16.12.14.
  */
-public final class BasicWSLoadSvc<T extends WSObject>
-extends BasicWSLoadExecutor<T>
+public final class LoadSvcImpl<T extends WSObject>
+extends LoadExecutorImpl<T>
 implements WSLoadSvc<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSLoadSvc(
+	public LoadSvcImpl(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int threadsPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq

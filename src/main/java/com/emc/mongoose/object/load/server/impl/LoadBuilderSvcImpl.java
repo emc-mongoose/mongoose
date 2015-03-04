@@ -4,7 +4,7 @@ import com.emc.mongoose.base.data.persist.TmpFileItemBuffer;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.impl.LoadExecutorBase;
 import com.emc.mongoose.base.load.server.DataItemBufferSvc;
-import com.emc.mongoose.object.load.impl.BasicWSLoadBuilder;
+import com.emc.mongoose.object.load.impl.ws.LoadBuilderImpl;
 import com.emc.mongoose.object.load.server.ObjectLoadSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.object.data.WSObject;
@@ -23,13 +23,13 @@ import java.rmi.RemoteException;
 /**
  Created by kurila on 30.05.14.
  */
-public class BasicWSLoadBuilderSvc<T extends WSObject, U extends WSLoadExecutor<T>>
-extends BasicWSLoadBuilder<T, U>
+public class LoadBuilderSvcImpl<T extends WSObject, U extends WSLoadExecutor<T>>
+extends LoadBuilderImpl<T, U>
 implements WSLoadBuilderSvc<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSLoadBuilderSvc(final RunTimeConfig runTimeConfig) {
+	public LoadBuilderSvcImpl(final RunTimeConfig runTimeConfig) {
 		super(runTimeConfig);
 	}
 	//
@@ -80,7 +80,7 @@ implements WSLoadBuilderSvc<T, U> {
 				)
 			);
 		}
-		return (U) new BasicWSLoadSvc<>(
+		return (U) new LoadSvcImpl<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
 			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem
 		);

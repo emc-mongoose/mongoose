@@ -1,8 +1,10 @@
-package com.emc.mongoose.object.load.impl;
+package com.emc.mongoose.object.load.impl.ws;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.persist.FileProducer;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.object.load.impl.NewWSDataProducerImpl;
+import com.emc.mongoose.object.load.impl.ObjectLoadExecutorBase;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
@@ -56,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.12.14.
  */
-public class BasicWSLoadExecutor<T extends WSObject>
+public class LoadExecutorImpl<T extends WSObject>
 extends ObjectLoadExecutorBase<T>
 implements WSLoadExecutor<T> {
 	//
@@ -66,7 +68,7 @@ implements WSLoadExecutor<T> {
 	private final BasicNIOConnPool connPool;
 	private final Thread clientThread;
 	//
-	public BasicWSLoadExecutor(
+	public LoadExecutorImpl(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
@@ -283,7 +285,7 @@ implements WSLoadExecutor<T> {
 	protected Producer<T> newDataProducer(
 		final long maxCount, final long minObjSize, final long maxObjSize, final float objSizeBias
 	) {
-		return (Producer<T>) new NewWSDataProducerImpl<>(
+		return (Producer<T>) new NewDataProducerImpl<>(
 			maxCount, minObjSize, maxObjSize, objSizeBias
 		);
 	}

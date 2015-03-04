@@ -513,7 +513,10 @@ implements LoadExecutor<T> {
 			} finally {
 				jmxReporter.close();
 				LoadCloseHook.del(this);
+				LOG.info("\"{}\" closed successfully");
 			}
+		} else {
+			LOG.debug(Markers.MSG, "Not closing \"{}\" because it has been closed before already");
 		}
 	}
 	//

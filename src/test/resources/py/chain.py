@@ -86,7 +86,9 @@ def execute(chain=(), flagSimultaneous=True):
 					LOG.info(Markers.MSG, "Starting next load job: \"{}\"", nextLoad)
 					nextLoad.start()
 					if prevLoad is not None and isinstance(prevLoad, DataItemBuffer):
+						LOG.debug(Markers.MSG, "Stop buffering the data items into \"{}\"", prevLoad)
 						prevLoad.close()
+						LOG.debug(Markers.MSG, "Start producing the data items from \"{}\"", prevLoad)
 						prevLoad.start()
 						try:
 							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
@@ -98,8 +100,11 @@ def execute(chain=(), flagSimultaneous=True):
 								String.format("Producer \"%s\" execution failure", prevLoad)
 							)
 						finally:
+							LOG.debug(Markers.MSG, "Load job \"{}\" done", nextLoad)
 							prevLoad.interrupt()
+							LOG.debug(Markers.MSG, "Stop producing the data items from \"{}\"", prevLoad)
 							nextLoad.close()
+							LOG.debug(Markers.MSG, "Load job \"{}\" closed", nextLoad)
 					else:
 						try:
 							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
@@ -111,7 +116,9 @@ def execute(chain=(), flagSimultaneous=True):
 								String.format("Consumer \"%s\" execution failure", nextLoad)
 							)
 						finally:
+							LOG.debug(Markers.MSG, "Load job \"{}\" done", nextLoad)
 							nextLoad.close()
+							LOG.debug(Markers.MSG, "Load job \"{}\" closed", nextLoad)
 				prevLoad = nextLoad
 	finally:
 		if chain is not None:

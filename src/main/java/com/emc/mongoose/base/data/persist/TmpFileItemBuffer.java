@@ -319,6 +319,7 @@ implements DataItemBufferSvc<T> {
 			}
 		}
 		producerThread.interrupt();
+		consumer = null;
 		LOG.debug(Markers.MSG, "{}: interrupted", getThreadFactory().toString());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

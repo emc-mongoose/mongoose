@@ -1,4 +1,4 @@
-package com.emc.mongoose.object.load.impl;
+package com.emc.mongoose.object.load.impl.ws;
 //
 import com.emc.mongoose.base.load.impl.LoadBuilderBase;
 import com.emc.mongoose.object.load.ObjectLoadBuilder;
@@ -17,13 +17,13 @@ import java.util.NoSuchElementException;
 /**
  Created by kurila on 05.05.14.
  */
-public class BasicWSLoadBuilder<T extends WSObject, U extends WSLoadExecutor<T>>
+public class LoadBuilderImpl<T extends WSObject, U extends WSLoadExecutor<T>>
 extends LoadBuilderBase<T, U>
 implements WSLoadBuilder<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSLoadBuilder(final RunTimeConfig runTimeConfig) {
+	public LoadBuilderImpl(final RunTimeConfig runTimeConfig) {
 		super(runTimeConfig);
 		setProperties(runTimeConfig);
 	}
@@ -51,9 +51,9 @@ implements WSLoadBuilder<T, U> {
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
-	public final BasicWSLoadBuilder<T, U> clone()
+	public final LoadBuilderImpl<T, U> clone()
 	throws CloneNotSupportedException {
-		final BasicWSLoadBuilder<T, U> lb = (BasicWSLoadBuilder<T, U>) super.clone();
+		final LoadBuilderImpl<T, U> lb = (LoadBuilderImpl<T, U>) super.clone();
 		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
 		return lb;
 	}
@@ -73,7 +73,7 @@ implements WSLoadBuilder<T, U> {
 					") should be less than upper bound "+Long.toString(maxObjSize)
 			);
 		}
-		return (U) new BasicWSLoadExecutor<>(
+		return (U) new LoadExecutorImpl<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
 			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem
 		);

@@ -61,13 +61,17 @@ implements Runnable {
 		if(LoadCloseHook.class.isInstance(Thread.currentThread())) {
 			LOG.debug(Markers.MSG, "Won't remove the shutdown hook which is in progress");
 		} else if(HOOKS_MAP.containsKey(loadExecutor)) {
-			try {
-				Runtime.getRuntime().removeShutdownHook(HOOKS_MAP.get(loadExecutor));
-				LOG.debug(Markers.MSG, "Shutdown hook for \"{}\" removed", loadExecutor);
-			} catch(final IllegalStateException e) {
-				TraceLogger.failure(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
-			} catch(final SecurityException | IllegalArgumentException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
+			synchronized(HOOKS_MAP) {
+				try {
+					Runtime.getRuntime().removeShutdownHook(HOOKS_MAP.get(loadExecutor));
+					LOG.debug(Markers.MSG, "Shutdown hook for \"{}\" removed", loadExecutor);
+				} catch(final IllegalStateException e) {
+					TraceLogger.failure(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
+				} catch(final SecurityException | IllegalArgumentException e) {
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
+				} finally {
+					HOOKS_MAP.remove(loadExecutor);
+				}
 			}
 		} else {
 			LOG.trace(Markers.ERR, "No shutdown hook registered for \"{}\"", loadExecutor);

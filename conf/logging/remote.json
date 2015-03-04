@@ -20,27 +20,17 @@
 						"Filter": [
 							{
 								"type": "MarkerFilter",
-								"marker": "perfAvg",
-								"onMatch": "ACCEPT",
+								"marker": "dataList",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfTrace",
+								"onMatch": "DENY",
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "ThresholdFilter",
 								"level": "INFO",
-								"onMatch": "NEUTRAL",
-								"onMismatch": "DENY"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "err",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "msg",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "perfSum",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
 							}
@@ -296,6 +286,13 @@
 						"ref": "async"
 					}
 				}, {
+					"name": "com.emc.mongoose.base.load.client.impl.gauges",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
 					"name": "com.emc.mongoose.base.load.client.impl.tasks",
 					"level": "debug",
 					"additivity": "false",
@@ -306,6 +303,62 @@
 
 				// Mongoose data object-related functionality
 				{
+					"name": "com.emc.mongoose.object",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.api",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.api.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.api.impl.provider",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.api.impl.provider.atmos",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.api.impl.provider.s3",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.api.impl.provider.swift",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.data",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
 					"name": "com.emc.mongoose.object.data.impl",
 					"level": "debug",
 					"additivity": "false",
@@ -313,7 +366,63 @@
 						"ref": "async"
 					}
 				}, {
+					"name": "com.emc.mongoose.object.load",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.client",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.load.client.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
 					"name": "com.emc.mongoose.object.load.impl",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.load.impl.ws",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.load.impl.ws.proc",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.load.impl.ws.tasks",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.load.server",
+					"level": "debug",
+					"additivity": "false",
+					"AppenderRef": {
+						"ref": "async"
+					}
+				}, {
+					"name": "com.emc.mongoose.object.load.server.impl",
 					"level": "debug",
 					"additivity": "false",
 					"AppenderRef": {
