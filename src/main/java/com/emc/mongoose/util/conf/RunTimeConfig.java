@@ -260,8 +260,8 @@ implements Externalizable {
 		return getString("storage.scheme");
 	}
 	//
-	public final String getDataNameSpace() {
-		return getString("data.namespace");
+	public final String getStorageNameSpace() {
+		return getString("storage.namespace");
 	}
 	//
 	public final String getHttpSignMethod() {

@@ -2,11 +2,11 @@ package com.emc.mongoose.run;
 //
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.remote.ServiceUtils;
-import com.emc.mongoose.web.mock.Cinderella;
-import com.emc.mongoose.web.data.WSObject;
-import com.emc.mongoose.web.load.WSLoadExecutor;
-import com.emc.mongoose.web.load.server.WSLoadBuilderSvc;
-import com.emc.mongoose.web.load.server.impl.BasicLoadBuilderSvc;
+import com.emc.mongoose.object.load.server.impl.WSLoadBuilderSvcImpl;
+import com.emc.mongoose.object.storagemock.Cinderella;
+import com.emc.mongoose.object.data.WSObject;
+import com.emc.mongoose.object.load.WSLoadExecutor;
+import com.emc.mongoose.object.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 //
@@ -137,7 +137,7 @@ public final class Main {
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
 					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
-						loadBuilderSvc = new BasicLoadBuilderSvc<>(RunTimeConfig.getContext())
+						loadBuilderSvc = new WSLoadBuilderSvcImpl<>(RunTimeConfig.getContext())
 				) {
 					loadBuilderSvc.start();
 					loadBuilderSvc.join();
