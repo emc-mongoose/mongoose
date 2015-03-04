@@ -83,7 +83,7 @@ def execute(chain=(), flagSimultaneous=True):
 			prevLoad, nextLoad = None, None
 			for nextLoad in chain:
 				if not isinstance(nextLoad, DataItemBuffer):
-					LOG.info(Markers.MSG, "Starting next load job: \"{}\"", nextLoad)
+					LOG.debug(Markers.MSG, "Starting next load job: \"{}\"", nextLoad)
 					nextLoad.start()
 					if prevLoad is not None and isinstance(prevLoad, DataItemBuffer):
 						LOG.debug(Markers.MSG, "Stop buffering the data items into \"{}\"", prevLoad)
