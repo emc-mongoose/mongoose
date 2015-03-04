@@ -7,7 +7,11 @@
 		<provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
 		<class>com.emc.mongoose.util.persist.StatusEntity</class>
 		<class>com.emc.mongoose.util.persist.ModeEntity</class>
-
+		<class>com.emc.mongoose.util.persist.RunEntity</class>
+		<class>com.emc.mongoose.util.persist.LevelEntity</class>
+		<class>com.emc.mongoose.util.persist.MessageClassEntity</class>
+		<class>com.emc.mongoose.util.persist.MessageEntity</class>
+		<class>com.emc.mongoose.util.persist.DataObjectEntity</class>
 		<properties>
 			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
 			<property name="openjpa.ConnectionURL" value="jdbc:postgresql://localhost:5432/mongoose"/>
@@ -18,4 +22,5 @@
 		</properties>
 
 	</persistence-unit>
+
 </persistence>

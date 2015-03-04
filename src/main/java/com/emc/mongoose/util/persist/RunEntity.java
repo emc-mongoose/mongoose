@@ -1,5 +1,6 @@
 package com.emc.mongoose.util.persist;
 //
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -14,7 +15,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 /**
  * Created by olga on 17.10.14.
  */
-@Entity(name = "Run")
+@Entity
 @Table(name = "run")
 public class RunEntity
 	implements Serializable {
@@ -22,9 +23,8 @@ public class RunEntity
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
 	private long id;
-	@ManyToOne(fetch = FetchType.LAZY)
+	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
 	@JoinColumn(name = "mode", nullable = false)
-
 	private ModeEntity mode;
 	@Column(name = "name")
 	private String name;
@@ -34,9 +34,9 @@ public class RunEntity
 	public RunEntity(){
 	}
 	public RunEntity(final ModeEntity mode, final  String name, final Date tstamp){
-			this.mode = mode;
-			this.name = name;
-			this.timestamp = tstamp;
+		this.mode = mode;
+		this.name = name;
+		this.timestamp = tstamp;
 	}
 	//
 	public final long getId() {

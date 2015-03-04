@@ -1,43 +1,43 @@
 package com.emc.mongoose.util.persist;
 //
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Id;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Id;
+import javax.persistence.Table;
 import java.io.Serializable;
-
+//
 import static javax.persistence.GenerationType.IDENTITY;
 /**
- * Created by olga on 16.10.14.
+ * Created by olga on 23.10.14.
  */
 @Entity
-@Table(name = "mode")
-public class ModeEntity
-	implements Serializable {
+@Table(name = "class")
+public class MessageClassEntity
+implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
 	private long id;
-	@Column(name = "name", unique = true)
+	@Column(name = "name")
 	private String name;
 	//
-	public ModeEntity(){
+	public MessageClassEntity(){
 	}
-	public ModeEntity(final String name){
+	public MessageClassEntity(final String name){
 		this.name = name;
 	}
 	//
-	public final long getId() {
-		return id;
-	}
-	public final void setId(final long id) {
-		this.id = id;
-	}
 	public final String getName() {
 		return name;
 	}
 	public final void setName(final String name) {
 		this.name = name;
+	}
+	public final long getId() {
+		return id;
+	}
+	public final void setId(final long id) {
+		this.id = id;
 	}
 }
