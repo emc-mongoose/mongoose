@@ -273,9 +273,9 @@ implements WSRequestConfig<T> {
 		WSIOTask<T> ioTask;
 		if(dataItem == null) {
 			LOG.debug(Markers.MSG, "Preparing poison request");
-			ioTask = (WSIOTask<T>) BasicWSIOTask.POISON;
+			ioTask = (WSIOTask<T>) WSIOTaskImpl.POISON;
 		} else {
-			ioTask = BasicWSIOTask.getInstanceFor(this, dataItem, nodeAddr);
+			ioTask = WSIOTaskImpl.getInstanceFor(this, dataItem, nodeAddr);
 		}
 		return ioTask;
 	}

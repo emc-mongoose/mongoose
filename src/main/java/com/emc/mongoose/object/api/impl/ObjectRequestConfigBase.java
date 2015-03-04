@@ -6,7 +6,7 @@ import com.emc.mongoose.object.data.DataObject;
 /**
  Created by kurila on 23.12.14.
  */
-public abstract class BasicObjectRequestConfig<T extends DataObject>
+public abstract class ObjectRequestConfigBase<T extends DataObject>
 extends RequestConfigBase<T>
 implements ObjectRequestConfig<T> {
 	//

@@ -8,7 +8,7 @@ import com.emc.mongoose.object.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.object.data.impl.BasicWSObject;
+import com.emc.mongoose.object.data.impl.WSObjectImpl;
 //
 import com.emc.mongoose.object.load.WSLoadExecutor;
 import org.apache.http.Header;
@@ -194,7 +194,7 @@ extends WSRequestConfigBase<T> {
 		if(anyDataProducerEnabled) {
 			try {
 				producer = new WSBucketProducer<>(
-					bucket, BasicWSObject.class, maxCount, (WSLoadExecutor<T>) client
+					bucket, WSObjectImpl.class, maxCount, (WSLoadExecutor<T>) client
 				);
 			} catch(final NoSuchMethodException e) {
 				TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");

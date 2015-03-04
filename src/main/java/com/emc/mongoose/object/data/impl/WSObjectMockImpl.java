@@ -3,7 +3,6 @@ package com.emc.mongoose.object.data.impl;
 import com.emc.mongoose.base.data.impl.UniformData;
 import com.emc.mongoose.base.data.impl.UniformDataSource;
 import com.emc.mongoose.object.data.WSObjectMock;
-import com.emc.mongoose.object.data.impl.BasicWSObject;
 //import com.emc.mongoose.util.logging.Markers;
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
@@ -15,20 +14,20 @@ import java.util.List;
 /**
  * Created by olga on 22.01.15.
  */
-public class BasicWSObjectMock
-extends BasicWSObject
+public class WSObjectMockImpl
+extends WSObjectImpl
 implements WSObjectMock {
 	//private final static Logger LOG = LogManager.getLogger();
 	//////////////////////////////////
-	public BasicWSObjectMock() {
+	public WSObjectMockImpl() {
 		super();
 	}
 	//
-	public BasicWSObjectMock(final String metaInfo) {
+	public WSObjectMockImpl(final String metaInfo) {
 		super(metaInfo);
 	}
 	//
-	public BasicWSObjectMock(final String id, final Long offset, final long size) {
+	public WSObjectMockImpl(final String id, final Long offset, final long size) {
 		super(id, offset, size);
 	}
 	//////////////////////////////////

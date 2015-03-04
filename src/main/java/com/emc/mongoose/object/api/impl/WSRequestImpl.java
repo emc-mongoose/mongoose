@@ -20,7 +20,7 @@ import org.apache.logging.log4j.Logger;
  Created by kurila on 04.12.14.
  */
 @NotThreadSafe
-public final class ReusableWSRequest
+public final class WSRequestImpl
 extends AbstractHttpMessage
 implements MutableWSRequest {
 	//
@@ -31,13 +31,13 @@ implements MutableWSRequest {
 	private volatile RequestLine requestline;
 	private volatile HttpEntity contentEntity = EMPTY_CONTENT_ENTITY;
 	//
-	public ReusableWSRequest(
+	public WSRequestImpl(
 		final WSIOTask.HTTPMethod method, final String uriAddr, final String uriPath
 	) {
 		this(method, uriAddr, uriPath, HttpVersion.HTTP_1_1);
 	}
 	//
-	public ReusableWSRequest(
+	public WSRequestImpl(
 		final WSIOTask.HTTPMethod method, final String uriAddr, final String uriPath,
 		final ProtocolVersion ver
 	) {
@@ -53,7 +53,7 @@ implements MutableWSRequest {
 		);
 	}
 	//
-	public ReusableWSRequest(final String uriAddr, final RequestLine requestline) {
+	public WSRequestImpl(final String uriAddr, final RequestLine requestline) {
 		super();
 		this.requestline = requestline;
 		method = WSIOTask.HTTPMethod.valueOf(requestline.getMethod());
@@ -82,7 +82,7 @@ implements MutableWSRequest {
 	}
 	//
 	@Override
-	public final ReusableWSRequest setMethod(final WSIOTask.HTTPMethod method) {
+	public final WSRequestImpl setMethod(final WSIOTask.HTTPMethod method) {
 		this.method = method;
 		requestline = new BasicRequestLine(
 			method.name(), uriPath, requestline.getProtocolVersion()
@@ -96,7 +96,7 @@ implements MutableWSRequest {
 	}
 	//
 	@Override
-	public final ReusableWSRequest setUriAddr(final String uriAddr) {
+	public final WSRequestImpl setUriAddr(final String uriAddr) {
 		this.uriAddr = uriAddr;
 		return this;
 	}
@@ -107,7 +107,7 @@ implements MutableWSRequest {
 	}
 	//
 	@Override
-	public final ReusableWSRequest setUriPath(final String uriPath) {
+	public final WSRequestImpl setUriPath(final String uriPath) {
 		this.uriPath = uriPath;
 		requestline = new BasicRequestLine(
 			method.name(), uriPath, requestline.getProtocolVersion()

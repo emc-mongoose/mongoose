@@ -7,7 +7,7 @@ import com.emc.mongoose.util.remote.Service;
 import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
-import com.emc.mongoose.object.data.impl.BasicWSObject;
+import com.emc.mongoose.object.data.impl.WSObjectImpl;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.base.data.persist.FileProducer;
 import com.emc.mongoose.util.logging.Markers;
@@ -32,18 +32,18 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 08.05.14.
  */
-public final class BasicWSLoadBuilderClient<T extends WSObject, U extends WSLoadClient<T>>
+public final class WSLoadBuilderClientImpl<T extends WSObject, U extends WSLoadClient<T>>
 extends LoadBuilderClientBase<T, U>
 implements WSLoadBuilderClient<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSLoadBuilderClient()
+	public WSLoadBuilderClientImpl()
 	throws IOException {
 		super();
 	}
 	//
-	public BasicWSLoadBuilderClient(final RunTimeConfig runTimeConfig)
+	public WSLoadBuilderClientImpl(final RunTimeConfig runTimeConfig)
 	throws IOException {
 		super(runTimeConfig);
 	}
@@ -74,11 +74,11 @@ implements WSLoadBuilderClient<T, U> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final BasicWSLoadBuilderClient<T, U> setInputFile(final String listFile)
+	public final WSLoadBuilderClientImpl<T, U> setInputFile(final String listFile)
 	throws RemoteException {
 		if(listFile!=null) {
 			try {
-				srcProducer = (FileProducer<T>) new FileProducer<>(getMaxCount(), listFile, BasicWSObject.class);
+				srcProducer = (FileProducer<T>) new FileProducer<>(getMaxCount(), listFile, WSObjectImpl.class);
 				LOG.info(Markers.MSG, "Local data items will be read from file @ \"{}\"", listFile);
 			} catch(final NoSuchMethodException | IOException e) {
 				LOG.error(Markers.ERR, "Failure", e);
@@ -142,7 +142,7 @@ implements WSLoadBuilderClient<T, U> {
 			//
 		}
 		//
-		newLoadClient = new BasicWSLoadClient<>(
+		newLoadClient = new WSLoadClientImpl<>(
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
 			runTimeConfig.getDataCount()
 		);

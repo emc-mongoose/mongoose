@@ -7,7 +7,7 @@ import com.codahale.metrics.MetricRegistry;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.object.data.WSObjectMock;
-import com.emc.mongoose.object.data.impl.BasicWSObjectMock;
+import com.emc.mongoose.object.data.impl.WSObjectMockImpl;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
@@ -189,7 +189,7 @@ implements Runnable {
 				final BufferedReader bufferReader = new BufferedReader(reader);
 				String s;
 				while((s = bufferReader.readLine()) != null) {
-					final WSObjectMock dataObject = new BasicWSObjectMock(s) ;
+					final WSObjectMock dataObject = new WSObjectMockImpl(s) ;
 					//if mongoose v.0.5.0
 					if (dataSizeRadix == 16) {
 						dataObject.setSize(Long.valueOf(String.valueOf(dataObject.getSize()), 0x10));
@@ -395,7 +395,7 @@ implements Runnable {
 							)
 						);
 					}
-					dataObject = new BasicWSObjectMock(dataID, offset, bytes);
+					dataObject = new WSObjectMockImpl(dataID, offset, bytes);
 				}
 				LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject));
 				synchronized (sharedStorage) {

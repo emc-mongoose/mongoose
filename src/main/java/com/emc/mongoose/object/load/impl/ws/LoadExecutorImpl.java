@@ -12,7 +12,7 @@ import com.emc.mongoose.util.threading.WorkerFactory;
 import com.emc.mongoose.object.api.WSIOTask;
 import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.data.WSObject;
-import com.emc.mongoose.object.data.impl.BasicWSObject;
+import com.emc.mongoose.object.data.impl.WSObjectImpl;
 import com.emc.mongoose.object.load.WSLoadExecutor;
 import com.emc.mongoose.object.load.impl.ws.proc.RequestSharedHeaders;
 import com.emc.mongoose.object.load.impl.ws.proc.RequestTargetHost;
@@ -268,7 +268,7 @@ implements WSLoadExecutor<T> {
 		Producer<T> localProducer = null;
 		try {
 			localProducer = (Producer<T>) new FileProducer<>(
-				maxCount, listFile, BasicWSObject.class
+				maxCount, listFile, WSObjectImpl.class
 			);
 		} catch(final NoSuchMethodException e) {
 			TraceLogger.failure(LOG, Level.FATAL, e, "Unexpected failure");

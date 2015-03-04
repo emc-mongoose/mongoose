@@ -2,7 +2,7 @@ package com.emc.mongoose.object.api;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
-import com.emc.mongoose.object.api.impl.ReusableWSRequest;
+import com.emc.mongoose.object.api.impl.WSRequestImpl;
 import com.emc.mongoose.object.data.WSObject;
 //
 import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
@@ -24,7 +24,7 @@ extends
 		DELETE, GET, HEAD, PUT, POST, TRACE;
 		//
 		public MutableWSRequest createRequest() {
-			return new ReusableWSRequest(this, null, "/");
+			return new WSRequestImpl(this, null, "/");
 		}
 	}
 	//

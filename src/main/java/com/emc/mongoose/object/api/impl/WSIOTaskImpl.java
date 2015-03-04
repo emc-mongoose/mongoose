@@ -45,27 +45,27 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 06.06.14.
  */
-public class BasicWSIOTask<T extends WSObject>
+public class WSIOTaskImpl<T extends WSObject>
 extends BasicObjectIOTask<T>
 implements WSIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static BasicWSIOTask POISON = new BasicWSIOTask() {
+	public final static WSIOTaskImpl POISON = new WSIOTaskImpl() {
 		@Override
 		public final String toString() {
 			return "<POISON>";
 		}
 	};
 	// BEGIN pool related things
-	private final static InstancePool<BasicWSIOTask>
-		POOL_WEB_IO_TASKS = new InstancePool<>(BasicWSIOTask.class);
+	private final static InstancePool<WSIOTaskImpl>
+		POOL_WEB_IO_TASKS = new InstancePool<>(WSIOTaskImpl.class);
 	//
 	@SuppressWarnings("unchecked")
-	public static <T extends WSObject> BasicWSIOTask<T> getInstanceFor(
+	public static <T extends WSObject> WSIOTaskImpl<T> getInstanceFor(
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
 	) throws InterruptedException {
-		final BasicWSIOTask<T> ioTask = (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
+		final WSIOTaskImpl<T> ioTask = (WSIOTaskImpl<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
 		LOG.trace(
 			Markers.MSG,
 			String.format(

@@ -23,38 +23,38 @@ import java.io.InputStream;
  Created by kurila on 29.04.14.
  Basic web storage data object implementation.
  */
-public class BasicWSObject
+public class WSObjectImpl
 extends BasicObject
 implements WSObject {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSObject() {
+	public WSObjectImpl() {
 		super();
 	}
 	//
-	public BasicWSObject(final String metaInfo) {
+	public WSObjectImpl(final String metaInfo) {
 		super();
 		fromString(metaInfo);
 	}
 	//
-	public BasicWSObject(final Long size) {
+	public WSObjectImpl(final Long size) {
 		super(size);
 	}
 	//
-	public BasicWSObject(final Long size, final UniformDataSource dataSrc) {
+	public WSObjectImpl(final Long size, final UniformDataSource dataSrc) {
 		super(size, dataSrc);
 	}
 	//
-	public BasicWSObject(final String id, final Long size) {
+	public WSObjectImpl(final String id, final Long size) {
 		super(id, size);
 	}
 	//
-	public BasicWSObject(final String id, final Long offset, final Long size) {
+	public WSObjectImpl(final String id, final Long offset, final Long size) {
 		super(id, offset, size);
 	}
 	//
-	public BasicWSObject(final String id, final Long size, final UniformDataSource dataSrc) {
+	public WSObjectImpl(final String id, final Long size, final UniformDataSource dataSrc) {
 		super(id, size, dataSrc);
 	}
 	//

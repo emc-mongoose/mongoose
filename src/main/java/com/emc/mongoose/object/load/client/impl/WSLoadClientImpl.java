@@ -21,13 +21,13 @@ import javax.management.remote.JMXConnector;
 /**
  Created by kurila on 08.05.14.
  */
-public class BasicWSLoadClient<T extends WSObject>
+public class WSLoadClientImpl<T extends WSObject>
 extends BasicLoadClient<T>
 implements WSLoadClient<T> {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
-	public BasicWSLoadClient(
+	public WSLoadClientImpl(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
 		final Map<String, JMXConnector> remoteJMXConnMap, final WSRequestConfig<T> reqConf,
 		final long maxCount
