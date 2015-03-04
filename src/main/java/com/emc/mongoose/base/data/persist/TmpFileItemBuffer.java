@@ -256,6 +256,7 @@ implements DataItemBufferSvc<T> {
 						} catch(final RejectedExecutionException e) {
 							LOG.debug(Markers.ERR, "Consumer rejected the poison");
 						} finally {
+							consumer = null;
 							if(fBuff.delete()) {
 								LOG.debug(
 									Markers.MSG, "File \"{}\" succesfully deleted",
@@ -319,7 +320,6 @@ implements DataItemBufferSvc<T> {
 			}
 		}
 		producerThread.interrupt();
-		consumer = null;
 		LOG.debug(Markers.MSG, "{}: interrupted", getThreadFactory().toString());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

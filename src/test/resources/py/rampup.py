@@ -49,8 +49,6 @@ def execute(loadBuilder, rampupParams=((),(),())):
 					)
 					chainExecute(nextChain, False)
 					LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
-					LOG.info(Markers.MSG, "Sleep for 50 seconds before next step...")
-					Thread.sleep(50000)
 				except InterruptedException as e:
 					raise e
 				except Throwable as e:
