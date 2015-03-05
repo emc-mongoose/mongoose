@@ -167,10 +167,10 @@ $(document).ready(function() {
 		var currentRunId = $(this).val();
 		var currentButton = $(this);
 		$.post("/stop", { "run.id" : currentRunId, "type" : "stop" }, function() {
-			currentButton.remove();
+			$("#scenarioTab-" + currentRunId.split(".").join("_") + " .stop").remove();
 		}).fail(function() {
 			alert("Internal Server Error");
-			currentButton.remove();
+			$("#scenarioTab-" + currentRunId.split(".").join("_") + " .stop").remove();
 		});
 	});
 	//
