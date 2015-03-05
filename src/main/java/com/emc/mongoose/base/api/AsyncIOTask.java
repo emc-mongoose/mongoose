@@ -46,7 +46,7 @@ extends Reusable {
 	AsyncIOTask<T> setDataItem(final T dataItem);
 	T getDataItem();
 	//
-	long getTransferSize();
+	long 3getTransferSize();
 	//
 	Status getStatus();
 	//

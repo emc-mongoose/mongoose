@@ -3,6 +3,7 @@ package com.emc.mongoose.base.load.impl.tasks;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataItem;
 import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.collections.InstancePool;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 11.12.14.
@@ -24,6 +26,8 @@ public final class RequestResultTask<T extends DataItem>
 implements Runnable, Reusable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static int
+		reqTimeOutMilliSec = RunTimeConfig.getContext().getRunReqTimeOutMilliSec();
 	//
 	private volatile LoadExecutor<T> executor = null;
 	private volatile AsyncIOTask<T> ioTask = null;
@@ -33,7 +37,7 @@ implements Runnable, Reusable {
 	public final void run() {
 		AsyncIOTask.Status ioTaskStatus = AsyncIOTask.Status.FAIL_UNKNOWN;
 		try {
-			ioTaskStatus = futureResult.get(); // submit done
+			ioTaskStatus = futureResult.get(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Task #{} done w/ result {}",
