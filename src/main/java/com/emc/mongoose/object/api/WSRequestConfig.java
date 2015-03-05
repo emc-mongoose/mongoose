@@ -38,7 +38,7 @@ extends ObjectRequestConfig<T> {
 		//
 	String[]
 		HEADERS_EMC = {
-			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_NS, KEY_EMC_SIG, KEY_EMC_UID, KEY_EMC_FS_ACCESS
+			KEY_EMC_ACCEPT, KEY_EMC_DATE, /*KEY_EMC_NS, */KEY_EMC_SIG, KEY_EMC_UID, KEY_EMC_FS_ACCESS
 		};
 	//
 	WSIOTask.HTTPMethod getHTTPMethod();
@@ -63,6 +63,9 @@ extends ObjectRequestConfig<T> {
 	//
 	WSRequestConfig<T> setFileSystemAccessEnabled(final boolean fsAccessFlag);
 	boolean getFileSystemAccessEnabled();
+	//
+	String getNameSpace();
+	WSRequestConfig<T> setNameSpace(final String ns);
 	//
 	@Override
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);

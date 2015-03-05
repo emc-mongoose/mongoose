@@ -16,6 +16,7 @@ import com.emc.mongoose.util.logging.Markers;
 //
 import org.apache.commons.codec.binary.Base64;
 //
+import org.apache.commons.lang.text.StrBuilder;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -178,11 +179,13 @@ implements WSRequestConfig<T> {
 		return this;
 	}
 	//
+	@Override
 	public String getNameSpace() {
 		return sharedHeadersMap.get(KEY_EMC_NS);
 	}
+	@Override
 	public WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
-		if(nameSpace==null) {
+		if(nameSpace == null) {
 			LOG.debug(Markers.MSG, "Using empty namespace");
 		} else {
 			sharedHeadersMap.put(KEY_EMC_NS, nameSpace);
@@ -354,25 +357,24 @@ implements WSRequestConfig<T> {
 			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply auth header");
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			synchronized(LOG) {
-				LOG.trace(
-					Markers.MSG, "built request: {} {}",
-					httpRequest.getRequestLine().getMethod(), httpRequest.getRequestLine().getUri()
-				);
-				for(final Header header: httpRequest.getAllHeaders()) {
-					LOG.trace(Markers.MSG, "\t{}: {}", header.getName(), header.getValue());
-				}
-				if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
-					LOG.trace(
-						Markers.MSG, "\tcontent: {} bytes",
-						HttpEntityEnclosingRequest.class.cast(
-							httpRequest
-						).getEntity().getContentLength()
-					);
-				} else {
-					LOG.trace(Markers.MSG, "\t---- no content ----");
-				}
+			final StrBuilder msgBuff = new StrBuilder("built request: ")
+				.append(httpRequest.getRequestLine().getMethod()).append(' ')
+				.append(httpRequest.getRequestLine().getUri()).appendNewLine();
+			for(final Header header: httpRequest.getAllHeaders()) {
+				msgBuff
+					.append('\t').append(header.getName())
+					.append(": ").append(header.getValue())
+					.appendNewLine();
 			}
+			if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
+				msgBuff
+					.append("\tcontent: ")
+					.append(RunTimeConfig.formatSize(httpRequest.getEntity().getContentLength()))
+					.append(" bytes");
+			} else {
+				msgBuff.append("\t---- no content ----");
+			}
+			LOG.trace(Markers.MSG, msgBuff.toString());
 		}
 	}
 	//

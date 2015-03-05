@@ -462,7 +462,7 @@ implements Externalizable {
 		final SystemConfiguration sysProps = new SystemConfiguration();
 		String key, keys2override[];
 		Object sharedValue;
-		for(final Iterator<String> keyIter=sysProps.getKeys(); keyIter.hasNext();) {
+		for(final Iterator<String> keyIter = sysProps.getKeys(); keyIter.hasNext();) {
 			key = keyIter.next();
 			LOG.trace(
 				Markers.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",

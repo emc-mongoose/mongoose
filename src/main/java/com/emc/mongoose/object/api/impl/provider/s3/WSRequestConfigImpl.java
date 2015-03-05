@@ -88,6 +88,11 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
+	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
+		return this;
+	}
+	//
+	@Override
 	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//
@@ -215,8 +220,10 @@ extends WSRequestConfigBase<T> {
 		if(bucket.exists(loadExecutor)) {
 			LOG.debug(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
 		} else {
+			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", bucketName);
 			bucket.create(loadExecutor);
 			if(bucket.exists(loadExecutor)) {
+				LOG.debug(Markers.MSG, "Bucket \"{}\" created successfully", bucketName);
 				runTimeConfig.set(KEY_BUCKET, bucketName);
 			} else {
 				throw new IllegalStateException(

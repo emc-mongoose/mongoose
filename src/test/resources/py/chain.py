@@ -150,19 +150,19 @@ if __name__ == "__builtin__":
 	#
 	loadTypesChain = ()
 	try:
-		loadTypesChain = RunTimeConfig.getStringArray("scenario.chain.load")
+		loadTypesChain = runTimeConfig.getStringArray("scenario.chain.load")
 	except:
-		LOG.debug(Markers.MSG, "No \"scenario.load.chain\" specified")
+		LOG.debug(Markers.MSG, "No \"scenario.chain.load\" specified")
 	#
 	flagSimultaneous, flagItemsBuffer = True, False
 	try:
-		flagSimultaneous = RunTimeConfig.getBoolean("scenario.chain.simultaneous")
+		flagSimultaneous = runTimeConfig.getBoolean("scenario.chain.simultaneous")
 	except:
-		LOG.debug(Markers.MSG, "No \"scenario.load.simultaneous\" specified")
+		LOG.debug(Markers.MSG, "No \"scenario.chain.simultaneous\" specified")
 	try:
-		flagItemsBuffer = RunTimeConfig.getBoolean("scenario.chain.itemsbuffer")
+		flagItemsBuffer = runTimeConfig.getBoolean("scenario.chain.itemsbuffer")
 	except:
-		LOG.debug(Markers.MSG, "No \"scenario.load.itemsbuffer\" specified")
+		LOG.debug(Markers.MSG, "No \"scenario.chain.itemsbuffer\" specified")
 	#
 	loadBuilder = loadBuilderInit()
 	#
@@ -172,9 +172,12 @@ if __name__ == "__builtin__":
 		dataItemSizeMax if dataItemSize == 0 else dataItemSize,
 		threadsPerNode
 	)
-	try:
-		execute(chain, flagSimultaneous)
-	except Throwable as e:
-		TraceLogger.failure(LOG, Level.WARN, e, "Chain execution failure")
+	if chain is None or len(chain) == 0:
+		LOG.error(Markers.ERR, "Empty chain has been build, nothing to do")
+	else:
+		try:
+			execute(chain, flagSimultaneous)
+		except Throwable as e:
+			TraceLogger.failure(LOG, Level.WARN, e, "Chain execution failure")
 	#
 	LOG.info(Markers.MSG, "Scenario end")

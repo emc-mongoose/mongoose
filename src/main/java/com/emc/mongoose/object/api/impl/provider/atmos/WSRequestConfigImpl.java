@@ -157,6 +157,12 @@ extends WSRequestConfigBase<T> {
 		//
 		return this;
 	}
+	//
+	@Override
+	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
+		return this;
+	}
+	//
 	@Override
 	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
