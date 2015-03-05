@@ -804,21 +804,28 @@
 					<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
 					<div class="tab-pane" id="scenarioTab-${correctMode}">
 						<ul id="scenario-tab" class="nav nav-tabs" role="presentation">
-							<li class="active"><a href="#${correctMode}-logs" data-toggle="tab">Logs</a></li>
-							<c:if test="${not empty chartsMap[mode]}">
-								<li><a href="#${correctMode}-charts" data-toggle="tab">Charts</a></li>
-							</c:if>
-							<li>
+							<li class="hidden-xs">
 								<c:if test="${empty sessionScope.stopped[mode]}">
 									<button type="button" class="btn btn-danger stop" value="${mode}">
 										Stop
 									</button>
 								</c:if>
 							</li>
+							<li class="active"><a href="#${correctMode}-logs" data-toggle="tab">Logs</a></li>
+							<c:if test="${not empty chartsMap[mode]}">
+								<li><a href="#${correctMode}-charts" data-toggle="tab">Charts</a></li>
+							</c:if>
 						</ul>
 						<div class="tab-content">
 							<div class="tab-pane active" id="${correctMode}-logs">
 								<ul id="log-pills" class="nav nav-pills">
+									<li class="hidden-sm hidden-md hidden-lg stop-block-xs">
+										<c:if test="${empty sessionScope.stopped[mode]}">
+											<button type="button" class="btn btn-danger stop" value="${mode}">
+												Stop
+											</button>
+										</c:if>
+									</li>
 									<li class="active"><a href="#${correctMode}-messages-csv" data-toggle="pill">messages.csv</a></li>
 									<li><a href="#${correctMode}-errors-log" data-toggle="pill">errors.log</a></li>
 									<li><a href="#${correctMode}-perf-avg-csv" data-toggle="pill">perf.avg.csv</a></li>
@@ -906,6 +913,13 @@
 							<c:if test="${not empty chartsMap[mode]}">
 								<div class="tab-pane" id="${correctMode}-charts">
 									<ul id="chart-pills" class="nav nav-pills">
+										<li class="hidden-sm hidden-md hidden-lg stop-block-xs">
+											<c:if test="${empty sessionScope.stopped[mode]}">
+												<button type="button" class="btn btn-danger stop" value="${mode}">
+													Stop
+												</button>
+											</c:if>
+										</li>
 										<c:choose>
 											<c:when test="${chartsMap[mode] eq 'single'}">
 												<li class="active"><a href="#tp-${correctMode}" data-toggle="pill">Throughput[obj/s]</a></li>
