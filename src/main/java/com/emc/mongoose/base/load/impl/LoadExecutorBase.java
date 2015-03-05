@@ -434,10 +434,12 @@ implements LoadExecutor<T> {
 				}
 				reqBytes.mark(ioTask.getTransferSize());
 				durSumTasks.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
-				LOG.info(
-					Markers.MSG, "Task #{}: successfull result, {}/{}",
-					ioTask.hashCode(), counterReqSucc.getCount(), ioTask.getTransferSize()
-				);
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "Task #{}: successfull result, {}/{}",
+						ioTask.hashCode(), counterReqSucc.getCount(), ioTask.getTransferSize()
+					);
+				}
 				// feed to the consumer
 				if(consumer != null) {
 					consumer.submit(dataItem);
