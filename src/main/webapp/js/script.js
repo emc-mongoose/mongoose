@@ -562,20 +562,28 @@ function charts(chartsArray) {
 		runMetricsPeriodSec: "run.metrics.period.sec",
 		runScenarioName: "run.scenario.name"
 	};
+	//
+	var colorsList18 = [
+		"#0000CD",
+		"#006400",
+		"#8B0000",
+		"#8B008B",
+		"#008B8B",
+		"#808000",
+		"#FF8C00",
+		"#556B2F",
+		"#8A2BE2",
+		"#00FA9A",
+		"#C71585",
+		"#8B4513",
+		"#00CED1",
+		"#191970",
+		"#2F4F4F",
+		"#FF00FF",
+		"#BDB76B",
+		"#BC8F8F"
+	];
 	var CHART_MODES = [AVG, MIN_1, MIN_5, MIN_15];
-	/*var color = d3.scale.ordinal()
-		.domain([
-			"#FF0000",
-			"#0000FF",
-			"#00FF00",
-			"#FF00FF",
-			"#FFFF00",
-			"#000000",
-			"#C66734",
-			"#8c564b",
-			"#7f7f7f",
-			"#8c6d31"
-		]);*/
 	//  Common functions for charts
 	function getScenarioChartObject(runId, runScenarioName, scenarioCharts) {
 		return {
@@ -624,7 +632,8 @@ function charts(chartsArray) {
 			])
 			.range([height, 0]);
 		//
-		var color = d3.scale.category10();
+		var color = d3.scale.ordinal().
+			range(colorsList18);
 		color.domain(data.map(function(d) { return d.name; }));
 		//
 		var xAxis = d3.svg.axis()
@@ -958,7 +967,7 @@ function charts(chartsArray) {
 					])
 					.range([height, 0]);
 				//
-				var color = d3.scale.category10();
+				var color = d3.scale.ordinal().range(colorsList18);
 				color.domain(data.map(function(d) { return d.loadType; }));
 				//
 				var xAxis = d3.svg.axis()
@@ -1501,7 +1510,8 @@ function charts(chartsArray) {
 							}); })
 						])
 						.range([height, 0]);
-					var color = d3.scale.category10();
+					var color = d3.scale.ordinal()
+						.range(colorsList18);
 					color.domain(loadRampupSizesArray.map(function(d) { return d; }));
 					//
 					var xAxis = d3.svg.axis()
@@ -1713,7 +1723,7 @@ function charts(chartsArray) {
 										.attr("class", "dot")
 										.attr("cx", function(coord) { return x(coord.x); })
 										.attr("cy", function(coord) { return y(coord.y); })
-										.attr("r", 2)
+										.attr("r", 2);
 									//  Update dots
 									loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
 										.selectAll(".dot").data(function(v) { return v.values; })
