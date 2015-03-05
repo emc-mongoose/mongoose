@@ -177,7 +177,7 @@ $(document).ready(function() {
 	$(".kill").click(function() {
 		var currentElement = $(this);
 		var currentRunId = $(this).attr("value");
-		if (confirm("Are you sure?") === true) {
+		if (confirm("Please note that the test will be shut down if it's running.") === true) {
 			$.post("/stop", { "run.id" : currentRunId, "type" : "remove" }, function() {
 				$("#" + currentRunId).remove();
 				currentElement.parent().remove();
