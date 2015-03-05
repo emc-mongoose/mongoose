@@ -75,7 +75,8 @@ implements AuthToken<T> {
 							LOG.warn(Markers.ERR, "Server hasn't returned auth token header");
 						}
 					} else {
-						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+						final StrBuilder msg = new StrBuilder("Create auth tocken failure: ")
+							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);

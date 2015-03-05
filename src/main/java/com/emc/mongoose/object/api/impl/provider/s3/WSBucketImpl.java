@@ -115,17 +115,21 @@ implements Bucket<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					if(statusCode == HttpStatus.SC_OK) {
+					if(statusCode >= 200 && statusCode < 300) {
 						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
 						flagExists = true;
 					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
 						LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist", name);
 					} else {
-						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+						final StrBuilder msg = new StrBuilder("Check bucket \"")
+							.append(name).append("\" failure: ")
+							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
 								msg.appendNewLine().append(buff.toString());
+							} catch(final Exception e) {
+								// ignore
 							}
 						}
 						throw new IllegalStateException(msg.toString());
@@ -155,14 +159,18 @@ implements Bucket<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					if(statusCode == HttpStatus.SC_OK) {
+					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(Markers.MSG, "Bucket \"{}\" created", name);
 					} else {
-						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+						final StrBuilder msg = new StrBuilder("Create bucket \"")
+							.append(name).append("\" failure: ")
+							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
 								msg.appendNewLine().append(buff.toString());
+							} catch(final Exception e) {
+								// ignore
 							}
 						}
 						LOG.warn(
@@ -193,14 +201,18 @@ implements Bucket<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					if(statusCode==HttpStatus.SC_OK) {
+					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(Markers.MSG, "Bucket \"{}\" deleted", name);
 					} else {
-						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+						final StrBuilder msg = new StrBuilder("Delete bucket \"")
+							.append(name).append("\" failure: ")
+							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
 								msg.appendNewLine().append(buff.toString());
+							} catch(final Exception e) {
+								// ignore
 							}
 						}
 						LOG.warn(

@@ -78,7 +78,9 @@ implements Container<T> {
 					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
 						LOG.debug(Markers.MSG, "Container \"{}\" doesn't exist", name);
 					} else {
-						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+						final StrBuilder msg = new StrBuilder("Check container \"")
+							.append(name).append("\" failure: ")
+							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
@@ -114,7 +116,9 @@ implements Container<T> {
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(Markers.MSG, "Container \"{}\" created", name);
 					} else {
-						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+						final StrBuilder msg = new StrBuilder("Create container \"")
+							.append(name).append("\" failure: ")
+							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
@@ -152,7 +156,9 @@ implements Container<T> {
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(Markers.MSG, "Container \"{}\" deleted", name);
 					} else {
-						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+						final StrBuilder msg = new StrBuilder("Delete container \"")
+							.append(name).append("\" failure: ")
+							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);

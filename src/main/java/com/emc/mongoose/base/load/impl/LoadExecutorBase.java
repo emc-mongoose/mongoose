@@ -67,8 +67,8 @@ implements LoadExecutor<T> {
 	private final int totalConnCount;
 	// METRICS section BEGIN
 	protected final MetricRegistry metrics = new MetricRegistry();
-	protected Counter counterSubm, counterRej, counterReqSucc, counterReqFail;
-	protected Meter reqBytes;
+	protected Counter counterSubm, counterRej, counterReqFail;
+	protected Meter throughPut, reqBytes;
 	protected Histogram respLatency;
 	//
 	protected final MBeanServer mBeanServer;
@@ -195,11 +195,13 @@ implements LoadExecutor<T> {
 	public final void logMetrics(final Marker logMarker) {
 		//
 		final long
-			countReqSucc = counterReqSucc.getCount(),
-			countReqFail = counterReqFail.getCount(),
-			countBytes = reqBytes.getCount();
+			countReqSucc = throughPut.getCount(),
+			countReqFail = counterReqFail.getCount();
 		final double
-			avgSize = countReqSucc==0 ? 0 : (double) countBytes / countReqSucc,
+			meanTP = throughPut.getMeanRate(),
+			oneMinTP = throughPut.getOneMinuteRate(),
+			fiveMinTP = throughPut.getFiveMinuteRate(),
+			fifteenMinTP = throughPut.getFifteenMinuteRate(),
 			meanBW = reqBytes.getMeanRate(),
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
@@ -223,20 +225,13 @@ implements LoadExecutor<T> {
 				(int) respLatencySnapshot.getMedian(),
 				(int) respLatencySnapshot.getMax(),
 				//
-				avgSize==0 ? 0 : meanBW / avgSize,
-				avgSize==0 ? 0 : oneMinBW / avgSize,
-				avgSize==0 ? 0 : fiveMinBW / avgSize,
-				avgSize==0 ? 0 : fifteenMinBW / avgSize,
-				//
-				meanBW / MIB,
-				oneMinBW / MIB,
-				fiveMinBW / MIB,
-				fifteenMinBW / MIB
+				meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
+				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 			) :
 			String.format(
 				Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
-				countReqSucc, counterSubm.getCount() - countReqSucc,
+				countReqSucc, throughPut.getCount() - countReqSucc,
 				countReqFail == 0 ?
 					Long.toString(countReqFail) :
 					(float) countReqSucc / countReqFail > 100 ?
@@ -248,15 +243,8 @@ implements LoadExecutor<T> {
 				(int) respLatencySnapshot.getMedian(),
 				(int) respLatencySnapshot.getMax(),
 				//
-				avgSize==0 ? 0 : meanBW / avgSize,
-				avgSize==0 ? 0 : oneMinBW / avgSize,
-				avgSize==0 ? 0 : fiveMinBW / avgSize,
-				avgSize==0 ? 0 : fifteenMinBW / avgSize,
-				//
-				meanBW / MIB,
-				oneMinBW / MIB,
-				fiveMinBW / MIB,
-				fifteenMinBW / MIB
+				meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
+				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 			);
 		LOG.info(logMarker, message);
 		/*
@@ -291,18 +279,18 @@ implements LoadExecutor<T> {
 			// init metrics
 			counterSubm = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUBM));
 			counterRej = metrics.counter(MetricRegistry.name(name, METRIC_NAME_REJ));
-			counterReqSucc = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUCC));
 			counterReqFail = metrics.counter(MetricRegistry.name(name, METRIC_NAME_FAIL));
+			throughPut = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_TP));
 			reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));
 			//reqDur = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR));
 			respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
-			jmxReporter.start();
-			//
-			metricDumpThread.setName(getName());
-			metricDumpThread.start();
 			//
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
+				//
+				jmxReporter.start();
+				metricDumpThread.setName(getName());
+				metricDumpThread.start();
 			} else {
 				//
 				try {
@@ -310,6 +298,10 @@ implements LoadExecutor<T> {
 				} catch(final IllegalStateException e) {
 					TraceLogger.failure(LOG, Level.WARN, e, "Failed to configure the storage");
 				}
+				//
+				jmxReporter.start();
+				metricDumpThread.setName(getName());
+				metricDumpThread.start();
 				//
 				try {
 					producer.start();
@@ -428,7 +420,7 @@ implements LoadExecutor<T> {
 				consumer.submit(null);
 			} else if(status == AsyncIOTask.Status.SUCC) {
 				// update the metrics with success
-				counterReqSucc.inc();
+				throughPut.mark();
 				if(latency > 0) {
 					respLatency.update(latency);
 				}
@@ -437,7 +429,7 @@ implements LoadExecutor<T> {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "Task #{}: successfull result, {}/{}",
-						ioTask.hashCode(), counterReqSucc.getCount(), ioTask.getTransferSize()
+						ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
 					);
 				}
 				// feed to the consumer
