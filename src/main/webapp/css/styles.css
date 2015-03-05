@@ -110,10 +110,10 @@ li input:checked + ul > li:last-child {
 	margin-left: 10px;
 }
 
-.stop {
+/*.stop {
 	width: 100%;
 	padding: 10px 15px;
-}
+}*/
 
 .tab-content {
 	width: 100%;
@@ -241,6 +241,10 @@ text.shadow {
 #chart-pills > li {
 	float: none;
 	display: inline-block;
+}
+
+#scenario-tab li:nth-child(2) {
+	margin-right: 40px;
 }
 
 #log-pills {

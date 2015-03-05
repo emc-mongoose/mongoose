@@ -808,17 +808,17 @@
 							<c:if test="${not empty chartsMap[mode]}">
 								<li><a href="#${correctMode}-charts" data-toggle="tab">Charts</a></li>
 							</c:if>
+							<li>
+								<c:if test="${empty sessionScope.stopped[mode]}">
+									<button type="button" class="btn btn-danger stop" value="${mode}">
+										Stop
+									</button>
+								</c:if>
+							</li>
 						</ul>
 						<div class="tab-content">
 							<div class="tab-pane active" id="${correctMode}-logs">
 								<ul id="log-pills" class="nav nav-pills">
-									<li>
-										<c:if test="${empty sessionScope.stopped[mode]}">
-											<button type="button" class="btn btn-danger stop" value="${mode}">
-												Stop
-											</button>
-										</c:if>
-									</li>
 									<li class="active"><a href="#${correctMode}-messages-csv" data-toggle="pill">messages.csv</a></li>
 									<li><a href="#${correctMode}-errors-log" data-toggle="pill">errors.log</a></li>
 									<li><a href="#${correctMode}-perf-avg-csv" data-toggle="pill">perf.avg.csv</a></li>
