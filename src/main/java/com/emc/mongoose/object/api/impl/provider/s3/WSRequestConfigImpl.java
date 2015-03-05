@@ -199,6 +199,8 @@ extends WSRequestConfigBase<T> {
 			} catch(final NoSuchMethodException e) {
 				TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
 			}
+		} else {
+			LOG.debug(Markers.MSG, "Using of bucket listing data producer is suppressed");
 		}
 		return producer;
 	}

@@ -277,6 +277,12 @@ implements WSRequestConfig<T> {
 		} else {
 			ioTask = WSIOTaskImpl.getInstanceFor(this, dataItem, nodeAddr);
 		}
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "Task #{}: linked with target address \"{}\" and data item \"{}\"",
+				ioTask.hashCode(), nodeAddr, dataItem
+			);
+		}
 		return ioTask;
 	}
 	//

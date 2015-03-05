@@ -67,8 +67,7 @@ implements Producer<T> {
 		LOG.debug(
 			Markers.MSG, "Will try to produce up to {} objects of {} size", maxCount,
 			minObjSize == maxObjSize ?
-				RunTimeConfig.formatSize(minObjSize)
-				:
+				RunTimeConfig.formatSize(minObjSize) :
 				RunTimeConfig.formatSize(minObjSize)+".."+RunTimeConfig.formatSize(maxObjSize)
 		);
 		//

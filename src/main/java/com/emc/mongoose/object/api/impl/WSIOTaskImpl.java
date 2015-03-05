@@ -33,6 +33,7 @@ import org.apache.http.protocol.HttpCoreContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import sun.nio.cs.ext.MacArabic;
 //
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -66,13 +67,6 @@ implements WSIOTask<T> {
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
 	) throws InterruptedException {
 		final WSIOTaskImpl<T> ioTask = (WSIOTaskImpl<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
-		LOG.trace(
-			Markers.MSG,
-			String.format(
-				"linked task #%d to {%s, %x, %s}",
-				ioTask.hashCode(), reqConf, dataItem.getOffset(), nodeAddr
-			)
-		);
 		return ioTask;
 	}
 	//
@@ -200,7 +194,7 @@ implements WSIOTask<T> {
 		try {
 			wsReqConf.applyHeadersFinally(httpRequest);
 			reqEntity = httpRequest.getEntity();
-			if(LOG.isTraceEnabled()) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Task #{}: generating the request w/ {} bytes of content",
 					hashCode(), reqEntity == null ? "NO" : reqEntity.getContentLength()
@@ -217,7 +211,7 @@ implements WSIOTask<T> {
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
 		try(final OutputStream outStream = ContentOutputStream.getInstance(out, ioCtl)) {
-			if(reqEntity != null) {
+			if(reqEntity != null && reqEntity.getContentLength() > 0) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "Task #{}, write out {} bytes",
@@ -225,9 +219,16 @@ implements WSIOTask<T> {
 					);
 				}
 				reqEntity.writeTo(outStream);
+			} else if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Task #{}: No content to produce", hashCode());
+				out.complete();
 			}
 		} catch(final InterruptedException e) {
-			// do nothing
+			// ignored
+		} catch(final Exception e) {
+			TraceLogger.failure(
+				LOG, Level.WARN, e, String.format("Task #%d: content producing failure", hashCode())
+			);
 		}
 	}
 	//
@@ -280,6 +281,9 @@ implements WSIOTask<T> {
 		//
 		respTimeStart = System.nanoTime() / 1000;
 		final StatusLine status = response.getStatusLine();
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "#{}, got response \"{}\"", hashCode(), status);
+		}
 		respStatusCode = status.getStatusCode();
 		//
 		if(respStatusCode < 200 || respStatusCode >= 300) {
@@ -432,9 +436,6 @@ implements WSIOTask<T> {
 				httpRequest.getMethod(), httpRequest.getUriAddr(), httpRequest.getUriPath()
 			);
 		} else {
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG, "Task #{} is successful", hashCode());
-			}
 			this.status = Status.SUCC;
 			wsReqConf.receiveResponse(response, dataItem);
 		}
@@ -443,6 +444,9 @@ implements WSIOTask<T> {
 	@Override
 	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
 	throws IOException {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "#{}: start content consuming", hashCode());
+		}
 		try(final InputStream contentStream = ContentInputStream.getInstance(in, ioCtl)) {
 			if(respStatusCode < 200 || respStatusCode >= 300) { // failure
 				final BufferedReader contentStreamBuff = new BufferedReader(
@@ -474,6 +478,9 @@ implements WSIOTask<T> {
 	@Override
 	public final void responseCompleted(final HttpContext context) {
 		respTimeDone = System.nanoTime() / 1000;
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "#{}: response completed", hashCode());
+		}
 		complete();
 	}
 	//

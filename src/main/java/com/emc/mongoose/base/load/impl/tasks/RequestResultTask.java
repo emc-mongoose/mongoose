@@ -44,11 +44,7 @@ implements Runnable, Reusable {
 			TraceLogger.failure(LOG, Level.TRACE, e, "Request has been cancelled");
 		} catch(final ExecutionException e) {
 			TraceLogger.failure(
-				LOG, Level.DEBUG, e,
-				String.format(
-					"Task #%d @ \"%s\" execution failure",
-					ioTask.hashCode(), ioTask.getNodeAddr()
-				)
+				LOG, Level.DEBUG, e, String.format("Task #%d execution failure", ioTask.hashCode())
 			);
 		} catch(final Exception e) {
 			TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");

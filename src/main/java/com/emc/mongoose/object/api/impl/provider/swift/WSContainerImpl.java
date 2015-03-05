@@ -72,7 +72,7 @@ implements Container<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					if(statusCode == HttpStatus.SC_OK) {
+					if(statusCode >= 200 && statusCode < 300) {
 						LOG.debug(Markers.MSG, "Container \"{}\" exists", name);
 						flagExists = true;
 					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
@@ -111,7 +111,7 @@ implements Container<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					if(statusCode == HttpStatus.SC_OK) {
+					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(Markers.MSG, "Container \"{}\" created", name);
 					} else {
 						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
@@ -174,7 +174,7 @@ implements Container<T> {
 	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	private HttpResponse execute(
+	final HttpResponse execute(
 		final WSLoadExecutor<T> wsClient, final WSIOTask.HTTPMethod method
 	) throws IOException {
 		//
@@ -193,6 +193,10 @@ implements Container<T> {
 					reqConf.getSvcBasePath(), reqConf.getNameSpace(), name
 				)
 			);
+		// if method is get add json format parameter to uri path
+		if(WSIOTask.HTTPMethod.GET.equals(method)) {
+			httpReq.setUriPath(httpReq.getUriPath() + "?format=json");
+		}
 		reqConf.applyHeadersFinally(httpReq);
 		return wsClient.execute(httpReq);
 	}

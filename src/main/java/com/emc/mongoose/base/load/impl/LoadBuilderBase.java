@@ -194,7 +194,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilder<T, U> setMinObjSize(final long minObjSize)
 	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set min data item size: {}", RunTimeConfig.formatSize(minObjSize));
-		if(minObjSize > 0) {
+		if(minObjSize >= 0) {
 			LOG.debug(Markers.MSG, "Using min object size: {}", RunTimeConfig.formatSize(minObjSize));
 		} else {
 			throw new IllegalArgumentException("Min object size should not be less than min");
@@ -207,7 +207,7 @@ implements LoadBuilder<T, U> {
 	public LoadBuilder<T, U> setMaxObjSize(final long maxObjSize)
 	throws IllegalArgumentException {
 		LOG.debug(Markers.MSG, "Set max data item size: {}", RunTimeConfig.formatSize(maxObjSize));
-		if(maxObjSize > 0) {
+		if(maxObjSize >= 0) {
 			LOG.debug(Markers.MSG, "Using max object size: {}", RunTimeConfig.formatSize(maxObjSize));
 		} else {
 			throw new IllegalArgumentException("Max object size should not be less than min");

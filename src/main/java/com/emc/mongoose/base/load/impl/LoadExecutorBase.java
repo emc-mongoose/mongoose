@@ -426,7 +426,7 @@ implements LoadExecutor<T> {
 		try {
 			if(dataItem == null) {
 				consumer.submit(null);
-			} else if(status== AsyncIOTask.Status.SUCC) {
+			} else if(status == AsyncIOTask.Status.SUCC) {
 				// update the metrics with success
 				counterReqSucc.inc();
 				if(latency > 0) {
@@ -434,6 +434,10 @@ implements LoadExecutor<T> {
 				}
 				reqBytes.mark(ioTask.getTransferSize());
 				durSumTasks.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
+				LOG.info(
+					Markers.MSG, "Task #{}: successfull result, {}/{}",
+					ioTask.hashCode(), counterReqSucc.getCount(), ioTask.getTransferSize()
+				);
 				// feed to the consumer
 				if(consumer != null) {
 					consumer.submit(dataItem);

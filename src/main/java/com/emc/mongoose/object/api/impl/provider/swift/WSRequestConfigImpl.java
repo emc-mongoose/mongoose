@@ -2,16 +2,20 @@ package com.emc.mongoose.object.api.impl.provider.swift;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.Producer;
+import com.emc.mongoose.object.data.impl.WSObjectImpl;
+import com.emc.mongoose.object.load.WSLoadExecutor;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.object.api.MutableWSRequest;
 import com.emc.mongoose.object.api.impl.WSRequestConfigBase;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
+import com.emc.mongoose.util.logging.TraceLogger;
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
 //
 import org.apache.http.message.BasicHeader;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -239,12 +243,17 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final void configureStorage(final LoadExecutor<T> client)
 	throws IllegalStateException {
-		// configure an auth token
+		// configure an auth token - create if not specified
+		String authTokenValue;
 		if(authToken == null) {
 			throw new IllegalStateException("No auth token specified");
+		} else {
+			authTokenValue = authToken.getValue();
+			if(authTokenValue == null || authTokenValue.length() < 1) {
+				authToken.create(client);
+				authTokenValue = authToken.getValue();
+			}
 		}
-		authToken.create(client);
-		final String authTokenValue = authToken.getValue();
 		if(authTokenValue == null) {
 			throw new IllegalStateException("No auth token was created");
 		}
@@ -274,7 +283,19 @@ extends WSRequestConfigBase<T> {
 	public final Producer<T> getAnyDataProducer(
 		final long maxCount, final LoadExecutor<T> loadExecutor
 	) {
-		return null; // TODO swift specific things
+		Producer<T> producer = null;
+		if(anyDataProducerEnabled) {
+			try {
+				producer = new WSContainerProducer<>(
+					container, WSObjectImpl.class, maxCount, (WSLoadExecutor<T>) loadExecutor
+				);
+			} catch(final NoSuchMethodException e) {
+				TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
+			}
+		} else {
+			LOG.debug(Markers.MSG, "Using of container listing data producer is suppressed");
+		}
+		return producer;
 	}
 	//
 }

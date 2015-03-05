@@ -188,8 +188,19 @@ implements AppendableDataItem, UpdatableDataItem {
 	@Override
 	public final boolean isContentEqualTo(final InputStream in)
 	throws IOException {
+		// do not go over ranges if there's no updated ones
+		if(maskRangesHistory.isEmpty()) {
+			if(layerNum.get() == 0) {
+				return isContentEqualTo(in, 0, size);
+			} else {
+				return new UniformData(
+					offset, size, layerNum.get(), UniformDataSource.DEFAULT
+				).isContentEqualTo(in, 0, size);
+			}
+		}
+		//
 		boolean contentEquals = true;
-		final int countRangesTotal = getRangeCount(size);
+		final int countRangesTotal = size > 0 ? getRangeCount(size) : Integer.MAX_VALUE;
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
 		for(int i = 0; i < countRangesTotal; i ++) {
@@ -380,7 +391,7 @@ implements AppendableDataItem, UpdatableDataItem {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
 			final int
-				lastCellPos = getRangeCount(size) - 1,
+				lastCellPos = size > 0 ? getRangeCount(size) - 1 : 0,
 				nextCellPos = getRangeCount(size + augmentSize);
 			if(lastCellPos < nextCellPos && maskRangesHistory.get(lastCellPos)) {
 				maskRangesPending.set(lastCellPos, nextCellPos);
@@ -402,9 +413,11 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException {
 		if(pendingAugmentSize > 0) {
 			synchronized(this) {
-				if(maskRangesHistory.get(getRangeCount(size) - 1)) { // write from next layer
+				final int rangeIndex = size > 0 ? getRangeCount(size) - 1 : 0;
+				if(maskRangesHistory.get(rangeIndex)) { // write from next layer
 					new UniformData(
-						offset + size, pendingAugmentSize, layerNum.get() + 1, UniformDataSource.DEFAULT
+						offset + size, pendingAugmentSize, layerNum.get() + 1,
+						UniformDataSource.DEFAULT
 					).writeTo(out);
 					size += pendingAugmentSize;
 				} else { // write from current layer

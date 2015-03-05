@@ -213,31 +213,46 @@ implements DataItem {
 		size = in.readLong();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	@SuppressWarnings("InfiniteLoopStatement")
 	public void writeTo(final OutputStream out)
 	throws IOException {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
 		}
-		final byte buff[] = new byte[size < MAX_PAGE_SIZE ? (int) size : MAX_PAGE_SIZE];
-		final int
-			countPages = (int) size / buff.length,
-			countTailBytes = (int) size % buff.length;
-		synchronized(this) {
-			setOffset(offset, 0); // resets the position in the ring to the beginning of the item
-			//
-			for(int i = 0; i < countPages; i++) {
-				if(read(buff) == buff.length) {
-					out.write(buff);
-				} else {
-					throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
+		if(size > 0) { // finite size
+			final byte buff[] = new byte[size < MAX_PAGE_SIZE ? (int) size : MAX_PAGE_SIZE];
+			final int
+				countPages = (int) size / buff.length,
+				countTailBytes = (int) size % buff.length;
+			synchronized(this) {
+				setOffset(offset, 0); // reset the ring buffer position to the beginning of the item
+				//
+				for(int i = 0; i < countPages; i++) {
+					if(read(buff) == buff.length) {
+						out.write(buff);
+					} else {
+						throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
+					}
+				}
+				// tail bytes
+				if(countTailBytes > 0) {
+					if(read(buff, 0, countTailBytes) == countTailBytes) {
+						out.write(buff, 0, countTailBytes);
+					} else {
+						throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
+					}
 				}
 			}
-			// tail bytes
-			if(countTailBytes > 0) {
-				if(read(buff, 0, countTailBytes)==countTailBytes) {
-					out.write(buff, 0, countTailBytes);
-				} else {
-					throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
+		} else { // infinite size
+			final byte buff[] = new byte[MAX_PAGE_SIZE];
+			synchronized(this) {
+				setOffset(offset, 0); // reset the ring buffer position to the beginning of the item
+				while(true) {
+					if(read(buff) == buff.length) {
+						out.write(buff);
+					} else {
+						throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
+					}
 				}
 			}
 		}
@@ -251,74 +266,133 @@ implements DataItem {
 	) throws IOException {
 		//
 		boolean contentEquals = true;
-		final int
-			pageSize = (int) (rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE),
-			countPages = (int) (rangeLength / pageSize),
-			countTailBytes = (int) (rangeLength % pageSize);
-		final byte
-			buff1[] = new byte[pageSize],
-			buff2[] = new byte[pageSize];
-		int doneByteCountSum, doneByteCount;
-		//
-		synchronized(this) {
-			setOffset(offset, rangeOffset);
-			for(int i = 0; i < countPages; i++) {
-				if(pageSize == read(buff1)) {
+		if(rangeLength > 0) { // finite size
+			final int
+				pageSize = (int) (rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE),
+				countPages = (int) (rangeLength / pageSize),
+				countTailBytes = (int) (rangeLength % pageSize);
+			final byte
+				buff1[] = new byte[pageSize],
+				buff2[] = new byte[pageSize];
+			int doneByteCountSum, doneByteCount;
+			//
+			synchronized(this) {
+				setOffset(offset, rangeOffset);
+				for(int i = 0; i < countPages; i++) {
+					if(pageSize == read(buff1)) {
+						doneByteCountSum = 0;
+						do {
+							doneByteCount = in.read(
+								buff2, doneByteCountSum, pageSize - doneByteCountSum
+							);
+							if(doneByteCount < 0) {
+								throw new EOFException("Unexpected end of data");
+							} else {
+								doneByteCountSum += doneByteCount;
+							}
+						} while(doneByteCountSum < pageSize);
+						contentEquals = Arrays.equals(buff1, buff2);
+						if(!contentEquals) {
+							LOG.debug(
+								Markers.ERR,
+								FMT_MSG_CORRUPT, rangeOffset, i * pageSize,
+								Base64.encodeBase64URLSafeString(buff1),
+								Base64.encodeBase64URLSafeString(buff2)
+							);
+							break;
+						}
+					} else {
+						LOG.debug(Markers.ERR, MSG_READ_STREAM_BLOCKED);
+						contentEquals = false;
+						break;
+					}
+				}
+				//
+				if(contentEquals && countTailBytes > 0) {
+					// tail bytes
+					if(read(buff1, 0, countTailBytes) == countTailBytes) {
+						doneByteCountSum = 0;
+						do {
+							doneByteCount = in.read(
+								buff2, doneByteCountSum, countTailBytes - doneByteCountSum
+							);
+							if(doneByteCount < 0) {
+								throw new EOFException("Unexpected end of data");
+							} else {
+								doneByteCountSum += doneByteCount;
+							}
+						} while(doneByteCountSum < countTailBytes);
+						contentEquals = Arrays.equals(buff1, buff2);
+						if(!contentEquals) {
+							LOG.debug(
+								Markers.ERR, FMT_MSG_CORRUPT,
+								rangeOffset, rangeLength - countTailBytes,
+								Base64.encodeBase64URLSafeString(buff1),
+								Base64.encodeBase64URLSafeString(buff2)
+							);
+						}
+					} else {
+						LOG.debug(Markers.ERR, MSG_READ_STREAM_BLOCKED);
+						contentEquals = false;
+					}
+				}
+			}
+		} else { // infinite size
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Size of the content to read is unknown");
+			}
+			final byte
+				buff1[] = new byte[MAX_PAGE_SIZE],
+				buff2[] = new byte[MAX_PAGE_SIZE];
+			int doneByteCountSum, doneByteCount, i = 0;
+			//
+			synchronized(this) {
+				setOffset(offset, rangeOffset);
+				while(true) {
+					// read some bytes from remote side firstly
 					doneByteCountSum = 0;
 					do {
 						doneByteCount = in.read(
-							buff2, doneByteCountSum, pageSize - doneByteCountSum
+							buff2, doneByteCountSum, MAX_PAGE_SIZE - doneByteCountSum
 						);
 						if(doneByteCount < 0) {
-							throw new EOFException("Unexpected end of data");
+							break;
 						} else {
 							doneByteCountSum += doneByteCount;
+							size += doneByteCount; // determine the size from input
+							if(LOG.isTraceEnabled(Markers.MSG)) {
+								LOG.trace(Markers.MSG, "Consumed {} bytes", size);
+							}
 						}
-					} while(doneByteCountSum < pageSize);
-					contentEquals = Arrays.equals(buff1, buff2);
+					} while(doneByteCountSum < MAX_PAGE_SIZE);
+					// read the same count of bytes from ring buffer
+					if(doneByteCountSum == read(buff1, 0, doneByteCountSum)) {
+						contentEquals = Arrays.equals(buff1, buff2);
+					} else {
+						contentEquals = false;
+						LOG.warn(Markers.ERR, "Failed to read the data from ring buffer");
+					}
+					//
 					if(!contentEquals) {
 						LOG.debug(
 							Markers.ERR,
-							FMT_MSG_CORRUPT, rangeOffset, i * pageSize,
+							FMT_MSG_CORRUPT, rangeOffset, i * MAX_PAGE_SIZE,
 							Base64.encodeBase64URLSafeString(buff1),
 							Base64.encodeBase64URLSafeString(buff2)
 						);
 						break;
 					}
-				} else {
-					LOG.debug(Markers.ERR, MSG_READ_STREAM_BLOCKED);
-					contentEquals = false;
-					break;
+					//
+					if(doneByteCount < 0) {
+						break;
+					}
+					//
+					i ++;
 				}
 			}
 			//
-			if(contentEquals && countTailBytes > 0) {
-				// tail bytes
-				if(read(buff1, 0, countTailBytes) == countTailBytes) {
-					doneByteCountSum = 0;
-					do {
-						doneByteCount = in.read(
-							buff2, doneByteCountSum, countTailBytes - doneByteCountSum
-						);
-						if(doneByteCount < 0) {
-							throw new EOFException("Unexpected end of data");
-						} else {
-							doneByteCountSum += doneByteCount;
-						}
-					} while(doneByteCountSum < countTailBytes);
-					contentEquals = Arrays.equals(buff1, buff2);
-					if(!contentEquals) {
-						LOG.debug(
-							Markers.ERR, FMT_MSG_CORRUPT,
-							rangeOffset, rangeLength - countTailBytes,
-							Base64.encodeBase64URLSafeString(buff1),
-							Base64.encodeBase64URLSafeString(buff2)
-						);
-					}
-				} else {
-					LOG.debug(Markers.ERR, MSG_READ_STREAM_BLOCKED);
-					contentEquals = false;
-				}
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Content consuming done @ {} bytes", size);
 			}
 		}
 		//

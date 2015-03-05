@@ -273,7 +273,7 @@
 					}
 				}, {
 					"name": "com.emc.mongoose.base.load.impl.tasks",
-					"level": "debug",
+					"level": "trace",
 					"additivity": "false",
 					"AppenderRef": {
 						"ref": "async"

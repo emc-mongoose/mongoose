@@ -29,7 +29,7 @@ import org.xml.sax.SAXException;
 /**
  Created by kurila on 08.10.14.
  */
-public final class WSBucketProducer<T extends WSObject, U extends WSObject>
+public final class WSBucketProducer<T extends WSObject>
 extends Thread
 implements Producer<T> {
 	//
@@ -43,7 +43,7 @@ implements Producer<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public WSBucketProducer(
-		final WSBucketImpl<T> bucket, final Class<U> dataCls, final long maxCount,
+		final WSBucketImpl<T> bucket, final Class<? extends WSObject> dataCls, final long maxCount,
 		final WSLoadExecutor<T> wsClient
 	) throws ClassCastException, NoSuchMethodException {
 		super("bucket-" + bucket + "-producer");
@@ -71,14 +71,19 @@ implements Producer<T> {
 			final HttpResponse httpResp = bucket.execute(wsClient, WSIOTask.HTTPMethod.GET);
 			if(httpResp != null) {
 				final StatusLine statusLine = httpResp.getStatusLine();
-				if(statusLine==null) {
-					LOG.warn(Markers.MSG, "No response status");
+				if(statusLine == null) {
+					LOG.warn(Markers.MSG, "No response status returnde");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					if(statusCode == HttpStatus.SC_OK) {
+					if(statusCode >= 200 && statusCode < 300) {
 						final HttpEntity respEntity = httpResp.getEntity();
-						if(respEntity != null && respEntity.getContentType() != null) {
-							final String respContentType = respEntity.getContentType().getValue();
+						if(respEntity != null) {
+							String respContentType = ContentType.APPLICATION_XML.getMimeType();
+							if(respEntity.getContentType() != null) {
+								respContentType = respEntity.getContentType().getValue();
+							} else {
+								LOG.debug(Markers.ERR, "No content type returned");
+							}
 							if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
 								try {
 									final SAXParser parser = SAXParserFactory
@@ -104,6 +109,7 @@ implements Producer<T> {
 									respContentType
 								);
 							}
+							EntityUtils.consumeQuietly(respEntity);
 						}
 					} else {
 						final String statusMsg = statusLine.getReasonPhrase();
@@ -113,7 +119,6 @@ implements Producer<T> {
 						);
 					}
 				}
-				EntityUtils.consumeQuietly(httpResp.getEntity());
 			}
 		} catch(final IOException e) {
 			TraceLogger.failure(

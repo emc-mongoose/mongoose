@@ -69,8 +69,10 @@ implements WSLoadBuilder<T, U> {
 		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 		if(minObjSize > maxObjSize) {
 			throw new IllegalStateException(
-				"Min object size ("+Long.toString(minObjSize)+
-					") should be less than upper bound "+Long.toString(maxObjSize)
+				String.format(
+					"Min object size (%s) shouldn't be more than max (%s)",
+					RunTimeConfig.formatSize(minObjSize), RunTimeConfig.formatSize(maxObjSize)
+				)
 			);
 		}
 		return (U) new LoadExecutorImpl<>(

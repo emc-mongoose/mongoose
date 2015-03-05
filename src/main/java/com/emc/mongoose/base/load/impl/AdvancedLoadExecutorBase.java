@@ -41,10 +41,10 @@ extends LoadExecutorBase<T> {
 		switch(loadType) {
 			case APPEND:
 			case CREATE:
-				if(sizeMin < 1) {
+				if(sizeMin < 0) {
 					throw new IllegalArgumentException(
 						String.format(
-							"Min data item size (%s) is less than 1 [bytes]",
+							"Min data item size (%s) is less than zero",
 							RunTimeConfig.formatSize(sizeMin)
 						)
 					);
@@ -52,7 +52,7 @@ extends LoadExecutorBase<T> {
 				if(sizeMin > sizeMax) {
 					throw new IllegalArgumentException(
 						String.format(
-							"Min object size (%s) should be less than max (%s)",
+							"Min object size (%s) shouldn't be more than max (%s)",
 							RunTimeConfig.formatSize(sizeMin), RunTimeConfig.formatSize(sizeMax)
 						)
 					);
@@ -98,11 +98,17 @@ extends LoadExecutorBase<T> {
 					}
 					break;
 				case UPDATE:
-					dataItem.updateRandomRanges(countUpdPerReq);
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "Modified {} ranges for object \"{}\"",
-							countUpdPerReq, dataItem
+					if(dataItem.getSize() > 0) {
+						dataItem.updateRandomRanges(countUpdPerReq);
+						if(LOG.isTraceEnabled(Markers.MSG)) {
+							LOG.trace(
+								Markers.MSG, "Modified {} ranges for object \"{}\"",
+								countUpdPerReq, dataItem
+							);
+						}
+					} else {
+						throw new RejectedExecutionException(
+							"It's impossible to update empty data item"
 						);
 					}
 					break;
