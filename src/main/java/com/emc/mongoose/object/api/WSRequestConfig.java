@@ -64,6 +64,9 @@ extends ObjectRequestConfig<T> {
 	String getNameSpace();
 	WSRequestConfig<T> setNameSpace(final String ns);
 	//
+	WSRequestConfig<T> setFileAccessEnabled(final boolean fsAccessFlag);
+	boolean getFileAccessEnabled();
+	//
 	@Override
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//

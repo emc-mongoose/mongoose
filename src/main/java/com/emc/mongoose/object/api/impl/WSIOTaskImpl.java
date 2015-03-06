@@ -123,7 +123,6 @@ implements WSIOTask<T> {
 		try {
 			super.setDataItem(dataItem);
 			wsReqConf.applyDataItem(httpRequest, dataItem);
-			transferSize += httpRequest.toString().length(); // coarse approximation
 		} catch(final Exception e) {
 			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply data item");
 		}

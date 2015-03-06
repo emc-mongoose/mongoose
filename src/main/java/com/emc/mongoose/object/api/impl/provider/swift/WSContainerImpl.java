@@ -211,11 +211,10 @@ implements Container<T> {
 				httpReq.setUriPath(httpReq.getUriPath() + "?format=json");
 				break;
 			case PUT:
-				final RunTimeConfig contextConfig = RunTimeConfig.getContext();
 				httpReq.setHeader(
 					new BasicHeader(
 						WSRequestConfig.KEY_EMC_FS_ACCESS,
-						Boolean.toString(contextConfig.getStorageFileAccessEnabled())
+						Boolean.toString(reqConf.getFileAccessEnabled())
 					)
 				);
 				break;

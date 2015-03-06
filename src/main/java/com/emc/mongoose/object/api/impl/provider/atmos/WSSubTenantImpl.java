@@ -1,6 +1,7 @@
 package com.emc.mongoose.object.api.impl.provider.atmos;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
+import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.object.api.MutableWSRequest;
@@ -70,14 +71,15 @@ implements SubTenant<T> {
 			httpReq.setUriPath(String.format(WSRequestConfigImpl.FMT_URI, SUBTENANT));
 			httpReq.setHeader(
 				new BasicHeader(
-					WSRequestConfigImpl.KEY_EMC_FS_ACCESS,
-					Boolean.toString(reqConf.getFileSystemAccessEnabled())
+					WSRequestConfig.KEY_EMC_FS_ACCESS,
+					Boolean.toString(reqConf.getFileAccessEnabled())
 				)
 			);
 		} else {
 			httpReq.setUriPath(
 				String.format(
-					WSRequestConfigImpl.FMT_SLASH, String.format(WSRequestConfigImpl.FMT_URI, SUBTENANT), name
+					WSRequestConfigImpl.FMT_SLASH,
+					String.format(WSRequestConfigImpl.FMT_URI, SUBTENANT), name
 				)
 			);
 		}

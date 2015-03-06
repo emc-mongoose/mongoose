@@ -1,6 +1,5 @@
 package com.emc.mongoose.object.load;
 //
-import com.emc.mongoose.object.load.ObjectLoadExecutor;
 import com.emc.mongoose.object.data.WSObject;
 //
 import org.apache.http.HttpRequest;

@@ -164,6 +164,17 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
+	public final WSRequestConfigImpl<T> setFileAccessEnabled(final boolean flag) {
+		super.setFileAccessEnabled(flag);
+		if(flag) {
+			uriBasePath = String.format(FMT_URI, API_TYPE_FS);
+		} else {
+			uriBasePath = String.format(FMT_URI, API_TYPE_OBJ);
+		}
+		return this;
+	}
+	//
+	@Override
 	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//
@@ -173,7 +184,7 @@ extends WSRequestConfigBase<T> {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_SUBTENANT);
 		}
 		//
-		if(fsAccess) {
+		if(runTimeConfig.getStorageFileAccessEnabled()) {
 			uriBasePath = String.format(FMT_URI, API_TYPE_FS);
 		} else {
 			uriBasePath = String.format(FMT_URI, API_TYPE_OBJ);
