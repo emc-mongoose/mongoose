@@ -194,14 +194,15 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> ioTask)
-	throws RemoteException {
+	public final Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> ioTask) {
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-		Future<WSIOTask.Status> futureResult;
+		Future<WSIOTask.Status> futureResult = null;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask.getHttpContext());
 		} catch(final IllegalStateException e) {
-			throw new RemoteException("I/O task submit failure", e);
+			TraceLogger.failure(
+				LOG, Level.WARN, e, "Failed to submit the HTTP request for execution"
+			);
 		}
 		return futureResult;
 	}

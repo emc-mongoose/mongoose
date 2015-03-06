@@ -206,7 +206,7 @@ implements DataItemBufferSvc<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private volatile Consumer<T> consumer = null;
 	private final Thread producerThread = new Thread("tmpFileProducer") {
-		@Override
+		@Override @SuppressWarnings("unchecked")
 		public final void run() {
 			if(TmpFileItemBuffer.super.isTerminated()) {
 				LOG.debug(Markers.MSG, "{}: started", getThreadFactory().toString());
@@ -232,7 +232,7 @@ implements DataItemBufferSvc<T> {
 						final ObjectInput
 							fBuffIn = new ObjectInputStream(new FileInputStream(fBuff))
 					) {
-						while(availDataItems -- > 0 && consumerMaxCount -- > 0) {
+						while(availDataItems-- > 0 && consumerMaxCount-- > 0) {
 							nextDataItem = (T) fBuffIn.readObject();
 							consumer.submit(nextDataItem);
 							if(nextDataItem == null) {
@@ -240,6 +240,8 @@ implements DataItemBufferSvc<T> {
 							}
 						}
 						LOG.debug(Markers.MSG, "done producing");
+					} catch(final RemoteException e) {
+						TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to submit a data item");
 					} catch(final IOException | ClassNotFoundException | ClassCastException e) {
 						TraceLogger.failure(LOG, Level.WARN, e, "Failed to read a data item");
 					} catch(final InterruptedException e) {

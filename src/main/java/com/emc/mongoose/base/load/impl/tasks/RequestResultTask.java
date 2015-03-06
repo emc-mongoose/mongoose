@@ -36,32 +36,33 @@ implements Runnable, Reusable {
 	@Override
 	public final void run() {
 		AsyncIOTask.Status ioTaskStatus = AsyncIOTask.Status.FAIL_UNKNOWN;
-		try {
-			ioTaskStatus = futureResult.get(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
+		if(futureResult != null) {
+			try {
+				ioTaskStatus = futureResult.get(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
+			} catch(final InterruptedException | CancellationException e) {
+				TraceLogger.failure(LOG, Level.TRACE, e, "Request has been cancelled");
+			} catch(final ExecutionException e) {
+				TraceLogger.failure(
+					LOG, Level.DEBUG, e,
+					String.format("Task #%d execution failure", ioTask.hashCode())
+				);
+			} catch(final Exception e) {
+				TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");
+			}
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Task #{} done w/ result {}",
 					ioTask.hashCode(), ioTaskStatus.name()
 				);
 			}
-		} catch(final InterruptedException | CancellationException e) {
-			TraceLogger.failure(LOG, Level.TRACE, e, "Request has been cancelled");
-		} catch(final ExecutionException e) {
-			TraceLogger.failure(
-				LOG, Level.DEBUG, e, String.format("Task #%d execution failure", ioTask.hashCode())
-			);
-		} catch(final Exception e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");
-		}
-		//
-		if(executor != null) {
-			try {
-				executor.handleResult(ioTask, ioTaskStatus);
-			} catch(final IOException e) {
-				TraceLogger.failure(LOG, Level.DEBUG, e, "Request result handling failed");
+			if(executor != null) {
+				try {
+					executor.handleResult(ioTask, ioTaskStatus);
+				} catch(final IOException e) {
+					TraceLogger.failure(LOG, Level.DEBUG, e, "Request result handling failed");
+				}
 			}
 		}
-		//
 		release();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +83,7 @@ implements Runnable, Reusable {
 	public final RequestResultTask<T> reuse(final Object... args)
 	throws IllegalArgumentException, IllegalStateException {
 		if(isAvailable.compareAndSet(true, false)) {
-			if(args==null) {
+			if(args == null) {
 				throw new IllegalArgumentException("No arguments for reusing the instance");
 			}
 			if(args.length > 0) {
@@ -96,9 +97,6 @@ implements Runnable, Reusable {
 			}
 			if(args.length > 2) {
 				futureResult = (Future<AsyncIOTask.Status>) args[2];
-				if(futureResult == null) {
-					throw new IllegalArgumentException("I/O task future result shouldn't be null");
-				}
 			}
 		} else {
 			throw new IllegalStateException("Not yet released instance reuse attempt");
