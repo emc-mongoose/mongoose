@@ -35,13 +35,11 @@ extends WSRequestConfigBase<T> {
 	public final static String
 		FMT_PATH = "/%s/%s",
 		KEY_BUCKET = "api.s3.bucket",
-		KEY_BUCKET_VERSIONING = KEY_BUCKET + ".versioning",
 		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
 	private final String fmtAuthValue;
 	//
 	private WSBucketImpl<T> bucket;
-	private boolean bucketVersioning = false;
 	//
 	public WSRequestConfigImpl()
 	throws NoSuchAlgorithmException {
@@ -78,15 +76,6 @@ extends WSRequestConfigBase<T> {
 		return this;
 	}
 	//
-	public final boolean getBucketVersioning() {
-		return bucketVersioning;
-	}
-	//
-	public final WSRequestConfigImpl<T> setBucketVersioning(final boolean flag) {
-		this.bucketVersioning = flag;
-		return this;
-	}
-	//
 	@Override
 	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
 		return this;
@@ -95,8 +84,6 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
-		//
-		setBucketVersioning(runTimeConfig.getBoolean(KEY_BUCKET_VERSIONING));
 		//
 		try {
 			setBucket(new WSBucketImpl<>(this, this.runTimeConfig.getString(KEY_BUCKET)));

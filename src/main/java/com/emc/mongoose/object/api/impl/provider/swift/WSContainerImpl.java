@@ -3,9 +3,11 @@ package com.emc.mongoose.object.api.impl.provider.swift;
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.object.api.MutableWSRequest;
 import com.emc.mongoose.object.api.WSIOTask;
+import com.emc.mongoose.object.api.WSRequestConfig;
 import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.object.load.WSLoadExecutor;
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
 //
@@ -14,6 +16,9 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -199,10 +204,23 @@ implements Container<T> {
 					reqConf.getSvcBasePath(), reqConf.getNameSpace(), name
 				)
 			);
-		// if method is get add json format parameter to uri path
-		if(WSIOTask.HTTPMethod.GET.equals(method)) {
-			httpReq.setUriPath(httpReq.getUriPath() + "?format=json");
+		//
+		switch(method) {
+			case GET:
+				// if method is get add json format parameter to uri path
+				httpReq.setUriPath(httpReq.getUriPath() + "?format=json");
+				break;
+			case PUT:
+				final RunTimeConfig contextConfig = RunTimeConfig.getContext();
+				httpReq.setHeader(
+					new BasicHeader(
+						WSRequestConfig.KEY_EMC_FS_ACCESS,
+						Boolean.toString(contextConfig.getStorageFileAccessEnabled())
+					)
+				);
+				break;
 		}
+		//
 		reqConf.applyHeadersFinally(httpReq);
 		return wsClient.execute(httpReq);
 	}

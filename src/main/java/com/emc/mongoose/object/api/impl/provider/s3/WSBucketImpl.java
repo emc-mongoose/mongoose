@@ -2,6 +2,7 @@ package com.emc.mongoose.object.api.impl.provider.s3;
 //
 import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.object.api.MutableWSRequest;
 import com.emc.mongoose.object.api.WSIOTask;
@@ -80,14 +81,15 @@ implements Bucket<T> {
 		//
 		final MutableWSRequest httpReq = method.createRequest().setUriPath("/" + name);
 		//
+		final RunTimeConfig contextConfig = RunTimeConfig.getContext();
 		if(WSIOTask.HTTPMethod.PUT.equals(method)) {
 			httpReq.setHeader(
 				new BasicHeader(
 					WSRequestConfigImpl.KEY_EMC_FS_ACCESS,
-					Boolean.toString(reqConf.getFileSystemAccessEnabled())
+					Boolean.toString(contextConfig.getStorageFileAccessEnabled())
 				)
 			);
-			if(reqConf.getBucketVersioning()) {
+			if(RunTimeConfig.getContext().getStorageVersioningEnabled()) {
 				httpReq.setEntity(
 					new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
 				);

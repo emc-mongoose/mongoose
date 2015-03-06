@@ -57,7 +57,6 @@ implements WSRequestConfig<T> {
 	//
 	public final static long serialVersionUID = 42L;
 	protected final String userAgent, signMethod;
-	protected boolean fsAccess = false;
 	//
 	public static WSRequestConfigBase getInstance() {
 		return newInstanceFor(RunTimeConfig.getContext().getStorageApi());
@@ -211,7 +210,7 @@ implements WSRequestConfig<T> {
 		}
 		//
 		try {
-			setFileSystemAccessEnabled(runTimeConfig.getEmcFileSystemAccessEnabled());
+			setFileSystemAccessEnabled(runTimeConfig.getStorageFileAccessEnabled());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "http.emc.fs.access");
 		}
@@ -238,18 +237,6 @@ implements WSRequestConfig<T> {
 		//
 		return this;
 	}
-	//
-	@Override
-	public final boolean getFileSystemAccessEnabled() {
-		return fsAccess;
-	}
-	//
-	@Override
-	public final WSRequestConfigBase<T> setFileSystemAccessEnabled(final boolean flag) {
-		this.fsAccess = flag;
-		return this;
-	}
-	//
 	//
 	@Override
 	public final List<Header> getSharedHeaders() {

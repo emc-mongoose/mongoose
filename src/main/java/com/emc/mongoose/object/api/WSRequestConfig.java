@@ -61,9 +61,6 @@ extends ObjectRequestConfig<T> {
 	@Override
 	WSRequestConfig<T> setRetries(final boolean retryFlag);
 	//
-	WSRequestConfig<T> setFileSystemAccessEnabled(final boolean fsAccessFlag);
-	boolean getFileSystemAccessEnabled();
-	//
 	String getNameSpace();
 	WSRequestConfig<T> setNameSpace(final String ns);
 	//
