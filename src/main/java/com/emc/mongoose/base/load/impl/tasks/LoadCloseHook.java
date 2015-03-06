@@ -68,6 +68,8 @@ implements Runnable {
 				TraceLogger.failure(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
 			} catch(final SecurityException | IllegalArgumentException e) {
 				TraceLogger.failure(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
+			} finally {
+				HOOKS_MAP.remove(loadExecutor);
 			}
 		} else {
 			LOG.trace(Markers.ERR, "No shutdown hook registered for \"{}\"", loadExecutor);
