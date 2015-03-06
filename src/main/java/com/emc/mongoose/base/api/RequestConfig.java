@@ -32,7 +32,7 @@ extends Externalizable, Cloneable, Closeable {
 	RequestConfig<T> setScheme(final String scheme);
 	//
 	//String getAddr();
-	//RequestConfig<T> setAddr(final String addr);
+	//WSRequestConfigImpl<T> setAddr(final String addr);
 	//
 	int getPort();
 	RequestConfig<T> setPort(final int port);

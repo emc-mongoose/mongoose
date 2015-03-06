@@ -7,7 +7,7 @@
 
 	<servlet>
 		<servlet-name>MainServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.web.ui.MainServlet</servlet-class>
+		<servlet-class>com.emc.mongoose.webui.MainServlet</servlet-class>
 		<load-on-startup>1</load-on-startup>
 	</servlet>
 
@@ -18,7 +18,7 @@
 
 	<servlet>
 		<servlet-name>StartServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.web.ui.StartServlet</servlet-class>
+		<servlet-class>com.emc.mongoose.webui.StartServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
@@ -28,7 +28,7 @@
 
 	<servlet>
 		<servlet-name>StopServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.web.ui.StopServlet</servlet-class>
+		<servlet-class>com.emc.mongoose.webui.StopServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
@@ -38,7 +38,7 @@
 
 	<servlet>
 		<servlet-name>LogServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.web.ui.websockets.impl.LogServlet</servlet-class>
+		<servlet-class>com.emc.mongoose.webui.websockets.impl.LogServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>
@@ -48,7 +48,7 @@
 
 	<servlet>
 		<servlet-name>SaveServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.web.ui.SaveServlet</servlet-class>
+		<servlet-class>com.emc.mongoose.webui.SaveServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>

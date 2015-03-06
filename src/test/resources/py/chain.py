@@ -68,50 +68,63 @@ def build(
 	#
 def execute(chain=(), flagSimultaneous=True):
 	runTimeOut = timeOutInit()
-	if flagSimultaneous:
-		for load in reversed(chain):
-			load.start()
-		for load in chain:
-			try:
-				load.join(runTimeOut[1].toMillis(runTimeOut[0]))
-			except InterruptedException:
-				pass
-			finally:
-				load.close()
-	else:
-		prevLoad, nextLoad = None, None
-		for nextLoad in chain:
-			if not isinstance(nextLoad, DataItemBuffer):
-				LOG.info(Markers.MSG, "Starting next load job: \"{}\"", nextLoad)
-				nextLoad.start()
-				if prevLoad is not None and isinstance(prevLoad, DataItemBuffer):
-					prevLoad.close()
-					prevLoad.start()
-					try:
-						nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
-					except InterruptedException as e:
-						raise e
-					except Throwable as e:
-						TraceLogger.failure(
-							LOG, Level.ERROR, e,
-							String.format("Producer \"%s\" execution failure", prevLoad)
-						)
-					finally:
-						prevLoad.interrupt()
-						nextLoad.close()
-				else:
-					try:
-						nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
-					except InterruptedException as e:
-						raise e
-					except Throwable as e:
-						TraceLogger.failure(
-							LOG, Level.ERROR, e,
-							String.format("Consumer \"%s\" execution failure", nextLoad)
-						)
-					finally:
-						nextLoad.close()
-			prevLoad = nextLoad
+	try:
+		if flagSimultaneous:
+			for load in reversed(chain):
+				load.start()
+			for load in chain:
+				try:
+					load.join(runTimeOut[1].toMillis(runTimeOut[0]))
+				except InterruptedException:
+					pass
+				finally:
+					load.close()
+		else:
+			prevLoad, nextLoad = None, None
+			for nextLoad in chain:
+				if not isinstance(nextLoad, DataItemBuffer):
+					LOG.debug(Markers.MSG, "Starting next load job: \"{}\"", nextLoad)
+					nextLoad.start()
+					if prevLoad is not None and isinstance(prevLoad, DataItemBuffer):
+						LOG.debug(Markers.MSG, "Stop buffering the data items into \"{}\"", prevLoad)
+						prevLoad.close()
+						LOG.debug(Markers.MSG, "Start producing the data items from \"{}\"", prevLoad)
+						prevLoad.start()
+						try:
+							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
+						except InterruptedException as e:
+							raise e
+						except Throwable as e:
+							TraceLogger.failure(
+								LOG, Level.ERROR, e,
+								String.format("Producer \"%s\" execution failure", prevLoad)
+							)
+						finally:
+							LOG.debug(Markers.MSG, "Load job \"{}\" done", nextLoad)
+							prevLoad.interrupt()
+							LOG.debug(Markers.MSG, "Stop producing the data items from \"{}\"", prevLoad)
+							nextLoad.close()
+							LOG.debug(Markers.MSG, "Load job \"{}\" closed", nextLoad)
+					else:
+						try:
+							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
+						except InterruptedException as e:
+							raise e
+						except Throwable as e:
+							TraceLogger.failure(
+								LOG, Level.ERROR, e,
+								String.format("Consumer \"%s\" execution failure", nextLoad)
+							)
+						finally:
+							LOG.debug(Markers.MSG, "Load job \"{}\" done", nextLoad)
+							nextLoad.close()
+							LOG.debug(Markers.MSG, "Load job \"{}\" closed", nextLoad)
+				prevLoad = nextLoad
+	finally:
+		if chain is not None:
+			for loadJob in chain:
+				del loadJob
+			del chain
 #
 if __name__ == "__builtin__":
 	#
