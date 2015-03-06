@@ -47,7 +47,11 @@ repositories {
 dependencies {
 
 	webui (
-		'jstl:jstl:1.2'
+		'jstl:jstl:1.2',
+		//  web jars
+		'org.webjars:bootstrap:3.3.2-1',
+		'org.webjars:jquery:2.1.0',
+		'org.webjars:d3js:3.5.3'
 	)
 
 	compile (

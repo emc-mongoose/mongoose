@@ -7,7 +7,7 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Mongoose-Run</title>
-		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<link rel='stylesheet' href='webjars/bootstrap/3.3.2-1/css/bootstrap.min.css'>
 		<link href="css/styles.css" rel="stylesheet">
 	</head>
 	<body>
@@ -979,9 +979,9 @@
 				</c:forEach>
 			</div>
 		</div>
-		<script type="text/javascript" src="js/d3.min.js"></script>
-		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
-		<script type="text/javascript" src="js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="webjars/d3js/3.5.3/d3.min.js"></script>
+		<script type="text/javascript" src="webjars/jquery/2.1.0/jquery.min.js"></script>
+		<script type="text/javascript" src="webjars/bootstrap/3.3.2-1/js/bootstrap.min.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
 		<script>
 			propertiesMap = ${runTimeConfig.propertiesMap};
