@@ -12,7 +12,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import com.emc.mongoose.util.logging.TraceLogger;
 import org.apache.http.Header;
-import org.apache.http.HttpResponse;
 //
 import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.Level;
@@ -41,9 +40,11 @@ extends WSRequestConfigBase<T> {
 		KEY_X_AUTH_TOKEN = "X-Auth-Token",
 		KEY_X_AUTH_USER = "X-Auth-User",
 		KEY_X_AUTH_KEY = "X-Auth-Key",
+		KEY_X_VERSIONING = "X-Versions-Location",
 		//
 		FMT_URI_CONTAINER_PATH = "/%s/%s/%s",
-		FMT_URI_OBJECT_PATH = "%s/%s";
+		FMT_URI_OBJECT_PATH = "%s/%s",
+		DEFAULT_VERSIONS_CONTAINER = "archive";
 	//
 	private String nameSpace = null, uriSvcBasePath = null, uriSvcBaseContainerPath = null;
 	private WSAuthTokenImpl<T> authToken = null;
@@ -64,6 +65,11 @@ extends WSRequestConfigBase<T> {
 			}
 			if(reqConf2Clone.uriSvcBaseContainerPath != null) {
 				uriSvcBaseContainerPath = reqConf2Clone.uriSvcBaseContainerPath;
+			}
+			if(reqConf2Clone.sharedHeadersMap.containsKey(KEY_X_VERSIONING)) {
+				sharedHeadersMap.put(
+					KEY_X_VERSIONING, reqConf2Clone.sharedHeadersMap.get(KEY_X_VERSIONING)
+				);
 			}
 			setAuthToken(reqConf2Clone.getAuthToken());
 			setContainer(reqConf2Clone.getContainer());
@@ -175,6 +181,12 @@ extends WSRequestConfigBase<T> {
 			container = new WSContainerImpl<>(this, runTimeConfig.getString(KEY_CONF_CONTAINER));
 		} else {
 			LOG.error(Markers.ERR, "Swift container is not specified");
+		}
+		//
+		if(runTimeConfig.getStorageVersioningEnabled()) {
+			sharedHeadersMap.put(KEY_X_VERSIONING, DEFAULT_VERSIONS_CONTAINER);
+		} else if(sharedHeadersMap.containsKey(KEY_X_VERSIONING)) {
+			sharedHeadersMap.remove(KEY_X_VERSIONING);
 		}
 		//
 		refreshContainerPath();
