@@ -10,12 +10,12 @@ import java.io.Serializable;
 //
 import static javax.persistence.GenerationType.IDENTITY;
 /**
- * Created by olga on 23.10.14.
+ * Created by olga on 21.10.14.
  */
 @Entity
-@Table(name = "Class", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
-public class MessageClassEntity
-implements Serializable{
+@Table(name = "LoadType", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
+public class LoadTypeEntity
+	implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
@@ -23,22 +23,22 @@ implements Serializable{
 	@Column(name = "name")
 	private String name;
 	//
-	public MessageClassEntity(){
+	public LoadTypeEntity(){
 	}
-	public MessageClassEntity(final String name){
+	public LoadTypeEntity(final String name){
 		this.name = name;
 	}
 	//
-	public final String getName() {
-		return name;
-	}
-	public final void setName(final String name) {
-		this.name = name;
-	}
 	public final long getId() {
 		return id;
 	}
 	public final void setId(final long id) {
 		this.id = id;
+	}
+	public final String getName() {
+		return name;
+	}
+	public final void setName(final String name) {
+		this.name = name;
 	}
 }

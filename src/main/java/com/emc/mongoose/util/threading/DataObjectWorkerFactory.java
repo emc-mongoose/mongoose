@@ -12,7 +12,7 @@ public final class DataObjectWorkerFactory
 		KEY_LOAD_NUM = "load.number",
 		KEY_API = "api",
 		KEY_LOAD_TYPE = "load.type",
-		KEY_THREAD_NUM = "thread.number";
+		KEY_CONNECTION_NUM = "connection.number";
 	//
 	private final int loadNumber;
 	private final String api;
@@ -63,7 +63,7 @@ public final class DataObjectWorkerFactory
 			ThreadContextMap.putValue(KEY_LOAD_NUM, String.valueOf(loadNumber));
 			ThreadContextMap.putValue(KEY_API, api);
 			ThreadContextMap.putValue(KEY_LOAD_TYPE, loadType.toString());
-			ThreadContextMap.putValue(KEY_THREAD_NUM, String.valueOf(threadNumber));
+			ThreadContextMap.putValue(KEY_CONNECTION_NUM, String.valueOf(threadNumber));
 			super.run();
 		}
 	}

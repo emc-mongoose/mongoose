@@ -9,6 +9,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 import java.util.Date;
 import static javax.persistence.GenerationType.IDENTITY;
@@ -16,7 +17,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 17.10.14.
  */
 @Entity
-@Table(name = "run")
+@Table(name = "run", uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "tstamp"})})
 public class RunEntity
 	implements Serializable {
 	@Id
@@ -24,11 +25,11 @@ public class RunEntity
 	@Column(name = "id")
 	private long id;
 	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	@JoinColumn(name = "mode", nullable = false)
+	@JoinColumn(name = "mode", referencedColumnName = "id", nullable = false)
 	private ModeEntity mode;
 	@Column(name = "name")
 	private String name;
-	@Column(name = "tstamp",  unique = true)
+	@Column(name = "tstamp")
 	private Date timestamp;
 	//
 	public RunEntity(){

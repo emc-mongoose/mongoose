@@ -12,8 +12,17 @@
 		<class>com.emc.mongoose.util.persist.MessageClassEntity</class>
 		<class>com.emc.mongoose.util.persist.MessageEntity</class>
 		<class>com.emc.mongoose.util.persist.DataObjectEntity</class>
+		<class>com.emc.mongoose.util.persist.ApiEntity</class>
+		<class>com.emc.mongoose.util.persist.LoadTypeEntity</class>
+		<class>com.emc.mongoose.util.persist.LoadEntity</class>
+		<class>com.emc.mongoose.util.persist.NodeEntity</class>
+		<class>com.emc.mongoose.util.persist.ConnectionEntity</class>
 		<properties>
 			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
+			<property name="openjpa.DynamicEnhancementAgent" value="true"/>
+			<property name="openjpa.jdbc.MappingDefaults"
+					  value="ForeignKeyDeleteAction=restrict,JoinForeignKeyDeleteAction=restrict"/>
+			<property name="openjpa.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true)" />
 			<property name="openjpa.ConnectionURL" value="jdbc:postgresql://localhost:5432/mongoose"/>
 			<property name="openjpa.ConnectionDriverName" value="org.postgresql.Driver"/>
 			<property name="openjpa.ConnectionUserName" value="mongoose"/>

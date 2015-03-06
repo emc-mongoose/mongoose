@@ -16,7 +16,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 23.10.14.
  */
 @Entity
-@Table(name = "Level")
+@Table(name = "Level", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
 public class LevelEntity
 implements Serializable{
 	@Id

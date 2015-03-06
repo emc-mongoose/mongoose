@@ -4,19 +4,20 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 /**
  * Created by olga on 28.10.14.
  */
 @Entity(name="Status")
-@Table(name = "status")
+@Table(name = "status", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
 //not final because catch: "OpenJPA cannot dynamically subclass final types."
 public class StatusEntity
 	implements Serializable{
 	@Id
 	@Column(name = "code")
 	private int code;
-	@Column(name = "name", unique = true)
+	@Column(name = "name")
 	private String name;
 	//
 	public StatusEntity(){

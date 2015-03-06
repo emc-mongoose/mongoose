@@ -39,7 +39,7 @@ implements Serializable{
 	@Temporal( TemporalType.TIMESTAMP )
 	@Column(name = "tstamp")
 	private Date tstamp;
-	@Column(name = "message")
+	@Column(name = "message", length = 1000000)
 	private String message;
 	//
 	public MessageEntity(){
