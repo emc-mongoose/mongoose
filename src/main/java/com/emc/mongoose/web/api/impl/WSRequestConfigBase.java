@@ -470,6 +470,8 @@ implements WSRequestConfig<T> {
 						} else {
 							TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
 						}
+					} finally {
+						playStreamQuietly(contentStream); // not all data may be played - consume quetly
 					}
 				} else { // read, verification is disabled - consume quietly
 					playStreamQuietly(contentStream);
