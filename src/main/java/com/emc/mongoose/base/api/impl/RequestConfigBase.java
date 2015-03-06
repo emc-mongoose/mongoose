@@ -219,7 +219,7 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final RequestConfigBase<T> setAPISpecificProducerEnabled(final boolean enabledFlag) {
+	public final RequestConfigBase<T> setAnyDataProducerEnabled(final boolean enabledFlag) {
 		this.anyDataProducerEnabled = enabledFlag;
 		return this;
 	}
