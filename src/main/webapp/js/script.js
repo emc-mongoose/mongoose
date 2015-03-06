@@ -1,4 +1,5 @@
 $(document).ready(function() {
+	$("#backup-run\\.mode").val($("#run\\.mode").val());
 	var WEBSOCKET_URL = "ws://" + window.location.host + "/logs";
 	var TABLE_ROWS_COUNT = 100;
 	excludeDuplicateOptions();
@@ -100,6 +101,11 @@ $(document).ready(function() {
 		$("#api-button").attr("data-target", "#" + valueSelected);
 	});
 	//
+	$("#backup-run\\.mode").on("change", function() {
+		var currElement = $(this);
+		$("#run\\.mode").val(currElement.val());
+	});
+	//
 	$("#base input, #base select").on("change", function() {
 		var currElement = $(this);
 		if (currElement.parents(".complex").length === 1) {
@@ -110,6 +116,7 @@ $(document).ready(function() {
 		//
 		var element = document.getElementById(currElement.attr("data-pointer"));
 		if (currElement.is("select")) {
+			alert("a");
 			var valueSelected = currElement.children("option").filter(":selected").text().trim();
 			$('select[data-pointer="'+currElement.attr("data-pointer")+'"]').val(currElement.val());
 			if (element) {

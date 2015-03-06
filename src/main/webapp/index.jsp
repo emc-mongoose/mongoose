@@ -62,8 +62,8 @@
 							<div id="menu" class="col-xs-12 col-sm-5 col-md-4 col-lg-3 no-padding">
 								<div id="run-modes">
 									<div>
-										<label for="config-type">Run mode</label>
-										<select>
+										<label for="backup-run.mode">Run mode</label>
+										<select id="backup-run.mode" data-pointer="run.mode">
 											<option value="standalone">standalone</option>
 											<option value="client">load client</option>
 											<option value="server">load server</option>
@@ -738,7 +738,8 @@
 														Load threads
 													</label>
 													<div class="col-sm-9">
-														<input type="text" id="backup-load.threads" data-pointer="load.threads" class="form-control">
+														<input type="text" id="backup-load.threads" data-pointer="load.threads" class="form-control"
+																value="${rt:getString(runTimeConfig, 'load.threads')}">
 													</div>
 												</div>
 
@@ -758,7 +759,8 @@
 														Items size
 													</label>
 													<div class="col-sm-9">
-														<input type="text" id="backup-data.size" data-pointer="data.size" class="form-control">
+														<input type="text" id="backup-data.size" data-pointer="data.size" class="form-control"
+																value="${rt:getString(runTimeConfig, 'data.size')}">
 													</div>
 												</div>
 
@@ -787,9 +789,16 @@
 								</div>
 								<div id="extended">
 									<form class="form-horizontal" id="main-form" role="form">
-										<input type="hidden" name="run.mode" id="run-mode" value="standalone">
-										<input type="hidden" id="data.size" name="data.size">
-										<input type="hidden" id="load.threads" name="load.threads">
+										<c:choose>
+											<c:when test = "${runTimeConfig.runMode ne 'webui'}">
+												<input type="hidden" name="run.mode" id="run.mode" value="${runTimeConfig.runMode}">
+											</c:when>
+											<c:otherwise>
+												<input type="hidden" name="run.mode" id="run.mode" value="standalone">
+											</c:otherwise>
+										</c:choose>
+										<input type="hidden" id="data.size" name="data.size" value="${rt:getString(runTimeConfig, 'data.size')}">
+										<input type="hidden" id="load.threads" name="load.threads" value="${rt:getString(runTimeConfig, 'load.threads')}">
 										<!-- Input fields with labels from JS -->
 										<div id="configuration-content">
 
