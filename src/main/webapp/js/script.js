@@ -116,7 +116,6 @@ $(document).ready(function() {
 		//
 		var element = document.getElementById(currElement.attr("data-pointer"));
 		if (currElement.is("select")) {
-			alert("a");
 			var valueSelected = currElement.children("option").filter(":selected").text().trim();
 			$('select[data-pointer="'+currElement.attr("data-pointer")+'"]').val(currElement.val());
 			if (element) {
@@ -548,7 +547,7 @@ function loadPropertiesFromFile(file) {
 function charts(chartsArray) {
 	var margin = {top: 40, right: 200, bottom: 60, left: 60},
 		width = 1070 - margin.left - margin.right,
-		height = 500 - margin.top - margin.bottom;
+		height = 460 - margin.top - margin.bottom;
 	//  Some constants
 	var SCENARIO = {
 		single: "single",
@@ -775,7 +774,7 @@ function charts(chartsArray) {
 			.attr("text-anchor", "middle")
 			.style("font-size", "16px")
 			.style("text-decoration", "underline")
-			.text("Throughput[obj/s]");
+			.text(json.threadName);
 		return function(chartType, value) {
 			var splitIndex = 0;
 			switch(chartType) {
@@ -1412,6 +1411,9 @@ function charts(chartsArray) {
 			}
 		},
 		rampup: function(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes) {
+			//
+			// change default width
+			width = 480;
 			//
 			var loadTypes = scenarioChainLoad.slice(1, -1).split(",");
 			var rampupThreadCountsArray = rampupThreadCounts.slice(1, -1).split(",").map(function(item) {
