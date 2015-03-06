@@ -456,30 +456,24 @@ implements WSRequestConfig<T> {
 		final InputStream contentStream, final IOControl ioCtl, T dataItem
 	) {
 		boolean ok = true;
-		if(dataItem != null) {
-			if(loadType == AsyncIOTask.Type.READ) { // read
-				if(verifyContentFlag) { // read and do verify
-					try {
+		try {
+			if(dataItem != null) {
+				if(loadType == AsyncIOTask.Type.READ) { // read
+					if(verifyContentFlag) { // read and do verify
 						ok = dataItem.isContentEqualTo(contentStream);
-					} catch(final IOException e) {
-						ok = false;
-						if(isClosed()) {
-							TraceLogger.failure(
-								LOG, Level.DEBUG, e, "Failed to read the content after closing"
-							);
-						} else {
-							TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
-						}
-					} finally {
-						playStreamQuietly(contentStream); // not all data may be played - consume quetly
 					}
-				} else { // read, verification is disabled - consume quietly
-					playStreamQuietly(contentStream);
 				}
-			} else { // append | create | delete | update - consume quietly
-				playStreamQuietly(contentStream);
 			}
-		} else { // poison or special request (e.g. bucket-related)? - consume quietly
+		} catch(final IOException e) {
+			ok = false;
+			if(isClosed()) {
+				TraceLogger.failure(
+					LOG, Level.DEBUG, e, "Failed to read the content after closing"
+				);
+			} else {
+				TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
+			}
+		} finally { // try to read the remaining data if left in the input stream
 			playStreamQuietly(contentStream);
 		}
 		return ok;

@@ -60,7 +60,7 @@ extends Externalizable, Cloneable, Closeable {
 	AsyncIOTask<T> getRequestFor(final T dataItem, final String nodeAddr)
 	throws InterruptedException;
 	//
-	RequestConfig<T> setAnyDataProducerEnabled(final boolean enabled);
+	RequestConfig<T> setAPISpecificProducerEnabled(final boolean enabled);
 	Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> loadExecutor);
 	//
 	void configureStorage(final LoadExecutor<T> loadExecutor)
