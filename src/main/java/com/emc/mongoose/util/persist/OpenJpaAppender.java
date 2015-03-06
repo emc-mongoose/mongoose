@@ -195,10 +195,14 @@ extends AbstractAppender {
 	}
 	//
 	private void persistDataList(final String[] message){
-		DataObjectEntity dataObjectEntity = new DataObjectEntity( message[0], message[1],
-			Long.valueOf(message[2]), Long.valueOf(message[3], 0x10),
-			Long.valueOf(message[4], 0x10));
 		final EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
+		DataObjectEntityPK dataObjectEntityPK = new DataObjectEntityPK(message[0], Long.valueOf(message[2]));
+		DataObjectEntity dataObjectEntity = entityManager.find(DataObjectEntity.class, dataObjectEntityPK);
+		if (dataObjectEntity == null){
+			dataObjectEntity = new DataObjectEntity( message[0], message[1],
+				Long.valueOf(message[2]), Long.valueOf(message[3], 0x10),
+				Long.valueOf(message[4], 0x10));
+		}
 		try {
 			entityManager.getTransaction().begin();
 			entityManager.persist(dataObjectEntity);
@@ -261,8 +265,9 @@ extends AbstractAppender {
 			entityManager.persist(loadEntity);
 			//
 			final StatusEntity statusEntity = entityManager.find(StatusEntity.class, Integer.valueOf(message[3], 0x10));
+			//entityManager.persist(statusEntity);
 			//
-			System.out.println("Connection create");
+			System.out.println("Connection");
 			final long connectionNumber = Long.valueOf(
 				event.getContextMap().get(DataObjectWorkerFactory.KEY_CONNECTION_NUM)
 			);
@@ -275,6 +280,19 @@ extends AbstractAppender {
 				connectionEntity = new ConnectionEntity(loadEntity, nodeEntity, connectionNumber);
 			}
 			entityManager.persist(connectionEntity);
+			//
+			System.out.println("data object");
+			DataObjectEntityPK dataObjectEntityPK = new DataObjectEntityPK(message[1], Integer.valueOf(message[2]));
+			DataObjectEntity dataObjectEntity = entityManager.find(DataObjectEntity.class, dataObjectEntityPK);
+			if (dataObjectEntity == null){
+				dataObjectEntity = new DataObjectEntity(message[1], Integer.valueOf(message[2]));
+			}
+			entityManager.merge(dataObjectEntity);
+			//
+			System.out.println("trace");
+			TraceEntity traceEntity = new TraceEntity(dataObjectEntity, connectionEntity, statusEntity,
+				Long.valueOf(message[4]), Long.valueOf(message[5]), Long.valueOf(message[6]));
+			entityManager.persist(traceEntity);
 			entityManager.getTransaction().commit();
 			System.out.println("commit");
 			entityManager.close();

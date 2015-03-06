@@ -17,6 +17,7 @@
 		<class>com.emc.mongoose.util.persist.LoadEntity</class>
 		<class>com.emc.mongoose.util.persist.NodeEntity</class>
 		<class>com.emc.mongoose.util.persist.ConnectionEntity</class>
+		<class>com.emc.mongoose.util.persist.TraceEntity</class>
 		<properties>
 			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
 			<property name="openjpa.DynamicEnhancementAgent" value="true"/>

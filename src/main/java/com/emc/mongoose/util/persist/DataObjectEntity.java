@@ -76,7 +76,6 @@ public class DataObjectEntity
 	}
 }
 /////////////////////////////////////////////
-@Embeddable
 class DataObjectEntityPK
 implements Serializable {
 	//
@@ -112,9 +111,6 @@ implements Serializable {
 	}
 	@Override
 	public int hashCode() {
-		int hsCode;
-		hsCode = Long.valueOf(this.size).hashCode();
-		hsCode = 19 * hsCode + this.identifier.hashCode();
-		return hsCode;
+		return (int) (this.size + this.identifier.hashCode());
 	}
 }
