@@ -35,6 +35,9 @@ configurations {
 	runtime {
 		extendsFrom compile
 	}
+	webui {
+		transitive = true
+	}
 }
 
 repositories {
@@ -42,6 +45,10 @@ repositories {
 }
 
 dependencies {
+
+	webui (
+		'jstl:jstl:1.2'
+	)
 
 	compile (
 		//
@@ -51,19 +58,18 @@ dependencies {
 		//
 		'org.apache.logging.log4j:log4j-api:2.1',
 		'org.apache.logging.log4j:log4j-core:2.1',
-		'org.apache.logging.log4j:log4j-web:2.1',
 		//
 		'org.apache.httpcomponents:httpcore-nio:4.4',
 		//
         'org.eclipse.jetty:jetty-server:9.3.0.M1',
 		'org.eclipse.jetty:jetty-webapp:9.3.0.M1',
+		'org.apache.logging.log4j:log4j-web:2.1',
 		//
 		'javax.servlet:javax.servlet-api:3.1.0',
         'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
 		'org.eclipse.jetty.websocket:websocket-server:9.3.0.M1',
 		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
 		//
-		'jstl:jstl:1.2',
 		'org.apache.commons:commons-collections4:4.0',
 		'commons-cli:commons-cli:1.2',
 		//
@@ -145,8 +151,7 @@ distributions {
 				from { 'src/main/webapp' }
 			}
 			into('webapp/WEB-INF/lib') {
-				from { configurations.compile.files {dep -> dep.name == 'jstl'} }
-				from { configurations.compile.files {dep -> dep.name == 'log4j-web'} }
+				from { configurations.webui.files }
 			}
 		}
 	}
