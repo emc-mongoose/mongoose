@@ -206,7 +206,12 @@ implements AppendableDataItem, UpdatableDataItem {
 		for(int i = 0; i < countRangesTotal; i ++) {
 			rangeOffset = getRangeOffset(i);
 			rangeSize = getRangeSize(i);
-			if(maskRangesHistory.get(i)) { // range have been modified
+			if(maskRangesHistory.get(i)) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "{}: range #{} has been modified", Long.toHexString(offset), i
+					);
+				}
 				updatedRange = new UniformData(
 					offset + rangeOffset, rangeSize, layerNum.get() + 1, UniformDataSource.DEFAULT
 				);
@@ -221,7 +226,13 @@ implements AppendableDataItem, UpdatableDataItem {
 						Base64.encodeBase64URLSafeString(contentRangeStream.toByteArray())
 					);
 				}
-			} else if(layerNum.get() > 1) { // previous layer of updated ranges
+			} else if(layerNum.get() > 1) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "{}: range #{} contains previous layer of data",
+						Long.toHexString(offset), i
+					);
+				}
 				updatedRange = new UniformData(
 					offset + rangeOffset, rangeSize, layerNum.get(), UniformDataSource.DEFAULT
 				);

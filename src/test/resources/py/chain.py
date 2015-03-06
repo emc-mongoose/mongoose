@@ -165,6 +165,7 @@ if __name__ == "__builtin__":
 		LOG.debug(Markers.MSG, "No \"scenario.chain.itemsbuffer\" specified")
 	#
 	loadBuilder = loadBuilderInit()
+	loadBuilder.getRequestConfig().setAnyDataProducerEnabled(False)
 	#
 	chain = build(
 		loadBuilder, loadTypesChain, flagSimultaneous, flagItemsBuffer,
