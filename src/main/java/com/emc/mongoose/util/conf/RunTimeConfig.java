@@ -368,6 +368,10 @@ implements Externalizable {
 	public final String getRunMode() {
 		return getString(KEY_RUN_MODE);
 	}
+	//
+	public final String getWuiWSTimeout() {
+		return getString("remote.wuisvc.ws.timeout");
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)

@@ -11,6 +11,11 @@
 		<link href="css/styles.css" rel="stylesheet">
 	</head>
 	<body>
+		<!-- For waiting image -->
+		<div id="wait">
+			<!--<img src="images/ajax-loader.gif" alt="Loading">-->
+		</div>
+		<!-- -->
 		<nav class="navbar navbar-default" role="navigation">
 			<div class="container-fluid">
 				<div class="navbar-header">

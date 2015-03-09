@@ -184,10 +184,12 @@ $(document).ready(function() {
 		var currentElement = $(this);
 		var currentRunId = $(this).attr("value");
 		if (confirm("Please note that the test will be shut down if it's running.") === true) {
+			$("#wait").show();
 			$.post("/stop", { "run.id" : currentRunId, "type" : "remove" }, function() {
 				$("#" + currentRunId).remove();
 				currentElement.parent().remove();
 				$('a[href="#configuration"]').tab('show');
+				$("#wait").hide();
 			});
 		}
 	});
@@ -496,7 +498,9 @@ function getTableRowByMessage(json) {
 }
 //
 function onStartButtonPressed() {
+	$("#wait").show();
 	$.post("/start", $("#main-form").serialize(), function(data) {
+		$("#wait").hide();
 		if (data) {
 			if (confirm("Are you sure? " + data) === true) {
 				$.post("/stop", { "run.id" : $("#run\\.id").val(), "type" : "remove" }, function(data, status) {
@@ -1415,12 +1419,21 @@ function charts(chartsArray) {
 			// change default width
 			width = 480;
 			//
-			var loadTypes = scenarioChainLoad.slice(1, -1).split(",");
-			var rampupThreadCountsArray = rampupThreadCounts.slice(1, -1).split(",").map(function(item) {
-				return parseInt(item, 10);
+			var loadTypes = scenarioChainLoad.split(",").map(function(item) {
+				return item.replace("[", "")
+					.replace("]", "")
+					.trim();
 			});
-			var loadRampupSizesArray = loadRampupSizes.slice(1, -1).split(",").map(function(item) {
-				return item.trim();
+			var rampupThreadCountsArray = rampupThreadCounts.split(",").map(function(item) {
+				var newItem = item.replace("[", "");
+							item.replace("]", "");
+							item.trim();
+				return parseInt(newItem, 10);
+			});
+			var loadRampupSizesArray = loadRampupSizes.split(",").map(function(item) {
+				return item.replace("[", "")
+					.replace("]", "")
+					.trim()
 			});
 			var AVG = "avg";
 			var MIN_1 = "1min";
