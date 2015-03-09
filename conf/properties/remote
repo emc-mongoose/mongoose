@@ -1,6 +1,9 @@
 # mongoose servers list, separated w/comma
-servers:		127.0.0.1
-control.port:	1099
-export.port:	1199
-import.port:	1199
-wuisvc.port:	8080
+servers:		            127.0.0.1
+control.port:	            1099
+export.port:	            1199
+import.port:	            1199
+wuisvc.port:	            8080
+
+# pattern: <integer>.<TimeUnit-case-insensitive-constant>
+wuisvc.ws.timeout:          1.days

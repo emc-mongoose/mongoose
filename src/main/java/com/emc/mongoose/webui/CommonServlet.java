@@ -31,7 +31,7 @@ public abstract class CommonServlet extends HttpServlet {
 		THREADS_MAP = new ConcurrentHashMap<>();
 		STOPPED_RUN_MODES = new ConcurrentHashMap<>();
 		CHARTS_MAP = new ConcurrentHashMap<>();
-		LAST_RUN_TIME_CONFIG = RunTimeConfig.getContext();
+		LAST_RUN_TIME_CONFIG = RunTimeConfig.getContext().clone();
 	}
 	//
 	@Override

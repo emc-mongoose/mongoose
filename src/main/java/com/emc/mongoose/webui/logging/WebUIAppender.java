@@ -1,6 +1,8 @@
 package com.emc.mongoose.webui.logging;
 //
 import com.emc.mongoose.webui.websockets.WebSocketLogListener;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 //
@@ -32,6 +34,8 @@ extends AbstractAppender {
 		LOG_EVENTS_MAP = new ConcurrentHashMap<>();
 	private final static List<WebSocketLogListener>
 		LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
+	//
+	private final static ObjectMapper mapper = new ObjectMapper();
 	//
 	private final static Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
@@ -65,6 +69,7 @@ extends AbstractAppender {
 			sendPreviousLogs(listener);
 			LISTENERS.add(listener);
 		}
+		//return LOG_EVENTS_MAP;
 	}
 	//
 	public static void unregister(final WebSocketLogListener listener) {
@@ -83,7 +88,7 @@ extends AbstractAppender {
 	//
 	@Override
 	public final void append(final LogEvent event) {
-		if (ENABLED_FLAG) {
+		/*if (ENABLED_FLAG) {
 			final String currentRunId = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
 			if (LOG_EVENTS_MAP.get(currentRunId) == null) {
 				LOG_EVENTS_MAP.put(currentRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST));
@@ -92,7 +97,7 @@ extends AbstractAppender {
 			for (final WebSocketLogListener listener : LISTENERS) {
 				listener.sendMessage(event);
 			}
-		}
+		}*/
 	}
 	//
 	public static void removeRunId(final String runId) {
