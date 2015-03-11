@@ -63,15 +63,13 @@ implements WSRequestConfig<T> {
 		return newInstanceFor(RunTimeConfig.getContext().getStorageApi());
 	}
 	//
-	private final static String NAME_CLS_IMPL = "WSRequestConfigImpl";
+	private final static String
+		FMT_CLS_PATH_ADAPTER_IMPL = "storage.adapter.%s.WSRequestConfigImpl";
 	//
 	@SuppressWarnings("unchecked")
 	public static WSRequestConfigBase newInstanceFor(final String api) {
 		WSRequestConfigBase reqConf = null;
-		final String apiImplClsFQN =
-			WSRequestConfigBase.class.getPackage().getName() +
-				Main.DOT + REL_PKG_PROVIDERS + Main.DOT +
-				api.toLowerCase() + Main.DOT + NAME_CLS_IMPL;
+		final String apiImplClsFQN = String.format(FMT_CLS_PATH_ADAPTER_IMPL, api.toLowerCase());
 		try {
 			final Class apiImplCls = Class.forName(apiImplClsFQN);
 			final Constructor<WSRequestConfigBase>

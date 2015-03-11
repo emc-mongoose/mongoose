@@ -1,4 +1,4 @@
-package com.emc.mongoose.run;
+package com.emc.mongoose.core.impl.util;
 //
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 //

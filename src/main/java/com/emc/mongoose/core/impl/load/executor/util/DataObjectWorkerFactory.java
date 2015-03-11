@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.load.executor.util;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.run.ThreadContextMap;
+import com.emc.mongoose.core.impl.util.ThreadContextMap;
 import com.emc.mongoose.core.impl.util.WorkerFactory;
 /**
  * Created by olga on 12.11.14.

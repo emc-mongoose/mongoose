@@ -5,10 +5,11 @@ from loadbuilder import init as loadBuilderInit
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from com.emc.mongoose.base.api import AsyncIOTask
-from com.emc.mongoose.util.conf import RunTimeConfig
-from com.emc.mongoose.util.logging import TraceLogger, Markers
-from com.emc.mongoose.base.load import DataItemBuffer
+from com.emc.mongoose.core.api.io.task import IOTask
+from com.emc.mongoose.core.api.persist import Markers
+from com.emc.mongoose.core.api.persist import DataItemBuffer
+from com.emc.mongoose.core.impl.persist import TraceLogger
+from com.emc.mongoose.core.impl.util import RunTimeConfig
 #
 from java.lang import Long, String, Throwable, IllegalArgumentException, InterruptedException
 #
@@ -27,7 +28,7 @@ def build(
 	for loadTypeStr in loadTypesChain:
 		LOG.debug(Markers.MSG, "Next load type is \"{}\"", loadTypeStr)
 		try:
-			loadBuilder.setLoadType(AsyncIOTask.Type.valueOf(loadTypeStr.upper()))
+			loadBuilder.setLoadType(IOTask.Type.valueOf(loadTypeStr.upper()))
 			if dataItemSizeMin > 0:
 				loadBuilder.setMinObjSize(dataItemSizeMin)
 			if dataItemSizeMax > 0:

@@ -1,7 +1,7 @@
 package com.emc.mongoose.webui;
 //
 import com.emc.mongoose.run.Scenario;
-import com.emc.mongoose.run.ThreadContextMap;
+import com.emc.mongoose.core.impl.util.ThreadContextMap;
 import com.emc.mongoose.core.impl.persist.TraceLogger;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;

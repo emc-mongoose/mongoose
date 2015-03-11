@@ -4,8 +4,9 @@ from __future__ import print_function, absolute_import, with_statement
 from org.apache.logging.log4j import Level, LogManager
 #
 from com.emc.mongoose.run import Main
-from com.emc.mongoose.util.conf import RunTimeConfig
-from com.emc.mongoose.util.logging import TraceLogger, Markers
+from com.emc.mongoose.core.impl.util import RunTimeConfig
+from com.emc.mongoose.core.api.persist import Markers
+from com.emc.mongoose.core.impl.persist import TraceLogger
 #
 from java.lang import IllegalStateException
 from java.util import NoSuchElementException
@@ -25,11 +26,11 @@ def init():
 	#
 	from org.apache.commons.configuration import ConversionException
 	if mode == Main.RUN_MODE_CLIENT or mode == Main.RUN_MODE_COMPAT_CLIENT:
-		from com.emc.mongoose.object.load.client.impl import WSLoadBuilderClientImpl
+		from com.emc.mongoose.client.impl.load.builder import BasicWSLoadBuilderClient
 		from java.rmi import RemoteException
 		try:
 			try:
-				loadBuilderInstance = WSLoadBuilderClientImpl(localRunTimeConfig)
+				loadBuilderInstance = BasicWSLoadBuilderClient(localRunTimeConfig)
 			except ConversionException:
 				LOG.fatal(Markers.ERR, "Servers address list should be comma delimited")
 			except NoSuchElementException:  # no one server addr not specified, try 127.0.0.1
@@ -37,10 +38,10 @@ def init():
 		except RemoteException as e:
 			LOG.fatal(Markers.ERR, "Failed to create load builder client: {}", e)
 	else: # standalone
-		from com.emc.mongoose.object.load.impl.ws import LoadBuilderImpl
+		from com.emc.mongoose.core.impl.load.builder import BasicWSLoadBuilder
 		#
 		try:
-			loadBuilderInstance = LoadBuilderImpl(localRunTimeConfig)
+			loadBuilderInstance = BasicWSLoadBuilder(localRunTimeConfig)
 		except IllegalStateException as e:
 			TraceLogger(LOG, Level.FATAL, e, "Failed to create load builder client")
 	#

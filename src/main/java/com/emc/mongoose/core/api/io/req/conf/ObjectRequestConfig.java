@@ -7,7 +7,4 @@ import com.emc.mongoose.core.api.data.DataObject;
  */
 public interface ObjectRequestConfig<T extends DataObject>
 extends RequestConfig<T> {
-	//
-	String REL_PKG_PROVIDERS = "adapter";
-	//
 }
