@@ -1,7 +1,6 @@
 package com.emc.mongoose.util.persist;
 //
 import javax.persistence.Column;
-import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
@@ -30,8 +29,9 @@ public class DataObjectEntity
 	//
 	public DataObjectEntity(){
 	}
-	public DataObjectEntity(final String identifier, final String ringOffset, final long size,
-							final long layer, final long mask)
+	public DataObjectEntity(
+		final String identifier, final String ringOffset, final long size,
+		final long layer, final long mask)
 	{
 		this.identifier = identifier;
 		this.ringOffset = ringOffset;
@@ -75,7 +75,9 @@ public class DataObjectEntity
 		this.ringOffset = ringOffset;
 	}
 }
-/////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Data object entity composite primary key
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class DataObjectEntityPK
 implements Serializable {
 	//
@@ -100,7 +102,7 @@ implements Serializable {
 	public void setSize(long size) {
 		this.size = size;
 	}
-	//
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public boolean equals(Object o) {
 		if(o == null) return false;

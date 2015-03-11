@@ -11,7 +11,6 @@ import java.io.Serializable;
  */
 @Entity(name="Status")
 @Table(name = "status", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
-//not final because catch: "OpenJPA cannot dynamically subclass final types."
 public class StatusEntity
 	implements Serializable{
 	@Id

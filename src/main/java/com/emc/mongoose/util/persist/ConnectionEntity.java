@@ -2,9 +2,6 @@ package com.emc.mongoose.util.persist;
 //
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.Embedded;
-import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
@@ -12,7 +9,6 @@ import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinColumns;
 import javax.persistence.ManyToOne;
-import javax.persistence.MapKeyColumn;
 import javax.persistence.Table;
 import java.io.Serializable;
 //
@@ -68,7 +64,9 @@ implements Serializable{
 		this.num = num;
 	}
 }
-/////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Connection entity composite primary key
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class ConnectionEntityPK
 implements Serializable{
 	//
@@ -94,7 +92,7 @@ implements Serializable{
 	public void setLoad(LoadEntityPK load) {
 		this.load = load;
 	}
-	///////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final boolean equals(final Object o) {
 		if(o == null) return false;

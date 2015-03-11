@@ -2,10 +2,8 @@ package com.emc.mongoose.util.persist;
 //
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.Embeddable;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
@@ -72,7 +70,9 @@ implements Serializable {
 		this.api = api;
 	}
 }
-@Embeddable
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//Load entity composite primary key
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 class LoadEntityPK
 implements Serializable{
 	//
@@ -98,7 +98,7 @@ implements Serializable{
 	public final void setRun(long run) {
 		this.run = run;
 	}
-	/////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final boolean equals(final Object o) {
 		if(o == null) return false;
