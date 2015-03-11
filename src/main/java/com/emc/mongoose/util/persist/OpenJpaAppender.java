@@ -13,6 +13,7 @@ import org.apache.logging.log4j.core.config.plugins.Plugin;
 import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
+import org.apache.logging.log4j.status.StatusLogger;
 import org.apache.openjpa.persistence.RollbackException;
 import org.apache.openjpa.util.StoreException;
 //
@@ -39,6 +40,8 @@ import java.util.Map;
 public final class OpenJpaAppender
 extends AbstractAppender {
 	//
+	public static final org.apache.logging.log4j.Logger LOGGER = StatusLogger.getLogger();
+	//
 	private static EntityManagerFactory ENTITY_MANAGER_FACTORY = null;
 	//
 	private final static Layout<? extends Serializable>
@@ -49,13 +52,11 @@ extends AbstractAppender {
 		PERF_TRACE = "perfTrace",
 		ERR = "err",
 		DATA_LIST = "dataList";
-
 	//
 	@Override
 	public final void start() {
 		super.start();
 	}
-
 	//
 	@Override
 	public final void stop() {
@@ -64,27 +65,25 @@ extends AbstractAppender {
 			ENTITY_MANAGER_FACTORY.close();
 		}
 	}
-
 	//
 	private OpenJpaAppender(
 		final String name, final Filter filter,
 		final Layout<? extends Serializable> layout, final boolean ignoreExceptions) {
 		super(name, filter, layout, ignoreExceptions);
 	}
-
 	//
 	@PluginFactory
 	public static OpenJpaAppender createAppender(
-		final @PluginAttribute("name") String name,
-		final @PluginAttribute("ignoreExceptions") boolean ignoreExceptions,
-		final @PluginElement("Filters") Filter filter,
-		final @PluginAttribute("enabled") Boolean enabled,
-		final @PluginAttribute("database") String provider,
-		final @PluginAttribute("username") String userName,
-		final @PluginAttribute("password") String passWord,
-		final @PluginAttribute("addr") String addr,
-		final @PluginAttribute("port") String port,
-		final @PluginAttribute("namedatabase") String dbName) {
+		final @PluginAttribute(value = "name") String name,
+		final @PluginAttribute(value = "ignoreExceptions", defaultBoolean = true) boolean ignoreExceptions,
+		final @PluginElement(value = "Filters") Filter filter,
+		final @PluginAttribute(value = "enabled", defaultBoolean = false) Boolean enabled,
+		final @PluginAttribute(value = "database", defaultString = "postgresql") String provider,
+		final @PluginAttribute(value = "username", defaultString = "mongoose") String userName,
+		final @PluginAttribute(value = "password", defaultString = "mongoose") String passWord,
+		final @PluginAttribute(value = "addr", defaultString = "localhost") String addr,
+		final @PluginAttribute(value = "port", defaultString = "5432") String port,
+		final @PluginAttribute(value = "namedatabase", defaultString = "mongoose") String dbName) {
 		OpenJpaAppender newAppender = null;
 		ENABLED_FLAG = enabled;
 		if (name == null) {
@@ -99,12 +98,11 @@ extends AbstractAppender {
 				newAppender.persistStatusEntity();
 			}
 		} catch (final Exception e) {
-			throw new IllegalStateException("Open DB session failed", e);
+			LOGGER.error("Open DB session failed", e);
 		}
 		return newAppender;
 	}
-
-	// append method // - really?! (kurilov) - yep! (zhavzharova)
+	//
 	@Override
 	public final void append(final LogEvent event) {
 		if (ENABLED_FLAG) {
@@ -115,6 +113,8 @@ extends AbstractAppender {
 				case ERR:
 					if (!event.getContextMap().isEmpty()) {
 						persistMessages(event);
+					}else {
+						LOGGER.info(String.format("There is empty context map for event: %s", event.getMessage()));
 					}
 					break;
 				case DATA_LIST:
@@ -123,24 +123,30 @@ extends AbstractAppender {
 				case PERF_TRACE:
 					if (!event.getContextMap().isEmpty()) {
 						persistPerfTrace(message, event);
+					}else {
+						LOGGER.info(String.format("There is empty context map for event: %s", event.getMessage()));
 					}
 					break;
 			}
 		}
 	}
-	/////////////////////////////////////////// Persist ///////////////////////////////////////////////
+	/////////////////////////////////////////// Persist ////////////////////////////////////////////////////////////////
 	private void persistStatusEntity()
 	{
+		EntityManager entityManager = null;
 		for (final AsyncIOTask.Status result:AsyncIOTask.Status.values()){
 			final StatusEntity statusEntity = new StatusEntity(result.code, result.description);
 			try {
-				final EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
+				entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
 				entityManager.getTransaction().begin();
 				entityManager.merge(statusEntity);
 				entityManager.getTransaction().commit();
 				entityManager.close();
 			}catch (final Exception e){
-				e.printStackTrace();
+				if (entityManager != null) {
+					entityManager.close();
+				}
+				LOGGER.error("Fail to persist status entity.", e);
 			}
 		}
 	}
@@ -193,64 +199,76 @@ extends AbstractAppender {
 				entityManager.close();
 			}
 			persistMessages(event);
-			System.out.println("Try one more time " + Thread.currentThread().getName());
+			LOGGER.trace(String.format("Try one more time for thread: %s", Thread.currentThread().getName()));
 		}catch (Exception e){
-			e.printStackTrace();
+			if (entityManager != null) {
+				entityManager.close();
+			}
+			LOGGER.error("Fail to persist messages.", e);
 		}
 	}
 	//
 	private void persistDataList(final String[] message){
-		final EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
-		DataObjectEntityPK dataObjectEntityPK = new DataObjectEntityPK(message[0], Long.valueOf(message[2]));
-		DataObjectEntity dataObjectEntity = entityManager.find(DataObjectEntity.class, dataObjectEntityPK);
-		if (dataObjectEntity == null){
-			dataObjectEntity = new DataObjectEntity( message[0], message[1],
-				Long.valueOf(message[2]), Long.valueOf(message[3], 0x10),
-				Long.valueOf(message[4], 0x10));
-		}
+		EntityManager entityManager = null;
+		final String
+			identifier = message[0],
+			ringOffset = message[1];
+		final long
+			size = Long.valueOf(message[2]),
+			layer  = Long.valueOf(message[3], 0x10),
+			mask = Long.valueOf(message[4], 0x10);
+		final DataObjectEntityPK dataObjectEntityPK = new DataObjectEntityPK(identifier, size);
+		//
 		try {
+			entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
 			entityManager.getTransaction().begin();
-			entityManager.persist(dataObjectEntity);
+			DataObjectEntity dataObjectEntity = entityManager.find(DataObjectEntity.class, dataObjectEntityPK);
+			if (dataObjectEntity == null){
+				dataObjectEntity = new DataObjectEntity(
+					identifier, ringOffset, size, layer, mask);
+			}
+			entityManager.merge(dataObjectEntity);
 			entityManager.getTransaction().commit();
 			entityManager.close();
 		}catch (final Exception e){
-			//delete!
-			entityManager.close();
-			e.printStackTrace();
+			if (entityManager != null) {
+				entityManager.close();
+			}
+			LOGGER.error("Fail to persist data list.", e);
 		}
 	}
 	//
 	private void persistPerfTrace(final String[] message, final LogEvent event){
-		//final DataObjectEntity dataObjectEntity = new DataObjectEntity(message[1], Integer.valueOf(message[2]));
 		//
-		System.out.println("run");
-		ConnectionEntity connectionEntity = null;
+		final String
+			runName = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID),
+			loadTypeName = event.getContextMap().get(DataObjectWorkerFactory.KEY_LOAD_TYPE),
+			apiName = event.getContextMap().get(DataObjectWorkerFactory.KEY_API),
+			nodeAddrs = message[0],
+			dataIdentifier = message[1];
+		final Date timestamp = getTimestamp(event.getContextMap().get(RunTimeConfig.KEY_RUN_TIMESTAMP));
+		final long
+			loadNumber = Long.valueOf(event.getContextMap().get(DataObjectWorkerFactory.KEY_LOAD_NUM)),
+			connectionNumber = Long.valueOf(event.getContextMap().get(DataObjectWorkerFactory.KEY_CONNECTION_NUM)),
+			tsReqStart = Long.valueOf(message[4]),
+			latency = Long.valueOf(message[5]),
+			reqDur = Long.valueOf(message[6]),
+			dataSize = Integer.valueOf(message[2]);
+		//
 		EntityManager entityManager = null;
-		LoadEntity loadEntity = null;
 		try {
-			final String runName = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
-			final Date timestamp = getTimestamp(event.getContextMap().get(RunTimeConfig.KEY_RUN_TIMESTAMP));
 			final RunEntity runEntity = (RunEntity) getEntity("name", runName, "timestamp", timestamp, RunEntity.class);
-			if (runEntity == null) {
-				System.out.println("run null");
-			}
 			//
-			System.out.println("LOAD type");
-			final String loadTypeName = event.getContextMap().get(DataObjectWorkerFactory.KEY_LOAD_TYPE);
 			LoadTypeEntity loadTypeEntity = (LoadTypeEntity) getEntity("name", loadTypeName, LoadTypeEntity.class);
 			if (loadTypeEntity == null) {
 				loadTypeEntity = new LoadTypeEntity(loadTypeName);
 			}
 			//
-			System.out.println("API");
-			final String apiName = event.getContextMap().get(DataObjectWorkerFactory.KEY_API);
 			ApiEntity apiEntity = (ApiEntity) getEntity("name", apiName, ApiEntity.class);
 			if (apiEntity == null){
 				apiEntity = new ApiEntity(apiName);
 			}
 			//
-			System.out.println("Node addrs");
-			final String nodeAddrs = message[0];
 			NodeEntity nodeEntity = (NodeEntity) getEntity("address", nodeAddrs, NodeEntity.class);
 			if (nodeEntity == null) {
 				nodeEntity = new NodeEntity(nodeAddrs);
@@ -259,61 +277,51 @@ extends AbstractAppender {
 			entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
 			entityManager.getTransaction().begin();
 			//
-			System.out.println("Load");
-			final long loadNumber = Long.valueOf(event.getContextMap().get(DataObjectWorkerFactory.KEY_LOAD_NUM));
 			final LoadEntityPK loadEntityPK = new LoadEntityPK(loadNumber, runEntity.getId());
-			loadEntity = entityManager.find(LoadEntity.class, loadEntityPK);
+			LoadEntity loadEntity = entityManager.find(LoadEntity.class, loadEntityPK);
 			if (loadEntity == null) {
 				loadEntity = new LoadEntity(runEntity, loadTypeEntity, loadNumber, apiEntity);
 			}
 			entityManager.persist(loadEntity);
 			//
 			final StatusEntity statusEntity = entityManager.find(StatusEntity.class, Integer.valueOf(message[3], 0x10));
-			//entityManager.persist(statusEntity);
 			//
-			System.out.println("Connection");
-			final long connectionNumber = Long.valueOf(
-				event.getContextMap().get(DataObjectWorkerFactory.KEY_CONNECTION_NUM)
-			);
-			//
-			ConnectionEntityPK connectionEntityPK = new ConnectionEntityPK(connectionNumber, loadEntityPK);
-			//connectionEntity = new ConnectionEntity(loadEntity, nodeEntity, threadNumber);
-			System.out.println(connectionEntityPK.getNum());
-			connectionEntity = (ConnectionEntity) entityManager.find(ConnectionEntity.class, connectionEntityPK);
+			final ConnectionEntityPK connectionEntityPK = new ConnectionEntityPK(connectionNumber, loadEntityPK);
+			ConnectionEntity connectionEntity = entityManager.find(ConnectionEntity.class, connectionEntityPK);
 			if (connectionEntity == null) {
 				connectionEntity = new ConnectionEntity(loadEntity, nodeEntity, connectionNumber);
 			}
 			entityManager.persist(connectionEntity);
 			//
-			System.out.println("data object");
-			DataObjectEntityPK dataObjectEntityPK = new DataObjectEntityPK(message[1], Integer.valueOf(message[2]));
+			final DataObjectEntityPK dataObjectEntityPK = new DataObjectEntityPK(dataIdentifier, dataSize);
 			DataObjectEntity dataObjectEntity = entityManager.find(DataObjectEntity.class, dataObjectEntityPK);
 			if (dataObjectEntity == null){
-				dataObjectEntity = new DataObjectEntity(message[1], Integer.valueOf(message[2]));
+				dataObjectEntity = new DataObjectEntity(dataIdentifier, dataSize);
 			}
 			entityManager.merge(dataObjectEntity);
 			//
-			System.out.println("trace");
-			TraceEntity traceEntity = new TraceEntity(dataObjectEntity, connectionEntity, statusEntity,
-				Long.valueOf(message[4]), Long.valueOf(message[5]), Long.valueOf(message[6]));
+			TraceEntity traceEntity = new TraceEntity(
+				dataObjectEntity, connectionEntity, statusEntity,
+				tsReqStart, latency, reqDur
+			);
 			entityManager.persist(traceEntity);
 			entityManager.getTransaction().commit();
-			System.out.println("commit");
 			entityManager.close();
 		} catch (final RollbackException exception) {
-			try {
-				assert entityManager != null;
+			if (entityManager != null) {
 				entityManager.close();
-			}catch (NullPointerException e){
-				System.out.println("session is not close");
 			}
 			persistPerfTrace(message,event);
-			System.out.println("Try one more time persist perfTrace " + Thread.currentThread().getName());
+			LOGGER.trace(String.format("Try one more time persist perfTrace for thread: %s",
+				Thread.currentThread().getName()));
 		} catch (final Exception e){
-			e.printStackTrace();
+			if (entityManager != null) {
+				entityManager.close();
+			}
+			LOGGER.error("Fail to persist perf. trace.", e);
 		}
 	}
-	///////////////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	private void buildSessionFactory(
 		final String username, final String password,
 		final String url) {
@@ -329,11 +337,11 @@ extends AbstractAppender {
 		try {
 			runTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS").parse(stringTimestamp);
 		} catch (final ParseException e) {
-			throw new IllegalStateException("Parse run timestamp is failed", e);
+			LOGGER.error("Parse run timestamp is failed", e);
 		}
 		return runTimestamp;
 	}
-	///////////////////////////// Getters ////////////////////////////////////////////////////////
+	///////////////////////////// Getters //////////////////////////////////////////////////////////////////////////////
 	private Object getEntity(final String colomnName, final Object value, final Class classEntity){
 		final EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
 		CriteriaBuilder queryBuilder = entityManager.getCriteriaBuilder();
@@ -344,15 +352,8 @@ extends AbstractAppender {
 		criteriaQuery.where(predicate);
 		List result = entityManager.createQuery(criteriaQuery).getResultList();
 		entityManager.close();
-		if (result.size() > 1){
-			throw new NonUniqueResultException(
-				String.format("non unique result: count of results: %d",result.size()));
-		}
-		if (result.isEmpty()){
-			return null;
-		} else  return result.get(0);
+		return getUniqueResult(result);
 	}
-
 	//
 	private Object getEntity(
 		final String colomnName1, final Object value1,
@@ -369,6 +370,10 @@ extends AbstractAppender {
 		criteriaQuery.where(queryBuilder.and(predicate1,predicate2));
 		List result = entityManager.createQuery(criteriaQuery).getResultList();
 		entityManager.close();
+		return getUniqueResult(result);
+	}
+	//
+	private Object getUniqueResult(final List result){
 		if (result.size() > 1){
 			throw new NonUniqueResultException(
 				String.format("non unique result: count of results: %d",result.size()));
@@ -377,6 +382,5 @@ extends AbstractAppender {
 			return null;
 		} else  return result.get(0);
 	}
-	//
 }
 //
