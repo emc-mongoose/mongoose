@@ -45,7 +45,7 @@ extends AbstractAppender {
 	private final BlockingQueue<Serializable> queue;
 	private static Boolean ENABLED_FLAG;
 	private final ThreadPoolExecutor executor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE, TIME_OUT_SEC, TimeUnit.SECONDS,
-		new ArrayBlockingQueue<Runnable>(100),new WorkerFactory("hibernate-appender-worker"));
+		new ArrayBlockingQueue<Runnable>(100),new WorkerFactory("openJPA-appender-worker"));
 	//
 	private final int threadsForQueue;
 	//
@@ -111,8 +111,13 @@ extends AbstractAppender {
 		}
 		if (!executor.isTerminated()){
 			try {
-				System.out.println(String.format("There are %d tasks from hibernate apender queue",
+				//problem
+				LOGGER.error(String.format("There are %d tasks from openJPA appender queue",
 					queue.size()));
+				//
+				System.out.println(String.format("There are %d tasks from openJPA appender queue",
+					queue.size()));
+				//
 				executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
 			} catch (final InterruptedException e) {
 				LOGGER.error("Interrupted waiting for submit executor to finish");

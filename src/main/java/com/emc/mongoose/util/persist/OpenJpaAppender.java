@@ -113,8 +113,6 @@ extends AbstractAppender {
 				case ERR:
 					if (!event.getContextMap().isEmpty()) {
 						persistMessages(event);
-					}else {
-						LOGGER.info(String.format("There is empty context map for event: %s", event.getMessage()));
 					}
 					break;
 				case DATA_LIST:
@@ -123,8 +121,6 @@ extends AbstractAppender {
 				case PERF_TRACE:
 					if (!event.getContextMap().isEmpty()) {
 						persistPerfTrace(message, event);
-					}else {
-						LOGGER.info(String.format("There is empty context map for event: %s", event.getMessage()));
 					}
 					break;
 			}
@@ -144,9 +140,11 @@ extends AbstractAppender {
 				entityManager.close();
 			}catch (final Exception e){
 				if (entityManager != null) {
+					entityManager.getTransaction().rollback();
 					entityManager.close();
 				}
 				LOGGER.error("Fail to persist status entity.", e);
+				e.printStackTrace();
 			}
 		}
 	}
@@ -196,15 +194,18 @@ extends AbstractAppender {
 			entityManager.close();
 		}catch (final RollbackException exception) {
 			if (entityManager != null) {
+				entityManager.getTransaction().rollback();
 				entityManager.close();
 			}
 			persistMessages(event);
 			LOGGER.trace(String.format("Try one more time for thread: %s", Thread.currentThread().getName()));
 		}catch (Exception e){
 			if (entityManager != null) {
+				entityManager.getTransaction().rollback();
 				entityManager.close();
 			}
 			LOGGER.error("Fail to persist messages.", e);
+			e.printStackTrace();
 		}
 	}
 	//
@@ -227,14 +228,16 @@ extends AbstractAppender {
 				dataObjectEntity = new DataObjectEntity(
 					identifier, ringOffset, size, layer, mask);
 			}
-			entityManager.merge(dataObjectEntity);
+			entityManager.persist(dataObjectEntity);
 			entityManager.getTransaction().commit();
 			entityManager.close();
 		}catch (final Exception e){
 			if (entityManager != null) {
+				entityManager.getTransaction().rollback();
 				entityManager.close();
 			}
 			LOGGER.error("Fail to persist data list.", e);
+			e.printStackTrace();
 		}
 	}
 	//
@@ -297,8 +300,10 @@ extends AbstractAppender {
 			DataObjectEntity dataObjectEntity = entityManager.find(DataObjectEntity.class, dataObjectEntityPK);
 			if (dataObjectEntity == null){
 				dataObjectEntity = new DataObjectEntity(dataIdentifier, dataSize);
+				entityManager.persist(dataObjectEntity);
+			}else {
+				entityManager.merge(dataObjectEntity);
 			}
-			entityManager.merge(dataObjectEntity);
 			//
 			TraceEntity traceEntity = new TraceEntity(
 				dataObjectEntity, connectionEntity, statusEntity,
@@ -309,6 +314,7 @@ extends AbstractAppender {
 			entityManager.close();
 		} catch (final RollbackException exception) {
 			if (entityManager != null) {
+				entityManager.getTransaction().rollback();
 				entityManager.close();
 			}
 			persistPerfTrace(message,event);
@@ -316,9 +322,11 @@ extends AbstractAppender {
 				Thread.currentThread().getName()));
 		} catch (final Exception e){
 			if (entityManager != null) {
+				entityManager.getTransaction().rollback();
 				entityManager.close();
 			}
 			LOGGER.error("Fail to persist perf. trace.", e);
+			e.printStackTrace();
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
