@@ -26,9 +26,49 @@ implements MutableWSRequest {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	private final static class MutableRequestLine
+	implements RequestLine {
+		//
+		private String method, uri;
+		private ProtocolVersion protocolVersion;
+		//
+		public MutableRequestLine(final String m, final String u, final ProtocolVersion v) {
+			this.method = m;
+			this.protocolVersion = v;
+			this.uri = u;
+		}
+		//
+		@Override
+		public final String getMethod() {
+			return method;
+		}
+		//
+		public final void setMethod(final String method) {
+			this.method = method;
+		}
+		//
+		@Override
+		public final ProtocolVersion getProtocolVersion() {
+			return protocolVersion;
+		}
+		//
+		public final void setProtocolVersion(final ProtocolVersion protocolVersion) {
+			this.protocolVersion = protocolVersion;
+		}
+		//
+		@Override
+		public final String getUri() {
+			return uri;
+		}
+		//
+		public final void setUri(final String uri) {
+			this.uri = uri;
+		}
+	}
+	private final MutableRequestLine requestline;
+	//
 	private volatile WSIOTask.HTTPMethod method;
 	private volatile String uriAddr, uriPath;
-	private volatile RequestLine requestline;
 	private volatile HttpEntity contentEntity = EMPTY_CONTENT_ENTITY;
 	//
 	public WSRequestImpl(
@@ -43,7 +83,7 @@ implements MutableWSRequest {
 	) {
 		this(
 			uriAddr,
-			new BasicRequestLine(
+			new MutableRequestLine(
 				method.name(),
 				uriAddr == null ?
 					(uriPath == null ? "" : uriPath) :
@@ -53,7 +93,7 @@ implements MutableWSRequest {
 		);
 	}
 	//
-	public WSRequestImpl(final String uriAddr, final RequestLine requestline) {
+	private WSRequestImpl(final String uriAddr, final MutableRequestLine requestline) {
 		super();
 		this.requestline = requestline;
 		method = WSIOTask.HTTPMethod.valueOf(requestline.getMethod());
@@ -84,9 +124,7 @@ implements MutableWSRequest {
 	@Override
 	public final WSRequestImpl setMethod(final WSIOTask.HTTPMethod method) {
 		this.method = method;
-		requestline = new BasicRequestLine(
-			method.name(), uriPath, requestline.getProtocolVersion()
-		);
+		requestline.setMethod(method.name());
 		return this;
 	}
 	//
@@ -109,9 +147,7 @@ implements MutableWSRequest {
 	@Override
 	public final WSRequestImpl setUriPath(final String uriPath) {
 		this.uriPath = uriPath;
-		requestline = new BasicRequestLine(
-			method.name(), uriPath, requestline.getProtocolVersion()
-		);
+		requestline.setUri(uriPath);
 		return this;
 	}
 	//
