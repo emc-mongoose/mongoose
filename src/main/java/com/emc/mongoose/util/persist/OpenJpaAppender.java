@@ -147,38 +147,41 @@ extends AbstractAppender {
 	//
 	private void persistMessages(final LogEvent event)
 	{
-		MessageEntity messageEntity = null;
+		final String
+			modeName = event.getContextMap().get(RunTimeConfig.KEY_RUN_MODE),
+			runName = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID),
+			levelName = event.getLevel().toString(),
+			className = event.getLoggerName();
+		final Date
+			timestamp = getTimestamp(event.getContextMap().get(RunTimeConfig.KEY_RUN_TIMESTAMP)),
+			timestampMessage = new Date(event.getTimeMillis());
+		//
 		EntityManager entityManager = null;
 		//
 		try {
-			final String modeName = event.getContextMap().get(RunTimeConfig.KEY_RUN_MODE);
 			ModeEntity modeEntity = (ModeEntity) getEntity("name", modeName,
 				ModeEntity.class);
 			if (modeEntity == null) {
 				modeEntity = new ModeEntity(modeName);
 			}
 			//
-			final String runName = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
-			final Date timestamp = getTimestamp(event.getContextMap().get(RunTimeConfig.KEY_RUN_TIMESTAMP));
 			RunEntity runEntity = (RunEntity) getEntity("name", runName, "timestamp", timestamp, RunEntity.class);
 			if (runEntity == null) {
 				runEntity = new RunEntity(modeEntity, runName, timestamp);
 			}
 			//
-			final String levelName = event.getLevel().toString();
 			LevelEntity levelEntity = (LevelEntity) getEntity("name", levelName, LevelEntity.class);
 			if (levelEntity == null) {
 				levelEntity = new LevelEntity(levelName);
 			}
 			//
-			final String className = event.getLoggerName();
 			MessageClassEntity messageClassEntity = (MessageClassEntity) getEntity("name", className, MessageClassEntity.class);
 			if (messageClassEntity == null) {
 				messageClassEntity = new MessageClassEntity(className);
 			}
 			//
-			messageEntity = new MessageEntity(runEntity, messageClassEntity, levelEntity,
-				event.getMessage().getFormattedMessage(), new Date(event.getTimeMillis()));
+			final MessageEntity messageEntity = new MessageEntity(runEntity, messageClassEntity, levelEntity,
+				event.getMessage().getFormattedMessage(), timestampMessage);
 			//
 			entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
 			entityManager.getTransaction().begin();
@@ -186,7 +189,9 @@ extends AbstractAppender {
 			entityManager.getTransaction().commit();
 			entityManager.close();
 		}catch (final RollbackException exception) {
-			entityManager.close();
+			if (entityManager != null) {
+				entityManager.close();
+			}
 			persistMessages(event);
 			System.out.println("Try one more time " + Thread.currentThread().getName());
 		}catch (Exception e){
@@ -250,7 +255,6 @@ extends AbstractAppender {
 			if (nodeEntity == null) {
 				nodeEntity = new NodeEntity(nodeAddrs);
 			}
-
 			//
 			entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
 			entityManager.getTransaction().begin();
@@ -308,12 +312,6 @@ extends AbstractAppender {
 		} catch (final Exception e){
 			e.printStackTrace();
 		}
-
-
-		/*
-		loadTraceEntity(dataObjectEntity, connectionEntity, statusEntity,
-			Long.valueOf(message[4]), Long.valueOf(message[5]), Long.valueOf(message[6]));
-			*/
 	}
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	private void buildSessionFactory(
