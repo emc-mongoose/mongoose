@@ -2,7 +2,7 @@ package com.emc.mongoose.webui.logging;
 //
 import com.emc.mongoose.webui.websockets.WebSocketLogListener;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
-import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.core.impl.util.RunTimeConfig;
 //
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;

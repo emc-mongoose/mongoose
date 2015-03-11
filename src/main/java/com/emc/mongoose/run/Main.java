@@ -1,14 +1,13 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.util.logging.TraceLogger;
-import com.emc.mongoose.util.remote.ServiceUtils;
-import com.emc.mongoose.object.load.server.impl.WSLoadBuilderSvcImpl;
-import com.emc.mongoose.object.storagemock.Cinderella;
-import com.emc.mongoose.object.data.WSObject;
-import com.emc.mongoose.object.load.WSLoadExecutor;
-import com.emc.mongoose.object.load.server.WSLoadBuilderSvc;
-import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.core.impl.persist.TraceLogger;
+import com.emc.mongoose.server.impl.ServiceUtils;
+import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
+import com.emc.mongoose.core.impl.util.RunTimeConfig;
+import com.emc.mongoose.core.api.persist.Markers;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.LifeCycle;
@@ -137,7 +136,7 @@ public final class Main {
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
 					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
-						loadBuilderSvc = new WSLoadBuilderSvcImpl<>(RunTimeConfig.getContext())
+						loadBuilderSvc = new BasicWSLoadBuilderSvc<>(RunTimeConfig.getContext())
 				) {
 					loadBuilderSvc.start();
 					loadBuilderSvc.join();
@@ -154,7 +153,7 @@ public final class Main {
 			case RUN_MODE_CINDERELLA:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
-					new Cinderella(RunTimeConfig.getContext()).run();
+					new com.emc.mongoose.storage.mock.impl.cinderella.Main(RunTimeConfig.getContext()).run();
 				} catch (final Exception e) {
 					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
 				}
@@ -183,7 +182,7 @@ public final class Main {
 		if(runId==null || runId.length()==0) {
 			System.setProperty(
 				RunTimeConfig.KEY_RUN_ID,
-				FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
+				FMT_DT.format(Calendar.getInstance(com.emc.mongoose.run.Main.TZ_UTC, com.emc.mongoose.run.Main.LOCALE_DEFAULT).getTime())
 			);
 		}
 		// make all used loggers asynchronous
