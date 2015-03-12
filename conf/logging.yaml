@@ -51,9 +51,7 @@ configuration:
         name: msgFile
         append: false
         bufferedIO: true
-        fileName: "${path.log}messages.csv"
-        filePattern: "${path.log}${sys:file.separator}%d{ISO8601}{GMT+0}${sys:file.separator}messages.csv.gz"
-        policies: { OnStartupTriggeringPolicy }
+        fileName: "${path.log}messages.csv.${sys:run.id}"
         defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
@@ -66,8 +64,7 @@ configuration:
         name: 3rdPartyFile
         append: false
         bufferedIO: true
-        fileName: "${path.log}3rdparty.csv"
-        filePattern: "${path.log}${sys:file.separator}%d{ISO8601}{GMT+0}${sys:file.separator}3rdparty.csv.gz"
+        fileName: "${path.log}3rdparty.csv.${sys:run.id}"
         policies: { OnStartupTriggeringPolicy }
         defaultRolloverStrategy: { max: 10 }
         PatternLayout:
@@ -109,9 +106,7 @@ configuration:
         name: errFile
         append: false
         bufferedIO: true
-        fileName: "${path.log}errors.csv"
-        filePattern: "${path.log}${sys:file.separator}%d{ISO8601}{GMT+0}${sys:file.separator}errors.csv.gz"
-        policies: { OnStartupTriggeringPolicy }
+        fileName: "${path.log}errors.csv.${sys:run.id}"
         defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
@@ -127,9 +122,7 @@ configuration:
         name: perfAvgFile
         append: false
         bufferedIO: true
-        fileName: "${path.log}perf.avg.csv"
-        filePattern: "${path.log}${sys:file.separator}%d{ISO8601}{GMT+0}${sys:file.separator}perv.avg.csv.gz"
-        policies: { OnStartupTriggeringPolicy }
+        fileName: "${path.log}perf.avg.csv.${sys:run.id}"
         defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %32t | %m%n"
@@ -142,9 +135,7 @@ configuration:
         name: perfSumFile
         append: false
         bufferedIO: true
-        fileName: "${path.log}perf.sum.csv"
-        filePattern: "${path.log}${sys:file.separator}%d{ISO8601}{GMT+0}${sys:file.separator}perf.sum.csv.gz"
-        policies: { OnStartupTriggeringPolicy }
+        fileName: "${path.log}perf.sum.csv.${sys:run.id}"
         defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %t | %m%n"
@@ -157,9 +148,7 @@ configuration:
         name: perfTraceFile
         append: false
         bufferedIO: true
-        fileName: "${path.log}perf.trace.csv"
-        filePattern: "${path.log}${sys:file.separator}%d{ISO8601}{GMT+0}${sys:file.separator}perf.trace.csv.gz"
-        policies: { OnStartupTriggeringPolicy }
+        fileName: "${path.log}perf.trace.csv.${sys:run.id}"
         defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%t,%m%n"
@@ -172,9 +161,7 @@ configuration:
         name: dataListFile
         append: false
         bufferedIO: true
-        fileName: "${path.log}data.items.csv"
-        filePattern: "${path.log}${sys:file.separator}%d{ISO8601}{GMT+0}${sys:file.separator}data.items.csv.gz"
-        policies: { OnStartupTriggeringPolicy }
+        fileName: "${path.log}data.items.csv.${sys:run.id}"
         defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%m%n"
