@@ -7,7 +7,7 @@ configuration:
     property:
       -
         name: path.log
-        value: "${sys:dir.root}${sys:file.separator}log${sys:file.separator}${sys:run.mode}${sys:file.separator}${sys:run.id}${sys:file.separator}"
+        value: "${sys:dir.root}${sys:file.separator}log${sys:file.separator}${sys:run.mode}${sys:file.separator}${sys:file.separator}"
   shutdownHook: disable
 
   appenders:
@@ -46,12 +46,13 @@ configuration:
           level: INFO
           onMatch: ACCEPT
           onMismatch: DENY
-    file:
+    rollingFile:
       -
         name: msgFile
         append: false
         bufferedIO: true
         fileName: "${path.log}messages.csv"
+        policy: OnStartupTriggeringPolicy
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
         filters:
