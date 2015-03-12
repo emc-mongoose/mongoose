@@ -3,9 +3,11 @@ package com.emc.mongoose.util.persist;
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
+import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.layout.SerializedLayout;
 //
@@ -15,7 +17,6 @@ import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.status.StatusLogger;
 import org.apache.openjpa.persistence.RollbackException;
-import org.apache.openjpa.util.StoreException;
 //
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
@@ -32,6 +33,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 //
 /**
  * Created by olga on 24.10.14.
@@ -40,36 +44,55 @@ import java.util.Map;
 public final class OpenJpaAppender
 extends AbstractAppender {
 	//
-	public static final org.apache.logging.log4j.Logger LOGGER = StatusLogger.getLogger();
+	public static final Logger LOGGER = StatusLogger.getLogger();
 	//
-	private static EntityManagerFactory ENTITY_MANAGER_FACTORY = null;
+	private EntityManagerFactory entityManagerFactory = null;
+	private final ThreadPoolExecutor executor;
+	private final Boolean enabledFlag;
 	//
-	private final static Layout<? extends Serializable>
+	private static final Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
-	private static Boolean ENABLED_FLAG;
 	private static final String
 		MSG = "msg",
 		PERF_TRACE = "perfTrace",
 		ERR = "err",
 		DATA_LIST = "dataList";
 	//
+	public static final int
+		POOL_SIZE = 1000,
+		TIME_OUT_SEC = 50;
+	//
 	@Override
 	public final void start() {
 		super.start();
+		System.out.println(LOGGER.getName());
 	}
 	//
 	@Override
 	public final void stop() {
 		super.stop();
-		if (ENABLED_FLAG) {
-			ENTITY_MANAGER_FACTORY.close();
+		if (enabledFlag) {
+			if (!executor.isShutdown()){
+				executor.shutdown();
+			}
+			if (!executor.isTerminated()) {
+				try {
+					executor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+				} catch (final InterruptedException e) {
+					LOGGER.error("Interrupted waiting for submit executor to finish");
+				}
+			}
+			entityManagerFactory.close();
 		}
 	}
 	//
 	private OpenJpaAppender(
-		final String name, final Filter filter,
-		final Layout<? extends Serializable> layout, final boolean ignoreExceptions) {
+		final String name, final Filter filter,	final Layout<? extends Serializable> layout,
+		final boolean ignoreExceptions, final int openJpaQueueSize, final boolean enabled) {
 		super(name, filter, layout, ignoreExceptions);
+		executor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE, TIME_OUT_SEC, TimeUnit.SECONDS,
+			new ArrayBlockingQueue<Runnable>(openJpaQueueSize),new WorkerFactory("openJPA-appender-worker"));
+		enabledFlag = enabled;
 	}
 	//
 	@PluginFactory
@@ -80,21 +103,26 @@ extends AbstractAppender {
 		final @PluginAttribute(value = "enabled", defaultBoolean = false) Boolean enabled,
 		final @PluginAttribute(value = "database", defaultString = "postgresql") String provider,
 		final @PluginAttribute(value = "username", defaultString = "mongoose") String userName,
-		final @PluginAttribute(value = "password", defaultString = "mongoose") String passWord,
+		final @PluginAttribute(value = "password", defaultString = "mongoose") String password,
 		final @PluginAttribute(value = "addr", defaultString = "localhost") String addr,
 		final @PluginAttribute(value = "port", defaultString = "5432") String port,
-		final @PluginAttribute(value = "namedatabase", defaultString = "mongoose") String dbName) {
+		final @PluginAttribute(value = "namedatabase", defaultString = "mongoose") String dbName,
+		final @PluginAttribute(value = "DriverClassName", defaultString = "org.postgresql.Driver") String driverClass,
+		final @PluginAttribute(value = "maxActiveConnection", defaultInt = 100) int maxActiveConnection,
+		final @PluginAttribute(value = "connectionTimeout", defaultInt = 1000) int connectionTimeout,
+		final @PluginAttribute(value = "appenderQueueSize", defaultInt = 1000) int appenderQueueSize ) {
 		OpenJpaAppender newAppender = null;
-		ENABLED_FLAG = enabled;
 		if (name == null) {
 			throw new IllegalArgumentException("No name provided for HibernateAppender");
 		}
 		final String url = String.format("jdbc:%s://%s:%s/%s", provider, addr, port, dbName);
 		try {
-			newAppender = new OpenJpaAppender(name, filter, DEFAULT_LAYOUT, ignoreExceptions);
-			if (ENABLED_FLAG) {
+			newAppender = new OpenJpaAppender(
+				name, filter, DEFAULT_LAYOUT, ignoreExceptions, appenderQueueSize, enabled);
+			if (enabled) {
 				// init database session with username,password and url
-				newAppender.buildSessionFactory(userName, passWord, url);
+				newAppender.buildSessionFactory(
+					driverClass, url, maxActiveConnection, connectionTimeout, userName, password);
 				newAppender.persistStatusEntity();
 			}
 		} catch (final Exception e) {
@@ -105,25 +133,8 @@ extends AbstractAppender {
 	//
 	@Override
 	public final void append(final LogEvent event) {
-		if (ENABLED_FLAG) {
-			final String marker = event.getMarker().toString();
-			final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
-			switch (marker) {
-				case MSG:
-				case ERR:
-					if (!event.getContextMap().isEmpty()) {
-						persistMessages(event);
-					}
-					break;
-				case DATA_LIST:
-					persistDataList(message);
-					break;
-				case PERF_TRACE:
-					if (!event.getContextMap().isEmpty()) {
-						persistPerfTrace(message, event);
-					}
-					break;
-			}
+		if (enabledFlag) {
+			executor.submit(new AppendTask(event));
 		}
 	}
 	/////////////////////////////////////////// Persist ////////////////////////////////////////////////////////////////
@@ -133,7 +144,7 @@ extends AbstractAppender {
 		for (final AsyncIOTask.Status result:AsyncIOTask.Status.values()){
 			final StatusEntity statusEntity = new StatusEntity(result.code, result.description);
 			try {
-				entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
+				entityManager = entityManagerFactory.createEntityManager();
 				entityManager.getTransaction().begin();
 				entityManager.merge(statusEntity);
 				entityManager.getTransaction().commit();
@@ -187,7 +198,7 @@ extends AbstractAppender {
 			final MessageEntity messageEntity = new MessageEntity(runEntity, messageClassEntity, levelEntity,
 				event.getMessage().getFormattedMessage(), timestampMessage);
 			//
-			entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
+			entityManager = entityManagerFactory.createEntityManager();
 			entityManager.getTransaction().begin();
 			entityManager.persist(messageEntity);
 			entityManager.getTransaction().commit();
@@ -221,7 +232,7 @@ extends AbstractAppender {
 		final DataObjectEntityPK dataObjectEntityPK = new DataObjectEntityPK(identifier, size);
 		//
 		try {
-			entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
+			entityManager = entityManagerFactory.createEntityManager();
 			entityManager.getTransaction().begin();
 			DataObjectEntity dataObjectEntity = entityManager.find(DataObjectEntity.class, dataObjectEntityPK);
 			if (dataObjectEntity == null){
@@ -277,7 +288,7 @@ extends AbstractAppender {
 				nodeEntity = new NodeEntity(nodeAddrs);
 			}
 			//
-			entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
+			entityManager = entityManagerFactory.createEntityManager();
 			entityManager.getTransaction().begin();
 			//
 			final LoadEntityPK loadEntityPK = new LoadEntityPK(loadNumber, runEntity.getId());
@@ -331,13 +342,20 @@ extends AbstractAppender {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	private void buildSessionFactory(
-		final String username, final String password,
-		final String url) {
+
+		final String driverClass, final String url, final int maxActiveConnection,
+		final int connectionTimeout, final String username, final String password) {
 		final Map<String, String> properties = new HashMap<>();
-		properties.put("openjpa.ConnectionUserName", username);
-		properties.put("openjpa.ConnectionPassword", password);
-		properties.put("openjpa.ConnectionURL", url);
-		ENTITY_MANAGER_FACTORY = Persistence.createEntityManagerFactory("openjpa", properties);
+
+		final String connectionPropertiesValue = String.format(
+			"DriverClassName = %s , " +
+			"Url = %s, MaxActive = %d, MaxWait = %d, " +
+			"TestOnBorrow = true, Username = %s, Password = %s",
+			driverClass, url, maxActiveConnection, connectionTimeout, username, password
+		);
+		//
+		properties.put("openjpa.ConnectionProperties", connectionPropertiesValue);
+		entityManagerFactory = Persistence.createEntityManagerFactory("openjpa", properties);
 	}
 	//parse String to Date
 	private Date getTimestamp(final String stringTimestamp){
@@ -351,7 +369,7 @@ extends AbstractAppender {
 	}
 	///////////////////////////// Getters //////////////////////////////////////////////////////////////////////////////
 	private Object getEntity(final String colomnName, final Object value, final Class classEntity){
-		final EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
+		final EntityManager entityManager = entityManagerFactory.createEntityManager();
 		CriteriaBuilder queryBuilder = entityManager.getCriteriaBuilder();
 		CriteriaQuery criteriaQuery = queryBuilder.createQuery();
 		Root modeRoot = criteriaQuery.from(classEntity);
@@ -368,7 +386,7 @@ extends AbstractAppender {
 		 final String colomnName2, final Object value2,
 		 final Class classEntity)
 	{
-		final EntityManager entityManager = ENTITY_MANAGER_FACTORY.createEntityManager();
+		final EntityManager entityManager = entityManagerFactory.createEntityManager();
 		CriteriaBuilder queryBuilder = entityManager.getCriteriaBuilder();
 		CriteriaQuery criteriaQuery = queryBuilder.createQuery();
 		Root modeRoot = criteriaQuery.from(classEntity);
@@ -389,6 +407,40 @@ extends AbstractAppender {
 		if (result.isEmpty()){
 			return null;
 		} else  return result.get(0);
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//Worker OpenJPA
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	private final class AppendTask
+	implements Runnable{
+
+		private final LogEvent event;
+
+		public AppendTask(final LogEvent event){
+			this.event = event;
+		}
+
+		@Override
+		public void run() {
+			final String marker = event.getMarker().toString();
+			final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
+			switch (marker) {
+				case MSG:
+				case ERR:
+					if (!event.getContextMap().isEmpty()) {
+						persistMessages(event);
+					}
+					break;
+				case DATA_LIST:
+					persistDataList(message);
+					break;
+				case PERF_TRACE:
+					if (!event.getContextMap().isEmpty()) {
+						persistPerfTrace(message, event);
+					}
+					break;
+			}
+		}
 	}
 }
 //

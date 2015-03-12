@@ -23,12 +23,21 @@
 			<property name="openjpa.DynamicEnhancementAgent" value="true"/>
 			<property name="openjpa.jdbc.MappingDefaults"
 					  value="ForeignKeyDeleteAction=restrict,JoinForeignKeyDeleteAction=restrict"/>
+			<!-- Logging Open JPA !-->
+			<property name="openjpa.Log" value="DefaultLevel=WARN, Tool=INFO, Runtime=WARN"/>
+			<!-- For auto creating tables !-->
 			<property name="openjpa.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true)" />
-			<property name="openjpa.ConnectionURL" value="jdbc:postgresql://localhost:5432/mongoose"/>
-			<property name="openjpa.ConnectionDriverName" value="org.postgresql.Driver"/>
-			<property name="openjpa.ConnectionUserName" value="mongoose"/>
-			<property name="openjpa.ConnectionPassword" value="mongoose"/>
-			<property name="openjpa.Log" value="DefaultLevel=WARN, Tool=INFO"/>
+			<!--  Connection Pool  !-->
+			<property name="openjpa.ConnectionDriverName"
+					  value="org.apache.commons.dbcp2.BasicDataSource"/>
+			<property name="openjpa.ConnectionProperties"
+					  value="DriverClassName = org.postgresql.Driver,
+					 	Url = jdbc:postgresql://localhost:5432/mongoose,
+					  	MaxActive = 100,
+            			MaxWait = 100,
+            			TestOnBorrow = true,
+            			Username = mongoose,
+            			Password = mongoose"/>
 		</properties>
 
 	</persistence-unit>

@@ -38,18 +38,8 @@
 					}
 				}, {
 					"name": "openJPA",
-					"type": "OpenJpaAsync",
-					"enabled": "true",
-					"blocking": "false",
-					"bufferSize": "65536",
-					"threadsForQueue": "20",
-					"AppenderRef": {
-						"ref": "openJPASync"
-					}
-				}, {
-					"name": "openJPASync",
 					"type": "OpenJPA",
-					"enabled": "true",
+					"enabled": "false",
 					"database": "postgresql",
 					"username": "mongoose",
 					"password": "mongoose",
