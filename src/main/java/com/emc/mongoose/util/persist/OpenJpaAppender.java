@@ -421,7 +421,7 @@ extends AbstractAppender {
 		}
 
 		@Override
-		public void run() {
+		public final void run() {
 			final String marker = event.getMarker().toString();
 			final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
 			switch (marker) {
@@ -429,6 +429,9 @@ extends AbstractAppender {
 				case ERR:
 					if (!event.getContextMap().isEmpty()) {
 						persistMessages(event);
+					}else {
+						LOGGER.debug(String.format("There is event with empty Context Map. Event message: %s",
+							event.getMessage()));
 					}
 					break;
 				case DATA_LIST:
@@ -437,6 +440,9 @@ extends AbstractAppender {
 				case PERF_TRACE:
 					if (!event.getContextMap().isEmpty()) {
 						persistPerfTrace(message, event);
+					}else {
+						LOGGER.debug(String.format("There is event with empty Context Map. Event message: %s",
+							event.getMessage()));
 					}
 					break;
 			}
