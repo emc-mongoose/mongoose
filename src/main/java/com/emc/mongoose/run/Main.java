@@ -14,7 +14,13 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.LifeCycle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
+import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.json.JsonConfiguration;
+import org.apache.logging.log4j.core.config.json.JsonConfigurationFactory;
+import org.apache.logging.log4j.status.StatusLogger;
 //
 import java.io.File;
 import java.io.IOException;
@@ -50,10 +56,7 @@ public final class Main {
 		SEP = System.getProperty("file.separator"),
 		DIR_ROOT,
 		DIR_CONF = "conf",
-		DIR_LOGGING = "logging",
 		DIR_PROPERTIES = "properties",
-		FNAME_LOGGING_LOCAL = "local.json",
-		FNAME_LOGGING_REMOTE = "remote.json",
 		FNAME_POLICY = "security.policy",
 		//
 		KEY_DIR_ROOT = "dir.root",
@@ -105,8 +108,9 @@ public final class Main {
 		//
 		final Map<String, String> properties = HumanFriendlyCli.parseCli(args);
 		//
-		final Logger rootLogger = initLogging(runMode);
-		if(rootLogger==null) {
+		initLogging(runMode);
+		final Logger rootLogger = LogManager.getRootLogger();
+		if(rootLogger == null) {
 			System.err.println("Logging initialization failure");
 			System.exit(1);
 		}
@@ -173,14 +177,16 @@ public final class Main {
 		shutdown();
 	}
 	//
-	public static Logger initLogging(final String runMode) {
+	private static volatile LoggerContext LOG_CONTEXT = null;
+	//
+	public static void initLogging(final String runMode) {
 		//
 		System.setProperty("isThreadContextMapInheritable", "true");
 		// set "dir.root" property
 		System.setProperty(KEY_DIR_ROOT, DIR_ROOT);
 		// set "run.id" property with timestamp value if not set before
 		String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
-		if(runId==null || runId.length()==0) {
+		if(runId == null || runId.length() == 0) {
 			System.setProperty(
 				RunTimeConfig.KEY_RUN_ID,
 				FMT_DT.format(Calendar.getInstance(com.emc.mongoose.run.Main.TZ_UTC, com.emc.mongoose.run.Main.LOCALE_DEFAULT).getTime())
@@ -188,30 +194,14 @@ public final class Main {
 		}
 		// make all used loggers asynchronous
 		System.setProperty(
-			"Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
-		);
-		// StatusConsoleListener statusListener = new StatusConsoleListener(Level.OFF);
-		// determine the logger configuration file path
-		final Path logConfPath = Paths.get(
-			DIR_ROOT, DIR_CONF, DIR_LOGGING,
-			(
-				runMode.equals(RUN_MODE_STANDALONE) ||
-				runMode.equals(RUN_MODE_CLIENT) ||
-				runMode.equals(RUN_MODE_COMPAT_CLIENT)
-			) ?
-				FNAME_LOGGING_LOCAL : FNAME_LOGGING_REMOTE
+			"Log4jContextSelector", AsyncLoggerContextSelector.class.getCanonicalName()
 		);
 		// connect JUL to Log4J2
 		System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
-		// go
-		Configurator.initialize(null, logConfPath.toUri().toString());
-		final Logger rootLogger = LogManager.getRootLogger();
-		if(rootLogger == null) {
-			System.err.println("FATAL: failed to configure the logging");
-		} else {
-			rootLogger.debug(Markers.MSG, "Used configuration from {}", logConfPath);
-		}
-		return LogManager.getRootLogger();
+		// determine the logger configuration file path
+		final Path logConfPath = Paths.get(DIR_ROOT, DIR_CONF, "logging.yaml");
+		//
+		LOG_CONTEXT = Configurator.initialize("mongoose", logConfPath.toUri().toString());
 	}
 	//
 	public static void initSecurity() {
@@ -223,7 +213,9 @@ public final class Main {
 	}
 	//
 	public static void shutdown() {
-		((LifeCycle) LogManager.getContext()).stop();
+		if(!LOG_CONTEXT.isStopped()) {
+			LOG_CONTEXT.stop();
+		}
 		ServiceUtils.shutdown();
 	}
 }

@@ -27,9 +27,6 @@ loadProperties confDirName + '/properties/run'
 version = ext.version
 
 configurations {
-	//all {
-	//	exclude module: 'ant'
-	//}
 	compileRMI {
 		transitive = true
 	}
@@ -80,7 +77,7 @@ dependencies {
 	compileRMI (
 		'commons-configuration:commons-configuration:1.10',
 		'org.apache.httpcomponents:httpcore:4.4',
-		'org.apache.logging.log4j:log4j-api:2.1'
+		'org.apache.logging.log4j:log4j-api:2.1',
 	)
 
 	runtime (
@@ -95,9 +92,10 @@ dependencies {
 		'org.apache.logging.log4j:log4j-jul:2.1',
 		//'org.slf4j:slf4j-api:1.7.7',
 		'com.lmax:disruptor:3.3.0',
+		'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.4.1',
+		'org.fusesource.jansi:jansi:1.11',
 		//
 		'org.python:jython-standalone:2.7-b3',
-		'org.fusesource.jansi:jansi:1.11'
 	)
 
 
@@ -126,13 +124,11 @@ ext.sharedManifest = manifest {
 task coreApiJar(type: Jar) {
 	archiveName "${baseName}-core-api.${extension}"
 	from(sourceSets.main.output) {
-		exclude "com/emc/mongoose/client/api/**"
-		exclude "com/emc/mongoose/client/impl/**"
+		exclude "com/emc/mongoose/client/**"
 		include "com/emc/mongoose/core/api/**"
 		exclude "com/emc/mongoose/core/impl/**"
 		exclude "com/emc/mongoose/run/**"
-		exclude "com/emc/mongoose/server/api/**"
-		exclude "com/emc/mongoose/server/impl/**"
+		exclude "com/emc/mongoose/server/**"
 		exclude "com/emc/mongoose/storage/adapter/atmos/**"
 		exclude "com/emc/mongoose/storage/adapter/s3/**"
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
@@ -149,13 +145,11 @@ task coreApiJar(type: Jar) {
 task coreImplJar(type: Jar) {
 	archiveName "${baseName}-core-impl.${extension}"
 	from(sourceSets.main.output) {
-		exclude "com/emc/mongoose/client/api/**"
-		exclude "com/emc/mongoose/client/impl/**"
+		exclude "com/emc/mongoose/client/**"
 		exclude "com/emc/mongoose/core/api/**"
 		include "com/emc/mongoose/core/impl/**"
 		exclude "com/emc/mongoose/run/**"
-		exclude "com/emc/mongoose/server/api/**"
-		exclude "com/emc/mongoose/server/impl/**"
+		exclude "com/emc/mongoose/server/**"
 		exclude "com/emc/mongoose/storage/adapter/atmos/**"
 		exclude "com/emc/mongoose/storage/adapter/s3/**"
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
@@ -171,13 +165,11 @@ task coreImplJar(type: Jar) {
 task storageAdapterAtmosJar(type: Jar) {
 	archiveName "${baseName}-storage-adapter-atmos.${extension}"
 	from(sourceSets.main.output) {
-		exclude "com/emc/mongoose/client/api/**"
-		exclude "com/emc/mongoose/client/impl/**"
+		exclude "com/emc/mongoose/client/**"
 		exclude "com/emc/mongoose/core/api/**"
 		exclude "com/emc/mongoose/core/impl/**"
 		exclude "com/emc/mongoose/run/**"
-		exclude "com/emc/mongoose/server/api/**"
-		exclude "com/emc/mongoose/server/impl/**"
+		exclude "com/emc/mongoose/server/**"
 		include "com/emc/mongoose/storage/adapter/atmos/**"
 		exclude "com/emc/mongoose/storage/adapter/s3/**"
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
@@ -193,13 +185,11 @@ task storageAdapterAtmosJar(type: Jar) {
 task storageAdapterS3Jar(type: Jar) {
 	archiveName "${baseName}-storage-adapter-s3.${extension}"
 	from(sourceSets.main.output) {
-		exclude "com/emc/mongoose/client/api/**"
-		exclude "com/emc/mongoose/client/impl/**"
+		exclude "com/emc/mongoose/client/**"
 		exclude "com/emc/mongoose/core/api/**"
 		exclude "com/emc/mongoose/core/impl/**"
 		exclude "com/emc/mongoose/run/**"
-		exclude "com/emc/mongoose/server/api/**"
-		exclude "com/emc/mongoose/server/impl/**"
+		exclude "com/emc/mongoose/server/**"
 		exclude "com/emc/mongoose/storage/adapter/atmos/**"
 		include "com/emc/mongoose/storage/adapter/s3/**"
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
@@ -215,13 +205,11 @@ task storageAdapterS3Jar(type: Jar) {
 task storageAdapterSwiftJar(type: Jar) {
 	archiveName "${baseName}-storage-adapter-swift.${extension}"
 	from(sourceSets.main.output) {
-		exclude "com/emc/mongoose/client/api/**"
-		exclude "com/emc/mongoose/client/impl/**"
+		exclude "com/emc/mongoose/client/**"
 		exclude "com/emc/mongoose/core/api/**"
 		exclude "com/emc/mongoose/core/impl/**"
 		exclude "com/emc/mongoose/run/**"
-		exclude "com/emc/mongoose/server/api/**"
-		exclude "com/emc/mongoose/server/impl/**"
+		exclude "com/emc/mongoose/server/**"
 		exclude "com/emc/mongoose/storage/adapter/atmos/**"
 		exclude "com/emc/mongoose/storage/adapter/s3/**"
 		include "com/emc/mongoose/storage/adapter/swift/**"
@@ -234,38 +222,14 @@ task storageAdapterSwiftJar(type: Jar) {
 	}
 }
 
-task clientApiJar(type: Jar) {
-	archiveName "${baseName}-client-api.${extension}"
-	from(sourceSets.main.output) {
-		include "com/emc/mongoose/client/api/**"
-		exclude "com/emc/mongoose/client/impl/**"
-		exclude "com/emc/mongoose/core/api/**"
-		exclude "com/emc/mongoose/core/impl/**"
-		exclude "com/emc/mongoose/run/**"
-		exclude "com/emc/mongoose/server/api/**"
-		exclude "com/emc/mongoose/server/impl/**"
-		exclude "com/emc/mongoose/storage/adapter/atmos/**"
-		exclude "com/emc/mongoose/storage/adapter/s3/**"
-		exclude "com/emc/mongoose/storage/adapter/swift/**"
-		exclude "com/emc/mongoose/storage/mock/**"
-		exclude "com/emc/mongoose/webui/**"
-	}
-	manifest {
-		from sharedManifest
-		attributes('Implementation-Title': rootProject.name + "-client-api")
-	}
-}
-
-task clientImplJar(type: Jar) {
+task clientJar(type: Jar) {
 	archiveName "${baseName}-client-impl.${extension}"
 	from(sourceSets.main.output) {
-		exclude "com/emc/mongoose/client/api/**"
-		include "com/emc/mongoose/client/impl/**"
+		include "com/emc/mongoose/client/**"
 		exclude "com/emc/mongoose/core/api/**"
 		exclude "com/emc/mongoose/core/impl/**"
 		exclude "com/emc/mongoose/run/**"
-		exclude "com/emc/mongoose/server/api/**"
-		exclude "com/emc/mongoose/server/impl/**"
+		exclude "com/emc/mongoose/server/**"
 		exclude "com/emc/mongoose/storage/adapter/atmos/**"
 		exclude "com/emc/mongoose/storage/adapter/s3/**"
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
@@ -278,38 +242,14 @@ task clientImplJar(type: Jar) {
 	}
 }
 
-task serverApiJar(type: Jar) {
-	archiveName "${baseName}-server-api.${extension}"
-	from(sourceSets.main.output) {
-		exclude "com/emc/mongoose/client/api/**"
-		exclude "com/emc/mongoose/client/impl/**"
-		exclude "com/emc/mongoose/core/api/**"
-		exclude "com/emc/mongoose/core/impl/**"
-		exclude "com/emc/mongoose/run/**"
-		include "com/emc/mongoose/server/api/**"
-		exclude "com/emc/mongoose/server/impl/**"
-		exclude "com/emc/mongoose/storage/adapter/atmos/**"
-		exclude "com/emc/mongoose/storage/adapter/s3/**"
-		exclude "com/emc/mongoose/storage/adapter/swift/**"
-		exclude "com/emc/mongoose/storage/mock/**"
-		exclude "com/emc/mongoose/webui/**"
-	}
-	manifest {
-		from sharedManifest
-		attributes('Implementation-Title': rootProject.name + "-server-api")
-	}
-}
-
-task serverImplJar(type: Jar, dependsOn: "rmic") {
+task serverJar(type: Jar, dependsOn: "rmic") {
 	archiveName "${baseName}-server-impl.${extension}"
 	from(sourceSets.main.output) {
-		exclude "com/emc/mongoose/client/api/**"
-		exclude "com/emc/mongoose/client/impl/**"
+		exclude "com/emc/mongoose/client/**"
 		exclude "com/emc/mongoose/core/api/**"
 		exclude "com/emc/mongoose/core/impl/**"
 		exclude "com/emc/mongoose/run/**"
-		exclude "com/emc/mongoose/server/api/**"
-		include "com/emc/mongoose/server/impl/**"
+		include "com/emc/mongoose/server/**"
 		exclude "com/emc/mongoose/storage/adapter/atmos/**"
 		exclude "com/emc/mongoose/storage/adapter/s3/**"
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
@@ -325,13 +265,11 @@ task serverImplJar(type: Jar, dependsOn: "rmic") {
 task storageMockJar(type: Jar) {
 	archiveName "${baseName}-storage-mock.${extension}"
 	from(sourceSets.main.output) {
-		exclude "com/emc/mongoose/client/api/**"
-		exclude "com/emc/mongoose/client/impl/**"
+		exclude "com/emc/mongoose/client/**"
 		exclude "com/emc/mongoose/core/api/**"
 		exclude "com/emc/mongoose/core/impl/**"
 		exclude "com/emc/mongoose/run/**"
-		exclude "com/emc/mongoose/server/api/**"
-		exclude "com/emc/mongoose/server/impl/**"
+		exclude "com/emc/mongoose/server/**"
 		exclude "com/emc/mongoose/storage/adapter/atmos/**"
 		exclude "com/emc/mongoose/storage/adapter/s3/**"
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
@@ -347,13 +285,11 @@ task storageMockJar(type: Jar) {
 task webuiJar(type: Jar) {
 	archiveName "${baseName}-webui.${extension}"
 	from(sourceSets.main.output) {
-		exclude "com/emc/mongoose/client/api/**"
-		exclude "com/emc/mongoose/client/impl/**"
+		exclude "com/emc/mongoose/client/**"
 		exclude "com/emc/mongoose/core/api/**"
 		exclude "com/emc/mongoose/core/impl/**"
 		exclude "com/emc/mongoose/run/**"
-		exclude "com/emc/mongoose/server/api/**"
-		exclude "com/emc/mongoose/server/impl/**"
+		exclude "com/emc/mongoose/server/**"
 		exclude "com/emc/mongoose/storage/adapter/atmos/**"
 		exclude "com/emc/mongoose/storage/adapter/s3/**"
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
@@ -373,11 +309,10 @@ task runJar(type: Jar) {
 	dependsOn storageAdapterAtmosJar
 	dependsOn storageAdapterS3Jar
 	dependsOn storageAdapterSwiftJar
-	dependsOn clientApiJar
-	dependsOn clientImplJar
-	dependsOn serverApiJar
-	dependsOn serverImplJar
+	dependsOn clientJar
+	dependsOn serverJar
 	dependsOn storageMockJar
+	dependsOn webuiJar
 
 	def componentsClsPath = [
 		"lib" + File.separator + coreApiJar.archiveName,
@@ -385,31 +320,30 @@ task runJar(type: Jar) {
 		"lib" + File.separator + storageAdapterAtmosJar.archiveName,
 		"lib" + File.separator + storageAdapterS3Jar.archiveName,
 		"lib" + File.separator + storageAdapterSwiftJar.archiveName,
-		"lib" + File.separator + clientApiJar.archiveName,
-		"lib" + File.separator + clientImplJar.archiveName,
-		"lib" + File.separator + serverApiJar.archiveName,
-		"lib" + File.separator + serverImplJar.archiveName,
+		"lib" + File.separator + clientJar.archiveName,
+		"lib" + File.separator + serverJar.archiveName,
 		"lib" + File.separator + storageMockJar.archiveName,
 		"lib" + File.separator + webuiJar.archiveName
 	].join(' ')
 
-	def allDepsClsPath = configurations.runtime.collect { 'lib' + File.separator + it.name }.join(' ')
+	def allDepsClsPath = configurations.runtime.collect { "lib" + File.separator + it.name }.join(' ')
 
-	archiveName "${baseName}-run.${extension}"
+	archiveName "${baseName}.${extension}"
 
 	from(sourceSets.main.output) {
-		exclude "com/emc/mongoose/client/api/**"
-		exclude "com/emc/mongoose/client/impl/**"
+		exclude "com/emc/mongoose/client/**"
 		exclude "com/emc/mongoose/core/api/**"
 		exclude "com/emc/mongoose/core/impl/**"
 		include "com/emc/mongoose/run/**"
-		exclude "com/emc/mongoose/server/api/**"
-		exclude "com/emc/mongoose/server/impl/**"
+		include "com/emc/mongoose/webui/logging/**"
+		exclude "com/emc/mongoose/server/**"
 		exclude "com/emc/mongoose/storage/adapter/atmos/**"
 		exclude "com/emc/mongoose/storage/adapter/s3/**"
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
 		exclude "com/emc/mongoose/storage/mock/**"
-		exclude "com/emc/mongoose/webui/**"
+		exclude "com/emc/mongoose/webui/*"
+		exclude "com/emc/mongoose/webui/expressions/**"
+		exclude "com/emc/mongoose/webui/websockets/**"
 	}
 
 	manifest {
@@ -417,7 +351,7 @@ task runJar(type: Jar) {
 		attributes(
 			'Implementation-Title': rootProject.name + "-run",
 			'Main-Class': 'com.emc.mongoose.run.Main',
-			'Class-Path': componentsClsPath + ' ' + allDepsClsPath
+			'Class-Path': [componentsClsPath, allDepsClsPath].join(' ')
 		)
 	}
 }
@@ -429,12 +363,11 @@ task dist(type: Tar) {
 	dependsOn storageAdapterAtmosJar
 	dependsOn storageAdapterS3Jar
 	dependsOn storageAdapterSwiftJar
-	dependsOn clientApiJar
-	dependsOn clientImplJar
-	dependsOn serverApiJar
-	dependsOn serverImplJar
+	dependsOn clientJar
+	dependsOn serverJar
 	dependsOn storageMockJar
 	dependsOn runJar
+	dependsOn webuiJar
 
 	baseName = project.name
 	compression = Compression.GZIP
@@ -449,10 +382,8 @@ task dist(type: Tar) {
 			from storageAdapterAtmosJar.outputs.files
 			from storageAdapterS3Jar.outputs.files
 			from storageAdapterSwiftJar.outputs.files
-			from clientApiJar.outputs.files
-			from clientImplJar.outputs.files
-			from serverApiJar.outputs.files
-			from serverImplJar.outputs.files
+			from clientJar.outputs.files
+			from serverJar.outputs.files
 			from storageMockJar.outputs.files
 			from webuiJar.outputs.files
 			from configurations.runtime
