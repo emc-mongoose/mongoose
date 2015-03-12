@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.mock.impl.cinderella;
 //
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.core.impl.io.util.http.ContentInputStream;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;

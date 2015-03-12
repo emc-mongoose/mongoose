@@ -1,10 +1,10 @@
 package com.emc.mongoose.core.impl.util;
 //
 import com.emc.mongoose.core.api.util.Reusable;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
 //
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -1,6 +1,6 @@
-package com.emc.mongoose.core.impl.persist;
+package com.emc.mongoose.core.impl.util.log;
 //
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;

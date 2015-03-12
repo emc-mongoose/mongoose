@@ -1,7 +1,7 @@
 package com.emc.mongoose.run;
 
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

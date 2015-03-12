@@ -13,8 +13,8 @@ import com.emc.mongoose.core.impl.load.executor.util.http.RequestSharedHeaders;
 import com.emc.mongoose.core.impl.load.executor.util.http.RequestTargetHost;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.impl.util.WorkerFactory;
 //
 import org.apache.http.Header;

@@ -5,14 +5,14 @@ import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.impl.data.DataRanges;
 import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 //
 import org.apache.commons.codec.binary.Base64;
 //

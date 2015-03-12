@@ -1,6 +1,6 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.core.impl.persist.TraceLogger;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.impl.util.ThreadContextMap;
 import com.emc.mongoose.server.impl.ServiceUtils;
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
@@ -8,19 +8,14 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 //
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.LifeCycle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
-import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.logging.log4j.core.config.json.JsonConfiguration;
-import org.apache.logging.log4j.core.config.json.JsonConfigurationFactory;
-import org.apache.logging.log4j.status.StatusLogger;
 //
 import java.io.File;
 import java.io.IOException;

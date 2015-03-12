@@ -2,12 +2,12 @@ package com.emc.mongoose.webui;
 //
 import com.emc.mongoose.run.Scenario;
 import com.emc.mongoose.core.impl.util.ThreadContextMap;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.cinderella.Main;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.server.impl.ServiceUtils;
 //
 import org.apache.logging.log4j.Level;

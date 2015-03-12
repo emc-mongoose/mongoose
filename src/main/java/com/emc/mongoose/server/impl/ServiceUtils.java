@@ -1,8 +1,8 @@
 package com.emc.mongoose.server.impl;
 //
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.run.Main;
 //
 import com.emc.mongoose.server.api.Service;

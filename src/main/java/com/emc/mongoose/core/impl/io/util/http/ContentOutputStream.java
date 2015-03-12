@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.io.util.http;
 //
 import com.emc.mongoose.core.impl.util.InstancePool;
 import com.emc.mongoose.core.api.util.Reusable;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 //
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;

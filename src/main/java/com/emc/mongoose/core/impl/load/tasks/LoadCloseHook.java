@@ -1,8 +1,8 @@
 package com.emc.mongoose.core.impl.load.tasks;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.core.api.util.log.Markers;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.api.persist;
+package com.emc.mongoose.core.api.util.log;
 //
 import org.apache.logging.log4j.Marker;
 import org.apache.logging.log4j.MarkerManager;

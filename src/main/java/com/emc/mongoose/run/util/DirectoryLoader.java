@@ -3,8 +3,8 @@ package com.emc.mongoose.run.util;
 
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.core.api.util.log.Markers;
 import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;

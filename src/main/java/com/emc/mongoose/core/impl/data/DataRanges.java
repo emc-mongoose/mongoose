@@ -5,7 +5,7 @@ import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 //
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;

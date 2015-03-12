@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.Header;
 //

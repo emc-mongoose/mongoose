@@ -6,7 +6,7 @@ import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.impl.util.InstancePool;
 //
 import com.emc.mongoose.core.api.util.Reusable;

@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.cinderella;
 
 import com.emc.mongoose.core.impl.io.util.http.ContentOutputStream;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.ContentEncoder;

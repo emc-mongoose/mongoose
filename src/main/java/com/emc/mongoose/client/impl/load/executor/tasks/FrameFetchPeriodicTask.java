@@ -2,7 +2,7 @@ package com.emc.mongoose.client.impl.load.executor.tasks;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
 //
 import org.apache.logging.log4j.Level;

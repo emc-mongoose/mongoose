@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.api.persist;
+package com.emc.mongoose.core.api.util.log;
 /**
  Created by kurila on 26.12.14.
  */

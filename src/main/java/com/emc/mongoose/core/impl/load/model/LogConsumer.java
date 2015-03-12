@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 //
 import com.emc.mongoose.core.impl.util.InstancePool;
 import com.emc.mongoose.core.api.util.Reusable;

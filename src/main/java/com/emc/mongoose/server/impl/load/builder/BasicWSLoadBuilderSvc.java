@@ -12,7 +12,7 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.server.impl.ServiceUtils;
 //
 import com.emc.mongoose.server.impl.persist.TmpFileItemBufferSvc;

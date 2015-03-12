@@ -4,7 +4,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.impl.util.InstancePool;
 import com.emc.mongoose.core.api.util.Reusable;
 import org.apache.logging.log4j.LogManager;

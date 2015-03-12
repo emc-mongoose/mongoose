@@ -46,13 +46,9 @@ configuration:
           level: INFO
           onMatch: ACCEPT
           onMismatch: DENY
-    rollingFile:
+    runIdFile:
       -
         name: msgFile
-        append: false
-        bufferedIO: true
-        fileName: "${path.log}messages.csv.${sys:run.id}"
-        defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
         filters:
@@ -62,11 +58,6 @@ configuration:
             onMismatch: DENY
       -
         name: 3rdPartyFile
-        append: false
-        bufferedIO: true
-        fileName: "${path.log}3rdparty.csv.${sys:run.id}"
-        policies: { OnStartupTriggeringPolicy }
-        defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
         filters:
@@ -104,10 +95,6 @@ configuration:
             maxBurst: 100
       -
         name: errFile
-        append: false
-        bufferedIO: true
-        fileName: "${path.log}errors.csv.${sys:run.id}"
-        defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
         filters:
@@ -120,10 +107,6 @@ configuration:
             maxBurst: 100
       -
         name: perfAvgFile
-        append: false
-        bufferedIO: true
-        fileName: "${path.log}perf.avg.csv.${sys:run.id}"
-        defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %32t | %m%n"
         filters:
@@ -133,10 +116,6 @@ configuration:
             onMismatch: DENY
       -
         name: perfSumFile
-        append: false
-        bufferedIO: true
-        fileName: "${path.log}perf.sum.csv.${sys:run.id}"
-        defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %t | %m%n"
         filters:
@@ -146,10 +125,6 @@ configuration:
             onMismatch: DENY
       -
         name: perfTraceFile
-        append: false
-        bufferedIO: true
-        fileName: "${path.log}perf.trace.csv.${sys:run.id}"
-        defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%t,%m%n"
         filters:
@@ -159,10 +134,6 @@ configuration:
             onMismatch: DENY
       -
         name: dataListFile
-        append: false
-        bufferedIO: true
-        fileName: "${path.log}data.items.csv.${sys:run.id}"
-        defaultRolloverStrategy: { max: 10 }
         PatternLayout:
           pattern: "%m%n"
         filters:

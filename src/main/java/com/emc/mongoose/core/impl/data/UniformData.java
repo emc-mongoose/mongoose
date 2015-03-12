@@ -3,8 +3,8 @@ package com.emc.mongoose.core.impl.data;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.server.impl.ServiceUtils;
 //
 import org.apache.commons.codec.binary.Base64;

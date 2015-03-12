@@ -5,7 +5,8 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.persist.DataItemBuffer;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.impl.util.WorkerFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

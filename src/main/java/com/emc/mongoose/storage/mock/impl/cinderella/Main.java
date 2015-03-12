@@ -9,8 +9,8 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.persist.Markers;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
+import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.server.impl.ServiceUtils;
 import com.emc.mongoose.core.impl.util.WorkerFactory;
 //

@@ -7,8 +7,8 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.core.api.persist.Markers;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
+import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 //
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.http.HttpEntity;

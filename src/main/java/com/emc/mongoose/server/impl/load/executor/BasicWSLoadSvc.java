@@ -5,7 +5,7 @@ import com.emc.mongoose.core.impl.load.model.FrameBuffConsumer;
 import com.emc.mongoose.server.api.load.model.ConsumerSvc;
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.persist.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
 import com.emc.mongoose.server.api.Service;
 import com.emc.mongoose.server.impl.ServiceUtils;

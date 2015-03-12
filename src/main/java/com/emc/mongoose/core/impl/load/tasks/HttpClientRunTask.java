@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.load.tasks;
 //
-import com.emc.mongoose.core.api.persist.Markers;
-import com.emc.mongoose.core.impl.persist.TraceLogger;
+import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import org.apache.http.nio.reactor.ConnectingIOReactor;
