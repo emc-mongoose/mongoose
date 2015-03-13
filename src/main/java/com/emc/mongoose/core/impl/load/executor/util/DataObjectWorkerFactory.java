@@ -1,8 +1,8 @@
 package com.emc.mongoose.core.impl.load.executor.util;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.impl.util.ThreadContextMap;
 import com.emc.mongoose.core.impl.util.WorkerFactory;
+import org.apache.logging.log4j.ThreadContext;
 /**
  * Created by olga on 12.11.14.
  */
@@ -61,10 +61,10 @@ extends WorkerFactory {
 		//
 		@Override
 		public void run() {
-			ThreadContextMap.putValue(KEY_LOAD_NUM, String.valueOf(loadNumber));
-			ThreadContextMap.putValue(KEY_API, api);
-			ThreadContextMap.putValue(KEY_LOAD_TYPE, loadType.toString());
-			ThreadContextMap.putValue(KEY_THREAD_NUM, String.valueOf(threadNumber));
+			ThreadContext.put(KEY_LOAD_NUM, String.valueOf(loadNumber));
+			ThreadContext.put(KEY_API, api);
+			ThreadContext.put(KEY_LOAD_TYPE, loadType.toString());
+			ThreadContext.put(KEY_THREAD_NUM, String.valueOf(threadNumber));
 			super.run();
 		}
 	}

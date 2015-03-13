@@ -1,7 +1,6 @@
 package com.emc.mongoose.webui;
 //
 import com.emc.mongoose.run.Scenario;
-import com.emc.mongoose.core.impl.util.ThreadContextMap;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
@@ -13,6 +12,7 @@ import com.emc.mongoose.server.impl.ServiceUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 //
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -101,7 +101,6 @@ public final class StartServlet extends CommonServlet {
 			 public void run() {
 				localRunTimeConfig = runTimeConfig;
 				RunTimeConfig.setContext(localRunTimeConfig);
-				ThreadContextMap.initThreadContextMap();
 				//
 				LOG.debug(Markers.MSG, message);
 				//
@@ -117,7 +116,6 @@ public final class StartServlet extends CommonServlet {
 			@Override
 			public void interrupt() {
 				RunTimeConfig.setContext(localRunTimeConfig);
-				ThreadContextMap.initThreadContextMap();
 				//
 				ServiceUtils.close(loadBuilderSvc);
 				super.interrupt();
@@ -132,15 +130,16 @@ public final class StartServlet extends CommonServlet {
 			@Override
 			public void run() {
 				RunTimeConfig.setContext(runTimeConfig);
-				ThreadContextMap.initThreadContextMap();
-				ThreadContextMap.putValue(RunTimeConfig.KEY_RUN_SCENARIO_NAME, runTimeConfig.getRunScenarioName());
-				ThreadContextMap.putValue(RunTimeConfig.KEY_RUN_METRICS_PERIOD_SEC,
-						String.valueOf(runTimeConfig.getRunMetricsPeriodSec()));
+				ThreadContext.put(RunTimeConfig.KEY_RUN_SCENARIO_NAME, runTimeConfig.getRunScenarioName());
+				ThreadContext.put(
+					RunTimeConfig.KEY_RUN_METRICS_PERIOD_SEC,
+					String.valueOf(runTimeConfig.getRunMetricsPeriodSec())
+				);
 				if (runTimeConfig.getRunScenarioName().equals("rampup")) {
-					ThreadContextMap.putValue("scenario.rampup.sizes", runTimeConfig.getProperty("scenario.rampup.sizes").toString());
-					ThreadContextMap.putValue("scenario.rampup.thread.counts",
-							runTimeConfig.getProperty("scenario.rampup.thread.counts").toString());
-					ThreadContextMap.putValue("scenario.chain.load", runTimeConfig.getProperty("scenario.chain.load").toString());
+					ThreadContext.put("scenario.rampup.sizes", runTimeConfig.getProperty("scenario.rampup.sizes").toString());
+					ThreadContext.put("scenario.rampup.thread.counts",
+						runTimeConfig.getProperty("scenario.rampup.thread.counts").toString());
+					ThreadContext.put("scenario.chain.load", runTimeConfig.getProperty("scenario.chain.load").toString());
 				}
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getRunScenarioName());
 				//
@@ -162,7 +161,6 @@ public final class StartServlet extends CommonServlet {
 			@Override
 			public void run() {
 				RunTimeConfig.setContext(runTimeConfig);
-				ThreadContextMap.initThreadContextMap();
 				//
 				LOG.debug(Markers.MSG, message);
 				try {

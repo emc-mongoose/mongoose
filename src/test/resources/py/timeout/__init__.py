@@ -6,7 +6,7 @@ from java.util.concurrent import TimeUnit
 #
 from org.apache.logging.log4j import LogManager
 #
-from com.emc.mongoose.core.api.persist import Markers
+from com.emc.mongoose.core.api.util.log import Markers
 from com.emc.mongoose.core.impl.util import RunTimeConfig
 #
 LOG = LogManager.getLogger()

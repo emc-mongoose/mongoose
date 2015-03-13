@@ -16,6 +16,7 @@ import org.apache.commons.lang.text.StrBuilder;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 //
 import java.io.Externalizable;
 import java.io.IOException;
@@ -34,7 +35,6 @@ import java.util.concurrent.TimeUnit;
 import java.nio.file.Paths;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 /**
  Created by kurila on 28.05.14.
  A shared runtime configuration.
@@ -46,12 +46,25 @@ implements Externalizable {
 	private static InheritableThreadLocal<RunTimeConfig>
 		INHERITABLE_CONTEXT = new InheritableThreadLocal<>();
 	//
+	public static void initContext() {
+		final RunTimeConfig instance = RunTimeConfig.getContext();
+		if(instance == null) {
+			ThreadContext.put(KEY_RUN_ID, System.getProperty(KEY_RUN_ID));
+			ThreadContext.put(KEY_RUN_MODE, System.getProperty(KEY_RUN_MODE));
+		} else {
+			ThreadContext.put(KEY_RUN_ID, instance.getRunId());
+			ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
+		}
+	}
+	//
 	public static RunTimeConfig getContext() {
 		return INHERITABLE_CONTEXT.get();
 	}
 	//
 	public static void setContext(final RunTimeConfig instance) {
 		INHERITABLE_CONTEXT.set(instance);
+		ThreadContext.put(KEY_RUN_ID, instance.getRunId());
+		ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
 	}
 	//
 	private Set<String> mongooseKeys;

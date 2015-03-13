@@ -5,9 +5,9 @@ from timeout import init as timeOutInit
 from loadbuilder import init as loadBuilderInit
 #
 from com.emc.mongoose.core.api.io.task import IOTask
-from com.emc.mongoose.core.api.persist import Markers
+from com.emc.mongoose.core.api.util.log import Markers
 from com.emc.mongoose.core.impl.util import RunTimeConfig
-from com.emc.mongoose.core.impl.persist import TraceLogger
+from com.emc.mongoose.core.impl.util.log import TraceLogger
 #
 from org.apache.logging.log4j import Level, LogManager
 #

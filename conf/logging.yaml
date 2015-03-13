@@ -1,13 +1,8 @@
 configuration:
-  status: warn
+  status: info
   name: mongoose
   monitorInterval: 1000
-  packages: com.emc.mongoose.webui.logging
-  properties:
-    property:
-      -
-        name: path.log
-        value: "${sys:dir.root}${sys:file.separator}log${sys:file.separator}${sys:run.mode}${sys:file.separator}${sys:file.separator}"
+  packages: com.emc.mongoose.webui.logging,com.emc.mongoose.core.impl.util.log
   shutdownHook: disable
 
   appenders:
@@ -49,6 +44,7 @@ configuration:
     runIdFile:
       -
         name: msgFile
+        fileName: "messages.log"
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
         filters:
@@ -58,6 +54,7 @@ configuration:
             onMismatch: DENY
       -
         name: 3rdPartyFile
+        fileName: "3rdparty.log"
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
         filters:
@@ -95,6 +92,7 @@ configuration:
             maxBurst: 100
       -
         name: errFile
+        fileName: "errors.log"
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
         filters:
@@ -107,6 +105,7 @@ configuration:
             maxBurst: 100
       -
         name: perfAvgFile
+        fileName: "perf.avg.log"
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %32t | %m%n"
         filters:
@@ -116,6 +115,7 @@ configuration:
             onMismatch: DENY
       -
         name: perfSumFile
+        fileName: "perf.sum.log"
         PatternLayout:
           pattern: "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %t | %m%n"
         filters:
@@ -125,6 +125,7 @@ configuration:
             onMismatch: DENY
       -
         name: perfTraceFile
+        fileName: "perf.trace.csv"
         PatternLayout:
           pattern: "%t,%m%n"
         filters:
@@ -134,6 +135,7 @@ configuration:
             onMismatch: DENY
       -
         name: dataListFile
+        fileName: "data.items.csv"
         PatternLayout:
           pattern: "%m%n"
         filters:

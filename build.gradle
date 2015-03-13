@@ -335,15 +335,12 @@ task runJar(type: Jar) {
 		exclude "com/emc/mongoose/core/api/**"
 		exclude "com/emc/mongoose/core/impl/**"
 		include "com/emc/mongoose/run/**"
-		include "com/emc/mongoose/webui/logging/**"
 		exclude "com/emc/mongoose/server/**"
 		exclude "com/emc/mongoose/storage/adapter/atmos/**"
 		exclude "com/emc/mongoose/storage/adapter/s3/**"
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
 		exclude "com/emc/mongoose/storage/mock/**"
-		exclude "com/emc/mongoose/webui/*"
-		exclude "com/emc/mongoose/webui/expressions/**"
-		exclude "com/emc/mongoose/webui/websockets/**"
+		exclude "com/emc/mongoose/webui/**"
 	}
 
 	manifest {
