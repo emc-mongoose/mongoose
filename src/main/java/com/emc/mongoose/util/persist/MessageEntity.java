@@ -21,7 +21,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity
 @Table(name = "message")
-public class MessageEntity
+public final class MessageEntity
 implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)

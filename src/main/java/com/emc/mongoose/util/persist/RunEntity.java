@@ -18,7 +18,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity
 @Table(name = "run", uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "tstamp"})})
-public class RunEntity
+public final class RunEntity
 	implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)

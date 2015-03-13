@@ -14,7 +14,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity
 @Table(name = "mode", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
-public class ModeEntity
+public final class ModeEntity
 	implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)

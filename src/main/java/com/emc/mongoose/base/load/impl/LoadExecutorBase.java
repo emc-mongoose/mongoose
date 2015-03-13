@@ -18,12 +18,15 @@ import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.impl.tasks.LoadCloseHook;
 import com.emc.mongoose.base.load.impl.tasks.RequestResultTask;
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.run.ThreadContextMap;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ConsoleColors;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.util.persist.OpenJpaAppender;
 import com.emc.mongoose.util.remote.ServiceUtils;
 //
+import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
 import com.emc.mongoose.util.threading.WorkerFactory;
 import org.apache.commons.lang.StringUtils;
 //
@@ -124,7 +127,6 @@ implements LoadExecutor<T> {
 			(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
 			Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount);
 		setThreadFactory(
-			//new DataObjectWorkerFactory(loadNum, reqConfig.getAPI(), loadType, name)
 			new WorkerFactory(name)
 		);
 		this.connCountPerNode = connCountPerNode;
@@ -176,6 +178,13 @@ implements LoadExecutor<T> {
 	private final Thread metricDumpThread = new Thread() {
 		@Override
 		public final void run() {
+			ThreadContextMap.putValue(
+				DataObjectWorkerFactory.KEY_LOAD_NUM, Integer.toString(reqConfig.getLoadNumber()));
+			ThreadContextMap.putValue(
+				DataObjectWorkerFactory.KEY_LOAD_TYPE, reqConfig.getLoadType().toString());
+			ThreadContextMap.putValue(
+				DataObjectWorkerFactory.KEY_API, reqConfig.getAPI());
+			//
 			final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
 			try {
 				if(metricsUpdatePeriodSec > 0) {
@@ -198,7 +207,8 @@ implements LoadExecutor<T> {
 		final long
 			countReqSucc = counterReqSucc.getCount(),
 			countReqFail = counterReqFail.getCount(),
-			countBytes = reqBytes.getCount();
+			countBytes = reqBytes.getCount(),
+			countReqInQueue = counterSubm.getCount() - countReqSucc;
 		final double
 			avgSize = countReqSucc==0 ? 0 : (double) countBytes / countReqSucc,
 			meanBW = reqBytes.getMeanRate(),
@@ -237,7 +247,7 @@ implements LoadExecutor<T> {
 			String.format(
 				Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
-				countReqSucc, counterSubm.getCount() - countReqSucc,
+				countReqSucc, countReqInQueue,
 				countReqFail == 0 ?
 					Long.toString(countReqFail) :
 					(float) countReqSucc / countReqFail > 100 ?
@@ -259,6 +269,30 @@ implements LoadExecutor<T> {
 				fiveMinBW / MIB,
 				fifteenMinBW / MIB
 			);
+		//
+		ThreadContextMap.putValue(
+			OpenJpaAppender.COUNT_REQ_SUCC, Long.toString(countReqSucc));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.COUNT_REQ_QUEUE, Long.toString(countReqInQueue));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.COUNT_REQ_FAIL, Long.toString(countReqFail));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.MEAN_TP, Double.toString(avgSize==0 ? 0 : meanBW / avgSize));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.ONE_MIN_TP, Double.toString(avgSize==0 ? 0 : oneMinBW / avgSize));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.FIVE_MIN_TP, Double.toString(avgSize==0 ? 0 : fiveMinBW / avgSize));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.FIFTEEN_MIN_TP, Double.toString(avgSize==0 ? 0 : fifteenMinBW / avgSize));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.MEAN_BW, Double.toString(meanBW / MIB));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.ONE_MIN_BW, Double.toString(oneMinBW / MIB));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.FIVE_MIN_BW, Double.toString(fiveMinBW / MIB));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.FIFTEEN_MIN_BW, Double.toString(fifteenMinBW / MIB));
+		//
 		LOG.info(logMarker, message);
 		/*
 		if(Markers.PERF_SUM.equals(logMarker)) {

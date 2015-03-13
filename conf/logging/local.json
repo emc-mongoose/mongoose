@@ -39,13 +39,14 @@
 				}, {
 					"name": "openJPA",
 					"type": "OpenJPA",
-					"enabled": "false",
+					"enabled": "true",
 					"database": "postgresql",
 					"username": "mongoose",
 					"password": "mongoose",
 					"addr": "localhost",
 					"port": "5432",
 					"namedatabase": "mongoose",
+					"appenderQueueSize": "1000000",
 					"Filters": {
 						"Filter": [
 							{
@@ -66,6 +67,11 @@
 							}, {
 								"type": "MarkerFilter",
 								"marker": "msg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfAvg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
 							}

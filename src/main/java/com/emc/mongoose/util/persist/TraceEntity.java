@@ -18,7 +18,7 @@ import java.io.Serializable;
 @Entity
 @IdClass(TraceEntityPK.class)
 @Table(name = "trace")
-public class TraceEntity
+public final class TraceEntity
 	implements Serializable{
 	//
 	@Id

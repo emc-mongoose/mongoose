@@ -17,7 +17,7 @@ import java.io.Serializable;
 @Entity
 @IdClass(LoadEntityPK.class)
 @Table(name = "load")
-public class LoadEntity
+public final class LoadEntity
 implements Serializable {
 	//
 	@Id

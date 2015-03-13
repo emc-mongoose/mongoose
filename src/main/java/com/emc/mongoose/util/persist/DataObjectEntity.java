@@ -12,7 +12,7 @@ import java.io.Serializable;
 @Entity
 @IdClass(DataObjectEntityPK.class)
 @Table(name = "dataobject")
-public class DataObjectEntity
+public final class DataObjectEntity
 	implements Serializable{
 	@Id
 	@Column(name = "identifier")

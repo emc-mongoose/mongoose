@@ -27,11 +27,13 @@ import com.emc.mongoose.base.load.impl.tasks.LoadCloseHook;
 import com.emc.mongoose.base.load.client.LoadClient;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.run.Main;
+import com.emc.mongoose.run.ThreadContextMap;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.ConsoleColors;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.remote.ServiceUtils;
+import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
 import com.emc.mongoose.util.threading.PeriodicTask;
 import com.emc.mongoose.util.threading.WorkerFactory;
 //
@@ -171,7 +173,9 @@ implements LoadClient<T> {
 		}
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			20 + remoteLoadMap.size(), new WorkerFactory(String.format("%s-remoteMonitor", name))
+			20 + remoteLoadMap.size(), //new WorkerFactory(String.format("%s-remoteMonitor", name))
+			new DataObjectWorkerFactory(reqConfig.getLoadNumber(), reqConfig.getAPI(),
+				reqConfig.getLoadType(),String.format("%s-remoteMonitor", name))
 		) { // make the shutdown method synchronized
 			@Override
 			public final synchronized void shutdown() {

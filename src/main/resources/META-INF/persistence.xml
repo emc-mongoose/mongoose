@@ -18,6 +18,7 @@
 		<class>com.emc.mongoose.util.persist.NodeEntity</class>
 		<class>com.emc.mongoose.util.persist.ConnectionEntity</class>
 		<class>com.emc.mongoose.util.persist.TraceEntity</class>
+		<class>com.emc.mongoose.util.persist.PerfomanceEntity</class>
 		<properties>
 			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
 			<property name="openjpa.DynamicEnhancementAgent" value="true"/>
@@ -38,6 +39,9 @@
             			TestOnBorrow = true,
             			Username = mongoose,
             			Password = mongoose"/>
+			<!-- Open JPA cache !-->
+			<!--<property name="openjpa.DataCache" value="true"/>!-->
+			<!--<property name="openjpa.QueryCache" value="true"/>!-->
 		</properties>
 
 	</persistence-unit>

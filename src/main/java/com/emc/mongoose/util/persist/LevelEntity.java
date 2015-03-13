@@ -15,7 +15,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity
 @Table(name = "Level", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
-public class LevelEntity
+public final class LevelEntity
 implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)

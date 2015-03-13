@@ -18,7 +18,7 @@ import java.io.Serializable;
 @Entity
 @IdClass(ConnectionEntityPK.class)
 @Table(name = "connection")
-public class ConnectionEntity
+public final class ConnectionEntity
 implements Serializable{
 	@Id
 	@Column(name = "num")
