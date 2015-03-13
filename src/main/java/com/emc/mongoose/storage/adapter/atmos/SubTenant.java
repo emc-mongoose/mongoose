@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.data.DataObject;
  */
 public interface SubTenant<T extends DataObject> {
 	//
-	String getName();
+	String getValue();
 	//
 	boolean exists(final LoadExecutor<T> client)
 	throws IllegalStateException;

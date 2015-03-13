@@ -2,23 +2,34 @@ package com.emc.mongoose.storage.adapter.atmos;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
+import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.text.StrBuilder;
 import org.apache.http.Header;
 //
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.spec.SecretKeySpec;
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
@@ -109,11 +120,11 @@ extends WSRequestConfigBase<T> {
 		this.subTenant = subTenant;
 		if(sharedHeadersMap != null && userName != null) {
 			if(
-				subTenant == null || subTenant.getName().length() < 1
+				subTenant == null || subTenant.getValue().length() < 1
 			) {
 				sharedHeadersMap.put(KEY_EMC_UID, userName);
 			} else {
-				sharedHeadersMap.put(KEY_EMC_UID, subTenant.getName() + '/' + userName);
+				sharedHeadersMap.put(KEY_EMC_UID, subTenant.getValue() + '/' + userName);
 			}
 		}
 		return this;
@@ -128,12 +139,12 @@ extends WSRequestConfigBase<T> {
 			super.setUserName(userName);
 			if(sharedHeadersMap != null) {
 				if(
-					subTenant==null || subTenant.getName().length() < 1
+					subTenant==null || subTenant.getValue().length() < 1
 				) {
 					sharedHeadersMap.put(KEY_EMC_UID, userName);
 				} else {
 					sharedHeadersMap.put(
-						KEY_EMC_UID, String.format(FMT_SLASH, subTenant.getName(), userName)
+						KEY_EMC_UID, String.format(FMT_SLASH, subTenant.getValue(), userName)
 					);
 				}
 			}
@@ -216,7 +227,7 @@ extends WSRequestConfigBase<T> {
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(subTenant == null ? null : subTenant.getName());
+		out.writeObject(subTenant == null ? null : subTenant.getValue());
 		out.writeObject(uriBasePath);
 	}
 	//
@@ -278,7 +289,7 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		if(LOG.isTraceEnabled()) {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Canonical request form:\n{}", buffer.toString());
 		}
 		//
@@ -349,24 +360,61 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public void configureStorage(final LoadExecutor<T> client)
 	throws IllegalStateException {
-		// TODO issue
-		// TODO issue #148
-		/*if(subTenant == null) {
-			throw new IllegalStateException("Subtenant is not specified");
-		}
-		final String subTenantName = subTenant.getName();
-		if(subTenant.exists(client)) {
-			LOG.debug(Markers.MSG, "Subtenant \"{}\" already exists", subTenantName);
-		} else {
-			subTenant.create(client);
-			if(subTenant.exists(client)) {
-				runTimeConfig.set(KEY_SUBTENANT, subTenantName);
-			} else {
-				throw new IllegalStateException(
-					String.format("Created subtenant \"%s\" doesn't exist", subTenantName)
-				);
+		/* show interesting system info
+		try {
+			MutableWSRequest req = WSIOTask.HTTPMethod.GET
+				.createRequest()
+				.setUriPath("/rest/service");
+			applyHeadersFinally(req);
+			final HttpResponse resp = WSLoadExecutor.class.cast(client).execute(req);
+			if(resp != null) {
+				final StatusLine statusLine = resp.getStatusLine();
+				if(statusLine != null) {
+					final int statusCode = statusLine.getStatusCode();
+					if(statusCode >= 200 && statusCode < 300) {
+						final HttpEntity contentEntity = resp.getEntity();
+						if(contentEntity != null && contentEntity.getContentLength() > 0) {
+							try(
+								final BufferedReader streamReader = new BufferedReader(
+									new InputStreamReader(
+										contentEntity.getContent()
+									)
+								)
+							) {
+								final StrBuilder strBuilder = new StrBuilder();
+								String nextLine;
+								do {
+									nextLine = streamReader.readLine();
+									strBuilder.append(nextLine).appendNewLine();
+								} while(nextLine != null);
+								LOG.info(Markers.MSG, strBuilder.toString());
+							} catch(final IOException e) {
+								TraceLogger.failure(
+									LOG, Level.DEBUG, e,
+									"Atmos system info response content reading failure"
+								);
+							}
+						}
+					}
+				}
 			}
+		} catch(final IOException e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Atmos system info request failure");
 		}*/
+		// create the subtenant if neccessary
+		String subTenantValue;
+		if(subTenant == null) {
+			throw new IllegalStateException("No subtenant specified");
+		} else {
+			subTenantValue = subTenant.getValue();
+			if(subTenantValue == null || subTenantValue.length() == 0) {
+				subTenant.create(client);
+			} else if(!subTenant.exists(client)) {
+				subTenant.create(client);
+			}
+		}
+		/*re*/setSubTenant(subTenant);
+		runTimeConfig.set(KEY_SUBTENANT, subTenant.getValue());
 	}
 	//
 	@Override

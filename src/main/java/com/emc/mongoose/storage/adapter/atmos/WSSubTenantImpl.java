@@ -34,21 +34,21 @@ implements SubTenant<T> {
 	//
 	@SuppressWarnings("FieldCanBeLocal")
 	private final WSRequestConfigImpl<T> reqConf;
-	private final String name;
+	private String value = null;
 	//
-	public WSSubTenantImpl(final WSRequestConfigImpl<T> reqConf, final String name) {
+	public WSSubTenantImpl(final WSRequestConfigImpl<T> reqConf, final String value) {
 		this.reqConf = reqConf;
-		this.name = name;
+		this.value = value;
 	}
 	//
 	@Override
-	public final String getName() {
+	public final String getValue() {
 		return toString();
 	}
 	//
 	@Override
 	public final String toString() {
-		return name;
+		return value;
 	}
 	//
 	private final static String
@@ -79,7 +79,7 @@ implements SubTenant<T> {
 			httpReq.setUriPath(
 				String.format(
 					WSRequestConfigImpl.FMT_SLASH,
-					String.format(WSRequestConfigImpl.FMT_URI, SUBTENANT), name
+					String.format(WSRequestConfigImpl.FMT_URI, SUBTENANT), value
 				)
 			);
 		}
@@ -93,10 +93,10 @@ implements SubTenant<T> {
 	throws IllegalStateException {
 		boolean flagExists = false;
 		//
-		if(name != null && name.length() > 0) {
+		if(value!= null && value.length() > 0) {
 			try {
 				final HttpResponse httpResp = execute(
-					(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.GET
+					(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.HEAD
 				);
 				if(httpResp != null) {
 					final HttpEntity httpEntity = httpResp.getEntity();
@@ -106,10 +106,10 @@ implements SubTenant<T> {
 					} else {
 						final int statusCode = statusLine.getStatusCode();
 						if(statusCode == HttpStatus.SC_OK) {
-							LOG.debug(Markers.MSG, "Subtenant \"{}\" exists", name);
+							LOG.debug(Markers.MSG, "Subtenant \"{}\" exists", value);
 							flagExists = true;
 						} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
-							LOG.debug(Markers.MSG, "Subtenant \"{}\" doesn't exist", name);
+							LOG.debug(Markers.MSG, "Subtenant \"{}\" doesn't exist", value);
 						} else {
 							final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
 							if(httpEntity != null) {
@@ -146,7 +146,7 @@ implements SubTenant<T> {
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode == HttpStatus.SC_OK) {
-						LOG.info(Markers.MSG, "Subtenant \"{}\" created", name);
+						LOG.info(Markers.MSG, "Subtenant \"{}\" created", value);
 					} else {
 						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
@@ -156,8 +156,7 @@ implements SubTenant<T> {
 							}
 						}
 						LOG.warn(
-							Markers.ERR, "Create subtenant \"{}\" response ({}): {}",
-							name, statusCode, msg.toString()
+							Markers.ERR, "Create subtenant \"{}\" response ({}): {}", value, statusCode, msg.toString()
 						);
 					}
 				}
@@ -178,12 +177,12 @@ implements SubTenant<T> {
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
-				if(statusLine==null) {
+				if(statusLine == null) {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					if(statusCode==HttpStatus.SC_OK) {
-						LOG.info(Markers.MSG, "Subtenant \"{}\" deleted", name);
+					if(statusCode == HttpStatus.SC_OK) {
+						LOG.info(Markers.MSG, "Subtenant \"{}\" deleted", value);
 					} else {
 						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
@@ -193,8 +192,7 @@ implements SubTenant<T> {
 							}
 						}
 						LOG.warn(
-							Markers.ERR, "Delete subtenant \"{}\" response ({}): {}",
-							name, statusCode, msg.toString()
+							Markers.ERR, "Delete subtenant \"{}\" response ({}): {}", value, statusCode, msg.toString()
 						);
 					}
 				}
