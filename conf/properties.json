@@ -1,0 +1,129 @@
+{
+    "properties": {
+        "api": {
+            "atmos": {
+                "port": 9022,
+                "subtenant": "a41583d347a848b89bc2f31747106db2"
+            },
+            "s3": {
+                "port": 9022,
+                "auth.prefix": "AWS",
+                "bucket": "",
+                "bucket.versioning": false
+            },
+            "swift": {
+                "port": 9024,
+                "service.basepath": "v1",
+                "auth.token": "",
+                "container": ""
+            }
+        },
+        "load": {
+            "append": {
+                "threads": 1
+            },
+            "create": {
+                "threads": 1
+            },
+            "delete": {
+                "threads": 1
+            },
+            "read": {
+                "threads": 1,
+                "verify.content": true
+            },
+            "update": {
+                "threads": 1,
+                "per.item": 1
+            }
+        },
+        "scenario": {
+            "chain": {
+                "load": "create,update,append,read,delete",
+                "simultaneous": true,
+                "itemsbuffer": false
+            },
+            "rampup": {
+                "thread.counts": "1,10,20,50,100,150,200,300,400,500",
+                "sizes": "1KB,8KB,64KB,1MB,8MB,64MB,1GB"
+            },
+            "rampup-create": {
+                "load": "create",
+                "threads": "2,5,10",
+                "objectsizes": "1024,2048"
+            },
+            "single": {
+                "load": "create"
+            }
+        },
+        "auth": {
+            "id": "wuser1@sanity.local",
+            "secret": "HjhQ0bXqUrt1lSPhOfn5S+GLDWaikLi32A6/EWY5"
+        },
+        "data": {
+            "count": 0,
+            "size.min": "1MB",
+            "size.max": "1MB",
+            "size.bias": 1,
+            "src.fpath": "",
+            "src.separator": ",",
+            "page.size": "4KB",
+            "ring.seed": "7a42d9c483244167",
+            "ring.size": "1MB"
+        },
+        "emc": {
+            "fs.access": false
+        },
+        "http": {
+            "sign.method": "HmacSHA1",
+            "content.chunked": false,
+            "content.type": "application/octet-stream",
+            "content.repeatable": true
+        },
+        "remote": {
+            "servers": "127.0.0.1",
+            "control.port": 1099,
+            "export.port": 1199,
+            "import.port": 1199,
+            "wuisvc.port": 8080
+        },
+        "run": {
+            "name": "mongoose",
+            "version": "0.7.0",
+            "mode": "standalone",
+            "time": "1000.days",
+            "scenario.dir": "scripts",
+            "scenario.lang": "py",
+            "scenario.name": "single",
+            "metrics.period.sec": 10,
+            "retry.delay.millisec": 100,
+            "retry.count.max": 100,
+            "request.retries": false,
+            "request.timeout.millisec": 1000000,
+            "request.queue.size": 1000000
+        },
+        "storage": {
+            "addrs": "127.0.0.1",
+            "api": "s3",
+            "namespace": "s3",
+            "scheme": "http",
+            "connection.timeout.millisec": 1000000,
+            "connection.pool.timeout.millisec": 1000000,
+            "socket.timeout.millisec": 1000000,
+            "socket.reuse.addr": true,
+            "socket.keepalive": true,
+            "socket.tcp.nodelay": true,
+            "socket.linger": 0,
+            "socket.bind.backlog.size": 0,
+            "socket.interest.op.queued": false,
+            "socket.select.interval": 100,
+            "mock.head.count": 8,
+            "mock.iothreads.persocket": 10,
+            "mock.capacity": 10000000,
+            "mock.data.offset.radix": 36,
+            "mock.data.size.radix": 10,
+            "mock.fault.period": 0,
+            "mock.fault.sleep.msec": 1000
+        }
+    }
+}

@@ -458,6 +458,10 @@ implements Externalizable {
 		DirectoryLoader.loadPropsFromDir(propsDir, this);
 	}
 	//
+	public synchronized void loadPropsFromJsonCfgFile(final Path propsDir) {
+		PropertiesLoader.loadPropsFromJsonCfgFile(propsDir, this);
+	}
+	//
 	public synchronized void loadSysProps() {
 		final SystemConfiguration sysProps = new SystemConfiguration();
 		String key, keys2override[];

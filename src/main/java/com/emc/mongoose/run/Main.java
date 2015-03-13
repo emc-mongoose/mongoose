@@ -10,6 +10,9 @@ import com.emc.mongoose.object.load.server.WSLoadBuilderSvc;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 //
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.LifeCycle;
 import org.apache.logging.log4j.LogManager;
@@ -27,7 +30,10 @@ import java.nio.file.Paths;
 import java.security.Policy;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -55,6 +61,7 @@ public final class Main {
 		FNAME_LOGGING_LOCAL = "local.json",
 		FNAME_LOGGING_REMOTE = "remote.json",
 		FNAME_POLICY = "security.policy",
+		JSON_PROPS_FILE = "properties.json",
 		//
 		KEY_DIR_ROOT = "dir.root",
 		KEY_POLICY = "java.security.policy",
@@ -121,7 +128,9 @@ public final class Main {
 		// load the properties
 		RunTimeConfig.setContext(new RunTimeConfig());
 		//
-		RunTimeConfig.getContext().loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
+		RunTimeConfig.getContext().loadPropsFromJsonCfgFile(Paths.get(DIR_ROOT, DIR_CONF)
+				.resolve(JSON_PROPS_FILE));
+		//
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RunTimeConfig.getContext().loadSysProps();
 		rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
