@@ -85,9 +85,9 @@ implements LoadExecutor<T> {
 				maxCount > 0 ?
 					Math.min(
 						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
-						RunTimeConfig.getContext().getRunRequestQueueSize())
-					:
-					RunTimeConfig.getContext().getRunRequestQueueSize()
+						runTimeConfig.getRunRequestQueueSize()
+					) :
+					runTimeConfig.getRunRequestQueueSize()
 			)//,
 			//new WorkerFactory("submitWorker")
 		);
