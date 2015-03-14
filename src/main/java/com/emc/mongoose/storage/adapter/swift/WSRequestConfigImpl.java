@@ -14,6 +14,7 @@ import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import org.apache.http.Header;
 //
 import org.apache.http.message.BasicHeader;
+import org.apache.http.message.HeaderGroup;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -66,9 +67,9 @@ extends WSRequestConfigBase<T> {
 			if(reqConf2Clone.uriSvcBaseContainerPath != null) {
 				uriSvcBaseContainerPath = reqConf2Clone.uriSvcBaseContainerPath;
 			}
-			if(reqConf2Clone.sharedHeadersMap.containsKey(KEY_X_VERSIONING)) {
-				sharedHeadersMap.put(
-					KEY_X_VERSIONING, reqConf2Clone.sharedHeadersMap.get(KEY_X_VERSIONING)
+			if(reqConf2Clone.sharedHeaders.containsHeader(KEY_X_VERSIONING)) {
+				sharedHeaders.updateHeader(
+					reqConf2Clone.sharedHeaders.getFirstHeader(KEY_X_VERSIONING)
 				);
 			}
 			setAuthToken(reqConf2Clone.getAuthToken());
@@ -184,9 +185,13 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		if(runTimeConfig.getStorageVersioningEnabled()) {
-			sharedHeadersMap.put(KEY_X_VERSIONING, DEFAULT_VERSIONS_CONTAINER);
-		} else if(sharedHeadersMap.containsKey(KEY_X_VERSIONING)) {
-			sharedHeadersMap.remove(KEY_X_VERSIONING);
+			sharedHeaders.updateHeader(
+				new BasicHeader(KEY_X_VERSIONING, DEFAULT_VERSIONS_CONTAINER)
+			);
+		} else if(sharedHeaders.containsHeader(KEY_X_VERSIONING)) {
+			for(final Header header2remove : sharedHeaders.getHeaders(KEY_X_VERSIONING)) {
+				sharedHeaders.removeHeader(header2remove);
+			}
 		}
 		//
 		refreshContainerPath();
@@ -269,7 +274,7 @@ extends WSRequestConfigBase<T> {
 		if(authTokenValue == null) {
 			throw new IllegalStateException("No auth token was created");
 		}
-		sharedHeadersMap.put(KEY_X_AUTH_TOKEN, authTokenValue);
+		sharedHeaders.updateHeader(new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue));
 		runTimeConfig.set(KEY_CONF_AUTH_TOKEN, authTokenValue);
 		// configure a container
 		if(container == null) {

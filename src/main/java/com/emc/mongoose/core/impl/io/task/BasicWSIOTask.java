@@ -24,6 +24,7 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
@@ -92,7 +93,7 @@ implements WSIOTask<T> {
 	}
 	//
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
-	protected Map<String, Header> sharedHeadersMap = null;
+	protected HeaderGroup sharedHeaders = null;
 	protected final MutableWSRequest httpRequest = HTTPMethod.GET.createRequest();
 	protected volatile HttpEntity reqEntity = null;
 	//
@@ -101,12 +102,10 @@ implements WSIOTask<T> {
 		if(reqConf != null && !reqConf.equals(wsReqConf)) {
 			this.wsReqConf = (WSRequestConfig<T>) reqConf;
 			//
-			final Map<String, String> _headersMap = wsReqConf.getSharedHeadersMap();
-			sharedHeadersMap = new ConcurrentHashMap<>();
-			for(final String headerKey : _headersMap.keySet()) {
-				sharedHeadersMap.put(
-					headerKey, new BasicHeader(headerKey, _headersMap.get(headerKey))
-				);
+			final HeaderGroup headers = wsReqConf.getSharedHeaders();
+			sharedHeaders = new HeaderGroup();
+			for(final Header header : headers.getAllHeaders()) {
+				sharedHeaders.updateHeader(header);
 			}
 			//
 			if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
@@ -252,15 +251,13 @@ implements WSIOTask<T> {
 		if(httpRequest != null) {
 			synchronized(httpRequest) {
 				httpRequest.clearHeaders();
-				for(final String headerKey : sharedHeadersMap.keySet()) {
-					httpRequest.setHeader(sharedHeadersMap.get(headerKey));
-				}
+				httpRequest.setHeaders(sharedHeaders.getAllHeaders());
 				httpRequest.setEntity(reqEntity);
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "Task #{}: reset the request, left headers: {}, shared headers: {}",
 						hashCode(), Arrays.toString(httpRequest.getAllHeaders()),
-						Arrays.toString(sharedHeadersMap.keySet().toArray())
+						Arrays.toString(sharedHeaders.getAllHeaders())
 					);
 				}
 			}

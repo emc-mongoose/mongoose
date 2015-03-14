@@ -9,8 +9,8 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
-//
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 //
@@ -146,8 +146,8 @@ extends WSRequestConfigBase<T> {
 		final StringBuffer buffer = new StringBuffer(httpRequest.getRequestLine().getMethod());
 		//
 		for(final String headerName : HEADERS4CANONICAL) {
-			if(sharedHeadersMap.containsKey(headerName)) {
-				buffer.append('\n').append(sharedHeadersMap.get(headerName));
+			if(sharedHeaders.containsHeader(headerName)) {
+				buffer.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
 			} else if(httpRequest.containsHeader(headerName)) {
 				for(final Header header: httpRequest.getHeaders(headerName)) {
 					buffer.append('\n').append(header.getValue());
@@ -158,10 +158,10 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		for(final String emcHeaderName : HEADERS_EMC) {
-			if(sharedHeadersMap.containsKey(emcHeaderName)) {
+			if(sharedHeaders.containsHeader(emcHeaderName)) {
 				buffer
 					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(sharedHeadersMap.get(emcHeaderName));
+					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
 			} else {
 				for(final Header emcHeader : httpRequest.getHeaders(emcHeaderName)) {
 					buffer

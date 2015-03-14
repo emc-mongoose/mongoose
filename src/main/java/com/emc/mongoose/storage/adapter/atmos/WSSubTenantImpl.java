@@ -32,6 +32,7 @@ implements SubTenant<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	private final static String KEY_SUBTENANT_ID = "subtenantID";
 	@SuppressWarnings("FieldCanBeLocal")
 	private final WSRequestConfigImpl<T> reqConf;
 	private String value = null;
@@ -145,8 +146,16 @@ implements SubTenant<T> {
 					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
-					if(statusCode == HttpStatus.SC_OK) {
-						LOG.info(Markers.MSG, "Subtenant \"{}\" created", value);
+					if(statusCode >= 200 && statusCode < 300) {
+						if(httpResp.containsHeader(KEY_SUBTENANT_ID)) {
+							value = httpResp.getLastHeader(KEY_SUBTENANT_ID).getValue();
+							LOG.info(Markers.MSG, "Subtenant \"{}\" created", value);
+						} else {
+							LOG.warn(
+								Markers.ERR, "Storage response doesn't contain the header {}",
+								KEY_SUBTENANT_ID
+							);
+						}
 					} else {
 						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
 						if(httpEntity != null) {

@@ -17,15 +17,17 @@ import com.emc.mongoose.core.api.util.log.Markers;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.commons.lang.text.StrBuilder;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.IOControl;
-//
 import org.apache.http.protocol.HttpDateGenerator;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -41,11 +43,7 @@ import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 09.06.14.
  */
@@ -93,7 +91,7 @@ implements WSRequestConfig<T> {
 		return reqConf;
 	}
 	//
-	protected Map<String, String> sharedHeadersMap = new ConcurrentHashMap<>();
+	protected HeaderGroup sharedHeaders = new HeaderGroup();
 	protected Mac mac;
 	//
 	public WSRequestConfigBase()
@@ -101,22 +99,21 @@ implements WSRequestConfig<T> {
 		this(null);
 	}
 	//
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "SynchronizeOnNonFinalField"})
 	protected WSRequestConfigBase(final WSRequestConfig<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		signMethod = runTimeConfig.getHttpSignMethod();
 		mac = Mac.getInstance(signMethod);
-		final String
-			runName = runTimeConfig.getRunName(),
+		final String runName = runTimeConfig.getRunName(),
 			runVersion = runTimeConfig.getRunVersion(),
 			contentType = runTimeConfig.getHttpContentType();
 		userAgent = runName + '/' + runVersion;
 		//
+		sharedHeaders.updateHeader(new BasicHeader(HttpHeaders.USER_AGENT, userAgent));
+		sharedHeaders.updateHeader(new BasicHeader(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE));
+		sharedHeaders.updateHeader(new BasicHeader(HttpHeaders.CONTENT_TYPE, contentType));
 		try {
-			sharedHeadersMap.put(HttpHeaders.USER_AGENT, userAgent);
-			sharedHeadersMap.put(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE);
-			sharedHeadersMap.put(HttpHeaders.CONTENT_TYPE, contentType);
 			if(reqConf2Clone != null) {
 				this
 					.setSecret(reqConf2Clone.getSecret())
@@ -179,14 +176,18 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public String getNameSpace() {
-		return sharedHeadersMap.get(KEY_EMC_NS);
+		String nameSpace = null;
+		if(sharedHeaders.containsHeader(KEY_EMC_NS)) {
+			nameSpace = sharedHeaders.getFirstHeader(KEY_EMC_NS).getValue();
+		}
+		return nameSpace;
 	}
 	@Override
 	public WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
-		if(nameSpace == null) {
+		if(nameSpace == null || nameSpace.length() < 1) {
 			LOG.debug(Markers.MSG, "Using empty namespace");
 		} else {
-			sharedHeadersMap.put(KEY_EMC_NS, nameSpace);
+			sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_NS, nameSpace));
 		}
 		return this;
 	}
@@ -249,17 +250,8 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final List<Header> getSharedHeaders() {
-		final LinkedList<Header> headers = new LinkedList<>();
-		for(final String headerName: sharedHeadersMap.keySet()) {
-			headers.add(new BasicHeader(headerName, sharedHeadersMap.get(headerName)));
-		}
-		return headers;
-	}
-	//
-	@Override
-	public final Map<String, String> getSharedHeadersMap() {
-		return sharedHeadersMap;
+	public final HeaderGroup getSharedHeaders() {
+		return sharedHeaders;
 	}
 	//
 	@Override
@@ -290,31 +282,15 @@ implements WSRequestConfig<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		sharedHeadersMap = (Map<String,String>) in.readObject();
-		/*final int headersCount = in.readInt();
-		sharedHeadersMap = new ConcurrentHashMap<>(headersCount);
-		LOG.trace(Markers.MSG, "Got headers count {}", headersCount);
-		String key, value;
-		for(int i = 0; i < headersCount; i ++) {
-			key = String.class.cast(in.readObject());
-			LOG.trace(Markers.MSG, "Got header key {}", key);
-			value = String.class.cast(in.readObject());
-			LOG.trace(Markers.MSG, "Got header value {}", value);
-			sharedHeadersMap.put(key, value);
-		}*/
-		LOG.trace(Markers.MSG, "Got headers map {}", sharedHeadersMap);
+		sharedHeaders = HeaderGroup.class.cast(in.readObject());
+		LOG.trace(Markers.MSG, "Got headers set {}", sharedHeaders);
 	}
 	//
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(sharedHeadersMap);
-		/*out.writeInt(sharedHeadersMap.size());
-		for(final String key: sharedHeadersMap.keySet()) {
-			out.writeObject(key);
-			out.writeObject(sharedHeadersMap.get(key));
-		}*/
+		out.writeObject(sharedHeaders);
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse httpResponse) {

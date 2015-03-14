@@ -58,7 +58,7 @@ implements LoadExecutor<T> {
 	//
 	protected final DataSource<T> dataSrc;
 	protected volatile RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
-	protected final RequestConfig<T> reqConfig;
+	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
 	protected volatile Producer<T> producer = null;
@@ -98,13 +98,13 @@ implements LoadExecutor<T> {
 		setMaximumPoolSize(getCorePoolSize());
 		//
 		this.runTimeConfig = runTimeConfig;
-		RequestConfig<T> reqConfigCopy = null;
+		RequestConfig<T> reqConfigClone = null;
 		try {
-			reqConfigCopy = reqConfig.clone();
+			reqConfigClone = reqConfig.clone();
 		} catch(final CloneNotSupportedException e) {
 			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to clone the request config");
 		} finally {
-			this.reqConfig = reqConfigCopy;
+			this.reqConfigCopy = reqConfigClone;
 		}
 		loadType = reqConfig.getLoadType();
 		final int loadNum = LAST_INSTANCE_NUM.getAndIncrement();
@@ -294,7 +294,7 @@ implements LoadExecutor<T> {
 			} else {
 				//
 				try {
-					reqConfig.configureStorage(this);
+					reqConfigCopy.configureStorage(this);
 				} catch(final IllegalStateException e) {
 					TraceLogger.failure(LOG, Level.WARN, e, "Failed to configure the storage");
 				}
@@ -362,7 +362,7 @@ implements LoadExecutor<T> {
 					(int) (countSubmCalls.getAndIncrement() % storageNodeCount)
 				];
 				// prepare the I/O task instance (make the link between the data item and load type)
-				final IOTask<T> ioTask = reqConfig.getRequestFor(dataItem, tgtNodeAddr);
+				final IOTask<T> ioTask = reqConfigCopy.getRequestFor(dataItem, tgtNodeAddr);
 				// submit the corresponding I/O task
 				final Future<IOTask.Status> futureResponse = submit(ioTask);
 				// prepare the corresponding result handling task
@@ -495,7 +495,7 @@ implements LoadExecutor<T> {
 			}
 			try {
 				// force shutdown
-				reqConfig.close(); // disables connection drop failures
+				reqConfigCopy.close(); // disables connection drop failures
 				LOG.debug(Markers.MSG, "{}: dropped {} tasks", getName(), shutdownNow().size());
 				// poison the consumer
 				consumer.submit(null);

@@ -27,6 +27,7 @@ import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
 import org.apache.http.nio.pool.NIOConnFactory;
@@ -50,6 +51,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -77,7 +79,8 @@ implements WSLoadExecutor<T> {
 		);
 		//
 		final int totalConnCount = connCountPerNode * storageNodeCount;
-		final List<Header> sharedHeaders = reqConfig.getSharedHeaders();
+		final HeaderGroup sharedHeaders = WSRequestConfig.class.cast(reqConfigCopy)
+			.getSharedHeaders();
 		final String userAgent = runTimeConfig.getRunName() + "/" + runTimeConfig.getRunVersion();
 		//
 		final HttpProcessor httpProcessor= HttpProcessorBuilder

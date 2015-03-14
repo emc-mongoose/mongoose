@@ -2,34 +2,26 @@ package com.emc.mongoose.storage.adapter.atmos;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
-import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang.text.StrBuilder;
-import org.apache.http.Header;
 //
-import org.apache.http.HttpEntity;
+import org.apache.commons.codec.binary.Base64;
+//
+import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
-import org.apache.http.StatusLine;
-import org.apache.logging.log4j.Level;
+import org.apache.http.message.BasicHeader;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.crypto.spec.SecretKeySpec;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
@@ -48,8 +40,10 @@ extends WSRequestConfigBase<T> {
 	//
 	public final static String
 		FMT_SLASH = "%s/%s", FMT_URI ="/rest/%s",
-		API_TYPE_OBJ = "objects", API_TYPE_FS = "interface",
-		DEFAULT_ACCEPT_VALUE = "*/*";
+		API_TYPE_OBJ = "objects", API_TYPE_FS = "interface";
+	//
+	public final static Header
+		DEFAULT_ACCEPT_HEADER = new BasicHeader(HttpHeaders.ACCEPT, "*/*");
 	//
 	private WSSubTenantImpl<T> subTenant;
 	private String uriBasePath;
@@ -75,9 +69,7 @@ extends WSRequestConfigBase<T> {
 			setSecret(reqConf2Clone.getSecret());
 		}
 		//
-		if(!sharedHeadersMap.containsKey(HttpHeaders.ACCEPT)) {
-			sharedHeadersMap.put(HttpHeaders.ACCEPT, DEFAULT_ACCEPT_VALUE);
-		}
+		sharedHeaders.updateHeader(DEFAULT_ACCEPT_HEADER);
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
@@ -118,13 +110,15 @@ extends WSRequestConfigBase<T> {
 	public final WSRequestConfigImpl<T> setSubTenant(final WSSubTenantImpl<T> subTenant)
 	throws IllegalStateException {
 		this.subTenant = subTenant;
-		if(sharedHeadersMap != null && userName != null) {
-			if(
-				subTenant == null || subTenant.getValue().length() < 1
-			) {
-				sharedHeadersMap.put(KEY_EMC_UID, userName);
+		if(sharedHeaders != null && userName != null) {
+			if(subTenant == null || subTenant.getValue().length() < 1) {
+				sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_UID, userName));
 			} else {
-				sharedHeadersMap.put(KEY_EMC_UID, subTenant.getValue() + '/' + userName);
+				sharedHeaders.updateHeader(
+					new BasicHeader(
+						KEY_EMC_UID, String.format(FMT_SLASH, subTenant.getValue(), userName)
+					)
+				);
 			}
 		}
 		return this;
@@ -137,14 +131,14 @@ extends WSRequestConfigBase<T> {
 			throw new IllegalStateException("User name is not specified for Atmos REST API");
 		} else {
 			super.setUserName(userName);
-			if(sharedHeadersMap != null) {
-				if(
-					subTenant==null || subTenant.getValue().length() < 1
-				) {
-					sharedHeadersMap.put(KEY_EMC_UID, userName);
+			if(sharedHeaders != null) {
+				if(subTenant==null || subTenant.getValue().length() < 1) {
+					sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_UID, userName));
 				} else {
-					sharedHeadersMap.put(
-						KEY_EMC_UID, String.format(FMT_SLASH, subTenant.getValue(), userName)
+					sharedHeaders.updateHeader(
+						new BasicHeader(
+							KEY_EMC_UID, String.format(FMT_SLASH, subTenant.getValue(), userName)
+						)
 					);
 				}
 			}
@@ -262,8 +256,8 @@ extends WSRequestConfigBase<T> {
 		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
 		for(final String headerName : HEADERS4CANONICAL) {
 			// support for multiple non-unique header keys
-			if(sharedHeadersMap.containsKey(headerName)) {
-				buffer.append('\n').append(sharedHeadersMap.get(headerName));
+			if(sharedHeaders.containsHeader(headerName)) {
+				buffer.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
 			} else if(httpRequest.containsHeader(headerName)) {
 				for(final Header header: httpRequest.getHeaders(headerName)) {
 					buffer.append('\n').append(header.getValue());
@@ -276,10 +270,10 @@ extends WSRequestConfigBase<T> {
 		buffer.append('\n').append(httpRequest.getUriPath());
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
-			if(sharedHeadersMap.containsKey(emcHeaderName)) {
+			if(sharedHeaders.containsHeader(emcHeaderName)) {
 				buffer
 					.append('\n').append(emcHeaderName.toLowerCase())
-					.append(':').append(sharedHeadersMap.get(emcHeaderName));
+					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
 			} else {
 				for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
 					buffer.append('\n').append(emcHeaderName.toLowerCase()).append(':').append(

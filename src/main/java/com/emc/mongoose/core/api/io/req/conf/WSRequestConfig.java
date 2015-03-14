@@ -9,12 +9,12 @@ import com.emc.mongoose.core.impl.util.RunTimeConfig;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.IOControl;
 //
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Map;
+import java.util.Set;
 /**
  Created by kurila on 29.09.14.
  An HTTP request shared configuration.
@@ -40,7 +40,7 @@ extends ObjectRequestConfig<T> {
 		//
 	String[]
 		HEADERS_EMC = {
-			KEY_EMC_ACCEPT, KEY_EMC_DATE, /*KEY_EMC_NS, */KEY_EMC_SIG, KEY_EMC_UID, KEY_EMC_FS_ACCESS
+			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_FS_ACCESS, /*KEY_EMC_NS, */KEY_EMC_SIG, KEY_EMC_UID
 		};
 	//
 	WSIOTask.HTTPMethod getHTTPMethod();
@@ -76,9 +76,7 @@ extends ObjectRequestConfig<T> {
 	WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr)
 	throws InterruptedException;
 	//
-	List<Header> getSharedHeaders();
-	//
-	Map<String, String> getSharedHeadersMap();
+	HeaderGroup getSharedHeaders();
 	//
 	String getUserAgent();
 	//
