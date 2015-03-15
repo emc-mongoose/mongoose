@@ -128,9 +128,10 @@ public final class Main {
 		// load the properties
 		RunTimeConfig.setContext(new RunTimeConfig());
 		//
-		RunTimeConfig.getContext().loadPropsFromJsonCfgFile(Paths.get(DIR_ROOT, DIR_CONF)
-				.resolve(JSON_PROPS_FILE));
+		//RunTimeConfig.getContext().loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
+		RunTimeConfig.getContext().loadPropsFromJsonCfgFile(Paths.get(DIR_ROOT, DIR_CONF).resolve(JSON_PROPS_FILE));
 		//
+		//System.out.println(RunTimeConfig.getContext().getPropertiesMap());
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RunTimeConfig.getContext().loadSysProps();
 		rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());

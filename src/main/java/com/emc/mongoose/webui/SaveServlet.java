@@ -3,6 +3,7 @@ package com.emc.mongoose.webui;
 import com.emc.mongoose.run.JettyRunner;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.util.conf.DirectoryLoader;
+import com.emc.mongoose.util.conf.PropertiesLoader;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.logging.TraceLogger;
 import org.apache.commons.configuration.ConfigurationException;
@@ -60,7 +61,7 @@ public class SaveServlet extends CommonServlet {
 	@Override
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
 		setupRunTimeConfig(request);
-		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES),
+		PropertiesLoader.updateProps(Paths.get(Main.DIR_ROOT, Main.DIR_CONF).resolve(Main.JSON_PROPS_FILE),
 				runTimeConfig, true);
 		updateLastRunTimeConfig(runTimeConfig);
 		response.setStatus(HttpServletResponse.SC_OK);
