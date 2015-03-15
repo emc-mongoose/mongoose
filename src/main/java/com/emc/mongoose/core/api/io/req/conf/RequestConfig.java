@@ -61,9 +61,9 @@ extends Externalizable, Cloneable, Closeable {
 	throws InterruptedException;
 	//
 	RequestConfig<T> setAnyDataProducerEnabled(final boolean enabled);
-	Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> loadExecutor);
+	Producer<T> getAnyDataProducer(final long maxCount, final String addr);
 	//
-	void configureStorage(final LoadExecutor<T> loadExecutor)
+	void configureStorage(final String storageAddrs[])
 	throws IllegalStateException;
 	//
 	boolean isClosed();

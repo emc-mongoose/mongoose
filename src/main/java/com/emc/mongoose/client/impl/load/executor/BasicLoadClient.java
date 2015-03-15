@@ -528,6 +528,7 @@ implements LoadClient<T> {
 	@Override
 	public final void start() {
 		LoadSvc<T> nextLoadSvc;
+		//
 		for(final String addr : loadSvcAddrs) {
 			nextLoadSvc = remoteLoadMap.get(addr);
 			try {

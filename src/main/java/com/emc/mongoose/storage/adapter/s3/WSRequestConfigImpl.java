@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
@@ -9,7 +8,6 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
@@ -181,13 +179,11 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> client) {
+	public final Producer<T> getAnyDataProducer(final long maxCount, final String addr) {
 		Producer<T> producer = null;
 		if(anyDataProducerEnabled) {
 			try {
-				producer = new WSBucketProducer<>(
-					bucket, BasicWSObject.class, maxCount, (WSLoadExecutor<T>) client
-				);
+				producer = new WSBucketProducer<>(bucket, BasicWSObject.class, maxCount, addr);
 			} catch(final NoSuchMethodException e) {
 				TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
 			}
@@ -198,18 +194,18 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final void configureStorage(final LoadExecutor<T> loadExecutor)
+	public final void configureStorage(final String[] storageNodeAddrs)
 	throws IllegalStateException {
 		if(bucket == null) {
 			throw new IllegalStateException("Bucket is not specified");
 		}
 		final String bucketName = bucket.getName();
-		if(bucket.exists(loadExecutor)) {
+		if(bucket.exists(storageNodeAddrs[0])) {
 			LOG.debug(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
 		} else {
 			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", bucketName);
-			bucket.create(loadExecutor);
-			if(bucket.exists(loadExecutor)) {
+			bucket.create(storageNodeAddrs[0]);
+			if(bucket.exists(storageNodeAddrs[0])) {
 				LOG.debug(Markers.MSG, "Bucket \"{}\" created successfully", bucketName);
 				runTimeConfig.set(KEY_BUCKET, bucketName);
 			} else {

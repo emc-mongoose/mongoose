@@ -35,14 +35,4 @@ implements WSLoadClient<T> {
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, reqConf, maxCount
 		);
 	}
-	//
-	@Override
-	public final HttpResponse execute(final HttpRequest request)
-	throws IOException {
-		final Object addrs[] = remoteLoadMap.keySet().toArray();
-		final String addr = String.class.cast(
-			addrs[(int) (getTaskCount() % addrs.length)]
-		);
-		return ((WSLoadSvc<T>) remoteLoadMap.get(addr)).execute(request);
-	}
 }

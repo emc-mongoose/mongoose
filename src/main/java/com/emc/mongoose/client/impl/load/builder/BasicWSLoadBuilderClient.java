@@ -13,10 +13,10 @@ import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 import com.emc.mongoose.server.impl.ServiceUtils;
-//
 import com.emc.mongoose.client.api.load.builder.WSLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.WSLoadClient;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -87,8 +87,14 @@ implements WSLoadBuilderClient<T, U> {
 		return this;
 	}
 	//
+	@Override
+	protected final void invokePreConditions()
+	throws IllegalStateException {
+		reqConf.configureStorage(dataNodeAddrs);
+	}
+	//
 	@Override  @SuppressWarnings("unchecked")
-	public final U build()
+	protected final U buildActually()
 	throws RemoteException {
 		//
 		WSLoadClient newLoadClient;
@@ -97,7 +103,7 @@ implements WSLoadBuilderClient<T, U> {
 		final Map<String, JMXConnector> remoteJMXConnMap = new ConcurrentHashMap<>();
 		//
 		LoadBuilderSvc<T, U> nextBuilder;
-		LoadSvc<T> nextLoad = null;
+		LoadSvc<T> nextLoad;
 		//
 		String svcJMXAddr;
 		JMXServiceURL nextJMXURL;

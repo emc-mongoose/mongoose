@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.data.DataObject;
 /**
  Created by kurila on 03.03.15.
@@ -8,12 +7,12 @@ import com.emc.mongoose.core.api.data.DataObject;
 public interface AuthToken<T extends DataObject> {
 	String getValue();
 	//
-	//boolean exists(final LoadExecutor<T> client)
+	//boolean exists(final String addr)
 	//throws IllegalStateException;
 	//
-	void create(final LoadExecutor<T> client)
+	void create(final String addr)
 	throws IllegalStateException;
 	//
-	//void delete(final LoadExecutor<T> client)
+	//void delete(final String addr)
 	//throws IllegalStateException;
 }

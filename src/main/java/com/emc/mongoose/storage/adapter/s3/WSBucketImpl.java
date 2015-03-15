@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
@@ -8,7 +7,6 @@ import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //
 import org.apache.commons.lang.text.StrBuilder;
 //
@@ -68,17 +66,12 @@ implements Bucket<T> {
 	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	HttpResponse execute(
-		final WSLoadExecutor<T> wsClient, final WSIOTask.HTTPMethod method
-	) throws IOException {
+	HttpResponse execute(final String addr, final WSIOTask.HTTPMethod method)
+	throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
-		if(wsClient == null) {
-			throw new IllegalStateException("No HTTP client specified");
-		}
-		//
 		final MutableWSRequest httpReq = method.createRequest().setUriPath("/" + name);
 		//
 		final RunTimeConfig contextConfig = RunTimeConfig.getContext();
@@ -97,19 +90,16 @@ implements Bucket<T> {
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
-		//
-		return wsClient.execute(httpReq);
+		return reqConf.execute(addr, httpReq);
 	}
 	//
 	@Override
-	public final boolean exists(final LoadExecutor<T> client)
+	public final boolean exists(final String addr)
 	throws IllegalStateException {
 		boolean flagExists = false;
 		//
 		try {
-			final HttpResponse httpResp = execute(
-				(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.HEAD
-			);
+			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.HEAD);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -147,13 +137,11 @@ implements Bucket<T> {
 	}
 	//
 	@Override
-	public final void create(final LoadExecutor<T> client)
+	public final void create(final String addr)
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(
-				(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.PUT
-			);
+			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.PUT);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -189,13 +177,11 @@ implements Bucket<T> {
 	}
 	//
 	@Override
-	public final void delete(final LoadExecutor<T> client)
+	public final void delete(final String addr)
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(
-				(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.DELETE
-			);
+			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.DELETE);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();

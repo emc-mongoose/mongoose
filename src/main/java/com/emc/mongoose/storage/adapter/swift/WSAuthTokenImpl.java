@@ -1,23 +1,22 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.WSObject;
-//
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
+//
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.util.EntityUtils;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 /**
@@ -47,12 +46,10 @@ implements AuthToken<T> {
 	}
 	//
 	@Override
-	public final void create(final LoadExecutor<T> client)
+	public final void create(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(
-				(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.GET
-			);
+			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.GET);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -93,15 +90,11 @@ implements AuthToken<T> {
 	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	private HttpResponse execute(
-		final WSLoadExecutor<T> wsClient, final WSIOTask.HTTPMethod method
-	) throws IOException {
+	private HttpResponse execute(final String addr, final WSIOTask.HTTPMethod method)
+	throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
-		}
-		if(wsClient == null) {
-			throw new IllegalStateException("No HTTP client specified");
 		}
 		//
 		final MutableWSRequest httpReq = method
@@ -112,7 +105,7 @@ implements AuthToken<T> {
 		httpReq.setHeader(WSRequestConfigImpl.KEY_X_AUTH_KEY, reqConf.getSecret());
 		httpReq.setHeader(HttpHeaders.ACCEPT, "*/*");
 		//
-		return wsClient.execute(httpReq);
+		return reqConf.execute(addr, httpReq);
 	}
 
 }

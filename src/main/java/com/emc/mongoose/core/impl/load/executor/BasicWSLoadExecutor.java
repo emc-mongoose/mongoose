@@ -17,11 +17,13 @@ import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.impl.util.WorkerFactory;
 //
+import org.apache.http.ExceptionLogger;
 import org.apache.http.Header;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
@@ -92,7 +94,15 @@ implements WSLoadExecutor<T> {
 			//.add(new RequestExpectContinue(true))
 			.add(new RequestContent(false))
 			.build();
-		client = new HttpAsyncRequester(httpProcessor);
+		client = new HttpAsyncRequester(
+			httpProcessor, DefaultConnectionReuseStrategy.INSTANCE,
+			new ExceptionLogger() {
+				@Override
+				public final void log(final Exception e) {
+					TraceLogger.failure(LOG, Level.DEBUG, e, "HTTP client internal failure");
+				}
+			}
+		);
 		//
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final ConnectionConfig connConfig = ConnectionConfig
@@ -206,63 +216,6 @@ implements WSLoadExecutor<T> {
 			);
 		}
 		return futureResult;
-	}
-	//
-	@Override
-	public final HttpResponse execute(final HttpRequest request) {
-		//
-		HttpResponse response = null;
-		//
-		final HttpCoreContext ctx = new HttpCoreContext();
-		final String nodeAddr = storageNodeAddrs[0];
-		HttpHost tgtHost = null;
-		if(nodeAddr != null) {
-			if(nodeAddr.contains(":")) {
-				final String t[] = nodeAddr.split(":");
-				try {
-					tgtHost = new HttpHost(
-						t[0], Integer.parseInt(t[1]), runTimeConfig.getStorageProto()
-					);
-				} catch(final Exception e) {
-					TraceLogger.failure(
-						LOG, Level.WARN, e, "Failed to determine the request target host"
-					);
-				}
-			} else {
-				tgtHost = new HttpHost(
-					nodeAddr, runTimeConfig.getApiPort(runTimeConfig.getStorageApi()),
-					runTimeConfig.getStorageProto()
-				);
-			}
-		} else {
-			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");
-		}
-		//
-		if(tgtHost != null && connPool != null) {
-			ctx.setTargetHost(tgtHost);
-			//
-			try {
-				response = client.execute(
-					new BasicAsyncRequestProducer(tgtHost, request),
-					new BasicAsyncResponseConsumer(), connPool, ctx
-				).get();
-			} catch(final InterruptedException e) {
-				if(!isTerminating() && !isTerminated()) {
-					LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
-				}
-			} catch(final ExecutionException e) {
-				if(!isTerminating() && !isTerminated()) {
-					TraceLogger.failure(
-						LOG, Level.WARN, e,
-						String.format(
-							"HTTP request \"%s\" execution failure @ \"%s\"", request, tgtHost
-						)
-					);
-				}
-			}
-		}
-		//
-		return response;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

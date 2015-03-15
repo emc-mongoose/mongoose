@@ -306,8 +306,19 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public abstract U build()
+	public final U build() {
+		try {
+			invokePreConditions();
+		} catch(final IllegalStateException e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Preconditions failure");
+		}
+		return buildActually();
+	}
+	//
+	protected abstract void invokePreConditions()
 	throws IllegalStateException;
+	//
+	protected abstract U buildActually();
 	//
 	@Override
 	public DataItemBuffer<T> newDataItemBuffer()

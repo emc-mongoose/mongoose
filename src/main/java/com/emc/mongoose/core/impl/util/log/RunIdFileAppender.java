@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.util.log;
 //
-import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Filter;
@@ -141,24 +141,14 @@ extends AbstractAppender {
 	//
 	private final ReadWriteLock rwLock = new ReentrantReadWriteLock();
 	private final Lock readLock = rwLock.readLock();
-	private final static String
-		KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID,
-		KEY_RUN_MODE = RunTimeConfig.KEY_RUN_MODE;
+	private final static String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
 	//
 	@Override
 	public final void append(final LogEvent event) {
 		readLock.lock();
 		try {
-			final String currRunMode, currRunId;
+			final String currRunId;
 			final Map<String, String> evtCtxMap = event.getContextMap();
-			//
-			if(evtCtxMap.containsKey(KEY_RUN_MODE)) {
-				currRunMode = evtCtxMap.get(KEY_RUN_MODE);
-			} else if(ThreadContext.containsKey(KEY_RUN_MODE)) {
-				currRunMode = ThreadContext.get(KEY_RUN_MODE);
-			} else {
-				currRunMode = null;
-			}
 			//
 			if(evtCtxMap.containsKey(KEY_RUN_ID)) {
 				currRunId = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
@@ -169,7 +159,7 @@ extends AbstractAppender {
 			}
 			final byte[] buff = getLayout().toByteArray(event);
 			if(buff.length > 0) {
-				manager.write(currRunMode, currRunId, buff);
+				manager.write(currRunId, buff);
 				if(flagFlush || event.isEndOfBatch()) {
 					manager.flush();
 				}

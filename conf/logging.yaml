@@ -176,7 +176,7 @@ configuration:
         appenderRef: { ref: entryPoint }
       -
         name: com.emc.mongoose.core.impl.io.req.conf
-        level: trace
+        level: debug
         additivity: false
         appenderRef: { ref: entryPoint }
       -
@@ -191,7 +191,7 @@ configuration:
         appenderRef: { ref: entryPoint }
       -
         name: com.emc.mongoose.storage.adapter.atmos
-        level: trace
+        level: debug
         additivity: false
         appenderRef: { ref: entryPoint }
       -

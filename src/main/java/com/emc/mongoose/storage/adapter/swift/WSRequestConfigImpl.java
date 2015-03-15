@@ -1,20 +1,17 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
-//
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import org.apache.http.Header;
 //
+import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
-import org.apache.http.message.HeaderGroup;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -258,7 +255,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final void configureStorage(final LoadExecutor<T> client)
+	public final void configureStorage(final String storageNodeAddrs[])
 	throws IllegalStateException {
 		// configure an auth token - create if not specified
 		String authTokenValue;
@@ -267,7 +264,7 @@ extends WSRequestConfigBase<T> {
 		} else {
 			authTokenValue = authToken.getValue();
 			if(authTokenValue == null || authTokenValue.length() < 1) {
-				authToken.create(client);
+				authToken.create(storageNodeAddrs[0]);
 				authTokenValue = authToken.getValue();
 			}
 		}
@@ -278,14 +275,14 @@ extends WSRequestConfigBase<T> {
 		runTimeConfig.set(KEY_CONF_AUTH_TOKEN, authTokenValue);
 		// configure a container
 		if(container == null) {
-			throw new IllegalStateException("Bucket is not specified");
+			throw new IllegalStateException("Container is not specified");
 		}
 		final String containerName = container.getName();
-		if(container.exists(client)) {
-			LOG.debug(Markers.MSG, "Bucket \"{}\" already exists", containerName);
+		if(container.exists(storageNodeAddrs[0])) {
+			LOG.debug(Markers.MSG, "Container \"{}\" already exists", containerName);
 		} else {
-			container.create(client);
-			if(container.exists(client)) {
+			container.create(storageNodeAddrs[0]);
+			if(container.exists(storageNodeAddrs[0])) {
 				runTimeConfig.set(KEY_CONF_CONTAINER, containerName);
 			} else {
 				throw new IllegalStateException(
@@ -297,15 +294,11 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final Producer<T> getAnyDataProducer(
-		final long maxCount, final LoadExecutor<T> loadExecutor
-	) {
+	public final Producer<T> getAnyDataProducer(final long maxCount, final String addr) {
 		Producer<T> producer = null;
 		if(anyDataProducerEnabled) {
 			try {
-				producer = new WSContainerProducer<>(
-					container, BasicWSObject.class, maxCount, (WSLoadExecutor<T>) loadExecutor
-				);
+				producer = new WSContainerProducer<>(container, BasicWSObject.class, maxCount, addr);
 			} catch(final NoSuchMethodException e) {
 				TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
 			}

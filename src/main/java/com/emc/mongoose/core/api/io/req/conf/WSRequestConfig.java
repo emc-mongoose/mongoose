@@ -8,6 +8,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 //
 import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.IOControl;
@@ -92,4 +93,6 @@ extends ObjectRequestConfig<T> {
 	void receiveResponse(final HttpResponse response, final T dataItem);
 	//
 	boolean consumeContent(final InputStream contentStream, final IOControl ioCtl, T dataItem);
+	//
+	public HttpResponse execute(final String addr, final HttpRequest request);
 }

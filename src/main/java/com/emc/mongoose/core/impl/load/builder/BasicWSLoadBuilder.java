@@ -58,9 +58,14 @@ implements WSLoadBuilder<T, U> {
 		return lb;
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	public U build()
+	@Override
+	protected void invokePreConditions()
 	throws IllegalStateException {
+		reqConf.configureStorage(dataNodeAddrs);
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	protected U buildActually() {
 		if(reqConf == null) {
 			throw new IllegalStateException("Should specify request builder instance");
 		}

@@ -12,7 +12,4 @@ import java.rmi.RemoteException;
  */
 public interface WSLoadSvc<T extends WSObject>
 extends WSLoadExecutor<T>, ObjectLoadSvc<T> {
-	@Override
-	HttpResponse execute(final HttpRequest request)
-	throws RemoteException;
 }

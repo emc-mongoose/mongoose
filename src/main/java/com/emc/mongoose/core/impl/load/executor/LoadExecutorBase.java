@@ -140,7 +140,7 @@ implements LoadExecutor<T> {
 			producer = newDataProducer(maxCount, sizeMin, sizeMax, sizeBias);
 			LOG.debug(Markers.MSG, "{} will use new data items producer", getName());
 		} else {
-			producer = reqConfig.getAnyDataProducer(maxCount, this);
+			producer = reqConfig.getAnyDataProducer(maxCount, addrs[0]);
 			LOG.debug(Markers.MSG, "{} will use {} as data items producer", getName(), producer);
 		}
 		//
@@ -287,21 +287,7 @@ implements LoadExecutor<T> {
 			//
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
-				//
-				jmxReporter.start();
-				metricDumpThread.setName(getName());
-				metricDumpThread.start();
 			} else {
-				//
-				try {
-					reqConfigCopy.configureStorage(this);
-				} catch(final IllegalStateException e) {
-					TraceLogger.failure(LOG, Level.WARN, e, "Failed to configure the storage");
-				}
-				//
-				jmxReporter.start();
-				metricDumpThread.setName(getName());
-				metricDumpThread.start();
 				//
 				try {
 					producer.start();
@@ -310,6 +296,10 @@ implements LoadExecutor<T> {
 					TraceLogger.failure(LOG, Level.WARN, e, "Failed to start the producer");
 				}
 			}
+			//
+			jmxReporter.start();
+			metricDumpThread.setName(getName());
+			metricDumpThread.start();
 			//
 			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
 		} else {

@@ -5,6 +5,10 @@ import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.impl.data.DataRanges;
 import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.impl.load.executor.util.http.RequestSharedHeaders;
+import com.emc.mongoose.core.impl.load.executor.util.http.RequestTargetHost;
+import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
+import com.emc.mongoose.core.impl.util.WorkerFactory;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
@@ -18,15 +22,41 @@ import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.commons.lang.text.StrBuilder;
 //
+import org.apache.http.ExceptionLogger;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.config.ConnectionConfig;
+import org.apache.http.impl.NoConnectionReuseStrategy;
+import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
+import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
+import org.apache.http.impl.nio.pool.BasicNIOConnPool;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.IOControl;
+import org.apache.http.nio.NHttpClientConnection;
+import org.apache.http.nio.NHttpClientEventHandler;
+import org.apache.http.nio.pool.NIOConnFactory;
+import org.apache.http.nio.protocol.BasicAsyncRequestProducer;
+import org.apache.http.nio.protocol.BasicAsyncResponseConsumer;
+import org.apache.http.nio.protocol.HttpAsyncRequestExecutor;
+import org.apache.http.nio.protocol.HttpAsyncRequester;
+import org.apache.http.nio.reactor.ConnectingIOReactor;
+import org.apache.http.nio.reactor.IOEventDispatch;
+import org.apache.http.nio.reactor.IOReactorException;
+import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpDateGenerator;
+import org.apache.http.protocol.HttpProcessor;
+import org.apache.http.protocol.HttpProcessorBuilder;
+import org.apache.http.protocol.RequestConnControl;
+import org.apache.http.protocol.RequestContent;
+import org.apache.http.protocol.RequestUserAgent;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -44,6 +74,8 @@ import java.net.URISyntaxException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 09.06.14.
  */
@@ -56,6 +88,10 @@ implements WSRequestConfig<T> {
 	public final static long serialVersionUID = 42L;
 	protected final String userAgent, signMethod;
 	protected boolean fsAccess;
+	//
+	private final HttpAsyncRequester client;
+	private final BasicNIOConnPool connPool;
+	private final Thread clientThread;
 	//
 	public static WSRequestConfigBase getInstance() {
 		return newInstanceFor(RunTimeConfig.getContext().getStorageApi());
@@ -114,16 +150,88 @@ implements WSRequestConfig<T> {
 		sharedHeaders.updateHeader(new BasicHeader(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE));
 		sharedHeaders.updateHeader(new BasicHeader(HttpHeaders.CONTENT_TYPE, contentType));
 		try {
-			if(reqConf2Clone != null) {
-				this
-					.setSecret(reqConf2Clone.getSecret())
-					.setScheme(reqConf2Clone.getScheme());
+			if(reqConf2Clone!=null) {
+				this.setSecret(reqConf2Clone.getSecret()).setScheme(reqConf2Clone.getScheme());
 			}
 			//
 			final String pkgSpec = getClass().getPackage().getName();
 			setAPI(pkgSpec.substring(pkgSpec.lastIndexOf('.') + 1));
 		} catch(final Exception e) {
 			TraceLogger.failure(LOG, Level.ERROR, e, "Request config instantiation failure");
+		}
+		// create HTTP client
+		final HttpProcessor httpProcessor= HttpProcessorBuilder
+			.create()
+			.add(new RequestSharedHeaders(sharedHeaders))
+			.add(new RequestTargetHost())
+			.add(new RequestConnControl())
+			.add(new RequestUserAgent(userAgent))
+				//.add(new RequestExpectContinue(true))
+			.add(new RequestContent(false))
+			.build();
+		client = new HttpAsyncRequester(
+			httpProcessor, NoConnectionReuseStrategy.INSTANCE,
+			new ExceptionLogger() {
+				@Override
+				public final void log(final Exception e) {
+					TraceLogger.failure(LOG, Level.DEBUG, e, "HTTP client internal failure");
+				}
+			}
+		);
+		//
+		final ConnectionConfig connConfig = ConnectionConfig
+			.custom()
+			.setBufferSize((int)runTimeConfig.getDataPageSize())
+			.build();
+		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
+			.custom()
+			.setIoThreadCount(1)
+			.setBacklogSize((int) runTimeConfig.getSocketBindBackLogSize())
+			.setInterestOpQueued(runTimeConfig.getSocketInterestOpQueued())
+			.setSelectInterval(runTimeConfig.getSocketSelectInterval())
+			.setShutdownGracePeriod(runTimeConfig.getSocketTimeOut())
+			.setSoKeepAlive(runTimeConfig.getSocketKeepAliveFlag())
+			.setSoLinger(runTimeConfig.getSocketLinger())
+			.setSoReuseAddress(runTimeConfig.getSocketReuseAddrFlag())
+			.setSoTimeout(runTimeConfig.getSocketTimeOut())
+			.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
+			.setRcvBufSize((int) runTimeConfig.getDataPageSize())
+			.setSndBufSize((int) runTimeConfig.getDataPageSize())
+			.setConnectTimeout(runTimeConfig.getConnTimeOut());
+		//
+		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
+		//
+		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
+			reqExecutor, connConfig
+		);
+		//
+		ConnectingIOReactor ioReactor = null;
+		try {
+			ioReactor = new DefaultConnectingIOReactor(
+				ioReactorConfigBuilder.build(),
+				new WorkerFactory(String.format("WSConfigurator<%s>", toString()))
+			);
+		} catch(final IOReactorException e) {
+			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
+		}
+		//
+		final NIOConnFactory<HttpHost, NHttpClientConnection>
+			connFactory = new BasicNIOConnFactory(connConfig);
+		if(ioReactor != null) {
+			//
+			connPool = new BasicNIOConnPool(
+				ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
+			);
+			connPool.setMaxTotal(1);
+			connPool.setDefaultMaxPerRoute(1);
+			clientThread = new Thread(
+				new HttpClientRunTask<>(ioEventDispatch, ioReactor),
+				String.format("%s-WSConfigThread", toString())
+			);
+			clientThread.start();
+		} else {
+			connPool = null;
+			clientThread = null;
 		}
 	}
 	//
@@ -476,5 +584,89 @@ implements WSRequestConfig<T> {
 		} catch(final IOException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
 		}
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		try {
+			super.close();
+		} finally {
+			//
+			clientThread.interrupt();
+			//
+			if(connPool!=null) {
+				connPool.closeExpired();
+				try {
+					connPool.closeIdle(0, TimeUnit.MILLISECONDS);
+				} finally {
+					try {
+						connPool.shutdown(0);
+					} catch(final IOException e) {
+						TraceLogger.failure(
+							LOG, Level.WARN, e, "Connection pool shutdown failure"
+						);
+					}
+				}
+			}
+		}
+		//
+		LOG.debug(Markers.MSG, "Closed web storage client");
+	}
+	//
+	@Override
+	public final HttpResponse execute(final String tgtAddr, final HttpRequest request) {
+		//
+		HttpResponse response = null;
+		//
+		final HttpCoreContext ctx = new HttpCoreContext();
+		HttpHost tgtHost = null;
+		if(tgtAddr != null) {
+			if(tgtAddr.contains(":")) {
+				final String t[] = tgtAddr.split(":");
+				try {
+					tgtHost = new HttpHost(
+						t[0], Integer.parseInt(t[1]), runTimeConfig.getStorageProto()
+					);
+				} catch(final Exception e) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e, "Failed to determine the request target host"
+					);
+				}
+			} else {
+				tgtHost = new HttpHost(
+					tgtAddr, runTimeConfig.getApiPort(runTimeConfig.getStorageApi()),
+					runTimeConfig.getStorageProto()
+				);
+			}
+		} else {
+			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");
+		}
+		//
+		if(tgtHost != null && connPool != null) {
+			ctx.setTargetHost(tgtHost);
+			//
+			try {
+				response = client.execute(
+					new BasicAsyncRequestProducer(tgtHost, request),
+					new BasicAsyncResponseConsumer(), connPool, ctx
+				).get();
+			} catch(final InterruptedException e) {
+				if(!isClosed()) {
+					LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
+				}
+			} catch(final ExecutionException e) {
+				if(!isClosed()) {
+					TraceLogger.failure(
+						LOG, Level.WARN, e,
+						String.format(
+							"HTTP request \"%s\" execution failure @ \"%s\"", request, tgtHost
+						)
+					);
+				}
+			}
+		}
+		//
+		return response;
 	}
 }

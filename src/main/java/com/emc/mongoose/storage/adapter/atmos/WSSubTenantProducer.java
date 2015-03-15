@@ -6,7 +6,6 @@ import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -40,12 +39,12 @@ implements Producer<T> {
 	private final WSSubTenantImpl<T> subTenant;
 	private final Constructor<T> dataConstructor;
 	private final long maxCount;
-	private final WSLoadExecutor<T> wsClient;
+	private final String addr;
 	//
 	@SuppressWarnings("unchecked")
 	public WSSubTenantProducer(
 		final WSSubTenantImpl<T> subTenant, final Class<U> dataCls, final long maxCount,
-		final WSLoadExecutor<T> wsClient
+		final String addr
 	) throws ClassCastException, NoSuchMethodException {
 		super("subtenant-" + subTenant + "-producer");
 		this.subTenant = subTenant;
@@ -53,7 +52,7 @@ implements Producer<T> {
 			String.class, Long.class, Long.class
 		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		this.wsClient = wsClient;
+		this.addr = addr;
 	}
 	//
 	@Override
@@ -69,7 +68,7 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		try {
-			final HttpResponse httpResp = subTenant.execute(wsClient, WSIOTask.HTTPMethod.GET);
+			final HttpResponse httpResp = subTenant.execute(addr, WSIOTask.HTTPMethod.GET);
 			if(httpResp != null) {
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine==null) {

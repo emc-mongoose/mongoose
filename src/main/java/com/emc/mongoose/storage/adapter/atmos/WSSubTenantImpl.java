@@ -7,7 +7,6 @@ import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //
 import org.apache.commons.lang.text.StrBuilder;
 //
@@ -56,16 +55,12 @@ implements SubTenant<T> {
 		MSG_INVALID_METHOD = "<NULL> is invalid HTTP method",
 		SUBTENANT = "subtenant";
 	//
-	final HttpResponse execute(final WSLoadExecutor<T> wsClient, final WSIOTask.HTTPMethod method)
+	final HttpResponse execute(final String addr, final WSIOTask.HTTPMethod method)
 	throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
-		if(wsClient == null) {
-			throw new IllegalStateException("No HTTP client specified");
-		}
-		//
 		final MutableWSRequest httpReq = method.createRequest();
 		//
 		if(WSIOTask.HTTPMethod.PUT.equals(method)) {
@@ -86,19 +81,17 @@ implements SubTenant<T> {
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
-		return wsClient.execute(httpReq);
+		return reqConf.execute(addr, httpReq);
 	}
 	//
 	@Override
-	public final boolean exists(final LoadExecutor<T> client)
+	public final boolean exists(final String addr)
 	throws IllegalStateException {
 		boolean flagExists = false;
 		//
 		if(value!= null && value.length() > 0) {
 			try {
-				final HttpResponse httpResp = execute(
-					(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.HEAD
-				);
+				final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.HEAD);
 				if(httpResp != null) {
 					final HttpEntity httpEntity = httpResp.getEntity();
 					final StatusLine statusLine = httpResp.getStatusLine();
@@ -133,12 +126,10 @@ implements SubTenant<T> {
 	}
 	//
 	@Override
-	public final void create(final LoadExecutor<T> client)
+	public final void create(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(
-				(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.PUT
-			);
+			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.PUT);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -177,12 +168,10 @@ implements SubTenant<T> {
 	}
 	//
 	@Override
-	public final void delete(final LoadExecutor<T> client)
+	public final void delete(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(
-				(WSLoadExecutor<T>) client, WSIOTask.HTTPMethod.DELETE
-			);
+			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.DELETE);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();

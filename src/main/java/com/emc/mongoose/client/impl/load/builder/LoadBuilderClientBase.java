@@ -34,6 +34,7 @@ implements LoadBuilderClient<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected FileProducer<T> srcProducer = null;
+	protected String[] dataNodeAddrs = null;
 	protected volatile RunTimeConfig runTimeConfig;
 	protected volatile RequestConfig<T> reqConf;
 	//
@@ -93,22 +94,19 @@ implements LoadBuilderClient<T, U> {
 			LOG.debug(Markers.MSG, "Applying the configuration to server @ \"{}\"...", addr);
 			nextBuilder.setProperties(runTimeConfig);
 		}
-		/*
-		final String firstNodeAddr = reqConf.getAddr();
-		if(firstNodeAddr == null || firstNodeAddr.length() == 0) {
-			final String nodeAddrs[] = runTimeConfig.getStorageAddrs();
-			if(nodeAddrs != null && nodeAddrs.length > 0) {
-				reqConf.setAddr(nodeAddrs[0]);
-			}
-		}*/
+		//
+		final String newAddrs[] = runTimeConfig.getStorageAddrs();
+		if(newAddrs != null && newAddrs.length > 0) {
+			dataNodeAddrs = newAddrs;
+		}
 		//
 		String dataMetaInfoFile = null;
 		try {
 			dataMetaInfoFile = this.runTimeConfig.getDataSrcFPath();
 			if(
-				dataMetaInfoFile!=null && dataMetaInfoFile.length()>0 &&
-					Files.isReadable(Paths.get(dataMetaInfoFile))
-				) {
+				dataMetaInfoFile!=null && dataMetaInfoFile.length() > 0 &&
+				Files.isReadable(Paths.get(dataMetaInfoFile))
+			) {
 				setInputFile(dataMetaInfoFile);
 			}
 		} catch(final NoSuchElementException e) {
@@ -215,18 +213,14 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public final LoadBuilderClient<T, U> setDataNodeAddrs(final String[] dataNodeAddrs)
 	throws IllegalArgumentException, RemoteException {
-		/* need to remember 1st storage node address to configure later
-		final String firstNodeAddr = reqConf.getAddr();
-		if(firstNodeAddr == null || firstNodeAddr.length() == 0) {
-			if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
-				reqConf.setAddr(dataNodeAddrs[0]);
+		if(dataNodeAddrs != null && dataNodeAddrs.length > 0) {
+			this.dataNodeAddrs = dataNodeAddrs;
+			//
+			LoadBuilderSvc<T, U> nextBuilder;
+			for(final String addr : keySet()) {
+				nextBuilder = get(addr);
+				nextBuilder.setDataNodeAddrs(dataNodeAddrs);
 			}
-		}*/
-		//
-		LoadBuilderSvc<T, U> nextBuilder;
-		for(final String addr : keySet()) {
-			nextBuilder = get(addr);
-			nextBuilder.setDataNodeAddrs(dataNodeAddrs);
 		}
 		return this;
 	}
@@ -253,7 +247,20 @@ implements LoadBuilderClient<T, U> {
 	throws RemoteException;
 	//
 	@Override
-	public abstract U build()
+	public final U build()
+	throws RemoteException {
+		try {
+			invokePreConditions();
+		} catch(final IllegalStateException e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Preconditions failure");
+		}
+		return buildActually();
+	}
+	//
+	protected abstract void invokePreConditions()
+	throws IllegalStateException;
+	//
+	protected abstract U buildActually()
 	throws RemoteException;
 	//
 	@Override

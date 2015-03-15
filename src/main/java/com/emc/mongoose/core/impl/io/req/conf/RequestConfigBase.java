@@ -287,7 +287,8 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final void close() {
+	public void close()
+	throws IOException {
 		if(closeFlag.compareAndSet(false, true)) {
 			LOG.trace(Markers.MSG, "Request config instance #{} marked as closed", hashCode());
 		}

@@ -5,17 +5,19 @@ import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
+//
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,12 +42,12 @@ implements Producer<T> {
 	private final WSContainerImpl<T> container;
 	private final Constructor<T> dataConstructor;
 	private final long maxCount;
-	private final WSLoadExecutor<T> wsClient;
+	private final String addr;
 	//
 	@SuppressWarnings("unchecked")
 	public WSContainerProducer(
 		final WSContainerImpl<T> container, final Class<? extends WSObject> dataCls, final long maxCount,
-		final WSLoadExecutor<T> wsClient
+		final String addr
 	) throws ClassCastException, NoSuchMethodException {
 		super("container-" + container + "-producer");
 		this.container = container;
@@ -53,7 +55,7 @@ implements Producer<T> {
 			String.class, Long.class, Long.class
 		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		this.wsClient = wsClient;
+		this.addr = addr;
 	}
 	//
 	@Override
@@ -69,7 +71,7 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		try {
-			final HttpResponse httpResp = container.execute(wsClient, WSIOTask.HTTPMethod.GET);
+			final HttpResponse httpResp = container.execute(addr, WSIOTask.HTTPMethod.GET);
 			if(httpResp != null) {
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {

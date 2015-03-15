@@ -38,12 +38,12 @@ implements Producer<T> {
 	private final WSBucketImpl<T> bucket;
 	private final Constructor<T> dataConstructor;
 	private final long maxCount;
-	private final WSLoadExecutor<T> wsClient;
+	private final String addr;
 	//
 	@SuppressWarnings("unchecked")
 	public WSBucketProducer(
 		final WSBucketImpl<T> bucket, final Class<? extends WSObject> dataCls, final long maxCount,
-		final WSLoadExecutor<T> wsClient
+		final String addr
 	) throws ClassCastException, NoSuchMethodException {
 		super("bucket-" + bucket + "-producer");
 		this.bucket = bucket;
@@ -51,7 +51,7 @@ implements Producer<T> {
 			String.class, Long.class, Long.class
 		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		this.wsClient = wsClient;
+		this.addr = addr;
 	}
 	//
 	@Override
@@ -67,7 +67,7 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		try {
-			final HttpResponse httpResp = bucket.execute(wsClient, WSIOTask.HTTPMethod.GET);
+			final HttpResponse httpResp = bucket.execute(addr, WSIOTask.HTTPMethod.GET);
 			if(httpResp != null) {
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {

@@ -3,8 +3,8 @@ package com.emc.mongoose.server.impl.load.builder;
 import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
+import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 import com.emc.mongoose.server.api.persist.DataItemBufferSvc;
-import com.emc.mongoose.server.api.load.executor.ObjectLoadSvc;
 import com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -14,8 +14,8 @@ import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.server.impl.ServiceUtils;
-//
 import com.emc.mongoose.server.impl.persist.TmpFileItemBufferSvc;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -44,7 +44,7 @@ implements WSLoadBuilderSvc<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final String buildRemotely()
 	throws RemoteException {
-		final ObjectLoadSvc<T> loadSvc = (ObjectLoadSvc<T>) build();
+		final WSLoadSvc<T> loadSvc = (WSLoadSvc<T>) build();
 		ServiceUtils.create(loadSvc);
 		return loadSvc.getName();
 	}
@@ -64,8 +64,11 @@ implements WSLoadBuilderSvc<T, U> {
 		LoadExecutorBase.LAST_INSTANCE_NUM.set(instanceN);
 	}
 	//
+	@Override
+	protected final void invokePreConditions() {} // discard any precondition invocations in load server mode
+	//
 	@Override @SuppressWarnings("unchecked")
-	public final U build()
+	protected final U buildActually()
 	throws IllegalStateException {
 		if(reqConf == null) {
 			throw new IllegalStateException("Should specify request builder instance before instancing");

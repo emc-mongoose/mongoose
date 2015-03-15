@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.adapter.atmos;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
@@ -199,7 +198,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> client) {
+	public final Producer<T> getAnyDataProducer(final long maxCount, final String addr) {
 		// TODO implement sub tenant listing producer
 		return null;
 	}
@@ -352,7 +351,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public void configureStorage(final LoadExecutor<T> client)
+	public void configureStorage(final String storageAddrs[])
 	throws IllegalStateException {
 		/* show interesting system info
 		try {
@@ -402,9 +401,9 @@ extends WSRequestConfigBase<T> {
 		} else {
 			subTenantValue = subTenant.getValue();
 			if(subTenantValue == null || subTenantValue.length() == 0) {
-				subTenant.create(client);
-			} else if(!subTenant.exists(client)) {
-				subTenant.create(client);
+				subTenant.create(storageAddrs[0]);
+			} else if(!subTenant.exists(storageAddrs[0])) {
+				subTenant.create(storageAddrs[0]);
 			}
 		}
 		/*re*/setSubTenant(subTenant);

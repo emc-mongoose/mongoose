@@ -125,10 +125,9 @@ extends AbstractManager {
 	}
 	//
 	protected final synchronized void write(
-		final String runMode, final String currRunId,
-		final byte[] buff, final int offset, final int len
+		final String currRunId, final byte[] buff, final int offset, final int len
 	) {
-		final FileOutputStream outStream = getOutputStream(runMode, currRunId);
+		final FileOutputStream outStream = getOutputStream(currRunId);
 		if(flagLock) {
 			final FileChannel channel = outStream.getChannel();
 			try {
@@ -157,15 +156,15 @@ extends AbstractManager {
 		}
 	}
 	//
-	protected final void write(final String runMode, final String currRunId, final byte[] bytes)  {
-		write(runMode, currRunId, bytes, 0, bytes.length);
+	protected final void write(final String currRunId, final byte[] bytes)  {
+		write(currRunId, bytes, 0, bytes.length);
 	}
 	//
 	private final String
-		FMT_FILE_PATH = "%s" + File.separator + "%s" + File.separator +"%s" + File.separator +"%s",
+		FMT_FILE_PATH = "%s" + File.separator + "%s" + File.separator +"%s",
 		FMT_FILE_PATH_NO_RUN_ID = "%s" + File.separator + File.separator +"%s";
 	//
-	protected final FileOutputStream getOutputStream(final String runMode, final String currRunId) {
+	protected final FileOutputStream getOutputStream(final String currRunId) {
 		FileOutputStream currentOutPutStream = null;
 		if(outStreamsMap.containsKey(currRunId)) {
 			currentOutPutStream = outStreamsMap.get(currRunId);
@@ -174,7 +173,7 @@ extends AbstractManager {
 				outPutFile = new File(
 					currRunId == null ?
 						String.format(FMT_FILE_PATH_NO_RUN_ID, PATH_LOG_DIR, fileName) :
-						String.format(FMT_FILE_PATH, PATH_LOG_DIR, runMode, currRunId, fileName)
+						String.format(FMT_FILE_PATH, PATH_LOG_DIR, currRunId, fileName)
 				),
 				parentFile = outPutFile.getParentFile();
 			if(parentFile != null && !parentFile.exists()) {
