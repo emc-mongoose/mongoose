@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -138,7 +139,7 @@ implements Externalizable {
 	}
 	//
 	public String getPropertiesMap() {
-		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES), this);
+		PropertiesLoader.updateProps(Paths.get(Main.DIR_ROOT, Main.DIR_CONF).resolve(Main.JSON_PROPS_FILE), this, false);
 		final ObjectMapper mapper = new ObjectMapper();
 		try {
 			return mapper.writeValueAsString(properties);
