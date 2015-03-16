@@ -43,6 +43,9 @@ extends Externalizable, Cloneable, Closeable {
 	String getSecret();
 	RequestConfig<T> setSecret(final String secret);
 	//
+	String getNameSpace();
+	RequestConfig<T> setNameSpace(final String nameSpace);
+	//
 	DataSource<T> getDataSource();
 	RequestConfig<T> setDataSource(final DataSource<T> dataSrc);
 	//
@@ -53,9 +56,6 @@ extends Externalizable, Cloneable, Closeable {
 	RequestConfig<T> setVerifyContentFlag(final boolean verifyContentFlag);
 	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
-	//
-	int getLoadNumber();
-	RequestConfig<T> setLoadNumber(final int loadNumber);
 	//
 	IOTask<T> getRequestFor(final T dataItem, final String nodeAddr)
 	throws InterruptedException;

@@ -1,16 +1,15 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-import com.emc.mongoose.run.Main;
 import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.run.Main;
 //
 import org.apache.commons.lang.text.StrBuilder;
+//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -35,7 +34,7 @@ implements Container<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final WSRequestConfigImpl<T> reqConf;
-	private final String name;
+	private String name;
 	//
 	public WSContainerImpl(final WSRequestConfigImpl<T> reqConf, final String name) {
 		this.reqConf = reqConf;
@@ -210,5 +209,4 @@ implements Container<T> {
 		reqConf.applyHeadersFinally(httpReq);
 		return reqConf.execute(addr, httpReq);
 	}
-
 }

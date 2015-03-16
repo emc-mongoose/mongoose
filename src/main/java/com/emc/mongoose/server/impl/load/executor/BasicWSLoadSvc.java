@@ -58,8 +58,11 @@ implements WSLoadSvc<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final void setConsumer(final ConsumerSvc<T> consumer) {
+		LOG.debug(
+			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
+			consumer, getName()
+		);
 		this.consumer = consumer;
-		LOG.debug(Markers.MSG, "Trying to resolve local service from the name");
 		try {
 			final ConsumerSvc remoteSvc = ConsumerSvc.class.cast(consumer);
 			final String remoteSvcName = remoteSvc.getName();
@@ -78,10 +81,13 @@ implements WSLoadSvc<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final List<T> takeFrame()
-		throws RemoteException {
+	throws RemoteException {
 		List<T> recFrame = Collections.emptyList();
 		if(RecordFrameBuffer.class.isInstance(consumer)) {
 			recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
+		}
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Returning {} data items records", recFrame.size());
 		}
 		return recFrame;
 	}

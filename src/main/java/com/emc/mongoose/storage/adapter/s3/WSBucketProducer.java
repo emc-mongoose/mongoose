@@ -18,8 +18,10 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -66,64 +68,75 @@ implements Producer<T> {
 	//
 	@Override
 	public final void run() {
+		//
+		HttpResponse httpResp = null;
 		try {
-			final HttpResponse httpResp = bucket.execute(addr, WSIOTask.HTTPMethod.GET);
-			if(httpResp != null) {
-				final StatusLine statusLine = httpResp.getStatusLine();
-				if(statusLine == null) {
-					LOG.warn(Markers.MSG, "No response status returnde");
-				} else {
-					final int statusCode = statusLine.getStatusCode();
-					if(statusCode >= 200 && statusCode < 300) {
-						final HttpEntity respEntity = httpResp.getEntity();
-						if(respEntity != null) {
-							String respContentType = ContentType.APPLICATION_XML.getMimeType();
-							if(respEntity.getContentType() != null) {
-								respContentType = respEntity.getContentType().getValue();
-							} else {
-								LOG.debug(Markers.ERR, "No content type returned");
-							}
-							if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
-								try {
-									final SAXParser parser = SAXParserFactory
-										.newInstance().newSAXParser();
-									try(final InputStream in = respEntity.getContent()) {
-										parser.parse(
-											in,
-											new XMLBucketListParser<>(
-												consumer, dataConstructor, maxCount
-											)
-										);
-									} catch(final SAXException e) {
-										TraceLogger.failure(LOG, Level.WARN, e, "Failed to parse");
-									}
-								} catch(final ParserConfigurationException | SAXException e) {
-									TraceLogger.failure(
-										LOG, Level.ERROR, e, "Failed to create SAX parser"
-									);
-								}
-							} else {
-								LOG.warn(
-									Markers.MSG, "Unexpected response content type: \"{}\"",
-									respContentType
-								);
-							}
-							EntityUtils.consumeQuietly(respEntity);
-						}
-					} else {
-						final String statusMsg = statusLine.getReasonPhrase();
-						LOG.debug(
-							Markers.MSG, "Listing bucket \"{}\" response: {}/{}",
-							bucket, statusCode, statusMsg
-						);
-					}
-				}
-			}
+			httpResp = bucket.execute(addr, WSIOTask.HTTPMethod.GET);
 		} catch(final IOException e) {
 			TraceLogger.failure(
 				LOG, Level.ERROR, e,
 				String.format("Failed to list the bucket \"%s\"", bucket)
 			);
+		}
+		//
+		if(httpResp != null) {
+			final StatusLine statusLine = httpResp.getStatusLine();
+			if(statusLine == null) {
+				LOG.warn(Markers.MSG, "No response status returned");
+			} else {
+				final int statusCode = statusLine.getStatusCode();
+				if(statusCode >= 200 && statusCode < 300) {
+					final HttpEntity respEntity = httpResp.getEntity();
+					if(respEntity != null) {
+						String respContentType = ContentType.APPLICATION_XML.getMimeType();
+						if(respEntity.getContentType() != null) {
+							respContentType = respEntity.getContentType().getValue();
+						} else {
+							LOG.debug(Markers.ERR, "No content type returned");
+						}
+						if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
+							try {
+								final SAXParser parser = SAXParserFactory
+									.newInstance().newSAXParser();
+								try(final InputStream in = respEntity.getContent()) {
+									parser.parse(
+										in,
+										new XMLBucketListParser<>(
+											consumer, dataConstructor, maxCount
+										)
+									);
+								} catch(final SAXException e) {
+									TraceLogger.failure(LOG, Level.WARN, e, "Failed to parse");
+								} catch(final IOException e) {
+									TraceLogger.failure(
+										LOG, Level.ERROR, e,
+										String.format(
+											"Failed to read the bucket \"%s\" listing response content",
+											bucket
+										)
+									);
+								}
+							} catch(final ParserConfigurationException | SAXException e) {
+								TraceLogger.failure(
+									LOG, Level.ERROR, e, "Failed to create SAX parser"
+								);
+							}
+						} else {
+							LOG.warn(
+								Markers.MSG, "Unexpected response content type: \"{}\"",
+								respContentType
+							);
+						}
+						EntityUtils.consumeQuietly(respEntity);
+					}
+				} else {
+					final String statusMsg = statusLine.getReasonPhrase();
+					LOG.warn(
+						Markers.ERR, "Listing bucket \"{}\" response: {}/{}",
+						bucket, statusCode, statusMsg
+					);
+				}
+			}
 		}
 	}
 	//

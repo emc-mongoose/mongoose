@@ -41,7 +41,7 @@ implements Bucket<T> {
 		"</VersioningConfiguration>";
 	//
 	private final WSRequestConfigImpl<T> reqConf;
-	private final String name;
+	private String name;
 	//
 	public WSBucketImpl(final WSRequestConfigImpl<T> reqConf, final String name) {
 		this.reqConf = reqConf;
@@ -75,18 +75,20 @@ implements Bucket<T> {
 		final MutableWSRequest httpReq = method.createRequest().setUriPath("/" + name);
 		//
 		final RunTimeConfig contextConfig = RunTimeConfig.getContext();
-		if(WSIOTask.HTTPMethod.PUT.equals(method)) {
-			httpReq.setHeader(
-				new BasicHeader(
-					WSRequestConfigImpl.KEY_EMC_FS_ACCESS,
-					Boolean.toString(contextConfig.getStorageFileAccessEnabled())
-				)
-			);
-			if(RunTimeConfig.getContext().getStorageVersioningEnabled()) {
-				httpReq.setEntity(
-					new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
+		switch(method) {
+			case PUT:
+				httpReq.setHeader(
+					new BasicHeader(
+						WSRequestConfigImpl.KEY_EMC_FS_ACCESS,
+						Boolean.toString(contextConfig.getStorageFileAccessEnabled())
+					)
 				);
-			}
+				if(RunTimeConfig.getContext().getStorageVersioningEnabled()) {
+					httpReq.setEntity(
+						new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
+					);
+				}
+				break;
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
@@ -216,5 +218,4 @@ implements Bucket<T> {
 		}
 		//
 	}
-	//
 }

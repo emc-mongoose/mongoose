@@ -62,6 +62,8 @@ implements Runnable, Reusable {
 					TraceLogger.failure(LOG, Level.DEBUG, e, "Request result handling failed");
 				}
 			}
+		} else {
+			LOG.warn(Markers.ERR, "Null future result");
 		}
 		release();
 	}

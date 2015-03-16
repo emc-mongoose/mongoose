@@ -180,6 +180,16 @@ configuration:
         additivity: false
         appenderRef: { ref: entryPoint }
       -
+        name: com.emc.mongoose.core.impl.load.executor
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
+        name: com.emc.mongoose.core.impl.load.tasks
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
         name: com.emc.mongoose.run
         level: debug
         additivity: false

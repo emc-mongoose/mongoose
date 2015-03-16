@@ -44,7 +44,7 @@ extends WSRequestConfigBase<T> {
 		FMT_URI_OBJECT_PATH = "%s/%s",
 		DEFAULT_VERSIONS_CONTAINER = "archive";
 	//
-	private String nameSpace = null, uriSvcBasePath = null, uriSvcBaseContainerPath = null;
+	private String uriSvcBasePath = null, uriSvcBaseContainerPath = null;
 	private WSAuthTokenImpl<T> authToken = null;
 	private WSContainerImpl<T> container = null;
 	//
@@ -94,7 +94,7 @@ extends WSRequestConfigBase<T> {
 		}
 		final String nameSpace = getNameSpace();
 		if(nameSpace == null) {
-			LOG.debug(Markers.MSG, "Swift access id is <null>, not refreshing the container path");
+			LOG.debug(Markers.MSG, "Swift namespace is <null>, not refreshing the container path");
 			return;
 		}
 		if(container == null) {
@@ -137,13 +137,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final String getNameSpace() {
-		return nameSpace;
-	}
-	//
-	@Override
 	public final WSRequestConfigImpl<T> setNameSpace(final String nameSpace) {
-		this.nameSpace = nameSpace;
+		super.setNameSpace(nameSpace);
 		refreshContainerPath();
 		return this;
 	}
@@ -200,9 +195,18 @@ extends WSRequestConfigBase<T> {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		uriSvcBasePath = String.class.cast(in.readObject());
-		final String containerName = String.class.cast(in.readObject());
-		LOG.debug(Markers.MSG, "The container name to use: \"{}\"", containerName);
-		setContainer(new WSContainerImpl<T>(this, containerName));
+		Object t = in.readObject();
+		if(t != null) {
+			setAuthToken(new WSAuthTokenImpl<>(this, String.class.cast(t)));
+		} else {
+			LOG.debug(Markers.MSG, "Note: no auth token has been got from load client side");
+		}
+		t = in.readObject();
+		if(t != null) {
+			setContainer(new WSContainerImpl<>(this, String.class.cast(t)));
+		} else {
+			LOG.debug(Markers.MSG, "Note: no container has been got from load client side");
+		}
 	}
 	//
 	@Override
@@ -210,11 +214,8 @@ extends WSRequestConfigBase<T> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeObject(uriSvcBasePath);
-		if(container != null) {
-			out.writeObject(container.getName());
-		} else {
-			out.writeObject(null);
-		}
+		out.writeObject(authToken == null ? null : authToken.getValue());
+		out.writeObject(container == null ? null : container.getName());
 	}
 	//
 	@Override

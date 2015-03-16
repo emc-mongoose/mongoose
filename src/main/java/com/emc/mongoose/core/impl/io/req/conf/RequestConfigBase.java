@@ -38,7 +38,7 @@ implements RequestConfig<T> {
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 	protected volatile RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
 	protected volatile String
-		/*addr, */scheme/*, uriTemplate*/;
+		/*addr, */nameSpace, scheme/*, uriTemplate*/;
 	protected volatile int
 		port;
 	protected int
@@ -56,6 +56,7 @@ implements RequestConfig<T> {
 		anyDataProducerEnabled = true;
 		scheme = runTimeConfig.getStorageProto();
 		port = runTimeConfig.getApiPort(api);
+		nameSpace = runTimeConfig.getStorageNameSpace();
 	}
 	//
 	protected RequestConfigBase(final RequestConfig<T> reqConf2Clone) {
@@ -70,6 +71,7 @@ implements RequestConfig<T> {
 			setPort(reqConf2Clone.getPort());
 			setScheme(reqConf2Clone.getScheme());
 			setLoadType(reqConf2Clone.getLoadType());
+			setNameSpace(reqConf2Clone.getNameSpace());
 			secret = reqConf2Clone.getSecret();
 		}
 	}
@@ -87,7 +89,8 @@ implements RequestConfig<T> {
 			.setUserName(userName)
 			.setPort(port)
 			.setScheme(scheme)
-			.setLoadType(loadType);
+			.setLoadType(loadType)
+			.setNameSpace(nameSpace);
 		requestConfigBranch.secret = secret;
 		return requestConfigBranch;
 	}
@@ -188,6 +191,17 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
+	public final String getNameSpace() {
+		return nameSpace;
+	}
+	//
+	@Override
+	public RequestConfigBase<T> setNameSpace(final String nameSpace) {
+		this.nameSpace = nameSpace;
+		return this;
+	}
+	//
+	@Override
 	public final DataSource<T> getDataSource() {
 		return dataSrc;
 	}
@@ -242,17 +256,7 @@ implements RequestConfig<T> {
 		setUserName(this.runTimeConfig.getAuthId());
 		setSecret(this.runTimeConfig.getAuthSecret());
 		setRetries(this.runTimeConfig.getRunRequestRetries());
-		return this;
-	}
-	//
-	@Override
-	public final int getLoadNumber() {
-		return loadNumber;
-	}
-	//
-	@Override
-	public final RequestConfig<T> setLoadNumber(int loadNumber) {
-		this.loadNumber = loadNumber;
+		setNameSpace(this.runTimeConfig.getStorageNameSpace());
 		return this;
 	}
 	//
@@ -265,6 +269,7 @@ implements RequestConfig<T> {
 		out.writeInt(getPort());
 		out.writeObject(getUserName());
 		out.writeObject(getSecret());
+		out.writeObject(getNameSpace());
 		out.writeObject(getDataSource());
 		out.writeBoolean(getRetries());
 		out.writeBoolean(getVerifyContentFlag());
@@ -286,6 +291,8 @@ implements RequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got user name {}", userName);
 		setSecret(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got secret {}", secret);
+		setNameSpace(String.class.cast(in.readObject()));
+		LOG.trace(Markers.MSG, "Got namespace {}", secret);
 		setDataSource((DataSource<T>) in.readObject());
 		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
 		setRetries(in.readBoolean());

@@ -3,7 +3,7 @@ addrs:								127.0.0.1
 
 # case-insensitive, may be "atmos", "s3" or "swift"
 api:								s3
-namespace:							s3
+namespace:					s3
 
 # reserved for future TLS usage (may be "https")
 scheme:								http

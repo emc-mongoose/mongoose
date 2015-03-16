@@ -270,6 +270,12 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
+	public WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
+		super.setNameSpace(nameSpace);
+		return this;
+	}
+	//
+	@Override
 	public final WSRequestConfigBase<T> setRetries(final boolean retryFlag) {
 		super.setRetries(retryFlag);
 		return this;
@@ -278,24 +284,6 @@ implements WSRequestConfig<T> {
 	@Override
 	public final WSRequestConfigBase<T> setLoadType(final IOTask.Type loadType) {
 		super.setLoadType(loadType);
-		return this;
-	}
-	//
-	@Override
-	public String getNameSpace() {
-		String nameSpace = null;
-		if(sharedHeaders.containsHeader(KEY_EMC_NS)) {
-			nameSpace = sharedHeaders.getFirstHeader(KEY_EMC_NS).getValue();
-		}
-		return nameSpace;
-	}
-	@Override
-	public WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
-		if(nameSpace == null || nameSpace.length() < 1) {
-			LOG.debug(Markers.MSG, "Using empty namespace");
-		} else {
-			sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_NS, nameSpace));
-		}
 		return this;
 	}
 	//
@@ -391,6 +379,8 @@ implements WSRequestConfig<T> {
 		super.readExternal(in);
 		sharedHeaders = HeaderGroup.class.cast(in.readObject());
 		LOG.trace(Markers.MSG, "Got headers set {}", sharedHeaders);
+		setNameSpace(String.class.cast(in.readObject()));
+		setFileAccessEnabled(Boolean.class.cast(in.readObject()));
 	}
 	//
 	@Override
@@ -398,6 +388,8 @@ implements WSRequestConfig<T> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeObject(sharedHeaders);
+		out.writeObject(getNameSpace());
+		out.writeObject(getFileAccessEnabled());
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse httpResponse) {

@@ -343,6 +343,7 @@ implements LoadClient<T> {
 			nextMetaInfoFrame = nextFrameFetchTask.getLastResult();
 			try {
 				if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
+					LOG.trace(Markers.MSG, "Got next metainfo frame: {}", nextMetaInfoFrame);
 					for(final T nextMetaInfoRec: nextMetaInfoFrame) {
 						metaInfoLog.submit(nextMetaInfoRec);
 					}
@@ -488,14 +489,6 @@ implements LoadClient<T> {
 			mgmtConnExecutor.scheduleAtFixedRate(
 				taskGetBW15Min, 0, periodSec, TimeUnit.SECONDS
 			);
-			//
-			mgmtConnExecutor.scheduleAtFixedRate(
-				new CountLimitWaitTask(
-					this, maxCount,
-					new PeriodicTask[] { taskGetCountSucc, taskGetCountRej, taskGetCountRej }
-				), 0, periodSec, TimeUnit.SECONDS
-			);
-			//
 			mgmtConnExecutor.scheduleAtFixedRate(
 				new Runnable() {
 					@Override
@@ -504,6 +497,13 @@ implements LoadClient<T> {
 					}
 				}, 0, periodSec, TimeUnit.SECONDS
 			);
+			mgmtConnExecutor.scheduleAtFixedRate(
+				new CountLimitWaitTask(
+					this, maxCount,
+					new PeriodicTask[] { taskGetCountSucc, taskGetCountRej, taskGetCountRej }
+				), 0, periodSec, TimeUnit.SECONDS
+			);
+			//
 			if(metricsPeriodSec > 0) {
 				mgmtConnExecutor.scheduleAtFixedRate(
 					new Runnable() {

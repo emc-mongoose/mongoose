@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.adapter.s3;
+	package com.emc.mongoose.storage.adapter.s3;
 //
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
@@ -12,6 +12,7 @@ import com.emc.mongoose.core.impl.data.BasicWSObject;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 //
+import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -76,6 +77,12 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
+		super.setNameSpace(nameSpace);
+		//if(nameSpace == null || nameSpace.length() < 1) {
+			LOG.debug(Markers.MSG, "Using empty namespace");
+		/*} else {
+			sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_NS, nameSpace));
+		}*/
 		return this;
 	}
 	//
@@ -98,7 +105,7 @@ extends WSRequestConfigBase<T> {
 		super.readExternal(in);
 		final Object t = in.readObject();
 		if(t == null) {
-			bucket = null;
+			LOG.debug(Markers.MSG, "Note: bucket has been got from load client side");
 		} else {
 			setBucket(new WSBucketImpl<>(this, String.class.cast(t)));
 			LOG.trace(Markers.MSG, "Got bucket {}", bucket);
@@ -209,7 +216,6 @@ extends WSRequestConfigBase<T> {
 			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", bucketName);
 			bucket.create(storageNodeAddrs[0]);
 			if(bucket.exists(storageNodeAddrs[0])) {
-				LOG.debug(Markers.MSG, "Bucket \"{}\" created successfully", bucketName);
 				runTimeConfig.set(KEY_BUCKET, bucketName);
 			} else {
 				throw new IllegalStateException(

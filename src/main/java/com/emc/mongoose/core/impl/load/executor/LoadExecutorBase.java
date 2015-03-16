@@ -425,7 +425,19 @@ implements LoadExecutor<T> {
 				}
 				// feed to the consumer
 				if(consumer != null) {
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG, "Going to feed the data item {} to the consumer {}",
+							dataItem, consumer
+						);
+					}
 					consumer.submit(dataItem);
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG, "The data item {} is passed to the consumer {} successfully",
+							dataItem, consumer
+						);
+					}
 				}
 			} else if(!isClosed.get()) {
 				counterReqFail.inc();
@@ -433,9 +445,15 @@ implements LoadExecutor<T> {
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Interrupted");
 		} catch(final RemoteException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Passing the data item to consumer failed");
+			TraceLogger.failure(
+				LOG, Level.WARN, e,
+				String.format("Failed to submit the data item \"%s\" to \"%s\"", dataItem, consumer)
+			);
 		} catch(final RejectedExecutionException e) {
-			TraceLogger.failure(LOG, Level.DEBUG, e, "Consumer rejected the data item");
+			TraceLogger.failure(
+				LOG, Level.WARN, e,
+				String.format("\"%s\" rejected the data item \"%s\"", consumer, dataItem)
+			);
 		}
 	}
 	//

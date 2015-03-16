@@ -164,6 +164,12 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
+		super.setNameSpace(nameSpace);
+		//if(nameSpace == null || nameSpace.length() < 1) {
+			LOG.debug(Markers.MSG, "Using empty namespace");
+		/*} else {
+			sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_NS, nameSpace));
+		}*/
 		return this;
 	}
 	//
@@ -209,7 +215,7 @@ extends WSRequestConfigBase<T> {
 		super.readExternal(in);
 		final Object t = in.readObject();
 		if(t == null) {
-			setSubTenant(null);
+			LOG.debug(Markers.MSG, "Note: no subtenant has got from load client side");
 		} else {
 			setSubTenant(new WSSubTenantImpl<>(this, String.class.cast(t)));
 		}

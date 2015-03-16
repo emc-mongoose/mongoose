@@ -107,5 +107,4 @@ implements AuthToken<T> {
 		//
 		return reqConf.execute(addr, httpReq);
 	}
-
 }
