@@ -53,7 +53,7 @@ implements DataItem {
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
 	//
-	public final static int MAX_PAGE_SIZE = (int) RunTimeConfig.getContext().getDataPageSize();
+	public final static int MAX_PAGE_SIZE = (int) RunTimeConfig.getContext().getDataBufferSize();
 	protected long offset = 0;
 	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////

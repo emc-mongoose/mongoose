@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -61,30 +60,33 @@ implements Externalizable {
 	public final static String
 		LIST_SEP = ",",
 		//
-		KEY_DATA_COUNT = "data.count",
+		KEY_DATA_ITEM_COUNT = "load.limit.dataItemCount",
 		KEY_DATA_SIZE = "data.size",
+		KEY_DATA_SIZE_MIN = "data.size.min",
+		KEY_DATA_SIZE_MAX = "data.size.max",
 		KEY_DATA_SIZE_BIAS = "data.size.bias",
 		KEY_DATA_RING_SEED = "data.ring.seed",
 		KEY_DATA_RING_SIZE = "data.ring.size",
+		KEY_DATA_SRC_FPATH = "data.src.fpath",
 		//
 		KEY_LOAD_THREADS = "load.threads",
 		KEY_LOAD_TIME = "load.step.time",
 		//
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
-		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
+		KEY_SCENARIO_NAME = "scenario.name",
 		KEY_RUN_METRICS_PERIOD_SEC = "run.metrics.period.sec",
-		KEY_RUN_TIME = "run.time",
+		KEY_LOAD_LIMIT_TIME = "load.limit.time",
 		KEY_RUN_VERSION = "run.version",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
-		KEY_STORAGE_API = "storage.api";
+		KEY_API_NAME = "api.name";
 	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
 	static {
 		MAP_OVERRIDE.put(KEY_DATA_SIZE, new String[] {"data.size.min", "data.size.max"});
-		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_RUN_TIME});
+		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_LOAD_LIMIT_TIME});
 		MAP_OVERRIDE.put(KEY_LOAD_THREADS, new String[] {"load.append.threads", "load.create.threads", "load.read.threads", "load.update.threads", "load.delete.threads"});
 		MAP_OVERRIDE.put("remote.drivers", new String[] {"remote.servers"});
 	}
@@ -181,27 +183,27 @@ implements Externalizable {
 	//
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final int getRunReqTimeOutMilliSec() {
-		return getInt("run.request.timeout.millisec");
+		return getInt("run.request.timeoutMilliSec");
 	}
 	//
 	public final int getRunRetryDelayMilliSec() {
-		return getInt("run.retry.delay.millisec");
+		return getInt("run.retry.delayMilliSec");
 	}
 	//
 	public final int getRunRetryCountMax() {
-		return getInt("run.retry.count.max");
+		return getInt("run.retry.countMax");
 	}
 	//
 	public final boolean getRunRequestRetries() {
 		return getBoolean("run.request.retries");
 	}
 	//
-	public final String getStorageApi() {
-		return getString(KEY_STORAGE_API);
+	public final String getApiName() {
+		return getString(KEY_API_NAME);
 	}
 	//
-	public final int getApiPort(final String api) {
-		return getInt("api." + api + ".port");
+	public final int getApiTypePort(final String api) {
+		return getInt("api.type." + api + ".port");
 	}
 	//
 	public final String getAuthId() {
@@ -212,32 +214,32 @@ implements Externalizable {
 		return getString("auth.secret");
 	}
 	//
-	public final long getDataPageSize() {
-		return getSizeBytes("data.page.size");
+	public final long getDataBufferSize() {
+		return getSizeBytes("data.buffer.size");
 	}
 	//
-	public final int getRemoteControlPort() {
-		return getInt("remote.control.port");
+	public final int getRemotePortControl() {
+		return getInt("remote.port.control");
 	}
 	//
-	public final int getRemoteExportPort() {
-		return getInt("remote.export.port");
+	public final int getRemotePortExport() {
+		return getInt("remote.port.export");
 	}
 	//
-	public final int getRemoteImportPort() {
-		return getInt("remote.import.port");
+	public final int getRemotePortImport() {
+		return getInt("remote.port.import");
 	}
 	//
-	public final int getWUISvcPort() {
-		return getInt("remote.wuisvc.port");
+	public final int getRemotePortWebUI() {
+		return getInt("remote.port.webui");
 	}
 	//
-	public final int getRunMetricsPeriodSec() {
-		return getInt("run.metrics.period.sec");
+	public final int getLoadMetricsPeriodSec() {
+		return getInt("load.metricsPeriodSec");
 	}
 	//
 	public final int getRunRequestQueueSize() {
-		return getInt("run.request.queue.size");
+		return getInt("run.request.queueSize");
 	}
 	//
 	public final String getHttpContentType() {
@@ -253,7 +255,7 @@ implements Externalizable {
 	}
 	//
 	public final boolean getReadVerifyContent() {
-		return getBoolean("load.read.verify.content");
+		return getBoolean("load.read.verifyContent");
 	}
 	//
 	public final String getStorageProto() {
@@ -265,11 +267,11 @@ implements Externalizable {
 	}
 	//
 	public final String getHttpSignMethod() {
-		return getString("http.sign.method");
+		return getString("http.signMethod");
 	}
 	//
-	public final boolean getEmcFileSystemAccessEnabled() {
-		return getBoolean("emc.fs.access");
+	public final boolean getStorageFileSystemAccessEnabled() {
+		return getBoolean("storage.fsAccess");
 	}
 	//
 	public final String getRunName() {
@@ -280,8 +282,8 @@ implements Externalizable {
 		return getString(KEY_RUN_VERSION);
 	}
 	//
-	public final long getDataCount() {
-		return getLong(KEY_DATA_COUNT);
+	public final long getLoadLimitDataItemCount() {
+		return getLong(KEY_DATA_ITEM_COUNT);
 	}
 	//
 	public final float getDataSizeBias() {
@@ -293,81 +295,123 @@ implements Externalizable {
 	}
 	//
 	public final int getConnPoolTimeOut() {
-		return getInt("storage.connection.pool.timeout.millisec");
+		return getInt("remote.connection.poolTimeoutMilliSec");
 	}
 	//
 	public final int getConnTimeOut() {
-		return getInt("storage.connection.timeout.millisec");
+		return getInt("remote.connection.timeoutMilliSec");
 	}
 	//
 	public final int getSocketTimeOut() {
-		return getInt("storage.socket.timeout.millisec");
+		return getInt("remote.socket.timeoutMilliSec");
 	}
 	//
 	public final boolean getSocketReuseAddrFlag() {
-		return getBoolean("storage.socket.reuse.addr");
+		return getBoolean("remote.socket.reuseAddr");
 	}
 	//
 	public final boolean getSocketKeepAliveFlag() {
-		return getBoolean("storage.socket.keepalive");
+		return getBoolean("remote.socket.keepalive");
 	}
 	//
 	public final boolean getSocketTCPNoDelayFlag() {
-		return getBoolean("storage.socket.tcp.nodelay");
+		return getBoolean("remote.socket.tcpNodelay");
 	}
 	//
 	public final int getSocketLinger() {
-		return getInt("storage.socket.linger");
+		return getInt("remote.socket.linger");
 	}
 	//
 	public final long getSocketBindBackLogSize() {
-		return getLong("storage.socket.bind.backlog.size");
+		return getLong("remote.socket.bindBacklogSize");
 	}
 	//
 	public final boolean getSocketInterestOpQueued() {
-		return getBoolean("storage.socket.interest.op.queued");
+		return getBoolean("remote.socket.interestOpQueued");
 	}
 	//
 	public final long getSocketSelectInterval() {
-		return getLong("storage.socket.select.interval");
+		return getLong("remote.socket.selectInterval");
 	}
 	//
-	public final String[] getRemoteServers() {
-		return getStringArray("remote.servers");
+	public final String[] getLoadServers() {
+		return getStringArray("load.servers");
 	}
 	//
 	public final String getDataSrcFPath() {
 		return getString("data.src.fpath");
 	}
 	//
-	public final String getRunScenarioLang() {
-		return getString("run.scenario.lang");
+	public final String getScenarioLang() {
+		return getString("scenario.lang");
 	}
 	//
-	public final String getRunScenarioName() {
-		return getString(KEY_RUN_SCENARIO_NAME);
+	public final String getScenarioName() {
+		return getString(KEY_SCENARIO_NAME);
 	}
 	//
-	public final String getRunScenarioDir() {
-		return getString("run.scenario.dir");
+	public final String getScenarioDir() {
+		return getString("scenario.dir");
 	}
 	//
 	public final String getRunId() {
 		return getString(KEY_RUN_ID);
 	}
 	//
-	public final String getRunTime() {
-		return getString(KEY_RUN_TIME);
+	public final String getLoadLimitTime() {
+		return getString(KEY_LOAD_LIMIT_TIME + ".value") + getString(KEY_LOAD_LIMIT_TIME + ".unit");
 	}
 	//
-	private String getFromRunTime(final int index) { return getRunTime().split("\\.")[index];}
+	public final TimeUnit getRunTimeUnit() {
+		return TimeUnit.valueOf(getString(KEY_LOAD_LIMIT_TIME + ".unit").toUpperCase());
+	}
 	//
-	public final TimeUnit getRunTimeUnit() { return TimeUnit.valueOf(getFromRunTime(1).toUpperCase());}
-	//
-	public final long getRunTimeValue() {return Long.valueOf(getFromRunTime(0));}
+	public final long getRunTimeValue() {
+		return getLong(KEY_LOAD_LIMIT_TIME + ".value");
+	}
 	//
 	public final String getRunMode() {
 		return getString(KEY_RUN_MODE);
+	}
+	//
+	public final int getStorageMockCapacity() {
+		return getInt("storage.mock.capacity");
+	}
+	//
+	public final int getStorageMockHeadCount() {
+		return getInt("storage.mock.headCount");
+	}
+	//
+	public final int getDataRadixSize() {
+		return getInt("data.radix.size");
+	}
+	//
+	public final int getDataRadixOffset() {
+		return getInt("data.radix.offset");
+	}
+	//
+	public final int getStorageMockIoThreadsPerSocket() {
+		return getInt("storage.mock.iothreadsPersocket");
+	}
+	//
+	public final int getStorageMockFaultSleepMilliSec() {
+		return getInt("storage.mock.fault.sleepMilliSec");
+	}
+	//
+	public final int getStorageMockFaultPeriod() {
+		return getInt("storage.mock.fault.period");
+	}
+	//
+	public final String getDataBufferRingSeed() {
+		return getString("data.buffer.ring.seed");
+	}
+	//
+	public final long getDataBufferRingSize() {
+		return getSizeBytes("data.buffer.ring.size");
+	}
+	//
+	public final short getLoadTypeThreadsCount(final String loadType) {
+		return getShort("load.type." + loadType + ".threads");
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -524,17 +568,17 @@ implements Externalizable {
 			switch(nextKey) {
 				case RunTimeConfig.KEY_RUN_ID:
 				case RunTimeConfig.KEY_RUN_MODE:
-				case RunTimeConfig.KEY_RUN_SCENARIO_NAME:
-				case RunTimeConfig.KEY_RUN_TIME:
+				case RunTimeConfig.KEY_SCENARIO_NAME:
+				case RunTimeConfig.KEY_LOAD_LIMIT_TIME:
 				case RunTimeConfig.KEY_RUN_VERSION:
-				case RunTimeConfig.KEY_DATA_COUNT:
+				case RunTimeConfig.KEY_DATA_ITEM_COUNT:
 				case RunTimeConfig.KEY_DATA_SIZE:
 				case RunTimeConfig.KEY_DATA_RING_SEED:
 				case RunTimeConfig.KEY_DATA_RING_SIZE:
 				case RunTimeConfig.KEY_LOAD_THREADS:
 				case RunTimeConfig.KEY_LOAD_TIME:
 				case RunTimeConfig.KEY_STORAGE_ADDRS:
-				case RunTimeConfig.KEY_STORAGE_API:
+				case RunTimeConfig.KEY_API_NAME:
 					strBuilder
 						.appendNewLine().append("| ")
 						.appendFixedWidthPadRight(nextKey, 31, ' ')

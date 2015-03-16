@@ -59,7 +59,7 @@ implements WSRequestConfig<T> {
 	protected boolean fsAccess = false;
 	//
 	public static WSRequestConfigBase getInstance() {
-		return newInstanceFor(RunTimeConfig.getContext().getStorageApi());
+		return newInstanceFor(RunTimeConfig.getContext().getApiName());
 	}
 	//
 	private final static String NAME_CLS_IMPL = "WSRequestConfigImpl";
@@ -208,7 +208,7 @@ implements WSRequestConfig<T> {
 		}
 		//
 		try {
-			setFileSystemAccessEnabled(runTimeConfig.getEmcFileSystemAccessEnabled());
+			setFileSystemAccessEnabled(runTimeConfig.getStorageFileSystemAccessEnabled());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "http.emc.fs.access");
 		}
@@ -493,7 +493,7 @@ implements WSRequestConfig<T> {
 	//
 	@SuppressWarnings("StatementWithEmptyBody")
 	public static void playStreamQuietly(final InputStream contentStream) {
-		final byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataPageSize()];
+		final byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataBufferSize()];
 		try {
 			while(contentStream.read(buff) != -1);
 		} catch(final IOException e) {

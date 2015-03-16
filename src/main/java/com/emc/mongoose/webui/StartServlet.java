@@ -134,16 +134,16 @@ public final class StartServlet extends CommonServlet {
 			public void run() {
 				RunTimeConfig.setContext(runTimeConfig);
 				ThreadContextMap.initThreadContextMap();
-				ThreadContextMap.putValue(RunTimeConfig.KEY_RUN_SCENARIO_NAME, runTimeConfig.getRunScenarioName());
+				ThreadContextMap.putValue(RunTimeConfig.KEY_SCENARIO_NAME, runTimeConfig.getScenarioName());
 				ThreadContextMap.putValue(RunTimeConfig.KEY_RUN_METRICS_PERIOD_SEC,
-						String.valueOf(runTimeConfig.getRunMetricsPeriodSec()));
-				if (runTimeConfig.getRunScenarioName().equals("rampup")) {
-					ThreadContextMap.putValue("scenario.rampup.sizes", runTimeConfig.getProperty("scenario.rampup.sizes").toString());
-					ThreadContextMap.putValue("scenario.rampup.thread.counts",
-							runTimeConfig.getProperty("scenario.rampup.thread.counts").toString());
-					ThreadContextMap.putValue("scenario.chain.load", runTimeConfig.getProperty("scenario.chain.load").toString());
+						String.valueOf(runTimeConfig.getLoadMetricsPeriodSec()));
+				if (runTimeConfig.getScenarioName().equals("rampup")) {
+					ThreadContextMap.putValue("scenario.type.rampup.sizes", runTimeConfig.getProperty("scenario.type.rampup.sizes").toString());
+					ThreadContextMap.putValue("scenario.type.rampup.threadCounts",
+							runTimeConfig.getProperty("scenario.type.rampup.threadCounts").toString());
+					ThreadContextMap.putValue("scenario.type.chain.load", runTimeConfig.getProperty("scenario.type.chain.load").toString());
 				}
-				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getRunScenarioName());
+				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);
 				new Scenario().run();

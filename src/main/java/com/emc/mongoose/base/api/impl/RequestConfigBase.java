@@ -46,7 +46,7 @@ implements RequestConfig<T> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		api = runTimeConfig.getStorageApi();
+		api = runTimeConfig.getApiName();
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();
 		loadType = AsyncIOTask.Type.CREATE;
@@ -55,7 +55,7 @@ implements RequestConfig<T> {
 		verifyContentFlag = runTimeConfig.getReadVerifyContent();
 		anyDataProducerEnabled = true;
 		scheme = runTimeConfig.getStorageProto();
-		port = runTimeConfig.getApiPort(api);
+		port = runTimeConfig.getApiTypePort(api);
 	}
 	//
 	protected RequestConfigBase(final RequestConfig<T> reqConf2Clone) {
@@ -228,9 +228,9 @@ implements RequestConfig<T> {
 	public RequestConfigBase<T> setProperties(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
 		//
-		final String api = runTimeConfig.getStorageApi();
+		final String api = runTimeConfig.getApiName();
 		setAPI(api);
-		setPort(this.runTimeConfig.getApiPort(api));
+		setPort(this.runTimeConfig.getApiTypePort(api));
 		setUserName(this.runTimeConfig.getAuthId());
 		setSecret(this.runTimeConfig.getAuthSecret());
 		setRetries(this.runTimeConfig.getRunRequestRetries());
