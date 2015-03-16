@@ -71,6 +71,7 @@ def execute(chain=(), flagSimultaneous=True):
 	runTimeOut = timeOutInit()
 	try:
 		if flagSimultaneous:
+			LOG.info(Markers.MSG, "Execute load jobs in parallel")
 			for load in reversed(chain):
 				load.start()
 			for load in chain:
@@ -81,6 +82,7 @@ def execute(chain=(), flagSimultaneous=True):
 				finally:
 					load.close()
 		else:
+			LOG.info(Markers.MSG, "Execute load jobs sequentially")
 			prevLoad, nextLoad = None, None
 			for nextLoad in chain:
 				if not isinstance(nextLoad, DataItemBuffer):

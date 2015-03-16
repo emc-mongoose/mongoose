@@ -64,7 +64,7 @@ implements RequestConfig<T> {
 			setDataSource(reqConf2Clone.getDataSource());
 			setRetries(reqConf2Clone.getRetries());
 			setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
-			//setAddr(reqConf2Clone.getAddr());
+			setAnyDataProducerEnabled(reqConf2Clone.getAnyDataProducerEnabled());
 			setAPI(reqConf2Clone.getAPI());
 			setUserName(reqConf2Clone.getUserName());
 			setPort(reqConf2Clone.getPort());
@@ -82,7 +82,7 @@ implements RequestConfig<T> {
 			.setDataSource(dataSrc)
 			.setRetries(retryFlag)
 			.setVerifyContentFlag(verifyContentFlag)
-			//.setAddr(addr)
+			.setAnyDataProducerEnabled(anyDataProducerEnabled)
 			.setAPI(api)
 			.setUserName(userName)
 			.setPort(port)
@@ -219,7 +219,15 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
+	public final boolean getAnyDataProducerEnabled() {
+		return anyDataProducerEnabled;
+	}
+	//
+	@Override
 	public final RequestConfigBase<T> setAnyDataProducerEnabled(final boolean enabledFlag) {
+		LOG.debug(
+			Markers.MSG, "req conf {}: set any data producer enabled to {}", hashCode(), enabledFlag
+		);
 		this.anyDataProducerEnabled = enabledFlag;
 		return this;
 	}
@@ -253,11 +261,14 @@ implements RequestConfig<T> {
 	throws IOException {
 		out.writeObject(getAPI());
 		out.writeObject(getLoadType());
+		out.writeObject(getScheme());
 		out.writeInt(getPort());
 		out.writeObject(getUserName());
 		out.writeObject(getSecret());
 		out.writeObject(getDataSource());
 		out.writeBoolean(getRetries());
+		out.writeBoolean(getVerifyContentFlag());
+		out.writeBoolean(getAnyDataProducerEnabled());
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -267,6 +278,8 @@ implements RequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got API {}", api);
 		setLoadType(IOTask.Type.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got load type {}", loadType);
+		setScheme(String.class.cast(in.readObject()));
+		LOG.trace(Markers.MSG, "Got scheme {}", scheme);
 		setPort(in.readInt());
 		LOG.trace(Markers.MSG, "Got port {}", port);
 		setUserName(String.class.cast(in.readObject()));
@@ -275,8 +288,13 @@ implements RequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got secret {}", secret);
 		setDataSource((DataSource<T>) in.readObject());
 		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
-		setRetries(Boolean.class.cast(in.readBoolean()));
+		setRetries(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got retry flag {}", retryFlag);
+		setVerifyContentFlag(in.readBoolean());
+		LOG.trace(Markers.MSG, "Got verify content flag {}", retryFlag);
+		setAnyDataProducerEnabled(in.readBoolean());
+		LOG.trace(Markers.MSG, "Got any data producer enabled flag {}", anyDataProducerEnabled);
+
 	}
 	//
 	@Override

@@ -16,7 +16,6 @@ import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
-import com.emc.mongoose.client.impl.load.executor.gauges.ThroughPut;
 import com.emc.mongoose.client.impl.load.executor.tasks.CountLimitWaitTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.FrameFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
@@ -83,6 +82,7 @@ implements LoadClient<T> {
 		metricSuccCount, metricByteCount;
 	@SuppressWarnings("FieldCanBeLocal")
 	private final Gauge<Double>
+		metricTPMean, metricTP1Min, metricTP5Min, metricTP15Min,
 		metricBWMean, metricBW1Min, metricBW5Min, metricBW15Min;
 	@SuppressWarnings("FieldCanBeLocal")
 	private final GaugeValuePeriodicTask<Long>
@@ -180,7 +180,19 @@ implements LoadClient<T> {
 		};
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricSuccCount = registerJmxGaugeSum(
-			DEFAULT_DOMAIN, METRIC_NAME_SUCC, ATTR_COUNT
+			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_COUNT
+		);
+		metricTPMean = registerJmxGaugeSumDouble(
+			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_MEAN
+		);
+		metricTP1Min = registerJmxGaugeSumDouble(
+			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_1MIN
+		);
+		metricTP5Min = registerJmxGaugeSumDouble(
+			DEFAULT_DOMAIN, METRIC_NAME_REQ+"."+METRIC_NAME_TP, ATTR_RATE_5MIN
+		);
+		metricTP15Min = registerJmxGaugeSumDouble(
+			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_15MIN
 		);
 		metricByteCount = registerJmxGaugeSum(
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_BW, ATTR_COUNT
@@ -234,34 +246,14 @@ implements LoadClient<T> {
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MAX
 			)
 		);
+		taskGetTPMean = new GaugeValuePeriodicTask<>(metricTPMean);
+		taskGetTP1Min = new GaugeValuePeriodicTask<>(metricTP1Min);
+		taskGetTP5Min = new GaugeValuePeriodicTask<>(metricTP5Min);
+		taskGetTP15Min = new GaugeValuePeriodicTask<>(metricTP15Min);
 		taskGetBWMean = new GaugeValuePeriodicTask<>(metricBWMean);
 		taskGetBW1Min = new GaugeValuePeriodicTask<>(metricBW1Min);
 		taskGetBW5Min = new GaugeValuePeriodicTask<>(metricBW5Min);
 		taskGetBW15Min = new GaugeValuePeriodicTask<>(metricBW15Min);
-		taskGetTPMean = new GaugeValuePeriodicTask<>(
-			metrics.register(
-				MetricRegistry.name(name, METRIC_NAME_TP + "." + ATTR_RATE_MEAN),
-				new ThroughPut(taskGetBWMean, taskGetCountSucc, taskGetCountBytes)
-			)
-		);
-		taskGetTP1Min = new GaugeValuePeriodicTask<>(
-			metrics.register(
-				MetricRegistry.name(name, METRIC_NAME_TP + "." + ATTR_RATE_1MIN),
-				new ThroughPut(taskGetBW1Min, taskGetCountSucc, taskGetCountBytes)
-			)
-		);
-		taskGetTP5Min = new GaugeValuePeriodicTask<>(
-			metrics.register(
-				MetricRegistry.name(name, METRIC_NAME_TP + "." + ATTR_RATE_5MIN),
-				new ThroughPut(taskGetBW5Min, taskGetCountSucc, taskGetCountBytes)
-			)
-		);
-		taskGetTP15Min = new GaugeValuePeriodicTask<>(
-			metrics.register(
-				MetricRegistry.name(name, METRIC_NAME_TP + "." + ATTR_RATE_15MIN),
-				new ThroughPut(taskGetBW15Min, taskGetCountSucc, taskGetCountBytes)
-			)
-		);
 		/*taskGetDurMed = new GaugeValueTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MED
@@ -528,7 +520,6 @@ implements LoadClient<T> {
 	@Override
 	public final void start() {
 		LoadSvc<T> nextLoadSvc;
-		//
 		for(final String addr : loadSvcAddrs) {
 			nextLoadSvc = remoteLoadMap.get(addr);
 			try {

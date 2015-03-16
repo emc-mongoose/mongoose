@@ -188,7 +188,10 @@ extends WSRequestConfigBase<T> {
 				TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		} else {
-			LOG.debug(Markers.MSG, "Using of bucket listing data producer is suppressed");
+			LOG.debug(
+				Markers.MSG, "req conf {}: using of bucket listing data producer is suppressed",
+				hashCode()
+			);
 		}
 		return producer;
 	}

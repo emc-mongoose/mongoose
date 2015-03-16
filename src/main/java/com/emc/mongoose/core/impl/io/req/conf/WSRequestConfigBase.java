@@ -228,7 +228,6 @@ implements WSRequestConfig<T> {
 				new HttpClientRunTask<>(ioEventDispatch, ioReactor),
 				String.format("%s-WSConfigThread", toString())
 			);
-			clientThread.start();
 		} else {
 			connPool = null;
 			clientThread = null;
@@ -592,10 +591,10 @@ implements WSRequestConfig<T> {
 		try {
 			super.close();
 		} finally {
-			//
-			clientThread.interrupt();
-			//
-			if(connPool!=null) {
+			if(clientThread.isAlive()) {
+				clientThread.interrupt();
+			}
+			if(connPool != null && connPool.isShutdown()) {
 				connPool.closeExpired();
 				try {
 					connPool.closeIdle(0, TimeUnit.MILLISECONDS);
@@ -610,12 +609,15 @@ implements WSRequestConfig<T> {
 				}
 			}
 		}
-		//
 		LOG.debug(Markers.MSG, "Closed web storage client");
 	}
 	//
 	@Override
 	public final HttpResponse execute(final String tgtAddr, final HttpRequest request) {
+		//
+		if(!clientThread.isAlive() && !clientThread.isInterrupted()) {
+			clientThread.start();
+		}
 		//
 		HttpResponse response = null;
 		//
