@@ -37,7 +37,7 @@ extends BasicAsyncRequestConsumer {
 	//
 	public DummyAsyncRequestConsumer(final RunTimeConfig runTimeConfig) {
 		super();
-		maxPageSize = (int) runTimeConfig.getDataPageSize();
+		maxPageSize = (int) runTimeConfig.getDataBufferSize();
 	}
 	//
 	@Override

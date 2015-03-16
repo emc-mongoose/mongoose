@@ -9,7 +9,6 @@ import com.emc.mongoose.object.data.WSObject;
 import com.emc.mongoose.object.data.impl.WSObjectImpl;
 import com.emc.mongoose.object.load.WSLoadExecutor;
 import com.emc.mongoose.object.load.impl.ObjectLoadExecutorBase;
-import com.emc.mongoose.object.load.impl.ws.NewDataProducerImpl;
 import com.emc.mongoose.object.load.impl.ws.proc.RequestSharedHeaders;
 import com.emc.mongoose.object.load.impl.ws.proc.RequestTargetHost;
 import com.emc.mongoose.object.load.impl.ws.tasks.ExecuteClientTask;
@@ -96,7 +95,7 @@ implements WSLoadExecutor<T> {
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int) thrLocalConfig.getDataPageSize())
+			.setBufferSize((int) thrLocalConfig.getDataBufferSize())
 			.build();
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
@@ -110,8 +109,8 @@ implements WSLoadExecutor<T> {
 			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize((int) thrLocalConfig.getDataPageSize())
-			.setSndBufSize((int) thrLocalConfig.getDataPageSize())
+			.setRcvBufSize((int) thrLocalConfig.getDataBufferSize())
+			.setSndBufSize((int) thrLocalConfig.getDataBufferSize())
 			.setConnectTimeout(thrLocalConfig.getConnTimeOut());
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
@@ -228,7 +227,7 @@ implements WSLoadExecutor<T> {
 				}
 			} else {
 				tgtHost = new HttpHost(
-					nodeAddr, runTimeConfig.getApiPort(runTimeConfig.getStorageApi()),
+					nodeAddr, runTimeConfig.getApiTypePort(runTimeConfig.getApiName()),
 					runTimeConfig.getStorageProto()
 				);
 			}

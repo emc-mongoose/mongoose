@@ -48,8 +48,8 @@ implements LoadBuilderClient<T, U> {
 	public LoadBuilderClientBase(final RunTimeConfig runTimeConfig)
 	throws IOException {
 		//
-		super(runTimeConfig.getRemoteServers().length);
-		final String remoteServers[] = runTimeConfig.getRemoteServers();
+		super(runTimeConfig.getLoadServers().length);
+		final String remoteServers[] = runTimeConfig.getLoadServers();
 		//
 		LoadBuilderSvc<T, U> loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;

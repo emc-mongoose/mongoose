@@ -63,8 +63,8 @@ public abstract class CommonServlet extends HttpServlet {
 			.replace("]", "")
 			.replace(" ", "")
 			.trim();
-		if (key.equals("run.time"))
-			return resultString.replace(",", ".");
+		/*if (key.equals(RunTimeConfig.KEY_LOAD_TIME))
+			return resultString.replace(",", ".");*/
 		return resultString;
 	}
 	//

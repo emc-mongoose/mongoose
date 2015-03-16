@@ -38,8 +38,8 @@ implements DataSource<T> {
 	public UniformDataSource()
 	throws NumberFormatException {
 		this(
-			Long.parseLong(RunTimeConfig.getContext().getString("data.ring.seed"), 0x10),
-			(int) RunTimeConfig.getContext().getSizeBytes("data.ring.size")
+			Long.parseLong(RunTimeConfig.getContext().getDataBufferRingSeed(), 0x10),
+			(int) RunTimeConfig.getContext().getDataBufferRingSize()
 		);
 	}
 	//

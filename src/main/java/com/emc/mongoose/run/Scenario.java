@@ -46,7 +46,7 @@ implements Runnable {
 		// get scenario language
 		String scriptLangKey = null;
 		try {
-			scriptLangKey = localRunTimeConfig.getRunScenarioLang();
+			scriptLangKey = localRunTimeConfig.getScenarioLang();
 		} catch(final NoSuchElementException e) {
 			LOG.fatal(
 				Markers.ERR,
@@ -57,7 +57,7 @@ implements Runnable {
 		// get scenario name
 		String scriptName = null;
 		try {
-			scriptName = localRunTimeConfig.getRunScenarioName();
+			scriptName = localRunTimeConfig.getScenarioName();
 			//LOG.info(Markers.MSG, "Script name to run: \"{}\"", scriptName);
 		} catch(final NoSuchElementException e) {
 			LOG.fatal(
@@ -70,7 +70,7 @@ implements Runnable {
 		String scriptsRootDir = null;
 		if(scriptName!=null && scriptLangKey!=null) {
 			try {
-				scriptsRootDir = localRunTimeConfig.getRunScenarioDir();
+				scriptsRootDir = localRunTimeConfig.getScenarioDir();
 			} catch(final NoSuchElementException e) {
 				LOG.fatal(Markers.ERR, "Scenario directory not specified");
 				System.exit(1);
