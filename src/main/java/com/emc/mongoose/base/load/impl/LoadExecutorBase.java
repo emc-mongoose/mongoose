@@ -94,6 +94,13 @@ implements LoadExecutor<T> {
 			)//,
 			//new WorkerFactory("submitWorker")
 		);
+		//For perf.sum
+		ThreadContextMap.putValue(
+			DataObjectWorkerFactory.KEY_LOAD_NUM, Integer.toString(reqConfig.getLoadNumber()));
+		ThreadContextMap.putValue(
+			DataObjectWorkerFactory.KEY_LOAD_TYPE, reqConfig.getLoadType().toString());
+		ThreadContextMap.putValue(
+			DataObjectWorkerFactory.KEY_API, reqConfig.getAPI());
 		//
 		storageNodeCount = addrs.length;
 		totalConnCount = connCountPerNode * storageNodeCount;
@@ -126,9 +133,7 @@ implements LoadExecutor<T> {
 			StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
 			(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
 			Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount);
-		setThreadFactory(
-			new WorkerFactory(name)
-		);
+		setThreadFactory(new WorkerFactory(name));
 		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the node executors array
@@ -276,6 +281,14 @@ implements LoadExecutor<T> {
 			OpenJpaAppender.COUNT_REQ_QUEUE, Long.toString(countReqInQueue));
 		ThreadContextMap.putValue(
 			OpenJpaAppender.COUNT_REQ_FAIL, Long.toString(countReqFail));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.LATENCY_AVG, Integer.toString((int) respLatencySnapshot.getMean()));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.LATENCY_MIN, Integer.toString((int) respLatencySnapshot.getMin()));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.LATENCY_MED, Integer.toString((int) respLatencySnapshot.getMedian()));
+		ThreadContextMap.putValue(
+			OpenJpaAppender.LATENCY_MAX, Integer.toString((int) respLatencySnapshot.getMax()));
 		ThreadContextMap.putValue(
 			OpenJpaAppender.MEAN_TP, Double.toString(avgSize==0 ? 0 : meanBW / avgSize));
 		ThreadContextMap.putValue(

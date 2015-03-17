@@ -173,9 +173,7 @@ implements LoadClient<T> {
 		}
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			20 + remoteLoadMap.size(), //new WorkerFactory(String.format("%s-remoteMonitor", name))
-			new DataObjectWorkerFactory(reqConfig.getLoadNumber(), reqConfig.getAPI(),
-				reqConfig.getLoadType(),String.format("%s-remoteMonitor", name))
+			20 + remoteLoadMap.size(), new WorkerFactory(String.format("%s-remoteMonitor", name))
 		) { // make the shutdown method synchronized
 			@Override
 			public final synchronized void shutdown() {

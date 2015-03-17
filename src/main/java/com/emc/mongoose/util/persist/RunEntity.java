@@ -19,7 +19,7 @@ import static javax.persistence.GenerationType.IDENTITY;
 @Entity
 @Table(name = "run", uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "tstamp"})})
 public final class RunEntity
-	implements Serializable {
+implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
@@ -58,10 +58,10 @@ public final class RunEntity
 	public final void setName(final String name) {
 		this.name = name;
 	}
-	public Date getTimestamp() {
+	public final Date getTimestamp() {
 		return timestamp;
 	}
-	public void setTimestamp(Date timestamp) {
+	public final void setTimestamp(final Date timestamp) {
 		this.timestamp = timestamp;
 	}
 }

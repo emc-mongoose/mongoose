@@ -12,7 +12,7 @@ import java.io.Serializable;
 @Entity(name="Status")
 @Table(name = "status", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
 public final class StatusEntity
-	implements Serializable{
+implements Serializable{
 	@Id
 	@Column(name = "code")
 	private int code;

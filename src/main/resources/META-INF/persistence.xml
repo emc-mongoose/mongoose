@@ -21,7 +21,7 @@
 		<class>com.emc.mongoose.util.persist.PerfomanceEntity</class>
 		<properties>
 			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
-			<property name="openjpa.DynamicEnhancementAgent" value="true"/>
+			<!--<property name="openjpa.DynamicEnhancementAgent" value="true"/>!-->
 			<property name="openjpa.jdbc.MappingDefaults"
 					  value="ForeignKeyDeleteAction=restrict,JoinForeignKeyDeleteAction=restrict"/>
 			<!-- Logging Open JPA !-->

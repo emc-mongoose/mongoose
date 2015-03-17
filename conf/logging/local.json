@@ -56,22 +56,17 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
-								"marker": "dataList",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
-								"marker": "perfTrace",
-								"onMatch": "ACCEPT",
-								"onMismatch": "NEUTRAL"
-							}, {
-								"type": "MarkerFilter",
 								"marker": "msg",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "MarkerFilter",
 								"marker": "perfAvg",
+								"onMatch": "ACCEPT",
+								"onMismatch": "NEUTRAL"
+							},  {
+								"type": "MarkerFilter",
+								"marker": "perfSum",
 								"onMatch": "ACCEPT",
 								"onMismatch": "NEUTRAL"
 							}

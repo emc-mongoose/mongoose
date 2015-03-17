@@ -19,7 +19,7 @@ import java.io.Serializable;
 @IdClass(TraceEntityPK.class)
 @Table(name = "trace")
 public final class TraceEntity
-	implements Serializable{
+implements Serializable{
 	//
 	@Id
 	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
@@ -67,7 +67,6 @@ public final class TraceEntity
 	public final void setDataobject(final DataObjectEntity dataobject) {
 		this.dataobject = dataobject;
 	}
-
 	public final ConnectionEntity getConnection() {
 		return connection;
 	}
@@ -92,18 +91,18 @@ public final class TraceEntity
 	public final void setReqDur(final long reqDur) {
 		this.reqDur = reqDur;
 	}
-	public long getLatency() {
+	public final long getLatency() {
 		return latency;
 	}
-	public void setLatency(long latency) {
+	public final void setLatency(final long latency) {
 		this.latency = latency;
 	}
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Trace Entity Primary Key
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class TraceEntityPK
-	implements Serializable{
+final class TraceEntityPK
+implements Serializable{
 	private DataObjectEntityPK dataobject;
 	private ConnectionEntityPK connection;
 	//
@@ -114,24 +113,24 @@ class TraceEntityPK
 		this.connection = connectionEntity;
 	}
 	//
-	public DataObjectEntityPK getDataobject() {
+	public final DataObjectEntityPK getDataobject() {
 		return dataobject;
 	}
-	public void setDataobject(DataObjectEntityPK dataobject) {
+	public final void setDataobject(final DataObjectEntityPK dataobject) {
 		this.dataobject = dataobject;
 	}
-	public ConnectionEntityPK getConnection() {
+	public final ConnectionEntityPK getConnection() {
 		return connection;
 	}
-	public void setConnection(ConnectionEntityPK connection) {
+	public final void setConnection(final ConnectionEntityPK connection) {
 		this.connection = connection;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public boolean equals(Object o) {
+	public final boolean equals(final Object o) {
 		if(o == null) return false;
 		if(!(o instanceof TraceEntity)) return false;
-		TraceEntity other = (TraceEntity) o;
+		final TraceEntity other = (TraceEntity) o;
 		return (this.dataobject.getIdentifier().equals(other.getDataobject().getIdentifier()))
 			&& (this.dataobject.getSize() == other.getDataobject().getSize()
 			&& (this.connection.getNum() == other.getConnection().getNum())
@@ -139,7 +138,7 @@ class TraceEntityPK
 			&& (this.connection.getLoad().getRun() == other.getConnection().getLoad().getRun().getId()));
 	}
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return (this.dataobject.hashCode() + this.connection.hashCode());
 	}
 }

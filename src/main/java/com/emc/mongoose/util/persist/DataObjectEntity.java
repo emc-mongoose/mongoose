@@ -13,7 +13,7 @@ import java.io.Serializable;
 @IdClass(DataObjectEntityPK.class)
 @Table(name = "dataobject")
 public final class DataObjectEntity
-	implements Serializable{
+implements Serializable{
 	@Id
 	@Column(name = "identifier")
 	private String identifier;
@@ -78,7 +78,7 @@ public final class DataObjectEntity
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Data object entity composite primary key
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class DataObjectEntityPK
+final class DataObjectEntityPK
 implements Serializable {
 	//
 	private String identifier;
@@ -90,29 +90,29 @@ implements Serializable {
 		this.size = size;
 	}
 	//
-	public String getIdentifier() {
+	public final String getIdentifier() {
 		return identifier;
 	}
-	public void setIdentifier(String identifier) {
+	public final void setIdentifier(final String identifier) {
 		this.identifier = identifier;
 	}
-	public long getSize() {
+	public final long getSize() {
 		return size;
 	}
-	public void setSize(long size) {
+	public final void setSize(final long size) {
 		this.size = size;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public boolean equals(Object o) {
+	public final boolean equals(final Object o) {
 		if(o == null) return false;
 		if(!(o instanceof DataObjectEntity)) return false;
-		DataObjectEntity other = (DataObjectEntity) o;
+		final DataObjectEntity other = (DataObjectEntity) o;
 		return (this.identifier.equals(other.getIdentifier())) && (this.size == other.getSize());
 
 	}
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return (int) (this.size + this.identifier.hashCode());
 	}
 }

@@ -55,11 +55,9 @@ implements Serializable{
 	public final void setNode(final NodeEntity node) {
 		this.node = node;
 	}
-
 	public final long getNum() {
 		return num;
 	}
-
 	public final void setNum(final long num) {
 		this.num = num;
 	}
@@ -67,7 +65,7 @@ implements Serializable{
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Connection entity composite primary key
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class ConnectionEntityPK
+final class ConnectionEntityPK
 implements Serializable{
 	//
 	private long num;
@@ -86,10 +84,10 @@ implements Serializable{
 	public final void setNum(final long num) {
 		this.num = num;
 	}
-	public LoadEntityPK getLoad() {
+	public final LoadEntityPK getLoad() {
 		return load;
 	}
-	public void setLoad(LoadEntityPK load) {
+	public final void setLoad(final LoadEntityPK load) {
 		this.load = load;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -40,6 +40,14 @@ implements Serializable{
 	private long countQueue;
 	@Column(name = "countFail")
 	private long countFail;
+	@Column(name = "latencyAvg")
+	private int latencyAvg;
+	@Column(name = "latencyMin")
+	private int latencyMin;
+	@Column(name = "latencyMed")
+	private int latencyMed;
+	@Column(name = "latencyMax")
+	private int latencyMax;
 	@Column(name = "meanTP")
 	private double meanTP;
 	@Column(name = "oneMinTP")
@@ -63,6 +71,7 @@ implements Serializable{
 	public PerfomanceEntity(
 		final LoadEntity load, final Date timestamp,
 		final long countSucc, final long countQueue, final long countFail,
+		final int latencyAvg, final int latencyMin, final int latencyMed, final int latencyMax,
 		final double meanTP, final double oneMinTP, final double fiveMinTP, final double fifteenMinTP,
 		final double meanBW, final double oneMinBW, final double fiveMinBW, final double fifteenMinBW)
 	{
@@ -71,6 +80,10 @@ implements Serializable{
 		this.countSucc = countSucc;
 		this.countQueue = countQueue;
 		this.countFail = countFail;
+		this.latencyAvg = latencyAvg;
+		this.latencyMin = latencyMin;
+		this.latencyMed = latencyMed;
+		this.latencyMax = latencyMax;
 		this.meanTP = meanTP;
 		this.oneMinTP = oneMinTP;
 		this.fiveMinTP = fiveMinTP;
@@ -81,88 +94,112 @@ implements Serializable{
 		this.fifteenMinBW = fifteenMinBW;
 	}
 
-	public long getId() {
+	public final long getId() {
 		return id;
 	}
-	public void setId(long id) {
+	public final void setId(final long id) {
 		this.id = id;
 	}
-	public LoadEntity getLoad() {
+	public final LoadEntity getLoad() {
 		return load;
 	}
-	public void setLoad(LoadEntity load) {
+	public final void setLoad(final LoadEntity load) {
 		this.load = load;
 	}
-	public Date getTimestamp() {
+	public final Date getTimestamp() {
 		return timestamp;
 	}
-	public void setTimestamp(Date timestamp) {
+	public final void setTimestamp(final Date timestamp) {
 		this.timestamp = timestamp;
 	}
-	public long getCountSucc() {
+	public final long getCountSucc() {
 		return countSucc;
 	}
-	public void setCountSucc(long countSucc) {
+	public final void setCountSucc(final long countSucc) {
 		this.countSucc = countSucc;
 	}
-	public long getCountQueue() {
+	public final long getCountQueue() {
 		return countQueue;
 	}
-	public void setCountQueue(long countQueue) {
+	public final void setCountQueue(final long countQueue) {
 		this.countQueue = countQueue;
 	}
-	public long getCountFail() {
+	public final long getCountFail() {
 		return countFail;
 	}
-	public void setCountFail(long countFail) {
+	public final void setCountFail(final long countFail) {
 		this.countFail = countFail;
 	}
-	public double getMeanTP() {
+	public final int getLatencyAvg() {
+		return latencyAvg;
+	}
+	public final void setLatencyAvg(final int latencyAvg) {
+		this.latencyAvg = latencyAvg;
+	}
+	public final int getLatencyMin() {
+		return latencyMin;
+	}
+	public final void setLatencyMin(final int latencyMin) {
+		this.latencyMin = latencyMin;
+	}
+	public final int getLatencyMed() {
+		return latencyMed;
+	}
+	public final void setLatencyMed(final int latencyMed) {
+		this.latencyMed = latencyMed;
+	}
+	public final int getLatencyMax() {
+		return latencyMax;
+	}
+	public final void setLatencyMax(final int latencyMax) {
+		this.latencyMax = latencyMax;
+	}
+	public final double getMeanTP() {
 		return meanTP;
 	}
-	public void setMeanTP(double meanTP) {
+	public final void setMeanTP(final double meanTP) {
 		this.meanTP = meanTP;
 	}
-	public double getOneMinTP() {
+	public final double getOneMinTP() {
 		return oneMinTP;
 	}
-	public void setOneMinTP(double oneMinTP) {
+	public final void setOneMinTP(final double oneMinTP) {
 		this.oneMinTP = oneMinTP;
 	}
-	public double getFiveMinTP() {
+	public final double getFiveMinTP() {
 		return fiveMinTP;
 	}
-	public void setFiveMinTP(double fiveMinTP) {
+	public final void setFiveMinTP(final double fiveMinTP) {
 		this.fiveMinTP = fiveMinTP;
 	}
-	public double getFifteenMinTP() {
+	public final double getFifteenMinTP() {
 		return fifteenMinTP;
 	}
-	public void setFifteenMinTP(double fifteenMinTP) {
+	public final void setFifteenMinTP(final double fifteenMinTP) {
 		this.fifteenMinTP = fifteenMinTP;
 	}
-	public double getMeanBW() {
+	public final double getMeanBW() {
 		return meanBW;
 	}
-	public void setMeanBW(double meanBW) {
+	public final void setMeanBW(final double meanBW) {
 		this.meanBW = meanBW;
 	}
-	public double getOneMinBW() {
+	public final double getOneMinBW() {
 		return oneMinBW;
 	}
-	public void setOneMinBW(double oneMinBW) {
+	public final void setOneMinBW(final double oneMinBW) {
 		this.oneMinBW = oneMinBW;
 	}
-	public double getFiveMinBW() {
+	public final double getFiveMinBW() {
 		return fiveMinBW;
 	}
-	public void setFiveMinBW(double fiveMinBW) {
+	public final void setFiveMinBW(final double fiveMinBW) {
 		this.fiveMinBW = fiveMinBW;
 	}
-	public double getFifteenMinBW() {
+	public final double getFifteenMinBW() {
 		return fifteenMinBW;
 	}
-	public void setFifteenMinBW(double fifteenMinBW) {
+	public final void setFifteenMinBW(final double fifteenMinBW) {
 		this.fifteenMinBW = fifteenMinBW;
 	}
 }

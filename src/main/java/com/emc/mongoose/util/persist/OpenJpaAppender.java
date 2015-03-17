@@ -31,7 +31,6 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.io.Serializable;
-import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -56,18 +55,21 @@ extends AbstractAppender {
 	private final ThreadPoolExecutor executor;
 	private final Boolean enabledFlag;
 	//
-	private static final Layout<? extends Serializable>
+	private final static Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
-	public static final String
+	public final static String
 		MSG = "msg",
-		//PERF_TRACE = "perfTrace",
 		ERR = "err",
-		//DATA_LIST = "dataList",
 		PERF_AVG = "perfAvg",
+		PERF_SUM = "perfSum",
 		//
 		COUNT_REQ_SUCC = "countReqSucc",
 		COUNT_REQ_QUEUE = "countReqQueue",
 		COUNT_REQ_FAIL = "countReqFail",
+		LATENCY_AVG = "latencyAvg",
+		LATENCY_MIN = "latencyMin",
+		LATENCY_MED = "latencyMed",
+		LATENCY_MAX = "latencyMax",
 		MEAN_TP = "meanTP",
 		ONE_MIN_TP = "oneMinTP",
 		FIVE_MIN_TP = "fiveMinTP",
@@ -140,8 +142,7 @@ extends AbstractAppender {
 				name, filter, DEFAULT_LAYOUT, ignoreExceptions,
 				enabled, appenderPoolSize, appenderPoolTimeout, appenderQueueSize);
 			if (enabled) {
-				// init database session with username,password and url
-				newAppender.buildSessionFactory(
+				newAppender.buildEntityManagerFactory(
 					driverClass, url, maxActiveConnection, connectionTimeout, userName, password);
 				newAppender.persistStatusEntity();
 			}
@@ -185,7 +186,7 @@ extends AbstractAppender {
 		}
 	}
 	//
-	private void persistPerfAvg(final LogEvent event){
+	private void persistPerf(final LogEvent event, final String marker){
 		final String
 			runName = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID),
 			loadTypeName = event.getContextMap().get(DataObjectWorkerFactory.KEY_LOAD_TYPE),
@@ -207,6 +208,11 @@ extends AbstractAppender {
 		final Date
 			runTimestamp = getTimestamp(event.getContextMap().get(RunTimeConfig.KEY_RUN_TIMESTAMP)),
 			timestamp = new Date(event.getTimeMillis());
+		final int
+			latencyAvg = Integer.valueOf(event.getContextMap().get(LATENCY_AVG)),
+			latencyMin = Integer.valueOf(event.getContextMap().get(LATENCY_MIN)),
+			latencyMed = Integer.valueOf(event.getContextMap().get(LATENCY_MED)),
+			latencyMax = Integer.valueOf(event.getContextMap().get(LATENCY_MAX));
 		EntityManager entityManager = null;
 		try {
 			final RunEntity runEntity = (RunEntity) getEntity("name", runName, "timestamp", runTimestamp, RunEntity.class);
@@ -227,16 +233,42 @@ extends AbstractAppender {
 			final LoadEntityPK loadEntityPK = new LoadEntityPK(loadNumber, runEntity.getId());
 			LoadEntity loadEntity = entityManager.find(LoadEntity.class, loadEntityPK);
 			if (loadEntity == null) {
-				loadEntity = new LoadEntity(runEntity, loadTypeEntity, loadNumber, apiEntity);
+				if (marker.equals(PERF_AVG)){
+					loadEntity = new LoadEntity(runEntity, loadTypeEntity, loadNumber, apiEntity);
+				} else {
+					loadEntity = new LoadEntity(
+						runEntity, loadTypeEntity, loadNumber, apiEntity,
+						countReqSucc, countReqFail,
+						latencyAvg, latencyMin, latencyMed, latencyMax,
+						meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
+						meanBW, oneMinBW, fiveMinBW, fifteenMinBW);
+				}
+				entityManager.persist(loadEntity);
+			}else {
+				if (marker.equals(PERF_SUM)){
+					loadEntity.setPerfomance(
+						countReqSucc, countReqFail,
+						latencyAvg, latencyMin, latencyMed, latencyMax,
+						meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
+						meanBW, oneMinBW, fiveMinBW, fifteenMinBW
+					);
+					entityManager.merge(loadEntity);
+				}else{
+					entityManager.persist(loadEntity);
+				}
 			}
-			entityManager.persist(loadEntity);
+
 			//
-			final PerfomanceEntity perfomanceEntity = new PerfomanceEntity(
-				loadEntity, timestamp,
-				countReqSucc, countReqInQueue, countReqFail,
-				meanTP,oneMinTP,fiveMinTP,fifteenMinTP,
-				meanBW,oneMinBW,fiveMinBW,fifteenMinBW);
-			entityManager.persist(perfomanceEntity);
+			if (marker.equals(PERF_AVG)){
+				final PerfomanceEntity perfomanceEntity = new PerfomanceEntity(
+					loadEntity, timestamp,
+					countReqSucc, countReqInQueue, countReqFail,
+					latencyAvg, latencyMin, latencyMed, latencyMax,
+					meanTP,oneMinTP,fiveMinTP,fifteenMinTP,
+					meanBW,oneMinBW,fiveMinBW,fifteenMinBW);
+				entityManager.persist(perfomanceEntity);
+			}
+			//
 			entityManager.getTransaction().commit();
 			entityManager.close();
 		} catch (final RollbackException exception) {
@@ -244,7 +276,7 @@ extends AbstractAppender {
 				entityManager.getTransaction().rollback();
 				entityManager.close();
 			}
-			persistPerfAvg(event);
+			persistPerf(event, marker);
 			logger.trace(Markers.MSG, String.format("Try one more time persist perfAvg for thread: %s",
 				Thread.currentThread().getName()));
 		} catch (final Exception e){
@@ -254,7 +286,6 @@ extends AbstractAppender {
 			}
 			TraceLogger.failure(logger, Level.ERROR, e, "Fail to persist perf.avg.");
 		}
-
 	}
 	//
 	private void persistMessages(final LogEvent event)
@@ -315,127 +346,8 @@ extends AbstractAppender {
 			TraceLogger.failure(logger, Level.ERROR, e, "Fail to persist messages.");
 		}
 	}
-	//
-	private void persistDataList(final String[] message){
-		EntityManager entityManager = null;
-		final String
-			identifier = message[0],
-			ringOffset = message[1];
-		final long
-			size = Long.valueOf(message[2]),
-			layer  = Long.valueOf(message[3], 0x10),
-			mask = Long.valueOf(message[4], 0x10);
-		final DataObjectEntityPK dataObjectEntityPK = new DataObjectEntityPK(identifier, size);
-		//
-		try {
-			entityManager = entityManagerFactory.createEntityManager();
-			entityManager.getTransaction().begin();
-			DataObjectEntity dataObjectEntity = entityManager.find(DataObjectEntity.class, dataObjectEntityPK);
-			if (dataObjectEntity == null){
-				dataObjectEntity = new DataObjectEntity(
-					identifier, ringOffset, size, layer, mask);
-			}
-			entityManager.persist(dataObjectEntity);
-			entityManager.getTransaction().commit();
-			entityManager.close();
-		}catch (final Exception e){
-			if (entityManager != null) {
-				entityManager.getTransaction().rollback();
-				entityManager.close();
-			}
-			TraceLogger.failure(logger, Level.ERROR, e, "Fail to persist data list.");
-		}
-	}
-	//
-	private void persistPerfTrace(final String[] message, final LogEvent event){
-		//
-		final String
-			runName = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID),
-			loadTypeName = event.getContextMap().get(DataObjectWorkerFactory.KEY_LOAD_TYPE),
-			apiName = event.getContextMap().get(DataObjectWorkerFactory.KEY_API),
-			nodeAddrs = message[0],
-			dataIdentifier = message[1];
-		final Date timestamp = getTimestamp(event.getContextMap().get(RunTimeConfig.KEY_RUN_TIMESTAMP));
-		final long
-			loadNumber = Long.valueOf(event.getContextMap().get(DataObjectWorkerFactory.KEY_LOAD_NUM)),
-			connectionNumber = Long.valueOf(event.getContextMap().get(DataObjectWorkerFactory.KEY_CONNECTION_NUM)),
-			tsReqStart = Long.valueOf(message[4]),
-			latency = Long.valueOf(message[5]),
-			reqDur = Long.valueOf(message[6]),
-			dataSize = Integer.valueOf(message[2]);
-		//
-		EntityManager entityManager = null;
-		try {
-			final RunEntity runEntity = (RunEntity) getEntity("name", runName, "timestamp", timestamp, RunEntity.class);
-			//
-			LoadTypeEntity loadTypeEntity = (LoadTypeEntity) getEntity("name", loadTypeName, LoadTypeEntity.class);
-			if (loadTypeEntity == null) {
-				loadTypeEntity = new LoadTypeEntity(loadTypeName);
-			}
-			//
-			ApiEntity apiEntity = (ApiEntity) getEntity("name", apiName, ApiEntity.class);
-			if (apiEntity == null){
-				apiEntity = new ApiEntity(apiName);
-			}
-			//
-			NodeEntity nodeEntity = (NodeEntity) getEntity("address", nodeAddrs, NodeEntity.class);
-			if (nodeEntity == null) {
-				nodeEntity = new NodeEntity(nodeAddrs);
-			}
-			//
-			entityManager = entityManagerFactory.createEntityManager();
-			entityManager.getTransaction().begin();
-			//
-			final LoadEntityPK loadEntityPK = new LoadEntityPK(loadNumber, runEntity.getId());
-			LoadEntity loadEntity = entityManager.find(LoadEntity.class, loadEntityPK);
-			if (loadEntity == null) {
-				loadEntity = new LoadEntity(runEntity, loadTypeEntity, loadNumber, apiEntity);
-			}
-			entityManager.persist(loadEntity);
-			//
-			final StatusEntity statusEntity = entityManager.find(StatusEntity.class, Integer.valueOf(message[3], 0x10));
-			//
-			final ConnectionEntityPK connectionEntityPK = new ConnectionEntityPK(connectionNumber, loadEntityPK);
-			ConnectionEntity connectionEntity = entityManager.find(ConnectionEntity.class, connectionEntityPK);
-			if (connectionEntity == null) {
-				connectionEntity = new ConnectionEntity(loadEntity, nodeEntity, connectionNumber);
-			}
-			entityManager.persist(connectionEntity);
-			//
-			final DataObjectEntityPK dataObjectEntityPK = new DataObjectEntityPK(dataIdentifier, dataSize);
-			DataObjectEntity dataObjectEntity = entityManager.find(DataObjectEntity.class, dataObjectEntityPK);
-			if (dataObjectEntity == null){
-				dataObjectEntity = new DataObjectEntity(dataIdentifier, dataSize);
-				entityManager.persist(dataObjectEntity);
-			}else {
-				entityManager.merge(dataObjectEntity);
-			}
-			//
-			TraceEntity traceEntity = new TraceEntity(
-				dataObjectEntity, connectionEntity, statusEntity,
-				tsReqStart, latency, reqDur
-			);
-			entityManager.persist(traceEntity);
-			entityManager.getTransaction().commit();
-			entityManager.close();
-		} catch (final RollbackException exception) {
-			if (entityManager != null) {
-				entityManager.getTransaction().rollback();
-				entityManager.close();
-			}
-			persistPerfTrace(message, event);
-			logger.trace(Markers.MSG, String.format("Try one more time persist perfTrace for thread: %s",
-				Thread.currentThread().getName()));
-		} catch (final Exception e){
-			if (entityManager != null) {
-				entityManager.getTransaction().rollback();
-				entityManager.close();
-			}
-			TraceLogger.failure(logger, Level.ERROR, e, "Fail to persist perf. trace.");
-		}
-	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	private void buildSessionFactory(
+	private void buildEntityManagerFactory(
 
 		final String driverClass, final String url, final int maxActiveConnection,
 		final int connectionTimeout, final String username, final String password) {
@@ -496,7 +408,7 @@ extends AbstractAppender {
 	private Object getUniqueResult(final List result){
 		if (result.size() > 1){
 			throw new NonUniqueResultException(
-				String.format("non unique result: count of results: %d",result.size()));
+				String.format("non unique result: count of results: %d", result.size()));
 		}
 		if (result.isEmpty()){
 			return null;
@@ -517,34 +429,22 @@ extends AbstractAppender {
 		@Override
 		public final void run() {
 			final String marker = event.getMarker().toString();
-			final String[] message = event.getMessage().getFormattedMessage().split("\\s*[,|/]\\s*");
-			switch (marker) {
-				case PERF_AVG:
-					//System.out.println(event.getContextMap().toString());
-					persistPerfAvg(event);
-					break;
-				case MSG:
-				case ERR:
-					if (!event.getContextMap().isEmpty()) {
+			if (!event.getContextMap().isEmpty()) {
+				switch (marker) {
+					case PERF_AVG:
+					case PERF_SUM:
+						if (event.getLevel().equals(Level.INFO)) {
+							persistPerf(event, marker);
+						}
+						break;
+					case MSG:
+					case ERR:
 						persistMessages(event);
-					}else {
-						logger.debug(Markers.ERR, String.format("There is event with empty Context Map. Event message: %s",
-							event.getMessage()));
-					}
-					break;
-				/*
-				case DATA_LIST:
-					persistDataList(message);
-					break;
-				case PERF_TRACE:
-					if (!event.getContextMap().isEmpty()) {
-						persistPerfTrace(message, event);
-					}else {
-						logger.debug(Markers.ERR, String.format("There is event with empty Context Map. Event message: %s",
-							event.getMessage()));
-					}
-					break;
-				*/
+						break;
+				}
+			}else{
+				logger.debug(Markers.ERR, String.format("There is event with empty Context Map for logger %s . Event message: %s",
+					event.getLoggerName(), event.getMessage()));
 			}
 		}
 
