@@ -170,19 +170,18 @@ public final class Main {
 	//
 	public static void initLogging(final String runMode) {
 		//
+		final String runTimestamp = FMT_DT.format(Calendar.getInstance(TZ_UTC, LOCALE_DEFAULT).getTime());
+		//
 		System.setProperty("isThreadContextMapInheritable", "true");
 		// set "dir.root" property
 		System.setProperty(KEY_DIR_ROOT, DIR_ROOT);
 		//set "run.timestamp" property
-		System.setProperty(
-			RunTimeConfig.KEY_RUN_TIMESTAMP, FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
-		);
+		System.setProperty(RunTimeConfig.KEY_RUN_TIMESTAMP, runTimestamp);
 		// set "run.id" property with timestamp value if not set before
 		String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 		if(runId == null || runId.length() == 0) {
 			System.setProperty(
-				RunTimeConfig.KEY_RUN_ID,
-				FMT_DT.format(Calendar.getInstance(TZ_UTC, LOCALE_DEFAULT).getTime())
+				RunTimeConfig.KEY_RUN_ID, runTimestamp
 			);
 		}
 		// make all used loggers asynchronous
