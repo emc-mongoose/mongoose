@@ -1,9 +1,9 @@
 package com.emc.mongoose.webui.websockets.impl;
 //
-import com.emc.mongoose.util.logging.TraceLogger;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.webui.websockets.WebSocketLogListener;
 import com.emc.mongoose.webui.logging.WebUIAppender;
-import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
 //
 import com.fasterxml.jackson.databind.ObjectMapper;
 //

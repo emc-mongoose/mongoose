@@ -3,10 +3,12 @@ addrs:								127.0.0.1
 
 # case-insensitive, may be "atmos", "s3" or "swift"
 api:								s3
-namespace:		s3
+namespace:					s3
 
 # reserved for future TLS usage (may be "https")
 scheme:								http
+fileaccess:							false
+versioning:							false
 
 #
 connection.timeout.millisec:		1000000
@@ -23,7 +25,7 @@ socket.interest.op.queued:			false
 socket.select.interval:				100
 
 #
-mock.head.count:					8
+mock.head.count:					1
 mock.iothreads.persocket:			10
 mock.capacity:						10000000
 mock.data.offset.radix:				36

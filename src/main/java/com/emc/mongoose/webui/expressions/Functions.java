@@ -1,6 +1,6 @@
 package com.emc.mongoose.webui.expressions;
 
-import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.core.impl.util.RunTimeConfig;
 
 import java.util.Arrays;
 

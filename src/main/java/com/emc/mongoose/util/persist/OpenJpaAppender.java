@@ -1,11 +1,11 @@
 package com.emc.mongoose.util.persist;
 //
-import com.emc.mongoose.base.api.AsyncIOTask;
-import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.logging.TraceLogger;
-import com.emc.mongoose.util.threading.DataObjectWorkerFactory;
-import com.emc.mongoose.util.threading.WorkerFactory;
+import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.core.impl.load.executor.util.DataObjectWorkerFactory;
+import com.emc.mongoose.core.impl.util.RunTimeConfig;
+import com.emc.mongoose.core.impl.util.WorkerFactory;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
@@ -168,7 +168,7 @@ extends AbstractAppender {
 	private void persistStatusEntity()
 	{
 		EntityManager entityManager = null;
-		for (final AsyncIOTask.Status result:AsyncIOTask.Status.values()){
+		for (final IOTask.Status result:IOTask.Status.values()){
 			final StatusEntity statusEntity = new StatusEntity(result.code, result.description);
 			try {
 				entityManager = entityManagerFactory.createEntityManager();

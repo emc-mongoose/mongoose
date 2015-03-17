@@ -1,6 +1,6 @@
 package com.emc.mongoose.webui;
 
-import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.webui.logging.WebUIAppender;
 
 import javax.servlet.http.HttpServletRequest;
