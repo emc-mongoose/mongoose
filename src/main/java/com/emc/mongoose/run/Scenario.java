@@ -1,8 +1,9 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.Markers;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -76,7 +77,7 @@ implements Runnable {
 				System.exit(1);
 			}
 			//
-			final Path scriptDir = Paths.get(Main.DIR_ROOT, scriptsRootDir, scriptLangKey);
+			final Path scriptDir = Paths.get(Constants.DIR_ROOT, scriptsRootDir, scriptLangKey);
 			if(VALUE_PY.equals(scriptLangKey)) {
 				System.setProperty(KEY_PYTHON_PATH, scriptDir.toString());
 				LOG.debug(

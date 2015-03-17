@@ -1,26 +1,24 @@
 package com.emc.mongoose.run;
-
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+//
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.TraceLogger;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+//
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.webapp.WebAppContext;
-
+//
 import java.nio.file.Paths;
-
 /**
  * Created by gusakk on 02/10/14.
  */
 public class JettyRunner {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
-    public final static String
-        DIR_WEBAPP = "webapp",
-        DIR_WEBINF = "WEB-INF";
-    private final RunTimeConfig runTimeConfig;
+	private final RunTimeConfig runTimeConfig;
 
     public final static String
             webResourceBaseDir,
@@ -28,10 +26,10 @@ public class JettyRunner {
 
     static {
         webResourceBaseDir = Paths
-			.get(Main.DIR_ROOT, DIR_WEBAPP)
+			.get(Constants.DIR_ROOT, Constants.DIR_WEBAPP)
 			.toString();
         webDescriptorBaseDir = Paths
-			.get(Main.DIR_ROOT, DIR_WEBAPP, DIR_WEBINF)
+			.get(Constants.DIR_ROOT, Constants.DIR_WEBAPP, Constants.DIR_WEBINF)
 			.resolve("web.xml").toString();
     }
 

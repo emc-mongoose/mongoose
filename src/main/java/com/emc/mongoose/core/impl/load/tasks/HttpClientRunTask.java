@@ -1,12 +1,14 @@
 package com.emc.mongoose.core.impl.load.tasks;
 //
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+//
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

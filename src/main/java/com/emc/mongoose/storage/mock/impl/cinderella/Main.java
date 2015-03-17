@@ -5,16 +5,19 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 //
+import com.emc.mongoose.common.logging.Constants;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+//
+import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+//
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.server.impl.ServiceUtils;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
 //
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.commons.collections4.map.LRUMap;
@@ -58,9 +61,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -128,28 +129,28 @@ implements Runnable {
 			ALL_METHODS, LoadExecutor.METRIC_NAME_BW));
 		//
 		counterGetSucc = metrics.counter(MetricRegistry.name(Main.class,
-			WSIOTask.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			MutableWSRequest.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterGetFail = metrics.counter(MetricRegistry.name(Main.class,
-			WSIOTask.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			MutableWSRequest.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		getBW = metrics.meter(MetricRegistry.name(Main.class,
-			WSIOTask.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_BW));
+			MutableWSRequest.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_BW));
 		getTP = metrics.meter(MetricRegistry.name(Main.class,
-			WSIOTask.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_TP));
+			MutableWSRequest.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_TP));
 		//
 		counterPutSucc = metrics.counter(MetricRegistry.name(Main.class,
-			WSIOTask.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			MutableWSRequest.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		counterPutFail = metrics.counter(MetricRegistry.name(Main.class,
-			WSIOTask.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+			MutableWSRequest.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
 		putBW = metrics.meter(MetricRegistry.name(Main.class,
-			WSIOTask.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_BW));
+			MutableWSRequest.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_BW));
 		putTP = metrics.meter(MetricRegistry.name(Main.class,
-			WSIOTask.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_TP));
+			MutableWSRequest.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_TP));
 		//
 		counterDeleteSucc = metrics.counter(MetricRegistry.name(Main.class,
-			WSIOTask.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+			MutableWSRequest.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		//
 		counterHeadSucc = metrics.counter(MetricRegistry.name(Main.class,
-			WSIOTask.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_SUCC));
+			MutableWSRequest.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_SUCC));
 		//
 		metricsReporter.start();
 		//queue size for data object
@@ -172,7 +173,7 @@ implements Runnable {
 		reqistry.register("*", new RequestHandler(sharedStorage));
 		protocolHandler = new HttpAsyncService(httpproc, reqistry);
 		multiSocketSvc = Executors.newFixedThreadPool(
-			countHeads, new WorkerFactory("cinderellaWorker")
+			countHeads, new NamingWorkerFactory("cinderellaWorker")
 		);
 	}
 
@@ -251,7 +252,7 @@ implements Runnable {
 		LOG.info(
 			Markers.PERF_AVG,
 			String.format(
-				com.emc.mongoose.run.Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
+				Constants.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
 				counterAllSucc.getCount(), counterAllFail.getCount(),
 				//

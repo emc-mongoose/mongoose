@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.api.util;
+package com.emc.mongoose.common.pool;
 /**
  Created by kurila on 22.12.14.
  */

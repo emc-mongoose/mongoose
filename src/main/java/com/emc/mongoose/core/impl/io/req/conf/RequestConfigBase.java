@@ -1,12 +1,14 @@
 package com.emc.mongoose.core.impl.io.req.conf;
 //
-import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+//
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.src.DataSource;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
+import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+//
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
-import com.emc.mongoose.core.api.util.log.Markers;
 //
 import org.apache.commons.lang.StringUtils;
 //
@@ -31,7 +33,7 @@ implements RequestConfig<T> {
 		api, secret, userName;
 	protected IOTask.Type
 		loadType;
-	protected DataSource<T>
+	protected DataSource
 		dataSrc;
 	protected volatile boolean
 		retryFlag, verifyContentFlag, anyDataProducerEnabled;
@@ -50,7 +52,7 @@ implements RequestConfig<T> {
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();
 		loadType = IOTask.Type.CREATE;
-		dataSrc = (DataSource<T>) UniformDataSource.DEFAULT;
+		dataSrc = UniformDataSource.DEFAULT;
 		retryFlag = runTimeConfig.getRunRequestRetries();
 		verifyContentFlag = runTimeConfig.getReadVerifyContent();
 		anyDataProducerEnabled = true;
@@ -202,11 +204,11 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final DataSource<T> getDataSource() {
+	public final DataSource getDataSource() {
 		return dataSrc;
 	}
 	@Override
-	public RequestConfigBase<T> setDataSource(final DataSource<T> dataSrc) {
+	public RequestConfigBase<T> setDataSource(final DataSource dataSrc) {
 		this.dataSrc = dataSrc;
 		return this;
 	}
@@ -293,7 +295,7 @@ implements RequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got secret {}", secret);
 		setNameSpace(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got namespace {}", secret);
-		setDataSource((DataSource<T>) in.readObject());
+		setDataSource(DataSource.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
 		setRetries(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got retry flag {}", retryFlag);

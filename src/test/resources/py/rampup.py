@@ -8,9 +8,8 @@ from java.lang import InterruptedException, Long, Short, Throwable, NumberFormat
 #
 from org.apache.logging.log4j import Level, LogManager, ThreadContext
 #
-from com.emc.mongoose.core.api.util.log import Markers
-from com.emc.mongoose.core.impl.util.log import TraceLogger
-from com.emc.mongoose.core.impl.util import RunTimeConfig
+from com.emc.mongoose.common.conf import RunTimeConfig
+from com.emc.mongoose.common.logging import Markers, TraceLogger
 #
 LOG = LogManager.getLogger()
 #

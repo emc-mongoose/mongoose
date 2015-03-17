@@ -1,4 +1,4 @@
-package com.emc.mongoose.server.api;
+package com.emc.mongoose.common.net;
 //
 import java.io.Closeable;
 import java.rmi.Remote;

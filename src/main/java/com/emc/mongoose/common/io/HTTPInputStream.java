@@ -1,7 +1,8 @@
-package com.emc.mongoose.core.impl.io.util.http;
+package com.emc.mongoose.common.io;
+// mongoose-common.jar
+import com.emc.mongoose.common.pool.Reusable;
+import com.emc.mongoose.common.pool.InstancePool;
 //
-import com.emc.mongoose.core.impl.util.InstancePool;
-import com.emc.mongoose.core.api.util.Reusable;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
 //
@@ -12,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 09.12.14.
  */
-public final class ContentInputStream
+public final class HTTPInputStream
 extends InputStream
 implements Reusable {
 	//
@@ -56,10 +57,10 @@ implements Reusable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Instances pooling ///////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static InstancePool<ContentInputStream>
-		POOL = new InstancePool<>(ContentInputStream.class);
+	private final static InstancePool<HTTPInputStream>
+		POOL = new InstancePool<>(HTTPInputStream.class);
 	//
-	public static ContentInputStream getInstance(
+	public static HTTPInputStream getInstance(
 		final ContentDecoder in, final IOControl ioCtl
 	) throws InterruptedException {
 		return POOL.take(in, ioCtl);
@@ -75,7 +76,7 @@ implements Reusable {
 	}
 	//
 	@Override
-	public final ContentInputStream reuse(final Object... args) {
+	public final HTTPInputStream reuse(final Object... args) {
 		if(isAvailable.compareAndSet(true, false)) {
 			if(args.length > 0) {
 				in = ContentDecoder.class.cast(args[0]);

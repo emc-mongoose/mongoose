@@ -2,7 +2,8 @@ package com.emc.mongoose.server.api.persist;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.persist.DataItemBuffer;
-import com.emc.mongoose.server.api.Service;
+//
+import com.emc.mongoose.common.net.Service;
 /**
  Created by kurila on 17.11.14.
  */

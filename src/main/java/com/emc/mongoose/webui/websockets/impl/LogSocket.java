@@ -1,9 +1,10 @@
 package com.emc.mongoose.webui.websockets.impl;
 //
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.Markers;
+//
 import com.emc.mongoose.webui.websockets.WebSocketLogListener;
 import com.emc.mongoose.webui.logging.WebUIAppender;
-import com.emc.mongoose.core.api.util.log.Markers;
 //
 import com.fasterxml.jackson.databind.ObjectMapper;
 //
@@ -21,7 +22,6 @@ import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
 import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 //
 import java.io.IOException;
-
 /**
  * Created by gusakk on 10/24/14.
  */

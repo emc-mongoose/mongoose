@@ -1,12 +1,13 @@
 package com.emc.mongoose.webui;
 //
-import com.emc.mongoose.run.JettyRunner;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.run.util.DirectoryLoader;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.DirectoryLoader;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+//
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,7 +28,7 @@ public class SaveServlet extends CommonServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String FILENAME = "config.txt";
-	private final static File FILE_PATH = Paths.get(Main.DIR_ROOT, JettyRunner.DIR_WEBAPP, Main.DIR_CONF).toFile();
+	private final static File FILE_PATH = Paths.get(Constants.DIR_ROOT, Constants.DIR_WEBAPP, Constants.DIR_CONF).toFile();
 	//	HTTP Headers
 	private final static String CONTENT_TYPE = "Content-Type";
 	private final static String CONTENT_LENGTH = "Content-Length";
@@ -60,7 +61,7 @@ public class SaveServlet extends CommonServlet {
 	@Override
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
 		setupRunTimeConfig(request);
-		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES),
+		DirectoryLoader.updatePropertiesFromDir(Paths.get(Constants.DIR_ROOT, Constants.DIR_CONF, Constants.DIR_PROPERTIES),
 				runTimeConfig, true);
 		updateLastRunTimeConfig(runTimeConfig);
 		response.setStatus(HttpServletResponse.SC_OK);

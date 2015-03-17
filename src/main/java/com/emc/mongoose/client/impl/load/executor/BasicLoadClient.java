@@ -3,13 +3,28 @@ package com.emc.mongoose.client.impl.load.executor;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
-//
-import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+// mongoose-common.jar
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.ConsoleColors;
+import com.emc.mongoose.common.logging.Constants;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.net.ServiceUtils;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.impl.load.model.LogConsumer;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
+import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+// mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.load.model.LogConsumer;
+import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
+// mongoose-server-api.jar
+import com.emc.mongoose.server.api.load.executor.LoadSvc;
+// mongoose-client.jar
+import com.emc.mongoose.client.api.load.executor.LoadClient;
+import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
 import com.emc.mongoose.client.api.persist.DataItemBufferClient;
 import com.emc.mongoose.client.impl.load.executor.gauges.AvgDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
@@ -22,17 +37,6 @@ import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.RemoteJoinTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
-import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
-import com.emc.mongoose.client.api.load.executor.LoadClient;
-import com.emc.mongoose.server.api.load.executor.LoadSvc;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.ConsoleColors;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.server.impl.ServiceUtils;
-import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -134,7 +138,7 @@ implements LoadClient<T> {
 		}
 		name = t;
 		//
-		setThreadFactory(new WorkerFactory(String.format("clientSubmitWorker<%s>", name)));
+		setThreadFactory(new NamingWorkerFactory(String.format("clientSubmitWorker<%s>", name)));
 		//
 		this.runTimeConfig = runTimeConfig;
 		this.reqConfig = reqConfig;
@@ -171,7 +175,7 @@ implements LoadClient<T> {
 		}
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			20 + remoteLoadMap.size(), new WorkerFactory(String.format("%s-remoteMonitor", name))
+			20 + remoteLoadMap.size(), new NamingWorkerFactory(String.format("%s-remoteMonitor", name))
 		) { // make the shutdown method synchronized
 			@Override
 			public final synchronized void shutdown() {
@@ -370,7 +374,7 @@ implements LoadClient<T> {
 			final String msg;
 			if(isSummary) {
 				msg = String.format(
-					Main.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
+					Constants.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 					//
 					name, countSucc,
 					countFail == 0 ?
@@ -389,7 +393,7 @@ implements LoadClient<T> {
 				);
 			} else {
 				msg = String.format(
-					Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
+					Constants.LOCALE_DEFAULT, MSG_FMT_METRICS,
 					//
 					countSucc, taskGetCountSubm.getLastResult() - countSucc,
 					countFail == 0 ?
@@ -548,7 +552,7 @@ implements LoadClient<T> {
 			LOG.debug(Markers.MSG, "{}: interrupting...", name);
 			shutdown();
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
-				remoteLoadMap.size(), new WorkerFactory(String.format("interrupt<%s>", getName()))
+				remoteLoadMap.size(), new NamingWorkerFactory(String.format("interrupt<%s>", getName()))
 			);
 			for(final String addr : loadSvcAddrs) {
 				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
@@ -788,7 +792,7 @@ implements LoadClient<T> {
 	public final void join(final long timeOutMilliSec)
 	throws InterruptedException {
 		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
-			remoteLoadMap.size(), new WorkerFactory(String.format("joinWorker<%s>", getName()))
+			remoteLoadMap.size(), new NamingWorkerFactory(String.format("joinWorker<%s>", getName()))
 		);
 		for(final String addr : remoteLoadMap.keySet()) {
 			joinExecutor.submit(new RemoteJoinTask(remoteLoadMap.get(addr), timeOutMilliSec));

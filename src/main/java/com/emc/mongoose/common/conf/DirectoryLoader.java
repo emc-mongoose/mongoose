@@ -1,18 +1,17 @@
-package com.emc.mongoose.run.util;
+package com.emc.mongoose.common.conf;
+// mongoose-common.jar
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
 //
-
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
 import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.lang.text.StrBuilder;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -81,12 +80,12 @@ extends SimpleFileVisitor<Path> {
 		// get prefix
 		final StrBuilder currPrefixBuilder = new StrBuilder();
 		for(final String nextToken: prefixTokens) {
-			if(!nextToken.equals(Main.DIR_PROPERTIES)) {
-				currPrefixBuilder.append(nextToken).append(Main.DOT);
+			if(!nextToken.equals(Constants.DIR_PROPERTIES)) {
+				currPrefixBuilder.append(nextToken).append(Constants.DOT);
 			}
 		}
 		final String currPrefix = currPrefixBuilder
-			.append(file.getName(file.getNameCount() - 1)).append(Main.DOT).toString();
+			.append(file.getName(file.getNameCount() - 1)).append(Constants.DOT).toString();
 		// get the properties
 		PropertiesConfiguration currProps = null;
 		try {

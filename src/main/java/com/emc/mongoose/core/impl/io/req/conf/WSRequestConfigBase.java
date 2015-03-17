@@ -1,25 +1,28 @@
 package com.emc.mongoose.core.impl.io.req.conf;
-//
-import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.data.src.DataSource;
-import com.emc.mongoose.core.impl.data.DataRanges;
-import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
-import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.impl.load.executor.util.http.RequestSharedHeaders;
-import com.emc.mongoose.core.impl.load.executor.util.http.RequestTargetHost;
-import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+// mongoose-common
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.http.RequestSharedHeaders;
+import com.emc.mongoose.common.http.RequestTargetHost;
+import com.emc.mongoose.common.io.StreamUtils;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+// mongoose-core-api
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.WSIOTask;
+import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.core.api.data.src.DataSource;
+// mongoose-core-impl
+import com.emc.mongoose.core.impl.data.DataRanges;
+import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
+import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
+import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.commons.codec.binary.Base64;
-//
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.http.ExceptionLogger;
@@ -80,7 +83,7 @@ import java.util.concurrent.TimeUnit;
  Created by kurila on 09.06.14.
  */
 public abstract class WSRequestConfigBase<T extends WSObject>
-extends RequestConfigBase<T>
+extends ObjectRequestConfigBase<T>
 implements WSRequestConfig<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -209,7 +212,7 @@ implements WSRequestConfig<T> {
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new WorkerFactory(String.format("WSConfigurator<%s>", toString()))
+				new NamingWorkerFactory(String.format("WSConfigurator<%s>", toString()))
 			);
 		} catch(final IOReactorException e) {
 			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
@@ -235,17 +238,22 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public WSIOTask.HTTPMethod getHTTPMethod() {
-		WSIOTask.HTTPMethod method;
+	public final MutableWSRequest createRequest() {
+		return new WSRequestImpl(getHTTPMethod(), null, null);
+	}
+	//
+	@Override
+	public MutableWSRequest.HTTPMethod getHTTPMethod() {
+		MutableWSRequest.HTTPMethod method;
 		switch(loadType) {
 			case READ:
-				method = WSIOTask.HTTPMethod.GET;
+				method = MutableWSRequest.HTTPMethod.GET;
 				break;
 			case DELETE:
-				method = WSIOTask.HTTPMethod.DELETE;
+				method = MutableWSRequest.HTTPMethod.DELETE;
 				break;
 			default:
-				method = WSIOTask.HTTPMethod.PUT;
+				method = MutableWSRequest.HTTPMethod.PUT;
 				break;
 		}
 		return method;
@@ -258,7 +266,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setDataSource(final DataSource<T> dataSrc) {
+	public final WSRequestConfigBase<T> setDataSource(final DataSource dataSrc) {
 		super.setDataSource(dataSrc);
 		return this;
 	}
@@ -333,7 +341,7 @@ implements WSRequestConfig<T> {
 		//
 		SecretKeySpec keySpec;
 		try {
-			keySpec = new SecretKeySpec(secret.getBytes(Main.DEFAULT_ENC), signMethod);
+			keySpec = new SecretKeySpec(secret.getBytes(Constants.DEFAULT_ENC), signMethod);
 			mac.init(keySpec);
 		} catch(UnsupportedEncodingException e) {
 			LOG.fatal(Markers.ERR, "Configuration error", e);
@@ -562,19 +570,9 @@ implements WSRequestConfig<T> {
 				TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
 			}
 		} finally { // try to read the remaining data if left in the input stream
-			playStreamQuietly(contentStream);
+			StreamUtils.skipStreamDataQuietly(contentStream);
 		}
 		return ok;
-	}
-	//
-	@SuppressWarnings("StatementWithEmptyBody")
-	public static void playStreamQuietly(final InputStream contentStream) {
-		final byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataPageSize()];
-		try {
-			while(contentStream.read(buff) != -1);
-		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
-		}
 	}
 	//
 	@Override

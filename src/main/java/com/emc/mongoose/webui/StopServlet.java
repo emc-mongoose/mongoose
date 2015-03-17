@@ -1,12 +1,13 @@
 package com.emc.mongoose.webui;
-
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
+//
+import com.emc.mongoose.common.conf.RunTimeConfig;
+//
 import com.emc.mongoose.webui.logging.WebUIAppender;
-
+//
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.concurrent.ConcurrentHashMap;
-
+//
 /**
  * Created by gusakk on 03/10/14.
  */

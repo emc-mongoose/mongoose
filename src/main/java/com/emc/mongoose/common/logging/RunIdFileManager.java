@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.util.log;
+package com.emc.mongoose.common.logging;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;

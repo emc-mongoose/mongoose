@@ -1,13 +1,17 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.server.impl.ServiceUtils;
-import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Constants;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.net.ServiceUtils;
+//
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+//
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
+//
+import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -19,75 +23,16 @@ import org.apache.logging.log4j.status.StatusLogger;
 //
 import java.io.File;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Policy;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Locale;
 import java.util.Map;
-import java.util.TimeZone;
 /**
  Created by kurila on 04.07.14.
  Mongoose entry point.
  */
 public final class Main {
-	//
-	public final static TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
-	public final static Locale LOCALE_DEFAULT = Locale.ROOT;
-	public final static DateFormat FMT_DT = new SimpleDateFormat(
-		"yyyy.MM.dd.HH.mm.ss.SSS", LOCALE_DEFAULT
-	) {
-		{ setTimeZone(TZ_UTC); }
-	};
-	//
-	public final static String
-		DOT = ".",
-		SEP = System.getProperty("file.separator"),
-		DIR_ROOT,
-		DIR_CONF = "conf",
-		DIR_PROPERTIES = "properties",
-		FNAME_POLICY = "security.policy",
-		//
-		KEY_DIR_ROOT = "dir.root",
-		KEY_POLICY = "java.security.policy",
-		//
-		RUN_MODE_STANDALONE = "standalone",
-		RUN_MODE_CLIENT = "client",
-		RUN_MODE_COMPAT_CLIENT = "controller",
-		RUN_MODE_SERVER = "server",
-		RUN_MODE_COMPAT_SERVER = "driver",
-		RUN_MODE_WEBUI = "webui",
-		RUN_MODE_CINDERELLA = "cinderella",
-		//
-		DEFAULT_ENC = StandardCharsets.UTF_8.name(),
-		EMPTY = "";
-
-	//
-	public final static File JAR_SELF;
-	static {
-		String dirRoot = System.getProperty("user.dir");
-		File jarSelf = null;
-		try {
-			jarSelf = new File(
-				Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()
-			);
-			dirRoot = URLDecoder.decode(
-				jarSelf.getParent(),
-				StandardCharsets.UTF_8.displayName()
-			);
-		} catch(final UnsupportedEncodingException|URISyntaxException e) {
-			e.printStackTrace(System.err);
-		} finally {
-			DIR_ROOT = dirRoot;
-			JAR_SELF = jarSelf;
-		}
-	}
 	//
 	public static void main(final String args[]) {
 		//
@@ -95,7 +40,7 @@ public final class Main {
 		//
 		final String runMode;
 		if(args == null || args.length == 0 || args[0].startsWith("-")) {
-			runMode = RUN_MODE_STANDALONE;
+			runMode = com.emc.mongoose.common.conf.Constants.RUN_MODE_STANDALONE;
 		} else {
 			runMode = args[0];
 		}
@@ -112,7 +57,13 @@ public final class Main {
 		RunTimeConfig.initContext();
 		// load the properties
 		RunTimeConfig.setContext(new RunTimeConfig());
-		RunTimeConfig.getContext().loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
+		RunTimeConfig.getContext().loadPropsFromDir(
+			Paths.get(
+				com.emc.mongoose.common.conf.Constants.DIR_ROOT,
+				com.emc.mongoose.common.conf.Constants.DIR_CONF,
+				com.emc.mongoose.common.conf.Constants.DIR_PROPERTIES
+			)
+		);
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RunTimeConfig.getContext().loadSysProps();
 		rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
@@ -123,8 +74,8 @@ public final class Main {
 		}
 		//
 		switch (runMode) {
-			case RUN_MODE_SERVER:
-			case RUN_MODE_COMPAT_SERVER:
+			case com.emc.mongoose.common.conf.Constants.RUN_MODE_SERVER:
+			case com.emc.mongoose.common.conf.Constants.RUN_MODE_COMPAT_SERVER:
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
 					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
@@ -138,11 +89,11 @@ public final class Main {
 					rootLogger.debug(Markers.MSG, "Interrupted load builder service");
 				}
 				break;
-			case RUN_MODE_WEBUI:
+			case com.emc.mongoose.common.conf.Constants.RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
 				new JettyRunner(RunTimeConfig.getContext()).run();
 				break;
-			case RUN_MODE_CINDERELLA:
+			case com.emc.mongoose.common.conf.Constants.RUN_MODE_CINDERELLA:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
 					new com.emc.mongoose.storage.mock.impl.cinderella.Main(
@@ -152,9 +103,9 @@ public final class Main {
 					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
 				}
 				break;
-			case RUN_MODE_CLIENT:
-			case RUN_MODE_STANDALONE:
-			case RUN_MODE_COMPAT_CLIENT:
+			case com.emc.mongoose.common.conf.Constants.RUN_MODE_CLIENT:
+			case com.emc.mongoose.common.conf.Constants.RUN_MODE_STANDALONE:
+			case com.emc.mongoose.common.conf.Constants.RUN_MODE_COMPAT_CLIENT:
 				new Scenario().run();
 				break;
 			default:
@@ -171,14 +122,14 @@ public final class Main {
 	public static void initLogging(final String runMode) {
 		//
 		System.setProperty("isThreadContextMapInheritable", "true");
-		// set "dir.root" property
-		System.setProperty(KEY_DIR_ROOT, DIR_ROOT);
 		// set "run.id" property with timestamp value if not set before
 		String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 		if(runId == null || runId.length() == 0) {
 			System.setProperty(
 				RunTimeConfig.KEY_RUN_ID,
-				FMT_DT.format(Calendar.getInstance(TZ_UTC, LOCALE_DEFAULT).getTime())
+				Constants.FMT_DT.format(
+					Calendar.getInstance(Constants.TZ_UTC, Constants.LOCALE_DEFAULT).getTime()
+				)
 			);
 		}
 		// make all used loggers asynchronous
@@ -188,15 +139,22 @@ public final class Main {
 		// connect JUL to Log4J2
 		System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
 		// determine the logger configuration file path
-		final Path logConfPath = Paths.get(DIR_ROOT, DIR_CONF, "logging.yaml");
+		final Path logConfPath = Paths.get(
+			com.emc.mongoose.common.conf.Constants.DIR_ROOT,
+			com.emc.mongoose.common.conf.Constants.DIR_CONF,
+			"logging.yaml"
+		);
 		//
 		LOG_CONTEXT = Configurator.initialize("mongoose", logConfPath.toUri().toString());
 	}
 	//
 	public static void initSecurity() {
 		// load the security policy
-		final String secPolicyURL = "file:" + DIR_ROOT + SEP + DIR_CONF + SEP + FNAME_POLICY;
-		System.setProperty(KEY_POLICY, secPolicyURL);
+		final String secPolicyURL = "file:" +
+			com.emc.mongoose.common.conf.Constants.DIR_ROOT + File.separatorChar +
+			com.emc.mongoose.common.conf.Constants.DIR_CONF + File.separatorChar +
+			com.emc.mongoose.common.conf.Constants.FNAME_POLICY;
+		System.setProperty(com.emc.mongoose.common.conf.Constants.KEY_POLICY, secPolicyURL);
 		Policy.getPolicy().refresh();
 		System.setSecurityManager(new SecurityManager());
 	}

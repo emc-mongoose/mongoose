@@ -1,13 +1,11 @@
 package com.emc.mongoose.webui.logging;
 //
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.webui.websockets.WebSocketLogListener;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
+//
+import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
@@ -18,7 +16,6 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.SerializedLayout;
-import org.apache.logging.log4j.status.StatusLogger;
 //
 import java.io.Serializable;
 import java.util.List;

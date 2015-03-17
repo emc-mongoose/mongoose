@@ -5,11 +5,11 @@ from loadbuilder import init as loadBuilderInit
 #
 from org.apache.logging.log4j import Level, LogManager
 #
+from com.emc.mongoose.common.conf import RunTimeConfig
+from com.emc.mongoose.common.logging import Markers, TraceLogger
+#
 from com.emc.mongoose.core.api.io.task import IOTask
-from com.emc.mongoose.core.api.util.log import Markers
 from com.emc.mongoose.core.api.persist import DataItemBuffer
-from com.emc.mongoose.core.impl.util.log import TraceLogger
-from com.emc.mongoose.core.impl.util import RunTimeConfig
 #
 from java.lang import Long, String, Throwable, IllegalArgumentException, InterruptedException
 #

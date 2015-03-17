@@ -1,9 +1,9 @@
 package com.emc.mongoose.storage.mock.impl.cinderella;
 //
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 //
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
@@ -29,7 +29,7 @@ extends DefaultNHttpServerConnectionFactory {
 	//
 	private final AtomicInteger counter = new AtomicInteger(0);
 	private final ExecutorService
-		connectionPool = Executors.newFixedThreadPool(100000, new WorkerFactory("connKiller"));
+		connectionPool = Executors.newFixedThreadPool(100000, new NamingWorkerFactory("connKiller"));
 	private final int faultSleepMsec;
 	private final int faultPeriod;
 	//

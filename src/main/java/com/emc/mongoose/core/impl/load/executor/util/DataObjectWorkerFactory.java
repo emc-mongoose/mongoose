@@ -1,13 +1,15 @@
 package com.emc.mongoose.core.impl.load.executor.util;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
+//
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+//
 import org.apache.logging.log4j.ThreadContext;
 /**
  * Created by olga on 12.11.14.
  */
 public final class DataObjectWorkerFactory
-extends WorkerFactory {
+extends NamingWorkerFactory {
 	//
 	public static final String
 		KEY_LOAD_NUM = "load.number",
@@ -37,7 +39,7 @@ extends WorkerFactory {
 	}
 	//
 	private static final class DataObjectWorker
-		extends Thread {
+	extends Thread {
 		//
 		private final int loadNumber;
 		private final String api;

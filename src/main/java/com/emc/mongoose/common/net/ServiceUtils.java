@@ -1,11 +1,9 @@
-package com.emc.mongoose.server.impl;
+package com.emc.mongoose.common.net;
+// mongoose-common.jar
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
 //
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.run.Main;
-//
-import com.emc.mongoose.server.api.Service;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,6 +12,7 @@ import javax.management.MBeanServer;
 import javax.management.remote.JMXConnectorServer;
 import javax.management.remote.JMXConnectorServerFactory;
 import javax.management.remote.JMXServiceURL;
+import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.management.ManagementFactory;
@@ -22,6 +21,7 @@ import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.rmi.Naming;
@@ -63,6 +63,20 @@ public final class ServiceUtils {
 		} finally {
 			PORT_RMI_CONTROL = tmpPort;
 		}
+	}
+	//
+	private final static File JAR_SELF;
+	static {
+		File jarSelf = null;
+		try {
+			jarSelf = new File(
+				ServiceUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+			);
+		} catch(final URISyntaxException e) {
+			TraceLogger.failure(LOG, Level.WARN, e, "Determining the launcher path failure");
+		}
+		JAR_SELF = jarSelf;
+
 	}
 	//
 	private final static Map<String, Service> SVC_MAP;
@@ -243,7 +257,7 @@ public final class ServiceUtils {
 				System.setProperty(
 					KEY_RMI_CODEBASE,
 					URLDecoder.decode(
-						Main.JAR_SELF.toURI().toString(), StandardCharsets.UTF_8.displayName()
+						JAR_SELF.toURI().toString(), StandardCharsets.UTF_8.displayName()
 					)
 				);
 			} catch(final UnsupportedEncodingException e) {

@@ -1,12 +1,12 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
+import com.emc.mongoose.common.logging.Constants;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+//
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.run.Main;
 //
 import org.apache.commons.lang.text.StrBuilder;
 //
@@ -40,8 +40,8 @@ implements Container<T> {
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
-			final Date dt = Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime();
-			this.name = "mongoose-" + Main.FMT_DT.format(dt);
+			final Date dt = Calendar.getInstance(Constants.TZ_UTC, Constants.LOCALE_DEFAULT).getTime();
+			this.name = "mongoose-" + Constants.FMT_DT.format(dt);
 		} else {
 			this.name = name;
 		}
@@ -63,7 +63,7 @@ implements Container<T> {
 		boolean flagExists = false;
 		//
 		try {
-			final HttpResponse httpResp = execute(addr,  WSIOTask.HTTPMethod.HEAD);
+			final HttpResponse httpResp = execute(addr,  MutableWSRequest.HTTPMethod.HEAD);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -102,7 +102,7 @@ implements Container<T> {
 	public final void create(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.PUT);
+			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.PUT);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -140,7 +140,7 @@ implements Container<T> {
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.DELETE);
+			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.DELETE);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -175,15 +175,16 @@ implements Container<T> {
 	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	final HttpResponse execute(final String addr, final WSIOTask.HTTPMethod method)
+	final HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)
 	throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
 		//
-		final MutableWSRequest httpReq = method
+		final MutableWSRequest httpReq = reqConf
 			.createRequest()
+			.setMethod(method)
 			.setUriPath(
 				String.format(
 					WSRequestConfigImpl.FMT_URI_CONTAINER_PATH,

@@ -1,9 +1,8 @@
-package com.emc.mongoose.core.impl.util;
-//
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.run.util.DirectoryLoader;
-import com.emc.mongoose.core.api.util.log.Markers;
+package com.emc.mongoose.common.conf;
+// mongoose-common.jar
+import com.emc.mongoose.common.logging.Constants;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
 //
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -153,7 +152,13 @@ implements Externalizable {
 	}
 	//
 	public String getPropertiesMap() {
-		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES), this);
+		DirectoryLoader.updatePropertiesFromDir(
+			Paths.get(
+				com.emc.mongoose.common.conf.Constants.DIR_ROOT,
+				com.emc.mongoose.common.conf.Constants.DIR_CONF,
+				com.emc.mongoose.common.conf.Constants.DIR_PROPERTIES
+			), this
+		);
 		final ObjectMapper mapper = new ObjectMapper();
 		try {
 			return mapper.writeValueAsString(properties);
@@ -504,7 +509,7 @@ implements Externalizable {
 		if(runTimeConfig != null) {
 			runTimeConfig.set(
 				KEY_RUN_ID,
-				Main.FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
+				Constants.FMT_DT.format(Calendar.getInstance(Constants.TZ_UTC, Constants.LOCALE_DEFAULT).getTime())
 			);
 		}
 		return runTimeConfig;

@@ -1,7 +1,7 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
 //
 import com.codahale.metrics.Gauge;
-//
+// mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
 /**
  Created by kurila on 17.12.14.

@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.load.executor.util.http;
+package com.emc.mongoose.common.http;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpException;

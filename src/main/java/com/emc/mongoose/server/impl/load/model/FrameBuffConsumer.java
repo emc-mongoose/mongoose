@@ -1,6 +1,9 @@
-package com.emc.mongoose.core.impl.load.model;
+package com.emc.mongoose.server.impl.load.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
+//
+import com.emc.mongoose.core.impl.load.model.LogConsumer;
+//
 import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
 //
 import java.util.ArrayList;

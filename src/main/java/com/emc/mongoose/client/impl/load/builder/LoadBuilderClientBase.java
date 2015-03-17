@@ -1,17 +1,21 @@
 package com.emc.mongoose.client.impl.load.builder;
-//
+// mongoose-common.jar
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
-import com.emc.mongoose.core.api.data.DataItem;
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.FileProducer;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+// mongoose-client.jar
 import com.emc.mongoose.client.api.persist.DataItemBufferClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
-import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.client.impl.persist.TmpFileItemBufferClient;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
+// mongoose-server-api.jar
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

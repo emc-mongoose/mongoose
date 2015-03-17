@@ -1,6 +1,6 @@
-package com.emc.mongoose.core.impl.util.log;
-//
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
+package com.emc.mongoose.common.logging;
+// mongoose-common.jar
+import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;

@@ -1,11 +1,12 @@
 package com.emc.mongoose.core.impl.data;
 //
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.server.impl.ServiceUtils;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.net.ServiceUtils;
 //
 import org.apache.commons.codec.binary.Base64;
 import org.apache.logging.log4j.Level;
@@ -127,7 +128,7 @@ implements DataItem {
 	}
 	//
 	@Override
-	public final void setDataSource(final UniformDataSource dataSrc, final int layerNum) {
+	public final void setDataSource(final DataSource dataSrc, final int layerNum) {
 		buf = dataSrc.getBytes(layerNum);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

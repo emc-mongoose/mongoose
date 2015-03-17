@@ -1,8 +1,9 @@
 package com.emc.mongoose.storage.adapter.atmos;
 //
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+//
 import com.emc.mongoose.core.api.load.model.Consumer;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import org.apache.logging.log4j.Level;

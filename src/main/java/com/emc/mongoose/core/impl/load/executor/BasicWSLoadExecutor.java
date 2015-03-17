@@ -1,27 +1,26 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.http.RequestSharedHeaders;
+import com.emc.mongoose.common.http.RequestTargetHost;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+//
+import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.impl.load.model.BasicWSDataGenerator;
-import com.emc.mongoose.core.impl.load.model.FileProducer;
-import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-import com.emc.mongoose.core.impl.load.executor.util.http.RequestSharedHeaders;
-import com.emc.mongoose.core.impl.load.executor.util.http.RequestTargetHost;
+import com.emc.mongoose.core.api.load.model.Producer;
+//
+import com.emc.mongoose.core.impl.load.model.BasicWSDataGenerator;
+import com.emc.mongoose.core.impl.load.model.FileProducer;
+import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
 //
 import org.apache.http.ExceptionLogger;
-import org.apache.http.Header;
 import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
@@ -33,14 +32,11 @@ import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
 import org.apache.http.nio.pool.NIOConnFactory;
-import org.apache.http.nio.protocol.BasicAsyncRequestProducer;
-import org.apache.http.nio.protocol.BasicAsyncResponseConsumer;
 import org.apache.http.nio.protocol.HttpAsyncRequestExecutor;
 import org.apache.http.nio.protocol.HttpAsyncRequester;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -52,9 +48,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 /**
@@ -135,7 +128,7 @@ implements WSLoadExecutor<T> {
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new WorkerFactory(String.format("IOWorker<%s>", getName()))
+				new NamingWorkerFactory(String.format("IOWorker<%s>", getName()))
 			);
 		} catch(final IOReactorException e) {
 			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");

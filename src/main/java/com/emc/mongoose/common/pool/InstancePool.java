@@ -1,10 +1,9 @@
-package com.emc.mongoose.core.impl.util;
+package com.emc.mongoose.common.pool;
+// mongoose-common.jar
+import com.emc.mongoose.common.logging.Constants;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
 //
-import com.emc.mongoose.core.api.util.Reusable;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.run.Main;
-//
-import com.emc.mongoose.core.api.util.log.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -63,7 +62,7 @@ extends TreeSet<T> {
 	@Override
 	public final String toString() {
 		return String.format(
-			Main.LOCALE_DEFAULT, "%s: %d instances are in the pool",
+			Constants.LOCALE_DEFAULT, "%s: %d instances are in the pool",
 			instanceCls.getCanonicalName(), size()
 		);
 	}

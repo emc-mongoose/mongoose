@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.api.util.log;
+package com.emc.mongoose.common.logging;
 /**
  Created by kurila on 26.12.14.
  */

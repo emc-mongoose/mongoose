@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.util;
+package com.emc.mongoose.common.concurrent;
 //
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 25.04.14.
  */
-public class WorkerFactory
+public class NamingWorkerFactory
 implements ThreadFactory {
 	//
 	//private static final Logger LOG = LogManager.getLogger();
@@ -17,7 +17,7 @@ implements ThreadFactory {
 	protected final String threadNamePrefix;
 	protected final AtomicInteger threadNumber = new AtomicInteger(0);
 	//
-	public WorkerFactory(final String threadNamePrefix) {
+	public NamingWorkerFactory(final String threadNamePrefix) {
 		this.threadNamePrefix = threadNamePrefix;
 	}
 	//

@@ -1,15 +1,16 @@
 package com.emc.mongoose.core.impl.io.task;
 //
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.pool.Reusable;
+import com.emc.mongoose.common.pool.InstancePool;
+//
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.InstancePool;
 //
-import com.emc.mongoose.core.api.util.Reusable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -88,7 +89,7 @@ implements IOTask<T> {
 		) {
 			LOG.debug(
 				Markers.ERR, String.format(
-					FMT_PERF_TRACE_INVALID, nodeAddr, dataItemId == null ? Main.EMPTY : dataItemId,
+					FMT_PERF_TRACE_INVALID, nodeAddr, dataItemId == null ? Constants.EMPTY : dataItemId,
 					transferSize, status.code,
 					reqTimeStart, reqTimeDone, respTimeStart, respTimeDone
 				)
@@ -96,7 +97,7 @@ implements IOTask<T> {
 		} else {
 			LOG.info(
 				Markers.PERF_TRACE, String.format(
-					FMT_PERF_TRACE, nodeAddr, dataItemId == null ? Main.EMPTY : dataItemId,
+					FMT_PERF_TRACE, nodeAddr, dataItemId == null ? Constants.EMPTY : dataItemId,
 					transferSize, status.code,
 					reqTimeStart, respTimeStart - reqTimeDone, respTimeDone - reqTimeStart
 				)

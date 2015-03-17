@@ -1,10 +1,10 @@
 package com.emc.mongoose.storage.adapter.atmos;
 //
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+//
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -54,15 +54,15 @@ implements SubTenant<T> {
 		MSG_INVALID_METHOD = "<NULL> is invalid HTTP method",
 		SUBTENANT = "subtenant";
 	//
-	final HttpResponse execute(final String addr, final WSIOTask.HTTPMethod method)
+	final HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)
 	throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
-		final MutableWSRequest httpReq = method.createRequest();
+		final MutableWSRequest httpReq = reqConf.createRequest().setMethod(method);
 		//
-		if(WSIOTask.HTTPMethod.PUT.equals(method)) {
+		if(MutableWSRequest.HTTPMethod.PUT.equals(method)) {
 			httpReq.setUriPath(String.format(WSRequestConfigImpl.FMT_URI, SUBTENANT));
 			httpReq.setHeader(
 				new BasicHeader(
@@ -90,7 +90,7 @@ implements SubTenant<T> {
 		//
 		if(value!= null && value.length() > 0) {
 			try {
-				final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.HEAD);
+				final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.HEAD);
 				if(httpResp != null) {
 					final HttpEntity httpEntity = httpResp.getEntity();
 					final StatusLine statusLine = httpResp.getStatusLine();
@@ -128,7 +128,7 @@ implements SubTenant<T> {
 	public final void create(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.PUT);
+			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.PUT);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -170,7 +170,7 @@ implements SubTenant<T> {
 	public final void delete(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.DELETE);
+			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.DELETE);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
