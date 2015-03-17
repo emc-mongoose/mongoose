@@ -6,13 +6,13 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
-import com.emc.mongoose.run.Scenario;
-//
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 //
 import com.emc.mongoose.storage.mock.impl.cinderella.Main;
+//
+import com.emc.mongoose.run.scenario.RunTask;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -149,7 +149,7 @@ public final class StartServlet extends CommonServlet {
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getRunScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);
-				new Scenario().run();
+				new RunTask().run();
 			}
 			//
 			@Override

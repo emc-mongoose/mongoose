@@ -1,13 +1,11 @@
 package com.emc.mongoose.common.conf;
 //
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 /**
  Created by kurila on 17.03.15.
  */
 public interface Constants {
 	String DEFAULT_ENC = StandardCharsets.UTF_8.name();
-	String DIR_ROOT = Paths.get("").toAbsolutePath().normalize().toString();
 	String DIR_CONF = "conf";
 	String DIR_PROPERTIES = "properties";
 	String DOT = ".";

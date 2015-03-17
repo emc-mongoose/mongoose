@@ -9,6 +9,9 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //
+import com.emc.mongoose.run.cli.HumanFriendly;
+import com.emc.mongoose.run.scenario.RunTask;
+import com.emc.mongoose.run.webserver.RunJettyTask;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
@@ -46,7 +49,7 @@ public final class Main {
 		}
 		System.setProperty(RunTimeConfig.KEY_RUN_MODE, runMode);
 		//
-		final Map<String, String> properties = HumanFriendlyCli.parseCli(args);
+		final Map<String, String> properties = HumanFriendly.parseCli(args);
 		//
 		initLogging(runMode);
 		final Logger rootLogger = LogManager.getRootLogger();
@@ -59,7 +62,7 @@ public final class Main {
 		RunTimeConfig.setContext(new RunTimeConfig());
 		RunTimeConfig.getContext().loadPropsFromDir(
 			Paths.get(
-				com.emc.mongoose.common.conf.Constants.DIR_ROOT,
+				RunTimeConfig.DIR_ROOT,
 				com.emc.mongoose.common.conf.Constants.DIR_CONF,
 				com.emc.mongoose.common.conf.Constants.DIR_PROPERTIES
 			)
@@ -91,7 +94,7 @@ public final class Main {
 				break;
 			case com.emc.mongoose.common.conf.Constants.RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-				new JettyRunner(RunTimeConfig.getContext()).run();
+				new RunJettyTask(RunTimeConfig.getContext()).run();
 				break;
 			case com.emc.mongoose.common.conf.Constants.RUN_MODE_CINDERELLA:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
@@ -106,7 +109,7 @@ public final class Main {
 			case com.emc.mongoose.common.conf.Constants.RUN_MODE_CLIENT:
 			case com.emc.mongoose.common.conf.Constants.RUN_MODE_STANDALONE:
 			case com.emc.mongoose.common.conf.Constants.RUN_MODE_COMPAT_CLIENT:
-				new Scenario().run();
+				new RunTask().run();
 				break;
 			default:
 				throw new IllegalArgumentException(
@@ -140,7 +143,7 @@ public final class Main {
 		System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
 		// determine the logger configuration file path
 		final Path logConfPath = Paths.get(
-			com.emc.mongoose.common.conf.Constants.DIR_ROOT,
+			RunTimeConfig.DIR_ROOT,
 			com.emc.mongoose.common.conf.Constants.DIR_CONF,
 			"logging.yaml"
 		);
@@ -151,7 +154,7 @@ public final class Main {
 	public static void initSecurity() {
 		// load the security policy
 		final String secPolicyURL = "file:" +
-			com.emc.mongoose.common.conf.Constants.DIR_ROOT + File.separatorChar +
+			RunTimeConfig.DIR_ROOT + File.separatorChar +
 			com.emc.mongoose.common.conf.Constants.DIR_CONF + File.separatorChar +
 			com.emc.mongoose.common.conf.Constants.FNAME_POLICY;
 		System.setProperty(com.emc.mongoose.common.conf.Constants.KEY_POLICY, secPolicyURL);

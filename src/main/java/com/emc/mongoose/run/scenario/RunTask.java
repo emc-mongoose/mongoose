@@ -1,4 +1,4 @@
-package com.emc.mongoose.run;
+package com.emc.mongoose.run.scenario;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -26,7 +26,7 @@ import javax.script.ScriptException;
  Created by kurila on 12.05.14.
  A scenario runner utility class.
  */
-public final class Scenario
+public final class RunTask
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -77,7 +77,7 @@ implements Runnable {
 				System.exit(1);
 			}
 			//
-			final Path scriptDir = Paths.get(Constants.DIR_ROOT, scriptsRootDir, scriptLangKey);
+			final Path scriptDir = Paths.get(RunTimeConfig.DIR_ROOT, scriptsRootDir, scriptLangKey);
 			if(VALUE_PY.equals(scriptLangKey)) {
 				System.setProperty(KEY_PYTHON_PATH, scriptDir.toString());
 				LOG.debug(

@@ -46,8 +46,8 @@ extends Externalizable, Cloneable, Closeable {
 	String getNameSpace();
 	RequestConfig<T> setNameSpace(final String nameSpace);
 	//
-	DataSource<T> getDataSource();
-	RequestConfig<T> setDataSource(final DataSource<T> dataSrc);
+	DataSource getDataSource();
+	RequestConfig<T> setDataSource(final DataSource dataSrc);
 	//
 	boolean getRetries();
 	RequestConfig<T> setRetries(final boolean retryFlag);

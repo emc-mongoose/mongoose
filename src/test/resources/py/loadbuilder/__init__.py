@@ -3,10 +3,8 @@ from __future__ import print_function, absolute_import, with_statement
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from com.emc.mongoose.common.conf import RunTimeConfig
+from com.emc.mongoose.common.conf import Constants, RunTimeConfig
 from com.emc.mongoose.common.logging import Markers, TraceLogger
-#
-from com.emc.mongoose.run import Main
 #
 from java.lang import IllegalStateException
 from java.util import NoSuchElementException
@@ -25,7 +23,7 @@ def init():
 	loadBuilderInstance = None
 	#
 	from org.apache.commons.configuration import ConversionException
-	if mode == Main.RUN_MODE_CLIENT or mode == Main.RUN_MODE_COMPAT_CLIENT:
+	if mode == Constants.RUN_MODE_CLIENT or mode == Constants.RUN_MODE_COMPAT_CLIENT:
 		from com.emc.mongoose.client.impl.load.builder import BasicWSLoadBuilderClient
 		from java.rmi import RemoteException
 		try:

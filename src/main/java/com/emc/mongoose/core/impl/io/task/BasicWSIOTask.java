@@ -14,6 +14,7 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 //
+import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.http.Header;
@@ -94,7 +95,9 @@ implements WSIOTask<T> {
 	//
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	protected HeaderGroup sharedHeaders = null;
-	protected final MutableWSRequest httpRequest = wsReqConf.createRequest();
+	protected final MutableWSRequest httpRequest = new WSRequestImpl(
+		MutableWSRequest.HTTPMethod.PUT, null, null
+	);
 	protected volatile HttpEntity reqEntity = null;
 	//
 	@Override

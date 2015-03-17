@@ -2,6 +2,7 @@ package com.emc.mongoose.webui;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.DirectoryLoader;
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.logging.TraceLogger;
 //
@@ -20,7 +21,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Paths;
 import java.util.Scanner;
-
 /**
  * Created by gusakk on 12/28/14.
  */
@@ -28,7 +28,9 @@ public class SaveServlet extends CommonServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String FILENAME = "config.txt";
-	private final static File FILE_PATH = Paths.get(Constants.DIR_ROOT, Constants.DIR_WEBAPP, Constants.DIR_CONF).toFile();
+	private final static File FILE_PATH = Paths.get(
+		RunTimeConfig.DIR_ROOT, Constants.DIR_WEBAPP, Constants.DIR_CONF
+	).toFile();
 	//	HTTP Headers
 	private final static String CONTENT_TYPE = "Content-Type";
 	private final static String CONTENT_LENGTH = "Content-Length";
@@ -61,8 +63,10 @@ public class SaveServlet extends CommonServlet {
 	@Override
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
 		setupRunTimeConfig(request);
-		DirectoryLoader.updatePropertiesFromDir(Paths.get(Constants.DIR_ROOT, Constants.DIR_CONF, Constants.DIR_PROPERTIES),
-				runTimeConfig, true);
+		DirectoryLoader.updatePropertiesFromDir(
+			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF, Constants.DIR_PROPERTIES),
+			runTimeConfig, true
+		);
 		updateLastRunTimeConfig(runTimeConfig);
 		response.setStatus(HttpServletResponse.SC_OK);
 	}

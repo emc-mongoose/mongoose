@@ -60,7 +60,7 @@ extends ObjectRequestConfig<T> {
 	WSRequestConfig<T> setSecret(final String secret);
 	//
 	@Override
-	WSRequestConfig<T> setDataSource(final DataSource<T> dataSrc);
+	WSRequestConfig<T> setDataSource(final DataSource dataSrc);
 	//
 	@Override
 	WSRequestConfig<T> setRetries(final boolean retryFlag);

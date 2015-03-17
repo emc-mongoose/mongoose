@@ -1,4 +1,4 @@
-package com.emc.mongoose.run;
+package com.emc.mongoose.run.cli;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -21,7 +21,7 @@ import java.util.Properties;
  * Date:   12/10/14
  * Time:   4:37 PM
  */
-public class HumanFriendlyCli {
+public class HumanFriendly {
 
     public enum CLIOption {
 

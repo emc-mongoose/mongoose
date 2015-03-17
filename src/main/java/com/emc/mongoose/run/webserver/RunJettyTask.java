@@ -1,4 +1,4 @@
-package com.emc.mongoose.run;
+package com.emc.mongoose.run.webserver;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -15,28 +15,30 @@ import java.nio.file.Paths;
 /**
  * Created by gusakk on 02/10/14.
  */
-public class JettyRunner {
+public class RunJettyTask
+implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final RunTimeConfig runTimeConfig;
-
+	//
     public final static String
             webResourceBaseDir,
             webDescriptorBaseDir;
-
+	//
     static {
         webResourceBaseDir = Paths
-			.get(Constants.DIR_ROOT, Constants.DIR_WEBAPP)
+			.get(RunTimeConfig.DIR_ROOT, Constants.DIR_WEBAPP)
 			.toString();
         webDescriptorBaseDir = Paths
-			.get(Constants.DIR_ROOT, Constants.DIR_WEBAPP, Constants.DIR_WEBINF)
+			.get(RunTimeConfig.DIR_ROOT, Constants.DIR_WEBAPP, Constants.DIR_WEBINF)
 			.resolve("web.xml").toString();
     }
-
-    public JettyRunner(RunTimeConfig runTimeConfig) {
+	//
+    public RunJettyTask(RunTimeConfig runTimeConfig) {
         this.runTimeConfig = runTimeConfig;
     }
-
+	//
+	@Override
     public void run() {
         final Server server = new Server(runTimeConfig.getWUISvcPort());
         //

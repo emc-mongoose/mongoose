@@ -17,11 +17,14 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
+import org.apache.logging.log4j.status.StatusLogger;
 //
 import java.io.Externalizable;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -67,8 +70,6 @@ implements Externalizable {
 		ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
 	}
 	//
-	private Set<String> mongooseKeys;
-	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static String
@@ -93,6 +94,21 @@ implements Externalizable {
 		KEY_STORAGE_ADDRS = "storage.addrs",
 		KEY_STORAGE_API = "storage.api";
 	//
+	public final static String DIR_ROOT;
+	static {
+		String dirRoot = System.getProperty("user.dir");
+		try {
+			dirRoot = new File(
+				Constants.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+			).getParent();
+		} catch(final URISyntaxException e) {
+			TraceLogger.failure(
+				StatusLogger.getLogger(), Level.WARN, e, "Failed to determine the executable path"
+			);
+		}
+		DIR_ROOT = dirRoot;
+	}
+	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
 	static {
@@ -107,6 +123,7 @@ implements Externalizable {
 		FMT_MSG_INVALID_SIZE = "The string \"%s\" doesn't match the pattern: \"%s\"";
 	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)b?");
 	//
+	private Set<String> mongooseKeys;
 	private final Map<String, Object> properties = new HashMap<>();
 	//
 	public long getSizeBytes(final String key) {
@@ -154,7 +171,7 @@ implements Externalizable {
 	public String getPropertiesMap() {
 		DirectoryLoader.updatePropertiesFromDir(
 			Paths.get(
-				com.emc.mongoose.common.conf.Constants.DIR_ROOT,
+				DIR_ROOT,
 				com.emc.mongoose.common.conf.Constants.DIR_CONF,
 				com.emc.mongoose.common.conf.Constants.DIR_PROPERTIES
 			), this
@@ -163,7 +180,7 @@ implements Externalizable {
 		try {
 			return mapper.writeValueAsString(properties);
 		} catch (final JsonProcessingException e) {
-			TraceLogger.failure(LOG, Level.ERROR, e, "Failed json processing");
+			e.printStackTrace(System.err);
 		}
 		return null;
 	}
