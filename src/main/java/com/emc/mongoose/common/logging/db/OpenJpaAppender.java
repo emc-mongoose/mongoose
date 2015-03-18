@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.persist;
+package com.emc.mongoose.common.logging.db;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.util.log.Markers;
@@ -6,6 +6,17 @@ import com.emc.mongoose.core.impl.load.executor.util.DataObjectWorkerFactory;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.core.impl.util.WorkerFactory;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.common.logging.db.entity.ApiEntity;
+import com.emc.mongoose.common.logging.db.entity.LevelEntity;
+import com.emc.mongoose.common.logging.db.entity.LoadEntity;
+import com.emc.mongoose.common.logging.db.entity.LoadEntityPK;
+import com.emc.mongoose.common.logging.db.entity.LoadTypeEntity;
+import com.emc.mongoose.common.logging.db.entity.MessageClassEntity;
+import com.emc.mongoose.common.logging.db.entity.MessageEntity;
+import com.emc.mongoose.common.logging.db.entity.ModeEntity;
+import com.emc.mongoose.common.logging.db.entity.PerfomanceEntity;
+import com.emc.mongoose.common.logging.db.entity.RunEntity;
+import com.emc.mongoose.common.logging.db.entity.StatusEntity;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
@@ -215,6 +226,7 @@ extends AbstractAppender {
 			latencyMax = Integer.valueOf(event.getContextMap().get(LATENCY_MAX));
 		EntityManager entityManager = null;
 		try {
+
 			final RunEntity runEntity = (RunEntity) getEntity("name", runName, "timestamp", runTimestamp, RunEntity.class);
 			//
 			LoadTypeEntity loadTypeEntity = (LoadTypeEntity) getEntity("name", loadTypeName, LoadTypeEntity.class);
@@ -285,6 +297,7 @@ extends AbstractAppender {
 				entityManager.close();
 			}
 			TraceLogger.failure(logger, Level.ERROR, e, "Fail to persist perf.avg.");
+			e.printStackTrace();
 		}
 	}
 	//
@@ -344,6 +357,7 @@ extends AbstractAppender {
 				entityManager.close();
 			}
 			TraceLogger.failure(logger, Level.ERROR, e, "Fail to persist messages.");
+			e.printStackTrace();
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -367,9 +381,13 @@ extends AbstractAppender {
 	private Date getTimestamp(final String stringTimestamp){
 		Date runTimestamp = null;
 		try {
-			runTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS").parse(stringTimestamp);
+				runTimestamp = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS").parse(stringTimestamp);
 		} catch (final ParseException e) {
 			TraceLogger.failure(StatusLogger.getLogger(), Level.ERROR, e, "Parse run timestamp is failed");
+		}catch (final NullPointerException e){
+			TraceLogger.failure(StatusLogger.getLogger(), Level.ERROR, e, "Parse run timestamp is failed. " +
+				"Timestamp equals null.");
+			e.printStackTrace();
 		}
 		return runTimestamp;
 	}

@@ -1,5 +1,7 @@
-package com.emc.mongoose.util.persist;
+package com.emc.mongoose.common.logging.db.entity;
 //
+import com.emc.mongoose.common.logging.db.entity.ModeEntity;
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -18,7 +20,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity
 @Table(name = "run", uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "tstamp"})})
-public final class RunEntity
+public class RunEntity
 implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)

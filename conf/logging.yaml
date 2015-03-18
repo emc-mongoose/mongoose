@@ -2,7 +2,7 @@ configuration:
   status: info
   name: mongoose
   monitorInterval: 1000
-  packages: com.emc.mongoose.webui.logging,com.emc.mongoose.core.impl.util.log
+  packages: com.emc.mongoose.webui.logging,com.emc.mongoose.core.impl.util.log,com.emc.mongoose.common.logging.db
   shutdownHook: disable
 
   appenders:
@@ -24,33 +24,33 @@ configuration:
           onMatch: ACCEPT
           onMismatch: DENY
     OpenJPA:
-	  name: OpenJPA
-	  enabled: true
-	  database: postgresql
-	  username: mongoose
-	  password: mongoose
-	  addr: localhost
-	  port: 5432
-	  namedatabase: mongoose
-	  appenderQueueSize: 1000000
-	  filters:
-		MarkerFilter:
-		  -
-			marker: err
-			onMatch: ACCEPT
-			onMismatch: NEUTRAL
-		  -
-			marker: msg
-			onMatch: ACCEPT
-			onMismatch: NEUTRAL
-		  -
-			marker: perfAvg
-			onMatch: ACCEPT
-			onMismatch: NEUTRAL
-		  -
-			marker: perfSum
-			onMatch: ACCEPT
-			onMismatch: DENY
+      name: OpenJPA
+      enabled: true
+      database: postgresql
+      username: mongoose
+      password: mongoose
+      addr: localhost
+      port: 5432
+      namedatabase: mongoose
+      appenderQueueSize: 1000000
+      filters:
+        MarkerFilter:
+          -
+            marker: err
+            onMatch: ACCEPT
+            onMismatch: NEUTRAL
+          -
+            marker: msg
+            onMatch: ACCEPT
+            onMismatch: NEUTRAL
+          -
+            marker: perfAvg
+            onMatch: ACCEPT
+            onMismatch: NEUTRAL
+          -
+            marker: perfSum
+            onMatch: ACCEPT
+            onMismatch: DENY
     console:
       name: stdout
       PatternLayout:
@@ -254,7 +254,7 @@ configuration:
         additivity: false
         appenderRef: { ref: entryPoint }
       -
-      	name: com.emc.mongoose.util.persist
-      	level:debag
-      	additivity: false
+        name: com.emc.mongoose.persist
+        level: debug
+        additivity: false
         appenderRef: { ref: entryPoint }

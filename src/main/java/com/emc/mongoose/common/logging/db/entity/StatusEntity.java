@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.persist;
+package com.emc.mongoose.common.logging.db.entity;
 //
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,7 +11,7 @@ import java.io.Serializable;
  */
 @Entity(name="Status")
 @Table(name = "status", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
-public final class StatusEntity
+public class StatusEntity
 implements Serializable{
 	@Id
 	@Column(name = "code")

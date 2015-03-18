@@ -5,23 +5,23 @@
              http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
 	<persistence-unit name="openjpa">
 		<provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
-		<class>com.emc.mongoose.util.persist.StatusEntity</class>
-		<class>com.emc.mongoose.util.persist.ModeEntity</class>
-		<class>com.emc.mongoose.util.persist.RunEntity</class>
-		<class>com.emc.mongoose.util.persist.LevelEntity</class>
-		<class>com.emc.mongoose.util.persist.MessageClassEntity</class>
-		<class>com.emc.mongoose.util.persist.MessageEntity</class>
-		<class>com.emc.mongoose.util.persist.DataObjectEntity</class>
-		<class>com.emc.mongoose.util.persist.ApiEntity</class>
-		<class>com.emc.mongoose.util.persist.LoadTypeEntity</class>
-		<class>com.emc.mongoose.util.persist.LoadEntity</class>
-		<class>com.emc.mongoose.util.persist.NodeEntity</class>
-		<class>com.emc.mongoose.util.persist.ConnectionEntity</class>
-		<class>com.emc.mongoose.util.persist.TraceEntity</class>
-		<class>com.emc.mongoose.util.persist.PerfomanceEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.StatusEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.ModeEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.RunEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.LevelEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.MessageClassEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.MessageEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.DataObjectEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.ApiEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.LoadTypeEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.LoadEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.NodeEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.ConnectionEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.TraceEntity</class>
+		<class>com.emc.mongoose.common.logging.db.entity.PerfomanceEntity</class>
 		<properties>
 			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
-			<!--<property name="openjpa.DynamicEnhancementAgent" value="true"/>!-->
+			<property name="openjpa.DynamicEnhancementAgent" value="true"/>
 			<property name="openjpa.jdbc.MappingDefaults"
 					  value="ForeignKeyDeleteAction=restrict,JoinForeignKeyDeleteAction=restrict"/>
 			<!-- Logging Open JPA !-->

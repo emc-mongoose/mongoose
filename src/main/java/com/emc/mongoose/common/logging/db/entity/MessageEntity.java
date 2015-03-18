@@ -1,5 +1,6 @@
-package com.emc.mongoose.util.persist;
+package com.emc.mongoose.common.logging.db.entity;
 //
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -21,7 +22,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity
 @Table(name = "message")
-public final class MessageEntity
+public class MessageEntity
 implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)

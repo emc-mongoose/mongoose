@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.persist;
+package com.emc.mongoose.common.logging.db.entity;
 //
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -9,12 +9,13 @@ import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
 //
 import static javax.persistence.GenerationType.IDENTITY;
+//
 /**
  * Created by olga on 23.10.14.
  */
 @Entity
-@Table(name = "Class", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
-public final class MessageClassEntity
+@Table(name = "Level", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
+public class LevelEntity
 implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -23,9 +24,9 @@ implements Serializable{
 	@Column(name = "name")
 	private String name;
 	//
-	public MessageClassEntity(){
+	public LevelEntity(){
 	}
-	public MessageClassEntity(final String name){
+	public LevelEntity(final String name){
 		this.name = name;
 	}
 	//

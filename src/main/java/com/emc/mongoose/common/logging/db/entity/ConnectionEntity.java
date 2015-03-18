@@ -1,5 +1,6 @@
-package com.emc.mongoose.util.persist;
+package com.emc.mongoose.common.logging.db.entity;
 //
+
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -18,7 +19,7 @@ import java.io.Serializable;
 @Entity
 @IdClass(ConnectionEntityPK.class)
 @Table(name = "connection")
-public final class ConnectionEntity
+public class ConnectionEntity
 implements Serializable{
 	@Id
 	@Column(name = "num")
@@ -60,48 +61,5 @@ implements Serializable{
 	}
 	public final void setNum(final long num) {
 		this.num = num;
-	}
-}
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//Connection entity composite primary key
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-final class ConnectionEntityPK
-implements Serializable{
-	//
-	private long num;
-	private LoadEntityPK load;
-	//
-	public ConnectionEntityPK(){
-	}
-	public ConnectionEntityPK(final long number, final LoadEntityPK load){
-		this.num = number;
-		this.load = load;
-	}
-	//
-	public final long getNum() {
-		return num;
-	}
-	public final void setNum(final long num) {
-		this.num = num;
-	}
-	public final LoadEntityPK getLoad() {
-		return load;
-	}
-	public final void setLoad(final LoadEntityPK load) {
-		this.load = load;
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public final boolean equals(final Object o) {
-		if(o == null) return false;
-		if(!(o instanceof ConnectionEntity)) return false;
-		final ConnectionEntity other = (ConnectionEntity) o;
-		return (this.num == other.getNum()) && (this.load.getNum() == other.getLoad().getNum()
-		&& (this.load.getRun() == other.getLoad().getRun().getId()));
-
-	}
-	@Override
-	public final int hashCode() {
-		return (int) (getNum()+ load.getNum()+load.getRun());
 	}
 }

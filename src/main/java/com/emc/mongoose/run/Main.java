@@ -111,7 +111,6 @@ public final class Main {
 		//
 		RunTimeConfig.initContext();
 		// load the properties
-		RunTimeConfig.setContext(new RunTimeConfig());
 		RunTimeConfig.getContext().loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RunTimeConfig.getContext().loadSysProps();

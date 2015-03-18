@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.persist;
+package com.emc.mongoose.common.logging.db.entity;
 //
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -14,7 +14,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  */
 @Entity
 @Table(name = "mode", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
-public final class ModeEntity
+public class ModeEntity
 implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)

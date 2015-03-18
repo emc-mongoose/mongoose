@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.persist;
+package com.emc.mongoose.common.logging.db.entity;
 //
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -11,23 +11,23 @@ import java.io.Serializable;
 import static javax.persistence.GenerationType.IDENTITY;
 //
 /**
- * Created by olga on 17.10.14.
+ * Created by olga on 28.10.14.
  */
 @Entity
-@Table(name = "API", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
-public final class ApiEntity
-implements Serializable {
+@Table(name = "Node", uniqueConstraints = {@UniqueConstraint(columnNames = "address")})
+public class NodeEntity
+implements Serializable{
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
 	@Column(name = "id")
 	private long id;
-	@Column(name = "name")
-	private String name;
+	@Column(name = "address")
+	private String address;
 	//
-	public ApiEntity(){
+	public NodeEntity(){
 	}
-	public ApiEntity(final String name){
-		this.name = name;
+	public NodeEntity(final String addr){
+		this.address = addr;
 	}
 	//
 	public final long getId() {
@@ -36,10 +36,11 @@ implements Serializable {
 	public final void setId(final long id) {
 		this.id = id;
 	}
-	public final String getName() {
-		return name;
+	public final String getAddress() {
+		return address;
 	}
-	public final void setName(final String name) {
-		this.name = name;
+	public final void setAddress(final String address) {
+		this.address = address;
 	}
 }
+

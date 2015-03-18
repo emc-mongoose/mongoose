@@ -18,7 +18,7 @@ import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.persist.OpenJpaAppender;
+import com.emc.mongoose.common.logging.db.OpenJpaAppender;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.core.api.util.log.ConsoleColors;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;

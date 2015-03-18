@@ -93,7 +93,7 @@ dependencies {
 		//
 		'org.apache.logging.log4j:log4j-slf4j-impl:2.1',
 		'org.apache.logging.log4j:log4j-jcl:2.1',
-		//'org.apache.logging.log4j:log4j-jul:2.1',
+		'org.apache.logging.log4j:log4j-jul:2.1',
 		//'org.slf4j:slf4j-api:1.7.7',
 		'com.lmax:disruptor:3.3.0',
 		'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.4.1',
@@ -128,6 +128,30 @@ ext.sharedManifest = manifest {
 	attributes('Implementation-Version': version)
 }
 
+task commonJar(type: Jar) {
+	archiveName "${baseName}-common.${extension}"
+	from(sourceSets.main.output) {
+		exclude "com/emc/mongoose/client/**"
+		exclude "com/emc/mongoose/core/api/**"
+		exclude "com/emc/mongoose/core/impl/**"
+		exclude "com/emc/mongoose/run/**"
+		exclude "com/emc/mongoose/server/**"
+		exclude "com/emc/mongoose/storage/adapter/atmos/**"
+		exclude "com/emc/mongoose/storage/adapter/s3/**"
+		exclude "com/emc/mongoose/storage/adapter/swift/**"
+		exclude "com/emc/mongoose/storage/mock/**"
+		exclude "com/emc/mongoose/webui/**"
+		include "com/emc/mongoose/common/**"
+	}
+	from (sourceSets.main.resources){
+		include "META-INF/**"
+	}
+	manifest {
+		from sharedManifest
+		attributes ('Implementation-Title': rootProject.name + "-common")
+	}
+}
+
 task coreApiJar(type: Jar) {
 	archiveName "${baseName}-core-api.${extension}"
 	from(sourceSets.main.output) {
@@ -141,6 +165,7 @@ task coreApiJar(type: Jar) {
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
 		exclude "com/emc/mongoose/storage/mock/**"
 		exclude "com/emc/mongoose/webui/**"
+		exclude "com/emc/mongoose/common/**"
 
 	}
 	manifest {
@@ -162,6 +187,7 @@ task coreImplJar(type: Jar) {
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
 		exclude "com/emc/mongoose/storage/mock/**"
 		exclude "com/emc/mongoose/webui/**"
+		exclude "com/emc/mongoose/common/**"
 	}
 	manifest {
 		from sharedManifest
@@ -182,6 +208,7 @@ task storageAdapterAtmosJar(type: Jar) {
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
 		exclude "com/emc/mongoose/storage/mock/**"
 		exclude "com/emc/mongoose/webui/**"
+		exclude "com/emc/mongoose/common/**"
 	}
 	manifest {
 		from sharedManifest
@@ -202,6 +229,7 @@ task storageAdapterS3Jar(type: Jar) {
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
 		exclude "com/emc/mongoose/storage/mock/**"
 		exclude "com/emc/mongoose/webui/**"
+		exclude "com/emc/mongoose/common/**"
 	}
 	manifest {
 		from sharedManifest
@@ -222,6 +250,7 @@ task storageAdapterSwiftJar(type: Jar) {
 		include "com/emc/mongoose/storage/adapter/swift/**"
 		exclude "com/emc/mongoose/storage/mock/**"
 		exclude "com/emc/mongoose/webui/**"
+		exclude "com/emc/mongoose/common/**"
 	}
 	manifest {
 		from sharedManifest
@@ -242,6 +271,7 @@ task clientJar(type: Jar) {
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
 		exclude "com/emc/mongoose/storage/mock/**"
 		exclude "com/emc/mongoose/webui/**"
+		exclude "com/emc/mongoose/common/**"
 	}
 	manifest {
 		from sharedManifest
@@ -262,6 +292,7 @@ task serverJar(type: Jar, dependsOn: "rmic") {
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
 		exclude "com/emc/mongoose/storage/mock/**"
 		exclude "com/emc/mongoose/webui/**"
+		exclude "com/emc/mongoose/common/**"
 	}
 	manifest {
 		from sharedManifest
@@ -282,6 +313,7 @@ task storageMockJar(type: Jar) {
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
 		include "com/emc/mongoose/storage/mock/**"
 		exclude "com/emc/mongoose/webui/**"
+		exclude "com/emc/mongoose/common/**"
 	}
 	manifest {
 		from sharedManifest
@@ -302,6 +334,7 @@ task webuiJar(type: Jar) {
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
 		exclude "com/emc/mongoose/storage/mock/**"
 		include "com/emc/mongoose/webui/**"
+		exclude "com/emc/mongoose/common/**"
 	}
 	manifest {
 		from sharedManifest
@@ -320,6 +353,7 @@ task runJar(type: Jar) {
 	dependsOn serverJar
 	dependsOn storageMockJar
 	dependsOn webuiJar
+	dependsOn commonJar
 
 	def componentsClsPath = [
 		"lib" + File.separator + coreApiJar.archiveName,
@@ -330,7 +364,8 @@ task runJar(type: Jar) {
 		"lib" + File.separator + clientJar.archiveName,
 		"lib" + File.separator + serverJar.archiveName,
 		"lib" + File.separator + storageMockJar.archiveName,
-		"lib" + File.separator + webuiJar.archiveName
+		"lib" + File.separator + webuiJar.archiveName,
+		"lib" + File.separator + commonJar.archiveName
 	].join(' ')
 
 	def allDepsClsPath = configurations.runtime.collect { "lib" + File.separator + it.name }.join(' ')
@@ -348,6 +383,7 @@ task runJar(type: Jar) {
 		exclude "com/emc/mongoose/storage/adapter/swift/**"
 		exclude "com/emc/mongoose/storage/mock/**"
 		exclude "com/emc/mongoose/webui/**"
+		exclude "com/emc/mongoose/common/**"
 	}
 
 	manifest {
@@ -372,6 +408,7 @@ task dist(type: Tar) {
 	dependsOn storageMockJar
 	dependsOn runJar
 	dependsOn webuiJar
+	dependsOn commonJar
 
 	baseName = project.name
 	compression = Compression.GZIP
@@ -391,6 +428,7 @@ task dist(type: Tar) {
 			from storageMockJar.outputs.files
 			from webuiJar.outputs.files
 			from configurations.runtime
+			from commonJar.outputs.files
 		}
 		from runJar.outputs.files
 		into('scripts') {
@@ -402,6 +440,9 @@ task dist(type: Tar) {
 		into('webapp/WEB-INF/lib') {
 			from { configurations.compile.files { dep -> dep.name == 'jstl' } }
 			from { configurations.compile.files { dep -> dep.name == 'log4j-web' } }
+		}
+		into('openjpa/conf') {
+			from {'src/main/resources'}
 		}
 	}
 }
