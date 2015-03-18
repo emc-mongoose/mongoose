@@ -23,6 +23,7 @@ import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.commons.codec.binary.Base64;
+//
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.http.ExceptionLogger;

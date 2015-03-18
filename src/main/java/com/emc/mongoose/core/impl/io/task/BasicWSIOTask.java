@@ -13,8 +13,9 @@ import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
-//
+// mongoose-core-impl
 import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
+//
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.http.Header;
@@ -30,8 +31,8 @@ import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.HttpContext;
-//
 import org.apache.http.protocol.HttpCoreContext;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

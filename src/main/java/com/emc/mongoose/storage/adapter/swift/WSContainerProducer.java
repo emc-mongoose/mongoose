@@ -47,8 +47,8 @@ implements Producer<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public WSContainerProducer(
-		final WSContainerImpl<T> container, final Class<? extends WSObject> dataCls, final long maxCount,
-		final String addr
+		final WSContainerImpl<T> container, final Class<? extends WSObject> dataCls,
+		final long maxCount, final String addr
 	) throws ClassCastException, NoSuchMethodException {
 		super("container-" + container + "-producer");
 		this.container = container;

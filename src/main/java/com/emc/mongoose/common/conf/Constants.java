@@ -10,9 +10,7 @@ public interface Constants {
 	String DIR_PROPERTIES = "properties";
 	String DOT = ".";
 	String EMPTY = "";
-	String FNAME_POLICY = "security.policy";
-	String KEY_DIR_ROOT = "dir.root";
-	String KEY_POLICY = "java.security.policy";
+	String FNAME_POLICY = "allpermission.policy";
 	String RUN_MODE_STANDALONE = "standalone";
 	String RUN_MODE_CLIENT = "client";
 	String RUN_MODE_COMPAT_CLIENT = "controller";

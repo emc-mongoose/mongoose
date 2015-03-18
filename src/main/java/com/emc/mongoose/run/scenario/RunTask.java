@@ -1,6 +1,5 @@
 package com.emc.mongoose.run.scenario;
 //
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.TraceLogger;
 import com.emc.mongoose.common.logging.Markers;

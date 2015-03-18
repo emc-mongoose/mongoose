@@ -50,13 +50,12 @@ implements Externalizable {
 		INHERITABLE_CONTEXT = new InheritableThreadLocal<>();
 	//
 	public static void initContext() {
-		final RunTimeConfig instance = RunTimeConfig.getContext();
+		RunTimeConfig instance = RunTimeConfig.getContext();
 		if(instance == null) {
-			ThreadContext.put(KEY_RUN_ID, System.getProperty(KEY_RUN_ID));
-			ThreadContext.put(KEY_RUN_MODE, System.getProperty(KEY_RUN_MODE));
-		} else {
-			ThreadContext.put(KEY_RUN_ID, instance.getRunId());
-			ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
+			instance = new RunTimeConfig();
+			instance.set(KEY_RUN_ID, System.getProperty(KEY_RUN_ID));
+			instance.set(KEY_RUN_MODE, System.getProperty(KEY_RUN_MODE));
+			setContext(instance);
 		}
 	}
 	//

@@ -19,16 +19,15 @@ import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.status.StatusLogger;
+//
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.logging.log4j.status.StatusLogger;
 //
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.Policy;
 import java.util.Calendar;
 import java.util.Map;
 /**
@@ -39,7 +38,7 @@ public final class Main {
 	//
 	public static void main(final String args[]) {
 		//
-		initSecurity();
+		//initSecurity();
 		//
 		final String runMode;
 		if(args == null || args.length == 0 || args[0].startsWith("-")) {
@@ -59,7 +58,6 @@ public final class Main {
 		//
 		RunTimeConfig.initContext();
 		// load the properties
-		RunTimeConfig.setContext(new RunTimeConfig());
 		RunTimeConfig.getContext().loadPropsFromDir(
 			Paths.get(
 				RunTimeConfig.DIR_ROOT,
@@ -150,7 +148,7 @@ public final class Main {
 		//
 		LOG_CONTEXT = Configurator.initialize("mongoose", logConfPath.toUri().toString());
 	}
-	//
+	/*
 	public static void initSecurity() {
 		// load the security policy
 		final String secPolicyURL = "file:" +
@@ -160,7 +158,7 @@ public final class Main {
 		System.setProperty(com.emc.mongoose.common.conf.Constants.KEY_POLICY, secPolicyURL);
 		Policy.getPolicy().refresh();
 		System.setSecurityManager(new SecurityManager());
-	}
+	}*/
 	//
 	public static void shutdown() {
 		if(!LOG_CONTEXT.isStopped()) {
