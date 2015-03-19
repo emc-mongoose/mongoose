@@ -7,7 +7,6 @@ import com.emc.mongoose.run.Main;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +17,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -60,11 +58,10 @@ public class PropertiesLoader {
 	}
 	//
 	private static void walkJsonTree(final JsonNode jsonNode) {
-		final List<DefaultMapEntry<String, Object>> props = new ArrayList<>();
-		walkJsonTree(jsonNode, props, null);
+		walkJsonTree(jsonNode, null);
 	}
 	//
-	private static void walkJsonTree(final JsonNode jsonNode, List<DefaultMapEntry<String, Object>> props,
+	private static void walkJsonTree(final JsonNode jsonNode,
 	                                 final String fullFileName) {
 		final Iterator<String> fields = jsonNode.fieldNames();
 		while (fields.hasNext()) {
@@ -94,8 +91,7 @@ public class PropertiesLoader {
 					mongooseKeys.add(fullFieldName);
 				}
 			} else {
-				props = new ArrayList<>();
-				walkJsonTree(jsonNode.get(shortFieldName), props, fullFieldName);
+				walkJsonTree(jsonNode.get(shortFieldName), fullFieldName);
 			}
 		}
 	}

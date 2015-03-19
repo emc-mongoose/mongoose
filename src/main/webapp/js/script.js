@@ -1416,11 +1416,11 @@ function charts(chartsArray) {
 			// change default width
 			width = 480;
 			//
-			var loadTypes = scenarioChainLoad.slice(1, -1).split(",");
-			var rampupThreadCountsArray = rampupThreadCounts.slice(1, -1).split(",").map(function(item) {
+			var loadTypes = scenarioChainLoad.split(",");
+			var rampupThreadCountsArray = rampupThreadCounts.split(",").map(function(item) {
 				return parseInt(item, 10);
 			});
-			var loadRampupSizesArray = loadRampupSizes.slice(1, -1).split(",").map(function(item) {
+			var loadRampupSizesArray = loadRampupSizes.split(",").map(function(item) {
 				return item.trim();
 			});
 			var AVG = "avg";
