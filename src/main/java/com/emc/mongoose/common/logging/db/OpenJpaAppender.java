@@ -31,6 +31,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.status.StatusLogger;
+import org.apache.openjpa.enhance.InstrumentationFactory;
 import org.apache.openjpa.persistence.RollbackException;
 //
 import javax.persistence.EntityManager;
@@ -41,7 +42,11 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import javax.persistence.spi.PersistenceProvider;
+import javax.persistence.spi.PersistenceUnitInfo;
+import javax.persistence.spi.ProviderUtil;
 import java.io.Serializable;
+import java.lang.instrument.Instrumentation;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -199,6 +204,7 @@ extends AbstractAppender {
 	//
 	private void persistPerf(final LogEvent event, final String marker){
 		final String
+			modeName = event.getContextMap().get(RunTimeConfig.KEY_RUN_MODE),
 			runName = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID),
 			loadTypeName = event.getContextMap().get(DataObjectWorkerFactory.KEY_LOAD_TYPE),
 			apiName = event.getContextMap().get(DataObjectWorkerFactory.KEY_API);
@@ -226,8 +232,23 @@ extends AbstractAppender {
 			latencyMax = Integer.valueOf(event.getContextMap().get(LATENCY_MAX));
 		EntityManager entityManager = null;
 		try {
-
-			final RunEntity runEntity = (RunEntity) getEntity("name", runName, "timestamp", runTimestamp, RunEntity.class);
+			entityManager = entityManagerFactory.createEntityManager();
+			entityManager.getTransaction().begin();
+			/*
+			ModeEntity modeEntity = (ModeEntity) getEntity("name", modeName,
+				ModeEntity.class);
+			if (modeEntity == null) {
+				modeEntity = new ModeEntity(modeName);
+			}
+			*/
+			//
+			RunEntity runEntity = (RunEntity) getEntity("name", runName, "timestamp", runTimestamp, RunEntity.class);
+			/*
+			if (runEntity == null) {
+				runEntity = new RunEntity(modeEntity, runName, timestamp);
+			}
+			entityManager.merge(runEntity);
+			*/
 			//
 			LoadTypeEntity loadTypeEntity = (LoadTypeEntity) getEntity("name", loadTypeName, LoadTypeEntity.class);
 			if (loadTypeEntity == null) {
@@ -238,9 +259,7 @@ extends AbstractAppender {
 			if (apiEntity == null){
 				apiEntity = new ApiEntity(apiName);
 			}
-			//
-			entityManager = entityManagerFactory.createEntityManager();
-			entityManager.getTransaction().begin();
+
 			//
 			final LoadEntityPK loadEntityPK = new LoadEntityPK(loadNumber, runEntity.getId());
 			LoadEntity loadEntity = entityManager.find(LoadEntity.class, loadEntityPK);
@@ -452,7 +471,7 @@ extends AbstractAppender {
 					case PERF_AVG:
 					case PERF_SUM:
 						if (event.getLevel().equals(Level.INFO)) {
-							persistPerf(event, marker);
+							//persistPerf(event, marker);
 						}
 						break;
 					case MSG:

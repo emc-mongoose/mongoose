@@ -20,12 +20,12 @@
 		<class>com.emc.mongoose.common.logging.db.entity.TraceEntity</class>
 		<class>com.emc.mongoose.common.logging.db.entity.PerfomanceEntity</class>
 		<properties>
-			<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>
-			<property name="openjpa.DynamicEnhancementAgent" value="true"/>
-			<property name="openjpa.jdbc.MappingDefaults"
-					  value="ForeignKeyDeleteAction=restrict,JoinForeignKeyDeleteAction=restrict"/>
+			<!--<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>!-->
+			<!--<property name="openjpa.DynamicEnhancementAgent" value="true"/>!-->
+			<!--<property name="openjpa.jdbc.MappingDefaults"
+					  value="ForeignKeyDeleteAction=restrict,JoinForeignKeyDeleteAction=restrict"/>!-->
 			<!-- Logging Open JPA !-->
-			<property name="openjpa.Log" value="DefaultLevel=WARN, Tool=INFO, Runtime=WARN"/>
+			<property name="openjpa.Log" value="DefaultLevel=TRACE, Tool=INFO, Runtime=WARN, Enhance=WARN"/>
 			<!-- For auto creating tables !-->
 			<property name="openjpa.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true)" />
 			<!--  Connection Pool  !-->

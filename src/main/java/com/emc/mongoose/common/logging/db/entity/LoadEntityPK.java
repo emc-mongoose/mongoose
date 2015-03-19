@@ -1,7 +1,6 @@
 package com.emc.mongoose.common.logging.db.entity;
 
-import com.emc.mongoose.common.logging.db.entity.LoadEntity;
-
+import javax.persistence.Embeddable;
 import java.io.Serializable;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
