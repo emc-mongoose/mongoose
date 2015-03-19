@@ -4,10 +4,14 @@ apply plugin: 'java'
 apply plugin: 'java-library-distribution'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
+
 sourceCompatibility = '1.7'
 
-def confDirName = 'conf'
+distsDirName = 'dist'
+dependencyCacheDirName = 'tmp'
+
 def libsDirName = 'lib'
+def confDirName = 'conf'
 
 def loadProperties(String sourceFileName) {
 	def config = new Properties()
@@ -295,7 +299,7 @@ dependencies {
 }
 
 
-def allDepsClsPath = configurations.runtime.collect { libsDirName + File.separator + it.name }.join(' ')
+def allDepsClsPath = configurations.all.collect { libsDirName + File.separator + it.name }.join(' ')
 
 task compileRMI(dependsOn: "compileServerImplJava") << {
 	String[] listClsRemote = [
@@ -636,13 +640,14 @@ task dist(type: Tar) {
 
 	baseName = project.name
 	compression = Compression.GZIP
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 
 	into(baseName + '-' + version) {
 		into('conf') {
 			from { 'conf' }
 		}
 		into('lib') {
-			from configurations.runtime
+			from configurations.all
 		}
 		from commonJar.outputs.files
 		from coreApiJar.outputs.files
@@ -663,11 +668,11 @@ task dist(type: Tar) {
 			from { sourceSets.test.resources }
 		}
 		into('webapp') {
-			from { 'src/main/webapp' }
+			from { ["src", "main", "webapp"].join(File.separator) }
 		}
-		into('webapp/WEB-INF/lib') {
-			from { configurations.compile.files { dep -> dep.name == 'jstl' } }
-			from { configurations.compile.files { dep -> dep.name == 'log4j-web' } }
+		into(["webapp", "WEB-INF", "lib"].join(File.separator)) {
+			from { configurations.all { dep -> dep.name == 'jstl' } }
+			from { configurations.all { dep -> dep.name == 'log4j-web' } }
 		}
 	}
 }
