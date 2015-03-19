@@ -16,10 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -50,6 +48,7 @@ public class PropertiesLoader {
 			final JsonNode rootNode = jsonMapper.readTree(cfgFile);
 			walkJsonTree(rootNode);
 			tgtConfig.setMongooseKeys(mongooseKeys);
+			tgtConfig.putJsonProps(rootNode);
 			//
 			if (ACTION.equals(PropertiesLoaderActions.UPLOAD)) {
 				jsonMapper.writerWithDefaultPrettyPrinter().writeValue(cfgFile, rootNode);
@@ -65,7 +64,8 @@ public class PropertiesLoader {
 		walkJsonTree(jsonNode, props, null);
 	}
 	//
-	private static void walkJsonTree(final JsonNode jsonNode, List<DefaultMapEntry<String, Object>> props, final String fullFileName) {
+	private static void walkJsonTree(final JsonNode jsonNode, List<DefaultMapEntry<String, Object>> props,
+	                                 final String fullFileName) {
 		final Iterator<String> fields = jsonNode.fieldNames();
 		while (fields.hasNext()) {
 			final String shortFieldName = fields.next();
@@ -80,50 +80,24 @@ public class PropertiesLoader {
 			if (!jsonNode.get(shortFieldName).fieldNames().hasNext()) {
 				if (ACTION.equals(PropertiesLoaderActions.UPDATE)
 						|| ACTION.equals(PropertiesLoaderActions.UPLOAD)) {
+					final String property = DEFAULT_CFG.getProperty(fullFieldName).toString()
+							.replace("[", "")
+							.replace("]", "")
+							.replace(" ", "")
+							.trim();
 					DEFAULT_CFG.setProperty(fullFieldName, DEFAULT_CFG.getProperty(fullFieldName));
-					props.add(new DefaultMapEntry<String, Object>(fullFieldName,
-							new DefaultMapEntry<>(shortFieldName, DEFAULT_CFG.getProperty(fullFieldName))));
-					if (!fields.hasNext()) {
-						setUpPropertiesMap(props, fullFileName);
-					}
-					if (ACTION.equals(PropertiesLoaderActions.UPLOAD)) {
-						((ObjectNode) jsonNode).put(shortFieldName, DEFAULT_CFG.getProperty(fullFieldName).toString()
-									.replace("[", "")
-									.replace("]", "")
-									.replace(" ", "")
-									.trim());
-					}
+					((ObjectNode) jsonNode).put(shortFieldName, property);
 				} else {
 					DEFAULT_CFG.setProperty(fullFieldName, jsonNode.get(shortFieldName).toString()
 							.replace("\"", "")
 							.trim());
 					mongooseKeys.add(fullFieldName);
-					props.add(new DefaultMapEntry<String, Object>(fullFieldName,
-							new DefaultMapEntry<>(shortFieldName, jsonNode.get(shortFieldName).toString()
-									.replace("\"", "")
-									.trim())));
-					if (!fields.hasNext()) {
-						setUpPropertiesMap(props, fullFileName);
-					}
 				}
 			} else {
 				props = new ArrayList<>();
 				walkJsonTree(jsonNode.get(shortFieldName), props, fullFieldName);
 			}
 		}
-	}
-	//
-	private static void setUpPropertiesMap(List<DefaultMapEntry<String, Object>> props, final String fullFileName) {
-		final LinkedList<String> prefixTokens = new LinkedList<>();
-		prefixTokens.add(Main.DIR_PROPERTIES);
-		final LinkedList<String> folders = new LinkedList<>(Arrays.asList(fullFileName.split("\\.")));
-		final String currFileName = folders.removeLast();
-		prefixTokens.addAll(folders);
-		if (currFileName.equals("run")) {
-			props.add(0, new DefaultMapEntry<String, Object>(RunTimeConfig.KEY_RUN_ID,
-					new DefaultMapEntry<>("id", DEFAULT_CFG.getProperty(RunTimeConfig.KEY_RUN_ID))));
-		}
-		DEFAULT_CFG.put(prefixTokens, currFileName, props);
 	}
 	//
 	public static void updateProps(final Path rootDir, final RunTimeConfig tgtConfig, final boolean isUpload) {

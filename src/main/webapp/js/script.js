@@ -8,9 +8,18 @@ $(document).ready(function() {
 	var shortPropsMap = {};
 	var ul = $(".folders");
 	//
-	walkTreeMap(propertiesMap, ul, shortPropsMap);
-	buildDivBlocksByFileNames(shortPropsMap);
-	generatePropertyPage();
+	walkTreeMap(jsonProps, ul, shortPropsMap);
+	$("#run").parent().find("ul").addChild("<li>")
+			.addClass("file")
+			.append($("<a>", {
+				class: "props",
+				href: "#" + "run.id",
+				text: "id"
+			}));
+	shortPropsMap["run.id"] = "";
+	buildDivBlocksByPropertyNames(shortPropsMap);
+	//
+	//generatePropertyPage();
 	configureWebSocketConnection(WEBSOCKET_URL, TABLE_ROWS_COUNT).connect(chartsArray);
 	//
 	$("select").each(function() {
@@ -77,7 +86,7 @@ $(document).ready(function() {
 		$("#run-mode").val(valueSelected);
 	});
 	//
-	$("#backup-run\\.scenario\\.name").on("change", function() {
+	$("#backup-scenario\\.name").on("change", function() {
 		var valueSelected = this.value;
 		$("#scenario-button").attr("data-target", "#" + valueSelected);
 		changeLoadHint(valueSelected);
@@ -86,17 +95,18 @@ $(document).ready(function() {
 	function changeLoadHint(value) {
 		switch (value) {
 			case "backup-single":
-				$("#scenario-load").text("Load: [" + $("#scenario\\.single\\.load").val() + "]");
+				$("#scenario-load").text("Load: [" + $("#scenario\\.type\\.single\\.load input").val() + "]");
 				break;
 			case "backup-chain":
+				$("#scenario-load").text("Load: [" + $("#scenario\\.type\\.chain\\.load input").val() + "]");
 			case "backup-rampup":
-				$("#scenario-load").text("Load: [" + $("#scenario\\.chain\\.load").val() + "]");
+				$("#scenario-load").text("Load: [" + $("#scenario\\.type\\.chain\\.load input").val() + "]");
 				break;
 		}
 	}
-	$("#backup-run\\.scenario\\.name").change();
+	$("#backup-scenario\\.name").change();
 	//
-	$("#backup-storage\\.api").on("change", function() {
+	$("#backup-api\\.name").on("change", function() {
 		var valueSelected = this.value;
 		$("#api-button").attr("data-target", "#" + valueSelected);
 	});
@@ -108,39 +118,43 @@ $(document).ready(function() {
 	//
 	$("#base input, #base select").on("change", function() {
 		var currElement = $(this);
-		if (currElement.parents(".complex").length === 1) {
+		/*if (currElement.parents(".complex").length === 1) {
 			var input = $("#backup-run\\.time\\.input").val();
 			var select = $("#backup-run\\.time\\.select").val();
 			currElement = $("#backup-run\\.time").val(input + "." + select);
-		}
+		}*/
 		//
-		var element = document.getElementById(currElement.attr("data-pointer"));
+		var element = $("#" + currElement.attr("data-pointer").replace(/\./g, "\\.") + " input");
 		if (currElement.is("select")) {
 			var valueSelected = currElement.children("option").filter(":selected").text().trim();
-			$('select[data-pointer="'+currElement.attr("data-pointer")+'"]').val(currElement.val());
+			$('select[data-pointer="'+currElement.attr("data-pointer")+'"]')
+					.val(currElement.val());
 			if (element) {
-				element.value = valueSelected;
+				element.val(valueSelected);
 			}
 		} else {
-			$('input[data-pointer="' + currElement.attr("data-pointer") + '"]').val(currElement.val());
+			$('input[data-pointer="' + currElement.attr("data-pointer") + '"]')
+					.val(currElement.val());
 			if (element) {
-				element.value = currElement.val();
+				element.val(currElement.val());
 			}
 		}
-		if ((currElement.attr("id") === "backup-scenario.single.load")
-			|| (currElement.attr("id") === "backup-scenario.chain.load")) {
-			changeLoadHint($("#backup-run\\.scenario\\.name").val());
+		if ((currElement.attr("id") === "backup-scenario.type.single.load")
+			|| (currElement.attr("id") === "backup-scenario.type.chain.load")) {
+			changeLoadHint($("#backup-scenario\\.name").val());
 		}
 	});
 	//
 	$("#extended input").on("change", function() {
-		if ($(this).attr("id") === "run.time") {
+		/*if ($(this).attr("id") === "run.time") {
 			var splittedTimeString = $(this).val().split(".");
 			$("#backup-run\\.time\\.input").val(splittedTimeString[0]);
 			$("#backup-run\\.time\\.select").val(splittedTimeString[1]);
-		}
-		$('input[data-pointer="' + $(this).attr("id") + '"]').val($(this).val()).change();
-		$('select[data-pointer="' + $(this).attr("id") + '"] option:contains(' + $(this).val() + ')')
+		}*/
+		$('input[data-pointer="' + $(this).parent().parent().attr("id") + '"]')
+				.val($(this).val()).change();
+		$('select[data-pointer="' + $(this).parent().parent().attr("id") + '"] option:contains(' + $(this)
+				.val() + ')')
 			.attr('selected', 'selected').change();
 	});
 	$("#backup-data\\.size").on("change", function() {
@@ -151,11 +165,11 @@ $(document).ready(function() {
 	$("#backup-load\\.threads").on("change", function() {
 		var currentValue = this.value;
 		var keys2Override = [
-			"#backup-load\\.append\\.threads",
-			"#backup-load\\.create\\.threads",
-			"#backup-load\\.read\\.threads",
-			"#backup-load\\.update\\.threads",
-			"#backup-load\\.delete\\.threads"
+			"#backup-load\\.type\\.append\\.threads",
+			"#backup-load\\.type\\.create\\.threads",
+			"#backup-load\\.type\\.read\\.threads",
+			"#backup-load\\.type\\.update\\.threads",
+			"#backup-load\\.type\\.delete\\.threads"
 		];
 		keys2Override.forEach(function(d) {
 			$(d).val(currentValue).change();
@@ -230,7 +244,7 @@ $(document).ready(function() {
 		}
 	});
 	//
-	$(".property").click(function() {
+	/*$(".property").click(function() {
 		var id = $(this).attr("href").replace(/\./g, "\\.");
 		var name = $(this).parents(".file").find(".props").text();
 		$("#" + name).show();
@@ -238,7 +252,7 @@ $(document).ready(function() {
 		var parent = element.parents(".form-group");
 		$("#" + name).children().hide();
 		parent.show();
-	});
+	});*/
 	//
 });
 
@@ -258,84 +272,70 @@ function excludeDuplicateOptions() {
 	});
 }
 //
-function walkTreeMap(map, ul, shortsPropsMap) {
+function walkTreeMap(map, ul, shortsPropsMap, fullKeyName) {
 	$.each(map, function(key, value) {
 		var element;
-		if (jQuery.isArray(value)) {
-			element = ul.addChild("<li>")
+		var currentKeyName = "";
+		if (key !== "properties") {
+			if (!fullKeyName) {
+				currentKeyName = key;
+			} else {
+				currentKeyName = fullKeyName + "." + key;
+			}
+		}
+		if (!(value instanceof Object)) {
+			if (currentKeyName === "run.mode")
+				return;
+			ul.addChild("<li>")
 				.addClass("file")
 				.append($("<a>", {
 					class: "props",
-					href: "#" + key,
+					href: "#" + currentKeyName,
 					text: key
-				}))
-				.append($("<input>", {
-					type: "checkbox"
-				}))
-				.addChild($("<ul>"));
-			var array = value;
-			for (var i = 0;i < array.length; i++) {
-				if (array[i].key === "run.mode") {
-					continue;
-				}
-				element.addChild($("<li>"))
-					.addChild($("<a>", {
-						href: "#" + array[i].key,
-						class: "property",
-						text: array[i].value.key
-					}));
-			}
-			shortsPropsMap[key] = value;
-			return;
+				}));
+			shortsPropsMap[currentKeyName] = value;
 		} else {
 			element = ul.prependChild("<li>")
-				.append($("<label>", {
-					for: key,
-					text: key
-				}))
-				.append($("<input>", {
-					type: "checkbox",
-					id: key
-				}))
-				.addChild("<ul>");
-
+					.append($("<label>", {
+						for: key,
+						text: key
+					}))
+					.append($("<input>", {
+						type: "checkbox",
+						id: key
+					}))
+					.addChild("<ul>");
+			walkTreeMap(value, element, shortsPropsMap, currentKeyName);
 		}
-		walkTreeMap(value, element, shortsPropsMap);
 	});
 }
 //
-function buildDivBlocksByFileNames(shortPropsMap) {
-	var formGroupDiv;
+function buildDivBlocksByPropertyNames(shortPropsMap) {
 	for (var key in shortPropsMap) {
 		if (shortPropsMap.hasOwnProperty(key)) {
-			var keyDiv = $("<div>").attr("id", key);
+			if (key === "run.mode")
+				continue;
+			var keyDiv = $("<div>").addClass("form-group");
+			keyDiv.attr("id", key);
 			keyDiv.css("display", "none");
-			var obj = shortPropsMap[key];
-			for (var i = 0; i < obj.length; i++) {
-				if (obj[i].key === "run.mode")
-					continue;
-				formGroupDiv = $("<div>").addClass("form-group");
-				var placeHolder = "";
-				if (obj[i].key === "data.src.fpath") {
-					placeHolder = "Format: log/<run.mode>/<run.id>/<filename>";
-				}
-				formGroupDiv.append($("<label>", {
-					for: obj[i].key,
-					class: "col-sm-3 control-label",
-					text: obj[i].value.key
-					}))
-					.append($("<div>", {
-						class: "col-sm-9"
-					}).append($("<input>", {
-						type: "text",
-						class: "form-control",
-						name: obj[i].key,
-						id: obj[i].key,
-						value: obj[i].value.value,
-						placeholder: "Enter '" + obj[i].key + "' property. " + placeHolder
-					})));
-				keyDiv.append(formGroupDiv);
+			var placeHolder = "";
+			if (key === "data.src.fpath") {
+				placeHolder = "Format: log/<run.mode>/<run.id>/<filename>";
 			}
+			keyDiv.append($("<label>", {
+				for: key,
+				class: "col-sm-3 control-label",
+				text: key.split(".").pop()
+			}))
+			.append($("<div>", {
+				class: "col-sm-9"
+			}).append($("<input>", {
+				type: "text",
+				class: "form-control",
+				name: key,
+				value: shortPropsMap[key],
+				placeholder: "Enter '" + key + "' property. " + placeHolder
+			})));
 			keyDiv.appendTo("#configuration-content");
 		}
 	}
@@ -366,7 +366,8 @@ function onMenuItemClick(element) {
 	resetParams();
 	element.css("color", "#CC0033");
 	if (element.is("a")) {
-		var block = $(element.attr("href"));
+		var id = element.attr("href").replace(/\./g, "\\.");
+		var block = $(id);
 		block.show();
 		block.children().show();
 	}
@@ -401,10 +402,10 @@ function configureWebSocketConnection(location, countOfRecords) {
 			this.ws.onmessage = function(message) {
 				var json = JSON.parse(message.data);
 				var runId = json.contextMap["run.id"];
-				var runMetricsPeriodSec = json.contextMap["run.metrics.period.sec"];
-				var scenarioChainLoad = json.contextMap["scenario.chain.load"];
-				var rampupThreadCounts = json.contextMap["scenario.rampup.thread.counts"];
-				var loadRampupSizes = json.contextMap["scenario.rampup.sizes"];
+				var runMetricsPeriodSec = json.contextMap["load.metricsPeriodSec"];
+				var scenarioChainLoad = json.contextMap["scenario.type.chain.load"];
+				var rampupThreadCounts = json.contextMap["scenario.type.rampup.threadCounts"];
+				var loadRampupSizes = json.contextMap["scenario.type.rampup.sizes"];
 				//
 				var entry = runId.split(".").join("_");
 				if (!json.hasOwnProperty("marker") || !json.loggerName) {
@@ -419,7 +420,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 					}
 				});
 				if (!isContains) {
-					if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+					if (json.contextMap["scenario.name"] === RUN_SCENARIO_NAME.rampup) {
 						charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
 					}
 				}
@@ -432,7 +433,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 						break;
 					case MARKERS.PERF_SUM:
 						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
-						if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+						if (json.contextMap["scenario.name"] === RUN_SCENARIO_NAME.rampup) {
 							//alert(json.contextMap["currentSize"]);
 							chartsArray.forEach(function(d) {
 								//console.log(d);
@@ -459,7 +460,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 							}
 						});
 						if (!isFound) {
-							switch(json.contextMap["run.scenario.name"]) {
+							switch(json.contextMap["scenario.name"]) {
 								case RUN_SCENARIO_NAME.single:
 									charts(chartsArray).single(json);
 									break;
@@ -565,8 +566,8 @@ function charts(chartsArray) {
 	//  Some constants from runTimeConfig
 	var RUN_TIME_CONFIG_CONSTANTS = {
 		runId: "run.id",
-		runMetricsPeriodSec: "run.metrics.period.sec",
-		runScenarioName: "run.scenario.name"
+		runMetricsPeriodSec: "load.metricsPeriodSec",
+		runScenarioName: "scenario.name"
 	};
 	//
 	var colorsList18 = [

@@ -58,9 +58,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -234,7 +232,7 @@ implements Runnable {
 			}
 			//
 			multiSocketSvc.awaitTermination(
-				runTimeConfig.getRunTimeValue(), runTimeConfig.getRunTimeUnit()
+				runTimeConfig.getLoadLimitTimeValue(), runTimeConfig.getLoadLimitTimeUnit()
 			);
 		} catch (final InterruptedException e) {
 			LOG.info(Markers.MSG, "Interrupting the Cinderella");

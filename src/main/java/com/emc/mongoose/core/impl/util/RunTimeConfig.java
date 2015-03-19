@@ -1,21 +1,16 @@
 package com.emc.mongoose.core.impl.util;
 //
 import com.emc.mongoose.core.impl.util.conf.PropertiesLoader;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.run.util.DirectoryLoader;
 import com.emc.mongoose.core.api.util.log.Markers;
 //
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 //
-import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -28,7 +23,6 @@ import java.nio.file.Path;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -117,7 +111,9 @@ implements Externalizable {
 		KEY_SCENARIO_CHAIN_ITEMSBUFFER = "scenario.type.chain.itemsbuffer",
 		//  Rampup
 		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
-		KEY_SCENARIO_RAMPUP_THREAD_COUNTS = "scenario.type.rampup.threadCounts";
+		KEY_SCENARIO_RAMPUP_THREAD_COUNTS = "scenario.type.rampup.threadCounts",
+		//  For ui property tree
+		KEY_CHILDREN_PROPS = "children";
 	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
@@ -134,6 +130,8 @@ implements Externalizable {
 	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)b?");
 	//
 	private final Map<String, Object> properties = new HashMap<>();
+	//
+	private JsonNode rootNode;
 	//
 	public long getSizeBytes(final String key) {
 		return toSize(getString(key));
@@ -177,32 +175,13 @@ implements Externalizable {
 		).toUpperCase();
 	}
 	//
-	public String getPropertiesMap() {
+	public String getJsonProps() {
 		PropertiesLoader.updateProps(Paths.get(Main.DIR_ROOT, Main.DIR_CONF).resolve(Main.JSON_PROPS_FILE), this, false);
-		final ObjectMapper mapper = new ObjectMapper();
-		try {
-			return mapper.writeValueAsString(properties);
-		} catch (final JsonProcessingException e) {
-			TraceLogger.failure(LOG, Level.ERROR, e, "Failed json processing");
-		}
-		return null;
+		return rootNode.toString();
 	}
 	//
-	@SuppressWarnings("unchecked")
-	public final synchronized void put(
-		final List<String> dirs, final String fileName,
-		final List<DefaultMapEntry<String, Object>> props
-	) {
-		Map<String, Object> node = properties;
-		if (dirs != null) {
-			for (final String nextDir : dirs) {
-				if (!node.containsKey(nextDir)) {
-					node.put(nextDir, new LinkedHashMap<>());
-				}
-				node = (Map<String, Object>) node.get(nextDir);
-			}
-		}
-		node.put(fileName, props);
+	public final synchronized void putJsonProps(final JsonNode rootNode) {
+		this.rootNode = rootNode;
 	}
 	//
 	public final synchronized void set(final String key, final Object value) {
@@ -410,11 +389,11 @@ implements Externalizable {
 		return getString(KEY_LOAD_LIMIT_TIME + ".value") + "." + getString(KEY_LOAD_LIMIT_TIME + ".unit");
 	}
 	//
-	public final TimeUnit getRunTimeUnit() {
+	public final TimeUnit getLoadLimitTimeUnit() {
 		return TimeUnit.valueOf(getString(KEY_LOAD_LIMIT_TIME + ".unit").toUpperCase());
 	}
 	//
-	public final long getRunTimeValue() {
+	public final long getLoadLimitTimeValue() {
 		return getLong(KEY_LOAD_LIMIT_TIME + ".value");
 	}
 	//
@@ -567,10 +546,6 @@ implements Externalizable {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public synchronized void loadPropsFromDir(final Path propsDir) {
-		DirectoryLoader.loadPropsFromDir(propsDir, this);
-	}
-	//
 	public synchronized void loadPropsFromJsonCfgFile(final Path propsDir) {
 		PropertiesLoader.loadPropsFromJsonCfgFile(propsDir, this);
 	}

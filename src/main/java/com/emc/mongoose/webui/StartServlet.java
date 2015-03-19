@@ -182,6 +182,6 @@ public final class StartServlet extends CommonServlet {
 	}
 	//
 	public final boolean isRunIdFree(final String runId) {
-		return threadsMap.containsKey(runId);
+		return !threadsMap.containsKey(runId);
 	}
 }
