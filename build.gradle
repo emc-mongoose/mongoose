@@ -7,9 +7,7 @@ apply plugin: 'eclipse'
 sourceCompatibility = '1.7'
 
 def confDirName = 'conf'
-distsDirName = 'dist'
-libsDirName = 'lib'
-dependencyCacheDirName = 'tmp'
+def libsDirName = 'lib'
 
 def loadProperties(String sourceFileName) {
 	def config = new Properties()
@@ -21,35 +19,17 @@ def loadProperties(String sourceFileName) {
 		}
 	}
 }
-
 loadProperties confDirName + File.separator + 'properties' + File.separator + 'run'
-
 version = ext.version
 
-repositories {
-    mavenCentral()
-}
-
-configurations {
-	compileRMI {
-		transitive = true
-	}
-	compile {
-		extendsFrom compileRMI
-		transitive = true
-	}
-	runtime {
-		extendsFrom compile
-	}
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// source sets//////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 sourceSets {
-	cli {
-		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'cli'].join(File.separator))
-			include '**'
-		}
-	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// shared basic functionality //////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	common {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'common'].join(File.separator))
@@ -60,6 +40,9 @@ sourceSets {
 			include 'allpermission.policy'
 		}
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// core ////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	coreApi {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'core', 'api'].join(File.separator))
@@ -74,6 +57,36 @@ sourceSets {
 		}
 		compileClasspath += sourceSets.common.output + sourceSets.coreApi.output
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// storage API adapters ////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	storageAdapterAtmos {
+		java {
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 'atmos'].join(File.separator))
+			include '**'
+		}
+		compileClasspath += sourceSets.common.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
+	}
+	storageAdapterS3 {
+		java {
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 's3'].join(File.separator))
+			include '**'
+		}
+		compileClasspath += sourceSets.common.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
+	}
+	storageAdapterSwift {
+		java {
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 'swift'].join(File.separator))
+			include '**'
+		}
+		compileClasspath += sourceSets.common.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// misc ////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	serverApi {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'server', 'api'].join(File.separator))
@@ -81,198 +94,225 @@ sourceSets {
 		}
 		compileClasspath += sourceSets.common.output + sourceSets.coreApi.output
 	}
-	serverImpl {
+	webserver {
 		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'server', 'impl'].join(File.separator))
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'webserver'].join(File.separator))
 			include '**'
 		}
-		compileClasspath += sourceSets.common.output + sourceSets.coreApi + sourceSets.coreImpl.output + sourceSets.serverApi.output
+		compileClasspath += sourceSets.common.output
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// run modes ///////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	client {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'client'].join(File.separator))
 			include '**'
 		}
-		compileClasspath += sourceSets.common.output + sourceSets.coreApi.output + sourceSets.serverApi.output
+		compileClasspath += sourceSets.common.output + sourceSets.serverApi.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
+	}
+	serverImpl {
+		java {
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'server', 'impl'].join(File.separator))
+			include '**'
+		}
+		compileClasspath += sourceSets.common.output + sourceSets.serverApi.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 	}
 	scenario {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'scenario'].join(File.separator))
 			include '**'
 		}
+		compileClasspath += sourceSets.common.output
 	}
-	webserver {
+	cli {
 		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'webserver'].join(File.separator))
-			include '**'
-		}
-	}
-	storageAdapterAtmos {
-		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 'atmos'].join(File.separator))
-			include '**'
-		}
-	}
-	storageAdapterS3 {
-		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 's3'].join(File.separator))
-			include '**'
-		}
-	}
-	storageAdapterSwift {
-		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 'swift'].join(File.separator))
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'cli'].join(File.separator))
 			include '**'
 		}
 	}
 	storageMock {
 		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'wsmock'].join(File.separator))
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'mock'].join(File.separator))
 			include '**'
 		}
+		compileClasspath += sourceSets.common.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 	}
 	webui {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'webui'].join(File.separator))
 			include '**'
 		}
+		//
+		compileClasspath += sourceSets.common.output + sourceSets.scenario.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
+		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
+		compileClasspath += sourceSets.storageMock.output
+		//
+		runtimeClasspath += sourceSets.client.output + sourceSets.storageMock.output
+		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// launcher ////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	run {
 		java {
-			srcDirs(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run'].join(File.separator))
-			include 'Main.java'
+			srcDirs(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'main'].join(File.separator))
+			include '**'
 		}
-		compileClasspath += sourceSets.common.output
+		//
+		compileClasspath += sourceSets.common.output + sourceSets.scenario.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
+		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
+		compileClasspath += sourceSets.webserver.output + sourceSets.webui.output
+		compileClasspath += sourceSets.cli.output + sourceSets.storageMock.output
+		//
+		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
+		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
 	}
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// dependencies ////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+repositories {
+	mavenCentral()
+}
+apply from: "deps.gradle"
 
 dependencies {
 
-	compile (
-		//
-		'io.dropwizard.metrics:metrics-core:3.1.0',
-		//
-		'commons-codec:commons-codec:1.10',
-		//
-		'org.apache.logging.log4j:log4j-api:2.1',
-		'org.apache.logging.log4j:log4j-core:2.1',
-		'org.apache.logging.log4j:log4j-web:2.1',
-		//
-		'org.apache.httpcomponents:httpcore-nio:4.4',
-		//
-		'org.eclipse.jetty:jetty-server:9.3.0.M1',
-		'org.eclipse.jetty:jetty-webapp:9.3.0.M1',
-		//
-		'javax.servlet:javax.servlet-api:3.1.0',
-		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
-		'org.eclipse.jetty.websocket:websocket-server:9.3.0.M1',
-		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
-		//
-		'jstl:jstl:1.2',
-		'org.apache.commons:commons-collections4:4.0',
-		'commons-cli:commons-cli:1.2',
-		//
-		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
-		'com.fasterxml.jackson.core:jackson-core:2.4.1',
-		'com.fasterxml.jackson.core:jackson-databind:2.4.1',
-	)
-
-	compileRMI (
-		'commons-configuration:commons-configuration:1.10',
-		'org.apache.httpcomponents:httpcore:4.4',
-		'org.apache.logging.log4j:log4j-api:2.1',
-	)
-
-	runtime (
-		//
-		'com.github.rickyclarkson:jmdns:3.4.2-r353-1',
-		//
-		'commons-lang:commons-lang:2.6',
-		'commons-logging:commons-logging:1.2',
-		//
-		'org.apache.logging.log4j:log4j-slf4j-impl:2.1',
-		'org.apache.logging.log4j:log4j-jcl:2.1',
-		'org.apache.logging.log4j:log4j-jul:2.1',
-		//'org.slf4j:slf4j-api:1.7.7',
-		'com.lmax:disruptor:3.3.0',
-		'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.4.1',
-		'org.fusesource.jansi:jansi:1.11',
-		//
-		'org.python:jython-standalone:2.7-b3',
-	)
-
-	cliCompile (
-		'commons-cli:commons-cli:1.2',
-		'commons-lang:commons-lang:2.6',
-	)
-
+	// common
 	commonCompile (
-		'commons-configuration:commons-configuration:1.10',
-		'commons-lang:commons-lang:2.6',
-		'org.apache.commons:commons-collections4:4.0',
-		'org.apache.httpcomponents:httpcore:4.4',
-		'org.apache.httpcomponents:httpcore-nio:4.4',
-		'org.apache.logging.log4j:log4j-api:2.1',
-		'org.apache.logging.log4j:log4j-core:2.1',
-		'com.fasterxml.jackson.core:jackson-core:2.4.1',
-		'com.fasterxml.jackson.core:jackson-databind:2.4.1',
+		library.commons_configuration,
+		library.commons_lang,
+		library.commons_collections4,
+		library.httpcore_plus_nio,
+		library.log4j_api_plus_core,
+		library.jackson_core,
+		library.jackson_databind,
 	)
-
 	commonRuntime (
-		'commons-logging:commons-logging:1.2',
-		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
-		'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.4.1',
-		'org.apache.logging.log4j:log4j-jcl:2.1',
-		'org.apache.logging.log4j:log4j-jul:2.1',
-		'org.apache.logging.log4j:log4j-slf4j-impl:2.1',
-		'org.fusesource.jansi:jansi:1.11',
-		'com.lmax:disruptor:3.3.0',
+		library.runtime_logging,
 	)
 
+	// core
 	coreApiCompile (
-		'commons-configuration:commons-configuration:1.10',
-		'org.apache.httpcomponents:httpcore:4.4',
-		'org.apache.httpcomponents:httpcore-nio:4.4',
-		'org.apache.logging.log4j:log4j-api:2.1',
+		library.commons_configuration,
+		library.httpcore_plus_nio,
+		library.log4j_api,
 	)
-
 	coreImplCompile (
-		'commons-codec:commons-codec:1.10',
-		'commons-configuration:commons-configuration:1.10',
-		'org.apache.commons:commons-collections4:4.0',
-		'org.apache.httpcomponents:httpcore:4.4',
-		'org.apache.httpcomponents:httpcore-nio:4.4',
-		'org.apache.logging.log4j:log4j-api:2.1',
-		'io.dropwizard.metrics:metrics-core:3.1.0',
+		library.commons_codec,
+		library.commons_configuration,
+		library.commons_collections4,
+		library.httpcore_plus_nio,
+		library.log4j_api,
+		library.metrics_core,
 	)
 
+	// storage API adapters
+	storageAdapterAtmosCompile (
+		library.commons_codec,
+		library.commons_configuration,
+		library.commons_lang,
+		library.httpcore,
+		library.log4j_api,
+	)
+	storageAdapterS3Compile (
+		library.commons_lang,
+		library.commons_configuration,
+		library.httpcore,
+		library.log4j_api,
+	)
+	storageAdapterSwiftCompile (
+		library.commons_lang,
+		library.commons_configuration,
+		library.httpcore,
+		library.log4j_api,
+		library.jackson_core
+	)
+
+	// misc
+	serverApiCompile (
+		library.httpcore,
+	)
+	webserverCompile (
+		library.commons_configuration,
+		library.log4j_api,
+		library.jetty_svc,
+	)
+
+	// run modes
+	cliCompile (
+		library.commons_cli,
+		library.commons_lang,
+	)
 	clientCompile (
-		'org.apache.logging.log4j:log4j-api:2.1',
-		'io.dropwizard.metrics:metrics-core:3.1.0',
+		library.commons_configuration,
+		library.httpcore,
+		library.log4j_api,
+		library.metrics_core,
+	)
+	serverImplCompile (
+		library.commons_configuration,
+		library.httpcore,
+		library.log4j_api,
+	)
+	scenarioCompile (
+		library.commons_configuration,
+		library.log4j_api,
+	)
+	storageMockCompile(
+		library.commons_codec,
+		library.commons_collections4,
+		library.commons_configuration,
+		library.httpcore_plus_nio,
+		library.log4j_api,
+		library.metrics_core,
+	)
+	webuiCompile (
+		library.commons_collections4,
+		library.commons_configuration,
+		library.jackson_databind,
+		library.jsp_api,
+		library.log4j_api_plus_core,
+		library.websockets,
 	)
 
-	clientRuntime (
-		'commons-logging:commons-logging:1.2',
-		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
-		'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.4.1',
-		'com.lmax:disruptor:3.3.0',
+	// launcher
+	runCompile (
+		library.commons_configuration,
+		library.log4j_api_plus_core,
 	)
 
+	// unit tests
 	testCompile group: 'junit', name: 'junit', version: '4.11'
 }
 
+
 def allDepsClsPath = configurations.runtime.collect { libsDirName + File.separator + it.name }.join(' ')
 
-task rmic << {
+task compileRMI(dependsOn: "compileServerImplJava") << {
 	String[] listClsRemote = [
 		'com.emc.mongoose.server.impl.persist.TmpFileItemBufferSvc',
 		'com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc',
 		'com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc'
 	]
-	String clsPath = """${sourceSets.main.output.classesDir}${File.separator}${configurations.compileRMI.asPath}"""
+	String clsPath = [
+		"${sourceSets.common.output.classesDir}",
+		"${sourceSets.coreApi.output.classesDir}",
+		"${sourceSets.coreImpl.output.classesDir}",
+		"${sourceSets.serverApi.output.classesDir}",
+		"${sourceSets.serverImpl.output.classesDir}",
+		"${configurations.serverImplCompile.asPath}",
+	].join(File.pathSeparator)
 	for(cls in listClsRemote) {
-		String command = """rmic -classpath ${clsPath} -d ${sourceSets.main.output.classesDir} ${cls}"""
-		//println command
+		String command = """rmic -classpath ${clsPath} -d ${sourceSets.serverImpl.output.classesDir} ${cls}"""
 		String test = command.execute().text
 		print test
 	}
@@ -281,6 +321,10 @@ task rmic << {
 ext.sharedManifest = manifest {
 	attributes('Implementation-Version': version)
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// common //////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 task commonJar(type: Jar) {
 	archiveName "${baseName}-common.${extension}"
@@ -291,7 +335,12 @@ task commonJar(type: Jar) {
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// core ////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 task coreApiJar(type: Jar) {
+	dependsOn commonJar
 	archiveName "${baseName}-core-api.${extension}"
 	from sourceSets.coreApi.output
 	manifest {
@@ -307,6 +356,7 @@ task coreApiJar(type: Jar) {
 }
 
 task coreImplJar(type: Jar) {
+	dependsOn commonJar, coreApiJar
 	archiveName "${baseName}-core-impl.${extension}"
 	from sourceSets.coreImpl.output
 	manifest {
@@ -322,7 +372,12 @@ task coreImplJar(type: Jar) {
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// storage API adapters ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 task storageAdapterAtmosJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar
 	archiveName "${baseName}-storage-adapter-atmos.${extension}"
 	from sourceSets.storageAdapterAtmos.output
 	manifest {
@@ -340,6 +395,7 @@ task storageAdapterAtmosJar(type: Jar) {
 }
 
 task storageAdapterS3Jar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar
 	archiveName "${baseName}-storage-adapter-s3.${extension}"
 	from sourceSets.storageAdapterS3.output
 	manifest {
@@ -357,6 +413,7 @@ task storageAdapterS3Jar(type: Jar) {
 }
 
 task storageAdapterSwiftJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar
 	archiveName "${baseName}-storage-adapter-swift.${extension}"
 	from sourceSets.storageAdapterSwift.output
 	manifest {
@@ -373,7 +430,12 @@ task storageAdapterSwiftJar(type: Jar) {
 	}
 }
 
-task serverApiJar(type: Jar, dependsOn: "rmic") {
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// misc ////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+task serverApiJar(type: Jar) {
+	dependsOn commonJar, coreApiJar
 	archiveName "${baseName}-server-api.${extension}"
 	from sourceSets.serverApi.output
 	manifest {
@@ -389,25 +451,42 @@ task serverApiJar(type: Jar, dependsOn: "rmic") {
 	}
 }
 
-task serverImplJar(type: Jar, dependsOn: "rmic") {
-	archiveName "${baseName}-server-impl.${extension}"
-	from sourceSets.serverImpl.output
+task webserverJar(type: Jar) {
+	dependsOn commonJar, compileRMI
+	archiveName "${baseName}-webserver.${extension}"
+	from sourceSets.webserver.output
 	manifest {
 		from sharedManifest
 		attributes(
-			'Implementation-Title': rootProject.name + "-server-impl",
+			'Implementation-Title': rootProject.name + "-webserver",
 			'Class-Path': [
 				allDepsClsPath,
-				commonJar.outputs.files.collect {it.name}.join(' '),
-				coreApiJar.outputs.files.collect {it.name}.join(' '),
-				coreImplJar.outputs.files.collect {it.name}.join(' '),
-				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				commonJar.outputs.files.collect {it.name}.join(' ')
+			].join(' ')
+		)
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// run modes ///////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+task cliJar(type: Jar) {
+	archiveName "${baseName}-cli.${extension}"
+	from sourceSets.cli.output
+	manifest {
+		from sharedManifest
+		attributes(
+			'Implementation-Title': rootProject.name + "-cli",
+			'Class-Path': [
+				allDepsClsPath,
 			].join(' ')
 		)
 	}
 }
 
 task clientJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar
 	archiveName "${baseName}-client.${extension}"
 	from sourceSets.client.output
 	manifest {
@@ -425,7 +504,43 @@ task clientJar(type: Jar) {
 	}
 }
 
+task scenarioJar(type: Jar) {
+	dependsOn commonJar
+	archiveName "${baseName}-scenario.${extension}"
+	from sourceSets.scenario.output
+	manifest {
+		from sharedManifest
+		attributes(
+			'Implementation-Title': rootProject.name + "-scenario",
+			'Class-Path': [
+				allDepsClsPath,
+				commonJar.outputs.files.collect {it.name}.join(' ')
+			].join(' ')
+		)
+	}
+}
+
+task serverImplJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar, compileRMI
+	archiveName "${baseName}-server-impl.${extension}"
+	from sourceSets.serverImpl.output
+	manifest {
+		from sharedManifest
+		attributes(
+			'Implementation-Title': rootProject.name + "-server-impl",
+			'Class-Path': [
+				allDepsClsPath,
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+			].join(' ')
+		)
+	}
+}
+
 task storageMockJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar
 	archiveName "${baseName}-storage-mock.${extension}"
 	from sourceSets.storageMock.output
 	manifest {
@@ -442,51 +557,8 @@ task storageMockJar(type: Jar) {
 	}
 }
 
-task scenarioJar(type: Jar) {
-	archiveName "${baseName}-scenario.${extension}"
-	from sourceSets.scenario.output
-	manifest {
-		from sharedManifest
-		attributes(
-			'Implementation-Title': rootProject.name + "-scenario",
-			'Class-Path': [
-				allDepsClsPath,
-				commonJar.outputs.files.collect {it.name}.join(' ')
-			].join(' ')
-		)
-	}
-}
-
-task cliJar(type: Jar) {
-	archiveName "${baseName}-cli.${extension}"
-	from sourceSets.cli.output
-	manifest {
-		from sharedManifest
-		attributes(
-			'Implementation-Title': rootProject.name + "-cli",
-			'Class-Path': [
-				allDepsClsPath,
-			].join(' ')
-		)
-	}
-}
-
-task webserverJar(type: Jar) {
-	archiveName "${baseName}-webserver.${extension}"
-	from sourceSets.webserver.output
-	manifest {
-		from sharedManifest
-		attributes(
-			'Implementation-Title': rootProject.name + "-webserver",
-			'Class-Path': [
-				allDepsClsPath,
-				commonJar.outputs.files.collect {it.name}.join(' ')
-			].join(' ')
-		)
-	}
-}
-
 task webuiJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar, scenarioJar, serverApiJar, serverImplJar, storageMockJar
 	archiveName "${baseName}-webui.${extension}"
 	from sourceSets.webui.output
 	manifest {
@@ -498,15 +570,24 @@ task webuiJar(type: Jar) {
 				commonJar.outputs.files.collect {it.name}.join(' '),
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
 				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				scenarioJar.outputs.files.collect {it.name}.join(' '),
 				serverApiJar.outputs.files.collect {it.name}.join(' '),
 				serverImplJar.outputs.files.collect {it.name}.join(' '),
-				scenarioJar.outputs.files.collect {it.name}.join(' '),
+				storageMockJar.outputs.files.collect {it.name}.join(' '),
 			].join(' ')
 		)
 	}
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// entry point /////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 task runJar(type: Jar) {
+	dependsOn commonJar, storageMockJar, coreApiJar, coreImplJar
+	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
+	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
+	dependsOn cliJar, clientJar, scenarioJar, webuiJar
 	archiveName "${baseName}.${extension}"
 	from sourceSets.run.output
 	manifest {

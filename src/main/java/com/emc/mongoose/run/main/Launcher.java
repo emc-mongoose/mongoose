@@ -1,4 +1,4 @@
-package com.emc.mongoose.run;
+package com.emc.mongoose.run.main;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.Constants;
@@ -34,7 +34,7 @@ import java.util.Map;
  Created by kurila on 04.07.14.
  Mongoose entry point.
  */
-public final class Main {
+public final class Launcher {
 	//
 	public static void main(final String args[]) {
 		//
