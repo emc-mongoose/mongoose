@@ -1,6 +1,6 @@
 package com.emc.mongoose.run;
 
-import com.emc.mongoose.util.conf.RunTimeConfig;
+import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang.StringUtils;
 

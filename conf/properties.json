@@ -22,17 +22,17 @@
         "api": {
             "name": "s3",
             "type": {
-                "atmos": {
-                    "port": 9022,
-                    "subtenant": "a41583d347a848b89bc2f31747106db2"
-                },
                 "s3": {
-                    "port": 9022,
+                    "port": 9020,
                     "authPrefix": "AWS",
                     "bucket": {
                         "name": "",
                         "versioning": false
                     }
+                },
+                "atmos": {
+                    "port": 9022,
+                    "subtenant": "a41583d347a848b89bc2f31747106db2"
                 },
                 "swift": {
                     "port": 9024,
@@ -55,7 +55,8 @@
                     "sleepMilliSec": 1000
                 }
             },
-            "fsAccess": false
+            "fsAccess": false,
+            "versioning": false
         },
         "remote": {
             "port": {
