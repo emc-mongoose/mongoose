@@ -1,23 +1,24 @@
 package com.emc.mongoose.run;
 //
-import com.emc.mongoose.util.logging.TraceLogger;
-import com.emc.mongoose.util.remote.ServiceUtils;
-import com.emc.mongoose.object.load.server.impl.WSLoadBuilderSvcImpl;
-import com.emc.mongoose.object.storagemock.Cinderella;
-import com.emc.mongoose.object.data.WSObject;
-import com.emc.mongoose.object.load.WSLoadExecutor;
-import com.emc.mongoose.object.load.server.WSLoadBuilderSvc;
-import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.Markers;
+import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.server.impl.ServiceUtils;
+import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
+import com.emc.mongoose.core.impl.util.RunTimeConfig;
 //
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.LifeCycle;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.status.StatusLogger;
 //
 import java.io.File;
 import java.io.IOException;
@@ -56,10 +57,7 @@ public final class Main {
 		SEP = System.getProperty("file.separator"),
 		DIR_ROOT,
 		DIR_CONF = "conf",
-		DIR_LOGGING = "logging",
 		DIR_PROPERTIES = "properties",
-		FNAME_LOGGING_LOCAL = "local.json",
-		FNAME_LOGGING_REMOTE = "remote.json",
 		FNAME_POLICY = "security.policy",
 		JSON_PROPS_FILE = "properties.json",
 		//
@@ -112,26 +110,16 @@ public final class Main {
 		//
 		final Map<String, String> properties = HumanFriendlyCli.parseCli(args);
 		//
-		final Logger rootLogger = initLogging(runMode);
-		if(rootLogger==null) {
-			System.err.println("Logging initialization failure");
-			System.exit(1);
+		initLogging(runMode);
+		final Logger rootLogger = LogManager.getRootLogger();
+		if(rootLogger == null) {
+			StatusLogger.getLogger().fatal("Logging initialization failure");
 		}
 		//
-		ThreadContextMap.initThreadContextMap();
-		/*
-		rootLogger.info(
-			Markers.MSG, "Run in mode \"{}\", id: \"{}\"",
-			System.getProperty(RunTimeConfig.KEY_RUN_MODE),
-			System.getProperty(RunTimeConfig.KEY_RUN_ID)
-		);*/
+		RunTimeConfig.initContext();
 		// load the properties
 		RunTimeConfig.setContext(new RunTimeConfig());
-		//
-		//RunTimeConfig.getContext().loadPropsFromDir(Paths.get(DIR_ROOT, DIR_CONF, DIR_PROPERTIES));
 		RunTimeConfig.getContext().loadPropsFromJsonCfgFile(Paths.get(DIR_ROOT, DIR_CONF).resolve(JSON_PROPS_FILE));
-		//
-		//System.out.println(RunTimeConfig.getContext().getPropertiesMap());
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RunTimeConfig.getContext().loadSysProps();
 		rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
@@ -147,7 +135,7 @@ public final class Main {
 				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
 					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
-						loadBuilderSvc = new WSLoadBuilderSvcImpl<>(RunTimeConfig.getContext())
+						loadBuilderSvc = new BasicWSLoadBuilderSvc<>(RunTimeConfig.getContext())
 				) {
 					loadBuilderSvc.start();
 					loadBuilderSvc.join();
@@ -164,7 +152,9 @@ public final class Main {
 			case RUN_MODE_CINDERELLA:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
-					new Cinderella(RunTimeConfig.getContext()).run();
+					new com.emc.mongoose.storage.mock.impl.cinderella.Main(
+						RunTimeConfig.getContext()
+					).run();
 				} catch (final Exception e) {
 					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
 				}
@@ -183,45 +173,31 @@ public final class Main {
 		shutdown();
 	}
 	//
-	public static Logger initLogging(final String runMode) {
+	private static volatile LoggerContext LOG_CONTEXT = null;
+	//
+	public static void initLogging(final String runMode) {
 		//
 		System.setProperty("isThreadContextMapInheritable", "true");
 		// set "dir.root" property
 		System.setProperty(KEY_DIR_ROOT, DIR_ROOT);
 		// set "run.id" property with timestamp value if not set before
 		String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
-		if(runId==null || runId.length()==0) {
+		if(runId == null || runId.length() == 0) {
 			System.setProperty(
 				RunTimeConfig.KEY_RUN_ID,
-				FMT_DT.format(Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime())
+				FMT_DT.format(Calendar.getInstance(TZ_UTC, LOCALE_DEFAULT).getTime())
 			);
 		}
 		// make all used loggers asynchronous
 		System.setProperty(
-			"Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector"
-		);
-		// StatusConsoleListener statusListener = new StatusConsoleListener(Level.OFF);
-		// determine the logger configuration file path
-		final Path logConfPath = Paths.get(
-			DIR_ROOT, DIR_CONF, DIR_LOGGING,
-			(
-				runMode.equals(RUN_MODE_STANDALONE) ||
-				runMode.equals(RUN_MODE_CLIENT) ||
-				runMode.equals(RUN_MODE_COMPAT_CLIENT)
-			) ?
-				FNAME_LOGGING_LOCAL : FNAME_LOGGING_REMOTE
+			"Log4jContextSelector", AsyncLoggerContextSelector.class.getCanonicalName()
 		);
 		// connect JUL to Log4J2
 		System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
-		// go
-		Configurator.initialize(null, logConfPath.toUri().toString());
-		final Logger rootLogger = LogManager.getRootLogger();
-		if(rootLogger == null) {
-			System.err.println("FATAL: failed to configure the logging");
-		} else {
-			rootLogger.debug(Markers.MSG, "Used configuration from {}", logConfPath);
-		}
-		return LogManager.getRootLogger();
+		// determine the logger configuration file path
+		final Path logConfPath = Paths.get(DIR_ROOT, DIR_CONF, "logging.yaml");
+		//
+		LOG_CONTEXT = Configurator.initialize("mongoose", logConfPath.toUri().toString());
 	}
 	//
 	public static void initSecurity() {
@@ -233,7 +209,9 @@ public final class Main {
 	}
 	//
 	public static void shutdown() {
-		((LifeCycle) LogManager.getContext()).stop();
+		if(!LOG_CONTEXT.isStopped()) {
+			LOG_CONTEXT.stop();
+		}
 		ServiceUtils.shutdown();
 	}
 }

@@ -1,0 +1,226 @@
+configuration:
+  status: info
+  name: mongoose
+  monitorInterval: 1000
+  packages: com.emc.mongoose.webui.logging,com.emc.mongoose.core.impl.util.log
+  shutdownHook: disable
+
+  appenders:
+    WebUI:
+      name: WebUI
+      enabled: true
+      filters:
+        MarkerFilter:
+          -
+            marker: dataList
+            onMatch: DENY
+            onMismatch: NEUTRAL
+          -
+            marker: perfTrace
+            onMatch: DENY
+            onMismatch: NEUTRAL
+        ThresholdFilter:
+          level: INFO
+          onMatch: ACCEPT
+          onMismatch: DENY
+    console:
+      name: stdout
+      PatternLayout:
+        pattern: "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t %m%n}"
+      filters:
+        MarkerFilter:
+          -
+            marker: dataList
+            onMatch: DENY
+            onMismatch: NEUTRAL
+          -
+            marker: perfTrace
+            onMatch: DENY
+            onMismatch: NEUTRAL
+        ThresholdFilter:
+          level: INFO
+          onMatch: ACCEPT
+          onMismatch: DENY
+    runIdFile:
+      -
+        name: msgFile
+        fileName: "messages.log"
+        PatternLayout:
+          pattern: "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+        filters:
+          MarkerFilter:
+            marker: msg
+            onMatch: ACCEPT
+            onMismatch: DENY
+      -
+        name: 3rdPartyFile
+        fileName: "3rdparty.log"
+        PatternLayout:
+          pattern: "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+        filters:
+          MarkerFilter:
+            -
+              marker: msg
+              onMatch: DENY
+              onMismatch: NEUTRAL
+            -
+              marker: err
+              onMatch: DENY
+              onMismatch: NEUTRAL
+            -
+              marker: dataList
+              onMatch: DENY
+              onMismatch: NEUTRAL
+            -
+              marker: perfAvg
+              onMatch: DENY
+              onMismatch: NEUTRAL
+            -
+              marker: perfSum
+              onMatch: DENY
+              onMismatch: NEUTRAL
+            -
+              marker: perfTrace
+              onMatch: DENY
+              onMismatch: NEUTRAL
+          ThresholdFilter:
+            level: info
+            onMatch: NEUTRAL
+            onMismatch: DENY
+          BurstFilter:
+            rate: 10
+            maxBurst: 100
+      -
+        name: errFile
+        fileName: "errors.log"
+        PatternLayout:
+          pattern: "%d{ISO8601}{GMT+0} | %p | %c{1} | %t | %m%n"
+        filters:
+          MarkerFilter:
+            marker: err
+            onMatch: ACCEPT
+            onMismatch: DENY
+          BurstFilter:
+            rate: 10
+            maxBurst: 100
+      -
+        name: perfAvgFile
+        fileName: "perf.avg.log"
+        PatternLayout:
+          pattern: "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %32t | %m%n"
+        filters:
+          MarkerFilter:
+            marker: perfAvg
+            onMatch: ACCEPT
+            onMismatch: DENY
+      -
+        name: perfSumFile
+        fileName: "perf.sum.log"
+        PatternLayout:
+          pattern: "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %t | %m%n"
+        filters:
+          MarkerFilter:
+            marker: perfSum
+            onMatch: ACCEPT
+            onMismatch: DENY
+      -
+        name: perfTraceFile
+        fileName: "perf.trace.csv"
+        PatternLayout:
+          pattern: "%t,%m%n"
+        filters:
+          MarkerFilter:
+            marker: perfTrace
+            onMatch: ACCEPT
+            onMismatch: DENY
+      -
+        name: dataListFile
+        fileName: "data.items.csv"
+        PatternLayout:
+          pattern: "%m%n"
+        filters:
+          MarkerFilter:
+            marker: dataList
+            onMatch: ACCEPT
+            onMismatch: DENY
+    async:
+      name: entryPoint
+      blocking: false
+      bufferSize: 100000
+      appenderRef:
+        - ref: stdout
+        - ref: msgFile
+        - ref: 3rdPartyFile
+        - ref: errFile
+        - ref: dataListFile
+        - ref: perfAvgFile
+        - ref: perfSumFile
+        - ref: perfTraceFile
+        - ref: WebUI
+
+  loggers:
+    root:
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+    logger:
+      -
+        name: com.emc.mongoose.client
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
+        name: com.emc.mongoose.core
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
+        name: com.emc.mongoose.core.impl.io.req.conf
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
+        name: com.emc.mongoose.core.impl.load.executor
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
+        name: com.emc.mongoose.core.impl.load.tasks
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
+        name: com.emc.mongoose.run
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
+        name: com.emc.mongoose.server
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
+        name: com.emc.mongoose.storage.adapter.atmos
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
+        name: com.emc.mongoose.storage.adapter.s3
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
+        name: com.emc.mongoose.storage.adapter.swift
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
+        name: com.emc.mongoose.storage.mock
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }
+      -
+        name: com.emc.mongoose.webui
+        level: debug
+        additivity: false
+        appenderRef: { ref: entryPoint }

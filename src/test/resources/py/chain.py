@@ -5,10 +5,11 @@ from loadbuilder import init as loadBuilderInit
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from com.emc.mongoose.base.api import AsyncIOTask
-from com.emc.mongoose.util.conf import RunTimeConfig
-from com.emc.mongoose.util.logging import TraceLogger, Markers
-from com.emc.mongoose.base.load import DataItemBuffer
+from com.emc.mongoose.core.api.io.task import IOTask
+from com.emc.mongoose.core.api.util.log import Markers
+from com.emc.mongoose.core.api.persist import DataItemBuffer
+from com.emc.mongoose.core.impl.util.log import TraceLogger
+from com.emc.mongoose.core.impl.util import RunTimeConfig
 #
 from java.lang import Long, String, Throwable, IllegalArgumentException, InterruptedException
 #
@@ -27,7 +28,7 @@ def build(
 	for loadTypeStr in loadTypesChain:
 		LOG.debug(Markers.MSG, "Next load type is \"{}\"", loadTypeStr)
 		try:
-			loadBuilder.setLoadType(AsyncIOTask.Type.valueOf(loadTypeStr.upper()))
+			loadBuilder.setLoadType(IOTask.Type.valueOf(loadTypeStr.upper()))
 			if dataItemSizeMin > 0:
 				loadBuilder.setMinObjSize(dataItemSizeMin)
 			if dataItemSizeMax > 0:
@@ -70,6 +71,7 @@ def execute(chain=(), flagSimultaneous=True):
 	runTimeOut = timeOutInit()
 	try:
 		if flagSimultaneous:
+			LOG.info(Markers.MSG, "Execute load jobs in parallel")
 			for load in reversed(chain):
 				load.start()
 			for load in chain:
@@ -80,6 +82,7 @@ def execute(chain=(), flagSimultaneous=True):
 				finally:
 					load.close()
 		else:
+			LOG.info(Markers.MSG, "Execute load jobs sequentially")
 			prevLoad, nextLoad = None, None
 			for nextLoad in chain:
 				if not isinstance(nextLoad, DataItemBuffer):
@@ -165,6 +168,7 @@ if __name__ == "__builtin__":
 		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
 	#
 	loadBuilder = loadBuilderInit()
+	loadBuilder.getRequestConfig().setAnyDataProducerEnabled(False)
 	#
 	chain = build(
 		loadBuilder, loadTypesChain, flagSimultaneous, flagItemsBuffer,
@@ -172,9 +176,12 @@ if __name__ == "__builtin__":
 		dataItemSizeMax if dataItemSize == 0 else dataItemSize,
 		threadsPerNode
 	)
-	try:
-		execute(chain, flagSimultaneous)
-	except Throwable as e:
-		TraceLogger.failure(LOG, Level.WARN, e, "Chain execution failure")
+	if chain is None or len(chain) == 0:
+		LOG.error(Markers.ERR, "Empty chain has been build, nothing to do")
+	else:
+		try:
+			execute(chain, flagSimultaneous)
+		except Throwable as e:
+			TraceLogger.failure(LOG, Level.WARN, e, "Chain execution failure")
 	#
 	LOG.info(Markers.MSG, "Scenario end")

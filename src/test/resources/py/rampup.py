@@ -4,13 +4,13 @@ from loadbuilder import init as loadBuilderInit
 from chain import build as chainBuild
 from chain import execute as chainExecute
 #
-from java.lang import InterruptedException, Long, Short, Thread, Throwable, NumberFormatException
+from java.lang import InterruptedException, Long, Short, Throwable, NumberFormatException
 #
-from org.apache.logging.log4j import Level, LogManager
+from org.apache.logging.log4j import Level, LogManager, ThreadContext
 #
-from com.emc.mongoose.util.conf import RunTimeConfig
-from com.emc.mongoose.util.logging import TraceLogger, Markers
-from com.emc.mongoose.run import ThreadContextMap
+from com.emc.mongoose.core.api.util.log import Markers
+from com.emc.mongoose.core.impl.util.log import TraceLogger
+from com.emc.mongoose.core.impl.util import RunTimeConfig
 #
 LOG = LogManager.getLogger()
 #
@@ -42,8 +42,8 @@ def execute(loadBuilder, rampupParams=((),(),())):
 					TraceLogger.failure(Markers.ERR, Level.WARN, e, "Failed to parse the next thread count")
 				try:
 					LOG.info(Markers.PERF_SUM, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
-					ThreadContextMap.putValue("currentSize", dataItemSizeStr + "-" + str(index))
-					ThreadContextMap.putValue("currentThreadCount", str(threadCount))
+					ThreadContext.put("currentSize", dataItemSizeStr + "-" + str(index))
+					ThreadContext.put("currentThreadCount", str(threadCount))
 					nextChain = chainBuild(
 						loadBuilder, loadTypesChain, False, True, dataItemSize, dataItemSize, threadCount
 					)
