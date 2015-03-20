@@ -1,10 +1,10 @@
 package com.emc.mongoose.webui;
 //
+import com.emc.mongoose.core.impl.util.conf.JsonConfigLoader;
 import com.emc.mongoose.run.JettyRunner;
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.util.conf.DirectoryLoader;
-import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.logging.TraceLogger;
+import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.Level;
@@ -60,8 +60,7 @@ public class SaveServlet extends CommonServlet {
 	@Override
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
 		setupRunTimeConfig(request);
-		DirectoryLoader.updatePropertiesFromDir(Paths.get(Main.DIR_ROOT, Main.DIR_CONF, Main.DIR_PROPERTIES),
-				runTimeConfig, true);
+		JsonConfigLoader.updateProps(Paths.get(Main.DIR_ROOT, Main.DIR_CONF).resolve(Main.JSON_PROPS_FILE), runTimeConfig, true);
 		updateLastRunTimeConfig(runTimeConfig);
 		response.setStatus(HttpServletResponse.SC_OK);
 	}

@@ -1,7 +1,7 @@
 package com.emc.mongoose.webui;
 //
-import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.TraceLogger;
+import com.emc.mongoose.core.impl.util.RunTimeConfig;
+import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -50,22 +50,19 @@ public abstract class CommonServlet extends HttpServlet {
 				continue;
 			}
 			if (entry.getValue().length > 1) {
-				runTimeConfig.set(entry.getKey(), convertArrayToString(entry.getKey(), entry.getValue()));
+				runTimeConfig.set(entry.getKey(), convertArrayToString(entry.getValue()));
 				continue;
 			}
 			runTimeConfig.set(entry.getKey(), entry.getValue()[0].trim());
 		}
 	}
 	//
-	private String convertArrayToString(final String key, final String[] stringArray) {
-		final String resultString = Arrays.toString(stringArray)
-			.replace("[", "")
-			.replace("]", "")
-			.replace(" ", "")
-			.trim();
-		if (key.equals("run.time"))
-			return resultString.replace(",", ".");
-		return resultString;
+	protected String convertArrayToString(final String[] stringArray) {
+		return Arrays.toString(stringArray)
+				.replace("[", "")
+				.replace("]", "")
+				.replace(" ", "")
+				.trim();
 	}
 	//
 	public static void updateLastRunTimeConfig(final RunTimeConfig runTimeConfig) {
