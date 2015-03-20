@@ -24,6 +24,12 @@ implements WSObjectMock {
 		super();
 	}
 	//
+	public BasicWSObjectMock(final long size){ super(size);}
+	//
+	public BasicWSObjectMock(final String id, final Long size) {
+		super(id, size);
+	}
+	//
 	public BasicWSObjectMock(final String metaInfo) {
 		super(metaInfo);
 	}

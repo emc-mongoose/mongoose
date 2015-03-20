@@ -18,6 +18,7 @@ import com.emc.mongoose.core.api.io.task.WSIOTask;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.commons.collections4.map.LRUMap;
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
@@ -61,9 +62,12 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Created by olga on 28.01.15.
  */
@@ -91,15 +95,21 @@ implements Runnable {
 	//
 	private final static String
 		ALL_METHODS = "all",
-		METRIC_COUNT = "count";
+		METRIC_COUNT = "count",
+		METHOD_PUT = "put",
+		METHOD_POST = "post",
+		METHOD_GET = "get",
+		METHOD_HEAD = "head",
+		METHOD_DELETE = "delete";
 	private final Counter
 		counterAllSucc, counterAllFail,
 		counterGetSucc, counterGetFail,
 		counterPutSucc, counterPutFail,
+		counterPostSucc, counterPostFail,
 		counterDeleteSucc, counterHeadSucc;
 	private final Meter
-		allBW, getBW, putBW,
-		allTP, getTP, putTP;
+		allBW, getBW, putBW, postBW,
+		allTP, getTP, putTP, postTP;
 	//
 	public Main(final RunTimeConfig runTimeConfig)
 	throws IOException {
@@ -142,6 +152,15 @@ implements Runnable {
 			WSIOTask.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_BW));
 		putTP = metrics.meter(MetricRegistry.name(Main.class,
 			WSIOTask.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_TP));
+		//
+		counterPostSucc = metrics.counter(MetricRegistry.name(Main.class,
+			WSIOTask.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+		counterPostFail = metrics.counter(MetricRegistry.name(Main.class,
+			WSIOTask.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+		postBW = metrics.meter(MetricRegistry.name(Main.class,
+			WSIOTask.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_BW));
+		postTP = metrics.meter(MetricRegistry.name(Main.class,
+			WSIOTask.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_TP));
 		//
 		counterDeleteSucc = metrics.counter(MetricRegistry.name(Main.class,
 			WSIOTask.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
@@ -318,16 +337,19 @@ implements Runnable {
 			}
 			//
 			switch(method) {
-				case ("put"):
+				case (METHOD_PUT):
 					doPut(request, response, dataID);
 					break;
-				case ("head"):
+				case (METHOD_POST):
+					doPost(request, response);
+					break;
+				case (METHOD_HEAD):
 					doHead(response);
 					break;
-				case ("get"):
+				case (METHOD_GET):
 					doGet(response, dataID);
 					break;
-				case ("delete"):
+				case (METHOD_DELETE):
 					doDelete(response);
 					break;
 			}
@@ -339,13 +361,13 @@ implements Runnable {
 			response.setStatusCode(HttpStatus.SC_OK);
 			if(sharedStorage.containsKey(dataID)) {
 				LOG.trace(Markers.MSG, "   Send data object ", dataID);
-				final WSObjectMock object = sharedStorage.get(dataID);
-				response.setEntity(object);
+				final WSObjectMock dataObject = sharedStorage.get(dataID);
+				response.setEntity(dataObject);
 				LOG.trace(Markers.MSG, "   Response: OK");
 				counterAllSucc.inc();
 				counterGetSucc.inc();
-				getBW.mark(object.getSize());
-				allBW.mark(object.getSize());
+				getBW.mark(dataObject.getSize());
+				allBW.mark(dataObject.getSize());
 				getTP.mark();
 				allTP.mark();
 			} else {
@@ -356,6 +378,50 @@ implements Runnable {
 			}
 		}
 		//
+		private String randomString(final int len )
+		{
+			final String alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+			final Random random = new Random();
+			final StringBuilder stringBuilder = new StringBuilder( len );
+			for( int i = 0; i < len; i++ )
+				stringBuilder.append( alphabet.charAt(random.nextInt(alphabet.length())) );
+			return stringBuilder.toString();
+		}
+		//
+		private void doPost(final HttpRequest request, final HttpResponse response){
+			LOG.trace(Markers.MSG, " Request  method Post ");
+			response.setStatusCode(HttpStatus.SC_OK);
+			final int ATMOS_ID_LEN = 32;
+			try {
+				final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+				final long bytes = entity.getContentLength();
+				final String dataID = randomString(ATMOS_ID_LEN);
+				final WSObjectMock dataObject = new BasicWSObjectMock(dataID, bytes);
+				LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject));
+				synchronized (sharedStorage) {
+					sharedStorage.put(dataID, dataObject);
+				}
+				response.setEntity(dataObject);
+				counterAllSucc.inc();
+				counterPostSucc.inc();
+				postBW.mark(bytes);
+				allBW.mark(bytes);
+				postTP.mark();
+				allTP.mark();
+				/*
+				System.out.println("------Post-----");
+				final Header[] headers = request.getAllHeaders();
+				for (Header header : headers) {
+					System.out.println(header.getName() + " : " + header.getValue());
+					System.out.println("--------");
+				}
+				*/
+			}catch (final Exception e){
+				e.printStackTrace();
+			}
+
+
+		}
 		/*
 		offset for mongoose versions since v0.6:
 			final long offset = Long.valueOf(dataID, WSRequestConfigBase.RADIX);
@@ -365,6 +431,26 @@ implements Runnable {
 		offset for mongoose versions prior to v.0.4:
 			final long offset = Long.valueOf(dataID, 0x10);
 		 */
+		//
+		private long genOffset(final String dataID) throws HttpException {
+			final long offset;
+			if (ringOffsetRadix == 0x40) { // base64
+				offset = ByteBuffer
+					.allocate(Long.SIZE / Byte.SIZE)
+					.put(Base64.decodeBase64(dataID))
+					.getLong(0);
+			} else if (ringOffsetRadix > 1 && ringOffsetRadix <= Character.MAX_RADIX) {
+				offset = Long.valueOf(dataID, ringOffsetRadix);
+			} else {
+				throw new HttpException(
+					String.format(
+						"Unsupported data ring offset radix: %d", ringOffsetRadix
+					)
+				);
+			}
+			return offset;
+		}
+		//
 		private void doPut(
 			final HttpRequest request, final HttpResponse response, final String dataID
 		){
@@ -378,21 +464,7 @@ implements Runnable {
 				if (sharedStorage.containsKey(dataID)) {
 					dataObject = sharedStorage.get(dataID);
 				} else {
-					final long offset;
-					if (ringOffsetRadix == 0x40) { // base64
-						offset = ByteBuffer
-							.allocate(Long.SIZE / Byte.SIZE)
-							.put(Base64.decodeBase64(dataID))
-							.getLong(0);
-					} else if (ringOffsetRadix > 1 && ringOffsetRadix <= Character.MAX_RADIX) {
-						offset = Long.valueOf(dataID, ringOffsetRadix);
-					} else {
-						throw new HttpException(
-							String.format(
-								"Unsupported data ring offset radix: %d", ringOffsetRadix
-							)
-						);
-					}
+					final long offset = genOffset(dataID);
 					dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 				}
 				LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject));
