@@ -559,10 +559,10 @@ function charts(chartsArray) {
 		TP: "throughput",
 		BW: "bandwidth"
 	};
-	var AVG = "avg",
-		MIN_1 = "1min",
-		MIN_5 = "5min",
-		MIN_15 = "15min";
+	var AVG = "total average",
+		MIN_1 = "last 1 min avg",
+		MIN_5 = "last 5 min avg",
+		MIN_15 = "last 15 min avg";
 	//  Some constants from runTimeConfig
 	var RUN_TIME_CONFIG_CONSTANTS = {
 		runId: "run.id",
@@ -763,10 +763,10 @@ function charts(chartsArray) {
 			.style("fill", function(d) { return color(d.name); });
 
 		legend.append("text")
-			.attr("x", width + 100)
+			.attr("x", width + 40)
 			.attr("y", 9)
 			.attr("dy", ".35em")
-			.style("text-anchor", "end")
+			.style("text-anchor", "start")
 			.text(function(d) { return d.name; });
 
 		svg.append("text")
@@ -856,10 +856,10 @@ function charts(chartsArray) {
 						drawBandwidthCharts($.extend(true, [], data), json)]));
 		},
 		chain: function(runId, runMetricsPeriodSec, loadType) {
-			var AVG = "avg";
-			var MIN_1 = "1min";
-			var MIN_5 = "5min";
-			var MIN_15 = "15min";
+			var AVG = "total average",
+				MIN_1 = "last 1 min avg",
+				MIN_5 = "last 5 min avg",
+				MIN_15 = "last 15 min avg";
 			//
 			var TP_MODES = [AVG, MIN_1, MIN_5, MIN_15];
 			//
@@ -1144,10 +1144,10 @@ function charts(chartsArray) {
 					.style("fill", function(d) { return color(d.loadType); });
 
 				rightLegend.append("text")
-					.attr("x", width + 170)
+					.attr("x", width + 43)
 					.attr("y", 9)
 					.attr("dy", ".35em")
-					.style("text-anchor", "end")
+					.style("text-anchor", "start")
 					.text(function(d) { return d.loadType; });
 				//
 				var bottomLegend = svg.selectAll(".bottom-legend")
@@ -1160,7 +1160,20 @@ function charts(chartsArray) {
 					});
 
 				bottomLegend.append("path")
-					.attr("d", "M0 0 L100 0")
+					.attr("d", function(d, i) {
+						switch(d) {
+						case AVG:
+							return "M20 0 L110 0";
+							break;
+						case MIN_1:
+							return "M20 0 L115 0";
+							break;
+						case MIN_5:
+						case MIN_15:
+							return "M20 0 L120 0";
+							break;
+						}
+					})
 					.attr("stroke-dasharray", function(d, i) {
 						switch (d) {
 							case AVG:
@@ -1178,10 +1191,10 @@ function charts(chartsArray) {
 						}
 					});
 				bottomLegend.append("text")
-					.attr("x", 70)
+					.attr("x", 35)
 					.attr("y", 15)
 					.attr("dy", ".35em")
-					.style("text-anchor", "middle")
+					.style("text-anchor", "start")
 					.attr("stroke", "none")
 					.attr("stroke-width", "none")
 					.text(function(d) { return d; });
@@ -1379,10 +1392,10 @@ function charts(chartsArray) {
 						.style("fill", function(d) { return color(d.loadType); });
 
 					rightLegend.append("text")
-						.attr("x", width + 170)
+						.attr("x", width + 43)
 						.attr("y", 9)
 						.attr("dy", ".35em")
-						.style("text-anchor", "end")
+						.style("text-anchor", "start")
 						.text(function(d) { return d.loadType; });
 					//
 					svg.selectAll(".right-foreign")
@@ -1423,10 +1436,10 @@ function charts(chartsArray) {
 			var loadRampupSizesArray = loadRampupSizes.split(",").map(function(item) {
 				return item.trim();
 			});
-			var AVG = "avg";
-			var MIN_1 = "1min";
-			var MIN_5 = "5min";
-			var MIN_15 = "15min";
+			var AVG = "total average",
+				MIN_1 = "last 1 min avg",
+				MIN_5 = "last 5 min avg",
+				MIN_15 = "last 15 min avg";
 			//
 			var CHART_TYPES = {
 				TP: "throughput",
@@ -1610,10 +1623,10 @@ function charts(chartsArray) {
 						.style("fill", function(d) { return color(d); });
 
 					legend.append("text")
-						.attr("x", width + 100)
+						.attr("x", width + 42)
 						.attr("y", 9)
 						.attr("dy", ".35em")
-						.style("text-anchor", "end")
+						.style("text-anchor", "start")
 						.text(function(d) { return d; });
 					//
 					var levels = svg.selectAll(".level")
