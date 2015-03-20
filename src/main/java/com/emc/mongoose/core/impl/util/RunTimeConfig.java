@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.util;
 //
+import com.emc.mongoose.core.impl.util.conf.PropertiesLoader;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.run.util.DirectoryLoader;
@@ -313,7 +314,7 @@ implements Externalizable {
 		return getString("http.signMethod");
 	}
 	//
-	public final boolean getStorageFileSystemAccessEnabled() {
+	public final boolean getStorageFileAccessEnabled() {
 		return getBoolean(KEY_STORAGE_FS_ACCESS);
 	}
 	//

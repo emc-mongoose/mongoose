@@ -153,17 +153,17 @@ if __name__ == "__builtin__":
 	#
 	loadTypesChain = ()
 	try:
-		loadTypesChain = RunTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
+		loadTypesChain = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
 	except:
 		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
 	#
 	flagSimultaneous, flagItemsBuffer = True, False
 	try:
-		flagSimultaneous = RunTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_SIMULTANEOUS)
+		flagSimultaneous = runTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_SIMULTANEOUS)
 	except:
 		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_SIMULTANEOUS)
 	try:
-		flagItemsBuffer = RunTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
+		flagItemsBuffer = runTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
 	except:
 		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
 	#

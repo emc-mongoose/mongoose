@@ -316,7 +316,7 @@ implements WSRequestConfig<T> {
 		}
 		//
 		try {
-			setFileSystemAccessEnabled(runTimeConfig.getStorageFileSystemAccessEnabled());
+			setFileAccessEnabled(runTimeConfig.getStorageFileAccessEnabled());
 		} catch(final NoSuchElementException e) {
 			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_FS_ACCESS);
 		}
@@ -498,8 +498,8 @@ implements WSRequestConfig<T> {
 		final MutableWSRequest httpRequest, final T dataItem
 	) {
 		httpRequest.addHeader(
-			HttpHeaders.RANGE,
-			String.format(MSG_TMPL_RANGE_BYTES_APPEND, dataItem.getSize())
+				HttpHeaders.RANGE,
+				String.format(MSG_TMPL_RANGE_BYTES_APPEND, dataItem.getSize())
 		);
 	}
 	/*
@@ -629,7 +629,7 @@ implements WSRequestConfig<T> {
 				}
 			} else {
 				tgtHost = new HttpHost(
-					tgtAddr, runTimeConfig.getApiPort(runTimeConfig.getStorageApi()),
+					tgtAddr, runTimeConfig.getApiTypePort(runTimeConfig.getApiName()),
 					runTimeConfig.getStorageProto()
 				);
 			}

@@ -1,11 +1,10 @@
 package com.emc.mongoose.webui;
 //
+import com.emc.mongoose.core.impl.util.conf.PropertiesLoader;
 import com.emc.mongoose.run.JettyRunner;
 import com.emc.mongoose.run.Main;
-import com.emc.mongoose.run.util.DirectoryLoader;
 import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.util.conf.PropertiesLoader;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.logging.log4j.Level;
