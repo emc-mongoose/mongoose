@@ -132,37 +132,37 @@ if __name__ == "__builtin__":
 	runTimeConfig = RunTimeConfig.getContext()
 	#
 	try:
-		dataItemSize = Long(runTimeConfig.getSizeBytes("data.size"))
+		dataItemSize = Long(runTimeConfig.getSizeBytes(RunTimeConfig.KEY_DATA_SIZE))
 	except:
-		LOG.debug(Markers.MSG, "No \"data.size\" specified")
+		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
 	try:
-		dataItemSizeMin = Long(runTimeConfig.getSizeBytes("data.size.min"))
+		dataItemSizeMin = Long(runTimeConfig.getSizeBytes(RunTimeConfig.KEY_DATA_SIZE_MIN))
 	except:
-		LOG.debug(Markers.MSG, "No \"data.size\" specified")
+		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
 	try:
-		dataItemSizeMax = Long(runTimeConfig.getSizeBytes("data.size.max"))
+		dataItemSizeMax = Long(runTimeConfig.getSizeBytes(RunTimeConfig.KEY_DATA_SIZE_MAX))
 	except:
-		LOG.debug(Markers.MSG, "No \"data.size\" specified")
+		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
 	try:
-		threadsPerNode = Long(runTimeConfig.getShort("load.threads"))
+		threadsPerNode = Long(runTimeConfig.getShort(RunTimeConfig.KEY_LOAD_THREADS))
 	except:
-		LOG.debug(Markers.MSG, "No \"load.threads\" specified")
+		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_LOAD_THREADS)
 	#
 	loadTypesChain = ()
 	try:
-		loadTypesChain = RunTimeConfig.getStringArray("scenario.chain.load")
+		loadTypesChain = RunTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
 	except:
-		LOG.debug(Markers.MSG, "No \"scenario.load.chain\" specified")
+		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
 	#
 	flagSimultaneous, flagItemsBuffer = True, False
 	try:
-		flagSimultaneous = RunTimeConfig.getBoolean("scenario.chain.simultaneous")
+		flagSimultaneous = RunTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_SIMULTANEOUS)
 	except:
-		LOG.debug(Markers.MSG, "No \"scenario.load.simultaneous\" specified")
+		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_SIMULTANEOUS)
 	try:
-		flagItemsBuffer = RunTimeConfig.getBoolean("scenario.chain.itemsbuffer")
+		flagItemsBuffer = RunTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
 	except:
-		LOG.debug(Markers.MSG, "No \"scenario.load.itemsbuffer\" specified")
+		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
 	#
 	loadBuilder = loadBuilderInit()
 	#

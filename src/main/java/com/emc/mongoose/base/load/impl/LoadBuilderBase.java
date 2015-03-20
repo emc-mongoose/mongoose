@@ -63,10 +63,10 @@ implements LoadBuilder<T, U> {
 		//
 		String paramName;
 		for(final AsyncIOTask.Type loadType: AsyncIOTask.Type.values()) {
-			paramName = "load."+loadType.name().toLowerCase()+".threads";
+			paramName = RunTimeConfig.getLoadThreadsParamName(loadType.name().toLowerCase());
 			try {
 				setThreadsPerNodeFor(runTimeConfig
-						.getLoadTypeThreadsCount(loadType.name().toLowerCase()), loadType);
+						.getLoadTypeThreads(loadType.name().toLowerCase()), loadType);
 			} catch(final NoSuchElementException e) {
 				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 			} catch(final IllegalArgumentException e) {
@@ -110,7 +110,7 @@ implements LoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		paramName = "load.update.per.item";
+		paramName = RunTimeConfig.KEY_LOAD_UPDATE_PER_ITEM;
 		try {
 			setUpdatesPerItem(runTimeConfig.getInt(paramName));
 		} catch(final NoSuchElementException e) {
@@ -128,7 +128,7 @@ implements LoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		paramName = "api."+ reqConf.getAPI().toLowerCase()+".port";
+		paramName = RunTimeConfig.getApiPortParamName(reqConf.getAPI().toLowerCase());
 		try {
 			reqConf.setPort(runTimeConfig.getApiTypePort(reqConf.getAPI().toLowerCase()));
 		} catch(final NoSuchElementException e) {

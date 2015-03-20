@@ -1,5 +1,6 @@
 package com.emc.mongoose.run;
 
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.apache.commons.cli.*;
 import org.apache.commons.lang.StringUtils;
 
@@ -15,19 +16,23 @@ public class HumanFriendlyCli {
 
     public enum CLIOption {
 
-        IP("i", "Comma-separated list of ip addresses to write to", true, "storage.addrs"),
-        USER("u", "User", true, "auth.id"),
-        SECRET("s", "Secret", true, "auth.secret"),
-        BUCKET("b","Bucket to write data to", true, "api.s3.bucket"),
-        READ("r", "Perform object read", true, new CompositeOptionConverter("scenario.single.load", "read", "data.src.fpath")),
-        WRITE("w", "Perform object write", false, new CompositeOptionConverter("scenario.single.load", "create")),
-        DELETE("d", "Perform object delete", false, new CompositeOptionConverter("scenario.single.load", "delete", "data.src.fpath")),
-        LENGTH("l", "Size of the object to write", true, "data.size.min", "data.size.max"),
-        COUNT("c", "Count of objects to write", true, "data.count"),
-        THREADS("t", "Number of parallel threads", true, "load.create.threads", "load.update.threads",
-                "load.delete.threads", "load.read.threads"),
+        IP("i", "Comma-separated list of ip addresses to write to", true, RunTimeConfig.KEY_STORAGE_ADDRS),
+        USER("u", "User", true, RunTimeConfig.KEY_AUTH_ID),
+        SECRET("s", "Secret", true, RunTimeConfig.KEY_AUTH_SECRET),
+        BUCKET("b","Bucket to write data to", true, RunTimeConfig.KEY_API_S3_BUCKET_NAME),
+        READ("r", "Perform object read", true, new CompositeOptionConverter(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD,
+                "read", RunTimeConfig.KEY_DATA_SRC_FPATH)),
+        WRITE("w", "Perform object write", false, new CompositeOptionConverter(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, "create")),
+        DELETE("d", "Perform object delete", false, new CompositeOptionConverter(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, "delete",
+                RunTimeConfig.KEY_DATA_SRC_FPATH)),
+        LENGTH("l", "Size of the object to write", true, RunTimeConfig.KEY_DATA_SIZE_MIN, RunTimeConfig.KEY_DATA_SIZE_MAX),
+        COUNT("c", "Count of objects to write", true, RunTimeConfig.KEY_DATA_ITEM_COUNT),
+        THREADS("t", "Number of parallel threads", true, RunTimeConfig.getLoadThreadsParamName("create"),
+                RunTimeConfig.getLoadThreadsParamName("update"),
+                RunTimeConfig.getLoadThreadsParamName("delete"),
+                RunTimeConfig.getLoadThreadsParamName("read")),
         HELP("h", "Displays this message", false, new NullOptionConverter()),
-        RUN_ID("z", "Sets run id", true, new SystemOptionConverter("run.id")),
+        RUN_ID("z", "Sets run id", true, new SystemOptionConverter(RunTimeConfig.KEY_RUN_ID)),
         USE_DEPLOYMENT_OUTPUT("o", "Use deployment output", false, new DeploymentOutputConverter());
 
         private final String shortName;
@@ -180,9 +185,9 @@ public class HumanFriendlyCli {
 
             Map<String, String> result = new HashMap<>();
 
-            result.put("auth.id", props.getProperty("user"));
-            result.put("auth.secret", props.getProperty("secretkey"));
-            result.put("api.s3.bucket", props.getProperty("bucket").split(" ")[0]);
+            result.put(RunTimeConfig.KEY_AUTH_ID, props.getProperty("user"));
+            result.put(RunTimeConfig.KEY_AUTH_SECRET, props.getProperty("secretkey"));
+            result.put(RunTimeConfig.KEY_API_S3_BUCKET_NAME, props.getProperty("bucket").split(" ")[0]);
 
             String dataNodes = System.getenv("DataNodes")
                     .replace('(', ' ').replace(')', ' ').trim().replace(' ', ',');
@@ -199,9 +204,9 @@ public class HumanFriendlyCli {
                     address.add(firstDataNode + ":" + port);
                 }
 
-                result.put("storage.addrs", StringUtils.join(address, ','));
+                result.put(RunTimeConfig.KEY_STORAGE_ADDRS, StringUtils.join(address, ','));
             }else{
-               result.put("storage.addrs", dataNodes);
+               result.put(RunTimeConfig.KEY_STORAGE_ADDRS, dataNodes);
             }
 
             return result;

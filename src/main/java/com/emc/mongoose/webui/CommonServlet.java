@@ -50,22 +50,19 @@ public abstract class CommonServlet extends HttpServlet {
 				continue;
 			}
 			if (entry.getValue().length > 1) {
-				runTimeConfig.set(entry.getKey(), convertArrayToString(entry.getKey(), entry.getValue()));
+				runTimeConfig.set(entry.getKey(), convertArrayToString(entry.getValue()));
 				continue;
 			}
 			runTimeConfig.set(entry.getKey(), entry.getValue()[0].trim());
 		}
 	}
 	//
-	private String convertArrayToString(final String key, final String[] stringArray) {
-		final String resultString = Arrays.toString(stringArray)
-			.replace("[", "")
-			.replace("]", "")
-			.replace(" ", "")
-			.trim();
-		/*if (key.equals(RunTimeConfig.KEY_LOAD_TIME))
-			return resultString.replace(",", ".");*/
-		return resultString;
+	protected String convertArrayToString(final String[] stringArray) {
+		return Arrays.toString(stringArray)
+				.replace("[", "")
+				.replace("]", "")
+				.replace(" ", "")
+				.trim();
 	}
 	//
 	public static void updateLastRunTimeConfig(final RunTimeConfig runTimeConfig) {

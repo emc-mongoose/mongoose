@@ -38,7 +38,7 @@ implements WSLoadBuilder<T, U> {
 		//
 		super.setProperties(runTimeConfig);
 		//
-		final String paramName = "storage.scheme";
+		final String paramName = RunTimeConfig.KEY_STORAGE_SCHEME;
 		try {
 			WSRequestConfig.class.cast(reqConf).setScheme(runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {

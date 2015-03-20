@@ -19,7 +19,7 @@ def init():
 	loadBuilder = loadBuilderInit()
 	try:
 		loadType = AsyncIOTask.Type.valueOf(
-			RunTimeConfig.getContext().getString("scenario.single.load").upper()
+			RunTimeConfig.getContext().getString(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD).upper()
 		)
 		LOG.debug(Markers.MSG, "Using load type: {}", loadType.name())
 		loadBuilder.setLoadType(loadType)

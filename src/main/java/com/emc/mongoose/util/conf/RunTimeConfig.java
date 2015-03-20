@@ -60,35 +60,56 @@ implements Externalizable {
 	public final static String
 		LIST_SEP = ",",
 		//
+		KEY_AUTH_ID = "auth.id",
+		KEY_AUTH_SECRET = "auth.secret",
+		//
 		KEY_DATA_ITEM_COUNT = "load.limit.dataItemCount",
 		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_SIZE_MIN = "data.size.min",
 		KEY_DATA_SIZE_MAX = "data.size.max",
 		KEY_DATA_SIZE_BIAS = "data.size.bias",
-		KEY_DATA_RING_SEED = "data.ring.seed",
-		KEY_DATA_RING_SIZE = "data.ring.size",
+		KEY_DATA_RING_SEED = "data.buffer.ring.seed",
+		KEY_DATA_RING_SIZE = "data.buffer.ring.size",
 		KEY_DATA_SRC_FPATH = "data.src.fpath",
 		//
 		KEY_LOAD_THREADS = "load.threads",
-		KEY_LOAD_TIME = "load.step.time",
+		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
 		KEY_SCENARIO_NAME = "scenario.name",
-		KEY_RUN_METRICS_PERIOD_SEC = "run.metrics.period.sec",
+		KEY_LOAD_METRICS_PERIOD_SEC = "load.metricsPeriodSec",
+		KEY_LOAD_TIME = "load.time",
 		KEY_LOAD_LIMIT_TIME = "load.limit.time",
+		KEY_LOAD_LIMIT_TIME_VALUE = KEY_LOAD_LIMIT_TIME + ".value",
+		KEY_LOAD_LIMIT_TIME_UNIT = KEY_LOAD_LIMIT_TIME + ".unit",
 		KEY_RUN_VERSION = "run.version",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
-		KEY_API_NAME = "api.name";
+		KEY_STORAGE_FS_ACCESS = "storage.fsAccess",
+		KEY_STORAGE_SCHEME = "storage.scheme",
+		KEY_STORAGE_NAMESPACE = "storage.namespace",
+		//
+		KEY_API_NAME = "api.name",
+		KEY_API_S3_BUCKET_NAME = "api.type.s3.bucket.name",
+		//
+		//  Single
+		KEY_SCENARIO_SINGLE_LOAD = "scenario.type.single.load",
+		//  Chain
+		KEY_SCENARIO_CHAIN_LOAD = "scenario.type.chain.load",
+		KEY_SCENARIO_CHAIN_SIMULTANEOUS = "scenario.type.chain.simultaneous",
+		KEY_SCENARIO_CHAIN_ITEMSBUFFER = "scenario.type.chain.itemsbuffer",
+		//  Rampup
+		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
+		KEY_SCENARIO_RAMPUP_THREAD_COUNTS = "scenario.type.rampup.threadCounts";
 	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
 	static {
 		MAP_OVERRIDE.put(KEY_DATA_SIZE, new String[] {"data.size.min", "data.size.max"});
-		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_LOAD_LIMIT_TIME});
-		MAP_OVERRIDE.put(KEY_LOAD_THREADS, new String[] {"load.append.threads", "load.create.threads", "load.read.threads", "load.update.threads", "load.delete.threads"});
-		MAP_OVERRIDE.put("remote.drivers", new String[] {"remote.servers"});
+		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_LOAD_LIMIT_TIME_VALUE, KEY_LOAD_LIMIT_TIME_UNIT});
+		MAP_OVERRIDE.put(KEY_LOAD_THREADS, new String[] {"load.type.append.threads", "load.type.create.threads", "load.type.read.threads", "load.type.update.threads", "load.type.delete.threads"});
+		MAP_OVERRIDE.put("load.drivers", new String[] {"load.servers"});
 	}
 	//
 	private final static String
@@ -180,7 +201,14 @@ implements Externalizable {
 	public final Set<String> getMongooseKeys() {
 		return mongooseKeys;
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	public static String getLoadThreadsParamName(final String loadType) {
+		return "load.type." + loadType + ".threads";
+	}
 	//
+	public static String getApiPortParamName(final String api) {
+		return "api.type." + api + ".port";
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final int getRunReqTimeOutMilliSec() {
 		return getInt("run.request.timeoutMilliSec");
@@ -255,7 +283,7 @@ implements Externalizable {
 	}
 	//
 	public final boolean getReadVerifyContent() {
-		return getBoolean("load.read.verifyContent");
+		return getBoolean("load.type.read.verifyContent");
 	}
 	//
 	public final String getStorageProto() {
@@ -271,7 +299,7 @@ implements Externalizable {
 	}
 	//
 	public final boolean getStorageFileSystemAccessEnabled() {
-		return getBoolean("storage.fsAccess");
+		return getBoolean(KEY_STORAGE_FS_ACCESS);
 	}
 	//
 	public final String getRunName() {
@@ -359,7 +387,7 @@ implements Externalizable {
 	}
 	//
 	public final String getLoadLimitTime() {
-		return getString(KEY_LOAD_LIMIT_TIME + ".value") + getString(KEY_LOAD_LIMIT_TIME + ".unit");
+		return getString(KEY_LOAD_LIMIT_TIME + ".value") + "." + getString(KEY_LOAD_LIMIT_TIME + ".unit");
 	}
 	//
 	public final TimeUnit getRunTimeUnit() {
@@ -410,8 +438,28 @@ implements Externalizable {
 		return getSizeBytes("data.buffer.ring.size");
 	}
 	//
-	public final short getLoadTypeThreadsCount(final String loadType) {
+	public final short getLoadTypeThreads(final String loadType) {
 		return getShort("load.type." + loadType + ".threads");
+	}
+	//
+	public final String getApiS3AuthPrefix() {
+		return getString("api.type.s3.authPrefix");
+	}
+	//
+	public final String getScenarioSingleLoad() {
+		return getString(KEY_SCENARIO_SINGLE_LOAD);
+	}
+	//
+	public final String[] getScenarioChainLoad() {
+		return getStringArray(KEY_SCENARIO_CHAIN_LOAD);
+	}
+	//
+	public final String[] getScenarioRampupThreadCounts() {
+		return getStringArray(KEY_SCENARIO_RAMPUP_THREAD_COUNTS);
+	}
+	//
+	public final String[] getScenarioRampupSizes() {
+		return getStringArray(KEY_SCENARIO_RAMPUP_SIZES);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -520,9 +568,20 @@ implements Externalizable {
 			keys2override = MAP_OVERRIDE.get(key);
 			sharedValue = sysProps.getProperty(key);
 			setProperty(key, sharedValue);
-			if(keys2override != null) {
-				for(final String key2override: keys2override) {
-					setProperty(key2override, sharedValue);
+			if (key.equals(RunTimeConfig.KEY_LOAD_TIME)) {
+				final String[] loadTime = sysProps.getString(key).split("\\.");
+				if (loadTime.length > 1) {
+					for (int i = 0; i < keys2override.length; i++) {
+						setProperty(keys2override[i], loadTime[i]);
+					}
+				} else {
+					LOG.error(Markers.ERR, "Load time isn't correct. Default values will be used.");
+				}
+			} else {
+				if(keys2override != null) {
+					for(final String key2override: keys2override) {
+						setProperty(key2override, sharedValue);
+					}
 				}
 			}
 		}
@@ -569,14 +628,14 @@ implements Externalizable {
 				case RunTimeConfig.KEY_RUN_ID:
 				case RunTimeConfig.KEY_RUN_MODE:
 				case RunTimeConfig.KEY_SCENARIO_NAME:
-				case RunTimeConfig.KEY_LOAD_LIMIT_TIME:
+				case RunTimeConfig.KEY_LOAD_LIMIT_TIME_VALUE:
+				case RunTimeConfig.KEY_LOAD_LIMIT_TIME_UNIT:
 				case RunTimeConfig.KEY_RUN_VERSION:
 				case RunTimeConfig.KEY_DATA_ITEM_COUNT:
 				case RunTimeConfig.KEY_DATA_SIZE:
 				case RunTimeConfig.KEY_DATA_RING_SEED:
 				case RunTimeConfig.KEY_DATA_RING_SIZE:
 				case RunTimeConfig.KEY_LOAD_THREADS:
-				case RunTimeConfig.KEY_LOAD_TIME:
 				case RunTimeConfig.KEY_STORAGE_ADDRS:
 				case RunTimeConfig.KEY_API_NAME:
 					strBuilder

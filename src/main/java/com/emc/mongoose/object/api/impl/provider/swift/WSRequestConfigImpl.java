@@ -30,9 +30,9 @@ extends WSRequestConfigBase<T> {
 	//
 	public final static String
 		//
-		KEY_CONF_AUTH_TOKEN = "api.swift.auth.token",
-		KEY_CONF_CONTAINER = "api.swift.container",
-		KEY_CONF_SVC_BASEPATH = "api.swift.service.basepath",
+		KEY_CONF_AUTH_TOKEN = "api.type.swift.authToken",
+		KEY_CONF_CONTAINER = "api.type.swift.container",
+		KEY_CONF_SVC_BASEPATH = "api.type.swift.serviceBasepath",
 		//
 		KEY_X_AUTH_TOKEN = "X-Auth-Token",
 		KEY_X_AUTH_USER = "X-Auth-User",
