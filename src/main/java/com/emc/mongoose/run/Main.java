@@ -108,13 +108,13 @@ public final class Main {
 		}
 		System.setProperty(RunTimeConfig.KEY_RUN_MODE, runMode);
 		//
-		final Map<String, String> properties = HumanFriendlyCli.parseCli(args);
-		//
 		initLogging(runMode);
 		final Logger rootLogger = LogManager.getRootLogger();
 		if(rootLogger == null) {
 			StatusLogger.getLogger().fatal("Logging initialization failure");
 		}
+		//
+		final Map<String, String> properties = HumanFriendlyCli.parseCli(args);
 		//
 		RunTimeConfig.initContext();
 		// load the properties
