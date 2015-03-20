@@ -27,7 +27,7 @@ import java.util.Set;
  * Created by gusakk on 3/13/15.
  */
 public class PropertiesLoader {
-	//private final static Logger LOG = LogManager.getLogger();
+	private final static Logger LOG = LogManager.getLogger();
 	private final static Set<String> mongooseKeys = new HashSet<>();
 	//
 	private static RunTimeConfig DEFAULT_CFG;
@@ -46,7 +46,7 @@ public class PropertiesLoader {
 		final ObjectMapper jsonMapper = new ObjectMapper();
 		//
 		try {
-			//LOG.debug(Markers.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
+			LOG.debug(Markers.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
 			final JsonNode rootNode = jsonMapper.readTree(cfgFile);
 			walkJsonTree(rootNode);
 			tgtConfig.setMongooseKeys(mongooseKeys);
@@ -55,8 +55,8 @@ public class PropertiesLoader {
 				jsonMapper.writerWithDefaultPrettyPrinter().writeValue(cfgFile, rootNode);
 			}
 		} catch (IOException e) {
-			/*TraceLogger.failure(LOG, Level.ERROR, e,
-					String.format("Failed to load properties from \"%s\"", cfgFile.toString()));*/
+			TraceLogger.failure(LOG, Level.ERROR, e,
+					String.format("Failed to load properties from \"%s\"", cfgFile.toString()));
 		}
 	}
 	//
