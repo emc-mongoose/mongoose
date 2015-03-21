@@ -1,6 +1,6 @@
 package com.emc.mongoose.webui;
 //
-import com.emc.mongoose.core.impl.util.conf.PropertiesLoader;
+import com.emc.mongoose.core.impl.util.conf.JsonConfigLoader;
 import com.emc.mongoose.run.JettyRunner;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.core.api.util.log.Markers;
@@ -60,7 +60,7 @@ public class SaveServlet extends CommonServlet {
 	@Override
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
 		setupRunTimeConfig(request);
-		PropertiesLoader.updateProps(Paths.get(Main.DIR_ROOT, Main.DIR_CONF).resolve(Main.JSON_PROPS_FILE), runTimeConfig, true);
+		JsonConfigLoader.updateProps(Paths.get(Main.DIR_ROOT, Main.DIR_CONF).resolve(Main.JSON_PROPS_FILE), runTimeConfig, true);
 		updateLastRunTimeConfig(runTimeConfig);
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
