@@ -12,15 +12,13 @@ distsDirName = 'dist'
 libsDirName = 'lib'
 dependencyCacheDirName = 'tmp'
 
-def loadPropertiesFromRun(String sourceFileName) {
+def loadProjectVersionFrom(String sourceFileName) {
 	def inputFile = new File(sourceFileName)
 	def json = new JsonSlurper().parseText(inputFile.text)
-	json.properties.run.each {
-		k, v -> ext[k] = v
-	}
+	ext.version = json.properties.run.version
 }
 
-loadPropertiesFromRun confDirName + '/properties.json'
+loadProjectVersionFrom confDirName + '/properties.json'
 
 version = ext.version
 
