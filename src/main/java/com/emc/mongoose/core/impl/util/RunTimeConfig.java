@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.util;
 //
-import com.emc.mongoose.core.impl.util.conf.PropertiesLoader;
+import com.emc.mongoose.core.impl.util.conf.JsonConfigLoader;
 import com.emc.mongoose.run.Main;
 import com.emc.mongoose.core.api.util.log.Markers;
 //
@@ -176,7 +176,7 @@ implements Externalizable {
 	}
 	//
 	public String getJsonProps() {
-		PropertiesLoader.updateProps(Paths.get(Main.DIR_ROOT, Main.DIR_CONF).resolve(Main.JSON_PROPS_FILE), this, false);
+		JsonConfigLoader.updateProps(Paths.get(Main.DIR_ROOT, Main.DIR_CONF).resolve(Main.JSON_PROPS_FILE), this, false);
 		return rootNode.toString();
 	}
 	//
@@ -547,7 +547,7 @@ implements Externalizable {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public synchronized void loadPropsFromJsonCfgFile(final Path propsDir) {
-		PropertiesLoader.loadPropsFromJsonCfgFile(propsDir, this);
+		JsonConfigLoader.loadPropsFromJsonCfgFile(propsDir, this);
 	}
 	//
 	public synchronized void loadSysProps() {

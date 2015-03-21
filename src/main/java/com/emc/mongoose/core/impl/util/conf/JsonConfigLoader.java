@@ -14,7 +14,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -22,16 +21,20 @@ import java.util.Set;
 /**
  * Created by gusakk on 3/13/15.
  */
-public class PropertiesLoader {
+public class JsonConfigLoader {
 	private final static Logger LOG = LogManager.getLogger();
 	private final static Set<String> mongooseKeys = new HashSet<>();
 	//
+	public static enum JsonConfigLoaderActions {
+		LOAD, UPDATE, UPLOAD
+	}
+	//
 	private static RunTimeConfig DEFAULT_CFG;
-	private static PropertiesLoaderActions ACTION = PropertiesLoaderActions.LOAD;
+	private static JsonConfigLoaderActions ACTION = JsonConfigLoaderActions.LOAD;
 	//
 	private final RunTimeConfig tgtConfig;
 	//
-	public PropertiesLoader(final RunTimeConfig tgtConfig) {
+	public JsonConfigLoader(final RunTimeConfig tgtConfig) {
 		this.tgtConfig = tgtConfig;
 	}
 	//
@@ -48,7 +51,7 @@ public class PropertiesLoader {
 			tgtConfig.setMongooseKeys(mongooseKeys);
 			tgtConfig.putJsonProps(rootNode);
 			//
-			if (ACTION.equals(PropertiesLoaderActions.UPLOAD)) {
+			if (ACTION.equals(JsonConfigLoaderActions.UPLOAD)) {
 				jsonMapper.writerWithDefaultPrettyPrinter().writeValue(cfgFile, rootNode);
 			}
 		} catch (IOException e) {
@@ -75,8 +78,8 @@ public class PropertiesLoader {
 				}
 			}
 			if (!jsonNode.get(shortFieldName).fieldNames().hasNext()) {
-				if (ACTION.equals(PropertiesLoaderActions.UPDATE)
-						|| ACTION.equals(PropertiesLoaderActions.UPLOAD)) {
+				if (ACTION.equals(JsonConfigLoaderActions.UPDATE)
+						|| ACTION.equals(JsonConfigLoaderActions.UPLOAD)) {
 					final String property = DEFAULT_CFG.getProperty(fullFieldName).toString()
 							.replace("[", "")
 							.replace("]", "")
@@ -98,9 +101,9 @@ public class PropertiesLoader {
 	//
 	public static void updateProps(final Path rootDir, final RunTimeConfig tgtConfig, final boolean isUpload) {
 		if (isUpload) {
-			ACTION = PropertiesLoaderActions.UPLOAD;
+			ACTION = JsonConfigLoaderActions.UPLOAD;
 		} else {
-			ACTION = PropertiesLoaderActions.UPDATE;
+			ACTION = JsonConfigLoaderActions.UPDATE;
 		}
 		loadPropsFromJsonCfgFile(rootDir, tgtConfig);
 	}
