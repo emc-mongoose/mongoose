@@ -1,4 +1,5 @@
 import org.gradle.api.tasks.bundling.Compression
+import groovy.json.JsonSlurper
 
 apply plugin: 'java'
 apply plugin: 'java-library-distribution'
@@ -11,18 +12,15 @@ distsDirName = 'dist'
 libsDirName = 'lib'
 dependencyCacheDirName = 'tmp'
 
-def loadProperties(String sourceFileName) {
-	def config = new Properties()
-	def propFile = new File(sourceFileName)
-	if (propFile.canRead()) {
-		config.load(new FileInputStream(propFile))
-		for (Map.Entry property in config) {
-			ext[property.key] = property.value;
-		}
+def loadPropertiesFromRun(String sourceFileName) {
+	def inputFile = new File(sourceFileName)
+	def json = new JsonSlurper().parseText(inputFile.text)
+	json.properties.run.each {
+		k, v -> ext[k] = v
 	}
 }
 
-loadProperties confDirName + '/properties/run'
+loadPropertiesFromRun confDirName + '/properties.json'
 
 version = ext.version
 
