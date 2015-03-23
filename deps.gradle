@@ -33,18 +33,21 @@ ext {
 
 	jetty_http = [ "org.eclipse.jetty:jetty-http:9.3.0.M1" ]
 	jetty_io = [ "org.eclipse.jetty:jetty-io:9.3.0.M1" ]
+	jetty_jsp = [ "org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127" ]
+	jetty_jsp_api = [ "org.mortbay.jetty:jsp-api-2.1-glassfish:2.1.v20100127" ]
+	jetty_jstl = [ "jstl:jstl:1.2" ]
 	jetty_security = [ "org.eclipse.jetty:jetty-security:9.3.0.M1" ]
 	jetty_server = [ "org.eclipse.jetty:jetty-server:9.3.0.M1" ]
 	jetty_servlet = [ "org.eclipse.jetty:jetty-servlet:9.3.0.M1" ]
+	jetty_servlet_api = [ "javax.servlet:javax.servlet-api:2.5.0" ]
 	jetty_util = [ "org.eclipse.jetty:jetty-util:9.3.0.M1" ]
 	jetty_webapp = [ "org.eclipse.jetty:jetty-webapp:9.3.0.M1" ]
 	jetty_xml = [ "org.eclipse.jetty:jetty-xml:9.3.0.M1" ]
 
 	jmdns = [ "com.github.rickyclarkson:jmdns:3.4.2-r353-1" ]
 
-	jsp = [ "org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127" ]
-	jsp_api = [ "javax.servlet.jsp:jsp-api:2.1" ]
-	jstl = [ "jstl:jstl:1.2" ]
+	jsp_api = [ "javax.servlet.jsp:jsp-api:2.2" ]
+	jstl = [ "javax.servlet:jstl:1.2" ]
 
 	jython = [ "org.python:jython-standalone:2.7-b3" ]
 
@@ -58,6 +61,7 @@ ext {
 	log4j_web = [ "org.apache.logging.log4j:log4j-web:2.1" ]
 
 	metrics_core = [ "io.dropwizard.metrics:metrics-core:3.1.0" ]
+
 
 	slf4j_api = [ "org.slf4j:slf4j-api:1.7.7" ]
 
@@ -80,8 +84,21 @@ ext {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
-	runtime_jetty = [ jetty_io, jetty_servlet, jetty_util, ]
-	runtime_jetty_svc = [ runtime_jetty, jetty_http, jetty_security, jetty_xml ]
+	runtime_jetty = [
+		jetty_io,
+		jetty_jsp,
+		jetty_jsp_api,
+		jetty_jstl,
+		jetty_servlet,
+		jetty_servlet_api,
+		jetty_util,
+	]
+	runtime_jetty_svc = [
+		runtime_jetty,
+		jetty_http,
+		jetty_security,
+		jetty_xml
+	]
 
 	runtime_logging = [
 		commons_logging,
@@ -92,6 +109,7 @@ ext {
 	]
 
 	runtime_webapp = [
-		log4j_web, jstl,
+		jetty_jstl,
+		log4j_web,
 	]
 }

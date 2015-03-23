@@ -1,5 +1,6 @@
 package com.emc.mongoose.run.cli;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;

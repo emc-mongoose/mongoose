@@ -6,7 +6,6 @@ import com.emc.mongoose.common.logging.TraceLogger;
 //
 import com.fasterxml.jackson.databind.JsonNode;
 //
-import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.BaseConfiguration;
 import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
@@ -18,14 +17,16 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 //
 import java.io.Externalizable;
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -88,7 +89,9 @@ implements Externalizable {
 		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
 		KEY_SCENARIO_RAMPUP_THREAD_COUNTS = "scenario.type.rampup.threadCounts",
 		//  For ui property tree
-		KEY_CHILDREN_PROPS = "children";
+		KEY_CHILDREN_PROPS = "children",
+		//
+		FNAME_CONF = "properties.json";
 	//
 	private static InheritableThreadLocal<RunTimeConfig>
 		INHERITABLE_CONTEXT = new InheritableThreadLocal<>();
@@ -146,9 +149,12 @@ implements Externalizable {
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
 	static {
+		// shortcuts
 		MAP_OVERRIDE.put(KEY_DATA_SIZE, new String[] {"data.size.min", "data.size.max"});
 		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_LOAD_LIMIT_TIME_VALUE, KEY_LOAD_LIMIT_TIME_UNIT});
 		MAP_OVERRIDE.put(KEY_LOAD_THREADS, new String[] {"load.type.append.threads", "load.type.create.threads", "load.type.read.threads", "load.type.update.threads", "load.type.delete.threads"});
+		MAP_OVERRIDE.put("data.count", new String[] {"load.limit.dataItemCount"});
+		// backward compatibility
 		MAP_OVERRIDE.put("load.drivers", new String[] {"load.servers"});
 	}
 	//
@@ -204,7 +210,11 @@ implements Externalizable {
 	}
 	//
 	public String getJsonProps() {
-		JsonConfigLoader.updateProps(Paths.get(Main.DIR_ROOT, Main.DIR_CONF).resolve(Main.JSON_PROPS_FILE), this, false);
+		JsonConfigLoader.updateProps(
+			Paths.get(DIR_ROOT, Constants.DIR_CONF)
+				.resolve(FNAME_CONF),
+			this, false
+		);
 		return rootNode.toString();
 	}
 	//
@@ -216,6 +226,8 @@ implements Externalizable {
 		setProperty(key, value);
 		//System.setProperty(key, value);
 	}
+	//
+	private Set<String> mongooseKeys;
 	//
 	public final synchronized void setMongooseKeys(final Set<String> mongooseKeys) {
 		this.mongooseKeys = mongooseKeys;
@@ -411,10 +423,6 @@ implements Externalizable {
 	//
 	public final String getRunId() {
 		return getString(KEY_RUN_ID);
-	}
-	//
-	public final String getLoadLimitTime() {
-		return getString(KEY_LOAD_LIMIT_TIME + ".value") + "." + getString(KEY_LOAD_LIMIT_TIME + ".unit");
 	}
 	//
 	public final TimeUnit getLoadLimitTimeUnit() {

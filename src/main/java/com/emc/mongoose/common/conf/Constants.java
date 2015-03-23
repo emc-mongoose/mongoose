@@ -18,6 +18,7 @@ public interface Constants {
 	String RUN_MODE_COMPAT_SERVER = "driver";
 	String RUN_MODE_WEBUI = "webui";
 	String RUN_MODE_CINDERELLA = "cinderella";
+	String RUN_MODE_WSMOCK = "wsmock";
 	//
 	String DIR_WEBAPP = "webapp";
 	String DIR_WEBINF = "WEB-INF";

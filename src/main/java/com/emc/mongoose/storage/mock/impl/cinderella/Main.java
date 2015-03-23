@@ -235,9 +235,16 @@ implements Runnable {
 				Thread.sleep(updatePeriodMilliSec);
 			}
 			//
-			multiSocketSvc.awaitTermination(
-				runTimeConfig.getLoadLimitTimeValue(), runTimeConfig.getLoadLimitTimeUnit()
-			);
+			final long timeOutValue = runTimeConfig.getLoadLimitTimeValue();
+			if(timeOutValue > 0) {
+				multiSocketSvc.awaitTermination(
+					timeOutValue, runTimeConfig.getLoadLimitTimeUnit()
+				);
+			} else {
+				multiSocketSvc.awaitTermination(
+					Long.MAX_VALUE, runTimeConfig.getLoadLimitTimeUnit()
+				);
+			}
 		} catch (final InterruptedException e) {
 			LOG.info(Markers.MSG, "Interrupting the Cinderella");
 		} finally {

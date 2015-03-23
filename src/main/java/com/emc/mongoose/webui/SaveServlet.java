@@ -4,10 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.logging.TraceLogger;
-import com.emc.mongoose.core.impl.util.conf.JsonConfigLoader;
-//
-import com.emc.mongoose.run.main.CLIRunModeHandler;
-import com.emc.mongoose.run.webserver.RunJettyTask;
+import com.emc.mongoose.common.conf.JsonConfigLoader;
 //
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -68,8 +65,7 @@ public class SaveServlet extends CommonServlet {
 	public void doPost(final HttpServletRequest request, final HttpServletResponse response) {
 		setupRunTimeConfig(request);
 		JsonConfigLoader.updateProps(
-			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF)
-				.resolve(RunTimeConfig.JSON_PROPS_FILE),
+			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF),
 			runTimeConfig, true
 		);
 		updateLastRunTimeConfig(runTimeConfig);

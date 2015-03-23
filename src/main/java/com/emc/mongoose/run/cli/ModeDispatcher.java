@@ -76,6 +76,7 @@ public final class ModeDispatcher {
 				new RunJettyTask(RunTimeConfig.getContext()).run();
 				break;
 			case Constants.RUN_MODE_CINDERELLA:
+			case Constants.RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
 					new com.emc.mongoose.storage.mock.impl.cinderella.Main(

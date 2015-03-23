@@ -1,5 +1,6 @@
 package com.emc.mongoose.common.logging;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.appender.AbstractManager;
 import org.apache.logging.log4j.core.appender.AppenderLoggingException;
@@ -17,8 +18,6 @@ import java.util.Map;
 /** Created by andrey on 13.03.15. */
 public final class RunIdFileManager
 extends AbstractManager {
-	//
-	private final static String PATH_LOG_DIR = System.getProperty("dir.root") + File.separator + "log";
 	//
 	private final String fileName, uriAdvertise;
 	private final boolean flagAppend, flagLock, flagBuffered;
@@ -157,8 +156,9 @@ extends AbstractManager {
 	}
 	//
 	private final String
+		PATH_LOG_DIR = String.format("%s%slog", RunTimeConfig.DIR_ROOT, File.separator),
 		FMT_FILE_PATH = "%s" + File.separator + "%s" + File.separator +"%s",
-		FMT_FILE_PATH_NO_RUN_ID = "%s" + File.separator + File.separator +"%s";
+		FMT_FILE_PATH_NO_RUN_ID = "%s" + File.separator +"%s";
 	//
 	protected final FileOutputStream getOutputStream(final String currRunId) {
 		FileOutputStream currentOutPutStream = null;

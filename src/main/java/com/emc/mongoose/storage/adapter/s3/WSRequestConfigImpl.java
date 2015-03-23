@@ -34,8 +34,7 @@ extends WSRequestConfigBase<T> {
 	//
 	public final static String
 		FMT_PATH = "/%s/%s",
-		KEY_BUCKET_NAME = "api.type.s3.bucket.name",
-		KEY_BUCKET_VERSIONING = "api.type.s3.bucket.versioning",
+		KEY_BUCKET_NAME = "api.type.s3.bucket",
 		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
 	private final String fmtAuthValue;

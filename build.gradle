@@ -128,12 +128,6 @@ sourceSets {
 		}
 		compileClasspath += sourceSets.common.output
 	}
-	cli {
-		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'cli'].join(File.separator))
-			include '**'
-		}
-	}
 	storageMock {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'mock'].join(File.separator))
@@ -159,9 +153,9 @@ sourceSets {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// launcher ////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	run {
+	cli {
 		java {
-			srcDirs(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'main'].join(File.separator))
+			srcDirs(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'cli'].join(File.separator))
 			include '**'
 		}
 		//
@@ -169,7 +163,7 @@ sourceSets {
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
 		compileClasspath += sourceSets.webserver.output + sourceSets.webui.output
-		compileClasspath += sourceSets.cli.output + sourceSets.storageMock.output
+		compileClasspath += sourceSets.storageMock.output
 		//
 		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
@@ -275,12 +269,6 @@ dependencies {
 	)
 
 	// run modes
-	cliCompile (
-		library.commons_cli,
-		library.commons_lang,
-	)
-	cliRuntime (
-	)
 
 	clientCompile (
 		library.commons_configuration,
@@ -342,16 +330,17 @@ dependencies {
 		library.websocket_common,
 		library.websocket_core,
 		library.websocket_server,
-		library.jsp,
 		library.jsp_api,
 	)
 
 	// launcher
-	runCompile (
+	cliCompile (
+		library.commons_cli,
 		library.commons_configuration,
+		library.commons_lang,
 		library.log4j_api_plus_core,
 	)
-	runRuntime (
+	cliRuntime (
 		library.runtime_logging,
 	)
 }
@@ -366,13 +355,12 @@ configurations {
 		storageAdapterSwiftRuntime,
 		serverApiRuntime,
 		webserverRuntime,
-		cliRuntime,
 		clientRuntime,
 		scenarioRuntime,
 		serverImplRuntime,
 		storageMockRuntime,
 		webuiRuntime,
-		runRuntime,
+		cliRuntime,
 	)
 }
 
@@ -571,22 +559,6 @@ task webserverJar(type: Jar) {
 // run modes ///////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-task cliJar(type: Jar) {
-	archiveName "${baseName}-cli.${extension}"
-	from sourceSets.cli.output
-	manifest {
-		from sharedManifest
-		attributes(
-			'Implementation-Title': rootProject.name + "-cli",
-			'Class-Path': [
-				configurations.cliRuntime.collect {
-					libsDirName + File.separator + it.getName()
-				}.join(' '),
-			].join(' ')
-		)
-	}
-}
-
 task clientJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar
 	archiveName "${baseName}-client.${extension}"
@@ -695,18 +667,18 @@ task webuiJar(type: Jar) {
 // entry point /////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-task runJar(type: Jar) {
+task cliJar(type: Jar) {
 	dependsOn commonJar, storageMockJar, coreApiJar, coreImplJar
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
 	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
-	dependsOn cliJar, clientJar, scenarioJar, webuiJar
+	dependsOn clientJar, scenarioJar, webuiJar
 	archiveName "${baseName}.${extension}"
-	from sourceSets.run.output
+	from sourceSets.cli.output
 	manifest {
 		from sharedManifest
 		attributes(
-			'Implementation-Title': rootProject.name + "-run",
-			'Main-Class': 'com.emc.mongoose.run.main.CLIRunModeHandler',
+			'Implementation-Title': rootProject.name + "-cli",
+			'Main-Class': "com.emc.mongoose.run.cli.ModeDispatcher",
 			'Class-Path': [
 				clientJar.outputs.files.collect {it.name}.join(' '),
 				commonJar.outputs.files.collect {it.name}.join(' '),
@@ -718,11 +690,10 @@ task runJar(type: Jar) {
 				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
 				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
 				storageMockJar.outputs.files.collect {it.name}.join(' '),
-				cliJar.outputs.files.collect {it.name}.join(' '),
 				scenarioJar.outputs.files.collect {it.name}.join(' '),
 				webserverJar.outputs.files.collect {it.name}.join(' '),
 				webuiJar.outputs.files.collect {it.name}.join(' '),
-				configurations.runRuntime.collect {
+				configurations.cliRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
 			].join(' ')
@@ -738,15 +709,14 @@ task dist(type: Tar) {
 	dependsOn storageAdapterAtmosJar
 	dependsOn storageAdapterS3Jar
 	dependsOn storageAdapterSwiftJar
-	dependsOn clientJar
 	dependsOn serverApiJar
+	dependsOn webserverJar
+	dependsOn clientJar
+	dependsOn scenarioJar
 	dependsOn serverImplJar
 	dependsOn storageMockJar
-	dependsOn cliJar
-	dependsOn scenarioJar
-	dependsOn webserverJar
-	dependsOn runJar
 	dependsOn webuiJar
+	dependsOn cliJar
 
 	baseName = project.name
 	compression = Compression.GZIP
@@ -773,15 +743,14 @@ task dist(type: Tar) {
 		from storageAdapterAtmosJar.outputs.files
 		from storageAdapterS3Jar.outputs.files
 		from storageAdapterSwiftJar.outputs.files
-		from clientJar.outputs.files
 		from serverApiJar.outputs.files
+		from webserverJar.outputs.files
+		from clientJar.outputs.files
+		from scenarioJar.outputs.files
 		from serverImplJar.outputs.files
 		from storageMockJar.outputs.files
 		from webuiJar.outputs.files
 		from cliJar.outputs.files
-		from scenarioJar.outputs.files
-		from webserverJar.outputs.files
-		from runJar.outputs.files
 		into('scripts') {
 			from { sourceSets.test.resources }
 		}

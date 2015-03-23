@@ -1,23 +1,23 @@
 package com.emc.mongoose.common.conf;
-
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.run.Main;
+//
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+//
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-
+//
 /**
  * Created by gusakk on 3/13/15.
  */
@@ -54,9 +54,10 @@ public class JsonConfigLoader {
 			if (ACTION.equals(JsonConfigLoaderActions.UPLOAD)) {
 				jsonMapper.writerWithDefaultPrettyPrinter().writeValue(cfgFile, rootNode);
 			}
-		} catch (IOException e) {
-			TraceLogger.failure(LOG, Level.ERROR, e,
-					String.format("Failed to load properties from \"%s\"", cfgFile.toString()));
+		} catch(final IOException e) {
+			TraceLogger.failure(
+				LOG, Level.ERROR, e, String.format("Failed to load properties from \"%s\"", cfgFile)
+			);
 		}
 	}
 	//
@@ -64,8 +65,7 @@ public class JsonConfigLoader {
 		walkJsonTree(jsonNode, null);
 	}
 	//
-	private static void walkJsonTree(final JsonNode jsonNode,
-	                                 final String fullFileName) {
+	private static void walkJsonTree(final JsonNode jsonNode, final String fullFileName) {
 		final Iterator<String> fields = jsonNode.fieldNames();
 		while (fields.hasNext()) {
 			final String shortFieldName = fields.next();
@@ -74,7 +74,7 @@ public class JsonConfigLoader {
 				if (fullFileName.isEmpty()) {
 					fullFieldName = shortFieldName;
 				} else {
-					fullFieldName = fullFileName + Main.DOT + shortFieldName;
+					fullFieldName = fullFileName + Constants.DOT + shortFieldName;
 				}
 			}
 			if (!jsonNode.get(shortFieldName).fieldNames().hasNext()) {
@@ -99,7 +99,9 @@ public class JsonConfigLoader {
 		}
 	}
 	//
-	public static void updateProps(final Path rootDir, final RunTimeConfig tgtConfig, final boolean isUpload) {
+	public static void updateProps(
+		final Path rootDir, final RunTimeConfig tgtConfig, final boolean isUpload
+	) {
 		if (isUpload) {
 			ACTION = JsonConfigLoaderActions.UPLOAD;
 		} else {
