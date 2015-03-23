@@ -98,7 +98,7 @@ implements WSRequestConfig<T> {
 	private final Thread clientThread;
 	//
 	public static WSRequestConfigBase getInstance() {
-		return newInstanceFor(RunTimeConfig.getContext().getStorageApi());
+		return newInstanceFor(RunTimeConfig.getContext().getApiName());
 	}
 	//
 	private final static String
@@ -185,7 +185,7 @@ implements WSRequestConfig<T> {
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int)runTimeConfig.getDataPageSize())
+			.setBufferSize((int)runTimeConfig.getDataBufferSize())
 			.build();
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
@@ -199,8 +199,8 @@ implements WSRequestConfig<T> {
 			.setSoReuseAddress(runTimeConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(runTimeConfig.getSocketTimeOut())
 			.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize((int) runTimeConfig.getDataPageSize())
-			.setSndBufSize((int) runTimeConfig.getDataPageSize())
+			.setRcvBufSize((int) runTimeConfig.getDataBufferSize())
+			.setSndBufSize((int) runTimeConfig.getDataBufferSize())
 			.setConnectTimeout(runTimeConfig.getConnTimeOut());
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
@@ -313,13 +313,13 @@ implements WSRequestConfig<T> {
 		try {
 			setScheme(this.runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "storage.scheme");
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_SCHEME);
 		}
 		//
 		try {
 			setNameSpace(this.runTimeConfig.getStorageNameSpace());
 		} catch(final NoSuchElementException e) {
-			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "data.namespace");
+			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_NAMESPACE);
 		} catch(final IllegalStateException e) {
 			LOG.debug(Markers.ERR, "Failed to set the namespace", e);
 		}
@@ -327,7 +327,7 @@ implements WSRequestConfig<T> {
 		try {
 			setFileAccessEnabled(runTimeConfig.getStorageFileAccessEnabled());
 		} catch(final NoSuchElementException e) {
-			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, "http.emc.fs.access");
+			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_FS_ACCESS);
 		}
 		//
 		super.setProperties(runTimeConfig);
@@ -507,8 +507,8 @@ implements WSRequestConfig<T> {
 		final MutableWSRequest httpRequest, final T dataItem
 	) {
 		httpRequest.addHeader(
-			HttpHeaders.RANGE,
-			String.format(MSG_TMPL_RANGE_BYTES_APPEND, dataItem.getSize())
+				HttpHeaders.RANGE,
+				String.format(MSG_TMPL_RANGE_BYTES_APPEND, dataItem.getSize())
 		);
 	}
 	/*
@@ -628,7 +628,7 @@ implements WSRequestConfig<T> {
 				}
 			} else {
 				tgtHost = new HttpHost(
-					tgtAddr, runTimeConfig.getApiPort(runTimeConfig.getStorageApi()),
+					tgtAddr, runTimeConfig.getApiTypePort(runTimeConfig.getApiName()),
 					runTimeConfig.getStorageProto()
 				);
 			}

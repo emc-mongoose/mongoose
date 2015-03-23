@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.main;
+package com.emc.mongoose.run.cli;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -14,7 +14,6 @@ import com.emc.mongoose.run.webserver.RunJettyTask;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
-//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,7 +25,7 @@ import java.util.Map;
  Created by kurila on 04.07.14.
  Mongoose entry point.
  */
-public final class CLIRunModeHandler {
+public final class ModeDispatcher {
 	//
 	public static void main(final String args[]) {
 		//
@@ -44,12 +43,8 @@ public final class CLIRunModeHandler {
 		//
 		RunTimeConfig.initContext();
 		// load the properties
-		RunTimeConfig.getContext().loadPropsFromDir(
-			Paths.get(
-				RunTimeConfig.DIR_ROOT,
-				Constants.DIR_CONF,
-				Constants.DIR_PROPERTIES
-			)
+		RunTimeConfig.getContext().loadPropsFromJsonCfgFile(
+			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
 		);
 		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		RunTimeConfig.getContext().loadSysProps();

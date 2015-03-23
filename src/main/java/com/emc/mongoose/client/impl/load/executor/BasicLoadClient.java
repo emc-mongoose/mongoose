@@ -146,10 +146,10 @@ implements LoadClient<T> {
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		//
-		metricsPeriodSec = runTimeConfig.getRunMetricsPeriodSec();
+		metricsPeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
 		//
 		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
-			runTimeConfig.getRemoteExportPort()
+			runTimeConfig.getRemotePortExport()
 		);
 		metricsReporter = JmxReporter.forRegistry(metrics)
 			//.convertDurationsTo(TimeUnit.SECONDS)

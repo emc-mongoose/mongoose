@@ -40,7 +40,7 @@ implements Runnable {
 	//
 	@Override
     public void run() {
-        final Server server = new Server(runTimeConfig.getWUISvcPort());
+        final Server server = new Server(runTimeConfig.getRemotePortWebUI());
         //
         final WebAppContext webAppContext = new WebAppContext();
         webAppContext.setContextPath("/");

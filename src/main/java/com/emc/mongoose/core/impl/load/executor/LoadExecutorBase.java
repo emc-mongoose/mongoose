@@ -113,7 +113,7 @@ implements LoadExecutor<T> {
 		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
-		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());
+		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemotePortExport());
 		jmxReporter = JmxReporter.forRegistry(metrics)
 			//.convertDurationsTo(TimeUnit.MICROSECONDS)
 			//.convertRatesTo(TimeUnit.SECONDS)
@@ -177,7 +177,7 @@ implements LoadExecutor<T> {
 	private final Thread metricDumpThread = new Thread() {
 		@Override
 		public final void run() {
-			final int metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
+			final int metricsUpdatePeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
 			try {
 				if(metricsUpdatePeriodSec > 0) {
 					while(isAlive()) {

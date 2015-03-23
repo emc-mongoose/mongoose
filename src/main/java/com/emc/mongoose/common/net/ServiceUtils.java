@@ -51,7 +51,7 @@ public final class ServiceUtils {
 	static {
 		int tmpPort = Registry.REGISTRY_PORT;
 		try {
-			tmpPort = RunTimeConfig.getContext().getRemoteControlPort();
+			tmpPort = RunTimeConfig.getContext().getRemotePortControl();
 		} catch(final Exception e) {
 			TraceLogger.failure(
 				LOG, Level.WARN, e,

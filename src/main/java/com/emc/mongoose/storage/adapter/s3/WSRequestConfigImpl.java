@@ -34,7 +34,8 @@ extends WSRequestConfigBase<T> {
 	//
 	public final static String
 		FMT_PATH = "/%s/%s",
-		KEY_BUCKET = "api.s3.bucket",
+		KEY_BUCKET_NAME = "api.type.s3.bucket.name",
+		KEY_BUCKET_VERSIONING = "api.type.s3.bucket.versioning",
 		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
 	private final String fmtAuthValue;
@@ -49,7 +50,7 @@ extends WSRequestConfigBase<T> {
 	protected WSRequestConfigImpl(final WSRequestConfigImpl<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		fmtAuthValue = runTimeConfig.getString("api.s3.auth.prefix") + " %s:%s";
+		fmtAuthValue = runTimeConfig.getApiS3AuthPrefix() + " %s:%s";
 		if(reqConf2Clone != null) {
 			setBucket(reqConf2Clone.getBucket());
 			setNameSpace(reqConf2Clone.getNameSpace());
@@ -92,9 +93,9 @@ extends WSRequestConfigBase<T> {
 		super.setProperties(runTimeConfig);
 		//
 		try {
-			setBucket(new WSBucketImpl<>(this, this.runTimeConfig.getString(KEY_BUCKET)));
+			setBucket(new WSBucketImpl<>(this, this.runTimeConfig.getString(KEY_BUCKET_NAME)));
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET_NAME);
 		}
 		//
 		return this;
@@ -217,7 +218,7 @@ extends WSRequestConfigBase<T> {
 			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", bucketName);
 			bucket.create(storageNodeAddrs[0]);
 			if(bucket.exists(storageNodeAddrs[0])) {
-				runTimeConfig.set(KEY_BUCKET, bucketName);
+				runTimeConfig.set(KEY_BUCKET_NAME, bucketName);
 			} else {
 				throw new IllegalStateException(
 					String.format(FMT_MSG_ERR_BUCKET_NOT_EXIST, bucketName)

@@ -1,4 +1,0 @@
-port:				9020
-auth.prefix:		AWS
-bucket:
-bucket.versioning:	false

@@ -15,7 +15,7 @@ def init():
     #
     runTimeValue = None  # tuple of (value, unit)
     try:
-        runTimeValue = RunTimeConfig.getContext().getRunTime()
+        runTimeValue = RunTimeConfig.getContext().getLoadLimitTime()
         runTimeValue = runTimeValue.split('.')
         runTimeValue = Integer.valueOf(runTimeValue[0]), TimeUnit.valueOf(runTimeValue[1].upper())
         # LOG.info(Markers.MSG, "Using time limit: {} {}", INSTANCE[0], INSTANCE[1].name().lower())

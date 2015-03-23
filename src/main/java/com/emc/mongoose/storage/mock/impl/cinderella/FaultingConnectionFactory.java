@@ -37,8 +37,8 @@ extends DefaultNHttpServerConnectionFactory {
 		final ConnectionConfig config, final RunTimeConfig runTimeConfig
 	) {
 		super(config);
-		this.faultSleepMsec =  runTimeConfig.getInt("storage.mock.fault.sleep.msec");
-		faultPeriod = runTimeConfig.getInt("storage.mock.fault.period");
+		this.faultSleepMsec =  runTimeConfig.getStorageMockFaultSleepMilliSec();
+		faultPeriod = runTimeConfig.getStorageMockFaultPeriod();
 	}
 	//
 	@Override

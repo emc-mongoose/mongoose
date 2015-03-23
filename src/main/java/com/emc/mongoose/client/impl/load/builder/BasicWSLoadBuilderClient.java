@@ -112,7 +112,7 @@ implements WSLoadBuilderClient<T, U> {
 		String svcJMXAddr;
 		JMXServiceURL nextJMXURL;
 		JMXConnector nextJMXConn;
-		final int jmxImportPort = runTimeConfig.getRemoteImportPort();
+		final int jmxImportPort = runTimeConfig.getRemotePortImport();
 		//
 		for(final String addr : keySet()) {
 			//
@@ -154,7 +154,7 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		newLoadClient = new BasicWSLoadClient<>(
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
-			runTimeConfig.getDataCount()
+			runTimeConfig.getLoadLimitDataItemCount()
 		);
 		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer != null && srcProducer.getConsumer() == null) {

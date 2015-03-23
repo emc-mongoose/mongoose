@@ -4,8 +4,7 @@ import com.emc.mongoose.common.logging.Settings;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.logging.TraceLogger;
 //
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 //
 import org.apache.commons.collections4.keyvalue.DefaultMapEntry;
 import org.apache.commons.configuration.BaseConfiguration;
@@ -19,12 +18,9 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
 //
 import java.io.Externalizable;
-import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Path;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -49,24 +45,50 @@ implements Externalizable {
 	public final static String
 		LIST_SEP = ",",
 		//
-		KEY_DATA_COUNT = "data.count",
+		KEY_AUTH_ID = "auth.id",
+		KEY_AUTH_SECRET = "auth.secret",
+		//
+		KEY_DATA_ITEM_COUNT = "load.limit.dataItemCount",
 		KEY_DATA_SIZE = "data.size",
+		KEY_DATA_SIZE_MIN = "data.size.min",
+		KEY_DATA_SIZE_MAX = "data.size.max",
 		KEY_DATA_SIZE_BIAS = "data.size.bias",
-		KEY_DATA_RING_SEED = "data.ring.seed",
-		KEY_DATA_RING_SIZE = "data.ring.size",
+		KEY_DATA_RING_SEED = "data.buffer.ring.seed",
+		KEY_DATA_RING_SIZE = "data.buffer.ring.size",
+		KEY_DATA_SRC_FPATH = "data.src.fpath",
 		//
 		KEY_LOAD_THREADS = "load.threads",
-		KEY_LOAD_TIME = "load.step.time",
+		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
-		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
-		KEY_RUN_METRICS_PERIOD_SEC = "run.metrics.period.sec",
-		KEY_RUN_TIME = "run.time",
+		KEY_SCENARIO_NAME = "scenario.name",
+		KEY_LOAD_METRICS_PERIOD_SEC = "load.metricsPeriodSec",
+		KEY_LOAD_TIME = "load.time",
+		KEY_LOAD_LIMIT_TIME = "load.limit.time",
+		KEY_LOAD_LIMIT_TIME_VALUE = KEY_LOAD_LIMIT_TIME + ".value",
+		KEY_LOAD_LIMIT_TIME_UNIT = KEY_LOAD_LIMIT_TIME + ".unit",
 		KEY_RUN_VERSION = "run.version",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
-		KEY_STORAGE_API = "storage.api";
+		KEY_STORAGE_FS_ACCESS = "storage.fsAccess",
+		KEY_STORAGE_SCHEME = "storage.scheme",
+		KEY_STORAGE_NAMESPACE = "storage.namespace",
+		//
+		KEY_API_NAME = "api.name",
+		KEY_API_S3_BUCKET_NAME = "api.type.s3.bucket.name",
+		//
+		//  Single
+		KEY_SCENARIO_SINGLE_LOAD = "scenario.type.single.load",
+		//  Chain
+		KEY_SCENARIO_CHAIN_LOAD = "scenario.type.chain.load",
+		KEY_SCENARIO_CHAIN_SIMULTANEOUS = "scenario.type.chain.simultaneous",
+		KEY_SCENARIO_CHAIN_ITEMSBUFFER = "scenario.type.chain.itemsbuffer",
+		//  Rampup
+		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
+		KEY_SCENARIO_RAMPUP_THREAD_COUNTS = "scenario.type.rampup.threadCounts",
+		//  For ui property tree
+		KEY_CHILDREN_PROPS = "children";
 	//
 	private static InheritableThreadLocal<RunTimeConfig>
 		INHERITABLE_CONTEXT = new InheritableThreadLocal<>();
@@ -125,9 +147,9 @@ implements Externalizable {
 	//
 	static {
 		MAP_OVERRIDE.put(KEY_DATA_SIZE, new String[] {"data.size.min", "data.size.max"});
-		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_RUN_TIME});
-		MAP_OVERRIDE.put(KEY_LOAD_THREADS, new String[] {"load.append.threads", "load.create.threads", "load.read.threads", "load.update.threads", "load.delete.threads"});
-		MAP_OVERRIDE.put("remote.drivers", new String[] {"remote.servers"});
+		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_LOAD_LIMIT_TIME_VALUE, KEY_LOAD_LIMIT_TIME_UNIT});
+		MAP_OVERRIDE.put(KEY_LOAD_THREADS, new String[] {"load.type.append.threads", "load.type.create.threads", "load.type.read.threads", "load.type.update.threads", "load.type.delete.threads"});
+		MAP_OVERRIDE.put("load.drivers", new String[] {"load.servers"});
 	}
 	//
 	private final static String
@@ -135,8 +157,9 @@ implements Externalizable {
 		FMT_MSG_INVALID_SIZE = "The string \"%s\" doesn't match the pattern: \"%s\"";
 	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)b?");
 	//
-	private Set<String> mongooseKeys;
 	private final Map<String, Object> properties = new HashMap<>();
+	//
+	private JsonNode rootNode;
 	//
 	public long getSizeBytes(final String key) {
 		return toSize(getString(key));
@@ -180,38 +203,13 @@ implements Externalizable {
 		).toUpperCase();
 	}
 	//
-	public String getPropertiesMap() {
-		DirectoryLoader.updatePropertiesFromDir(
-			Paths.get(
-				DIR_ROOT,
-				com.emc.mongoose.common.conf.Constants.DIR_CONF,
-				com.emc.mongoose.common.conf.Constants.DIR_PROPERTIES
-			), this
-		);
-		final ObjectMapper mapper = new ObjectMapper();
-		try {
-			return mapper.writeValueAsString(properties);
-		} catch (final JsonProcessingException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to get the configuration");
-		}
-		return null;
+	public String getJsonProps() {
+		JsonConfigLoader.updateProps(Paths.get(Main.DIR_ROOT, Main.DIR_CONF).resolve(Main.JSON_PROPS_FILE), this, false);
+		return rootNode.toString();
 	}
 	//
-	@SuppressWarnings("unchecked")
-	public final synchronized void put(
-		final List<String> dirs, final String fileName,
-		final List<DefaultMapEntry<String, Object>> props
-	) {
-		Map<String, Object> node = properties;
-		if (dirs != null) {
-			for (final String nextDir : dirs) {
-				if (!node.containsKey(nextDir)) {
-					node.put(nextDir, new LinkedHashMap<>());
-				}
-				node = (Map<String, Object>) node.get(nextDir);
-			}
-		}
-		node.put(fileName, props);
+	public final synchronized void putJsonProps(final JsonNode rootNode) {
+		this.rootNode = rootNode;
 	}
 	//
 	public final synchronized void set(final String key, final Object value) {
@@ -226,30 +224,37 @@ implements Externalizable {
 	public final Set<String> getMongooseKeys() {
 		return mongooseKeys;
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	public static String getLoadThreadsParamName(final String loadType) {
+		return "load.type." + loadType + ".threads";
+	}
 	//
+	public static String getApiPortParamName(final String api) {
+		return "api.type." + api + ".port";
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public final int getRunReqTimeOutMilliSec() {
-		return getInt("run.request.timeout.millisec");
+		return getInt("run.request.timeoutMilliSec");
 	}
 	//
 	public final int getRunRetryDelayMilliSec() {
-		return getInt("run.retry.delay.millisec");
+		return getInt("run.retry.delayMilliSec");
 	}
 	//
 	public final int getRunRetryCountMax() {
-		return getInt("run.retry.count.max");
+		return getInt("run.retry.countMax");
 	}
 	//
 	public final boolean getRunRequestRetries() {
 		return getBoolean("run.request.retries");
 	}
 	//
-	public final String getStorageApi() {
-		return getString(KEY_STORAGE_API);
+	public final String getApiName() {
+		return getString(KEY_API_NAME);
 	}
 	//
-	public final int getApiPort(final String api) {
-		return getInt("api." + api + ".port");
+	public final int getApiTypePort(final String api) {
+		return getInt("api.type." + api + ".port");
 	}
 	//
 	public final String getAuthId() {
@@ -260,32 +265,32 @@ implements Externalizable {
 		return getString("auth.secret");
 	}
 	//
-	public final long getDataPageSize() {
-		return getSizeBytes("data.page.size");
+	public final long getDataBufferSize() {
+		return getSizeBytes("data.buffer.size");
 	}
 	//
-	public final int getRemoteControlPort() {
-		return getInt("remote.control.port");
+	public final int getRemotePortControl() {
+		return getInt("remote.port.control");
 	}
 	//
-	public final int getRemoteExportPort() {
-		return getInt("remote.export.port");
+	public final int getRemotePortExport() {
+		return getInt("remote.port.export");
 	}
 	//
-	public final int getRemoteImportPort() {
-		return getInt("remote.import.port");
+	public final int getRemotePortImport() {
+		return getInt("remote.port.import");
 	}
 	//
-	public final int getWUISvcPort() {
-		return getInt("remote.wuisvc.port");
+	public final int getRemotePortWebUI() {
+		return getInt("remote.port.webui");
 	}
 	//
-	public final int getRunMetricsPeriodSec() {
-		return getInt("run.metrics.period.sec");
+	public final int getLoadMetricsPeriodSec() {
+		return getInt("load.metricsPeriodSec");
 	}
 	//
 	public final int getRunRequestQueueSize() {
-		return getInt("run.request.queue.size");
+		return getInt("run.request.queueSize");
 	}
 	//
 	public final String getHttpContentType() {
@@ -301,7 +306,7 @@ implements Externalizable {
 	}
 	//
 	public final boolean getReadVerifyContent() {
-		return getBoolean("load.read.verify.content");
+		return getBoolean("load.type.read.verifyContent");
 	}
 	//
 	public final String getStorageProto() {
@@ -313,11 +318,11 @@ implements Externalizable {
 	}
 	//
 	public final String getHttpSignMethod() {
-		return getString("http.sign.method");
+		return getString("http.signMethod");
 	}
 	//
 	public final boolean getStorageFileAccessEnabled() {
-		return getBoolean("storage.fileaccess");
+		return getBoolean(KEY_STORAGE_FS_ACCESS);
 	}
 	//
 	public final boolean getStorageVersioningEnabled() {
@@ -332,8 +337,8 @@ implements Externalizable {
 		return getString(KEY_RUN_VERSION);
 	}
 	//
-	public final long getDataCount() {
-		return getLong(KEY_DATA_COUNT);
+	public final long getLoadLimitDataItemCount() {
+		return getLong(KEY_DATA_ITEM_COUNT);
 	}
 	//
 	public final float getDataSizeBias() {
@@ -345,81 +350,143 @@ implements Externalizable {
 	}
 	//
 	public final int getConnPoolTimeOut() {
-		return getInt("storage.connection.pool.timeout.millisec");
+		return getInt("remote.connection.poolTimeoutMilliSec");
 	}
 	//
 	public final int getConnTimeOut() {
-		return getInt("storage.connection.timeout.millisec");
+		return getInt("remote.connection.timeoutMilliSec");
 	}
 	//
 	public final int getSocketTimeOut() {
-		return getInt("storage.socket.timeout.millisec");
+		return getInt("remote.socket.timeoutMilliSec");
 	}
 	//
 	public final boolean getSocketReuseAddrFlag() {
-		return getBoolean("storage.socket.reuse.addr");
+		return getBoolean("remote.socket.reuseAddr");
 	}
 	//
 	public final boolean getSocketKeepAliveFlag() {
-		return getBoolean("storage.socket.keepalive");
+		return getBoolean("remote.socket.keepalive");
 	}
 	//
 	public final boolean getSocketTCPNoDelayFlag() {
-		return getBoolean("storage.socket.tcp.nodelay");
+		return getBoolean("remote.socket.tcpNodelay");
 	}
 	//
 	public final int getSocketLinger() {
-		return getInt("storage.socket.linger");
+		return getInt("remote.socket.linger");
 	}
 	//
 	public final long getSocketBindBackLogSize() {
-		return getLong("storage.socket.bind.backlog.size");
+		return getLong("remote.socket.bindBacklogSize");
 	}
 	//
 	public final boolean getSocketInterestOpQueued() {
-		return getBoolean("storage.socket.interest.op.queued");
+		return getBoolean("remote.socket.interestOpQueued");
 	}
 	//
 	public final long getSocketSelectInterval() {
-		return getLong("storage.socket.select.interval");
+		return getLong("remote.socket.selectInterval");
 	}
 	//
-	public final String[] getRemoteServers() {
-		return getStringArray("remote.servers");
+	public final String[] getLoadServers() {
+		return getStringArray("load.servers");
 	}
 	//
 	public final String getDataSrcFPath() {
 		return getString("data.src.fpath");
 	}
 	//
-	public final String getRunScenarioLang() {
-		return getString("run.scenario.lang");
+	public final String getScenarioLang() {
+		return getString("scenario.lang");
 	}
 	//
-	public final String getRunScenarioName() {
-		return getString(KEY_RUN_SCENARIO_NAME);
+	public final String getScenarioName() {
+		return getString(KEY_SCENARIO_NAME);
 	}
 	//
-	public final String getRunScenarioDir() {
-		return getString("run.scenario.dir");
+	public final String getScenarioDir() {
+		return getString("scenario.dir");
 	}
 	//
 	public final String getRunId() {
 		return getString(KEY_RUN_ID);
 	}
 	//
-	public final String getRunTime() {
-		return getString(KEY_RUN_TIME);
+	public final String getLoadLimitTime() {
+		return getString(KEY_LOAD_LIMIT_TIME + ".value") + "." + getString(KEY_LOAD_LIMIT_TIME + ".unit");
 	}
 	//
-	private String getFromRunTime(final int index) { return getRunTime().split("\\.")[index];}
+	public final TimeUnit getLoadLimitTimeUnit() {
+		return TimeUnit.valueOf(getString(KEY_LOAD_LIMIT_TIME + ".unit").toUpperCase());
+	}
 	//
-	public final TimeUnit getRunTimeUnit() { return TimeUnit.valueOf(getFromRunTime(1).toUpperCase());}
-	//
-	public final long getRunTimeValue() {return Long.valueOf(getFromRunTime(0));}
+	public final long getLoadLimitTimeValue() {
+		return getLong(KEY_LOAD_LIMIT_TIME + ".value");
+	}
 	//
 	public final String getRunMode() {
 		return getString(KEY_RUN_MODE);
+	}
+	//
+	public final int getStorageMockCapacity() {
+		return getInt("storage.mock.capacity");
+	}
+	//
+	public final int getStorageMockHeadCount() {
+		return getInt("storage.mock.headCount");
+	}
+	//
+	public final int getDataRadixSize() {
+		return getInt("data.radix.size");
+	}
+	//
+	public final int getDataRadixOffset() {
+		return getInt("data.radix.offset");
+	}
+	//
+	public final int getStorageMockIoThreadsPerSocket() {
+		return getInt("storage.mock.iothreadsPersocket");
+	}
+	//
+	public final int getStorageMockFaultSleepMilliSec() {
+		return getInt("storage.mock.fault.sleepMilliSec");
+	}
+	//
+	public final int getStorageMockFaultPeriod() {
+		return getInt("storage.mock.fault.period");
+	}
+	//
+	public final String getDataBufferRingSeed() {
+		return getString("data.buffer.ring.seed");
+	}
+	//
+	public final long getDataBufferRingSize() {
+		return getSizeBytes("data.buffer.ring.size");
+	}
+	//
+	public final short getLoadTypeThreads(final String loadType) {
+		return getShort("load.type." + loadType + ".threads");
+	}
+	//
+	public final String getApiS3AuthPrefix() {
+		return getString("api.type.s3.authPrefix");
+	}
+	//
+	public final String getScenarioSingleLoad() {
+		return getString(KEY_SCENARIO_SINGLE_LOAD);
+	}
+	//
+	public final String[] getScenarioChainLoad() {
+		return getStringArray(KEY_SCENARIO_CHAIN_LOAD);
+	}
+	//
+	public final String[] getScenarioRampupThreadCounts() {
+		return getStringArray(KEY_SCENARIO_RAMPUP_THREAD_COUNTS);
+	}
+	//
+	public final String[] getScenarioRampupSizes() {
+		return getStringArray(KEY_SCENARIO_RAMPUP_SIZES);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -507,8 +574,8 @@ implements Externalizable {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public synchronized void loadPropsFromDir(final Path propsDir) {
-		DirectoryLoader.loadPropsFromDir(propsDir, this);
+	public synchronized void loadPropsFromJsonCfgFile(final Path propsDir) {
+		JsonConfigLoader.loadPropsFromJsonCfgFile(propsDir, this);
 	}
 	//
 	public synchronized void loadSysProps() {
@@ -524,9 +591,20 @@ implements Externalizable {
 			keys2override = MAP_OVERRIDE.get(key);
 			sharedValue = sysProps.getProperty(key);
 			setProperty(key, sharedValue);
-			if(keys2override != null) {
-				for(final String key2override: keys2override) {
-					setProperty(key2override, sharedValue);
+			if (key.equals(RunTimeConfig.KEY_LOAD_TIME)) {
+				final String[] loadTime = sysProps.getString(key).split("\\.");
+				if (loadTime.length > 1) {
+					for (int i = 0; i < keys2override.length; i++) {
+						setProperty(keys2override[i], loadTime[i]);
+					}
+				} else {
+					LOG.error(Markers.ERR, "Load time isn't correct. Default values will be used.");
+				}
+			} else {
+				if(keys2override != null) {
+					for(final String key2override: keys2override) {
+						setProperty(key2override, sharedValue);
+					}
 				}
 			}
 		}
@@ -572,17 +650,17 @@ implements Externalizable {
 			switch(nextKey) {
 				case RunTimeConfig.KEY_RUN_ID:
 				case RunTimeConfig.KEY_RUN_MODE:
-				case RunTimeConfig.KEY_RUN_SCENARIO_NAME:
-				case RunTimeConfig.KEY_RUN_TIME:
+				case RunTimeConfig.KEY_SCENARIO_NAME:
+				case RunTimeConfig.KEY_LOAD_LIMIT_TIME_VALUE:
+				case RunTimeConfig.KEY_LOAD_LIMIT_TIME_UNIT:
 				case RunTimeConfig.KEY_RUN_VERSION:
-				case RunTimeConfig.KEY_DATA_COUNT:
+				case RunTimeConfig.KEY_DATA_ITEM_COUNT:
 				case RunTimeConfig.KEY_DATA_SIZE:
 				case RunTimeConfig.KEY_DATA_RING_SEED:
 				case RunTimeConfig.KEY_DATA_RING_SIZE:
 				case RunTimeConfig.KEY_LOAD_THREADS:
-				case RunTimeConfig.KEY_LOAD_TIME:
 				case RunTimeConfig.KEY_STORAGE_ADDRS:
-				case RunTimeConfig.KEY_STORAGE_API:
+				case RunTimeConfig.KEY_API_NAME:
 					strBuilder
 						.appendNewLine().append("| ")
 						.appendFixedWidthPadRight(nextKey, 31, ' ')

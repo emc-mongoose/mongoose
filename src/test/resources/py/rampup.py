@@ -16,13 +16,13 @@ LOG = LogManager.getLogger()
 def init():
 	runTimeConfig = RunTimeConfig.getContext()
 	LOG.debug(Markers.MSG, "Setting the metric update period to zero for chain scenario")
-	runTimeConfig.set("run.metrics.period.sec", 0)
+	runTimeConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0)
 	#
-	loadTypesChain = runTimeConfig.getStringArray("scenario.chain.load")
+	loadTypesChain = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
 	LOG.info(Markers.MSG, "Load types chain: {}", loadTypesChain)
-	listSizes = runTimeConfig.getStringArray("scenario.rampup.sizes")
+	listSizes = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES)
 	LOG.info(Markers.MSG, "Data sizes: {}", listSizes)
-	listThreadCounts = runTimeConfig.getStringArray("scenario.rampup.thread.counts")
+	listThreadCounts = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS)
 	LOG.info(Markers.MSG, "Thread counts: {}", listThreadCounts)
 	return loadTypesChain, listSizes, listThreadCounts
 #

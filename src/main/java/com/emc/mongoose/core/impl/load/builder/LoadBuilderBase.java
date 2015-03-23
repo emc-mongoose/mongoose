@@ -66,9 +66,10 @@ implements LoadBuilder<T, U> {
 		//
 		String paramName;
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
-			paramName = "load."+loadType.name().toLowerCase()+".threads";
+			paramName = RunTimeConfig.getLoadThreadsParamName(loadType.name().toLowerCase());
 			try {
-				setThreadsPerNodeFor(runTimeConfig.getShort(paramName), loadType);
+				setThreadsPerNodeFor(runTimeConfig
+						.getLoadTypeThreads(loadType.name().toLowerCase()), loadType);
 			} catch(final NoSuchElementException e) {
 				LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 			} catch(final IllegalArgumentException e) {
@@ -76,16 +77,16 @@ implements LoadBuilder<T, U> {
 			}
 		}
 		//
-		paramName = RunTimeConfig.KEY_DATA_COUNT;
+		paramName = RunTimeConfig.KEY_DATA_ITEM_COUNT;
 		try {
-			setMaxCount(runTimeConfig.getDataCount());
+			setMaxCount(runTimeConfig.getLoadLimitDataItemCount());
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		paramName = "data.size.min";
+		paramName = RunTimeConfig.KEY_DATA_SIZE_MIN;
 		try {
 			setMinObjSize(runTimeConfig.getSizeBytes(paramName));
 		} catch(final NoSuchElementException e) {
@@ -94,7 +95,7 @@ implements LoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		paramName = "data.size.max";
+		paramName = RunTimeConfig.KEY_DATA_SIZE_MAX;
 		try {
 			setMaxObjSize(runTimeConfig.getSizeBytes(paramName));
 		} catch(final NoSuchElementException e) {
@@ -112,7 +113,7 @@ implements LoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		paramName = "load.update.per.item";
+		paramName = RunTimeConfig.KEY_LOAD_UPDATE_PER_ITEM;
 		try {
 			setUpdatesPerItem(runTimeConfig.getInt(paramName));
 		} catch(final NoSuchElementException e) {
@@ -130,14 +131,14 @@ implements LoadBuilder<T, U> {
 			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
-		paramName = "api."+ reqConf.getAPI().toLowerCase()+".port";
+		paramName = RunTimeConfig.getApiPortParamName(reqConf.getAPI().toLowerCase());
 		try {
-			reqConf.setPort(runTimeConfig.getApiPort(reqConf.getAPI().toLowerCase()));
+			reqConf.setPort(runTimeConfig.getApiTypePort(reqConf.getAPI().toLowerCase()));
 		} catch(final NoSuchElementException e) {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		}
 		//
-		paramName = "data.src.fpath";
+		paramName = RunTimeConfig.KEY_DATA_SRC_FPATH;
 		try {
 			setInputFile(runTimeConfig.getString(paramName));
 		} catch(final NoSuchElementException e) {

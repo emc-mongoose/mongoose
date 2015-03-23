@@ -108,12 +108,12 @@ implements Runnable {
 	public Main(final RunTimeConfig runTimeConfig)
 	throws IOException {
 		this.runTimeConfig = runTimeConfig;
-		metricsUpdatePeriodSec = runTimeConfig.getRunMetricsPeriodSec();
+		metricsUpdatePeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
 		connFactory = new FaultingConnectionFactory(ConnectionConfig.DEFAULT, runTimeConfig);
 		//
 		final MetricRegistry metrics = new MetricRegistry();
 		final MBeanServer mBeanServer;
-		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());
+		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemotePortExport());
 		metricsReporter = JmxReporter.forRegistry(metrics)
 			.convertDurationsTo(TimeUnit.SECONDS)
 			.convertRatesTo(TimeUnit.SECONDS)
@@ -155,13 +155,13 @@ implements Runnable {
 		//
 		metricsReporter.start();
 		//queue size for data object
-		final int queueDataIdSize = runTimeConfig.getInt("storage.mock.capacity");
+		final int queueDataIdSize = runTimeConfig.getStorageMockCapacity();
 		sharedStorage = Collections.synchronizedMap(new LRUMap<String, WSObjectMock>(queueDataIdSize));
 		// count of heads = 1 head or config count
-		countHeads = Math.max(1,  runTimeConfig.getInt("storage.mock.head.count"));
+		countHeads = Math.max(1, runTimeConfig.getStorageMockHeadCount());
 		LOG.info(Markers.MSG, "Starting with {} heads", countHeads);
-		final String apiName = runTimeConfig.getStorageApi();
-		portStart = runTimeConfig.getInt("api." + apiName + ".port");
+		final String apiName = runTimeConfig.getApiName();
+		portStart = runTimeConfig.getApiTypePort(apiName);
 		// Set up the HTTP protocol processor
 		final HttpProcessor httpproc = HttpProcessorBuilder.create()
 			.add(new ResponseDate())
@@ -182,7 +182,7 @@ implements Runnable {
 	public void run() {
 		//if there is data src file path
 		final String dataFilePath = runTimeConfig.getDataSrcFPath();
-		final int dataSizeRadix = runTimeConfig.getInt("storage.mock.data.size.radix");
+		final int dataSizeRadix = runTimeConfig.getDataRadixSize();
 		if (!dataFilePath.isEmpty()){
 			try {
 				final FileReader reader = new FileReader(dataFilePath);
@@ -236,7 +236,7 @@ implements Runnable {
 			}
 			//
 			multiSocketSvc.awaitTermination(
-				runTimeConfig.getRunTimeValue(), runTimeConfig.getRunTimeUnit()
+				runTimeConfig.getLoadLimitTimeValue(), runTimeConfig.getLoadLimitTimeUnit()
 			);
 		} catch (final InterruptedException e) {
 			LOG.info(Markers.MSG, "Interrupting the Cinderella");
@@ -277,9 +277,8 @@ implements Runnable {
 		//
 		final Map<String, WSObjectMock> sharedStorage;
 		//
-		private final int ringOffsetRadix = runTimeConfig.getInt(
-			"storage.mock.data.offset.radix"
-		);
+		private final int ringOffsetRadix = runTimeConfig.getDataRadixOffset();
+
 		//
 		public RequestHandler(final Map<String, WSObjectMock> sharedStorage) {
 			super();
@@ -452,8 +451,8 @@ implements Runnable {
 			// Set I/O reactor defaults
 			final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 			final IOReactorConfig config = IOReactorConfig.custom()
-				.setIoThreadCount(localRunTimeConfig.getInt("storage.mock.iothreads.persocket"))
-				.setSoTimeout(localRunTimeConfig.getSocketTimeOut())
+				.setIoThreadCount(localRunTimeConfig.getStorageMockIoThreadsPerSocket())
+					.setSoTimeout(localRunTimeConfig.getSocketTimeOut())
 				.setConnectTimeout(localRunTimeConfig.getConnTimeOut())
 				.build();
 			// Create server-side I/O reactor

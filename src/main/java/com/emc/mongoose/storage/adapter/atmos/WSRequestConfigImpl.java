@@ -36,7 +36,7 @@ extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static String KEY_SUBTENANT = "api.atmos.subtenant";
+	private final static String KEY_SUBTENANT = "api.type.atmos.subtenant";
 	//
 	public final static String
 		FMT_SLASH = "%s/%s", FMT_URI ="/rest/%s",
