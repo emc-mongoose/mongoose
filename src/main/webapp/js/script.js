@@ -158,8 +158,8 @@ $(document).ready(function() {
 			.attr('selected', 'selected').change();
 	});
 	$("#backup-data\\.size").on("change", function() {
-		$("#data\\.size\\.min").val($(this).val());
-		$("#data\\.size\\.max").val($(this).val());
+		$("#data\\.size\\.min input").val($(this).val());
+		$("#data\\.size\\.max input").val($(this).val());
 	});
 	//
 	$("#backup-load\\.threads").on("change", function() {
@@ -671,6 +671,8 @@ function charts(chartsArray) {
 			});
 		//
 		var svg = d3.select(chartDOMPath)
+			.append("div")
+			.attr("class", "svg-container")
 			.append("svg")
 			.attr("width", width + margin.left + margin.right)
 			.attr("height", height + margin.top + margin.bottom)
@@ -776,6 +778,40 @@ function charts(chartsArray) {
 			.style("font-size", "16px")
 			.style("text-decoration", "underline")
 			.text(json.threadName);
+		/*d3.select(chartDOMPath)
+			.append("button")
+			.attr("class", "save")
+			.text("Save chart")
+			.on("click", function() {
+				var html = d3.select(chartDOMPath + " svg")
+					.attr("version", 1.1)
+					.attr("xmlns", "http://www.w3.org/2000/svg")
+					.node().parentNode.innerHTML;
+				var imgSrc = 'data:image/svg+xml;base64,' + btoa(html);
+				var img = '<img src="' + imgSrc + '">';
+				d3.select("#svg-test").html(img);
+				//
+				var canvas = document.createElement("canvas");
+				//
+				canvas.setAttribute("width", "1070");
+				canvas.setAttribute("height", "460");
+				//
+				var context = canvas.getContext("2d");
+				//
+				var image = new Image();
+				image.src = imgSrc;
+				image.onload = function() {
+					context.drawImage(image, 0, 0, 1070, 460);
+					var canvasData = canvas.toDataURL("image/png");
+					var pngImg = '<img src="'+canvasData+'">';
+					d3.select("#png-test").html(pngImg);
+					//
+					var a = document.createElement("a");
+					a.download = "sample.png";
+					a.href = canvasData;
+					a.click();
+				};
+			});*/
 		return function(chartType, value) {
 			var splitIndex = 0;
 			switch(chartType) {
