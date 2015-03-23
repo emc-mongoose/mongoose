@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
-import com.emc.mongoose.common.logging.Constants;
+import com.emc.mongoose.common.logging.Settings;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.logging.TraceLogger;
 //
@@ -40,8 +40,8 @@ implements Container<T> {
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
-			final Date dt = Calendar.getInstance(Constants.TZ_UTC, Constants.LOCALE_DEFAULT).getTime();
-			this.name = "mongoose-" + Constants.FMT_DT.format(dt);
+			final Date dt = Calendar.getInstance(Settings.TZ_UTC, Settings.LOCALE_DEFAULT).getTime();
+			this.name = "mongoose-" + Settings.FMT_DT.format(dt);
 		} else {
 			this.name = name;
 		}

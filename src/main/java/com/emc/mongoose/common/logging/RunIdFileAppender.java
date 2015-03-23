@@ -2,7 +2,6 @@ package com.emc.mongoose.common.logging;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
@@ -17,9 +16,7 @@ import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.net.Advertiser;
-import org.apache.logging.log4j.core.util.Booleans;
-import org.apache.logging.log4j.status.StatusLogger;
-//
+import org.apache.logging.log4j.core.util.Booleans;//
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -121,13 +118,15 @@ extends AbstractAppender {
 		}
 		// determine the buffer size
 		int buffSize = DEFAULT_SIZE_BUFF; // by default
-		try {
-			buffSize = Integer.parseInt(bufferSize);
-			if(buffSize < 1) {
-				buffSize = DEFAULT_SIZE_BUFF;
+		if(bufferSize != null) {
+			try {
+				buffSize = Integer.parseInt(bufferSize);
+				if(buffSize < 1) {
+					buffSize = DEFAULT_SIZE_BUFF;
+				}
+			} catch(final Exception e) {
+				e.printStackTrace(System.err);
 			}
-		} catch(final Exception e) {
-			TraceLogger.failure(StatusLogger.getLogger(), Level.DEBUG, e, "illegal buffer size");
 		}
 		final RunIdFileManager manager = RunIdFileManager.getRunIdFileManager(
 			fileNamePrefix, isAppend, isLocking, isBuffering, advertiseUri, layout, buffSize

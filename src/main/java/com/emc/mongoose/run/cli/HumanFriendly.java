@@ -108,7 +108,7 @@ public class HumanFriendly {
             formatter.printHelp("Mongoose", options);
             System.exit(1);
         } catch(Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.err);
             System.exit(0);
         }
 

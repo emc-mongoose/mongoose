@@ -92,8 +92,6 @@ ext {
 	]
 
 	runtime_webapp = [
-		jetty_servlet, jsp, jsp_api, jstl,
-		ecj, ant,
-		websocket_client, websocket_common, websocket_core, websocket_server,
+		log4j_web, jstl,
 	]
 }

@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.pool;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.Constants;
+import com.emc.mongoose.common.logging.Settings;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.logging.TraceLogger;
 //
@@ -62,7 +62,7 @@ extends TreeSet<T> {
 	@Override
 	public final String toString() {
 		return String.format(
-			Constants.LOCALE_DEFAULT, "%s: %d instances are in the pool",
+			Settings.LOCALE_DEFAULT, "%s: %d instances are in the pool",
 			instanceCls.getCanonicalName(), size()
 		);
 	}

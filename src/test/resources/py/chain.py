@@ -61,8 +61,9 @@ def build(
 				loadBuilder.setInputFile(None) # prevent the file list producer creation for next loads
 			prevLoad = load
 		except IllegalArgumentException as e:
-			e.printStackTrace()
-			LOG.error(Markers.ERR, "Wrong load type \"{}\", skipping", loadTypeStr)
+			TraceLogger.failure(
+				LOG, Level.ERROR, e, String.format("Wrong load type \"%s\", skipping", loadTypeStr)
+			)
 		except Throwable as e:
 			TraceLogger.failure(LOG, Level.FATAL, e, "Unexpected failure")
 	return chain

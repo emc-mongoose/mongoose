@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.conf;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.Constants;
+import com.emc.mongoose.common.logging.Settings;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.logging.TraceLogger;
 //
@@ -17,7 +17,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
-import org.apache.logging.log4j.status.StatusLogger;
 //
 import java.io.Externalizable;
 import java.io.File;
@@ -25,6 +24,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -45,6 +45,28 @@ import java.util.regex.Pattern;
 public final class RunTimeConfig
 extends BaseConfiguration
 implements Externalizable {
+	//
+	public final static String
+		LIST_SEP = ",",
+		//
+		KEY_DATA_COUNT = "data.count",
+		KEY_DATA_SIZE = "data.size",
+		KEY_DATA_SIZE_BIAS = "data.size.bias",
+		KEY_DATA_RING_SEED = "data.ring.seed",
+		KEY_DATA_RING_SIZE = "data.ring.size",
+		//
+		KEY_LOAD_THREADS = "load.threads",
+		KEY_LOAD_TIME = "load.step.time",
+		//
+		KEY_RUN_ID = "run.id",
+		KEY_RUN_MODE = "run.mode",
+		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
+		KEY_RUN_METRICS_PERIOD_SEC = "run.metrics.period.sec",
+		KEY_RUN_TIME = "run.time",
+		KEY_RUN_VERSION = "run.version",
+		//
+		KEY_STORAGE_ADDRS = "storage.addrs",
+		KEY_STORAGE_API = "storage.api";
 	//
 	private static InheritableThreadLocal<RunTimeConfig>
 		INHERITABLE_CONTEXT = new InheritableThreadLocal<>();
@@ -71,41 +93,32 @@ implements Externalizable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static String
-		LIST_SEP = ",",
-		//
-		KEY_DATA_COUNT = "data.count",
-		KEY_DATA_SIZE = "data.size",
-		KEY_DATA_SIZE_BIAS = "data.size.bias",
-		KEY_DATA_RING_SEED = "data.ring.seed",
-		KEY_DATA_RING_SIZE = "data.ring.size",
-		//
-		KEY_LOAD_THREADS = "load.threads",
-		KEY_LOAD_TIME = "load.step.time",
-		//
-		KEY_RUN_ID = "run.id",
-		KEY_RUN_MODE = "run.mode",
-		KEY_RUN_SCENARIO_NAME = "run.scenario.name",
-		KEY_RUN_METRICS_PERIOD_SEC = "run.metrics.period.sec",
-		KEY_RUN_TIME = "run.time",
-		KEY_RUN_VERSION = "run.version",
-		//
-		KEY_STORAGE_ADDRS = "storage.addrs",
-		KEY_STORAGE_API = "storage.api";
-	//
 	public final static String DIR_ROOT;
 	static {
 		String dirRoot = System.getProperty("user.dir");
 		try {
 			dirRoot = new File(
-				Constants.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+				Settings.class.getProtectionDomain().getCodeSource().getLocation().toURI()
 			).getParent();
 		} catch(final URISyntaxException e) {
 			TraceLogger.failure(
-				StatusLogger.getLogger(), Level.WARN, e, "Failed to determine the executable path"
+				LOG, Level.WARN, e, "Failed to determine the executable path"
 			);
 		}
 		DIR_ROOT = dirRoot;
+	}
+	//
+	static {
+		final ClassLoader cl = RunTimeConfig.class.getClassLoader();
+		final URL urlPolicy = cl.getResource("allpermissions.policy");
+		if(urlPolicy == null) {
+			System.err.println(
+				"Failed to load security policty from mongoose-common.jar\\allpermissions.policy"
+			);
+		} else {
+			System.setProperty("java.security.policy", urlPolicy.toString());
+			System.setSecurityManager(new SecurityManager());
+		}
 	}
 	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
@@ -179,7 +192,7 @@ implements Externalizable {
 		try {
 			return mapper.writeValueAsString(properties);
 		} catch (final JsonProcessingException e) {
-			e.printStackTrace(System.err);
+			TraceLogger.failure(LOG, Level.WARN, e, "Failed to get the configuration");
 		}
 		return null;
 	}
@@ -525,7 +538,7 @@ implements Externalizable {
 		if(runTimeConfig != null) {
 			runTimeConfig.set(
 				KEY_RUN_ID,
-				Constants.FMT_DT.format(Calendar.getInstance(Constants.TZ_UTC, Constants.LOCALE_DEFAULT).getTime())
+				Settings.FMT_DT.format(Calendar.getInstance(Settings.TZ_UTC, Settings.LOCALE_DEFAULT).getTime())
 			);
 		}
 		return runTimeConfig;

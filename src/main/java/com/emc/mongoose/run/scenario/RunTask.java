@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 //
 import javax.script.ScriptEngine;
@@ -35,7 +36,7 @@ implements Runnable {
 		VALUE_PY = "py";
 	//
 	private final static ScriptEngineManager SCRIPT_ENGINE_MANAGER = new ScriptEngineManager();
-	private final static HashMap<String, String> SCRIPT_LANG_MAP = new HashMap<>();
+	private final static Map<String, String> SCRIPT_LANG_MAP = new HashMap<>();
 	static {
 		SCRIPT_LANG_MAP.put(VALUE_JS, "ECMAScript");
 		SCRIPT_LANG_MAP.put(VALUE_PY, "jython");
@@ -68,7 +69,7 @@ implements Runnable {
 		}
 		//
 		String scriptsRootDir = null;
-		if(scriptName!=null && scriptLangKey!=null) {
+		if(scriptName != null && scriptLangKey != null) {
 			try {
 				scriptsRootDir = localRunTimeConfig.getRunScenarioDir();
 			} catch(final NoSuchElementException e) {
@@ -107,11 +108,9 @@ implements Runnable {
 					scriptLangKey
 				);
 			} else {
-				ScriptEngine scriptEngine = SCRIPT_ENGINE_MANAGER
-					.getEngineByName(scriptLangValue);
+				ScriptEngine scriptEngine = SCRIPT_ENGINE_MANAGER.getEngineByName(scriptLangValue);
 				//
 				if(scriptEngine == null) {
-
 					for(final ScriptEngineFactory sef : SCRIPT_ENGINE_MANAGER.getEngineFactories()) {
 						LOG.info(
 							Markers.ERR, "\t{}:\tfor language \"{}\" v{}",
@@ -119,13 +118,15 @@ implements Runnable {
 						);
 						if(scriptLangValue.equals(sef.getEngineName())) {
 							scriptEngine = sef.getScriptEngine();
+							LOG.info(
+								Markers.MSG, "Required script engine found: \"{}\"", scriptEngine
+							);
 							break;
 						}
 					}
 					if(scriptEngine == null) {
 						LOG.fatal(
-							Markers.ERR,
-							"Failed to get script engine for language \"{}\", the available engines are:",
+							Markers.ERR, "Failed to get script engine for language \"{}\"",
 							scriptLangValue
 						);
 					}

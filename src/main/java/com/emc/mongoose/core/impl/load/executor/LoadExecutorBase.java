@@ -7,7 +7,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
-import com.emc.mongoose.common.logging.Constants;
+import com.emc.mongoose.common.logging.Settings;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.ConsoleColors;
 import com.emc.mongoose.common.logging.TraceLogger;
@@ -212,7 +212,7 @@ implements LoadExecutor<T> {
 		//
 		final String message = Markers.PERF_SUM.equals(logMarker) ?
 			String.format(
-				Constants.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
+				Settings.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 				//
 				getName(),
 				countReqSucc,
@@ -231,7 +231,7 @@ implements LoadExecutor<T> {
 				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 			) :
 			String.format(
-				Constants.LOCALE_DEFAULT, MSG_FMT_METRICS,
+				Settings.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
 				countReqSucc, throughPut.getCount() - countReqSucc,
 				countReqFail == 0 ?
@@ -498,7 +498,7 @@ implements LoadExecutor<T> {
 				LOG.debug(
 					Markers.PERF_SUM,
 					String.format(
-						Constants.LOCALE_DEFAULT,
+						Settings.LOCALE_DEFAULT,
 						"Load execution duration: %3.3f[sec], efficiency estimation: %3.3f[%%]",
 						loadDurMicroSec / 1e6, 100 * eff
 					)

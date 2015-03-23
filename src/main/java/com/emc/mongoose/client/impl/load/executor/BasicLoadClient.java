@@ -7,7 +7,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.ConsoleColors;
-import com.emc.mongoose.common.logging.Constants;
+import com.emc.mongoose.common.logging.Settings;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.logging.TraceLogger;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -374,7 +374,7 @@ implements LoadClient<T> {
 			final String msg;
 			if(isSummary) {
 				msg = String.format(
-					Constants.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
+					Settings.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 					//
 					name, countSucc,
 					countFail == 0 ?
@@ -393,7 +393,7 @@ implements LoadClient<T> {
 				);
 			} else {
 				msg = String.format(
-					Constants.LOCALE_DEFAULT, MSG_FMT_METRICS,
+					Settings.LOCALE_DEFAULT, MSG_FMT_METRICS,
 					//
 					countSucc, taskGetCountSubm.getLastResult() - countSucc,
 					countFail == 0 ?

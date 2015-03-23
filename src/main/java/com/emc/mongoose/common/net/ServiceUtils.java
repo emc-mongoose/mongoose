@@ -79,6 +79,17 @@ public final class ServiceUtils {
 
 	}
 	//
+	static {
+		Runtime.getRuntime().addShutdownHook(
+			new Thread("remoteSvcShutDownHook") {
+				@Override
+				public final void run() {
+					shutdown();
+				}
+			}
+		);
+	}
+	//
 	private final static Map<String, Service> SVC_MAP;
 	//private final static Registry REGISTRY;
 	static {
@@ -376,4 +387,5 @@ public final class ServiceUtils {
 			}
 		}
 	}
+	//
 }

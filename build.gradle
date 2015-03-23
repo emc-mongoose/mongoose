@@ -4,6 +4,7 @@ apply plugin: 'java'
 apply plugin: 'java-library-distribution'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
+apply plugin: 'war'
 
 sourceCompatibility = '1.7'
 
@@ -41,7 +42,7 @@ sourceSets {
 		}
 		resources {
 			srcDir(['src', 'main', 'resources', 'META-INF'].join(File.separator))
-			include 'allpermission.policy'
+			include 'allpermissions.policy'
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -337,8 +338,16 @@ dependencies {
 	)
 	webuiRuntime (
 		library.runtime_logging,
+		library.runtime_jetty,
 		library.runtime_webapp,
-		library.runtime_jetty
+		library.ecj,
+		library.ant,
+		library.websocket_client,
+		library.websocket_common,
+		library.websocket_core,
+		library.websocket_server,
+		library.jsp,
+		library.jsp_api,
 	)
 
 	// launcher
@@ -363,10 +372,11 @@ configurations {
 		webserverRuntime,
 		cliRuntime,
 		clientRuntime,
+		scenarioRuntime,
 		serverImplRuntime,
 		storageMockRuntime,
-		runRuntime,
 		webuiRuntime,
+		runRuntime,
 	)
 }
 
@@ -408,7 +418,9 @@ task commonJar(type: Jar) {
 		from sharedManifest
 		attributes (
 			'Implementation-Title': rootProject.name + "-core-api",
-			'Class-Path': configurations.commonRuntime.collect { it.getName() }.join(' '),
+			'Class-Path': configurations.commonRuntime.collect {
+				libsDirName + File.separator + it.getName()
+			}.join(' '),
 		)
 	}
 }
@@ -427,7 +439,9 @@ task coreApiJar(type: Jar) {
 			'Implementation-Title': rootProject.name + "-core-api",
 			'Class-Path': [
 				commonJar.outputs.files.collect {it.name}.join(' '),
-				configurations.coreApiRuntime.collect { it.getName() }.join(' '),
+				configurations.coreApiRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -444,7 +458,9 @@ task coreImplJar(type: Jar) {
 			'Class-Path': [
 				commonJar.outputs.files.collect {it.name}.join(' '),
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
-				configurations.coreImplRuntime.collect { it.getName() }.join(' '),
+				configurations.coreImplRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -466,7 +482,9 @@ task storageAdapterAtmosJar(type: Jar) {
 				commonJar.outputs.files.collect {it.name}.join(' '),
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
 				coreImplJar.outputs.files.collect {it.name}.join(' '),
-				configurations.storageAdapterAtmosRuntime.collect { it.getName() }.join(' '),
+				configurations.storageAdapterAtmosRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -484,7 +502,9 @@ task storageAdapterS3Jar(type: Jar) {
 				commonJar.outputs.files.collect {it.name}.join(' '),
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
 				coreImplJar.outputs.files.collect {it.name}.join(' '),
-				configurations.storageAdapterS3Runtime.collect { it.getName() }.join(' '),
+				configurations.storageAdapterS3Runtime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -502,7 +522,9 @@ task storageAdapterSwiftJar(type: Jar) {
 				commonJar.outputs.files.collect {it.name}.join(' '),
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
 				coreImplJar.outputs.files.collect {it.name}.join(' '),
-				configurations.storageAdapterSwiftRuntime.collect { it.getName() }.join(' '),
+				configurations.storageAdapterSwiftRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -523,7 +545,9 @@ task serverApiJar(type: Jar) {
 			'Class-Path': [
 				commonJar.outputs.files.collect {it.name}.join(' '),
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
-				configurations.serverApiRuntime.collect { it.getName() }.join(' '),
+				configurations.serverApiRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -539,7 +563,9 @@ task webserverJar(type: Jar) {
 			'Implementation-Title': rootProject.name + "-webserver",
 			'Class-Path': [
 				commonJar.outputs.files.collect {it.name}.join(' '),
-				configurations.webserverRuntime.collect { it.getName() }.join(' '),
+				configurations.webserverRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -557,7 +583,9 @@ task cliJar(type: Jar) {
 		attributes(
 			'Implementation-Title': rootProject.name + "-cli",
 			'Class-Path': [
-				configurations.cliRuntime.collect { it.getName() }.join(' '),
+				configurations.cliRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -576,7 +604,9 @@ task clientJar(type: Jar) {
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
 				coreImplJar.outputs.files.collect {it.name}.join(' '),
 				serverApiJar.outputs.files.collect {it.name}.join(' '),
-				configurations.clientRuntime.collect { it.getName() }.join(' '),
+				configurations.clientRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -592,7 +622,9 @@ task scenarioJar(type: Jar) {
 			'Implementation-Title': rootProject.name + "-scenario",
 			'Class-Path': [
 				commonJar.outputs.files.collect {it.name}.join(' '),
-				configurations.scenarioRuntime.collect { it.getName() }.join(' '),
+				configurations.scenarioRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -611,7 +643,9 @@ task serverImplJar(type: Jar) {
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
 				coreImplJar.outputs.files.collect {it.name}.join(' '),
 				serverApiJar.outputs.files.collect {it.name}.join(' '),
-				configurations.serverImplRuntime.collect { it.getName() }.join(' '),
+				configurations.serverImplRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -629,7 +663,9 @@ task storageMockJar(type: Jar) {
 				commonJar.outputs.files.collect {it.name}.join(' '),
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
 				coreImplJar.outputs.files.collect {it.name}.join(' '),
-				configurations.storageMockRuntime.collect { it.getName() }.join(' '),
+				configurations.storageMockRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -651,7 +687,9 @@ task webuiJar(type: Jar) {
 				serverApiJar.outputs.files.collect {it.name}.join(' '),
 				serverImplJar.outputs.files.collect {it.name}.join(' '),
 				storageMockJar.outputs.files.collect {it.name}.join(' '),
-				configurations.webuiRuntime.collect { it.getName() }.join(' '),
+				configurations.webuiRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -672,7 +710,7 @@ task runJar(type: Jar) {
 		from sharedManifest
 		attributes(
 			'Implementation-Title': rootProject.name + "-run",
-			'Main-Class': 'com.emc.mongoose.run.main.Launcher',
+			'Main-Class': 'com.emc.mongoose.run.main.CLIRunModeHandler',
 			'Class-Path': [
 				clientJar.outputs.files.collect {it.name}.join(' '),
 				commonJar.outputs.files.collect {it.name}.join(' '),
@@ -688,7 +726,9 @@ task runJar(type: Jar) {
 				scenarioJar.outputs.files.collect {it.name}.join(' '),
 				webserverJar.outputs.files.collect {it.name}.join(' '),
 				webuiJar.outputs.files.collect {it.name}.join(' '),
-				configurations.runRuntime.collect { it.getName() }.join(' '),
+				configurations.runRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -715,6 +755,14 @@ task dist(type: Tar) {
 	baseName = project.name
 	compression = Compression.GZIP
 	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	List webappLibs = new LinkedList()
+	configurations.webuiRuntime.collect {
+		def path = it.getAbsolutePath()
+		if(it.isFile() && (path.contains("jstl") || path.contains("log4j-web"))) {
+			webappLibs.add(path)
+		}
+	}
 
 	into(baseName + '-' + version) {
 		into('conf') {
@@ -745,8 +793,7 @@ task dist(type: Tar) {
 			from { ["src", "main", "webapp"].join(File.separator) }
 		}
 		into(["webapp", "WEB-INF", "lib"].join(File.separator)) {
-			from { configurations.webuiRuntime.collect { it == 'jstl' } }
-			from { configurations.webuiRuntime.collect { it == 'log4j-web' } }
+			from { webappLibs }
 		}
 	}
 }

@@ -5,7 +5,7 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 //
-import com.emc.mongoose.common.logging.Constants;
+import com.emc.mongoose.common.logging.Settings;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.logging.TraceLogger;
@@ -253,7 +253,7 @@ implements Runnable {
 		LOG.info(
 			Markers.PERF_AVG,
 			String.format(
-				Constants.LOCALE_DEFAULT, MSG_FMT_METRICS,
+				Settings.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
 				counterAllSucc.getCount(), counterAllFail.getCount(),
 				//

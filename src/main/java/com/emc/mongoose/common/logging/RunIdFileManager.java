@@ -1,12 +1,9 @@
 package com.emc.mongoose.common.logging;
 //
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.appender.AbstractManager;
 import org.apache.logging.log4j.core.appender.AppenderLoggingException;
 import org.apache.logging.log4j.core.appender.ManagerFactory;
-import org.apache.logging.log4j.status.StatusLogger;
 //
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,7 +18,6 @@ import java.util.Map;
 public final class RunIdFileManager
 extends AbstractManager {
 	//
-	private final static Logger LOG = StatusLogger.getLogger();
 	private final static String PATH_LOG_DIR = System.getProperty("dir.root") + File.separator + "log";
 	//
 	private final String fileName, uriAdvertise;
@@ -185,9 +181,7 @@ extends AbstractManager {
 				);
 				outStreamsMap.put(currRunId, currentOutPutStream);
 			} catch(final FileNotFoundException e) {
-				TraceLogger.failure(
-					LOG, Level.ERROR, e, "Failed to open log file for writing"
-				);
+				e.printStackTrace(System.err);
 			}
 		}
 		return currentOutPutStream;
@@ -198,7 +192,7 @@ extends AbstractManager {
 			try {
 				outStream.close();
 			} catch(final IOException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Failed to close the log file");
+				e.printStackTrace(System.err);
 			}
 		}
 	}
@@ -208,7 +202,7 @@ extends AbstractManager {
 			try {
 				outStream.flush();
 			} catch(final IOException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Failed to flush the log");
+				e.printStackTrace(System.err);
 			}
 		}
 	}
