@@ -37,7 +37,7 @@ sourceSets {
 			include '**'
 		}
 		resources {
-			srcDir(['src', 'main', 'resources', 'META-INF'].join(File.separator))
+			srcDir(['src', 'main', 'resources'].join(File.separator))
 			include 'allpermissions.policy'
 		}
 	}
@@ -113,6 +113,17 @@ sourceSets {
 		compileClasspath += sourceSets.common.output + sourceSets.serverApi.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 	}
+	scenario {
+		java {
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'scenario'].join(File.separator))
+			include '**'
+		}
+		compileClasspath += sourceSets.common.output
+		resources {
+			srcDir(['src', 'main', 'resources', 'scripts'].join(File.separator))
+			include '**'
+		}
+	}
 	serverImpl {
 		java {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'server', 'impl'].join(File.separator))
@@ -120,13 +131,6 @@ sourceSets {
 		}
 		compileClasspath += sourceSets.common.output + sourceSets.serverApi.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
-	}
-	scenario {
-		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'scenario'].join(File.separator))
-			include '**'
-		}
-		compileClasspath += sourceSets.common.output
 	}
 	storageMock {
 		java {
@@ -752,7 +756,7 @@ task dist(type: Tar) {
 		from webuiJar.outputs.files
 		from cliJar.outputs.files
 		into('scripts') {
-			from { sourceSets.test.resources }
+			from { sourceSets.scenario.resources }
 		}
 		into('webapp') {
 			from { ["src", "main", "webapp"].join(File.separator) }

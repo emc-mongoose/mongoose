@@ -102,7 +102,7 @@ implements Runnable {
 			}
 			//
 			final String scriptLangValue = SCRIPT_LANG_MAP.get(scriptLangKey);
-			if(scriptLangValue==null) {
+			if(scriptLangValue == null) {
 				LOG.fatal(
 					Markers.MSG, "Failed to determine the scenario language for key \"{}\"",
 					scriptLangKey
