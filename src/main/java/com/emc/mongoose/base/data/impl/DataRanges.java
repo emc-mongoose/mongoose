@@ -424,9 +424,8 @@ implements AppendableDataItem, UpdatableDataItem {
 					size += pendingAugmentSize;
 					// redirect the tail's data to the output
 					final byte buff[] = new byte[
-						pendingAugmentSize < MAX_PAGE_SIZE ?
-							(int) pendingAugmentSize : MAX_PAGE_SIZE
-						];
+						pendingAugmentSize < maxBuffSize ? (int) pendingAugmentSize : maxBuffSize
+					];
 					final int
 						countPages = (int) (pendingAugmentSize / buff.length),
 						countTailBytes = (int) (pendingAugmentSize % buff.length);

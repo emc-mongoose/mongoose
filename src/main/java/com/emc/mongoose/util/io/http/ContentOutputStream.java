@@ -57,16 +57,13 @@ implements Reusable {
 		bb.limit(Math.min(off + len, bb.capacity()));
 		bb.position(off);
 		//
+		long writtenByteCount = 0;
 		int n;
-		while(bb.remaining() > 0) {
-			do {
-				n = out.write(bb);
-				if(n > 0) {
-					break;
-				} else {
-					ioCtl.requestOutput();
-				}
-			} while(true);
+		while(writtenByteCount < len) {
+			n = out.write(bb);
+			if(n > 0) {
+				writtenByteCount += n;
+			}
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

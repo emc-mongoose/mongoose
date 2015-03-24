@@ -43,17 +43,16 @@ implements DataItem {
 		FMT_MSG_CORRUPT = "Content mismatch:\n" +
 			"\trange offset: {}; internal offset: {};\n" +
 			"\texpected buffer content:\n{}\n" +
-			"\tbut got the following:\n{}",
-		MSG_IO_FAILURE_DURING_VERIFICATION = "Data integrity verification failed due to I/O error";
+			"\tbut got the following:\n{}";
 	protected final static String
 		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s",
-		MSG_READ_RING_BLOCKED = "Reading from data ring blocked?",
-		MSG_READ_STREAM_BLOCKED = "Reading from the stream blocked?";
+		MSG_READ_RING_BLOCKED = "Reading from the data buffer ring blocked",
+		MSG_READ_STREAM_BLOCKED = "Reading from the stream blocked";
 	private static AtomicLong NEXT_OFFSET = new AtomicLong(
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
 	//
-	public final static int MAX_PAGE_SIZE = (int) RunTimeConfig.getContext().getDataPageSize();
+	protected final int maxBuffSize = (int) RunTimeConfig.getContext().getDataPageSize();
 	protected long offset = 0;
 	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,7 +217,7 @@ implements DataItem {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
 		}
-		final byte buff[] = new byte[size < MAX_PAGE_SIZE ? (int) size : MAX_PAGE_SIZE];
+		final byte buff[] = new byte[size < maxBuffSize ? (int) size : maxBuffSize];
 		final int
 			countPages = (int) size / buff.length,
 			countTailBytes = (int) size % buff.length;
@@ -234,7 +233,7 @@ implements DataItem {
 			}
 			// tail bytes
 			if(countTailBytes > 0) {
-				if(read(buff, 0, countTailBytes)==countTailBytes) {
+				if(read(buff, 0, countTailBytes) == countTailBytes) {
 					out.write(buff, 0, countTailBytes);
 				} else {
 					throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
@@ -252,7 +251,7 @@ implements DataItem {
 		//
 		boolean contentEquals = true;
 		final int
-			pageSize = (int) (rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE),
+			pageSize = (int) (rangeLength < maxBuffSize ? rangeLength : maxBuffSize),
 			countPages = (int) (rangeLength / pageSize),
 			countTailBytes = (int) (rangeLength % pageSize);
 		final byte

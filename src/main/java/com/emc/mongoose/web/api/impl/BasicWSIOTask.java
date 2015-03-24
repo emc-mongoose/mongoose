@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -215,17 +214,11 @@ implements WSIOTask<T> {
 		return httpRequest;
 	}
 	//
-	private final byte buff[] = new byte[
-		RunTimeConfig.getContext().getDataPageSize() > Integer.MAX_VALUE ?
-			Integer.MAX_VALUE : (int) RunTimeConfig.getContext().getDataPageSize()
-	];
-	private final ByteBuffer bb = ByteBuffer.wrap(buff);
-	//
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
 		if(reqEntity != null) {
-			/*try(final OutputStream outStream = ContentOutputStream.getInstance(out, ioCtl)) {
+			try(final OutputStream outStream = ContentOutputStream.getInstance(out, ioCtl)) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
 						Markers.MSG, "Task #{}, write out {}",
@@ -240,30 +233,9 @@ implements WSIOTask<T> {
 					);
 				}
 			} catch(final InterruptedException e) {
-				// do nothing*/
-			long lastReadByteCount, lastWrittenByteCount, totalByteCount = 0, n;
-			try(final InputStream dataStream = reqEntity.getContent()) {
-				LOG.info(Markers.MSG, reqEntity.getContentLength());
-				while(totalByteCount < reqEntity.getContentLength()) {
-					lastReadByteCount = dataStream.read(buff);
-					bb.rewind();
-					if(lastReadByteCount <= 0) {
-						break;
-					}
-					lastWrittenByteCount = 0;
-					do {
-						n = out.write(bb);
-						if(n > 0) {
-							lastWrittenByteCount += n;
-						}
-					} while(lastWrittenByteCount < lastReadByteCount);
-					totalByteCount += lastReadByteCount;
-				}
-				LOG.info(Markers.MSG, RunTimeConfig.formatSize(totalByteCount));
+				TraceLogger.trace(LOG, Level.TRACE, Markers.MSG, "Content producing interrupted");
 			} finally {
-				LOG.info(Markers.MSG, "Completing...");
 				out.complete();
-				LOG.info(Markers.MSG, "Completed");
 			}
 		}
 	}
