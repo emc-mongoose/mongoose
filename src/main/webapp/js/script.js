@@ -355,6 +355,14 @@ jQuery.fn.prependChild = function(html) {
 	return child;
 };
 //
+(function($) {
+    $.strRemove = function(theTarget, theString) {
+        return $("<div/>").append(
+            $(theTarget, theString).remove().end()
+        ).html();
+    };
+})(jQuery);
+//
 function generatePropertyPage() {
 	if (!$("#properties").is(":checked")) {
 		$("#properties").trigger("click");
@@ -591,6 +599,45 @@ function charts(chartsArray) {
 		"#BC8F8F"
 	];
 	var CHART_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+    //
+    function saveChart(chartDOMPath, w, h) {
+        var html;
+        if (typeof chartDOMPath === 'object') {
+            html = d3.select(chartDOMPath)
+                .attr("version", 1.1)
+                .attr("xmlns", "http://www.w3.org/2000/svg")
+                .node().parentNode.innerHTML;
+        } else {
+            html = d3.select(chartDOMPath + " svg")
+                .attr("version", 1.1)
+                .attr("xmlns", "http://www.w3.org/2000/svg")
+                .node().parentNode.innerHTML;
+        }
+        var theResult = $.strRemove(".foreign", html);
+        //
+        var imgSrc = 'data:image/svg+xml;base64,' + btoa(theResult);
+        //
+        var canvas = document.createElement("canvas");
+        //
+        canvas.setAttribute("width", w);
+        canvas.setAttribute("height", h);
+        //
+        var context = canvas.getContext("2d");
+        //
+        var image = new Image();
+        image.src = imgSrc;
+        image.onload = function() {
+            context.drawImage(image, 0, 0, w, h);
+            var canvasData = canvas.toDataURL("image/png");
+            //
+            var a = document.createElement("a");
+            a.download = Math.random().toString(36).substring(7) + ".png";
+            a.href = canvasData;
+	        document.body.appendChild(a);
+            a.click();
+	        document.body.removeChild(a);
+        };
+    }
 	//  Common functions for charts
 	function getScenarioChartObject(runId, runScenarioName, scenarioCharts) {
 		return {
@@ -623,6 +670,11 @@ function charts(chartsArray) {
 	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath) {
 		//  get some fields from runTimeConfig
 		var runMetricsPeriodSec = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec];
+        //
+        if (json.threadName.indexOf("remote") > -1) {
+            json.threadName = json.threadName.substring(0, json.threadName.lastIndexOf("-"));
+        }
+        //
 		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
 		//
 		var x = d3.scale.linear()
@@ -677,7 +729,9 @@ function charts(chartsArray) {
 			.attr("width", width + margin.left + margin.right)
 			.attr("height", height + margin.top + margin.bottom)
 			.append("g")
-			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+            .style("font", "12px sans-serif")
+            .style("overflow-x", "auto");
 
 		var xAxisGroup = svg.append("g")
 			.attr("class", "x axis")
@@ -700,7 +754,7 @@ function charts(chartsArray) {
 			.call(makeYAxis()
 				.tickSize(-width, 0, 0)
 				.tickFormat(""));
-
+        //
 		var levels = svg.selectAll(".level")
 			.data(data).enter()
 			.append("g")
@@ -730,6 +784,7 @@ function charts(chartsArray) {
 		svg.selectAll("foreignObject")
 			.data(data).enter()
 			.append("foreignObject")
+            .attr("class", "foreign")
 			.attr("x", width + 3)
 			.attr("width", 18)
 			.attr("height", 18)
@@ -778,40 +833,26 @@ function charts(chartsArray) {
 			.style("font-size", "16px")
 			.style("text-decoration", "underline")
 			.text(json.threadName);
-		/*d3.select(chartDOMPath)
-			.append("button")
-			.attr("class", "save")
+        //
+        d3.selectAll(".axis path, .axis line")
+            .style("fill", "none")
+            .style("stroke", "grey")
+            .style("stroke-width", "1")
+            .style("shape-rendering", "crispEdges");
+        //
+        d3.selectAll(".grid .tick")
+            .style("stroke", "lightgrey")
+            .style("stroke-opacity", "0.7")
+            .style("shape-rendering", "crispEdges");
+        //
+		d3.select(chartDOMPath)
+			.append("a")
 			.text("Save chart")
+            .style("cursor", "pointer")
+            .style("margin-left", margin.left + "px")
 			.on("click", function() {
-				var html = d3.select(chartDOMPath + " svg")
-					.attr("version", 1.1)
-					.attr("xmlns", "http://www.w3.org/2000/svg")
-					.node().parentNode.innerHTML;
-				var imgSrc = 'data:image/svg+xml;base64,' + btoa(html);
-				var img = '<img src="' + imgSrc + '">';
-				d3.select("#svg-test").html(img);
-				//
-				var canvas = document.createElement("canvas");
-				//
-				canvas.setAttribute("width", "1070");
-				canvas.setAttribute("height", "460");
-				//
-				var context = canvas.getContext("2d");
-				//
-				var image = new Image();
-				image.src = imgSrc;
-				image.onload = function() {
-					context.drawImage(image, 0, 0, 1070, 460);
-					var canvasData = canvas.toDataURL("image/png");
-					var pngImg = '<img src="'+canvasData+'">';
-					d3.select("#png-test").html(pngImg);
-					//
-					var a = document.createElement("a");
-					a.download = "sample.png";
-					a.href = canvasData;
-					a.click();
-				};
-			});*/
+				saveChart(chartDOMPath, 1070, 460);
+			});
 		return function(chartType, value) {
 			var splitIndex = 0;
 			switch(chartType) {
@@ -855,6 +896,18 @@ function charts(chartsArray) {
 				.attr("d", function(d) { return line(d.values); })
 				.attr("stroke", function(d) { return color(d.name); })
 				.attr("fill", "none");
+
+            //
+            d3.selectAll(".axis path, .axis line")
+                .style("fill", "none")
+                .style("stroke", "grey")
+                .style("stroke-width", "1")
+                .style("shape-rendering", "crispEdges");
+            //
+            d3.selectAll(".grid .tick")
+                .style("stroke", "lightgrey")
+                .style("stroke-opacity", "0.7")
+                .style("shape-rendering", "crispEdges");
 		};
 	}
 	//
@@ -1040,12 +1093,16 @@ function charts(chartsArray) {
 						return y(d.y);
 					});
 				//
-				var svg = d3.select(path)
-					.append("svg")
-					.attr("width", width + margin.left + margin.right)
-					.attr("height", height + margin.top + margin.bottom)
-					.append("g")
-					.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                var svg = d3.select(path)
+                    .append("div")
+                    .attr("class", "svg-container")
+                    .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                    .style("font", "12px sans-serif")
+                    .style("overflow-x", "auto");
 
 				var xAxisGroup = svg.append("g")
 					.attr("class", "x axis")
@@ -1109,7 +1166,7 @@ function charts(chartsArray) {
 				svg.selectAll(".right-foreign")
 					.data(data).enter()
 					.append("foreignObject")
-					.attr("class", "right-foreign")
+					.attr("class", "foreign right-foreign")
 					.attr("x", width + 3)
 					.attr("width", 18)
 					.attr("height", 18)
@@ -1133,7 +1190,7 @@ function charts(chartsArray) {
 				svg.selectAll(".bottom-foreign")
 					.data(TP_MODES).enter()
 					.append("foreignObject")
-					.attr("class", "bottom-foreign")
+					.attr("class", "foreign bottom-foreign")
 					.attr("width", 18)
 					.attr("height", 18)
 					.attr("transform", function(d, i) {
@@ -1244,6 +1301,26 @@ function charts(chartsArray) {
 					.style("font-size", "16px")
 					.style("text-decoration", "underline")
 					.text(chartTitle);
+                //
+                d3.selectAll(".axis path, .axis line")
+                    .style("fill", "none")
+                    .style("stroke", "grey")
+                    .style("stroke-width", "1")
+                    .style("shape-rendering", "crispEdges");
+                //
+                d3.selectAll(".grid .tick")
+                    .style("stroke", "lightgrey")
+                    .style("stroke-opacity", "0.7")
+                    .style("shape-rendering", "crispEdges");
+                //
+                d3.select(path)
+                    .append("a")
+                    .text("Save chart")
+                    .style("cursor", "pointer")
+                    .style("margin-left", margin.left + "px")
+                    .on("click", function() {
+                        saveChart(path, 1070, 460);
+                    });
 				return function(chartType, json) {
 					if (json.threadName.indexOf("remote") > -1) {
 						json.threadName = json.threadName.substring(0, json.threadName.lastIndexOf("-"));
@@ -1424,7 +1501,7 @@ function charts(chartsArray) {
 					svg.selectAll(".right-foreign")
 						.data(data).enter()
 						.append("foreignObject")
-						.attr("class", "right-foreign")
+						.attr("class", "foreign right-foreign")
 						.attr("x", width + 3)
 						.attr("width", 18)
 						.attr("height", 18)
@@ -1444,6 +1521,16 @@ function charts(chartsArray) {
 								element.css("opacity", "0");
 							}
 						});
+                    d3.selectAll(".axis path, .axis line")
+                        .style("fill", "none")
+                        .style("stroke", "grey")
+                        .style("stroke-width", "1")
+                        .style("shape-rendering", "crispEdges");
+                    //
+                    d3.selectAll(".grid .tick")
+                        .style("stroke", "lightgrey")
+                        .style("stroke-opacity", "0.7")
+                        .style("shape-rendering", "crispEdges");
 				};
 			}
 		},
@@ -1584,12 +1671,17 @@ function charts(chartsArray) {
 						.y(function(d) {
 							return y(d.y);
 						});
-					var svg = d3.select(path).append("svg")
-						.attr("width", width + margin.left + margin.right)
-						.attr("height", height + margin.top + margin.bottom)
-						.attr("id", path.replace("#", "") + "-" + d.loadType)
-						.append("g")
-						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                    var svg = d3.select(path)
+                        .append("div")
+                        .attr("class", "svg-container")
+                        .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+	                    .attr("id", path.replace("#", "") + "-" + d.loadType)
+                        .append("g")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                        .style("font", "12px sans-serif")
+                        .style("overflow-x", "auto");
 					//
 					var xAxisGroup = svg.append("g")
 						.attr("class", "axis x-axis")
@@ -1667,7 +1759,7 @@ function charts(chartsArray) {
 					svg.selectAll(".right-foreign")
 						.data(d.sizes).enter()
 						.append("foreignObject")
-						.attr("class", "right-foreign")
+						.attr("class", "foreign right-foreign")
 						.attr("x", width + 3)
 						.attr("width", 18)
 						.attr("height", 18)
@@ -1687,6 +1779,25 @@ function charts(chartsArray) {
 								element.css("opacity", "0");
 							}
 						});
+                    d3.selectAll(".axis path, .axis line")
+                        .style("fill", "none")
+                        .style("stroke", "grey")
+                        .style("stroke-width", "1")
+                        .style("shape-rendering", "crispEdges");
+                    //
+                    d3.selectAll(".grid .tick")
+                        .style("stroke", "lightgrey")
+                        .style("stroke-opacity", "0.7")
+                        .style("shape-rendering", "crispEdges");
+                    //
+                    d3.select(path)
+                        .append("a")
+                        .text("Save chart")
+                        .style("cursor", "pointer")
+                        .style("margin-left", margin.left + "px")
+                        .on("click", function() {
+                            saveChart(svg.node().parentNode, 740, 460);
+                        });
 				});
 				//
 				return function(chartType, json) {
@@ -1767,6 +1878,7 @@ function charts(chartsArray) {
 										.selectAll(".dot").data(function(v) { return v.values; })
 										.enter().append("circle")
 										.attr("class", "dot")
+                                        //.style("stroke-width", "1.5px")
 										.attr("cx", function(coord) { return x(coord.x); })
 										.attr("cy", function(coord) { return y(coord.y); })
 										.attr("r", 2);
@@ -1779,6 +1891,16 @@ function charts(chartsArray) {
 							});
 						}
 					});
+                    d3.selectAll(".axis path, .axis line")
+                        .style("fill", "none")
+                        .style("stroke", "grey")
+                        .style("stroke-width", "1")
+                        .style("shape-rendering", "crispEdges");
+                    //
+                    d3.selectAll(".grid .tick")
+                        .style("stroke", "lightgrey")
+                        .style("stroke-opacity", "0.7")
+                        .style("shape-rendering", "crispEdges");
 				}
 			}
 		}

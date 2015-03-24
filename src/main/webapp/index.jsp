@@ -979,12 +979,6 @@
 				</c:forEach>
 			</div>
 		</div>
-		<!--<div id="svg-test">
-
-		</div>
-		<div id="png-test">
-
-		</div>-->
 		<script type="text/javascript" src="js/d3.min.js"></script>
 		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
 		<script type="text/javascript" src="js/bootstrap.min.js"></script>
