@@ -3,8 +3,9 @@ package com.emc.mongoose.storage.mock.impl.data;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.UniformData;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
+//
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
-//import com.emc.mongoose.core.api.util.log.Markers;
+//import com.emc.mongoose.common.logging.Markers;
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
 //

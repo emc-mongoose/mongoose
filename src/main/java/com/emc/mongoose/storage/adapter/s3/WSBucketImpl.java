@@ -1,12 +1,12 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.common.logging.Settings;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.Markers;
+//
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.util.log.Markers;
 //
 import org.apache.commons.lang.text.StrBuilder;
 //
@@ -47,8 +47,8 @@ implements Bucket<T> {
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
-			final Date dt = Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime();
-			this.name = "mongoose-" + Main.FMT_DT.format(dt);
+			final Date dt = Calendar.getInstance(Settings.TZ_UTC, Settings.LOCALE_DEFAULT).getTime();
+			this.name = "mongoose-" + Settings.FMT_DT.format(dt);
 		} else {
 			this.name = name;
 		}
@@ -66,13 +66,14 @@ implements Bucket<T> {
 	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	HttpResponse execute(final String addr, final WSIOTask.HTTPMethod method)
+	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)
 	throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
-		final MutableWSRequest httpReq = method.createRequest().setUriPath("/" + name);
+		final MutableWSRequest httpReq = reqConf
+			.createRequest().setMethod(method).setUriPath("/" + name);
 		//
 		final RunTimeConfig contextConfig = RunTimeConfig.getContext();
 		switch(method) {
@@ -101,7 +102,7 @@ implements Bucket<T> {
 		boolean flagExists = false;
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.HEAD);
+			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.HEAD);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -143,7 +144,7 @@ implements Bucket<T> {
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.PUT);
+			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.PUT);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -183,7 +184,7 @@ implements Bucket<T> {
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.DELETE);
+			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.DELETE);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();

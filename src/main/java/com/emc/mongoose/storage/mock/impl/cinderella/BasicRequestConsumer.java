@@ -1,9 +1,10 @@
 package com.emc.mongoose.storage.mock.impl.cinderella;
 //
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.io.util.http.ContentInputStream;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.io.HTTPInputStream;
+import com.emc.mongoose.common.io.StreamUtils;
+import com.emc.mongoose.common.logging.TraceLogger;
+//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpRequest;
@@ -15,6 +16,7 @@ import org.apache.http.nio.protocol.BasicAsyncRequestConsumer;
 import org.apache.http.nio.util.HeapByteBufferAllocator;
 import org.apache.http.nio.util.SimpleInputBuffer;
 import org.apache.http.protocol.HttpContext;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -66,8 +68,8 @@ extends BasicAsyncRequestConsumer {
 		final ContentDecoder decoder, final IOControl ioctrl)
 	{
 		//this.buf.consumeContent(decoder);
-		try (final InputStream contentStream = ContentInputStream.getInstance(decoder, ioctrl)) {
-			WSRequestConfigBase.playStreamQuietly(contentStream);
+		try (final InputStream contentStream = HTTPInputStream.getInstance(decoder, ioctrl)) {
+			StreamUtils.skipStreamDataQuietly(contentStream);
 			this.buf.shutdown();
 		} catch (final InterruptedException e) {
 			TraceLogger.failure(LOG, Level.ERROR, e, "Buffer interrupted fault");

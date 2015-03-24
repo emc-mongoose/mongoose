@@ -3,11 +3,12 @@ package com.emc.mongoose.core.impl.load.tasks;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.impl.util.InstancePool;
-import com.emc.mongoose.core.api.util.Reusable;
+//
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.pool.InstancePool;
+import com.emc.mongoose.common.pool.Reusable;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

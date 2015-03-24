@@ -1,8 +1,6 @@
 package com.emc.mongoose.core.api.io.task;
 //
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
-import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
@@ -18,15 +16,6 @@ extends
 	DataObjectIOTask<T>,
 	HttpAsyncRequestProducer,
 	HttpAsyncResponseConsumer<IOTask.Status> {
-	//
-	enum HTTPMethod {
-		//
-		DELETE, GET, HEAD, PUT, POST, TRACE;
-		//
-		public MutableWSRequest createRequest() {
-			return new WSRequestImpl(this, null, "/");
-		}
-	}
 	//
 	@Override
 	WSIOTask<T> setDataItem(final T dataItem);

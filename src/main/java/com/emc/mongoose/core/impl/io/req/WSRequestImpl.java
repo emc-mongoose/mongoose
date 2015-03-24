@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.io.req;
 //
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 //
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import org.apache.http.Header;
 import org.apache.http.HeaderIterator;
 import org.apache.http.HttpEntity;
@@ -11,7 +10,6 @@ import org.apache.http.HttpVersion;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.RequestLine;
 import org.apache.http.annotation.NotThreadSafe;
-import org.apache.http.message.BasicRequestLine;
 import org.apache.http.protocol.HTTP;
 //
 import org.apache.logging.log4j.LogManager;
@@ -67,18 +65,18 @@ implements MutableWSRequest {
 	}
 	private final MutableRequestLine requestline;
 	//
-	private volatile WSIOTask.HTTPMethod method;
+	private volatile HTTPMethod method;
 	private volatile String uriAddr, uriPath;
 	private volatile HttpEntity contentEntity = EMPTY_CONTENT_ENTITY;
 	//
 	public WSRequestImpl(
-		final WSIOTask.HTTPMethod method, final String uriAddr, final String uriPath
+		final HTTPMethod method, final String uriAddr, final String uriPath
 	) {
 		this(method, uriAddr, uriPath, HttpVersion.HTTP_1_1);
 	}
 	//
 	public WSRequestImpl(
-		final WSIOTask.HTTPMethod method, final String uriAddr, final String uriPath,
+		final HTTPMethod method, final String uriAddr, final String uriPath,
 		final ProtocolVersion ver
 	) {
 		this(
@@ -96,7 +94,7 @@ implements MutableWSRequest {
 	private WSRequestImpl(final String uriAddr, final MutableRequestLine requestline) {
 		super();
 		this.requestline = requestline;
-		method = WSIOTask.HTTPMethod.valueOf(requestline.getMethod());
+		method = HTTPMethod.valueOf(requestline.getMethod());
 		this.uriAddr = uriAddr;
 		uriPath = requestline.getUri();
 	}
@@ -117,12 +115,12 @@ implements MutableWSRequest {
 	}
 	//
 	@Override
-	public final WSIOTask.HTTPMethod getMethod() {
+	public final HTTPMethod getMethod() {
 		return method;
 	}
 	//
 	@Override
-	public final WSRequestImpl setMethod(final WSIOTask.HTTPMethod method) {
+	public final WSRequestImpl setMethod(final HTTPMethod method) {
 		this.method = method;
 		requestline.setMethod(method.name());
 		return this;

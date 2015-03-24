@@ -1,11 +1,11 @@
 package com.emc.mongoose.core.api.io.req.conf;
-//
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
+// mongoose-common.jar
+import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import java.io.Closeable;
 import java.io.Externalizable;
@@ -46,8 +46,8 @@ extends Externalizable, Cloneable, Closeable {
 	String getNameSpace();
 	RequestConfig<T> setNameSpace(final String nameSpace);
 	//
-	DataSource<T> getDataSource();
-	RequestConfig<T> setDataSource(final DataSource<T> dataSrc);
+	DataSource getDataSource();
+	RequestConfig<T> setDataSource(final DataSource dataSrc);
 	//
 	boolean getRetries();
 	RequestConfig<T> setRetries(final boolean retryFlag);

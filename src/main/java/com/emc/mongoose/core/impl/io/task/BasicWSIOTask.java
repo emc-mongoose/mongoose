@@ -1,17 +1,20 @@
 package com.emc.mongoose.core.impl.io.task;
-//
-import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.io.util.http.ContentInputStream;
-import com.emc.mongoose.core.impl.io.util.http.ContentOutputStream;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.impl.util.InstancePool;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+// mongoose-common
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.io.HTTPInputStream;
+import com.emc.mongoose.common.io.HTTPOutputStream;
+import com.emc.mongoose.common.pool.InstancePool;
+// mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.core.api.io.req.MutableWSRequest;
+import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.WSIOTask;
+// mongoose-core-impl
+import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 //
 import org.apache.commons.lang.text.StrBuilder;
 //
@@ -23,14 +26,13 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
-import org.apache.http.message.BasicHeader;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.HttpContext;
-//
 import org.apache.http.protocol.HttpCoreContext;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -94,7 +96,9 @@ implements WSIOTask<T> {
 	//
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	protected HeaderGroup sharedHeaders = null;
-	protected final MutableWSRequest httpRequest = HTTPMethod.GET.createRequest();
+	protected final MutableWSRequest httpRequest = new WSRequestImpl(
+		MutableWSRequest.HTTPMethod.PUT, null, null
+	);
 	protected volatile HttpEntity reqEntity = null;
 	//
 	@Override
@@ -208,7 +212,7 @@ implements WSIOTask<T> {
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		try(final OutputStream outStream = ContentOutputStream.getInstance(out, ioCtl)) {
+		try(final OutputStream outStream = HTTPOutputStream.getInstance(out, ioCtl)) {
 			if(reqEntity != null && reqEntity.getContentLength() > 0) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
@@ -443,7 +447,7 @@ implements WSIOTask<T> {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "#{}: start content consuming", hashCode());
 		}
-		try(final InputStream contentStream = ContentInputStream.getInstance(in, ioCtl)) {
+		try(final InputStream contentStream = HTTPInputStream.getInstance(in, ioCtl)) {
 			if(respStatusCode < 200 || respStatusCode >= 300) { // failure
 				final BufferedReader contentStreamBuff = new BufferedReader(
 					new InputStreamReader(contentStream)

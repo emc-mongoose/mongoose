@@ -5,7 +5,8 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.persist.DataItemBuffer;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
+// mongoose-common
+import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;

@@ -1,8 +1,9 @@
 package com.emc.mongoose.core.impl.data;
-//
+// mongoose-common
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
+//
 import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
 //
 import java.io.IOException;
 import java.io.ObjectInput;

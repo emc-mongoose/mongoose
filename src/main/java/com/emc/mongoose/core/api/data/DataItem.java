@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.api.data;
 //
-import com.emc.mongoose.core.impl.data.src.UniformDataSource;
-
+import com.emc.mongoose.core.api.data.src.DataSource;
+//
 import java.io.Closeable;
 import java.io.Externalizable;
 import java.io.IOException;
@@ -19,7 +19,7 @@ extends Externalizable, Closeable {
 	//
 	long getOffset();
 	//
-	void setDataSource(final UniformDataSource dataSrc, final int layerNum);
+	void setDataSource(final DataSource dataSrc, final int layerNum);
 	//
 	void writeTo(final OutputStream out)
 	throws IOException;

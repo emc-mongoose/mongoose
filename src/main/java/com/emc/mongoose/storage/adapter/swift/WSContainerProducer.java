@@ -1,12 +1,13 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+//
+import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
 //
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -46,8 +47,8 @@ implements Producer<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public WSContainerProducer(
-		final WSContainerImpl<T> container, final Class<? extends WSObject> dataCls, final long maxCount,
-		final String addr
+		final WSContainerImpl<T> container, final Class<? extends WSObject> dataCls,
+		final long maxCount, final String addr
 	) throws ClassCastException, NoSuchMethodException {
 		super("container-" + container + "-producer");
 		this.container = container;
@@ -71,7 +72,7 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		try {
-			final HttpResponse httpResp = container.execute(addr, WSIOTask.HTTPMethod.GET);
+			final HttpResponse httpResp = container.execute(addr, MutableWSRequest.HTTPMethod.GET);
 			if(httpResp != null) {
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
