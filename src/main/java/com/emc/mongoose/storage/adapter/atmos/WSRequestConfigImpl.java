@@ -3,11 +3,12 @@ package com.emc.mongoose.storage.adapter.atmos;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
+//
+import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
+//
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
 //
 import org.apache.commons.codec.binary.Base64;
 //
@@ -83,20 +84,20 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public WSIOTask.HTTPMethod getHTTPMethod() {
-		WSIOTask.HTTPMethod method;
+	public MutableWSRequest.HTTPMethod getHTTPMethod() {
+		MutableWSRequest.HTTPMethod method;
 		switch(loadType) {
 			case CREATE:
-				method = WSIOTask.HTTPMethod.POST;
+				method = MutableWSRequest.HTTPMethod.POST;
 				break;
 			case READ:
-				method = WSIOTask.HTTPMethod.GET;
+				method = MutableWSRequest.HTTPMethod.GET;
 				break;
 			case DELETE:
-				method = WSIOTask.HTTPMethod.DELETE;
+				method = MutableWSRequest.HTTPMethod.DELETE;
 				break;
 			default: // UPDATE, APPEND
-				method = WSIOTask.HTTPMethod.PUT;
+				method = MutableWSRequest.HTTPMethod.PUT;
 				break;
 		}
 		return method;

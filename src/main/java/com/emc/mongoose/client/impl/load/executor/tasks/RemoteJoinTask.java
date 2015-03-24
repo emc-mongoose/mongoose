@@ -1,11 +1,14 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
+// mongoose-common.jar
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+// mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 /**

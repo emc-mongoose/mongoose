@@ -1,20 +1,18 @@
 package com.emc.mongoose.client.impl.load.executor;
-//
-import com.emc.mongoose.server.api.load.executor.LoadSvc;
+// mongoose-common.jar
+import com.emc.mongoose.common.conf.RunTimeConfig;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
+// mongoose-server-api.jar
+import com.emc.mongoose.server.api.load.executor.LoadSvc;
+// mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.WSLoadClient;
-import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
-//
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
 //
 //import org.apache.logging.log4j.Level;
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
 //
-import java.io.IOException;
 import java.util.Map;
 import javax.management.remote.JMXConnector;
 /**

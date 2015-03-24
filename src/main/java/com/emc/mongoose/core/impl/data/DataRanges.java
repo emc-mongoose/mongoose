@@ -1,15 +1,18 @@
 package com.emc.mongoose.core.impl.data;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.impl.data.src.UniformDataSource;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
-import com.emc.mongoose.core.api.util.log.Markers;
+//
+import com.emc.mongoose.core.impl.data.src.UniformDataSource;
+//
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
 //
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //

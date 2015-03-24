@@ -1,13 +1,12 @@
 package com.emc.mongoose.core.impl.data.src;
-//
+// mongoose-common
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api
 import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.impl.data.UniformData;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
 //
-import org.apache.http.annotation.ThreadSafe;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,9 +21,8 @@ import java.util.ArrayList;
  A uniform data source for producing uniform data items.
  Implemented as finite buffer of pseudorandom bytes.
  */
-@ThreadSafe
-public class UniformDataSource<T extends UniformData>
-implements DataSource<T> {
+public class UniformDataSource
+implements DataSource {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////

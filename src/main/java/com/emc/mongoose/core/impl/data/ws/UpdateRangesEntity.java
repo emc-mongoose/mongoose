@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.data.ws;
 //
 import com.emc.mongoose.core.api.data.WSObject;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.util.EntityUtils;

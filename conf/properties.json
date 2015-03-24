@@ -25,10 +25,7 @@
                 "s3": {
                     "port": 9020,
                     "authPrefix": "AWS",
-                    "bucket": {
-                        "name": "",
-                        "versioning": false
-                    }
+                    "bucket": ""
                 },
                 "atmos": {
                     "port": 9022,
@@ -125,8 +122,8 @@
             "limit": {
                 "dataItemCount": 0,
                 "time": {
-                    "value": 1000,
-                    "unit": "days"
+                    "value": 0,
+                    "unit": "seconds"
                 }
             },
             "servers": "127.0.0.1",
@@ -143,7 +140,7 @@
             "request": {
                 "retries": false,
                 "timeoutMilliSec": 1000000,
-                "queueSize": 1000000
+                "queueSize": 16384
             }
         },
         "auth": {

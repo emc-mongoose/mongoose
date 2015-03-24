@@ -1,18 +1,21 @@
 package com.emc.mongoose.client.impl.persist;
-//
+// mongoose-common.jar
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.persist.DataItemBuffer;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.client.api.persist.DataItemBufferClient;
-import com.emc.mongoose.client.api.load.executor.LoadClient;
+// mongoose-server-api.jar
 import com.emc.mongoose.server.api.persist.DataItemBufferSvc;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+// mongoose-client.jar
+import com.emc.mongoose.client.api.persist.DataItemBufferClient;
+import com.emc.mongoose.client.api.load.executor.LoadClient;
 //
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -236,7 +239,7 @@ implements DataItemBufferClient<T> {
 	throws InterruptedException {
 		//
 		final ExecutorService remoteJoinExecutor = Executors.newFixedThreadPool(
-			size(), new WorkerFactory("itemBufferClientJoin")
+			size(), new NamingWorkerFactory("itemBufferClientJoin")
 		);
 		//
 		for(final String addr: keySet()) {

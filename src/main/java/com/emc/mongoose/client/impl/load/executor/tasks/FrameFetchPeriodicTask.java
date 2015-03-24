@@ -1,8 +1,11 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
-//
+// mongoose-common.jar
+import com.emc.mongoose.common.logging.TraceLogger;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
+// mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+// mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
 //
 import org.apache.logging.log4j.Level;

@@ -1,5 +1,5 @@
 package com.emc.mongoose.client.api.load.executor;
-//
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
 /**

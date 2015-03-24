@@ -1,0 +1,115 @@
+ext {
+
+	library = { deps ->
+		deps.collectNested { dep ->
+			dependencies.create(dep) {
+				transitive = true
+			}
+		}
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+
+	ant = [ "ant:ant:1.6.5" ]
+
+	commons_cli = [ "commons-cli:commons-cli:1.2" ]
+	commons_codec = [ "commons-codec:commons-codec:1.10" ]
+	commons_collections4 = [ "org.apache.commons:commons-collections4:4.0" ]
+	commons_configuration = [ "commons-configuration:commons-configuration:1.10" ]
+	commons_lang = [ "commons-lang:commons-lang:2.6" ]
+	commons_logging = [ "commons-logging:commons-logging:1.2" ]
+
+	ecj = [ "org.eclipse.jdt.core.compiler:ecj:3.5.1" ]
+
+	httpcore = [ "org.apache.httpcomponents:httpcore-nio:4.4" ]
+	httpcore_nio = [ "org.apache.httpcomponents:httpcore-nio:4.4" ]
+
+	jackson_annotations = [ "com.fasterxml.jackson.core:jackson-annotations:2.4.1" ]
+	jackson_core = [ "com.fasterxml.jackson.core:jackson-core:2.4.1" ]
+	jackson_databind = [ "com.fasterxml.jackson.core:jackson-databind:2.4.1" ]
+	jackson_dataformat_yaml = [ "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.4.1" ]
+
+	jansi = [ "org.fusesource.jansi:jansi:1.11" ]
+
+	jetty_http = [ "org.eclipse.jetty:jetty-http:9.3.0.M1" ]
+	jetty_io = [ "org.eclipse.jetty:jetty-io:9.3.0.M1" ]
+	jetty_jsp = [ "org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127" ]
+	jetty_jsp_api = [ "org.mortbay.jetty:jsp-api-2.1-glassfish:2.1.v20100127" ]
+	jetty_jstl = [ "jstl:jstl:1.2" ]
+	jetty_security = [ "org.eclipse.jetty:jetty-security:9.3.0.M1" ]
+	jetty_server = [ "org.eclipse.jetty:jetty-server:9.3.0.M1" ]
+	jetty_servlet = [ "org.eclipse.jetty:jetty-servlet:9.3.0.M1" ]
+	jetty_servlet_api = [ "javax.servlet:javax.servlet-api:2.5.0" ]
+	jetty_util = [ "org.eclipse.jetty:jetty-util:9.3.0.M1" ]
+	jetty_webapp = [ "org.eclipse.jetty:jetty-webapp:9.3.0.M1" ]
+	jetty_xml = [ "org.eclipse.jetty:jetty-xml:9.3.0.M1" ]
+
+	jmdns = [ "com.github.rickyclarkson:jmdns:3.4.2-r353-1" ]
+
+	jsp_api = [ "javax.servlet.jsp:jsp-api:2.2" ]
+	jstl = [ "javax.servlet:jstl:1.2" ]
+
+	jython = [ "org.python:jython-standalone:2.7-b3" ]
+
+	lmax_disruptor = [ "com.lmax:disruptor:3.3.0" ]
+
+	log4j_api = [ "org.apache.logging.log4j:log4j-api:2.1" ]
+	log4j_core = [ "org.apache.logging.log4j:log4j-core:2.1" ]
+	log4j_jcl = [ "org.apache.logging.log4j:log4j-jcl:2.1" ]
+	log4j_jul = [ "org.apache.logging.log4j:log4j-jul:2.1" ]
+	log4j_slf4j_impl = [ "org.apache.logging.log4j:log4j-slf4j-impl:2.1" ]
+	log4j_web = [ "org.apache.logging.log4j:log4j-web:2.1" ]
+
+	metrics_core = [ "io.dropwizard.metrics:metrics-core:3.1.0" ]
+
+
+	slf4j_api = [ "org.slf4j:slf4j-api:1.7.7" ]
+
+	websocket_api = [ "org.eclipse.jetty.websocket:websocket-api:9.3.0.M1" ]
+	websocket_client = [ "org.eclipse.jetty.websocket:websocket-client:9.3.0.M1" ]
+	websocket_common = [ "org.eclipse.jetty.websocket:websocket-common:9.3.0.M1" ]
+	websocket_core = [ "org.eclipse.jetty.websocket:websocket-core:9.0.0.M2" ]
+	websocket_server = [ "org.eclipse.jetty.websocket:websocket-server:9.3.0.M1" ]
+	websocket_servlet = [ "org.eclipse.jetty.websocket:websocket-servlet:9.3.0.M1" ]
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+
+	httpcore_plus_nio = [ httpcore, httpcore_nio, ]
+
+	jetty_svc = [ jetty_server, jetty_webapp, ]
+
+	log4j_api_plus_core = [ log4j_api, log4j_core, ]
+
+	websockets = [ websocket_api, websocket_servlet, ]
+
+	////////////////////////////////////////////////////////////////////////////////////////////////
+
+	runtime_jetty = [
+		jetty_io,
+		jetty_jsp,
+		jetty_jsp_api,
+		jetty_jstl,
+		jetty_servlet,
+		jetty_servlet_api,
+		jetty_util,
+	]
+	runtime_jetty_svc = [
+		runtime_jetty,
+		jetty_http,
+		jetty_security,
+		jetty_xml
+	]
+
+	runtime_logging = [
+		commons_logging,
+		lmax_disruptor,
+		jackson_core, jackson_dataformat_yaml,
+		log4j_jcl, log4j_jul, log4j_slf4j_impl,
+		jansi,
+	]
+
+	runtime_webapp = [
+		jetty_jstl,
+		log4j_web,
+	]
+}

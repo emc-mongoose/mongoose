@@ -1,13 +1,18 @@
 package com.emc.mongoose.webui;
 //
-import com.emc.mongoose.run.Scenario;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.net.ServiceUtils;
+//
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
+//
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+//
 import com.emc.mongoose.storage.mock.impl.cinderella.Main;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.server.impl.ServiceUtils;
+//
+import com.emc.mongoose.run.scenario.RunTask;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -16,10 +21,10 @@ import org.apache.logging.log4j.ThreadContext;
 //
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+//
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Created by gusakk on 01/10/14.
  */
@@ -68,18 +73,18 @@ public final class StartServlet extends CommonServlet {
 		setupRunTimeConfig(request);
 		updateLastRunTimeConfig(runTimeConfig);
 		switch(request.getParameter(RunTimeConfig.KEY_RUN_MODE)) {
-			case com.emc.mongoose.run.Main.RUN_MODE_SERVER:
-			case com.emc.mongoose.run.Main.RUN_MODE_COMPAT_SERVER:
+			case Constants.RUN_MODE_SERVER:
+			case Constants.RUN_MODE_COMPAT_SERVER:
 				startServer("Starting the distributed load server");
 				break;
-			case com.emc.mongoose.run.Main.RUN_MODE_CINDERELLA:
+			case Constants.RUN_MODE_CINDERELLA:
 				startCinderella("Starting the cinderella");
 				break;
-			case com.emc.mongoose.run.Main.RUN_MODE_CLIENT:
-			case com.emc.mongoose.run.Main.RUN_MODE_COMPAT_CLIENT:
+			case Constants.RUN_MODE_CLIENT:
+			case Constants.RUN_MODE_COMPAT_CLIENT:
 				startStandaloneOrClient("Starting the distributed load client");
 				break;
-			case com.emc.mongoose.run.Main.RUN_MODE_STANDALONE:
+			case Constants.RUN_MODE_STANDALONE:
 				startStandaloneOrClient("Starting in the standalone mode");
 				break;
 			default:
@@ -145,7 +150,7 @@ public final class StartServlet extends CommonServlet {
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);
-				new Scenario().run();
+				new RunTask().run();
 			}
 			//
 			@Override

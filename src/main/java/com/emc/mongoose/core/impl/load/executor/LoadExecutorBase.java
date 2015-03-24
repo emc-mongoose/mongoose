@@ -7,22 +7,24 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
+import com.emc.mongoose.common.logging.Settings;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.ConsoleColors;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.net.ServiceUtils;
+//
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.src.DataSource;
-import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
-import com.emc.mongoose.core.impl.load.tasks.RequestResultTask;
-import com.emc.mongoose.core.impl.load.model.LogConsumer;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.ConsoleColors;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.server.impl.ServiceUtils;
+//
+import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
+import com.emc.mongoose.core.impl.load.tasks.RequestResultTask;
+import com.emc.mongoose.core.impl.load.model.LogConsumer;
 import com.emc.mongoose.core.impl.load.executor.util.DataObjectWorkerFactory;
 //
 import org.apache.commons.lang.StringUtils;
@@ -56,7 +58,7 @@ implements LoadExecutor<T> {
 	protected final int connCountPerNode, storageNodeCount, retryCountMax, retryDelayMilliSec;
 	protected final String storageNodeAddrs[];
 	//
-	protected final DataSource<T> dataSrc;
+	protected final DataSource dataSrc;
 	protected volatile RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
@@ -210,7 +212,7 @@ implements LoadExecutor<T> {
 		//
 		final String message = Markers.PERF_SUM.equals(logMarker) ?
 			String.format(
-				Main.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
+				Settings.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 				//
 				getName(),
 				countReqSucc,
@@ -229,7 +231,7 @@ implements LoadExecutor<T> {
 				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 			) :
 			String.format(
-				Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
+				Settings.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
 				countReqSucc, throughPut.getCount() - countReqSucc,
 				countReqFail == 0 ?
@@ -496,7 +498,7 @@ implements LoadExecutor<T> {
 				LOG.debug(
 					Markers.PERF_SUM,
 					String.format(
-						Main.LOCALE_DEFAULT,
+						Settings.LOCALE_DEFAULT,
 						"Load execution duration: %3.3f[sec], efficiency estimation: %3.3f[%%]",
 						loadDurMicroSec / 1e6, 100 * eff
 					)

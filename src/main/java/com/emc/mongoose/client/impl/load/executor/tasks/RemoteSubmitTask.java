@@ -1,12 +1,14 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
-//
+// mongoose-common.jar
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.pool.InstancePool;
+import com.emc.mongoose.common.pool.Reusable;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
+// mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.InstancePool;
-import com.emc.mongoose.core.api.util.Reusable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //

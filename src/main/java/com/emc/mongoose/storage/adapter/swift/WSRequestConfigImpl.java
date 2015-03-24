@@ -1,13 +1,15 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+//
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+//
+import com.emc.mongoose.core.impl.data.BasicWSObject;
+import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 //
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;

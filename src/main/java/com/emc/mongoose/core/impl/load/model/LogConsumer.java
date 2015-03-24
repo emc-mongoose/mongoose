@@ -2,12 +2,13 @@ package com.emc.mongoose.core.impl.load.model;
 //
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
 //
-import com.emc.mongoose.core.impl.util.InstancePool;
-import com.emc.mongoose.core.api.util.Reusable;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.pool.InstancePool;
+import com.emc.mongoose.common.pool.Reusable;
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -39,7 +40,7 @@ implements Consumer<T> {
 					:
 					RunTimeConfig.getContext().getRunRequestQueueSize()
 			),
-			new WorkerFactory("dataItemLogWorker")
+			new NamingWorkerFactory("dataItemLogWorker")
 		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 	}

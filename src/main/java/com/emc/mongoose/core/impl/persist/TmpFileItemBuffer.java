@@ -1,13 +1,14 @@
 package com.emc.mongoose.core.impl.persist;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+//
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.persist.DataItemBuffer;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -73,7 +74,7 @@ implements DataItemBuffer<T> {
 		//
 		if(fBuff != null) {
 			setThreadFactory(
-				new WorkerFactory(fBuff.getName()) // the name should be URL-safe
+				new NamingWorkerFactory(fBuff.getName()) // the name should be URL-safe
 			);
 		}
 		//
