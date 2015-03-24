@@ -219,13 +219,19 @@ implements WSIOTask<T> {
 	throws IOException {
 		try(final OutputStream outStream = ContentOutputStream.getInstance(out, ioCtl)) {
 			if(reqEntity != null) {
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						Markers.MSG, "Task #{}, write out {} bytes",
-						hashCode(), reqEntity.getContentLength()
+				//if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.info(
+						Markers.MSG, "Task #{}, write out {}",
+						hashCode(), RunTimeConfig.formatSize(reqEntity.getContentLength())
 					);
-				}
+				//}
 				reqEntity.writeTo(outStream);
+				//if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.info(
+						Markers.MSG, "Task #{}, write out done",
+						hashCode(), RunTimeConfig.formatSize(reqEntity.getContentLength())
+					);
+				//}
 			}
 		} catch(final InterruptedException e) {
 			// do nothing
