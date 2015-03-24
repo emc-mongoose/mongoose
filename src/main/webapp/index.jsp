@@ -22,7 +22,7 @@
 						<span class="icon-bar"></span>
 					</button>
 					<a id="logo" href="/">
-						<img width="120" height="40" src="images/mongooselogo.svg"/>
+						<img width="50" height="50" src="images/mongoose_sqr_white.png"/>
 					</a>
 					<a class="navbar-brand" href="/">
 						Mongoose
