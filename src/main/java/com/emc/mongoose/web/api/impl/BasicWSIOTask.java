@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -214,27 +215,56 @@ implements WSIOTask<T> {
 		return httpRequest;
 	}
 	//
+	private final byte buff[] = new byte[
+		RunTimeConfig.getContext().getDataPageSize() > Integer.MAX_VALUE ?
+			Integer.MAX_VALUE : (int) RunTimeConfig.getContext().getDataPageSize()
+	];
+	private final ByteBuffer bb = ByteBuffer.wrap(buff);
+	//
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		try(final OutputStream outStream = ContentOutputStream.getInstance(out, ioCtl)) {
-			if(reqEntity != null) {
-				//if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.info(
+		if(reqEntity != null) {
+			/*try(final OutputStream outStream = ContentOutputStream.getInstance(out, ioCtl)) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
 						Markers.MSG, "Task #{}, write out {}",
 						hashCode(), RunTimeConfig.formatSize(reqEntity.getContentLength())
 					);
-				//}
+				}
 				reqEntity.writeTo(outStream);
-				//if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.info(
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
 						Markers.MSG, "Task #{}, write out done",
 						hashCode(), RunTimeConfig.formatSize(reqEntity.getContentLength())
 					);
-				//}
+				}
+			} catch(final InterruptedException e) {
+				// do nothing*/
+			long lastReadByteCount, lastWrittenByteCount, totalByteCount = 0, n;
+			try(final InputStream dataStream = reqEntity.getContent()) {
+				LOG.info(Markers.MSG, reqEntity.getContentLength());
+				while(totalByteCount < reqEntity.getContentLength()) {
+					lastReadByteCount = dataStream.read(buff);
+					bb.rewind();
+					if(lastReadByteCount <= 0) {
+						break;
+					}
+					lastWrittenByteCount = 0;
+					do {
+						n = out.write(bb);
+						if(n > 0) {
+							lastWrittenByteCount += n;
+						}
+					} while(lastWrittenByteCount < lastReadByteCount);
+					totalByteCount += lastReadByteCount;
+				}
+				LOG.info(Markers.MSG, RunTimeConfig.formatSize(totalByteCount));
+			} finally {
+				LOG.info(Markers.MSG, "Completing...");
+				out.complete();
+				LOG.info(Markers.MSG, "Completed");
 			}
-		} catch(final InterruptedException e) {
-			// do nothing
 		}
 	}
 	//
