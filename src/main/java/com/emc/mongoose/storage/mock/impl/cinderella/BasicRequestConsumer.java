@@ -69,7 +69,7 @@ extends BasicAsyncRequestConsumer {
 	{
 		//this.buf.consumeContent(decoder);
 		try (final InputStream contentStream = HTTPInputStream.getInstance(decoder, ioctrl)) {
-			StreamUtils.skipStreamDataQuietly(contentStream);
+			StreamUtils.skipStreamDataQuietly(contentStream, maxPageSize);
 			this.buf.shutdown();
 		} catch (final InterruptedException e) {
 			TraceLogger.failure(LOG, Level.ERROR, e, "Buffer interrupted fault");
@@ -77,7 +77,7 @@ extends BasicAsyncRequestConsumer {
 			TraceLogger.failure(LOG, Level.ERROR, e, "Content input stream fault");
 		}
 	}
-		//
+	//
 	@Override
 	protected final void releaseResources() {
 		this.request = null;

@@ -571,7 +571,7 @@ implements WSRequestConfig<T> {
 				TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
 			}
 		} finally { // try to read the remaining data if left in the input stream
-			StreamUtils.skipStreamDataQuietly(contentStream);
+			StreamUtils.skipStreamDataQuietly(contentStream,(int) runTimeConfig.getDataBufferSize());
 		}
 		return ok;
 	}

@@ -15,15 +15,12 @@ public final class StreamUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public static void skipStreamDataQuietly(final InputStream contentStream) {
+	public static void skipStreamDataQuietly(final InputStream contentStream, final int maxPageSize) {
+		final byte buff[] = new byte[maxPageSize];
 		try {
-			long n = contentStream.available();
-			while(n > 0) {
-				contentStream.skip(n);
-				n = contentStream.available();
-			}
+			while(contentStream.read(buff) != -1);
 		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to skip the input stream data");
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
 		}
 	}
 }

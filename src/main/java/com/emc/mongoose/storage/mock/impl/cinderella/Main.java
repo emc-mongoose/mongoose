@@ -326,10 +326,13 @@ implements Runnable {
 			String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
 			String dataID = "";
 			//Get data Id
+			String[] requestUri = null;
+			System.out.println(request.getRequestLine().getUri());
 			try {
-				final String[] requestUri = request.getRequestLine().getUri().split("/");
+				System.out.println(request.getRequestLine().getUri());
+				requestUri = request.getRequestLine().getUri().split("/");
 				if(requestUri.length >= 3) {
-					dataID = requestUri[2];
+					dataID = requestUri[requestUri.length - 1];
 				} else {
 					method = "head";
 				}
@@ -345,12 +348,17 @@ implements Runnable {
 					"Request URI is not correct. Data object ID doesn't exist in request URI");
 			}
 			//
+			System.out.println(method);
 			switch(method) {
 				case (METHOD_PUT):
 					doPut(request, response, dataID);
 					break;
 				case (METHOD_POST):
-					doPost(request, response);
+					if (requestUri!= null && requestUri.length == 4){
+						doPut(request, response, dataID);
+					}else {
+						doPost(request, response);
+					}
 					break;
 				case (METHOD_HEAD):
 					doHead(response);
@@ -362,17 +370,21 @@ implements Runnable {
 					doDelete(response);
 					break;
 			}
-			httpexchange.submitResponse(new BasicResponseProducer(response));
+			try {
+				httpexchange.submitResponse(new BasicResponseProducer(response));
+			}catch (final Exception e){
+				e.printStackTrace();
+			}
 		}
 		//
 		private void doGet(final HttpResponse response, final String dataID){
-			LOG.trace(Markers.MSG, " Request  method Get ");
+			LOG.trace(Markers.MSG, "Request  method Get ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			if(sharedStorage.containsKey(dataID)) {
-				LOG.trace(Markers.MSG, "   Send data object ", dataID);
+				LOG.trace(Markers.MSG, "Send data object ", dataID);
 				final WSObjectMock dataObject = sharedStorage.get(dataID);
 				response.setEntity(dataObject);
-				LOG.trace(Markers.MSG, "   Response: OK");
+				LOG.trace(Markers.MSG, "Response: OK");
 				counterAllSucc.inc();
 				counterGetSucc.inc();
 				getBW.mark(dataObject.getSize());
@@ -398,38 +410,45 @@ implements Runnable {
 		}
 		//
 		private void doPost(final HttpRequest request, final HttpResponse response){
-			LOG.trace(Markers.MSG, " Request  method Post ");
-			response.setStatusCode(HttpStatus.SC_OK);
+			LOG.trace(Markers.MSG, "Request  method Post ");
 			final int ATMOS_ID_LEN = 32;
 			try {
-				final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-				final long bytes = entity.getContentLength();
 				final String dataID = randomString(ATMOS_ID_LEN);
-				final WSObjectMock dataObject = new BasicWSObjectMock(dataID, bytes);
-				LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject));
-				synchronized (sharedStorage) {
-					sharedStorage.put(dataID, dataObject);
-				}
+				final WSObjectMock dataObject = writeDataObject(request, response, dataID);
 				response.setEntity(dataObject);
 				counterAllSucc.inc();
 				counterPostSucc.inc();
-				postBW.mark(bytes);
-				allBW.mark(bytes);
+				postBW.mark(dataObject.getSize());
+				allBW.mark(dataObject.getSize());
 				postTP.mark();
 				allTP.mark();
-				/*
-				System.out.println("------Post-----");
-				final Header[] headers = request.getAllHeaders();
-				for (Header header : headers) {
-					System.out.println(header.getName() + " : " + header.getValue());
-					System.out.println("--------");
-				}
-				*/
 			}catch (final Exception e){
 				e.printStackTrace();
 			}
 
 
+		}
+		//
+		private WSObjectMock writeDataObject(final HttpRequest request, final HttpResponse response, final String dataID)
+		throws HttpException{
+			response.setStatusCode(HttpStatus.SC_OK);
+			WSObjectMock dataObject;
+			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+			final long bytes = entity.getContentLength();
+			//create data object or get it for append or update
+			if (sharedStorage.containsKey(dataID)) {
+				dataObject = sharedStorage.get(dataID);
+			} else if (request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH).equals(METHOD_POST)){
+				dataObject = new BasicWSObjectMock(dataID, bytes);
+			} else {
+				final long offset = genOffset(dataID);
+				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
+			}
+			LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject));
+			synchronized (sharedStorage) {
+				sharedStorage.put(dataID, dataObject);
+			}
+			return dataObject;
 		}
 		/*
 		offset for mongoose versions since v0.6:
@@ -464,29 +483,15 @@ implements Runnable {
 			final HttpRequest request, final HttpResponse response, final String dataID
 		){
 			try {
-				LOG.trace(Markers.MSG, " Request  method Put ");
-				response.setStatusCode(HttpStatus.SC_OK);
-				WSObjectMock dataObject = null;
-				final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-				final long bytes = entity.getContentLength();
-				//create data object or get it for append or update
-				if (sharedStorage.containsKey(dataID)) {
-					dataObject = sharedStorage.get(dataID);
-				} else {
-					final long offset = genOffset(dataID);
-					dataObject = new BasicWSObjectMock(dataID, offset, bytes);
-				}
-				LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject));
-				synchronized (sharedStorage) {
-					sharedStorage.put(dataID, dataObject);
-				}
+				LOG.trace(Markers.MSG, "Request  method Put ");
+				final WSObjectMock dataObject = writeDataObject(request, response, dataID);
 				counterAllSucc.inc();
 				counterPutSucc.inc();
-				putBW.mark(bytes);
-				allBW.mark(bytes);
+				putBW.mark(dataObject.getSize());
+				allBW.mark(dataObject.getSize());
 				putTP.mark();
 				allTP.mark();
-			} catch (final HttpException e){
+			}catch (final HttpException e){
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 				TraceLogger.failure(LOG, Level.ERROR, e, "Put method failure");
 				counterAllFail.inc();
@@ -495,14 +500,15 @@ implements Runnable {
 		}
 		//
 		private void doHead(final HttpResponse response){
-			LOG.trace(Markers.MSG, " Request  method Head ");
+			LOG.trace(Markers.MSG, "Request  method Head ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			counterAllSucc.inc();
 			counterHeadSucc.inc();
+			System.out.println("head ok");
 		}
 		//
 		private void doDelete(final HttpResponse response){
-			LOG.trace(Markers.MSG, " Request  method Delete ");
+			LOG.trace(Markers.MSG, "Request  method Delete ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			counterAllSucc.inc();
 			counterDeleteSucc.inc();
