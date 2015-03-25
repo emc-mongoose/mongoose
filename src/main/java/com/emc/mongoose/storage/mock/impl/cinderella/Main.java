@@ -375,7 +375,7 @@ implements Runnable {
 			}
 		}
 		//
-		private String randomString(final int len )
+		private static String randomString(final int len )
 		{
 			final byte buff[] = new byte[len];
 			ThreadLocalRandom.current().nextBytes(buff);
