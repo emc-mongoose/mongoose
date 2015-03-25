@@ -57,13 +57,9 @@ implements Reusable {
 		bb.limit(Math.min(off + len, bb.capacity()));
 		bb.position(off);
 		//
-		long writtenByteCount = 0;
-		int n;
-		while(writtenByteCount < len) {
+		int n = 0;
+		while(bb.remaining() > 0 && n <= 0) {
 			n = out.write(bb);
-			if(n > 0) {
-				writtenByteCount += n;
-			}
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,10 +79,12 @@ implements Reusable {
 	@Override
 	public final void release() {
 		if(isClosed.compareAndSet(false, true)) {
-			try {
-				out.complete();
-			} catch(final IOException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Failed to finish the output stream");
+			if(!out.isCompleted()) {
+				try {
+					out.complete();
+				} catch(final IOException e) {
+					TraceLogger.failure(LOG, Level.WARN, e, "Failed to finish the output stream");
+				}
 			}
 			POOL.release(this);
 		}

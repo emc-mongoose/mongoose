@@ -9,7 +9,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
@@ -21,7 +21,7 @@ extends LoadExecutorBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final AsyncIOTask.Type loadType;
+	protected final AsyncIOTask.Type loadType;
 	private final int countUpdPerReq;
 	private final long sizeMin, sizeRange;
 	private final float sizeBias;
@@ -37,6 +37,32 @@ extends LoadExecutorBase<T> {
 		);
 		//
 		this.loadType = reqConfig.getLoadType();
+		//
+		int buffSize;
+		if(sizeMin == sizeMax) {
+			if(sizeMin < BUFF_SIZE_HI) {
+				buffSize = (int) sizeMin;
+			} else {
+				buffSize = BUFF_SIZE_HI;
+			}
+		} else {
+			if(sizeMin > BUFF_SIZE_HI) {
+				buffSize = BUFF_SIZE_HI;
+			} else if(sizeMin < BUFF_SIZE_LO) {
+				if(sizeMax > BUFF_SIZE_HI) {
+					buffSize = BUFF_SIZE_HI;
+				} else {
+					buffSize = (int) ((sizeMin + sizeMax) / 2);
+				}
+			} else {
+				buffSize = (int) sizeMin;
+			}
+		}
+		LOG.debug(
+			Markers.MSG, "Determined buffer size of {} for \"{}\"",
+			RunTimeConfig.formatSize(buffSize), getName()
+		);
+		this.reqConfig.setBuffSize(buffSize);
 		//
 		switch(loadType) {
 			case APPEND:

@@ -42,7 +42,7 @@ implements RequestConfig<T> {
 	protected volatile int
 		port;
 	protected int
-		loadNumber;
+		loadNumber, buffSize;
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
@@ -56,6 +56,7 @@ implements RequestConfig<T> {
 		anyDataProducerEnabled = true;
 		scheme = runTimeConfig.getStorageProto();
 		port = runTimeConfig.getApiPort(api);
+		buffSize = (int) runTimeConfig.getDataPageSize();
 	}
 	//
 	protected RequestConfigBase(final RequestConfig<T> reqConf2Clone) {
@@ -71,6 +72,7 @@ implements RequestConfig<T> {
 			setScheme(reqConf2Clone.getScheme());
 			setLoadType(reqConf2Clone.getLoadType());
 			secret = reqConf2Clone.getSecret();
+			setBuffSize(reqConf2Clone.getBuffSize());
 		}
 	}
 	//
@@ -87,7 +89,8 @@ implements RequestConfig<T> {
 			.setUserName(userName)
 			.setPort(port)
 			.setScheme(scheme)
-			.setLoadType(loadType);
+			.setLoadType(loadType)
+			.setBuffSize(buffSize);
 		requestConfigBranch.secret = secret;
 		return requestConfigBranch;
 	}
@@ -234,6 +237,7 @@ implements RequestConfig<T> {
 		setUserName(this.runTimeConfig.getAuthId());
 		setSecret(this.runTimeConfig.getAuthSecret());
 		setRetries(this.runTimeConfig.getRunRequestRetries());
+		setBuffSize((int) this.runTimeConfig.getDataPageSize());
 		return this;
 	}
 	//
@@ -246,6 +250,16 @@ implements RequestConfig<T> {
 	public final RequestConfig<T> setLoadNumber(int loadNumber) {
 		this.loadNumber = loadNumber;
 		return this;
+	}
+	//
+	@Override
+	public final int getBuffSize() {
+		return buffSize;
+	}
+	//
+	@Override
+	public final void setBuffSize(final int buffSize) {
+		this.buffSize = buffSize;
 	}
 	//
 	@Override

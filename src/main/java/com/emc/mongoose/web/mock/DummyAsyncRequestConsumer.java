@@ -67,7 +67,7 @@ extends BasicAsyncRequestConsumer {
 	{
 		//this.buf.consumeContent(decoder);
 		try (final InputStream contentStream = ContentInputStream.getInstance(decoder, ioctrl)) {
-			WSRequestConfigBase.playStreamQuietly(contentStream);
+			playStreamQuietly(contentStream);
 			this.buf.shutdown();
 		} catch (final InterruptedException e) {
 			TraceLogger.failure(LOG, Level.ERROR, e, "Buffer interrupted fault");
@@ -85,5 +85,14 @@ extends BasicAsyncRequestConsumer {
 	@Override
 	protected final  HttpRequest buildResult(final HttpContext context) {
 		return this.request;
+	}
+	//
+	private void playStreamQuietly(final InputStream contentStream) {
+		final byte buff[] = new byte[maxPageSize];
+		try {
+			while(contentStream.read(buff) != -1);
+		} catch(final IOException e) {
+			TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
+		}
 	}
 }

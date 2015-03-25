@@ -92,11 +92,12 @@ implements WSLoadExecutor<T> {
 			.build();
 		client = new HttpAsyncRequester(httpProcessor);
 		//
-		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
+		final int buffSize = this.reqConfig.getBuffSize();
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int) thrLocalConfig.getDataPageSize())
+			.setBufferSize(buffSize)
 			.build();
+		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(totalConnCount)
@@ -109,8 +110,8 @@ implements WSLoadExecutor<T> {
 			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize((int) thrLocalConfig.getDataPageSize())
-			.setSndBufSize((int) thrLocalConfig.getDataPageSize())
+			.setRcvBufSize(AsyncIOTask.Type.READ.equals(loadType) ? buffSize : BUFF_SIZE_LO)
+			.setSndBufSize(AsyncIOTask.Type.READ.equals(loadType) ? BUFF_SIZE_LO : buffSize)
 			.setConnectTimeout(thrLocalConfig.getConnTimeOut());
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
