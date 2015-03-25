@@ -373,11 +373,7 @@ implements Runnable {
 					doDelete(response);
 					break;
 			}
-			try {
-				httpexchange.submitResponse(new BasicResponseProducer(response));
-			}catch (final Exception e){
-				e.printStackTrace();
-			}
+			httpexchange.submitResponse(new BasicResponseProducer(response));
 		}
 		//
 		private void doGet(final HttpResponse response, final String dataID){

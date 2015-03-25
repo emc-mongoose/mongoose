@@ -10,7 +10,6 @@ import org.apache.http.nio.IOControl;
 import org.apache.http.nio.entity.EntityAsyncContentProducer;
 import org.apache.http.nio.entity.HttpAsyncContentProducer;
 import org.apache.http.nio.protocol.BasicAsyncResponseProducer;
-import org.apache.http.protocol.HttpContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -81,5 +80,4 @@ extends BasicAsyncResponseProducer {
 		}
 		return buf.toString();
 	}
-
 }
