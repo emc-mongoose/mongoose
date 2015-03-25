@@ -78,22 +78,27 @@ import java.util.concurrent.TimeUnit;
 public final class Main
 implements Runnable {
 	//
-	private static Map<String, WSObjectMock> SHARED_STORAGE;
+	private final static Map<String, WSObjectMock> SHARED_STORAGE = Collections.synchronizedMap(
+			new LRUMap<String, WSObjectMock>(RunTimeConfig.getContext().getStorageMockCapacity()));
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final ExecutorService multiSocketSvc;
 	private final HttpAsyncService protocolHandler;
-	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
+	private final static NHttpConnectionFactory<DefaultNHttpServerConnection>
+		CONNECTION_FACTORY = new FaultingConnectionFactory(ConnectionConfig.DEFAULT);
 	//
 	public final static String NAME_SERVER = String.format(
 		"%s/%s", Main.class.getSimpleName(), RunTimeConfig.getContext().getRunVersion()
 	);
-	private final int countHeads;
-	private final int portStart;
+	// count of heads = 1 head or config count
+	private final static int COUNT_HEADS = Math.max(1, RunTimeConfig.getContext().getStorageMockHeadCount());
+
+	private final static String API_NAME = RunTimeConfig.getContext().getApiName();
+	private final static int PORT_START = RunTimeConfig.getContext().getApiTypePort(API_NAME);;
 	//
 	private final JmxReporter metricsReporter;
 	//
-	private long metricsUpdatePeriodSec;
+	private final static long METRICS_UPDATE_PERIOD_SEC = RunTimeConfig.getContext().getLoadMetricsPeriodSec();
 	//
 	private final static String
 		ALL_METHODS = "all",
@@ -116,9 +121,6 @@ implements Runnable {
 	//
 	public Main()
 	throws IOException {
-		metricsUpdatePeriodSec = RunTimeConfig.getContext().getLoadMetricsPeriodSec();
-		connFactory = new FaultingConnectionFactory(ConnectionConfig.DEFAULT);
-		//
 		final MetricRegistry metrics = new MetricRegistry();
 		final MBeanServer mBeanServer;
 		mBeanServer = ServiceUtils.getMBeanServer(RunTimeConfig.getContext().getRemotePortExport());
@@ -171,14 +173,7 @@ implements Runnable {
 			MutableWSRequest.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_SUCC));
 		//
 		metricsReporter.start();
-		//queue size for data object
-		final int queueDataIdSize = RunTimeConfig.getContext().getStorageMockCapacity();
-		SHARED_STORAGE = Collections.synchronizedMap(new LRUMap<String, WSObjectMock>(queueDataIdSize));
-		// count of heads = 1 head or config count
-		countHeads = Math.max(1, RunTimeConfig.getContext().getStorageMockHeadCount());
-		LOG.info(Markers.MSG, "Starting with {} heads", countHeads);
-		final String apiName = RunTimeConfig.getContext().getApiName();
-		portStart = RunTimeConfig.getContext().getApiTypePort(apiName);
+		LOG.info(Markers.MSG, "Starting with {} heads", COUNT_HEADS);
 		// Set up the HTTP protocol processor
 		final HttpProcessor httpproc = HttpProcessorBuilder.create()
 			.add(new ResponseDate())
@@ -191,7 +186,7 @@ implements Runnable {
 		reqistry.register("*", new RequestHandler());
 		protocolHandler = new HttpAsyncService(httpproc, reqistry);
 		multiSocketSvc = Executors.newFixedThreadPool(
-			countHeads, new NamingWorkerFactory("cinderellaWorker")
+			COUNT_HEADS, new NamingWorkerFactory("cinderellaWorker")
 		);
 	}
 
@@ -228,9 +223,9 @@ implements Runnable {
 		}
 		//
 
-		for(int nextPort = portStart; nextPort < portStart + countHeads; nextPort ++){
+		for(int nextPort = PORT_START; nextPort < PORT_START + COUNT_HEADS; nextPort ++){
 			try {
-				multiSocketSvc.submit(new WorkerTask(protocolHandler, connFactory, nextPort));
+				multiSocketSvc.submit(new WorkerTask(protocolHandler, nextPort));
 			} catch(final IOReactorException e) {
 				TraceLogger.failure(
 					LOG, Level.ERROR, e,
@@ -238,16 +233,16 @@ implements Runnable {
 				);
 			}
 		}
-		if (countHeads > 1) {
-			LOG.info(Markers.MSG,"Listening the ports {} .. {}", portStart, portStart + countHeads - 1);
+		if (COUNT_HEADS > 1) {
+			LOG.info(Markers.MSG,"Listening the ports {} .. {}", PORT_START, PORT_START + COUNT_HEADS - 1);
 		} else {
-			LOG.info(Markers.MSG,"Listening the port {}", portStart);
+			LOG.info(Markers.MSG,"Listening the port {}", PORT_START);
 		}
 		multiSocketSvc.shutdown();
 		try {
 			//output metrics
-			final long updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(metricsUpdatePeriodSec);
-			while (metricsUpdatePeriodSec > 0) {
+			final long updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(METRICS_UPDATE_PERIOD_SEC);
+			while (METRICS_UPDATE_PERIOD_SEC > 0) {
 				printMetrics();
 				Thread.sleep(updatePeriodMilliSec);
 			}
@@ -514,11 +509,10 @@ implements Runnable {
 		//
 		public WorkerTask(
 			final HttpAsyncService protocolHandler,
-			final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory,
 			final int port
 		) throws IOReactorException {
 			this.port = port;
-			ioEventDispatch = new DefaultHttpServerIODispatch(protocolHandler, connFactory);
+			ioEventDispatch = new DefaultHttpServerIODispatch(protocolHandler, CONNECTION_FACTORY);
 			// Set I/O reactor defaults
 			final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 			final IOReactorConfig config = IOReactorConfig.custom()

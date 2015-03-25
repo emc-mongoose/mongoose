@@ -14,6 +14,7 @@ import com.emc.mongoose.run.webserver.RunJettyTask;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+import com.emc.mongoose.storage.mock.impl.cinderella.Main;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -79,7 +80,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
-					new com.emc.mongoose.storage.mock.impl.cinderella.Main().run();
+					new Main().run();
 				} catch (final Exception e) {
 					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
 				}
