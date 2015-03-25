@@ -8,7 +8,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import java.io.Closeable;
 import java.io.Externalizable;
-import java.nio.charset.StandardCharsets;
 /**
  Created by kurila on 29.09.14.
  Shared request configuration.
@@ -65,6 +64,9 @@ extends Externalizable, Cloneable, Closeable {
 	//
 	void configureStorage(final LoadExecutor<T> loadExecutor)
 	throws IllegalStateException;
+	//
+	int getBuffSize();
+	void setBuffSize(final int buffSize);
 	//
 	boolean isClosed();
 }

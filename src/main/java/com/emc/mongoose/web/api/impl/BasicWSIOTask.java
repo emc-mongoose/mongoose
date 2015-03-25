@@ -5,7 +5,6 @@ import com.emc.mongoose.base.api.RequestConfig;
 import com.emc.mongoose.object.api.impl.BasicObjectIOTask;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.io.http.ContentInputStream;
-import com.emc.mongoose.util.io.http.ContentOutputStream;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.collections.InstancePool;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
@@ -29,8 +28,8 @@ import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.HttpContext;
-//
 import org.apache.http.protocol.HttpCoreContext;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +38,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -120,6 +119,13 @@ implements WSIOTask<T> {
 			if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
 				httpRequest.setMethod(wsReqConf.getHTTPMethod());
 			}
+			//
+			int newBuffSize = wsReqConf.getBuffSize();
+			if(buff.length != newBuffSize) {
+				buff = new byte[newBuffSize];
+				bb = ByteBuffer.wrap(buff);
+			}
+			//
 			super.setRequestConfig(reqConf);
 		}
 		return this;
@@ -214,21 +220,45 @@ implements WSIOTask<T> {
 		return httpRequest;
 	}
 	//
+	private byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataPageSize()];
+	private ByteBuffer bb = ByteBuffer.wrap(buff);
+	//
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		try(final OutputStream outStream = ContentOutputStream.getInstance(out, ioCtl)) {
-			if(reqEntity != null) {
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						Markers.MSG, "Task #{}, write out {} bytes",
-						hashCode(), reqEntity.getContentLength()
-					);
-				}
-				reqEntity.writeTo(outStream);
+		if(reqEntity != null) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Task #{}, write out {} bytes",
+					hashCode(), reqEntity.getContentLength()
+				);
 			}
-		} catch(final InterruptedException e) {
-			// do nothing
+			/*try(final ContentOutputStream outStream = ContentOutputStream.getInstance(out, ioCtl)) {
+				reqEntity.writeTo(outStream);
+			} catch(final InterruptedException ignored) {
+			} finally {
+				out.complete();
+			}*/
+			long lastReadByteCount, lastWrittenByteCount, totalByteCount = 0, n;
+			try(final InputStream dataStream = reqEntity.getContent()) {
+				while(totalByteCount < reqEntity.getContentLength()) {
+					lastReadByteCount = dataStream.read(buff);
+					bb.rewind();
+					if(lastReadByteCount <= 0) {
+						break;
+					}
+					lastWrittenByteCount = 0;
+					do {
+						n = out.write(bb);
+						if(n > 0) {
+							lastWrittenByteCount += n;
+						}
+					} while(lastWrittenByteCount < lastReadByteCount);
+					totalByteCount += lastReadByteCount;
+				}
+			} finally {
+				out.complete();
+			}
 		}
 	}
 	//

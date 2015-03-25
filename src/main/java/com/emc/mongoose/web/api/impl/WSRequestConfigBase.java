@@ -114,6 +114,7 @@ implements WSRequestConfig<T> {
 				this
 					.setSecret(reqConf2Clone.getSecret())
 					.setScheme(reqConf2Clone.getScheme());
+				this.setFileSystemAccessEnabled(reqConf2Clone.getFileSystemAccessEnabled());
 			}
 			//
 			final String pkgSpec = getClass().getPackage().getName();
@@ -277,6 +278,7 @@ implements WSRequestConfig<T> {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		sharedHeadersMap = (Map<String,String>) in.readObject();
+		setFileSystemAccessEnabled(in.readBoolean());
 		/*final int headersCount = in.readInt();
 		sharedHeadersMap = new ConcurrentHashMap<>(headersCount);
 		LOG.trace(Markers.MSG, "Got headers count {}", headersCount);
@@ -296,6 +298,7 @@ implements WSRequestConfig<T> {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeObject(sharedHeadersMap);
+		out.writeBoolean(getFileSystemAccessEnabled());
 		/*out.writeInt(sharedHeadersMap.size());
 		for(final String key: sharedHeadersMap.keySet()) {
 			out.writeObject(key);
@@ -480,8 +483,8 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@SuppressWarnings("StatementWithEmptyBody")
-	public static void playStreamQuietly(final InputStream contentStream) {
-		final byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataPageSize()];
+	public final void playStreamQuietly(final InputStream contentStream) {
+		final byte buff[] = new byte[buffSize];
 		try {
 			while(contentStream.read(buff) != -1);
 		} catch(final IOException e) {

@@ -18,7 +18,9 @@ extends Producer<T>, Consumer<T> {
 	//
 	AtomicInteger LAST_INSTANCE_NUM = new AtomicInteger(0);
 	//
-	int NANOSEC_SCALEDOWN = 1000, MIB = 0x100000, COUNT_THREADS_MIN = 2;
+	int
+		NANOSEC_SCALEDOWN = 1000, MIB = 0x100000, COUNT_THREADS_MIN = 2,
+		BUFF_SIZE_LO = 0x1000, BUFF_SIZE_HI = 0x1000000;
 	//
 	String
 		METRIC_NAME_SUCC = "succ",
