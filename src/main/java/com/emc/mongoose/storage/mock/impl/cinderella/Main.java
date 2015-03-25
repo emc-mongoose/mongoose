@@ -21,6 +21,7 @@ import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 //
 import org.apache.commons.codec.binary.Base64;
 //
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.collections4.map.LRUMap;
 //
 import org.apache.http.HttpEntity;
@@ -66,9 +67,9 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -328,24 +329,11 @@ implements Runnable {
 			String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
 			String dataID = "";
 			//Get data Id
-			String[] requestUri = null;
-			try {
-				requestUri = request.getRequestLine().getUri().split("/");
-				if(requestUri.length >= 3) {
-					dataID = requestUri[requestUri.length - 1];
-				} else {
-					method = "head";
-				}
-			} catch(final NumberFormatException e) {
-				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-				TraceLogger.failure(
-					LOG, Level.WARN, e,
-					String.format("Unexpected object id format: \"%s\"", dataID)
-				);
-			} catch(final ArrayIndexOutOfBoundsException e) {
-				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-				TraceLogger.failure(LOG, Level.WARN, e,
-					"Request URI is not correct. Data object ID doesn't exist in request URI");
+			final String[] requestUri = request.getRequestLine().getUri().split("/");
+			if(requestUri.length >= 3) {
+				dataID = requestUri[requestUri.length - 1];
+			} else {
+				method = "head";
 			}
 			//
 			switch(method) {
@@ -353,7 +341,7 @@ implements Runnable {
 					doPut(request, response, dataID);
 					break;
 				case (METHOD_POST):
-					if (requestUri!= null && requestUri.length == 4){
+					if (requestUri.length == 4){
 						doPut(request, response, dataID);
 					}else {
 						doPost(request, response);
@@ -363,7 +351,7 @@ implements Runnable {
 					doHead(response);
 					break;
 				case (METHOD_GET):
-					if (requestUri!= null && requestUri[1].equals(AUTH)){
+					if (requestUri[1].equals(AUTH)){
 						createAuthToken(response);
 					}else {
 						doGet(response, dataID);
@@ -400,12 +388,9 @@ implements Runnable {
 		//
 		private String randomString(final int len )
 		{
-			final String alphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-			final Random random = new Random();
-			final StringBuilder stringBuilder = new StringBuilder( len );
-			for( int i = 0; i < len; i++ )
-				stringBuilder.append( alphabet.charAt(random.nextInt(alphabet.length())) );
-			return stringBuilder.toString();
+			final byte buff[] = new byte[len];
+			ThreadLocalRandom.current().nextBytes(buff);
+			return Hex.encodeHexString(buff);
 		}
 		//
 		private void doPost(final HttpRequest request, final HttpResponse response){
