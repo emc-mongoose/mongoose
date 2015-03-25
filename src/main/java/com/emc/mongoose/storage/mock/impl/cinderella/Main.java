@@ -15,6 +15,7 @@ import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 //
@@ -102,7 +103,8 @@ implements Runnable {
 		METHOD_POST = "post",
 		METHOD_GET = "get",
 		METHOD_HEAD = "head",
-		METHOD_DELETE = "delete";
+		METHOD_DELETE = "delete",
+		AUTH = "auth";
 	private final Counter
 		counterAllSucc, counterAllFail,
 		counterGetSucc, counterGetFail,
@@ -327,9 +329,7 @@ implements Runnable {
 			String dataID = "";
 			//Get data Id
 			String[] requestUri = null;
-			System.out.println(request.getRequestLine().getUri());
 			try {
-				System.out.println(request.getRequestLine().getUri());
 				requestUri = request.getRequestLine().getUri().split("/");
 				if(requestUri.length >= 3) {
 					dataID = requestUri[requestUri.length - 1];
@@ -348,7 +348,6 @@ implements Runnable {
 					"Request URI is not correct. Data object ID doesn't exist in request URI");
 			}
 			//
-			System.out.println(method);
 			switch(method) {
 				case (METHOD_PUT):
 					doPut(request, response, dataID);
@@ -364,7 +363,11 @@ implements Runnable {
 					doHead(response);
 					break;
 				case (METHOD_GET):
-					doGet(response, dataID);
+					if (requestUri!= null && requestUri[1].equals(AUTH)){
+						createAuthToken(response);
+					}else {
+						doGet(response, dataID);
+					}
 					break;
 				case (METHOD_DELETE):
 					doDelete(response);
@@ -422,15 +425,17 @@ implements Runnable {
 				allBW.mark(dataObject.getSize());
 				postTP.mark();
 				allTP.mark();
-			}catch (final Exception e){
-				e.printStackTrace();
+			}catch (final HttpException e) {
+				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				TraceLogger.failure(LOG, Level.ERROR, e, "Post method failure");
+				counterAllFail.inc();
+				counterPostFail.inc();
 			}
-
-
 		}
 		//
-		private WSObjectMock writeDataObject(final HttpRequest request, final HttpResponse response, final String dataID)
-		throws HttpException{
+		private WSObjectMock writeDataObject(
+			final HttpRequest request, final HttpResponse response, final String dataID
+		) throws HttpException{
 			response.setStatusCode(HttpStatus.SC_OK);
 			WSObjectMock dataObject;
 			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
@@ -460,7 +465,9 @@ implements Runnable {
 			final long offset = Long.valueOf(dataID, 0x10);
 		 */
 		//
-		private long genOffset(final String dataID) throws HttpException {
+		private long genOffset(final String dataID)
+		throws HttpException
+		{
 			final long offset;
 			if (ringOffsetRadix == 0x40) { // base64
 				offset = ByteBuffer
@@ -504,7 +511,6 @@ implements Runnable {
 			response.setStatusCode(HttpStatus.SC_OK);
 			counterAllSucc.inc();
 			counterHeadSucc.inc();
-			System.out.println("head ok");
 		}
 		//
 		private void doDelete(final HttpResponse response){
@@ -512,6 +518,14 @@ implements Runnable {
 			response.setStatusCode(HttpStatus.SC_OK);
 			counterAllSucc.inc();
 			counterDeleteSucc.inc();
+		}
+		//
+		private void createAuthToken(final HttpResponse response){
+			LOG.trace(Markers.MSG, "Create auth token ");
+			response.setStatusCode(HttpStatus.SC_OK);
+			response.setHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, randomString(5));
+			counterGetSucc.inc();
+			counterAllSucc.inc();
 		}
 	}
 	///////////////////////////////////////////////////////////////////////////////////////////////////
