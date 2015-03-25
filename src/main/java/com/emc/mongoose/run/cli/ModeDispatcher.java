@@ -79,9 +79,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
-					new com.emc.mongoose.storage.mock.impl.cinderella.Main(
-						RunTimeConfig.getContext()
-					).run();
+					new com.emc.mongoose.storage.mock.impl.cinderella.Main().run();
 				} catch (final Exception e) {
 					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
 				}
