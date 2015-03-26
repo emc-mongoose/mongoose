@@ -459,7 +459,7 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public final boolean consumeContent(
-		final ContentDecoder in, final IOControl ioCtl, T dataItem
+		final InputStream contentStream, final IOControl ioCtl, T dataItem
 	) {
 		boolean ok = true;
 		try {

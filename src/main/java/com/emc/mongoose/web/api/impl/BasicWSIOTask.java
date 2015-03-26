@@ -248,6 +248,12 @@ implements WSIOTask<T> {
 				}
 			} finally {
 				out.complete();
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "Task #{}: {} bytes written out",
+						hashCode(), contentLength - byteCountDown
+					);
+				}
 			}
 		}
 	}

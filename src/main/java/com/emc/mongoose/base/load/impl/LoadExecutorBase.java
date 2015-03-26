@@ -94,7 +94,18 @@ implements LoadExecutor<T> {
 			//new WorkerFactory("submitWorker")
 		);
 		//
+		final int loadNum = LAST_INSTANCE_NUM.getAndIncrement();
 		storageNodeCount = addrs.length;
+		final String name = Integer.toString(loadNum) + '-' +
+			StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
+			StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
+			(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
+			Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount);
+		LOG.debug(
+			Markers.MSG, "Determined queue capacity of {} for \"{}\"",
+			getQueue().remainingCapacity(), name
+		);
+		//
 		totalConnCount = connCountPerNode * storageNodeCount;
 		setCorePoolSize(Math.min(COUNT_THREADS_MIN, storageNodeCount));
 		setMaximumPoolSize(getCorePoolSize());
@@ -109,8 +120,7 @@ implements LoadExecutor<T> {
 			this.reqConfig = reqConfigCopy;
 		}
 		loadType = reqConfig.getLoadType();
-		final int loadNum = LAST_INSTANCE_NUM.getAndIncrement();
-		//
+//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());
@@ -120,11 +130,6 @@ implements LoadExecutor<T> {
 			.registerWith(mBeanServer)
 			.build();
 		//
-		final String name = Integer.toString(loadNum) + '-' +
-			StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
-			StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
-			(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
-			Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount);
 		setThreadFactory(
 			new DataObjectWorkerFactory(loadNum, reqConfig.getAPI(), loadType, name)
 		);

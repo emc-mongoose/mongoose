@@ -239,7 +239,7 @@ implements DataItem {
 		boolean contentEquals = true;
 		long byteCountDown = rangeLength;
 		int
-			nextOffset = (int) (offset + rangeOffset) % buf.length,
+			nextOffset = (int) ((offset + rangeOffset) % buf.length),
 			nextLength = buf.length - nextOffset,
 			nextReadByteCount, nextReadByteCountSum;
 		final byte buff2verify[] = new byte[buf.length];
