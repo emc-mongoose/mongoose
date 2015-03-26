@@ -34,7 +34,6 @@ import org.apache.logging.log4j.Logger;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
@@ -458,9 +457,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final boolean consumeContent(
-		final InputStream contentStream, final IOControl ioCtl, T dataItem
-	) {
+	public final boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem) {
 		boolean ok = true;
 		try {
 			if(dataItem != null) {
