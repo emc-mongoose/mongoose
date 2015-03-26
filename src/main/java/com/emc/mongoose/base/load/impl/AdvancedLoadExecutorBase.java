@@ -41,21 +41,24 @@ extends LoadExecutorBase<T> {
 		int buffSize;
 		if(sizeMin == sizeMax) {
 			if(sizeMin < BUFF_SIZE_HI) {
-				buffSize = (int) sizeMin;
+				if(sizeMin < BUFF_SIZE_LO) {
+					buffSize = BUFF_SIZE_LO;
+				} else {
+					buffSize = (int) sizeMin;
+				}
 			} else {
 				buffSize = BUFF_SIZE_HI;
 			}
 		} else {
 			if(sizeMin > BUFF_SIZE_HI) {
 				buffSize = BUFF_SIZE_HI;
-			} else if(sizeMin < BUFF_SIZE_LO) {
-				if(sizeMax > BUFF_SIZE_HI) {
-					buffSize = BUFF_SIZE_HI;
-				} else {
-					buffSize = (int) ((sizeMin + sizeMax) / 2);
-				}
 			} else {
-				buffSize = (int) sizeMin;
+				buffSize = (int) ((sizeMin + sizeMax) / 2);
+				if(buffSize < BUFF_SIZE_LO) {
+					buffSize = BUFF_SIZE_LO;
+				} else if(buffSize > BUFF_SIZE_HI) {
+					buffSize = BUFF_SIZE_HI;
+				}
 			}
 		}
 		LOG.debug(

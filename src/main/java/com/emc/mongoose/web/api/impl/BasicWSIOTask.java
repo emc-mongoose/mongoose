@@ -105,6 +105,9 @@ implements WSIOTask<T> {
 	protected final MutableHTTPRequest httpRequest = HTTPMethod.GET.createRequest();
 	protected volatile HttpEntity reqEntity = null;
 	//
+	private byte buff[] = new byte[LoadExecutor.BUFF_SIZE_LO];
+	private ByteBuffer bb = ByteBuffer.wrap(buff);
+	//
 	@Override
 	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
 		if(reqConf != null && !reqConf.equals(wsReqConf)) {
@@ -222,17 +225,15 @@ implements WSIOTask<T> {
 		return httpRequest;
 	}
 	//
-	private byte buff[] = new byte[LoadExecutor.BUFF_SIZE_LO];
-	private ByteBuffer bb = ByteBuffer.wrap(buff);
-	//
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
 		if(reqEntity != null) {
+			long contentLength = reqEntity.getContentLength();
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
 					Markers.MSG, "Task #{}, write out {} bytes",
-					hashCode(), reqEntity.getContentLength()
+					hashCode(), contentLength
 				);
 			}
 			/*try(final ContentOutputStream outStream = ContentOutputStream.getInstance(out, ioCtl)) {
@@ -241,25 +242,32 @@ implements WSIOTask<T> {
 			} finally {
 				out.complete();
 			}*/
-			long lastReadByteCount, lastWrittenByteCount, totalByteCount = 0, n;
+			int nextByteCount;
+			long doneByteCountSum = 0;
 			try(final InputStream dataStream = reqEntity.getContent()) {
-				while(totalByteCount < reqEntity.getContentLength()) {
-					lastReadByteCount = dataStream.read(buff);
-					bb.rewind();
-					if(lastReadByteCount <= 0) {
+				while(doneByteCountSum < contentLength) {
+					if(buff.length > contentLength - doneByteCountSum) {
+						nextByteCount = (int) (contentLength - doneByteCountSum);
+					} else {
+						nextByteCount = buff.length;
+					}
+					if(dataStream.read(buff, 0, nextByteCount) <= 0) {
 						break;
 					}
-					lastWrittenByteCount = 0;
-					do {
-						n = out.write(bb);
-						if(n > 0) {
-							lastWrittenByteCount += n;
-						}
-					} while(lastWrittenByteCount < lastReadByteCount);
-					totalByteCount += lastReadByteCount;
+					bb.rewind().limit(nextByteCount);
+					while(bb.hasRemaining()) {
+						out.write(bb);
+					}
+					doneByteCountSum += nextByteCount;
 				}
 			} finally {
 				out.complete();
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "Task #{}: {} bytes written out",
+						hashCode(), doneByteCountSum
+					);
+				}
 			}
 		}
 	}

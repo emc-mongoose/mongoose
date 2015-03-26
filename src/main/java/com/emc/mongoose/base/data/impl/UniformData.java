@@ -239,7 +239,7 @@ implements DataItem {
 		boolean contentEquals = true;
 		long byteCountToRead = rangeLength;
 		int
-			nextOffset = (int) (offset + rangeOffset) % buf.length,
+			nextOffset = (int) ((offset + rangeOffset) % buf.length),
 			nextLength = buf.length - nextOffset,
 			nextReadByteCount, nextReadByteCountSum;
 		final byte buff2verify[] = new byte[buf.length];
@@ -256,8 +256,7 @@ implements DataItem {
 				if(nextReadByteCount < 0) {
 					contentEquals = false;
 					LOG.warn(
-						Markers.MSG,
-						"{}: data corruption, expected size: {}, got: {}",
+						Markers.MSG, "{}: content size mismatch: expected: {}, got: {}",
 						Long.toString(offset, DataObject.ID_RADIX), size,
 						rangeOffset + rangeLength - byteCountToRead + nextReadByteCountSum
 					);
@@ -275,11 +274,13 @@ implements DataItem {
 					contentEquals = false;
 					LOG.warn(
 						Markers.MSG,
-						"{}: data corruption, size: {}, offset: {}, expected value: {}, got: {}",
-						Long.toString(offset, DataObject.ID_RADIX), size,
-						rangeOffset - byteCountToRead + i,
-						Integer.toHexString(buf[nextOffset + i]),
-						Integer.toHexString(buff2verify[i])
+						String.format(
+							"%s: content mismatch @ offset %d: expected: 0x%X, got: 0x%X",
+							Long.toString(offset, DataObject.ID_RADIX),
+							rangeOffset + rangeLength - byteCountToRead + i,
+							buf[nextOffset + i],
+							buff2verify[i]
+						)
 					);
 					break;
 				}
