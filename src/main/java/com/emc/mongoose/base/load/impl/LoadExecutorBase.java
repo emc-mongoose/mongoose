@@ -83,12 +83,11 @@ implements LoadExecutor<T> {
 			1, 1, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				maxCount > 0 ?
-					Math.min(
-						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
-						RunTimeConfig.getContext().getRunRequestQueueSize())
-					:
-					RunTimeConfig.getContext().getRunRequestQueueSize()
-			)//,
+					maxCount > Short.MAX_VALUE ?
+						Short.MAX_VALUE :
+						(int) maxCount :
+					Short.MAX_VALUE
+			)
 			//new WorkerFactory("submitWorker")
 		);
 		//

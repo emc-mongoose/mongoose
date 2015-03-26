@@ -13,8 +13,10 @@ src.separator:	,
 #
 #namespace:		s3
 
-#
-page.size:		1MB
+# usually shouldn't be more than ring.size
+page.size:		1KB
 
 ring.seed:		7a42d9c483244167
-ring.size:		16MB
+
+# please don't change the property below
+ring.size:		1MB

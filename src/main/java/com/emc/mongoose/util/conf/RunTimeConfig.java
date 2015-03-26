@@ -211,6 +211,10 @@ implements Externalizable {
 		return getString("auth.secret");
 	}
 	//
+	public final long getDataRingSize() {
+		return getSizeBytes("data.ring.size");
+	}
+	//
 	public final long getDataPageSize() {
 		return getSizeBytes("data.page.size");
 	}
