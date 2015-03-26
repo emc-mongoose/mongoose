@@ -2,9 +2,11 @@ package com.emc.mongoose.web.api.impl;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
+import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.object.api.impl.BasicObjectIOTask;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.io.http.ContentInputStream;
+import com.emc.mongoose.util.io.http.ContentOutputStream;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.util.collections.InstancePool;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
@@ -220,7 +222,7 @@ implements WSIOTask<T> {
 		return httpRequest;
 	}
 	//
-	private byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataPageSize()];
+	private byte buff[] = new byte[LoadExecutor.BUFF_SIZE_LO];
 	private ByteBuffer bb = ByteBuffer.wrap(buff);
 	//
 	@Override

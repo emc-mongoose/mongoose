@@ -4,6 +4,7 @@ import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.impl.RequestConfigBase;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
+import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.object.data.DataObject;
 import com.emc.mongoose.util.io.http.ContentInputStream;
 import com.emc.mongoose.util.logging.TraceLogger;
@@ -519,7 +520,9 @@ implements WSRequestConfig<T> {
 	}*/
 	//
 	public final void playStreamQuietly(final ContentDecoder in) {
-		final ByteBuffer buff = ByteBuffer.allocate(buffSize);
+		final ByteBuffer buff = ByteBuffer.allocate(
+			AsyncIOTask.Type.READ.equals(loadType) ? buffSize : LoadExecutor.BUFF_SIZE_LO
+		);
 		try {
 			while(!in.isCompleted() && in.read(buff) != -1) {
 				buff.clear();

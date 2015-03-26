@@ -95,8 +95,8 @@ implements WSLoadExecutor<T> {
 		final int buffSize = this.reqConfig.getBuffSize();
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(8192)
-			.setFragmentSizeHint(1024)
+			.setBufferSize(4 * BUFF_SIZE_LO)
+			.setFragmentSizeHint(2 * BUFF_SIZE_LO)
 			.build();
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
