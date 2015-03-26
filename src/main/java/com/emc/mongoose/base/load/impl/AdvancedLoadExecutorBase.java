@@ -39,12 +39,15 @@ extends LoadExecutorBase<T> {
 		this.loadType = reqConfig.getLoadType();
 		//
 		int buffSize;
-		if(sizeMin < BUFF_SIZE_LO) {
-			buffSize = BUFF_SIZE_LO;
-		} else if(sizeMin > BUFF_SIZE_HI) {
-			buffSize = BUFF_SIZE_HI;
-		} else {
+		if(sizeMin == sizeMax) {
 			buffSize = (int) sizeMin;
+		} else {
+			buffSize = (int) ((sizeMin + sizeMax) / 2);
+		}
+		if(buffSize < BUFF_SIZE_LO) {
+			buffSize = BUFF_SIZE_LO;
+		} else if(buffSize > BUFF_SIZE_HI) {
+			buffSize = BUFF_SIZE_HI;
 		}
 		LOG.debug(
 			Markers.MSG, "Determined buffer size of {} for \"{}\"",

@@ -237,15 +237,15 @@ implements DataItem {
 	) throws IOException {
 		//
 		boolean contentEquals = true;
-		long byteCountToRead = rangeLength;
+		long byteCountDown = rangeLength;
 		int
 			nextOffset = (int) (offset + rangeOffset) % buf.length,
 			nextLength = buf.length - nextOffset,
 			nextReadByteCount, nextReadByteCountSum;
 		final byte buff2verify[] = new byte[buf.length];
-		while(byteCountToRead > 0) {
-			if(byteCountToRead < nextLength) { // tail bytes case
-				nextLength = (int) byteCountToRead;
+		while(byteCountDown > 0) {
+			if(byteCountDown < nextLength) { // tail bytes case
+				nextLength = (int) byteCountDown;
 			}
 			// read the determined bytes range
 			nextReadByteCountSum = 0;
@@ -257,9 +257,9 @@ implements DataItem {
 					contentEquals = false;
 					LOG.warn(
 						Markers.MSG,
-						"{}: data corruption, expected size: {}, got: {}",
+						"{}: content size mismatch, expected: {}, got: {}",
 						Long.toString(offset, DataObject.ID_RADIX), size,
-						rangeOffset + rangeLength - byteCountToRead + nextReadByteCountSum
+						rangeOffset + rangeLength - byteCountDown + nextReadByteCountSum
 					);
 					break;
 				} else {
@@ -275,11 +275,12 @@ implements DataItem {
 					contentEquals = false;
 					LOG.warn(
 						Markers.MSG,
-						"{}: data corruption, size: {}, offset: {}, expected value: {}, got: {}",
-						Long.toString(offset, DataObject.ID_RADIX), size,
-						rangeOffset - byteCountToRead + i,
-						Integer.toHexString(buf[nextOffset + i]),
-						Integer.toHexString(buff2verify[i])
+						String.format(
+							"%s: content mismatch @ offset %d, expected byte value: \"0x%X\", got \"0x%X\"",
+							Long.toString(offset, DataObject.ID_RADIX),
+							rangeOffset + rangeLength - byteCountDown + i,
+							buf[nextOffset + i], buff2verify[i]
+						)
 					);
 					break;
 				}
@@ -288,7 +289,7 @@ implements DataItem {
 				break;
 			}
 			// prepare the next iteration
-			byteCountToRead -= nextLength;
+			byteCountDown -= nextLength;
 			nextOffset = 0;
 			nextLength = buf.length;
 		}

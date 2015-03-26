@@ -83,10 +83,13 @@ implements LoadExecutor<T> {
 			1, 1, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				maxCount > 0 ?
-					maxCount > Short.MAX_VALUE ?
-						Short.MAX_VALUE :
-						(int) maxCount :
-					Short.MAX_VALUE
+					(sizeMin == 0 && sizeMax == 0) ?
+						(int) Math.min(maxCount, Integer.MAX_VALUE) :
+						Math.max(0x10, (int) Math.min(maxCount, Integer.MAX_VALUE / (sizeMin + sizeMax)))
+					:
+					(sizeMin == 0 && sizeMax == 0) ?
+						Integer.MAX_VALUE :
+						Math.max(0x10, (int) (Integer.MAX_VALUE / (sizeMin + sizeMax)))
 			)
 			//new WorkerFactory("submitWorker")
 		);

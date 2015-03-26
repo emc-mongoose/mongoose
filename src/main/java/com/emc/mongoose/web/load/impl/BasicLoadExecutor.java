@@ -92,12 +92,13 @@ implements WSLoadExecutor<T> {
 			.build();
 		client = new HttpAsyncRequester(httpProcessor);
 		//
-		final int buffSize = this.reqConfig.getBuffSize();
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(buffSize)
+			.setBufferSize(8192)
+			.setFragmentSizeHint(4096)
 			.build();
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
+		final int buffSize = this.reqConfig.getBuffSize();
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(totalConnCount)

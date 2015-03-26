@@ -2,6 +2,7 @@ package com.emc.mongoose.web.api.impl;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.api.RequestConfig;
+import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.object.api.impl.BasicObjectIOTask;
 import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.io.http.ContentInputStream;
@@ -102,6 +103,9 @@ implements WSIOTask<T> {
 	protected Map<String, Header> sharedHeadersMap = null;
 	protected final MutableHTTPRequest httpRequest = HTTPMethod.GET.createRequest();
 	protected volatile HttpEntity reqEntity = null;
+	//
+	private byte buff[] = new byte[LoadExecutor.BUFF_SIZE_LO];
+	private ByteBuffer bb = ByteBuffer.wrap(buff);
 	//
 	@Override
 	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
@@ -220,41 +224,27 @@ implements WSIOTask<T> {
 		return httpRequest;
 	}
 	//
-	private byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataPageSize()];
-	private ByteBuffer bb = ByteBuffer.wrap(buff);
-	//
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
 		if(reqEntity != null) {
+			long contentLength = reqEntity.getContentLength();
 			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-					Markers.MSG, "Task #{}, write out {} bytes",
-					hashCode(), reqEntity.getContentLength()
-				);
+				LOG.trace(Markers.MSG, "Task #{}, write out {} bytes", hashCode(), contentLength);
 			}
-			/*try(final ContentOutputStream outStream = ContentOutputStream.getInstance(out, ioCtl)) {
-				reqEntity.writeTo(outStream);
-			} catch(final InterruptedException ignored) {
-			} finally {
-				out.complete();
-			}*/
-			long lastReadByteCount, lastWrittenByteCount, totalByteCount = 0, n;
+			long byteCountDown = contentLength;
+			int n;
 			try(final InputStream dataStream = reqEntity.getContent()) {
-				while(totalByteCount < reqEntity.getContentLength()) {
-					lastReadByteCount = dataStream.read(buff);
-					bb.rewind();
-					if(lastReadByteCount <= 0) {
+				while(byteCountDown > 0) {
+					n = byteCountDown < buff.length ? (int) byteCountDown : buff.length;
+					if(0 >= dataStream.read(buff, 0, n)) {
 						break;
 					}
-					lastWrittenByteCount = 0;
-					do {
-						n = out.write(bb);
-						if(n > 0) {
-							lastWrittenByteCount += n;
-						}
-					} while(lastWrittenByteCount < lastReadByteCount);
-					totalByteCount += lastReadByteCount;
+					bb.rewind().limit(n);
+					while(bb.hasRemaining()) {
+						out.write(bb);
+					}
+					byteCountDown -= n;
 				}
 			} finally {
 				out.complete();
@@ -474,11 +464,12 @@ implements WSIOTask<T> {
 	@Override
 	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
 	throws IOException {
-		try(final InputStream contentStream = ContentInputStream.getInstance(in, ioCtl)) {
-			if(respStatusCode < 200 || respStatusCode >= 300) { // failure
+		if(respStatusCode < 200 || respStatusCode >= 300) { // failure
+			try(
 				final BufferedReader contentStreamBuff = new BufferedReader(
-					new InputStreamReader(contentStream)
-				);
+					new InputStreamReader(ContentInputStream.getInstance(in, ioCtl))
+				)
+			) {
 				final StrBuilder msgBuilder = new StrBuilder();
 				String nextLine;
 				do {
@@ -492,13 +483,13 @@ implements WSIOTask<T> {
 						msgBuilder.append(nextLine);
 					}
 				} while(nextLine != null);
-			} else {
-				if(!wsReqConf.consumeContent(contentStream, ioCtl, dataItem)) { // content corruption
-					status = Status.FAIL_CORRUPT;
-				}
+			} catch(final InterruptedException e) {
+				// ignore
 			}
-		} catch(final InterruptedException e) {
-			// do nothing
+		} else {
+			if(!wsReqConf.consumeContent(in, ioCtl, dataItem)) { // content corruption
+				status = Status.FAIL_CORRUPT;
+			}
 		}
 	}
 	//

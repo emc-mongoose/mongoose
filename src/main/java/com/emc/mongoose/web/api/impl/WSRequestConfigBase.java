@@ -5,6 +5,7 @@ import com.emc.mongoose.base.api.impl.RequestConfigBase;
 import com.emc.mongoose.base.data.DataSource;
 import com.emc.mongoose.base.data.impl.DataRanges;
 import com.emc.mongoose.object.data.DataObject;
+import com.emc.mongoose.util.io.http.ContentInputStream;
 import com.emc.mongoose.util.logging.TraceLogger;
 import com.emc.mongoose.web.api.MutableHTTPRequest;
 import com.emc.mongoose.web.api.WSIOTask;
@@ -22,6 +23,7 @@ import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
 //
 import org.apache.http.protocol.HttpDateGenerator;
@@ -38,6 +40,7 @@ import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
@@ -456,14 +459,19 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public final boolean consumeContent(
-		final InputStream contentStream, final IOControl ioCtl, T dataItem
+		final ContentDecoder in, final IOControl ioCtl, T dataItem
 	) {
 		boolean ok = true;
 		try {
 			if(dataItem != null) {
 				if(loadType == AsyncIOTask.Type.READ) { // read
 					if(verifyContentFlag) { // read and do verify
-						ok = dataItem.isContentEqualTo(contentStream);
+						try(final ContentInputStream
+							inStream = ContentInputStream.getInstance(in, ioCtl)) {
+							ok = dataItem.isContentEqualTo(inStream);
+						} catch(final InterruptedException e) {
+							// ignore
+						}
 					}
 				}
 			}
@@ -477,16 +485,20 @@ implements WSRequestConfig<T> {
 				TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
 			}
 		} finally { // try to read the remaining data if left in the input stream
-			playStreamQuietly(contentStream);
+			playStreamQuietly(in, ioCtl, buffSize);
 		}
 		return ok;
 	}
 	//
 	@SuppressWarnings("StatementWithEmptyBody")
-	public final void playStreamQuietly(final InputStream contentStream) {
-		final byte buff[] = new byte[buffSize];
+	public static void playStreamQuietly(
+		final ContentDecoder in, IOControl ioCtl, final int buffSize
+	) {
+		final ByteBuffer buff = ByteBuffer.allocate(buffSize);
 		try {
-			while(contentStream.read(buff) != -1);
+			while(in.read(buff) >= 0) {
+				buff.clear();
+			}
 		} catch(final IOException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
 		}
