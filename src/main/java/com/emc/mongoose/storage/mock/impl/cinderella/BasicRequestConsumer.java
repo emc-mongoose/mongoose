@@ -5,6 +5,7 @@ import com.emc.mongoose.common.io.HTTPInputStream;
 import com.emc.mongoose.common.io.StreamUtils;
 import com.emc.mongoose.common.logging.TraceLogger;
 //
+import org.apache.commons.codec.binary.Hex;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpRequest;
