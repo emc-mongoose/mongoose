@@ -1,7 +1,8 @@
 package com.emc.mongoose.client.api.persist;
-//
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.persist.DataItemBuffer;
+// mongoose-server-api.jar
 import com.emc.mongoose.server.api.persist.DataItemBufferSvc;
 //
 import java.util.Map;

@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.api.data;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.message.BasicHeader;

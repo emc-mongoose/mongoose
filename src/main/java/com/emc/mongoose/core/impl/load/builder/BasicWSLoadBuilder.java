@@ -1,14 +1,16 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
+//
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
-import com.emc.mongoose.core.api.load.builder.ObjectLoadBuilder;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
+//
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.load.builder.ObjectLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.WSLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

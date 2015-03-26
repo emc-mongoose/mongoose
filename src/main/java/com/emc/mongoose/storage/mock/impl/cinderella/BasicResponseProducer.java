@@ -1,7 +1,8 @@
 package com.emc.mongoose.storage.mock.impl.cinderella;
-
-import com.emc.mongoose.core.impl.io.util.http.ContentOutputStream;
-import com.emc.mongoose.core.api.util.log.Markers;
+//
+import com.emc.mongoose.common.io.HTTPOutputStream;
+import com.emc.mongoose.common.logging.Markers;
+//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.ContentEncoder;
@@ -11,10 +12,9 @@ import org.apache.http.nio.entity.HttpAsyncContentProducer;
 import org.apache.http.nio.protocol.BasicAsyncResponseProducer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.io.IOException;
 import java.io.OutputStream;
-
 /**
  * Created by olga on 12.02.15.
  */
@@ -45,7 +45,7 @@ extends BasicAsyncResponseProducer {
 	public final void produceContent(
 		final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
-		try(final OutputStream outStream = ContentOutputStream.getInstance(encoder, ioctrl)) {
+		try(final OutputStream outStream = HTTPOutputStream.getInstance(encoder, ioctrl)) {
 			final HttpEntity entity = this.response.getEntity();
 			if( entity != null) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {

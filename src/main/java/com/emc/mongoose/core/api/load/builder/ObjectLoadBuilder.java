@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.api.load.builder;
 //
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
-//
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.data.DataObject;
 /**

@@ -1,13 +1,12 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
+import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
+import com.emc.mongoose.common.logging.TraceLogger;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.common.logging.Markers;
 //
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -18,10 +17,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -71,7 +68,7 @@ implements Producer<T> {
 		//
 		HttpResponse httpResp = null;
 		try {
-			httpResp = bucket.execute(addr, WSIOTask.HTTPMethod.GET);
+			httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET);
 		} catch(final IOException e) {
 			TraceLogger.failure(
 				LOG, Level.ERROR, e,

@@ -2,7 +2,8 @@ package com.emc.mongoose.server.api.load.model;
 //
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.server.api.Service;
+//
+import com.emc.mongoose.common.net.Service;
 /**
  Created by kurila on 30.05.14.
  A remote/server-side data items consumer.

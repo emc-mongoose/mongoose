@@ -1,11 +1,12 @@
 package com.emc.mongoose.storage.adapter.atmos;
 //
+import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.WSObject;
+//
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -68,7 +69,7 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		try {
-			final HttpResponse httpResp = subTenant.execute(addr, WSIOTask.HTTPMethod.GET);
+			final HttpResponse httpResp = subTenant.execute(addr, MutableWSRequest.HTTPMethod.GET);
 			if(httpResp != null) {
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine==null) {

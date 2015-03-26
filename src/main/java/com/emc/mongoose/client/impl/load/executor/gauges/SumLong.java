@@ -1,14 +1,16 @@
 package com.emc.mongoose.client.impl.load.executor.gauges;
 //
-import com.codahale.metrics.Gauge;
-//
+// mongoose-common.jar
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+// mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 //
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+//
+import com.codahale.metrics.Gauge;
 //
 import javax.management.AttributeNotFoundException;
 import javax.management.InstanceNotFoundException;

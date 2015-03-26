@@ -1,21 +1,25 @@
 package com.emc.mongoose.client.impl.load.builder;
-//
-import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-import com.emc.mongoose.client.impl.load.executor.BasicWSLoadClient;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.server.api.Service;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.load.model.FileProducer;
-import com.emc.mongoose.core.api.util.log.Markers;
+// mongoose-server-api.jar
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
+import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
-import com.emc.mongoose.server.impl.ServiceUtils;
+// mongoose-common.jar
+import com.emc.mongoose.common.net.Service;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.net.ServiceUtils;
+// mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.data.BasicWSObject;
+import com.emc.mongoose.core.impl.load.model.FileProducer;
+import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
+// mongoose-client.jar
+import com.emc.mongoose.client.impl.load.executor.BasicWSLoadClient;
 import com.emc.mongoose.client.api.load.builder.WSLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.WSLoadClient;
-import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

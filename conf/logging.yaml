@@ -2,7 +2,7 @@ configuration:
   status: info
   name: mongoose
   monitorInterval: 1000
-  packages: com.emc.mongoose.webui.logging,com.emc.mongoose.core.impl.util.log
+  packages: com.emc.mongoose.webui.logging,com.emc.mongoose.common.logging
   shutdownHook: disable
 
   appenders:
