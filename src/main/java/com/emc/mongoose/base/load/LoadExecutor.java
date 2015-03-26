@@ -2,6 +2,7 @@ package com.emc.mongoose.base.load;
 //
 import com.emc.mongoose.base.api.AsyncIOTask;
 import com.emc.mongoose.base.data.DataItem;
+import com.emc.mongoose.util.conf.RunTimeConfig;
 import org.apache.logging.log4j.Marker;
 //
 import java.rmi.RemoteException;
@@ -20,7 +21,8 @@ extends Producer<T>, Consumer<T> {
 	//
 	int
 		NANOSEC_SCALEDOWN = 1000, MIB = 0x100000, COUNT_THREADS_MIN = 2,
-		BUFF_SIZE_LO = 0x1000, BUFF_SIZE_HI = 0x1000000;
+		BUFF_SIZE_LO = (int) RunTimeConfig.getContext().getDataPageSize(),
+		BUFF_SIZE_HI = (int) RunTimeConfig.getContext().getDataRingSize();
 	//
 	String
 		METRIC_NAME_SUCC = "succ",

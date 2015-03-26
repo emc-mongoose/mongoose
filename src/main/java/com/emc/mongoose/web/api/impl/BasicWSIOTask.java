@@ -474,8 +474,8 @@ implements WSIOTask<T> {
 	@Override
 	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
 	throws IOException {
-		try(final InputStream contentStream = ContentInputStream.getInstance(in, ioCtl)) {
-			if(respStatusCode < 200 || respStatusCode >= 300) { // failure
+		if(respStatusCode < 200 || respStatusCode >= 300) { // failure
+			try(final InputStream contentStream = ContentInputStream.getInstance(in, ioCtl)) {
 				final BufferedReader contentStreamBuff = new BufferedReader(
 					new InputStreamReader(contentStream)
 				);
@@ -492,13 +492,13 @@ implements WSIOTask<T> {
 						msgBuilder.append(nextLine);
 					}
 				} while(nextLine != null);
-			} else {
-				if(!wsReqConf.consumeContent(contentStream, ioCtl, dataItem)) { // content corruption
-					status = Status.FAIL_CORRUPT;
-				}
+			} catch(final InterruptedException e) {
+				// do nothing
 			}
-		} catch(final InterruptedException e) {
-			// do nothing
+		} else {
+			if(!wsReqConf.consumeContent(in, ioCtl, dataItem)) { // content corruption
+				status = Status.FAIL_CORRUPT;
+			}
 		}
 	}
 	//

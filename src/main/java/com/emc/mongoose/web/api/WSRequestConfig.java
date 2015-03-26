@@ -9,6 +9,7 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpResponse;
+import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
 //
 import java.io.IOException;
@@ -91,5 +92,7 @@ extends ObjectRequestConfig<T> {
 	//
 	void receiveResponse(final HttpResponse response, final T dataItem);
 	//
-	boolean consumeContent(final InputStream contentStream, final IOControl ioCtl, T dataItem);
+	boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem);
+	//
+	//boolean consumeContent(final InputStream contentStream, final IOControl ioCtl, T dataItem);
 }
