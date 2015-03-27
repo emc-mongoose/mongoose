@@ -22,7 +22,7 @@
 						<span class="icon-bar"></span>
 					</button>
 					<a id="logo" href="/">
-						<img width="120" height="40" src="images/mongooselogo.svg"/>
+						<img width="50" height="50" src="images/mongoose_sqr_white.png"/>
 					</a>
 					<a class="navbar-brand" href="/">
 						Mongoose
@@ -62,8 +62,8 @@
 							<div id="menu" class="col-xs-12 col-sm-5 col-md-4 col-lg-3 no-padding">
 								<div id="run-modes">
 									<div>
-										<label for="config-type">Run mode</label>
-										<select>
+										<label for="backup-run.mode">Run mode</label>
+										<select id="backup-run.mode" data-pointer="run.mode">
 											<option value="standalone">standalone</option>
 											<option value="client">load client</option>
 											<option value="server">load server</option>
@@ -121,34 +121,35 @@
 
 											<div class="standalone client">
 												<div id="time" class="form-group complex">
-													<c:set var="runTimeArray" value="${fn:split(runTimeConfig.runTime, '.')}"/>
-													<label for="backup-run.time.input" class="col-sm-3 control-label">
+													<label for="backup-load.limit.time.value" class="col-sm-3 control-label">
 														Time limit
 													</label>
 													<div class="col-sm-9">
-														<input type="text" id="backup-run.time.input" class="form-control pre-select"
-														       value="${runTimeArray[0]}">
-														<select class="form-select" id="backup-run.time.select">
-															<option>${runTimeArray[1]}</option>
+														<input type="text" id="backup-load.limit.time.value"
+														       class="form-control pre-select"
+														       value="${rt:getString(runTimeConfig, 'load.limit.time.value')}"
+																data-pointer="load.limit.time.value">
+														<select class="form-select" id="backup-load.limit.time.unit"
+																data-pointer="load.limit.time.unit">
+															<option>
+																${rt:getString(runTimeConfig, 'load.limit.time.unit')}
+															</option>
 															<option>days</option>
 															<option>hours</option>
 															<option>minutes</option>
 															<option>seconds</option>
 														</select>
 													</div>
-													<input type="hidden" id="backup-run.time" class="form-control"
-													       data-pointer="run.time"
-													       value="${runTimeArray[0]}.${runTimeArray[1]}">
 												</div>
 
 												<div class="form-group">
-													<label for="backup-run.scenario.name" class="col-sm-3 control-label">
+													<label for="backup-scenario.name" class="col-sm-3 control-label">
 														The scenario to run
 													</label>
 													<div class="col-sm-9">
-														<select id="backup-run.scenario.name" class="form-select" data-pointer="run.scenario.name">
-															<option value="backup-${runTimeConfig.runScenarioName}">
-																${runTimeConfig.runScenarioName}
+														<select id="backup-scenario.name" class="form-select" data-pointer="scenario.name">
+															<option value="backup-${runTimeConfig.scenarioName}">
+																${runTimeConfig.scenarioName}
 															</option>
 															<option value="backup-single">single</option>
 															<option value="backup-chain">chain</option>
@@ -156,7 +157,7 @@
 														</select>
 														<button type="button" id="scenario-button" class="btn btn-primary"
 														        data-toggle="modal"
-														        data-target="#backup-${runTimeConfig.runScenarioName}">
+														        data-target="#backup-${runTimeConfig.scenarioName}">
 															Details...
 														</button>
 
@@ -176,14 +177,14 @@
 
 																	<div class="modal-body">
 																		<div class="form-group">
-																			<label for="backup-scenario.single.load"
+																			<label for="backup-scenario.type.single.load"
 																			       class="col-sm-6 control-label">Load type</label>
 																			<div class="col-sm-6">
-																				<select id="backup-scenario.single.load" class="form-select"
-																				        data-pointer="scenario.single.load">
+																				<select id="backup-scenario.type.single.load" class="form-select"
+																				        data-pointer="scenario.type.single.load">
 																					<option value="backup-${rt:getString(runTimeConfig,
-																						'scenario.single.load')}">
-																						${rt:getString(runTimeConfig, 'scenario.single.load')}
+																						'scenario.type.single.load')}">
+																						${rt:getString(runTimeConfig, 'scenario.type.single.load')}
 																					</option>
 																					<option value="backup-create">create</option>
 																					<option value="backup-read">read</option>
@@ -200,15 +201,14 @@
 																			<fieldset>
 																				<legend>Create</legend>
 																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.create.threads">
+																					<label class="col-sm-6 control-label" for="backup-load.type.create.threads">
 																						Load threads count
 																					</label>
 																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.create.threads"
+																						<input type="text" id="backup-load.type.create.threads"
 																						       class="form-control"
-																						       data-pointer="load.create.threads"
-																						       value="${rt:getString(runTimeConfig, 'load.create.threads')}"
-																						       placeholder="Enter 'load.create.threads' property">
+																						       data-pointer="load.type.create.threads"
+																						       value="${rt:getString(runTimeConfig, 'load.type.create.threads')}">
 																					</div>
 																				</div>
 																			</fieldset>
@@ -218,25 +218,25 @@
 																			<fieldset>
 																				<legend>Read</legend>
 																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.read.threads">
+																					<label class="col-sm-6 control-label" for="backup-load.type.read.threads">
 																						Load threads count
 																					</label>
 																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.read.threads"
+																						<input type="text" id="backup-load.type.read.threads"
 																						       class="form-control"
-																						       data-pointer="load.read.threads"
-																						       value="${rt:getString(runTimeConfig, 'load.read.threads')}">
+																						       data-pointer="load.type.read.threads"
+																						       value="${rt:getString(runTimeConfig, 'load.type.read.threads')}">
 																					</div>
 																				</div>
 
 																				<div class="form-group">
-																					<label for="backup-load.read.verify.content"
+																					<label for="backup-load.type.read.verifyContent"
 																					       class="col-sm-6 control-label">Verify content</label>
 																					<div class="col-sm-6">
-																						<select id="backup-load.read.verify.content" class="form-select"
-																						        data-pointer="load.read.verify.content">
+																						<select id="backup-load.type.read.verifyContent" class="form-select"
+																						        data-pointer="load.type.read.verifyContent">
 																							<option>
-																								${rt:getString(runTimeConfig, 'load.read.verify.content')}
+																								${rt:getString(runTimeConfig, 'load.type.read.verifyContent')}
 																							</option>
 																							<option>true</option>
 																							<option>false</option>
@@ -250,26 +250,26 @@
 																			<fieldset>
 																				<legend>Update</legend>
 																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.update.threads">
+																					<label class="col-sm-6 control-label" for="backup-load.type.update.threads">
 																						Load threads count
 																					</label>
 																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.update.threads"
+																						<input type="text" id="backup-load.type.update.threads"
 																						       class="form-control"
-																						       value="${rt:getString(runTimeConfig, 'load.update.threads')}"
-																						       data-pointer="load.update.threads">
+																						       value="${rt:getString(runTimeConfig, 'load.type.update.threads')}"
+																						       data-pointer="load.type.update.threads">
 																					</div>
 																				</div>
 
 																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.update.per.item">
+																					<label class="col-sm-6 control-label" for="backup-load.type.update.perItem">
 																						Update per item count
 																					</label>
 																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.update.per.item"
+																						<input type="text" id="backup-load.type.update.perItem"
 																						       class="form-control"
-																						       value="${rt:getString(runTimeConfig, 'load.update.per.item')}"
-																						       data-pointer="load.update.per.item">
+																						       value="${rt:getString(runTimeConfig, 'load.type.update.perItem')}"
+																						       data-pointer="load.type.update.perItem">
 																					</div>
 																				</div>
 																			</fieldset>
@@ -279,14 +279,14 @@
 																			<fieldset>
 																				<legend>Delete</legend>
 																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.delete.threads">
+																					<label class="col-sm-6 control-label" for="backup-load.type.delete.threads">
 																						Load threads count
 																					</label>
 																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.delete.threads"
+																						<input type="text" id="backup-load.type.delete.threads"
 																						       class="form-control"
-																						       value="${rt:getString(runTimeConfig, 'load.delete.threads')}"
-																						       data-pointer="load.delete.threads">
+																						       value="${rt:getString(runTimeConfig, 'load.type.delete.threads')}"
+																						       data-pointer="load.type.delete.threads">
 																					</div>
 																				</div>
 																			</fieldset>
@@ -296,14 +296,14 @@
 																			<fieldset>
 																				<legend>Append</legend>
 																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.append.threads">
+																					<label class="col-sm-6 control-label" for="backup-load.type.append.threads">
 																						Load threads count
 																					</label>
 																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.append.threads"
+																						<input type="text" id="backup-load.type.append.threads"
 																						       class="form-control"
-																						       value="${rt:getString(runTimeConfig, 'load.append.threads')}"
-																						       data-pointer="load.append.threads">
+																						       value="${rt:getString(runTimeConfig, 'load.type.append.threads')}"
+																						       data-pointer="load.type.append.threads">
 																					</div>
 																				</div>
 																			</fieldset>
@@ -331,13 +331,13 @@
 
 																	<div class="modal-body">
 																		<div class="form-group">
-																			<label for="backup-scenario.chain.load" class="col-sm-6 control-label">
+																			<label for="backup-scenario.type.chain.load" class="col-sm-6 control-label">
 																				Load types
 																			</label>
 																			<div class="col-sm-6">
-																				<input type="text" class="form-control" id="backup-scenario.chain.load"
-																				       value="${rt:getString(runTimeConfig, 'scenario.chain.load')}"
-																				       data-pointer="scenario.chain.load">
+																				<input type="text" class="form-control" id="backup-scenario.type.chain.load"
+																				       value="${rt:getString(runTimeConfig, 'scenario.type.chain.load')}"
+																				       data-pointer="scenario.type.chain.load">
 																			</div>
 																		</div>
 
@@ -379,40 +379,40 @@
 																				<div role="tabpanel" class="tab-pane active" id="backuptab-create">
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.create.threads">
+																						       for="backuptab-load.type.create.threads">
 																							Load threads count
 																						</label>
 																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.create.threads"
+																							<input type="text" id="backuptab-load.type.create.threads"
 																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.create.threads')}"
-																							       data-pointer="load.create.threads">
+																							       value="${rt:getString(runTimeConfig, 'load.type.create.threads')}"
+																							       data-pointer="load.type.create.threads">
 																						</div>
 																					</div>
 																				</div>
 																				<div role="tabpanel" class="tab-pane" id="backuptab-read">
 																					<div class="form-group">
-																						<label class="col-sm-6 control-label" for="backuptab-load.read.threads">
+																						<label class="col-sm-6 control-label" for="backuptab-load.type.read.threads">
 																							Load threads count
 																						</label>
 																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.read.threads"
+																							<input type="text" id="backuptab-load.type.read.threads"
 																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.read.threads')}"
-																							       data-pointer="load.read.threads">
+																							       value="${rt:getString(runTimeConfig, 'load.type.read.threads')}"
+																							       data-pointer="load.type.read.threads">
 																						</div>
 																					</div>
 
 																					<div class="form-group">
-																						<label for="backuptab-load.read.verify.content"
+																						<label for="backuptab-load.type.read.verifyContent"
 																						       class="col-sm-6 control-label">
 																							Verfiy content
 																						</label>
 																						<div class="col-sm-6">
-																							<select id="backuptab-load.read.verify.content" class="form-select"
-																							        data-pointer="load.read.verify.content">
+																							<select id="backuptab-load.type.read.verifyContent" class="form-select"
+																							        data-pointer="load.type.read.verifyContent">
 																								<option>
-																									${rt:getString(runTimeConfig, 'load.read.verify.content')}
+																									${rt:getString(runTimeConfig, 'load.type.read.verifyContent')}
 																								</option>
 																								<option>true</option>
 																								<option>false</option>
@@ -423,54 +423,54 @@
 																				<div role="tabpanel" class="tab-pane" id="backuptab-update">
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.update.threads">
+																						       for="backuptab-load.type.update.threads">
 																							Load threads count
 																						</label>
 																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.update.threads"
+																							<input type="text" id="backuptab-load.type.update.threads"
 																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.update.threads')}"
-																							       data-pointer="load.update.threads">
+																							       value="${rt:getString(runTimeConfig, 'load.type.update.threads')}"
+																							       data-pointer="load.type.update.threads">
 																						</div>
 																					</div>
 
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.update.per.item">
+																						       for="backuptab-load.type.update.perItem">
 																							Update per item count
 																						</label>
 																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.update.per.item"
+																							<input type="text" id="backuptab-load.type.update.perItem"
 																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.update.per.item')}"
-																							       data-pointer="load.update.per.item">
+																							       value="${rt:getString(runTimeConfig, 'load.type.update.perItem')}"
+																							       data-pointer="load.type.update.perItem">
 																						</div>
 																					</div>
 																				</div>
 																				<div role="tabpanel" class="tab-pane" id="backuptab-delete">
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.delete.threads">
+																						       for="backuptab-load.type.delete.threads">
 																							Load threads count
 																						</label>
 																						<div class="col-sm-6">
-																							<input type="text" class="form-control" id="backuptab-load.delete.threads"
-																							       value="${rt:getString(runTimeConfig, 'load.delete.threads')}"
-																							       data-pointer="load.delete.threads">
+																							<input type="text" class="form-control" id="backuptab-load.type.delete.threads"
+																							       value="${rt:getString(runTimeConfig, 'load.type.delete.threads')}"
+																							       data-pointer="load.type.delete.threads">
 																						</div>
 																					</div>
 																				</div>
 																				<div role="tabpanel" class="tab-pane" id="backuptab-append">
 																					<div class="form-group">
 																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.append.threads">
+																						       for="backuptab-load.type.append.threads">
 																							Load threads count
 																						</label>
 																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.append.threads"
+																							<input type="text" id="backuptab-load.type.append.threads"
 																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.append.threads')}"
-																							       data-pointer="load.append.threads">
+																							       value="${rt:getString(runTimeConfig, 'load.type.append.threads')}"
+																							       data-pointer="load.type.append.threads">
 																						</div>
 																					</div>
 																				</div>
@@ -480,15 +480,15 @@
 																		<hr/>
 
 																		<div class="form-group">
-																			<label for="backup-scenario.chain.simultaneous"
+																			<label for="backup-scenario.type.chain.simultaneous"
 																			       class="col-sm-6 control-label">
 																				Simultaneous
 																			</label>
 																			<div class="col-sm-6">
-																				<select id="backup-scenario.chain.simultaneous" class="form-select"
-																				        data-pointer="scenario.chain.simultaneous">
+																				<select id="backup-scenario.type.chain.simultaneous" class="form-select"
+																				        data-pointer="scenario.type.chain.simultaneous">
 																					<option>
-																						${rt:getString(runTimeConfig, 'scenario.chain.simultaneous')}
+																						${rt:getString(runTimeConfig, 'scenario.type.chain.simultaneous')}
 																					</option>
 																					<option>true</option>
 																					<option>false</option>
@@ -527,26 +527,26 @@
 																			</div>
 																		</div>
 																		<div class="form-group">
-																			<label for="backup-scenario.rampup.thread.counts"
+																			<label for="backup-scenario.type.rampup.threadCounts"
 																			       class="col-sm-4 control-label">
 																				Thread count
 																			</label>
 																			<div class="col-sm-8">
-																				<input type="text" id="backup-scenario.rampup.thread.counts"
+																				<input type="text" id="backup-scenario.type.rampup.threadCounts"
 																				       class="form-control"
-																				       value="${rt:getString(runTimeConfig, 'scenario.rampup.thread.counts')}"
-																				       data-pointer="scenario.rampup.thread.counts">
+																				       value="${rt:getString(runTimeConfig, 'scenario.type.rampup.threadCounts')}"
+																				       data-pointer="scenario.type.rampup.threadCounts">
 																			</div>
 																		</div>
 
 																		<div class="form-group">
-																			<label for="backup-scenario.rampup.sizes" class="col-sm-4 control-label">
+																			<label for="backup-scenario.type.rampup.sizes" class="col-sm-4 control-label">
 																				Objects' sizes
 																			</label>
 																			<div class="col-sm-8">
-																				<input type="text" id="backup-scenario.rampup.sizes" class="form-control"
-																				       value="${rt:getString(runTimeConfig, 'scenario.rampup.sizes')}"
-																				       data-pointer="scenario.rampup.sizes">
+																				<input type="text" id="backup-scenario.type.rampup.sizes" class="form-control"
+																				       value="${rt:getString(runTimeConfig, 'scenario.type.rampup.sizes')}"
+																				       data-pointer="scenario.type.rampup.sizes">
 																			</div>
 																		</div>
 																	</div>
@@ -603,18 +603,18 @@
 												</div>
 												<div class="standalone client cinderella">
 													<div class="form-group">
-														<label for="backup-storage.api" class="col-sm-3 control-label">
+														<label for="backup-api.name" class="col-sm-3 control-label">
 															API
 														</label>
 														<div class="col-sm-9">
-															<select id="backup-storage.api" class="form-select" data-pointer="storage.api">
-																<option value="backup-${runTimeConfig.storageApi}">${runTimeConfig.storageApi}</option>
+															<select id="backup-api.name" class="form-select" data-pointer="api.name">
+																<option value="backup-${runTimeConfig.apiName}">${runTimeConfig.apiName}</option>
 																<option value="backup-swift">swift</option>
 																<option value="backup-s3">s3</option>
 																<option value="backup-atmos">atmos</option>
 															</select>
 															<button type="button" id="api-button" class="btn btn-primary"
-													            data-toggle="modal" data-target="#backup-${runTimeConfig.storageApi}">
+													            data-toggle="modal" data-target="#backup-${runTimeConfig.apiName}">
 																Details...
 															</button>
 
@@ -633,13 +633,13 @@
 
 																		<div class="modal-body">
 																			<div class="form-group">
-																				<label for="backup-api.s3.bucket" class="col-sm-4 control-label">
+																				<label for="backup-api.type.s3.bucket.name" class="col-sm-4 control-label">
 																					Bucket
 																				</label>
 																				<div class="col-sm-8">
-																					<input type="text" id="backup-api.s3.bucket" class="form-control"
-																			            data-pointer="api.s3.bucket"
-																		                value="${rt:getString(runTimeConfig, 'api.s3.bucket')}">
+																					<input type="text" id="backup-api.type.s3.bucket.name" class="form-control"
+																			            data-pointer="api.type.s3.bucket.name"
+																		                value="${rt:getString(runTimeConfig, 'api.type.s3.bucket.name')}">
 																				</div>
 																			</div>
 																		</div>
@@ -690,13 +690,13 @@
 
 																		<div class="modal-body">
 																			<div class="form-group">
-																				<label for="backup-api.atmos.subtenant" class="col-sm-4 control-label">
+																				<label for="backup-api.type.atmos.subtenant" class="col-sm-4 control-label">
 																					Subtenant
 																				</label>
 																				<div class="col-sm-8">
-																					<input type="text" id="backup-api.atmos.subtenant" class="form-control"
-																					       data-pointer="api.atmos.subtenant"
-																					       value="${rt:getString(runTimeConfig, 'api.atmos.subtenant')}">
+																					<input type="text" id="backup-api.type.atmos.subtenant" class="form-control"
+																					       data-pointer="api.type.atmos.subtenant"
+																					       value="${rt:getString(runTimeConfig, 'api.type.atmos.subtenant')}">
 																				</div>
 																			</div>
 																		</div>
@@ -717,13 +717,13 @@
 											<fieldset>
 												<legend>Controller</legend>
 												<div class="form-group">
-													<label for="backup-remote.servers" class="col-sm-3 control-label">
+													<label for="backup-load.servers" class="col-sm-3 control-label">
 														Load servers
 													</label>
 													<div class="col-sm-9">
-														<input type="text" id="backup-remote.servers" class="form-control"
-												            data-pointer="remote.servers"
-												            value="${rt:getString(runTimeConfig, 'remote.servers')}">
+														<input type="text" id="backup-load.servers" class="form-control"
+												            data-pointer="load.servers"
+												            value="${rt:getString(runTimeConfig, 'load.servers')}">
 													</div>
 												</div>
 											</fieldset>
@@ -738,7 +738,8 @@
 														Load threads
 													</label>
 													<div class="col-sm-9">
-														<input type="text" id="backup-load.threads" data-pointer="load.threads" class="form-control">
+														<input type="text" id="backup-load.threads" data-pointer="load.threads" class="form-control"
+																value="${rt:getString(runTimeConfig, 'load.threads')}">
 													</div>
 												</div>
 
@@ -749,7 +750,7 @@
 													<div class="col-sm-9">
 														<input type="text" id="backup-data.count" class="form-control"
 									                        data-pointer="data.count"
-												            value="${runTimeConfig.dataCount}">
+												            value="${runTimeConfig.loadLimitDataItemCount}">
 													</div>
 												</div>
 
@@ -758,7 +759,8 @@
 														Items size
 													</label>
 													<div class="col-sm-9">
-														<input type="text" id="backup-data.size" data-pointer="data.size" class="form-control">
+														<input type="text" id="backup-data.size" data-pointer="data.size" class="form-control"
+																value="${rt:getString(runTimeConfig, 'data.size')}">
 													</div>
 												</div>
 
@@ -787,9 +789,16 @@
 								</div>
 								<div id="extended">
 									<form class="form-horizontal" id="main-form" role="form">
-										<input type="hidden" name="run.mode" id="run-mode" value="standalone">
-										<input type="hidden" id="data.size" name="data.size">
-										<input type="hidden" id="load.threads" name="load.threads">
+										<c:choose>
+											<c:when test = "${runTimeConfig.runMode ne 'webui'}">
+												<input type="hidden" name="run.mode" id="run.mode" value="${runTimeConfig.runMode}">
+											</c:when>
+											<c:otherwise>
+												<input type="hidden" name="run.mode" id="run.mode" value="standalone">
+											</c:otherwise>
+										</c:choose>
+										<input type="hidden" id="data.size" name="data.size" value="${rt:getString(runTimeConfig, 'data.size')}">
+										<input type="hidden" id="load.threads" name="load.threads" value="${rt:getString(runTimeConfig, 'load.threads')}">
 										<!-- Input fields with labels from JS -->
 										<div id="configuration-content">
 
@@ -804,6 +813,13 @@
 					<c:set var="correctMode" value="${fn:replace(mode, '.', '_')}"/>
 					<div class="tab-pane" id="scenarioTab-${correctMode}">
 						<ul id="scenario-tab" class="nav nav-tabs" role="presentation">
+							<li class="hidden-xs">
+								<c:if test="${empty sessionScope.stopped[mode]}">
+									<button type="button" class="btn btn-danger stop" value="${mode}">
+										Stop
+									</button>
+								</c:if>
+							</li>
 							<li class="active"><a href="#${correctMode}-logs" data-toggle="tab">Logs</a></li>
 							<c:if test="${not empty chartsMap[mode]}">
 								<li><a href="#${correctMode}-charts" data-toggle="tab">Charts</a></li>
@@ -812,7 +828,7 @@
 						<div class="tab-content">
 							<div class="tab-pane active" id="${correctMode}-logs">
 								<ul id="log-pills" class="nav nav-pills">
-									<li>
+									<li class="hidden-sm hidden-md hidden-lg stop-block-xs">
 										<c:if test="${empty sessionScope.stopped[mode]}">
 											<button type="button" class="btn btn-danger stop" value="${mode}">
 												Stop
@@ -906,6 +922,13 @@
 							<c:if test="${not empty chartsMap[mode]}">
 								<div class="tab-pane" id="${correctMode}-charts">
 									<ul id="chart-pills" class="nav nav-pills">
+										<li class="hidden-sm hidden-md hidden-lg stop-block-xs">
+											<c:if test="${empty sessionScope.stopped[mode]}">
+												<button type="button" class="btn btn-danger stop" value="${mode}">
+													Stop
+												</button>
+											</c:if>
+										</li>
 										<c:choose>
 											<c:when test="${chartsMap[mode] eq 'single'}">
 												<li class="active"><a href="#tp-${correctMode}" data-toggle="pill">Throughput[obj/s]</a></li>
@@ -961,7 +984,7 @@
 		<script type="text/javascript" src="js/bootstrap.min.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
 		<script>
-			propertiesMap = ${runTimeConfig.propertiesMap};
+			jsonProps = ${runTimeConfig.jsonProps};
 		</script>
 	</body>
 </html>

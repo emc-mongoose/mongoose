@@ -1,0 +1,159 @@
+{
+    "properties": {
+        "scenario": {
+            "name": "single",
+            "lang": "py",
+            "dir": "scripts",
+            "type": {
+                "single": {
+                    "load": "create"
+                },
+                "chain": {
+                    "load": "create,update,append,read,delete",
+                    "simultaneous": true,
+                    "itemsbuffer": false
+                },
+                "rampup": {
+                    "threadCounts": "1,10,20,50,100,150,200,300,400,500",
+                    "sizes": "1KB,8KB,64KB,1MB,8MB,64MB,1GB"
+                }
+            }
+        },
+        "api": {
+            "name": "s3",
+            "type": {
+                "s3": {
+                    "port": 9020,
+                    "authPrefix": "AWS",
+                    "bucket": ""
+                },
+                "atmos": {
+                    "port": 9022,
+                    "subtenant": "a41583d347a848b89bc2f31747106db2"
+                },
+                "swift": {
+                    "port": 9024,
+                    "serviceBasepath": "v1",
+                    "authToken": "",
+                    "container": ""
+                }
+            }
+        },
+        "storage": {
+            "addrs": "127.0.0.1",
+            "namespace": "s3",
+            "scheme": "http",
+            "mock": {
+                "headCount": 8,
+                "iothreadsPersocket": 10,
+                "capacity": 10000000,
+                "fault": {
+                    "period": 0,
+                    "sleepMilliSec": 1000
+                }
+            },
+            "fsAccess": false,
+            "versioning": false
+        },
+        "remote": {
+            "port": {
+                "control": 1099,
+                "export": 1199,
+                "import": 1199,
+                "webui": 8080
+            },
+            "connection": {
+                "timeoutMilliSec": 1000000,
+                "poolTimeoutMilliSec": 1000000
+            },
+            "socket": {
+                "timeoutMilliSec": 1000000,
+                "reuseAddr": true,
+                "keepalive": true,
+                "tcpNodelay": true,
+                "linger": 0,
+                "bindBacklogSize": 0,
+                "interestOpQueued": false,
+                "selectInterval": 100
+            }
+        },
+        "data": {
+            "size": {
+                "min": "1MB",
+                "max": "1MB",
+                "bias": 1
+            },
+            "src": {
+                "fpath": "",
+                "separator": ","
+            },
+            "radix": {
+                "size": 10,
+                "offset": 36
+            },
+            "buffer": {
+                "size": "1KB",
+                "ring": {
+                    "seed": "7a42d9c483244167",
+                    "size": "1MB"
+                }
+            }
+        },
+        "load": {
+            "type": {
+                "create": {
+                    "threads": 1
+                },
+                "read": {
+                    "threads": 1,
+                    "verifyContent": true
+                },
+                "update": {
+                    "threads": 1,
+                    "perItem": 1
+                },
+                "delete": {
+                    "threads": 1
+                },
+                "append": {
+                    "threads": 1
+                }
+            },
+            "limit": {
+                "dataItemCount": 0,
+                "time": {
+                    "value": 0,
+                    "unit": "seconds"
+                }
+            },
+            "servers": "127.0.0.1",
+            "metricsPeriodSec": 10
+        },
+        "run": {
+            "name": "mongoose",
+            "version": "0.7.0",
+            "mode": "standalone",
+            "retry": {
+                "delayMilliSec": 100,
+                "countMax": 100
+            },
+            "request": {
+                "retries": false,
+                "timeoutMilliSec": 1000000,
+                "queueSize": 16384
+            }
+        },
+        "auth": {
+            "id": "wuser1@sanity.local",
+            "secret": "HjhQ0bXqUrt1lSPhOfn5S+GLDWaikLi32A6/EWY5"
+        },
+        "http": {
+            "signMethod": "HmacSHA1",
+            "content": {
+                "chunked": false,
+                "type": "application/octet-stream",
+                "repeatable": true
+            }
+        }
+    }
+}
