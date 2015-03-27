@@ -185,204 +185,186 @@ apply from: "deps.gradle"
 
 dependencies {
 
-	compile (
-		//
-		'io.dropwizard.metrics:metrics-core:3.1.0',
-		//
-		'commons-codec:commons-codec:1.10',
-		//
-		'org.apache.logging.log4j:log4j-api:2.1',
-		'org.apache.logging.log4j:log4j-core:2.1',
-		'org.apache.logging.log4j:log4j-web:2.1',
-		//
-		'org.apache.httpcomponents:httpcore-nio:4.4',
-		//
-		'org.eclipse.jetty:jetty-server:9.3.0.M1',
-		'org.eclipse.jetty:jetty-webapp:9.3.0.M1',
-		//
-		'javax.servlet:javax.servlet-api:3.1.0',
-		'org.mortbay.jetty:jsp-2.1-glassfish:2.1.v20100127',
-		'org.eclipse.jetty.websocket:websocket-server:9.3.0.M1',
-		'org.eclipse.jetty.websocket:websocket-core:9.0.0.M2',
-		//
-		'jstl:jstl:1.2',
-		'org.apache.commons:commons-collections4:4.0',
-		'commons-cli:commons-cli:1.2',
-		//
-		'com.fasterxml.jackson.core:jackson-annotations:2.4.1',
-		'com.fasterxml.jackson.core:jackson-core:2.4.1',
-		'com.fasterxml.jackson.core:jackson-databind:2.4.1',
+	// common
+	commonCompile (
+			library.commons_configuration,
+			library.commons_lang,
+			library.commons_collections4,
+			library.httpcore_plus_nio,
+			library.log4j_api_plus_core,
+			library.jackson_core,
+			library.jackson_databind,
 	)
 	commonRuntime (
-		library.runtime_logging,
+			library.runtime_logging,
 	)
 
 	// core
 	coreApiCompile (
-		library.commons_configuration,
-		library.httpcore_plus_nio,
-		library.log4j_api,
+			library.commons_configuration,
+			library.httpcore_plus_nio,
+			library.log4j_api,
 	)
 	coreApiRuntime (
-		library.runtime_logging,
+			library.runtime_logging,
 	)
 
 	coreImplCompile (
-		library.commons_codec,
-		library.commons_configuration,
-		library.commons_collections4,
-		library.httpcore_plus_nio,
-		library.log4j_api,
-		library.metrics_core,
+			library.commons_codec,
+			library.commons_configuration,
+			library.commons_collections4,
+			library.httpcore_plus_nio,
+			library.log4j_api,
+			library.metrics_core,
 	)
 	coreImplRuntime(
-		library.runtime_logging,
+			library.runtime_logging,
 	)
 
 	// storage API adapters
 	storageAdapterAtmosCompile (
-		library.commons_codec,
-		library.commons_configuration,
-		library.commons_lang,
-		library.httpcore,
-		library.log4j_api,
+			library.commons_codec,
+			library.commons_configuration,
+			library.commons_lang,
+			library.httpcore,
+			library.log4j_api,
 	)
 	storageAdapterAtmosRuntime (
-		library.runtime_logging,
+			library.runtime_logging,
 	)
 
 	storageAdapterS3Compile (
-		library.commons_lang,
-		library.commons_configuration,
-		library.httpcore,
-		library.log4j_api,
+			library.commons_lang,
+			library.commons_configuration,
+			library.httpcore,
+			library.log4j_api,
 	)
 	storageAdapterS3Runtime (
-		library.runtime_logging,
+			library.runtime_logging,
 	)
 
 	storageAdapterSwiftCompile (
-		library.commons_lang,
-		library.commons_configuration,
-		library.httpcore,
-		library.log4j_api,
-		library.jackson_core
+			library.commons_lang,
+			library.commons_configuration,
+			library.httpcore,
+			library.log4j_api,
+			library.jackson_core
 	)
 	storageAdapterSwiftRuntime (
-		library.runtime_logging,
+			library.runtime_logging,
 	)
 
 	// misc
 	serverApiCompile (
-		library.httpcore,
+			library.httpcore,
 	)
 	serverApiRuntime (
-		library.runtime_logging,
+			library.runtime_logging,
 	)
 
 	webserverCompile (
-		library.commons_configuration,
-		library.log4j_api,
-		library.jetty_svc,
+			library.commons_configuration,
+			library.log4j_api,
+			library.jetty_svc,
 	)
 	webserverRuntime (
-		library.runtime_logging,
-		library.runtime_jetty_svc,
+			library.runtime_logging,
+			library.runtime_jetty_svc,
 	)
 
 	// run modes
 
 	clientCompile (
-		library.commons_configuration,
-		library.httpcore,
-		library.log4j_api,
-		library.metrics_core,
+			library.commons_configuration,
+			library.httpcore,
+			library.log4j_api,
+			library.metrics_core,
 	)
 	clientRuntime (
-		library.runtime_logging,
-		library.slf4j_api,
+			library.runtime_logging,
+			library.slf4j_api,
 	)
 
 	serverImplCompile (
-		library.commons_configuration,
-		library.httpcore,
-		library.log4j_api,
+			library.commons_configuration,
+			library.httpcore,
+			library.log4j_api,
 	)
 	serverImplRuntime (
-		library.runtime_logging,
+			library.runtime_logging,
 	)
 
 	scenarioCompile (
-		library.commons_configuration,
-		library.log4j_api,
+			library.commons_configuration,
+			library.log4j_api,
 	)
 	scenarioRuntime (
-		library.jython,
-		//library.rhino,
-		library.runtime_logging,
+			library.jython,
+			//library.rhino,
+			library.runtime_logging,
 	)
 
 	storageMockCompile(
-		library.commons_codec,
-		library.commons_collections4,
-		library.commons_configuration,
-		library.httpcore_plus_nio,
-		library.log4j_api,
-		library.metrics_core,
+			library.commons_codec,
+			library.commons_collections4,
+			library.commons_configuration,
+			library.httpcore_plus_nio,
+			library.log4j_api,
+			library.metrics_core,
 	)
 	storageMockRuntime (
-		library.runtime_logging,
+			library.runtime_logging,
 	)
 
 	webuiCompile (
-		library.commons_collections4,
-		library.commons_configuration,
-		library.jackson_databind,
-		library.jsp_api,
-		library.log4j_api_plus_core,
-		library.websockets,
+			library.commons_collections4,
+			library.commons_configuration,
+			library.jackson_databind,
+			library.jsp_api,
+			library.log4j_api_plus_core,
+			library.websockets,
 	)
 	webuiRuntime (
-		library.runtime_logging,
-		library.runtime_jetty,
-		library.runtime_webapp,
-		library.ecj,
-		library.ant,
-		library.websocket_client,
-		library.websocket_common,
-		library.websocket_core,
-		library.websocket_server,
-		library.jsp_api,
+			library.runtime_logging,
+			library.runtime_jetty,
+			library.runtime_webapp,
+			library.ecj,
+			library.ant,
+			library.websocket_client,
+			library.websocket_common,
+			library.websocket_core,
+			library.websocket_server,
+			library.jsp_api,
 	)
 
 	// launcher
 	cliCompile (
-		library.commons_cli,
-		library.commons_configuration,
-		library.commons_lang,
-		library.log4j_api_plus_core,
+			library.commons_cli,
+			library.commons_configuration,
+			library.commons_lang,
+			library.log4j_api_plus_core,
 	)
 	cliRuntime (
-		library.runtime_logging,
+			library.runtime_logging,
 	)
 }
 
 configurations {
 	allRuntime.extendsFrom(
-		commonRuntime,
-		coreApiRuntime,
-		coreImplRuntime,
-		storageAdapterAtmosImplRuntime,
-		storageAdapterS3Runtime,
-		storageAdapterSwiftRuntime,
-		serverApiRuntime,
-		webserverRuntime,
-		clientRuntime,
-		scenarioRuntime,
-		serverImplRuntime,
-		storageMockRuntime,
-		webuiRuntime,
-		cliRuntime,
+			commonRuntime,
+			coreApiRuntime,
+			coreImplRuntime,
+			storageAdapterAtmosImplRuntime,
+			storageAdapterS3Runtime,
+			storageAdapterSwiftRuntime,
+			serverApiRuntime,
+			webserverRuntime,
+			clientRuntime,
+			scenarioRuntime,
+			serverImplRuntime,
+			storageMockRuntime,
+			webuiRuntime,
+			cliRuntime,
 	)
 }
 
@@ -390,17 +372,17 @@ configurations {
 
 task compileRMI(dependsOn: "compileServerImplJava") << {
 	String[] listClsRemote = [
-		'com.emc.mongoose.server.impl.persist.TmpFileItemBufferSvc',
-		'com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc',
-		'com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc'
+			'com.emc.mongoose.server.impl.persist.TmpFileItemBufferSvc',
+			'com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc',
+			'com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc'
 	]
 	String clsPath = [
-		"${sourceSets.common.output.classesDir}",
-		"${sourceSets.coreApi.output.classesDir}",
-		"${sourceSets.coreImpl.output.classesDir}",
-		"${sourceSets.serverApi.output.classesDir}",
-		"${sourceSets.serverImpl.output.classesDir}",
-		"${configurations.serverImplCompile.asPath}",
+			"${sourceSets.common.output.classesDir}",
+			"${sourceSets.coreApi.output.classesDir}",
+			"${sourceSets.coreImpl.output.classesDir}",
+			"${sourceSets.serverApi.output.classesDir}",
+			"${sourceSets.serverImpl.output.classesDir}",
+			"${configurations.serverImplCompile.asPath}",
 	].join(File.pathSeparator)
 	for(cls in listClsRemote) {
 		String command = """rmic -classpath ${clsPath} -d ${sourceSets.serverImpl.output.classesDir} ${cls}"""
@@ -423,34 +405,364 @@ task commonJar(type: Jar) {
 	manifest {
 		from sharedManifest
 		attributes (
-			'Implementation-Title': rootProject.name + "-core-api",
-			'Class-Path': configurations.commonRuntime.collect {
-				libsDirName + File.separator + it.getName()
-			}.join(' '),
+				'Implementation-Title': rootProject.name + "-core-api",
+				'Class-Path': configurations.commonRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 		)
 	}
 }
 
-distributions {
-	main {
-		baseName = rootProject.name
-		contents {
-			into('conf') {
-				from { 'conf' }
-			}
-			into('lib') {
-				from { libsDirName }
-			}
-			into('scripts') {
-				from { sourceSets.test.resources }
-			}
-			into('webapp') {
-				from { 'src/main/webapp' }
-			}
-			into('webapp/WEB-INF/lib') {
-				from { configurations.compile.files {dep -> dep.name == 'jstl'} }
-				from { configurations.compile.files {dep -> dep.name == 'log4j-web'} }
-			}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// core ////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+task coreApiJar(type: Jar) {
+	dependsOn commonJar
+	archiveName "${baseName}-core-api.${extension}"
+	from sourceSets.coreApi.output
+	manifest {
+		from sharedManifest
+		attributes (
+				'Implementation-Title': rootProject.name + "-core-api",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						configurations.coreApiRuntime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+task coreImplJar(type: Jar) {
+	dependsOn commonJar, coreApiJar
+	archiveName "${baseName}-core-impl.${extension}"
+	from sourceSets.coreImpl.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-core-impl",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						coreApiJar.outputs.files.collect {it.name}.join(' '),
+						configurations.coreImplRuntime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// storage API adapters ////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+task storageAdapterAtmosJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar
+	archiveName "${baseName}-storage-adapter-atmos.${extension}"
+	from sourceSets.storageAdapterAtmos.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-storage-adapter-atmos",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						coreApiJar.outputs.files.collect {it.name}.join(' '),
+						coreImplJar.outputs.files.collect {it.name}.join(' '),
+						configurations.storageAdapterAtmosRuntime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+task storageAdapterS3Jar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar
+	archiveName "${baseName}-storage-adapter-s3.${extension}"
+	from sourceSets.storageAdapterS3.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-storage-adapter-s3s",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						coreApiJar.outputs.files.collect {it.name}.join(' '),
+						coreImplJar.outputs.files.collect {it.name}.join(' '),
+						configurations.storageAdapterS3Runtime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+task storageAdapterSwiftJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar
+	archiveName "${baseName}-storage-adapter-swift.${extension}"
+	from sourceSets.storageAdapterSwift.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-storage-adapter-swift",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						coreApiJar.outputs.files.collect {it.name}.join(' '),
+						coreImplJar.outputs.files.collect {it.name}.join(' '),
+						configurations.storageAdapterSwiftRuntime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// misc ////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+task serverApiJar(type: Jar) {
+	dependsOn commonJar, coreApiJar
+	archiveName "${baseName}-server-api.${extension}"
+	from sourceSets.serverApi.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-server-api",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						coreApiJar.outputs.files.collect {it.name}.join(' '),
+						configurations.serverApiRuntime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+task webserverJar(type: Jar) {
+	dependsOn commonJar, compileRMI
+	archiveName "${baseName}-webserver.${extension}"
+	from sourceSets.webserver.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-webserver",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						configurations.webserverRuntime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// run modes ///////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+task clientJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar
+	archiveName "${baseName}-client.${extension}"
+	from sourceSets.client.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-client-impl",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						coreApiJar.outputs.files.collect {it.name}.join(' '),
+						coreImplJar.outputs.files.collect {it.name}.join(' '),
+						serverApiJar.outputs.files.collect {it.name}.join(' '),
+						configurations.clientRuntime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+task scenarioJar(type: Jar) {
+	dependsOn commonJar
+	archiveName "${baseName}-scenario.${extension}"
+	from sourceSets.scenario.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-scenario",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						configurations.scenarioRuntime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+task serverImplJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar, compileRMI
+	archiveName "${baseName}-server-impl.${extension}"
+	from sourceSets.serverImpl.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-server-impl",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						coreApiJar.outputs.files.collect {it.name}.join(' '),
+						coreImplJar.outputs.files.collect {it.name}.join(' '),
+						serverApiJar.outputs.files.collect {it.name}.join(' '),
+						configurations.serverImplRuntime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+task storageMockJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar
+	archiveName "${baseName}-storage-mock.${extension}"
+	from sourceSets.storageMock.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-storage-mock",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						coreApiJar.outputs.files.collect {it.name}.join(' '),
+						coreImplJar.outputs.files.collect {it.name}.join(' '),
+						configurations.storageMockRuntime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+task webuiJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar, scenarioJar, serverApiJar, serverImplJar, storageMockJar
+	archiveName "${baseName}-webui.${extension}"
+	from sourceSets.webui.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-webui",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						coreApiJar.outputs.files.collect {it.name}.join(' '),
+						coreImplJar.outputs.files.collect {it.name}.join(' '),
+						scenarioJar.outputs.files.collect {it.name}.join(' '),
+						serverApiJar.outputs.files.collect {it.name}.join(' '),
+						serverImplJar.outputs.files.collect {it.name}.join(' '),
+						storageMockJar.outputs.files.collect {it.name}.join(' '),
+						configurations.webuiRuntime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// entry point /////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+task cliJar(type: Jar) {
+	dependsOn commonJar, storageMockJar, coreApiJar, coreImplJar
+	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
+	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
+	dependsOn clientJar, scenarioJar, webuiJar
+	archiveName "${baseName}.${extension}"
+	from sourceSets.cli.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-cli",
+				'Main-Class': "com.emc.mongoose.run.cli.ModeDispatcher",
+				'Class-Path': [
+						clientJar.outputs.files.collect {it.name}.join(' '),
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						coreApiJar.outputs.files.collect {it.name}.join(' '),
+						coreImplJar.outputs.files.collect {it.name}.join(' '),
+						serverApiJar.outputs.files.collect {it.name}.join(' '),
+						serverImplJar.outputs.files.collect {it.name}.join(' '),
+						storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
+						storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
+						storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
+						storageMockJar.outputs.files.collect {it.name}.join(' '),
+						scenarioJar.outputs.files.collect {it.name}.join(' '),
+						webserverJar.outputs.files.collect {it.name}.join(' '),
+						webuiJar.outputs.files.collect {it.name}.join(' '),
+						configurations.cliRuntime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+task dist(type: Tar) {
+
+	dependsOn commonJar
+	dependsOn coreApiJar
+	dependsOn coreImplJar
+	dependsOn storageAdapterAtmosJar
+	dependsOn storageAdapterS3Jar
+	dependsOn storageAdapterSwiftJar
+	dependsOn serverApiJar
+	dependsOn webserverJar
+	dependsOn clientJar
+	dependsOn scenarioJar
+	dependsOn serverImplJar
+	dependsOn storageMockJar
+	dependsOn webuiJar
+	dependsOn cliJar
+
+	baseName = project.name
+	compression = Compression.GZIP
+	duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+	List webappLibs = new LinkedList()
+	configurations.webuiRuntime.collect {
+		def path = it.getAbsolutePath()
+		if(it.isFile() && (path.contains("jstl") || path.contains("log4j-web"))) {
+			webappLibs.add(path)
+		}
+	}
+
+	into(baseName + '-' + version) {
+		into('conf') {
+			from { 'conf' }
+		}
+		into('lib') {
+			from { configurations.allRuntime }
+		}
+		from commonJar.outputs.files
+		from coreApiJar.outputs.files
+		from coreImplJar.outputs.files
+		from storageAdapterAtmosJar.outputs.files
+		from storageAdapterS3Jar.outputs.files
+		from storageAdapterSwiftJar.outputs.files
+		from serverApiJar.outputs.files
+		from webserverJar.outputs.files
+		from clientJar.outputs.files
+		from scenarioJar.outputs.files
+		from serverImplJar.outputs.files
+		from storageMockJar.outputs.files
+		from webuiJar.outputs.files
+		from cliJar.outputs.files
+		into('scripts') {
+			from { sourceSets.scenario.resources }
+		}
+		into('webapp') {
+			from { ["src", "main", "webapp"].join(File.separator) }
+		}
+		into(["webapp", "WEB-INF", "lib"].join(File.separator)) {
+			from { webappLibs }
 		}
 	}
 }
@@ -468,3 +780,4 @@ idea {
 }
 
 tasks.idea.dependsOn(cleanIdea)
+
