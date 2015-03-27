@@ -1,11 +1,12 @@
 package com.emc.mongoose.webui.logging;
 //
 import com.emc.mongoose.webui.websockets.WebSocketLogListener;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.commons.collections4.queue.CircularFifoQueue;
-import com.emc.mongoose.util.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
+//
+import org.apache.commons.collections4.queue.CircularFifoQueue;
+//
+import org.apache.logging.log4j.ThreadContext;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -20,8 +21,8 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 /**
  Created by kurila on 23.10.14.
  */
@@ -34,8 +35,6 @@ extends AbstractAppender {
 		LOG_EVENTS_MAP = new ConcurrentHashMap<>();
 	private final static List<WebSocketLogListener>
 		LISTENERS = Collections.synchronizedList(new LinkedList<WebSocketLogListener>());
-	//
-	private final static ObjectMapper mapper = new ObjectMapper();
 	//
 	private final static Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
@@ -69,7 +68,6 @@ extends AbstractAppender {
 			sendPreviousLogs(listener);
 			LISTENERS.add(listener);
 		}
-		//return LOG_EVENTS_MAP;
 	}
 	//
 	public static void unregister(final WebSocketLogListener listener) {
@@ -86,17 +84,32 @@ extends AbstractAppender {
 		}
 	}
 	//
+	private final String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
+	//
 	@Override
 	public final void append(final LogEvent event) {
-		if (ENABLED_FLAG) {
-			final String currentRunId = event.getContextMap().get(RunTimeConfig.KEY_RUN_ID);
-			if (LOG_EVENTS_MAP.get(currentRunId) == null) {
-				LOG_EVENTS_MAP.put(currentRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST));
+		if(ENABLED_FLAG) {
+			final String currRunId;
+			final Map<String, String> evtCtxMap = event.getContextMap();
+			if(evtCtxMap.containsKey(KEY_RUN_ID)) {
+				currRunId = evtCtxMap.get(KEY_RUN_ID);
+			} else if(ThreadContext.containsKey(KEY_RUN_ID)) {
+				currRunId = ThreadContext.get(KEY_RUN_ID);
+			} else {
+				currRunId = null;
 			}
-			LOG_EVENTS_MAP.get(currentRunId).add(event);
-			for (final WebSocketLogListener listener : LISTENERS) {
-				listener.sendMessage(event);
-			}
+			//
+			if(currRunId != null) {
+				if(!LOG_EVENTS_MAP.containsKey(currRunId)) {
+					LOG_EVENTS_MAP.put(
+						currRunId, new CircularFifoQueue<LogEvent>(MAX_ELEMENTS_IN_THE_LIST)
+					);
+				}
+				LOG_EVENTS_MAP.get(currRunId).add(event);
+				for(final WebSocketLogListener listener : LISTENERS) {
+					listener.sendMessage(event);
+				}
+			} // else silently skip
 		}
 	}
 	//

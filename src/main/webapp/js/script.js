@@ -8,9 +8,18 @@ $(document).ready(function() {
 	var shortPropsMap = {};
 	var ul = $(".folders");
 	//
-	walkTreeMap(propertiesMap, ul, shortPropsMap);
-	buildDivBlocksByFileNames(shortPropsMap);
-	generatePropertyPage();
+	walkTreeMap(jsonProps, ul, shortPropsMap);
+	$("#run").parent().find("ul").addChild("<li>")
+			.addClass("file")
+			.append($("<a>", {
+				class: "props",
+				href: "#" + "run.id",
+				text: "id"
+			}));
+	shortPropsMap["run.id"] = "";
+	buildDivBlocksByPropertyNames(shortPropsMap);
+	//
+	//generatePropertyPage();
 	configureWebSocketConnection(WEBSOCKET_URL, TABLE_ROWS_COUNT).connect(chartsArray);
 	//
 	$("select").each(function() {
@@ -77,7 +86,7 @@ $(document).ready(function() {
 		$("#run-mode").val(valueSelected);
 	});
 	//
-	$("#backup-run\\.scenario\\.name").on("change", function() {
+	$("#backup-scenario\\.name").on("change", function() {
 		var valueSelected = this.value;
 		$("#scenario-button").attr("data-target", "#" + valueSelected);
 		changeLoadHint(valueSelected);
@@ -86,17 +95,18 @@ $(document).ready(function() {
 	function changeLoadHint(value) {
 		switch (value) {
 			case "backup-single":
-				$("#scenario-load").text("Load: [" + $("#scenario\\.single\\.load").val() + "]");
+				$("#scenario-load").text("Load: [" + $("#scenario\\.type\\.single\\.load input").val() + "]");
 				break;
 			case "backup-chain":
+				$("#scenario-load").text("Load: [" + $("#scenario\\.type\\.chain\\.load input").val() + "]");
 			case "backup-rampup":
-				$("#scenario-load").text("Load: [" + $("#scenario\\.chain\\.load").val() + "]");
+				$("#scenario-load").text("Load: [" + $("#scenario\\.type\\.chain\\.load input").val() + "]");
 				break;
 		}
 	}
-	$("#backup-run\\.scenario\\.name").change();
+	$("#backup-scenario\\.name").change();
 	//
-	$("#backup-storage\\.api").on("change", function() {
+	$("#backup-api\\.name").on("change", function() {
 		var valueSelected = this.value;
 		$("#api-button").attr("data-target", "#" + valueSelected);
 	});
@@ -108,54 +118,58 @@ $(document).ready(function() {
 	//
 	$("#base input, #base select").on("change", function() {
 		var currElement = $(this);
-		if (currElement.parents(".complex").length === 1) {
+		/*if (currElement.parents(".complex").length === 1) {
 			var input = $("#backup-run\\.time\\.input").val();
 			var select = $("#backup-run\\.time\\.select").val();
 			currElement = $("#backup-run\\.time").val(input + "." + select);
-		}
+		}*/
 		//
-		var element = document.getElementById(currElement.attr("data-pointer"));
+		var element = $("#" + currElement.attr("data-pointer").replace(/\./g, "\\.") + " input");
 		if (currElement.is("select")) {
 			var valueSelected = currElement.children("option").filter(":selected").text().trim();
-			$('select[data-pointer="'+currElement.attr("data-pointer")+'"]').val(currElement.val());
+			$('select[data-pointer="'+currElement.attr("data-pointer")+'"]')
+					.val(currElement.val());
 			if (element) {
-				element.value = valueSelected;
+				element.val(valueSelected);
 			}
 		} else {
-			$('input[data-pointer="' + currElement.attr("data-pointer") + '"]').val(currElement.val());
+			$('input[data-pointer="' + currElement.attr("data-pointer") + '"]')
+					.val(currElement.val());
 			if (element) {
-				element.value = currElement.val();
+				element.val(currElement.val());
 			}
 		}
-		if ((currElement.attr("id") === "backup-scenario.single.load")
-			|| (currElement.attr("id") === "backup-scenario.chain.load")) {
-			changeLoadHint($("#backup-run\\.scenario\\.name").val());
+		if ((currElement.attr("id") === "backup-scenario.type.single.load")
+			|| (currElement.attr("id") === "backup-scenario.type.chain.load")) {
+			changeLoadHint($("#backup-scenario\\.name").val());
 		}
 	});
 	//
 	$("#extended input").on("change", function() {
-		if ($(this).attr("id") === "run.time") {
+		/*if ($(this).attr("id") === "run.time") {
 			var splittedTimeString = $(this).val().split(".");
 			$("#backup-run\\.time\\.input").val(splittedTimeString[0]);
 			$("#backup-run\\.time\\.select").val(splittedTimeString[1]);
-		}
-		$('input[data-pointer="' + $(this).attr("id") + '"]').val($(this).val()).change();
-		$('select[data-pointer="' + $(this).attr("id") + '"] option:contains(' + $(this).val() + ')')
+		}*/
+		$('input[data-pointer="' + $(this).parent().parent().attr("id") + '"]')
+				.val($(this).val()).change();
+		$('select[data-pointer="' + $(this).parent().parent().attr("id") + '"] option:contains(' + $(this)
+				.val() + ')')
 			.attr('selected', 'selected').change();
 	});
 	$("#backup-data\\.size").on("change", function() {
-		$("#data\\.size\\.min").val($(this).val());
-		$("#data\\.size\\.max").val($(this).val());
+		$("#data\\.size\\.min input").val($(this).val());
+		$("#data\\.size\\.max input").val($(this).val());
 	});
 	//
 	$("#backup-load\\.threads").on("change", function() {
 		var currentValue = this.value;
 		var keys2Override = [
-			"#backup-load\\.append\\.threads",
-			"#backup-load\\.create\\.threads",
-			"#backup-load\\.read\\.threads",
-			"#backup-load\\.update\\.threads",
-			"#backup-load\\.delete\\.threads"
+			"#backup-load\\.type\\.append\\.threads",
+			"#backup-load\\.type\\.create\\.threads",
+			"#backup-load\\.type\\.read\\.threads",
+			"#backup-load\\.type\\.update\\.threads",
+			"#backup-load\\.type\\.delete\\.threads"
 		];
 		keys2Override.forEach(function(d) {
 			$(d).val(currentValue).change();
@@ -232,7 +246,7 @@ $(document).ready(function() {
 		}
 	});
 	//
-	$(".property").click(function() {
+	/*$(".property").click(function() {
 		var id = $(this).attr("href").replace(/\./g, "\\.");
 		var name = $(this).parents(".file").find(".props").text();
 		$("#" + name).show();
@@ -240,7 +254,7 @@ $(document).ready(function() {
 		var parent = element.parents(".form-group");
 		$("#" + name).children().hide();
 		parent.show();
-	});
+	});*/
 	//
 });
 
@@ -260,84 +274,70 @@ function excludeDuplicateOptions() {
 	});
 }
 //
-function walkTreeMap(map, ul, shortsPropsMap) {
+function walkTreeMap(map, ul, shortsPropsMap, fullKeyName) {
 	$.each(map, function(key, value) {
 		var element;
-		if (jQuery.isArray(value)) {
-			element = ul.addChild("<li>")
+		var currentKeyName = "";
+		if (key !== "properties") {
+			if (!fullKeyName) {
+				currentKeyName = key;
+			} else {
+				currentKeyName = fullKeyName + "." + key;
+			}
+		}
+		if (!(value instanceof Object)) {
+			if (currentKeyName === "run.mode")
+				return;
+			ul.addChild("<li>")
 				.addClass("file")
 				.append($("<a>", {
 					class: "props",
-					href: "#" + key,
+					href: "#" + currentKeyName,
 					text: key
-				}))
-				.append($("<input>", {
-					type: "checkbox"
-				}))
-				.addChild($("<ul>"));
-			var array = value;
-			for (var i = 0;i < array.length; i++) {
-				if (array[i].key === "run.mode") {
-					continue;
-				}
-				element.addChild($("<li>"))
-					.addChild($("<a>", {
-						href: "#" + array[i].key,
-						class: "property",
-						text: array[i].value.key
-					}));
-			}
-			shortsPropsMap[key] = value;
-			return;
+				}));
+			shortsPropsMap[currentKeyName] = value;
 		} else {
 			element = ul.prependChild("<li>")
-				.append($("<label>", {
-					for: key,
-					text: key
-				}))
-				.append($("<input>", {
-					type: "checkbox",
-					id: key
-				}))
-				.addChild("<ul>");
-
+					.append($("<label>", {
+						for: key,
+						text: key
+					}))
+					.append($("<input>", {
+						type: "checkbox",
+						id: key
+					}))
+					.addChild("<ul>");
+			walkTreeMap(value, element, shortsPropsMap, currentKeyName);
 		}
-		walkTreeMap(value, element, shortsPropsMap);
 	});
 }
 //
-function buildDivBlocksByFileNames(shortPropsMap) {
-	var formGroupDiv;
+function buildDivBlocksByPropertyNames(shortPropsMap) {
 	for (var key in shortPropsMap) {
 		if (shortPropsMap.hasOwnProperty(key)) {
-			var keyDiv = $("<div>").attr("id", key);
+			if (key === "run.mode")
+				continue;
+			var keyDiv = $("<div>").addClass("form-group");
+			keyDiv.attr("id", key);
 			keyDiv.css("display", "none");
-			var obj = shortPropsMap[key];
-			for (var i = 0; i < obj.length; i++) {
-				if (obj[i].key === "run.mode")
-					continue;
-				formGroupDiv = $("<div>").addClass("form-group");
-				var placeHolder = "";
-				if (obj[i].key === "data.src.fpath") {
-					placeHolder = "Format: log/<run.mode>/<run.id>/<filename>";
-				}
-				formGroupDiv.append($("<label>", {
-					for: obj[i].key,
-					class: "col-sm-3 control-label",
-					text: obj[i].value.key
-					}))
-					.append($("<div>", {
-						class: "col-sm-9"
-					}).append($("<input>", {
-						type: "text",
-						class: "form-control",
-						name: obj[i].key,
-						id: obj[i].key,
-						value: obj[i].value.value,
-						placeholder: "Enter '" + obj[i].key + "' property. " + placeHolder
-					})));
-				keyDiv.append(formGroupDiv);
+			var placeHolder = "";
+			if (key === "data.src.fpath") {
+				placeHolder = "Format: log/<run.mode>/<run.id>/<filename>";
 			}
+			keyDiv.append($("<label>", {
+				for: key,
+				class: "col-sm-3 control-label",
+				text: key.split(".").pop()
+			}))
+			.append($("<div>", {
+				class: "col-sm-9"
+			}).append($("<input>", {
+				type: "text",
+				class: "form-control",
+				name: key,
+				value: shortPropsMap[key],
+				placeholder: "Enter '" + key + "' property. " + placeHolder
+			})));
 			keyDiv.appendTo("#configuration-content");
 		}
 	}
@@ -357,6 +357,14 @@ jQuery.fn.prependChild = function(html) {
 	return child;
 };
 //
+(function($) {
+    $.strRemove = function(theTarget, theString) {
+        return $("<div/>").append(
+            $(theTarget, theString).remove().end()
+        ).html();
+    };
+})(jQuery);
+//
 function generatePropertyPage() {
 	if (!$("#properties").is(":checked")) {
 		$("#properties").trigger("click");
@@ -368,7 +376,8 @@ function onMenuItemClick(element) {
 	resetParams();
 	element.css("color", "#CC0033");
 	if (element.is("a")) {
-		var block = $(element.attr("href"));
+		var id = element.attr("href").replace(/\./g, "\\.");
+		var block = $(id);
 		block.show();
 		block.children().show();
 	}
@@ -403,10 +412,10 @@ function configureWebSocketConnection(location, countOfRecords) {
 			this.ws.onmessage = function(message) {
 				var json = JSON.parse(message.data);
 				var runId = json.contextMap["run.id"];
-				var runMetricsPeriodSec = json.contextMap["run.metrics.period.sec"];
-				var scenarioChainLoad = json.contextMap["scenario.chain.load"];
-				var rampupThreadCounts = json.contextMap["scenario.rampup.thread.counts"];
-				var loadRampupSizes = json.contextMap["scenario.rampup.sizes"];
+				var runMetricsPeriodSec = json.contextMap["load.metricsPeriodSec"];
+				var scenarioChainLoad = json.contextMap["scenario.type.chain.load"];
+				var rampupThreadCounts = json.contextMap["scenario.type.rampup.threadCounts"];
+				var loadRampupSizes = json.contextMap["scenario.type.rampup.sizes"];
 				//
 				var entry = runId.split(".").join("_");
 				if (!json.hasOwnProperty("marker") || !json.loggerName) {
@@ -421,7 +430,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 					}
 				});
 				if (!isContains) {
-					if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+					if (json.contextMap["scenario.name"] === RUN_SCENARIO_NAME.rampup) {
 						charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
 					}
 				}
@@ -434,7 +443,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 						break;
 					case MARKERS.PERF_SUM:
 						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
-						if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+						if (json.contextMap["scenario.name"] === RUN_SCENARIO_NAME.rampup) {
 							//alert(json.contextMap["currentSize"]);
 							chartsArray.forEach(function(d) {
 								//console.log(d);
@@ -461,7 +470,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 							}
 						});
 						if (!isFound) {
-							switch(json.contextMap["run.scenario.name"]) {
+							switch(json.contextMap["scenario.name"]) {
 								case RUN_SCENARIO_NAME.single:
 									charts(chartsArray).single(json);
 									break;
@@ -498,9 +507,7 @@ function getTableRowByMessage(json) {
 }
 //
 function onStartButtonPressed() {
-	$("#wait").show();
 	$.post("/start", $("#main-form").serialize(), function(data) {
-		$("#wait").hide();
 		if (data) {
 			if (confirm("Are you sure? " + data) === true) {
 				$.post("/stop", { "run.id" : $("#run\\.id").val(), "type" : "remove" }, function(data, status) {
@@ -569,8 +576,8 @@ function charts(chartsArray) {
 	//  Some constants from runTimeConfig
 	var RUN_TIME_CONFIG_CONSTANTS = {
 		runId: "run.id",
-		runMetricsPeriodSec: "run.metrics.period.sec",
-		runScenarioName: "run.scenario.name"
+		runMetricsPeriodSec: "load.metricsPeriodSec",
+		runScenarioName: "scenario.name"
 	};
 	//
 	var colorsList18 = [
@@ -594,6 +601,45 @@ function charts(chartsArray) {
 		"#BC8F8F"
 	];
 	var CHART_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+    //
+    function saveChart(chartDOMPath, w, h) {
+        var html;
+        if (typeof chartDOMPath === 'object') {
+            html = d3.select(chartDOMPath)
+                .attr("version", 1.1)
+                .attr("xmlns", "http://www.w3.org/2000/svg")
+                .node().parentNode.innerHTML;
+        } else {
+            html = d3.select(chartDOMPath + " svg")
+                .attr("version", 1.1)
+                .attr("xmlns", "http://www.w3.org/2000/svg")
+                .node().parentNode.innerHTML;
+        }
+        var theResult = $.strRemove(".foreign", html);
+        //
+        var imgSrc = 'data:image/svg+xml;base64,' + btoa(theResult);
+        //
+        var canvas = document.createElement("canvas");
+        //
+        canvas.setAttribute("width", w);
+        canvas.setAttribute("height", h);
+        //
+        var context = canvas.getContext("2d");
+        //
+        var image = new Image();
+        image.src = imgSrc;
+        image.onload = function() {
+            context.drawImage(image, 0, 0, w, h);
+            var canvasData = canvas.toDataURL("image/png");
+            //
+            var a = document.createElement("a");
+            a.download = Math.random().toString(36).substring(7) + ".png";
+            a.href = canvasData;
+	        document.body.appendChild(a);
+            a.click();
+	        document.body.removeChild(a);
+        };
+    }
 	//  Common functions for charts
 	function getScenarioChartObject(runId, runScenarioName, scenarioCharts) {
 		return {
@@ -626,6 +672,11 @@ function charts(chartsArray) {
 	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath) {
 		//  get some fields from runTimeConfig
 		var runMetricsPeriodSec = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec];
+        //
+        if (json.threadName.indexOf("remote") > -1) {
+            json.threadName = json.threadName.substring(0, json.threadName.lastIndexOf("-"));
+        }
+        //
 		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
 		//
 		var x = d3.scale.linear()
@@ -674,11 +725,15 @@ function charts(chartsArray) {
 			});
 		//
 		var svg = d3.select(chartDOMPath)
+			.append("div")
+			.attr("class", "svg-container")
 			.append("svg")
 			.attr("width", width + margin.left + margin.right)
 			.attr("height", height + margin.top + margin.bottom)
 			.append("g")
-			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+            .style("font", "12px sans-serif")
+            .style("overflow-x", "auto");
 
 		var xAxisGroup = svg.append("g")
 			.attr("class", "x axis")
@@ -701,7 +756,7 @@ function charts(chartsArray) {
 			.call(makeYAxis()
 				.tickSize(-width, 0, 0)
 				.tickFormat(""));
-
+        //
 		var levels = svg.selectAll(".level")
 			.data(data).enter()
 			.append("g")
@@ -731,6 +786,7 @@ function charts(chartsArray) {
 		svg.selectAll("foreignObject")
 			.data(data).enter()
 			.append("foreignObject")
+            .attr("class", "foreign")
 			.attr("x", width + 3)
 			.attr("width", 18)
 			.attr("height", 18)
@@ -779,6 +835,26 @@ function charts(chartsArray) {
 			.style("font-size", "16px")
 			.style("text-decoration", "underline")
 			.text(json.threadName);
+        //
+        d3.selectAll(".axis path, .axis line")
+            .style("fill", "none")
+            .style("stroke", "grey")
+            .style("stroke-width", "1")
+            .style("shape-rendering", "crispEdges");
+        //
+        d3.selectAll(".grid .tick")
+            .style("stroke", "lightgrey")
+            .style("stroke-opacity", "0.7")
+            .style("shape-rendering", "crispEdges");
+        //
+		d3.select(chartDOMPath)
+			.append("a")
+			.text("Save chart")
+            .style("cursor", "pointer")
+            .style("margin-left", margin.left + "px")
+			.on("click", function() {
+				saveChart(chartDOMPath, 1070, 460);
+			});
 		return function(chartType, value) {
 			var splitIndex = 0;
 			switch(chartType) {
@@ -822,6 +898,18 @@ function charts(chartsArray) {
 				.attr("d", function(d) { return line(d.values); })
 				.attr("stroke", function(d) { return color(d.name); })
 				.attr("fill", "none");
+
+            //
+            d3.selectAll(".axis path, .axis line")
+                .style("fill", "none")
+                .style("stroke", "grey")
+                .style("stroke-width", "1")
+                .style("shape-rendering", "crispEdges");
+            //
+            d3.selectAll(".grid .tick")
+                .style("stroke", "lightgrey")
+                .style("stroke-opacity", "0.7")
+                .style("shape-rendering", "crispEdges");
 		};
 	}
 	//
@@ -1007,12 +1095,16 @@ function charts(chartsArray) {
 						return y(d.y);
 					});
 				//
-				var svg = d3.select(path)
-					.append("svg")
-					.attr("width", width + margin.left + margin.right)
-					.attr("height", height + margin.top + margin.bottom)
-					.append("g")
-					.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                var svg = d3.select(path)
+                    .append("div")
+                    .attr("class", "svg-container")
+                    .append("svg")
+                    .attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
+                    .append("g")
+                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                    .style("font", "12px sans-serif")
+                    .style("overflow-x", "auto");
 
 				var xAxisGroup = svg.append("g")
 					.attr("class", "x axis")
@@ -1076,7 +1168,7 @@ function charts(chartsArray) {
 				svg.selectAll(".right-foreign")
 					.data(data).enter()
 					.append("foreignObject")
-					.attr("class", "right-foreign")
+					.attr("class", "foreign right-foreign")
 					.attr("x", width + 3)
 					.attr("width", 18)
 					.attr("height", 18)
@@ -1100,7 +1192,7 @@ function charts(chartsArray) {
 				svg.selectAll(".bottom-foreign")
 					.data(TP_MODES).enter()
 					.append("foreignObject")
-					.attr("class", "bottom-foreign")
+					.attr("class", "foreign bottom-foreign")
 					.attr("width", 18)
 					.attr("height", 18)
 					.attr("transform", function(d, i) {
@@ -1211,6 +1303,26 @@ function charts(chartsArray) {
 					.style("font-size", "16px")
 					.style("text-decoration", "underline")
 					.text(chartTitle);
+                //
+                d3.selectAll(".axis path, .axis line")
+                    .style("fill", "none")
+                    .style("stroke", "grey")
+                    .style("stroke-width", "1")
+                    .style("shape-rendering", "crispEdges");
+                //
+                d3.selectAll(".grid .tick")
+                    .style("stroke", "lightgrey")
+                    .style("stroke-opacity", "0.7")
+                    .style("shape-rendering", "crispEdges");
+                //
+                d3.select(path)
+                    .append("a")
+                    .text("Save chart")
+                    .style("cursor", "pointer")
+                    .style("margin-left", margin.left + "px")
+                    .on("click", function() {
+                        saveChart(path, 1070, 460);
+                    });
 				return function(chartType, json) {
 					if (json.threadName.indexOf("remote") > -1) {
 						json.threadName = json.threadName.substring(0, json.threadName.lastIndexOf("-"));
@@ -1391,7 +1503,7 @@ function charts(chartsArray) {
 					svg.selectAll(".right-foreign")
 						.data(data).enter()
 						.append("foreignObject")
-						.attr("class", "right-foreign")
+						.attr("class", "foreign right-foreign")
 						.attr("x", width + 3)
 						.attr("width", 18)
 						.attr("height", 18)
@@ -1411,6 +1523,16 @@ function charts(chartsArray) {
 								element.css("opacity", "0");
 							}
 						});
+                    d3.selectAll(".axis path, .axis line")
+                        .style("fill", "none")
+                        .style("stroke", "grey")
+                        .style("stroke-width", "1")
+                        .style("shape-rendering", "crispEdges");
+                    //
+                    d3.selectAll(".grid .tick")
+                        .style("stroke", "lightgrey")
+                        .style("stroke-opacity", "0.7")
+                        .style("shape-rendering", "crispEdges");
 				};
 			}
 		},
@@ -1419,21 +1541,12 @@ function charts(chartsArray) {
 			// change default width
 			width = 480;
 			//
-			var loadTypes = scenarioChainLoad.split(",").map(function(item) {
-				return item.replace("[", "")
-					.replace("]", "")
-					.trim();
-			});
+			var loadTypes = scenarioChainLoad.split(",");
 			var rampupThreadCountsArray = rampupThreadCounts.split(",").map(function(item) {
-				var newItem = item.replace("[", "");
-							item.replace("]", "");
-							item.trim();
-				return parseInt(newItem, 10);
+				return parseInt(item, 10);
 			});
 			var loadRampupSizesArray = loadRampupSizes.split(",").map(function(item) {
-				return item.replace("[", "")
-					.replace("]", "")
-					.trim()
+				return item.trim();
 			});
 			var AVG = "avg";
 			var MIN_1 = "1min";
@@ -1560,12 +1673,17 @@ function charts(chartsArray) {
 						.y(function(d) {
 							return y(d.y);
 						});
-					var svg = d3.select(path).append("svg")
-						.attr("width", width + margin.left + margin.right)
-						.attr("height", height + margin.top + margin.bottom)
-						.attr("id", path.replace("#", "") + "-" + d.loadType)
-						.append("g")
-						.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                    var svg = d3.select(path)
+                        .append("div")
+                        .attr("class", "svg-container")
+                        .append("svg")
+                        .attr("width", width + margin.left + margin.right)
+                        .attr("height", height + margin.top + margin.bottom)
+	                    .attr("id", path.replace("#", "") + "-" + d.loadType)
+                        .append("g")
+                        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+                        .style("font", "12px sans-serif")
+                        .style("overflow-x", "auto");
 					//
 					var xAxisGroup = svg.append("g")
 						.attr("class", "axis x-axis")
@@ -1643,7 +1761,7 @@ function charts(chartsArray) {
 					svg.selectAll(".right-foreign")
 						.data(d.sizes).enter()
 						.append("foreignObject")
-						.attr("class", "right-foreign")
+						.attr("class", "foreign right-foreign")
 						.attr("x", width + 3)
 						.attr("width", 18)
 						.attr("height", 18)
@@ -1663,6 +1781,25 @@ function charts(chartsArray) {
 								element.css("opacity", "0");
 							}
 						});
+                    d3.selectAll(".axis path, .axis line")
+                        .style("fill", "none")
+                        .style("stroke", "grey")
+                        .style("stroke-width", "1")
+                        .style("shape-rendering", "crispEdges");
+                    //
+                    d3.selectAll(".grid .tick")
+                        .style("stroke", "lightgrey")
+                        .style("stroke-opacity", "0.7")
+                        .style("shape-rendering", "crispEdges");
+                    //
+                    d3.select(path)
+                        .append("a")
+                        .text("Save chart")
+                        .style("cursor", "pointer")
+                        .style("margin-left", margin.left + "px")
+                        .on("click", function() {
+                            saveChart(svg.node().parentNode, 740, 460);
+                        });
 				});
 				//
 				return function(chartType, json) {
@@ -1743,6 +1880,7 @@ function charts(chartsArray) {
 										.selectAll(".dot").data(function(v) { return v.values; })
 										.enter().append("circle")
 										.attr("class", "dot")
+                                        //.style("stroke-width", "1.5px")
 										.attr("cx", function(coord) { return x(coord.x); })
 										.attr("cy", function(coord) { return y(coord.y); })
 										.attr("r", 2);
@@ -1755,6 +1893,16 @@ function charts(chartsArray) {
 							});
 						}
 					});
+                    d3.selectAll(".axis path, .axis line")
+                        .style("fill", "none")
+                        .style("stroke", "grey")
+                        .style("stroke-width", "1")
+                        .style("shape-rendering", "crispEdges");
+                    //
+                    d3.selectAll(".grid .tick")
+                        .style("stroke", "lightgrey")
+                        .style("stroke-opacity", "0.7")
+                        .style("shape-rendering", "crispEdges");
 				}
 			}
 		}

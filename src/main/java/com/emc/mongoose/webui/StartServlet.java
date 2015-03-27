@@ -1,26 +1,30 @@
 package com.emc.mongoose.webui;
 //
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.run.Scenario;
-import com.emc.mongoose.run.ThreadContextMap;
-import com.emc.mongoose.util.logging.TraceLogger;
-import com.emc.mongoose.object.load.server.WSLoadBuilderSvc;
-import com.emc.mongoose.object.load.server.impl.WSLoadBuilderSvcImpl;
-import com.emc.mongoose.object.storagemock.Cinderella;
-import com.emc.mongoose.util.conf.RunTimeConfig;
-import com.emc.mongoose.util.logging.Markers;
-import com.emc.mongoose.util.remote.ServiceUtils;
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.net.ServiceUtils;
+//
+import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
+//
+import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+//
+import com.emc.mongoose.storage.mock.impl.cinderella.Main;
+//
+import com.emc.mongoose.run.scenario.RunTask;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 //
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+//
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Created by gusakk on 01/10/14.
  */
@@ -69,18 +73,18 @@ public final class StartServlet extends CommonServlet {
 		setupRunTimeConfig(request);
 		updateLastRunTimeConfig(runTimeConfig);
 		switch(request.getParameter(RunTimeConfig.KEY_RUN_MODE)) {
-			case Main.RUN_MODE_SERVER:
-			case Main.RUN_MODE_COMPAT_SERVER:
+			case Constants.RUN_MODE_SERVER:
+			case Constants.RUN_MODE_COMPAT_SERVER:
 				startServer("Starting the distributed load server");
 				break;
-			case Main.RUN_MODE_CINDERELLA:
+			case Constants.RUN_MODE_CINDERELLA:
 				startCinderella("Starting the cinderella");
 				break;
-			case Main.RUN_MODE_CLIENT:
-			case Main.RUN_MODE_COMPAT_CLIENT:
+			case Constants.RUN_MODE_CLIENT:
+			case Constants.RUN_MODE_COMPAT_CLIENT:
 				startStandaloneOrClient("Starting the distributed load client");
 				break;
-			case Main.RUN_MODE_STANDALONE:
+			case Constants.RUN_MODE_STANDALONE:
 				startStandaloneOrClient("Starting in the standalone mode");
 				break;
 			default:
@@ -102,11 +106,10 @@ public final class StartServlet extends CommonServlet {
 			 public void run() {
 				localRunTimeConfig = runTimeConfig;
 				RunTimeConfig.setContext(localRunTimeConfig);
-				ThreadContextMap.initThreadContextMap();
 				//
 				LOG.debug(Markers.MSG, message);
 				//
-				loadBuilderSvc = new WSLoadBuilderSvcImpl(localRunTimeConfig);
+				loadBuilderSvc = new BasicWSLoadBuilderSvc(localRunTimeConfig);
 				//
 				try {
 					loadBuilderSvc.setProperties(runTimeConfig);
@@ -118,7 +121,6 @@ public final class StartServlet extends CommonServlet {
 			@Override
 			public void interrupt() {
 				RunTimeConfig.setContext(localRunTimeConfig);
-				ThreadContextMap.initThreadContextMap();
 				//
 				ServiceUtils.close(loadBuilderSvc);
 				super.interrupt();
@@ -133,20 +135,22 @@ public final class StartServlet extends CommonServlet {
 			@Override
 			public void run() {
 				RunTimeConfig.setContext(runTimeConfig);
-				ThreadContextMap.initThreadContextMap();
-				ThreadContextMap.putValue(RunTimeConfig.KEY_RUN_SCENARIO_NAME, runTimeConfig.getRunScenarioName());
-				ThreadContextMap.putValue(RunTimeConfig.KEY_RUN_METRICS_PERIOD_SEC,
-						String.valueOf(runTimeConfig.getRunMetricsPeriodSec()));
-				if (runTimeConfig.getRunScenarioName().equals("rampup")) {
-					ThreadContextMap.putValue("scenario.rampup.sizes", runTimeConfig.getProperty("scenario.rampup.sizes").toString());
-					ThreadContextMap.putValue("scenario.rampup.thread.counts",
-							runTimeConfig.getProperty("scenario.rampup.thread.counts").toString());
-					ThreadContextMap.putValue("scenario.chain.load", runTimeConfig.getProperty("scenario.chain.load").toString());
+				ThreadContext.put(RunTimeConfig.KEY_SCENARIO_NAME, runTimeConfig.getScenarioName());
+				ThreadContext.put(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC,
+						String.valueOf(runTimeConfig.getLoadMetricsPeriodSec()));
+				//
+				if (runTimeConfig.getScenarioName().equals("rampup")) {
+					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
+							convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
+					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS,
+							convertArrayToString(runTimeConfig.getScenarioRampupThreadCounts()));
+					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD,
+							convertArrayToString(runTimeConfig.getScenarioChainLoad()));
 				}
-				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getRunScenarioName());
+				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);
-				new Scenario().run();
+				new RunTask().run();
 			}
 			//
 			@Override
@@ -163,11 +167,10 @@ public final class StartServlet extends CommonServlet {
 			@Override
 			public void run() {
 				RunTimeConfig.setContext(runTimeConfig);
-				ThreadContextMap.initThreadContextMap();
 				//
 				LOG.debug(Markers.MSG, message);
 				try {
-					new Cinderella(runTimeConfig).run();
+					new Main(runTimeConfig).run();
 				} catch (final IOException e) {
 					TraceLogger.failure(LOG, Level.FATAL, e, "Failed run Cinderella");
 				}
@@ -184,8 +187,6 @@ public final class StartServlet extends CommonServlet {
 	}
 	//
 	public final boolean isRunIdFree(final String runId) {
-		if (threadsMap.get(runId) != null)
-			return false;
-		return true;
+		return !threadsMap.containsKey(runId);
 	}
 }
