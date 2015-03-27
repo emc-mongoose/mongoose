@@ -1654,9 +1654,9 @@ function charts(chartsArray) {
 
 			function drawCharts(data, xAxisLabel, yAxisLabel, path) {
 				data.forEach(function(d) {
-					var x = d3.scale.ordinal()
-						.domain(rampupThreadCountsArray)
-						.rangePoints([0, width]);
+					var x = d3.scale.linear()
+						.domain([0, d3.max(rampupThreadCountsArray)])
+						.range([0, width]);
 					var y = d3.scale.linear()
 						.domain([
 							d3.min(d.sizes, function(c) { return d3.min(c.charts, function(v) {
@@ -1847,9 +1847,9 @@ function charts(chartsArray) {
 							var second = parsedString.lastIndexOf(")");
 							var value = parsedString.substring(first, second).split("/");
 
-							var x = d3.scale.ordinal()
-								.domain(rampupThreadCountsArray)
-								.rangePoints([0, width]);
+							var x = d3.scale.linear()
+								.domain([0, d3.max(rampupThreadCountsArray)])
+								.range([0, width]);
 
 							d.sizes.forEach(function(d, i) {
 								if (d.size === json.contextMap["currentSize"]) {
