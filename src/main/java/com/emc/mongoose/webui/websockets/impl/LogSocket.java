@@ -39,13 +39,13 @@ implements WebSocketLogListener {
 	//
 	@OnWebSocketClose
 	public final void onClose(int statusCode, final String reason) {
-		//WebUIAppender.unregister(this);
+		WebUIAppender.unregister(this);
 		LOG.info(Markers.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
 	}
 	//
 	@OnWebSocketError
 	public final void onError(final Throwable t) {
-		//WebUIAppender.unregister(this);
+		WebUIAppender.unregister(this);
 		TraceLogger.failure(LOG, Level.ERROR, t, "WebSocket failure");
 	}
 	//
@@ -53,30 +53,7 @@ implements WebSocketLogListener {
 	public final void onConnect(final Session session) {
 		this.session = session;
 		//
-		/*ConcurrentHashMap<String, CircularFifoQueue<LogEvent>> map = WebUIAppender.register(this);
-		for (final CircularFifoQueue<LogEvent> queue : map.values()) {
-			for (final LogEvent logEvent : queue) {
-				sendMessage(logEvent);
-			}
-		}*/
-		LOG.info(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
-		if (session.isOpen()) {
-			int i = 0;
-			while (i < 5000000) {
-				try {
-					session.getRemote().sendString("test message");
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				i++;
-			}
-		}
-		/*try {
-			Thread.sleep(10000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}*/
-		//WebUIAppender.register(this);
+		WebUIAppender.register(this);
 
 	}
 	//
@@ -89,11 +66,6 @@ implements WebSocketLogListener {
 	public synchronized final void sendMessage(final LogEvent message) {
 		try {
 			if (session.isOpen()) {
-				try {
-					Thread.sleep(2000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
 				session.getRemote().sendString(mapper.writeValueAsString(message));
 			}
 		} catch (final IOException|WebSocketException e) {
