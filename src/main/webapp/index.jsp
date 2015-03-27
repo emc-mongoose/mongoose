@@ -670,7 +670,26 @@
 																		</div>
 
 																		<div class="modal-body">
-
+																			<div class="form-group">
+																				<label for="backup-api.type.swift.authToken" class="col-sm-4 control-label">
+																					Authentication token (created automatically if left blank)
+																				</label>
+																				<div class="col-sm-8">
+																					<input type="text" id="backup-api.type.swift.authToken" class="form-control"
+																					       data-pointer="api.type.swift.authToken"
+																					       value="${rt:getString(runTimeConfig, 'api.type.swift.authToken')}"/>
+																				</div>
+																			</div>
+																			<div class="form-group">
+																				<label for="backup-api.type.swift.container" class="col-sm-4 control-label">
+																					Container (may be created automatically if left blank, required to be specified explicitly for any load except create)
+																				</label>
+																				<div class="col-sm-8">
+																					<input type="text" id="backup-api.type.swift.container" class="form-control"
+																					       data-pointer="api.type.swift.container"
+																					       value="${rt:getString(runTimeConfig, 'api.type.swift.container')}"/>
+																				</div>
+																			</div>
 																		</div>
 
 																		<div class="modal-footer">
