@@ -78,8 +78,18 @@ implements Producer<T> {
 					try {
 						consumer.submit(nextData);
 						dataItemsCount ++;
+					} catch(final InterruptedException e) {
+						TraceLogger.failure(
+							LOG, Level.DEBUG, e, "Interrupted while submitting the data item"
+						);
+						break;
 					} catch(final Exception e) {
-						TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit data item");
+						if(consumer.getMaxCount() > dataItemsCount) {
+							TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit data item");
+							break;
+						} else {
+							TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to submit data item");
+						}
 					}
 				}
 			} while(!isInterrupted() && dataItemsCount < maxCount);

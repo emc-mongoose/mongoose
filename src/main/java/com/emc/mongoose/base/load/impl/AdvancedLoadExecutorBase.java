@@ -40,14 +40,22 @@ extends LoadExecutorBase<T> {
 		//
 		int buffSize;
 		if(sizeMin == sizeMax) {
-			buffSize = (int) sizeMin;
+			LOG.debug(Markers.MSG, "Fixed data item size: {}", RunTimeConfig.formatSize(sizeMin));
+			buffSize = sizeMin < BUFF_SIZE_HI ? (int) sizeMin : BUFF_SIZE_HI;
 		} else {
-			buffSize = (int) ((sizeMin + sizeMax) / 2);
+			final long t = (sizeMin + sizeMax) / 2;
+			buffSize = t < BUFF_SIZE_HI ? (int) t : BUFF_SIZE_HI;
+			LOG.debug(
+				Markers.MSG, "Average data item size: {}",
+				RunTimeConfig.formatSize(buffSize)
+			);
 		}
 		if(buffSize < BUFF_SIZE_LO) {
+			LOG.debug(
+				Markers.MSG, "Buffer size {} is less than lower bound {}",
+				RunTimeConfig.formatSize(buffSize), RunTimeConfig.formatSize(BUFF_SIZE_LO)
+			);
 			buffSize = BUFF_SIZE_LO;
-		} else if(buffSize > BUFF_SIZE_HI) {
-			buffSize = BUFF_SIZE_HI;
 		}
 		LOG.debug(
 			Markers.MSG, "Determined buffer size of {} for \"{}\"",
