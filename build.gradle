@@ -731,7 +731,6 @@ task dist(type: Tar) {
 		def path = it.getAbsolutePath()
 		if(it.isFile() && (path.contains("jstl") || path.contains("log4j-web")
 				|| path.contains("webjars"))) {
-			print path
 			webappLibs.add(path)
 		}
 	}

@@ -116,6 +116,22 @@ $(document).ready(function() {
 		$("#run\\.mode").val(currElement.val());
 	});
 	//
+	$("#time input, #time select").on("change", function() {
+		var defaultCount = $("#load\\.limit\\.dataItemCount input").get(0).defaultValue;
+		$("#load\\.limit\\.dataItemCount input").val(defaultCount);
+		$("#backup-load\\.limit\\.dataItemCount").val(defaultCount);
+	});
+	//
+	$("#objects input").on("change", function() {
+		var defaultValue = $("#load\\.limit\\.time\\.value input").get(0).defaultValue;
+		$("#load\\.limit\\.time\\.value input").val(defaultValue);
+		$("#backup-load\\.limit\\.time\\.value").val(defaultValue);
+		//
+		var defaultUnit = $("#load\\.limit\\.time\\.unit input").get(0).defaultValue;
+		$("#load\\.limit\\.time\\.unit input").val(defaultUnit);
+		$("#backup-load\\.limit\\.time\\.unit").val(defaultUnit);
+	});
+	//
 	$("#base input, #base select").on("change", function() {
 		var currElement = $(this);
 		/*if (currElement.parents(".complex").length === 1) {
@@ -151,11 +167,17 @@ $(document).ready(function() {
 			$("#backup-run\\.time\\.input").val(splittedTimeString[0]);
 			$("#backup-run\\.time\\.select").val(splittedTimeString[1]);
 		}*/
-		$('input[data-pointer="' + $(this).parent().parent().attr("id") + '"]')
-				.val($(this).val()).change();
-		$('select[data-pointer="' + $(this).parent().parent().attr("id") + '"] option:contains(' + $(this)
+		var input = $('input[data-pointer="' + $(this).parent().parent().attr("id") + '"]')
+				.val($(this).val());
+		var select = $('select[data-pointer="' + $(this).parent().parent().attr("id") + '"] option:contains(' + $(this)
 				.val() + ')')
-			.attr('selected', 'selected').change();
+			.attr('selected', 'selected');
+		if ($(this).parent().parent().attr("id") !== "load.limit.time.value"
+			&& $(this).parent().parent().attr("id") !== "load.limit.time.unit"
+			&& $(this).parent().parent().attr("id") !== "load.limit.dataItemCount") {
+				input.change();
+				select.change();
+		}
 	});
 	$("#backup-data\\.size").on("change", function() {
 		$("#data\\.size\\.min input").val($(this).val());
