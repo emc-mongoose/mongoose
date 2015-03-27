@@ -6,7 +6,6 @@ import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
 import com.emc.mongoose.common.http.RequestTargetHost;
 import com.emc.mongoose.common.io.HTTPInputStream;
-import com.emc.mongoose.common.io.StreamUtils;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.logging.TraceLogger;
 // mongoose-core-api
