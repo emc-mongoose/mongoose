@@ -729,7 +729,9 @@ task dist(type: Tar) {
 	List webappLibs = new LinkedList()
 	configurations.webuiRuntime.collect {
 		def path = it.getAbsolutePath()
-		if(it.isFile() && (path.contains("jstl") || path.contains("log4j-web"))) {
+		if(it.isFile() && (path.contains("jstl") || path.contains("log4j-web")
+				|| path.contains("webjars"))) {
+			print path
 			webappLibs.add(path)
 		}
 	}
