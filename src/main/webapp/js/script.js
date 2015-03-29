@@ -570,6 +570,8 @@ function charts(chartsArray) {
 		runScenarioName: "scenario.name"
 	};
 	//
+	var CRITICAL_DOTS_COUNT = 1000;
+	//
 	var colorsList18 = [
 		"#0000CD",
 		"#006400",
@@ -622,7 +624,8 @@ function charts(chartsArray) {
 	//
 	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath) {
 		//  get some fields from runTimeConfig
-		var runMetricsPeriodSec = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec];
+		var runMetricsPeriodSec = parseInt(json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec]);
+		var currentMetricsPeriodSec = 0;
 		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
 		//
 		var x = d3.scale.linear()
@@ -787,13 +790,47 @@ function charts(chartsArray) {
 					break;
 			}
 			//
+			currentMetricsPeriodSec += runMetricsPeriodSec;
+			//
 			var parsedString = value.split(";")[splitIndex];
 			var first = parsedString.indexOf("(") + 1;
 			var second = parsedString.lastIndexOf(")");
 			value = parsedString.substring(first, second).split("/");
 			//
 			data.forEach(function(d, i) {
-				d.values.push({x: d.values.length * runMetricsPeriodSec, y: parseFloat(value[i])});
+				if (d.values.length === CRITICAL_DOTS_COUNT) {
+					var newDotsArray = [];
+					var step = 4;
+					var startOffset = 0;
+					var endOffset = 4;
+					while (endOffset <= CRITICAL_DOTS_COUNT) {
+						var slicedArray = d.values.slice(startOffset, endOffset);
+						var minElement = slicedArray[0];
+						var maxElement = slicedArray[0];
+						slicedArray.forEach(function(c) {
+							if (c.y < minElement.y) {
+								minElement = c;
+							}
+							if (c.y > maxElement.y) {
+								maxElement = c;
+							}
+						});
+						var startXCoord = slicedArray.shift().x;
+						var endXCoord = slicedArray.pop().x;
+						if (minElement.x < maxElement.x) {
+							newDotsArray.push({x: startXCoord, y: minElement.y});
+							newDotsArray.push({x: endXCoord, y: maxElement.y});
+						} else {
+							newDotsArray.push({x: startXCoord, y: maxElement.y});
+							newDotsArray.push({x: endXCoord, y: minElement.y});
+						}
+						startOffset = endOffset;
+						endOffset += step;
+					}
+					d.values = newDotsArray;
+					alert(d.values.length);
+				}
+				d.values.push({x: currentMetricsPeriodSec, y:parseFloat(value[i])});
 			});
 			//
 			x.domain([
