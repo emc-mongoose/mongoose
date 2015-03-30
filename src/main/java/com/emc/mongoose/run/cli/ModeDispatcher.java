@@ -8,8 +8,7 @@ import com.emc.mongoose.common.logging.TraceLogger;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //
-import com.emc.mongoose.run.cli.HumanFriendly;
-import com.emc.mongoose.run.scenario.RunTask;
+import com.emc.mongoose.run.scenario.Scenario;
 import com.emc.mongoose.run.webserver.RunJettyTask;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
@@ -88,7 +87,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_STANDALONE:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
-				new RunTask().run();
+				new Scenario().run();
 				break;
 			default:
 				throw new IllegalArgumentException(

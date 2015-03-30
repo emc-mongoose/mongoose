@@ -58,4 +58,5 @@ if __name__ == "__builtin__":
 	loadBuilder = init()
 	load = build(loadBuilder)
 	execute(load)
+	loadBuilder.getRequestConfig().close() # to exit normally
 	LOG.info(Markers.MSG, "Scenario end")

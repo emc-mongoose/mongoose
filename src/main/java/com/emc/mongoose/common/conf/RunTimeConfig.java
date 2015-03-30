@@ -282,7 +282,7 @@ implements Externalizable {
 	}
 	//
 	public final long getDataRingSize() {
-		return getSizeBytes("data.ring.size");
+		return getSizeBytes("data.buffer.ring.size");
 	}
 	//
 		public final int getRemotePortControl() {

@@ -3,7 +3,6 @@ package com.emc.mongoose.core.api.io.req.conf;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
