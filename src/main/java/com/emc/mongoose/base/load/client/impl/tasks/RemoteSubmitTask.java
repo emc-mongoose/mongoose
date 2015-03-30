@@ -7,8 +7,6 @@ import com.emc.mongoose.util.conf.RunTimeConfig;
 import com.emc.mongoose.util.logging.Markers;
 import com.emc.mongoose.util.collections.InstancePool;
 import com.emc.mongoose.util.collections.Reusable;
-import com.emc.mongoose.util.logging.TraceLogger;
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //

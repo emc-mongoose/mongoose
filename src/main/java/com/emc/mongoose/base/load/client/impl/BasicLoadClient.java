@@ -113,7 +113,8 @@ implements LoadClient<T> {
 		final long maxCount, final Producer<T> producer
 	) {
 		super(
-			remoteLoadMap.size(), remoteLoadMap.size(), 0, TimeUnit.SECONDS,
+			Math.min(0x10, remoteLoadMap.size()), Math.min(0x10, remoteLoadMap.size()),
+			0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				maxCount > 0 ?
 					Math.min(
@@ -174,7 +175,8 @@ implements LoadClient<T> {
 		}
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			20 + remoteLoadMap.size(), new WorkerFactory(String.format("%s-remoteMonitor", name))
+			19 + remoteLoadMap.size(),
+			new WorkerFactory(String.format("%s-remoteMonitor", name))
 		) { // make the shutdown method synchronized
 			@Override
 			public final synchronized void shutdown() {
