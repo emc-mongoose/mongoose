@@ -53,7 +53,6 @@ implements Runnable, Reusable {
 						LOG.debug(Markers.ERR, "Load service \"{}\" seems to be shut down already");
 						break;
 					} catch(final RemoteException e) {
-						e.printStackTrace(System.err);
 						rejectCount ++;
 						Thread.sleep(retryDelayMilliSec);
 					}

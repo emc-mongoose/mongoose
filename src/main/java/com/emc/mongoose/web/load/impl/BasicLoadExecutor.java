@@ -49,10 +49,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.12.14.
@@ -197,13 +197,13 @@ implements WSLoadExecutor<T> {
 	//
 	@Override
 	public final Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> ioTask)
-	throws RemoteException {
+	throws RejectedExecutionException {
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
 		Future<WSIOTask.Status> futureResult;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask.getHttpContext());
 		} catch(final IllegalStateException e) {
-			throw new RemoteException("I/O task submit failure", e);
+			throw new RejectedExecutionException("I/O task submit failure", e);
 		}
 		return futureResult;
 	}

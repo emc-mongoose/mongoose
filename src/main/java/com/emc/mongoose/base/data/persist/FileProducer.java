@@ -18,6 +18,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
+import java.util.concurrent.RejectedExecutionException;
 /**
  Created by kurila on 12.05.14.
  A data item producer which constructs data items while reading the special input file.
@@ -84,7 +85,10 @@ implements Producer<T> {
 						);
 						break;
 					} catch(final Exception e) {
-						if(consumer.getMaxCount() > dataItemsCount) {
+						if(
+							consumer.getMaxCount() > dataItemsCount &&
+							!RejectedExecutionException.class.isInstance(e)
+						) {
 							TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit data item");
 							break;
 						} else {

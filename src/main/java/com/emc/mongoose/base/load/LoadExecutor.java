@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Marker;
 //
 import java.rmi.RemoteException;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 28.04.14.
@@ -49,7 +50,7 @@ extends Producer<T>, Consumer<T> {
 	throws RemoteException;
 	//
 	Future<AsyncIOTask.Status> submit(final AsyncIOTask<T> request)
-	throws RemoteException;
+	throws RemoteException, RejectedExecutionException;
 	//
 	void handleResult(final AsyncIOTask<T> task, AsyncIOTask.Status status)
 	throws RemoteException;
