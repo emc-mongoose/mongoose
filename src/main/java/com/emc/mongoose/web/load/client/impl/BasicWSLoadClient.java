@@ -1,5 +1,6 @@
 package com.emc.mongoose.web.load.client.impl;
 //
+import com.emc.mongoose.base.load.Producer;
 import com.emc.mongoose.base.load.client.impl.BasicLoadClient;
 import com.emc.mongoose.base.load.server.LoadSvc;
 import com.emc.mongoose.web.api.WSRequestConfig;
@@ -30,10 +31,10 @@ implements WSLoadClient<T> {
 	public BasicWSLoadClient(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
 		final Map<String, JMXConnector> remoteJMXConnMap, final WSRequestConfig<T> reqConf,
-		final long maxCount
+		final long maxCount, final Producer<T> producer
 	) {
 		super(
-			runTimeConfig, remoteLoadMap, remoteJMXConnMap, reqConf, maxCount
+			runTimeConfig, remoteLoadMap, remoteJMXConnMap, reqConf, maxCount, producer
 		);
 	}
 	//

@@ -109,6 +109,7 @@ implements LoadBuilderClient<T, U> {
 					Files.isReadable(Paths.get(dataMetaInfoFile))
 				) {
 				setInputFile(dataMetaInfoFile);
+				reqConf.setAnyDataProducerEnabled(false);
 			}
 		} catch(final NoSuchElementException e) {
 			LOG.warn(Markers.ERR, "No \"data.src.fpath\" property available");

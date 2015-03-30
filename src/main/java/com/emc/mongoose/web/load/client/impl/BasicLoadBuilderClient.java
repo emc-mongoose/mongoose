@@ -1,6 +1,5 @@
 package com.emc.mongoose.web.load.client.impl;
 //
-import com.emc.mongoose.base.load.LoadExecutor;
 import com.emc.mongoose.base.load.client.impl.LoadBuilderClientBase;
 import com.emc.mongoose.base.load.server.LoadBuilderSvc;
 import com.emc.mongoose.util.logging.TraceLogger;
@@ -98,7 +97,7 @@ implements WSLoadBuilderClient<T, U> {
 		final Map<String, JMXConnector> remoteJMXConnMap = new ConcurrentHashMap<>();
 		//
 		LoadBuilderSvc<T, U> nextBuilder;
-		LoadSvc<T> nextLoad = null;
+		LoadSvc<T> nextLoad;
 		//
 		String svcJMXAddr;
 		JMXServiceURL nextJMXURL;
@@ -145,18 +144,17 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		newLoadClient = new BasicWSLoadClient<>(
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
-			runTimeConfig.getDataCount()
+			runTimeConfig.getDataCount(), srcProducer
 		);
-		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer != null && srcProducer.getConsumer() == null) {
 			LOG.debug(
 				Markers.MSG, "Append consumer {} for producer {}",
 				newLoadClient.getName(), srcProducer.getName()
 			);
 			srcProducer.setConsumer(newLoadClient);
-			srcProducer.start();
-			srcProducer = null;
 		}
+		srcProducer = null;
+		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		//
 		return (U) newLoadClient;
 	}

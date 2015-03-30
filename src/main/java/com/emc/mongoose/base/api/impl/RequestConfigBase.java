@@ -65,7 +65,7 @@ implements RequestConfig<T> {
 			setDataSource(reqConf2Clone.getDataSource());
 			setRetries(reqConf2Clone.getRetries());
 			setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
-			//setAddr(reqConf2Clone.getAddr());
+			setAnyDataProducerEnabled(reqConf2Clone.getAnyDataProducerEnabled());
 			setAPI(reqConf2Clone.getAPI());
 			setUserName(reqConf2Clone.getUserName());
 			setPort(reqConf2Clone.getPort());
@@ -84,7 +84,7 @@ implements RequestConfig<T> {
 			.setDataSource(dataSrc)
 			.setRetries(retryFlag)
 			.setVerifyContentFlag(verifyContentFlag)
-			//.setAddr(addr)
+			.setAnyDataProducerEnabled(anyDataProducerEnabled)
 			.setAPI(api)
 			.setUserName(userName)
 			.setPort(port)
@@ -222,6 +222,11 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
+	public final boolean getAnyDataProducerEnabled() {
+		return anyDataProducerEnabled;
+	}
+	//
+	@Override
 	public final RequestConfigBase<T> setAnyDataProducerEnabled(final boolean enabledFlag) {
 		this.anyDataProducerEnabled = enabledFlag;
 		return this;
@@ -272,6 +277,7 @@ implements RequestConfig<T> {
 		out.writeObject(getSecret());
 		out.writeObject(getDataSource());
 		out.writeBoolean(getRetries());
+		out.writeBoolean(getAnyDataProducerEnabled());
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -291,6 +297,8 @@ implements RequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
 		setRetries(Boolean.class.cast(in.readBoolean()));
 		LOG.trace(Markers.MSG, "Got retry flag {}", retryFlag);
+		setAnyDataProducerEnabled(Boolean.class.cast(in.readBoolean()));
+		LOG.trace(Markers.MSG, "Got any producer enabled flag {}", anyDataProducerEnabled);
 	}
 	//
 	@Override

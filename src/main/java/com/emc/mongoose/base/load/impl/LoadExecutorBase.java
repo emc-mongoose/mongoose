@@ -84,14 +84,22 @@ implements LoadExecutor<T> {
 			new LinkedBlockingQueue<Runnable>(
 				maxCount > 0 ?
 					(sizeMin == 0 && sizeMax == 0) ?
-						(int) Math.min(maxCount, Integer.MAX_VALUE) :
-						Math.max(0x10, (int) Math.min(maxCount, Integer.MAX_VALUE / (sizeMin + sizeMax)))
+						(int) Math.min(maxCount, runTimeConfig.getRunRequestQueueSize()) :
+						Math.max(
+							0x10,
+							(int) Math.min(
+								maxCount,
+								runTimeConfig.getRunRequestQueueSize() / (sizeMin + sizeMax)
+							)
+						)
 					:
 					(sizeMin == 0 && sizeMax == 0) ?
-						Integer.MAX_VALUE :
-						Math.max(0x10, (int) (Integer.MAX_VALUE / (sizeMin + sizeMax)))
+						runTimeConfig.getRunRequestQueueSize() :
+						Math.max(
+							0x10,
+							(int) (runTimeConfig.getRunRequestQueueSize() / (sizeMin + sizeMax))
+						)
 			)
-			//new WorkerFactory("submitWorker")
 		);
 		//
 		final int loadNum = LAST_INSTANCE_NUM.getAndIncrement();

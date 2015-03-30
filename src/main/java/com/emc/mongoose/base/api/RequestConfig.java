@@ -60,6 +60,7 @@ extends Externalizable, Cloneable, Closeable {
 	throws InterruptedException;
 	//
 	RequestConfig<T> setAnyDataProducerEnabled(final boolean enabled);
+	boolean getAnyDataProducerEnabled();
 	Producer<T> getAnyDataProducer(final long maxCount, final LoadExecutor<T> loadExecutor);
 	//
 	void configureStorage(final LoadExecutor<T> loadExecutor)

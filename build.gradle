@@ -35,6 +35,9 @@ configurations {
 	runtime {
 		extendsFrom compile
 	}
+	providedCompile {
+		extendsFrom compile
+	}
 }
 
 repositories {
