@@ -173,6 +173,9 @@ sourceSets {
 		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
 	}
+	providedCompile {
+		extendsFrom compile
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

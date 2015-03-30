@@ -48,7 +48,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.12.14.
@@ -66,11 +69,12 @@ implements WSLoadExecutor<T> {
 	public BasicWSLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
+		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq,
+	    final int queueSize
 	) {
 		super(
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
-			sizeMin, sizeMax, sizeBias, countUpdPerReq
+			sizeMin, sizeMax, sizeBias, countUpdPerReq, queueSize
 		);
 		//
 		final int totalConnCount = connCountPerNode * storageNodeCount;
@@ -99,8 +103,8 @@ implements WSLoadExecutor<T> {
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(8192)
-			.setFragmentSizeHint(4096)
+			.setBufferSize(BUFF_SIZE_LO > 0x1000 ? 0x2000 : 2 * BUFF_SIZE_LO)
+			.setFragmentSizeHint(BUFF_SIZE_LO > 0x1000 ? 0x1000 : BUFF_SIZE_LO)
 			.build();
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final int buffSize = this.reqConfigCopy.getBuffSize();
@@ -200,7 +204,8 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public final Future<IOTask.Status> submit(final IOTask<T> ioTask) {
+	public final Future<IOTask.Status> submit(final IOTask<T> ioTask)
+	throws RejectedExecutionException {
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
 		Future<WSIOTask.Status> futureResult = null;
 		try {
@@ -209,6 +214,7 @@ implements WSLoadExecutor<T> {
 			TraceLogger.failure(
 				LOG, Level.WARN, e, "Failed to submit the HTTP request for execution"
 			);
+			throw new RejectedExecutionException("I/O task submit failure", e);
 		}
 		return futureResult;
 	}

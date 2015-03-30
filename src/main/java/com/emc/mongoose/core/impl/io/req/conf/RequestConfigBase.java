@@ -244,9 +244,6 @@ implements RequestConfig<T> {
 	//
 	@Override
 	public final RequestConfigBase<T> setAnyDataProducerEnabled(final boolean enabledFlag) {
-		LOG.debug(
-			Markers.MSG, "req conf {}: set any data producer enabled to {}", hashCode(), enabledFlag
-		);
 		this.anyDataProducerEnabled = enabledFlag;
 		return this;
 	}
@@ -288,6 +285,7 @@ implements RequestConfig<T> {
 		out.writeObject(getNameSpace());
 		out.writeObject(getDataSource());
 		out.writeBoolean(getRetries());
+		out.writeBoolean(getAnyDataProducerEnabled());
 		out.writeBoolean(getVerifyContentFlag());
 		out.writeBoolean(getAnyDataProducerEnabled());
 	}
@@ -313,11 +311,10 @@ implements RequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
 		setRetries(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got retry flag {}", retryFlag);
+		setAnyDataProducerEnabled(Boolean.class.cast(in.readBoolean()));
+		LOG.trace(Markers.MSG, "Got any producer enabled flag {}", anyDataProducerEnabled);
 		setVerifyContentFlag(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got verify content flag {}", retryFlag);
-		setAnyDataProducerEnabled(in.readBoolean());
-		LOG.trace(Markers.MSG, "Got any data producer enabled flag {}", anyDataProducerEnabled);
-
 	}
 	//
 	@Override
