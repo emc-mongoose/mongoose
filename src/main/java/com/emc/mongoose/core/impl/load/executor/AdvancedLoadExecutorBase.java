@@ -62,7 +62,7 @@ extends LoadExecutorBase<T> {
 			Markers.MSG, "Determined buffer size of {} for \"{}\"",
 			RunTimeConfig.formatSize(buffSize), getName()
 		);
-		this.reqConfig.setBuffSize(buffSize);
+		this.reqConfigCopy.setBuffSize(buffSize);
 		//
 		switch(loadType) {
 			case APPEND:

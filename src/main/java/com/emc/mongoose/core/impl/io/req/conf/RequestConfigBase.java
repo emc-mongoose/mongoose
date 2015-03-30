@@ -59,7 +59,7 @@ implements RequestConfig<T> {
 		scheme = runTimeConfig.getStorageProto();
 		port = runTimeConfig.getApiTypePort(api);
 		nameSpace = runTimeConfig.getStorageNameSpace();
-		buffSize = (int) runTimeConfig.getDataPageSize();
+		buffSize = (int) runTimeConfig.getDataBufferSize();
 	}
 	//
 	protected RequestConfigBase(final RequestConfig<T> reqConf2Clone) {
@@ -263,17 +263,6 @@ implements RequestConfig<T> {
 		setRetries(this.runTimeConfig.getRunRequestRetries());
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
 		setBuffSize((int) this.runTimeConfig.getDataBufferSize());
-		return this;
-	}
-	//
-	@Override
-	public final int getLoadNumber() {
-		return loadNumber;
-	}
-	//
-	@Override
-	public final RequestConfig<T> setLoadNumber(int loadNumber) {
-		this.loadNumber = loadNumber;
 		return this;
 	}
 	//

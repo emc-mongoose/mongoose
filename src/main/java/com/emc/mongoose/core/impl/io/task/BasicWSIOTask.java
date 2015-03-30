@@ -14,6 +14,7 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -466,7 +467,7 @@ implements WSIOTask<T> {
 		if(respStatusCode < 200 || respStatusCode >= 300) { // failure
 			try(
 				final BufferedReader contentStreamBuff = new BufferedReader(
-					new InputStreamReader(ContentInputStream.getInstance(in, ioCtl))
+					new InputStreamReader(HTTPInputStream.getInstance(in, ioCtl))
 				)
 			) {
 				final StrBuilder msgBuilder = new StrBuilder();

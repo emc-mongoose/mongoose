@@ -43,6 +43,15 @@ import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.HeaderGroup;
+import org.apache.http.protocol.HttpCoreContext;
+import org.apache.http.protocol.HttpDateGenerator;
+import org.apache.http.protocol.HttpProcessor;
+import org.apache.http.protocol.HttpProcessorBuilder;
+import org.apache.http.protocol.RequestConnControl;
+import org.apache.http.protocol.RequestContent;
+import org.apache.http.protocol.RequestUserAgent;
+//
+import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
@@ -54,13 +63,6 @@ import org.apache.http.nio.protocol.HttpAsyncRequester;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.protocol.HttpCoreContext;
-import org.apache.http.protocol.HttpDateGenerator;
-import org.apache.http.protocol.HttpProcessor;
-import org.apache.http.protocol.HttpProcessorBuilder;
-import org.apache.http.protocol.RequestConnControl;
-import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestUserAgent;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -552,10 +554,11 @@ implements WSRequestConfig<T> {
 		boolean ok = true;
 		try {
 			if(dataItem != null) {
-				if(loadType == AsyncIOTask.Type.READ) { // read
+				if(loadType == IOTask.Type.READ) { // read
 					if(verifyContentFlag) { // read and do verify
-						try(final ContentInputStream
-							    inStream = ContentInputStream.getInstance(in, ioCtl)) {
+						try(
+							final HTTPInputStream inStream = HTTPInputStream.getInstance(in, ioCtl)
+						) {
 							ok = dataItem.isContentEqualTo(inStream);
 						} catch(final InterruptedException e) {
 							// ignore
