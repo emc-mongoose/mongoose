@@ -396,83 +396,92 @@ function configureWebSocketConnection(location, countOfRecords) {
 		PERF_SUM: "perf-sum-csv",
 		PERF_AVG: "perf-avg-csv"
 	};
+	function processJsonLogEvents(chartsArray, json) {
+		var runId = json.contextMap["run.id"];
+		var runMetricsPeriodSec = json.contextMap["load.metricsPeriodSec"];
+		var scenarioChainLoad = json.contextMap["scenario.type.chain.load"];
+		var rampupThreadCounts = json.contextMap["scenario.type.rampup.threadCounts"];
+		var loadRampupSizes = json.contextMap["scenario.type.rampup.sizes"];
+		//
+		var entry = runId.split(".").join("_");
+		if (!json.hasOwnProperty("marker") || !json.loggerName) {
+			return;
+		}
+		if (json.marker === null)
+			return;
+		var isContains = false;
+		chartsArray.forEach(function(d) {
+			if (d["run.id"] === runId) {
+				isContains = true;
+			}
+		});
+		if (!isContains) {
+			if (json.contextMap["scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+				charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
+			}
+		}
+		switch (json.marker.name) {
+			case MARKERS.ERR:
+				appendMessageToTable(entry, LOG_FILES.ERR, countOfRecords, json);
+				break;
+			case MARKERS.MSG:
+				appendMessageToTable(entry, LOG_FILES.MSG, countOfRecords, json);
+				break;
+			case MARKERS.PERF_SUM:
+				appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
+				if (json.contextMap["scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+					//alert(json.contextMap["currentSize"]);
+					chartsArray.forEach(function(d) {
+						//console.log(d);
+						if (d["run.id"] === runId) {
+							d.charts.forEach(function(c) {
+								c.update(json);
+							});
+						}
+					});
+				}
+				/*if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
+				 charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
+				 }*/
+				break;
+			case MARKERS.PERF_AVG:
+				appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
+				var isFound = false;
+				chartsArray.forEach(function(d) {
+					if (d["run.id"] === runId) {
+						isFound = true;
+						d.charts.forEach(function(c) {
+							c.update(json);
+						});
+					}
+				});
+				if (!isFound) {
+					switch(json.contextMap["scenario.name"]) {
+						case RUN_SCENARIO_NAME.single:
+							charts(chartsArray).single(json);
+							break;
+						case RUN_SCENARIO_NAME.chain:
+							if (json.threadName.indexOf("remote") > -1) {
+								json.threadName = json.threadName.substring(0, json.threadName.lastIndexOf("-"));
+							}
+							charts(chartsArray).chain(runId, runMetricsPeriodSec, json.threadName);
+							break;
+					}
+				}
+				break;
+		}
+	}
 	return {
 		connect: function(chartsArray) {
 			this.ws = new WebSocket(location);
 			this.ws.onmessage = function(message) {
 				var json = JSON.parse(message.data);
-				var runId = json.contextMap["run.id"];
-				var runMetricsPeriodSec = json.contextMap["load.metricsPeriodSec"];
-				var scenarioChainLoad = json.contextMap["scenario.type.chain.load"];
-				var rampupThreadCounts = json.contextMap["scenario.type.rampup.threadCounts"];
-				var loadRampupSizes = json.contextMap["scenario.type.rampup.sizes"];
-				//
-				var entry = runId.split(".").join("_");
-				if (!json.hasOwnProperty("marker") || !json.loggerName) {
-					return;
-				}
-				if (json.marker === null)
-					return;
-				var isContains = false;
-				chartsArray.forEach(function(d) {
-					if (d["run.id"] === runId) {
-						isContains = true;
-					}
-				});
-				if (!isContains) {
-					if (json.contextMap["scenario.name"] === RUN_SCENARIO_NAME.rampup) {
-						charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
-					}
-				}
-				switch (json.marker.name) {
-					case MARKERS.ERR:
-						appendMessageToTable(entry, LOG_FILES.ERR, countOfRecords, json);
-						break;
-					case MARKERS.MSG:
-						appendMessageToTable(entry, LOG_FILES.MSG, countOfRecords, json);
-						break;
-					case MARKERS.PERF_SUM:
-						appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
-						if (json.contextMap["scenario.name"] === RUN_SCENARIO_NAME.rampup) {
-							//alert(json.contextMap["currentSize"]);
-							chartsArray.forEach(function(d) {
-								//console.log(d);
-								if (d["run.id"] === runId) {
-									d.charts.forEach(function(c) {
-										c.update(json);
-									});
-								}
-							});
-						}
-						/*if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
-					        charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
-					    }*/
-						break;
-					case MARKERS.PERF_AVG:
-						appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
-						var isFound = false;
-						chartsArray.forEach(function(d) {
-							if (d["run.id"] === runId) {
-								isFound = true;
-								d.charts.forEach(function(c) {
-									c.update(json);
-								});
-							}
-						});
-						if (!isFound) {
-							switch(json.contextMap["scenario.name"]) {
-								case RUN_SCENARIO_NAME.single:
-									charts(chartsArray).single(json);
-									break;
-								case RUN_SCENARIO_NAME.chain:
-									if (json.threadName.indexOf("remote") > -1) {
-										json.threadName = json.threadName.substring(0, json.threadName.lastIndexOf("-"));
-									}
-									charts(chartsArray).chain(runId, runMetricsPeriodSec, json.threadName);
-									break;
-							}
-						}
-						break;
+				if ($.isArray(json)) {
+					json.forEach(function(d) {
+						processJsonLogEvents(chartsArray, d);
+					});
+				} else {
+					processJsonLogEvents(chartsArray, json);
 				}
 			};
 		}
@@ -828,9 +837,8 @@ function charts(chartsArray) {
 						endOffset += step;
 					}
 					d.values = newDotsArray;
-					alert(d.values.length);
 				}
-				d.values.push({x: currentMetricsPeriodSec, y:parseFloat(value[i])});
+				d.values.push({x: currentMetricsPeriodSec, y: parseFloat(value[i])});
 			});
 			//
 			x.domain([
@@ -940,7 +948,8 @@ function charts(chartsArray) {
 									{x: 0, y: 0}
 								]
 							}
-						]
+						],
+						currentRunMetricsPeriodSec: 0
 					}
 				];
 				var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
@@ -977,7 +986,8 @@ function charts(chartsArray) {
 									{x: 0, y: 0}
 								]
 							}
-						]
+						],
+						currentRunMetricsPeriodSec: 0
 					}
 				];
 				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds", "bandwidth[obj/s]", "#bw-" + runId.split(".").join("_"));
@@ -989,6 +999,7 @@ function charts(chartsArray) {
 			}
 			//
 			function drawChart(data, chartTitle, xAxisLabel, yAxisLabel, path) {
+				//
 				var x = d3.scale.linear()
 					.domain([
 						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
@@ -1283,12 +1294,46 @@ function charts(chartsArray) {
 					data.forEach(function(d) {
 						if (d.loadType === loadType) {
 							isFound = true;
+							d.currentRunMetricsPeriodSec += parseInt(runMetricsPeriodSec);
 							d.charts.forEach(function(c, i) {
-								c.values.push({x: c.values.length * runMetricsPeriodSec, y: parseFloat(value[i])});
+								if (c.values.length === CRITICAL_DOTS_COUNT) {
+									var newDotsArray = [];
+									var step = 4;
+									var startOffset = 0;
+									var endOffset = 4;
+									while (endOffset <= CRITICAL_DOTS_COUNT) {
+										var slicedArray = c.values.slice(startOffset, endOffset);
+										var minElement = slicedArray[0];
+										var maxElement = slicedArray[0];
+										slicedArray.forEach(function(v) {
+											if (v.y < minElement.y) {
+												minElement = v;
+											}
+											if (v.y > maxElement.y) {
+												maxElement = v;
+											}
+										});
+										var startXCoord = slicedArray.shift().x;
+										var endXCoord = slicedArray.pop().x;
+										if (minElement.x < maxElement.x) {
+											newDotsArray.push({x: startXCoord, y: minElement.y});
+											newDotsArray.push({x: endXCoord, y: maxElement.y});
+										} else {
+											newDotsArray.push({x: startXCoord, y: maxElement.y});
+											newDotsArray.push({x: endXCoord, y: minElement.y});
+										}
+										startOffset = endOffset;
+										endOffset += step;
+									}
+									c.values = newDotsArray;
+								}
+								c.values.push({x: d.currentRunMetricsPeriodSec, y: parseFloat(value[i])});
 							})
 						}
 					});
 					if (!isFound) {
+						//currentMetricsPeriodSec = 0;
+						//
 						var d = {
 							loadType: loadType,
 							charts: [
@@ -1313,7 +1358,8 @@ function charts(chartsArray) {
 										{x: 0, y: 0}
 									]
 								}
-							]
+							],
+							currentRunMetricsPeriodSec: 0
 						};
 						/*d.charts.forEach(function(c, i) {
 							c.values.push({x: c.values.length * 10, y: parseFloat(value[i])})

@@ -5,6 +5,8 @@ import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.webui.websockets.WebSocketLogListener;
 import com.emc.mongoose.core.impl.util.RunTimeConfig;
 //
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
 import org.apache.logging.log4j.Level;
@@ -21,6 +23,7 @@ import org.apache.logging.log4j.core.layout.SerializedLayout;
 import org.apache.logging.log4j.status.StatusLogger;
 //
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -80,18 +83,20 @@ extends AbstractAppender {
 	}
 	//
 	public static void sendPreviousLogs(final WebSocketLogListener listener) {
+		final List<LogEvent> previousLogs = new ArrayList<>();
 		for (final CircularFifoQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
 			for (final LogEvent logEvent : queue) {
-				listener.sendMessage(logEvent);
+				previousLogs.add(logEvent);
 			}
 		}
+		listener.sendMessage(previousLogs);
 	}
 	//
 	private final String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
 	//
 	@Override
 	public final void append(final LogEvent event) {
-		if(ENABLED_FLAG) {
+		if(ENABLED_FLAG && !LISTENERS.isEmpty()) {
 			final String currRunId;
 			final Map<String, String> evtCtxMap = event.getContextMap();
 			if(evtCtxMap.containsKey(KEY_RUN_ID)) {

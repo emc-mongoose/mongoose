@@ -21,9 +21,9 @@ public abstract class CommonServlet extends HttpServlet {
 	private final static Logger LOG = LogManager.getLogger();
 	private static volatile RunTimeConfig LAST_RUN_TIME_CONFIG;
 	//
-	public static volatile ConcurrentHashMap<String, Thread> THREADS_MAP;
-	public static volatile ConcurrentHashMap<String, Boolean> STOPPED_RUN_MODES;
-	public static volatile ConcurrentHashMap<String, String> CHARTS_MAP;
+	public static ConcurrentHashMap<String, Thread> THREADS_MAP;
+	public static ConcurrentHashMap<String, Boolean> STOPPED_RUN_MODES;
+	public static ConcurrentHashMap<String, String> CHARTS_MAP;
 	//
 	protected RunTimeConfig runTimeConfig;
 	//
