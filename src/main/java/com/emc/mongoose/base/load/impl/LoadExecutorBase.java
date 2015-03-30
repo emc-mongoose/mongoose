@@ -77,29 +77,11 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias
+		final long sizeMin, final long sizeMax, final float sizeBias, final int queueSize
 	) {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(
-				maxCount > 0 ?
-					(sizeMin == 0 && sizeMax == 0) ?
-						(int) Math.min(maxCount, runTimeConfig.getRunRequestQueueSize()) :
-						Math.max(
-							0x10,
-							(int) Math.min(
-								maxCount,
-								runTimeConfig.getRunRequestQueueSize() / (sizeMin + sizeMax)
-							)
-						)
-					:
-					(sizeMin == 0 && sizeMax == 0) ?
-						runTimeConfig.getRunRequestQueueSize() :
-						Math.max(
-							0x10,
-							(int) (runTimeConfig.getRunRequestQueueSize() / (sizeMin + sizeMax))
-						)
-			)
+			new LinkedBlockingQueue<Runnable>(queueSize)
 		);
 		//
 		final int loadNum = LAST_INSTANCE_NUM.getAndIncrement();
@@ -128,7 +110,7 @@ implements LoadExecutor<T> {
 			this.reqConfig = reqConfigCopy;
 		}
 		loadType = reqConfig.getLoadType();
-//
+		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemoteExportPort());

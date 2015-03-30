@@ -80,9 +80,27 @@ implements WSLoadBuilderSvc<T, U> {
 				)
 			);
 		}
+		// selecting the load job executor's queue size
+		long queueSize = (minObjSize + maxObjSize) / 2;
+		queueSize = queueSize == 0 ?
+			LoadExecutor.BUFF_SIZE_LO :
+			queueSize > LoadExecutor.BUFF_SIZE_HI ? LoadExecutor.BUFF_SIZE_HI : queueSize;
+		queueSize = Runtime.getRuntime().freeMemory() / queueSize;
+		if(queueSize < 1) {
+			throw new IllegalStateException(
+				String.format(
+					"Not enough free memory for load job execution: %s",
+					RunTimeConfig.formatSize(Runtime.getRuntime().freeMemory())
+				)
+			);
+		} else if(queueSize > Integer.MAX_VALUE) {
+			queueSize = Integer.MAX_VALUE;
+		}
+		LOG.debug(Markers.MSG, "Queue size for \"{}\" load job is {}", reqConf, queueSize);
+		//
 		return (U) new BasicWSLoadSvc<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
-			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem
+			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem, (int) queueSize
 		);
 	}
 	//

@@ -70,11 +70,12 @@ implements WSLoadExecutor<T> {
 	public BasicLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
+		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq,
+	    final int queueSize
 	) {
 		super(
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
-			sizeMin, sizeMax, sizeBias, countUpdPerReq
+			sizeMin, sizeMax, sizeBias, countUpdPerReq, queueSize
 		);
 		//
 		final int totalConnCount = connCountPerNode * storageNodeCount;
