@@ -101,10 +101,12 @@ extends DefaultHandler {
 					} else {
 						endDocument();
 					}
-				} catch(final RemoteException | RejectedExecutionException e) {
+				} catch(final RemoteException e) {
 					TraceLogger.failure(
 						LOG, Level.WARN, e, "Failed to submit new data object to the consumer"
 					);
+				} catch(final  RejectedExecutionException e) {
+					TraceLogger.failure(LOG, Level.DEBUG, e, "Consumer rejected the data object");
 				} catch(final InterruptedException e) {
 					endDocument();
 				} catch(final NumberFormatException e) {

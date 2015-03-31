@@ -185,4 +185,6 @@ if __name__ == "__builtin__":
 		except Throwable as e:
 			TraceLogger.failure(LOG, Level.WARN, e, "Chain execution failure")
 	#
+	loadBuilder.getRequestConfig().close()
+	#
 	LOG.info(Markers.MSG, "Scenario end")

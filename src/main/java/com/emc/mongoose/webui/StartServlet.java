@@ -12,7 +12,7 @@ import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 //
 import com.emc.mongoose.storage.mock.impl.cinderella.Main;
 //
-import com.emc.mongoose.run.scenario.RunTask;
+import com.emc.mongoose.run.scenario.Scenario;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -150,7 +150,7 @@ public final class StartServlet extends CommonServlet {
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getScenarioName());
 				//
 				LOG.debug(Markers.MSG, message);
-				new RunTask().run();
+				new Scenario().run();
 			}
 			//
 			@Override

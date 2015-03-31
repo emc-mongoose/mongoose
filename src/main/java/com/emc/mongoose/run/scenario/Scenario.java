@@ -26,7 +26,7 @@ import javax.script.ScriptException;
  Created by kurila on 12.05.14.
  A scenario runner utility class.
  */
-public final class RunTask
+public final class Scenario
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();

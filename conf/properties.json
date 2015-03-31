@@ -92,7 +92,7 @@
                 "offset": 36
             },
             "buffer": {
-                "size": "4KB",
+                "size": "1KB",
                 "ring": {
                     "seed": "7a42d9c483244167",
                     "size": "1MB"

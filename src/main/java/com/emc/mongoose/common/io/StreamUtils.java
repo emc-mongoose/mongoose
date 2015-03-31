@@ -15,12 +15,13 @@ public final class StreamUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public static void skipStreamDataQuietly(final InputStream contentStream, final int maxPageSize) {
-		final byte buff[] = new byte[maxPageSize];
+	public static void consumeQuietly(final InputStream contentStream, final int buffSize) {
+		final byte buff[] = new byte[buffSize];
 		try {
 			while(contentStream.read(buff) != -1);
 		} catch(final IOException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
 		}
 	}
+	//
 }

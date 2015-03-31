@@ -58,5 +58,7 @@ def execute(loadBuilder, rampupParams=((),(),())):
 			TraceLogger.failure(LOG, Level.ERROR, e, "Determining the next data item size failure")
 #
 if __name__ == "__builtin__":
-	execute(loadBuilder=loadBuilderInit(), rampupParams=init())
+	loadBuilder = loadBuilderInit()
+	execute(loadBuilder=loadBuilder, rampupParams=init())
+	loadBuilder.getRequestConfig().close()
 	LOG.info(Markers.MSG, "Scenario end")
