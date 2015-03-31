@@ -1,8 +1,6 @@
 package com.emc.mongoose.common.pool;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.Settings;
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +32,7 @@ extends TreeSet<T> {
 			try {
 				instance = instanceCls.newInstance();
 			} catch(final NullPointerException|InstantiationException|IllegalAccessException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e, "Reusable instantiation failure");
+				LogUtil.failure(LOG, Level.ERROR, e, "Reusable instantiation failure");
 			}
 		} else {
 			instance = first();
@@ -52,7 +50,7 @@ extends TreeSet<T> {
 		if(instance != null) {
 			if(!add(instance)) {
 				LOG.debug(
-					Markers.ERR, "The \"{}\" already contains instance \"{}\"",
+					LogUtil.ERR, "The \"{}\" already contains instance \"{}\"",
 					toString(), instance.hashCode()
 				);
 			}
@@ -62,7 +60,7 @@ extends TreeSet<T> {
 	@Override
 	public final String toString() {
 		return String.format(
-			Settings.LOCALE_DEFAULT, "%s: %d instances are in the pool",
+			LogUtil.LOCALE_DEFAULT, "%s: %d instances are in the pool",
 			instanceCls.getCanonicalName(), size()
 		);
 	}

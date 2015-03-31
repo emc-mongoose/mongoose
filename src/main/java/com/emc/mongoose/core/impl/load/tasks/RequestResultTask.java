@@ -5,8 +5,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.pool.InstancePool;
 import com.emc.mongoose.common.pool.Reusable;
 //
@@ -41,18 +40,18 @@ implements Runnable, Reusable {
 			try {
 				ioTaskStatus = futureResult.get(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 			} catch(final InterruptedException | CancellationException e) {
-				TraceLogger.failure(LOG, Level.TRACE, e, "Request has been cancelled");
+				LogUtil.failure(LOG, Level.TRACE, e, "Request has been cancelled");
 			} catch(final ExecutionException e) {
-				TraceLogger.failure(
+				LogUtil.failure(
 					LOG, Level.DEBUG, e,
 					String.format("Task #%d execution failure", ioTask.hashCode())
 				);
 			} catch(final Exception e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");
+				LogUtil.failure(LOG, Level.WARN, e, "Unexpected failure");
 			}
-			if(LOG.isTraceEnabled(Markers.MSG)) {
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(
-					Markers.MSG, "Task #{} done w/ result {}",
+					LogUtil.MSG, "Task #{} done w/ result {}",
 					ioTask.hashCode(), ioTaskStatus.name()
 				);
 			}
@@ -60,11 +59,11 @@ implements Runnable, Reusable {
 				try {
 					executor.handleResult(ioTask, ioTaskStatus);
 				} catch(final IOException e) {
-					TraceLogger.failure(LOG, Level.DEBUG, e, "Request result handling failed");
+					LogUtil.failure(LOG, Level.DEBUG, e, "Request result handling failed");
 				}
 			}
 		} else {
-			LOG.warn(Markers.ERR, "Null future result");
+			LOG.warn(LogUtil.ERR, "Null future result");
 		}
 		release();
 	}

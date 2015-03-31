@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.io.task;
 //
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.pool.Reusable;
 import com.emc.mongoose.common.pool.InstancePool;
 //
@@ -88,7 +88,7 @@ implements IOTask<T> {
 			reqTimeDone < reqTimeStart
 		) {
 			LOG.debug(
-				Markers.ERR, String.format(
+				LogUtil.ERR, String.format(
 					FMT_PERF_TRACE_INVALID, nodeAddr, dataItemId == null ? Constants.EMPTY : dataItemId,
 					transferSize, status.code,
 					reqTimeStart, reqTimeDone, respTimeStart, respTimeDone
@@ -96,7 +96,7 @@ implements IOTask<T> {
 			);
 		} else {
 			LOG.info(
-				Markers.PERF_TRACE, String.format(
+				LogUtil.PERF_TRACE, String.format(
 					FMT_PERF_TRACE, nodeAddr, dataItemId == null ? Constants.EMPTY : dataItemId,
 					transferSize, status.code,
 					reqTimeStart, respTimeStart - reqTimeDone, respTimeDone - reqTimeStart

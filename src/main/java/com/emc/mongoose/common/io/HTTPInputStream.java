@@ -1,6 +1,5 @@
 package com.emc.mongoose.common.io;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.TraceLogger;
 import com.emc.mongoose.common.pool.Reusable;
 import com.emc.mongoose.common.pool.InstancePool;
 //

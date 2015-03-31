@@ -6,7 +6,7 @@ import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,25 +42,25 @@ extends LoadExecutorBase<T> {
 		//
 		int buffSize;
 		if(sizeMin == sizeMax) {
-			LOG.debug(Markers.MSG, "Fixed data item size: {}", RunTimeConfig.formatSize(sizeMin));
+			LOG.debug(LogUtil.MSG, "Fixed data item size: {}", RunTimeConfig.formatSize(sizeMin));
 			buffSize = sizeMin < BUFF_SIZE_HI ? (int) sizeMin : BUFF_SIZE_HI;
 		} else {
 			final long t = (sizeMin + sizeMax) / 2;
 			buffSize = t < BUFF_SIZE_HI ? (int) t : BUFF_SIZE_HI;
 			LOG.debug(
-				Markers.MSG, "Average data item size: {}",
+				LogUtil.MSG, "Average data item size: {}",
 				RunTimeConfig.formatSize(buffSize)
 			);
 		}
 		if(buffSize < BUFF_SIZE_LO) {
 			LOG.debug(
-				Markers.MSG, "Buffer size {} is less than lower bound {}",
+				LogUtil.MSG, "Buffer size {} is less than lower bound {}",
 				RunTimeConfig.formatSize(buffSize), RunTimeConfig.formatSize(BUFF_SIZE_LO)
 			);
 			buffSize = BUFF_SIZE_LO;
 		}
 		LOG.debug(
-			Markers.MSG, "Determined buffer size of {} for \"{}\"",
+			LogUtil.MSG, "Determined buffer size of {} for \"{}\"",
 			RunTimeConfig.formatSize(buffSize), getName()
 		);
 		this.reqConfigCopy.setBuffSize(buffSize);
@@ -117,9 +117,9 @@ extends LoadExecutorBase<T> {
 							sizeRange
 						);
 					dataItem.append(nextSize);
-					if(LOG.isTraceEnabled(Markers.MSG)) {
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
 						LOG.trace(
-							Markers.MSG, "Append the object \"{}\": +{}",
+							LogUtil.MSG, "Append the object \"{}\": +{}",
 							dataItem, RunTimeConfig.formatSize(nextSize)
 						);
 					}
@@ -127,9 +127,9 @@ extends LoadExecutorBase<T> {
 				case UPDATE:
 					if(dataItem.getSize() > 0) {
 						dataItem.updateRandomRanges(countUpdPerReq);
-						if(LOG.isTraceEnabled(Markers.MSG)) {
+						if(LOG.isTraceEnabled(LogUtil.MSG)) {
 							LOG.trace(
-								Markers.MSG, "Modified {} ranges for object \"{}\"",
+								LogUtil.MSG, "Modified {} ranges for object \"{}\"",
 								countUpdPerReq, dataItem
 							);
 						}

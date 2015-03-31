@@ -1,7 +1,6 @@
 package com.emc.mongoose.webui.websockets.impl;
 //
-import com.emc.mongoose.common.logging.TraceLogger;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.webui.websockets.WebSocketLogListener;
 import com.emc.mongoose.webui.logging.WebUIAppender;
@@ -37,13 +36,13 @@ implements WebSocketLogListener {
 	@OnWebSocketClose
 	public final void onClose(int statusCode, final String reason) {
 		WebUIAppender.unregister(this);
-		LOG.trace(Markers.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
+		LOG.trace(LogUtil.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
 	}
 	//
 	@OnWebSocketError
 	public final void onError(final Throwable t) {
 		WebUIAppender.unregister(this);
-		TraceLogger.failure(LOG, Level.DEBUG, t, "WebSocket failure");
+		LogUtil.failure(LOG, Level.DEBUG, t, "WebSocket failure");
 	}
 	//
 	@OnWebSocketConnect
@@ -51,12 +50,12 @@ implements WebSocketLogListener {
 		this.session = session;
 		//
 		WebUIAppender.register(this);
-		LOG.trace(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
+		LOG.trace(LogUtil.MSG, "Web Socket connection {}", session.getRemoteAddress());
 	}
 	//
 	@OnWebSocketMessage
 	public final void onMessage(final String message) {
-		LOG.trace(Markers.MSG, "Message from Browser {}", message);
+		LOG.trace(LogUtil.MSG, "Message from Browser {}", message);
 	}
 	//
 	@Override
@@ -64,7 +63,7 @@ implements WebSocketLogListener {
 		try {
 			session.getRemote().sendString(mapper.writeValueAsString(message));
 		} catch (final IOException|WebSocketException e) {
-			TraceLogger.failure(LOG, Level.DEBUG, e, "WebSocket failure");
+			LogUtil.failure(LOG, Level.DEBUG, e, "WebSocket failure");
 		}
 	}
 }

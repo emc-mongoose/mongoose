@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.io;
 //
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -20,7 +20,7 @@ public final class StreamUtils {
 		try {
 			while(contentStream.read(buff) != -1);
 		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.DEBUG, e, "Content reading failure");
+			LogUtil.failure(LOG, Level.DEBUG, e, "Content reading failure");
 		}
 	}
 	//

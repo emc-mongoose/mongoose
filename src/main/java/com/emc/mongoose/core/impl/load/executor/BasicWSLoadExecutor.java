@@ -4,8 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
 import com.emc.mongoose.common.http.RequestTargetHost;
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -23,12 +22,18 @@ import org.apache.http.ExceptionLogger;
 import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.message.HeaderGroup;
+import org.apache.http.protocol.HttpProcessor;
+import org.apache.http.protocol.HttpProcessorBuilder;
+import org.apache.http.protocol.RequestConnControl;
+import org.apache.http.protocol.RequestContent;
+import org.apache.http.protocol.RequestUserAgent;
+//
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
-import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
 import org.apache.http.nio.pool.NIOConnFactory;
@@ -37,19 +42,12 @@ import org.apache.http.nio.protocol.HttpAsyncRequester;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.protocol.HttpProcessor;
-import org.apache.http.protocol.HttpProcessorBuilder;
-import org.apache.http.protocol.RequestConnControl;
-import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestUserAgent;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -63,6 +61,7 @@ implements WSLoadExecutor<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final HttpAsyncRequester client;
+	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
 	private final Thread clientThread;
 	//
@@ -70,7 +69,7 @@ implements WSLoadExecutor<T> {
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq,
-	    final int queueSize
+		final int queueSize
 	) {
 		super(
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
@@ -96,7 +95,7 @@ implements WSLoadExecutor<T> {
 			new ExceptionLogger() {
 				@Override
 				public final void log(final Exception e) {
-					TraceLogger.failure(LOG, Level.DEBUG, e, "HTTP client internal failure");
+					LogUtil.failure(LOG, Level.DEBUG, e, "HTTP client internal failure");
 				}
 			}
 		);
@@ -130,39 +129,33 @@ implements WSLoadExecutor<T> {
 			reqExecutor, connConfig
 		);
 		//
-		ConnectingIOReactor ioReactor = null;
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
 				new NamingWorkerFactory(String.format("IOWorker<%s>", getName()))
 			);
 		} catch(final IOReactorException e) {
-			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
+			throw new IllegalStateException("Failed to build the I/O reactor", e);
 		}
 		//
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
 			connFactory = new BasicNIOConnFactory(connConfig);
-		if(ioReactor != null) {
-			//
-			connPool = new BasicNIOConnPool(
-				ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
-			);
-			connPool.setMaxTotal(totalConnCount);
-			connPool.setDefaultMaxPerRoute(totalConnCount);
-			clientThread = new Thread(
-				new HttpClientRunTask<>(ioEventDispatch, ioReactor),
-				String.format("%s-webClientThread", getName())
-			);
-		} else {
-			connPool = null;
-			clientThread = null;
-		}
+		//
+		connPool = new BasicNIOConnPool(
+			ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
+		);
+		connPool.setMaxTotal(totalConnCount);
+		connPool.setDefaultMaxPerRoute(totalConnCount);
+		clientThread = new Thread(
+			new HttpClientRunTask(ioEventDispatch, ioReactor),
+			String.format("%s-webClientThread", getName())
+		);
 	}
 	//
 	@Override
 	public synchronized void start() {
-		if(clientThread== null) {
-			LOG.debug(Markers.ERR, "Not starting web load client due to initialization failures");
+		if(clientThread == null) {
+			LOG.debug(LogUtil.ERR, "Not starting web load client due to initialization failures");
 		} else {
 			clientThread.start();
 			super.start();
@@ -176,42 +169,45 @@ implements WSLoadExecutor<T> {
 		try {
 			super.close();
 		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Closing failure");
+			LogUtil.failure(LOG, Level.WARN, e, "Closing failure");
 		}
 		//
-		LOG.debug(Markers.MSG, "Going to close the web storage client");
-		//
 		clientThread.interrupt();
-		//
-		if(connPool != null) {
-			connPool.closeExpired();
-			try {
-				connPool.closeIdle(
-					SHUTDOWN_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
-				);
-			} finally {
+		LOG.debug(LogUtil.MSG, "Closed the web storage client \"{}\"", clientThread);
+		try {
+			ioReactor.shutdown();
+			LOG.debug(LogUtil.MSG, "{}: I/O reactor shut down", getName());
+		} finally {
+			if(connPool != null) {
+				connPool.closeExpired();
 				try {
-					connPool.shutdown(SHUTDOWN_TIMEOUT_MILLISEC);
-				} catch(final IOException e) {
-					TraceLogger.failure(
-						LOG, Level.WARN, e, "Connection pool shutdown failure"
+					connPool.closeIdle(
+						SHUTDOWN_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
 					);
+				} finally {
+					try {
+						connPool.shutdown(SHUTDOWN_TIMEOUT_MILLISEC);
+					} catch(final IOException e) {
+						LogUtil.failure(
+							LOG, Level.WARN, e, "Connection pool shutdown failure"
+						);
+					}
 				}
 			}
 		}
 		//
-		LOG.debug(Markers.MSG, "Closed web storage client");
+		LOG.debug(LogUtil.MSG, "Closed web storage client");
 	}
 	//
 	@Override
 	public final Future<IOTask.Status> submit(final IOTask<T> ioTask)
 	throws RejectedExecutionException {
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-		Future<WSIOTask.Status> futureResult = null;
+		final Future<IOTask.Status> futureResult;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask.getHttpContext());
 		} catch(final IllegalStateException e) {
-			TraceLogger.failure(
+			LogUtil.failure(
 				LOG, Level.WARN, e, "Failed to submit the HTTP request for execution"
 			);
 			throw new RejectedExecutionException("I/O task submit failure", e);
@@ -227,9 +223,9 @@ implements WSLoadExecutor<T> {
 				maxCount, listFile, BasicWSObject.class
 			);
 		} catch(final NoSuchMethodException e) {
-			TraceLogger.failure(LOG, Level.FATAL, e, "Unexpected failure");
+			LogUtil.failure(LOG, Level.FATAL, e, "Unexpected failure");
 		} catch(final IOException e) {
-			TraceLogger.failure(
+			LogUtil.failure(
 				LOG, Level.ERROR, e,
 				String.format("Failed to read the data items file \"%s\"", listFile)
 			);

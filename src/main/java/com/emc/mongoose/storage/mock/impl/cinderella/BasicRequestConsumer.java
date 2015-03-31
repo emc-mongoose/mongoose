@@ -2,27 +2,24 @@ package com.emc.mongoose.storage.mock.impl.cinderella;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.HTTPInputStream;
-import com.emc.mongoose.common.io.StreamUtils;
-import com.emc.mongoose.common.logging.TraceLogger;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpRequest;
 import org.apache.http.entity.ContentType;
+import org.apache.http.protocol.HttpContext;
+//
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
 import org.apache.http.nio.entity.ContentBufferEntity;
 import org.apache.http.nio.protocol.BasicAsyncRequestConsumer;
 import org.apache.http.nio.util.HeapByteBufferAllocator;
 import org.apache.http.nio.util.SimpleInputBuffer;
-import org.apache.http.protocol.HttpContext;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.io.InputStream;
 //
 /**
  * Created by olga on 04.02.15.

@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.cinderella;
 //
 import com.emc.mongoose.common.io.HTTPOutputStream;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -48,9 +48,9 @@ extends BasicAsyncResponseProducer {
 		try(final OutputStream outStream = HTTPOutputStream.getInstance(encoder, ioctrl)) {
 			final HttpEntity entity = this.response.getEntity();
 			if( entity != null) {
-				if(LOG.isTraceEnabled(Markers.MSG)) {
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
-						Markers.MSG, "Write out {} bytes",
+						LogUtil.MSG, "Write out {} bytes",
 						entity.getContentLength()
 					);
 				}

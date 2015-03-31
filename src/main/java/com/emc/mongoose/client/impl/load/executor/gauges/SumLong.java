@@ -1,8 +1,7 @@
 package com.emc.mongoose.client.impl.load.executor.gauges;
 //
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 //
@@ -55,7 +54,7 @@ implements Gauge<Long> {
 			try {
 				objectName = new ObjectName(domain, LoadClient.KEY_NAME, fqMBeanName);
 			} catch(final MalformedObjectNameException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "No such remote object");
+				LogUtil.failure(LOG, Level.WARN, e, "No such remote object");
 			}
 			//
 			if(objectName != null) {
@@ -63,11 +62,11 @@ implements Gauge<Long> {
 					value += (long) nextMBeanConn.getAttribute(objectName, attrName);
 				} catch(final AttributeNotFoundException e) {
 					LOG.warn(
-						Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
+						LogUtil.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
 						attrName, objectName.getCanonicalName(), addr
 					);
 				} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
-					TraceLogger.failure(
+					LogUtil.failure(
 						LOG, Level.DEBUG, e,
 						String.format(
 							LoadClient.FMT_MSG_FAIL_FETCH_VALUE,

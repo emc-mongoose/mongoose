@@ -2,8 +2,7 @@ package com.emc.mongoose.webui;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.conf.JsonConfigLoader;
 //
 import org.apache.commons.configuration.ConfigurationException;
@@ -54,7 +53,7 @@ public class SaveServlet extends CommonServlet {
 				writer.write(s + "\n");
 			}
 		} catch (final IOException e) {
-			TraceLogger.failure(LOG, Level.ERROR, e, "IOException");
+			LogUtil.failure(LOG, Level.ERROR, e, "IOException");
 		}
 		response.setHeader(CONTENT_TYPE, getServletContext().getMimeType(fullFileName.getName()));
 		response.setHeader(CONTENT_LENGTH, String.valueOf(fullFileName.length()));
@@ -75,7 +74,7 @@ public class SaveServlet extends CommonServlet {
 	private void saveConfigInSeparateFile() {
 		if (!FILE_PATH.mkdirs()) {
 			if (!FILE_PATH.exists()) {
-				LOG.error(Markers.ERR, "Failed to create folders for ui config");
+				LOG.error(LogUtil.ERR, "Failed to create folders for ui config");
 				return;
 			}
 		}
@@ -87,10 +86,10 @@ public class SaveServlet extends CommonServlet {
 			try {
 				props.save(writer);
 			} catch (final ConfigurationException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e, "Configuration exception");
+				LogUtil.failure(LOG, Level.ERROR, e, "Configuration exception");
 			}
 		} catch (final IOException e) {
-			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to write properties to ui config file");
+			LogUtil.failure(LOG, Level.ERROR, e, "Failed to write properties to ui config file");
 		}
 	}
 }

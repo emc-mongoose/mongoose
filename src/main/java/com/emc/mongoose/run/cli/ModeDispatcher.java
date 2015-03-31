@@ -2,8 +2,7 @@ package com.emc.mongoose.run.cli;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
@@ -46,19 +45,19 @@ public final class ModeDispatcher {
 		RunTimeConfig.getContext().loadPropsFromJsonCfgFile(
 			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
 		);
-		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
+		rootLogger.debug(LogUtil.MSG, "Loaded the properties from the files");
 		RunTimeConfig.getContext().loadSysProps();
-		rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		rootLogger.info(LogUtil.MSG, RunTimeConfig.getContext().toString());
 		//
 		if(!properties.isEmpty()) {
-			rootLogger.info(Markers.MSG, "Overriding properties {}", properties);
+			rootLogger.info(LogUtil.MSG, "Overriding properties {}", properties);
 			RunTimeConfig.getContext().overrideSystemProperties(properties);
 		}
 		//
 		switch(runMode) {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
-				rootLogger.debug(Markers.MSG, "Starting the server");
+				rootLogger.debug(LogUtil.MSG, "Starting the server");
 				try(
 					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
 						loadBuilderSvc = new BasicWSLoadBuilderSvc<>(RunTimeConfig.getContext())
@@ -66,22 +65,22 @@ public final class ModeDispatcher {
 					loadBuilderSvc.start();
 					loadBuilderSvc.join();
 				} catch(final IOException e) {
-					TraceLogger.failure(rootLogger, Level.ERROR, e, "Load builder service failure");
+					LogUtil.failure(rootLogger, Level.ERROR, e, "Load builder service failure");
 				} catch(InterruptedException e) {
-					rootLogger.debug(Markers.MSG, "Interrupted load builder service");
+					rootLogger.debug(LogUtil.MSG, "Interrupted load builder service");
 				}
 				break;
 			case Constants.RUN_MODE_WEBUI:
-				rootLogger.debug(Markers.MSG, "Starting the web UI");
+				rootLogger.debug(LogUtil.MSG, "Starting the web UI");
 				new RunJettyTask(RunTimeConfig.getContext()).run();
 				break;
 			case Constants.RUN_MODE_CINDERELLA:
 			case Constants.RUN_MODE_WSMOCK:
-				rootLogger.debug(Markers.MSG, "Starting the cinderella");
+				rootLogger.debug(LogUtil.MSG, "Starting the cinderella");
 				try {
 					new Main().run();
 				} catch (final Exception e) {
-					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
+					LogUtil.failure(rootLogger, Level.FATAL, e, "Failed");
 				}
 				break;
 			case Constants.RUN_MODE_CLIENT:

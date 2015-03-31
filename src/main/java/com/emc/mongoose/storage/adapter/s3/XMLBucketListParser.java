@@ -4,8 +4,7 @@ import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
 //
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -82,19 +81,19 @@ extends DefaultHandler {
 				try {
 					size = Long.parseLong(strSize);
 				} catch(final NumberFormatException e) {
-					TraceLogger.failure(
+					LogUtil.failure(
 						LOG, Level.WARN, e, "Data object size should be a 64 bit number"
 					);
 				}
 			} else {
-				LOG.trace(Markers.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
+				LOG.trace(LogUtil.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
 			}
 			//
 			if(strId != null && strId.length() > 0 && size > 0) {
 				try {
 					offset = Long.parseLong(strId, DataObject.ID_RADIX);
 					if(offset < 0) {
-						LOG.warn(Markers.ERR, "Calculated from id ring offset is negative");
+						LOG.warn(LogUtil.ERR, "Calculated from id ring offset is negative");
 					} else if(count < maxCount) {
 						consumer.submit(dataConstructor.newInstance(strId, offset, size));
 						count ++;
@@ -102,20 +101,20 @@ extends DefaultHandler {
 						endDocument();
 					}
 				} catch(final RemoteException e) {
-					TraceLogger.failure(
+					LogUtil.failure(
 						LOG, Level.WARN, e, "Failed to submit new data object to the consumer"
 					);
 				} catch(final  RejectedExecutionException e) {
-					TraceLogger.failure(LOG, Level.DEBUG, e, "Consumer rejected the data object");
+					LogUtil.failure(LOG, Level.DEBUG, e, "Consumer rejected the data object");
 				} catch(final InterruptedException e) {
 					endDocument();
 				} catch(final NumberFormatException e) {
-					LOG.debug(Markers.ERR, "Invalid id: {}", strId);
+					LOG.debug(LogUtil.ERR, "Invalid id: {}", strId);
 				} catch(final Exception e) {
-					TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
+					LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
 				}
 			} else {
-				LOG.trace(Markers.ERR, "Invalid object id ({}) or size ({})", strId, strSize);
+				LOG.trace(LogUtil.ERR, "Invalid object id ({}) or size ({})", strId, strSize);
 			}
 		}
 		//
@@ -137,12 +136,12 @@ extends DefaultHandler {
 	@Override
 	public final void endDocument()
 	throws SAXException {
-		LOG.debug(Markers.MSG, "End of bucket listing, got {} items", count);
+		LOG.debug(LogUtil.MSG, "End of bucket listing, got {} items", count);
 		if(consumer != null) {
 			try {
 				consumer.shutdown();
 			} catch(final RemoteException e) {
-				TraceLogger.failure(
+				LogUtil.failure(
 					LOG, Level.WARN, e, "Failed to limit data items count for remote consumer"
 				);
 			}

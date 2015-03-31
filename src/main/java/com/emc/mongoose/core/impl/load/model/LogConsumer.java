@@ -4,7 +4,7 @@ import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.pool.InstancePool;
 import com.emc.mongoose.common.pool.Reusable;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
@@ -64,7 +64,7 @@ implements Consumer<T> {
 		@Override
 		public final void run() {
 			try {
-				LOG.info(Markers.DATA_LIST, dataItem.toString());
+				LOG.info(LogUtil.DATA_LIST, dataItem.toString());
 			} finally {
 				release();
 			}
@@ -116,11 +116,11 @@ implements Consumer<T> {
 				RunTimeConfig.getContext().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 			);
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Interrupted while waiting the remaining tasks to complete");
+			LOG.debug(LogUtil.MSG, "Interrupted while waiting the remaining tasks to complete");
 		} finally {
-			LOG.debug(Markers.MSG, "Dropped {} tasks", shutdownNow().size());
+			LOG.debug(LogUtil.MSG, "Dropped {} tasks", shutdownNow().size());
 		}
-		LOG.trace(Markers.MSG, "invoking close() here does nothing");
+		LOG.trace(LogUtil.MSG, "invoking close() here does nothing");
 	}
 	//
 	@Override

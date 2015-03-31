@@ -9,21 +9,22 @@ from java.lang import InterruptedException, Long, Short, Throwable, NumberFormat
 from org.apache.logging.log4j import Level, LogManager, ThreadContext
 #
 from com.emc.mongoose.common.conf import RunTimeConfig
-from com.emc.mongoose.common.logging import Markers, TraceLogger
+from com.emc.mongoose.common.logging import LogUtil
+from com.emc.mongoose.common.net import ServiceUtils
 #
 LOG = LogManager.getLogger()
 #
 def init():
 	runTimeConfig = RunTimeConfig.getContext()
-	LOG.debug(Markers.MSG, "Setting the metric update period to zero for chain scenario")
+	LOG.debug(LogUtil.MSG, "Setting the metric update period to zero for chain scenario")
 	runTimeConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0)
 	#
 	loadTypesChain = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
-	LOG.info(Markers.MSG, "Load types chain: {}", loadTypesChain)
+	LOG.info(LogUtil.MSG, "Load types chain: {}", loadTypesChain)
 	listSizes = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES)
-	LOG.info(Markers.MSG, "Data sizes: {}", listSizes)
+	LOG.info(LogUtil.MSG, "Data sizes: {}", listSizes)
 	listThreadCounts = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS)
-	LOG.info(Markers.MSG, "Thread counts: {}", listThreadCounts)
+	LOG.info(LogUtil.MSG, "Thread counts: {}", listThreadCounts)
 	return loadTypesChain, listSizes, listThreadCounts
 #
 def execute(loadBuilder, rampupParams=((),(),())):
@@ -38,27 +39,29 @@ def execute(loadBuilder, rampupParams=((),(),())):
 				try:
 					threadCount = Short.valueOf(threadCountStr)
 				except NumberFormatException as e:
-					TraceLogger.failure(Markers.ERR, Level.WARN, e, "Failed to parse the next thread count")
+					LogUtil.failure(LogUtil.ERR, Level.WARN, e, "Failed to parse the next thread count")
 				try:
-					LOG.info(Markers.PERF_SUM, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
+					LOG.info(LogUtil.PERF_SUM, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
 					ThreadContext.put("currentSize", dataItemSizeStr + "-" + str(index))
 					ThreadContext.put("currentThreadCount", str(threadCount))
 					nextChain = chainBuild(
 						loadBuilder, loadTypesChain, False, True, dataItemSize, dataItemSize, threadCount
 					)
 					chainExecute(nextChain, False)
-					LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
+					LOG.debug(LogUtil.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
 				except InterruptedException as e:
 					raise e
 				except Throwable as e:
-					TraceLogger.failure(LOG, Level.ERROR, e, "Chain execution failure")
+					LogUtil.failure(LOG, Level.ERROR, e, "Chain execution failure")
 		except InterruptedException:
 			break
 		except Throwable as e:
-			TraceLogger.failure(LOG, Level.ERROR, e, "Determining the next data item size failure")
+			LogUtil.failure(LOG, Level.ERROR, e, "Determining the next data item size failure")
 #
 if __name__ == "__builtin__":
 	loadBuilder = loadBuilderInit()
 	execute(loadBuilder=loadBuilder, rampupParams=init())
-	loadBuilder.getRequestConfig().close()
-	LOG.info(Markers.MSG, "Scenario end")
+	loadBuilder.close()
+	ServiceUtils.shutdown()
+	LOG.info(LogUtil.MSG, "Scenario end")
+	LogUtil.shutdown()

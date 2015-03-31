@@ -1,7 +1,6 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //
@@ -34,13 +33,13 @@ implements Runnable {
 				loadSvc.join(timeOutMilliSec);
 			} catch(final InterruptedException e) {
 				LOG.debug(
-					Markers.MSG, "Remote join task for \"{}\" was interrupted", loadSvc.getName()
+					LogUtil.MSG, "Remote join task for \"{}\" was interrupted", loadSvc.getName()
 				);
 			}
 		} catch(final NoSuchObjectException e) {
-			TraceLogger.failure(LOG, Level.DEBUG, e, "Remote join failed, no such service");
+			LogUtil.failure(LOG, Level.DEBUG, e, "Remote join failed, no such service");
 		} catch(final RemoteException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Remote join task failure");
+			LogUtil.failure(LOG, Level.WARN, e, "Remote join task failure");
 		}
 	}
 }

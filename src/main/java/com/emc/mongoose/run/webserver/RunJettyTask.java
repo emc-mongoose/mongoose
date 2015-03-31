@@ -2,7 +2,7 @@ package com.emc.mongoose.run.webserver;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -56,7 +56,7 @@ implements Runnable {
             server.start();
             server.join();
         } catch (final Exception e) {
-            TraceLogger.failure(LOG, Level.FATAL, e, "Web UI service failure");
+            LogUtil.failure(LOG, Level.FATAL, e, "Web UI service failure");
         }
     }
 
