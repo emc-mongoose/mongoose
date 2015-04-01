@@ -10,9 +10,11 @@ import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 //
+import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
@@ -25,6 +27,7 @@ import org.apache.commons.collections4.map.LRUMap;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -69,6 +72,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by olga on 28.01.15.
@@ -201,11 +205,11 @@ implements Runnable {
 				while((s = bufferReader.readLine()) != null) {
 					final WSObjectMock dataObject = new BasicWSObjectMock(s) ;
 					//if mongoose v.0.5.0
-					if (dataSizeRadix == 16) {
+					if (dataSizeRadix == 0x10) {
 						dataObject.setSize(Long.valueOf(String.valueOf(dataObject.getSize()), 0x10));
 					}
 					//
-					LOG.trace(LogUtil.DATA_LIST, dataObject.toString());
+					LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
 					synchronized (SHARED_STORAGE){
 						SHARED_STORAGE.put(dataObject.getId(), dataObject);
 					}
@@ -290,7 +294,9 @@ implements Runnable {
 	implements HttpAsyncRequestHandler<HttpRequest> {
 		//
 		private final static int RING_OFFSET_RADIX = RunTimeConfig.getContext().getDataRadixOffset();
-
+		private static AtomicLong NEXT_OFFSET = new AtomicLong(
+			Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
+		);
 		//
 		public RequestHandler() {
 			super();
@@ -310,8 +316,7 @@ implements Runnable {
 		){
 			final int
 				lenStandertUriWithID = 3,
-				lenAtmosUriWithID = 4,
-				lenAtmosID = 32;
+				lenAtmosUriWithID = 4;
 			final HttpResponse response = httpexchange.getResponse();
 			//HttpCoreContext coreContext = HttpCoreContext.adapt(context);
 			String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
@@ -330,7 +335,13 @@ implements Runnable {
 					break;
 				case (METHOD_POST):
 					if (requestUri.length != lenAtmosUriWithID) {
-						dataID = randomString(lenAtmosID);
+						dataID = generateId();
+						response.setHeader(
+							HttpHeaders.LOCATION, String.format(
+								com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl.FMT_SLASH,
+								request.getRequestLine().getUri(), dataID));
+					}else {
+						response.setHeader(HttpHeaders.LOCATION, request.getRequestLine().getUri());
 					}
 					doPost(request, response, dataID);
 					break;
@@ -373,7 +384,12 @@ implements Runnable {
 			}
 		}
 		//
-		private static String randomString(final int len )
+		private static String generateId(){
+			long offset = NEXT_OFFSET.getAndSet(Math.abs(UniformDataSource.nextWord(NEXT_OFFSET.get())));
+			return Long.toString(offset, DataObject.ID_RADIX);
+		}
+		//
+		private static String randomString(final int len)
 		{
 			final byte buff[] = new byte[len];
 			ThreadLocalRandom.current().nextBytes(buff);
@@ -385,7 +401,6 @@ implements Runnable {
 			try {
 				response.setStatusCode(HttpStatus.SC_OK);
 				final WSObjectMock dataObject = writeDataObject(request, dataID);
-				response.setEntity(dataObject);
 				counterAllSucc.inc();
 				counterPostSucc.inc();
 				postBW.mark(dataObject.getSize());
@@ -397,21 +412,24 @@ implements Runnable {
 				LogUtil.failure(LOG, Level.ERROR, e, "Post method failure");
 				counterAllFail.inc();
 				counterPostFail.inc();
+			}catch (final NumberFormatException e){
+				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				LogUtil.failure(LOG, Level.ERROR, e, "Post method failure.Data offset doesn't decode.");
+				counterAllFail.inc();
+				counterPostFail.inc();
 			}
 		}
 		//
 		private static WSObjectMock writeDataObject(
 			final HttpRequest request, final String dataID
-		) throws HttpException{
-			WSObjectMock dataObject;
+		) throws HttpException, NumberFormatException{
+			WSObjectMock dataObject= null;
 			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 			final long bytes = entity.getContentLength();
 			//create data object or get it for append or update
 			if (SHARED_STORAGE.containsKey(dataID)) {
 				dataObject = SHARED_STORAGE.get(dataID);
-			} else if (request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH).equals(METHOD_POST)){
-				dataObject = new BasicWSObjectMock(dataID, bytes);
-			} else {
+			}else {
 				final long offset = genOffset(dataID);
 				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 			}
@@ -432,9 +450,9 @@ implements Runnable {
 		 */
 		//
 		private static long genOffset(final String dataID)
-		throws HttpException
+		throws HttpException, NumberFormatException
 		{
-			final long offset;
+			long offset = 0;
 			if (RING_OFFSET_RADIX == 0x40) { // base64
 				offset = ByteBuffer
 					.allocate(Long.SIZE / Byte.SIZE)
@@ -468,6 +486,11 @@ implements Runnable {
 			}catch (final HttpException e){
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 				LogUtil.failure(LOG, Level.ERROR, e, "Put method failure");
+				counterAllFail.inc();
+				counterPutFail.inc();
+			}catch (final NumberFormatException e){
+				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				LogUtil.failure(LOG, Level.ERROR, e, "Put method failure.Data offset doesn't decode.");
 				counterAllFail.inc();
 				counterPutFail.inc();
 			}

@@ -57,9 +57,8 @@ implements Reusable {
 		bb.limit(Math.min(off + len, bb.capacity()));
 		bb.position(off);
 		//
-		int n = 0;
-		while(bb.remaining() > 0 && n <= 0) {
-			n = out.write(bb);
+		while(bb.remaining() > 0) {
+			out.write(bb);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

@@ -158,6 +158,7 @@ implements WSRequestConfig<T> {
 		try {
 			if(reqConf2Clone!=null) {
 				this.setSecret(reqConf2Clone.getSecret()).setScheme(reqConf2Clone.getScheme());
+				this.setFileAccessEnabled(reqConf2Clone.getFileAccessEnabled());
 			}
 			//
 			final String pkgSpec = getClass().getPackage().getName();
