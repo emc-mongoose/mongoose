@@ -587,27 +587,22 @@ implements WSRequestConfig<T> {
 			LOG.debug(LogUtil.MSG, "Client thread \"{}\" stopped", clientThread);
 		}
 		//
-		try {
-			ioReactor.shutdown();
-			LOG.debug(LogUtil.MSG, "{}: I/O reactor has been shut down successfully", toString());
-		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, "I/O reactor shutdown failure");
-		} finally {
-			if(connPool != null && connPool.isShutdown()) {
-				connPool.closeExpired();
+		if(connPool != null && connPool.isShutdown()) {
+			connPool.closeExpired();
+			try {
+				connPool.closeIdle(0, TimeUnit.MILLISECONDS);
+			} finally {
 				try {
-					connPool.closeIdle(0, TimeUnit.MILLISECONDS);
-				} finally {
-					try {
-						connPool.shutdown(0);
-					} catch(final IOException e) {
-						LogUtil.failure(
-							LOG, Level.WARN, e, "Connection pool shutdown failure"
-						);
-					}
+					connPool.shutdown(0);
+				} catch(final IOException e) {
+					LogUtil.failure(
+						LOG, Level.WARN, e, "Connection pool shutdown failure"
+					);
 				}
 			}
 		}
+		//
+		ioReactor.shutdown();
 		LOG.debug(LogUtil.MSG, "Closed web storage client");
 	}
 	//

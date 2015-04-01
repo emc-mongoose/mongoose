@@ -174,28 +174,24 @@ implements WSLoadExecutor<T> {
 		//
 		clientThread.interrupt();
 		LOG.debug(LogUtil.MSG, "Closed the web storage client \"{}\"", clientThread);
-		try {
-			ioReactor.shutdown();
-			LOG.debug(LogUtil.MSG, "{}: I/O reactor shut down", getName());
-		} finally {
-			if(connPool != null) {
-				connPool.closeExpired();
+		if(connPool != null) {
+			connPool.closeExpired();
+			try {
+				connPool.closeIdle(
+					SHUTDOWN_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
+				);
+			} finally {
 				try {
-					connPool.closeIdle(
-						SHUTDOWN_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
+					connPool.shutdown(SHUTDOWN_TIMEOUT_MILLISEC);
+				} catch(final IOException e) {
+					LogUtil.failure(
+						LOG, Level.WARN, e, "Connection pool shutdown failure"
 					);
-				} finally {
-					try {
-						connPool.shutdown(SHUTDOWN_TIMEOUT_MILLISEC);
-					} catch(final IOException e) {
-						LogUtil.failure(
-							LOG, Level.WARN, e, "Connection pool shutdown failure"
-						);
-					}
 				}
 			}
 		}
 		//
+		ioReactor.shutdown();
 		LOG.debug(LogUtil.MSG, "Closed web storage client");
 	}
 	//

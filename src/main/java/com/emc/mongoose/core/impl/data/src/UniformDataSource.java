@@ -42,6 +42,7 @@ implements DataSource {
 	}
 	//
 	protected UniformDataSource(final long seed, final int size) {
+		LOG.debug(LogUtil.MSG, "New ring buffer instance #{}", hashCode());
 		this.seed = seed;
 		this.size = size;
 		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
@@ -183,6 +184,7 @@ implements DataSource {
 				byteLayers.add(nextLayer);
 				prevLayer = nextLayer;
 			}
+			LOG.debug(LogUtil.MSG, "New layer #{}", byteLayers.size() - 1);
 		}
 		return byteLayers.get(layerNum).array();
 	}

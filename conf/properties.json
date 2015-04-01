@@ -9,7 +9,7 @@
                     "load": "create"
                 },
                 "chain": {
-                    "load": "create,update,append,read,delete",
+                    "load": "create,append,update,read,delete",
                     "simultaneous": true,
                     "itemsbuffer": false
                 },
