@@ -1,7 +1,7 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.pool.InstancePool;
 import com.emc.mongoose.common.pool.Reusable;
 // mongoose-core-api.jar
@@ -52,14 +52,14 @@ implements Runnable, Reusable {
 						loadSvc.submit(dataItem);
 						break;
 					} catch(final NoSuchObjectException | ServerException e) {
-						LOG.debug(Markers.ERR, "Load service \"{}\" seems to be shut down already");
+						LOG.debug(LogUtil.ERR, "Load service \"{}\" seems to be shut down already");
 						break;
 					} catch(final RemoteException e) {
 						rejectCount ++;
 						Thread.sleep(retryDelayMilliSec);
 					}
 				} catch(final InterruptedException e) {
-					LOG.debug(Markers.MSG, "Interrupted");
+					LOG.debug(LogUtil.MSG, "Interrupted");
 					break;
 				}
 			} while(rejectCount > retryMaxCount);

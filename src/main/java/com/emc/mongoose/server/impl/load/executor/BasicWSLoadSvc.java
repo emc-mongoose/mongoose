@@ -13,7 +13,7 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
@@ -54,9 +54,9 @@ implements WSLoadSvc<T> {
 		// close the exposed network service, if any
 		final Service svc = ServiceUtils.getLocalSvc(getName());
 		if(svc == null) {
-			LOG.debug(Markers.MSG, "The load was not exposed remotely");
+			LOG.debug(LogUtil.MSG, "The load was not exposed remotely");
 		} else {
-			LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
+			LOG.debug(LogUtil.MSG, "The load was exposed remotely, removing the service");
 			ServiceUtils.close(svc);
 		}
 	}
@@ -64,23 +64,23 @@ implements WSLoadSvc<T> {
 	@Override @SuppressWarnings("unchecked")
 	public final void setConsumer(final ConsumerSvc<T> consumer) {
 		LOG.debug(
-			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
+			LogUtil.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
 			consumer, getName()
 		);
 		this.consumer = consumer;
 		try {
 			final ConsumerSvc remoteSvc = ConsumerSvc.class.cast(consumer);
 			final String remoteSvcName = remoteSvc.getName();
-			LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
+			LOG.debug(LogUtil.MSG, "Name is {}", remoteSvcName);
 			final Service localSvc = ServiceUtils.getLocalSvc(remoteSvcName);
 			if(localSvc == null) {
-				LOG.error(Markers.ERR, "Failed to get local service for name {}", remoteSvcName);
+				LOG.error(LogUtil.ERR, "Failed to get local service for name {}", remoteSvcName);
 			} else {
 				super.setConsumer((ObjectLoadExecutor<T>) localSvc);
 			}
-			LOG.debug(Markers.MSG, "Successfully resolved local service and appended it as consumer");
+			LOG.debug(LogUtil.MSG, "Successfully resolved local service and appended it as consumer");
 		} catch(final IOException ee) {
-			LOG.error(Markers.ERR, "Looks like network failure", ee);
+			LOG.error(LogUtil.ERR, "Looks like network failure", ee);
 		}
 	}
 	//
@@ -91,8 +91,8 @@ implements WSLoadSvc<T> {
 		if(RecordFrameBuffer.class.isInstance(consumer)) {
 			recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
 		}
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Returning {} data items records", recFrame.size());
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(LogUtil.MSG, "Returning {} data items records", recFrame.size());
 		}
 		return recFrame;
 	}

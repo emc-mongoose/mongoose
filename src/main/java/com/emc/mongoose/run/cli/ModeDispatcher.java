@@ -1,19 +1,22 @@
 package com.emc.mongoose.run.cli;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
-//
+import com.emc.mongoose.common.logging.LogUtil;
+// mongoose-core-api.jar
+import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-//
+// mongoose-scenario.jar
 import com.emc.mongoose.run.scenario.Scenario;
 import com.emc.mongoose.run.webserver.RunJettyTask;
+// mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
-//
+// mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
-import com.emc.mongoose.storage.mock.impl.cinderella.Main;
+// mongoose-storage-mock.jar
+import com.emc.mongoose.storage.mock.impl.cinderella.Cinderella;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,6 +39,7 @@ public final class ModeDispatcher {
 			runMode = args[0];
 		}
 		System.setProperty(RunTimeConfig.KEY_RUN_MODE, runMode);
+		LogUtil.init();
 		//
 		final Map<String, String> properties = HumanFriendly.parseCli(args);
 		//
@@ -46,19 +50,19 @@ public final class ModeDispatcher {
 		RunTimeConfig.getContext().loadPropsFromJsonCfgFile(
 			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
 		);
-		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
+		rootLogger.debug(LogUtil.MSG, "Loaded the properties from the files");
 		RunTimeConfig.getContext().loadSysProps();
-		rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+		rootLogger.info(LogUtil.MSG, RunTimeConfig.getContext().toString());
 		//
 		if(!properties.isEmpty()) {
-			rootLogger.info(Markers.MSG, "Overriding properties {}", properties);
+			rootLogger.info(LogUtil.MSG, "Overriding properties {}", properties);
 			RunTimeConfig.getContext().overrideSystemProperties(properties);
 		}
 		//
 		switch(runMode) {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
-				rootLogger.debug(Markers.MSG, "Starting the server");
+				rootLogger.debug(LogUtil.MSG, "Starting the server");
 				try(
 					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
 						loadBuilderSvc = new BasicWSLoadBuilderSvc<>(RunTimeConfig.getContext())
@@ -66,22 +70,22 @@ public final class ModeDispatcher {
 					loadBuilderSvc.start();
 					loadBuilderSvc.join();
 				} catch(final IOException e) {
-					TraceLogger.failure(rootLogger, Level.ERROR, e, "Load builder service failure");
+					LogUtil.failure(rootLogger, Level.ERROR, e, "Load builder service failure");
 				} catch(InterruptedException e) {
-					rootLogger.debug(Markers.MSG, "Interrupted load builder service");
+					rootLogger.debug(LogUtil.MSG, "Interrupted load builder service");
 				}
 				break;
 			case Constants.RUN_MODE_WEBUI:
-				rootLogger.debug(Markers.MSG, "Starting the web UI");
+				rootLogger.debug(LogUtil.MSG, "Starting the web UI");
 				new RunJettyTask(RunTimeConfig.getContext()).run();
 				break;
 			case Constants.RUN_MODE_CINDERELLA:
 			case Constants.RUN_MODE_WSMOCK:
-				rootLogger.debug(Markers.MSG, "Starting the cinderella");
+				rootLogger.debug(LogUtil.MSG, "Starting the cinderella");
 				try {
-					new Main().run();
+					new Cinderella().run();
 				} catch (final Exception e) {
-					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
+					LogUtil.failure(rootLogger, Level.FATAL, e, "Failed");
 				}
 				break;
 			case Constants.RUN_MODE_CLIENT:
@@ -94,55 +98,9 @@ public final class ModeDispatcher {
 					String.format("Incorrect run mode: \"%s\"", runMode)
 				);
 		}
-	}
-	/*
-	private static volatile LoggerContext LOG_CONTEXT = null;
-	//
-	public static void initLogging(final String runMode) {
 		//
-		System.setProperty("isThreadContextMapInheritable", "true");
-		// set "run.id" property with timestamp value if not set before
-		String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
-		if(runId == null || runId.length() == 0) {
-			System.setProperty(
-				RunTimeConfig.KEY_RUN_ID,
-				Settings.FMT_DT.format(
-					Calendar.getInstance(Settings.TZ_UTC, Settings.LOCALE_DEFAULT).getTime()
-				)
-			);
-		}
-		// make all used loggers asynchronous
-		System.setProperty(
-			"Log4jContextSelector", AsyncLoggerContextSelector.class.getCanonicalName()
-		);
-		// connect JUL to Log4J2
-		System.setProperty("java.util.logging.manager", "org.apache.logging.log4j.jul.LogManager");
-		// determine the logger configuration file path
-		final Path logConfPath = Paths.get(
-			RunTimeConfig.DIR_ROOT,
-			Constants.DIR_CONF,
-			"logging.yaml"
-		);
-		//
-		LOG_CONTEXT = Configurator.initialize("mongoose", logConfPath.toUri().toString());
-	}
-	//
-	public static void initSecurity() {
-		// load the security policy
-		final String secPolicyURL = "file:" +
-			RunTimeConfig.DIR_ROOT + File.separatorChar +
-			Constants.DIR_CONF + File.separatorChar +
-			Constants.FNAME_POLICY;
-		System.setProperty(Constants.KEY_POLICY, secPolicyURL);
-		Policy.getPolicy().refresh();
-		System.setSecurityManager(new SecurityManager());
-	}
-	//
-	public static void shutdown() {
-		if(!LOG_CONTEXT.isStopped()) {
-			LOG_CONTEXT.stop();
-		}
 		ServiceUtils.shutdown();
-	}*/
+		LogUtil.shutdown();
+	}
 }
 //

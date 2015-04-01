@@ -30,7 +30,7 @@ public class HumanFriendly {
         IP("i", "Comma-separated list of ip addresses to write to", true, RunTimeConfig.KEY_STORAGE_ADDRS),
         USER("u", "User", true, RunTimeConfig.KEY_AUTH_ID),
         SECRET("s", "Secret", true, RunTimeConfig.KEY_AUTH_SECRET),
-        BUCKET("b","Bucket to write data to", true, RunTimeConfig.KEY_API_S3_BUCKET_NAME),
+        BUCKET("b","Bucket to write data to", true, RunTimeConfig.KEY_API_S3_BUCKET),
         READ("r", "Perform object read", true, new CompositeOptionConverter(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD,
                 "read", RunTimeConfig.KEY_DATA_SRC_FPATH)),
         WRITE("w", "Perform object write", false, new CompositeOptionConverter(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, "create")),
@@ -198,7 +198,7 @@ public class HumanFriendly {
 
             result.put(RunTimeConfig.KEY_AUTH_ID, props.getProperty("user"));
             result.put(RunTimeConfig.KEY_AUTH_SECRET, props.getProperty("secretkey"));
-            result.put(RunTimeConfig.KEY_API_S3_BUCKET_NAME, props.getProperty("bucket").split(" ")[0]);
+            result.put(RunTimeConfig.KEY_API_S3_BUCKET, props.getProperty("bucket").split(" ")[0]);
 
             String dataNodes = System.getenv("DataNodes")
                     .replace('(', ' ').replace(')', ' ').trim().replace(' ', ',');

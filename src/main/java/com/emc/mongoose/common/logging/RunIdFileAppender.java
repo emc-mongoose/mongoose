@@ -3,6 +3,7 @@ package com.emc.mongoose.common.logging;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import org.apache.logging.log4j.ThreadContext;
+//
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -16,7 +17,8 @@ import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 import org.apache.logging.log4j.core.net.Advertiser;
-import org.apache.logging.log4j.core.util.Booleans;//
+import org.apache.logging.log4j.core.util.Booleans;
+//
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;

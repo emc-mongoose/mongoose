@@ -6,7 +6,7 @@ from java.util import NoSuchElementException
 from org.apache.logging.log4j import LogManager
 #
 from com.emc.mongoose.common.conf import RunTimeConfig
-from com.emc.mongoose.common.logging import Markers
+from com.emc.mongoose.common.logging import LogUtil
 #
 LOG = LogManager.getLogger()
 #
@@ -20,9 +20,9 @@ def init():
 			runTimeValue = Long.MAX_VALUE
 		runTime = runTimeValue, localConfig.getLoadLimitTimeUnit()
 	except NoSuchElementException:
-		LOG.error(Markers.ERR, "No timeout specified, try arg -Drun.time=<INTEGER>.<UNIT> to override")
+		LOG.error(LogUtil.ERR, "No timeout specified, try arg -Drun.time=<INTEGER>.<UNIT> to override")
 	except IllegalArgumentException:
-		LOG.error(Markers.ERR, "Timeout unit should be a name of a constant from TimeUnit enumeration")
+		LOG.error(LogUtil.ERR, "Timeout unit should be a name of a constant from TimeUnit enumeration")
 	except IndexError:
-		LOG.error(Markers.ERR, "Time unit should be specified with timeout value (following after \".\" separator)")
+		LOG.error(LogUtil.ERR, "Time unit should be specified with timeout value (following after \".\" separator)")
 	return runTime

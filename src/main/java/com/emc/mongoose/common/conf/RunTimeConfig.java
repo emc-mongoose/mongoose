@@ -1,8 +1,6 @@
 package com.emc.mongoose.common.conf;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.Settings;
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.fasterxml.jackson.databind.JsonNode;
 //
@@ -11,7 +9,6 @@ import org.apache.commons.configuration.SystemConfiguration;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.ThreadContext;
@@ -50,6 +47,7 @@ implements Externalizable {
 		KEY_AUTH_SECRET = "auth.secret",
 		//
 		KEY_DATA_ITEM_COUNT = "load.limit.dataItemCount",
+		KEY_DATA_COUNT = "data.count",
 		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_SIZE_MIN = "data.size.min",
 		KEY_DATA_SIZE_MAX = "data.size.max",
@@ -63,6 +61,7 @@ implements Externalizable {
 		//
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
+		KEY_RUN_TIME = "run.time",
 		KEY_SCENARIO_NAME = "scenario.name",
 		KEY_LOAD_METRICS_PERIOD_SEC = "load.metricsPeriodSec",
 		KEY_LOAD_TIME = "load.time",
@@ -77,7 +76,7 @@ implements Externalizable {
 		KEY_STORAGE_NAMESPACE = "storage.namespace",
 		//
 		KEY_API_NAME = "api.name",
-		KEY_API_S3_BUCKET_NAME = "api.type.s3.bucket.name",
+		KEY_API_S3_BUCKET = "api.type.s3.bucket",
 		//
 		//  Single
 		KEY_SCENARIO_SINGLE_LOAD = "scenario.type.single.load",
@@ -94,7 +93,7 @@ implements Externalizable {
 		FNAME_CONF = "properties.json";
 	//
 	private static InheritableThreadLocal<RunTimeConfig>
-		INHERITABLE_CONTEXT = new InheritableThreadLocal<>();
+		CONTEXT_CONFIG = new InheritableThreadLocal<>();
 	//
 	public static void initContext() {
 		RunTimeConfig instance = RunTimeConfig.getContext();
@@ -107,28 +106,27 @@ implements Externalizable {
 	}
 	//
 	public static RunTimeConfig getContext() {
-		return INHERITABLE_CONTEXT.get();
+		return CONTEXT_CONFIG.get();
 	}
 	//
 	public static void setContext(final RunTimeConfig instance) {
-		INHERITABLE_CONTEXT.set(instance);
+		CONTEXT_CONFIG.set(instance);
 		ThreadContext.put(KEY_RUN_ID, instance.getRunId());
 		ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
 	}
-	//
-	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static String DIR_ROOT;
 	static {
 		String dirRoot = System.getProperty("user.dir");
 		try {
 			dirRoot = new File(
-				Settings.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+				Constants.class.getProtectionDomain().getCodeSource().getLocation().toURI()
 			).getParent();
 		} catch(final URISyntaxException e) {
-			TraceLogger.failure(
-				LOG, Level.WARN, e, "Failed to determine the executable path"
-			);
+			synchronized(System.err) {
+				System.err.println("Failed to determine the executable path:");
+				e.printStackTrace(System.err);
+			}
 		}
 		DIR_ROOT = dirRoot;
 	}
@@ -153,8 +151,9 @@ implements Externalizable {
 		MAP_OVERRIDE.put(KEY_DATA_SIZE, new String[] {"data.size.min", "data.size.max"});
 		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_LOAD_LIMIT_TIME_VALUE, KEY_LOAD_LIMIT_TIME_UNIT});
 		MAP_OVERRIDE.put(KEY_LOAD_THREADS, new String[] {"load.type.append.threads", "load.type.create.threads", "load.type.read.threads", "load.type.update.threads", "load.type.delete.threads"});
-		MAP_OVERRIDE.put("data.count", new String[] {"load.limit.dataItemCount"});
 		// backward compatibility
+		MAP_OVERRIDE.put(KEY_RUN_TIME, new String[] {KEY_LOAD_TIME});
+		MAP_OVERRIDE.put(KEY_DATA_COUNT, new String[] {"load.limit.dataItemCount"});
 		MAP_OVERRIDE.put("load.drivers", new String[] {"load.servers"});
 	}
 	//
@@ -500,19 +499,32 @@ implements Externalizable {
 	public final String[] getScenarioRampupSizes() {
 		return getStringArray(KEY_SCENARIO_RAMPUP_SIZES);
 	}
+	//
+	public final String getWebUIWSTimeout() {
+		return getString("remote.webui.wsTimeOut.value") + "." + getString("remote.webui.wsTimeOut.unit");
+	}
+	//
+	public final String getWebUIWSTimeOutValue() {
+		return getString("remote.webui.wsTimeOut.value");
+	}
+	//
+	public final String getWebUIWSTimeOutUnit() {
+		return getString("remote.webui.wsTimeOut.unit");
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)
-		throws IOException {
-		LOG.debug(Markers.MSG, "Going to upload properties to a server");
+	throws IOException {
+		final Logger log = LogManager.getLogger();
+		log.debug(LogUtil.MSG, "Going to upload properties to a server");
 		String nextPropName;
 		Object nextPropValue;
 		final HashMap<String, String> propsMap = new HashMap<>();
 		for(final Iterator<String> i = getKeys(); i.hasNext();) {
 			nextPropName = i.next();
 			nextPropValue = getProperty(nextPropName);
-			LOG.trace(
-				Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
+			log.trace(
+				LogUtil.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
 			);
 			if(List.class.isInstance(nextPropValue)) {
 				propsMap.put(
@@ -524,41 +536,42 @@ implements Externalizable {
 			} else if(Number.class.isInstance(nextPropValue)) {
 				propsMap.put(nextPropName, Number.class.cast(nextPropValue).toString());
 			} else if(nextPropValue == null) {
-				LOG.warn(Markers.ERR, "Property \"{}\" is null");
+				log.warn(LogUtil.ERR, "Property \"{}\" is null");
 			} else {
-				LOG.error(
-					Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
+				log.error(
+					LogUtil.ERR, "Unexpected type \"{}\" for property \"{}\"",
 					nextPropValue.getClass().getCanonicalName(), nextPropName
 				);
 			}
 		}
 		//
-		LOG.trace(Markers.MSG, "Sending configuration: {}", propsMap);
+		log.trace(LogUtil.MSG, "Sending configuration: {}", propsMap);
 		//
 		out.writeObject(propsMap);
-		LOG.debug(Markers.MSG, "Uploaded the properties from client side");
+		log.debug(LogUtil.MSG, "Uploaded the properties from client side");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final synchronized void readExternal(final ObjectInput in)
-		throws IOException, ClassNotFoundException {
-		LOG.debug(Markers.MSG, "Going to fetch the properties from client side");
+	throws IOException, ClassNotFoundException {
+		final Logger log = LogManager.getLogger();
+		log.debug(LogUtil.MSG, "Going to fetch the properties from client side");
 		final HashMap<String, String> confMap = HashMap.class.cast(in.readObject());
-		LOG.trace(Markers.MSG, "Got the properties from client side: {}", confMap);
+		log.trace(LogUtil.MSG, "Got the properties from client side: {}", confMap);
 		//
 		final String
-			serverVersion = INHERITABLE_CONTEXT.get().getRunVersion(),
+			serverVersion = CONTEXT_CONFIG.get().getRunVersion(),
 			clientVersion = confMap.get(KEY_RUN_VERSION);
 		if(serverVersion.equals(clientVersion)) {
 			// put the properties into the System
 			Object nextPropValue;
-			final RunTimeConfig localRunTimeConfig = INHERITABLE_CONTEXT.get();
+			final RunTimeConfig localRunTimeConfig = CONTEXT_CONFIG.get();
 			for(final String nextPropName: confMap.keySet()) {
 				// to not to override the import/export ports from the load client side
 				nextPropValue = nextPropName.startsWith("remote") ?
 					localRunTimeConfig.getString(nextPropName) :
 					confMap.get(nextPropName);
-				LOG.trace(Markers.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
+				log.trace(LogUtil.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
 				if(List.class.isInstance(nextPropValue)) {
 					setProperty(
 						nextPropName,
@@ -567,22 +580,22 @@ implements Externalizable {
 				} else if(String.class.isInstance(nextPropValue)) {
 					setProperty(nextPropName, String.class.cast(nextPropValue));
 				} else if(nextPropValue == null) {
-					LOG.debug(Markers.ERR, "Property \"{}\" is null", nextPropName);
+					log.debug(LogUtil.ERR, "Property \"{}\" is null", nextPropName);
 				} else {
-					LOG.error(
-						Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
+					log.error(
+						LogUtil.ERR, "Unexpected type \"{}\" for property \"{}\"",
 						nextPropValue.getClass().getCanonicalName(), nextPropName
 					);
 				}
 			}
-			INHERITABLE_CONTEXT.set(this);
-			LOG.info(Markers.MSG, toString());
+			CONTEXT_CONFIG.set(this);
+			log.info(LogUtil.MSG, toString());
 		} else {
 			final String errMsg = String.format(
 				"%s, version mismatch, server: %s client: %s",
 				getRunName(), serverVersion, clientVersion
 			);
-			LOG.fatal(Markers.ERR, errMsg);
+			log.fatal(LogUtil.ERR, errMsg);
 			throw new IOException(errMsg);
 		}
 	}
@@ -592,34 +605,44 @@ implements Externalizable {
 	}
 	//
 	public synchronized void loadSysProps() {
+		final Logger log = LogManager.getLogger();
 		final SystemConfiguration sysProps = new SystemConfiguration();
 		String key, keys2override[];
 		Object sharedValue;
 		for(final Iterator<String> keyIter = sysProps.getKeys(); keyIter.hasNext();) {
 			key = keyIter.next();
-			LOG.trace(
-				Markers.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",
+			log.trace(
+				LogUtil.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",
 				key, getProperty(key), sysProps.getProperty(key)
 			);
 			keys2override = MAP_OVERRIDE.get(key);
 			sharedValue = sysProps.getProperty(key);
 			setProperty(key, sharedValue);
 			if (key.equals(RunTimeConfig.KEY_LOAD_TIME)) {
-				final String[] loadTime = sysProps.getString(key).split("\\.");
-				if (loadTime.length > 1) {
-					for (int i = 0; i < keys2override.length; i++) {
-						setProperty(keys2override[i], loadTime[i]);
-					}
-				} else {
-					LOG.error(Markers.ERR, "Load time isn't correct. Default values will be used.");
-				}
+				setLoadTimeSpecificProps(sysProps.getString(key));
 			} else {
 				if(keys2override != null) {
 					for(final String key2override: keys2override) {
 						setProperty(key2override, sharedValue);
+						if (key2override.equals(KEY_LOAD_TIME)) {
+							setLoadTimeSpecificProps(sharedValue.toString());
+						}
 					}
 				}
 			}
+		}
+	}
+	//
+	private void setLoadTimeSpecificProps(final String sharedValue) {
+		final Logger log = LogManager.getLogger();
+		final String[] loadTime = sharedValue.split("\\.");
+		final String[] loadTimeKeys = MAP_OVERRIDE.get(KEY_LOAD_TIME);
+		if (loadTime.length > 1) {
+			for (int i = 0; i < loadTimeKeys.length; i++) {
+				setProperty(loadTimeKeys[i], loadTime[i]);
+			}
+		} else {
+			log.error(LogUtil.ERR, "Load time isn't correct. Default values will be used.");
 		}
 	}
 	//
@@ -629,7 +652,7 @@ implements Externalizable {
 		if(runTimeConfig != null) {
 			runTimeConfig.set(
 				KEY_RUN_ID,
-				Settings.FMT_DT.format(Calendar.getInstance(Settings.TZ_UTC, Settings.LOCALE_DEFAULT).getTime())
+				LogUtil.FMT_DT.format(Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime())
 			);
 		}
 		return runTimeConfig;

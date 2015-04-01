@@ -6,10 +6,7 @@ import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.ConsoleColors;
-import com.emc.mongoose.common.logging.Settings;
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
@@ -134,9 +131,9 @@ implements LoadClient<T> {
 			final Object remoteLoads[] = remoteLoadMap.values().toArray();
 			t = LoadSvc.class.cast(remoteLoads[0]).getName() + 'x' + remoteLoads.length;
 		} catch(final NoSuchElementException | NullPointerException e) {
-			LOG.error(Markers.ERR, "No remote load instances", e);
+			LOG.error(LogUtil.ERR, "No remote load instances", e);
 		} catch(final IOException e) {
-			LOG.error(Markers.ERR, "Looks like connectivity failure", e);
+			LOG.error(LogUtil.ERR, "Looks like connectivity failure", e);
 		}
 		name = t;
 		//
@@ -171,7 +168,7 @@ implements LoadClient<T> {
 			try {
 				mBeanSrvConnMap.put(addr, remoteJMXConnMap.get(addr).getMBeanServerConnection());
 			} catch(final IOException e) {
-				TraceLogger.failure(
+				LogUtil.failure(
 					LOG, Level.ERROR, e,
 					String.format("Failed to obtain MBean server connection for %s", addr)
 				);
@@ -351,14 +348,14 @@ implements LoadClient<T> {
 			nextMetaInfoFrame = nextFrameFetchTask.getLastResult();
 			try {
 				if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
-					LOG.trace(Markers.MSG, "Got next metainfo frame: {}", nextMetaInfoFrame);
+					LOG.trace(LogUtil.MSG, "Got next metainfo frame: {}", nextMetaInfoFrame);
 					for(final T nextMetaInfoRec: nextMetaInfoFrame) {
 						metaInfoLog.submit(nextMetaInfoRec);
 					}
 				}
 			} catch(final InterruptedException | RejectedExecutionException e) {
-				if(LOG.isTraceEnabled(Markers.ERR)) {
-					TraceLogger.failure(LOG, Level.TRACE, e, "Failed to log the metainfo frame");
+				if(LOG.isTraceEnabled(LogUtil.ERR)) {
+					LogUtil.failure(LOG, Level.TRACE, e, "Failed to log the metainfo frame");
 				}
 			}
 		}
@@ -374,18 +371,18 @@ implements LoadClient<T> {
 				minLat = taskGetLatencyMin.getLastResult(),
 				medLat = taskGetLatencyMed.getLastResult().intValue(),
 				maxLat = taskGetLatencyMax.getLastResult();
-			final boolean isSummary = Markers.PERF_SUM.equals(logMarker);
+			final boolean isSummary = LogUtil.PERF_SUM.equals(logMarker);
 			final String msg;
 			if(isSummary) {
 				msg = String.format(
-					Settings.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
+					LogUtil.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 					//
 					name, countSucc,
 					countFail == 0 ?
 						Long.toString(countFail) :
 						(float) countSucc / countFail > 100 ?
-							String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countFail) :
-							String.format(ConsoleColors.INT_RED_OVER_GREEN, countFail),
+							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
+							String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
 					//
 					avgLat, minLat, medLat, maxLat,
 					//
@@ -397,14 +394,14 @@ implements LoadClient<T> {
 				);
 			} else {
 				msg = String.format(
-					Settings.LOCALE_DEFAULT, MSG_FMT_METRICS,
+					LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 					//
 					countSucc, taskGetCountSubm.getLastResult() - countSucc,
 					countFail == 0 ?
 						Long.toString(countFail) :
 						(float) countSucc / countFail > 100 ?
-							String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countFail) :
-							String.format(ConsoleColors.INT_RED_OVER_GREEN, countFail),
+							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
+							String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
 					//
 					avgLat, minLat, medLat, maxLat,
 					//
@@ -418,9 +415,9 @@ implements LoadClient<T> {
 			LOG.info(logMarker, msg);
 		} catch(final NullPointerException e) {
 			if(isTerminating() || isTerminated()) {
-				TraceLogger.failure(LOG, Level.TRACE, e, "Unexpected failure");
+				LogUtil.failure(LOG, Level.TRACE, e, "Unexpected failure");
 			} else {
-				TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");
+				LogUtil.failure(LOG, Level.WARN, e, "Unexpected failure");
 			}
 		}/* catch(final TimeoutException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "Distributed metrics aggregation timeout");
@@ -517,7 +514,7 @@ implements LoadClient<T> {
 					new Runnable() {
 						@Override
 						public final void run() {
-							logMetrics(Markers.PERF_AVG);
+							logMetrics(LogUtil.PERF_AVG);
 						}
 					}, 0, metricsPeriodSec, TimeUnit.SECONDS
 				);
@@ -534,23 +531,23 @@ implements LoadClient<T> {
 			try {
 				nextLoadSvc.start();
 				LOG.debug(
-					Markers.MSG, "{} started bound to remote service @{}",
+					LogUtil.MSG, "{} started bound to remote service @{}",
 					nextLoadSvc.getName(), addr
 				);
 			} catch(final IOException e) {
-				LOG.error(Markers.ERR, "Failed to start remote load @" + addr, e);
+				LOG.error(LogUtil.ERR, "Failed to start remote load @" + addr, e);
 			}
 		}
 		//
 		if(producer == null) {
-			LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
+			LOG.debug(LogUtil.MSG, "{}: using an external data items producer", getName());
 		} else {
 			//
 			try {
 				producer.start();
-				LOG.debug(Markers.MSG, "Started object producer {}", producer);
+				LOG.debug(LogUtil.MSG, "Started object producer {}", producer);
 			} catch(final IOException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Failed to start the producer");
+				LogUtil.failure(LOG, Level.WARN, e, "Failed to start the producer");
 			}
 		}
 		//
@@ -559,7 +556,7 @@ implements LoadClient<T> {
 		LoadCloseHook.add(this);
 		prestartAllCoreThreads();
 		//
-		LOG.debug(Markers.MSG, "{}: started", name);
+		LOG.debug(LogUtil.MSG, "{}: started", name);
 	}
 	//
 	@Override
@@ -567,7 +564,7 @@ implements LoadClient<T> {
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
 		if(!isShutdown()) {
-			LOG.debug(Markers.MSG, "{}: interrupting...", name);
+			LOG.debug(LogUtil.MSG, "{}: interrupting...", name);
 			shutdown();
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 				remoteLoadMap.size(), new NamingWorkerFactory(String.format("interrupt<%s>", getName()))
@@ -579,9 +576,9 @@ implements LoadClient<T> {
 			try {
 				interruptExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 			} catch(final InterruptedException e) {
-				TraceLogger.failure(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
+				LogUtil.failure(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
 			}
-			LOG.debug(Markers.MSG, "{}: interrupted", name);
+			LOG.debug(LogUtil.MSG, "{}: interrupted", name);
 		}
 	}
 	//
@@ -600,37 +597,37 @@ implements LoadClient<T> {
 			try {
 				this.consumer = (LoadClient<T>) consumer;
 				final Map<String, LoadSvc<T>> consumeMap = this.consumer.getRemoteLoadMap();
-				LOG.debug(Markers.MSG, "Consumer is LoadClient instance");
+				LOG.debug(LogUtil.MSG, "Consumer is LoadClient instance");
 				for(final String addr : consumeMap.keySet()) {
 					remoteLoadMap.get(addr).setConsumer(consumeMap.get(addr));
 				}
 			} catch(final ClassCastException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Data item class mismatch");
+				LogUtil.failure(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else if(LoadSvc.class.isInstance(consumer)) {
 			// single consumer for all these producers
 			try {
 				final LoadSvc<T> loadSvc = (LoadSvc<T>) consumer;
-				LOG.debug(Markers.MSG, "Consumer is load service instance");
+				LOG.debug(LogUtil.MSG, "Consumer is load service instance");
 				for(final String addr : loadSvcAddrs) {
 					remoteLoadMap.get(addr).setConsumer(loadSvc);
 				}
 			} catch(final ClassCastException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Data item class mismatch");
+				LogUtil.failure(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else if(DataItemBufferClient.class.isInstance(consumer)) {
 			try {
 				final DataItemBufferClient<T> mediator = (DataItemBufferClient<T>) consumer;
-				LOG.debug(Markers.MSG, "Consumer is remote mediator buffer");
+				LOG.debug(LogUtil.MSG, "Consumer is remote mediator buffer");
 				for(final String addr : loadSvcAddrs) {
 					remoteLoadMap.get(addr).setConsumer(mediator.get(addr));
 				}
 			} catch(final ClassCastException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Data item class mismatch");
+				LogUtil.failure(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else {
 			LOG.error(
-				Markers.ERR, "Unexpected consumer type: {}",
+				LogUtil.ERR, "Unexpected consumer type: {}",
 				consumer == null ? null : consumer.getClass()
 			);
 		}
@@ -645,15 +642,15 @@ implements LoadClient<T> {
 	throws InterruptedException {
 		if(maxCount > getTaskCount()) { // getTaskCount() is inaccurate
 			if(dataItem == null) {
-				LOG.debug(Markers.MSG, "{}: poison submitted, performing the shutdown", name);
+				LOG.debug(LogUtil.MSG, "{}: poison submitted, performing the shutdown", name);
 				// poison the remote load service instances
 				for(final String addr : loadSvcAddrs) {
 					try {
 						remoteLoadMap.get(addr).submit((T) null); // feed the poison
 					} catch(final InterruptedException | IllegalStateException e) {
-						LOG.debug(Markers.MSG, "Interrupting while submitting the poison");
+						LOG.debug(LogUtil.MSG, "Interrupting while submitting the poison");
 					} catch(final Exception e) {
-						TraceLogger.failure(
+						LogUtil.failure(
 							LOG, Level.WARN, e,
 							String.format("Failed to submit the poison to @%s", addr)
 						);
@@ -683,7 +680,7 @@ implements LoadClient<T> {
 				} while(rejectCount < retryCountMax && !isShutdown());
 			}
 		} else {
-			LOG.info(Markers.MSG, "maxCount = {}, taskCount = {}", maxCount, getTaskCount());
+			LOG.info(LogUtil.MSG, "maxCount = {}, taskCount = {}", maxCount, getTaskCount());
 			shutdown();
 		}
 		//
@@ -700,22 +697,22 @@ implements LoadClient<T> {
 	@Override
 	public final void close()
 	throws IOException {
-		LOG.debug(Markers.MSG, "trying to close");
+		LOG.debug(LogUtil.MSG, "trying to close");
 		synchronized(remoteLoadMap) {
 			if(!remoteLoadMap.isEmpty()) {
-				LOG.debug(Markers.MSG, "do performing close");
+				LOG.debug(LogUtil.MSG, "do performing close");
 				interrupt();
-				LOG.debug(Markers.MSG, "log summary metrics");
-				logMetrics(Markers.PERF_SUM);
-				LOG.debug(Markers.MSG, "log metainfo frames");
+				LOG.debug(LogUtil.MSG, "log summary metrics");
+				logMetrics(LogUtil.PERF_SUM);
+				LOG.debug(LogUtil.MSG, "log metainfo frames");
 				logMetaInfoFrames();
 				LOG.debug(
-					Markers.MSG, "Dropped {} remote tasks",
+					LogUtil.MSG, "Dropped {} remote tasks",
 					shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()
 				);
 				metricsReporter.close();
 				//
-				LOG.debug(Markers.MSG, "Closing the remote services...");
+				LOG.debug(LogUtil.MSG, "Closing the remote services...");
 				LoadSvc<T> nextLoadSvc;
 				JMXConnector nextJMXConn;
 				for(final String addr : remoteLoadMap.keySet()) {
@@ -723,20 +720,20 @@ implements LoadClient<T> {
 					try {
 						nextLoadSvc = remoteLoadMap.get(addr);
 						nextLoadSvc.close();
-						LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
+						LOG.debug(LogUtil.MSG, "Server instance @ {} has been closed", addr);
 					} catch(final NoSuchElementException e) {
 						if(!isTerminating() && !isTerminated()) {
 							LOG.debug(
-								Markers.ERR,
+								LogUtil.ERR,
 								"Looks like the remote load service is already shut down"
 							);
 						}
 					} catch(final NoSuchObjectException e) {
-						TraceLogger.failure(
+						LogUtil.failure(
 							LOG, Level.DEBUG, e, "No remote service found for closing"
 						);
 					} catch(final IOException e) {
-						TraceLogger.failure(
+						LogUtil.failure(
 							LOG, Level.WARN, e, "Failed to close remote load executor service"
 						);
 					}
@@ -745,14 +742,14 @@ implements LoadClient<T> {
 						nextJMXConn = remoteJMXConnMap.get(addr);
 						if(nextJMXConn!=null) {
 							nextJMXConn.close();
-							LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
+							LOG.debug(LogUtil.MSG, "JMX connection to {} closed", addr);
 						}
 					} catch(final NoSuchElementException e) {
 						LOG.debug(
-							Markers.ERR, "Remote JMX connection had been interrupted earlier"
+							LogUtil.ERR, "Remote JMX connection had been interrupted earlier"
 						);
 					} catch(final IOException e) {
-						TraceLogger.failure(
+						LogUtil.failure(
 							LOG, Level.WARN, e,
 							String.format("Failed to close JMX connection to %s", addr)
 						);
@@ -760,13 +757,13 @@ implements LoadClient<T> {
 				}
 				//
 				metaInfoLog.close();
-				LOG.debug(Markers.MSG, "Metainfo logger closed");
+				LOG.debug(LogUtil.MSG, "Metainfo logger closed");
 				LoadCloseHook.del(this);
-				LOG.debug(Markers.MSG, "Clear the servers map");
+				LOG.debug(LogUtil.MSG, "Clear the servers map");
 				remoteLoadMap.clear();
-				LOG.debug(Markers.MSG, "Closed {}", getName());
+				LOG.debug(LogUtil.MSG, "Closed {}", getName());
 			} else {
-				LOG.debug(Markers.ERR, "Closed already");
+				LOG.debug(LogUtil.ERR, "Closed already");
 			}
 		}
 	}
@@ -782,7 +779,7 @@ implements LoadClient<T> {
 		try {
 			producer = remoteLoadMap.entrySet().iterator().next().getValue().getProducer();
 		} catch(final RemoteException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to get remote producer");
+			LogUtil.failure(LOG, Level.WARN, e, "Failed to get remote producer");
 		}
 		return producer;
 	}
@@ -825,13 +822,13 @@ implements LoadClient<T> {
 				@Override
 				public final void run() {
 					LOG.trace(
-						Markers.MSG, "{}: waiting remaining {} tasks to complete",
+						LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
 						getName(), getQueue().size() + getActiveCount()
 					);
 					try {
 						awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
 					} catch(final InterruptedException e) {
-						LOG.debug(Markers.MSG, "Interrupted");
+						LOG.debug(LogUtil.MSG, "Interrupted");
 					}
 				}
 			}

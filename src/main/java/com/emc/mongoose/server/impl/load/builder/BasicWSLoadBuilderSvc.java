@@ -1,8 +1,7 @@
 package com.emc.mongoose.server.impl.load.builder;
 //
-import com.emc.mongoose.common.logging.Settings;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -83,7 +82,7 @@ implements WSLoadBuilderSvc<T, U> {
 		if(minObjSize > maxObjSize) {
 			throw new IllegalStateException(
 				String.format(
-					Settings.LOCALE_DEFAULT, "Min object size %s should be less than upper bound %s",
+					LogUtil.LOCALE_DEFAULT, "Min object size %s should be less than upper bound %s",
 					RunTimeConfig.formatSize(minObjSize), RunTimeConfig.formatSize(maxObjSize)
 				)
 			);
@@ -104,7 +103,7 @@ implements WSLoadBuilderSvc<T, U> {
 		} else if(queueSize > Integer.MAX_VALUE) {
 			queueSize = Integer.MAX_VALUE;
 		}
-		LOG.debug(Markers.MSG, "Queue size for \"{}\" load job is {}", reqConf, queueSize);
+		LOG.debug(LogUtil.MSG, "Queue size for \"{}\" load job is {}", reqConf, queueSize);
 		//
 		return (U) new BasicWSLoadSvc<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
@@ -121,10 +120,10 @@ implements WSLoadBuilderSvc<T, U> {
 	}
 	//
 	public final void start() {
-		LOG.debug(Markers.MSG, "Load builder service instance created");
+		LOG.debug(LogUtil.MSG, "Load builder service instance created");
 		/*final RemoteStub stub = */ServiceUtils.create(this);
 		/*LOG.debug(Markers.MSG, stub.toString());*/
-		LOG.info(Markers.MSG, "Server started and waiting for the requests");
+		LOG.info(LogUtil.MSG, "Server started and waiting for the requests");
 	}
 	//
 	@Override
@@ -137,10 +136,5 @@ implements WSLoadBuilderSvc<T, U> {
 	public final void join(final long ms)
 	throws InterruptedException {
 		Thread.sleep(ms);
-	}
-	//
-	@Override
-	public final void close()
-	throws IOException {
 	}
 }

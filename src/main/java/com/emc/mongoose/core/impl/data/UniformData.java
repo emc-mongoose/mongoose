@@ -7,11 +7,9 @@ import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.TraceLogger;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
-import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -23,6 +21,7 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 09.05.14.
@@ -89,7 +88,7 @@ implements DataItem {
 		try {
 			setOffset(offset, 0);
 		} catch(final IOException e) {
-			TraceLogger.failure(
+			LogUtil.failure(
 				LOG, Level.ERROR, e, String.format(FMT_MSG_FAIL_SET_OFFSET, offset)
 			);
 		}
@@ -215,8 +214,8 @@ implements DataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public void writeTo(final OutputStream out)
 	throws IOException {
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(LogUtil.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
 		}
 		long byteCountToWrite = size;
 		int
@@ -233,8 +232,8 @@ implements DataItem {
 			nextOffset = 0;
 			nextLength = buf.length;
 		}
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_FINISH, Long.toHexString(offset));
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(LogUtil.MSG, FMT_MSG_STREAM_OUT_FINISH, Long.toHexString(offset));
 		}
 	}
 	// checks that data read from input equals the specified range
@@ -262,7 +261,7 @@ implements DataItem {
 				if(nextReadByteCount < 0) {
 					contentEquals = false;
 					LOG.warn(
-						Markers.MSG,
+						LogUtil.MSG,
 						"{}: content size mismatch, expected: {}, got: {}",
 						Long.toString(offset, DataObject.ID_RADIX), size,
 						rangeOffset + rangeLength - byteCountDown + nextReadByteCountSum
@@ -280,7 +279,7 @@ implements DataItem {
 				if(buf[nextOffset + i] != buff2verify[i]) {
 					contentEquals = false;
 					LOG.warn(
-						Markers.MSG,
+						LogUtil.MSG,
 						String.format(
 							"%s: content mismatch @ offset %d, expected byte value: \"0x%X\", got \"0x%X\"",
 							Long.toString(offset, DataObject.ID_RADIX),

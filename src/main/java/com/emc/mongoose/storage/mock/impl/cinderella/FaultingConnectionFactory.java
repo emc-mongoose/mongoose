@@ -1,8 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.cinderella;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 //
 import org.apache.http.config.ConnectionConfig;
@@ -42,7 +41,7 @@ extends DefaultNHttpServerConnectionFactory {
 		final DefaultNHttpServerConnection connection = super.createConnection(session);
 		if (FAULT_PERIOD > 0 && (counter.incrementAndGet() % FAULT_PERIOD) == 0 ){
 			LOG.trace(
-				Markers.MSG, "The connection {} is submitted to be possibly broken", connection
+				LogUtil.MSG, "The connection {} is submitted to be possibly broken", connection
 			);
 			connectionPool.submit(new FailConnectionTask(connection));
 		}
@@ -64,14 +63,14 @@ extends DefaultNHttpServerConnectionFactory {
 				Thread.sleep(FAULT_SLEEP_MILLI_SEC);
 				if(connection.isOpen()) {
 					connection.close();
-					LOG.trace(Markers.MSG, "The connection {} is closed", connection);
+					LOG.trace(LogUtil.MSG, "The connection {} is closed", connection);
 				} else {
-					LOG.trace(Markers.MSG, "The connection {} is already closed", connection);
+					LOG.trace(LogUtil.MSG, "The connection {} is already closed", connection);
 				}
 			} catch (final IOException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e, "Failed to fail the connection");
+				LogUtil.failure(LOG, Level.ERROR, e, "Failed to fail the connection");
 			} catch (final InterruptedException e) {
-				TraceLogger.failure(LOG, Level.DEBUG, e, "Interrupted");
+				LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
 			}
 		}
 	}

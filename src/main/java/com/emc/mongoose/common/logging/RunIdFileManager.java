@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.logging;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
+//
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.appender.AbstractManager;
 import org.apache.logging.log4j.core.appender.AppenderLoggingException;

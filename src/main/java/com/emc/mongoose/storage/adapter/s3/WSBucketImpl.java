@@ -1,9 +1,7 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
-import com.emc.mongoose.common.logging.Settings;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.TraceLogger;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -47,8 +45,8 @@ implements Bucket<T> {
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
-			final Date dt = Calendar.getInstance(Settings.TZ_UTC, Settings.LOCALE_DEFAULT).getTime();
-			this.name = "mongoose-" + Settings.FMT_DT.format(dt);
+			final Date dt = Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime();
+			this.name = "mongoose-" + LogUtil.FMT_DT.format(dt);
 		} else {
 			this.name = name;
 		}
@@ -107,14 +105,14 @@ implements Bucket<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(Markers.MSG, "No response status");
+					LOG.warn(LogUtil.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
+						LOG.debug(LogUtil.MSG, "Bucket \"{}\" exists", name);
 						flagExists = true;
 					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
-						LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist", name);
+						LOG.debug(LogUtil.MSG, "Bucket \"{}\" doesn't exist", name);
 					} else {
 						final StrBuilder msg = new StrBuilder("Check bucket \"")
 							.append(name).append("\" failure: ")
@@ -133,7 +131,7 @@ implements Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 		return flagExists;
@@ -149,11 +147,11 @@ implements Bucket<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(Markers.MSG, "No response status");
+					LOG.warn(LogUtil.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Bucket \"{}\" created", name);
+						LOG.info(LogUtil.MSG, "Bucket \"{}\" created", name);
 					} else {
 						final StrBuilder msg = new StrBuilder("Create bucket \"")
 							.append(name).append("\" failure: ")
@@ -167,7 +165,7 @@ implements Bucket<T> {
 							}
 						}
 						LOG.warn(
-							Markers.ERR, "Create bucket \"{}\" response ({}): {}",
+							LogUtil.ERR, "Create bucket \"{}\" response ({}): {}",
 							name, statusCode, msg.toString()
 						);
 					}
@@ -175,7 +173,7 @@ implements Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 	}
 	//
@@ -189,11 +187,11 @@ implements Bucket<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine==null) {
-					LOG.warn(Markers.MSG, "No response status");
+					LOG.warn(LogUtil.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Bucket \"{}\" deleted", name);
+						LOG.info(LogUtil.MSG, "Bucket \"{}\" deleted", name);
 					} else {
 						final StrBuilder msg = new StrBuilder("Delete bucket \"")
 							.append(name).append("\" failure: ")
@@ -207,7 +205,7 @@ implements Bucket<T> {
 							}
 						}
 						LOG.warn(
-							Markers.ERR, "Delete bucket \"{}\" response ({}): {}",
+							LogUtil.ERR, "Delete bucket \"{}\" response ({}): {}",
 							name, statusCode, msg.toString()
 						);
 					}
@@ -215,7 +213,7 @@ implements Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 	}

@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.io;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.pool.Reusable;
 import com.emc.mongoose.common.pool.InstancePool;
 //
@@ -82,7 +82,7 @@ implements Reusable {
 				try {
 					out.complete();
 				} catch(final IOException e) {
-					TraceLogger.failure(LOG, Level.WARN, e, "Failed to finish the output stream");
+					LogUtil.failure(LOG, Level.WARN, e, "Failed to finish the output stream");
 				}
 			}
 			POOL.release(this);

@@ -2,11 +2,8 @@ package com.emc.mongoose.storage.mock.impl.cinderella;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.HTTPOutputStream;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
-import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.ContentEncoder;
@@ -19,7 +16,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 /**
@@ -59,9 +55,9 @@ extends BasicAsyncResponseProducer {
 		try(final OutputStream outStream = HTTPOutputStream.getInstance(encoder, ioctrl)) {
 			final HttpEntity entity = this.response.getEntity();
 			if( entity != null) {
-				if(LOG.isTraceEnabled(Markers.MSG)) {
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
-						Markers.MSG, "Write out {} bytes",
+						LogUtil.MSG, "Write out {} bytes",
 						entity.getContentLength()
 					);
 				}
@@ -77,8 +73,8 @@ extends BasicAsyncResponseProducer {
 		final HttpEntity respEntity = this.response.getEntity();
 		if(respEntity != null) {
 			long contentLength = respEntity.getContentLength();
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG, "Write out {} bytes", contentLength);
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(LogUtil.MSG, "Write out {} bytes", contentLength);
 			}
 			long byteCountToWrite = contentLength;
 			int n;
@@ -97,9 +93,9 @@ extends BasicAsyncResponseProducer {
 			} finally {
 				encoder.complete();
 				this.producer.close();
-				if(LOG.isTraceEnabled(Markers.MSG)) {
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
-						Markers.MSG, "{} bytes written out",
+						LogUtil.MSG, "{} bytes written out",
 						contentLength - byteCountToWrite
 					);
 				}

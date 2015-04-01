@@ -5,10 +5,8 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 //
-import com.emc.mongoose.common.logging.Settings;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 //
@@ -39,7 +37,6 @@ import org.apache.http.impl.nio.DefaultNHttpServerConnection;
 import org.apache.http.impl.nio.reactor.DefaultListeningIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpConnectionFactory;
-import org.apache.http.nio.protocol.BasicAsyncRequestConsumer;
 import org.apache.http.nio.protocol.HttpAsyncExchange;
 import org.apache.http.nio.protocol.HttpAsyncRequestConsumer;
 import org.apache.http.nio.protocol.HttpAsyncRequestHandler;
@@ -61,16 +58,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.management.MBeanServer;
-import javax.xml.ws.http.HTTPException;
-import javax.xml.ws.spi.http.HttpHandler;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InterruptedIOException;
-import java.math.BigInteger;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.util.Collections;
@@ -85,7 +77,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  * Created by olga on 28.01.15.
  */
-public final class Main
+public final class Cinderella
 implements Runnable {
 	//
 	private final static Map<String, WSObjectMock> SHARED_STORAGE = Collections.synchronizedMap(
@@ -98,7 +90,7 @@ implements Runnable {
 		CONNECTION_FACTORY = new FaultingConnectionFactory(ConnectionConfig.DEFAULT);
 	//
 	public final static String NAME_SERVER = String.format(
-		"%s/%s", Main.class.getSimpleName(), RunTimeConfig.getContext().getRunVersion()
+		"%s/%s", Cinderella.class.getSimpleName(), RunTimeConfig.getContext().getRunVersion()
 	);
 	// count of heads = 1 head or config count
 	private final static int COUNT_HEADS = Math.max(1, RunTimeConfig.getContext().getStorageMockHeadCount());
@@ -129,7 +121,7 @@ implements Runnable {
 		allBW, getBW, putBW, postBW,
 		allTP, getTP, putTP, postTP;
 	//
-	public Main()
+	public Cinderella()
 	throws IOException {
 		final MetricRegistry metrics = new MetricRegistry();
 		final MBeanServer mBeanServer;
@@ -140,50 +132,50 @@ implements Runnable {
 			.registerWith(mBeanServer)
 			.build();
 		// init metrics
-		counterAllSucc = metrics.counter(MetricRegistry.name(Main.class,
+		counterAllSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterAllFail = metrics.counter(MetricRegistry.name(Main.class,
+		counterAllFail = metrics.counter(MetricRegistry.name(Cinderella.class,
 			ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		allTP = metrics.meter(MetricRegistry.name(Main.class,
+		allTP = metrics.meter(MetricRegistry.name(Cinderella.class,
 			ALL_METHODS, LoadExecutor.METRIC_NAME_TP));
-		allBW = metrics.meter(MetricRegistry.name(Main.class,
+		allBW = metrics.meter(MetricRegistry.name(Cinderella.class,
 			ALL_METHODS, LoadExecutor.METRIC_NAME_BW));
 		//
-		counterGetSucc = metrics.counter(MetricRegistry.name(Main.class,
+		counterGetSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterGetFail = metrics.counter(MetricRegistry.name(Main.class,
+		counterGetFail = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		getBW = metrics.meter(MetricRegistry.name(Main.class,
+		getBW = metrics.meter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_BW));
-		getTP = metrics.meter(MetricRegistry.name(Main.class,
+		getTP = metrics.meter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_TP));
 		//
-		counterPutSucc = metrics.counter(MetricRegistry.name(Main.class,
+		counterPutSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterPutFail = metrics.counter(MetricRegistry.name(Main.class,
+		counterPutFail = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		putBW = metrics.meter(MetricRegistry.name(Main.class,
+		putBW = metrics.meter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_BW));
-		putTP = metrics.meter(MetricRegistry.name(Main.class,
+		putTP = metrics.meter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_TP));
 		//
-		counterPostSucc = metrics.counter(MetricRegistry.name(Main.class,
+		counterPostSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterPostFail = metrics.counter(MetricRegistry.name(Main.class,
+		counterPostFail = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		postBW = metrics.meter(MetricRegistry.name(Main.class,
+		postBW = metrics.meter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_BW));
-		postTP = metrics.meter(MetricRegistry.name(Main.class,
+		postTP = metrics.meter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_TP));
 		//
-		counterDeleteSucc = metrics.counter(MetricRegistry.name(Main.class,
+		counterDeleteSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		//
-		counterHeadSucc = metrics.counter(MetricRegistry.name(Main.class,
+		counterHeadSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_SUCC));
 		//
 		metricsReporter.start();
-		LOG.info(Markers.MSG, "Starting with {} heads", COUNT_HEADS);
+		LOG.info(LogUtil.MSG, "Starting with {} heads", COUNT_HEADS);
 		// Set up the HTTP protocol processor
 		final HttpProcessor httpproc = HttpProcessorBuilder.create()
 			.add(new ResponseDate())
@@ -217,18 +209,17 @@ implements Runnable {
 						dataObject.setSize(Long.valueOf(String.valueOf(dataObject.getSize()), 0x10));
 					}
 					//
-					LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject.toString()));
-					System.out.println(String.format("%s", dataObject.toString()));
+					LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
 					synchronized (SHARED_STORAGE){
 						SHARED_STORAGE.put(dataObject.getId(), dataObject);
 					}
 				}
 				reader.close();
 			} catch (final FileNotFoundException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e,
+				LogUtil.failure(LOG, Level.ERROR, e,
 					"File not found.");
 			} catch (final IOException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e,
+				LogUtil.failure(LOG, Level.ERROR, e,
 					"Read line is fault.");
 			}
 		}
@@ -238,16 +229,16 @@ implements Runnable {
 			try {
 				multiSocketSvc.submit(new WorkerTask(protocolHandler, nextPort));
 			} catch(final IOReactorException e) {
-				TraceLogger.failure(
+				LogUtil.failure(
 					LOG, Level.ERROR, e,
 					String.format("Failed to start the head at port #%d", nextPort)
 				);
 			}
 		}
 		if (COUNT_HEADS > 1) {
-			LOG.info(Markers.MSG,"Listening the ports {} .. {}", PORT_START, PORT_START + COUNT_HEADS - 1);
+			LOG.info(LogUtil.MSG,"Listening the ports {} .. {}", PORT_START, PORT_START + COUNT_HEADS - 1);
 		} else {
-			LOG.info(Markers.MSG,"Listening the port {}", PORT_START);
+			LOG.info(LogUtil.MSG,"Listening the port {}", PORT_START);
 		}
 		multiSocketSvc.shutdown();
 		try {
@@ -266,7 +257,7 @@ implements Runnable {
 				multiSocketSvc.awaitTermination(Long.MAX_VALUE, timeUnit);
 			}
 		} catch (final InterruptedException e) {
-			LOG.info(Markers.MSG, "Interrupting the Cinderella");
+			LOG.info(LogUtil.MSG, "Interrupting the Cinderella");
 		} finally {
 			metricsReporter.close();
 		}
@@ -278,9 +269,9 @@ implements Runnable {
 	//
 	private void printMetrics() {
 		LOG.info(
-			Markers.PERF_AVG,
+			LogUtil.PERF_AVG,
 			String.format(
-				Settings.LOCALE_DEFAULT, MSG_FMT_METRICS,
+				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
 				counterAllSucc.getCount(), counterAllFail.getCount(),
 				//
@@ -372,13 +363,13 @@ implements Runnable {
 		}
 		//
 		private void doGet(final HttpResponse response, final String dataID){
-			LOG.trace(Markers.MSG, "Request  method Get ");
+			LOG.trace(LogUtil.MSG, "Request  method Get ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			if(SHARED_STORAGE.containsKey(dataID)) {
-				LOG.trace(Markers.MSG, "Send data object ", dataID);
+				LOG.trace(LogUtil.MSG, "Send data object ", dataID);
 				final WSObjectMock dataObject = SHARED_STORAGE.get(dataID);
 				response.setEntity(dataObject);
-				LOG.trace(Markers.MSG, "Response: OK");
+				LOG.trace(LogUtil.MSG, "Response: OK");
 				counterAllSucc.inc();
 				counterGetSucc.inc();
 				getBW.mark(dataObject.getSize());
@@ -387,7 +378,7 @@ implements Runnable {
 				allTP.mark();
 			} else {
 				response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-				LOG.trace(Markers.ERR, String.format("No such object: \"%s\"", dataID));
+				LOG.trace(LogUtil.ERR, String.format("No such object: \"%s\"", dataID));
 				counterAllFail.inc();
 				counterGetFail.inc();
 			}
@@ -406,7 +397,7 @@ implements Runnable {
 		}
 		//
 		private void doPost(final HttpRequest request, final HttpResponse response, final String dataID){
-			LOG.trace(Markers.MSG, "Request  method Post ");
+			LOG.trace(LogUtil.MSG, "Request  method Post ");
 			try {
 				response.setStatusCode(HttpStatus.SC_OK);
 				final WSObjectMock dataObject = writeDataObject(request, dataID);
@@ -418,12 +409,12 @@ implements Runnable {
 				allTP.mark();
 			}catch (final HttpException e) {
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.ERROR, e, "Post method failure");
+				LogUtil.failure(LOG, Level.ERROR, e, "Post method failure");
 				counterAllFail.inc();
 				counterPostFail.inc();
 			}catch (final NumberFormatException e){
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.ERROR, e, "Post method failure.Data offset doesn't decode.");
+				LogUtil.failure(LOG, Level.ERROR, e, "Post method failure.Data offset doesn't decode.");
 				counterAllFail.inc();
 				counterPostFail.inc();
 			}
@@ -442,7 +433,7 @@ implements Runnable {
 				final long offset = genOffset(dataID);
 				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 			}
-			LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject));
+			LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
 			synchronized (SHARED_STORAGE) {
 				SHARED_STORAGE.put(dataID, dataObject);
 			}
@@ -482,7 +473,7 @@ implements Runnable {
 		private void doPut(
 			final HttpRequest request, final HttpResponse response, final String dataID
 		){
-			LOG.trace(Markers.MSG, "Request  method Put ");
+			LOG.trace(LogUtil.MSG, "Request  method Put ");
 			try {
 				response.setStatusCode(HttpStatus.SC_OK);
 				final WSObjectMock dataObject = writeDataObject(request, dataID);
@@ -494,33 +485,33 @@ implements Runnable {
 				allTP.mark();
 			}catch (final HttpException e){
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.ERROR, e, "Put method failure");
+				LogUtil.failure(LOG, Level.ERROR, e, "Put method failure");
 				counterAllFail.inc();
 				counterPutFail.inc();
 			}catch (final NumberFormatException e){
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				TraceLogger.failure(LOG, Level.ERROR, e, "Put method failure.Data offset doesn't decode.");
+				LogUtil.failure(LOG, Level.ERROR, e, "Put method failure.Data offset doesn't decode.");
 				counterAllFail.inc();
 				counterPutFail.inc();
 			}
 		}
 		//
 		private void doHead(final HttpResponse response){
-			LOG.trace(Markers.MSG, "Request  method Head ");
+			LOG.trace(LogUtil.MSG, "Request  method Head ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			counterAllSucc.inc();
 			counterHeadSucc.inc();
 		}
 		//
 		private void doDelete(final HttpResponse response){
-			LOG.trace(Markers.MSG, "Request  method Delete ");
+			LOG.trace(LogUtil.MSG, "Request  method Delete ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			counterAllSucc.inc();
 			counterDeleteSucc.inc();
 		}
 		//
 		private void createSwiftAuthToken(final HttpResponse response){
-			LOG.trace(Markers.MSG, "Create auth token ");
+			LOG.trace(LogUtil.MSG, "Create auth token ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			response.setHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, randomString(5));
 			counterGetSucc.inc();
@@ -562,11 +553,11 @@ implements Runnable {
 				// Ready to go!
 				ioReactor.execute(ioEventDispatch);
 			} catch (final InterruptedIOException ex) {
-				TraceLogger.failure(LOG, Level.DEBUG, ex, "Interrupted");
+				LogUtil.failure(LOG, Level.DEBUG, ex, "Interrupted");
 			} catch (final IOReactorException ex) {
-				TraceLogger.failure(LOG, Level.ERROR, ex, "I/O reactor failure");
+				LogUtil.failure(LOG, Level.ERROR, ex, "I/O reactor failure");
 			} catch (final IOException ex) {
-				TraceLogger.failure(LOG, Level.ERROR, ex, "I/O failure");
+				LogUtil.failure(LOG, Level.ERROR, ex, "I/O failure");
 			}
 		}
 	}
