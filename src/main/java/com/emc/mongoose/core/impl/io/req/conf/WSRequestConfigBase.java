@@ -5,9 +5,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
 import com.emc.mongoose.common.http.RequestTargetHost;
-import com.emc.mongoose.common.io.StreamUtils;
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.io.HTTPInputStream;
+import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
@@ -36,13 +35,23 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.NoConnectionReuseStrategy;
+import org.apache.http.message.BasicHeader;
+import org.apache.http.message.HeaderGroup;
+import org.apache.http.protocol.HttpCoreContext;
+import org.apache.http.protocol.HttpDateGenerator;
+import org.apache.http.protocol.HttpProcessor;
+import org.apache.http.protocol.HttpProcessorBuilder;
+import org.apache.http.protocol.RequestConnControl;
+import org.apache.http.protocol.RequestContent;
+import org.apache.http.protocol.RequestUserAgent;
+//
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.message.HeaderGroup;
+//
+import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
@@ -54,13 +63,6 @@ import org.apache.http.nio.protocol.HttpAsyncRequester;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.protocol.HttpCoreContext;
-import org.apache.http.protocol.HttpDateGenerator;
-import org.apache.http.protocol.HttpProcessor;
-import org.apache.http.protocol.HttpProcessorBuilder;
-import org.apache.http.protocol.RequestConnControl;
-import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestUserAgent;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -69,7 +71,6 @@ import org.apache.logging.log4j.Logger;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
@@ -94,6 +95,7 @@ implements WSRequestConfig<T> {
 	protected boolean fsAccess;
 	//
 	private final HttpAsyncRequester client;
+	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
 	private final Thread clientThread;
 	//
@@ -114,19 +116,19 @@ implements WSRequestConfig<T> {
 				constructor = (Constructor<WSRequestConfigBase>) apiImplCls.getConstructors()[0];
 			reqConf = constructor.newInstance();
 		} catch(final ClassNotFoundException e) {
-			TraceLogger.failure(
+			LogUtil.failure(
 				LOG, Level.FATAL, e,
 				String.format("API implementation \"%s\" is not found", api)
 			);
 		} catch(final ClassCastException e) {
-			TraceLogger.failure(
+			LogUtil.failure(
 				LOG, Level.FATAL, e,
 				String.format(
 					"Class \"%s\" is not valid API implementation for \"%s\"", apiImplClsFQN, api
 				)
 			);
 		} catch(final Exception e) {
-			TraceLogger.failure(LOG, Level.FATAL, e, "WS API config instantiation failure");
+			LogUtil.failure(LOG, Level.FATAL, e, "WS API config instantiation failure");
 		}
 		return reqConf;
 	}
@@ -135,7 +137,7 @@ implements WSRequestConfig<T> {
 	protected Mac mac;
 	//
 	public WSRequestConfigBase()
-	throws NoSuchAlgorithmException {
+	throws NoSuchAlgorithmException, IOReactorException {
 		this(null);
 	}
 	//
@@ -161,7 +163,7 @@ implements WSRequestConfig<T> {
 			final String pkgSpec = getClass().getPackage().getName();
 			setAPI(pkgSpec.substring(pkgSpec.lastIndexOf('.') + 1));
 		} catch(final Exception e) {
-			TraceLogger.failure(LOG, Level.ERROR, e, "Request config instantiation failure");
+			LogUtil.failure(LOG, Level.ERROR, e, "Request config instantiation failure");
 		}
 		// create HTTP client
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
@@ -178,7 +180,7 @@ implements WSRequestConfig<T> {
 			new ExceptionLogger() {
 				@Override
 				public final void log(final Exception e) {
-					TraceLogger.failure(LOG, Level.DEBUG, e, "HTTP client internal failure");
+					LogUtil.failure(LOG, Level.DEBUG, e, "HTTP client internal failure");
 				}
 			}
 		);
@@ -209,33 +211,27 @@ implements WSRequestConfig<T> {
 			reqExecutor, connConfig
 		);
 		//
-		ConnectingIOReactor ioReactor = null;
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new NamingWorkerFactory(String.format("WSConfigurator<%s>", toString()))
+				new NamingWorkerFactory(String.format("WSConfigurator<%s>-%d", toString(), hashCode()))
 			);
 		} catch(final IOReactorException e) {
-			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
+			throw new IllegalStateException("Failed to build the I/O reactor", e);
 		}
 		//
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
 			connFactory = new BasicNIOConnFactory(connConfig);
-		if(ioReactor != null) {
-			//
-			connPool = new BasicNIOConnPool(
-				ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
-			);
-			connPool.setMaxTotal(1);
-			connPool.setDefaultMaxPerRoute(1);
-			clientThread = new Thread(
-				new HttpClientRunTask<>(ioEventDispatch, ioReactor),
-				String.format("%s-WSConfigThread", toString())
-			);
-		} else {
-			connPool = null;
-			clientThread = null;
-		}
+		//
+		connPool = new BasicNIOConnPool(
+			ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
+		);
+		connPool.setMaxTotal(1);
+		connPool.setDefaultMaxPerRoute(1);
+		clientThread = new Thread(
+			new HttpClientRunTask(ioEventDispatch, ioReactor),
+			String.format("%s-WSConfigThread-%d", toString(), hashCode())
+		);
 	}
 	//
 	@Override
@@ -313,21 +309,21 @@ implements WSRequestConfig<T> {
 		try {
 			setScheme(this.runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_SCHEME);
+			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_SCHEME);
 		}
 		//
 		try {
 			setNameSpace(this.runTimeConfig.getStorageNameSpace());
 		} catch(final NoSuchElementException e) {
-			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_NAMESPACE);
+			LOG.debug(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_NAMESPACE);
 		} catch(final IllegalStateException e) {
-			LOG.debug(Markers.ERR, "Failed to set the namespace", e);
+			LOG.debug(LogUtil.ERR, "Failed to set the namespace", e);
 		}
 		//
 		try {
 			setFileAccessEnabled(runTimeConfig.getStorageFileAccessEnabled());
 		} catch(final NoSuchElementException e) {
-			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_FS_ACCESS);
+			LOG.debug(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_FS_ACCESS);
 		}
 		//
 		super.setProperties(runTimeConfig);
@@ -345,9 +341,9 @@ implements WSRequestConfig<T> {
 			keySpec = new SecretKeySpec(secret.getBytes(Constants.DEFAULT_ENC), signMethod);
 			mac.init(keySpec);
 		} catch(UnsupportedEncodingException e) {
-			LOG.fatal(Markers.ERR, "Configuration error", e);
+			LOG.fatal(LogUtil.ERR, "Configuration error", e);
 		} catch(InvalidKeyException e) {
-			LOG.error(Markers.ERR, "Invalid secret key", e);
+			LOG.error(LogUtil.ERR, "Invalid secret key", e);
 		}
 		//
 		return this;
@@ -368,14 +364,14 @@ implements WSRequestConfig<T> {
 	throws InterruptedException {
 		WSIOTask<T> ioTask;
 		if(dataItem == null) {
-			LOG.debug(Markers.MSG, "Preparing poison request");
+			LOG.debug(LogUtil.MSG, "Preparing poison request");
 			ioTask = (WSIOTask<T>) BasicWSIOTask.POISON;
 		} else {
 			ioTask = BasicWSIOTask.getInstanceFor(this, dataItem, nodeAddr);
 		}
-		if(LOG.isTraceEnabled(Markers.MSG)) {
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(
-				Markers.MSG, "Task #{}: linked with target address \"{}\" and data item \"{}\"",
+				LogUtil.MSG, "Task #{}: linked with target address \"{}\" and data item \"{}\"",
 				ioTask.hashCode(), nodeAddr, dataItem
 			);
 		}
@@ -387,7 +383,7 @@ implements WSRequestConfig<T> {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		sharedHeaders = HeaderGroup.class.cast(in.readObject());
-		LOG.trace(Markers.MSG, "Got headers set {}", sharedHeaders);
+		LOG.trace(LogUtil.MSG, "Got headers set {}", sharedHeaders);
 		setNameSpace(String.class.cast(in.readObject()));
 		setFileAccessEnabled(Boolean.class.cast(in.readObject()));
 	}
@@ -430,14 +426,14 @@ implements WSRequestConfig<T> {
 		try {
 			applyDateHeader(httpRequest);
 		} catch(final Exception e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply date header");
+			LogUtil.failure(LOG, Level.WARN, e, "Failed to apply date header");
 		}
 		try {
 			applyAuthHeader(httpRequest);
 		} catch(final Exception e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply auth header");
+			LogUtil.failure(LOG, Level.WARN, e, "Failed to apply auth header");
 		}
-		if(LOG.isTraceEnabled(Markers.MSG)) {
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			final StrBuilder msgBuff = new StrBuilder("built request: ")
 				.append(httpRequest.getRequestLine().getMethod()).append(' ')
 				.append(httpRequest.getRequestLine().getUri()).appendNewLine();
@@ -455,7 +451,7 @@ implements WSRequestConfig<T> {
 			} else {
 				msgBuff.append("\t---- no content ----");
 			}
-			LOG.trace(Markers.MSG, msgBuff.toString());
+			LOG.trace(LogUtil.MSG, msgBuff.toString());
 		}
 	}
 	//
@@ -475,24 +471,24 @@ implements WSRequestConfig<T> {
 		for(int i = 0; i < rangeCount; i++) {
 			rangeLen = dataItem.getRangeSize(i);
 			if(dataItem.isRangeUpdatePending(i)) {
-				LOG.trace(Markers.MSG, "\"{}\": should update range #{}", dataItem, i);
+				LOG.trace(LogUtil.MSG, "\"{}\": should update range #{}", dataItem, i);
 				if(rangeBeg < 0) { // begin of the possible updated ranges sequence
 					rangeBeg = DataRanges.getRangeOffset(i);
 					rangeEnd = rangeBeg + rangeLen - 1;
 					LOG.trace(
-						Markers.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
+						LogUtil.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
 					);
 				} else if(rangeEnd > 0) { // next range in the sequence of updated ranges
 					rangeEnd += rangeLen;
 				}
 				if(i == rangeCount - 1) { // this is the last range which is updated also
-					LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
+					LOG.trace(LogUtil.MSG, "End of the updated ranges sequence @{}", rangeEnd);
 					httpRequest.addHeader(
 						HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
 					);
 				}
 			} else if(rangeBeg > -1 && rangeEnd > -1) { // end of the updated ranges sequence
-				LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
+				LOG.trace(LogUtil.MSG, "End of the updated ranges sequence @{}", rangeEnd);
 				httpRequest.addHeader(
 					HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
 				);
@@ -522,9 +518,9 @@ implements WSRequestConfig<T> {
 	//
 	protected void applyDateHeader(final MutableWSRequest httpRequest) {
 		httpRequest.setHeader(HttpHeaders.DATE, DATE_GENERATOR.getCurrentDate());
-		if(LOG.isTraceEnabled(Markers.MSG)) {
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(
-				Markers.MSG, "Apply date header \"{}\" to the request: \"{}\"",
+				LogUtil.MSG, "Apply date header \"{}\" to the request: \"{}\"",
 				httpRequest.getLastHeader(HttpHeaders.DATE), httpRequest
 			);
 		}
@@ -549,29 +545,33 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final boolean consumeContent(
-		final InputStream contentStream, final IOControl ioCtl, T dataItem
-	) {
+	public final boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem) {
 		boolean ok = true;
 		try {
 			if(dataItem != null) {
 				if(loadType == IOTask.Type.READ) { // read
 					if(verifyContentFlag) { // read and do verify
-						ok = dataItem.isContentEqualTo(contentStream);
+						try(
+							final HTTPInputStream inStream = HTTPInputStream.getInstance(in, ioCtl)
+						) {
+							ok = dataItem.isContentEqualTo(inStream);
+						} catch(final InterruptedException e) {
+							// ignore
+						}
 					}
 				}
 			}
 		} catch(final IOException e) {
 			ok = false;
 			if(isClosed()) {
-				TraceLogger.failure(
+				LogUtil.failure(
 					LOG, Level.DEBUG, e, "Failed to read the content after closing"
 				);
 			} else {
-				TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
+				LogUtil.failure(LOG, Level.WARN, e, "Content reading failure");
 			}
 		} finally { // try to read the remaining data if left in the input stream
-			StreamUtils.skipStreamDataQuietly(contentStream);
+			HTTPInputStream.consumeQuietly(in, ioCtl, buffSize);
 		}
 		return ok;
 	}
@@ -579,34 +579,38 @@ implements WSRequestConfig<T> {
 	@Override
 	public final void close()
 	throws IOException {
+		//
 		try {
 			super.close();
 		} finally {
-			if(clientThread.isAlive()) {
-				clientThread.interrupt();
-			}
-			if(connPool != null && connPool.isShutdown()) {
-				connPool.closeExpired();
+			clientThread.interrupt();
+			LOG.debug(LogUtil.MSG, "Client thread \"{}\" stopped", clientThread);
+		}
+		//
+		if(connPool != null && connPool.isShutdown()) {
+			connPool.closeExpired();
+			try {
+				connPool.closeIdle(0, TimeUnit.MILLISECONDS);
+			} finally {
 				try {
-					connPool.closeIdle(0, TimeUnit.MILLISECONDS);
-				} finally {
-					try {
-						connPool.shutdown(0);
-					} catch(final IOException e) {
-						TraceLogger.failure(
-							LOG, Level.WARN, e, "Connection pool shutdown failure"
-						);
-					}
+					connPool.shutdown(0);
+				} catch(final IOException e) {
+					LogUtil.failure(
+						LOG, Level.WARN, e, "Connection pool shutdown failure"
+					);
 				}
 			}
 		}
-		LOG.debug(Markers.MSG, "Closed web storage client");
+		//
+		ioReactor.shutdown();
+		LOG.debug(LogUtil.MSG, "Closed web storage client");
 	}
 	//
 	@Override
-	public final HttpResponse execute(final String tgtAddr, final HttpRequest request) {
+	public final HttpResponse execute(final String tgtAddr, final HttpRequest request)
+	throws IllegalThreadStateException {
 		//
-		if(!clientThread.isAlive() && !clientThread.isInterrupted()) {
+		if(!clientThread.isAlive()) {
 			clientThread.start();
 		}
 		//
@@ -622,7 +626,7 @@ implements WSRequestConfig<T> {
 						t[0], Integer.parseInt(t[1]), runTimeConfig.getStorageProto()
 					);
 				} catch(final Exception e) {
-					TraceLogger.failure(
+					LogUtil.failure(
 						LOG, Level.WARN, e, "Failed to determine the request target host"
 					);
 				}
@@ -633,7 +637,7 @@ implements WSRequestConfig<T> {
 				);
 			}
 		} else {
-			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");
+			LOG.warn(LogUtil.ERR, "Failed to determine the 1st storage node address");
 		}
 		//
 		if(tgtHost != null && connPool != null) {
@@ -646,11 +650,11 @@ implements WSRequestConfig<T> {
 				).get();
 			} catch(final InterruptedException e) {
 				if(!isClosed()) {
-					LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
+					LOG.debug(LogUtil.ERR, "Interrupted during HTTP request execution");
 				}
 			} catch(final ExecutionException e) {
 				if(!isClosed()) {
-					TraceLogger.failure(
+					LogUtil.failure(
 						LOG, Level.WARN, e,
 						String.format(
 							"HTTP request \"%s\" execution failure @ \"%s\"", request, tgtHost

@@ -6,11 +6,11 @@ import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
@@ -22,7 +22,7 @@ extends LoadExecutorBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final IOTask.Type loadType;
+	protected final IOTask.Type loadType;
 	private final int countUpdPerReq;
 	private final long sizeMin, sizeRange;
 	private final float sizeBias;
@@ -30,14 +30,40 @@ extends LoadExecutorBase<T> {
 	protected AdvancedLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
+		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq,
+	    final int queueSize
 	) throws ClassCastException {
 		super(
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
-			sizeMin, sizeMax, sizeBias
+			sizeMin, sizeMax, sizeBias, queueSize
 		);
 		//
 		this.loadType = reqConfig.getLoadType();
+		//
+		int buffSize;
+		if(sizeMin == sizeMax) {
+			LOG.debug(LogUtil.MSG, "Fixed data item size: {}", RunTimeConfig.formatSize(sizeMin));
+			buffSize = sizeMin < BUFF_SIZE_HI ? (int) sizeMin : BUFF_SIZE_HI;
+		} else {
+			final long t = (sizeMin + sizeMax) / 2;
+			buffSize = t < BUFF_SIZE_HI ? (int) t : BUFF_SIZE_HI;
+			LOG.debug(
+				LogUtil.MSG, "Average data item size: {}",
+				RunTimeConfig.formatSize(buffSize)
+			);
+		}
+		if(buffSize < BUFF_SIZE_LO) {
+			LOG.debug(
+				LogUtil.MSG, "Buffer size {} is less than lower bound {}",
+				RunTimeConfig.formatSize(buffSize), RunTimeConfig.formatSize(BUFF_SIZE_LO)
+			);
+			buffSize = BUFF_SIZE_LO;
+		}
+		LOG.debug(
+			LogUtil.MSG, "Determined buffer size of {} for \"{}\"",
+			RunTimeConfig.formatSize(buffSize), getName()
+		);
+		this.reqConfigCopy.setBuffSize(buffSize);
 		//
 		switch(loadType) {
 			case APPEND:
@@ -91,9 +117,9 @@ extends LoadExecutorBase<T> {
 							sizeRange
 						);
 					dataItem.append(nextSize);
-					if(LOG.isTraceEnabled(Markers.MSG)) {
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
 						LOG.trace(
-							Markers.MSG, "Append the object \"{}\": +{}",
+							LogUtil.MSG, "Append the object \"{}\": +{}",
 							dataItem, RunTimeConfig.formatSize(nextSize)
 						);
 					}
@@ -101,9 +127,9 @@ extends LoadExecutorBase<T> {
 				case UPDATE:
 					if(dataItem.getSize() > 0) {
 						dataItem.updateRandomRanges(countUpdPerReq);
-						if(LOG.isTraceEnabled(Markers.MSG)) {
+						if(LOG.isTraceEnabled(LogUtil.MSG)) {
 							LOG.trace(
-								Markers.MSG, "Modified {} ranges for object \"{}\"",
+								LogUtil.MSG, "Modified {} ranges for object \"{}\"",
 								countUpdPerReq, dataItem
 							);
 						}

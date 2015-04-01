@@ -25,6 +25,12 @@ implements WSObjectMock {
 		super();
 	}
 	//
+	public BasicWSObjectMock(final long size){ super(size);}
+	//
+	public BasicWSObjectMock(final String id, final Long size) {
+		super(id, size);
+	}
+	//
 	public BasicWSObjectMock(final String metaInfo) {
 		super(metaInfo);
 	}
@@ -74,10 +80,10 @@ implements WSObjectMock {
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
 		synchronized (this) { // stream position protection
-			if (maskRangesPending.isEmpty()) {
+			if(maskRangesPending.isEmpty()) {
 				super.writeTo(out);
 			} else {
-				for (int i = 0; i < countRangesTotal; i++) {
+				for(int i = 0; i < countRangesTotal; i++) {
 					rangeOffset = getRangeOffset(i);
 					rangeSize = getRangeSize(i);
 					if (maskRangesPending.get(i)) { // range have been modified

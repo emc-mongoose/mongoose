@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.io.req.conf;
 //
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import com.emc.mongoose.core.api.data.DataItem;
@@ -43,11 +43,11 @@ implements RequestConfig<T> {
 		/*addr, */nameSpace, scheme/*, uriTemplate*/;
 	protected volatile int
 		port;
-	protected int
-		loadNumber;
+	protected int buffSize;
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
+		LOG.trace(LogUtil.MSG, String.format("New reqconf instance (%d)", hashCode()));
 		api = runTimeConfig.getApiName();
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();
@@ -59,6 +59,7 @@ implements RequestConfig<T> {
 		scheme = runTimeConfig.getStorageProto();
 		port = runTimeConfig.getApiTypePort(api);
 		nameSpace = runTimeConfig.getStorageNameSpace();
+		buffSize = (int) runTimeConfig.getDataBufferSize();
 	}
 	//
 	protected RequestConfigBase(final RequestConfig<T> reqConf2Clone) {
@@ -75,6 +76,10 @@ implements RequestConfig<T> {
 			setLoadType(reqConf2Clone.getLoadType());
 			setNameSpace(reqConf2Clone.getNameSpace());
 			secret = reqConf2Clone.getSecret();
+			setBuffSize(reqConf2Clone.getBuffSize());
+			LOG.debug(
+				LogUtil.MSG, "Forked req conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
+			);
 		}
 	}
 	//
@@ -92,8 +97,12 @@ implements RequestConfig<T> {
 			.setPort(port)
 			.setScheme(scheme)
 			.setLoadType(loadType)
-			.setNameSpace(nameSpace);
+			.setNameSpace(nameSpace)
+			.setBuffSize(buffSize);
 		requestConfigBranch.secret = secret;
+		LOG.debug(
+			LogUtil.MSG, "Forked req conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
+		);
 		return requestConfigBranch;
 	}
 	//
@@ -113,7 +122,7 @@ implements RequestConfig<T> {
 	}
 	@Override
 	public RequestConfigBase<T> setLoadType(final IOTask.Type loadType) {
-		LOG.trace(Markers.MSG, "Setting load type {}", loadType);
+		LOG.trace(LogUtil.MSG, "Setting load type {}", loadType);
 		this.loadType = loadType;
 		return this;
 	}
@@ -158,7 +167,7 @@ implements RequestConfig<T> {
 	@Override
 	public final RequestConfigBase<T> setPort(final int port)
 	throws IllegalArgumentException {
-		LOG.trace(Markers.MSG, "Using storage port: {}", port);
+		LOG.trace(LogUtil.MSG, "Using storage port: {}", port);
 		if(port > 0 || port < 0x10000) {
 			this.port = port;
 			/*uriTemplate = String.format(
@@ -241,9 +250,6 @@ implements RequestConfig<T> {
 	//
 	@Override
 	public final RequestConfigBase<T> setAnyDataProducerEnabled(final boolean enabledFlag) {
-		LOG.debug(
-			Markers.MSG, "req conf {}: set any data producer enabled to {}", hashCode(), enabledFlag
-		);
 		this.anyDataProducerEnabled = enabledFlag;
 		return this;
 	}
@@ -259,7 +265,18 @@ implements RequestConfig<T> {
 		setSecret(this.runTimeConfig.getAuthSecret());
 		setRetries(this.runTimeConfig.getRunRequestRetries());
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
+		setBuffSize((int) this.runTimeConfig.getDataBufferSize());
 		return this;
+	}
+	//
+	@Override
+	public final int getBuffSize() {
+		return buffSize;
+	}
+	//
+	@Override
+	public final void setBuffSize(final int buffSize) {
+		this.buffSize = buffSize;
 	}
 	//
 	@Override
@@ -274,6 +291,7 @@ implements RequestConfig<T> {
 		out.writeObject(getNameSpace());
 		out.writeObject(getDataSource());
 		out.writeBoolean(getRetries());
+		out.writeBoolean(getAnyDataProducerEnabled());
 		out.writeBoolean(getVerifyContentFlag());
 		out.writeBoolean(getAnyDataProducerEnabled());
 	}
@@ -282,28 +300,27 @@ implements RequestConfig<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		setAPI(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got API {}", api);
+		LOG.trace(LogUtil.MSG, "Got API {}", api);
 		setLoadType(IOTask.Type.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got load type {}", loadType);
+		LOG.trace(LogUtil.MSG, "Got load type {}", loadType);
 		setScheme(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got scheme {}", scheme);
+		LOG.trace(LogUtil.MSG, "Got scheme {}", scheme);
 		setPort(in.readInt());
-		LOG.trace(Markers.MSG, "Got port {}", port);
+		LOG.trace(LogUtil.MSG, "Got port {}", port);
 		setUserName(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got user name {}", userName);
+		LOG.trace(LogUtil.MSG, "Got user name {}", userName);
 		setSecret(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got secret {}", secret);
+		LOG.trace(LogUtil.MSG, "Got secret {}", secret);
 		setNameSpace(String.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got namespace {}", secret);
+		LOG.trace(LogUtil.MSG, "Got namespace {}", secret);
 		setDataSource(DataSource.class.cast(in.readObject()));
-		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
+		LOG.trace(LogUtil.MSG, "Got data source {}", dataSrc);
 		setRetries(in.readBoolean());
-		LOG.trace(Markers.MSG, "Got retry flag {}", retryFlag);
+		LOG.trace(LogUtil.MSG, "Got retry flag {}", retryFlag);
+		setAnyDataProducerEnabled(Boolean.class.cast(in.readBoolean()));
+		LOG.trace(LogUtil.MSG, "Got any producer enabled flag {}", anyDataProducerEnabled);
 		setVerifyContentFlag(in.readBoolean());
-		LOG.trace(Markers.MSG, "Got verify content flag {}", retryFlag);
-		setAnyDataProducerEnabled(in.readBoolean());
-		LOG.trace(Markers.MSG, "Got any data producer enabled flag {}", anyDataProducerEnabled);
-
+		LOG.trace(LogUtil.MSG, "Got verify content flag {}", retryFlag);
 	}
 	//
 	@Override
@@ -317,7 +334,7 @@ implements RequestConfig<T> {
 	public void close()
 	throws IOException {
 		if(closeFlag.compareAndSet(false, true)) {
-			LOG.trace(Markers.MSG, "Request config instance #{} marked as closed", hashCode());
+			LOG.debug(LogUtil.MSG, "Request config instance #{} marked as closed", hashCode());
 		}
 	}
 	//

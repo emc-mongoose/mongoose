@@ -1,7 +1,7 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.pool.InstancePool;
 import com.emc.mongoose.common.pool.Reusable;
 // mongoose-core-api.jar
@@ -12,7 +12,9 @@ import com.emc.mongoose.server.api.load.executor.LoadSvc;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.rmi.ServerException;
 import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 18.12.14.
@@ -49,12 +51,15 @@ implements Runnable, Reusable {
 					try {
 						loadSvc.submit(dataItem);
 						break;
+					} catch(final NoSuchObjectException | ServerException e) {
+						LOG.debug(LogUtil.ERR, "Load service \"{}\" seems to be shut down already");
+						break;
 					} catch(final RemoteException e) {
 						rejectCount ++;
 						Thread.sleep(retryDelayMilliSec);
 					}
 				} catch(final InterruptedException e) {
-					LOG.debug(Markers.MSG, "Interrupted");
+					LOG.debug(LogUtil.MSG, "Interrupted");
 					break;
 				}
 			} while(rejectCount > retryMaxCount);

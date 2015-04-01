@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.adapter.atmos;
 //
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -63,12 +62,12 @@ extends DefaultHandler {
 	@Override
 	public final void endDocument()
 	throws SAXException {
-		LOG.debug(Markers.MSG, "End of bucket listing, got {} items", count);
+		LOG.debug(LogUtil.MSG, "End of bucket listing, got {} items", count);
 		if(consumer != null) {
 			try {
 				consumer.shutdown();
 			} catch(final RemoteException e) {
-				TraceLogger.failure(
+				LogUtil.failure(
 					LOG, Level.WARN, e, "Failed to limit data items count for remote consumer"
 				);
 			}

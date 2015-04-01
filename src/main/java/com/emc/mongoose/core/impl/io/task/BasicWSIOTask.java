@@ -1,10 +1,8 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.io.HTTPInputStream;
-import com.emc.mongoose.common.io.HTTPOutputStream;
 import com.emc.mongoose.common.pool.InstancePool;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
@@ -14,6 +12,7 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -41,7 +40,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -75,16 +74,16 @@ implements WSIOTask<T> {
 	@Override
 	public void release() {
 		if(isAvailable.compareAndSet(false, true)) {
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				TraceLogger.trace(
-					LOG, Level.TRACE, Markers.MSG,
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LogUtil.trace(
+					LOG, Level.TRACE, LogUtil.MSG,
 					String.format("Releasing the task #%d", hashCode())
 				);
 			}
 			resetRequest();
 			POOL_WEB_IO_TASKS.release(this);
 		} else {
-			LOG.warn(Markers.ERR, "Not closing already closed task #{}", hashCode());
+			LOG.warn(LogUtil.ERR, "Not closing already closed task #{}", hashCode());
 		}
 	}
 	// END pool related things
@@ -101,6 +100,9 @@ implements WSIOTask<T> {
 	);
 	protected volatile HttpEntity reqEntity = null;
 	//
+	private byte buff[] = new byte[LoadExecutor.BUFF_SIZE_LO];
+	private ByteBuffer bb = ByteBuffer.wrap(buff);
+	//
 	@Override
 	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
 		if(reqConf != null && !reqConf.equals(wsReqConf)) {
@@ -115,6 +117,13 @@ implements WSIOTask<T> {
 			if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
 				httpRequest.setMethod(wsReqConf.getHTTPMethod());
 			}
+			//
+			int newBuffSize = wsReqConf.getBuffSize();
+			if(buff.length != newBuffSize) {
+				buff = new byte[newBuffSize];
+				bb = ByteBuffer.wrap(buff);
+			}
+			//
 			super.setRequestConfig(reqConf);
 		}
 		return this;
@@ -126,7 +135,7 @@ implements WSIOTask<T> {
 			super.setDataItem(dataItem);
 			wsReqConf.applyDataItem(httpRequest, dataItem);
 		} catch(final Exception e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply data item");
+			LogUtil.failure(LOG, Level.WARN, e, "Failed to apply data item");
 		}
 		return this;
 	}
@@ -152,7 +161,7 @@ implements WSIOTask<T> {
 						throw new InterruptedException("Stop due to irrecoverable failure");
 					}
 				} catch(final Exception e) {
-					TraceLogger.failure(
+					LogUtil.failure(
 						LOG, Level.WARN, e,
 						String.format("Invalid syntax of storage address \"%s\"", nodeAddr)
 					);
@@ -196,14 +205,14 @@ implements WSIOTask<T> {
 		try {
 			wsReqConf.applyHeadersFinally(httpRequest);
 			reqEntity = httpRequest.getEntity();
-			if(LOG.isTraceEnabled(Markers.MSG)) {
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(
-					Markers.MSG, "Task #{}: generating the request w/ {} bytes of content",
+					LogUtil.MSG, "Task #{}: generating the request w/ {} bytes of content",
 					hashCode(), reqEntity == null ? "NO" : reqEntity.getContentLength()
 				);
 			}
 		} catch(final Exception e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to apply the final headers");
+			LogUtil.failure(LOG, Level.WARN, e, "Failed to apply the final headers");
 		}
 		reqTimeStart = System.nanoTime() / 1000;
 		return httpRequest;
@@ -212,33 +221,42 @@ implements WSIOTask<T> {
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		try(final OutputStream outStream = HTTPOutputStream.getInstance(out, ioCtl)) {
-			if(reqEntity != null && reqEntity.getContentLength() > 0) {
-				if(LOG.isTraceEnabled(Markers.MSG)) {
+		if(reqEntity != null) {
+			long contentLength = reqEntity.getContentLength();
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(LogUtil.MSG, "Task #{}, write out {} bytes", hashCode(), contentLength);
+			}
+			long byteCountDown = contentLength;
+			int n;
+			try(final InputStream dataStream = reqEntity.getContent()) {
+				while(byteCountDown > 0) {
+					n = byteCountDown < buff.length ? (int) byteCountDown : buff.length;
+					if(0 >= dataStream.read(buff, 0, n)) {
+						break;
+					}
+					bb.rewind().limit(n);
+					while(bb.hasRemaining()) {
+						out.write(bb);
+					}
+					byteCountDown -= n;
+				}
+			} finally {
+				out.complete();
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
-						Markers.MSG, "Task #{}, write out {} bytes",
-						hashCode(), reqEntity.getContentLength()
+						LogUtil.MSG, "Task #{}: {} bytes written out",
+						hashCode(), contentLength - byteCountDown
 					);
 				}
-				reqEntity.writeTo(outStream);
-			} else if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG, "Task #{}: No content to produce", hashCode());
-				out.complete();
 			}
-		} catch(final InterruptedException e) {
-			// ignored
-		} catch(final Exception e) {
-			TraceLogger.failure(
-				LOG, Level.WARN, e, String.format("Task #%d: content producing failure", hashCode())
-			);
 		}
 	}
 	//
 	@Override
 	public final void requestCompleted(final HttpContext context) {
 		reqTimeDone = System.nanoTime() / 1000;
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Task #{}: request sent completely", hashCode());
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(LogUtil.MSG, "Task #{}: request sent completely", hashCode());
 		}
 	}
 	//
@@ -257,9 +275,9 @@ implements WSIOTask<T> {
 				httpRequest.clearHeaders();
 				httpRequest.setHeaders(sharedHeaders.getAllHeaders());
 				httpRequest.setEntity(reqEntity);
-				if(LOG.isTraceEnabled(Markers.MSG)) {
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
-						Markers.MSG, "Task #{}: reset the request, left headers: {}, shared headers: {}",
+						LogUtil.MSG, "Task #{}: reset the request, left headers: {}, shared headers: {}",
 						hashCode(), Arrays.toString(httpRequest.getAllHeaders()),
 						Arrays.toString(sharedHeaders.getAllHeaders())
 					);
@@ -281,8 +299,8 @@ implements WSIOTask<T> {
 		//
 		respTimeStart = System.nanoTime() / 1000;
 		final StatusLine status = response.getStatusLine();
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "#{}, got response \"{}\"", hashCode(), status);
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(LogUtil.MSG, "#{}, got response \"{}\"", hashCode(), status);
 		}
 		respStatusCode = status.getStatusCode();
 		//
@@ -300,7 +318,7 @@ implements WSIOTask<T> {
 						msgBuff
 							.append("Incorrect request: \"")
 							.append(httpRequest.getRequestLine()).append("\"\n");
-						if(LOG.isTraceEnabled(Markers.ERR)) {
+						if(LOG.isTraceEnabled(LogUtil.ERR)) {
 							for(final Header rangeHeader : httpRequest.getAllHeaders()) {
 								msgBuff
 									.append('\t').append(rangeHeader.getName()).append(": ")
@@ -312,7 +330,7 @@ implements WSIOTask<T> {
 					break;
 				case (403):
 					msgBuff.append("Access failure for data item: \"").append(dataItem);
-					if(LOG.isTraceEnabled(Markers.ERR)) {
+					if(LOG.isTraceEnabled(LogUtil.ERR)) {
 						msgBuff.append("\"\nSource request headers:\n");
 						for(final Header rangeHeader : httpRequest.getAllHeaders()) {
 							msgBuff
@@ -374,7 +392,7 @@ implements WSIOTask<T> {
 				case (416):
 					synchronized(LOG) {
 						msgBuff.append("Incorrect range\n");
-						if(LOG.isTraceEnabled(Markers.ERR)) {
+						if(LOG.isTraceEnabled(LogUtil.ERR)) {
 							for(
 								final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)
 							) {
@@ -431,7 +449,7 @@ implements WSIOTask<T> {
 			}
 			//
 			LOG.debug(
-				Markers.ERR, "Task #{}: {}{}/{} <- {} {}{}",
+				LogUtil.ERR, "Task #{}: {}{}/{} <- {} {}{}",
 				hashCode(), msgBuff, respStatusCode, status.getReasonPhrase(),
 				httpRequest.getMethod(), httpRequest.getUriAddr(), httpRequest.getUriPath()
 			);
@@ -444,43 +462,38 @@ implements WSIOTask<T> {
 	@Override
 	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
 	throws IOException {
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "#{}: start content consuming", hashCode());
-		}
-		try(final InputStream contentStream = HTTPInputStream.getInstance(in, ioCtl)) {
-			if(respStatusCode < 200 || respStatusCode >= 300) { // failure
+		if(respStatusCode < 200 || respStatusCode >= 300) { // failure
+			try(
 				final BufferedReader contentStreamBuff = new BufferedReader(
-					new InputStreamReader(contentStream)
-				);
+					new InputStreamReader(HTTPInputStream.getInstance(in, ioCtl))
+				)
+			) {
 				final StrBuilder msgBuilder = new StrBuilder();
 				String nextLine;
 				do {
 					nextLine = contentStreamBuff.readLine();
-					if(nextLine == null && LOG.isTraceEnabled(Markers.ERR)) {
+					if(nextLine == null && LOG.isTraceEnabled(LogUtil.ERR)) {
 						LOG.trace(
-							Markers.ERR, "Response failure code \"{}\", content: \"{}\"",
+							LogUtil.ERR, "Response failure code \"{}\", content: \"{}\"",
 							respStatusCode, msgBuilder.toString()
 						);
 					} else {
 						msgBuilder.append(nextLine);
 					}
 				} while(nextLine != null);
-			} else {
-				if(!wsReqConf.consumeContent(contentStream, ioCtl, dataItem)) { // content corruption
-					status = Status.FAIL_CORRUPT;
-				}
+			} catch(final InterruptedException e) {
+				// ignore
 			}
-		} catch(final InterruptedException e) {
-			// do nothing
+		} else {
+			if(!wsReqConf.consumeContent(in, ioCtl, dataItem)) { // content corruption
+				status = Status.FAIL_CORRUPT;
+			}
 		}
 	}
 	//
 	@Override
 	public final void responseCompleted(final HttpContext context) {
 		respTimeDone = System.nanoTime() / 1000;
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "#{}: response completed", hashCode());
-		}
 		complete();
 	}
 	//

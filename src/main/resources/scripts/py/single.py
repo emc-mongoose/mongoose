@@ -5,7 +5,8 @@ from timeout import init as timeOutInit
 from loadbuilder import init as loadBuilderInit
 #
 from com.emc.mongoose.common.conf import RunTimeConfig
-from com.emc.mongoose.common.logging import Markers, TraceLogger
+from com.emc.mongoose.common.logging import LogUtil
+from com.emc.mongoose.common.net import ServiceUtils
 #
 from com.emc.mongoose.core.api.io.task import IOTask
 #
@@ -22,28 +23,28 @@ def init():
 		loadType = IOTask.Type.valueOf(
 			RunTimeConfig.getContext().getString(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD).upper()
 		)
-		LOG.debug(Markers.MSG, "Using load type: {}", loadType.name())
+		LOG.debug(LogUtil.MSG, "Using load type: {}", loadType.name())
 		loadBuilder.setLoadType(loadType)
 	except NoSuchElementException:
-		LOG.error(Markers.ERR, "No load type specified, try arg -Dscenario.single.load=<VALUE> to override")
+		LOG.error(LogUtil.ERR, "No load type specified, try arg -Dscenario.single.load=<VALUE> to override")
 	except IllegalArgumentException:
-		LOG.error(Markers.ERR, "No such load type, it should be a constant from Load.Type enumeration")
+		LOG.error(LogUtil.ERR, "No such load type, it should be a constant from Load.Type enumeration")
 	return loadBuilder
 #
 def build(loadBuilder):
 	load = None
 	if loadBuilder is None:
-		LOG.fatal(Markers.ERR, "No load builder specified")
+		LOG.fatal(LogUtil.ERR, "No load builder specified")
 	else:
 		try:
 			load = loadBuilder.build()
 		except Exception as e:
-			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
+			LogUtil.failure(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
 	return load
 #
 def execute(load):
 	if load is None:
-		LOG.fatal(Markers.ERR, "No load job specified")
+		LOG.fatal(LogUtil.ERR, "No load job specified")
 	else:
 		runTimeOut = timeOutInit()
 		load.start()
@@ -58,4 +59,5 @@ if __name__ == "__builtin__":
 	loadBuilder = init()
 	load = build(loadBuilder)
 	execute(load)
-	LOG.info(Markers.MSG, "Scenario end")
+	loadBuilder.close() # to exit normally
+	LOG.info(LogUtil.MSG, "Scenario end")

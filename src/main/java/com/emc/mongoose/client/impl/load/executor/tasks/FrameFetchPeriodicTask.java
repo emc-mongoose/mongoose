@@ -1,6 +1,6 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 // mongoose-server-api.jar
@@ -35,7 +35,7 @@ implements PeriodicTask<T> {
 		try {
 			result.set((T) loadSvc.takeFrame());
 		} catch(final RemoteException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to fetch the frame");
+			LogUtil.failure(LOG, Level.WARN, e, "Failed to fetch the frame");
 		}
 	}
 	//

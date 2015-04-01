@@ -1,18 +1,17 @@
 package com.emc.mongoose.webui;
 //
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.logging.TraceLogger;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 //
-import com.emc.mongoose.storage.mock.impl.cinderella.Main;
+import com.emc.mongoose.storage.mock.impl.cinderella.Cinderella;
 //
-import com.emc.mongoose.run.scenario.RunTask;
+import com.emc.mongoose.run.scenario.Scenario;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -59,7 +58,7 @@ public final class StartServlet extends CommonServlet {
 				try {
 					response.getWriter().write(resultString);
 				} catch (final IOException e) {
-					TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to write in servlet response");
+					LogUtil.failure(LOG, Level.DEBUG, e, "Failed to write in servlet response");
 				}
 			}
 			return;
@@ -89,7 +88,7 @@ public final class StartServlet extends CommonServlet {
 				break;
 			default:
 				LOG.warn(
-					Markers.ERR, "Unsupported run mode \"{}\"",
+					LogUtil.ERR, "Unsupported run mode \"{}\"",
 					request.getParameter(RunTimeConfig.KEY_RUN_MODE)
 				);
 		}
@@ -107,7 +106,7 @@ public final class StartServlet extends CommonServlet {
 				localRunTimeConfig = runTimeConfig;
 				RunTimeConfig.setContext(localRunTimeConfig);
 				//
-				LOG.debug(Markers.MSG, message);
+				LOG.debug(LogUtil.MSG, message);
 				//
 				loadBuilderSvc = new BasicWSLoadBuilderSvc(localRunTimeConfig);
 				//
@@ -115,7 +114,7 @@ public final class StartServlet extends CommonServlet {
 					loadBuilderSvc.setProperties(runTimeConfig);
 					loadBuilderSvc.start();
 				} catch (final RemoteException e) {
-					TraceLogger.failure(LOG, Level.ERROR, e, "Failed to start load builder service");
+					LogUtil.failure(LOG, Level.ERROR, e, "Failed to start load builder service");
 				}
 			}
 			@Override
@@ -149,8 +148,8 @@ public final class StartServlet extends CommonServlet {
 				}
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getScenarioName());
 				//
-				LOG.debug(Markers.MSG, message);
-				new RunTask().run();
+				LOG.debug(LogUtil.MSG, message);
+				new Scenario().run();
 			}
 			//
 			@Override
@@ -168,11 +167,11 @@ public final class StartServlet extends CommonServlet {
 			public void run() {
 				RunTimeConfig.setContext(runTimeConfig);
 				//
-				LOG.debug(Markers.MSG, message);
+				LOG.debug(LogUtil.MSG, message);
 				try {
-					new Main(runTimeConfig).run();
+					new Cinderella().run();
 				} catch (final IOException e) {
-					TraceLogger.failure(LOG, Level.FATAL, e, "Failed run Cinderella");
+					LogUtil.failure(LOG, Level.FATAL, e, "Failed run Cinderella");
 				}
 			}
 

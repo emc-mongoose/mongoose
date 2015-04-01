@@ -10,6 +10,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.nio.ContentDecoder;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.IOControl;
 //
@@ -93,7 +94,8 @@ extends ObjectRequestConfig<T> {
 	//
 	void receiveResponse(final HttpResponse response, final T dataItem);
 	//
-	boolean consumeContent(final InputStream contentStream, final IOControl ioCtl, T dataItem);
+	public HttpResponse execute(final String addr, final HttpRequest request)
+	throws IllegalThreadStateException;
 	//
-	public HttpResponse execute(final String addr, final HttpRequest request);
+	boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem);
 }

@@ -6,7 +6,8 @@ from loadbuilder import init as loadBuilderInit
 from org.apache.logging.log4j import Level, LogManager
 #
 from com.emc.mongoose.common.conf import RunTimeConfig
-from com.emc.mongoose.common.logging import Markers, TraceLogger
+from com.emc.mongoose.common.logging import LogUtil
+from com.emc.mongoose.common.net import ServiceUtils
 #
 from com.emc.mongoose.core.api.io.task import IOTask
 from com.emc.mongoose.core.api.persist import DataItemBuffer
@@ -26,7 +27,7 @@ def build(
 	chain = list()
 	prevLoad = None
 	for loadTypeStr in loadTypesChain:
-		LOG.debug(Markers.MSG, "Next load type is \"{}\"", loadTypeStr)
+		LOG.debug(LogUtil.MSG, "Next load type is \"{}\"", loadTypeStr)
 		try:
 			loadBuilder.setLoadType(IOTask.Type.valueOf(loadTypeStr.upper()))
 			if dataItemSizeMin > 0:
@@ -51,28 +52,28 @@ def build(
 								chain.append(mediatorBuff)
 								mediatorBuff.setConsumer(load)
 							else:
-								LOG.error(Markers.ERR, "No mediator buffer instanced")
+								LOG.error(LogUtil.ERR, "No mediator buffer instanced")
 						else:
 							prevLoad.setConsumer(load)
 					chain.append(load)
 			else:
-				LOG.error(Markers.ERR, "No load executor instanced")
+				LOG.error(LogUtil.ERR, "No load executor instanced")
 			if prevLoad is None:
 				loadBuilder.setInputFile(None) # prevent the file list producer creation for next loads
 			prevLoad = load
 		except IllegalArgumentException as e:
-			TraceLogger.failure(
+			LogUtil.failure(
 				LOG, Level.ERROR, e, String.format("Wrong load type \"%s\", skipping", loadTypeStr)
 			)
 		except Throwable as e:
-			TraceLogger.failure(LOG, Level.FATAL, e, "Unexpected failure")
+			LogUtil.failure(LOG, Level.FATAL, e, "Unexpected failure")
 	return chain
 	#
 def execute(chain=(), flagSimultaneous=True):
 	runTimeOut = timeOutInit()
 	try:
 		if flagSimultaneous:
-			LOG.info(Markers.MSG, "Execute load jobs in parallel")
+			LOG.info(LogUtil.MSG, "Execute load jobs in parallel")
 			for load in reversed(chain):
 				load.start()
 			for load in chain:
@@ -83,46 +84,46 @@ def execute(chain=(), flagSimultaneous=True):
 				finally:
 					load.close()
 		else:
-			LOG.info(Markers.MSG, "Execute load jobs sequentially")
+			LOG.info(LogUtil.MSG, "Execute load jobs sequentially")
 			prevLoad, nextLoad = None, None
 			for nextLoad in chain:
 				if not isinstance(nextLoad, DataItemBuffer):
-					LOG.debug(Markers.MSG, "Starting next load job: \"{}\"", nextLoad)
+					LOG.debug(LogUtil.MSG, "Starting next load job: \"{}\"", nextLoad)
 					nextLoad.start()
 					if prevLoad is not None and isinstance(prevLoad, DataItemBuffer):
-						LOG.debug(Markers.MSG, "Stop buffering the data items into \"{}\"", prevLoad)
+						LOG.debug(LogUtil.MSG, "Stop buffering the data items into \"{}\"", prevLoad)
 						prevLoad.close()
-						LOG.debug(Markers.MSG, "Start producing the data items from \"{}\"", prevLoad)
+						LOG.debug(LogUtil.MSG, "Start producing the data items from \"{}\"", prevLoad)
 						prevLoad.start()
 						try:
 							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
 						except InterruptedException as e:
 							raise e
 						except Throwable as e:
-							TraceLogger.failure(
+							LogUtil.failure(
 								LOG, Level.ERROR, e,
 								String.format("Producer \"%s\" execution failure", prevLoad)
 							)
 						finally:
-							LOG.debug(Markers.MSG, "Load job \"{}\" done", nextLoad)
+							LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
 							prevLoad.interrupt()
-							LOG.debug(Markers.MSG, "Stop producing the data items from \"{}\"", prevLoad)
+							LOG.debug(LogUtil.MSG, "Stop producing the data items from \"{}\"", prevLoad)
 							nextLoad.close()
-							LOG.debug(Markers.MSG, "Load job \"{}\" closed", nextLoad)
+							LOG.debug(LogUtil.MSG, "Load job \"{}\" closed", nextLoad)
 					else:
 						try:
 							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
 						except InterruptedException as e:
 							raise e
 						except Throwable as e:
-							TraceLogger.failure(
+							LogUtil.failure(
 								LOG, Level.ERROR, e,
 								String.format("Consumer \"%s\" execution failure", nextLoad)
 							)
 						finally:
-							LOG.debug(Markers.MSG, "Load job \"{}\" done", nextLoad)
+							LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
 							nextLoad.close()
-							LOG.debug(Markers.MSG, "Load job \"{}\" closed", nextLoad)
+							LOG.debug(LogUtil.MSG, "Load job \"{}\" closed", nextLoad)
 				prevLoad = nextLoad
 	finally:
 		if chain is not None:
@@ -138,35 +139,35 @@ if __name__ == "__builtin__":
 	try:
 		dataItemSize = Long(runTimeConfig.getSizeBytes(RunTimeConfig.KEY_DATA_SIZE))
 	except:
-		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
+		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
 	try:
 		dataItemSizeMin = Long(runTimeConfig.getSizeBytes(RunTimeConfig.KEY_DATA_SIZE_MIN))
 	except:
-		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
+		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
 	try:
 		dataItemSizeMax = Long(runTimeConfig.getSizeBytes(RunTimeConfig.KEY_DATA_SIZE_MAX))
 	except:
-		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
+		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
 	try:
 		threadsPerNode = Long(runTimeConfig.getShort(RunTimeConfig.KEY_LOAD_THREADS))
 	except:
-		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_LOAD_THREADS)
+		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_LOAD_THREADS)
 	#
 	loadTypesChain = ()
 	try:
 		loadTypesChain = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
 	except:
-		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
+		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
 	#
 	flagSimultaneous, flagItemsBuffer = True, False
 	try:
 		flagSimultaneous = runTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_SIMULTANEOUS)
 	except:
-		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_SIMULTANEOUS)
+		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_SIMULTANEOUS)
 	try:
 		flagItemsBuffer = runTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
 	except:
-		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
+		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
 	#
 	loadBuilder = loadBuilderInit()
 	loadBuilder.getRequestConfig().setAnyDataProducerEnabled(False)
@@ -178,11 +179,13 @@ if __name__ == "__builtin__":
 		threadsPerNode
 	)
 	if chain is None or len(chain) == 0:
-		LOG.error(Markers.ERR, "Empty chain has been build, nothing to do")
+		LOG.error(LogUtil.ERR, "Empty chain has been build, nothing to do")
 	else:
 		try:
 			execute(chain, flagSimultaneous)
 		except Throwable as e:
-			TraceLogger.failure(LOG, Level.WARN, e, "Chain execution failure")
+			LogUtil.failure(LOG, Level.WARN, e, "Chain execution failure")
 	#
-	LOG.info(Markers.MSG, "Scenario end")
+	loadBuilder.close()
+	#
+	LOG.info(LogUtil.MSG, "Scenario end")

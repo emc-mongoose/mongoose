@@ -48,6 +48,7 @@ public final class StopServlet extends CommonServlet {
 			case REMOVE_REQUEST:
 				try {
 					threadsMap.get(runId).interrupt();
+					threadsMap.get(runId).join();
 					threadsMap.remove(runId);
 					//
 					WebUIAppender.removeRunId(runId);

@@ -1,8 +1,7 @@
 package com.emc.mongoose.core.impl.data.src;
 // mongoose-common
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.TraceLogger;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -43,6 +42,7 @@ implements DataSource {
 	}
 	//
 	protected UniformDataSource(final long seed, final int size) {
+		LOG.debug(LogUtil.MSG, "New ring buffer instance #{}", hashCode());
 		this.seed = seed;
 		this.size = size;
 		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
@@ -56,7 +56,7 @@ implements DataSource {
 			DEFAULT = new UniformDataSource();
 			//LOG.info(Markers.MSG, "Default data source: {}", DEFAULT.toString());
 		} catch(final Exception e) {
-			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to create default data source");
+			LogUtil.failure(LOG, Level.ERROR, e, "Failed to create default data source");
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -70,7 +70,7 @@ implements DataSource {
 		long word = seed;
 		int i;
 		double d = System.nanoTime();
-		LOG.debug(Markers.MSG, "Prepare {} of ring data...", RunTimeConfig.formatSize(size));
+		LOG.debug(LogUtil.MSG, "Prepare {} of ring data...", RunTimeConfig.formatSize(size));
 		// 64-bit words
 		for(i = 0; i < countWords; i++) {
 			byteLayer.putLong(word);
@@ -85,7 +85,7 @@ implements DataSource {
 		}
 		//
 		LOG.debug(
-			Markers.MSG, "Pre-generating the data done in {}[us]",
+			LogUtil.MSG, "Pre-generating the data done in {}[us]",
 			(System.nanoTime() - d) / LoadExecutor.NANOSEC_SCALEDOWN
 		);
 	}
@@ -179,11 +179,12 @@ implements DataSource {
 				nextLayer = ByteBuffer.allocate(ringSize);
 				prevSeed = prevLayer.getLong(0);
 				nextSeed = Long.reverse(nextWord(Long.reverseBytes(prevSeed)));
-				LOG.debug(Markers.MSG, String.format(MSG_FMT_NEW_LAYER, i, prevSeed, nextSeed));
+				LOG.debug(LogUtil.MSG, String.format(MSG_FMT_NEW_LAYER, i, prevSeed, nextSeed));
 				generateData(nextLayer, nextSeed);
 				byteLayers.add(nextLayer);
 				prevLayer = nextLayer;
 			}
+			LOG.debug(LogUtil.MSG, "New layer #{}", byteLayers.size() - 1);
 		}
 		return byteLayers.get(layerNum).array();
 	}

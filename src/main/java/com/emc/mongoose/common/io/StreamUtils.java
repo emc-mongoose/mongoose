@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.io;
 //
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -15,15 +15,13 @@ public final class StreamUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public static void skipStreamDataQuietly(final InputStream contentStream) {
+	public static void consumeQuietly(final InputStream contentStream, final int buffSize) {
+		final byte buff[] = new byte[buffSize];
 		try {
-			long n = contentStream.available();
-			while(n > 0) {
-				contentStream.skip(n);
-				n = contentStream.available();
-			}
+			while(contentStream.read(buff) != -1);
 		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to skip the input stream data");
+			LogUtil.failure(LOG, Level.DEBUG, e, "Content reading failure");
 		}
 	}
+	//
 }

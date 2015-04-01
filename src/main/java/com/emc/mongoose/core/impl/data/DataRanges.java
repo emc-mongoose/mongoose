@@ -7,7 +7,7 @@ import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Base64;
@@ -211,29 +211,29 @@ implements AppendableDataItem, UpdatableDataItem {
 			rangeOffset = getRangeOffset(i);
 			rangeSize = getRangeSize(i);
 			if(maskRangesHistory.get(i)) {
-				if(LOG.isTraceEnabled(Markers.MSG)) {
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
-						Markers.MSG, "{}: range #{} has been modified", Long.toHexString(offset), i
+						LogUtil.MSG, "{}: range #{} has been modified", Long.toHexString(offset), i
 					);
 				}
 				updatedRange = new UniformData(
 					offset + rangeOffset, rangeSize, layerNum.get() + 1, UniformDataSource.DEFAULT
 				);
 				contentEquals = updatedRange.isContentEqualTo(in, 0, rangeSize);
-				if(LOG.isTraceEnabled(Markers.MSG)) {
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					final ByteArrayOutputStream contentRangeStream = new ByteArrayOutputStream();
 					updatedRange.writeTo(contentRangeStream);
 					LOG.trace(
-						Markers.MSG, FMT_MSG_RANGE_MODIFIED,
+						LogUtil.MSG, FMT_MSG_RANGE_MODIFIED,
 						Long.toHexString(offset), i, rangeOffset, rangeOffset + rangeSize - 1,
 						layerNum.get() + 1,
 						Base64.encodeBase64URLSafeString(contentRangeStream.toByteArray())
 					);
 				}
 			} else if(layerNum.get() > 1) {
-				if(LOG.isTraceEnabled(Markers.MSG)) {
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
-						Markers.MSG, "{}: range #{} contains previous layer of data",
+						LogUtil.MSG, "{}: range #{} contains previous layer of data",
 						Long.toHexString(offset), i
 					);
 				}
@@ -246,7 +246,7 @@ implements AppendableDataItem, UpdatableDataItem {
 			}
 			if(!contentEquals) {
 				LOG.debug(
-					Markers.ERR, FMT_MSG_RANGE_CORRUPT,
+					LogUtil.ERR, FMT_MSG_RANGE_CORRUPT,
 					Long.toHexString(offset), i, rangeOffset, toString()
 				);
 				break;
@@ -282,9 +282,9 @@ implements AppendableDataItem, UpdatableDataItem {
 				if(!maskRangesHistory.get(nextCellPos) && !maskRangesPending.get(nextCellPos)) {
 					maskRangesPending.set(nextCellPos);
 					updateDone = true;
-					if(LOG.isTraceEnabled(Markers.MSG)) {
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
 						LOG.trace(
-							Markers.MSG, FMT_MSG_UPD_CELL,
+							LogUtil.MSG, FMT_MSG_UPD_CELL,
 							Long.toHexString(offset), nextCellPos, getRangeOffset(nextCellPos),
 							Hex.encodeHexString(maskRangesPending.toByteArray())
 						);
@@ -341,11 +341,11 @@ implements AppendableDataItem, UpdatableDataItem {
 						offset + rangeOffset, rangeSize, layerNum.get() + 1, UniformDataSource.DEFAULT
 					);
 					nextRangeData.writeTo(out);
-					if(LOG.isTraceEnabled(Markers.MSG)) {
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
 						final ByteArrayOutputStream rangeContentStream = new ByteArrayOutputStream();
 						nextRangeData.writeTo(rangeContentStream);
 						LOG.trace(
-							Markers.MSG, FMT_MSG_UPD_RANGE,
+							LogUtil.MSG, FMT_MSG_UPD_RANGE,
 							toString(), i, rangeSize, offset + rangeOffset, layerNum.get() + 1,
 							Base64.encodeBase64URLSafeString(rangeContentStream.toByteArray())
 						);
@@ -353,9 +353,9 @@ implements AppendableDataItem, UpdatableDataItem {
 				}
 			}
 			// move pending updated ranges to history
-			if(LOG.isTraceEnabled(Markers.MSG)) {
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(
-					Markers.MSG, FMT_MSG_MERGE_MASKS,
+					LogUtil.MSG, FMT_MSG_MERGE_MASKS,
 					Long.toHexString(offset),
 					Hex.encodeHexString(maskRangesPending.toByteArray()),
 					Hex.encodeHexString(maskRangesHistory.toByteArray())
@@ -384,9 +384,9 @@ implements AppendableDataItem, UpdatableDataItem {
 				}
 			}
 			// move pending updated ranges to history
-			if(LOG.isTraceEnabled(Markers.MSG)) {
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(
-					Markers.MSG, FMT_MSG_MERGE_MASKS,
+					LogUtil.MSG, FMT_MSG_MERGE_MASKS,
 					Long.toHexString(offset),
 					Hex.encodeHexString(maskRangesPending.toByteArray()),
 					Hex.encodeHexString(maskRangesHistory.toByteArray())
@@ -441,9 +441,8 @@ implements AppendableDataItem, UpdatableDataItem {
 					size += pendingAugmentSize;
 					// redirect the tail's data to the output
 					final byte buff[] = new byte[
-						pendingAugmentSize < MAX_PAGE_SIZE ?
-							(int) pendingAugmentSize : MAX_PAGE_SIZE
-						];
+						pendingAugmentSize < maxBuffSize ? (int) pendingAugmentSize : maxBuffSize
+					];
 					final int
 						countPages = (int) (pendingAugmentSize / buff.length),
 						countTailBytes = (int) (pendingAugmentSize % buff.length);

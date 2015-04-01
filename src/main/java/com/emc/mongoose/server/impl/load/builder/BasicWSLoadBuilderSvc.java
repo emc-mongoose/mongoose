@@ -1,8 +1,7 @@
 package com.emc.mongoose.server.impl.load.builder;
 //
-import com.emc.mongoose.common.logging.Settings;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -83,14 +82,32 @@ implements WSLoadBuilderSvc<T, U> {
 		if(minObjSize > maxObjSize) {
 			throw new IllegalStateException(
 				String.format(
-					Settings.LOCALE_DEFAULT, "Min object size %s should be less than upper bound %s",
+					LogUtil.LOCALE_DEFAULT, "Min object size %s should be less than upper bound %s",
 					RunTimeConfig.formatSize(minObjSize), RunTimeConfig.formatSize(maxObjSize)
 				)
 			);
 		}
+		// selecting the load job executor's queue size
+		long queueSize = (minObjSize + maxObjSize) / 2;
+		queueSize = queueSize == 0 ?
+			LoadExecutor.BUFF_SIZE_LO :
+			queueSize > LoadExecutor.BUFF_SIZE_HI ? LoadExecutor.BUFF_SIZE_HI : queueSize;
+		queueSize = Runtime.getRuntime().freeMemory() / queueSize;
+		if(queueSize < 1) {
+			throw new IllegalStateException(
+				String.format(
+					"Not enough free memory for load job execution: %s",
+					RunTimeConfig.formatSize(Runtime.getRuntime().freeMemory())
+				)
+			);
+		} else if(queueSize > Integer.MAX_VALUE) {
+			queueSize = Integer.MAX_VALUE;
+		}
+		LOG.debug(LogUtil.MSG, "Queue size for \"{}\" load job is {}", reqConf, queueSize);
+		//
 		return (U) new BasicWSLoadSvc<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
-			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem
+			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem, (int) queueSize
 		);
 	}
 	//
@@ -103,10 +120,10 @@ implements WSLoadBuilderSvc<T, U> {
 	}
 	//
 	public final void start() {
-		LOG.debug(Markers.MSG, "Load builder service instance created");
+		LOG.debug(LogUtil.MSG, "Load builder service instance created");
 		/*final RemoteStub stub = */ServiceUtils.create(this);
 		/*LOG.debug(Markers.MSG, stub.toString());*/
-		LOG.info(Markers.MSG, "Server started and waiting for the requests");
+		LOG.info(LogUtil.MSG, "Server started and waiting for the requests");
 	}
 	//
 	@Override
@@ -119,10 +136,5 @@ implements WSLoadBuilderSvc<T, U> {
 	public final void join(final long ms)
 	throws InterruptedException {
 		Thread.sleep(ms);
-	}
-	//
-	@Override
-	public final void close()
-	throws IOException {
 	}
 }

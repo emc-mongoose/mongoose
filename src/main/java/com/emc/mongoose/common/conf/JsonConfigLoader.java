@@ -1,7 +1,6 @@
 package com.emc.mongoose.common.conf;
 //
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -45,7 +44,7 @@ public class JsonConfigLoader {
 		final ObjectMapper jsonMapper = new ObjectMapper();
 		//
 		try {
-			LOG.debug(Markers.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
+			LOG.debug(LogUtil.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
 			final JsonNode rootNode = jsonMapper.readTree(cfgFile);
 			walkJsonTree(rootNode);
 			tgtConfig.setMongooseKeys(mongooseKeys);
@@ -55,7 +54,7 @@ public class JsonConfigLoader {
 				jsonMapper.writerWithDefaultPrettyPrinter().writeValue(cfgFile, rootNode);
 			}
 		} catch(final IOException e) {
-			TraceLogger.failure(
+			LogUtil.failure(
 				LOG, Level.ERROR, e, String.format("Failed to load properties from \"%s\"", cfgFile)
 			);
 		}

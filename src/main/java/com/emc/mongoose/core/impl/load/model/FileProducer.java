@@ -4,8 +4,7 @@ import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
-import com.emc.mongoose.common.logging.TraceLogger;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -19,6 +18,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
+import java.util.concurrent.RejectedExecutionException;
 /**
  Created by kurila on 12.05.14.
  A data item producer which constructs data items while reading the special input file.
@@ -63,48 +63,61 @@ implements Producer<T> {
 			String nextLine;
 			T nextData;
 			LOG.debug(
-				Markers.MSG, "Going to produce up to {} data items for consumer \"{}\"",
+				LogUtil.MSG, "Going to produce up to {} data items for consumer \"{}\"",
 				consumer.getMaxCount(), consumer.toString()
 			);
 			do {
 				//
 				nextLine = fReader.readLine();
-				LOG.trace(Markers.MSG, "Got next line #{}: \"{}\"", dataItemsCount, nextLine);
+				LOG.trace(LogUtil.MSG, "Got next line #{}: \"{}\"", dataItemsCount, nextLine);
 				//
 				if(nextLine==null || nextLine.isEmpty()) {
-					LOG.debug(Markers.MSG, "No next line, exiting");
+					LOG.debug(LogUtil.MSG, "No next line, exiting");
 					break;
 				} else {
 					nextData = dataItemConstructor.newInstance(nextLine);
 					try {
 						consumer.submit(nextData);
 						dataItemsCount ++;
+					} catch(final InterruptedException e) {
+						LogUtil.failure(
+							LOG, Level.DEBUG, e, "Interrupted while submitting the data item"
+						);
+						break;
 					} catch(final Exception e) {
-						TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit data item");
+						if(
+							consumer.getMaxCount() > dataItemsCount &&
+							!RejectedExecutionException.class.isInstance(e)
+						) {
+							LogUtil.failure(LOG, Level.WARN, e, "Failed to submit data item");
+							break;
+						} else {
+							LogUtil.failure(LOG, Level.DEBUG, e, "Failed to submit data item");
+						}
 					}
 				}
 			} while(!isInterrupted() && dataItemsCount < maxCount);
 		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to read line from the file");
+			LogUtil.failure(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final Exception e) {
-			TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
+			LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
 		} finally {
-			LOG.debug(Markers.MSG, "Produced {} data items", dataItemsCount);
+			LOG.debug(LogUtil.MSG, "Produced {} data items", dataItemsCount);
 			try {
-				LOG.debug(Markers.MSG, "Feeding poison to consumer \"{}\"", consumer.toString());
+				LOG.debug(LogUtil.MSG, "Feeding poison to consumer \"{}\"", consumer.toString());
 				consumer.submit(null); // or: consumer.setMaxCount(dataItemsCount);
 			} catch(final InterruptedException e) {
-				TraceLogger.trace(LOG, Level.DEBUG, Markers.MSG, "Consumer is already shutdown");
+				LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, "Consumer is already shutdown");
 			} catch(final Exception e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Failed to submit the poison to remote consumer");
+				LogUtil.failure(LOG, Level.WARN, e, "Failed to submit the poison to remote consumer");
 			}
-			LOG.debug(Markers.MSG, "Exiting");
+			LOG.debug(LogUtil.MSG, "Exiting");
 		}
 	}
 	//
 	@Override
 	public final void setConsumer(final Consumer<T> consumer) {
-		LOG.debug(Markers.MSG, "Set consumer to \"{}\"", consumer.toString());
+		LOG.debug(LogUtil.MSG, "Set consumer to \"{}\"", consumer.toString());
 		this.consumer = consumer;
 	}
 	//

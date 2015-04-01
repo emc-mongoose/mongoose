@@ -103,4 +103,17 @@ implements Reusable {
 	public final void close() {
 		release();
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	public static void consumeQuietly(
+		final ContentDecoder in, final IOControl ioCtl, final int buffSize
+	) {
+		final ByteBuffer buff = ByteBuffer.allocate(buffSize);
+		try {
+			while(in.read(buff) >= 0) {
+				buff.clear();
+			}
+		} catch(final IOException e) {
+			// ignore
+		}
+	}
 }

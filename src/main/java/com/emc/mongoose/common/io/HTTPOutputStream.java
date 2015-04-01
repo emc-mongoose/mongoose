@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.io;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.pool.Reusable;
 import com.emc.mongoose.common.pool.InstancePool;
 //
@@ -57,16 +57,9 @@ implements Reusable {
 		bb.limit(Math.min(off + len, bb.capacity()));
 		bb.position(off);
 		//
-		int n;
-		while(bb.remaining() > 0) {
-			do {
-				n = out.write(bb);
-				if(n > 0) {
-					break;
-				} else {
-					ioCtl.requestOutput();
-				}
-			} while(true);
+		int n = 0;
+		while(bb.remaining() > 0 && n <= 0) {
+			n = out.write(bb);
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,10 +79,12 @@ implements Reusable {
 	@Override
 	public final void release() {
 		if(isClosed.compareAndSet(false, true)) {
-			try {
-				out.complete();
-			} catch(final IOException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Failed to finish the output stream");
+			if(!out.isCompleted()) {
+				try {
+					out.complete();
+				} catch(final IOException e) {
+					LogUtil.failure(LOG, Level.WARN, e, "Failed to finish the output stream");
+				}
 			}
 			POOL.release(this);
 		}

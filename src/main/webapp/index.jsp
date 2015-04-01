@@ -7,10 +7,15 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Mongoose-Run</title>
-		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<link rel='stylesheet' href='webjars/bootstrap/3.3.2-1/css/bootstrap.min.css'>
 		<link href="css/styles.css" rel="stylesheet">
 	</head>
 	<body>
+		<!-- For waiting image -->
+		<div id="wait">
+			<!--<img src="images/ajax-loader.gif" alt="Loading">-->
+		</div>
+		<!-- -->
 		<nav class="navbar navbar-default" role="navigation">
 			<div class="container-fluid">
 				<div class="navbar-header">
@@ -92,11 +97,11 @@
 									</div>
 									<br/>
 									<div id="file-visibility">
-										<input id="file-checkbox" type="checkbox">
+										<input id="file-checkbox" type="checkbox"/>
 										<label for="file-checkbox">Read config from file</label>
 									</div>
 									<br/>
-									<input id="config-file" type="file" accept=".txt">
+									<input id="config-file" type="file" accept=".txt"/>
 								</div>
 
 								<ul class="folders">
@@ -114,7 +119,7 @@
 													<label for="backup-run.id" class="col-sm-3 control-label">Id</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-run.id" class="form-control"
-														       data-pointer="run.id">
+														       data-pointer="run.id"/>
 													</div>
 												</div>
 											</fieldset>
@@ -128,7 +133,7 @@
 														<input type="text" id="backup-load.limit.time.value"
 														       class="form-control pre-select"
 														       value="${rt:getString(runTimeConfig, 'load.limit.time.value')}"
-																data-pointer="load.limit.time.value">
+																data-pointer="load.limit.time.value"/>
 														<select class="form-select" id="backup-load.limit.time.unit"
 																data-pointer="load.limit.time.unit">
 															<option>
@@ -208,7 +213,7 @@
 																						<input type="text" id="backup-load.type.create.threads"
 																						       class="form-control"
 																						       data-pointer="load.type.create.threads"
-																						       value="${rt:getString(runTimeConfig, 'load.type.create.threads')}">
+																						       value="${rt:getString(runTimeConfig, 'load.type.create.threads')}"/>
 																					</div>
 																				</div>
 																			</fieldset>
@@ -225,7 +230,7 @@
 																						<input type="text" id="backup-load.type.read.threads"
 																						       class="form-control"
 																						       data-pointer="load.type.read.threads"
-																						       value="${rt:getString(runTimeConfig, 'load.type.read.threads')}">
+																						       value="${rt:getString(runTimeConfig, 'load.type.read.threads')}"/>
 																					</div>
 																				</div>
 
@@ -257,7 +262,7 @@
 																						<input type="text" id="backup-load.type.update.threads"
 																						       class="form-control"
 																						       value="${rt:getString(runTimeConfig, 'load.type.update.threads')}"
-																						       data-pointer="load.type.update.threads">
+																						       data-pointer="load.type.update.threads"/>
 																					</div>
 																				</div>
 
@@ -269,7 +274,7 @@
 																						<input type="text" id="backup-load.type.update.perItem"
 																						       class="form-control"
 																						       value="${rt:getString(runTimeConfig, 'load.type.update.perItem')}"
-																						       data-pointer="load.type.update.perItem">
+																						       data-pointer="load.type.update.perItem"/>
 																					</div>
 																				</div>
 																			</fieldset>
@@ -286,7 +291,7 @@
 																						<input type="text" id="backup-load.type.delete.threads"
 																						       class="form-control"
 																						       value="${rt:getString(runTimeConfig, 'load.type.delete.threads')}"
-																						       data-pointer="load.type.delete.threads">
+																						       data-pointer="load.type.delete.threads"/>
 																					</div>
 																				</div>
 																			</fieldset>
@@ -303,7 +308,7 @@
 																						<input type="text" id="backup-load.type.append.threads"
 																						       class="form-control"
 																						       value="${rt:getString(runTimeConfig, 'load.type.append.threads')}"
-																						       data-pointer="load.type.append.threads">
+																						       data-pointer="load.type.append.threads"/>
 																					</div>
 																				</div>
 																			</fieldset>
@@ -337,7 +342,7 @@
 																			<div class="col-sm-6">
 																				<input type="text" class="form-control" id="backup-scenario.type.chain.load"
 																				       value="${rt:getString(runTimeConfig, 'scenario.type.chain.load')}"
-																				       data-pointer="scenario.type.chain.load">
+																				       data-pointer="scenario.type.chain.load"/>
 																			</div>
 																		</div>
 
@@ -386,7 +391,7 @@
 																							<input type="text" id="backuptab-load.type.create.threads"
 																							       class="form-control"
 																							       value="${rt:getString(runTimeConfig, 'load.type.create.threads')}"
-																							       data-pointer="load.type.create.threads">
+																							       data-pointer="load.type.create.threads"/>
 																						</div>
 																					</div>
 																				</div>
@@ -399,7 +404,7 @@
 																							<input type="text" id="backuptab-load.type.read.threads"
 																							       class="form-control"
 																							       value="${rt:getString(runTimeConfig, 'load.type.read.threads')}"
-																							       data-pointer="load.type.read.threads">
+																							       data-pointer="load.type.read.threads"/>
 																						</div>
 																					</div>
 
@@ -430,7 +435,7 @@
 																							<input type="text" id="backuptab-load.type.update.threads"
 																							       class="form-control"
 																							       value="${rt:getString(runTimeConfig, 'load.type.update.threads')}"
-																							       data-pointer="load.type.update.threads">
+																							       data-pointer="load.type.update.threads"/>
 																						</div>
 																					</div>
 
@@ -443,7 +448,7 @@
 																							<input type="text" id="backuptab-load.type.update.perItem"
 																							       class="form-control"
 																							       value="${rt:getString(runTimeConfig, 'load.type.update.perItem')}"
-																							       data-pointer="load.type.update.perItem">
+																							       data-pointer="load.type.update.perItem"/>
 																						</div>
 																					</div>
 																				</div>
@@ -456,7 +461,7 @@
 																						<div class="col-sm-6">
 																							<input type="text" class="form-control" id="backuptab-load.type.delete.threads"
 																							       value="${rt:getString(runTimeConfig, 'load.type.delete.threads')}"
-																							       data-pointer="load.type.delete.threads">
+																							       data-pointer="load.type.delete.threads"/>
 																						</div>
 																					</div>
 																				</div>
@@ -470,7 +475,7 @@
 																							<input type="text" id="backuptab-load.type.append.threads"
 																							       class="form-control"
 																							       value="${rt:getString(runTimeConfig, 'load.type.append.threads')}"
-																							       data-pointer="load.type.append.threads">
+																							       data-pointer="load.type.append.threads"/>
 																						</div>
 																					</div>
 																				</div>
@@ -535,7 +540,7 @@
 																				<input type="text" id="backup-scenario.type.rampup.threadCounts"
 																				       class="form-control"
 																				       value="${rt:getString(runTimeConfig, 'scenario.type.rampup.threadCounts')}"
-																				       data-pointer="scenario.type.rampup.threadCounts">
+																				       data-pointer="scenario.type.rampup.threadCounts"/>
 																			</div>
 																		</div>
 
@@ -546,7 +551,7 @@
 																			<div class="col-sm-8">
 																				<input type="text" id="backup-scenario.type.rampup.sizes" class="form-control"
 																				       value="${rt:getString(runTimeConfig, 'scenario.type.rampup.sizes')}"
-																				       data-pointer="scenario.type.rampup.sizes">
+																				       data-pointer="scenario.type.rampup.sizes"/>
 																			</div>
 																		</div>
 																	</div>
@@ -571,7 +576,7 @@
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-auth.id" class="form-control"
-												            data-pointer="auth.id" value="${runTimeConfig.authId}">
+												            data-pointer="auth.id" value="${runTimeConfig.authId}"/>
 													</div>
 												</div>
 												<div class="form-group">
@@ -580,7 +585,7 @@
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-auth.secret" class="form-control"
-									                        data-pointer="auth.secret" value="${runTimeConfig.authSecret}">
+									                        data-pointer="auth.secret" value="${runTimeConfig.authSecret}"/>
 													</div>
 												</div>
 											</fieldset>
@@ -597,7 +602,7 @@
 														<div class="col-sm-9">
 															<input type="text" id="backup-storage.addrs" class="form-control"
 																data-pointer="storage.addrs"
-																value="${rt:getString(runTimeConfig, 'storage.addrs')}">
+																value="${rt:getString(runTimeConfig, 'storage.addrs')}"/>
 														</div>
 													</div>
 												</div>
@@ -633,13 +638,13 @@
 
 																		<div class="modal-body">
 																			<div class="form-group">
-																				<label for="backup-api.type.s3.bucket.name" class="col-sm-4 control-label">
+																				<label for="backup-api.type.s3.bucket" class="col-sm-4 control-label">
 																					Bucket
 																				</label>
 																				<div class="col-sm-8">
-																					<input type="text" id="backup-api.type.s3.bucket.name" class="form-control"
-																			            data-pointer="api.type.s3.bucket.name"
-																		                value="${rt:getString(runTimeConfig, 'api.type.s3.bucket.name')}">
+																					<input type="text" id="backup-api.type.s3.bucket" class="form-control"
+																			            data-pointer="api.type.s3.bucket"
+																		                value="${rt:getString(runTimeConfig, 'api.type.s3.bucket')}"/>
 																				</div>
 																			</div>
 																		</div>
@@ -665,7 +670,26 @@
 																		</div>
 
 																		<div class="modal-body">
-
+																			<div class="form-group">
+																				<label for="backup-api.type.swift.authToken" class="col-sm-4 control-label">
+																					Authentication token (created automatically if left blank)
+																				</label>
+																				<div class="col-sm-8">
+																					<input type="text" id="backup-api.type.swift.authToken" class="form-control"
+																					       data-pointer="api.type.swift.authToken"
+																					       value="${rt:getString(runTimeConfig, 'api.type.swift.authToken')}"/>
+																				</div>
+																			</div>
+																			<div class="form-group">
+																				<label for="backup-api.type.swift.container" class="col-sm-4 control-label">
+																					Container (may be created automatically if left blank, required to be specified explicitly for any load except create)
+																				</label>
+																				<div class="col-sm-8">
+																					<input type="text" id="backup-api.type.swift.container" class="form-control"
+																					       data-pointer="api.type.swift.container"
+																					       value="${rt:getString(runTimeConfig, 'api.type.swift.container')}"/>
+																				</div>
+																			</div>
 																		</div>
 
 																		<div class="modal-footer">
@@ -696,7 +720,7 @@
 																				<div class="col-sm-8">
 																					<input type="text" id="backup-api.type.atmos.subtenant" class="form-control"
 																					       data-pointer="api.type.atmos.subtenant"
-																					       value="${rt:getString(runTimeConfig, 'api.type.atmos.subtenant')}">
+																					       value="${rt:getString(runTimeConfig, 'api.type.atmos.subtenant')}"/>
 																				</div>
 																			</div>
 																		</div>
@@ -723,7 +747,7 @@
 													<div class="col-sm-9">
 														<input type="text" id="backup-load.servers" class="form-control"
 												            data-pointer="load.servers"
-												            value="${rt:getString(runTimeConfig, 'load.servers')}">
+												            value="${rt:getString(runTimeConfig, 'load.servers')}"/>
 													</div>
 												</div>
 											</fieldset>
@@ -739,18 +763,18 @@
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-load.threads" data-pointer="load.threads" class="form-control"
-																value="${rt:getString(runTimeConfig, 'load.threads')}">
+																value="${rt:getString(runTimeConfig, 'load.threads')}"/>
 													</div>
 												</div>
 
 												<div id="objects" class="form-group">
-													<label for="backup-data.count" class="col-sm-3 control-label">
+													<label for="backup-load.limit.dataItemCount" class="col-sm-3 control-label">
 														Items count limit
 													</label>
 													<div class="col-sm-9">
-														<input type="text" id="backup-data.count" class="form-control"
-									                        data-pointer="data.count"
-												            value="${runTimeConfig.loadLimitDataItemCount}">
+														<input type="text" id="backup-load.limit.dataItemCount" class="form-control"
+									                        data-pointer="load.limit.dataItemCount"
+												            value="${runTimeConfig.loadLimitDataItemCount}"/>
 													</div>
 												</div>
 
@@ -760,7 +784,7 @@
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-data.size" data-pointer="data.size" class="form-control"
-																value="${rt:getString(runTimeConfig, 'data.size')}">
+																value="${rt:getString(runTimeConfig, 'data.size')}"/>
 													</div>
 												</div>
 
@@ -772,14 +796,14 @@
 														<input type="text" id="backup-data.src.fpath" class="form-control"
 												            data-pointer="data.src.fpath"
 												            value="${rt:getString(runTimeConfig, 'data.src.fpath')}"
-									                        placeholder="Enter path to the list of objects on remote host. Format: log/<run.mode>/<run.id>/<filename>">
+									                        placeholder="Enter path to the list of objects on remote host. Format: log/<run.mode>/<run.id>/<filename>"/>
 													</div>
 												</div>
 
 												<div class="form-group">
 													<label class="col-sm-3 control-label">Output directory for logs</label>
 													<div class="col-sm-9">
-														<input type="text" class="form-control" value="log/webui/" readonly>
+														<input type="text" class="form-control" value="log/webui/" readonly/>
 													</div>
 												</div>
 											</fieldset>
@@ -791,14 +815,14 @@
 									<form class="form-horizontal" id="main-form" role="form">
 										<c:choose>
 											<c:when test = "${runTimeConfig.runMode ne 'webui'}">
-												<input type="hidden" name="run.mode" id="run.mode" value="${runTimeConfig.runMode}">
+												<input type="hidden" name="run.mode" id="run.mode" value="${runTimeConfig.runMode}"/>
 											</c:when>
 											<c:otherwise>
-												<input type="hidden" name="run.mode" id="run.mode" value="standalone">
+												<input type="hidden" name="run.mode" id="run.mode" value="standalone"/>
 											</c:otherwise>
 										</c:choose>
-										<input type="hidden" id="data.size" name="data.size" value="${rt:getString(runTimeConfig, 'data.size')}">
-										<input type="hidden" id="load.threads" name="load.threads" value="${rt:getString(runTimeConfig, 'load.threads')}">
+										<input type="hidden" id="data.size" name="data.size" value="${rt:getString(runTimeConfig, 'data.size')}"/>
+										<input type="hidden" id="load.threads" name="load.threads" value="${rt:getString(runTimeConfig, 'load.threads')}"/>
 										<!-- Input fields with labels from JS -->
 										<div id="configuration-content">
 
@@ -979,9 +1003,9 @@
 				</c:forEach>
 			</div>
 		</div>
-		<script type="text/javascript" src="js/d3.min.js"></script>
-		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
-		<script type="text/javascript" src="js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="webjars/d3js/3.5.3/d3.min.js"></script>
+		<script type="text/javascript" src="webjars/jquery/2.1.0/jquery.min.js"></script>
+		<script type="text/javascript" src="webjars/bootstrap/3.3.2-1/js/bootstrap.min.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
 		<script>
 			jsonProps = ${runTimeConfig.jsonProps};
