@@ -187,7 +187,5 @@ if __name__ == "__builtin__":
 			LogUtil.failure(LOG, Level.WARN, e, "Chain execution failure")
 	#
 	loadBuilder.close()
-	ServiceUtils.shutdown()
 	#
 	LOG.info(LogUtil.MSG, "Scenario end")
-	LogUtil.shutdown()

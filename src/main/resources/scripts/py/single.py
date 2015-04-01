@@ -60,6 +60,4 @@ if __name__ == "__builtin__":
 	load = build(loadBuilder)
 	execute(load)
 	loadBuilder.close() # to exit normally
-	ServiceUtils.shutdown()
 	LOG.info(LogUtil.MSG, "Scenario end")
-	LogUtil.shutdown()

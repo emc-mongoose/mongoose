@@ -62,6 +62,4 @@ if __name__ == "__builtin__":
 	loadBuilder = loadBuilderInit()
 	execute(loadBuilder=loadBuilder, rampupParams=init())
 	loadBuilder.close()
-	ServiceUtils.shutdown()
 	LOG.info(LogUtil.MSG, "Scenario end")
-	LogUtil.shutdown()
