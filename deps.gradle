@@ -27,7 +27,6 @@ ext {
 	jackson_annotations = [ "com.fasterxml.jackson.core:jackson-annotations:2.4.1" ]
 	jackson_core = [ "com.fasterxml.jackson.core:jackson-core:2.4.1" ]
 	jackson_databind = [ "com.fasterxml.jackson.core:jackson-databind:2.4.1" ]
-	jackson_dataformat_yaml = [ "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.4.1" ]
 
 	jansi = [ "org.fusesource.jansi:jansi:1.11" ]
 
@@ -104,7 +103,7 @@ ext {
 	runtime_logging = [
 		commons_logging,
 		lmax_disruptor,
-		jackson_core, jackson_dataformat_yaml,
+		jackson_core,
 		log4j_jcl, log4j_jul, log4j_slf4j_impl,
 		jansi,
 	]

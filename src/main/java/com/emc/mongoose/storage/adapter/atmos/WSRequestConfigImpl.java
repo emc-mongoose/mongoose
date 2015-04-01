@@ -40,7 +40,7 @@ extends WSRequestConfigBase<T> {
 	//
 	public final static String
 		FMT_SLASH = "%s/%s", FMT_URI ="/rest/%s",
-		API_TYPE_OBJ = "objects", API_TYPE_FS = "interface";
+		API_TYPE_OBJ = "objects", API_TYPE_FS = "namespace";
 	//
 	public final static Header
 		DEFAULT_ACCEPT_HEADER = new BasicHeader(HttpHeaders.ACCEPT, "*/*");

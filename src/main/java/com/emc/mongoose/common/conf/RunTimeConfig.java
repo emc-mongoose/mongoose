@@ -90,7 +90,7 @@ implements Externalizable {
 		//  For ui property tree
 		KEY_CHILDREN_PROPS = "children",
 		//
-		FNAME_CONF = "properties.json";
+		FNAME_CONF = "mongoose.json";
 	//
 	private static InheritableThreadLocal<RunTimeConfig>
 		CONTEXT_CONFIG = new InheritableThreadLocal<>();

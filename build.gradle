@@ -20,7 +20,7 @@ def loadProjectVersionFrom(String sourceFileName) {
 	def json = new JsonSlurper().parseText(inputFile.text)
 	ext.version = json.properties.run.version
 }
-loadProjectVersionFrom confDirName + '/properties.json'
+loadProjectVersionFrom confDirName + File.separator + project.name + ".json"
 version = ext.version
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
