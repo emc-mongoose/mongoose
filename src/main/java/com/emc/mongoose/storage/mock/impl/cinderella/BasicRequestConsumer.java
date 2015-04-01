@@ -3,7 +3,6 @@ package com.emc.mongoose.storage.mock.impl.cinderella;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.HTTPInputStream;
 //
-import org.apache.commons.codec.binary.Hex;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpRequest;
