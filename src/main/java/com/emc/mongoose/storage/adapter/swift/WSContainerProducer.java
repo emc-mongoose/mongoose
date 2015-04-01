@@ -87,22 +87,21 @@ implements Producer<T> {
 							} else {
 								LOG.debug(LogUtil.ERR, "No content type returned");
 							}
-							if(ContentType.APPLICATION_JSON.getMimeType().equals(respContentType)) {
-								try(final InputStream in = respEntity.getContent()) {
-									handleJsonInputStream(in);
-								} catch(final IOException e) {
-									LogUtil.failure(
-										LOG, Level.ERROR, e,
-										String.format(
-											"Failed to list the content of container \"%s\"",
-											container
-										)
-									);
-								}
-							} else {
+							if(!respContentType.toLowerCase().contains("json")) {
 								LOG.warn(
-									LogUtil.MSG, "Unexpected response content type: \"{}\"",
+									LogUtil.ERR, "Unexpected response content type: \"{}\"",
 									respContentType
+								);
+							}
+							try(final InputStream in = respEntity.getContent()) {
+								handleJsonInputStream(in);
+							} catch(final IOException e) {
+								LogUtil.failure(
+									LOG, Level.ERROR, e,
+									String.format(
+										"Failed to list the content of container \"%s\"",
+										container
+									)
 								);
 							}
 							EntityUtils.consumeQuietly(respEntity);
