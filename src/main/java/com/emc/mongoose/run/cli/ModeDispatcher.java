@@ -19,6 +19,7 @@ import com.emc.mongoose.storage.mock.impl.cinderella.Main;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 //
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -38,6 +39,7 @@ public final class ModeDispatcher {
 			runMode = args[0];
 		}
 		System.setProperty(RunTimeConfig.KEY_RUN_MODE, runMode);
+		System.setProperty(Constants.INHERITABLE_CONTEXT_MAP, "true");
 		//
 		final Map<String, String> properties = HumanFriendly.parseCli(args);
 		//

@@ -11,10 +11,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import org.apache.logging.log4j.core.LogEvent;
-//
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.WebSocketException;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketConnect;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
@@ -36,12 +33,14 @@ implements WebSocketLogListener {
 	@OnWebSocketClose
 	public final void onClose(int statusCode, final String reason) {
 		WebUIAppender.unregister(this);
+		session.close();
 		LOG.trace(LogUtil.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
 	}
 	//
 	@OnWebSocketError
 	public final void onError(final Throwable t) {
 		WebUIAppender.unregister(this);
+		session.close();
 		LogUtil.failure(LOG, Level.DEBUG, t, "WebSocket failure");
 	}
 	//
@@ -59,11 +58,13 @@ implements WebSocketLogListener {
 	}
 	//
 	@Override
-	public final synchronized void sendMessage(final LogEvent message) {
-		try {
-			session.getRemote().sendString(mapper.writeValueAsString(message));
-		} catch (final IOException|WebSocketException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, "WebSocket failure");
+	public final void sendMessage(final Object message) {
+		if(session.isOpen()) {
+			try {
+				session.getRemote().sendString(mapper.writeValueAsString(message));
+			} catch (final IOException e) {
+				LogUtil.failure(LOG, Level.DEBUG, e, "WebSocket failure");
+			}
 		}
 	}
 }

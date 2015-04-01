@@ -73,7 +73,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by olga on 28.01.15.
  */
-public final class Main
+public final class Cinderella
 implements Runnable {
 	//
 	private final static Map<String, WSObjectMock> SHARED_STORAGE = Collections.synchronizedMap(
@@ -86,7 +86,7 @@ implements Runnable {
 		CONNECTION_FACTORY = new FaultingConnectionFactory(ConnectionConfig.DEFAULT);
 	//
 	public final static String NAME_SERVER = String.format(
-		"%s/%s", Main.class.getSimpleName(), RunTimeConfig.getContext().getRunVersion()
+		"%s/%s", Cinderella.class.getSimpleName(), RunTimeConfig.getContext().getRunVersion()
 	);
 	// count of heads = 1 head or config count
 	private final static int COUNT_HEADS = Math.max(1, RunTimeConfig.getContext().getStorageMockHeadCount());
@@ -117,7 +117,7 @@ implements Runnable {
 		allBW, getBW, putBW, postBW,
 		allTP, getTP, putTP, postTP;
 	//
-	public Main()
+	public Cinderella()
 	throws IOException {
 		final MetricRegistry metrics = new MetricRegistry();
 		final MBeanServer mBeanServer;
@@ -128,46 +128,46 @@ implements Runnable {
 			.registerWith(mBeanServer)
 			.build();
 		// init metrics
-		counterAllSucc = metrics.counter(MetricRegistry.name(Main.class,
+		counterAllSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterAllFail = metrics.counter(MetricRegistry.name(Main.class,
+		counterAllFail = metrics.counter(MetricRegistry.name(Cinderella.class,
 			ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		allTP = metrics.meter(MetricRegistry.name(Main.class,
+		allTP = metrics.meter(MetricRegistry.name(Cinderella.class,
 			ALL_METHODS, LoadExecutor.METRIC_NAME_TP));
-		allBW = metrics.meter(MetricRegistry.name(Main.class,
+		allBW = metrics.meter(MetricRegistry.name(Cinderella.class,
 			ALL_METHODS, LoadExecutor.METRIC_NAME_BW));
 		//
-		counterGetSucc = metrics.counter(MetricRegistry.name(Main.class,
+		counterGetSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterGetFail = metrics.counter(MetricRegistry.name(Main.class,
+		counterGetFail = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		getBW = metrics.meter(MetricRegistry.name(Main.class,
+		getBW = metrics.meter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_BW));
-		getTP = metrics.meter(MetricRegistry.name(Main.class,
+		getTP = metrics.meter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_TP));
 		//
-		counterPutSucc = metrics.counter(MetricRegistry.name(Main.class,
+		counterPutSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterPutFail = metrics.counter(MetricRegistry.name(Main.class,
+		counterPutFail = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		putBW = metrics.meter(MetricRegistry.name(Main.class,
+		putBW = metrics.meter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_BW));
-		putTP = metrics.meter(MetricRegistry.name(Main.class,
+		putTP = metrics.meter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_TP));
 		//
-		counterPostSucc = metrics.counter(MetricRegistry.name(Main.class,
+		counterPostSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterPostFail = metrics.counter(MetricRegistry.name(Main.class,
+		counterPostFail = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		postBW = metrics.meter(MetricRegistry.name(Main.class,
+		postBW = metrics.meter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_BW));
-		postTP = metrics.meter(MetricRegistry.name(Main.class,
+		postTP = metrics.meter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_TP));
 		//
-		counterDeleteSucc = metrics.counter(MetricRegistry.name(Main.class,
+		counterDeleteSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		//
-		counterHeadSucc = metrics.counter(MetricRegistry.name(Main.class,
+		counterHeadSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
 			MutableWSRequest.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_SUCC));
 		//
 		metricsReporter.start();

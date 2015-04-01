@@ -75,7 +75,7 @@ implements Externalizable {
 		KEY_STORAGE_NAMESPACE = "storage.namespace",
 		//
 		KEY_API_NAME = "api.name",
-		KEY_API_S3_BUCKET_NAME = "api.type.s3.bucket.name",
+		KEY_API_S3_BUCKET = "api.type.s3.bucket",
 		//
 		//  Single
 		KEY_SCENARIO_SINGLE_LOAD = "scenario.type.single.load",
@@ -497,6 +497,18 @@ implements Externalizable {
 	//
 	public final String[] getScenarioRampupSizes() {
 		return getStringArray(KEY_SCENARIO_RAMPUP_SIZES);
+	}
+	//
+	public final String getWebUIWSTimeout() {
+		return getString("remote.webui.wsTimeOut.value") + "." + getString("remote.webui.wsTimeOut.unit");
+	}
+	//
+	public final String getWebUIWSTimeOutValue() {
+		return getString("remote.webui.wsTimeOut.value");
+	}
+	//
+	public final String getWebUIWSTimeOutUnit() {
+		return getString("remote.webui.wsTimeOut.unit");
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
