@@ -9,7 +9,7 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 //
-import com.emc.mongoose.storage.mock.impl.cinderella.Main;
+import com.emc.mongoose.storage.mock.impl.cinderella.Cinderella;
 //
 import com.emc.mongoose.run.scenario.Scenario;
 //
@@ -169,7 +169,7 @@ public final class StartServlet extends CommonServlet {
 				//
 				LOG.debug(LogUtil.MSG, message);
 				try {
-					new Main().run();
+					new Cinderella().run();
 				} catch (final IOException e) {
 					LogUtil.failure(LOG, Level.FATAL, e, "Failed run Cinderella");
 				}

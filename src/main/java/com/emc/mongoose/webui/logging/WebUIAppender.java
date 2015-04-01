@@ -4,11 +4,10 @@ import com.emc.mongoose.webui.websockets.WebSocketLogListener;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
 import org.apache.logging.log4j.ThreadContext;
+//
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;

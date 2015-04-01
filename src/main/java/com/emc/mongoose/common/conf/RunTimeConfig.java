@@ -114,8 +114,6 @@ implements Externalizable {
 		ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
 	}
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	//
 	public final static String DIR_ROOT;
 	static {
 		String dirRoot = System.getProperty("user.dir");
@@ -124,9 +122,10 @@ implements Externalizable {
 				Constants.class.getProtectionDomain().getCodeSource().getLocation().toURI()
 			).getParent();
 		} catch(final URISyntaxException e) {
-			LogUtil.failure(
-				LOG, Level.WARN, e, "Failed to determine the executable path"
-			);
+			synchronized(System.err) {
+				System.err.println("Failed to determine the executable path:");
+				e.printStackTrace(System.err);
+			}
 		}
 		DIR_ROOT = dirRoot;
 	}
@@ -513,15 +512,16 @@ implements Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)
-		throws IOException {
-		LOG.debug(LogUtil.MSG, "Going to upload properties to a server");
+	throws IOException {
+		final Logger log = LogManager.getLogger();
+		log.debug(LogUtil.MSG, "Going to upload properties to a server");
 		String nextPropName;
 		Object nextPropValue;
 		final HashMap<String, String> propsMap = new HashMap<>();
 		for(final Iterator<String> i = getKeys(); i.hasNext();) {
 			nextPropName = i.next();
 			nextPropValue = getProperty(nextPropName);
-			LOG.trace(
+			log.trace(
 				LogUtil.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
 			);
 			if(List.class.isInstance(nextPropValue)) {
@@ -534,27 +534,28 @@ implements Externalizable {
 			} else if(Number.class.isInstance(nextPropValue)) {
 				propsMap.put(nextPropName, Number.class.cast(nextPropValue).toString());
 			} else if(nextPropValue == null) {
-				LOG.warn(LogUtil.ERR, "Property \"{}\" is null");
+				log.warn(LogUtil.ERR, "Property \"{}\" is null");
 			} else {
-				LOG.error(
+				log.error(
 					LogUtil.ERR, "Unexpected type \"{}\" for property \"{}\"",
 					nextPropValue.getClass().getCanonicalName(), nextPropName
 				);
 			}
 		}
 		//
-		LOG.trace(LogUtil.MSG, "Sending configuration: {}", propsMap);
+		log.trace(LogUtil.MSG, "Sending configuration: {}", propsMap);
 		//
 		out.writeObject(propsMap);
-		LOG.debug(LogUtil.MSG, "Uploaded the properties from client side");
+		log.debug(LogUtil.MSG, "Uploaded the properties from client side");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final synchronized void readExternal(final ObjectInput in)
-		throws IOException, ClassNotFoundException {
-		LOG.debug(LogUtil.MSG, "Going to fetch the properties from client side");
+	throws IOException, ClassNotFoundException {
+		final Logger log = LogManager.getLogger();
+		log.debug(LogUtil.MSG, "Going to fetch the properties from client side");
 		final HashMap<String, String> confMap = HashMap.class.cast(in.readObject());
-		LOG.trace(LogUtil.MSG, "Got the properties from client side: {}", confMap);
+		log.trace(LogUtil.MSG, "Got the properties from client side: {}", confMap);
 		//
 		final String
 			serverVersion = CONTEXT_CONFIG.get().getRunVersion(),
@@ -568,7 +569,7 @@ implements Externalizable {
 				nextPropValue = nextPropName.startsWith("remote") ?
 					localRunTimeConfig.getString(nextPropName) :
 					confMap.get(nextPropName);
-				LOG.trace(LogUtil.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
+				log.trace(LogUtil.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
 				if(List.class.isInstance(nextPropValue)) {
 					setProperty(
 						nextPropName,
@@ -577,22 +578,22 @@ implements Externalizable {
 				} else if(String.class.isInstance(nextPropValue)) {
 					setProperty(nextPropName, String.class.cast(nextPropValue));
 				} else if(nextPropValue == null) {
-					LOG.debug(LogUtil.ERR, "Property \"{}\" is null", nextPropName);
+					log.debug(LogUtil.ERR, "Property \"{}\" is null", nextPropName);
 				} else {
-					LOG.error(
+					log.error(
 						LogUtil.ERR, "Unexpected type \"{}\" for property \"{}\"",
 						nextPropValue.getClass().getCanonicalName(), nextPropName
 					);
 				}
 			}
 			CONTEXT_CONFIG.set(this);
-			LOG.info(LogUtil.MSG, toString());
+			log.info(LogUtil.MSG, toString());
 		} else {
 			final String errMsg = String.format(
 				"%s, version mismatch, server: %s client: %s",
 				getRunName(), serverVersion, clientVersion
 			);
-			LOG.fatal(LogUtil.ERR, errMsg);
+			log.fatal(LogUtil.ERR, errMsg);
 			throw new IOException(errMsg);
 		}
 	}
@@ -602,12 +603,13 @@ implements Externalizable {
 	}
 	//
 	public synchronized void loadSysProps() {
+		final Logger log = LogManager.getLogger();
 		final SystemConfiguration sysProps = new SystemConfiguration();
 		String key, keys2override[];
 		Object sharedValue;
 		for(final Iterator<String> keyIter = sysProps.getKeys(); keyIter.hasNext();) {
 			key = keyIter.next();
-			LOG.trace(
+			log.trace(
 				LogUtil.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",
 				key, getProperty(key), sysProps.getProperty(key)
 			);
@@ -621,7 +623,7 @@ implements Externalizable {
 						setProperty(keys2override[i], loadTime[i]);
 					}
 				} else {
-					LOG.error(LogUtil.ERR, "Load time isn't correct. Default values will be used.");
+					log.error(LogUtil.ERR, "Load time isn't correct. Default values will be used.");
 				}
 			} else {
 				if(keys2override != null) {

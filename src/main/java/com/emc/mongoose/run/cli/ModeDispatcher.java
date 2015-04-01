@@ -14,12 +14,11 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.impl.cinderella.Main;
+import com.emc.mongoose.storage.mock.impl.cinderella.Cinderella;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.ThreadContext;
 //
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -39,7 +38,7 @@ public final class ModeDispatcher {
 			runMode = args[0];
 		}
 		System.setProperty(RunTimeConfig.KEY_RUN_MODE, runMode);
-		System.setProperty(Constants.INHERITABLE_CONTEXT_MAP, "true");
+		LogUtil.init();
 		//
 		final Map<String, String> properties = HumanFriendly.parseCli(args);
 		//
@@ -83,7 +82,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_WSMOCK:
 				rootLogger.debug(LogUtil.MSG, "Starting the cinderella");
 				try {
-					new Main().run();
+					new Cinderella().run();
 				} catch (final Exception e) {
 					LogUtil.failure(rootLogger, Level.FATAL, e, "Failed");
 				}

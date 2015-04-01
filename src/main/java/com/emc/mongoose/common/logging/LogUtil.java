@@ -30,7 +30,7 @@ public final class LogUtil {
 	private final static String
 		//
 		KEY_LOG4J_CTX_SELECTOR = "Log4jContextSelector",
-		VALUE_LOG4J_CTX_SELECTOR = AsyncLoggerContextSelector.class.getCanonicalName(),
+		VALUE_LOG4J_CTX_ASYNC_SELECTOR = AsyncLoggerContextSelector.class.getCanonicalName(),
 		//
 		KEY_JUL_MANAGER = "java.util.logging.manager",
 		VALUE_JUL_MANAGER = "org.apache.logging.log4j.jul.LogManager",
@@ -39,10 +39,6 @@ public final class LogUtil {
 		VALUE_THREAD_CTX_INHERIT = Boolean.toString(true),
 		//
 		FNAME_LOG_CONF = "logging.yaml";
-	//
-	static {
-		System.setProperty(KEY_THREAD_CTX_INHERIT, VALUE_THREAD_CTX_INHERIT);
-	}
 	//
 	public static final TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
 	public static final Locale LOCALE_DEFAULT = Locale.ROOT;
@@ -74,8 +70,16 @@ public final class LogUtil {
 	//
 	private final static AtomicReference<LoggerContext> LOG_CTX = new AtomicReference<>(null);
 	static {
+		init();
+	}
+	public static void init() {
 		synchronized(LOG_CTX) {
 			if(LOG_CTX.get() == null) {
+				System.setProperty(KEY_THREAD_CTX_INHERIT, VALUE_THREAD_CTX_INHERIT);
+				// make all used loggers asynchronous
+				System.setProperty(KEY_LOG4J_CTX_SELECTOR, VALUE_LOG4J_CTX_ASYNC_SELECTOR);
+				// connect JUL to Log4J2
+				System.setProperty(KEY_JUL_MANAGER, VALUE_JUL_MANAGER);
 				// set "run.id" property with timestamp value if not set before
 				String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
@@ -86,10 +90,6 @@ public final class LogUtil {
 						)
 					);
 				}
-				// make all used loggers asynchronous
-				System.setProperty(KEY_LOG4J_CTX_SELECTOR, VALUE_LOG4J_CTX_SELECTOR);
-				// connect JUL to Log4J2
-				System.setProperty(KEY_JUL_MANAGER, VALUE_JUL_MANAGER);
 				// determine the logger configuration file path
 				final Path logConfPath = Paths.get(
 					RunTimeConfig.DIR_ROOT, Constants.DIR_CONF, FNAME_LOG_CONF
