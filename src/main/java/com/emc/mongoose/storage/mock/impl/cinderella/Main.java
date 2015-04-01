@@ -213,11 +213,12 @@ implements Runnable {
 				while((s = bufferReader.readLine()) != null) {
 					final WSObjectMock dataObject = new BasicWSObjectMock(s) ;
 					//if mongoose v.0.5.0
-					if (dataSizeRadix == 16) {
+					if (dataSizeRadix == 0x10) {
 						dataObject.setSize(Long.valueOf(String.valueOf(dataObject.getSize()), 0x10));
 					}
 					//
-					LOG.trace(Markers.DATA_LIST, dataObject.toString());
+					LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject.toString()));
+					System.out.println(String.format("%s", dataObject.toString()));
 					synchronized (SHARED_STORAGE){
 						SHARED_STORAGE.put(dataObject.getId(), dataObject);
 					}
@@ -324,8 +325,7 @@ implements Runnable {
 		){
 			final int
 				lenStandertUriWithID = 3,
-				lenAtmosUriWithID = 4,
-				lenAtmosID = 12;
+				lenAtmosUriWithID = 4;
 			final HttpResponse response = httpexchange.getResponse();
 			//HttpCoreContext coreContext = HttpCoreContext.adapt(context);
 			String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
@@ -442,7 +442,6 @@ implements Runnable {
 				final long offset = genOffset(dataID);
 				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 			}
-			//System.out.println( String.format("%s", dataObject));
 			LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject));
 			synchronized (SHARED_STORAGE) {
 				SHARED_STORAGE.put(dataID, dataObject);
