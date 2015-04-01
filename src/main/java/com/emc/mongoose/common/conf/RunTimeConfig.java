@@ -121,7 +121,7 @@ implements Externalizable {
 		String dirRoot = System.getProperty("user.dir");
 		try {
 			dirRoot = new File(
-				RunTimeConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+				Constants.class.getProtectionDomain().getCodeSource().getLocation().toURI()
 			).getParent();
 		} catch(final URISyntaxException e) {
 			LogUtil.failure(

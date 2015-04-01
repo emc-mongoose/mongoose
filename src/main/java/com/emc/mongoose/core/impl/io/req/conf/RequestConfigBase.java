@@ -77,6 +77,9 @@ implements RequestConfig<T> {
 			setNameSpace(reqConf2Clone.getNameSpace());
 			secret = reqConf2Clone.getSecret();
 			setBuffSize(reqConf2Clone.getBuffSize());
+			LOG.debug(
+				LogUtil.MSG, "Forked req conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
+			);
 		}
 	}
 	//
@@ -97,6 +100,9 @@ implements RequestConfig<T> {
 			.setNameSpace(nameSpace)
 			.setBuffSize(buffSize);
 		requestConfigBranch.secret = secret;
+		LOG.debug(
+			LogUtil.MSG, "Forked req conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
+		);
 		return requestConfigBranch;
 	}
 	//

@@ -321,7 +321,6 @@ dependencies {
 		library.commons_collections4,
 		library.commons_configuration,
 		library.jackson_databind,
-		library.jsp_api,
 		library.log4j_api_plus_core,
 		library.websockets,
 	)
@@ -335,7 +334,6 @@ dependencies {
 		library.websocket_common,
 		library.websocket_core,
 		library.websocket_server,
-		library.jsp_api,
 	)
 
 	// launcher

@@ -1,18 +1,21 @@
 package com.emc.mongoose.run.cli;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
-//
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-//
+// mongoose-scenario.jar
 import com.emc.mongoose.run.scenario.Scenario;
 import com.emc.mongoose.run.webserver.RunJettyTask;
+// mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
-//
+// mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+// mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.cinderella.Main;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -71,6 +71,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	public final WSRequestConfigImpl<T> setBucket(final WSBucketImpl<T> bucket) {
+		LOG.debug(LogUtil.MSG, "Req conf instance #{}: set bucket \"{}\"", hashCode(), bucket);
 		this.bucket = bucket;
 		return this;
 	}
@@ -208,6 +209,8 @@ extends WSRequestConfigBase<T> {
 	throws IllegalStateException {
 		if(bucket == null) {
 			throw new IllegalStateException("Bucket is not specified");
+		} else {
+			LOG.debug(LogUtil.MSG, "Configure storage w/ bucket \"{}\"", bucket);
 		}
 		final String bucketName = bucket.getName();
 		if(bucket.exists(storageNodeAddrs[0])) {

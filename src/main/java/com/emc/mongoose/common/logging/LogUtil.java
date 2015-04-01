@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import org.apache.commons.lang.text.StrBuilder;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +27,36 @@ import java.util.concurrent.atomic.AtomicReference;
  Created by kurila on 06.05.14.
  */
 public final class LogUtil {
+	private final static String
+		//
+		KEY_LOG4J_CTX_SELECTOR = "Log4jContextSelector",
+		VALUE_LOG4J_CTX_SELECTOR = AsyncLoggerContextSelector.class.getCanonicalName(),
+		//
+		KEY_JUL_MANAGER = "java.util.logging.manager",
+		VALUE_JUL_MANAGER = "org.apache.logging.log4j.jul.LogManager",
+		//
+		KEY_THREAD_CTX_INHERIT = "isThreadContextMapInheritable",
+		VALUE_THREAD_CTX_INHERIT = Boolean.toString(true),
+		//
+		FNAME_LOG_CONF = "logging.yaml";
+	//
+	static {
+		System.setProperty(KEY_THREAD_CTX_INHERIT, VALUE_THREAD_CTX_INHERIT);
+	}
+	//
+	public static final TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
+	public static final Locale LOCALE_DEFAULT = Locale.ROOT;
+	public static final DateFormat FMT_DT = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS",LOCALE_DEFAULT) {
+		{ setTimeZone(TZ_UTC); }
+	};
+	//
+	public final static Marker
+		MSG = MarkerManager.getMarker("msg"),
+		ERR = MarkerManager.getMarker("err"),
+		DATA_LIST = MarkerManager.getMarker("dataList"),
+		PERF_AVG = MarkerManager.getMarker("perfAvg"),
+		PERF_SUM = MarkerManager.getMarker("perfSum"),
+		PERF_TRACE = MarkerManager.getMarker("perfTrace");
 	// console colors
 	public static final String
 		RESET = "\u001B[0m",
@@ -41,39 +72,10 @@ public final class LogUtil {
 		CYAN = "\u001B[36m",
 		WHITE = "\u001B[37m";
 	//
-	public static final TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
-	public static final Locale LOCALE_DEFAULT = Locale.ROOT;
-	public static final DateFormat FMT_DT = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS",LOCALE_DEFAULT) {
-		{ setTimeZone(TZ_UTC); }
-	};
-	//
-	public final static Marker
-		MSG = MarkerManager.getMarker("msg"),
-		ERR = MarkerManager.getMarker("err"),
-		DATA_LIST = MarkerManager.getMarker("dataList"),
-		PERF_AVG = MarkerManager.getMarker("perfAvg"),
-		PERF_SUM = MarkerManager.getMarker("perfSum"),
-		PERF_TRACE = MarkerManager.getMarker("perfTrace");
-	//
-	private final static String
-		//
-		KEY_LOG4J_CTX_SELECTOR = "Log4jContextSelector",
-		VALUE_LOG4J_CTX_SELECTOR = AsyncLoggerContextSelector.class.getCanonicalName(),
-		//
-		KEY_JUL_MANAGER = "java.util.logging.manager",
-		VALUE_JUL_MANAGER = "org.apache.logging.log4j.jul.LogManager",
-		//
-		KEY_THREAD_CTX_INHERIT = "isThreadContextMapInheritable",
-		VALUE_THREAD_CTX_INHERIT = Boolean.toString(true),
-		//
-		FNAME_LOG_CONF = "logging.yaml";
-	//
 	private final static AtomicReference<LoggerContext> LOG_CTX = new AtomicReference<>(null);
 	static {
 		synchronized(LOG_CTX) {
 			if(LOG_CTX.get() == null) {
-				//
-				System.setProperty(KEY_THREAD_CTX_INHERIT, VALUE_THREAD_CTX_INHERIT);
 				// set "run.id" property with timestamp value if not set before
 				String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {

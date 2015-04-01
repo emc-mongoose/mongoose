@@ -44,7 +44,6 @@ ext {
 	jetty_webapp = [ "org.eclipse.jetty:jetty-webapp:9.3.0.M1" ]
 	jetty_xml = [ "org.eclipse.jetty:jetty-xml:9.3.0.M1" ]
 
-	jsp_api = [ "javax.servlet.jsp:jsp-api:2.2" ]
 	jstl = [ "javax.servlet:jstl:1.2" ]
 
 	jython = [ "org.python:jython-standalone:2.7-b3" ]
