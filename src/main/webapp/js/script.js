@@ -568,10 +568,22 @@ function charts(chartsArray) {
 		TP: "throughput",
 		BW: "bandwidth"
 	};
-	var AVG = "total average",
-		MIN_1 = "last 1 min avg",
-		MIN_5 = "last 5 min avg",
-		MIN_15 = "last 15 min avg";
+	var AVG = {
+			id: "avg",
+			text: "total average"
+		},
+		MIN_1 = {
+			id: "1min",
+			text: "last 1 min avg"
+		},
+		MIN_5 = {
+			id: "5min",
+			text: "last 5 min avg"
+		},
+		MIN_15 = {
+			id: "15min",
+			text: "last 15 min avg"
+		};
 	//  Some constants from runTimeConfig
 	var RUN_TIME_CONFIG_CONSTANTS = {
 		runId: "run.id",
@@ -653,7 +665,7 @@ function charts(chartsArray) {
 		//
 		var color = d3.scale.ordinal().
 			range(colorsList18);
-		color.domain(data.map(function(d) { return d.name; }));
+		color.domain(data.map(function(d) { return d.name.id; }));
 		//
 		var xAxis = d3.svg.axis()
 			.scale(x)
@@ -715,12 +727,12 @@ function charts(chartsArray) {
 			.data(data).enter()
 			.append("g")
 			.attr("class", "level")
-			.attr("id", function(d, i) { return chartDOMPath.replace("#", "") + d.name; })
-			.attr("visibility", function(d) { if (d.name === AVG) { return "visible"; } else { return "hidden"; }})
+			.attr("id", function(d, i) { return chartDOMPath.replace("#", "") + d.name.id; })
+			.attr("visibility", function(d) { if (d.name.id === AVG.id) { return "visible"; } else { return "hidden"; }})
 			.append("path")
 			.attr("class", "line")
 			.attr("d", function(d)  { return line(d.values); })
-			.attr("stroke", function(d) { return color(d.name); });
+			.attr("stroke", function(d) { return color(d.name.id); });
 		//  Axis X Label
 		svg.append("text")
 			.attr("x", width - 2)
@@ -749,10 +761,10 @@ function charts(chartsArray) {
 			.append("xhtml:body")
 			.append("input")
 			.attr("type", "checkbox")
-			.attr("value", function(d) { return d.name; })
-			.attr("checked", function(d) { if (d.name === AVG) { return "checked"; } })
+			.attr("value", function(d) { return d.name.id; })
+			.attr("checked", function(d) { if (d.name.id === AVG.id) { return "checked"; } })
 			.on("click", function(d, i) {
-				var element = $(chartDOMPath + d.name);
+				var element = $(chartDOMPath + d.name.id);
 				if ($(this).is(":checked")) {
 					element.css("visibility", "visible")
 				} else {
@@ -772,14 +784,14 @@ function charts(chartsArray) {
 			.attr("x", width + 18)
 			.attr("width", 18)
 			.attr("height", 18)
-			.style("fill", function(d) { return color(d.name); });
+			.style("fill", function(d) { return color(d.name.id); });
 
 		legend.append("text")
 			.attr("x", width + 40)
 			.attr("y", 9)
 			.attr("dy", ".35em")
 			.style("text-anchor", "start")
-			.text(function(d) { return d.name; });
+			.text(function(d) { return d.name.text; });
 
 		svg.append("text")
 			.attr("x", (width / 2))
@@ -862,7 +874,7 @@ function charts(chartsArray) {
 			var paths = svg.selectAll(".level path")
 				.data(data)
 				.attr("d", function(d) { return line(d.values); })
-				.attr("stroke", function(d) { return color(d.name); })
+				.attr("stroke", function(d) { return color(d.name.id); })
 				.attr("fill", "none");
 		};
 	}
