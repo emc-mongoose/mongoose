@@ -8,14 +8,13 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
-import org.apache.http.nio.entity.EntityAsyncContentProducer;
-import org.apache.http.nio.entity.HttpAsyncContentProducer;
 import org.apache.http.nio.protocol.BasicAsyncResponseProducer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 /**
@@ -40,7 +39,7 @@ extends BasicAsyncResponseProducer {
 	public final void produceContent(
 		final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
-		/*
+
 		try(final OutputStream outStream = HTTPOutputStream.getInstance(encoder, ioctrl)) {
 			final HttpEntity entity = this.response.getEntity();
 			if( entity != null) {
@@ -56,9 +55,8 @@ extends BasicAsyncResponseProducer {
 			// do nothing
 		} finally {
 			encoder.complete();
-			this.producer.close();
 		}
-		*/
+		/*
 		final HttpEntity respEntity = this.response.getEntity();
 		if(respEntity != null) {
 			long contentLength = respEntity.getContentLength();
@@ -79,7 +77,7 @@ extends BasicAsyncResponseProducer {
 					}
 					byteCountToWrite -= n;
 				}
-				dataStream.close();
+
 			} finally {
 				encoder.complete();
 				//this.producer.close();
@@ -91,23 +89,6 @@ extends BasicAsyncResponseProducer {
 				}
 			}
 		}
+		*/
 	}
-	/*
-	@Override
-	public final void close()
-	throws IOException {
-		if (this.producer != null) {
-			this.producer.close();
-		}
-	}
-	//
-	@Override
-	public final String toString() {
-		final StringBuilder buf = new StringBuilder();
-		buf.append(this.response);
-		if (this.producer != null) {
-			buf.append(" ").append(this.producer);
-		}
-		return buf.toString();
-	}*/
 }
