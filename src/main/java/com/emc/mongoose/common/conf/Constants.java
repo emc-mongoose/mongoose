@@ -22,4 +22,6 @@ public interface Constants {
 	//
 	String DIR_WEBAPP = "webapp";
 	String DIR_WEBINF = "WEB-INF";
+	//
+	String INHERITABLE_CONTEXT_MAP = "isInheritableThreadContextMap";
 }
