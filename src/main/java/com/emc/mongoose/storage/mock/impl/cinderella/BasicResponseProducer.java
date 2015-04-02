@@ -27,7 +27,6 @@ extends BasicAsyncResponseProducer {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final HttpResponse response;
-	private final HttpAsyncContentProducer producer;
 	//
 	private final byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataBufferSize()];
 	private final ByteBuffer bb = ByteBuffer.wrap(buff);
@@ -35,16 +34,6 @@ extends BasicAsyncResponseProducer {
 	public BasicResponseProducer(HttpResponse response) {
 		super(response);
 		this.response = response;
-		final HttpEntity entity = response.getEntity();
-		if (entity != null) {
-			if (entity instanceof HttpAsyncContentProducer) {
-				this.producer = (HttpAsyncContentProducer) entity;
-			} else {
-				this.producer = new EntityAsyncContentProducer(entity);
-			}
-		} else {
-			this.producer = null;
-		}
 	}
 	//
 	@Override
@@ -93,7 +82,7 @@ extends BasicAsyncResponseProducer {
 				dataStream.close();
 			} finally {
 				encoder.complete();
-				this.producer.close();
+				//this.producer.close();
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
 						LogUtil.MSG, "{} bytes written out",
@@ -103,7 +92,7 @@ extends BasicAsyncResponseProducer {
 			}
 		}
 	}
-	//
+	/*
 	@Override
 	public final void close()
 	throws IOException {
@@ -120,5 +109,5 @@ extends BasicAsyncResponseProducer {
 			buf.append(" ").append(this.producer);
 		}
 		return buf.toString();
-	}
+	}*/
 }
