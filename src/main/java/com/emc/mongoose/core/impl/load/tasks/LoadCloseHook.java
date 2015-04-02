@@ -81,7 +81,7 @@ implements Runnable {
 		LOG.debug(LogUtil.MSG, "Closing the load executor \"{}\"...", loadName);
 		try {
 			loadExecutor.close();
-			LOG.debug(LogUtil.MSG, "The load executor \"{}\"closed successfully", loadName);
+			LOG.debug(LogUtil.MSG, "The load executor \"{}\" closed successfully", loadName);
 		} catch(final Exception e) {
 			LogUtil.failure(
 				LOG, Level.DEBUG, e,

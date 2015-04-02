@@ -1,5 +1,3 @@
-from __future__ import print_function, absolute_import, with_statement
-#
 from timeout import init as timeOutInit
 from loadbuilder import init as loadBuilderInit
 #
@@ -7,7 +5,6 @@ from org.apache.logging.log4j import Level, LogManager
 #
 from com.emc.mongoose.common.conf import RunTimeConfig
 from com.emc.mongoose.common.logging import LogUtil
-from com.emc.mongoose.common.net import ServiceUtils
 #
 from com.emc.mongoose.core.api.io.task import IOTask
 from com.emc.mongoose.core.api.persist import DataItemBuffer

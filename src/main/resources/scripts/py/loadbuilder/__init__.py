@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-from __future__ import print_function, absolute_import, with_statement
-#
 from org.apache.logging.log4j import Level, LogManager
 #
 from com.emc.mongoose.common.conf import Constants, RunTimeConfig

@@ -1,5 +1,3 @@
-from __future__ import print_function, absolute_import, with_statement
-#
 from loadbuilder import init as loadBuilderInit
 from chain import build as chainBuild
 from chain import execute as chainExecute
@@ -10,7 +8,6 @@ from org.apache.logging.log4j import Level, LogManager, ThreadContext
 #
 from com.emc.mongoose.common.conf import RunTimeConfig
 from com.emc.mongoose.common.logging import LogUtil
-from com.emc.mongoose.common.net import ServiceUtils
 #
 LOG = LogManager.getLogger()
 #
