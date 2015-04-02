@@ -298,7 +298,7 @@ implements Runnable {
 			final HttpContext context
 		){
 			final HttpResponse response = httpexchange.getResponse();
-			String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
+			final String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
 			//Get URI components
 			final String[] requestUri = request.getRequestLine().getUri().split("/");
 			//
