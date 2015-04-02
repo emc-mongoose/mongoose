@@ -90,6 +90,7 @@ extends BasicAsyncResponseProducer {
 					}
 					byteCountToWrite -= n;
 				}
+				dataStream.close();
 			} finally {
 				encoder.complete();
 				this.producer.close();
