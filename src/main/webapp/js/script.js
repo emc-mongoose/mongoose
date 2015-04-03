@@ -913,10 +913,23 @@ function charts(chartsArray) {
 						drawBandwidthCharts($.extend(true, [], data), json)]));
 		},
 		chain: function(runId, runMetricsPeriodSec, loadType) {
-			var AVG = "total average",
-				MIN_1 = "last 1 min avg",
-				MIN_5 = "last 5 min avg",
-				MIN_15 = "last 15 min avg";
+			//
+			var AVG = {
+					id: "avg",
+					text: "total average"
+				},
+				MIN_1 = {
+					id: "1min",
+					text: "last 1 min avg"
+				},
+				MIN_5 = {
+					id: "5min",
+					text: "last 5 min avg"
+				},
+				MIN_15 = {
+					id: "15min",
+					text: "last 15 min avg"
+				};
 			//
 			var TP_MODES = [AVG, MIN_1, MIN_5, MIN_15];
 			//
@@ -1110,25 +1123,25 @@ function charts(chartsArray) {
 					.attr("class", "line")
 					.attr("d", function(c) { return line(c.values); })
 					.attr("stroke-dasharray", function(c, i) {
-						switch (c.name) {
-							case AVG:
+						switch (c.name.id) {
+							case AVG.id:
 								return "0,0";
 								break;
-							case MIN_1:
+							case MIN_1.id:
 								return "3,3";
 								break;
-							case MIN_5:
+							case MIN_5.id:
 								return "10,10";
 								break;
-							case MIN_15:
+							case MIN_15.id:
 								return "20,10,5,5,5,10";
 								break;
 						}
 					})
 					.attr("id", function(c) {
-						return path.replace("#", "") + loadType + "-" + c.name;
+						return path.replace("#", "") + loadType + "-" + c.name.id;
 					})
-					.attr("visibility", function(c) { if (c.name === AVG) { return "visible"; } else { return "hidden"; }});
+					.attr("visibility", function(c) { if (c.name.id === AVG.id) { return "visible"; } else { return "hidden"; }});
 				//
 				svg.selectAll(".right-foreign")
 					.data(data).enter()
@@ -1143,7 +1156,6 @@ function charts(chartsArray) {
 					.append("xhtml:body")
 					.append("input")
 					.attr("type", "checkbox")
-					.attr("value", function(d) { return d.name; })
 					.attr("checked", "checked")
 					.on("click", function(d, i) {
 						var element = $(path + d.loadType);
@@ -1167,8 +1179,8 @@ function charts(chartsArray) {
 					.append("input")
 					.attr("type", "checkbox")
 					.attr("class", "bottom-checkbox")
-					.attr("value", function(d) { return d; })
-					.attr("checked", function(d) { if (d === AVG) { return "checked"; } })
+					.attr("value", function(d) { return d.id; })
+					.attr("checked", function(d) { if (d.id === AVG.id) { return "checked"; } })
 					.on("click", function(d, i) {
 						var currentVal = $(this).val();
 						var elements = $(path + " " + ".line");
@@ -1221,31 +1233,31 @@ function charts(chartsArray) {
 
 				bottomLegend.append("path")
 					.attr("d", function(d, i) {
-						switch(d) {
-						case AVG:
+						switch(d.id) {
+						case AVG.id:
 							return "M20 0 L110 0";
 							break;
-						case MIN_1:
+						case MIN_1.id:
 							return "M20 0 L115 0";
 							break;
-						case MIN_5:
-						case MIN_15:
+						case MIN_5.id:
+						case MIN_15.id:
 							return "M20 0 L120 0";
 							break;
 						}
 					})
 					.attr("stroke-dasharray", function(d, i) {
-						switch (d) {
-							case AVG:
+						switch (d.id) {
+							case AVG.id:
 								return "0,0";
 								break;
-							case MIN_1:
+							case MIN_1.id:
 								return "3,3";
 								break;
-							case MIN_5:
+							case MIN_5.id:
 								return "10,10";
 								break;
-							case MIN_15:
+							case MIN_15.id:
 								return "20,10,5,5,5,10";
 								break;
 						}
@@ -1257,7 +1269,7 @@ function charts(chartsArray) {
 					.style("text-anchor", "start")
 					.attr("stroke", "none")
 					.attr("stroke-width", "none")
-					.text(function(d) { return d; });
+					.text(function(d) { return d.text; });
 				//  Axis X Label
 				svg.append("text")
 					.attr("x", width - 2)
@@ -1398,12 +1410,12 @@ function charts(chartsArray) {
 								}
 								return i*15 + "," + i*15;
 							})
-							.attr("id", function(c) { return path.replace("#", "") + loadType + "-" + c.name; })
+							.attr("id", function(c) { return path.replace("#", "") + loadType + "-" + c.name.id; })
 							.attr("visibility", function(c) {
 								var elements = $(path + " " + ".bottom-checkbox:checked");
 								var isFound = false;
 								elements.each(function() {
-									if (c.name === $(this).val()) {
+									if (c.name.id === $(this).val()) {
 										isFound = true;
 									}
 								});
@@ -1454,17 +1466,17 @@ function charts(chartsArray) {
 						})
 						.attr("d", function(c) { return line(c.values); })
 						.attr("stroke-dasharray", function(c, i) {
-							switch (c.name) {
-								case AVG:
+							switch (c.name.id) {
+								case AVG.id:
 									return "0,0";
 									break;
-								case MIN_1:
+								case MIN_1.id:
 									return "3,3";
 									break;
-								case MIN_5:
+								case MIN_5.id:
 									return "10,10";
 									break;
-								case MIN_15:
+								case MIN_15.id:
 									return "20,10,5,5,5,10";
 									break;
 							}
@@ -1506,7 +1518,6 @@ function charts(chartsArray) {
 						.append("xhtml:body")
 						.append("input")
 						.attr("type", "checkbox")
-						.attr("value", function(d) { return d.name; })
 						.attr("checked", "checked")
 						.on("click", function(d, i) {
 							var element = $(path + d.loadType);
