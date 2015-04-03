@@ -513,11 +513,9 @@ function configureWebSocketConnection(location, countOfRecords) {
 			this.ws.onmessage = function(message) {
 				var json = JSON.parse(message.data);
 				if ($.isArray(json)) {
-					$("#wait").show();
 					json.forEach(function(d) {
 						processJsonLogEvents(chartsArray, d);
 					});
-					$("#wait").hide();
 				} else {
 					processJsonLogEvents(chartsArray, json);
 				}
