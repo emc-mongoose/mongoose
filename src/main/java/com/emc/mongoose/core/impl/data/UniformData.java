@@ -1,8 +1,11 @@
 package com.emc.mongoose.core.impl.data;
 //
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
+//
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
+//
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.TraceLogger;
 import com.emc.mongoose.common.logging.Markers;
@@ -15,14 +18,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayInputStream;
-import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 09.05.14.
@@ -42,21 +42,15 @@ implements DataItem {
 		FMT_MSG_FAIL_CHANGE_OFFSET = "Failed to change offset to \"%x\"",
 		FMT_MSG_FAIL_SET_OFFSET = "Failed to set data ring offset: \"%s\"",
 		FMT_MSG_STREAM_OUT_START = "Item \"{}\": stream out start",
-		FMT_MSG_STREAM_OUT_FINISH = "Item \"{}\": stream out finish",
-		FMT_MSG_CORRUPT = "Content mismatch:\n" +
-			"\trange offset: {}; internal offset: {};\n" +
-			"\texpected buffer content:\n{}\n" +
-			"\tbut got the following:\n{}",
-		MSG_IO_FAILURE_DURING_VERIFICATION = "Data integrity verification failed due to I/O error";
+		FMT_MSG_STREAM_OUT_FINISH = "Item \"{}\": stream out finish";
 	protected final static String
 		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s",
-		MSG_READ_RING_BLOCKED = "Reading from data ring blocked?",
-		MSG_READ_STREAM_BLOCKED = "Reading from the stream blocked?";
+		MSG_READ_RING_BLOCKED = "Reading from data ring blocked?";
 	private static AtomicLong NEXT_OFFSET = new AtomicLong(
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
 	//
-	public final static int MAX_PAGE_SIZE = (int) RunTimeConfig.getContext().getDataBufferSize();
+	public final int maxBuffSize = (int) RunTimeConfig.getContext().getDataRingSize();
 	protected long offset = 0;
 	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -142,11 +136,13 @@ implements DataItem {
 	//
 	@Override
 	public final int read() {
-		int b = super.read();
-		if(b < 0) { // end of file
-			pos = 0;
-			b = super.read(); // re-read the byte
-		}
+		int b;
+		do {
+			b = super.read();
+			if(b < 0) { // end of file
+				pos = 0;
+			}
+		} while(b < 1);
 		return b;
 	}
 	//
@@ -158,14 +154,15 @@ implements DataItem {
 	//
 	@Override
 	public final int read(final byte buff[], final int offset, final int length) {
-		int doneByteCount = super.read(buff, offset, length);
-		if(doneByteCount < length) {
-			if(doneByteCount == -1) {
-				doneByteCount = 0;
+		int doneByteCount = 0, lastByteCount;
+		do {
+			lastByteCount = super.read(buff, offset + doneByteCount, length - doneByteCount);
+			if(lastByteCount < 0) {
+				pos = 0;
+			} else {
+				doneByteCount += lastByteCount;
 			}
-			pos = 0;
-			doneByteCount += super.read(buff, offset + doneByteCount, length - doneByteCount);
-		}
+		} while(doneByteCount < length);
 		return doneByteCount;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -216,48 +213,25 @@ implements DataItem {
 		size = in.readLong();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@SuppressWarnings("InfiniteLoopStatement")
 	public void writeTo(final OutputStream out)
 	throws IOException {
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
 		}
-		if(size > 0) { // finite size
-			final byte buff[] = new byte[size < MAX_PAGE_SIZE ? (int) size : MAX_PAGE_SIZE];
-			final int
-				countPages = (int) size / buff.length,
-				countTailBytes = (int) size % buff.length;
-			synchronized(this) {
-				setOffset(offset, 0); // reset the ring buffer position to the beginning of the item
-				//
-				for(int i = 0; i < countPages; i++) {
-					if(read(buff) == buff.length) {
-						out.write(buff);
-					} else {
-						throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
-					}
-				}
-				// tail bytes
-				if(countTailBytes > 0) {
-					if(read(buff, 0, countTailBytes) == countTailBytes) {
-						out.write(buff, 0, countTailBytes);
-					} else {
-						throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
-					}
-				}
+		long byteCountToWrite = size;
+		int
+			nextOffset = (int) (offset % buf.length),
+			nextLength = buf.length - nextOffset;
+		while(byteCountToWrite > 0) {
+			if(byteCountToWrite < nextLength) { // tail bytes case
+				nextLength = (int) byteCountToWrite;
 			}
-		} else { // infinite size
-			final byte buff[] = new byte[MAX_PAGE_SIZE];
-			synchronized(this) {
-				setOffset(offset, 0); // reset the ring buffer position to the beginning of the item
-				while(true) {
-					if(read(buff) == buff.length) {
-						out.write(buff);
-					} else {
-						throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
-					}
-				}
-			}
+			// write the determined bytes range
+			out.write(buf, nextOffset, nextLength);
+			// prepare the next iteration
+			byteCountToWrite -= nextLength;
+			nextOffset = 0;
+			nextLength = buf.length;
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, FMT_MSG_STREAM_OUT_FINISH, Long.toHexString(offset));
@@ -269,134 +243,61 @@ implements DataItem {
 	) throws IOException {
 		//
 		boolean contentEquals = true;
-		if(rangeLength > 0) { // finite size
-			final int
-				pageSize = (int) (rangeLength < MAX_PAGE_SIZE ? rangeLength : MAX_PAGE_SIZE),
-				countPages = (int) (rangeLength / pageSize),
-				countTailBytes = (int) (rangeLength % pageSize);
-			final byte
-				buff1[] = new byte[pageSize],
-				buff2[] = new byte[pageSize];
-			int doneByteCountSum, doneByteCount;
-			//
-			synchronized(this) {
-				setOffset(offset, rangeOffset);
-				for(int i = 0; i < countPages; i++) {
-					if(pageSize == read(buff1)) {
-						doneByteCountSum = 0;
-						do {
-							doneByteCount = in.read(
-								buff2, doneByteCountSum, pageSize - doneByteCountSum
-							);
-							if(doneByteCount < 0) {
-								throw new EOFException("Unexpected end of data");
-							} else {
-								doneByteCountSum += doneByteCount;
-							}
-						} while(doneByteCountSum < pageSize);
-						contentEquals = Arrays.equals(buff1, buff2);
-						if(!contentEquals) {
-							LOG.debug(
-								Markers.ERR,
-								FMT_MSG_CORRUPT, rangeOffset, i * pageSize,
-								Base64.encodeBase64URLSafeString(buff1),
-								Base64.encodeBase64URLSafeString(buff2)
-							);
-							break;
-						}
-					} else {
-						LOG.debug(Markers.ERR, MSG_READ_STREAM_BLOCKED);
-						contentEquals = false;
-						break;
-					}
+		long byteCountDown = rangeLength;
+		int
+			nextOffset = (int) ((offset + rangeOffset) % buf.length),
+			nextLength = buf.length - nextOffset,
+			nextReadByteCount, nextReadByteCountSum;
+		final byte buff2verify[] = new byte[buf.length];
+		while(byteCountDown > 0) {
+			if(byteCountDown < nextLength) { // tail bytes case
+				nextLength = (int) byteCountDown;
+			}
+			// read the determined bytes range
+			nextReadByteCountSum = 0;
+			do {
+				nextReadByteCount = in.read(
+					buff2verify, nextReadByteCountSum, nextLength - nextReadByteCountSum
+				);
+				if(nextReadByteCount < 0) {
+					contentEquals = false;
+					LOG.warn(
+						Markers.MSG,
+						"{}: content size mismatch, expected: {}, got: {}",
+						Long.toString(offset, DataObject.ID_RADIX), size,
+						rangeOffset + rangeLength - byteCountDown + nextReadByteCountSum
+					);
+					break;
+				} else {
+					nextReadByteCountSum += nextReadByteCount;
 				}
-				//
-				if(contentEquals && countTailBytes > 0) {
-					// tail bytes
-					if(read(buff1, 0, countTailBytes) == countTailBytes) {
-						doneByteCountSum = 0;
-						do {
-							doneByteCount = in.read(
-								buff2, doneByteCountSum, countTailBytes - doneByteCountSum
-							);
-							if(doneByteCount < 0) {
-								throw new EOFException("Unexpected end of data");
-							} else {
-								doneByteCountSum += doneByteCount;
-							}
-						} while(doneByteCountSum < countTailBytes);
-						contentEquals = Arrays.equals(buff1, buff2);
-						if(!contentEquals) {
-							LOG.debug(
-								Markers.ERR, FMT_MSG_CORRUPT,
-								rangeOffset, rangeLength - countTailBytes,
-								Base64.encodeBase64URLSafeString(buff1),
-								Base64.encodeBase64URLSafeString(buff2)
-							);
-						}
-					} else {
-						LOG.debug(Markers.ERR, MSG_READ_STREAM_BLOCKED);
-						contentEquals = false;
-					}
+			} while(nextReadByteCountSum < nextLength);
+			if(!contentEquals) {
+				break;
+			}
+			// verify the data
+			for(int i = 0; i < nextLength; i ++) {
+				if(buf[nextOffset + i] != buff2verify[i]) {
+					contentEquals = false;
+					LOG.warn(
+						Markers.MSG,
+						String.format(
+							"%s: content mismatch @ offset %d, expected byte value: \"0x%X\", got \"0x%X\"",
+							Long.toString(offset, DataObject.ID_RADIX),
+							rangeOffset + rangeLength - byteCountDown + i,
+							buf[nextOffset + i], buff2verify[i]
+						)
+					);
+					break;
 				}
 			}
-		} else { // infinite size
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG, "Size of the content to read is unknown");
+			if(!contentEquals) {
+				break;
 			}
-			final byte
-				buff1[] = new byte[MAX_PAGE_SIZE],
-				buff2[] = new byte[MAX_PAGE_SIZE];
-			int doneByteCountSum, doneByteCount, i = 0;
-			//
-			synchronized(this) {
-				setOffset(offset, rangeOffset);
-				while(true) {
-					// read some bytes from remote side firstly
-					doneByteCountSum = 0;
-					do {
-						doneByteCount = in.read(
-							buff2, doneByteCountSum, MAX_PAGE_SIZE - doneByteCountSum
-						);
-						if(doneByteCount < 0) {
-							break;
-						} else {
-							doneByteCountSum += doneByteCount;
-							size += doneByteCount; // determine the size from input
-							if(LOG.isTraceEnabled(Markers.MSG)) {
-								LOG.trace(Markers.MSG, "Consumed {} bytes", size);
-							}
-						}
-					} while(doneByteCountSum < MAX_PAGE_SIZE);
-					// read the same count of bytes from ring buffer
-					if(doneByteCountSum == read(buff1, 0, doneByteCountSum)) {
-						contentEquals = Arrays.equals(buff1, buff2);
-					} else {
-						contentEquals = false;
-						LOG.warn(Markers.ERR, "Failed to read the data from ring buffer");
-					}
-					//
-					if(!contentEquals) {
-						LOG.debug(
-							Markers.ERR,
-							FMT_MSG_CORRUPT, rangeOffset, i * MAX_PAGE_SIZE,
-							Base64.encodeBase64URLSafeString(buff1),
-							Base64.encodeBase64URLSafeString(buff2)
-						);
-						break;
-					}
-					//
-					if(doneByteCount < 0) {
-						break;
-					}
-					//
-					i ++;
-				}
-			}
-			//
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG, "Content consuming done @ {} bytes", size);
-			}
+			// prepare the next iteration
+			byteCountDown -= nextLength;
+			nextOffset = 0;
+			nextLength = buf.length;
 		}
 		//
 		return contentEquals;

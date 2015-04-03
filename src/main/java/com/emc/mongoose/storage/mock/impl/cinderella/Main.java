@@ -15,11 +15,13 @@ import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 //
 import org.apache.commons.codec.binary.Base64;
 //
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.collections4.map.LRUMap;
 //
 import org.apache.http.HttpEntity;
@@ -67,53 +69,61 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+
 /**
  * Created by olga on 28.01.15.
  */
 public final class Main
 implements Runnable {
 	//
-	private final Map<String, WSObjectMock> sharedStorage;
+	private final static Map<String, WSObjectMock> SHARED_STORAGE = Collections.synchronizedMap(
+			new LRUMap<String, WSObjectMock>(RunTimeConfig.getContext().getStorageMockCapacity()));
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final ExecutorService multiSocketSvc;
 	private final HttpAsyncService protocolHandler;
-	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
+	private final static NHttpConnectionFactory<DefaultNHttpServerConnection>
+		CONNECTION_FACTORY = new FaultingConnectionFactory(ConnectionConfig.DEFAULT);
 	//
 	public final static String NAME_SERVER = String.format(
 		"%s/%s", Main.class.getSimpleName(), RunTimeConfig.getContext().getRunVersion()
 	);
-	private final int countHeads;
-	private final int portStart;
-	//
-	private final RunTimeConfig runTimeConfig;
+	// count of heads = 1 head or config count
+	private final static int COUNT_HEADS = Math.max(1, RunTimeConfig.getContext().getStorageMockHeadCount());
+
+	private final static String API_NAME = RunTimeConfig.getContext().getApiName();
+	private final static int PORT_START = RunTimeConfig.getContext().getApiTypePort(API_NAME);;
 	//
 	private final JmxReporter metricsReporter;
 	//
-	private long metricsUpdatePeriodSec;
+	private final static long METRICS_UPDATE_PERIOD_SEC = RunTimeConfig.getContext().getLoadMetricsPeriodSec();
 	//
 	private final static String
 		ALL_METHODS = "all",
-		METRIC_COUNT = "count";
-	private final Counter
+		METRIC_COUNT = "count",
+		METHOD_PUT = "put",
+		METHOD_POST = "post",
+		METHOD_GET = "get",
+		METHOD_HEAD = "head",
+		METHOD_DELETE = "delete",
+		AUTH = "auth";
+	private static Counter
 		counterAllSucc, counterAllFail,
 		counterGetSucc, counterGetFail,
 		counterPutSucc, counterPutFail,
+		counterPostSucc, counterPostFail,
 		counterDeleteSucc, counterHeadSucc;
-	private final Meter
-		allBW, getBW, putBW,
-		allTP, getTP, putTP;
+	private static Meter
+		allBW, getBW, putBW, postBW,
+		allTP, getTP, putTP, postTP;
 	//
-	public Main(final RunTimeConfig runTimeConfig)
+	public Main()
 	throws IOException {
-		this.runTimeConfig = runTimeConfig;
-		metricsUpdatePeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
-		connFactory = new FaultingConnectionFactory(ConnectionConfig.DEFAULT, runTimeConfig);
-		//
 		final MetricRegistry metrics = new MetricRegistry();
 		final MBeanServer mBeanServer;
-		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemotePortExport());
+		mBeanServer = ServiceUtils.getMBeanServer(RunTimeConfig.getContext().getRemotePortExport());
 		metricsReporter = JmxReporter.forRegistry(metrics)
 			.convertDurationsTo(TimeUnit.SECONDS)
 			.convertRatesTo(TimeUnit.SECONDS)
@@ -147,6 +157,15 @@ implements Runnable {
 		putTP = metrics.meter(MetricRegistry.name(Main.class,
 			MutableWSRequest.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_TP));
 		//
+		counterPostSucc = metrics.counter(MetricRegistry.name(Main.class,
+			MutableWSRequest.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+		counterPostFail = metrics.counter(MetricRegistry.name(Main.class,
+			MutableWSRequest.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+		postBW = metrics.meter(MetricRegistry.name(Main.class,
+			MutableWSRequest.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_BW));
+		postTP = metrics.meter(MetricRegistry.name(Main.class,
+			MutableWSRequest.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_TP));
+		//
 		counterDeleteSucc = metrics.counter(MetricRegistry.name(Main.class,
 			MutableWSRequest.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
 		//
@@ -154,14 +173,7 @@ implements Runnable {
 			MutableWSRequest.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_SUCC));
 		//
 		metricsReporter.start();
-		//queue size for data object
-		final int queueDataIdSize = runTimeConfig.getStorageMockCapacity();
-		sharedStorage = Collections.synchronizedMap(new LRUMap<String, WSObjectMock>(queueDataIdSize));
-		// count of heads = 1 head or config count
-		countHeads = Math.max(1, runTimeConfig.getStorageMockHeadCount());
-		LOG.info(Markers.MSG, "Starting with {} heads", countHeads);
-		final String apiName = runTimeConfig.getApiName();
-		portStart = runTimeConfig.getApiTypePort(apiName);
+		LOG.info(Markers.MSG, "Starting with {} heads", COUNT_HEADS);
 		// Set up the HTTP protocol processor
 		final HttpProcessor httpproc = HttpProcessorBuilder.create()
 			.add(new ResponseDate())
@@ -171,18 +183,18 @@ implements Runnable {
 		// Create request handler registry
 		final UriHttpAsyncRequestHandlerMapper reqistry = new UriHttpAsyncRequestHandlerMapper();
 		// Register the default handler for all URIs
-		reqistry.register("*", new RequestHandler(sharedStorage));
+		reqistry.register("*", new RequestHandler());
 		protocolHandler = new HttpAsyncService(httpproc, reqistry);
 		multiSocketSvc = Executors.newFixedThreadPool(
-			countHeads, new NamingWorkerFactory("cinderellaWorker")
+			COUNT_HEADS, new NamingWorkerFactory("cinderellaWorker")
 		);
 	}
 
 	@Override
 	public void run() {
 		//if there is data src file path
-		final String dataFilePath = runTimeConfig.getDataSrcFPath();
-		final int dataSizeRadix = runTimeConfig.getDataRadixSize();
+		final String dataFilePath = RunTimeConfig.getContext().getDataSrcFPath();
+		final int dataSizeRadix = RunTimeConfig.getContext().getDataRadixSize();
 		if (!dataFilePath.isEmpty()){
 			try {
 				final FileReader reader = new FileReader(dataFilePath);
@@ -196,8 +208,8 @@ implements Runnable {
 					}
 					//
 					LOG.trace(Markers.DATA_LIST, dataObject.toString());
-					synchronized (sharedStorage){
-						sharedStorage.put(dataObject.getId(),dataObject);
+					synchronized (SHARED_STORAGE){
+						SHARED_STORAGE.put(dataObject.getId(), dataObject);
 					}
 				}
 				reader.close();
@@ -211,9 +223,9 @@ implements Runnable {
 		}
 		//
 
-		for(int nextPort = portStart; nextPort < portStart + countHeads; nextPort ++){
+		for(int nextPort = PORT_START; nextPort < PORT_START + COUNT_HEADS; nextPort ++){
 			try {
-				multiSocketSvc.submit(new WorkerTask(protocolHandler, connFactory, nextPort));
+				multiSocketSvc.submit(new WorkerTask(protocolHandler, nextPort));
 			} catch(final IOReactorException e) {
 				TraceLogger.failure(
 					LOG, Level.ERROR, e,
@@ -221,29 +233,26 @@ implements Runnable {
 				);
 			}
 		}
-		if (countHeads > 1) {
-			LOG.info(Markers.MSG,"Listening the ports {} .. {}", portStart, portStart + countHeads - 1);
+		if (COUNT_HEADS > 1) {
+			LOG.info(Markers.MSG,"Listening the ports {} .. {}", PORT_START, PORT_START + COUNT_HEADS - 1);
 		} else {
-			LOG.info(Markers.MSG,"Listening the port {}", portStart);
+			LOG.info(Markers.MSG,"Listening the port {}", PORT_START);
 		}
 		multiSocketSvc.shutdown();
 		try {
 			//output metrics
-			final long updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(metricsUpdatePeriodSec);
-			while (metricsUpdatePeriodSec > 0) {
+			final long updatePeriodMilliSec = TimeUnit.SECONDS.toMillis(METRICS_UPDATE_PERIOD_SEC);
+			while (METRICS_UPDATE_PERIOD_SEC > 0) {
 				printMetrics();
 				Thread.sleep(updatePeriodMilliSec);
 			}
 			//
-			final long timeOutValue = runTimeConfig.getLoadLimitTimeValue();
+			final long timeOutValue = RunTimeConfig.getContext().getLoadLimitTimeValue();
+			final TimeUnit timeUnit = RunTimeConfig.getContext().getLoadLimitTimeUnit();
 			if(timeOutValue > 0) {
-				multiSocketSvc.awaitTermination(
-					timeOutValue, runTimeConfig.getLoadLimitTimeUnit()
-				);
+				multiSocketSvc.awaitTermination(timeOutValue, timeUnit);
 			} else {
-				multiSocketSvc.awaitTermination(
-					Long.MAX_VALUE, runTimeConfig.getLoadLimitTimeUnit()
-				);
+				multiSocketSvc.awaitTermination(Long.MAX_VALUE, timeUnit);
 			}
 		} catch (final InterruptedException e) {
 			LOG.info(Markers.MSG, "Interrupting the Cinderella");
@@ -279,24 +288,21 @@ implements Runnable {
 	///////////////////////////////////////////////////////////////////////////////////////////////////
 	//Mock Handler
 	///////////////////////////////////////////////////////////////////////////////////////////////////
-	private final class RequestHandler
+	private static final class RequestHandler
 	implements HttpAsyncRequestHandler<HttpRequest> {
 		//
-		final Map<String, WSObjectMock> sharedStorage;
-		//
-		private final int ringOffsetRadix = runTimeConfig.getDataRadixOffset();
+		private final static int RING_OFFSET_RADIX = RunTimeConfig.getContext().getDataRadixOffset();
 
 		//
-		public RequestHandler(final Map<String, WSObjectMock> sharedStorage) {
+		public RequestHandler() {
 			super();
-			this.sharedStorage = sharedStorage;
 		}
 		//
 		@Override
 		public HttpAsyncRequestConsumer<HttpRequest> processRequest(
 			final HttpRequest request, final HttpContext context
 		) throws HttpException, IOException {
-			return new BasicRequestConsumer(runTimeConfig);
+			return new BasicRequestConsumer();
 		}
 		//
 		@Override
@@ -304,41 +310,43 @@ implements Runnable {
 			final HttpRequest request, final HttpAsyncExchange httpexchange,
 			final HttpContext context
 		){
+			final int
+				lenStandertUriWithID = 3,
+				lenAtmosUriWithID = 4,
+				lenAtmosID = 32;
 			final HttpResponse response = httpexchange.getResponse();
 			//HttpCoreContext coreContext = HttpCoreContext.adapt(context);
 			String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
 			String dataID = "";
 			//Get data Id
-			try {
-				final String[] requestUri = request.getRequestLine().getUri().split("/");
-				if(requestUri.length >= 3) {
-					dataID = requestUri[2];
-				} else {
-					method = "head";
-				}
-			} catch(final NumberFormatException e) {
-				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-				TraceLogger.failure(
-					LOG, Level.WARN, e,
-					String.format("Unexpected object id format: \"%s\"", dataID)
-				);
-			} catch(final ArrayIndexOutOfBoundsException e) {
-				response.setStatusCode(HttpStatus.SC_BAD_REQUEST);
-				TraceLogger.failure(LOG, Level.WARN, e,
-					"Request URI is not correct. Data object ID doesn't exist in request URI");
+			final String[] requestUri = request.getRequestLine().getUri().split("/");
+			if(requestUri.length >= lenStandertUriWithID) {
+				dataID = requestUri[requestUri.length - 1];
+			} else {
+				method = "head";
 			}
 			//
 			switch(method) {
-				case ("put"):
+				case (METHOD_PUT):
 					doPut(request, response, dataID);
 					break;
-				case ("head"):
+				case (METHOD_POST):
+					if (requestUri.length != lenAtmosUriWithID) {
+						dataID = randomString(lenAtmosID);
+					}
+					doPost(request, response, dataID);
+					break;
+				case (METHOD_HEAD):
 					doHead(response);
 					break;
-				case ("get"):
-					doGet(response, dataID);
+				case (METHOD_GET):
+					if (requestUri[1].equals(AUTH)){
+						createSwiftAuthToken(response);
+					}else {
+						doGet(response, dataID);
+					}
 					break;
-				case ("delete"):
+				case (METHOD_DELETE):
 					doDelete(response);
 					break;
 			}
@@ -346,17 +354,17 @@ implements Runnable {
 		}
 		//
 		private void doGet(final HttpResponse response, final String dataID){
-			LOG.trace(Markers.MSG, " Request  method Get ");
+			LOG.trace(Markers.MSG, "Request  method Get ");
 			response.setStatusCode(HttpStatus.SC_OK);
-			if(sharedStorage.containsKey(dataID)) {
-				LOG.trace(Markers.MSG, "   Send data object ", dataID);
-				final WSObjectMock object = sharedStorage.get(dataID);
-				response.setEntity(object);
-				LOG.trace(Markers.MSG, "   Response: OK");
+			if(SHARED_STORAGE.containsKey(dataID)) {
+				LOG.trace(Markers.MSG, "Send data object ", dataID);
+				final WSObjectMock dataObject = SHARED_STORAGE.get(dataID);
+				response.setEntity(dataObject);
+				LOG.trace(Markers.MSG, "Response: OK");
 				counterAllSucc.inc();
 				counterGetSucc.inc();
-				getBW.mark(object.getSize());
-				allBW.mark(object.getSize());
+				getBW.mark(dataObject.getSize());
+				allBW.mark(dataObject.getSize());
 				getTP.mark();
 				allTP.mark();
 			} else {
@@ -367,6 +375,54 @@ implements Runnable {
 			}
 		}
 		//
+		private static String randomString(final int len )
+		{
+			final byte buff[] = new byte[len];
+			ThreadLocalRandom.current().nextBytes(buff);
+			return Hex.encodeHexString(buff);
+		}
+		//
+		private void doPost(final HttpRequest request, final HttpResponse response, final String dataID){
+			LOG.trace(Markers.MSG, "Request  method Post ");
+			try {
+				response.setStatusCode(HttpStatus.SC_OK);
+				final WSObjectMock dataObject = writeDataObject(request, dataID);
+				response.setEntity(dataObject);
+				counterAllSucc.inc();
+				counterPostSucc.inc();
+				postBW.mark(dataObject.getSize());
+				allBW.mark(dataObject.getSize());
+				postTP.mark();
+				allTP.mark();
+			}catch (final HttpException e) {
+				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				TraceLogger.failure(LOG, Level.ERROR, e, "Post method failure");
+				counterAllFail.inc();
+				counterPostFail.inc();
+			}
+		}
+		//
+		private static WSObjectMock writeDataObject(
+			final HttpRequest request, final String dataID
+		) throws HttpException{
+			WSObjectMock dataObject;
+			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+			final long bytes = entity.getContentLength();
+			//create data object or get it for append or update
+			if (SHARED_STORAGE.containsKey(dataID)) {
+				dataObject = SHARED_STORAGE.get(dataID);
+			} else if (request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH).equals(METHOD_POST)){
+				dataObject = new BasicWSObjectMock(dataID, bytes);
+			} else {
+				final long offset = genOffset(dataID);
+				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
+			}
+			LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject));
+			synchronized (SHARED_STORAGE) {
+				SHARED_STORAGE.put(dataID, dataObject);
+			}
+			return dataObject;
+		}
 		/*
 		offset for mongoose versions since v0.6:
 			final long offset = Long.valueOf(dataID, WSRequestConfigBase.RADIX);
@@ -376,47 +432,42 @@ implements Runnable {
 		offset for mongoose versions prior to v.0.4:
 			final long offset = Long.valueOf(dataID, 0x10);
 		 */
+		//
+		private static long genOffset(final String dataID)
+		throws HttpException
+		{
+			final long offset;
+			if (RING_OFFSET_RADIX == 0x40) { // base64
+				offset = ByteBuffer
+					.allocate(Long.SIZE / Byte.SIZE)
+					.put(Base64.decodeBase64(dataID))
+					.getLong(0);
+			} else if (RING_OFFSET_RADIX > 1 && RING_OFFSET_RADIX <= Character.MAX_RADIX) {
+				offset = Long.valueOf(dataID, RING_OFFSET_RADIX);
+			} else {
+				throw new HttpException(
+					String.format(
+						"Unsupported data ring offset radix: %d", RING_OFFSET_RADIX
+					)
+				);
+			}
+			return offset;
+		}
+		//
 		private void doPut(
 			final HttpRequest request, final HttpResponse response, final String dataID
 		){
+			LOG.trace(Markers.MSG, "Request  method Put ");
 			try {
-				LOG.trace(Markers.MSG, " Request  method Put ");
 				response.setStatusCode(HttpStatus.SC_OK);
-				WSObjectMock dataObject = null;
-				final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
-				final long bytes = entity.getContentLength();
-				//create data object or get it for append or update
-				if (sharedStorage.containsKey(dataID)) {
-					dataObject = sharedStorage.get(dataID);
-				} else {
-					final long offset;
-					if (ringOffsetRadix == 0x40) { // base64
-						offset = ByteBuffer
-							.allocate(Long.SIZE / Byte.SIZE)
-							.put(Base64.decodeBase64(dataID))
-							.getLong(0);
-					} else if (ringOffsetRadix > 1 && ringOffsetRadix <= Character.MAX_RADIX) {
-						offset = Long.valueOf(dataID, ringOffsetRadix);
-					} else {
-						throw new HttpException(
-							String.format(
-								"Unsupported data ring offset radix: %d", ringOffsetRadix
-							)
-						);
-					}
-					dataObject = new BasicWSObjectMock(dataID, offset, bytes);
-				}
-				LOG.trace(Markers.DATA_LIST, String.format("%s", dataObject));
-				synchronized (sharedStorage) {
-					sharedStorage.put(dataID, dataObject);
-				}
+				final WSObjectMock dataObject = writeDataObject(request, dataID);
 				counterAllSucc.inc();
 				counterPutSucc.inc();
-				putBW.mark(bytes);
-				allBW.mark(bytes);
+				putBW.mark(dataObject.getSize());
+				allBW.mark(dataObject.getSize());
 				putTP.mark();
 				allTP.mark();
-			} catch (final HttpException e){
+			}catch (final HttpException e){
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 				TraceLogger.failure(LOG, Level.ERROR, e, "Put method failure");
 				counterAllFail.inc();
@@ -425,17 +476,25 @@ implements Runnable {
 		}
 		//
 		private void doHead(final HttpResponse response){
-			LOG.trace(Markers.MSG, " Request  method Head ");
+			LOG.trace(Markers.MSG, "Request  method Head ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			counterAllSucc.inc();
 			counterHeadSucc.inc();
 		}
 		//
 		private void doDelete(final HttpResponse response){
-			LOG.trace(Markers.MSG, " Request  method Delete ");
+			LOG.trace(Markers.MSG, "Request  method Delete ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			counterAllSucc.inc();
 			counterDeleteSucc.inc();
+		}
+		//
+		private void createSwiftAuthToken(final HttpResponse response){
+			LOG.trace(Markers.MSG, "Create auth token ");
+			response.setStatusCode(HttpStatus.SC_OK);
+			response.setHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, randomString(5));
+			counterGetSucc.inc();
+			counterAllSucc.inc();
 		}
 	}
 	///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -450,11 +509,10 @@ implements Runnable {
 		//
 		public WorkerTask(
 			final HttpAsyncService protocolHandler,
-			final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory,
 			final int port
 		) throws IOReactorException {
 			this.port = port;
-			ioEventDispatch = new DefaultHttpServerIODispatch(protocolHandler, connFactory);
+			ioEventDispatch = new DefaultHttpServerIODispatch(protocolHandler, CONNECTION_FACTORY);
 			// Set I/O reactor defaults
 			final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 			final IOReactorConfig config = IOReactorConfig.custom()

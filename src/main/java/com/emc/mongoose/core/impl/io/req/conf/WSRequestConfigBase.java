@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
 import com.emc.mongoose.common.http.RequestTargetHost;
-import com.emc.mongoose.common.io.StreamUtils;
+import com.emc.mongoose.common.io.HTTPInputStream;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.logging.TraceLogger;
 // mongoose-core-api
@@ -43,6 +43,15 @@ import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.HeaderGroup;
+import org.apache.http.protocol.HttpCoreContext;
+import org.apache.http.protocol.HttpDateGenerator;
+import org.apache.http.protocol.HttpProcessor;
+import org.apache.http.protocol.HttpProcessorBuilder;
+import org.apache.http.protocol.RequestConnControl;
+import org.apache.http.protocol.RequestContent;
+import org.apache.http.protocol.RequestUserAgent;
+//
+import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
@@ -54,13 +63,6 @@ import org.apache.http.nio.protocol.HttpAsyncRequester;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.protocol.HttpCoreContext;
-import org.apache.http.protocol.HttpDateGenerator;
-import org.apache.http.protocol.HttpProcessor;
-import org.apache.http.protocol.HttpProcessorBuilder;
-import org.apache.http.protocol.RequestConnControl;
-import org.apache.http.protocol.RequestContent;
-import org.apache.http.protocol.RequestUserAgent;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -69,7 +71,6 @@ import org.apache.logging.log4j.Logger;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
@@ -549,15 +550,19 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final boolean consumeContent(
-		final InputStream contentStream, final IOControl ioCtl, T dataItem
-	) {
+	public final boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem) {
 		boolean ok = true;
 		try {
 			if(dataItem != null) {
 				if(loadType == IOTask.Type.READ) { // read
 					if(verifyContentFlag) { // read and do verify
-						ok = dataItem.isContentEqualTo(contentStream);
+						try(
+							final HTTPInputStream inStream = HTTPInputStream.getInstance(in, ioCtl)
+						) {
+							ok = dataItem.isContentEqualTo(inStream);
+						} catch(final InterruptedException e) {
+							// ignore
+						}
 					}
 				}
 			}
@@ -571,7 +576,7 @@ implements WSRequestConfig<T> {
 				TraceLogger.failure(LOG, Level.WARN, e, "Content reading failure");
 			}
 		} finally { // try to read the remaining data if left in the input stream
-			StreamUtils.skipStreamDataQuietly(contentStream);
+			HTTPInputStream.consumeQuietly(in, ioCtl, buffSize);
 		}
 		return ok;
 	}

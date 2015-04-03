@@ -67,5 +67,8 @@ extends Externalizable, Cloneable, Closeable {
 	void configureStorage(final String storageAddrs[])
 	throws IllegalStateException;
 	//
+	int getBuffSize();
+	void setBuffSize(final int buffSize);
+	//
 	boolean isClosed();
 }

@@ -14,6 +14,7 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -41,7 +42,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -101,6 +102,9 @@ implements WSIOTask<T> {
 	);
 	protected volatile HttpEntity reqEntity = null;
 	//
+	private byte buff[] = new byte[LoadExecutor.BUFF_SIZE_LO];
+	private ByteBuffer bb = ByteBuffer.wrap(buff);
+	//
 	@Override
 	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
 		if(reqConf != null && !reqConf.equals(wsReqConf)) {
@@ -115,6 +119,13 @@ implements WSIOTask<T> {
 			if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
 				httpRequest.setMethod(wsReqConf.getHTTPMethod());
 			}
+			//
+			int newBuffSize = wsReqConf.getBuffSize();
+			if(buff.length != newBuffSize) {
+				buff = new byte[newBuffSize];
+				bb = ByteBuffer.wrap(buff);
+			}
+			//
 			super.setRequestConfig(reqConf);
 		}
 		return this;
@@ -212,25 +223,34 @@ implements WSIOTask<T> {
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		try(final OutputStream outStream = HTTPOutputStream.getInstance(out, ioCtl)) {
-			if(reqEntity != null && reqEntity.getContentLength() > 0) {
+		if(reqEntity != null) {
+			long contentLength = reqEntity.getContentLength();
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Task #{}, write out {} bytes", hashCode(), contentLength);
+			}
+			long byteCountDown = contentLength;
+			int n;
+			try(final InputStream dataStream = reqEntity.getContent()) {
+				while(byteCountDown > 0) {
+					n = byteCountDown < buff.length ? (int) byteCountDown : buff.length;
+					if(0 >= dataStream.read(buff, 0, n)) {
+						break;
+					}
+					bb.rewind().limit(n);
+					while(bb.hasRemaining()) {
+						out.write(bb);
+					}
+					byteCountDown -= n;
+				}
+			} finally {
+				out.complete();
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
-						Markers.MSG, "Task #{}, write out {} bytes",
-						hashCode(), reqEntity.getContentLength()
+						Markers.MSG, "Task #{}: {} bytes written out",
+						hashCode(), contentLength - byteCountDown
 					);
 				}
-				reqEntity.writeTo(outStream);
-			} else if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.MSG, "Task #{}: No content to produce", hashCode());
-				out.complete();
 			}
-		} catch(final InterruptedException e) {
-			// ignored
-		} catch(final Exception e) {
-			TraceLogger.failure(
-				LOG, Level.WARN, e, String.format("Task #%d: content producing failure", hashCode())
-			);
 		}
 	}
 	//
@@ -444,14 +464,12 @@ implements WSIOTask<T> {
 	@Override
 	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
 	throws IOException {
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "#{}: start content consuming", hashCode());
-		}
-		try(final InputStream contentStream = HTTPInputStream.getInstance(in, ioCtl)) {
-			if(respStatusCode < 200 || respStatusCode >= 300) { // failure
+		if(respStatusCode < 200 || respStatusCode >= 300) { // failure
+			try(
 				final BufferedReader contentStreamBuff = new BufferedReader(
-					new InputStreamReader(contentStream)
-				);
+					new InputStreamReader(HTTPInputStream.getInstance(in, ioCtl))
+				)
+			) {
 				final StrBuilder msgBuilder = new StrBuilder();
 				String nextLine;
 				do {
@@ -465,22 +483,19 @@ implements WSIOTask<T> {
 						msgBuilder.append(nextLine);
 					}
 				} while(nextLine != null);
-			} else {
-				if(!wsReqConf.consumeContent(contentStream, ioCtl, dataItem)) { // content corruption
-					status = Status.FAIL_CORRUPT;
-				}
+			} catch(final InterruptedException e) {
+				// ignore
 			}
-		} catch(final InterruptedException e) {
-			// do nothing
+		} else {
+			if(!wsReqConf.consumeContent(in, ioCtl, dataItem)) { // content corruption
+				status = Status.FAIL_CORRUPT;
+			}
 		}
 	}
 	//
 	@Override
 	public final void responseCompleted(final HttpContext context) {
 		respTimeDone = System.nanoTime() / 1000;
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "#{}: response completed", hashCode());
-		}
 		complete();
 	}
 	//

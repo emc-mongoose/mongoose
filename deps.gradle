@@ -44,8 +44,6 @@ ext {
 	jetty_webapp = [ "org.eclipse.jetty:jetty-webapp:9.3.0.M1" ]
 	jetty_xml = [ "org.eclipse.jetty:jetty-xml:9.3.0.M1" ]
 
-	jmdns = [ "com.github.rickyclarkson:jmdns:3.4.2-r353-1" ]
-
 	jsp_api = [ "javax.servlet.jsp:jsp-api:2.2" ]
 	jstl = [ "javax.servlet:jstl:1.2" ]
 

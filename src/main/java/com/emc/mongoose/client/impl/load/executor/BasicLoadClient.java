@@ -109,18 +109,20 @@ implements LoadClient<T> {
 	private final RunTimeConfig runTimeConfig;
 	private final RequestConfig<T> reqConfig;
 	private final int retryCountMax, retryDelayMilliSec, metricsPeriodSec;
+	protected volatile Producer<T> producer;
 	//
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
 		final Map<String, JMXConnector> remoteJMXConnMap, final RequestConfig<T> reqConfig,
-		final long maxCount
+		final long maxCount, final Producer<T> producer
 	) {
 		super(
-			remoteLoadMap.size(), remoteLoadMap.size(), 0, TimeUnit.SECONDS,
+			Math.min(0x10, remoteLoadMap.size()), Math.min(0x10, remoteLoadMap.size()),
+			0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				maxCount > 0 ?
 					Math.min(
-						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
+						maxCount > Short.MAX_VALUE ? Short.MAX_VALUE : (int) maxCount,
 						RunTimeConfig.getContext().getRunRequestQueueSize())
 					:
 					RunTimeConfig.getContext().getRunRequestQueueSize()
@@ -143,6 +145,8 @@ implements LoadClient<T> {
 		this.runTimeConfig = runTimeConfig;
 		this.reqConfig = reqConfig;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
+		this.producer = producer;
+		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		//
@@ -175,7 +179,7 @@ implements LoadClient<T> {
 		}
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			20 + remoteLoadMap.size(), new NamingWorkerFactory(String.format("%s-remoteMonitor", name))
+			19 + remoteLoadMap.size(), new NamingWorkerFactory(String.format("%s-remoteMonitor", name))
 		) { // make the shutdown method synchronized
 			@Override
 			public final synchronized void shutdown() {
@@ -523,6 +527,7 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final void start() {
+		//
 		LoadSvc<T> nextLoadSvc;
 		for(final String addr : loadSvcAddrs) {
 			nextLoadSvc = remoteLoadMap.get(addr);
@@ -536,6 +541,19 @@ implements LoadClient<T> {
 				LOG.error(Markers.ERR, "Failed to start remote load @" + addr, e);
 			}
 		}
+		//
+		if(producer == null) {
+			LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
+		} else {
+			//
+			try {
+				producer.start();
+				LOG.debug(Markers.MSG, "Started object producer {}", producer);
+			} catch(final IOException e) {
+				TraceLogger.failure(LOG, Level.WARN, e, "Failed to start the producer");
+			}
+		}
+		//
 		schedulePeriodicMgmtTasks();
 		metricsReporter.start();
 		LoadCloseHook.add(this);
@@ -632,6 +650,8 @@ implements LoadClient<T> {
 				for(final String addr : loadSvcAddrs) {
 					try {
 						remoteLoadMap.get(addr).submit((T) null); // feed the poison
+					} catch(final InterruptedException | IllegalStateException e) {
+						LOG.debug(Markers.MSG, "Interrupting while submitting the poison");
 					} catch(final Exception e) {
 						TraceLogger.failure(
 							LOG, Level.WARN, e,
@@ -642,7 +662,9 @@ implements LoadClient<T> {
 				//
 				shutdown();
 			} else {
-				final String addr = loadSvcAddrs[(int) (countSubmCalls.get() % loadSvcAddrs.length)];
+				final String addr = loadSvcAddrs[
+					(int) (countSubmCalls.getAndIncrement() % loadSvcAddrs.length)
+				];
 				final RemoteSubmitTask<T> remoteSubmitTask = RemoteSubmitTask
 					.getInstanceFor(remoteLoadMap.get(addr), dataItem);
 				int rejectCount = 0;
@@ -661,6 +683,7 @@ implements LoadClient<T> {
 				} while(rejectCount < retryCountMax && !isShutdown());
 			}
 		} else {
+			LOG.info(Markers.MSG, "maxCount = {}, taskCount = {}", maxCount, getTaskCount());
 			shutdown();
 		}
 		//
@@ -682,11 +705,14 @@ implements LoadClient<T> {
 			if(!remoteLoadMap.isEmpty()) {
 				LOG.debug(Markers.MSG, "do performing close");
 				interrupt();
-				mgmtConnExecutor.shutdownNow();
 				LOG.debug(Markers.MSG, "log summary metrics");
 				logMetrics(Markers.PERF_SUM);
 				LOG.debug(Markers.MSG, "log metainfo frames");
 				logMetaInfoFrames();
+				LOG.debug(
+					Markers.MSG, "Dropped {} remote tasks",
+					shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()
+				);
 				metricsReporter.close();
 				//
 				LOG.debug(Markers.MSG, "Closing the remote services...");
@@ -794,10 +820,26 @@ implements LoadClient<T> {
 		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
 			remoteLoadMap.size(), new NamingWorkerFactory(String.format("joinWorker<%s>", getName()))
 		);
+		joinExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {
+					LOG.trace(
+						Markers.MSG, "{}: waiting remaining {} tasks to complete",
+						getName(), getQueue().size() + getActiveCount()
+					);
+					try {
+						awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
+					} catch(final InterruptedException e) {
+						LOG.debug(Markers.MSG, "Interrupted");
+					}
+				}
+			}
+		);
 		for(final String addr : remoteLoadMap.keySet()) {
 			joinExecutor.submit(new RemoteJoinTask(remoteLoadMap.get(addr), timeOutMilliSec));
 		}
 		joinExecutor.shutdown();
-		joinExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+		joinExecutor.awaitTermination(2 * timeOutMilliSec, TimeUnit.MILLISECONDS);
 	}
 }

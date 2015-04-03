@@ -154,18 +154,17 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		newLoadClient = new BasicWSLoadClient<>(
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
-			runTimeConfig.getLoadLimitDataItemCount()
+			runTimeConfig.getLoadLimitDataItemCount(), srcProducer
 		);
-		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer != null && srcProducer.getConsumer() == null) {
 			LOG.debug(
 				Markers.MSG, "Append consumer {} for producer {}",
 				newLoadClient.getName(), srcProducer.getName()
 			);
 			srcProducer.setConsumer(newLoadClient);
-			srcProducer.start();
-			srcProducer = null;
 		}
+		srcProducer = null;
+		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		//
 		return (U) newLoadClient;
 	}

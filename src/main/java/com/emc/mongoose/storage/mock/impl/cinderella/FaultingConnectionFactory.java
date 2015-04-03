@@ -30,25 +30,21 @@ extends DefaultNHttpServerConnectionFactory {
 	private final AtomicInteger counter = new AtomicInteger(0);
 	private final ExecutorService
 		connectionPool = Executors.newFixedThreadPool(100000, new NamingWorkerFactory("connKiller"));
-	private final int faultSleepMsec;
-	private final int faultPeriod;
+	private final static int FAULT_SLEEP_MILLI_SEC = RunTimeConfig.getContext().getStorageMockFaultSleepMilliSec();
+	private final static int FAULT_PERIOD = RunTimeConfig.getContext().getStorageMockFaultPeriod();
 	//
-	public FaultingConnectionFactory(
-		final ConnectionConfig config, final RunTimeConfig runTimeConfig
-	) {
+	public FaultingConnectionFactory(final ConnectionConfig config) {
 		super(config);
-		this.faultSleepMsec =  runTimeConfig.getStorageMockFaultSleepMilliSec();
-		faultPeriod = runTimeConfig.getStorageMockFaultPeriod();
 	}
 	//
 	@Override
 	public final DefaultNHttpServerConnection createConnection(final IOSession session) {
 		final DefaultNHttpServerConnection connection = super.createConnection(session);
-		if (faultPeriod > 0 && (counter.incrementAndGet() % faultPeriod) == 0 ){
+		if (FAULT_PERIOD > 0 && (counter.incrementAndGet() % FAULT_PERIOD) == 0 ){
 			LOG.trace(
 				Markers.MSG, "The connection {} is submitted to be possibly broken", connection
 			);
-			connectionPool.submit(new FailConnectionTask(connection, faultSleepMsec));
+			connectionPool.submit(new FailConnectionTask(connection));
 		}
 		return connection;
 	}
@@ -57,19 +53,15 @@ extends DefaultNHttpServerConnectionFactory {
 	implements Runnable {
 		//
 		private final NHttpServerConnection connection;
-		private final int faultSleepMsec;
 		//
-		public FailConnectionTask(
-			final NHttpServerConnection connection, final int faultSleepMsec
-		) {
+		public FailConnectionTask(final NHttpServerConnection connection) {
 			this.connection = connection;
-			this.faultSleepMsec = faultSleepMsec;
 		}
 		//
 		@Override
 		public final void run() {
 			try {
-				Thread.sleep(faultSleepMsec);
+				Thread.sleep(FAULT_SLEEP_MILLI_SEC);
 				if(connection.isOpen()) {
 					connection.close();
 					LOG.trace(Markers.MSG, "The connection {} is closed", connection);

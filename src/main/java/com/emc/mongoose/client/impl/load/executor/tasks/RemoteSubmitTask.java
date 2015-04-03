@@ -12,7 +12,9 @@ import com.emc.mongoose.server.api.load.executor.LoadSvc;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.rmi.ServerException;
 import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 18.12.14.
@@ -48,6 +50,9 @@ implements Runnable, Reusable {
 				try {
 					try {
 						loadSvc.submit(dataItem);
+						break;
+					} catch(final NoSuchObjectException | ServerException e) {
+						LOG.debug(Markers.ERR, "Load service \"{}\" seems to be shut down already");
 						break;
 					} catch(final RemoteException e) {
 						rejectCount ++;
