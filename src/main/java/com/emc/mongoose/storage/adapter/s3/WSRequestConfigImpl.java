@@ -214,7 +214,7 @@ extends WSRequestConfigBase<T> {
 		}
 		final String bucketName = bucket.getName();
 		if(bucket.exists(storageNodeAddrs[0])) {
-			LOG.debug(LogUtil.MSG, "Bucket \"{}\" already exists", bucketName);
+			LOG.info(LogUtil.MSG, "Bucket \"{}\" already exists", bucketName);
 		} else {
 			LOG.debug(LogUtil.MSG, "Bucket \"{}\" doesn't exist, trying to create", bucketName);
 			bucket.create(storageNodeAddrs[0]);
