@@ -24,6 +24,7 @@ import java.io.ObjectOutput;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -50,6 +51,7 @@ implements Externalizable {
 		KEY_AUTH_SECRET = "auth.secret",
 		//
 		KEY_DATA_ITEM_COUNT = "load.limit.dataItemCount",
+		KEY_DATA_COUNT = "data.count",
 		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_SIZE_MIN = "data.size.min",
 		KEY_DATA_SIZE_MAX = "data.size.max",
@@ -63,6 +65,7 @@ implements Externalizable {
 		//
 		KEY_RUN_ID = "run.id",
 		KEY_RUN_MODE = "run.mode",
+		KEY_RUN_TIME = "run.time",
 		KEY_SCENARIO_NAME = "scenario.name",
 		KEY_LOAD_METRICS_PERIOD_SEC = "load.metricsPeriodSec",
 		KEY_LOAD_TIME = "load.time",
@@ -153,8 +156,9 @@ implements Externalizable {
 		MAP_OVERRIDE.put(KEY_DATA_SIZE, new String[] {"data.size.min", "data.size.max"});
 		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_LOAD_LIMIT_TIME_VALUE, KEY_LOAD_LIMIT_TIME_UNIT});
 		MAP_OVERRIDE.put(KEY_LOAD_THREADS, new String[] {"load.type.append.threads", "load.type.create.threads", "load.type.read.threads", "load.type.update.threads", "load.type.delete.threads"});
-		MAP_OVERRIDE.put("data.count", new String[] {"load.limit.dataItemCount"});
 		// backward compatibility
+		MAP_OVERRIDE.put(KEY_RUN_TIME, new String[] {KEY_LOAD_TIME});
+		MAP_OVERRIDE.put(KEY_DATA_COUNT, new String[] {"load.limit.dataItemCount"});
 		MAP_OVERRIDE.put("load.drivers", new String[] {"load.servers"});
 	}
 	//
@@ -617,21 +621,29 @@ implements Externalizable {
 			sharedValue = sysProps.getProperty(key);
 			setProperty(key, sharedValue);
 			if (key.equals(RunTimeConfig.KEY_LOAD_TIME)) {
-				final String[] loadTime = sysProps.getString(key).split("\\.");
-				if (loadTime.length > 1) {
-					for (int i = 0; i < keys2override.length; i++) {
-						setProperty(keys2override[i], loadTime[i]);
-					}
-				} else {
-					LOG.error(Markers.ERR, "Load time isn't correct. Default values will be used.");
-				}
+				setLoadTimeSpecificProps(sysProps.getString(key));
 			} else {
 				if(keys2override != null) {
 					for(final String key2override: keys2override) {
 						setProperty(key2override, sharedValue);
+						if (key2override.equals(KEY_LOAD_TIME)) {
+							setLoadTimeSpecificProps(sharedValue.toString());
+						}
 					}
 				}
 			}
+		}
+	}
+	//
+	private void setLoadTimeSpecificProps(final String sharedValue) {
+		final String[] loadTime = sharedValue.split("\\.");
+		final String[] loadTimeKeys = MAP_OVERRIDE.get(KEY_LOAD_TIME);
+		if (loadTime.length > 1) {
+			for (int i = 0; i < loadTimeKeys.length; i++) {
+				setProperty(loadTimeKeys[i], loadTime[i]);
+			}
+		} else {
+			LOG.error(Markers.ERR, "Load time isn't correct. Default values will be used.");
 		}
 	}
 	//
