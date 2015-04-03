@@ -38,7 +38,7 @@ public final class LogUtil {
 		KEY_THREAD_CTX_INHERIT = "isThreadContextMapInheritable",
 		VALUE_THREAD_CTX_INHERIT = Boolean.toString(true),
 		//
-		FNAME_LOG_CONF = "logging.yaml";
+		FNAME_LOG_CONF = "logging.json";
 	//
 	public static final TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
 	public static final Locale LOCALE_DEFAULT = Locale.ROOT;

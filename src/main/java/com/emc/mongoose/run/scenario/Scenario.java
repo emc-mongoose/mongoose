@@ -30,9 +30,11 @@ implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String
-		KEY_PYTHON_PATH = "python.path",
 		VALUE_JS = "js",
-		VALUE_PY = "py";
+		VALUE_PY = "py",
+		//
+		KEY_PYTHON_PATH = "python.path",
+		KEY_PYTHON_IMPORT_SITE = "python.import.site";
 	//
 	private final static ScriptEngineManager SCRIPT_ENGINE_MANAGER = new ScriptEngineManager();
 	private final static Map<String, String> SCRIPT_LANG_MAP = new HashMap<>();
@@ -77,12 +79,24 @@ implements Runnable {
 			}
 			//
 			final Path scriptDir = Paths.get(RunTimeConfig.DIR_ROOT, scriptsRootDir, scriptLangKey);
-			if(VALUE_PY.equals(scriptLangKey)) {
-				System.setProperty(KEY_PYTHON_PATH, scriptDir.toString());
-				LOG.debug(
-					LogUtil.MSG, "Set \"{}\"=\"{}\"",
-					KEY_PYTHON_PATH, System.getProperty(KEY_PYTHON_PATH)
-				);
+			// language-specifig preparations
+			switch(scriptLangKey) {
+				case VALUE_JS:
+					break;
+				case VALUE_PY:
+					System.setProperty(KEY_PYTHON_PATH, scriptDir.toString());
+					LOG.debug(
+						LogUtil.MSG, "Set system property \"{}\"=\"{}\"",
+						KEY_PYTHON_PATH, System.getProperty(KEY_PYTHON_PATH)
+					);
+					System.setProperty(KEY_PYTHON_IMPORT_SITE, Boolean.toString(false));
+					LOG.debug(
+						LogUtil.MSG, "Set system property \"{}\"=\"{}\"",
+						KEY_PYTHON_IMPORT_SITE, System.getProperty(KEY_PYTHON_IMPORT_SITE)
+					);
+					break;
+				default:
+					break;
 			}
 			//
 			final Path scriptPath = Paths.get(scriptDir.toString(), scriptName+'.'+scriptLangKey);

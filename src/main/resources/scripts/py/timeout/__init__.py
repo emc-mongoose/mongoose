@@ -1,5 +1,3 @@
-from __future__ import print_function, absolute_import, with_statement
-#
 from java.lang import IllegalArgumentException, Long
 from java.util import NoSuchElementException
 #

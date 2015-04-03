@@ -29,7 +29,7 @@ implements SubTenant<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static String KEY_SUBTENANT_ID = "subtenantID";
+	public final static String KEY_SUBTENANT_ID = "subtenantID";
 	@SuppressWarnings("FieldCanBeLocal")
 	private final WSRequestConfigImpl<T> reqConf;
 	private String value = null;
@@ -49,7 +49,7 @@ implements SubTenant<T> {
 		return value;
 	}
 	//
-	private final static String
+	public final static String
 		MSG_INVALID_METHOD = "<NULL> is invalid HTTP method",
 		SUBTENANT = "subtenant";
 	//

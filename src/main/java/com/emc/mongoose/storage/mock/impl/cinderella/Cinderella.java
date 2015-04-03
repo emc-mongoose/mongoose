@@ -11,10 +11,11 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 //
 import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
+import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
+import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
@@ -82,26 +83,13 @@ implements Runnable {
 	//
 	private final static Map<String, WSObjectMock> SHARED_STORAGE = Collections.synchronizedMap(
 			new LRUMap<String, WSObjectMock>(RunTimeConfig.getContext().getStorageMockCapacity()));
-	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final ExecutorService multiSocketSvc;
 	private final HttpAsyncService protocolHandler;
 	private final static NHttpConnectionFactory<DefaultNHttpServerConnection>
 		CONNECTION_FACTORY = new FaultingConnectionFactory(ConnectionConfig.DEFAULT);
-	//
-	public final static String NAME_SERVER = String.format(
-		"%s/%s", Cinderella.class.getSimpleName(), RunTimeConfig.getContext().getRunVersion()
-	);
-	// count of heads = 1 head or config count
-	private final static int COUNT_HEADS = Math.max(1, RunTimeConfig.getContext().getStorageMockHeadCount());
-
-	private final static String API_NAME = RunTimeConfig.getContext().getApiName();
-	private final static int PORT_START = RunTimeConfig.getContext().getApiTypePort(API_NAME);;
-	//
 	private final JmxReporter metricsReporter;
-	//
 	private final static long METRICS_UPDATE_PERIOD_SEC = RunTimeConfig.getContext().getLoadMetricsPeriodSec();
-	//
 	private final static String
 		ALL_METHODS = "all",
 		METRIC_COUNT = "count",
@@ -110,16 +98,23 @@ implements Runnable {
 		METHOD_GET = "get",
 		METHOD_HEAD = "head",
 		METHOD_DELETE = "delete",
-		AUTH = "auth";
+		AUTH = "auth",
+		REST = "rest",
+		API_NAME = RunTimeConfig.getContext().getApiName(),
+		URI_SVC_BASE_PATH = RunTimeConfig.getContext().getString(WSRequestConfigImpl.KEY_CONF_SVC_BASEPATH),
+		NAME_SERVER = String.format(
+			"%s/%s", Cinderella.class.getSimpleName(), RunTimeConfig.getContext().getRunVersion()
+		);
 	private static Counter
-		counterAllSucc, counterAllFail,
-		counterGetSucc, counterGetFail,
-		counterPutSucc, counterPutFail,
-		counterPostSucc, counterPostFail,
-		counterDeleteSucc, counterHeadSucc;
+		counterSuccCreate, counterSuccRead, counterSuccDelete,
+		counterFailCreate, counterFailRead, counterFailDelete;
 	private static Meter
-		allBW, getBW, putBW, postBW,
-		allTP, getTP, putTP, postTP;
+		allBW, createBW, readBW,
+		allTP, createTP, readTP;
+	private final static int
+		PORT_START = RunTimeConfig.getContext().getApiTypePort(API_NAME),
+		// count of heads = 1 head or config count
+		COUNT_HEADS = Math.max(1, RunTimeConfig.getContext().getStorageMockHeadCount());
 	//
 	public Cinderella()
 	throws IOException {
@@ -132,47 +127,33 @@ implements Runnable {
 			.registerWith(mBeanServer)
 			.build();
 		// init metrics
-		counterAllSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
-			ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterAllFail = metrics.counter(MetricRegistry.name(Cinderella.class,
-			ALL_METHODS, METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+		counterSuccCreate = metrics.counter(MetricRegistry.name(Cinderella.class,
+			String.valueOf(IOTask.Type.CREATE), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+		counterSuccRead = metrics.counter(MetricRegistry.name(Cinderella.class,
+			String.valueOf(IOTask.Type.READ), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+		counterSuccDelete = metrics.counter(MetricRegistry.name(Cinderella.class,
+			String.valueOf(IOTask.Type.DELETE), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
+		//
+		counterFailCreate = metrics.counter(MetricRegistry.name(Cinderella.class,
+			String.valueOf(IOTask.Type.CREATE), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+		counterFailRead = metrics.counter(MetricRegistry.name(Cinderella.class,
+			String.valueOf(IOTask.Type.READ), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+		counterFailDelete = metrics.counter(MetricRegistry.name(Cinderella.class,
+			String.valueOf(IOTask.Type.DELETE), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
+		//
 		allTP = metrics.meter(MetricRegistry.name(Cinderella.class,
 			ALL_METHODS, LoadExecutor.METRIC_NAME_TP));
+		createTP = metrics.meter(MetricRegistry.name(Cinderella.class,
+			String.valueOf(IOTask.Type.CREATE), LoadExecutor.METRIC_NAME_TP));
+		readTP = metrics.meter(MetricRegistry.name(Cinderella.class,
+			String.valueOf(IOTask.Type.READ), LoadExecutor.METRIC_NAME_TP));
+		//
 		allBW = metrics.meter(MetricRegistry.name(Cinderella.class,
 			ALL_METHODS, LoadExecutor.METRIC_NAME_BW));
-		//
-		counterGetSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterGetFail = metrics.counter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.GET.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		getBW = metrics.meter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_BW));
-		getTP = metrics.meter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.GET.name(), LoadExecutor.METRIC_NAME_TP));
-		//
-		counterPutSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterPutFail = metrics.counter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.PUT.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		putBW = metrics.meter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_BW));
-		putTP = metrics.meter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.PUT.name(), LoadExecutor.METRIC_NAME_TP));
-		//
-		counterPostSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		counterPostFail = metrics.counter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.POST.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_FAIL));
-		postBW = metrics.meter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_BW));
-		postTP = metrics.meter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.POST.name(), LoadExecutor.METRIC_NAME_TP));
-		//
-		counterDeleteSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.DELETE.name(), METRIC_COUNT, LoadExecutor.METRIC_NAME_SUCC));
-		//
-		counterHeadSucc = metrics.counter(MetricRegistry.name(Cinderella.class,
-			MutableWSRequest.HTTPMethod.HEAD.name(), LoadExecutor.METRIC_NAME_SUCC));
+		createBW = metrics.meter(MetricRegistry.name(Cinderella.class,
+			String.valueOf(IOTask.Type.CREATE), LoadExecutor.METRIC_NAME_BW));
+		readBW = metrics.meter(MetricRegistry.name(Cinderella.class,
+			String.valueOf(IOTask.Type.CREATE), LoadExecutor.METRIC_NAME_BW));
 		//
 		metricsReporter.start();
 		LOG.info(LogUtil.MSG, "Starting with {} heads", COUNT_HEADS);
@@ -264,7 +245,7 @@ implements Runnable {
 	}
 	//
 	private final static String
-		MSG_FMT_METRICS = "count=(%d/%d); " +
+		MSG_FMT_METRICS = "countSucc=(%d/%d/%d); countFail=(%d/%d/%d)" +
 		"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
 	private void printMetrics() {
@@ -273,7 +254,8 @@ implements Runnable {
 			String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
-				counterAllSucc.getCount(), counterAllFail.getCount(),
+				counterSuccCreate.getCount(), counterSuccRead.getCount(), counterSuccDelete.getCount(),
+				counterFailCreate.getCount(), counterFailRead.getCount(), counterFailDelete.getCount(),
 				//
 				allTP.getMeanRate(),
 				allTP.getOneMinuteRate(),
@@ -314,73 +296,166 @@ implements Runnable {
 			final HttpRequest request, final HttpAsyncExchange httpexchange,
 			final HttpContext context
 		){
-			final int
-				lenStandertUriWithID = 3,
-				lenAtmosUriWithID = 4;
 			final HttpResponse response = httpexchange.getResponse();
-			//HttpCoreContext coreContext = HttpCoreContext.adapt(context);
-			String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
-			String dataID = "";
-			//Get data Id
+			final String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
+			//Get URI components
 			final String[] requestUri = request.getRequestLine().getUri().split("/");
-			if(requestUri.length >= lenStandertUriWithID) {
-				dataID = requestUri[requestUri.length - 1];
-			} else {
-				method = "head";
-			}
+			final String dataId = requestUri[requestUri.length - 1];
 			//
-			switch(method) {
-				case (METHOD_PUT):
-					doPut(request, response, dataID);
-					break;
-				case (METHOD_POST):
-					if (requestUri.length != lenAtmosUriWithID) {
-						dataID = generateId();
-						response.setHeader(
-							HttpHeaders.LOCATION, String.format(
-								com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl.FMT_SLASH,
-								request.getRequestLine().getUri(), dataID));
-					}else {
-						response.setHeader(HttpHeaders.LOCATION, request.getRequestLine().getUri());
+			if(isAtmosReq(requestUri)){
+				if(isAtmosSubtenantReq(requestUri)){
+					handleSubtenantReq(response, method);
+				} else {
+					if (isAtmosObjectReq(requestUri)) {
+						LOG.trace(LogUtil.MSG, "Handle atmos object request. URI doesn't contain the object ID.");
+						handleAtmosObjectDataReq(response, request, method, dataId);
+					} else {
+						LOG.trace(LogUtil.MSG, "Handle atmos request. URI contains the object ID.");
+						handleGenericDataReq(response, request, method, dataId);
 					}
-					doPost(request, response, dataID);
-					break;
-				case (METHOD_HEAD):
-					doHead(response);
-					break;
-				case (METHOD_GET):
-					if (requestUri[1].equals(AUTH)){
-						createSwiftAuthToken(response);
-					}else {
-						doGet(response, dataID);
-					}
-					break;
-				case (METHOD_DELETE):
-					doDelete(response);
-					break;
+				}
+			} else if(isSwiftAuthTokenReq(requestUri)){
+				handleSwiftAuthTokenReq(response);
+			} else if(isSwiftReq(requestUri)){
+				if(isSwiftContanerReq(requestUri, method)){
+					LOG.trace(LogUtil.MSG, "Create contaner: response OK.");
+					response.setStatusCode(HttpStatus.SC_OK);
+				} else {
+					LOG.trace(LogUtil.MSG, "Handle swift request.");
+					handleGenericDataReq(response, request, method, dataId);
+				}
+			}else if (isS3BucketReq(requestUri, method)){
+				LOG.trace(LogUtil.MSG, "Create s3 bucket: response OK.");
+				response.setStatusCode(HttpStatus.SC_OK);
+			} else {
+				LOG.trace(LogUtil.MSG, "Handle S3 request.");
+				handleGenericDataReq(response, request, method, dataId);
 			}
 			httpexchange.submitResponse(new BasicResponseProducer(response));
 		}
 		//
-		private void doGet(final HttpResponse response, final String dataID){
-			LOG.trace(LogUtil.MSG, "Request  method Get ");
+		private static boolean isAtmosReq(final String[] requestUri){
+			return requestUri[1].equals(REST);
+		}
+		//
+		private static boolean isAtmosSubtenantReq(final String[] requestUri){
+			return requestUri[2].equals(WSSubTenantImpl.SUBTENANT);
+		}
+		//
+		private static boolean isAtmosObjectReq(final String[] requestUri){
+			return requestUri[2].equals(com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl.API_TYPE_OBJ);
+		}
+		//
+		private static boolean isS3BucketReq(final String[] requestUri, final String method){
+			return method.equals(METHOD_PUT) && requestUri.length == 2;
+		}
+		//
+		private static boolean isSwiftReq(final String[] requestUri){
+			return requestUri[1].equals(URI_SVC_BASE_PATH);
+		}
+		//
+		private static boolean isSwiftAuthTokenReq(final String[] requestUri){
+			return requestUri[1].equals(AUTH);
+		}
+		//
+		private static boolean isSwiftContanerReq(final String[] requestUri, final String method){
+			return requestUri[1].equals(URI_SVC_BASE_PATH) &&
+				requestUri.length == 4 && method.equals(METHOD_PUT);
+		}
+		//
+		private void handleSwiftAuthTokenReq(final HttpResponse response){
+			LOG.trace(LogUtil.MSG, "Create auth token ");
 			response.setStatusCode(HttpStatus.SC_OK);
-			if(SHARED_STORAGE.containsKey(dataID)) {
-				LOG.trace(LogUtil.MSG, "Send data object ", dataID);
-				final WSObjectMock dataObject = SHARED_STORAGE.get(dataID);
-				response.setEntity(dataObject);
-				LOG.trace(LogUtil.MSG, "Response: OK");
-				counterAllSucc.inc();
-				counterGetSucc.inc();
-				getBW.mark(dataObject.getSize());
+			response.setHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, randomString(5));
+		}
+		//
+		private void handleSubtenantReq(final HttpResponse response, final String method){
+			LOG.trace(LogUtil.MSG, "Create atmos subtenant");
+			if(method.equals(METHOD_PUT)) {
+				response.setHeader(WSSubTenantImpl.KEY_SUBTENANT_ID, randomString(5));
+			}
+			response.setStatusCode(HttpStatus.SC_OK);
+		}
+		//
+		private void handleAtmosObjectDataReq(
+			final HttpResponse response, final HttpRequest request,
+			final String method, String dataId
+		) {
+			if (method.equals(METHOD_POST)) {
+				dataId = generateId();
+				final String headerLocation = String.format(
+					com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl.FMT_SLASH,
+					request.getRequestLine().getUri(), dataId);
+				response.setHeader(HttpHeaders.LOCATION, headerLocation);
+			}
+			handleGenericDataReq(response, request, method, dataId);
+		}
+		//
+		private void handleDeleteReq(final HttpResponse response){
+			LOG.trace(LogUtil.MSG, "Delete data object: response OK");
+			response.setStatusCode(HttpStatus.SC_OK);
+			counterSuccDelete.inc();
+		}
+		//
+		private void handleGenericDataReq(
+			final HttpResponse response, final HttpRequest request,
+			final String method, final String dataId){
+			switch (method){
+				case METHOD_POST:
+					handleCreate(response, request, dataId);
+					break;
+				case METHOD_PUT:
+					handleCreate(response, request, dataId);
+					break;
+				case METHOD_GET:
+					handleRead(response, dataId);
+					break;
+				case METHOD_HEAD:
+					response.setStatusCode(HttpStatus.SC_OK);
+					break;
+				case METHOD_DELETE:
+					handleDeleteReq(response);
+					break;
+			}
+
+		}
+		//
+		private static void handleCreate(final HttpResponse response, final HttpRequest request, final String dataId){
+			LOG.trace(LogUtil.MSG, String.format("Create data object with ID: %s", dataId));
+			try {
+				response.setStatusCode(HttpStatus.SC_OK);
+				final WSObjectMock dataObject = writeDataObject(request, dataId);
+				counterSuccCreate.inc();
+				createBW.mark(dataObject.getSize());
 				allBW.mark(dataObject.getSize());
-				getTP.mark();
+				createTP.mark();
 				allTP.mark();
+			}catch (final HttpException e){
+				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				LogUtil.failure(LOG, Level.ERROR, e, "Put method failure");
+				counterFailCreate.inc();
+			}catch (final NumberFormatException e){
+				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				LogUtil.failure(LOG, Level.ERROR, e, "Put method failure.Data offset doesn't decode.");
+				counterFailCreate.inc();
+			}
+		}
+		//
+		private static void handleRead(final HttpResponse response, final String dataId){
+			if(SHARED_STORAGE.containsKey(dataId)) {
+				response.setStatusCode(HttpStatus.SC_OK);
+				LOG.trace(LogUtil.MSG, String.format("Send data object with ID: %s", dataId));
+				final WSObjectMock dataObject = SHARED_STORAGE.get(dataId);
+				response.setEntity(dataObject);
+				counterSuccRead.inc();
+				allBW.mark(dataObject.getSize());
+				readBW.mark(dataObject.getSize());
+				allTP.mark();
+				readTP.mark();
 			} else {
 				response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-				LOG.trace(LogUtil.ERR, String.format("No such object: \"%s\"", dataID));
-				counterAllFail.inc();
-				counterGetFail.inc();
+				LOG.trace(LogUtil.ERR, String.format("No such object: %s", dataId));
+				counterFailRead.inc();
 			}
 		}
 		//
@@ -396,34 +471,10 @@ implements Runnable {
 			return Hex.encodeHexString(buff);
 		}
 		//
-		private void doPost(final HttpRequest request, final HttpResponse response, final String dataID){
-			LOG.trace(LogUtil.MSG, "Request  method Post ");
-			try {
-				response.setStatusCode(HttpStatus.SC_OK);
-				final WSObjectMock dataObject = writeDataObject(request, dataID);
-				counterAllSucc.inc();
-				counterPostSucc.inc();
-				postBW.mark(dataObject.getSize());
-				allBW.mark(dataObject.getSize());
-				postTP.mark();
-				allTP.mark();
-			}catch (final HttpException e) {
-				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				LogUtil.failure(LOG, Level.ERROR, e, "Post method failure");
-				counterAllFail.inc();
-				counterPostFail.inc();
-			}catch (final NumberFormatException e){
-				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				LogUtil.failure(LOG, Level.ERROR, e, "Post method failure.Data offset doesn't decode.");
-				counterAllFail.inc();
-				counterPostFail.inc();
-			}
-		}
-		//
 		private static WSObjectMock writeDataObject(
 			final HttpRequest request, final String dataID
 		) throws HttpException, NumberFormatException{
-			WSObjectMock dataObject= null;
+			WSObjectMock dataObject;
 			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
 			final long bytes = entity.getContentLength();
 			//create data object or get it for append or update
@@ -448,11 +499,9 @@ implements Runnable {
 		offset for mongoose versions prior to v.0.4:
 			final long offset = Long.valueOf(dataID, 0x10);
 		 */
-		//
 		private static long genOffset(final String dataID)
-		throws HttpException, NumberFormatException
-		{
-			long offset = 0;
+			throws HttpException, NumberFormatException {
+			long offset;
 			if (RING_OFFSET_RADIX == 0x40) { // base64
 				offset = ByteBuffer
 					.allocate(Long.SIZE / Byte.SIZE)
@@ -468,54 +517,6 @@ implements Runnable {
 				);
 			}
 			return offset;
-		}
-		//
-		private void doPut(
-			final HttpRequest request, final HttpResponse response, final String dataID
-		){
-			LOG.trace(LogUtil.MSG, "Request  method Put ");
-			try {
-				response.setStatusCode(HttpStatus.SC_OK);
-				final WSObjectMock dataObject = writeDataObject(request, dataID);
-				counterAllSucc.inc();
-				counterPutSucc.inc();
-				putBW.mark(dataObject.getSize());
-				allBW.mark(dataObject.getSize());
-				putTP.mark();
-				allTP.mark();
-			}catch (final HttpException e){
-				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				LogUtil.failure(LOG, Level.ERROR, e, "Put method failure");
-				counterAllFail.inc();
-				counterPutFail.inc();
-			}catch (final NumberFormatException e){
-				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				LogUtil.failure(LOG, Level.ERROR, e, "Put method failure.Data offset doesn't decode.");
-				counterAllFail.inc();
-				counterPutFail.inc();
-			}
-		}
-		//
-		private void doHead(final HttpResponse response){
-			LOG.trace(LogUtil.MSG, "Request  method Head ");
-			response.setStatusCode(HttpStatus.SC_OK);
-			counterAllSucc.inc();
-			counterHeadSucc.inc();
-		}
-		//
-		private void doDelete(final HttpResponse response){
-			LOG.trace(LogUtil.MSG, "Request  method Delete ");
-			response.setStatusCode(HttpStatus.SC_OK);
-			counterAllSucc.inc();
-			counterDeleteSucc.inc();
-		}
-		//
-		private void createSwiftAuthToken(final HttpResponse response){
-			LOG.trace(LogUtil.MSG, "Create auth token ");
-			response.setStatusCode(HttpStatus.SC_OK);
-			response.setHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, randomString(5));
-			counterGetSucc.inc();
-			counterAllSucc.inc();
 		}
 	}
 	///////////////////////////////////////////////////////////////////////////////////////////////////
