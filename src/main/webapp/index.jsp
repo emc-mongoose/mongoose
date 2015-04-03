@@ -796,7 +796,7 @@
 														<input type="text" id="backup-data.src.fpath" class="form-control"
 												            data-pointer="data.src.fpath"
 												            value="${rt:getString(runTimeConfig, 'data.src.fpath')}"
-									                        placeholder="Enter path to the list of objects on remote host. Format: log/<run.mode>/<run.id>/<filename>"/>
+									                        placeholder="Enter path to the list of objects on remote host. Format: ${runTimeConfig.runName}-${runTimeConfig.runVersion}/log/<run.id>/<filename>"/>
 													</div>
 												</div>
 
