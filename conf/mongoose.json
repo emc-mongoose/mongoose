@@ -85,8 +85,8 @@
 		},
 		"data": {
 			"size": {
-				"min": "8KB",
-				"max": "8KB",
+				"min": "1MB",
+				"max": "1MB",
 				"bias": 1
 			},
 			"src": {

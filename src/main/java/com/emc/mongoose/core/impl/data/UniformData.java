@@ -4,6 +4,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
 //
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -21,7 +22,6 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 09.05.14.
@@ -49,7 +49,6 @@ implements DataItem {
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
 	//
-	public final int maxBuffSize = (int) RunTimeConfig.getContext().getDataRingSize();
 	protected long offset = 0;
 	protected long size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -242,61 +241,46 @@ implements DataItem {
 	) throws IOException {
 		//
 		boolean contentEquals = true;
-		long byteCountDown = rangeLength;
-		int
-			nextOffset = (int) ((offset + rangeOffset) % buf.length),
-			nextLength = buf.length - nextOffset,
-			nextReadByteCount, nextReadByteCountSum;
-		final byte buff2verify[] = new byte[buf.length];
-		while(byteCountDown > 0) {
-			if(byteCountDown < nextLength) { // tail bytes case
-				nextLength = (int) byteCountDown;
-			}
-			// read the determined bytes range
-			nextReadByteCountSum = 0;
-			do {
-				nextReadByteCount = in.read(
-					buff2verify, nextReadByteCountSum, nextLength - nextReadByteCountSum
+		long readByteCountSum = 0;
+		final byte buff2verify[] = new byte[
+			rangeLength > LoadExecutor.BUFF_SIZE_HI ?
+				LoadExecutor.BUFF_SIZE_HI :
+				rangeLength < LoadExecutor.BUFF_SIZE_LO ?
+					LoadExecutor.BUFF_SIZE_LO : (int) rangeLength // cast to int should be safe here
+		];
+		int nextOffset, nextReadByteCount;
+		//
+		while(readByteCountSum < rangeLength && contentEquals) {
+			nextReadByteCount = rangeLength - readByteCountSum > buff2verify.length ?
+				buff2verify.length : (int) (rangeLength - readByteCountSum);
+			nextReadByteCount = in.read(buff2verify, 0, nextReadByteCount);
+			if(nextReadByteCount < 0) { // not ok
+				contentEquals = false;
+				LOG.warn(
+					LogUtil.MSG,
+					"{}: content size mismatch, expected: {}, got: {}",
+					Long.toString(offset, DataObject.ID_RADIX), size,
+					rangeOffset + readByteCountSum + nextReadByteCount
 				);
-				if(nextReadByteCount < 0) {
-					contentEquals = false;
-					LOG.warn(
-						LogUtil.MSG,
-						"{}: content size mismatch, expected: {}, got: {}",
-						Long.toString(offset, DataObject.ID_RADIX), size,
-						rangeOffset + rangeLength - byteCountDown + nextReadByteCountSum
-					);
-					break;
-				} else {
-					nextReadByteCountSum += nextReadByteCount;
+			} else if(nextReadByteCount > 0) { // ok
+				nextOffset = (int) ((offset + rangeOffset + readByteCountSum) % buf.length);
+				for(int i = 0; i < nextReadByteCount; i ++) {
+					if(buff2verify[i] != buf[nextOffset + i]) {
+						contentEquals = false;
+						LOG.warn(
+							LogUtil.MSG,
+							String.format(
+								"%s: content mismatch @ offset %d, expected byte value: \"0x%X\", got \"0x%X\"",
+								Long.toString(offset, DataObject.ID_RADIX),
+								rangeOffset + readByteCountSum + i,
+								buf[nextOffset + i], buff2verify[i]
+							)
+						);
+						break;
+					}
 				}
-			} while(nextReadByteCountSum < nextLength);
-			if(!contentEquals) {
-				break;
+				readByteCountSum += nextReadByteCount;
 			}
-			// verify the data
-			for(int i = 0; i < nextLength; i ++) {
-				if(buf[nextOffset + i] != buff2verify[i]) {
-					contentEquals = false;
-					LOG.warn(
-						LogUtil.MSG,
-						String.format(
-							"%s: content mismatch @ offset %d, expected byte value: \"0x%X\", got \"0x%X\"",
-							Long.toString(offset, DataObject.ID_RADIX),
-							rangeOffset + rangeLength - byteCountDown + i,
-							buf[nextOffset + i], buff2verify[i]
-						)
-					);
-					break;
-				}
-			}
-			if(!contentEquals) {
-				break;
-			}
-			// prepare the next iteration
-			byteCountDown -= nextLength;
-			nextOffset = 0;
-			nextLength = buf.length;
 		}
 		//
 		return contentEquals;

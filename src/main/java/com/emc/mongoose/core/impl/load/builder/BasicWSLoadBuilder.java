@@ -1,10 +1,10 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
+import com.emc.mongoose.common.conf.MemUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-//
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 //
@@ -84,27 +84,11 @@ implements WSLoadBuilder<T, U> {
 				)
 			);
 		}
-		// selecting the load job executor's queue size
-		long queueSize = (minObjSize + maxObjSize) / 2;
-		queueSize = queueSize == 0 ?
-			LoadExecutor.BUFF_SIZE_LO :
-			queueSize > LoadExecutor.BUFF_SIZE_HI ? LoadExecutor.BUFF_SIZE_HI : queueSize;
-		queueSize = Runtime.getRuntime().freeMemory() / queueSize;
-		if(queueSize < 1) {
-			throw new IllegalStateException(
-				String.format(
-					"Not enough free memory for load job execution: %s",
-					RunTimeConfig.formatSize(Runtime.getRuntime().freeMemory())
-				)
-			);
-		} else if(queueSize > Integer.MAX_VALUE) {
-			queueSize = Integer.MAX_VALUE;
-		}
-		LOG.debug(LogUtil.MSG, "Queue size for \"{}\" load job is {}", reqConf, queueSize);
 		//
 		return (U) new BasicWSLoadExecutor<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
-			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem, (int) queueSize
+			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem,
+			getSafeLoadTasksQueueSizeEstimation()
 		);
 	}
 }

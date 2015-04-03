@@ -4,6 +4,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 //
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -441,7 +442,8 @@ implements AppendableDataItem, UpdatableDataItem {
 					size += pendingAugmentSize;
 					// redirect the tail's data to the output
 					final byte buff[] = new byte[
-						pendingAugmentSize < maxBuffSize ? (int) pendingAugmentSize : maxBuffSize
+						pendingAugmentSize < LoadExecutor.BUFF_SIZE_HI ?
+							(int) pendingAugmentSize : LoadExecutor.BUFF_SIZE_HI
 					];
 					final int
 						countPages = (int) (pendingAugmentSize / buff.length),
