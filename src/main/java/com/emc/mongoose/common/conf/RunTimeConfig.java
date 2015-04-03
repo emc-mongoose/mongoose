@@ -496,6 +496,18 @@ implements Externalizable {
 	public final String[] getScenarioRampupSizes() {
 		return getStringArray(KEY_SCENARIO_RAMPUP_SIZES);
 	}
+	//
+	public final String getWebUIWSTimeout() {
+		return getString("remote.webui.wsTimeOut.value") + "." + getString("remote.webui.wsTimeOut.unit");
+	}
+	//
+	public final String getWebUIWSTimeOutValue() {
+		return getString("remote.webui.wsTimeOut.value");
+	}
+	//
+	public final String getWebUIWSTimeOutUnit() {
+		return getString("remote.webui.wsTimeOut.unit");
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)

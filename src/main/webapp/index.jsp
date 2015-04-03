@@ -7,10 +7,15 @@
 	<head>
 		<meta charset="utf-8">
 		<title>Mongoose-Run</title>
-		<link href="css/bootstrap.min.css" rel="stylesheet">
+		<link rel='stylesheet' href='webjars/bootstrap/3.3.2-1/css/bootstrap.min.css'>
 		<link href="css/styles.css" rel="stylesheet">
 	</head>
 	<body>
+		<!-- For waiting image -->
+		<div id="wait">
+			<!--<img src="images/ajax-loader.gif" alt="Loading">-->
+		</div>
+		<!-- -->
 		<nav class="navbar navbar-default" role="navigation">
 			<div class="container-fluid">
 				<div class="navbar-header">
@@ -665,7 +670,26 @@
 																		</div>
 
 																		<div class="modal-body">
-
+																			<div class="form-group">
+																				<label for="backup-api.type.swift.authToken" class="col-sm-4 control-label">
+																					Authentication token (created automatically if left blank)
+																				</label>
+																				<div class="col-sm-8">
+																					<input type="text" id="backup-api.type.swift.authToken" class="form-control"
+																					       data-pointer="api.type.swift.authToken"
+																					       value="${rt:getString(runTimeConfig, 'api.type.swift.authToken')}"/>
+																				</div>
+																			</div>
+																			<div class="form-group">
+																				<label for="backup-api.type.swift.container" class="col-sm-4 control-label">
+																					Container (may be created automatically if left blank, required to be specified explicitly for any load except create)
+																				</label>
+																				<div class="col-sm-8">
+																					<input type="text" id="backup-api.type.swift.container" class="form-control"
+																					       data-pointer="api.type.swift.container"
+																					       value="${rt:getString(runTimeConfig, 'api.type.swift.container')}"/>
+																				</div>
+																			</div>
 																		</div>
 
 																		<div class="modal-footer">
@@ -979,9 +1003,9 @@
 				</c:forEach>
 			</div>
 		</div>
-		<script type="text/javascript" src="js/d3.min.js"></script>
-		<script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>
-		<script type="text/javascript" src="js/bootstrap.min.js"></script>
+		<script type="text/javascript" src="webjars/d3js/3.5.3/d3.min.js"></script>
+		<script type="text/javascript" src="webjars/jquery/2.1.0/jquery.min.js"></script>
+		<script type="text/javascript" src="webjars/bootstrap/3.3.2-1/js/bootstrap.min.js"></script>
 		<script type="text/javascript" src="js/script.js"></script>
 		<script>
 			jsonProps = ${runTimeConfig.jsonProps};
