@@ -182,6 +182,8 @@ $(document).ready(function() {
 	$("#backup-data\\.size").on("change", function() {
 		$("#data\\.size\\.min input").val($(this).val());
 		$("#data\\.size\\.max input").val($(this).val());
+		//
+		$("#data\\.size").val(this.value);
 	});
 	//
 	$("#backup-load\\.threads").on("change", function() {
@@ -195,7 +197,9 @@ $(document).ready(function() {
 		];
 		keys2Override.forEach(function(d) {
 			$(d).val(currentValue).change();
-		})
+		});
+		//
+		$("#load\\.threads").val(this.value);
 	});
 	//
 	$("#start").click(function(e) {
@@ -509,9 +513,11 @@ function configureWebSocketConnection(location, countOfRecords) {
 			this.ws.onmessage = function(message) {
 				var json = JSON.parse(message.data);
 				if ($.isArray(json)) {
+					$("#wait").show();
 					json.forEach(function(d) {
 						processJsonLogEvents(chartsArray, d);
 					});
+					$("#wait").hide();
 				} else {
 					processJsonLogEvents(chartsArray, json);
 				}
@@ -912,7 +918,7 @@ function charts(chartsArray) {
 					break;
 			}
 			//
-			currentMetricsPeriodSec += runMetricsPeriodSec;
+			currentMetricsPeriodSec += parseInt(runMetricsPeriodSec);
 			//
 			var parsedString = value.split(";")[splitIndex];
 			var first = parsedString.indexOf("(") + 1;
