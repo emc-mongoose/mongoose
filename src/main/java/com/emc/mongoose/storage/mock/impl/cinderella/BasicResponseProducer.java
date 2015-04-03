@@ -39,10 +39,9 @@ extends BasicAsyncResponseProducer {
 	public final void produceContent(
 		final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
-
 		try(final OutputStream outStream = HTTPOutputStream.getInstance(encoder, ioctrl)) {
 			final HttpEntity entity = this.response.getEntity();
-			if( entity != null) {
+			if(entity != null) {
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
 						LogUtil.MSG, "Write out {} bytes",

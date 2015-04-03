@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
-import com.emc.mongoose.common.conf.MemUtil;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -331,27 +330,6 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	private final static int MAX_LOAD_COUNT = 10;
-	//
-	protected final int getSafeLoadTasksQueueSizeEstimation() {
-		// selecting the load job executor's queue size
-		long queueSize = (minObjSize + maxObjSize) / 2;
-		queueSize = queueSize == 0 ?
-			LoadExecutor.BUFF_SIZE_LO :
-			queueSize > LoadExecutor.BUFF_SIZE_HI ? LoadExecutor.BUFF_SIZE_HI : queueSize;
-		queueSize = MemUtil.getCurrentSafeFreeMemSize() / (MAX_LOAD_COUNT * queueSize);
-		if(queueSize < 1) {
-			throw new IllegalStateException(
-				String.format(
-					"Not enough free memory for safe load job execution: %s",
-					RunTimeConfig.formatSize(MemUtil.getCurrentSafeFreeMemSize())
-				)
-			);
-		} else if(queueSize > Integer.MAX_VALUE) {
-			queueSize = Integer.MAX_VALUE;
-		}
-		LOG.debug(LogUtil.MSG, "Queue size for \"{}\" load job is {}", reqConf, queueSize);
-		return (int) queueSize;
-	}
 	//
 	private final static String FMT_STR = "%s.%dx%s", FMT_SIZE_RANGE = "%s-%s";
 	//

@@ -1,10 +1,8 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
-import com.emc.mongoose.common.conf.MemUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 //
@@ -87,8 +85,7 @@ implements WSLoadBuilder<T, U> {
 		//
 		return (U) new BasicWSLoadExecutor<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
-			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem,
-			getSafeLoadTasksQueueSizeEstimation()
+			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem
 		);
 	}
 }

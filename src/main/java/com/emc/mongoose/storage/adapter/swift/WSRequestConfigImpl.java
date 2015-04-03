@@ -281,7 +281,7 @@ extends WSRequestConfigBase<T> {
 		}
 		final String containerName = container.getName();
 		if(container.exists(storageNodeAddrs[0])) {
-			LOG.debug(LogUtil.MSG, "Container \"{}\" already exists", containerName);
+			LOG.info(LogUtil.MSG, "Container \"{}\" already exists", containerName);
 		} else {
 			container.create(storageNodeAddrs[0]);
 			if(container.exists(storageNodeAddrs[0])) {

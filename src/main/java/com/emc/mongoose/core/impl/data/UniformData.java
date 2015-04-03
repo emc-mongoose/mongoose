@@ -216,20 +216,18 @@ implements DataItem {
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(LogUtil.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
 		}
-		long byteCountToWrite = size;
 		int
 			nextOffset = (int) (offset % buf.length),
 			nextLength = buf.length - nextOffset;
-		while(byteCountToWrite > 0) {
-			if(byteCountToWrite < nextLength) { // tail bytes case
-				nextLength = (int) byteCountToWrite;
-			}
-			// write the determined bytes range
+		if(nextLength > size) {
+			nextLength = (int) size;
+		}
+		long byteCountLeft = size;
+		while(byteCountLeft > 0) {
 			out.write(buf, nextOffset, nextLength);
-			// prepare the next iteration
-			byteCountToWrite -= nextLength;
+			byteCountLeft -= nextLength;
 			nextOffset = 0;
-			nextLength = buf.length;
+			nextLength = (int) (byteCountLeft % buf.length);
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(LogUtil.MSG, FMT_MSG_STREAM_OUT_FINISH, Long.toHexString(offset));

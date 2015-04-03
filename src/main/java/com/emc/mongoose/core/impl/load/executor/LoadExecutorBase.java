@@ -76,11 +76,15 @@ implements LoadExecutor<T> {
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias, final int queueSize
+		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(queueSize)
+			new LinkedBlockingQueue<Runnable>(
+				maxCount > 0 ?
+					Math.min((int) maxCount, runTimeConfig.getRunRequestQueueSize()) :
+					runTimeConfig.getRunRequestQueueSize()
+			)
 		);
 		//
 		final int loadNum = LAST_INSTANCE_NUM.getAndIncrement();

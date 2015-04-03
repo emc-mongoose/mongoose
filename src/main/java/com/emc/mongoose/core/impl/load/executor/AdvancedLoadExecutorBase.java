@@ -30,12 +30,11 @@ extends LoadExecutorBase<T> {
 	protected AdvancedLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq,
-	    final int queueSize
+		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
 	) throws ClassCastException {
 		super(
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
-			sizeMin, sizeMax, sizeBias, queueSize
+			sizeMin, sizeMax, sizeBias
 		);
 		//
 		this.loadType = reqConfig.getLoadType();

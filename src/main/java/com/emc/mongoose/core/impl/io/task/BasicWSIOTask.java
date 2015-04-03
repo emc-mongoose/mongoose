@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.io.HTTPOutputStream;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.io.HTTPInputStream;
 import com.emc.mongoose.common.pool.InstancePool;
@@ -12,7 +13,6 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 //
 import org.apache.commons.lang.text.StrBuilder;
@@ -38,9 +38,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -100,9 +98,6 @@ implements WSIOTask<T> {
 	);
 	protected volatile HttpEntity reqEntity = null;
 	//
-	private byte buff[] = new byte[LoadExecutor.BUFF_SIZE_LO];
-	private ByteBuffer bb = ByteBuffer.wrap(buff);
-	//
 	@Override
 	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
 		if(reqConf != null && !reqConf.equals(wsReqConf)) {
@@ -116,12 +111,6 @@ implements WSIOTask<T> {
 			//
 			if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
 				httpRequest.setMethod(wsReqConf.getHTTPMethod());
-			}
-			//
-			int newBuffSize = wsReqConf.getBuffSize();
-			if(buff.length != newBuffSize) {
-				buff = new byte[newBuffSize];
-				bb = ByteBuffer.wrap(buff);
 			}
 			//
 			super.setRequestConfig(reqConf);
@@ -222,11 +211,13 @@ implements WSIOTask<T> {
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
 		if(reqEntity != null) {
+			/*final ByteBuffer bb = ByteBuffer.allocateDirect(reqConf.getBuffSize());
+			final byte buff[] = bb.array();*/
 			long contentLength = reqEntity.getContentLength();
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(LogUtil.MSG, "Task #{}, write out {} bytes", hashCode(), contentLength);
 			}
-			long byteCountDown = contentLength;
+			/*long byteCountDown = contentLength;
 			int n;
 			try(final InputStream dataStream = reqEntity.getContent()) {
 				while(byteCountDown > 0) {
@@ -239,13 +230,20 @@ implements WSIOTask<T> {
 						out.write(bb);
 					}
 					byteCountDown -= n;
-				}
+				}*/
+			try(final HTTPOutputStream outStream = HTTPOutputStream.getInstance(out, ioCtl)) {
+				reqEntity.writeTo(outStream);
+			} catch(final InterruptedException e) {
+				LogUtil.failure(
+					LOG, Level.DEBUG, e,
+					"Failed to get the HTTP output stream instance from the instance pool"
+				);
 			} finally {
 				out.complete();
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
 						LogUtil.MSG, "Task #{}: {} bytes written out",
-						hashCode(), contentLength - byteCountDown
+						hashCode(), contentLength
 					);
 				}
 			}
