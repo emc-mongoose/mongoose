@@ -139,6 +139,7 @@ sourceSets {
 		}
 		compileClasspath += sourceSets.common.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
+		compileClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
 	}
 	webui {
 		java {

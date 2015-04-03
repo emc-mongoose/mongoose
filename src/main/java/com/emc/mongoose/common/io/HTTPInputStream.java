@@ -1,5 +1,6 @@
 package com.emc.mongoose.common.io;
 // mongoose-common.jar
+import com.emc.mongoose.common.logging.TraceLogger;
 import com.emc.mongoose.common.pool.Reusable;
 import com.emc.mongoose.common.pool.InstancePool;
 //
@@ -102,5 +103,18 @@ implements Reusable {
 	@Override
 	public final void close() {
 		release();
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	public static void consumeQuietly(
+		final ContentDecoder in, final IOControl ioCtl, final int buffSize
+	) {
+		final ByteBuffer buff = ByteBuffer.allocate(buffSize);
+		try {
+			while(in.read(buff) >= 0) {
+				buff.clear();
+			}
+		} catch(final IOException e) {
+			// ignore
+		}
 	}
 }

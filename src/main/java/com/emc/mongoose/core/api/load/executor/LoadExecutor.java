@@ -1,5 +1,7 @@
 package com.emc.mongoose.core.api.load.executor;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
+//
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Consumer;
@@ -9,6 +11,7 @@ import org.apache.logging.log4j.Marker;
 //
 import java.rmi.RemoteException;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 28.04.14.
@@ -21,7 +24,10 @@ extends Producer<T>, Consumer<T> {
 	//
 	AtomicInteger LAST_INSTANCE_NUM = new AtomicInteger(0);
 	//
-	int NANOSEC_SCALEDOWN = 1000, MIB = 0x100000, COUNT_THREADS_MIN = 2;
+	int
+		NANOSEC_SCALEDOWN = 1000, MIB = 0x100000, COUNT_THREADS_MIN = 2,
+		BUFF_SIZE_LO = (int) RunTimeConfig.getContext().getDataBufferSize(),
+		BUFF_SIZE_HI = (int) RunTimeConfig.getContext().getDataRingSize();
 	//
 	String
 		METRIC_NAME_SUCC = "succ",
@@ -48,7 +54,7 @@ extends Producer<T>, Consumer<T> {
 	throws RemoteException;
 	//
 	Future<IOTask.Status> submit(final IOTask<T> request)
-	throws RemoteException;
+	throws RemoteException, RejectedExecutionException;
 	//
 	void handleResult(final IOTask<T> task, IOTask.Status status)
 	throws RemoteException;

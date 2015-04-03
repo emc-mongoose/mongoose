@@ -35,11 +35,11 @@ extends BasicAsyncRequestConsumer {
 	private volatile HttpRequest request;
 	private volatile SimpleInputBuffer buf;
 	//
-	private final int maxPageSize;
+	private final int buffSize;
 	//
-	public BasicRequestConsumer(final RunTimeConfig runTimeConfig) {
+	public BasicRequestConsumer() {
 		super();
-		maxPageSize = (int) runTimeConfig.getDataBufferSize();
+		buffSize = (int) RunTimeConfig.getContext().getDataBufferSize();
 	}
 	//
 	@Override
@@ -53,8 +53,8 @@ extends BasicAsyncRequestConsumer {
 	{
 		long len = entity.getContentLength();
 		//
-		if (len < 0 || len > maxPageSize) {
-			len = maxPageSize;
+		if (len < 0 || len > buffSize) {
+			len = buffSize;
 		}
 		this.buf = new SimpleInputBuffer(
 			len > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) len, new HeapByteBufferAllocator()
@@ -64,20 +64,10 @@ extends BasicAsyncRequestConsumer {
 	}
 	//
 	@Override
-	protected final void onContentReceived(
-		final ContentDecoder decoder, final IOControl ioctrl)
-	{
-		//this.buf.consumeContent(decoder);
-		try (final InputStream contentStream = HTTPInputStream.getInstance(decoder, ioctrl)) {
-			StreamUtils.skipStreamDataQuietly(contentStream);
-			this.buf.shutdown();
-		} catch (final InterruptedException e) {
-			TraceLogger.failure(LOG, Level.ERROR, e, "Buffer interrupted fault");
-		} catch (final IOException e){
-			TraceLogger.failure(LOG, Level.ERROR, e, "Content input stream fault");
-		}
+	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioctrl) {
+		HTTPInputStream.consumeQuietly(decoder, ioctrl, buffSize);
 	}
-		//
+	//
 	@Override
 	protected final void releaseResources() {
 		this.request = null;

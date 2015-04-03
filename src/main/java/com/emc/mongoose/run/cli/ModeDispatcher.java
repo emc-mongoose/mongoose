@@ -8,12 +8,12 @@ import com.emc.mongoose.common.logging.TraceLogger;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //
-import com.emc.mongoose.run.cli.HumanFriendly;
-import com.emc.mongoose.run.scenario.RunTask;
+import com.emc.mongoose.run.scenario.Scenario;
 import com.emc.mongoose.run.webserver.RunJettyTask;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+import com.emc.mongoose.storage.mock.impl.cinderella.Main;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -81,9 +81,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_WSMOCK:
 				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
-					new com.emc.mongoose.storage.mock.impl.cinderella.Main(
-						RunTimeConfig.getContext()
-					).run();
+					new Main().run();
 				} catch (final Exception e) {
 					TraceLogger.failure(rootLogger, Level.FATAL, e, "Failed");
 				}
@@ -91,7 +89,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_STANDALONE:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
-				new RunTask().run();
+				new Scenario().run();
 				break;
 			default:
 				throw new IllegalArgumentException(

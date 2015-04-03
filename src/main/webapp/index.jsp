@@ -27,7 +27,7 @@
 						<span class="icon-bar"></span>
 					</button>
 					<a id="logo" href="/">
-						<img width="120" height="40" src="images/mongooselogo.svg"/>
+						<img width="50" height="50" src="images/mongoose_sqr_white.png"/>
 					</a>
 					<a class="navbar-brand" href="/">
 						Mongoose
@@ -638,13 +638,13 @@
 
 																		<div class="modal-body">
 																			<div class="form-group">
-																				<label for="backup-api.type.s3.bucket.name" class="col-sm-4 control-label">
+																				<label for="backup-api.type.s3.bucket" class="col-sm-4 control-label">
 																					Bucket
 																				</label>
 																				<div class="col-sm-8">
-																					<input type="text" id="backup-api.type.s3.bucket.name" class="form-control"
-																			            data-pointer="api.type.s3.bucket.name"
-																		                value="${rt:getString(runTimeConfig, 'api.type.s3.bucket.name')}"/>
+																					<input type="text" id="backup-api.type.s3.bucket" class="form-control"
+																			            data-pointer="api.type.s3.bucket"
+																		                value="${rt:getString(runTimeConfig, 'api.type.s3.bucket')}"/>
 																				</div>
 																			</div>
 																		</div>

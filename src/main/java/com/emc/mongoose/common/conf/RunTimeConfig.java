@@ -281,7 +281,11 @@ implements Externalizable {
 		return getSizeBytes("data.buffer.size");
 	}
 	//
-	public final int getRemotePortControl() {
+	public final long getDataRingSize() {
+		return getSizeBytes("data.buffer.ring.size");
+	}
+	//
+		public final int getRemotePortControl() {
 		return getInt("remote.port.control");
 	}
 	//
@@ -562,6 +566,7 @@ implements Externalizable {
 			Object nextPropValue;
 			final RunTimeConfig localRunTimeConfig = INHERITABLE_CONTEXT.get();
 			for(final String nextPropName: confMap.keySet()) {
+				// to not to override the import/export ports from the load client side
 				nextPropValue = nextPropName.startsWith("remote") ?
 					localRunTimeConfig.getString(nextPropName) :
 					confMap.get(nextPropName);
@@ -573,8 +578,8 @@ implements Externalizable {
 					);
 				} else if(String.class.isInstance(nextPropValue)) {
 					setProperty(nextPropName, String.class.cast(nextPropValue));
-				} else if(nextPropValue==null) {
-					LOG.warn(Markers.ERR, "Property \"{}\" is null", nextPropName);
+				} else if(nextPropValue == null) {
+					LOG.debug(Markers.ERR, "Property \"{}\" is null", nextPropName);
 				} else {
 					LOG.error(
 						Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",

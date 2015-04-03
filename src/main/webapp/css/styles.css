@@ -15,8 +15,9 @@ label {
 }
 
 #logo img {
-	margin-top: 5px;
-	margin-right: 5px;
+	margin-top: 0px;
+	margin-right: 10px;
+	margin-left: 10px;
 }
 
 #run-modes, #config {

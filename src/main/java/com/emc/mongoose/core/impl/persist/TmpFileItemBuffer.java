@@ -49,7 +49,7 @@ implements DataItemBuffer<T> {
 			new LinkedBlockingQueue<Runnable>(
 				maxCount > 0 ?
 					Math.min(
-						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
+						maxCount > Short.MAX_VALUE ? Short.MAX_VALUE : (int) maxCount,
 						RunTimeConfig.getContext().getRunRequestQueueSize())
 					:
 					RunTimeConfig.getContext().getRunRequestQueueSize()
