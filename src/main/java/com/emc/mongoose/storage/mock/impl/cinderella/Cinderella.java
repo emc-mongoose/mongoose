@@ -315,7 +315,7 @@ implements Runnable {
 					}
 				}
 			} else if(isSwiftAuthTokenReq(requestUri)){
-				handleSwiftAuthToken(response);
+				handleSwiftAuthTokenReq(response);
 			} else if(isSwiftReq(requestUri)){
 				if(isSwiftContanerReq(requestUri, method)){
 					LOG.trace(LogUtil.MSG, "Create contaner: response OK.");
@@ -363,7 +363,7 @@ implements Runnable {
 				requestUri.length == 4 && method.equals(METHOD_PUT);
 		}
 		//
-		private void handleSwiftAuthToken(final HttpResponse response){
+		private void handleSwiftAuthTokenReq(final HttpResponse response){
 			LOG.trace(LogUtil.MSG, "Create auth token ");
 			response.setStatusCode(HttpStatus.SC_OK);
 			response.setHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, randomString(5));
