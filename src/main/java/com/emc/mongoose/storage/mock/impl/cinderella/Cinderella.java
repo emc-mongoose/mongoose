@@ -11,7 +11,6 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 //
 import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -301,87 +300,121 @@ implements Runnable {
 			final String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
 			//Get URI components
 			final String[] requestUri = request.getRequestLine().getUri().split("/");
+			final String dataId = requestUri[requestUri.length - 1];
 			//
-			if(method.equals(METHOD_HEAD) || method.equals(METHOD_DELETE) ||
-				isSwiftContanerReq(requestUri, method) || isHeadS3(requestUri, method)){
-				if(method.equals(METHOD_DELETE)) counterSuccDelete.inc();
-				LOG.trace(LogUtil.MSG, String.format("Method %s: Response OK.", method));
-				response.setStatusCode(HttpStatus.SC_OK);
-			} else if(isAtmosReq(requestUri)){
-				if(isAtmosSubtenant(requestUri)){
-					handleSubtenantReq(response);
-				}else {
-					handleAtmosDataReq(response, request, method, requestUri);
+			if(isAtmosReq(requestUri)){
+				if(isAtmosSubtenantReq(requestUri)){
+					handleSubtenantReq(response, method);
+				} else {
+					if (isAtmosObjectReq(requestUri)) {
+						LOG.trace(LogUtil.MSG, "Handle atmos object request. URI doesn't contain the object ID.");
+						handleAtmosObjectDataReq(response, request, method, dataId);
+					} else {
+						LOG.trace(LogUtil.MSG, "Handle atmos request. URI contains the object ID.");
+						handleGenericDataReq(response, request, method, dataId);
+					}
 				}
-			} else if(isAuthSwiftReq(requestUri)){
+			} else if(isSwiftAuthTokenReq(requestUri)){
 				handleSwiftAuthToken(response);
+			} else if(isSwiftReq(requestUri)){
+				if(isSwiftContanerReq(requestUri, method)){
+					LOG.trace(LogUtil.MSG, "Create contaner: response OK.");
+					response.setStatusCode(HttpStatus.SC_OK);
+				} else {
+					LOG.trace(LogUtil.MSG, "Handle swift request.");
+					handleGenericDataReq(response, request, method, dataId);
+				}
+			}else if (isS3BucketReq(requestUri, method)){
+				LOG.trace(LogUtil.MSG, "Create s3 bucket: response OK.");
+				response.setStatusCode(HttpStatus.SC_OK);
 			} else {
-				handleDataReq(response, request, method, requestUri);
+				LOG.trace(LogUtil.MSG, "Handle S3 request.");
+				handleGenericDataReq(response, request, method, dataId);
 			}
 			httpexchange.submitResponse(new BasicResponseProducer(response));
 		}
 		//
-		private static Boolean isAtmosReq(final String[] requestUri){
+		private static boolean isAtmosReq(final String[] requestUri){
 			return requestUri[1].equals(REST);
 		}
 		//
-		private static Boolean isAtmosSubtenant(final String[] requestUri){
+		private static boolean isAtmosSubtenantReq(final String[] requestUri){
 			return requestUri[2].equals(WSSubTenantImpl.SUBTENANT);
 		}
 		//
-		private static Boolean isHeadS3(final String[] requestUri, final String method){
+		private static boolean isAtmosObjectReq(final String[] requestUri){
+			return requestUri[2].equals(com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl.API_TYPE_OBJ);
+		}
+		//
+		private static boolean isS3BucketReq(final String[] requestUri, final String method){
 			return method.equals(METHOD_PUT) && requestUri.length == 2;
 		}
 		//
-		private static Boolean isAuthSwiftReq(final String[] requestUri){
+		private static boolean isSwiftReq(final String[] requestUri){
+			return requestUri[1].equals(URI_SVC_BASE_PATH);
+		}
+		//
+		private static boolean isSwiftAuthTokenReq(final String[] requestUri){
 			return requestUri[1].equals(AUTH);
 		}
 		//
-		private static Boolean isSwiftContanerReq(final String[] requestUri, final String method){
+		private static boolean isSwiftContanerReq(final String[] requestUri, final String method){
 			return requestUri[1].equals(URI_SVC_BASE_PATH) &&
 				requestUri.length == 4 && method.equals(METHOD_PUT);
 		}
 		//
-		private void handleSubtenantReq(final HttpResponse response){
+		private void handleSwiftAuthToken(final HttpResponse response){
+			LOG.trace(LogUtil.MSG, "Create auth token ");
+			response.setStatusCode(HttpStatus.SC_OK);
+			response.setHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, randomString(5));
+		}
+		//
+		private void handleSubtenantReq(final HttpResponse response, final String method){
 			LOG.trace(LogUtil.MSG, "Create atmos subtenant");
-			response.setHeader(WSSubTenantImpl.KEY_SUBTENANT_ID, randomString(5));
+			if(method.equals(METHOD_PUT)) {
+				response.setHeader(WSSubTenantImpl.KEY_SUBTENANT_ID, randomString(5));
+			}
 			response.setStatusCode(HttpStatus.SC_OK);
 		}
 		//
-		private void handleAtmosDataReq(
+		private void handleAtmosObjectDataReq(
 			final HttpResponse response, final HttpRequest request,
-			final String method, final String[] requestUri){
-			LOG.trace(LogUtil.MSG, "Handle atmos data request.");
-			String
-				dataId = requestUri[requestUri.length - 1],
-				headerLocation = request.getRequestLine().getUri();
-			if(requestUri[2].equals(com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl.API_TYPE_OBJ)){
+			final String method, String dataId
+		) {
+			if (method.equals(METHOD_POST)) {
 				dataId = generateId();
-				headerLocation = String.format(
+				final String headerLocation = String.format(
 					com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl.FMT_SLASH,
-					headerLocation, dataId);
+					request.getRequestLine().getUri(), dataId);
+				response.setHeader(HttpHeaders.LOCATION, headerLocation);
 			}
-			response.setHeader(HttpHeaders.LOCATION, headerLocation);
+			handleGenericDataReq(response, request, method, dataId);
+		}
+		//
+		private void handleDeleteReq(final HttpResponse response){
+			LOG.trace(LogUtil.MSG, "Delete data object: response OK");
+			response.setStatusCode(HttpStatus.SC_OK);
+			counterSuccDelete.inc();
+		}
+		//
+		private void handleGenericDataReq(
+			final HttpResponse response, final HttpRequest request,
+			final String method, final String dataId){
 			switch (method){
 				case METHOD_POST:
 					handleCreate(response, request, dataId);
 					break;
-				case METHOD_GET:
-					handleRead(response, dataId);
-					break;
-			}
-		}
-		//
-		private void handleDataReq(
-			final HttpResponse response, final HttpRequest request,
-			final String method, final String[] requestUri){
-			final String dataId = requestUri[requestUri.length - 1];
-			switch (method){
 				case METHOD_PUT:
 					handleCreate(response, request, dataId);
 					break;
 				case METHOD_GET:
 					handleRead(response, dataId);
+					break;
+				case METHOD_HEAD:
+					response.setStatusCode(HttpStatus.SC_OK);
+					break;
+				case METHOD_DELETE:
+					handleDeleteReq(response);
 					break;
 			}
 
@@ -467,8 +500,7 @@ implements Runnable {
 			final long offset = Long.valueOf(dataID, 0x10);
 		 */
 		private static long genOffset(final String dataID)
-			throws HttpException, NumberFormatException
-		{
+			throws HttpException, NumberFormatException {
 			long offset;
 			if (RING_OFFSET_RADIX == 0x40) { // base64
 				offset = ByteBuffer
@@ -485,12 +517,6 @@ implements Runnable {
 				);
 			}
 			return offset;
-		}
-		//
-		private void handleSwiftAuthToken(final HttpResponse response){
-			LOG.trace(LogUtil.MSG, "Create auth token ");
-			response.setStatusCode(HttpStatus.SC_OK);
-			response.setHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, randomString(5));
 		}
 	}
 	///////////////////////////////////////////////////////////////////////////////////////////////////
