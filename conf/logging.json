@@ -211,7 +211,7 @@
 		},
 		"loggers": {
 			"root": {
-				"level": "trace",
+				"level": "debug",
 				"additivity": "false",
 				"AppenderRef": {
 					"ref": "async"
@@ -220,34 +220,34 @@
 			"logger": [
 				{
 					"name": "com.emc.mongoose.client",
-					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.common",
-					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.core",
-					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.run",
-					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.server",
-					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.adapter.atmos",
-					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.adapter.s3",
-					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.adapter.swift",
-					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.mock",
-					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.webui",
-					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}
 			]
 		}
