@@ -4,7 +4,7 @@ import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 //
-import com.emc.mongoose.common.pool.InstancePool;
+import com.emc.mongoose.common.collections.InstancePool;
 /**
  Created by kurila on 23.12.14.
  */

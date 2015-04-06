@@ -5,6 +5,7 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 //
+import com.emc.mongoose.common.collections.Cache;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -82,7 +83,8 @@ public final class Cinderella
 implements Runnable {
 	//
 	private final static Map<String, WSObjectMock> SHARED_STORAGE = Collections.synchronizedMap(
-			new LRUMap<String, WSObjectMock>(RunTimeConfig.getContext().getStorageMockCapacity()));
+		new Cache<String, WSObjectMock>(RunTimeConfig.getContext().getStorageMockCapacity())
+	);
 	private final static Logger LOG = LogManager.getLogger();
 	private final ExecutorService multiSocketSvc;
 	private final HttpAsyncService protocolHandler;

@@ -451,7 +451,7 @@ implements LoadExecutor<T> {
 			);
 		} catch(final RejectedExecutionException e) {
 			LogUtil.failure(
-				LOG, Level.WARN, e,
+				LOG, Level.DEBUG, e,
 				String.format("\"%s\" rejected the data item \"%s\"", consumer, dataItem)
 			);
 		}

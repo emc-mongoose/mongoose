@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.pool;
+package com.emc.mongoose.common.collections;
 /**
  Created by kurila on 22.12.14.
  */

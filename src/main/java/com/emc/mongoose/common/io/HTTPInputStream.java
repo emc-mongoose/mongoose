@@ -1,7 +1,7 @@
 package com.emc.mongoose.common.io;
 // mongoose-common.jar
-import com.emc.mongoose.common.pool.Reusable;
-import com.emc.mongoose.common.pool.InstancePool;
+import com.emc.mongoose.common.collections.Reusable;
+import com.emc.mongoose.common.collections.InstancePool;
 //
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;

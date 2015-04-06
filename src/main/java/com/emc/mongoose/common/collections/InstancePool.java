@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.pool;
+package com.emc.mongoose.common.collections;
 // mongoose-common.jar
 import com.emc.mongoose.common.logging.LogUtil;
 //

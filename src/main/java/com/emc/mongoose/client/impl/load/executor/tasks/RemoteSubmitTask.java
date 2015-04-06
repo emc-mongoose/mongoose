@@ -2,8 +2,8 @@ package com.emc.mongoose.client.impl.load.executor.tasks;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.pool.InstancePool;
-import com.emc.mongoose.common.pool.Reusable;
+import com.emc.mongoose.common.collections.InstancePool;
+import com.emc.mongoose.common.collections.Reusable;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 // mongoose-server-api.jar

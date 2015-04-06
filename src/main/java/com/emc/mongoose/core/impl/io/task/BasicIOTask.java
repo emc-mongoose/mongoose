@@ -2,8 +2,8 @@ package com.emc.mongoose.core.impl.io.task;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.pool.Reusable;
-import com.emc.mongoose.common.pool.InstancePool;
+import com.emc.mongoose.common.collections.Reusable;
+import com.emc.mongoose.common.collections.InstancePool;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;

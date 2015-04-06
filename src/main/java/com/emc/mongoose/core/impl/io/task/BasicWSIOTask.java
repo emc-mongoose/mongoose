@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.HTTPOutputStream;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.io.HTTPInputStream;
-import com.emc.mongoose.common.pool.InstancePool;
+import com.emc.mongoose.common.collections.InstancePool;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
@@ -211,7 +211,7 @@ implements WSIOTask<T> {
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
 		if(reqEntity != null) {
-			/*final ByteBuffer bb = ByteBuffer.allocateDirect(reqConf.getBuffSize());
+			/*final ByteBuffer bb = ByteBuffer.allocate(reqConf.getBuffSize());
 			final byte buff[] = bb.array();*/
 			long contentLength = reqEntity.getContentLength();
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {

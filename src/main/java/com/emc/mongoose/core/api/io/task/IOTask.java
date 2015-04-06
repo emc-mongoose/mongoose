@@ -3,7 +3,7 @@ package com.emc.mongoose.core.api.io.task;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-common.jar
-import com.emc.mongoose.common.pool.Reusable;
+import com.emc.mongoose.common.collections.Reusable;
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
