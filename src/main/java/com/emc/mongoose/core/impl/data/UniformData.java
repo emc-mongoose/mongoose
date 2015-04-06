@@ -11,7 +11,6 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
-//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -239,45 +238,46 @@ implements DataItem {
 	) throws IOException {
 		//
 		boolean contentEquals = true;
-		long readByteCountSum = 0;
+		long byteCountLeft = rangeLength;
 		final byte buff2verify[] = new byte[
 			rangeLength > LoadExecutor.BUFF_SIZE_HI ?
 				LoadExecutor.BUFF_SIZE_HI :
 				rangeLength < LoadExecutor.BUFF_SIZE_LO ?
 					LoadExecutor.BUFF_SIZE_LO : (int) rangeLength // cast to int should be safe here
 		];
-		int nextOffset, nextReadByteCount;
+		long nextOffset = offset + rangeOffset;
+		int nextByteCount;
 		//
-		while(readByteCountSum < rangeLength && contentEquals) {
-			nextReadByteCount = rangeLength - readByteCountSum > buff2verify.length ?
-				buff2verify.length : (int) (rangeLength - readByteCountSum);
-			nextReadByteCount = in.read(buff2verify, 0, nextReadByteCount);
-			if(nextReadByteCount < 0) { // not ok
+		while(byteCountLeft > 0 && contentEquals) {
+			nextByteCount = byteCountLeft > buff2verify.length ?
+				buff2verify.length : (int) byteCountLeft;
+			nextByteCount = in.read(buff2verify, 0, nextByteCount);
+			if(nextByteCount < 0) { // not ok
 				contentEquals = false;
 				LOG.warn(
 					LogUtil.MSG,
 					"{}: content size mismatch, expected: {}, got: {}",
 					Long.toString(offset, DataObject.ID_RADIX), size,
-					rangeOffset + readByteCountSum + nextReadByteCount
+					rangeOffset + rangeLength - byteCountLeft
 				);
-			} else if(nextReadByteCount > 0) { // ok
-				nextOffset = (int) ((offset + rangeOffset + readByteCountSum) % buf.length);
-				for(int i = 0; i < nextReadByteCount; i ++) {
-					if(buff2verify[i] != buf[nextOffset + i]) {
+			} else if(nextByteCount > 0) { // ok
+				for(int i = 0; i < nextByteCount; i ++) {
+					if(buff2verify[i] != buf[(int) ((nextOffset + i) % buf.length)]) {
 						contentEquals = false;
 						LOG.warn(
 							LogUtil.MSG,
 							String.format(
 								"%s: content mismatch @ offset %d, expected byte value: \"0x%X\", got \"0x%X\"",
 								Long.toString(offset, DataObject.ID_RADIX),
-								rangeOffset + readByteCountSum + i,
-								buf[nextOffset + i], buff2verify[i]
+								rangeOffset + rangeLength - byteCountLeft + i,
+								buf[(int) ((nextOffset + i) % buf.length)], buff2verify[i]
 							)
 						);
 						break;
 					}
 				}
-				readByteCountSum += nextReadByteCount;
+				nextOffset += nextByteCount;
+				byteCountLeft -= nextByteCount;
 			}
 		}
 		//

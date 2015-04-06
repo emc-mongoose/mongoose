@@ -83,6 +83,12 @@ implements DataSource {
 		for(i = 0; i < countTailBytes; i++) {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
 		}
+		/*
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(
+				LogUtil.MSG, "Ring buffer data: {}", Base64.encodeBase64String(byteLayer.array())
+			);
+		}*/
 		//
 		LOG.debug(
 			LogUtil.MSG, "Pre-generating the data done in {}[us]",

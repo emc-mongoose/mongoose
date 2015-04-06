@@ -156,8 +156,7 @@ extends AbstractManager {
 		write(currRunId, bytes, 0, bytes.length);
 	}
 	//
-	private final String
-		PATH_LOG_DIR = String.format("%s%slog", RunTimeConfig.DIR_ROOT, File.separator),
+	public final String
 		FMT_FILE_PATH = "%s" + File.separator + "%s" + File.separator +"%s",
 		FMT_FILE_PATH_NO_RUN_ID = "%s" + File.separator +"%s";
 	//
@@ -169,8 +168,8 @@ extends AbstractManager {
 			final File
 				outPutFile = new File(
 					currRunId == null ?
-						String.format(FMT_FILE_PATH_NO_RUN_ID, PATH_LOG_DIR, fileName) :
-						String.format(FMT_FILE_PATH, PATH_LOG_DIR, currRunId, fileName)
+						String.format(FMT_FILE_PATH_NO_RUN_ID, LogUtil.PATH_LOG_DIR, fileName) :
+						String.format(FMT_FILE_PATH, LogUtil.PATH_LOG_DIR, currRunId, fileName)
 				),
 				parentFile = outPutFile.getParentFile();
 			if(parentFile != null && !parentFile.exists()) {

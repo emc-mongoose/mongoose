@@ -15,6 +15,7 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
 //
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -66,7 +67,9 @@ public final class LogUtil {
 		BLUE = "\u001B[34m",
 		PURPLE = "\u001B[35m",
 		CYAN = "\u001B[36m",
-		WHITE = "\u001B[37m";
+		WHITE = "\u001B[37m",
+		//
+		PATH_LOG_DIR = String.format("%s%slog", RunTimeConfig.DIR_ROOT, File.separator);
 	//
 	private final static AtomicReference<LoggerContext> LOG_CTX = new AtomicReference<>(null);
 	static {
