@@ -25,13 +25,10 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.nio.file.Paths;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 /**
  Created by kurila on 28.05.14.
  A shared runtime configuration.
@@ -46,7 +43,7 @@ implements Externalizable {
 		KEY_AUTH_ID = "auth.id",
 		KEY_AUTH_SECRET = "auth.secret",
 		//
-		KEY_DATA_ITEM_COUNT = "load.limit.dataItemCount",
+		KEY_DATA_ITEM_COUNT = "load.limit.count",
 		KEY_DATA_COUNT = "data.count",
 		KEY_DATA_SIZE = "data.size",
 		KEY_DATA_SIZE_MIN = "data.size.min",
@@ -64,10 +61,9 @@ implements Externalizable {
 		KEY_RUN_TIME = "run.time",
 		KEY_SCENARIO_NAME = "scenario.name",
 		KEY_LOAD_METRICS_PERIOD_SEC = "load.metricsPeriodSec",
-		KEY_LOAD_TIME = "load.time",
+		KEY_LOAD_LIMIT_COUNT = "load.limit.count",
 		KEY_LOAD_LIMIT_TIME = "load.limit.time",
-		KEY_LOAD_LIMIT_TIME_VALUE = KEY_LOAD_LIMIT_TIME + ".value",
-		KEY_LOAD_LIMIT_TIME_UNIT = KEY_LOAD_LIMIT_TIME + ".unit",
+		KEY_LOAD_TIME = "load.time",
 		KEY_RUN_VERSION = "run.version",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
@@ -148,64 +144,36 @@ implements Externalizable {
 	//
 	static {
 		// shortcuts
-		MAP_OVERRIDE.put(KEY_DATA_SIZE, new String[] {"data.size.min", "data.size.max"});
-		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] {KEY_LOAD_LIMIT_TIME_VALUE, KEY_LOAD_LIMIT_TIME_UNIT});
-		MAP_OVERRIDE.put(KEY_LOAD_THREADS, new String[] {"load.type.append.threads", "load.type.create.threads", "load.type.read.threads", "load.type.update.threads", "load.type.delete.threads"});
+		MAP_OVERRIDE.put(
+			KEY_DATA_SIZE,
+			new String[] {
+				"data.size.min",
+				"data.size.max"
+			}
+		);
+		MAP_OVERRIDE.put(
+			KEY_LOAD_THREADS,
+			new String[] {
+				"load.type.append.threads",
+				"load.type.create.threads",
+				"load.type.read.threads",
+				"load.type.update.threads",
+				"load.type.delete.threads"
+			}
+		);
+		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] { KEY_LOAD_LIMIT_TIME });
 		// backward compatibility
-		MAP_OVERRIDE.put(KEY_RUN_TIME, new String[] {KEY_LOAD_TIME});
-		MAP_OVERRIDE.put(KEY_DATA_COUNT, new String[] {"load.limit.dataItemCount"});
-		MAP_OVERRIDE.put("load.drivers", new String[] {"load.servers"});
+		MAP_OVERRIDE.put(KEY_RUN_TIME, new String[] { KEY_LOAD_LIMIT_TIME });
+		MAP_OVERRIDE.put(KEY_DATA_COUNT, new String[] { KEY_LOAD_LIMIT_COUNT });
+		MAP_OVERRIDE.put("load.drivers", new String[] { "load.servers" });
 	}
-	//
-	private final static String
-		SIZE_UNITS = "kmgtpe",
-		FMT_MSG_INVALID_SIZE = "The string \"%s\" doesn't match the pattern: \"%s\"";
-	private final static Pattern PATTERN_SIZE = Pattern.compile("(\\d+)(["+SIZE_UNITS+"]?)b?");
 	//
 	private final Map<String, Object> properties = new HashMap<>();
 	//
 	private JsonNode rootNode;
 	//
 	public long getSizeBytes(final String key) {
-		return toSize(getString(key));
-	}
-	//
-	public static long toSize(final String value) {
-		final String unit;
-		final Matcher matcher = PATTERN_SIZE.matcher(value.toLowerCase());
-		long size, degree;
-		if(matcher.matches() && matcher.groupCount() > 0 && matcher.groupCount() < 3) {
-			size = Long.valueOf(matcher.group(1), 10);
-			unit = matcher.group(2);
-			if(unit.length() == 0) {
-				degree = 0;
-			} else if(unit.length() == 1) {
-				degree = SIZE_UNITS.indexOf(matcher.group(2)) + 1;
-			} else {
-				throw new IllegalArgumentException(
-					String.format(FMT_MSG_INVALID_SIZE, value, PATTERN_SIZE)
-				);
-			}
-		} else {
-			throw new IllegalArgumentException(
-				String.format(FMT_MSG_INVALID_SIZE, value, PATTERN_SIZE)
-			);
-		}
-		size *= 1L << 10 * degree;
-		return size;
-	}
-	//
-	public static String formatSize(final long v) {
-		if(v < 1024) {
-			return v + "B";
-		}
-		final int z = (63 - Long.numberOfLeadingZeros(v)) / 10;
-		final double x = (double) v / (1L << (z * 10));
-		return String.format(
-			Locale.ROOT,
-			x < 10 ? "%.3f%sb" : x < 100 ? "%.2f%sb" : "%.1f%sb",
-			x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
-		).toUpperCase();
+		return SizeUtil.toSize(getString(key));
 	}
 	//
 	public String getJsonProps() {
@@ -277,11 +245,11 @@ implements Externalizable {
 	}
 	//
 	public final long getDataBufferSize() {
-		return getSizeBytes("data.buffer.size");
+		return SizeUtil.toSize(getString("data.buffer.size"));
 	}
 	//
 	public final long getDataRingSize() {
-		return getSizeBytes("data.buffer.ring.size");
+		return SizeUtil.toSize(getString("data.buffer.ring.size"));
 	}
 	//
 		public final int getRemotePortControl() {
@@ -354,6 +322,14 @@ implements Externalizable {
 	//
 	public final long getLoadLimitDataItemCount() {
 		return getLong(KEY_DATA_ITEM_COUNT);
+	}
+	//
+	public final long getDataSizeMin() {
+		return SizeUtil.toSize(getString(KEY_DATA_SIZE_MIN));
+	}
+	//
+	public final long getDataSizeMax() {
+		return SizeUtil.toSize(getString(KEY_DATA_SIZE_MAX));
 	}
 	//
 	public final float getDataSizeBias() {
@@ -429,11 +405,11 @@ implements Externalizable {
 	}
 	//
 	public final TimeUnit getLoadLimitTimeUnit() {
-		return TimeUnit.valueOf(getString(KEY_LOAD_LIMIT_TIME + ".unit").toUpperCase());
+		return TimeUtil.getTimeUnit(getString(KEY_LOAD_LIMIT_TIME));
 	}
 	//
 	public final long getLoadLimitTimeValue() {
-		return getLong(KEY_LOAD_LIMIT_TIME + ".value");
+		return TimeUtil.getTimeValue(getString(KEY_LOAD_LIMIT_TIME));
 	}
 	//
 	public final String getRunMode() {
@@ -473,7 +449,7 @@ implements Externalizable {
 	}
 	//
 	public final long getDataBufferRingSize() {
-		return getSizeBytes("data.buffer.ring.size");
+		return SizeUtil.toSize(getString("data.buffer.ring.size"));
 	}
 	//
 	public final short getLoadTypeThreads(final String loadType) {
@@ -618,31 +594,11 @@ implements Externalizable {
 			keys2override = MAP_OVERRIDE.get(key);
 			sharedValue = sysProps.getProperty(key);
 			setProperty(key, sharedValue);
-			if (key.equals(RunTimeConfig.KEY_LOAD_TIME)) {
-				setLoadTimeSpecificProps(sysProps.getString(key));
-			} else {
-				if(keys2override != null) {
-					for(final String key2override: keys2override) {
-						setProperty(key2override, sharedValue);
-						if (key2override.equals(KEY_LOAD_TIME)) {
-							setLoadTimeSpecificProps(sharedValue.toString());
-						}
-					}
+			if(keys2override != null) {
+				for(final String key2override: keys2override) {
+					setProperty(key2override, sharedValue);
 				}
 			}
-		}
-	}
-	//
-	private void setLoadTimeSpecificProps(final String sharedValue) {
-		final Logger log = LogManager.getLogger();
-		final String[] loadTime = sharedValue.split("\\.");
-		final String[] loadTimeKeys = MAP_OVERRIDE.get(KEY_LOAD_TIME);
-		if (loadTime.length > 1) {
-			for (int i = 0; i < loadTimeKeys.length; i++) {
-				setProperty(loadTimeKeys[i], loadTime[i]);
-			}
-		} else {
-			log.error(LogUtil.ERR, "Load time isn't correct. Default values will be used.");
 		}
 	}
 	//
@@ -687,8 +643,7 @@ implements Externalizable {
 				case KEY_RUN_ID:
 				case KEY_RUN_MODE:
 				case KEY_SCENARIO_NAME:
-				case KEY_LOAD_LIMIT_TIME_VALUE:
-				case KEY_LOAD_LIMIT_TIME_UNIT:
+				case KEY_LOAD_LIMIT_TIME:
 				case KEY_RUN_VERSION:
 				case KEY_DATA_ITEM_COUNT:
 				case KEY_DATA_SIZE:

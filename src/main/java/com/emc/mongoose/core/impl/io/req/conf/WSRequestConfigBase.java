@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.io.req.conf;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
 import com.emc.mongoose.common.http.RequestTargetHost;
 import com.emc.mongoose.common.io.HTTPInputStream;
@@ -447,7 +448,7 @@ implements WSRequestConfig<T> {
 			if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
 				msgBuff
 					.append("\tcontent: ")
-					.append(RunTimeConfig.formatSize(httpRequest.getEntity().getContentLength()))
+					.append(SizeUtil.formatSize(httpRequest.getEntity().getContentLength()))
 					.append(" bytes");
 			} else {
 				msgBuff.append("\t---- no content ----");

@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -67,8 +68,11 @@ implements LoadBuilder<T, U> {
 		for(final IOTask.Type loadType: IOTask.Type.values()) {
 			paramName = RunTimeConfig.getLoadThreadsParamName(loadType.name().toLowerCase());
 			try {
-				setThreadsPerNodeFor(runTimeConfig
-						.getLoadTypeThreads(loadType.name().toLowerCase()), loadType);
+				setThreadsPerNodeFor(
+					runTimeConfig.getLoadTypeThreads(
+						loadType.name().toLowerCase()
+					), loadType
+				);
 			} catch(final NoSuchElementException e) {
 				LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 			} catch(final IllegalArgumentException e) {
@@ -87,7 +91,7 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_DATA_SIZE_MIN;
 		try {
-			setMinObjSize(runTimeConfig.getSizeBytes(paramName));
+			setMinObjSize(runTimeConfig.getDataSizeMin());
 		} catch(final NoSuchElementException e) {
 			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -96,7 +100,7 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_DATA_SIZE_MAX;
 		try {
-			setMaxObjSize(runTimeConfig.getSizeBytes(paramName));
+			setMaxObjSize(runTimeConfig.getDataSizeMax());
 		} catch(final NoSuchElementException e) {
 			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -196,9 +200,9 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setMinObjSize(final long minObjSize)
 	throws IllegalArgumentException {
-		LOG.debug(LogUtil.MSG, "Set min data item size: {}", RunTimeConfig.formatSize(minObjSize));
+		LOG.debug(LogUtil.MSG, "Set min data item size: {}", SizeUtil.formatSize(minObjSize));
 		if(minObjSize >= 0) {
-			LOG.debug(LogUtil.MSG, "Using min object size: {}", RunTimeConfig.formatSize(minObjSize));
+			LOG.debug(LogUtil.MSG, "Using min object size: {}", SizeUtil.formatSize(minObjSize));
 		} else {
 			throw new IllegalArgumentException("Min object size should not be less than min");
 		}
@@ -209,9 +213,9 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setMaxObjSize(final long maxObjSize)
 	throws IllegalArgumentException {
-		LOG.debug(LogUtil.MSG, "Set max data item size: {}", RunTimeConfig.formatSize(maxObjSize));
+		LOG.debug(LogUtil.MSG, "Set max data item size: {}", SizeUtil.formatSize(maxObjSize));
 		if(maxObjSize >= 0) {
-			LOG.debug(LogUtil.MSG, "Using max object size: {}", RunTimeConfig.formatSize(maxObjSize));
+			LOG.debug(LogUtil.MSG, "Using max object size: {}", SizeUtil.formatSize(maxObjSize));
 		} else {
 			throw new IllegalArgumentException("Max object size should not be less than min");
 		}
@@ -340,7 +344,7 @@ implements LoadBuilder<T, U> {
 			reqConf.toString(),
 			threadsPerNodeMap.get(threadsPerNodeMap.keySet().iterator().next()),
 			minObjSize == maxObjSize ?
-				RunTimeConfig.formatSize(minObjSize) :
+				SizeUtil.formatSize(minObjSize) :
 				String.format(FMT_SIZE_RANGE, minObjSize, maxObjSize)
 		);
 	}

@@ -1,10 +1,10 @@
 package com.emc.mongoose.core.impl.load.model;
 //
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.Level;
@@ -67,8 +67,8 @@ implements Producer<T> {
 		LOG.debug(
 			LogUtil.MSG, "Will try to produce up to {} objects of {} size", maxCount,
 			minObjSize == maxObjSize ?
-				RunTimeConfig.formatSize(minObjSize) :
-				RunTimeConfig.formatSize(minObjSize)+".."+RunTimeConfig.formatSize(maxObjSize)
+				SizeUtil.formatSize(minObjSize) :
+				SizeUtil.formatSize(minObjSize)+".."+ SizeUtil.formatSize(maxObjSize)
 		);
 		//
 		do {

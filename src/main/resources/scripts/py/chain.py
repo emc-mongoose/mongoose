@@ -138,11 +138,11 @@ if __name__ == "__builtin__":
 	except:
 		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
 	try:
-		dataItemSizeMin = Long(runTimeConfig.getSizeBytes(RunTimeConfig.KEY_DATA_SIZE_MIN))
+		dataItemSizeMin = runTimeConfig.getDataSizeMin()
 	except:
 		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
 	try:
-		dataItemSizeMax = Long(runTimeConfig.getSizeBytes(RunTimeConfig.KEY_DATA_SIZE_MAX))
+		dataItemSizeMax = runTimeConfig.getDataSizeMax()
 	except:
 		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
 	try:

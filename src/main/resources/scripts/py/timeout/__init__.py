@@ -19,7 +19,8 @@ def init():
 		runTime = runTimeValue, localConfig.getLoadLimitTimeUnit()
 	except NoSuchElementException:
 		LOG.error(LogUtil.ERR, "No timeout specified, try arg -Drun.time=<INTEGER>.<UNIT> to override")
-	except IllegalArgumentException:
+	except IllegalArgumentException as e:
+		e.printStackTrace()
 		LOG.error(LogUtil.ERR, "Timeout unit should be a name of a constant from TimeUnit enumeration")
 	except IndexError:
 		LOG.error(LogUtil.ERR, "Time unit should be specified with timeout value (following after \".\" separator)")

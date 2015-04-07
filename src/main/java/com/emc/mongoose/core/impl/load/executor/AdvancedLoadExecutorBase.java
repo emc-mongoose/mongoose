@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
@@ -41,26 +42,26 @@ extends LoadExecutorBase<T> {
 		//
 		int buffSize;
 		if(sizeMin == sizeMax) {
-			LOG.debug(LogUtil.MSG, "Fixed data item size: {}", RunTimeConfig.formatSize(sizeMin));
+			LOG.debug(LogUtil.MSG, "Fixed data item size: {}", SizeUtil.formatSize(sizeMin));
 			buffSize = sizeMin < BUFF_SIZE_HI ? (int) sizeMin : BUFF_SIZE_HI;
 		} else {
 			final long t = (sizeMin + sizeMax) / 2;
 			buffSize = t < BUFF_SIZE_HI ? (int) t : BUFF_SIZE_HI;
 			LOG.debug(
 				LogUtil.MSG, "Average data item size: {}",
-				RunTimeConfig.formatSize(buffSize)
+				SizeUtil.formatSize(buffSize)
 			);
 		}
 		if(buffSize < BUFF_SIZE_LO) {
 			LOG.debug(
 				LogUtil.MSG, "Buffer size {} is less than lower bound {}",
-				RunTimeConfig.formatSize(buffSize), RunTimeConfig.formatSize(BUFF_SIZE_LO)
+				SizeUtil.formatSize(buffSize), SizeUtil.formatSize(BUFF_SIZE_LO)
 			);
 			buffSize = BUFF_SIZE_LO;
 		}
 		LOG.debug(
 			LogUtil.MSG, "Determined buffer size of {} for \"{}\"",
-			RunTimeConfig.formatSize(buffSize), getName()
+			SizeUtil.formatSize(buffSize), getName()
 		);
 		this.reqConfigCopy.setBuffSize(buffSize);
 		//
@@ -71,7 +72,7 @@ extends LoadExecutorBase<T> {
 					throw new IllegalArgumentException(
 						String.format(
 							"Min data item size (%s) is less than zero",
-							RunTimeConfig.formatSize(sizeMin)
+							SizeUtil.formatSize(sizeMin)
 						)
 					);
 				}
@@ -79,7 +80,7 @@ extends LoadExecutorBase<T> {
 					throw new IllegalArgumentException(
 						String.format(
 							"Min object size (%s) shouldn't be more than max (%s)",
-							RunTimeConfig.formatSize(sizeMin), RunTimeConfig.formatSize(sizeMax)
+							SizeUtil.formatSize(sizeMin), SizeUtil.formatSize(sizeMax)
 						)
 					);
 				}
@@ -119,7 +120,7 @@ extends LoadExecutorBase<T> {
 					if(LOG.isTraceEnabled(LogUtil.MSG)) {
 						LOG.trace(
 							LogUtil.MSG, "Append the object \"{}\": +{}",
-							dataItem, RunTimeConfig.formatSize(nextSize)
+							dataItem, SizeUtil.formatSize(nextSize)
 						);
 					}
 					break;

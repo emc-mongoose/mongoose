@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
@@ -78,7 +79,7 @@ implements WSLoadBuilder<T, U> {
 			throw new IllegalStateException(
 				String.format(
 					"Min object size (%s) shouldn't be more than max (%s)",
-					RunTimeConfig.formatSize(minObjSize), RunTimeConfig.formatSize(maxObjSize)
+					SizeUtil.formatSize(minObjSize), SizeUtil.formatSize(maxObjSize)
 				)
 			);
 		}

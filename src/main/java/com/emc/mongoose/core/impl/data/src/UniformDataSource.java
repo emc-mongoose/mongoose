@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.data.src;
 // mongoose-common
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.src.DataSource;
@@ -70,7 +71,7 @@ implements DataSource {
 		long word = seed;
 		int i;
 		double d = System.nanoTime();
-		LOG.debug(LogUtil.MSG, "Prepare {} of ring data...", RunTimeConfig.formatSize(size));
+		LOG.debug(LogUtil.MSG, "Prepare {} of ring data...", SizeUtil.formatSize(size));
 		// 64-bit words
 		for(i = 0; i < countWords; i++) {
 			byteLayer.putLong(word);

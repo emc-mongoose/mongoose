@@ -157,6 +157,7 @@ public final class LogUtil {
 				}
 			}
 			if(msgBuilder.size() > 0) {
+				System.err.println(msgBuilder.toString());
 				logger.log(Level.TRACE, ERR, msgBuilder.toString());
 			}
 		}

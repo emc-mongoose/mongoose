@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.io.HTTPOutputStream;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.io.HTTPInputStream;
@@ -370,7 +370,7 @@ implements WSIOTask<T> {
 				case (413):
 					msgBuff
 						.append("Content is too large: ")
-						.append(RunTimeConfig.formatSize(transferSize))
+						.append(SizeUtil.formatSize(transferSize))
 						.append('\n');
 					this.status = Status.FAIL_SVC;
 					break;

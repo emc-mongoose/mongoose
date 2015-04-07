@@ -1,24 +1,5 @@
 {
 	"properties": {
-		"scenario": {
-			"name": "single",
-			"lang": "py",
-			"dir": "scripts",
-			"type": {
-				"single": {
-					"load": "create"
-				},
-				"chain": {
-					"load": "create,append,update,read,delete",
-					"simultaneous": true,
-					"itemsbuffer": false
-				},
-				"rampup": {
-					"threadCounts": "1,10,20,50,100,150,200,300,400,500",
-					"sizes": "1KB,8KB,64KB,1MB,8MB,64MB,1GB"
-				}
-			}
-		},
 		"api": {
 			"name": "s3",
 			"type": {
@@ -36,6 +17,86 @@
 					"serviceBasepath": "v1",
 					"authToken": "",
 					"container": ""
+				}
+			}
+		},
+		"auth": {
+			"id": "wuser1@sanity.local",
+			"secret": "uwXSy4kD+N8pmltfOC2JxtrJ+Tg7/yBswV6jMu6h"
+		},
+		"data": {
+			"size": {
+				"min": "1MB",
+				"max": "1MB",
+				"bias": 1
+			},
+			"src": {
+				"fpath": "",
+				"separator": ","
+			},
+			"radix": {
+				"size": 10,
+				"offset": 36
+			},
+			"buffer": {
+				"size": "1KB",
+				"ring": {
+					"seed": "7a42d9c483244167",
+					"size": "1MB"
+				}
+			}
+		},
+		"http": {
+			"signMethod": "HmacSHA1",
+			"content": {
+				"chunked": false,
+				"type": "application/octet-stream",
+				"repeatable": true
+			}
+		},
+		"load": {
+			"type": {
+				"create": {
+					"threads": 1
+				},
+				"read": {
+					"threads": 1,
+					"verifyContent": true
+				},
+				"update": {
+					"threads": 1,
+					"perItem": 1
+				},
+				"delete": {
+					"threads": 1
+				},
+				"append": {
+					"threads": 1
+				}
+			},
+			"limit": {
+				"count": 0,
+				"time": "0s"
+			},
+			"servers": "127.0.0.1",
+			"metricsPeriodSec": 10
+		},
+		"scenario": {
+			"name": "single",
+			"lang": "py",
+			"dir": "scripts",
+			"type": {
+				"single": {
+					"load": "create"
+				},
+				"chain": {
+					"load": "create,append,update,read,delete",
+					"simultaneous": true,
+					"itemsbuffer": false
+				},
+				"rampup": {
+					"threadCounts": "1,10,20,50,100,150,200,300,400,500",
+					"sizes": "1KB,8KB,64KB,1MB,8MB,64MB,1GB"
 				}
 			}
 		},
@@ -83,58 +144,6 @@
 				}
 			}
 		},
-		"data": {
-			"size": {
-				"min": "1MB",
-				"max": "1MB",
-				"bias": 1
-			},
-			"src": {
-				"fpath": "",
-				"separator": ","
-			},
-			"radix": {
-				"size": 10,
-				"offset": 36
-			},
-			"buffer": {
-				"size": "1KB",
-				"ring": {
-					"seed": "7a42d9c483244167",
-					"size": "1MB"
-				}
-			}
-		},
-		"load": {
-			"type": {
-				"create": {
-					"threads": 1
-				},
-				"read": {
-					"threads": 1,
-					"verifyContent": true
-				},
-				"update": {
-					"threads": 1,
-					"perItem": 1
-				},
-				"delete": {
-					"threads": 1
-				},
-				"append": {
-					"threads": 1
-				}
-			},
-			"limit": {
-				"dataItemCount": 0,
-				"time": {
-					"value": 0,
-					"unit": "seconds"
-				}
-			},
-			"servers": "127.0.0.1",
-			"metricsPeriodSec": 10
-		},
 		"run": {
 			"name": "mongoose",
 			"version": "0.7.0",
@@ -147,18 +156,6 @@
 				"retries": false,
 				"timeoutMilliSec": 1000000,
 				"queueSize": 1000000
-			}
-		},
-		"auth": {
-			"id": "wuser1@sanity.local",
-			"secret": "uwXSy4kD+N8pmltfOC2JxtrJ+Tg7/yBswV6jMu6h"
-		},
-		"http": {
-			"signMethod": "HmacSHA1",
-			"content": {
-				"chunked": false,
-				"type": "application/octet-stream",
-				"repeatable": true
 			}
 		}
 	}

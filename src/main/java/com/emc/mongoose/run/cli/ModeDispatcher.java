@@ -41,23 +41,24 @@ public final class ModeDispatcher {
 		System.setProperty(RunTimeConfig.KEY_RUN_MODE, runMode);
 		LogUtil.init();
 		//
-		final Map<String, String> properties = HumanFriendly.parseCli(args);
-		//
 		final Logger rootLogger = LogManager.getRootLogger();
 		//
 		RunTimeConfig.initContext();
-		// load the properties
+		// load the config from file
 		RunTimeConfig.getContext().loadPropsFromJsonCfgFile(
 			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
 		);
 		rootLogger.debug(LogUtil.MSG, "Loaded the properties from the files");
+		// load the config from system properties
 		RunTimeConfig.getContext().loadSysProps();
-		rootLogger.info(LogUtil.MSG, RunTimeConfig.getContext().toString());
-		//
+		// load the confi from CLI arguments
+		final Map<String, String> properties = HumanFriendly.parseCli(args);
 		if(!properties.isEmpty()) {
-			rootLogger.info(LogUtil.MSG, "Overriding properties {}", properties);
+			rootLogger.debug(LogUtil.MSG, "Overriding properties {}", properties);
 			RunTimeConfig.getContext().overrideSystemProperties(properties);
 		}
+		//
+		rootLogger.info(LogUtil.MSG, RunTimeConfig.getContext().toString());
 		//
 		switch(runMode) {
 			case Constants.RUN_MODE_SERVER:
