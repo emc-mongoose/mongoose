@@ -23,6 +23,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.message.HeaderGroup;
+import org.apache.http.nio.reactor.IOReactorStatus;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -197,15 +198,12 @@ implements WSLoadExecutor<T> {
 	@Override
 	public final Future<IOTask.Status> submit(final IOTask<T> ioTask)
 	throws RejectedExecutionException {
-		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
 		final Future<IOTask.Status> futureResult;
-		try {
+		if(IOReactorStatus.ACTIVE.equals(ioReactor.getStatus())) {
+			final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask.getHttpContext());
-		} catch(final IllegalStateException e) {
-			LogUtil.failure(
-				LOG, Level.WARN, e, "Failed to submit the HTTP request for execution"
-			);
-			throw new RejectedExecutionException("I/O task submit failure", e);
+		} else {
+			throw new RejectedExecutionException("I/O reactor is not active");
 		}
 		return futureResult;
 	}

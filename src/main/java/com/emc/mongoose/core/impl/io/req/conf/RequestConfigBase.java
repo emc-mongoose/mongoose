@@ -293,7 +293,6 @@ implements RequestConfig<T> {
 		out.writeBoolean(getRetries());
 		out.writeBoolean(getAnyDataProducerEnabled());
 		out.writeBoolean(getVerifyContentFlag());
-		out.writeBoolean(getAnyDataProducerEnabled());
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

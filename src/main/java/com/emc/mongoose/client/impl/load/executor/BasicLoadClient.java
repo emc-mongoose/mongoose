@@ -118,8 +118,10 @@ implements LoadClient<T> {
 			0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				maxCount > 0 ?
-					Math.min((int) maxCount, runTimeConfig.getRunRequestQueueSize()) :
-					runTimeConfig.getRunRequestQueueSize()
+					maxCount > Integer.MAX_VALUE ?
+						RunTimeConfig.getContext().getRunRequestQueueSize()
+						: (int) maxCount
+					: RunTimeConfig.getContext().getRunRequestQueueSize()
 			)
 		);
 		//

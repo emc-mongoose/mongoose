@@ -84,7 +84,8 @@ extends AbstractAppender {
 		return fName;
 	}
 	//
-	private final static int DEFAULT_SIZE_BUFF = 8192;
+	private final static int DEFAULT_SIZE_BUFF = 0x2000; // 8KB
+	private final static long DEFAULT_SIZE_TO_ROTATE = 0x1000000; // 16MB
 	//
 	@PluginFactory
 	public static RunIdFileAppender createAppender(
@@ -130,6 +131,7 @@ extends AbstractAppender {
 				e.printStackTrace(System.err);
 			}
 		}
+		//
 		final RunIdFileManager manager = RunIdFileManager.getRunIdFileManager(
 			fileNamePrefix, isAppend, isLocking, isBuffering, advertiseUri, layout, buffSize
 		);

@@ -680,29 +680,39 @@ implements Externalizable {
 		for(
 			final Iterator<String> keyIterator = getKeys();
 			keyIterator.hasNext();
-			) {
+		) {
 			nextKey = keyIterator.next();
 			nextVal = getProperty(nextKey);
 			switch(nextKey) {
-				case RunTimeConfig.KEY_RUN_ID:
-				case RunTimeConfig.KEY_RUN_MODE:
-				case RunTimeConfig.KEY_SCENARIO_NAME:
-				case RunTimeConfig.KEY_LOAD_LIMIT_TIME_VALUE:
-				case RunTimeConfig.KEY_LOAD_LIMIT_TIME_UNIT:
-				case RunTimeConfig.KEY_RUN_VERSION:
-				case RunTimeConfig.KEY_DATA_ITEM_COUNT:
-				case RunTimeConfig.KEY_DATA_SIZE:
-				case RunTimeConfig.KEY_DATA_RING_SEED:
-				case RunTimeConfig.KEY_DATA_RING_SIZE:
-				case RunTimeConfig.KEY_LOAD_THREADS:
-				case RunTimeConfig.KEY_STORAGE_ADDRS:
-				case RunTimeConfig.KEY_API_NAME:
+				case KEY_RUN_ID:
+				case KEY_RUN_MODE:
+				case KEY_SCENARIO_NAME:
+				case KEY_LOAD_LIMIT_TIME_VALUE:
+				case KEY_LOAD_LIMIT_TIME_UNIT:
+				case KEY_RUN_VERSION:
+				case KEY_DATA_ITEM_COUNT:
+				case KEY_DATA_SIZE:
+				case KEY_DATA_RING_SEED:
+				case KEY_DATA_RING_SIZE:
+				case KEY_LOAD_THREADS:
+				case KEY_STORAGE_ADDRS:
+				case KEY_API_NAME:
 					strBuilder
 						.appendNewLine().append("| ")
 						.appendFixedWidthPadRight(nextKey, 31, ' ')
 						.append("| ")
 						.appendFixedWidthPadRight(nextVal, 63, ' ')
 						.append('|');
+					if(KEY_SCENARIO_NAME.equals(nextKey)) {
+						strBuilder
+							.appendNewLine().append("| ")
+							.appendFixedWidthPadRight("load", 31, ' ')
+							.append("| ")
+							.appendFixedWidthPadRight(
+								getProperty("scenario.type."+nextVal+".load"), 63, ' '
+							)
+							.append('|');
+					}
 					break;
 			}
 		}

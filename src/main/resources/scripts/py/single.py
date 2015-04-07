@@ -35,6 +35,7 @@ def build(loadBuilder):
 		try:
 			load = loadBuilder.build()
 		except Exception as e:
+			e.printStackTrace()
 			LogUtil.failure(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
 	return load
 #

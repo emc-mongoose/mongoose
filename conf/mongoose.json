@@ -151,7 +151,7 @@
 		},
 		"auth": {
 			"id": "wuser1@sanity.local",
-			"secret": "HjhQ0bXqUrt1lSPhOfn5S+GLDWaikLi32A6/EWY5"
+			"secret": "uwXSy4kD+N8pmltfOC2JxtrJ+Tg7/yBswV6jMu6h"
 		},
 		"http": {
 			"signMethod": "HmacSHA1",

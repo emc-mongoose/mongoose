@@ -47,8 +47,10 @@ implements DataItemBuffer<T> {
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				maxCount > 0 ?
-					Math.min((int)maxCount, RunTimeConfig.getContext().getRunRequestQueueSize()) :
-					RunTimeConfig.getContext().getRunRequestQueueSize()
+					maxCount > Integer.MAX_VALUE ?
+						RunTimeConfig.getContext().getRunRequestQueueSize()
+						: (int) maxCount
+					: RunTimeConfig.getContext().getRunRequestQueueSize()
 			)
 		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
@@ -309,9 +311,7 @@ implements DataItemBuffer<T> {
 			try {
 				consumer.submit(null); // feed the poison
 			} catch(final RemoteException | InterruptedException | RejectedExecutionException e) {
-				LogUtil.failure(
-					LOG, Level.DEBUG, e, "Failed to submit the poison to the consumer"
-				);
+				// ignore
 			}
 		}
 		producerThread.interrupt();

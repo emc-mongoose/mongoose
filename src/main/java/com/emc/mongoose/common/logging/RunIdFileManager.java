@@ -1,6 +1,5 @@
 package com.emc.mongoose.common.logging;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.appender.AbstractManager;
@@ -8,12 +7,10 @@ import org.apache.logging.log4j.core.appender.AppenderLoggingException;
 import org.apache.logging.log4j.core.appender.ManagerFactory;
 //
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Serializable;
-import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
 import java.util.HashMap;
 import java.util.Map;
 /** Created by andrey on 13.03.15. */
@@ -23,7 +20,7 @@ extends AbstractManager {
 	private final String fileName, uriAdvertise;
 	private final boolean flagAppend, flagLock, flagBuffered;
 	private final int buffSize;
-	private final Map<String, FileOutputStream> outStreamsMap = new HashMap<>();
+	private final Map<String, OutputStream> outStreamsMap = new HashMap<>();
 	private final Layout<? extends Serializable> layout;
 	//
 	protected RunIdFileManager(
@@ -99,7 +96,9 @@ extends AbstractManager {
 		return RunIdFileManager.class.cast(
 			getManager(
 				fileName, FACTORY,
-				new FactoryData(flagAppend, flagLock, flagBuffered, buffSize, uriAdvertise, layout)
+				new FactoryData(
+					flagAppend, flagLock, flagBuffered, buffSize, uriAdvertise, layout
+				)
 			)
 		);
 	}
@@ -123,32 +122,10 @@ extends AbstractManager {
 	protected final synchronized void write(
 		final String currRunId, final byte[] buff, final int offset, final int len
 	) {
-		final FileOutputStream outStream = getOutputStream(currRunId);
-		if(flagLock) {
-			final FileChannel channel = outStream.getChannel();
-			try {
-				/* Lock the whole file. This could be optimized to only lock from the current file
-				position. Note that locking may be advisory on some systems and mandatory on others,
-				so locking just from the current position would allow reading on systems where
-				locking is mandatory.  Also, Java 6 will throw an exception if the region of the
-				file is already locked by another FileChannel in the same JVM. Hopefully, that will
-				be avoided since every file should have a single file manager - unless two different
-				files strings are configured that somehow map to the same file.*/
-				final FileLock lock = channel.lock(0, Long.MAX_VALUE, false);
-				try {
-					outStream.write(buff, offset, len);
-				} finally {
-					lock.release();
-				}
-			} catch(final IOException e) {
-				throw new AppenderLoggingException("Unable to obtain lock on " + getName(), e);
-			}
-		} else {
-			try {
-				outStream.write(buff, offset, len);
-			} catch (final IOException e) {
-				throw new AppenderLoggingException("Error writing to stream " + getName(), e);
-			}
+		try(final OutputStream outStream = getOutputStream(currRunId)) {
+			outStream.write(buff, offset, len);
+		} catch (final IOException e) {
+			throw new AppenderLoggingException("Error writing to stream " + getName(), e);
 		}
 	}
 	//
@@ -160,27 +137,26 @@ extends AbstractManager {
 		FMT_FILE_PATH = "%s" + File.separator + "%s" + File.separator +"%s",
 		FMT_FILE_PATH_NO_RUN_ID = "%s" + File.separator +"%s";
 	//
-	protected final FileOutputStream getOutputStream(final String currRunId) {
-		FileOutputStream currentOutPutStream = null;
+	protected final OutputStream getOutputStream(final String currRunId) {
+		OutputStream currentOutPutStream = null;
+		File currentOutPutFile;
 		if(outStreamsMap.containsKey(currRunId)) {
 			currentOutPutStream = outStreamsMap.get(currRunId);
 		} else {
-			final File
-				outPutFile = new File(
-					currRunId == null ?
-						String.format(FMT_FILE_PATH_NO_RUN_ID, LogUtil.PATH_LOG_DIR, fileName) :
-						String.format(FMT_FILE_PATH, LogUtil.PATH_LOG_DIR, currRunId, fileName)
-				),
-				parentFile = outPutFile.getParentFile();
+			currentOutPutFile = new File(
+				currRunId == null ?
+					String.format(FMT_FILE_PATH_NO_RUN_ID, LogUtil.PATH_LOG_DIR, fileName) :
+					String.format(FMT_FILE_PATH, LogUtil.PATH_LOG_DIR, currRunId, fileName)
+			);
+			final File parentFile = currentOutPutFile.getParentFile();
 			if(parentFile != null && !parentFile.exists()) {
 				parentFile.mkdirs();
 			}
+			//
 			try {
-				currentOutPutStream = new FileOutputStream(
-					outPutFile.getPath(), flagAppend
-				);
+				currentOutPutStream = new FileOutputStream(currentOutPutFile.getPath(), flagAppend);
 				outStreamsMap.put(currRunId, currentOutPutStream);
-			} catch(final FileNotFoundException e) {
+			} catch(final IOException e) {
 				e.printStackTrace(System.err);
 			}
 		}
@@ -188,7 +164,7 @@ extends AbstractManager {
 	}
 	//
 	protected final synchronized void close() {
-		for(final FileOutputStream outStream : outStreamsMap.values()) {
+		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
 				outStream.close();
 			} catch(final IOException e) {
@@ -198,7 +174,7 @@ extends AbstractManager {
 	}
 	/** Flushes all available output streams */
 	public final synchronized void flush() {
-		for(final FileOutputStream outStream : outStreamsMap.values()) {
+		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
 				outStream.flush();
 			} catch(final IOException e) {

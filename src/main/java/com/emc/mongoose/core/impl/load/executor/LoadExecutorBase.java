@@ -82,8 +82,10 @@ implements LoadExecutor<T> {
 			1, 1, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				maxCount > 0 ?
-					Math.min((int) maxCount, runTimeConfig.getRunRequestQueueSize()) :
-					runTimeConfig.getRunRequestQueueSize()
+					maxCount > Integer.MAX_VALUE ?
+						RunTimeConfig.getContext().getRunRequestQueueSize()
+						: (int) maxCount
+					: RunTimeConfig.getContext().getRunRequestQueueSize()
 			)
 		);
 		//
@@ -231,7 +233,7 @@ implements LoadExecutor<T> {
 			String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
-				countReqSucc, throughPut.getCount() - countReqSucc,
+				countReqSucc, getQueue().size(),
 				countReqFail == 0 ?
 					Long.toString(countReqFail) :
 					(float) countReqSucc / countReqFail > 100 ?

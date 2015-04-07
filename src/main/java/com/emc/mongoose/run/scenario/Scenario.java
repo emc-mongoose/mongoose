@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -146,7 +146,7 @@ implements Runnable {
 				} else {
 					try {
 						LOG.debug(LogUtil.MSG, "Script start");
-						scriptEngine.eval(Files.newBufferedReader(scriptPath, Charset.defaultCharset()));
+						scriptEngine.eval(Files.newBufferedReader(scriptPath, StandardCharsets.UTF_8));
 						LOG.debug(LogUtil.MSG, "Script from \"{}\" done", scriptPath);
 					} catch(final ScriptException e) {
 						LogUtil.failure(LOG, Level.WARN, e, "Script failure");

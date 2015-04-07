@@ -462,14 +462,14 @@ implements WSIOTask<T> {
 	throws IOException {
 		if(respStatusCode < 200 || respStatusCode >= 300) { // failure
 			try(
-				final BufferedReader contentStreamBuff = new BufferedReader(
+				final BufferedReader contentStream = new BufferedReader(
 					new InputStreamReader(HTTPInputStream.getInstance(in, ioCtl))
 				)
 			) {
 				final StrBuilder msgBuilder = new StrBuilder();
 				String nextLine;
 				do {
-					nextLine = contentStreamBuff.readLine();
+					nextLine = contentStream.readLine();
 					if(nextLine == null && LOG.isTraceEnabled(LogUtil.ERR)) {
 						LOG.trace(
 							LogUtil.ERR, "Response failure code \"{}\", content: \"{}\"",
