@@ -141,7 +141,7 @@ $(document).ready(function() {
 		}*/
 		//
 		var currDataPointer = currElement.attr("data-pointer");
-		if(currDataPointer != null && !currDataPointer.length > 0) {
+		if(currDataPointer != null && currDataPointer.length > 0) {
 			var element = $("#" + currElement.attr("data-pointer").replace(/\./g, "\\.") + " input");
 			if (currElement.is("select")) {
 				var valueSelected = currElement.children("option").filter(":selected").text().trim();
@@ -189,8 +189,6 @@ $(document).ready(function() {
 					unitStr = timeUnitShortCuts[matcher[2]];
 				}
 			} else if(rawValue.indexOf('.') > 0) {
-				console.log(rawValue + " contains a dot");
-				console.log(splitValue);
 				numStr = splitValue[0];
 				unitStr = splitValue[1];
 			}
