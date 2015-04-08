@@ -171,9 +171,7 @@ $(document).ready(function() {
 			$("#backup-run\\.time\\.select").val(splittedTimeString[1]);
 		}*/
 		var parentIdAttr = $(this).parent().parent().attr("id");
-		var
-			patternTime = /([0-9]*)([smhd]?)/,
-			patternTimeCompat = /([0-9]*)\\.([a-zA-Z]{4,7})/;
+		var patternTime = /^([0-9]*)([smhd]?)$/;
 		var numStr = "0", unitStr = "seconds";
 		var timeUnitShortCuts = {
 			"s" : "seconds",
@@ -184,17 +182,17 @@ $(document).ready(function() {
 		//console.log($(this).val())
 		if(parentIdAttr == "load.limit.time") {
 			var rawValue = $(this).val();
-			if(rawValue.match(patternTime)) {
+			if(patternTime.test(rawValue)) {
 				var matcher = patternTime.exec(rawValue);
 				numStr = matcher[1];
-				if(matcher[2] === undefined) {
-					if(rawValue.matcher(patternTimeCompat)) {
-						matcher = patternTimeCompat.exec(rawValue);
-						unitStr = matcher[2];
-					}
-				} else {
+				if(matcher[2] != null && matcher[2].length > 0) {
 					unitStr = timeUnitShortCuts[matcher[2]];
 				}
+			} else if(rawValue.indexOf('.') > 0) {
+				console.log(rawValue + " contains a dot");
+				console.log(splitValue);
+				numStr = splitValue[0];
+				unitStr = splitValue[1];
 			}
 			// ok, going further
 			$("#backup-load\\.limit\\.time\\.value").val(numStr);
