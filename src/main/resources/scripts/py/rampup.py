@@ -6,7 +6,7 @@ from java.lang import InterruptedException, Long, Short, Throwable, NumberFormat
 #
 from org.apache.logging.log4j import Level, LogManager, ThreadContext
 #
-from com.emc.mongoose.common.conf import RunTimeConfig
+from com.emc.mongoose.common.conf import RunTimeConfig, SizeUtil
 from com.emc.mongoose.common.logging import LogUtil
 #
 LOG = LogManager.getLogger()
@@ -30,7 +30,7 @@ def execute(loadBuilder, rampupParams=((),(),())):
 	listThreadCounts = rampupParams[2]
 	for index, dataItemSizeStr in enumerate(listSizes):
 		try:
-			dataItemSize = Long(RunTimeConfig.toSize(dataItemSizeStr))
+			dataItemSize = Long(SizeUtil.toSize(dataItemSizeStr))
 			for threadCountStr in listThreadCounts:
 				nextChain = None
 				try:
