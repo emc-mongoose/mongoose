@@ -117,11 +117,11 @@ $(document).ready(function() {
 	});
 	//
 	$("#time input, #time select").on("change", function() {
-		var defaultCount = $("#load\\.limit\\.dataItemCount input").get(0).defaultValue;
-		$("#load\\.limit\\.dataItemCount input").val(defaultCount);
-		$("#backup-load\\.limit\\.dataItemCount").val(defaultCount);
+		var strValue = $("#backup-load\\.limit\\.time\\.value").val() +
+			$("#backup-load\\.limit\\.time\\.unit").val().charAt(0);
+		$("#load\\.limit\\.time input").val(strValue);
 	});
-	//
+	/*
 	$("#objects input").on("change", function() {
 		var defaultValue = $("#load\\.limit\\.time\\.value input").get(0).defaultValue;
 		$("#load\\.limit\\.time\\.value input").val(defaultValue);
@@ -130,7 +130,7 @@ $(document).ready(function() {
 		var defaultUnit = $("#load\\.limit\\.time\\.unit input").get(0).defaultValue;
 		$("#load\\.limit\\.time\\.unit input").val(defaultUnit);
 		$("#backup-load\\.limit\\.time\\.unit").val(defaultUnit);
-	});
+	});*/
 	//
 	$("#base input, #base select").on("change", function() {
 		var currElement = $(this);
@@ -140,24 +140,27 @@ $(document).ready(function() {
 			currElement = $("#backup-run\\.time").val(input + "." + select);
 		}*/
 		//
-		var element = $("#" + currElement.attr("data-pointer").replace(/\./g, "\\.") + " input");
-		if (currElement.is("select")) {
-			var valueSelected = currElement.children("option").filter(":selected").text().trim();
-			$('select[data-pointer="'+currElement.attr("data-pointer")+'"]')
-					.val(currElement.val());
-			if (element) {
-				element.val(valueSelected);
+		var currDataPointer = currElement.attr("data-pointer");
+		if(currDataPointer != null && !currDataPointer.length > 0) {
+			var element = $("#" + currElement.attr("data-pointer").replace(/\./g, "\\.") + " input");
+			if (currElement.is("select")) {
+				var valueSelected = currElement.children("option").filter(":selected").text().trim();
+				$('select[data-pointer="'+currElement.attr("data-pointer")+'"]')
+						.val(currElement.val());
+				if (element) {
+					element.val(valueSelected);
+				}
+			} else {
+				$('input[data-pointer="' + currElement.attr("data-pointer") + '"]')
+						.val(currElement.val());
+				if (element) {
+					element.val(currElement.val());
+				}
 			}
-		} else {
-			$('input[data-pointer="' + currElement.attr("data-pointer") + '"]')
-					.val(currElement.val());
-			if (element) {
-				element.val(currElement.val());
+			if ((currElement.attr("id") === "backup-scenario.type.single.load")
+				|| (currElement.attr("id") === "backup-scenario.type.chain.load")) {
+				changeLoadHint($("#backup-scenario\\.name").val());
 			}
-		}
-		if ((currElement.attr("id") === "backup-scenario.type.single.load")
-			|| (currElement.attr("id") === "backup-scenario.type.chain.load")) {
-			changeLoadHint($("#backup-scenario\\.name").val());
 		}
 	});
 	//
@@ -167,16 +170,41 @@ $(document).ready(function() {
 			$("#backup-run\\.time\\.input").val(splittedTimeString[0]);
 			$("#backup-run\\.time\\.select").val(splittedTimeString[1]);
 		}*/
-		var input = $('input[data-pointer="' + $(this).parent().parent().attr("id") + '"]')
+		var parentIdAttr = $(this).parent().parent().attr("id");
+		var
+			patternTime = /([0-9]*)([smhd]?)/,
+			patternTimeCompat = /([0-9]*)\\.([a-zA-Z]{4,7})/;
+		var numStr = "0", unitStr = "seconds";
+		var timeUnitShortCuts = {
+			"s" : "seconds",
+			"m" : "minutes",
+			"h" : "hours",
+			"d" : "days"
+		};
+		//console.log($(this).val())
+		if(parentIdAttr == "load.limit.time") {
+			var rawValue = $(this).val();
+			if(rawValue.match(patternTime)) {
+				var matcher = patternTime.exec(rawValue);
+				numStr = matcher[1];
+				if(matcher[2] === undefined) {
+					if(rawValue.matcher(patternTimeCompat)) {
+						matcher = patternTimeCompat.exec(rawValue);
+						unitStr = matcher[2];
+					}
+				} else {
+					unitStr = timeUnitShortCuts[matcher[2]];
+				}
+			}
+			// ok, going further
+			$("#backup-load\\.limit\\.time\\.value").val(numStr);
+			$("#backup-load\\.limit\\.time\\.unit").val(unitStr);
+		} else {
+			var input = $('input[data-pointer="' + parentIdAttr + '"]')
 				.val($(this).val());
-		var select = $('select[data-pointer="' + $(this).parent().parent().attr("id") + '"] option:contains(' + $(this)
+			var select = $('select[data-pointer="' + parentIdAttr + '"] option:contains(' + $(this)
 				.val() + ')')
-			.attr('selected', 'selected');
-		if ($(this).parent().parent().attr("id") !== "load.limit.time.value"
-			&& $(this).parent().parent().attr("id") !== "load.limit.time.unit"
-			&& $(this).parent().parent().attr("id") !== "load.limit.dataItemCount") {
-				input.change();
-				select.change();
+				.attr('selected', 'selected');
 		}
 	});
 	$("#backup-data\\.size").on("change", function() {

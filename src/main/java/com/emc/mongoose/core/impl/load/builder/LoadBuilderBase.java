@@ -82,7 +82,7 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_DATA_ITEM_COUNT;
 		try {
-			setMaxCount(runTimeConfig.getLoadLimitDataItemCount());
+			setMaxCount(runTimeConfig.getLoadLimitCount());
 		} catch(final NoSuchElementException e) {
 			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {

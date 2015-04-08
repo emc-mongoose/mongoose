@@ -29,17 +29,19 @@ implements Runnable {
 	@Override
 	public final void run() {
 		try {
-			try {
-				loadSvc.join(timeOutMilliSec);
-			} catch(final InterruptedException e) {
-				LOG.debug(
-					LogUtil.MSG, "Remote join task for \"{}\" was interrupted", loadSvc.getName()
-				);
-			}
+			LOG.debug(
+				LogUtil.MSG, "Wait for the remote load service \"{}\" to complete at {}[ms]",
+				loadSvc, timeOutMilliSec
+			);
+			loadSvc.join(timeOutMilliSec);
+		} catch(final InterruptedException e) {
+			LOG.debug(LogUtil.MSG, "Remote join task for \"{}\" was interrupted", loadSvc);
 		} catch(final NoSuchObjectException e) {
 			LogUtil.failure(LOG, Level.DEBUG, e, "Remote join failed, no such service");
 		} catch(final RemoteException e) {
 			LogUtil.failure(LOG, Level.WARN, e, "Remote join task failure");
+		} finally {
+			LOG.debug(LogUtil.MSG, "Remote join task for \"{}\" was completed", loadSvc);
 		}
 	}
 }

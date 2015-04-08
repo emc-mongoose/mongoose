@@ -226,7 +226,7 @@ implements DataItem {
 			out.write(buf, nextOffset, nextLength);
 			byteCountLeft -= nextLength;
 			nextOffset = 0;
-			nextLength = (int) (byteCountLeft % buf.length);
+			nextLength = byteCountLeft > buf.length ? buf.length : (int) byteCountLeft;
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(LogUtil.MSG, FMT_MSG_STREAM_OUT_FINISH, Long.toHexString(offset));

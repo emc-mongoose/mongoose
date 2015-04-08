@@ -7,6 +7,7 @@ import org.apache.logging.log4j.core.appender.AppenderLoggingException;
 import org.apache.logging.log4j.core.appender.ManagerFactory;
 //
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -122,10 +123,15 @@ extends AbstractManager {
 	protected final synchronized void write(
 		final String currRunId, final byte[] buff, final int offset, final int len
 	) {
-		try(final OutputStream outStream = getOutputStream(currRunId)) {
+		final OutputStream outStream = getOutputStream(currRunId);
+		try {
 			outStream.write(buff, offset, len);
 		} catch (final IOException e) {
-			throw new AppenderLoggingException("Error writing to stream " + getName(), e);
+			throw new AppenderLoggingException(
+				String.format(
+					"Failed to write to the stream \"%s\" w/ run id \"%s\"", getName(), currRunId
+				), e
+			);
 		}
 	}
 	//
@@ -139,24 +145,26 @@ extends AbstractManager {
 	//
 	protected final OutputStream getOutputStream(final String currRunId) {
 		OutputStream currentOutPutStream = null;
-		File currentOutPutFile;
 		if(outStreamsMap.containsKey(currRunId)) {
 			currentOutPutStream = outStreamsMap.get(currRunId);
 		} else {
-			currentOutPutFile = new File(
-				currRunId == null ?
-					String.format(FMT_FILE_PATH_NO_RUN_ID, LogUtil.PATH_LOG_DIR, fileName) :
-					String.format(FMT_FILE_PATH, LogUtil.PATH_LOG_DIR, currRunId, fileName)
-			);
-			final File parentFile = currentOutPutFile.getParentFile();
+			final File
+				outPutFile = new File(
+					currRunId == null ?
+						String.format(FMT_FILE_PATH_NO_RUN_ID, LogUtil.PATH_LOG_DIR, fileName) :
+						String.format(FMT_FILE_PATH, LogUtil.PATH_LOG_DIR, currRunId, fileName)
+				),
+				parentFile = outPutFile.getParentFile();
 			if(parentFile != null && !parentFile.exists()) {
 				parentFile.mkdirs();
 			}
 			//
 			try {
-				currentOutPutStream = new FileOutputStream(currentOutPutFile.getPath(), flagAppend);
+				currentOutPutStream = new FileOutputStream(
+					outPutFile.getPath(), flagAppend
+				);
 				outStreamsMap.put(currRunId, currentOutPutStream);
-			} catch(final IOException e) {
+			} catch(final FileNotFoundException e) {
 				e.printStackTrace(System.err);
 			}
 		}

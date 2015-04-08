@@ -132,17 +132,15 @@
 													<div class="col-sm-9">
 														<input type="text" id="backup-load.limit.time.value"
 														       class="form-control pre-select"
-														       value="${rt:getString(runTimeConfig, 'load.limit.time.value')}"
-																data-pointer="load.limit.time.value"/>
-														<select class="form-select" id="backup-load.limit.time.unit"
-																data-pointer="load.limit.time.unit">
-															<option>
-																${rt:getString(runTimeConfig, 'load.limit.time.unit')}
+														       value="${rt:getTimeValue(runTimeConfig, 'load.limit.time')}"/>
+														<select class="form-select" id="backup-load.limit.time.unit">
+															<option value="${rt:getTimeUnit(runTimeConfig, 'load.limit.time')}">
+																${rt:getTimeUnit(runTimeConfig, 'load.limit.time')}
 															</option>
-															<option>days</option>
-															<option>hours</option>
-															<option>minutes</option>
-															<option>seconds</option>
+															<option value="days">days</option>
+															<option value="hours">hours</option>
+															<option value="minutes">minutes</option>
+															<option value="seconds">seconds</option>
 														</select>
 													</div>
 												</div>
@@ -768,13 +766,13 @@
 												</div>
 
 												<div id="objects" class="form-group">
-													<label for="backup-load.limit.dataItemCount" class="col-sm-3 control-label">
+													<label for="backup-load.limit.count" class="col-sm-3 control-label">
 														Items count limit
 													</label>
 													<div class="col-sm-9">
-														<input type="text" id="backup-load.limit.dataItemCount" class="form-control"
-									                        data-pointer="load.limit.dataItemCount"
-												            value="${runTimeConfig.loadLimitDataItemCount}"/>
+														<input type="text" id="backup-load.limit.count" class="form-control"
+									                        data-pointer="load.limit.count"
+												            value="${runTimeConfig.loadLimitCount}"/>
 													</div>
 												</div>
 

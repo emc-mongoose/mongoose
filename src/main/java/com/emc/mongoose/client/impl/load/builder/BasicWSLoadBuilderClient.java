@@ -153,7 +153,7 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		newLoadClient = new BasicWSLoadClient<>(
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
-			runTimeConfig.getLoadLimitDataItemCount(), srcProducer
+			runTimeConfig.getLoadLimitCount(), srcProducer
 		);
 		if(srcProducer != null && srcProducer.getConsumer() == null) {
 			LOG.debug(

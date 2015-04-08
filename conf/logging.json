@@ -1,7 +1,6 @@
-
 {
 	"configuration": {
-		"status": "off",
+		"status": "warn",
 		"name": "mongoose",
 		"monitorInterval": "1000",
 		"packages": "com.emc.mongoose.webui.logging,com.emc.mongoose.common.logging",

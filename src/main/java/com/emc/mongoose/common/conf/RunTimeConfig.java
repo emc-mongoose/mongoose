@@ -320,7 +320,7 @@ implements Externalizable {
 		return getString(KEY_RUN_VERSION);
 	}
 	//
-	public final long getLoadLimitDataItemCount() {
+	public final long getLoadLimitCount() {
 		return getLong(KEY_DATA_ITEM_COUNT);
 	}
 	//
@@ -664,7 +664,7 @@ implements Externalizable {
 							.appendFixedWidthPadRight("load", 31, ' ')
 							.append("| ")
 							.appendFixedWidthPadRight(
-								getProperty("scenario.type."+nextVal+".load"), 63, ' '
+								getProperty("scenario.type." + nextVal + ".load"), 63, ' '
 							)
 							.append('|');
 					}

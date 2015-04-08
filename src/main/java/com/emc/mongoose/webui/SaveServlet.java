@@ -24,13 +24,15 @@ import java.util.Scanner;
 /**
  * Created by gusakk on 12/28/14.
  */
-public class SaveServlet extends CommonServlet {
+public class SaveServlet
+extends CommonServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String FILENAME = "config.txt";
-	private final static File FILE_PATH = Paths.get(
-		RunTimeConfig.DIR_ROOT, Constants.DIR_WEBAPP, Constants.DIR_CONF
-	).toFile();
+	private final static File
+		FILE_PATH = Paths.get(
+			RunTimeConfig.DIR_ROOT, Constants.DIR_WEBAPP, Constants.DIR_CONF
+		).toFile();
 	//	HTTP Headers
 	private final static String CONTENT_TYPE = "Content-Type";
 	private final static String CONTENT_LENGTH = "Content-Length";

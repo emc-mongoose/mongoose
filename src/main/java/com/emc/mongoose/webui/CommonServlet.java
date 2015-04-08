@@ -17,7 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * Created by gusakk on 1/16/15.
  */
-public abstract class CommonServlet extends HttpServlet {
+public abstract class CommonServlet
+extends HttpServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private static volatile RunTimeConfig LAST_RUN_TIME_CONFIG;

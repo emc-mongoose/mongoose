@@ -15,7 +15,8 @@ import java.io.IOException;
 /**
  * Created by gusakk on 02/10/14.
  */
-public final class MainServlet extends HttpServlet {
+public final class MainServlet
+extends HttpServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
