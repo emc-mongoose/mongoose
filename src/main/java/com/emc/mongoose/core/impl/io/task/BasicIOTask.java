@@ -60,7 +60,7 @@ implements IOTask<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public BasicIOTask<T> reuse(final Object... args)
-	throws IllegalStateException, InterruptedException {
+	throws IllegalStateException {
 		if(isAvailable.compareAndSet(true, false)) {
 			status = Status.FAIL_UNKNOWN;
 			reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
@@ -113,8 +113,7 @@ implements IOTask<T> {
 	}
 	//
 	@Override
-	public IOTask<T> setNodeAddr(final String nodeAddr)
-	throws InterruptedException {
+	public IOTask<T> setNodeAddr(final String nodeAddr) {
 		this.nodeAddr = nodeAddr;
 		return this;
 	}

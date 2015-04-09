@@ -15,7 +15,6 @@ import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
 import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 //
-import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.http.Header;
@@ -37,11 +36,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -129,7 +125,7 @@ implements WSIOTask<T> {
 	private final static Map<String, HttpHost> HTTP_HOST_MAP = new ConcurrentHashMap<>();
 	@Override
 	public final WSIOTask<T> setNodeAddr(final String nodeAddr)
-	throws InterruptedException {
+	throws IllegalStateException {
 		super.setNodeAddr(nodeAddr);
 		HttpHost tgtHost = null;
 		if(HTTP_HOST_MAP.containsKey(nodeAddr)) {
@@ -151,7 +147,7 @@ implements WSIOTask<T> {
 						LOG, Level.WARN, e,
 						String.format("Invalid syntax of storage address \"%s\"", nodeAddr)
 					);
-					throw new InterruptedException("Stop due to unrecoverable failure");
+					throw new IllegalStateException("Stop due to unrecoverable failure");
 				}
 			} else {
 				tgtHost = new HttpHost(

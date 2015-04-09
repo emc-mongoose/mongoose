@@ -24,5 +24,5 @@ extends
 	//
 	@Override
 	WSIOTask<T> setNodeAddr(final String nodeAddr)
-	throws InterruptedException;
+	throws IllegalStateException;
 }

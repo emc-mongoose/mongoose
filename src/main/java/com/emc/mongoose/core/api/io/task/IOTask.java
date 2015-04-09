@@ -41,7 +41,7 @@ extends Reusable {
 	IOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//
 	IOTask<T> setNodeAddr(final String nodeAddr)
-	throws InterruptedException;
+	throws IllegalStateException;
 	//
 	String getNodeAddr();
 	//
