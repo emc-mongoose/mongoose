@@ -169,6 +169,11 @@
 						"marker": "perfSum",
 						"onMatch": "ACCEPT",
 						"onMismatch": "DENY"
+					}}, {
+						"type": "ThresholdFilter",
+						"level": "INFO",
+						"onMatch": "ACCEPT",
+						"onMismatch": "DENY"
 					}
 				}, {
 					"name": "perfTraceFile",
@@ -179,6 +184,11 @@
 						"marker": "perfTrace",
 						"onMatch": "ACCEPT",
 						"onMismatch": "DENY"
+					}, {
+						"type": "ThresholdFilter",
+						"level": "INFO",
+						"onMatch": "ACCEPT",
+						"onMismatch": "DENY"
 					}
 				}, {
 					"name": "dataListFile",
@@ -187,6 +197,11 @@
 					"PatternLayout": { "pattern": "%m%n" },
 					"MarkerFilter": {
 						"marker": "dataList",
+						"onMatch": "ACCEPT",
+						"onMismatch": "DENY"
+					}, {
+						"type": "ThresholdFilter",
+						"level": "INFO",
 						"onMatch": "ACCEPT",
 						"onMismatch": "DENY"
 					}
