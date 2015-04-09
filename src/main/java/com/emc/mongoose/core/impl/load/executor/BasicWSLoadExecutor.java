@@ -22,8 +22,8 @@ import org.apache.http.ExceptionLogger;
 import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.nio.reactor.IOReactorStatus;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -43,15 +43,18 @@ import org.apache.http.nio.protocol.HttpAsyncRequester;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
+import org.apache.http.nio.reactor.IOReactorStatus;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 /**
  Created by kurila on 02.12.14.
  */
@@ -64,6 +67,7 @@ implements WSLoadExecutor<T> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
+	private final long connPoolTimeOutMilliSec;
 	private final Thread clientThread;
 	//
 	public BasicWSLoadExecutor(
@@ -146,6 +150,8 @@ implements WSLoadExecutor<T> {
 		);
 		connPool.setMaxTotal(totalConnCount);
 		connPool.setDefaultMaxPerRoute(totalConnCount);
+		connPoolTimeOutMilliSec = thrLocalConfig.getRunReqTimeOutMilliSec();
+		//
 		clientThread = new Thread(
 			new HttpClientRunTask(ioEventDispatch, ioReactor),
 			String.format("%s-webClientThread", getName())
@@ -201,7 +207,13 @@ implements WSLoadExecutor<T> {
 		final Future<IOTask.Status> futureResult;
 		if(IOReactorStatus.ACTIVE.equals(ioReactor.getStatus())) {
 			final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-			futureResult = client.execute(wsTask, wsTask, connPool, wsTask.getHttpContext());
+			futureResult = client.execute(wsTask, wsTask, connPool);
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(
+					LogUtil.MSG, "I/O task #{} has been submitted for execution",
+					wsTask.hashCode()
+				);
+			}
 		} else {
 			throw new RejectedExecutionException("I/O reactor is not active");
 		}

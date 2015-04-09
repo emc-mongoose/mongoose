@@ -807,7 +807,7 @@ implements LoadClient<T> {
 	@Override
 	public final void join()
 	throws InterruptedException {
-		join(Long.MAX_VALUE);
+		join(Long.MAX_VALUE - 1000);
 	}
 	//
 	@Override
@@ -820,7 +820,7 @@ implements LoadClient<T> {
 			new Runnable() {
 				@Override
 				public final void run() {
-					LOG.trace(
+					LOG.debug(
 						LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
 						getName(), getQueue().size() + getActiveCount()
 					);
@@ -836,6 +836,7 @@ implements LoadClient<T> {
 			joinExecutor.submit(new RemoteJoinTask(remoteLoadMap.get(addr), timeOutMilliSec));
 		}
 		joinExecutor.shutdown();
-		joinExecutor.awaitTermination(2 * timeOutMilliSec, TimeUnit.MILLISECONDS);
+		joinExecutor.awaitTermination(timeOutMilliSec + 1000, TimeUnit.MILLISECONDS);
+		LOG.debug(LogUtil.MSG, "Distributed join call done");
 	}
 }

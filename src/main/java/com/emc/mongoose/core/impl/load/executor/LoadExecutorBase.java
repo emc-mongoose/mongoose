@@ -177,12 +177,14 @@ implements LoadExecutor<T> {
 	private final Thread metricDumpThread = new Thread() {
 		@Override
 		public final void run() {
-			final int metricsUpdatePeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
+			final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
+				runTimeConfig.getLoadMetricsPeriodSec()
+			);
 			try {
-				if(metricsUpdatePeriodSec > 0) {
-					while(isAlive()) {
+				if(metricsUpdatePeriodMilliSec > 0) {
+					while(!isShutdown() || getQueue().size() > 0) {
 						logMetrics(LogUtil.PERF_AVG);
-						Thread.sleep(metricsUpdatePeriodSec * 1000);
+						Thread.sleep(metricsUpdatePeriodMilliSec);
 					}
 				} else {
 					Thread.sleep(Long.MAX_VALUE);
@@ -315,10 +317,7 @@ implements LoadExecutor<T> {
 		if(!isShutdown()) {
 			shutdown();
 		}
-		if(metricDumpThread.isAlive()) {
-			LOG.debug(LogUtil.MSG, "{}: interrupting...", getName());
-			metricDumpThread.interrupt();
-		}
+		LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, String.format("Interrupted %s", getName()));
 	}
 	//
 	@Override
@@ -557,22 +556,22 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join()
 	throws InterruptedException {
-		LOG.trace(
+		LOG.debug(
 			LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
 			getName(), getQueue().size() + getActiveCount()
 		);
 		awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-		LOG.trace(LogUtil.MSG, "{} interrupted and done", getName());
+		LOG.debug(LogUtil.MSG, "{} interrupted and done", getName());
 	}
 	//
 	@Override
 	public final void join(final long timeOutMilliSec)
 	throws InterruptedException {
-		LOG.trace(
+		LOG.debug(
 			LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
 			getName(), getQueue().size() + getActiveCount()
 		);
 		awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
-		LOG.trace(LogUtil.MSG, "{} interrupted and done", getName());
+		LOG.debug(LogUtil.MSG, "{} interrupted and done", getName());
 	}
 }

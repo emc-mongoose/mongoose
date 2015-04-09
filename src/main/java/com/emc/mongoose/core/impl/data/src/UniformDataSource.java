@@ -118,7 +118,7 @@ implements DataSource {
 	@Override
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		DEFAULT.setSeed(in.readInt());
+		DEFAULT.setSize(in.readInt());
 		DEFAULT.setSeed(in.readLong());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
