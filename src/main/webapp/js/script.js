@@ -171,7 +171,7 @@ $(document).ready(function() {
 			$("#backup-run\\.time\\.select").val(splittedTimeString[1]);
 		}*/
 		var parentIdAttr = $(this).parent().parent().attr("id");
-		var patternTime = /^([0-9]*)([smhd]?)$/;
+		var patternTime = /^([0-9]*)([smhdSMHD]?)$/;
 		var numStr = "0", unitStr = "seconds";
 		var timeUnitShortCuts = {
 			"s" : "seconds",
@@ -186,9 +186,10 @@ $(document).ready(function() {
 				var matcher = patternTime.exec(rawValue);
 				numStr = matcher[1];
 				if(matcher[2] != null && matcher[2].length > 0) {
-					unitStr = timeUnitShortCuts[matcher[2]];
+					unitStr = timeUnitShortCuts[matcher[2].toLowerCase()];
 				}
 			} else if(rawValue.indexOf('.') > 0) {
+				var splitValue = rawValue.split('.')
 				numStr = splitValue[0];
 				unitStr = splitValue[1];
 			}
