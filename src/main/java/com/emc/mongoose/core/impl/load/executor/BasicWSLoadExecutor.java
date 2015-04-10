@@ -20,8 +20,10 @@ import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
+import org.apache.http.ConnectionReuseStrategy;
 import org.apache.http.ExceptionLogger;
 import org.apache.http.HttpHost;
+import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
@@ -58,7 +60,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 02.12.14.
  */
@@ -205,50 +206,26 @@ implements WSLoadExecutor<T> {
 		LOG.debug(LogUtil.MSG, "Closed web storage client");
 	}
 	//
-	private final static class ReusableHTTPContext
-	extends HttpCoreContext
-	implements Reusable {
-		//
-		private final static InstancePool<ReusableHTTPContext> HTTP_CTX_POOL = new InstancePool<>(
-			ReusableHTTPContext.class
-		);
-		//
-		private final AtomicBoolean isAvailable = new AtomicBoolean(true);
-		//
-		public static ReusableHTTPContext getInstance() {
-			return HTTP_CTX_POOL.take(null);
-		}
-		//
-		@Override
-		public final Reusable reuse(final Object... args)
-		throws IllegalArgumentException, IllegalStateException {
-			if(isAvailable.compareAndSet(true, false)) {
-
-			} else {
-				throw new IllegalStateException("Not yet released instance reuse attempt");
-			}
-			return null;
-		}
-		@Override
-		public final void release() {
-			if(isAvailable.compareAndSet(false, true)) {
-				HTTP_CTX_POOL.release(this);
-			}
-		}
-		@Override
-		public final int compareTo(final Reusable another) {
-			return another == null ? 1 : hashCode() - another.hashCode();
-		}
-	}
-	//
 	@Override
 	public final Future<IOTask.Status> submit(final IOTask<T> ioTask)
 	throws RejectedExecutionException {
+		//
+		if(!IOReactorStatus.ACTIVE.equals(ioReactor.getStatus())) {
+			throw new RejectedExecutionException("I/O reactor is not active");
+		}
+		//
+		if(connPool.isShutdown()) {
+			throw new RejectedExecutionException("Connection pool is shut down");
+		}
+		//
 		final Future<IOTask.Status> futureResult;
-		if(IOReactorStatus.ACTIVE.equals(ioReactor.getStatus())) {
-			final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
+		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
+		try {
+			final BasicNIOPoolEntry connPoolEntry = connPool
+				.lease(wsTask.getTarget(), null, this)
+				.get(connPoolTimeOutMilliSec, TimeUnit.MILLISECONDS);
 			futureResult = client.execute(
-				wsTask, wsTask, connPool, ReusableHTTPContext.getInstance()
+				wsTask, wsTask, connPoolEntry.getConnection(), wsTask.getHTTPContext()
 			);
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(
@@ -256,8 +233,8 @@ implements WSLoadExecutor<T> {
 					wsTask.hashCode()
 				);
 			}
-		} else {
-			throw new RejectedExecutionException("I/O reactor is not active");
+		} catch(final InterruptedException | ExecutionException | TimeoutException e) {
+			throw new RejectedExecutionException(e);
 		}
 		return futureResult;
 	}

@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
+import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.io.HTTPOutputStream;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -32,6 +33,7 @@ import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 //
+import org.apache.http.protocol.HttpCoreContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
