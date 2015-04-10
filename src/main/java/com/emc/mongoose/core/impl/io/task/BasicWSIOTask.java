@@ -33,7 +33,6 @@ import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 //
-import org.apache.http.protocol.HttpCoreContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

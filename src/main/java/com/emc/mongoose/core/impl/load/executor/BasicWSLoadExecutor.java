@@ -1,7 +1,5 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
-import com.emc.mongoose.common.collections.InstancePool;
-import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
@@ -20,15 +18,12 @@ import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
-import org.apache.http.ConnectionReuseStrategy;
 import org.apache.http.ExceptionLogger;
 import org.apache.http.HttpHost;
-import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -213,28 +208,18 @@ implements WSLoadExecutor<T> {
 		if(!IOReactorStatus.ACTIVE.equals(ioReactor.getStatus())) {
 			throw new RejectedExecutionException("I/O reactor is not active");
 		}
-		//
 		if(connPool.isShutdown()) {
 			throw new RejectedExecutionException("Connection pool is shut down");
 		}
 		//
 		final Future<IOTask.Status> futureResult;
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-		try {
-			final BasicNIOPoolEntry connPoolEntry = connPool
-				.lease(wsTask.getTarget(), null, this)
-				.get(connPoolTimeOutMilliSec, TimeUnit.MILLISECONDS);
-			futureResult = client.execute(
-				wsTask, wsTask, connPoolEntry.getConnection(), wsTask.getHTTPContext()
+		futureResult = client.execute(wsTask, wsTask, connPool);
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(
+				LogUtil.MSG, "I/O task #{} has been submitted for execution",
+				wsTask.hashCode()
 			);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(
-					LogUtil.MSG, "I/O task #{} has been submitted for execution",
-					wsTask.hashCode()
-				);
-			}
-		} catch(final InterruptedException | ExecutionException | TimeoutException e) {
-			throw new RejectedExecutionException(e);
 		}
 		return futureResult;
 	}
