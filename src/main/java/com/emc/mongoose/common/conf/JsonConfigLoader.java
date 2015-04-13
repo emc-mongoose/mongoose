@@ -88,6 +88,9 @@ public class JsonConfigLoader {
 					((ObjectNode) jsonNode).put(shortFieldName, property);
 				} else {
 					DEFAULT_CFG.setProperty(fullFieldName, jsonNode.get(shortFieldName).toString()
+                            .replace("[", "")
+                            .replace("]", "")
+                            .replace(" ", "")
 							.replace("\"", "")
 							.trim());
 					mongooseKeys.add(fullFieldName);
