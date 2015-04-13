@@ -42,7 +42,8 @@ implements DataItemBuffer<T> {
 	private volatile ObjectOutput fBuffOut;
 	private volatile int retryCountMax, retryDelayMilliSec;
 	//
-	public TmpFileItemBuffer(final long maxCount, final int threadCount) {
+	public TmpFileItemBuffer(final long maxCount, final int threadCount)
+	throws IllegalStateException {
 		super(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
@@ -59,36 +60,24 @@ implements DataItemBuffer<T> {
 		retryCountMax = localRunTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = localRunTimeConfig.getRunRetryDelayMilliSec();
 		//
-		File localFBuff = null;
 		try {
-			localFBuff = Files.createTempFile(
+			fBuff = Files.createTempFile(
 				String.format(FMT_THREAD_NAME, localRunTimeConfig.getRunName()), null
 			).toFile();
+			fBuff.deleteOnExit();
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Failed to create temporary file for output");
+			throw new IllegalStateException("Failed to create temporary file for output", e);
 		}
-		fBuff = localFBuff;
 		LOG.debug(LogUtil.MSG, "{}: created temp file", toString());
-		//
-		if(fBuff != null) {
-			setThreadFactory(
-				new NamingWorkerFactory(fBuff.getName()) // the name should be URL-safe
+		// the name should be URL-safe
+		setThreadFactory(new NamingWorkerFactory(fBuff.getName()));
+		try {
+			fBuffOut = new ObjectOutputStream(
+				new FileOutputStream(fBuff)
 			);
+		} catch(final IOException e) {
+			throw new IllegalStateException("Failed to open temporary file for output", e);
 		}
-		//
-		ObjectOutput fBuffOutTmp = null;
-		if(fBuff != null) {
-			try {
-				fBuffOutTmp = new ObjectOutputStream(
-					new FileOutputStream(fBuff)
-				);
-			} catch(final IOException e) {
-				LogUtil.failure(
-					LOG, Level.ERROR, e, "Failed to open temporary file for output"
-				);
-			}
-		}
-		fBuffOut = fBuffOutTmp;
 	}
 	//
 	@Override
@@ -254,17 +243,7 @@ implements DataItemBuffer<T> {
 							LOG.debug(LogUtil.ERR, "Consumer rejected the poison");
 						} finally {
 							consumer = null;
-							if(fBuff.delete()) {
-								LOG.debug(
-									LogUtil.MSG, "File \"{}\" succesfully deleted",
-									fBuff.getAbsolutePath()
-								);
-							} else {
-								LOG.debug(
-									LogUtil.ERR, "Failed to delete the file \"{}\"",
-									fBuff.getAbsolutePath()
-								);
-							}
+							deleteFromFileSystem();
 						}
 					}
 				}
@@ -315,7 +294,23 @@ implements DataItemBuffer<T> {
 			}
 		}
 		producerThread.interrupt();
+		deleteFromFileSystem();
 		LOG.debug(LogUtil.MSG, "{}: interrupted", getThreadFactory().toString());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private void deleteFromFileSystem() {
+		if(fBuff.exists()) {
+			if(fBuff.delete()) {
+				LOG.debug(
+					LogUtil.MSG, "File \"{}\" succesfully deleted",
+					fBuff.getAbsolutePath()
+				);
+			} else {
+				LOG.debug(
+					LogUtil.ERR, "Failed to delete the file \"{}\"",
+					fBuff.getAbsolutePath()
+				);
+			}
+		}
+	}
 }

@@ -464,6 +464,9 @@ implements LoadExecutor<T> {
 			// stop the producing
 			try {
 				producer.interrupt();
+				LOG.debug(
+					LogUtil.MSG, "Stopped the producer \"{}\" for \"{}\"", producer, getName()
+				);
 			} catch(final IOException e) {
 				LogUtil.failure(
 					LOG, Level.WARN, e,
@@ -473,7 +476,8 @@ implements LoadExecutor<T> {
 		}
 		//
 		if(!isShutdown()) {
-			super.shutdown(); // stop the submitting
+			super.shutdown();
+			LOG.debug(LogUtil.MSG, "\"{}\" will not accept new tasks more", getName());
 		}
 	}
 	//
@@ -483,7 +487,7 @@ implements LoadExecutor<T> {
 	public void close()
 	throws IOException {
 		LogUtil.trace(
-			LOG, Level.TRACE, LogUtil.MSG, String.format("invoked close of %s", getName())
+			LOG, Level.DEBUG, LogUtil.MSG, String.format("Invoked close of %s", getName())
 		);
 		if(isClosed.compareAndSet(false, true)) {
 			final long tsStartNanoSec = tsStart.get();
@@ -555,23 +559,31 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final void join()
-	throws InterruptedException {
+	throws RemoteException {
 		LOG.debug(
 			LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
 			getName(), getQueue().size() + getActiveCount()
 		);
-		awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+		try {
+			awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
+		} catch(final InterruptedException e) {
+			throw new RemoteException("Interrupted", e);
+		}
 		LOG.debug(LogUtil.MSG, "{} interrupted and done", getName());
 	}
 	//
 	@Override
 	public final void join(final long timeOutMilliSec)
-	throws InterruptedException {
+	throws RemoteException {
 		LOG.debug(
 			LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
 			getName(), getQueue().size() + getActiveCount()
 		);
-		awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
+		try {
+			awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
+		} catch(final InterruptedException e) {
+			throw new RemoteException("Interrupted", e);
+		}
 		LOG.debug(LogUtil.MSG, "{} interrupted and done", getName());
 	}
 }

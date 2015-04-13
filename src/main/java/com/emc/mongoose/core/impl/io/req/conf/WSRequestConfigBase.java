@@ -537,9 +537,13 @@ implements WSRequestConfig<T> {
 	//}
 	//
 	@Override
-	public synchronized String getSignature(final String canonicalForm) {
-		mac.reset();
-		return Base64.encodeBase64String(mac.doFinal(canonicalForm.getBytes()));
+	public String getSignature(final String canonicalForm) {
+		final byte sigData[];
+		synchronized(mac) {
+			mac.reset();
+			sigData = mac.doFinal(canonicalForm.getBytes());
+		}
+		return Base64.encodeBase64String(sigData);
 	}
 	//
 	@Override

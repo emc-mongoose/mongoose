@@ -22,7 +22,6 @@ import org.apache.http.ExceptionLogger;
 import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
@@ -50,11 +49,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 /**
  Created by kurila on 02.12.14.
  */
@@ -67,7 +64,6 @@ implements WSLoadExecutor<T> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
-	private final long connPoolTimeOutMilliSec;
 	private final Thread clientThread;
 	//
 	public BasicWSLoadExecutor(
@@ -150,7 +146,6 @@ implements WSLoadExecutor<T> {
 		);
 		connPool.setMaxTotal(totalConnCount);
 		connPool.setDefaultMaxPerRoute(totalConnCount);
-		connPoolTimeOutMilliSec = thrLocalConfig.getRunReqTimeOutMilliSec();
 		//
 		clientThread = new Thread(
 			new HttpClientRunTask(ioEventDispatch, ioReactor),

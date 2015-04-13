@@ -8,8 +8,10 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.lang.reflect.Method;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.Arrays;
 /**
  Created by kurila on 23.12.14.
  */
@@ -31,11 +33,9 @@ implements Runnable {
 		try {
 			LOG.debug(
 				LogUtil.MSG, "Wait for the remote load service \"{}\" to complete at {}[ms]",
-				loadSvc, timeOutMilliSec
+				loadSvc.getName(), timeOutMilliSec
 			);
 			loadSvc.join(timeOutMilliSec);
-		} catch(final InterruptedException e) {
-			LOG.debug(LogUtil.MSG, "Remote join task for \"{}\" was interrupted", loadSvc);
 		} catch(final NoSuchObjectException e) {
 			LogUtil.failure(LOG, Level.DEBUG, e, "Remote join failed, no such service");
 		} catch(final RemoteException e) {

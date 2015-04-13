@@ -45,7 +45,7 @@ implements Producer<T> {
 	//
 	@Override
 	public final Consumer<T> getConsumer()
-		throws RemoteException {
+	throws RemoteException {
 		return newDataConsumer;
 	}
 	//
@@ -93,7 +93,7 @@ implements Producer<T> {
 			} catch(final IOException e) {
 				LogUtil.failure(LOG, Level.TRACE, e, MSG_SUBMIT_FAILED);
 			} catch(final InterruptedException e) {
-				LOG.debug(LogUtil.MSG, MSG_INTERRUPTED);
+				LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, MSG_INTERRUPTED);
 				break;
 			}
 		} while(isAlive());
