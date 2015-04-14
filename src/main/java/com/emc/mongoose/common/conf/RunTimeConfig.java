@@ -142,32 +142,6 @@ implements Externalizable {
 	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
-	static {
-		// shortcuts
-		MAP_OVERRIDE.put(
-			KEY_DATA_SIZE,
-			new String[] {
-				"data.size.min",
-				"data.size.max"
-			}
-		);
-		MAP_OVERRIDE.put(
-			KEY_LOAD_THREADS,
-			new String[] {
-				"load.type.append.threads",
-				"load.type.create.threads",
-				"load.type.read.threads",
-				"load.type.update.threads",
-				"load.type.delete.threads"
-			}
-		);
-		MAP_OVERRIDE.put(KEY_LOAD_TIME, new String[] { KEY_LOAD_LIMIT_TIME });
-		// backward compatibility
-		MAP_OVERRIDE.put(KEY_RUN_TIME, new String[] { KEY_LOAD_LIMIT_TIME });
-		MAP_OVERRIDE.put(KEY_DATA_COUNT, new String[] { KEY_LOAD_LIMIT_COUNT });
-		MAP_OVERRIDE.put("load.drivers", new String[] { "load.servers" });
-	}
-	//
 	private final Map<String, Object> properties = new HashMap<>();
 	//
 	private JsonNode rootNode;
@@ -578,6 +552,12 @@ implements Externalizable {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public synchronized void loadPropsFromJsonCfgFile(final Path propsDir) {
 		JsonConfigLoader.loadPropsFromJsonCfgFile(propsDir, this);
+        for (String key : mongooseKeys) {
+            if (key.startsWith("aliasing.")) {
+                final String correctKey = key.replaceAll("aliasing.", "");
+                MAP_OVERRIDE.put(correctKey, getStringArray(key));
+            }
+        }
 	}
 	//
 	public synchronized void loadSysProps() {
