@@ -124,6 +124,17 @@
 												</div>
 											</fieldset>
 
+											<div id="objects" class="form-group">
+												<label for="backup-load.limit.count" class="col-sm-3 control-label">
+													Items count limit
+												</label>
+												<div class="col-sm-9">
+													<input type="text" id="backup-load.limit.count" class="form-control"
+													       data-pointer="load.limit.count"
+													       value="${runTimeConfig.loadLimitCount}"/>
+												</div>
+											</div>
+
 											<div class="standalone client">
 												<div id="time" class="form-group complex">
 													<label for="backup-load.limit.time.value" class="col-sm-3 control-label">
@@ -765,17 +776,6 @@
 													</div>
 												</div>
 
-												<div id="objects" class="form-group">
-													<label for="backup-load.limit.count" class="col-sm-3 control-label">
-														Items count limit
-													</label>
-													<div class="col-sm-9">
-														<input type="text" id="backup-load.limit.count" class="form-control"
-									                        data-pointer="load.limit.count"
-												            value="${runTimeConfig.loadLimitCount}"/>
-													</div>
-												</div>
-
 												<div class="form-group">
 													<label for="backup-data.size" class="col-sm-3 control-label">
 														Items size
@@ -798,12 +798,6 @@
 													</div>
 												</div>
 
-												<div class="form-group">
-													<label class="col-sm-3 control-label">Output directory for logs</label>
-													<div class="col-sm-9">
-														<input type="text" class="form-control" value="log/webui/" readonly/>
-													</div>
-												</div>
 											</fieldset>
 										</div>
 
