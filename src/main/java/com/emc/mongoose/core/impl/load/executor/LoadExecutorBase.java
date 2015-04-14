@@ -43,6 +43,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 15.10.14.
  */
@@ -73,6 +76,12 @@ implements LoadExecutor<T> {
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter jmxReporter;
 	// METRICS section END
+	private final AtomicLong
+		durSumTasks = new AtomicLong(0),
+		countTasksDone = new AtomicLong(0);
+	private final Lock lock = new ReentrantLock();
+	private final Condition condMaxCountReachedOrClosed = lock.newCondition();
+	//
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
@@ -177,12 +186,14 @@ implements LoadExecutor<T> {
 	private final Thread metricDumpThread = new Thread() {
 		@Override
 		public final void run() {
-			final int metricsUpdatePeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
+			final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
+				runTimeConfig.getLoadMetricsPeriodSec()
+			);
 			try {
-				if(metricsUpdatePeriodSec > 0) {
-					while(isAlive()) {
+				if(metricsUpdatePeriodMilliSec > 0) {
+					while(!isShutdown() || getQueue().size() > 0) {
 						logMetrics(LogUtil.PERF_AVG);
-						Thread.sleep(metricsUpdatePeriodSec * 1000);
+						Thread.sleep(metricsUpdatePeriodMilliSec);
 					}
 				} else {
 					Thread.sleep(Long.MAX_VALUE);
@@ -315,10 +326,7 @@ implements LoadExecutor<T> {
 		if(!isShutdown()) {
 			shutdown();
 		}
-		if(metricDumpThread.isAlive()) {
-			LOG.debug(LogUtil.MSG, "{}: interrupting...", getName());
-			metricDumpThread.interrupt();
-		}
+		LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, String.format("Interrupted %s", getName()));
 	}
 	//
 	@Override
@@ -402,8 +410,6 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	private final AtomicLong durSumTasks = new AtomicLong(0);
-	//
 	@Override
 	public final void handleResult(final IOTask<T> ioTask, final IOTask.Status status) {
 		final T dataItem = ioTask.getDataItem();
@@ -411,38 +417,49 @@ implements LoadExecutor<T> {
 		try {
 			if(dataItem == null) {
 				consumer.submit(null);
-			} else if(status == IOTask.Status.SUCC) {
-				// update the metrics with success
-				throughPut.mark();
-				if(latency > 0) {
-					respLatency.update(latency);
-				}
-				reqBytes.mark(ioTask.getTransferSize());
-				durSumTasks.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(
-						LogUtil.MSG, "Task #{}: successfull result, {}/{}",
-						ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
-					);
-				}
-				// feed to the consumer
-				if(consumer != null) {
+			} else {
+				if(status == IOTask.Status.SUCC) {
+					// update the metrics with success
+					throughPut.mark();
+					if(latency > 0) {
+						respLatency.update(latency);
+					}
+					reqBytes.mark(ioTask.getTransferSize());
+					durSumTasks.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
 					if(LOG.isTraceEnabled(LogUtil.MSG)) {
 						LOG.trace(
-							LogUtil.MSG, "Going to feed the data item {} to the consumer {}",
-							dataItem, consumer
+							LogUtil.MSG, "Task #{}: successfull result, {}/{}",
+							ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
 						);
 					}
-					consumer.submit(dataItem);
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
-						LOG.trace(
-							LogUtil.MSG, "The data item {} is passed to the consumer {} successfully",
-							dataItem, consumer
-						);
+					// feed to the consumer
+					if(consumer != null) {
+						if(LOG.isTraceEnabled(LogUtil.MSG)) {
+							LOG.trace(
+								LogUtil.MSG, "Going to feed the data item {} to the consumer {}",
+								dataItem, consumer
+							);
+						}
+						consumer.submit(dataItem);
+						if(LOG.isTraceEnabled(LogUtil.MSG)) {
+							LOG.trace(
+								LogUtil.MSG, "The data item {} is passed to the consumer {} successfully",
+								dataItem, consumer
+							);
+						}
+					}
+				} else if(!isClosed.get()) {
+					counterReqFail.inc();
+				}
+				//
+				if(maxCount <= countTasksDone.incrementAndGet()) {
+					if(lock.tryLock(1, TimeUnit.SECONDS)) {
+						condMaxCountReachedOrClosed.signalAll();
+						lock.unlock();
+					} else {
+						LOG.warn(LogUtil.ERR, "Failed to acquire the lock for result handling");
 					}
 				}
-			} else if(!isClosed.get()) {
-				counterReqFail.inc();
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Interrupted");
@@ -465,6 +482,9 @@ implements LoadExecutor<T> {
 			// stop the producing
 			try {
 				producer.interrupt();
+				LOG.debug(
+					LogUtil.MSG, "Stopped the producer \"{}\" for \"{}\"", producer, getName()
+				);
 			} catch(final IOException e) {
 				LogUtil.failure(
 					LOG, Level.WARN, e,
@@ -474,7 +494,8 @@ implements LoadExecutor<T> {
 		}
 		//
 		if(!isShutdown()) {
-			super.shutdown(); // stop the submitting
+			super.shutdown();
+			LOG.debug(LogUtil.MSG, "\"{}\" will not accept new tasks more", getName());
 		}
 	}
 	//
@@ -484,7 +505,7 @@ implements LoadExecutor<T> {
 	public void close()
 	throws IOException {
 		LogUtil.trace(
-			LOG, Level.TRACE, LogUtil.MSG, String.format("invoked close of %s", getName())
+			LOG, Level.DEBUG, LogUtil.MSG, String.format("Invoked close of %s", getName())
 		);
 		if(isClosed.compareAndSet(false, true)) {
 			final long tsStartNanoSec = tsStart.get();
@@ -504,6 +525,13 @@ implements LoadExecutor<T> {
 					)
 				);
 			}
+			//
+			if(lock.tryLock()) {
+				condMaxCountReachedOrClosed.signalAll();
+			} else {
+				LOG.warn(LogUtil.ERR, "Failed to acquire the lock in close method");
+			}
+			//
 			try {
 				// force shutdown
 				reqConfigCopy.close(); // disables connection drop failures
@@ -556,23 +584,29 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final void join()
-	throws InterruptedException {
-		LOG.trace(
-			LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
-			getName(), getQueue().size() + getActiveCount()
-		);
-		awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-		LOG.trace(LogUtil.MSG, "{} interrupted and done", getName());
+	throws RemoteException {
+		join(Long.MAX_VALUE);
 	}
 	//
 	@Override
 	public final void join(final long timeOutMilliSec)
-	throws InterruptedException {
-		LOG.trace(
-			LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
-			getName(), getQueue().size() + getActiveCount()
-		);
-		awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
-		LOG.trace(LogUtil.MSG, "{} interrupted and done", getName());
+	throws RemoteException {
+		long t = System.currentTimeMillis();
+		try {
+			if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+				t = System.currentTimeMillis() - t; // the count of time wasted for locking
+				if(condMaxCountReachedOrClosed.await(timeOutMilliSec - t, TimeUnit.MILLISECONDS)) {
+					LOG.debug(LogUtil.MSG, "Join finished");
+				} else {
+					LOG.debug(LogUtil.MSG, "Join timeout");
+				}
+			} else {
+				LOG.warn(LogUtil.ERR, "Failed to acquire the lock for the join method");
+			}
+		} catch(final InterruptedException e) {
+			LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
+		} finally {
+			lock.unlock();
+		}
 	}
 }

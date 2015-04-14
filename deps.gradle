@@ -49,7 +49,7 @@ ext {
 	webjars_jquery = ['org.webjars:jquery:2.1.0']
 	webjars_d3js = ['org.webjars:d3js:3.5.3']
 
-	jython = [ "org.python:jython-standalone:2.7-b3" ]
+	jython = [ "org.python:jython:2.7-rc1" ]
 
 	lmax_disruptor = [ "com.lmax:disruptor:3.3.0" ]
 

@@ -31,11 +31,9 @@ implements Runnable {
 		try {
 			LOG.debug(
 				LogUtil.MSG, "Wait for the remote load service \"{}\" to complete at {}[ms]",
-				loadSvc, timeOutMilliSec
+				loadSvc.getName(), timeOutMilliSec
 			);
 			loadSvc.join(timeOutMilliSec);
-		} catch(final InterruptedException e) {
-			LOG.debug(LogUtil.MSG, "Remote join task for \"{}\" was interrupted", loadSvc);
 		} catch(final NoSuchObjectException e) {
 			LogUtil.failure(LOG, Level.DEBUG, e, "Remote join failed, no such service");
 		} catch(final RemoteException e) {

@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
+import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.io.HTTPOutputStream;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -29,16 +30,15 @@ import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
+import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
-import org.apache.http.protocol.HttpCoreContext;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -85,12 +85,6 @@ implements WSIOTask<T> {
 		}
 	}
 	// END pool related things
-	protected final HttpCoreContext httpContext = new HttpCoreContext();
-	@Override
-	public final HttpContext getHttpContext() {
-		return httpContext;
-	}
-	//
 	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	protected HeaderGroup sharedHeaders = null;
 	protected final MutableWSRequest httpRequest = new WSRequestImpl(
@@ -132,7 +126,7 @@ implements WSIOTask<T> {
 	private final static Map<String, HttpHost> HTTP_HOST_MAP = new ConcurrentHashMap<>();
 	@Override
 	public final WSIOTask<T> setNodeAddr(final String nodeAddr)
-	throws InterruptedException {
+	throws IllegalStateException {
 		super.setNodeAddr(nodeAddr);
 		HttpHost tgtHost = null;
 		if(HTTP_HOST_MAP.containsKey(nodeAddr)) {
@@ -154,7 +148,7 @@ implements WSIOTask<T> {
 						LOG, Level.WARN, e,
 						String.format("Invalid syntax of storage address \"%s\"", nodeAddr)
 					);
-					throw new InterruptedException("Stop due to unrecoverable failure");
+					throw new IllegalStateException("Stop due to unrecoverable failure");
 				}
 			} else {
 				tgtHost = new HttpHost(
@@ -165,7 +159,7 @@ implements WSIOTask<T> {
 		}
 		if(tgtHost != null) {
 			httpRequest.setUriAddr(tgtHost.toURI());
-			httpContext.setTargetHost(tgtHost);
+			httpRequest.setHeader(HTTP.TARGET_HOST, nodeAddr);
 		}
 		return this;
 	}
@@ -460,25 +454,18 @@ implements WSIOTask<T> {
 	@Override
 	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
 	throws IOException {
-		if(respStatusCode < 200 || respStatusCode >= 300) { // failure
-			try(
-				final BufferedReader contentStream = new BufferedReader(
-					new InputStreamReader(HTTPInputStream.getInstance(in, ioCtl))
-				)
-			) {
+		if(respStatusCode < 200 || respStatusCode >= 300) { // failure, no big data is expected
+			try(final InputStream inStream = HTTPInputStream.getInstance(in, ioCtl)) {
 				final StrBuilder msgBuilder = new StrBuilder();
-				String nextLine;
+				final byte buff[] = new byte[0x2000];
+				int n;
 				do {
-					nextLine = contentStream.readLine();
-					if(nextLine == null && LOG.isTraceEnabled(LogUtil.ERR)) {
-						LOG.trace(
-							LogUtil.ERR, "Response failure code \"{}\", content: \"{}\"",
-							respStatusCode, msgBuilder.toString()
-						);
-					} else {
-						msgBuilder.append(nextLine);
+					n = inStream.read(buff);
+					if(n < 0) {
+						break;
 					}
-				} while(nextLine != null);
+					msgBuilder.append(new String(buff, 0, n));
+				} while(!in.isCompleted());
 			} catch(final InterruptedException e) {
 				// ignore
 			}

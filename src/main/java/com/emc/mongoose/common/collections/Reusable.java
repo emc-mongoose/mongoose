@@ -6,7 +6,7 @@ public interface Reusable
 extends Comparable<Reusable> {
 	//
 	Reusable reuse(final Object... args)
-	throws IllegalArgumentException, IllegalStateException, InterruptedException;
+	throws IllegalArgumentException, IllegalStateException;
 	//
 	void release();
 }

@@ -179,8 +179,8 @@
 				},
 				"chain": {
 					"load": "create,append,update,read,delete",
-					"simultaneous": true,
-					"itemsbuffer": false
+					"concurrent": true,
+					"itemsBuffer": true
 				},
 				"rampup": {
 					"threadCounts": "1,10,20,50,100,150,200,300,400,500",

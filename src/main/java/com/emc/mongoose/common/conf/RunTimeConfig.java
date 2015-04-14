@@ -78,8 +78,8 @@ implements Externalizable {
 		KEY_SCENARIO_SINGLE_LOAD = "scenario.type.single.load",
 		//  Chain
 		KEY_SCENARIO_CHAIN_LOAD = "scenario.type.chain.load",
-		KEY_SCENARIO_CHAIN_SIMULTANEOUS = "scenario.type.chain.simultaneous",
-		KEY_SCENARIO_CHAIN_ITEMSBUFFER = "scenario.type.chain.itemsbuffer",
+		KEY_SCENARIO_CHAIN_CONCURRENT = "scenario.type.chain.concurrent",
+		KEY_SCENARIO_CHAIN_ITEMSBUFFER = "scenario.type.chain.itemsBuffer",
 		//  Rampup
 		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
 		KEY_SCENARIO_RAMPUP_THREAD_COUNTS = "scenario.type.rampup.threadCounts",
@@ -638,16 +638,6 @@ implements Externalizable {
 						.append("| ")
 						.appendFixedWidthPadRight(nextVal, 63, ' ')
 						.append('|');
-					if(KEY_SCENARIO_NAME.equals(nextKey)) {
-						strBuilder
-							.appendNewLine().append("| ")
-							.appendFixedWidthPadRight("load", 31, ' ')
-							.append("| ")
-							.appendFixedWidthPadRight(
-								getProperty("scenario.type." + nextVal + ".load"), 63, ' '
-							)
-							.append('|');
-					}
 					break;
 			}
 		}

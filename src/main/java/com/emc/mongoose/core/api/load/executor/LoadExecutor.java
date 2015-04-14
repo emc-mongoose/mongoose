@@ -59,11 +59,13 @@ extends Producer<T>, Consumer<T> {
 	void handleResult(final IOTask<T> task, IOTask.Status status)
 	throws RemoteException;
 	//
+	@Override
 	void join()
-	throws RemoteException, InterruptedException;
+	throws RemoteException;
 	//
+	@Override
 	void join(final long timeOutMilliSec)
-	throws RemoteException, InterruptedException;
+	throws RemoteException;
 	//
 	void logMetrics(Marker marker)
 	throws RemoteException;

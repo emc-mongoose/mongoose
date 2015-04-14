@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -563,7 +564,7 @@ implements LoadClient<T> {
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
 		if(!isShutdown()) {
-			LOG.debug(LogUtil.MSG, "{}: interrupting...", name);
+			LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, String.format("Interrupting %s...", name));
 			shutdown();
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 				remoteLoadMap.size(), new NamingWorkerFactory(String.format("interrupt<%s>", getName()))
@@ -805,22 +806,22 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final void join()
-	throws InterruptedException {
+	public final void join() {
 		join(Long.MAX_VALUE);
 	}
 	//
 	@Override
-	public final void join(final long timeOutMilliSec)
-	throws InterruptedException {
+	public final void join(final long timeOutMilliSec) {
 		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
-			remoteLoadMap.size(), new NamingWorkerFactory(String.format("joinWorker<%s>", getName()))
+			remoteLoadMap.size() + 1,
+			new NamingWorkerFactory(String.format("joinWorker<%s>", getName()))
 		);
 		joinExecutor.submit(
 			new Runnable() {
 				@Override
 				public final void run() {
-					LOG.trace(
+					// wait the remaining tasks to be transmitted to load servers
+					LOG.debug(
 						LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
 						getName(), getQueue().size() + getActiveCount()
 					);
@@ -836,6 +837,20 @@ implements LoadClient<T> {
 			joinExecutor.submit(new RemoteJoinTask(remoteLoadMap.get(addr), timeOutMilliSec));
 		}
 		joinExecutor.shutdown();
-		joinExecutor.awaitTermination(2 * timeOutMilliSec, TimeUnit.MILLISECONDS);
+		try {
+			LOG.debug(LogUtil.MSG, "Wait remote join tasks for finish {}[ms]", timeOutMilliSec);
+			if(joinExecutor.awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+				LOG.debug(LogUtil.MSG, "All join tasks finished");
+			} else {
+				LOG.debug(LogUtil.MSG, "Join tasks execution timeout");
+			}
+		} catch(final InterruptedException e) {
+			LOG.debug(LogUtil.MSG, "Interrupted");
+		} finally {
+			LOG.debug(
+				LogUtil.MSG, "Interrupted join tasks: {}",
+				Arrays.toString(joinExecutor.shutdownNow().toArray())
+			);
+		}
 	}
 }

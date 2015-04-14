@@ -14,11 +14,11 @@ from java.lang import Long, String, Throwable, IllegalArgumentException, Interru
 LOG = LogManager.getLogger()
 #
 def build(
-	loadBuilder, loadTypesChain, flagSimultaneous=True, flagItemsBuffer=True,
+	loadBuilder, loadTypesChain, flagConcurrent=True, flagUseItemsBuffer=True,
 	dataItemSizeMin=0, dataItemSizeMax=0, threadsPerNode=0
 ):
 	#
-	if flagItemsBuffer:
+	if flagUseItemsBuffer:
 		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(False)
 	#
 	chain = list()
@@ -36,13 +36,13 @@ def build(
 			load = loadBuilder.build()
 			#
 			if load is not None:
-				if flagSimultaneous:
+				if flagConcurrent:
 					if prevLoad is not None:
 						prevLoad.setConsumer(load)
 					chain.append(load)
 				else:
 					if prevLoad is not None:
-						if flagItemsBuffer:
+						if flagUseItemsBuffer:
 							mediatorBuff = loadBuilder.newDataItemBuffer()
 							if mediatorBuff is not None:
 								prevLoad.setConsumer(mediatorBuff)
@@ -93,6 +93,10 @@ def execute(chain=(), flagSimultaneous=True):
 						LOG.debug(LogUtil.MSG, "Start producing the data items from \"{}\"", prevLoad)
 						prevLoad.start()
 						try:
+							LOG.debug(
+								LogUtil.MSG, "Execute \"{}\" for up to {}[{}]",
+								nextLoad, runTimeOut[0], runTimeOut[1]
+							)
 							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
 						except InterruptedException as e:
 							raise e
@@ -109,6 +113,10 @@ def execute(chain=(), flagSimultaneous=True):
 							LOG.debug(LogUtil.MSG, "Load job \"{}\" closed", nextLoad)
 					else:
 						try:
+							LOG.debug(
+								LogUtil.MSG, "Execute \"{}\" for up to {}[{}]",
+								nextLoad, runTimeOut[0], runTimeOut[1]
+							)
 							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
 						except InterruptedException as e:
 							raise e
@@ -156,11 +164,11 @@ if __name__ == "__builtin__":
 	except:
 		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
 	#
-	flagSimultaneous, flagItemsBuffer = True, False
+	flagConcurrent, flagItemsBuffer = True, True
 	try:
-		flagSimultaneous = runTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_SIMULTANEOUS)
+		flagConcurrent = runTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT)
 	except:
-		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_SIMULTANEOUS)
+		LOG.debug(LogUtil.MSG, "No \"{}\" specified", RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT)
 	try:
 		flagItemsBuffer = runTimeConfig.getBoolean(RunTimeConfig.KEY_SCENARIO_CHAIN_ITEMSBUFFER)
 	except:
@@ -170,7 +178,7 @@ if __name__ == "__builtin__":
 	loadBuilder.getRequestConfig().setAnyDataProducerEnabled(False)
 	#
 	chain = build(
-		loadBuilder, loadTypesChain, flagSimultaneous, flagItemsBuffer,
+		loadBuilder, loadTypesChain, flagConcurrent, flagItemsBuffer,
 		dataItemSizeMin if dataItemSize == 0 else dataItemSize,
 		dataItemSizeMax if dataItemSize == 0 else dataItemSize,
 		threadsPerNode
@@ -179,7 +187,7 @@ if __name__ == "__builtin__":
 		LOG.error(LogUtil.ERR, "Empty chain has been build, nothing to do")
 	else:
 		try:
-			execute(chain, flagSimultaneous)
+			execute(chain, flagConcurrent)
 		except Throwable as e:
 			LogUtil.failure(LOG, Level.WARN, e, "Chain execution failure")
 	#

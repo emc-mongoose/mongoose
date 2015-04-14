@@ -19,7 +19,7 @@ public final class TimeUtil {
 		}
 	};
 	private final static Pattern
-		PATTERN_TIME = Pattern.compile("([0-9]*)([smhd]?)"),
+		PATTERN_TIME = Pattern.compile("([0-9]*)([smhdSMHD]?)"),
 		PATTERN_TIME_COMPAT = Pattern.compile("([0-9]*)\\.([a-zA-Z]{4,7})");
 	//
 	public static long getTimeValue(final String rawValue)
@@ -54,7 +54,7 @@ public final class TimeUtil {
 		//
 		Matcher m = PATTERN_TIME.matcher(rawValue);
 		if(m.matches()) {
-			final String t = m.group(2);
+			final String t = m.group(2).toLowerCase();
 			if(TIME_UNIT_SHORTCUTS.containsKey(t)) {
 				result = TIME_UNIT_SHORTCUTS.get(t);
 			}

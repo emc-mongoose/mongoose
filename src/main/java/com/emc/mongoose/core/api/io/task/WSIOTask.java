@@ -5,7 +5,6 @@ import com.emc.mongoose.core.api.data.WSObject;
 //
 import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
 import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
-import org.apache.http.protocol.HttpContext;
 /**
  Created by kurila on 29.09.14.
  A HTTP request for performing an operation on data object.
@@ -25,7 +24,5 @@ extends
 	//
 	@Override
 	WSIOTask<T> setNodeAddr(final String nodeAddr)
-	throws InterruptedException;
-	//
-	HttpContext getHttpContext();
+	throws IllegalStateException;
 }

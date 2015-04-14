@@ -17,6 +17,7 @@ import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
 // mongoose-core-impl
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.DataRanges;
 import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
@@ -536,9 +537,13 @@ implements WSRequestConfig<T> {
 	//}
 	//
 	@Override
-	public synchronized String getSignature(final String canonicalForm) {
-		mac.reset();
-		return Base64.encodeBase64String(mac.doFinal(canonicalForm.getBytes()));
+	public String getSignature(final String canonicalForm) {
+		final byte sigData[];
+		synchronized(mac) {
+			mac.reset();
+			sigData = mac.doFinal(canonicalForm.getBytes());
+		}
+		return Base64.encodeBase64String(sigData);
 	}
 	//
 	@Override
@@ -560,6 +565,8 @@ implements WSRequestConfig<T> {
 						} catch(final InterruptedException e) {
 							// ignore
 						}
+					} else { // consume the whole data item content - may estimate the buffer size
+						HTTPInputStream.consumeQuietly(in, ioCtl, buffSize);
 					}
 				}
 			}
@@ -573,7 +580,7 @@ implements WSRequestConfig<T> {
 				LogUtil.failure(LOG, Level.WARN, e, "Content reading failure");
 			}
 		} finally { // try to read the remaining data if left in the input stream
-			HTTPInputStream.consumeQuietly(in, ioCtl, buffSize);
+			HTTPInputStream.consumeQuietly(in, ioCtl, LoadExecutor.BUFF_SIZE_LO);
 		}
 		return ok;
 	}

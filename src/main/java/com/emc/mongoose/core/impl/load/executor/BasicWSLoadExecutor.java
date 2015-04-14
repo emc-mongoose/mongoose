@@ -23,7 +23,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.nio.reactor.IOReactorStatus;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -43,6 +42,7 @@ import org.apache.http.nio.protocol.HttpAsyncRequester;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
+import org.apache.http.nio.reactor.IOReactorStatus;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -146,6 +146,7 @@ implements WSLoadExecutor<T> {
 		);
 		connPool.setMaxTotal(totalConnCount);
 		connPool.setDefaultMaxPerRoute(totalConnCount);
+		//
 		clientThread = new Thread(
 			new HttpClientRunTask(ioEventDispatch, ioReactor),
 			String.format("%s-webClientThread", getName())
@@ -198,12 +199,22 @@ implements WSLoadExecutor<T> {
 	@Override
 	public final Future<IOTask.Status> submit(final IOTask<T> ioTask)
 	throws RejectedExecutionException {
-		final Future<IOTask.Status> futureResult;
-		if(IOReactorStatus.ACTIVE.equals(ioReactor.getStatus())) {
-			final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-			futureResult = client.execute(wsTask, wsTask, connPool, wsTask.getHttpContext());
-		} else {
+		//
+		if(!IOReactorStatus.ACTIVE.equals(ioReactor.getStatus())) {
 			throw new RejectedExecutionException("I/O reactor is not active");
+		}
+		if(connPool.isShutdown()) {
+			throw new RejectedExecutionException("Connection pool is shut down");
+		}
+		//
+		final Future<IOTask.Status> futureResult;
+		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
+		futureResult = client.execute(wsTask, wsTask, connPool);
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(
+				LogUtil.MSG, "I/O task #{} has been submitted for execution",
+				wsTask.hashCode()
+			);
 		}
 		return futureResult;
 	}

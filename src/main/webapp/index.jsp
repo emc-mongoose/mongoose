@@ -494,15 +494,15 @@
 																		<hr/>
 
 																		<div class="form-group">
-																			<label for="backup-scenario.type.chain.simultaneous"
+																			<label for="backup-scenario.type.chain.concurrent"
 																			       class="col-sm-6 control-label">
 																				Simultaneous
 																			</label>
 																			<div class="col-sm-6">
-																				<select id="backup-scenario.type.chain.simultaneous" class="form-select"
-																				        data-pointer="scenario.type.chain.simultaneous">
+																				<select id="backup-scenario.type.chain.concurrent" class="form-select"
+																				        data-pointer="scenario.type.chain.concurrent">
 																					<option>
-																						${rt:getString(runTimeConfig, 'scenario.type.chain.simultaneous')}
+																						${rt:getString(runTimeConfig, 'scenario.type.chain.concurrent')}
 																					</option>
 																					<option>true</option>
 																					<option>false</option>

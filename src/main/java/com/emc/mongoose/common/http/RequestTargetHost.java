@@ -45,12 +45,6 @@ implements HttpRequestInterceptor {
 				} else {
 					req.setHeader(HTTP.TARGET_HOST, tgtHost.toHostString());
 				}
-			} else {
-				throw new ProtocolException(
-					String.format(
-						"HTTP context #%d is not instance of HttpCoreContext class", ctx.hashCode()
-					)
-				);
 			}
 		}
 	}

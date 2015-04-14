@@ -1,6 +1,6 @@
 {
 	"configuration": {
-		"status": "warn",
+		"status": "off",
 		"name": "mongoose",
 		"monitorInterval": "1000",
 		"packages": "com.emc.mongoose.webui.logging,com.emc.mongoose.common.logging",
@@ -165,30 +165,63 @@
 					"PatternLayout": {
 						"pattern": "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %t | %m%n"
 					},
-					"MarkerFilter": {
-						"marker": "perfSum",
-						"onMatch": "ACCEPT",
-						"onMismatch": "DENY"
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "perfSum",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							},
+							{
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
 					}
 				}, {
 					"name": "perfTraceFile",
 					"type": "runIdFile",
 					"fileName": "perf.trace.csv",
 					"PatternLayout": { "pattern": "%t,%m%n" },
-					"MarkerFilter": {
-						"marker": "perfTrace",
-						"onMatch": "ACCEPT",
-						"onMismatch": "DENY"
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "perfTrace",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							},
+							{
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
 					}
 				}, {
 					"name": "dataListFile",
 					"type": "runIdFile",
 					"fileName": "data.items.csv",
 					"PatternLayout": { "pattern": "%m%n" },
-					"MarkerFilter": {
-						"marker": "dataList",
-						"onMatch": "ACCEPT",
-						"onMismatch": "DENY"
+					"Filters": {
+						"Filter": [
+							{
+								"type": "MarkerFilter",
+								"marker": "dataList",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							},
+							{
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
 					}
 				}, {
 					"name": "async",
