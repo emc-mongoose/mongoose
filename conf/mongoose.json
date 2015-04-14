@@ -70,8 +70,8 @@
 			"scenario.single.load": "scenario.type.single.load",
 
 			"scenario.chain.load": "scenario.type.chain.load",
-			"scenario.chain.simultaneous": "scenario.type.chain.simultaneous",
-			"scenario.chain.itemsbuffer": "scenario.type.chain.itemsbuffer",
+			"scenario.chain.simultaneous": "scenario.type.chain.concurrent",
+			"scenario.chain.itemsbuffer": "scenario.type.chain.itemsBuffer",
 
 			"scenario.rampup.thread.counts": "scenario.type.rampup.threadCounts",
 			"scenario.rampup.sizes": "scenario.type.rampup.sizes",
