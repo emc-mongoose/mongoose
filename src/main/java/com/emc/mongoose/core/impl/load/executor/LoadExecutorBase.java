@@ -30,7 +30,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
-import sun.rmi.runtime.Log;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
@@ -81,7 +80,7 @@ implements LoadExecutor<T> {
 		durSumTasks = new AtomicLong(0),
 		countTasksDone = new AtomicLong(0);
 	private final Lock lock = new ReentrantLock();
-	private final Condition condMaxCountReached = lock.newCondition();
+	private final Condition condMaxCountReachedOrClosed = lock.newCondition();
 	//
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
@@ -453,14 +452,13 @@ implements LoadExecutor<T> {
 					counterReqFail.inc();
 				}
 				//
-				final long countTasksDoneNow = countTasksDone.incrementAndGet();
-				if(lock.tryLock()) {
-					if(maxCount <= countTasksDoneNow) {
-						condMaxCountReached.signalAll();
+				if(maxCount <= countTasksDone.incrementAndGet()) {
+					if(lock.tryLock(1, TimeUnit.SECONDS)) {
+						condMaxCountReachedOrClosed.signalAll();
+						lock.unlock();
+					} else {
+						LOG.warn(LogUtil.ERR, "Failed to acquire the lock for result handling");
 					}
-					lock.unlock();
-				} else {
-					LOG.warn(LogUtil.ERR, "Failed to obtain the lock");
 				}
 			}
 		} catch(final InterruptedException e) {
@@ -527,6 +525,13 @@ implements LoadExecutor<T> {
 					)
 				);
 			}
+			//
+			if(lock.tryLock()) {
+				condMaxCountReachedOrClosed.signalAll();
+			} else {
+				LOG.warn(LogUtil.ERR, "Failed to acquire the lock in close method");
+			}
+			//
 			try {
 				// force shutdown
 				reqConfigCopy.close(); // disables connection drop failures
@@ -590,7 +595,7 @@ implements LoadExecutor<T> {
 		try {
 			if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
 				t = System.currentTimeMillis() - t; // the count of time wasted for locking
-				if(condMaxCountReached.await(timeOutMilliSec - t, TimeUnit.MILLISECONDS)) {
+				if(condMaxCountReachedOrClosed.await(timeOutMilliSec - t, TimeUnit.MILLISECONDS)) {
 					LOG.debug(LogUtil.MSG, "Join finished");
 				} else {
 					LOG.debug(LogUtil.MSG, "Join timeout");

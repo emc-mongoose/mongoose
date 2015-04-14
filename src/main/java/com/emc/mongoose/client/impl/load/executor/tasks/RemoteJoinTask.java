@@ -29,7 +29,7 @@ implements Runnable {
 	@Override
 	public final void run() {
 		try {
-			LOG.info(
+			LOG.debug(
 				LogUtil.MSG, "Wait for the remote load service \"{}\" to complete at {}[ms]",
 				loadSvc.getName(), timeOutMilliSec
 			);
@@ -39,7 +39,7 @@ implements Runnable {
 		} catch(final RemoteException e) {
 			LogUtil.failure(LOG, Level.WARN, e, "Remote join task failure");
 		} finally {
-			LOG.info(LogUtil.MSG, "Remote join task for \"{}\" was completed", loadSvc);
+			LOG.debug(LogUtil.MSG, "Remote join task for \"{}\" was completed", loadSvc);
 		}
 	}
 }

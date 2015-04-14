@@ -48,6 +48,7 @@ import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -563,7 +564,7 @@ implements LoadClient<T> {
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
 		if(!isShutdown()) {
-			LOG.debug(LogUtil.MSG, "{}: interrupting...", name);
+			LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, String.format("Interrupting %s...", name));
 			shutdown();
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 				remoteLoadMap.size(), new NamingWorkerFactory(String.format("interrupt<%s>", getName()))
@@ -806,7 +807,7 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final void join() {
-		join(Long.MAX_VALUE - 1000);
+		join(Long.MAX_VALUE);
 	}
 	//
 	@Override
@@ -818,6 +819,7 @@ implements LoadClient<T> {
 			new Runnable() {
 				@Override
 				public final void run() {
+					// wait the remaining tasks to be transmitted to load servers
 					LOG.debug(
 						LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
 						getName(), getQueue().size() + getActiveCount()
@@ -827,6 +829,7 @@ implements LoadClient<T> {
 					} catch(final InterruptedException e) {
 						LOG.debug(LogUtil.MSG, "Interrupted");
 					}
+					// then wait until
 				}
 			}
 		);
@@ -835,10 +838,18 @@ implements LoadClient<T> {
 		}
 		joinExecutor.shutdown();
 		try {
-			joinExecutor.awaitTermination(timeOutMilliSec + 1000, TimeUnit.MILLISECONDS);
+			if(joinExecutor.awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+				LOG.debug(LogUtil.MSG, "All join tasks finished");
+			} else {
+				LOG.debug(LogUtil.MSG, "Join tasks execution timeout");
+			}
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Interrupted");
+		} finally {
+			LOG.debug(
+				LogUtil.MSG, "Interrupted join tasks: {}",
+				Arrays.toString(joinExecutor.shutdownNow().toArray())
+			);
 		}
-		LOG.debug(LogUtil.MSG, "Distributed join call done");
 	}
 }
