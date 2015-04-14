@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.api.load.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.load.model.Consumer;
 //
 import java.rmi.RemoteException;
 /**
