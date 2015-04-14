@@ -75,7 +75,7 @@ extends DefaultHandler {
 		if(isInsideItem && QNAME_ITEM.equals(qName)) {
 			isInsideItem = false;
 			//
-			long offset, size = 0;
+			long offset, size = -1;
 			//
 			if(strSize != null && strSize.length() > 0) {
 				try {
@@ -89,7 +89,7 @@ extends DefaultHandler {
 				LOG.trace(LogUtil.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
 			}
 			//
-			if(strId != null && strId.length() > 0 && size > 0) {
+			if(strId != null && strId.length() > 0 && size > -1) {
 				try {
 					offset = Long.parseLong(strId, DataObject.ID_RADIX);
 					if(offset < 0) {
