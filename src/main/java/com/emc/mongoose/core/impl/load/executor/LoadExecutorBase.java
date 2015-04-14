@@ -30,6 +30,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
+import sun.rmi.runtime.Log;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
@@ -43,6 +44,9 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 15.10.14.
  */
@@ -73,6 +77,12 @@ implements LoadExecutor<T> {
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter jmxReporter;
 	// METRICS section END
+	private final AtomicLong
+		durSumTasks = new AtomicLong(0),
+		countTasksDone = new AtomicLong(0);
+	private final Lock lock = new ReentrantLock();
+	private final Condition condMaxCountReached = lock.newCondition();
+	//
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
@@ -401,8 +411,6 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	private final AtomicLong durSumTasks = new AtomicLong(0);
-	//
 	@Override
 	public final void handleResult(final IOTask<T> ioTask, final IOTask.Status status) {
 		final T dataItem = ioTask.getDataItem();
@@ -410,38 +418,50 @@ implements LoadExecutor<T> {
 		try {
 			if(dataItem == null) {
 				consumer.submit(null);
-			} else if(status == IOTask.Status.SUCC) {
-				// update the metrics with success
-				throughPut.mark();
-				if(latency > 0) {
-					respLatency.update(latency);
-				}
-				reqBytes.mark(ioTask.getTransferSize());
-				durSumTasks.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(
-						LogUtil.MSG, "Task #{}: successfull result, {}/{}",
-						ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
-					);
-				}
-				// feed to the consumer
-				if(consumer != null) {
+			} else {
+				if(status == IOTask.Status.SUCC) {
+					// update the metrics with success
+					throughPut.mark();
+					if(latency > 0) {
+						respLatency.update(latency);
+					}
+					reqBytes.mark(ioTask.getTransferSize());
+					durSumTasks.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
 					if(LOG.isTraceEnabled(LogUtil.MSG)) {
 						LOG.trace(
-							LogUtil.MSG, "Going to feed the data item {} to the consumer {}",
-							dataItem, consumer
+							LogUtil.MSG, "Task #{}: successfull result, {}/{}",
+							ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
 						);
 					}
-					consumer.submit(dataItem);
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
-						LOG.trace(
-							LogUtil.MSG, "The data item {} is passed to the consumer {} successfully",
-							dataItem, consumer
-						);
+					// feed to the consumer
+					if(consumer != null) {
+						if(LOG.isTraceEnabled(LogUtil.MSG)) {
+							LOG.trace(
+								LogUtil.MSG, "Going to feed the data item {} to the consumer {}",
+								dataItem, consumer
+							);
+						}
+						consumer.submit(dataItem);
+						if(LOG.isTraceEnabled(LogUtil.MSG)) {
+							LOG.trace(
+								LogUtil.MSG, "The data item {} is passed to the consumer {} successfully",
+								dataItem, consumer
+							);
+						}
 					}
+				} else if(!isClosed.get()) {
+					counterReqFail.inc();
 				}
-			} else if(!isClosed.get()) {
-				counterReqFail.inc();
+				//
+				final long countTasksDoneNow = countTasksDone.incrementAndGet();
+				if(lock.tryLock()) {
+					if(maxCount <= countTasksDoneNow) {
+						condMaxCountReached.signalAll();
+					}
+					lock.unlock();
+				} else {
+					LOG.warn(LogUtil.ERR, "Failed to obtain the lock");
+				}
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Interrupted");
@@ -560,30 +580,28 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join()
 	throws RemoteException {
-		LOG.debug(
-			LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
-			getName(), getQueue().size() + getActiveCount()
-		);
-		try {
-			awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
-		} catch(final InterruptedException e) {
-			throw new RemoteException("Interrupted", e);
-		}
-		LOG.debug(LogUtil.MSG, "{} interrupted and done", getName());
+		join(Long.MAX_VALUE);
 	}
 	//
 	@Override
 	public final void join(final long timeOutMilliSec)
 	throws RemoteException {
-		LOG.debug(
-			LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
-			getName(), getQueue().size() + getActiveCount()
-		);
+		long t = System.currentTimeMillis();
 		try {
-			awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
+			if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+				t = System.currentTimeMillis() - t; // the count of time wasted for locking
+				if(condMaxCountReached.await(timeOutMilliSec - t, TimeUnit.MILLISECONDS)) {
+					LOG.debug(LogUtil.MSG, "Join finished");
+				} else {
+					LOG.debug(LogUtil.MSG, "Join timeout");
+				}
+			} else {
+				LOG.warn(LogUtil.ERR, "Failed to acquire the lock for the join method");
+			}
 		} catch(final InterruptedException e) {
-			throw new RemoteException("Interrupted", e);
+			LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
+		} finally {
+			lock.unlock();
 		}
-		LOG.debug(LogUtil.MSG, "{} interrupted and done", getName());
 	}
 }
