@@ -813,7 +813,8 @@ implements LoadClient<T> {
 	@Override
 	public final void join(final long timeOutMilliSec) {
 		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
-			remoteLoadMap.size(), new NamingWorkerFactory(String.format("joinWorker<%s>", getName()))
+			remoteLoadMap.size() + 1,
+			new NamingWorkerFactory(String.format("joinWorker<%s>", getName()))
 		);
 		joinExecutor.submit(
 			new Runnable() {
@@ -829,7 +830,6 @@ implements LoadClient<T> {
 					} catch(final InterruptedException e) {
 						LOG.debug(LogUtil.MSG, "Interrupted");
 					}
-					// then wait until
 				}
 			}
 		);
@@ -838,6 +838,7 @@ implements LoadClient<T> {
 		}
 		joinExecutor.shutdown();
 		try {
+			LOG.debug(LogUtil.MSG, "Wait remote join tasks for finish {}[ms]", timeOutMilliSec);
 			if(joinExecutor.awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
 				LOG.debug(LogUtil.MSG, "All join tasks finished");
 			} else {
