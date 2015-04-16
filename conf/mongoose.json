@@ -193,8 +193,8 @@
 			"namespace": "s3",
 			"scheme": "http",
 			"mock": {
-				"headCount": 8,
-				"ioThreadsPerSocket": 10,
+				"headCount": 1,
+				"ioThreadsPerSocket": 100,
 				"capacity": 10000000,
 				"fault": {
 					"period": 0,
