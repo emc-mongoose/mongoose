@@ -409,8 +409,6 @@ extends WSRequestConfigBase<T> {
 			subTenantValue = subTenant.getValue();
 			if(subTenantValue == null || subTenantValue.length() == 0) {
 				subTenant.create(storageAddrs[0]);
-			} else if(!subTenant.exists(storageAddrs[0])) {
-				subTenant.create(storageAddrs[0]);
 			}
 		}
 		/*re*/setSubTenant(subTenant);
