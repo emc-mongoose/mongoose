@@ -9,7 +9,7 @@ import com.emc.mongoose.common.collections.Reusable;
  Request entity supporting some common operations.
  */
 public interface IOTask<T extends DataItem>
-extends Reusable {
+extends Reusable<IOTask<T>> {
 	//
 	enum Type {
 		CREATE, READ, DELETE, UPDATE, APPEND

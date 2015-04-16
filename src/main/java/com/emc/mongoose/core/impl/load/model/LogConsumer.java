@@ -33,11 +33,8 @@ implements Consumer<T> {
 		super(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
-				maxCount > 0 ?
-					maxCount > Integer.MAX_VALUE ?
-						RunTimeConfig.getContext().getRunRequestQueueSize()
-						: (int) maxCount
-					: RunTimeConfig.getContext().getRunRequestQueueSize()
+				(maxCount > 0 && maxCount < RunTimeConfig.getContext().getRunRequestQueueSize()) ?
+					(int) maxCount : RunTimeConfig.getContext().getRunRequestQueueSize()
 			),
 			new NamingWorkerFactory("dataItemLogWorker")
 		);
@@ -56,7 +53,7 @@ implements Consumer<T> {
 	);
 	//
 	public final static class DataItemLogTask<T extends DataItem>
-	implements Runnable, Reusable {
+	implements Runnable, Reusable<DataItemLogTask<T>> {
 		//
 		public T dataItem = null;
 		//
@@ -69,28 +66,20 @@ implements Consumer<T> {
 			}
 		}
 		//
-		private final AtomicBoolean isAvailable = new AtomicBoolean(true);
-		//
 		@Override
 		public final void release() {
-			if(isAvailable.compareAndSet(false, true)) {
-				TASK_POOL.release(this);
-			}
+			TASK_POOL.release(this);
 		}
 		//
 		@Override @SuppressWarnings("unchecked")
 		public final DataItemLogTask<T> reuse(final Object... args) {
-			if(isAvailable.compareAndSet(true, false)) {
-				this.dataItem = (T) args[0];
-			} else {
-				throw new IllegalStateException("Not yet released instance reuse attempt");
-			}
+			this.dataItem = (T) args[0];
 			return this;
 		}
 		//
-		@Override @SuppressWarnings("NullableProblems")
-		public final int compareTo(Reusable another) {
-			return another == null ? 1 : hashCode() - another.hashCode();
+		@Override
+		public final int compareTo(final DataItemLogTask<T> o) {
+			return o == null ? -1 : hashCode() - o.hashCode();
 		}
 	}
 	//

@@ -96,7 +96,7 @@ implements LoadClient<T> {
 		taskGetBWMean, taskGetBW1Min, taskGetBW5Min, taskGetBW15Min,
 		taskGetLatencyMed, taskGetLatencyAvg;
 	//
-	private final List<PeriodicTask<List<T>>> frameFetchTasks = new ArrayList<>();
+	private final List<PeriodicTask<T[]>> frameFetchTasks = new ArrayList<>();
 	//
 	private final ScheduledExecutorService mgmtConnExecutor;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,11 +118,8 @@ implements LoadClient<T> {
 			Math.min(0x10, remoteLoadMap.size()), Math.min(0x10, remoteLoadMap.size()),
 			0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
-				maxCount > 0 ?
-					maxCount > Integer.MAX_VALUE ?
-						RunTimeConfig.getContext().getRunRequestQueueSize()
-						: (int) maxCount
-					: RunTimeConfig.getContext().getRunRequestQueueSize()
+				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
+					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
 			)
 		);
 		//
@@ -343,13 +340,18 @@ implements LoadClient<T> {
 	@Override
 	public void logMetaInfoFrames() {
 		//
-		List<T> nextMetaInfoFrame;
-		for(final PeriodicTask<List<T>> nextFrameFetchTask : frameFetchTasks) {
+		T[] nextMetaInfoFrame;
+		for(final PeriodicTask<T[]> nextFrameFetchTask : frameFetchTasks) {
 			nextMetaInfoFrame = nextFrameFetchTask.getLastResult();
 			try {
-				if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
-					LOG.trace(LogUtil.MSG, "Got next metainfo frame: {}", nextMetaInfoFrame);
-					for(final T nextMetaInfoRec: nextMetaInfoFrame) {
+				if(nextMetaInfoFrame != null && nextMetaInfoFrame.length > 0) {
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+						LOG.trace(
+							LogUtil.MSG, "Got next metainfo frame: {}",
+							Arrays.toString(nextMetaInfoFrame)
+						);
+					}
+					for(final T nextMetaInfoRec : nextMetaInfoFrame) {
 						metaInfoLog.submit(nextMetaInfoRec);
 					}
 				}
@@ -431,7 +433,7 @@ implements LoadClient<T> {
 			//
 			for(final String loadSvcAddr : loadSvcAddrs) {
 				nextLoadSvc = remoteLoadMap.get(loadSvcAddr);
-				final PeriodicTask<List<T>> nextFrameFetchTask = new FrameFetchPeriodicTask<>(
+				final PeriodicTask<T[]> nextFrameFetchTask = new FrameFetchPeriodicTask<>(
 					nextLoadSvc
 				);
 				frameFetchTasks.add(nextFrameFetchTask);
@@ -641,44 +643,25 @@ implements LoadClient<T> {
 	public final void submit(final T dataItem)
 	throws InterruptedException {
 		if(maxCount > getTaskCount()) { // getTaskCount() is inaccurate
-			if(dataItem == null) {
-				LOG.debug(LogUtil.MSG, "{}: poison submitted, performing the shutdown", name);
-				// poison the remote load service instances
-				for(final String addr : loadSvcAddrs) {
+			final String addr = loadSvcAddrs[
+				(int) (countSubmCalls.getAndIncrement() % loadSvcAddrs.length)
+			];
+			final RemoteSubmitTask<T> remoteSubmitTask = RemoteSubmitTask
+				.getInstanceFor(remoteLoadMap.get(addr), dataItem);
+			int rejectCount = 0;
+			do {
+				try {
+					submit(remoteSubmitTask);
+					break;
+				} catch(final RejectedExecutionException e) {
+					rejectCount ++;
 					try {
-						remoteLoadMap.get(addr).submit((T) null); // feed the poison
-					} catch(final InterruptedException | IllegalStateException e) {
-						LOG.debug(LogUtil.MSG, "Interrupting while submitting the poison");
-					} catch(final Exception e) {
-						LogUtil.failure(
-							LOG, Level.WARN, e,
-							String.format("Failed to submit the poison to @%s", addr)
-						);
+						Thread.sleep(rejectCount * retryDelayMilliSec);
+					} catch(final InterruptedException ee) {
+						break;
 					}
 				}
-				//
-				shutdown();
-			} else {
-				final String addr = loadSvcAddrs[
-					(int) (countSubmCalls.getAndIncrement() % loadSvcAddrs.length)
-				];
-				final RemoteSubmitTask<T> remoteSubmitTask = RemoteSubmitTask
-					.getInstanceFor(remoteLoadMap.get(addr), dataItem);
-				int rejectCount = 0;
-				do {
-					try {
-						submit(remoteSubmitTask);
-						break;
-					} catch(final RejectedExecutionException e) {
-						rejectCount ++;
-						try {
-							Thread.sleep(rejectCount * retryDelayMilliSec);
-						} catch(final InterruptedException ee) {
-							break;
-						}
-					}
-				} while(rejectCount < retryCountMax && !isShutdown());
-			}
+			} while(rejectCount < retryCountMax && !isShutdown());
 		} else {
 			LOG.info(LogUtil.MSG, "maxCount = {}, taskCount = {}", maxCount, getTaskCount());
 			shutdown();

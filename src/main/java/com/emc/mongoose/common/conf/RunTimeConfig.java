@@ -407,7 +407,7 @@ implements Externalizable {
 	}
 	//
 	public final int getStorageMockIoThreadsPerSocket() {
-		return getInt("storage.mock.iothreadsPersocket");
+		return getInt("storage.mock.ioThreadsPerSocket");
 	}
 	//
 	public final int getStorageMockFaultSleepMilliSec() {

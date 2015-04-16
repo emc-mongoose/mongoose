@@ -105,9 +105,7 @@ implements Producer<T> {
 			LOG.debug(LogUtil.MSG, "Produced {} data items", dataItemsCount);
 			try {
 				LOG.debug(LogUtil.MSG, "Feeding poison to consumer \"{}\"", consumer.toString());
-				consumer.submit(null); // or: consumer.setMaxCount(dataItemsCount);
-			} catch(final InterruptedException e) {
-				LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, "Consumer is already shutdown");
+				consumer.shutdown();
 			} catch(final Exception e) {
 				LogUtil.failure(LOG, Level.WARN, e, "Failed to submit the poison to remote consumer");
 			}

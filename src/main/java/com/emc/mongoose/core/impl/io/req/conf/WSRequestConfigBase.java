@@ -363,22 +363,8 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr)
-	throws InterruptedException {
-		WSIOTask<T> ioTask;
-		if(dataItem == null) {
-			LOG.debug(LogUtil.MSG, "Preparing poison request");
-			ioTask = (WSIOTask<T>) BasicWSIOTask.POISON;
-		} else {
-			ioTask = BasicWSIOTask.getInstanceFor(this, dataItem, nodeAddr);
-		}
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(
-				LogUtil.MSG, "Task #{}: linked with target address \"{}\" and data item \"{}\"",
-				ioTask.hashCode(), nodeAddr, dataItem
-			);
-		}
-		return ioTask;
+	public final WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr) {
+		return BasicWSIOTask.getInstanceFor(this, dataItem, nodeAddr);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

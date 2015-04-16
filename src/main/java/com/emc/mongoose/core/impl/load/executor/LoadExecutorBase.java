@@ -90,11 +90,8 @@ implements LoadExecutor<T> {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
-				maxCount > 0 ?
-					maxCount > Integer.MAX_VALUE ?
-						RunTimeConfig.getContext().getRunRequestQueueSize()
-						: (int) maxCount
-					: RunTimeConfig.getContext().getRunRequestQueueSize()
+				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
+					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
 			)
 		);
 		//
@@ -354,47 +351,42 @@ implements LoadExecutor<T> {
 				"Not started yet, rejecting the submit of the data item"
 			);
 		} else if(maxCount > counterSubm.getCount()) {
-			if(dataItem == null) {
-				LOG.debug(LogUtil.MSG, "{}: poison submitted, performing the shutdown", getName());
-				shutdown(); // stop further submitting
-			} else {
-				// round-robin node selection
-				final String tgtNodeAddr = storageNodeAddrs[
-					(int) (countSubmCalls.getAndIncrement() % storageNodeCount)
-				];
-				// prepare the I/O task instance (make the link between the data item and load type)
-				final IOTask<T> ioTask = reqConfigCopy.getRequestFor(dataItem, tgtNodeAddr);
-				// submit the corresponding I/O task
-				final Future<IOTask.Status> futureResponse = submit(ioTask);
-				// prepare the corresponding result handling task
-				final RequestResultTask<T>
-					handleResultTask = (RequestResultTask<T>) RequestResultTask.getInstance(
-						this, ioTask, futureResponse
-					);
-				Future futureResult = null;
-				int rejectCount = 0;
-				do {
-					try { // submit the result handling task
-						futureResult = submit(handleResultTask);
-						counterSubm.inc();
-					} catch(final RejectedExecutionException e) {
-						rejectCount ++;
-						try {
-							Thread.sleep(rejectCount * retryDelayMilliSec);
-						} catch(final InterruptedException ee) {
-							LOG.trace(
-								LogUtil.ERR,
-								"Got interruption, won't submit result handling for task #{}",
-								ioTask.hashCode()
-							);
-						}
+			// round-robin node selection
+			final String tgtNodeAddr = storageNodeAddrs[
+				(int) (countSubmCalls.getAndIncrement() % storageNodeCount)
+			];
+			// prepare the I/O task instance (make the link between the data item and load type)
+			final IOTask<T> ioTask = reqConfigCopy.getRequestFor(dataItem, tgtNodeAddr);
+			// submit the corresponding I/O task
+			final Future<IOTask.Status> futureResponse = submit(ioTask);
+			// prepare the corresponding result handling task
+			final RequestResultTask<T>
+				handleResultTask = (RequestResultTask<T>) RequestResultTask.getInstance(
+					this, ioTask, futureResponse
+				);
+			Future futureResult = null;
+			int rejectCount = 0;
+			do {
+				try { // submit the result handling task
+					futureResult = submit(handleResultTask);
+					counterSubm.inc();
+				} catch(final RejectedExecutionException e) {
+					rejectCount ++;
+					try {
+						Thread.sleep(rejectCount * retryDelayMilliSec);
+					} catch(final InterruptedException ee) {
+						LOG.trace(
+							LogUtil.ERR,
+							"Got interruption, won't submit result handling for task #{}",
+							ioTask.hashCode()
+						);
 					}
-					//
-				} while(futureResult == null && rejectCount < retryCountMax && !isShutdown());
-				//
-				if(futureResponse == null) {
-					counterRej.inc();
 				}
+				//
+			} while(futureResult == null && rejectCount < retryCountMax && !isShutdown());
+			//
+			if(futureResponse == null) {
+				counterRej.inc();
 			}
 		} else {
 			shutdown();
@@ -415,51 +407,38 @@ implements LoadExecutor<T> {
 		final T dataItem = ioTask.getDataItem();
 		final int latency = ioTask.getLatency();
 		try {
-			if(dataItem == null) {
-				consumer.submit(null);
-			} else {
-				if(status == IOTask.Status.SUCC) {
-					// update the metrics with success
-					throughPut.mark();
-					if(latency > 0) {
-						respLatency.update(latency);
-					}
-					reqBytes.mark(ioTask.getTransferSize());
-					durSumTasks.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
+			if(status == IOTask.Status.SUCC) {
+				// update the metrics with success
+				throughPut.mark();
+				if(latency > 0) {
+					respLatency.update(latency);
+				}
+				reqBytes.mark(ioTask.getTransferSize());
+				durSumTasks.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(
+						LogUtil.MSG, "Task #{}: successfull result, {}/{}",
+						ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
+					);
+				}
+				// feed to the consumer
+				if(consumer != null) {
 					if(LOG.isTraceEnabled(LogUtil.MSG)) {
 						LOG.trace(
-							LogUtil.MSG, "Task #{}: successfull result, {}/{}",
-							ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
+							LogUtil.MSG, "Going to feed the data item {} to the consumer {}",
+							dataItem, consumer
 						);
 					}
-					// feed to the consumer
-					if(consumer != null) {
-						if(LOG.isTraceEnabled(LogUtil.MSG)) {
-							LOG.trace(
-								LogUtil.MSG, "Going to feed the data item {} to the consumer {}",
-								dataItem, consumer
-							);
-						}
-						consumer.submit(dataItem);
-						if(LOG.isTraceEnabled(LogUtil.MSG)) {
-							LOG.trace(
-								LogUtil.MSG, "The data item {} is passed to the consumer {} successfully",
-								dataItem, consumer
-							);
-						}
-					}
-				} else if(!isClosed.get()) {
-					counterReqFail.inc();
-				}
-				//
-				if (maxCount <= countTasksDone.incrementAndGet()) {
-					if(lock.tryLock(1, TimeUnit.SECONDS)) {
-						condMaxCountReachedOrClosed.signalAll();
-						lock.unlock();
-					} else {
-						LOG.warn(LogUtil.ERR, "Failed to acquire the lock for result handling");
+					consumer.submit(dataItem);
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+						LOG.trace(
+							LogUtil.MSG, "The data item {} is passed to the consumer {} successfully",
+							dataItem, consumer
+						);
 					}
 				}
+			} else if(!isClosed.get()) {
+				counterReqFail.inc();
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Interrupted");
@@ -473,6 +452,20 @@ implements LoadExecutor<T> {
 				LOG, Level.DEBUG, e,
 				String.format("\"%s\" rejected the data item \"%s\"", consumer, dataItem)
 			);
+		} finally {
+			final long n = countTasksDone.incrementAndGet();
+			if(isShutdown() && n >= counterSubm.getCount()) {
+				try {
+					if(lock.tryLock(1, TimeUnit.SECONDS)) {
+						condMaxCountReachedOrClosed.signalAll();
+						lock.unlock();
+					} else {
+						LOG.warn(LogUtil.ERR, "Failed to acquire the lock for result handling");
+					}
+				} catch(final InterruptedException e) {
+					LogUtil.failure(LOG, Level.WARN, e, "Interrupted");
+				}
+			}
 		}
 	}
 	//
@@ -537,14 +530,7 @@ implements LoadExecutor<T> {
 				reqConfigCopy.close(); // disables connection drop failures
 				LOG.debug(LogUtil.MSG, "{}: dropped {} tasks", getName(), shutdownNow().size());
 				// poison the consumer
-				consumer.submit(null);
-			} catch(final InterruptedException e) {
-				LogUtil.failure(
-					LOG, Level.TRACE, e,
-					String.format(
-						"%s: interrupted on feeding the poison to the consumer", getName()
-					)
-				);
+				consumer.shutdown();
 			} catch(final IllegalStateException | RejectedExecutionException e) {
 				LogUtil.failure(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {

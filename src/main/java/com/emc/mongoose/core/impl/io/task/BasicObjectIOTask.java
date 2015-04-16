@@ -11,13 +11,6 @@ import com.emc.mongoose.common.collections.InstancePool;
 public class BasicObjectIOTask<T extends DataObject>
 extends BasicIOTask<T>
 implements DataObjectIOTask<T> {
-	//
-	public final static BasicObjectIOTask POISON = new BasicObjectIOTask() {
-		@Override
-		public final String toString() {
-			return "<POISON>";
-		}
-	};
 	// BEGIN pool related things
 	private final static InstancePool<BasicIOTask>
 		POOL_OBJ_TASKS = new InstancePool<>(BasicIOTask.class);
@@ -31,9 +24,7 @@ implements DataObjectIOTask<T> {
 	//
 	@Override
 	public void release() {
-		if(isAvailable.compareAndSet(false, true)) {
-			POOL_OBJ_TASKS.release(this);
-		}
+		POOL_OBJ_TASKS.release(this);
 	}
 	// END pool related things
 }

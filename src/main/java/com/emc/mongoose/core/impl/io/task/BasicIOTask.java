@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.io.task;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.collections.InstancePool;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -13,8 +12,6 @@ import com.emc.mongoose.core.api.data.DataObject;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by andrey on 12.10.14.
  */
@@ -22,13 +19,6 @@ public class BasicIOTask<T extends DataObject>
 implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
-	public final static BasicIOTask POISON = new BasicIOTask() {
-		@Override
-		public final String toString() {
-			return "<POISON>";
-		}
-	};
 	//
 	protected volatile RequestConfig<T> reqConf = null;
 	protected volatile String nodeAddr = null;
@@ -49,34 +39,31 @@ implements IOTask<T> {
 		return (BasicIOTask<T>) POOL_BASIC_IO_TASKS.take(reqConf, dataItem, nodeAddr);
 	}
 	//
-	protected final AtomicBoolean isAvailable = new AtomicBoolean(true);
-	//
 	@Override
 	public void release() {
-		if(isAvailable.compareAndSet(false, true)) {
-			POOL_BASIC_IO_TASKS.release(this);
-		}
+		POOL_BASIC_IO_TASKS.release(this);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public BasicIOTask<T> reuse(final Object... args)
 	throws IllegalStateException {
-		if(isAvailable.compareAndSet(true, false)) {
-			status = Status.FAIL_UNKNOWN;
-			reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
-			if(args.length > 0) {
-				setRequestConfig((RequestConfig<T>) args[0]);
-			}
-			if(args.length > 1) {
-				setDataItem((T) args[1]);
-			}
-			if(args.length > 2) {
-				setNodeAddr(String.class.cast(args[2]));
-			}
-		} else {
-			throw new IllegalStateException("Not yet released instance reuse attempt");
+		status = Status.FAIL_UNKNOWN;
+		reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
+		if(args.length > 0) {
+			setRequestConfig((RequestConfig<T>) args[0]);
+		}
+		if(args.length > 1) {
+			setDataItem((T) args[1]);
+		}
+		if(args.length > 2) {
+			setNodeAddr(String.class.cast(args[2]));
 		}
 		return this;
+	}
+	//
+	@Override
+	public final int compareTo(final IOTask<T> o) {
+		return o == null ? -1 : hashCode() - o.hashCode();
 	}
 	// END pool related things
 	@Override
@@ -177,10 +164,5 @@ implements IOTask<T> {
 	@Override
 	public final long getRespTimeDone() {
 		return respTimeDone;
-	}
-	//
-	@Override
-	public final int compareTo(final Reusable another) {
-		return hashCode() - another.hashCode();
 	}
 }

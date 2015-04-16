@@ -14,13 +14,12 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 09.12.14.
  */
 public final class HTTPOutputStream
 extends OutputStream
-implements Reusable {
+implements Reusable<HTTPOutputStream> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -73,38 +72,32 @@ implements Reusable {
 		return POOL.take(out, ioCtl);
 	}
 	//
-	private final AtomicBoolean isClosed = new AtomicBoolean(true);
-	//
 	@Override
 	public final void release() {
-		if(isClosed.compareAndSet(false, true)) {
-			if(!out.isCompleted()) {
-				try {
-					out.complete();
-				} catch(final IOException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Failed to finish the output stream");
-				}
+		if(!out.isCompleted()) {
+			try {
+				out.complete();
+			} catch(final IOException e) {
+				LogUtil.failure(LOG, Level.WARN, e, "Failed to finish the output stream");
 			}
-			POOL.release(this);
 		}
+		POOL.release(this);
 	}
 	//
 	@Override
 	public final HTTPOutputStream reuse(final Object... args) {
-		if(isClosed.compareAndSet(true, false)) {
-			if(args.length > 0) {
-				out = ContentEncoder.class.cast(args[0]);
-			}
-			if(args.length > 1) {
-				ioCtl = IOControl.class.cast(args[1]);
-			}
+		if(args.length > 0) {
+			out = ContentEncoder.class.cast(args[0]);
+		}
+		if(args.length > 1) {
+			ioCtl = IOControl.class.cast(args[1]);
 		}
 		return this;
 	}
 	//
-	@Override @SuppressWarnings("NullableProblems")
-	public final int compareTo(Reusable another) {
-		return another == null ? 1 : hashCode() - another.hashCode();
+	@Override
+	public final int compareTo(final HTTPOutputStream o) {
+		return o == null ? -1 : hashCode() - o.hashCode();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/**
