@@ -47,11 +47,8 @@ implements DataItemBuffer<T> {
 		super(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
-				maxCount > 0 ?
-					maxCount > Integer.MAX_VALUE ?
-						RunTimeConfig.getContext().getRunRequestQueueSize()
-						: (int) maxCount
-					: RunTimeConfig.getContext().getRunRequestQueueSize()
+				(maxCount > 0 && maxCount < RunTimeConfig.getContext().getRunRequestQueueSize()) ?
+					(int) maxCount : RunTimeConfig.getContext().getRunRequestQueueSize()
 			)
 		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;

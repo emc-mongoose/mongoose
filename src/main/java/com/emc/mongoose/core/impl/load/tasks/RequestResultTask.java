@@ -18,12 +18,11 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 11.12.14.
  */
 public final class RequestResultTask<T extends DataItem>
-implements Runnable, Reusable {
+implements Runnable, Reusable<RequestResultTask<T>> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int
@@ -79,45 +78,37 @@ implements Runnable, Reusable {
 		return (RequestResultTask<? extends DataItem>) POOL.take(executor, ioTask, futureResult);
 	}
 	//
-	private final AtomicBoolean isAvailable = new AtomicBoolean(true);
-	//
 	@Override @SuppressWarnings("unchecked")
 	public final RequestResultTask<T> reuse(final Object... args)
-	throws IllegalArgumentException, IllegalStateException {
-		if(isAvailable.compareAndSet(true, false)) {
-			if(args == null) {
-				throw new IllegalArgumentException("No arguments for reusing the instance");
+	throws IllegalArgumentException {
+		if(args == null) {
+			throw new IllegalArgumentException("No arguments for reusing the instance");
+		}
+		if(args.length > 0) {
+			executor = (LoadExecutor<T>) args[0];
+		}
+		if(args.length > 1) {
+			ioTask = (IOTask<T>) args[1];
+			if(ioTask == null) {
+				throw new IllegalArgumentException("I/O task shouldn't be null");
 			}
-			if(args.length > 0) {
-				executor = (LoadExecutor<T>) args[0];
-			}
-			if(args.length > 1) {
-				ioTask = (IOTask<T>) args[1];
-				if(ioTask == null) {
-					throw new IllegalArgumentException("I/O task shouldn't be null");
-				}
-			}
-			if(args.length > 2) {
-				futureResult = (Future<IOTask.Status>) args[2];
-			}
-		} else {
-			throw new IllegalStateException("Not yet released instance reuse attempt");
+		}
+		if(args.length > 2) {
+			futureResult = (Future<IOTask.Status>) args[2];
 		}
 		return this;
 	}
 	//
 	@Override
 	public final void release() {
-		if(isAvailable.compareAndSet(false, true)) {
-			if(ioTask != null) {
-				ioTask.release();
-			}
-			POOL.release(this);
+		if(ioTask != null) {
+			ioTask.release();
 		}
+		POOL.release(this);
 	}
 	//
-	@Override @SuppressWarnings("NullableProblems")
-	public final int compareTo(Reusable another) {
-		return another == null ? 1 : hashCode() - another.hashCode();
+	@Override
+	public final int compareTo(final RequestResultTask<T> o) {
+		return o == null ? -1 : hashCode() - o.hashCode();
 	}
 }

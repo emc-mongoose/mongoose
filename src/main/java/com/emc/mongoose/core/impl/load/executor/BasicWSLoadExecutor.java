@@ -207,9 +207,10 @@ implements WSLoadExecutor<T> {
 			throw new RejectedExecutionException("Connection pool is shut down");
 		}
 		//
-		final Future<IOTask.Status> futureResult;
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-		futureResult = client.execute(wsTask, wsTask, connPool);
+		final Future<IOTask.Status> futureResult = client.execute(
+			wsTask, wsTask, connPool, wsTask, wsTask
+		);
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(
 				LogUtil.MSG, "I/O task #{} has been submitted for execution",

@@ -9,13 +9,12 @@ import org.apache.http.nio.IOControl;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 09.12.14.
  */
 public final class HTTPInputStream
 extends InputStream
-implements Reusable {
+implements Reusable<HTTPInputStream> {
 	//
 	private volatile ByteBuffer bb = null;
 	private volatile byte[] bs = null; // Invoker's previous array
@@ -66,33 +65,25 @@ implements Reusable {
 		return POOL.take(in, ioCtl);
 	}
 	//
-	private final AtomicBoolean isAvailable = new AtomicBoolean(true);
-	//
 	@Override
 	public final void release() {
-		if(isAvailable.compareAndSet(false, true)) {
-			POOL.release(this);
-		}
+		POOL.release(this);
 	}
 	//
 	@Override
 	public final HTTPInputStream reuse(final Object... args) {
-		if(isAvailable.compareAndSet(true, false)) {
-			if(args.length > 0) {
-				in = ContentDecoder.class.cast(args[0]);
-			}
-			if(args.length > 1) {
-				ioCtl = IOControl.class.cast(args[1]);
-			}
-		} else {
-			throw new IllegalStateException("Not yet released instance reuse attempt");
+		if(args.length > 0) {
+			in = ContentDecoder.class.cast(args[0]);
+		}
+		if(args.length > 1) {
+			ioCtl = IOControl.class.cast(args[1]);
 		}
 		return this;
 	}
 	//
-	@Override @SuppressWarnings("NullableProblems")
-	public final int compareTo(final Reusable another) {
-		return another == null ? 1 : hashCode() - another.hashCode();
+	@Override
+	public final int compareTo(final HTTPInputStream o) {
+		return o == null ? -1 : hashCode() - o.hashCode();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/**

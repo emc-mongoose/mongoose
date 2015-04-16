@@ -31,9 +31,7 @@ implements DataObjectIOTask<T> {
 	//
 	@Override
 	public void release() {
-		if(isAvailable.compareAndSet(false, true)) {
-			POOL_OBJ_TASKS.release(this);
-		}
+		POOL_OBJ_TASKS.release(this);
 	}
 	// END pool related things
 }

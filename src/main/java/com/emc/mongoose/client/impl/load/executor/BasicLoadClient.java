@@ -118,11 +118,8 @@ implements LoadClient<T> {
 			Math.min(0x10, remoteLoadMap.size()), Math.min(0x10, remoteLoadMap.size()),
 			0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
-				maxCount > 0 ?
-					maxCount > Integer.MAX_VALUE ?
-						RunTimeConfig.getContext().getRunRequestQueueSize()
-						: (int) maxCount
-					: RunTimeConfig.getContext().getRunRequestQueueSize()
+				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
+					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
 			)
 		);
 		//

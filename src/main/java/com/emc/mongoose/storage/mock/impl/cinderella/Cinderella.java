@@ -540,7 +540,7 @@ implements Runnable {
 			final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 			final IOReactorConfig config = IOReactorConfig.custom()
 				.setIoThreadCount(localRunTimeConfig.getStorageMockIoThreadsPerSocket())
-					.setSoTimeout(localRunTimeConfig.getSocketTimeOut())
+				.setSoTimeout(localRunTimeConfig.getSocketTimeOut())
 				.setConnectTimeout(localRunTimeConfig.getConnTimeOut())
 				.build();
 			// Create server-side I/O reactor

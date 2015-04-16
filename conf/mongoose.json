@@ -20,7 +20,7 @@
 			"storage.mock.data.offset.radix": "data.radix.offset",
 			"storage.mock.data.size.radix": "data.radix.size",
 			"storage.mock.head.count": "storage.mock.headCount",
-			"storage.mock.iothreads.persocket": "iothreadsPersocket",
+			"storage.mock.iothreads.persocket": "ioThreadsPerSocket",
 			"storage.mock.fault.sleep.msec": "storage.mock.fault.sleepMilliSec",
 			"storage.connection.timeout.millisec": "remote.connection.timeoutMilliSec",
 			"storage.connection.pool.timeout.millisec": "remote.connection.poolTimeoutMilliSec",
@@ -70,7 +70,7 @@
 			"scenario.single.load": "scenario.type.single.load",
 
 			"scenario.chain.load": "scenario.type.chain.load",
-			"scenario.chain.simultaneous": "scenario.type.chain.simultaneous",
+			"scenario.chain.concurrent": "scenario.type.chain.concurrent",
 			"scenario.chain.itemsbuffer": "scenario.type.chain.itemsbuffer",
 
 			"scenario.rampup.thread.counts": "scenario.type.rampup.threadCounts",
@@ -194,7 +194,7 @@
 			"scheme": "http",
 			"mock": {
 				"headCount": 8,
-				"iothreadsPersocket": 10,
+				"ioThreadsPerSocket": 10,
 				"capacity": 10000000,
 				"fault": {
 					"period": 0,
@@ -243,7 +243,7 @@
 			"request": {
 				"retries": false,
 				"timeoutMilliSec": 1000000,
-				"queueSize": 1000000
+				"queueSize": 65536
 			}
 		}
 	}

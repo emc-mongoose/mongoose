@@ -90,11 +90,8 @@ implements LoadExecutor<T> {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
-				maxCount > 0 ?
-					maxCount > Integer.MAX_VALUE ?
-						RunTimeConfig.getContext().getRunRequestQueueSize()
-						: (int) maxCount
-					: RunTimeConfig.getContext().getRunRequestQueueSize()
+				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
+					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
 			)
 		);
 		//

@@ -15,12 +15,11 @@ import org.apache.logging.log4j.Logger;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.rmi.ServerException;
-import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 18.12.14.
  */
 public class RemoteSubmitTask<T extends DataItem>
-implements Runnable, Reusable {
+implements Runnable, Reusable<RemoteSubmitTask<T>> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -68,32 +67,24 @@ implements Runnable, Reusable {
 		}
 	}
 	//
-	private final AtomicBoolean isAvailable = new AtomicBoolean(true);
-	//
 	@Override
 	public final void release() {
-		if(isAvailable.compareAndSet(false, true)) {
-			INSTANCE_POOL.release(this);
-		}
+		INSTANCE_POOL.release(this);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final RemoteSubmitTask<T> reuse(final Object... args) {
-		if(isAvailable.compareAndSet(true, false)) {
-			if(args.length > 0) {
-				loadSvc = (LoadSvc<T>) args[0];
-			}
-			if(args.length > 1) {
-				dataItem = (T) args[1];
-			}
-		} else {
-			throw new IllegalStateException("Not yet released instance reuse attempt");
+		if(args.length > 0) {
+			loadSvc = (LoadSvc<T>) args[0];
+		}
+		if(args.length > 1) {
+			dataItem = (T) args[1];
 		}
 		return this;
 	}
 	//
-	@Override @SuppressWarnings("NullableProblems")
-	public final int compareTo(Reusable another) {
-		return another == null ? 1 : hashCode() - another.hashCode();
+	@Override
+	public final int compareTo(final RemoteSubmitTask<T> o) {
+		return o == null ? -1 : hashCode() - o.hashCode();
 	}
 }

@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
-import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.io.HTTPOutputStream;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -30,6 +29,7 @@ import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
+import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 //
@@ -71,26 +71,23 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public void release() {
-		if(isAvailable.compareAndSet(false, true)) {
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LogUtil.trace(
-					LOG, Level.TRACE, LogUtil.MSG,
-					String.format("Releasing the task #%d", hashCode())
-				);
-			}
-			resetRequest();
-			POOL_WEB_IO_TASKS.release(this);
-		} else {
-			LOG.warn(LogUtil.ERR, "Not closing already closed task #{}", hashCode());
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LogUtil.trace(
+				LOG, Level.TRACE, LogUtil.MSG,
+				String.format("Releasing the task #%d", hashCode())
+			);
 		}
+		resetRequest();
+		POOL_WEB_IO_TASKS.release(this);
 	}
 	// END pool related things
-	protected WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
-	protected HeaderGroup sharedHeaders = null;
-	protected final MutableWSRequest httpRequest = new WSRequestImpl(
+	private WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
+	private HeaderGroup sharedHeaders = null;
+	private final MutableWSRequest httpRequest = new WSRequestImpl(
 		MutableWSRequest.HTTPMethod.PUT, null, null
 	);
-	protected volatile HttpEntity reqEntity = null;
+	private volatile HttpEntity reqEntity = null;
+	private volatile BasicHttpContext httpContext = null;
 	//
 	@Override
 	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
@@ -515,5 +512,32 @@ implements WSIOTask<T> {
 	@Override
 	public final boolean cancel() {
 		return false;
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// HttpContext implementation //////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final HttpContext wrappedHttpCtx = new BasicHttpContext();
+	//
+	@Override
+	public final Object getAttribute(final String s) {
+		return wrappedHttpCtx.getAttribute(s);
+	}
+	@Override
+	public final void setAttribute(final String s, final Object o) {
+		wrappedHttpCtx.setAttribute(s, o);
+	}
+	@Override
+	public final Object removeAttribute(final String s) {
+		return wrappedHttpCtx.removeAttribute(s);
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// FutureCallback<IOTask.Status> implementation ////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final void completed(final IOTask.Status status) {
+	}
+	//
+	@Override
+	public final void cancelled() {
 	}
 }
