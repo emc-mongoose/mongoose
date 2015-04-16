@@ -180,7 +180,10 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final Thread metricDumpThread = new Thread() {
+	private final Thread metricDumpDaemon = new Thread() {
+		//
+		{ setDaemon(true); } // do not block process exit
+		//
 		@Override
 		public final void run() {
 			final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
@@ -309,8 +312,8 @@ implements LoadExecutor<T> {
 			}
 			//
 			jmxReporter.start();
-			metricDumpThread.setName(getName());
-			metricDumpThread.start();
+			metricDumpDaemon.setName(getName());
+			metricDumpDaemon.start();
 			//
 			LOG.debug(LogUtil.MSG, "Started \"{}\"", getName());
 		} else {

@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
 import com.emc.mongoose.common.http.RequestTargetHost;
 import com.emc.mongoose.common.io.HTTPInputStream;
@@ -40,7 +41,6 @@ import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpCoreContext;
-import org.apache.http.protocol.HttpDateGenerator;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -99,7 +99,7 @@ implements WSRequestConfig<T> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
-	private final Thread clientThread;
+	private final Thread clientDaemon;
 	//
 	public static WSRequestConfigBase getInstance() {
 		return newInstanceFor(RunTimeConfig.getContext().getApiName());
@@ -231,10 +231,11 @@ implements WSRequestConfig<T> {
 		);
 		connPool.setMaxTotal(1);
 		connPool.setDefaultMaxPerRoute(1);
-		clientThread = new Thread(
+		clientDaemon = new Thread(
 			new HttpClientRunTask(ioEventDispatch, ioReactor),
 			String.format("%s-WSConfigThread-%d", toString(), hashCode())
 		);
+		clientDaemon.setDaemon(true);
 	}
 	//
 	@Override
@@ -503,10 +504,8 @@ implements WSRequestConfig<T> {
 		{ setTimeZone(Main.TZ_UTC); }
 	};*/
 	//
-	private final static HttpDateGenerator DATE_GENERATOR = new HttpDateGenerator();
-	//
 	protected void applyDateHeader(final MutableWSRequest httpRequest) {
-		httpRequest.setHeader(HttpHeaders.DATE, DATE_GENERATOR.getCurrentDate());
+		httpRequest.setHeader(HttpHeaders.DATE, LowPrecisionDateGenerator.getDateText());
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(
 				LogUtil.MSG, "Apply date header \"{}\" to the request: \"{}\"",
@@ -578,8 +577,8 @@ implements WSRequestConfig<T> {
 		try {
 			super.close();
 		} finally {
-			clientThread.interrupt();
-			LOG.debug(LogUtil.MSG, "Client thread \"{}\" stopped", clientThread);
+			clientDaemon.interrupt();
+			LOG.debug(LogUtil.MSG, "Client thread \"{}\" stopped", clientDaemon);
 		}
 		//
 		if(connPool != null && connPool.isShutdown()) {
@@ -605,8 +604,8 @@ implements WSRequestConfig<T> {
 	public final HttpResponse execute(final String tgtAddr, final HttpRequest request)
 	throws IllegalThreadStateException {
 		//
-		if(!clientThread.isAlive()) {
-			clientThread.start();
+		if(!clientDaemon.isAlive()) {
+			clientDaemon.start();
 		}
 		//
 		HttpResponse response = null;

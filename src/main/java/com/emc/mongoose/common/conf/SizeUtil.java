@@ -1,4 +1,6 @@
 package com.emc.mongoose.common.conf;
+import com.emc.mongoose.common.logging.LogUtil;
+
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,7 +46,7 @@ public final class SizeUtil {
 		final int z = (63 - Long.numberOfLeadingZeros(v)) / 10;
 		final double x = (double) v / (1L << (z * 10));
 		return String.format(
-			Locale.ROOT,
+			LogUtil.LOCALE_DEFAULT,
 			x < 10 ? "%.3f%sb" : x < 100 ? "%.2f%sb" : "%.1f%sb",
 			x, z > 0 ? SIZE_UNITS.charAt(z - 1) : ""
 		).toUpperCase();

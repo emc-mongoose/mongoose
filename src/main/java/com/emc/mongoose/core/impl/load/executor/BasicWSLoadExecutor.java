@@ -64,7 +64,7 @@ implements WSLoadExecutor<T> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
-	private final Thread clientThread;
+	private final Thread clientDaemon;
 	//
 	public BasicWSLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
@@ -147,18 +147,19 @@ implements WSLoadExecutor<T> {
 		connPool.setMaxTotal(totalConnCount);
 		connPool.setDefaultMaxPerRoute(totalConnCount);
 		//
-		clientThread = new Thread(
+		clientDaemon = new Thread(
 			new HttpClientRunTask(ioEventDispatch, ioReactor),
 			String.format("%s-webClientThread", getName())
 		);
+		clientDaemon.setDaemon(true);
 	}
 	//
 	@Override
 	public synchronized void start() {
-		if(clientThread == null) {
+		if(clientDaemon == null) {
 			LOG.debug(LogUtil.ERR, "Not starting web load client due to initialization failures");
 		} else {
-			clientThread.start();
+			clientDaemon.start();
 			super.start();
 		}
 	}
@@ -173,8 +174,8 @@ implements WSLoadExecutor<T> {
 			LogUtil.failure(LOG, Level.WARN, e, "Closing failure");
 		}
 		//
-		clientThread.interrupt();
-		LOG.debug(LogUtil.MSG, "Closed the web storage client \"{}\"", clientThread);
+		clientDaemon.interrupt();
+		LOG.debug(LogUtil.MSG, "Closed the web storage client \"{}\"", clientDaemon);
 		if(connPool != null) {
 			connPool.closeExpired();
 			try {

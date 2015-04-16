@@ -187,6 +187,9 @@ implements DataItemBuffer<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private volatile Consumer<T> consumer = null;
 	private final Thread producerThread = new Thread("tmpFileProducer") {
+		//
+		{ setDaemon(true); } // do not block process exit
+		//
 		@Override @SuppressWarnings("unchecked")
 		public final void run() {
 			if(TmpFileItemBuffer.super.isTerminated()) {
