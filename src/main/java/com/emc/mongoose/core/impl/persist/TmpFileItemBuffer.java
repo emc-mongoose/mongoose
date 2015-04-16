@@ -231,11 +231,9 @@ implements DataItemBuffer<T> {
 						LOG.debug(LogUtil.ERR, "Consumer rejected the data item");
 					} finally {
 						try {
-							consumer.submit(null); // feed the poison
+							consumer.shutdown();
 						} catch(final RemoteException e) {
 							LogUtil.failure(LOG, Level.WARN, e, "Looks like network failure");
-						} catch(final InterruptedException e) {
-							LOG.trace(LogUtil.ERR, "Interrupted");
 						} catch(final RejectedExecutionException e) {
 							LOG.debug(LogUtil.ERR, "Consumer rejected the poison");
 						} finally {
@@ -285,8 +283,8 @@ implements DataItemBuffer<T> {
 	public final synchronized void interrupt() {
 		if(consumer != null) {
 			try {
-				consumer.submit(null); // feed the poison
-			} catch(final RemoteException | InterruptedException | RejectedExecutionException e) {
+				consumer.shutdown();
+			} catch(final RemoteException | RejectedExecutionException e) {
 				// ignore
 			}
 		}

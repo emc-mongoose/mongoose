@@ -118,11 +118,11 @@ implements Producer<T> {
 			LOG.debug(LogUtil.MSG, "Container \"{}\" producer interrupted", container);
 		} finally {
 			try {
-				consumer.submit(null);
+				consumer.shutdown();
 			} catch(final Exception e) {
 				LogUtil.failure(
 					LOG, Level.DEBUG, e,
-					"Failed to submit the poison to the consumer"
+					"Failed to shutdown the consumer"
 				);
 			}
 		}

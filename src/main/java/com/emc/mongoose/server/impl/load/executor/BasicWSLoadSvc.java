@@ -83,15 +83,19 @@ implements WSLoadSvc<T> {
 		}
 	}
 	//
+	private final static Object[] EMPTY_FRAME = new Object[0];
+	//
 	@Override @SuppressWarnings("unchecked")
-	public final List<T> takeFrame()
+	public final T[] takeFrame()
 	throws RemoteException {
-		List<T> recFrame = Collections.emptyList();
+		final T[] recFrame;
 		if(RecordFrameBuffer.class.isInstance(consumer)) {
 			recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
+		} else {
+			recFrame = (T[]) EMPTY_FRAME;
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "Returning {} data items records", recFrame.size());
+			LOG.trace(LogUtil.MSG, "Returning {} data items records", recFrame.length);
 		}
 		return recFrame;
 	}

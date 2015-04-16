@@ -108,39 +108,38 @@ extends LoadExecutorBase<T> {
 	@Override
 	public final void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
-		if(dataItem != null) {
-			switch(loadType) {
-				case APPEND:
-					final long nextSize = sizeMin +
-						(long) (
-							Math.pow(ThreadLocalRandom.current().nextDouble(), sizeBias) *
-							sizeRange
-						);
-					dataItem.append(nextSize);
+		switch(loadType) {
+			case APPEND:
+				final long nextSize = sizeMin +
+					(long) (
+						Math.pow(ThreadLocalRandom.current().nextDouble(), sizeBias) *
+						sizeRange
+					);
+				dataItem.append(nextSize);
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(
+						LogUtil.MSG, "Append the object \"{}\": +{}",
+						dataItem, SizeUtil.formatSize(nextSize)
+					);
+				}
+				break;
+			case UPDATE:
+				if(dataItem.getSize() > 0) {
+					dataItem.updateRandomRanges(countUpdPerReq);
 					if(LOG.isTraceEnabled(LogUtil.MSG)) {
 						LOG.trace(
-							LogUtil.MSG, "Append the object \"{}\": +{}",
-							dataItem, SizeUtil.formatSize(nextSize)
+							LogUtil.MSG, "Modified {} ranges for object \"{}\"",
+							countUpdPerReq, dataItem
 						);
 					}
-					break;
-				case UPDATE:
-					if(dataItem.getSize() > 0) {
-						dataItem.updateRandomRanges(countUpdPerReq);
-						if(LOG.isTraceEnabled(LogUtil.MSG)) {
-							LOG.trace(
-								LogUtil.MSG, "Modified {} ranges for object \"{}\"",
-								countUpdPerReq, dataItem
-							);
-						}
-					} else {
-						throw new RejectedExecutionException(
-							"It's impossible to update empty data item"
-						);
-					}
-					break;
-			}
+				} else {
+					throw new RejectedExecutionException(
+						"It's impossible to update empty data item"
+					);
+				}
+				break;
 		}
+		//
 		super.submit(dataItem);
 	}
 }
