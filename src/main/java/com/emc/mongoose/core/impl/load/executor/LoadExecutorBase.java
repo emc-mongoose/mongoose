@@ -452,9 +452,7 @@ implements LoadExecutor<T> {
 					counterReqFail.inc();
 				}
 				//
-				final long finishedTasks = countTasksDone.incrementAndGet();
-				if ((counterSubm.getCount() == finishedTasks)
-					|| (maxCount <= finishedTasks)) {
+				if (maxCount <= countTasksDone.incrementAndGet()) {
 					if(lock.tryLock(1, TimeUnit.SECONDS)) {
 						condMaxCountReachedOrClosed.signalAll();
 						lock.unlock();
