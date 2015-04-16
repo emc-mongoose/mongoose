@@ -345,7 +345,12 @@ implements LoadClient<T> {
 			nextMetaInfoFrame = nextFrameFetchTask.getLastResult();
 			try {
 				if(nextMetaInfoFrame != null && nextMetaInfoFrame.length > 0) {
-					LOG.trace(LogUtil.MSG, "Got next metainfo frame: {}", nextMetaInfoFrame);
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+						LOG.trace(
+							LogUtil.MSG, "Got next metainfo frame: {}",
+							Arrays.toString(nextMetaInfoFrame)
+						);
+					}
 					for(final T nextMetaInfoRec : nextMetaInfoFrame) {
 						metaInfoLog.submit(nextMetaInfoRec);
 					}

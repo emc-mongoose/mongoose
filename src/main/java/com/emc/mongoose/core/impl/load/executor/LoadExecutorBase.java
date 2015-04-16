@@ -453,7 +453,8 @@ implements LoadExecutor<T> {
 				String.format("\"%s\" rejected the data item \"%s\"", consumer, dataItem)
 			);
 		} finally {
-			if(isShutdown() && counterSubm.getCount() <= countTasksDone.incrementAndGet()) {
+			final long n = countTasksDone.incrementAndGet();
+			if(isShutdown() && n >= counterSubm.getCount()) {
 				try {
 					if(lock.tryLock(1, TimeUnit.SECONDS)) {
 						condMaxCountReachedOrClosed.signalAll();

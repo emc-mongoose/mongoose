@@ -20,13 +20,6 @@ implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static BasicIOTask POISON = new BasicIOTask() {
-		@Override
-		public final String toString() {
-			return "<POISON>";
-		}
-	};
-	//
 	protected volatile RequestConfig<T> reqConf = null;
 	protected volatile String nodeAddr = null;
 	protected volatile T dataItem = null;

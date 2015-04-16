@@ -64,7 +64,7 @@ implements WSIOTask<T> {
 	@SuppressWarnings("unchecked")
 	public static <T extends WSObject> BasicWSIOTask<T> getInstanceFor(
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
-	) throws InterruptedException {
+	) {
 		final BasicWSIOTask<T> ioTask = (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
 		return ioTask;
 	}

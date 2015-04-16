@@ -35,36 +35,32 @@ implements Runnable, Reusable<RequestResultTask<T>> {
 	@Override
 	public final void run() {
 		IOTask.Status ioTaskStatus = IOTask.Status.FAIL_UNKNOWN;
-		if(futureResult != null) {
+		try {
+			ioTaskStatus = futureResult.get(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
+		} catch(final InterruptedException | CancellationException e) {
+			LogUtil.failure(LOG, Level.TRACE, e, "Request has been cancelled");
+		} catch(final ExecutionException e) {
+			LogUtil.failure(
+				LOG, Level.DEBUG, e,
+				String.format("Task #%d execution failure", ioTask.hashCode())
+			);
+		} catch(final Exception e) {
+			LogUtil.failure(LOG, Level.WARN, e, "Unexpected failure");
+		} finally {
 			try {
-				ioTaskStatus = futureResult.get(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
-			} catch(final InterruptedException | CancellationException e) {
-				LogUtil.failure(LOG, Level.TRACE, e, "Request has been cancelled");
-			} catch(final ExecutionException e) {
-				LogUtil.failure(
-					LOG, Level.DEBUG, e,
-					String.format("Task #%d execution failure", ioTask.hashCode())
-				);
-			} catch(final Exception e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Unexpected failure");
+				executor.handleResult(ioTask, ioTaskStatus);
+			} catch(final IOException e) {
+				LogUtil.failure(LOG, Level.DEBUG, e, "Request result handling failed");
 			}
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(
-					LogUtil.MSG, "Task #{} done w/ result {}",
-					ioTask.hashCode(), ioTaskStatus.name()
-				);
-			}
-			if(executor != null) {
-				try {
-					executor.handleResult(ioTask, ioTaskStatus);
-				} catch(final IOException e) {
-					LogUtil.failure(LOG, Level.DEBUG, e, "Request result handling failed");
-				}
-			}
-		} else {
-			LOG.warn(LogUtil.ERR, "Null future result");
+			//
+			release();
 		}
-		release();
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(
+				LogUtil.MSG, "Task #{} done w/ result {}",
+				ioTask.hashCode(), ioTaskStatus.name()
+			);
+		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static InstancePool<RequestResultTask>
@@ -86,6 +82,9 @@ implements Runnable, Reusable<RequestResultTask<T>> {
 		}
 		if(args.length > 0) {
 			executor = (LoadExecutor<T>) args[0];
+			if(executor == null) {
+				throw new IllegalArgumentException("No executor is specified");
+			}
 		}
 		if(args.length > 1) {
 			ioTask = (IOTask<T>) args[1];
@@ -95,6 +94,9 @@ implements Runnable, Reusable<RequestResultTask<T>> {
 		}
 		if(args.length > 2) {
 			futureResult = (Future<IOTask.Status>) args[2];
+			if(futureResult == null) {
+				throw new IllegalArgumentException("Result future shouldn't be null");
+			}
 		}
 		return this;
 	}
