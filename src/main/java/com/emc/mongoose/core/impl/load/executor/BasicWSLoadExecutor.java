@@ -64,7 +64,7 @@ implements WSLoadExecutor<T> {
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
-	private final Thread clientThread;
+	private final Thread clientDaemon;
 	//
 	public BasicWSLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
@@ -147,23 +147,23 @@ implements WSLoadExecutor<T> {
 		connPool.setMaxTotal(totalConnCount);
 		connPool.setDefaultMaxPerRoute(totalConnCount);
 		//
-		clientThread = new Thread(
+		clientDaemon = new Thread(
 			new HttpClientRunTask(ioEventDispatch, ioReactor),
 			String.format("%s-webClientThread", getName())
 		);
+		clientDaemon.setDaemon(true);
 	}
 	//
 	@Override
 	public synchronized void start() {
-		if(clientThread == null) {
+		if(clientDaemon == null) {
 			LOG.debug(LogUtil.ERR, "Not starting web load client due to initialization failures");
 		} else {
-			clientThread.start();
+			clientDaemon.start();
 			super.start();
 		}
 	}
 	//
-	private final static int SHUTDOWN_TIMEOUT_MILLISEC = 1000;
 	@Override
 	public void close()
 	throws IOException {
@@ -173,17 +173,18 @@ implements WSLoadExecutor<T> {
 			LogUtil.failure(LOG, Level.WARN, e, "Closing failure");
 		}
 		//
-		clientThread.interrupt();
-		LOG.debug(LogUtil.MSG, "Closed the web storage client \"{}\"", clientThread);
+		clientDaemon.interrupt();
+		LOG.debug(LogUtil.MSG, "Web storage client daemon \"{}\" interrupted", clientDaemon);
 		if(connPool != null) {
 			connPool.closeExpired();
+			LOG.debug(LogUtil.MSG, "Closed expired (if any) connections in the pool");
 			try {
-				connPool.closeIdle(
-					SHUTDOWN_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
-				);
+				connPool.closeIdle(1, TimeUnit.MILLISECONDS);
+				LOG.debug(LogUtil.MSG, "Closed idle connections (if any) in the pool");
 			} finally {
 				try {
-					connPool.shutdown(SHUTDOWN_TIMEOUT_MILLISEC);
+					connPool.shutdown(1);
+					LOG.debug(LogUtil.MSG, "Connection pool has been shut down");
 				} catch(final IOException e) {
 					LogUtil.failure(
 						LOG, Level.WARN, e, "Connection pool shutdown failure"
@@ -192,25 +193,25 @@ implements WSLoadExecutor<T> {
 			}
 		}
 		//
-		ioReactor.shutdown();
-		LOG.debug(LogUtil.MSG, "Closed web storage client");
+		ioReactor.shutdown(1);
+		LOG.debug(LogUtil.MSG, "I/O reactor has been shut down");
 	}
 	//
 	@Override
 	public final Future<IOTask.Status> submit(final IOTask<T> ioTask)
 	throws RejectedExecutionException {
 		//
-		if(!IOReactorStatus.ACTIVE.equals(ioReactor.getStatus())) {
-			throw new RejectedExecutionException("I/O reactor is not active");
-		}
 		if(connPool.isShutdown()) {
 			throw new RejectedExecutionException("Connection pool is shut down");
 		}
 		//
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-		final Future<IOTask.Status> futureResult = client.execute(
-			wsTask, wsTask, connPool, wsTask, wsTask
-		);
+		final Future<IOTask.Status> futureResult;
+		try {
+			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, wsTask);
+		} catch(final IllegalStateException e) {
+			throw new RejectedExecutionException(e);
+		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(
 				LogUtil.MSG, "I/O task #{} has been submitted for execution",

@@ -92,7 +92,11 @@ extends WSRequestConfigBase<T> {
 		super.setProperties(runTimeConfig);
 		//
 		try {
-			setBucket(new WSBucketImpl<>(this, this.runTimeConfig.getString(KEY_BUCKET_NAME)));
+			final WSBucketImpl<T> bucket = new WSBucketImpl<>(
+				this, this.runTimeConfig.getString(KEY_BUCKET_NAME),
+				this.runTimeConfig.getStorageVersioningEnabled()
+			);
+			setBucket(bucket);
 		} catch(final NoSuchElementException e) {
 			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET_NAME);
 		}
@@ -108,7 +112,7 @@ extends WSRequestConfigBase<T> {
 		if(t == null) {
 			LOG.debug(LogUtil.MSG, "Note: bucket has been got from load client side");
 		} else {
-			setBucket(new WSBucketImpl<>(this, String.class.cast(t)));
+			setBucket(WSBucketImpl.class.cast(in.readObject()));
 			LOG.trace(LogUtil.MSG, "Got bucket {}", bucket);
 		}
 	}
@@ -117,7 +121,7 @@ extends WSRequestConfigBase<T> {
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(bucket == null ? null : bucket.toString());
+		out.writeObject(bucket);
 	}
 	//
 	@Override

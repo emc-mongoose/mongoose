@@ -98,7 +98,7 @@
 				},
 				"atmos": {
 					"port": 9022,
-					"subtenant": "a41583d347a848b89bc2f31747106db2"
+					"subtenant": ""
 				},
 				"swift": {
 					"port": 9024,
