@@ -37,6 +37,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.entity.ContentType;
 import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.HeaderGroup;
@@ -150,13 +151,16 @@ implements WSRequestConfig<T> {
 		signMethod = runTimeConfig.getHttpSignMethod();
 		mac = Mac.getInstance(signMethod);
 		final String runName = runTimeConfig.getRunName(),
-			runVersion = runTimeConfig.getRunVersion(),
-			contentType = runTimeConfig.getHttpContentType();
+			runVersion = runTimeConfig.getRunVersion();
 		userAgent = runName + '/' + runVersion;
 		//
 		sharedHeaders.updateHeader(new BasicHeader(HttpHeaders.USER_AGENT, userAgent));
 		sharedHeaders.updateHeader(new BasicHeader(HttpHeaders.CONNECTION, VALUE_KEEP_ALIVE));
-		sharedHeaders.updateHeader(new BasicHeader(HttpHeaders.CONTENT_TYPE, contentType));
+		sharedHeaders.updateHeader(
+			new BasicHeader(
+				HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_OCTET_STREAM.getMimeType()
+			)
+		);
 		try {
 			if(reqConf2Clone!=null) {
 				this.setSecret(reqConf2Clone.getSecret()).setScheme(reqConf2Clone.getScheme());

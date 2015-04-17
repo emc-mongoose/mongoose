@@ -458,6 +458,7 @@ implements LoadExecutor<T> {
 		} finally {
 			final long n = countTasksDone.incrementAndGet();
 			if(isShutdown() && n >= counterSubm.getCount()) {
+				LOG.debug(LogUtil.MSG, "Done condition is met at {} processed items", n);
 				try {
 					if(lock.tryLock(1, TimeUnit.SECONDS)) {
 						condMaxCountReachedOrClosed.signalAll();
@@ -500,9 +501,7 @@ implements LoadExecutor<T> {
 	@Override
 	public void close()
 	throws IOException {
-		LogUtil.trace(
-			LOG, Level.DEBUG, LogUtil.MSG, String.format("Invoked close of %s", getName())
-		);
+		LOG.debug(LogUtil.MSG, "Invoked close for {}", getName());
 		if(isClosed.compareAndSet(false, true)) {
 			final long tsStartNanoSec = tsStart.get();
 			if(tsStartNanoSec > 0) {
@@ -522,22 +521,28 @@ implements LoadExecutor<T> {
 				);
 			}
 			//
-			if(lock.tryLock()) {
-				condMaxCountReachedOrClosed.signalAll();
-			} else {
-				LOG.warn(LogUtil.ERR, "Failed to acquire the lock in close method");
+			try {
+				if(lock.tryLock(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)) {
+					condMaxCountReachedOrClosed.signalAll();
+				} else {
+					LOG.warn(LogUtil.ERR, "Failed to acquire the lock in close method");
+				}
+			} catch(final InterruptedException e) {
+				LogUtil.failure(LOG, Level.WARN, e, "Interrupted while acquiring the lock");
 			}
 			//
 			try {
-				// force shutdown
+				LOG.debug(LogUtil.MSG, "Forcing the shutdown");
 				reqConfigCopy.close(); // disables connection drop failures
 				LOG.debug(LogUtil.MSG, "{}: dropped {} tasks", getName(), shutdownNow().size());
 				// poison the consumer
 				consumer.shutdown();
+				LOG.debug(LogUtil.MSG, "Consumer \"{}\" has been poisoned", consumer);
 			} catch(final IllegalStateException | RejectedExecutionException e) {
 				LogUtil.failure(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
 				jmxReporter.close();
+				LOG.debug(LogUtil.MSG, "JMX reported closed");
 				LoadCloseHook.del(this);
 				LOG.debug(LogUtil.MSG, "\"{}\" closed successfully", getName());
 			}
@@ -584,16 +589,23 @@ implements LoadExecutor<T> {
 		try {
 			if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
 				t = System.currentTimeMillis() - t; // the count of time wasted for locking
+				LOG.debug(
+					LogUtil.MSG, "Join: wait for the done condition at most for {}[ms]",
+					timeOutMilliSec - t
+				);
 				if(condMaxCountReachedOrClosed.await(timeOutMilliSec - t, TimeUnit.MILLISECONDS)) {
-					LOG.debug(LogUtil.MSG, "Join finished");
+					LOG.debug(LogUtil.MSG, "{}: join finished", getName());
 				} else {
-					LOG.debug(LogUtil.MSG, "Join timeout");
+					LOG.debug(
+						LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
+						getName(), getQueue().size(), getActiveCount()
+					);
 				}
 			} else {
 				LOG.warn(LogUtil.ERR, "Failed to acquire the lock for the join method");
 			}
 		} catch(final InterruptedException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
+			LogUtil.failure(LOG, Level.DEBUG, e, String.format("%s: join interrupted", getName()));
 		} finally {
 			lock.unlock();
 		}

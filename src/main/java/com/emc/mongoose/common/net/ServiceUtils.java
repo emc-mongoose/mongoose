@@ -236,9 +236,9 @@ public final class ServiceUtils {
 			SVC_MAP.remove(svcName);
 			LOG.info(LogUtil.MSG, "Removed service: {}", svcName);
 		} catch(final NotBoundException e) {
-			LOG.warn(LogUtil.ERR, "Service not bound");
+			LOG.debug(LogUtil.ERR, "Service not bound");
 		} catch(final RemoteException e) {
-			LOG.error(LogUtil.ERR, "Possible connection failure", e);
+			LOG.warn(LogUtil.ERR, "Possible connection failure", e);
 		} catch(final MalformedURLException e) {
 			LOG.error(LogUtil.ERR, "Invalid URL", e);
 		}

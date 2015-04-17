@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
@@ -23,6 +22,8 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.util.Calendar;
 import java.util.Date;
 /**
@@ -33,15 +34,16 @@ implements Bucket<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String VERSIONING_ENTITY_CONTENT =
-		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">\n" +
-		"	<Status>Enabled</Status>\n" +
-		"	<MfaDelete>Disabled</MfaDelete>\n" +
-		"</VersioningConfiguration>";
+		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
+		"<Status>Enabled</Status></VersioningConfiguration>";
 	//
 	private final WSRequestConfigImpl<T> reqConf;
 	private String name;
+	private boolean versioningEnabled;
 	//
-	public WSBucketImpl(final WSRequestConfigImpl<T> reqConf, final String name) {
+	public WSBucketImpl(
+		final WSRequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
+	) {
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
@@ -50,6 +52,7 @@ implements Bucket<T> {
 		} else {
 			this.name = name;
 		}
+		this.versioningEnabled = versioningEnabled;
 	}
 	//
 	@Override
@@ -73,16 +76,17 @@ implements Bucket<T> {
 		final MutableWSRequest httpReq = reqConf
 			.createRequest().setMethod(method).setUriPath("/" + name);
 		//
-		final RunTimeConfig contextConfig = RunTimeConfig.getContext();
 		switch(method) {
 			case PUT:
-				httpReq.setHeader(
-					new BasicHeader(
-						WSRequestConfigImpl.KEY_EMC_FS_ACCESS,
-						Boolean.toString(contextConfig.getStorageFileAccessEnabled())
-					)
-				);
-				if(RunTimeConfig.getContext().getStorageVersioningEnabled()) {
+				if(reqConf.getFileAccessEnabled()) {
+					httpReq.setHeader(
+						new BasicHeader(
+							WSRequestConfigImpl.KEY_EMC_FS_ACCESS, Boolean.toString(true)
+						)
+					);
+				}
+				if(versioningEnabled) {
+					httpReq.setUriPath(httpReq.getUriPath() + "/?versioning=");
 					httpReq.setEntity(
 						new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
 					);
@@ -216,5 +220,21 @@ implements Bucket<T> {
 			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// serialization ///////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final void writeExternal(final ObjectOutput out)
+	throws IOException {
+		out.writeObject(name);
+		out.writeBoolean(versioningEnabled);
+	}
+	//
+	@Override
+	public final void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		name = String.class.cast(in.readObject());
+		versioningEnabled = in.readBoolean();
 	}
 }
