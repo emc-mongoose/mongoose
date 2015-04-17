@@ -13,8 +13,6 @@ import com.emc.mongoose.core.impl.data.BasicWSObject;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 //
-import org.apache.http.entity.ContentType;
-import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,9 +49,6 @@ extends WSRequestConfigBase<T> {
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		fmtAuthValue = runTimeConfig.getApiS3AuthPrefix() + " %s:%s";
-		while(sharedHeaders.containsHeader(HttpHeaders.CONTENT_TYPE)) {
-			sharedHeaders.removeHeader(sharedHeaders.getFirstHeader(HttpHeaders.CONTENT_TYPE));
-		}
 		if(reqConf2Clone != null) {
 			setBucket(reqConf2Clone.getBucket());
 			setNameSpace(reqConf2Clone.getNameSpace());

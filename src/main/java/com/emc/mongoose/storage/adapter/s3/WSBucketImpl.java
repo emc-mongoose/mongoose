@@ -1,13 +1,16 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
+import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.api.io.task.IOTask;
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -87,6 +90,7 @@ implements Bucket<T> {
 				}
 				if(versioningEnabled) {
 					httpReq.setUriPath(httpReq.getUriPath() + "/?versioning=");
+					//httpReq.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.TEXT_PLAIN.getMimeType());
 					httpReq.setEntity(
 						new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
 					);
