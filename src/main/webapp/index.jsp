@@ -177,7 +177,7 @@
 
 														<i id="scenario-load"></i>
 
-														<div class="modal fade" id="backup-single" tabindex="-1" role="dialog" aria-labelledby="singleLabel"
+														<div class="modal" id="backup-single" tabindex="-1" role="dialog" aria-labelledby="singleLabel"
 														     aria-hidden="true">
 															<div class="modal-dialog">
 																<div class="modal-content">
@@ -331,7 +331,7 @@
 															</div>
 														</div>
 
-														<div class="modal fade" id="backup-chain" tabindex="-1" role="dialog" aria-labelledby="chainLabel"
+														<div class="modal" id="backup-chain" tabindex="-1" role="dialog" aria-labelledby="chainLabel"
 														     aria-hidden="true">
 															<div class="modal-dialog">
 																<div class="modal-content">
@@ -518,7 +518,7 @@
 															</div>
 														</div>
 
-														<div class="modal fade" id="backup-rampup" tabindex="-1"
+														<div class="modal" id="backup-rampup" tabindex="-1"
 														     role="dialog" aria-labelledby="rampupLabel"
 														     aria-hidden="true">
 															<div class="modal-dialog">
@@ -632,7 +632,7 @@
 																Details...
 															</button>
 
-															<div class="modal fade" id="backup-s3" tabindex="-1" role="dialog"
+															<div class="modal" id="backup-s3" tabindex="-1" role="dialog"
 													            aria-labelledby="s3Label"
 												                aria-hidden="true">
 																<div class="modal-dialog">
@@ -665,7 +665,7 @@
 																</div>
 															</div>
 
-															<div class="modal fade" id="backup-swift" tabindex="-1" role="dialog"
+															<div class="modal" id="backup-swift" tabindex="-1" role="dialog"
 													            aria-labelledby="swiftLabel"
 											                    aria-hidden="true">
 																<div class="modal-dialog">
@@ -708,7 +708,7 @@
 																</div>
 															</div>
 
-															<div class="modal fade" id="backup-atmos" tabindex="-1" role="dialog"
+															<div class="modal" id="backup-atmos" tabindex="-1" role="dialog"
 													            aria-labelledby="atmosLabel"
 													            aria-hidden="true">
 																<div class="modal-dialog">
