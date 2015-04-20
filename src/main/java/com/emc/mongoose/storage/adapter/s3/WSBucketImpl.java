@@ -1,16 +1,13 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
-import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //
-import com.emc.mongoose.core.api.io.task.IOTask;
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -25,8 +22,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.Calendar;
 import java.util.Date;
 /**
@@ -224,21 +219,5 @@ implements Bucket<T> {
 			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	// serialization ///////////////////////////////////////////////////////////////////////////////
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public final void writeExternal(final ObjectOutput out)
-	throws IOException {
-		out.writeObject(name);
-		out.writeBoolean(versioningEnabled);
-	}
-	//
-	@Override
-	public final void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		name = String.class.cast(in.readObject());
-		versioningEnabled = in.readBoolean();
 	}
 }
