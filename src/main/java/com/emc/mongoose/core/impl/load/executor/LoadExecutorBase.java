@@ -36,13 +36,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -60,8 +58,8 @@ implements LoadExecutor<T> {
 	//
 	private final String name;
 	protected final int connCountPerNode, storageNodeCount, retryCountMax, retryDelayMilliSec;
-	protected final ArrayList<String> storageNodeAddrs;
-	protected final HashMap<String, ExecutorService> storageNodes;
+	protected final String storageNodeAddrs[];
+	protected final HashMap<String, ThreadPoolExecutor> storageNodes;
 	//
 	protected final DataSource dataSrc;
 	protected final RequestConfig<T> reqConfigCopy;
@@ -125,7 +123,7 @@ implements LoadExecutor<T> {
 		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the node executors
-		storageNodeAddrs = new ArrayList<>(storageNodeCount);
+		storageNodeAddrs = addrs.clone();
 		storageNodes = new HashMap<>(storageNodeCount);
 		for(final String addr : addrs) {
 			final ExecutorService nextNodeExecutor = new ThreadPoolExecutor(
@@ -138,7 +136,6 @@ implements LoadExecutor<T> {
 					loadNum, reqConfig.getAPI(), loadType, name + '@' + addr
 				)
 			);
-			storageNodeAddrs.add(addr);
 			storageNodes.put(addr, nextNodeExecutor);
 		}
 		// create and configure the connection manager
@@ -356,7 +353,7 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final ThreadLocalRandom tlr = ThreadLocalRandom.current();
+	private final AtomicLong roundRobinCounter = new AtomicLong(0);
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void submit(final T dataItem)
@@ -366,46 +363,69 @@ implements LoadExecutor<T> {
 				"Not started yet, rejecting the submit of the data item"
 			);
 		} else if(maxCount > counterSubm.getCount()) {
-			// round-robin node selection
-			final Runnable r = new Runnable() {
-				@Override
-				public void run() {
-					final String tgtNodeAddr = storageNodeAddrs.get(tlr.nextInt(0, storageNodeCount));
-					// prepare the I/O task instance (make the link between the data item and load type)
-					final IOTask<T> ioTask = reqConfigCopy.getRequestFor(dataItem, tgtNodeAddr);
-					// submit the corresponding I/O task
-					final Future<IOTask.Status>
-						futureResponse = storageNodes.get(tgtNodeAddr).submit(ioTask);
-					// prepare the corresponding result handling task
-					final RequestResultTask<T>
-						handleResultTask = (RequestResultTask<T>) RequestResultTask.getInstance(
-							this, ioTask, futureResponse
-						);
-					Future futureResult = null;
-					int rejectCount = 0;
-					do {
-						try { // submit the result handling task
-							futureResult = submit(handleResultTask);
-							counterSubm.inc();
-						} catch(final RejectedExecutionException e) {
-							rejectCount ++;
-							try {
-								Thread.sleep(rejectCount * retryDelayMilliSec);
-							} catch(final InterruptedException ee) {
-								LOG.trace(
-									LogUtil.ERR,
-									"Got interruption, won't submit result handling for task #{}",
-									ioTask.hashCode()
-								);
-							}
+			String nextNodeAddr;
+			ThreadPoolExecutor nextNodeExecutor;
+			final long rrc = roundRobinCounter.getAndIncrement();
+			for(long tryCount = rrc; tryCount < retryCountMax + rrc; tryCount ++) {
+				nextNodeAddr = storageNodeAddrs[(int) (tryCount % storageNodeCount)];
+				nextNodeExecutor = storageNodes.get(nextNodeAddr);
+				if(nextNodeExecutor.isShutdown()) {
+					LOG.debug(
+						LogUtil.MSG, "Node executor \"{}\" is already shut down", nextNodeAddr
+					);
+					// continue;
+				} else {
+					try {
+						nextNodeExecutor.submit();
+						break; // exit the loop
+					} catch(final RejectedExecutionException e) {
+						if(LOG.isTraceEnabled(LogUtil.MSG)) {
+							LOG.trace(
+								LogUtil.MSG, "Node executor \"{}\" rejected the task #{}",
+								nextNodeAddr, io
+							);
 						}
-						//
-					} while(futureResult == null && rejectCount < retryCountMax && !isShutdown());
-					//
-					if(futureResponse == null) {
-						counterRej.inc();
+						// continue;
 					}
 				}
+			}
+			// round-robin node selection
+			final String tgtNodeAddr = storageNodeAddrs.get(tlr.nextInt(0, storageNodeCount));
+			// prepare the I/O task instance (make the link between the data item and load type)
+			final IOTask<T> ioTask = reqConfigCopy.getRequestFor(dataItem, tgtNodeAddr);
+			// submit the corresponding I/O task
+			final IOTask.Status
+				status = storageNodes.get(tgtNodeAddr)
+					.submit(ioTask)
+					.get();
+			// prepare the corresponding result handling task
+			final RequestResultTask<T>
+				handleResultTask = (RequestResultTask<T>) RequestResultTask.getInstance(
+					this, ioTask, futureResponse
+				);
+			Future futureResult = null;
+			int rejectCount = 0;
+			do {
+				try { // submit the result handling task
+					futureResult = submit(handleResultTask);
+					counterSubm.inc();
+				} catch(final RejectedExecutionException e) {
+					rejectCount ++;
+					try {
+						Thread.sleep(rejectCount * retryDelayMilliSec);
+					} catch(final InterruptedException ee) {
+						LOG.trace(
+							LogUtil.ERR,
+							"Got interruption, won't submit result handling for task #{}",
+							ioTask.hashCode()
+						);
+					}
+				}
+				//
+			} while(futureResult == null && rejectCount < retryCountMax && !isShutdown());
+			//
+			if(futureResponse == null) {
+				counterRej.inc();
 			}
 		} else {
 			shutdown();

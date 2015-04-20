@@ -5,6 +5,7 @@ import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 //
 import com.emc.mongoose.common.collections.InstancePool;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 /**
  Created by kurila on 23.12.14.
  */
@@ -15,11 +16,10 @@ implements DataObjectIOTask<T> {
 	private final static InstancePool<BasicIOTask>
 		POOL_OBJ_TASKS = new InstancePool<>(BasicIOTask.class);
 	//
-	@SuppressWarnings("unchecked")
-	public static <T extends DataObject> BasicIOTask<T> getInstanceFor(
-		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
-	) throws InterruptedException {
-		return (BasicIOTask<T>) POOL_OBJ_TASKS.take(reqConf, dataItem, nodeAddr);
+	public static <T extends DataObject> BasicObjectIOTask<T> getInstanceFor(
+		final LoadExecutor<T> loadExecutor, final RequestConfig<T> reqConf, final T dataItem
+	) {
+		return POOL_OBJ_TASKS.take(loadExecutor, reqConf, dataItem);
 	}
 	//
 	@Override

@@ -4,6 +4,7 @@ import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
 import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
 //
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.io.task.BasicObjectIOTask;
 /**
  Created by kurila on 23.12.14.
@@ -17,9 +18,8 @@ implements ObjectRequestConfig<T> {
 	}
 	//
 	@Override
-	public DataObjectIOTask<T> getRequestFor(T dataItem, String nodeAddr)
-	throws InterruptedException {
-		return (BasicObjectIOTask<T>) BasicObjectIOTask.getInstanceFor(this, dataItem, nodeAddr);
+	public BasicObjectIOTask<T> getRequestFor(final LoadExecutor<T> loadExecutor, T dataItem) {
+		return BasicObjectIOTask.getInstanceFor(loadExecutor, this, dataItem);
 	}
 	//
 	/*@Override

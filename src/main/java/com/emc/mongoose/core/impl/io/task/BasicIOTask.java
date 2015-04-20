@@ -10,6 +10,7 @@ import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 //
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
@@ -20,6 +21,7 @@ implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	protected volatile LoadExecutor<T> loadExecutor = null;
 	protected volatile RequestConfig<T> reqConf = null;
 	protected volatile String nodeAddr = null;
 	protected volatile T dataItem = null;
@@ -50,13 +52,13 @@ implements IOTask<T> {
 		status = Status.FAIL_UNKNOWN;
 		reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
 		if(args.length > 0) {
-			setRequestConfig((RequestConfig<T>) args[0]);
+			loadExecutor = (LoadExecutor<T>) args[0];
 		}
 		if(args.length > 1) {
-			setDataItem((T) args[1]);
+			setRequestConfig((RequestConfig<T>) args[1]);
 		}
 		if(args.length > 2) {
-			setNodeAddr(String.class.cast(args[2]));
+			setDataItem((T) args[2]);
 		}
 		return this;
 	}
