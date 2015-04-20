@@ -36,9 +36,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -50,19 +54,20 @@ import java.util.concurrent.locks.ReentrantLock;
  Created by kurila on 15.10.14.
  */
 public abstract class LoadExecutorBase<T extends DataItem>
-extends ThreadPoolExecutor
 implements LoadExecutor<T> {
 	//
-	private final Logger LOG = LogManager.getLogger();
+	private final static Logger LOG = LogManager.getLogger();
 	//
+	private final String name;
 	protected final int connCountPerNode, storageNodeCount, retryCountMax, retryDelayMilliSec;
-	protected final String storageNodeAddrs[];
+	protected final ArrayList<String> storageNodeAddrs;
+	protected final HashMap<String, ExecutorService> storageNodes;
 	//
 	protected final DataSource dataSrc;
-	protected volatile RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
+	protected RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
 	private final long maxCount;
@@ -87,29 +92,15 @@ implements LoadExecutor<T> {
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
-		super(
-			1, 1, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(
-				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
-					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
-			)
-		);
-		//
 		final int loadNum = LAST_INSTANCE_NUM.getAndIncrement();
 		storageNodeCount = addrs.length;
-		final String name = Integer.toString(loadNum) + '-' +
+		name = Integer.toString(loadNum) + '-' +
 			StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
 			StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
 			(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
 			Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount);
-		LOG.debug(
-			LogUtil.MSG, "Determined queue capacity of {} for \"{}\"",
-			getQueue().remainingCapacity(), name
-		);
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
-		setCorePoolSize(Math.min(COUNT_THREADS_MIN, storageNodeCount));
-		setMaximumPoolSize(getCorePoolSize());
 		//
 		this.runTimeConfig = runTimeConfig;
 		RequestConfig<T> reqConfigClone = null;
@@ -131,13 +122,25 @@ implements LoadExecutor<T> {
 			.registerWith(mBeanServer)
 			.build();
 		//
-		setThreadFactory(
-			new DataObjectWorkerFactory(loadNum, reqConfig.getAPI(), loadType, name)
-		);
 		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		// prepare the node executors array
-		storageNodeAddrs = addrs.clone();
+		// prepare the node executors
+		storageNodeAddrs = new ArrayList<>(storageNodeCount);
+		storageNodes = new HashMap<>(storageNodeCount);
+		for(final String addr : addrs) {
+			final ExecutorService nextNodeExecutor = new ThreadPoolExecutor(
+				COUNT_THREADS_MIN, COUNT_THREADS_MIN, 0, TimeUnit.SECONDS,
+				new LinkedBlockingQueue<Runnable>(
+					(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
+						(int) maxCount : runTimeConfig.getRunRequestQueueSize()
+				),
+				new DataObjectWorkerFactory(
+					loadNum, reqConfig.getAPI(), loadType, name + '@' + addr
+				)
+			);
+			storageNodeAddrs.add(addr);
+			storageNodes.put(addr, nextNodeExecutor);
+		}
 		// create and configure the connection manager
 		dataSrc = reqConfig.getDataSource();
 		//
@@ -159,7 +162,9 @@ implements LoadExecutor<T> {
 				LogUtil.failure(LOG, Level.WARN, e, "Unexpected failure");
 			}
 		}
-		setConsumer(new LogConsumer<T>(maxCount, getCorePoolSize())); // by default, may be overriden later externally
+		setConsumer( // by default, may be overriden later externally
+			new LogConsumer<T>(maxCount, Math.max(COUNT_THREADS_MIN, storageNodeCount))
+		);
 		LoadCloseHook.add(this);
 	}
 	//
@@ -170,12 +175,21 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final String getName() {
-		return getThreadFactory().toString();
+		return name;
 	}
 	//
 	@Override
 	public final String toString() {
-		return getName();
+		return name;
+	}
+	//
+	protected final boolean isShutdown() {
+		for(final ExecutorService nextNodeExecutor : storageNodes.values()) {
+			if(!nextNodeExecutor.isShutdown()) {
+				return false;
+			}
+		}
+		return true;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
@@ -191,7 +205,7 @@ implements LoadExecutor<T> {
 			);
 			try {
 				if(metricsUpdatePeriodMilliSec > 0) {
-					while(!isShutdown() || getQueue().size() > 0) {
+					while(!isShutdown() || counterSubm.getCount() <= countTasksDone.get()) {
 						logMetrics(LogUtil.PERF_AVG);
 						Thread.sleep(metricsUpdatePeriodMilliSec);
 					}
@@ -244,7 +258,7 @@ implements LoadExecutor<T> {
 			String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
-				countReqSucc, getQueue().size(),
+				countReqSucc, counterSubm.getCount() - countTasksDone.get(),
 				countReqFail == 0 ?
 					Long.toString(countReqFail) :
 					(float) countReqSucc / countReqFail > 100 ?
@@ -286,8 +300,6 @@ implements LoadExecutor<T> {
 	public void start() {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			LOG.debug(LogUtil.MSG, "Starting {}", getName());
-			//
-			prestartAllCoreThreads();
 			//
 			final String name = getName();
 			// init metrics
@@ -344,52 +356,56 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final AtomicLong countSubmCalls = new AtomicLong(0);
+	protected final ThreadLocalRandom tlr = ThreadLocalRandom.current();
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void submit(final T dataItem)
-	throws RemoteException, RejectedExecutionException, InterruptedException {
+	throws RemoteException, RejectedExecutionException {
 		if(tsStart.get() < 0) {
 			throw new RejectedExecutionException(
 				"Not started yet, rejecting the submit of the data item"
 			);
 		} else if(maxCount > counterSubm.getCount()) {
 			// round-robin node selection
-			final String tgtNodeAddr = storageNodeAddrs[
-				(int) (countSubmCalls.getAndIncrement() % storageNodeCount)
-			];
-			// prepare the I/O task instance (make the link between the data item and load type)
-			final IOTask<T> ioTask = reqConfigCopy.getRequestFor(dataItem, tgtNodeAddr);
-			// submit the corresponding I/O task
-			final Future<IOTask.Status> futureResponse = submit(ioTask);
-			// prepare the corresponding result handling task
-			final RequestResultTask<T>
-				handleResultTask = (RequestResultTask<T>) RequestResultTask.getInstance(
-					this, ioTask, futureResponse
-				);
-			Future futureResult = null;
-			int rejectCount = 0;
-			do {
-				try { // submit the result handling task
-					futureResult = submit(handleResultTask);
-					counterSubm.inc();
-				} catch(final RejectedExecutionException e) {
-					rejectCount ++;
-					try {
-						Thread.sleep(rejectCount * retryDelayMilliSec);
-					} catch(final InterruptedException ee) {
-						LOG.trace(
-							LogUtil.ERR,
-							"Got interruption, won't submit result handling for task #{}",
-							ioTask.hashCode()
+			final Runnable r = new Runnable() {
+				@Override
+				public void run() {
+					final String tgtNodeAddr = storageNodeAddrs.get(tlr.nextInt(0, storageNodeCount));
+					// prepare the I/O task instance (make the link between the data item and load type)
+					final IOTask<T> ioTask = reqConfigCopy.getRequestFor(dataItem, tgtNodeAddr);
+					// submit the corresponding I/O task
+					final Future<IOTask.Status>
+						futureResponse = storageNodes.get(tgtNodeAddr).submit(ioTask);
+					// prepare the corresponding result handling task
+					final RequestResultTask<T>
+						handleResultTask = (RequestResultTask<T>) RequestResultTask.getInstance(
+							this, ioTask, futureResponse
 						);
+					Future futureResult = null;
+					int rejectCount = 0;
+					do {
+						try { // submit the result handling task
+							futureResult = submit(handleResultTask);
+							counterSubm.inc();
+						} catch(final RejectedExecutionException e) {
+							rejectCount ++;
+							try {
+								Thread.sleep(rejectCount * retryDelayMilliSec);
+							} catch(final InterruptedException ee) {
+								LOG.trace(
+									LogUtil.ERR,
+									"Got interruption, won't submit result handling for task #{}",
+									ioTask.hashCode()
+								);
+							}
+						}
+						//
+					} while(futureResult == null && rejectCount < retryCountMax && !isShutdown());
+					//
+					if(futureResponse == null) {
+						counterRej.inc();
 					}
 				}
-				//
-			} while(futureResult == null && rejectCount < retryCountMax && !isShutdown());
-			//
-			if(futureResponse == null) {
-				counterRej.inc();
 			}
 		} else {
 			shutdown();
@@ -491,7 +507,9 @@ implements LoadExecutor<T> {
 		}
 		//
 		if(!isShutdown()) {
-			super.shutdown();
+			for(final ExecutorService nextNodeExecutor : storageNodes.values()) {
+				nextNodeExecutor.shutdown();
+			}
 			LOG.debug(LogUtil.MSG, "\"{}\" will not accept new tasks more", getName());
 		}
 	}
@@ -563,7 +581,6 @@ implements LoadExecutor<T> {
 				LOG, Level.WARN, e, String.format("%s: failed to close", getName())
 			);
 		}
-		super.finalize();
 	}
 	//
 	@Override
@@ -597,8 +614,8 @@ implements LoadExecutor<T> {
 					LOG.debug(LogUtil.MSG, "{}: join finished", getName());
 				} else {
 					LOG.debug(
-						LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
-						getName(), getQueue().size(), getActiveCount()
+						LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued + active",
+						getName(), counterSubm.getCount() - countTasksDone.get()
 					);
 				}
 			} else {
