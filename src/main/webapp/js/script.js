@@ -307,6 +307,17 @@ $(document).ready(function() {
 		parent.show();
 	});*/
 	//
+	$("#backup-run\\.id, #run\\.id").change(function() {
+		var startBtn = $("#start");
+		var currVal = this.value;
+		var patternValidId = /^[a-zA-Z]([-a-zA-Z0-9]*)$/;
+		if (!patternValidId.test(currVal)) {
+			alert("Invalid id value. RegExp for id: /^[a-zA-Z]([-a-zA-Z0-9]*)$/");
+			startBtn.prop("disabled", true);
+		} else {
+			startBtn.prop("disabled", false);
+		}
+	});
 });
 
 /* Functions */
