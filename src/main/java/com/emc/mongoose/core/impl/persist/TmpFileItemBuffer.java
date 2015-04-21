@@ -1,5 +1,7 @@
 package com.emc.mongoose.core.impl.persist;
 //
+import com.emc.mongoose.common.collections.InstancePool;
+import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -47,7 +49,7 @@ implements DataItemBuffer<T> {
 	public TmpFileItemBuffer(final long maxCount)
 	throws IllegalStateException {
 		super(
-			Producer.WORKER_COUNT, Producer.WORKER_COUNT, 0, TimeUnit.SECONDS,
+			1, 1, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				(maxCount > 0 && maxCount < RunTimeConfig.getContext().getRunRequestQueueSize()) ?
 					(int) maxCount : RunTimeConfig.getContext().getRunRequestQueueSize()
@@ -86,28 +88,61 @@ implements DataItemBuffer<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static class DataItemOutPutTask<T>
-	implements Runnable {
+	public final static class DataItemOutPutTask<T>
+	implements Runnable, Reusable<DataItemOutPutTask<T>> {
 		//
-		private final ObjectOutput fBuffOut;
-		private final T dataItem;
+		private final static InstancePool<DataItemOutPutTask>
+			TASKS_POOL = new InstancePool<>(DataItemOutPutTask.class);
 		//
-		private DataItemOutPutTask(final ObjectOutput fBuffOut, final T dataItem) {
-			this.fBuffOut = fBuffOut;
-			this.dataItem = dataItem;
+		private ObjectOutput fBuffOut = null;
+		private T dataItem = null;
+		//
+		@Override @SuppressWarnings("SynchronizeOnNonFinalField")
+		public final void run() {
+			try {
+				if(fBuffOut != null) {
+					synchronized(fBuffOut) {
+						try {
+							fBuffOut.writeObject(dataItem);
+						} catch(final IOException e) {
+							LogUtil.failure(LOG, Level.WARN, e, "failed to write out the data item");
+						}
+					}
+				}
+			} finally {
+				release();
+			}
+		}
+		//
+		@SuppressWarnings("unchecked")
+		static DataItemOutPutTask<DataItem> getInstance(
+			final ObjectOutput out, final DataItem dataItem
+		) {
+			return (DataItemOutPutTask<DataItem>) TASKS_POOL.take(out, dataItem);
+		}
+		//
+		@Override @SuppressWarnings("unchecked")
+		public final DataItemOutPutTask<T> reuse(final Object... args)
+		throws IllegalArgumentException, IllegalStateException {
+			if(args != null) {
+				if(args.length > 0) {
+					fBuffOut = ObjectOutput.class.cast(args[0]);
+				}
+				if(args.length > 1) {
+					dataItem = (T) args[1];
+				}
+			}
+			return this;
 		}
 		//
 		@Override
-		public final void run() {
-			if(fBuffOut != null) {
-				synchronized(fBuffOut) {
-					try {
-						fBuffOut.writeObject(dataItem);
-					} catch(final IOException e) {
-						LogUtil.failure(LOG, Level.WARN, e, "failed to write out the data item");
-					}
-				}
-			}
+		public final void release() {
+			TASKS_POOL.release(this);
+		}
+		//
+		@Override
+		public final int compareTo(final DataItemOutPutTask<T> o) {
+			return o == null ? -1 : hashCode() - o.hashCode();
 		}
 	}
 	//
@@ -121,7 +156,8 @@ implements DataItemBuffer<T> {
 			shutdown();
 		} else {
 			//
-			final DataItemOutPutTask<T> outPutTask = new DataItemOutPutTask<>(fBuffOut, dataItem);
+			final DataItemOutPutTask<DataItem>
+				outPutTask = DataItemOutPutTask.getInstance(fBuffOut, dataItem);
 			boolean passed = false;
 			int rejectCount = 0;
 			while(!passed && rejectCount < retryCountMax && writtenDataItems.get() < maxCount) {
@@ -220,7 +256,11 @@ implements DataItemBuffer<T> {
 					} finally {
 						try {
 							if(isInterrupted()) {
-								shutdownNow();
+								LOG.debug(
+									LogUtil.MSG,
+									"Was interrupted, shut down immediately, dropped {} submit tasks",
+									shutdownNow().size()
+								);
 							} else {
 								shutdown();
 								awaitTermination(
@@ -228,16 +268,19 @@ implements DataItemBuffer<T> {
 									TimeUnit.MILLISECONDS
 								);
 							}
-							consumer.shutdown();
-						} catch(final RemoteException e) {
-							LogUtil.failure(LOG, Level.WARN, e, "Looks like network failure");
 						} catch(final RejectedExecutionException e) {
 							LOG.debug(LogUtil.ERR, "Consumer rejected the poison");
 						} catch(final InterruptedException e) {
-							LOG.debug(LogUtil.MSG, "Interrupted");
+							LOG.debug(LogUtil.MSG, "Interrupted while waiting for finish");
 						} finally {
-							consumer = null;
-							deleteFromFileSystem();
+							try {
+								consumer.shutdown();
+							} catch(final RemoteException e) {
+								LogUtil.failure(LOG, Level.WARN, e, "Looks like network failure");
+							} finally {
+								consumer = null;
+								deleteFromFileSystem();
+							}
 						}
 					}
 				}
