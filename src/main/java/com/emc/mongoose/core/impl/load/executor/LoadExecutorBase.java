@@ -459,7 +459,9 @@ implements LoadExecutor<T> {
 			if(isShutdown() && n >= counterSubm.getCount()) {
 				LOG.debug(LogUtil.MSG, "Done condition is met at {} processed items", n);
 				try {
-					if(lock.tryLock(1, TimeUnit.SECONDS)) {
+					if(
+						lock.tryLock(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)
+					) {
 						condMaxCountReachedOrClosed.signalAll();
 						lock.unlock();
 					} else {
