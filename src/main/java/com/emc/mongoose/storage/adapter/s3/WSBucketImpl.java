@@ -1,16 +1,13 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
-import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //
-import com.emc.mongoose.core.api.io.task.IOTask;
 import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -39,6 +36,7 @@ implements Bucket<T> {
 	private final static String VERSIONING_ENTITY_CONTENT =
 		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
 		"<Status>Enabled</Status></VersioningConfiguration>";
+	private final static String VERSIONING_URL_PART = "/?versioning";
 	//
 	private final WSRequestConfigImpl<T> reqConf;
 	private String name;
@@ -72,6 +70,11 @@ implements Bucket<T> {
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)
 	throws IOException {
+		return execute(addr, method, false);
+	}
+	//
+	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning)
+	throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
@@ -88,11 +91,10 @@ implements Bucket<T> {
 						)
 					);
 				}
-				if(versioningEnabled) {
-					httpReq.setUriPath(httpReq.getUriPath() + "/?versioning=");
-					//httpReq.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.TEXT_PLAIN.getMimeType());
+				if (versioning) {
+					httpReq.setUriPath(httpReq.getUriPath() + VERSIONING_URL_PART);
 					httpReq.setEntity(
-						new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
+							new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
 					);
 				}
 				break;
@@ -142,7 +144,48 @@ implements Bucket<T> {
 			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
+		if (flagExists && versioningEnabled){
+			enableVersioning(addr, MutableWSRequest.HTTPMethod.PUT);
+		}
+		//
 		return flagExists;
+	}
+	//
+	private void enableVersioning(final String addr, MutableWSRequest.HTTPMethod method) {
+		try {
+			final HttpResponse httpResp = execute(addr, method, true);
+			if(httpResp != null) {
+				final HttpEntity httpEntity = httpResp.getEntity();
+				final StatusLine statusLine = httpResp.getStatusLine();
+				if(statusLine == null) {
+					LOG.warn(LogUtil.MSG, "No response status");
+				} else {
+					final int statusCode = statusLine.getStatusCode();
+					if(statusCode >= 200 && statusCode < 300) {
+						LOG.info(LogUtil.MSG, "Bucket \"{}\" versioning enabled", name);
+					} else {
+						final StrBuilder msg = new StrBuilder("Bucket versioning \"")
+								.append(name).append("\" failure: ")
+								.append(statusLine.getReasonPhrase());
+						if(httpEntity != null) {
+							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
+								httpEntity.writeTo(buff);
+								msg.appendNewLine().append(buff.toString());
+							} catch(final Exception e) {
+								// ignore
+							}
+						}
+						LOG.warn(
+								LogUtil.ERR, "Bucket versioning \"{}\" response ({}): {}",
+								name, statusCode, msg.toString()
+						);
+					}
+				}
+				EntityUtils.consumeQuietly(httpEntity);
+			}
+		} catch(final IOException e) {
+			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+		}
 	}
 	//
 	@Override
