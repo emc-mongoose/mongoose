@@ -98,12 +98,6 @@ public final class LogUtil {
 					RunTimeConfig.DIR_ROOT, Constants.DIR_CONF, FNAME_LOG_CONF
 				);
 				//
-				System.out.println(
-					String.format(
-						"Going to configure the logging subsystem using configuration file \"%s\"",
-						logConfPath
-					)
-				);
 				try {
 					LOG_CTX.set(
 						Configurator.initialize("mongoose", logConfPath.toUri().toString())

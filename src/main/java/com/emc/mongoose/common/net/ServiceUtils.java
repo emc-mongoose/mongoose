@@ -3,6 +3,7 @@ package com.emc.mongoose.common.net;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -353,7 +354,9 @@ public final class ServiceUtils {
 				LOG.debug(LogUtil.MSG, "Not closed services: {}", Arrays.toString(names));
 				for(final String name : names) {
 					try{
-						registry.unbind(name);
+						if(!name.equals(BasicWSLoadBuilderSvc.class.getPackage().getName())){
+							registry.unbind(name);
+						}
 					} catch(final NotBoundException e) {
 						LogUtil.failure(
 							LOG, Level.DEBUG, e,
