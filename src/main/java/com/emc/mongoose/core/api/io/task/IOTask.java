@@ -4,14 +4,12 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-common.jar
 import com.emc.mongoose.common.collections.Reusable;
-
-import java.util.concurrent.Callable;
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
  */
 public interface IOTask<T extends DataItem>
-extends Reusable<IOTask<T>>, Callable<IOTask.Status> {
+extends Reusable<IOTask<T>> {
 	//
 	enum Type {
 		CREATE, READ, DELETE, UPDATE, APPEND

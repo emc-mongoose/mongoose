@@ -16,10 +16,11 @@ implements DataObjectIOTask<T> {
 	private final static InstancePool<BasicIOTask>
 		POOL_OBJ_TASKS = new InstancePool<>(BasicIOTask.class);
 	//
+	@SuppressWarnings("unchecked")
 	public static <T extends DataObject> BasicObjectIOTask<T> getInstanceFor(
 		final LoadExecutor<T> loadExecutor, final RequestConfig<T> reqConf, final T dataItem
 	) {
-		return POOL_OBJ_TASKS.take(loadExecutor, reqConf, dataItem);
+		return (BasicObjectIOTask<T>) POOL_OBJ_TASKS.take(loadExecutor, reqConf, dataItem);
 	}
 	//
 	@Override

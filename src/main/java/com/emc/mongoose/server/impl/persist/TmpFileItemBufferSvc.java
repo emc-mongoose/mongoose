@@ -14,8 +14,8 @@ public final class TmpFileItemBufferSvc<T extends DataItem>
 extends TmpFileItemBuffer<T>
 implements DataItemBufferSvc<T> {
 	//
-	public TmpFileItemBufferSvc(final long maxCount, final int threadCount) {
-		super(maxCount, threadCount);
+	public TmpFileItemBufferSvc(final long maxCount) {
+		super(maxCount);
 	}
 	//
 	@Override

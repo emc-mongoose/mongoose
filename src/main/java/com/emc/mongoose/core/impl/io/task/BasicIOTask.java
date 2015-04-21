@@ -37,7 +37,7 @@ implements IOTask<T> {
 	@SuppressWarnings("unchecked")
 	public static <T extends DataObject> BasicIOTask<T> getInstanceFor(
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
-	) throws InterruptedException {
+	) {
 		return (BasicIOTask<T>) POOL_BASIC_IO_TASKS.take(reqConf, dataItem, nodeAddr);
 	}
 	//
@@ -52,13 +52,13 @@ implements IOTask<T> {
 		status = Status.FAIL_UNKNOWN;
 		reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
 		if(args.length > 0) {
-			loadExecutor = (LoadExecutor<T>) args[0];
+			setRequestConfig((RequestConfig<T>) args[0]);
 		}
 		if(args.length > 1) {
-			setRequestConfig((RequestConfig<T>) args[1]);
+			setDataItem((T) args[1]);
 		}
 		if(args.length > 2) {
-			setDataItem((T) args[2]);
+			setNodeAddr(String.class.cast(args[2]));
 		}
 		return this;
 	}

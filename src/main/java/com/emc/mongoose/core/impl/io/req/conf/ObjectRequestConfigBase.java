@@ -2,9 +2,7 @@ package com.emc.mongoose.core.impl.io.req.conf;
 //
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
-import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.io.task.BasicObjectIOTask;
 /**
  Created by kurila on 23.12.14.
@@ -18,8 +16,8 @@ implements ObjectRequestConfig<T> {
 	}
 	//
 	@Override
-	public BasicObjectIOTask<T> getRequestFor(final LoadExecutor<T> loadExecutor, T dataItem) {
-		return BasicObjectIOTask.getInstanceFor(loadExecutor, this, dataItem);
+	public BasicObjectIOTask<T> getRequestFor(T dataItem, final String addr) {
+		return (BasicObjectIOTask<T>) BasicObjectIOTask.getInstanceFor(this, dataItem, addr);
 	}
 	//
 	/*@Override

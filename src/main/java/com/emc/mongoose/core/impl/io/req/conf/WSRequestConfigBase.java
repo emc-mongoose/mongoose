@@ -368,8 +368,8 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr) {
-		return BasicWSIOTask.getInstanceFor(this, dataItem, nodeAddr);
+	public final BasicWSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr) {
+		return (BasicWSIOTask<T>) BasicWSIOTask.getInstanceFor(this, dataItem, nodeAddr);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

@@ -1,11 +1,14 @@
 package com.emc.mongoose.core.impl.load.model;
 //
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,7 +21,10 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 12.05.14.
  A data item producer which constructs data items while reading the special input file.
@@ -32,6 +38,7 @@ implements Producer<T> {
 	private final Path fPath;
 	private final Constructor<T> dataItemConstructor;
 	private final long maxCount;
+	private final ExecutorService producerExecSvc;
 	//
 	private Consumer<T> consumer = null;
 	//
@@ -39,7 +46,9 @@ implements Producer<T> {
 	public FileProducer(final long maxCount, final String fPathStr, final Class<T> dataItemsImplCls)
 	throws NoSuchMethodException, IOException {
 		super(fPathStr);
-		//
+		producerExecSvc = Executors.newFixedThreadPool(
+			Producer.WORKER_COUNT, new NamingWorkerFactory(fPathStr)
+		);
 		fPath = FileSystems.getDefault().getPath(fPathStr);
 		if(!Files.exists(fPath)) {
 			throw new IOException("File \""+fPathStr+"\" doesn't exist");
@@ -77,13 +86,10 @@ implements Producer<T> {
 				} else {
 					nextData = dataItemConstructor.newInstance(nextLine);
 					try {
-						consumer.submit(nextData);
-						dataItemsCount ++;
-					} catch(final InterruptedException e) {
-						LogUtil.failure(
-							LOG, Level.DEBUG, e, "Interrupted while submitting the data item"
+						producerExecSvc.submit(
+							SubmitTask.getInstance(consumer, nextData)
 						);
-						break;
+						dataItemsCount ++;
 					} catch(final Exception e) {
 						if(
 							consumer.getMaxCount() > dataItemsCount &&
@@ -105,9 +111,18 @@ implements Producer<T> {
 			LOG.debug(LogUtil.MSG, "Produced {} data items", dataItemsCount);
 			try {
 				LOG.debug(LogUtil.MSG, "Feeding poison to consumer \"{}\"", consumer.toString());
+				if(isInterrupted()) {
+					producerExecSvc.shutdownNow();
+				} else {
+					producerExecSvc.shutdown();
+					producerExecSvc.awaitTermination(
+						RunTimeConfig.getContext().getRunReqTimeOutMilliSec(),
+						TimeUnit.MILLISECONDS
+					);
+				}
 				consumer.shutdown();
 			} catch(final Exception e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Failed to submit the poison to remote consumer");
+				LogUtil.failure(LOG, Level.WARN, e, "Failed to shut down the consumer");
 			}
 			LOG.debug(LogUtil.MSG, "Exiting");
 		}
@@ -125,4 +140,8 @@ implements Producer<T> {
 		return consumer;
 	}
 	//
+	@Override
+	public final void interrupt() {
+		producerExecSvc.shutdownNow();
+	}
 }
