@@ -100,10 +100,12 @@ implements DataItemBuffer<T> {
 		@Override
 		public final void run() {
 			if(fBuffOut != null) {
-				try {
-					fBuffOut.writeObject(dataItem);
-				} catch(final IOException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "failed to write out the data item");
+				synchronized(fBuffOut) {
+					try {
+						fBuffOut.writeObject(dataItem);
+					} catch(final IOException e) {
+						LogUtil.failure(LOG, Level.WARN, e, "failed to write out the data item");
+					}
 				}
 			}
 		}
