@@ -78,7 +78,7 @@ implements Runnable, Reusable<SubmitTask> {
 			} while(rejectCount < retryCountMax);
 		} catch(final InterruptedException e) {
 			LogUtil.failure(
-				LOG, Level.INFO, e, String.format(
+				LOG, Level.DEBUG, e, String.format(
 					"Failed to submit the data item \"%s\" to consumer \"%s\"",
 					dataItem, consumer
 				)

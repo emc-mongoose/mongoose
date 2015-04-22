@@ -51,7 +51,7 @@ public final class ModeDispatcher {
 		rootLogger.debug(LogUtil.MSG, "Loaded the properties from the files");
 		// load the config from system properties
 		RunTimeConfig.getContext().loadSysProps();
-		// load the confi from CLI arguments
+		// load the config from CLI arguments
 		final Map<String, String> properties = HumanFriendly.parseCli(args);
 		if(!properties.isEmpty()) {
 			rootLogger.debug(LogUtil.MSG, "Overriding properties {}", properties);

@@ -191,7 +191,7 @@ implements LoadExecutor<T> {
 			);
 			try {
 				if(metricsUpdatePeriodMilliSec > 0) {
-					while(!isShutdown() || counterSubm.getCount() <= countTasksDone.get()) {
+					while(!isClosed.get()) {
 						logMetrics(LogUtil.PERF_AVG);
 						Thread.sleep(metricsUpdatePeriodMilliSec);
 					}
@@ -472,7 +472,7 @@ implements LoadExecutor<T> {
 							LOG.debug(LogUtil.ERR, "Failed to acquire the lock for result handling");
 						}
 					} catch(final InterruptedException e) {
-						LogUtil.failure(LOG, Level.WARN, e, "Interrupted");
+						LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
 					}
 				}
 			}
