@@ -82,6 +82,7 @@ implements LoadExecutor<T> {
 		countTasksDone = new AtomicLong(0);
 	private final Lock lock = new ReentrantLock();
 	private final Condition condMaxCountReachedOrClosed = lock.newCondition();
+	private final AtomicBoolean isClosed = new AtomicBoolean(false);
 	//
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
@@ -460,6 +461,7 @@ implements LoadExecutor<T> {
 				LOG.debug(LogUtil.MSG, "Done condition is met at {} processed items", n);
 				try {
 					if(
+						!isClosed.get() &&
 						lock.tryLock(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)
 					) {
 						condMaxCountReachedOrClosed.signalAll();
@@ -497,8 +499,6 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	private final AtomicBoolean isClosed = new AtomicBoolean(false);
-	//
 	@Override
 	public void close()
 	throws IOException {
@@ -524,7 +524,10 @@ implements LoadExecutor<T> {
 			}
 			//
 			try {
-				if(lock.tryLock(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)) {
+				if(
+					!isClosed.get() &&
+					lock.tryLock(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)
+				) {
 					condMaxCountReachedOrClosed.signalAll();
 				} else {
 					LOG.warn(LogUtil.ERR, "Failed to acquire the lock in close method");
@@ -595,27 +598,36 @@ implements LoadExecutor<T> {
 		//
 		long t = System.currentTimeMillis();
 		try {
-			if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
-				t = System.currentTimeMillis() - t; // the count of time wasted for locking
-				LOG.debug(
-					LogUtil.MSG, "Join: wait for the done condition at most for {}[ms]",
-					timeOutMilliSec - t
-				);
-				if(condMaxCountReachedOrClosed.await(timeOutMilliSec - t, TimeUnit.MILLISECONDS)) {
-					LOG.debug(LogUtil.MSG, "{}: join finished", getName());
-				} else {
+			if(
+				!isClosed.get() &&
+				lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)
+			) {
+				try {
+					t = System.currentTimeMillis() - t; // the count of time wasted for locking
 					LOG.debug(
-						LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
-						getName(), getQueue().size(), getActiveCount()
+						LogUtil.MSG, "Join: wait for the done condition at most for {}[ms]",
+						timeOutMilliSec - t
 					);
+					if(
+						condMaxCountReachedOrClosed.await(
+							timeOutMilliSec - t, TimeUnit.MILLISECONDS
+						)
+					) {
+						LOG.debug(LogUtil.MSG, "{}: join finished", getName());
+					} else {
+						LOG.debug(
+							LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
+							getName(), getQueue().size(), getActiveCount()
+						);
+					}
+				} finally {
+					lock.unlock();
 				}
 			} else {
 				LOG.warn(LogUtil.ERR, "Failed to acquire the lock for the join method");
 			}
 		} catch(final InterruptedException e) {
 			LogUtil.failure(LOG, Level.DEBUG, e, String.format("%s: join interrupted", getName()));
-		} finally {
-			lock.unlock();
 		}
 	}
 }
