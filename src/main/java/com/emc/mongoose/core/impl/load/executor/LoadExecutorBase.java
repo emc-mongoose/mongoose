@@ -459,18 +459,21 @@ implements LoadExecutor<T> {
 			final long n = countTasksDone.incrementAndGet();
 			if(isShutdown() && n >= counterSubm.getCount()) {
 				LOG.debug(LogUtil.MSG, "Done condition is met at {} processed items", n);
-				try {
-					if(
-						!isClosed.get() &&
-						lock.tryLock(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)
-					) {
-						condMaxCountReachedOrClosed.signalAll();
-						lock.unlock();
-					} else {
-						LOG.warn(LogUtil.ERR, "Failed to acquire the lock for result handling");
+				if(!isClosed.get()) {
+					try {
+						if(
+							lock.tryLock(
+								runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+							)
+						) {
+							condMaxCountReachedOrClosed.signalAll();
+							lock.unlock();
+						} else {
+							LOG.debug(LogUtil.ERR, "Failed to acquire the lock for result handling");
+						}
+					} catch(final InterruptedException e) {
+						LogUtil.failure(LOG, Level.WARN, e, "Interrupted");
 					}
-				} catch(final InterruptedException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Interrupted");
 				}
 			}
 		}
@@ -523,17 +526,20 @@ implements LoadExecutor<T> {
 				);
 			}
 			//
-			try {
-				if(
-					!isClosed.get() &&
-					lock.tryLock(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)
-				) {
-					condMaxCountReachedOrClosed.signalAll();
-				} else {
-					LOG.warn(LogUtil.ERR, "Failed to acquire the lock in close method");
+			if(!isClosed.get()) {
+				try {
+					if(
+						lock.tryLock(
+							runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+						)
+					) {
+						condMaxCountReachedOrClosed.signalAll();
+					} else {
+						LOG.warn(LogUtil.ERR, "Failed to acquire the lock in close method");
+					}
+				} catch(final InterruptedException e) {
+					LogUtil.failure(LOG, Level.WARN, e, "Interrupted while acquiring the lock");
 				}
-			} catch(final InterruptedException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Interrupted while acquiring the lock");
 			}
 			//
 			try {
@@ -595,13 +601,13 @@ implements LoadExecutor<T> {
 		if(isShutdown() && n >= counterSubm.getCount()) {
 			return;
 		}
+		if(isClosed.get()) {
+			return;
+		}
 		//
 		long t = System.currentTimeMillis();
 		try {
-			if(
-				!isClosed.get() &&
-				lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)
-			) {
+			if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
 				try {
 					t = System.currentTimeMillis() - t; // the count of time wasted for locking
 					LOG.debug(
