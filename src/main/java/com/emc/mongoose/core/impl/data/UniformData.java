@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.data;
 //
-import com.emc.mongoose.common.collections.UnsafeByteArrays;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
@@ -15,7 +14,6 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import sun.misc.Unsafe;
 //
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -23,7 +21,6 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
-import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 09.05.14.
@@ -242,21 +239,19 @@ implements DataItem {
 		//
 		boolean contentEquals = true;
 		long byteCountLeft = rangeLength;
-		final byte
-			buff1[] = new byte[
-				rangeLength > LoadExecutor.BUFF_SIZE_HI ?
-					LoadExecutor.BUFF_SIZE_HI :
-					rangeLength < LoadExecutor.BUFF_SIZE_LO ?
-						LoadExecutor.BUFF_SIZE_LO : (int) rangeLength // cast to int should be safe here
-			],
-			buff2[] = new byte[buff1.length];
+		final byte buff2verify[] = new byte[
+			rangeLength > LoadExecutor.BUFF_SIZE_HI ?
+				LoadExecutor.BUFF_SIZE_HI :
+				rangeLength < LoadExecutor.BUFF_SIZE_LO ?
+					LoadExecutor.BUFF_SIZE_LO : (int) rangeLength // cast to int should be safe here
+		];
 		long nextOffset = offset + rangeOffset;
 		int nextByteCount;
 		//
 		while(byteCountLeft > 0 && contentEquals) {
-			nextByteCount = byteCountLeft > buff1.length ?
-				buff1.length : (int) byteCountLeft;
-			nextByteCount = in.read(buff1, 0, nextByteCount);
+			nextByteCount = byteCountLeft > buff2verify.length ?
+				buff2verify.length : (int) byteCountLeft;
+			nextByteCount = in.read(buff2verify, 0, nextByteCount);
 			if(nextByteCount < 0) { // not ok
 				contentEquals = false;
 				LOG.warn(
@@ -266,27 +261,20 @@ implements DataItem {
 					rangeOffset + rangeLength - byteCountLeft
 				);
 			} else if(nextByteCount > 0) { // ok
-				if(nextByteCount != read(buff2, (int) nextOffset % buf.length, nextByteCount)) {
-					throw new IllegalStateException(
-						String.format("Failed to read %d bytes from the data ring", nextByteCount)
-					);
-				}
-				if(nextByteCount < buff1.length) {
-					Arrays.fill(buff1, nextByteCount, buff1.length - 1, Byte.MAX_VALUE);
-					Arrays.fill(buff2, nextByteCount, buff2.length - 1, Byte.MAX_VALUE);
-				}
-				contentEquals = Arrays.equals(buff1, buff2);
-				if(!contentEquals) {
-					LOG.warn(
-						LogUtil.MSG,
-						String.format(
-							"%s: content mismatch in the range (%d, %d)",
-							Long.toString(offset, DataObject.ID_RADIX),
-							rangeOffset + rangeLength - byteCountLeft,
-							rangeOffset + rangeLength - byteCountLeft + nextByteCount
-						)
-					);
-					break;
+				for(int i = 0; i < nextByteCount; i ++) {
+					if(buff2verify[i] != buf[(int) ((nextOffset + i) % buf.length)]) {
+						contentEquals = false;
+						LOG.warn(
+							LogUtil.MSG,
+							String.format(
+								"%s: content mismatch @ offset %d, expected byte value: \"0x%X\", got \"0x%X\"",
+								Long.toString(offset, DataObject.ID_RADIX),
+								rangeOffset + rangeLength - byteCountLeft + i,
+								buf[(int) ((nextOffset + i) % buf.length)], buff2verify[i]
+							)
+						);
+						break;
+					}
 				}
 				nextOffset += nextByteCount;
 				byteCountLeft -= nextByteCount;
