@@ -330,7 +330,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public DataItemBuffer<T> newDataItemBuffer()
 	throws IOException {
-		return new TmpFileItemBuffer<>(getMaxCount(), 1);
+		return new TmpFileItemBuffer<>(maxCount);
 	}
 	//
 	private final static int MAX_LOAD_COUNT = 10;

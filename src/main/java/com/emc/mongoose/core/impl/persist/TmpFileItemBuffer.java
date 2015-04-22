@@ -6,8 +6,10 @@ import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.persist.DataItemBuffer;
 //
+import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -42,10 +44,10 @@ implements DataItemBuffer<T> {
 	private volatile ObjectOutput fBuffOut;
 	private volatile int retryCountMax, retryDelayMilliSec;
 	//
-	public TmpFileItemBuffer(final long maxCount, final int threadCount)
+	public TmpFileItemBuffer(final long maxCount)
 	throws IllegalStateException {
 		super(
-			threadCount, threadCount, 0, TimeUnit.SECONDS,
+			Producer.WORKER_COUNT, Producer.WORKER_COUNT, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				(maxCount > 0 && maxCount < RunTimeConfig.getContext().getRunRequestQueueSize()) ?
 					(int) maxCount : RunTimeConfig.getContext().getRunRequestQueueSize()
@@ -98,10 +100,12 @@ implements DataItemBuffer<T> {
 		@Override
 		public final void run() {
 			if(fBuffOut != null) {
-				try {
-					fBuffOut.writeObject(dataItem);
-				} catch(final IOException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "failed to write out the data item");
+				synchronized(fBuffOut) {
+					try {
+						fBuffOut.writeObject(dataItem);
+					} catch(final IOException e) {
+						LogUtil.failure(LOG, Level.WARN, e, "failed to write out the data item");
+					}
 				}
 			}
 		}
@@ -120,10 +124,7 @@ implements DataItemBuffer<T> {
 			final DataItemOutPutTask<T> outPutTask = new DataItemOutPutTask<>(fBuffOut, dataItem);
 			boolean passed = false;
 			int rejectCount = 0;
-			while(
-				!passed && rejectCount < retryCountMax && writtenDataItems.get() < maxCount &&
-				!isShutdown()
-			) {
+			while(!passed && rejectCount < retryCountMax && writtenDataItems.get() < maxCount) {
 				try {
 					submit(outPutTask);
 					writtenDataItems.incrementAndGet();
@@ -158,25 +159,10 @@ implements DataItemBuffer<T> {
 	public final synchronized void close()
 	throws IOException {
 		if(fBuffOut != null) {
-			//
-			LOG.debug(LogUtil.MSG, "{}: output done, {} items", toString(), writtenDataItems.get());
-			//
-			shutdown();
-			try {
-				awaitTermination(
-					RunTimeConfig.getContext().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
-				);
-			} catch(final InterruptedException e) {
-				LogUtil.failure(
-					LOG, Level.DEBUG, e, "Interrupted while writing out the remaining data items"
-				);
-			} finally {
-				final int droppedTaskCount = shutdownNow().size();
-				LOG.debug(
-					LogUtil.MSG, "{}: wrote {} data items, dropped {}", toString(),
-					writtenDataItems.addAndGet(-droppedTaskCount), droppedTaskCount
-				);
+			while(getQueue().size() > 0 && getActiveCount() > 0) {
+				Thread.yield();
 			}
+			LOG.debug(LogUtil.MSG, "{}: output done, {} items", toString(), writtenDataItems.get());
 			//
 			fBuffOut.close();
 			fBuffOut = null;
@@ -192,7 +178,7 @@ implements DataItemBuffer<T> {
 		//
 		@Override @SuppressWarnings("unchecked")
 		public final void run() {
-			if(TmpFileItemBuffer.super.isTerminated()) {
+			if(fBuffOut == null) {
 				LOG.debug(LogUtil.MSG, "{}: started", getThreadFactory().toString());
 				//
 				long
@@ -218,27 +204,37 @@ implements DataItemBuffer<T> {
 					) {
 						while(availDataItems -- > 0 && consumerMaxCount -- > 0) {
 							nextDataItem = (T) fBuffIn.readObject();
-							consumer.submit(nextDataItem);
 							if(nextDataItem == null) {
+								shutdown();
 								break;
 							}
+							submit(SubmitTask.getInstance(consumer, nextDataItem));
 						}
 						LOG.debug(LogUtil.MSG, "done producing");
 					} catch(final RemoteException e) {
 						LogUtil.failure(LOG, Level.DEBUG, e, "Failed to submit a data item");
 					} catch(final IOException | ClassNotFoundException | ClassCastException e) {
 						LogUtil.failure(LOG, Level.WARN, e, "Failed to read a data item");
-					} catch(final InterruptedException e) {
-						LOG.trace(LogUtil.ERR, "Interrupted during submit the data item");
 					} catch(final RejectedExecutionException e) {
 						LOG.debug(LogUtil.ERR, "Consumer rejected the data item");
 					} finally {
 						try {
+							if(isInterrupted()) {
+								shutdownNow();
+							} else {
+								shutdown();
+								awaitTermination(
+									RunTimeConfig.getContext().getRunReqTimeOutMilliSec(),
+									TimeUnit.MILLISECONDS
+								);
+							}
 							consumer.shutdown();
 						} catch(final RemoteException e) {
 							LogUtil.failure(LOG, Level.WARN, e, "Looks like network failure");
 						} catch(final RejectedExecutionException e) {
 							LOG.debug(LogUtil.ERR, "Consumer rejected the poison");
+						} catch(final InterruptedException e) {
+							LOG.debug(LogUtil.MSG, "Interrupted");
 						} finally {
 							consumer = null;
 							deleteFromFileSystem();

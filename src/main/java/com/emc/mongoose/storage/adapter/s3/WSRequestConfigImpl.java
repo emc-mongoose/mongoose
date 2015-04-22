@@ -108,20 +108,16 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final Object t = in.readObject();
-		if(t == null) {
-			LOG.debug(LogUtil.MSG, "Note: bucket has been got from load client side");
-		} else {
-			setBucket(WSBucketImpl.class.cast(in.readObject()));
-			LOG.trace(LogUtil.MSG, "Got bucket {}", bucket);
-		}
+		final String bucketName = String.class.cast(in.readObject());
+		LOG.debug(LogUtil.MSG, "Note: bucket {} has been got from load client side", bucketName);
+		setBucket(new WSBucketImpl<>(this, bucketName, runTimeConfig.getStorageVersioningEnabled()));
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(bucket);
+		out.writeObject(bucket.getName());
 	}
 	//
 	@Override

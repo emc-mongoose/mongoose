@@ -5,7 +5,7 @@ package com.emc.mongoose.common.collections;
 public interface Reusable<T extends Reusable>
 extends Comparable<T> {
 	//
-	Reusable reuse(final Object... args)
+	Reusable<T> reuse(final Object... args)
 	throws IllegalArgumentException, IllegalStateException;
 	//
 	void release();

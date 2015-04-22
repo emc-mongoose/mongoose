@@ -42,7 +42,6 @@ import org.apache.http.nio.protocol.HttpAsyncRequester;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.nio.reactor.IOReactorStatus;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

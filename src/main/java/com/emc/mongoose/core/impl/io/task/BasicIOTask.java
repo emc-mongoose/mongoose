@@ -10,6 +10,7 @@ import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 //
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
@@ -20,6 +21,7 @@ implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	protected volatile LoadExecutor<T> loadExecutor = null;
 	protected volatile RequestConfig<T> reqConf = null;
 	protected volatile String nodeAddr = null;
 	protected volatile T dataItem = null;
@@ -35,7 +37,7 @@ implements IOTask<T> {
 	@SuppressWarnings("unchecked")
 	public static <T extends DataObject> BasicIOTask<T> getInstanceFor(
 		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
-	) throws InterruptedException {
+	) {
 		return (BasicIOTask<T>) POOL_BASIC_IO_TASKS.take(reqConf, dataItem, nodeAddr);
 	}
 	//

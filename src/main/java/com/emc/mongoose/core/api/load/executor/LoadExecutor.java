@@ -25,7 +25,7 @@ extends Producer<T>, Consumer<T> {
 	AtomicInteger LAST_INSTANCE_NUM = new AtomicInteger(0);
 	//
 	int
-		NANOSEC_SCALEDOWN = 1000, MIB = 0x100000, COUNT_THREADS_MIN = 2,
+		NANOSEC_SCALEDOWN = 1000, MIB = 0x100000,
 		BUFF_SIZE_LO = (int) RunTimeConfig.getContext().getDataBufferSize(),
 		BUFF_SIZE_HI = (int) RunTimeConfig.getContext().getDataRingSize();
 	//

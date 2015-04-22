@@ -99,7 +99,7 @@ implements WSLoadBuilderSvc<T, U> {
 	public DataItemBufferSvc<T> newDataItemBuffer()
 	throws IOException {
 		return (DataItemBufferSvc<T>) ServiceUtils.create(
-			new TmpFileItemBufferSvc<>(getMaxCount(), 1)
+			new TmpFileItemBufferSvc<>(getMaxCount())
 		);
 	}
 	//

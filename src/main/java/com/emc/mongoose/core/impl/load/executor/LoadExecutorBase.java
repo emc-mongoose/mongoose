@@ -53,8 +53,9 @@ public abstract class LoadExecutorBase<T extends DataItem>
 extends ThreadPoolExecutor
 implements LoadExecutor<T> {
 	//
-	private final Logger LOG = LogManager.getLogger();
+	private final static Logger LOG = LogManager.getLogger();
 	//
+	private final String name;
 	protected final int connCountPerNode, storageNodeCount, retryCountMax, retryDelayMilliSec;
 	protected final String storageNodeAddrs[];
 	//
@@ -88,7 +89,7 @@ implements LoadExecutor<T> {
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
 		super(
-			1, 1, 0, TimeUnit.SECONDS,
+			Producer.WORKER_COUNT, Producer.WORKER_COUNT, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
 					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
@@ -97,7 +98,7 @@ implements LoadExecutor<T> {
 		//
 		final int loadNum = LAST_INSTANCE_NUM.getAndIncrement();
 		storageNodeCount = addrs.length;
-		final String name = Integer.toString(loadNum) + '-' +
+		name = Integer.toString(loadNum) + '-' +
 			StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
 			StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
 			(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
@@ -108,8 +109,6 @@ implements LoadExecutor<T> {
 		);
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
-		setCorePoolSize(Math.min(COUNT_THREADS_MIN, storageNodeCount));
-		setMaximumPoolSize(getCorePoolSize());
 		//
 		this.runTimeConfig = runTimeConfig;
 		RequestConfig<T> reqConfigClone = null;
@@ -170,12 +169,12 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final String getName() {
-		return getThreadFactory().toString();
+		return name;
 	}
 	//
 	@Override
 	public final String toString() {
-		return getName();
+		return name;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
@@ -191,7 +190,7 @@ implements LoadExecutor<T> {
 			);
 			try {
 				if(metricsUpdatePeriodMilliSec > 0) {
-					while(!isShutdown() || getQueue().size() > 0) {
+					while(!isShutdown() || counterSubm.getCount() <= countTasksDone.get()) {
 						logMetrics(LogUtil.PERF_AVG);
 						Thread.sleep(metricsUpdatePeriodMilliSec);
 					}
@@ -244,7 +243,7 @@ implements LoadExecutor<T> {
 			String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
-				countReqSucc, getQueue().size(),
+				countReqSucc, counterSubm.getCount() - countTasksDone.get(),
 				countReqFail == 0 ?
 					Long.toString(countReqFail) :
 					(float) countReqSucc / countReqFail > 100 ?
@@ -460,7 +459,9 @@ implements LoadExecutor<T> {
 			if(isShutdown() && n >= counterSubm.getCount()) {
 				LOG.debug(LogUtil.MSG, "Done condition is met at {} processed items", n);
 				try {
-					if(lock.tryLock(1, TimeUnit.SECONDS)) {
+					if(
+						lock.tryLock(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)
+					) {
 						condMaxCountReachedOrClosed.signalAll();
 						lock.unlock();
 					} else {
@@ -506,6 +507,7 @@ implements LoadExecutor<T> {
 			final long tsStartNanoSec = tsStart.get();
 			if(tsStartNanoSec > 0) {
 				interrupt();
+				metricDumpDaemon.interrupt();
 				logMetrics(LogUtil.PERF_SUM); // provide summary metrics
 				// calculate the efficiency and report
 				final float
@@ -562,8 +564,9 @@ implements LoadExecutor<T> {
 			LogUtil.failure(
 				LOG, Level.WARN, e, String.format("%s: failed to close", getName())
 			);
+		} finally {
+			super.finalize();
 		}
-		super.finalize();
 	}
 	//
 	@Override

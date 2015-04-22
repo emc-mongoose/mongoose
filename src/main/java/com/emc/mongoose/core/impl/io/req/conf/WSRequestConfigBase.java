@@ -368,8 +368,8 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr) {
-		return BasicWSIOTask.getInstanceFor(this, dataItem, nodeAddr);
+	public final BasicWSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr) {
+		return (BasicWSIOTask<T>) BasicWSIOTask.getInstanceFor(this, dataItem, nodeAddr);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -588,10 +588,10 @@ implements WSRequestConfig<T> {
 		if(connPool != null && connPool.isShutdown()) {
 			connPool.closeExpired();
 			try {
-				connPool.closeIdle(0, TimeUnit.MILLISECONDS);
+				connPool.closeIdle(1, TimeUnit.MILLISECONDS);
 			} finally {
 				try {
-					connPool.shutdown(0);
+					connPool.shutdown(1);
 				} catch(final IOException e) {
 					LogUtil.failure(
 						LOG, Level.WARN, e, "Connection pool shutdown failure"
@@ -600,7 +600,7 @@ implements WSRequestConfig<T> {
 			}
 		}
 		//
-		ioReactor.shutdown();
+		ioReactor.shutdown(1);
 		LOG.debug(LogUtil.MSG, "Closed web storage client");
 	}
 	//

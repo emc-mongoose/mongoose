@@ -57,8 +57,7 @@ extends Externalizable, Cloneable, Closeable {
 	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
 	//
-	IOTask<T> getRequestFor(final T dataItem, final String nodeAddr)
-	throws InterruptedException;
+	IOTask<T> getRequestFor(final T dataItem, final String nodeAddr);
 	//
 	RequestConfig<T> setAnyDataProducerEnabled(final boolean enabled);
 	boolean getAnyDataProducerEnabled();

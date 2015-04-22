@@ -99,9 +99,7 @@ public final class LogUtil {
 				);
 				//
 				try {
-					LOG_CTX.set(
-						Configurator.initialize("mongoose", logConfPath.toUri().toString())
-					);
+					LOG_CTX.set(Configurator.initialize("mongoose", logConfPath.toUri().toString()));
 					if(LOG_CTX.get() == null) {
 						System.err.println("Logging configuration failed");
 					} else {
