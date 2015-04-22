@@ -343,7 +343,7 @@ public final class ServiceUtils {
 	public static void shutdown() {
 		//
 		try {
-			for (final Service svc : SVC_MAP.values()) {
+			for(final Service svc : SVC_MAP.values()) {
 				close(svc);
 			}
 			//
