@@ -10,7 +10,7 @@ import java.rmi.RemoteException;
  */
 public interface Producer<T extends DataItem> {
 	//
-	int WORKER_COUNT = 2;
+	int WORKER_COUNT = 1;
 	//
 	void setConsumer(final Consumer<T> consumer)
 	throws RemoteException;

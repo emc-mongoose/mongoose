@@ -66,34 +66,25 @@ implements Runnable, Reusable<SubmitTask> {
 	@Override
 	public final void run() {
 		rejectCount = 0;
-		do {
-			try {
-				consumer.submit(dataItem);
-				break;
-			} catch(final RejectedExecutionException | RemoteException e) {
-				rejectCount ++;
+		try {
+			do {
 				try {
-					Thread.sleep(rejectCount * retryDelayMilliSec);
-				} catch(final InterruptedException ee) {
-					LogUtil.failure(
-						LOG, Level.INFO, ee,
-						String.format(
-							"Failed to submit the data item \"%s\" to consumer \"%s\"",
-							dataItem, consumer
-						)
-					);
+					consumer.submit(dataItem);
 					break;
+				} catch(final RejectedExecutionException | RemoteException e) {
+					rejectCount ++;
+					Thread.sleep(rejectCount * retryDelayMilliSec);
 				}
-			} catch(final InterruptedException e) {
-				LogUtil.failure(
-					LOG, Level.INFO, e,
-					String.format(
-						"Failed to submit the data item \"%s\" to consumer \"%s\"",
-						dataItem, consumer
-					)
-				);
-				break;
-			}
-		} while(rejectCount < retryCountMax);
+			} while(rejectCount < retryCountMax);
+		} catch(final InterruptedException e) {
+			LogUtil.failure(
+				LOG, Level.INFO, e, String.format(
+					"Failed to submit the data item \"%s\" to consumer \"%s\"",
+					dataItem, consumer
+				)
+			);
+		} finally {
+			release();
+		}
 	}
 }
