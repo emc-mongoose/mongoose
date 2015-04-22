@@ -597,7 +597,7 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join(final long timeOutMilliSec)
 	throws RemoteException {
-		final long n = countTasksDone.incrementAndGet();
+		final long n = countTasksDone.get();
 		if(isShutdown() && n >= counterSubm.getCount()) {
 			return;
 		}
