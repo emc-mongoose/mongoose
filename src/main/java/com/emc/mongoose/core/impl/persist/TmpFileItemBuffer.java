@@ -26,6 +26,8 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.rmi.RemoteException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -195,10 +197,25 @@ implements DataItemBuffer<T> {
 	public final synchronized void close()
 	throws IOException {
 		if(fBuffOut != null) {
-			while(getQueue().size() > 0 && getActiveCount() > 0) {
-				Thread.yield();
-			}
+			//
 			LOG.debug(LogUtil.MSG, "{}: output done, {} items", toString(), writtenDataItems.get());
+			//
+			shutdown();
+			try {
+				awaitTermination(
+					RunTimeConfig.getContext().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+				);
+			} catch(final InterruptedException e) {
+				LogUtil.failure(
+					LOG, Level.DEBUG, e, "Interrupted while writing out the remaining data items"
+				);
+			} finally {
+				final int droppedTaskCount = shutdownNow().size();
+				LOG.debug(
+					LogUtil.MSG, "{}: wrote {} data items, dropped {}", toString(),
+					writtenDataItems.addAndGet(-droppedTaskCount), droppedTaskCount
+				);
+			}
 			//
 			fBuffOut.close();
 			fBuffOut = null;
@@ -214,7 +231,10 @@ implements DataItemBuffer<T> {
 		//
 		@Override @SuppressWarnings("unchecked")
 		public final void run() {
-			if(fBuffOut == null) {
+			if(TmpFileItemBuffer.super.isTerminated()) {
+				final ExecutorService submitExecSvc = Executors.newFixedThreadPool(
+					Producer.WORKER_COUNT, new NamingWorkerFactory("tmpFileProducerSubmitWorker")
+				);
 				LOG.debug(LogUtil.MSG, "{}: started", getThreadFactory().toString());
 				//
 				long
@@ -241,10 +261,10 @@ implements DataItemBuffer<T> {
 						while(availDataItems -- > 0 && consumerMaxCount -- > 0) {
 							nextDataItem = (T) fBuffIn.readObject();
 							if(nextDataItem == null) {
-								shutdown();
+								submitExecSvc.shutdown();
 								break;
 							}
-							submit(SubmitTask.getInstance(consumer, nextDataItem));
+							submitExecSvc.submit(SubmitTask.getInstance(consumer, nextDataItem));
 						}
 						LOG.debug(LogUtil.MSG, "done producing");
 					} catch(final RemoteException e) {
@@ -259,11 +279,11 @@ implements DataItemBuffer<T> {
 								LOG.debug(
 									LogUtil.MSG,
 									"Was interrupted, shut down immediately, dropped {} submit tasks",
-									shutdownNow().size()
+									submitExecSvc.shutdownNow().size()
 								);
 							} else {
-								shutdown();
-								awaitTermination(
+								submitExecSvc.shutdown();
+								submitExecSvc.awaitTermination(
 									RunTimeConfig.getContext().getRunReqTimeOutMilliSec(),
 									TimeUnit.MILLISECONDS
 								);

@@ -588,6 +588,11 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join(final long timeOutMilliSec)
 	throws RemoteException {
+		final long n = countTasksDone.incrementAndGet();
+		if(isShutdown() && n >= counterSubm.getCount()) {
+			return;
+		}
+		//
 		long t = System.currentTimeMillis();
 		try {
 			if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
