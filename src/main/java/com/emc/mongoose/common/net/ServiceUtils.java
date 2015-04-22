@@ -342,6 +342,10 @@ public final class ServiceUtils {
 	//
 	public static void shutdown() {
 		//
+		for(final Service svc : SVC_MAP.values()) {
+			close(svc);
+		}
+		/*
 		try {
 			for(final Service svc : SVC_MAP.values()) {
 				close(svc);
@@ -349,7 +353,7 @@ public final class ServiceUtils {
 			//
 			final Registry registry = LocateRegistry.getRegistry(PORT_RMI_CONTROL);
 			final String names[] = registry.list();
-			if(names.length > 1) {
+			if(names.length > 0) {
 				LOG.debug(LogUtil.MSG, "Not closed services: {}", Arrays.toString(names));
 				for(final String name : names) {
 					try{
@@ -369,6 +373,7 @@ public final class ServiceUtils {
 				String.format("Failed to get a registry for port #%d", PORT_RMI_CONTROL)
 			);
 		}
+		*/
 		//
 		for(final JMXConnectorServer jmxConnectorServer : JMX_CONNECTOR_SERVERS) {
 			if(jmxConnectorServer.isActive()) {
