@@ -470,7 +470,7 @@ implements LoadExecutor<T> {
 						LOG.warn(LogUtil.ERR, "Failed to acquire the lock for result handling");
 					}
 				} catch(final InterruptedException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Interrupted");
+					LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
 				}
 			}
 		}
@@ -591,7 +591,7 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join(final long timeOutMilliSec)
 	throws RemoteException {
-		final long n = countTasksDone.incrementAndGet();
+		final long n = countTasksDone.get();
 		if(isShutdown() && n >= counterSubm.getCount()) {
 			return;
 		}
