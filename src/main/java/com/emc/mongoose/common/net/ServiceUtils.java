@@ -343,10 +343,8 @@ public final class ServiceUtils {
 	public static void shutdown() {
 		//
 		try {
-			if(SVC_MAP.size() > 1) {
-				for (final Service svc : SVC_MAP.values()) {
-					close(svc);
-				}
+			for (final Service svc : SVC_MAP.values()) {
+				close(svc);
 			}
 			//
 			final Registry registry = LocateRegistry.getRegistry(PORT_RMI_CONTROL);
