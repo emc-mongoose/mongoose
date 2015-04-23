@@ -134,7 +134,7 @@ def execute(chain=(), flagSimultaneous=True):
 		if chain is not None:
 			for loadJob in chain:
 				del loadJob
-			del chain
+			#del chain
 #
 if __name__ == "__builtin__":
 	#
