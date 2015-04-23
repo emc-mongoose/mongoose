@@ -46,15 +46,17 @@ public final class StopServlet extends CommonServlet {
 	//
 	private void stopMongoose(final String runId) {
 		final Thread runnerThread = threadsMap.get(runId);
-		if(runnerThread.isInterrupted()) {
-			if(threadsMap.containsKey(runId)) {
-				threadsMap.remove(runId);
-			}
-		} else {
-			runnerThread.interrupt();
-			try {
-				runnerThread.join();
-			} catch(final InterruptedException ignore) {
+		if(runnerThread != null) {
+			if(runnerThread.isInterrupted()) {
+				if(threadsMap.containsKey(runId)) {
+					threadsMap.remove(runId);
+				}
+			} else {
+				runnerThread.interrupt();
+				try {
+					runnerThread.join();
+				} catch(final InterruptedException ignore) {
+				}
 			}
 		}
 	}

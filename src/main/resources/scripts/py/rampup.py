@@ -50,7 +50,7 @@ def execute(loadBuilder, rampupParams=((),(),())):
 				except Throwable as e:
 					LogUtil.failure(LOG, Level.ERROR, e, "Chain execution failure")
 		except InterruptedException:
-			break
+			raise e
 		except Throwable as e:
 			LogUtil.failure(LOG, Level.ERROR, e, "Determining the next data item size failure")
 #
