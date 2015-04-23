@@ -13,7 +13,6 @@ import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
@@ -96,6 +95,7 @@ implements WSRequestConfig<T> {
 	public final static long serialVersionUID = 42L;
 	protected final String userAgent, signMethod;
 	protected boolean fsAccess;
+	protected SecretKeySpec secretKey;
 	//
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
@@ -137,7 +137,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected HeaderGroup sharedHeaders = new HeaderGroup();
-	protected Mac mac;
+	protected final ThreadLocal<Mac> threadLocalMac = new ThreadLocal<>();
 	//
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException, IOReactorException {
@@ -149,7 +149,6 @@ implements WSRequestConfig<T> {
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
 		signMethod = runTimeConfig.getHttpSignMethod();
-		mac = Mac.getInstance(signMethod);
 		final String runName = runTimeConfig.getRunName(),
 			runVersion = runTimeConfig.getRunVersion();
 		userAgent = runName + '/' + runVersion;
@@ -341,19 +340,12 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public WSRequestConfigBase<T> setSecret(final String secret) {
-		//
 		super.setSecret(secret);
-		//
-		SecretKeySpec keySpec;
 		try {
-			keySpec = new SecretKeySpec(secret.getBytes(Constants.DEFAULT_ENC), signMethod);
-			mac.init(keySpec);
+			secretKey = new SecretKeySpec(secret.getBytes(Constants.DEFAULT_ENC), signMethod);
 		} catch(UnsupportedEncodingException e) {
-			LOG.fatal(LogUtil.ERR, "Configuration error", e);
-		} catch(InvalidKeyException e) {
-			LOG.error(LogUtil.ERR, "Invalid secret key", e);
+			LogUtil.failure(LOG, Level.ERROR, e, "Configuration error");
 		}
-		//
 		return this;
 	}
 	//
@@ -369,7 +361,7 @@ implements WSRequestConfig<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final BasicWSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr) {
-		return (BasicWSIOTask<T>) BasicWSIOTask.getInstanceFor(this, dataItem, nodeAddr);
+		return BasicWSIOTask.getInstanceFor(this, dataItem, nodeAddr);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -528,10 +520,20 @@ implements WSRequestConfig<T> {
 	@Override
 	public String getSignature(final String canonicalForm) {
 		final byte sigData[];
-		synchronized(mac) {
+		Mac mac = threadLocalMac.get();
+		if(mac == null) {
+			try {
+				mac = Mac.getInstance(signMethod);
+				mac.init(secretKey);
+			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
+				LogUtil.failure(LOG, Level.FATAL, e, "Failed to calculate the signature");
+				throw new IllegalStateException("Failed to init MAC cypher instance");
+			}
+			threadLocalMac.set(mac);
+		} else {
 			mac.reset();
-			sigData = mac.doFinal(canonicalForm.getBytes());
 		}
+		sigData = mac.doFinal(canonicalForm.getBytes());
 		return Base64.encodeBase64String(sigData);
 	}
 	//

@@ -6,7 +6,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.util.TreeSet;
+import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  Created by andrey on 09.06.14.
  A pool for any reusable objects(instances).
@@ -14,7 +14,7 @@ import java.util.TreeSet;
  Such instances pool may improve the performance in some cases.
  */
 public final class InstancePool<T extends Reusable>
-extends TreeSet<T> {
+extends ConcurrentLinkedQueue<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -25,33 +25,34 @@ extends TreeSet<T> {
 	}
 	//
 	@SuppressWarnings("unchecked")
-	public final synchronized T take(final Object... args)
+	public final T take(final Object... args)
 	throws IllegalStateException, IllegalArgumentException {
 		T instance = null;
 		if(isEmpty()) {
 			try {
 				instance = instanceCls.newInstance();
-			} catch(final NullPointerException|InstantiationException|IllegalAccessException e) {
+			} catch(
+				final NullPointerException | InstantiationException | IllegalAccessException e
+			) {
 				LogUtil.failure(LOG, Level.ERROR, e, "Reusable instantiation failure");
 			}
 		} else {
-			instance = first();
+			instance = remove();
 		}
 		//
 		if(instance == null) {
 			throw new IllegalStateException("No instance was taken");
 		}
-		remove(instance);
 		//
 		return (T) instance.reuse(args);
 	}
 	//
-	public final synchronized void release(final T instance) {
+	public final void release(final T instance) {
 		if(instance != null) {
-			if(!add(instance)) {
+			if(!offer(instance)) {
 				LOG.debug(
-					LogUtil.ERR, "The \"{}\" already contains instance \"{}\"",
-					toString(), instance.hashCode()
+					LogUtil.ERR, "Failed to return the instance \"{}\" back into the pool \"{}\"",
+					instance.hashCode(), toString()
 				);
 			}
 		}

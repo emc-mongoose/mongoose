@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 09.05.14.
@@ -232,6 +233,9 @@ implements DataItem {
 			LOG.trace(LogUtil.MSG, FMT_MSG_STREAM_OUT_FINISH, Long.toHexString(offset));
 		}
 	}
+	//
+	private final static String
+		FMT_MSG_CONTENT_MISMATCH = "%s: content mismatch @ pos #%d, expected \"0x%X\", but got \"0x%X\"";
 	// checks that data read from input equals the specified range
 	protected final boolean isContentEqualTo(
 		final InputStream in, final long rangeOffset, final long rangeLength
@@ -239,46 +243,81 @@ implements DataItem {
 		//
 		boolean contentEquals = true;
 		long byteCountLeft = rangeLength;
-		final byte buff2verify[] = new byte[
-			rangeLength > LoadExecutor.BUFF_SIZE_HI ?
-				LoadExecutor.BUFF_SIZE_HI :
-				rangeLength < LoadExecutor.BUFF_SIZE_LO ?
-					LoadExecutor.BUFF_SIZE_LO : (int) rangeLength // cast to int should be safe here
-		];
-		long nextOffset = offset + rangeOffset;
+		final byte
+			lByteBuff[] = new byte[
+				rangeLength > LoadExecutor.BUFF_SIZE_HI ?
+					LoadExecutor.BUFF_SIZE_HI :
+					rangeLength < LoadExecutor.BUFF_SIZE_LO ?
+						LoadExecutor.BUFF_SIZE_LO : (int) rangeLength // cast to int should be safe here
+			],
+			rByteBuff[] = new byte[lByteBuff.length];
 		int nextByteCount;
 		//
 		while(byteCountLeft > 0 && contentEquals) {
-			nextByteCount = byteCountLeft > buff2verify.length ?
-				buff2verify.length : (int) byteCountLeft;
-			nextByteCount = in.read(buff2verify, 0, nextByteCount);
-			if(nextByteCount < 0) { // not ok
-				contentEquals = false;
-				LOG.warn(
-					LogUtil.MSG,
-					"{}: content size mismatch, expected: {}, got: {}",
-					Long.toString(offset, DataObject.ID_RADIX), size,
-					rangeOffset + rangeLength - byteCountLeft
+			// determine how many bytes to read in the next iteration
+			nextByteCount = byteCountLeft > lByteBuff.length ?
+				lByteBuff.length : (int) byteCountLeft;
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(
+					LogUtil.MSG, "Try to read from remote side the next {} bytes, left: {}",
+					nextByteCount, byteCountLeft
 				);
-			} else if(nextByteCount > 0) { // ok
-				for(int i = 0; i < nextByteCount; i ++) {
-					if(buff2verify[i] != buf[(int) ((nextOffset + i) % buf.length)]) {
-						contentEquals = false;
-						LOG.warn(
-							LogUtil.MSG,
-							String.format(
-								"%s: content mismatch @ offset %d, expected byte value: \"0x%X\", got \"0x%X\"",
-								Long.toString(offset, DataObject.ID_RADIX),
-								rangeOffset + rangeLength - byteCountLeft + i,
-								buf[(int) ((nextOffset + i) % buf.length)], buff2verify[i]
-							)
+			}
+			// try to read the determined byte count from the remote side
+			int n, m = 0;
+			do {
+				n = in.read(lByteBuff, m, nextByteCount - m);
+				if(n < 0) { // premature end of stream
+					contentEquals = false;
+					LOG.warn(
+						LogUtil.MSG,
+						"{}: content size mismatch, expected: {}, got: {}",
+						Long.toString(offset, DataObject.ID_RADIX), size,
+						rangeOffset + rangeLength - byteCountLeft + m
+					);
+				} else {
+					m += n;
+				}
+			} while(m < nextByteCount);
+			// try to read the determined byte count from the ring buffer
+			setOffset(offset, rangeOffset + rangeLength - byteCountLeft);
+			if(nextByteCount == read(rByteBuff, 0, nextByteCount)) {
+				if(nextByteCount < lByteBuff.length) { // byte count doesn't fit the buffer size
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+						LOG.trace(
+							LogUtil.MSG, "Fill the buffers tails from {} to {} w/ equal bytes",
+							lByteBuff.length, nextByteCount, lByteBuff.length - 1
 						);
-						break;
+					}
+					Arrays.fill(lByteBuff, nextByteCount, lByteBuff.length - 1, Byte.MIN_VALUE);
+					Arrays.fill(rByteBuff, nextByteCount, lByteBuff.length - 1, Byte.MIN_VALUE);
+				}
+				// compare the buffers containing the data been read
+				if(!Arrays.equals(lByteBuff, rByteBuff)) {
+					contentEquals = false;
+					// find the 1st corrupted byte and its position
+					for(int i = 0; i < nextByteCount; i ++) {
+						if(lByteBuff[i] != rByteBuff[i]) {
+							LOG.warn(
+								LogUtil.MSG,
+								String.format(
+									FMT_MSG_CONTENT_MISMATCH,
+									Long.toString(offset, DataObject.ID_RADIX),
+									rangeOffset + rangeLength - byteCountLeft + i,
+									rByteBuff[i], lByteBuff[i]
+								)
+							);
+							break;
+						}
 					}
 				}
-				nextOffset += nextByteCount;
-				byteCountLeft -= nextByteCount;
+			} else {
+				throw new IllegalStateException(
+					String.format("Failed to read %d bytes from ring buffer", nextByteCount)
+				);
 			}
+			// prepare the next iteration
+			byteCountLeft -= nextByteCount;
 		}
 		//
 		return contentEquals;

@@ -148,18 +148,9 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	public final WSRequestConfigBase<T> setSecret(final String secret) {
-		//
-		this.secret = secret;
-		//
-		SecretKeySpec keySpec;
+		super.setSecret(secret);
 		LOG.trace(LogUtil.MSG, "Applying secret key {}", secret);
-		try {
-			keySpec = new SecretKeySpec(Base64.decodeBase64(secret), signMethod);
-			mac.init(keySpec);
-		} catch(InvalidKeyException e) {
-			LOG.error(LogUtil.ERR, "Invalid secret key", e);
-		}
-		//
+		secretKey = new SecretKeySpec(Base64.decodeBase64(secret), signMethod);
 		return this;
 	}
 	//

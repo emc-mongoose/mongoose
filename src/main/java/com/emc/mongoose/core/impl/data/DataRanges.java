@@ -437,7 +437,7 @@ implements AppendableDataItem, UpdatableDataItem {
 					).writeTo(out);
 					size += pendingAugmentSize;
 				} else { // write from current layer
-					setOffset(offset, size);
+					setOffset(offset, size); // FIXME: has no effect?
 					// change the size
 					size += pendingAugmentSize;
 					// redirect the tail's data to the output
@@ -450,7 +450,7 @@ implements AppendableDataItem, UpdatableDataItem {
 						countTailBytes = (int) (pendingAugmentSize % buff.length);
 					//
 					for(int i = 0; i < countPages; i++) {
-						if(read(buff)==buff.length) {
+						if(read(buff) == buff.length) {
 							out.write(buff);
 						} else {
 							throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
