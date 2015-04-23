@@ -104,8 +104,7 @@ implements Reusable<HTTPInputStream> {
 				while(in.read(buff) >= 0) {
 					buff.clear();
 				}
-			} catch(final IOException e) {
-				// ignore
+			} catch(final IOException ignore) {
 			}
 		}
 	}
