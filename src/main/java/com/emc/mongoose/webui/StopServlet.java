@@ -30,33 +30,32 @@ public final class StopServlet extends CommonServlet {
 	@Override
 	public final void doPost(final HttpServletRequest request, final HttpServletResponse response) {
 		final String currentRunId = request.getParameter(RunTimeConfig.KEY_RUN_ID);
-		interruptMongoose(currentRunId, request.getParameter(STOP_TYPE));
+		switch(request.getParameter(STOP_TYPE)) {
+			case STOP_REQUEST:
+				stopMongoose(currentRunId);
+				break;
+			case REMOVE_REQUEST:
+				stopMongoose(currentRunId);
+				WebUIAppender.removeRunId(currentRunId);
+				break;
+		}
 		stoppedRunModes.put(currentRunId, true);
 		request.getSession(true).setAttribute("stopped", stoppedRunModes);
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 	//
-	private void interruptMongoose(final String runId, final String type) {
-		switch (type) {
-			case STOP_REQUEST:
-				try {
-					threadsMap.get(runId).interrupt();
-				} catch (final Exception e) {
-					threadsMap.remove(runId);
-				}
-				break;
-			case REMOVE_REQUEST:
-				try {
-					threadsMap.get(runId).interrupt();
-					threadsMap.get(runId).join();
-					threadsMap.remove(runId);
-					//
-					WebUIAppender.removeRunId(runId);
-				} catch (final Exception e) {
-					threadsMap.remove(runId);
-				}
-				break;
+	private void stopMongoose(final String runId) {
+		final Thread runnerThread = threadsMap.get(runId);
+		if(runnerThread.isInterrupted()) {
+			if(threadsMap.containsKey(runId)) {
+				threadsMap.remove(runId);
+			}
+		} else {
+			runnerThread.interrupt();
+			try {
+				runnerThread.join();
+			} catch(final InterruptedException ignore) {
+			}
 		}
 	}
-
 }

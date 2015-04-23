@@ -138,7 +138,7 @@ public final class StartServlet extends CommonServlet {
 				ThreadContext.put(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC,
 						String.valueOf(runTimeConfig.getLoadMetricsPeriodSec()));
 				//
-				if (runTimeConfig.getScenarioName().equals("rampup")) {
+				if(runTimeConfig.getScenarioName().equals("rampup")) {
 					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
 							convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
 					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS,

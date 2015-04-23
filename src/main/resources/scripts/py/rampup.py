@@ -32,7 +32,6 @@ def execute(loadBuilder, rampupParams=((),(),())):
 		try:
 			dataItemSize = Long(SizeUtil.toSize(dataItemSizeStr))
 			for threadCountStr in listThreadCounts:
-				nextChain = None
 				try:
 					threadCount = Short.valueOf(threadCountStr)
 				except NumberFormatException as e:
