@@ -354,21 +354,24 @@ implements LoadExecutor<T> {
 	public void submit(final T dataItem)
 	throws RemoteException, RejectedExecutionException, InterruptedException {
 		if(tsStart.get() < 0) {
-			throw new RejectedExecutionException(
-				"Not started yet, rejecting the submit of the data item"
-			);
+			throw new RejectedExecutionException(String.format("%s: not started yet", name));
+		}
+		//
+		if(isClosed.get()) {
+			throw new InterruptedException(String.format("%s: closed already", name));
 		}
 		//
 		if(counterSubm.getCount() + counterRej.getCount() >= maxCount) {
-			LOG.debug(LogUtil.MSG, "{}: all {} tasks has been submitted or rejected", name, maxCount);
+			LOG.debug(
+				LogUtil.MSG, "{}: all tasks has been submitted ({}) or rejected ({})",
+				name, counterSubm.getCount(), counterRej.getCount()
+			);
 			shutdown();
 		}
 		//
 		if(isMaxCountSubmTries.get()) {
-			throw new RejectedExecutionException(
-				String.format(
-					"%s: max data item count (%d) has been submitted already", name, maxCount
-				)
+			throw new InterruptedException(
+				String.format("%s: all %d tasks has been submitted", name, counterSubm.getCount())
 			);
 		}
 		// round-robin node selection
@@ -488,28 +491,32 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final synchronized void shutdown() {
-		if(producer != null) {
-			try {
+		try {
+			if(producer != null) {
 				producer.interrupt(); // stop the producing right now
 				LOG.debug(
 					LogUtil.MSG, "Stopped the producer \"{}\" for \"{}\"", producer, getName()
 				);
-			} catch(final IOException e) {
-				LogUtil.failure(
-					LOG, Level.WARN, e,
-					String.format("Failed to stop the producer: %s", producer)
-				);
 			}
+		} catch(final IOException e) {
+			LogUtil.failure(
+				LOG, Level.WARN, e,
+				String.format("Failed to stop the producer: %s", producer)
+			);
+		} finally {
+			isMaxCountSubmTries.set(true); // prevent new data items scheduling
+			LOG.debug(LogUtil.MSG, "\"{}\" will not accept new tasks more", getName());
 		}
-		//
-		isMaxCountSubmTries.set(true); // prevent new data items scheduling
-		LOG.debug(LogUtil.MSG, "\"{}\" will not accept new tasks more", getName());
 	}
 	//
 	@Override
 	public void close()
 	throws IOException {
 		LOG.debug(LogUtil.MSG, "Invoked close for {}", getName());
+		if(isMaxCountSubmTries.compareAndSet(false, true)) {
+			shutdown();
+		}
+		//
 		if(isClosed.compareAndSet(false, true)) {
 			final long tsStartNanoSec = tsStart.get();
 			if(tsStartNanoSec > 0) { // if was executing

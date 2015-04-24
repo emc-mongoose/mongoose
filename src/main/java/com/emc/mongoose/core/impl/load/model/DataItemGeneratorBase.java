@@ -96,7 +96,7 @@ implements Producer<T> {
 				LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, MSG_INTERRUPTED);
 				break;
 			}
-		} while(isAlive() && i < maxCount);
+		} while(!isInterrupted() && i < maxCount);
 		LOG.debug(LogUtil.MSG, "Finished, generated {} items", i);
 	}
 	//
