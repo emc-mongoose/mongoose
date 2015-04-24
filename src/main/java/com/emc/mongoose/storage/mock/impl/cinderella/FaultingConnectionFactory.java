@@ -1,9 +1,8 @@
 package com.emc.mongoose.storage.mock.impl.cinderella;
 //
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 //
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
@@ -29,26 +28,22 @@ extends DefaultNHttpServerConnectionFactory {
 	//
 	private final AtomicInteger counter = new AtomicInteger(0);
 	private final ExecutorService
-		connectionPool = Executors.newFixedThreadPool(100000, new WorkerFactory("connKiller"));
-	private final int faultSleepMsec;
-	private final int faultPeriod;
+		connectionPool = Executors.newFixedThreadPool(100000, new NamingWorkerFactory("connKiller"));
+	private final static int FAULT_SLEEP_MILLI_SEC = RunTimeConfig.getContext().getStorageMockFaultSleepMilliSec();
+	private final static int FAULT_PERIOD = RunTimeConfig.getContext().getStorageMockFaultPeriod();
 	//
-	public FaultingConnectionFactory(
-		final ConnectionConfig config, final RunTimeConfig runTimeConfig
-	) {
+	public FaultingConnectionFactory(final ConnectionConfig config) {
 		super(config);
-		this.faultSleepMsec =  runTimeConfig.getInt("storage.mock.fault.sleep.msec");
-		faultPeriod = runTimeConfig.getInt("storage.mock.fault.period");
 	}
 	//
 	@Override
 	public final DefaultNHttpServerConnection createConnection(final IOSession session) {
 		final DefaultNHttpServerConnection connection = super.createConnection(session);
-		if (faultPeriod > 0 && (counter.incrementAndGet() % faultPeriod) == 0 ){
+		if (FAULT_PERIOD > 0 && (counter.incrementAndGet() % FAULT_PERIOD) == 0 ){
 			LOG.trace(
-				Markers.MSG, "The connection {} is submitted to be possibly broken", connection
+				LogUtil.MSG, "The connection {} is submitted to be possibly broken", connection
 			);
-			connectionPool.submit(new FailConnectionTask(connection, faultSleepMsec));
+			connectionPool.submit(new FailConnectionTask(connection));
 		}
 		return connection;
 	}
@@ -57,29 +52,25 @@ extends DefaultNHttpServerConnectionFactory {
 	implements Runnable {
 		//
 		private final NHttpServerConnection connection;
-		private final int faultSleepMsec;
 		//
-		public FailConnectionTask(
-			final NHttpServerConnection connection, final int faultSleepMsec
-		) {
+		public FailConnectionTask(final NHttpServerConnection connection) {
 			this.connection = connection;
-			this.faultSleepMsec = faultSleepMsec;
 		}
 		//
 		@Override
 		public final void run() {
 			try {
-				Thread.sleep(faultSleepMsec);
+				Thread.sleep(FAULT_SLEEP_MILLI_SEC);
 				if(connection.isOpen()) {
 					connection.close();
-					LOG.trace(Markers.MSG, "The connection {} is closed", connection);
+					LOG.trace(LogUtil.MSG, "The connection {} is closed", connection);
 				} else {
-					LOG.trace(Markers.MSG, "The connection {} is already closed", connection);
+					LOG.trace(LogUtil.MSG, "The connection {} is already closed", connection);
 				}
 			} catch (final IOException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e, "Failed to fail the connection");
+				LogUtil.failure(LOG, Level.ERROR, e, "Failed to fail the connection");
 			} catch (final InterruptedException e) {
-				TraceLogger.failure(LOG, Level.DEBUG, e, "Interrupted");
+				LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
 			}
 		}
 	}

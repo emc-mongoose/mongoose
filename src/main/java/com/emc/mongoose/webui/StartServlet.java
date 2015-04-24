@@ -1,13 +1,17 @@
 package com.emc.mongoose.webui;
 //
-import com.emc.mongoose.run.Scenario;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.net.ServiceUtils;
+//
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
+//
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
-import com.emc.mongoose.storage.mock.impl.cinderella.Main;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.server.impl.ServiceUtils;
+//
+import com.emc.mongoose.storage.mock.impl.cinderella.Cinderella;
+//
+import com.emc.mongoose.run.scenario.Scenario;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -16,10 +20,10 @@ import org.apache.logging.log4j.ThreadContext;
 //
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+//
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.ConcurrentHashMap;
-
 /**
  * Created by gusakk on 01/10/14.
  */
@@ -54,7 +58,7 @@ public final class StartServlet extends CommonServlet {
 				try {
 					response.getWriter().write(resultString);
 				} catch (final IOException e) {
-					TraceLogger.failure(LOG, Level.DEBUG, e, "Failed to write in servlet response");
+					LogUtil.failure(LOG, Level.DEBUG, e, "Failed to write in servlet response");
 				}
 			}
 			return;
@@ -68,23 +72,23 @@ public final class StartServlet extends CommonServlet {
 		setupRunTimeConfig(request);
 		updateLastRunTimeConfig(runTimeConfig);
 		switch(request.getParameter(RunTimeConfig.KEY_RUN_MODE)) {
-			case com.emc.mongoose.run.Main.RUN_MODE_SERVER:
-			case com.emc.mongoose.run.Main.RUN_MODE_COMPAT_SERVER:
+			case Constants.RUN_MODE_SERVER:
+			case Constants.RUN_MODE_COMPAT_SERVER:
 				startServer("Starting the distributed load server");
 				break;
-			case com.emc.mongoose.run.Main.RUN_MODE_CINDERELLA:
+			case Constants.RUN_MODE_CINDERELLA:
 				startCinderella("Starting the cinderella");
 				break;
-			case com.emc.mongoose.run.Main.RUN_MODE_CLIENT:
-			case com.emc.mongoose.run.Main.RUN_MODE_COMPAT_CLIENT:
+			case Constants.RUN_MODE_CLIENT:
+			case Constants.RUN_MODE_COMPAT_CLIENT:
 				startStandaloneOrClient("Starting the distributed load client");
 				break;
-			case com.emc.mongoose.run.Main.RUN_MODE_STANDALONE:
+			case Constants.RUN_MODE_STANDALONE:
 				startStandaloneOrClient("Starting in the standalone mode");
 				break;
 			default:
 				LOG.warn(
-					Markers.ERR, "Unsupported run mode \"{}\"",
+					LogUtil.ERR, "Unsupported run mode \"{}\"",
 					request.getParameter(RunTimeConfig.KEY_RUN_MODE)
 				);
 		}
@@ -102,7 +106,7 @@ public final class StartServlet extends CommonServlet {
 				localRunTimeConfig = runTimeConfig;
 				RunTimeConfig.setContext(localRunTimeConfig);
 				//
-				LOG.debug(Markers.MSG, message);
+				LOG.debug(LogUtil.MSG, message);
 				//
 				loadBuilderSvc = new BasicWSLoadBuilderSvc(localRunTimeConfig);
 				//
@@ -110,7 +114,7 @@ public final class StartServlet extends CommonServlet {
 					loadBuilderSvc.setProperties(runTimeConfig);
 					loadBuilderSvc.start();
 				} catch (final RemoteException e) {
-					TraceLogger.failure(LOG, Level.ERROR, e, "Failed to start load builder service");
+					LogUtil.failure(LOG, Level.ERROR, e, "Failed to start load builder service");
 				}
 			}
 			@Override
@@ -130,20 +134,21 @@ public final class StartServlet extends CommonServlet {
 			@Override
 			public void run() {
 				RunTimeConfig.setContext(runTimeConfig);
-				ThreadContext.put(RunTimeConfig.KEY_RUN_SCENARIO_NAME, runTimeConfig.getRunScenarioName());
-				ThreadContext.put(
-					RunTimeConfig.KEY_RUN_METRICS_PERIOD_SEC,
-					String.valueOf(runTimeConfig.getRunMetricsPeriodSec())
-				);
-				if (runTimeConfig.getRunScenarioName().equals("rampup")) {
-					ThreadContext.put("scenario.rampup.sizes", runTimeConfig.getProperty("scenario.rampup.sizes").toString());
-					ThreadContext.put("scenario.rampup.thread.counts",
-						runTimeConfig.getProperty("scenario.rampup.thread.counts").toString());
-					ThreadContext.put("scenario.chain.load", runTimeConfig.getProperty("scenario.chain.load").toString());
-				}
-				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getRunScenarioName());
+				ThreadContext.put(RunTimeConfig.KEY_SCENARIO_NAME, runTimeConfig.getScenarioName());
+				ThreadContext.put(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC,
+						String.valueOf(runTimeConfig.getLoadMetricsPeriodSec()));
 				//
-				LOG.debug(Markers.MSG, message);
+				if (runTimeConfig.getScenarioName().equals("rampup")) {
+					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES,
+							convertArrayToString(runTimeConfig.getScenarioRampupSizes()));
+					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS,
+							convertArrayToString(runTimeConfig.getScenarioRampupThreadCounts()));
+					ThreadContext.put(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD,
+							convertArrayToString(runTimeConfig.getScenarioChainLoad()));
+				}
+				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getScenarioName());
+				//
+				LOG.debug(LogUtil.MSG, message);
 				new Scenario().run();
 			}
 			//
@@ -162,11 +167,11 @@ public final class StartServlet extends CommonServlet {
 			public void run() {
 				RunTimeConfig.setContext(runTimeConfig);
 				//
-				LOG.debug(Markers.MSG, message);
+				LOG.debug(LogUtil.MSG, message);
 				try {
-					new Main(runTimeConfig).run();
+					new Cinderella().run();
 				} catch (final IOException e) {
-					TraceLogger.failure(LOG, Level.FATAL, e, "Failed run Cinderella");
+					LogUtil.failure(LOG, Level.FATAL, e, "Failed run Cinderella");
 				}
 			}
 
@@ -181,8 +186,6 @@ public final class StartServlet extends CommonServlet {
 	}
 	//
 	public final boolean isRunIdFree(final String runId) {
-		if (threadsMap.get(runId) != null)
-			return false;
-		return true;
+		return !threadsMap.containsKey(runId);
 	}
 }

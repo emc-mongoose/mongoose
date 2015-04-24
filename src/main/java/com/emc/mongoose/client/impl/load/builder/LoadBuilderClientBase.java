@@ -1,17 +1,20 @@
 package com.emc.mongoose.client.impl.load.builder;
-//
+// mongoose-common.jar
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.LogUtil;
+// mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
-import com.emc.mongoose.core.api.data.DataItem;
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.FileProducer;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+// mongoose-client.jar
 import com.emc.mongoose.client.api.persist.DataItemBufferClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
-import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.client.impl.persist.TmpFileItemBufferClient;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
+// mongoose-server-api.jar
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -50,13 +53,13 @@ implements LoadBuilderClient<T, U> {
 	public LoadBuilderClientBase(final RunTimeConfig runTimeConfig)
 	throws IOException {
 		//
-		super(runTimeConfig.getRemoteServers().length);
-		final String remoteServers[] = runTimeConfig.getRemoteServers();
+		super(runTimeConfig.getLoadServers().length);
+		final String remoteServers[] = runTimeConfig.getLoadServers();
 		//
 		LoadBuilderSvc<T, U> loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;
 		for(final String serverAddr : remoteServers) {
-			LOG.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
+			LOG.info(LogUtil.MSG, "Resolving service @ \"{}\"...", serverAddr);
 			loadBuilderSvc = resolve(serverAddr);
 			nextInstanceN = loadBuilderSvc.getLastInstanceNum();
 			if(nextInstanceN > maxLastInstanceN) {
@@ -91,7 +94,7 @@ implements LoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			LOG.debug(Markers.MSG, "Applying the configuration to server @ \"{}\"...", addr);
+			LOG.debug(LogUtil.MSG, "Applying the configuration to server @ \"{}\"...", addr);
 			nextBuilder.setProperties(runTimeConfig);
 		}
 		//
@@ -108,13 +111,14 @@ implements LoadBuilderClient<T, U> {
 				Files.isReadable(Paths.get(dataMetaInfoFile))
 			) {
 				setInputFile(dataMetaInfoFile);
+				reqConf.setAnyDataProducerEnabled(false);
 			}
 		} catch(final NoSuchElementException e) {
-			LOG.warn(Markers.ERR, "No \"data.src.fpath\" property available");
+			LOG.warn(LogUtil.ERR, "No \"data.src.fpath\" property available");
 		} catch(final InvalidPathException e) {
-			LOG.warn(Markers.ERR, "Invalid data metainfo src file path: {}", dataMetaInfoFile);
+			LOG.warn(LogUtil.ERR, "Invalid data metainfo src file path: {}", dataMetaInfoFile);
 		} catch(final SecurityException e) {
-			LOG.warn(Markers.ERR, "Unexpected exception", e);
+			LOG.warn(LogUtil.ERR, "Unexpected exception", e);
 		}
 		return this;
 	}
@@ -252,7 +256,7 @@ implements LoadBuilderClient<T, U> {
 		try {
 			invokePreConditions();
 		} catch(final IllegalStateException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Preconditions failure");
+			LogUtil.failure(LOG, Level.WARN, e, "Preconditions failure");
 		}
 		return buildActually();
 	}
@@ -275,8 +279,14 @@ implements LoadBuilderClient<T, U> {
 		try {
 			strBuilder.append('-').append(get(keySet().iterator().next()).getLastInstanceNum());
 		} catch(final RemoteException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to make load builder string");
+			LogUtil.failure(LOG, Level.WARN, e, "Failed to make load builder string");
 		}
 		return strBuilder.toString();
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		reqConf.close();
 	}
 }

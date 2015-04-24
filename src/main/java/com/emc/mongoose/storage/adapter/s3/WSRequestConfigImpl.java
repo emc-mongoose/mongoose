@@ -1,18 +1,18 @@
-	package com.emc.mongoose.storage.adapter.s3;
+package com.emc.mongoose.storage.adapter.s3;
+//
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
+//
+import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 //
-import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,7 +33,7 @@ extends WSRequestConfigBase<T> {
 	//
 	public final static String
 		FMT_PATH = "/%s/%s",
-		KEY_BUCKET = "api.s3.bucket",
+		KEY_BUCKET_NAME = "api.type.s3.bucket",
 		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
 	private final String fmtAuthValue;
@@ -48,7 +48,7 @@ extends WSRequestConfigBase<T> {
 	protected WSRequestConfigImpl(final WSRequestConfigImpl<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		fmtAuthValue = runTimeConfig.getString("api.s3.auth.prefix") + " %s:%s";
+		fmtAuthValue = runTimeConfig.getApiS3AuthPrefix() + " %s:%s";
 		if(reqConf2Clone != null) {
 			setBucket(reqConf2Clone.getBucket());
 			setNameSpace(reqConf2Clone.getNameSpace());
@@ -61,7 +61,7 @@ extends WSRequestConfigBase<T> {
 		try {
 			copy = new WSRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
-			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
+			LOG.fatal(LogUtil.ERR, "No such algorithm: \"{}\"", signMethod);
 		}
 		return copy;
 	}
@@ -71,6 +71,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	public final WSRequestConfigImpl<T> setBucket(final WSBucketImpl<T> bucket) {
+		LOG.debug(LogUtil.MSG, "Req conf instance #{}: set bucket \"{}\"", hashCode(), bucket);
 		this.bucket = bucket;
 		return this;
 	}
@@ -79,7 +80,7 @@ extends WSRequestConfigBase<T> {
 	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
 		//if(nameSpace == null || nameSpace.length() < 1) {
-			LOG.debug(Markers.MSG, "Using empty namespace");
+			LOG.debug(LogUtil.MSG, "Using empty namespace");
 		/*} else {
 			sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_NS, nameSpace));
 		}*/
@@ -91,9 +92,13 @@ extends WSRequestConfigBase<T> {
 		super.setProperties(runTimeConfig);
 		//
 		try {
-			setBucket(new WSBucketImpl<>(this, this.runTimeConfig.getString(KEY_BUCKET)));
+			final WSBucketImpl<T> bucket = new WSBucketImpl<>(
+				this, this.runTimeConfig.getString(KEY_BUCKET_NAME),
+				this.runTimeConfig.getStorageVersioningEnabled()
+			);
+			setBucket(bucket);
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET);
+			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET_NAME);
 		}
 		//
 		return this;
@@ -103,20 +108,16 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final Object t = in.readObject();
-		if(t == null) {
-			LOG.debug(Markers.MSG, "Note: bucket has been got from load client side");
-		} else {
-			setBucket(new WSBucketImpl<>(this, String.class.cast(t)));
-			LOG.trace(Markers.MSG, "Got bucket {}", bucket);
-		}
+		final String bucketName = String.class.cast(in.readObject());
+		LOG.debug(LogUtil.MSG, "Note: bucket {} has been got from load client side", bucketName);
+		setBucket(new WSBucketImpl<>(this, bucketName, runTimeConfig.getStorageVersioningEnabled()));
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(bucket == null ? null : bucket.toString());
+		out.writeObject(bucket.getName());
 	}
 	//
 	@Override
@@ -178,8 +179,8 @@ extends WSRequestConfigBase<T> {
 		//
 		buffer.append('\n').append(httpRequest.getUriPath());
 		//
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffer);
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(LogUtil.MSG, "Canonical representation:\n{}", buffer);
 		}
 		//
 		return buffer.toString();
@@ -192,11 +193,11 @@ extends WSRequestConfigBase<T> {
 			try {
 				producer = new WSBucketProducer<>(bucket, BasicWSObject.class, maxCount, addr);
 			} catch(final NoSuchMethodException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
+				LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		} else {
 			LOG.debug(
-				Markers.MSG, "req conf {}: using of bucket listing data producer is suppressed",
+				LogUtil.MSG, "req conf {}: using of bucket listing data producer is suppressed",
 				hashCode()
 			);
 		}
@@ -208,15 +209,17 @@ extends WSRequestConfigBase<T> {
 	throws IllegalStateException {
 		if(bucket == null) {
 			throw new IllegalStateException("Bucket is not specified");
+		} else {
+			LOG.debug(LogUtil.MSG, "Configure storage w/ bucket \"{}\"", bucket);
 		}
 		final String bucketName = bucket.getName();
 		if(bucket.exists(storageNodeAddrs[0])) {
-			LOG.debug(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
+			LOG.info(LogUtil.MSG, "Bucket \"{}\" already exists", bucketName);
 		} else {
-			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", bucketName);
+			LOG.debug(LogUtil.MSG, "Bucket \"{}\" doesn't exist, trying to create", bucketName);
 			bucket.create(storageNodeAddrs[0]);
 			if(bucket.exists(storageNodeAddrs[0])) {
-				runTimeConfig.set(KEY_BUCKET, bucketName);
+				runTimeConfig.set(KEY_BUCKET_NAME, bucketName);
 			} else {
 				throw new IllegalStateException(
 					String.format(FMT_MSG_ERR_BUCKET_NOT_EXIST, bucketName)

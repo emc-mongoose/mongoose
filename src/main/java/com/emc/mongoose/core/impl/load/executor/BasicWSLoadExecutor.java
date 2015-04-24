@@ -1,61 +1,55 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.http.RequestSharedHeaders;
+import com.emc.mongoose.common.http.RequestTargetHost;
+import com.emc.mongoose.common.logging.LogUtil;
+//
+import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.impl.load.model.BasicWSDataGenerator;
-import com.emc.mongoose.core.impl.load.model.FileProducer;
-import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
-import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-import com.emc.mongoose.core.impl.load.executor.util.http.RequestSharedHeaders;
-import com.emc.mongoose.core.impl.load.executor.util.http.RequestTargetHost;
+import com.emc.mongoose.core.api.load.model.Producer;
+//
+import com.emc.mongoose.core.impl.load.model.BasicWSDataGenerator;
+import com.emc.mongoose.core.impl.load.model.FileProducer;
+import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
 //
 import org.apache.http.ExceptionLogger;
-import org.apache.http.Header;
 import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
-import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
-import org.apache.http.impl.nio.pool.BasicNIOConnPool;
-import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
-import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.nio.NHttpClientConnection;
-import org.apache.http.nio.NHttpClientEventHandler;
-import org.apache.http.nio.pool.NIOConnFactory;
-import org.apache.http.nio.protocol.BasicAsyncRequestProducer;
-import org.apache.http.nio.protocol.BasicAsyncResponseConsumer;
-import org.apache.http.nio.protocol.HttpAsyncRequestExecutor;
-import org.apache.http.nio.protocol.HttpAsyncRequester;
-import org.apache.http.nio.reactor.ConnectingIOReactor;
-import org.apache.http.nio.reactor.IOEventDispatch;
-import org.apache.http.nio.reactor.IOReactorException;
-import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
 import org.apache.http.protocol.RequestUserAgent;
 //
+import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
+import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
+import org.apache.http.impl.nio.pool.BasicNIOConnPool;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.impl.nio.reactor.IOReactorConfig;
+import org.apache.http.nio.NHttpClientConnection;
+import org.apache.http.nio.NHttpClientEventHandler;
+import org.apache.http.nio.pool.NIOConnFactory;
+import org.apache.http.nio.protocol.HttpAsyncRequestExecutor;
+import org.apache.http.nio.protocol.HttpAsyncRequester;
+import org.apache.http.nio.reactor.ConnectingIOReactor;
+import org.apache.http.nio.reactor.IOEventDispatch;
+import org.apache.http.nio.reactor.IOReactorException;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 02.12.14.
@@ -67,8 +61,9 @@ implements WSLoadExecutor<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final HttpAsyncRequester client;
+	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
-	private final Thread clientThread;
+	private final Thread clientDaemon;
 	//
 	public BasicWSLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
@@ -99,16 +94,18 @@ implements WSLoadExecutor<T> {
 			new ExceptionLogger() {
 				@Override
 				public final void log(final Exception e) {
-					TraceLogger.failure(LOG, Level.DEBUG, e, "HTTP client internal failure");
+					LogUtil.failure(LOG, Level.DEBUG, e, "HTTP client internal failure");
 				}
 			}
 		);
 		//
-		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int) thrLocalConfig.getDataPageSize())
+			.setBufferSize(BUFF_SIZE_LO > 0x1000 ? 0x2000 : 2 * BUFF_SIZE_LO)
+			.setFragmentSizeHint(BUFF_SIZE_LO > 0x1000 ? 0x1000 : BUFF_SIZE_LO)
 			.build();
+		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
+		final int buffSize = this.reqConfigCopy.getBuffSize();
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(totalConnCount)
@@ -121,8 +118,8 @@ implements WSLoadExecutor<T> {
 			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize((int) thrLocalConfig.getDataPageSize())
-			.setSndBufSize((int) thrLocalConfig.getDataPageSize())
+			.setRcvBufSize(IOTask.Type.READ.equals(loadType) ? buffSize : BUFF_SIZE_LO)
+			.setSndBufSize(IOTask.Type.READ.equals(loadType) ? BUFF_SIZE_LO : buffSize)
 			.setConnectTimeout(thrLocalConfig.getConnTimeOut());
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
@@ -131,88 +128,93 @@ implements WSLoadExecutor<T> {
 			reqExecutor, connConfig
 		);
 		//
-		ConnectingIOReactor ioReactor = null;
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new WorkerFactory(String.format("IOWorker<%s>", getName()))
+				new NamingWorkerFactory(String.format("IOWorker<%s>", getName()))
 			);
 		} catch(final IOReactorException e) {
-			TraceLogger.failure(LOG, Level.FATAL, e, "Failed to build I/O reactor");
+			throw new IllegalStateException("Failed to build the I/O reactor", e);
 		}
 		//
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
 			connFactory = new BasicNIOConnFactory(connConfig);
-		if(ioReactor != null) {
-			//
-			connPool = new BasicNIOConnPool(
-				ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
-			);
-			connPool.setMaxTotal(totalConnCount);
-			connPool.setDefaultMaxPerRoute(totalConnCount);
-			clientThread = new Thread(
-				new HttpClientRunTask<>(ioEventDispatch, ioReactor),
-				String.format("%s-webClientThread", getName())
-			);
-		} else {
-			connPool = null;
-			clientThread = null;
-		}
+		//
+		connPool = new BasicNIOConnPool(
+			ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
+		);
+		connPool.setMaxTotal(totalConnCount);
+		connPool.setDefaultMaxPerRoute(totalConnCount);
+		//
+		clientDaemon = new Thread(
+			new HttpClientRunTask(ioEventDispatch, ioReactor),
+			String.format("%s-webClientThread", getName())
+		);
+		clientDaemon.setDaemon(true);
 	}
 	//
 	@Override
 	public synchronized void start() {
-		if(clientThread== null) {
-			LOG.debug(Markers.ERR, "Not starting web load client due to initialization failures");
+		if(clientDaemon == null) {
+			LOG.debug(LogUtil.ERR, "Not starting web load client due to initialization failures");
 		} else {
-			clientThread.start();
+			clientDaemon.start();
 			super.start();
 		}
 	}
 	//
-	private final static int SHUTDOWN_TIMEOUT_MILLISEC = 1000;
 	@Override
 	public void close()
 	throws IOException {
 		try {
 			super.close();
 		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Closing failure");
+			LogUtil.failure(LOG, Level.WARN, e, "Closing failure");
 		}
 		//
-		LOG.debug(Markers.MSG, "Going to close the web storage client");
-		//
-		clientThread.interrupt();
-		//
+		clientDaemon.interrupt();
+		LOG.debug(LogUtil.MSG, "Web storage client daemon \"{}\" interrupted", clientDaemon);
 		if(connPool != null) {
 			connPool.closeExpired();
+			LOG.debug(LogUtil.MSG, "Closed expired (if any) connections in the pool");
 			try {
-				connPool.closeIdle(
-					SHUTDOWN_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
-				);
+				connPool.closeIdle(1, TimeUnit.MILLISECONDS);
+				LOG.debug(LogUtil.MSG, "Closed idle connections (if any) in the pool");
 			} finally {
 				try {
-					connPool.shutdown(SHUTDOWN_TIMEOUT_MILLISEC);
+					connPool.shutdown(1);
+					LOG.debug(LogUtil.MSG, "Connection pool has been shut down");
 				} catch(final IOException e) {
-					TraceLogger.failure(
+					LogUtil.failure(
 						LOG, Level.WARN, e, "Connection pool shutdown failure"
 					);
 				}
 			}
 		}
 		//
-		LOG.debug(Markers.MSG, "Closed web storage client");
+		ioReactor.shutdown(1);
+		LOG.debug(LogUtil.MSG, "I/O reactor has been shut down");
 	}
 	//
 	@Override
-	public final Future<IOTask.Status> submit(final IOTask<T> ioTask) {
+	public final Future<IOTask.Status> submit(final IOTask<T> ioTask)
+	throws RejectedExecutionException {
+		//
+		if(connPool.isShutdown()) {
+			throw new RejectedExecutionException("Connection pool is shut down");
+		}
+		//
 		final WSIOTask<T> wsTask = (WSIOTask<T>) ioTask;
-		Future<WSIOTask.Status> futureResult = null;
+		final Future<IOTask.Status> futureResult;
 		try {
-			futureResult = client.execute(wsTask, wsTask, connPool, wsTask.getHttpContext());
+			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, wsTask);
 		} catch(final IllegalStateException e) {
-			TraceLogger.failure(
-				LOG, Level.WARN, e, "Failed to submit the HTTP request for execution"
+			throw new RejectedExecutionException(e);
+		}
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(
+				LogUtil.MSG, "I/O task #{} has been submitted for execution",
+				wsTask.hashCode()
 			);
 		}
 		return futureResult;
@@ -226,9 +228,9 @@ implements WSLoadExecutor<T> {
 				maxCount, listFile, BasicWSObject.class
 			);
 		} catch(final NoSuchMethodException e) {
-			TraceLogger.failure(LOG, Level.FATAL, e, "Unexpected failure");
+			LogUtil.failure(LOG, Level.FATAL, e, "Unexpected failure");
 		} catch(final IOException e) {
-			TraceLogger.failure(
+			LogUtil.failure(
 				LOG, Level.ERROR, e,
 				String.format("Failed to read the data items file \"%s\"", listFile)
 			);

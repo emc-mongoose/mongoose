@@ -1,14 +1,17 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.logging.LogUtil;
+//
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
-import com.emc.mongoose.core.api.load.builder.ObjectLoadBuilder;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
+//
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.load.builder.ObjectLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.WSLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,13 +41,13 @@ implements WSLoadBuilder<T, U> {
 		//
 		super.setProperties(runTimeConfig);
 		//
-		final String paramName = "storage.scheme";
+		final String paramName = RunTimeConfig.KEY_STORAGE_SCHEME;
 		try {
 			WSRequestConfig.class.cast(reqConf).setScheme(runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+			LOG.error(LogUtil.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
 		return this;
@@ -54,7 +57,7 @@ implements WSLoadBuilder<T, U> {
 	public final BasicWSLoadBuilder<T, U> clone()
 	throws CloneNotSupportedException {
 		final BasicWSLoadBuilder<T, U> lb = (BasicWSLoadBuilder<T, U>) super.clone();
-		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
+		LOG.debug(LogUtil.MSG, "Cloning request config for {}", reqConf.toString());
 		return lb;
 	}
 	//
@@ -76,10 +79,11 @@ implements WSLoadBuilder<T, U> {
 			throw new IllegalStateException(
 				String.format(
 					"Min object size (%s) shouldn't be more than max (%s)",
-					RunTimeConfig.formatSize(minObjSize), RunTimeConfig.formatSize(maxObjSize)
+					SizeUtil.formatSize(minObjSize), SizeUtil.formatSize(maxObjSize)
 				)
 			);
 		}
+		//
 		return (U) new BasicWSLoadExecutor<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
 			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem

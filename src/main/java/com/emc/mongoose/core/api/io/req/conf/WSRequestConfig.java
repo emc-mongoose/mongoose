@@ -1,21 +1,21 @@
 package com.emc.mongoose.core.api.io.req.conf;
-//
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
+// mongoose-common.jar
+import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.nio.ContentDecoder;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.IOControl;
 //
 import java.io.InputStream;
 import java.net.URISyntaxException;
-import java.util.Set;
 /**
  Created by kurila on 29.09.14.
  An HTTP request shared configuration.
@@ -44,7 +44,9 @@ extends ObjectRequestConfig<T> {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_FS_ACCESS, /*KEY_EMC_NS, */KEY_EMC_SIG, KEY_EMC_UID
 		};
 	//
-	WSIOTask.HTTPMethod getHTTPMethod();
+	MutableWSRequest createRequest();
+	//
+	MutableWSRequest.HTTPMethod getHTTPMethod();
 	//
 	@Override
 	WSRequestConfig<T> setAPI(final String api);
@@ -59,7 +61,7 @@ extends ObjectRequestConfig<T> {
 	WSRequestConfig<T> setSecret(final String secret);
 	//
 	@Override
-	WSRequestConfig<T> setDataSource(final DataSource<T> dataSrc);
+	WSRequestConfig<T> setDataSource(final DataSource dataSrc);
 	//
 	@Override
 	WSRequestConfig<T> setRetries(final boolean retryFlag);
@@ -74,8 +76,7 @@ extends ObjectRequestConfig<T> {
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
 	@Override
-	WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr)
-	throws InterruptedException;
+	WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr);
 	//
 	HeaderGroup getSharedHeaders();
 	//
@@ -92,7 +93,8 @@ extends ObjectRequestConfig<T> {
 	//
 	void receiveResponse(final HttpResponse response, final T dataItem);
 	//
-	boolean consumeContent(final InputStream contentStream, final IOControl ioCtl, T dataItem);
+	public HttpResponse execute(final String addr, final HttpRequest request)
+	throws IllegalThreadStateException;
 	//
-	public HttpResponse execute(final String addr, final HttpRequest request);
+	boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem);
 }

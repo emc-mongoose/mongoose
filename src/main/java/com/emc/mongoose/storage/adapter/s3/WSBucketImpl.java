@@ -1,12 +1,9 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+import com.emc.mongoose.common.logging.LogUtil;
+//
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.util.log.Markers;
 //
 import org.apache.commons.lang.text.StrBuilder;
 //
@@ -35,23 +32,26 @@ implements Bucket<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String VERSIONING_ENTITY_CONTENT =
-		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">\n" +
-		"	<Status>Enabled</Status>\n" +
-		"	<MfaDelete>Disabled</MfaDelete>\n" +
-		"</VersioningConfiguration>";
+		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
+		"<Status>Enabled</Status></VersioningConfiguration>";
+	private final static String VERSIONING_URL_PART = "/?versioning";
 	//
 	private final WSRequestConfigImpl<T> reqConf;
 	private String name;
+	private boolean versioningEnabled;
 	//
-	public WSBucketImpl(final WSRequestConfigImpl<T> reqConf, final String name) {
+	public WSBucketImpl(
+		final WSRequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
+	) {
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
-			final Date dt = Calendar.getInstance(Main.TZ_UTC, Main.LOCALE_DEFAULT).getTime();
-			this.name = "mongoose-" + Main.FMT_DT.format(dt);
+			final Date dt = Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime();
+			this.name = "mongoose-" + LogUtil.FMT_DT.format(dt);
 		} else {
 			this.name = name;
 		}
+		this.versioningEnabled = versioningEnabled;
 	}
 	//
 	@Override
@@ -66,26 +66,33 @@ implements Bucket<T> {
 	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	HttpResponse execute(final String addr, final WSIOTask.HTTPMethod method)
+	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)
+	throws IOException {
+		return execute(addr, method, false);
+	}
+	//
+	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning)
 	throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
-		final MutableWSRequest httpReq = method.createRequest().setUriPath("/" + name);
+		final MutableWSRequest httpReq = reqConf
+			.createRequest().setMethod(method).setUriPath("/" + name);
 		//
-		final RunTimeConfig contextConfig = RunTimeConfig.getContext();
 		switch(method) {
 			case PUT:
-				httpReq.setHeader(
-					new BasicHeader(
-						WSRequestConfigImpl.KEY_EMC_FS_ACCESS,
-						Boolean.toString(contextConfig.getStorageFileAccessEnabled())
-					)
-				);
-				if(RunTimeConfig.getContext().getStorageVersioningEnabled()) {
+				if(reqConf.getFileAccessEnabled()) {
+					httpReq.setHeader(
+						new BasicHeader(
+							WSRequestConfigImpl.KEY_EMC_FS_ACCESS, Boolean.toString(true)
+						)
+					);
+				}
+				if (versioning) {
+					httpReq.setUriPath(httpReq.getUriPath() + VERSIONING_URL_PART);
 					httpReq.setEntity(
-						new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
+							new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
 					);
 				}
 				break;
@@ -101,19 +108,19 @@ implements Bucket<T> {
 		boolean flagExists = false;
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.HEAD);
+			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.HEAD);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(Markers.MSG, "No response status");
+					LOG.warn(LogUtil.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
+						LOG.debug(LogUtil.MSG, "Bucket \"{}\" exists", name);
 						flagExists = true;
 					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
-						LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist", name);
+						LOG.debug(LogUtil.MSG, "Bucket \"{}\" doesn't exist", name);
 					} else {
 						final StrBuilder msg = new StrBuilder("Check bucket \"")
 							.append(name).append("\" failure: ")
@@ -132,10 +139,51 @@ implements Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+		}
+		//
+		if (flagExists && versioningEnabled){
+			enableVersioning(addr, MutableWSRequest.HTTPMethod.PUT);
 		}
 		//
 		return flagExists;
+	}
+	//
+	private void enableVersioning(final String addr, MutableWSRequest.HTTPMethod method) {
+		try {
+			final HttpResponse httpResp = execute(addr, method, true);
+			if(httpResp != null) {
+				final HttpEntity httpEntity = httpResp.getEntity();
+				final StatusLine statusLine = httpResp.getStatusLine();
+				if(statusLine == null) {
+					LOG.warn(LogUtil.MSG, "No response status");
+				} else {
+					final int statusCode = statusLine.getStatusCode();
+					if(statusCode >= 200 && statusCode < 300) {
+						LOG.info(LogUtil.MSG, "Bucket \"{}\" versioning enabled", name);
+					} else {
+						final StrBuilder msg = new StrBuilder("Bucket versioning \"")
+								.append(name).append("\" failure: ")
+								.append(statusLine.getReasonPhrase());
+						if(httpEntity != null) {
+							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
+								httpEntity.writeTo(buff);
+								msg.appendNewLine().append(buff.toString());
+							} catch(final Exception e) {
+								// ignore
+							}
+						}
+						LOG.warn(
+								LogUtil.ERR, "Bucket versioning \"{}\" response ({}): {}",
+								name, statusCode, msg.toString()
+						);
+					}
+				}
+				EntityUtils.consumeQuietly(httpEntity);
+			}
+		} catch(final IOException e) {
+			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+		}
 	}
 	//
 	@Override
@@ -143,16 +191,16 @@ implements Bucket<T> {
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.PUT);
+			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.PUT);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(Markers.MSG, "No response status");
+					LOG.warn(LogUtil.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Bucket \"{}\" created", name);
+						LOG.info(LogUtil.MSG, "Bucket \"{}\" created", name);
 					} else {
 						final StrBuilder msg = new StrBuilder("Create bucket \"")
 							.append(name).append("\" failure: ")
@@ -166,7 +214,7 @@ implements Bucket<T> {
 							}
 						}
 						LOG.warn(
-							Markers.ERR, "Create bucket \"{}\" response ({}): {}",
+							LogUtil.ERR, "Create bucket \"{}\" response ({}): {}",
 							name, statusCode, msg.toString()
 						);
 					}
@@ -174,7 +222,7 @@ implements Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 	}
 	//
@@ -183,16 +231,16 @@ implements Bucket<T> {
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, WSIOTask.HTTPMethod.DELETE);
+			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.DELETE);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine==null) {
-					LOG.warn(Markers.MSG, "No response status");
+					LOG.warn(LogUtil.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Bucket \"{}\" deleted", name);
+						LOG.info(LogUtil.MSG, "Bucket \"{}\" deleted", name);
 					} else {
 						final StrBuilder msg = new StrBuilder("Delete bucket \"")
 							.append(name).append("\" failure: ")
@@ -206,7 +254,7 @@ implements Bucket<T> {
 							}
 						}
 						LOG.warn(
-							Markers.ERR, "Delete bucket \"{}\" response ({}): {}",
+							LogUtil.ERR, "Delete bucket \"{}\" response ({}): {}",
 							name, statusCode, msg.toString()
 						);
 					}
@@ -214,7 +262,7 @@ implements Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 	}

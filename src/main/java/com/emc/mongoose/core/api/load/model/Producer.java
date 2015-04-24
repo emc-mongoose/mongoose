@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.api.load.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.load.model.Consumer;
 //
 import java.rmi.RemoteException;
 /**
@@ -10,6 +9,8 @@ import java.rmi.RemoteException;
  May be linked with particular consumer, started and interrupted.
  */
 public interface Producer<T extends DataItem> {
+	//
+	int WORKER_COUNT = 1;
 	//
 	void setConsumer(final Consumer<T> consumer)
 	throws RemoteException;

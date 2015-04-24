@@ -2,13 +2,14 @@ package com.emc.mongoose.core.api.io.task;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
-import com.emc.mongoose.core.api.util.Reusable;
+// mongoose-common.jar
+import com.emc.mongoose.common.collections.Reusable;
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
  */
 public interface IOTask<T extends DataItem>
-extends Reusable {
+extends Reusable<IOTask<T>> {
 	//
 	enum Type {
 		CREATE, READ, DELETE, UPDATE, APPEND
@@ -40,7 +41,7 @@ extends Reusable {
 	IOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//
 	IOTask<T> setNodeAddr(final String nodeAddr)
-	throws InterruptedException;
+	throws IllegalStateException;
 	//
 	String getNodeAddr();
 	//

@@ -3,7 +3,8 @@ package com.emc.mongoose.server.api.load.builder;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.server.api.Service;
+//
+import com.emc.mongoose.common.net.Service;
 //
 import java.rmi.RemoteException;
 /**

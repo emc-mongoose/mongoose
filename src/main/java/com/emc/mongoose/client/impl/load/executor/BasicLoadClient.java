@@ -3,13 +3,25 @@ package com.emc.mongoose.client.impl.load.executor;
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
-//
-import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+// mongoose-common.jar
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.net.ServiceUtils;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.impl.load.model.LogConsumer;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
+import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+// mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.load.model.LogConsumer;
+import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
+// mongoose-server-api.jar
+import com.emc.mongoose.server.api.load.executor.LoadSvc;
+// mongoose-client.jar
+import com.emc.mongoose.client.api.load.executor.LoadClient;
+import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
 import com.emc.mongoose.client.api.persist.DataItemBufferClient;
 import com.emc.mongoose.client.impl.load.executor.gauges.AvgDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
@@ -22,17 +34,6 @@ import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.RemoteJoinTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
-import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
-import com.emc.mongoose.client.api.load.executor.LoadClient;
-import com.emc.mongoose.server.api.load.executor.LoadSvc;
-import com.emc.mongoose.run.Main;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.ConsoleColors;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.server.impl.ServiceUtils;
-import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -47,6 +48,7 @@ import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -94,7 +96,7 @@ implements LoadClient<T> {
 		taskGetBWMean, taskGetBW1Min, taskGetBW5Min, taskGetBW15Min,
 		taskGetLatencyMed, taskGetLatencyAvg;
 	//
-	private final List<PeriodicTask<List<T>>> frameFetchTasks = new ArrayList<>();
+	private final List<PeriodicTask<T[]>> frameFetchTasks = new ArrayList<>();
 	//
 	private final ScheduledExecutorService mgmtConnExecutor;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,21 +107,19 @@ implements LoadClient<T> {
 	private final RunTimeConfig runTimeConfig;
 	private final RequestConfig<T> reqConfig;
 	private final int retryCountMax, retryDelayMilliSec, metricsPeriodSec;
+	protected volatile Producer<T> producer;
 	//
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
 		final Map<String, JMXConnector> remoteJMXConnMap, final RequestConfig<T> reqConfig,
-		final long maxCount
+		final long maxCount, final Producer<T> producer
 	) {
 		super(
-			remoteLoadMap.size(), remoteLoadMap.size(), 0, TimeUnit.SECONDS,
+			Math.min(0x10, remoteLoadMap.size()), Math.min(0x10, remoteLoadMap.size()),
+			0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
-				maxCount > 0 ?
-					Math.min(
-						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
-						RunTimeConfig.getContext().getRunRequestQueueSize())
-					:
-					RunTimeConfig.getContext().getRunRequestQueueSize()
+				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
+					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
 			)
 		);
 		//
@@ -128,24 +128,26 @@ implements LoadClient<T> {
 			final Object remoteLoads[] = remoteLoadMap.values().toArray();
 			t = LoadSvc.class.cast(remoteLoads[0]).getName() + 'x' + remoteLoads.length;
 		} catch(final NoSuchElementException | NullPointerException e) {
-			LOG.error(Markers.ERR, "No remote load instances", e);
+			LOG.error(LogUtil.ERR, "No remote load instances", e);
 		} catch(final IOException e) {
-			LOG.error(Markers.ERR, "Looks like connectivity failure", e);
+			LOG.error(LogUtil.ERR, "Looks like connectivity failure", e);
 		}
 		name = t;
 		//
-		setThreadFactory(new WorkerFactory(String.format("clientSubmitWorker<%s>", name)));
+		setThreadFactory(new NamingWorkerFactory(String.format("clientSubmitWorker<%s>", name)));
 		//
 		this.runTimeConfig = runTimeConfig;
 		this.reqConfig = reqConfig;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
+		this.producer = producer;
+		//
 		retryCountMax = runTimeConfig.getRunRetryCountMax();
 		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		//
-		metricsPeriodSec = runTimeConfig.getRunMetricsPeriodSec();
+		metricsPeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
 		//
 		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
-			runTimeConfig.getRemoteExportPort()
+			runTimeConfig.getRemotePortExport()
 		);
 		metricsReporter = JmxReporter.forRegistry(metrics)
 			//.convertDurationsTo(TimeUnit.SECONDS)
@@ -163,7 +165,7 @@ implements LoadClient<T> {
 			try {
 				mBeanSrvConnMap.put(addr, remoteJMXConnMap.get(addr).getMBeanServerConnection());
 			} catch(final IOException e) {
-				TraceLogger.failure(
+				LogUtil.failure(
 					LOG, Level.ERROR, e,
 					String.format("Failed to obtain MBean server connection for %s", addr)
 				);
@@ -171,7 +173,7 @@ implements LoadClient<T> {
 		}
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			20 + remoteLoadMap.size(), new WorkerFactory(String.format("%s-remoteMonitor", name))
+			19 + remoteLoadMap.size(), new NamingWorkerFactory(String.format("%s-remoteMonitor", name))
 		) { // make the shutdown method synchronized
 			@Override
 			public final synchronized void shutdown() {
@@ -338,19 +340,24 @@ implements LoadClient<T> {
 	@Override
 	public void logMetaInfoFrames() {
 		//
-		List<T> nextMetaInfoFrame;
-		for(final PeriodicTask<List<T>> nextFrameFetchTask : frameFetchTasks) {
+		T[] nextMetaInfoFrame;
+		for(final PeriodicTask<T[]> nextFrameFetchTask : frameFetchTasks) {
 			nextMetaInfoFrame = nextFrameFetchTask.getLastResult();
 			try {
-				if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
-					LOG.trace(Markers.MSG, "Got next metainfo frame: {}", nextMetaInfoFrame);
-					for(final T nextMetaInfoRec: nextMetaInfoFrame) {
+				if(nextMetaInfoFrame != null && nextMetaInfoFrame.length > 0) {
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+						LOG.trace(
+							LogUtil.MSG, "Got next metainfo frame: {}",
+							Arrays.toString(nextMetaInfoFrame)
+						);
+					}
+					for(final T nextMetaInfoRec : nextMetaInfoFrame) {
 						metaInfoLog.submit(nextMetaInfoRec);
 					}
 				}
 			} catch(final InterruptedException | RejectedExecutionException e) {
-				if(LOG.isTraceEnabled(Markers.ERR)) {
-					TraceLogger.failure(LOG, Level.TRACE, e, "Failed to log the metainfo frame");
+				if(LOG.isTraceEnabled(LogUtil.ERR)) {
+					LogUtil.failure(LOG, Level.TRACE, e, "Failed to log the metainfo frame");
 				}
 			}
 		}
@@ -366,18 +373,18 @@ implements LoadClient<T> {
 				minLat = taskGetLatencyMin.getLastResult(),
 				medLat = taskGetLatencyMed.getLastResult().intValue(),
 				maxLat = taskGetLatencyMax.getLastResult();
-			final boolean isSummary = Markers.PERF_SUM.equals(logMarker);
+			final boolean isSummary = LogUtil.PERF_SUM.equals(logMarker);
 			final String msg;
 			if(isSummary) {
 				msg = String.format(
-					Main.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
+					LogUtil.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 					//
 					name, countSucc,
 					countFail == 0 ?
 						Long.toString(countFail) :
 						(float) countSucc / countFail > 100 ?
-							String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countFail) :
-							String.format(ConsoleColors.INT_RED_OVER_GREEN, countFail),
+							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
+							String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
 					//
 					avgLat, minLat, medLat, maxLat,
 					//
@@ -389,14 +396,14 @@ implements LoadClient<T> {
 				);
 			} else {
 				msg = String.format(
-					Main.LOCALE_DEFAULT, MSG_FMT_METRICS,
+					LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 					//
 					countSucc, taskGetCountSubm.getLastResult() - countSucc,
 					countFail == 0 ?
 						Long.toString(countFail) :
 						(float) countSucc / countFail > 100 ?
-							String.format(ConsoleColors.INT_YELLOW_OVER_GREEN, countFail) :
-							String.format(ConsoleColors.INT_RED_OVER_GREEN, countFail),
+							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
+							String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
 					//
 					avgLat, minLat, medLat, maxLat,
 					//
@@ -410,9 +417,9 @@ implements LoadClient<T> {
 			LOG.info(logMarker, msg);
 		} catch(final NullPointerException e) {
 			if(isTerminating() || isTerminated()) {
-				TraceLogger.failure(LOG, Level.TRACE, e, "Unexpected failure");
+				LogUtil.failure(LOG, Level.TRACE, e, "Unexpected failure");
 			} else {
-				TraceLogger.failure(LOG, Level.WARN, e, "Unexpected failure");
+				LogUtil.failure(LOG, Level.WARN, e, "Unexpected failure");
 			}
 		}/* catch(final TimeoutException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "Distributed metrics aggregation timeout");
@@ -426,7 +433,7 @@ implements LoadClient<T> {
 			//
 			for(final String loadSvcAddr : loadSvcAddrs) {
 				nextLoadSvc = remoteLoadMap.get(loadSvcAddr);
-				final PeriodicTask<List<T>> nextFrameFetchTask = new FrameFetchPeriodicTask<>(
+				final PeriodicTask<T[]> nextFrameFetchTask = new FrameFetchPeriodicTask<>(
 					nextLoadSvc
 				);
 				frameFetchTasks.add(nextFrameFetchTask);
@@ -509,7 +516,7 @@ implements LoadClient<T> {
 					new Runnable() {
 						@Override
 						public final void run() {
-							logMetrics(Markers.PERF_AVG);
+							logMetrics(LogUtil.PERF_AVG);
 						}
 					}, 0, metricsPeriodSec, TimeUnit.SECONDS
 				);
@@ -519,25 +526,39 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final void start() {
+		//
 		LoadSvc<T> nextLoadSvc;
 		for(final String addr : loadSvcAddrs) {
 			nextLoadSvc = remoteLoadMap.get(addr);
 			try {
 				nextLoadSvc.start();
 				LOG.debug(
-					Markers.MSG, "{} started bound to remote service @{}",
+					LogUtil.MSG, "{} started bound to remote service @{}",
 					nextLoadSvc.getName(), addr
 				);
 			} catch(final IOException e) {
-				LOG.error(Markers.ERR, "Failed to start remote load @" + addr, e);
+				LOG.error(LogUtil.ERR, "Failed to start remote load @" + addr, e);
 			}
 		}
+		//
+		if(producer == null) {
+			LOG.debug(LogUtil.MSG, "{}: using an external data items producer", getName());
+		} else {
+			//
+			try {
+				producer.start();
+				LOG.debug(LogUtil.MSG, "Started object producer {}", producer);
+			} catch(final IOException e) {
+				LogUtil.failure(LOG, Level.WARN, e, "Failed to start the producer");
+			}
+		}
+		//
 		schedulePeriodicMgmtTasks();
 		metricsReporter.start();
 		LoadCloseHook.add(this);
 		prestartAllCoreThreads();
 		//
-		LOG.debug(Markers.MSG, "{}: started", name);
+		LOG.debug(LogUtil.MSG, "{}: started", name);
 	}
 	//
 	@Override
@@ -545,10 +566,10 @@ implements LoadClient<T> {
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
 		if(!isShutdown()) {
-			LOG.debug(Markers.MSG, "{}: interrupting...", name);
+			LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, String.format("Interrupting %s...", name));
 			shutdown();
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
-				remoteLoadMap.size(), new WorkerFactory(String.format("interrupt<%s>", getName()))
+				remoteLoadMap.size(), new NamingWorkerFactory(String.format("interrupt<%s>", getName()))
 			);
 			for(final String addr : loadSvcAddrs) {
 				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
@@ -557,9 +578,9 @@ implements LoadClient<T> {
 			try {
 				interruptExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 			} catch(final InterruptedException e) {
-				TraceLogger.failure(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
+				LogUtil.failure(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
 			}
-			LOG.debug(Markers.MSG, "{}: interrupted", name);
+			LOG.debug(LogUtil.MSG, "{}: interrupted", name);
 		}
 	}
 	//
@@ -578,37 +599,37 @@ implements LoadClient<T> {
 			try {
 				this.consumer = (LoadClient<T>) consumer;
 				final Map<String, LoadSvc<T>> consumeMap = this.consumer.getRemoteLoadMap();
-				LOG.debug(Markers.MSG, "Consumer is LoadClient instance");
+				LOG.debug(LogUtil.MSG, "Consumer is LoadClient instance");
 				for(final String addr : consumeMap.keySet()) {
 					remoteLoadMap.get(addr).setConsumer(consumeMap.get(addr));
 				}
 			} catch(final ClassCastException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Data item class mismatch");
+				LogUtil.failure(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else if(LoadSvc.class.isInstance(consumer)) {
 			// single consumer for all these producers
 			try {
 				final LoadSvc<T> loadSvc = (LoadSvc<T>) consumer;
-				LOG.debug(Markers.MSG, "Consumer is load service instance");
+				LOG.debug(LogUtil.MSG, "Consumer is load service instance");
 				for(final String addr : loadSvcAddrs) {
 					remoteLoadMap.get(addr).setConsumer(loadSvc);
 				}
 			} catch(final ClassCastException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Data item class mismatch");
+				LogUtil.failure(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else if(DataItemBufferClient.class.isInstance(consumer)) {
 			try {
 				final DataItemBufferClient<T> mediator = (DataItemBufferClient<T>) consumer;
-				LOG.debug(Markers.MSG, "Consumer is remote mediator buffer");
+				LOG.debug(LogUtil.MSG, "Consumer is remote mediator buffer");
 				for(final String addr : loadSvcAddrs) {
 					remoteLoadMap.get(addr).setConsumer(mediator.get(addr));
 				}
 			} catch(final ClassCastException e) {
-				TraceLogger.failure(LOG, Level.WARN, e, "Data item class mismatch");
+				LogUtil.failure(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else {
 			LOG.error(
-				Markers.ERR, "Unexpected consumer type: {}",
+				LogUtil.ERR, "Unexpected consumer type: {}",
 				consumer == null ? null : consumer.getClass()
 			);
 		}
@@ -622,41 +643,27 @@ implements LoadClient<T> {
 	public final void submit(final T dataItem)
 	throws InterruptedException {
 		if(maxCount > getTaskCount()) { // getTaskCount() is inaccurate
-			if(dataItem == null) {
-				LOG.debug(Markers.MSG, "{}: poison submitted, performing the shutdown", name);
-				// poison the remote load service instances
-				for(final String addr : loadSvcAddrs) {
+			final String addr = loadSvcAddrs[
+				(int) (countSubmCalls.getAndIncrement() % loadSvcAddrs.length)
+			];
+			final RemoteSubmitTask<T> remoteSubmitTask = RemoteSubmitTask
+				.getInstanceFor(remoteLoadMap.get(addr), dataItem);
+			int rejectCount = 0;
+			do {
+				try {
+					submit(remoteSubmitTask);
+					break;
+				} catch(final RejectedExecutionException e) {
+					rejectCount ++;
 					try {
-						remoteLoadMap.get(addr).submit((T) null); // feed the poison
-					} catch(final Exception e) {
-						TraceLogger.failure(
-							LOG, Level.WARN, e,
-							String.format("Failed to submit the poison to @%s", addr)
-						);
+						Thread.sleep(rejectCount * retryDelayMilliSec);
+					} catch(final InterruptedException ee) {
+						break;
 					}
 				}
-				//
-				shutdown();
-			} else {
-				final String addr = loadSvcAddrs[(int) (countSubmCalls.get() % loadSvcAddrs.length)];
-				final RemoteSubmitTask<T> remoteSubmitTask = RemoteSubmitTask
-					.getInstanceFor(remoteLoadMap.get(addr), dataItem);
-				int rejectCount = 0;
-				do {
-					try {
-						submit(remoteSubmitTask);
-						break;
-					} catch(final RejectedExecutionException e) {
-						rejectCount ++;
-						try {
-							Thread.sleep(rejectCount * retryDelayMilliSec);
-						} catch(final InterruptedException ee) {
-							break;
-						}
-					}
-				} while(rejectCount < retryCountMax && !isShutdown());
-			}
+			} while(rejectCount < retryCountMax && !isShutdown());
 		} else {
+			LOG.info(LogUtil.MSG, "maxCount = {}, taskCount = {}", maxCount, getTaskCount());
 			shutdown();
 		}
 		//
@@ -673,19 +680,22 @@ implements LoadClient<T> {
 	@Override
 	public final void close()
 	throws IOException {
-		LOG.debug(Markers.MSG, "trying to close");
+		LOG.debug(LogUtil.MSG, "trying to close");
 		synchronized(remoteLoadMap) {
 			if(!remoteLoadMap.isEmpty()) {
-				LOG.debug(Markers.MSG, "do performing close");
+				LOG.debug(LogUtil.MSG, "do performing close");
 				interrupt();
-				mgmtConnExecutor.shutdownNow();
-				LOG.debug(Markers.MSG, "log summary metrics");
-				logMetrics(Markers.PERF_SUM);
-				LOG.debug(Markers.MSG, "log metainfo frames");
+				LOG.debug(LogUtil.MSG, "log summary metrics");
+				logMetrics(LogUtil.PERF_SUM);
+				LOG.debug(LogUtil.MSG, "log metainfo frames");
 				logMetaInfoFrames();
+				LOG.debug(
+					LogUtil.MSG, "Dropped {} remote tasks",
+					shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()
+				);
 				metricsReporter.close();
 				//
-				LOG.debug(Markers.MSG, "Closing the remote services...");
+				LOG.debug(LogUtil.MSG, "Closing the remote services...");
 				LoadSvc<T> nextLoadSvc;
 				JMXConnector nextJMXConn;
 				for(final String addr : remoteLoadMap.keySet()) {
@@ -693,20 +703,20 @@ implements LoadClient<T> {
 					try {
 						nextLoadSvc = remoteLoadMap.get(addr);
 						nextLoadSvc.close();
-						LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
+						LOG.debug(LogUtil.MSG, "Server instance @ {} has been closed", addr);
 					} catch(final NoSuchElementException e) {
 						if(!isTerminating() && !isTerminated()) {
 							LOG.debug(
-								Markers.ERR,
+								LogUtil.ERR,
 								"Looks like the remote load service is already shut down"
 							);
 						}
 					} catch(final NoSuchObjectException e) {
-						TraceLogger.failure(
+						LogUtil.failure(
 							LOG, Level.DEBUG, e, "No remote service found for closing"
 						);
 					} catch(final IOException e) {
-						TraceLogger.failure(
+						LogUtil.failure(
 							LOG, Level.WARN, e, "Failed to close remote load executor service"
 						);
 					}
@@ -715,14 +725,14 @@ implements LoadClient<T> {
 						nextJMXConn = remoteJMXConnMap.get(addr);
 						if(nextJMXConn!=null) {
 							nextJMXConn.close();
-							LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
+							LOG.debug(LogUtil.MSG, "JMX connection to {} closed", addr);
 						}
 					} catch(final NoSuchElementException e) {
 						LOG.debug(
-							Markers.ERR, "Remote JMX connection had been interrupted earlier"
+							LogUtil.ERR, "Remote JMX connection had been interrupted earlier"
 						);
 					} catch(final IOException e) {
-						TraceLogger.failure(
+						LogUtil.failure(
 							LOG, Level.WARN, e,
 							String.format("Failed to close JMX connection to %s", addr)
 						);
@@ -730,13 +740,13 @@ implements LoadClient<T> {
 				}
 				//
 				metaInfoLog.close();
-				LOG.debug(Markers.MSG, "Metainfo logger closed");
+				LOG.debug(LogUtil.MSG, "Metainfo logger closed");
 				LoadCloseHook.del(this);
-				LOG.debug(Markers.MSG, "Clear the servers map");
+				LOG.debug(LogUtil.MSG, "Clear the servers map");
 				remoteLoadMap.clear();
-				LOG.debug(Markers.MSG, "Closed {}", getName());
+				LOG.debug(LogUtil.MSG, "Closed {}", getName());
 			} else {
-				LOG.debug(Markers.ERR, "Closed already");
+				LOG.debug(LogUtil.ERR, "Closed already");
 			}
 		}
 	}
@@ -752,7 +762,7 @@ implements LoadClient<T> {
 		try {
 			producer = remoteLoadMap.entrySet().iterator().next().getValue().getProducer();
 		} catch(final RemoteException e) {
-			TraceLogger.failure(LOG, Level.WARN, e, "Failed to get remote producer");
+			LogUtil.failure(LOG, Level.WARN, e, "Failed to get remote producer");
 		}
 		return producer;
 	}
@@ -779,21 +789,51 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final void join()
-	throws InterruptedException {
+	public final void join() {
 		join(Long.MAX_VALUE);
 	}
 	//
 	@Override
-	public final void join(final long timeOutMilliSec)
-	throws InterruptedException {
+	public final void join(final long timeOutMilliSec) {
 		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
-			remoteLoadMap.size(), new WorkerFactory(String.format("joinWorker<%s>", getName()))
+			remoteLoadMap.size() + 1,
+			new NamingWorkerFactory(String.format("joinWorker<%s>", getName()))
+		);
+		joinExecutor.submit(
+			new Runnable() {
+				@Override
+				public final void run() {
+					// wait the remaining tasks to be transmitted to load servers
+					LOG.debug(
+						LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
+						getName(), getQueue().size() + getActiveCount()
+					);
+					try {
+						awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
+					} catch(final InterruptedException e) {
+						LOG.debug(LogUtil.MSG, "Interrupted");
+					}
+				}
+			}
 		);
 		for(final String addr : remoteLoadMap.keySet()) {
 			joinExecutor.submit(new RemoteJoinTask(remoteLoadMap.get(addr), timeOutMilliSec));
 		}
 		joinExecutor.shutdown();
-		joinExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+		try {
+			LOG.debug(LogUtil.MSG, "Wait remote join tasks for finish {}[ms]", timeOutMilliSec);
+			if(joinExecutor.awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+				LOG.debug(LogUtil.MSG, "All join tasks finished");
+			} else {
+				LOG.debug(LogUtil.MSG, "Join tasks execution timeout");
+			}
+		} catch(final InterruptedException e) {
+			LOG.debug(LogUtil.MSG, "Interrupted");
+		} finally {
+			LOG.debug(
+				LogUtil.MSG, "Interrupted join tasks: {}",
+				Arrays.toString(joinExecutor.shutdownNow().toArray())
+			);
+		}
 	}
 }

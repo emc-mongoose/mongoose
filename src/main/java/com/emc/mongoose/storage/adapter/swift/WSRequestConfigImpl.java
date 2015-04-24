@@ -1,13 +1,14 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.LogUtil;
+//
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.api.util.log.Markers;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+//
+import com.emc.mongoose.core.impl.data.BasicWSObject;
+import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 //
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
@@ -31,9 +32,9 @@ extends WSRequestConfigBase<T> {
 	//
 	public final static String
 		//
-		KEY_CONF_AUTH_TOKEN = "api.swift.auth.token",
-		KEY_CONF_CONTAINER = "api.swift.container",
-		KEY_CONF_SVC_BASEPATH = "api.swift.service.basepath",
+		KEY_CONF_AUTH_TOKEN = "api.type.swift.authToken",
+		KEY_CONF_CONTAINER = "api.type.swift.container",
+		KEY_CONF_SVC_BASEPATH = "api.type.swift.serviceBasepath",
 		//
 		KEY_X_AUTH_TOKEN = "X-Auth-Token",
 		KEY_X_AUTH_USER = "X-Auth-User",
@@ -89,16 +90,16 @@ extends WSRequestConfigBase<T> {
 	//
 	private void refreshContainerPath() {
 		if(uriSvcBasePath == null) {
-			LOG.debug(Markers.MSG, "Swift API URI base path is <null>, not refreshing the container path");
+			LOG.debug(LogUtil.MSG, "Swift API URI base path is <null>, not refreshing the container path");
 			return;
 		}
 		final String nameSpace = getNameSpace();
 		if(nameSpace == null) {
-			LOG.debug(Markers.MSG, "Swift namespace is <null>, not refreshing the container path");
+			LOG.debug(LogUtil.MSG, "Swift namespace is <null>, not refreshing the container path");
 			return;
 		}
 		if(container == null) {
-			LOG.debug(Markers.MSG, "Swift container is <null>, not refreshing the container path");
+			LOG.debug(LogUtil.MSG, "Swift container is <null>, not refreshing the container path");
 			return;
 		}
 		uriSvcBaseContainerPath = String
@@ -149,7 +150,7 @@ extends WSRequestConfigBase<T> {
 		try {
 			copy = new WSRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
-			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
+			LOG.fatal(LogUtil.ERR, "No such algorithm: \"{}\"", signMethod);
 		}
 		return copy;
 	}
@@ -161,19 +162,19 @@ extends WSRequestConfigBase<T> {
 		if(runTimeConfig.containsKey(KEY_CONF_SVC_BASEPATH)) {
 			uriSvcBasePath = runTimeConfig.getString(KEY_CONF_SVC_BASEPATH);
 		} else {
-			LOG.error(Markers.ERR, "Swift base uri path is not specified");
+			LOG.error(LogUtil.ERR, "Swift base uri path is not specified");
 		}
 		//
 		if(runTimeConfig.containsKey(KEY_CONF_AUTH_TOKEN)) {
 			authToken = new WSAuthTokenImpl<>(this, runTimeConfig.getString(KEY_CONF_AUTH_TOKEN));
 		} else {
-			LOG.error(Markers.ERR, "Swift auth token is not specified");
+			LOG.error(LogUtil.ERR, "Swift auth token is not specified");
 		}
 		//
 		if(runTimeConfig.containsKey(KEY_CONF_CONTAINER)) {
 			container = new WSContainerImpl<>(this, runTimeConfig.getString(KEY_CONF_CONTAINER));
 		} else {
-			LOG.error(Markers.ERR, "Swift container is not specified");
+			LOG.error(LogUtil.ERR, "Swift container is not specified");
 		}
 		//
 		if(runTimeConfig.getStorageVersioningEnabled()) {
@@ -199,13 +200,13 @@ extends WSRequestConfigBase<T> {
 		if(t != null) {
 			setAuthToken(new WSAuthTokenImpl<>(this, String.class.cast(t)));
 		} else {
-			LOG.debug(Markers.MSG, "Note: no auth token has been got from load client side");
+			LOG.debug(LogUtil.MSG, "Note: no auth token has been got from load client side");
 		}
 		t = in.readObject();
 		if(t != null) {
 			setContainer(new WSContainerImpl<>(this, String.class.cast(t)));
 		} else {
-			LOG.debug(Markers.MSG, "Note: no container has been got from load client side");
+			LOG.debug(LogUtil.MSG, "Note: no container has been got from load client side");
 		}
 	}
 	//
@@ -222,7 +223,7 @@ extends WSRequestConfigBase<T> {
 	protected final void applyURI(final MutableWSRequest httpRequest, final WSObject dataItem)
 	throws IllegalArgumentException {
 		if(uriSvcBaseContainerPath == null) {
-			LOG.warn(Markers.ERR, "Illegal URI template: <null>");
+			LOG.warn(LogUtil.ERR, "Illegal URI template: <null>");
 		}
 		if(dataItem == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
@@ -280,7 +281,7 @@ extends WSRequestConfigBase<T> {
 		}
 		final String containerName = container.getName();
 		if(container.exists(storageNodeAddrs[0])) {
-			LOG.debug(Markers.MSG, "Container \"{}\" already exists", containerName);
+			LOG.info(LogUtil.MSG, "Container \"{}\" already exists", containerName);
 		} else {
 			container.create(storageNodeAddrs[0]);
 			if(container.exists(storageNodeAddrs[0])) {
@@ -301,10 +302,10 @@ extends WSRequestConfigBase<T> {
 			try {
 				producer = new WSContainerProducer<>(container, BasicWSObject.class, maxCount, addr);
 			} catch(final NoSuchMethodException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e, "Unexpected failure");
+				LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		} else {
-			LOG.debug(Markers.MSG, "Using of container listing data producer is suppressed");
+			LOG.debug(LogUtil.MSG, "Using of container listing data producer is suppressed");
 		}
 		return producer;
 	}

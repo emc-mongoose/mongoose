@@ -2,9 +2,9 @@ package com.emc.mongoose.core.impl.load.executor;
 //
 import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
 import com.emc.mongoose.core.api.data.DataObject;
-//
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
+//
+import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;

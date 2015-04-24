@@ -1,19 +1,22 @@
 package com.emc.mongoose.webui;
-
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
+//
+import com.emc.mongoose.common.logging.LogUtil;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
+//
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+//
 import java.io.IOException;
 /**
  * Created by gusakk on 02/10/14.
  */
-public final class MainServlet extends HttpServlet {
+public final class MainServlet
+extends HttpServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -27,7 +30,7 @@ public final class MainServlet extends HttpServlet {
 		try {
 			request.getRequestDispatcher("index.jsp").forward(request, response);
 		} catch (final IOException|ServletException e) {
-			TraceLogger.failure(LOG, Level.DEBUG, e, "Failed forwarding to index.jsp");
+			LogUtil.failure(LOG, Level.DEBUG, e, "Failed forwarding to index.jsp");
 		}
 	}
 

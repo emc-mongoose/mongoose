@@ -1,13 +1,13 @@
 package com.emc.mongoose.core.api.io.task;
 //
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
-import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 import com.emc.mongoose.core.api.data.WSObject;
+//
+import org.apache.http.concurrent.FutureCallback;
+import org.apache.http.protocol.HttpContext;
 //
 import org.apache.http.nio.protocol.HttpAsyncRequestProducer;
 import org.apache.http.nio.protocol.HttpAsyncResponseConsumer;
-import org.apache.http.protocol.HttpContext;
 /**
  Created by kurila on 29.09.14.
  A HTTP request for performing an operation on data object.
@@ -17,16 +17,9 @@ public interface
 extends
 	DataObjectIOTask<T>,
 	HttpAsyncRequestProducer,
-	HttpAsyncResponseConsumer<IOTask.Status> {
-	//
-	enum HTTPMethod {
-		//
-		DELETE, GET, HEAD, PUT, POST, TRACE;
-		//
-		public MutableWSRequest createRequest() {
-			return new WSRequestImpl(this, null, "/");
-		}
-	}
+	HttpAsyncResponseConsumer<IOTask.Status>,
+	HttpContext,
+	FutureCallback<IOTask.Status> {
 	//
 	@Override
 	WSIOTask<T> setDataItem(final T dataItem);
@@ -36,7 +29,5 @@ extends
 	//
 	@Override
 	WSIOTask<T> setNodeAddr(final String nodeAddr)
-	throws InterruptedException;
-	//
-	HttpContext getHttpContext();
+	throws IllegalStateException;
 }

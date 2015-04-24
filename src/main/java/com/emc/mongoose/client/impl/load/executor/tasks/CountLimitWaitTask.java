@@ -1,7 +1,8 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
-//
+// mongoose-common.jar
+import com.emc.mongoose.common.logging.LogUtil;
+// mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
 //
 import org.apache.logging.log4j.Level;
@@ -38,7 +39,7 @@ implements PeriodicTask<Long> {
 				try {
 					loadClient.shutdown();
 				} catch(final RemoteException e) {
-					TraceLogger.failure(LOG, Level.WARN, e, "Failed to shutdown the load client");
+					LogUtil.failure(LOG, Level.WARN, e, "Failed to shutdown the load client");
 				}
 			}
 		}

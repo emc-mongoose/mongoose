@@ -5,20 +5,20 @@
              http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
 	<persistence-unit name="openjpa">
 		<provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
-		<class>com.emc.mongoose.common.logging.db.entity.StatusEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.ModeEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.RunEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.LevelEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.MessageClassEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.MessageEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.DataObjectEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.ApiEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.LoadTypeEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.LoadEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.NodeEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.ConnectionEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.TraceEntity</class>
-		<class>com.emc.mongoose.common.logging.db.entity.PerfomanceEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.StatusEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.ModeEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.RunEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.LevelEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.MessageClassEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.MessageEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.DataObjectEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.ApiEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.LoadTypeEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.LoadEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.NodeEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.ConnectionEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.TraceEntity</class>
+		<class>com.emc.mongoose.persist.db.entity.PerfomanceEntity</class>
 		<properties>
 			<!--<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>!-->
 			<!--<property name="openjpa.DynamicEnhancementAgent" value="true"/>!-->

@@ -2,12 +2,13 @@ package com.emc.mongoose.core.impl.load.model;
 //
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.api.util.log.Markers;
 //
-import com.emc.mongoose.core.impl.util.InstancePool;
-import com.emc.mongoose.core.api.util.Reusable;
-import com.emc.mongoose.core.impl.util.WorkerFactory;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.collections.InstancePool;
+import com.emc.mongoose.common.collections.Reusable;
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -32,14 +33,10 @@ implements Consumer<T> {
 		super(
 			threadCount, threadCount, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
-				maxCount > 0 ?
-					Math.min(
-						maxCount > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) maxCount,
-						RunTimeConfig.getContext().getRunRequestQueueSize())
-					:
-					RunTimeConfig.getContext().getRunRequestQueueSize()
+				(maxCount > 0 && maxCount < RunTimeConfig.getContext().getRunRequestQueueSize()) ?
+					(int) maxCount : RunTimeConfig.getContext().getRunRequestQueueSize()
 			),
-			new WorkerFactory("dataItemLogWorker")
+			new NamingWorkerFactory("dataItemLogWorker")
 		);
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 	}
@@ -56,41 +53,33 @@ implements Consumer<T> {
 	);
 	//
 	public final static class DataItemLogTask<T extends DataItem>
-	implements Runnable, Reusable {
+	implements Runnable, Reusable<DataItemLogTask<T>> {
 		//
 		public T dataItem = null;
 		//
 		@Override
 		public final void run() {
 			try {
-				LOG.info(Markers.DATA_LIST, dataItem.toString());
+				LOG.info(LogUtil.DATA_LIST, dataItem.toString());
 			} finally {
 				release();
 			}
 		}
 		//
-		private final AtomicBoolean isAvailable = new AtomicBoolean(true);
-		//
 		@Override
 		public final void release() {
-			if(isAvailable.compareAndSet(false, true)) {
-				TASK_POOL.release(this);
-			}
+			TASK_POOL.release(this);
 		}
 		//
 		@Override @SuppressWarnings("unchecked")
 		public final DataItemLogTask<T> reuse(final Object... args) {
-			if(isAvailable.compareAndSet(true, false)) {
-				this.dataItem = (T) args[0];
-			} else {
-				throw new IllegalStateException("Not yet released instance reuse attempt");
-			}
+			this.dataItem = (T) args[0];
 			return this;
 		}
 		//
-		@Override @SuppressWarnings("NullableProblems")
-		public final int compareTo(Reusable another) {
-			return another == null ? 1 : hashCode() - another.hashCode();
+		@Override
+		public final int compareTo(final DataItemLogTask<T> o) {
+			return o == null ? -1 : hashCode() - o.hashCode();
 		}
 	}
 	//
@@ -115,11 +104,11 @@ implements Consumer<T> {
 				RunTimeConfig.getContext().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 			);
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Interrupted while waiting the remaining tasks to complete");
+			LOG.debug(LogUtil.MSG, "Interrupted while waiting the remaining tasks to complete");
 		} finally {
-			LOG.debug(Markers.MSG, "Dropped {} tasks", shutdownNow().size());
+			LOG.debug(LogUtil.MSG, "Dropped {} tasks", shutdownNow().size());
 		}
-		LOG.trace(Markers.MSG, "invoking close() here does nothing");
+		LOG.trace(LogUtil.MSG, "invoking close() here does nothing");
 	}
 	//
 	@Override

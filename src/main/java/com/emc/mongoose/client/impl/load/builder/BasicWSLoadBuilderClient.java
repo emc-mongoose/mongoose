@@ -1,21 +1,24 @@
 package com.emc.mongoose.client.impl.load.builder;
-//
-import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-import com.emc.mongoose.client.impl.load.executor.BasicWSLoadClient;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.server.api.Service;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.load.model.FileProducer;
-import com.emc.mongoose.core.api.util.log.Markers;
+// mongoose-server-api.jar
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
+import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
-import com.emc.mongoose.server.impl.ServiceUtils;
+// mongoose-common.jar
+import com.emc.mongoose.common.net.Service;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.net.ServiceUtils;
+// mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.data.BasicWSObject;
+import com.emc.mongoose.core.impl.load.model.FileProducer;
+import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
+// mongoose-client.jar
+import com.emc.mongoose.client.impl.load.executor.BasicWSLoadClient;
 import com.emc.mongoose.client.api.load.builder.WSLoadBuilderClient;
 import com.emc.mongoose.client.api.load.executor.WSLoadClient;
-import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -79,9 +82,9 @@ implements WSLoadBuilderClient<T, U> {
 		if(listFile!=null) {
 			try {
 				srcProducer = (FileProducer<T>) new FileProducer<>(getMaxCount(), listFile, BasicWSObject.class);
-				LOG.info(Markers.MSG, "Local data items will be read from file @ \"{}\"", listFile);
+				LOG.info(LogUtil.MSG, "Local data items will be read from file @ \"{}\"", listFile);
 			} catch(final NoSuchMethodException | IOException e) {
-				LOG.error(Markers.ERR, "Failure", e);
+				LOG.error(LogUtil.ERR, "Failure", e);
 			}
 		}
 		return this;
@@ -108,7 +111,7 @@ implements WSLoadBuilderClient<T, U> {
 		String svcJMXAddr;
 		JMXServiceURL nextJMXURL;
 		JMXConnector nextJMXConn;
-		final int jmxImportPort = runTimeConfig.getRemoteImportPort();
+		final int jmxImportPort = runTimeConfig.getRemotePortImport();
 		//
 		for(final String addr : keySet()) {
 			//
@@ -125,9 +128,9 @@ implements WSLoadBuilderClient<T, U> {
 					Integer.toString(jmxImportPort) + ServiceUtils.JMXRMI_URL_PATH +
 					Integer.toString(jmxImportPort);
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
-				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
+				LOG.debug(LogUtil.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
-				TraceLogger.failure(LOG, Level.ERROR, e, "Failed to generate JMX URL");
+				LogUtil.failure(LOG, Level.ERROR, e, "Failed to generate JMX URL");
 			}
 			//
 			nextJMXConn = null;
@@ -135,7 +138,7 @@ implements WSLoadBuilderClient<T, U> {
 				try {
 					nextJMXConn = JMXConnectorFactory.connect(nextJMXURL, null);
 				} catch(final IOException e) {
-					TraceLogger.failure(
+					LogUtil.failure(
 						LOG, Level.ERROR, e,
 						String.format("Failed to connect to \"%s\" via JMX", nextJMXURL)
 					);
@@ -150,18 +153,17 @@ implements WSLoadBuilderClient<T, U> {
 		//
 		newLoadClient = new BasicWSLoadClient<>(
 			runTimeConfig, remoteLoadMap, remoteJMXConnMap, (WSRequestConfig<T>) reqConf,
-			runTimeConfig.getDataCount()
+			runTimeConfig.getLoadLimitCount(), srcProducer
 		);
-		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		if(srcProducer != null && srcProducer.getConsumer() == null) {
 			LOG.debug(
-				Markers.MSG, "Append consumer {} for producer {}",
+				LogUtil.MSG, "Append consumer {} for producer {}",
 				newLoadClient.getName(), srcProducer.getName()
 			);
 			srcProducer.setConsumer(newLoadClient);
-			srcProducer.start();
-			srcProducer = null;
 		}
+		srcProducer = null;
+		LOG.debug(LogUtil.MSG, "Load client {} created", newLoadClient.getName());
 		//
 		return (U) newLoadClient;
 	}

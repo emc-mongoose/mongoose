@@ -1,12 +1,12 @@
 package com.emc.mongoose.storage.adapter.swift;
 //
+import com.emc.mongoose.common.logging.LogUtil;
+//
+import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
 //
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -46,8 +46,8 @@ implements Producer<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public WSContainerProducer(
-		final WSContainerImpl<T> container, final Class<? extends WSObject> dataCls, final long maxCount,
-		final String addr
+		final WSContainerImpl<T> container, final Class<? extends WSObject> dataCls,
+		final long maxCount, final String addr
 	) throws ClassCastException, NoSuchMethodException {
 		super("container-" + container + "-producer");
 		this.container = container;
@@ -71,11 +71,11 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		try {
-			final HttpResponse httpResp = container.execute(addr, WSIOTask.HTTPMethod.GET);
+			final HttpResponse httpResp = container.execute(addr, MutableWSRequest.HTTPMethod.GET);
 			if(httpResp != null) {
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(Markers.MSG, "No response status returned");
+					LOG.warn(LogUtil.MSG, "No response status returned");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
@@ -85,24 +85,23 @@ implements Producer<T> {
 							if(respEntity.getContentType() != null) {
 								respContentType = respEntity.getContentType().getValue();
 							} else {
-								LOG.debug(Markers.ERR, "No content type returned");
+								LOG.debug(LogUtil.ERR, "No content type returned");
 							}
-							if(ContentType.APPLICATION_JSON.getMimeType().equals(respContentType)) {
-								try(final InputStream in = respEntity.getContent()) {
-									handleJsonInputStream(in);
-								} catch(final IOException e) {
-									TraceLogger.failure(
-										LOG, Level.ERROR, e,
-										String.format(
-											"Failed to list the content of container \"%s\"",
-											container
-										)
-									);
-								}
-							} else {
+							if(!respContentType.toLowerCase().contains("json")) {
 								LOG.warn(
-									Markers.MSG, "Unexpected response content type: \"{}\"",
+									LogUtil.ERR, "Unexpected response content type: \"{}\"",
 									respContentType
+								);
+							}
+							try(final InputStream in = respEntity.getContent()) {
+								handleJsonInputStream(in);
+							} catch(final IOException e) {
+								LogUtil.failure(
+									LOG, Level.ERROR, e,
+									String.format(
+										"Failed to list the content of container \"%s\"",
+										container
+									)
 								);
 							}
 							EntityUtils.consumeQuietly(respEntity);
@@ -111,19 +110,19 @@ implements Producer<T> {
 				}
 			}
 		} catch(final IOException e) {
-			TraceLogger.failure(
+			LogUtil.failure(
 				LOG, Level.ERROR, e,
 				String.format("Failed to list the container \"%s\"", container)
 			);
 		} catch(final InterruptedException e) {
-			LOG.debug(Markers.MSG, "Container \"{}\" producer interrupted", container);
+			LOG.debug(LogUtil.MSG, "Container \"{}\" producer interrupted", container);
 		} finally {
 			try {
-				consumer.submit(null);
+				consumer.shutdown();
 			} catch(final Exception e) {
-				TraceLogger.failure(
+				LogUtil.failure(
 					LOG, Level.DEBUG, e,
-					"Failed to submit the poison to the consumer"
+					"Failed to shutdown the consumer"
 				);
 			}
 		}
@@ -146,7 +145,7 @@ implements Producer<T> {
 					switch(nextToken) {
 						case START_OBJECT:
 							if(isInsideObjectToken) {
-								LOG.debug(Markers.ERR, "Looks like the json response is not plain");
+								LOG.debug(LogUtil.ERR, "Looks like the json response is not plain");
 							}
 							isInsideObjectToken = true;
 							break;
@@ -157,16 +156,16 @@ implements Producer<T> {
 										offset = Long.parseLong(lastId, DataObject.ID_RADIX);
 										if(offset < 0) {
 											LOG.warn(
-												Markers.ERR,
+												LogUtil.ERR,
 												"Calculated from id ring offset is negative"
 											);
 										} else if(count < maxCount) {
 											nextDataItem = dataConstructor
 												.newInstance(lastId, offset, lastSize);
 											consumer.submit(nextDataItem);
-											if(LOG.isTraceEnabled(Markers.MSG)) {
+											if(LOG.isTraceEnabled(LogUtil.MSG)) {
 												LOG.trace(
-													Markers.MSG, "Submitted \"{}\" to consumer",
+													LogUtil.MSG, "Submitted \"{}\" to consumer",
 													nextDataItem
 												);
 											}
@@ -178,26 +177,26 @@ implements Producer<T> {
 										final InstantiationException | IllegalAccessException |
 											InvocationTargetException e
 										) {
-										TraceLogger.failure(
+										LogUtil.failure(
 											LOG, Level.WARN, e,
 											"Failed to create data item descriptor"
 										);
 									} catch(final RemoteException | RejectedExecutionException e) {
-										TraceLogger.failure(
+										LogUtil.failure(
 											LOG, Level.WARN, e,
 											"Failed to submit new data object to the consumer"
 										);
 									} catch(final NumberFormatException e) {
-										LOG.debug(Markers.ERR, "Invalid id: {}", lastId);
+										LOG.debug(LogUtil.ERR, "Invalid id: {}", lastId);
 									}
 								} else {
 									LOG.trace(
-										Markers.ERR, "Invalid object id ({}) or size ({})",
+										LogUtil.ERR, "Invalid object id ({}) or size ({})",
 										lastId, lastSize
 									);
 								}
 							} else {
-								LOG.debug(Markers.ERR, "End of json object is not inside object");
+								LOG.debug(LogUtil.ERR, "End of json object is not inside object");
 							}
 							isInsideObjectToken = false;
 							break;
@@ -223,7 +222,7 @@ implements Producer<T> {
 				} while(!JsonToken.END_ARRAY.equals(nextToken));
 			} else {
 				LOG.warn(
-					Markers.ERR,
+					LogUtil.ERR,
 					"Response contains root JSON token \"{}\", but array token was expected"
 				);
 			}

@@ -5,15 +5,18 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.persist.DataItemBuffer;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
+// mongoose-common
+import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import java.io.Closeable;
 import java.io.IOException;
 import java.rmi.RemoteException;
 /**
  Created by kurila on 28.04.14.
  A builder pattern implementation which should help to instantiate a configured load executor.
  */
-public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>> {
+public interface LoadBuilder<T extends DataItem, U extends LoadExecutor<T>>
+extends Closeable {
 	//
 	String
 		MSG_TMPL_NOT_SPECIFIED = "\"{}\" parameter is not specified nor in configuration files neither in command line",

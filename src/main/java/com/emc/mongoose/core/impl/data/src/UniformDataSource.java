@@ -1,13 +1,12 @@
 package com.emc.mongoose.core.impl.data.src;
-//
+// mongoose-common
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.logging.LogUtil;
+// mongoose-core-api
 import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.impl.data.UniformData;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
 //
-import org.apache.http.annotation.ThreadSafe;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,9 +21,8 @@ import java.util.ArrayList;
  A uniform data source for producing uniform data items.
  Implemented as finite buffer of pseudorandom bytes.
  */
-@ThreadSafe
-public class UniformDataSource<T extends UniformData>
-implements DataSource<T> {
+public class UniformDataSource
+implements DataSource {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,12 +37,13 @@ implements DataSource<T> {
 	public UniformDataSource()
 	throws NumberFormatException {
 		this(
-			Long.parseLong(RunTimeConfig.getContext().getString("data.ring.seed"), 0x10),
-			(int) RunTimeConfig.getContext().getSizeBytes("data.ring.size")
+			Long.parseLong(RunTimeConfig.getContext().getDataBufferRingSeed(), 0x10),
+			(int) RunTimeConfig.getContext().getDataBufferRingSize()
 		);
 	}
 	//
 	protected UniformDataSource(final long seed, final int size) {
+		LOG.debug(LogUtil.MSG, "New ring buffer instance #{}", hashCode());
 		this.seed = seed;
 		this.size = size;
 		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
@@ -58,7 +57,7 @@ implements DataSource<T> {
 			DEFAULT = new UniformDataSource();
 			//LOG.info(Markers.MSG, "Default data source: {}", DEFAULT.toString());
 		} catch(final Exception e) {
-			TraceLogger.failure(LOG, Level.ERROR, e, "Failed to create default data source");
+			LogUtil.failure(LOG, Level.ERROR, e, "Failed to create default data source");
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -72,7 +71,7 @@ implements DataSource<T> {
 		long word = seed;
 		int i;
 		double d = System.nanoTime();
-		LOG.debug(Markers.MSG, "Prepare {} of ring data...", RunTimeConfig.formatSize(size));
+		LOG.debug(LogUtil.MSG, "Prepare {} of ring data...", SizeUtil.formatSize(size));
 		// 64-bit words
 		for(i = 0; i < countWords; i++) {
 			byteLayer.putLong(word);
@@ -85,9 +84,15 @@ implements DataSource<T> {
 		for(i = 0; i < countTailBytes; i++) {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
 		}
+		/*
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(
+				LogUtil.MSG, "Ring buffer data: {}", Base64.encodeBase64String(byteLayer.array())
+			);
+		}*/
 		//
 		LOG.debug(
-			Markers.MSG, "Pre-generating the data done in {}[us]",
+			LogUtil.MSG, "Pre-generating the data done in {}[us]",
 			(System.nanoTime() - d) / LoadExecutor.NANOSEC_SCALEDOWN
 		);
 	}
@@ -113,7 +118,7 @@ implements DataSource<T> {
 	@Override
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		DEFAULT.setSeed(in.readInt());
+		DEFAULT.setSize(in.readInt());
 		DEFAULT.setSeed(in.readLong());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -181,11 +186,12 @@ implements DataSource<T> {
 				nextLayer = ByteBuffer.allocate(ringSize);
 				prevSeed = prevLayer.getLong(0);
 				nextSeed = Long.reverse(nextWord(Long.reverseBytes(prevSeed)));
-				LOG.debug(Markers.MSG, String.format(MSG_FMT_NEW_LAYER, i, prevSeed, nextSeed));
+				LOG.debug(LogUtil.MSG, String.format(MSG_FMT_NEW_LAYER, i, prevSeed, nextSeed));
 				generateData(nextLayer, nextSeed);
 				byteLayers.add(nextLayer);
 				prevLayer = nextLayer;
 			}
+			LOG.debug(LogUtil.MSG, "New layer #{}", byteLayers.size() - 1);
 		}
 		return byteLayers.get(layerNum).array();
 	}

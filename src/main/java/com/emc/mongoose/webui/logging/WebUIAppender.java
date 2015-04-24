@@ -1,14 +1,13 @@
 package com.emc.mongoose.webui.logging;
 //
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
 import com.emc.mongoose.webui.websockets.WebSocketLogListener;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
+//
+import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.ThreadContext;
+//
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.Layout;
 import org.apache.logging.log4j.core.LogEvent;
@@ -18,9 +17,9 @@ import org.apache.logging.log4j.core.config.plugins.PluginAttribute;
 import org.apache.logging.log4j.core.config.plugins.PluginElement;
 import org.apache.logging.log4j.core.config.plugins.PluginFactory;
 import org.apache.logging.log4j.core.layout.SerializedLayout;
-import org.apache.logging.log4j.status.StatusLogger;
 //
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -41,6 +40,8 @@ extends AbstractAppender {
 	//
 	private final static Layout<? extends Serializable>
 		DEFAULT_LAYOUT = SerializedLayout.createLayout();
+	//
+	private final String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
 	//
 	private static boolean ENABLED_FLAG;
 	//
@@ -79,18 +80,18 @@ extends AbstractAppender {
 		}
 	}
 	//
-	public static void sendPreviousLogs(final WebSocketLogListener listener) {
+	public synchronized static void sendPreviousLogs(final WebSocketLogListener listener) {
+		final List<LogEvent> previousLogs = new ArrayList<>();
 		for (final CircularFifoQueue<LogEvent> queue : LOG_EVENTS_MAP.values()) {
 			for (final LogEvent logEvent : queue) {
-				listener.sendMessage(logEvent);
+				previousLogs.add(logEvent);
 			}
 		}
+		listener.sendMessage(previousLogs);
 	}
 	//
-	private final String KEY_RUN_ID = RunTimeConfig.KEY_RUN_ID;
-	//
 	@Override
-	public final void append(final LogEvent event) {
+	public synchronized final void append(final LogEvent event) {
 		if(ENABLED_FLAG) {
 			final String currRunId;
 			final Map<String, String> evtCtxMap = event.getContextMap();
@@ -109,7 +110,7 @@ extends AbstractAppender {
 					);
 				}
 				LOG_EVENTS_MAP.get(currRunId).add(event);
-				for(final WebSocketLogListener listener : LISTENERS) {
+				for (final WebSocketLogListener listener : LISTENERS) {
 					listener.sendMessage(event);
 				}
 			} // else silently skip
@@ -117,6 +118,8 @@ extends AbstractAppender {
 	}
 	//
 	public static void removeRunId(final String runId) {
-		LOG_EVENTS_MAP.remove(runId);
+		if (ENABLED_FLAG) {
+			LOG_EVENTS_MAP.remove(runId);
+		}
 	}
 }

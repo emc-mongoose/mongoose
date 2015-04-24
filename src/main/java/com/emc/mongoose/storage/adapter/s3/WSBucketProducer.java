@@ -1,13 +1,11 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
+import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.util.log.Markers;
+import com.emc.mongoose.common.logging.LogUtil;
 //
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -18,10 +16,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -71,9 +67,9 @@ implements Producer<T> {
 		//
 		HttpResponse httpResp = null;
 		try {
-			httpResp = bucket.execute(addr, WSIOTask.HTTPMethod.GET);
+			httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET);
 		} catch(final IOException e) {
-			TraceLogger.failure(
+			LogUtil.failure(
 				LOG, Level.ERROR, e,
 				String.format("Failed to list the bucket \"%s\"", bucket)
 			);
@@ -82,7 +78,7 @@ implements Producer<T> {
 		if(httpResp != null) {
 			final StatusLine statusLine = httpResp.getStatusLine();
 			if(statusLine == null) {
-				LOG.warn(Markers.MSG, "No response status returned");
+				LOG.warn(LogUtil.MSG, "No response status returned");
 			} else {
 				final int statusCode = statusLine.getStatusCode();
 				if(statusCode >= 200 && statusCode < 300) {
@@ -92,7 +88,7 @@ implements Producer<T> {
 						if(respEntity.getContentType() != null) {
 							respContentType = respEntity.getContentType().getValue();
 						} else {
-							LOG.debug(Markers.ERR, "No content type returned");
+							LOG.debug(LogUtil.ERR, "No content type returned");
 						}
 						if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
 							try {
@@ -106,9 +102,9 @@ implements Producer<T> {
 										)
 									);
 								} catch(final SAXException e) {
-									TraceLogger.failure(LOG, Level.WARN, e, "Failed to parse");
+									LogUtil.failure(LOG, Level.WARN, e, "Failed to parse");
 								} catch(final IOException e) {
-									TraceLogger.failure(
+									LogUtil.failure(
 										LOG, Level.ERROR, e,
 										String.format(
 											"Failed to read the bucket \"%s\" listing response content",
@@ -117,13 +113,13 @@ implements Producer<T> {
 									);
 								}
 							} catch(final ParserConfigurationException | SAXException e) {
-								TraceLogger.failure(
+								LogUtil.failure(
 									LOG, Level.ERROR, e, "Failed to create SAX parser"
 								);
 							}
 						} else {
 							LOG.warn(
-								Markers.MSG, "Unexpected response content type: \"{}\"",
+								LogUtil.MSG, "Unexpected response content type: \"{}\"",
 								respContentType
 							);
 						}
@@ -132,7 +128,7 @@ implements Producer<T> {
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.warn(
-						Markers.ERR, "Listing bucket \"{}\" response: {}/{}",
+						LogUtil.ERR, "Listing bucket \"{}\" response: {}/{}",
 						bucket, statusCode, statusMsg
 					);
 				}

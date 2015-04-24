@@ -1,11 +1,11 @@
 package com.emc.mongoose.storage.adapter.atmos;
 //
+import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.api.util.log.Markers;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.data.WSObject;
+//
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -68,11 +68,11 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		try {
-			final HttpResponse httpResp = subTenant.execute(addr, WSIOTask.HTTPMethod.GET);
+			final HttpResponse httpResp = subTenant.execute(addr, MutableWSRequest.HTTPMethod.GET);
 			if(httpResp != null) {
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine==null) {
-					LOG.warn(Markers.MSG, "No response status");
+					LOG.warn(LogUtil.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode == HttpStatus.SC_OK) {
@@ -90,23 +90,23 @@ implements Producer<T> {
 										)
 									);
 								} catch(final SAXException e) {
-									TraceLogger.failure(LOG, Level.WARN, e, "Failed to parse");
+									LogUtil.failure(LOG, Level.WARN, e, "Failed to parse");
 								}
 							} catch(final ParserConfigurationException | SAXException e) {
-								TraceLogger.failure(
+								LogUtil.failure(
 									LOG, Level.ERROR, e, "Failed to create SAX parser"
 								);
 							}
 						} else {
 							LOG.warn(
-								Markers.MSG, "Unexpected response content type: \"{}\"",
+								LogUtil.MSG, "Unexpected response content type: \"{}\"",
 								respContentType
 							);
 						}
 					} else {
 						final String statusMsg = statusLine.getReasonPhrase();
 						LOG.debug(
-							Markers.MSG, "Listing subtenant \"{}\" response: {}/{}",
+							LogUtil.MSG, "Listing subtenant \"{}\" response: {}/{}",
 							subTenant, statusCode, statusMsg
 						);
 					}
@@ -114,7 +114,7 @@ implements Producer<T> {
 				EntityUtils.consumeQuietly(httpResp.getEntity());
 			}
 		} catch(final IOException e) {
-			TraceLogger.failure(
+			LogUtil.failure(
 				LOG, Level.ERROR, e,
 				String.format("Failed to list the subtenant \"%s\"", subTenant)
 			);

@@ -1,11 +1,11 @@
 package com.emc.mongoose.core.impl.load.model;
 //
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.impl.util.RunTimeConfig;
-import com.emc.mongoose.core.impl.util.log.TraceLogger;
-import com.emc.mongoose.core.api.util.log.Markers;
+//
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -45,7 +45,7 @@ implements Producer<T> {
 	//
 	@Override
 	public final Consumer<T> getConsumer()
-		throws RemoteException {
+	throws RemoteException {
 		return newDataConsumer;
 	}
 	//
@@ -65,10 +65,10 @@ implements Producer<T> {
 		long i = 0, nextSize;
 		//
 		LOG.debug(
-			Markers.MSG, "Will try to produce up to {} objects of {} size", maxCount,
+			LogUtil.MSG, "Will try to produce up to {} objects of {} size", maxCount,
 			minObjSize == maxObjSize ?
-				RunTimeConfig.formatSize(minObjSize) :
-				RunTimeConfig.formatSize(minObjSize)+".."+RunTimeConfig.formatSize(maxObjSize)
+				SizeUtil.formatSize(minObjSize) :
+				SizeUtil.formatSize(minObjSize)+".."+ SizeUtil.formatSize(maxObjSize)
 		);
 		//
 		do {
@@ -84,20 +84,20 @@ implements Producer<T> {
 					nextSize += minObjSize;
 				}
 				newDataConsumer.submit(produceSpecificDataItem(nextSize));
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.MSG, String.format(FMT_MSG_SUBMIT_NEXT, i, nextSize));
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(LogUtil.MSG, String.format(FMT_MSG_SUBMIT_NEXT, i, nextSize));
 				}
 				i ++;
 			} catch(final RejectedExecutionException e) {
-				LOG.trace(Markers.ERR, MSG_SUBMIT_REJECTED);
+				LOG.trace(LogUtil.ERR, MSG_SUBMIT_REJECTED);
 			} catch(final IOException e) {
-				TraceLogger.failure(LOG, Level.TRACE, e, MSG_SUBMIT_FAILED);
+				LogUtil.failure(LOG, Level.TRACE, e, MSG_SUBMIT_FAILED);
 			} catch(final InterruptedException e) {
-				LOG.debug(Markers.MSG, MSG_INTERRUPTED);
+				LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, MSG_INTERRUPTED);
 				break;
 			}
 		} while(isAlive());
-		LOG.debug(Markers.MSG, "Finished, generated {} items", i);
+		LOG.debug(LogUtil.MSG, "Finished, generated {} items", i);
 	}
 	//
 }

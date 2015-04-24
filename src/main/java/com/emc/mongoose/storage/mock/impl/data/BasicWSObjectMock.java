@@ -3,8 +3,9 @@ package com.emc.mongoose.storage.mock.impl.data;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.UniformData;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
+//
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
-//import com.emc.mongoose.core.api.util.log.Markers;
+//import com.emc.mongoose.common.logging.Markers;
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
 //
@@ -22,6 +23,12 @@ implements WSObjectMock {
 	//////////////////////////////////
 	public BasicWSObjectMock() {
 		super();
+	}
+	//
+	public BasicWSObjectMock(final long size){ super(size);}
+	//
+	public BasicWSObjectMock(final String id, final Long size) {
+		super(id, size);
 	}
 	//
 	public BasicWSObjectMock(final String metaInfo) {
@@ -73,10 +80,10 @@ implements WSObjectMock {
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
 		synchronized (this) { // stream position protection
-			if (maskRangesPending.isEmpty()) {
+			if(maskRangesPending.isEmpty()) {
 				super.writeTo(out);
 			} else {
-				for (int i = 0; i < countRangesTotal; i++) {
+				for(int i = 0; i < countRangesTotal; i++) {
 					rangeOffset = getRangeOffset(i);
 					rangeSize = getRangeSize(i);
 					if (maskRangesPending.get(i)) { // range have been modified
