@@ -6,10 +6,10 @@ import java.io.IOException;
 /**
  Created by kurila on 15.12.14.
  */
-public final class BasicWSDataGenerator<T extends BasicWSObject>
-extends DataGeneratorBase<T> {
+public final class BasicWSObjectGenerator<T extends BasicWSObject>
+extends DataItemGeneratorBase<T> {
 	//
-	public BasicWSDataGenerator(
+	public BasicWSObjectGenerator(
 		final long maxCount, final long minObjSize, final long maxObjSize, final float objSizeBias
 	) {
 		super(maxCount, minObjSize, maxObjSize, objSizeBias);

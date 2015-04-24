@@ -13,7 +13,7 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
-import com.emc.mongoose.core.impl.load.model.BasicWSDataGenerator;
+import com.emc.mongoose.core.impl.load.model.BasicWSObjectGenerator;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
@@ -242,7 +242,7 @@ implements WSLoadExecutor<T> {
 	protected Producer<T> newDataProducer(
 		final long maxCount, final long minObjSize, final long maxObjSize, final float objSizeBias
 	) {
-		return (Producer<T>) new BasicWSDataGenerator<>(
+		return (Producer<T>) new BasicWSObjectGenerator<>(
 			maxCount, minObjSize, maxObjSize, objSizeBias
 		);
 	}

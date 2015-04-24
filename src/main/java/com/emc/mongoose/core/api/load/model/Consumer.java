@@ -4,9 +4,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 //
 import java.io.Closeable;
 import java.rmi.RemoteException;
-import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 09.05.14.
  A data items consumer supporting the method to feed the data item to it.
@@ -20,12 +18,6 @@ extends Closeable {
 	throws RemoteException, InterruptedException, RejectedExecutionException;
 	//
 	void shutdown()
-	throws RemoteException;
-	//
-	boolean awaitTermination(final long timeOut, final TimeUnit timeUnit)
-	throws RemoteException, InterruptedException;
-	//
-	List<Runnable> shutdownNow()
 	throws RemoteException;
 	//
 	long getMaxCount()

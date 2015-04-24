@@ -75,19 +75,6 @@ implements DataItemBufferClient<T> {
 	}
 	//
 	@Override
-	public final boolean awaitTermination(
-		final long timeOut, final TimeUnit timeUnit
-	) throws RemoteException, InterruptedException {
-		throw new RemoteException("The method is not supported in distributed mode currently");
-	}
-	//
-	@Override
-	public final List<Runnable> shutdownNow()
-	throws RemoteException {
-		throw new RemoteException("The method is not supported in distributed mode currently");
-	}
-	//
-	@Override
 	public final long getMaxCount()
 	throws RemoteException {
 		return loadBuilderSvcMap.get(

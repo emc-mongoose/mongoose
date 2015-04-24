@@ -37,7 +37,7 @@ implements PeriodicTask<Long> {
 		for(final PeriodicTask<Long> nextCountTask : getValueTasks) {
 			if(maxCount <= processedCount.addAndGet(nextCountTask.getLastResult())) {
 				try {
-					loadClient.shutdown();
+					loadClient.interrupt();
 				} catch(final RemoteException e) {
 					LogUtil.failure(LOG, Level.WARN, e, "Failed to shutdown the load client");
 				}
