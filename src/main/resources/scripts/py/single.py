@@ -8,7 +8,7 @@ from com.emc.mongoose.core.api.io.task import IOTask
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from java.lang import Exception, IllegalArgumentException, InterruptedException
+from java.lang import Exception, IllegalArgumentException
 from java.util import NoSuchElementException
 #
 LOG = LogManager.getLogger()
@@ -47,14 +47,15 @@ def execute(load):
 		load.start()
 		try:
 			load.join(runTimeOut[1].toMillis(runTimeOut[0]))
-		except InterruptedException:
-			pass
 		finally:
 			load.close()
 #
 if __name__ == "__builtin__":
 	loadBuilder = init()
 	load = build(loadBuilder)
-	execute(load)
+	try:
+		execute(load)
+	except Throwable as e:
+		LogUtil.failure(LOG, Level.ERROR, e, "Scenario failed")
 	loadBuilder.close() # to exit normally
 	LOG.info(LogUtil.MSG, "Scenario end")

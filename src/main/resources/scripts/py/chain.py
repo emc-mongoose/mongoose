@@ -9,7 +9,7 @@ from com.emc.mongoose.common.logging import LogUtil
 from com.emc.mongoose.core.api.io.task import IOTask
 from com.emc.mongoose.core.api.persist import DataItemBuffer
 #
-from java.lang import Long, String, Throwable, IllegalArgumentException, InterruptedException
+from java.lang import Long, String, Throwable, IllegalArgumentException
 #
 LOG = LogManager.getLogger()
 #
@@ -76,8 +76,6 @@ def execute(chain=(), flagSimultaneous=True):
 			for load in chain:
 				try:
 					load.join(runTimeOut[1].toMillis(runTimeOut[0]))
-				except InterruptedException:
-					pass
 				finally:
 					load.close()
 		else:
@@ -98,13 +96,6 @@ def execute(chain=(), flagSimultaneous=True):
 								nextLoad, runTimeOut[0], runTimeOut[1]
 							)
 							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
-						except InterruptedException as e:
-							raise e
-						except Throwable as e:
-							LogUtil.failure(
-								LOG, Level.ERROR, e,
-								String.format("Producer \"%s\" execution failure", prevLoad)
-							)
 						finally:
 							LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
 							prevLoad.interrupt()
@@ -118,13 +109,6 @@ def execute(chain=(), flagSimultaneous=True):
 								nextLoad, runTimeOut[0], runTimeOut[1]
 							)
 							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
-						except InterruptedException as e:
-							raise e
-						except Throwable as e:
-							LogUtil.failure(
-								LOG, Level.ERROR, e,
-								String.format("Consumer \"%s\" execution failure", nextLoad)
-							)
 						finally:
 							LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
 							nextLoad.close()
@@ -134,7 +118,7 @@ def execute(chain=(), flagSimultaneous=True):
 		if chain is not None:
 			for loadJob in chain:
 				del loadJob
-			#del chain
+			del chain
 #
 if __name__ == "__builtin__":
 	#

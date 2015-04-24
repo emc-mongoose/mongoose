@@ -40,7 +40,6 @@ implements Runnable, Reusable<RequestResultTask<T>> {
 		} catch(final InterruptedException | CancellationException e) {
 			LogUtil.failure(LOG, Level.TRACE, e, "Request has been cancelled");
 		} catch(final ExecutionException e) {
-			e.printStackTrace(System.err);
 			LogUtil.failure(
 				LOG, Level.DEBUG, e,
 				String.format("Task #%d execution failure", ioTask.hashCode())
