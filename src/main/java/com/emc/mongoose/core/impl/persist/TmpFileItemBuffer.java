@@ -349,6 +349,11 @@ implements DataItemBuffer<T> {
 		deleteFromFileSystem();
 		LOG.debug(LogUtil.MSG, "{}: interrupted", getThreadFactory().toString());
 	}
+	//
+	@Override
+	public final boolean isInterrupted() {
+		return producerThread.isInterrupted();
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private void deleteFromFileSystem() {
 		if(fBuff.exists()) {

@@ -30,9 +30,7 @@ extends ConcurrentLinkedQueue<T> {
 		if(instance == null) {
 			try {
 				instance = instanceCls.newInstance();
-			} catch(
-				final NullPointerException | InstantiationException | IllegalAccessException e
-			) {
+			} catch(final NullPointerException|InstantiationException|IllegalAccessException e) {
 				throw new IllegalStateException("Reusable instantiation failure", e);
 			}
 		}

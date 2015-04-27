@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 14.11.14.
  */
@@ -157,8 +158,11 @@ implements DataItemBufferClient<T> {
 		}
 	}
 	//
+	private final AtomicBoolean isInterruptedFlag = new AtomicBoolean(false);
+	//
 	@Override
 	public final void interrupt() {
+		isInterruptedFlag.set(true);
 		DataItemBuffer<T> nextDataItemBuffer;
 		for(final String addr: keySet()) {
 			try {
@@ -175,6 +179,11 @@ implements DataItemBufferClient<T> {
 				);
 			}
 		}
+	}
+	//
+	@Override
+	public final boolean isInterrupted() {
+		return isInterruptedFlag.get();
 	}
 	//
 	private final static class RemoteJoinTask

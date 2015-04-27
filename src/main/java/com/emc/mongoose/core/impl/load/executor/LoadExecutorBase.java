@@ -336,6 +336,11 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
+	public final boolean isInterrupted() {
+		return isClosed.get();
+	}
+	//
+	@Override
 	public final Consumer<T> getConsumer() {
 		return consumer;
 	}
@@ -408,14 +413,15 @@ implements LoadExecutor<T> {
 			//
 		} while(futureResult == null && rejectCount < retryCountMax && !isShutdown());
 		//
-		if(futureResponse == null) {
+		if(futureResponse == null || futureResult == null) {
+			LOG.warn(LogUtil.ERR, "Rejected the task {} after {} tries", ioTask, rejectCount);
 			counterRej.inc();
 		}
 	}
 	//
-	//
 	@Override
-	public final void handleResult(final IOTask<T> ioTask, final IOTask.Status status) {
+	public final void handleResult(final IOTask<T> ioTask, final IOTask.Status status)
+	throws RemoteException {
 		final T dataItem = ioTask.getDataItem();
 		final int latency = ioTask.getLatency();
 		try {
@@ -466,7 +472,8 @@ implements LoadExecutor<T> {
 			);
 		} finally {
 			final long n = counterResultHandle.incrementAndGet();
-			if(n >= counterSubm.getCount()) {
+			if(n >= counterSubm.getCount() && producer != null && producer.isInterrupted()) {
+				// only if producer is internal and is interrupted
 				LOG.debug(LogUtil.MSG, "{}: all {} task results has been obtained", name, n);
 				super.shutdown(); // prevent further scheduling of result handling tasks
 				if(!isClosed.get()) {

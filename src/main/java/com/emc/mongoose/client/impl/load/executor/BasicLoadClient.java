@@ -584,6 +584,11 @@ implements LoadClient<T> {
 		}
 	}
 	//
+	@Override
+	public final boolean isInterrupted() {
+		return isShutdown();
+	}
+	//
 	private volatile LoadClient<T> consumer = null;
 	//
 	@Override

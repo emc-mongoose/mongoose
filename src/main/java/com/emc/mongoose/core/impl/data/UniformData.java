@@ -278,7 +278,7 @@ implements DataItem {
 				} else {
 					m += n;
 				}
-			} while(m < nextByteCount);
+			} while(m < nextByteCount && contentEquals);
 			// try to read the determined byte count from the ring buffer
 			setOffset(offset, rangeOffset + rangeLength - byteCountLeft);
 			if(nextByteCount == read(rByteBuff, 0, nextByteCount)) {

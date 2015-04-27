@@ -19,7 +19,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.OutputStream;
-
 /**
  * Created by olga on 12.02.15.
  */
@@ -28,28 +27,26 @@ implements HttpAsyncResponseProducer, Reusable<BasicResponseProducer> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private HttpResponse response = null;
+	private volatile HttpResponse response = null;
 	//
 	//private final byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataBufferSize()];
 	//private final ByteBuffer bb = ByteBuffer.wrap(buff);
 	//
-	public BasicResponseProducer() {
-	}
+	//public BasicResponseProducer(HttpResponse response) {
+	//	this.response = response;
+	//}
 	//
-	/*public BasicResponseProducer(HttpResponse response) {
-		this.response = response;
-	}
-	*/
 	@Override
 	public HttpResponse generateResponse() {
-		return response;
+		return this.response;
 	}
 	//
 	@Override
-	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
+	public final void produceContent(
+		final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
 		try(final OutputStream outStream = HTTPOutputStream.getInstance(encoder, ioctrl)) {
-			final HttpEntity entity = response.getEntity();
+			final HttpEntity entity = this.response.getEntity();
 			if(entity != null) {
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
@@ -102,13 +99,10 @@ implements HttpAsyncResponseProducer, Reusable<BasicResponseProducer> {
 	//
 	@Override
 	public final void responseCompleted(final HttpContext context) {
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "Response completed: {}", context);
-		}
 	}
 	//
 	@Override
-	public void failed(final Exception e) {
+	public final void failed(final Exception e) {
 		LogUtil.failure(LOG, Level.WARN, e, "Response failure");
 	}
 	//

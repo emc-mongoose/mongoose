@@ -186,15 +186,13 @@ implements Runnable {
 				String s;
 				while((s = bufferReader.readLine()) != null) {
 					final WSObjectMock dataObject = new BasicWSObjectMock(s) ;
-					//if mongoose v0.5.0
-					if(dataSizeRadix == 0x10) {
+					//if mongoose v.0.5.0
+					if (dataSizeRadix == 0x10) {
 						dataObject.setSize(Long.valueOf(String.valueOf(dataObject.getSize()), 0x10));
 					}
 					//
 					LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
-					synchronized (SHARED_STORAGE){
-						SHARED_STORAGE.put(dataObject.getId(), dataObject);
-					}
+					SHARED_STORAGE.put(dataObject.getId(), dataObject);
 				}
 				reader.close();
 			} catch (final FileNotFoundException e) {
@@ -288,7 +286,7 @@ implements Runnable {
 		public HttpAsyncRequestConsumer<HttpRequest> processRequest(
 			final HttpRequest request, final HttpContext context
 		) throws HttpException, IOException {
-			return BasicRequestConsumer.getInstance();
+			return new BasicRequestConsumer();
 		}
 		//
 		@Override
@@ -331,6 +329,7 @@ implements Runnable {
 				LOG.trace(LogUtil.MSG, "Handle S3 request.");
 				handleGenericDataReq(response, request, method, dataId);
 			}
+			//httpexchange.submitResponse(new BasicResponseProducer(response));
 			httpexchange.submitResponse(BasicResponseProducer.getInstance(response));
 		}
 		//
@@ -401,7 +400,7 @@ implements Runnable {
 			final HttpResponse response, final HttpRequest request, final String method,
 			final String dataId
 		) {
-			switch (method){
+			switch(method) {
 				case METHOD_POST:
 					handleCreate(response, request, dataId);
 					break;
@@ -479,21 +478,20 @@ implements Runnable {
 		}
 		//
 		private static WSObjectMock writeDataObject(final HttpRequest request, final String dataID)
-		throws HttpException, NumberFormatException{
+		throws HttpException, NumberFormatException {
 			WSObjectMock dataObject;
 			final HttpEntity entity = HttpEntityEnclosingRequest.class.cast(request).getEntity();
 			final long bytes = entity.getContentLength();
 			//create data object or get it for append or update
-			if (SHARED_STORAGE.containsKey(dataID)) {
+			if(SHARED_STORAGE.containsKey(dataID)) {
 				dataObject = SHARED_STORAGE.get(dataID);
-			}else {
+				// TODO modify the descriptor here to support update/append requests
+			} else {
 				final long offset = genOffset(dataID);
 				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
-			}
-			LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
-			synchronized (SHARED_STORAGE) {
 				SHARED_STORAGE.put(dataID, dataObject);
 			}
+			LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
 			return dataObject;
 		}
 		/*
