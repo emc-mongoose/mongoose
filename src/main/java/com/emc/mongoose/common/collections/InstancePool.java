@@ -2,7 +2,6 @@ package com.emc.mongoose.common.collections;
 // mongoose-common.jar
 import com.emc.mongoose.common.logging.LogUtil;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -27,21 +26,15 @@ extends ConcurrentLinkedQueue<T> {
 	@SuppressWarnings("unchecked")
 	public final T take(final Object... args)
 	throws IllegalStateException, IllegalArgumentException {
-		T instance = null;
-		if(isEmpty()) {
+		T instance = poll();
+		if(instance == null) {
 			try {
 				instance = instanceCls.newInstance();
 			} catch(
 				final NullPointerException | InstantiationException | IllegalAccessException e
 			) {
-				LogUtil.failure(LOG, Level.ERROR, e, "Reusable instantiation failure");
+				throw new IllegalStateException("Reusable instantiation failure", e);
 			}
-		} else {
-			instance = remove();
-		}
-		//
-		if(instance == null) {
-			throw new IllegalStateException("No instance was taken");
 		}
 		//
 		return (T) instance.reuse(args);

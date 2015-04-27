@@ -62,11 +62,6 @@ implements IOTask<T> {
 		}
 		return this;
 	}
-	//
-	@Override
-	public final int compareTo(final IOTask<T> o) {
-		return o == null ? -1 : hashCode() - o.hashCode();
-	}
 	// END pool related things
 	@Override
 	public final void complete() {

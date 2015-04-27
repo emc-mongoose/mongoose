@@ -80,11 +80,6 @@ implements Reusable<HTTPInputStream> {
 		}
 		return this;
 	}
-	//
-	@Override
-	public final int compareTo(final HTTPInputStream o) {
-		return o == null ? -1 : hashCode() - o.hashCode();
-	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/**
 	 * Does not close the stream actually.

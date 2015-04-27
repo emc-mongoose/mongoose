@@ -1,46 +1,55 @@
 package com.emc.mongoose.storage.mock.impl.cinderella;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.collections.InstancePool;
+import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.io.HTTPOutputStream;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+//
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
-import org.apache.http.nio.protocol.BasicAsyncResponseProducer;
+//
+import org.apache.http.nio.protocol.HttpAsyncResponseProducer;
+import org.apache.http.protocol.HttpContext;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.ByteBuffer;
 
 /**
  * Created by olga on 12.02.15.
  */
 public final class BasicResponseProducer
-extends BasicAsyncResponseProducer {
+implements HttpAsyncResponseProducer, Reusable<BasicResponseProducer> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final HttpResponse response;
+	private HttpResponse response = null;
 	//
-	private final byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataBufferSize()];
-	private final ByteBuffer bb = ByteBuffer.wrap(buff);
+	//private final byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataBufferSize()];
+	//private final ByteBuffer bb = ByteBuffer.wrap(buff);
 	//
-	public BasicResponseProducer(HttpResponse response) {
-		super(response);
+	public BasicResponseProducer() {
+	}
+	//
+	/*public BasicResponseProducer(HttpResponse response) {
 		this.response = response;
+	}
+	*/
+	@Override
+	public HttpResponse generateResponse() {
+		return response;
 	}
 	//
 	@Override
-	public final void produceContent(
-		final ContentEncoder encoder, final IOControl ioctrl)
+	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
 		try(final OutputStream outStream = HTTPOutputStream.getInstance(encoder, ioctrl)) {
-			final HttpEntity entity = this.response.getEntity();
+			final HttpEntity entity = response.getEntity();
 			if(entity != null) {
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
@@ -89,5 +98,49 @@ extends BasicAsyncResponseProducer {
 			}
 		}
 		*/
+	}
+	//
+	@Override
+	public final void responseCompleted(final HttpContext context) {
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(LogUtil.MSG, "Response completed: {}", context);
+		}
+	}
+	//
+	@Override
+	public void failed(final Exception e) {
+		LogUtil.failure(LOG, Level.WARN, e, "Response failure");
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		release();
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Reusable implementation /////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final static InstancePool<BasicResponseProducer> POOL = new InstancePool<>(
+		BasicResponseProducer.class
+	);
+	//
+	public static BasicResponseProducer getInstance(final HttpResponse response) {
+		return POOL.take(response);
+	}
+	//
+	@Override
+	public final Reusable<BasicResponseProducer> reuse(final Object... args)
+	throws IllegalArgumentException, IllegalStateException {
+		if(args != null) {
+			if(args.length > 0) {
+				response = HttpResponse.class.cast(args[0]);
+			}
+		}
+		return this;
+	}
+	//
+	@Override
+	public final void release() {
+		POOL.release(this);
 	}
 }

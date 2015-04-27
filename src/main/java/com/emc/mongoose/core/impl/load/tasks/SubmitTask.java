@@ -52,11 +52,6 @@ implements Runnable, Reusable<SubmitTask> {
 		SUBMIT_TASK_POOL.release(this);
 	}
 	//
-	@Override
-	public final int compareTo(final SubmitTask o) {
-		return o == null ? -1 : hashCode() - o.hashCode();
-	}
-	//
 	@SuppressWarnings("FieldCanBeLocal")
 	private int rejectCount;
 	private final int
@@ -78,7 +73,7 @@ implements Runnable, Reusable<SubmitTask> {
 			} while(rejectCount < retryCountMax);
 		} catch(final InterruptedException e) {
 			LogUtil.failure(
-				LOG, Level.DEBUG, e, String.format(
+				LOG, Level.TRACE, e, String.format(
 					"Failed to submit the data item \"%s\" to consumer \"%s\"",
 					dataItem, consumer
 				)

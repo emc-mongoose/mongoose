@@ -141,11 +141,6 @@ implements DataItemBuffer<T> {
 		public final void release() {
 			TASKS_POOL.release(this);
 		}
-		//
-		@Override
-		public final int compareTo(final DataItemOutPutTask<T> o) {
-			return o == null ? -1 : hashCode() - o.hashCode();
-		}
 	}
 	//
 	@Override

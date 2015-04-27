@@ -82,9 +82,4 @@ implements Runnable, Reusable<RemoteSubmitTask<T>> {
 		}
 		return this;
 	}
-	//
-	@Override
-	public final int compareTo(final RemoteSubmitTask<T> o) {
-		return o == null ? -1 : hashCode() - o.hashCode();
-	}
 }

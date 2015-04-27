@@ -108,9 +108,4 @@ implements Runnable, Reusable<RequestResultTask<T>> {
 		}
 		POOL.release(this);
 	}
-	//
-	@Override
-	public final int compareTo(final RequestResultTask<T> o) {
-		return o == null ? -1 : hashCode() - o.hashCode();
-	}
 }

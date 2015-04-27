@@ -15,7 +15,6 @@ import org.apache.logging.log4j.Logger;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 12.05.14.
@@ -75,11 +74,6 @@ implements Consumer<T> {
 		public final DataItemLogTask<T> reuse(final Object... args) {
 			this.dataItem = (T) args[0];
 			return this;
-		}
-		//
-		@Override
-		public final int compareTo(final DataItemLogTask<T> o) {
-			return o == null ? -1 : hashCode() - o.hashCode();
 		}
 	}
 	//
