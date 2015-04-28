@@ -11,6 +11,8 @@ import org.apache.logging.log4j.Logger;
 import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+
 /**
 Created by kurila on 23.10.14.
 Register shutdown hook which should perform correct server-side shutdown even if user hits ^C
@@ -58,18 +60,34 @@ implements Runnable {
 	}
 	//
 	public static void del(final LoadExecutor loadExecutor) {
-		if(LoadCloseHook.class.isInstance(Thread.currentThread())) {
+		if (LoadCloseHook.class.isInstance(Thread.currentThread())) {
 			LOG.debug(LogUtil.MSG, "Won't remove the shutdown hook which is in progress");
-		} else if(HOOKS_MAP.containsKey(loadExecutor)) {
+		} else if (HOOKS_MAP.containsKey(loadExecutor)) {
 			try {
 				Runtime.getRuntime().removeShutdownHook(HOOKS_MAP.get(loadExecutor));
 				LOG.debug(LogUtil.MSG, "Shutdown hook for \"{}\" removed", loadExecutor);
-			} catch(final IllegalStateException e) {
+			} catch (final IllegalStateException e) {
 				LogUtil.failure(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
-			} catch(final SecurityException | IllegalArgumentException e) {
+			} catch (final SecurityException | IllegalArgumentException e) {
 				LogUtil.failure(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
 			} finally {
 				HOOKS_MAP.remove(loadExecutor);
+				if (HOOKS_MAP.isEmpty()) {
+					try {
+						if (LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
+							try {
+								LogUtil.HOOKS_MAP_EMPTY.set(true);
+								LogUtil.HOOKS_COND.signalAll();
+							} finally {
+								LogUtil.HOOKS_LOCK.unlock();
+							}
+						} else {
+							LOG.debug(LogUtil.ERR, "Failed to acquire the lock for the del method");
+						}
+					} catch (final InterruptedException e) {
+						LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
+					}
+				}
 			}
 		} else {
 			LOG.trace(LogUtil.ERR, "No shutdown hook registered for \"{}\"", loadExecutor);
