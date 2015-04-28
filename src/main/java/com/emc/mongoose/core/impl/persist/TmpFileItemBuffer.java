@@ -351,8 +351,8 @@ implements DataItemBuffer<T> {
 	}
 	//
 	@Override
-	public final boolean isInterrupted() {
-		return producerThread.isInterrupted();
+	public final boolean isAlive() {
+		return producerThread.isAlive();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private void deleteFromFileSystem() {

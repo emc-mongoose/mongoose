@@ -22,7 +22,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -182,8 +181,8 @@ implements DataItemBufferClient<T> {
 	}
 	//
 	@Override
-	public final boolean isInterrupted() {
-		return isInterruptedFlag.get();
+	public final boolean isAlive() {
+		return !isInterruptedFlag.get();
 	}
 	//
 	private final static class RemoteJoinTask

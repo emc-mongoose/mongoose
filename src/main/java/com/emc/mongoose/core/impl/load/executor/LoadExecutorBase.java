@@ -86,7 +86,7 @@ implements LoadExecutor<T> {
 		isMaxCountSubmTries = new AtomicBoolean(false),
 		isMaxCountResults = new AtomicBoolean(false);
 	private final Lock lock = new ReentrantLock();
-	private final Condition condMaxCountReachedOrClosed = lock.newCondition();
+	private final Condition condDoneOrInterrupted = lock.newCondition();
 	//
 	protected LoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
@@ -325,19 +325,67 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
+	private final AtomicBoolean isInterruptedFlag = new AtomicBoolean(false);
+	//
 	@Override
 	public final void interrupt() {
-		try {
-			close();
-		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to close the load executor");
+		if(isInterruptedFlag.compareAndSet(false, true)) {
+			// releasing the blocked join() methods, if any
+			try {
+				if(
+					lock.tryLock(
+						runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+					)
+				) {
+					try {
+						condDoneOrInterrupted.signalAll();
+						LOG.debug(LogUtil.MSG, "{}: done/interrupted signal emitted", name);
+					} finally {
+						lock.unlock();
+					}
+				} else {
+					LOG.warn(LogUtil.ERR, "{}: failed to acquire the lock in close method", name);
+				}
+			} catch(final InterruptedException e) {
+				LogUtil.failure(
+					LOG, Level.WARN, e,
+					String.format("%s: Interrupted while acquiring the lock", name)
+				);
+			}
+			//
+			final long tsStartNanoSec = tsStart.get();
+			if(tsStartNanoSec > 0) { // if was executing
+				metricDumpDaemon.interrupt();
+				if(!isShutdown()) {
+					super.shutdown();
+				}
+				logMetrics(LogUtil.PERF_SUM); // provide summary metrics
+				// calculate the efficiency and report
+				final float
+					loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
+					eff = durTasksSum.get() / (loadDurMicroSec * totalConnCount);
+				LOG.debug(
+					LogUtil.PERF_SUM,
+					String.format(
+						LogUtil.LOCALE_DEFAULT,
+						"%s: load execution duration: %3.3f[sec], efficiency estimation: %3.3f[%%]",
+						name, loadDurMicroSec / 1e6, 100 * eff
+					)
+				);
+			} else {
+				LOG.debug(LogUtil.ERR, "{}: trying to interrupt while not started", name);
+			}
+			//
+			LOG.debug(LogUtil.MSG, "{} interrupted", name);
+		} else {
+			LOG.debug(LogUtil.MSG, "{} was already interrupted", name);
 		}
-		LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, String.format("Interrupted %s", getName()));
+
 	}
 	//
 	@Override
-	public final boolean isInterrupted() {
-		return isClosed.get();
+	public final boolean isAlive() {
+		return !isInterruptedFlag.get();
 	}
 	//
 	@Override
@@ -414,7 +462,7 @@ implements LoadExecutor<T> {
 		} while(futureResult == null && rejectCount < retryCountMax && !isShutdown());
 		//
 		if(futureResponse == null || futureResult == null) {
-			LOG.warn(LogUtil.ERR, "Rejected the task {} after {} tries", ioTask, rejectCount);
+			LOG.debug(LogUtil.ERR, "Rejected the task {} after {} tries", ioTask, rejectCount);
 			counterRej.inc();
 		}
 	}
@@ -472,8 +520,10 @@ implements LoadExecutor<T> {
 			);
 		} finally {
 			final long n = counterResultHandle.incrementAndGet();
-			if(n >= counterSubm.getCount() && producer != null && producer.isInterrupted()) {
-				// only if producer is internal and is interrupted
+			if( // max count is reached OR all tasks from interrupted internal producer are done
+				n >= maxCount ||
+				producer != null && !producer.isAlive() && n >= counterSubm.getCount()
+			) {
 				LOG.debug(LogUtil.MSG, "{}: all {} task results has been obtained", name, n);
 				super.shutdown(); // prevent further scheduling of result handling tasks
 				if(!isClosed.get()) {
@@ -483,8 +533,12 @@ implements LoadExecutor<T> {
 								runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 							)
 						) {
-							condMaxCountReachedOrClosed.signalAll();
-							lock.unlock();
+							try {
+								condDoneOrInterrupted.signalAll();
+								LOG.debug(LogUtil.MSG, "{}: done/interrupted signal emitted", name);
+							} finally {
+								lock.unlock();
+							}
 						} else {
 							LOG.debug(LogUtil.ERR, "Failed to acquire the lock for result handling");
 						}
@@ -519,49 +573,16 @@ implements LoadExecutor<T> {
 	@Override
 	public void close()
 	throws IOException {
+		//
 		LOG.debug(LogUtil.MSG, "Invoked close for {}", getName());
+		//
 		if(isMaxCountSubmTries.compareAndSet(false, true)) {
 			shutdown();
 		}
 		//
+		interrupt();
+		//
 		if(isClosed.compareAndSet(false, true)) {
-			final long tsStartNanoSec = tsStart.get();
-			if(tsStartNanoSec > 0) { // if was executing
-				metricDumpDaemon.interrupt();
-				if(!isShutdown()) {
-					super.shutdown();
-				}
-				logMetrics(LogUtil.PERF_SUM); // provide summary metrics
-				// calculate the efficiency and report
-				final float
-					loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
-					eff = durTasksSum.get() / (loadDurMicroSec * totalConnCount);
-				LOG.debug(
-					LogUtil.PERF_SUM,
-					String.format(
-						LogUtil.LOCALE_DEFAULT,
-						"Load execution duration: %3.3f[sec], efficiency estimation: %3.3f[%%]",
-						loadDurMicroSec / 1e6, 100 * eff
-					)
-				);
-			}
-			//
-			if(!isClosed.get()) {
-				try {
-					if(
-						lock.tryLock(
-							runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
-						)
-					) {
-						condMaxCountReachedOrClosed.signalAll();
-					} else {
-						LOG.warn(LogUtil.ERR, "Failed to acquire the lock in close method");
-					}
-				} catch(final InterruptedException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Interrupted while acquiring the lock");
-				}
-			}
-			//
 			try {
 				LOG.debug(LogUtil.MSG, "Forcing the shutdown");
 				reqConfigCopy.close(); // disables connection drop failures
@@ -617,7 +638,7 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join(final long timeOutMilliSec)
 	throws RemoteException {
-		if(isClosed.get() || isMaxCountResults.get()) {
+		if(isInterruptedFlag.get() || isMaxCountResults.get() || isClosed.get()) {
 			return;
 		}
 		//
@@ -627,19 +648,19 @@ implements LoadExecutor<T> {
 				try {
 					t = System.currentTimeMillis() - t; // the count of time wasted for locking
 					LOG.debug(
-						LogUtil.MSG, "Join: wait for the done condition at most for {}[ms]",
-						timeOutMilliSec - t
+						LogUtil.MSG, "{}: wait for the done condition at most for {}[ms]",
+						name, timeOutMilliSec - t
 					);
 					if(
-						condMaxCountReachedOrClosed.await(
+						condDoneOrInterrupted.await(
 							timeOutMilliSec - t, TimeUnit.MILLISECONDS
 						)
 					) {
-						LOG.debug(LogUtil.MSG, "{}: join finished", getName());
+						LOG.debug(LogUtil.MSG, "{}: join finished", name);
 					} else {
 						LOG.debug(
 							LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
-							getName(), getQueue().size(), getActiveCount()
+							name, getQueue().size(), getActiveCount()
 						);
 					}
 				} finally {
@@ -649,7 +670,7 @@ implements LoadExecutor<T> {
 				LOG.warn(LogUtil.ERR, "Failed to acquire the lock for the join method");
 			}
 		} catch(final InterruptedException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, String.format("%s: join interrupted", getName()));
+			LogUtil.failure(LOG, Level.DEBUG, e, String.format("%s: join interrupted", name));
 		}
 	}
 }

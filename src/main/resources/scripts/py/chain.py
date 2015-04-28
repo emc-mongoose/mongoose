@@ -3,13 +3,17 @@ from loadbuilder import init as loadBuilderInit
 #
 from org.apache.logging.log4j import Level, LogManager
 #
+from com.emc.mongoose.common.concurrent import NamingWorkerFactory
 from com.emc.mongoose.common.conf import RunTimeConfig
 from com.emc.mongoose.common.logging import LogUtil
 #
 from com.emc.mongoose.core.api.io.task import IOTask
 from com.emc.mongoose.core.api.persist import DataItemBuffer
 #
+from com.emc.mongoose.core.impl.load.tasks import JoinLoadJobTask
+#
 from java.lang import Long, String, Throwable, IllegalArgumentException
+from java.util.concurrent import Executors
 #
 LOG = LogManager.getLogger()
 #
@@ -73,10 +77,23 @@ def execute(chain=(), flagSimultaneous=True):
 			LOG.info(LogUtil.MSG, "Execute load jobs in parallel")
 			for load in reversed(chain):
 				load.start()
+			chainJoinExecSvc = Executors.newFixedThreadPool(
+				len(chain), NamingWorkerFactory("chainConcurrentJoin")
+			)
 			for load in chain:
-				try:
-					load.join(runTimeOut[1].toMillis(runTimeOut[0]))
-				finally:
+				chainJoinExecSvc.submit(
+					JoinLoadJobTask(load, runTimeOut[1].toMillis(runTimeOut[0]))
+				)
+			chainJoinExecSvc.shutdown()
+			try:
+				if chainJoinExecSvc.awaitTermination(runTimeOut[0], runTimeOut[1]):
+					LOG.debug(LogUtil.MSG, "Load jobs are finished in time")
+			finally:
+				LOG.debug(
+					LogUtil.MSG, "{} load jobs are not finished in time",
+					chainJoinExecSvc.shutdownNow().size()
+				)
+				for load in chain:
 					load.close()
 		else:
 			LOG.info(LogUtil.MSG, "Execute load jobs sequentially")

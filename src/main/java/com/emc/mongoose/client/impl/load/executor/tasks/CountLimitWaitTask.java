@@ -38,6 +38,10 @@ implements PeriodicTask<Long> {
 			if(maxCount <= processedCount.addAndGet(nextCountTask.getLastResult())) {
 				try {
 					loadClient.interrupt();
+					LOG.debug(
+						LogUtil.MSG, "Load client \"{}\" was interrupted due to count limit {}",
+						loadClient, maxCount
+					);
 				} catch(final RemoteException e) {
 					LogUtil.failure(LOG, Level.WARN, e, "Failed to shutdown the load client");
 				}
