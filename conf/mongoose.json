@@ -27,7 +27,7 @@
 			"storage.socket.timeout.millisec": "remote.socket.timeoutMilliSec",
 			"storage.socket.reuse.addr": "remote.socket.reuseAddr",
 			"storage.socket.keepalive": "remote.socket.keepalive",
-			"storage.socket.tcp.nodelay": "remote.socket.tcpNodelay",
+			"storage.socket.tcp.nodelay": "remote.socket.tcpNoDelay",
 			"storage.socket.linger": "remote.socket.linger",
 			"storage.socket.bind.backlog.size": "remote.socket.bindBacklogSize",
 			"storage.socket.interest.op.queued": "remote.socket.interestOpQueued",
@@ -219,7 +219,7 @@
 				"timeoutMilliSec": 1000000,
 				"reuseAddr": true,
 				"keepalive": true,
-				"tcpNodelay": true,
+				"tcpNoDelay": true,
 				"linger": 0,
 				"bindBacklogSize": 0,
 				"interestOpQueued": false,
@@ -234,7 +234,7 @@
 		},
 		"run": {
 			"name": "mongoose",
-			"version": "0.7.0",
+			"version": "0.7.1",
 			"mode": "standalone",
 			"retry": {
 				"delayMilliSec": 100,

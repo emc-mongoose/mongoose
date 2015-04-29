@@ -335,7 +335,7 @@ implements Externalizable {
 	}
 	//
 	public final boolean getSocketTCPNoDelayFlag() {
-		return getBoolean("remote.socket.tcpNodelay");
+		return getBoolean("remote.socket.tcpNoDelay");
 	}
 	//
 	public final int getSocketLinger() {
@@ -518,7 +518,7 @@ implements Externalizable {
 			final RunTimeConfig localRunTimeConfig = CONTEXT_CONFIG.get();
 			for(final String nextPropName: confMap.keySet()) {
 				// to not to override the import/export ports from the load client side
-				nextPropValue = nextPropName.startsWith("remote") ?
+				nextPropValue = nextPropName.startsWith("remote.port.export") || nextPropName.startsWith("remote.port.import") ?
 					localRunTimeConfig.getString(nextPropName) :
 					confMap.get(nextPropName);
 				log.trace(LogUtil.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);

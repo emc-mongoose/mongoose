@@ -149,9 +149,10 @@
 				}, {
 					"name": "perfAvgFile",
 					"type": "runIdFile",
-					"fileName": "perf.avg.log",
+					"fileName": "perf.avg.csv",
 					"PatternLayout": {
-						"pattern": "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %32t | %m%n"
+						"pattern": "%d{ISO8601}{GMT+0},%-1p,%c{1},%32t,%m%n",
+						"noConsoleNoAnsi": "true"
 					},
 					"MarkerFilter": {
 						"marker": "perfAvg",
@@ -161,9 +162,10 @@
 				}, {
 					"name": "perfSumFile",
 					"type": "runIdFile",
-					"fileName": "perf.sum.log",
+					"fileName": "perf.sum.csv",
 					"PatternLayout": {
-						"pattern": "%d{ISO8601}{GMT+0} | %-1p | %c{1} | %t | %m%n"
+						"pattern": "%d{ISO8601}{GMT+0},%-1p,%c{1},%t,%m%n",
+						"noConsoleNoAnsi": "true"
 					},
 					"Filters": {
 						"Filter": [
@@ -185,7 +187,10 @@
 					"name": "perfTraceFile",
 					"type": "runIdFile",
 					"fileName": "perf.trace.csv",
-					"PatternLayout": { "pattern": "%t,%m%n" },
+					"PatternLayout": {
+						"header": "Thread,TargetNode,DataId,DataSize,StatusCode,ReqMicroTimeStart,MicroLatency,MicroDuration",
+						"pattern": "%t,%m%n"
+					},
 					"Filters": {
 						"Filter": [
 							{

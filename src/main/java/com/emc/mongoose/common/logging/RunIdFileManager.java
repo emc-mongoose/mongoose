@@ -143,30 +143,38 @@ extends AbstractManager {
 		FMT_FILE_PATH = "%s" + File.separator + "%s" + File.separator +"%s",
 		FMT_FILE_PATH_NO_RUN_ID = "%s" + File.separator +"%s";
 	//
+	protected final OutputStream prepareNewFile(final String currRunId) {
+		OutputStream newOutPutStream = null;
+		final File
+			outPutFile = new File(
+			currRunId == null ?
+				String.format(FMT_FILE_PATH_NO_RUN_ID, LogUtil.PATH_LOG_DIR, fileName) :
+				String.format(FMT_FILE_PATH, LogUtil.PATH_LOG_DIR, currRunId, fileName)
+		),
+			parentFile = outPutFile.getParentFile();
+		if(parentFile != null && !parentFile.exists()) {
+			parentFile.mkdirs();
+		}
+		//
+		try {
+			newOutPutStream = new FileOutputStream(
+				outPutFile.getPath(), flagAppend
+			);
+			outStreamsMap.put(currRunId, newOutPutStream);
+			if(layout != null) {
+				newOutPutStream.write(layout.getHeader());
+			}
+		} catch(final IOException e) {
+			e.printStackTrace(System.err);
+		}
+		//
+		return newOutPutStream;
+	}
+	//
 	protected final OutputStream getOutputStream(final String currRunId) {
-		OutputStream currentOutPutStream = null;
-		if(outStreamsMap.containsKey(currRunId)) {
-			currentOutPutStream = outStreamsMap.get(currRunId);
-		} else {
-			final File
-				outPutFile = new File(
-					currRunId == null ?
-						String.format(FMT_FILE_PATH_NO_RUN_ID, LogUtil.PATH_LOG_DIR, fileName) :
-						String.format(FMT_FILE_PATH, LogUtil.PATH_LOG_DIR, currRunId, fileName)
-				),
-				parentFile = outPutFile.getParentFile();
-			if(parentFile != null && !parentFile.exists()) {
-				parentFile.mkdirs();
-			}
-			//
-			try {
-				currentOutPutStream = new FileOutputStream(
-					outPutFile.getPath(), flagAppend
-				);
-				outStreamsMap.put(currRunId, currentOutPutStream);
-			} catch(final FileNotFoundException e) {
-				e.printStackTrace(System.err);
-			}
+		OutputStream currentOutPutStream = outStreamsMap.get(currRunId);
+		if(currentOutPutStream == null) {
+			currentOutPutStream = prepareNewFile(currRunId);
 		}
 		return currentOutPutStream;
 	}
@@ -174,6 +182,9 @@ extends AbstractManager {
 	protected final synchronized void close() {
 		for(final OutputStream outStream : outStreamsMap.values()) {
 			try {
+				if(layout != null) {
+					outStream.write(layout.getFooter());
+				}
 				outStream.close();
 			} catch(final IOException e) {
 				e.printStackTrace(System.err);

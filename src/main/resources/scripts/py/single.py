@@ -8,7 +8,7 @@ from com.emc.mongoose.core.api.io.task import IOTask
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from java.lang import Exception, IllegalArgumentException
+from java.lang import Throwable, IllegalArgumentException
 from java.util import NoSuchElementException
 #
 LOG = LogManager.getLogger()
@@ -34,8 +34,7 @@ def build(loadBuilder):
 	else:
 		try:
 			load = loadBuilder.build()
-		except Exception as e:
-			e.printStackTrace()
+		except Throwable as e:
 			LogUtil.failure(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
 	return load
 #
