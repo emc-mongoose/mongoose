@@ -188,7 +188,7 @@
 					"type": "runIdFile",
 					"fileName": "perf.trace.csv",
 					"PatternLayout": {
-						"header": "Thread,TargetNode,DataId,DataSize,StatusCode,ReqMicroTimeStart,MicroLatency,MicroDuration",
+						"header": "Thread,TargetNode,DataId,DataSize,StatusCode,ReqMicroTimeStart,MicroLatency,MicroDuration\n",
 						"pattern": "%t,%m%n"
 					},
 					"Filters": {
