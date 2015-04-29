@@ -98,7 +98,6 @@ implements Externalizable {
 			instance = new RunTimeConfig();
 			instance.set(KEY_RUN_ID, System.getProperty(KEY_RUN_ID));
 			instance.set(KEY_RUN_MODE, System.getProperty(KEY_RUN_MODE));
-			instance.set(KEY_RUN_TIMESTAMP, System.getProperty(KEY_RUN_TIMESTAMP));
 			setContext(instance);
 		}
 	}
@@ -111,7 +110,6 @@ implements Externalizable {
 		CONTEXT_CONFIG.set(instance);
 		ThreadContext.put(KEY_RUN_ID, instance.getRunId());
 		ThreadContext.put(KEY_RUN_MODE, instance.getRunMode());
-		ThreadContext.put(KEY_RUN_TIMESTAMP, instance.getRunTimestamp());
 	}
 	//
 	public final static String DIR_ROOT;
@@ -486,9 +484,57 @@ implements Externalizable {
 	public final String getWebUIWSTimeOutUnit() {
 		return getString("remote.webui.wsTimeOut.unit");
 	}
+	// for persister
+	public final boolean getPersistEnabled(){
+		return getBoolean("persist.enabled", false);
+	}
 	//
-	public final String getRunTimestamp() {
-		return getString(KEY_RUN_TIMESTAMP);
+	public final String getPersistDatabaseProvider(){
+		return getString("persist.database.provider");
+	}
+	//
+	public final String getPersistDatabaseDriver(){
+		return getString("persist.database.driver");
+	}
+	//
+	public final String getPersistDatabaseUsername(){
+		return getString("persist.database.username");
+	}
+	//
+	public final String getPersistDatabasePassword(){
+		return getString("persist.database.password");
+	}
+	//
+	public final String getPersistDatabaseAddr(){
+		return getString("persist.database.addr");
+	}
+	//
+	public final String getPersistDatabasePort(){
+		return getString("persist.database.port");
+	}
+	//
+	public final String getPersistDatabaseName(){
+		return getString("persist.database.name");
+	}
+	//
+	public final int getPersistExecutorPoolSize(){
+		return getInt("persist.executor.pool.size", 1000);
+	}
+	//
+	public final int getPersistExecutorPoolTimeout(){
+		return getInt("persist.executor.pool.timeout", 0);
+	}
+	//
+	public final int getPersistExecutorQueueSize(){
+		return getInt("persist.executor.queueSize", 1000000);
+	}
+	//
+	public final int getPersistMaxActiveConnection(){
+		return getInt("persist.maxActiveConnection", 100);
+	}
+	//
+	public final int getPersistConnectionTimeout(){
+		return getInt("persist.connectionTimeout", 0);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

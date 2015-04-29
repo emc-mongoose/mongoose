@@ -161,8 +161,8 @@ sourceSets {
 			include '**'
 		}
 		resources {
-			srcDir(['src', 'main', 'resources', 'META-INF'].join(File.separator))
-			include 'persistence.xml'
+			srcDir(['src', 'main', 'resources'].join(File.separator))
+			include 'META-INF/persistence.xml'
 		}
 		compileClasspath += sourceSets.common.output
 		compileClasspath += sourceSets.coreApi.output
@@ -181,6 +181,7 @@ sourceSets {
 		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
 		compileClasspath += sourceSets.webserver.output + sourceSets.webui.output
 		compileClasspath += sourceSets.storageMock.output
+		compileClasspath += sourceSets.persist.output
 		//
 		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
@@ -353,6 +354,7 @@ dependencies {
 			library.openjpa,
 			library.persistence_javax,
 			library.log4j_api,
+			library.commons_configuration,
 	)
 	persistRuntime (
 			library.postgresql_jdbc,
@@ -661,6 +663,7 @@ task storageMockJar(type: Jar) {
 						configurations.storageMockRuntime.collect {
 							libsDirName + File.separator + it.getName()
 						}.join(' '),
+
 				].join(' ')
 		)
 	}
@@ -813,6 +816,9 @@ task dist(type: Tar) {
 		}
 		into(["webapp", "WEB-INF", "lib"].join(File.separator)) {
 			from { webappLibs }
+		}
+		into('persist') {
+			from { sourceSets.persist.resources }
 		}
 	}
 }

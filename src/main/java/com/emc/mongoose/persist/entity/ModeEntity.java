@@ -1,20 +1,20 @@
-package com.emc.mongoose.persist.db.entity;
+package com.emc.mongoose.persist.entity;
 //
-import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.Column;
 import javax.persistence.UniqueConstraint;
 import java.io.Serializable;
-//
+
 import static javax.persistence.GenerationType.IDENTITY;
 /**
- * Created by olga on 21.10.14.
+ * Created by olga on 16.10.14.
  */
 @Entity
-@Table(name = "LoadType", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
-public class LoadTypeEntity
+@Table(name = "mode", uniqueConstraints = {@UniqueConstraint(columnNames = "name")})
+public class ModeEntity
 implements Serializable {
 	@Id
 	@GeneratedValue(strategy = IDENTITY)
@@ -23,9 +23,9 @@ implements Serializable {
 	@Column(name = "name")
 	private String name;
 	//
-	public LoadTypeEntity(){
+	public ModeEntity(){
 	}
-	public LoadTypeEntity(final String name){
+	public ModeEntity(final String name){
 		this.name = name;
 	}
 	//

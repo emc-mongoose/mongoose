@@ -1,43 +1,42 @@
-package com.emc.mongoose.persist.db.entity;
+package com.emc.mongoose.persist.entity;
+//
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.IdClass;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinColumns;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.io.Serializable;
-import java.util.Date;
-
-import static javax.persistence.GenerationType.IDENTITY;
+//
 /**
- * Created by olga on 13.03.15.
+ * Created by olga on 21.10.14.
  */
 @Entity
-@Table(name = "Perfomance")
-public class PerfomanceEntity
-implements Serializable{
+@IdClass(LoadEntityPK.class)
+@Table(name = "load")
+public class LoadEntity
+implements Serializable {
+	//
 	@Id
-	@GeneratedValue(strategy = IDENTITY)
-	@Column(name = "id")
-	private long id;
+	@Column(name = "num")
+	private long num;
+	@Id
+	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinColumn(name = "run", referencedColumnName = "id", nullable = false)
+	private RunEntity run;
 	//
 	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	@JoinColumns({
-		@JoinColumn(name = "load", referencedColumnName = "num", nullable = false),
-		@JoinColumn(name = "run", referencedColumnName = "run", nullable = false)
-	})
-	private LoadEntity load;
-	@Column(name = "timestamp")
-	private Date timestamp;
+	@JoinColumn(name = "type", referencedColumnName = "id", nullable = false)
+	private LoadTypeEntity type;
+	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+	@JoinColumn(name = "api", referencedColumnName = "id", nullable = false)
+	private ApiEntity api;
 	@Column(name = "countSucc")
 	private long countSucc;
-	@Column(name = "countQueue")
-	private long countQueue;
 	@Column(name = "countFail")
 	private long countFail;
 	@Column(name = "latencyAvg")
@@ -65,20 +64,25 @@ implements Serializable{
 	@Column(name = "fifteenMinBW")
 	private double fifteenMinBW;
 	//
-	public PerfomanceEntity(){
-
+	public LoadEntity(){
 	}
-	public PerfomanceEntity(
-		final LoadEntity load, final Date timestamp,
-		final long countSucc, final long countQueue, final long countFail,
+	public LoadEntity(final RunEntity run, final LoadTypeEntity type, final long num, final ApiEntity api){
+		this.run = run;
+		this.num = num;
+		this.type = type;
+		this.api = api;
+	}
+	public LoadEntity(
+		final RunEntity run, final LoadTypeEntity type, final long num, final ApiEntity api,
+		final long countSucc, final long countFail,
 		final int latencyAvg, final int latencyMin, final int latencyMed, final int latencyMax,
 		final double meanTP, final double oneMinTP, final double fiveMinTP, final double fifteenMinTP,
-		final double meanBW, final double oneMinBW, final double fiveMinBW, final double fifteenMinBW)
-	{
-		this.load = load;
-		this.timestamp = timestamp;
+		final double meanBW, final double oneMinBW, final double fiveMinBW, final double fifteenMinBW){
+		this.run = run;
+		this.num = num;
+		this.type = type;
+		this.api = api;
 		this.countSucc = countSucc;
-		this.countQueue = countQueue;
 		this.countFail = countFail;
 		this.latencyAvg = latencyAvg;
 		this.latencyMin = latencyMin;
@@ -89,40 +93,60 @@ implements Serializable{
 		this.fiveMinTP = fiveMinTP;
 		this.fifteenMinTP = fifteenMinTP;
 		this.meanBW = meanBW;
-		this.oneMinBW = oneMinBW;
 		this.fiveMinBW = fiveMinBW;
 		this.fifteenMinBW = fifteenMinBW;
 	}
-
-	public final long getId() {
-		return id;
+	//
+	public final void setPerfomance(
+		final long countSucc, final long countFail,
+		final int latencyAvg, final int latencyMin, final int latencyMed, final int latencyMax,
+		final double meanTP, final double oneMinTP, final double fiveMinTP, final double fifteenMinTP,
+		final double meanBW, final double oneMinBW, final double fiveMinBW, final double fifteenMinBW
+	){
+		this.countSucc = countSucc;
+		this.countFail = countFail;
+		this.latencyAvg = latencyAvg;
+		this.latencyMin = latencyMin;
+		this.latencyMed = latencyMed;
+		this.latencyMax = latencyMax;
+		this.meanTP = meanTP;
+		this.oneMinTP = oneMinTP;
+		this.fiveMinTP = fiveMinTP;
+		this.fifteenMinTP = fifteenMinTP;
+		this.meanBW = meanBW;
+		this.fiveMinBW = fiveMinBW;
+		this.fifteenMinBW = fifteenMinBW;
 	}
-	public final void setId(final long id) {
-		this.id = id;
+	//
+	public final RunEntity getRun() {
+		return run;
 	}
-	public final LoadEntity getLoad() {
-		return load;
+	public final void setRun(final RunEntity run) {
+		this.run = run;
 	}
-	public final void setLoad(final LoadEntity load) {
-		this.load = load;
+	public final LoadTypeEntity getType() {
+		return type;
 	}
-	public final Date getTimestamp() {
-		return timestamp;
+	public final void setType(final LoadTypeEntity type) {
+		this.type = type;
 	}
-	public final void setTimestamp(final Date timestamp) {
-		this.timestamp = timestamp;
+	public final long getNum() {
+		return num;
+	}
+	public final void setNum(final long num) {
+		this.num = num;
+	}
+	public final ApiEntity getApi() {
+		return api;
+	}
+	public final void setApi(final ApiEntity api) {
+		this.api = api;
 	}
 	public final long getCountSucc() {
 		return countSucc;
 	}
 	public final void setCountSucc(final long countSucc) {
 		this.countSucc = countSucc;
-	}
-	public final long getCountQueue() {
-		return countQueue;
-	}
-	public final void setCountQueue(final long countQueue) {
-		this.countQueue = countQueue;
 	}
 	public final long getCountFail() {
 		return countFail;

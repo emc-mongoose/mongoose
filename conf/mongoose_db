@@ -76,12 +76,11 @@ CREATE TABLE run
   id bigserial NOT NULL,
   mode bigint NOT NULL,
   name text NOT NULL,
-  tstamp timestamp without time zone NOT NULL,
   CONSTRAINT id_run PRIMARY KEY (id),
   CONSTRAINT mode FOREIGN KEY (mode)
       REFERENCES mode (id) MATCH SIMPLE
       ON UPDATE CASCADE ON DELETE CASCADE,
-  CONSTRAINT run_name_key UNIQUE (name,tstamp)
+  CONSTRAINT run_name_key UNIQUE (name)
 )
 WITH (
   OIDS=FALSE

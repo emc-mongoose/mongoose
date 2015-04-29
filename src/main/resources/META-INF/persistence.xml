@@ -5,30 +5,35 @@
              http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
 	<persistence-unit name="openjpa">
 		<provider>org.apache.openjpa.persistence.PersistenceProviderImpl</provider>
-		<class>com.emc.mongoose.persist.db.entity.StatusEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.ModeEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.RunEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.LevelEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.MessageClassEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.MessageEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.DataObjectEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.ApiEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.LoadTypeEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.LoadEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.NodeEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.ConnectionEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.TraceEntity</class>
-		<class>com.emc.mongoose.persist.db.entity.PerfomanceEntity</class>
+		<class>com.emc.mongoose.persist.entity.StatusEntity</class>
+		<class>com.emc.mongoose.persist.entity.ModeEntity</class>
+		<class>com.emc.mongoose.persist.entity.RunEntity</class>
+		<class>com.emc.mongoose.persist.entity.LevelEntity</class>
+		<class>com.emc.mongoose.persist.entity.MessageClassEntity</class>
+		<class>com.emc.mongoose.persist.entity.MessageEntity</class>
+		<!--<class>com.emc.mongoose.persist.entity.DataObjectEntity</class>
+		<class>com.emc.mongoose.persist.entity.ApiEntity</class>
+		<class>com.emc.mongoose.persist.entity.LoadTypeEntity</class>
+		<class>com.emc.mongoose.persist.entity.LoadEntity</class>
+		<class>com.emc.mongoose.persist.entity.NodeEntity</class>
+		<class>com.emc.mongoose.persist.entity.ConnectionEntity</class>
+		<class>com.emc.mongoose.persist.entity.TraceEntity</class>
+		<class>com.emc.mongoose.persist.entity.PerfomanceEntity</class>!-->
 		<properties>
+			<property name="openjpa.ConnectionURL" value="jdbc:postgresql://localhost:5432/mongoose"/>
+			<property name="openjpa.ConnectionDriverName" value="org.postgresql.Driver"/>
+			<property name="openjpa.ConnectionUserName" value="mongoose"/>
+			<property name="openjpa.ConnectionPassword" value="mongoose"/>
+			<property name="openjpa.Log" value="DefaultLevel=WARN, Tool=INFO"/>
 			<!--<property name="openjpa.RuntimeUnenhancedClasses" value="supported"/>!-->
 			<!--<property name="openjpa.DynamicEnhancementAgent" value="true"/>!-->
 			<!--<property name="openjpa.jdbc.MappingDefaults"
 					  value="ForeignKeyDeleteAction=restrict,JoinForeignKeyDeleteAction=restrict"/>!-->
 			<!-- Logging Open JPA !-->
-			<property name="openjpa.Log" value="DefaultLevel=TRACE, Tool=INFO, Runtime=WARN, Enhance=WARN"/>
+			<property name="openjpa.Log" value="DefaultLevel=FATAL, Tool=INFO, Runtime=WARN, Enhance=WARN"/>
 			<!-- For auto creating tables !-->
 			<property name="openjpa.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true)" />
-			<!--  Connection Pool  !-->
+			<!--  Connection Pool
 			<property name="openjpa.ConnectionDriverName"
 					  value="org.apache.commons.dbcp2.BasicDataSource"/>
 			<property name="openjpa.ConnectionProperties"
@@ -38,10 +43,7 @@
             			MaxWait = 100,
             			TestOnBorrow = true,
             			Username = mongoose,
-            			Password = mongoose"/>
-			<!-- Open JPA cache !-->
-			<!--<property name="openjpa.DataCache" value="true"/>!-->
-			<!--<property name="openjpa.QueryCache" value="true"/>!-->
+            			Password = mongoose"/>!-->
 		</properties>
 
 	</persistence-unit>

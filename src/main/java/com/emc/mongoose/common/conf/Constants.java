@@ -9,7 +9,9 @@ public interface Constants {
 	String DIR_CONF = "conf";
 	String DIR_PROPERTIES = "properties";
 	String DOT = ".";
+	String COMMA = ",";
 	String EMPTY = "";
+	String PIPE = " | ";
 	String FNAME_POLICY = "allpermissions.policy";
 	String RUN_MODE_STANDALONE = "standalone";
 	String RUN_MODE_CLIENT = "client";
@@ -19,6 +21,7 @@ public interface Constants {
 	String RUN_MODE_WEBUI = "webui";
 	String RUN_MODE_CINDERELLA = "cinderella";
 	String RUN_MODE_WSMOCK = "wsmock";
+	String RUN_MODE_PERSIST = "persist";
 	//
 	String DIR_WEBAPP = "webapp";
 	String DIR_WEBINF = "WEB-INF";

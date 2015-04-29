@@ -1,22 +1,21 @@
-package com.emc.mongoose.persist.db.entity;
+package com.emc.mongoose.persist.entity;
 
-import javax.persistence.Embeddable;
 import java.io.Serializable;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//Load entity composite primary key
+//Connection entity composite primary key
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public class LoadEntityPK
+public class ConnectionEntityPK
 implements Serializable {
 	//
 	private long num;
-	private long run;
+	private LoadEntityPK load;
 	//
-	public LoadEntityPK(){
+	public ConnectionEntityPK(){
 	}
-	public LoadEntityPK(final long number, final long runEntity){
+	public ConnectionEntityPK(final long number, final LoadEntityPK load){
 		this.num = number;
-		this.run = runEntity;
+		this.load = load;
 	}
 	//
 	public final long getNum() {
@@ -25,23 +24,24 @@ implements Serializable {
 	public final void setNum(final long num) {
 		this.num = num;
 	}
-	public final long getRun() {
-		return run;
+	public final LoadEntityPK getLoad() {
+		return load;
 	}
-	public final void setRun(final long run) {
-		this.run = run;
+	public final void setLoad(final LoadEntityPK load) {
+		this.load = load;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final boolean equals(final Object o) {
 		if(o == null) return false;
-		if(!(o instanceof LoadEntity)) return false;
-		final LoadEntity other = (LoadEntity) o;
-		return (this.num == other.getNum()) && (this.run == other.getRun().getId());
+		if(!(o instanceof ConnectionEntity)) return false;
+		final ConnectionEntity other = (ConnectionEntity) o;
+		return (this.num == other.getNum()) && (this.load.getNum() == other.getLoad().getNum()
+		&& (this.load.getRun() == other.getLoad().getRun().getId()));
 
 	}
 	@Override
 	public final int hashCode() {
-		return (int) ( getNum() + getRun());
+		return (int) (getNum()+ load.getNum()+load.getRun());
 	}
 }

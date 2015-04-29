@@ -83,15 +83,12 @@ public final class LogUtil {
 				System.setProperty(KEY_LOG4J_CTX_SELECTOR, VALUE_LOG4J_CTX_ASYNC_SELECTOR);
 				// connect JUL to Log4J2
 				System.setProperty(KEY_JUL_MANAGER, VALUE_JUL_MANAGER);
-				//set "run.timestamp" property
-				final String runTimestamp = FMT_DT.format(
-					Calendar.getInstance(TZ_UTC, LOCALE_DEFAULT).getTime()
-				);
-				System.setProperty(RunTimeConfig.KEY_RUN_TIMESTAMP, runTimestamp);
 				// set "run.id" property with timestamp value if not set before
 				String runId = System.getProperty(RunTimeConfig.KEY_RUN_ID);
 				if(runId == null || runId.length() == 0) {
-					System.setProperty(RunTimeConfig.KEY_RUN_ID, runTimestamp);
+					System.setProperty(RunTimeConfig.KEY_RUN_ID, FMT_DT.format(
+						Calendar.getInstance(TZ_UTC, LOCALE_DEFAULT).getTime()
+					));
 				}
 				// determine the logger configuration file path
 				final Path logConfPath = Paths.get(

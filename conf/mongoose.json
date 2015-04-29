@@ -246,7 +246,7 @@
 				"queueSize": 65536
 			}
 		},
-	  	"persistence": {
+	  	"persist": {
 		  	"enabled": false,
 		  	"database": {
 			  	"provider": "postgresql",
@@ -265,7 +265,7 @@
 				}
 			},
 		  	"maxActiveConnection": 100,
-		  	"connectionTimeout": 10
+		  	"connectionTimeout": 0
 		}
 	}
 }

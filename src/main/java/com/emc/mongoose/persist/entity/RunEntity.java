@@ -1,4 +1,4 @@
-package com.emc.mongoose.persist.db.entity;
+package com.emc.mongoose.persist.entity;
 //
 
 import javax.persistence.CascadeType;
@@ -18,7 +18,7 @@ import static javax.persistence.GenerationType.IDENTITY;
  * Created by olga on 17.10.14.
  */
 @Entity
-@Table(name = "run", uniqueConstraints = {@UniqueConstraint(columnNames = {"name", "tstamp"})})
+@Table(name = "run", uniqueConstraints = {@UniqueConstraint(columnNames = {"name"})})
 public class RunEntity
 implements Serializable {
 	@Id
@@ -26,43 +26,37 @@ implements Serializable {
 	@Column(name = "id")
 	private long id;
 	@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-	@JoinColumn(name = "mode", referencedColumnName = "id", nullable = false)
+	@JoinColumn(name = "mode", referencedColumnName = "id")
 	private ModeEntity mode;
 	@Column(name = "name")
 	private String name;
-	@Column(name = "tstamp")
-	private Date timestamp;
 	//
 	public RunEntity(){
 	}
-	public RunEntity(final ModeEntity mode, final  String name, final Date tstamp){
+	public RunEntity(final String name){
+		this.name = name;
+	}
+	public RunEntity(final ModeEntity mode, final  String name){
 		this.mode = mode;
 		this.name = name;
-		this.timestamp = tstamp;
 	}
 	//
 	public final long getId() {
-		return id;
+		return this.id;
 	}
 	public final void setId(final long id) {
 		this.id = id;
 	}
 	public final ModeEntity getMode() {
-		return mode;
+		return this.mode;
 	}
 	public final void setMode(final ModeEntity mode) {
 		this.mode = mode;
 	}
 	public final String getName() {
-		return name;
+		return this.name;
 	}
 	public final void setName(final String name) {
 		this.name = name;
-	}
-	public final Date getTimestamp() {
-		return timestamp;
-	}
-	public final void setTimestamp(final Date timestamp) {
-		this.timestamp = timestamp;
 	}
 }

@@ -16,7 +16,10 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.cinderella.Cinderella;
+//mongoose-persist.jar
+import com.emc.mongoose.persist.Persister;
 //
+import org.apache.commons.lang.NullArgumentException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -93,6 +96,14 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_STANDALONE:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
 				new Scenario().run();
+				break;
+			case Constants.RUN_MODE_PERSIST:
+				rootLogger.debug(LogUtil.MSG, "Starting the persist");
+				try {
+					new Persister();
+				}catch (final NullArgumentException e){
+					LogUtil.failure(rootLogger, Level.FATAL, e, "Persistence mode is failed");
+				}
 				break;
 			default:
 				throw new IllegalArgumentException(

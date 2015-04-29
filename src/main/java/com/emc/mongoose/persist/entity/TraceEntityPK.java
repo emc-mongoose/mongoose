@@ -1,4 +1,4 @@
-package com.emc.mongoose.persist.db.entity;
+package com.emc.mongoose.persist.entity;
 
 import java.io.Serializable;
 
