@@ -80,11 +80,6 @@ implements Reusable<HTTPInputStream> {
 		}
 		return this;
 	}
-	//
-	@Override
-	public final int compareTo(final HTTPInputStream o) {
-		return o == null ? -1 : hashCode() - o.hashCode();
-	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/**
 	 * Does not close the stream actually.
@@ -98,15 +93,12 @@ implements Reusable<HTTPInputStream> {
 	public static void consumeQuietly(
 		final ContentDecoder in, final IOControl ioCtl, final int buffSize
 	) {
-		if(!in.isCompleted()) {
-			final ByteBuffer buff = ByteBuffer.allocate(buffSize);
-			try {
-				while(in.read(buff) >= 0) {
-					buff.clear();
-				}
-			} catch(final IOException e) {
-				// ignore
+		final ByteBuffer buff = ByteBuffer.allocate(buffSize);
+		try {
+			while(!in.isCompleted() && in.read(buff) >= 0) {
+				buff.clear();
 			}
+		} catch(final IOException ignore) {
 		}
 	}
 }

@@ -18,7 +18,7 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 15.12.14.
  */
-public abstract class DataGeneratorBase<T extends DataItem>
+public abstract class DataItemGeneratorBase<T extends DataItem>
 extends Thread
 implements Producer<T> {
 	//
@@ -28,7 +28,7 @@ implements Producer<T> {
 	protected final float objSizeBias;
 	protected Consumer<T> newDataConsumer;
 	//
-	protected DataGeneratorBase(
+	protected DataItemGeneratorBase(
 		final long maxCount, final long minObjSize, final long maxObjSize, final float objSizeBias
 	) {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
@@ -96,7 +96,7 @@ implements Producer<T> {
 				LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, MSG_INTERRUPTED);
 				break;
 			}
-		} while(isAlive());
+		} while(!isInterrupted() && i < maxCount);
 		LOG.debug(LogUtil.MSG, "Finished, generated {} items", i);
 	}
 	//

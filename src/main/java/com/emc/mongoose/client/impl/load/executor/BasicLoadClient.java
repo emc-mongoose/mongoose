@@ -32,7 +32,7 @@ import com.emc.mongoose.client.impl.load.executor.tasks.CountLimitWaitTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.FrameFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
-import com.emc.mongoose.client.impl.load.executor.tasks.RemoteJoinTask;
+import com.emc.mongoose.core.impl.load.tasks.JoinLoadJobTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
 //
 import org.apache.logging.log4j.Level;
@@ -373,9 +373,8 @@ implements LoadClient<T> {
 				minLat = taskGetLatencyMin.getLastResult(),
 				medLat = taskGetLatencyMed.getLastResult().intValue(),
 				maxLat = taskGetLatencyMax.getLastResult();
-			final boolean isSummary = LogUtil.PERF_SUM.equals(logMarker);
 			final String msg;
-			if(isSummary) {
+			if(LogUtil.PERF_SUM.equals(logMarker)) {
 				msg = String.format(
 					LogUtil.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 					//
@@ -417,9 +416,9 @@ implements LoadClient<T> {
 			LOG.info(logMarker, msg);
 		} catch(final NullPointerException e) {
 			if(isTerminating() || isTerminated()) {
-				LogUtil.failure(LOG, Level.TRACE, e, "Unexpected failure");
+				LogUtil.failure(LOG, Level.TRACE, e, "Terminated already");
 			} else {
-				LogUtil.failure(LOG, Level.WARN, e, "Unexpected failure");
+				LogUtil.failure(LOG, Level.TRACE, e, "Unexpected failure");
 			}
 		}/* catch(final TimeoutException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "Distributed metrics aggregation timeout");
@@ -582,6 +581,11 @@ implements LoadClient<T> {
 			}
 			LOG.debug(LogUtil.MSG, "{}: interrupted", name);
 		}
+	}
+	//
+	@Override
+	public final boolean isAlive() {
+		return !isTerminated();
 	}
 	//
 	private volatile LoadClient<T> consumer = null;
@@ -789,12 +793,14 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final void join() {
+	public final void join()
+	throws RemoteException, InterruptedException {
 		join(Long.MAX_VALUE);
 	}
 	//
 	@Override
-	public final void join(final long timeOutMilliSec) {
+	public final void join(final long timeOutMilliSec)
+	throws RemoteException, InterruptedException {
 		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
 			remoteLoadMap.size() + 1,
 			new NamingWorkerFactory(String.format("joinWorker<%s>", getName()))
@@ -817,7 +823,7 @@ implements LoadClient<T> {
 			}
 		);
 		for(final String addr : remoteLoadMap.keySet()) {
-			joinExecutor.submit(new RemoteJoinTask(remoteLoadMap.get(addr), timeOutMilliSec));
+			joinExecutor.submit(new JoinLoadJobTask(remoteLoadMap.get(addr), timeOutMilliSec));
 		}
 		joinExecutor.shutdown();
 		try {
@@ -829,6 +835,7 @@ implements LoadClient<T> {
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Interrupted");
+			throw new InterruptedException();
 		} finally {
 			LOG.debug(
 				LogUtil.MSG, "Interrupted join tasks: {}",

@@ -94,11 +94,6 @@ implements Reusable<HTTPOutputStream> {
 		}
 		return this;
 	}
-	//
-	@Override
-	public final int compareTo(final HTTPOutputStream o) {
-		return o == null ? -1 : hashCode() - o.hashCode();
-	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/**
 	 * Does not close the stream actually.

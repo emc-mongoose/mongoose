@@ -1,8 +1,8 @@
-package com.emc.mongoose.client.impl.load.executor.tasks;
+package com.emc.mongoose.core.impl.load.tasks;
 // mongoose-common.jar
 import com.emc.mongoose.common.logging.LogUtil;
-// mongoose-server-api.jar
-import com.emc.mongoose.server.api.load.executor.LoadSvc;
+// mongoose-core-api.jar
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -13,16 +13,16 @@ import java.rmi.RemoteException;
 /**
  Created by kurila on 23.12.14.
  */
-public final class RemoteJoinTask
+public final class JoinLoadJobTask
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final LoadSvc loadSvc;
+	private final LoadExecutor loadJob;
 	private final long timeOutMilliSec;
 	//
-	public RemoteJoinTask(final LoadSvc loadSvc, final long timeOutMilliSec) {
-		this.loadSvc = loadSvc;
+	public JoinLoadJobTask(final LoadExecutor loadJob, final long timeOutMilliSec) {
+		this.loadJob = loadJob;
 		this.timeOutMilliSec = timeOutMilliSec;
 	}
 	//
@@ -31,15 +31,17 @@ implements Runnable {
 		try {
 			LOG.debug(
 				LogUtil.MSG, "Wait for the remote load service \"{}\" to complete at {}[ms]",
-				loadSvc.getName(), timeOutMilliSec
+				loadJob.getName(), timeOutMilliSec
 			);
-			loadSvc.join(timeOutMilliSec);
+			loadJob.join(timeOutMilliSec);
 		} catch(final NoSuchObjectException e) {
 			LogUtil.failure(LOG, Level.DEBUG, e, "Remote join failed, no such service");
 		} catch(final RemoteException e) {
 			LogUtil.failure(LOG, Level.WARN, e, "Remote join task failure");
+		} catch (final InterruptedException e) {
+			LOG.debug(LogUtil.MSG, "Remote join task for \"{}\" was interrupted", loadJob);
 		} finally {
-			LOG.debug(LogUtil.MSG, "Remote join task for \"{}\" was completed", loadSvc);
+			LOG.debug(LogUtil.MSG, "Remote join task for \"{}\" was completed", loadJob);
 		}
 	}
 }

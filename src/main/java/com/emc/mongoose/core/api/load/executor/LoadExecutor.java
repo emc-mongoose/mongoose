@@ -61,11 +61,11 @@ extends Producer<T>, Consumer<T> {
 	//
 	@Override
 	void join()
-	throws RemoteException;
+	throws RemoteException, InterruptedException;
 	//
 	@Override
 	void join(final long timeOutMilliSec)
-	throws RemoteException;
+	throws RemoteException, InterruptedException;
 	//
 	void logMetrics(Marker marker)
 	throws RemoteException;

@@ -237,11 +237,10 @@ $(document).ready(function() {
 	$(".stop").click(function() {
 		var currentRunId = $(this).val();
 		var currentButton = $(this);
+		currentButton.remove();
 		$.post("/stop", { "run.id" : currentRunId, "type" : "stop" }, function() {
-			$("#scenarioTab-" + currentRunId.split(".").join("_") + " .stop").remove();
 		}).fail(function() {
 			alert("Internal Server Error");
-			$("#scenarioTab-" + currentRunId.split(".").join("_") + " .stop").remove();
 		});
 	});
 	//

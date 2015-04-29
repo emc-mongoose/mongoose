@@ -115,7 +115,7 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "ThresholdFilter",
-								"level": "INFO",
+								"level": "TRACE",
 								"onMatch": "NEUTRAL",
 								"onMismatch": "DENY"
 							}, {
@@ -281,6 +281,9 @@
 				}, {
 					"name": "com.emc.mongoose.webui",
 					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "org.python.core.PyReflectedFunction",
+					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}
 			]
 		}

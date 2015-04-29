@@ -22,11 +22,11 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 14.11.14.
  */
@@ -70,19 +70,6 @@ implements DataItemBufferClient<T> {
 	//
 	@Override
 	public final void shutdown()
-	throws RemoteException {
-		throw new RemoteException("The method is not supported in distributed mode currently");
-	}
-	//
-	@Override
-	public final boolean awaitTermination(
-		final long timeOut, final TimeUnit timeUnit
-	) throws RemoteException, InterruptedException {
-		throw new RemoteException("The method is not supported in distributed mode currently");
-	}
-	//
-	@Override
-	public final List<Runnable> shutdownNow()
 	throws RemoteException {
 		throw new RemoteException("The method is not supported in distributed mode currently");
 	}
@@ -170,8 +157,11 @@ implements DataItemBufferClient<T> {
 		}
 	}
 	//
+	private final AtomicBoolean isInterruptedFlag = new AtomicBoolean(false);
+	//
 	@Override
 	public final void interrupt() {
+		isInterruptedFlag.set(true);
 		DataItemBuffer<T> nextDataItemBuffer;
 		for(final String addr: keySet()) {
 			try {
@@ -188,6 +178,11 @@ implements DataItemBufferClient<T> {
 				);
 			}
 		}
+	}
+	//
+	@Override
+	public final boolean isAlive() {
+		return !isInterruptedFlag.get();
 	}
 	//
 	private final static class RemoteJoinTask

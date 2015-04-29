@@ -192,9 +192,7 @@ implements Runnable {
 					}
 					//
 					LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
-					synchronized (SHARED_STORAGE){
-						SHARED_STORAGE.put(dataObject.getId(), dataObject);
-					}
+					SHARED_STORAGE.put(dataObject.getId(), dataObject);
 				}
 				reader.close();
 			} catch (final FileNotFoundException e) {
@@ -206,7 +204,6 @@ implements Runnable {
 			}
 		}
 		//
-
 		for(int nextPort = PORT_START; nextPort < PORT_START + COUNT_HEADS; nextPort ++){
 			try {
 				multiSocketSvc.submit(new WorkerTask(protocolHandler, nextPort));
@@ -217,7 +214,7 @@ implements Runnable {
 				);
 			}
 		}
-		if (COUNT_HEADS > 1) {
+		if(COUNT_HEADS > 1) {
 			LOG.info(LogUtil.MSG,"Listening the ports {} .. {}", PORT_START, PORT_START + COUNT_HEADS - 1);
 		} else {
 			LOG.info(LogUtil.MSG,"Listening the port {}", PORT_START);
@@ -296,7 +293,7 @@ implements Runnable {
 		public final void handle(
 			final HttpRequest request, final HttpAsyncExchange httpexchange,
 			final HttpContext context
-		){
+		) {
 			final HttpResponse response = httpexchange.getResponse();
 			final String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
 			//Get URI components
@@ -325,14 +322,15 @@ implements Runnable {
 					LOG.trace(LogUtil.MSG, "Handle swift request.");
 					handleGenericDataReq(response, request, method, dataId);
 				}
-			}else if (isS3BucketReq(requestUri, method)){
+			} else if (isS3BucketReq(requestUri, method)){
 				LOG.trace(LogUtil.MSG, "Create s3 bucket: response OK.");
 				response.setStatusCode(HttpStatus.SC_OK);
 			} else {
 				LOG.trace(LogUtil.MSG, "Handle S3 request.");
 				handleGenericDataReq(response, request, method, dataId);
 			}
-			httpexchange.submitResponse(new BasicResponseProducer(response));
+			//httpexchange.submitResponse(new BasicResponseProducer(response));
+			httpexchange.submitResponse(BasicResponseProducer.getInstance(response));
 		}
 		//
 		private static boolean isAtmosReq(final String[] requestUri){
@@ -399,9 +397,10 @@ implements Runnable {
 		}
 		//
 		private void handleGenericDataReq(
-			final HttpResponse response, final HttpRequest request,
-			final String method, final String dataId){
-			switch (method){
+			final HttpResponse response, final HttpRequest request, final String method,
+			final String dataId
+		) {
+			switch(method) {
 				case METHOD_POST:
 					handleCreate(response, request, dataId);
 					break;
@@ -421,7 +420,9 @@ implements Runnable {
 
 		}
 		//
-		private static void handleCreate(final HttpResponse response, final HttpRequest request, final String dataId){
+		private static void handleCreate(
+			final HttpResponse response, final HttpRequest request, final String dataId
+		) {
 			LOG.trace(LogUtil.MSG, String.format("Create data object with ID: %s", dataId));
 			try {
 				response.setStatusCode(HttpStatus.SC_OK);
@@ -437,12 +438,14 @@ implements Runnable {
 				counterFailCreate.inc();
 			}catch (final NumberFormatException e){
 				response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				LogUtil.failure(LOG, Level.ERROR, e, "Put method failure.Data offset doesn't decode.");
+				LogUtil.failure(
+					LOG, Level.ERROR, e, "Put method failure.Data offset doesn't decode."
+				);
 				counterFailCreate.inc();
 			}
 		}
 		//
-		private static void handleRead(final HttpResponse response, final String dataId){
+		private static void handleRead(final HttpResponse response, final String dataId) {
 			if(SHARED_STORAGE.containsKey(dataId)) {
 				response.setStatusCode(HttpStatus.SC_OK);
 				LOG.trace(LogUtil.MSG, String.format("Send data object with ID: %s", dataId));
@@ -461,7 +464,9 @@ implements Runnable {
 		}
 		//
 		private static String generateId(){
-			long offset = NEXT_OFFSET.getAndSet(Math.abs(UniformDataSource.nextWord(NEXT_OFFSET.get())));
+			long offset = NEXT_OFFSET.getAndSet(
+				Math.abs(UniformDataSource.nextWord(NEXT_OFFSET.get()))
+			);
 			return Long.toString(offset, DataObject.ID_RADIX);
 		}
 		//
@@ -472,23 +477,21 @@ implements Runnable {
 			return Hex.encodeHexString(buff);
 		}
 		//
-		private static WSObjectMock writeDataObject(
-			final HttpRequest request, final String dataID
-		) throws HttpException, NumberFormatException{
+		private static WSObjectMock writeDataObject(final HttpRequest request, final String dataID)
+		throws HttpException, NumberFormatException {
 			WSObjectMock dataObject;
-			final HttpEntity entity = ((HttpEntityEnclosingRequest) request).getEntity();
+			final HttpEntity entity = HttpEntityEnclosingRequest.class.cast(request).getEntity();
 			final long bytes = entity.getContentLength();
 			//create data object or get it for append or update
-			if (SHARED_STORAGE.containsKey(dataID)) {
+			if(SHARED_STORAGE.containsKey(dataID)) {
 				dataObject = SHARED_STORAGE.get(dataID);
-			}else {
+				// TODO modify the descriptor here to support update/append requests
+			} else {
 				final long offset = genOffset(dataID);
 				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
-			}
-			LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
-			synchronized (SHARED_STORAGE) {
 				SHARED_STORAGE.put(dataID, dataObject);
 			}
+			LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
 			return dataObject;
 		}
 		/*
