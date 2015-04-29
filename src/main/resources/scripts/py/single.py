@@ -8,7 +8,7 @@ from com.emc.mongoose.core.api.io.task import IOTask
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from java.lang import Exception, IllegalArgumentException, Throwable, InterruptedException, Thread
+from java.lang import Exception, IllegalArgumentException, Throwable, InterruptedException
 from java.util import NoSuchElementException
 #
 LOG = LogManager.getLogger()
