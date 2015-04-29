@@ -2,7 +2,7 @@ from loadbuilder import init as loadBuilderInit
 from chain import build as chainBuild
 from chain import execute as chainExecute
 #
-from java.lang import Long, Short, Throwable, NumberFormatException
+from java.lang import Long, Short, Throwable, NumberFormatException, InterruptedException
 #
 from org.apache.logging.log4j import Level, LogManager, ThreadContext
 #
@@ -48,6 +48,8 @@ if __name__ == "__builtin__":
 	loadBuilder = loadBuilderInit()
 	try:
 		execute(loadBuilder=loadBuilder, rampupParams=init())
+	except InterruptedException as e:
+		LOG.info(LogUtil.MSG, "Rampup was interrupted")
 	except Throwable as e:
 		LogUtil.failure(LOG, Level.ERROR, e, "Scenario failed")
 	loadBuilder.close()

@@ -38,6 +38,8 @@ implements Runnable {
 			LogUtil.failure(LOG, Level.DEBUG, e, "Remote join failed, no such service");
 		} catch(final RemoteException e) {
 			LogUtil.failure(LOG, Level.WARN, e, "Remote join task failure");
+		} catch (final InterruptedException e) {
+			LOG.debug(LogUtil.MSG, "Remote join task for \"{}\" was interrupted", loadJob);
 		} finally {
 			LOG.debug(LogUtil.MSG, "Remote join task for \"{}\" was completed", loadJob);
 		}
