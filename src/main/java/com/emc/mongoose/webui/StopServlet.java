@@ -32,10 +32,10 @@ public final class StopServlet extends CommonServlet {
 		final String currentRunId = request.getParameter(RunTimeConfig.KEY_RUN_ID);
 		switch(request.getParameter(STOP_TYPE)) {
 			case STOP_REQUEST:
-				stopMongoose(currentRunId);
+				interruptMongoose(currentRunId, request.getParameter(STOP_TYPE));
 				break;
 			case REMOVE_REQUEST:
-				stopMongoose(currentRunId);
+				interruptMongoose(currentRunId, request.getParameter(STOP_TYPE));
 				WebUIAppender.removeRunId(currentRunId);
 				break;
 		}
@@ -44,7 +44,29 @@ public final class StopServlet extends CommonServlet {
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 	//
-	private void stopMongoose(final String runId) {
+	private void interruptMongoose(final String runId, final String type) {
+		switch (type) {
+			case STOP_REQUEST:
+				try {
+					threadsMap.get(runId).interrupt();
+				} catch (final Exception e) {
+					threadsMap.remove(runId);
+				}
+				break;
+			case REMOVE_REQUEST:
+				try {
+					threadsMap.get(runId).interrupt();
+					threadsMap.get(runId).join();
+					threadsMap.remove(runId);
+					//
+					WebUIAppender.removeRunId(runId);
+				} catch (final Exception e) {
+					threadsMap.remove(runId);
+				}
+				break;
+		}
+	}
+	/*private void stopMongoose(final String runId) {
 		final Thread runnerThread = threadsMap.get(runId);
 		if(runnerThread != null) {
 			if(runnerThread.isInterrupted()) {
@@ -59,5 +81,5 @@ public final class StopServlet extends CommonServlet {
 				}
 			}
 		}
-	}
+	}*/
 }

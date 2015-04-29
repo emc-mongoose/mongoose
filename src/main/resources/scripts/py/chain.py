@@ -12,7 +12,7 @@ from com.emc.mongoose.core.api.persist import DataItemBuffer
 #
 from com.emc.mongoose.core.impl.load.tasks import JoinLoadJobTask
 #
-from java.lang import Long, String, Throwable, IllegalArgumentException
+from java.lang import Long, String, Throwable, IllegalArgumentException, InterruptedException
 from java.util.concurrent import Executors
 #
 LOG = LogManager.getLogger()
@@ -189,6 +189,8 @@ if __name__ == "__builtin__":
 	else:
 		try:
 			execute(chain, flagConcurrent)
+		except InterruptedException as e:
+			LOG.info(LogUtil.MSG, "Chain was interrupted")
 		except Throwable as e:
 			LogUtil.failure(LOG, Level.WARN, e, "Chain execution failure")
 	#
