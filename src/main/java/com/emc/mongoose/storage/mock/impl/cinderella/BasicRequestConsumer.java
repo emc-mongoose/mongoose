@@ -2,9 +2,9 @@ package com.emc.mongoose.storage.mock.impl.cinderella;
 //
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.io.HTTPInputStream;
 //
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import org.apache.http.HttpEntity;
@@ -13,9 +13,12 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
 import org.apache.http.nio.protocol.BasicAsyncRequestConsumer;
+import org.apache.logging.log4j.Level;
+
+import java.nio.ByteBuffer;
 //
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 /**
  * Created by olga on 04.02.15.
  */
@@ -23,13 +26,13 @@ public final class BasicRequestConsumer
 extends BasicAsyncRequestConsumer
 implements Reusable<BasicRequestConsumer> {
 	//
-	//private final static Logger LOG = LogManager.getLogger();
+	private final static Logger LOG = LogManager.getLogger();
 	//
-	private volatile int buffSize;
+	private volatile int buffSize = 0;
+	private volatile ByteBuffer bbuff;
 	//
 	public BasicRequestConsumer() {
 		super();
-		buffSize = (int) RunTimeConfig.getContext().getDataBufferSize();
 	}
 	//
 	@Override
@@ -40,16 +43,23 @@ implements Reusable<BasicRequestConsumer> {
 		//
 		if(len < LoadExecutor.BUFF_SIZE_LO) {
 			buffSize = LoadExecutor.BUFF_SIZE_LO;
+			bbuff = ByteBuffer.allocate(buffSize);
 		} else if(len > LoadExecutor.BUFF_SIZE_HI) {
 			buffSize = LoadExecutor.BUFF_SIZE_HI;
-		} else {
+			bbuff = ByteBuffer.allocate(buffSize);
+		} else if(len != buffSize) {
 			buffSize = (int) len;
+			bbuff = ByteBuffer.allocate(buffSize);
 		}
 	}
 	//
 	@Override
 	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioctrl) {
-		HTTPInputStream.consumeQuietly(decoder, ioctrl, buffSize);
+		try {
+			HTTPInputStream.consumeQuietly(decoder, ioctrl, bbuff);
+		} catch(final Throwable e) {
+			LogUtil.failure(LOG, Level.WARN, e, "Content consuming failure");
+		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Reusable implementation /////////////////////////////////////////////////////////////////////

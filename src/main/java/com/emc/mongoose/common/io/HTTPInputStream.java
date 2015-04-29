@@ -91,12 +91,11 @@ implements Reusable<HTTPInputStream> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public static void consumeQuietly(
-		final ContentDecoder in, final IOControl ioCtl, final int buffSize
+		final ContentDecoder in, final IOControl ioCtl, final ByteBuffer bbuff
 	) {
-		final ByteBuffer buff = ByteBuffer.allocate(buffSize);
 		try {
-			while(!in.isCompleted() && in.read(buff) >= 0) {
-				buff.clear();
+			while(!in.isCompleted() && in.read(bbuff) >= 0) {
+				bbuff.clear();
 			}
 		} catch(final IOException ignore) {
 		}

@@ -243,8 +243,8 @@ implements Runnable {
 	}
 	//
 	private final static String
-		MSG_FMT_METRICS = "countSucc=(%d/%d/%d); countFail=(%d/%d/%d)" +
-		"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
+		MSG_FMT_METRICS = "count(succ=(%d/%d/%d); fail=(%d/%d/%d)); " +
+			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
 	private void printMetrics() {
 		LOG.info(
@@ -305,10 +305,19 @@ implements Runnable {
 					handleSubtenantReq(response, method);
 				} else {
 					if (isAtmosObjectReq(requestUri)) {
-						LOG.trace(LogUtil.MSG, "Handle atmos object request. URI doesn't contain the object ID.");
+						if(LOG.isTraceEnabled(LogUtil.MSG)) {
+							LOG.trace(
+								LogUtil.MSG,
+								"Handle atmos object request. URI doesn't contain the object ID."
+							);
+						}
 						handleAtmosObjectDataReq(response, request, method, dataId);
 					} else {
-						LOG.trace(LogUtil.MSG, "Handle atmos request. URI contains the object ID.");
+						if(LOG.isTraceEnabled(LogUtil.MSG)) {
+							LOG.trace(
+								LogUtil.MSG, "Handle atmos request. URI contains the object ID."
+							);
+						}
 						handleGenericDataReq(response, request, method, dataId);
 					}
 				}
@@ -316,17 +325,25 @@ implements Runnable {
 				handleSwiftAuthTokenReq(response);
 			} else if(isSwiftReq(requestUri)){
 				if(isSwiftContanerReq(requestUri, method)){
-					LOG.trace(LogUtil.MSG, "Create contaner: response OK.");
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+						LOG.trace(LogUtil.MSG, "Create contaner: response OK.");
+					}
 					response.setStatusCode(HttpStatus.SC_OK);
 				} else {
-					LOG.trace(LogUtil.MSG, "Handle swift request.");
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+						LOG.trace(LogUtil.MSG, "Handle swift request.");
+					}
 					handleGenericDataReq(response, request, method, dataId);
 				}
 			} else if (isS3BucketReq(requestUri, method)){
-				LOG.trace(LogUtil.MSG, "Create s3 bucket: response OK.");
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(LogUtil.MSG, "Create s3 bucket: response OK.");
+				}
 				response.setStatusCode(HttpStatus.SC_OK);
 			} else {
-				LOG.trace(LogUtil.MSG, "Handle S3 request.");
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(LogUtil.MSG, "Handle S3 request.");
+				}
 				handleGenericDataReq(response, request, method, dataId);
 			}
 			//httpexchange.submitResponse(new BasicResponseProducer(response));
@@ -363,13 +380,17 @@ implements Runnable {
 		}
 		//
 		private void handleSwiftAuthTokenReq(final HttpResponse response){
-			LOG.trace(LogUtil.MSG, "Create auth token ");
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(LogUtil.MSG, "Create auth token ");
+			}
 			response.setStatusCode(HttpStatus.SC_OK);
 			response.setHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, randomString(5));
 		}
 		//
 		private void handleSubtenantReq(final HttpResponse response, final String method){
-			LOG.trace(LogUtil.MSG, "Create atmos subtenant");
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(LogUtil.MSG, "Create atmos subtenant");
+			}
 			if(method.equals(METHOD_PUT)) {
 				response.setHeader(WSSubTenantImpl.KEY_SUBTENANT_ID, randomString(5));
 			}
@@ -380,7 +401,7 @@ implements Runnable {
 			final HttpResponse response, final HttpRequest request,
 			final String method, String dataId
 		) {
-			if (method.equals(METHOD_POST)) {
+			if(method.equals(METHOD_POST)) {
 				dataId = generateId();
 				final String headerLocation = String.format(
 					com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl.FMT_SLASH,
@@ -391,7 +412,9 @@ implements Runnable {
 		}
 		//
 		private void handleDeleteReq(final HttpResponse response){
-			LOG.trace(LogUtil.MSG, "Delete data object: response OK");
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(LogUtil.MSG, "Delete data object: response OK");
+			}
 			response.setStatusCode(HttpStatus.SC_OK);
 			counterSuccDelete.inc();
 		}
@@ -423,7 +446,9 @@ implements Runnable {
 		private static void handleCreate(
 			final HttpResponse response, final HttpRequest request, final String dataId
 		) {
-			LOG.trace(LogUtil.MSG, String.format("Create data object with ID: %s", dataId));
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(LogUtil.MSG, String.format("Create data object with ID: %s", dataId));
+			}
 			try {
 				response.setStatusCode(HttpStatus.SC_OK);
 				final WSObjectMock dataObject = writeDataObject(request, dataId);
@@ -446,20 +471,24 @@ implements Runnable {
 		}
 		//
 		private static void handleRead(final HttpResponse response, final String dataId) {
-			if(SHARED_STORAGE.containsKey(dataId)) {
+			final WSObjectMock dataObject = SHARED_STORAGE.get(dataId);
+			if(dataObject == null) {
+				response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(LogUtil.ERR, String.format("No such object: %s", dataId));
+				}
+				counterFailRead.inc();
+			} else {
 				response.setStatusCode(HttpStatus.SC_OK);
-				LOG.trace(LogUtil.MSG, String.format("Send data object with ID: %s", dataId));
-				final WSObjectMock dataObject = SHARED_STORAGE.get(dataId);
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(LogUtil.MSG, String.format("Send data object with ID: %s", dataId));
+				}
 				response.setEntity(dataObject);
 				counterSuccRead.inc();
 				allBW.mark(dataObject.getSize());
 				readBW.mark(dataObject.getSize());
 				allTP.mark();
 				readTP.mark();
-			} else {
-				response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-				LOG.trace(LogUtil.ERR, String.format("No such object: %s", dataId));
-				counterFailRead.inc();
 			}
 		}
 		//
@@ -479,19 +508,15 @@ implements Runnable {
 		//
 		private static WSObjectMock writeDataObject(final HttpRequest request, final String dataID)
 		throws HttpException, NumberFormatException {
-			WSObjectMock dataObject;
 			final HttpEntity entity = HttpEntityEnclosingRequest.class.cast(request).getEntity();
 			final long bytes = entity.getContentLength();
 			//create data object or get it for append or update
-			if(SHARED_STORAGE.containsKey(dataID)) {
-				dataObject = SHARED_STORAGE.get(dataID);
-				// TODO modify the descriptor here to support update/append requests
-			} else {
-				final long offset = genOffset(dataID);
-				dataObject = new BasicWSObjectMock(dataID, offset, bytes);
-				SHARED_STORAGE.put(dataID, dataObject);
+			final long offset = genOffset(dataID);
+			final WSObjectMock dataObject = new BasicWSObjectMock(dataID, offset, bytes);
+			SHARED_STORAGE.put(dataID, dataObject);
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
 			}
-			LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
 			return dataObject;
 		}
 		/*

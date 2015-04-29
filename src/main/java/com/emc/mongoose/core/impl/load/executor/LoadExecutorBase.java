@@ -631,46 +631,42 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final void join()
-	throws RemoteException {
+	throws RemoteException, InterruptedException {
 		join(Long.MAX_VALUE);
 	}
 	//
 	@Override
 	public final void join(final long timeOutMilliSec)
-	throws RemoteException {
+	throws RemoteException, InterruptedException {
 		if(isInterruptedFlag.get() || isMaxCountResults.get() || isClosed.get()) {
 			return;
 		}
 		//
 		long t = System.currentTimeMillis();
-		try {
-			if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
-				try {
-					t = System.currentTimeMillis() - t; // the count of time wasted for locking
+		if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+			try {
+				t = System.currentTimeMillis() - t; // the count of time wasted for locking
+				LOG.debug(
+					LogUtil.MSG, "{}: wait for the done condition at most for {}[ms]",
+					name, timeOutMilliSec - t
+				);
+				if(
+					condDoneOrInterrupted.await(
+						timeOutMilliSec - t, TimeUnit.MILLISECONDS
+					)
+				) {
+					LOG.debug(LogUtil.MSG, "{}: join finished", name);
+				} else {
 					LOG.debug(
-						LogUtil.MSG, "{}: wait for the done condition at most for {}[ms]",
-						name, timeOutMilliSec - t
+						LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
+						name, getQueue().size(), getActiveCount()
 					);
-					if(
-						condDoneOrInterrupted.await(
-							timeOutMilliSec - t, TimeUnit.MILLISECONDS
-						)
-					) {
-						LOG.debug(LogUtil.MSG, "{}: join finished", name);
-					} else {
-						LOG.debug(
-							LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
-							name, getQueue().size(), getActiveCount()
-						);
-					}
-				} finally {
-					lock.unlock();
 				}
-			} else {
-				LOG.warn(LogUtil.ERR, "Failed to acquire the lock for the join method");
+			} finally {
+				lock.unlock();
 			}
-		} catch(final InterruptedException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, String.format("%s: join interrupted", name));
+		} else {
+			LOG.warn(LogUtil.ERR, "Failed to acquire the lock for the join method");
 		}
 	}
 }

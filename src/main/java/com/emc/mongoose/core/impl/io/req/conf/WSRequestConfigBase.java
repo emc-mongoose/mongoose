@@ -78,6 +78,7 @@ import java.io.ObjectOutput;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
+import java.nio.ByteBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -542,6 +543,10 @@ implements WSRequestConfig<T> {
 		// may invoke applyObjectId in some implementations
 	}
 	//
+	private final static ThreadLocal<ByteBuffer>
+		RESP_BUFF_NON_READ = new ThreadLocal<>(),
+		RESP_BUFF_READ = new ThreadLocal<>();
+	//
 	@Override
 	public final boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem) {
 		boolean ok = true;
@@ -557,7 +562,14 @@ implements WSRequestConfig<T> {
 							// ignore
 						}
 					} else { // consume the whole data item content - may estimate the buffer size
-						HTTPInputStream.consumeQuietly(in, ioCtl, buffSize);
+						ByteBuffer bbuff = RESP_BUFF_READ.get();
+						if(bbuff == null || bbuff.capacity() != buffSize) {
+							bbuff = ByteBuffer.allocate(buffSize);
+							RESP_BUFF_READ.set(bbuff);
+						} else {
+							bbuff.clear();
+						}
+						HTTPInputStream.consumeQuietly(in, ioCtl, bbuff);
 					}
 				}
 			}
@@ -571,7 +583,14 @@ implements WSRequestConfig<T> {
 				LogUtil.failure(LOG, Level.WARN, e, "Content reading failure");
 			}
 		} finally { // try to read the remaining data if left in the input stream
-			HTTPInputStream.consumeQuietly(in, ioCtl, LoadExecutor.BUFF_SIZE_LO);
+			ByteBuffer bbuff = RESP_BUFF_NON_READ.get();
+			if(bbuff == null) {
+				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
+				RESP_BUFF_NON_READ.set(bbuff);
+			} else {
+				bbuff.clear();
+			}
+			HTTPInputStream.consumeQuietly(in, ioCtl, bbuff);
 		}
 		return ok;
 	}
