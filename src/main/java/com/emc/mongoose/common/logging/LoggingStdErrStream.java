@@ -8,14 +8,14 @@ import java.io.ByteArrayOutputStream;
 /**
  * Created by gusakk on 4/29/15.
  */
-public class LoggingStdErrStream extends ByteArrayOutputStream {
+public final class LoggingStdErrStream extends ByteArrayOutputStream {
 	//
 	private final static String LINE_SEPARATOR = System.getProperty("line.separator");
 	private static final int DEFAULT_BUFFER_LENGTH = 2048;
 	//
 	private int curBufLength;
-	private Logger log;
-	private Marker marker;
+	private final Logger log;
+	private final Marker marker;
 	//
 	public LoggingStdErrStream(final Logger log,
 	                           final Marker marker)
@@ -31,7 +31,7 @@ public class LoggingStdErrStream extends ByteArrayOutputStream {
 		count = 0;
 	}
 	//
-	public synchronized void write(final int b) {
+	public final synchronized void write(final int b) {
 		if (b == 0) {
 			return;
 		}
@@ -41,7 +41,7 @@ public class LoggingStdErrStream extends ByteArrayOutputStream {
 		buf[count++] = (byte) b;
 	}
 	//
-	public synchronized void write(byte[] b, int off, int len) {
+	public final synchronized void write(byte[] b, int off, int len) {
 		if(off >= 0 && off <= b.length && len >= 0 && off + len - b.length <= 0) {
 			if ((count + len) - curBufLength > 0) {
 				ensureCapacity();
@@ -53,7 +53,7 @@ public class LoggingStdErrStream extends ByteArrayOutputStream {
 		}
 	}
 	//
-	public synchronized void ensureCapacity() {
+	public final synchronized void ensureCapacity() {
 		final int newBufLength = curBufLength +
 				DEFAULT_BUFFER_LENGTH;
 		final byte[] newBuf = new byte[newBufLength];
@@ -62,7 +62,7 @@ public class LoggingStdErrStream extends ByteArrayOutputStream {
 		curBufLength = newBufLength;
 	}
 	//
-	public void flush() {
+	public final void flush() {
 		if (count == 0) {
 			return;
 		}
@@ -82,7 +82,7 @@ public class LoggingStdErrStream extends ByteArrayOutputStream {
 		count = 0;
 	}
 	//
-	public void close() {
+	public final void close() {
 		flush();
 	}
 }
