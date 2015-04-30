@@ -49,7 +49,7 @@ implements Runnable {
 			);
 			Runtime.getRuntime().addShutdownHook(hookThread);
 			HOOKS_MAP.put(loadExecutor, hookThread);
-			LogUtil.HOOKS_MAP_SIZE.incrementAndGet();
+			LogUtil.LOAD_HOOKS_COUNT.incrementAndGet();
 			LOG.debug(
 				LogUtil.MSG, "Registered shutdown hook \"{}\"", hookTask.loadName
 			);
@@ -73,7 +73,7 @@ implements Runnable {
 				LogUtil.failure(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
 			} finally {
 				HOOKS_MAP.remove(loadExecutor);
-				LogUtil.HOOKS_MAP_SIZE.decrementAndGet();
+				LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
 				if (HOOKS_MAP.isEmpty()) {
 					try {
 						if (LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {

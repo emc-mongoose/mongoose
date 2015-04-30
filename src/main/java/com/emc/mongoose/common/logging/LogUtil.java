@@ -50,7 +50,7 @@ public final class LogUtil {
 	//
 	public static final Lock HOOKS_LOCK = new ReentrantLock();
 	public static final Condition HOOKS_COND = HOOKS_LOCK.newCondition();
-	public static final AtomicInteger HOOKS_MAP_SIZE = new AtomicInteger(0);
+	public static final AtomicInteger LOAD_HOOKS_COUNT = new AtomicInteger(0);
 	//
 	public static final TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
 	public static final Locale LOCALE_DEFAULT = Locale.ROOT;
@@ -139,7 +139,7 @@ public final class LogUtil {
 	public static void shutdown() {
 		final Logger LOG = LogManager.getLogger();
 		try {
-			if(HOOKS_MAP_SIZE.get() != 0) {
+			if(LOAD_HOOKS_COUNT.get() != 0) {
 				LOG.debug(LogUtil.MSG, "Not all loads are closed, blocking the logging subsystem shutdown");
 				if (HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
 					try {
