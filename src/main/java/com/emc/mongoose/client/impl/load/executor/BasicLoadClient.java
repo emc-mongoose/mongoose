@@ -793,12 +793,14 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final void join() {
+	public final void join()
+	throws RemoteException, InterruptedException {
 		join(Long.MAX_VALUE);
 	}
 	//
 	@Override
-	public final void join(final long timeOutMilliSec) {
+	public final void join(final long timeOutMilliSec)
+	throws RemoteException, InterruptedException {
 		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
 			remoteLoadMap.size() + 1,
 			new NamingWorkerFactory(String.format("joinWorker<%s>", getName()))
@@ -833,6 +835,7 @@ implements LoadClient<T> {
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Interrupted");
+			throw new InterruptedException();
 		} finally {
 			LOG.debug(
 				LogUtil.MSG, "Interrupted join tasks: {}",

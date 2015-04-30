@@ -16,6 +16,7 @@ import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
 //
 import java.io.File;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -24,7 +25,7 @@ import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -49,7 +50,7 @@ public final class LogUtil {
 	//
 	public static final Lock HOOKS_LOCK = new ReentrantLock();
 	public static final Condition HOOKS_COND = HOOKS_LOCK.newCondition();
-	public static final AtomicBoolean HOOKS_MAP_EMPTY = new AtomicBoolean(false);
+	public static final AtomicInteger LOAD_HOOKS_COUNT = new AtomicInteger(0);
 	//
 	public static final TimeZone TZ_UTC = TimeZone.getTimeZone("UTC");
 	public static final Locale LOCALE_DEFAULT = Locale.ROOT;
@@ -125,6 +126,9 @@ public final class LogUtil {
 							}
 						);
 					}
+					System.setErr(new PrintStream(new LoggingStdErrStream(
+						LogManager.getRootLogger(), LogUtil.ERR
+					), true));
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -135,7 +139,7 @@ public final class LogUtil {
 	public static void shutdown() {
 		final Logger LOG = LogManager.getLogger();
 		try {
-			if(!HOOKS_MAP_EMPTY.get()) {
+			if(LOAD_HOOKS_COUNT.get() != 0) {
 				LOG.debug(LogUtil.MSG, "Not all loads are closed, blocking the logging subsystem shutdown");
 				if (HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
 					try {
@@ -200,5 +204,4 @@ public final class LogUtil {
 		}
 		logger.log(level, marker, msgBuilder.toString());
 	}
-	//
 }

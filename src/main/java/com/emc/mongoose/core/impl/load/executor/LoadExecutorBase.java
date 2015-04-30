@@ -626,23 +626,23 @@ implements LoadExecutor<T> {
 		}
 		//
 		long t = System.currentTimeMillis();
-		if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+		if (lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
 			try {
 				t = System.currentTimeMillis() - t; // the count of time wasted for locking
 				LOG.debug(
-					LogUtil.MSG, "{}: wait for the done condition at most for {}[ms]",
-					name, timeOutMilliSec - t
+						LogUtil.MSG, "{}: wait for the done condition at most for {}[ms]",
+						name, timeOutMilliSec - t
 				);
-				if(
-					condDoneOrInterrupted.await(
-						timeOutMilliSec - t, TimeUnit.MILLISECONDS
-					)
-				) {
+				if (
+						condDoneOrInterrupted.await(
+								timeOutMilliSec - t, TimeUnit.MILLISECONDS
+						)
+						) {
 					LOG.debug(LogUtil.MSG, "{}: join finished", name);
 				} else {
 					LOG.debug(
-						LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
-						name, getQueue().size(), getActiveCount()
+							LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
+							name, getQueue().size(), getActiveCount()
 					);
 				}
 			} finally {
