@@ -190,7 +190,7 @@ if __name__ == "__builtin__":
 		try:
 			execute(chain, flagConcurrent)
 		except InterruptedException as e:
-			LOG.info(LogUtil.MSG, "Chain was interrupted")
+			LOG.debug(LogUtil.MSG, "Chain was interrupted")
 		except Throwable as e:
 			LogUtil.failure(LOG, Level.WARN, e, "Chain execution failure")
 	#

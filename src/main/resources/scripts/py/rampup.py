@@ -49,7 +49,7 @@ if __name__ == "__builtin__":
 	try:
 		execute(loadBuilder=loadBuilder, rampupParams=init())
 	except InterruptedException as e:
-		LOG.info(LogUtil.MSG, "Rampup was interrupted")
+		LOG.debug(LogUtil.MSG, "Rampup was interrupted")
 	except Throwable as e:
 		LogUtil.failure(LOG, Level.ERROR, e, "Scenario failed")
 	loadBuilder.close()
