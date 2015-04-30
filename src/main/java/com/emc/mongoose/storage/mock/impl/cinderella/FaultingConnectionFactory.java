@@ -28,7 +28,7 @@ extends DefaultNHttpServerConnectionFactory {
 	//
 	private final AtomicInteger counter = new AtomicInteger(0);
 	private final ExecutorService
-		connectionPool = Executors.newFixedThreadPool(100000, new NamingWorkerFactory("connKiller"));
+		connectionPool = Executors.newFixedThreadPool(10, new NamingWorkerFactory("connKiller"));
 	private final static int FAULT_SLEEP_MILLI_SEC = RunTimeConfig.getContext().getStorageMockFaultSleepMilliSec();
 	private final static int FAULT_PERIOD = RunTimeConfig.getContext().getStorageMockFaultPeriod();
 	//

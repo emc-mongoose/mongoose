@@ -264,23 +264,6 @@ implements LoadExecutor<T> {
 				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 			);
 		LOG.info(logMarker, message);
-		/*
-		if(Markers.PERF_SUM.equals(logMarker)) {
-			final double totalReqNanoSeconds = reqDurSnapshot.getMean() * countReqSucc;
-			LOG.debug(
-				Markers.PERF_SUM,
-				String.format(
-					Main.LOCALE_DEFAULT, FMT_EFF_SUM,
-					100 * totalReqNanoSeconds / ((System.nanoTime() - tsStart) * getTotalConnCount())
-				)
-			);
-		}
-		//
-		if(LOG.isTraceEnabled(Markers.PERF_AVG)) {
-			for(final StorageNodeExecutor<T> node: storageNodeAddrs) {
-				node.logMetrics(Level.TRACE, Markers.PERF_AVG);
-			}
-		}*/
 		//
 	}
 	//
@@ -365,7 +348,7 @@ implements LoadExecutor<T> {
 					loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
 					eff = durTasksSum.get() / (loadDurMicroSec * totalConnCount);
 				LOG.debug(
-					LogUtil.PERF_SUM,
+					LogUtil.MSG,
 					String.format(
 						LogUtil.LOCALE_DEFAULT,
 						"%s: load execution duration: %3.3f[sec], efficiency estimation: %3.3f[%%]",

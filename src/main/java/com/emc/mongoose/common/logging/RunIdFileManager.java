@@ -147,12 +147,13 @@ extends AbstractManager {
 		OutputStream newOutPutStream = null;
 		final File
 			outPutFile = new File(
-			currRunId == null ?
-				String.format(FMT_FILE_PATH_NO_RUN_ID, LogUtil.PATH_LOG_DIR, fileName) :
-				String.format(FMT_FILE_PATH, LogUtil.PATH_LOG_DIR, currRunId, fileName)
-		),
+				currRunId == null ?
+					String.format(FMT_FILE_PATH_NO_RUN_ID, LogUtil.PATH_LOG_DIR, fileName) :
+					String.format(FMT_FILE_PATH, LogUtil.PATH_LOG_DIR, currRunId, fileName)
+			),
 			parentFile = outPutFile.getParentFile();
-		if(parentFile != null && !parentFile.exists()) {
+		final boolean existedBefore = outPutFile.exists();
+		if(!existedBefore && parentFile != null && !parentFile.exists()) {
 			parentFile.mkdirs();
 		}
 		//
@@ -161,7 +162,7 @@ extends AbstractManager {
 				outPutFile.getPath(), flagAppend
 			);
 			outStreamsMap.put(currRunId, newOutPutStream);
-			if(layout != null) {
+			if(layout != null && (!flagAppend || !existedBefore)) {
 				newOutPutStream.write(layout.getHeader());
 			}
 		} catch(final IOException e) {

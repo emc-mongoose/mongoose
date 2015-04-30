@@ -123,10 +123,6 @@ sourceSets {
 			include '**'
 		}
 		compileClasspath += sourceSets.common.output
-		resources {
-			srcDir(['src', 'main', 'resources', 'scripts'].join(File.separator))
-			include '**'
-		}
 	}
 	serverImpl {
 		java {
