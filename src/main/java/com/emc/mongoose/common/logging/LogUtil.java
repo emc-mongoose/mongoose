@@ -127,7 +127,7 @@ public final class LogUtil {
 						);
 					}
 					System.setErr(new PrintStream(new LoggingStdErrStream(
-						LogManager.getLogger(), LogUtil.ERR
+						LogManager.getRootLogger(), LogUtil.ERR
 					), true));
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
