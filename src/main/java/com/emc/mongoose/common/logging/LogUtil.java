@@ -16,6 +16,7 @@ import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
 //
 import java.io.File;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -125,6 +126,9 @@ public final class LogUtil {
 							}
 						);
 					}
+					System.setErr(new PrintStream(new LoggingStdErrStream(
+						LogManager.getLogger(), LogUtil.ERR
+					), true));
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -200,5 +204,4 @@ public final class LogUtil {
 		}
 		logger.log(level, marker, msgBuilder.toString());
 	}
-	//
 }
