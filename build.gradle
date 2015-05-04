@@ -760,7 +760,7 @@ task dist(type: Tar) {
 		from webuiJar.outputs.files
 		from cliJar.outputs.files
 		into('scripts') {
-			from { sourceSets.scenario.resources }
+			from { ["src", "main", "resources", "scripts"].join(File.separator) }
 		}
 		into('webapp') {
 			from { ["src", "main", "webapp"].join(File.separator) }
