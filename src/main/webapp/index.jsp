@@ -112,53 +112,19 @@
 							<div id="main-content" class="col-xs-12 col-sm-7 col-md-8 col-lg-9 no-padding">
 								<div id="base">
 									<form class="form-horizontal" role="form">
-										<div class="standalone client cinderella server">
-											<fieldset class="no-margin">
-												<legend>Run</legend>
-												<div class="form-group">
-													<label for="backup-run.id" class="col-sm-3 control-label">Id</label>
-													<div class="col-sm-9">
-														<input type="text" id="backup-run.id" class="form-control"
-														       data-pointer="run.id"/>
-													</div>
+										<fieldset>
+											<legend>Run</legend>
+											<div class="form-group">
+												<label for="backup-run.id" class="col-sm-3 control-label">Run id</label>
+												<div class="col-sm-9">
+													<input type="text" id="backup-run.id" class="form-control"
+													       data-pointer="run.id"/>
 												</div>
-											</fieldset>
-
+											</div>
 											<div class="standalone client">
-												<div id="objects" class="form-group">
-													<label for="backup-load.limit.count" class="col-sm-3 control-label">
-														Items count limit
-													</label>
-													<div class="col-sm-9">
-														<input type="text" id="backup-load.limit.count" class="form-control"
-														       data-pointer="load.limit.count"
-														       value="${runTimeConfig.loadLimitCount}"/>
-													</div>
-												</div>
-
-												<div id="time" class="form-group complex">
-													<label for="backup-load.limit.time.value" class="col-sm-3 control-label">
-														Time limit
-													</label>
-													<div class="col-sm-9">
-														<input type="text" id="backup-load.limit.time.value"
-														       class="form-control pre-select"
-														       value="${rt:getTimeValue(runTimeConfig, 'load.limit.time')}"/>
-														<select class="form-select" id="backup-load.limit.time.unit">
-															<option value="${rt:getTimeUnit(runTimeConfig, 'load.limit.time')}">
-																${rt:getTimeUnit(runTimeConfig, 'load.limit.time')}
-															</option>
-															<option value="days">days</option>
-															<option value="hours">hours</option>
-															<option value="minutes">minutes</option>
-															<option value="seconds">seconds</option>
-														</select>
-													</div>
-												</div>
-
 												<div class="form-group">
 													<label for="backup-scenario.name" class="col-sm-3 control-label">
-														The scenario to run
+														Scenario
 													</label>
 													<div class="col-sm-9">
 														<select id="backup-scenario.name" class="form-select" data-pointer="scenario.name">
@@ -194,10 +160,10 @@
 																			<label for="backup-scenario.type.single.load"
 																			       class="col-sm-6 control-label">Load type</label>
 																			<div class="col-sm-6">
-																				<select id="backup-scenario.type.single.load" class="form-select"
+																				<select id="backup-scenario.type.single.load"
 																				        data-pointer="scenario.type.single.load">
 																					<option value="backup-${rt:getString(runTimeConfig,
-																						'scenario.type.single.load')}">
+																					'scenario.type.single.load')}">
 																						${rt:getString(runTimeConfig, 'scenario.type.single.load')}
 																					</option>
 																					<option value="backup-create">create</option>
@@ -574,6 +540,148 @@
 													</div>
 												</div>
 											</div>
+										</fieldset>
+
+										<div class="standalone client">
+											<fieldset>
+												<legend>Storage</legend>
+												<div class="form-group">
+													<label for="backup-storage.addrs" class="col-sm-3 control-label">
+														Storage nodes (comma-separated list)
+													</label>
+													<div class="col-sm-9">
+														<input type="text" id="backup-storage.addrs" class="form-control"
+														       data-pointer="storage.addrs"
+														       value="${rt:getString(runTimeConfig, 'storage.addrs')}"/>
+													</div>
+												</div>
+												<div class="form-group">
+													<label for="backup-api.name" class="col-sm-3 control-label">
+														Storage API
+													</label>
+													<div class="col-sm-9">
+														<select id="backup-api.name" class="form-select" data-pointer="api.name">
+															<option value="backup-${runTimeConfig.apiName}">${runTimeConfig.apiName}</option>
+															<option value="backup-swift">swift</option>
+															<option value="backup-s3">s3</option>
+															<option value="backup-atmos">atmos</option>
+														</select>
+														<button type="button" id="api-button" class="btn btn-primary"
+														        data-toggle="modal" data-target="#backup-${runTimeConfig.apiName}">
+															Details...
+														</button>
+
+														<div class="modal" id="backup-s3" tabindex="-1" role="dialog"
+														     aria-labelledby="s3Label"
+														     aria-hidden="true">
+															<div class="modal-dialog">
+																<div class="modal-content">
+																	<div class="modal-header">
+																		<button type="button" class="close" data-dismiss="modal">
+																			<span aria-hidden="true">&times;</span>
+																			<span class="sr-only">Close</span>
+																		</button>
+																		<h4 class="modal-title" id="s3Label">S3</h4>
+																	</div>
+
+																	<div class="modal-body">
+																		<div class="form-group">
+																			<label for="backup-api.type.s3.bucket" class="col-sm-4 control-label">
+																				Bucket
+																			</label>
+																			<div class="col-sm-8">
+																				<input type="text" id="backup-api.type.s3.bucket" class="form-control"
+																				       data-pointer="api.type.s3.bucket"
+																				       value="${rt:getString(runTimeConfig, 'api.type.s3.bucket')}"/>
+																			</div>
+																		</div>
+																	</div>
+
+																	<div class="modal-footer">
+																		<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+																	</div>
+																</div>
+															</div>
+														</div>
+
+														<div class="modal" id="backup-swift" tabindex="-1" role="dialog"
+														     aria-labelledby="swiftLabel"
+														     aria-hidden="true">
+															<div class="modal-dialog">
+																<div class="modal-content">
+																	<div class="modal-header">
+																		<button type="button" class="close" data-dismiss="modal">
+																			<span aria-hidden="true">&times;</span>
+																			<span class="sr-only">Close</span>
+																		</button>
+																		<h4 class="modal-title" id="swiftLabel">Swift</h4>
+																	</div>
+
+																	<div class="modal-body">
+																		<div class="form-group">
+																			<label for="backup-api.type.swift.authToken" class="col-sm-4 control-label">
+																				Authentication token (created automatically if left blank)
+																			</label>
+																			<div class="col-sm-8">
+																				<input type="text" id="backup-api.type.swift.authToken" class="form-control"
+																				       data-pointer="api.type.swift.authToken"
+																				       value="${rt:getString(runTimeConfig, 'api.type.swift.authToken')}"/>
+																			</div>
+																		</div>
+																		<div class="form-group">
+																			<label for="backup-api.type.swift.container" class="col-sm-4 control-label">
+																				Container (may be created automatically if left blank, required to be specified explicitly for any load except create)
+																			</label>
+																			<div class="col-sm-8">
+																				<input type="text" id="backup-api.type.swift.container" class="form-control"
+																				       data-pointer="api.type.swift.container"
+																				       value="${rt:getString(runTimeConfig, 'api.type.swift.container')}"/>
+																			</div>
+																		</div>
+																	</div>
+
+																	<div class="modal-footer">
+																		<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+																	</div>
+																</div>
+															</div>
+														</div>
+
+														<div class="modal" id="backup-atmos" tabindex="-1" role="dialog"
+														     aria-labelledby="atmosLabel"
+														     aria-hidden="true">
+															<div class="modal-dialog">
+																<div class="modal-content">
+																	<div class="modal-header">
+																		<button type="button" class="close" data-dismiss="modal">
+																			<span aria-hidden="true">&times;</span>
+																			<span class="sr-only">Close</span>
+																		</button>
+																		<h4 class="modal-title" id="atmosLabel">Atmos</h4>
+																	</div>
+
+																	<div class="modal-body">
+																		<div class="form-group">
+																			<label for="backup-api.type.atmos.subtenant" class="col-sm-4 control-label">
+																				Subtenant
+																			</label>
+																			<div class="col-sm-8">
+																				<input type="text" id="backup-api.type.atmos.subtenant" class="form-control"
+																				       data-pointer="api.type.atmos.subtenant"
+																				       value="${rt:getString(runTimeConfig, 'api.type.atmos.subtenant')}"/>
+																			</div>
+																		</div>
+																	</div>
+
+																	<div class="modal-footer">
+																		<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+																	</div>
+																</div>
+															</div>
+														</div>
+													</div>
+												</div>
+											</fieldset>
 										</div>
 
 										<div class="standalone client">
@@ -590,7 +698,7 @@
 												</div>
 												<div class="form-group">
 													<label for="backup-auth.secret" class="col-sm-3 control-label">
-														Access secret
+														Secret
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-auth.secret" class="form-control"
@@ -600,189 +708,85 @@
 											</fieldset>
 										</div>
 
-										<div class="standalone client cinderella">
-											<fieldset>
-												<legend>Storage</legend>
-												<div class="standalone client">
-													<div class="form-group">
-														<label for="backup-storage.addrs" class="col-sm-3 control-label">
-															Addresses (comma-separated)
-														</label>
-														<div class="col-sm-9">
-															<input type="text" id="backup-storage.addrs" class="form-control"
-																data-pointer="storage.addrs"
-																value="${rt:getString(runTimeConfig, 'storage.addrs')}"/>
-														</div>
-													</div>
-												</div>
-												<div class="standalone client cinderella">
-													<div class="form-group">
-														<label for="backup-api.name" class="col-sm-3 control-label">
-															API
-														</label>
-														<div class="col-sm-9">
-															<select id="backup-api.name" class="form-select" data-pointer="api.name">
-																<option value="backup-${runTimeConfig.apiName}">${runTimeConfig.apiName}</option>
-																<option value="backup-swift">swift</option>
-																<option value="backup-s3">s3</option>
-																<option value="backup-atmos">atmos</option>
-															</select>
-															<button type="button" id="api-button" class="btn btn-primary"
-													            data-toggle="modal" data-target="#backup-${runTimeConfig.apiName}">
-																Details...
-															</button>
-
-															<div class="modal" id="backup-s3" tabindex="-1" role="dialog"
-													            aria-labelledby="s3Label"
-												                aria-hidden="true">
-																<div class="modal-dialog">
-																	<div class="modal-content">
-																		<div class="modal-header">
-																			<button type="button" class="close" data-dismiss="modal">
-																				<span aria-hidden="true">&times;</span>
-																				<span class="sr-only">Close</span>
-																			</button>
-																			<h4 class="modal-title" id="s3Label">S3</h4>
-																		</div>
-
-																		<div class="modal-body">
-																			<div class="form-group">
-																				<label for="backup-api.type.s3.bucket" class="col-sm-4 control-label">
-																					Bucket
-																				</label>
-																				<div class="col-sm-8">
-																					<input type="text" id="backup-api.type.s3.bucket" class="form-control"
-																			            data-pointer="api.type.s3.bucket"
-																		                value="${rt:getString(runTimeConfig, 'api.type.s3.bucket')}"/>
-																				</div>
-																			</div>
-																		</div>
-
-																		<div class="modal-footer">
-																			<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-																		</div>
-																	</div>
-																</div>
-															</div>
-
-															<div class="modal" id="backup-swift" tabindex="-1" role="dialog"
-													            aria-labelledby="swiftLabel"
-											                    aria-hidden="true">
-																<div class="modal-dialog">
-																	<div class="modal-content">
-																		<div class="modal-header">
-																			<button type="button" class="close" data-dismiss="modal">
-																				<span aria-hidden="true">&times;</span>
-																				<span class="sr-only">Close</span>
-																			</button>
-																			<h4 class="modal-title" id="swiftLabel">Swift</h4>
-																		</div>
-
-																		<div class="modal-body">
-																			<div class="form-group">
-																				<label for="backup-api.type.swift.authToken" class="col-sm-4 control-label">
-																					Authentication token (created automatically if left blank)
-																				</label>
-																				<div class="col-sm-8">
-																					<input type="text" id="backup-api.type.swift.authToken" class="form-control"
-																					       data-pointer="api.type.swift.authToken"
-																					       value="${rt:getString(runTimeConfig, 'api.type.swift.authToken')}"/>
-																				</div>
-																			</div>
-																			<div class="form-group">
-																				<label for="backup-api.type.swift.container" class="col-sm-4 control-label">
-																					Container (may be created automatically if left blank, required to be specified explicitly for any load except create)
-																				</label>
-																				<div class="col-sm-8">
-																					<input type="text" id="backup-api.type.swift.container" class="form-control"
-																					       data-pointer="api.type.swift.container"
-																					       value="${rt:getString(runTimeConfig, 'api.type.swift.container')}"/>
-																				</div>
-																			</div>
-																		</div>
-
-																		<div class="modal-footer">
-																			<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-																		</div>
-																	</div>
-																</div>
-															</div>
-
-															<div class="modal" id="backup-atmos" tabindex="-1" role="dialog"
-													            aria-labelledby="atmosLabel"
-													            aria-hidden="true">
-																<div class="modal-dialog">
-																	<div class="modal-content">
-																		<div class="modal-header">
-																			<button type="button" class="close" data-dismiss="modal">
-																				<span aria-hidden="true">&times;</span>
-																				<span class="sr-only">Close</span>
-																			</button>
-																			<h4 class="modal-title" id="atmosLabel">Atmos</h4>
-																		</div>
-
-																		<div class="modal-body">
-																			<div class="form-group">
-																				<label for="backup-api.type.atmos.subtenant" class="col-sm-4 control-label">
-																					Subtenant
-																				</label>
-																				<div class="col-sm-8">
-																					<input type="text" id="backup-api.type.atmos.subtenant" class="form-control"
-																					       data-pointer="api.type.atmos.subtenant"
-																					       value="${rt:getString(runTimeConfig, 'api.type.atmos.subtenant')}"/>
-																				</div>
-																			</div>
-																		</div>
-
-																		<div class="modal-footer">
-																			<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-																		</div>
-																	</div>
-																</div>
-															</div>
-														</div>
-													</div>
-												</div>
-											</fieldset>
-										</div>
-
-										<div class="client">
-											<fieldset>
-												<legend>Controller</legend>
-												<div class="form-group">
-													<label for="backup-load.servers" class="col-sm-3 control-label">
-														Load servers
-													</label>
-													<div class="col-sm-9">
-														<input type="text" id="backup-load.servers" class="form-control"
-												            data-pointer="load.servers"
-												            value="${rt:getString(runTimeConfig, 'load.servers')}"/>
-													</div>
-												</div>
-											</fieldset>
-										</div>
-
 										<div class="standalone client">
 											<fieldset>
-												<legend>Data</legend>
-
+												<legend>Load</legend>
 												<div class="form-group">
 													<label for="backup-load.threads" class="col-sm-3 control-label">
-														Load threads
+														Threads/connections
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-load.threads" data-pointer="load.threads" class="form-control"
-																value="${rt:getString(runTimeConfig, 'load.threads')}"/>
+																value="${rt:getString(runTimeConfig, 'load.type.create.threads')}"/>
 													</div>
 												</div>
 
+												<div id="objects" class="form-group">
+													<label for="backup-load.limit.count" class="col-sm-3 control-label">
+														Items count limit
+													</label>
+													<div class="col-sm-9">
+														<input type="text" id="backup-load.limit.count" class="form-control"
+														       data-pointer="load.limit.count"
+														       value="${runTimeConfig.loadLimitCount}"/>
+													</div>
+												</div>
+
+												<div id="time" class="form-group complex">
+													<label for="backup-load.limit.time.value" class="col-sm-3 control-label">
+														Time limit
+													</label>
+													<div class="col-sm-9">
+														<input type="text" id="backup-load.limit.time.value"
+														       class="form-control pre-select"
+														       value="${rt:getTimeValue(runTimeConfig, 'load.limit.time')}"/>
+														<select class="form-select" id="backup-load.limit.time.unit">
+															<option value="${rt:getTimeUnit(runTimeConfig, 'load.limit.time')}">
+																${rt:getTimeUnit(runTimeConfig, 'load.limit.time')}
+															</option>
+															<option value="days">days</option>
+															<option value="hours">hours</option>
+															<option value="minutes">minutes</option>
+															<option value="seconds">seconds</option>
+														</select>
+													</div>
+												</div>
+
+												<div class="form-group">
+													<label for="backup-load.limit.rate" class="col-sm-3 control-label">
+														Rate limit
+													</label>
+													<div class="col-sm-9">
+														<input type="text" id="backup-load.limit.rate" class="form-control"
+																data-pointer="load.limit.rate"
+																value="${rt:getString(runTimeConfig, 'load.limit.rate')}"/>
+
+													</div>
+												</div>
+
+												<div class="client">
+													<div class="form-group">
+														<label for="backup-load.servers" class="col-sm-3 control-label">
+															Load servers
+														</label>
+														<div class="col-sm-9">
+															<input type="text" id="backup-load.servers" class="form-control"
+															       data-pointer="load.servers"
+															       value="${rt:getString(runTimeConfig, 'load.servers')}"/>
+														</div>
+													</div>
+												</div>
+											</fieldset>
+
+											<fieldset>
+												<legend>Data</legend>
 												<div class="form-group">
 													<label for="backup-data.size" class="col-sm-3 control-label">
 														Items size
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-data.size" data-pointer="data.size" class="form-control"
-																value="${rt:getString(runTimeConfig, 'data.size')}"/>
+														       value="${rt:getString(runTimeConfig, 'data.size.min')}"/>
 													</div>
 												</div>
 
@@ -792,12 +796,11 @@
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-data.src.fpath" class="form-control"
-												            data-pointer="data.src.fpath"
-												            value="${rt:getString(runTimeConfig, 'data.src.fpath')}"
-									                        placeholder="Enter path to the list of objects on remote host. Format: ${runTimeConfig.runName}-${runTimeConfig.runVersion}/log/<run.id>/<filename>"/>
+														       data-pointer="data.src.fpath"
+														       value="${rt:getString(runTimeConfig, 'data.src.fpath')}"
+														       placeholder="Enter path to the list of objects on remote host. Format: ${runTimeConfig.runName}-${runTimeConfig.runVersion}/log/<run.id>/<filename>"/>
 													</div>
 												</div>
-
 											</fieldset>
 										</div>
 
