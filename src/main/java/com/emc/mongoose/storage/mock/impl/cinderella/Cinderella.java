@@ -280,7 +280,7 @@ implements Runnable {
 		);
 		//
 		private final float rateLimit = RunTimeConfig.getContext().getLoadLimitRate();
-		private final AtomicInteger lastMilliDelay = new AtomicInteger(10);
+		private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 		//
 		@Override
 		public HttpAsyncRequestConsumer<HttpRequest> processRequest(
@@ -295,14 +295,16 @@ implements Runnable {
 			final HttpContext context
 		) {
 			// load rate limitation algorithm
-			if(allTP.getMeanRate() > rateLimit) {
-				try {
-					Thread.sleep(lastMilliDelay.incrementAndGet());
-				} catch(final InterruptedException e) {
-					return;
+			if(rateLimit > 0) {
+				if(allTP.getMeanRate() > rateLimit) {
+					try {
+						Thread.sleep(lastMilliDelay.incrementAndGet());
+					} catch(final InterruptedException e) {
+						return;
+					}
+				} else if(lastMilliDelay.get() > 0) {
+					lastMilliDelay.decrementAndGet();
 				}
-			} else if(lastMilliDelay.get() > 0) {
-				lastMilliDelay.decrementAndGet();
 			}
 			//
 			final HttpResponse response = httpexchange.getResponse();

@@ -53,7 +53,10 @@ extends LoadExecutorBase<T> {
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
 		if(rateLimit > 0 && throughPut.getMeanRate() > rateLimit) {
-			TimeUnit.MICROSECONDS.sleep(tgtMicroDur);
+			final long microDelay = durTasksSum.get() / throughPut.getCount() - tgtMicroDur;
+			if(microDelay > 0) {
+				TimeUnit.MICROSECONDS.sleep(microDelay);
+			}
 		}
 		super.submit(dataItem);
 	}

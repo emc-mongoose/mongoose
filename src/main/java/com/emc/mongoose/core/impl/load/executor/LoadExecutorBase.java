@@ -74,12 +74,11 @@ implements LoadExecutor<T> {
 	protected Counter counterSubm, counterRej, counterReqFail;
 	protected Meter throughPut, reqBytes;
 	protected Histogram respLatency;
-	protected volatile long lastMicroDur = 0; // needed for rate limitation in another class
 	//
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter jmxReporter;
 	// STATES section
-	private final AtomicLong
+	protected final AtomicLong
 		durTasksSum = new AtomicLong(0),
 		counterRoundRobinSubm = new AtomicLong(0),
 		counterResultHandle = new AtomicLong(0);
@@ -285,7 +284,6 @@ implements LoadExecutor<T> {
 			counterReqFail = metrics.counter(MetricRegistry.name(name, METRIC_NAME_FAIL));
 			throughPut = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_TP));
 			reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));
-			//reqDur = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_DUR));
 			respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
 			if(producer == null) {
@@ -464,9 +462,8 @@ implements LoadExecutor<T> {
 				if(latency > 0) {
 					respLatency.update(latency);
 				}
+				durTasksSum.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
 				reqBytes.mark(ioTask.getTransferSize());
-				lastMicroDur = ioTask.getRespTimeDone() - ioTask.getReqTimeStart();
-				durTasksSum.addAndGet(lastMicroDur);
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
 						LogUtil.MSG, "Task #{}: successfull result, {}/{}",
