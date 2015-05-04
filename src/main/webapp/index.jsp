@@ -112,19 +112,611 @@
 							<div id="main-content" class="col-xs-12 col-sm-7 col-md-8 col-lg-9 no-padding">
 								<div id="base">
 									<form class="form-horizontal" role="form">
-										<div class="standalone client cinderella server">
-											<fieldset class="no-margin">
-												<legend>Run</legend>
+										<div class="form-group">
+											<label for="backup-run.id" class="col-sm-3 control-label">Run id</label>
+											<div class="col-sm-9">
+												<input type="text" id="backup-run.id" class="form-control"
+												       data-pointer="run.id"/>
+											</div>
+										</div>
+
+										<div class="standalone client">
+											<div class="form-group">
+												<label for="backup-scenario.name" class="col-sm-3 control-label">
+													Scenario
+												</label>
+												<div class="col-sm-9">
+													<select id="backup-scenario.name" class="form-select" data-pointer="scenario.name">
+														<option value="backup-${runTimeConfig.scenarioName}">
+															${runTimeConfig.scenarioName}
+														</option>
+														<option value="backup-single">single</option>
+														<option value="backup-chain">chain</option>
+														<option value="backup-rampup">rampup</option>
+													</select>
+													<button type="button" id="scenario-button" class="btn btn-primary"
+													        data-toggle="modal"
+													        data-target="#backup-${runTimeConfig.scenarioName}">
+														Details...
+													</button>
+
+													<i id="scenario-load"></i>
+
+													<div class="modal" id="backup-single" tabindex="-1" role="dialog" aria-labelledby="singleLabel"
+													     aria-hidden="true">
+														<div class="modal-dialog">
+															<div class="modal-content">
+																<div class="modal-header">
+																	<button type="button" class="close" data-dismiss="modal">
+																		<span aria-hidden="true">&times;</span>
+																		<span class="sr-only">Close</span>
+																	</button>
+																	<h4 class="modal-title" id="singleLabel">Single</h4>
+																</div>
+
+																<div class="modal-body">
+																	<div class="form-group">
+																		<label for="backup-scenario.type.single.load"
+																		       class="col-sm-6 control-label">Load type</label>
+																		<div class="col-sm-6">
+																			<select id="backup-scenario.type.single.load"
+																		            data-pointer="scenario.type.single.load">
+																				<option value="backup-${rt:getString(runTimeConfig,
+																					'scenario.type.single.load')}">
+																					${rt:getString(runTimeConfig, 'scenario.type.single.load')}
+																				</option>
+																				<option value="backup-create">create</option>
+																				<option value="backup-read">read</option>
+																				<option value="backup-update">update</option>
+																				<option value="backup-delete">delete</option>
+																				<option value="backup-append">append</option>
+																			</select>
+																		</div>
+																	</div>
+
+																	<hr/>
+
+																	<div id="backup-create">
+																		<fieldset>
+																			<legend>Create</legend>
+																			<div class="form-group">
+																				<label class="col-sm-6 control-label" for="backup-load.type.create.threads">
+																					Load threads count
+																				</label>
+																				<div class="col-sm-6">
+																					<input type="text" id="backup-load.type.create.threads"
+																					       class="form-control"
+																					       data-pointer="load.type.create.threads"
+																					       value="${rt:getString(runTimeConfig, 'load.type.create.threads')}"/>
+																				</div>
+																			</div>
+																		</fieldset>
+																	</div>
+
+																	<div id="backup-read">
+																		<fieldset>
+																			<legend>Read</legend>
+																			<div class="form-group">
+																				<label class="col-sm-6 control-label" for="backup-load.type.read.threads">
+																					Load threads count
+																				</label>
+																				<div class="col-sm-6">
+																					<input type="text" id="backup-load.type.read.threads"
+																					       class="form-control"
+																					       data-pointer="load.type.read.threads"
+																					       value="${rt:getString(runTimeConfig, 'load.type.read.threads')}"/>
+																				</div>
+																			</div>
+
+																			<div class="form-group">
+																				<label for="backup-load.type.read.verifyContent"
+																				       class="col-sm-6 control-label">Verify content</label>
+																				<div class="col-sm-6">
+																					<select id="backup-load.type.read.verifyContent" class="form-select"
+																					        data-pointer="load.type.read.verifyContent">
+																						<option>
+																							${rt:getString(runTimeConfig, 'load.type.read.verifyContent')}
+																						</option>
+																						<option>true</option>
+																						<option>false</option>
+																					</select>
+																				</div>
+																			</div>
+																		</fieldset>
+																	</div>
+
+																	<div id="backup-update">
+																		<fieldset>
+																			<legend>Update</legend>
+																			<div class="form-group">
+																				<label class="col-sm-6 control-label" for="backup-load.type.update.threads">
+																					Load threads count
+																				</label>
+																				<div class="col-sm-6">
+																					<input type="text" id="backup-load.type.update.threads"
+																					       class="form-control"
+																					       value="${rt:getString(runTimeConfig, 'load.type.update.threads')}"
+																					       data-pointer="load.type.update.threads"/>
+																				</div>
+																			</div>
+
+																			<div class="form-group">
+																				<label class="col-sm-6 control-label" for="backup-load.type.update.perItem">
+																					Update per item count
+																				</label>
+																				<div class="col-sm-6">
+																					<input type="text" id="backup-load.type.update.perItem"
+																					       class="form-control"
+																					       value="${rt:getString(runTimeConfig, 'load.type.update.perItem')}"
+																					       data-pointer="load.type.update.perItem"/>
+																				</div>
+																			</div>
+																		</fieldset>
+																	</div>
+
+																	<div id="backup-delete">
+																		<fieldset>
+																			<legend>Delete</legend>
+																			<div class="form-group">
+																				<label class="col-sm-6 control-label" for="backup-load.type.delete.threads">
+																					Load threads count
+																				</label>
+																				<div class="col-sm-6">
+																					<input type="text" id="backup-load.type.delete.threads"
+																					       class="form-control"
+																					       value="${rt:getString(runTimeConfig, 'load.type.delete.threads')}"
+																					       data-pointer="load.type.delete.threads"/>
+																				</div>
+																			</div>
+																		</fieldset>
+																	</div>
+
+																	<div id="backup-append">
+																		<fieldset>
+																			<legend>Append</legend>
+																			<div class="form-group">
+																				<label class="col-sm-6 control-label" for="backup-load.type.append.threads">
+																					Load threads count
+																				</label>
+																				<div class="col-sm-6">
+																					<input type="text" id="backup-load.type.append.threads"
+																					       class="form-control"
+																					       value="${rt:getString(runTimeConfig, 'load.type.append.threads')}"
+																					       data-pointer="load.type.append.threads"/>
+																				</div>
+																			</div>
+																		</fieldset>
+																	</div>
+																</div>
+
+																<div class="modal-footer">
+																	<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+																</div>
+															</div>
+														</div>
+													</div>
+
+													<div class="modal" id="backup-chain" tabindex="-1" role="dialog" aria-labelledby="chainLabel"
+													     aria-hidden="true">
+														<div class="modal-dialog">
+															<div class="modal-content">
+																<div class="modal-header">
+																	<button type="button" class="close" data-dismiss="modal">
+																		<span aria-hidden="true">&times;</span>
+																		<span class="sr-only">Close</span>
+																	</button>
+																	<h4 class="modal-title" id="chainLabel">Chain</h4>
+																</div>
+
+																<div class="modal-body">
+																	<div class="form-group">
+																		<label for="backup-scenario.type.chain.load" class="col-sm-6 control-label">
+																			Load types
+																		</label>
+																		<div class="col-sm-6">
+																			<input type="text" class="form-control" id="backup-scenario.type.chain.load"
+																			       value="${rt:getString(runTimeConfig, 'scenario.type.chain.load')}"
+																			       data-pointer="scenario.type.chain.load"/>
+																		</div>
+																	</div>
+
+																	<div role="tabpanel">
+																		<ul class="nav nav-tabs" role="tablist">
+																			<li role="presentation" class="active">
+																				<a href="#backuptab-create" aria-controls="backuptab-create"
+																				   role="tab" data-toggle="tab">
+																					Create
+																				</a>
+																			</li>
+																			<li role="presentation">
+																				<a href="#backuptab-read" aria-controls="backuptab-read"
+																				   role="tab" data-toggle="tab">
+																					Read
+																				</a>
+																			</li>
+																			<li role="presentation">
+																				<a href="#backuptab-update" aria-controls="backuptab-update"
+																				   role="tab" data-toggle="tab">
+																					Update
+																				</a>
+																			</li>
+																			<li role="presentation">
+																				<a href="#backuptab-delete" aria-controls="backuptab-delete"
+																				   role="tab" data-toggle="tab">
+																					Delete
+																				</a>
+																			</li>
+																			<li role="presentation">
+																				<a href="#backuptab-append" aria-controls="backuptab-append"
+																				   role="tab" data-toggle="tab">
+																					Append
+																				</a>
+																			</li>
+																		</ul>
+
+																		<div class="tab-content modal-tabs">
+																			<div role="tabpanel" class="tab-pane active" id="backuptab-create">
+																				<div class="form-group">
+																					<label class="col-sm-6 control-label"
+																					       for="backuptab-load.type.create.threads">
+																						Load threads count
+																					</label>
+																					<div class="col-sm-6">
+																						<input type="text" id="backuptab-load.type.create.threads"
+																						       class="form-control"
+																						       value="${rt:getString(runTimeConfig, 'load.type.create.threads')}"
+																						       data-pointer="load.type.create.threads"/>
+																					</div>
+																				</div>
+																			</div>
+																			<div role="tabpanel" class="tab-pane" id="backuptab-read">
+																				<div class="form-group">
+																					<label class="col-sm-6 control-label" for="backuptab-load.type.read.threads">
+																						Load threads count
+																					</label>
+																					<div class="col-sm-6">
+																						<input type="text" id="backuptab-load.type.read.threads"
+																						       class="form-control"
+																						       value="${rt:getString(runTimeConfig, 'load.type.read.threads')}"
+																						       data-pointer="load.type.read.threads"/>
+																					</div>
+																				</div>
+
+																				<div class="form-group">
+																					<label for="backuptab-load.type.read.verifyContent"
+																					       class="col-sm-6 control-label">
+																						Verfiy content
+																					</label>
+																					<div class="col-sm-6">
+																						<select id="backuptab-load.type.read.verifyContent" class="form-select"
+																						        data-pointer="load.type.read.verifyContent">
+																							<option>
+																								${rt:getString(runTimeConfig, 'load.type.read.verifyContent')}
+																							</option>
+																							<option>true</option>
+																							<option>false</option>
+																						</select>
+																					</div>
+																				</div>
+																			</div>
+																			<div role="tabpanel" class="tab-pane" id="backuptab-update">
+																				<div class="form-group">
+																					<label class="col-sm-6 control-label"
+																					       for="backuptab-load.type.update.threads">
+																						Load threads count
+																					</label>
+																					<div class="col-sm-6">
+																						<input type="text" id="backuptab-load.type.update.threads"
+																						       class="form-control"
+																						       value="${rt:getString(runTimeConfig, 'load.type.update.threads')}"
+																						       data-pointer="load.type.update.threads"/>
+																					</div>
+																				</div>
+
+																				<div class="form-group">
+																					<label class="col-sm-6 control-label"
+																					       for="backuptab-load.type.update.perItem">
+																						Update per item count
+																					</label>
+																					<div class="col-sm-6">
+																						<input type="text" id="backuptab-load.type.update.perItem"
+																						       class="form-control"
+																						       value="${rt:getString(runTimeConfig, 'load.type.update.perItem')}"
+																						       data-pointer="load.type.update.perItem"/>
+																					</div>
+																				</div>
+																			</div>
+																			<div role="tabpanel" class="tab-pane" id="backuptab-delete">
+																				<div class="form-group">
+																					<label class="col-sm-6 control-label"
+																					       for="backuptab-load.type.delete.threads">
+																						Load threads count
+																					</label>
+																					<div class="col-sm-6">
+																						<input type="text" class="form-control" id="backuptab-load.type.delete.threads"
+																						       value="${rt:getString(runTimeConfig, 'load.type.delete.threads')}"
+																						       data-pointer="load.type.delete.threads"/>
+																					</div>
+																				</div>
+																			</div>
+																			<div role="tabpanel" class="tab-pane" id="backuptab-append">
+																				<div class="form-group">
+																					<label class="col-sm-6 control-label"
+																					       for="backuptab-load.type.append.threads">
+																						Load threads count
+																					</label>
+																					<div class="col-sm-6">
+																						<input type="text" id="backuptab-load.type.append.threads"
+																						       class="form-control"
+																						       value="${rt:getString(runTimeConfig, 'load.type.append.threads')}"
+																						       data-pointer="load.type.append.threads"/>
+																					</div>
+																				</div>
+																			</div>
+																		</div>
+																	</div>
+
+																	<hr/>
+
+																	<div class="form-group">
+																		<label for="backup-scenario.type.chain.concurrent"
+																		       class="col-sm-6 control-label">
+																			Simultaneous
+																		</label>
+																		<div class="col-sm-6">
+																			<select id="backup-scenario.type.chain.concurrent" class="form-select"
+																			        data-pointer="scenario.type.chain.concurrent">
+																				<option>
+																					${rt:getString(runTimeConfig, 'scenario.type.chain.concurrent')}
+																				</option>
+																				<option>true</option>
+																				<option>false</option>
+																			</select>
+																		</div>
+																	</div>
+																</div>
+
+																<div class="modal-footer">
+																	<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+																</div>
+															</div>
+														</div>
+													</div>
+
+													<div class="modal" id="backup-rampup" tabindex="-1"
+													     role="dialog" aria-labelledby="rampupLabel"
+													     aria-hidden="true">
+														<div class="modal-dialog">
+															<div class="modal-content">
+																<div class="modal-header">
+																	<button type="button" class="close" data-dismiss="modal">
+																		<span aria-hidden="true">&times;</span>
+																		<span class="sr-only">Close</span>
+																	</button>
+																	<h4 class="modal-title" id="rampupLabel">Rampup</h4>
+																</div>
+
+																<div class="modal-body">
+
+																	<div class="form-group">
+																		<div class="col-sm-6">
+																			<button type="button" class="btn btn-default" id="chain-load">
+																				Chain load details
+																			</button>
+																		</div>
+																	</div>
+																	<div class="form-group">
+																		<label for="backup-scenario.type.rampup.threadCounts"
+																		       class="col-sm-4 control-label">
+																			Thread count
+																		</label>
+																		<div class="col-sm-8">
+																			<input type="text" id="backup-scenario.type.rampup.threadCounts"
+																			       class="form-control"
+																			       value="${rt:getString(runTimeConfig, 'scenario.type.rampup.threadCounts')}"
+																			       data-pointer="scenario.type.rampup.threadCounts"/>
+																		</div>
+																	</div>
+
+																	<div class="form-group">
+																		<label for="backup-scenario.type.rampup.sizes" class="col-sm-4 control-label">
+																			Objects' sizes
+																		</label>
+																		<div class="col-sm-8">
+																			<input type="text" id="backup-scenario.type.rampup.sizes" class="form-control"
+																			       value="${rt:getString(runTimeConfig, 'scenario.type.rampup.sizes')}"
+																			       data-pointer="scenario.type.rampup.sizes"/>
+																		</div>
+																	</div>
+																</div>
+
+																<div class="modal-footer">
+																	<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+																</div>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+											<div class="standalone client">
 												<div class="form-group">
-													<label for="backup-run.id" class="col-sm-3 control-label">Id</label>
+													<label for="backup-storage.addrs" class="col-sm-3 control-label">
+														Storage nodes (comma-separated)
+													</label>
 													<div class="col-sm-9">
-														<input type="text" id="backup-run.id" class="form-control"
-														       data-pointer="run.id"/>
+														<input type="text" id="backup-storage.addrs" class="form-control"
+														       data-pointer="storage.addrs"
+														       value="${rt:getString(runTimeConfig, 'storage.addrs')}"/>
+													</div>
+												</div>
+											</div>
+											<div class="form-group">
+												<label for="backup-api.name" class="col-sm-3 control-label">
+													API
+												</label>
+												<div class="col-sm-9">
+													<select id="backup-api.name" class="form-select" data-pointer="api.name">
+														<option value="backup-${runTimeConfig.apiName}">${runTimeConfig.apiName}</option>
+														<option value="backup-swift">swift</option>
+														<option value="backup-s3">s3</option>
+														<option value="backup-atmos">atmos</option>
+													</select>
+													<button type="button" id="api-button" class="btn btn-primary"
+													        data-toggle="modal" data-target="#backup-${runTimeConfig.apiName}">
+														Details...
+													</button>
+
+													<div class="modal" id="backup-s3" tabindex="-1" role="dialog"
+													     aria-labelledby="s3Label"
+													     aria-hidden="true">
+														<div class="modal-dialog">
+															<div class="modal-content">
+																<div class="modal-header">
+																	<button type="button" class="close" data-dismiss="modal">
+																		<span aria-hidden="true">&times;</span>
+																		<span class="sr-only">Close</span>
+																	</button>
+																	<h4 class="modal-title" id="s3Label">S3</h4>
+																</div>
+
+																<div class="modal-body">
+																	<div class="form-group">
+																		<label for="backup-api.type.s3.bucket" class="col-sm-4 control-label">
+																			Bucket
+																		</label>
+																		<div class="col-sm-8">
+																			<input type="text" id="backup-api.type.s3.bucket" class="form-control"
+																			       data-pointer="api.type.s3.bucket"
+																			       value="${rt:getString(runTimeConfig, 'api.type.s3.bucket')}"/>
+																		</div>
+																	</div>
+																</div>
+
+																<div class="modal-footer">
+																	<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+																</div>
+															</div>
+														</div>
+													</div>
+
+													<div class="modal" id="backup-swift" tabindex="-1" role="dialog"
+													     aria-labelledby="swiftLabel"
+													     aria-hidden="true">
+														<div class="modal-dialog">
+															<div class="modal-content">
+																<div class="modal-header">
+																	<button type="button" class="close" data-dismiss="modal">
+																		<span aria-hidden="true">&times;</span>
+																		<span class="sr-only">Close</span>
+																	</button>
+																	<h4 class="modal-title" id="swiftLabel">Swift</h4>
+																</div>
+
+																<div class="modal-body">
+																	<div class="form-group">
+																		<label for="backup-api.type.swift.authToken" class="col-sm-4 control-label">
+																			Authentication token (created automatically if left blank)
+																		</label>
+																		<div class="col-sm-8">
+																			<input type="text" id="backup-api.type.swift.authToken" class="form-control"
+																			       data-pointer="api.type.swift.authToken"
+																			       value="${rt:getString(runTimeConfig, 'api.type.swift.authToken')}"/>
+																		</div>
+																	</div>
+																	<div class="form-group">
+																		<label for="backup-api.type.swift.container" class="col-sm-4 control-label">
+																			Container (may be created automatically if left blank, required to be specified explicitly for any load except create)
+																		</label>
+																		<div class="col-sm-8">
+																			<input type="text" id="backup-api.type.swift.container" class="form-control"
+																			       data-pointer="api.type.swift.container"
+																			       value="${rt:getString(runTimeConfig, 'api.type.swift.container')}"/>
+																		</div>
+																	</div>
+																</div>
+
+																<div class="modal-footer">
+																	<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+																</div>
+															</div>
+														</div>
+													</div>
+
+													<div class="modal" id="backup-atmos" tabindex="-1" role="dialog"
+													     aria-labelledby="atmosLabel"
+													     aria-hidden="true">
+														<div class="modal-dialog">
+															<div class="modal-content">
+																<div class="modal-header">
+																	<button type="button" class="close" data-dismiss="modal">
+																		<span aria-hidden="true">&times;</span>
+																		<span class="sr-only">Close</span>
+																	</button>
+																	<h4 class="modal-title" id="atmosLabel">Atmos</h4>
+																</div>
+
+																<div class="modal-body">
+																	<div class="form-group">
+																		<label for="backup-api.type.atmos.subtenant" class="col-sm-4 control-label">
+																			Subtenant
+																		</label>
+																		<div class="col-sm-8">
+																			<input type="text" id="backup-api.type.atmos.subtenant" class="form-control"
+																			       data-pointer="api.type.atmos.subtenant"
+																			       value="${rt:getString(runTimeConfig, 'api.type.atmos.subtenant')}"/>
+																		</div>
+																	</div>
+																</div>
+
+																<div class="modal-footer">
+																	<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
+																</div>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+
+										<div class="standalone client">
+											<fieldset>
+												<legend>Authentication</legend>
+												<div class="form-group">
+													<label for="backup-auth.id" class="col-sm-3 control-label">
+														User id
+													</label>
+													<div class="col-sm-9">
+														<input type="text" id="backup-auth.id" class="form-control"
+												            data-pointer="auth.id" value="${runTimeConfig.authId}"/>
+													</div>
+												</div>
+												<div class="form-group">
+													<label for="backup-auth.secret" class="col-sm-3 control-label">
+														Secret
+													</label>
+													<div class="col-sm-9">
+														<input type="text" id="backup-auth.secret" class="form-control"
+									                        data-pointer="auth.secret" value="${runTimeConfig.authSecret}"/>
 													</div>
 												</div>
 											</fieldset>
+										</div>
 
-											<div class="standalone client">
+										<div class="standalone client">
+											<fieldset>
+												<legend>Load</legend>
+												<div class="form-group">
+													<label for="backup-load.threads" class="col-sm-3 control-label">
+														Threads/connections
+														<br/>
+														(per node/load server)
+													</label>
+													<div class="col-sm-9">
+														<input type="text" id="backup-load.threads" data-pointer="load.threads" class="form-control"
+																value="${rt:getString(runTimeConfig, 'load.type.create.threads')}"/>
+													</div>
+												</div>
+
 												<div id="objects" class="form-group">
 													<label for="backup-load.limit.count" class="col-sm-3 control-label">
 														Items count limit
@@ -156,648 +748,43 @@
 													</div>
 												</div>
 
-												<div class="form-group">
-													<label for="backup-scenario.name" class="col-sm-3 control-label">
-														The scenario to run
-													</label>
-													<div class="col-sm-9">
-														<select id="backup-scenario.name" class="form-select" data-pointer="scenario.name">
-															<option value="backup-${runTimeConfig.scenarioName}">
-																${runTimeConfig.scenarioName}
-															</option>
-															<option value="backup-single">single</option>
-															<option value="backup-chain">chain</option>
-															<option value="backup-rampup">rampup</option>
-														</select>
-														<button type="button" id="scenario-button" class="btn btn-primary"
-														        data-toggle="modal"
-														        data-target="#backup-${runTimeConfig.scenarioName}">
-															Details...
-														</button>
-
-														<i id="scenario-load"></i>
-
-														<div class="modal" id="backup-single" tabindex="-1" role="dialog" aria-labelledby="singleLabel"
-														     aria-hidden="true">
-															<div class="modal-dialog">
-																<div class="modal-content">
-																	<div class="modal-header">
-																		<button type="button" class="close" data-dismiss="modal">
-																			<span aria-hidden="true">&times;</span>
-																			<span class="sr-only">Close</span>
-																		</button>
-																		<h4 class="modal-title" id="singleLabel">Single</h4>
-																	</div>
-
-																	<div class="modal-body">
-																		<div class="form-group">
-																			<label for="backup-scenario.type.single.load"
-																			       class="col-sm-6 control-label">Load type</label>
-																			<div class="col-sm-6">
-																				<select id="backup-scenario.type.single.load" class="form-select"
-																				        data-pointer="scenario.type.single.load">
-																					<option value="backup-${rt:getString(runTimeConfig,
-																						'scenario.type.single.load')}">
-																						${rt:getString(runTimeConfig, 'scenario.type.single.load')}
-																					</option>
-																					<option value="backup-create">create</option>
-																					<option value="backup-read">read</option>
-																					<option value="backup-update">update</option>
-																					<option value="backup-delete">delete</option>
-																					<option value="backup-append">append</option>
-																				</select>
-																			</div>
-																		</div>
-
-																		<hr/>
-
-																		<div id="backup-create">
-																			<fieldset>
-																				<legend>Create</legend>
-																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.type.create.threads">
-																						Load threads count
-																					</label>
-																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.type.create.threads"
-																						       class="form-control"
-																						       data-pointer="load.type.create.threads"
-																						       value="${rt:getString(runTimeConfig, 'load.type.create.threads')}"/>
-																					</div>
-																				</div>
-																			</fieldset>
-																		</div>
-
-																		<div id="backup-read">
-																			<fieldset>
-																				<legend>Read</legend>
-																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.type.read.threads">
-																						Load threads count
-																					</label>
-																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.type.read.threads"
-																						       class="form-control"
-																						       data-pointer="load.type.read.threads"
-																						       value="${rt:getString(runTimeConfig, 'load.type.read.threads')}"/>
-																					</div>
-																				</div>
-
-																				<div class="form-group">
-																					<label for="backup-load.type.read.verifyContent"
-																					       class="col-sm-6 control-label">Verify content</label>
-																					<div class="col-sm-6">
-																						<select id="backup-load.type.read.verifyContent" class="form-select"
-																						        data-pointer="load.type.read.verifyContent">
-																							<option>
-																								${rt:getString(runTimeConfig, 'load.type.read.verifyContent')}
-																							</option>
-																							<option>true</option>
-																							<option>false</option>
-																						</select>
-																					</div>
-																				</div>
-																			</fieldset>
-																		</div>
-
-																		<div id="backup-update">
-																			<fieldset>
-																				<legend>Update</legend>
-																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.type.update.threads">
-																						Load threads count
-																					</label>
-																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.type.update.threads"
-																						       class="form-control"
-																						       value="${rt:getString(runTimeConfig, 'load.type.update.threads')}"
-																						       data-pointer="load.type.update.threads"/>
-																					</div>
-																				</div>
-
-																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.type.update.perItem">
-																						Update per item count
-																					</label>
-																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.type.update.perItem"
-																						       class="form-control"
-																						       value="${rt:getString(runTimeConfig, 'load.type.update.perItem')}"
-																						       data-pointer="load.type.update.perItem"/>
-																					</div>
-																				</div>
-																			</fieldset>
-																		</div>
-
-																		<div id="backup-delete">
-																			<fieldset>
-																				<legend>Delete</legend>
-																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.type.delete.threads">
-																						Load threads count
-																					</label>
-																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.type.delete.threads"
-																						       class="form-control"
-																						       value="${rt:getString(runTimeConfig, 'load.type.delete.threads')}"
-																						       data-pointer="load.type.delete.threads"/>
-																					</div>
-																				</div>
-																			</fieldset>
-																		</div>
-
-																		<div id="backup-append">
-																			<fieldset>
-																				<legend>Append</legend>
-																				<div class="form-group">
-																					<label class="col-sm-6 control-label" for="backup-load.type.append.threads">
-																						Load threads count
-																					</label>
-																					<div class="col-sm-6">
-																						<input type="text" id="backup-load.type.append.threads"
-																						       class="form-control"
-																						       value="${rt:getString(runTimeConfig, 'load.type.append.threads')}"
-																						       data-pointer="load.type.append.threads"/>
-																					</div>
-																				</div>
-																			</fieldset>
-																		</div>
-																	</div>
-
-																	<div class="modal-footer">
-																		<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-																	</div>
-																</div>
-															</div>
-														</div>
-
-														<div class="modal" id="backup-chain" tabindex="-1" role="dialog" aria-labelledby="chainLabel"
-														     aria-hidden="true">
-															<div class="modal-dialog">
-																<div class="modal-content">
-																	<div class="modal-header">
-																		<button type="button" class="close" data-dismiss="modal">
-																			<span aria-hidden="true">&times;</span>
-																			<span class="sr-only">Close</span>
-																		</button>
-																		<h4 class="modal-title" id="chainLabel">Chain</h4>
-																	</div>
-
-																	<div class="modal-body">
-																		<div class="form-group">
-																			<label for="backup-scenario.type.chain.load" class="col-sm-6 control-label">
-																				Load types
-																			</label>
-																			<div class="col-sm-6">
-																				<input type="text" class="form-control" id="backup-scenario.type.chain.load"
-																				       value="${rt:getString(runTimeConfig, 'scenario.type.chain.load')}"
-																				       data-pointer="scenario.type.chain.load"/>
-																			</div>
-																		</div>
-
-																		<div role="tabpanel">
-																			<ul class="nav nav-tabs" role="tablist">
-																				<li role="presentation" class="active">
-																					<a href="#backuptab-create" aria-controls="backuptab-create"
-																					   role="tab" data-toggle="tab">
-																						Create
-																					</a>
-																				</li>
-																				<li role="presentation">
-																					<a href="#backuptab-read" aria-controls="backuptab-read"
-																					   role="tab" data-toggle="tab">
-																						Read
-																					</a>
-																				</li>
-																				<li role="presentation">
-																					<a href="#backuptab-update" aria-controls="backuptab-update"
-																					   role="tab" data-toggle="tab">
-																						Update
-																					</a>
-																				</li>
-																				<li role="presentation">
-																					<a href="#backuptab-delete" aria-controls="backuptab-delete"
-																					   role="tab" data-toggle="tab">
-																						Delete
-																					</a>
-																				</li>
-																				<li role="presentation">
-																					<a href="#backuptab-append" aria-controls="backuptab-append"
-																					   role="tab" data-toggle="tab">
-																						Append
-																					</a>
-																				</li>
-																			</ul>
-
-																			<div class="tab-content modal-tabs">
-																				<div role="tabpanel" class="tab-pane active" id="backuptab-create">
-																					<div class="form-group">
-																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.type.create.threads">
-																							Load threads count
-																						</label>
-																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.type.create.threads"
-																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.type.create.threads')}"
-																							       data-pointer="load.type.create.threads"/>
-																						</div>
-																					</div>
-																				</div>
-																				<div role="tabpanel" class="tab-pane" id="backuptab-read">
-																					<div class="form-group">
-																						<label class="col-sm-6 control-label" for="backuptab-load.type.read.threads">
-																							Load threads count
-																						</label>
-																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.type.read.threads"
-																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.type.read.threads')}"
-																							       data-pointer="load.type.read.threads"/>
-																						</div>
-																					</div>
-
-																					<div class="form-group">
-																						<label for="backuptab-load.type.read.verifyContent"
-																						       class="col-sm-6 control-label">
-																							Verfiy content
-																						</label>
-																						<div class="col-sm-6">
-																							<select id="backuptab-load.type.read.verifyContent" class="form-select"
-																							        data-pointer="load.type.read.verifyContent">
-																								<option>
-																									${rt:getString(runTimeConfig, 'load.type.read.verifyContent')}
-																								</option>
-																								<option>true</option>
-																								<option>false</option>
-																							</select>
-																						</div>
-																					</div>
-																				</div>
-																				<div role="tabpanel" class="tab-pane" id="backuptab-update">
-																					<div class="form-group">
-																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.type.update.threads">
-																							Load threads count
-																						</label>
-																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.type.update.threads"
-																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.type.update.threads')}"
-																							       data-pointer="load.type.update.threads"/>
-																						</div>
-																					</div>
-
-																					<div class="form-group">
-																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.type.update.perItem">
-																							Update per item count
-																						</label>
-																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.type.update.perItem"
-																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.type.update.perItem')}"
-																							       data-pointer="load.type.update.perItem"/>
-																						</div>
-																					</div>
-																				</div>
-																				<div role="tabpanel" class="tab-pane" id="backuptab-delete">
-																					<div class="form-group">
-																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.type.delete.threads">
-																							Load threads count
-																						</label>
-																						<div class="col-sm-6">
-																							<input type="text" class="form-control" id="backuptab-load.type.delete.threads"
-																							       value="${rt:getString(runTimeConfig, 'load.type.delete.threads')}"
-																							       data-pointer="load.type.delete.threads"/>
-																						</div>
-																					</div>
-																				</div>
-																				<div role="tabpanel" class="tab-pane" id="backuptab-append">
-																					<div class="form-group">
-																						<label class="col-sm-6 control-label"
-																						       for="backuptab-load.type.append.threads">
-																							Load threads count
-																						</label>
-																						<div class="col-sm-6">
-																							<input type="text" id="backuptab-load.type.append.threads"
-																							       class="form-control"
-																							       value="${rt:getString(runTimeConfig, 'load.type.append.threads')}"
-																							       data-pointer="load.type.append.threads"/>
-																						</div>
-																					</div>
-																				</div>
-																			</div>
-																		</div>
-
-																		<hr/>
-
-																		<div class="form-group">
-																			<label for="backup-scenario.type.chain.concurrent"
-																			       class="col-sm-6 control-label">
-																				Simultaneous
-																			</label>
-																			<div class="col-sm-6">
-																				<select id="backup-scenario.type.chain.concurrent" class="form-select"
-																				        data-pointer="scenario.type.chain.concurrent">
-																					<option>
-																						${rt:getString(runTimeConfig, 'scenario.type.chain.concurrent')}
-																					</option>
-																					<option>true</option>
-																					<option>false</option>
-																				</select>
-																			</div>
-																		</div>
-																	</div>
-
-																	<div class="modal-footer">
-																		<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-																	</div>
-																</div>
-															</div>
-														</div>
-
-														<div class="modal" id="backup-rampup" tabindex="-1"
-														     role="dialog" aria-labelledby="rampupLabel"
-														     aria-hidden="true">
-															<div class="modal-dialog">
-																<div class="modal-content">
-																	<div class="modal-header">
-																		<button type="button" class="close" data-dismiss="modal">
-																			<span aria-hidden="true">&times;</span>
-																			<span class="sr-only">Close</span>
-																		</button>
-																		<h4 class="modal-title" id="rampupLabel">Rampup</h4>
-																	</div>
-
-																	<div class="modal-body">
-
-																		<div class="form-group">
-																			<div class="col-sm-6">
-																				<button type="button" class="btn btn-default" id="chain-load">
-																					Chain load details
-																				</button>
-																			</div>
-																		</div>
-																		<div class="form-group">
-																			<label for="backup-scenario.type.rampup.threadCounts"
-																			       class="col-sm-4 control-label">
-																				Thread count
-																			</label>
-																			<div class="col-sm-8">
-																				<input type="text" id="backup-scenario.type.rampup.threadCounts"
-																				       class="form-control"
-																				       value="${rt:getString(runTimeConfig, 'scenario.type.rampup.threadCounts')}"
-																				       data-pointer="scenario.type.rampup.threadCounts"/>
-																			</div>
-																		</div>
-
-																		<div class="form-group">
-																			<label for="backup-scenario.type.rampup.sizes" class="col-sm-4 control-label">
-																				Objects' sizes
-																			</label>
-																			<div class="col-sm-8">
-																				<input type="text" id="backup-scenario.type.rampup.sizes" class="form-control"
-																				       value="${rt:getString(runTimeConfig, 'scenario.type.rampup.sizes')}"
-																				       data-pointer="scenario.type.rampup.sizes"/>
-																			</div>
-																		</div>
-																	</div>
-
-																	<div class="modal-footer">
-																		<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-																	</div>
-																</div>
-															</div>
-														</div>
-													</div>
-												</div>
-											</div>
-										</div>
-
-										<div class="standalone client">
-											<fieldset>
-												<legend>Authentication</legend>
-												<div class="form-group">
-													<label for="backup-auth.id" class="col-sm-3 control-label">
-														User id
-													</label>
-													<div class="col-sm-9">
-														<input type="text" id="backup-auth.id" class="form-control"
-												            data-pointer="auth.id" value="${runTimeConfig.authId}"/>
-													</div>
-												</div>
-												<div class="form-group">
-													<label for="backup-auth.secret" class="col-sm-3 control-label">
-														Access secret
-													</label>
-													<div class="col-sm-9">
-														<input type="text" id="backup-auth.secret" class="form-control"
-									                        data-pointer="auth.secret" value="${runTimeConfig.authSecret}"/>
-													</div>
-												</div>
-											</fieldset>
-										</div>
-
-										<div class="standalone client cinderella">
-											<fieldset>
-												<legend>Storage</legend>
-												<div class="standalone client">
+												<div class="client">
 													<div class="form-group">
-														<label for="backup-storage.addrs" class="col-sm-3 control-label">
-															Addresses (comma-separated)
+														<label for="backup-load.servers" class="col-sm-3 control-label">
+															Load servers
 														</label>
 														<div class="col-sm-9">
-															<input type="text" id="backup-storage.addrs" class="form-control"
-																data-pointer="storage.addrs"
-																value="${rt:getString(runTimeConfig, 'storage.addrs')}"/>
-														</div>
-													</div>
-												</div>
-												<div class="standalone client cinderella">
-													<div class="form-group">
-														<label for="backup-api.name" class="col-sm-3 control-label">
-															API
-														</label>
-														<div class="col-sm-9">
-															<select id="backup-api.name" class="form-select" data-pointer="api.name">
-																<option value="backup-${runTimeConfig.apiName}">${runTimeConfig.apiName}</option>
-																<option value="backup-swift">swift</option>
-																<option value="backup-s3">s3</option>
-																<option value="backup-atmos">atmos</option>
-															</select>
-															<button type="button" id="api-button" class="btn btn-primary"
-													            data-toggle="modal" data-target="#backup-${runTimeConfig.apiName}">
-																Details...
-															</button>
-
-															<div class="modal" id="backup-s3" tabindex="-1" role="dialog"
-													            aria-labelledby="s3Label"
-												                aria-hidden="true">
-																<div class="modal-dialog">
-																	<div class="modal-content">
-																		<div class="modal-header">
-																			<button type="button" class="close" data-dismiss="modal">
-																				<span aria-hidden="true">&times;</span>
-																				<span class="sr-only">Close</span>
-																			</button>
-																			<h4 class="modal-title" id="s3Label">S3</h4>
-																		</div>
-
-																		<div class="modal-body">
-																			<div class="form-group">
-																				<label for="backup-api.type.s3.bucket" class="col-sm-4 control-label">
-																					Bucket
-																				</label>
-																				<div class="col-sm-8">
-																					<input type="text" id="backup-api.type.s3.bucket" class="form-control"
-																			            data-pointer="api.type.s3.bucket"
-																		                value="${rt:getString(runTimeConfig, 'api.type.s3.bucket')}"/>
-																				</div>
-																			</div>
-																		</div>
-
-																		<div class="modal-footer">
-																			<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-																		</div>
-																	</div>
-																</div>
-															</div>
-
-															<div class="modal" id="backup-swift" tabindex="-1" role="dialog"
-													            aria-labelledby="swiftLabel"
-											                    aria-hidden="true">
-																<div class="modal-dialog">
-																	<div class="modal-content">
-																		<div class="modal-header">
-																			<button type="button" class="close" data-dismiss="modal">
-																				<span aria-hidden="true">&times;</span>
-																				<span class="sr-only">Close</span>
-																			</button>
-																			<h4 class="modal-title" id="swiftLabel">Swift</h4>
-																		</div>
-
-																		<div class="modal-body">
-																			<div class="form-group">
-																				<label for="backup-api.type.swift.authToken" class="col-sm-4 control-label">
-																					Authentication token (created automatically if left blank)
-																				</label>
-																				<div class="col-sm-8">
-																					<input type="text" id="backup-api.type.swift.authToken" class="form-control"
-																					       data-pointer="api.type.swift.authToken"
-																					       value="${rt:getString(runTimeConfig, 'api.type.swift.authToken')}"/>
-																				</div>
-																			</div>
-																			<div class="form-group">
-																				<label for="backup-api.type.swift.container" class="col-sm-4 control-label">
-																					Container (may be created automatically if left blank, required to be specified explicitly for any load except create)
-																				</label>
-																				<div class="col-sm-8">
-																					<input type="text" id="backup-api.type.swift.container" class="form-control"
-																					       data-pointer="api.type.swift.container"
-																					       value="${rt:getString(runTimeConfig, 'api.type.swift.container')}"/>
-																				</div>
-																			</div>
-																		</div>
-
-																		<div class="modal-footer">
-																			<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-																		</div>
-																	</div>
-																</div>
-															</div>
-
-															<div class="modal" id="backup-atmos" tabindex="-1" role="dialog"
-													            aria-labelledby="atmosLabel"
-													            aria-hidden="true">
-																<div class="modal-dialog">
-																	<div class="modal-content">
-																		<div class="modal-header">
-																			<button type="button" class="close" data-dismiss="modal">
-																				<span aria-hidden="true">&times;</span>
-																				<span class="sr-only">Close</span>
-																			</button>
-																			<h4 class="modal-title" id="atmosLabel">Atmos</h4>
-																		</div>
-
-																		<div class="modal-body">
-																			<div class="form-group">
-																				<label for="backup-api.type.atmos.subtenant" class="col-sm-4 control-label">
-																					Subtenant
-																				</label>
-																				<div class="col-sm-8">
-																					<input type="text" id="backup-api.type.atmos.subtenant" class="form-control"
-																					       data-pointer="api.type.atmos.subtenant"
-																					       value="${rt:getString(runTimeConfig, 'api.type.atmos.subtenant')}"/>
-																				</div>
-																			</div>
-																		</div>
-
-																		<div class="modal-footer">
-																			<button type="button" class="btn btn-default" data-dismiss="modal">Ok</button>
-																		</div>
-																	</div>
-																</div>
-															</div>
+															<input type="text" id="backup-load.servers" class="form-control"
+															       data-pointer="load.servers"
+															       value="${rt:getString(runTimeConfig, 'load.servers')}"/>
 														</div>
 													</div>
 												</div>
 											</fieldset>
-										</div>
 
-										<div class="client">
-											<fieldset>
-												<legend>Controller</legend>
-												<div class="form-group">
-													<label for="backup-load.servers" class="col-sm-3 control-label">
-														Load servers
-													</label>
-													<div class="col-sm-9">
-														<input type="text" id="backup-load.servers" class="form-control"
-												            data-pointer="load.servers"
-												            value="${rt:getString(runTimeConfig, 'load.servers')}"/>
-													</div>
-												</div>
-											</fieldset>
-										</div>
-
-										<div class="standalone client">
 											<fieldset>
 												<legend>Data</legend>
-
-												<div class="form-group">
-													<label for="backup-load.threads" class="col-sm-3 control-label">
-														Load threads
-													</label>
-													<div class="col-sm-9">
-														<input type="text" id="backup-load.threads" data-pointer="load.threads" class="form-control"
-																value="${rt:getString(runTimeConfig, 'load.threads')}"/>
-													</div>
-												</div>
-
 												<div class="form-group">
 													<label for="backup-data.size" class="col-sm-3 control-label">
-														Items size
+														Size
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-data.size" data-pointer="data.size" class="form-control"
-																value="${rt:getString(runTimeConfig, 'data.size')}"/>
+														       value="${rt:getString(runTimeConfig, 'data.size.min')}"/>
 													</div>
 												</div>
 
 												<div class="form-group">
 													<label for="backup-data.src.fpath" class="col-sm-3 control-label">
-														Input items list file
+														List file
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-data.src.fpath" class="form-control"
-												            data-pointer="data.src.fpath"
-												            value="${rt:getString(runTimeConfig, 'data.src.fpath')}"
-									                        placeholder="Enter path to the list of objects on remote host. Format: ${runTimeConfig.runName}-${runTimeConfig.runVersion}/log/<run.id>/<filename>"/>
+														       data-pointer="data.src.fpath"
+														       value="${rt:getString(runTimeConfig, 'data.src.fpath')}"
+														       placeholder="Enter path to the list of objects on remote host. Format: ${runTimeConfig.runName}-${runTimeConfig.runVersion}/log/<run.id>/<filename>"/>
 													</div>
 												</div>
-
 											</fieldset>
 										</div>
 

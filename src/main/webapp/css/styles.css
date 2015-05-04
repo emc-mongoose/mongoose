@@ -142,11 +142,6 @@ li input:checked + ul > li:last-child {
 	margin-left: 10px;
 }
 
-.form-select {
-	margin-top: 7px;
-	margin-bottom: 7px;
-}
-
 .pre-select {
 	width: 100px;
 }
