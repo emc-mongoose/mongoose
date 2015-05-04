@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.load.model;
 //
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Producer;
@@ -34,10 +35,14 @@ extends Thread
 implements Producer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static short
+		MAX_COUNT_TO_ESTIMATE_SIZES = 100,
+		MAX_WAIT_TO_ESTIMATE_MILLIS = 10000;
 	//
 	private final Path fPath;
 	private final Constructor<T> dataItemConstructor;
 	private final long maxCount;
+	private long approxDataItemsSize = LoadExecutor.BUFF_SIZE_LO;
 	private final ExecutorService producerExecSvc;
 	//
 	private Consumer<T> consumer = null;
@@ -45,6 +50,13 @@ implements Producer<T> {
 	@SuppressWarnings("unchecked")
 	public FileProducer(final long maxCount, final String fPathStr, final Class<T> dataItemsImplCls)
 	throws NoSuchMethodException, IOException {
+		this(maxCount, fPathStr, dataItemsImplCls, false);
+	}
+	//
+	private FileProducer(
+		final long maxCount, final String fPathStr, final Class<T> dataItemsImplCls,
+		final boolean nested
+	) throws IOException, NoSuchMethodException {
 		super(fPathStr);
 		producerExecSvc = Executors.newFixedThreadPool(
 			Producer.WORKER_COUNT, new NamingWorkerFactory(fPathStr)
@@ -57,12 +69,58 @@ implements Producer<T> {
 			throw new IOException("File \""+fPathStr+"\" is not readable");
 		}
 		dataItemConstructor = dataItemsImplCls.getConstructor(String.class);
-		//
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
+		//
+		if(!nested) {
+			// try to read 1st max 100 data items to determine the
+			new FileProducer<T>(MAX_COUNT_TO_ESTIMATE_SIZES, fPathStr, dataItemsImplCls, true) {
+				{
+					setConsumer(
+						new Consumer<T>() {
+							//
+							private long sizeSum = 0, count = 0;
+							//
+							@Override
+							public final void submit(final T data) {
+								sizeSum += data.getSize();
+								count++;
+								approxDataItemsSize = sizeSum / count;
+							}
+							//
+							@Override
+							public final void shutdown() {
+							}
+							//
+							@Override
+							public final long getMaxCount() {
+								return MAX_COUNT_TO_ESTIMATE_SIZES;
+							}
+							//
+							@Override
+							public final void close() {
+							}
+						}
+					);
+					//
+					start();
+					try {
+						join(MAX_WAIT_TO_ESTIMATE_MILLIS);
+					} catch(final InterruptedException e) {
+						LogUtil.failure(LOG, Level.WARN, e, "Interrupted");
+					} finally {
+						interrupt();
+					}
+				}
+			};
+		}
 	}
 	//
 	public final String getPath() {
 		return fPath.toString();
+	}
+	//
+	public final long getApproxDataItemsSize() {
+		return approxDataItemsSize;
 	}
 	//
 	@Override
@@ -106,6 +164,7 @@ implements Producer<T> {
 		} catch(final IOException e) {
 			LogUtil.failure(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final Exception e) {
+			e.printStackTrace(System.err);
 			LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
 		} finally {
 			LOG.debug(LogUtil.MSG, "Produced {} data items", dataItemsCount);
