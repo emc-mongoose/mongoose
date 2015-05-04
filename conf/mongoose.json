@@ -166,7 +166,7 @@
 				"count": 0,
 				"time": "0s",
 				"rate": 0,
-				"taskMicroDelay": 0
+				"reqSleepMilliSec": 0
 			},
 			"servers": "127.0.0.1",
 			"metricsPeriodSec": 10
@@ -236,7 +236,7 @@
 		},
 		"run": {
 			"name": "mongoose",
-			"version": "0.7.1",
+			"version": "0.8.0",
 			"mode": "standalone",
 			"retry": {
 				"delayMilliSec": 100,

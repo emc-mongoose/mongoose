@@ -65,7 +65,7 @@ implements Externalizable {
 		KEY_LOAD_LIMIT_TIME = "load.limit.time",
 		KEY_LOAD_TIME = "load.time",
 		KEY_LOAD_LIMIT_RATE = "load.limit.rate",
-		KEY_LOAD_LIMIT_TASKMICRODELAY = "load.limit.taskMicroDelay",
+		KEY_LOAD_LIMIT_REQSLEEP_MILLISEC = "load.limit.reqSleepMilliSec",
 		KEY_RUN_VERSION = "run.version",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
@@ -304,8 +304,8 @@ implements Externalizable {
 		return getFloat(KEY_LOAD_LIMIT_RATE);
 	}
 	//
-	public final int getLoadLimitTaskMicroDelay() {
-		return getInt(KEY_LOAD_LIMIT_TASKMICRODELAY);
+	public final int getLoadLimitReqSleepMilliSec() {
+		return getInt(KEY_LOAD_LIMIT_REQSLEEP_MILLISEC);
 	}
 	//
 	public final long getDataSizeMin() {
