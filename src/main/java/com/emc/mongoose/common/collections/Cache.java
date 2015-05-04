@@ -5,7 +5,7 @@ import java.util.Map;
 /**
  Created by kurila on 06.04.15.
  */
-public final class Cache<T, V>
+public class Cache<T, V>
 extends LinkedHashMap<T, V> {
 	//
 	private final int capacity;

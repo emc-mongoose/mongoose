@@ -55,7 +55,7 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	@Override
 	public final String getName() {
-		return "//"+ServiceUtils.getHostAddr()+'/'+getClass().getPackage().getName();
+		return "//" + ServiceUtils.getHostAddr() + '/' + getClass().getPackage().getName();
 	}
 	//
 	@Override
@@ -65,7 +65,7 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	@Override
 	public final void setLastInstanceNum(final int instanceN) {
-		LoadExecutorBase.LAST_INSTANCE_NUM.set(instanceN);
+		LoadExecutor.LAST_INSTANCE_NUM.set(instanceN);
 	}
 	//
 	@Override
@@ -91,7 +91,7 @@ implements WSLoadBuilderSvc<T, U> {
 		//
 		return (U) new BasicWSLoadSvc<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
-			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem
+			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
 		);
 	}
 	//

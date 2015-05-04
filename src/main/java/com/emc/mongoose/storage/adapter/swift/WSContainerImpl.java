@@ -142,7 +142,7 @@ implements Container<T> {
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
-				if(statusLine==null) {
+				if(statusLine == null) {
 					LOG.warn(LogUtil.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();

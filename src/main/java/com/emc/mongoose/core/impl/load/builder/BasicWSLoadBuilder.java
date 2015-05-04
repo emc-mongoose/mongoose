@@ -86,7 +86,7 @@ implements WSLoadBuilder<T, U> {
 		//
 		return (U) new BasicWSLoadExecutor<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
-			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, updatesPerItem
+			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
 		);
 	}
 }

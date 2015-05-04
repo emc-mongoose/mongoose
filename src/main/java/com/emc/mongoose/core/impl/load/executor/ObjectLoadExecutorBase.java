@@ -12,7 +12,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
  Created by kurila on 09.10.14.
  */
 public abstract class ObjectLoadExecutorBase<T extends DataObject>
-extends AdvancedLoadExecutorBase<T>
+extends TypeSpecificLoadExecutorBase<T>
 implements ObjectLoadExecutor<T> {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
@@ -20,11 +20,12 @@ implements ObjectLoadExecutor<T> {
 	protected ObjectLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final ObjectRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
+		final long sizeMin, final long sizeMax, final float sizeBias, final float rateLimit,
+		final int countUpdPerReq
 	) throws ClassCastException {
 		super(
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
-			sizeMin, sizeMax, sizeBias, countUpdPerReq
+			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
 	}
 	//

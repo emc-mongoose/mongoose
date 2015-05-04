@@ -18,8 +18,8 @@ import java.util.concurrent.ThreadLocalRandom;
 /**
  Created by kurila on 15.12.14.
  */
-public abstract class AdvancedLoadExecutorBase<T extends AppendableDataItem & UpdatableDataItem>
-extends LoadExecutorBase<T> {
+public abstract class TypeSpecificLoadExecutorBase<T extends AppendableDataItem & UpdatableDataItem>
+extends LimitedRateLoadExecutorBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -28,14 +28,15 @@ extends LoadExecutorBase<T> {
 	private final long sizeMin, sizeRange;
 	private final float sizeBias;
 	//
-	protected AdvancedLoadExecutorBase(
+	protected TypeSpecificLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
-		final long sizeMin, final long sizeMax, final float sizeBias, final int countUpdPerReq
+		final long sizeMin, final long sizeMax, final float sizeBias,
+		final float rateLimit, final int countUpdPerReq
 	) throws ClassCastException {
 		super(
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
-			sizeMin, sizeMax, sizeBias
+			sizeMin, sizeMax, sizeBias, rateLimit
 		);
 		//
 		this.loadType = reqConfig.getLoadType();

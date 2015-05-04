@@ -34,7 +34,7 @@ implements LoadBuilder<T, U> {
 	protected RequestConfig<T> reqConf;
 	protected IOTask.Type loadType;
 	protected long maxCount, minObjSize, maxObjSize;
-	protected float objSizeBias;
+	protected float objSizeBias, rateLimit;
 	protected int updatesPerItem;
 	protected String listFile, dataNodeAddrs[];
 	protected final HashMap<IOTask.Type, Short> threadsPerNodeMap;
@@ -110,6 +110,15 @@ implements LoadBuilder<T, U> {
 		paramName = RunTimeConfig.KEY_DATA_SIZE_BIAS;
 		try {
 			setObjSizeBias(runTimeConfig.getDataSizeBias());
+		} catch(final NoSuchElementException e) {
+			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+		} catch(final IllegalArgumentException e) {
+			LOG.error(LogUtil.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+		}
+		//
+		paramName = RunTimeConfig.KEY_LOAD_LIMIT_RATE;
+		try {
+			setRateLimit(runTimeConfig.getLoadLimitRate());
 		} catch(final NoSuchElementException e) {
 			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -233,6 +242,19 @@ implements LoadBuilder<T, U> {
 			LOG.debug(LogUtil.MSG, "Using object size bias: {}", objSizeBias);
 		}
 		this.objSizeBias = objSizeBias;
+		return this;
+	}
+	//
+	@Override
+	public LoadBuilder<T, U> setRateLimit(final float rateLimit)
+	throws IllegalArgumentException {
+		LOG.debug(LogUtil.MSG, "Set rate limit to: {}", rateLimit);
+		if(rateLimit < 0) {
+			throw new IllegalArgumentException("Rate limit should not be negative");
+		} else {
+			LOG.debug(LogUtil.MSG, "Using load rate limit: {}", rateLimit);
+		}
+		this.rateLimit = rateLimit;
 		return this;
 	}
 	//

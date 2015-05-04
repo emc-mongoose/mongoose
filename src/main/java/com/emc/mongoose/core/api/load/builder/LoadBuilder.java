@@ -45,6 +45,9 @@ extends Closeable {
 	LoadBuilder<T, U> setObjSizeBias(final float objSizeBias)
 	throws IllegalArgumentException, RemoteException;
 	//
+	LoadBuilder<T, U> setRateLimit(final float rateLimit)
+	throws IllegalArgumentException, RemoteException;
+	//
 	LoadBuilder<T, U> setThreadsPerNodeDefault(final short threadCount)
 	throws IllegalArgumentException, RemoteException;
 	//

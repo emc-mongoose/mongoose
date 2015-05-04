@@ -64,6 +64,7 @@ implements Externalizable {
 		KEY_LOAD_LIMIT_COUNT = "load.limit.count",
 		KEY_LOAD_LIMIT_TIME = "load.limit.time",
 		KEY_LOAD_TIME = "load.time",
+		KEY_LOAD_LIMIT_RATE = "load.limit.rate",
 		KEY_RUN_VERSION = "run.version",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
@@ -296,6 +297,10 @@ implements Externalizable {
 	//
 	public final long getLoadLimitCount() {
 		return getLong(KEY_DATA_ITEM_COUNT);
+	}
+	//
+	public final float getLoadLimitRate() {
+		return getFloat(KEY_LOAD_LIMIT_RATE);
 	}
 	//
 	public final long getDataSizeMin() {

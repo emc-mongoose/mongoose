@@ -73,6 +73,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -278,9 +279,8 @@ implements Runnable {
 			Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 		);
 		//
-		public RequestHandler() {
-			super();
-		}
+		private final float rateLimit = RunTimeConfig.getContext().getLoadLimitRate();
+		private final AtomicInteger lastMilliDelay = new AtomicInteger(10);
 		//
 		@Override
 		public HttpAsyncRequestConsumer<HttpRequest> processRequest(
@@ -294,6 +294,17 @@ implements Runnable {
 			final HttpRequest request, final HttpAsyncExchange httpexchange,
 			final HttpContext context
 		) {
+			// load rate limitation algorithm
+			if(allTP.getMeanRate() > rateLimit) {
+				try {
+					Thread.sleep(lastMilliDelay.incrementAndGet());
+				} catch(final InterruptedException e) {
+					return;
+				}
+			} else if(lastMilliDelay.get() > 0) {
+				lastMilliDelay.decrementAndGet();
+			}
+			//
 			final HttpResponse response = httpexchange.getResponse();
 			final String method = request.getRequestLine().getMethod().toLowerCase(Locale.ENGLISH);
 			//Get URI components
@@ -346,7 +357,6 @@ implements Runnable {
 				}
 				handleGenericDataReq(response, request, method, dataId);
 			}
-			//httpexchange.submitResponse(new BasicResponseProducer(response));
 			httpexchange.submitResponse(BasicResponseProducer.getInstance(response));
 		}
 		//

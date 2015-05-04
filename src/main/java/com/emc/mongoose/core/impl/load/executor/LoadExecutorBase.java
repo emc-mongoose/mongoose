@@ -66,6 +66,7 @@ implements LoadExecutor<T> {
 	//
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
+	//
 	private final long maxCount;
 	private final int totalConnCount;
 	// METRICS section
@@ -73,6 +74,7 @@ implements LoadExecutor<T> {
 	protected Counter counterSubm, counterRej, counterReqFail;
 	protected Meter throughPut, reqBytes;
 	protected Histogram respLatency;
+	protected volatile long lastMicroDur = 0; // needed for rate limitation in another class
 	//
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter jmxReporter;
@@ -463,7 +465,8 @@ implements LoadExecutor<T> {
 					respLatency.update(latency);
 				}
 				reqBytes.mark(ioTask.getTransferSize());
-				durTasksSum.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
+				lastMicroDur = ioTask.getRespTimeDone() - ioTask.getReqTimeStart();
+				durTasksSum.addAndGet(lastMicroDur);
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
 						LogUtil.MSG, "Task #{}: successfull result, {}/{}",
