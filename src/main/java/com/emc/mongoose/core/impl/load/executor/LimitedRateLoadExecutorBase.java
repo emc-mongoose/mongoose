@@ -2,11 +2,12 @@ package com.emc.mongoose.core.impl.load.executor;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 //
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
@@ -19,10 +20,10 @@ import java.util.concurrent.TimeUnit;
 public abstract class LimitedRateLoadExecutorBase<T extends DataItem>
 extends LoadExecutorBase<T> {
 	//
-	//private final static Logger LOG = LogManager.getLogger();
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final float rateLimit;
-	private final int tgtMicroDur;
+	private final int tgtDur, manualMicroDelay;
 	//
 	protected LimitedRateLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
@@ -40,10 +41,13 @@ extends LoadExecutorBase<T> {
 		}
 		this.rateLimit = rateLimit;
 		if(rateLimit > 0) {
-			tgtMicroDur = (int) (1e6 * addrs.length * connCountPerNode / rateLimit);
+			tgtDur = (int) (1000000 * addrs.length * connCountPerNode / rateLimit);
+			LOG.debug(LogUtil.MSG, "{}: target I/O task durations is {}[us]", getName(), tgtDur);
 		} else {
-			tgtMicroDur = 0;
+			tgtDur = 0;
 		}
+		//
+		manualMicroDelay = runTimeConfig.getLoadLimitTaskMicroDelay();
 	}
 	/**
 	 Adds the optional delay calculated from last successfull I/O task duration and the target
@@ -53,9 +57,14 @@ extends LoadExecutorBase<T> {
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
 		if(rateLimit > 0 && throughPut.getMeanRate() > rateLimit) {
-			final long microDelay = durTasksSum.get() / throughPut.getCount() - tgtMicroDur;
+			final int microDelay = (int) (tgtDur - durTasksSum.get() / throughPut.getCount());
 			if(microDelay > 0) {
-				TimeUnit.MICROSECONDS.sleep(microDelay);
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(LogUtil.MSG, "Next delay: {}[us]", microDelay);
+				}
+				TimeUnit.MICROSECONDS.sleep(
+					microDelay > manualMicroDelay ? microDelay : manualMicroDelay
+				);
 			}
 		}
 		super.submit(dataItem);

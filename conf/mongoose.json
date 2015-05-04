@@ -165,7 +165,8 @@
 			"limit": {
 				"count": 0,
 				"time": "0s",
-				"rate": 0
+				"rate": 0,
+				"taskMicroDelay": 0
 			},
 			"servers": "127.0.0.1",
 			"metricsPeriodSec": 10
