@@ -748,6 +748,18 @@
 													</div>
 												</div>
 
+												<div class="form-group">
+													<label for="backup-load.limit.rate" class="col-sm-3 control-label">
+														Rate limit
+													</label>
+													<div class="col-sm-9">
+														<input type="text" id="backup-load.limit.rate" class="form-control"
+																data-pointer="load.limit.rate"
+																value="${rt:getString(runTimeConfig, 'load.limit.rate')}"/>
+
+													</div>
+												</div>
+
 												<div class="client">
 													<div class="form-group">
 														<label for="backup-load.servers" class="col-sm-3 control-label">
