@@ -662,7 +662,7 @@ function charts(chartsArray) {
 		runScenarioName: "scenario.name"
 	};
 	//
-	var CRITICAL_DOTS_COUNT = 1000;
+	var CRITICAL_DOTS_COUNT = 10;
 	//
 	var colorsList18 = [
 		"#0000CD",
@@ -977,7 +977,7 @@ function charts(chartsArray) {
 							}
 						});
 						var startXCoord = slicedArray.shift().x;
-						var endXCoord = slicedArray.pop().x;
+						var endXCoord = slicedArray[step/2].x;
 						if (minElement.x < maxElement.x) {
 							newDotsArray.push({x: startXCoord, y: minElement.y});
 							newDotsArray.push({x: endXCoord, y: maxElement.y});
