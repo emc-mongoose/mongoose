@@ -662,7 +662,7 @@ function charts(chartsArray) {
 		runScenarioName: "scenario.name"
 	};
 	//
-	var CRITICAL_DOTS_COUNT = 10;
+	var CRITICAL_DOTS_COUNT = 1000;
 	//
 	var colorsList18 = [
 		"#0000CD",
