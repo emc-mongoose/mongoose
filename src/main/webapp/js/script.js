@@ -662,7 +662,7 @@ function charts(chartsArray) {
 		runScenarioName: "scenario.name"
 	};
 	//
-	var CRITICAL_DOTS_COUNT = 1000;
+	var CRITICAL_DOTS_COUNT = 10;
 	//
 	var colorsList18 = [
 		"#0000CD",
@@ -986,7 +986,7 @@ function charts(chartsArray) {
 							newDotsArray.push({x: endXCoord, y: minElement.y});
 						}
 						startOffset = endOffset;
-                        if (endOffset + step > CRITICAL_DOTS_COUNT) {
+                        if (endOffset < CRITICAL_DOTS_COUNT && endOffset + step > CRITICAL_DOTS_COUNT) {
                             var start = endOffset;
                             while (start < CRITICAL_DOTS_COUNT) {
                                 newDotsArray.push({x: d.values[start].x, y: d.values[start].y});
@@ -1530,7 +1530,7 @@ function charts(chartsArray) {
 											newDotsArray.push({x: endXCoord, y: minElement.y});
 										}
 										startOffset = endOffset;
-                                        if (endOffset + step > CRITICAL_DOTS_COUNT) {
+                                        if (endOffset < CRITICAL_DOTS_COUNT && endOffset + step > CRITICAL_DOTS_COUNT) {
                                             var start = endOffset;
                                             while (start < CRITICAL_DOTS_COUNT) {
                                                 newDotsArray.push({x: d.values[start].x, y: d.values[start].y});
