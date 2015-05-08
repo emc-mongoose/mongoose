@@ -81,7 +81,9 @@ implements Producer<T> {
 			//
 			if (RunTimeConfig.getContext().isEnabledDataRandom()) {
 				reader = new RandomFileReader(fPath);
-			}else reader = new SimpleFileReader(fPath);
+			} else {
+				reader = new SimpleFileReader(fPath);
+			}
 			//
 			do {
 				if ((nextDataString = reader.getDataItemString()) == null){
