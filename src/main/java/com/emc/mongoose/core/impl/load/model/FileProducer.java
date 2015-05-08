@@ -80,7 +80,7 @@ implements Producer<T> {
 			);
 			//
 			if (RunTimeConfig.getContext().isEnabledDataRandom()) {
-				reader = new RandomFileReader(fPath);
+				reader = new RandomFileReader(fPath, maxCount);
 			} else {
 				reader = new SimpleFileReader(fPath);
 			}

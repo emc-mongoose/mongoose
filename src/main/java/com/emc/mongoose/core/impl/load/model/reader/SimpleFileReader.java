@@ -25,7 +25,7 @@ extends FileReader{
 	public final String getDataItemString()
 	throws IOException {
 		final String nextLine = fReader.readLine();
-		if (nextLine != null){
+		if (nextLine != null && !nextLine.isEmpty()){
 			LOG.trace(LogUtil.MSG, "Got next line #{}", nextLine);
 			return nextLine;
 		} else {

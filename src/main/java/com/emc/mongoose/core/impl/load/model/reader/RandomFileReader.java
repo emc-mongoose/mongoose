@@ -24,13 +24,14 @@ extends FileReader{
 	final Random random = new Random();
 
 
-	public RandomFileReader(final Path fPath)
+	public RandomFileReader(final Path fPath, final long maxCount)
 	throws IOException
 	{
 		super(fPath);
 		final int batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
 		LOG.trace(LogUtil.MSG, "Read data items randomly");
-		while ((nextLine = fReader.readLine()) != null && dataItemsList.size() < batchSize){
+		final long sizeLimit = Math.min(batchSize, maxCount);
+		while ((nextLine = fReader.readLine()) != null && !nextLine.isEmpty() && dataItemsList.size() < sizeLimit){
 			LOG.trace(LogUtil.MSG, "Got next line #{}", nextLine);
 			dataItemsList.add(nextLine);
 		}
@@ -41,11 +42,10 @@ extends FileReader{
 	throws IOException
 	{
 		if (!dataItemsList.isEmpty()) {
-			if (nextLine != null ) {
+			if (nextLine != null && !nextLine.isEmpty()) {
 				LOG.trace(LogUtil.MSG, "Got next line #{}", nextLine);
 				dataItemsList.add(nextLine);
 				nextLine = fReader.readLine();
-
 			}
 			return dataItemsList.remove(random.nextInt(dataItemsList.size()));
 		} else {
