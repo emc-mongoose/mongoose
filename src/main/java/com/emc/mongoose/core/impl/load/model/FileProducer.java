@@ -79,7 +79,7 @@ implements Producer<T> {
 				consumer.getMaxCount(), consumer.toString()
 			);
 			//
-			if (RunTimeConfig.getContext().isEnabledDataRandomRead()) {
+			if (RunTimeConfig.getContext().isEnabledDataRandom()) {
 				reader = new RandomFileReader(fPath);
 			}else reader = new SimpleFileReader(fPath);
 			//

@@ -472,7 +472,7 @@ implements Externalizable {
 		return getString("remote.webui.wsTimeOut.unit");
 	}
 	//
-	public final boolean isEnabledDataRandomRead() {return  getBoolean("data.src.random.enabled");}
+	public final boolean isEnabledDataRandom() {return  getBoolean("data.src.random.enabled");}
 	public final int getDataRandomBatchSize() {return getInt("data.src.random.batchSize");}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
