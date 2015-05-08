@@ -471,6 +471,9 @@ implements Externalizable {
 	public final String getWebUIWSTimeOutUnit() {
 		return getString("remote.webui.wsTimeOut.unit");
 	}
+	//
+	public final boolean isEnabledDataRandomRead() {return  getBoolean("data.src.random.enabled");}
+	public final int getDataRandomBatchSize() {return getInt("data.src.random.batchSize");}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)

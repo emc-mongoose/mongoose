@@ -405,7 +405,7 @@ task commonJar(type: Jar) {
 	manifest {
 		from sharedManifest
 		attributes (
-				'Implementation-Title': rootProject.name + "-core-api",
+				'Implementation-Title': rootProject.name + "-common",
 				'Class-Path': configurations.commonRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
