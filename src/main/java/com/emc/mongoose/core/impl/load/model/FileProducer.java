@@ -8,23 +8,21 @@ import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Producer;
 //mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.load.model.reader.FileReader;
+import com.emc.mongoose.core.impl.load.model.reader.RandomFileReader;
+import com.emc.mongoose.core.impl.load.model.reader.SimpleFileReader;
 import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -72,79 +70,42 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		long dataItemsCount = 0;
-		try(BufferedReader fReader = Files.newBufferedReader(fPath, StandardCharsets.UTF_8)) {
-			String nextLine;
+		try {
+			FileReader reader;
+			String nextDataString;
 			T nextData;
 			LOG.debug(
 				LogUtil.MSG, "Going to produce up to {} data items for consumer \"{}\"",
 				consumer.getMaxCount(), consumer.toString()
 			);
-			if (RunTimeConfig.getContext().isEnabledDataRandomRead()){
-				LOG.trace(LogUtil.MSG, "Read data items randomly");
-				final int batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
-				final Random random = new Random();
-				int nextDataIndex;
-				final List<String> dataRandomList = new ArrayList<>();
-				nextLine = fReader.readLine();
-				do {
-					while (nextLine != null &&
-						dataRandomList.size() < Math.min(batchSize, (maxCount - dataItemsCount))
-						){
-						dataRandomList.add(nextLine);
-						nextLine = fReader.readLine();
-					}
-					LOG.trace(LogUtil.MSG, "Get {} data items for random read", dataRandomList.size());
-					while (!dataRandomList.isEmpty()){
-						nextDataIndex = random.nextInt(dataRandomList.size());
-						nextData = dataItemConstructor.newInstance(dataRandomList.remove(nextDataIndex));
-						try {
-							producerExecSvc.submit(
-								SubmitTask.getInstance(consumer, nextData)
-							);
-							dataItemsCount++;
-						} catch (final Exception e) {
-							if (
-								consumer.getMaxCount() > dataItemsCount &&
-									!RejectedExecutionException.class.isInstance(e)
-								) {
-								LogUtil.failure(LOG, Level.WARN, e, "Failed to submit data item");
-								break;
-							} else {
-								LogUtil.failure(LOG, Level.DEBUG, e, "Failed to submit data item");
-							}
-						}
-					}
-				} while (!isInterrupted() && dataItemsCount < maxCount && nextLine != null);
-			}else {
-				do {
-					//
-					nextLine = fReader.readLine();
-					LOG.trace(LogUtil.MSG, "Got next line #{}: \"{}\"", dataItemsCount, nextLine);
-					//
-					if (nextLine == null || nextLine.isEmpty()) {
-						LOG.debug(LogUtil.MSG, "No next line, exiting");
+			//
+			if (RunTimeConfig.getContext().isEnabledDataRandomRead()) {
+				reader = new RandomFileReader(fPath);
+			}else reader = new SimpleFileReader(fPath);
+			//
+			do {
+				if ((nextDataString = reader.getDataItemString()) == null){
+					break;
+				}
+				nextData = dataItemConstructor.newInstance(nextDataString);
+				//
+				try {
+					producerExecSvc.submit(
+						SubmitTask.getInstance(consumer, nextData)
+					);
+					dataItemsCount++;
+				} catch (final Exception e) {
+					if (
+						consumer.getMaxCount() > dataItemsCount &&
+							!RejectedExecutionException.class.isInstance(e)
+						) {
+						LogUtil.failure(LOG, Level.WARN, e, "Failed to submit data item");
 						break;
 					} else {
-						nextData = dataItemConstructor.newInstance(nextLine);
-						try {
-							producerExecSvc.submit(
-								SubmitTask.getInstance(consumer, nextData)
-							);
-							dataItemsCount++;
-						} catch (final Exception e) {
-							if (
-								consumer.getMaxCount() > dataItemsCount &&
-									!RejectedExecutionException.class.isInstance(e)
-								) {
-								LogUtil.failure(LOG, Level.WARN, e, "Failed to submit data item");
-								break;
-							} else {
-								LogUtil.failure(LOG, Level.DEBUG, e, "Failed to submit data item");
-							}
-						}
+						LogUtil.failure(LOG, Level.DEBUG, e, "Failed to submit data item");
 					}
-				} while (!isInterrupted() && dataItemsCount < maxCount);
-			}
+				}
+			} while (!isInterrupted() && dataItemsCount < maxCount);
 		} catch(final IOException e) {
 			LogUtil.failure(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final Exception e) {
