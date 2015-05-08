@@ -11,7 +11,7 @@ import java.nio.file.Path;
 /**
  * Created by olga on 08.05.15.
  */
-public class SimpleFileReader
+public final class SimpleFileReader
 extends FileReader{
 
 	private final static Logger LOG = LogManager.getLogger();
@@ -22,10 +22,10 @@ extends FileReader{
 	}
 
 	@Override
-	public String getDataItemString()
+	public final String getDataItemString()
 	throws IOException {
-		String nextLine;
-		if ((nextLine = fReader.readLine()) != null){
+		final String nextLine = fReader.readLine();
+		if (nextLine != null){
 			LOG.trace(LogUtil.MSG, "Got next line #{}", nextLine);
 			return nextLine;
 		} else {
