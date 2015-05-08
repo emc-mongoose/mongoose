@@ -662,7 +662,7 @@ function charts(chartsArray) {
 		runScenarioName: "scenario.name"
 	};
 	//
-	var CRITICAL_DOTS_COUNT = 1000;
+	var CRITICAL_DOTS_COUNT = 996;
 	//
 	var colorsList18 = [
 		"#0000CD",
@@ -976,8 +976,8 @@ function charts(chartsArray) {
 								maxElement = c;
 							}
 						});
-						var startXCoord = slicedArray.shift().x;
-						var endXCoord = slicedArray.pop().x;
+						var startXCoord = slicedArray[0].x;
+						var endXCoord = slicedArray[step/2].x;
 						if (minElement.x < maxElement.x) {
 							newDotsArray.push({x: startXCoord, y: minElement.y});
 							newDotsArray.push({x: endXCoord, y: maxElement.y});
@@ -986,6 +986,13 @@ function charts(chartsArray) {
 							newDotsArray.push({x: endXCoord, y: minElement.y});
 						}
 						startOffset = endOffset;
+                        if (endOffset < CRITICAL_DOTS_COUNT && endOffset + step > CRITICAL_DOTS_COUNT) {
+                            var start = endOffset;
+                            while (start < CRITICAL_DOTS_COUNT) {
+                                newDotsArray.push({x: d.values[start].x, y: d.values[start].y});
+                                start++;
+                            }
+                        }
 						endOffset += step;
 					}
 					d.values = newDotsArray;
@@ -1513,8 +1520,8 @@ function charts(chartsArray) {
 												maxElement = v;
 											}
 										});
-										var startXCoord = slicedArray.shift().x;
-										var endXCoord = slicedArray.pop().x;
+										var startXCoord = slicedArray[0].x;
+										var endXCoord = slicedArray[step/2].x;
 										if (minElement.x < maxElement.x) {
 											newDotsArray.push({x: startXCoord, y: minElement.y});
 											newDotsArray.push({x: endXCoord, y: maxElement.y});
@@ -1523,6 +1530,13 @@ function charts(chartsArray) {
 											newDotsArray.push({x: endXCoord, y: minElement.y});
 										}
 										startOffset = endOffset;
+                                        if (endOffset < CRITICAL_DOTS_COUNT && endOffset + step > CRITICAL_DOTS_COUNT) {
+                                            var start = endOffset;
+                                            while (start < CRITICAL_DOTS_COUNT) {
+                                                newDotsArray.push({x: d.values[start].x, y: d.values[start].y});
+                                                start++;
+                                            }
+                                        }
 										endOffset += step;
 									}
 									c.values = newDotsArray;
