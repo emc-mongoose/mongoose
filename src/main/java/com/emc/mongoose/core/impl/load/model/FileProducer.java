@@ -70,8 +70,8 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		long dataItemsCount = 0;
+		FileReader reader = null;
 		try {
-			FileReader reader;
 			String nextDataString;
 			T nextData;
 			LOG.debug(
@@ -126,7 +126,12 @@ implements Producer<T> {
 					);
 				}
 				consumer.shutdown();
-			} catch(final Exception e) {
+				if (reader != null) {
+					reader.close();
+				}
+			} catch(final IOException e) {
+				LogUtil.failure(LOG, Level.WARN, e, "Failed to close file reader.");
+			}catch(final Exception e) {
 				LogUtil.failure(LOG, Level.WARN, e, "Failed to shut down the consumer");
 			}
 			LOG.debug(LogUtil.MSG, "Exiting");

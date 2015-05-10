@@ -21,4 +21,8 @@ public abstract class FileReader {
 
 	public abstract String getDataItemString()
 	throws IOException;
+
+	public final void close() throws IOException {
+		this.fReader.close();
+	}
 }
