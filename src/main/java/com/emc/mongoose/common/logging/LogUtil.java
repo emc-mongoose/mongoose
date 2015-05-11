@@ -143,7 +143,7 @@ public final class LogUtil {
 				LOG.debug(LogUtil.MSG, "Not all loads are closed, blocking the logging subsystem shutdown");
 				if (HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
 					try {
-						if (HOOKS_COND.await(10, TimeUnit.SECONDS)) {
+						if (HOOKS_COND.await(1000, TimeUnit.DAYS)) {
 							LOG.debug(LogUtil.MSG, "All load executors are closed");
 						} else {
 							LOG.debug(LogUtil.ERR, "Timeout while waiting the load executors to be closed");

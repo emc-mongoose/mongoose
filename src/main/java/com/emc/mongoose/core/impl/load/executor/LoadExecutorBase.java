@@ -30,6 +30,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
+import sun.rmi.runtime.Log;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
@@ -85,7 +86,8 @@ implements LoadExecutor<T> {
 	private final AtomicBoolean
 		isClosed = new AtomicBoolean(false),
 		isMaxCountSubmTries = new AtomicBoolean(false),
-		isMaxCountResults = new AtomicBoolean(false);
+		isMaxCountResults = new AtomicBoolean(false),
+		isLastTaskDone = new AtomicBoolean(false);
 	private final Lock lock = new ReentrantLock();
 	private final Condition condDoneOrInterrupted = lock.newCondition();
 	//
@@ -563,6 +565,7 @@ implements LoadExecutor<T> {
 			shutdown();
 		}
 		//
+		waitForTheLastTask();
 		interrupt();
 		//
 		if(isClosed.compareAndSet(false, true)) {
@@ -586,6 +589,25 @@ implements LoadExecutor<T> {
 				LogUtil.MSG,
 				"Not closing \"{}\" because it has been closed before already", getName()
 			);
+		}
+	}
+	//
+	private void waitForTheLastTask() {
+		if (isLastTaskDone.compareAndSet(false, true)) {
+			if (!RequestResultTask.IS_LAST_TASK_DONE.get()) {
+				try {
+					if (RequestResultTask.RESULT_TASKS_LOCK.tryLock(1, TimeUnit.SECONDS)) {
+						try {
+							LOG.info(LogUtil.MSG, "Waiting for the last task to be done");
+							RequestResultTask.TASKS_COND.await(1000, TimeUnit.DAYS);
+						} finally {
+							RequestResultTask.RESULT_TASKS_LOCK.unlock();
+						}
+					}
+				} catch (final InterruptedException e) {
+					LOG.debug(LogUtil.ERR, "Interrupted");
+				}
+			}
 		}
 	}
 	//
