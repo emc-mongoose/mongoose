@@ -8,10 +8,8 @@ import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
-import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.LogManager;

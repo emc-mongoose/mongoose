@@ -15,7 +15,6 @@ import com.emc.mongoose.server.api.persist.DataItemBufferSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
-import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 //
 import com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc;
 import com.emc.mongoose.server.impl.persist.TmpFileItemBufferSvc;
@@ -55,7 +54,7 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	@Override
 	public final String getName() {
-		return "//" + ServiceUtils.getHostAddr() + '/' + getClass().getPackage().getName();
+		return "//0.0.0.0/" + getClass().getPackage().getName();
 	}
 	//
 	@Override

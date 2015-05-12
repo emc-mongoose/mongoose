@@ -32,8 +32,14 @@ implements PeriodicTask<T[]> {
 	@Override
 	public final void run() {
 		try {
-			result.set(loadSvc.takeFrame());
-		} catch(final RemoteException e) {
+			final T[] nextFrame = loadSvc.takeFrame();
+			if(nextFrame != null) {
+				result.set(nextFrame);
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(LogUtil.MSG, "Got frame containing {} items", nextFrame.length);
+				}
+			}
+		} catch(final RemoteException | InterruptedException e) {
 			LogUtil.failure(LOG, Level.WARN, e, "Failed to fetch the frame");
 		}
 	}

@@ -194,7 +194,7 @@ implements WSRequestConfig<T> {
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int)runTimeConfig.getDataBufferSize())
+			.setBufferSize((int) runTimeConfig.getDataBufferSize())
 			.build();
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()

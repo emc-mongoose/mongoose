@@ -207,15 +207,15 @@
 			"versioning": false
 		},
 		"remote": {
-			"port": {
+			"connection" : {
+				"timeoutMilliSec": 1000000,
+				"poolTimeoutMilliSec": 1000000
+			},
+			"port" : {
 				"control": 1099,
 				"export": 1199,
 				"import": 1199,
 				"webui": 8080
-			},
-			"connection": {
-				"timeoutMilliSec": 1000000,
-				"poolTimeoutMilliSec": 1000000
 			},
 			"socket": {
 				"timeoutMilliSec": 1000000,

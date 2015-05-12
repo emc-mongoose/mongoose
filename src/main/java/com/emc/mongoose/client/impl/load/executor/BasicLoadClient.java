@@ -115,13 +115,16 @@ implements LoadClient<T> {
 		final long maxCount, final Producer<T> producer
 	) {
 		super(
-			Math.min(0x10, remoteLoadMap.size()), Math.min(0x10, remoteLoadMap.size()),
-			0, TimeUnit.SECONDS,
+			1, 1, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
 					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
 			)
 		);
+		setCorePoolSize(
+			Math.max(Runtime.getRuntime().availableProcessors(), remoteLoadMap.size())
+		);
+		setMaximumPoolSize(getCorePoolSize());
 		//
 		String t = null;
 		try {
@@ -567,8 +570,12 @@ implements LoadClient<T> {
 		if(!isShutdown()) {
 			LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, String.format("Interrupting %s...", name));
 			shutdown();
+		}
+		//
+		if(isAlive()) {
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
-				remoteLoadMap.size(), new NamingWorkerFactory(String.format("interrupt<%s>", getName()))
+				remoteLoadMap.size(),
+				new NamingWorkerFactory(String.format("interrupt<%s>", getName()))
 			);
 			for(final String addr : loadSvcAddrs) {
 				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
@@ -782,6 +789,25 @@ implements LoadClient<T> {
 		remoteLoadMap
 			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
 			.handleResult(task, status);
+	}
+	//
+	@Override
+	public final void shutdown() {
+		super.shutdown();
+		LOG.debug(LogUtil.MSG, "{}: shutdown invoked", getName());
+		try {
+			awaitTermination(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS);
+		} catch(final InterruptedException e) {
+			LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
+		} finally {
+			for(final String addr : remoteLoadMap.keySet()) {
+				try {
+					remoteLoadMap.get(addr).shutdown();
+				} catch(final RemoteException e) {
+					LogUtil.failure(LOG, Level.WARN, e, "Failed to shut down remote load service");
+				}
+			}
+		}
 	}
 	//
 	@Override

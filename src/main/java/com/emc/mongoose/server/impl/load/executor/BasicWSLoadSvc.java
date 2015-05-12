@@ -17,6 +17,7 @@ import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -82,19 +83,18 @@ implements WSLoadSvc<T> {
 		}
 	}
 	//
-	private final static Object[] EMPTY_FRAME = new Object[0];
-	//
 	@Override @SuppressWarnings("unchecked")
 	public final T[] takeFrame()
-	throws RemoteException {
-		final T[] recFrame;
+	throws RemoteException, InterruptedException {
+		T recFrame[] = null;
 		if(RecordFrameBuffer.class.isInstance(consumer)) {
 			recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
-		} else {
-			recFrame = (T[]) EMPTY_FRAME;
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "Returning {} data items records", recFrame.length);
+			LOG.trace(
+				LogUtil.MSG, "Returning {} data items records",
+				recFrame == null ? 0 : recFrame.length
+			);
 		}
 		return recFrame;
 	}

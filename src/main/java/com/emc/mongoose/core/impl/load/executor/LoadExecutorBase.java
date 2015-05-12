@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
@@ -84,8 +85,7 @@ implements LoadExecutor<T> {
 		counterResultHandle = new AtomicLong(0);
 	private final AtomicBoolean
 		isClosed = new AtomicBoolean(false),
-		isMaxCountSubmTries = new AtomicBoolean(false),
-		isMaxCountResults = new AtomicBoolean(false);
+		isMaxCountSubmTries = new AtomicBoolean(false);
 	private final Lock lock = new ReentrantLock();
 	private final Condition condDoneOrInterrupted = lock.newCondition();
 	//
@@ -503,12 +503,9 @@ implements LoadExecutor<T> {
 			);
 		} finally {
 			final long n = counterResultHandle.incrementAndGet();
-			if( // max count is reached OR all tasks from interrupted internal producer are done
-				n >= maxCount ||
-				producer != null && !producer.isAlive() && n >= counterSubm.getCount()
-			) {
+			if(n >= maxCount || isMaxCountSubmTries.get() && n >= counterSubm.getCount()) {
+				// max count is reached OR all tasks are done
 				LOG.debug(LogUtil.MSG, "{}: all {} task results has been obtained", name, n);
-				super.shutdown(); // prevent further scheduling of result handling tasks
 				if(!isClosed.get()) {
 					try {
 						if(
@@ -529,6 +526,8 @@ implements LoadExecutor<T> {
 						LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
 					}
 				}
+				//
+				super.shutdown(); // prevent further scheduling of result handling tasks
 			}
 		}
 	}
@@ -621,28 +620,24 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join(final long timeOutMilliSec)
 	throws RemoteException, InterruptedException {
-		if(isInterruptedFlag.get() || isMaxCountResults.get() || isClosed.get()) {
+		if(isShutdown() || isInterruptedFlag.get() || isClosed.get()) {
 			return;
 		}
 		//
 		long t = System.currentTimeMillis();
-		if (lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+		if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
 			try {
 				t = System.currentTimeMillis() - t; // the count of time wasted for locking
 				LOG.debug(
-						LogUtil.MSG, "{}: wait for the done condition at most for {}[ms]",
-						name, timeOutMilliSec - t
+					LogUtil.MSG, "{}: wait for the done condition at most for {}[ms]",
+					name, timeOutMilliSec - t
 				);
-				if (
-						condDoneOrInterrupted.await(
-								timeOutMilliSec - t, TimeUnit.MILLISECONDS
-						)
-						) {
+				if(condDoneOrInterrupted.await(timeOutMilliSec - t, TimeUnit.MILLISECONDS)) {
 					LOG.debug(LogUtil.MSG, "{}: join finished", name);
 				} else {
 					LOG.debug(
-							LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
-							name, getQueue().size(), getActiveCount()
+						LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
+						name, getQueue().size(), getActiveCount()
 					);
 				}
 			} finally {

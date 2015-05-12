@@ -164,7 +164,7 @@ implements Producer<T> {
 		} catch(final IOException e) {
 			LogUtil.failure(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final Exception e) {
-			e.printStackTrace(System.err);
+			//e.printStackTrace(System.err);
 			LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
 		} finally {
 			LOG.debug(LogUtil.MSG, "Produced {} data items", dataItemsCount);
