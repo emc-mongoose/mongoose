@@ -188,183 +188,183 @@ dependencies {
 
 	// common
 	commonCompile (
-			library.commons_configuration,
-			library.commons_lang,
-			library.commons_collections4,
-			library.httpcore_plus_nio,
-			library.log4j_api_plus_core,
-			library.jackson_core,
-			library.jackson_databind,
+		library.commons_configuration,
+		library.commons_lang,
+		library.commons_collections4,
+		library.httpcore_plus_nio,
+		library.log4j_api_plus_core,
+		library.jackson_core,
+		library.jackson_databind,
 	)
 	commonRuntime (
-			library.runtime_logging,
+		library.runtime_logging,
 	)
 
 	// core
 	coreApiCompile (
-			library.commons_configuration,
-			library.httpcore_plus_nio,
-			library.log4j_api,
+		library.commons_configuration,
+		library.httpcore_plus_nio,
+		library.log4j_api,
 	)
 	coreApiRuntime (
-			library.runtime_logging,
+		library.runtime_logging,
 	)
 
 	coreImplCompile (
-			library.commons_codec,
-			library.commons_configuration,
-			library.commons_collections4,
-			library.httpcore_plus_nio,
-			library.log4j_api,
-			library.metrics_core,
+		library.commons_codec,
+		library.commons_configuration,
+		library.commons_collections4,
+		library.httpcore_plus_nio,
+		library.log4j_api,
+		library.metrics_core,
 	)
 	coreImplRuntime(
-			library.runtime_logging,
+		library.runtime_logging,
 	)
 
 	// storage API adapters
 	storageAdapterAtmosCompile (
-			library.commons_codec,
-			library.commons_configuration,
-			library.commons_lang,
-			library.httpcore,
-			library.log4j_api,
+		library.commons_codec,
+		library.commons_configuration,
+		library.commons_lang,
+		library.httpcore,
+		library.log4j_api,
 	)
 	storageAdapterAtmosRuntime (
-			library.runtime_logging,
+		library.runtime_logging,
 	)
 
 	storageAdapterS3Compile (
-			library.commons_lang,
-			library.commons_configuration,
-			library.httpcore,
-			library.log4j_api,
+		library.commons_lang,
+		library.commons_configuration,
+		library.httpcore,
+		library.log4j_api,
 	)
 	storageAdapterS3Runtime (
-			library.runtime_logging,
+		library.runtime_logging,
 	)
 
 	storageAdapterSwiftCompile (
-			library.commons_lang,
-			library.commons_configuration,
-			library.httpcore,
-			library.log4j_api,
-			library.jackson_core
+		library.commons_lang,
+		library.commons_configuration,
+		library.httpcore,
+		library.log4j_api,
+		library.jackson_core,
 	)
 	storageAdapterSwiftRuntime (
-			library.runtime_logging,
+		library.runtime_logging,
 	)
 
 	// misc
 	serverApiCompile (
-			library.httpcore,
+		library.httpcore,
 	)
 	serverApiRuntime (
-			library.runtime_logging,
+		library.runtime_logging,
 	)
 
 	webserverCompile (
-			library.commons_configuration,
-			library.log4j_api,
-			library.jetty_svc,
+		library.commons_configuration,
+		library.log4j_api,
+		library.jetty_svc,
 	)
 	webserverRuntime (
-			library.runtime_logging,
-			library.runtime_jetty_svc,
+		library.runtime_logging,
+		library.runtime_jetty_svc,
 	)
 
 	// run modes
 
 	clientCompile (
-			library.commons_configuration,
-			library.httpcore,
-			library.log4j_api,
-			library.metrics_core,
+		library.commons_configuration,
+		library.httpcore,
+		library.log4j_api,
+		library.metrics_core,
 	)
 	clientRuntime (
-			library.runtime_logging,
-			library.slf4j_api,
+		library.runtime_logging,
+		library.slf4j_api,
 	)
 
 	serverImplCompile (
-			library.commons_collections4,
-			library.commons_configuration,
-			library.httpcore,
-			library.log4j_api,
+		library.commons_collections4,
+		library.commons_configuration,
+		library.httpcore,
+		library.log4j_api,
 	)
 	serverImplRuntime (
-			library.runtime_logging,
+		library.runtime_logging,
 	)
 
 	scenarioCompile (
-			library.commons_configuration,
-			library.log4j_api,
+		library.commons_configuration,
+		library.log4j_api,
 	)
 	scenarioRuntime (
-			library.jython,
-			//library.rhino,
-			library.runtime_logging,
+		library.jython,
+		//library.rhino,
+		library.runtime_logging,
 	)
 
 	storageMockCompile(
-			library.commons_codec,
-			library.commons_collections4,
-			library.commons_configuration,
-			library.httpcore_plus_nio,
-			library.log4j_api,
-			library.metrics_core,
+		library.commons_codec,
+		library.commons_collections4,
+		library.commons_configuration,
+		library.httpcore_plus_nio,
+		library.log4j_api,
+		library.metrics_core,
 	)
 	storageMockRuntime (
-			library.runtime_logging,
+		library.runtime_logging,
 	)
 
 	webuiCompile (
-			library.commons_collections4,
-			library.commons_configuration,
-			library.jackson_databind,
-			library.log4j_api_plus_core,
-			library.websockets,
+		library.commons_collections4,
+		library.commons_configuration,
+		library.jackson_databind,
+		library.log4j_api_plus_core,
+		library.websockets,
 	)
 	webuiRuntime (
-			library.runtime_logging,
-			library.runtime_jetty,
-			library.runtime_webapp,
-			library.ecj,
-			library.ant,
-			library.websocket_client,
-			library.websocket_common,
-			library.websocket_core,
-			library.websocket_server,
+		library.runtime_logging,
+		library.runtime_jetty,
+		library.runtime_webapp,
+		library.ecj,
+		library.ant,
+		library.websocket_client,
+		library.websocket_common,
+		library.websocket_core,
+		library.websocket_server,
 	)
 
 	// launcher
 	cliCompile (
-			library.commons_cli,
-			library.commons_configuration,
-			library.commons_lang,
-			library.log4j_api_plus_core,
+		library.commons_cli,
+		library.commons_configuration,
+		library.commons_lang,
+		library.log4j_api_plus_core,
 	)
 	cliRuntime (
-			library.runtime_logging,
+		library.runtime_logging,
 	)
 }
 
 configurations {
 	allRuntime.extendsFrom(
-			commonRuntime,
-			coreApiRuntime,
-			coreImplRuntime,
-			storageAdapterAtmosImplRuntime,
-			storageAdapterS3Runtime,
-			storageAdapterSwiftRuntime,
-			serverApiRuntime,
-			webserverRuntime,
-			clientRuntime,
-			scenarioRuntime,
-			serverImplRuntime,
-			storageMockRuntime,
-			webuiRuntime,
-			cliRuntime,
+		commonRuntime,
+		coreApiRuntime,
+		coreImplRuntime,
+		storageAdapterAtmosImplRuntime,
+		storageAdapterS3Runtime,
+		storageAdapterSwiftRuntime,
+		serverApiRuntime,
+		webserverRuntime,
+		clientRuntime,
+		scenarioRuntime,
+		serverImplRuntime,
+		storageMockRuntime,
+		webuiRuntime,
+		cliRuntime,
 	)
 }
 
@@ -775,6 +775,7 @@ idea {
 	module {
 		name = rootProject.name
 		jdkName = sourceCompatibility
+		scopes.PROVIDED.plus += [ configurations.allRuntime ]
 	}
 	project.ipr {
 		withXml { provider ->
