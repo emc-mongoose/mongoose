@@ -7,7 +7,6 @@ import org.apache.logging.log4j.core.appender.AppenderLoggingException;
 import org.apache.logging.log4j.core.appender.ManagerFactory;
 //
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -163,7 +162,10 @@ extends AbstractManager {
 			);
 			outStreamsMap.put(currRunId, newOutPutStream);
 			if(layout != null && (!flagAppend || !existedBefore)) {
-				newOutPutStream.write(layout.getHeader());
+				final byte header[] = layout.getHeader();
+				if(header != null) {
+					newOutPutStream.write(layout.getHeader());
+				}
 			}
 		} catch(final IOException e) {
 			e.printStackTrace(System.err);

@@ -174,7 +174,7 @@ public final class ServiceUtils {
 				final String svcName = svc.getName();
 				Naming.rebind(svcName, svc);
 				SVC_MAP.put(svcName, svc);
-				LOG.info(LogUtil.MSG, "New service bound: {}", svcName);
+				LOG.debug(LogUtil.MSG, "New service bound: {}", svcName);
 			} catch(final RemoteException e) {
 				LOG.error(LogUtil.ERR, "Failed to rebind the service", e);
 			} catch(final MalformedURLException e) {

@@ -32,8 +32,9 @@ import com.emc.mongoose.client.impl.load.executor.tasks.CountLimitWaitTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.FrameFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
-import com.emc.mongoose.core.impl.load.tasks.JoinLoadJobTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
+//
+import com.emc.mongoose.core.impl.load.tasks.JoinLoadJobTask;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
