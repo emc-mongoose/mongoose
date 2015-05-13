@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.mock.impl.request;
+package com.emc.mongoose.storage.mock.impl.cinderella.request;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //

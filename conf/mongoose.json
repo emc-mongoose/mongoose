@@ -199,8 +199,8 @@
 				"ioThreadsPerSocket": 100,
 				"capacity": 10000000,
 				"fault": {
-					"period": 0,
-					"sleepMilliSec": 1000
+					"connCacheSize": 0,
+					"periodSec": 10
 				}
 			},
 			"fsAccess": false,

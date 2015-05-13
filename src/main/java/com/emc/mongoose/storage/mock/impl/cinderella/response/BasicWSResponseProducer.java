@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.mock.impl.cinderella;
+package com.emc.mongoose.storage.mock.impl.cinderella.response;
 //
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
@@ -22,8 +22,8 @@ import java.io.OutputStream;
 /**
  * Created by olga on 12.02.15.
  */
-public final class BasicResponseProducer
-implements HttpAsyncResponseProducer, Reusable<BasicResponseProducer> {
+public final class BasicWSResponseProducer
+implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -114,16 +114,16 @@ implements HttpAsyncResponseProducer, Reusable<BasicResponseProducer> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Reusable implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static InstancePool<BasicResponseProducer> POOL = new InstancePool<>(
-		BasicResponseProducer.class
+	private final static InstancePool<BasicWSResponseProducer> POOL = new InstancePool<>(
+		BasicWSResponseProducer.class
 	);
 	//
-	public static BasicResponseProducer getInstance(final HttpResponse response) {
+	public static BasicWSResponseProducer getInstance(final HttpResponse response) {
 		return POOL.take(response);
 	}
 	//
 	@Override
-	public final Reusable<BasicResponseProducer> reuse(final Object... args)
+	public final Reusable<BasicWSResponseProducer> reuse(final Object... args)
 	throws IllegalArgumentException, IllegalStateException {
 		if(args != null) {
 			if(args.length > 0) {

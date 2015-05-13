@@ -151,8 +151,8 @@
 					"type": "runIdFile",
 					"fileName": "perf.avg.csv",
 					"PatternLayout": {
-						"header": "\"DateTimeISO8601\", \"LoadId\",\"TypeAPI\",\"TypeLoad\",\"CountConn\",\"CountNode\",\"CountSrv\", \"CountSucc\",\"CountPending\",\"CountFail\", \"MicroLatencyAvg\",\"MicroLatencyMin\",\"MicroLatencyMed\",\"MicroLatencyMax\", \"TPAvg\",\"TP1Min\",\"TP5Min\",\"TP15Min\", \"BWAvg\",\"BW1Min\",\"BW5Min\",\"BW15Min\"\n",
-						"pattern": "\"%d{ISO8601}{GMT+0}\", %replace{%t}{([\\d]+)\\-([A-Za-z0-9]+)\\-([CreateRdDlUpAn]+)[\\d]*\\-([\\d]*)x([\\d]*)x?([\\d]*)[\\S]*}{\"$1\",\"$2\",\"$3\",\"$4\",\"$5\",\"$6\"}, %replace{%m}{count=\\((\\d+)/(\\d+)/(\\d+)\\);[\\s]+latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\); TP\\[/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\); BW\\[MB/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\)}{\"$1\",\"$2\",\"$3\", \"$4\",\"$5\",\"$6\",\"$7\", \"$8\",\"$9\",\"$10\",\"$11\", \"$12\",\"$13\",\"$14\",\"$15\"}%n",
+						"header": "DateTimeISO8601,LoadId,TypeAPI,TypeLoad,CountConn,CountNode,CountLoadServer,CountSucc,CountPending,CountFail,LatencyAvg[us],LatencyMin[us],LatencyMed[us],LatencyMax[us],TPAvg,TP1Min,TP5Min,TP15Min,BWAvg[MB/s],BW1Min[MB/s],BW5Min[MB/s],BW15Min[MB/s]\n",
+						"pattern": "\"%d{ISO8601}{GMT+0}\",%replace{%t}{([\\d]+)\\-([A-Za-z0-9]+)\\-([CreateRdDlUpAn]+)[\\d]*\\-([\\d]*)x([\\d]*)x?([\\d]*)[\\S]*}{$1,$2,$3,$4,$5,$6},%replace{%m}{count=\\((\\d+)/(\\-?\\d+)/(\\d+)\\);[\\s]+latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\);[\\s]+TP\\[/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+BW\\[MB/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\)}{$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15}%n",
 						"noConsoleNoAnsi": "true"
 					},
 					"MarkerFilter": {
@@ -165,8 +165,8 @@
 					"type": "runIdFile",
 					"fileName": "perf.sum.csv",
 					"PatternLayout": {
-						"header": "\"DateTimeISO8601\", \"LoadId\",\"TypeAPI\",\"TypeLoad\",\"CountConn\",\"CountNode\",\"CountSrv\", \"CountSucc\",\"CountFail\", \"MicroLatencyAvg\",\"MicroLatencyMin\",\"MicroLatencyMed\",\"MicroLatencyMax\", \"TPAvg\",\"TP1Min\",\"TP5Min\",\"TP15Min\", \"BWAvg\",\"BW1Min\",\"BW5Min\",\"BW15Min\"\n",
-						"pattern": "\"%d{ISO8601}{GMT+0}\", %replace{%m}{\"([\\d]+)\\-([A-Za-z0-9]+)\\-([CreateRdDlUpAn]+)[\\d]*\\-([\\d]*)x([\\d]*)x?([\\d]*)\"[\\s]+summary:[\\s]+count=\\((\\d+)/(\\d+)\\);[\\s]+latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\);[\\s]+TP\\[/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+BW\\[MB/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\)}{\"$1\",\"$2\",\"$3\",\"$4\",\"$5\",\"$6\", \"$7\",\"$8\", \"$9\",\"$10\",\"$11\",\"$12\", \"$13\",\"$14\",\"$15\",\"$16\", \"$17\",\"$18\",\"$19\",\"$20\"}%n",
+						"header": "DateTimeISO8601,LoadId,TypeAPI,TypeLoad,CountConn,CountNode,CountLoadServer,CountSucc,CountFail,LatencyAvg[us],LatencyMin[us],LatencyMed[us],LatencyMax[us],TPAvg,TP1Min,TP5Min,TP15Min,BWAvg[MB/s],BW1Min[MB/s],BW5Min[MB/s],BW15Min[MB/s]\n",
+						"pattern": "\"%d{ISO8601}{GMT+0}\",%replace{%m}{([\\d]+)\\-([A-Za-z0-9]+)\\-([CreateRdDlUpAn]+)[\\d]*\\-([\\d]*)x([\\d]*)x?([\\d]*)[\\s]+summary:[\\s]+count=\\((\\d+)/(\\d+)\\);[\\s]+latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\);[\\s]+TP\\[/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+BW\\[MB/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\)}{$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20}%n",
 						"noConsoleNoAnsi": "true"
 					},
 					"Filters": {
@@ -190,7 +190,7 @@
 					"type": "runIdFile",
 					"fileName": "perf.trace.csv",
 					"PatternLayout": {
-						"header": "Thread,TargetNode,DataId,DataSize,StatusCode,ReqMicroTimeStart,MicroLatency,MicroDuration\n",
+						"header": "Thread,TargetNode,DataItemId,DataItemSize,StatusCode,ReqTimeStart[us],Latency[us],Duration[us]\n",
 						"pattern": "%t,%m%n"
 					},
 					"Filters": {

@@ -1,24 +1,16 @@
-package com.emc.mongoose.storage.mock.impl.request;
-//
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.JmxReporter;
-import com.codahale.metrics.Meter;
-import com.codahale.metrics.MetricRegistry;
+package com.emc.mongoose.storage.mock.impl.cinderella.request;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
-import com.emc.mongoose.storage.mock.impl.cinderella.BasicRequestConsumer;
-import com.emc.mongoose.storage.mock.impl.cinderella.BasicResponseProducer;
-import com.emc.mongoose.storage.mock.impl.cinderella.Cinderella;
+import com.emc.mongoose.storage.mock.impl.cinderella.response.BasicWSResponseProducer;
+import com.emc.mongoose.storage.mock.impl.cinderella.WSRequestMetrics;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -41,12 +33,10 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import javax.management.MBeanServer;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 /**
@@ -56,92 +46,20 @@ public abstract class WSRequestHandlerBase
 implements HttpAsyncRequestHandler<HttpRequest> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static int RING_OFFSET_RADIX = RunTimeConfig.getContext().getDataRadixOffset();
-	// metrics section start
-	private final static MetricRegistry METRICS = new MetricRegistry();
-	private final static MBeanServer MBEAN_SRV = ServiceUtils.getMBeanServer(
-		RunTimeConfig.getContext().getRemotePortExport()
-	);
-	private final static JmxReporter METRICS_REPORTER = JmxReporter.forRegistry(METRICS)
-		.convertDurationsTo(TimeUnit.SECONDS)
-		.convertRatesTo(TimeUnit.SECONDS)
-		.registerWith(MBEAN_SRV)
-		.build();
+	//
 	protected final static String
-		METRIC_COUNT = "count",
-		ALL_METHODS = "all",
 		METHOD_PUT = "put",
 		METHOD_GET = "get",
 		METHOD_POST = "post",
 		METHOD_HEAD = "head",
 		METHOD_DELETE = "delete",
 		METHOD_TRACE = "trace";
-	private final static Counter
-		COUNT_SUCC_CREATE = METRICS.counter(
-			MetricRegistry.name(
-				Cinderella.class, String.valueOf(IOTask.Type.CREATE), METRIC_COUNT,
-				LoadExecutor.METRIC_NAME_SUCC
-			)
-		),
-		COUNT_SUCC_READ = METRICS.counter(
-			MetricRegistry.name(
-				Cinderella.class, String.valueOf(IOTask.Type.READ), METRIC_COUNT,
-				LoadExecutor.METRIC_NAME_SUCC
-			)
-		),
-		COUNT_SUCC_DELETE = METRICS.counter(
-			MetricRegistry.name(
-				Cinderella.class, String.valueOf(IOTask.Type.DELETE), METRIC_COUNT,
-				LoadExecutor.METRIC_NAME_SUCC
-			)
-		),
-		COUNTER_FAIL_CREATE = METRICS.counter(
-			MetricRegistry.name(
-				Cinderella.class, String.valueOf(IOTask.Type.CREATE), METRIC_COUNT,
-				LoadExecutor.METRIC_NAME_FAIL
-			)
-		), COUNTER_FAIL_READ = METRICS.counter(
-		MetricRegistry.name(
-			Cinderella.class, String.valueOf(IOTask.Type.READ), METRIC_COUNT,
-			LoadExecutor.METRIC_NAME_FAIL
-		)
-	);
-	private final static Meter
-		BW_ALL = METRICS.meter(
-			MetricRegistry.name(Cinderella.class, ALL_METHODS, LoadExecutor.METRIC_NAME_BW)
-		),
-		BW_CREATE = METRICS.meter(
-			MetricRegistry.name(
-				Cinderella.class, String.valueOf(IOTask.Type.CREATE), LoadExecutor.METRIC_NAME_BW
-			)
-		),
-		BW_READ = METRICS.meter(
-			MetricRegistry.name(
-				Cinderella.class, String.valueOf(IOTask.Type.READ), LoadExecutor.METRIC_NAME_BW
-			)
-		),
-		TP_ALL = METRICS.meter(
-			MetricRegistry.name(
-				Cinderella.class, ALL_METHODS, LoadExecutor.METRIC_NAME_TP
-			)
-		),
-		TP_CREATE = METRICS.meter(
-			MetricRegistry.name(
-				Cinderella.class, String.valueOf(IOTask.Type.CREATE), LoadExecutor.METRIC_NAME_TP
-			)
-		),
-		TP_READ = METRICS.meter(
-			MetricRegistry.name(
-				Cinderella.class, String.valueOf(IOTask.Type.READ), LoadExecutor.METRIC_NAME_TP
-			)
-		);
-	static {
-		METRICS_REPORTER.start();
-	}
-	// metrics section end
+	//
+	private final static int RING_OFFSET_RADIX = RunTimeConfig.getContext().getDataRadixOffset();
 	private final static AtomicLong NEXT_OFFSET = new AtomicLong(
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
+	public final static WSRequestMetrics METRICS = new WSRequestMetrics(RunTimeConfig.getContext());
 	//
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
@@ -158,7 +76,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	public final HttpAsyncRequestConsumer<HttpRequest> processRequest(
 		final HttpRequest request, final HttpContext context
 	) throws HttpException, IOException {
-		return BasicRequestConsumer.getInstance();
+		return BasicWSRequestConsumer.getInstance();
 	}
 	//
 	@Override
@@ -168,7 +86,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	) {
 		// load rate limitation algorithm
 		if(rateLimit > 0) {
-			if(TP_ALL.getMeanRate() > rateLimit) {
+			if(METRICS.getMeanRate() > rateLimit) {
 				try {
 					Thread.sleep(lastMilliDelay.incrementAndGet());
 				} catch(final InterruptedException e) {
@@ -188,7 +106,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		//
 		handleActually(httpRequest, httpResponse, method, requestURI, dataId);
 		// done
-		httpExchange.submitResponse(BasicResponseProducer.getInstance(httpResponse));
+		httpExchange.submitResponse(BasicWSResponseProducer.getInstance(httpResponse));
 	}
 	//
 	protected abstract void handleActually(
@@ -234,21 +152,17 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		try {
 			httpResponse.setStatusCode(HttpStatus.SC_OK);
 			final WSObjectMock dataObject = writeDataObject(httpRequest, dataId);
-			COUNT_SUCC_CREATE.inc();
-			BW_CREATE.mark(dataObject.getSize());
-			BW_ALL.mark(dataObject.getSize());
-			TP_CREATE.mark();
-			TP_ALL.mark();
+			METRICS.markCreate(dataObject.getSize());
 		} catch(final HttpException e) {
 			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			LogUtil.failure(LOG, Level.ERROR, e, "Put method failure");
-			COUNTER_FAIL_CREATE.inc();
+			METRICS.markCreate(-1);
 		} catch(final NumberFormatException e){
 			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			LogUtil.failure(
 				LOG, Level.ERROR, e, "Put method failure.Data offset doesn't decode."
 			);
-			COUNTER_FAIL_CREATE.inc();
+			METRICS.markCreate(-1);
 		}
 	}
 	//
@@ -259,18 +173,14 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(LogUtil.ERR, String.format("No such object: %s", dataId));
 			}
-			COUNTER_FAIL_READ.inc();
+			METRICS.markRead(-1);
 		} else {
 			response.setStatusCode(HttpStatus.SC_OK);
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(LogUtil.MSG, String.format("Send data object with ID: %s", dataId));
 			}
 			response.setEntity(dataObject);
-			COUNT_SUCC_READ.inc();
-			BW_ALL.mark(dataObject.getSize());
-			BW_READ.mark(dataObject.getSize());
-			TP_ALL.mark();
-			TP_READ.mark();
+			METRICS.markRead(dataObject.getSize());
 		}
 	}
 	//
@@ -279,7 +189,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			LOG.trace(LogUtil.MSG, "Delete data object: response OK");
 		}
 		httpResponse.setStatusCode(HttpStatus.SC_OK);
-		COUNT_SUCC_DELETE.inc();
+		METRICS.markDelete();
 	}
 	//
 	private WSObjectMock writeDataObject(final HttpRequest request, final String dataID)

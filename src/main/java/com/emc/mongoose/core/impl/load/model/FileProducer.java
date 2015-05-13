@@ -83,7 +83,7 @@ implements Producer<T> {
 							@Override
 							public final void submit(final T data) {
 								sizeSum += data.getSize();
-								count++;
+								count ++;
 								approxDataItemsSize = sizeSum / count;
 							}
 							//
@@ -112,6 +112,8 @@ implements Producer<T> {
 					}
 				}
 			};
+			//
+			// TODO randomize the lines if necessary
 		}
 	}
 	//

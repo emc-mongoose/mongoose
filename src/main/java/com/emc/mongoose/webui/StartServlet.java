@@ -169,7 +169,7 @@ public final class StartServlet extends CommonServlet {
 				//
 				LOG.debug(LogUtil.MSG, message);
 				try {
-					new Cinderella().run();
+					new Cinderella(runTimeConfig).run();
 				} catch (final IOException e) {
 					LogUtil.failure(LOG, Level.FATAL, e, "Failed run Cinderella");
 				}

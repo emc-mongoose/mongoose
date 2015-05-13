@@ -420,12 +420,12 @@ implements Externalizable {
 		return getInt("storage.mock.ioThreadsPerSocket");
 	}
 	//
-	public final int getStorageMockFaultSleepMilliSec() {
-		return getInt("storage.mock.fault.sleepMilliSec");
+	public final int getStorageMockFaultPeriodSec() {
+		return getInt("storage.mock.fault.periodSec");
 	}
 	//
-	public final int getStorageMockFaultPeriod() {
-		return getInt("storage.mock.fault.period");
+	public final int getStorageMockFaultConnCacheSize() {
+		return getInt("storage.mock.fault.connCacheSize");
 	}
 	//
 	public final String getDataBufferRingSeed() {

@@ -4,9 +4,13 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 //
+import org.apache.commons.collections4.queue.CircularFifoQueue;
+//
 import org.apache.http.config.ConnectionConfig;
+//
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
 import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
+import org.apache.http.nio.NHttpConnection;
 import org.apache.http.nio.NHttpServerConnection;
 import org.apache.http.nio.reactor.IOSession;
 //
@@ -15,9 +19,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
+import java.util.Queue;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 /**
  * Created by olga on 04.02.15.
  */
@@ -26,51 +31,59 @@ extends DefaultNHttpServerConnectionFactory {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final AtomicInteger counter = new AtomicInteger(0);
-	private final ExecutorService
-		connectionPool = Executors.newFixedThreadPool(10, new NamingWorkerFactory("connKiller"));
-	private final static int FAULT_SLEEP_MILLI_SEC = RunTimeConfig.getContext().getStorageMockFaultSleepMilliSec();
-	private final static int FAULT_PERIOD = RunTimeConfig.getContext().getStorageMockFaultPeriod();
+	private final Queue<NHttpServerConnection> connCache;
+	private final ScheduledExecutorService connKillExecutor;
+	private final int connCacheSize, connKillPeriodSec;
 	//
-	public FaultingConnectionFactory(final ConnectionConfig config) {
+	public FaultingConnectionFactory(
+		final RunTimeConfig runTimeConfig, final ConnectionConfig config
+	) {
 		super(config);
+		connKillExecutor = Executors.newScheduledThreadPool(
+			1, new NamingWorkerFactory("connKiller")
+		);
+		connCacheSize = runTimeConfig.getStorageMockFaultConnCacheSize();
+		connCache = new CircularFifoQueue<>(connCacheSize);
+		connKillPeriodSec = runTimeConfig.getStorageMockFaultPeriodSec();
+		connKillExecutor.scheduleAtFixedRate(
+			new FailSomeConnectionsTask(connCache),
+			connKillPeriodSec, connKillPeriodSec, TimeUnit.SECONDS
+		);
 	}
 	//
 	@Override
 	public final DefaultNHttpServerConnection createConnection(final IOSession session) {
 		final DefaultNHttpServerConnection connection = super.createConnection(session);
-		if (FAULT_PERIOD > 0 && (counter.incrementAndGet() % FAULT_PERIOD) == 0 ){
-			LOG.trace(
-				LogUtil.MSG, "The connection {} is submitted to be possibly broken", connection
-			);
-			connectionPool.submit(new FailConnectionTask(connection));
+		if(connCacheSize > 0 && connCache.add(connection)) {
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(LogUtil.MSG, "Added the connection \"{}\" to the cache", connection);
+			}
 		}
 		return connection;
 	}
 	///////////////////////////////////////////////////////////////////////////////
-	private final static class FailConnectionTask
+	private final static class FailSomeConnectionsTask
 	implements Runnable {
 		//
-		private final NHttpServerConnection connection;
+		private final Queue<NHttpServerConnection> connCache;
 		//
-		public FailConnectionTask(final NHttpServerConnection connection) {
-			this.connection = connection;
+		public FailSomeConnectionsTask(final Queue<NHttpServerConnection> connCache) {
+			this.connCache = connCache;
 		}
 		//
 		@Override
 		public final void run() {
-			try {
-				Thread.sleep(FAULT_SLEEP_MILLI_SEC);
-				if(connection.isOpen()) {
-					connection.close();
-					LOG.trace(LogUtil.MSG, "The connection {} is closed", connection);
-				} else {
-					LOG.trace(LogUtil.MSG, "The connection {} is already closed", connection);
+			for(final NHttpServerConnection connection : connCache) {
+				try {
+					if(NHttpConnection.ACTIVE == connection.getStatus()) {
+						connection.close();
+					}
+				} catch (final IOException e) {
+					LogUtil.failure(
+						LOG, Level.WARN, e,
+						String.format("Failed to close the connection \"%s\"", connection)
+					);
 				}
-			} catch (final IOException e) {
-				LogUtil.failure(LOG, Level.ERROR, e, "Failed to fail the connection");
-			} catch (final InterruptedException e) {
-				LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
 			}
 		}
 	}
