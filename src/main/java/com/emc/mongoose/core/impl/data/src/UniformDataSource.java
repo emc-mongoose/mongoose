@@ -176,13 +176,13 @@ implements DataSource {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final synchronized byte[] getBytes(final int layerNum) {
+	public final synchronized byte[] getBytes(final int layerIndex) {
 		final int layerCount = byteLayers.size();
-		if(layerNum >= layerCount) {
+		if(layerIndex >= layerCount) {
 			ByteBuffer prevLayer = byteLayers.get(layerCount - 1), nextLayer;
 			long prevSeed, nextSeed;
 			final int ringSize = prevLayer.array().length;
-			for(int i = layerCount; i <= layerNum; i ++) {
+			for(int i = layerCount; i <= layerIndex; i ++) {
 				nextLayer = ByteBuffer.allocate(ringSize);
 				prevSeed = prevLayer.getLong(0);
 				nextSeed = Long.reverse(nextWord(Long.reverseBytes(prevSeed)));
@@ -193,7 +193,7 @@ implements DataSource {
 			}
 			LOG.debug(LogUtil.MSG, "New layer #{}", byteLayers.size() - 1);
 		}
-		return byteLayers.get(layerNum).array();
+		return byteLayers.get(layerIndex).array();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }

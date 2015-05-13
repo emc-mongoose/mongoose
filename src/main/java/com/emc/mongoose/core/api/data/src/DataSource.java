@@ -18,5 +18,5 @@ extends Externalizable {
 	void fromString(final String v)
 	throws IOException;
 	//
-	byte[] getBytes(final int layerNum);
+	byte[] getBytes(final int layerIndex);
 }

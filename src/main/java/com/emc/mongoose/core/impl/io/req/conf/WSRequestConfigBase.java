@@ -18,7 +18,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
 // mongoose-core-impl
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.impl.data.DataRanges;
+import com.emc.mongoose.core.impl.data.RangeLayerData;
 import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
@@ -460,7 +460,7 @@ implements WSRequestConfig<T> {
 			if(dataItem.isRangeUpdatePending(i)) {
 				LOG.trace(LogUtil.MSG, "\"{}\": should update range #{}", dataItem, i);
 				if(rangeBeg < 0) { // begin of the possible updated ranges sequence
-					rangeBeg = DataRanges.getRangeOffset(i);
+					rangeBeg = RangeLayerData.getRangeOffset(i);
 					rangeEnd = rangeBeg + rangeLen - 1;
 					LOG.trace(
 						LogUtil.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg

@@ -121,8 +121,8 @@ implements DataItem {
 	}
 	//
 	@Override
-	public final void setDataSource(final DataSource dataSrc, final int layerNum) {
-		buf = dataSrc.getBytes(layerNum);
+	public final void setDataSource(final DataSource dataSrc, final int overlayIndex) {
+		buf = dataSrc.getBytes(overlayIndex);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring input stream implementation ////////////////////////////////////////////////////////////

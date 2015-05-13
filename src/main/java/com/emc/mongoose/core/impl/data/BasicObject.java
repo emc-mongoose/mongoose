@@ -13,7 +13,7 @@ import java.io.ObjectOutput;
  Basic data object implementation extending DataRanges.
  */
 public class BasicObject
-extends DataRanges
+extends RangeLayerData
 implements DataObject {
 	//
 	protected String id = null;
