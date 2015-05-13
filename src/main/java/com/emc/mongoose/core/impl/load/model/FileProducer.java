@@ -18,7 +18,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -70,7 +74,7 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		long dataItemsCount = 0;
-		FileReader reader = null;
+		FileReader fReader = null;
 		try {
 			String nextDataString;
 			T nextData;
@@ -79,14 +83,20 @@ implements Producer<T> {
 				consumer.getMaxCount(), consumer.toString()
 			);
 			//
+			final Charset charset =  StandardCharsets.UTF_8;
+			final CharsetDecoder decoder = charset.newDecoder();
+			final InputStreamReader reader = new InputStreamReader(
+				Files.newInputStream(fPath), decoder);
+			//
 			if (RunTimeConfig.getContext().isEnabledDataRandom()) {
-				reader = new RandomFileReader(fPath, maxCount);
+				final long batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
+				fReader = new RandomFileReader(reader, batchSize, maxCount);
 			} else {
-				reader = new SimpleFileReader(fPath);
+				fReader = new SimpleFileReader(reader);
 			}
 			//
 			do {
-				if ((nextDataString = reader.getDataItemString()) == null){
+				if ((nextDataString = fReader.getLine()) == null){
 					break;
 				}
 				nextData = dataItemConstructor.newInstance(nextDataString);
@@ -126,8 +136,8 @@ implements Producer<T> {
 					);
 				}
 				consumer.shutdown();
-				if (reader != null) {
-					reader.close();
+				if (fReader != null) {
+					fReader.close();
 				}
 			} catch(final IOException e) {
 				LogUtil.failure(LOG, Level.WARN, e, "Failed to close file reader.");

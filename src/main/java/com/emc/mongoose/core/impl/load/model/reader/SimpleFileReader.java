@@ -6,7 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.nio.file.Path;
+import java.io.Reader;
 
 /**
  * Created by olga on 08.05.15.
@@ -16,15 +16,15 @@ extends FileReader{
 
 	private final static Logger LOG = LogManager.getLogger();
 
-	public SimpleFileReader(final Path fPath)
+	public SimpleFileReader(final Reader in)
 	throws IOException{
-		super(fPath);
+		super(in);
 	}
 
 	@Override
-	public final String getDataItemString()
+	public final String getLine()
 	throws IOException {
-		final String nextLine = fReader.readLine();
+		final String nextLine = readLine();
 		if (nextLine != null && !nextLine.isEmpty()){
 			LOG.trace(LogUtil.MSG, "Got next line #{}", nextLine);
 			return nextLine;

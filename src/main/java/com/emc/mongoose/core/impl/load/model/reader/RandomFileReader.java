@@ -1,13 +1,12 @@
 package com.emc.mongoose.core.impl.load.model.reader;
 //mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.nio.file.Path;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -19,43 +18,53 @@ public final class RandomFileReader
 extends FileReader{
 
 	private final static Logger LOG = LogManager.getLogger();
-	private final List<String> dataItemsList = new ArrayList<>();
+	private final List<String> lines;
 	private final Random random = new Random();
+	private final long batchSize;
+	private final long maxCount;
+	private long count;
+	private boolean eof;
 
-
-	public RandomFileReader(final Path fPath, final long maxCount)
+	public RandomFileReader(final Reader in, final long batchSize, final long maxCount)
 	throws IOException
 	{
-		super(fPath);
-		final int batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
+		super(in);
+
 		LOG.trace(LogUtil.MSG, "Read data items randomly");
-		final long sizeLimit = Math.min(batchSize, maxCount);
-		String nextLine;
-		while (dataItemsList.size() < sizeLimit){
-			nextLine = fReader.readLine();
-			if (nextLine == null || nextLine.isEmpty()){
-				break;
-			}
-			LOG.trace(LogUtil.MSG, "Got next line #{}", nextLine);
-			dataItemsList.add(nextLine);
-		}
+
+		this.batchSize = batchSize;
+		this.maxCount = maxCount;
+		this.lines = new ArrayList<>();
+		count = 0;
+		eof = false;
 	}
 
 	@Override
-	public final String getDataItemString()
+	public final String getLine()
 	throws IOException
 	{
-		String nextLine;
-		if (!dataItemsList.isEmpty()) {
-			nextLine = fReader.readLine();
-			if (nextLine != null && !nextLine.isEmpty()) {
-				LOG.trace(LogUtil.MSG, "Got next line #{}", nextLine);
-				dataItemsList.add(nextLine);
-			}
-			return dataItemsList.remove(random.nextInt(dataItemsList.size()));
-		} else {
-			LOG.debug(LogUtil.MSG, "Data items list is empty, exiting");
+		fillUp();
+		//
+		if (lines.isEmpty()) {
 			return null;
+		} else {
+			final int i = random.nextInt(lines.size());
+			return lines.remove(i);
+		}
+	}
+
+	private void fillUp() throws IOException {
+		while (!eof && (count < maxCount) && (lines.size() < batchSize)) {
+			final String line = readLine();
+
+			if ((line == null) || line.isEmpty()){
+				eof = true;
+
+				break;
+			}
+
+			count++;
+			lines.add(line);
 		}
 	}
 }
