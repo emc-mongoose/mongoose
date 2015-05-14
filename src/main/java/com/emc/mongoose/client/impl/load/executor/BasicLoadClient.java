@@ -389,7 +389,7 @@ implements LoadClient<T> {
 							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
 							String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
 					//
-					avgLat, minLat, medLat, maxLat,
+					avgLat, minLat == Long.MAX_VALUE ? 0 : minLat, medLat, maxLat == Long.MIN_VALUE ? 0 : maxLat,
 					//
 					taskGetTPMean.getLastResult(), taskGetTP1Min.getLastResult(),
 					taskGetTP5Min.getLastResult(), taskGetTP15Min.getLastResult(),
@@ -408,7 +408,7 @@ implements LoadClient<T> {
 							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
 							String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
 					//
-					avgLat, minLat, medLat, maxLat,
+					avgLat, minLat == Long.MAX_VALUE ? 0 : minLat, medLat, maxLat == Long.MIN_VALUE ? 0 : maxLat,
 					//
 					taskGetTPMean.getLastResult(), taskGetTP1Min.getLastResult(),
 					taskGetTP5Min.getLastResult(), taskGetTP15Min.getLastResult(),
