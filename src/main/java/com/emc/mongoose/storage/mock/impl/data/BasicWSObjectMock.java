@@ -5,7 +5,7 @@ import com.emc.mongoose.core.impl.data.UniformData;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
-//import com.emc.mongoose.common.logging.Markers;
+//
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
 //
@@ -20,22 +20,13 @@ public class BasicWSObjectMock
 extends BasicWSObject
 implements WSObjectMock {
 	//private final static Logger LOG = LogManager.getLogger();
-	//////////////////////////////////
-	public BasicWSObjectMock() {
-		super();
-	}
-	//
-	public BasicWSObjectMock(final long size){ super(size);}
-	//
-	public BasicWSObjectMock(final String id, final Long size) {
-		super(id, size);
-	}
 	//
 	public BasicWSObjectMock(final String metaInfo) {
-		super(metaInfo);
+		super();
+		fromString(metaInfo);
 	}
 	//
-	public BasicWSObjectMock(final String id, final Long offset, final long size) {
+	public BasicWSObjectMock(final String id, final Long offset, final Long size) {
 		super(id, offset, size);
 	}
 	//////////////////////////////////
@@ -45,30 +36,28 @@ implements WSObjectMock {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
 			final int
-				lastCellPos = getRangeCount(size)-1,
+				lastCellPos = getRangeCount(size) - 1,
 				nextCellPos = getRangeCount(size + augmentSize);
 			if(lastCellPos < nextCellPos && maskRangesPending.get(lastCellPos)) {
 				maskRangesPending.set(lastCellPos, nextCellPos);
 			}
 		} else {
-			throw new IllegalArgumentException(
-				String.format(FMT_MSG_ILLEGAL_APPEND_SIZE, augmentSize)
-			);
+			throw new IllegalArgumentException("Illegal append size: " + augmentSize);
 		}
 	}
 	//
 	@Override
-	public final void updateRanges(final List<Long> ranges){
+	public final void updateRanges(final List<Long> ranges) {
 		final int countRangesTotal = getRangeCount(size);
 		int startCellPos,
 			finishCellPos;
-		for (int i = 0; i < ranges.size(); i++){
+		for(int i = 0; i < ranges.size(); i++){
 			startCellPos = getRangeCount(ranges.get(i));
 			finishCellPos = getRangeCount(ranges.get(i++))+1;
 			maskRangesPending.set(startCellPos, finishCellPos);
 		}
 		//return true if mask is full -> inc layer
-		if (maskRangesPending.cardinality() == countRangesTotal){
+		if(maskRangesPending.cardinality() == countRangesTotal){
 			switchToNextOverlay();
 		}
 	}
@@ -86,7 +75,7 @@ implements WSObjectMock {
 				for(int i = 0; i < countRangesTotal; i++) {
 					rangeOffset = getRangeOffset(i);
 					rangeSize = getRangeSize(i);
-					if (maskRangesPending.get(i)) { // range have been modified
+					if(maskRangesPending.get(i)) { // range have been modified
 						updatedRange = new UniformData(
 							offset + rangeOffset, rangeSize, currLayerIndex.get() + 1, UniformDataSource.DEFAULT
 						);

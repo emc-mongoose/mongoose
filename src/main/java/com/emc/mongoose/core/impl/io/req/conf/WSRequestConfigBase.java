@@ -421,14 +421,14 @@ implements WSRequestConfig<T> {
 			LogUtil.failure(LOG, Level.WARN, e, "Failed to apply auth header");
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			final StrBuilder msgBuff = new StrBuilder("built request: ")
+			final StringBuilder msgBuff = new StringBuilder("built request: ")
 				.append(httpRequest.getRequestLine().getMethod()).append(' ')
-				.append(httpRequest.getRequestLine().getUri()).appendNewLine();
+				.append(httpRequest.getRequestLine().getUri()).append('\n');
 			for(final Header header: httpRequest.getAllHeaders()) {
 				msgBuff
 					.append('\t').append(header.getName())
 					.append(": ").append(header.getValue())
-					.appendNewLine();
+					.append('\n');
 			}
 			if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
 				msgBuff
@@ -470,15 +470,11 @@ implements WSRequestConfig<T> {
 				}
 				if(i == rangeCount - 1) { // this is the last range which is updated also
 					LOG.trace(LogUtil.MSG, "End of the updated ranges sequence @{}", rangeEnd);
-					httpRequest.addHeader(
-						HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
-					);
+					httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + rangeBeg + "-" + rangeEnd);
 				}
 			} else if(rangeBeg > -1 && rangeEnd > -1) { // end of the updated ranges sequence
 				LOG.trace(LogUtil.MSG, "End of the updated ranges sequence @{}", rangeEnd);
-				httpRequest.addHeader(
-					HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
-				);
+				httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + rangeBeg + "-" + rangeEnd);
 				// drop the updated ranges sequence info
 				rangeBeg = -1;
 				rangeEnd = -1;
@@ -489,10 +485,7 @@ implements WSRequestConfig<T> {
 	protected final void applyAppendRangeHeader(
 		final MutableWSRequest httpRequest, final T dataItem
 	) {
-		httpRequest.addHeader(
-				HttpHeaders.RANGE,
-				String.format(MSG_TMPL_RANGE_BYTES_APPEND, dataItem.getSize())
-		);
+		httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + dataItem.getSize() + "-");
 	}
 	/*
 	protected final static DateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(

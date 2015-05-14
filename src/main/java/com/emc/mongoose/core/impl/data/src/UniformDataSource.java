@@ -27,8 +27,6 @@ implements DataSource {
 	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static int A = 21, B = 35, C = 4;
-	private final static String
-		MSG_FMT_NEW_LAYER = "Generate new byte layer #%d, previous seed: \"%x\", next one: \"%x\"";
 	//
 	private long seed;
 	private int size;
@@ -131,7 +129,7 @@ implements DataSource {
 	public final void setSize(final int size)
 	throws IllegalArgumentException {
 		if(size < 1) {
-			throw new IllegalArgumentException(String.format("Illegal ring size: %d", size));
+			throw new IllegalArgumentException("Illegal ring size: " + size);
 		}
 		this.size = size;
 		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
@@ -186,7 +184,11 @@ implements DataSource {
 				nextLayer = ByteBuffer.allocate(ringSize);
 				prevSeed = prevLayer.getLong(0);
 				nextSeed = Long.reverse(nextWord(Long.reverseBytes(prevSeed)));
-				LOG.debug(LogUtil.MSG, String.format(MSG_FMT_NEW_LAYER, i, prevSeed, nextSeed));
+				LOG.debug(
+					LogUtil.MSG,
+					"Generate new byte layer #{}, previous seed: \"{}\", next one: \"{}\"",
+					i, Long.toHexString(prevSeed), Long.toHexString(nextSeed)
+				);
 				generateData(nextLayer, nextSeed);
 				byteLayers.add(nextLayer);
 				prevLayer = nextLayer;

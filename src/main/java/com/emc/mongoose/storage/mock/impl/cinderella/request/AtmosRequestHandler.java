@@ -61,12 +61,9 @@ extends WSRequestHandlerBase {
 						);
 					}
 					if(method.equals(METHOD_POST)) {
-						final String newDataId = generateId(),
-							headerLocation = String.format(
-								WSRequestConfigImpl.FMT_SLASH,
-								httpRequest.getRequestLine().getUri(),
-								newDataId
-							);
+						final String
+							newDataId = generateId(),
+							headerLocation = httpRequest.getRequestLine().getUri()+"/"+newDataId;
 						httpResponse.setHeader(HttpHeaders.LOCATION, headerLocation);
 						handleGenericDataReq(httpRequest, httpResponse, method, newDataId);
 					}

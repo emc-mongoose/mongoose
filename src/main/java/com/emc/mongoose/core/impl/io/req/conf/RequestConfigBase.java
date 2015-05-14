@@ -47,7 +47,7 @@ implements RequestConfig<T> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		LOG.trace(LogUtil.MSG, String.format("New reqconf instance (%d)", hashCode()));
+		LOG.trace(LogUtil.MSG, "New reqconf instance #" + hashCode());
 		api = runTimeConfig.getApiName();
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();

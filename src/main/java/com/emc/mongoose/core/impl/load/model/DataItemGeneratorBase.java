@@ -53,7 +53,6 @@ implements Producer<T> {
 	throws IOException;
 	//
 	private final static String
-		FMT_MSG_SUBMIT_NEXT = "Submitted object #%d of size %x",
 		MSG_SUBMIT_REJECTED = "Submitting the object rejected by consumer",
 		MSG_SUBMIT_FAILED = "Failed to submit object to consumer",
 		MSG_INTERRUPTED = "Interrupted";
@@ -85,7 +84,10 @@ implements Producer<T> {
 				}
 				newDataConsumer.submit(produceSpecificDataItem(nextSize));
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(LogUtil.MSG, String.format(FMT_MSG_SUBMIT_NEXT, i, nextSize));
+					LOG.trace(
+						LogUtil.MSG, "Submitted object #{} of size {}",
+						i, SizeUtil.formatSize(nextSize)
+					);
 				}
 				i ++;
 			} catch(final RejectedExecutionException e) {

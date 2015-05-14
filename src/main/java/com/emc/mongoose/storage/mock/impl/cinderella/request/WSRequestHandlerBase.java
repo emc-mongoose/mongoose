@@ -147,7 +147,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final HttpRequest httpRequest, final HttpResponse httpResponse, final String dataId
 	) {
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, String.format("Create data object with ID: %s", dataId));
+			LOG.trace(LogUtil.MSG, "Create data object with ID: {}", dataId);
 		}
 		try {
 			httpResponse.setStatusCode(HttpStatus.SC_OK);
@@ -171,13 +171,13 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		if(dataObject == null) {
 			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.ERR, String.format("No such object: %s", dataId));
+				LOG.trace(LogUtil.ERR, "No such object: {}", dataId);
 			}
 			METRICS.markRead(-1);
 		} else {
 			response.setStatusCode(HttpStatus.SC_OK);
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.MSG, String.format("Send data object with ID: %s", dataId));
+				LOG.trace(LogUtil.MSG, "Send data object with ID: {}", dataId);
 			}
 			response.setEntity(dataObject);
 			METRICS.markRead(dataObject.getSize());
@@ -201,7 +201,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final WSObjectMock dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 		sharedStorage.put(dataID, dataObject);
 		if(LOG.isTraceEnabled(LogUtil.DATA_LIST)) {
-			LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
+			LOG.trace(LogUtil.DATA_LIST, dataObject);
 		}
 		return dataObject;
 	}
@@ -225,11 +225,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		} else if(RING_OFFSET_RADIX > 1 && RING_OFFSET_RADIX <= Character.MAX_RADIX) {
 			offset = Long.valueOf(dataID, RING_OFFSET_RADIX);
 		} else {
-			throw new HttpException(
-				String.format(
-					"Unsupported data ring offset radix: %d", RING_OFFSET_RADIX
-				)
-			);
+			throw new HttpException("Unsupported data ring offset radix: " + RING_OFFSET_RADIX);
 		}
 		return offset;
 	}

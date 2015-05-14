@@ -38,9 +38,7 @@ implements HttpRequestInterceptor {
 				final HttpHost tgtHost = HttpCoreContext.class.cast(ctx).getTargetHost();
 				if(tgtHost == null) {
 					throw new ProtocolException(
-						String.format(
-							"No target host is in HTTP context #%d", ctx.hashCode()
-						)
+						"No target host is in HTTP context #" + ctx.hashCode()
 					);
 				} else {
 					req.setHeader(HTTP.TARGET_HOST, tgtHost.toHostString());

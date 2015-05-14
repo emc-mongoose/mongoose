@@ -73,15 +73,13 @@ extends DefaultNHttpServerConnectionFactory {
 		//
 		@Override
 		public final void run() {
-			for(final NHttpServerConnection connection : connCache) {
+			for(final NHttpServerConnection conn : connCache) {
 				try {
-					if(NHttpConnection.ACTIVE == connection.getStatus()) {
-						connection.close();
+					if(NHttpConnection.ACTIVE == conn.getStatus()) {
+						conn.close();
 					}
 				} catch (final IOException e) {
-					LogUtil.failure(
-						LOG, Level.WARN, e,
-						String.format("Failed to close the connection \"%s\"", connection)
+					LogUtil.failure(LOG, Level.WARN, e, "Failed to close the connection " + conn
 					);
 				}
 			}

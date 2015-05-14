@@ -10,7 +10,6 @@ import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
@@ -21,7 +20,8 @@ implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected volatile LoadExecutor<T> loadExecutor = null;
+	private final static ThreadLocal<StringBuilder> THRLOC_STRBUILDER = new ThreadLocal<>();
+	//
 	protected volatile RequestConfig<T> reqConf = null;
 	protected volatile String nodeAddr = null;
 	protected volatile T dataItem = null;
@@ -63,28 +63,49 @@ implements IOTask<T> {
 		return this;
 	}
 	// END pool related things
+	private final static String MSG_PERF_TRACE_INVALID = "Invalid trace: ";
+	//
 	@Override
 	public final void complete() {
 		final String dataItemId = dataItem.getId();
+		StringBuilder strBuilder = THRLOC_STRBUILDER.get();
+		if(strBuilder == null) {
+			strBuilder = new StringBuilder();
+			THRLOC_STRBUILDER.set(strBuilder);
+		} else {
+			strBuilder.setLength(0); // clear/reset
+		}
 		if(
 			respTimeDone < respTimeStart ||
 			respTimeStart < reqTimeDone ||
 			reqTimeDone < reqTimeStart
 		) {
 			LOG.debug(
-				LogUtil.ERR, String.format(
-					FMT_PERF_TRACE_INVALID, nodeAddr, dataItemId == null ? Constants.EMPTY : dataItemId,
-					transferSize, status.code,
-					reqTimeStart, reqTimeDone, respTimeStart, respTimeDone
-				)
+				LogUtil.ERR,
+				strBuilder
+					.append(MSG_PERF_TRACE_INVALID)
+					.append(nodeAddr).append(',')
+					.append(dataItemId == null ? Constants.EMPTY : dataItemId).append(',')
+					.append(transferSize).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(reqTimeDone).append(',')
+					.append(respTimeStart).append(',')
+					.append(respTimeDone)
+					.toString()
 			);
 		} else {
 			LOG.info(
-				LogUtil.PERF_TRACE, String.format(
-					FMT_PERF_TRACE, nodeAddr, dataItemId == null ? Constants.EMPTY : dataItemId,
-					transferSize, status.code,
-					reqTimeStart, respTimeStart - reqTimeDone, respTimeDone - reqTimeStart
-				)
+				LogUtil.PERF_TRACE,
+				strBuilder
+					.append(nodeAddr).append(',')
+					.append(dataItemId == null ? Constants.EMPTY : dataItemId).append(',')
+					.append(transferSize).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(respTimeStart - reqTimeDone).append(',')
+					.append(respTimeDone - reqTimeStart)
+					.toString()
 			);
 		}
 	}

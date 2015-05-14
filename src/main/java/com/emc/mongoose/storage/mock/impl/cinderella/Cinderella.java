@@ -115,7 +115,7 @@ implements Runnable {
 						dataObject.setSize(Long.valueOf(String.valueOf(dataObject.getSize()), 0x10));
 					}
 					//
-					LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
+					LOG.trace(LogUtil.DATA_LIST, dataObject);
 					put(dataObject.getId(), dataObject);
 				}
 			} catch(final FileNotFoundException e) {

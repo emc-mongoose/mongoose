@@ -35,11 +35,8 @@ implements DataItem {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final static String
-		FMT_META_INFO = "%x" + RunTimeConfig.LIST_SEP + "%d",
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",
 		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: \"%s\"",
-		FMT_MSG_FAIL_CHANGE_OFFSET = "Failed to change offset to \"%x\"",
-		FMT_MSG_FAIL_SET_OFFSET = "Failed to set data ring offset: \"%s\"",
 		FMT_MSG_STREAM_OUT_START = "Item \"{}\": stream out start",
 		FMT_MSG_STREAM_OUT_FINISH = "Item \"{}\": stream out finish";
 	protected final static String
@@ -88,7 +85,7 @@ implements DataItem {
 			setOffset(offset, 0);
 		} catch(final IOException e) {
 			LogUtil.failure(
-				LOG, Level.ERROR, e, String.format(FMT_MSG_FAIL_SET_OFFSET, offset)
+				LOG, Level.ERROR, e, "Failed to set data ring offset: " + Long.toString(offset)
 			);
 		}
 		this.size = size;
@@ -106,17 +103,17 @@ implements DataItem {
 		if(skip(offset % count) == offset % count) {
 			offset = offset0;
 		} else {
-			throw new IOException(String.format(FMT_MSG_FAIL_CHANGE_OFFSET, offset));
+			throw new IOException("Failed to change offset to " + Long.toHexString(offset));
 		}
 	}
 	//
 	@Override
-	public final long getSize() {
+	public long getSize() {
 		return size;
 	}
 	//
 	@Override
-	public final void setSize(final long size) {
+	public void setSize(final long size) {
 		this.size = size;
 	}
 	//
@@ -168,7 +165,7 @@ implements DataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public String toString() {
-		return String.format(FMT_META_INFO, offset, size);
+		return Long.toHexString(offset) + "," + size;
 	}
 	//
 	public void fromString(final String v)
@@ -233,11 +230,8 @@ implements DataItem {
 			LOG.trace(LogUtil.MSG, FMT_MSG_STREAM_OUT_FINISH, Long.toHexString(offset));
 		}
 	}
-	//
-	private final static String
-		FMT_MSG_CONTENT_MISMATCH = "%s: content mismatch @ pos #%d, expected \"0x%X\", but got \"0x%X\"";
 	// checks that data read from input equals the specified range
-	protected final boolean isContentEqualTo(
+	protected boolean isContentEqualTo(
 		final InputStream in, final long rangeOffset, final long rangeLength
 	) throws IOException {
 		//
@@ -300,12 +294,10 @@ implements DataItem {
 						if(lByteBuff[i] != rByteBuff[i]) {
 							LOG.warn(
 								LogUtil.MSG,
-								String.format(
-									FMT_MSG_CONTENT_MISMATCH,
-									Long.toString(offset, DataObject.ID_RADIX),
-									rangeOffset + rangeLength - byteCountLeft + i,
-									rByteBuff[i], lByteBuff[i]
-								)
+								"{}: content mismatch @ pos #{}, expected \"{}\", but got \"{}\"",
+								Long.toString(offset, DataObject.ID_RADIX),
+								rangeOffset + rangeLength - byteCountLeft + i,
+								Integer.toHexString(rByteBuff[i]), Integer.toHexString(lByteBuff[i])
 							);
 							break;
 						}
@@ -313,7 +305,7 @@ implements DataItem {
 				}
 			} else {
 				throw new IllegalStateException(
-					String.format("Failed to read %d bytes from ring buffer", nextByteCount)
+					"Failed to read " + nextByteCount + " bytes from ring buffer"
 				);
 			}
 			// prepare the next iteration

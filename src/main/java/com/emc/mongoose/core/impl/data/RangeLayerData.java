@@ -38,15 +38,10 @@ extends UniformData
 implements AppendableDataItem, UpdatableDataItem {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
 	private final static char LAYER_MASK_SEP = '/';
 	//
 	protected final static String
-		FMT_META_INFO = "%s" + RunTimeConfig.LIST_SEP + "%x" + LAYER_MASK_SEP + "%s",
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
-		FMT_MSG_WRONG_RANGE_COUNT = "Range count should be more than 0 and less than max %d for the item size",
-		FMT_MSG_ILLEGAL_APPEND_SIZE = "Append tail size should be more than 0, but got %D",
-		FMT_MASK = "0%s",
 		FMT_MSG_RANGE_CORRUPT = "{}: range #{}(offset {}) of \"{}\" corrupted",
 		FMT_MSG_UPD_CELL = "{}: update cell at position: {}, offset: {}, new mask: {}",
 		FMT_MSG_UPD_RANGE = "{}: update range(#{}, [{}]) of with data({}, {}): {}",
@@ -73,27 +68,20 @@ implements AppendableDataItem, UpdatableDataItem {
 		super(size);
 	}
 	//
-	public RangeLayerData(final Long size, final UniformDataSource dataSrc) {
-		super(size, dataSrc);
-	}
-	//
 	public RangeLayerData(final Long offset, final Long size) {
 		super(offset, size);
-	}
-	//
-	public RangeLayerData(final Long offset, final Long size, final UniformDataSource dataSrc) {
-		super(offset, size, dataSrc);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public String toString() {
-		return String.format(
-			FMT_META_INFO, super.toString(), currLayerIndex.get(),
-			maskRangesHistory.isEmpty() ? STR_EMPTY_MASK :
-				Hex.encodeHexString(maskRangesHistory.toByteArray())
-		);
+		return super.toString() + ',' + Integer.toHexString(currLayerIndex.get()) + ',' +
+			(
+				maskRangesHistory.isEmpty() ?
+					STR_EMPTY_MASK : Hex.encodeHexString(maskRangesHistory.toByteArray())
+			)
+		;
 	}
 	//
 	@Override
@@ -113,7 +101,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				// extract hexadecimal mask, convert into bit set and add to the existing mask
 				String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
 				while(rangesMask.length() == 0 || rangesMask.length() % 2 == 1) {
-					rangesMask = String.format(FMT_MASK, rangesMask);
+					rangesMask = "0" + rangesMask;
 				}
 				maskRangesHistory.or(
 					BitSet.valueOf(
@@ -304,9 +292,8 @@ implements AppendableDataItem, UpdatableDataItem {
 		final int countRangesTotal = getRangeCount(size);
 		if(count < 1 || count > countRangesTotal) {
 			throw new IllegalArgumentException(
-				String.format(
-					FMT_MSG_WRONG_RANGE_COUNT, countRangesTotal
-				)
+				"Range count should be more than 0 and less than max " + countRangesTotal +
+				" for the item size"
 			);
 		}
 		for(int i = 0; i < count; i++) {
@@ -413,7 +400,7 @@ implements AppendableDataItem, UpdatableDataItem {
 			}
 		} else {
 			throw new IllegalArgumentException(
-				String.format(FMT_MSG_ILLEGAL_APPEND_SIZE, augmentSize)
+				"Append tail size should be more than 0, but got " + augmentSize
 			);
 		}
 	}

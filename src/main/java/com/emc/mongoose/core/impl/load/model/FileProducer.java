@@ -128,7 +128,7 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		long dataItemsCount = 0;
-		try(BufferedReader fReader = Files.newBufferedReader(fPath, StandardCharsets.UTF_8)) {
+		try(final BufferedReader fReader = Files.newBufferedReader(fPath, StandardCharsets.UTF_8)) {
 			String nextLine;
 			T nextData;
 			LOG.debug(
@@ -166,7 +166,6 @@ implements Producer<T> {
 		} catch(final IOException e) {
 			LogUtil.failure(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final Exception e) {
-			//e.printStackTrace(System.err);
 			LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
 		} finally {
 			LOG.debug(LogUtil.MSG, "Produced {} data items", dataItemsCount);

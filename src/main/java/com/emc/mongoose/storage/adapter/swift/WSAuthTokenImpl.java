@@ -5,8 +5,6 @@ import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //
-import org.apache.commons.lang.text.StrBuilder;
-//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
@@ -67,12 +65,12 @@ implements AuthToken<T> {
 							LOG.warn(LogUtil.ERR, "Server hasn't returned auth token header");
 						}
 					} else {
-						final StrBuilder msg = new StrBuilder("Create auth tocken failure: ")
+						final StringBuilder msg = new StringBuilder("Create auth tocken failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
-								msg.appendNewLine().append(buff.toString());
+								msg.append('\n').append(buff.toString());
 							}
 						}
 						LOG.warn(

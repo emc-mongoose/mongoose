@@ -69,10 +69,7 @@ implements Producer<T> {
 		try {
 			httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET);
 		} catch(final IOException e) {
-			LogUtil.failure(
-				LOG, Level.ERROR, e,
-				String.format("Failed to list the bucket \"%s\"", bucket)
-			);
+			LogUtil.failure(LOG, Level.ERROR, e, "Failed to list the bucket: " + bucket);
 		}
 		//
 		if(httpResp != null) {
@@ -106,10 +103,7 @@ implements Producer<T> {
 								} catch(final IOException e) {
 									LogUtil.failure(
 										LOG, Level.ERROR, e,
-										String.format(
-											"Failed to read the bucket \"%s\" listing response content",
-											bucket
-										)
+										"Failed to read the bucket listing response content: "+bucket
 									);
 								}
 							} catch(final ParserConfigurationException | SAXException e) {

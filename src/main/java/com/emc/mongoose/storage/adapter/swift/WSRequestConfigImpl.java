@@ -41,8 +41,6 @@ extends WSRequestConfigBase<T> {
 		KEY_X_AUTH_KEY = "X-Auth-Key",
 		KEY_X_VERSIONING = "X-Versions-Location",
 		//
-		FMT_URI_CONTAINER_PATH = "/%s/%s/%s",
-		FMT_URI_OBJECT_PATH = "%s/%s",
 		DEFAULT_VERSIONS_CONTAINER = "archive";
 	//
 	private String uriSvcBasePath = null, uriSvcBaseContainerPath = null;
@@ -102,8 +100,7 @@ extends WSRequestConfigBase<T> {
 			LOG.debug(LogUtil.MSG, "Swift container is <null>, not refreshing the container path");
 			return;
 		}
-		uriSvcBaseContainerPath = String
-			.format(FMT_URI_CONTAINER_PATH, uriSvcBasePath, nameSpace, container.getName());
+		uriSvcBaseContainerPath = "/"+uriSvcBasePath+"/"+nameSpace+"/"+container.getName();
 	}
 	//
 	public final String getSvcBasePath() {
@@ -228,11 +225,7 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		httpRequest.setUriPath(
-			String.format(
-				FMT_URI_OBJECT_PATH, uriSvcBaseContainerPath, dataItem.getId()
-			)
-		);
+		httpRequest.setUriPath(uriSvcBaseContainerPath+"/"+dataItem.getId());
 	}
 	//
 	private Header headerAuthToken = null;

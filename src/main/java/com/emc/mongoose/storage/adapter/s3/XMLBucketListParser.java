@@ -62,7 +62,6 @@ extends DefaultHandler {
 	}
 	//
 	private final ByteBuffer offsetValueBytes = ByteBuffer.allocate(Long.SIZE / Byte.SIZE);
-	private final LongBuffer offsetValueView = offsetValueBytes.asLongBuffer();
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final void endElement(

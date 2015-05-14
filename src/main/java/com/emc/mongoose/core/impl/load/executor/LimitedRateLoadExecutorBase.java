@@ -50,7 +50,7 @@ extends LoadExecutorBase<T> {
 		manualMicroSleep = 1000 * runTimeConfig.getLoadLimitReqSleepMilliSec();
 	}
 	/**
-	 Adds the optional delay calculated from last successfull I/O task duration and the target
+	 Adds the optional delay calculated from last successful I/O task duration and the target
 	 duration
 	 */
 	@Override

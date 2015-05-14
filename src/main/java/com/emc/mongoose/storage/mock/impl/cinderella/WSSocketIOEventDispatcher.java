@@ -75,15 +75,9 @@ implements Runnable {
 		} catch (final InterruptedIOException e) {
 			LOG.debug(LogUtil.MSG, "{}: interrupted", toString());
 		} catch (final IOReactorException e) {
-			LogUtil.failure(
-				LOG, Level.WARN, e,
-				String.format("%s: I/O reactor failure", toString())
-			);
+			LogUtil.failure(LOG, Level.WARN, e, toString() + ": I/O reactor failure");
 		} catch (final IOException e) {
-			LogUtil.failure(
-				LOG, Level.WARN, e,
-				String.format("%s: I/O failure", toString())
-			);
+			LogUtil.failure(LOG, Level.WARN, e, toString() + ": I/O failure");
 		}
 	}
 }

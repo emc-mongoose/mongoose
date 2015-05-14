@@ -42,20 +42,8 @@ implements WSObject {
 		super(size);
 	}
 	//
-	public BasicWSObject(final Long size, final UniformDataSource dataSrc) {
-		super(size, dataSrc);
-	}
-	//
-	public BasicWSObject(final String id, final Long size) {
-		super(id, size);
-	}
-	//
 	public BasicWSObject(final String id, final Long offset, final Long size) {
 		super(id, offset, size);
-	}
-	//
-	public BasicWSObject(final String id, final Long size, final UniformDataSource dataSrc) {
-		super(id, size, dataSrc);
 	}
 	//
 	@Override
