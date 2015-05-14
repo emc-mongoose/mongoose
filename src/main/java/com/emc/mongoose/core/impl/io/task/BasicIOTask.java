@@ -10,6 +10,7 @@ import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 /**
@@ -29,6 +30,7 @@ implements IOTask<T> {
 	//
 	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
 	protected volatile long transferSize = 0;
+	protected int reqSleepMilliSec = 0;
 	private volatile Type type;
 	// BEGIN pool related things
 	private final static InstancePool<BasicIOTask>
@@ -108,11 +110,20 @@ implements IOTask<T> {
 					.toString()
 			);
 		}
+		//
+		if(reqSleepMilliSec > 0) {
+			try {
+				Thread.sleep(reqSleepMilliSec);
+			} catch(final InterruptedException e) {
+				LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted request sleep");
+			}
+		}
 	}
 	//
 	@Override
 	public IOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
 		this.reqConf = reqConf;
+		reqSleepMilliSec = reqConf.getReqSleepMilliSec();
 		type = reqConf.getLoadType();
 		return this;
 	}

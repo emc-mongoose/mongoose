@@ -7,7 +7,6 @@ import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
@@ -170,7 +169,7 @@ implements DataItem {
 	//
 	public void fromString(final String v)
 	throws IllegalArgumentException, NullPointerException {
-		final String tokens[] = v.split(RunTimeConfig.LIST_SEP, 2);
+		final String tokens[] = v.split(",", 2);
 		if(tokens.length==2) {
 			try {
 				offset = Long.parseLong(tokens[0], 0x10);

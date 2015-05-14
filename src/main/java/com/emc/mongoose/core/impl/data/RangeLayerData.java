@@ -76,7 +76,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public String toString() {
-		return super.toString() + ',' + Integer.toHexString(currLayerIndex.get()) + ',' +
+		return super.toString() + ',' + Integer.toHexString(currLayerIndex.get()) + '/' +
 			(
 				maskRangesHistory.isEmpty() ?
 					STR_EMPTY_MASK : Hex.encodeHexString(maskRangesHistory.toByteArray())
@@ -99,15 +99,17 @@ implements AppendableDataItem, UpdatableDataItem {
 				currLayerIndex.set(Integer.valueOf(rangesInfo.substring(0, sepPos), 0x10));
 				setDataSource(UniformDataSource.DEFAULT, currLayerIndex.get());
 				// extract hexadecimal mask, convert into bit set and add to the existing mask
-				String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
-				while(rangesMask.length() == 0 || rangesMask.length() % 2 == 1) {
-					rangesMask = "0" + rangesMask;
+				final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
+				final char rangesMaskChars[];
+				if(rangesMask.length() == 0) {
+					rangesMaskChars = "00".toCharArray();
+				} else if(rangesMask.length() % 2 == 1) {
+					rangesMaskChars = ("0" + rangesMask).toCharArray();
+				} else {
+					rangesMaskChars = rangesMask.toCharArray();
 				}
-				maskRangesHistory.or(
-					BitSet.valueOf(
-						Hex.decodeHex(rangesMask.toCharArray())
-					)
-				);
+				// method "or" to merge w/ the existing mask
+				maskRangesHistory.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
 			} catch(final DecoderException | NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
 			}
