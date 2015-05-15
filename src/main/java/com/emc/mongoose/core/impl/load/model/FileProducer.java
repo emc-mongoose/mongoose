@@ -168,12 +168,12 @@ implements Producer<T> {
 						producerExecSvc.submit(
 							SubmitTask.getInstance(consumer, nextData)
 						);
-						dataItemsCount++;
-					} catch (final Exception e) {
-						if (
+						dataItemsCount ++;
+					} catch(final Exception e) {
+						if(
 							consumer.getMaxCount() > dataItemsCount &&
-								!RejectedExecutionException.class.isInstance(e)
-							) {
+							!RejectedExecutionException.class.isInstance(e)
+						) {
 							LogUtil.failure(LOG, Level.WARN, e, "Failed to submit data item");
 							break;
 						} else {
@@ -181,7 +181,7 @@ implements Producer<T> {
 						}
 					}
 				}
-			} while (!isInterrupted() && dataItemsCount < maxCount);
+			} while(!isInterrupted() && dataItemsCount < maxCount);
 		} catch(final IOException e) {
 			LogUtil.failure(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final Exception e) {
