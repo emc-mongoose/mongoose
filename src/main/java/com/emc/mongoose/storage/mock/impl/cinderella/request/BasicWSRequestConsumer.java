@@ -2,15 +2,18 @@ package com.emc.mongoose.storage.mock.impl.cinderella.request;
 //
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.io.HTTPInputStream;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.entity.ContentType;
+//
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
 import org.apache.http.nio.protocol.AbstractAsyncRequestConsumer;
@@ -18,7 +21,6 @@ import org.apache.http.nio.protocol.AbstractAsyncRequestConsumer;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 //
-import org.apache.http.protocol.HttpContext;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -72,6 +74,7 @@ implements Reusable<BasicWSRequestConsumer> {
 	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
 			bbuff.clear();
+			LOG.info(LogUtil.MSG, "Consume using buffer of size {}", SizeUtil.formatSize(bbuff.capacity()));
 			HTTPInputStream.consumeQuietly(decoder, ioCtl, bbuff);
 		} catch(final Throwable e) {
 			LogUtil.failure(LOG, Level.WARN, e, "Content consuming failure");
