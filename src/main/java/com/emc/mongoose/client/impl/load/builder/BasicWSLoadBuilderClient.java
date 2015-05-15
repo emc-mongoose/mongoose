@@ -3,6 +3,7 @@ package com.emc.mongoose.client.impl.load.builder;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
@@ -79,10 +80,20 @@ implements WSLoadBuilderClient<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public final BasicWSLoadBuilderClient<T, U> setInputFile(final String listFile)
 	throws RemoteException {
-		if(listFile!=null) {
+		if(listFile != null) {
 			try {
-				srcProducer = (FileProducer<T>) new FileProducer<>(getMaxCount(), listFile, BasicWSObject.class);
+				srcProducer = (FileProducer<T>) new FileProducer<>(
+					getMaxCount(), listFile, BasicWSObject.class
+				);
 				LOG.info(LogUtil.MSG, "Local data items will be read from file @ \"{}\"", listFile);
+				// adjusting the buffer size for the expected data items size
+				final long approxDataItemsSize = srcProducer.getApproxDataItemsSize();
+				reqConf.setBuffSize(
+					approxDataItemsSize < LoadExecutor.BUFF_SIZE_LO ?
+						LoadExecutor.BUFF_SIZE_LO :
+						approxDataItemsSize > LoadExecutor.BUFF_SIZE_HI ?
+							LoadExecutor.BUFF_SIZE_HI : (int) approxDataItemsSize
+				);
 			} catch(final NoSuchMethodException | IOException e) {
 				LOG.error(LogUtil.ERR, "Failure", e);
 			}

@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.mock.impl.cinderella;
+package com.emc.mongoose.storage.mock.impl.cinderella.request;
 //
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
@@ -22,16 +22,16 @@ import org.apache.logging.log4j.Logger;
 /**
  * Created by olga on 04.02.15.
  */
-public final class BasicRequestConsumer
+public final class BasicWSRequestConsumer
 extends BasicAsyncRequestConsumer
-implements Reusable<BasicRequestConsumer> {
+implements Reusable<BasicWSRequestConsumer> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile int buffSize = 0;
 	private volatile ByteBuffer bbuff;
 	//
-	public BasicRequestConsumer() {
+	public BasicWSRequestConsumer() {
 		super();
 	}
 	//
@@ -64,16 +64,16 @@ implements Reusable<BasicRequestConsumer> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Reusable implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static InstancePool<BasicRequestConsumer> POOL = new InstancePool<>(
-		BasicRequestConsumer.class
+	private final static InstancePool<BasicWSRequestConsumer> POOL = new InstancePool<>(
+		BasicWSRequestConsumer.class
 	);
 	//
-	public static BasicRequestConsumer getInstance() {
+	public static BasicWSRequestConsumer getInstance() {
 		return POOL.take();
 	}
 	//
 	@Override
-	public final Reusable<BasicRequestConsumer> reuse(final Object... args)
+	public final Reusable<BasicWSRequestConsumer> reuse(final Object... args)
 	throws IllegalArgumentException, IllegalStateException {
 		return this;
 	}

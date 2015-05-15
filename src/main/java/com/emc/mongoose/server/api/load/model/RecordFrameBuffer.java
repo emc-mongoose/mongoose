@@ -9,6 +9,6 @@ import java.rmi.RemoteException;
 public interface RecordFrameBuffer<T extends DataItem> {
 	//
 	T[] takeFrame()
-	throws RemoteException;
+	throws RemoteException, InterruptedException;
 	//
 }

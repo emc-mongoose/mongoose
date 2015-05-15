@@ -84,7 +84,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_WSMOCK:
 				rootLogger.debug(LogUtil.MSG, "Starting the cinderella");
 				try {
-					new Cinderella().run();
+					new Cinderella(RunTimeConfig.getContext()).run();
 				} catch (final Exception e) {
 					LogUtil.failure(rootLogger, Level.FATAL, e, "Failed");
 				}

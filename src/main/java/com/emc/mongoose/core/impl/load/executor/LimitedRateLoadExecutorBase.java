@@ -23,7 +23,7 @@ extends LoadExecutorBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final float rateLimit;
-	private final int tgtDur, manualMicroDelay;
+	private final int tgtDur, manualMicroSleep;
 	//
 	protected LimitedRateLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
@@ -47,7 +47,7 @@ extends LoadExecutorBase<T> {
 			tgtDur = 0;
 		}
 		//
-		manualMicroDelay = runTimeConfig.getLoadLimitTaskMicroDelay();
+		manualMicroSleep = 1000 * runTimeConfig.getLoadLimitReqSleepMilliSec();
 	}
 	/**
 	 Adds the optional delay calculated from last successfull I/O task duration and the target
@@ -63,7 +63,7 @@ extends LoadExecutorBase<T> {
 					LOG.trace(LogUtil.MSG, "Next delay: {}[us]", microDelay);
 				}
 				TimeUnit.MICROSECONDS.sleep(
-					microDelay > manualMicroDelay ? microDelay : manualMicroDelay
+					microDelay > manualMicroSleep ? microDelay : manualMicroSleep
 				);
 			}
 		}
