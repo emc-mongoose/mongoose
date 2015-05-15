@@ -133,27 +133,24 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		long dataItemsCount = 0;
-		BufferedReader fReader = null;
-		try {
+		int batchSize = 0;
+		//
+		final Charset charset =  StandardCharsets.UTF_8;
+		final CharsetDecoder decoder = charset.newDecoder();
+		//
+		if(RunTimeConfig.getContext().isEnabledDataRandom()) {
+			batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
+		}
+		try(BufferedReader fReader = new RandomFileReader(new InputStreamReader(
+			Files.newInputStream(fPath), decoder), batchSize, maxCount)
+		) {
+			//
 			String nextLine;
 			T nextData;
 			LOG.debug(
 				LogUtil.MSG, "Going to produce up to {} data items for consumer \"{}\"",
 				consumer.getMaxCount(), consumer.toString()
 			);
-			//
-			if(RunTimeConfig.getContext().isEnabledDataRandom()) {
-				final long batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
-				final Charset charset =  StandardCharsets.UTF_8;
-				final CharsetDecoder decoder = charset.newDecoder();
-				final InputStreamReader reader = new InputStreamReader(
-					Files.newInputStream(fPath), decoder);
-				//
-				fReader = new RandomFileReader(reader, batchSize, maxCount);
-			} else {
-				fReader = Files.newBufferedReader(fPath, StandardCharsets.UTF_8);
-			}
-			//
 			do {
 				//
 				nextLine = fReader.readLine();
@@ -201,12 +198,7 @@ implements Producer<T> {
 					);
 				}
 				consumer.shutdown();
-				if (fReader != null) {
-					fReader.close();
-				}
-			} catch(final IOException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Failed to close file reader.");
-			}catch(final Exception e) {
+			} catch(final Exception e) {
 				LogUtil.failure(LOG, Level.WARN, e, "Failed to shut down the consumer");
 			}
 			LOG.debug(LogUtil.MSG, "Exiting");

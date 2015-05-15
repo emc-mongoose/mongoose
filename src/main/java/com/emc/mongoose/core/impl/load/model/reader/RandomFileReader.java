@@ -8,9 +8,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
+import java.util.Vector;
 
 /**
  * Created by olga on 08.05.15.
@@ -20,51 +19,53 @@ extends BufferedReader {
 
 	private final static Logger LOG = LogManager.getLogger();
 
-	private final List<String> lines;
+	private final Vector<String> linesBuffer;
 	private final Random random = new Random();
-	private final long batchSize;
 	private final long maxCount;
 	private long count;
-	private boolean eof;
+	private boolean isEOF;
 
-	public RandomFileReader(final Reader in, final long batchSize, final long maxCount)
+	public RandomFileReader(final Reader in, final int batchSize, final long maxCount)
 	throws IOException {
 		super(in);
 
 		LOG.trace(LogUtil.MSG, "Read data items randomly");
 
-		this.batchSize = batchSize;
 		this.maxCount = maxCount;
-		this.lines = new ArrayList<>();
+		this.linesBuffer = new Vector<>(batchSize);
 		count = 0;
-		eof = false;
+		isEOF = false;
 	}
 
 	@Override
 	public final String readLine()
 	throws IOException {
+		if(linesBuffer.capacity() == 0) {
+			return super.readLine();
+		}
+		//
 		fillUp();
 		//
-		if(lines.isEmpty()) {
+		if(linesBuffer.isEmpty()) {
 			return null;
 		} else {
-			final int i = random.nextInt(lines.size());
-			return lines.remove(i);
+			final int i = random.nextInt(linesBuffer.size());
+			return linesBuffer.remove(i);
 		}
 	}
 
 	private void fillUp()
 	throws IOException {
-		while(!eof && (count < maxCount) && (lines.size() < batchSize)) {
+		while(!isEOF && (count < maxCount) && (linesBuffer.size() < linesBuffer.capacity())) {
 			final String line = super.readLine();
 
 			if((line == null) || line.isEmpty()) {
-				eof = true;
+				isEOF = true;
 				break;
 			}
 
 			count++;
-			lines.add(line);
+			linesBuffer.add(line);
 		}
 	}
 }
