@@ -5,6 +5,7 @@ import com.emc.mongoose.common.logging.LogUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
@@ -15,9 +16,10 @@ import java.util.Random;
  * Created by olga on 08.05.15.
  */
 public final class RandomFileReader
-extends FileReader{
+extends BufferedReader {
 
 	private final static Logger LOG = LogManager.getLogger();
+
 	private final List<String> lines;
 	private final Random random = new Random();
 	private final long batchSize;
@@ -26,8 +28,7 @@ extends FileReader{
 	private boolean eof;
 
 	public RandomFileReader(final Reader in, final long batchSize, final long maxCount)
-	throws IOException
-	{
+	throws IOException {
 		super(in);
 
 		LOG.trace(LogUtil.MSG, "Read data items randomly");
@@ -40,12 +41,11 @@ extends FileReader{
 	}
 
 	@Override
-	public final String getLine()
-	throws IOException
-	{
+	public final String readLine()
+	throws IOException {
 		fillUp();
 		//
-		if (lines.isEmpty()) {
+		if(lines.isEmpty()) {
 			return null;
 		} else {
 			final int i = random.nextInt(lines.size());
@@ -53,13 +53,13 @@ extends FileReader{
 		}
 	}
 
-	private void fillUp() throws IOException {
-		while (!eof && (count < maxCount) && (lines.size() < batchSize)) {
-			final String line = readLine();
+	private void fillUp()
+	throws IOException {
+		while(!eof && (count < maxCount) && (lines.size() < batchSize)) {
+			final String line = super.readLine();
 
-			if ((line == null) || line.isEmpty()){
+			if((line == null) || line.isEmpty()) {
 				eof = true;
-
 				break;
 			}
 

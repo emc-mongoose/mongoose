@@ -9,15 +9,14 @@ import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Producer;
 //mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.model.reader.FileReader;
 import com.emc.mongoose.core.impl.load.model.reader.RandomFileReader;
-import com.emc.mongoose.core.impl.load.model.reader.SimpleFileReader;
 import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
@@ -134,47 +133,52 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		long dataItemsCount = 0;
-		FileReader fReader = null;
+		BufferedReader fReader = null;
 		try {
-			String nextDataString;
+			String nextLine;
 			T nextData;
 			LOG.debug(
 				LogUtil.MSG, "Going to produce up to {} data items for consumer \"{}\"",
 				consumer.getMaxCount(), consumer.toString()
 			);
 			//
-			final Charset charset =  StandardCharsets.UTF_8;
-			final CharsetDecoder decoder = charset.newDecoder();
-			final InputStreamReader reader = new InputStreamReader(
-				Files.newInputStream(fPath), decoder);
-			//
-			if (RunTimeConfig.getContext().isEnabledDataRandom()) {
+			if(RunTimeConfig.getContext().isEnabledDataRandom()) {
 				final long batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
+				final Charset charset =  StandardCharsets.UTF_8;
+				final CharsetDecoder decoder = charset.newDecoder();
+				final InputStreamReader reader = new InputStreamReader(
+					Files.newInputStream(fPath), decoder);
+				//
 				fReader = new RandomFileReader(reader, batchSize, maxCount);
 			} else {
-				fReader = new SimpleFileReader(reader);
+				fReader = Files.newBufferedReader(fPath, StandardCharsets.UTF_8);
 			}
 			//
 			do {
-				if ((nextDataString = fReader.getLine()) == null){
-					break;
-				}
-				nextData = dataItemConstructor.newInstance(nextDataString);
 				//
-				try {
-					producerExecSvc.submit(
-						SubmitTask.getInstance(consumer, nextData)
-					);
-					dataItemsCount++;
-				} catch (final Exception e) {
-					if (
-						consumer.getMaxCount() > dataItemsCount &&
-							!RejectedExecutionException.class.isInstance(e)
-						) {
-						LogUtil.failure(LOG, Level.WARN, e, "Failed to submit data item");
-						break;
-					} else {
-						LogUtil.failure(LOG, Level.DEBUG, e, "Failed to submit data item");
+				nextLine = fReader.readLine();
+				LOG.trace(LogUtil.MSG, "Got next line #{}: \"{}\"", dataItemsCount, nextLine);
+				//
+				if(nextLine == null || nextLine.isEmpty()) {
+					LOG.debug(LogUtil.MSG, "No next line, exiting");
+					break;
+				} else {
+					nextData = dataItemConstructor.newInstance(nextLine);
+					try {
+						producerExecSvc.submit(
+							SubmitTask.getInstance(consumer, nextData)
+						);
+						dataItemsCount++;
+					} catch (final Exception e) {
+						if (
+							consumer.getMaxCount() > dataItemsCount &&
+								!RejectedExecutionException.class.isInstance(e)
+							) {
+							LogUtil.failure(LOG, Level.WARN, e, "Failed to submit data item");
+							break;
+						} else {
+							LogUtil.failure(LOG, Level.DEBUG, e, "Failed to submit data item");
+						}
 					}
 				}
 			} while (!isInterrupted() && dataItemsCount < maxCount);
