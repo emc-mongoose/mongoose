@@ -3,8 +3,13 @@ package com.emc.mongoose.common.io;
 import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.collections.InstancePool;
 //
+import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.logging.LogUtil;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.nio.IOControl;
+//
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,13 +21,15 @@ public final class HTTPInputStream
 extends InputStream
 implements Reusable<HTTPInputStream> {
 	//
+	private final static Logger LOG = LogManager.getLogger();
+	//
+	private final static int BYTE_VALUE_MAX = 0xff;
+	//
 	private volatile ByteBuffer bb = null;
 	private volatile byte[] bs = null; // Invoker's previous array
 	private volatile byte[] b1 = new byte[1];
 	private volatile ContentDecoder in = null;
 	private volatile IOControl ioCtl = null;
-	//
-	private final static int BYTE_VALUE_MAX = 0xff;
 	//
 	@Override
 	public final synchronized int read()

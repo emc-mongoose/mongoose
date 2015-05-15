@@ -167,15 +167,15 @@ public final class LogUtil {
 		}
 	}
 	//
-	private static final ThreadLocal<StringBuilder> TLSB = new ThreadLocal<>();
+	private static final ThreadLocal<StringBuilder> THRLOC_SB = new ThreadLocal<>();
 	//
 	public static void failure(
 		final Logger logger, final Level level, final Throwable thrown, final String msg
 	) {
-		StringBuilder msgBuilder = TLSB.get();
+		StringBuilder msgBuilder = THRLOC_SB.get();
 		if(msgBuilder == null) {
 			msgBuilder = new StringBuilder();
-			TLSB.set(msgBuilder);
+			THRLOC_SB.set(msgBuilder);
 		} else {
 			msgBuilder.setLength(0);
 		}
@@ -198,10 +198,10 @@ public final class LogUtil {
 	public static void trace(
 		final Logger logger, final Level level, final Marker marker, final String msg
 	) {
-		StringBuilder msgBuilder = TLSB.get();
+		StringBuilder msgBuilder = THRLOC_SB.get();
 		if(msgBuilder == null) {
 			msgBuilder = new StringBuilder();
-			TLSB.set(msgBuilder);
+			THRLOC_SB.set(msgBuilder);
 		} else {
 			msgBuilder.setLength(0);
 		}

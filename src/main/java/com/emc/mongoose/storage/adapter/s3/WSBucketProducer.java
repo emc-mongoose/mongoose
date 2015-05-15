@@ -89,8 +89,8 @@ implements Producer<T> {
 						}
 						if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
 							try {
-								final SAXParser parser = SAXParserFactory
-									.newInstance().newSAXParser();
+								final SAXParser
+									parser = SAXParserFactory.newInstance().newSAXParser();
 								try(final InputStream in = respEntity.getContent()) {
 									parser.parse(
 										in,

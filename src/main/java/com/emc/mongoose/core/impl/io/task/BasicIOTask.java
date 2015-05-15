@@ -21,7 +21,12 @@ implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static ThreadLocal<StringBuilder> THRLOC_STRBUILDER = new ThreadLocal<>();
+	private final static ThreadLocal<StringBuilder> THRLOC_SB = new ThreadLocal<StringBuilder>() {
+		@Override
+		protected final StringBuilder initialValue() {
+			return new StringBuilder();
+		}
+	};
 	//
 	protected volatile RequestConfig<T> reqConf = null;
 	protected volatile String nodeAddr = null;
@@ -70,13 +75,8 @@ implements IOTask<T> {
 	@Override
 	public final void complete() {
 		final String dataItemId = dataItem.getId();
-		StringBuilder strBuilder = THRLOC_STRBUILDER.get();
-		if(strBuilder == null) {
-			strBuilder = new StringBuilder();
-			THRLOC_STRBUILDER.set(strBuilder);
-		} else {
-			strBuilder.setLength(0); // clear/reset
-		}
+		StringBuilder strBuilder = THRLOC_SB.get();
+		strBuilder.setLength(0); // clear/reset
 		if(
 			respTimeDone < respTimeStart ||
 			respTimeStart < reqTimeDone ||

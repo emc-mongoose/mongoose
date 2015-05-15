@@ -204,7 +204,7 @@ public final class ServiceUtils {
 			remote = Naming.lookup(url);
 			remoteSvc = Service.class.cast(remote);
 		} catch(final ClassCastException e) {
-			if(remote==null) {
+			if(remote == null) {
 				LOG.error(LogUtil.ERR, "Lookup method returns null");
 			} else {
 				LOG.error(

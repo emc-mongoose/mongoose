@@ -61,8 +61,6 @@ extends DefaultHandler {
 		super.startElement(uri, localName, qName, attrs);
 	}
 	//
-	private final ByteBuffer offsetValueBytes = ByteBuffer.allocate(Long.SIZE / Byte.SIZE);
-	//
 	@Override @SuppressWarnings("unchecked")
 	public final void endElement(
 		final String uri, final String localName, final String qName

@@ -56,8 +56,7 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 				}
 				entity.writeTo(outStream);
 			}
-		} catch(final InterruptedException e) {
-			// do nothing
+		} catch(final InterruptedException ignored) {
 		} finally {
 			encoder.complete();
 		}

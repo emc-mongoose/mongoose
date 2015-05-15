@@ -62,7 +62,7 @@ implements DataSource {
 	private static void generateData(final ByteBuffer byteLayer, final long seed) {
 		//final LongBuffer wordLayerView = byteLayer.asLongBuffer();
 		final int
-			size = byteLayer.array().length,
+			size = byteLayer.capacity(),
 			countWordBytes = Long.SIZE / Byte.SIZE,
 			countWords = size / countWordBytes,
 			countTailBytes = size % countWordBytes;
@@ -109,7 +109,7 @@ implements DataSource {
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
-		out.writeInt(byteLayers.get(0).array().length);
+		out.writeInt(byteLayers.get(0).capacity());
 		out.writeLong(seed);
 	}
 	//
@@ -158,7 +158,7 @@ implements DataSource {
 	public final String toString() {
 		return
 			Long.toHexString(seed) + RunTimeConfig.LIST_SEP +
-			Integer.toHexString(byteLayers.get(0).array().length);
+			Integer.toHexString(byteLayers.get(0).capacity());
 	}
 	//
 	@Override
@@ -179,7 +179,7 @@ implements DataSource {
 		if(layerIndex >= layerCount) {
 			ByteBuffer prevLayer = byteLayers.get(layerCount - 1), nextLayer;
 			long prevSeed, nextSeed;
-			final int ringSize = prevLayer.array().length;
+			final int ringSize = prevLayer.capacity();
 			for(int i = layerCount; i <= layerIndex; i ++) {
 				nextLayer = ByteBuffer.allocate(ringSize);
 				prevSeed = prevLayer.getLong(0);

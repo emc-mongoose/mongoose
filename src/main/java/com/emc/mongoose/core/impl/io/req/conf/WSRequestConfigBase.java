@@ -25,7 +25,6 @@ import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.commons.codec.binary.Base64;
 //
-import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.http.ExceptionLogger;
 import org.apache.http.Header;
@@ -79,6 +78,12 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -138,7 +143,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected HeaderGroup sharedHeaders = new HeaderGroup();
-	protected final ThreadLocal<Mac> threadLocalMac = new ThreadLocal<>();
+	protected static final ThreadLocal<Mac> THRLOC_MAC = new ThreadLocal<>();
 	//
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException, IOReactorException {
@@ -514,7 +519,7 @@ implements WSRequestConfig<T> {
 	@Override
 	public String getSignature(final String canonicalForm) {
 		final byte sigData[];
-		Mac mac = threadLocalMac.get();
+		Mac mac = THRLOC_MAC.get();
 		if(mac == null) {
 			try {
 				mac = Mac.getInstance(signMethod);
@@ -523,7 +528,7 @@ implements WSRequestConfig<T> {
 				LogUtil.failure(LOG, Level.FATAL, e, "Failed to calculate the signature");
 				throw new IllegalStateException("Failed to init MAC cypher instance");
 			}
-			threadLocalMac.set(mac);
+			THRLOC_MAC.set(mac);
 		} else {
 			mac.reset();
 		}
@@ -537,8 +542,8 @@ implements WSRequestConfig<T> {
 	}
 	//
 	private final static ThreadLocal<ByteBuffer>
-		RESP_BUFF_NON_READ = new ThreadLocal<>(),
-		RESP_BUFF_READ = new ThreadLocal<>();
+		THRLOC_BB_RESP_WRITE = new ThreadLocal<>(),
+		THRLOC_BB_RESP_READ = new ThreadLocal<>();
 	//
 	@Override
 	public final boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem) {
@@ -555,10 +560,18 @@ implements WSRequestConfig<T> {
 							// ignore
 						}
 					} else { // consume the whole data item content - may estimate the buffer size
-						ByteBuffer bbuff = RESP_BUFF_READ.get();
-						if(bbuff == null || bbuff.capacity() != buffSize) {
-							bbuff = ByteBuffer.allocate(buffSize);
-							RESP_BUFF_READ.set(bbuff);
+						ByteBuffer bbuff = THRLOC_BB_RESP_READ.get();
+						final long dataSize = dataItem.getSize();
+						// should I adapt the buffer size?
+						if(bbuff == null || bbuff.capacity() > 2 * dataSize || dataSize > 2 * bbuff.capacity()) {
+							if(dataSize < LoadExecutor.BUFF_SIZE_LO) {
+								bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
+							} else if(dataSize > LoadExecutor.BUFF_SIZE_HI) {
+								bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_HI);
+							} else {
+								bbuff = ByteBuffer.allocate((int) dataSize); // cast is safe
+							}
+							THRLOC_BB_RESP_READ.set(bbuff);
 						} else {
 							bbuff.clear();
 						}
@@ -576,10 +589,10 @@ implements WSRequestConfig<T> {
 				LogUtil.failure(LOG, Level.WARN, e, "Content reading failure");
 			}
 		} finally { // try to read the remaining data if left in the input stream
-			ByteBuffer bbuff = RESP_BUFF_NON_READ.get();
+			ByteBuffer bbuff = THRLOC_BB_RESP_WRITE.get();
 			if(bbuff == null) {
 				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
-				RESP_BUFF_NON_READ.set(bbuff);
+				THRLOC_BB_RESP_WRITE.set(bbuff);
 			} else {
 				bbuff.clear();
 			}
