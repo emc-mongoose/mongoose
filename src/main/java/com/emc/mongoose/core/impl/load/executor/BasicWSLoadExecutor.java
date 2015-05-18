@@ -102,8 +102,8 @@ implements WSLoadExecutor<T> {
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(BUFF_SIZE_LO > 0x1000 ? 0x2000 : 2 * BUFF_SIZE_LO)
-			.setFragmentSizeHint(BUFF_SIZE_LO > 0x1000 ? 0x1000 : BUFF_SIZE_LO)
+			.setBufferSize(BUFF_SIZE_LO)
+			.setFragmentSizeHint(BUFF_SIZE_LO)
 			.build();
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final int buffSize = this.reqConfigCopy.getBuffSize();

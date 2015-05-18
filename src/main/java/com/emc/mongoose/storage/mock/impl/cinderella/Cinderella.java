@@ -6,13 +6,15 @@ import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+//
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.cinderella.request.APIRequestHandlerMapper;
 import com.emc.mongoose.storage.mock.impl.cinderella.request.WSRequestHandlerBase;
 //
+import com.emc.mongoose.storage.mock.impl.net.WSMockConnFactory;
 import org.apache.http.config.ConnectionConfig;
-import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
+//
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.ResponseConnControl;
@@ -21,6 +23,7 @@ import org.apache.http.protocol.ResponseDate;
 import org.apache.http.protocol.ResponseServer;
 //
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
+import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
 import org.apache.http.nio.NHttpConnectionFactory;
 import org.apache.http.nio.protocol.HttpAsyncRequestHandlerMapper;
 import org.apache.http.nio.protocol.HttpAsyncService;
@@ -64,12 +67,12 @@ implements Runnable {
 		// connection config
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(LoadExecutor.BUFF_SIZE_LO > 0x1000 ? 0x2000 : 2 * LoadExecutor.BUFF_SIZE_LO)
-			.setFragmentSizeHint(LoadExecutor.BUFF_SIZE_LO > 0x1000 ? 0x1000 : LoadExecutor.BUFF_SIZE_LO)
+			.setBufferSize(LoadExecutor.BUFF_SIZE_LO)
+			.setFragmentSizeHint(LoadExecutor.BUFF_SIZE_LO)
 			.build();
 		final int faultConnCacheSize = runTimeConfig.getStorageMockFaultConnCacheSize();
 		if(faultConnCacheSize > 0) {
-			connFactory = new FaultingConnectionFactory(runTimeConfig, connConfig);
+			connFactory = new WSMockConnFactory(runTimeConfig, connConfig);
 		} else {
 			connFactory = new DefaultNHttpServerConnectionFactory(connConfig);
 		}
@@ -134,7 +137,8 @@ implements Runnable {
 			try {
 				multiSocketSvc.submit(
 					new WSSocketIOEventDispatcher(
-						runTimeConfig, protocolHandler, nextPort, connFactory
+						runTimeConfig, protocolHandler, nextPort, connFactory,
+						WSRequestHandlerBase.METRICS
 					)
 				);
 			} catch(final IOReactorException e) {
@@ -163,7 +167,11 @@ implements Runnable {
 		} catch (final InterruptedException e) {
 			LOG.info(LogUtil.MSG, "Interrupting the Cinderella");
 		} finally {
-			WSRequestHandlerBase.METRICS.close();
+			try {
+				WSRequestHandlerBase.METRICS.close();
+			} catch(final IOException e) {
+				LogUtil.failure(LOG, Level.WARN, e, "Closing I/O stats failure");
+			}
 		}
 	}
 }

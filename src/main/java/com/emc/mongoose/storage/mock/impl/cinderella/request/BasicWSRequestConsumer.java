@@ -2,7 +2,6 @@ package com.emc.mongoose.storage.mock.impl.cinderella.request;
 //
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.io.HTTPInputStream;
 import com.emc.mongoose.common.logging.LogUtil;
 //
@@ -74,7 +73,6 @@ implements Reusable<BasicWSRequestConsumer> {
 	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
 			bbuff.clear();
-			LOG.info(LogUtil.MSG, "Consume using buffer of size {}", SizeUtil.formatSize(bbuff.capacity()));
 			HTTPInputStream.consumeQuietly(decoder, ioCtl, bbuff);
 		} catch(final Throwable e) {
 			LogUtil.failure(LOG, Level.WARN, e, "Content consuming failure");

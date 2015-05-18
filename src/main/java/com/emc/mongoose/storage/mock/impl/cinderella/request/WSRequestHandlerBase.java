@@ -9,8 +9,9 @@ import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.stats.IOStats;
 import com.emc.mongoose.storage.mock.impl.cinderella.response.BasicWSResponseProducer;
-import com.emc.mongoose.storage.mock.impl.cinderella.WSRequestMetrics;
+import com.emc.mongoose.storage.mock.impl.cinderella.BasicWSIOStats;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -59,7 +60,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	private final static AtomicLong NEXT_OFFSET = new AtomicLong(
 		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
 	);
-	public final static WSRequestMetrics METRICS = new WSRequestMetrics(RunTimeConfig.getContext());
+	public final static IOStats METRICS = new BasicWSIOStats(RunTimeConfig.getContext());
 	//
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
