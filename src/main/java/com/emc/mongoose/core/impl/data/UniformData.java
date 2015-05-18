@@ -10,17 +10,17 @@ import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.OutputStream;
-import java.util.Arrays;
+import java.nio.ByteBuffer;
+import java.nio.channels.Channels;
+import java.nio.channels.WritableByteChannel;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 09.05.14.
@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
  Uses UniformDataSource as a ring buffer.
  */
 public class UniformData
-extends ByteArrayInputStream
+extends InputStream
 implements DataItem {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -47,9 +47,10 @@ implements DataItem {
 	//
 	protected long offset = 0;
 	protected long size = 0;
+	private ByteBuffer ringBuff;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformData() {
-		super(UniformDataSource.DEFAULT.getBytes(0));
+		this.ringBuff = UniformDataSource.DEFAULT.getLayer(0);
 	}
 	//
 	public UniformData(final String metaInfo) {
@@ -79,14 +80,8 @@ implements DataItem {
 	public UniformData(
 		final Long offset, final Long size, final Integer layerNum, final UniformDataSource dataSrc
 	) {
-		super(dataSrc.getBytes(layerNum));
-		try {
-			setOffset(offset, 0);
-		} catch(final IOException e) {
-			LogUtil.failure(
-				LOG, Level.ERROR, e, "Failed to set data ring offset: " + Long.toString(offset)
-			);
-		}
+		this.ringBuff = dataSrc.getLayer(layerNum);
+		setRelativeOffset(0);
 		this.size = size;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -95,15 +90,18 @@ implements DataItem {
 		return offset;
 	}
 	//
-	public final void setOffset(final long offset0, final long offset1)
-	throws IOException {
-		pos = 0;
-		offset = offset0 + offset1; // temporary offset
-		if(skip(offset % count) == offset % count) {
-			offset = offset0;
-		} else {
-			throw new IOException("Failed to change offset to " + Long.toHexString(offset));
-		}
+	@Override
+	public final void setOffset(final long offset) {
+		this.offset = offset;
+		ringBuff.position((int) (offset % ringBuff.capacity()));
+	}
+	//
+	public final int getRelativeOffset() {
+		return ringBuff.position();
+	}
+	//
+	public final void setRelativeOffset(final long relOffset) {
+		ringBuff.position((int) ((offset + relOffset) % ringBuff.capacity()));
 	}
 	//
 	@Override
@@ -118,7 +116,7 @@ implements DataItem {
 	//
 	@Override
 	public final void setDataSource(final DataSource dataSrc, final int overlayIndex) {
-		buf = dataSrc.getBytes(overlayIndex);
+		ringBuff = dataSrc.getLayer(overlayIndex);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring input stream implementation ////////////////////////////////////////////////////////////
@@ -130,14 +128,10 @@ implements DataItem {
 	//
 	@Override
 	public final int read() {
-		int b;
-		do {
-			b = super.read();
-			if(b < 0) { // end of file
-				pos = 0;
-			}
-		} while(b < 1);
-		return b;
+		if(!ringBuff.hasRemaining()) {
+			ringBuff.position(0);
+		}
+		return ringBuff.get();
 	}
 	//
 	@Override @SuppressWarnings("NullableProblems")
@@ -148,16 +142,16 @@ implements DataItem {
 	//
 	@Override
 	public final int read(final byte buff[], final int offset, final int length) {
-		int doneByteCount = 0, lastByteCount;
+		int nextLen, doneLen = 0;
 		do {
-			lastByteCount = super.read(buff, offset + doneByteCount, length - doneByteCount);
-			if(lastByteCount < 0) {
-				pos = 0;
-			} else {
-				doneByteCount += lastByteCount;
+			if(!ringBuff.hasRemaining()) {
+				ringBuff.position(0);
 			}
-		} while(doneByteCount < length);
-		return doneByteCount;
+			nextLen = Math.min(ringBuff.remaining(), length - doneLen);
+			ringBuff.get(buff, offset + doneLen, nextLen);
+			doneLen += nextLen;
+		} while(doneLen < length);
+		return length;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
@@ -170,7 +164,7 @@ implements DataItem {
 	public void fromString(final String v)
 	throws IllegalArgumentException, NullPointerException {
 		final String tokens[] = v.split(",", 2);
-		if(tokens.length==2) {
+		if(tokens.length == 2) {
 			try {
 				offset = Long.parseLong(tokens[0], 0x10);
 			} catch(final NumberFormatException e) {
@@ -203,7 +197,7 @@ implements DataItem {
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		setOffset(in.readLong(), 0);
+		setOffset(in.readLong());
 		size = in.readLong();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,106 +206,61 @@ implements DataItem {
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(LogUtil.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
 		}
-		int
-			nextOffset = (int) (offset % buf.length),
-			nextLength = buf.length - nextOffset;
-		if(nextLength > size) {
-			nextLength = (int) size;
-		}
-		long byteCountLeft = size;
-		while(byteCountLeft > 0) {
-			out.write(buf, nextOffset, nextLength);
-			byteCountLeft -= nextLength;
-			nextOffset = 0;
-			nextLength = byteCountLeft > buf.length ? buf.length : (int) byteCountLeft;
+		long doneLen = 0;
+		final WritableByteChannel chan = Channels.newChannel(out);
+		while(doneLen < size) {
+			if(!ringBuff.hasRemaining()) {
+				ringBuff.position(0);
+			}
+			doneLen += chan.write(ringBuff);
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(LogUtil.MSG, FMT_MSG_STREAM_OUT_FINISH, Long.toHexString(offset));
 		}
 	}
 	// checks that data read from input equals the specified range
-	protected boolean isContentEqualTo(
-		final InputStream in, final long rangeOffset, final long rangeLength
-	) throws IOException {
+	protected boolean isContentEqualTo(final InputStream in, final long rOffset, final long length)
+	throws IOException {
 		//
-		boolean contentEquals = true;
-		long byteCountLeft = rangeLength;
 		final byte
-			lByteBuff[] = new byte[
-				rangeLength > LoadExecutor.BUFF_SIZE_HI ?
-					LoadExecutor.BUFF_SIZE_HI :
-					rangeLength < LoadExecutor.BUFF_SIZE_LO ?
-						LoadExecutor.BUFF_SIZE_LO : (int) rangeLength // cast to int should be safe here
-			],
-			rByteBuff[] = new byte[lByteBuff.length];
-		int nextByteCount;
-		//
-		while(byteCountLeft > 0 && contentEquals) {
-			// determine how many bytes to read in the next iteration
-			nextByteCount = byteCountLeft > lByteBuff.length ?
-				lByteBuff.length : (int) byteCountLeft;
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(
-					LogUtil.MSG, "Try to read from remote side the next {} bytes, left: {}",
-					nextByteCount, byteCountLeft
-				);
+			inBuff[] = new byte[
+				(int) Math.min(
+					LoadExecutor.BUFF_SIZE_HI, Math.max(LoadExecutor.BUFF_SIZE_LO, length)
+				)
+			];
+		setRelativeOffset(rOffset + length);
+		long doneByteCount = 0, nextByteCount;
+		int n, m;
+		byte b;
+		while(doneByteCount < length) {
+			if(!ringBuff.hasRemaining()) {
+				ringBuff.position(0);
 			}
-			// try to read the determined byte count from the remote side
-			int n, m = 0;
-			do {
-				n = in.read(lByteBuff, m, nextByteCount - m);
-				if(n < 0) { // premature end of stream
-					contentEquals = false;
-					LOG.warn(
-						LogUtil.MSG,
-						"{}: content size mismatch, expected: {}, got: {}",
-						Long.toString(offset, DataObject.ID_RADIX), size,
-						rangeOffset + rangeLength - byteCountLeft + m
-					);
-				} else {
-					m += n;
-				}
-			} while(m < nextByteCount && contentEquals);
-			// try to read the determined byte count from the ring buffer
-			setOffset(offset, rangeOffset + rangeLength - byteCountLeft);
-			if(nextByteCount == read(rByteBuff, 0, nextByteCount)) {
-				if(nextByteCount < lByteBuff.length) { // byte count doesn't fit the buffer size
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
-						LOG.trace(
-							LogUtil.MSG, "Fill the buffers tails from {} to {} w/ equal bytes",
-							lByteBuff.length, nextByteCount, lByteBuff.length - 1
-						);
-					}
-					Arrays.fill(lByteBuff, nextByteCount, lByteBuff.length - 1, Byte.MIN_VALUE);
-					Arrays.fill(rByteBuff, nextByteCount, lByteBuff.length - 1, Byte.MIN_VALUE);
-				}
-				// compare the buffers containing the data been read
-				if(!Arrays.equals(lByteBuff, rByteBuff)) {
-					contentEquals = false;
-					// find the 1st corrupted byte and its position
-					for(int i = 0; i < nextByteCount; i ++) {
-						if(lByteBuff[i] != rByteBuff[i]) {
-							LOG.warn(
-								LogUtil.MSG,
-								"{}: content mismatch @ pos #{}, expected \"{}\", but got \"{}\"",
-								Long.toString(offset, DataObject.ID_RADIX),
-								rangeOffset + rangeLength - byteCountLeft + i,
-								Integer.toHexString(rByteBuff[i]), Integer.toHexString(lByteBuff[i])
-							);
-							break;
-						}
-					}
-				}
+			nextByteCount = Math.min(length - doneByteCount, ringBuff.remaining());
+			nextByteCount = Math.min(nextByteCount, inBuff.length);
+			n = in.read(inBuff, 0, (int) nextByteCount); // cast should be safe here
+			if(n < 0) { // premature end of stream
+				LOG.warn(
+					LogUtil.MSG, "{}: content size mismatch, expected: {}, got: {}",
+					Long.toString(offset, DataObject.ID_RADIX), size, rOffset + doneByteCount
+				);
+				return false;
 			} else {
-				throw new IllegalStateException(
-					"Failed to read " + nextByteCount + " bytes from ring buffer"
-				);
+				for(m = 0; m < n; m ++) {
+					b = ringBuff.get();
+					if(b != inBuff[m]) {
+						LOG.warn(
+							LogUtil.MSG, "{}: content mismatch @ offset {}, expected: 0x{}, got: 0x{}",
+							Long.toString(offset, DataObject.ID_RADIX), rOffset + doneByteCount + m,
+							Integer.toHexString(b), Integer.toHexString(inBuff[m])
+						);
+						return false;
+					}
+				}
+				doneByteCount += n;
 			}
-			// prepare the next iteration
-			byteCountLeft -= nextByteCount;
 		}
-		//
-		return contentEquals;
+		return true;
 	}
 	//
 }

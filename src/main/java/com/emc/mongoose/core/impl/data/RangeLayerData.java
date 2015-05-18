@@ -425,7 +425,7 @@ implements AppendableDataItem, UpdatableDataItem {
 					).writeTo(out);
 					size += pendingAugmentSize;
 				} else { // write from current layer
-					setOffset(offset, size); // FIXME: has no effect?
+					setRelativeOffset(size);
 					// change the size
 					size += pendingAugmentSize;
 					// redirect the tail's data to the output
@@ -471,7 +471,7 @@ implements AppendableDataItem, UpdatableDataItem {
 						offset + size, pendingAugmentSize, currLayerIndex.get() + 1, UniformDataSource.DEFAULT
 					);
 				} else { // write from current layer
-					setOffset(offset, size);
+					setRelativeOffset(size);
 					// change the size
 					size += pendingAugmentSize;
 					augment = this;

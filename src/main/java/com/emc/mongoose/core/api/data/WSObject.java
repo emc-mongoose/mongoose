@@ -16,10 +16,10 @@ import org.apache.http.protocol.HTTP;
 public interface WSObject
 extends DataObject, HttpEntity {
 	//
-	public final static Header HEADER_CONTENT_TYPE = new BasicHeader(
+	Header HEADER_CONTENT_TYPE = new BasicHeader(
 		HTTP.CONTENT_TYPE, RunTimeConfig.getContext().getHttpContentType()
 	);
-	public final static boolean
+	boolean
 		IS_CONTENT_CHUNKED = RunTimeConfig.getContext().getHttpContentChunked(),
 		IS_CONTENT_REPEATABLE = RunTimeConfig.getContext().getHttpContentRepeatable();
 	//

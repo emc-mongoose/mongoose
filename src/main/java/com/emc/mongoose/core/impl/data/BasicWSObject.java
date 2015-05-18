@@ -73,7 +73,7 @@ implements WSObject {
 	//
 	@Override
 	public final InputStream getContent()
-		throws IOException, IllegalStateException {
+	throws IOException, IllegalStateException {
 		return this;
 	}
 	//

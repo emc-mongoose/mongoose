@@ -19,6 +19,12 @@ extends Externalizable, Closeable {
 	//
 	long getOffset();
 	//
+	void setOffset(final long offset);
+	//
+	int getRelativeOffset();
+	//
+	void setRelativeOffset(final long relativeOffset);
+	//
 	void setDataSource(final DataSource dataSrc, final int layerNum);
 	//
 	void writeTo(final OutputStream out)

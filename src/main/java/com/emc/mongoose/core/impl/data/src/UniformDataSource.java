@@ -16,6 +16,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.List;
 /**
  Created by kurila on 23.07.14.
  A uniform data source for producing uniform data items.
@@ -32,7 +33,7 @@ implements DataSource {
 	//
 	private long seed;
 	private int size;
-	private final ArrayList<ByteBuffer> byteLayers = new ArrayList<>(1);
+	private final List<ByteBuffer> byteLayers = new ArrayList<>(1);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformDataSource()
 	throws NumberFormatException {
@@ -46,7 +47,7 @@ implements DataSource {
 		LOG.debug(LogUtil.MSG, "New ring buffer instance #{}", hashCode());
 		this.seed = seed;
 		this.size = size;
-		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
+		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.add(zeroByteLayer);
 	}
@@ -81,33 +82,39 @@ implements DataSource {
 			word = nextWord(word);
 		}
 		// tail bytes
-		final ByteBuffer tailBytes = ByteBuffer.allocate(countWordBytes);
+		final ByteBuffer tailBytes = ByteBuffer.allocateDirect(countWordBytes);
 		tailBytes.asLongBuffer().put(word).rewind();
 		for(i = 0; i < countTailBytes; i ++) {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
 		}
 		// recurrent sequences?
 		if(seqBuffSize < ringBuffSize) {
-			final int seqNum = ringBuffSize / seqBuffSize;
-			if(ringBuffSize % seqBuffSize == 0) {
-				LOG.info(
-					LogUtil.MSG, "There are {} recurrent {} sequences in the {} ring buffer",
-					seqNum, SizeUtil.formatSize(seqBuffSize), SizeUtil.formatSize(ringBuffSize)
+			final int
+				seqNum = ringBuffSize / seqBuffSize,
+				tailSize = ringBuffSize % seqBuffSize;
+			if(tailSize == 0) {
+				LOG.debug(
+					LogUtil.MSG,
+					"There are exactly {} recurrent {} sequences in the {} ring buffer", seqNum,
+					SizeUtil.formatSize(seqBuffSize), SizeUtil.formatSize(ringBuffSize)
 				);
 			} else {
 				LOG.warn(
-					LogUtil.ERR, "Uniform sequence size {} doesn't fit ring buffer size {}",
+					LogUtil.ERR, "Uniform sequence size {} doesn't make up ring buffer size {} integer number of times",
 					SizeUtil.formatSize(seqBuffSize), SizeUtil.formatSize(ringBuffSize)
 				);
 			}
 			final byte seqData[] = new byte[seqBuffSize];
-			byteLayer.get(seqData, 0, seqBuffSize);
+			byteLayer.get(seqData, 0, seqBuffSize).position(seqBuffSize);
 			for(i = 1; i < seqNum; i ++) {
-				LOG.info(LogUtil.MSG, "Next offset: {}/{}", i * seqBuffSize, byteLayer.remaining());
+				LOG.trace(
+					LogUtil.MSG, "Next sequence offset: {}, ring buffer remainging space: {}",
+					i * seqBuffSize, byteLayer.remaining()
+				);
 				byteLayer.put(seqData);
 			}
 			// tail?
-			for(i = 0; i < ringBuffSize % seqBuffSize; i ++) {
+			for(i = 0; i < tailSize; i ++) {
 				byteLayer.put(seqData[i]);
 			}
 		}
@@ -161,7 +168,7 @@ implements DataSource {
 			throw new IllegalArgumentException("Illegal ring size: " + size);
 		}
 		this.size = size;
-		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
+		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.clear();
 		byteLayers.add(zeroByteLayer);
@@ -175,7 +182,7 @@ implements DataSource {
 	@Override
 	public final void setSeed(final long seed) {
 		this.seed = seed;
-		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
+		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.clear();
 		byteLayers.add(zeroByteLayer);
@@ -203,14 +210,15 @@ implements DataSource {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final synchronized byte[] getBytes(final int layerIndex) {
+	@Override
+	public final synchronized ByteBuffer getLayer(final int layerIndex) {
 		final int layerCount = byteLayers.size();
 		if(layerIndex >= layerCount) {
 			ByteBuffer prevLayer = byteLayers.get(layerCount - 1), nextLayer;
 			long prevSeed, nextSeed;
 			final int ringSize = prevLayer.capacity();
 			for(int i = layerCount; i <= layerIndex; i ++) {
-				nextLayer = ByteBuffer.allocate(ringSize);
+				nextLayer = ByteBuffer.allocateDirect(ringSize);
 				prevSeed = prevLayer.getLong(0);
 				nextSeed = Long.reverse(nextWord(Long.reverseBytes(prevSeed)));
 				LOG.debug(
@@ -224,7 +232,7 @@ implements DataSource {
 			}
 			LOG.debug(LogUtil.MSG, "New layer #{}", byteLayers.size() - 1);
 		}
-		return byteLayers.get(layerIndex).array();
+		return byteLayers.get(layerIndex).asReadOnlyBuffer();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }
