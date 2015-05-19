@@ -172,9 +172,7 @@ public final class ServiceUtils {
 		//
 		if(stub != null) {
 			try {
-				final String rmiHostName = System.getProperty(JAVA_RMI_SERVER_HOSTNAME);
-				final String svcName = (rmiHostName != null) ?
-					rmiHostName : svc.getName();
+				final String svcName = svc.getName();
 				Naming.rebind(svcName, svc);
 				SVC_MAP.put(svcName, svc);
 				LOG.info(LogUtil.MSG, "New service bound: {}", svcName);
