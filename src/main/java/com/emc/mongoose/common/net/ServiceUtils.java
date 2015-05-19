@@ -45,6 +45,7 @@ public final class ServiceUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	public final static String JAVA_RMI_SERVER_HOSTNAME = "java.rmi.server.hostname";
 	public final static int PORT_RMI_CONTROL;
 	static {
 		int tmpPort = Registry.REGISTRY_PORT;
@@ -171,10 +172,12 @@ public final class ServiceUtils {
 		//
 		if(stub != null) {
 			try {
-				final String svcName = svc.getName();
+				final String rmiHostName = System.getProperty(JAVA_RMI_SERVER_HOSTNAME);
+				final String svcName = (rmiHostName != null) ?
+					rmiHostName : svc.getName();
 				Naming.rebind(svcName, svc);
 				SVC_MAP.put(svcName, svc);
-				LOG.debug(LogUtil.MSG, "New service bound: {}", svcName);
+				LOG.info(LogUtil.MSG, "New service bound: {}", svcName);
 			} catch(final RemoteException e) {
 				LOG.error(LogUtil.ERR, "Failed to rebind the service", e);
 			} catch(final MalformedURLException e) {
