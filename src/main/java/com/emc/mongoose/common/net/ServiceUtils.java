@@ -45,7 +45,6 @@ public final class ServiceUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static String JAVA_RMI_SERVER_HOSTNAME = "java.rmi.server.hostname";
 	public final static int PORT_RMI_CONTROL;
 	static {
 		int tmpPort = Registry.REGISTRY_PORT;
@@ -245,6 +244,7 @@ public final class ServiceUtils {
 	}
 	//
 	public final static String
+		KEY_RMI_HOSTNAME = "java.rmi.server.hostname",
 		KEY_RMI_CODEBASE = "java.rmi.server.codebase",
 		KEY_JMX_AUTH = "com.sun.management.jmxremote.authenticate",
 		KEY_JMX_PORT = "com.sun.management.jmxremote.port",
