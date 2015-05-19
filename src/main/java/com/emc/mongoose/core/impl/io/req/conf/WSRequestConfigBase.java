@@ -547,7 +547,7 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public final boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem) {
-		boolean ok = true;
+		boolean verifyPass = true;
 		try {
 			if(dataItem != null) {
 				if(loadType == IOTask.Type.READ) { // read
@@ -555,7 +555,7 @@ implements WSRequestConfig<T> {
 						try(
 							final HTTPInputStream inStream = HTTPInputStream.getInstance(in, ioCtl)
 						) {
-							ok = dataItem.isContentEqualTo(inStream);
+							verifyPass = dataItem.isContentEqualTo(inStream);
 						} catch(final InterruptedException e) {
 							// ignore
 						}
@@ -580,7 +580,7 @@ implements WSRequestConfig<T> {
 				}
 			}
 		} catch(final IOException e) {
-			ok = false;
+			verifyPass = false;
 			if(isClosed()) {
 				LogUtil.failure(
 					LOG, Level.DEBUG, e, "Failed to read the content after closing"
@@ -598,7 +598,7 @@ implements WSRequestConfig<T> {
 			}
 			HTTPInputStream.consumeQuietly(in, ioCtl, bbuff);
 		}
-		return ok;
+		return verifyPass;
 	}
 	//
 	@Override

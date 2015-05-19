@@ -6,7 +6,7 @@ import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.data.DataObject;
 //
-import com.emc.mongoose.core.impl.data.src.UniformDataSource;
+import com.emc.mongoose.core.impl.data.UniformData;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
@@ -58,7 +58,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	//
 	private final static int RING_OFFSET_RADIX = RunTimeConfig.getContext().getDataRadixOffset();
 	private final static AtomicLong
-		NEXT_OFFSET = new AtomicLong(
+		LAST_OFFSET = new AtomicLong(
 			Math.abs(
 				Long.reverse(System.currentTimeMillis()) ^
 					Long.reverseBytes(System.nanoTime()) ^
@@ -167,7 +167,8 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		} catch(final NumberFormatException e){
 			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			LogUtil.failure(
-				LOG, Level.ERROR, e, "Put method failure.Data offset doesn't decode."
+				LOG, Level.ERROR, e,
+				"Failed to decode the data id \"" + dataId + "\" as ring buffer offset"
 			);
 			ioStats.markCreate(-1);
 		}
@@ -203,9 +204,8 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		throws HttpException, NumberFormatException {
 		final HttpEntity entity = HttpEntityEnclosingRequest.class.cast(request).getEntity();
 		final long bytes = entity.getContentLength();
-		//create data object or get it for append or update
-		final long offset = genOffset(dataID);
-		LOG.info(LogUtil.MSG, "Store {} w/ ring buffer offset {} and size {}", dataID, offset, bytes);
+		// create data object or get it for append or update
+		final long offset = decodeRingBufferOffset(dataID);
 		final WSObjectMock dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 		sharedStorage.put(dataID, dataObject);
 		if(LOG.isTraceEnabled(LogUtil.DATA_LIST)) {
@@ -222,7 +222,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	offset for mongoose versions prior to v.0.4:
 		final long offset = Long.valueOf(dataID, 0x10);
 	 */
-	private static long genOffset(final String dataID)
+	private static long decodeRingBufferOffset(final String dataID)
 	throws HttpException, NumberFormatException {
 		long offset;
 		if(RING_OFFSET_RADIX == 0x40) { // base64
@@ -238,10 +238,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		return offset;
 	}
 	//
-	protected static String generateId(){
-		long offset = NEXT_OFFSET.getAndSet(
-			Math.abs(UniformDataSource.nextWord(NEXT_OFFSET.get()))
-		);
-		return Long.toString(offset, DataObject.ID_RADIX);
+	protected static String generateId() {
+		return Long.toString(UniformData.nextOffset(LAST_OFFSET), DataObject.ID_RADIX);
 	}
 }

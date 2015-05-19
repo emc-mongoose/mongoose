@@ -42,20 +42,27 @@ implements DataItem {
 		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s",
 		MSG_READ_RING_BLOCKED = "Reading from data ring blocked?";
 	private static AtomicLong
-		NEXT_OFFSET = new AtomicLong(
+		LAST_OFFSET = new AtomicLong(
 			Math.abs(
 				Long.reverse(System.currentTimeMillis()) ^
 				Long.reverseBytes(System.nanoTime()) ^
 				ServiceUtils.getHostAddrCode()
 			)
 		);
+	public static long nextOffset(final AtomicLong lastOffset) {
+		return lastOffset.getAndSet(
+			Math.abs(
+				UniformDataSource.nextWord(lastOffset.get()) ^ System.nanoTime()
+			)
+		);
+	}
 	//
 	private ByteBuffer ringBuff;
 	protected long offset = 0, size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformData() {
-		offset = NEXT_OFFSET.getAndSet(Math.abs(UniformDataSource.nextWord(NEXT_OFFSET.get())));
 		ringBuff = UniformDataSource.DEFAULT.getLayer(0);
+		setOffset(nextOffset(LAST_OFFSET));
 	}
 	//
 	public UniformData(final String metaInfo) {
@@ -64,17 +71,11 @@ implements DataItem {
 	}
 	//
 	public UniformData(final Long size) {
-		this(
-			NEXT_OFFSET.getAndSet(Math.abs(UniformDataSource.nextWord(NEXT_OFFSET.get()))),
-			size, UniformDataSource.DEFAULT
-		);
+		this(nextOffset(LAST_OFFSET), size, UniformDataSource.DEFAULT);
 	}
 	//
 	public UniformData(final Long size, final UniformDataSource dataSrc) {
-		this(
-			NEXT_OFFSET.getAndSet(Math.abs(UniformDataSource.nextWord(NEXT_OFFSET.get()))),
-			size, dataSrc
-		);
+		this(nextOffset(LAST_OFFSET), size, dataSrc);
 	}
 	//
 	public UniformData(final Long offset, final Long size) {
@@ -137,7 +138,7 @@ implements DataItem {
 	@Override
 	public final int read() {
 		if(!ringBuff.hasRemaining()) {
-			ringBuff.position(0);
+			ringBuff.flip();
 		}
 		return ringBuff.get();
 	}
@@ -153,7 +154,7 @@ implements DataItem {
 		int nextLen, doneLen = 0;
 		while(doneLen < length) {
 			if(!ringBuff.hasRemaining()) {
-				ringBuff.position(0);
+				ringBuff.flip();
 			}
 			nextLen = Math.min(ringBuff.remaining(), length - doneLen);
 			ringBuff.get(buff, offset + doneLen, nextLen);
@@ -220,7 +221,7 @@ implements DataItem {
 		setRelativeOffset(0);
 		while(doneLen < size) {
 			if(!ringBuff.hasRemaining()) {
-				ringBuff.position(0);
+				ringBuff.flip();
 			}
 			nextLimit = (int) Math.min(ringBuff.remaining(), size - doneLen);
 			ringBuff.limit(nextLimit);
@@ -246,7 +247,7 @@ implements DataItem {
 		byte b;
 		while(doneByteCount < length) {
 			if(!ringBuff.hasRemaining()) {
-				ringBuff.position(0);
+				ringBuff.flip();
 			}
 			nextByteCount = Math.min(length - doneByteCount, ringBuff.remaining());
 			nextByteCount = Math.min(nextByteCount, inBuff.length);
@@ -264,7 +265,7 @@ implements DataItem {
 						LOG.warn(
 							LogUtil.MSG, "{}: content mismatch @ offset {}, expected: {}, got: {}",
 							Long.toString(offset, DataObject.ID_RADIX), rOffset + doneByteCount + m,
-							String.format("%X", b), String.format("%X", inBuff[m])
+							String.format("\"0x%X\"", b), String.format("\"0x%X\"", inBuff[m])
 						);
 						return false;
 					}

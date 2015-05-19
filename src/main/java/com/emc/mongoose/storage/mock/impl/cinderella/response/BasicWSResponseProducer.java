@@ -46,15 +46,15 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 		final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
 		try(final OutputStream outStream = HTTPOutputStream.getInstance(encoder, ioctrl)) {
-			final HttpEntity entity = this.response.getEntity();
-			if(entity != null) {
+			final HttpEntity dataItemEntity = this.response.getEntity();
+			if(dataItemEntity != null) {
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
 						LogUtil.MSG, "{}: write out {} bytes",
-						entity, entity.getContentLength()
+						dataItemEntity, dataItemEntity.getContentLength()
 					);
 				}
-				entity.writeTo(outStream);
+				dataItemEntity.writeTo(outStream);
 			}
 		} catch(final InterruptedException ignored) {
 		} finally {
