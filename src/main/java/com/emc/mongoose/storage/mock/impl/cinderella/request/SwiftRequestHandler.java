@@ -6,10 +6,10 @@ import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.stats.IOStats;
 //
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-//
 import org.apache.http.HttpStatus;
 //
 import org.apache.logging.log4j.LogManager;
@@ -28,9 +28,10 @@ extends WSRequestHandlerBase {
 	private final String apiBasePathSwift;
 	//
 	public SwiftRequestHandler(
-		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> sharedStorage
+		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> sharedStorage,
+	    final IOStats ioStats
 	) {
-		super(runTimeConfig, sharedStorage);
+		super(runTimeConfig, sharedStorage, ioStats);
 		apiBasePathSwift = runTimeConfig.getString(WSRequestConfigImpl.KEY_CONF_SVC_BASEPATH);
 	}
 	//
@@ -59,7 +60,7 @@ extends WSRequestHandlerBase {
 				httpResponse.setStatusCode(HttpStatus.SC_OK);
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
-						LogUtil.MSG, "Createf the container: {}", requestURI[requestURI.length - 1]
+						LogUtil.MSG, "Create the container: {}", requestURI[requestURI.length - 1]
 					);
 				}
 			} else {

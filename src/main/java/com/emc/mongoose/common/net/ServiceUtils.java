@@ -157,7 +157,7 @@ public final class ServiceUtils {
 	}
 	//
 	public static long getHostAddrCode() {
-		return (long) getHostAddr().hashCode() << Integer.SIZE;
+		return getHostAddr().hashCode();
 	}
 	//
 	public static Remote create(final Service svc) {
@@ -174,7 +174,7 @@ public final class ServiceUtils {
 				final String svcName = svc.getName();
 				Naming.rebind(svcName, svc);
 				SVC_MAP.put(svcName, svc);
-				LOG.debug(LogUtil.MSG, "New service bound: {}", svcName);
+				LOG.info(LogUtil.MSG, "New service bound: {}", svcName);
 			} catch(final RemoteException e) {
 				LOG.error(LogUtil.ERR, "Failed to rebind the service", e);
 			} catch(final MalformedURLException e) {

@@ -19,4 +19,8 @@ extends LinkedHashMap<T, V> {
 	protected final boolean removeEldestEntry(final Map.Entry eldest) {
 		return size() > capacity;
 	}
+	//
+	public final int getCapacity() {
+		return capacity;
+	}
 }

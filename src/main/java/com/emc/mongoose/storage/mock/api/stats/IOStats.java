@@ -9,6 +9,8 @@ extends Runnable, Closeable {
 	//
 	String METRIC_COUNT = "count", ALL_METHODS = "all";
 	//
+	void start();
+	//
 	void markCreate(final long size);
 	void markRead(final long size);
 	void markDelete();

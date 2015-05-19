@@ -11,7 +11,6 @@ import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
 import com.emc.mongoose.storage.mock.impl.cinderella.response.BasicWSResponseProducer;
-import com.emc.mongoose.storage.mock.impl.cinderella.BasicWSIOStats;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -36,6 +35,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,20 +57,26 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		METHOD_TRACE = "trace";
 	//
 	private final static int RING_OFFSET_RADIX = RunTimeConfig.getContext().getDataRadixOffset();
-	private final static AtomicLong NEXT_OFFSET = new AtomicLong(
-		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
-	);
-	public final static IOStats METRICS = new BasicWSIOStats(RunTimeConfig.getContext());
-	//
+	private final static AtomicLong
+		NEXT_OFFSET = new AtomicLong(
+			Math.abs(
+				Long.reverse(System.currentTimeMillis()) ^
+					Long.reverseBytes(System.nanoTime()) ^
+					ServiceUtils.getHostAddrCode()
+			)
+		);
+	private final IOStats ioStats;
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 	private final Map<String, WSObjectMock> sharedStorage;
 	//
 	protected WSRequestHandlerBase(
-		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> sharedStorage
+		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> storage,
+	    final IOStats ioStats
 	) {
 		this.rateLimit = runTimeConfig.getLoadLimitRate();
-		this.sharedStorage = sharedStorage;
+		this.sharedStorage = Collections.synchronizedMap(storage);
+		this.ioStats = ioStats;
 	}
 	//
 	@Override
@@ -82,12 +88,11 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	//
 	@Override
 	public final void handle(
-		final HttpRequest httpRequest, final HttpAsyncExchange httpExchange,
-		final HttpContext httpContext
+		final HttpRequest r, final HttpAsyncExchange httpExchange, final HttpContext httpContext
 	) {
 		// load rate limitation algorithm
 		if(rateLimit > 0) {
-			if(METRICS.getMeanRate() > rateLimit) {
+			if(ioStats.getMeanRate() > rateLimit) {
 				try {
 					Thread.sleep(lastMilliDelay.incrementAndGet());
 				} catch(final InterruptedException e) {
@@ -98,6 +103,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			}
 		}
 		// prepare
+		final HttpRequest httpRequest = httpExchange.getRequest();
 		final HttpResponse httpResponse = httpExchange.getResponse();
 		final RequestLine requestLine = httpRequest.getRequestLine();
 		final String method = requestLine.getMethod().toLowerCase(LogUtil.LOCALE_DEFAULT);
@@ -111,8 +117,8 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	}
 	//
 	protected abstract void handleActually(
-		final HttpRequest httpRequest, final HttpResponse httpResponse, final String method,
-		final String requestURI[], final String dataId
+		final HttpRequest httpRequest, final HttpResponse httpResponse,
+		final String method, final String requestURI[], final String dataId
 	);
 	//
 	protected static String randomString(final int len) {
@@ -153,17 +159,17 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		try {
 			httpResponse.setStatusCode(HttpStatus.SC_OK);
 			final WSObjectMock dataObject = writeDataObject(httpRequest, dataId);
-			METRICS.markCreate(dataObject.getSize());
+			ioStats.markCreate(dataObject.getSize());
 		} catch(final HttpException e) {
 			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			LogUtil.failure(LOG, Level.ERROR, e, "Put method failure");
-			METRICS.markCreate(-1);
+			ioStats.markCreate(-1);
 		} catch(final NumberFormatException e){
 			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			LogUtil.failure(
 				LOG, Level.ERROR, e, "Put method failure.Data offset doesn't decode."
 			);
-			METRICS.markCreate(-1);
+			ioStats.markCreate(-1);
 		}
 	}
 	//
@@ -174,14 +180,14 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(LogUtil.ERR, "No such object: {}", dataId);
 			}
-			METRICS.markRead(-1);
+			ioStats.markRead(-1);
 		} else {
 			response.setStatusCode(HttpStatus.SC_OK);
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(LogUtil.MSG, "Send data object with ID: {}", dataId);
 			}
 			response.setEntity(dataObject);
-			METRICS.markRead(dataObject.getSize());
+			ioStats.markRead(dataObject.getSize());
 		}
 	}
 	//
@@ -190,7 +196,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			LOG.trace(LogUtil.MSG, "Delete data object: response OK");
 		}
 		httpResponse.setStatusCode(HttpStatus.SC_OK);
-		METRICS.markDelete();
+		ioStats.markDelete();
 	}
 	//
 	private WSObjectMock writeDataObject(final HttpRequest request, final String dataID)
@@ -199,6 +205,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final long bytes = entity.getContentLength();
 		//create data object or get it for append or update
 		final long offset = genOffset(dataID);
+		LOG.info(LogUtil.MSG, "Store {} w/ ring buffer offset {} and size {}", dataID, offset, bytes);
 		final WSObjectMock dataObject = new BasicWSObjectMock(dataID, offset, bytes);
 		sharedStorage.put(dataID, dataObject);
 		if(LOG.isTraceEnabled(LogUtil.DATA_LIST)) {

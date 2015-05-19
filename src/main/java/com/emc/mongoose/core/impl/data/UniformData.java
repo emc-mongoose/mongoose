@@ -41,16 +41,21 @@ implements DataItem {
 	protected final static String
 		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s",
 		MSG_READ_RING_BLOCKED = "Reading from data ring blocked?";
-	private static AtomicLong NEXT_OFFSET = new AtomicLong(
-		Math.abs(System.nanoTime() ^ ServiceUtils.getHostAddrCode())
-	);
+	private static AtomicLong
+		NEXT_OFFSET = new AtomicLong(
+			Math.abs(
+				Long.reverse(System.currentTimeMillis()) ^
+				Long.reverseBytes(System.nanoTime()) ^
+				ServiceUtils.getHostAddrCode()
+			)
+		);
 	//
-	protected long offset = 0;
-	protected long size = 0;
 	private ByteBuffer ringBuff;
+	protected long offset = 0, size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformData() {
-		this.ringBuff = UniformDataSource.DEFAULT.getLayer(0);
+		offset = NEXT_OFFSET.getAndSet(Math.abs(UniformDataSource.nextWord(NEXT_OFFSET.get())));
+		ringBuff = UniformDataSource.DEFAULT.getLayer(0);
 	}
 	//
 	public UniformData(final String metaInfo) {
@@ -59,7 +64,10 @@ implements DataItem {
 	}
 	//
 	public UniformData(final Long size) {
-		this(size, UniformDataSource.DEFAULT);
+		this(
+			NEXT_OFFSET.getAndSet(Math.abs(UniformDataSource.nextWord(NEXT_OFFSET.get()))),
+			size, UniformDataSource.DEFAULT
+		);
 	}
 	//
 	public UniformData(final Long size, final UniformDataSource dataSrc) {
@@ -81,7 +89,7 @@ implements DataItem {
 		final Long offset, final Long size, final Integer layerNum, final UniformDataSource dataSrc
 	) {
 		this.ringBuff = dataSrc.getLayer(layerNum);
-		setRelativeOffset(0);
+		setOffset(offset);
 		this.size = size;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -143,14 +151,14 @@ implements DataItem {
 	@Override
 	public final int read(final byte buff[], final int offset, final int length) {
 		int nextLen, doneLen = 0;
-		do {
+		while(doneLen < length) {
 			if(!ringBuff.hasRemaining()) {
 				ringBuff.position(0);
 			}
 			nextLen = Math.min(ringBuff.remaining(), length - doneLen);
 			ringBuff.get(buff, offset + doneLen, nextLen);
 			doneLen += nextLen;
-		} while(doneLen < length);
+		}
 		return length;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,12 +174,12 @@ implements DataItem {
 		final String tokens[] = v.split(",", 2);
 		if(tokens.length == 2) {
 			try {
-				offset = Long.parseLong(tokens[0], 0x10);
+				setOffset(Long.parseLong(tokens[0], 0x10));
 			} catch(final NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_OFFSET, tokens[0]));
 			}
 			try {
-				size = Long.parseLong(tokens[1], 10);
+				setSize(Long.parseLong(tokens[1], 10));
 			} catch(final NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_SIZE, tokens[1]));
 			}
@@ -198,7 +206,7 @@ implements DataItem {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		setOffset(in.readLong());
-		size = in.readLong();
+		setSize(in.readLong());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public void writeTo(final OutputStream out)
@@ -208,10 +216,14 @@ implements DataItem {
 		}
 		long doneLen = 0;
 		final WritableByteChannel chan = Channels.newChannel(out);
+		int nextLimit;
+		setRelativeOffset(0);
 		while(doneLen < size) {
 			if(!ringBuff.hasRemaining()) {
 				ringBuff.position(0);
 			}
+			nextLimit = (int) Math.min(ringBuff.remaining(), size - doneLen);
+			ringBuff.limit(nextLimit);
 			doneLen += chan.write(ringBuff);
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
@@ -250,9 +262,9 @@ implements DataItem {
 					b = ringBuff.get();
 					if(b != inBuff[m]) {
 						LOG.warn(
-							LogUtil.MSG, "{}: content mismatch @ offset {}, expected: 0x{}, got: 0x{}",
+							LogUtil.MSG, "{}: content mismatch @ offset {}, expected: {}, got: {}",
 							Long.toString(offset, DataObject.ID_RADIX), rOffset + doneByteCount + m,
-							Integer.toHexString(b), Integer.toHexString(inBuff[m])
+							String.format("%X", b), String.format("%X", inBuff[m])
 						);
 						return false;
 					}

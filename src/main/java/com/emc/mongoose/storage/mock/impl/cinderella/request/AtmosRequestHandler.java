@@ -7,11 +7,11 @@ import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.stats.IOStats;
 //
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-//
 import org.apache.http.HttpStatus;
 //
 import org.apache.logging.log4j.LogManager;
@@ -28,9 +28,10 @@ extends WSRequestHandlerBase {
 	private final static String URI_BASE_PATH = "/rest";
 	//
 	public AtmosRequestHandler(
-		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> sharedStorage
+		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> sharedStorage,
+	    final IOStats ioStats
 	) {
-		super(runTimeConfig, sharedStorage);
+		super(runTimeConfig, sharedStorage, ioStats);
 	}
 	//
 	public boolean matches(final String requestURI) {

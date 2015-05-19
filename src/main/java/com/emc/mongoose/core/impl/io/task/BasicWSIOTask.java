@@ -23,13 +23,15 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
+import org.apache.http.impl.nio.codecs.LengthDelimitedEncoder;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.nio.ContentDecoder;
-import org.apache.http.nio.ContentEncoder;
-import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
+//
+import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.ContentEncoder;
+import org.apache.http.nio.IOControl;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -200,7 +202,7 @@ implements WSIOTask<T> {
 			final byte buff[] = bb.array();*/
 			long contentLength = reqEntity.getContentLength();
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.MSG, "Task #{}, write out {} bytes", hashCode(), contentLength);
+				LOG.info(LogUtil.MSG, "Task #{}, write out {} bytes", hashCode(), contentLength);
 			}
 			/*long byteCountDown = contentLength;
 			int n;
@@ -218,11 +220,9 @@ implements WSIOTask<T> {
 				}*/
 			try(final HTTPOutputStream outStream = HTTPOutputStream.getInstance(out, ioCtl)) {
 				reqEntity.writeTo(outStream);
-			} catch(final InterruptedException e) {
-				LogUtil.failure(
-					LOG, Level.DEBUG, e,
-					"Failed to get the HTTP output stream instance from the instance pool"
-				);
+			} catch(final Exception e) {
+				LogUtil.failure(LOG, Level.ERROR, e, "Failure");
+				e.printStackTrace(System.err);
 			} finally {
 				out.complete();
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {

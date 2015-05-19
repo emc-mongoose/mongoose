@@ -27,9 +27,7 @@ implements DataSource {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static int
-		A = 21, B = 35, C = 4,
-		SIZE_UNIFORM = 0x100000; // 1MB
+	private final static int A = 21, B = 35, C = 4;
 	//
 	private long seed;
 	private int size;
@@ -63,13 +61,11 @@ implements DataSource {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private static void generateData(final ByteBuffer byteLayer, final long seed) {
-		//final LongBuffer wordLayerView = byteLayer.asLongBuffer();
 		final int
 			ringBuffSize = byteLayer.capacity(),
-			seqBuffSize = Math.min(SIZE_UNIFORM, ringBuffSize),
 			countWordBytes = Long.SIZE / Byte.SIZE,
-			countWords = seqBuffSize / countWordBytes,
-			countTailBytes = seqBuffSize % countWordBytes;
+			countWords = ringBuffSize / countWordBytes,
+			countTailBytes = ringBuffSize % countWordBytes;
 		long word = seed;
 		int i;
 		double d = System.nanoTime();
@@ -78,48 +74,15 @@ implements DataSource {
 		byteLayer.clear();
 		for(i = 0; i < countWords; i ++) {
 			byteLayer.putLong(word);
-			//wordLayerView.putL(i, word);
 			word = nextWord(word);
 		}
-		// tail bytes
+		// tail bytes\
 		final ByteBuffer tailBytes = ByteBuffer.allocateDirect(countWordBytes);
 		tailBytes.asLongBuffer().put(word).rewind();
 		for(i = 0; i < countTailBytes; i ++) {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
 		}
-		// recurrent sequences?
-		if(seqBuffSize < ringBuffSize) {
-			final int
-				seqNum = ringBuffSize / seqBuffSize,
-				tailSize = ringBuffSize % seqBuffSize;
-			if(tailSize == 0) {
-				LOG.debug(
-					LogUtil.MSG,
-					"There are exactly {} recurrent {} sequences in the {} ring buffer", seqNum,
-					SizeUtil.formatSize(seqBuffSize), SizeUtil.formatSize(ringBuffSize)
-				);
-			} else {
-				LOG.warn(
-					LogUtil.ERR, "Uniform sequence size {} doesn't make up ring buffer size {} integer number of times",
-					SizeUtil.formatSize(seqBuffSize), SizeUtil.formatSize(ringBuffSize)
-				);
-			}
-			final byte seqData[] = new byte[seqBuffSize];
-			byteLayer.get(seqData, 0, seqBuffSize).position(seqBuffSize);
-			for(i = 1; i < seqNum; i ++) {
-				LOG.trace(
-					LogUtil.MSG, "Next sequence offset: {}, ring buffer remainging space: {}",
-					i * seqBuffSize, byteLayer.remaining()
-				);
-				byteLayer.put(seqData);
-			}
-			// tail?
-			for(i = 0; i < tailSize; i ++) {
-				byteLayer.put(seqData[i]);
-			}
-		}
-		/*
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+		/*if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(
 				LogUtil.MSG, "Ring buffer data: {}", Base64.encodeBase64String(byteLayer.array())
 			);

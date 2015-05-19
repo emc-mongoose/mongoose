@@ -50,8 +50,8 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 			if(entity != null) {
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
-						LogUtil.MSG, "Write out {} bytes",
-						entity.getContentLength()
+						LogUtil.MSG, "{}: write out {} bytes",
+						entity, entity.getContentLength()
 					);
 				}
 				entity.writeTo(outStream);

@@ -5,6 +5,7 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 //
+import com.emc.mongoose.common.collections.Cache;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -12,7 +13,9 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -98,23 +101,27 @@ implements IOStats {
 		);
 	//
 	private final long updateMilliPeriod;
+	private final Cache<String, WSObjectMock> storage;
 	//
-	public BasicWSIOStats(final RunTimeConfig runTimeConfig) {
+	public BasicWSIOStats(
+		final RunTimeConfig runTimeConfig, final Cache<String, WSObjectMock> storage
+	) {
 		super(BasicWSIOStats.class.getSimpleName());
 		setDaemon(true);
 		updateMilliPeriod = TimeUnit.SECONDS.toMillis(runTimeConfig.getLoadMetricsPeriodSec());
-		metricsReporter.start();
-		start();
+		this.storage = storage;
 	}
 	//
 	private final static String
-		MSG_FMT_METRICS = "count(succ=(%d/%d/%d); fail=(%d/%d)); " +
-		"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
+		MSG_FMT_METRICS = "capacity used=(%d/%.3f%%); count=(succ=(%d/%d/%d); fail=(%d/%d)); " +
+			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
 	@Override
 	public final String toString() {
 		return String.format(
 			LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
+			//
+			storage.size(), 100.0 * storage.size() / storage.getCapacity(),
 			//
 			countSuccCreate.getCount(), countSuccRead.getCount(), countSuccDelete.getCount(),
 			countFailCreate.getCount(), countFailRead.getCount(),
@@ -132,13 +139,22 @@ implements IOStats {
 	}
 	//
 	@Override
+	public final void start() {
+		LOG.debug(LogUtil.MSG, "Start");
+		metricsReporter.start();
+		super.start();
+	}
+	//
+	@Override
 	public final void run() {
+		LOG.debug(LogUtil.MSG, "Running");
 		try {
 			while(updateMilliPeriod > 0) {
 				LOG.info(LogUtil.PERF_AVG, toString());
 				Thread.sleep(updateMilliPeriod);
 			}
-		} catch(final InterruptedException ignored) {
+		} catch(final Exception e) {
+			LogUtil.failure(LOG, Level.WARN, e, "Failure");
 		} finally {
 			close();
 		}

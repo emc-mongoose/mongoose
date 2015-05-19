@@ -8,13 +8,12 @@ import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.stats.IOStats;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.cinderella.request.APIRequestHandlerMapper;
-import com.emc.mongoose.storage.mock.impl.cinderella.request.WSRequestHandlerBase;
-//
 import com.emc.mongoose.storage.mock.impl.net.WSMockConnFactory;
-import org.apache.http.config.ConnectionConfig;
 //
+import org.apache.http.config.ConnectionConfig;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.ResponseConnControl;
@@ -37,6 +36,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -53,11 +53,13 @@ implements Runnable {
 	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
 	private final int portStart, countHeads;
 	private final RunTimeConfig runTimeConfig;
+	private final IOStats ioStats;
 	//
 	public Cinderella(final RunTimeConfig runTimeConfig)
 	throws IOException {
 		super(runTimeConfig.getStorageMockCapacity());
 		this.runTimeConfig = runTimeConfig;
+		ioStats = new BasicWSIOStats(runTimeConfig, this);
 		countHeads = runTimeConfig.getStorageMockHeadCount();
 		portStart = runTimeConfig.getApiTypePort(runTimeConfig.getApiName());
 		LOG.info(
@@ -91,7 +93,7 @@ implements Runnable {
 			.build();
 		// Create request handler registry
 		final HttpAsyncRequestHandlerMapper apiReqHandlerMapper = new APIRequestHandlerMapper(
-			runTimeConfig, this
+			runTimeConfig, Collections.synchronizedMap(this), ioStats
 		);
 		// Register the default handler for all URIs
 		protocolHandler = new HttpAsyncService(httpproc, apiReqHandlerMapper);
@@ -99,9 +101,10 @@ implements Runnable {
 			countHeads, new NamingWorkerFactory("cinderellaWorker")
 		);
 	}
-
+	//
 	@Override
 	public void run() {
+		ioStats.start();
 		// if there is data src file path
 		final String dataFilePath = runTimeConfig.getDataSrcFPath();
 		final int dataSizeRadix = runTimeConfig.getDataRadixSize();
@@ -137,8 +140,7 @@ implements Runnable {
 			try {
 				multiSocketSvc.submit(
 					new WSSocketIOEventDispatcher(
-						runTimeConfig, protocolHandler, nextPort, connFactory,
-						WSRequestHandlerBase.METRICS
+						runTimeConfig, protocolHandler, nextPort, connFactory, ioStats
 					)
 				);
 			} catch(final IOReactorException e) {
@@ -168,7 +170,7 @@ implements Runnable {
 			LOG.info(LogUtil.MSG, "Interrupting the Cinderella");
 		} finally {
 			try {
-				WSRequestHandlerBase.METRICS.close();
+				ioStats.close();
 			} catch(final IOException e) {
 				LogUtil.failure(LOG, Level.WARN, e, "Closing I/O stats failure");
 			}

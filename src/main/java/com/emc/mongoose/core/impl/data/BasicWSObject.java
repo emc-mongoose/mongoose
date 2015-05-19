@@ -2,13 +2,13 @@ package com.emc.mongoose.core.impl.data;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
 //
-import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 import com.emc.mongoose.core.impl.data.ws.AugmentEntity;
 import com.emc.mongoose.core.impl.data.ws.UpdateRangesEntity;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
 import org.apache.http.util.EntityUtils;
 //
@@ -94,11 +94,6 @@ implements WSObject {
 	//
 	public final HttpEntity getPendingAugmentContentEntity() {
 		return new AugmentEntity<WSObject>(this);
-	}
-	//
-	@Override
-	public final boolean compareWith(final ContentDecoder in, final IOControl ioCtl) {
-		return true;
 	}
 }
 //

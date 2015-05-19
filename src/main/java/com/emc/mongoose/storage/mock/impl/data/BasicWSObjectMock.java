@@ -77,12 +77,14 @@ implements WSObjectMock {
 					rangeSize = getRangeSize(i);
 					if(maskRangesPending.get(i)) { // range have been modified
 						updatedRange = new UniformData(
-							offset + rangeOffset, rangeSize, currLayerIndex.get() + 1, UniformDataSource.DEFAULT
+							offset + rangeOffset, rangeSize, currLayerIndex.get() + 1,
+							UniformDataSource.DEFAULT
 						);
 						updatedRange.writeTo(out);
 					} else { // previous layer of updated ranges
 						updatedRange = new UniformData(
-							offset + rangeOffset, rangeSize, currLayerIndex.get(), UniformDataSource.DEFAULT
+							offset + rangeOffset, rangeSize, currLayerIndex.get(),
+							UniformDataSource.DEFAULT
 						);
 						updatedRange.writeTo(out);
 					}

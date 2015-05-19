@@ -127,10 +127,10 @@
 				"offset": 36
 			},
 			"buffer": {
-				"size": "8KB",
+				"size": "4KB",
 				"ring": {
 					"seed": "7a42d9c483244167",
-					"size": "16MB"
+					"size": "4MB"
 				}
 			}
 		},

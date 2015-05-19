@@ -49,9 +49,7 @@ implements AppendableDataItem, UpdatableDataItem {
 		FMT_MSG_MERGE_MASKS = "{}: move pending ranges \"{}\" to history \"{}\"",
 		STR_EMPTY_MASK = "0";
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final BitSet
-		maskRangesHistory = new BitSet(),
-		maskRangesPending = new BitSet();
+	protected final BitSet maskRangesHistory = new BitSet(), maskRangesPending = new BitSet();
 	protected AtomicInteger currLayerIndex = new AtomicInteger();
 	//
 	protected long pendingAugmentSize = 0;
@@ -102,14 +100,16 @@ implements AppendableDataItem, UpdatableDataItem {
 				final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
 				final char rangesMaskChars[];
 				if(rangesMask.length() == 0) {
-					rangesMaskChars = "00".toCharArray();
+					rangesMaskChars = ("00" + rangesMask).toCharArray();
 				} else if(rangesMask.length() % 2 == 1) {
 					rangesMaskChars = ("0" + rangesMask).toCharArray();
 				} else {
 					rangesMaskChars = rangesMask.toCharArray();
 				}
 				// method "or" to merge w/ the existing mask
-				maskRangesHistory.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
+				maskRangesHistory.or(
+					BitSet.valueOf(Hex.decodeHex(rangesMaskChars))
+				);
 			} catch(final DecoderException | NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
 			}
@@ -188,7 +188,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				return isContentEqualTo(in, 0, size);
 			} else {
 				return new UniformData(
-					offset, size, currLayerIndex.get(), UniformDataSource.DEFAULT
+					getOffset(), size, currLayerIndex.get(), UniformDataSource.DEFAULT
 				).isContentEqualTo(in, 0, size);
 			}
 		}

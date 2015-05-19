@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.io;
 //
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+//import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
 //
@@ -10,8 +10,8 @@ import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.reactor.ListeningIOReactor;
 //
-import java.net.Socket;
-import java.net.SocketException;
+//import java.net.Socket;
+//import java.net.SocketException;
 /**
  Created by kurila on 18.05.15.
  */
