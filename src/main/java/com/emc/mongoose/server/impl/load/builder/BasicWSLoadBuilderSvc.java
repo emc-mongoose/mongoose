@@ -54,7 +54,7 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	@Override
 	public final String getName() {
-		return "//127.0.0.1/" + getClass().getPackage().getName();
+		return "//" + ServiceUtils.getHostAddr() + "/" + getClass().getPackage().getName();
 	}
 	//
 	@Override
