@@ -173,6 +173,18 @@ sourceSets {
 		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// JUnit 4 tests ///////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	jUTest {
+		java {
+			srcDirs(['src', 'main', 'java', 'test', 'com', 'emc', 'mongoose'].join(File.separator))
+			include '**'
+		}
+		//
+		compileClasspath += sourceSets.coreImpl.output
+
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -347,6 +359,12 @@ dependencies {
 	cliRuntime (
 		library.runtime_logging,
 	)
+
+	jUTestCompile (
+		library.junit,
+		library.junit_easy_mock,
+	)
+
 }
 
 configurations {
@@ -781,6 +799,18 @@ idea {
 		withXml { provider ->
 			provider.node.component.find { it.@name == 'VcsDirectoryMappings' }.mapping.@vcs = 'Git'
 		}
+	}
+}
+
+task jUTest(type: Test) {
+	dependsOn coreImplJar
+	description = "Runs tests"
+	testClassesDir = sourceSets.jUTest.output.classesDir
+	classpath = (sourceSets.jUTest.runtimeClasspath
+			+ sourceSets.coreImpl.runtimeClasspath)
+	useJUnit()
+	testLogging {
+		events "passed", "skipped", "failed"
 	}
 }
 

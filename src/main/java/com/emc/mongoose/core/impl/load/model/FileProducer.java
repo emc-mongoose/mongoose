@@ -27,6 +27,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
@@ -134,15 +135,12 @@ implements Producer<T> {
 	public final void run() {
 		long dataItemsCount = 0;
 		int batchSize = 0;
-		//
-		final Charset charset =  StandardCharsets.UTF_8;
-		final CharsetDecoder decoder = charset.newDecoder();
-		//
 		if(RunTimeConfig.getContext().isEnabledDataRandom()) {
 			batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
 		}
-		try(BufferedReader fReader = new RandomFileReader(new InputStreamReader(
-			Files.newInputStream(fPath), decoder), batchSize, maxCount)
+		//
+		try(RandomFileReader fReader = new RandomFileReader(
+			Files.newBufferedReader(fPath, StandardCharsets.UTF_8), batchSize, maxCount, new Random())
 		) {
 			//
 			String nextLine;

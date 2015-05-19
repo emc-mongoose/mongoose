@@ -72,6 +72,9 @@ ext {
 	websocket_server = [ "org.eclipse.jetty.websocket:websocket-server:9.3.0.M1" ]
 	websocket_servlet = [ "org.eclipse.jetty.websocket:websocket-servlet:9.3.0.M1" ]
 
+	junit = ["junit:junit:4.12"]
+	junit_easy_mock = ["org.easymock:easymock:3.3.1"]
+
 	////////////////////////////////////////////////////////////////////////////////////////////////
 
 	httpcore_plus_nio = [ httpcore, httpcore_nio, ]
