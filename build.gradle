@@ -183,6 +183,8 @@ sourceSets {
 		}
 		//
 		compileClasspath += sourceSets.coreImpl.output
+		//
+		runtimeClasspath += sourceSets.coreImpl.output
 
 	}
 }
@@ -363,6 +365,9 @@ dependencies {
 	jUTestCompile (
 		library.junit,
 		library.junit_easy_mock,
+		library.log4j_core,
+		library.commons_collections4,
+		library.commons_configuration,
 	)
 
 }
@@ -803,11 +808,12 @@ idea {
 }
 
 task jUTest(type: Test) {
+	dependsOn commonJar
 	dependsOn coreImplJar
-	description = "Runs tests"
+
+	description = "Runs JUnit tests"
 	testClassesDir = sourceSets.jUTest.output.classesDir
-	classpath = (sourceSets.jUTest.runtimeClasspath
-			+ sourceSets.coreImpl.runtimeClasspath)
+	classpath = sourceSets.jUTest.runtimeClasspath
 	useJUnit()
 	testLogging {
 		events "passed", "skipped", "failed"
