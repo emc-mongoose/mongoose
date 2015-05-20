@@ -15,8 +15,6 @@ import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
 import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 //
-import org.apache.commons.lang.text.StrBuilder;
-//
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
@@ -25,13 +23,15 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
+import org.apache.http.impl.nio.codecs.LengthDelimitedEncoder;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.nio.ContentDecoder;
-import org.apache.http.nio.ContentEncoder;
-import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
+//
+import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.ContentEncoder;
+import org.apache.http.nio.IOControl;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -72,10 +72,7 @@ implements WSIOTask<T> {
 	@Override
 	public void release() {
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LogUtil.trace(
-				LOG, Level.TRACE, LogUtil.MSG,
-				String.format("Releasing the task #%d", hashCode())
-			);
+			LogUtil.trace(LOG, Level.TRACE, LogUtil.MSG, "Releasing the task #" + hashCode());
 		}
 		resetRequest();
 		POOL_WEB_IO_TASKS.release(this);
@@ -142,8 +139,7 @@ implements WSIOTask<T> {
 					}
 				} catch(final Exception e) {
 					LogUtil.failure(
-						LOG, Level.WARN, e,
-						String.format("Invalid syntax of storage address \"%s\"", nodeAddr)
+						LOG, Level.WARN, e, "Invalid syntax of storage address: " + nodeAddr
 					);
 					throw new IllegalStateException("Stop due to unrecoverable failure");
 				}
@@ -206,7 +202,7 @@ implements WSIOTask<T> {
 			final byte buff[] = bb.array();*/
 			long contentLength = reqEntity.getContentLength();
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.MSG, "Task #{}, write out {} bytes", hashCode(), contentLength);
+				LOG.info(LogUtil.MSG, "Task #{}, write out {} bytes", hashCode(), contentLength);
 			}
 			/*long byteCountDown = contentLength;
 			int n;
@@ -224,11 +220,9 @@ implements WSIOTask<T> {
 				}*/
 			try(final HTTPOutputStream outStream = HTTPOutputStream.getInstance(out, ioCtl)) {
 				reqEntity.writeTo(outStream);
-			} catch(final InterruptedException e) {
-				LogUtil.failure(
-					LOG, Level.DEBUG, e,
-					"Failed to get the HTTP output stream instance from the instance pool"
-				);
+			} catch(final Exception e) {
+				LogUtil.failure(LOG, Level.ERROR, e, "Failure");
+				e.printStackTrace(System.err);
 			} finally {
 				out.complete();
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
@@ -453,7 +447,7 @@ implements WSIOTask<T> {
 	throws IOException {
 		if(respStatusCode < 200 || respStatusCode >= 300) { // failure, no big data is expected
 			try(final InputStream inStream = HTTPInputStream.getInstance(in, ioCtl)) {
-				final StrBuilder msgBuilder = new StrBuilder();
+				final StringBuilder msgBuilder = new StringBuilder();
 				final byte buff[] = new byte[0x2000];
 				int n;
 				do {
@@ -463,6 +457,9 @@ implements WSIOTask<T> {
 					}
 					msgBuilder.append(new String(buff, 0, n));
 				} while(!in.isCompleted());
+				if(LOG.isTraceEnabled(LogUtil.ERR)) {
+					LOG.trace(LogUtil.ERR, msgBuilder);
+				}
 			} catch(final InterruptedException e) {
 				// ignore
 			}

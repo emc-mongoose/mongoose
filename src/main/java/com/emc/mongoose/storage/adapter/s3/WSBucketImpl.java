@@ -5,8 +5,6 @@ import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //
-import org.apache.commons.lang.text.StrBuilder;
-//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -122,13 +120,13 @@ implements Bucket<T> {
 					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
 						LOG.debug(LogUtil.MSG, "Bucket \"{}\" doesn't exist", name);
 					} else {
-						final StrBuilder msg = new StrBuilder("Check bucket \"")
+						final StringBuilder msg = new StringBuilder("Check bucket \"")
 							.append(name).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
-								msg.appendNewLine().append(buff.toString());
+								msg.append('\n').append(buff.toString());
 							} catch(final Exception e) {
 								// ignore
 							}
@@ -162,13 +160,13 @@ implements Bucket<T> {
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(LogUtil.MSG, "Bucket \"{}\" versioning enabled", name);
 					} else {
-						final StrBuilder msg = new StrBuilder("Bucket versioning \"")
+						final StringBuilder msg = new StringBuilder("Bucket versioning \"")
 								.append(name).append("\" failure: ")
 								.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
-								msg.appendNewLine().append(buff.toString());
+								msg.append('\n').append(buff.toString());
 							} catch(final Exception e) {
 								// ignore
 							}
@@ -202,13 +200,13 @@ implements Bucket<T> {
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(LogUtil.MSG, "Bucket \"{}\" created", name);
 					} else {
-						final StrBuilder msg = new StrBuilder("Create bucket \"")
+						final StringBuilder msg = new StringBuilder("Create bucket \"")
 							.append(name).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
-								msg.appendNewLine().append(buff.toString());
+								msg.append('\n').append(buff.toString());
 							} catch(final Exception e) {
 								// ignore
 							}
@@ -242,13 +240,13 @@ implements Bucket<T> {
 					if(statusCode >= 200 && statusCode < 300) {
 						LOG.info(LogUtil.MSG, "Bucket \"{}\" deleted", name);
 					} else {
-						final StrBuilder msg = new StrBuilder("Delete bucket \"")
+						final StringBuilder msg = new StringBuilder("Delete bucket \"")
 							.append(name).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
-								msg.appendNewLine().append(buff.toString());
+								msg.append('\n').append(buff.toString());
 							} catch(final Exception e) {
 								// ignore
 							}

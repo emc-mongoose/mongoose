@@ -42,22 +42,22 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 	}
 	//
 	@Override
-	public final void produceContent(
-		final ContentEncoder encoder, final IOControl ioctrl)
+	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
 		try(final OutputStream outStream = HTTPOutputStream.getInstance(encoder, ioctrl)) {
-			final HttpEntity entity = this.response.getEntity();
-			if(entity != null) {
+			final HttpEntity dataItemEntity = this.response.getEntity();
+			if(dataItemEntity != null) {
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
-						LogUtil.MSG, "Write out {} bytes",
-						entity.getContentLength()
+						LogUtil.MSG, "{}: write out {} bytes",
+						dataItemEntity, dataItemEntity.getContentLength()
 					);
 				}
-				entity.writeTo(outStream);
+				dataItemEntity.writeTo(outStream);
 			}
-		} catch(final InterruptedException e) {
-			// do nothing
+		} catch(final InterruptedException ignored) {
+		} catch(final Exception e) {
+			LogUtil.failure(LOG, Level.WARN, e, "Content producing failure");
 		} finally {
 			encoder.complete();
 		}

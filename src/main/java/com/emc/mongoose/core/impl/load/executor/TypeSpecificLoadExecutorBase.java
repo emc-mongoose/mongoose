@@ -83,30 +83,25 @@ extends LimitedRateLoadExecutorBase<T> {
 			case CREATE:
 				if(sizeMin < 0) {
 					throw new IllegalArgumentException(
-						String.format(
-							"Min data item size (%s) is less than zero",
-							SizeUtil.formatSize(sizeMin)
-						)
+						"Min data item size is less than zero: " + SizeUtil.formatSize(sizeMin)
 					);
 				}
 				if(sizeMin > sizeMax) {
 					throw new IllegalArgumentException(
-						String.format(
-							"Min object size (%s) shouldn't be more than max (%s)",
-							SizeUtil.formatSize(sizeMin), SizeUtil.formatSize(sizeMax)
-						)
+						"Min object size shouldn't be more than max: " +
+						SizeUtil.formatSize(sizeMin) + ", " + SizeUtil.formatSize(sizeMax)
 					);
 				}
 				if(sizeBias < 0) {
 					throw new IllegalArgumentException(
-						String.format("Object size bias (%f) should not be less than 0", sizeBias)
+						"Object size bias should not be less than 0: " + sizeBias
 					);
 				}
 				break;
 			case UPDATE:
 				if(countUpdPerReq < 0) {
 					throw new IllegalArgumentException(
-						String.format("Invalid updates per request count: %d", countUpdPerReq)
+						"Invalid updates per request count: " + countUpdPerReq
 					);
 				}
 				break;

@@ -23,21 +23,21 @@ implements Reusable<HTTPOutputStream> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private volatile ByteBuffer bb = null;
-	private volatile byte[] bs = null; // Invoker's previous array
-	private volatile byte[] b1 = new byte[1];
-	private volatile ContentEncoder out = null;
-	private volatile IOControl ioCtl = null;
+	private ByteBuffer bb = null;
+	private byte[] bs = null; // Invoker's previous array
+	private byte[] b1 = new byte[1];
+	private ContentEncoder out = null;
+	private IOControl ioCtl = null;
 	//
 	@Override
-	public synchronized void write(final int b)
+	public void write(final int b)
 	throws IOException {
 		b1[0] = (byte) b;
 		write(b1);
 	}
 	//
 	@Override
-	public final synchronized void write(final byte bs[], final int off, final int len)
+	public final void write(final byte bs[], final int off, final int len)
 	throws IOException, IndexOutOfBoundsException {
 		if(
 			(off < 0) || (off > bs.length) || (len < 0) || ((off + len) > bs.length) ||

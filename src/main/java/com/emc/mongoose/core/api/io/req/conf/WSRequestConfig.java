@@ -34,8 +34,6 @@ extends ObjectRequestConfig<T> {
 		//
 		VALUE_KEEP_ALIVE = "keep-alive",
 		MSG_TMPL_NOT_SPECIFIED = "Required property \"{}\" is not specifed",
-		MSG_TMPL_RANGE_BYTES = "bytes=%d-%d",
-		MSG_TMPL_RANGE_BYTES_APPEND = "bytes=%d-",
 		MSG_NO_DATA_ITEM = "Data item is not specified",
 		MSG_NO_REQ = "No request specified to apply to";
 		//

@@ -12,7 +12,7 @@ import java.io.OutputStream;
 public interface UpdatableDataItem
 extends DataItem {
 	//
-	int getLayerNum();
+	int getCurrLayerIndex();
 	//
 	boolean isRangeUpdatePending(final int i);
 	//

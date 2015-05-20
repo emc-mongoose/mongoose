@@ -141,10 +141,12 @@ implements Producer<T> {
 		if(RunTimeConfig.getContext().isEnabledDataRandom()) {
 			batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
 		}
-		try(BufferedReader fReader = new RandomFileReader(new InputStreamReader(
-			Files.newInputStream(fPath), decoder), batchSize, maxCount)
+		try(
+			BufferedReader fReader = new RandomFileReader(
+				new InputStreamReader(Files.newInputStream(fPath), decoder),
+				batchSize, maxCount
+			)
 		) {
-			//
 			String nextLine;
 			T nextData;
 			LOG.debug(
@@ -182,7 +184,6 @@ implements Producer<T> {
 		} catch(final IOException e) {
 			LogUtil.failure(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final Exception e) {
-			//e.printStackTrace(System.err);
 			LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
 		} finally {
 			LOG.debug(LogUtil.MSG, "Produced {} data items", dataItemsCount);

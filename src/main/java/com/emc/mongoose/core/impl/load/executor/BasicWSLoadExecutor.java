@@ -13,6 +13,7 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
+import com.emc.mongoose.core.impl.load.executor.util.AsyncReleaseWSConnPool;
 import com.emc.mongoose.core.impl.load.model.BasicWSObjectGenerator;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
@@ -23,6 +24,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.message.HeaderGroup;
+import org.apache.http.pool.PoolStats;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -81,13 +83,13 @@ implements WSLoadExecutor<T> {
 			.getSharedHeaders();
 		final String userAgent = runTimeConfig.getRunName() + "/" + runTimeConfig.getRunVersion();
 		//
-		final HttpProcessor httpProcessor= HttpProcessorBuilder
+		final HttpProcessor httpProcessor = HttpProcessorBuilder
 			.create()
 			.add(new RequestSharedHeaders(sharedHeaders))
 			.add(new RequestTargetHost())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
-			//.add(new RequestExpectContinue(true))
+				//.add(new RequestExpectContinue(true))
 			.add(new RequestContent(false))
 			.build();
 		client = new HttpAsyncRequester(
@@ -100,11 +102,6 @@ implements WSLoadExecutor<T> {
 			}
 		);
 		//
-		final ConnectionConfig connConfig = ConnectionConfig
-			.custom()
-			.setBufferSize(BUFF_SIZE_LO > 0x1000 ? 0x2000 : 2 * BUFF_SIZE_LO)
-			.setFragmentSizeHint(BUFF_SIZE_LO > 0x1000 ? 0x1000 : BUFF_SIZE_LO)
-			.build();
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final int buffSize = this.reqConfigCopy.getBuffSize();
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
@@ -125,6 +122,11 @@ implements WSLoadExecutor<T> {
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
+		final ConnectionConfig connConfig = ConnectionConfig
+			.custom()
+			.setBufferSize(BUFF_SIZE_LO)
+			.setFragmentSizeHint(BUFF_SIZE_LO)
+			.build();
 		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
 			reqExecutor, connConfig
 		);

@@ -390,11 +390,11 @@ implements LoadExecutor<T> {
 	public void submit(final T dataItem)
 	throws RemoteException, RejectedExecutionException, InterruptedException {
 		if(tsStart.get() < 0) {
-			throw new RejectedExecutionException(String.format("%s: not started yet", name));
+			throw new RejectedExecutionException(name + ": not started yet");
 		}
 		//
 		if(isClosed.get()) {
-			throw new InterruptedException(String.format("%s: closed already", name));
+			throw new InterruptedException(name + ": closed already");
 		}
 		//
 		if(counterSubm.getCount() + counterRej.getCount() >= maxCount) {
@@ -407,7 +407,7 @@ implements LoadExecutor<T> {
 		//
 		if(isMaxCountSubmTries.get()) {
 			throw new InterruptedException(
-				String.format("%s: all %d tasks has been submitted", name, counterSubm.getCount())
+				name + ": all " + counterSubm.getCount() + " tasks has been submitted"
 			);
 		}
 		// round-robin node selection
@@ -494,12 +494,12 @@ implements LoadExecutor<T> {
 		} catch(final RemoteException e) {
 			LogUtil.failure(
 				LOG, Level.WARN, e,
-				String.format("Failed to submit the data item \"%s\" to \"%s\"", dataItem, consumer)
+				"Failed to submit the data item \"" + dataItem + "\" to \"" + consumer + "\""
 			);
 		} catch(final RejectedExecutionException e) {
 			LogUtil.failure(
 				LOG, Level.DEBUG, e,
-				String.format("\"%s\" rejected the data item \"%s\"", consumer, dataItem)
+				"\"" + consumer + "\" rejected the data item \"" + dataItem + "\""
 			);
 		} finally {
 			final long n = counterResultHandle.incrementAndGet();

@@ -32,11 +32,10 @@ extends WSRequestConfigBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static String
-		FMT_PATH = "/%s/%s",
 		KEY_BUCKET_NAME = "api.type.s3.bucket",
 		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
-	private final String fmtAuthValue;
+	private final String authPrefixValue;
 	//
 	private WSBucketImpl<T> bucket;
 	//
@@ -48,7 +47,7 @@ extends WSRequestConfigBase<T> {
 	protected WSRequestConfigImpl(final WSRequestConfigImpl<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		fmtAuthValue = runTimeConfig.getApiS3AuthPrefix() + " %s:%s";
+		authPrefixValue = runTimeConfig.getApiS3AuthPrefix() + " ";
 		if(reqConf2Clone != null) {
 			setBucket(reqConf2Clone.getBucket());
 			setNameSpace(reqConf2Clone.getNameSpace());
@@ -132,14 +131,14 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		httpRequest.setUriPath(String.format(FMT_PATH, bucket, dataItem.getId()));
+		httpRequest.setUriPath("/" + bucket + "/" + dataItem.getId());
 	}
 	//
 	@Override
 	protected final void applyAuthHeader(final MutableWSRequest httpRequest) {
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
-			String.format(fmtAuthValue, userName, getSignature(getCanonical(httpRequest)))
+			authPrefixValue + userName + ":" + getSignature(getCanonical(httpRequest))
 		);
 	}
 	//

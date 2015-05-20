@@ -2,13 +2,13 @@ package com.emc.mongoose.core.impl.data;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
 //
-import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 import com.emc.mongoose.core.impl.data.ws.AugmentEntity;
 import com.emc.mongoose.core.impl.data.ws.UpdateRangesEntity;
 //
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
 import org.apache.http.util.EntityUtils;
 //
@@ -42,20 +42,8 @@ implements WSObject {
 		super(size);
 	}
 	//
-	public BasicWSObject(final Long size, final UniformDataSource dataSrc) {
-		super(size, dataSrc);
-	}
-	//
-	public BasicWSObject(final String id, final Long size) {
-		super(id, size);
-	}
-	//
 	public BasicWSObject(final String id, final Long offset, final Long size) {
 		super(id, offset, size);
-	}
-	//
-	public BasicWSObject(final String id, final Long size, final UniformDataSource dataSrc) {
-		super(id, size, dataSrc);
 	}
 	//
 	@Override
@@ -85,7 +73,7 @@ implements WSObject {
 	//
 	@Override
 	public final InputStream getContent()
-		throws IOException, IllegalStateException {
+	throws IOException, IllegalStateException {
 		return this;
 	}
 	//
@@ -106,11 +94,6 @@ implements WSObject {
 	//
 	public final HttpEntity getPendingAugmentContentEntity() {
 		return new AugmentEntity<WSObject>(this);
-	}
-	//
-	@Override
-	public final boolean compareWith(final ContentDecoder in, final IOControl ioCtl) {
-		return true;
 	}
 }
 //

@@ -157,7 +157,7 @@ public final class ServiceUtils {
 	}
 	//
 	public static long getHostAddrCode() {
-		return (long) getHostAddr().hashCode() << Integer.SIZE;
+		return getHostAddr().hashCode();
 	}
 	//
 	public static Remote create(final Service svc) {
@@ -204,7 +204,7 @@ public final class ServiceUtils {
 			remote = Naming.lookup(url);
 			remoteSvc = Service.class.cast(remote);
 		} catch(final ClassCastException e) {
-			if(remote==null) {
+			if(remote == null) {
 				LOG.error(LogUtil.ERR, "Lookup method returns null");
 			} else {
 				LOG.error(

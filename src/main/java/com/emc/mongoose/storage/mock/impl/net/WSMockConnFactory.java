@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.mock.impl.cinderella;
+package com.emc.mongoose.storage.mock.impl.net;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -8,6 +8,7 @@ import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
 import org.apache.http.config.ConnectionConfig;
 //
+import org.apache.http.impl.entity.StrictContentLengthStrategy;
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
 import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
 import org.apache.http.nio.NHttpConnection;
@@ -26,7 +27,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by olga on 04.02.15.
  */
-public final class FaultingConnectionFactory
+public final class WSMockConnFactory
 extends DefaultNHttpServerConnectionFactory {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -35,7 +36,7 @@ extends DefaultNHttpServerConnectionFactory {
 	private final ScheduledExecutorService connKillExecutor;
 	private final int connCacheSize, connKillPeriodSec;
 	//
-	public FaultingConnectionFactory(
+	public WSMockConnFactory(
 		final RunTimeConfig runTimeConfig, final ConnectionConfig config
 	) {
 		super(config);
@@ -73,15 +74,13 @@ extends DefaultNHttpServerConnectionFactory {
 		//
 		@Override
 		public final void run() {
-			for(final NHttpServerConnection connection : connCache) {
+			for(final NHttpServerConnection conn : connCache) {
 				try {
-					if(NHttpConnection.ACTIVE == connection.getStatus()) {
-						connection.close();
+					if(NHttpConnection.ACTIVE == conn.getStatus()) {
+						conn.close();
 					}
 				} catch (final IOException e) {
-					LogUtil.failure(
-						LOG, Level.WARN, e,
-						String.format("Failed to close the connection \"%s\"", connection)
+					LogUtil.failure(LOG, Level.WARN, e, "Failed to close the connection " + conn
 					);
 				}
 			}

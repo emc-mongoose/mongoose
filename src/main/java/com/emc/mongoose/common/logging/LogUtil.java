@@ -3,8 +3,6 @@ package com.emc.mongoose.common.logging;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import org.apache.commons.lang.text.StrBuilder;
-//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -169,15 +167,20 @@ public final class LogUtil {
 		}
 	}
 	//
+	private static final ThreadLocal<StringBuilder> THRLOC_SB = new ThreadLocal<>();
+	//
 	public static void failure(
 		final Logger logger, final Level level, final Throwable thrown, final String msg
 	) {
-		final StrBuilder msgBuilder = new StrBuilder();
+		StringBuilder msgBuilder = THRLOC_SB.get();
+		if(msgBuilder == null) {
+			msgBuilder = new StringBuilder();
+			THRLOC_SB.set(msgBuilder);
+		} else {
+			msgBuilder.setLength(0);
+		}
 		synchronized(logger) {
-			logger.log(
-				level, ERR,
-				String.format("%s: %s", msg, thrown == null ? null : thrown.toString())
-			);
+			logger.log(level, ERR, "{}: {}", msg, thrown == null ? null : thrown.toString());
 			if(logger.isTraceEnabled(ERR)) {
 				for(Throwable cause = thrown; cause != null; cause = cause.getCause()) {
 					msgBuilder.append("\n\t").append(cause.toString());
@@ -186,7 +189,7 @@ public final class LogUtil {
 					msgBuilder.append("\n\t\t").append(ste.toString());
 				}
 			}
-			if(msgBuilder.size() > 0) {
+			if(msgBuilder.length() > 0) {
 				logger.log(Level.TRACE, ERR, msgBuilder.toString());
 			}
 		}
@@ -195,7 +198,13 @@ public final class LogUtil {
 	public static void trace(
 		final Logger logger, final Level level, final Marker marker, final String msg
 	) {
-		final StrBuilder msgBuilder = new StrBuilder(msg);
+		StringBuilder msgBuilder = THRLOC_SB.get();
+		if(msgBuilder == null) {
+			msgBuilder = new StringBuilder();
+			THRLOC_SB.set(msgBuilder);
+		} else {
+			msgBuilder.setLength(0);
+		}
 		final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
 		if(stackTrace.length > 2) {
 			for(int i = 2; i < stackTrace.length; i ++) {

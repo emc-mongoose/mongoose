@@ -98,10 +98,7 @@ implements Producer<T> {
 							} catch(final IOException e) {
 								LogUtil.failure(
 									LOG, Level.ERROR, e,
-									String.format(
-										"Failed to list the content of container \"%s\"",
-										container
-									)
+									"Failed to list the content of container: " + container
 								);
 							}
 							EntityUtils.consumeQuietly(respEntity);
@@ -111,8 +108,7 @@ implements Producer<T> {
 			}
 		} catch(final IOException e) {
 			LogUtil.failure(
-				LOG, Level.ERROR, e,
-				String.format("Failed to list the container \"%s\"", container)
+				LOG, Level.ERROR, e, "Failed to list the container :" + container
 			);
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Container \"{}\" producer interrupted", container);

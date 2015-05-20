@@ -59,7 +59,9 @@ implements Consumer<T> {
 		@Override
 		public final void run() {
 			try {
-				LOG.info(LogUtil.DATA_LIST, dataItem.toString());
+				if(dataItem != null) {
+					LOG.info(LogUtil.DATA_LIST, dataItem);
+				}
 			} finally {
 				release();
 			}
