@@ -21,6 +21,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.BasicHttpContext;
@@ -267,11 +268,11 @@ implements WSIOTask<T> {
 			final StringBuilder msgBuff = new StringBuilder();
 			//
 			switch(respStatusCode) {
-				case (100):
+				case HttpStatus.SC_CONTINUE:
 					msgBuff.append("\"100/continue\" response is not supported\n");
 					this.status = Status.FAIL_CLIENT;
 					break;
-				case (400):
+				case HttpStatus.SC_BAD_REQUEST:
 					synchronized(LOG) {
 						msgBuff
 							.append("Incorrect request: \"")
@@ -286,7 +287,8 @@ implements WSIOTask<T> {
 					}
 					this.status = Status.FAIL_CLIENT;
 					break;
-				case (403):
+				case HttpStatus.SC_UNAUTHORIZED:
+				case HttpStatus.SC_FORBIDDEN:
 					msgBuff.append("Access failure for data item: \"").append(dataItem);
 					if(LOG.isTraceEnabled(LogUtil.ERR)) {
 						msgBuff.append("\"\nSource request headers:\n");
@@ -302,52 +304,52 @@ implements WSIOTask<T> {
 					}
 					this.status = Status.FAIL_AUTH;
 					break;
-				case (404):
+				case HttpStatus.SC_NOT_FOUND:
 					msgBuff
 						.append("Not found: ").append(httpRequest.getUriAddr())
 						.append(httpRequest.getUriPath()).append('\n');
 					this.status = Status.FAIL_NOT_FOUND;
 					break;
-				case (405):
+				case HttpStatus.SC_METHOD_NOT_ALLOWED:
 					msgBuff
 						.append("The operation is not allowed: \"")
 						.append(httpRequest.getRequestLine())
 						.append("\"\n");
 					this.status = Status.FAIL_CLIENT;
 					break;
-				case (409):
+				case HttpStatus.SC_CONFLICT:
 					msgBuff
 						.append("Conflicting resource modification on \"")
 						.append(httpRequest.getUriPath())
 						.append("\"\n");
 					this.status = Status.FAIL_CLIENT;
 					break;
-				case (411):
+				case HttpStatus.SC_LENGTH_REQUIRED:
 					msgBuff
 						.append("Content length is required\n");
 					this.status = Status.FAIL_CLIENT;
 					break;
-				case (413):
+				case HttpStatus.SC_REQUEST_TOO_LONG:
 					msgBuff
 						.append("Content is too large: ")
 						.append(SizeUtil.formatSize(transferSize))
 						.append('\n');
 					this.status = Status.FAIL_SVC;
 					break;
-				case (414):
+				case HttpStatus.SC_REQUEST_URI_TOO_LONG:
 					msgBuff
 						.append("URI is too long: \"")
 						.append(httpRequest.getUriPath()).append("\"\n");
 					this.status = Status.FAIL_CLIENT;
 					break;
-				case (415):
+				case HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE:
 					msgBuff
 						.append("Unsupported media type: \"")
 						.append(httpRequest.getEntity().getContentType())
 						.append("\"\n");
 					this.status = Status.FAIL_SVC;
 					break;
-				case (416):
+				case HttpStatus.SC_REQUESTED_RANGE_NOT_SATISFIABLE:
 					synchronized(LOG) {
 						msgBuff.append("Incorrect range\n");
 						if(LOG.isTraceEnabled(LogUtil.ERR)) {
@@ -363,38 +365,38 @@ implements WSIOTask<T> {
 					}
 					this.status = Status.FAIL_CLIENT;
 					break;
-				case (429):
+				case 429:
 					msgBuff.append("Storage prays about a mercy\n");
 					this.status = Status.FAIL_SVC;
 					break;
-				case (500):
+				case HttpStatus.SC_INTERNAL_SERVER_ERROR:
 					msgBuff.append("Storage internal failure\n");
 					this.status = Status.FAIL_SVC;
 					break;
-				case (501):
+				case HttpStatus.SC_NOT_IMPLEMENTED:
 					msgBuff.append("Not implemented\n");
 					this.status = Status.FAIL_SVC;
 					break;
-				case (502):
+				case HttpStatus.SC_BAD_GATEWAY:
 					msgBuff.append("Bad gateway\n");
 					this.status = Status.FAIL_SVC;
 					break;
-				case (503):
+				case HttpStatus.SC_SERVICE_UNAVAILABLE:
 					msgBuff.append("Storage prays about a mercy\n");
 					this.status = Status.FAIL_SVC;
 					break;
-				case (504):
+				case HttpStatus.SC_GATEWAY_TIMEOUT:
 					msgBuff.append("Gateway timeout\n");
 					this.status = Status.FAIL_TIMEOUT;
 					break;
-				case (505):
+				case HttpStatus.SC_HTTP_VERSION_NOT_SUPPORTED:
 					msgBuff
 						.append("HTTP version is not supported: ")
 						.append(httpRequest.getProtocolVersion())
 						.append("\n");
 					this.status = Status.FAIL_TIMEOUT;
 					break;
-				case (507):
+				case HttpStatus.SC_INSUFFICIENT_STORAGE:
 					msgBuff.append("Not enough space is left on the storage\n");
 					this.status = Status.FAIL_NO_SPACE;
 					break;
