@@ -15,10 +15,6 @@ extends Reusable<IOTask<T>> {
 		CREATE, READ, DELETE, UPDATE, APPEND
 	}
 	//
-	String
-		FMT_PERF_TRACE = "%s,%s,%d,%x,%d,%d,%d",
-		FMT_PERF_TRACE_INVALID = "Invalid trace: %s,%s,%d,%x,%d,%d,%d,%d";
-	//
 	enum Status {
 		SUCC(0, "Success"),
 		FAIL_CLIENT(1, "Client failure/invalid request"),

@@ -38,8 +38,7 @@ extends WSRequestConfigBase<T> {
 	private final static String KEY_SUBTENANT = "api.type.atmos.subtenant";
 	//
 	public final static String
-		FMT_SLASH = "%s/%s", FMT_URI ="/rest/%s",
-		API_TYPE_OBJ = "objects", API_TYPE_FS = "namespace";
+		PREFIX_URI ="/rest/", API_TYPE_OBJ = "objects", API_TYPE_FS = "namespace";
 	//
 	public final static Header
 		DEFAULT_ACCEPT_HEADER = new BasicHeader(HttpHeaders.ACCEPT, "*/*");
@@ -57,9 +56,9 @@ extends WSRequestConfigBase<T> {
 		super(reqConf2Clone);
 		//
 		if(fsAccess) {
-			uriBasePath = String.format(FMT_URI, API_TYPE_FS);
+			uriBasePath = PREFIX_URI + API_TYPE_FS;
 		} else {
-			uriBasePath = String.format(FMT_URI, API_TYPE_OBJ);
+			uriBasePath = PREFIX_URI + API_TYPE_OBJ;
 		}
 		//
 		if(reqConf2Clone != null) {
@@ -114,9 +113,7 @@ extends WSRequestConfigBase<T> {
 				sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_UID, userName));
 			} else {
 				sharedHeaders.updateHeader(
-					new BasicHeader(
-						KEY_EMC_UID, String.format(FMT_SLASH, subTenant.getValue(), userName)
-					)
+					new BasicHeader(KEY_EMC_UID, subTenant.getValue() + "/" + userName)
 				);
 			}
 		}
@@ -136,7 +133,7 @@ extends WSRequestConfigBase<T> {
 				} else {
 					sharedHeaders.updateHeader(
 						new BasicHeader(
-							KEY_EMC_UID, String.format(FMT_SLASH, subTenant.getValue(), userName)
+							KEY_EMC_UID, subTenant.getValue() + "/" + userName
 						)
 					);
 				}
@@ -168,9 +165,9 @@ extends WSRequestConfigBase<T> {
 	public final WSRequestConfigImpl<T> setFileAccessEnabled(final boolean flag) {
 		super.setFileAccessEnabled(flag);
 		if(flag) {
-			uriBasePath = String.format(FMT_URI, API_TYPE_FS);
+			uriBasePath = PREFIX_URI + API_TYPE_FS;
 		} else {
-			uriBasePath = String.format(FMT_URI, API_TYPE_OBJ);
+			uriBasePath = PREFIX_URI + API_TYPE_OBJ;
 		}
 		return this;
 	}
@@ -186,9 +183,9 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		if(runTimeConfig.getStorageFileAccessEnabled()) {
-			uriBasePath = String.format(FMT_URI, API_TYPE_FS);
+			uriBasePath = PREFIX_URI + API_TYPE_FS;
 		} else {
-			uriBasePath = String.format(FMT_URI, API_TYPE_OBJ);
+			uriBasePath = PREFIX_URI + API_TYPE_OBJ;
 		}
 		//
 		return this;
@@ -230,7 +227,7 @@ extends WSRequestConfigBase<T> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		if(fsAccess || !IOTask.Type.CREATE.equals(loadType)) {
-			httpRequest.setUriPath(String.format(FMT_SLASH, uriBasePath, dataItem.getId()));
+			httpRequest.setUriPath(uriBasePath + "/" + dataItem.getId());
 		} else if(!uriBasePath.equals(httpRequest.getUriPath())) { // "/rest/objects"
 			httpRequest.setUriPath(uriBasePath);
 		} // else do nothing, uri is "/rest/objects" already
@@ -286,9 +283,6 @@ extends WSRequestConfigBase<T> {
 		return buffer.toString();
 	}
 	//
-	private final static String
-		FMT_MSG_ERR_LOCATION_HEADER_VALUE = "Invalid response location header value: \"%s\"";
-	//
 	@Override
 	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
 		if(
@@ -311,7 +305,7 @@ extends WSRequestConfigBase<T> {
 				}
 			} else if(LOG.isTraceEnabled(LogUtil.ERR)) {
 				LOG.trace(
-					LogUtil.ERR, String.format(FMT_MSG_ERR_LOCATION_HEADER_VALUE, valueLocation)
+					LogUtil.ERR, "Invalid response location header value: \"{}\"", valueLocation
 				);
 			}
 		}

@@ -681,10 +681,8 @@ implements LoadClient<T> {
 		//
 		if(isShutdown()) {
 			throw new InterruptedException(
-				String.format(
-					"%s: max data item count (%d) have been submitted, shutdown the submit executor",
-					getName(), maxCount
-				)
+				getName() + ": max data item count (" + maxCount +
+				") have been submitted, shutdown the submit executor"
 			);
 		}
 	}

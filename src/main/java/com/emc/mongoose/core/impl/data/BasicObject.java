@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.data;
 // mongoose-common
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.core.api.data.DataObject;
 //
@@ -13,7 +12,7 @@ import java.io.ObjectOutput;
  Basic data object implementation extending DataRanges.
  */
 public class BasicObject
-extends DataRanges
+extends RangeLayerData
 implements DataObject {
 	//
 	protected String id = null;
@@ -31,29 +30,8 @@ implements DataObject {
 		super(size);
 	}
 	//
-	public BasicObject(final Long size, final UniformDataSource dataSrc) {
-		super(size, dataSrc);
-	}
-	//
-	public BasicObject(final String id, final Long size) {
-		super(size);
-		this.id = id;
-	}
-	//
-	public BasicObject(final String id, final Long size, final UniformDataSource dataSrc) {
-		super(size, dataSrc);
-		this.id = id;
-	}
-	//
 	public BasicObject(final String id, final Long offset, final long size) {
 		super(offset, size);
-		this.id = id;
-	}
-	//
-	public BasicObject(
-		final String id, final Long offset, final Long size, final UniformDataSource dataSrc
-	) {
-		super(offset, size, dataSrc);
 		this.id = id;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,11 +63,9 @@ implements DataObject {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable serialization implementation /////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final static String FMT2STR = "%s" + RunTimeConfig.LIST_SEP + "%s";
-	//
 	@Override
 	public String toString() {
-		return String.format(FMT2STR, id, super.toString());
+		return id + "," + super.toString();
 	}
 	//
 	@Override
@@ -100,7 +76,7 @@ implements DataObject {
 			id = v.substring(0, posSep);
 		} else {
 			throw new IllegalArgumentException(
-				String.format("Failed to get an object id from the string \"%s\"", v)
+				"Failed to get an object id from the string \"" + v + "\""
 			);
 		}
 		super.fromString(v.substring(posSep + 1));

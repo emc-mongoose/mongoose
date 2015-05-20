@@ -55,6 +55,12 @@ extends Externalizable, Cloneable, Closeable {
 	boolean getVerifyContentFlag();
 	RequestConfig<T> setVerifyContentFlag(final boolean verifyContentFlag);
 	//
+	int getBuffSize();
+	RequestConfig<T> setBuffSize(final int buffSize);
+	//
+	int getReqSleepMilliSec();
+	RequestConfig<T> setReqSleepMilliSec(final int reqSleepMilliSec);
+	//
 	RequestConfig<T> setProperties(final RunTimeConfig props);
 	//
 	IOTask<T> getRequestFor(final T dataItem, final String nodeAddr);
@@ -65,9 +71,6 @@ extends Externalizable, Cloneable, Closeable {
 	//
 	void configureStorage(final String storageAddrs[])
 	throws IllegalStateException;
-	//
-	int getBuffSize();
-	void setBuffSize(final int buffSize);
 	//
 	boolean isClosed();
 }

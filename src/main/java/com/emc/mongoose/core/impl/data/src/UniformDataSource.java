@@ -16,6 +16,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.List;
 /**
  Created by kurila on 23.07.14.
  A uniform data source for producing uniform data items.
@@ -27,12 +28,10 @@ implements DataSource {
 	private final static Logger LOG = LogManager.getLogger();
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static int A = 21, B = 35, C = 4;
-	private final static String
-		MSG_FMT_NEW_LAYER = "Generate new byte layer #%d, previous seed: \"%x\", next one: \"%x\"";
 	//
 	private long seed;
 	private int size;
-	private final ArrayList<ByteBuffer> byteLayers = new ArrayList<>(1);
+	private final List<ByteBuffer> byteLayers = new ArrayList<>(1);
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformDataSource()
 	throws NumberFormatException {
@@ -46,7 +45,7 @@ implements DataSource {
 		LOG.debug(LogUtil.MSG, "New ring buffer instance #{}", hashCode());
 		this.seed = seed;
 		this.size = size;
-		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
+		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.add(zeroByteLayer);
 	}
@@ -62,30 +61,28 @@ implements DataSource {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private static void generateData(final ByteBuffer byteLayer, final long seed) {
-		//final LongBuffer wordLayerView = byteLayer.asLongBuffer();
 		final int
-			size = byteLayer.array().length,
+			ringBuffSize = byteLayer.capacity(),
 			countWordBytes = Long.SIZE / Byte.SIZE,
-			countWords = size / countWordBytes,
-			countTailBytes = size % countWordBytes;
+			countWords = ringBuffSize / countWordBytes,
+			countTailBytes = ringBuffSize % countWordBytes;
 		long word = seed;
 		int i;
 		double d = System.nanoTime();
-		LOG.debug(LogUtil.MSG, "Prepare {} of ring data...", SizeUtil.formatSize(size));
+		LOG.debug(LogUtil.MSG, "Prepare {} of ring data...", SizeUtil.formatSize(ringBuffSize));
 		// 64-bit words
-		for(i = 0; i < countWords; i++) {
+		byteLayer.clear();
+		for(i = 0; i < countWords; i ++) {
 			byteLayer.putLong(word);
-			//wordLayerView.putL(i, word);
 			word = nextWord(word);
 		}
-		// tail bytes
-		final ByteBuffer tailBytes = ByteBuffer.allocate(countWordBytes);
+		// tail bytes\
+		final ByteBuffer tailBytes = ByteBuffer.allocateDirect(countWordBytes);
 		tailBytes.asLongBuffer().put(word).rewind();
-		for(i = 0; i < countTailBytes; i++) {
+		for(i = 0; i < countTailBytes; i ++) {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
 		}
-		/*
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+		/*if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(
 				LogUtil.MSG, "Ring buffer data: {}", Base64.encodeBase64String(byteLayer.array())
 			);
@@ -111,7 +108,7 @@ implements DataSource {
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
-		out.writeInt(byteLayers.get(0).array().length);
+		out.writeInt(byteLayers.get(0).capacity());
 		out.writeLong(seed);
 	}
 	//
@@ -131,10 +128,10 @@ implements DataSource {
 	public final void setSize(final int size)
 	throws IllegalArgumentException {
 		if(size < 1) {
-			throw new IllegalArgumentException(String.format("Illegal ring size: %d", size));
+			throw new IllegalArgumentException("Illegal ring size: " + size);
 		}
 		this.size = size;
-		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
+		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.clear();
 		byteLayers.add(zeroByteLayer);
@@ -148,7 +145,7 @@ implements DataSource {
 	@Override
 	public final void setSeed(final long seed) {
 		this.seed = seed;
-		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
+		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.clear();
 		byteLayers.add(zeroByteLayer);
@@ -160,7 +157,7 @@ implements DataSource {
 	public final String toString() {
 		return
 			Long.toHexString(seed) + RunTimeConfig.LIST_SEP +
-			Integer.toHexString(byteLayers.get(0).array().length);
+			Integer.toHexString(byteLayers.get(0).capacity());
 	}
 	//
 	@Override
@@ -176,24 +173,29 @@ implements DataSource {
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final synchronized byte[] getBytes(final int layerNum) {
+	@Override
+	public final synchronized ByteBuffer getLayer(final int layerIndex) {
 		final int layerCount = byteLayers.size();
-		if(layerNum >= layerCount) {
+		if(layerIndex >= layerCount) {
 			ByteBuffer prevLayer = byteLayers.get(layerCount - 1), nextLayer;
 			long prevSeed, nextSeed;
-			final int ringSize = prevLayer.array().length;
-			for(int i = layerCount; i <= layerNum; i ++) {
-				nextLayer = ByteBuffer.allocate(ringSize);
+			final int ringSize = prevLayer.capacity();
+			for(int i = layerCount; i <= layerIndex; i ++) {
+				nextLayer = ByteBuffer.allocateDirect(ringSize);
 				prevSeed = prevLayer.getLong(0);
 				nextSeed = Long.reverse(nextWord(Long.reverseBytes(prevSeed)));
-				LOG.debug(LogUtil.MSG, String.format(MSG_FMT_NEW_LAYER, i, prevSeed, nextSeed));
+				LOG.debug(
+					LogUtil.MSG,
+					"Generate new byte layer #{}, previous seed: \"{}\", next one: \"{}\"",
+					i, Long.toHexString(prevSeed), Long.toHexString(nextSeed)
+				);
 				generateData(nextLayer, nextSeed);
 				byteLayers.add(nextLayer);
 				prevLayer = nextLayer;
 			}
 			LOG.debug(LogUtil.MSG, "New layer #{}", byteLayers.size() - 1);
 		}
-		return byteLayers.get(layerNum).array();
+		return byteLayers.get(layerIndex).asReadOnlyBuffer();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }

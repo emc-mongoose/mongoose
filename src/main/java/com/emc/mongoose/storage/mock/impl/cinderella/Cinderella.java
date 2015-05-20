@@ -6,13 +6,14 @@ import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+//
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.stats.IOStats;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.cinderella.request.APIRequestHandlerMapper;
-import com.emc.mongoose.storage.mock.impl.cinderella.request.WSRequestHandlerBase;
+import com.emc.mongoose.storage.mock.impl.net.WSMockConnFactory;
 //
 import org.apache.http.config.ConnectionConfig;
-import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.ResponseConnControl;
@@ -21,6 +22,7 @@ import org.apache.http.protocol.ResponseDate;
 import org.apache.http.protocol.ResponseServer;
 //
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
+import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
 import org.apache.http.nio.NHttpConnectionFactory;
 import org.apache.http.nio.protocol.HttpAsyncRequestHandlerMapper;
 import org.apache.http.nio.protocol.HttpAsyncService;
@@ -34,6 +36,7 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -50,11 +53,13 @@ implements Runnable {
 	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
 	private final int portStart, countHeads;
 	private final RunTimeConfig runTimeConfig;
+	private final IOStats ioStats;
 	//
 	public Cinderella(final RunTimeConfig runTimeConfig)
 	throws IOException {
 		super(runTimeConfig.getStorageMockCapacity());
 		this.runTimeConfig = runTimeConfig;
+		ioStats = new BasicWSIOStats(runTimeConfig, this);
 		countHeads = runTimeConfig.getStorageMockHeadCount();
 		portStart = runTimeConfig.getApiTypePort(runTimeConfig.getApiName());
 		LOG.info(
@@ -64,12 +69,12 @@ implements Runnable {
 		// connection config
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(LoadExecutor.BUFF_SIZE_LO > 0x1000 ? 0x2000 : 2 * LoadExecutor.BUFF_SIZE_LO)
-			.setFragmentSizeHint(LoadExecutor.BUFF_SIZE_LO > 0x1000 ? 0x1000 : LoadExecutor.BUFF_SIZE_LO)
+			.setBufferSize(LoadExecutor.BUFF_SIZE_LO)
+			.setFragmentSizeHint(LoadExecutor.BUFF_SIZE_LO)
 			.build();
 		final int faultConnCacheSize = runTimeConfig.getStorageMockFaultConnCacheSize();
 		if(faultConnCacheSize > 0) {
-			connFactory = new FaultingConnectionFactory(runTimeConfig, connConfig);
+			connFactory = new WSMockConnFactory(runTimeConfig, connConfig);
 		} else {
 			connFactory = new DefaultNHttpServerConnectionFactory(connConfig);
 		}
@@ -88,7 +93,7 @@ implements Runnable {
 			.build();
 		// Create request handler registry
 		final HttpAsyncRequestHandlerMapper apiReqHandlerMapper = new APIRequestHandlerMapper(
-			runTimeConfig, this
+			runTimeConfig, Collections.synchronizedMap(this), ioStats
 		);
 		// Register the default handler for all URIs
 		protocolHandler = new HttpAsyncService(httpproc, apiReqHandlerMapper);
@@ -96,9 +101,10 @@ implements Runnable {
 			countHeads, new NamingWorkerFactory("cinderellaWorker")
 		);
 	}
-
+	//
 	@Override
 	public void run() {
+		ioStats.start();
 		// if there is data src file path
 		final String dataFilePath = runTimeConfig.getDataSrcFPath();
 		final int dataSizeRadix = runTimeConfig.getDataRadixSize();
@@ -115,7 +121,7 @@ implements Runnable {
 						dataObject.setSize(Long.valueOf(String.valueOf(dataObject.getSize()), 0x10));
 					}
 					//
-					LOG.trace(LogUtil.DATA_LIST, String.format("%s", dataObject));
+					LOG.trace(LogUtil.DATA_LIST, dataObject);
 					put(dataObject.getId(), dataObject);
 				}
 			} catch(final FileNotFoundException e) {
@@ -134,7 +140,7 @@ implements Runnable {
 			try {
 				multiSocketSvc.submit(
 					new WSSocketIOEventDispatcher(
-						runTimeConfig, protocolHandler, nextPort, connFactory
+						runTimeConfig, protocolHandler, nextPort, connFactory, ioStats
 					)
 				);
 			} catch(final IOReactorException e) {
@@ -163,7 +169,11 @@ implements Runnable {
 		} catch (final InterruptedException e) {
 			LOG.info(LogUtil.MSG, "Interrupting the Cinderella");
 		} finally {
-			WSRequestHandlerBase.METRICS.close();
+			try {
+				ioStats.close();
+			} catch(final IOException e) {
+				LogUtil.failure(LOG, Level.WARN, e, "Closing I/O stats failure");
+			}
 		}
 	}
 }

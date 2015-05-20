@@ -6,8 +6,6 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //
-import org.apache.commons.lang.text.StrBuilder;
-//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -62,7 +60,7 @@ implements SubTenant<T> {
 		final MutableWSRequest httpReq = reqConf.createRequest().setMethod(method);
 		//
 		if(MutableWSRequest.HTTPMethod.PUT.equals(method)) {
-			httpReq.setUriPath(String.format(WSRequestConfigImpl.FMT_URI, SUBTENANT));
+			httpReq.setUriPath(WSRequestConfigImpl.PREFIX_URI + SUBTENANT);
 			httpReq.setHeader(
 				new BasicHeader(
 					WSRequestConfig.KEY_EMC_FS_ACCESS,
@@ -70,12 +68,7 @@ implements SubTenant<T> {
 				)
 			);
 		} else {
-			httpReq.setUriPath(
-				String.format(
-					WSRequestConfigImpl.FMT_SLASH,
-					String.format(WSRequestConfigImpl.FMT_URI, SUBTENANT), value
-				)
-			);
+			httpReq.setUriPath(WSRequestConfigImpl.PREFIX_URI + SUBTENANT + "/" + value);
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
@@ -103,11 +96,13 @@ implements SubTenant<T> {
 						} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
 							LOG.debug(LogUtil.MSG, "Subtenant \"{}\" doesn't exist", value);
 						} else {
-							final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+							final StringBuilder msg = new StringBuilder(
+								statusLine.getReasonPhrase()
+							);
 							if(httpEntity != null) {
 								try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 									httpEntity.writeTo(buff);
-									msg.appendNewLine().append(buff.toString());
+									msg.append('\n').append(buff.toString());
 								}
 							}
 							throw new IllegalStateException(msg.toString());
@@ -146,11 +141,11 @@ implements SubTenant<T> {
 							);
 						}
 					} else {
-						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+						final StringBuilder msg = new StringBuilder(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
-								msg.appendNewLine().append(buff.toString());
+								msg.append('\n').append(buff.toString());
 							}
 						}
 						LOG.warn(
@@ -180,11 +175,11 @@ implements SubTenant<T> {
 					if(statusCode == HttpStatus.SC_OK) {
 						LOG.info(LogUtil.MSG, "Subtenant \"{}\" deleted", value);
 					} else {
-						final StrBuilder msg = new StrBuilder(statusLine.getReasonPhrase());
+						final StringBuilder msg = new StringBuilder(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
 								httpEntity.writeTo(buff);
-								msg.appendNewLine().append(buff.toString());
+								msg.append('\n').append(buff.toString());
 							}
 						}
 						LOG.warn(

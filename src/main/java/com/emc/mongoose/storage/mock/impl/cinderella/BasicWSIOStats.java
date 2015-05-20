@@ -5,6 +5,7 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 //
+import com.emc.mongoose.common.collections.Cache;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -12,22 +13,22 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.stats.IOStats;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import javax.management.MBeanServer;
-import java.io.Closeable;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 13.05.15.
  */
-public final class WSRequestMetrics
+public final class BasicWSIOStats
 extends Thread
-implements Closeable {
+implements IOStats {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
-	public final static String METRIC_COUNT = "count", ALL_METHODS = "all";
 	//
 	private final MetricRegistry metricRegistry = new MetricRegistry();
 	private final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
@@ -100,53 +101,66 @@ implements Closeable {
 		);
 	//
 	private final long updateMilliPeriod;
+	private final Cache<String, WSObjectMock> storage;
 	//
-	public WSRequestMetrics(final RunTimeConfig runTimeConfig) {
-		super(WSRequestMetrics.class.getSimpleName());
+	public BasicWSIOStats(
+		final RunTimeConfig runTimeConfig, final Cache<String, WSObjectMock> storage
+	) {
+		super(BasicWSIOStats.class.getSimpleName());
 		setDaemon(true);
 		updateMilliPeriod = TimeUnit.SECONDS.toMillis(runTimeConfig.getLoadMetricsPeriodSec());
-		metricsReporter.start();
-		start();
+		this.storage = storage;
 	}
 	//
 	private final static String
-		MSG_FMT_METRICS = "count(succ=(%d/%d/%d); fail=(%d/%d)); " +
-		"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
+		MSG_FMT_METRICS = "capacity used=(%d/%.3f%%); count=(succ=(%d/%d/%d); fail=(%d/%d)); " +
+			"TP[/s]=(%.3f/%.3f/%.3f/%.3f); BW[MB/s]=(%.3f/%.3f/%.3f/%.3f)";
 	//
-	private void printMetrics() {
-		LOG.info(
-			LogUtil.PERF_AVG,
-			String.format(
-				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
-				//
-				countSuccCreate.getCount(), countSuccRead.getCount(), countSuccDelete.getCount(),
-				countFailCreate.getCount(), countFailRead.getCount(),
-				//
-				tpAll.getMeanRate(),
-				tpAll.getOneMinuteRate(),
-				tpAll.getFiveMinuteRate(),
-				tpAll.getFifteenMinuteRate(),
-				//
-				bwAll.getMeanRate() / LoadExecutor.MIB,
-				bwAll.getOneMinuteRate() / LoadExecutor.MIB,
-				bwAll.getFiveMinuteRate() / LoadExecutor.MIB,
-				bwAll.getFifteenMinuteRate() / LoadExecutor.MIB
-			)
+	@Override
+	public final String toString() {
+		return String.format(
+			LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
+			//
+			storage.size(), 100.0 * storage.size() / storage.getCapacity(),
+			//
+			countSuccCreate.getCount(), countSuccRead.getCount(), countSuccDelete.getCount(),
+			countFailCreate.getCount(), countFailRead.getCount(),
+			//
+			tpAll.getMeanRate(),
+			tpAll.getOneMinuteRate(),
+			tpAll.getFiveMinuteRate(),
+			tpAll.getFifteenMinuteRate(),
+			//
+			bwAll.getMeanRate() / LoadExecutor.MIB,
+			bwAll.getOneMinuteRate() / LoadExecutor.MIB,
+			bwAll.getFiveMinuteRate() / LoadExecutor.MIB,
+			bwAll.getFifteenMinuteRate() / LoadExecutor.MIB
 		);
 	}
 	//
+	@Override
+	public final void start() {
+		LOG.debug(LogUtil.MSG, "Start");
+		metricsReporter.start();
+		super.start();
+	}
+	//
+	@Override
 	public final void run() {
+		LOG.debug(LogUtil.MSG, "Running");
 		try {
 			while(updateMilliPeriod > 0) {
-				printMetrics();
+				LOG.info(LogUtil.PERF_AVG, toString());
 				Thread.sleep(updateMilliPeriod);
 			}
-		} catch(final InterruptedException ignored) {
+		} catch(final Exception e) {
+			LogUtil.failure(LOG, Level.WARN, e, "Failure");
 		} finally {
 			close();
 		}
 	}
 	//
+	@Override
 	public final void close() {
 		if(isAlive()) {
 			interrupt();
@@ -154,10 +168,7 @@ implements Closeable {
 		metricsReporter.close();
 	}
 	//
-	public final double getMeanRate() {
-		return tpAll.getMeanRate();
-	}
-	//
+	@Override
 	public final void markCreate(final long size) {
 		if(size < 0) {
 			countFailCreate.inc();
@@ -170,6 +181,7 @@ implements Closeable {
 		}
 	}
 	//
+	@Override
 	public final void markRead(final long size) {
 		if(size < 0) {
 			countFailRead.inc();
@@ -182,8 +194,36 @@ implements Closeable {
 		}
 	}
 	//
+	@Override
 	public final void markDelete() {
 		countSuccDelete.inc();
 		tpAll.mark();
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// methods necessary for throttling, perf adaptation, etc
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final double getMeanRate() {
+		return tpAll.getOneMinuteRate();
+	}
+	//
+	@Override
+	public final double getWriteRate() {
+		return tpCreate.getOneMinuteRate();
+	}
+	//
+	@Override
+	public final double getReadRate() {
+		return tpRead.getOneMinuteRate();
+	}
+	//
+	@Override
+	public final double getWriteRateBytes() {
+		return bwCreate.getOneMinuteRate();
+	}
+	//
+	@Override
+	public final double getReadRateBytes() {
+		return bwRead.getOneMinuteRate();
 	}
 }

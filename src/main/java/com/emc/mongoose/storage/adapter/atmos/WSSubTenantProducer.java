@@ -114,10 +114,7 @@ implements Producer<T> {
 				EntityUtils.consumeQuietly(httpResp.getEntity());
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(
-				LOG, Level.ERROR, e,
-				String.format("Failed to list the subtenant \"%s\"", subTenant)
-			);
+			LogUtil.failure(LOG, Level.ERROR, e, "Failed to list the subtenant: " + subTenant);
 		}
 	}
 	//

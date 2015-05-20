@@ -1,14 +1,15 @@
 package com.emc.mongoose.storage.mock.impl.cinderella.request;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-//
 import com.emc.mongoose.common.logging.LogUtil;
+//
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.stats.IOStats;
 //
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
-//
 import org.apache.http.HttpStatus;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -22,9 +23,10 @@ extends WSRequestHandlerBase {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public S3RequestHandler(
-		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> sharedStorage
+		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> sharedStorage,
+	    final IOStats ioStats
 	) {
-		super(runTimeConfig, sharedStorage);
+		super(runTimeConfig, sharedStorage, ioStats);
 	}
 	//
 	@Override

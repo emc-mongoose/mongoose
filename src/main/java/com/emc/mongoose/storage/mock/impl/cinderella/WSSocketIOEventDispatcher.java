@@ -5,9 +5,11 @@ import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.storage.mock.api.stats.IOStats;
+import com.emc.mongoose.storage.mock.impl.io.BasicAdaptiveListeningIOReactor;
+//
 import org.apache.http.impl.nio.DefaultHttpServerIODispatch;
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
-import org.apache.http.impl.nio.reactor.DefaultListeningIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpConnectionFactory;
 import org.apache.http.nio.protocol.HttpAsyncService;
@@ -36,12 +38,13 @@ implements Runnable {
 	public WSSocketIOEventDispatcher(
 		final RunTimeConfig runTimeConfig,
 		final HttpAsyncService protocolHandler, final int port,
-		final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory
+		final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory,
+		final IOStats ioStats
 	) throws IOReactorException {
 		super(protocolHandler, connFactory);
 		socketAddress = new InetSocketAddress(port);
 		// set I/O reactor configuration
-		final IOReactorConfig config = IOReactorConfig.custom()
+		final IOReactorConfig ioReactorConf = IOReactorConfig.custom()
 			.setIoThreadCount(runTimeConfig.getStorageMockIoThreadsPerSocket())
 			.setBacklogSize((int) runTimeConfig.getSocketBindBackLogSize())
 			.setInterestOpQueued(runTimeConfig.getSocketInterestOpQueued())
@@ -57,7 +60,7 @@ implements Runnable {
 			.setConnectTimeout(runTimeConfig.getConnTimeOut())
 			.build();
 		// create the server-side I/O reactor
-		ioReactor = new DefaultListeningIOReactor(config);
+		ioReactor = new BasicAdaptiveListeningIOReactor(ioReactorConf, ioStats);
 	}
 	//
 	@Override
@@ -75,15 +78,9 @@ implements Runnable {
 		} catch (final InterruptedIOException e) {
 			LOG.debug(LogUtil.MSG, "{}: interrupted", toString());
 		} catch (final IOReactorException e) {
-			LogUtil.failure(
-				LOG, Level.WARN, e,
-				String.format("%s: I/O reactor failure", toString())
-			);
+			LogUtil.failure(LOG, Level.WARN, e, toString() + ": I/O reactor failure");
 		} catch (final IOException e) {
-			LogUtil.failure(
-				LOG, Level.WARN, e,
-				String.format("%s: I/O failure", toString())
-			);
+			LogUtil.failure(LOG, Level.WARN, e, toString() + ": I/O failure");
 		}
 	}
 }
