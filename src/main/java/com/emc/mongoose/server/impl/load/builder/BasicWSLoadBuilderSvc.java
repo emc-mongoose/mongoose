@@ -54,13 +54,9 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	@Override
 	public final String getName() {
-<<<<<<< HEAD
 		final String rmiHostName = System.getProperty(ServiceUtils.KEY_RMI_HOSTNAME);
 		return "//" + ((rmiHostName != null) ? rmiHostName : ServiceUtils.getHostAddr())
 			+ "/" + getClass().getPackage().getName();
-=======
-		return "//" + ServiceUtils.getHostAddr() + "/" + getClass().getPackage().getName();
->>>>>>> c66fbd3fd5d16d60cfc9ff7369148192abbc64db
 	}
 	//
 	@Override
