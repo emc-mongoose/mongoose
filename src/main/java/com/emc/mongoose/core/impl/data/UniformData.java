@@ -98,6 +98,12 @@ implements DataItem {
 	private void reset() {
 		ringBuff.limit(ringBuffSize).position((int) (offset % ringBuffSize));
 	}
+	//
+	private void enforceCircularity() {
+		if(!ringBuff.hasRemaining()) {
+			ringBuff.clear();
+		}
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final long getOffset() {
@@ -146,10 +152,7 @@ implements DataItem {
 	//
 	@Override
 	public final int read(final ByteBuffer dst) {
-		// circularity
-		if(!ringBuff.hasRemaining()) {
-			ringBuff.clear();
-		}
+		enforceCircularity();
 		// bytes count to transfer
 		final int n = Math.min(dst.remaining(), ringBuff.remaining());
 		ringBuff.limit(ringBuff.position() + n);
@@ -170,6 +173,7 @@ implements DataItem {
 		long writtenCount = 0;
 		setRelativeOffset(relOffset);
 		while(writtenCount < len) {
+			enforceCircularity();
 			writtenCount += chanDst.write(ringBuff);
 		}
 	}
@@ -197,10 +201,7 @@ implements DataItem {
 		long doneByteCount = 0;
 		setRelativeOffset(relOffset);
 		while(doneByteCount < len) {
-			// circularity
-			if(!ringBuff.hasRemaining()) {
-				ringBuff.clear();
-			}
+			enforceCircularity();
 			//
 			n = chanSrc.read(inBuff);
 			//

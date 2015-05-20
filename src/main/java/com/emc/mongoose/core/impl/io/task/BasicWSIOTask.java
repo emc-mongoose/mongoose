@@ -207,8 +207,6 @@ implements WSIOTask<T> {
 			}
 		} catch(final Exception e) {
 			LogUtil.failure(LOG, Level.WARN, e, "Producing content failure");
-		} finally {
-			out.complete();
 		}
 	}
 	//

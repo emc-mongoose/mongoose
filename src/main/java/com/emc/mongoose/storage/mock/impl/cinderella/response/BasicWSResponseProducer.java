@@ -37,7 +37,7 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 	@Override
 	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
-		try(final WritableByteChannel chanOut= HTTPContentEncoderChannel.getInstance(encoder)) {
+		try(final WritableByteChannel chanOut = HTTPContentEncoderChannel.getInstance(encoder)) {
 			final WSObjectMock dataItem = WSObjectMock.class.cast(response.getEntity());
 			if(dataItem != null) {
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
@@ -47,8 +47,6 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 			}
 		} catch(final Exception e) {
 			LogUtil.failure(LOG, Level.WARN, e, "Content producing failure");
-		} finally {
-			encoder.complete();
 		}
 	}
 	//

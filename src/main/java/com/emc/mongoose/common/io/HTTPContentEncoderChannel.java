@@ -23,7 +23,9 @@ implements WritableByteChannel, Reusable<HTTPContentEncoderChannel> {
 	}
 	//
 	@Override
-	public final void close() {
+	public final void close()
+	throws IOException {
+		contentEncoder.complete();
 		release();
 	}
 	//
