@@ -3,16 +3,18 @@ package test.com.emc.mongoose.core.impl.load.model.reader;
 import static org.easymock.EasyMock.createControl;
 import static org.easymock.EasyMock.expect;
 //mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.load.model.reader.io.LineReader;
 import com.emc.mongoose.core.impl.load.model.reader.RandomFileReader;
 //
+import com.emc.mongoose.core.impl.load.model.reader.util.Randomizer;
 import org.easymock.IMocksControl;
 import org.junit.Test;
 import org.junit.Before; 
 import org.junit.After;
 //
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.Random;
+import java.util.RandomAccess;
 
 import static org.junit.Assert.assertEquals;
 
@@ -42,8 +44,8 @@ public final class RandomFileReaderTest {
       final int size = 100;
       final int batch = 0;
       try {
-         final BufferedReader reader = control.createMock(BufferedReader.class);
-         final Random random = control.createMock(Random.class);
+         final LineReader reader = control.createMock(LineReader.class);
+         final Randomizer random = control.createMock(Randomizer.class);
          final RandomFileReader randomReader = new RandomFileReader(reader, batch, Integer.MAX_VALUE, random);
 
          for(int i = 0; i < size; i++) {
@@ -70,6 +72,8 @@ public final class RandomFileReaderTest {
 
       }catch (final IOException e) {
          System.err.print(String.format("Failed to read line: %s", e.getMessage()));
+      }catch (Exception e){
+         e.printStackTrace();
       }
    }
 
@@ -78,8 +82,8 @@ public final class RandomFileReaderTest {
       final int size = 100;
       final int batch = 100;
       try {
-         final BufferedReader reader = control.createMock(BufferedReader.class);
-         final Random random = control.createMock(Random.class);
+         final LineReader reader = control.createMock(LineReader.class);
+         final Randomizer random = control.createMock(Randomizer.class);
          final RandomFileReader randomReader = new RandomFileReader(reader, batch, Integer.MAX_VALUE, random);
 
          prepare(size, batch, reader, random);
@@ -104,6 +108,8 @@ public final class RandomFileReaderTest {
 
       }catch (final IOException e) {
          System.err.print(String.format("Failed to read line: %s", e.getMessage()));
+      }catch (Exception e){
+         e.printStackTrace();
       }
    }
 
@@ -112,8 +118,8 @@ public final class RandomFileReaderTest {
       final int size = 100;
       final int batch = 15;
       try {
-         final BufferedReader reader = control.createMock(BufferedReader.class);
-         final Random random = control.createMock(Random.class);
+         final LineReader reader = control.createMock(LineReader.class);
+         final Randomizer random = control.createMock(Randomizer.class);
          final RandomFileReader randomReader = new RandomFileReader(reader, batch, Integer.MAX_VALUE, random);
 
          prepare(size, batch, reader, random);
@@ -142,6 +148,8 @@ public final class RandomFileReaderTest {
 
       }catch (final IOException e) {
          System.err.print(String.format("Failed to read line: %s", e.getMessage()));
+      }catch (Exception e){
+         e.printStackTrace();
       }
    }
 
@@ -150,8 +158,8 @@ public final class RandomFileReaderTest {
       final int maxCount = 10;
       final int batch = 3;
       try {
-         final BufferedReader reader = control.createMock(BufferedReader.class);
-         final Random random = control.createMock(Random.class);
+         final LineReader reader = control.createMock(LineReader.class);
+         final Randomizer random = control.createMock(Randomizer.class);
          final RandomFileReader randomReader = new RandomFileReader(reader, batch, maxCount, random);
 
          prepare(maxCount, batch, reader, random);
@@ -183,6 +191,8 @@ public final class RandomFileReaderTest {
 
       }catch (final IOException e) {
          System.err.print(String.format("Failed to read line: %s", e.getMessage()));
+      }catch (Exception e){
+         e.printStackTrace();
       }
    }
 
@@ -191,8 +201,8 @@ public final class RandomFileReaderTest {
       final int maxCount = 10;
       final int batch = 10000;
       try {
-         final BufferedReader reader = control.createMock(BufferedReader.class);
-         final Random random = control.createMock(Random.class);
+         final LineReader reader = control.createMock(LineReader.class);
+         final Randomizer random = control.createMock(Randomizer.class);
          final RandomFileReader randomReader = new RandomFileReader(reader, batch, maxCount, random);
 
          prepare(maxCount, batch, reader, random);
@@ -222,10 +232,12 @@ public final class RandomFileReaderTest {
 
       }catch (final IOException e) {
          System.err.print(String.format("Failed to read line: %s", e.getMessage()));
+      }catch (Exception e){
+         e.printStackTrace();
       }
    }
 
-   private void prepare(final int size, final int batch, final BufferedReader reader, final Random random)
+   private void prepare(final int size, final int batch, final LineReader reader, final Randomizer random)
    throws IOException {
       for(int i = 0; i < size; i++) {
          expect(reader.readLine()).andReturn(Integer.toString(i));

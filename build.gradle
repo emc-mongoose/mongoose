@@ -183,8 +183,10 @@ sourceSets {
 		}
 		//
 		compileClasspath += sourceSets.coreImpl.output
+		compileClasspath += sourceSets.common.output
 		//
 		runtimeClasspath += sourceSets.coreImpl.output
+		runtimeClasspath += sourceSets.common.output
 
 	}
 }

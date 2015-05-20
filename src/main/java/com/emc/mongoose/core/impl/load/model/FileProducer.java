@@ -9,19 +9,17 @@ import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Producer;
 //mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.load.model.reader.io.LineReader;
 import com.emc.mongoose.core.impl.load.model.reader.RandomFileReader;
+import com.emc.mongoose.core.impl.load.model.reader.util.Randomizer;
 import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -135,13 +133,13 @@ implements Producer<T> {
 	public final void run() {
 		long dataItemsCount = 0;
 		int batchSize = 0;
+		final Randomizer random = (Randomizer) new Random();
 		if(RunTimeConfig.getContext().isEnabledDataRandom()) {
 			batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
 		}
 		//
-		try(RandomFileReader fReader = new RandomFileReader(
-			Files.newBufferedReader(fPath, StandardCharsets.UTF_8), batchSize, maxCount, new Random())
-		) {
+		try(LineReader reader = (LineReader) Files.newBufferedReader(fPath, StandardCharsets.UTF_8)) {
+			RandomFileReader fReader = new RandomFileReader(reader, batchSize, maxCount, random);
 			//
 			String nextLine;
 			T nextData;
