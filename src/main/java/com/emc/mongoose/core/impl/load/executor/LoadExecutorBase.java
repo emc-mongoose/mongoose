@@ -115,6 +115,8 @@ implements LoadExecutor<T> {
 		);
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
+		setCorePoolSize(totalConnCount > 3 ? (int) Math.sqrt(totalConnCount) : totalConnCount);
+		setMaximumPoolSize(getCorePoolSize());
 		//
 		this.runTimeConfig = runTimeConfig;
 		RequestConfig<T> reqConfigClone = null;

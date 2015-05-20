@@ -20,8 +20,4 @@ extends DataObject, HttpEntity {
 	boolean
 		IS_CONTENT_CHUNKED = RunTimeConfig.getContext().getHttpContentChunked(),
 		IS_CONTENT_REPEATABLE = RunTimeConfig.getContext().getHttpContentRepeatable();
-	//
-	HttpEntity getPendingUpdatesContentEntity();
-	//
-	HttpEntity getPendingAugmentContentEntity();
 }

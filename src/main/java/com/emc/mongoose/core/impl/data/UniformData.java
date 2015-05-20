@@ -14,30 +14,25 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channels;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 09.05.14.
  A data item which may produce uniformly distributed non-compressible content.
- Uses UniformDataSource as a ring buffer.
+ Uses UniformDataSource as a ring buffer. Not thread safe.
  */
 public class UniformData
-extends InputStream
 implements DataItem {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final static String
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",
-		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: \"%s\"",
-		FMT_MSG_STREAM_OUT_START = "Item \"{}\": stream out start",
-		FMT_MSG_STREAM_OUT_FINISH = "Item \"{}\": stream out finish";
+		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: \"%s\"";
 	protected final static String
 		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s",
 		MSG_READ_RING_BLOCKED = "Reading from data ring blocked?";
@@ -58,7 +53,7 @@ implements DataItem {
 	}
 	//
 	private ByteBuffer ringBuff;
-	private int ringBuffOffset, ringBuffSize;
+	private int ringBuffSize;
 	protected long offset = 0, size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformData() {
@@ -99,6 +94,10 @@ implements DataItem {
 		this.ringBuff = ringBuff;
 		ringBuffSize = ringBuff.capacity();
 	}
+	//
+	private void reset() {
+		ringBuff.limit(ringBuffSize).position((int) (offset % ringBuffSize));
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final long getOffset() {
@@ -108,7 +107,6 @@ implements DataItem {
 	@Override
 	public final void setOffset(final long offset) {
 		this.offset = offset;
-		ringBuffOffset = (int) (offset % ringBuffSize);
 		reset();
 	}
 	//
@@ -117,7 +115,7 @@ implements DataItem {
 	}
 	//
 	public final void setRelativeOffset(final long relOffset) {
-		ringBuff.clear().position((int) ((offset + relOffset) % ringBuffSize));
+		ringBuff.limit(ringBuffSize).position((int) ((offset + relOffset) % ringBuffSize));
 	}
 	//
 	@Override
@@ -135,44 +133,106 @@ implements DataItem {
 		setRingBuffer(dataSrc.getLayer(overlayIndex));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	// Ring input stream implementation ////////////////////////////////////////////////////////////
+	// ReadableByteChannel implementation
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final int available() {
-		return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
+	public final void close() {
 	}
 	//
 	@Override
-	public final void reset() {
-		ringBuff.clear().position(ringBuffOffset);
+	public final boolean isOpen() {
+		return true;
 	}
 	//
 	@Override
-	public final int read() {
+	public final int read(final ByteBuffer dst) {
+		// circularity
 		if(!ringBuff.hasRemaining()) {
-			ringBuff.flip();
+			ringBuff.clear();
 		}
-		return ringBuff.get();
-	}
-	//
-	@Override @SuppressWarnings("NullableProblems")
-	public final int read(final byte buff[])
-	throws IOException {
-		return read(buff, 0, buff.length);
+		// bytes count to transfer
+		final int n = Math.min(dst.remaining(), ringBuff.remaining());
+		ringBuff.limit(ringBuff.position() + n);
+		// do the transfer
+		dst.put(ringBuff);
+		return n;
 	}
 	//
 	@Override
-	public final int read(final byte buff[], final int offset, final int length) {
-		int nextLen, doneLen = 0;
-		while(doneLen < length) {
+	public void write(final WritableByteChannel chanDst)
+	throws IOException {
+		write(chanDst, 0, size);
+	}
+	//
+	protected final void write(
+		final WritableByteChannel chanDst, final long relOffset, final long len
+	) throws IOException {
+		long writtenCount = 0;
+		setRelativeOffset(relOffset);
+		while(writtenCount < len) {
+			writtenCount += chanDst.write(ringBuff);
+		}
+	}
+	//
+	@Override
+	public boolean equals(final ReadableByteChannel chanSrc)
+	throws IOException {
+		return equals(chanSrc, 0, size);
+	}
+	// checks that data read from input equals the specified range
+	protected final boolean equals(
+		final ReadableByteChannel chanSrc, final long relOffset, final long len
+	) throws IOException {
+		// byte counters
+		int n, m;
+		// source byte vs input byte
+		byte bs, bi;
+		//
+		final ByteBuffer
+			inBuff = ByteBuffer.allocate(
+			(int) Math.min(
+				LoadExecutor.BUFF_SIZE_HI, Math.max(LoadExecutor.BUFF_SIZE_LO, len)
+			)
+		);
+		long doneByteCount = 0;
+		setRelativeOffset(relOffset);
+		while(doneByteCount < len) {
+			// circularity
 			if(!ringBuff.hasRemaining()) {
 				ringBuff.clear();
 			}
-			nextLen = Math.min(ringBuff.remaining(), length - doneLen);
-			ringBuff.get(buff, offset + doneLen, nextLen);
-			doneLen += nextLen;
+			//
+			n = chanSrc.read(inBuff);
+			//
+			if(n < 0) { // premature end of stream
+				LOG.warn(
+					LogUtil.MSG, "{}: content size mismatch, expected: {}, got: {}",
+					Long.toString(offset, DataObject.ID_RADIX), size, relOffset + doneByteCount
+				);
+				return false;
+			} else {
+				//
+				inBuff.flip();
+				//
+				for(m = 0; m < n; m ++) {
+					bs = ringBuff.get();
+					bi = inBuff.get();
+					if(bs != bi) {
+						LOG.warn(
+							LogUtil.MSG, "{}: content mismatch @ offset {}, expected: {}, got: {}",
+							Long.toString(offset, DataObject.ID_RADIX),
+							relOffset + doneByteCount + m,
+							String.format("\"0x%X\"", bs), String.format("\"0x%X\"", bi)
+						);
+						return false;
+					}
+				}
+				//
+				inBuff.clear();
+				doneByteCount += n;
+			}
 		}
-		return length;
+		return true;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
@@ -221,73 +281,4 @@ implements DataItem {
 		setOffset(in.readLong());
 		setSize(in.readLong());
 	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	public void writeTo(final OutputStream out)
-	throws IOException {
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, FMT_MSG_STREAM_OUT_START, Long.toHexString(offset));
-		}
-		long doneLen = 0;
-		final WritableByteChannel chan = Channels.newChannel(out);
-		int nextLimit;
-		if(ringBuff.position() != ringBuffOffset) {
-			reset();
-		}
-		while(doneLen < size) {
-			if(!ringBuff.hasRemaining()) {
-				ringBuff.clear();
-			}
-			nextLimit = (int) Math.min(ringBuff.remaining(), size - doneLen);
-			ringBuff.limit(ringBuff.position() + nextLimit);
-			doneLen += chan.write(ringBuff);
-		}
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, FMT_MSG_STREAM_OUT_FINISH, Long.toHexString(offset));
-		}
-	}
-	// checks that data read from input equals the specified range
-	protected boolean isContentEqualTo(final InputStream in, final long rOffset, final long length)
-	throws IOException {
-		//
-		final byte
-			inBuff[] = new byte[
-				(int) Math.min(
-					LoadExecutor.BUFF_SIZE_HI, Math.max(LoadExecutor.BUFF_SIZE_LO, length)
-				)
-			];
-		setRelativeOffset(rOffset);
-		long doneByteCount = 0, nextByteCount;
-		int n, m;
-		byte b;
-		while(doneByteCount < length) {
-			if(!ringBuff.hasRemaining()) {
-				ringBuff.clear();
-			}
-			nextByteCount = Math.min(length - doneByteCount, ringBuff.remaining());
-			nextByteCount = Math.min(nextByteCount, inBuff.length);
-			n = in.read(inBuff, 0, (int) nextByteCount); // cast should be safe here
-			if(n < 0) { // premature end of stream
-				LOG.warn(
-					LogUtil.MSG, "{}: content size mismatch, expected: {}, got: {}",
-					Long.toString(offset, DataObject.ID_RADIX), size, rOffset + doneByteCount
-				);
-				return false;
-			} else {
-				for(m = 0; m < n; m ++) {
-					b = ringBuff.get();
-					if(b != inBuff[m]) {
-						LOG.warn(
-							LogUtil.MSG, "{}: content mismatch @ offset {}, expected: {}, got: {}",
-							Long.toString(offset, DataObject.ID_RADIX), rOffset + doneByteCount + m,
-							String.format("\"0x%X\"", b), String.format("\"0x%X\"", inBuff[m])
-						);
-						return false;
-					}
-				}
-				doneByteCount += n;
-			}
-		}
-		return true;
-	}
-	//
 }

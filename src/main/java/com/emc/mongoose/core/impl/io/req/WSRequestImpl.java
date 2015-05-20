@@ -67,7 +67,7 @@ implements MutableWSRequest {
 	//
 	private volatile HTTPMethod method;
 	private volatile String uriAddr, uriPath;
-	private volatile HttpEntity contentEntity = EMPTY_CONTENT_ENTITY;
+	private volatile HttpEntity contentEntity = null;
 	//
 	public WSRequestImpl(
 		final HTTPMethod method, final String uriAddr, final String uriPath

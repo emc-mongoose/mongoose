@@ -327,16 +327,15 @@ extends WSRequestConfigBase<T> {
 		}
 		applyURI(httpRequest, dataItem);
 		switch(loadType) {
+			case UPDATE:
+			case APPEND:
+				applyRangesHeaders(httpRequest, dataItem);
 			case CREATE:
 				applyPayLoad(httpRequest, dataItem);
 				break;
-			case UPDATE:
-				applyRangesHeaders(httpRequest, dataItem);
-				applyPayLoad(httpRequest, dataItem.getPendingUpdatesContentEntity());
-				break;
-			case APPEND:
-				applyAppendRangeHeader(httpRequest, dataItem);
-				applyPayLoad(httpRequest, dataItem.getPendingAugmentContentEntity());
+			case READ:
+			case DELETE:
+				applyPayLoad(httpRequest, null);
 				break;
 		}
 	}

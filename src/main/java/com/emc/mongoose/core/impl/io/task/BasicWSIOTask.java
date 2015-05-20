@@ -1,9 +1,8 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.io.HTTPOutputStream;
+import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
 import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.io.HTTPInputStream;
 import com.emc.mongoose.common.collections.InstancePool;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
@@ -23,7 +22,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
-import org.apache.http.impl.nio.codecs.LengthDelimitedEncoder;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HTTP;
@@ -38,7 +36,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,7 +83,6 @@ implements WSIOTask<T> {
 		MutableWSRequest.HTTPMethod.PUT, null, null
 	);
 	private volatile HttpEntity reqEntity = null;
-	private volatile BasicHttpContext httpContext = null;
 	//
 	@Override
 	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
@@ -197,41 +195,20 @@ implements WSIOTask<T> {
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		if(reqEntity != null) {
-			/*final ByteBuffer bb = ByteBuffer.allocate(reqConf.getBuffSize());
-			final byte buff[] = bb.array();*/
-			long contentLength = reqEntity.getContentLength();
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.info(LogUtil.MSG, "Task #{}, write out {} bytes", hashCode(), contentLength);
-			}
-			/*long byteCountDown = contentLength;
-			int n;
-			try(final InputStream dataStream = reqEntity.getContent()) {
-				while(byteCountDown > 0) {
-					n = byteCountDown < buff.length ? (int) byteCountDown : buff.length;
-					if(0 >= dataStream.read(buff, 0, n)) {
-						break;
-					}
-					bb.rewind().limit(n);
-					while(bb.hasRemaining()) {
-						out.write(bb);
-					}
-					byteCountDown -= n;
-				}*/
-			try(final HTTPOutputStream outStream = HTTPOutputStream.getInstance(out, ioCtl)) {
-				reqEntity.writeTo(outStream);
-			} catch(final Exception e) {
-				LogUtil.failure(LOG, Level.ERROR, e, "Failure");
-				e.printStackTrace(System.err);
-			} finally {
-				out.complete();
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(
-						LogUtil.MSG, "Task #{}: {} bytes written out",
-						hashCode(), contentLength
-					);
+		try(final WritableByteChannel chanOut = HTTPContentEncoderChannel.getInstance(out)) {
+			if(reqEntity != null) {
+				if(dataItem.isAppending()) {
+					dataItem.writeAugment(chanOut);
+				} else if(dataItem.hasUpdatedRanges()) {
+					dataItem.writeUpdates(chanOut);
+				} else {
+					dataItem.write(chanOut);
 				}
 			}
+		} catch(final Exception e) {
+			LogUtil.failure(LOG, Level.WARN, e, "Producing content failure");
+		} finally {
+			out.complete();
 		}
 	}
 	//
@@ -446,22 +423,14 @@ implements WSIOTask<T> {
 	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
 	throws IOException {
 		if(respStatusCode < 200 || respStatusCode >= 300) { // failure, no big data is expected
-			try(final InputStream inStream = HTTPInputStream.getInstance(in, ioCtl)) {
-				final StringBuilder msgBuilder = new StringBuilder();
-				final byte buff[] = new byte[0x2000];
-				int n;
-				do {
-					n = inStream.read(buff);
-					if(n < 0) {
-						break;
-					}
-					msgBuilder.append(new String(buff, 0, n));
-				} while(!in.isCompleted());
-				if(LOG.isTraceEnabled(LogUtil.ERR)) {
-					LOG.trace(LogUtil.ERR, msgBuilder);
-				}
-			} catch(final InterruptedException e) {
-				// ignore
+			final StringBuilder msgBuilder = new StringBuilder();
+			final ByteBuffer bbuff = ByteBuffer.allocate(0x1000);
+			while(in.read(bbuff) >= 0) {
+				msgBuilder.append(bbuff.asCharBuffer().toString());
+				bbuff.clear();
+			}
+			if(LOG.isTraceEnabled(LogUtil.ERR)) {
+				LOG.trace(LogUtil.ERR, msgBuilder);
 			}
 		} else {
 			if(!wsReqConf.consumeContent(in, ioCtl, dataItem)) { // content corruption

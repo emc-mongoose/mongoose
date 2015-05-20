@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.mock.impl.cinderella.request;
 //
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
-import com.emc.mongoose.common.io.HTTPInputStream;
+import com.emc.mongoose.common.io.StreamUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -73,7 +73,7 @@ implements Reusable<BasicWSRequestConsumer> {
 	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
 			bbuff.clear();
-			HTTPInputStream.consumeQuietly(decoder, ioCtl, bbuff);
+			StreamUtils.consumeQuietly(decoder, ioCtl, bbuff);
 		} catch(final Throwable e) {
 			LogUtil.failure(LOG, Level.WARN, e, "Content consuming failure");
 		}

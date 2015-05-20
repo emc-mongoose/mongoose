@@ -53,8 +53,8 @@ extends BasicNIOConnPool {
 		super(ioReactor);
 	}
 	//
-	private final ExecutorService connReleaseExecSvc = Executors.newFixedThreadPool(
-		Runtime.getRuntime().availableProcessors(), new NamingWorkerFactory("connReleaseWorker")
+	private final ExecutorService connReleaseExecSvc = Executors.newSingleThreadExecutor(
+		new NamingWorkerFactory("connReleaseWorker")
 	);
 	//
 	public final static class ConnReleaseTask

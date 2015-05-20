@@ -8,7 +8,8 @@ import java.io.ByteArrayOutputStream;
 /**
  * Created by gusakk on 4/29/15.
  */
-public final class LoggingStdErrStream extends ByteArrayOutputStream {
+public final class StdErrLoggingStream
+extends ByteArrayOutputStream {
 	//
 	private final static String LINE_SEPARATOR = System.getProperty("line.separator");
 	private static final int DEFAULT_BUFFER_LENGTH = 2048;
@@ -17,7 +18,7 @@ public final class LoggingStdErrStream extends ByteArrayOutputStream {
 	private final Logger log;
 	private final Marker marker;
 	//
-	public LoggingStdErrStream(final Logger log,
+	public StdErrLoggingStream(final Logger log,
 	                           final Marker marker)
 			throws IllegalArgumentException {
 		super(DEFAULT_BUFFER_LENGTH);

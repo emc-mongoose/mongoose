@@ -11,6 +11,7 @@ import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.channels.WritableByteChannel;
 import java.util.List;
 //
 /**
@@ -63,14 +64,14 @@ implements WSObjectMock {
 	}
 	//
 	@Override
-	public final void writeTo(final OutputStream out)
+	public final void write(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
 		synchronized (this) { // stream position protection
 			if(maskRangesPending.isEmpty()) {
-				super.writeTo(out);
+				super.write(chanOut);
 			} else {
 				for(int i = 0; i < countRangesTotal; i++) {
 					rangeOffset = getRangeOffset(i);
@@ -80,13 +81,13 @@ implements WSObjectMock {
 							offset + rangeOffset, rangeSize, currLayerIndex.get() + 1,
 							UniformDataSource.DEFAULT
 						);
-						updatedRange.writeTo(out);
+						updatedRange.write(chanOut);
 					} else { // previous layer of updated ranges
 						updatedRange = new UniformData(
 							offset + rangeOffset, rangeSize, currLayerIndex.get(),
 							UniformDataSource.DEFAULT
 						);
-						updatedRange.writeTo(out);
+						updatedRange.write(chanOut);
 					}
 				}
 			}

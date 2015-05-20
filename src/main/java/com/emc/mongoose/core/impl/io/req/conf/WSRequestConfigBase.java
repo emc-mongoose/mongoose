@@ -7,7 +7,8 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
 import com.emc.mongoose.common.http.RequestTargetHost;
-import com.emc.mongoose.common.io.HTTPInputStream;
+import com.emc.mongoose.common.io.HTTPContentDecoderChannel;
+import com.emc.mongoose.common.io.StreamUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
@@ -78,12 +79,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.DoubleBuffer;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
-import java.nio.LongBuffer;
-import java.nio.ShortBuffer;
+import java.nio.channels.ReadableByteChannel;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -399,16 +395,15 @@ implements WSRequestConfig<T> {
 		applyObjectId(dataItem, null);
 		applyURI(httpRequest, dataItem);
 		switch(loadType) {
+			case UPDATE:
+			case APPEND:
+				applyRangesHeaders(httpRequest, dataItem);
 			case CREATE:
 				applyPayLoad(httpRequest, dataItem);
 				break;
-			case UPDATE:
-				applyRangesHeaders(httpRequest, dataItem);
-				applyPayLoad(httpRequest, dataItem.getPendingUpdatesContentEntity());
-				break;
-			case APPEND:
-				applyAppendRangeHeader(httpRequest, dataItem);
-				applyPayLoad(httpRequest, dataItem.getPendingAugmentContentEntity());
+			case READ:
+			case DELETE:
+				applyPayLoad(httpRequest, null);
 				break;
 		}
 	}
@@ -458,39 +453,39 @@ implements WSRequestConfig<T> {
 	// merge subsequent updated ranges functionality is here
 	protected final void applyRangesHeaders(final MutableWSRequest httpRequest, final T dataItem) {
 		httpRequest.removeHeaders(HttpHeaders.RANGE); // cleanup
-		long rangeBeg = -1, rangeEnd = -1, rangeLen;
-		int rangeCount = dataItem.getCountRangesTotal();
-		for(int i = 0; i < rangeCount; i++) {
-			rangeLen = dataItem.getRangeSize(i);
-			if(dataItem.isRangeUpdatePending(i)) {
-				LOG.trace(LogUtil.MSG, "\"{}\": should update range #{}", dataItem, i);
-				if(rangeBeg < 0) { // begin of the possible updated ranges sequence
-					rangeBeg = RangeLayerData.getRangeOffset(i);
-					rangeEnd = rangeBeg + rangeLen - 1;
-					LOG.trace(
-						LogUtil.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
-					);
-				} else if(rangeEnd > 0) { // next range in the sequence of updated ranges
-					rangeEnd += rangeLen;
-				}
-				if(i == rangeCount - 1) { // this is the last range which is updated also
+		if(dataItem.isAppending()) {
+			httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + dataItem.getSize() + "-");
+		} else if(dataItem.hasUpdatedRanges()) {
+			long rangeBeg = -1, rangeEnd = -1, rangeLen;
+			int rangeCount = dataItem.getCountRangesTotal();
+			for(int i = 0; i < rangeCount; i++) {
+				rangeLen = dataItem.getRangeSize(i);
+				if(dataItem.isRangeUpdatePending(i)) {
+					LOG.trace(LogUtil.MSG, "\"{}\": should update range #{}", dataItem, i);
+					if(rangeBeg < 0) { // begin of the possible updated ranges sequence
+						rangeBeg = RangeLayerData.getRangeOffset(i);
+						rangeEnd = rangeBeg + rangeLen - 1;
+						LOG.trace(
+							LogUtil.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
+						);
+					} else if(rangeEnd > 0) { // next range in the sequence of updated ranges
+						rangeEnd += rangeLen;
+					}
+					if(i == rangeCount - 1) { // this is the last range which is updated also
+						LOG.trace(LogUtil.MSG, "End of the updated ranges sequence @{}", rangeEnd);
+						httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + rangeBeg + "-" + rangeEnd);
+					}
+				} else if(rangeBeg > -1 && rangeEnd > -1) { // end of the updated ranges sequence
 					LOG.trace(LogUtil.MSG, "End of the updated ranges sequence @{}", rangeEnd);
 					httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + rangeBeg + "-" + rangeEnd);
+					// drop the updated ranges sequence info
+					rangeBeg = -1;
+					rangeEnd = -1;
 				}
-			} else if(rangeBeg > -1 && rangeEnd > -1) { // end of the updated ranges sequence
-				LOG.trace(LogUtil.MSG, "End of the updated ranges sequence @{}", rangeEnd);
-				httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + rangeBeg + "-" + rangeEnd);
-				// drop the updated ranges sequence info
-				rangeBeg = -1;
-				rangeEnd = -1;
 			}
+		} else {
+			throw new IllegalStateException("applyRangesHeaders invoked while there's nothing to do");
 		}
-	}
-	//
-	protected final void applyAppendRangeHeader(
-		final MutableWSRequest httpRequest, final T dataItem
-	) {
-		httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + dataItem.getSize() + "-");
 	}
 	/*
 	protected final static DateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(
@@ -553,11 +548,10 @@ implements WSRequestConfig<T> {
 				if(loadType == IOTask.Type.READ) { // read
 					if(verifyContentFlag) { // read and do verify
 						try(
-							final HTTPInputStream inStream = HTTPInputStream.getInstance(in, ioCtl)
+							final ReadableByteChannel
+								chanIn = HTTPContentDecoderChannel.getInstance(in)
 						) {
-							verifyPass = dataItem.isContentEqualTo(inStream);
-						} catch(final InterruptedException e) {
-							// ignore
+							verifyPass = dataItem.equals(chanIn);
 						}
 					} else { // consume the whole data item content - may estimate the buffer size
 						ByteBuffer bbuff = THRLOC_BB_RESP_READ.get();
@@ -575,7 +569,7 @@ implements WSRequestConfig<T> {
 						} else {
 							bbuff.clear();
 						}
-						HTTPInputStream.consumeQuietly(in, ioCtl, bbuff);
+						StreamUtils.consumeQuietly(in, ioCtl, bbuff);
 					}
 				}
 			}
@@ -596,7 +590,7 @@ implements WSRequestConfig<T> {
 			} else {
 				bbuff.clear();
 			}
-			HTTPInputStream.consumeQuietly(in, ioCtl, bbuff);
+			StreamUtils.consumeQuietly(in, ioCtl, bbuff);
 		}
 		return verifyPass;
 	}

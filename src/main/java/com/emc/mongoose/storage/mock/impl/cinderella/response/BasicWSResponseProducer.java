@@ -2,10 +2,10 @@ package com.emc.mongoose.storage.mock.impl.cinderella.response;
 //
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
-import com.emc.mongoose.common.io.HTTPOutputStream;
+import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
 import com.emc.mongoose.common.logging.LogUtil;
 //
-import org.apache.http.HttpEntity;
+import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import org.apache.http.HttpResponse;
 //
 import org.apache.http.nio.ContentEncoder;
@@ -18,7 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.channels.WritableByteChannel;
 /**
  * Created by olga on 12.02.15.
  */
@@ -29,13 +29,6 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 	//
 	private volatile HttpResponse response = null;
 	//
-	//private final byte buff[] = new byte[(int) RunTimeConfig.getContext().getDataBufferSize()];
-	//private final ByteBuffer bb = ByteBuffer.wrap(buff);
-	//
-	//public BasicResponseProducer(HttpResponse response) {
-	//	this.response = response;
-	//}
-	//
 	@Override
 	public HttpResponse generateResponse() {
 		return this.response;
@@ -44,57 +37,19 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 	@Override
 	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
-		try(final OutputStream outStream = HTTPOutputStream.getInstance(encoder, ioctrl)) {
-			final HttpEntity dataItemEntity = this.response.getEntity();
-			if(dataItemEntity != null) {
+		try(final WritableByteChannel chanOut= HTTPContentEncoderChannel.getInstance(encoder)) {
+			final WSObjectMock dataItem = WSObjectMock.class.cast(response.getEntity());
+			if(dataItem != null) {
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(
-						LogUtil.MSG, "{}: write out {} bytes",
-						dataItemEntity, dataItemEntity.getContentLength()
-					);
+					LOG.trace(LogUtil.MSG, "{}: write out {} bytes", dataItem, dataItem.getSize());
 				}
-				dataItemEntity.writeTo(outStream);
+				dataItem.write(chanOut);
 			}
-		} catch(final InterruptedException ignored) {
 		} catch(final Exception e) {
 			LogUtil.failure(LOG, Level.WARN, e, "Content producing failure");
 		} finally {
 			encoder.complete();
 		}
-		/*
-		final HttpEntity respEntity = this.response.getEntity();
-		if(respEntity != null) {
-			long contentLength = respEntity.getContentLength();
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.MSG, "Write out {} bytes", contentLength);
-			}
-			long byteCountToWrite = contentLength;
-			int n;
-			try(final InputStream dataStream = respEntity.getContent()) {
-				while(byteCountToWrite > 0) {
-					n = byteCountToWrite < buff.length ? (int) byteCountToWrite : buff.length;
-					if(0 >= dataStream.read(buff, 0, n)) {
-						break;
-					}
-					bb.rewind().limit(n);
-					while(bb.hasRemaining()) {
-						encoder.write(bb);
-					}
-					byteCountToWrite -= n;
-				}
-
-			} finally {
-				encoder.complete();
-				//this.producer.close();
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(
-						LogUtil.MSG, "{} bytes written out",
-						contentLength - byteCountToWrite
-					);
-				}
-			}
-		}
-		*/
 	}
 	//
 	@Override
