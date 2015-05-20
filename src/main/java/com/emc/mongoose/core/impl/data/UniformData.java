@@ -58,10 +58,11 @@ implements DataItem {
 	}
 	//
 	private ByteBuffer ringBuff;
+	private int ringBuffOffset, ringBuffSize;
 	protected long offset = 0, size = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformData() {
-		ringBuff = UniformDataSource.DEFAULT.getLayer(0);
+		setRingBuffer(UniformDataSource.DEFAULT.getLayer(0));
 		setOffset(nextOffset(LAST_OFFSET));
 	}
 	//
@@ -89,9 +90,14 @@ implements DataItem {
 	public UniformData(
 		final Long offset, final Long size, final Integer layerNum, final UniformDataSource dataSrc
 	) {
-		this.ringBuff = dataSrc.getLayer(layerNum);
+		setRingBuffer(dataSrc.getLayer(layerNum));
 		setOffset(offset);
 		this.size = size;
+	}
+	//
+	private void setRingBuffer(final ByteBuffer ringBuff) {
+		this.ringBuff = ringBuff;
+		ringBuffSize = ringBuff.capacity();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
@@ -102,7 +108,8 @@ implements DataItem {
 	@Override
 	public final void setOffset(final long offset) {
 		this.offset = offset;
-		ringBuff.position((int) (offset % ringBuff.capacity()));
+		ringBuffOffset = (int) (offset % ringBuffSize);
+		reset();
 	}
 	//
 	public final int getRelativeOffset() {
@@ -110,7 +117,7 @@ implements DataItem {
 	}
 	//
 	public final void setRelativeOffset(final long relOffset) {
-		ringBuff.position((int) ((offset + relOffset) % ringBuff.capacity()));
+		ringBuff.clear().position((int) ((offset + relOffset) % ringBuffSize));
 	}
 	//
 	@Override
@@ -125,7 +132,7 @@ implements DataItem {
 	//
 	@Override
 	public final void setDataSource(final DataSource dataSrc, final int overlayIndex) {
-		ringBuff = dataSrc.getLayer(overlayIndex);
+		setRingBuffer(dataSrc.getLayer(overlayIndex));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Ring input stream implementation ////////////////////////////////////////////////////////////
@@ -133,6 +140,11 @@ implements DataItem {
 	@Override
 	public final int available() {
 		return size > Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) size;
+	}
+	//
+	@Override
+	public final void reset() {
+		ringBuff.clear().position(ringBuffOffset);
 	}
 	//
 	@Override
@@ -154,7 +166,7 @@ implements DataItem {
 		int nextLen, doneLen = 0;
 		while(doneLen < length) {
 			if(!ringBuff.hasRemaining()) {
-				ringBuff.flip();
+				ringBuff.clear();
 			}
 			nextLen = Math.min(ringBuff.remaining(), length - doneLen);
 			ringBuff.get(buff, offset + doneLen, nextLen);
@@ -218,13 +230,15 @@ implements DataItem {
 		long doneLen = 0;
 		final WritableByteChannel chan = Channels.newChannel(out);
 		int nextLimit;
-		setRelativeOffset(0);
+		if(ringBuff.position() != ringBuffOffset) {
+			reset();
+		}
 		while(doneLen < size) {
 			if(!ringBuff.hasRemaining()) {
-				ringBuff.flip();
+				ringBuff.clear();
 			}
 			nextLimit = (int) Math.min(ringBuff.remaining(), size - doneLen);
-			ringBuff.limit(nextLimit);
+			ringBuff.limit(ringBuff.position() + nextLimit);
 			doneLen += chan.write(ringBuff);
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
@@ -241,13 +255,13 @@ implements DataItem {
 					LoadExecutor.BUFF_SIZE_HI, Math.max(LoadExecutor.BUFF_SIZE_LO, length)
 				)
 			];
-		setRelativeOffset(rOffset + length);
+		setRelativeOffset(rOffset);
 		long doneByteCount = 0, nextByteCount;
 		int n, m;
 		byte b;
 		while(doneByteCount < length) {
 			if(!ringBuff.hasRemaining()) {
-				ringBuff.flip();
+				ringBuff.clear();
 			}
 			nextByteCount = Math.min(length - doneByteCount, ringBuff.remaining());
 			nextByteCount = Math.min(nextByteCount, inBuff.length);

@@ -42,8 +42,7 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 	}
 	//
 	@Override
-	public final void produceContent(
-		final ContentEncoder encoder, final IOControl ioctrl)
+	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
 		try(final OutputStream outStream = HTTPOutputStream.getInstance(encoder, ioctrl)) {
 			final HttpEntity dataItemEntity = this.response.getEntity();
@@ -57,6 +56,8 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 				dataItemEntity.writeTo(outStream);
 			}
 		} catch(final InterruptedException ignored) {
+		} catch(final Exception e) {
+			LogUtil.failure(LOG, Level.WARN, e, "Content producing failure");
 		} finally {
 			encoder.complete();
 		}

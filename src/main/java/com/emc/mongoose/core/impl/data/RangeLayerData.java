@@ -188,7 +188,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				return isContentEqualTo(in, 0, size);
 			} else {
 				return new UniformData(
-					getOffset(), size, currLayerIndex.get(), UniformDataSource.DEFAULT
+					offset, size, currLayerIndex.get(), UniformDataSource.DEFAULT
 				).isContentEqualTo(in, 0, size);
 			}
 		}
