@@ -120,7 +120,11 @@
 			},
 			"src": {
 				"fpath": "",
-				"separator": ","
+				"separator": ",",
+			  	"random": {
+				  	"enabled": false,
+				  	"batchSize": 1000
+				}
 			},
 			"radix": {
 				"size": 10,

@@ -1,22 +1,27 @@
 package com.emc.mongoose.core.impl.load.model;
-//
+//mongoose-common.jar
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.LogUtil;
+//mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Producer;
-//
-import com.emc.mongoose.common.logging.LogUtil;
-//
+//mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.load.model.reader.RandomFileReader;
 import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
@@ -128,7 +133,20 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		long dataItemsCount = 0;
-		try(final BufferedReader fReader = Files.newBufferedReader(fPath, StandardCharsets.UTF_8)) {
+		int batchSize = 0;
+		//
+		final Charset charset =  StandardCharsets.UTF_8;
+		final CharsetDecoder decoder = charset.newDecoder();
+		//
+		if(RunTimeConfig.getContext().isEnabledDataRandom()) {
+			batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
+		}
+		try(
+			BufferedReader fReader = new RandomFileReader(
+				new InputStreamReader(Files.newInputStream(fPath), decoder),
+				batchSize, maxCount
+			)
+		) {
 			String nextLine;
 			T nextData;
 			LOG.debug(
@@ -140,7 +158,7 @@ implements Producer<T> {
 				nextLine = fReader.readLine();
 				LOG.trace(LogUtil.MSG, "Got next line #{}: \"{}\"", dataItemsCount, nextLine);
 				//
-				if(nextLine==null || nextLine.isEmpty()) {
+				if(nextLine == null || nextLine.isEmpty()) {
 					LOG.debug(LogUtil.MSG, "No next line, exiting");
 					break;
 				} else {
