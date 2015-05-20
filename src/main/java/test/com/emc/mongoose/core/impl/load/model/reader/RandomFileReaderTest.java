@@ -2,7 +2,7 @@ package test.com.emc.mongoose.core.impl.load.model.reader;
 
 import static org.easymock.EasyMock.createControl;
 import static org.easymock.EasyMock.expect;
-////mongoose-core-impl.jar
+//mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.reader.RandomFileReader;
 //
 import org.easymock.IMocksControl;
@@ -23,32 +23,22 @@ import static org.junit.Assert.assertEquals;
 * @since <pre>May 15, 2015</pre> 
 * @version 1.0 
 */ 
-public class RandomFileReaderTest {
+public final class RandomFileReaderTest {
 
    private final IMocksControl control = createControl();
 
-
    @Before
-   public void before() throws Exception {
+   public final void before()
+   throws Exception {
    }
 
    @After
-   public void after() throws Exception {
-   }
-   
-   /**
-    *
-    * Method: fillUp()
-    *
-    */
-
-   @Test
-   public void testFillUp() throws Exception {
-      //TODO: Test goes here...
+   public final void after()
+   throws Exception {
    }
 
    @Test
-   public void testSynchronousReadEntireFile(){
+   public final void testSynchronousReadEntireFile() {
       final int size = 100;
       final int batch = 0;
       try {
@@ -63,26 +53,28 @@ public class RandomFileReaderTest {
 
          control.replay();
 
-         String line;
-         int i = 0;
+         int countReadLines = 0;
+         String actualLine;
+         String expectedLine;
 
          do {
-            line = randomReader.readLine();
-            if(i < size) {
-               assertEquals(Integer.toString(i), line);
+            actualLine = randomReader.readLine();
+            expectedLine = Integer.toString(countReadLines);
+            if(countReadLines < size) {
+               assertEquals(expectedLine, actualLine);
             }
-            i ++;
-         } while (line != null);
+            countReadLines ++;
+         } while (actualLine != null);
 
          control.verify();
 
-      }catch (IOException e) {
+      }catch (final IOException e) {
          System.err.print(String.format("Failed to read line: %s", e.getMessage()));
       }
    }
 
    @Test
-   public void testRandomReadEntireFile() throws IOException {
+   public final void testRandomReadEntireFile() {
       final int size = 100;
       final int batch = 100;
       try {
@@ -95,30 +87,68 @@ public class RandomFileReaderTest {
 
          control.replay();
 
-         String line;
+         String actualLine;
+         String expectedLine;
          int i = size - 1;
 
          do {
-            line = randomReader.readLine();
-
+            actualLine = randomReader.readLine();
+            expectedLine = Integer.toString(i);
             if(i >= 0) {
-               assertEquals(Integer.toString(i), line);
+               assertEquals(expectedLine, actualLine);
             }
             i--;
-         } while (line != null);
+         } while (actualLine != null);
 
          control.verify();
 
-
-      }catch (IOException e) {
+      }catch (final IOException e) {
          System.err.print(String.format("Failed to read line: %s", e.getMessage()));
       }
    }
 
    @Test
-   public void testMaxCount() throws IOException {
-      final int maxCount = 50;
-      final int batch = 1000;
+   public final void testRandomBatchedReadEntireFile() {
+      final int size = 100;
+      final int batch = 15;
+      try {
+         final BufferedReader reader = control.createMock(BufferedReader.class);
+         final Random random = control.createMock(Random.class);
+         final RandomFileReader randomReader = new RandomFileReader(reader, batch, Integer.MAX_VALUE, random);
+
+         prepare(size, batch, reader, random);
+         expect(reader.readLine()).andReturn("");    // EOF by empty string
+
+         control.replay();
+
+         int countReadLines = 0;
+         String actualLine;
+         String expectedLine;
+
+         do {
+            actualLine = randomReader.readLine();
+            if (countReadLines < size) {
+               if(countReadLines <= size - batch){
+                  expectedLine = Integer.toString(batch + countReadLines - 1);
+               } else {
+                  expectedLine = Integer.toString(size - countReadLines - 1);
+               }
+               assertEquals(expectedLine, actualLine);
+            }
+            countReadLines ++;
+         } while (actualLine != null);
+
+         control.verify();
+
+      }catch (final IOException e) {
+         System.err.print(String.format("Failed to read line: %s", e.getMessage()));
+      }
+   }
+
+   @Test
+   public final void testBatchedMaxCount() {
+      final int maxCount = 10;
+      final int batch = 3;
       try {
          final BufferedReader reader = control.createMock(BufferedReader.class);
          final Random random = control.createMock(Random.class);
@@ -129,63 +159,74 @@ public class RandomFileReaderTest {
 
          control.replay();
 
-         String line;
-         int i = maxCount - 1;
+         int countReadLines = 0;
+         String actualLine;
+         String expectedLine;
 
          do {
-            line = reader.readLine();
-
-            if(i >= 0) {
-               assertEquals(Integer.toString(i), line);
-               i--;
+            actualLine = randomReader.readLine();
+            if (countReadLines < maxCount) {
+               if(countReadLines <= maxCount - batch){
+                  expectedLine = Integer.toString(batch + countReadLines - 1);
+               } else {
+                  expectedLine = Integer.toString(maxCount - countReadLines - 1);
+               }
+               assertEquals(expectedLine, actualLine);
             }
-         } while (line != null);
+            countReadLines ++;
+         } while (actualLine != null);
+
+         //Assert max count where actualMaxCount = countReadLines - null line
+         assertEquals(maxCount, countReadLines - 1);
 
          control.verify();
 
-      }catch (IOException e) {
+      }catch (final IOException e) {
          System.err.print(String.format("Failed to read line: %s", e.getMessage()));
       }
    }
 
    @Test
-   public void testRandomBatchedReadEntireFile() throws IOException {
-      final int size = 100;
-      final int batch = 15;
+   public final void testMaxCount() throws IOException {
+      final int maxCount = 10;
+      final int batch = 10000;
       try {
          final BufferedReader reader = control.createMock(BufferedReader.class);
          final Random random = control.createMock(Random.class);
-         final RandomFileReader randomReader = new RandomFileReader(reader, batch, Integer.MAX_VALUE, random);
+         final RandomFileReader randomReader = new RandomFileReader(reader, batch, maxCount, random);
 
-         prepare(size, batch, reader, random);
-         expect(reader.readLine()).andReturn("");    // EOF by empty str
+         prepare(maxCount, batch, reader, random);
+         // No EOF; stop by maxCount
 
          control.replay();
 
-         String line;
-         int i = 0;
+         int countReadLines = 0;
+         String actualLine;
+         String expectedLine;
+         int i = maxCount - 1;
 
          do {
-            line = reader.readLine();
-
-            if (i < size) {
-               if (i <= size - batch) {
-                  assertEquals(Integer.toString(batch - 1 + i), line);
-               } else {
-                  assertEquals(Integer.toString(size - i - 1), line);
-               }
+            actualLine = randomReader.readLine();
+            expectedLine = Integer.toString(i);
+            if(i >= 0) {
+               assertEquals(expectedLine, actualLine);
             }
-            i++;
-         } while (line != null);
+            i --;
+            countReadLines ++;
+         } while (actualLine != null);
+
+         //Assert max count where actualMaxCount = countReadLines - null line
+         assertEquals(maxCount, countReadLines - 1);
 
          control.verify();
-      }catch (IOException e) {
+
+      }catch (final IOException e) {
          System.err.print(String.format("Failed to read line: %s", e.getMessage()));
       }
    }
 
-
-   private void prepare(int size, int batch, final BufferedReader reader, final Random random) throws IOException {
+   private void prepare(final int size, final int batch, final BufferedReader reader, final Random random)
+   throws IOException {
       for(int i = 0; i < size; i++) {
          expect(reader.readLine()).andReturn(Integer.toString(i));
          if(batch >= size) {
