@@ -7,6 +7,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
+import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -37,6 +38,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -66,6 +69,7 @@ implements LoadExecutor<T> {
 	protected final IOTask.Type loadType;
 	//
 	protected volatile Producer<T> producer = null;
+	private final ExecutorService resultsHandler;
 	protected volatile Consumer<T> consumer;
 	//
 	private final long maxCount;
@@ -115,7 +119,7 @@ implements LoadExecutor<T> {
 		);
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
-		setCorePoolSize(totalConnCount > 3 ? (int) Math.sqrt(totalConnCount) : totalConnCount);
+		setCorePoolSize(totalConnCount > 3 ? (int)Math.sqrt(totalConnCount) : totalConnCount);
 		setMaximumPoolSize(getCorePoolSize());
 		//
 		this.runTimeConfig = runTimeConfig;
@@ -138,9 +142,12 @@ implements LoadExecutor<T> {
 			.registerWith(mBeanServer)
 			.build();
 		//
-		setThreadFactory(
+		setThreadFactory(new NamingWorkerFactory(name + "submitWorker"));
+		resultsHandler = Executors.newFixedThreadPool(
+			getCorePoolSize(),
 			new DataObjectWorkerFactory(loadNum, reqConfig.getAPI(), loadType, name)
 		);
+		//
 		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the node executors array
@@ -432,7 +439,7 @@ implements LoadExecutor<T> {
 			int rejectCount = 0;
 			do {
 				try { // submit the result handling task
-					futureResult = submit(handleResultTask);
+					futureResult = resultsHandler.submit(handleResultTask);
 					counterSubm.inc();
 				} catch(final RejectedExecutionException e) {
 					rejectCount ++;
@@ -455,6 +462,10 @@ implements LoadExecutor<T> {
 			}
 		} catch(final Exception e) {
 			LogUtil.failure(LOG, Level.DEBUG, e, "Submit failure");
+		} finally {
+			if(isShutdown()) {
+				resultsHandler.shutdown();
+			}
 		}
 	}
 	// NOTE: basic implementation has no idea about node balancing
@@ -538,8 +549,12 @@ implements LoadExecutor<T> {
 						LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
 					}
 				}
-				//
-				super.shutdown(); // prevent further scheduling of result handling tasks
+				// prevent further scheduling of result handling tasks
+				resultsHandler.shutdown();
+				// prevent submitting new data items
+				if(!isShutdown()) {
+					super.shutdown();
+				}
 			}
 		}
 	}
@@ -632,7 +647,7 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join(final long timeOutMilliSec)
 	throws RemoteException, InterruptedException {
-		if(isShutdown() || isInterruptedFlag.get() || isClosed.get()) {
+		if(resultsHandler.isShutdown() || isInterruptedFlag.get() || isClosed.get()) {
 			return;
 		}
 		//
