@@ -18,6 +18,7 @@ import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.impl.load.model.LogConsumer;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
@@ -32,7 +33,6 @@ import com.emc.mongoose.client.impl.load.executor.tasks.CountLimitWaitTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.FrameFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
-import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
 //
 import com.emc.mongoose.core.impl.load.tasks.JoinLoadJobTask;
 //
@@ -653,26 +653,33 @@ implements LoadClient<T> {
 	protected final AtomicLong countSubmCalls = new AtomicLong(0);
 	//
 	@Override
-	public final void submit(final T dataItem)
-	throws InterruptedException {
+	public final void submit(final T dataItem) {
+		submit(SubmitTask.getInstance(this, dataItem));
+	}
+	//
+	@Override
+	public final void submitSynchronously(final T dataItem)
+	throws RejectedExecutionException {
 		if(maxCount > getTaskCount()) { // getTaskCount() is inaccurate
-			final String addr = loadSvcAddrs[
-				(int) (countSubmCalls.getAndIncrement() % loadSvcAddrs.length)
-			];
-			final RemoteSubmitTask<T> remoteSubmitTask = RemoteSubmitTask
-				.getInstanceFor(remoteLoadMap.get(addr), dataItem);
+			String addr;
 			int rejectCount = 0;
 			do {
 				try {
-					submit(remoteSubmitTask);
+					addr = loadSvcAddrs[
+						(int) (countSubmCalls.getAndIncrement() % loadSvcAddrs.length)
+					];
+					remoteLoadMap.get(addr).submit(dataItem);
 					break;
-				} catch(final RejectedExecutionException e) {
+				} catch(final RemoteException | RejectedExecutionException e) {
 					rejectCount ++;
 					try {
 						Thread.sleep(rejectCount * retryDelayMilliSec);
 					} catch(final InterruptedException ee) {
 						break;
 					}
+				} catch(final InterruptedException e) {
+					LOG.debug(LogUtil.MSG, "Interrupted while submitting the data item");
+					break;
 				}
 			} while(rejectCount < retryCountMax && !isShutdown());
 		} else {
@@ -681,7 +688,7 @@ implements LoadClient<T> {
 		}
 		//
 		if(isShutdown()) {
-			throw new InterruptedException(
+			throw new RejectedExecutionException(
 				getName() + ": max data item count (" + maxCount +
 				") have been submitted, shutdown the submit executor"
 			);

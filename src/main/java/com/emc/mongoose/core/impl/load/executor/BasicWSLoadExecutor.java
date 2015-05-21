@@ -13,7 +13,6 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
-import com.emc.mongoose.core.impl.load.executor.util.AsyncReleaseWSConnPool;
 import com.emc.mongoose.core.impl.load.model.BasicWSObjectGenerator;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
@@ -24,7 +23,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.pool.PoolStats;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -66,6 +64,7 @@ implements WSLoadExecutor<T> {
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
+	private final WSRequestConfig<T> wsReqConfigCopy;
 	//
 	public BasicWSLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
@@ -77,6 +76,7 @@ implements WSLoadExecutor<T> {
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
+		this.wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
 		//
 		final int totalConnCount = connCountPerNode * storageNodeCount;
 		final HeaderGroup sharedHeaders = WSRequestConfig.class.cast(reqConfigCopy)
@@ -248,5 +248,24 @@ implements WSLoadExecutor<T> {
 		return (Producer<T>) new BasicWSObjectGenerator<>(
 			maxCount, minObjSize, maxObjSize, objSizeBias
 		);
+	}
+	// determines the route having the maximum available connections in the pool
+	// this should correspond the fastest target node
+	@Override
+	protected final String getNextNode() {
+		String bestNodeAddr = storageNodeAddrs[0];
+		if(storageNodeAddrs.length > 1) {
+			int
+				lastBestConnAvail = Integer.MIN_VALUE,
+				nextConnAvail;
+			for(final String addr : storageNodeAddrs) {
+				nextConnAvail = connPool.getStats(wsReqConfigCopy.getHttpHost(addr)).getAvailable();
+				if(nextConnAvail > lastBestConnAvail) {
+					lastBestConnAvail = nextConnAvail;
+					bestNodeAddr = addr;
+				}
+			}
+		}
+		return bestNodeAddr;
 	}
 }

@@ -82,7 +82,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
@@ -359,6 +361,34 @@ implements WSRequestConfig<T> {
 	@Override
 	public final String getUserAgent() {
 		return userAgent;
+	}
+	//
+	private final static Map<String, HttpHost> HTTP_HOST_CACHE = new ConcurrentHashMap<>();
+	//
+	@Override
+	public HttpHost getHttpHost(final String addr) {
+		final HttpHost httpHost;
+		if(HTTP_HOST_CACHE.containsKey(addr)) {
+			httpHost = HTTP_HOST_CACHE.get(addr);
+		} else if(addr != null) {
+			if(addr.contains(HOST_PORT_SEP)) {
+				final String nodeAddrParts[] = addr.split(HOST_PORT_SEP);
+				if(nodeAddrParts.length == 2) {
+					httpHost = new HttpHost(
+						nodeAddrParts[0], Integer.valueOf(nodeAddrParts[1]), getScheme()
+					);
+				} else {
+					LOG.fatal(LogUtil.ERR, "Invalid node address: {}", addr);
+					httpHost = null;
+				}
+			} else {
+				httpHost = new HttpHost(addr, getPort(), getScheme());
+			}
+			HTTP_HOST_CACHE.put(addr, httpHost);
+		} else {
+			httpHost = null;
+		}
+		return httpHost;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

@@ -8,10 +8,8 @@ import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.persist.DataItemBuffer;
 //
-import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,8 +24,6 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.nio.file.Files;
 import java.rmi.RemoteException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -227,9 +223,6 @@ implements DataItemBuffer<T> {
 		@Override @SuppressWarnings("unchecked")
 		public final void run() {
 			if(TmpFileItemBuffer.super.isTerminated()) {
-				final ExecutorService submitExecSvc = Executors.newFixedThreadPool(
-					Producer.WORKER_COUNT, new NamingWorkerFactory("tmpFileProducerSubmitWorker")
-				);
 				LOG.debug(LogUtil.MSG, "{}: started", getThreadFactory().toString());
 				//
 				long
@@ -256,10 +249,9 @@ implements DataItemBuffer<T> {
 						while(availDataItems -- > 0 && consumerMaxCount -- > 0) {
 							nextDataItem = (T) fBuffIn.readObject();
 							if(nextDataItem == null) {
-								submitExecSvc.shutdown();
 								break;
 							}
-							submitExecSvc.submit(SubmitTask.getInstance(consumer, nextDataItem));
+							consumer.submit(nextDataItem);
 						}
 						LOG.debug(LogUtil.MSG, "done producing");
 					} catch(final RemoteException e) {
@@ -268,34 +260,16 @@ implements DataItemBuffer<T> {
 						LogUtil.failure(LOG, Level.WARN, e, "Failed to read a data item");
 					} catch(final RejectedExecutionException e) {
 						LOG.debug(LogUtil.ERR, "Consumer rejected the data item");
+					} catch(final InterruptedException e) {
+						LOG.debug(LogUtil.MSG, "Interrupted");
 					} finally {
 						try {
-							if(isInterrupted()) {
-								LOG.debug(
-									LogUtil.MSG,
-									"Was interrupted, shut down immediately, dropped {} submit tasks",
-									submitExecSvc.shutdownNow().size()
-								);
-							} else {
-								submitExecSvc.shutdown();
-								submitExecSvc.awaitTermination(
-									RunTimeConfig.getContext().getRunReqTimeOutMilliSec(),
-									TimeUnit.MILLISECONDS
-								);
-							}
-						} catch(final RejectedExecutionException e) {
-							LOG.debug(LogUtil.ERR, "Consumer rejected the poison");
-						} catch(final InterruptedException e) {
-							LOG.debug(LogUtil.MSG, "Interrupted while waiting for finish");
+							consumer.shutdown();
+						} catch(final RemoteException e) {
+							LogUtil.failure(LOG, Level.WARN, e, "Looks like network failure");
 						} finally {
-							try {
-								consumer.shutdown();
-							} catch(final RemoteException e) {
-								LogUtil.failure(LOG, Level.WARN, e, "Looks like network failure");
-							} finally {
-								consumer = null;
-								deleteFromFileSystem();
-							}
+							consumer = null;
+							deleteFromFileSystem();
 						}
 					}
 				}

@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
-import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
@@ -25,6 +24,7 @@ import com.emc.mongoose.core.impl.load.tasks.RequestResultTask;
 import com.emc.mongoose.core.impl.load.model.LogConsumer;
 import com.emc.mongoose.core.impl.load.executor.util.DataObjectWorkerFactory;
 //
+import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -95,7 +95,7 @@ implements LoadExecutor<T> {
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
 		super(
-			Producer.WORKER_COUNT, Producer.WORKER_COUNT, 0, TimeUnit.SECONDS,
+			1, 1, 0, TimeUnit.SECONDS,
 			new LinkedBlockingQueue<Runnable>(
 				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
 					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
@@ -388,15 +388,20 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override @SuppressWarnings("unchecked")
+	@Override
 	public void submit(final T dataItem)
-	throws RemoteException, RejectedExecutionException, InterruptedException {
+	throws InterruptedException, RemoteException, RejectedExecutionException {
+		submit(SubmitTask.getInstance(this, dataItem));
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	public final void submitSynchronously(final T dataItem) {
 		if(tsStart.get() < 0) {
 			throw new RejectedExecutionException(name + ": not started yet");
 		}
 		//
 		if(isClosed.get()) {
-			throw new InterruptedException(name + ": closed already");
+			throw new RejectedExecutionException(name + ": closed already");
 		}
 		//
 		if(counterSubm.getCount() + counterRej.getCount() >= maxCount) {
@@ -408,48 +413,53 @@ implements LoadExecutor<T> {
 		}
 		//
 		if(isMaxCountSubmTries.get()) {
-			throw new InterruptedException(
+			throw new RejectedExecutionException(
 				name + ": all " + counterSubm.getCount() + " tasks has been submitted"
 			);
 		}
-		// round-robin node selection
-		final String tgtNodeAddr = storageNodeAddrs[
-			(int) (counterRoundRobinSubm.getAndIncrement() % storageNodeCount)
-		];
+		// the node selection approach depends on the implementation
+		final String tgtNodeAddr = getNextNode();
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final IOTask<T> ioTask = reqConfigCopy.getRequestFor(dataItem, tgtNodeAddr);
-		// submit the corresponding I/O task
-		final Future<IOTask.Status> futureResponse = submit(ioTask);
-		// prepare the corresponding result handling task
-		final RequestResultTask<T>
-			handleResultTask = (RequestResultTask<T>) RequestResultTask.getInstance(
+		try {
+			// submit the corresponding I/O task
+			final Future<IOTask.Status> futureResponse = submit(ioTask);
+			// prepare the corresponding result handling task
+			final Runnable handleResultTask = RequestResultTask.getInstance(
 				this, ioTask, futureResponse
 			);
-		Future futureResult = null;
-		int rejectCount = 0;
-		do {
-			try { // submit the result handling task
-				futureResult = submit(handleResultTask);
-				counterSubm.inc();
-			} catch(final RejectedExecutionException e) {
-				rejectCount ++;
-				try {
-					Thread.sleep(rejectCount * retryDelayMilliSec);
-				} catch(final InterruptedException ee) {
-					LOG.trace(
-						LogUtil.ERR,
-						"Got interruption, won't submit result handling for task #{}",
-						ioTask.hashCode()
-					);
+			Future futureResult = null;
+			int rejectCount = 0;
+			do {
+				try { // submit the result handling task
+					futureResult = submit(handleResultTask);
+					counterSubm.inc();
+				} catch(final RejectedExecutionException e) {
+					rejectCount ++;
+					try {
+						Thread.sleep(rejectCount * retryDelayMilliSec);
+					} catch(final InterruptedException ee) {
+						LOG.trace(
+							LogUtil.ERR,
+							"Got interruption, won't submit result handling for task #{}",
+							ioTask.hashCode()
+						);
+					}
 				}
-			}
+				//
+			} while(futureResult == null && rejectCount < retryCountMax && !isShutdown());
 			//
-		} while(futureResult == null && rejectCount < retryCountMax && !isShutdown());
-		//
-		if(futureResponse == null || futureResult == null) {
-			LOG.debug(LogUtil.ERR, "Rejected the task {} after {} tries", ioTask, rejectCount);
-			counterRej.inc();
+			if(futureResponse == null || futureResult == null) {
+				LOG.debug(LogUtil.ERR, "Rejected the task {} after {} tries", ioTask, rejectCount);
+				counterRej.inc();
+			}
+		} catch(final Exception e) {
+			LogUtil.failure(LOG, Level.DEBUG, e, "Submit failure");
 		}
+	}
+	// NOTE: basic implementation has no idea about node balancing
+	protected String getNextNode() {
+		return storageNodeAddrs[(int) (counterRoundRobinSubm.getAndIncrement() % storageNodeCount)];
 	}
 	//
 	@Override

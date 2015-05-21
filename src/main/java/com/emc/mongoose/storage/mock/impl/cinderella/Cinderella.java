@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.cinderella;
 //
-import com.emc.mongoose.common.collections.Cache;
+import com.emc.mongoose.common.collections.AsyncCache;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  * Created by olga on 28.01.15.
  */
 public final class Cinderella
-extends Cache<String, WSObjectMock>
+extends AsyncCache<String, WSObjectMock>
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();

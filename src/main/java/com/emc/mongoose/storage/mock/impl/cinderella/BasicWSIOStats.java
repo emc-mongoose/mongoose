@@ -5,7 +5,7 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 //
-import com.emc.mongoose.common.collections.Cache;
+import com.emc.mongoose.common.collections.AsyncCache;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -101,10 +101,10 @@ implements IOStats {
 		);
 	//
 	private final long updateMilliPeriod;
-	private final Cache<String, WSObjectMock> storage;
+	private final AsyncCache<String, WSObjectMock> storage;
 	//
 	public BasicWSIOStats(
-		final RunTimeConfig runTimeConfig, final Cache<String, WSObjectMock> storage
+		final RunTimeConfig runTimeConfig, final AsyncCache<String, WSObjectMock> storage
 	) {
 		super(BasicWSIOStats.class.getSimpleName());
 		setDaemon(true);

@@ -14,6 +14,7 @@ import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
 import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 //
+import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
@@ -116,39 +117,11 @@ implements WSIOTask<T> {
 		return this;
 	}
 	//
-	private final static Map<String, HttpHost> HTTP_HOST_MAP = new ConcurrentHashMap<>();
 	@Override
 	public final WSIOTask<T> setNodeAddr(final String nodeAddr)
 	throws IllegalStateException {
 		super.setNodeAddr(nodeAddr);
-		HttpHost tgtHost = null;
-		if(HTTP_HOST_MAP.containsKey(nodeAddr)) {
-			tgtHost = HTTP_HOST_MAP.get(nodeAddr);
-		} else if(nodeAddr != null) {
-			if(nodeAddr.contains(RequestConfig.HOST_PORT_SEP)) {
-				try {
-					final String nodeAddrParts[] = nodeAddr.split(RequestConfig.HOST_PORT_SEP);
-					if(nodeAddrParts.length == 2) {
-						tgtHost = new HttpHost(
-							nodeAddrParts[0],
-							Integer.valueOf(nodeAddrParts[1]), wsReqConf.getScheme()
-						);
-					} else {
-						throw new InterruptedException("Stop due to irrecoverable failure");
-					}
-				} catch(final Exception e) {
-					LogUtil.failure(
-						LOG, Level.WARN, e, "Invalid syntax of storage address: " + nodeAddr
-					);
-					throw new IllegalStateException("Stop due to unrecoverable failure");
-				}
-			} else {
-				tgtHost = new HttpHost(
-					nodeAddr, wsReqConf.getPort(), wsReqConf.getScheme()
-				);
-			}
-			HTTP_HOST_MAP.put(nodeAddr, tgtHost);
-		}
+		final HttpHost tgtHost = wsReqConf.getHttpHost(nodeAddr);
 		if(tgtHost != null) {
 			httpRequest.setUriAddr(tgtHost.toURI());
 			httpRequest.setHeader(HTTP.TARGET_HOST, nodeAddr);
@@ -171,7 +144,7 @@ implements WSIOTask<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final HttpHost getTarget() {
-		return HTTP_HOST_MAP.get(nodeAddr);
+		return wsReqConf.getHttpHost(nodeAddr);
 	}
 	//
 	@Override

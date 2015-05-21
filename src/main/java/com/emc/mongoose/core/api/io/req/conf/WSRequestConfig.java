@@ -8,6 +8,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.ContentDecoder;
@@ -77,6 +78,8 @@ extends ObjectRequestConfig<T> {
 	WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr);
 	//
 	HeaderGroup getSharedHeaders();
+	//
+	HttpHost getHttpHost(final String addr);
 	//
 	String getUserAgent();
 	//

@@ -56,6 +56,9 @@ extends Producer<T>, Consumer<T> {
 	Future<IOTask.Status> submit(final IOTask<T> request)
 	throws RemoteException, RejectedExecutionException;
 	//
+	void submitSynchronously(final T dataItem)
+	throws RemoteException;
+	//
 	void handleResult(final IOTask<T> task, IOTask.Status status)
 	throws RemoteException;
 	//

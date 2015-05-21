@@ -2,46 +2,44 @@ package com.emc.mongoose.core.impl.load.tasks;
 //
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.load.model.Consumer;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
-import java.util.concurrent.RejectedExecutionException;
 /**
- Created by kurila on 21.04.15.
+ Created by andrey on 22.05.15.
  */
-public final class SubmitTask
+public final class SubmitTask<T extends DataItem>
 implements Runnable, Reusable<SubmitTask> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static InstancePool<SubmitTask>
-		SUBMIT_TASK_POOL = new InstancePool<>(SubmitTask.class);
+		INSTANCE_POOL = new InstancePool<>(SubmitTask.class);
 	//
-	private Consumer<DataItem> consumer = null;
-	private DataItem dataItem = null;
-	//
-	public static SubmitTask getInstance(
-		final Consumer<? extends DataItem> consumer, final DataItem dataItem
+	public static <T extends DataItem>  SubmitTask getInstance(
+		final LoadExecutor<T> loadExecutor, final T dataItem
 	) {
-		return SUBMIT_TASK_POOL.take(consumer, dataItem);
+		return INSTANCE_POOL.take(loadExecutor, dataItem);
 	}
+	//
+	private LoadExecutor<T> loadExecutor = null;
+	private T dataItem = null;
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final SubmitTask reuse(final Object... args)
 	throws IllegalArgumentException, IllegalStateException {
 		if(args != null) {
 			if(args.length > 0) {
-				consumer = (Consumer<DataItem>) args[0];
+				loadExecutor = (LoadExecutor<T>) args[0];
 			}
 			if(args.length > 1) {
-				dataItem = (DataItem) args[1];
+				dataItem = (T) args[1];
 			}
 		}
 		return this;
@@ -49,33 +47,16 @@ implements Runnable, Reusable<SubmitTask> {
 	//
 	@Override
 	public final void release() {
-		SUBMIT_TASK_POOL.release(this);
+		INSTANCE_POOL.release(this);
 	}
 	//
-	@SuppressWarnings("FieldCanBeLocal")
-	private int rejectCount;
-	private final int
-		retryCountMax = RunTimeConfig.getContext().getRunRetryCountMax(),
-		retryDelayMilliSec = RunTimeConfig.getContext().getRunRetryDelayMilliSec();
-	//
 	@Override
-	public final void run() {
-		rejectCount = 0;
+	public final
+	void run() {
 		try {
-			do {
-				try {
-					consumer.submit(dataItem);
-					break;
-				} catch(final RejectedExecutionException | RemoteException e) {
-					rejectCount ++;
-					Thread.sleep(rejectCount * retryDelayMilliSec);
-				}
-			} while(rejectCount < retryCountMax);
-		} catch(final InterruptedException e) {
-			LogUtil.failure(
-				LOG, Level.TRACE, e,
-				"Failed to submit the data item \""+dataItem+"\" to consumer \""+consumer +"\""
-			);
+			loadExecutor.submitSynchronously(dataItem);
+		} catch(final RemoteException e){
+			LogUtil.failure(LOG, Level.WARN, e, "Failed to submit the data item " + dataItem);
 		} finally {
 			release();
 		}
