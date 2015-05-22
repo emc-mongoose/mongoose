@@ -53,8 +53,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -67,7 +67,7 @@ extends ObjectLoadExecutorBase<T>
 implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	/*
+	//
 	private static interface WSConnPool
 	extends ConnPool<HttpHost, BasicNIOPoolEntry>, ConnPoolControl<HttpHost> {
 		//
@@ -87,7 +87,7 @@ implements WSLoadExecutor<T> {
 	extends BasicNIOConnPool
 	implements WSConnPool, PoolEntryCallback<HttpHost, NHttpClientConnection> {
 		//
-		private final Map<HttpHost, AtomicInteger> availRoutes = new ConcurrentHashMap<>();
+		private final Map<HttpHost, AtomicInteger> routeAvailCounts = new HashMap<>();
 		//
 		private final Thread routesAnalyzer = new Thread("poolRoutesAnalyzer") {
 			{
@@ -96,8 +96,17 @@ implements WSLoadExecutor<T> {
 			//
 			@Override
 			public final void run() {
+				AtomicInteger nextAvailCount;
 				while(!isInterrupted()) {
-
+					for(final HttpHost nextRoute : getRoutes()) {
+						nextAvailCount = routeAvailCounts.get(nextRoute);
+						if(nextAvailCount == null) {
+							nextAvailCount = new AtomicInteger(0);
+							routeAvailCounts.put(nextRoute, nextAvailCount);
+						} else {
+							nextAvailCount.set(0);
+						}
+					}
 					enumAvailable(BasicWSConnPool.this);
 				}
 			}
@@ -128,14 +137,32 @@ implements WSLoadExecutor<T> {
 		//
 		@Override
 		public final HttpHost getBestRoute() {
-
+			int maxAvailConn = Integer.MIN_VALUE;
+			HttpHost bestRoute = null;
+			AtomicInteger nextRouteAvailCount;
+			for(final HttpHost nextRoute : getRoutes()) {
+				nextRouteAvailCount = routeAvailCounts.get(nextRoute);
+				if(nextRouteAvailCount == null) {
+					LOG.error(LogUtil.ERR, "No route stats for {} in the table", nextRoute);
+				} else if(nextRouteAvailCount.get() > maxAvailConn) {
+					maxAvailConn = nextRouteAvailCount.get();
+					bestRoute = nextRoute;
+				}
+			}
+			return bestRoute;
 		}
 		//
 		@Override
 		public void process(final PoolEntry<HttpHost, NHttpClientConnection> entry) {
-
+			final HttpHost route = entry.getRoute();
+			final AtomicInteger availConnCount = routeAvailCounts.get(route);
+			if(availConnCount == null) {
+				LOG.error(LogUtil.ERR, "No route stats for {} in the table", route);
+			} else {
+				availConnCount.incrementAndGet();
+			}
 		}
-	};*/
+	};
 	//
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
