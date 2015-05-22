@@ -30,7 +30,7 @@ extends HttpServlet {
 		try {
 			request.getRequestDispatcher("index.jsp").forward(request, response);
 		} catch (final IOException|ServletException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, "Failed forwarding to index.jsp");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed forwarding to index.jsp");
 		}
 	}
 

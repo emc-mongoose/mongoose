@@ -38,16 +38,16 @@ implements Runnable, Reusable<RequestResultTask<T>> {
 		try {
 			ioTaskStatus = futureResult.get(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException | CancellationException e) {
-			LogUtil.failure(LOG, Level.TRACE, e, "Request has been cancelled");
+			LogUtil.exception(LOG, Level.TRACE, e, "Request has been cancelled");
 		} catch(final ExecutionException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, "Task execution failure: #" + ioTask.hashCode());
+			LogUtil.exception(LOG, Level.DEBUG, e, "Task execution failure: #{}", ioTask.hashCode());
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Unexpected failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
 		} finally {
 			try {
 				executor.handleResult(ioTask, ioTaskStatus);
 			} catch(final IOException e) {
-				LogUtil.failure(LOG, Level.DEBUG, e, "Request result handling failed");
+				LogUtil.exception(LOG, Level.DEBUG, e, "Request result handling failed");
 			}
 			//
 			release();
@@ -67,7 +67,7 @@ implements Runnable, Reusable<RequestResultTask<T>> {
 		final LoadExecutor<? extends DataItem> executor,
 		final IOTask<? extends DataItem> ioTask,
 		final Future<IOTask.Status> futureResult
-	) throws InterruptedException {
+	) {
 		return (RequestResultTask<? extends DataItem>) POOL.take(executor, ioTask, futureResult);
 	}
 	//

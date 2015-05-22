@@ -88,7 +88,7 @@ implements Container<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 		return flagExists;
@@ -127,7 +127,7 @@ implements Container<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 	}
 	//
@@ -165,7 +165,7 @@ implements Container<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 	}
 	//

@@ -102,7 +102,7 @@ implements Producer<T> {
 					try {
 						join(MAX_WAIT_TO_ESTIMATE_MILLIS);
 					} catch(final InterruptedException e) {
-						LogUtil.failure(LOG, Level.WARN, e, "Interrupted");
+						LogUtil.exception(LOG, Level.WARN, e, "Interrupted");
 					} finally {
 						interrupt();
 					}
@@ -162,25 +162,25 @@ implements Producer<T> {
 							consumer.getMaxCount() > dataItemsCount &&
 							!RejectedExecutionException.class.isInstance(e)
 						) {
-							LogUtil.failure(LOG, Level.WARN, e, "Failed to submit data item");
+							LogUtil.exception(LOG, Level.WARN, e, "Failed to submit data item");
 							break;
 						} else {
-							LogUtil.failure(LOG, Level.DEBUG, e, "Failed to submit data item");
+							LogUtil.exception(LOG, Level.DEBUG, e, "Failed to submit data item");
 						}
 					}
 				}
 			} while(!isInterrupted() && dataItemsCount < maxCount);
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Failed to read line from the file");
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
+			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 		} finally {
 			LOG.debug(LogUtil.MSG, "Produced {} data items", dataItemsCount);
 			try {
 				LOG.debug(LogUtil.MSG, "Feeding poison to consumer \"{}\"", consumer.toString());
 				consumer.shutdown();
 			} catch(final Exception e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Failed to shut down the consumer");
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down the consumer");
 			}
 			LOG.debug(LogUtil.MSG, "Exiting");
 		}

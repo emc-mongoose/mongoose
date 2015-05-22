@@ -108,7 +108,7 @@ extends BasicNIOConnPool {
 		try {
 			connReleaseExecSvc.submit(ConnReleaseTask.getInstance(this, poolEntry, isEntryReusable));
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to submit the connection for releasing");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to submit the connection for releasing");
 		}
 	}
 	//

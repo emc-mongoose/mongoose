@@ -20,7 +20,7 @@ import com.emc.mongoose.core.api.data.src.DataSource;
 // mongoose-core-impl
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.RangeLayerData;
-import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
+import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
@@ -123,19 +123,14 @@ implements WSRequestConfig<T> {
 				constructor = (Constructor<WSRequestConfigBase>) apiImplCls.getConstructors()[0];
 			reqConf = constructor.newInstance();
 		} catch(final ClassNotFoundException e) {
-			LogUtil.failure(
-				LOG, Level.FATAL, e,
-				String.format("API implementation \"%s\" is not found", api)
-			);
+			LogUtil.exception(LOG, Level.FATAL, e, "API implementation \"{}\" is not found", api);
 		} catch(final ClassCastException e) {
-			LogUtil.failure(
+			LogUtil.exception(
 				LOG, Level.FATAL, e,
-				String.format(
-					"Class \"%s\" is not valid API implementation for \"%s\"", apiImplClsFQN, api
-				)
+				"Class \"{}\" is not valid API implementation for \"{}\"", apiImplClsFQN, api
 			);
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.FATAL, e, "WS API config instantiation failure");
+			LogUtil.exception(LOG, Level.FATAL, e, "WS API config instantiation failure");
 		}
 		return reqConf;
 	}
@@ -173,7 +168,7 @@ implements WSRequestConfig<T> {
 			final String pkgSpec = getClass().getPackage().getName();
 			setAPI(pkgSpec.substring(pkgSpec.lastIndexOf('.') + 1));
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Request config instantiation failure");
+			LogUtil.exception(LOG, Level.ERROR, e, "Request config instantiation failure");
 		}
 		// create HTTP client
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
@@ -190,7 +185,7 @@ implements WSRequestConfig<T> {
 			new ExceptionLogger() {
 				@Override
 				public final void log(final Exception e) {
-					LogUtil.failure(LOG, Level.DEBUG, e, "HTTP client internal failure");
+					LogUtil.exception(LOG, Level.DEBUG, e, "HTTP client internal failure");
 				}
 			}
 		);
@@ -247,7 +242,7 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public final MutableWSRequest createRequest() {
-		return new WSRequestImpl(getHTTPMethod(), null, null);
+		return new BasicWSRequest(getHTTPMethod(), null, null);
 	}
 	//
 	@Override
@@ -348,7 +343,7 @@ implements WSRequestConfig<T> {
 		try {
 			secretKey = new SecretKeySpec(secret.getBytes(Constants.DEFAULT_ENC), signMethod);
 		} catch(UnsupportedEncodingException e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Configuration error");
+			LogUtil.exception(LOG, Level.ERROR, e, "Configuration error");
 		}
 		return this;
 	}
@@ -443,12 +438,12 @@ implements WSRequestConfig<T> {
 		try {
 			applyDateHeader(httpRequest);
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to apply date header");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply date header");
 		}
 		try {
 			applyAuthHeader(httpRequest);
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to apply auth header");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply auth header");
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			final StringBuilder msgBuff = new StringBuilder("built request: ")
@@ -550,7 +545,7 @@ implements WSRequestConfig<T> {
 				mac = Mac.getInstance(signMethod);
 				mac.init(secretKey);
 			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
-				LogUtil.failure(LOG, Level.FATAL, e, "Failed to calculate the signature");
+				LogUtil.exception(LOG, Level.FATAL, e, "Failed to calculate the signature");
 				throw new IllegalStateException("Failed to init MAC cypher instance");
 			}
 			THRLOC_MAC.set(mac);
@@ -606,11 +601,9 @@ implements WSRequestConfig<T> {
 		} catch(final IOException e) {
 			verifyPass = false;
 			if(isClosed()) {
-				LogUtil.failure(
-					LOG, Level.DEBUG, e, "Failed to read the content after closing"
-				);
+				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to read the content after closing");
 			} else {
-				LogUtil.failure(LOG, Level.WARN, e, "Content reading failure");
+				LogUtil.exception(LOG, Level.WARN, e, "Content reading failure");
 			}
 		} finally { // try to read the remaining data if left in the input stream
 			ByteBuffer bbuff = THRLOC_BB_RESP_WRITE.get();
@@ -644,9 +637,7 @@ implements WSRequestConfig<T> {
 				try {
 					connPool.shutdown(1);
 				} catch(final IOException e) {
-					LogUtil.failure(
-						LOG, Level.WARN, e, "Connection pool shutdown failure"
-					);
+					LogUtil.exception(LOG, Level.WARN, e, "Connection pool shutdown failure");
 				}
 			}
 		}
@@ -675,7 +666,7 @@ implements WSRequestConfig<T> {
 						t[0], Integer.parseInt(t[1]), runTimeConfig.getStorageProto()
 					);
 				} catch(final Exception e) {
-					LogUtil.failure(
+					LogUtil.exception(
 						LOG, Level.WARN, e, "Failed to determine the request target host"
 					);
 				}
@@ -703,11 +694,9 @@ implements WSRequestConfig<T> {
 				}
 			} catch(final ExecutionException e) {
 				if(!isClosed()) {
-					LogUtil.failure(
+					LogUtil.exception(
 						LOG, Level.WARN, e,
-						String.format(
-							"HTTP request \"%s\" execution failure @ \"%s\"", request, tgtHost
-						)
+						"HTTP request \"{}\" execution failure @ \"{}\"", request, tgtHost
 					);
 				}
 			}

@@ -295,7 +295,7 @@ extends WSRequestConfigBase<T> {
 			try {
 				producer = new WSContainerProducer<>(container, BasicWSObject.class, maxCount, addr);
 			} catch(final NoSuchMethodException e) {
-				LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
+				LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		} else {
 			LOG.debug(LogUtil.MSG, "Using of container listing data producer is suppressed");

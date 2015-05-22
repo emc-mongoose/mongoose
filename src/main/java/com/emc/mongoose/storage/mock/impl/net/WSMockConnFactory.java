@@ -8,7 +8,6 @@ import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
 import org.apache.http.config.ConnectionConfig;
 //
-import org.apache.http.impl.entity.StrictContentLengthStrategy;
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
 import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
 import org.apache.http.nio.NHttpConnection;
@@ -80,7 +79,7 @@ extends DefaultNHttpServerConnectionFactory {
 						conn.close();
 					}
 				} catch (final IOException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Failed to close the connection " + conn
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the connection: {}", conn
 					);
 				}
 			}

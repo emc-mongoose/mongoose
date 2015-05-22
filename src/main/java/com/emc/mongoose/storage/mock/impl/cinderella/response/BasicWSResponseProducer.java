@@ -46,7 +46,7 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 				dataItem.write(chanOut);
 			}
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Content producing failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Content producing failure");
 		}
 	}
 	//
@@ -56,7 +56,7 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 	//
 	@Override
 	public final void failed(final Exception e) {
-		LogUtil.failure(LOG, Level.WARN, e, "Response failure");
+		LogUtil.exception(LOG, Level.WARN, e, "Response failure");
 	}
 	//
 	@Override

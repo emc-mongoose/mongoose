@@ -115,7 +115,7 @@ implements IOTask<T> {
 			try {
 				Thread.sleep(reqSleepMilliSec);
 			} catch(final InterruptedException e) {
-				LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted request sleep");
+				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
 			}
 		}
 	}

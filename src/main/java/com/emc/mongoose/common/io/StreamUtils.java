@@ -23,7 +23,7 @@ public final class StreamUtils {
 		try {
 			while(contentStream.read(buff) != -1);
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, "Content reading failure");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Content reading failure");
 		}
 	}
 	//

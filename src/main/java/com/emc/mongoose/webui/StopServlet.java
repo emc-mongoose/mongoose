@@ -43,7 +43,7 @@ public final class StopServlet extends CommonServlet {
 			}
 			stoppedRunModes.put(currentRunId, true);
 		} catch (InterruptedException e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Mongoose can't stop correctly through Web UI");
+			LogUtil.exception(LOG, Level.ERROR, e, "Mongoose can't stop correctly through Web UI");
 		}
 		request.getSession(true).setAttribute("stopped", stoppedRunModes);
 		response.setStatus(HttpServletResponse.SC_OK);

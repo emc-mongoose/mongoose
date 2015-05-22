@@ -1,6 +1,6 @@
 {
 	"configuration": {
-		"status": "off",
+		"status": "warn",
 		"name": "mongoose",
 		"monitorInterval": "1000",
 		"packages": "com.emc.mongoose.webui.logging,com.emc.mongoose.common.logging",
@@ -35,6 +35,7 @@
 					"name": "stdout",
 					"type": "Console",
 					"PatternLayout": {
+						"alwaysWriteExceptions" : false,
 						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t %m%n}"
 					},
 					"Filters": {

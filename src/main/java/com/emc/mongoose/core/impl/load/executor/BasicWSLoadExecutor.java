@@ -22,7 +22,12 @@ import org.apache.http.ExceptionLogger;
 import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
+import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.message.HeaderGroup;
+import org.apache.http.pool.ConnPool;
+import org.apache.http.pool.ConnPoolControl;
+import org.apache.http.pool.PoolEntry;
+import org.apache.http.pool.PoolEntryCallback;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -48,9 +53,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 02.12.14.
  */
@@ -59,6 +68,75 @@ extends ObjectLoadExecutorBase<T>
 implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	/*
+	private static interface WSConnPool
+	extends ConnPool<HttpHost, BasicNIOPoolEntry>, ConnPoolControl<HttpHost> {
+		//
+		void closeExpired();
+		//
+		void closeIdle(final long idletime, final TimeUnit tunit);
+		//
+		void shutdown(final long waitMilliSec)
+		throws IOException;
+		//
+		boolean isShutdown();
+		//
+		HttpHost getBestRoute();
+	}
+	//
+	private final static class BasicWSConnPool
+	extends BasicNIOConnPool
+	implements WSConnPool, PoolEntryCallback<HttpHost, NHttpClientConnection> {
+		//
+		private final Map<HttpHost, AtomicInteger> availRoutes = new ConcurrentHashMap<>();
+		//
+		private final Thread routesAnalyzer = new Thread("poolRoutesAnalyzer") {
+			{
+				setDaemon(true);
+			}
+			//
+			@Override
+			public final void run() {
+				while(!isInterrupted()) {
+
+					enumAvailable(BasicWSConnPool.this);
+				}
+			}
+		};
+		//
+		public BasicWSConnPool(
+			final ConnectingIOReactor ioreactor,
+			final NIOConnFactory<HttpHost, NHttpClientConnection> connFactory,
+			final int connectTimeout
+		) {
+			super(ioreactor, connFactory, connectTimeout);
+		}
+		//
+		public BasicWSConnPool(
+			final ConnectingIOReactor ioreactor, final int connectTimeout,
+			final ConnectionConfig config
+		) {
+			super(ioreactor, connectTimeout, config);
+		}
+		//
+		public BasicWSConnPool(final ConnectingIOReactor ioreactor, final ConnectionConfig config) {
+			super(ioreactor, config);
+		}
+		//
+		public BasicWSConnPool(final ConnectingIOReactor ioreactor) {
+			super(ioreactor);
+		}
+		//
+		@Override
+		public final HttpHost getBestRoute() {
+
+		}
+		//
+		@Override
+		public void process(final PoolEntry<HttpHost, NHttpClientConnection> entry) {
+
+		}
+	};*/
 	//
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
@@ -97,7 +175,7 @@ implements WSLoadExecutor<T> {
 			new ExceptionLogger() {
 				@Override
 				public final void log(final Exception e) {
-					LogUtil.failure(LOG, Level.DEBUG, e, "HTTP client internal failure");
+					LogUtil.exception(LOG, Level.DEBUG, e, "HTTP client internal failure");
 				}
 			}
 		);
@@ -134,14 +212,21 @@ implements WSLoadExecutor<T> {
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new NamingWorkerFactory(String.format("IOWorker<%s>", getName()))
+				new NamingWorkerFactory(String.format("ioWorker<%s>", getName()))
 			);
 		} catch(final IOReactorException e) {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);
 		}
 		//
+		//final NHttpMessageParserFactory<HttpResponse>
+		//	respParserFactory = new DefaultHttpResponseParserFactory(
+		//		null, new DefaultHttpResponseFactory()
+		//	);
 		final NIOConnFactory<HttpHost, NHttpClientConnection>
-			connFactory = new BasicNIOConnFactory(connConfig);
+			connFactory = new BasicNIOConnFactory(
+				/*null, null, respParserFactory, null,
+				HeapByteBufferAllocator.INSTANCE, */connConfig
+			);
 		//
 		connPool = new BasicNIOConnPool(
 			ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
@@ -172,7 +257,7 @@ implements WSLoadExecutor<T> {
 		try {
 			super.close();
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Closing failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Closing failure");
 		}
 		//
 		clientDaemon.interrupt();
@@ -188,9 +273,7 @@ implements WSLoadExecutor<T> {
 					connPool.shutdown(1);
 					LOG.debug(LogUtil.MSG, "Connection pool has been shut down");
 				} catch(final IOException e) {
-					LogUtil.failure(
-						LOG, Level.WARN, e, "Connection pool shutdown failure"
-					);
+					LogUtil.exception(LOG, Level.WARN, e, "Connection pool shutdown failure");
 				}
 			}
 		}
@@ -231,11 +314,10 @@ implements WSLoadExecutor<T> {
 				maxCount, listFile, BasicWSObject.class
 			);
 		} catch(final NoSuchMethodException e) {
-			LogUtil.failure(LOG, Level.FATAL, e, "Unexpected failure");
+			LogUtil.exception(LOG, Level.FATAL, e, "Unexpected failure");
 		} catch(final IOException e) {
-			LogUtil.failure(
-				LOG, Level.ERROR, e,
-				String.format("Failed to read the data items file \"%s\"", listFile)
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to read the data items file \"{}\"", listFile
 			);
 		}
 		return localProducer;

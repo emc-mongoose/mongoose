@@ -35,9 +35,9 @@ implements Runnable {
 			);
 			loadJob.join(timeOutMilliSec);
 		} catch(final NoSuchObjectException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, "Remote join failed, no such service");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Remote join failed, no such service");
 		} catch(final RemoteException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Remote join task failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Remote join task failure");
 		} catch(final InterruptedException ignore) {
 		} finally {
 			LOG.debug(LogUtil.MSG, "Remote join task for \"{}\" was completed", loadJob);

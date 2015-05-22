@@ -31,11 +31,8 @@ implements Runnable {
 			loadSvc.interrupt();
 			LOG.trace(LogUtil.MSG, "Interrupted remote service @ {}", addr);
 		} catch(final IOException e) {
-			LogUtil.failure(
-				LOG, Level.DEBUG, e,
-				String.format(
-					"Failed to interrupt remote load service @ %s", addr
-				)
+			LogUtil.exception(
+				LOG, Level.DEBUG, e, "Failed to interrupt remote load service @ {}", addr
 			);
 		}
 	}

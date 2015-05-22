@@ -39,7 +39,7 @@ def init():
 		try:
 			loadBuilderInstance = BasicWSLoadBuilder(localRunTimeConfig)
 		except IllegalStateException as e:
-			LogUtil.failure(LOG, Level.FATAL, e, "Failed to create load builder client")
+			LogUtil.exception(LOG, Level.FATAL, e, "Failed to create load builder client")
 	#
 	if loadBuilderInstance is None:
 		LOG.fatal(LogUtil.ERR, "No load builder instanced")

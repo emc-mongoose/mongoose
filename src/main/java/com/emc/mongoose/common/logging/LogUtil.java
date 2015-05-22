@@ -12,6 +12,8 @@ import org.apache.logging.log4j.MarkerManager;
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.message.Message;
+import org.apache.logging.log4j.message.ParameterizedMessage;
 //
 import java.io.File;
 import java.io.PrintStream;
@@ -156,7 +158,7 @@ public final class LogUtil {
 				LOG.debug(LogUtil.MSG, "There's no unclosed loads, forcing logging subsystem shutdown");
 			}
 		} catch (final InterruptedException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, "Shutdown method was interrupted");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Shutdown method was interrupted");
 		} finally {
 			synchronized (LOG_CTX) {
 				final LoggerContext logCtx = LOG_CTX.get();
@@ -169,48 +171,21 @@ public final class LogUtil {
 	//
 	private static final ThreadLocal<StringBuilder> THRLOC_SB = new ThreadLocal<>();
 	//
-	public static void failure(
-		final Logger logger, final Level level, final Throwable thrown, final String msg
+	public static void exception(
+		final Logger logger, final Level level, final Throwable thrown,
+		final String msgPattern, final Object... args
 	) {
-		StringBuilder msgBuilder = THRLOC_SB.get();
-		if(msgBuilder == null) {
-			msgBuilder = new StringBuilder();
-			THRLOC_SB.set(msgBuilder);
-		} else {
-			msgBuilder.setLength(0);
-		}
-		synchronized(logger) {
-			logger.log(level, ERR, "{}: {}", msg, thrown == null ? null : thrown.toString());
-			if(logger.isTraceEnabled(ERR)) {
-				for(Throwable cause = thrown; cause != null; cause = cause.getCause()) {
-					msgBuilder.append("\n\t").append(cause.toString());
-				}
-				for(final StackTraceElement ste : thrown.getStackTrace()) {
-					msgBuilder.append("\n\t\t").append(ste.toString());
-				}
-			}
-			if(msgBuilder.length() > 0) {
-				logger.log(Level.TRACE, ERR, msgBuilder.toString());
-			}
-		}
+		logger.log(
+			level, LogUtil.ERR, logger.getMessageFactory().newMessage(msgPattern, args), thrown
+		);
 	}
 	//
 	public static void trace(
-		final Logger logger, final Level level, final Marker marker, final String msg
+		final Logger logger, final Level level, final Marker marker,
+		final String msgPattern, final Object... args
 	) {
-		StringBuilder msgBuilder = THRLOC_SB.get();
-		if(msgBuilder == null) {
-			msgBuilder = new StringBuilder();
-			THRLOC_SB.set(msgBuilder);
-		} else {
-			msgBuilder.setLength(0);
-		}
-		final StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-		if(stackTrace.length > 2) {
-			for(int i = 2; i < stackTrace.length; i ++) {
-				msgBuilder.append("\n\t").append(stackTrace[i]);
-			}
-		}
-		logger.log(level, marker, msgBuilder.toString());
+		logger.log(
+			level, marker, logger.getMessageFactory().newMessage(msgPattern, args), new Throwable()
+		);
 	}
 }

@@ -15,7 +15,6 @@ import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.model.LogConsumer;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 // mongoose-server-api.jar
 import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
@@ -104,7 +103,6 @@ implements LoadClient<T> {
 	private final long maxCount;
 	private final String name, loadSvcAddrs[];
 	//
-	private final LogConsumer<T> metaInfoLog;
 	private final RunTimeConfig runTimeConfig;
 	private final RequestConfig<T> reqConfig;
 	private final int retryCountMax, retryDelayMilliSec, metricsPeriodSec;
@@ -169,9 +167,8 @@ implements LoadClient<T> {
 			try {
 				mBeanSrvConnMap.put(addr, remoteJMXConnMap.get(addr).getMBeanServerConnection());
 			} catch(final IOException e) {
-				LogUtil.failure(
-					LOG, Level.ERROR, e,
-					String.format("Failed to obtain MBean server connection for %s", addr)
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to obtain MBean server connection for {}", addr
 				);
 			}
 		}
@@ -280,8 +277,6 @@ implements LoadClient<T> {
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_AVG
 			)
 		);
-		////////////////////////////////////////////////////////////////////////////////////////////
-		metaInfoLog = new LogConsumer<>(maxCount, Math.max(2, remoteLoadMap.size()));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private Gauge<Long> registerJmxGaugeSum(
@@ -347,21 +342,15 @@ implements LoadClient<T> {
 		T[] nextMetaInfoFrame;
 		for(final PeriodicTask<T[]> nextFrameFetchTask : frameFetchTasks) {
 			nextMetaInfoFrame = nextFrameFetchTask.getLastResult();
-			try {
-				if(nextMetaInfoFrame != null && nextMetaInfoFrame.length > 0) {
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
-						LOG.trace(
-							LogUtil.MSG, "Got next metainfo frame: {}",
-							Arrays.toString(nextMetaInfoFrame)
-						);
-					}
-					for(final T nextMetaInfoRec : nextMetaInfoFrame) {
-						metaInfoLog.submit(nextMetaInfoRec);
-					}
+			if(nextMetaInfoFrame != null && nextMetaInfoFrame.length > 0) {
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(
+						LogUtil.MSG, "Got next metainfo frame: {}",
+						Arrays.toString(nextMetaInfoFrame)
+					);
 				}
-			} catch(final InterruptedException | RejectedExecutionException e) {
-				if(LOG.isTraceEnabled(LogUtil.ERR)) {
-					LogUtil.failure(LOG, Level.TRACE, e, "Failed to log the metainfo frame");
+				for(final T nextMetaInfoRec : nextMetaInfoFrame) {
+					LOG.info(LogUtil.DATA_LIST, nextMetaInfoRec);
 				}
 			}
 		}
@@ -421,9 +410,9 @@ implements LoadClient<T> {
 			LOG.info(logMarker, msg);
 		} catch(final NullPointerException e) {
 			if(isTerminating() || isTerminated()) {
-				LogUtil.failure(LOG, Level.TRACE, e, "Terminated already");
+				LogUtil.exception(LOG, Level.TRACE, e, "Terminated already");
 			} else {
-				LogUtil.failure(LOG, Level.TRACE, e, "Unexpected failure");
+				LogUtil.exception(LOG, Level.TRACE, e, "Unexpected failure");
 			}
 		}/* catch(final TimeoutException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "Distributed metrics aggregation timeout");
@@ -553,7 +542,7 @@ implements LoadClient<T> {
 				producer.start();
 				LOG.debug(LogUtil.MSG, "Started object producer {}", producer);
 			} catch(final IOException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Failed to start the producer");
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to start the producer");
 			}
 		}
 		//
@@ -570,7 +559,7 @@ implements LoadClient<T> {
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
 		if(!isShutdown()) {
-			LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, String.format("Interrupting %s...", name));
+			LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, "Interrupting {}", name);
 			shutdown();
 		}
 		//
@@ -586,7 +575,7 @@ implements LoadClient<T> {
 			try {
 				interruptExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 			} catch(final InterruptedException e) {
-				LogUtil.failure(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
+				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
 			}
 			LOG.debug(LogUtil.MSG, "{}: interrupted", name);
 		}
@@ -617,7 +606,7 @@ implements LoadClient<T> {
 					remoteLoadMap.get(addr).setConsumer(consumeMap.get(addr));
 				}
 			} catch(final ClassCastException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Data item class mismatch");
+				LogUtil.exception(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else if(LoadSvc.class.isInstance(consumer)) {
 			// single consumer for all these producers
@@ -628,7 +617,7 @@ implements LoadClient<T> {
 					remoteLoadMap.get(addr).setConsumer(loadSvc);
 				}
 			} catch(final ClassCastException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Data item class mismatch");
+				LogUtil.exception(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else if(DataItemBufferClient.class.isInstance(consumer)) {
 			try {
@@ -638,7 +627,7 @@ implements LoadClient<T> {
 					remoteLoadMap.get(addr).setConsumer(mediator.get(addr));
 				}
 			} catch(final ClassCastException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Data item class mismatch");
+				LogUtil.exception(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else {
 			LOG.error(
@@ -730,11 +719,11 @@ implements LoadClient<T> {
 							);
 						}
 					} catch(final NoSuchObjectException e) {
-						LogUtil.failure(
+						LogUtil.exception(
 							LOG, Level.DEBUG, e, "No remote service found for closing"
 						);
 					} catch(final IOException e) {
-						LogUtil.failure(
+						LogUtil.exception(
 							LOG, Level.WARN, e, "Failed to close remote load executor service"
 						);
 					}
@@ -750,15 +739,12 @@ implements LoadClient<T> {
 							LogUtil.ERR, "Remote JMX connection had been interrupted earlier"
 						);
 					} catch(final IOException e) {
-						LogUtil.failure(
-							LOG, Level.WARN, e,
-							String.format("Failed to close JMX connection to %s", addr)
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to close JMX connection to {}", addr
 						);
 					}
 				}
 				//
-				metaInfoLog.close();
-				LOG.debug(LogUtil.MSG, "Metainfo logger closed");
 				LoadCloseHook.del(this);
 				LOG.debug(LogUtil.MSG, "Clear the servers map");
 				remoteLoadMap.clear();
@@ -780,7 +766,7 @@ implements LoadClient<T> {
 		try {
 			producer = remoteLoadMap.entrySet().iterator().next().getValue().getProducer();
 		} catch(final RemoteException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to get remote producer");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to get remote producer");
 		}
 		return producer;
 	}
@@ -805,13 +791,13 @@ implements LoadClient<T> {
 		try {
 			awaitTermination(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 		} finally {
 			for(final String addr : remoteLoadMap.keySet()) {
 				try {
 					remoteLoadMap.get(addr).shutdown();
 				} catch(final RemoteException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Failed to shut down remote load service");
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down remote load service");
 				}
 			}
 		}

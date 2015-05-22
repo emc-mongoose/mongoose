@@ -56,7 +56,7 @@ implements Runnable, Reusable<SubmitTask> {
 		try {
 			loadExecutor.submitSynchronously(dataItem);
 		} catch(final RemoteException e){
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to submit the data item " + dataItem);
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to submit the data item {}", dataItem);
 		} finally {
 			release();
 		}

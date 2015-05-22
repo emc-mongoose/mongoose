@@ -31,7 +31,7 @@ implements Runnable {
 		try {
 			ln = loadExecutor.getName();
 		} catch(final RemoteException e) {
-			LogUtil.failure(
+			LogUtil.exception(
 				LOG, Level.WARN, e, "Failed to get the name of the remote load executor"
 			);
 		} finally {
@@ -54,9 +54,9 @@ implements Runnable {
 				LogUtil.MSG, "Registered shutdown hook \"{}\"", hookTask.loadName
 			);
 		} catch(final SecurityException | IllegalArgumentException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to add the shutdown hook");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to add the shutdown hook");
 		} catch(final IllegalStateException e) { // shutdown is in progress
-			LogUtil.failure(LOG, Level.DEBUG, e, "Failed to add the shutdown hook");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Failed to add the shutdown hook");
 		}
 	}
 	//
@@ -68,9 +68,9 @@ implements Runnable {
 				Runtime.getRuntime().removeShutdownHook(HOOKS_MAP.get(loadExecutor));
 				LOG.debug(LogUtil.MSG, "Shutdown hook for \"{}\" removed", loadExecutor);
 			} catch (final IllegalStateException e) {
-				LogUtil.failure(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
+				LogUtil.exception(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
 			} catch (final SecurityException | IllegalArgumentException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
 			} finally {
 				HOOKS_MAP.remove(loadExecutor);
 				LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
@@ -86,7 +86,7 @@ implements Runnable {
 							LOG.debug(LogUtil.ERR, "Failed to acquire the lock for the del method");
 						}
 					} catch (final InterruptedException e) {
-						LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
+						LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 					}
 				}
 			}
@@ -102,9 +102,8 @@ implements Runnable {
 			loadExecutor.close();
 			LOG.debug(LogUtil.MSG, "The load executor \"{}\" closed successfully", loadName);
 		} catch(final Exception e) {
-			LogUtil.failure(
-				LOG, Level.DEBUG, e,
-				String.format("Failed to close the load executor \"%s\"", loadName)
+			LogUtil.exception(
+				LOG, Level.DEBUG, e, "Failed to close the load executor \"{}\"", loadName
 			);
 		}
 	}

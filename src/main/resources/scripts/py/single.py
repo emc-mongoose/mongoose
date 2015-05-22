@@ -35,7 +35,7 @@ def build(loadBuilder):
 		try:
 			load = loadBuilder.build()
 		except Throwable as e:
-			LogUtil.failure(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
+			LogUtil.exception(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
 	return load
 #
 def execute(load):
@@ -57,6 +57,6 @@ if __name__ == "__builtin__":
 	except InterruptedException as e:
 		LOG.debug(LogUtil.MSG, "Single was interrupted")
 	except Throwable as e:
-		LogUtil.failure(LOG, Level.ERROR, e, "Scenario failed")
+		LogUtil.exception(LOG, Level.ERROR, e, "Scenario failed")
 	loadBuilder.close() # to exit normally
 	LOG.info(LogUtil.MSG, "Scenario end")

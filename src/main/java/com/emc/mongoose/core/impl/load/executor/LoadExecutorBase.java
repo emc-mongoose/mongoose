@@ -22,7 +22,6 @@ import com.emc.mongoose.core.api.load.model.Producer;
 //
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.tasks.RequestResultTask;
-import com.emc.mongoose.core.impl.load.model.LogConsumer;
 import com.emc.mongoose.core.impl.load.executor.util.DataObjectWorkerFactory;
 //
 import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
@@ -69,8 +68,8 @@ implements LoadExecutor<T> {
 	protected final IOTask.Type loadType;
 	//
 	protected volatile Producer<T> producer = null;
-	private final ExecutorService resultsHandler;
 	protected volatile Consumer<T> consumer;
+	private final ThreadPoolExecutor submitExecutor;
 	//
 	private final long maxCount;
 	private final int totalConnCount;
@@ -87,9 +86,7 @@ implements LoadExecutor<T> {
 		durTasksSum = new AtomicLong(0),
 		counterRoundRobinSubm = new AtomicLong(0),
 		counterResultHandle = new AtomicLong(0);
-	private final AtomicBoolean
-		isClosed = new AtomicBoolean(false),
-		isMaxCountSubmTries = new AtomicBoolean(false);
+	private final AtomicBoolean isClosed = new AtomicBoolean(false);
 	private final Lock lock = new ReentrantLock();
 	private final Condition condDoneOrInterrupted = lock.newCondition();
 	//
@@ -119,7 +116,7 @@ implements LoadExecutor<T> {
 		);
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
-		setCorePoolSize(totalConnCount > 3 ? (int)Math.sqrt(totalConnCount) : totalConnCount);
+		setCorePoolSize(totalConnCount > 4 ? (int) Math.sqrt(totalConnCount) : totalConnCount);
 		setMaximumPoolSize(getCorePoolSize());
 		//
 		this.runTimeConfig = runTimeConfig;
@@ -127,7 +124,7 @@ implements LoadExecutor<T> {
 		try {
 			reqConfigClone = reqConfig.clone();
 		} catch(final CloneNotSupportedException e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Failed to clone the request config");
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the request config");
 		} finally {
 			this.reqConfigCopy = reqConfigClone;
 		}
@@ -142,10 +139,15 @@ implements LoadExecutor<T> {
 			.registerWith(mBeanServer)
 			.build();
 		//
-		setThreadFactory(new NamingWorkerFactory(name + "submitWorker"));
-		resultsHandler = Executors.newFixedThreadPool(
-			getCorePoolSize(),
-			new DataObjectWorkerFactory(loadNum, reqConfig.getAPI(), loadType, name)
+		setThreadFactory(
+			new DataObjectWorkerFactory(
+				loadNum, reqConfig.getAPI(), loadType, String.format("resultsHandler<%s>", name)
+			)
+		);
+		submitExecutor = new ThreadPoolExecutor(
+			getCorePoolSize(), getMaximumPoolSize(), 0, TimeUnit.MILLISECONDS,
+			new LinkedBlockingQueue<Runnable>(getQueue().remainingCapacity()),
+			new NamingWorkerFactory(String.format("submitWorker<%s>", name))
 		);
 		//
 		this.connCountPerNode = connCountPerNode;
@@ -170,10 +172,9 @@ implements LoadExecutor<T> {
 			try {
 				producer.setConsumer(this);
 			} catch(final RemoteException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Unexpected failure");
+				LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
 			}
 		}
-		setConsumer(new LogConsumer<T>(maxCount, getCorePoolSize())); // by default, may be overriden later externally
 		LoadCloseHook.add(this);
 	}
 	//
@@ -274,7 +275,6 @@ implements LoadExecutor<T> {
 				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 			);
 		LOG.info(logMarker, message);
-		//
 	}
 	//
 	private final AtomicLong tsStart = new AtomicLong(-1);
@@ -284,6 +284,7 @@ implements LoadExecutor<T> {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			LOG.debug(LogUtil.MSG, "Starting {}", getName());
 			//
+			submitExecutor.prestartAllCoreThreads();
 			prestartAllCoreThreads();
 			//
 			final String name = getName();
@@ -303,7 +304,7 @@ implements LoadExecutor<T> {
 					producer.start();
 					LOG.debug(LogUtil.MSG, "Started object producer {}", producer);
 				} catch(final IOException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Failed to start the producer");
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to start the producer");
 				}
 			}
 			//
@@ -339,9 +340,8 @@ implements LoadExecutor<T> {
 					LOG.warn(LogUtil.ERR, "{}: failed to acquire the lock in close method", name);
 				}
 			} catch(final InterruptedException e) {
-				LogUtil.failure(
-					LOG, Level.WARN, e,
-					String.format("%s: Interrupted while acquiring the lock", name)
+				LogUtil.exception(
+					LOG, Level.WARN, e, "{}: Interrupted while acquiring the lock", name
 				);
 			}
 			//
@@ -398,10 +398,32 @@ implements LoadExecutor<T> {
 	@Override
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
-		submit(SubmitTask.getInstance(this, dataItem));
+		//
+		Future submitFuture = null;
+		int rejectCount = 0;
+		final Runnable submitTask = SubmitTask.getInstance(this, dataItem);
+		while(!submitExecutor.isShutdown() && submitFuture == null && rejectCount < retryCountMax) {
+			try { // submit the result handling task
+				submitFuture = submitExecutor.submit(submitTask);
+			} catch(final RejectedExecutionException e) {
+				rejectCount ++;
+				try {
+					Thread.sleep(rejectCount * retryDelayMilliSec);
+				} catch(final InterruptedException ee) {
+					LOG.trace(LogUtil.ERR, "Interrupted, won't submit data item {}", dataItem);
+				}
+			}
+		}
+		//
+		if(submitFuture == null) {
+			counterRej.inc();
+			throw new RejectedExecutionException(
+				"Rejected the data item " + dataItem + " after " + rejectCount + " tries"
+			);
+		}
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
+	@SuppressWarnings("unchecked")
 	public final void submitSynchronously(final T dataItem) {
 		if(tsStart.get() < 0) {
 			throw new RejectedExecutionException(name + ": not started yet");
@@ -417,9 +439,10 @@ implements LoadExecutor<T> {
 				name, counterSubm.getCount(), counterRej.getCount()
 			);
 			shutdown();
+			submitExecutor.shutdown();
 		}
 		//
-		if(isMaxCountSubmTries.get()) {
+		if(submitExecutor.isShutdown()) {
 			throw new RejectedExecutionException(
 				name + ": all " + counterSubm.getCount() + " tasks has been submitted"
 			);
@@ -435,14 +458,15 @@ implements LoadExecutor<T> {
 			final Runnable handleResultTask = RequestResultTask.getInstance(
 				this, ioTask, futureResponse
 			);
+			//
 			Future futureResult = null;
 			int rejectCount = 0;
 			do {
 				try { // submit the result handling task
-					futureResult = resultsHandler.submit(handleResultTask);
+					futureResult = submit(handleResultTask);
 					counterSubm.inc();
 				} catch(final RejectedExecutionException e) {
-					rejectCount ++;
+					rejectCount++;
 					try {
 						Thread.sleep(rejectCount * retryDelayMilliSec);
 					} catch(final InterruptedException ee) {
@@ -461,10 +485,10 @@ implements LoadExecutor<T> {
 				counterRej.inc();
 			}
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, "Submit failure");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Submit failure");
 		} finally {
-			if(isShutdown()) {
-				resultsHandler.shutdown();
+			if(submitExecutor.isShutdown()) {
+				super.shutdown();
 			}
 		}
 	}
@@ -493,8 +517,10 @@ implements LoadExecutor<T> {
 						ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
 					);
 				}
-				// feed to the consumer
-				if(consumer != null) {
+				// is this an end of consumer-producer chain?
+				if(consumer == null) {
+					LOG.info(LogUtil.DATA_LIST, dataItem);
+				} else { // feed to the consumer
 					if(LOG.isTraceEnabled(LogUtil.MSG)) {
 						LOG.trace(
 							LogUtil.MSG, "Going to feed the data item {} to the consumer {}",
@@ -515,18 +541,17 @@ implements LoadExecutor<T> {
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Interrupted");
 		} catch(final RemoteException e) {
-			LogUtil.failure(
-				LOG, Level.WARN, e,
-				"Failed to submit the data item \"" + dataItem + "\" to \"" + consumer + "\""
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to submit the data item \"{}\" to \"{}\"",
+				dataItem, consumer
 			);
 		} catch(final RejectedExecutionException e) {
-			LogUtil.failure(
-				LOG, Level.DEBUG, e,
-				"\"" + consumer + "\" rejected the data item \"" + dataItem + "\""
+			LogUtil.exception(
+				LOG, Level.DEBUG, e, "\"{}\" rejected the data item \"{}\"", consumer, dataItem
 			);
 		} finally {
 			final long n = counterResultHandle.incrementAndGet();
-			if(n >= maxCount || isMaxCountSubmTries.get() && n >= counterSubm.getCount()) {
+			if(n >= maxCount || submitExecutor.isShutdown() && n >= counterSubm.getCount()) {
 				// max count is reached OR all tasks are done
 				LOG.debug(LogUtil.MSG, "{}: all {} task results has been obtained", name, n);
 				if(!isClosed.get()) {
@@ -546,14 +571,15 @@ implements LoadExecutor<T> {
 							LOG.debug(LogUtil.ERR, "Failed to acquire the lock for result handling");
 						}
 					} catch(final InterruptedException e) {
-						LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
+						LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 					}
 				}
 				// prevent further scheduling of result handling tasks
-				resultsHandler.shutdown();
-				// prevent submitting new data items
-				if(!isShutdown()) {
-					super.shutdown();
+				super.shutdown();
+				if(!submitExecutor.isShutdown()) {
+					LOG.debug(
+						LogUtil.MSG, "Dropped {} submit tasks", submitExecutor.shutdownNow().size()
+					);
 				}
 			}
 		}
@@ -569,12 +595,9 @@ implements LoadExecutor<T> {
 				);
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(
-				LOG, Level.WARN, e,
-				String.format("Failed to stop the producer: %s", producer)
-			);
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to stop the producer: {}", producer);
 		} finally {
-			isMaxCountSubmTries.set(true); // prevent new data items scheduling
+			submitExecutor.shutdown(); // prevent new data items scheduling
 			LOG.debug(LogUtil.MSG, "\"{}\" will not accept new tasks more", getName());
 		}
 	}
@@ -585,7 +608,7 @@ implements LoadExecutor<T> {
 		//
 		LOG.debug(LogUtil.MSG, "Invoked close for {}", getName());
 		//
-		if(isMaxCountSubmTries.compareAndSet(false, true)) {
+		if(!submitExecutor.isShutdown()) {
 			shutdown();
 		}
 		//
@@ -596,11 +619,12 @@ implements LoadExecutor<T> {
 				LOG.debug(LogUtil.MSG, "Forcing the shutdown");
 				reqConfigCopy.close(); // disables connection drop failures
 				LOG.debug(LogUtil.MSG, "{}: dropped {} tasks", getName(), shutdownNow().size());
-				// poison the consumer
-				consumer.shutdown();
-				LOG.debug(LogUtil.MSG, "Consumer \"{}\" has been poisoned", consumer);
+				if(consumer != null) {
+					consumer.shutdown(); // poison the consumer
+					LOG.debug(LogUtil.MSG, "Consumer \"{}\" has been poisoned", consumer);
+				}
 			} catch(final IllegalStateException | RejectedExecutionException e) {
-				LogUtil.failure(LOG, Level.DEBUG, e, "Failed to poison the consumer");
+				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
 				jmxReporter.close();
 				LOG.debug(LogUtil.MSG, "JMX reported closed");
@@ -620,9 +644,7 @@ implements LoadExecutor<T> {
 		try {
 			close();
 		} catch(final IOException e) {
-			LogUtil.failure(
-				LOG, Level.WARN, e, String.format("%s: failed to close", getName())
-			);
+			LogUtil.exception(LOG, Level.WARN, e, "{}: failed to close", getName());
 		} finally {
 			super.finalize();
 		}
@@ -647,7 +669,7 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join(final long timeOutMilliSec)
 	throws RemoteException, InterruptedException {
-		if(resultsHandler.isShutdown() || isInterruptedFlag.get() || isClosed.get()) {
+		if(isShutdown() || isInterruptedFlag.get() || isClosed.get()) {
 			return;
 		}
 		//

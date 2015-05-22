@@ -65,7 +65,7 @@ implements AuthToken<T> {
 							LOG.warn(LogUtil.ERR, "Server hasn't returned auth token header");
 						}
 					} else {
-						final StringBuilder msg = new StringBuilder("Create auth tocken failure: ")
+						final StringBuilder msg = new StringBuilder("Create auth token failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
 							try(final ByteArrayOutputStream buff = new ByteArrayOutputStream()) {
@@ -82,7 +82,7 @@ implements AuthToken<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 	}
 	//

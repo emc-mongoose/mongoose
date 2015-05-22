@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.cinderella;
 //
-import com.emc.mongoose.common.collections.AsyncCache;
+import com.emc.mongoose.common.collections.Cache;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
@@ -36,15 +36,16 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 /**
  * Created by olga on 28.01.15.
  */
 public final class Cinderella
-extends AsyncCache<String, WSObjectMock>
+extends Cache<String, WSObjectMock>
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -54,6 +55,46 @@ implements Runnable {
 	private final int portStart, countHeads;
 	private final RunTimeConfig runTimeConfig;
 	private final IOStats ioStats;
+	//
+	private final BlockingQueue<WSObjectMock> createQueue = new LinkedBlockingQueue<>();
+	private final BlockingQueue<String> deleteQueue = new LinkedBlockingQueue<>();
+	private final Thread
+		createWorker = new Thread("storageCreateWorker") {
+			{
+				setDaemon(true);
+			}
+			//
+			@Override
+			public final void run() {
+				WSObjectMock nextDataItem;
+				try {
+					while(!isInterrupted()) {
+						nextDataItem = createQueue.take();
+						putSynchronously(nextDataItem.getId(), nextDataItem);
+					}
+				} catch(final InterruptedException e) {
+					LOG.debug(LogUtil.MSG, "Interrupted");
+				}
+			}
+		},
+		deleteWorker = new Thread("storageDeleteWorker") {
+			{
+				setDaemon(true);
+			}
+			//
+			@Override
+			public final void run() {
+				String nextId;
+				try {
+					while(!isInterrupted()) {
+						nextId = deleteQueue.take();
+						removeSynchronously(nextId);
+					}
+				} catch(final InterruptedException e) {
+					LOG.debug(LogUtil.MSG, "Interrupted");
+				}
+			}
+		};
 	//
 	public Cinderella(final RunTimeConfig runTimeConfig)
 	throws IOException {
@@ -93,7 +134,7 @@ implements Runnable {
 			.build();
 		// Create request handler registry
 		final HttpAsyncRequestHandlerMapper apiReqHandlerMapper = new APIRequestHandlerMapper(
-			runTimeConfig, Collections.synchronizedMap(this), ioStats
+			runTimeConfig, this, ioStats
 		);
 		// Register the default handler for all URIs
 		protocolHandler = new HttpAsyncService(httpproc, apiReqHandlerMapper);
@@ -105,6 +146,8 @@ implements Runnable {
 	@Override
 	public void run() {
 		ioStats.start();
+		createWorker.start();
+		deleteWorker.start();
 		// if there is data src file path
 		final String dataFilePath = runTimeConfig.getDataSrcFPath();
 		final int dataSizeRadix = runTimeConfig.getDataRadixSize();
@@ -125,13 +168,12 @@ implements Runnable {
 					put(dataObject.getId(), dataObject);
 				}
 			} catch(final FileNotFoundException e) {
-				LogUtil.failure(
-					LOG, Level.ERROR, e, String.format("File \"%s\" not found", dataFilePath)
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "File \"{}\" not found", dataFilePath
 				);
 			} catch(final IOException e) {
-				LogUtil.failure(
-					LOG, Level.ERROR, e,
-					String.format("Failed to read from file \"%s\"", dataFilePath)
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to read from file \"{}\"", dataFilePath
 				);
 			}
 		}
@@ -144,9 +186,8 @@ implements Runnable {
 					)
 				);
 			} catch(final IOReactorException e) {
-				LogUtil.failure(
-					LOG, Level.ERROR, e,
-					String.format("Failed to start the head at port #%d", nextPort)
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to start the head at port #{}", nextPort
 				);
 			}
 		}
@@ -170,10 +211,31 @@ implements Runnable {
 			LOG.info(LogUtil.MSG, "Interrupting the Cinderella");
 		} finally {
 			try {
+				createWorker.interrupt();
 				ioStats.close();
 			} catch(final IOException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Closing I/O stats failure");
+				LogUtil.exception(LOG, Level.WARN, e, "Closing I/O stats failure");
 			}
 		}
+	}
+	//
+	@Override
+	public final WSObjectMock put(final String id, final WSObjectMock dataItem) {
+		createQueue.offer(dataItem);
+		return null;
+	}
+	//
+	private WSObjectMock putSynchronously(final String id, final WSObjectMock dataItem) {
+		return super.put(id, dataItem);
+	}
+	//
+	@Override
+	public final WSObjectMock remove(final Object id) {
+		deleteQueue.offer(String.class.cast(id));
+		return null;
+	}
+	//
+	private WSObjectMock removeSynchronously(final String id) {
+		return super.remove(id);
 	}
 }

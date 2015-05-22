@@ -54,7 +54,7 @@ implements Gauge<Long> {
 			try {
 				objectName = new ObjectName(domain, LoadClient.KEY_NAME, fqMBeanName);
 			} catch(final MalformedObjectNameException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "No such remote object");
+				LogUtil.exception(LOG, Level.WARN, e, "No such remote object");
 			}
 			//
 			if(objectName != null) {
@@ -66,12 +66,9 @@ implements Gauge<Long> {
 						attrName, objectName.getCanonicalName(), addr
 					);
 				} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {
-					LogUtil.failure(
-						LOG, Level.DEBUG, e,
-						String.format(
-							LoadClient.FMT_MSG_FAIL_FETCH_VALUE,
-							objectName.getCanonicalName() + "." + attrName, addr
-						)
+					LogUtil.exception(
+						LOG, Level.DEBUG, e, LoadClient.FMT_MSG_FAIL_FETCH_VALUE,
+						objectName.getCanonicalName() + "." + attrName, addr
 					);
 				}
 			}

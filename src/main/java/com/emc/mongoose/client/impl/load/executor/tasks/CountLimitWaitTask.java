@@ -43,7 +43,7 @@ implements PeriodicTask<Long> {
 						loadClient, maxCount
 					);
 				} catch(final RemoteException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Failed to shutdown the load client");
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to shutdown the load client");
 				}
 			}
 		}

@@ -103,7 +103,7 @@ implements DataItemBuffer<T> {
 						try {
 							fBuffOut.writeObject(dataItem);
 						} catch(final IOException e) {
-							LogUtil.failure(LOG, Level.WARN, e, "failed to write out the data item");
+							LogUtil.exception(LOG, Level.WARN, e, "failed to write out the data item");
 						}
 					}
 				}
@@ -197,7 +197,7 @@ implements DataItemBuffer<T> {
 					RunTimeConfig.getContext().getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 				);
 			} catch(final InterruptedException e) {
-				LogUtil.failure(
+				LogUtil.exception(
 					LOG, Level.DEBUG, e, "Interrupted while writing out the remaining data items"
 				);
 			} finally {
@@ -231,7 +231,7 @@ implements DataItemBuffer<T> {
 				try {
 					consumerMaxCount = consumer.getMaxCount();
 				} catch(final RemoteException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Looks like network failure");
+					LogUtil.exception(LOG, Level.WARN, e, "Looks like network failure");
 				}
 				LOG.debug(
 					LogUtil.MSG, "{}: {} available data items to read, while consumer limit is {}",
@@ -255,9 +255,9 @@ implements DataItemBuffer<T> {
 						}
 						LOG.debug(LogUtil.MSG, "done producing");
 					} catch(final RemoteException e) {
-						LogUtil.failure(LOG, Level.DEBUG, e, "Failed to submit a data item");
+						LogUtil.exception(LOG, Level.DEBUG, e, "Failed to submit a data item");
 					} catch(final IOException | ClassNotFoundException | ClassCastException e) {
-						LogUtil.failure(LOG, Level.WARN, e, "Failed to read a data item");
+						LogUtil.exception(LOG, Level.WARN, e, "Failed to read a data item");
 					} catch(final RejectedExecutionException e) {
 						LOG.debug(LogUtil.ERR, "Consumer rejected the data item");
 					} catch(final InterruptedException e) {
@@ -266,7 +266,7 @@ implements DataItemBuffer<T> {
 						try {
 							consumer.shutdown();
 						} catch(final RemoteException e) {
-							LogUtil.failure(LOG, Level.WARN, e, "Looks like network failure");
+							LogUtil.exception(LOG, Level.WARN, e, "Looks like network failure");
 						} finally {
 							consumer = null;
 							deleteFromFileSystem();

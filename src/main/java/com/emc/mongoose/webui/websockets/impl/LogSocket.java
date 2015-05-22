@@ -41,7 +41,7 @@ implements WebSocketLogListener {
 	public final void onError(final Throwable t) {
 		WebUIAppender.unregister(this);
 		session.close();
-		LogUtil.failure(LOG, Level.DEBUG, t, "WebSocket failure");
+		LogUtil.exception(LOG, Level.DEBUG, t, "WebSocket failure");
 	}
 	//
 	@OnWebSocketConnect
@@ -63,7 +63,7 @@ implements WebSocketLogListener {
 			try {
 				session.getRemote().sendString(mapper.writeValueAsString(message));
 			} catch (final IOException e) {
-				LogUtil.failure(LOG, Level.DEBUG, e, "WebSocket failure");
+				LogUtil.exception(LOG, Level.DEBUG, e, "WebSocket failure");
 			}
 		}
 	}

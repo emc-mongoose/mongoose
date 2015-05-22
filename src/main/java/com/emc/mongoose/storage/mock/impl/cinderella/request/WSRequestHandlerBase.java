@@ -71,11 +71,11 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	private final Map<String, WSObjectMock> sharedStorage;
 	//
 	protected WSRequestHandlerBase(
-		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> storage,
+		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> sharedStorage,
 	    final IOStats ioStats
 	) {
 		this.rateLimit = runTimeConfig.getLoadLimitRate();
-		this.sharedStorage = Collections.synchronizedMap(storage);
+		this.sharedStorage = sharedStorage;
 		this.ioStats = ioStats;
 	}
 	//
@@ -145,7 +145,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 				httpResponse.setStatusCode(HttpStatus.SC_OK);
 				break;
 			case METHOD_DELETE:
-				handleDelete(httpResponse);
+				handleDelete(httpResponse, dataId);
 				break;
 		}
 	}
@@ -162,13 +162,13 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			ioStats.markCreate(dataObject.getSize());
 		} catch(final HttpException e) {
 			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-			LogUtil.failure(LOG, Level.ERROR, e, "Put method failure");
+			LogUtil.exception(LOG, Level.ERROR, e, "Put method failure");
 			ioStats.markCreate(-1);
 		} catch(final NumberFormatException e){
 			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-			LogUtil.failure(
+			LogUtil.exception(
 				LOG, Level.ERROR, e,
-				"Failed to decode the data id \"" + dataId + "\" as ring buffer offset"
+				"Failed to decode the data id \"{}\" as ring buffer offset", dataId
 			);
 			ioStats.markCreate(-1);
 		}
@@ -192,16 +192,25 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		}
 	}
 	//
-	private void handleDelete(final HttpResponse httpResponse){
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "Delete data object: response OK");
+	private void handleDelete(final HttpResponse response, final String dataId){
+		final WSObjectMock dataObject = sharedStorage.get(dataId);
+		if(dataObject == null) {
+			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(LogUtil.ERR, "No such object: {}", dataId);
+			}
+		} else {
+			sharedStorage.remove(dataId);
+			response.setStatusCode(HttpStatus.SC_OK);
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(LogUtil.MSG, "Delete data object with ID: {}", dataId);
+			}
+			ioStats.markDelete();
 		}
-		httpResponse.setStatusCode(HttpStatus.SC_OK);
-		ioStats.markDelete();
 	}
 	//
 	private WSObjectMock writeDataObject(final HttpRequest request, final String dataID)
-		throws HttpException, NumberFormatException {
+	throws HttpException, NumberFormatException {
 		final HttpEntity entity = HttpEntityEnclosingRequest.class.cast(request).getEntity();
 		final long bytes = entity.getContentLength();
 		// create data object or get it for append or update

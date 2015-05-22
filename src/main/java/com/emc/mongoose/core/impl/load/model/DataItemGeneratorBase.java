@@ -93,7 +93,7 @@ implements Producer<T> {
 			} catch(final RejectedExecutionException e) {
 				LOG.trace(LogUtil.ERR, MSG_SUBMIT_REJECTED);
 			} catch(final IOException e) {
-				LogUtil.failure(LOG, Level.TRACE, e, MSG_SUBMIT_FAILED);
+				LogUtil.exception(LOG, Level.TRACE, e, MSG_SUBMIT_FAILED);
 			} catch(final InterruptedException e) {
 				LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, MSG_INTERRUPTED);
 				break;

@@ -111,7 +111,7 @@ implements SubTenant<T> {
 					EntityUtils.consumeQuietly(httpEntity);
 				}
 			} catch(final IOException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+				LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 			}
 		}
 		//
@@ -156,7 +156,7 @@ implements SubTenant<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 	}
 	//
@@ -190,7 +190,7 @@ implements SubTenant<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 	}
 }

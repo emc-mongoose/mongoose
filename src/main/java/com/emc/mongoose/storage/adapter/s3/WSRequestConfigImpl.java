@@ -192,7 +192,7 @@ extends WSRequestConfigBase<T> {
 			try {
 				producer = new WSBucketProducer<>(bucket, BasicWSObject.class, maxCount, addr);
 			} catch(final NoSuchMethodException e) {
-				LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
+				LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		} else {
 			LOG.debug(

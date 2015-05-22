@@ -18,7 +18,7 @@ import org.apache.logging.log4j.Logger;
  Created by kurila on 04.12.14.
  */
 @NotThreadSafe
-public final class WSRequestImpl
+public final class BasicWSRequest
 extends AbstractHttpMessage
 implements MutableWSRequest {
 	//
@@ -69,13 +69,13 @@ implements MutableWSRequest {
 	private volatile String uriAddr, uriPath;
 	private volatile HttpEntity contentEntity = null;
 	//
-	public WSRequestImpl(
+	public BasicWSRequest(
 		final HTTPMethod method, final String uriAddr, final String uriPath
 	) {
 		this(method, uriAddr, uriPath, HttpVersion.HTTP_1_1);
 	}
 	//
-	public WSRequestImpl(
+	public BasicWSRequest(
 		final HTTPMethod method, final String uriAddr, final String uriPath,
 		final ProtocolVersion ver
 	) {
@@ -91,7 +91,7 @@ implements MutableWSRequest {
 		);
 	}
 	//
-	private WSRequestImpl(final String uriAddr, final MutableRequestLine requestline) {
+	private BasicWSRequest(final String uriAddr, final MutableRequestLine requestline) {
 		super();
 		this.requestline = requestline;
 		method = HTTPMethod.valueOf(requestline.getMethod());
@@ -120,7 +120,7 @@ implements MutableWSRequest {
 	}
 	//
 	@Override
-	public final WSRequestImpl setMethod(final HTTPMethod method) {
+	public final BasicWSRequest setMethod(final HTTPMethod method) {
 		this.method = method;
 		requestline.setMethod(method.name());
 		return this;
@@ -132,7 +132,7 @@ implements MutableWSRequest {
 	}
 	//
 	@Override
-	public final WSRequestImpl setUriAddr(final String uriAddr) {
+	public final BasicWSRequest setUriAddr(final String uriAddr) {
 		this.uriAddr = uriAddr;
 		return this;
 	}
@@ -143,7 +143,7 @@ implements MutableWSRequest {
 	}
 	//
 	@Override
-	public final WSRequestImpl setUriPath(final String uriPath) {
+	public final BasicWSRequest setUriPath(final String uriPath) {
 		this.uriPath = uriPath;
 		requestline.setUri(uriPath);
 		return this;

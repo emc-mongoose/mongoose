@@ -271,7 +271,7 @@ implements LoadBuilderClient<T, U> {
 		try {
 			invokePreConditions();
 		} catch(final IllegalStateException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Preconditions failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
 		return buildActually();
 	}
@@ -294,7 +294,7 @@ implements LoadBuilderClient<T, U> {
 		try {
 			strBuilder.append('-').append(get(keySet().iterator().next()).getLastInstanceNum());
 		} catch(final RemoteException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to make load builder string");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to make load builder string");
 		}
 		return strBuilder.toString();
 	}

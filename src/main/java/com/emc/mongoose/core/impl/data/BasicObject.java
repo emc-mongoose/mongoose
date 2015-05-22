@@ -63,9 +63,17 @@ implements DataObject {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable serialization implementation /////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final static ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
 	@Override
 	public String toString() {
-		return id + "," + super.toString();
+		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();
+		if(strBuilder == null) {
+			strBuilder = new StringBuilder();
+			THR_LOCAL_STR_BUILDER.set(strBuilder);
+		} else {
+			strBuilder.setLength(0); // reset
+		}
+		return strBuilder.append(id).append(',').append(super.toString()).toString();
 	}
 	//
 	@Override

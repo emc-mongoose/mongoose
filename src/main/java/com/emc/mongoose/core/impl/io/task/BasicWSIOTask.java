@@ -12,9 +12,8 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
-import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
+import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 //
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
@@ -41,8 +40,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 06.06.14.
  */
@@ -73,7 +70,7 @@ implements WSIOTask<T> {
 	@Override
 	public void release() {
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LogUtil.trace(LOG, Level.TRACE, LogUtil.MSG, "Releasing the task #" + hashCode());
+			LogUtil.trace(LOG, Level.TRACE, LogUtil.MSG, "Releasing the task {}", hashCode());
 		}
 		resetRequest();
 		POOL_WEB_IO_TASKS.release(this);
@@ -81,7 +78,7 @@ implements WSIOTask<T> {
 	// END pool related things
 	private WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	private HeaderGroup sharedHeaders = null;
-	private final MutableWSRequest httpRequest = new WSRequestImpl(
+	private final MutableWSRequest httpRequest = new BasicWSRequest(
 		MutableWSRequest.HTTPMethod.PUT, null, null
 	);
 	private volatile HttpEntity reqEntity = null;
@@ -112,7 +109,7 @@ implements WSIOTask<T> {
 			super.setDataItem(dataItem);
 			wsReqConf.applyDataItem(httpRequest, dataItem);
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to apply data item");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply data item");
 		}
 		return this;
 	}
@@ -160,7 +157,7 @@ implements WSIOTask<T> {
 				);
 			}
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to apply the final headers");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply the final headers");
 		}
 		reqTimeStart = System.nanoTime() / 1000;
 		return httpRequest;
@@ -180,7 +177,7 @@ implements WSIOTask<T> {
 				}
 			}
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Producing content failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Producing content failure");
 		}
 	}
 	//

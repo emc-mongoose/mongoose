@@ -45,7 +45,7 @@ implements LoadBuilder<T, U> {
 			reqConf = getDefaultRequestConfig();
 			setProperties(RunTimeConfig.getContext());
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Failed to apply configuration");
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply configuration");
 		}
 	}
 	protected abstract RequestConfig<T> getDefaultRequestConfig();
@@ -339,7 +339,7 @@ implements LoadBuilder<T, U> {
 		try {
 			invokePreConditions();
 		} catch(final IllegalStateException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Preconditions failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
 		return buildActually();
 	}

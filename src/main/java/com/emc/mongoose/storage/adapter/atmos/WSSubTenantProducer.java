@@ -90,10 +90,10 @@ implements Producer<T> {
 										)
 									);
 								} catch(final SAXException e) {
-									LogUtil.failure(LOG, Level.WARN, e, "Failed to parse");
+									LogUtil.exception(LOG, Level.WARN, e, "Failed to parse");
 								}
 							} catch(final ParserConfigurationException | SAXException e) {
-								LogUtil.failure(
+								LogUtil.exception(
 									LOG, Level.ERROR, e, "Failed to create SAX parser"
 								);
 							}
@@ -114,7 +114,7 @@ implements Producer<T> {
 				EntityUtils.consumeQuietly(httpResp.getEntity());
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Failed to list the subtenant: " + subTenant);
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the subtenant: {}", subTenant);
 		}
 	}
 	//

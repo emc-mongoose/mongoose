@@ -71,7 +71,7 @@ public final class ModeDispatcher {
 					loadBuilderSvc.start();
 					loadBuilderSvc.join();
 				} catch(final IOException e) {
-					LogUtil.failure(rootLogger, Level.ERROR, e, "Load builder service failure");
+					LogUtil.exception(rootLogger, Level.ERROR, e, "Load builder service failure");
 				} catch(InterruptedException e) {
 					rootLogger.debug(LogUtil.MSG, "Interrupted load builder service");
 				}
@@ -86,7 +86,7 @@ public final class ModeDispatcher {
 				try {
 					new Cinderella(RunTimeConfig.getContext()).run();
 				} catch (final Exception e) {
-					LogUtil.failure(rootLogger, Level.FATAL, e, "Failed");
+					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed");
 				}
 				break;
 			case Constants.RUN_MODE_CLIENT:

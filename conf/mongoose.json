@@ -249,7 +249,7 @@
 			"request": {
 				"retries": false,
 				"timeoutMilliSec": 1000000,
-				"queueSize": 65536
+				"queueSize": 100000
 			}
 		}
 	}

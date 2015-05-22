@@ -53,9 +53,8 @@ implements DataItemBufferClient<T> {
 			try {
 				nextDataItemBuffer = (DataItemBufferSvc<T>) nextLoadBuilderSvc.newDataItemBuffer();
 			} catch(final IOException e) {
-				LogUtil.failure(
-					LOG, Level.ERROR, e,
-					String.format("Failed to create remote data items buffer @%s", addr)
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to create remote data items buffer @ {}", addr
 				);
 			}
 			put(addr, nextDataItemBuffer);
@@ -94,9 +93,9 @@ implements DataItemBufferClient<T> {
 					addr, nextDataItemBuffer.toString()
 				);
 			} catch(final Exception e) {
-				LogUtil.failure(
+				LogUtil.exception(
 					LOG, Level.WARN, e,
-					String.format("Failed to close remote data items buffer @ %s", addr)
+					"Failed to close remote data items buffer @ {}", addr
 				);
 			}
 		}
@@ -114,12 +113,10 @@ implements DataItemBufferClient<T> {
 					nextLoadSvc = loadSvcMap.get(addr);
 					nextDataItemBuffer.setConsumer(nextLoadSvc);
 				} catch(final Exception e) {
-					LogUtil.failure(
+					LogUtil.exception(
 						LOG, Level.WARN, e,
-						String.format(
-							"Failed to set the consumer %s for remote data items buffer @ %s",
-							consumer, addr
-						)
+						"Failed to set the consumer {} for remote data items buffer @ {}",
+						consumer, addr
 					);
 				}
 			}
@@ -149,9 +146,8 @@ implements DataItemBufferClient<T> {
 					addr, nextDataItemBuffer.toString()
 				);
 			} catch(final Exception e) {
-				LogUtil.failure(
-					LOG, Level.WARN, e,
-					String.format("Failed to start remote data items buffer @ %s", addr)
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to start remote data items buffer @ {}", addr
 				);
 			}
 		}
@@ -172,9 +168,8 @@ implements DataItemBufferClient<T> {
 					addr, nextDataItemBuffer.toString()
 				);
 			} catch(final Exception e) {
-				LogUtil.failure(
-					LOG, Level.WARN, e,
-					String.format("Failed to interrupt remote data items buffer @ %s", addr)
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to interrupt remote data items buffer @ {}", addr
 				);
 			}
 		}
@@ -212,11 +207,8 @@ implements DataItemBufferClient<T> {
 			} catch(final InterruptedException e) {
 				LOG.debug(LogUtil.MSG, "Interrupted");
 			} catch(final IOException e) {
-				LogUtil.failure(
-					LOG, Level.WARN, e,
-					String.format(
-						"Failed to await the remote data items buffer @%s", addr
-					)
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to await the remote data items buffer @ {}", addr
 				);
 			}
 		}
@@ -241,9 +233,8 @@ implements DataItemBufferClient<T> {
 				final DataItemBuffer<T> nextDataItemBuffer = get(addr);
 				remoteJoinExecutor.submit(new RemoteJoinTask(addr, nextDataItemBuffer, milliSec));
 			} catch(final Exception e) {
-				LogUtil.failure(
-					LOG, Level.WARN, e,
-					String.format("Failed to wait for remote data items buffer @ %s", addr)
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to wait for remote data items buffer @ {}", addr
 				);
 			}
 		}

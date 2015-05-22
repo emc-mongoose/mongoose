@@ -75,7 +75,7 @@ implements Reusable<BasicWSRequestConsumer> {
 			bbuff.clear();
 			StreamUtils.consumeQuietly(decoder, ioCtl, bbuff);
 		} catch(final Throwable e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Content consuming failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Content consuming failure");
 		}
 	}
 	@Override

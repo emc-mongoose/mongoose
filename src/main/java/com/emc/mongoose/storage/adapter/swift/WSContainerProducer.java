@@ -96,9 +96,9 @@ implements Producer<T> {
 							try(final InputStream in = respEntity.getContent()) {
 								handleJsonInputStream(in);
 							} catch(final IOException e) {
-								LogUtil.failure(
+								LogUtil.exception(
 									LOG, Level.ERROR, e,
-									"Failed to list the content of container: " + container
+									"Failed to list the content of container: {}", container
 								);
 							}
 							EntityUtils.consumeQuietly(respEntity);
@@ -107,19 +107,14 @@ implements Producer<T> {
 				}
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(
-				LOG, Level.ERROR, e, "Failed to list the container :" + container
-			);
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the container: {}", container);
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Container \"{}\" producer interrupted", container);
 		} finally {
 			try {
 				consumer.shutdown();
 			} catch(final Exception e) {
-				LogUtil.failure(
-					LOG, Level.DEBUG, e,
-					"Failed to shutdown the consumer"
-				);
+				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to shutdown the consumer");
 			}
 		}
 	}
@@ -165,7 +160,7 @@ implements Producer<T> {
 													nextDataItem
 												);
 											}
-											count++;
+											count ++;
 										} else {
 											break;
 										}
@@ -173,12 +168,12 @@ implements Producer<T> {
 										final InstantiationException | IllegalAccessException |
 											InvocationTargetException e
 										) {
-										LogUtil.failure(
+										LogUtil.exception(
 											LOG, Level.WARN, e,
 											"Failed to create data item descriptor"
 										);
 									} catch(final RemoteException | RejectedExecutionException e) {
-										LogUtil.failure(
+										LogUtil.exception(
 											LOG, Level.WARN, e,
 											"Failed to submit new data object to the consumer"
 										);

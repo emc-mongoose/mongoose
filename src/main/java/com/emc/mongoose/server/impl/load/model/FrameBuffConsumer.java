@@ -4,8 +4,6 @@ package com.emc.mongoose.server.impl.load.model;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
-import com.emc.mongoose.core.impl.load.model.LogConsumer;
-//
 import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
 //
 import org.apache.commons.collections4.queue.CircularFifoQueue;
@@ -25,7 +23,6 @@ import java.util.concurrent.locks.ReentrantLock;
  A logging consumer which accumulates the data items until the accumulated data is externally taken.
  */
 public final class FrameBuffConsumer<T extends DataItem>
-extends LogConsumer<T>
 implements RecordFrameBuffer<T> {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
@@ -35,16 +32,12 @@ implements RecordFrameBuffer<T> {
 	private final Queue<T> buff = new CircularFifoQueue<>(0x100000);
 	private final Lock buffLock = new ReentrantLock();
 	//
-	public FrameBuffConsumer() {
-		super(Long.MAX_VALUE, 1);
-	}
-	//
 	@Override
-	public final void submit(final T data)
-	throws RejectedExecutionException, InterruptedException {
+	public final void submit(final T dataItem)
+	throws InterruptedException, RejectedExecutionException {
 		if(buffLock.tryLock(LOCK_TIMEOUT_SEC, TimeUnit.SECONDS)) {
 			try {
-				buff.add(data);
+				buff.add(dataItem);
 			} finally {
 				buffLock.unlock();
 			}
@@ -57,7 +50,7 @@ implements RecordFrameBuffer<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final T[] takeFrame()
-	throws RemoteException, InterruptedException {
+	throws InterruptedException, RemoteException {
 		T frame[] = null;
 		if(anyItem == null) {
 			anyItem = buff.peek();
@@ -80,4 +73,16 @@ implements RecordFrameBuffer<T> {
 		return frame;
 	}
 	//
+	@Override
+	public final void shutdown() {
+	}
+	//
+	@Override
+	public final void close() {
+	}
+	//
+	@Override
+	public final long getMaxCount() {
+		return Long.MAX_VALUE;
+	}
 }

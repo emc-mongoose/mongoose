@@ -137,7 +137,7 @@ implements Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 		if (flagExists && versioningEnabled){
@@ -180,7 +180,7 @@ implements Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 	}
 	//
@@ -220,7 +220,7 @@ implements Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 	}
 	//
@@ -260,7 +260,7 @@ implements Bucket<T> {
 				EntityUtils.consumeQuietly(httpEntity);
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "HTTP request execution failure");
+			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
 	}

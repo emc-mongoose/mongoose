@@ -63,11 +63,11 @@ def build(
 				loadBuilder.setInputFile(None) # prevent the file list producer creation for next loads
 			prevLoad = load
 		except IllegalArgumentException as e:
-			LogUtil.failure(
+			LogUtil.exception(
 				LOG, Level.ERROR, e, String.format("Wrong load type \"%s\", skipping", loadTypeStr)
 			)
 		except Throwable as e:
-			LogUtil.failure(LOG, Level.FATAL, e, "Unexpected failure")
+			LogUtil.exception(LOG, Level.FATAL, e, "Unexpected failure")
 	return chain
 	#
 def execute(chain=(), flagSimultaneous=True):
@@ -192,7 +192,7 @@ if __name__ == "__builtin__":
 		except InterruptedException as e:
 			LOG.debug(LogUtil.MSG, "Chain was interrupted")
 		except Throwable as e:
-			LogUtil.failure(LOG, Level.WARN, e, "Chain execution failure")
+			LogUtil.exception(LOG, Level.WARN, e, "Chain execution failure")
 	#
 	loadBuilder.close()
 	#

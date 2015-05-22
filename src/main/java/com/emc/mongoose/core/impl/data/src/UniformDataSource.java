@@ -45,7 +45,7 @@ implements DataSource {
 		LOG.debug(LogUtil.MSG, "New ring buffer instance #{}", hashCode());
 		this.seed = seed;
 		this.size = size;
-		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
+		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.add(zeroByteLayer);
 	}
@@ -56,7 +56,7 @@ implements DataSource {
 			DEFAULT = new UniformDataSource();
 			//LOG.info(Markers.MSG, "Default data source: {}", DEFAULT.toString());
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Failed to create default data source");
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create default data source");
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -77,7 +77,7 @@ implements DataSource {
 			word = nextWord(word);
 		}
 		// tail bytes\
-		final ByteBuffer tailBytes = ByteBuffer.allocateDirect(countWordBytes);
+		final ByteBuffer tailBytes = ByteBuffer.allocate(countWordBytes);
 		tailBytes.asLongBuffer().put(word).rewind();
 		for(i = 0; i < countTailBytes; i ++) {
 			byteLayer.put(countWordBytes * countWords + i, tailBytes.get(i));
@@ -131,7 +131,7 @@ implements DataSource {
 			throw new IllegalArgumentException("Illegal ring size: " + size);
 		}
 		this.size = size;
-		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
+		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.clear();
 		byteLayers.add(zeroByteLayer);
@@ -145,7 +145,7 @@ implements DataSource {
 	@Override
 	public final void setSeed(final long seed) {
 		this.seed = seed;
-		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
+		final ByteBuffer zeroByteLayer = ByteBuffer.allocate(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.clear();
 		byteLayers.add(zeroByteLayer);
@@ -181,7 +181,7 @@ implements DataSource {
 			long prevSeed, nextSeed;
 			final int ringSize = prevLayer.capacity();
 			for(int i = layerCount; i <= layerIndex; i ++) {
-				nextLayer = ByteBuffer.allocateDirect(ringSize);
+				nextLayer = ByteBuffer.allocate(ringSize);
 				prevSeed = prevLayer.getLong(0);
 				nextSeed = Long.reverse(nextWord(Long.reverseBytes(prevSeed)));
 				LOG.debug(
@@ -195,7 +195,7 @@ implements DataSource {
 			}
 			LOG.debug(LogUtil.MSG, "New layer #{}", byteLayers.size() - 1);
 		}
-		return byteLayers.get(layerIndex).asReadOnlyBuffer();
+		return byteLayers.get(layerIndex);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }

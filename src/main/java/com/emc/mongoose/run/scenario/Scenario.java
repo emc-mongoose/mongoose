@@ -149,7 +149,7 @@ implements Runnable {
 						scriptEngine.eval(Files.newBufferedReader(scriptPath, StandardCharsets.UTF_8));
 						LOG.debug(LogUtil.MSG, "Script from \"{}\" done", scriptPath);
 					} catch(final ScriptException e) {
-						LogUtil.failure(LOG, Level.WARN, e, "Script failure");
+						LogUtil.exception(LOG, Level.WARN, e, "Script failure");
 					} catch(final FileNotFoundException e) {
 						LOG.error(LogUtil.ERR, "Script file not found at \"{}\"", scriptPath);
 					} catch(final IOException e) {

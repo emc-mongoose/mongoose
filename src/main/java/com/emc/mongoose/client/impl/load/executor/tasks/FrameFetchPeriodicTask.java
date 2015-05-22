@@ -40,7 +40,7 @@ implements PeriodicTask<T[]> {
 				}
 			}
 		} catch(final RemoteException | InterruptedException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to fetch the frame");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to fetch the frame");
 		}
 	}
 	//

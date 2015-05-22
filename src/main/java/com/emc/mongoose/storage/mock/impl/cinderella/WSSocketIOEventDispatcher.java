@@ -76,11 +76,11 @@ implements Runnable {
 			// Ready to go!
 			ioReactor.execute(this);
 		} catch (final InterruptedIOException e) {
-			LOG.debug(LogUtil.MSG, "{}: interrupted", toString());
+			LOG.debug(LogUtil.MSG, "{}: interrupted", this);
 		} catch (final IOReactorException e) {
-			LogUtil.failure(LOG, Level.WARN, e, toString() + ": I/O reactor failure");
+			LogUtil.exception(LOG, Level.WARN, e, "{}: I/O reactor failure", this);
 		} catch (final IOException e) {
-			LogUtil.failure(LOG, Level.WARN, e, toString() + ": I/O failure");
+			LogUtil.exception(LOG, Level.WARN, e, "{}: I/O failure", this);
 		}
 	}
 }
