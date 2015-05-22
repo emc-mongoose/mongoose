@@ -166,7 +166,7 @@ implements WSLoadExecutor<T> {
 	//
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
-	private final BasicNIOConnPool connPool;
+	private final WSConnPool connPool;
 	private final Thread clientDaemon;
 	private final WSRequestConfig<T> wsReqConfigCopy;
 	//
@@ -254,7 +254,7 @@ implements WSLoadExecutor<T> {
 				HeapByteBufferAllocator.INSTANCE, */connConfig
 			);
 		//
-		connPool = new BasicNIOConnPool(
+		connPool = new BasicWSConnPool(
 			ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
 		);
 		connPool.setMaxTotal(totalConnCount);
@@ -361,19 +361,6 @@ implements WSLoadExecutor<T> {
 	// this should correspond the fastest target node
 	@Override
 	protected final String getNextNode() {
-		String bestNodeAddr = storageNodeAddrs[0];
-		if(storageNodeAddrs.length > 1) {
-			int
-				lastBestConnAvail = Integer.MIN_VALUE,
-				nextConnAvail;
-			for(final String addr : storageNodeAddrs) {
-				nextConnAvail = connPool.getStats(wsReqConfigCopy.getHttpHost(addr)).getAvailable();
-				if(nextConnAvail > lastBestConnAvail) {
-					lastBestConnAvail = nextConnAvail;
-					bestNodeAddr = addr;
-				}
-			}
-		}
-		return bestNodeAddr;
+		return connPool.getBestRoute();
 	}
 }
