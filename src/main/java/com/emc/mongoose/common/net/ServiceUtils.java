@@ -242,6 +242,7 @@ public final class ServiceUtils {
 	}
 	//
 	public final static String
+		KEY_RMI_HOSTNAME = "java.rmi.server.hostname",
 		KEY_RMI_CODEBASE = "java.rmi.server.codebase",
 		KEY_JMX_AUTH = "com.sun.management.jmxremote.authenticate",
 		KEY_JMX_PORT = "com.sun.management.jmxremote.port",
