@@ -13,21 +13,18 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
+import com.emc.mongoose.core.api.net.WSConnPool;
 import com.emc.mongoose.core.impl.load.model.BasicWSObjectGenerator;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
+import com.emc.mongoose.core.impl.net.BasicWSConnPool;
 import org.apache.http.ExceptionLogger;
 import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.pool.ConnPool;
-import org.apache.http.pool.ConnPoolControl;
-import org.apache.http.pool.PoolEntry;
-import org.apache.http.pool.PoolEntryCallback;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -36,7 +33,6 @@ import org.apache.http.protocol.RequestUserAgent;
 //
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
-import org.apache.http.impl.nio.pool.BasicNIOConnPool;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpClientConnection;
@@ -51,6 +47,7 @@ import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import sun.org.mozilla.javascript.NativeObject;
 //
 import java.io.IOException;
 import java.util.HashMap;
@@ -58,7 +55,6 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 02.12.14.
  */
@@ -67,102 +63,7 @@ extends ObjectLoadExecutorBase<T>
 implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
-	private static interface WSConnPool
-	extends ConnPool<HttpHost, BasicNIOPoolEntry>, ConnPoolControl<HttpHost> {
-		//
-		void closeExpired();
-		//
-		void closeIdle(final long idletime, final TimeUnit tunit);
-		//
-		void shutdown(final long waitMilliSec)
-		throws IOException;
-		//
-		boolean isShutdown();
-		//
-		HttpHost getBestRoute();
-	}
-	//
-	private final static class BasicWSConnPool
-	extends BasicNIOConnPool
-	implements WSConnPool, PoolEntryCallback<HttpHost, NHttpClientConnection> {
-		//
-		private final Map<HttpHost, AtomicInteger> routeAvailCounts = new HashMap<>();
-		//
-		private final Thread routesAnalyzer = new Thread("poolRoutesAnalyzer") {
-			{
-				setDaemon(true);
-			}
-			//
-			@Override
-			public final void run() {
-				AtomicInteger nextAvailCount;
-				while(!isInterrupted()) {
-					for(final HttpHost nextRoute : getRoutes()) {
-						nextAvailCount = routeAvailCounts.get(nextRoute);
-						if(nextAvailCount == null) {
-							nextAvailCount = new AtomicInteger(0);
-							routeAvailCounts.put(nextRoute, nextAvailCount);
-						} else {
-							nextAvailCount.set(0);
-						}
-					}
-					enumAvailable(BasicWSConnPool.this);
-				}
-			}
-		};
-		//
-		public BasicWSConnPool(
-			final ConnectingIOReactor ioreactor,
-			final NIOConnFactory<HttpHost, NHttpClientConnection> connFactory,
-			final int connectTimeout
-		) {
-			super(ioreactor, connFactory, connectTimeout);
-		}
-		//
-		public BasicWSConnPool(
-			final ConnectingIOReactor ioreactor, final int connectTimeout,
-			final ConnectionConfig config
-		) {
-			super(ioreactor, connectTimeout, config);
-		}
-		//
-		public BasicWSConnPool(final ConnectingIOReactor ioreactor, final ConnectionConfig config) {
-			super(ioreactor, config);
-		}
-		//
-		public BasicWSConnPool(final ConnectingIOReactor ioreactor) {
-			super(ioreactor);
-		}
-		//
-		@Override
-		public final HttpHost getBestRoute() {
-			int maxAvailConn = Integer.MIN_VALUE;
-			HttpHost bestRoute = null;
-			AtomicInteger nextRouteAvailCount;
-			for(final HttpHost nextRoute : getRoutes()) {
-				nextRouteAvailCount = routeAvailCounts.get(nextRoute);
-				if(nextRouteAvailCount == null) {
-					LOG.error(LogUtil.ERR, "No route stats for {} in the table", nextRoute);
-				} else if(nextRouteAvailCount.get() > maxAvailConn) {
-					maxAvailConn = nextRouteAvailCount.get();
-					bestRoute = nextRoute;
-				}
-			}
-			return bestRoute;
-		}
-		//
-		@Override
-		public void process(final PoolEntry<HttpHost, NHttpClientConnection> entry) {
-			final HttpHost route = entry.getRoute();
-			final AtomicInteger availConnCount = routeAvailCounts.get(route);
-			if(availConnCount == null) {
-				LOG.error(LogUtil.ERR, "No route stats for {} in the table", route);
-			} else {
-				availConnCount.incrementAndGet();
-			}
-		}
-	};
+	;
 	//
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
@@ -357,10 +258,27 @@ implements WSLoadExecutor<T> {
 			maxCount, minObjSize, maxObjSize, objSizeBias
 		);
 	}
-	// determines the route having the maximum available connections in the pool
-	// this should correspond the fastest target node
+	// fallbacks to round robin implementation if there's no best route is determined (yet)
+	private final static ThreadLocal<Map<HttpHost, String>> NODE_ADDR_CACHE = new ThreadLocal<>();
+	//
 	@Override
 	protected final String getNextNode() {
-		return connPool.getBestRoute();
+		final HttpHost bestRoute = connPool.getBestRoute();
+		if(bestRoute != null) {
+			//
+			Map<HttpHost, String> nodeAddrCache = NODE_ADDR_CACHE.get();
+			if(nodeAddrCache == null) {
+				nodeAddrCache = new HashMap<>();
+				NODE_ADDR_CACHE.set(nodeAddrCache);
+			}
+			//
+			String nextAddr = nodeAddrCache.get(bestRoute);
+			if(nextAddr == null) {
+				nextAddr = bestRoute.toHostString();
+				nodeAddrCache.put(bestRoute, nextAddr);
+			}
+			return nextAddr;
+		}
+		return super.getNextNode();
 	}
 }

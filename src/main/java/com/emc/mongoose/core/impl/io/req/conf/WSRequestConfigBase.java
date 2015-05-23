@@ -361,7 +361,7 @@ implements WSRequestConfig<T> {
 	private final static Map<String, HttpHost> HTTP_HOST_CACHE = new ConcurrentHashMap<>();
 	//
 	@Override
-	public HttpHost getHttpHost(final String addr) {
+	public final HttpHost getHttpHost(final String addr) {
 		final HttpHost httpHost;
 		if(HTTP_HOST_CACHE.containsKey(addr)) {
 			httpHost = HTTP_HOST_CACHE.get(addr);
