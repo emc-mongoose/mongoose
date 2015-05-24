@@ -448,7 +448,8 @@ implements LoadExecutor<T> {
 			);
 		}
 		// the node selection approach depends on the implementation
-		final String tgtNodeAddr = getNextNode();
+		final String tgtNodeAddr = storageNodeAddrs.length == 1 ?
+			storageNodeAddrs[0] : getNextNode();
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final IOTask<T> ioTask = reqConfigCopy.getRequestFor(dataItem, tgtNodeAddr);
 		try {

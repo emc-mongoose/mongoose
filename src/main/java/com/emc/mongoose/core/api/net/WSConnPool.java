@@ -22,5 +22,5 @@ extends ConnPool<HttpHost, BasicNIOPoolEntry>, ConnPoolControl<HttpHost> {
 	//
 	boolean isShutdown();
 	//
-	HttpHost getBestRoute();
+	HttpHost getMostFreeRoute();
 }

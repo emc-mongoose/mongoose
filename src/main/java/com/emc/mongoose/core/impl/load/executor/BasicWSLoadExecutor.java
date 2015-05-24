@@ -47,7 +47,6 @@ import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import sun.org.mozilla.javascript.NativeObject;
 //
 import java.io.IOException;
 import java.util.HashMap;
@@ -263,7 +262,7 @@ implements WSLoadExecutor<T> {
 	//
 	@Override
 	protected final String getNextNode() {
-		final HttpHost bestRoute = connPool.getBestRoute();
+		final HttpHost bestRoute = connPool.getMostFreeRoute();
 		if(bestRoute != null) {
 			//
 			Map<HttpHost, String> nodeAddrCache = NODE_ADDR_CACHE.get();
