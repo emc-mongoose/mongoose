@@ -447,7 +447,7 @@ implements LoadExecutor<T> {
 				name + ": all " + counterSubm.getCount() + " tasks has been submitted"
 			);
 		}
-		// the node selection approach depends on the implementation
+		// the node selection approach depends on the LoadExecutor implementation
 		final String tgtNodeAddr = storageNodeAddrs.length == 1 ?
 			storageNodeAddrs[0] : getNextNode();
 		// prepare the I/O task instance (make the link between the data item and load type)

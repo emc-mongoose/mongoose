@@ -149,10 +149,12 @@ implements IOStats {
 	public final void run() {
 		LOG.debug(LogUtil.MSG, "Running");
 		try {
-			while(updateMilliPeriod > 0) {
+			while(updateMilliPeriod > 0 && !isInterrupted()) {
 				LOG.info(LogUtil.PERF_AVG, toString());
 				Thread.sleep(updateMilliPeriod);
 			}
+		} catch(final InterruptedException ignored) {
+			LOG.debug(LogUtil.MSG, "Interrupted");
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failure");
 		} finally {

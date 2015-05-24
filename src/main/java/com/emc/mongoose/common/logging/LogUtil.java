@@ -169,15 +169,17 @@ public final class LogUtil {
 		}
 	}
 	//
-	private static final ThreadLocal<StringBuilder> THRLOC_SB = new ThreadLocal<>();
-	//
 	public static void exception(
 		final Logger logger, final Level level, final Throwable thrown,
 		final String msgPattern, final Object... args
 	) {
-		logger.log(
-			level, LogUtil.ERR, logger.getMessageFactory().newMessage(msgPattern, args), thrown
-		);
+		if(logger.isTraceEnabled(ERR)) {
+			logger.log(
+				level, ERR, logger.getMessageFactory().newMessage(msgPattern, args), thrown
+			);
+		} else {
+			logger.log(level, ERR, logger.getMessageFactory().newMessage(msgPattern, args));
+		}
 	}
 	//
 	public static void trace(
