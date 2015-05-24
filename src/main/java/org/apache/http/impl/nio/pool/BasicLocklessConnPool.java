@@ -158,7 +158,7 @@ implements AdvancedConnPool {
 	// Balancer implementation
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final static Logger LOG = LogManager.getLogger();
-	private final static int BALANCER_SLEEP_MILLISEC = 1000;
+	private final static int BALANCER_REST_TIME_RATIO = 200;
 	//
 	private volatile HttpHost mostFreeRoute = null;
 	/**
@@ -191,9 +191,8 @@ implements AdvancedConnPool {
 							mostFreeRoute = nextRoute;
 						}
 					}
-					LOG.info(LogUtil.MSG, "Balancing took {}[us]", (System.nanoTime() - t)/1000);
 					// have a rest
-					TimeUnit.MILLISECONDS.sleep(BALANCER_SLEEP_MILLISEC);
+					TimeUnit.NANOSECONDS.sleep((System.nanoTime() - t) * BALANCER_REST_TIME_RATIO);
 				}
 			} catch(final InterruptedException e) {
 				LOG.debug(LogUtil.MSG, "Interrupted");

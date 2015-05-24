@@ -45,11 +45,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.http.annotation.ThreadSafe;
 import org.apache.http.concurrent.BasicFuture;
 import org.apache.http.concurrent.FutureCallback;
-import org.apache.http.impl.nio.reactor.BasicConnectingIOReactor;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOSession;
 import org.apache.http.nio.reactor.SessionRequest;
-import org.apache.http.nio.reactor.SessionRequestCallback;
+import org.apache.http.nio.reactor.AdvancedSessionRequestCallback;
 import org.apache.http.pool.ConnPool;
 import org.apache.http.pool.ConnPoolControl;
 import org.apache.http.pool.PoolEntry;
@@ -778,7 +777,7 @@ implements ConnPool<T, E>, ConnPoolControl<T> {
     }
 
     public final class InternalSessionRequestCallback
-    implements SessionRequestCallback {
+    implements AdvancedSessionRequestCallback {
 
         private final BasicFuture<E> future;
         private final RouteSpecificPoolBase<T, C, E> pool;
@@ -787,24 +786,24 @@ implements ConnPool<T, E>, ConnPoolControl<T> {
             this.pool = pool;
             this.future = future;
         }
-
-        public void completed(final SessionRequest request) {
+        @Override
+        public final void completed(final SessionRequest request) {
             requestCompleted(request);
         }
-
-        public void cancelled(final SessionRequest request) {
+        @Override
+        public final void cancelled(final SessionRequest request) {
             requestCancelled(request);
         }
-
-        public void failed(final SessionRequest request) {
+        @Override
+        public final void failed(final SessionRequest request) {
             requestFailed(request);
         }
-
-        public void timeout(final SessionRequest request) {
+        @Override
+        public final void timeout(final SessionRequest request) {
             requestTimeout(request);
         }
-
-        public void initiated(final SessionRequest request) {
+        @Override
+        public final void initiated(final SessionRequest request) {
             pool.addPending(request, future);
             pending.add(request);
             final int timout = request.getConnectTimeout() < Integer.MAX_VALUE ?

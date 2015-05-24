@@ -485,7 +485,8 @@ implements LoadExecutor<T> {
 				LOG.debug(LogUtil.ERR, "Rejected the task {} after {} tries", ioTask, rejectCount);
 				counterRej.inc();
 			}
-		} catch(final Exception e) {
+		} catch(final Throwable e) {
+			e.printStackTrace(System.err);
 			LogUtil.exception(LOG, Level.DEBUG, e, "Submit failure");
 		} finally {
 			if(submitExecutor.isShutdown()) {

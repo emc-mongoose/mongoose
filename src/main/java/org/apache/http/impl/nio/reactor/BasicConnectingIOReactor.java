@@ -41,11 +41,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadFactory;
 
 import org.apache.http.annotation.ThreadSafe;
-import org.apache.http.nio.pool.LocklessConnPoolBase;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.reactor.IOReactorStatus;
 import org.apache.http.nio.reactor.SessionRequest;
+import org.apache.http.nio.reactor.AdvancedSessionRequestCallback;
 import org.apache.http.nio.reactor.SessionRequestCallback;
 import org.apache.http.params.HttpParams;
 import org.apache.http.util.Asserts;
@@ -226,7 +226,7 @@ implements ConnectingIOReactor {
         final SessionRequestImpl sessionRequest = new SessionRequestImpl(
                 remoteAddress, localAddress, attachment, callback);
         sessionRequest.setConnectTimeout(this.config.getConnectTimeout());
-        callback.initiated(sessionRequest);
+        AdvancedSessionRequestCallback.class.cast(callback).initiated(sessionRequest);
         this.requestQueue.add(sessionRequest);
         this.selector.wakeup();
 
