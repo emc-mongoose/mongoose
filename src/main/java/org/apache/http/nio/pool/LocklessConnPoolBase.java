@@ -435,8 +435,9 @@ implements ConnPool<T, E>, ConnPoolControl<T> {
             }
             final BasicFuture<E> future = request.getFuture();
             final SessionRequest sessionRequest = this.ioreactor.connect(
-                    remoteAddress, localAddress, route, new InternalSessionRequestCallback(pool, future));
-            // actually useless, but kept for compatibility with unit tests (SRU)
+				remoteAddress, localAddress, route, new InternalSessionRequestCallback(pool, future)
+			);
+            /* actually useless, but kept for compatibility with unit tests (SRU)
             if (!(this.ioreactor instanceof BasicConnectingIOReactor)) {
                 pool.addPending(sessionRequest, future);
                 this.pending.add(sessionRequest);
@@ -444,7 +445,7 @@ implements ConnPool<T, E>, ConnPoolControl<T> {
                         (int) request.getConnectTimeout() : Integer.MAX_VALUE;
                 sessionRequest.setConnectTimeout(timout);
             }
-            // End of comment (SRU)
+            // End of comment (SRU)*/
             return true;
         } else {
             return false;
@@ -776,7 +777,8 @@ implements ConnPool<T, E>, ConnPoolControl<T> {
         return buffer.toString();
     }
 
-    public class InternalSessionRequestCallback implements SessionRequestCallback {
+    public final class InternalSessionRequestCallback
+    implements SessionRequestCallback {
 
         private final BasicFuture<E> future;
         private final RouteSpecificPoolBase<T, C, E> pool;

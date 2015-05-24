@@ -38,6 +38,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.NoConnectionReuseStrategy;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpCoreContext;
@@ -50,7 +51,6 @@ import org.apache.http.protocol.RequestUserAgent;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
 import org.apache.http.impl.nio.pool.BasicNIOConnPool;
-import org.apache.http.impl.nio.reactor.BasicConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 //
 import org.apache.http.nio.ContentDecoder;
@@ -217,7 +217,7 @@ implements WSRequestConfig<T> {
 		);
 		//
 		try {
-			ioReactor = new BasicConnectingIOReactor(
+			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
 				new NamingWorkerFactory(String.format("WSConfigurator<%s>-%d", toString(), hashCode()))
 			);

@@ -41,6 +41,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ThreadFactory;
 
 import org.apache.http.annotation.ThreadSafe;
+import org.apache.http.nio.pool.LocklessConnPoolBase;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOReactorException;
 import org.apache.http.nio.reactor.IOReactorStatus;
