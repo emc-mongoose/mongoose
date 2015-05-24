@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.api.net;
+package org.apache.http.nio.pool;
 //
 import org.apache.http.HttpHost;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
@@ -10,7 +10,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 23.05.15.
  */ //
-public interface WSConnPool
+public interface AdvancedConnPool
 extends ConnPool<HttpHost, BasicNIOPoolEntry>, ConnPoolControl<HttpHost> {
 	//
 	void closeExpired();

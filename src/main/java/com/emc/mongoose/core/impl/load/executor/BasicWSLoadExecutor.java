@@ -13,13 +13,13 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
-import com.emc.mongoose.core.api.net.WSConnPool;
+import org.apache.http.nio.pool.AdvancedConnPool;
 import com.emc.mongoose.core.impl.load.model.BasicWSObjectGenerator;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
-import com.emc.mongoose.core.impl.net.BasicWSConnPool;
+import org.apache.http.impl.nio.pool.BasicLocklessConnPool;
 import org.apache.http.ExceptionLogger;
 import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
@@ -33,7 +33,7 @@ import org.apache.http.protocol.RequestUserAgent;
 //
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
-import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
+import org.apache.http.impl.nio.reactor.BasicConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
@@ -66,7 +66,7 @@ implements WSLoadExecutor<T> {
 	//
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
-	private final WSConnPool connPool;
+	private final AdvancedConnPool connPool;
 	private final Thread clientDaemon;
 	private final WSRequestConfig<T> wsReqConfigCopy;
 	//
@@ -136,7 +136,7 @@ implements WSLoadExecutor<T> {
 		);
 		//
 		try {
-			ioReactor = new DefaultConnectingIOReactor(
+			ioReactor = new BasicConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
 				new NamingWorkerFactory(String.format("ioWorker<%s>", getName()))
 			);
@@ -154,7 +154,7 @@ implements WSLoadExecutor<T> {
 				HeapByteBufferAllocator.INSTANCE, */connConfig
 			);
 		//
-		connPool = new BasicWSConnPool(
+		connPool = new BasicLocklessConnPool(
 			ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
 		);
 		connPool.setMaxTotal(totalConnCount);
