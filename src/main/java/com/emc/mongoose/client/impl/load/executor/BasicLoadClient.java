@@ -104,7 +104,7 @@ implements LoadClient<T> {
 	private final String name, loadSvcAddrs[];
 	//
 	private final RunTimeConfig runTimeConfig;
-	private final RequestConfig<T> reqConfig;
+	private final RequestConfig<T> reqConfigCopy;
 	private final int retryCountMax, retryDelayMilliSec, metricsPeriodSec;
 	protected volatile Producer<T> producer;
 	//
@@ -139,7 +139,14 @@ implements LoadClient<T> {
 		setThreadFactory(new NamingWorkerFactory(String.format("clientSubmitWorker<%s>", name)));
 		//
 		this.runTimeConfig = runTimeConfig;
-		this.reqConfig = reqConfig;
+		RequestConfig<T> reqConfigClone = null;
+		try {
+			reqConfigClone = reqConfig.clone();
+		} catch(final CloneNotSupportedException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the request config");
+		} finally {
+			this.reqConfigCopy = reqConfigClone;
+		}
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		this.producer = producer;
 		//
@@ -563,7 +570,7 @@ implements LoadClient<T> {
 			shutdown();
 		}
 		//
-		if(isAlive()) {
+		if(!isTerminated()) {
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 				remoteLoadMap.size(),
 				new NamingWorkerFactory(String.format("interrupt<%s>", getName()))
@@ -579,11 +586,6 @@ implements LoadClient<T> {
 			}
 			LOG.debug(LogUtil.MSG, "{}: interrupted", name);
 		}
-	}
-	//
-	@Override
-	public final boolean isAlive() {
-		return !isTerminated();
 	}
 	//
 	private volatile LoadClient<T> consumer = null;
@@ -646,8 +648,7 @@ implements LoadClient<T> {
 		submit(SubmitTask.getInstance(this, dataItem));
 	}
 	//
-	@Override
-	public final void submitSynchronously(final T dataItem)
+	private void submitSync(final T dataItem)
 	throws RejectedExecutionException {
 		if(maxCount > getTaskCount()) { // getTaskCount() is inaccurate
 			String addr;
@@ -772,16 +773,21 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
+	public final RequestConfig<T> getRequestConfig() {
+		return reqConfigCopy;
+	}
+	//
+	@Override
 	public final Map<String, LoadSvc<T>> getRemoteLoadMap() {
 		return remoteLoadMap;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void handleResult(final IOTask<T> task, final IOTask.Status status)
+	public final void handleResult(final IOTask<T> task)
 	throws RemoteException {
 		remoteLoadMap
 			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
-			.handleResult(task, status);
+			.handleResult(task);
 	}
 	//
 	@Override

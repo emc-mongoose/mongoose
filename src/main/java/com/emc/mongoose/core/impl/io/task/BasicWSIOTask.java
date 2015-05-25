@@ -12,6 +12,7 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
+import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 //
 import org.apache.http.Header;
@@ -61,10 +62,9 @@ implements WSIOTask<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public static <T extends WSObject> BasicWSIOTask<T> getInstanceFor(
-		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
+		final WSLoadExecutor<T> loadExecutor, final T dataItem, final String nodeAddr
 	) {
-		final BasicWSIOTask<T> ioTask = (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
-		return ioTask;
+		return (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(loadExecutor, dataItem, nodeAddr);
 	}
 	//
 	@Override
@@ -378,11 +378,13 @@ implements WSIOTask<T> {
 					break;
 			}
 			//
-			LOG.debug(
-				LogUtil.ERR, "Task #{}: {}{}/{} <- {} {}{}",
-				hashCode(), msgBuff, respStatusCode, status.getReasonPhrase(),
-				httpRequest.getMethod(), httpRequest.getUriAddr(), httpRequest.getUriPath()
-			);
+			if(LOG.isDebugEnabled(LogUtil.ERR)) {
+				LOG.debug(
+					LogUtil.ERR, "Task #{}: {}{}/{} <- {} {}{}",
+					hashCode(), msgBuff, respStatusCode, status.getReasonPhrase(),
+					httpRequest.getMethod(), httpRequest.getUriAddr(), httpRequest.getUriPath()
+				);
+			}
 		} else {
 			this.status = Status.SUCC;
 			wsReqConf.receiveResponse(response, dataItem);

@@ -4,6 +4,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-common.jar
 import com.emc.mongoose.common.collections.Reusable;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
@@ -33,6 +34,8 @@ extends Reusable<IOTask<T>> {
 			this.description = description;
 		}
 	}
+	//
+	IOTask<T> setLoadExecutor(final LoadExecutor<T> loadExecutor);
 	//
 	IOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//

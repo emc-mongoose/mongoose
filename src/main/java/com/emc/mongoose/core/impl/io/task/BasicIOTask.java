@@ -9,10 +9,13 @@ import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+//
+import java.rmi.RemoteException;
 /**
  Created by andrey on 12.10.14.
  */
@@ -28,6 +31,7 @@ implements IOTask<T> {
 		}
 	};
 	//
+	protected volatile LoadExecutor<T> loadExecutor = null;
 	protected volatile RequestConfig<T> reqConf = null;
 	protected volatile String nodeAddr = null;
 	protected volatile T dataItem = null;
@@ -43,9 +47,9 @@ implements IOTask<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public static <T extends DataObject> BasicIOTask<T> getInstanceFor(
-		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
+		final LoadExecutor<T> loadExecutor, final T dataItem, final String nodeAddr
 	) {
-		return (BasicIOTask<T>) POOL_BASIC_IO_TASKS.take(reqConf, dataItem, nodeAddr);
+		return (BasicIOTask<T>) POOL_BASIC_IO_TASKS.take(loadExecutor, dataItem, nodeAddr);
 	}
 	//
 	@Override
@@ -59,7 +63,7 @@ implements IOTask<T> {
 		status = Status.FAIL_UNKNOWN;
 		reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
 		if(args.length > 0) {
-			setRequestConfig((RequestConfig<T>) args[0]);
+			setLoadExecutor((LoadExecutor<T>)args[0]);
 		}
 		if(args.length > 1) {
 			setDataItem((T) args[1]);
@@ -70,8 +74,6 @@ implements IOTask<T> {
 		return this;
 	}
 	// END pool related things
-	private final static String MSG_PERF_TRACE_INVALID = "Invalid trace: ";
-	//
 	@Override
 	public final void complete() {
 		final String dataItemId = dataItem.getId();
@@ -85,7 +87,7 @@ implements IOTask<T> {
 			LOG.debug(
 				LogUtil.ERR,
 				strBuilder
-					.append(MSG_PERF_TRACE_INVALID)
+					.append("Invalid trace: ")
 					.append(nodeAddr).append(',')
 					.append(dataItemId == null ? Constants.EMPTY : dataItemId).append(',')
 					.append(transferSize).append(',')
@@ -111,6 +113,12 @@ implements IOTask<T> {
 			);
 		}
 		//
+		try {
+			loadExecutor.handleResult(this);
+		} catch(final RemoteException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected network failure");
+		}
+		//
 		if(reqSleepMilliSec > 0) {
 			try {
 				Thread.sleep(reqSleepMilliSec);
@@ -118,6 +126,17 @@ implements IOTask<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
 			}
 		}
+	}
+	//
+	@Override
+	public IOTask<T> setLoadExecutor(final LoadExecutor<T> loadExecutor) {
+		this.loadExecutor = loadExecutor;
+		try {
+			setRequestConfig(loadExecutor.getRequestConfig());
+		} catch(final RemoteException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected network failure");
+		}
+		return this;
 	}
 	//
 	@Override

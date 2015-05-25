@@ -387,11 +387,6 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final BasicWSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr) {
-		return BasicWSIOTask.getInstanceFor(this, dataItem, nodeAddr);
-	}
-	//
-	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);

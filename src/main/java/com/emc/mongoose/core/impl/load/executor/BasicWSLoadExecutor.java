@@ -13,13 +13,12 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
-import org.apache.http.nio.pool.AdvancedConnPool;
+import com.emc.mongoose.core.impl.load.executor.util.DataObjectWorkerFactory;
 import com.emc.mongoose.core.impl.load.model.BasicWSObjectGenerator;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
-import org.apache.http.impl.nio.pool.BasicLocklessConnPool;
 import org.apache.http.ExceptionLogger;
 import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
@@ -31,9 +30,10 @@ import org.apache.http.protocol.RequestConnControl;
 import org.apache.http.protocol.RequestContent;
 import org.apache.http.protocol.RequestUserAgent;
 //
+import org.apache.http.impl.nio.pool.BasicNIOConnPool;
+import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.impl.nio.DefaultHttpClientIODispatch;
 import org.apache.http.impl.nio.pool.BasicNIOConnFactory;
-import org.apache.http.impl.nio.reactor.BasicConnectingIOReactor;
 import org.apache.http.impl.nio.reactor.IOReactorConfig;
 import org.apache.http.nio.NHttpClientConnection;
 import org.apache.http.nio.NHttpClientEventHandler;
@@ -49,8 +49,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +64,7 @@ implements WSLoadExecutor<T> {
 	//
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
-	private final AdvancedConnPool connPool;
+	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
 	private final WSRequestConfig<T> wsReqConfigCopy;
 	//
@@ -83,8 +81,7 @@ implements WSLoadExecutor<T> {
 		this.wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
 		//
 		final int totalConnCount = connCountPerNode * storageNodeCount;
-		final HeaderGroup sharedHeaders = WSRequestConfig.class.cast(reqConfigCopy)
-			.getSharedHeaders();
+		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
 		final String userAgent = runTimeConfig.getRunName() + "/" + runTimeConfig.getRunVersion();
 		//
 		final HttpProcessor httpProcessor = HttpProcessorBuilder
@@ -93,7 +90,7 @@ implements WSLoadExecutor<T> {
 			.add(new RequestTargetHost())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
-				//.add(new RequestExpectContinue(true))
+			//.add(new RequestExpectContinue(true))
 			.add(new RequestContent(false))
 			.build();
 		client = new HttpAsyncRequester(
@@ -107,7 +104,7 @@ implements WSLoadExecutor<T> {
 		);
 		//
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
-		final int buffSize = this.reqConfigCopy.getBuffSize();
+		final int buffSize = wsReqConfigCopy.getBuffSize();
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(totalConnCount)
@@ -136,9 +133,9 @@ implements WSLoadExecutor<T> {
 		);
 		//
 		try {
-			ioReactor = new BasicConnectingIOReactor(
+			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new NamingWorkerFactory(String.format("ioWorker<%s>", getName()))
+				new DataObjectWorkerFactory(loadNum, wsReqConfigCopy.getAPI(), loadType, name)
 			);
 		} catch(final IOReactorException e) {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);
@@ -154,7 +151,7 @@ implements WSLoadExecutor<T> {
 				HeapByteBufferAllocator.INSTANCE, */connConfig
 			);
 		//
-		connPool = new BasicLocklessConnPool(
+		connPool = new BasicNIOConnPool(
 			ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
 		);
 		connPool.setMaxTotal(totalConnCount);
@@ -256,28 +253,5 @@ implements WSLoadExecutor<T> {
 		return (Producer<T>) new BasicWSObjectGenerator<>(
 			maxCount, minObjSize, maxObjSize, objSizeBias
 		);
-	}
-	// fallbacks to round robin implementation if there's no best route is determined (yet)
-	private final static ThreadLocal<Map<HttpHost, String>> NODE_ADDR_CACHE = new ThreadLocal<>();
-	//
-	@Override
-	protected final String getNextNode() {
-		final HttpHost bestRoute = connPool.getMostFreeRoute();
-		if(bestRoute != null) {
-			//
-			Map<HttpHost, String> nodeAddrCache = NODE_ADDR_CACHE.get();
-			if(nodeAddrCache == null) {
-				nodeAddrCache = new HashMap<>();
-				NODE_ADDR_CACHE.set(nodeAddrCache);
-			}
-			//
-			String nextAddr = nodeAddrCache.get(bestRoute);
-			if(nextAddr == null) {
-				nextAddr = bestRoute.toHostString();
-				nodeAddrCache.put(bestRoute, nextAddr);
-			}
-			return nextAddr;
-		}
-		return super.getNextNode();
 	}
 }

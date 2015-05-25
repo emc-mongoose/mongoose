@@ -2,6 +2,7 @@ package com.emc.mongoose.core.api.load.executor;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Consumer;
@@ -53,22 +54,14 @@ extends Producer<T>, Consumer<T> {
 	Producer<T> getProducer()
 	throws RemoteException;
 	//
+	RequestConfig<T> getRequestConfig()
+	throws RemoteException;
+	//
 	Future<IOTask.Status> submit(final IOTask<T> request)
 	throws RemoteException, RejectedExecutionException;
 	//
-	void submitSynchronously(final T dataItem)
+	void handleResult(final IOTask<T> task)
 	throws RemoteException;
-	//
-	void handleResult(final IOTask<T> task, IOTask.Status status)
-	throws RemoteException;
-	//
-	@Override
-	void join()
-	throws RemoteException, InterruptedException;
-	//
-	@Override
-	void join(final long timeOutMilliSec)
-	throws RemoteException, InterruptedException;
 	//
 	void logMetrics(Marker marker)
 	throws RemoteException;

@@ -27,7 +27,4 @@ public interface Producer<T extends DataItem> {
 	//
 	void interrupt()
 	throws RemoteException;
-	//
-	boolean isAlive()
-	throws RemoteException;
 }
