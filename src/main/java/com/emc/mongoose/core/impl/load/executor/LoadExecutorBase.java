@@ -7,7 +7,6 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
-import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -33,17 +32,15 @@ import org.apache.logging.log4j.Marker;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -65,8 +62,6 @@ implements LoadExecutor<T> {
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
-	private final InstancePool<BasicIOTask> ioTaskPool;
-	//
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
 	//
@@ -80,6 +75,8 @@ implements LoadExecutor<T> {
 	//
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter jmxReporter;
+	//
+	protected final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
 	//
 	private final Thread metricsDaemon = new Thread() {
 		//
@@ -107,7 +104,6 @@ implements LoadExecutor<T> {
 	// STATES section
 	protected final AtomicLong
 		durTasksSum = new AtomicLong(0),
-		counterRoundRobinSubm = new AtomicLong(0),
 		counterResultHandle = new AtomicLong(0);
 	private final AtomicBoolean isClosed = new AtomicBoolean(false);
 	private final Lock lock = new ReentrantLock();
@@ -155,6 +151,9 @@ implements LoadExecutor<T> {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		// prepare the nodes array
 		storageNodeAddrs = addrs.clone();
+		for(final String addr : storageNodeAddrs) {
+			activeTasksStats.put(addr, new AtomicInteger(0));
+		}
 		// create and configure the connection manager
 		dataSrc = reqConfig.getDataSource();
 		//
@@ -167,17 +166,6 @@ implements LoadExecutor<T> {
 		} else {
 			producer = reqConfig.getAnyDataProducer(maxCount, addrs[0]);
 			LOG.debug(LogUtil.MSG, "{} will use {} as data items producer", getName(), producer);
-		}
-		//
-		try {
-			ioTaskPool = new InstancePool<>(
-				BasicIOTask.class.getConstructor(LoadExecutor.class), this
-			);
-		} catch(final NoSuchMethodException e) {
-			for(final Constructor c : BasicIOTask.class.getConstructors()) {
-				LOG.info(LogUtil.ERR, c);
-			}
-			throw new IllegalStateException(e);
 		}
 		//
 		if(producer != null) {
@@ -396,21 +384,31 @@ implements LoadExecutor<T> {
 			submit(ioTask);
 			counterSubm.inc();
 		} catch(final Exception e) {
+			e.printStackTrace(System.err);
 			LogUtil.exception(LOG, Level.DEBUG, e, "Submit failure");
 		}
 	}
 	//
 	@SuppressWarnings("unchecked")
-	protected IOTask<T> getIOTask(final T dataItem, final String addr) {
-		return ioTaskPool.take(dataItem, addr);
-	}
-	//
-	protected void releaseIOTask(final IOTask<T> ioTask) {
-		ioTaskPool.release(BasicIOTask.class.cast(ioTask));
+	protected BasicIOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
+		return BasicIOTask.getInstance(this, dataItem, nextNodeAddr);
 	}
 	//
 	private String getNextNode() {
-		return storageNodeAddrs[(int) (counterRoundRobinSubm.getAndIncrement() % storageNodeCount)];
+		String nextNode = null;
+		//final StringBuilder sb = new StringBuilder("Active tasks stats: ");
+		int minActiveTaskCount = Integer.MAX_VALUE, nextActiveTaskCount;
+		for(final String addr : storageNodeAddrs) {
+			nextActiveTaskCount = activeTasksStats.get(addr).get();
+			//sb.append(addr).append("=").append(nextActiveTaskCount).append(", ");
+			if(nextActiveTaskCount < minActiveTaskCount) {
+				minActiveTaskCount = nextActiveTaskCount;
+				nextNode = addr;
+			}
+		}
+		//LOG.info(LogUtil.MSG, sb.append("best: ").append(nextNode).toString());
+		activeTasksStats.get(nextNode).incrementAndGet(); // mark
+		return nextNode;
 	}
 	//
 	@Override
@@ -420,7 +418,8 @@ implements LoadExecutor<T> {
 		if(metricsDaemon.isInterrupted()) {
 			return;
 		}
-		// update the metrics and release the task
+		// update the metrics
+		activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 		final IOTask.Status status = ioTask.getStatus();
 		final T dataItem = ioTask.getDataItem();
 		final int latency = ioTask.getLatency();
@@ -471,9 +470,6 @@ implements LoadExecutor<T> {
 				LOG, Level.DEBUG, e, "\"{}\" rejected the data item \"{}\"", consumer, dataItem
 			);
 		} finally {
-			//
-			releaseIOTask(ioTask);
-			//
 			final long n = counterResultHandle.incrementAndGet();
 			if(n >= maxCount || super.isInterrupted() && n >= counterSubm.getCount()) {
 				// max count is reached OR all tasks are done
@@ -537,7 +533,7 @@ implements LoadExecutor<T> {
 			} catch(final IllegalStateException | RejectedExecutionException e) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
-				ioTaskPool.clear();
+				BasicIOTask.INSTANCE_POOL_MAP.put(this, null); // dispose I/O tasks pool
 				jmxReporter.close();
 				LOG.debug(LogUtil.MSG, "JMX reported closed");
 				LoadCloseHook.del(this);

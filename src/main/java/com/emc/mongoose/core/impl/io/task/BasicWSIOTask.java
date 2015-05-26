@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
+import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -10,6 +11,7 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 //
@@ -38,6 +40,8 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 /**
  Created by kurila on 06.06.14.
  */
@@ -65,6 +69,37 @@ implements WSIOTask<T> {
 		//
 		if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
 			httpRequest.setMethod(wsReqConf.getHTTPMethod());
+		}
+	}
+	//
+	public final static Map<WSLoadExecutor, InstancePool<BasicWSIOTask>>
+		INSTANCE_POOL_MAP = new HashMap<>();
+	//
+	public static BasicWSIOTask getInstance(
+		final WSLoadExecutor loadExecutor, WSObject dataItem, final String nodeAddr
+	) {
+		InstancePool<BasicWSIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
+		if(instPool == null) {
+			try {
+				instPool = new InstancePool<>(
+					BasicWSIOTask.class.getConstructor(WSLoadExecutor.class), loadExecutor
+				);
+				INSTANCE_POOL_MAP.put(loadExecutor, instPool);
+			} catch(final NoSuchMethodException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+		//
+		return instPool.take(dataItem, nodeAddr);
+	}
+	//
+	@Override
+	public void release() {
+		final InstancePool<BasicWSIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
+		if(instPool == null) {
+			throw new IllegalStateException("No pool found to release back");
+		} else {
+			instPool.release(this);
 		}
 	}
 	//

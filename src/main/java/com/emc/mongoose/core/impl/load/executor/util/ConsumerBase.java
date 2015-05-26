@@ -82,6 +82,7 @@ implements Consumer<T> {
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "{}: consuming interrupted", getName());
 		} catch(final Exception e) {
+			e.printStackTrace(System.err);
 			LogUtil.exception(LOG, Level.ERROR, e, "Serving the submit queue failure");
 		}
 	}

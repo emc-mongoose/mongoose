@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.io.task;
 //
+import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataItem;
@@ -14,6 +15,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
+import java.util.HashMap;
+import java.util.Map;
 /**
  Created by andrey on 12.10.14.
  */
@@ -48,6 +51,27 @@ implements IOTask<T> {
 		}
 	}
 	//
+	public final static Map<LoadExecutor, InstancePool<BasicIOTask>>
+		INSTANCE_POOL_MAP = new HashMap<>();
+	//
+	public static BasicIOTask getInstance(
+		final LoadExecutor loadExecutor, DataItem dataItem, final String nodeAddr
+	) {
+		InstancePool<BasicIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
+		if(instPool == null) {
+			try {
+				instPool = new InstancePool<>(
+					BasicIOTask.class.getConstructor(LoadExecutor.class), loadExecutor
+				);
+				INSTANCE_POOL_MAP.put(loadExecutor, instPool);
+			} catch(final NoSuchMethodException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+		//
+		return instPool.take(dataItem, nodeAddr);
+	}
+	//
 	@Override @SuppressWarnings("unchecked")
 	public final BasicIOTask<T> reuse(final Object... args) {
 		if(args == null) {
@@ -62,12 +86,15 @@ implements IOTask<T> {
 		}
 		return this;
 	}
-	/**
-	 Does nothing. LoadExecutor cares about releasing this back into the pool at the end of
-	 LoadExecutor.handleResult invocation.
-	 */
+	//
 	@Override
-	public final void release() {
+	public void release() {
+		final InstancePool<BasicIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
+		if(instPool == null) {
+			throw new IllegalStateException("No pool found to release back");
+		} else {
+			instPool.release(this);
+		}
 	}
 	//
 	@Override
@@ -128,6 +155,8 @@ implements IOTask<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
 			}
 		}
+		//
+		release();
 	}
 	//
 	@Override

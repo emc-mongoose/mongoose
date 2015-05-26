@@ -1,11 +1,7 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
-import com.emc.mongoose.common.collections.InstancePool;
-//
 import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
 import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
-import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -25,8 +21,6 @@ implements ObjectLoadExecutor<T> {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
 	//
-	private final InstancePool<BasicObjectIOTask> ioTaskPool;
-	//
 	protected ObjectLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final ObjectRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
@@ -34,28 +28,14 @@ implements ObjectLoadExecutor<T> {
 		final int countUpdPerReq
 	) throws ClassCastException {
 		super(
-			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
-			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
+			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount, sizeMin, sizeMax,
+			sizeBias, rateLimit, countUpdPerReq
 		);
-		//
-		try {
-			ioTaskPool = new InstancePool<>(
-				BasicObjectIOTask.class.getConstructor(ObjectLoadExecutor.class), this
-			);
-		} catch(final NoSuchMethodException e) {
-			throw new IllegalStateException(e);
-		}
 	}
 	//
-	@Override
-	@SuppressWarnings("unchecked")
-	protected DataObjectIOTask<T> getIOTask(final T dataItem, final String addr) {
-		return ioTaskPool.take(dataItem, addr);
-	}
-	//
-	@Override
-	protected void releaseIOTask(final IOTask<T> ioTask) {
-		ioTaskPool.release(BasicObjectIOTask.class.cast(ioTask));
+	@Override @SuppressWarnings("unchecked")
+	protected BasicObjectIOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
+		return BasicObjectIOTask.getInstance(this, dataItem, nextNodeAddr);
 	}
 	//
 	@Override
@@ -64,7 +44,7 @@ implements ObjectLoadExecutor<T> {
 		try {
 			super.close();
 		} finally {
-			ioTaskPool.clear();
+			BasicObjectIOTask.INSTANCE_POOL_MAP.put(this, null); // dispose the I/O tasks pool
 		}
 	}
 }

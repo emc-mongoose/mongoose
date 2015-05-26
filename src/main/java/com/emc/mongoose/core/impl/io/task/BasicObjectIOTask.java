@@ -1,15 +1,20 @@
 package com.emc.mongoose.core.impl.io.task;
 //
+import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.logging.LogUtil;
+//
 import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
-//
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
+import java.util.HashMap;
+import java.util.Map;
 /**
  Created by kurila on 23.12.14.
  */
@@ -21,6 +26,37 @@ implements DataObjectIOTask<T> {
 	//
 	public BasicObjectIOTask(final ObjectLoadExecutor<T> loadExecutor) {
 		super(loadExecutor);
+	}
+	//
+	public final static Map<ObjectLoadExecutor, InstancePool<BasicObjectIOTask>>
+		INSTANCE_POOL_MAP = new HashMap<>();
+	//
+	public static BasicObjectIOTask getInstance(
+		final ObjectLoadExecutor loadExecutor, DataObject dataItem, final String nodeAddr
+	) {
+		InstancePool<BasicObjectIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
+		if(instPool == null) {
+			try {
+				instPool = new InstancePool<>(
+					BasicObjectIOTask.class.getConstructor(ObjectLoadExecutor.class), loadExecutor
+				);
+				INSTANCE_POOL_MAP.put(loadExecutor, instPool);
+			} catch(final NoSuchMethodException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+		//
+		return instPool.take(dataItem, nodeAddr);
+	}
+	//
+	@Override
+	public void release() {
+		final InstancePool<BasicObjectIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
+		if(instPool == null) {
+			throw new IllegalStateException("No pool found to release back");
+		} else {
+			instPool.release(this);
+		}
 	}
 	//
 	@Override
@@ -81,5 +117,7 @@ implements DataObjectIOTask<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
 			}
 		}
+		//
+		release();
 	}
 }

@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
-import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
 import com.emc.mongoose.common.http.RequestTargetHost;
@@ -62,12 +61,12 @@ implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	@SuppressWarnings("FieldCanBeLocal")
+	private final HttpProcessor httpProcessor;
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
-	//
-	private final InstancePool<BasicWSIOTask> ioTaskPool;
 	//
 	public BasicWSLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
@@ -81,19 +80,11 @@ implements WSLoadExecutor<T> {
 		);
 		final WSRequestConfig<T> wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
 		//
-		try {
-			ioTaskPool = new InstancePool<>(
-				BasicWSIOTask.class.getConstructor(WSLoadExecutor.class), this
-			);
-		} catch(final NoSuchMethodException e) {
-			throw new IllegalStateException(e);
-		}
-		//
 		final int totalConnCount = connCountPerNode * storageNodeCount;
 		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
 		final String userAgent = runTimeConfig.getRunName() + "/" + runTimeConfig.getRunVersion();
 		//
-		final HttpProcessor httpProcessor = HttpProcessorBuilder
+		httpProcessor = HttpProcessorBuilder
 			.create()
 			.add(new RequestSharedHeaders(sharedHeaders))
 			.add(new RequestTargetHost())
@@ -173,16 +164,6 @@ implements WSLoadExecutor<T> {
 		clientDaemon.setDaemon(true);
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	protected WSIOTask<T> getIOTask(final T dataItem, final String addr) {
-		return ioTaskPool.take(dataItem, addr);
-	}
-	//
-	@Override
-	protected void releaseIOTask(final IOTask<T> ioTask) {
-		ioTaskPool.release(BasicWSIOTask.class.cast(ioTask));
-	}
-	//
 	@Override
 	public synchronized void start() {
 		if(clientDaemon == null) {
@@ -200,30 +181,38 @@ implements WSLoadExecutor<T> {
 			super.close();
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Closing failure");
-		}
-		//
-		clientDaemon.interrupt();
-		LOG.debug(LogUtil.MSG, "Web storage client daemon \"{}\" interrupted", clientDaemon);
-		if(connPool != null) {
-			connPool.closeExpired();
-			LOG.debug(LogUtil.MSG, "Closed expired (if any) connections in the pool");
+		} finally {
 			try {
-				connPool.closeIdle(1, TimeUnit.MILLISECONDS);
-				LOG.debug(LogUtil.MSG, "Closed idle connections (if any) in the pool");
-			} finally {
-				try {
-					connPool.shutdown(1);
-					LOG.debug(LogUtil.MSG, "Connection pool has been shut down");
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Connection pool shutdown failure");
+				clientDaemon.interrupt();
+				LOG.debug(
+					LogUtil.MSG, "Web storage client daemon \"{}\" interrupted", clientDaemon
+				);
+				if(connPool != null) {
+					connPool.closeExpired();
+					LOG.debug(LogUtil.MSG, "Closed expired (if any) connections in the pool");
+					try {
+						connPool.closeIdle(1, TimeUnit.MILLISECONDS);
+						LOG.debug(LogUtil.MSG, "Closed idle connections (if any) in the pool");
+					} finally {
+						try {
+							connPool.shutdown(1);
+							LOG.debug(LogUtil.MSG, "Connection pool has been shut down");
+						} catch(final IOException e) {
+							LogUtil.exception(
+								LOG, Level.WARN, e, "Connection pool shutdown failure"
+							);
+						}
+					}
 				}
+				//
+				ioReactor.shutdown(1);
+				LOG.debug(LogUtil.MSG, "I/O reactor has been shut down");
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "I/O reactor shutdown failure");
+			} finally {
+				BasicWSIOTask.INSTANCE_POOL_MAP.put(this, null); // dispose the I/O tasks pool
 			}
 		}
-		//
-		ioReactor.shutdown(1);
-		LOG.debug(LogUtil.MSG, "I/O reactor has been shut down");
-		//
-		ioTaskPool.clear();
 	}
 	//
 	@Override
@@ -240,14 +229,18 @@ implements WSLoadExecutor<T> {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, wsTask);
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(
-					LogUtil.MSG, "I/O task #{} has been submitted for execution, {}",
-					wsTask.hashCode(), ioTaskPool.toString()
+					LogUtil.MSG, "I/O task #{} has been submitted for execution", wsTask.hashCode()
 				);
 			}
 		} catch(final Exception e) {
 			throw new RejectedExecutionException(e);
 		}
 		return futureResult;
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	protected  BasicWSIOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
+		return BasicWSIOTask.getInstance(this, dataItem, nextNodeAddr);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
