@@ -67,9 +67,16 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Reusable implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static InstancePool<BasicWSResponseProducer> POOL = new InstancePool<>(
-		BasicWSResponseProducer.class
-	);
+	private final static InstancePool<BasicWSResponseProducer> POOL;
+	static {
+		InstancePool<BasicWSResponseProducer> t = null;
+		try {
+			t = new InstancePool<>(BasicWSResponseProducer.class.getConstructor());
+		} catch(final NoSuchMethodException e) {
+			LogUtil.exception(LOG, Level.FATAL, e, "Failed to create the instance pool");
+		}
+		POOL = t;
+	}
 	//
 	public static BasicWSResponseProducer getInstance(final HttpResponse response) {
 		return POOL.take(response);

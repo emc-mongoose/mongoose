@@ -291,7 +291,7 @@
 					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "org.python.core.PyReflectedFunction",
-					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}
 			]
 		}

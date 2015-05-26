@@ -10,30 +10,35 @@ import org.apache.logging.log4j.Logger;
 //
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 23.12.14.
  */
-public final class JoinLoadJobTask
+public final class AwaitLoadJobTask
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final LoadExecutor loadJob;
-	private final long timeOutMilliSec;
+	private final long timeOut;
+	private final TimeUnit timeUnit;
 	//
-	public JoinLoadJobTask(final LoadExecutor loadJob, final long timeOutMilliSec) {
+	public AwaitLoadJobTask(
+		final LoadExecutor loadJob, final long timeOut, final TimeUnit timeUnit
+	) {
 		this.loadJob = loadJob;
-		this.timeOutMilliSec = timeOutMilliSec;
+		this.timeOut = timeOut;
+		this.timeUnit = timeUnit;
 	}
 	//
 	@Override
 	public final void run() {
 		try {
 			LOG.debug(
-				LogUtil.MSG, "Wait for the remote load service \"{}\" to complete at {}[ms]",
-				loadJob.getName(), timeOutMilliSec
+				LogUtil.MSG, "Wait for the remote load service \"{}\" to complete at {}[{}]",
+				loadJob.getName(), timeOut, timeUnit
 			);
-			loadJob.join(timeOutMilliSec);
+			loadJob.await(timeOut, timeUnit);
 		} catch(final NoSuchObjectException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Remote join failed, no such service");
 		} catch(final RemoteException e) {

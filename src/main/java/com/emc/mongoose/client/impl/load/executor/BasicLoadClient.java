@@ -4,6 +4,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
+import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -15,9 +16,10 @@ import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
+import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
@@ -32,8 +34,6 @@ import com.emc.mongoose.client.impl.load.executor.tasks.CountLimitWaitTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.FrameFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
-//
-import com.emc.mongoose.core.impl.load.tasks.JoinLoadJobTask;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -53,16 +53,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 20.10.14.
  */
@@ -76,6 +75,8 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final Map<String, JMXConnector> remoteJMXConnMap;
 	private final Map<String, MBeanServerConnection> mBeanSrvConnMap;
+	private final Map<String, InstancePool<RemoteSubmitTask>> submTaskPoolMap;
+	//
 	private final MetricRegistry metrics = new MetricRegistry();
 	protected final JmxReporter metricsReporter;
 	//
@@ -105,7 +106,7 @@ implements LoadClient<T> {
 	//
 	private final RunTimeConfig runTimeConfig;
 	private final RequestConfig<T> reqConfigCopy;
-	private final int retryCountMax, retryDelayMilliSec, metricsPeriodSec;
+	private final int metricsPeriodSec;
 	protected volatile Producer<T> producer;
 	//
 	public BasicLoadClient(
@@ -115,9 +116,8 @@ implements LoadClient<T> {
 	) {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(
-				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
-					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
+			new ArrayBlockingQueue<Runnable>(
+				(int) Math.min(maxCount, runTimeConfig.getRunRequestQueueSize())
 			)
 		);
 		setCorePoolSize(
@@ -139,19 +139,13 @@ implements LoadClient<T> {
 		setThreadFactory(new NamingWorkerFactory(String.format("clientSubmitWorker<%s>", name)));
 		//
 		this.runTimeConfig = runTimeConfig;
-		RequestConfig<T> reqConfigClone = null;
 		try {
-			reqConfigClone = reqConfig.clone();
+			this.reqConfigCopy = reqConfig.clone();
 		} catch(final CloneNotSupportedException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to clone the request config");
-		} finally {
-			this.reqConfigCopy = reqConfigClone;
+			throw new IllegalStateException("Failed to clone the request config");
 		}
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		this.producer = producer;
-		//
-		retryCountMax = runTimeConfig.getRunRetryCountMax();
-		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		//
 		metricsPeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
 		//
@@ -170,12 +164,27 @@ implements LoadClient<T> {
 		this.remoteJMXConnMap = remoteJMXConnMap;
 		////////////////////////////////////////////////////////////////////////////////////////////
 		mBeanSrvConnMap = new HashMap<>();
+		submTaskPoolMap = new HashMap<>();
 		for(final String addr: loadSvcAddrs) {
 			try {
 				mBeanSrvConnMap.put(addr, remoteJMXConnMap.get(addr).getMBeanServerConnection());
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to obtain MBean server connection for {}", addr
+				);
+			}
+			//
+			try {
+				submTaskPoolMap.put(
+					addr,
+					new InstancePool<>(
+						RemoteSubmitTask.class.getConstructor(LoadSvc.class),
+						remoteLoadMap.get(addr)
+					)
+				);
+			} catch(final NoSuchMethodException e) {
+				LogUtil.exception(
+					LOG, Level.FATAL, e, "Failed to create the remote submit task instance pool"
 				);
 			}
 		}
@@ -638,50 +647,29 @@ implements LoadClient<T> {
 			);
 		}
 	}
+	//
+	@Override
+	public final RequestConfig<T> getRequestConfig() {
+		return reqConfigCopy;
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final AtomicLong countSubmCalls = new AtomicLong(0);
-	//
 	@Override
 	public final void submit(final T dataItem) {
-		submit(SubmitTask.getInstance(this, dataItem));
-	}
-	//
-	private void submitSync(final T dataItem)
-	throws RejectedExecutionException {
-		if(maxCount > getTaskCount()) { // getTaskCount() is inaccurate
-			String addr;
-			int rejectCount = 0;
-			do {
-				try {
-					addr = loadSvcAddrs[
-						(int) (countSubmCalls.getAndIncrement() % loadSvcAddrs.length)
-					];
-					remoteLoadMap.get(addr).submit(dataItem);
-					break;
-				} catch(final RemoteException | RejectedExecutionException e) {
-					rejectCount ++;
-					try {
-						Thread.sleep(rejectCount * retryDelayMilliSec);
-					} catch(final InterruptedException ee) {
-						break;
-					}
-				} catch(final InterruptedException e) {
-					LOG.debug(LogUtil.MSG, "Interrupted while submitting the data item");
-					break;
-				}
-			} while(rejectCount < retryCountMax && !isShutdown());
-		} else {
-			LOG.info(LogUtil.MSG, "maxCount = {}, taskCount = {}", maxCount, getTaskCount());
-			shutdown();
+		InstancePool<RemoteSubmitTask> mostAvailPool = null;
+		int maxPoolSize = 0, nextPoolSize;
+		for(final InstancePool<RemoteSubmitTask> nextPool : submTaskPoolMap.values()) {
+			nextPoolSize = nextPool.size();
+			if(nextPoolSize >= maxPoolSize) {
+				maxPoolSize = nextPoolSize;
+				mostAvailPool = nextPool;
+			}
 		}
-		//
-		if(isShutdown()) {
-			throw new RejectedExecutionException(
-				getName() + ": max data item count (" + maxCount +
-				") have been submitted, shutdown the submit executor"
-			);
+		if(mostAvailPool == null) {
+			throw new RejectedExecutionException("No remote load service to execute on");
+		} else {
+			submit(mostAvailPool.take(dataItem));
 		}
 	}
 	//
@@ -773,11 +761,6 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final RequestConfig<T> getRequestConfig() {
-		return reqConfigCopy;
-	}
-	//
-	@Override
 	public final Map<String, LoadSvc<T>> getRemoteLoadMap() {
 		return remoteLoadMap;
 	}
@@ -818,13 +801,13 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final void join()
+	public final void await()
 	throws RemoteException, InterruptedException {
-		join(Long.MAX_VALUE);
+		await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 	//
 	@Override
-	public final void join(final long timeOutMilliSec)
+	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
 		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
 			remoteLoadMap.size() + 1,
@@ -840,7 +823,7 @@ implements LoadClient<T> {
 						getName(), getQueue().size() + getActiveCount()
 					);
 					try {
-						awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
+						awaitTermination(timeOut, timeUnit);
 					} catch(final InterruptedException e) {
 						LOG.debug(LogUtil.MSG, "Interrupted");
 					}
@@ -848,12 +831,12 @@ implements LoadClient<T> {
 			}
 		);
 		for(final String addr : remoteLoadMap.keySet()) {
-			joinExecutor.submit(new JoinLoadJobTask(remoteLoadMap.get(addr), timeOutMilliSec));
+			joinExecutor.submit(new AwaitLoadJobTask(remoteLoadMap.get(addr), timeOut, timeUnit));
 		}
 		joinExecutor.shutdown();
 		try {
-			LOG.debug(LogUtil.MSG, "Wait remote join tasks for finish {}[ms]", timeOutMilliSec);
-			if(joinExecutor.awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+			LOG.debug(LogUtil.MSG, "Wait remote join tasks for finish {}[{}]", timeOut, timeUnit);
+			if(joinExecutor.awaitTermination(timeOut, timeUnit)) {
 				LOG.debug(LogUtil.MSG, "All join tasks finished");
 			} else {
 				LOG.debug(LogUtil.MSG, "Join tasks execution timeout");

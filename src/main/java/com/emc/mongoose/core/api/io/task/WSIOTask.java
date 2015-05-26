@@ -25,9 +25,6 @@ extends
 	WSIOTask<T> setDataItem(final T dataItem);
 	//
 	@Override
-	WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
-	//
-	@Override
 	WSIOTask<T> setNodeAddr(final String nodeAddr)
 	throws IllegalStateException;
 }

@@ -91,11 +91,11 @@ implements Producer<T> {
 				}
 				i ++;
 			} catch(final RejectedExecutionException e) {
-				LOG.trace(LogUtil.ERR, MSG_SUBMIT_REJECTED);
+				LogUtil.exception(LOG, Level.TRACE, e, MSG_SUBMIT_REJECTED);
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.TRACE, e, MSG_SUBMIT_FAILED);
 			} catch(final InterruptedException e) {
-				LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, MSG_INTERRUPTED);
+				LOG.debug(LogUtil.MSG, MSG_INTERRUPTED);
 				break;
 			}
 		} while(!isInterrupted() && i < maxCount);

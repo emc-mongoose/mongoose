@@ -19,6 +19,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.rmi.RemoteException;
+import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -60,6 +62,18 @@ implements Producer<T> {
 	@Override
 	public final Consumer<T> getConsumer() {
 		return consumer;
+	}
+	//
+	@Override
+	public final void await()
+	throws InterruptedException {
+		join();
+	}
+	//
+	@Override
+	public final void await(final long timeOut, final TimeUnit timeUnit)
+	throws InterruptedException {
+		timeUnit.timedJoin(this, timeOut);
 	}
 	//
 	@Override

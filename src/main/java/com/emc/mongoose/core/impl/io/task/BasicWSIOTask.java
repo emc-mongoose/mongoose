@@ -3,11 +3,9 @@ package com.emc.mongoose.core.impl.io.task;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
 import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.collections.InstancePool;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
@@ -16,7 +14,6 @@ import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 //
 import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
@@ -50,57 +47,25 @@ implements WSIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static BasicWSIOTask POISON = new BasicWSIOTask() {
-		@Override
-		public final String toString() {
-			return "<POISON>";
-		}
-	};
-	// BEGIN pool related things
-	private final static InstancePool<BasicWSIOTask>
-		POOL_WEB_IO_TASKS = new InstancePool<>(BasicWSIOTask.class);
-	//
-	@SuppressWarnings("unchecked")
-	public static <T extends WSObject> BasicWSIOTask<T> getInstanceFor(
-		final WSLoadExecutor<T> loadExecutor, final T dataItem, final String nodeAddr
-	) {
-		return (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(loadExecutor, dataItem, nodeAddr);
-	}
-	//
-	@Override
-	public void release() {
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LogUtil.trace(LOG, Level.TRACE, LogUtil.MSG, "Releasing the task {}", hashCode());
-		}
-		resetRequest();
-		POOL_WEB_IO_TASKS.release(this);
-	}
-	// END pool related things
-	private WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
-	private HeaderGroup sharedHeaders = null;
+	private final HeaderGroup sharedHeaders;
 	private final MutableWSRequest httpRequest = new BasicWSRequest(
 		MutableWSRequest.HTTPMethod.PUT, null, null
 	);
-	private volatile HttpEntity reqEntity = null;
+	private WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	//
-	@Override
-	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
-		if(reqConf != null && !reqConf.equals(wsReqConf)) {
-			this.wsReqConf = (WSRequestConfig<T>) reqConf;
-			//
-			final HeaderGroup headers = wsReqConf.getSharedHeaders();
-			sharedHeaders = new HeaderGroup();
-			for(final Header header : headers.getAllHeaders()) {
-				sharedHeaders.updateHeader(header);
-			}
-			//
-			if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
-				httpRequest.setMethod(wsReqConf.getHTTPMethod());
-			}
-			//
-			super.setRequestConfig(reqConf);
+	public BasicWSIOTask(final WSLoadExecutor<T> loadExecutor) {
+		super(loadExecutor);
+		//
+		wsReqConf = (WSRequestConfig<T>) reqConf;
+		//final HeaderGroup headers = wsReqConf.getSharedHeaders();
+		sharedHeaders = wsReqConf.getSharedHeaders();
+		/*for(final Header header : headers.getAllHeaders()) {
+			sharedHeaders.updateHeader(header);
+		}*/
+		//
+		if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
+			httpRequest.setMethod(wsReqConf.getHTTPMethod());
 		}
-		return this;
 	}
 	//
 	@Override
@@ -149,13 +114,6 @@ implements WSIOTask<T> {
 	throws IOException, HttpException {
 		try {
 			wsReqConf.applyHeadersFinally(httpRequest);
-			reqEntity = httpRequest.getEntity();
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(
-					LogUtil.MSG, "Task #{}: generating the request w/ {} bytes of content",
-					hashCode(), reqEntity == null ? "NO" : reqEntity.getContentLength()
-				);
-			}
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply the final headers");
 		}
@@ -167,7 +125,7 @@ implements WSIOTask<T> {
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
 		try(final WritableByteChannel chanOut = HTTPContentEncoderChannel.getInstance(out)) {
-			if(reqEntity != null) {
+			if(httpRequest.getEntity() != null) {
 				if(dataItem.isAppending()) {
 					dataItem.writeAugment(chanOut);
 				} else if(dataItem.hasUpdatedRanges()) {
@@ -191,19 +149,18 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final boolean isRepeatable() {
-		return reqEntity == null || reqEntity.isRepeatable();
+		return WSObject.IS_CONTENT_REPEATABLE;
 	}
 	//
 	@Override @SuppressWarnings("SynchronizeOnNonFinalField")
 	public final void resetRequest() {
 		respStatusCode = -1;
 		exception = null;
-		reqEntity = null;
 		if(httpRequest != null) {
 			synchronized(httpRequest) {
 				httpRequest.clearHeaders();
 				httpRequest.setHeaders(sharedHeaders.getAllHeaders());
-				httpRequest.setEntity(reqEntity);
+				httpRequest.setEntity(null);
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
 						LogUtil.MSG, "Task #{}: reset the request, left headers: {}, shared headers: {}",

@@ -28,6 +28,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 04.03.15.
  */
@@ -66,6 +67,18 @@ implements Producer<T> {
 	@Override
 	public final Consumer<T> getConsumer() {
 		return consumer;
+	}
+	//
+	@Override
+	public final void await()
+	throws InterruptedException {
+		join();
+	}
+	//
+	@Override
+	public final void await(final long timeOut, final TimeUnit timeUnit)
+	throws InterruptedException {
+		timeUnit.timedJoin(this, timeOut);
 	}
 	//
 	@Override

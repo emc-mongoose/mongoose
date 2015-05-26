@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 //
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 15.12.14.
  */
@@ -19,5 +20,17 @@ extends DataItemGeneratorBase<T> {
 	protected T produceSpecificDataItem(final long nextSize)
 	throws IOException {
 		return (T) new BasicWSObject(nextSize);
+	}
+	//
+	@Override
+	public final void await()
+		throws InterruptedException {
+		join();
+	}
+	//
+	@Override
+	public final void await(final long timeOut, final TimeUnit timeUnit)
+		throws InterruptedException {
+		timeUnit.timedJoin(this, timeOut);
 	}
 }

@@ -15,7 +15,6 @@ import org.apache.http.nio.ContentDecoder;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.IOControl;
 //
-import java.io.InputStream;
 import java.net.URISyntaxException;
 /**
  Created by kurila on 29.09.14.
@@ -73,9 +72,6 @@ extends ObjectRequestConfig<T> {
 	//
 	@Override
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
-	//
-	@Override
-	WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr);
 	//
 	HeaderGroup getSharedHeaders();
 	//

@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
 import com.emc.mongoose.common.http.RequestTargetHost;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -13,6 +13,7 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
+import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
 import com.emc.mongoose.core.impl.load.executor.util.DataObjectWorkerFactory;
 import com.emc.mongoose.core.impl.load.model.BasicWSObjectGenerator;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
@@ -60,13 +61,13 @@ extends ObjectLoadExecutorBase<T>
 implements WSLoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	;
 	//
 	private final HttpAsyncRequester client;
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
-	private final WSRequestConfig<T> wsReqConfigCopy;
+	//
+	private final InstancePool<BasicWSIOTask> ioTaskPool;
 	//
 	public BasicWSLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
@@ -78,7 +79,15 @@ implements WSLoadExecutor<T> {
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
-		this.wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
+		final WSRequestConfig<T> wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
+		//
+		try {
+			ioTaskPool = new InstancePool<>(
+				BasicWSIOTask.class.getConstructor(WSLoadExecutor.class), this
+			);
+		} catch(final NoSuchMethodException e) {
+			throw new IllegalStateException(e);
+		}
 		//
 		final int totalConnCount = connCountPerNode * storageNodeCount;
 		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
@@ -135,7 +144,7 @@ implements WSLoadExecutor<T> {
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new DataObjectWorkerFactory(loadNum, wsReqConfigCopy.getAPI(), loadType, name)
+				new DataObjectWorkerFactory(loadNum, wsReqConfigCopy.getAPI(), loadType, getName())
 			);
 		} catch(final IOReactorException e) {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);
@@ -162,6 +171,16 @@ implements WSLoadExecutor<T> {
 			String.format("%s-webClientThread", getName())
 		);
 		clientDaemon.setDaemon(true);
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	protected WSIOTask<T> getIOTask(final T dataItem, final String addr) {
+		return ioTaskPool.take(dataItem, addr);
+	}
+	//
+	@Override
+	protected void releaseIOTask(final IOTask<T> ioTask) {
+		ioTaskPool.release(BasicWSIOTask.class.cast(ioTask));
 	}
 	//
 	@Override
@@ -203,6 +222,8 @@ implements WSLoadExecutor<T> {
 		//
 		ioReactor.shutdown(1);
 		LOG.debug(LogUtil.MSG, "I/O reactor has been shut down");
+		//
+		ioTaskPool.clear();
 	}
 	//
 	@Override
@@ -217,14 +238,14 @@ implements WSLoadExecutor<T> {
 		final Future<IOTask.Status> futureResult;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, wsTask);
-		} catch(final IllegalStateException e) {
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(
+					LogUtil.MSG, "I/O task #{} has been submitted for execution, {}",
+					wsTask.hashCode(), ioTaskPool.toString()
+				);
+			}
+		} catch(final Exception e) {
 			throw new RejectedExecutionException(e);
-		}
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(
-				LogUtil.MSG, "I/O task #{} has been submitted for execution",
-				wsTask.hashCode()
-			);
 		}
 		return futureResult;
 	}

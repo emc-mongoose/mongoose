@@ -7,6 +7,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 //
+import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -19,6 +20,8 @@ import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
+import com.emc.mongoose.core.impl.io.task.BasicIOTask;
+import com.emc.mongoose.core.impl.load.executor.util.ConsumerBase;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 //
 import org.apache.commons.lang.StringUtils;
@@ -30,11 +33,14 @@ import org.apache.logging.log4j.Marker;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,75 +52,58 @@ import java.util.concurrent.locks.ReentrantLock;
  Created by kurila on 15.10.14.
  */
 public abstract class LoadExecutorBase<T extends DataItem>
+extends ConsumerBase<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final int
-		loadNum, connCountPerNode, storageNodeCount, retryCountMax, retryDelayMilliSec;
-	protected final String
-		name, storageNodeAddrs[];
+	protected final int loadNum, connCountPerNode, storageNodeCount;
+	protected final String storageNodeAddrs[];
 	//
 	protected final DataSource dataSrc;
 	protected volatile RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
+	private final InstancePool<BasicIOTask> ioTaskPool;
+	//
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
-	private final BlockingQueue<T> submitQueue;
 	//
 	private final long maxCount;
 	private final int totalConnCount;
 	// METRICS section
 	protected final MetricRegistry metrics = new MetricRegistry();
-	protected Counter
-		counterSubm, counterRej, counterReqFail;
-	protected Meter
-		throughPut, reqBytes;
+	protected Counter counterSubm, counterRej, counterReqFail;
+	protected Meter throughPut, reqBytes;
 	protected Histogram respLatency;
 	//
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter jmxReporter;
 	//
-	private final Thread
-		submitWorker = new Thread() {
-			@Override
-			public final void run() {
-				T dataItem;
-				try {
-					while(!isInterrupted()) {
-						dataItem = submitQueue.take();
-						submitSync(dataItem);
+	private final Thread metricsDaemon = new Thread() {
+		//
+		{ setDaemon(true); } // do not block process exit
+		//
+		@Override
+		public final void run() {
+			final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
+				runTimeConfig.getLoadMetricsPeriodSec()
+			);
+			try {
+				if(metricsUpdatePeriodMilliSec > 0) {
+					while(!isClosed.get()) {
+						logMetrics(LogUtil.PERF_AVG);
+						Thread.sleep(metricsUpdatePeriodMilliSec);
 					}
-				} catch(final InterruptedException e) {
-					LOG.debug(LogUtil.MSG, "{}: consuming interrupted", name);
+				} else {
+					Thread.sleep(Long.MAX_VALUE);
 				}
+			} catch(final InterruptedException e) {
+				LOG.debug(LogUtil.MSG, "{}: interrupted", getName());
 			}
-		},
-		metricDumpDaemon = new Thread() {
-			//
-			{ setDaemon(true); } // do not block process exit
-			//
-			@Override
-			public final void run() {
-				final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
-					runTimeConfig.getLoadMetricsPeriodSec()
-				);
-				try {
-					if(metricsUpdatePeriodMilliSec > 0) {
-						while(!isClosed.get()) {
-							logMetrics(LogUtil.PERF_AVG);
-							Thread.sleep(metricsUpdatePeriodMilliSec);
-						}
-					} else {
-						Thread.sleep(Long.MAX_VALUE);
-					}
-				} catch(final InterruptedException e) {
-					LOG.debug(LogUtil.MSG, "{}: interrupted", getName());
-				}
-			}
-		};
+		}
+	};
 	// STATES section
 	protected final AtomicLong
 		durTasksSum = new AtomicLong(0),
@@ -129,22 +118,17 @@ implements LoadExecutor<T> {
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
+		super(runTimeConfig, maxCount);
+		//
 		loadNum = LAST_INSTANCE_NUM.getAndIncrement();
 		storageNodeCount = addrs.length;
-		name = Integer.toString(loadNum) + '-' +
-			StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
-			StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
-			(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
-			Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount);
 		//
-		submitWorker.setName("submitDaemon<" + name + ">");
-		submitQueue = new ArrayBlockingQueue<>(
-			(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
-				(int) maxCount : runTimeConfig.getRunRequestQueueSize()
-		);
-		LOG.debug(
-			LogUtil.MSG, "Determined submit queue capacity of {} for \"{}\"",
-			submitQueue.remainingCapacity(), getName()
+		setName(
+			Integer.toString(loadNum) + '-' +
+				StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
+				StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
+				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
+				Integer.toString(connCountPerNode) + 'x' + Integer.toString(storageNodeCount)
 		);
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
@@ -160,8 +144,6 @@ implements LoadExecutor<T> {
 		}
 		loadType = reqConfig.getLoadType();
 		//
-		retryCountMax = runTimeConfig.getRunRetryCountMax();
-		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemotePortExport());
 		jmxReporter = JmxReporter.forRegistry(metrics)
 			//.convertDurationsTo(TimeUnit.MICROSECONDS)
@@ -171,20 +153,31 @@ implements LoadExecutor<T> {
 		//
 		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		// prepare the node executors array
+		// prepare the nodes array
 		storageNodeAddrs = addrs.clone();
 		// create and configure the connection manager
 		dataSrc = reqConfig.getDataSource();
 		//
 		if(listFile != null && listFile.length() > 0 && Files.isReadable(Paths.get(listFile))) {
 			producer = newFileBasedProducer(maxCount, listFile);
-			LOG.debug(LogUtil.MSG, "{} will use file-based producer: {}", name, listFile);
+			LOG.debug(LogUtil.MSG, "{} will use file-based producer: {}", getName(), listFile);
 		} else if(loadType == IOTask.Type.CREATE) {
 			producer = newDataProducer(maxCount, sizeMin, sizeMax, sizeBias);
-			LOG.debug(LogUtil.MSG, "{} will use new data items producer", name);
+			LOG.debug(LogUtil.MSG, "{} will use new data items producer", getName());
 		} else {
 			producer = reqConfig.getAnyDataProducer(maxCount, addrs[0]);
-			LOG.debug(LogUtil.MSG, "{} will use {} as data items producer", name, producer);
+			LOG.debug(LogUtil.MSG, "{} will use {} as data items producer", getName(), producer);
+		}
+		//
+		try {
+			ioTaskPool = new InstancePool<>(
+				BasicIOTask.class.getConstructor(LoadExecutor.class), this
+			);
+		} catch(final NoSuchMethodException e) {
+			for(final Constructor c : BasicIOTask.class.getConstructors()) {
+				LOG.info(LogUtil.ERR, c);
+			}
+			throw new IllegalStateException(e);
 		}
 		//
 		if(producer != null) {
@@ -203,13 +196,8 @@ implements LoadExecutor<T> {
 	);
 	//
 	@Override
-	public final String getName() {
-		return name;
-	}
-	//
-	@Override
 	public final String toString() {
-		return name;
+		return getName();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
@@ -278,18 +266,17 @@ implements LoadExecutor<T> {
 	public void start() {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			LOG.debug(LogUtil.MSG, "Starting {}", getName());
-			//
-			submitWorker.start();
 			// init metrics
-			counterSubm = metrics.counter(MetricRegistry.name(name, METRIC_NAME_SUBM));
-			counterRej = metrics.counter(MetricRegistry.name(name, METRIC_NAME_REJ));
-			counterReqFail = metrics.counter(MetricRegistry.name(name, METRIC_NAME_FAIL));
-			throughPut = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_TP));
-			reqBytes = metrics.meter(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_BW));
-			respLatency = metrics.histogram(MetricRegistry.name(name, METRIC_NAME_REQ, METRIC_NAME_LAT));
+			counterSubm = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_SUBM));
+			counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
+			counterReqFail = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_FAIL));
+			throughPut = metrics.meter(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_TP));
+			reqBytes = metrics.meter(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW));
+			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
+			super.start();
 			if(producer == null) {
-				LOG.debug(LogUtil.MSG, "{}: using an external data items producer", name);
+				LOG.debug(LogUtil.MSG, "{}: using an external data items producer", getName());
 			} else {
 				//
 				try {
@@ -301,10 +288,10 @@ implements LoadExecutor<T> {
 			}
 			//
 			jmxReporter.start();
-			metricDumpDaemon.setName("metricsDumpDaemon<" + name + ">");
-			metricDumpDaemon.start();
+			metricsDaemon.setName("metricsDaemon<" + getName() + ">");
+			metricsDaemon.start();
 			//
-			LOG.debug(LogUtil.MSG, "Started \"{}\"", name);
+			LOG.debug(LogUtil.MSG, "Started \"{}\"", getName());
 		} else {
 			LOG.warn(LogUtil.ERR, "Second start attempt - skipped");
 		}
@@ -312,7 +299,8 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final synchronized void interrupt() {
-		if(metricDumpDaemon.isAlive()) {
+		if(metricsDaemon.isAlive()) {
+			metricsDaemon.interrupt();
 			shutdown();
 			// releasing the blocked join() methods, if any
 			try {
@@ -334,7 +322,6 @@ implements LoadExecutor<T> {
 			//
 			final long tsStartNanoSec = tsStart.get();
 			if(tsStartNanoSec > 0) { // if was executing
-				metricDumpDaemon.interrupt();
 				logMetrics(LogUtil.PERF_SUM); // provide summary metrics
 				// calculate the efficiency and report
 				final float
@@ -377,112 +364,100 @@ implements LoadExecutor<T> {
 	@Override
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
-		//
-		boolean passed = false;
-		int rejectCount = 0;
-		while(rejectCount < retryCountMax) {
-			if(submitWorker.isInterrupted()) {
-				throw new RejectedExecutionException(
-					"Consumer \"" + getName() + "\" has been already shut down"
-				);
-			}
-			passed = submitQueue.offer(dataItem);
-			if(passed) {
-				break;
-			} else {
-				rejectCount ++;
-				try {
-					Thread.sleep(rejectCount * retryDelayMilliSec);
-				} catch(final InterruptedException ee) {
-					LOG.trace(LogUtil.ERR, "Interrupted, won't submit data item {}", dataItem);
-				}
-			}
-		}
-		//
-		if(!passed) {
+		try {
+			super.submit(dataItem);
+		} catch(final RejectedExecutionException e) {
 			counterRej.inc();
-			throw new RejectedExecutionException(
-				"Rejected the data item " + dataItem + " after " + rejectCount + " tries"
-			);
+			throw e;
 		}
 	}
 	//
-	@SuppressWarnings("unchecked")
-	private void submitSync(final T dataItem) {
+	@Override @SuppressWarnings("unchecked")
+	protected final void submitSync(final T dataItem) {
 		if(counterSubm.getCount() + counterRej.getCount() >= maxCount) {
 			LOG.debug(
 				LogUtil.MSG, "{}: all tasks has been submitted ({}) or rejected ({})", getName(),
 				counterSubm.getCount(), counterRej.getCount()
 			);
-			submitWorker.interrupt();
+			super.interrupt();
+		}
+		// prepare the I/O task instance (make the link between the data item and load type)
+		final String nextNodeAddr = getNextNode();
+		final IOTask<T> ioTask = getIOTask(dataItem, nextNodeAddr);
+		// try to sleep while underlying connection pool becomes more free
+		try {
+			while(counterSubm.getCount() - counterResultHandle.get() >= maxQueueSize) {
+				Thread.sleep(submTimeOutMilliSec);
+			}
+		} catch(final InterruptedException ignored) {
 		}
 		//
-		if(submitWorker.isInterrupted()) {
-			throw new RejectedExecutionException(
-				getName() + ": all " + counterSubm.getCount() + " tasks has been submitted"
-			);
-		}
-		// the node selection approach depends on the LoadExecutor implementation
-		final String tgtNodeAddr = storageNodeAddrs.length == 1 ?
-			storageNodeAddrs[0] : getNextNode();
-		// prepare the I/O task instance (make the link between the data item and load type)
-		final IOTask<T> ioTask = reqConfigCopy.getRequestFor(dataItem, tgtNodeAddr);
 		try {
-			submit(ioTask); // submit the corresponding I/O task
+			submit(ioTask);
+			counterSubm.inc();
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Submit failure");
 		}
 	}
-	// NOTE: basic implementation has no idea about node balancing
-	protected String getNextNode() {
+	//
+	@SuppressWarnings("unchecked")
+	protected IOTask<T> getIOTask(final T dataItem, final String addr) {
+		return ioTaskPool.take(dataItem, addr);
+	}
+	//
+	protected void releaseIOTask(final IOTask<T> ioTask) {
+		ioTaskPool.release(BasicIOTask.class.cast(ioTask));
+	}
+	//
+	private String getNextNode() {
 		return storageNodeAddrs[(int) (counterRoundRobinSubm.getAndIncrement() % storageNodeCount)];
 	}
 	//
 	@Override
 	public final void handleResult(final IOTask<T> ioTask)
 	throws RemoteException {
-		if(metricDumpDaemon.isInterrupted()) { // producing was interrupted
+		// producing was interrupted?
+		if(metricsDaemon.isInterrupted()) {
 			return;
 		}
-		//
+		// update the metrics and release the task
 		final IOTask.Status status = ioTask.getStatus();
 		final T dataItem = ioTask.getDataItem();
 		final int latency = ioTask.getLatency();
+		if(status == IOTask.Status.SUCC) {
+			// update the metrics with success
+			throughPut.mark();
+			if(latency > 0) {
+				respLatency.update(latency);
+			}
+			durTasksSum.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
+			reqBytes.mark(ioTask.getTransferSize());
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(
+					LogUtil.MSG, "Task #{}: successful, {}/{}",
+					ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
+				);
+			}
+		}
+		// feed the data item to the consumer and finally check for the finish state
 		try {
-			if(status == IOTask.Status.SUCC) {
-				// update the metrics with success
-				throughPut.mark();
-				if(latency > 0) {
-					respLatency.update(latency);
-				}
-				durTasksSum.addAndGet(ioTask.getRespTimeDone() - ioTask.getReqTimeStart());
-				reqBytes.mark(ioTask.getTransferSize());
+			// is this an end of consumer-producer chain?
+			if(consumer == null) {
+				LOG.info(LogUtil.DATA_LIST, dataItem);
+			} else { // feed to the consumer
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
-						LogUtil.MSG, "Task #{}: successfull result, {}/{}",
-						ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
+						LogUtil.MSG, "Going to feed the data item {} to the consumer {}",
+						dataItem, consumer
 					);
 				}
-				// is this an end of consumer-producer chain?
-				if(consumer == null) {
-					LOG.info(LogUtil.DATA_LIST, dataItem);
-				} else { // feed to the consumer
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
-						LOG.trace(
-							LogUtil.MSG, "Going to feed the data item {} to the consumer {}",
-							dataItem, consumer
-						);
-					}
-					consumer.submit(dataItem);
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
-						LOG.trace(
-							LogUtil.MSG, "The data item {} is passed to the consumer {} successfully",
-							dataItem, consumer
-						);
-					}
+				consumer.submit(dataItem);
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(
+						LogUtil.MSG, "The data item {} is passed to the consumer {} successfully",
+						dataItem, consumer
+					);
 				}
-			} else if(!isClosed.get()) {
-				counterReqFail.inc();
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Interrupted");
@@ -496,8 +471,11 @@ implements LoadExecutor<T> {
 				LOG, Level.DEBUG, e, "\"{}\" rejected the data item \"{}\"", consumer, dataItem
 			);
 		} finally {
+			//
+			releaseIOTask(ioTask);
+			//
 			final long n = counterResultHandle.incrementAndGet();
-			if(n >= maxCount || submitWorker.isInterrupted() && n >= counterSubm.getCount()) {
+			if(n >= maxCount || super.isInterrupted() && n >= counterSubm.getCount()) {
 				// max count is reached OR all tasks are done
 				LOG.debug(LogUtil.MSG, "{}: all {} task results has been obtained", getName(), n);
 				if(!isClosed.get()) {
@@ -538,10 +516,7 @@ implements LoadExecutor<T> {
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to stop the producer: {}", producer);
 		} finally {
-			if(submitWorker.isAlive()) {
-				submitWorker.interrupt(); // prevent new data items scheduling
-				LOG.debug(LogUtil.MSG, "\"{}\" will not accept new tasks more", getName());
-			}
+			super.shutdown();
 		}
 	}
 	//
@@ -550,10 +525,9 @@ implements LoadExecutor<T> {
 	throws IOException {
 		LOG.debug(LogUtil.MSG, "Invoked close for {}", getName());
 		// interrupt the producing
-		interrupt();
-		//
 		if(isClosed.compareAndSet(false, true)) {
 			try {
+				super.close();
 				LOG.debug(LogUtil.MSG, "Forcing the shutdown");
 				reqConfigCopy.close(); // disables connection drop failures
 				if(consumer != null) {
@@ -563,6 +537,7 @@ implements LoadExecutor<T> {
 			} catch(final IllegalStateException | RejectedExecutionException e) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
+				ioTaskPool.clear();
 				jmxReporter.close();
 				LOG.debug(LogUtil.MSG, "JMX reported closed");
 				LoadCloseHook.del(this);
@@ -604,32 +579,32 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public final void join()
+	public final void await()
 	throws InterruptedException {
 		join(Long.MAX_VALUE);
 	}
 	//
 	@Override
-	public final void join(final long timeOutMilliSec)
+	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException {
-		if(submitWorker.isInterrupted() || metricDumpDaemon.isInterrupted() || isClosed.get()) {
+		if(super.isInterrupted() || metricsDaemon.isInterrupted() || isClosed.get()) {
 			return;
 		}
 		//
-		long t = System.currentTimeMillis();
-		if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+		long t = System.currentTimeMillis(), timeOutMilliSec = timeUnit.toMillis(timeOut);
+		if(lock.tryLock(timeOut, timeUnit)) {
 			try {
 				t = System.currentTimeMillis() - t; // the count of time wasted for locking
 				LOG.debug(
 					LogUtil.MSG, "{}: wait for the done condition at most for {}[ms]",
-					name, timeOutMilliSec - t
+					getName(), timeOutMilliSec - t
 				);
 				if(condProducerDone.await(timeOutMilliSec - t, TimeUnit.MILLISECONDS)) {
-					LOG.debug(LogUtil.MSG, "{}: join finished", name);
+					LOG.debug(LogUtil.MSG, "{}: join finished", getName());
 				} else {
 					LOG.debug(
 						LogUtil.MSG, "{}: join timeout, unhandled results left: {}",
-						name, counterSubm.getCount() - counterResultHandle.get()
+						getName(), counterSubm.getCount() - counterResultHandle.get()
 					);
 				}
 			} finally {

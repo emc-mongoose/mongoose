@@ -112,7 +112,7 @@ def execute(chain=(), flagSimultaneous=True):
 								LogUtil.MSG, "Execute \"{}\" for up to {}[{}]",
 								nextLoad, runTimeOut[0], runTimeOut[1]
 							)
-							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
+							nextLoad.await(runTimeOut[0], runTimeOut[1])
 						finally:
 							LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
 							prevLoad.interrupt()
@@ -125,7 +125,7 @@ def execute(chain=(), flagSimultaneous=True):
 								LogUtil.MSG, "Execute \"{}\" for up to {}[{}]",
 								nextLoad, runTimeOut[0], runTimeOut[1]
 							)
-							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
+							nextLoad.await(runTimeOut[0], runTimeOut[1])
 						finally:
 							LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
 							nextLoad.close()

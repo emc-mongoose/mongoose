@@ -45,7 +45,7 @@ def execute(load):
 		runTimeOut = timeOutInit()
 		load.start()
 		try:
-			load.join(runTimeOut[1].toMillis(runTimeOut[0]))
+			load.await(runTimeOut[0], runTimeOut[1])
 		finally:
 			load.close()
 #

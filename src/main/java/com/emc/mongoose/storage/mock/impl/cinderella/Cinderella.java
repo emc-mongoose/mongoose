@@ -36,10 +36,10 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 /**
  * Created by olga on 28.01.15.
@@ -56,8 +56,8 @@ implements Runnable {
 	private final RunTimeConfig runTimeConfig;
 	private final IOStats ioStats;
 	//
-	private final BlockingQueue<WSObjectMock> createQueue = new LinkedBlockingQueue<>();
-	private final BlockingQueue<String> deleteQueue = new LinkedBlockingQueue<>();
+	private final BlockingQueue<WSObjectMock> createQueue;
+	private final BlockingQueue<String> deleteQueue;
 	private final Thread
 		createWorker = new Thread("storageCreateWorker") {
 			{
@@ -100,6 +100,8 @@ implements Runnable {
 	throws IOException {
 		super(runTimeConfig.getStorageMockCapacity());
 		this.runTimeConfig = runTimeConfig;
+		createQueue = new ArrayBlockingQueue<>(runTimeConfig.getRunRequestQueueSize());
+		deleteQueue = new ArrayBlockingQueue<>(runTimeConfig.getRunRequestQueueSize());
 		ioStats = new BasicWSIOStats(runTimeConfig, this);
 		countHeads = runTimeConfig.getStorageMockHeadCount();
 		portStart = runTimeConfig.getApiTypePort(runTimeConfig.getApiName());

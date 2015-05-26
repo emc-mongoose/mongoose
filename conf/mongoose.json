@@ -242,10 +242,7 @@
 			"name": "mongoose",
 			"version": "0.8.0",
 			"mode": "standalone",
-			"retry": {
-				"delayMilliSec": 100,
-				"countMax": 100
-			},
+			"submitTimeOutMilliSec": 10,
 			"request": {
 				"retries": false,
 				"timeoutMilliSec": 1000000,

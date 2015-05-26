@@ -22,6 +22,7 @@ import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.MethodNotSupportedException;
 import org.apache.http.RequestLine;
 import org.apache.http.protocol.HttpContext;
 //
@@ -35,7 +36,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -83,7 +83,11 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	public final HttpAsyncRequestConsumer<HttpRequest> processRequest(
 		final HttpRequest request, final HttpContext context
 	) throws HttpException, IOException {
-		return BasicWSRequestConsumer.getInstance();
+		try {
+			return BasicWSRequestConsumer.getInstance();
+		} catch(final IllegalArgumentException | IllegalStateException e) {
+			throw new MethodNotSupportedException("Request consumer instantiation failure", e);
+		}
 	}
 	//
 	@Override

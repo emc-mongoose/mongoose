@@ -175,30 +175,28 @@ implements DataItemBufferClient<T> {
 		}
 	}
 	//
-	@Override
-	public final boolean isAlive() {
-		return !isInterruptedFlag.get();
-	}
-	//
-	private final static class RemoteJoinTask
+	private final static class RemoteAwaitTask
 	implements Runnable {
 		//
 		private final String addr;
 		private final DataItemBuffer dataItemBuffer;
-		private final long timeOutMilliSec;
+		private final long timeOut;
+		private final TimeUnit timeUnit;
 		//
-		protected RemoteJoinTask(
-			final String addr, final DataItemBuffer dataItemBuffer, final long timeOutMilliSec
+		protected RemoteAwaitTask(
+			final String addr, final DataItemBuffer dataItemBuffer,
+			final long timeOutMilliSec, final TimeUnit timeUnit
 		) {
 			this.addr = addr;
 			this.dataItemBuffer = dataItemBuffer;
-			this.timeOutMilliSec = timeOutMilliSec;
+			this.timeOut = timeOutMilliSec;
+			this.timeUnit = timeUnit;
 		}
 		//
 		@Override
 		public void run() {
 			try {
-				dataItemBuffer.join(timeOutMilliSec);
+				dataItemBuffer.await(timeOut, timeUnit);
 				LOG.debug(
 					LogUtil.MSG,
 					"Finished the remote data items buffer producing @{}: \"{}\"",
@@ -215,13 +213,13 @@ implements DataItemBufferClient<T> {
 	}
 	//
 	@Override
-	public final void join()
+	public final void await()
 	throws InterruptedException {
-		join(Long.MAX_VALUE);
+		await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 	//
 	@Override
-	public final void join(final long milliSec)
+	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException {
 		//
 		final ExecutorService remoteJoinExecutor = Executors.newFixedThreadPool(
@@ -231,7 +229,9 @@ implements DataItemBufferClient<T> {
 		for(final String addr: keySet()) {
 			try {
 				final DataItemBuffer<T> nextDataItemBuffer = get(addr);
-				remoteJoinExecutor.submit(new RemoteJoinTask(addr, nextDataItemBuffer, milliSec));
+				remoteJoinExecutor.submit(
+					new RemoteAwaitTask(addr, nextDataItemBuffer, timeOut, timeUnit)
+				);
 			} catch(final Exception e) {
 				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to wait for remote data items buffer @ {}", addr
@@ -240,6 +240,6 @@ implements DataItemBufferClient<T> {
 		}
 		//
 		remoteJoinExecutor.shutdown();
-		remoteJoinExecutor.awaitTermination(milliSec, TimeUnit.MILLISECONDS);
+		remoteJoinExecutor.awaitTermination(timeOut, timeUnit);
 	}
 }

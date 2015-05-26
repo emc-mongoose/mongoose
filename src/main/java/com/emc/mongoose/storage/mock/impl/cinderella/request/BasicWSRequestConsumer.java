@@ -91,11 +91,19 @@ implements Reusable<BasicWSRequestConsumer> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Reusable implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static InstancePool<BasicWSRequestConsumer> POOL = new InstancePool<>(
-		BasicWSRequestConsumer.class
-	);
+	private final static InstancePool<BasicWSRequestConsumer> POOL;
+	static {
+		InstancePool<BasicWSRequestConsumer> t = null;
+		try {
+			t = new InstancePool<>(BasicWSRequestConsumer.class.getConstructor());
+		} catch(final NoSuchMethodException e) {
+			LogUtil.exception(LOG, Level.FATAL, e, "Failed to create the instance pool");
+		}
+		POOL = t;
+	}
 	//
-	public static BasicWSRequestConsumer getInstance() {
+	public static BasicWSRequestConsumer getInstance()
+	throws IllegalStateException, IllegalArgumentException {
 		return POOL.take();
 	}
 	//

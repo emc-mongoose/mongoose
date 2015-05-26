@@ -9,7 +9,6 @@ import com.emc.mongoose.server.api.load.model.ConsumerSvc;
 import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 //
-import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 //

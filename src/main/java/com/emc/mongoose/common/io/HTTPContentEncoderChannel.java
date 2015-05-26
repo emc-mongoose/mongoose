@@ -2,8 +2,12 @@ package com.emc.mongoose.common.io;
 //
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.http.nio.ContentEncoder;
+//
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -36,9 +40,16 @@ implements WritableByteChannel, Reusable<HTTPContentEncoderChannel> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Reusable implementation
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private static final InstancePool<HTTPContentEncoderChannel>
-		INSTANCE_POOL = new InstancePool<>(HTTPContentEncoderChannel.class);
-	//
+	private static final InstancePool<HTTPContentEncoderChannel> INSTANCE_POOL;
+	static {
+		InstancePool<HTTPContentEncoderChannel> t = null;
+		try {
+			t = new InstancePool<>(HTTPContentEncoderChannel.class.getConstructor());
+		} catch(final NoSuchMethodException e) {
+			LogUtil.exception(LogManager.getLogger(), Level.FATAL, e, "No such constructor");
+		}
+		INSTANCE_POOL = t;
+	}
 	public static HTTPContentEncoderChannel getInstance(final ContentEncoder contentEncoder) {
 		return INSTANCE_POOL.take(contentEncoder);
 	}

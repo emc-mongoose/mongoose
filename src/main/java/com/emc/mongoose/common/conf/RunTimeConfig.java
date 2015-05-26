@@ -192,12 +192,8 @@ implements Externalizable {
 		return getInt("run.request.timeoutMilliSec");
 	}
 	//
-	public final int getRunRetryDelayMilliSec() {
-		return getInt("run.retry.delayMilliSec");
-	}
-	//
-	public final int getRunRetryCountMax() {
-		return getInt("run.retry.countMax");
+	public final int getRunSubmitTimeOutMilliSec() {
+		return getInt("run.submitTimeOutMilliSec");
 	}
 	//
 	public final boolean getRunRequestRetries() {
