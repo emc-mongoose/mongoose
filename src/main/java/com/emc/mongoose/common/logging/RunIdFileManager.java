@@ -7,7 +7,6 @@ import org.apache.logging.log4j.core.appender.AppenderLoggingException;
 import org.apache.logging.log4j.core.appender.ManagerFactory;
 //
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -128,9 +127,7 @@ extends AbstractManager {
 			outStream.write(buff, offset, len);
 		} catch (final IOException e) {
 			throw new AppenderLoggingException(
-				String.format(
-					"Failed to write to the stream \"%s\" w/ run id \"%s\"", getName(), currRunId
-				), e
+				"Failed to write to the stream \""+getName()+"\" w/ run id \""+currRunId+"\"", e
 			);
 		}
 	}
@@ -139,17 +136,13 @@ extends AbstractManager {
 		write(currRunId, bytes, 0, bytes.length);
 	}
 	//
-	public final String
-		FMT_FILE_PATH = "%s" + File.separator + "%s" + File.separator +"%s",
-		FMT_FILE_PATH_NO_RUN_ID = "%s" + File.separator +"%s";
-	//
 	protected final OutputStream prepareNewFile(final String currRunId) {
 		OutputStream newOutPutStream = null;
 		final File
 			outPutFile = new File(
 				currRunId == null ?
-					String.format(FMT_FILE_PATH_NO_RUN_ID, LogUtil.PATH_LOG_DIR, fileName) :
-					String.format(FMT_FILE_PATH, LogUtil.PATH_LOG_DIR, currRunId, fileName)
+					LogUtil.PATH_LOG_DIR + File.separator + fileName :
+					LogUtil.PATH_LOG_DIR + File.separator + currRunId + File.separator + fileName
 			),
 			parentFile = outPutFile.getParentFile();
 		final boolean existedBefore = outPutFile.exists();
@@ -163,7 +156,10 @@ extends AbstractManager {
 			);
 			outStreamsMap.put(currRunId, newOutPutStream);
 			if(layout != null && (!flagAppend || !existedBefore)) {
-				newOutPutStream.write(layout.getHeader());
+				final byte header[] = layout.getHeader();
+				if(header != null) {
+					newOutPutStream.write(layout.getHeader());
+				}
 			}
 		} catch(final IOException e) {
 			e.printStackTrace(System.err);

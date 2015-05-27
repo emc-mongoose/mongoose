@@ -120,17 +120,21 @@
 			},
 			"src": {
 				"fpath": "",
-				"separator": ","
+				"separator": ",",
+			  	"random": {
+				  	"enabled": false,
+				  	"batchSize": 1000
+				}
 			},
 			"radix": {
 				"size": 10,
 				"offset": 36
 			},
 			"buffer": {
-				"size": "1KB",
+				"size": "4KB",
 				"ring": {
 					"seed": "7a42d9c483244167",
-					"size": "1MB"
+					"size": "4MB"
 				}
 			}
 		},
@@ -166,7 +170,7 @@
 				"count": 0,
 				"time": "0s",
 				"rate": 0,
-				"taskMicroDelay": 0
+				"reqSleepMilliSec": 0
 			},
 			"servers": "127.0.0.1",
 			"metricsPeriodSec": 10
@@ -199,23 +203,23 @@
 				"ioThreadsPerSocket": 100,
 				"capacity": 10000000,
 				"fault": {
-					"period": 0,
-					"sleepMilliSec": 1000
+					"connCacheSize": 0,
+					"periodSec": 10
 				}
 			},
 			"fsAccess": false,
 			"versioning": false
 		},
 		"remote": {
-			"port": {
+			"connection" : {
+				"timeoutMilliSec": 1000000,
+				"poolTimeoutMilliSec": 1000000
+			},
+			"port" : {
 				"control": 1099,
 				"export": 1199,
 				"import": 1199,
 				"webui": 8080
-			},
-			"connection": {
-				"timeoutMilliSec": 1000000,
-				"poolTimeoutMilliSec": 1000000
 			},
 			"socket": {
 				"timeoutMilliSec": 1000000,
@@ -236,7 +240,7 @@
 		},
 		"run": {
 			"name": "mongoose",
-			"version": "0.7.1",
+			"version": "0.8.0",
 			"mode": "standalone",
 			"retry": {
 				"delayMilliSec": 100,

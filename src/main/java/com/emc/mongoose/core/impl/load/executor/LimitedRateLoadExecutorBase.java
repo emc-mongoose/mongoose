@@ -23,7 +23,7 @@ extends LoadExecutorBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final float rateLimit;
-	private final int tgtDur, manualMicroDelay;
+	private final int tgtDur;
 	//
 	protected LimitedRateLoadExecutorBase(
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
@@ -46,11 +46,9 @@ extends LoadExecutorBase<T> {
 		} else {
 			tgtDur = 0;
 		}
-		//
-		manualMicroDelay = runTimeConfig.getLoadLimitTaskMicroDelay();
 	}
 	/**
-	 Adds the optional delay calculated from last successfull I/O task duration and the target
+	 Adds the optional delay calculated from last successful I/O task duration and the target
 	 duration
 	 */
 	@Override
@@ -62,9 +60,7 @@ extends LoadExecutorBase<T> {
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(LogUtil.MSG, "Next delay: {}[us]", microDelay);
 				}
-				TimeUnit.MICROSECONDS.sleep(
-					microDelay > manualMicroDelay ? microDelay : manualMicroDelay
-				);
+				TimeUnit.MICROSECONDS.sleep(microDelay);
 			}
 		}
 		super.submit(dataItem);

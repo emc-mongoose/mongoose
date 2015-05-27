@@ -15,7 +15,6 @@ import com.emc.mongoose.server.api.persist.DataItemBufferSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
-import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 //
 import com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc;
 import com.emc.mongoose.server.impl.persist.TmpFileItemBufferSvc;
@@ -55,7 +54,9 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	@Override
 	public final String getName() {
-		return "//" + ServiceUtils.getHostAddr() + '/' + getClass().getPackage().getName();
+		final String rmiHostName = System.getProperty(ServiceUtils.KEY_RMI_HOSTNAME);
+		return "//" + ((rmiHostName != null) ? rmiHostName : ServiceUtils.getHostAddr())
+			+ "/" + getClass().getPackage().getName();
 	}
 	//
 	@Override

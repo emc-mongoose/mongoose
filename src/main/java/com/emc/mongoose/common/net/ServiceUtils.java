@@ -32,7 +32,6 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.RemoteStub;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -158,7 +157,7 @@ public final class ServiceUtils {
 	}
 	//
 	public static long getHostAddrCode() {
-		return (long) getHostAddr().hashCode() << Integer.SIZE;
+		return getHostAddr().hashCode();
 	}
 	//
 	public static Remote create(final Service svc) {
@@ -205,7 +204,7 @@ public final class ServiceUtils {
 			remote = Naming.lookup(url);
 			remoteSvc = Service.class.cast(remote);
 		} catch(final ClassCastException e) {
-			if(remote==null) {
+			if(remote == null) {
 				LOG.error(LogUtil.ERR, "Lookup method returns null");
 			} else {
 				LOG.error(
@@ -245,6 +244,7 @@ public final class ServiceUtils {
 	}
 	//
 	public final static String
+		KEY_RMI_HOSTNAME = "java.rmi.server.hostname",
 		KEY_RMI_CODEBASE = "java.rmi.server.codebase",
 		KEY_JMX_AUTH = "com.sun.management.jmxremote.authenticate",
 		KEY_JMX_PORT = "com.sun.management.jmxremote.port",

@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
@@ -30,7 +31,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
-import sun.rmi.runtime.Log;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
@@ -85,9 +85,7 @@ implements LoadExecutor<T> {
 		counterResultHandle = new AtomicLong(0);
 	private final AtomicBoolean
 		isClosed = new AtomicBoolean(false),
-		isMaxCountSubmTries = new AtomicBoolean(false),
-		isMaxCountResults = new AtomicBoolean(false),
-		isLastTaskDone = new AtomicBoolean(false);
+		isMaxCountSubmTries = new AtomicBoolean(false);
 	private final Lock lock = new ReentrantLock();
 	private final Condition condDoneOrInterrupted = lock.newCondition();
 	//
@@ -392,11 +390,11 @@ implements LoadExecutor<T> {
 	public void submit(final T dataItem)
 	throws RemoteException, RejectedExecutionException, InterruptedException {
 		if(tsStart.get() < 0) {
-			throw new RejectedExecutionException(String.format("%s: not started yet", name));
+			throw new RejectedExecutionException(name + ": not started yet");
 		}
 		//
 		if(isClosed.get()) {
-			throw new InterruptedException(String.format("%s: closed already", name));
+			throw new InterruptedException(name + ": closed already");
 		}
 		//
 		if(counterSubm.getCount() + counterRej.getCount() >= maxCount) {
@@ -409,7 +407,7 @@ implements LoadExecutor<T> {
 		//
 		if(isMaxCountSubmTries.get()) {
 			throw new InterruptedException(
-				String.format("%s: all %d tasks has been submitted", name, counterSubm.getCount())
+				name + ": all " + counterSubm.getCount() + " tasks has been submitted"
 			);
 		}
 		// round-robin node selection
@@ -496,21 +494,18 @@ implements LoadExecutor<T> {
 		} catch(final RemoteException e) {
 			LogUtil.failure(
 				LOG, Level.WARN, e,
-				String.format("Failed to submit the data item \"%s\" to \"%s\"", dataItem, consumer)
+				"Failed to submit the data item \"" + dataItem + "\" to \"" + consumer + "\""
 			);
 		} catch(final RejectedExecutionException e) {
 			LogUtil.failure(
 				LOG, Level.DEBUG, e,
-				String.format("\"%s\" rejected the data item \"%s\"", consumer, dataItem)
+				"\"" + consumer + "\" rejected the data item \"" + dataItem + "\""
 			);
 		} finally {
 			final long n = counterResultHandle.incrementAndGet();
-			if( // max count is reached OR all tasks from interrupted internal producer are done
-				n >= maxCount ||
-				producer != null && !producer.isAlive() && n >= counterSubm.getCount()
-			) {
+			if(n >= maxCount || isMaxCountSubmTries.get() && n >= counterSubm.getCount()) {
+				// max count is reached OR all tasks are done
 				LOG.debug(LogUtil.MSG, "{}: all {} task results has been obtained", name, n);
-				super.shutdown(); // prevent further scheduling of result handling tasks
 				if(!isClosed.get()) {
 					try {
 						if(
@@ -531,6 +526,8 @@ implements LoadExecutor<T> {
 						LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
 					}
 				}
+				//
+				super.shutdown(); // prevent further scheduling of result handling tasks
 			}
 		}
 	}
@@ -565,7 +562,6 @@ implements LoadExecutor<T> {
 			shutdown();
 		}
 		//
-		waitForTheLastTask();
 		interrupt();
 		//
 		if(isClosed.compareAndSet(false, true)) {
@@ -589,25 +585,6 @@ implements LoadExecutor<T> {
 				LogUtil.MSG,
 				"Not closing \"{}\" because it has been closed before already", getName()
 			);
-		}
-	}
-	//
-	private void waitForTheLastTask() {
-		if (isLastTaskDone.compareAndSet(false, true)) {
-			if (!RequestResultTask.IS_LAST_TASK_DONE.get()) {
-				try {
-					if (RequestResultTask.RESULT_TASKS_LOCK.tryLock(1, TimeUnit.SECONDS)) {
-						try {
-							LOG.info(LogUtil.MSG, "Waiting for the last task to be done");
-							RequestResultTask.TASKS_COND.await(1000, TimeUnit.DAYS);
-						} finally {
-							RequestResultTask.RESULT_TASKS_LOCK.unlock();
-						}
-					}
-				} catch (final InterruptedException e) {
-					LOG.debug(LogUtil.ERR, "Interrupted");
-				}
-			}
 		}
 	}
 	//
@@ -643,28 +620,24 @@ implements LoadExecutor<T> {
 	@Override
 	public final void join(final long timeOutMilliSec)
 	throws RemoteException, InterruptedException {
-		if(isInterruptedFlag.get() || isMaxCountResults.get() || isClosed.get()) {
+		if(isShutdown() || isInterruptedFlag.get() || isClosed.get()) {
 			return;
 		}
 		//
 		long t = System.currentTimeMillis();
-		if (lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+		if(lock.tryLock(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
 			try {
 				t = System.currentTimeMillis() - t; // the count of time wasted for locking
 				LOG.debug(
-						LogUtil.MSG, "{}: wait for the done condition at most for {}[ms]",
-						name, timeOutMilliSec - t
+					LogUtil.MSG, "{}: wait for the done condition at most for {}[ms]",
+					name, timeOutMilliSec - t
 				);
-				if (
-						condDoneOrInterrupted.await(
-								timeOutMilliSec - t, TimeUnit.MILLISECONDS
-						)
-						) {
+				if(condDoneOrInterrupted.await(timeOutMilliSec - t, TimeUnit.MILLISECONDS)) {
 					LOG.debug(LogUtil.MSG, "{}: join finished", name);
 				} else {
 					LOG.debug(
-							LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
-							name, getQueue().size(), getActiveCount()
+						LogUtil.MSG, "{}: join timeout, tasks left: {} enqueued, {} active",
+						name, getQueue().size(), getActiveCount()
 					);
 				}
 			} finally {

@@ -65,7 +65,7 @@ implements Externalizable {
 		KEY_LOAD_LIMIT_TIME = "load.limit.time",
 		KEY_LOAD_TIME = "load.time",
 		KEY_LOAD_LIMIT_RATE = "load.limit.rate",
-		KEY_LOAD_LIMIT_TASKMICRODELAY = "load.limit.taskMicroDelay",
+		KEY_LOAD_LIMIT_REQSLEEP_MILLISEC = "load.limit.reqSleepMilliSec",
 		KEY_RUN_VERSION = "run.version",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
@@ -304,8 +304,8 @@ implements Externalizable {
 		return getFloat(KEY_LOAD_LIMIT_RATE);
 	}
 	//
-	public final int getLoadLimitTaskMicroDelay() {
-		return getInt(KEY_LOAD_LIMIT_TASKMICRODELAY);
+	public final int getLoadLimitReqSleepMilliSec() {
+		return getInt(KEY_LOAD_LIMIT_REQSLEEP_MILLISEC);
 	}
 	//
 	public final long getDataSizeMin() {
@@ -420,12 +420,12 @@ implements Externalizable {
 		return getInt("storage.mock.ioThreadsPerSocket");
 	}
 	//
-	public final int getStorageMockFaultSleepMilliSec() {
-		return getInt("storage.mock.fault.sleepMilliSec");
+	public final int getStorageMockFaultPeriodSec() {
+		return getInt("storage.mock.fault.periodSec");
 	}
 	//
-	public final int getStorageMockFaultPeriod() {
-		return getInt("storage.mock.fault.period");
+	public final int getStorageMockFaultConnCacheSize() {
+		return getInt("storage.mock.fault.connCacheSize");
 	}
 	//
 	public final String getDataBufferRingSeed() {
@@ -471,6 +471,9 @@ implements Externalizable {
 	public final String getWebUIWSTimeOutUnit() {
 		return getString("remote.webui.wsTimeOut.unit");
 	}
+	//
+	public final boolean isEnabledDataRandom() {return  getBoolean("data.src.random.enabled");}
+	public final int getDataRandomBatchSize() {return getInt("data.src.random.batchSize");}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)

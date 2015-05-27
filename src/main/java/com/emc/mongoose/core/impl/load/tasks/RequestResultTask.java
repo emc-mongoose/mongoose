@@ -61,10 +61,7 @@ implements Runnable, Reusable<RequestResultTask<T>> {
 		} catch(final InterruptedException | CancellationException e) {
 			LogUtil.failure(LOG, Level.TRACE, e, "Request has been cancelled");
 		} catch(final ExecutionException e) {
-			LogUtil.failure(
-				LOG, Level.DEBUG, e,
-				String.format("Task #%d execution failure", ioTask.hashCode())
-			);
+			LogUtil.failure(LOG, Level.DEBUG, e, "Task execution failure: #" + ioTask.hashCode());
 		} catch(final Exception e) {
 			LogUtil.failure(LOG, Level.WARN, e, "Unexpected failure");
 		} finally {

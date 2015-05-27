@@ -111,7 +111,12 @@ implements LoadBuilderClient<T, U> {
 				Files.isReadable(Paths.get(dataMetaInfoFile))
 			) {
 				setInputFile(dataMetaInfoFile);
+				// disable API-specific producers
 				reqConf.setAnyDataProducerEnabled(false);
+				// disable file-based producers on the load servers side
+				for(final LoadBuilderSvc<T, U> nextLoadBuilder : values()) {
+					nextLoadBuilder.setInputFile(null);
+				}
 			}
 		} catch(final NoSuchElementException e) {
 			LOG.warn(LogUtil.ERR, "No \"data.src.fpath\" property available");

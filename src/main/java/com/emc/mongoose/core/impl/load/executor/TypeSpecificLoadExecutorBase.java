@@ -9,6 +9,7 @@ import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.core.impl.load.model.FileProducer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -42,23 +43,34 @@ extends LimitedRateLoadExecutorBase<T> {
 		this.loadType = reqConfig.getLoadType();
 		//
 		int buffSize;
-		if(sizeMin == sizeMax) {
-			LOG.debug(LogUtil.MSG, "Fixed data item size: {}", SizeUtil.formatSize(sizeMin));
-			buffSize = sizeMin < BUFF_SIZE_HI ? (int) sizeMin : BUFF_SIZE_HI;
+		if(producer != null && FileProducer.class.isInstance(producer)) {
+			final long approxDataItemSize = ((FileProducer) producer).getApproxDataItemsSize();
+			if(approxDataItemSize < BUFF_SIZE_LO) {
+				buffSize = BUFF_SIZE_LO;
+			} else if(approxDataItemSize > BUFF_SIZE_HI) {
+				buffSize = BUFF_SIZE_HI;
+			} else {
+				buffSize = (int) approxDataItemSize;
+			}
 		} else {
-			final long t = (sizeMin + sizeMax) / 2;
-			buffSize = t < BUFF_SIZE_HI ? (int) t : BUFF_SIZE_HI;
-			LOG.debug(
-				LogUtil.MSG, "Average data item size: {}",
-				SizeUtil.formatSize(buffSize)
-			);
-		}
-		if(buffSize < BUFF_SIZE_LO) {
-			LOG.debug(
-				LogUtil.MSG, "Buffer size {} is less than lower bound {}",
-				SizeUtil.formatSize(buffSize), SizeUtil.formatSize(BUFF_SIZE_LO)
-			);
-			buffSize = BUFF_SIZE_LO;
+			if(sizeMin == sizeMax) {
+				LOG.debug(LogUtil.MSG, "Fixed data item size: {}", SizeUtil.formatSize(sizeMin));
+				buffSize = sizeMin < BUFF_SIZE_HI ? (int) sizeMin : BUFF_SIZE_HI;
+			} else {
+				final long t = (sizeMin + sizeMax) / 2;
+				buffSize = t < BUFF_SIZE_HI ? (int) t : BUFF_SIZE_HI;
+				LOG.debug(
+					LogUtil.MSG, "Average data item size: {}",
+					SizeUtil.formatSize(buffSize)
+				);
+			}
+			if(buffSize < BUFF_SIZE_LO) {
+				LOG.debug(
+					LogUtil.MSG, "Buffer size {} is less than lower bound {}",
+					SizeUtil.formatSize(buffSize), SizeUtil.formatSize(BUFF_SIZE_LO)
+				);
+				buffSize = BUFF_SIZE_LO;
+			}
 		}
 		LOG.debug(
 			LogUtil.MSG, "Determined buffer size of {} for \"{}\"",
@@ -71,30 +83,25 @@ extends LimitedRateLoadExecutorBase<T> {
 			case CREATE:
 				if(sizeMin < 0) {
 					throw new IllegalArgumentException(
-						String.format(
-							"Min data item size (%s) is less than zero",
-							SizeUtil.formatSize(sizeMin)
-						)
+						"Min data item size is less than zero: " + SizeUtil.formatSize(sizeMin)
 					);
 				}
 				if(sizeMin > sizeMax) {
 					throw new IllegalArgumentException(
-						String.format(
-							"Min object size (%s) shouldn't be more than max (%s)",
-							SizeUtil.formatSize(sizeMin), SizeUtil.formatSize(sizeMax)
-						)
+						"Min object size shouldn't be more than max: " +
+						SizeUtil.formatSize(sizeMin) + ", " + SizeUtil.formatSize(sizeMax)
 					);
 				}
 				if(sizeBias < 0) {
 					throw new IllegalArgumentException(
-						String.format("Object size bias (%f) should not be less than 0", sizeBias)
+						"Object size bias should not be less than 0: " + sizeBias
 					);
 				}
 				break;
 			case UPDATE:
 				if(countUpdPerReq < 0) {
 					throw new IllegalArgumentException(
-						String.format("Invalid updates per request count: %d", countUpdPerReq)
+						"Invalid updates per request count: " + countUpdPerReq
 					);
 				}
 				break;

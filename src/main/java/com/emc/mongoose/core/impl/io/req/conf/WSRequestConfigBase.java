@@ -18,14 +18,13 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
 // mongoose-core-impl
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.impl.data.DataRanges;
+import com.emc.mongoose.core.impl.data.RangeLayerData;
 import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
 import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.commons.codec.binary.Base64;
 //
-import org.apache.commons.lang.text.StrBuilder;
 //
 import org.apache.http.ExceptionLogger;
 import org.apache.http.Header;
@@ -79,6 +78,12 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.DoubleBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
+import java.nio.ShortBuffer;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -138,7 +143,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected HeaderGroup sharedHeaders = new HeaderGroup();
-	protected final ThreadLocal<Mac> threadLocalMac = new ThreadLocal<>();
+	protected static final ThreadLocal<Mac> THRLOC_MAC = new ThreadLocal<>();
 	//
 	public WSRequestConfigBase()
 	throws NoSuchAlgorithmException, IOReactorException {
@@ -194,7 +199,7 @@ implements WSRequestConfig<T> {
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize((int)runTimeConfig.getDataBufferSize())
+			.setBufferSize((int) runTimeConfig.getDataBufferSize())
 			.build();
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
@@ -421,14 +426,14 @@ implements WSRequestConfig<T> {
 			LogUtil.failure(LOG, Level.WARN, e, "Failed to apply auth header");
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			final StrBuilder msgBuff = new StrBuilder("built request: ")
+			final StringBuilder msgBuff = new StringBuilder("built request: ")
 				.append(httpRequest.getRequestLine().getMethod()).append(' ')
-				.append(httpRequest.getRequestLine().getUri()).appendNewLine();
+				.append(httpRequest.getRequestLine().getUri()).append('\n');
 			for(final Header header: httpRequest.getAllHeaders()) {
 				msgBuff
 					.append('\t').append(header.getName())
 					.append(": ").append(header.getValue())
-					.appendNewLine();
+					.append('\n');
 			}
 			if(httpRequest.getClass().isInstance(HttpEntityEnclosingRequest.class)) {
 				msgBuff
@@ -460,7 +465,7 @@ implements WSRequestConfig<T> {
 			if(dataItem.isRangeUpdatePending(i)) {
 				LOG.trace(LogUtil.MSG, "\"{}\": should update range #{}", dataItem, i);
 				if(rangeBeg < 0) { // begin of the possible updated ranges sequence
-					rangeBeg = DataRanges.getRangeOffset(i);
+					rangeBeg = RangeLayerData.getRangeOffset(i);
 					rangeEnd = rangeBeg + rangeLen - 1;
 					LOG.trace(
 						LogUtil.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
@@ -470,15 +475,11 @@ implements WSRequestConfig<T> {
 				}
 				if(i == rangeCount - 1) { // this is the last range which is updated also
 					LOG.trace(LogUtil.MSG, "End of the updated ranges sequence @{}", rangeEnd);
-					httpRequest.addHeader(
-						HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
-					);
+					httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + rangeBeg + "-" + rangeEnd);
 				}
 			} else if(rangeBeg > -1 && rangeEnd > -1) { // end of the updated ranges sequence
 				LOG.trace(LogUtil.MSG, "End of the updated ranges sequence @{}", rangeEnd);
-				httpRequest.addHeader(
-					HttpHeaders.RANGE, String.format(MSG_TMPL_RANGE_BYTES, rangeBeg, rangeEnd)
-				);
+				httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + rangeBeg + "-" + rangeEnd);
 				// drop the updated ranges sequence info
 				rangeBeg = -1;
 				rangeEnd = -1;
@@ -489,10 +490,7 @@ implements WSRequestConfig<T> {
 	protected final void applyAppendRangeHeader(
 		final MutableWSRequest httpRequest, final T dataItem
 	) {
-		httpRequest.addHeader(
-				HttpHeaders.RANGE,
-				String.format(MSG_TMPL_RANGE_BYTES_APPEND, dataItem.getSize())
-		);
+		httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + dataItem.getSize() + "-");
 	}
 	/*
 	protected final static DateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(
@@ -521,7 +519,7 @@ implements WSRequestConfig<T> {
 	@Override
 	public String getSignature(final String canonicalForm) {
 		final byte sigData[];
-		Mac mac = threadLocalMac.get();
+		Mac mac = THRLOC_MAC.get();
 		if(mac == null) {
 			try {
 				mac = Mac.getInstance(signMethod);
@@ -530,7 +528,7 @@ implements WSRequestConfig<T> {
 				LogUtil.failure(LOG, Level.FATAL, e, "Failed to calculate the signature");
 				throw new IllegalStateException("Failed to init MAC cypher instance");
 			}
-			threadLocalMac.set(mac);
+			THRLOC_MAC.set(mac);
 		} else {
 			mac.reset();
 		}
@@ -544,12 +542,12 @@ implements WSRequestConfig<T> {
 	}
 	//
 	private final static ThreadLocal<ByteBuffer>
-		RESP_BUFF_NON_READ = new ThreadLocal<>(),
-		RESP_BUFF_READ = new ThreadLocal<>();
+		THRLOC_BB_RESP_WRITE = new ThreadLocal<>(),
+		THRLOC_BB_RESP_READ = new ThreadLocal<>();
 	//
 	@Override
 	public final boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem) {
-		boolean ok = true;
+		boolean verifyPass = true;
 		try {
 			if(dataItem != null) {
 				if(loadType == IOTask.Type.READ) { // read
@@ -557,15 +555,23 @@ implements WSRequestConfig<T> {
 						try(
 							final HTTPInputStream inStream = HTTPInputStream.getInstance(in, ioCtl)
 						) {
-							ok = dataItem.isContentEqualTo(inStream);
+							verifyPass = dataItem.isContentEqualTo(inStream);
 						} catch(final InterruptedException e) {
 							// ignore
 						}
 					} else { // consume the whole data item content - may estimate the buffer size
-						ByteBuffer bbuff = RESP_BUFF_READ.get();
-						if(bbuff == null || bbuff.capacity() != buffSize) {
-							bbuff = ByteBuffer.allocate(buffSize);
-							RESP_BUFF_READ.set(bbuff);
+						ByteBuffer bbuff = THRLOC_BB_RESP_READ.get();
+						final long dataSize = dataItem.getSize();
+						// should I adapt the buffer size?
+						if(bbuff == null || bbuff.capacity() > 2 * dataSize || dataSize > 2 * bbuff.capacity()) {
+							if(dataSize < LoadExecutor.BUFF_SIZE_LO) {
+								bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
+							} else if(dataSize > LoadExecutor.BUFF_SIZE_HI) {
+								bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_HI);
+							} else {
+								bbuff = ByteBuffer.allocate((int) dataSize); // cast is safe
+							}
+							THRLOC_BB_RESP_READ.set(bbuff);
 						} else {
 							bbuff.clear();
 						}
@@ -574,7 +580,7 @@ implements WSRequestConfig<T> {
 				}
 			}
 		} catch(final IOException e) {
-			ok = false;
+			verifyPass = false;
 			if(isClosed()) {
 				LogUtil.failure(
 					LOG, Level.DEBUG, e, "Failed to read the content after closing"
@@ -583,16 +589,16 @@ implements WSRequestConfig<T> {
 				LogUtil.failure(LOG, Level.WARN, e, "Content reading failure");
 			}
 		} finally { // try to read the remaining data if left in the input stream
-			ByteBuffer bbuff = RESP_BUFF_NON_READ.get();
+			ByteBuffer bbuff = THRLOC_BB_RESP_WRITE.get();
 			if(bbuff == null) {
 				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
-				RESP_BUFF_NON_READ.set(bbuff);
+				THRLOC_BB_RESP_WRITE.set(bbuff);
 			} else {
 				bbuff.clear();
 			}
 			HTTPInputStream.consumeQuietly(in, ioCtl, bbuff);
 		}
-		return ok;
+		return verifyPass;
 	}
 	//
 	@Override

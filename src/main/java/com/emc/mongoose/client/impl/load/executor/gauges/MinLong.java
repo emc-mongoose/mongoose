@@ -26,7 +26,7 @@ import java.util.Map;
  Created by kurila on 19.12.14.
  */
 public final class MinLong
-	implements Gauge<Long> {
+implements Gauge<Long> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//

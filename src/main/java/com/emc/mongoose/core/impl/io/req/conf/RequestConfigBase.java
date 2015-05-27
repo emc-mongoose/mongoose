@@ -8,10 +8,8 @@ import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
-import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.LogManager;
@@ -46,10 +44,11 @@ implements RequestConfig<T> {
 	protected volatile int
 		port;
 	protected int buffSize;
+	protected int reqSleepMilliSec;
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		LOG.trace(LogUtil.MSG, String.format("New reqconf instance (%d)", hashCode()));
+		LOG.trace(LogUtil.MSG, "New reqconf instance #" + hashCode());
 		api = runTimeConfig.getApiName();
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();
@@ -62,6 +61,7 @@ implements RequestConfig<T> {
 		port = runTimeConfig.getApiTypePort(api);
 		nameSpace = runTimeConfig.getStorageNameSpace();
 		buffSize = (int) runTimeConfig.getDataBufferSize();
+		reqSleepMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 	}
 	//
 	protected RequestConfigBase(final RequestConfig<T> reqConf2Clone) {
@@ -79,6 +79,7 @@ implements RequestConfig<T> {
 			setNameSpace(reqConf2Clone.getNameSpace());
 			secret = reqConf2Clone.getSecret();
 			setBuffSize(reqConf2Clone.getBuffSize());
+			setReqSleepMilliSec(reqConf2Clone.getReqSleepMilliSec());
 			LOG.debug(
 				LogUtil.MSG, "Forked req conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
 			);
@@ -100,7 +101,8 @@ implements RequestConfig<T> {
 			.setScheme(scheme)
 			.setLoadType(loadType)
 			.setNameSpace(nameSpace)
-			.setBuffSize(buffSize);
+			.setBuffSize(buffSize)
+			.setReqSleepMilliSec(reqSleepMilliSec);
 		requestConfigBranch.secret = secret;
 		LOG.debug(
 			LogUtil.MSG, "Forked req conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
@@ -257,6 +259,20 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
+	public final int getReqSleepMilliSec() {
+		return reqSleepMilliSec;
+	}
+	@Override
+	public final RequestConfigBase<T> setReqSleepMilliSec(final int reqSleepMilliSec)
+	throws IllegalArgumentException {
+		if(reqSleepMilliSec < 0) {
+			throw new IllegalArgumentException("Request sleep time shouldn't have a negative value");
+		}
+		this.reqSleepMilliSec = reqSleepMilliSec;
+		return this;
+	}
+	//
+	@Override
 	public RequestConfigBase<T> setProperties(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
 		//
@@ -267,7 +283,8 @@ implements RequestConfig<T> {
 		setSecret(this.runTimeConfig.getAuthSecret());
 		setRetries(this.runTimeConfig.getRunRequestRetries());
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
-		setBuffSize((int) this.runTimeConfig.getDataBufferSize());
+		setBuffSize((int)this.runTimeConfig.getDataBufferSize());
+		setReqSleepMilliSec(this.runTimeConfig.getLoadLimitReqSleepMilliSec());
 		return this;
 	}
 	//
@@ -277,8 +294,9 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final void setBuffSize(final int buffSize) {
+	public final RequestConfigBase<T> setBuffSize(final int buffSize) {
 		this.buffSize = buffSize;
+		return this;
 	}
 	//
 	@Override
@@ -295,6 +313,7 @@ implements RequestConfig<T> {
 		out.writeBoolean(getRetries());
 		out.writeBoolean(getAnyDataProducerEnabled());
 		out.writeBoolean(getVerifyContentFlag());
+		out.writeInt(getReqSleepMilliSec());
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -322,6 +341,8 @@ implements RequestConfig<T> {
 		LOG.trace(LogUtil.MSG, "Got any producer enabled flag {}", anyDataProducerEnabled);
 		setVerifyContentFlag(in.readBoolean());
 		LOG.trace(LogUtil.MSG, "Got verify content flag {}", retryFlag);
+		setReqSleepMilliSec(in.readInt());
+		LOG.trace(LogUtil.MSG, "Got requests sleep time {}", reqSleepMilliSec);
 	}
 	//
 	@Override
