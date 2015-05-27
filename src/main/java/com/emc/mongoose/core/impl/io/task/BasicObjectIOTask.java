@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
 /**
@@ -104,8 +103,8 @@ implements DataObjectIOTask<T> {
 		//
 		try {
 			loadExecutor.handleResult(this);
-		} catch(final RemoteException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Unexpected network failure");
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
 		}
 		//
 		final int reqSleepMilliSec = reqConf.getReqSleepMilliSec();
@@ -116,7 +115,5 @@ implements DataObjectIOTask<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
 			}
 		}
-		//
-		//release();
 	}
 }

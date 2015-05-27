@@ -128,11 +128,10 @@ implements WSLoadExecutor<T> {
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
-
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(buffSize > 2 * BUFF_SIZE_LO ? buffSize / 2 : buffSize)
-			.setFragmentSizeHint(buffSize > 2 * BUFF_SIZE_LO ? buffSize / 2 : buffSize)
+			.setBufferSize(buffSize > (2 * BUFF_SIZE_LO) ? buffSize / 2 : buffSize)
+			.setFragmentSizeHint(buffSize > (2 * BUFF_SIZE_LO) ? buffSize / 2 : buffSize)
 			.build();
 		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
 			reqExecutor, connConfig
@@ -234,7 +233,8 @@ implements WSLoadExecutor<T> {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, wsTask);
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(
-					LogUtil.MSG, "I/O task #{} has been submitted for execution", wsTask.hashCode()
+					LogUtil.MSG, "I/O task #{} has been submitted for execution: {}1",
+					wsTask.hashCode(), futureResult
 				);
 			}
 		} catch(final Exception e) {

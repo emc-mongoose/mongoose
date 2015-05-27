@@ -425,17 +425,10 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final void failed(final Exception e) {
+		LogUtil.exception(LOG, Level.DEBUG, e, "I/O task failure");
 		exception = e;
-		/*if(wsReqConf != null && !wsReqConf.isClosed()) {
-			TraceLogger.failure(LOG, Level.WARN, e, "I/O task failure");
-		} else if(
-			ConnectionClosedException.class.isInstance(e) ||
-			IllegalStateException.class.isInstance(e)
-		) {
-			TraceLogger.failure(LOG, Level.TRACE, e, "Looks like dropped I/O task");
-		} else {
-			TraceLogger.failure(LOG, Level.WARN, e, "I/O task failure");
-		}*/
+		this.status = Status.FAIL_UNKNOWN;
+		complete();
 	}
 	//
 	@Override
@@ -455,6 +448,7 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final boolean cancel() {
+		LOG.debug(LogUtil.MSG, "{}: I/O task cancel", hashCode());
 		return false;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -483,5 +477,6 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final void cancelled() {
+		LOG.debug(LogUtil.MSG, "{}: I/O task canceled", hashCode());
 	}
 }

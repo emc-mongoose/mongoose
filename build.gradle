@@ -45,13 +45,6 @@ sourceSets {
 			include 'allpermissions.policy'
 		}
 	}
-	httpCoreLocklessConnPool {
-		java {
-			srcDir(['src', 'main', 'java', 'org', 'apache', 'http'].join(File.separator))
-			include '**'
-		}
-		compileClasspath += sourceSets.common.output
-	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// core ////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -67,7 +60,7 @@ sourceSets {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'core', 'impl'].join(File.separator))
 			include '**'
 		}
-		compileClasspath += sourceSets.common.output + sourceSets.coreApi.output + sourceSets.httpCoreLocklessConnPool.output
+		compileClasspath += sourceSets.common.output + sourceSets.coreApi.output
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// storage API adapters ////////////////////////////////////////////////////////////////////////
@@ -204,14 +197,6 @@ dependencies {
 		library.jackson_databind,
 	)
 	commonRuntime (
-		library.runtime_logging,
-	)
-
-	httpCoreLocklessConnPoolCompile (
-		library.httpcore_plus_nio,
-		library.log4j_api,
-	)
-	httpCoreLocklessConnPoolRuntime (
 		library.runtime_logging,
 	)
 
@@ -367,7 +352,6 @@ dependencies {
 configurations {
 	allRuntime.extendsFrom(
 		commonRuntime,
-		httpCoreLocklessConnPoolRuntime,
 		coreApiRuntime,
 		coreImplRuntime,
 		storageAdapterAtmosImplRuntime,
@@ -429,23 +413,6 @@ task commonJar(type: Jar) {
 	}
 }
 
-task httpCoreLocklessConnPoolJar(type: Jar) {
-	archiveName "${baseName}-httpcore-lockless-connpool.${extension}"
-	from sourceSets.httpCoreLocklessConnPool.output
-	manifest {
-		from sharedManifest
-		attributes (
-			'Implementation-Title': rootProject.name + "-httpcore-lockless-connpool",
-			'Class-Path': [
-				commonJar.outputs.files.collect {it.name}.join(' '),
-				configurations.httpCoreLocklessConnPoolRuntime.collect {
-					libsDirName + File.separator + it.getName()
-				}.join(' '),
-			]
-		)
-	}
-}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // core ////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -478,7 +445,6 @@ task coreImplJar(type: Jar) {
 			'Implementation-Title': rootProject.name + "-core-impl",
 			'Class-Path': [
 				commonJar.outputs.files.collect {it.name}.join(' '),
-				httpCoreLocklessConnPoolJar.outputs.files.collect {it.name}.join(' '),
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
 				configurations.coreImplRuntime.collect {
 					libsDirName + File.separator + it.getName()
@@ -706,7 +672,7 @@ task webuiJar(type: Jar) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 task cliJar(type: Jar) {
-	dependsOn commonJar, storageMockJar, coreApiJar, coreImplJar, httpCoreLocklessConnPoolJar
+	dependsOn commonJar, storageMockJar, coreApiJar, coreImplJar
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
 	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
 	dependsOn clientJar, scenarioJar, webuiJar
@@ -722,7 +688,6 @@ task cliJar(type: Jar) {
 						commonJar.outputs.files.collect {it.name}.join(' '),
 						coreApiJar.outputs.files.collect {it.name}.join(' '),
 						coreImplJar.outputs.files.collect {it.name}.join(' '),
-						httpCoreLocklessConnPoolJar.outputs.files.collect {it.name}.join(' '),
 						serverApiJar.outputs.files.collect {it.name}.join(' '),
 						serverImplJar.outputs.files.collect {it.name}.join(' '),
 						storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
@@ -743,7 +708,6 @@ task cliJar(type: Jar) {
 task dist(type: Tar) {
 
 	dependsOn commonJar
-	dependsOn httpCoreLocklessConnPoolJar
 	dependsOn coreApiJar
 	dependsOn coreImplJar
 	dependsOn storageAdapterAtmosJar
@@ -782,7 +746,6 @@ task dist(type: Tar) {
 			from { configurations.allRuntime }
 		}
 		from commonJar.outputs.files
-		from httpCoreLocklessConnPoolJar.outputs.files
 		from coreApiJar.outputs.files
 		from coreImplJar.outputs.files
 		from storageAdapterAtmosJar.outputs.files

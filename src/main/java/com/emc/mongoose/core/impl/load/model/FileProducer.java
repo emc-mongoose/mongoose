@@ -158,16 +158,10 @@ implements Producer<T> {
 					try {
 						consumer.submit(nextData);
 						dataItemsCount ++;
+					} catch(final RejectedExecutionException e) {
+						LogUtil.exception(LOG, Level.DEBUG, e, "Consumer rejected the data item");
 					} catch(final Exception e) {
-						if(
-							consumer.getMaxCount() > dataItemsCount &&
-							!RejectedExecutionException.class.isInstance(e)
-						) {
-							LogUtil.exception(LOG, Level.WARN, e, "Failed to submit data item");
-							break;
-						} else {
-							LogUtil.exception(LOG, Level.DEBUG, e, "Failed to submit data item");
-						}
+						LogUtil.exception(LOG, Level.WARN, e, "Failed to submit the data item");
 					}
 				}
 			} while(!isInterrupted() && dataItemsCount < maxCount);

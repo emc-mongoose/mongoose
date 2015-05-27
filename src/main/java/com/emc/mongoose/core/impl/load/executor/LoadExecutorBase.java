@@ -39,7 +39,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -124,7 +123,9 @@ implements LoadExecutor<T> {
 	protected final AtomicLong
 		durTasksSum = new AtomicLong(0),
 		counterResults = new AtomicLong(0);
-	private final AtomicBoolean isClosed = new AtomicBoolean(false);
+	private final AtomicBoolean
+		isInterrupted = new AtomicBoolean(false),
+		isClosed = new AtomicBoolean(false);
 	private final Lock lock = new ReentrantLock();
 	private final Condition condProducerDone = lock.newCondition();
 	//
@@ -298,7 +299,7 @@ implements LoadExecutor<T> {
 			}
 			//
 			jmxReporter.start();
-			metricsDaemon.setName("metricsDaemon<" + getName() + ">");
+			metricsDaemon.setName(getName());
 			metricsDaemon.start();
 			//
 			LOG.debug(LogUtil.MSG, "Started \"{}\"", getName());
@@ -306,8 +307,6 @@ implements LoadExecutor<T> {
 			LOG.warn(LogUtil.ERR, "Second start attempt - skipped");
 		}
 	}
-	//
-	private final AtomicBoolean isInterrupted = new AtomicBoolean(false);
 	//
 	@Override
 	public final synchronized void interrupt() {
@@ -405,7 +404,9 @@ implements LoadExecutor<T> {
 		}
 		//
 		try {
-			submit(ioTask);
+			if(submit(ioTask) == null) {
+				throw new RejectedExecutionException("Null future returned");
+			}
 			counterSubm.inc();
 			activeTasksStats.get(nextNodeAddr).incrementAndGet(); // increment node's usage counter
 		} catch(final RejectedExecutionException e) {
@@ -446,11 +447,11 @@ implements LoadExecutor<T> {
 	public final void handleResult(final IOTask<T> ioTask)
 	throws RemoteException {
 		// producing was interrupted?
-		if(metricsDaemon.isInterrupted()) {
+		if(isInterrupted.get()) {
 			return;
 		}
 		// update the metrics
-		//activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
+		activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 		final IOTask.Status status = ioTask.getStatus();
 		final T dataItem = ioTask.getDataItem();
 		final int latency = ioTask.getLatency();
@@ -468,6 +469,8 @@ implements LoadExecutor<T> {
 					ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
 				);
 			}
+		} else {
+			counterReqFail.inc();
 		}
 		// feed the data item to the consumer and finally check for the finish state
 		try {
@@ -501,10 +504,16 @@ implements LoadExecutor<T> {
 				LOG, Level.DEBUG, e, "\"{}\" rejected the data item \"{}\"", consumer, dataItem
 			);
 		} finally {
-			final long n = counterResults.incrementAndGet();
-			if(n >= maxCount || super.isInterrupted() && n >= counterSubm.getCount()) {
+			counterResults.incrementAndGet();
+			if(
+				counterResults.get() >= maxCount ||
+				(isShutdown.get() && counterResults.get() >= counterSubm.getCount())
+			) {
 				// max count is reached OR all tasks are done
-				LOG.debug(LogUtil.MSG, "{}: all {} task results has been obtained", getName(), n);
+				LOG.debug(
+					LogUtil.MSG, "{}: all {} task results has been obtained",
+					getName(), counterResults.get()
+				);
 				if(!isClosed.get()) {
 					try {
 						if(
@@ -514,12 +523,16 @@ implements LoadExecutor<T> {
 						) {
 							try {
 								condProducerDone.signalAll();
-								LOG.debug(LogUtil.MSG, "{}: done/interrupted signal emitted", getName());
+								LOG.debug(
+									LogUtil.MSG, "{}: done/interrupted signal emitted", getName()
+								);
 							} finally {
 								lock.unlock();
 							}
 						} else {
-							LOG.debug(LogUtil.ERR, "Failed to acquire the lock for result handling");
+							LOG.debug(
+								LogUtil.ERR, "Failed to acquire the lock for result handling"
+							);
 						}
 					} catch(final InterruptedException e) {
 						LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
@@ -616,7 +629,7 @@ implements LoadExecutor<T> {
 	@Override
 	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException {
-		if(super.isInterrupted() || metricsDaemon.isInterrupted() || isClosed.get()) {
+		if(super.isInterrupted() || isShutdown.get() || isClosed.get()) {
 			return;
 		}
 		//

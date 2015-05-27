@@ -200,9 +200,11 @@ implements DataItem {
 		);
 		long doneByteCount = 0;
 		setRelativeOffset(relOffset);
+		//
 		while(doneByteCount < len) {
-			enforceCircularity();
 			//
+			enforceCircularity();
+			inBuff.limit(ringBuff.remaining());
 			n = chanSrc.read(inBuff);
 			//
 			if(n < 0) { // premature end of stream

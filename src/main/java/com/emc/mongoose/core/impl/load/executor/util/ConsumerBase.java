@@ -1,5 +1,7 @@
 package com.emc.mongoose.core.impl.load.executor.util;
 //
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
@@ -54,7 +56,7 @@ implements Consumer<T> {
 	public void submit(final T dataItem)
 	throws RemoteException, InterruptedException, RejectedExecutionException {
 		//
-		if(counterPreSubm.get() >= maxCount) {
+		if(dataItem == null || counterPreSubm.get() >= maxCount) {
 			shutdown();
 		}
 		if(isShutdown.get()) {
@@ -74,9 +76,13 @@ implements Consumer<T> {
 			LogUtil.MSG, "Determined submit queue capacity of {} for \"{}\"",
 			submitQueue.remainingCapacity(), getName()
 		);
+		T nextDataItem;
 		try {
 			while(!(isShutdown.get() && submitQueue.size() == 0)) {
-				submitSync(submitQueue.take());
+				nextDataItem = submitQueue.poll(submTimeOutMilliSec, TimeUnit.MILLISECONDS);
+				if(nextDataItem != null) {
+					submitSync(nextDataItem);
+				}
 			}
 			LOG.debug(LogUtil.MSG, "{}: consuming finished", getName());
 		} catch(final InterruptedException e) {
@@ -85,6 +91,8 @@ implements Consumer<T> {
 			LOG.debug(LogUtil.MSG, "{}: consuming rejected", getName());
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Submit data item failure");
+		} finally {
+			shutdown();
 		}
 	}
 	//
@@ -105,6 +113,7 @@ implements Consumer<T> {
 	public void interrupt() {
 		if(!super.isInterrupted()) {
 			super.interrupt();
+			shutdown();
 			final int dropCount = submitQueue.size();
 			if(dropCount > 0) {
 				LOG.debug(LogUtil.MSG, "Dropped {} submit tasks", dropCount);
