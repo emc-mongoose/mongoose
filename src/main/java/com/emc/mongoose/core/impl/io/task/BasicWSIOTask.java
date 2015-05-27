@@ -39,6 +39,8 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.ClosedChannelException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -220,9 +222,15 @@ implements WSIOTask<T> {
 				}*/
 			try(final HTTPOutputStream outStream = HTTPOutputStream.getInstance(out, ioCtl)) {
 				reqEntity.writeTo(outStream);
-			} catch(final Exception e) {
+			} catch (final ClosedChannelException e) {
+				status = Status.FAIL_IO;
+				LogUtil.failure(LOG, Level.TRACE, e, "Failure");
+			} catch (final IOException e) {
+				status = Status.FAIL_IO;
 				LogUtil.failure(LOG, Level.ERROR, e, "Failure");
-				e.printStackTrace(System.err);
+			} catch(final Exception e) {
+				status = Status.FAIL_UNKNOWN;
+				LogUtil.failure(LOG, Level.ERROR, e, "Failure");
 			} finally {
 				out.complete();
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
