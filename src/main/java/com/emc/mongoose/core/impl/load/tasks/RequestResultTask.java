@@ -37,27 +37,11 @@ implements Runnable, Reusable<RequestResultTask<T>> {
 	private volatile IOTask<T> ioTask = null;
 	private volatile Future<IOTask.Status> futureResult = null;
 	//
-	public final static AtomicBoolean IS_LAST_TASK_DONE = new AtomicBoolean(true);
-	public final static Lock RESULT_TASKS_LOCK = new ReentrantLock();
-	public final static Condition TASKS_COND = RESULT_TASKS_LOCK.newCondition();
 	@Override
 	public final void run() {
 		IOTask.Status ioTaskStatus = IOTask.Status.FAIL_UNKNOWN;
 		try {
-			IS_LAST_TASK_DONE.compareAndSet(true, false);
 			ioTaskStatus = futureResult.get(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
-			IS_LAST_TASK_DONE.compareAndSet(false, true);
-			if (IS_LAST_TASK_DONE.get()) {
-				if (RESULT_TASKS_LOCK.tryLock(1, TimeUnit.SECONDS)) {
-					try {
-						TASKS_COND.signalAll();
-					} finally {
-						RESULT_TASKS_LOCK.unlock();
-					}
-				} else {
-					LOG.debug(LogUtil.ERR, "Failed to acquire lock to request result task");
-				}
-			}
 		} catch(final InterruptedException | CancellationException e) {
 			LogUtil.failure(LOG, Level.TRACE, e, "Request has been cancelled");
 		} catch(final ExecutionException e) {
