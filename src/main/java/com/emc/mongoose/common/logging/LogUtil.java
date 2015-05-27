@@ -174,9 +174,7 @@ public final class LogUtil {
 		final String msgPattern, final Object... args
 	) {
 		if(logger.isTraceEnabled(ERR)) {
-			logger.log(
-				level, ERR, logger.getMessageFactory().newMessage(msgPattern, args), thrown
-			);
+			logger.log(level, ERR, logger.getMessageFactory().newMessage(msgPattern, args), thrown);
 		} else {
 			logger.log(level, ERR, logger.getMessageFactory().newMessage(msgPattern, args));
 		}

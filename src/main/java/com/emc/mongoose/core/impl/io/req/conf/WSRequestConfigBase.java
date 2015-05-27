@@ -217,7 +217,7 @@ implements WSRequestConfig<T> {
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new NamingWorkerFactory(String.format("WSConfigurator<%s>-%d", toString(), hashCode()))
+				new NamingWorkerFactory("wsConfigWorker<" + toString() + ">")
 			);
 		} catch(final IOReactorException e) {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);
@@ -232,8 +232,7 @@ implements WSRequestConfig<T> {
 		connPool.setMaxTotal(1);
 		connPool.setDefaultMaxPerRoute(1);
 		clientDaemon = new Thread(
-			new HttpClientRunTask(ioEventDispatch, ioReactor),
-			String.format("%s-WSConfigThread-%d", toString(), hashCode())
+			new HttpClientRunTask(ioEventDispatch, ioReactor), "wsConfigDaemon<" + toString() + ">"
 		);
 		clientDaemon.setDaemon(true);
 	}

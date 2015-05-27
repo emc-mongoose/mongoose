@@ -9,6 +9,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
@@ -24,6 +25,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.message.HeaderGroup;
+import org.apache.http.pool.PoolStats;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -49,6 +51,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -123,10 +128,11 @@ implements WSLoadExecutor<T> {
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
+
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(BUFF_SIZE_LO)
-			.setFragmentSizeHint(BUFF_SIZE_LO)
+			.setBufferSize(buffSize > 2 * BUFF_SIZE_LO ? buffSize / 2 : buffSize)
+			.setFragmentSizeHint(buffSize > 2 * BUFF_SIZE_LO ? buffSize / 2 : buffSize)
 			.build();
 		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
 			reqExecutor, connConfig
@@ -158,8 +164,7 @@ implements WSLoadExecutor<T> {
 		connPool.setDefaultMaxPerRoute(totalConnCount);
 		//
 		clientDaemon = new Thread(
-			new HttpClientRunTask(ioEventDispatch, ioReactor),
-			String.format("%s-webClientThread", getName())
+			new HttpClientRunTask(ioEventDispatch, ioReactor), "clientDaemon<" + getName() + ">"
 		);
 		clientDaemon.setDaemon(true);
 	}
@@ -239,10 +244,56 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected  BasicWSIOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
+	protected BasicWSIOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
 		return BasicWSIOTask.getInstance(this, dataItem, nextNodeAddr);
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Balancing based on the connection pool stats
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	private volatile Set<HttpHost> routes = null;
+	private static final ThreadLocal<Map<HttpHost, String>>
+		THR_LOCAL_REVERSE_NODE_MAP = new ThreadLocal<>();
 	//
+	@Override
+	protected final String getNextNode() {
+		HttpHost bestRoute = null;
+		// connPool.getRoutes() is quite expensive, so reuse the routes set
+		if(routes == null || routes.size() < storageNodeCount) {
+			routes = connPool.getRoutes();
+		} else {
+			// select the route having the max count of the free connections in the pool
+			// TODO think how to not to invoke connPool.getStats(HttpHost route)
+			int maxConnCount = -1, nextConnCount;
+			for(final HttpHost nextRoute : routes) {
+				nextConnCount = connPool.getStats(nextRoute).getAvailable();
+				if(nextConnCount > maxConnCount) {
+					maxConnCount = nextConnCount;
+					bestRoute = nextRoute;
+				}
+			}
+		}
+		//
+		String nodeAddr;
+		if(bestRoute == null) { // fallback
+			nodeAddr = super.getNextNode();
+		} else {
+			// use thread local reverse node map, create a new one if not exists yet
+			Map<HttpHost, String> reverseNodeMap = THR_LOCAL_REVERSE_NODE_MAP.get();
+			if(reverseNodeMap == null) {
+				reverseNodeMap = new ConcurrentHashMap<>();
+				THR_LOCAL_REVERSE_NODE_MAP.set(reverseNodeMap);
+			}
+			// use cached string representation
+			nodeAddr = reverseNodeMap.get(bestRoute);
+			if(nodeAddr == null) {
+				nodeAddr = bestRoute.toHostString();
+				reverseNodeMap.put(bestRoute, nodeAddr);
+			}
+		}
+		//
+		return nodeAddr;
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override @SuppressWarnings("unchecked")
 	protected Producer<T> newFileBasedProducer(final long maxCount, final String listFile) {
 		Producer<T> localProducer = null;

@@ -37,6 +37,9 @@ import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -76,35 +79,51 @@ implements LoadExecutor<T> {
 	protected final MBeanServer mBeanServer;
 	protected final JmxReporter jmxReporter;
 	//
-	protected final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
+	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
+	private final BlockingQueue<IOTask<T>> ioTaskSpentQueue;
 	//
-	private final Thread metricsDaemon = new Thread() {
-		//
-		{ setDaemon(true); } // do not block process exit
-		//
-		@Override
-		public final void run() {
-			final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
-				runTimeConfig.getLoadMetricsPeriodSec()
-			);
-			try {
-				if(metricsUpdatePeriodMilliSec > 0) {
-					while(!isClosed.get()) {
-						logMetrics(LogUtil.PERF_AVG);
-						Thread.sleep(metricsUpdatePeriodMilliSec);
+	private final Thread
+		metricsDaemon = new Thread() {
+			//
+			{ setDaemon(true); } // do not block process exit
+			//
+			@Override
+			public final void run() {
+				final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
+					runTimeConfig.getLoadMetricsPeriodSec()
+				);
+				try {
+					if(metricsUpdatePeriodMilliSec > 0) {
+						while(!isClosed.get()) {
+							logMetrics(LogUtil.PERF_AVG);
+							Thread.sleep(metricsUpdatePeriodMilliSec);
+						}
+					} else {
+						Thread.sleep(Long.MAX_VALUE);
 					}
-				} else {
-					Thread.sleep(Long.MAX_VALUE);
+				} catch(final InterruptedException e) {
+					LOG.debug(LogUtil.MSG, "{}: interrupted", getName());
 				}
-			} catch(final InterruptedException e) {
-				LOG.debug(LogUtil.MSG, "{}: interrupted", getName());
 			}
-		}
-	};
+		},
+		ioTaskReleaseDaemon = new Thread() {
+			//
+			{ setDaemon(true); }
+			//
+			@Override
+			public final void run() {
+				try {
+					while(!isClosed.get()) {
+						ioTaskSpentQueue.take().release();
+					}
+				} catch(final InterruptedException ignored) {
+				}
+			}
+		};
 	// STATES section
 	protected final AtomicLong
 		durTasksSum = new AtomicLong(0),
-		counterResultHandle = new AtomicLong(0);
+		counterResults = new AtomicLong(0);
 	private final AtomicBoolean isClosed = new AtomicBoolean(false);
 	private final Lock lock = new ReentrantLock();
 	private final Condition condProducerDone = lock.newCondition();
@@ -154,6 +173,7 @@ implements LoadExecutor<T> {
 		for(final String addr : storageNodeAddrs) {
 			activeTasksStats.put(addr, new AtomicInteger(0));
 		}
+		ioTaskSpentQueue = new ArrayBlockingQueue<>(maxQueueSize);
 		// create and configure the connection manager
 		dataSrc = reqConfig.getDataSource();
 		//
@@ -230,7 +250,7 @@ implements LoadExecutor<T> {
 			String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 				//
-				countReqSucc, counterSubm.getCount() - counterResultHandle.get(),
+				countReqSucc, counterSubm.getCount() - counterResults.get(),
 				countReqFail == 0 ?
 					Long.toString(countReqFail) :
 					(float) countReqSucc / countReqFail > 100 ?
@@ -263,6 +283,8 @@ implements LoadExecutor<T> {
 			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
 			super.start();
+			ioTaskReleaseDaemon.setName("ioTaskReleaseDaemon<" + getName() + ">");
+			ioTaskReleaseDaemon.start();
 			if(producer == null) {
 				LOG.debug(LogUtil.MSG, "{}: using an external data items producer", getName());
 			} else {
@@ -285,9 +307,11 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
+	private final AtomicBoolean isInterrupted = new AtomicBoolean(false);
+	//
 	@Override
 	public final synchronized void interrupt() {
-		if(metricsDaemon.isAlive()) {
+		if(isInterrupted.compareAndSet(false, true)) {
 			metricsDaemon.interrupt();
 			shutdown();
 			// releasing the blocked join() methods, if any
@@ -349,7 +373,7 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
+	/*@Override
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
 		try {
@@ -358,10 +382,11 @@ implements LoadExecutor<T> {
 			counterRej.inc();
 			throw e;
 		}
-	}
+	}*/
 	//
 	@Override @SuppressWarnings("unchecked")
-	protected final void submitSync(final T dataItem) {
+	protected final void submitSync(final T dataItem)
+	throws InterruptedException, RemoteException {
 		if(counterSubm.getCount() + counterRej.getCount() >= maxCount) {
 			LOG.debug(
 				LogUtil.MSG, "{}: all tasks has been submitted ({}) or rejected ({})", getName(),
@@ -370,22 +395,22 @@ implements LoadExecutor<T> {
 			super.interrupt();
 		}
 		// prepare the I/O task instance (make the link between the data item and load type)
-		final String nextNodeAddr = getNextNode();
+		final String nextNodeAddr = storageNodeCount == 1 ? storageNodeAddrs[0] : getNextNode();
 		final IOTask<T> ioTask = getIOTask(dataItem, nextNodeAddr);
-		// try to sleep while underlying connection pool becomes more free
-		try {
-			while(counterSubm.getCount() - counterResultHandle.get() >= maxQueueSize) {
-				Thread.sleep(submTimeOutMilliSec);
-			}
-		} catch(final InterruptedException ignored) {
+		//
+		// try to sleep while underlying connection pool becomes more free if is going too fast
+		// warning: w/o such sleep the behaviour becomes very ugly
+		while(counterSubm.getCount() - counterResults.get() >= maxQueueSize) {
+			Thread.sleep(1);
 		}
 		//
 		try {
 			submit(ioTask);
 			counterSubm.inc();
-		} catch(final Exception e) {
-			e.printStackTrace(System.err);
-			LogUtil.exception(LOG, Level.DEBUG, e, "Submit failure");
+			activeTasksStats.get(nextNodeAddr).incrementAndGet(); // increment node's usage counter
+		} catch(final RejectedExecutionException e) {
+			counterRej.inc();
+			LogUtil.exception(LOG, Level.DEBUG, e, "Rejected the I/O task {}", ioTask);
 		}
 	}
 	//
@@ -393,24 +418,30 @@ implements LoadExecutor<T> {
 	protected BasicIOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
 		return BasicIOTask.getInstance(this, dataItem, nextNodeAddr);
 	}
-	//
-	private String getNextNode() {
-		String nextNode = null;
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Balancing implementation
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// round-robin variant:
+	/*private final AtomicInteger rountRobinCounter = new AtomicInteger(0);
+	protected String getNextNode() {
+		return storageNodeAddrs[rountRobinCounter.incrementAndGet() % storageNodeCount];
+	}*/
+	protected String getNextNode() {
+		String bestNode = null;
 		//final StringBuilder sb = new StringBuilder("Active tasks stats: ");
 		int minActiveTaskCount = Integer.MAX_VALUE, nextActiveTaskCount;
-		for(final String addr : storageNodeAddrs) {
-			nextActiveTaskCount = activeTasksStats.get(addr).get();
-			//sb.append(addr).append("=").append(nextActiveTaskCount).append(", ");
+		for(final String nextNode : storageNodeAddrs) {
+			nextActiveTaskCount = activeTasksStats.get(nextNode).get();
+			//sb.append(nextNode).append("=").append(nextActiveTaskCount).append(", ");
 			if(nextActiveTaskCount < minActiveTaskCount) {
 				minActiveTaskCount = nextActiveTaskCount;
-				nextNode = addr;
+				bestNode = nextNode;
 			}
 		}
-		//LOG.info(LogUtil.MSG, sb.append("best: ").append(nextNode).toString());
-		activeTasksStats.get(nextNode).incrementAndGet(); // mark
-		return nextNode;
+		//LOG.trace(LogUtil.MSG, sb.append("best: ").append(bestNode).toString());
+		return bestNode;
 	}
-	//
+	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void handleResult(final IOTask<T> ioTask)
 	throws RemoteException {
@@ -419,7 +450,7 @@ implements LoadExecutor<T> {
 			return;
 		}
 		// update the metrics
-		activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
+		//activeTasksStats.get(ioTask.getNodeAddr()).decrementAndGet();
 		final IOTask.Status status = ioTask.getStatus();
 		final T dataItem = ioTask.getDataItem();
 		final int latency = ioTask.getLatency();
@@ -470,7 +501,7 @@ implements LoadExecutor<T> {
 				LOG, Level.DEBUG, e, "\"{}\" rejected the data item \"{}\"", consumer, dataItem
 			);
 		} finally {
-			final long n = counterResultHandle.incrementAndGet();
+			final long n = counterResults.incrementAndGet();
 			if(n >= maxCount || super.isInterrupted() && n >= counterSubm.getCount()) {
 				// max count is reached OR all tasks are done
 				LOG.debug(LogUtil.MSG, "{}: all {} task results has been obtained", getName(), n);
@@ -533,6 +564,8 @@ implements LoadExecutor<T> {
 			} catch(final IllegalStateException | RejectedExecutionException e) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
+				ioTaskReleaseDaemon.interrupt();
+				ioTaskSpentQueue.clear();
 				BasicIOTask.INSTANCE_POOL_MAP.put(this, null); // dispose I/O tasks pool
 				jmxReporter.close();
 				LOG.debug(LogUtil.MSG, "JMX reported closed");
@@ -600,7 +633,7 @@ implements LoadExecutor<T> {
 				} else {
 					LOG.debug(
 						LogUtil.MSG, "{}: join timeout, unhandled results left: {}",
-						getName(), counterSubm.getCount() - counterResultHandle.get()
+						getName(), counterSubm.getCount() - counterResults.get()
 					);
 				}
 			} finally {

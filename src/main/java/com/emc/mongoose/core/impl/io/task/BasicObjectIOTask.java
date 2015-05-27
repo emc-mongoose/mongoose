@@ -5,7 +5,6 @@ import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
 //
 import org.apache.logging.log4j.Level;
@@ -118,6 +117,6 @@ implements DataObjectIOTask<T> {
 			}
 		}
 		//
-		release();
+		//release();
 	}
 }

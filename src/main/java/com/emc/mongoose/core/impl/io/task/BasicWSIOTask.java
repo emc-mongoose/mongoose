@@ -11,7 +11,6 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 //
@@ -38,6 +37,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -99,6 +99,13 @@ implements WSIOTask<T> {
 		if(instPool == null) {
 			throw new IllegalStateException("No pool found to release back");
 		} else {
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(
+					LogUtil.MSG,
+					"Releasing the task #{} back into the pool for {}: {}",
+					hashCode(), loadExecutor, instPool.toString()
+				);
+			}
 			instPool.release(this);
 		}
 	}
@@ -169,8 +176,15 @@ implements WSIOTask<T> {
 					dataItem.write(chanOut);
 				}
 			}
+		} catch(final AsynchronousCloseException e) { // probably a manual interruption
+			status = Status.FAIL_IO;
+			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
+		} catch(final IOException e) {
+			status = Status.FAIL_IO;
+			LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during the data output");
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Producing content failure");
+			status = Status.FAIL_UNKNOWN;
+			LogUtil.exception(LOG, Level.ERROR, e, "Producing content failure");
 		}
 	}
 	//

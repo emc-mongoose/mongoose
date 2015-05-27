@@ -72,9 +72,9 @@ implements DataItemBuffer<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void submitSync(T dataItem)
-	throws RejectedExecutionException {
+	throws InterruptedException {
 		if(fBuffOut == null) {
-			throw new RejectedExecutionException();
+			throw new InterruptedException("Output is already closed");
 		} else if(dataItem == null) {
 			shutdown();
 		} else {

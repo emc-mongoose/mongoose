@@ -81,14 +81,15 @@ implements Consumer<T> {
 			LOG.debug(LogUtil.MSG, "{}: consuming finished", getName());
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "{}: consuming interrupted", getName());
+		} catch(final RejectedExecutionException e) {
+			LOG.debug(LogUtil.MSG, "{}: consuming rejected", getName());
 		} catch(final Exception e) {
-			e.printStackTrace(System.err);
-			LogUtil.exception(LOG, Level.ERROR, e, "Serving the submit queue failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Submit data item failure");
 		}
 	}
 	//
 	protected abstract void submitSync(final T dataItem)
-	throws RejectedExecutionException;
+	throws InterruptedException, RemoteException;
 	//
 	@Override
 	public void shutdown() {

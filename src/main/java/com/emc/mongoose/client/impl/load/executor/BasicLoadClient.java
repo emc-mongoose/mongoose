@@ -656,7 +656,8 @@ implements LoadClient<T> {
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void submit(final T dataItem) {
+	public final void submit(final T dataItem)
+	throws RejectedExecutionException {
 		InstancePool<RemoteSubmitTask> mostAvailPool = null;
 		int maxPoolSize = 0, nextPoolSize;
 		for(final InstancePool<RemoteSubmitTask> nextPool : submTaskPoolMap.values()) {

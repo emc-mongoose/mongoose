@@ -134,7 +134,7 @@
 				"size": "4KB",
 				"ring": {
 					"seed": "7a42d9c483244167",
-					"size": "4MB"
+					"size": "1MB"
 				}
 			}
 		},
@@ -242,7 +242,7 @@
 			"name": "mongoose",
 			"version": "0.8.0",
 			"mode": "standalone",
-			"submitTimeOutMilliSec": 10,
+			"submitTimeOutMilliSec": 1000,
 			"request": {
 				"retries": false,
 				"timeoutMilliSec": 1000000,

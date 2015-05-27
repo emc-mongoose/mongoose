@@ -61,7 +61,6 @@ implements Producer<T> {
 	public final void run() {
 		final long sizeRange = maxObjSize - minObjSize;
 		final ThreadLocalRandom thrLocalRnd = ThreadLocalRandom.current();
-		long i = 0, nextSize;
 		//
 		LOG.debug(
 			LogUtil.MSG, "Will try to produce up to {} objects of {} size", maxCount,
@@ -70,7 +69,8 @@ implements Producer<T> {
 				SizeUtil.formatSize(minObjSize)+".."+ SizeUtil.formatSize(maxObjSize)
 		);
 		//
-		do {
+		long i = 0, nextSize;
+		while(i < maxCount && !isInterrupted()) {
 			try {
 				if(minObjSize == maxObjSize) {
 					nextSize = minObjSize;
@@ -78,18 +78,20 @@ implements Producer<T> {
 					if(objSizeBias == 1) {
 						nextSize = (long) (thrLocalRnd.nextDouble() * sizeRange);
 					} else {
-						nextSize = (long) (Math.pow(thrLocalRnd.nextDouble(), objSizeBias) * sizeRange);
+						nextSize = (long) (
+							Math.pow(thrLocalRnd.nextDouble(), objSizeBias) * sizeRange
+						);
 					}
 					nextSize += minObjSize;
 				}
 				newDataConsumer.submit(produceSpecificDataItem(nextSize));
+				i ++;
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
 						LogUtil.MSG, "Submitted object #{} of size {}",
 						i, SizeUtil.formatSize(nextSize)
 					);
 				}
-				i ++;
 			} catch(final RejectedExecutionException e) {
 				LogUtil.exception(LOG, Level.TRACE, e, MSG_SUBMIT_REJECTED);
 			} catch(final IOException e) {
@@ -98,7 +100,7 @@ implements Producer<T> {
 				LOG.debug(LogUtil.MSG, MSG_INTERRUPTED);
 				break;
 			}
-		} while(!isInterrupted() && i < maxCount);
+		}
 		LOG.debug(LogUtil.MSG, "Finished, generated {} items", i);
 	}
 	//
