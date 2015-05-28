@@ -69,7 +69,7 @@ public final class ModeDispatcher {
 						loadBuilderSvc = new BasicWSLoadBuilderSvc<>(RunTimeConfig.getContext())
 				) {
 					loadBuilderSvc.start();
-					loadBuilderSvc.join();
+					loadBuilderSvc.await();
 				} catch(final IOException e) {
 					LogUtil.exception(rootLogger, Level.ERROR, e, "Load builder service failure");
 				} catch(InterruptedException e) {

@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.api.io.task;
 //
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import org.apache.http.concurrent.FutureCallback;

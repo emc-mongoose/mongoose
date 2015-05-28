@@ -150,6 +150,7 @@ implements Runnable {
 						LOG.debug(LogUtil.MSG, "Script from \"{}\" done", scriptPath);
 					} catch(final ScriptException e) {
 						LogUtil.exception(LOG, Level.WARN, e, "Script failure");
+						e.printStackTrace(System.err);
 					} catch(final FileNotFoundException e) {
 						LOG.error(LogUtil.ERR, "Script file not found at \"{}\"", scriptPath);
 					} catch(final IOException e) {

@@ -108,11 +108,29 @@ implements IOTask<T> {
 			strBuilder.setLength(0); // clear/reset
 		}
 		if(
-			respTimeDone < respTimeStart ||
-			respTimeStart < reqTimeDone ||
-			reqTimeDone < reqTimeStart
+			reqTimeDone >= reqTimeStart ||
+				respTimeStart >= reqTimeDone ||
+				respTimeDone >= respTimeStart
+			) {
+			LOG.info(
+				LogUtil.PERF_TRACE,
+				strBuilder
+					.append(nodeAddr).append(',')
+					.append(dataItemId).append(',')
+					.append(transferSize).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(respTimeStart - reqTimeDone).append(',')
+					.append(respTimeDone - reqTimeStart)
+					.toString()
+			);
+		} else if(
+			status != Status.CANCELLED &&
+			status != Status.FAIL_IO &&
+			status != Status.FAIL_TIMEOUT &&
+			status != Status.FAIL_UNKNOWN
 		) {
-			LOG.debug(
+			LOG.warn(
 				LogUtil.ERR,
 				strBuilder
 					.append("Invalid trace: ")
@@ -124,19 +142,6 @@ implements IOTask<T> {
 					.append(reqTimeDone).append(',')
 					.append(respTimeStart).append(',')
 					.append(respTimeDone)
-					.toString()
-			);
-		} else {
-			LOG.info(
-				LogUtil.PERF_TRACE,
-				strBuilder
-					.append(nodeAddr).append(',')
-					.append(dataItemId).append(',')
-					.append(transferSize).append(',')
-					.append(status.code).append(',')
-					.append(reqTimeStart).append(',')
-					.append(respTimeStart - reqTimeDone).append(',')
-					.append(respTimeDone - reqTimeStart)
 					.toString()
 			);
 		}
@@ -155,8 +160,6 @@ implements IOTask<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
 			}
 		}
-		//
-		release();
 	}
 	//
 	@Override

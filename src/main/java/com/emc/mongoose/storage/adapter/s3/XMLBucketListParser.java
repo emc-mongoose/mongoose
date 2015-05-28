@@ -127,20 +127,4 @@ extends DefaultHandler {
 		}
 		super.characters(buff, start, length);
 	}
-	//
-	@Override
-	public final void endDocument()
-	throws SAXException {
-		LOG.debug(LogUtil.MSG, "End of bucket listing, got {} items", count);
-		if(consumer != null) {
-			try {
-				consumer.shutdown();
-			} catch(final RemoteException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to limit data items count for remote consumer"
-				);
-			}
-		}
-		super.endDocument();
-	}
 }

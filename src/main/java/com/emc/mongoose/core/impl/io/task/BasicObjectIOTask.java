@@ -68,11 +68,29 @@ implements DataObjectIOTask<T> {
 			strBuilder.setLength(0); // clear/reset
 		}
 		if(
-			respTimeDone < respTimeStart ||
-				respTimeStart < reqTimeDone ||
-				reqTimeDone < reqTimeStart
-			) {
-			LOG.debug(
+			reqTimeDone >= reqTimeStart &&
+			respTimeStart >= reqTimeDone &&
+			respTimeDone >= respTimeStart
+		) {
+			LOG.info(
+				LogUtil.PERF_TRACE,
+				strBuilder
+					.append(nodeAddr).append(',')
+					.append(dataItemId).append(',')
+					.append(transferSize).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(respTimeStart - reqTimeDone).append(',')
+					.append(respTimeDone - reqTimeStart)
+					.toString()
+			);
+		} else if(
+			status != Status.CANCELLED &&
+			status != Status.FAIL_IO &&
+			status != Status.FAIL_TIMEOUT &&
+			status != Status.FAIL_UNKNOWN
+		) {
+			LOG.warn(
 				LogUtil.ERR,
 				strBuilder
 					.append("Invalid trace: ")
@@ -86,25 +104,13 @@ implements DataObjectIOTask<T> {
 					.append(respTimeDone)
 					.toString()
 			);
-		} else {
-			LOG.info(
-				LogUtil.PERF_TRACE,
-				strBuilder
-					.append(nodeAddr).append(',')
-					.append(dataItemId).append(',')
-					.append(transferSize).append(',')
-					.append(status.code).append(',')
-					.append(reqTimeStart).append(',')
-					.append(respTimeStart - reqTimeDone).append(',')
-					.append(respTimeDone - reqTimeStart)
-					.toString()
-			);
 		}
 		//
 		try {
 			loadExecutor.handleResult(this);
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
+			e.printStackTrace(System.err);
 		}
 		//
 		final int reqSleepMilliSec = reqConf.getReqSleepMilliSec();

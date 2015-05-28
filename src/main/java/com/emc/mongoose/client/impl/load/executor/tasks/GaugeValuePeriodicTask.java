@@ -10,19 +10,19 @@ public final class GaugeValuePeriodicTask<V extends Number>
 implements PeriodicTask<V> {
 	//
 	private final Gauge<V> gauge;
-	private V result = null;
+	private volatile V result = null;
 	//
 	public GaugeValuePeriodicTask(final Gauge<V> gauge) {
 		this.gauge = gauge;
 	}
 	//
 	@Override
-	public final synchronized void run() {
+	public final void run() {
 		result = gauge.getValue();
 	}
 	//
 	@Override
-	public final synchronized V getLastResult() {
+	public final V getLastResult() {
 		return result;
 	}
 }

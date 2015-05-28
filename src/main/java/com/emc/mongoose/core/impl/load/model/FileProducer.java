@@ -160,22 +160,23 @@ implements Producer<T> {
 						dataItemsCount ++;
 					} catch(final RejectedExecutionException e) {
 						LogUtil.exception(LOG, Level.DEBUG, e, "Consumer rejected the data item");
-					} catch(final Exception e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Failed to submit the data item");
 					}
 				}
 			} while(!isInterrupted() && dataItemsCount < maxCount);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to read line from the file");
+		} catch(final InterruptedException e) {
+			LOG.debug(LogUtil.MSG, "Interrupted");
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure, file producer interrupted");
 		} finally {
 			LOG.debug(LogUtil.MSG, "Produced {} data items", dataItemsCount);
 			try {
-				LOG.debug(LogUtil.MSG, "Feeding poison to consumer \"{}\"", consumer.toString());
 				consumer.shutdown();
-			} catch(final Exception e) {
+			} catch(final RemoteException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down the consumer");
+			} finally {
+				consumer = null;
 			}
 			LOG.debug(LogUtil.MSG, "Exiting");
 		}

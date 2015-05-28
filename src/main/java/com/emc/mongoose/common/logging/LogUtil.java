@@ -160,7 +160,7 @@ public final class LogUtil {
 		} catch (final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Shutdown method was interrupted");
 		} finally {
-			synchronized (LOG_CTX) {
+			synchronized(LOG_CTX) {
 				final LoggerContext logCtx = LOG_CTX.get();
 				if (logCtx != null && !logCtx.isStopped()) {
 					logCtx.stop();
@@ -170,13 +170,19 @@ public final class LogUtil {
 	}
 	//
 	public static void exception(
-		final Logger logger, final Level level, final Throwable thrown,
+		final Logger logger, final Level level, final Throwable e,
 		final String msgPattern, final Object... args
 	) {
 		if(logger.isTraceEnabled(ERR)) {
-			logger.log(level, ERR, logger.getMessageFactory().newMessage(msgPattern, args), thrown);
+			logger.log(
+				level, ERR,
+				logger.getMessageFactory().newMessage(msgPattern + ": " + e, args), e
+			);
 		} else {
-			logger.log(level, ERR, logger.getMessageFactory().newMessage(msgPattern, args));
+			logger.log(
+				level, ERR,
+				logger.getMessageFactory().newMessage(msgPattern + ": " + e, args)
+			);
 		}
 	}
 	//

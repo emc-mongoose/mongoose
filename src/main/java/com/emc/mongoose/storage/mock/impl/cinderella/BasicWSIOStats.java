@@ -164,7 +164,7 @@ implements IOStats {
 	//
 	@Override
 	public final void close() {
-		if(isAlive()) {
+		if(!isInterrupted()) {
 			interrupt();
 		}
 		metricsReporter.close();

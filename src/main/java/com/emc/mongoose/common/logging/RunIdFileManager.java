@@ -125,7 +125,7 @@ extends AbstractManager {
 		final OutputStream outStream = getOutputStream(currRunId);
 		try {
 			outStream.write(buff, offset, len);
-		} catch (final IOException e) {
+		} catch (final Exception e) {
 			throw new AppenderLoggingException(
 				"Failed to write to the stream \""+getName()+"\" w/ run id \""+currRunId+"\"", e
 			);

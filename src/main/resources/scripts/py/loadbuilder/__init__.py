@@ -1,10 +1,13 @@
 #!/usr/bin/env python
 from org.apache.logging.log4j import Level, LogManager
 #
+from org.apache.commons.configuration import ConversionException
+#
 from com.emc.mongoose.common.conf import Constants, RunTimeConfig
 from com.emc.mongoose.common.logging import LogUtil
 #
 from java.lang import IllegalStateException
+from java.rmi import RemoteException
 from java.util import NoSuchElementException
 #
 LOG = LogManager.getLogger()
@@ -20,10 +23,10 @@ def init():
 	#
 	loadBuilderInstance = None
 	#
-	from org.apache.commons.configuration import ConversionException
 	if mode == Constants.RUN_MODE_CLIENT or mode == Constants.RUN_MODE_COMPAT_CLIENT:
+		############################################################################################
 		from com.emc.mongoose.client.impl.load.builder import BasicWSLoadBuilderClient
-		from java.rmi import RemoteException
+		############################################################################################
 		try:
 			try:
 				loadBuilderInstance = BasicWSLoadBuilderClient(localRunTimeConfig)
@@ -34,8 +37,9 @@ def init():
 		except RemoteException as e:
 			LOG.fatal(LogUtil.ERR, "Failed to create load builder client: {}", e)
 	else: # standalone
+		############################################################################################
 		from com.emc.mongoose.core.impl.load.builder import BasicWSLoadBuilder
-		#
+		############################################################################################
 		try:
 			loadBuilderInstance = BasicWSLoadBuilder(localRunTimeConfig)
 		except IllegalStateException as e:

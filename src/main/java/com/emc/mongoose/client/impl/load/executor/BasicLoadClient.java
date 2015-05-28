@@ -120,9 +120,7 @@ implements LoadClient<T> {
 				(int) Math.min(maxCount, runTimeConfig.getRunRequestQueueSize())
 			)
 		);
-		setCorePoolSize(
-			Math.max(Runtime.getRuntime().availableProcessors(), remoteLoadMap.size())
-		);
+		setCorePoolSize(Math.max(Runtime.getRuntime().availableProcessors(), remoteLoadMap.size()));
 		setMaximumPoolSize(getCorePoolSize());
 		//
 		String t = null;
@@ -190,13 +188,9 @@ implements LoadClient<T> {
 		}
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			19 + remoteLoadMap.size(), new NamingWorkerFactory(String.format("%s-remoteMonitor", name))
-		) { // make the shutdown method synchronized
-			@Override
-			public final synchronized void shutdown() {
-				super.shutdown();
-			}
-		};
+			20 + remoteLoadMap.size(), // 20 metric fetching tasks + N frame fetching tasks
+			new NamingWorkerFactory(String.format("%s-remoteMonitor", name))
+		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricSuccCount = registerJmxGaugeSum(
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_COUNT
@@ -208,7 +202,7 @@ implements LoadClient<T> {
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_1MIN
 		);
 		metricTP5Min = registerJmxGaugeSumDouble(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ+"."+METRIC_NAME_TP, ATTR_RATE_5MIN
+			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_5MIN
 		);
 		metricTP15Min = registerJmxGaugeSumDouble(
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_15MIN
@@ -438,103 +432,101 @@ implements LoadClient<T> {
 	private void schedulePeriodicMgmtTasks() {
 		LoadSvc<T> nextLoadSvc;
 		final int periodSec = metricsPeriodSec > 0 ? metricsPeriodSec : 10;
-		synchronized(mgmtConnExecutor) {
-			//
-			for(final String loadSvcAddr : loadSvcAddrs) {
-				nextLoadSvc = remoteLoadMap.get(loadSvcAddr);
-				final PeriodicTask<T[]> nextFrameFetchTask = new FrameFetchPeriodicTask<>(
-					nextLoadSvc
-				);
-				frameFetchTasks.add(nextFrameFetchTask);
-				mgmtConnExecutor.scheduleAtFixedRate(
-					nextFrameFetchTask, 0, periodSec, TimeUnit.SECONDS
-				);
-			}
-			//
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetCountSubm, 0, periodSec, TimeUnit.SECONDS
+		//
+		for(final String loadSvcAddr : loadSvcAddrs) {
+			nextLoadSvc = remoteLoadMap.get(loadSvcAddr);
+			final PeriodicTask<T[]> nextFrameFetchTask = new FrameFetchPeriodicTask<>(
+				nextLoadSvc
 			);
+			frameFetchTasks.add(nextFrameFetchTask);
 			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetCountRej, 0, periodSec, TimeUnit.SECONDS
+				nextFrameFetchTask, 0, periodSec, TimeUnit.SECONDS
 			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetCountSucc, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetCountFail, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetCountBytes, 0, periodSec, TimeUnit.SECONDS
-			);
-			//
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetLatencyAvg, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetLatencyMin, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetLatencyMed, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetLatencyMax, 0, periodSec, TimeUnit.SECONDS
-			);
-			//
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetTPMean, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetTP1Min, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetTP5Min, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetTP15Min, 0, periodSec, TimeUnit.SECONDS
-			);
-			//
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetBWMean, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetBW1Min, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetBW5Min, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetBW15Min, 0, periodSec, TimeUnit.SECONDS
-			);
+		}
+		//
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetCountSubm, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetCountRej, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetCountSucc, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetCountFail, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetCountBytes, 0, periodSec, TimeUnit.SECONDS
+		);
+		//
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetLatencyAvg, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetLatencyMin, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetLatencyMed, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetLatencyMax, 0, periodSec, TimeUnit.SECONDS
+		);
+		//
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetTPMean, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetTP1Min, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetTP5Min, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetTP15Min, 0, periodSec, TimeUnit.SECONDS
+		);
+		//
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetBWMean, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetBW1Min, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetBW5Min, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetBW15Min, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			new Runnable() {
+				@Override
+				public final void run() {
+					logMetaInfoFrames();
+				}
+			}, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			new CountLimitWaitTask(
+				this, maxCount,
+				new PeriodicTask[] { taskGetCountSucc, taskGetCountRej, taskGetCountRej }
+			), 0, periodSec, TimeUnit.SECONDS
+		);
+		//
+		if(metricsPeriodSec > 0) {
 			mgmtConnExecutor.scheduleAtFixedRate(
 				new Runnable() {
 					@Override
 					public final void run() {
-						logMetaInfoFrames();
+						logMetrics(LogUtil.PERF_AVG);
 					}
-				}, 0, periodSec, TimeUnit.SECONDS
+				}, 0, metricsPeriodSec, TimeUnit.SECONDS
 			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				new CountLimitWaitTask(
-					this, maxCount,
-					new PeriodicTask[] { taskGetCountSucc, taskGetCountRej, taskGetCountRej }
-				), 0, periodSec, TimeUnit.SECONDS
-			);
-			//
-			if(metricsPeriodSec > 0) {
-				mgmtConnExecutor.scheduleAtFixedRate(
-					new Runnable() {
-						@Override
-						public final void run() {
-							logMetrics(LogUtil.PERF_AVG);
-						}
-					}, 0, metricsPeriodSec, TimeUnit.SECONDS
-				);
-			}
 		}
 	}
 	//
 	@Override
-	public final void start() {
+	public final synchronized void start() {
 		//
 		LoadSvc<T> nextLoadSvc;
 		for(final String addr : loadSvcAddrs) {

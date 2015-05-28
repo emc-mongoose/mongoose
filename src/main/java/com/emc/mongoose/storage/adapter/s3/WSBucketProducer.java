@@ -106,12 +106,14 @@ implements Producer<T> {
 								final SAXParser
 									parser = SAXParserFactory.newInstance().newSAXParser();
 								try(final InputStream in = respEntity.getContent()) {
+									////////////////////////////////////////////////////////////////
 									parser.parse(
 										in,
 										new XMLBucketListParser<>(
 											consumer, dataConstructor, maxCount
 										)
 									);
+									////////////////////////////////////////////////////////////////
 								} catch(final SAXException e) {
 									LogUtil.exception(LOG, Level.WARN, e, "Failed to parse");
 								} catch(final IOException e) {
@@ -120,6 +122,19 @@ implements Producer<T> {
 										"Failed to read the bucket listing response content: {}",
 										bucket
 									);
+								} finally {
+									if(consumer != null) {
+										try {
+											consumer.shutdown();
+										} catch(final RemoteException e) {
+											LogUtil.exception(
+												LOG, Level.WARN, e,
+												"Failed to limit data items count for remote consumer"
+											);
+										} finally {
+											consumer = null;
+										}
+									}
 								}
 							} catch(final ParserConfigurationException | SAXException e) {
 								LogUtil.exception(

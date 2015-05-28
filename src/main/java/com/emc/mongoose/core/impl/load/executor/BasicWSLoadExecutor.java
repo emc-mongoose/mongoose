@@ -169,7 +169,7 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	public synchronized void start() {
+	public void start() {
 		if(clientDaemon == null) {
 			LOG.debug(LogUtil.ERR, "Not starting web load client due to initialization failures");
 		} else {

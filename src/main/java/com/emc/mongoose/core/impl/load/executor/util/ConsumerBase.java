@@ -1,7 +1,5 @@
 package com.emc.mongoose.core.impl.load.executor.util;
 //
-import com.codahale.metrics.Counter;
-import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
@@ -35,7 +33,9 @@ implements Consumer<T> {
 	private final AtomicLong counterPreSubm = new AtomicLong(0);
 	//
 	protected final int submTimeOutMilliSec, maxQueueSize;
-	protected final AtomicBoolean isShutdown = new AtomicBoolean(false);
+	protected final AtomicBoolean
+		isShutdown = new AtomicBoolean(false),
+		isAllSubm = new AtomicBoolean(false);
 	//
 	protected ConsumerBase(final RunTimeConfig runTimeConfig, final long maxCount) {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
@@ -78,7 +78,7 @@ implements Consumer<T> {
 		);
 		T nextDataItem;
 		try {
-			while(!(isShutdown.get() && submitQueue.size() == 0)) {
+			while(submitQueue.size() > 0 || !isShutdown.get()) {
 				nextDataItem = submitQueue.poll(submTimeOutMilliSec, TimeUnit.MILLISECONDS);
 				if(nextDataItem != null) {
 					submitSync(nextDataItem);
@@ -93,6 +93,7 @@ implements Consumer<T> {
 			LogUtil.exception(LOG, Level.WARN, e, "Submit data item failure");
 		} finally {
 			shutdown();
+			isAllSubm.set(true);
 		}
 	}
 	//
@@ -101,7 +102,9 @@ implements Consumer<T> {
 	//
 	@Override
 	public void shutdown() {
-		isShutdown.compareAndSet(false, true);
+		if(isShutdown.compareAndSet(false, true)) {
+			LOG.debug(LogUtil.MSG, "{}: consumed {} data items", getName(), counterPreSubm.get());
+		}
 	}
 	//
 	@Override
@@ -110,21 +113,21 @@ implements Consumer<T> {
 	}
 	//
 	@Override
-	public void interrupt() {
+	public synchronized void interrupt() {
+		shutdown();
 		if(!super.isInterrupted()) {
-			super.interrupt();
-			shutdown();
+			submitQueue.clear(); // dispose
 			final int dropCount = submitQueue.size();
 			if(dropCount > 0) {
 				LOG.debug(LogUtil.MSG, "Dropped {} submit tasks", dropCount);
 			}
-			submitQueue.clear(); // dispose
+			super.interrupt();
 		}
 	}
 	//
 	@Override
 	public void close()
 	throws IOException {
-		ConsumerBase.this.interrupt();
+		interrupt();
 	}
 }

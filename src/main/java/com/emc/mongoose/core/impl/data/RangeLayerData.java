@@ -132,8 +132,8 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeInt(currLayerIndex.get());
-		out.writeObject(maskRangesHistory);
-		out.writeObject(maskRangesPending);
+		out.writeObject(maskRangesHistory.toLongArray());
+		out.writeObject(maskRangesPending.toLongArray());
 	}
 	//
 	@Override
@@ -141,8 +141,8 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		currLayerIndex.set(in.readInt());
-		maskRangesHistory.or(BitSet.class.cast(in.readObject()));
-		maskRangesPending.or(BitSet.class.cast(in.readObject()));
+		maskRangesHistory.or(BitSet.valueOf((long[]) in.readObject()));
+		maskRangesPending.or(BitSet.valueOf((long[]) in.readObject()));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/*public static int log2(long value) {
@@ -255,7 +255,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final void updateRandomRange()
+	public final synchronized void updateRandomRange()
 	throws IllegalStateException {
 		final int
 			countRangesTotal = getRangeCount(size),
@@ -312,34 +312,32 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final void writeUpdates(final WritableByteChannel chanOut)
+	public final synchronized void writeUpdates(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		DataItem nextRangeData;
 		long rangeOffset, rangeSize;
-		synchronized(this) {
-			for(int i = 0; i < countRangesTotal; i++) {
-				rangeOffset = getRangeOffset(i);
-				rangeSize = getRangeSize(i);
-				if(maskRangesPending.get(i)) {
-					nextRangeData = new UniformData(
-						offset + rangeOffset, rangeSize, currLayerIndex.get() + 1, UniformDataSource.DEFAULT
-					);
-					nextRangeData.write(chanOut);
-				}
-			}
-			// move pending updated ranges to history
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(
-					LogUtil.MSG, FMT_MSG_MERGE_MASKS,
-					Long.toHexString(offset),
-					Hex.encodeHexString(maskRangesPending.toByteArray()),
-					Hex.encodeHexString(maskRangesHistory.toByteArray())
+		for(int i = 0; i < countRangesTotal; i++) {
+			rangeOffset = getRangeOffset(i);
+			rangeSize = getRangeSize(i);
+			if(maskRangesPending.get(i)) {
+				nextRangeData = new UniformData(
+					offset + rangeOffset, rangeSize, currLayerIndex.get() + 1, UniformDataSource.DEFAULT
 				);
+				nextRangeData.write(chanOut);
 			}
-			maskRangesHistory.or(maskRangesPending);
-			maskRangesPending.clear();
 		}
+		// move pending updated ranges to history
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(
+				LogUtil.MSG, FMT_MSG_MERGE_MASKS,
+				Long.toHexString(offset),
+				Hex.encodeHexString(maskRangesPending.toByteArray()),
+				Hex.encodeHexString(maskRangesHistory.toByteArray())
+			);
+		}
+		maskRangesHistory.or(maskRangesPending);
+		maskRangesPending.clear();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// APPEND //////////////////////////////////////////////////////////////////////////////////////
@@ -373,26 +371,24 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final void writeAugment(final WritableByteChannel chanOut)
+	public final synchronized void writeAugment(final WritableByteChannel chanOut)
 	throws IOException {
 		if(pendingAugmentSize > 0) {
-			synchronized(this) {
-				final int rangeIndex = size > 0 ? getRangeCount(size) - 1 : 0;
-				if(maskRangesHistory.get(rangeIndex)) { // write from next layer
-					new UniformData(
-						offset + size, pendingAugmentSize, currLayerIndex.get() + 1,
-						UniformDataSource.DEFAULT
-					).write(chanOut);
-					size += pendingAugmentSize;
-				} else { // write from current layer
-					write(chanOut, size, pendingAugmentSize);
-					size += pendingAugmentSize;
-				}
-				// clean up the appending on success
-				pendingAugmentSize = 0;
-				maskRangesHistory.or(maskRangesPending);
-				maskRangesPending.clear();
+			final int rangeIndex = size > 0 ? getRangeCount(size) - 1 : 0;
+			if(maskRangesHistory.get(rangeIndex)) { // write from next layer
+				new UniformData(
+					offset + size, pendingAugmentSize, currLayerIndex.get() + 1,
+					UniformDataSource.DEFAULT
+				).write(chanOut);
+				size += pendingAugmentSize;
+			} else { // write from current layer
+				write(chanOut, size, pendingAugmentSize);
+				size += pendingAugmentSize;
 			}
+			// clean up the appending on success
+			pendingAugmentSize = 0;
+			maskRangesHistory.or(maskRangesPending);
+			maskRangesPending.clear();
 		}
 	}
 }

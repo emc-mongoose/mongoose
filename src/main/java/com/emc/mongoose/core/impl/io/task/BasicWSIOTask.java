@@ -177,7 +177,7 @@ implements WSIOTask<T> {
 				}
 			}
 		} catch(final AsynchronousCloseException e) { // probably a manual interruption
-			status = Status.FAIL_IO;
+			status = Status.CANCELLED;
 			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
 		} catch(final IOException e) {
 			status = Status.FAIL_IO;
@@ -204,19 +204,18 @@ implements WSIOTask<T> {
 	@Override @SuppressWarnings("SynchronizeOnNonFinalField")
 	public final void resetRequest() {
 		respStatusCode = -1;
+		status = Status.FAIL_UNKNOWN;
 		exception = null;
 		if(httpRequest != null) {
-			synchronized(httpRequest) {
-				httpRequest.clearHeaders();
-				httpRequest.setHeaders(sharedHeaders.getAllHeaders());
-				httpRequest.setEntity(null);
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(
-						LogUtil.MSG, "Task #{}: reset the request, left headers: {}, shared headers: {}",
-						hashCode(), Arrays.toString(httpRequest.getAllHeaders()),
-						Arrays.toString(sharedHeaders.getAllHeaders())
-					);
-				}
+			httpRequest.clearHeaders();
+			httpRequest.setHeaders(sharedHeaders.getAllHeaders());
+			httpRequest.setEntity(null);
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(
+					LogUtil.MSG, "Task #{}: reset the request, left headers: {}, shared headers: {}",
+					hashCode(), Arrays.toString(httpRequest.getAllHeaders()),
+					Arrays.toString(sharedHeaders.getAllHeaders())
+				);
 			}
 		}
 	}
@@ -246,22 +245,20 @@ implements WSIOTask<T> {
 			switch(respStatusCode) {
 				case HttpStatus.SC_CONTINUE:
 					msgBuff.append("\"100/continue\" response is not supported\n");
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_BAD_REQUEST:
-					synchronized(LOG) {
-						msgBuff
-							.append("Incorrect request: \"")
-							.append(httpRequest.getRequestLine()).append("\"\n");
-						if(LOG.isTraceEnabled(LogUtil.ERR)) {
-							for(final Header rangeHeader : httpRequest.getAllHeaders()) {
-								msgBuff
-									.append('\t').append(rangeHeader.getName()).append(": ")
-									.append(rangeHeader.getValue()).append('\n');
-							}
+					msgBuff
+						.append("Incorrect request: \"")
+						.append(httpRequest.getRequestLine()).append("\"\n");
+					if(LOG.isTraceEnabled(LogUtil.ERR)) {
+						for(final Header rangeHeader : httpRequest.getAllHeaders()) {
+							msgBuff
+								.append('\t').append(rangeHeader.getName()).append(": ")
+								.append(rangeHeader.getValue()).append('\n');
 						}
 					}
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_UNAUTHORIZED:
 				case HttpStatus.SC_FORBIDDEN:
@@ -278,88 +275,84 @@ implements WSIOTask<T> {
 							.append(wsReqConf.getCanonical(httpRequest))
 							.append('\n');
 					}
-					this.status = Status.FAIL_AUTH;
+					this.status = Status.RESP_FAIL_AUTH;
 					break;
 				case HttpStatus.SC_NOT_FOUND:
 					msgBuff
 						.append("Not found: ").append(httpRequest.getUriAddr())
 						.append(httpRequest.getUriPath()).append('\n');
-					this.status = Status.FAIL_NOT_FOUND;
+					this.status = Status.RESP_FAIL_NOT_FOUND;
 					break;
 				case HttpStatus.SC_METHOD_NOT_ALLOWED:
 					msgBuff
 						.append("The operation is not allowed: \"")
 						.append(httpRequest.getRequestLine())
 						.append("\"\n");
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_CONFLICT:
 					msgBuff
 						.append("Conflicting resource modification on \"")
 						.append(httpRequest.getUriPath())
 						.append("\"\n");
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_LENGTH_REQUIRED:
 					msgBuff
 						.append("Content length is required\n");
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_REQUEST_TOO_LONG:
 					msgBuff
 						.append("Content is too large: ")
 						.append(SizeUtil.formatSize(transferSize))
 						.append('\n');
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_REQUEST_URI_TOO_LONG:
 					msgBuff
 						.append("URI is too long: \"")
 						.append(httpRequest.getUriPath()).append("\"\n");
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE:
 					msgBuff
 						.append("Unsupported media type: \"")
 						.append(httpRequest.getEntity().getContentType())
 						.append("\"\n");
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_REQUESTED_RANGE_NOT_SATISFIABLE:
-					synchronized(LOG) {
-						msgBuff.append("Incorrect range\n");
-						if(LOG.isTraceEnabled(LogUtil.ERR)) {
-							for(
-								final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)
-							) {
-								msgBuff
-									.append("Incorrect range ").append(rangeHeader.getValue())
-									.append(" for data item ").append(dataItem.getId())
-									.append('\n');
-							}
+					msgBuff.append("Incorrect range\n");
+					if(LOG.isTraceEnabled(LogUtil.ERR)) {
+						for(final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)) {
+							msgBuff
+								.append("Incorrect range ").append(rangeHeader.getValue())
+								.append(" for data item ").append(dataItem.getId())
+								.append('\n');
 						}
 					}
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case 429:
 					msgBuff.append("Storage prays about a mercy\n");
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_INTERNAL_SERVER_ERROR:
 					msgBuff.append("Storage internal failure\n");
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_NOT_IMPLEMENTED:
 					msgBuff.append("Not implemented\n");
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_BAD_GATEWAY:
 					msgBuff.append("Bad gateway\n");
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_SERVICE_UNAVAILABLE:
 					msgBuff.append("Storage prays about a mercy\n");
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_GATEWAY_TIMEOUT:
 					msgBuff.append("Gateway timeout\n");
@@ -370,11 +363,11 @@ implements WSIOTask<T> {
 						.append("HTTP version is not supported: ")
 						.append(httpRequest.getProtocolVersion())
 						.append("\n");
-					this.status = Status.FAIL_TIMEOUT;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_INSUFFICIENT_STORAGE:
 					msgBuff.append("Not enough space is left on the storage\n");
-					this.status = Status.FAIL_NO_SPACE;
+					this.status = Status.RESP_FAIL_SPACE;
 					break;
 				default:
 					msgBuff
@@ -412,7 +405,7 @@ implements WSIOTask<T> {
 			}
 		} else {
 			if(!wsReqConf.consumeContent(in, ioCtl, dataItem)) { // content corruption
-				status = Status.FAIL_CORRUPT;
+				status = Status.RESP_FAIL_CORRUPT;
 			}
 		}
 	}
@@ -420,15 +413,6 @@ implements WSIOTask<T> {
 	@Override
 	public final void responseCompleted(final HttpContext context) {
 		respTimeDone = System.nanoTime() / 1000;
-		complete();
-	}
-	//
-	@Override
-	public final void failed(final Exception e) {
-		LogUtil.exception(LOG, Level.DEBUG, e, "I/O task failure");
-		exception = e;
-		this.status = Status.FAIL_UNKNOWN;
-		complete();
 	}
 	//
 	@Override
@@ -473,10 +457,26 @@ implements WSIOTask<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void completed(final IOTask.Status status) {
+		complete();
+	}
+	/**
+	 Overrides HttpAsyncRequestProducer.failed(Exception),
+	 HttpAsyncResponseConsumer&lt;IOTask.Status&gt;.failed(Exception) and
+	 FutureCallback&lt;IOTask.Status&gt;.failed(Exception)
+	 @param e
+	 */
+	@Override
+	public final void failed(final Exception e) {
+		LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O task failure", hashCode());
+		exception = e;
+		status = Status.FAIL_UNKNOWN;
+		complete();
 	}
 	//
 	@Override
 	public final void cancelled() {
 		LOG.debug(LogUtil.MSG, "{}: I/O task canceled", hashCode());
+		status = Status.CANCELLED;
+		complete();
 	}
 }

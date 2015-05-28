@@ -309,7 +309,7 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
-	public final synchronized void interrupt() {
+	public final void interrupt() {
 		if(isInterrupted.compareAndSet(false, true)) {
 			metricsDaemon.interrupt();
 			shutdown();
@@ -342,7 +342,7 @@ implements LoadExecutor<T> {
 					LogUtil.MSG,
 					String.format(
 						LogUtil.LOCALE_DEFAULT,
-						"%s: load execution duration: %3.3f[sec], efficiency estimation: %3.3f[%%]",
+						"%s: load execution duration: %3.3f[sec], efficiency estimation: %3.1f[%%]",
 						getName(), loadDurMicroSec / 1e6, 100 * eff
 					)
 				);
@@ -404,14 +404,16 @@ implements LoadExecutor<T> {
 		}
 		//
 		try {
-			if(submit(ioTask) == null) {
+			if(null == submit(ioTask)) {
 				throw new RejectedExecutionException("Null future returned");
 			}
 			counterSubm.inc();
 			activeTasksStats.get(nextNodeAddr).incrementAndGet(); // increment node's usage counter
 		} catch(final RejectedExecutionException e) {
-			counterRej.inc();
-			LogUtil.exception(LOG, Level.DEBUG, e, "Rejected the I/O task {}", ioTask);
+			if(!isInterrupted.get()) {
+				counterRej.inc();
+				LogUtil.exception(LOG, Level.DEBUG, e, "Rejected the I/O task {}", ioTask);
+			}
 		}
 	}
 	//
@@ -505,41 +507,19 @@ implements LoadExecutor<T> {
 			);
 		} finally {
 			counterResults.incrementAndGet();
-			if(
+			if( // check that max count of results is reached OR
 				counterResults.get() >= maxCount ||
-				(isShutdown.get() && counterResults.get() >= counterSubm.getCount())
-			) {
-				// max count is reached OR all tasks are done
+				// consumer is not running and submitted count is equal to done count
+				(isAllSubm.get() && counterResults.get() >= counterSubm.getCount())
+			) { // so max count is reached OR all tasks are done
 				LOG.debug(
 					LogUtil.MSG, "{}: all {} task results has been obtained",
 					getName(), counterResults.get()
 				);
 				if(!isClosed.get()) {
-					try {
-						if(
-							lock.tryLock(
-								runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
-							)
-						) {
-							try {
-								condProducerDone.signalAll();
-								LOG.debug(
-									LogUtil.MSG, "{}: done/interrupted signal emitted", getName()
-								);
-							} finally {
-								lock.unlock();
-							}
-						} else {
-							LOG.debug(
-								LogUtil.ERR, "Failed to acquire the lock for result handling"
-							);
-						}
-					} catch(final InterruptedException e) {
-						LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
-					}
+					// prevent further results handling
+					interrupt();
 				}
-				// prevent further results handling
-				interrupt();
 			}
 		}
 	}

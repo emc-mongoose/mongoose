@@ -24,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.05.14.
  */
@@ -112,14 +113,14 @@ implements WSLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public final void join()
+	public final void await()
 	throws InterruptedException {
-		join(Long.MAX_VALUE);
+		await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 	//
 	@Override
-	public final void join(final long ms)
+	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException {
-		Thread.sleep(ms);
+		timeUnit.sleep(timeOut);
 	}
 }

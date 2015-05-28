@@ -24,13 +24,13 @@ extends DataItemGeneratorBase<T> {
 	//
 	@Override
 	public final void await()
-		throws InterruptedException {
+	throws InterruptedException {
 		join();
 	}
 	//
 	@Override
 	public final void await(final long timeOut, final TimeUnit timeUnit)
-		throws InterruptedException {
+	throws InterruptedException {
 		timeUnit.timedJoin(this, timeOut);
 	}
 }

@@ -23,9 +23,7 @@ implements Runnable {
 	private final long timeOut;
 	private final TimeUnit timeUnit;
 	//
-	public AwaitLoadJobTask(
-		final LoadExecutor loadJob, final long timeOut, final TimeUnit timeUnit
-	) {
+	public AwaitLoadJobTask(final LoadExecutor loadJob, final long timeOut, final TimeUnit timeUnit) {
 		this.loadJob = loadJob;
 		this.timeOut = timeOut;
 		this.timeUnit = timeUnit;

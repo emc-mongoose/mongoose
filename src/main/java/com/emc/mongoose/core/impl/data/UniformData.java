@@ -192,8 +192,7 @@ implements DataItem {
 		// source byte vs input byte
 		byte bs, bi;
 		//
-		final ByteBuffer
-			inBuff = ByteBuffer.allocate(
+		final ByteBuffer inBuff = ByteBuffer.allocate(
 			(int) Math.min(
 				LoadExecutor.BUFF_SIZE_HI, Math.max(LoadExecutor.BUFF_SIZE_LO, len)
 			)
@@ -204,7 +203,10 @@ implements DataItem {
 		while(doneByteCount < len) {
 			//
 			enforceCircularity();
-			inBuff.limit(ringBuff.remaining());
+			n = ringBuff.remaining();
+			if(inBuff.capacity() > n) {
+				inBuff.limit(n);
+			}
 			n = chanSrc.read(inBuff);
 			//
 			if(n < 0) { // premature end of stream

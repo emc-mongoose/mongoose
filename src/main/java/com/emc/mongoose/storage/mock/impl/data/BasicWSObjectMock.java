@@ -64,31 +64,29 @@ implements WSObjectMock {
 	}
 	//
 	@Override
-	public final void write(final WritableByteChannel chanOut)
+	public final synchronized void write(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
-		synchronized (this) { // stream position protection
-			if(maskRangesPending.isEmpty()) {
-				super.write(chanOut);
-			} else {
-				for(int i = 0; i < countRangesTotal; i++) {
-					rangeOffset = getRangeOffset(i);
-					rangeSize = getRangeSize(i);
-					if(maskRangesPending.get(i)) { // range have been modified
-						updatedRange = new UniformData(
-							offset + rangeOffset, rangeSize, currLayerIndex.get() + 1,
-							UniformDataSource.DEFAULT
-						);
-						updatedRange.write(chanOut);
-					} else { // previous layer of updated ranges
-						updatedRange = new UniformData(
-							offset + rangeOffset, rangeSize, currLayerIndex.get(),
-							UniformDataSource.DEFAULT
-						);
-						updatedRange.write(chanOut);
-					}
+		if(maskRangesPending.isEmpty()) {
+			super.write(chanOut);
+		} else {
+			for(int i = 0; i < countRangesTotal; i++) {
+				rangeOffset = getRangeOffset(i);
+				rangeSize = getRangeSize(i);
+				if(maskRangesPending.get(i)) { // range have been modified
+					updatedRange = new UniformData(
+						offset + rangeOffset, rangeSize, currLayerIndex.get() + 1,
+						UniformDataSource.DEFAULT
+					);
+					updatedRange.write(chanOut);
+				} else { // previous layer of updated ranges
+					updatedRange = new UniformData(
+						offset + rangeOffset, rangeSize, currLayerIndex.get(),
+						UniformDataSource.DEFAULT
+					);
+					updatedRange.write(chanOut);
 				}
 			}
 		}
