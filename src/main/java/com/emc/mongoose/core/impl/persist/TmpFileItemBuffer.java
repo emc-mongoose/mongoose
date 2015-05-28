@@ -157,7 +157,9 @@ implements DataItemBuffer<T> {
 						try {
 							consumer.submit(nextDataItem);
 						} catch(final RejectedExecutionException e) {
-							LOG.debug(LogUtil.ERR, "Consumer rejected the data item");
+							if(LOG.isTraceEnabled(LogUtil.ERR)) {
+								LOG.trace(LogUtil.ERR, "Consumer rejected the data item");
+							}
 						}
 					}
 					LOG.debug(LogUtil.MSG, "done producing");
