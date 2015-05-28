@@ -513,8 +513,8 @@ implements LoadExecutor<T> {
 				(isAllSubm.get() && counterResults.get() >= counterSubm.getCount())
 			) { // so max count is reached OR all tasks are done
 				LOG.debug(
-					LogUtil.MSG, "{}: all {} task results has been obtained",
-					getName(), counterResults.get()
+					LogUtil.MSG, "{}: all {} task results has been obtained", getName(),
+					counterResults.get()
 				);
 				if(!isClosed.get()) {
 					// prevent further results handling
@@ -547,9 +547,9 @@ implements LoadExecutor<T> {
 		// interrupt the producing
 		if(isClosed.compareAndSet(false, true)) {
 			try {
-				super.close();
 				LOG.debug(LogUtil.MSG, "Forcing the shutdown");
 				reqConfigCopy.close(); // disables connection drop failures
+				super.close();
 				if(consumer != null) {
 					consumer.shutdown(); // poison the consumer
 					LOG.debug(LogUtil.MSG, "Consumer \"{}\" has been poisoned", consumer);

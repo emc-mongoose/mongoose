@@ -82,7 +82,7 @@ def execute(chain=(), flagSimultaneous=True):
 			)
 			for load in chain:
 				chainWaitExecSvc.submit(
-					AwaitLoadJobTask(load, runTimeOut[1].toMillis(runTimeOut[0]))
+					AwaitLoadJobTask(load, runTimeOut[0], runTimeOut[1])
 				)
 			chainWaitExecSvc.shutdown()
 			try:

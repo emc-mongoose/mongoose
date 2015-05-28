@@ -558,7 +558,9 @@ implements WSRequestConfig<T> {
 		THRLOC_BB_RESP_READ = new ThreadLocal<>();
 	//
 	@Override
-	public final boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem) {
+	public final boolean consumeContent(
+		final ContentDecoder in, final IOControl ioCtl, T dataItem
+	) {
 		boolean verifyPass = true;
 		try {
 			if(dataItem != null) {

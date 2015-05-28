@@ -391,17 +391,22 @@ implements WSIOTask<T> {
 	}
 	//
 	@Override
-	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
-	throws IOException {
+	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl) {
 		if(respStatusCode < 200 || respStatusCode >= 300) { // failure, no big data is expected
 			final StringBuilder msgBuilder = new StringBuilder();
 			final ByteBuffer bbuff = ByteBuffer.allocate(0x1000);
-			while(in.read(bbuff) >= 0) {
-				msgBuilder.append(bbuff.asCharBuffer().toString());
-				bbuff.clear();
-			}
-			if(LOG.isTraceEnabled(LogUtil.ERR)) {
-				LOG.trace(LogUtil.ERR, msgBuilder);
+			try {
+				while(in.read(bbuff) >= 0) {
+					msgBuilder.append(bbuff.asCharBuffer().toString());
+					bbuff.clear();
+				}
+				if(LOG.isTraceEnabled(LogUtil.ERR)) {
+					LOG.trace(LogUtil.ERR, msgBuilder);
+				}
+			} catch(final IOException e) {
+				if(!wsReqConf.isClosed()) {
+					LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during content consuming");
+				}
 			}
 		} else {
 			if(!wsReqConf.consumeContent(in, ioCtl, dataItem)) { // content corruption
@@ -467,7 +472,9 @@ implements WSIOTask<T> {
 	 */
 	@Override
 	public final void failed(final Exception e) {
-		LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O task failure", hashCode());
+		if(!wsReqConf.isClosed()) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O task failure", hashCode());
+		}
 		exception = e;
 		status = Status.FAIL_UNKNOWN;
 		complete();
