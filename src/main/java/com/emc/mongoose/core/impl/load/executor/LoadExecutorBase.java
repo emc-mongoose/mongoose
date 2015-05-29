@@ -396,10 +396,9 @@ implements LoadExecutor<T> {
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final String nextNodeAddr = storageNodeCount == 1 ? storageNodeAddrs[0] : getNextNode();
 		final IOTask<T> ioTask = getIOTask(dataItem, nextNodeAddr);
-		//
-		// try to sleep while underlying connection pool becomes more free if is going too fast
+		// try to sleep while underlying connection pool becomes more free if it's going too fast
 		// warning: w/o such sleep the behaviour becomes very ugly
-		while(counterSubm.getCount() - counterResults.get() >= maxQueueSize) {
+		while(isAlive() && counterSubm.getCount() - counterResults.get() >= maxQueueSize) {
 			Thread.sleep(1);
 		}
 		//

@@ -6,7 +6,9 @@ import com.emc.mongoose.core.api.data.DataObject;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 /**
  Created by kurila on 01.05.14.
  Basic data object implementation extending DataRanges.
@@ -51,14 +53,14 @@ implements DataObject {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(id);
+		ObjectOutputStream.class.cast(out).writeUnshared(id);
 	}
 	//
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		id = String.class.cast(in.readObject());
+		id = String.class.cast(ObjectInputStream.class.cast(in).readUnshared());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable serialization implementation /////////////////////////////////////////////////

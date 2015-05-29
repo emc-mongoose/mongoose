@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.data;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
@@ -253,12 +254,14 @@ implements DataItem {
 		} else {
 			strBuilder.setLength(0); // reset
 		}
-		return strBuilder.append(Long.toHexString(offset)).append(',').append(size).toString();
+		return strBuilder
+			.append(Long.toHexString(offset)).append(RunTimeConfig.LIST_SEP)
+			.append(size).toString();
 	}
 	//
 	public void fromString(final String v)
 	throws IllegalArgumentException, NullPointerException {
-		final String tokens[] = v.split(",", 2);
+		final String tokens[] = v.split(RunTimeConfig.LIST_SEP, 2);
 		if(tokens.length == 2) {
 			try {
 				setOffset(Long.parseLong(tokens[0], 0x10));

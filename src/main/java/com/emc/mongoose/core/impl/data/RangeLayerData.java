@@ -17,7 +17,9 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.BitSet;
@@ -76,7 +78,7 @@ implements AppendableDataItem, UpdatableDataItem {
 			strBuilder.setLength(0); // reset
 		}
 		return strBuilder
-			.append(super.toString()).append(',')
+			.append(super.toString()).append(RunTimeConfig.LIST_SEP)
 			.append(Integer.toHexString(currLayerIndex.get())).append('/')
 			.append(
 				maskRangesHistory.isEmpty() ?
@@ -109,9 +111,7 @@ implements AppendableDataItem, UpdatableDataItem {
 					rangesMaskChars = rangesMask.toCharArray();
 				}
 				// method "or" to merge w/ the existing mask
-				maskRangesHistory.or(
-					BitSet.valueOf(Hex.decodeHex(rangesMaskChars))
-				);
+				maskRangesHistory.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
 			} catch(final DecoderException | NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
 			}
@@ -132,8 +132,8 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeInt(currLayerIndex.get());
-		out.writeObject(maskRangesHistory.toLongArray());
-		out.writeObject(maskRangesPending.toLongArray());
+		ObjectOutputStream.class.cast(out).writeUnshared(maskRangesHistory);
+		ObjectOutputStream.class.cast(out).writeUnshared(maskRangesPending);
 	}
 	//
 	@Override
@@ -141,8 +141,8 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		currLayerIndex.set(in.readInt());
-		maskRangesHistory.or(BitSet.valueOf((long[]) in.readObject()));
-		maskRangesPending.or(BitSet.valueOf((long[]) in.readObject()));
+		maskRangesHistory.or(BitSet.class.cast(ObjectInputStream.class.cast(in).readUnshared()));
+		maskRangesPending.or(BitSet.class.cast(ObjectInputStream.class.cast(in).readUnshared()));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/*public static int log2(long value) {

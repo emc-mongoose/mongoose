@@ -116,11 +116,6 @@ implements Consumer<T> {
 	public synchronized void interrupt() {
 		shutdown();
 		if(!super.isInterrupted()) {
-			submitQueue.clear(); // dispose
-			final int dropCount = submitQueue.size();
-			if(dropCount > 0) {
-				LOG.debug(LogUtil.MSG, "Dropped {} submit tasks", dropCount);
-			}
 			super.interrupt();
 		}
 	}
@@ -128,6 +123,11 @@ implements Consumer<T> {
 	@Override
 	public void close()
 	throws IOException {
-		interrupt();
+		shutdown();
+		submitQueue.clear(); // dispose
+		final int dropCount = submitQueue.size();
+		if(dropCount > 0) {
+			LOG.debug(LogUtil.MSG, "Dropped {} submit tasks", dropCount);
+		}
 	}
 }

@@ -106,7 +106,7 @@ implements DataItemBuffer<T> {
 				LOG.debug(
 					LogUtil.MSG, "{}: output done, {} items", toString(), writtenDataItems.get()
 				);
-				//super.close();
+				super.close();
 				fBuffOut.close();
 				fBuffOut = null;
 			}
