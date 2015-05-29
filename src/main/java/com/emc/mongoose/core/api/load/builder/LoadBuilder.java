@@ -4,7 +4,6 @@ import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-import com.emc.mongoose.core.api.persist.DataItemBuffer;
 // mongoose-common
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
@@ -64,9 +63,6 @@ extends Closeable {
 	throws RemoteException;
 	//
 	U build()
-	throws IOException;
-	//
-	DataItemBuffer<T> newDataItemBuffer()
 	throws IOException;
 	//
 	long getMaxCount()

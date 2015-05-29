@@ -24,7 +24,6 @@ import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
-import com.emc.mongoose.client.api.persist.DataItemBufferClient;
 import com.emc.mongoose.client.impl.load.executor.gauges.AvgDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
@@ -618,16 +617,6 @@ implements LoadClient<T> {
 				LOG.debug(LogUtil.MSG, "Consumer is load service instance");
 				for(final String addr : loadSvcAddrs) {
 					remoteLoadMap.get(addr).setConsumer(loadSvc);
-				}
-			} catch(final ClassCastException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Data item class mismatch");
-			}
-		} else if(DataItemBufferClient.class.isInstance(consumer)) {
-			try {
-				final DataItemBufferClient<T> mediator = (DataItemBufferClient<T>) consumer;
-				LOG.debug(LogUtil.MSG, "Consumer is remote mediator buffer");
-				for(final String addr : loadSvcAddrs) {
-					remoteLoadMap.get(addr).setConsumer(mediator.get(addr));
 				}
 			} catch(final ClassCastException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Data item class mismatch");

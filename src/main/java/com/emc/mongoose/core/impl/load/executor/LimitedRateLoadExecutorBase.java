@@ -26,12 +26,14 @@ extends LoadExecutorBase<T> {
 	private final int tgtDur;
 	//
 	protected LimitedRateLoadExecutorBase(
+		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final float rateLimit
 	) throws ClassCastException {
 		super(
+			dataCls,
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias
 		);

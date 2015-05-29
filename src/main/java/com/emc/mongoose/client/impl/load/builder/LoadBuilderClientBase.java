@@ -10,9 +10,7 @@ import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 // mongoose-client.jar
-import com.emc.mongoose.client.api.persist.DataItemBufferClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
-import com.emc.mongoose.client.impl.persist.TmpFileItemBufferClient;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
@@ -281,12 +279,6 @@ implements LoadBuilderClient<T, U> {
 	//
 	protected abstract U buildActually()
 	throws RemoteException;
-	//
-	@Override
-	public DataItemBufferClient<T> newDataItemBuffer()
-	throws RemoteException {
-		return new TmpFileItemBufferClient<>(this);
-	}
 	//
 	@Override
 	public String toString() {

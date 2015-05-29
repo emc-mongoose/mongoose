@@ -20,7 +20,9 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
-import com.emc.mongoose.core.impl.load.executor.util.ConsumerBase;
+import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
+import com.emc.mongoose.core.impl.load.model.ConsumerBase;
+import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 //
 import org.apache.commons.lang.StringUtils;
@@ -60,7 +62,6 @@ implements LoadExecutor<T> {
 	protected final String storageNodeAddrs[];
 	//
 	protected final DataSource dataSrc;
-	protected volatile RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
@@ -130,11 +131,12 @@ implements LoadExecutor<T> {
 	private final Condition condProducerDone = lock.newCondition();
 	//
 	protected LoadExecutorBase(
+		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
-		super(runTimeConfig, maxCount);
+		super(dataCls, runTimeConfig, maxCount);
 		//
 		loadNum = LAST_INSTANCE_NUM.getAndIncrement();
 		storageNodeCount = addrs.length;
@@ -149,7 +151,6 @@ implements LoadExecutor<T> {
 		//
 		totalConnCount = connCountPerNode * storageNodeCount;
 		//
-		this.runTimeConfig = runTimeConfig;
 		RequestConfig<T> reqConfigClone = null;
 		try {
 			reqConfigClone = reqConfig.clone();
@@ -179,11 +180,29 @@ implements LoadExecutor<T> {
 		dataSrc = reqConfig.getDataSource();
 		//
 		if(listFile != null && listFile.length() > 0 && Files.isReadable(Paths.get(listFile))) {
-			producer = newFileBasedProducer(maxCount, listFile);
-			LOG.debug(LogUtil.MSG, "{} will use file-based producer: {}", getName(), listFile);
+			try {
+				producer = new FileProducer<>(maxCount, listFile, dataCls);
+				LOG.debug(LogUtil.MSG, "{} will use file-based producer: {}", getName(), listFile);
+			} catch(final NoSuchMethodException | IOException e) {
+				LogUtil.exception(
+					LOG, Level.FATAL, e,
+					"Failed to create file-based producer for the class \"{}\" and src file \"{}\"",
+					dataCls.getName(), listFile
+				);
+			}
 		} else if(loadType == IOTask.Type.CREATE) {
-			producer = newDataProducer(maxCount, sizeMin, sizeMax, sizeBias);
-			LOG.debug(LogUtil.MSG, "{} will use new data items producer", getName());
+			try {
+				producer = new BasicDataItemGenerator<>(
+					dataCls, maxCount, sizeMin, sizeMax, sizeBias
+				);
+				LOG.debug(LogUtil.MSG, "{} will use new data items producer", getName());
+			} catch(final NoSuchMethodException e) {
+				LogUtil.exception(
+					LOG, Level.FATAL, e,
+					"Failed to create new data items producer for class \"{}\"",
+					dataCls.getName()
+				);
+			}
 		} else {
 			producer = reqConfig.getAnyDataProducer(maxCount, addrs[0]);
 			LOG.debug(LogUtil.MSG, "{} will use {} as data items producer", getName(), producer);
@@ -198,11 +217,6 @@ implements LoadExecutor<T> {
 		}
 		LoadCloseHook.add(this);
 	}
-	//
-	protected abstract Producer<T> newFileBasedProducer(final long maxCount, final String listFile);
-	protected abstract Producer<T> newDataProducer(
-		final long maxCount, final long minObjSize, final long maxObjSize, final float objSizeBias
-	);
 	//
 	@Override
 	public final String toString() {
@@ -398,7 +412,7 @@ implements LoadExecutor<T> {
 		final IOTask<T> ioTask = getIOTask(dataItem, nextNodeAddr);
 		// try to sleep while underlying connection pool becomes more free if it's going too fast
 		// warning: w/o such sleep the behaviour becomes very ugly
-		while(isAlive() && counterSubm.getCount() - counterResults.get() >= maxQueueSize) {
+		while(!isAllSubm.get() && counterSubm.getCount() - counterResults.get() >= maxQueueSize) {
 			Thread.sleep(1);
 		}
 		//
@@ -501,9 +515,11 @@ implements LoadExecutor<T> {
 				dataItem, consumer
 			);
 		} catch(final RejectedExecutionException e) {
-			LogUtil.exception(
-				LOG, Level.DEBUG, e, "\"{}\" rejected the data item \"{}\"", consumer, dataItem
-			);
+			if(LOG.isTraceEnabled(LogUtil.ERR)) {
+				LogUtil.exception(
+					LOG, Level.TRACE, e, "\"{}\" rejected the data item \"{}\"", consumer, dataItem
+				);
+			}
 		} finally {
 			counterResults.incrementAndGet();
 			if( // check that max count of results is reached OR
@@ -543,6 +559,7 @@ implements LoadExecutor<T> {
 	public void close()
 	throws IOException {
 		LOG.debug(LogUtil.MSG, "Invoked close for {}", getName());
+		interrupt();
 		// interrupt the producing
 		if(isClosed.compareAndSet(false, true)) {
 			try {

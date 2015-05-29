@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.load.executor.util;
+package com.emc.mongoose.core.impl.load.model;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
 //

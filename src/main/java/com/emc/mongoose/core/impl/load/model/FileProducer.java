@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
 /**
  Created by kurila on 12.05.14.
  A data item producer which constructs data items while reading the special input file.
@@ -43,21 +44,23 @@ implements Producer<T> {
 	private final Path fPath;
 	private final Constructor<T> dataItemConstructor;
 	private final long maxCount;
-	private long approxDataItemsSize = LoadExecutor.BUFF_SIZE_LO;
+	private final boolean compressed;
 	//
+	private long approxDataItemsSize = LoadExecutor.BUFF_SIZE_LO;
 	private Consumer<T> consumer = null;
 	//
 	@SuppressWarnings("unchecked")
 	public FileProducer(final long maxCount, final String fPathStr, final Class<T> dataItemsImplCls)
 	throws NoSuchMethodException, IOException {
-		this(maxCount, fPathStr, dataItemsImplCls, false);
+		this(maxCount, fPathStr, dataItemsImplCls, false, false);
 	}
 	//
-	private FileProducer(
+	FileProducer(
 		final long maxCount, final String fPathStr, final Class<T> dataItemsImplCls,
-		final boolean nested
+		final boolean nested, final boolean compressed
 	) throws IOException, NoSuchMethodException {
 		super(fPathStr);
+		this.compressed = compressed;
 		fPath = FileSystems.getDefault().getPath(fPathStr);
 		if(!Files.exists(fPath)) {
 			throw new IOException("File \""+fPathStr+"\" doesn't exist");
@@ -70,7 +73,9 @@ implements Producer<T> {
 		//
 		if(!nested) {
 			// try to read 1st max 100 data items to determine the
-			new FileProducer<T>(MAX_COUNT_TO_ESTIMATE_SIZES, fPathStr, dataItemsImplCls, true) {
+			new FileProducer<T>(
+				MAX_COUNT_TO_ESTIMATE_SIZES, fPathStr, dataItemsImplCls, true, compressed
+			) {
 				{
 					setConsumer(
 						new Consumer<T>() {
@@ -135,7 +140,12 @@ implements Producer<T> {
 		}
 		try(
 			BufferedReader fReader = new RandomFileReader(
-				new InputStreamReader(Files.newInputStream(fPath), decoder),
+				new InputStreamReader(
+					compressed ?
+						new GZIPInputStream(Files.newInputStream(fPath))
+						: Files.newInputStream(fPath),
+					decoder
+				),
 				batchSize, maxCount
 			)
 		) {

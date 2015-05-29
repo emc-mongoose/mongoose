@@ -11,18 +11,15 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
-import com.emc.mongoose.server.api.persist.DataItemBufferSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
 //
 import com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc;
-import com.emc.mongoose.server.impl.persist.TmpFileItemBufferSvc;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
 /**
@@ -94,14 +91,6 @@ implements WSLoadBuilderSvc<T, U> {
 		return (U) new BasicWSLoadSvc<>(
 			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
 			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
-		);
-	}
-	//
-	@Override @SuppressWarnings("unchecked")
-	public DataItemBufferSvc<T> newDataItemBuffer()
-	throws IOException {
-		return (DataItemBufferSvc<T>) ServiceUtils.create(
-			new TmpFileItemBufferSvc<>(getMaxCount())
 		);
 	}
 	//

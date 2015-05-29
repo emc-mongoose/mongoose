@@ -12,30 +12,36 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 15.12.14.
  */
-public abstract class DataItemGeneratorBase<T extends DataItem>
+public final class BasicDataItemGenerator<T extends DataItem>
 extends Thread
 implements Producer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	protected final long maxCount, minObjSize, maxObjSize;
-	protected final float objSizeBias;
-	protected Consumer<T> newDataConsumer;
+	private final long maxCount, minObjSize, maxObjSize;
+	private final float objSizeBias;
+	private final Constructor<T> dataConstructor;
+	private Consumer<T> newDataConsumer;
 	//
-	protected DataItemGeneratorBase(
+	public BasicDataItemGenerator(
+		final Class<T> dataCls,
 		final long maxCount, final long minObjSize, final long maxObjSize, final float objSizeBias
-	) {
+	) throws NoSuchMethodException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		this.minObjSize = minObjSize;
 		this.maxObjSize = maxObjSize;
 		this.objSizeBias = objSizeBias;
-		setName(getClass().getSimpleName());
+		dataConstructor = dataCls.getConstructor(Long.class);
+		setName("dataItemGenerator<" + dataCls.getSimpleName() + ">" + hashCode());
 	}
 	//
 	@Override
@@ -49,8 +55,17 @@ implements Producer<T> {
 		return newDataConsumer;
 	}
 	//
-	protected abstract T produceSpecificDataItem(final long nextSize)
-	throws IOException;
+	@Override
+	public final void await()
+	throws RemoteException, InterruptedException {
+		join();
+	}
+	//
+	@Override
+	public final void await(final long timeOut, final TimeUnit timeUnit)
+	throws RemoteException, InterruptedException {
+		timeUnit.timedJoin(this, timeOut);
+	}
 	//
 	private final static String
 		MSG_SUBMIT_REJECTED = "Submitting the object rejected by consumer",
@@ -84,7 +99,7 @@ implements Producer<T> {
 					}
 					nextSize += minObjSize;
 				}
-				newDataConsumer.submit(produceSpecificDataItem(nextSize));
+				newDataConsumer.submit(dataConstructor.newInstance(nextSize));
 				i ++;
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
@@ -96,6 +111,11 @@ implements Producer<T> {
 				LogUtil.exception(LOG, Level.TRACE, e, MSG_SUBMIT_REJECTED);
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.TRACE, e, MSG_SUBMIT_FAILED);
+			} catch(
+				final InstantiationException | IllegalAccessException | InvocationTargetException e
+			) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to instantiate the data item");
+				break;
 			} catch(final InterruptedException e) {
 				LOG.debug(LogUtil.MSG, MSG_INTERRUPTED);
 				break;

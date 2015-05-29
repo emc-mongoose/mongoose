@@ -9,14 +9,10 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-import com.emc.mongoose.core.api.load.model.Producer;
 //
 import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
-import com.emc.mongoose.core.impl.load.executor.util.DataObjectWorkerFactory;
-import com.emc.mongoose.core.impl.load.model.BasicWSObjectGenerator;
-import com.emc.mongoose.core.impl.load.model.FileProducer;
+import com.emc.mongoose.core.impl.load.model.DataObjectWorkerFactory;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
@@ -25,7 +21,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.pool.PoolStats;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -73,6 +68,7 @@ implements WSLoadExecutor<T> {
 	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
 	//
+	@SuppressWarnings("unchecked")
 	public BasicWSLoadExecutor(
 		final RunTimeConfig runTimeConfig, final WSRequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
@@ -80,6 +76,7 @@ implements WSLoadExecutor<T> {
 		final int countUpdPerReq
 	) {
 		super(
+			(Class<T>) BasicWSObject.class,
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
@@ -292,31 +289,5 @@ implements WSLoadExecutor<T> {
 		}
 		//
 		return nodeAddr;
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override @SuppressWarnings("unchecked")
-	protected Producer<T> newFileBasedProducer(final long maxCount, final String listFile) {
-		Producer<T> localProducer = null;
-		try {
-			localProducer = (Producer<T>) new FileProducer<>(
-				maxCount, listFile, BasicWSObject.class
-			);
-		} catch(final NoSuchMethodException e) {
-			LogUtil.exception(LOG, Level.FATAL, e, "Unexpected failure");
-		} catch(final IOException e) {
-			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to read the data items file \"{}\"", listFile
-			);
-		}
-		return localProducer;
-	}
-	//
-	@Override @SuppressWarnings("unchecked")
-	protected Producer<T> newDataProducer(
-		final long maxCount, final long minObjSize, final long maxObjSize, final float objSizeBias
-	) {
-		return (Producer<T>) new BasicWSObjectGenerator<>(
-			maxCount, minObjSize, maxObjSize, objSizeBias
-		);
 	}
 }

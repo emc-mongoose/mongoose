@@ -18,7 +18,7 @@ from java.util.concurrent import Executors
 LOG = LogManager.getLogger()
 #
 def build(
-	loadBuilder, loadTypesChain, flagConcurrent=True, flagUseItemsBuffer=True,
+	loadBuilder, loadTypesChain, flagUseItemsBuffer=True,
 	dataItemSizeMin=0, dataItemSizeMax=0, threadsPerNode=0
 ):
 	#
@@ -40,23 +40,9 @@ def build(
 			load = loadBuilder.build()
 			#
 			if load is not None:
-				if flagConcurrent:
-					if prevLoad is not None:
-						prevLoad.setConsumer(load)
-					chain.append(load)
-				else:
-					if prevLoad is not None:
-						if flagUseItemsBuffer:
-							mediatorBuff = loadBuilder.newDataItemBuffer()
-							if mediatorBuff is not None:
-								prevLoad.setConsumer(mediatorBuff)
-								chain.append(mediatorBuff)
-								mediatorBuff.setConsumer(load)
-							else:
-								LOG.error(LogUtil.ERR, "No mediator buffer instanced")
-						else:
-							prevLoad.setConsumer(load)
-					chain.append(load)
+				if prevLoad is not None:
+					prevLoad.setConsumer(load)
+				chain.append(load)
 			else:
 				LOG.error(LogUtil.ERR, "No load executor instanced")
 			if prevLoad is None:
@@ -70,10 +56,10 @@ def build(
 			LogUtil.exception(LOG, Level.FATAL, e, "Unexpected failure")
 	return chain
 	#
-def execute(chain=(), flagSimultaneous=True):
+def execute(chain=(), flagConcurrent=True):
 	runTimeOut = timeOutInit()
 	try:
-		if flagSimultaneous:
+		if flagConcurrent:
 			LOG.info(LogUtil.MSG, "Execute load jobs in parallel")
 			for load in reversed(chain):
 				load.start()
@@ -97,40 +83,20 @@ def execute(chain=(), flagSimultaneous=True):
 					load.close()
 		else:
 			LOG.info(LogUtil.MSG, "Execute load jobs sequentially")
-			prevLoad, nextLoad = None, None
 			for nextLoad in chain:
 				if not isinstance(nextLoad, DataItemBuffer):
 					LOG.debug(LogUtil.MSG, "Starting next load job: \"{}\"", nextLoad)
 					nextLoad.start()
-					if prevLoad is not None and isinstance(prevLoad, DataItemBuffer):
-						LOG.debug(LogUtil.MSG, "Stop buffering the data items into \"{}\"", prevLoad)
-						prevLoad.close()
-						LOG.debug(LogUtil.MSG, "Start producing the data items from \"{}\"", prevLoad)
-						prevLoad.start()
-						try:
-							LOG.debug(
-								LogUtil.MSG, "Execute \"{}\" for up to {}[{}]",
-								nextLoad, runTimeOut[0], runTimeOut[1]
-							)
-							nextLoad.await(runTimeOut[0], runTimeOut[1])
-						finally:
-							LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
-							prevLoad.interrupt()
-							LOG.debug(LogUtil.MSG, "Stop producing the data items from \"{}\"", prevLoad)
-							nextLoad.close()
-							LOG.debug(LogUtil.MSG, "Load job \"{}\" closed", nextLoad)
-					else:
-						try:
-							LOG.debug(
-								LogUtil.MSG, "Execute \"{}\" for up to {}[{}]",
-								nextLoad, runTimeOut[0], runTimeOut[1]
-							)
-							nextLoad.await(runTimeOut[0], runTimeOut[1])
-						finally:
-							LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
-							nextLoad.close()
-							LOG.debug(LogUtil.MSG, "Load job \"{}\" closed", nextLoad)
-				prevLoad = nextLoad
+					try:
+						LOG.debug(
+							LogUtil.MSG, "Execute \"{}\" for up to {}[{}]",
+							nextLoad, runTimeOut[0], runTimeOut[1]
+						)
+						nextLoad.await(runTimeOut[0], runTimeOut[1])
+					finally:
+						LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
+						nextLoad.close()
+						LOG.debug(LogUtil.MSG, "Load job \"{}\" closed", nextLoad)
 	finally:
 		if chain is not None:
 			for loadJob in chain:
@@ -179,7 +145,7 @@ if __name__ == "__builtin__":
 	loadBuilder.getRequestConfig().setAnyDataProducerEnabled(False)
 	#
 	chain = build(
-		loadBuilder, loadTypesChain, flagConcurrent, flagItemsBuffer,
+		loadBuilder, loadTypesChain, flagItemsBuffer,
 		dataItemSizeMin if dataItemSize == 0 else dataItemSize,
 		dataItemSizeMax if dataItemSize == 0 else dataItemSize,
 		threadsPerNode

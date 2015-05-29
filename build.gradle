@@ -372,7 +372,6 @@ configurations {
 
 task compileRMI(dependsOn: "compileServerImplJava") << {
 	String[] listClsRemote = [
-			'com.emc.mongoose.server.impl.persist.TmpFileItemBufferSvc',
 			'com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc',
 			'com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc'
 	]

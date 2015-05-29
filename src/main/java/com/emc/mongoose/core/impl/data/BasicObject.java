@@ -75,7 +75,9 @@ implements DataObject {
 		} else {
 			strBuilder.setLength(0); // reset
 		}
-		return strBuilder.append(id).append(',').append(super.toString()).toString();
+		return strBuilder
+			.append(id) .append(RunTimeConfig.LIST_SEP)
+			.append(super.toString()).toString();
 	}
 	//
 	@Override
