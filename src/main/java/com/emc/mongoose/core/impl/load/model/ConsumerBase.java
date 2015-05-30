@@ -1,7 +1,6 @@
 package com.emc.mongoose.core.impl.load.model;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataItem;
@@ -42,9 +41,7 @@ implements Consumer<T> {
 	private final long maxCount;
 	protected final int submTimeOutMilliSec, maxQueueSize;
 	// states
-	private final AtomicLong
-		counterVolatile = new AtomicLong(0),
-		counterPersisted = new AtomicLong(0);
+	private final AtomicLong counterPreSubm = new AtomicLong(0);
 	protected final AtomicBoolean
 		isStarted = new AtomicBoolean(false),
 		isShutdown = new AtomicBoolean(false),
@@ -52,13 +49,19 @@ implements Consumer<T> {
 	// volatile
 	private final BlockingQueue<T> volatileQueue;
 	// persistent
-	private final File persistentQueueFile;
-	private final BufferedWriter persistentQueueOutput;
-	private volatile FileProducer<T> persistentQueueWorker = null;
 	protected final Class<T> dataCls;
+	private final ConsumerBase<T> persistentQueue;
+	private volatile FileProducer<T> tmpFileProducer = null;
 	//
 	protected ConsumerBase(
 		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount
+	) {
+		this(dataCls, runTimeConfig, maxCount, false);
+	}
+	//
+	private ConsumerBase(
+		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount,
+		final boolean nested
 	) throws IllegalStateException {
 		this.dataCls = dataCls;
 		this.runTimeConfig = runTimeConfig;
@@ -69,67 +72,127 @@ implements Consumer<T> {
 		volatileQueue = new ArrayBlockingQueue<>(maxQueueSize);
 		submTimeOutMilliSec = runTimeConfig.getRunSubmitTimeOutMilliSec();
 		//
-		final Path tmpFilePath = Paths.get(
-			System.getProperty("java.io.tmpdir"),
-			runTimeConfig.getRunName() + "-v" + runTimeConfig.getRunVersion()
-		);
-		if(!tmpFilePath.toFile().exists() && !tmpFilePath.toFile().mkdirs()) {
-			LOG.warn(LogUtil.ERR, "Failed to create the directory: \"{}\"", tmpFilePath);
-		}
-		try {
-			persistentQueueFile = Files.createTempFile(
-				tmpFilePath, runTimeConfig.getRunId(), COMPRESSION_ENABLED ? ".gz" : null
-			).toFile();
-			persistentQueueFile.deleteOnExit();
-		} catch(final IOException e) {
-			throw new IllegalStateException(
-				"Failed to create the temporary file in " + tmpFilePath.toAbsolutePath(), e
+		if(nested) {
+			persistentQueue = null;
+		} else {
+			final Path tmpFilePath = Paths.get(
+				System.getProperty("java.io.tmpdir"),
+				runTimeConfig.getRunName() + "-v" + runTimeConfig.getRunVersion()
 			);
-		}
-		try {
-			persistentQueueOutput = new BufferedWriter(
-				new OutputStreamWriter(
-					COMPRESSION_ENABLED ?
-						new GZIPOutputStream(Files.newOutputStream(persistentQueueFile.toPath()))
-						: Files.newOutputStream(persistentQueueFile.toPath())
-				)
-			);
-		} catch(final IOException e) {
-			throw new IllegalStateException(
-				"Failed to open the temporary file in " + tmpFilePath.toAbsolutePath(), e
-			);
+			if(!tmpFilePath.toFile().exists() && !tmpFilePath.toFile().mkdirs()) {
+				LOG.warn(LogUtil.ERR, "Failed to create the directory: \"{}\"", tmpFilePath);
+			}
+			//
+			persistentQueue = new ConsumerBase<T>(
+				dataCls, runTimeConfig, maxCount, true
+			) {
+				//
+				private final BufferedWriter tmpFileWriter;
+				private final File tmpFile;
+				//
+				{
+					try {
+						tmpFile = Files.createTempFile(
+							tmpFilePath, runTimeConfig.getRunId(),
+							COMPRESSION_ENABLED ? ".gz" : null
+						).toFile();
+						tmpFile.deleteOnExit();
+					} catch(final IOException e) {
+						throw new IllegalStateException(
+							"Failed to create the temporary file in " + tmpFilePath.toAbsolutePath(), e
+						);
+					}
+					//
+					try {
+						tmpFileWriter = new BufferedWriter(
+							new OutputStreamWriter(
+								COMPRESSION_ENABLED ? new GZIPOutputStream(
+									Files.newOutputStream(tmpFile.toPath())
+								) : Files.newOutputStream(tmpFile.toPath())
+							)
+						);
+					} catch(final IOException e) {
+						throw new IllegalStateException(
+							"Failed to open the temporary file in " + tmpFilePath.toAbsolutePath(),
+							e
+						);
+					}
+					//
+					try {
+						tmpFileProducer = new FileProducer<>(
+							maxCount, tmpFile.getAbsolutePath(), dataCls,
+							/*nested=*/true, COMPRESSION_ENABLED
+						);
+					} catch(final IOException | NoSuchMethodException e) {
+						throw new IllegalStateException(e);
+					}
+				}
+				//
+				@Override
+				protected final synchronized
+				void submitSync(final T dataItem)
+				throws RejectedExecutionException {
+					if(dataItem != null) {
+						try {
+							tmpFileWriter.write(dataItem.toString());
+							tmpFileWriter.newLine();
+						} catch(final IOException e) {
+							throw new RejectedExecutionException(e);
+						}
+					}
+				}
+				//
+				@Override
+				public final void interrupt() {
+					super.interrupt();
+					//
+					try {
+						tmpFileWriter.close();
+						LOG.debug(
+							LogUtil.MSG, "{}: closed the file \"{}\" for writing", getName(),
+							tmpFile.getAbsolutePath()
+						);
+					} catch(final IOException e) {
+						LogUtil.exception(LOG, Level.DEBUG, e, "Failed to close tmp buffer file");
+					}
+					//
+					if(tmpFile.delete()) {
+						LOG.debug(
+							LogUtil.MSG, "{}: temporary file \"{}\" deleted", getName(),
+							tmpFile.getAbsolutePath()
+						);
+					}
+				}
+				//
+				@Override
+				public final void close()
+				throws IOException {
+					super.close();
+				}
+			};
 		}
 	}
 	//
 	@Override
 	public void start() {
 		if(isStarted.compareAndSet(false, true)) {
-			super.start();
 			LOG.debug(
-				LogUtil.MSG, "{}: started, the further consuming will go through volatile queue",
+				LogUtil.MSG,
+				"{}: started, the further consuming will go through the volatile queue",
 				getName()
 			);
-			if(counterPersisted.get() > 0) {
-				LOG.debug(
-					LogUtil.MSG, "{}: there's a {} data items compressed data in the file \"{}\"",
-					getName(), SizeUtil.formatSize(persistentQueueFile.length()),
-					persistentQueueFile.getAbsolutePath()
-				);
-				try {
-					persistentQueueWorker = new FileProducer<>(
-						maxCount, persistentQueueFile.getAbsolutePath(), dataCls,
-						/*nested=*/true, COMPRESSION_ENABLED
-					);
-					persistentQueueWorker.setDaemon(true); // do not block process exit
-					persistentQueueWorker.setConsumer(this); // go through the volatile queue
-					persistentQueueWorker.start();
-				} catch(final IOException | NoSuchMethodException e) {
-					LogUtil.exception(
-						LOG, Level.ERROR, e, "Failed to consume the persistent queue from \"{}\"",
-						persistentQueueFile.getAbsolutePath()
-					);
+			if(persistentQueue != null && persistentQueue.counterPreSubm.get() > 0) {
+				// means that this is not nested consumer and there are items persisted
+				if(tmpFileProducer == null) { // additional check
+					throw new IllegalStateException("No file producer instanced");
+				} else { // there are items persisted
+					tmpFileProducer.setDaemon(true); // do not block process exit
+					tmpFileProducer.setConsumer(this); // go through the volatile queue
+					tmpFileProducer.start(); // start producing
 				}
 			}
+			//
+			super.start();
 		}
 	}
 	/**
@@ -142,34 +205,22 @@ implements Consumer<T> {
 	@Override
 	public void submit(final T dataItem)
 	throws RemoteException, InterruptedException, RejectedExecutionException {
-		//
-		if(dataItem == null || counterVolatile.get() >= maxCount) {
-			shutdown();
-		}
-		if(isShutdown.get()) {
-			throw new InterruptedException("Shut down already");
-		}
-		//
 		if(isStarted.get()) {
+			if(dataItem == null || counterPreSubm.get() >= maxCount) {
+				shutdown();
+			}
+			if(isShutdown.get()) {
+				throw new InterruptedException("Shut down already");
+			}
 			if(volatileQueue.offer(dataItem, submTimeOutMilliSec, TimeUnit.MILLISECONDS)) {
-				counterVolatile.incrementAndGet();
+				counterPreSubm.incrementAndGet();
 			} else {
 				throw new RejectedExecutionException("Submit queue timeout");
 			}
+		} else if(persistentQueue != null) {
+			persistentQueue.submit(dataItem);
 		} else {
-			try {
-				if(counterPersisted.get() < maxCount) {
-					synchronized(persistentQueueOutput) {
-						persistentQueueOutput.write(dataItem.toString());
-						persistentQueueOutput.newLine();
-					}
-					counterPersisted.incrementAndGet();
-				} else {
-					throw new InterruptedException("Max count reached: " + maxCount);
-				}
-			} catch(final IOException e) {
-				throw new RejectedExecutionException(e);
-			}
+			throw new RejectedExecutionException("Consuming failed due to internal error");
 		}
 	}
 	/** Consumes the queue */
@@ -206,24 +257,14 @@ implements Consumer<T> {
 	@Override
 	public void shutdown() {
 		if(!isStarted.get()) {
-			LOG.debug(
-				LogUtil.MSG, "{}: there are {} data items persisted in \"{}\"",
-				getName(), counterPersisted.get(), persistentQueueFile
-			);
-			try {
-				persistentQueueOutput.close();
-				LOG.debug(
-					LogUtil.MSG, "{}: closed the file \"{}\" for writing",
-					getName(), persistentQueueFile.getAbsolutePath()
-				);
-			} catch(final IOException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to close the persistent queue file: \"{}\"",
-					persistentQueueFile.getAbsolutePath()
-				);
+			LOG.debug(LogUtil.MSG, "{}: not started yet, trying to shutdown the persistent buffer");
+			if(persistentQueue == null) {
+				throw new IllegalStateException("Not started yet, but shutdown is invoked");
+			} else {
+				persistentQueue.shutdown();
 			}
 		} else if(isShutdown.compareAndSet(false, true)) {
-			LOG.debug(LogUtil.MSG, "{}: consumed {} data items", getName(), counterVolatile.get());
+			LOG.debug(LogUtil.MSG, "{}: consumed {} data items", getName(), counterPreSubm.get());
 		}
 	}
 	//
@@ -234,18 +275,26 @@ implements Consumer<T> {
 	//
 	@Override
 	public synchronized void interrupt() {
+		//
 		shutdown();
-		if(
-			persistentQueueWorker != null &&
-			(persistentQueueWorker.isAlive() || !persistentQueueWorker.isInterrupted() )
-		) {
-			persistentQueueWorker.interrupt();
-			persistentQueueWorker = null;
+		//
+		if(persistentQueue != null) {
+			persistentQueue.interrupt();
 			LOG.debug(
-				LogUtil.MSG, "{}: interrupted persistent queue producer for the file \"{}\"",
-				getName(), persistentQueueFile.getAbsolutePath()
+				LogUtil.MSG, "{}: interrupted persistent buffer consumer \"{}\"", getName(),
+				persistentQueue
 			);
 		}
+		//
+		if(tmpFileProducer != null) {
+			tmpFileProducer.interrupt();
+			tmpFileProducer = null;
+			LOG.debug(
+				LogUtil.MSG, "{}: interrupted persistent buffer producer \"{}\"", getName(),
+				tmpFileProducer
+			);
+		}
+		//
 		if(!super.isInterrupted()) {
 			super.interrupt();
 		}
@@ -255,8 +304,8 @@ implements Consumer<T> {
 	public void close()
 	throws IOException {
 		shutdown();
-		if(!persistentQueueFile.delete()) {
-			LOG.debug(LogUtil.ERR, "Failed to delete the file \"{}\"", persistentQueueFile);
+		if(persistentQueue != null) {
+			persistentQueue.close();
 		}
 		final int dropCount = volatileQueue.size();
 		if(dropCount > 0) {

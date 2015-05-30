@@ -3,7 +3,7 @@ from loadbuilder import init as loadBuilderInit
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from com.emc.mongoose.common.concurrent import NamingWorkerFactory
+from com.emc.mongoose.common.concurrent import GroupThreadFactory
 from com.emc.mongoose.common.conf import RunTimeConfig
 from com.emc.mongoose.common.logging import LogUtil
 #
@@ -64,7 +64,7 @@ def execute(chain=(), flagConcurrent=True):
 			for load in reversed(chain):
 				load.start()
 			chainWaitExecSvc = Executors.newFixedThreadPool(
-				len(chain), NamingWorkerFactory("chainFinishAwait")
+				len(chain), GroupThreadFactory("chainFinishAwait")
 			)
 			for load in chain:
 				chainWaitExecSvc.submit(

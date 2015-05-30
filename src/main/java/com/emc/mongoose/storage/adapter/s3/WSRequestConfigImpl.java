@@ -19,7 +19,9 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -107,7 +109,7 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final String bucketName = String.class.cast(in.readObject());
+		final String bucketName = String.class.cast(ObjectInputStream.class.cast(in).readUnshared());
 		LOG.debug(LogUtil.MSG, "Note: bucket {} has been got from load client side", bucketName);
 		setBucket(new WSBucketImpl<>(this, bucketName, runTimeConfig.getStorageVersioningEnabled()));
 	}
@@ -116,7 +118,7 @@ extends WSRequestConfigBase<T> {
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(bucket.getName());
+		ObjectOutputStream.class.cast(out).writeUnshared(bucket.getName());
 	}
 	//
 	@Override

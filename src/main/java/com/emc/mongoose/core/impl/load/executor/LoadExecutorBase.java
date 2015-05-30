@@ -215,6 +215,7 @@ implements LoadExecutor<T> {
 				LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
 			}
 		}
+		//
 		LoadCloseHook.add(this);
 	}
 	//

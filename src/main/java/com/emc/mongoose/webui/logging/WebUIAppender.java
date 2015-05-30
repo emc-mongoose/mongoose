@@ -97,10 +97,8 @@ extends AbstractAppender {
 			final Map<String, String> evtCtxMap = event.getContextMap();
 			if(evtCtxMap.containsKey(KEY_RUN_ID)) {
 				currRunId = evtCtxMap.get(KEY_RUN_ID);
-			} else if(ThreadContext.containsKey(KEY_RUN_ID)) {
-				currRunId = ThreadContext.get(KEY_RUN_ID);
 			} else {
-				currRunId = null;
+				currRunId = ThreadContext.get(KEY_RUN_ID);
 			}
 			//
 			if(currRunId != null) {

@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.io.req.conf;
 // mongoose-common
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
@@ -72,7 +72,9 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
@@ -217,7 +219,7 @@ implements WSRequestConfig<T> {
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
 				ioReactorConfigBuilder.build(),
-				new NamingWorkerFactory("wsConfigWorker<" + toString() + ">")
+				new GroupThreadFactory("wsConfigWorker<" + toString() + ">", true)
 			);
 		} catch(final IOReactorException e) {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);
@@ -387,19 +389,21 @@ implements WSRequestConfig<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		sharedHeaders = HeaderGroup.class.cast(in.readObject());
+		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
+		sharedHeaders = HeaderGroup.class.cast(ois.readUnshared());
 		LOG.trace(LogUtil.MSG, "Got headers set {}", sharedHeaders);
-		setNameSpace(String.class.cast(in.readObject()));
-		setFileAccessEnabled(Boolean.class.cast(in.readObject()));
+		setNameSpace(String.class.cast(ois.readUnshared()));
+		setFileAccessEnabled(Boolean.class.cast(ois.readUnshared()));
 	}
 	//
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(sharedHeaders);
-		out.writeObject(getNameSpace());
-		out.writeObject(getFileAccessEnabled());
+		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
+		oos.writeUnshared(sharedHeaders);
+		oos.writeUnshared(getNameSpace());
+		oos.writeUnshared(getFileAccessEnabled());
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse httpResponse) {

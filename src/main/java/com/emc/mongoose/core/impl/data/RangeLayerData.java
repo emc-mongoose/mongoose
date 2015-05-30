@@ -132,8 +132,9 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeInt(currLayerIndex.get());
-		ObjectOutputStream.class.cast(out).writeUnshared(maskRangesHistory);
-		ObjectOutputStream.class.cast(out).writeUnshared(maskRangesPending);
+		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
+		oos.writeUnshared(maskRangesHistory);
+		oos.writeUnshared(maskRangesPending);
 	}
 	//
 	@Override
@@ -141,8 +142,9 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		currLayerIndex.set(in.readInt());
-		maskRangesHistory.or(BitSet.class.cast(ObjectInputStream.class.cast(in).readUnshared()));
-		maskRangesPending.or(BitSet.class.cast(ObjectInputStream.class.cast(in).readUnshared()));
+		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
+		maskRangesHistory.or(BitSet.class.cast(ois.readUnshared()));
+		maskRangesPending.or(BitSet.class.cast(ois.readUnshared()));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/*public static int log2(long value) {

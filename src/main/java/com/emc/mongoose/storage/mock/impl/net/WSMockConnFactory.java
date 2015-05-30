@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.mock.impl.net;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 //
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
@@ -40,7 +40,7 @@ extends DefaultNHttpServerConnectionFactory {
 	) {
 		super(config);
 		connKillExecutor = Executors.newScheduledThreadPool(
-			1, new NamingWorkerFactory("connKiller")
+			1, new GroupThreadFactory("connKiller", true)
 		);
 		connCacheSize = runTimeConfig.getStorageMockFaultConnCacheSize();
 		connCache = new CircularFifoQueue<>(connCacheSize);

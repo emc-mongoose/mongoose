@@ -1,6 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.cinderella;
 //
-import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
@@ -65,7 +65,7 @@ implements Runnable {
 			.build();
 		// create the server-side I/O reactor
 		ioReactor = new DefaultListeningIOReactor(
-			ioReactorConf, new NamingWorkerFactory("ioReactor")
+			ioReactorConf, new GroupThreadFactory("ioReactor")
 		);
 		this.ioStats = ioStats;
 	}

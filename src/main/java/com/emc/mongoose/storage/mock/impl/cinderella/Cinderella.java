@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.mock.impl.cinderella;
 import com.emc.mongoose.common.collections.Cache;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -141,7 +141,7 @@ implements Runnable {
 		// Register the default handler for all URIs
 		protocolHandler = new HttpAsyncService(httpproc, apiReqHandlerMapper);
 		multiSocketSvc = Executors.newFixedThreadPool(
-			countHeads, new NamingWorkerFactory("cinderellaWorker")
+			countHeads, new GroupThreadFactory("cinderellaHead")
 		);
 	}
 	//

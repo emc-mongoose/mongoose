@@ -151,7 +151,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			case METHOD_DELETE:
 				handleDelete(httpResponse, dataId);
 				break;
-		}
+	}
 	}
 	//
 	private void handleCreate(

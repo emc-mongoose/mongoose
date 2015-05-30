@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
 import com.emc.mongoose.common.http.RequestTargetHost;
@@ -12,7 +13,6 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //
 import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
-import com.emc.mongoose.core.impl.load.model.DataObjectWorkerFactory;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
@@ -136,8 +136,7 @@ implements WSLoadExecutor<T> {
 		//
 		try {
 			ioReactor = new DefaultConnectingIOReactor(
-				ioReactorConfigBuilder.build(),
-				new DataObjectWorkerFactory(loadNum, wsReqConfigCopy.getAPI(), loadType, getName())
+				ioReactorConfigBuilder.build(), new GroupThreadFactory(getName())
 			);
 		} catch(final IOReactorException e) {
 			throw new IllegalStateException("Failed to build the I/O reactor", e);

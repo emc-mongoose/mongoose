@@ -5,7 +5,7 @@ import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
 import com.emc.mongoose.common.collections.InstancePool;
-import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -133,7 +133,9 @@ implements LoadClient<T> {
 		}
 		name = t;
 		//
-		setThreadFactory(new NamingWorkerFactory(String.format("clientSubmitWorker<%s>", name)));
+		setThreadFactory(
+			new GroupThreadFactory(String.format("clientSubmitWorker<%s>", name), true)
+		);
 		//
 		this.runTimeConfig = runTimeConfig;
 		try {
@@ -188,7 +190,7 @@ implements LoadClient<T> {
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
 			20 + remoteLoadMap.size(), // 20 metric fetching tasks + N frame fetching tasks
-			new NamingWorkerFactory(String.format("%s-remoteMonitor", name))
+			new GroupThreadFactory(String.format("%s-remoteMonitor", name), true)
 		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricSuccCount = registerJmxGaugeSum(
@@ -573,7 +575,7 @@ implements LoadClient<T> {
 		if(!isTerminated()) {
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 				remoteLoadMap.size(),
-				new NamingWorkerFactory(String.format("interrupt<%s>", getName()))
+				new GroupThreadFactory(String.format("interrupt<%s>", getName()))
 			);
 			for(final String addr : loadSvcAddrs) {
 				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
@@ -791,18 +793,18 @@ implements LoadClient<T> {
 	@Override
 	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
-		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
+		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			remoteLoadMap.size() + 1,
-			new NamingWorkerFactory(String.format("joinWorker<%s>", getName()))
+			new GroupThreadFactory(String.format("awaitWorker<%s>", getName()))
 		);
-		joinExecutor.submit(
+		awaitExecutor.submit(
 			new Runnable() {
 				@Override
 				public final void run() {
 					// wait the remaining tasks to be transmitted to load servers
 					LOG.debug(
-						LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
-						getName(), getQueue().size() + getActiveCount()
+						LogUtil.MSG, "{}: waiting remaining {} tasks to complete", getName(),
+						getQueue().size() + getActiveCount()
 					);
 					try {
 						awaitTermination(timeOut, timeUnit);
@@ -813,23 +815,23 @@ implements LoadClient<T> {
 			}
 		);
 		for(final String addr : remoteLoadMap.keySet()) {
-			joinExecutor.submit(new AwaitLoadJobTask(remoteLoadMap.get(addr), timeOut, timeUnit));
+			awaitExecutor.submit(new AwaitLoadJobTask(remoteLoadMap.get(addr), timeOut, timeUnit));
 		}
-		joinExecutor.shutdown();
+		awaitExecutor.shutdown();
 		try {
-			LOG.debug(LogUtil.MSG, "Wait remote join tasks for finish {}[{}]", timeOut, timeUnit);
-			if(joinExecutor.awaitTermination(timeOut, timeUnit)) {
-				LOG.debug(LogUtil.MSG, "All join tasks finished");
+			LOG.debug(LogUtil.MSG, "Wait remote await tasks for finish {}[{}]", timeOut, timeUnit);
+			if(awaitExecutor.awaitTermination(timeOut, timeUnit)) {
+				LOG.debug(LogUtil.MSG, "All await tasks finished");
 			} else {
-				LOG.debug(LogUtil.MSG, "Join tasks execution timeout");
+				LOG.debug(LogUtil.MSG, "Await tasks execution timeout");
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Interrupted");
 			throw new InterruptedException();
 		} finally {
 			LOG.debug(
-				LogUtil.MSG, "Interrupted join tasks: {}",
-				Arrays.toString(joinExecutor.shutdownNow().toArray())
+				LogUtil.MSG, "Interrupted await tasks: {}",
+				Arrays.toString(awaitExecutor.shutdownNow().toArray())
 			);
 		}
 	}
