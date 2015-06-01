@@ -37,7 +37,7 @@ def execute(loadBuilder, rampupParams=((),(),())):
 				ThreadContext.put("currentSize", dataItemSizeStr + "-" + str(index))
 				ThreadContext.put("currentThreadCount", str(threadCount))
 				nextChain = chainBuild(
-					loadBuilder, loadTypesChain, False, True, dataItemSize, dataItemSize, threadCount
+					loadBuilder, loadTypesChain, True, dataItemSize, dataItemSize, threadCount
 				)
 				chainExecute(nextChain, False)
 				LOG.debug(LogUtil.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
