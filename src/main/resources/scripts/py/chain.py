@@ -8,7 +8,6 @@ from com.emc.mongoose.common.conf import RunTimeConfig
 from com.emc.mongoose.common.logging import LogUtil
 #
 from com.emc.mongoose.core.api.io.task import IOTask
-from com.emc.mongoose.core.api.persist import DataItemBuffer
 #
 from com.emc.mongoose.core.impl.load.tasks import AwaitLoadJobTask
 #
@@ -84,19 +83,18 @@ def execute(chain=(), flagConcurrent=True):
 		else:
 			LOG.info(LogUtil.MSG, "Execute load jobs sequentially")
 			for nextLoad in chain:
-				if not isinstance(nextLoad, DataItemBuffer):
-					LOG.debug(LogUtil.MSG, "Starting next load job: \"{}\"", nextLoad)
-					nextLoad.start()
-					try:
-						LOG.debug(
-							LogUtil.MSG, "Execute \"{}\" for up to {}[{}]",
-							nextLoad, runTimeOut[0], runTimeOut[1]
-						)
-						nextLoad.await(runTimeOut[0], runTimeOut[1])
-					finally:
-						LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
-						nextLoad.close()
-						LOG.debug(LogUtil.MSG, "Load job \"{}\" closed", nextLoad)
+				LOG.debug(LogUtil.MSG, "Starting next load job: \"{}\"", nextLoad)
+				nextLoad.start()
+				try:
+					LOG.debug(
+						LogUtil.MSG, "Execute \"{}\" for up to {}[{}]",
+						nextLoad, runTimeOut[0], runTimeOut[1]
+					)
+					nextLoad.await(runTimeOut[0], runTimeOut[1])
+				finally:
+					LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
+					nextLoad.close()
+					LOG.debug(LogUtil.MSG, "Load job \"{}\" closed", nextLoad)
 	finally:
 		if chain is not None:
 			for loadJob in chain:

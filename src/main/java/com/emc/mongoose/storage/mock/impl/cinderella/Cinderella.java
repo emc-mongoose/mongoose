@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.mock.impl.cinderella;
 //
 import com.emc.mongoose.common.collections.Cache;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 //
@@ -13,12 +14,16 @@ import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.cinderella.request.APIRequestHandlerMapper;
 import com.emc.mongoose.storage.mock.impl.net.WSMockConnFactory;
 //
+import org.apache.http.HttpException;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpResponseInterceptor;
 import org.apache.http.config.ConnectionConfig;
+import org.apache.http.protocol.HTTP;
+import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.ResponseConnControl;
 import org.apache.http.protocol.ResponseContent;
-import org.apache.http.protocol.ResponseDate;
 import org.apache.http.protocol.ResponseServer;
 //
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
@@ -122,9 +127,20 @@ implements Runnable {
 			connFactory = new DefaultNHttpServerConnectionFactory(connConfig);
 		}
 		// Set up the HTTP protocol processor
-		final HttpProcessor httpproc = HttpProcessorBuilder.create()
-			.add(new ResponseDate())
-			.add(
+		final HttpProcessor httpProc = HttpProcessorBuilder.create()
+			.add( // this is a date header generator below
+				new HttpResponseInterceptor() {
+					@Override
+					public void process(
+						final HttpResponse response, final HttpContext context
+					) throws HttpException, IOException {
+						response.setHeader(
+							HTTP.DATE_HEADER, LowPrecisionDateGenerator.getDateText()
+						);
+					}
+				}
+			)
+			.add( // user-agent header
 				new ResponseServer(
 					String.format(
 						"%s/%s", Cinderella.class.getSimpleName(), runTimeConfig.getRunVersion()
@@ -139,7 +155,7 @@ implements Runnable {
 			runTimeConfig, this, ioStats
 		);
 		// Register the default handler for all URIs
-		protocolHandler = new HttpAsyncService(httpproc, apiReqHandlerMapper);
+		protocolHandler = new HttpAsyncService(httpProc, apiReqHandlerMapper);
 		multiSocketSvc = Executors.newFixedThreadPool(
 			countHeads, new GroupThreadFactory("cinderellaHead")
 		);
@@ -223,7 +239,9 @@ implements Runnable {
 	//
 	@Override
 	public final WSObjectMock put(final String id, final WSObjectMock dataItem) {
-		createQueue.offer(dataItem);
+		if(!createQueue.add(dataItem)) {
+			LOG.warn(LogUtil.ERR, "Failed to add the data item \"{}\" to the create queue", id);
+		}
 		return null;
 	}
 	//

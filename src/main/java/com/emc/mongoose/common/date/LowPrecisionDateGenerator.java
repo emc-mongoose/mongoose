@@ -25,6 +25,8 @@ public class LowPrecisionDateGenerator {
 		FMT_DATE.format(new Date(DT_MILLISEC))
 	);
 	//
+	public static int UPDATE_PERIOD_MILLISEC = 100000;
+	//
 	private static final Timer UPDATE_DAEMON = new Timer(true) {{
 		schedule(
 			new TimerTask() {
@@ -33,7 +35,7 @@ public class LowPrecisionDateGenerator {
 					DT_MILLISEC = System.currentTimeMillis();
 					DT_TEXT_REF.set(FMT_DATE.format(new Date(DT_MILLISEC)));
 				}
-			}, 100000, 100000
+			}, UPDATE_PERIOD_MILLISEC, UPDATE_PERIOD_MILLISEC
 		);
 	}};
 	//
