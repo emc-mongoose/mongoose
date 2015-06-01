@@ -413,7 +413,10 @@ implements LoadExecutor<T> {
 		final IOTask<T> ioTask = getIOTask(dataItem, nextNodeAddr);
 		// try to sleep while underlying connection pool becomes more free if it's going too fast
 		// warning: w/o such sleep the behaviour becomes very ugly
-		while(!isAllSubm.get() && counterSubm.getCount() - counterResults.get() >= maxQueueSize) {
+		while(
+			!isAllSubm.get() && !isInterrupted.get() &&
+			counterSubm.getCount() - counterResults.get() >= maxQueueSize
+		) {
 			Thread.sleep(1);
 		}
 		//

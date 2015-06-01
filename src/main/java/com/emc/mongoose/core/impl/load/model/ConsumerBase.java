@@ -50,7 +50,7 @@ implements Consumer<T> {
 	private final BlockingQueue<T> volatileQueue;
 	// persistent
 	protected final Class<T> dataCls;
-	private final ConsumerBase<T> persistentQueue;
+	private final ConsumerBase<T> tmpFileConsumer;
 	private volatile FileProducer<T> tmpFileProducer = null;
 	//
 	protected ConsumerBase(
@@ -73,7 +73,7 @@ implements Consumer<T> {
 		submTimeOutMilliSec = runTimeConfig.getRunSubmitTimeOutMilliSec();
 		//
 		if(nested) {
-			persistentQueue = null;
+			tmpFileConsumer = null;
 		} else {
 			final Path tmpFilePath = Paths.get(
 				System.getProperty("java.io.tmpdir"),
@@ -83,7 +83,7 @@ implements Consumer<T> {
 				LOG.warn(LogUtil.ERR, "Failed to create the directory: \"{}\"", tmpFilePath);
 			}
 			//
-			persistentQueue = new ConsumerBase<T>(
+			tmpFileConsumer = new ConsumerBase<T>(
 				dataCls, runTimeConfig, maxCount, true
 			) {
 				//
@@ -126,16 +126,19 @@ implements Consumer<T> {
 					} catch(final IOException | NoSuchMethodException e) {
 						throw new IllegalStateException(e);
 					}
+					//
+					setName("consumer<" + tmpFile.getName() + ">");
 				}
 				//
 				@Override
-				protected final synchronized
-				void submitSync(final T dataItem)
+				protected final void submitSync(final T dataItem)
 				throws RejectedExecutionException {
 					if(dataItem != null) {
 						try {
-							tmpFileWriter.write(dataItem.toString());
-							tmpFileWriter.newLine();
+							synchronized(tmpFileWriter) {
+								tmpFileWriter.write(dataItem.toString());
+								tmpFileWriter.newLine();
+							}
 						} catch(final IOException e) {
 							throw new RejectedExecutionException(e);
 						}
@@ -144,16 +147,16 @@ implements Consumer<T> {
 				//
 				@Override
 				public final void interrupt() {
-					super.interrupt();
+					// the synchronization is necessary here to make sure that every data item is
+					// written completely to the file
+					synchronized(tmpFileWriter) {
+						super.interrupt();
+					}
 					//
 					try {
-						tmpFileWriter.close();
-						LOG.debug(
-							LogUtil.MSG, "{}: closed the file \"{}\" for writing", getName(),
-							tmpFile.getAbsolutePath()
-						);
+						close();
 					} catch(final IOException e) {
-						LogUtil.exception(LOG, Level.DEBUG, e, "Failed to close tmp buffer file");
+						LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
 					}
 					//
 					if(tmpFile.delete()) {
@@ -167,9 +170,21 @@ implements Consumer<T> {
 				@Override
 				public final void close()
 				throws IOException {
-					super.close();
+					try {
+						super.close();
+					} finally {
+						synchronized(tmpFileWriter) {
+							tmpFileWriter.close();
+						}
+						LOG.debug(
+							LogUtil.MSG, "{}: closed the file \"{}\" for writing", getName(),
+							tmpFile.getAbsolutePath()
+						);
+					}
 				}
 			};
+			//
+			tmpFileConsumer.start();
 		}
 	}
 	//
@@ -181,7 +196,13 @@ implements Consumer<T> {
 				"{}: started, the further consuming will go through the volatile queue",
 				getName()
 			);
-			if(persistentQueue != null && persistentQueue.counterPreSubm.get() > 0) {
+			if(tmpFileConsumer != null && tmpFileConsumer.counterPreSubm.get() > 0) {
+				//
+				try {
+					tmpFileConsumer.close();
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the tmp file consumer");
+				}
 				// means that this is not nested consumer and there are items persisted
 				if(tmpFileProducer == null) { // additional check
 					throw new IllegalStateException("No file producer instanced");
@@ -189,6 +210,10 @@ implements Consumer<T> {
 					tmpFileProducer.setDaemon(true); // do not block process exit
 					tmpFileProducer.setConsumer(this); // go through the volatile queue
 					tmpFileProducer.start(); // start producing
+					LOG.debug(
+						LogUtil.MSG, "{}: started producing from file \"{}\"",
+						getName(), tmpFileProducer.getPath()
+					);
 				}
 			}
 			//
@@ -217,8 +242,8 @@ implements Consumer<T> {
 			} else {
 				throw new RejectedExecutionException("Submit queue timeout");
 			}
-		} else if(persistentQueue != null) {
-			persistentQueue.submit(dataItem);
+		} else if(tmpFileConsumer != null) {
+			tmpFileConsumer.submit(dataItem);
 		} else {
 			throw new RejectedExecutionException("Consuming failed due to internal error");
 		}
@@ -257,11 +282,14 @@ implements Consumer<T> {
 	@Override
 	public void shutdown() {
 		if(!isStarted.get()) {
-			LOG.debug(LogUtil.MSG, "{}: not started yet, trying to shutdown the persistent buffer");
-			if(persistentQueue == null) {
+			if(tmpFileConsumer == null) {
 				throw new IllegalStateException("Not started yet, but shutdown is invoked");
 			} else {
-				persistentQueue.shutdown();
+				LOG.debug(
+					LogUtil.MSG, "{}: not started yet, trying to shutdown the persistent buffer",
+					getName()
+				);
+				tmpFileConsumer.shutdown();
 			}
 		} else if(isShutdown.compareAndSet(false, true)) {
 			LOG.debug(LogUtil.MSG, "{}: consumed {} data items", getName(), counterPreSubm.get());
@@ -278,11 +306,11 @@ implements Consumer<T> {
 		//
 		shutdown();
 		//
-		if(persistentQueue != null) {
-			persistentQueue.interrupt();
+		if(tmpFileConsumer != null) {
+			tmpFileConsumer.interrupt();
 			LOG.debug(
 				LogUtil.MSG, "{}: interrupted persistent buffer consumer \"{}\"", getName(),
-				persistentQueue
+				tmpFileConsumer
 			);
 		}
 		//
@@ -304,8 +332,8 @@ implements Consumer<T> {
 	public void close()
 	throws IOException {
 		shutdown();
-		if(persistentQueue != null) {
-			persistentQueue.close();
+		if(tmpFileConsumer != null) {
+			tmpFileConsumer.close();
 		}
 		final int dropCount = volatileQueue.size();
 		if(dropCount > 0) {
