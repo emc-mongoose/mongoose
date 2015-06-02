@@ -273,6 +273,9 @@ implements Consumer<T> {
 		} finally {
 			shutdown();
 			isAllSubm.set(true);
+			if(tmpFileConsumer != null) {
+				tmpFileConsumer.interrupt(); // delete the temp file
+			}
 		}
 	}
 	//
@@ -334,6 +337,7 @@ implements Consumer<T> {
 		shutdown();
 		if(tmpFileConsumer != null) {
 			tmpFileConsumer.close();
+			tmpFileConsumer.interrupt(); // delete the temp file
 		}
 		final int dropCount = volatileQueue.size();
 		if(dropCount > 0) {
