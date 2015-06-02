@@ -5,6 +5,7 @@ import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 //
+import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
@@ -41,6 +42,8 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
@@ -63,19 +66,29 @@ implements Runnable {
 	//
 	private final BlockingQueue<WSObjectMock> createQueue;
 	private final BlockingQueue<String> deleteQueue;
+	private final int submTimeOutMilliSec = RunTimeConfig.getContext().getRunSubmitTimeOutMilliSec();
 	private final Thread
 		createWorker = new Thread("storageCreateWorker") {
-			{
-				setDaemon(true);
-			}
+			{ setDaemon(true); }
+			//
+			private final List<WSObjectMock> buff = new ArrayList<>(0x100);
+
 			//
 			@Override
 			public final void run() {
-				WSObjectMock nextDataItem;
+				int n;
+				//WSObjectMock nextDataItem;
 				try {
 					while(!isInterrupted()) {
-						nextDataItem = createQueue.take();
-						putSynchronously(nextDataItem.getId(), nextDataItem);
+						n = createQueue.drainTo(buff);
+						if(n > 0) {
+							putSynchronously(buff, n);
+						} else {
+							Thread.sleep(submTimeOutMilliSec);
+						}
+						buff.clear();
+						// nextDataItem = createQueue.take();
+						// putSynchronously(nextDataItem.getId(), nextDataItem);
 					}
 				} catch(final InterruptedException e) {
 					LOG.debug(LogUtil.MSG, "Interrupted");
@@ -83,17 +96,25 @@ implements Runnable {
 			}
 		},
 		deleteWorker = new Thread("storageDeleteWorker") {
-			{
-				setDaemon(true);
-			}
+			{ setDaemon(true); }
+			//
+			private final List<String> buff = new ArrayList<>(0x100);
 			//
 			@Override
 			public final void run() {
-				String nextId;
+				//String nextId;
+				int n;
 				try {
 					while(!isInterrupted()) {
-						nextId = deleteQueue.take();
-						removeSynchronously(nextId);
+						//nextId = deleteQueue.take();
+						//removeSynchronously(nextId);
+						n = deleteQueue.drainTo(buff);
+						if(n > 0) {
+							removeSynchronously(buff, n);
+						} else {
+							Thread.sleep(submTimeOutMilliSec);
+						}
+						buff.clear();
 					}
 				} catch(final InterruptedException e) {
 					LOG.debug(LogUtil.MSG, "Interrupted");
@@ -245,8 +266,15 @@ implements Runnable {
 		return null;
 	}
 	//
-	private WSObjectMock putSynchronously(final String id, final WSObjectMock dataItem) {
+	private synchronized WSObjectMock putSynchronously(final String id, final WSObjectMock dataItem) {
 		return super.put(id, dataItem);
+	}
+	//
+	private synchronized int putSynchronously(final List<WSObjectMock> dataItems, final int count) {
+		for(final WSObjectMock dataItem : dataItems) {
+			super.put(dataItem.getId(), dataItem);
+		}
+		return count;
 	}
 	//
 	@Override
@@ -258,7 +286,14 @@ implements Runnable {
 		return null;
 	}
 	//
-	private WSObjectMock removeSynchronously(final String id) {
+	private synchronized WSObjectMock removeSynchronously(final String id) {
 		return super.remove(id);
+	}
+	//
+	private synchronized int removeSynchronously(final List<String> ids, final int count) {
+		for(final String id : ids) {
+			super.remove(id);
+		}
+		return count;
 	}
 }

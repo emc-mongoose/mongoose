@@ -7,6 +7,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Consumer;
 //
 //
+import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -136,6 +137,7 @@ implements Consumer<T> {
 					if(dataItem != null) {
 						try {
 							synchronized(tmpFileWriter) {
+								// TODO SerializationUtils.serialize(dataItem)
 								tmpFileWriter.write(dataItem.toString());
 								tmpFileWriter.newLine();
 							}
@@ -209,8 +211,8 @@ implements Consumer<T> {
 					tmpFileProducer.setConsumer(this); // go through the volatile queue
 					tmpFileProducer.start(); // start producing
 					LOG.debug(
-						LogUtil.MSG, "{}: started producing from file \"{}\"",
-						getName(), tmpFileProducer.getPath()
+						LogUtil.MSG, "{}: started producing from file \"{}\"", getName(),
+						tmpFileProducer.getPath()
 					);
 				}
 			}
