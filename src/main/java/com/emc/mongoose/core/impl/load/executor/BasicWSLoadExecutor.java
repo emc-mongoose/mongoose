@@ -46,9 +46,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -67,6 +67,7 @@ implements WSLoadExecutor<T> {
 	private final ConnectingIOReactor ioReactor;
 	private final BasicNIOConnPool connPool;
 	private final Thread clientDaemon;
+	private final WSRequestConfig<T> wsReqConfigCopy;
 	//
 	@SuppressWarnings("unchecked")
 	public BasicWSLoadExecutor(
@@ -80,7 +81,7 @@ implements WSLoadExecutor<T> {
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
-		final WSRequestConfig<T> wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
+		wsReqConfigCopy = (WSRequestConfig<T>) reqConfigCopy;
 		//
 		final int totalConnCount = connCountPerNode * storageNodeCount;
 		final HeaderGroup sharedHeaders = wsReqConfigCopy.getSharedHeaders();
@@ -161,7 +162,6 @@ implements WSLoadExecutor<T> {
 		clientDaemon = new Thread(
 			new HttpClientRunTask(ioEventDispatch, ioReactor), "clientDaemon<" + getName() + ">"
 		);
-		clientDaemon.setDaemon(true);
 	}
 	//
 	@Override
@@ -247,12 +247,11 @@ implements WSLoadExecutor<T> {
 	// Balancing based on the connection pool stats
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private volatile Set<HttpHost> routes = null;
-	private static final ThreadLocal<Map<HttpHost, String>>
-		THR_LOCAL_REVERSE_NODE_MAP = new ThreadLocal<>();
-	//
+	private final static ThreadLocal<Map<HttpHost, String>>
+		THREAD_CACHED_REVERSE_NODE_MAP = new ThreadLocal<>();
 	@Override
 	protected final String getNextNode() {
-		HttpHost bestRoute = null;
+		HttpHost nodeHost = null;
 		// connPool.getRoutes() is quite expensive, so reuse the routes set
 		if(routes == null || routes.size() < storageNodeCount) {
 			routes = connPool.getRoutes();
@@ -264,29 +263,26 @@ implements WSLoadExecutor<T> {
 				nextConnCount = connPool.getStats(nextRoute).getAvailable();
 				if(nextConnCount > maxConnCount) {
 					maxConnCount = nextConnCount;
-					bestRoute = nextRoute;
+					nodeHost = nextRoute;
 				}
 			}
 		}
 		//
 		String nodeAddr;
-		if(bestRoute == null) { // fallback
+		if(nodeHost == null) { // fallback
 			nodeAddr = super.getNextNode();
 		} else {
-			// use thread local reverse node map, create a new one if not exists yet
-			Map<HttpHost, String> reverseNodeMap = THR_LOCAL_REVERSE_NODE_MAP.get();
-			if(reverseNodeMap == null) {
-				reverseNodeMap = new ConcurrentHashMap<>();
-				THR_LOCAL_REVERSE_NODE_MAP.set(reverseNodeMap);
+			Map<HttpHost, String> cachedReverseNodeMap = THREAD_CACHED_REVERSE_NODE_MAP.get();
+			if(cachedReverseNodeMap == null) {
+				cachedReverseNodeMap = new HashMap<>();
+				THREAD_CACHED_REVERSE_NODE_MAP.set(cachedReverseNodeMap);
 			}
-			// use cached string representation
-			nodeAddr = reverseNodeMap.get(bestRoute);
+			nodeAddr = cachedReverseNodeMap.get(nodeHost);
 			if(nodeAddr == null) {
-				nodeAddr = bestRoute.toHostString();
-				reverseNodeMap.put(bestRoute, nodeAddr);
+				nodeAddr = nodeHost.toHostString();
+				cachedReverseNodeMap.put(nodeHost, nodeAddr);
 			}
 		}
-		//
 		return nodeAddr;
 	}
 }

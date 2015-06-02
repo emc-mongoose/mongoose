@@ -204,9 +204,7 @@ implements Consumer<T> {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the tmp file consumer");
 				}
 				// means that this is not nested consumer and there are items persisted
-				if(tmpFileProducer == null) { // additional check
-					throw new IllegalStateException("No file producer instanced");
-				} else { // there are items persisted
+				if(tmpFileProducer != null) { // additional check
 					tmpFileProducer.setDaemon(true); // do not block process exit
 					tmpFileProducer.setConsumer(this); // go through the volatile queue
 					tmpFileProducer.start(); // start producing
@@ -295,6 +293,22 @@ implements Consumer<T> {
 				tmpFileConsumer.shutdown();
 			}
 		} else if(isShutdown.compareAndSet(false, true)) {
+			final long countPreSubm = counterPreSubm.get();
+			if(countPreSubm == 0) { // tmp file consumer has no consumed data items
+				if(tmpFileConsumer != null) {
+					try {
+						tmpFileConsumer.close();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to close the temporary file consumer \"{}\"",
+							tmpFileConsumer
+						);
+					} finally {
+						tmpFileProducer = null; // dispose
+						tmpFileConsumer.interrupt(); // delete the file
+					}
+				}
+			}
 			LOG.debug(LogUtil.MSG, "{}: consumed {} data items", getName(), counterPreSubm.get());
 		}
 	}

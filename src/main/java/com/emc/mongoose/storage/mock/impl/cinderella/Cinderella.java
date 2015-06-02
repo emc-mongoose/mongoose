@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.mock.impl.cinderella;
 //
-import com.emc.mongoose.common.collections.Cache;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -14,6 +13,7 @@ import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.cinderella.request.APIRequestHandlerMapper;
 import com.emc.mongoose.storage.mock.impl.net.WSMockConnFactory;
 //
+import org.apache.commons.collections4.map.LRUMap;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
  * Created by olga on 28.01.15.
  */
 public final class Cinderella
-extends Cache<String, WSObjectMock>
+extends LRUMap<String, WSObjectMock>
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -250,8 +250,11 @@ implements Runnable {
 	}
 	//
 	@Override
-	public final WSObjectMock remove(final Object id) {
-		deleteQueue.offer(String.class.cast(id));
+	public final WSObjectMock remove(final Object key) {
+		final String id = String.class.cast(key);
+		if(!deleteQueue.add(id)) {
+			LOG.warn(LogUtil.ERR, "Failed to add the data item \"{}\" to the delete queue", id);
+		}
 		return null;
 	}
 	//

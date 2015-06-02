@@ -340,6 +340,7 @@ dependencies {
 	// launcher
 	cliCompile (
 		library.commons_cli,
+		library.commons_collections4,
 		library.commons_configuration,
 		library.commons_lang,
 		library.log4j_api_plus_core,

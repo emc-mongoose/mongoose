@@ -346,23 +346,27 @@ implements LoadExecutor<T> {
 				);
 			}
 			//
-			final long tsStartNanoSec = tsStart.get();
-			if(tsStartNanoSec > 0) { // if was executing
-				logMetrics(LogUtil.PERF_SUM); // provide summary metrics
-				// calculate the efficiency and report
-				final float
-					loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
-					eff = durTasksSum.get() / (loadDurMicroSec * totalConnCount);
-				LOG.debug(
-					LogUtil.MSG,
-					String.format(
-						LogUtil.LOCALE_DEFAULT,
-						"%s: load execution duration: %3.3f[sec], efficiency estimation: %3.1f[%%]",
-						getName(), loadDurMicroSec / 1e6, 100 * eff
-					)
-				);
-			} else {
-				LOG.debug(LogUtil.ERR, "{}: trying to interrupt while not started", getName());
+			try {
+				final long tsStartNanoSec = tsStart.get();
+				if(tsStartNanoSec > 0) { // if was executing
+					logMetrics(LogUtil.PERF_SUM); // provide summary metrics
+					// calculate the efficiency and report
+					final float
+						loadDurMicroSec = (float) (System.nanoTime() - tsStart.get()) / 1000,
+						eff = durTasksSum.get() / (loadDurMicroSec * totalConnCount);
+					LOG.debug(
+						LogUtil.MSG,
+						String.format(
+							LogUtil.LOCALE_DEFAULT,
+							"%s: load execution duration: %3.3f[sec], efficiency estimation: %3.1f[%%]",
+							getName(), loadDurMicroSec / 1e6, 100 * eff
+						)
+					);
+				} else {
+					LOG.debug(LogUtil.ERR, "{}: trying to interrupt while not started", getName());
+				}
+			} catch(final Throwable t) {
+				t.printStackTrace(System.err);
 			}
 			//
 			LOG.debug(LogUtil.MSG, "{} interrupted", getName());
@@ -629,7 +633,7 @@ implements LoadExecutor<T> {
 	@Override
 	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException {
-		if(super.isInterrupted() || isShutdown.get() || isClosed.get()) {
+		if(super.isInterrupted() || isClosed.get()) {
 			return;
 		}
 		//
