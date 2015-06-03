@@ -17,8 +17,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.NoSuchElementException;
 /**
  Created by kurila on 20.10.14.
@@ -291,7 +293,16 @@ implements LoadBuilder<T, U> {
 		if(dataNodeAddrs == null || dataNodeAddrs.length == 0) {
 			throw new IllegalArgumentException("Data node address list should not be empty");
 		}
-		this.dataNodeAddrs = dataNodeAddrs;
+		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+		final List<String> nodes = new ArrayList<>();
+		for (String nodeAddr : dataNodeAddrs) {
+			if (!nodeAddr.contains(":")) {
+				nodeAddr = nodeAddr + ":" + localRunTimeConfig.getString(
+						RunTimeConfig.getApiPortParamName(localRunTimeConfig.getApiName()));
+			}
+			nodes.add(nodeAddr);
+		}
+		this.dataNodeAddrs = nodes.toArray(new String[nodes.size()]);
 		return this;
 	}
 	//
