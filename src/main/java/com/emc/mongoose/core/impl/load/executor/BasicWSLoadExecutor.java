@@ -157,7 +157,7 @@ implements WSLoadExecutor<T> {
 			ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
 		);
 		connPool.setMaxTotal(totalConnCount);
-		connPool.setDefaultMaxPerRoute(totalConnCount / storageNodeCount);
+		connPool.setDefaultMaxPerRoute(connCountPerNode);
 		//
 		clientDaemon = new Thread(
 			new HttpClientRunTask(ioEventDispatch, ioReactor), "clientDaemon<" + getName() + ">"
