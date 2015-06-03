@@ -1,11 +1,10 @@
-package com.emc.mongoose.storage.mock.impl.cinderella;
+package com.emc.mongoose.storage.mock.impl.stats;
 //
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 //
-import com.emc.mongoose.common.collections.Cache;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -13,8 +12,10 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
+//
+import com.emc.mongoose.storage.mock.impl.Cinderella;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -24,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 13.05.15.
  */
-public final class BasicWSIOStats
+public final class BasicIOStats
 extends Thread
 implements IOStats {
 	//
@@ -101,12 +102,12 @@ implements IOStats {
 		);
 	//
 	private final long updateMilliPeriod;
-	private final Cache<String, WSObjectMock> storage;
+	private final Storage storage;
 	//
-	public BasicWSIOStats(
-		final RunTimeConfig runTimeConfig, final Cache<String, WSObjectMock> storage
+	public BasicIOStats(
+		final RunTimeConfig runTimeConfig, final Storage storage
 	) {
-		super(BasicWSIOStats.class.getSimpleName());
+		super(BasicIOStats.class.getSimpleName());
 		setDaemon(true);
 		updateMilliPeriod = TimeUnit.SECONDS.toMillis(runTimeConfig.getLoadMetricsPeriodSec());
 		this.storage = storage;
@@ -121,7 +122,7 @@ implements IOStats {
 		return String.format(
 			LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
 			//
-			100.0 * storage.size() / storage.getCapacity(),
+			100.0 * storage.getSize() / storage.getCapacity(),
 			//
 			countSuccCreate.getCount(), countSuccRead.getCount(), countSuccDelete.getCount(),
 			countFailCreate.getCount(), countFailRead.getCount(),

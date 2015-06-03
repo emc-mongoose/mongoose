@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.mock.impl.cinderella;
+package com.emc.mongoose.storage.mock.impl.net;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;

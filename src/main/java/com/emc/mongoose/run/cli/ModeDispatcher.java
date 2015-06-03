@@ -15,7 +15,7 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.impl.cinderella.Cinderella;
+import com.emc.mongoose.storage.mock.impl.Cinderella;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

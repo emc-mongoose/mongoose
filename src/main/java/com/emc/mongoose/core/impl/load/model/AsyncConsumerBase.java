@@ -4,8 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.load.model.Consumer;
-//
+import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -30,9 +29,9 @@ import java.util.zip.GZIPOutputStream;
 /**
  Created by kurila on 26.05.15.
  */
-public abstract class ConsumerBase<T extends DataItem>
+public abstract class AsyncConsumerBase<T extends DataItem>
 extends Thread
-implements Consumer<T> {
+implements AsyncConsumer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static boolean COMPRESSION_ENABLED = false;
@@ -50,16 +49,16 @@ implements Consumer<T> {
 	private final BlockingQueue<T> volatileQueue;
 	// persistent
 	protected final Class<T> dataCls;
-	private final ConsumerBase<T> tmpFileConsumer;
+	private final AsyncConsumerBase<T> tmpFileConsumer;
 	private volatile FileProducer<T> tmpFileProducer = null;
 	//
-	protected ConsumerBase(
+	public AsyncConsumerBase(
 		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount
 	) {
 		this(dataCls, runTimeConfig, maxCount, false);
 	}
 	//
-	private ConsumerBase(
+	public AsyncConsumerBase(
 		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount,
 		final boolean nested
 	) throws IllegalStateException {
@@ -83,7 +82,7 @@ implements Consumer<T> {
 				LOG.warn(LogUtil.ERR, "Failed to create the directory: \"{}\"", tmpFilePath);
 			}
 			//
-			tmpFileConsumer = new ConsumerBase<T>(
+			tmpFileConsumer = new AsyncConsumerBase<T>(
 				dataCls, runTimeConfig, maxCount, true
 			) {
 				//
@@ -136,6 +135,7 @@ implements Consumer<T> {
 					if(dataItem != null) {
 						try {
 							synchronized(tmpFileWriter) {
+								// TODO SerializationUtils.serialize(dataItem)
 								tmpFileWriter.write(dataItem.toString());
 								tmpFileWriter.newLine();
 							}
@@ -204,15 +204,13 @@ implements Consumer<T> {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the tmp file consumer");
 				}
 				// means that this is not nested consumer and there are items persisted
-				if(tmpFileProducer == null) { // additional check
-					throw new IllegalStateException("No file producer instanced");
-				} else { // there are items persisted
+				if(tmpFileProducer != null) { // additional check
 					tmpFileProducer.setDaemon(true); // do not block process exit
 					tmpFileProducer.setConsumer(this); // go through the volatile queue
 					tmpFileProducer.start(); // start producing
 					LOG.debug(
-						LogUtil.MSG, "{}: started producing from file \"{}\"",
-						getName(), tmpFileProducer.getPath()
+						LogUtil.MSG, "{}: started producing from file \"{}\"", getName(),
+						tmpFileProducer.getPath()
 					);
 				}
 			}
@@ -295,6 +293,22 @@ implements Consumer<T> {
 				tmpFileConsumer.shutdown();
 			}
 		} else if(isShutdown.compareAndSet(false, true)) {
+			final long countPreSubm = counterPreSubm.get();
+			if(countPreSubm == 0) { // tmp file consumer has no consumed data items
+				if(tmpFileConsumer != null) {
+					try {
+						tmpFileConsumer.close();
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to close the temporary file consumer \"{}\"",
+							tmpFileConsumer
+						);
+					} finally {
+						tmpFileProducer = null; // dispose
+						tmpFileConsumer.interrupt(); // delete the file
+					}
+				}
+			}
 			LOG.debug(LogUtil.MSG, "{}: consumed {} data items", getName(), counterPreSubm.get());
 		}
 	}

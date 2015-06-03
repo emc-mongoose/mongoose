@@ -8,7 +8,7 @@ from com.emc.mongoose.core.api.io.task import IOTask
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from java.lang import Throwable, IllegalArgumentException, InterruptedException
+from java.lang import System, Throwable, IllegalArgumentException, InterruptedException
 from java.util import NoSuchElementException
 #
 LOG = LogManager.getLogger()
@@ -57,6 +57,7 @@ if __name__ == "__builtin__":
 	except InterruptedException as e:
 		LOG.debug(LogUtil.MSG, "Single was interrupted")
 	except Throwable as e:
+		e.printStackTrace(System.err)
 		LogUtil.exception(LOG, Level.ERROR, e, "Scenario failed")
 	loadBuilder.close() # to exit normally
 	LOG.info(LogUtil.MSG, "Scenario end")

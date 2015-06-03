@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.mock.impl.cinderella.request;
+package com.emc.mongoose.storage.mock.impl.request;
 //
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;

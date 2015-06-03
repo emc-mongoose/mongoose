@@ -75,7 +75,7 @@ extends ObjectRequestConfig<T> {
 	//
 	HeaderGroup getSharedHeaders();
 	//
-	HttpHost getHttpHost(final String addr);
+	HttpHost getNodeHost(final String nodeAddr);
 	//
 	String getUserAgent();
 	//

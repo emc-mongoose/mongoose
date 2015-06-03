@@ -82,9 +82,9 @@ import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
@@ -357,32 +357,36 @@ implements WSRequestConfig<T> {
 		return userAgent;
 	}
 	//
-	private final static Map<String, HttpHost> HTTP_HOST_CACHE = new ConcurrentHashMap<>();
+	private final static ThreadLocal<Map<String, HttpHost>>
+		THREAD_CACHED_NODE_MAP = new ThreadLocal<>();
 	//
 	@Override
-	public final HttpHost getHttpHost(final String addr) {
-		final HttpHost httpHost;
-		if(HTTP_HOST_CACHE.containsKey(addr)) {
-			httpHost = HTTP_HOST_CACHE.get(addr);
-		} else if(addr != null) {
-			if(addr.contains(HOST_PORT_SEP)) {
-				final String nodeAddrParts[] = addr.split(HOST_PORT_SEP);
+	public final HttpHost getNodeHost(final String nodeAddr) {
+		Map<String, HttpHost> cachedNodeMap = THREAD_CACHED_NODE_MAP.get();
+		if(cachedNodeMap == null) {
+			cachedNodeMap = new HashMap<>();
+			THREAD_CACHED_NODE_MAP.set(cachedNodeMap);
+		}
+		//
+		HttpHost nodeHost = cachedNodeMap.get(nodeAddr);
+		if(nodeHost == null) {
+			if(nodeAddr.contains(HOST_PORT_SEP)) {
+				final String nodeAddrParts[] = nodeAddr.split(HOST_PORT_SEP);
 				if(nodeAddrParts.length == 2) {
-					httpHost = new HttpHost(
+					nodeHost = new HttpHost(
 						nodeAddrParts[0], Integer.valueOf(nodeAddrParts[1]), getScheme()
 					);
 				} else {
-					LOG.fatal(LogUtil.ERR, "Invalid node address: {}", addr);
-					httpHost = null;
+					LOG.fatal(LogUtil.ERR, "Invalid node address: {}", nodeAddr);
+					nodeHost = null;
 				}
 			} else {
-				httpHost = new HttpHost(addr, getPort(), getScheme());
+				nodeHost = new HttpHost(nodeAddr, getPort(), getScheme());
 			}
-			HTTP_HOST_CACHE.put(addr, httpHost);
-		} else {
-			httpHost = null;
+			cachedNodeMap.put(nodeAddr, nodeHost);
 		}
-		return httpHost;
+		//
+		return nodeHost;
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.mock.impl.cinderella.response;
+package com.emc.mongoose.storage.mock.impl.response;
 //
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
@@ -6,13 +6,14 @@ import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
+//
 import org.apache.http.HttpResponse;
+import org.apache.http.protocol.HttpContext;
 //
 import org.apache.http.nio.ContentEncoder;
 import org.apache.http.nio.IOControl;
-//
 import org.apache.http.nio.protocol.HttpAsyncResponseProducer;
-import org.apache.http.protocol.HttpContext;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

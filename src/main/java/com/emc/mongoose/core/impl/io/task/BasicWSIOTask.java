@@ -125,7 +125,7 @@ implements WSIOTask<T> {
 	public final WSIOTask<T> setNodeAddr(final String nodeAddr)
 	throws IllegalStateException {
 		super.setNodeAddr(nodeAddr);
-		final HttpHost tgtHost = wsReqConf.getHttpHost(nodeAddr);
+		final HttpHost tgtHost = wsReqConf.getNodeHost(nodeAddr);
 		if(tgtHost != null) {
 			httpRequest.setUriAddr(tgtHost.toURI());
 			httpRequest.setHeader(HTTP.TARGET_HOST, nodeAddr);
@@ -148,7 +148,7 @@ implements WSIOTask<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final HttpHost getTarget() {
-		return wsReqConf.getHttpHost(nodeAddr);
+		return wsReqConf.getNodeHost(nodeAddr);
 	}
 	//
 	@Override
