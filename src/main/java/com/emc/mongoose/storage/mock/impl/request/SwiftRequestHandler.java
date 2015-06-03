@@ -1,12 +1,12 @@
-package com.emc.mongoose.storage.mock.impl.cinderella.request;
+package com.emc.mongoose.storage.mock.impl.request;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 //
+import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
-import com.emc.mongoose.storage.mock.api.stats.IOStats;
 //
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -14,13 +14,11 @@ import org.apache.http.HttpStatus;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
-import java.util.Map;
 /**
  Created by andrey on 13.05.15.
  */
-public final class SwiftRequestHandler
-extends WSRequestHandlerBase {
+public final class SwiftRequestHandler<T extends WSObjectMock>
+extends WSRequestHandlerBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String AUTH = "auth";
@@ -28,10 +26,9 @@ extends WSRequestHandlerBase {
 	private final String apiBasePathSwift;
 	//
 	public SwiftRequestHandler(
-		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> sharedStorage,
-	    final IOStats ioStats
+		final RunTimeConfig runTimeConfig, final Storage<T> sharedStorage
 	) {
-		super(runTimeConfig, sharedStorage, ioStats);
+		super(runTimeConfig, sharedStorage);
 		apiBasePathSwift = runTimeConfig.getString(WSRequestConfigImpl.KEY_CONF_SVC_BASEPATH);
 	}
 	//

@@ -9,7 +9,7 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 //
-import com.emc.mongoose.storage.mock.impl.cinderella.Cinderella;
+import com.emc.mongoose.storage.mock.impl.Cinderella;
 //
 import com.emc.mongoose.run.scenario.Scenario;
 //

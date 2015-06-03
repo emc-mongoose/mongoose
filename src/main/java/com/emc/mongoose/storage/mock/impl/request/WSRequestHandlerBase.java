@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.mock.impl.cinderella.request;
+package com.emc.mongoose.storage.mock.impl.request;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -8,9 +8,10 @@ import com.emc.mongoose.core.api.data.DataObject;
 //
 import com.emc.mongoose.core.impl.data.UniformData;
 //
+import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
-import com.emc.mongoose.storage.mock.impl.cinderella.response.BasicWSResponseProducer;
+import com.emc.mongoose.storage.mock.impl.response.BasicWSResponseProducer;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -36,14 +37,13 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by andrey on 13.05.15.
  */
-public abstract class WSRequestHandlerBase
+public abstract class WSRequestHandlerBase<T extends WSObjectMock>
 implements HttpAsyncRequestHandler<HttpRequest> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -68,15 +68,14 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	private final IOStats ioStats;
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
-	private final Map<String, WSObjectMock> sharedStorage;
+	private final Storage<T> sharedStorage;
 	//
 	protected WSRequestHandlerBase(
-		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> sharedStorage,
-	    final IOStats ioStats
+		final RunTimeConfig runTimeConfig, final Storage<T> sharedStorage
 	) {
 		this.rateLimit = runTimeConfig.getLoadLimitRate();
 		this.sharedStorage = sharedStorage;
-		this.ioStats = ioStats;
+		this.ioStats = sharedStorage.getStats();
 	}
 	//
 	@Override
@@ -197,14 +196,14 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	}
 	//
 	private void handleDelete(final HttpResponse response, final String dataId){
-		final WSObjectMock dataObject = sharedStorage.get(dataId);
+		final T dataObject = sharedStorage.get(dataId);
 		if(dataObject == null) {
 			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(LogUtil.ERR, "No such object: {}", dataId);
 			}
 		} else {
-			sharedStorage.remove(dataId);
+			sharedStorage.delete(dataObject);
 			response.setStatusCode(HttpStatus.SC_OK);
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(LogUtil.MSG, "Delete data object with ID: {}", dataId);
@@ -219,8 +218,8 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final long bytes = entity.getContentLength();
 		// create data object or get it for append or update
 		final long offset = decodeRingBufferOffset(dataID);
-		final WSObjectMock dataObject = new BasicWSObjectMock(dataID, offset, bytes);
-		sharedStorage.put(dataID, dataObject);
+		final T dataObject = (T) new BasicWSObjectMock(dataID, offset, bytes);
+		sharedStorage.create(dataObject);
 		if(LOG.isTraceEnabled(LogUtil.DATA_LIST)) {
 			LOG.trace(LogUtil.DATA_LIST, dataObject);
 		}

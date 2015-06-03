@@ -21,7 +21,7 @@ import com.emc.mongoose.core.api.load.model.Producer;
 //
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
-import com.emc.mongoose.core.impl.load.model.ConsumerBase;
+import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 //
@@ -53,7 +53,7 @@ import java.util.concurrent.locks.ReentrantLock;
  Created by kurila on 15.10.14.
  */
 public abstract class LoadExecutorBase<T extends DataItem>
-extends ConsumerBase<T>
+extends AsyncConsumerBase<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();

@@ -1,20 +1,26 @@
-package com.emc.mongoose.storage.mock.impl.cinderella;
+package com.emc.mongoose.storage.mock.impl;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 //
-import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.api.load.model.AsyncConsumer;
+import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
+//
+import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
+import com.emc.mongoose.storage.mock.impl.net.WSSocketIOEventDispatcher;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
-import com.emc.mongoose.storage.mock.impl.cinderella.request.APIRequestHandlerMapper;
+import com.emc.mongoose.storage.mock.impl.request.APIRequestHandlerMapper;
 import com.emc.mongoose.storage.mock.impl.net.WSMockConnFactory;
+import com.emc.mongoose.storage.mock.impl.stats.BasicIOStats;
 //
 import org.apache.commons.collections4.map.LRUMap;
+//
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpResponseInterceptor;
@@ -42,19 +48,19 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
+import java.rmi.RemoteException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by olga on 28.01.15.
  */
-public final class Cinderella
-extends LRUMap<String, WSObjectMock>
-implements Runnable {
+public final class Cinderella<T extends WSObjectMock>
+extends LRUMap<String, T>
+implements Storage<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final ExecutorService multiSocketSvc;
@@ -64,71 +70,42 @@ implements Runnable {
 	private final RunTimeConfig runTimeConfig;
 	private final IOStats ioStats;
 	//
-	private final BlockingQueue<WSObjectMock> createQueue;
-	private final BlockingQueue<String> deleteQueue;
-	private final int submTimeOutMilliSec = RunTimeConfig.getContext().getRunSubmitTimeOutMilliSec();
-	private final Thread
-		createWorker = new Thread("storageCreateWorker") {
-			{ setDaemon(true); }
-			//
-			private final List<WSObjectMock> buff = new ArrayList<>(0x100);
-
-			//
-			@Override
-			public final void run() {
-				int n;
-				//WSObjectMock nextDataItem;
-				try {
-					while(!isInterrupted()) {
-						n = createQueue.drainTo(buff);
-						if(n > 0) {
-							putSynchronously(buff, n);
-						} else {
-							Thread.sleep(submTimeOutMilliSec);
-						}
-						buff.clear();
-						// nextDataItem = createQueue.take();
-						// putSynchronously(nextDataItem.getId(), nextDataItem);
-					}
-				} catch(final InterruptedException e) {
-					LOG.debug(LogUtil.MSG, "Interrupted");
-				}
-			}
-		},
-		deleteWorker = new Thread("storageDeleteWorker") {
-			{ setDaemon(true); }
-			//
-			private final List<String> buff = new ArrayList<>(0x100);
-			//
-			@Override
-			public final void run() {
-				//String nextId;
-				int n;
-				try {
-					while(!isInterrupted()) {
-						//nextId = deleteQueue.take();
-						//removeSynchronously(nextId);
-						n = deleteQueue.drainTo(buff);
-						if(n > 0) {
-							removeSynchronously(buff, n);
-						} else {
-							Thread.sleep(submTimeOutMilliSec);
-						}
-						buff.clear();
-					}
-				} catch(final InterruptedException e) {
-					LOG.debug(LogUtil.MSG, "Interrupted");
-				}
-			}
-		};
+	private final AsyncConsumer<T> createConsumer, deleteConsumer;
+	private final Lock lock = new ReentrantLock(false);
 	//
 	public Cinderella(final RunTimeConfig runTimeConfig)
 	throws IOException {
 		super(runTimeConfig.getStorageMockCapacity());
 		this.runTimeConfig = runTimeConfig;
-		createQueue = new ArrayBlockingQueue<>(runTimeConfig.getRunRequestQueueSize());
-		deleteQueue = new ArrayBlockingQueue<>(runTimeConfig.getRunRequestQueueSize());
-		ioStats = new BasicWSIOStats(runTimeConfig, this);
+		createConsumer = new AsyncConsumerBase<T>(
+			(Class<T>) BasicWSObjectMock.class, runTimeConfig, Long.MAX_VALUE, true
+		) {
+			@Override
+			protected final void submitSync(final T dataItem)
+			throws InterruptedException, RemoteException {
+				lock.lock();
+				try {
+					put(dataItem.getId(), dataItem);
+				} finally {
+					lock.unlock();
+				}
+			}
+		};
+		deleteConsumer = new AsyncConsumerBase<T>(
+			(Class<T>) BasicWSObjectMock.class, runTimeConfig, Long.MAX_VALUE, true
+		) {
+			@Override
+			protected final void submitSync(final T dataItem)
+			throws InterruptedException, RemoteException {
+				lock.lock();
+				try {
+					remove(dataItem.getId());
+				} finally {
+					lock.unlock();
+				}
+			}
+		};
+		ioStats = new BasicIOStats(runTimeConfig, this);
 		countHeads = runTimeConfig.getStorageMockHeadCount();
 		portStart = runTimeConfig.getApiTypePort(runTimeConfig.getApiName());
 		LOG.info(
@@ -172,8 +149,8 @@ implements Runnable {
 			.add(new ResponseConnControl())
 			.build();
 		// Create request handler registry
-		final HttpAsyncRequestHandlerMapper apiReqHandlerMapper = new APIRequestHandlerMapper(
-			runTimeConfig, this, ioStats
+		final HttpAsyncRequestHandlerMapper apiReqHandlerMapper = new APIRequestHandlerMapper<T>(
+			runTimeConfig, this
 		);
 		// Register the default handler for all URIs
 		protocolHandler = new HttpAsyncService(httpProc, apiReqHandlerMapper);
@@ -185,8 +162,8 @@ implements Runnable {
 	@Override
 	public void run() {
 		ioStats.start();
-		createWorker.start();
-		deleteWorker.start();
+		createConsumer.start();
+		deleteConsumer.start();
 		// if there is data src file path
 		final String dataFilePath = runTimeConfig.getDataSrcFPath();
 		final int dataSizeRadix = runTimeConfig.getDataRadixSize();
@@ -197,7 +174,7 @@ implements Runnable {
 			) {
 				String s;
 				while((s = bufferReader.readLine()) != null) {
-					final WSObjectMock dataObject = new BasicWSObjectMock(s) ;
+					final T dataObject = (T) new BasicWSObjectMock(s) ;
 					// if mongoose is v0.5.0
 					if(dataSizeRadix == 0x10) {
 						dataObject.setSize(Long.valueOf(String.valueOf(dataObject.getSize()), 0x10));
@@ -250,7 +227,8 @@ implements Runnable {
 			LOG.info(LogUtil.MSG, "Interrupting the Cinderella");
 		} finally {
 			try {
-				createWorker.interrupt();
+				createConsumer.close();
+				deleteConsumer.close();
 				ioStats.close();
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Closing I/O stats failure");
@@ -259,41 +237,38 @@ implements Runnable {
 	}
 	//
 	@Override
-	public final WSObjectMock put(final String id, final WSObjectMock dataItem) {
-		if(!createQueue.add(dataItem)) {
-			LOG.warn(LogUtil.ERR, "Failed to add the data item \"{}\" to the create queue", id);
-		}
-		return null;
+	public final T get(final String id) {
+		return super.get(id);
 	}
-	//
-	private synchronized WSObjectMock putSynchronously(final String id, final WSObjectMock dataItem) {
-		return super.put(id, dataItem);
+	@Override
+	public long getSize() {
+		return size();
 	}
-	//
-	private synchronized int putSynchronously(final List<WSObjectMock> dataItems, final int count) {
-		for(final WSObjectMock dataItem : dataItems) {
-			super.put(dataItem.getId(), dataItem);
-		}
-		return count;
+	@Override
+	public long getCapacity() {
+		return maxSize();
 	}
 	//
 	@Override
-	public final WSObjectMock remove(final Object key) {
-		final String id = String.class.cast(key);
-		if(!deleteQueue.add(id)) {
-			LOG.warn(LogUtil.ERR, "Failed to add the data item \"{}\" to the delete queue", id);
-		}
-		return null;
+	public final IOStats getStats() {
+		return ioStats;
 	}
 	//
-	private synchronized WSObjectMock removeSynchronously(final String id) {
-		return super.remove(id);
+	@Override
+	public final void create(final T object) {
+		try {
+			createConsumer.submit(object);
+		} catch(final InterruptedException | RejectedExecutionException | RemoteException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Create submission failure");
+		}
 	}
 	//
-	private synchronized int removeSynchronously(final List<String> ids, final int count) {
-		for(final String id : ids) {
-			super.remove(id);
+	@Override
+	public final void delete(final T object) {
+		try {
+			deleteConsumer.submit(object);
+		} catch(final InterruptedException | RejectedExecutionException | RemoteException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Delete submission failure");
 		}
-		return count;
 	}
 }

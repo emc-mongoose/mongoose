@@ -4,10 +4,8 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.load.model.Consumer;
+import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 //
-//
-import org.apache.commons.lang.SerializationUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,9 +29,9 @@ import java.util.zip.GZIPOutputStream;
 /**
  Created by kurila on 26.05.15.
  */
-public abstract class ConsumerBase<T extends DataItem>
+public abstract class AsyncConsumerBase<T extends DataItem>
 extends Thread
-implements Consumer<T> {
+implements AsyncConsumer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static boolean COMPRESSION_ENABLED = false;
@@ -51,16 +49,16 @@ implements Consumer<T> {
 	private final BlockingQueue<T> volatileQueue;
 	// persistent
 	protected final Class<T> dataCls;
-	private final ConsumerBase<T> tmpFileConsumer;
+	private final AsyncConsumerBase<T> tmpFileConsumer;
 	private volatile FileProducer<T> tmpFileProducer = null;
 	//
-	protected ConsumerBase(
+	public AsyncConsumerBase(
 		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount
 	) {
 		this(dataCls, runTimeConfig, maxCount, false);
 	}
 	//
-	private ConsumerBase(
+	public AsyncConsumerBase(
 		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount,
 		final boolean nested
 	) throws IllegalStateException {
@@ -84,7 +82,7 @@ implements Consumer<T> {
 				LOG.warn(LogUtil.ERR, "Failed to create the directory: \"{}\"", tmpFilePath);
 			}
 			//
-			tmpFileConsumer = new ConsumerBase<T>(
+			tmpFileConsumer = new AsyncConsumerBase<T>(
 				dataCls, runTimeConfig, maxCount, true
 			) {
 				//

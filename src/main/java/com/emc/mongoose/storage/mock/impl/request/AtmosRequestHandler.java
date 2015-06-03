@@ -1,4 +1,4 @@
-package com.emc.mongoose.storage.mock.impl.cinderella.request;
+package com.emc.mongoose.storage.mock.impl.request;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -6,8 +6,8 @@ import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 //
+import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
-import com.emc.mongoose.storage.mock.api.stats.IOStats;
 //
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
@@ -16,22 +16,17 @@ import org.apache.http.HttpStatus;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-//
-import java.util.Map;
 /**
  Created by andrey on 13.05.15.
  */
-public final class AtmosRequestHandler
-extends WSRequestHandlerBase {
+public final class AtmosRequestHandler<T extends WSObjectMock>
+extends WSRequestHandlerBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String URI_BASE_PATH = "/rest";
 	//
-	public AtmosRequestHandler(
-		final RunTimeConfig runTimeConfig, final Map<String, WSObjectMock> sharedStorage,
-	    final IOStats ioStats
-	) {
-		super(runTimeConfig, sharedStorage, ioStats);
+	public AtmosRequestHandler(final RunTimeConfig runTimeConfig, final Storage<T> sharedStorage) {
+		super(runTimeConfig, sharedStorage);
 	}
 	//
 	public boolean matches(final String requestURI) {
