@@ -23,6 +23,7 @@ import java.io.ObjectOutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -319,6 +320,18 @@ implements Externalizable {
 	//
 	public final String[] getStorageAddrs() {
 		return getStringArray(KEY_STORAGE_ADDRS);
+	}
+	//
+	public final String[] getStorageAddrsWithPorts() {
+		final List<String> nodes = new ArrayList<>();
+		for (String nodeAddr : getStorageAddrs()) {
+			if (!nodeAddr.contains(STORAGE_PORT_SEP)) {
+				nodeAddr = nodeAddr + STORAGE_PORT_SEP + getString(
+					getApiPortParamName(getApiName()));
+			}
+			nodes.add(nodeAddr);
+		}
+		return nodes.toArray(new String[nodes.size()]);
 	}
 	//
 	public final int getConnPoolTimeOut() {

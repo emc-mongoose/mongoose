@@ -135,7 +135,7 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_STORAGE_ADDRS;
 		try {
-			setDataNodeAddrs(runTimeConfig.getStorageAddrs());
+			setDataNodeAddrs(runTimeConfig.getStorageAddrsWithPorts());
 		} catch(final NoSuchElementException|ConversionException e) {
 			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -293,16 +293,7 @@ implements LoadBuilder<T, U> {
 		if(dataNodeAddrs == null || dataNodeAddrs.length == 0) {
 			throw new IllegalArgumentException("Data node address list should not be empty");
 		}
-		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
-		final List<String> nodes = new ArrayList<>();
-		for (String nodeAddr : dataNodeAddrs) {
-			if (!nodeAddr.contains(RunTimeConfig.STORAGE_PORT_SEP)) {
-				nodeAddr = nodeAddr + RunTimeConfig.STORAGE_PORT_SEP + localRunTimeConfig.getString(
-					RunTimeConfig.getApiPortParamName(localRunTimeConfig.getApiName()));
-			}
-			nodes.add(nodeAddr);
-		}
-		this.dataNodeAddrs = nodes.toArray(new String[nodes.size()]);
+		this.dataNodeAddrs = dataNodeAddrs;
 		return this;
 	}
 	//

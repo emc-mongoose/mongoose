@@ -98,18 +98,9 @@ implements LoadBuilderClient<T, U> {
 			nextBuilder.setProperties(runTimeConfig);
 		}
 		//
-		final String newAddrs[] = runTimeConfig.getStorageAddrs();
-		if(newAddrs != null && newAddrs.length > 0) {
-			final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
-			final List<String> nodes = new ArrayList<>();
-			for (String nodeAddr : newAddrs) {
-				if (!nodeAddr.contains(RunTimeConfig.STORAGE_PORT_SEP)) {
-					nodeAddr = nodeAddr + RunTimeConfig.STORAGE_PORT_SEP + localRunTimeConfig.getString(
-						RunTimeConfig.getApiPortParamName(localRunTimeConfig.getApiName()));
-				}
-				nodes.add(nodeAddr);
-			}
-			dataNodeAddrs = nodes.toArray(new String[nodes.size()]);
+		final String newAddrs[] = runTimeConfig.getStorageAddrsWithPorts();
+		if(newAddrs.length > 0) {
+			dataNodeAddrs = newAddrs;
 		}
 		//
 		String dataMetaInfoFile = null;
