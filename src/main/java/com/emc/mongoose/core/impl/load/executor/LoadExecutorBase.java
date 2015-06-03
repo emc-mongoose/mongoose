@@ -633,7 +633,7 @@ implements LoadExecutor<T> {
 	@Override
 	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException {
-		if(super.isInterrupted() || isClosed.get()) {
+		if(isInterrupted.get() || isClosed.get()) {
 			return;
 		}
 		//
