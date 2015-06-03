@@ -23,7 +23,9 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.NoSuchElementException;
 /**
  Created by kurila on 20.10.14.
@@ -96,7 +98,7 @@ implements LoadBuilderClient<T, U> {
 			nextBuilder.setProperties(runTimeConfig);
 		}
 		//
-		final String newAddrs[] = runTimeConfig.getStorageAddrs();
+		final String newAddrs[] = runTimeConfig.getStorageAddrsWithPorts();
 		if(newAddrs != null && newAddrs.length > 0) {
 			dataNodeAddrs = newAddrs;
 		}

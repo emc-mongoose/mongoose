@@ -116,7 +116,8 @@ implements LoadClient<T> {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<Runnable>(
-				(int) Math.min(maxCount, runTimeConfig.getRunRequestQueueSize())
+				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
+					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
 			)
 		);
 		setCorePoolSize(Math.max(Runtime.getRuntime().availableProcessors(), remoteLoadMap.size()));
