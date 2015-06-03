@@ -296,8 +296,8 @@ implements LoadBuilder<T, U> {
 		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 		final List<String> nodes = new ArrayList<>();
 		for (String nodeAddr : dataNodeAddrs) {
-			if (!nodeAddr.contains(":")) {
-				nodeAddr = nodeAddr + ":" + localRunTimeConfig.getString(
+			if (!nodeAddr.contains(RunTimeConfig.STORAGE_PORT_SEP)) {
+				nodeAddr = nodeAddr + RunTimeConfig.STORAGE_PORT_SEP + localRunTimeConfig.getString(
 					RunTimeConfig.getApiPortParamName(localRunTimeConfig.getApiName()));
 			}
 			nodes.add(nodeAddr);

@@ -246,7 +246,7 @@ implements WSLoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing based on the connection pool stats
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private volatile Set<HttpHost> routes = null;
+	/*private volatile Set<HttpHost> routes = null;
 	private final static ThreadLocal<Map<HttpHost, String>>
 		THREAD_CACHED_REVERSE_NODE_MAP = new ThreadLocal<>();
 	@Override
@@ -284,5 +284,5 @@ implements WSLoadExecutor<T> {
 			}
 		}
 		return nodeAddr;
-	}
+	}*/
 }

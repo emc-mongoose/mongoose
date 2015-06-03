@@ -41,6 +41,7 @@ implements Externalizable {
 	//
 	public final static String
 		LIST_SEP = ",",
+		STORAGE_PORT_SEP = ":",
 		//
 		KEY_AUTH_ID = "auth.id",
 		KEY_AUTH_SECRET = "auth.secret",
