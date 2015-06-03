@@ -53,8 +53,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by olga on 28.01.15.
  */
@@ -71,7 +69,6 @@ implements Storage<T> {
 	private final IOStats ioStats;
 	//
 	private final AsyncConsumer<T> createConsumer, deleteConsumer;
-	private final Lock lock = new ReentrantLock(false);
 	//
 	public Cinderella(final RunTimeConfig runTimeConfig)
 	throws IOException {
@@ -84,12 +81,7 @@ implements Storage<T> {
 			@Override
 			protected final void submitSync(final T dataItem)
 			throws InterruptedException, RemoteException {
-				lock.lock();
-				try {
-					put(dataItem.getId(), dataItem);
-				} finally {
-					lock.unlock();
-				}
+				put(dataItem.getId(), dataItem);
 			}
 		};
 		deleteConsumer = new AsyncConsumerBase<T>(
@@ -99,12 +91,7 @@ implements Storage<T> {
 			@Override
 			protected final void submitSync(final T dataItem)
 			throws InterruptedException, RemoteException {
-				lock.lock();
-				try {
-					remove(dataItem.getId());
-				} finally {
-					lock.unlock();
-				}
+				remove(dataItem.getId());
 			}
 		};
 		ioStats = new BasicIOStats(runTimeConfig, this);
@@ -151,7 +138,7 @@ implements Storage<T> {
 			.add(new ResponseConnControl())
 			.build();
 		// Create request handler registry
-		final HttpAsyncRequestHandlerMapper apiReqHandlerMapper = new APIRequestHandlerMapper<T>(
+		final HttpAsyncRequestHandlerMapper apiReqHandlerMapper = new APIRequestHandlerMapper<>(
 			runTimeConfig, this
 		);
 		// Register the default handler for all URIs
@@ -239,9 +226,20 @@ implements Storage<T> {
 	}
 	//
 	@Override
-	public final T get(final String id) {
+	public final synchronized T get(final String id) {
 		return super.get(id);
 	}
+	//
+	@Override
+	public final synchronized T put(final String id, final T object) {
+		return super.put(id, object);
+	}
+	//
+	@Override
+	public final synchronized T remove(final Object id) {
+		return super.remove(id);
+	}
+	//
 	@Override
 	public long getSize() {
 		return size();

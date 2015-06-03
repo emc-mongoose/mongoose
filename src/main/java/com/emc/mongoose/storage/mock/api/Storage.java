@@ -12,7 +12,7 @@ extends Runnable {
 	long getSize();
 	long getCapacity();
 	IOStats getStats();
-	//
+	// async methods
 	void create(final T dataItem);
 	void delete(final T dataItem);
 }
