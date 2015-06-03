@@ -177,6 +177,9 @@ implements DataItem {
 			enforceCircularity();
 			writtenCount += chanDst.write(ringBuff);
 		}
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(LogUtil.MSG, "{}: written {} bytes to the channel", toString(), writtenCount);
+		}
 	}
 	//
 	@Override

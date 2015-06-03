@@ -80,6 +80,7 @@ implements Storage<T> {
 		createConsumer = new AsyncConsumerBase<T>(
 			(Class<T>) BasicWSObjectMock.class, runTimeConfig, Long.MAX_VALUE, true
 		) {
+			{ setDaemon(true); setName("createQueueWorker"); start(); }
 			@Override
 			protected final void submitSync(final T dataItem)
 			throws InterruptedException, RemoteException {
@@ -94,6 +95,7 @@ implements Storage<T> {
 		deleteConsumer = new AsyncConsumerBase<T>(
 			(Class<T>) BasicWSObjectMock.class, runTimeConfig, Long.MAX_VALUE, true
 		) {
+			{ setDaemon(true); setName("deleteQueueWorker"); start(); }
 			@Override
 			protected final void submitSync(final T dataItem)
 			throws InterruptedException, RemoteException {
