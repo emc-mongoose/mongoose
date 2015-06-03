@@ -298,7 +298,7 @@ implements LoadBuilder<T, U> {
 		for (String nodeAddr : dataNodeAddrs) {
 			if (!nodeAddr.contains(":")) {
 				nodeAddr = nodeAddr + ":" + localRunTimeConfig.getString(
-						RunTimeConfig.getApiPortParamName(localRunTimeConfig.getApiName()));
+					RunTimeConfig.getApiPortParamName(localRunTimeConfig.getApiName()));
 			}
 			nodes.add(nodeAddr);
 		}
