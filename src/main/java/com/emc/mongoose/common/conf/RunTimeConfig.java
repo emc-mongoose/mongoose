@@ -324,10 +324,11 @@ implements Externalizable {
 	//
 	public final String[] getStorageAddrsWithPorts() {
 		final List<String> nodes = new ArrayList<>();
-		for (String nodeAddr : getStorageAddrs()) {
+		for(String nodeAddr : getStorageAddrs()) {
 			if (!nodeAddr.contains(STORAGE_PORT_SEP)) {
 				nodeAddr = nodeAddr + STORAGE_PORT_SEP + getString(
-					getApiPortParamName(getApiName()));
+					getApiPortParamName(getApiName())
+				);
 			}
 			nodes.add(nodeAddr);
 		}

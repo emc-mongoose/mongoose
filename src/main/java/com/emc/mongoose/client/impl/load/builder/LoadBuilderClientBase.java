@@ -101,6 +101,8 @@ implements LoadBuilderClient<T, U> {
 		final String newAddrs[] = runTimeConfig.getStorageAddrsWithPorts();
 		if(newAddrs.length > 0) {
 			dataNodeAddrs = newAddrs;
+		} else {
+			LOG.error(LogUtil.ERR, "No \"storage available\"");
 		}
 		//
 		String dataMetaInfoFile = null;
