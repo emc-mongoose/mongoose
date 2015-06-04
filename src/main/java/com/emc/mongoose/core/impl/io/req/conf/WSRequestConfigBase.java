@@ -79,6 +79,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.ReadableByteChannel;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -564,7 +565,8 @@ implements WSRequestConfig<T> {
 	private final static ThreadLocal<ByteBuffer>
 		THRLOC_BB_RESP_WRITE = new ThreadLocal<>(),
 		THRLOC_BB_RESP_READ = new ThreadLocal<>();
-	//
+	private final static ThreadLocal<HTTPContentDecoderChannel>
+		THRLOC_CHAN_IN = new ThreadLocal<>();
 	@Override
 	public final boolean consumeContent(
 		final ContentDecoder in, final IOControl ioCtl, T dataItem
@@ -574,11 +576,16 @@ implements WSRequestConfig<T> {
 			if(dataItem != null) {
 				if(loadType == IOTask.Type.READ) { // read
 					if(verifyContentFlag) { // read and do verify
-						try(
-							final ReadableByteChannel
-								chanIn = HTTPContentDecoderChannel.getInstance(in)
-						) {
+						HTTPContentDecoderChannel chanIn = THRLOC_CHAN_IN.get();
+						if(chanIn == null) {
+							chanIn = new HTTPContentDecoderChannel();
+							THRLOC_CHAN_IN.set(chanIn);
+						}
+						chanIn.setContentDecoder(in);
+						try{
 							verifyPass = dataItem.equals(chanIn);
+						} finally {
+							chanIn.close();
 						}
 					} else { // consume the whole data item content - may estimate the buffer size
 						ByteBuffer bbuff = THRLOC_BB_RESP_READ.get();
@@ -600,6 +607,8 @@ implements WSRequestConfig<T> {
 					}
 				}
 			}
+		} catch(final AsynchronousCloseException e) { // probably a manual interruption
+			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
 		} catch(final IOException e) {
 			verifyPass = false;
 			if(isClosed()) {

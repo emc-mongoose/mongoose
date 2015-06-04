@@ -1,13 +1,13 @@
 package com.emc.mongoose.common.io;
 //
-import com.emc.mongoose.common.collections.InstancePool;
-import com.emc.mongoose.common.collections.Reusable;
-import com.emc.mongoose.common.logging.LogUtil;
+//import com.emc.mongoose.common.collections.InstancePool;
+//import com.emc.mongoose.common.collections.Reusable;
+//import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.http.nio.ContentEncoder;
 //
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
+//import org.apache.logging.log4j.Level;
+//import org.apache.logging.log4j.LogManager;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,31 +16,39 @@ import java.nio.channels.WritableByteChannel;
  Created by kurila on 20.05.15.
  */
 public final class HTTPContentEncoderChannel
-implements WritableByteChannel, Reusable<HTTPContentEncoderChannel> {
+implements WritableByteChannel {
 	//
-	private ContentEncoder contentEncoder;
+	private ContentEncoder contentEncoder = null;
 	//
 	@Override
 	public final int write(final ByteBuffer src)
 	throws IOException {
+		if(contentEncoder == null) {
+			throw new IOException("Output channel is not ready");
+		}
 		return contentEncoder.write(src);
 	}
 	//
 	@Override
 	public final void close()
 	throws IOException {
-		contentEncoder.complete();
-		release();
+		if(contentEncoder != null) {
+			contentEncoder.complete();
+		}
 	}
 	//
 	@Override
 	public final boolean isOpen() {
-		return true;
+		return contentEncoder != null && !contentEncoder.isCompleted();
+	}
+	//
+	public final void setContentEncoder(final ContentEncoder contentEncoder) {
+		this.contentEncoder = contentEncoder;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Reusable implementation
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private static final InstancePool<HTTPContentEncoderChannel> INSTANCE_POOL;
+	/*private static final InstancePool<HTTPContentEncoderChannel> INSTANCE_POOL;
 	static {
 		InstancePool<HTTPContentEncoderChannel> t = null;
 		try {
@@ -68,5 +76,5 @@ implements WritableByteChannel, Reusable<HTTPContentEncoderChannel> {
 	@Override
 	public final void release() {
 		INSTANCE_POOL.release(this);
-	}
+	}*/
 }

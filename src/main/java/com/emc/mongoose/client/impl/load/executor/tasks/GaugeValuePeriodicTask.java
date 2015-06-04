@@ -23,6 +23,6 @@ implements PeriodicTask<V> {
 	//
 	@Override
 	public final V getLastResult() {
-		return result;
+		return result == null ? gauge.getValue() : result;
 	}
 }

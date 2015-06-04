@@ -351,6 +351,22 @@ dependencies {
 }
 
 configurations {
+	allCompile.extendsFrom(
+		commonCompile,
+		coreApiCompile,
+		coreImplCompile,
+		storageAdapterAtmosImplCompile,
+		storageAdapterS3Compile,
+		storageAdapterSwiftCompile,
+		serverApiCompile,
+		webserverCompile,
+		clientCompile,
+		scenarioCompile,
+		serverImplCompile,
+		storageMockCompile,
+		webuiCompile,
+		cliCompile,
+	)
 	allRuntime.extendsFrom(
 		commonRuntime,
 		coreApiRuntime,
@@ -775,7 +791,7 @@ idea {
 	module {
 		name = rootProject.name
 		jdkName = sourceCompatibility
-		scopes.PROVIDED.plus += [ configurations.allRuntime ]
+		scopes.PROVIDED.plus += [ configurations.allCompile ]
 	}
 	project.ipr {
 		withXml { provider ->

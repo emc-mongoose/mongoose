@@ -78,17 +78,26 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		this.ioStats = sharedStorage.getStats();
 	}
 	//
+	private final static ThreadLocal<HttpAsyncRequestConsumer<HttpRequest>>
+		THRLOC_REQ_CONSUMER = new ThreadLocal<>();
 	@Override
 	public final HttpAsyncRequestConsumer<HttpRequest> processRequest(
 		final HttpRequest request, final HttpContext context
 	) throws HttpException, IOException {
 		try {
-			return BasicWSRequestConsumer.getInstance();
+			HttpAsyncRequestConsumer<HttpRequest> reqConsumer = THRLOC_REQ_CONSUMER.get();
+			if(reqConsumer == null) {
+				reqConsumer = new BasicWSRequestConsumer();
+				THRLOC_REQ_CONSUMER.set(reqConsumer);
+			}
+			return reqConsumer;
 		} catch(final IllegalArgumentException | IllegalStateException e) {
 			throw new MethodNotSupportedException("Request consumer instantiation failure", e);
 		}
 	}
 	//
+	private final static ThreadLocal<BasicWSResponseProducer>
+		THRLOC_RESP_PRODUCER = new ThreadLocal<>();
 	@Override
 	public final void handle(
 		final HttpRequest r, final HttpAsyncExchange httpExchange, final HttpContext httpContext
@@ -116,7 +125,13 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		//
 		handleActually(httpRequest, httpResponse, method, requestURI, dataId);
 		// done
-		httpExchange.submitResponse(BasicWSResponseProducer.getInstance(httpResponse));
+		BasicWSResponseProducer respProducer = THRLOC_RESP_PRODUCER.get();
+		if(respProducer == null) {
+			respProducer = new BasicWSResponseProducer();
+			THRLOC_RESP_PRODUCER.set(respProducer);
+		}
+		respProducer.setResponse(httpResponse);
+		httpExchange.submitResponse(respProducer);
 	}
 	//
 	protected abstract void handleActually(

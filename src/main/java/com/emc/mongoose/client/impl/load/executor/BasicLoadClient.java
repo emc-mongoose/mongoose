@@ -29,7 +29,7 @@ import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
-import com.emc.mongoose.client.impl.load.executor.tasks.CountLimitWaitTask;
+import com.emc.mongoose.client.impl.load.executor.tasks.InterruptClientOnMaxCountTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.FrameFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
@@ -509,7 +509,7 @@ implements LoadClient<T> {
 			}, 0, periodSec, TimeUnit.SECONDS
 		);
 		mgmtConnExecutor.scheduleAtFixedRate(
-			new CountLimitWaitTask(
+			new InterruptClientOnMaxCountTask(
 				this, maxCount,
 				new PeriodicTask[] { taskGetCountSucc, taskGetCountRej, taskGetCountRej }
 			), 0, periodSec, TimeUnit.SECONDS

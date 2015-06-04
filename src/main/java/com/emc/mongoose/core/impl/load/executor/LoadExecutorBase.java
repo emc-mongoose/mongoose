@@ -492,57 +492,58 @@ implements LoadExecutor<T> {
 					ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
 				);
 			}
+			// feed the data item to the consumer and finally check for the finish state
+			try {
+				// is this an end of consumer-producer chain?
+				if(consumer == null) {
+					LOG.info(LogUtil.DATA_LIST, dataItem);
+				} else { // feed to the consumer
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+						LOG.trace(
+							LogUtil.MSG, "Going to feed the data item {} to the consumer {}",
+							dataItem, consumer
+						);
+					}
+					consumer.submit(dataItem);
+					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+						LOG.trace(
+							LogUtil.MSG, "The data item {} is passed to the consumer {} successfully",
+							dataItem, consumer
+						);
+					}
+				}
+			} catch(final InterruptedException e) {
+				LOG.debug(LogUtil.MSG, "Interrupted");
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to submit the data item \"{}\" to \"{}\"",
+					dataItem, consumer
+				);
+			} catch(final RejectedExecutionException e) {
+				if(LOG.isTraceEnabled(LogUtil.ERR)) {
+					LogUtil.exception(
+						LOG, Level.TRACE, e, "\"{}\" rejected the data item \"{}\"", consumer,
+						dataItem
+					);
+				}
+			}
 		} else {
 			counterReqFail.inc();
 		}
-		// feed the data item to the consumer and finally check for the finish state
-		try {
-			// is this an end of consumer-producer chain?
-			if(consumer == null) {
-				LOG.info(LogUtil.DATA_LIST, dataItem);
-			} else { // feed to the consumer
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(
-						LogUtil.MSG, "Going to feed the data item {} to the consumer {}",
-						dataItem, consumer
-					);
-				}
-				consumer.submit(dataItem);
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(
-						LogUtil.MSG, "The data item {} is passed to the consumer {} successfully",
-						dataItem, consumer
-					);
-				}
-			}
-		} catch(final InterruptedException e) {
-			LOG.debug(LogUtil.MSG, "Interrupted");
-		} catch(final RemoteException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to submit the data item \"{}\" to \"{}\"",
-				dataItem, consumer
+		//
+		counterResults.incrementAndGet();
+		if( // check that max count of results is reached OR
+			counterResults.get() >= maxCount ||
+			// consumer is not running and submitted count is equal to done count
+			(isAllSubm.get() && counterResults.get() >= counterSubm.getCount())
+		) { // so max count is reached OR all tasks are done
+			LOG.debug(
+				LogUtil.MSG, "{}: all {} task results has been obtained", getName(),
+				counterResults.get()
 			);
-		} catch(final RejectedExecutionException e) {
-			if(LOG.isTraceEnabled(LogUtil.ERR)) {
-				LogUtil.exception(
-					LOG, Level.TRACE, e, "\"{}\" rejected the data item \"{}\"", consumer, dataItem
-				);
-			}
-		} finally {
-			counterResults.incrementAndGet();
-			if( // check that max count of results is reached OR
-				counterResults.get() >= maxCount ||
-				// consumer is not running and submitted count is equal to done count
-				(isAllSubm.get() && counterResults.get() >= counterSubm.getCount())
-			) { // so max count is reached OR all tasks are done
-				LOG.debug(
-					LogUtil.MSG, "{}: all {} task results has been obtained", getName(),
-					counterResults.get()
-				);
-				if(!isClosed.get()) {
-					// prevent further results handling
-					interrupt();
-				}
+			if(!isClosed.get()) {
+				// prevent further results handling
+				interrupt();
 			}
 		}
 	}

@@ -172,10 +172,16 @@ implements DataItem {
 		final WritableByteChannel chanDst, final long relOffset, final long len
 	) throws IOException {
 		long writtenCount = 0;
+		int n;
 		setRelativeOffset(relOffset);
 		while(writtenCount < len) {
 			enforceCircularity();
-			writtenCount += chanDst.write(ringBuff);
+			n = chanDst.write(ringBuff);
+			if(n < 0) {
+				LOG.warn(LogUtil.ERR, "Channel returned {} as written byte count", n);
+			} else {
+				writtenCount += n;
+			}
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(LogUtil.MSG, "{}: written {} bytes to the channel", toString(), writtenCount);

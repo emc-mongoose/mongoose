@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.request;
 //
-import com.emc.mongoose.common.collections.InstancePool;
-import com.emc.mongoose.common.collections.Reusable;
+//import com.emc.mongoose.common.collections.InstancePool;
+//import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.io.StreamUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 //
@@ -27,11 +27,9 @@ import org.apache.logging.log4j.Logger;
  * Created by olga on 04.02.15.
  */
 public final class BasicWSRequestConsumer
-extends AbstractAsyncRequestConsumer<HttpRequest>
-implements Reusable<BasicWSRequestConsumer> {
+extends AbstractAsyncRequestConsumer<HttpRequest> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static ThreadLocal<ByteBuffer> THRLOC_BB = new ThreadLocal<>();
 	//
 	private ByteBuffer bbuff = null;
 	private HttpRequest httpRequest = null;
@@ -39,9 +37,13 @@ implements Reusable<BasicWSRequestConsumer> {
 	public BasicWSRequestConsumer() {
 		super();
 	}
+	//
 	@Override
 	protected final void onRequestReceived(final HttpRequest httpRequest)
 	throws HttpException, IOException {
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(LogUtil.MSG, "Got request: {}", httpRequest);
+		}
 		this.httpRequest = httpRequest;
 	}
 	//
@@ -49,22 +51,18 @@ implements Reusable<BasicWSRequestConsumer> {
 	protected final void onEntityEnclosed(final HttpEntity entity, final ContentType contentType) {
 		final long dataSize = entity.getContentLength();
 		// adapt the buffer size or reuse existing thread local buffer if any
-		bbuff = THRLOC_BB.get();
 		if(dataSize > LoadExecutor.BUFF_SIZE_HI) {
 			if(bbuff == null || bbuff.capacity() != LoadExecutor.BUFF_SIZE_HI) {
 				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_HI);
-				THRLOC_BB.set(bbuff);
 			}
 		} else if(dataSize < LoadExecutor.BUFF_SIZE_LO) {
 			if(bbuff == null || bbuff.capacity() != LoadExecutor.BUFF_SIZE_LO) {
 				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
-				THRLOC_BB.set(bbuff);
 			}
 		} else {
 			// reallocate only if content length is twice less/more than buffer size
 			if(bbuff == null || dataSize > 2 * bbuff.capacity() || bbuff.capacity() > 2 * dataSize) {
 				bbuff = ByteBuffer.allocate((int) dataSize); // type cast should be safe here
-				THRLOC_BB.set(bbuff);
 			}
 		}
 	}
@@ -86,12 +84,12 @@ implements Reusable<BasicWSRequestConsumer> {
 	@Override
 	protected void releaseResources() {
 		httpRequest = null;
-		release();
+		//release();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Reusable implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static InstancePool<BasicWSRequestConsumer> POOL;
+	/*private final static InstancePool<BasicWSRequestConsumer> POOL;
 	static {
 		InstancePool<BasicWSRequestConsumer> t = null;
 		try {
@@ -116,5 +114,5 @@ implements Reusable<BasicWSRequestConsumer> {
 	@Override
 	public final void release() {
 		POOL.release(this);
-	}
+	}*/
 }
