@@ -534,9 +534,9 @@ implements LoadExecutor<T> {
 		counterResults.incrementAndGet();
 		if( // check that max count of results is reached OR
 			counterResults.get() >= maxCount ||
-			// consumer is not running and submitted count is equal to done count
-			(isAllSubm.get() && counterResults.get() >= counterSubm.getCount())
-		) { // so max count is reached OR all tasks are done
+				// consumer is not running and submitted count is equal to done count
+				(isAllSubm.get() && counterResults.get() >= counterSubm.getCount())
+			) { // so max count is reached OR all tasks are done
 			LOG.debug(
 				LogUtil.MSG, "{}: all {} task results has been obtained", getName(),
 				counterResults.get()
