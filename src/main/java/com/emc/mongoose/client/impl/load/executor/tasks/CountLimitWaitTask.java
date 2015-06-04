@@ -35,7 +35,7 @@ implements PeriodicTask<Long> {
 	@Override
 	public final void run() {
 		for(final PeriodicTask<Long> nextCountTask : getValueTasks) {
-			if(maxCount <= processedCount.addAndGet(nextCountTask.getLastResult())) {
+			if(nextCountTask.getLastResult() != null && maxCount <= processedCount.addAndGet(nextCountTask.getLastResult())) {
 				try {
 					loadClient.interrupt();
 					LOG.debug(
