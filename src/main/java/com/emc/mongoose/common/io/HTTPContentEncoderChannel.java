@@ -2,12 +2,13 @@ package com.emc.mongoose.common.io;
 //
 //import com.emc.mongoose.common.collections.InstancePool;
 //import com.emc.mongoose.common.collections.Reusable;
-//import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.http.nio.ContentEncoder;
 //
 //import org.apache.logging.log4j.Level;
-//import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -17,6 +18,8 @@ import java.nio.channels.WritableByteChannel;
  */
 public final class HTTPContentEncoderChannel
 implements WritableByteChannel {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	private ContentEncoder contentEncoder = null;
 	//
@@ -34,6 +37,7 @@ implements WritableByteChannel {
 	throws IOException {
 		if(contentEncoder != null) {
 			contentEncoder.complete();
+			contentEncoder = null;
 		}
 	}
 	//
@@ -43,6 +47,9 @@ implements WritableByteChannel {
 	}
 	//
 	public final void setContentEncoder(final ContentEncoder contentEncoder) {
+		if(this.contentEncoder != null) {
+			LOG.warn(LogUtil.ERR, "Possible output channel concurrent usage");
+		}
 		this.contentEncoder = contentEncoder;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

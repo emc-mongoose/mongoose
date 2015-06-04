@@ -71,7 +71,10 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
 			bbuff.clear();
-			StreamUtils.consumeQuietly(decoder, ioCtl, bbuff);
+			final long ingestByteCount = StreamUtils.consumeQuietly(decoder, ioCtl, bbuff);
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(LogUtil.MSG, "Consumed {} bytes", ingestByteCount);
+			}
 		} catch(final Throwable e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Content consuming failure");
 		}

@@ -46,9 +46,6 @@ implements HttpAsyncResponseProducer {
 		try {
 			final WSObjectMock dataItem = WSObjectMock.class.cast(response.getEntity());
 			if(dataItem != null) {
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(LogUtil.MSG, "{}: write out {} bytes", dataItem, dataItem.getSize());
-				}
 				dataItem.write(chanOut);
 			}
 		} catch(final Exception e) {
