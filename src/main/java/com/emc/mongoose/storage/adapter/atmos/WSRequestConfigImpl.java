@@ -23,7 +23,9 @@ import org.apache.logging.log4j.Logger;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -38,8 +40,7 @@ extends WSRequestConfigBase<T> {
 	private final static String KEY_SUBTENANT = "api.type.atmos.subtenant";
 	//
 	public final static String
-		FMT_SLASH = "%s/%s", FMT_URI ="/rest/%s",
-		API_TYPE_OBJ = "objects", API_TYPE_FS = "namespace";
+		PREFIX_URI ="/rest/", API_TYPE_OBJ = "objects", API_TYPE_FS = "namespace";
 	//
 	public final static Header
 		DEFAULT_ACCEPT_HEADER = new BasicHeader(HttpHeaders.ACCEPT, "*/*");
@@ -57,9 +58,9 @@ extends WSRequestConfigBase<T> {
 		super(reqConf2Clone);
 		//
 		if(fsAccess) {
-			uriBasePath = String.format(FMT_URI, API_TYPE_FS);
+			uriBasePath = PREFIX_URI + API_TYPE_FS;
 		} else {
-			uriBasePath = String.format(FMT_URI, API_TYPE_OBJ);
+			uriBasePath = PREFIX_URI + API_TYPE_OBJ;
 		}
 		//
 		if(reqConf2Clone != null) {
@@ -114,9 +115,7 @@ extends WSRequestConfigBase<T> {
 				sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_UID, userName));
 			} else {
 				sharedHeaders.updateHeader(
-					new BasicHeader(
-						KEY_EMC_UID, String.format(FMT_SLASH, subTenant.getValue(), userName)
-					)
+					new BasicHeader(KEY_EMC_UID, subTenant.getValue() + "/" + userName)
 				);
 			}
 		}
@@ -136,7 +135,7 @@ extends WSRequestConfigBase<T> {
 				} else {
 					sharedHeaders.updateHeader(
 						new BasicHeader(
-							KEY_EMC_UID, String.format(FMT_SLASH, subTenant.getValue(), userName)
+							KEY_EMC_UID, subTenant.getValue() + "/" + userName
 						)
 					);
 				}
@@ -168,9 +167,9 @@ extends WSRequestConfigBase<T> {
 	public final WSRequestConfigImpl<T> setFileAccessEnabled(final boolean flag) {
 		super.setFileAccessEnabled(flag);
 		if(flag) {
-			uriBasePath = String.format(FMT_URI, API_TYPE_FS);
+			uriBasePath = PREFIX_URI + API_TYPE_FS;
 		} else {
-			uriBasePath = String.format(FMT_URI, API_TYPE_OBJ);
+			uriBasePath = PREFIX_URI + API_TYPE_OBJ;
 		}
 		return this;
 	}
@@ -186,9 +185,9 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		if(runTimeConfig.getStorageFileAccessEnabled()) {
-			uriBasePath = String.format(FMT_URI, API_TYPE_FS);
+			uriBasePath = PREFIX_URI + API_TYPE_FS;
 		} else {
-			uriBasePath = String.format(FMT_URI, API_TYPE_OBJ);
+			uriBasePath = PREFIX_URI + API_TYPE_OBJ;
 		}
 		//
 		return this;
@@ -204,21 +203,23 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final Object t = in.readObject();
+		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
+		final Object t = ois.readUnshared();
 		if(t == null) {
 			LOG.debug(LogUtil.MSG, "Note: no subtenant has got from load client side");
 		} else {
 			setSubTenant(new WSSubTenantImpl<>(this, String.class.cast(t)));
 		}
-		uriBasePath = String.class.cast(in.readObject());
+		uriBasePath = String.class.cast(ois.readUnshared());
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(subTenant == null ? null : subTenant.getValue());
-		out.writeObject(uriBasePath);
+		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
+		oos.writeUnshared(subTenant == null ? null : subTenant.getValue());
+		oos.writeUnshared(uriBasePath);
 	}
 	//
 	@Override
@@ -230,7 +231,7 @@ extends WSRequestConfigBase<T> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		if(fsAccess || !IOTask.Type.CREATE.equals(loadType)) {
-			httpRequest.setUriPath(String.format(FMT_SLASH, uriBasePath, dataItem.getId()));
+			httpRequest.setUriPath(uriBasePath + "/" + dataItem.getId());
 		} else if(!uriBasePath.equals(httpRequest.getUriPath())) { // "/rest/objects"
 			httpRequest.setUriPath(uriBasePath);
 		} // else do nothing, uri is "/rest/objects" already
@@ -286,9 +287,6 @@ extends WSRequestConfigBase<T> {
 		return buffer.toString();
 	}
 	//
-	private final static String
-		FMT_MSG_ERR_LOCATION_HEADER_VALUE = "Invalid response location header value: \"%s\"";
-	//
 	@Override
 	protected final void applyObjectId(final T dataObject, final HttpResponse httpResponse) {
 		if(
@@ -311,7 +309,7 @@ extends WSRequestConfigBase<T> {
 				}
 			} else if(LOG.isTraceEnabled(LogUtil.ERR)) {
 				LOG.trace(
-					LogUtil.ERR, String.format(FMT_MSG_ERR_LOCATION_HEADER_VALUE, valueLocation)
+					LogUtil.ERR, "Invalid response location header value: \"{}\"", valueLocation
 				);
 			}
 		}
@@ -333,16 +331,15 @@ extends WSRequestConfigBase<T> {
 		}
 		applyURI(httpRequest, dataItem);
 		switch(loadType) {
+			case UPDATE:
+			case APPEND:
+				applyRangesHeaders(httpRequest, dataItem);
 			case CREATE:
 				applyPayLoad(httpRequest, dataItem);
 				break;
-			case UPDATE:
-				applyRangesHeaders(httpRequest, dataItem);
-				applyPayLoad(httpRequest, dataItem.getPendingUpdatesContentEntity());
-				break;
-			case APPEND:
-				applyAppendRangeHeader(httpRequest, dataItem);
-				applyPayLoad(httpRequest, dataItem.getPendingAugmentContentEntity());
+			case READ:
+			case DELETE:
+				applyPayLoad(httpRequest, null);
 				break;
 		}
 	}

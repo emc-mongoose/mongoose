@@ -51,12 +51,10 @@ public final class ServiceUtils {
 		try {
 			tmpPort = RunTimeConfig.getContext().getRemotePortControl();
 		} catch(final Exception e) {
-			LogUtil.failure(
+			LogUtil.exception(
 				LOG, Level.WARN, e,
-				String.format(
-					"Failed to take remote control port value, will use the default value \"%d\"",
-					tmpPort
-				)
+				"Failed to take remote control port value, will use the default value \"{}\"",
+				tmpPort
 			);
 		} finally {
 			PORT_RMI_CONTROL = tmpPort;
@@ -71,7 +69,7 @@ public final class ServiceUtils {
 				ServiceUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI()
 			);
 		} catch(final URISyntaxException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Determining the launcher path failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Determining the launcher path failure");
 		}
 		JAR_SELF = jarSelf;
 
@@ -143,7 +141,7 @@ public final class ServiceUtils {
 				}
 			}
 		} catch(final SocketException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to get an external interface address");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to get an external interface address");
 		}
 		//
 		if(addr == null) {
@@ -157,7 +155,7 @@ public final class ServiceUtils {
 	}
 	//
 	public static long getHostAddrCode() {
-		return (long) getHostAddr().hashCode() << Integer.SIZE;
+		return getHostAddr().hashCode();
 	}
 	//
 	public static Remote create(final Service svc) {
@@ -166,7 +164,7 @@ public final class ServiceUtils {
 			stub = UnicastRemoteObject.exportObject(svc);
 			LOG.debug(LogUtil.MSG, "Exported service object successfully");
 		} catch(final RemoteException e) {
-			LogUtil.failure(LOG, Level.FATAL, e, "Failed to export service object");
+			LogUtil.exception(LOG, Level.FATAL, e, "Failed to export service object");
 		}
 		//
 		if(stub != null) {
@@ -174,7 +172,7 @@ public final class ServiceUtils {
 				final String svcName = svc.getName();
 				Naming.rebind(svcName, svc);
 				SVC_MAP.put(svcName, svc);
-				LOG.debug(LogUtil.MSG, "New service bound: {}", svcName);
+				LOG.info(LogUtil.MSG, "New service bound: {}", svcName);
 			} catch(final RemoteException e) {
 				LOG.error(LogUtil.ERR, "Failed to rebind the service", e);
 			} catch(final MalformedURLException e) {
@@ -204,7 +202,7 @@ public final class ServiceUtils {
 			remote = Naming.lookup(url);
 			remoteSvc = Service.class.cast(remote);
 		} catch(final ClassCastException e) {
-			if(remote==null) {
+			if(remote == null) {
 				LOG.error(LogUtil.ERR, "Lookup method returns null");
 			} else {
 				LOG.error(
@@ -216,7 +214,7 @@ public final class ServiceUtils {
 		} catch(final NotBoundException e) {
 			LOG.error(LogUtil.ERR, "No service bound with url \"{}\"", url);
 		} catch(final RemoteException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Looks like network failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Looks like network failure");
 		}
 		return remoteSvc;
 	}
@@ -226,7 +224,7 @@ public final class ServiceUtils {
             UnicastRemoteObject.unexportObject(svc, true);
 			LOG.debug(LogUtil.MSG, "Unexported service object");
 		} catch(NoSuchObjectException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to unexport service object");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to unexport service object");
 		}
 		//
 		try {
@@ -244,6 +242,7 @@ public final class ServiceUtils {
 	}
 	//
 	public final static String
+		KEY_RMI_HOSTNAME = "java.rmi.server.hostname",
 		KEY_RMI_CODEBASE = "java.rmi.server.codebase",
 		KEY_JMX_AUTH = "com.sun.management.jmxremote.authenticate",
 		KEY_JMX_PORT = "com.sun.management.jmxremote.port",
@@ -270,7 +269,7 @@ public final class ServiceUtils {
 					)
 				);
 			} catch(final UnsupportedEncodingException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Setting system property failure");
+				LogUtil.exception(LOG, Level.WARN, e, "Setting system property failure");
 			}
 			LOG.debug(LogUtil.MSG, "RMI codebase: {}", System.getProperty(KEY_RMI_CODEBASE));
 			//
@@ -281,11 +280,10 @@ public final class ServiceUtils {
 			//
 			try {
 				LocateRegistry.createRegistry(portJmxRmi);
-				LOG.debug(LogUtil.MSG, "Created locate registry for port {}", portJmxRmi);
+				LOG.debug(LogUtil.MSG, "Created locate registry for port #{}", portJmxRmi);
 			} catch(final RemoteException e) {
-				LogUtil.failure(
-					LOG, Level.WARN, e,
-					String.format("Failed to create registry for port %d", portJmxRmi)
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to create registry for port #{}", portJmxRmi
 				);
 			}
 			//
@@ -301,9 +299,8 @@ public final class ServiceUtils {
 				);
 				LOG.debug(LogUtil.MSG, "Created JMX service URL {}", jmxSvcURL.toString());
 			} catch(final MalformedURLException e) {
-				LogUtil.failure(
-					LOG, Level.WARN, e,
-					String.format("Failed to create JMX service URL for port #%d", portJmxRmi)
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to create JMX service URL for port #{}", portJmxRmi
 				);
 			}
 			//
@@ -317,7 +314,7 @@ public final class ServiceUtils {
 					JMX_CONNECTOR_SERVERS.add(connectorServer); // remember for shutdown
 					LOG.debug(LogUtil.MSG, "Created JMX connector");
 				} catch(final IOException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Failed to create JMX connector");
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to create JMX connector");
 				}
 			}
 			//
@@ -326,7 +323,7 @@ public final class ServiceUtils {
 					connectorServer.start();
 					LOG.debug(LogUtil.MSG, "JMX connector started", portJmxRmi);
 				} catch(final IOException e) {
-					LogUtil.failure(
+					LogUtil.exception(
 						LOG, Level.WARN, e,
 						"Failed to start JMX connector, please check that there's no another instance running"
 					);
@@ -379,7 +376,7 @@ public final class ServiceUtils {
 				try {
 					jmxConnectorServer.stop();
 				} catch(final IOException e) {
-					LogUtil.failure(
+					LogUtil.exception(
 						LOG, Level.WARN, e,
 						String.format(
 							"Failed to stop JMX connector server @%s",

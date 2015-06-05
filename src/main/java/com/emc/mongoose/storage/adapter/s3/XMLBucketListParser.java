@@ -15,8 +15,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 //
 import java.lang.reflect.Constructor;
-import java.nio.ByteBuffer;
-import java.nio.LongBuffer;
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
 /**
@@ -61,9 +59,6 @@ extends DefaultHandler {
 		super.startElement(uri, localName, qName, attrs);
 	}
 	//
-	private final ByteBuffer offsetValueBytes = ByteBuffer.allocate(Long.SIZE / Byte.SIZE);
-	private final LongBuffer offsetValueView = offsetValueBytes.asLongBuffer();
-	//
 	@Override @SuppressWarnings("unchecked")
 	public final void endElement(
 		final String uri, final String localName, final String qName
@@ -81,7 +76,7 @@ extends DefaultHandler {
 				try {
 					size = Long.parseLong(strSize);
 				} catch(final NumberFormatException e) {
-					LogUtil.failure(
+					LogUtil.exception(
 						LOG, Level.WARN, e, "Data object size should be a 64 bit number"
 					);
 				}
@@ -101,17 +96,17 @@ extends DefaultHandler {
 						endDocument();
 					}
 				} catch(final RemoteException e) {
-					LogUtil.failure(
+					LogUtil.exception(
 						LOG, Level.WARN, e, "Failed to submit new data object to the consumer"
 					);
 				} catch(final  RejectedExecutionException e) {
-					LogUtil.failure(LOG, Level.DEBUG, e, "Consumer rejected the data object");
+					LogUtil.exception(LOG, Level.DEBUG, e, "Consumer rejected the data object");
 				} catch(final InterruptedException e) {
 					endDocument();
 				} catch(final NumberFormatException e) {
 					LOG.debug(LogUtil.ERR, "Invalid id: {}", strId);
 				} catch(final Exception e) {
-					LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
+					LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 				}
 			} else {
 				LOG.trace(LogUtil.ERR, "Invalid object id ({}) or size ({})", strId, strSize);
@@ -131,21 +126,5 @@ extends DefaultHandler {
 			strSize = new String(buff, start, length);
 		}
 		super.characters(buff, start, length);
-	}
-	//
-	@Override
-	public final void endDocument()
-	throws SAXException {
-		LOG.debug(LogUtil.MSG, "End of bucket listing, got {} items", count);
-		if(consumer != null) {
-			try {
-				consumer.shutdown();
-			} catch(final RemoteException e) {
-				LogUtil.failure(
-					LOG, Level.WARN, e, "Failed to limit data items count for remote consumer"
-				);
-			}
-		}
-		super.endDocument();
 	}
 }

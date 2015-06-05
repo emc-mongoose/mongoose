@@ -547,7 +547,7 @@
 												<legend>Storage</legend>
 												<div class="form-group">
 													<label for="backup-storage.addrs" class="col-sm-3 control-label">
-														Storage nodes (comma-separated list)
+														Nodes (comma-separated list)
 													</label>
 													<div class="col-sm-9">
 														<input type="text" id="backup-storage.addrs" class="form-control"
@@ -557,7 +557,7 @@
 												</div>
 												<div class="form-group">
 													<label for="backup-api.name" class="col-sm-3 control-label">
-														Storage API
+														API
 													</label>
 													<div class="col-sm-9">
 														<select id="backup-api.name" class="form-select" data-pointer="api.name">

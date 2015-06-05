@@ -17,10 +17,13 @@ import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -39,6 +42,7 @@ implements Externalizable {
 	//
 	public final static String
 		LIST_SEP = ",",
+		STORAGE_PORT_SEP = ":",
 		//
 		KEY_AUTH_ID = "auth.id",
 		KEY_AUTH_SECRET = "auth.secret",
@@ -154,9 +158,7 @@ implements Externalizable {
 	//
 	public String getJsonProps() {
 		JsonConfigLoader.updateProps(
-			Paths.get(DIR_ROOT, Constants.DIR_CONF)
-				.resolve(FNAME_CONF),
-			this, false
+			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF), this, false
 		);
 		return rootNode.toString();
 	}
@@ -192,12 +194,8 @@ implements Externalizable {
 		return getInt("run.request.timeoutMilliSec");
 	}
 	//
-	public final int getRunRetryDelayMilliSec() {
-		return getInt("run.retry.delayMilliSec");
-	}
-	//
-	public final int getRunRetryCountMax() {
-		return getInt("run.retry.countMax");
+	public final int getRunSubmitTimeOutMilliSec() {
+		return getInt("run.submitTimeOutMilliSec");
 	}
 	//
 	public final boolean getRunRequestRetries() {
@@ -322,6 +320,19 @@ implements Externalizable {
 	//
 	public final String[] getStorageAddrs() {
 		return getStringArray(KEY_STORAGE_ADDRS);
+	}
+	//
+	public final String[] getStorageAddrsWithPorts() {
+		final List<String> nodes = new ArrayList<>();
+		for(String nodeAddr : getStorageAddrs()) {
+			if (!nodeAddr.contains(STORAGE_PORT_SEP)) {
+				nodeAddr = nodeAddr + STORAGE_PORT_SEP + getString(
+					getApiPortParamName(getApiName())
+				);
+			}
+			nodes.add(nodeAddr);
+		}
+		return nodes.toArray(new String[nodes.size()]);
 	}
 	//
 	public final int getConnPoolTimeOut() {
@@ -510,7 +521,8 @@ implements Externalizable {
 		//
 		log.trace(LogUtil.MSG, "Sending configuration: {}", propsMap);
 		//
-		out.writeObject(propsMap);
+		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
+		oos.writeUnshared(propsMap);
 		log.debug(LogUtil.MSG, "Uploaded the properties from client side");
 	}
 	//
@@ -518,8 +530,9 @@ implements Externalizable {
 	public final synchronized void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		final Logger log = LogManager.getLogger();
+		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
 		log.debug(LogUtil.MSG, "Going to fetch the properties from client side");
-		final HashMap<String, String> confMap = HashMap.class.cast(in.readObject());
+		final HashMap<String, String> confMap = HashMap.class.cast(ois.readUnshared());
 		log.trace(LogUtil.MSG, "Got the properties from client side: {}", confMap);
 		//
 		final String

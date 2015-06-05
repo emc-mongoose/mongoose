@@ -30,8 +30,6 @@ implements WSLoadClient<T> {
 		final Map<String, JMXConnector> remoteJMXConnMap, final WSRequestConfig<T> reqConf,
 		final long maxCount, final Producer<T> producer
 	) {
-		super(
-			runTimeConfig, remoteLoadMap, remoteJMXConnMap, reqConf, maxCount, producer
-		);
+		super(runTimeConfig, remoteLoadMap, remoteJMXConnMap, reqConf, maxCount, producer);
 	}
 }

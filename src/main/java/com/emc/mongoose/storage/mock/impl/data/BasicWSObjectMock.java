@@ -5,12 +5,12 @@ import com.emc.mongoose.core.impl.data.UniformData;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
-//import com.emc.mongoose.common.logging.Markers;
+//
 //import org.apache.logging.log4j.LogManager;
 //import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.channels.WritableByteChannel;
 import java.util.List;
 //
 /**
@@ -20,83 +20,72 @@ public class BasicWSObjectMock
 extends BasicWSObject
 implements WSObjectMock {
 	//private final static Logger LOG = LogManager.getLogger();
-	//////////////////////////////////
-	public BasicWSObjectMock() {
-		super();
-	}
-	//
-	public BasicWSObjectMock(final long size){ super(size);}
-	//
-	public BasicWSObjectMock(final String id, final Long size) {
-		super(id, size);
-	}
 	//
 	public BasicWSObjectMock(final String metaInfo) {
-		super(metaInfo);
+		super();
+		fromString(metaInfo);
 	}
 	//
-	public BasicWSObjectMock(final String id, final Long offset, final long size) {
+	public BasicWSObjectMock(final String id, final Long offset, final Long size) {
 		super(id, offset, size);
 	}
-	//////////////////////////////////
+	//
 	@Override
-	public final void append(final long augmentSize)
+	public final synchronized void append(final long augmentSize)
 	throws IllegalArgumentException {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
 			final int
-				lastCellPos = getRangeCount(size)-1,
+				lastCellPos = getRangeCount(size) - 1,
 				nextCellPos = getRangeCount(size + augmentSize);
 			if(lastCellPos < nextCellPos && maskRangesPending.get(lastCellPos)) {
 				maskRangesPending.set(lastCellPos, nextCellPos);
 			}
 		} else {
-			throw new IllegalArgumentException(
-				String.format(FMT_MSG_ILLEGAL_APPEND_SIZE, augmentSize)
-			);
+			throw new IllegalArgumentException("Illegal append size: " + augmentSize);
 		}
 	}
 	//
 	@Override
-	public final void updateRanges(final List<Long> ranges){
+	public final synchronized void updateRanges(final List<Long> ranges) {
 		final int countRangesTotal = getRangeCount(size);
 		int startCellPos,
 			finishCellPos;
-		for (int i = 0; i < ranges.size(); i++){
+		for(int i = 0; i < ranges.size(); i ++){
 			startCellPos = getRangeCount(ranges.get(i));
-			finishCellPos = getRangeCount(ranges.get(i++))+1;
+			finishCellPos = getRangeCount(ranges.get(i ++)) + 1;
 			maskRangesPending.set(startCellPos, finishCellPos);
 		}
 		//return true if mask is full -> inc layer
-		if (maskRangesPending.cardinality() == countRangesTotal){
-			switchToNextLayer();
+		if(maskRangesPending.cardinality() == countRangesTotal){
+			switchToNextOverlay();
 		}
 	}
 	//
 	@Override
-	public final void writeTo(final OutputStream out)
+	public final synchronized void write(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
-		synchronized (this) { // stream position protection
-			if(maskRangesPending.isEmpty()) {
-				super.writeTo(out);
-			} else {
-				for(int i = 0; i < countRangesTotal; i++) {
-					rangeOffset = getRangeOffset(i);
-					rangeSize = getRangeSize(i);
-					if (maskRangesPending.get(i)) { // range have been modified
-						updatedRange = new UniformData(
-							offset + rangeOffset, rangeSize, layerNum.get() + 1, UniformDataSource.DEFAULT
-						);
-						updatedRange.writeTo(out);
-					} else { // previous layer of updated ranges
-						updatedRange = new UniformData(
-							offset + rangeOffset, rangeSize, layerNum.get(), UniformDataSource.DEFAULT
-						);
-						updatedRange.writeTo(out);
-					}
+		if(maskRangesPending.isEmpty()) {
+			super.write(chanOut);
+		} else {
+			for(int i = 0; i < countRangesTotal; i++) {
+				rangeOffset = getRangeOffset(i);
+				rangeSize = getRangeSize(i);
+				if(maskRangesPending.get(i)) { // range have been modified
+					updatedRange = new UniformData(
+						offset + rangeOffset, rangeSize, currLayerIndex + 1,
+						UniformDataSource.DEFAULT
+					);
+					updatedRange.write(chanOut);
+				} else { // previous layer of updated ranges
+					updatedRange = new UniformData(
+						offset + rangeOffset, rangeSize, currLayerIndex,
+						UniformDataSource.DEFAULT
+					);
+					updatedRange.write(chanOut);
 				}
 			}
 		}

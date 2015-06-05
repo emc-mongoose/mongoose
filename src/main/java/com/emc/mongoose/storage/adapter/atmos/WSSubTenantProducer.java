@@ -26,6 +26,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 23.01.15.
  */
@@ -66,6 +67,18 @@ implements Producer<T> {
 	}
 	//
 	@Override
+	public final void await()
+	throws InterruptedException {
+		join();
+	}
+	//
+	@Override
+	public final void await(final long timeOut, final TimeUnit timeUnit)
+	throws InterruptedException {
+		timeUnit.timedJoin(this, timeOut);
+	}
+	//
+	@Override
 	public final void run() {
 		try {
 			final HttpResponse httpResp = subTenant.execute(addr, MutableWSRequest.HTTPMethod.GET);
@@ -90,10 +103,10 @@ implements Producer<T> {
 										)
 									);
 								} catch(final SAXException e) {
-									LogUtil.failure(LOG, Level.WARN, e, "Failed to parse");
+									LogUtil.exception(LOG, Level.WARN, e, "Failed to parse");
 								}
 							} catch(final ParserConfigurationException | SAXException e) {
-								LogUtil.failure(
+								LogUtil.exception(
 									LOG, Level.ERROR, e, "Failed to create SAX parser"
 								);
 							}
@@ -114,10 +127,7 @@ implements Producer<T> {
 				EntityUtils.consumeQuietly(httpResp.getEntity());
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(
-				LOG, Level.ERROR, e,
-				String.format("Failed to list the subtenant \"%s\"", subTenant)
-			);
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the subtenant: {}", subTenant);
 		}
 	}
 	//

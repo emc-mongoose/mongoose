@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.load.model;
 //mongoose-common.jar
-import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //mongoose-core-api.jar
@@ -12,24 +11,26 @@ import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.impl.load.model.reader.io.LineReader;
 import com.emc.mongoose.core.impl.load.model.reader.RandomFileReader;
 import com.emc.mongoose.core.impl.load.model.reader.util.Randomizer;
-import com.emc.mongoose.core.impl.load.tasks.SubmitTask;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.zip.GZIPInputStream;
 /**
  Created by kurila on 12.05.14.
  A data item producer which constructs data items while reading the special input file.
@@ -46,25 +47,23 @@ implements Producer<T> {
 	private final Path fPath;
 	private final Constructor<T> dataItemConstructor;
 	private final long maxCount;
-	private long approxDataItemsSize = LoadExecutor.BUFF_SIZE_LO;
-	private final ExecutorService producerExecSvc;
+	private final boolean compressed;
 	//
+	private long approxDataItemsSize = LoadExecutor.BUFF_SIZE_LO;
 	private Consumer<T> consumer = null;
 	//
 	@SuppressWarnings("unchecked")
 	public FileProducer(final long maxCount, final String fPathStr, final Class<T> dataItemsImplCls)
 	throws NoSuchMethodException, IOException {
-		this(maxCount, fPathStr, dataItemsImplCls, false);
+		this(maxCount, fPathStr, dataItemsImplCls, false, false);
 	}
 	//
-	private FileProducer(
+	FileProducer(
 		final long maxCount, final String fPathStr, final Class<T> dataItemsImplCls,
-		final boolean nested
+		final boolean nested, final boolean compressed
 	) throws IOException, NoSuchMethodException {
 		super(fPathStr);
-		producerExecSvc = Executors.newFixedThreadPool(
-			Producer.WORKER_COUNT, new NamingWorkerFactory(fPathStr)
-		);
+		this.compressed = compressed;
 		fPath = FileSystems.getDefault().getPath(fPathStr);
 		if(!Files.exists(fPath)) {
 			throw new IOException("File \""+fPathStr+"\" doesn't exist");
@@ -77,7 +76,9 @@ implements Producer<T> {
 		//
 		if(!nested) {
 			// try to read 1st max 100 data items to determine the
-			new FileProducer<T>(MAX_COUNT_TO_ESTIMATE_SIZES, fPathStr, dataItemsImplCls, true) {
+			new FileProducer<T>(
+				MAX_COUNT_TO_ESTIMATE_SIZES, fPathStr, dataItemsImplCls, true, compressed
+			) {
 				{
 					setConsumer(
 						new Consumer<T>() {
@@ -110,7 +111,7 @@ implements Producer<T> {
 					try {
 						join(MAX_WAIT_TO_ESTIMATE_MILLIS);
 					} catch(final InterruptedException e) {
-						LogUtil.failure(LOG, Level.WARN, e, "Interrupted");
+						LogUtil.exception(LOG, Level.WARN, e, "Interrupted");
 					} finally {
 						interrupt();
 					}
@@ -134,13 +135,26 @@ implements Producer<T> {
 		long dataItemsCount = 0;
 		int batchSize = 0;
 		final Randomizer random = (Randomizer) new Random();
+		//
+		final Charset charset =  StandardCharsets.UTF_8;
+		final CharsetDecoder decoder = charset.newDecoder();
+		//
 		if(RunTimeConfig.getContext().isEnabledDataRandom()) {
 			batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
 		}
 		//
-		try(LineReader reader = (LineReader) Files.newBufferedReader(fPath, StandardCharsets.UTF_8)) {
-			RandomFileReader fReader = new RandomFileReader(reader, batchSize, maxCount, random);
-			//
+		try(
+			RandomFileReader fReader = new RandomFileReader(
+				(LineReader) new BufferedReader(
+					new InputStreamReader(
+						compressed ?
+							new GZIPInputStream(Files.newInputStream(fPath))
+							: Files.newInputStream(fPath),
+						decoder
+					)
+				),
+				batchSize, maxCount, random)
+		) {
 			String nextLine;
 			T nextData;
 			LOG.debug(
@@ -158,44 +172,27 @@ implements Producer<T> {
 				} else {
 					nextData = dataItemConstructor.newInstance(nextLine);
 					try {
-						producerExecSvc.submit(
-							SubmitTask.getInstance(consumer, nextData)
-						);
+						consumer.submit(nextData);
 						dataItemsCount ++;
-					} catch(final Exception e) {
-						if(
-							consumer.getMaxCount() > dataItemsCount &&
-							!RejectedExecutionException.class.isInstance(e)
-						) {
-							LogUtil.failure(LOG, Level.WARN, e, "Failed to submit data item");
-							break;
-						} else {
-							LogUtil.failure(LOG, Level.DEBUG, e, "Failed to submit data item");
-						}
+					} catch(final RejectedExecutionException e) {
+						LogUtil.exception(LOG, Level.DEBUG, e, "Consumer rejected the data item");
 					}
 				}
 			} while(!isInterrupted() && dataItemsCount < maxCount);
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Failed to read line from the file");
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to read line from the file");
+		} catch(final InterruptedException e) {
+			LOG.debug(LogUtil.MSG, "Interrupted");
 		} catch(final Exception e) {
-			//e.printStackTrace(System.err);
-			LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
+			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure, file producer interrupted");
 		} finally {
 			LOG.debug(LogUtil.MSG, "Produced {} data items", dataItemsCount);
 			try {
-				LOG.debug(LogUtil.MSG, "Feeding poison to consumer \"{}\"", consumer.toString());
-				if(isInterrupted()) {
-					producerExecSvc.shutdownNow();
-				} else {
-					producerExecSvc.shutdown();
-					producerExecSvc.awaitTermination(
-						RunTimeConfig.getContext().getRunReqTimeOutMilliSec(),
-						TimeUnit.MILLISECONDS
-					);
-				}
 				consumer.shutdown();
-			} catch(final Exception e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Failed to shut down the consumer");
+			} catch(final RemoteException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down the consumer");
+			} finally {
+				consumer = null;
 			}
 			LOG.debug(LogUtil.MSG, "Exiting");
 		}
@@ -214,7 +211,14 @@ implements Producer<T> {
 	}
 	//
 	@Override
-	public final void interrupt() {
-		producerExecSvc.shutdownNow();
+	public final void await()
+	throws InterruptedException {
+		join();
+	}
+	//
+	@Override
+	public final void await(final long timeOut, final TimeUnit timeUnit)
+	throws InterruptedException {
+		timeUnit.timedJoin(this, timeOut);
 	}
 }

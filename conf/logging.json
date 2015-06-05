@@ -35,6 +35,7 @@
 					"name": "stdout",
 					"type": "Console",
 					"PatternLayout": {
+						"alwaysWriteExceptions" : false,
 						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t %m%n}"
 					},
 					"Filters": {
@@ -152,7 +153,7 @@
 					"fileName": "perf.avg.csv",
 					"PatternLayout": {
 						"header": "DateTimeISO8601,LoadId,TypeAPI,TypeLoad,CountConn,CountNode,CountLoadServer,CountSucc,CountPending,CountFail,LatencyAvg[us],LatencyMin[us],LatencyMed[us],LatencyMax[us],TPAvg,TP1Min,TP5Min,TP15Min,BWAvg[MB/s],BW1Min[MB/s],BW5Min[MB/s],BW15Min[MB/s]\n",
-						"pattern": "\"%d{ISO8601}{GMT+0}\",%replace{%t}{([\\d]+)\\-([A-Za-z0-9]+)\\-([CreateRdDlUpAn]+)[\\d]*\\-([\\d]*)x([\\d]*)x?([\\d]*)[\\S]*}{$1,$2,$3,$4,$5,$6},%replace{%m}{count=\\((\\d+)/(\\-?\\d+)/\\\u001B*\\[*\\d*m*(\\d+)\\\u001B*\\[*\\d*m*\\);[\\s]+latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\);[\\s]+TP\\[/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+BW\\[MB/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\)}{$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15}%n",
+						"pattern": "\"%d{ISO8601}{GMT+0}\",%replace{%t}{\\w*<?([\\d]+)\\-([A-Za-z0-9]+)\\-([CreateRdDlUpAn]+)[\\d]*\\-([\\d]*)x([\\d]*)x?([\\d]*)>*[\\S]*}{$1,$2,$3,$4,$5,$6},%replace{%m}{count=\\((\\d+)/(\\-?\\d+)/\\\u001B*\\[*\\d*m*(\\d+)\\\u001B*\\[*\\d*m*\\);[\\s]+latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\);[\\s]+TP\\[/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\);[\\s]+BW\\[MB/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\)}{$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15}%n",
 						"noConsoleNoAnsi": "true"
 					},
 					"MarkerFilter": {
@@ -234,7 +235,7 @@
 					"name": "async",
 					"type": "Async",
 					"blocking": "false",
-					"bufferSize": "100000",
+					"bufferSize": "200000",
 					"AppenderRef": [
 						{ "ref": "stdout" },
 						{ "ref": "msgFile" },
@@ -290,7 +291,7 @@
 					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "org.python.core.PyReflectedFunction",
-					"level": "trace", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}
 			]
 		}

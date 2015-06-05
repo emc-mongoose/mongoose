@@ -8,7 +8,7 @@ from com.emc.mongoose.core.api.io.task import IOTask
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from java.lang import Throwable, IllegalArgumentException, InterruptedException
+from java.lang import System, Throwable, IllegalArgumentException, InterruptedException
 from java.util import NoSuchElementException
 #
 LOG = LogManager.getLogger()
@@ -35,7 +35,7 @@ def build(loadBuilder):
 		try:
 			load = loadBuilder.build()
 		except Throwable as e:
-			LogUtil.failure(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
+			LogUtil.exception(LOG, Level.FATAL, e, "Failed to instantiate the load executor")
 	return load
 #
 def execute(load):
@@ -45,7 +45,7 @@ def execute(load):
 		runTimeOut = timeOutInit()
 		load.start()
 		try:
-			load.join(runTimeOut[1].toMillis(runTimeOut[0]))
+			load.await(runTimeOut[0], runTimeOut[1])
 		finally:
 			load.close()
 #
@@ -57,6 +57,7 @@ if __name__ == "__builtin__":
 	except InterruptedException as e:
 		LOG.debug(LogUtil.MSG, "Single was interrupted")
 	except Throwable as e:
-		LogUtil.failure(LOG, Level.ERROR, e, "Scenario failed")
+		e.printStackTrace(System.err)
+		LogUtil.exception(LOG, Level.ERROR, e, "Scenario failed")
 	loadBuilder.close() # to exit normally
 	LOG.info(LogUtil.MSG, "Scenario end")

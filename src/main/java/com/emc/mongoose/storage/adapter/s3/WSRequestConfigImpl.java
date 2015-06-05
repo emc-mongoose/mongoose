@@ -19,7 +19,9 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -32,11 +34,10 @@ extends WSRequestConfigBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static String
-		FMT_PATH = "/%s/%s",
 		KEY_BUCKET_NAME = "api.type.s3.bucket",
 		MSG_NO_BUCKET = "Bucket is not specified",
 		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
-	private final String fmtAuthValue;
+	private final String authPrefixValue;
 	//
 	private WSBucketImpl<T> bucket;
 	//
@@ -48,7 +49,7 @@ extends WSRequestConfigBase<T> {
 	protected WSRequestConfigImpl(final WSRequestConfigImpl<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
-		fmtAuthValue = runTimeConfig.getApiS3AuthPrefix() + " %s:%s";
+		authPrefixValue = runTimeConfig.getApiS3AuthPrefix() + " ";
 		if(reqConf2Clone != null) {
 			setBucket(reqConf2Clone.getBucket());
 			setNameSpace(reqConf2Clone.getNameSpace());
@@ -108,7 +109,7 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final String bucketName = String.class.cast(in.readObject());
+		final String bucketName = String.class.cast(ObjectInputStream.class.cast(in).readUnshared());
 		LOG.debug(LogUtil.MSG, "Note: bucket {} has been got from load client side", bucketName);
 		setBucket(new WSBucketImpl<>(this, bucketName, runTimeConfig.getStorageVersioningEnabled()));
 	}
@@ -117,7 +118,7 @@ extends WSRequestConfigBase<T> {
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(bucket.getName());
+		ObjectOutputStream.class.cast(out).writeUnshared(bucket.getName());
 	}
 	//
 	@Override
@@ -132,14 +133,14 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		httpRequest.setUriPath(String.format(FMT_PATH, bucket, dataItem.getId()));
+		httpRequest.setUriPath("/" + bucket + "/" + dataItem.getId());
 	}
 	//
 	@Override
 	protected final void applyAuthHeader(final MutableWSRequest httpRequest) {
 		httpRequest.setHeader(
 			HttpHeaders.AUTHORIZATION,
-			String.format(fmtAuthValue, userName, getSignature(getCanonical(httpRequest)))
+			authPrefixValue + userName + ":" + getSignature(getCanonical(httpRequest))
 		);
 	}
 	//
@@ -193,7 +194,7 @@ extends WSRequestConfigBase<T> {
 			try {
 				producer = new WSBucketProducer<>(bucket, BasicWSObject.class, maxCount, addr);
 			} catch(final NoSuchMethodException e) {
-				LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
+				LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		} else {
 			LOG.debug(

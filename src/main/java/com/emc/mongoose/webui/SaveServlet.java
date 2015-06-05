@@ -50,12 +50,12 @@ extends CommonServlet {
 		try {
 			final PrintWriter writer = response.getWriter();
 			final Scanner scanner = new Scanner(fullFileName);
-			while (scanner.hasNextLine()) {
+			while(scanner.hasNextLine()) {
 				String s = scanner.nextLine();
-				writer.write(s + "\n");
+				writer.write(s + '\n');
 			}
 		} catch (final IOException e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "IOException");
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to write the response");
 		}
 		response.setHeader(CONTENT_TYPE, getServletContext().getMimeType(fullFileName.getName()));
 		response.setHeader(CONTENT_LENGTH, String.valueOf(fullFileName.length()));
@@ -88,10 +88,10 @@ extends CommonServlet {
 			try {
 				props.save(writer);
 			} catch (final ConfigurationException e) {
-				LogUtil.failure(LOG, Level.ERROR, e, "Configuration exception");
+				LogUtil.exception(LOG, Level.ERROR, e, "Configuration exception");
 			}
 		} catch (final IOException e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Failed to write properties to ui config file");
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to write properties to ui config file");
 		}
 	}
 }

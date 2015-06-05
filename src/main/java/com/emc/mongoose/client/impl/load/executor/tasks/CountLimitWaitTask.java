@@ -35,7 +35,7 @@ implements PeriodicTask<Long> {
 	@Override
 	public final void run() {
 		for(final PeriodicTask<Long> nextCountTask : getValueTasks) {
-			if(maxCount <= processedCount.addAndGet(nextCountTask.getLastResult())) {
+			if(nextCountTask.getLastResult() != null && maxCount <= processedCount.addAndGet(nextCountTask.getLastResult())) {
 				try {
 					loadClient.interrupt();
 					LOG.debug(
@@ -43,7 +43,7 @@ implements PeriodicTask<Long> {
 						loadClient, maxCount
 					);
 				} catch(final RemoteException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Failed to shutdown the load client");
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to shutdown the load client");
 				}
 			}
 		}

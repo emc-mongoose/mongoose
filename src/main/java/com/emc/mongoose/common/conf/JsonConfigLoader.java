@@ -54,8 +54,8 @@ public class JsonConfigLoader {
 				jsonMapper.writerWithDefaultPrettyPrinter().writeValue(cfgFile, rootNode);
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(
-				LOG, Level.ERROR, e, String.format("Failed to load properties from \"%s\"", cfgFile)
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to load properties from \"{}\"", cfgFile
 			);
 		}
 	}

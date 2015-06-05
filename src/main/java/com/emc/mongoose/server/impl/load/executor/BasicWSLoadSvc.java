@@ -1,5 +1,6 @@
 package com.emc.mongoose.server.impl.load.executor;
 //
+import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 //
 import com.emc.mongoose.server.impl.load.model.FrameBuffConsumer;
@@ -8,7 +9,6 @@ import com.emc.mongoose.server.api.load.model.ConsumerSvc;
 import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 //
-import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 //
@@ -67,14 +67,15 @@ implements WSLoadSvc<T> {
 		);
 		this.consumer = consumer;
 		try {
-			final ConsumerSvc remoteSvc = ConsumerSvc.class.cast(consumer);
-			final String remoteSvcName = remoteSvc.getName();
-			LOG.debug(LogUtil.MSG, "Name is {}", remoteSvcName);
-			final Service localSvc = ServiceUtils.getLocalSvc(remoteSvcName);
-			if(localSvc == null) {
-				LOG.error(LogUtil.ERR, "Failed to get local service for name {}", remoteSvcName);
-			} else {
-				super.setConsumer((ObjectLoadExecutor<T>) localSvc);
+			if(consumer != null) {
+				final String remoteSvcName = consumer.getName();
+				LOG.debug(LogUtil.MSG, "Name is {}", remoteSvcName);
+				final Service localSvc = ServiceUtils.getLocalSvc(remoteSvcName);
+				if(localSvc == null) {
+					LOG.error(LogUtil.ERR, "Failed to get local service for name {}", remoteSvcName);
+				} else {
+					super.setConsumer((WSLoadExecutor<T>) localSvc);
+				}
 			}
 			LOG.debug(LogUtil.MSG, "Successfully resolved local service and appended it as consumer");
 		} catch(final IOException ee) {
@@ -86,7 +87,7 @@ implements WSLoadSvc<T> {
 	public final T[] takeFrame()
 	throws RemoteException, InterruptedException {
 		T recFrame[] = null;
-		if(RecordFrameBuffer.class.isInstance(consumer)) {
+		if(consumer != null && RecordFrameBuffer.class.isInstance(consumer)) {
 			recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {

@@ -1,15 +1,11 @@
 package com.emc.mongoose.core.api.io.req;
 //
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.entity.ByteArrayEntity;
 /**
  Created by kurila on 04.12.14.
  */
 public interface MutableWSRequest
 extends HttpEntityEnclosingRequest {
-	//
-	HttpEntity EMPTY_CONTENT_ENTITY = new ByteArrayEntity(new byte[]{});
 	//
 	HTTPMethod getMethod();
 	MutableWSRequest setMethod(final HTTPMethod method);

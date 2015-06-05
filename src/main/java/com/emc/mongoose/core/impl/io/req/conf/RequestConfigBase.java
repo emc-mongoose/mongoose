@@ -17,7 +17,9 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 06.06.14.
@@ -44,10 +46,11 @@ implements RequestConfig<T> {
 	protected volatile int
 		port;
 	protected int buffSize;
+	protected int reqSleepMilliSec;
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		LOG.trace(LogUtil.MSG, String.format("New reqconf instance (%d)", hashCode()));
+		LOG.trace(LogUtil.MSG, "New reqconf instance #" + hashCode());
 		api = runTimeConfig.getApiName();
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();
@@ -60,6 +63,7 @@ implements RequestConfig<T> {
 		port = runTimeConfig.getApiTypePort(api);
 		nameSpace = runTimeConfig.getStorageNameSpace();
 		buffSize = (int) runTimeConfig.getDataBufferSize();
+		reqSleepMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 	}
 	//
 	protected RequestConfigBase(final RequestConfig<T> reqConf2Clone) {
@@ -77,6 +81,7 @@ implements RequestConfig<T> {
 			setNameSpace(reqConf2Clone.getNameSpace());
 			secret = reqConf2Clone.getSecret();
 			setBuffSize(reqConf2Clone.getBuffSize());
+			setReqSleepMilliSec(reqConf2Clone.getReqSleepMilliSec());
 			LOG.debug(
 				LogUtil.MSG, "Forked req conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
 			);
@@ -98,7 +103,8 @@ implements RequestConfig<T> {
 			.setScheme(scheme)
 			.setLoadType(loadType)
 			.setNameSpace(nameSpace)
-			.setBuffSize(buffSize);
+			.setBuffSize(buffSize)
+			.setReqSleepMilliSec(reqSleepMilliSec);
 		requestConfigBranch.secret = secret;
 		LOG.debug(
 			LogUtil.MSG, "Forked req conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
@@ -255,6 +261,20 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
+	public final int getReqSleepMilliSec() {
+		return reqSleepMilliSec;
+	}
+	@Override
+	public final RequestConfigBase<T> setReqSleepMilliSec(final int reqSleepMilliSec)
+	throws IllegalArgumentException {
+		if(reqSleepMilliSec < 0) {
+			throw new IllegalArgumentException("Request sleep time shouldn't have a negative value");
+		}
+		this.reqSleepMilliSec = reqSleepMilliSec;
+		return this;
+	}
+	//
+	@Override
 	public RequestConfigBase<T> setProperties(final RunTimeConfig runTimeConfig) {
 		this.runTimeConfig = runTimeConfig;
 		//
@@ -265,7 +285,8 @@ implements RequestConfig<T> {
 		setSecret(this.runTimeConfig.getAuthSecret());
 		setRetries(this.runTimeConfig.getRunRequestRetries());
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
-		setBuffSize((int) this.runTimeConfig.getDataBufferSize());
+		setBuffSize((int)this.runTimeConfig.getDataBufferSize());
+		setReqSleepMilliSec(this.runTimeConfig.getLoadLimitReqSleepMilliSec());
 		return this;
 	}
 	//
@@ -275,44 +296,48 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final void setBuffSize(final int buffSize) {
+	public final RequestConfigBase<T> setBuffSize(final int buffSize) {
 		this.buffSize = buffSize;
+		return this;
 	}
 	//
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
-		out.writeObject(getAPI());
-		out.writeObject(getLoadType());
-		out.writeObject(getScheme());
+		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
+		oos.writeUnshared(getAPI());
+		oos.writeUnshared(getLoadType());
+		oos.writeUnshared(getScheme());
 		out.writeInt(getPort());
-		out.writeObject(getUserName());
-		out.writeObject(getSecret());
-		out.writeObject(getNameSpace());
-		out.writeObject(getDataSource());
+		oos.writeUnshared(getUserName());
+		oos.writeUnshared(getSecret());
+		oos.writeUnshared(getNameSpace());
+		oos.writeUnshared(getDataSource());
 		out.writeBoolean(getRetries());
 		out.writeBoolean(getAnyDataProducerEnabled());
 		out.writeBoolean(getVerifyContentFlag());
+		out.writeInt(getReqSleepMilliSec());
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		setAPI(String.class.cast(in.readObject()));
+		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
+		setAPI(String.class.cast(ois.readUnshared()));
 		LOG.trace(LogUtil.MSG, "Got API {}", api);
-		setLoadType(IOTask.Type.class.cast(in.readObject()));
+		setLoadType(IOTask.Type.class.cast(ois.readUnshared()));
 		LOG.trace(LogUtil.MSG, "Got load type {}", loadType);
-		setScheme(String.class.cast(in.readObject()));
+		setScheme(String.class.cast(ois.readUnshared()));
 		LOG.trace(LogUtil.MSG, "Got scheme {}", scheme);
 		setPort(in.readInt());
 		LOG.trace(LogUtil.MSG, "Got port {}", port);
-		setUserName(String.class.cast(in.readObject()));
+		setUserName(String.class.cast(ois.readUnshared()));
 		LOG.trace(LogUtil.MSG, "Got user name {}", userName);
-		setSecret(String.class.cast(in.readObject()));
+		setSecret(String.class.cast(ois.readUnshared()));
 		LOG.trace(LogUtil.MSG, "Got secret {}", secret);
-		setNameSpace(String.class.cast(in.readObject()));
+		setNameSpace(String.class.cast(ois.readUnshared()));
 		LOG.trace(LogUtil.MSG, "Got namespace {}", secret);
-		setDataSource(DataSource.class.cast(in.readObject()));
+		setDataSource(DataSource.class.cast(ois.readUnshared()));
 		LOG.trace(LogUtil.MSG, "Got data source {}", dataSrc);
 		setRetries(in.readBoolean());
 		LOG.trace(LogUtil.MSG, "Got retry flag {}", retryFlag);
@@ -320,6 +345,8 @@ implements RequestConfig<T> {
 		LOG.trace(LogUtil.MSG, "Got any producer enabled flag {}", anyDataProducerEnabled);
 		setVerifyContentFlag(in.readBoolean());
 		LOG.trace(LogUtil.MSG, "Got verify content flag {}", retryFlag);
+		setReqSleepMilliSec(in.readInt());
+		LOG.trace(LogUtil.MSG, "Got requests sleep time {}", reqSleepMilliSec);
 	}
 	//
 	@Override

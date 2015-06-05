@@ -67,7 +67,7 @@ extends DefaultHandler {
 			try {
 				consumer.shutdown();
 			} catch(final RemoteException e) {
-				LogUtil.failure(
+				LogUtil.exception(
 					LOG, Level.WARN, e, "Failed to limit data items count for remote consumer"
 				);
 			}

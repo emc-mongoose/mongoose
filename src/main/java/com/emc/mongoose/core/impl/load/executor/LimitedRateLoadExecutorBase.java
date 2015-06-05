@@ -23,15 +23,17 @@ extends LoadExecutorBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final float rateLimit;
-	private final int tgtDur, manualMicroSleep;
+	private final int tgtDur;
 	//
 	protected LimitedRateLoadExecutorBase(
+		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final float rateLimit
 	) throws ClassCastException {
 		super(
+			dataCls,
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias
 		);
@@ -46,11 +48,9 @@ extends LoadExecutorBase<T> {
 		} else {
 			tgtDur = 0;
 		}
-		//
-		manualMicroSleep = 1000 * runTimeConfig.getLoadLimitReqSleepMilliSec();
 	}
 	/**
-	 Adds the optional delay calculated from last successfull I/O task duration and the target
+	 Adds the optional delay calculated from last successful I/O task duration and the target
 	 duration
 	 */
 	@Override
@@ -62,9 +62,7 @@ extends LoadExecutorBase<T> {
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(LogUtil.MSG, "Next delay: {}[us]", microDelay);
 				}
-				TimeUnit.MICROSECONDS.sleep(
-					microDelay > manualMicroSleep ? microDelay : manualMicroSleep
-				);
+				TimeUnit.MICROSECONDS.sleep(microDelay);
 			}
 		}
 		super.submit(dataItem);

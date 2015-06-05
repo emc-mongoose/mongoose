@@ -8,13 +8,13 @@ import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.IOControl;
 //
-import java.io.InputStream;
 import java.net.URISyntaxException;
 /**
  Created by kurila on 29.09.14.
@@ -34,8 +34,6 @@ extends ObjectRequestConfig<T> {
 		//
 		VALUE_KEEP_ALIVE = "keep-alive",
 		MSG_TMPL_NOT_SPECIFIED = "Required property \"{}\" is not specifed",
-		MSG_TMPL_RANGE_BYTES = "bytes=%d-%d",
-		MSG_TMPL_RANGE_BYTES_APPEND = "bytes=%d-",
 		MSG_NO_DATA_ITEM = "Data item is not specified",
 		MSG_NO_REQ = "No request specified to apply to";
 		//
@@ -75,10 +73,9 @@ extends ObjectRequestConfig<T> {
 	@Override
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
-	@Override
-	WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr);
-	//
 	HeaderGroup getSharedHeaders();
+	//
+	HttpHost getNodeHost(final String nodeAddr);
 	//
 	String getUserAgent();
 	//

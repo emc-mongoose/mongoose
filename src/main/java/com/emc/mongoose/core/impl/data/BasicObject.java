@@ -1,19 +1,20 @@
 package com.emc.mongoose.core.impl.data;
 // mongoose-common
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.core.api.data.DataObject;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 /**
  Created by kurila on 01.05.14.
  Basic data object implementation extending DataRanges.
  */
 public class BasicObject
-extends DataRanges
+extends RangeLayerData
 implements DataObject {
 	//
 	protected String id = null;
@@ -31,29 +32,8 @@ implements DataObject {
 		super(size);
 	}
 	//
-	public BasicObject(final Long size, final UniformDataSource dataSrc) {
-		super(size, dataSrc);
-	}
-	//
-	public BasicObject(final String id, final Long size) {
-		super(size);
-		this.id = id;
-	}
-	//
-	public BasicObject(final String id, final Long size, final UniformDataSource dataSrc) {
-		super(size, dataSrc);
-		this.id = id;
-	}
-	//
 	public BasicObject(final String id, final Long offset, final long size) {
 		super(offset, size);
-		this.id = id;
-	}
-	//
-	public BasicObject(
-		final String id, final Long offset, final Long size, final UniformDataSource dataSrc
-	) {
-		super(offset, size, dataSrc);
 		this.id = id;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -73,23 +53,31 @@ implements DataObject {
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(id);
+		ObjectOutputStream.class.cast(out).writeUnshared(id);
 	}
 	//
 	@Override
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		id = String.class.cast(in.readObject());
+		id = String.class.cast(ObjectInputStream.class.cast(in).readUnshared());
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable serialization implementation /////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final static String FMT2STR = "%s" + RunTimeConfig.LIST_SEP + "%s";
-	//
+	private final static ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
 	@Override
 	public String toString() {
-		return String.format(FMT2STR, id, super.toString());
+		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();
+		if(strBuilder == null) {
+			strBuilder = new StringBuilder();
+			THR_LOCAL_STR_BUILDER.set(strBuilder);
+		} else {
+			strBuilder.setLength(0); // reset
+		}
+		return strBuilder
+			.append(id) .append(RunTimeConfig.LIST_SEP)
+			.append(super.toString()).toString();
 	}
 	//
 	@Override
@@ -100,7 +88,7 @@ implements DataObject {
 			id = v.substring(0, posSep);
 		} else {
 			throw new IllegalArgumentException(
-				String.format("Failed to get an object id from the string \"%s\"", v)
+				"Failed to get an object id from the string \"" + v + "\""
 			);
 		}
 		super.fromString(v.substring(posSep + 1));

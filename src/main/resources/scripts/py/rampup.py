@@ -37,12 +37,12 @@ def execute(loadBuilder, rampupParams=((),(),())):
 				ThreadContext.put("currentSize", dataItemSizeStr + "-" + str(index))
 				ThreadContext.put("currentThreadCount", str(threadCount))
 				nextChain = chainBuild(
-					loadBuilder, loadTypesChain, False, True, dataItemSize, dataItemSize, threadCount
+					loadBuilder, loadTypesChain, True, dataItemSize, dataItemSize, threadCount
 				)
 				chainExecute(nextChain, False)
 				LOG.debug(LogUtil.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
 			except NumberFormatException as e:
-				LogUtil.failure(LogUtil.ERR, Level.WARN, e, "Failed to parse the next thread count")
+				LogUtil.exception(LogUtil.ERR, Level.WARN, e, "Failed to parse the next thread count")
 #
 if __name__ == "__builtin__":
 	loadBuilder = loadBuilderInit()
@@ -51,6 +51,6 @@ if __name__ == "__builtin__":
 	except InterruptedException as e:
 		LOG.debug(LogUtil.MSG, "Rampup was interrupted")
 	except Throwable as e:
-		LogUtil.failure(LOG, Level.ERROR, e, "Scenario failed")
+		LogUtil.exception(LOG, Level.ERROR, e, "Scenario failed")
 	loadBuilder.close()
 	LOG.info(LogUtil.MSG, "Scenario end")

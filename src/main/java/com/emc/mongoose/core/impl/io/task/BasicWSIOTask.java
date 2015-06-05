@@ -1,47 +1,47 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
-import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.io.HTTPOutputStream;
-import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.io.HTTPInputStream;
 import com.emc.mongoose.common.collections.InstancePool;
+import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
+import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
-import com.emc.mongoose.core.impl.io.req.WSRequestImpl;
-//
-import org.apache.commons.lang.text.StrBuilder;
+import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 //
 import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.nio.ContentDecoder;
-import org.apache.http.nio.ContentEncoder;
-import org.apache.http.nio.IOControl;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
+//
+import org.apache.http.nio.ContentDecoder;
+import org.apache.http.nio.ContentEncoder;
+import org.apache.http.nio.IOControl;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.WritableByteChannel;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 /**
  Created by kurila on 06.06.14.
  */
@@ -51,62 +51,63 @@ implements WSIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static BasicWSIOTask POISON = new BasicWSIOTask() {
-		@Override
-		public final String toString() {
-			return "<POISON>";
-		}
-	};
-	// BEGIN pool related things
-	private final static InstancePool<BasicWSIOTask>
-		POOL_WEB_IO_TASKS = new InstancePool<>(BasicWSIOTask.class);
+	private final HeaderGroup sharedHeaders;
+	private final MutableWSRequest httpRequest = new BasicWSRequest(
+		MutableWSRequest.HTTPMethod.PUT, null, null
+	);
+	private WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	//
-	@SuppressWarnings("unchecked")
-	public static <T extends WSObject> BasicWSIOTask<T> getInstanceFor(
-		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
+	public BasicWSIOTask(final WSLoadExecutor<T> loadExecutor) {
+		super(loadExecutor);
+		//
+		wsReqConf = (WSRequestConfig<T>) reqConf;
+		//final HeaderGroup headers = wsReqConf.getSharedHeaders();
+		sharedHeaders = wsReqConf.getSharedHeaders();
+		/*for(final Header header : headers.getAllHeaders()) {
+			sharedHeaders.updateHeader(header);
+		}*/
+		//
+		if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
+			httpRequest.setMethod(wsReqConf.getHTTPMethod());
+		}
+	}
+	//
+	public final static Map<WSLoadExecutor, InstancePool<BasicWSIOTask>>
+		INSTANCE_POOL_MAP = new HashMap<>();
+	//
+	public static BasicWSIOTask getInstance(
+		final WSLoadExecutor loadExecutor, WSObject dataItem, final String nodeAddr
 	) {
-		final BasicWSIOTask<T> ioTask = (BasicWSIOTask<T>) POOL_WEB_IO_TASKS.take(reqConf, dataItem, nodeAddr);
-		return ioTask;
+		InstancePool<BasicWSIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
+		if(instPool == null) {
+			try {
+				instPool = new InstancePool<>(
+					BasicWSIOTask.class.getConstructor(WSLoadExecutor.class), loadExecutor
+				);
+				INSTANCE_POOL_MAP.put(loadExecutor, instPool);
+			} catch(final NoSuchMethodException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+		//
+		return instPool.take(dataItem, nodeAddr);
 	}
 	//
 	@Override
 	public void release() {
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LogUtil.trace(
-				LOG, Level.TRACE, LogUtil.MSG,
-				String.format("Releasing the task #%d", hashCode())
-			);
-		}
-		resetRequest();
-		POOL_WEB_IO_TASKS.release(this);
-	}
-	// END pool related things
-	private WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
-	private HeaderGroup sharedHeaders = null;
-	private final MutableWSRequest httpRequest = new WSRequestImpl(
-		MutableWSRequest.HTTPMethod.PUT, null, null
-	);
-	private volatile HttpEntity reqEntity = null;
-	private volatile BasicHttpContext httpContext = null;
-	//
-	@Override
-	public synchronized WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
-		if(reqConf != null && !reqConf.equals(wsReqConf)) {
-			this.wsReqConf = (WSRequestConfig<T>) reqConf;
-			//
-			final HeaderGroup headers = wsReqConf.getSharedHeaders();
-			sharedHeaders = new HeaderGroup();
-			for(final Header header : headers.getAllHeaders()) {
-				sharedHeaders.updateHeader(header);
+		final InstancePool<BasicWSIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
+		if(instPool == null) {
+			throw new IllegalStateException("No pool found to release back");
+		} else {
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(
+					LogUtil.MSG,
+					"Releasing the task #{} back into the pool for {}: {}",
+					hashCode(), loadExecutor, instPool.toString()
+				);
 			}
-			//
-			if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
-				httpRequest.setMethod(wsReqConf.getHTTPMethod());
-			}
-			//
-			super.setRequestConfig(reqConf);
+			instPool.release(this);
 		}
-		return this;
 	}
 	//
 	@Override
@@ -115,45 +116,16 @@ implements WSIOTask<T> {
 			super.setDataItem(dataItem);
 			wsReqConf.applyDataItem(httpRequest, dataItem);
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to apply data item");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply data item");
 		}
 		return this;
 	}
 	//
-	private final static Map<String, HttpHost> HTTP_HOST_MAP = new ConcurrentHashMap<>();
 	@Override
 	public final WSIOTask<T> setNodeAddr(final String nodeAddr)
 	throws IllegalStateException {
 		super.setNodeAddr(nodeAddr);
-		HttpHost tgtHost = null;
-		if(HTTP_HOST_MAP.containsKey(nodeAddr)) {
-			tgtHost = HTTP_HOST_MAP.get(nodeAddr);
-		} else if(nodeAddr != null) {
-			if(nodeAddr.contains(RequestConfig.HOST_PORT_SEP)) {
-				try {
-					final String nodeAddrParts[] = nodeAddr.split(RequestConfig.HOST_PORT_SEP);
-					if(nodeAddrParts.length == 2) {
-						tgtHost = new HttpHost(
-							nodeAddrParts[0],
-							Integer.valueOf(nodeAddrParts[1]), wsReqConf.getScheme()
-						);
-					} else {
-						throw new InterruptedException("Stop due to irrecoverable failure");
-					}
-				} catch(final Exception e) {
-					LogUtil.failure(
-						LOG, Level.WARN, e,
-						String.format("Invalid syntax of storage address \"%s\"", nodeAddr)
-					);
-					throw new IllegalStateException("Stop due to unrecoverable failure");
-				}
-			} else {
-				tgtHost = new HttpHost(
-					nodeAddr, wsReqConf.getPort(), wsReqConf.getScheme()
-				);
-			}
-			HTTP_HOST_MAP.put(nodeAddr, tgtHost);
-		}
+		final HttpHost tgtHost = wsReqConf.getNodeHost(nodeAddr);
 		if(tgtHost != null) {
 			httpRequest.setUriAddr(tgtHost.toURI());
 			httpRequest.setHeader(HTTP.TARGET_HOST, nodeAddr);
@@ -176,7 +148,7 @@ implements WSIOTask<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final HttpHost getTarget() {
-		return HTTP_HOST_MAP.get(nodeAddr);
+		return wsReqConf.getNodeHost(nodeAddr);
 	}
 	//
 	@Override
@@ -184,15 +156,8 @@ implements WSIOTask<T> {
 	throws IOException, HttpException {
 		try {
 			wsReqConf.applyHeadersFinally(httpRequest);
-			reqEntity = httpRequest.getEntity();
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(
-					LogUtil.MSG, "Task #{}: generating the request w/ {} bytes of content",
-					hashCode(), reqEntity == null ? "NO" : reqEntity.getContentLength()
-				);
-			}
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to apply the final headers");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply the final headers");
 		}
 		reqTimeStart = System.nanoTime() / 1000;
 		return httpRequest;
@@ -201,43 +166,25 @@ implements WSIOTask<T> {
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		if(reqEntity != null) {
-			/*final ByteBuffer bb = ByteBuffer.allocate(reqConf.getBuffSize());
-			final byte buff[] = bb.array();*/
-			long contentLength = reqEntity.getContentLength();
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.MSG, "Task #{}, write out {} bytes", hashCode(), contentLength);
-			}
-			/*long byteCountDown = contentLength;
-			int n;
-			try(final InputStream dataStream = reqEntity.getContent()) {
-				while(byteCountDown > 0) {
-					n = byteCountDown < buff.length ? (int) byteCountDown : buff.length;
-					if(0 >= dataStream.read(buff, 0, n)) {
-						break;
-					}
-					bb.rewind().limit(n);
-					while(bb.hasRemaining()) {
-						out.write(bb);
-					}
-					byteCountDown -= n;
-				}*/
-			try(final HTTPOutputStream outStream = HTTPOutputStream.getInstance(out, ioCtl)) {
-				reqEntity.writeTo(outStream);
-			} catch(final InterruptedException e) {
-				LogUtil.failure(
-					LOG, Level.DEBUG, e,
-					"Failed to get the HTTP output stream instance from the instance pool"
-				);
-			} finally {
-				out.complete();
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(
-						LogUtil.MSG, "Task #{}: {} bytes written out",
-						hashCode(), contentLength
-					);
+		try(final WritableByteChannel chanOut = HTTPContentEncoderChannel.getInstance(out)) {
+			if(httpRequest.getEntity() != null) {
+				if(dataItem.isAppending()) {
+					dataItem.writeAugment(chanOut);
+				} else if(dataItem.hasUpdatedRanges()) {
+					dataItem.writeUpdates(chanOut);
+				} else {
+					dataItem.write(chanOut);
 				}
 			}
+		} catch(final AsynchronousCloseException e) { // probably a manual interruption
+			status = Status.CANCELLED;
+			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
+		} catch(final IOException e) {
+			status = Status.FAIL_IO;
+			LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during the data output");
+		} catch(final Exception e) {
+			status = Status.FAIL_UNKNOWN;
+			LogUtil.exception(LOG, Level.ERROR, e, "Producing content failure");
 		}
 	}
 	//
@@ -251,26 +198,24 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final boolean isRepeatable() {
-		return reqEntity == null || reqEntity.isRepeatable();
+		return WSObject.IS_CONTENT_REPEATABLE;
 	}
 	//
 	@Override @SuppressWarnings("SynchronizeOnNonFinalField")
 	public final void resetRequest() {
 		respStatusCode = -1;
+		status = Status.FAIL_UNKNOWN;
 		exception = null;
-		reqEntity = null;
 		if(httpRequest != null) {
-			synchronized(httpRequest) {
-				httpRequest.clearHeaders();
-				httpRequest.setHeaders(sharedHeaders.getAllHeaders());
-				httpRequest.setEntity(reqEntity);
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(
-						LogUtil.MSG, "Task #{}: reset the request, left headers: {}, shared headers: {}",
-						hashCode(), Arrays.toString(httpRequest.getAllHeaders()),
-						Arrays.toString(sharedHeaders.getAllHeaders())
-					);
-				}
+			httpRequest.clearHeaders();
+			httpRequest.setHeaders(sharedHeaders.getAllHeaders());
+			httpRequest.setEntity(null);
+			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				LOG.trace(
+					LogUtil.MSG, "Task #{}: reset the request, left headers: {}, shared headers: {}",
+					hashCode(), Arrays.toString(httpRequest.getAllHeaders()),
+					Arrays.toString(sharedHeaders.getAllHeaders())
+				);
 			}
 		}
 	}
@@ -298,26 +243,25 @@ implements WSIOTask<T> {
 			final StringBuilder msgBuff = new StringBuilder();
 			//
 			switch(respStatusCode) {
-				case (100):
+				case HttpStatus.SC_CONTINUE:
 					msgBuff.append("\"100/continue\" response is not supported\n");
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
-				case (400):
-					synchronized(LOG) {
-						msgBuff
-							.append("Incorrect request: \"")
-							.append(httpRequest.getRequestLine()).append("\"\n");
-						if(LOG.isTraceEnabled(LogUtil.ERR)) {
-							for(final Header rangeHeader : httpRequest.getAllHeaders()) {
-								msgBuff
-									.append('\t').append(rangeHeader.getName()).append(": ")
-									.append(rangeHeader.getValue()).append('\n');
-							}
+				case HttpStatus.SC_BAD_REQUEST:
+					msgBuff
+						.append("Incorrect request: \"")
+						.append(httpRequest.getRequestLine()).append("\"\n");
+					if(LOG.isTraceEnabled(LogUtil.ERR)) {
+						for(final Header rangeHeader : httpRequest.getAllHeaders()) {
+							msgBuff
+								.append('\t').append(rangeHeader.getName()).append(": ")
+								.append(rangeHeader.getValue()).append('\n');
 						}
 					}
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
-				case (403):
+				case HttpStatus.SC_UNAUTHORIZED:
+				case HttpStatus.SC_FORBIDDEN:
 					msgBuff.append("Access failure for data item: \"").append(dataItem);
 					if(LOG.isTraceEnabled(LogUtil.ERR)) {
 						msgBuff.append("\"\nSource request headers:\n");
@@ -331,103 +275,99 @@ implements WSIOTask<T> {
 							.append(wsReqConf.getCanonical(httpRequest))
 							.append('\n');
 					}
-					this.status = Status.FAIL_AUTH;
+					this.status = Status.RESP_FAIL_AUTH;
 					break;
-				case (404):
+				case HttpStatus.SC_NOT_FOUND:
 					msgBuff
 						.append("Not found: ").append(httpRequest.getUriAddr())
 						.append(httpRequest.getUriPath()).append('\n');
-					this.status = Status.FAIL_NOT_FOUND;
+					this.status = Status.RESP_FAIL_NOT_FOUND;
 					break;
-				case (405):
+				case HttpStatus.SC_METHOD_NOT_ALLOWED:
 					msgBuff
 						.append("The operation is not allowed: \"")
 						.append(httpRequest.getRequestLine())
 						.append("\"\n");
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
-				case (409):
+				case HttpStatus.SC_CONFLICT:
 					msgBuff
 						.append("Conflicting resource modification on \"")
 						.append(httpRequest.getUriPath())
 						.append("\"\n");
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
-				case (411):
+				case HttpStatus.SC_LENGTH_REQUIRED:
 					msgBuff
 						.append("Content length is required\n");
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
-				case (413):
+				case HttpStatus.SC_REQUEST_TOO_LONG:
 					msgBuff
 						.append("Content is too large: ")
 						.append(SizeUtil.formatSize(transferSize))
 						.append('\n');
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
-				case (414):
+				case HttpStatus.SC_REQUEST_URI_TOO_LONG:
 					msgBuff
 						.append("URI is too long: \"")
 						.append(httpRequest.getUriPath()).append("\"\n");
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
-				case (415):
+				case HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE:
 					msgBuff
 						.append("Unsupported media type: \"")
 						.append(httpRequest.getEntity().getContentType())
 						.append("\"\n");
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
-				case (416):
-					synchronized(LOG) {
-						msgBuff.append("Incorrect range\n");
-						if(LOG.isTraceEnabled(LogUtil.ERR)) {
-							for(
-								final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)
-							) {
-								msgBuff
-									.append("Incorrect range ").append(rangeHeader.getValue())
-									.append(" for data item ").append(dataItem.getId())
-									.append('\n');
-							}
+				case HttpStatus.SC_REQUESTED_RANGE_NOT_SATISFIABLE:
+					msgBuff.append("Incorrect range\n");
+					if(LOG.isTraceEnabled(LogUtil.ERR)) {
+						for(final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)) {
+							msgBuff
+								.append("Incorrect range ").append(rangeHeader.getValue())
+								.append(" for data item ").append(dataItem.getId())
+								.append('\n');
 						}
 					}
-					this.status = Status.FAIL_CLIENT;
+					this.status = Status.RESP_FAIL_CLIENT;
 					break;
-				case (429):
+				case 429:
 					msgBuff.append("Storage prays about a mercy\n");
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
-				case (500):
+				case HttpStatus.SC_INTERNAL_SERVER_ERROR:
 					msgBuff.append("Storage internal failure\n");
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
-				case (501):
+				case HttpStatus.SC_NOT_IMPLEMENTED:
 					msgBuff.append("Not implemented\n");
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
-				case (502):
+				case HttpStatus.SC_BAD_GATEWAY:
 					msgBuff.append("Bad gateway\n");
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
-				case (503):
+				case HttpStatus.SC_SERVICE_UNAVAILABLE:
 					msgBuff.append("Storage prays about a mercy\n");
-					this.status = Status.FAIL_SVC;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
-				case (504):
+				case HttpStatus.SC_GATEWAY_TIMEOUT:
 					msgBuff.append("Gateway timeout\n");
 					this.status = Status.FAIL_TIMEOUT;
 					break;
-				case (505):
+				case HttpStatus.SC_HTTP_VERSION_NOT_SUPPORTED:
 					msgBuff
 						.append("HTTP version is not supported: ")
 						.append(httpRequest.getProtocolVersion())
 						.append("\n");
-					this.status = Status.FAIL_TIMEOUT;
+					this.status = Status.RESP_FAIL_SVC;
 					break;
-				case (507):
+				case HttpStatus.SC_INSUFFICIENT_STORAGE:
 					msgBuff.append("Not enough space is left on the storage\n");
-					this.status = Status.FAIL_NO_SPACE;
+					this.status = Status.RESP_FAIL_SPACE;
 					break;
 				default:
 					msgBuff
@@ -437,11 +377,13 @@ implements WSIOTask<T> {
 					break;
 			}
 			//
-			LOG.debug(
-				LogUtil.ERR, "Task #{}: {}{}/{} <- {} {}{}",
-				hashCode(), msgBuff, respStatusCode, status.getReasonPhrase(),
-				httpRequest.getMethod(), httpRequest.getUriAddr(), httpRequest.getUriPath()
-			);
+			if(LOG.isDebugEnabled(LogUtil.ERR)) {
+				LOG.debug(
+					LogUtil.ERR, "Task #{}: {}{}/{} <- {} {}{}",
+					hashCode(), msgBuff, respStatusCode, status.getReasonPhrase(),
+					httpRequest.getMethod(), httpRequest.getUriAddr(), httpRequest.getUriPath()
+				);
+			}
 		} else {
 			this.status = Status.SUCC;
 			wsReqConf.receiveResponse(response, dataItem);
@@ -449,26 +391,26 @@ implements WSIOTask<T> {
 	}
 	//
 	@Override
-	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl)
-	throws IOException {
+	public final void consumeContent(final ContentDecoder in, final IOControl ioCtl) {
 		if(respStatusCode < 200 || respStatusCode >= 300) { // failure, no big data is expected
-			try(final InputStream inStream = HTTPInputStream.getInstance(in, ioCtl)) {
-				final StrBuilder msgBuilder = new StrBuilder();
-				final byte buff[] = new byte[0x2000];
-				int n;
-				do {
-					n = inStream.read(buff);
-					if(n < 0) {
-						break;
-					}
-					msgBuilder.append(new String(buff, 0, n));
-				} while(!in.isCompleted());
-			} catch(final InterruptedException e) {
-				// ignore
+			final StringBuilder msgBuilder = new StringBuilder();
+			final ByteBuffer bbuff = ByteBuffer.allocate(0x1000);
+			try {
+				while(in.read(bbuff) >= 0) {
+					msgBuilder.append(bbuff.asCharBuffer().toString());
+					bbuff.clear();
+				}
+				if(LOG.isTraceEnabled(LogUtil.ERR)) {
+					LOG.trace(LogUtil.ERR, msgBuilder);
+				}
+			} catch(final IOException e) {
+				if(!wsReqConf.isClosed()) {
+					LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during content consuming");
+				}
 			}
 		} else {
 			if(!wsReqConf.consumeContent(in, ioCtl, dataItem)) { // content corruption
-				status = Status.FAIL_CORRUPT;
+				status = Status.RESP_FAIL_CORRUPT;
 			}
 		}
 	}
@@ -476,22 +418,6 @@ implements WSIOTask<T> {
 	@Override
 	public final void responseCompleted(final HttpContext context) {
 		respTimeDone = System.nanoTime() / 1000;
-		complete();
-	}
-	//
-	@Override
-	public final void failed(final Exception e) {
-		exception = e;
-		/*if(wsReqConf != null && !wsReqConf.isClosed()) {
-			TraceLogger.failure(LOG, Level.WARN, e, "I/O task failure");
-		} else if(
-			ConnectionClosedException.class.isInstance(e) ||
-			IllegalStateException.class.isInstance(e)
-		) {
-			TraceLogger.failure(LOG, Level.TRACE, e, "Looks like dropped I/O task");
-		} else {
-			TraceLogger.failure(LOG, Level.WARN, e, "I/O task failure");
-		}*/
 	}
 	//
 	@Override
@@ -511,6 +437,7 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final boolean cancel() {
+		LOG.debug(LogUtil.MSG, "{}: I/O task cancel", hashCode());
 		return false;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -535,9 +462,28 @@ implements WSIOTask<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void completed(final IOTask.Status status) {
+		complete();
+	}
+	/**
+	 Overrides HttpAsyncRequestProducer.failed(Exception),
+	 HttpAsyncResponseConsumer&lt;IOTask.Status&gt;.failed(Exception) and
+	 FutureCallback&lt;IOTask.Status&gt;.failed(Exception)
+	 @param e
+	 */
+	@Override
+	public final void failed(final Exception e) {
+		if(!wsReqConf.isClosed()) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O task failure", hashCode());
+		}
+		exception = e;
+		status = Status.FAIL_UNKNOWN;
+		complete();
 	}
 	//
 	@Override
 	public final void cancelled() {
+		LOG.debug(LogUtil.MSG, "{}: I/O task canceled", hashCode());
+		status = Status.CANCELLED;
+		complete();
 	}
 }

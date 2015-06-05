@@ -14,7 +14,7 @@ public interface LoadClient<T extends DataItem>
 extends LoadExecutor<T> {
 	String
 		DEFAULT_DOMAIN = "metrics",
-		FMT_MSG_FAIL_FETCH_VALUE = "Failed to fetch the value for \"%s\" from %s",
+		FMT_MSG_FAIL_FETCH_VALUE = "Failed to fetch the value for \"{}\" from {}",
 		KEY_NAME = "name",
 		ATTR_COUNT = "Count",
 		ATTR_MIN = "Min",

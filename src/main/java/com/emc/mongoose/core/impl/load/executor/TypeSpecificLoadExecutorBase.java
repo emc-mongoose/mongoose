@@ -30,12 +30,14 @@ extends LimitedRateLoadExecutorBase<T> {
 	private final float sizeBias;
 	//
 	protected TypeSpecificLoadExecutorBase(
+		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final float rateLimit, final int countUpdPerReq
 	) throws ClassCastException {
 		super(
+			dataCls,
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit
 		);
@@ -83,30 +85,25 @@ extends LimitedRateLoadExecutorBase<T> {
 			case CREATE:
 				if(sizeMin < 0) {
 					throw new IllegalArgumentException(
-						String.format(
-							"Min data item size (%s) is less than zero",
-							SizeUtil.formatSize(sizeMin)
-						)
+						"Min data item size is less than zero: " + SizeUtil.formatSize(sizeMin)
 					);
 				}
 				if(sizeMin > sizeMax) {
 					throw new IllegalArgumentException(
-						String.format(
-							"Min object size (%s) shouldn't be more than max (%s)",
-							SizeUtil.formatSize(sizeMin), SizeUtil.formatSize(sizeMax)
-						)
+						"Min object size shouldn't be more than max: " +
+						SizeUtil.formatSize(sizeMin) + ", " + SizeUtil.formatSize(sizeMax)
 					);
 				}
 				if(sizeBias < 0) {
 					throw new IllegalArgumentException(
-						String.format("Object size bias (%f) should not be less than 0", sizeBias)
+						"Object size bias should not be less than 0: " + sizeBias
 					);
 				}
 				break;
 			case UPDATE:
 				if(countUpdPerReq < 0) {
 					throw new IllegalArgumentException(
-						String.format("Invalid updates per request count: %d", countUpdPerReq)
+						"Invalid updates per request count: " + countUpdPerReq
 					);
 				}
 				break;
