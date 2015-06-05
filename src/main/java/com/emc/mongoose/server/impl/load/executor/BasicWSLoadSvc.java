@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.Collection;
 /**
  Created by kurila on 16.12.14.
  */
@@ -42,7 +43,7 @@ implements WSLoadSvc<T> {
 			sizeMin, sizeMax, sizeBias, rateLimit, countUpdPerReq
 		);
 		// by default, may be overriden later externally:
-		super.setConsumer(new FrameBuffConsumer<T>());
+		super.setConsumer(new FrameBuffConsumer<>(dataCls, runTimeConfig, maxCount));
 	}
 	//
 	@Override
@@ -84,16 +85,16 @@ implements WSLoadSvc<T> {
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final T[] takeFrame()
+	public final Collection<T> takeFrame()
 	throws RemoteException, InterruptedException {
-		T recFrame[] = null;
+		Collection<T> recFrame = null;
 		if(consumer != null && RecordFrameBuffer.class.isInstance(consumer)) {
 			recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
 		}
 		if(LOG.isTraceEnabled(LogUtil.MSG)) {
 			LOG.trace(
 				LogUtil.MSG, "Returning {} data items records",
-				recFrame == null ? 0 : recFrame.length
+				recFrame == null ? 0 : recFrame.size()
 			);
 		}
 		return recFrame;

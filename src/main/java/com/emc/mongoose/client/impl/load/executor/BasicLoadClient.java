@@ -48,6 +48,8 @@ import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -96,7 +98,7 @@ implements LoadClient<T> {
 		taskGetBWMean, taskGetBW1Min, taskGetBW5Min, taskGetBW15Min,
 		taskGetLatencyMed, taskGetLatencyAvg;
 	//
-	private final List<PeriodicTask<T[]>> frameFetchTasks = new ArrayList<>();
+	private final List<PeriodicTask<Collection<T>>> frameFetchTasks = new ArrayList<>();
 	//
 	private final ScheduledExecutorService mgmtConnExecutor;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -351,14 +353,14 @@ implements LoadClient<T> {
 	@Override
 	public void logMetaInfoFrames() {
 		//
-		T[] nextMetaInfoFrame;
-		for(final PeriodicTask<T[]> nextFrameFetchTask : frameFetchTasks) {
+		Collection<T> nextMetaInfoFrame;
+		for(final PeriodicTask<Collection<T>> nextFrameFetchTask : frameFetchTasks) {
 			nextMetaInfoFrame = nextFrameFetchTask.getLastResult();
-			if(nextMetaInfoFrame != null && nextMetaInfoFrame.length > 0) {
+			if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
-						LogUtil.MSG, "Got next metainfo frame: {}",
-						Arrays.toString(nextMetaInfoFrame)
+						LogUtil.MSG, "Got next metainfo frame: containing {} recordds",
+						nextMetaInfoFrame.size()
 					);
 				}
 				for(final T nextMetaInfoRec : nextMetaInfoFrame) {
@@ -437,7 +439,7 @@ implements LoadClient<T> {
 		//
 		for(final String loadSvcAddr : loadSvcAddrs) {
 			nextLoadSvc = remoteLoadMap.get(loadSvcAddr);
-			final PeriodicTask<T[]> nextFrameFetchTask = new FrameFetchPeriodicTask<>(
+			final PeriodicTask<Collection<T>> nextFrameFetchTask = new FrameFetchPeriodicTask<>(
 				nextLoadSvc
 			);
 			frameFetchTasks.add(nextFrameFetchTask);
