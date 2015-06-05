@@ -246,7 +246,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	offset for mongoose v0.4x and 0.5x:
 		final byte dataIdBytes[] = Base64.decodeBase64(dataID);
 		final long offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
-	offset for mongoose versions prior to v.0.4:
+	offset for mongoose versions prior to v0.4:
 		final long offset = Long.valueOf(dataID, 0x10);
 	 */
 	private static long decodeRingBufferOffset(final String dataID)
