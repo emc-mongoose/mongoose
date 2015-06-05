@@ -8,7 +8,7 @@ import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
 import com.emc.mongoose.common.http.RequestTargetHost;
 import com.emc.mongoose.common.io.HTTPContentDecoderChannel;
-import com.emc.mongoose.common.io.StreamUtils;
+import com.emc.mongoose.common.io.IOUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
@@ -18,7 +18,6 @@ import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
 // mongoose-core-impl
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.RangeLayerData;
 import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
@@ -592,7 +591,7 @@ implements WSRequestConfig<T> {
 						} finally {
 							chanIn.close();
 						}
-					} else { // consume the whole data item content - may estimate the buffer size
+					} else { /* consume the whole data item content - may estimate the buffer size
 						ByteBuffer bbuff = THRLOC_BB_RESP_READ.get();
 						final long dataSize = dataItem.getSize();
 						// should I adapt the buffer size?
@@ -607,8 +606,8 @@ implements WSRequestConfig<T> {
 							THRLOC_BB_RESP_READ.set(bbuff);
 						} else {
 							bbuff.clear();
-						}
-						StreamUtils.consumeQuietly(in, ioCtl, bbuff);
+						}*/
+						IOUtils.consumeQuietly(in);
 					}
 				}
 			}
@@ -621,15 +620,15 @@ implements WSRequestConfig<T> {
 			} else {
 				LogUtil.exception(LOG, Level.WARN, e, "Content reading failure");
 			}
-		} finally { // try to read the remaining data if left in the input stream
+		} finally { /* try to read the remaining data if left in the input stream
 			ByteBuffer bbuff = THRLOC_BB_RESP_WRITE.get();
 			if(bbuff == null) {
 				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
 				THRLOC_BB_RESP_WRITE.set(bbuff);
 			} else {
 				bbuff.clear();
-			}
-			StreamUtils.consumeQuietly(in, ioCtl, bbuff);
+			}*/
+			IOUtils.consumeQuietly(in);
 		}
 		return verifyPass;
 	}

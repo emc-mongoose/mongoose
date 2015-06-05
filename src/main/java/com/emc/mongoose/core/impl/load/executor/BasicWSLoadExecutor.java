@@ -4,6 +4,7 @@ import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.http.RequestSharedHeaders;
 import com.emc.mongoose.common.http.RequestTargetHost;
+import com.emc.mongoose.common.io.IOUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
@@ -120,8 +121,8 @@ implements WSLoadExecutor<T> {
 			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize(IOTask.Type.READ.equals(loadType) ? buffSize : BUFF_SIZE_LO)
-			.setSndBufSize(IOTask.Type.READ.equals(loadType) ? BUFF_SIZE_LO : buffSize)
+			.setRcvBufSize(IOTask.Type.READ.equals(loadType) ? buffSize : IOUtils.BUFF_SIZE_LO)
+			.setSndBufSize(IOTask.Type.READ.equals(loadType) ? IOUtils.BUFF_SIZE_LO : buffSize)
 			.setConnectTimeout(thrLocalConfig.getConnTimeOut());
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
@@ -129,7 +130,7 @@ implements WSLoadExecutor<T> {
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
 			.setBufferSize(buffSize)
-			.setFragmentSizeHint(BUFF_SIZE_LO)
+			.setFragmentSizeHint(IOUtils.BUFF_SIZE_LO)
 			.build();
 		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
 			reqExecutor, connConfig

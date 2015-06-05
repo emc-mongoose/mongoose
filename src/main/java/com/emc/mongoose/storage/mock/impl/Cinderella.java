@@ -2,10 +2,10 @@ package com.emc.mongoose.storage.mock.impl;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
+import com.emc.mongoose.common.io.IOUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
@@ -104,8 +104,8 @@ implements Storage<T> {
 		// connection config
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(LoadExecutor.BUFF_SIZE_LO)
-			.setFragmentSizeHint(LoadExecutor.BUFF_SIZE_LO)
+			.setBufferSize(IOUtils.BUFF_SIZE_LO)
+			.setFragmentSizeHint(IOUtils.BUFF_SIZE_LO)
 			.build();
 		final int faultConnCacheSize = runTimeConfig.getStorageMockFaultConnCacheSize();
 		if(faultConnCacheSize > 0) {
