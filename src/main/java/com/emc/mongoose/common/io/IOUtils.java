@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.io;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.http.nio.ContentDecoder;
@@ -46,6 +47,54 @@ public final class IOUtils {
 	//
 	private final static ThreadLocal<Map<Integer, ByteBuffer>>
 		THRLOC_BUFF_SIZE_MAP = new ThreadLocal<>();
+	//
+	public static long consumeQuietly(final ContentDecoder in, final long expectedSize) {
+		long doneByteCount = 0;
+		final int buffSize = (int) Math.max(BUFF_SIZE_LO, Math.min(expectedSize, BUFF_SIZE_HI));
+		int lastByteCount;
+		//
+		Map<Integer, ByteBuffer> buffSizeMap = THRLOC_BUFF_SIZE_MAP.get();
+		if(buffSizeMap == null) {
+			buffSizeMap = new HashMap<>();
+			THRLOC_BUFF_SIZE_MAP.set(buffSizeMap);
+		}
+		//
+		ByteBuffer buff = buffSizeMap.get(buffSize);
+		if(buff == null) {
+			buff = ByteBuffer.allocateDirect(buffSize);
+			buffSizeMap.put(buffSize, buff);
+		}
+		//
+		try {
+			while(in.isCompleted()) {
+				buff.clear();
+				lastByteCount = in.read(buff);
+				if(lastByteCount < 0) {
+					if(doneByteCount < expectedSize) {
+						LOG.warn(
+							LogUtil.MSG, "Expected size {} but got: {}",
+							SizeUtil.formatSize(expectedSize), SizeUtil.formatSize(doneByteCount)
+						);
+					}
+					break;
+				} else if(lastByteCount > 0) {
+					doneByteCount += lastByteCount;
+				}
+			}
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Content reading failure");
+		}
+		//
+		if(doneByteCount > expectedSize) {
+			LOG.warn(
+				LogUtil.MSG, "Expected size {} but got: {}",
+				SizeUtil.formatSize(expectedSize), SizeUtil.formatSize(doneByteCount)
+			);
+		}
+		//
+		return doneByteCount;
+	}
+	//
 	public static long consumeQuietly(final ContentDecoder in) {
 		long doneByteCount = 0;
 		//

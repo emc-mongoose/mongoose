@@ -607,7 +607,7 @@ implements WSRequestConfig<T> {
 						} else {
 							bbuff.clear();
 						}*/
-						IOUtils.consumeQuietly(in);
+						IOUtils.consumeQuietly(in, buffSize);
 					}
 				}
 			}

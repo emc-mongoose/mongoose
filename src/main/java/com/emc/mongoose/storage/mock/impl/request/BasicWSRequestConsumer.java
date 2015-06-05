@@ -28,8 +28,8 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	//private ByteBuffer bbuff = null;
 	private HttpRequest httpRequest = null;
+	private long expectedContentSize = IOUtils.BUFF_SIZE_LO;
 	//
 	public BasicWSRequestConsumer() {
 		super();
@@ -46,28 +46,18 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	//
 	@Override
 	protected final void onEntityEnclosed(final HttpEntity entity, final ContentType contentType) {
-		/*final long dataSize = entity.getContentLength();
-		// adapt the buffer size or reuse existing thread local buffer if any
-		if(dataSize > LoadExecutor.BUFF_SIZE_HI) {
-			if(bbuff == null || bbuff.capacity() != LoadExecutor.BUFF_SIZE_HI) {
-				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_HI);
-			}
-		} else if(dataSize < LoadExecutor.BUFF_SIZE_LO) {
-			if(bbuff == null || bbuff.capacity() != LoadExecutor.BUFF_SIZE_LO) {
-				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
-			}
-		} else {
-			// reallocate only if content length is twice less/more than buffer size
-			if(bbuff == null || dataSize > 2 * bbuff.capacity() || bbuff.capacity() > 2 * dataSize) {
-				bbuff = ByteBuffer.allocate((int) dataSize); // type cast should be safe here
-			}
-		}*/
+		expectedContentSize = entity.getContentLength();
 	}
 	//
 	@Override
 	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
-			final long ingestByteCount = IOUtils.consumeQuietly(decoder);
+			final long ingestByteCount = IOUtils.consumeQuietly(
+				decoder,
+				(int) Math.max(
+					IOUtils.BUFF_SIZE_LO, Math.min(IOUtils.BUFF_SIZE_HI, expectedContentSize)
+				)
+			);
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {
 				LOG.trace(LogUtil.MSG, "Consumed {} bytes", ingestByteCount);
 			}
