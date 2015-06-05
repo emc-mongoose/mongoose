@@ -37,7 +37,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousCloseException;
+import java.nio.channels.ClosedChannelException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -183,7 +183,7 @@ implements WSIOTask<T> {
 					dataItem.write(chanOut);
 				}
 			}
-		} catch(final AsynchronousCloseException e) { // probably a manual interruption
+		} catch(final ClosedChannelException e) { // probably a manual interruption
 			status = Status.CANCELLED;
 			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
 		} catch(final IOException e) {
@@ -412,7 +412,7 @@ implements WSIOTask<T> {
 				if(LOG.isTraceEnabled(LogUtil.ERR)) {
 					LOG.trace(LogUtil.ERR, msgBuilder);
 				}
-			} catch(final AsynchronousCloseException e) { // probably a manual interruption
+			} catch(final ClosedChannelException e) { // probably a manual interruption
 				status = Status.CANCELLED;
 				LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
 			} catch(final IOException e) {

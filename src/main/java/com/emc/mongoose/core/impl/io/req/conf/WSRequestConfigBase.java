@@ -79,8 +79,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousCloseException;
-import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.ClosedChannelException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
@@ -607,7 +606,7 @@ implements WSRequestConfig<T> {
 					}
 				}
 			}
-		} catch(final AsynchronousCloseException e) { // probably a manual interruption
+		} catch(final ClosedChannelException e) { // probably a manual interruption
 			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
 		} catch(final IOException e) {
 			verifyPass = false;
