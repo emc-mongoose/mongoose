@@ -29,9 +29,6 @@ implements WritableByteChannel {
 		if(contentEncoder == null) {
 			throw new IOException("The channel is not ready for the output");
 		}
-		if(contentEncoder.isCompleted()) {
-			throw new IOException("The channel output has been done completely already");
-		}
 		return contentEncoder.write(src);
 	}
 	//

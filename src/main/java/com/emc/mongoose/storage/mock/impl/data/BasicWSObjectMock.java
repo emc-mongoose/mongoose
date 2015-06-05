@@ -69,7 +69,7 @@ implements WSObjectMock {
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
 		if(maskRangesPending.isEmpty()) {
-			super.write(chanOut);
+			write(chanOut, 0, size);
 		} else {
 			for(int i = 0; i < countRangesTotal; i++) {
 				rangeOffset = getRangeOffset(i);

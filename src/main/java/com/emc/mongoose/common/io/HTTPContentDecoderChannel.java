@@ -26,9 +26,6 @@ implements ReadableByteChannel {
 		if(contentDecoder == null) {
 			throw new IOException("The channel is not ready for the input");
 		}
-		if(contentDecoder.isCompleted()) {
-			throw new IOException("The channel input has been read completely already");
-		}
 		return contentDecoder.read(src);
 	}
 	//
