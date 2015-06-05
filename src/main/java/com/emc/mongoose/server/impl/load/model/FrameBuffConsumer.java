@@ -33,6 +33,8 @@ implements RecordFrameBuffer<T> {
 		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount
 	) {
 		super(dataCls, runTimeConfig, maxCount, true);
+		setName(Thread.currentThread().getName() + "-" + getClass().getSimpleName());
+		start();
 	}
 	//
 	@Override
