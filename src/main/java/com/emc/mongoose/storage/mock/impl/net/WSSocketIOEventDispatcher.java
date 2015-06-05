@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.mock.impl.net;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.io.IOUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 //
@@ -59,8 +59,8 @@ implements Runnable {
 			.setSoReuseAddress(runTimeConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(runTimeConfig.getSocketTimeOut())
 			.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize(IOUtils.BUFF_SIZE_LO)
-			.setSndBufSize(IOUtils.BUFF_SIZE_LO)
+			.setRcvBufSize(Constants.BUFF_SIZE_LO)
+			.setSndBufSize(Constants.BUFF_SIZE_LO)
 			.setConnectTimeout(runTimeConfig.getConnTimeOut())
 			.build();
 		// create the server-side I/O reactor

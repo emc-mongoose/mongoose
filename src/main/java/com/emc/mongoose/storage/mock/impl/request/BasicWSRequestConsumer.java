@@ -2,7 +2,8 @@ package com.emc.mongoose.storage.mock.impl.request;
 //
 //import com.emc.mongoose.common.collections.InstancePool;
 //import com.emc.mongoose.common.collections.Reusable;
-import com.emc.mongoose.common.io.IOUtils;
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.http.protocol.HttpContext;
@@ -29,7 +30,7 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private HttpRequest httpRequest = null;
-	private long expectedContentSize = IOUtils.BUFF_SIZE_LO;
+	private long expectedContentSize = Constants.BUFF_SIZE_LO;
 	//
 	public BasicWSRequestConsumer() {
 		super();
@@ -55,7 +56,7 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 			final long ingestByteCount = IOUtils.consumeQuietly(
 				decoder,
 				(int) Math.max(
-					IOUtils.BUFF_SIZE_LO, Math.min(IOUtils.BUFF_SIZE_HI, expectedContentSize)
+					Constants.BUFF_SIZE_LO, Math.min(Constants.BUFF_SIZE_HI, expectedContentSize)
 				)
 			);
 			if(LOG.isTraceEnabled(LogUtil.MSG)) {

@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.mock.impl.response;
 //
 //import com.emc.mongoose.common.collections.InstancePool;
 //import com.emc.mongoose.common.collections.Reusable;
-import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
+import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
@@ -28,7 +28,7 @@ implements HttpAsyncResponseProducer {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile HttpResponse response = null;
-	private final HTTPContentEncoderChannel chanOut = new HTTPContentEncoderChannel();
+	private final OutputChannel chanOut = new OutputChannel();
 	//
 	public final void setResponse(final HttpResponse response) {
 		this.response = response;

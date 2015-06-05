@@ -2,7 +2,7 @@ package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
+import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
@@ -162,14 +162,14 @@ implements WSIOTask<T> {
 		return httpRequest;
 	}
 	//
-	private final static ThreadLocal<HTTPContentEncoderChannel>
+	private final static ThreadLocal<OutputChannel>
 		THRLOC_CHAN_OUT = new ThreadLocal<>();
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		HTTPContentEncoderChannel chanOut = THRLOC_CHAN_OUT.get();
+		OutputChannel chanOut = THRLOC_CHAN_OUT.get();
 		if(chanOut == null) {
-			chanOut = new HTTPContentEncoderChannel();
+			chanOut = new OutputChannel();
 			THRLOC_CHAN_OUT.set(chanOut);
 		}
 		chanOut.setContentEncoder(out);

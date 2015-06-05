@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.io;
+package com.emc.mongoose.common.net.http.content;
 //
 //import com.emc.mongoose.common.collections.InstancePool;
 //import com.emc.mongoose.common.collections.Reusable;
@@ -16,7 +16,7 @@ import java.nio.channels.WritableByteChannel;
 /**
  Created by kurila on 20.05.15.
  */
-public final class HTTPContentEncoderChannel
+public final class OutputChannel
 implements WritableByteChannel {
 	//
 	private final static Logger LOG = LogManager.getLogger();

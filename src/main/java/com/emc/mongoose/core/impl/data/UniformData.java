@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.data;
 //
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.io.IOUtils;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
@@ -201,7 +201,7 @@ implements DataItem {
 		//
 		final ByteBuffer inBuff = ByteBuffer.allocate(
 			(int) Math.min(
-				IOUtils.BUFF_SIZE_HI, Math.max(IOUtils.BUFF_SIZE_LO, len)
+				Constants.BUFF_SIZE_HI, Math.max(Constants.BUFF_SIZE_LO, len)
 			)
 		);
 		long doneByteCount = 0;

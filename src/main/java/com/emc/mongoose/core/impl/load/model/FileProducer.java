@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.load.model;
 //mongoose-common.jar
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.io.IOUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 //mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.model.Consumer;
@@ -46,7 +46,7 @@ implements Producer<T> {
 	private final long maxCount;
 	private final boolean compressed;
 	//
-	private long approxDataItemsSize = IOUtils.BUFF_SIZE_LO;
+	private long approxDataItemsSize = Constants.BUFF_SIZE_LO;
 	private Consumer<T> consumer = null;
 	//
 	@SuppressWarnings("unchecked")

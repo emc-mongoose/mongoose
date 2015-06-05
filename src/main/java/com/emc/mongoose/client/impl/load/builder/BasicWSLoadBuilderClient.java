@@ -1,6 +1,6 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
-import com.emc.mongoose.common.io.IOUtils;
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
@@ -89,10 +89,10 @@ implements WSLoadBuilderClient<T, U> {
 				// adjusting the buffer size for the expected data items size
 				final long approxDataItemsSize = srcProducer.getApproxDataItemsSize();
 				reqConf.setBuffSize(
-					approxDataItemsSize < IOUtils.BUFF_SIZE_LO ?
-						IOUtils.BUFF_SIZE_LO :
-						approxDataItemsSize > IOUtils.BUFF_SIZE_HI ?
-							IOUtils.BUFF_SIZE_HI : (int) approxDataItemsSize
+					approxDataItemsSize < Constants.BUFF_SIZE_LO ?
+						Constants.BUFF_SIZE_LO :
+						approxDataItemsSize > Constants.BUFF_SIZE_HI ?
+							Constants.BUFF_SIZE_HI : (int) approxDataItemsSize
 				);
 			} catch(final NoSuchMethodException | IOException e) {
 				LOG.error(LogUtil.ERR, "Failure", e);

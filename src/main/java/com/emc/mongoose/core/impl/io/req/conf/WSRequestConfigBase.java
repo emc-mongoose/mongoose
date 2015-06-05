@@ -5,10 +5,10 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
-import com.emc.mongoose.common.http.RequestSharedHeaders;
-import com.emc.mongoose.common.http.RequestTargetHost;
-import com.emc.mongoose.common.io.HTTPContentDecoderChannel;
-import com.emc.mongoose.common.io.IOUtils;
+import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
+import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
+import com.emc.mongoose.common.net.http.content.InputChannel;
+import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
@@ -172,8 +172,8 @@ implements WSRequestConfig<T> {
 		// create HTTP client
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
 			.create()
-			.add(new RequestSharedHeaders(sharedHeaders))
-			.add(new RequestTargetHost())
+			.add(new SharedHeadersAdder(sharedHeaders))
+			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
 				//.add(new RequestExpectContinue(true))
@@ -569,7 +569,7 @@ implements WSRequestConfig<T> {
 	private final static ThreadLocal<ByteBuffer>
 		THRLOC_BB_RESP_WRITE = new ThreadLocal<>(),
 		THRLOC_BB_RESP_READ = new ThreadLocal<>();
-	private final static ThreadLocal<HTTPContentDecoderChannel>
+	private final static ThreadLocal<InputChannel>
 		THRLOC_CHAN_IN = new ThreadLocal<>();
 	@Override
 	public final boolean consumeContent(
@@ -580,9 +580,9 @@ implements WSRequestConfig<T> {
 			if(dataItem != null) {
 				if(loadType == IOTask.Type.READ) { // read
 					if(verifyContentFlag) { // read and do verify
-						HTTPContentDecoderChannel chanIn = THRLOC_CHAN_IN.get();
+						InputChannel chanIn = THRLOC_CHAN_IN.get();
 						if(chanIn == null) {
-							chanIn = new HTTPContentDecoderChannel();
+							chanIn = new InputChannel();
 							THRLOC_CHAN_IN.set(chanIn);
 						}
 						chanIn.setContentDecoder(in);
