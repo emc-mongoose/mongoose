@@ -193,6 +193,7 @@ implements WSIOTask<T> {
 			status = Status.FAIL_UNKNOWN;
 			LogUtil.exception(LOG, Level.ERROR, e, "Producing content failure");
 		} finally {
+			out.complete();
 			chanOut.close();
 		}
 	}

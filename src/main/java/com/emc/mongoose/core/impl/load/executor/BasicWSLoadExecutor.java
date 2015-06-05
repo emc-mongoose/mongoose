@@ -128,8 +128,8 @@ implements WSLoadExecutor<T> {
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(buffSize > (2 * BUFF_SIZE_LO) ? buffSize / 2 : buffSize)
-			.setFragmentSizeHint(buffSize > (2 * BUFF_SIZE_LO) ? buffSize / 2 : buffSize)
+			.setBufferSize(buffSize)
+			.setFragmentSizeHint(BUFF_SIZE_LO)
 			.build();
 		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
 			reqExecutor, connConfig

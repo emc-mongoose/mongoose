@@ -52,7 +52,8 @@ public final class StreamUtils {
 				}
 				bbuff.clear();
 			}
-		} catch(final IOException ignore) {
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Content reading failure");
 		}
 		return sum;
 	}

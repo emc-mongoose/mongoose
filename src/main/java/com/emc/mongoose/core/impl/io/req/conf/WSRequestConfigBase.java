@@ -558,6 +558,12 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public void receiveResponse(final HttpResponse response, final T dataItem) {
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(
+				LogUtil.MSG, "Got response with {} bytes of payload data",
+				response.getFirstHeader(HttpHeaders.CONTENT_LENGTH).getValue()
+			);
+		}
 		// may invoke applyObjectId in some implementations
 	}
 	//

@@ -179,12 +179,9 @@ implements DataItem {
 			n = chanDst.write(ringBuff);
 			if(n < 0) {
 				LOG.warn(LogUtil.ERR, "Channel returned {} as written byte count", n);
-			} else {
+			} else if(n > 0) {
 				writtenCount += n;
 			}
-		}
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "{}: written {} bytes to the channel", toString(), writtenCount);
 		}
 	}
 	//
@@ -225,8 +222,7 @@ implements DataItem {
 					Long.toString(offset, DataObject.ID_RADIX), size, relOffset + doneByteCount
 				);
 				return false;
-			} else {
-				//
+			} else if(n > 0) {
 				inBuff.flip();
 				//
 				for(m = 0; m < n; m ++) {

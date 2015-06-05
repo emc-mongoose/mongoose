@@ -24,7 +24,10 @@ implements ReadableByteChannel {
 	public final int read(final ByteBuffer src)
 	throws IOException {
 		if(contentDecoder == null) {
-			throw new IOException("The input channel is not ready");
+			throw new IOException("The channel is not ready for the input");
+		}
+		if(contentDecoder.isCompleted()) {
+			throw new IOException("The channel input has been read completely already");
 		}
 		return contentDecoder.read(src);
 	}

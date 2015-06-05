@@ -27,7 +27,10 @@ implements WritableByteChannel {
 	public final int write(final ByteBuffer src)
 	throws IOException {
 		if(contentEncoder == null) {
-			throw new IOException("Output channel is not ready");
+			throw new IOException("The channel is not ready for the output");
+		}
+		if(contentEncoder.isCompleted()) {
+			throw new IOException("The channel output has been done completely already");
 		}
 		return contentEncoder.write(src);
 	}
@@ -36,14 +39,13 @@ implements WritableByteChannel {
 	public final void close()
 	throws IOException {
 		if(contentEncoder != null) {
-			contentEncoder.complete();
 			contentEncoder = null;
 		}
 	}
 	//
 	@Override
 	public final boolean isOpen() {
-		return contentEncoder != null && !contentEncoder.isCompleted();
+		return contentEncoder != null;
 	}
 	//
 	public final void setContentEncoder(final ContentEncoder contentEncoder) {

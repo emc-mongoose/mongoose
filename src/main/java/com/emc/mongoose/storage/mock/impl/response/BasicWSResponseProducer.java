@@ -51,6 +51,7 @@ implements HttpAsyncResponseProducer {
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Content producing failure");
 		} finally {
+			encoder.complete();
 			chanOut.close();
 		}
 	}
