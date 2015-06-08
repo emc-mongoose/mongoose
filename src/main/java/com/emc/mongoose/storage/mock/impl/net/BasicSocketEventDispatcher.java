@@ -28,7 +28,7 @@ import java.net.InetSocketAddress;
 /**
  Created by kurila on 13.05.15.
  */
-public final class WSSocketIOEventDispatcher
+public final class BasicSocketEventDispatcher
 extends DefaultHttpServerIODispatch
 implements Runnable {
 	//
@@ -39,7 +39,7 @@ implements Runnable {
 	private final IOReactorConfig ioReactorConf;
 	private final IOStats ioStats;
 	//
-	public WSSocketIOEventDispatcher(
+	public BasicSocketEventDispatcher(
 		final RunTimeConfig runTimeConfig,
 		final HttpAsyncService protocolHandler, final int port,
 		final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory,
@@ -148,7 +148,7 @@ implements Runnable {
 	//
 	@Override
 	public final String toString() {
-		return WSSocketIOEventDispatcher.class.getSimpleName() + ":" + socketAddress.getPort();
+		return BasicSocketEventDispatcher.class.getSimpleName() + ":" + socketAddress.getPort();
 	}
 	//
 }

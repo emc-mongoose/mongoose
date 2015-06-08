@@ -43,7 +43,7 @@ public final class IOUtils {
 		}
 		//
 		try {
-			while(in.isCompleted()) {
+			while(!in.isCompleted()) {
 				buff.clear();
 				lastByteCount = in.read(buff);
 				if(lastByteCount < 0) {

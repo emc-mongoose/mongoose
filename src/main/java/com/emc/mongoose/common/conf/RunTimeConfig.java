@@ -431,12 +431,12 @@ implements Externalizable {
 		return getInt("storage.mock.ioThreadsPerSocket");
 	}
 	//
-	public final int getStorageMockFaultPeriodSec() {
-		return getInt("storage.mock.fault.periodSec");
+	public final int getStorageMockMinConnLifeMilliSec() {
+		return getInt("storage.mock.fault.minConnLifeMilliSec");
 	}
 	//
-	public final int getStorageMockFaultConnCacheSize() {
-		return getInt("storage.mock.fault.connCacheSize");
+	public final int getStorageMockMaxConnLifeMilliSec() {
+		return getInt("storage.mock.fault.maxConnLifeMilliSec");
 	}
 	//
 	public final String getDataBufferRingSeed() {

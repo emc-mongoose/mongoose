@@ -6,6 +6,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import org.apache.http.nio.protocol.HttpAsyncResponseProducer;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;

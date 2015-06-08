@@ -203,8 +203,8 @@
 				"ioThreadsPerSocket": 100,
 				"capacity": 10000000,
 				"fault": {
-					"connCacheSize": 0,
-					"periodSec": 10
+					"minConnLifeMilliSec": 0,
+					"maxConnLifeMilliSec": 0
 				}
 			},
 			"fsAccess": false,

@@ -78,14 +78,14 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		this.ioStats = sharedStorage.getStats();
 	}
 	//
-	private final static ThreadLocal<HttpAsyncRequestConsumer<HttpRequest>>
+	private final static ThreadLocal<BasicWSRequestConsumer>
 		THRLOC_REQ_CONSUMER = new ThreadLocal<>();
 	@Override
 	public final HttpAsyncRequestConsumer<HttpRequest> processRequest(
 		final HttpRequest request, final HttpContext context
 	) throws HttpException, IOException {
 		try {
-			HttpAsyncRequestConsumer<HttpRequest> reqConsumer = THRLOC_REQ_CONSUMER.get();
+			BasicWSRequestConsumer reqConsumer = THRLOC_REQ_CONSUMER.get();
 			if(reqConsumer == null) {
 				reqConsumer = new BasicWSRequestConsumer();
 				THRLOC_REQ_CONSUMER.set(reqConsumer);

@@ -13,10 +13,10 @@ import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
-import com.emc.mongoose.storage.mock.impl.net.WSSocketIOEventDispatcher;
+import com.emc.mongoose.storage.mock.impl.net.BasicSocketEventDispatcher;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.request.APIRequestHandlerMapper;
-import com.emc.mongoose.storage.mock.impl.net.WSMockConnFactory;
+import com.emc.mongoose.storage.mock.impl.net.BasicWSMockConnFactory;
 import com.emc.mongoose.storage.mock.impl.stats.BasicIOStats;
 //
 import org.apache.commons.collections4.map.LRUMap;
@@ -34,7 +34,6 @@ import org.apache.http.protocol.ResponseContent;
 import org.apache.http.protocol.ResponseServer;
 //
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
-import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
 import org.apache.http.nio.NHttpConnectionFactory;
 import org.apache.http.nio.protocol.HttpAsyncRequestHandlerMapper;
 import org.apache.http.nio.protocol.HttpAsyncService;
@@ -104,15 +103,10 @@ implements Storage<T> {
 		// connection config
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(Constants.BUFF_SIZE_LO)
+			.setBufferSize(2 * Constants.BUFF_SIZE_LO)
 			.setFragmentSizeHint(Constants.BUFF_SIZE_LO)
 			.build();
-		final int faultConnCacheSize = runTimeConfig.getStorageMockFaultConnCacheSize();
-		if(faultConnCacheSize > 0) {
-			connFactory = new WSMockConnFactory(runTimeConfig, connConfig);
-		} else {
-			connFactory = new DefaultNHttpServerConnectionFactory(connConfig);
-		}
+		connFactory = new BasicWSMockConnFactory(runTimeConfig, connConfig);
 		// Set up the HTTP protocol processor
 		final HttpProcessor httpProc = HttpProcessorBuilder.create()
 			.add( // this is a date header generator below
@@ -186,7 +180,7 @@ implements Storage<T> {
 		for(int nextPort = portStart; nextPort < portStart + countHeads; nextPort ++){
 			try {
 				multiSocketSvc.submit(
-					new WSSocketIOEventDispatcher(
+					new BasicSocketEventDispatcher(
 						runTimeConfig, protocolHandler, nextPort, connFactory, ioStats
 					)
 				);
