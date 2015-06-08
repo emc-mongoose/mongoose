@@ -61,12 +61,12 @@ extends DefaultNHttpServerConnection {
 				// probe the input buffer for size limit
 				socket.setReceiveBufferSize(Constants.BUFF_SIZE_HI);
 				maxInBuffSize = socket.getReceiveBufferSize();
-				LOG.info(LogUtil.MSG, "{}: max IN buffer size is {}", this, SizeUtil.formatSize(maxInBuffSize));
+				LOG.debug(LogUtil.MSG, "{}: max IN buffer size is {}", this, SizeUtil.formatSize(maxInBuffSize));
 				socket.setReceiveBufferSize(Constants.BUFF_SIZE_LO); // reset back to the default
 				// probe the output buffer for size limit
 				socket.setSendBufferSize(Constants.BUFF_SIZE_HI);
 				maxOutBuffSize = socket.getSendBufferSize();
-				LOG.info(LogUtil.MSG, "{}: max OUT buffer size is {}", this, SizeUtil.formatSize(maxOutBuffSize));
+				LOG.debug(LogUtil.MSG, "{}: max OUT buffer size is {}", this, SizeUtil.formatSize(maxOutBuffSize));
 				socket.setSendBufferSize(Constants.BUFF_SIZE_LO); // reset back to the default
 				//
 				socket.setPerformancePreferences(0, 1, 2);
