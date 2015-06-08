@@ -17,6 +17,7 @@ import org.apache.http.nio.NHttpMessageWriterFactory;
 import org.apache.http.nio.reactor.IOSession;
 import org.apache.http.nio.util.ByteBufferAllocator;
 //
+import org.apache.http.nio.util.HeapByteBufferAllocator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +34,8 @@ extends DefaultNHttpServerConnection {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	private final int maxInBuffSize, maxOutBuffSize;
+	//
 	public BasicWSMockConnection(
 		final IOSession session, final int buffersize, final int fragmentSizeHint,
 		final ByteBufferAllocator allocator, final CharsetDecoder chardecoder,
@@ -47,17 +50,47 @@ extends DefaultNHttpServerConnection {
 			incomingContentStrategy, outgoingContentStrategy, requestParserFactory,
 			responseWriterFactory
 		);
+		// get the socket
+		final Socket socket = getSocket();
+		if(socket == null) {
+			LOG.warn(LogUtil.ERR, "No socket available to probe the I/O buffers for size limits");
+			maxInBuffSize = Constants.BUFF_SIZE_HI;
+			maxOutBuffSize = Constants.BUFF_SIZE_HI;
+		} else {
+			try {
+				// probe the input buffer for size limit
+				socket.setReceiveBufferSize(Constants.BUFF_SIZE_HI);
+				maxInBuffSize = socket.getReceiveBufferSize();
+				LOG.info(LogUtil.MSG, "{}: max IN buffer size is {}", this, SizeUtil.formatSize(maxInBuffSize));
+				socket.setReceiveBufferSize(Constants.BUFF_SIZE_LO); // reset back to the default
+				// probe the output buffer for size limit
+				socket.setSendBufferSize(Constants.BUFF_SIZE_HI);
+				maxOutBuffSize = socket.getSendBufferSize();
+				LOG.info(LogUtil.MSG, "{}: max OUT buffer size is {}", this, SizeUtil.formatSize(maxOutBuffSize));
+				socket.setSendBufferSize(Constants.BUFF_SIZE_LO); // reset back to the default
+				//
+				socket.setPerformancePreferences(0, 1, 2);
+			} catch(final SocketException e) {
+				throw new IllegalStateException(e);
+			}
+		}
 	}
 	//
 	public BasicWSMockConnection(
 		final IOSession session, final int buffersize, final CharsetDecoder chardecoder,
 		final CharsetEncoder charencoder, final MessageConstraints constraints
 	) {
-		super(session, buffersize, chardecoder, charencoder, constraints);
+		this(
+			session, buffersize, 0, HeapByteBufferAllocator.INSTANCE, chardecoder, charencoder,
+			constraints, null, null, null, null
+		);
 	}
 	//
 	public BasicWSMockConnection(final IOSession session, final int buffersize) {
-		super(session, buffersize);
+		this(
+			session, buffersize, 0, HeapByteBufferAllocator.INSTANCE, null, null, null, null, null,
+			null, null
+		);
 	}
 	//
 	@Override
@@ -74,18 +107,20 @@ extends DefaultNHttpServerConnection {
 			if(contentLenHeader != null) {
 				newBuffSize = (int) Math.max(
 					Constants.BUFF_SIZE_LO,
-					Math.min(Constants.BUFF_SIZE_HI, Long.parseLong(contentLenHeader.getValue()))
+					Math.min(maxInBuffSize, Long.parseLong(contentLenHeader.getValue()))
 				);
 			} else {
 				newBuffSize = Constants.BUFF_SIZE_LO;
 			}
 			//
 			if(lastBuffSize != newBuffSize) {
-				LOG.info(
-					LogUtil.MSG, "{}: IN buffer size {} to {}",
-					socket, SizeUtil.formatSize(lastBuffSize), SizeUtil.formatSize(newBuffSize)
-				);
-				socket.setReceiveBufferSize(newBuffSize);
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.info(
+						LogUtil.MSG, "{}: IN buffer size {} to {}", socket,
+						SizeUtil.formatSize(lastBuffSize), SizeUtil.formatSize(newBuffSize)
+					);
+				}
+				socket.setSendBufferSize(newBuffSize);
 			}
 		} catch(final SocketException | NumberFormatException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Socket buffer size adjustment failure");
@@ -106,17 +141,19 @@ extends DefaultNHttpServerConnection {
 			if(contentLenHeader != null) {
 				newBuffSize = (int) Math.max(
 					Constants.BUFF_SIZE_LO,
-					Math.min(Constants.BUFF_SIZE_HI, Long.parseLong(contentLenHeader.getValue()))
+					Math.min(maxOutBuffSize, Long.parseLong(contentLenHeader.getValue()))
 				);
 			} else {
 				newBuffSize = Constants.BUFF_SIZE_LO;
 			}
 			//
 			if(lastBuffSize != newBuffSize) {
-				LOG.info(
-					LogUtil.MSG, "{}: OUT buffer size {} to {}",
-					socket, SizeUtil.formatSize(lastBuffSize), SizeUtil.formatSize(newBuffSize)
-				);
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(
+						LogUtil.MSG, "{}: OUT buffer size {} to {}", socket,
+						SizeUtil.formatSize(lastBuffSize), SizeUtil.formatSize(newBuffSize)
+					);
+				}
 				socket.setSendBufferSize(newBuffSize);
 			}
 		} catch(final SocketException | NumberFormatException e) {
