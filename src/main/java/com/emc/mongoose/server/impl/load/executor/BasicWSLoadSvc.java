@@ -1,21 +1,21 @@
 package com.emc.mongoose.server.impl.load.executor;
-//
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
-//
+// mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.model.FrameBuffConsumer;
-//
+// mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.model.ConsumerSvc;
 import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
-//
+// mongoose-core-api.jar
+import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
+import com.emc.mongoose.common.logging.Markers;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

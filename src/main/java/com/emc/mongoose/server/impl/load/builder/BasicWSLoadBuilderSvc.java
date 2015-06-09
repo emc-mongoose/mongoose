@@ -1,21 +1,21 @@
 package com.emc.mongoose.server.impl.load.builder;
-//
+//mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
-//
+//mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-//
+//mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
-//
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
-//
+// mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc;
 //
 import org.apache.logging.log4j.LogManager;

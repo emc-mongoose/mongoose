@@ -1,10 +1,10 @@
 package com.emc.mongoose.storage.mock.impl.net;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-//
 import com.emc.mongoose.common.logging.Markers;
+//
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
 import org.apache.http.config.ConnectionConfig;

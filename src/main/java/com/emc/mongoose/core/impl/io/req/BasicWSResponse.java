@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.io.req;
-//
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.MutableWSResponse;
+//
 import org.apache.http.HttpEntity;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.ReasonPhraseCatalog;

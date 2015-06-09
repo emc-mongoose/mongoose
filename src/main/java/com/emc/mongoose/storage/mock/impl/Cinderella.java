@@ -1,16 +1,16 @@
 package com.emc.mongoose.storage.mock.impl;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-//
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-//
 import com.emc.mongoose.core.api.load.model.AsyncConsumer;
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
-//
+// mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;

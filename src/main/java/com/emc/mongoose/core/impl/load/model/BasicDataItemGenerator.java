@@ -1,12 +1,12 @@
 package com.emc.mongoose.core.impl.load.model;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
-//
-import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

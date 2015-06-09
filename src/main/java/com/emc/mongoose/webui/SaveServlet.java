@@ -1,11 +1,11 @@
 package com.emc.mongoose.webui;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.conf.JsonConfigLoader;
-//
 import com.emc.mongoose.common.logging.Markers;
+//
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 //

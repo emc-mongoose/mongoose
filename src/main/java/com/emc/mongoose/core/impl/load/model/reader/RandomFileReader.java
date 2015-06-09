@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.load.model.reader;
-//mongoose-common.jar
+// mongoose-common.jar
 import com.emc.mongoose.common.logging.Markers;
-//mongoose-core-impl.jar
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.reader.io.LineReader;
 import com.emc.mongoose.core.impl.load.model.reader.util.Randomizer;
 //
@@ -17,12 +17,13 @@ import java.util.Vector;
 public final class RandomFileReader
 implements AutoCloseable{
 
-	private static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
 	private final LineReader reader;
 	private final Vector<String> linesBuffer;
-	private final Randomizer random;
 	private final long maxCount;
+	private final Randomizer random;
+
 	private long count;
 	private boolean isEOF;
 
@@ -34,8 +35,8 @@ implements AutoCloseable{
 
 		this.reader = reader;
 		this.linesBuffer = new Vector<>(batchSize);
-		this.random = random;
 		this.maxCount = maxCount;
+		this.random = random;
 
 		count = 0;
 		isEOF = false;

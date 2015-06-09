@@ -1,15 +1,15 @@
 package com.emc.mongoose.core.impl.load.builder;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-//
-import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.commons.configuration.ConversionException;
 //

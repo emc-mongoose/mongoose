@@ -1,8 +1,8 @@
 package com.emc.mongoose.common.conf;
 // mongoose-common.jar
 import com.emc.mongoose.common.logging.LogUtil;
-//
 import com.emc.mongoose.common.logging.Markers;
+//
 import com.fasterxml.jackson.databind.JsonNode;
 //
 import org.apache.commons.configuration.BaseConfiguration;

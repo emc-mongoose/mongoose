@@ -1,8 +1,8 @@
 package com.emc.mongoose.webui.websockets.impl;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.logging.LogUtil;
-//
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-webui.jar
 import com.emc.mongoose.webui.websockets.WebSocketLogListener;
 import com.emc.mongoose.webui.logging.WebUIAppender;
 //

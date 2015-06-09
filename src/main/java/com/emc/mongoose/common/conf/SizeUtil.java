@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.conf;
+// mongoose-common.jar
 import com.emc.mongoose.common.logging.LogUtil;
-
+//
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

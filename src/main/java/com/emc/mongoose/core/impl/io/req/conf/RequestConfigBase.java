@@ -1,13 +1,13 @@
 package com.emc.mongoose.core.impl.io.req.conf;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-//
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
-//
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import org.apache.commons.lang.StringUtils;

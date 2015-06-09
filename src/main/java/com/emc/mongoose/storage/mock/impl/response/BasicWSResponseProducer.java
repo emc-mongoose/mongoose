@@ -1,11 +1,11 @@
 package com.emc.mongoose.storage.mock.impl.response;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
 import com.emc.mongoose.common.logging.LogUtil;
-//
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //
 import org.apache.http.HttpResponse;

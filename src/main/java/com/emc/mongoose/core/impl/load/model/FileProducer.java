@@ -1,14 +1,14 @@
 package com.emc.mongoose.core.impl.load.model;
-//mongoose-common.jar
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
-//mongoose-core-api.jar
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Producer;
-//mongoose-core-impl.jar
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.reader.io.LineReader;
 import com.emc.mongoose.core.impl.load.model.reader.RandomFileReader;
 import com.emc.mongoose.core.impl.load.model.reader.util.Randomizer;

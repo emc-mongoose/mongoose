@@ -4,8 +4,8 @@ import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
 import com.emc.mongoose.common.logging.LogUtil;
-// mongoose-core-api
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;

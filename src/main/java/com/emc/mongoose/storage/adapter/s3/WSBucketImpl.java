@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.adapter.s3;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.logging.LogUtil;
-//
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //

@@ -10,8 +10,8 @@ import com.emc.mongoose.common.http.RequestTargetHost;
 import com.emc.mongoose.common.io.HTTPContentDecoderChannel;
 import com.emc.mongoose.common.io.StreamUtils;
 import com.emc.mongoose.common.logging.LogUtil;
-// mongoose-core-api
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;

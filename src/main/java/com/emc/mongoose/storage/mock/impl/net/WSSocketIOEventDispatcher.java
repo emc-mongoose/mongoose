@@ -1,12 +1,12 @@
 package com.emc.mongoose.storage.mock.impl.net;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
-//
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-//
+// mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
 //
 import org.apache.http.impl.nio.DefaultHttpServerIODispatch;

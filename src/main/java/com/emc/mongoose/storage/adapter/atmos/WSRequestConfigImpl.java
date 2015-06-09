@@ -1,14 +1,14 @@
 package com.emc.mongoose.storage.adapter.atmos;
-//
-import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
-//
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
 //
 import org.apache.commons.codec.binary.Base64;
 //

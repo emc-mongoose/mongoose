@@ -1,9 +1,9 @@
 package com.emc.mongoose.core.impl.io.task;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.logging.LogUtil;
-//
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;

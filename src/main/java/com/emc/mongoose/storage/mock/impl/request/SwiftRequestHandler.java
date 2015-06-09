@@ -1,10 +1,10 @@
 package com.emc.mongoose.storage.mock.impl.request;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-//
 import com.emc.mongoose.common.logging.Markers;
+// mongoose-storage-adapter-swift.jar
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
-//
+// mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //
