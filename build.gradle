@@ -378,7 +378,7 @@ dependencies {
 }
 
 configurations {
-	allCompile.extendsFrom(
+	compile.extendsFrom(
 		commonCompile,
 		coreApiCompile,
 		coreImplCompile,
@@ -394,7 +394,7 @@ configurations {
 		webuiCompile,
 		cliCompile,
 	)
-	allRuntime.extendsFrom(
+	runtime.extendsFrom(
 		commonRuntime,
 		coreApiRuntime,
 		coreImplRuntime,
@@ -410,17 +410,11 @@ configurations {
 		webuiRuntime,
 		cliRuntime,
 	)
-	compile.extendsFrom(
-		allCompile,
-	)
-	runtime.extendsFrom(
-		allRuntime,
-	)
 	testCompile.extendsFrom(
-		allCompile,
+		compile,
 	)
 	testRuntime.extendsFrom(
-		allRuntime,
+		runtime,
 	)
 }
 
@@ -798,7 +792,7 @@ task dist(type: Tar) {
 			from { 'conf' }
 		}
 		into('lib') {
-			from { configurations.allRuntime }
+			from { configurations.runtime }
 		}
 		from commonJar.outputs.files
 		from coreApiJar.outputs.files
@@ -830,7 +824,7 @@ idea {
 	module {
 		name = rootProject.name
 		jdkName = sourceCompatibility
-		scopes.PROVIDED.plus += [ configurations.allCompile ]
+		scopes.PROVIDED.plus += [ configurations.compile ]
 	}
 	project.ipr {
 		withXml { provider ->
