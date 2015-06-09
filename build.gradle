@@ -176,18 +176,22 @@ sourceSets {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// JUnit 4 tests ///////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	jUTest {
+	test {
 		java {
-			srcDirs(['src', 'main', 'java', 'test', 'com', 'emc', 'mongoose'].join(File.separator))
+			srcDir(['src', 'test'].join(File.separator))
 			include '**'
 		}
-		//
-		compileClasspath += sourceSets.coreImpl.output
-		compileClasspath += sourceSets.common.output
-		//
-		runtimeClasspath += sourceSets.coreImpl.output
-		runtimeClasspath += sourceSets.common.output
-
+	}
+	//////////////////////////////////////////////////////////////////////////////////////
+	main {
+		java {
+			srcDir(['src', 'main'].join(File.separator))
+			include '**'
+		}
+		resources {
+			srcDir(['src', 'main'].join(File.separator))
+			include '**'
+		}
 	}
 }
 
@@ -365,17 +369,29 @@ dependencies {
 		library.runtime_logging,
 	)
 
-	jUTestCompile (
+	testCompile (
 		library.junit,
-		library.junit_easy_mock,
-		library.log4j_core,
-		library.commons_collections4,
-		library.commons_configuration,
+		library.junit_mockito,
 	)
-
 }
 
 configurations {
+	allCompile.extendsFrom(
+			commonCompile,
+			coreApiCompile,
+			coreImplCompile,
+			storageAdapterAtmosImplCompile,
+			storageAdapterS3Compile,
+			storageAdapterSwiftCompile,
+			serverApiCompile,
+			webserverCompile,
+			clientCompile,
+			scenarioCompile,
+			serverImplCompile,
+			storageMockCompile,
+			webuiCompile,
+			cliCompile,
+	)
 	allRuntime.extendsFrom(
 		commonRuntime,
 		coreApiRuntime,
@@ -391,6 +407,18 @@ configurations {
 		storageMockRuntime,
 		webuiRuntime,
 		cliRuntime,
+	)
+	compile.extendsFrom(
+		allCompile,
+	)
+	runtime.extendsFrom(
+		allRuntime,
+	)
+	testCompile.extendsFrom(
+		allCompile,
+	)
+	testRuntime.extendsFrom(
+		allRuntime,
 	)
 }
 
@@ -800,7 +828,8 @@ idea {
 	module {
 		name = rootProject.name
 		jdkName = sourceCompatibility
-		scopes.PROVIDED.plus += [ configurations.allRuntime ]
+		scopes.PROVIDED.plus += [ configurations.allCompile ]
+		//scopes.PROVIDED.plus += [ configurations.allRuntime ]
 	}
 	project.ipr {
 		withXml { provider ->
@@ -809,17 +838,11 @@ idea {
 	}
 }
 
-task jUTest(type: Test) {
-	dependsOn commonJar
-	dependsOn coreImplJar
-
-	description = "Runs JUnit tests"
-	testClassesDir = sourceSets.jUTest.output.classesDir
-	classpath = sourceSets.jUTest.runtimeClasspath
-	useJUnit()
-	testLogging {
-		events "passed", "skipped", "failed"
-	}
+test {
+	testLogging.showStandardStreams = true
+	testLogging { events "passed", "skipped", "failed" }
 }
 
 tasks.idea.dependsOn(cleanIdea)
+
+

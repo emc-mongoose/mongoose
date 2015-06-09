@@ -2,6 +2,7 @@ package com.emc.mongoose.webui.websockets.impl;
 //
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.webui.websockets.WebSocketLogListener;
 import com.emc.mongoose.webui.logging.WebUIAppender;
 //
@@ -34,7 +35,7 @@ implements WebSocketLogListener {
 	public final void onClose(int statusCode, final String reason) {
 		WebUIAppender.unregister(this);
 		session.close();
-		LOG.trace(LogUtil.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
+		LOG.trace(Markers.MSG, "Web Socket closed. Reason: {}, StatusCode: {}", reason, statusCode);
 	}
 	//
 	@OnWebSocketError
@@ -49,12 +50,12 @@ implements WebSocketLogListener {
 		this.session = session;
 		//
 		WebUIAppender.register(this);
-		LOG.trace(LogUtil.MSG, "Web Socket connection {}", session.getRemoteAddress());
+		LOG.trace(Markers.MSG, "Web Socket connection {}", session.getRemoteAddress());
 	}
 	//
 	@OnWebSocketMessage
 	public final void onMessage(final String message) {
-		LOG.trace(LogUtil.MSG, "Message from Browser {}", message);
+		LOG.trace(Markers.MSG, "Message from Browser {}", message);
 	}
 	//
 	@Override

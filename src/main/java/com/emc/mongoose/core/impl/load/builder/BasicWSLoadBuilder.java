@@ -2,8 +2,8 @@ package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 //
@@ -45,9 +45,9 @@ implements WSLoadBuilder<T, U> {
 		try {
 			WSRequestConfig.class.cast(reqConf).setScheme(runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
-			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
-			LOG.error(LogUtil.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
 		return this;
@@ -57,7 +57,7 @@ implements WSLoadBuilder<T, U> {
 	public final BasicWSLoadBuilder<T, U> clone()
 	throws CloneNotSupportedException {
 		final BasicWSLoadBuilder<T, U> lb = (BasicWSLoadBuilder<T, U>) super.clone();
-		LOG.debug(LogUtil.MSG, "Cloning request config for {}", reqConf.toString());
+		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
 		return lb;
 	}
 	//

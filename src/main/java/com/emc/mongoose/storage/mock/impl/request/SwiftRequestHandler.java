@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.mock.impl.request;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 //
 import com.emc.mongoose.storage.mock.api.Storage;
@@ -45,8 +45,8 @@ extends WSRequestHandlerBase<T> {
 		if(requestURI.length > 1) {
 			if(requestURI[1].equals(AUTH)) { // create an auth token
 				final String authToken = randomString(5);
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(LogUtil.MSG, "Created auth token: {}", authToken);
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(Markers.MSG, "Created auth token: {}", authToken);
 				}
 				httpResponse.setHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, authToken);
 				httpResponse.setStatusCode(HttpStatus.SC_OK);
@@ -55,9 +55,9 @@ extends WSRequestHandlerBase<T> {
 				method.equalsIgnoreCase(METHOD_PUT)
 			) { // put the container
 				httpResponse.setStatusCode(HttpStatus.SC_OK);
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
-						LogUtil.MSG, "Create the container: {}", requestURI[requestURI.length - 1]
+						Markers.MSG, "Create the container: {}", requestURI[requestURI.length - 1]
 					);
 				}
 			} else {

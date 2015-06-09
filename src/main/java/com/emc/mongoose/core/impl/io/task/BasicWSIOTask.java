@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
@@ -99,9 +100,9 @@ implements WSIOTask<T> {
 		if(instPool == null) {
 			throw new IllegalStateException("No pool found to release back");
 		} else {
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-					LogUtil.MSG,
+					Markers.MSG,
 					"Releasing the task #{} back into the pool for {}: {}",
 					hashCode(), loadExecutor, instPool.toString()
 				);
@@ -191,8 +192,8 @@ implements WSIOTask<T> {
 	@Override
 	public final void requestCompleted(final HttpContext context) {
 		reqTimeDone = System.nanoTime() / 1000;
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "Task #{}: request sent completely", hashCode());
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Task #{}: request sent completely", hashCode());
 		}
 	}
 	//
@@ -210,9 +211,9 @@ implements WSIOTask<T> {
 			httpRequest.clearHeaders();
 			httpRequest.setHeaders(sharedHeaders.getAllHeaders());
 			httpRequest.setEntity(null);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-					LogUtil.MSG, "Task #{}: reset the request, left headers: {}, shared headers: {}",
+					Markers.MSG, "Task #{}: reset the request, left headers: {}, shared headers: {}",
 					hashCode(), Arrays.toString(httpRequest.getAllHeaders()),
 					Arrays.toString(sharedHeaders.getAllHeaders())
 				);
@@ -233,8 +234,8 @@ implements WSIOTask<T> {
 		//
 		respTimeStart = System.nanoTime() / 1000;
 		final StatusLine status = response.getStatusLine();
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "#{}, got response \"{}\"", hashCode(), status);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "#{}, got response \"{}\"", hashCode(), status);
 		}
 		respStatusCode = status.getStatusCode();
 		//
@@ -251,7 +252,7 @@ implements WSIOTask<T> {
 					msgBuff
 						.append("Incorrect request: \"")
 						.append(httpRequest.getRequestLine()).append("\"\n");
-					if(LOG.isTraceEnabled(LogUtil.ERR)) {
+					if(LOG.isTraceEnabled(Markers.ERR)) {
 						for(final Header rangeHeader : httpRequest.getAllHeaders()) {
 							msgBuff
 								.append('\t').append(rangeHeader.getName()).append(": ")
@@ -263,7 +264,7 @@ implements WSIOTask<T> {
 				case HttpStatus.SC_UNAUTHORIZED:
 				case HttpStatus.SC_FORBIDDEN:
 					msgBuff.append("Access failure for data item: \"").append(dataItem);
-					if(LOG.isTraceEnabled(LogUtil.ERR)) {
+					if(LOG.isTraceEnabled(Markers.ERR)) {
 						msgBuff.append("\"\nSource request headers:\n");
 						for(final Header rangeHeader : httpRequest.getAllHeaders()) {
 							msgBuff
@@ -324,7 +325,7 @@ implements WSIOTask<T> {
 					break;
 				case HttpStatus.SC_REQUESTED_RANGE_NOT_SATISFIABLE:
 					msgBuff.append("Incorrect range\n");
-					if(LOG.isTraceEnabled(LogUtil.ERR)) {
+					if(LOG.isTraceEnabled(Markers.ERR)) {
 						for(final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)) {
 							msgBuff
 								.append("Incorrect range ").append(rangeHeader.getValue())
@@ -377,9 +378,9 @@ implements WSIOTask<T> {
 					break;
 			}
 			//
-			if(LOG.isDebugEnabled(LogUtil.ERR)) {
+			if(LOG.isDebugEnabled(Markers.ERR)) {
 				LOG.debug(
-					LogUtil.ERR, "Task #{}: {}{}/{} <- {} {}{}",
+					Markers.ERR, "Task #{}: {}{}/{} <- {} {}{}",
 					hashCode(), msgBuff, respStatusCode, status.getReasonPhrase(),
 					httpRequest.getMethod(), httpRequest.getUriAddr(), httpRequest.getUriPath()
 				);
@@ -400,8 +401,8 @@ implements WSIOTask<T> {
 					msgBuilder.append(bbuff.asCharBuffer().toString());
 					bbuff.clear();
 				}
-				if(LOG.isTraceEnabled(LogUtil.ERR)) {
-					LOG.trace(LogUtil.ERR, msgBuilder);
+				if(LOG.isTraceEnabled(Markers.ERR)) {
+					LOG.trace(Markers.ERR, msgBuilder);
 				}
 			} catch(final IOException e) {
 				if(!wsReqConf.isClosed()) {
@@ -437,7 +438,7 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final boolean cancel() {
-		LOG.debug(LogUtil.MSG, "{}: I/O task cancel", hashCode());
+		LOG.debug(Markers.MSG, "{}: I/O task cancel", hashCode());
 		return false;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -482,7 +483,7 @@ implements WSIOTask<T> {
 	//
 	@Override
 	public final void cancelled() {
-		LOG.debug(LogUtil.MSG, "{}: I/O task canceled", hashCode());
+		LOG.debug(Markers.MSG, "{}: I/O task canceled", hashCode());
 		status = Status.CANCELLED;
 		complete();
 	}

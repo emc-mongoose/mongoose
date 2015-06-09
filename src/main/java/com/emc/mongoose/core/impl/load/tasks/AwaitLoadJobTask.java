@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.load.tasks;
 // mongoose-common.jar
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import org.apache.logging.log4j.Level;
@@ -33,7 +34,7 @@ implements Runnable {
 	public final void run() {
 		try {
 			LOG.debug(
-				LogUtil.MSG, "Wait for the remote load service \"{}\" to complete at {}[{}]",
+				Markers.MSG, "Wait for the remote load service \"{}\" to complete at {}[{}]",
 				loadJob.getName(), timeOut, timeUnit
 			);
 			loadJob.await(timeOut, timeUnit);
@@ -43,7 +44,7 @@ implements Runnable {
 			LogUtil.exception(LOG, Level.WARN, e, "Remote join task failure");
 		} catch(final InterruptedException ignore) {
 		} finally {
-			LOG.debug(LogUtil.MSG, "Remote join task for \"{}\" was completed", loadJob);
+			LOG.debug(Markers.MSG, "Remote join task for \"{}\" was completed", loadJob);
 		}
 	}
 }

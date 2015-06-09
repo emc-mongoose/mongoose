@@ -1,9 +1,10 @@
 package com.emc.mongoose.core.impl.load.model.reader;
 //mongoose-common.jar
-import com.emc.mongoose.common.logging.LogUtil;
-//
+import com.emc.mongoose.common.logging.Markers;
+//mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.reader.io.LineReader;
 import com.emc.mongoose.core.impl.load.model.reader.util.Randomizer;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -16,7 +17,7 @@ import java.util.Vector;
 public final class RandomFileReader
 implements AutoCloseable{
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static Logger LOG = LogManager.getLogger();
 
 	private final LineReader reader;
 	private final Vector<String> linesBuffer;
@@ -25,10 +26,11 @@ implements AutoCloseable{
 	private long count;
 	private boolean isEOF;
 
-	public RandomFileReader(final LineReader reader, final int batchSize, final long maxCount, final Randomizer random)
+	public RandomFileReader(final LineReader reader, final int batchSize, final long maxCount,
+		final Randomizer random)
 	throws IOException {
 
-		LOG.trace(LogUtil.MSG, "Read data items randomly");
+		LOG.trace(Markers.MSG, "Read data items randomly");
 
 		this.reader = reader;
 		this.linesBuffer = new Vector<>(batchSize);

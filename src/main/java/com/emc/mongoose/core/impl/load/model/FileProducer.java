@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //mongoose-core-api.jar
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -158,16 +159,16 @@ implements Producer<T> {
 			String nextLine;
 			T nextData;
 			LOG.debug(
-				LogUtil.MSG, "Going to produce up to {} data items for consumer \"{}\"",
+				Markers.MSG, "Going to produce up to {} data items for consumer \"{}\"",
 				consumer.getMaxCount(), consumer.toString()
 			);
 			do {
 				//
 				nextLine = fReader.readLine();
-				LOG.trace(LogUtil.MSG, "Got next line #{}: \"{}\"", dataItemsCount, nextLine);
+				LOG.trace(Markers.MSG, "Got next line #{}: \"{}\"", dataItemsCount, nextLine);
 				//
 				if(nextLine == null || nextLine.isEmpty()) {
-					LOG.debug(LogUtil.MSG, "No next line, exiting");
+					LOG.debug(Markers.MSG, "No next line, exiting");
 					break;
 				} else {
 					nextData = dataItemConstructor.newInstance(nextLine);
@@ -182,11 +183,11 @@ implements Producer<T> {
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final InterruptedException e) {
-			LOG.debug(LogUtil.MSG, "Interrupted");
+			LOG.debug(Markers.MSG, "Interrupted");
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure, file producer interrupted");
 		} finally {
-			LOG.debug(LogUtil.MSG, "Produced {} data items", dataItemsCount);
+			LOG.debug(Markers.MSG, "Produced {} data items", dataItemsCount);
 			try {
 				consumer.shutdown();
 			} catch(final RemoteException e) {
@@ -194,13 +195,13 @@ implements Producer<T> {
 			} finally {
 				consumer = null;
 			}
-			LOG.debug(LogUtil.MSG, "Exiting");
+			LOG.debug(Markers.MSG, "Exiting");
 		}
 	}
 	//
 	@Override
 	public final void setConsumer(final Consumer<T> consumer) {
-		LOG.debug(LogUtil.MSG, "Set consumer to \"{}\"", consumer.toString());
+		LOG.debug(Markers.MSG, "Set consumer to \"{}\"", consumer.toString());
 		this.consumer = consumer;
 	}
 	//

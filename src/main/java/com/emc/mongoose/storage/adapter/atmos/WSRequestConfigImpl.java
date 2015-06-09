@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.adapter.atmos;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
@@ -8,7 +9,6 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.commons.codec.binary.Base64;
 //
@@ -78,7 +78,7 @@ extends WSRequestConfigBase<T> {
 		try {
 			copy = new WSRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
-			LOG.fatal(LogUtil.ERR, "No such algorithm: \"{}\"", signMethod);
+			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
 		}
 		return copy;
 	}
@@ -147,7 +147,7 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final WSRequestConfigBase<T> setSecret(final String secret) {
 		super.setSecret(secret);
-		LOG.trace(LogUtil.MSG, "Applying secret key {}", secret);
+		LOG.trace(Markers.MSG, "Applying secret key {}", secret);
 		secretKey = new SecretKeySpec(Base64.decodeBase64(secret), signMethod);
 		return this;
 	}
@@ -156,7 +156,7 @@ extends WSRequestConfigBase<T> {
 	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
 		//if(nameSpace == null || nameSpace.length() < 1) {
-			LOG.debug(LogUtil.MSG, "Using empty namespace");
+			LOG.debug(Markers.MSG, "Using empty namespace");
 		/*} else {
 			sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_NS, nameSpace));
 		}*/
@@ -181,7 +181,7 @@ extends WSRequestConfigBase<T> {
 		try {
 			setSubTenant(new WSSubTenantImpl<>(this, runTimeConfig.getString(KEY_SUBTENANT)));
 		} catch(final NoSuchElementException e) {
-			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_SUBTENANT);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_SUBTENANT);
 		}
 		//
 		if(runTimeConfig.getStorageFileAccessEnabled()) {
@@ -206,7 +206,7 @@ extends WSRequestConfigBase<T> {
 		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
 		final Object t = ois.readUnshared();
 		if(t == null) {
-			LOG.debug(LogUtil.MSG, "Note: no subtenant has got from load client side");
+			LOG.debug(Markers.MSG, "Note: no subtenant has got from load client side");
 		} else {
 			setSubTenant(new WSSubTenantImpl<>(this, String.class.cast(t)));
 		}
@@ -280,8 +280,8 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "Canonical request form:\n{}", buffer.toString());
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Canonical request form:\n{}", buffer.toString());
 		}
 		//
 		return buffer.toString();
@@ -305,18 +305,18 @@ extends WSRequestConfigBase<T> {
 				if(id.length() > 0) {
 					dataObject.setId(id);
 				} else {
-					LOG.trace(LogUtil.ERR, "Got empty object id");
+					LOG.trace(Markers.ERR, "Got empty object id");
 				}
-			} else if(LOG.isTraceEnabled(LogUtil.ERR)) {
+			} else if(LOG.isTraceEnabled(Markers.ERR)) {
 				LOG.trace(
-					LogUtil.ERR, "Invalid response location header value: \"{}\"", valueLocation
+					Markers.ERR, "Invalid response location header value: \"{}\"", valueLocation
 				);
 			}
 		}
 		//
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				LogUtil.MSG, "Applied object \"{}\" id \"{}\" from the source \"{}\"",
+				Markers.MSG, "Applied object \"{}\" id \"{}\" from the source \"{}\"",
 				Long.toHexString(dataObject.getOffset()), dataObject.getId(),
 				httpResponse.getFirstHeader(HttpHeaders.LOCATION)
 			);

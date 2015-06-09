@@ -5,6 +5,7 @@ import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //
 import org.apache.http.HttpResponse;
@@ -41,8 +42,8 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 		try(final WritableByteChannel chanOut = HTTPContentEncoderChannel.getInstance(encoder)) {
 			final WSObjectMock dataItem = WSObjectMock.class.cast(response.getEntity());
 			if(dataItem != null) {
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(LogUtil.MSG, "{}: write out {} bytes", dataItem, dataItem.getSize());
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(Markers.MSG, "{}: write out {} bytes", dataItem, dataItem.getSize());
 				}
 				dataItem.write(chanOut);
 			}

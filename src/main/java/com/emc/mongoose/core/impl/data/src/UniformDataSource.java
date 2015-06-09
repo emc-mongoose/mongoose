@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -42,7 +43,7 @@ implements DataSource {
 	}
 	//
 	protected UniformDataSource(final long seed, final int size) {
-		LOG.debug(LogUtil.MSG, "New ring buffer instance #{}", hashCode());
+		LOG.debug(Markers.MSG, "New ring buffer instance #{}", hashCode());
 		this.seed = seed;
 		this.size = size;
 		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
@@ -69,7 +70,7 @@ implements DataSource {
 		long word = seed;
 		int i;
 		double d = System.nanoTime();
-		LOG.debug(LogUtil.MSG, "Prepare {} of ring data...", SizeUtil.formatSize(ringBuffSize));
+		LOG.debug(Markers.MSG, "Prepare {} of ring data...", SizeUtil.formatSize(ringBuffSize));
 		// 64-bit words
 		byteLayer.clear();
 		for(i = 0; i < countWords; i ++) {
@@ -89,7 +90,7 @@ implements DataSource {
 		}*/
 		//
 		LOG.debug(
-			LogUtil.MSG, "Pre-generating the data done in {}[us]",
+			Markers.MSG, "Pre-generating the data done in {}[us]",
 			(System.nanoTime() - d) / LoadExecutor.NANOSEC_SCALEDOWN
 		);
 	}
@@ -185,7 +186,7 @@ implements DataSource {
 				prevSeed = prevLayer.getLong(0);
 				nextSeed = Long.reverse(nextWord(Long.reverseBytes(prevSeed)));
 				LOG.debug(
-					LogUtil.MSG,
+					Markers.MSG,
 					"Generate new byte layer #{}, previous seed: \"{}\", next one: \"{}\"",
 					i, Long.toHexString(prevSeed), Long.toHexString(nextSeed)
 				);
@@ -193,7 +194,7 @@ implements DataSource {
 				byteLayers.add(nextLayer);
 				prevLayer = nextLayer;
 			}
-			LOG.debug(LogUtil.MSG, "New layer #{}", byteLayers.size() - 1);
+			LOG.debug(Markers.MSG, "New layer #{}", byteLayers.size() - 1);
 		}
 		return byteLayers.get(layerIndex);
 	}

@@ -5,6 +5,7 @@ import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
 //
+import com.emc.mongoose.common.logging.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,7 +40,7 @@ implements PeriodicTask<Long> {
 				try {
 					loadClient.interrupt();
 					LOG.debug(
-						LogUtil.MSG, "Load client \"{}\" was interrupted due to count limit {}",
+						Markers.MSG, "Load client \"{}\" was interrupted due to count limit {}",
 						loadClient, maxCount
 					);
 				} catch(final RemoteException e) {
