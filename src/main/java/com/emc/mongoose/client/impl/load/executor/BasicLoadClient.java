@@ -8,6 +8,7 @@ import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
@@ -46,7 +47,6 @@ import javax.management.remote.JMXConnector;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -131,9 +131,9 @@ implements LoadClient<T> {
 			final Object remoteLoads[] = remoteLoadMap.values().toArray();
 			t = LoadSvc.class.cast(remoteLoads[0]).getName() + 'x' + remoteLoads.length;
 		} catch(final NoSuchElementException | NullPointerException e) {
-			LOG.error(LogUtil.ERR, "No remote load instances", e);
+			LOG.error(Markers.ERR, "No remote load instances", e);
 		} catch(final IOException e) {
-			LOG.error(LogUtil.ERR, "Looks like connectivity failure", e);
+			LOG.error(Markers.ERR, "Looks like connectivity failure", e);
 		}
 		name = t;
 		//
@@ -376,14 +376,14 @@ implements LoadClient<T> {
 		for(final PeriodicTask<Collection<T>> nextFrameFetchTask : frameFetchTasks) {
 			nextMetaInfoFrame = nextFrameFetchTask.getLastResult();
 			if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
-						LogUtil.MSG, "Got next metainfo frame: containing {} recordds",
+						Markers.MSG, "Got next metainfo frame: containing {} recordds",
 						nextMetaInfoFrame.size()
 					);
 				}
 				for(final T nextMetaInfoRec : nextMetaInfoFrame) {
-					LOG.info(LogUtil.DATA_LIST, nextMetaInfoRec);
+					LOG.info(Markers.DATA_LIST, nextMetaInfoRec);
 				}
 			}
 		}
@@ -400,7 +400,7 @@ implements LoadClient<T> {
 				medLat = taskGetLatencyMed.getLastResult().intValue(),
 				maxLat = taskGetLatencyMax.getLastResult();
 			final String msg;
-			if(LogUtil.PERF_SUM.equals(logMarker)) {
+			if(Markers.PERF_SUM.equals(logMarker)) {
 				msg = String.format(
 					LogUtil.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
 					//
@@ -491,7 +491,7 @@ implements LoadClient<T> {
 				new Runnable() {
 					@Override
 					public final void run() {
-						logMetrics(LogUtil.PERF_AVG);
+						logMetrics(Markers.PERF_AVG);
 					}
 				}, 0, metricsPeriodSec, TimeUnit.SECONDS
 			);
@@ -507,21 +507,21 @@ implements LoadClient<T> {
 			try {
 				nextLoadSvc.start();
 				LOG.debug(
-					LogUtil.MSG, "{} started bound to remote service @{}",
+					Markers.MSG, "{} started bound to remote service @{}",
 					nextLoadSvc.getName(), addr
 				);
 			} catch(final IOException e) {
-				LOG.error(LogUtil.ERR, "Failed to start remote load @" + addr, e);
+				LOG.error(Markers.ERR, "Failed to start remote load @" + addr, e);
 			}
 		}
 		//
 		if(producer == null) {
-			LOG.debug(LogUtil.MSG, "{}: using an external data items producer", getName());
+			LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
 		} else {
 			//
 			try {
 				producer.start();
-				LOG.debug(LogUtil.MSG, "Started object producer {}", producer);
+				LOG.debug(Markers.MSG, "Started object producer {}", producer);
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to start the producer");
 			}
@@ -532,7 +532,7 @@ implements LoadClient<T> {
 		LoadCloseHook.add(this);
 		prestartAllCoreThreads();
 		//
-		LOG.debug(LogUtil.MSG, "{}: started", name);
+		LOG.debug(Markers.MSG, "{}: started", name);
 	}
 	//
 	@Override
@@ -540,7 +540,7 @@ implements LoadClient<T> {
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
 		if(!isShutdown()) {
-			LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, "Interrupting {}", name);
+			LogUtil.trace(LOG, Level.DEBUG, Markers.MSG, "Interrupting {}", name);
 			shutdown();
 		}
 		//
@@ -558,7 +558,7 @@ implements LoadClient<T> {
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
 			}
-			LOG.debug(LogUtil.MSG, "{}: interrupted", name);
+			LOG.debug(Markers.MSG, "{}: interrupted", name);
 		}
 	}
 	//
@@ -577,7 +577,7 @@ implements LoadClient<T> {
 			try {
 				this.consumer = (LoadClient<T>) consumer;
 				final Map<String, LoadSvc<T>> consumeMap = this.consumer.getRemoteLoadMap();
-				LOG.debug(LogUtil.MSG, "Consumer is LoadClient instance");
+				LOG.debug(Markers.MSG, "Consumer is LoadClient instance");
 				for(final String addr : consumeMap.keySet()) {
 					remoteLoadMap.get(addr).setConsumer(consumeMap.get(addr));
 				}
@@ -588,7 +588,7 @@ implements LoadClient<T> {
 			// single consumer for all these producers
 			try {
 				final LoadSvc<T> loadSvc = (LoadSvc<T>) consumer;
-				LOG.debug(LogUtil.MSG, "Consumer is load service instance");
+				LOG.debug(Markers.MSG, "Consumer is load service instance");
 				for(final String addr : loadSvcAddrs) {
 					remoteLoadMap.get(addr).setConsumer(loadSvc);
 				}
@@ -597,7 +597,7 @@ implements LoadClient<T> {
 			}
 		} else {
 			LOG.error(
-				LogUtil.ERR, "Unexpected consumer type: {}",
+				Markers.ERR, "Unexpected consumer type: {}",
 				consumer == null ? null : consumer.getClass()
 			);
 		}
@@ -655,23 +655,23 @@ implements LoadClient<T> {
 	@Override
 	public final void close()
 	throws IOException {
-		LOG.debug(LogUtil.MSG, "trying to close");
+		LOG.debug(Markers.MSG, "trying to close");
 		synchronized(remoteLoadMap) {
 			if(!remoteLoadMap.isEmpty()) {
-				LOG.debug(LogUtil.MSG, "do performing close");
+				LOG.debug(Markers.MSG, "do performing close");
 				interrupt();
 				forceFetchAndAggregation();
-				LOG.debug(LogUtil.MSG, "log summary metrics");
-				logMetrics(LogUtil.PERF_SUM);
-				LOG.debug(LogUtil.MSG, "log metainfo frames");
+				LOG.debug(Markers.MSG, "log summary metrics");
+				logMetrics(Markers.PERF_SUM);
+				LOG.debug(Markers.MSG, "log metainfo frames");
 				logMetaInfoFrames();
 				LOG.debug(
-					LogUtil.MSG, "Dropped {} remote tasks",
+					Markers.MSG, "Dropped {} remote tasks",
 					shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()
 				);
 				metricsReporter.close();
 				//
-				LOG.debug(LogUtil.MSG, "Closing the remote services...");
+				LOG.debug(Markers.MSG, "Closing the remote services...");
 				LoadSvc<T> nextLoadSvc;
 				JMXConnector nextJMXConn;
 				for(final String addr : remoteLoadMap.keySet()) {
@@ -679,11 +679,11 @@ implements LoadClient<T> {
 					try {
 						nextLoadSvc = remoteLoadMap.get(addr);
 						nextLoadSvc.close();
-						LOG.debug(LogUtil.MSG, "Server instance @ {} has been closed", addr);
+						LOG.debug(Markers.MSG, "Server instance @ {} has been closed", addr);
 					} catch(final NoSuchElementException e) {
 						if(!isTerminating() && !isTerminated()) {
 							LOG.debug(
-								LogUtil.ERR,
+								Markers.ERR,
 								"Looks like the remote load service is already shut down"
 							);
 						}
@@ -701,11 +701,11 @@ implements LoadClient<T> {
 						nextJMXConn = remoteJMXConnMap.get(addr);
 						if(nextJMXConn!=null) {
 							nextJMXConn.close();
-							LOG.debug(LogUtil.MSG, "JMX connection to {} closed", addr);
+							LOG.debug(Markers.MSG, "JMX connection to {} closed", addr);
 						}
 					} catch(final NoSuchElementException e) {
 						LOG.debug(
-							LogUtil.ERR, "Remote JMX connection had been interrupted earlier"
+							Markers.ERR, "Remote JMX connection had been interrupted earlier"
 						);
 					} catch(final IOException e) {
 						LogUtil.exception(
@@ -715,11 +715,11 @@ implements LoadClient<T> {
 				}
 				//
 				LoadCloseHook.del(this);
-				LOG.debug(LogUtil.MSG, "Clear the servers map");
+				LOG.debug(Markers.MSG, "Clear the servers map");
 				remoteLoadMap.clear();
-				LOG.debug(LogUtil.MSG, "Closed {}", getName());
+				LOG.debug(Markers.MSG, "Closed {}", getName());
 			} else {
-				LOG.debug(LogUtil.ERR, "Closed already");
+				LOG.debug(Markers.ERR, "Closed already");
 			}
 		}
 	}
@@ -756,7 +756,7 @@ implements LoadClient<T> {
 	@Override
 	public final void shutdown() {
 		super.shutdown();
-		LOG.debug(LogUtil.MSG, "{}: shutdown invoked", getName());
+		LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
 		try {
 			awaitTermination(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException e) {
@@ -799,13 +799,13 @@ implements LoadClient<T> {
 				public final void run() {
 					// wait the remaining tasks to be transmitted to load servers
 					LOG.debug(
-						LogUtil.MSG, "{}: waiting remaining {} tasks to complete", getName(),
+						Markers.MSG, "{}: waiting remaining {} tasks to complete", getName(),
 						getQueue().size() + getActiveCount()
 					);
 					try {
 						awaitTermination(timeOut, timeUnit);
 					} catch(final InterruptedException e) {
-						LOG.debug(LogUtil.MSG, "Interrupted");
+						LOG.debug(Markers.MSG, "Interrupted");
 					}
 				}
 			}
@@ -815,18 +815,18 @@ implements LoadClient<T> {
 		}
 		awaitExecutor.shutdown();
 		try {
-			LOG.debug(LogUtil.MSG, "Wait remote await tasks for finish {}[{}]", timeOut, timeUnit);
+			LOG.debug(Markers.MSG, "Wait remote await tasks for finish {}[{}]", timeOut, timeUnit);
 			if(awaitExecutor.awaitTermination(timeOut, timeUnit)) {
-				LOG.debug(LogUtil.MSG, "All await tasks finished");
+				LOG.debug(Markers.MSG, "All await tasks finished");
 			} else {
-				LOG.debug(LogUtil.MSG, "Await tasks execution timeout");
+				LOG.debug(Markers.MSG, "Await tasks execution timeout");
 			}
 		} catch(final InterruptedException e) {
-			LOG.debug(LogUtil.MSG, "Interrupted");
+			LOG.debug(Markers.MSG, "Interrupted");
 			throw new InterruptedException();
 		} finally {
 			LOG.debug(
-				LogUtil.MSG, "Interrupted await tasks: {}",
+				Markers.MSG, "Interrupted await tasks: {}",
 				Arrays.toString(awaitExecutor.shutdownNow().toArray())
 			);
 		}

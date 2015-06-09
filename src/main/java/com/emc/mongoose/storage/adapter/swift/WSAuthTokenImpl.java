@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.adapter.swift;
 //
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //
@@ -52,7 +53,7 @@ implements AuthToken<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(LogUtil.MSG, "No response status");
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
@@ -60,9 +61,9 @@ implements AuthToken<T> {
 							value = httpResp
 								.getFirstHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN)
 								.getValue();
-							LOG.info(LogUtil.MSG, "Created auth token \"{}\"", value);
+							LOG.info(Markers.MSG, "Created auth token \"{}\"", value);
 						} else {
-							LOG.warn(LogUtil.ERR, "Server hasn't returned auth token header");
+							LOG.warn(Markers.ERR, "Server hasn't returned auth token header");
 						}
 					} else {
 						final StringBuilder msg = new StringBuilder("Create auth token failure: ")
@@ -74,7 +75,7 @@ implements AuthToken<T> {
 							}
 						}
 						LOG.warn(
-							LogUtil.ERR, "Create auth token response ({}): {}",
+							Markers.ERR, "Create auth token response ({}): {}",
 							value, statusCode, msg.toString()
 						);
 					}

@@ -7,13 +7,10 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
-import org.apache.logging.log4j.MarkerManager;
 //
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
-import org.apache.logging.log4j.message.Message;
-import org.apache.logging.log4j.message.ParameterizedMessage;
 //
 import java.io.File;
 import java.io.PrintStream;
@@ -57,14 +54,6 @@ public final class LogUtil {
 	public static final DateFormat FMT_DT = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS",LOCALE_DEFAULT) {
 		{ setTimeZone(TZ_UTC); }
 	};
-	//
-	public final static Marker
-		MSG = MarkerManager.getMarker("msg"),
-		ERR = MarkerManager.getMarker("err"),
-		DATA_LIST = MarkerManager.getMarker("dataList"),
-		PERF_AVG = MarkerManager.getMarker("perfAvg"),
-		PERF_SUM = MarkerManager.getMarker("perfSum"),
-		PERF_TRACE = MarkerManager.getMarker("perfTrace");
 	// console colors
 	public static final String
 		RESET = "\u001B[0m",
@@ -115,7 +104,7 @@ public final class LogUtil {
 						System.err.println("Logging configuration failed");
 					} else {
 						LogManager.getLogger().info(
-							LogUtil.MSG, "Logging subsystem is configured successfully"
+							Markers.MSG, "Logging subsystem is configured successfully"
 						);
 						Runtime.getRuntime().addShutdownHook(
 							new Thread("logCtxShutDownHook") {
@@ -126,9 +115,11 @@ public final class LogUtil {
 							}
 						);
 					}
-					System.setErr(new PrintStream(new StdErrLoggingStream(
-						LogManager.getRootLogger(), LogUtil.ERR
-					), true));
+					System.setErr(
+						new PrintStream(
+							new StdErrLoggingStream(LogManager.getRootLogger(), Markers.ERR), true
+						)
+					);
 				} catch(final Exception e) {
 					e.printStackTrace(System.err);
 				}
@@ -140,22 +131,22 @@ public final class LogUtil {
 		final Logger LOG = LogManager.getLogger();
 		try {
 			if(LOAD_HOOKS_COUNT.get() != 0) {
-				LOG.debug(LogUtil.MSG, "Not all loads are closed, blocking the logging subsystem shutdown");
+				LOG.debug(Markers.MSG, "Not all loads are closed, blocking the logging subsystem shutdown");
 				if (HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
 					try {
 						if (HOOKS_COND.await(10, TimeUnit.SECONDS)) {
-							LOG.debug(LogUtil.MSG, "All load executors are closed");
+							LOG.debug(Markers.MSG, "All load executors are closed");
 						} else {
-							LOG.debug(LogUtil.ERR, "Timeout while waiting the load executors to be closed");
+							LOG.debug(Markers.ERR, "Timeout while waiting the load executors to be closed");
 						}
 					} finally {
 						HOOKS_LOCK.unlock();
 					}
 				} else {
-					LOG.debug(LogUtil.ERR, "Failed to acquire the lock for the del method");
+					LOG.debug(Markers.ERR, "Failed to acquire the lock for the del method");
 				}
 			} else {
-				LOG.debug(LogUtil.MSG, "There's no unclosed loads, forcing logging subsystem shutdown");
+				LOG.debug(Markers.MSG, "There's no unclosed loads, forcing logging subsystem shutdown");
 			}
 		} catch (final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Shutdown method was interrupted");
@@ -173,14 +164,14 @@ public final class LogUtil {
 		final Logger logger, final Level level, final Throwable e,
 		final String msgPattern, final Object... args
 	) {
-		if(logger.isTraceEnabled(ERR)) {
+		if(logger.isTraceEnabled(Markers.ERR)) {
 			logger.log(
-				level, ERR,
+				level, Markers.ERR,
 				logger.getMessageFactory().newMessage(msgPattern + ": " + e, args), e
 			);
 		} else {
 			logger.log(
-				level, ERR,
+				level, Markers.ERR,
 				logger.getMessageFactory().newMessage(msgPattern + ": " + e, args)
 			);
 		}

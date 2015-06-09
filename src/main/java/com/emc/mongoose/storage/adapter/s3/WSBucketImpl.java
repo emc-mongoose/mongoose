@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.adapter.s3;
 //
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //
@@ -111,14 +112,14 @@ implements Bucket<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(LogUtil.MSG, "No response status");
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.debug(LogUtil.MSG, "Bucket \"{}\" exists", name);
+						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
 						flagExists = true;
 					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
-						LOG.debug(LogUtil.MSG, "Bucket \"{}\" doesn't exist", name);
+						LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist", name);
 					} else {
 						final StringBuilder msg = new StringBuilder("Check bucket \"")
 							.append(name).append("\" failure: ")
@@ -154,11 +155,11 @@ implements Bucket<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(LogUtil.MSG, "No response status");
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(LogUtil.MSG, "Bucket \"{}\" versioning enabled", name);
+						LOG.info(Markers.MSG, "Bucket \"{}\" versioning enabled", name);
 					} else {
 						final StringBuilder msg = new StringBuilder("Bucket versioning \"")
 								.append(name).append("\" failure: ")
@@ -172,7 +173,7 @@ implements Bucket<T> {
 							}
 						}
 						LOG.warn(
-								LogUtil.ERR, "Bucket versioning \"{}\" response ({}): {}",
+								Markers.ERR, "Bucket versioning \"{}\" response ({}): {}",
 								name, statusCode, msg.toString()
 						);
 					}
@@ -194,11 +195,11 @@ implements Bucket<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(LogUtil.MSG, "No response status");
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(LogUtil.MSG, "Bucket \"{}\" created", name);
+						LOG.info(Markers.MSG, "Bucket \"{}\" created", name);
 					} else {
 						final StringBuilder msg = new StringBuilder("Create bucket \"")
 							.append(name).append("\" failure: ")
@@ -212,7 +213,7 @@ implements Bucket<T> {
 							}
 						}
 						LOG.warn(
-							LogUtil.ERR, "Create bucket \"{}\" response ({}): {}",
+							Markers.ERR, "Create bucket \"{}\" response ({}): {}",
 							name, statusCode, msg.toString()
 						);
 					}
@@ -234,11 +235,11 @@ implements Bucket<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine==null) {
-					LOG.warn(LogUtil.MSG, "No response status");
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(LogUtil.MSG, "Bucket \"{}\" deleted", name);
+						LOG.info(Markers.MSG, "Bucket \"{}\" deleted", name);
 					} else {
 						final StringBuilder msg = new StringBuilder("Delete bucket \"")
 							.append(name).append("\" failure: ")
@@ -252,7 +253,7 @@ implements Bucket<T> {
 							}
 						}
 						LOG.warn(
-							LogUtil.ERR, "Delete bucket \"{}\" response ({}): {}",
+							Markers.ERR, "Delete bucket \"{}\" response ({}): {}",
 							name, statusCode, msg.toString()
 						);
 					}

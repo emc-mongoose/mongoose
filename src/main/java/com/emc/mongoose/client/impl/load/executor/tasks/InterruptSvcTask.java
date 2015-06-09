@@ -2,6 +2,7 @@ package com.emc.mongoose.client.impl.load.executor.tasks;
 // mongoose-common.jar
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-server-api.jar
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //
 import org.apache.logging.log4j.Level;
@@ -29,7 +30,7 @@ implements Runnable {
 	public final void run() {
 		try {
 			loadSvc.interrupt();
-			LOG.trace(LogUtil.MSG, "Interrupted remote service @ {}", addr);
+			LOG.trace(Markers.MSG, "Interrupted remote service @ {}", addr);
 		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.DEBUG, e, "Failed to interrupt remote load service @ {}", addr

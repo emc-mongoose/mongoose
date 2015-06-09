@@ -3,6 +3,7 @@ package com.emc.mongoose.webui;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
@@ -11,7 +12,7 @@ import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 //
 import com.emc.mongoose.storage.mock.impl.Cinderella;
 //
-import com.emc.mongoose.run.scenario.Scenario;
+import com.emc.mongoose.run.scenario.ScriptRunner;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -88,7 +89,7 @@ public final class StartServlet extends CommonServlet {
 				break;
 			default:
 				LOG.warn(
-					LogUtil.ERR, "Unsupported run mode \"{}\"",
+					Markers.ERR, "Unsupported run mode \"{}\"",
 					request.getParameter(RunTimeConfig.KEY_RUN_MODE)
 				);
 		}
@@ -106,7 +107,7 @@ public final class StartServlet extends CommonServlet {
 				localRunTimeConfig = runTimeConfig;
 				RunTimeConfig.setContext(localRunTimeConfig);
 				//
-				LOG.debug(LogUtil.MSG, message);
+				LOG.debug(Markers.MSG, message);
 				//
 				loadBuilderSvc = new BasicWSLoadBuilderSvc(localRunTimeConfig);
 				//
@@ -148,8 +149,8 @@ public final class StartServlet extends CommonServlet {
 				}
 				chartsMap.put(runTimeConfig.getRunId(), runTimeConfig.getScenarioName());
 				//
-				LOG.debug(LogUtil.MSG, message);
-				new Scenario().run();
+				LOG.debug(Markers.MSG, message);
+				new ScriptRunner().run();
 			}
 			//
 			@Override
@@ -167,7 +168,7 @@ public final class StartServlet extends CommonServlet {
 			public void run() {
 				RunTimeConfig.setContext(runTimeConfig);
 				//
-				LOG.debug(LogUtil.MSG, message);
+				LOG.debug(Markers.MSG, message);
 				try {
 					new Cinderella(runTimeConfig).run();
 				} catch (final IOException e) {

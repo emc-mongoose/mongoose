@@ -1,6 +1,7 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
@@ -85,7 +86,7 @@ implements WSLoadBuilderClient<T, U> {
 				srcProducer = (FileProducer<T>) new FileProducer<>(
 					getMaxCount(), listFile, BasicWSObject.class
 				);
-				LOG.info(LogUtil.MSG, "Local data items will be read from file @ \"{}\"", listFile);
+				LOG.info(Markers.MSG, "Local data items will be read from file @ \"{}\"", listFile);
 				// adjusting the buffer size for the expected data items size
 				final long approxDataItemsSize = srcProducer.getApproxDataItemsSize();
 				reqConf.setBuffSize(
@@ -95,7 +96,7 @@ implements WSLoadBuilderClient<T, U> {
 							Constants.BUFF_SIZE_HI : (int) approxDataItemsSize
 				);
 			} catch(final NoSuchMethodException | IOException e) {
-				LOG.error(LogUtil.ERR, "Failure", e);
+				LOG.error(Markers.ERR, "Failure", e);
 			}
 		}
 		return this;
@@ -139,7 +140,7 @@ implements WSLoadBuilderClient<T, U> {
 					Integer.toString(jmxImportPort) + ServiceUtils.JMXRMI_URL_PATH +
 					Integer.toString(jmxImportPort);
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
-				LOG.debug(LogUtil.MSG, "Server JMX URL: {}", svcJMXAddr);
+				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to generate JMX URL");
 			}
@@ -167,13 +168,13 @@ implements WSLoadBuilderClient<T, U> {
 		);
 		if(srcProducer != null && srcProducer.getConsumer() == null) {
 			LOG.debug(
-				LogUtil.MSG, "Append consumer {} for producer {}",
+				Markers.MSG, "Append consumer {} for producer {}",
 				newLoadClient.getName(), srcProducer.getName()
 			);
 			srcProducer.setConsumer(newLoadClient);
 		}
 		srcProducer = null;
-		LOG.debug(LogUtil.MSG, "Load client {} created", newLoadClient.getName());
+		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		//
 		return (U) newLoadClient;
 	}

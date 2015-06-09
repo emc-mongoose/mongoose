@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.adapter.swift;
 //
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
@@ -88,7 +89,7 @@ implements Producer<T> {
 			if(httpResp != null) {
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(LogUtil.MSG, "No response status returned");
+					LOG.warn(Markers.MSG, "No response status returned");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
@@ -98,11 +99,11 @@ implements Producer<T> {
 							if(respEntity.getContentType() != null) {
 								respContentType = respEntity.getContentType().getValue();
 							} else {
-								LOG.debug(LogUtil.ERR, "No content type returned");
+								LOG.debug(Markers.ERR, "No content type returned");
 							}
 							if(!respContentType.toLowerCase().contains("json")) {
 								LOG.warn(
-									LogUtil.ERR, "Unexpected response content type: \"{}\"",
+									Markers.ERR, "Unexpected response content type: \"{}\"",
 									respContentType
 								);
 							}
@@ -122,7 +123,7 @@ implements Producer<T> {
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the container: {}", container);
 		} catch(final InterruptedException e) {
-			LOG.debug(LogUtil.MSG, "Container \"{}\" producer interrupted", container);
+			LOG.debug(Markers.MSG, "Container \"{}\" producer interrupted", container);
 		} finally {
 			if(consumer != null) {
 				try {
@@ -153,7 +154,7 @@ implements Producer<T> {
 					switch(nextToken) {
 						case START_OBJECT:
 							if(isInsideObjectToken) {
-								LOG.debug(LogUtil.ERR, "Looks like the json response is not plain");
+								LOG.debug(Markers.ERR, "Looks like the json response is not plain");
 							}
 							isInsideObjectToken = true;
 							break;
@@ -164,16 +165,16 @@ implements Producer<T> {
 										offset = Long.parseLong(lastId, DataObject.ID_RADIX);
 										if(offset < 0) {
 											LOG.warn(
-												LogUtil.ERR,
+												Markers.ERR,
 												"Calculated from id ring offset is negative"
 											);
 										} else if(count < maxCount) {
 											nextDataItem = dataConstructor
 												.newInstance(lastId, offset, lastSize);
 											consumer.submit(nextDataItem);
-											if(LOG.isTraceEnabled(LogUtil.MSG)) {
+											if(LOG.isTraceEnabled(Markers.MSG)) {
 												LOG.trace(
-													LogUtil.MSG, "Submitted \"{}\" to consumer",
+													Markers.MSG, "Submitted \"{}\" to consumer",
 													nextDataItem
 												);
 											}
@@ -195,24 +196,24 @@ implements Producer<T> {
 											"Failed to submit new data object to the consumer"
 										);
 									} catch(final NumberFormatException e) {
-										LOG.debug(LogUtil.ERR, "Invalid id: {}", lastId);
+										LOG.debug(Markers.ERR, "Invalid id: {}", lastId);
 									} catch(final RejectedExecutionException e) {
 										LOG.debug(
-											LogUtil.ERR, "Consumer {} rejected the data item",
+											Markers.ERR, "Consumer {} rejected the data item",
 											consumer
 										);
 									} catch(final InterruptedException e) {
-										LOG.debug(LogUtil.MSG, "Interrupted");
+										LOG.debug(Markers.MSG, "Interrupted");
 										break;
 									}
 								} else {
 									LOG.trace(
-										LogUtil.ERR, "Invalid object id ({}) or size ({})",
+										Markers.ERR, "Invalid object id ({}) or size ({})",
 										lastId, lastSize
 									);
 								}
 							} else {
-								LOG.debug(LogUtil.ERR, "End of json object is not inside object");
+								LOG.debug(Markers.ERR, "End of json object is not inside object");
 							}
 							isInsideObjectToken = false;
 							break;
@@ -238,7 +239,7 @@ implements Producer<T> {
 				} while(!JsonToken.END_ARRAY.equals(nextToken));
 			} else {
 				LOG.warn(
-					LogUtil.ERR,
+					Markers.ERR,
 					"Response contains root JSON token \"{}\", but array token was expected"
 				);
 			}

@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 //
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.logging.Markers;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
@@ -53,7 +54,7 @@ extends DefaultNHttpServerConnection {
 		// get the socket
 		final Socket socket = getSocket();
 		if(socket == null) {
-			LOG.warn(LogUtil.ERR, "No socket available to probe the I/O buffers for size limits");
+			LOG.warn(Markers.ERR, "No socket available to probe the I/O buffers for size limits");
 			maxInBuffSize = Constants.BUFF_SIZE_HI;
 			maxOutBuffSize = Constants.BUFF_SIZE_HI;
 		} else {
@@ -61,12 +62,12 @@ extends DefaultNHttpServerConnection {
 				// probe the input buffer for size limit
 				socket.setReceiveBufferSize(Constants.BUFF_SIZE_HI);
 				maxInBuffSize = socket.getReceiveBufferSize();
-				LOG.debug(LogUtil.MSG, "{}: max IN buffer size is {}", this, SizeUtil.formatSize(maxInBuffSize));
+				LOG.debug(Markers.MSG, "{}: max IN buffer size is {}", this, SizeUtil.formatSize(maxInBuffSize));
 				socket.setReceiveBufferSize(Constants.BUFF_SIZE_LO); // reset back to the default
 				// probe the output buffer for size limit
 				socket.setSendBufferSize(Constants.BUFF_SIZE_HI);
 				maxOutBuffSize = socket.getSendBufferSize();
-				LOG.debug(LogUtil.MSG, "{}: max OUT buffer size is {}", this, SizeUtil.formatSize(maxOutBuffSize));
+				LOG.debug(Markers.MSG, "{}: max OUT buffer size is {}", this, SizeUtil.formatSize(maxOutBuffSize));
 				socket.setSendBufferSize(Constants.BUFF_SIZE_LO); // reset back to the default
 				//
 				socket.setPerformancePreferences(0, 1, 2);
@@ -114,9 +115,9 @@ extends DefaultNHttpServerConnection {
 			}
 			//
 			if(lastBuffSize != newBuffSize) {
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.info(
-						LogUtil.MSG, "{}: IN buffer size {} to {}", socket,
+						Markers.MSG, "{}: IN buffer size {} to {}", socket,
 						SizeUtil.formatSize(lastBuffSize), SizeUtil.formatSize(newBuffSize)
 					);
 				}
@@ -148,9 +149,9 @@ extends DefaultNHttpServerConnection {
 			}
 			//
 			if(lastBuffSize != newBuffSize) {
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
-						LogUtil.MSG, "{}: OUT buffer size {} to {}", socket,
+						Markers.MSG, "{}: OUT buffer size {} to {}", socket,
 						SizeUtil.formatSize(lastBuffSize), SizeUtil.formatSize(newBuffSize)
 					);
 				}

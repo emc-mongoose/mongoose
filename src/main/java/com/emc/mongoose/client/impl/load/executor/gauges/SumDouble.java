@@ -5,6 +5,7 @@ import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 //
+import com.emc.mongoose.common.logging.Markers;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -62,7 +63,7 @@ implements Gauge<Double> {
 					value += (double) nextMBeanConn.getAttribute(objectName, attrName);
 				} catch(final AttributeNotFoundException e) {
 					LOG.warn(
-						LogUtil.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
+						Markers.ERR, "Attribute \"{}\" not found for MBean \"{}\" @ {}",
 						attrName, objectName.getCanonicalName(), addr
 					);
 				} catch(final IOException|MBeanException|InstanceNotFoundException|ReflectionException e) {

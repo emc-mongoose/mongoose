@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -81,14 +82,14 @@ extends DefaultHandler {
 					);
 				}
 			} else {
-				LOG.trace(LogUtil.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
+				LOG.trace(Markers.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
 			}
 			//
 			if(strId != null && strId.length() > 0 && size > -1) {
 				try {
 					offset = Long.parseLong(strId, DataObject.ID_RADIX);
 					if(offset < 0) {
-						LOG.warn(LogUtil.ERR, "Calculated from id ring offset is negative");
+						LOG.warn(Markers.ERR, "Calculated from id ring offset is negative");
 					} else if(count < maxCount) {
 						consumer.submit(dataConstructor.newInstance(strId, offset, size));
 						count ++;
@@ -104,12 +105,12 @@ extends DefaultHandler {
 				} catch(final InterruptedException e) {
 					endDocument();
 				} catch(final NumberFormatException e) {
-					LOG.debug(LogUtil.ERR, "Invalid id: {}", strId);
+					LOG.debug(Markers.ERR, "Invalid id: {}", strId);
 				} catch(final Exception e) {
 					LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 				}
 			} else {
-				LOG.trace(LogUtil.ERR, "Invalid object id ({}) or size ({})", strId, strSize);
+				LOG.trace(Markers.ERR, "Invalid object id ({}) or size ({})", strId, strSize);
 			}
 		}
 		//

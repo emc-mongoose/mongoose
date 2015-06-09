@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.adapter.s3;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -62,7 +63,7 @@ extends WSRequestConfigBase<T> {
 		try {
 			copy = new WSRequestConfigImpl<>(this);
 		} catch(final NoSuchAlgorithmException e) {
-			LOG.fatal(LogUtil.ERR, "No such algorithm: \"{}\"", signMethod);
+			LOG.fatal(Markers.ERR, "No such algorithm: \"{}\"", signMethod);
 		}
 		return copy;
 	}
@@ -72,7 +73,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	public final WSRequestConfigImpl<T> setBucket(final WSBucketImpl<T> bucket) {
-		LOG.debug(LogUtil.MSG, "Req conf instance #{}: set bucket \"{}\"", hashCode(), bucket);
+		LOG.debug(Markers.MSG, "Req conf instance #{}: set bucket \"{}\"", hashCode(), bucket);
 		this.bucket = bucket;
 		return this;
 	}
@@ -81,7 +82,7 @@ extends WSRequestConfigBase<T> {
 	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
 		//if(nameSpace == null || nameSpace.length() < 1) {
-			LOG.debug(LogUtil.MSG, "Using empty namespace");
+			LOG.debug(Markers.MSG, "Using empty namespace");
 		/*} else {
 			sharedHeaders.updateHeader(new BasicHeader(KEY_EMC_NS, nameSpace));
 		}*/
@@ -99,7 +100,7 @@ extends WSRequestConfigBase<T> {
 			);
 			setBucket(bucket);
 		} catch(final NoSuchElementException e) {
-			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET_NAME);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET_NAME);
 		}
 		//
 		return this;
@@ -110,7 +111,7 @@ extends WSRequestConfigBase<T> {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		final String bucketName = String.class.cast(ObjectInputStream.class.cast(in).readUnshared());
-		LOG.debug(LogUtil.MSG, "Note: bucket {} has been got from load client side", bucketName);
+		LOG.debug(Markers.MSG, "Note: bucket {} has been got from load client side", bucketName);
 		setBucket(new WSBucketImpl<>(this, bucketName, runTimeConfig.getStorageVersioningEnabled()));
 	}
 	//
@@ -180,8 +181,8 @@ extends WSRequestConfigBase<T> {
 		//
 		buffer.append('\n').append(httpRequest.getUriPath());
 		//
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "Canonical representation:\n{}", buffer);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffer);
 		}
 		//
 		return buffer.toString();
@@ -198,7 +199,7 @@ extends WSRequestConfigBase<T> {
 			}
 		} else {
 			LOG.debug(
-				LogUtil.MSG, "req conf {}: using of bucket listing data producer is suppressed",
+				Markers.MSG, "req conf {}: using of bucket listing data producer is suppressed",
 				hashCode()
 			);
 		}
@@ -211,13 +212,13 @@ extends WSRequestConfigBase<T> {
 		if(bucket == null) {
 			throw new IllegalStateException("Bucket is not specified");
 		} else {
-			LOG.debug(LogUtil.MSG, "Configure storage w/ bucket \"{}\"", bucket);
+			LOG.debug(Markers.MSG, "Configure storage w/ bucket \"{}\"", bucket);
 		}
 		final String bucketName = bucket.getName();
 		if(bucket.exists(storageNodeAddrs[0])) {
-			LOG.info(LogUtil.MSG, "Bucket \"{}\" already exists", bucketName);
+			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
 		} else {
-			LOG.debug(LogUtil.MSG, "Bucket \"{}\" doesn't exist, trying to create", bucketName);
+			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", bucketName);
 			bucket.create(storageNodeAddrs[0]);
 			if(bucket.exists(storageNodeAddrs[0])) {
 				runTimeConfig.set(KEY_BUCKET_NAME, bucketName);

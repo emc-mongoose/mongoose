@@ -2,6 +2,7 @@ package com.emc.mongoose.common.conf;
 //
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -44,7 +45,7 @@ public class JsonConfigLoader {
 		final ObjectMapper jsonMapper = new ObjectMapper();
 		//
 		try {
-			LOG.debug(LogUtil.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
+			LOG.debug(Markers.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
 			final JsonNode rootNode = jsonMapper.readTree(cfgFile);
 			walkJsonTree(rootNode);
 			tgtConfig.setMongooseKeys(mongooseKeys);

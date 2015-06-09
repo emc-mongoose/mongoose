@@ -3,10 +3,10 @@ package com.emc.mongoose.storage.mock.impl.request;
 //import com.emc.mongoose.common.collections.InstancePool;
 //import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 //
-import org.apache.http.nio.protocol.HttpAsyncResponseProducer;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
@@ -40,8 +40,8 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	@Override
 	protected final void onRequestReceived(final HttpRequest httpRequest)
 	throws HttpException, IOException {
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "Got request: {}", httpRequest);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Got request: {}", httpRequest);
 		}
 		this.httpRequest = httpRequest;
 	}
@@ -60,8 +60,8 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 					Constants.BUFF_SIZE_LO, Math.min(Constants.BUFF_SIZE_HI, expectedContentSize)
 				)
 			);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.MSG, "Consumed {} bytes", ingestByteCount);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Consumed {} bytes", ingestByteCount);
 			}
 		} catch(final Throwable e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Content consuming failure");

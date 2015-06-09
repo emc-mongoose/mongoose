@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import org.apache.http.nio.ContentDecoder;
 //
 import org.apache.logging.log4j.Level;
@@ -49,7 +50,7 @@ public final class IOUtils {
 				if(lastByteCount < 0) {
 					if(doneByteCount < expectedSize) {
 						LOG.warn(
-							LogUtil.MSG, "Expected size {} but got: {}",
+							Markers.MSG, "Expected size {} but got: {}",
 							SizeUtil.formatSize(expectedSize), SizeUtil.formatSize(doneByteCount)
 						);
 					}
@@ -64,7 +65,7 @@ public final class IOUtils {
 		//
 		if(doneByteCount > expectedSize) {
 			LOG.warn(
-				LogUtil.MSG, "Expected size {} but got: {}", SizeUtil.formatSize(expectedSize),
+				Markers.MSG, "Expected size {} but got: {}", SizeUtil.formatSize(expectedSize),
 				SizeUtil.formatSize(doneByteCount)
 			);
 		}
@@ -123,7 +124,7 @@ public final class IOUtils {
 				}
 				//
 				LOG.info(
-					LogUtil.MSG, "Byte count: done {}, last {}, next {}",
+					Markers.MSG, "Byte count: done {}, last {}, next {}",
 					doneByteCount, lastByteCount, nextByteCount
 				);
 			}

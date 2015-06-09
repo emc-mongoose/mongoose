@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
@@ -89,7 +90,7 @@ implements Producer<T> {
 		if(httpResp != null) {
 			final StatusLine statusLine = httpResp.getStatusLine();
 			if(statusLine == null) {
-				LOG.warn(LogUtil.MSG, "No response status returned");
+				LOG.warn(Markers.MSG, "No response status returned");
 			} else {
 				final int statusCode = statusLine.getStatusCode();
 				if(statusCode >= 200 && statusCode < 300) {
@@ -99,7 +100,7 @@ implements Producer<T> {
 						if(respEntity.getContentType() != null) {
 							respContentType = respEntity.getContentType().getValue();
 						} else {
-							LOG.debug(LogUtil.ERR, "No content type returned");
+							LOG.debug(Markers.ERR, "No content type returned");
 						}
 						if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
 							try {
@@ -143,7 +144,7 @@ implements Producer<T> {
 							}
 						} else {
 							LOG.warn(
-								LogUtil.MSG, "Unexpected response content type: \"{}\"",
+								Markers.MSG, "Unexpected response content type: \"{}\"",
 								respContentType
 							);
 						}
@@ -152,7 +153,7 @@ implements Producer<T> {
 				} else {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.warn(
-						LogUtil.ERR, "Listing bucket \"{}\" response: {}/{}",
+						Markers.ERR, "Listing bucket \"{}\" response: {}/{}",
 						bucket, statusCode, statusMsg
 					);
 				}

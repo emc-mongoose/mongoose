@@ -7,6 +7,7 @@ import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 //
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 //
@@ -97,7 +98,7 @@ implements Storage<T> {
 		countHeads = runTimeConfig.getStorageMockHeadCount();
 		portStart = runTimeConfig.getApiTypePort(runTimeConfig.getApiName());
 		LOG.info(
-			LogUtil.MSG, "Starting with {} heads and capacity of {}",
+			Markers.MSG, "Starting with {} heads and capacity of {}",
 			countHeads, runTimeConfig.getStorageMockCapacity()
 		);
 		// connection config
@@ -163,7 +164,7 @@ implements Storage<T> {
 						dataObject.setSize(Long.valueOf(String.valueOf(dataObject.getSize()), 0x10));
 					}
 					//
-					LOG.trace(LogUtil.DATA_LIST, dataObject);
+					LOG.trace(Markers.DATA_LIST, dataObject);
 					put(dataObject.getId(), dataObject);
 				}
 			} catch(final FileNotFoundException e) {
@@ -191,10 +192,10 @@ implements Storage<T> {
 			}
 		}
 		if(countHeads > 1) {
-			LOG.info(LogUtil.MSG,"Listening the ports {} .. {}",
+			LOG.info(Markers.MSG,"Listening the ports {} .. {}",
 				portStart, portStart + countHeads - 1);
 		} else {
-			LOG.info(LogUtil.MSG,"Listening the port {}", portStart);
+			LOG.info(Markers.MSG,"Listening the port {}", portStart);
 		}
 		multiSocketSvc.shutdown();
 		//
@@ -207,7 +208,7 @@ implements Storage<T> {
 				multiSocketSvc.awaitTermination(Long.MAX_VALUE, timeUnit);
 			}
 		} catch (final InterruptedException e) {
-			LOG.info(LogUtil.MSG, "Interrupting the Cinderella");
+			LOG.info(Markers.MSG, "Interrupting the Cinderella");
 		} finally {
 			try {
 				createConsumer.close();

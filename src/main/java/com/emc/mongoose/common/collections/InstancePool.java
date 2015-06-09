@@ -1,7 +1,7 @@
 package com.emc.mongoose.common.collections;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -58,7 +58,7 @@ extends ConcurrentLinkedQueue<T> {
 		if(instance != null) {
 			if(!offer(instance)) {
 				LOG.debug(
-					LogUtil.ERR, "Failed to return the instance \"{}\" back into the pool \"{}\"",
+					Markers.ERR, "Failed to return the instance \"{}\" back into the pool \"{}\"",
 					instance.hashCode(), toString()
 				);
 			}

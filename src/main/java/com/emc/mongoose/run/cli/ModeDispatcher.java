@@ -4,11 +4,12 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 // mongoose-scenario.jar
-import com.emc.mongoose.run.scenario.Scenario;
+import com.emc.mongoose.run.scenario.ScriptRunner;
 import com.emc.mongoose.run.webserver.RunJettyTask;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
@@ -48,22 +49,22 @@ public final class ModeDispatcher {
 		RunTimeConfig.getContext().loadPropsFromJsonCfgFile(
 			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
 		);
-		rootLogger.debug(LogUtil.MSG, "Loaded the properties from the files");
+		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
 		// load the config from system properties
 		RunTimeConfig.getContext().loadSysProps();
 		// load the config from CLI arguments
 		final Map<String, String> properties = HumanFriendly.parseCli(args);
 		if(!properties.isEmpty()) {
-			rootLogger.debug(LogUtil.MSG, "Overriding properties {}", properties);
+			rootLogger.debug(Markers.MSG, "Overriding properties {}", properties);
 			RunTimeConfig.getContext().overrideSystemProperties(properties);
 		}
 		//
-		rootLogger.info(LogUtil.MSG, RunTimeConfig.getContext().toString());
+		rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		//
 		switch(runMode) {
 			case Constants.RUN_MODE_SERVER:
 			case Constants.RUN_MODE_COMPAT_SERVER:
-				rootLogger.debug(LogUtil.MSG, "Starting the server");
+				rootLogger.debug(Markers.MSG, "Starting the server");
 				try(
 					final WSLoadBuilderSvc<WSObject, WSLoadExecutor<WSObject>>
 						loadBuilderSvc = new BasicWSLoadBuilderSvc<>(RunTimeConfig.getContext())
@@ -73,16 +74,16 @@ public final class ModeDispatcher {
 				} catch(final IOException e) {
 					LogUtil.exception(rootLogger, Level.ERROR, e, "Load builder service failure");
 				} catch(InterruptedException e) {
-					rootLogger.debug(LogUtil.MSG, "Interrupted load builder service");
+					rootLogger.debug(Markers.MSG, "Interrupted load builder service");
 				}
 				break;
 			case Constants.RUN_MODE_WEBUI:
-				rootLogger.debug(LogUtil.MSG, "Starting the web UI");
+				rootLogger.debug(Markers.MSG, "Starting the web UI");
 				new RunJettyTask(RunTimeConfig.getContext()).run();
 				break;
 			case Constants.RUN_MODE_CINDERELLA:
 			case Constants.RUN_MODE_WSMOCK:
-				rootLogger.debug(LogUtil.MSG, "Starting the cinderella");
+				rootLogger.debug(Markers.MSG, "Starting the cinderella");
 				try {
 					new Cinderella(RunTimeConfig.getContext()).run();
 				} catch (final Exception e) {
@@ -92,7 +93,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_STANDALONE:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
-				new Scenario().run();
+				new ScriptRunner().run();
 				break;
 			default:
 				throw new IllegalArgumentException(

@@ -7,6 +7,7 @@ import com.codahale.metrics.MetricRegistry;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -141,21 +142,21 @@ implements IOStats {
 	//
 	@Override
 	public final void start() {
-		LOG.debug(LogUtil.MSG, "Start");
+		LOG.debug(Markers.MSG, "Start");
 		metricsReporter.start();
 		super.start();
 	}
 	//
 	@Override
 	public final void run() {
-		LOG.debug(LogUtil.MSG, "Running");
+		LOG.debug(Markers.MSG, "Running");
 		try {
 			while(updateMilliPeriod > 0 && !isInterrupted()) {
-				LOG.info(LogUtil.PERF_AVG, toString());
+				LOG.info(Markers.PERF_AVG, toString());
 				Thread.sleep(updateMilliPeriod);
 			}
 		} catch(final InterruptedException ignored) {
-			LOG.debug(LogUtil.MSG, "Interrupted");
+			LOG.debug(Markers.MSG, "Interrupted");
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failure");
 		} finally {

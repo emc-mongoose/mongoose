@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.io.task;
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
@@ -113,7 +114,7 @@ implements IOTask<T> {
 				respTimeDone >= respTimeStart
 			) {
 			LOG.info(
-				LogUtil.PERF_TRACE,
+				Markers.PERF_TRACE,
 				strBuilder
 					.append(nodeAddr).append(',')
 					.append(dataItemId).append(',')
@@ -131,7 +132,7 @@ implements IOTask<T> {
 			status != Status.FAIL_UNKNOWN
 		) {
 			LOG.warn(
-				LogUtil.ERR,
+				Markers.ERR,
 				strBuilder
 					.append("Invalid trace: ")
 					.append(nodeAddr).append(',')

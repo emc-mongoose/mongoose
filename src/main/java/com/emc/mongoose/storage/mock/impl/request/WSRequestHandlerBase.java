@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.mock.impl.request;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.data.DataObject;
@@ -171,8 +172,8 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	private void handleCreate(
 		final HttpRequest httpRequest, final HttpResponse httpResponse, final String dataId
 	) {
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "Create data object with ID: {}", dataId);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Create data object with ID: {}", dataId);
 		}
 		try {
 			httpResponse.setStatusCode(HttpStatus.SC_OK);
@@ -196,14 +197,14 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final WSObjectMock dataObject = sharedStorage.get(dataId);
 		if(dataObject == null) {
 			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.ERR, "No such object: {}", dataId);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.ERR, "No such object: {}", dataId);
 			}
 			ioStats.markRead(-1);
 		} else {
 			response.setStatusCode(HttpStatus.SC_OK);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.MSG, "Send data object with ID: {}", dataId);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Send data object with ID: {}", dataId);
 			}
 			response.setEntity(dataObject);
 			ioStats.markRead(dataObject.getSize());
@@ -214,14 +215,14 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final T dataObject = sharedStorage.get(dataId);
 		if(dataObject == null) {
 			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.ERR, "No such object: {}", dataId);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.ERR, "No such object: {}", dataId);
 			}
 		} else {
 			sharedStorage.delete(dataObject);
 			response.setStatusCode(HttpStatus.SC_OK);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.MSG, "Delete data object with ID: {}", dataId);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Delete data object with ID: {}", dataId);
 			}
 			ioStats.markDelete();
 		}
@@ -235,8 +236,8 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final long offset = decodeRingBufferOffset(dataID);
 		final T dataObject = (T) new BasicWSObjectMock(dataID, offset, bytes);
 		sharedStorage.create(dataObject);
-		if(LOG.isTraceEnabled(LogUtil.DATA_LIST)) {
-			LOG.trace(LogUtil.DATA_LIST, dataObject);
+		if(LOG.isTraceEnabled(Markers.DATA_LIST)) {
+			LOG.trace(Markers.DATA_LIST, dataObject);
 		}
 		return dataObject;
 	}

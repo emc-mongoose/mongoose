@@ -3,6 +3,7 @@ package com.emc.mongoose.server.impl.load.builder;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -95,10 +96,10 @@ implements WSLoadBuilderSvc<T, U> {
 	}
 	//
 	public final void start() {
-		LOG.debug(LogUtil.MSG, "Load builder service instance created");
+		LOG.debug(Markers.MSG, "Load builder service instance created");
 		/*final RemoteStub stub = */ServiceUtils.create(this);
 		/*LOG.debug(Markers.MSG, stub.toString());*/
-		LOG.info(LogUtil.MSG, "Server started and waiting for the requests");
+		LOG.info(Markers.MSG, "Server started and waiting for the requests");
 	}
 	//
 	@Override
