@@ -49,8 +49,8 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -98,9 +98,10 @@ implements LoadClient<T> {
 		taskGetBWMean, taskGetBW1Min, taskGetBW5Min, taskGetBW15Min,
 		taskGetLatencyMed, taskGetLatencyAvg;
 	//
-	private final List<PeriodicTask<Collection<T>>> frameFetchTasks = new ArrayList<>();
-	//
 	private final ScheduledExecutorService mgmtConnExecutor;
+	private final List<PeriodicTask<Collection<T>>> frameFetchTasks = new LinkedList<>();
+	private final List<PeriodicTask> metricFetchTasks = new LinkedList<>();
+	//
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final long maxCount;
 	private final String name, loadSvcAddrs[];
@@ -190,11 +191,6 @@ implements LoadClient<T> {
 				);
 			}
 		}
-		//
-		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			20 + remoteLoadMap.size(), // 20 metric fetching tasks + N frame fetching tasks
-			new GroupThreadFactory(String.format("%s-remoteMonitor", name), true)
-		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricSuccCount = registerJmxGaugeSum(
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_COUNT
@@ -230,19 +226,24 @@ implements LoadClient<T> {
 		taskGetCountSubm = new GaugeValuePeriodicTask<>(
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_SUBM, ATTR_COUNT)
 		);
+		metricFetchTasks.add(taskGetCountSubm);
 		taskGetCountRej = new GaugeValuePeriodicTask<>(
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_REJ, ATTR_COUNT)
 		);
+		metricFetchTasks.add(taskGetCountRej);
 		taskGetCountSucc = new GaugeValuePeriodicTask<>(metricSuccCount);
+		metricFetchTasks.add(taskGetCountSucc);
 		taskGetCountFail = new GaugeValuePeriodicTask<>(
 			registerJmxGaugeSum(DEFAULT_DOMAIN, METRIC_NAME_FAIL, ATTR_COUNT)
 		);
+		metricFetchTasks.add(taskGetCountFail);
 		/*taskGetCountNanoSec = new GaugeValuePeriodicTask<>(
 			registerJmxGaugeSum(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_COUNT
 			)
 		);*/
 		taskGetCountBytes = new GaugeValuePeriodicTask<>(metricByteCount);
+		metricFetchTasks.add(taskGetCountBytes);
 		/*taskGetDurMin = new GaugeValueTask<>(
 			registerJmxGaugeMinLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MIN
@@ -258,19 +259,29 @@ implements LoadClient<T> {
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MIN
 			)
 		);
+		metricFetchTasks.add(taskGetLatencyMin);
 		taskGetLatencyMax = new GaugeValuePeriodicTask<>(
 			registerJmxGaugeMaxLong(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MAX
 			)
 		);
+		metricFetchTasks.add(taskGetLatencyMax);
 		taskGetTPMean = new GaugeValuePeriodicTask<>(metricTPMean);
+		metricFetchTasks.add(taskGetTPMean);
 		taskGetTP1Min = new GaugeValuePeriodicTask<>(metricTP1Min);
+		metricFetchTasks.add(taskGetTP1Min);
 		taskGetTP5Min = new GaugeValuePeriodicTask<>(metricTP5Min);
+		metricFetchTasks.add(taskGetTP5Min);
 		taskGetTP15Min = new GaugeValuePeriodicTask<>(metricTP15Min);
+		metricFetchTasks.add(taskGetTP15Min);
 		taskGetBWMean = new GaugeValuePeriodicTask<>(metricBWMean);
+		metricFetchTasks.add(taskGetBWMean);
 		taskGetBW1Min = new GaugeValuePeriodicTask<>(metricBW1Min);
+		metricFetchTasks.add(taskGetBW1Min);
 		taskGetBW5Min = new GaugeValuePeriodicTask<>(metricBW5Min);
+		metricFetchTasks.add(taskGetBW5Min);
 		taskGetBW15Min = new GaugeValuePeriodicTask<>(metricBW15Min);
+		metricFetchTasks.add(taskGetBW15Min);
 		/*taskGetDurMed = new GaugeValueTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_DUR, ATTR_MED
@@ -286,11 +297,19 @@ implements LoadClient<T> {
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_MED
 			)
 		);
+		metricFetchTasks.add(taskGetLatencyMed);
 		taskGetLatencyAvg = new GaugeValuePeriodicTask<>(
 			registerJmxGaugeAvgDouble(
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_AVG
 			)
 		);
+		metricFetchTasks.add(taskGetLatencyAvg);
+		//
+		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
+			remoteLoadMap.size() + frameFetchTasks.size(),
+			new GroupThreadFactory(String.format("%s-aggregator", name), true)
+		);
+
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private Gauge<Long> registerJmxGaugeSum(
@@ -448,60 +467,10 @@ implements LoadClient<T> {
 			);
 		}
 		//
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetCountSubm, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetCountRej, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetCountSucc, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetCountFail, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetCountBytes, 0, periodSec, TimeUnit.SECONDS
-		);
+		for(final PeriodicTask metricTask : metricFetchTasks) {
+			mgmtConnExecutor.scheduleAtFixedRate(metricTask, 0, periodSec, TimeUnit.SECONDS);
+		}
 		//
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetLatencyAvg, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetLatencyMin, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetLatencyMed, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetLatencyMax, 0, periodSec, TimeUnit.SECONDS
-		);
-		//
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetTPMean, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetTP1Min, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetTP5Min, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetTP15Min, 0, periodSec, TimeUnit.SECONDS
-		);
-		//
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetBWMean, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetBW1Min, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetBW5Min, 0, periodSec, TimeUnit.SECONDS
-		);
-		mgmtConnExecutor.scheduleAtFixedRate(
-			taskGetBW15Min, 0, periodSec, TimeUnit.SECONDS
-		);
 		mgmtConnExecutor.scheduleAtFixedRate(
 			new Runnable() {
 				@Override
@@ -660,6 +629,29 @@ implements LoadClient<T> {
 		}
 	}
 	//
+	private void forceFetchAndAggregation() {
+		final ExecutorService forcedAggregator = Executors.newFixedThreadPool(
+			frameFetchTasks.size() + metricFetchTasks.size(),
+			new GroupThreadFactory("forcedAggregator")
+		);
+		//
+		for(final PeriodicTask<Collection<T>> frameFetchTask : frameFetchTasks) {
+			forcedAggregator.submit(frameFetchTask);
+		}
+		for(final PeriodicTask metricFetchTask : metricFetchTasks) {
+			forcedAggregator.submit(metricFetchTask);
+		}
+		forcedAggregator.shutdown();
+		//
+		try {
+			forcedAggregator.awaitTermination(metricsPeriodSec, TimeUnit.SECONDS);
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Interrupted while aggregating the remote info");
+		} finally {
+			forcedAggregator.shutdownNow();
+		}
+	}
+	//
 	@Override
 	public final void close()
 	throws IOException {
@@ -668,6 +660,7 @@ implements LoadClient<T> {
 			if(!remoteLoadMap.isEmpty()) {
 				LOG.debug(LogUtil.MSG, "do performing close");
 				interrupt();
+				forceFetchAndAggregation();
 				LOG.debug(LogUtil.MSG, "log summary metrics");
 				logMetrics(LogUtil.PERF_SUM);
 				LOG.debug(LogUtil.MSG, "log metainfo frames");
