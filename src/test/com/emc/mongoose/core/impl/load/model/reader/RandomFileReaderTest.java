@@ -38,7 +38,7 @@ public final class RandomFileReaderTest {
 
     @Before
     public final void before()
-       throws Exception {
+    throws Exception {
     }
 
     @After
@@ -53,7 +53,6 @@ public final class RandomFileReaderTest {
         when(reader.readLine())
             .thenReturn("line #1")
             .thenReturn(null);
-
         assertEquals(
             "line #1",
             randomReader.readLine()
@@ -108,7 +107,7 @@ public final class RandomFileReaderTest {
     }
 
     @Test
-    public void shouldReturnLinesInOrderDefinedByRandomizer() throws Exception {
+    public void shouldReadLinesInOrderDefinedByRandomizer() throws Exception {
         int batch = 5;
 
         final RandomFileReader randomReader = new RandomFileReader(
@@ -154,7 +153,7 @@ public final class RandomFileReaderTest {
     }
 
     @Test
-    public void shouldReadLinesByBatch() throws Exception {
+    public void shouldReadLinesFromFileByBatch() throws Exception {
         int batch = 3;
 
         final RandomFileReader randomReader = new RandomFileReader(
