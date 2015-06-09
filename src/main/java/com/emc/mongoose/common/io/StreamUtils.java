@@ -18,24 +18,44 @@ public final class StreamUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public static void consumeQuietly(final InputStream contentStream, final int buffSize) {
+	public static long consumeQuietly(final InputStream contentStream, final int buffSize) {
+		int n;
+		long sum = 0;
 		final byte buff[] = new byte[buffSize];
 		try {
-			while(contentStream.read(buff) != -1);
+			while(true) {
+				n = contentStream.read(buff);
+				if(n < 0) {
+					break;
+				} else {
+					sum += n;
+				}
+			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Content reading failure");
 		}
+		return sum;
 	}
 	//
-	public static void consumeQuietly(
+	public static long consumeQuietly(
 		final ContentDecoder in, final IOControl ioCtl, final ByteBuffer bbuff
 	) {
+		int n;
+		long sum = 0;
 		try {
-			while(!in.isCompleted() && in.read(bbuff) >= 0) {
+			while(!in.isCompleted()) {
+				n = in.read(bbuff);
+				if(n < 0) {
+					break;
+				} else {
+					sum += n;
+				}
 				bbuff.clear();
 			}
-		} catch(final IOException ignore) {
+		} catch(final IOException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Content reading failure");
 		}
+		return sum;
 	}
 	//
 }

@@ -1,13 +1,13 @@
 package com.emc.mongoose.common.io;
 //
-import com.emc.mongoose.common.collections.InstancePool;
-import com.emc.mongoose.common.collections.Reusable;
-import com.emc.mongoose.common.logging.LogUtil;
+//import com.emc.mongoose.common.collections.InstancePool;
+//import com.emc.mongoose.common.collections.Reusable;
+//import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.http.nio.ContentDecoder;
 //
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
+//import org.apache.logging.log4j.Level;
+//import org.apache.logging.log4j.LogManager;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,28 +16,36 @@ import java.nio.channels.ReadableByteChannel;
  Created by kurila on 20.05.15.
  */
 public final class HTTPContentDecoderChannel
-implements ReadableByteChannel, Reusable<HTTPContentDecoderChannel> {
+implements ReadableByteChannel {
 	//
-	private ContentDecoder contentDecoder;
+	private ContentDecoder contentDecoder = null;
 	//
 	@Override
 	public final int read(final ByteBuffer src)
 	throws IOException {
+		if(contentDecoder == null) {
+			throw new IOException("The channel is not ready for the input");
+		}
 		return contentDecoder.read(src);
 	}
 	//
 	@Override
 	public final void close() {
-		release();
+		contentDecoder = null;
 	}
 	//
 	@Override
 	public final boolean isOpen() {
-		return true;
+		return contentDecoder != null;
+	}
+	//
+	public final void setContentDecoder(final ContentDecoder contentDecoder) {
+		this.contentDecoder = contentDecoder;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Reusable implementation
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	/*
 	private static final InstancePool<HTTPContentDecoderChannel> INSTANCE_POOL;
 	static {
 		InstancePool<HTTPContentDecoderChannel> t = null;
@@ -67,5 +75,5 @@ implements ReadableByteChannel, Reusable<HTTPContentDecoderChannel> {
 	@Override
 	public final void release() {
 		INSTANCE_POOL.release(this);
-	}
+	}*/
 }

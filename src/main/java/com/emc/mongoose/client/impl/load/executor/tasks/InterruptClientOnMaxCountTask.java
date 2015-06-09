@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 17.12.14.
  */
-public class CountLimitWaitTask
+public class InterruptClientOnMaxCountTask
 implements PeriodicTask<Long> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -25,7 +25,7 @@ implements PeriodicTask<Long> {
 	private final long maxCount;
 	private final AtomicLong processedCount = new AtomicLong(0);
 	//
-	public CountLimitWaitTask(
+	public InterruptClientOnMaxCountTask(
 		final LoadClient loadClient, final long maxCount, final PeriodicTask<Long> getValueTasks[]
 	) {
 		this.loadClient = loadClient;

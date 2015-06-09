@@ -38,8 +38,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.AsynchronousCloseException;
-import java.nio.channels.WritableByteChannel;
+import java.nio.channels.ClosedChannelException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -164,10 +163,18 @@ implements WSIOTask<T> {
 		return httpRequest;
 	}
 	//
+	private final static ThreadLocal<HTTPContentEncoderChannel>
+		THRLOC_CHAN_OUT = new ThreadLocal<>();
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		try(final WritableByteChannel chanOut = HTTPContentEncoderChannel.getInstance(out)) {
+		HTTPContentEncoderChannel chanOut = THRLOC_CHAN_OUT.get();
+		if(chanOut == null) {
+			chanOut = new HTTPContentEncoderChannel();
+			THRLOC_CHAN_OUT.set(chanOut);
+		}
+		chanOut.setContentEncoder(out);
+		try {
 			if(httpRequest.getEntity() != null) {
 				if(dataItem.isAppending()) {
 					dataItem.writeAugment(chanOut);
@@ -177,7 +184,7 @@ implements WSIOTask<T> {
 					dataItem.write(chanOut);
 				}
 			}
-		} catch(final AsynchronousCloseException e) { // probably a manual interruption
+		} catch(final ClosedChannelException e) { // probably a manual interruption
 			status = Status.CANCELLED;
 			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
 		} catch(final IOException e) {
@@ -186,6 +193,9 @@ implements WSIOTask<T> {
 		} catch(final Exception e) {
 			status = Status.FAIL_UNKNOWN;
 			LogUtil.exception(LOG, Level.ERROR, e, "Producing content failure");
+		} finally {
+			out.complete();
+			chanOut.close();
 		}
 	}
 	//
@@ -404,6 +414,9 @@ implements WSIOTask<T> {
 				if(LOG.isTraceEnabled(Markers.ERR)) {
 					LOG.trace(Markers.ERR, msgBuilder);
 				}
+			} catch(final ClosedChannelException e) { // probably a manual interruption
+				status = Status.CANCELLED;
+				LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
 			} catch(final IOException e) {
 				if(!wsReqConf.isClosed()) {
 					LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during content consuming");

@@ -493,6 +493,7 @@ implements LoadExecutor<T> {
 					ioTask.hashCode(), throughPut.getCount(), ioTask.getTransferSize()
 				);
 			}
+			// feed the data item to the consumer and finally check for the finish state
 			try {
 				// is this an end of consumer-producer chain?
 				if(consumer == null) {
@@ -522,20 +523,21 @@ implements LoadExecutor<T> {
 			} catch(final RejectedExecutionException e) {
 				if (LOG.isTraceEnabled(Markers.ERR)) {
 					LogUtil.exception(
-						LOG, Level.TRACE, e, "\"{}\" rejected the data item \"{}\"", consumer, dataItem
+						LOG, Level.TRACE, e, "\"{}\" rejected the data item \"{}\"", consumer,
+						dataItem
 					);
 				}
 			}
 		} else {
 			counterReqFail.inc();
 		}
-		// feed the data item to the consumer and finally check for the finish state
+		//
 		counterResults.incrementAndGet();
 		if( // check that max count of results is reached OR
 			counterResults.get() >= maxCount ||
-			// consumer is not running and submitted count is equal to done count
-			(isAllSubm.get() && counterResults.get() >= counterSubm.getCount())
-		) { // so max count is reached OR all tasks are done
+				// consumer is not running and submitted count is equal to done count
+				(isAllSubm.get() && counterResults.get() >= counterSubm.getCount())
+			) { // so max count is reached OR all tasks are done
 			LOG.debug(
 				Markers.MSG, "{}: all {} task results has been obtained", getName(),
 				counterResults.get()

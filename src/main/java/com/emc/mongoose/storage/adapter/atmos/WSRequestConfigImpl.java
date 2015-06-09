@@ -399,6 +399,7 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	public void receiveResponse(final HttpResponse response, final T dataItem) {
+		super.receiveResponse(response, dataItem);
 		applyObjectId(dataItem, response);
 	}
 }

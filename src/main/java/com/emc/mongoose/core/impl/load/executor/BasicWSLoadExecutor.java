@@ -47,6 +47,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+//import java.util.HashMap;
+//import java.util.Map;
+//import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -126,8 +129,8 @@ implements WSLoadExecutor<T> {
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(buffSize > (2 * BUFF_SIZE_LO) ? buffSize / 2 : buffSize)
-			.setFragmentSizeHint(buffSize > (2 * BUFF_SIZE_LO) ? buffSize / 2 : buffSize)
+			.setBufferSize(buffSize)
+			.setFragmentSizeHint(BUFF_SIZE_LO)
 			.build();
 		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
 			reqExecutor, connConfig

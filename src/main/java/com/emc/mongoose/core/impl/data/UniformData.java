@@ -173,10 +173,16 @@ implements DataItem {
 		final WritableByteChannel chanDst, final long relOffset, final long len
 	) throws IOException {
 		long writtenCount = 0;
+		int n;
 		setRelativeOffset(relOffset);
 		while(writtenCount < len) {
 			enforceCircularity();
-			writtenCount += chanDst.write(ringBuff);
+			n = chanDst.write(ringBuff);
+			if(n < 0) {
+				LOG.warn(Markers.ERR, "Channel returned {} as written byte count", n);
+			} else if(n > 0) {
+				writtenCount += n;
+			}
 		}
 	}
 	//
@@ -217,8 +223,7 @@ implements DataItem {
 					Long.toString(offset, DataObject.ID_RADIX), size, relOffset + doneByteCount
 				);
 				return false;
-			} else {
-				//
+			} else if(n > 0) {
 				inBuff.flip();
 				//
 				for(m = 0; m < n; m ++) {

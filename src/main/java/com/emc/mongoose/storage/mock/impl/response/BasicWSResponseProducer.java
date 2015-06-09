@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.response;
 // mongoose-common.jar
-import com.emc.mongoose.common.collections.InstancePool;
-import com.emc.mongoose.common.collections.Reusable;
+//import com.emc.mongoose.common.collections.InstancePool;
+//import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.io.HTTPContentEncoderChannel;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.logging.Markers;
@@ -20,16 +20,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.nio.channels.WritableByteChannel;
 /**
  * Created by olga on 12.02.15.
  */
 public final class BasicWSResponseProducer
-implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
+implements HttpAsyncResponseProducer {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private volatile HttpResponse response = null;
+	private final HTTPContentEncoderChannel chanOut = new HTTPContentEncoderChannel();
+	//
+	public final void setResponse(final HttpResponse response) {
+		this.response = response;
+	}
 	//
 	@Override
 	public HttpResponse generateResponse() {
@@ -39,16 +43,17 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 	@Override
 	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
-		try(final WritableByteChannel chanOut = HTTPContentEncoderChannel.getInstance(encoder)) {
+		chanOut.setContentEncoder(encoder);
+		try {
 			final WSObjectMock dataItem = WSObjectMock.class.cast(response.getEntity());
 			if(dataItem != null) {
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.MSG, "{}: write out {} bytes", dataItem, dataItem.getSize());
-				}
 				dataItem.write(chanOut);
 			}
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Content producing failure");
+		} finally {
+			encoder.complete();
+			chanOut.close();
 		}
 	}
 	//
@@ -64,12 +69,11 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 	@Override
 	public final void close()
 	throws IOException {
-		release();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Reusable implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static InstancePool<BasicWSResponseProducer> POOL;
+	/*private final static InstancePool<BasicWSResponseProducer> POOL;
 	static {
 		InstancePool<BasicWSResponseProducer> t = null;
 		try {
@@ -98,5 +102,5 @@ implements HttpAsyncResponseProducer, Reusable<BasicWSResponseProducer> {
 	@Override
 	public final void release() {
 		POOL.release(this);
-	}
+	}*/
 }
