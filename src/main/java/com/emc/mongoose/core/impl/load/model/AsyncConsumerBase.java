@@ -150,7 +150,9 @@ implements AsyncConsumer<T> {
 					// the synchronization is necessary here to make sure that every data item is
 					// written completely to the file
 					synchronized(tmpFileWriter) {
-						super.interrupt();
+						super.interrupt(); // suspect bug: issue #395
+						// should invoke Thread.interrupt() instead this
+						// but invokes AsyncConsumerBase.interrupt() actually
 					}
 					//
 					try {
