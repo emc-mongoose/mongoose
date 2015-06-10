@@ -3,22 +3,17 @@ package com.emc.mongoose.core.impl.load.model.reader;
 import com.emc.mongoose.core.impl.load.model.reader.io.LineReader;
 import com.emc.mongoose.core.impl.load.model.reader.util.Randomizer;
 //
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.Before; 
 import org.junit.After;
 import org.junit.runner.RunWith;
 //
+import org.mockito.Matchers;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 //
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 /**
 * RandomFileReader Tester. 
 * 
@@ -50,10 +45,10 @@ public final class RandomFileReaderTest {
     public void shouldReadSingleLine() throws Exception {
         final RandomFileReader randomReader = new RandomFileReader(reader, 0, Integer.MAX_VALUE, random);
 
-        when(reader.readLine())
+        Mockito.when(reader.readLine())
             .thenReturn("line #1")
             .thenReturn(null);
-        assertEquals(
+        Assert.assertEquals(
             "line #1",
             randomReader.readLine()
         );
@@ -63,13 +58,13 @@ public final class RandomFileReaderTest {
     public void shouldReturnNullWhenReachedEndOfFile() throws Exception {
         final RandomFileReader randomReader = new RandomFileReader(reader, 0, Integer.MAX_VALUE, random);
 
-        when(reader.readLine())
+        Mockito.when(reader.readLine())
             .thenReturn("line #1")
             .thenReturn(null);
 
         randomReader.readLine();
 
-        assertNull(
+        Assert.assertNull(
             randomReader.readLine()
         );
     }
@@ -78,7 +73,7 @@ public final class RandomFileReaderTest {
     public void shouldReadLinesInNaturalOrder() throws Exception {
         final RandomFileReader randomReader = new RandomFileReader(reader, 0, Integer.MAX_VALUE, random);
 
-        when(reader.readLine())
+        Mockito.when(reader.readLine())
             .thenReturn("line #01")
             .thenReturn("line #02")
             .thenReturn("line #03")
@@ -86,7 +81,7 @@ public final class RandomFileReaderTest {
             .thenReturn("line #05")
             .thenReturn(null);
 
-        assertArrayEquals(
+        Assert.assertArrayEquals(
             new String[]{
                 "line #01",
                 "line #02",
@@ -117,7 +112,7 @@ public final class RandomFileReaderTest {
             random
         );
 
-        when(reader.readLine())
+        Mockito.when(reader.readLine())
             .thenReturn("line #00")
             .thenReturn("line #01")
             .thenReturn("line #02")
@@ -125,14 +120,14 @@ public final class RandomFileReaderTest {
             .thenReturn("line #04")
             .thenReturn(null);
 
-        when(random.nextInt(anyInt()))
+        Mockito.when(random.nextInt(Matchers.anyInt()))
             .thenReturn(4)
             .thenReturn(2)
             .thenReturn(1)
             .thenReturn(1)
             .thenReturn(0);
 
-        assertArrayEquals(
+        Assert.assertArrayEquals(
             new String[]{
                 "line #04",
                 "line #02",
@@ -163,18 +158,18 @@ public final class RandomFileReaderTest {
             random
         );
 
-        when(reader.readLine())
+        Mockito.when(reader.readLine())
             .thenReturn("line #00")
             .thenReturn("line #01")
             .thenReturn("line #02");
 
-        when(random.nextInt(anyInt()))
+        Mockito.when(random.nextInt(Matchers.anyInt()))
             .thenReturn(0);
 
 
         randomReader.readLine();
 
-        verify(reader, atLeastOnce()).readLine();
+        Mockito.verify(reader, Mockito.atLeastOnce()).readLine();
     }
 
     @Test
@@ -188,19 +183,19 @@ public final class RandomFileReaderTest {
             random
         );
 
-        when(reader.readLine())
+        Mockito.when(reader.readLine())
             .thenReturn("line #00")
             .thenReturn("line #01")
             .thenReturn("line #02")
             .thenReturn("line #03");
 
-        when(random.nextInt(anyInt()))
+        Mockito.when(random.nextInt(Matchers.anyInt()))
             .thenReturn(0);
 
         randomReader.readLine();
         randomReader.readLine();
 
-        verify(reader, atLeastOnce()).readLine();
+        Mockito.verify(reader, Mockito.atLeastOnce()).readLine();
     }
 
     @Test
@@ -208,7 +203,7 @@ public final class RandomFileReaderTest {
         int batchSize = 10;
         final RandomFileReader randomReader = new RandomFileReader(reader, batchSize, Integer.MAX_VALUE, random);
 
-        when(reader.readLine())
+        Mockito.when(reader.readLine())
             .thenReturn("line #01")
             .thenReturn("line #02")
             .thenReturn("line #03")
@@ -216,24 +211,24 @@ public final class RandomFileReaderTest {
             .thenReturn("line #05")
             .thenReturn(null);
 
-        when(random.nextInt(anyInt())).thenReturn(0);
+        Mockito.when(random.nextInt(Matchers.anyInt())).thenReturn(0);
 
-        assertArrayEquals(
+        Assert.assertArrayEquals(
             new String[]{
-              "line #01",
-              "line #02",
-              "line #03",
-              "line #04",
-              "line #05",
-              null
+                "line #01",
+                "line #02",
+                "line #03",
+                "line #04",
+                "line #05",
+                null
             },
-            new String[] {
-              randomReader.readLine(),
-              randomReader.readLine(),
-              randomReader.readLine(),
-              randomReader.readLine(),
-              randomReader.readLine(),
-              randomReader.readLine()
+            new String[]{
+                randomReader.readLine(),
+                randomReader.readLine(),
+                randomReader.readLine(),
+                randomReader.readLine(),
+                randomReader.readLine(),
+                randomReader.readLine()
             }
         );
     }
@@ -244,7 +239,7 @@ public final class RandomFileReaderTest {
 
         randomReader.close();
 
-        verify(reader).close();
+        Mockito.verify(reader).close();
     }
 
 } 
