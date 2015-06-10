@@ -4,6 +4,7 @@ import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
@@ -136,7 +137,7 @@ implements Runnable {
 			// Ready to go!
 			ioReactor.execute(this);
 		} catch (final InterruptedIOException e) {
-			LOG.debug(LogUtil.MSG, "{}: interrupted", this);
+			LOG.debug(Markers.MSG, "{}: interrupted", this);
 		} catch (final IOReactorException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "{}: I/O reactor failure", this);
 		} catch (final IOException e) {

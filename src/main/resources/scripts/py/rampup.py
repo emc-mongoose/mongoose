@@ -33,7 +33,7 @@ def execute(loadBuilder, rampupParams=((),(),())):
 		for threadCountStr in listThreadCounts:
 			try:
 				threadCount = Short.valueOf(threadCountStr)
-				LOG.info(LogUtil.PERF_SUM, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
+				LOG.info(Markers.PERF_SUM, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
 				ThreadContext.put("currentSize", dataItemSizeStr + "-" + str(index))
 				ThreadContext.put("currentThreadCount", str(threadCount))
 				nextChain = chainBuild(

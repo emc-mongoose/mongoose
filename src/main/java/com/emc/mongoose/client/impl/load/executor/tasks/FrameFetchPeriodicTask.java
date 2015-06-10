@@ -2,6 +2,7 @@ package com.emc.mongoose.client.impl.load.executor.tasks;
 // mongoose-common.jar
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
@@ -36,8 +37,8 @@ implements PeriodicTask<Collection<T>> {
 			final Collection<T> nextFrame = loadSvc.takeFrame();
 			if(nextFrame != null) {
 				result.set(nextFrame);
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(LogUtil.MSG, "Got frame containing {} items", nextFrame.size());
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(Markers.MSG, "Got frame containing {} items", nextFrame.size());
 				}
 			}
 		} catch(final RemoteException | InterruptedException e) {

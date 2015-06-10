@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.conf.JsonConfigLoader;
 //
+import com.emc.mongoose.common.logging.Markers;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 //
@@ -76,7 +77,7 @@ extends CommonServlet {
 	private void saveConfigInSeparateFile() {
 		if (!FILE_PATH.mkdirs()) {
 			if (!FILE_PATH.exists()) {
-				LOG.error(LogUtil.ERR, "Failed to create folders for ui config");
+				LOG.error(Markers.ERR, "Failed to create folders for ui config");
 				return;
 			}
 		}

@@ -5,6 +5,7 @@ package com.emc.mongoose.storage.mock.impl.request;
 import com.emc.mongoose.common.io.StreamUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import org.apache.http.protocol.HttpContext;
@@ -41,8 +42,8 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	@Override
 	protected final void onRequestReceived(final HttpRequest httpRequest)
 	throws HttpException, IOException {
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "Got request: {}", httpRequest);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Got request: {}", httpRequest);
 		}
 		this.httpRequest = httpRequest;
 	}
@@ -72,8 +73,8 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 		try {
 			bbuff.clear();
 			final long ingestByteCount = StreamUtils.consumeQuietly(decoder, ioCtl, bbuff);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.MSG, "Consumed {} bytes", ingestByteCount);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Consumed {} bytes", ingestByteCount);
 			}
 		} catch(final Throwable e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Content consuming failure");

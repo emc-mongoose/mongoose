@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.data;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
@@ -8,7 +9,6 @@ import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
-import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import org.apache.logging.log4j.LogManager;
@@ -178,7 +178,7 @@ implements DataItem {
 			enforceCircularity();
 			n = chanDst.write(ringBuff);
 			if(n < 0) {
-				LOG.warn(LogUtil.ERR, "Channel returned {} as written byte count", n);
+				LOG.warn(Markers.ERR, "Channel returned {} as written byte count", n);
 			} else if(n > 0) {
 				writtenCount += n;
 			}
@@ -218,7 +218,7 @@ implements DataItem {
 			//
 			if(n < 0) { // premature end of stream
 				LOG.warn(
-					LogUtil.MSG, "{}: content size mismatch, expected: {}, got: {}",
+					Markers.MSG, "{}: content size mismatch, expected: {}, got: {}",
 					Long.toString(offset, DataObject.ID_RADIX), size, relOffset + doneByteCount
 				);
 				return false;
@@ -230,7 +230,7 @@ implements DataItem {
 					bi = inBuff.get();
 					if(bs != bi) {
 						LOG.warn(
-							LogUtil.MSG, "{}: content mismatch @ offset {}, expected: {}, got: {}",
+							Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, got: {}",
 							Long.toString(offset, DataObject.ID_RADIX),
 							relOffset + doneByteCount + m,
 							String.format("\"0x%X\"", bs), String.format("\"0x%X\"", bi)

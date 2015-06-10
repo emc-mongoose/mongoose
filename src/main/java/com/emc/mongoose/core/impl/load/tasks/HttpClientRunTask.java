@@ -2,6 +2,7 @@ package com.emc.mongoose.core.impl.load.tasks;
 //
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import org.apache.http.nio.reactor.ConnectingIOReactor;
 import org.apache.http.nio.reactor.IOEventDispatch;
 import org.apache.http.nio.reactor.IOReactorException;
@@ -33,7 +34,7 @@ implements Runnable {
 	@Override
 	public final void run() {
 		LOG.debug(
-			LogUtil.MSG, "Running the web storage client {}", Thread.currentThread().getName()
+			Markers.MSG, "Running the web storage client {}", Thread.currentThread().getName()
 		);
 		try {
 			ioReactor.execute(ioEventDispatch);
@@ -43,7 +44,7 @@ implements Runnable {
 				"Possible max open files limit exceeded, please check the environment configuration"
 			);
 		} catch(final InterruptedIOException e) {
-			LOG.debug(LogUtil.MSG, "{}: interrupted", Thread.currentThread().getName());
+			LOG.debug(Markers.MSG, "{}: interrupted", Thread.currentThread().getName());
 		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to execute the web storage client"

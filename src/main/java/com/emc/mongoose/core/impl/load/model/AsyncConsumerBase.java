@@ -3,6 +3,7 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 //
@@ -79,7 +80,7 @@ implements AsyncConsumer<T> {
 				runTimeConfig.getRunName() + "-v" + runTimeConfig.getRunVersion()
 			);
 			if(!tmpFilePath.toFile().exists() && !tmpFilePath.toFile().mkdirs()) {
-				LOG.warn(LogUtil.ERR, "Failed to create the directory: \"{}\"", tmpFilePath);
+				LOG.warn(Markers.ERR, "Failed to create the directory: \"{}\"", tmpFilePath);
 			}
 			//
 			tmpFileConsumer = new AsyncConsumerBase<T>(
@@ -163,7 +164,7 @@ implements AsyncConsumer<T> {
 					//
 					if(tmpFile.delete()) {
 						LOG.debug(
-							LogUtil.MSG, "{}: temporary file \"{}\" deleted", getName(),
+							Markers.MSG, "{}: temporary file \"{}\" deleted", getName(),
 							tmpFile.getAbsolutePath()
 						);
 					}
@@ -179,7 +180,7 @@ implements AsyncConsumer<T> {
 							tmpFileWriter.close();
 						}
 						LOG.debug(
-							LogUtil.MSG, "{}: closed the file \"{}\" for writing", getName(),
+							Markers.MSG, "{}: closed the file \"{}\" for writing", getName(),
 							tmpFile.getAbsolutePath()
 						);
 					}
@@ -194,7 +195,7 @@ implements AsyncConsumer<T> {
 	public void start() {
 		if(isStarted.compareAndSet(false, true)) {
 			LOG.debug(
-				LogUtil.MSG,
+				Markers.MSG,
 				"{}: started, the further consuming will go through the volatile queue",
 				getName()
 			);
@@ -211,7 +212,7 @@ implements AsyncConsumer<T> {
 					tmpFileProducer.setConsumer(this); // go through the volatile queue
 					tmpFileProducer.start(); // start producing
 					LOG.debug(
-						LogUtil.MSG, "{}: started producing from file \"{}\"", getName(),
+						Markers.MSG, "{}: started producing from file \"{}\"", getName(),
 						tmpFileProducer.getPath()
 					);
 				}
@@ -252,7 +253,7 @@ implements AsyncConsumer<T> {
 	@Override
 	public final void run() {
 		LOG.debug(
-			LogUtil.MSG, "Determined submit queue capacity of {} for \"{}\"",
+			Markers.MSG, "Determined submit queue capacity of {} for \"{}\"",
 			volatileQueue.remainingCapacity(), getName()
 		);
 		T nextDataItem;
@@ -263,11 +264,11 @@ implements AsyncConsumer<T> {
 					submitSync(nextDataItem);
 				}
 			}
-			LOG.debug(LogUtil.MSG, "{}: consuming finished", getName());
+			LOG.debug(Markers.MSG, "{}: consuming finished", getName());
 		} catch(final InterruptedException e) {
-			LOG.debug(LogUtil.MSG, "{}: consuming interrupted", getName());
+			LOG.debug(Markers.MSG, "{}: consuming interrupted", getName());
 		} catch(final RejectedExecutionException e) {
-			LOG.debug(LogUtil.MSG, "{}: consuming rejected", getName());
+			LOG.debug(Markers.MSG, "{}: consuming rejected", getName());
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Submit data item failure");
 		} finally {
@@ -289,7 +290,7 @@ implements AsyncConsumer<T> {
 				throw new IllegalStateException("Not started yet, but shutdown is invoked");
 			} else {
 				LOG.debug(
-					LogUtil.MSG, "{}: not started yet, trying to shutdown the persistent buffer",
+					Markers.MSG, "{}: not started yet, trying to shutdown the persistent buffer",
 					getName()
 				);
 				tmpFileConsumer.shutdown();
@@ -311,7 +312,7 @@ implements AsyncConsumer<T> {
 					}
 				}
 			}
-			LOG.debug(LogUtil.MSG, "{}: consumed {} data items", getName(), counterPreSubm.get());
+			LOG.debug(Markers.MSG, "{}: consumed {} data items", getName(), counterPreSubm.get());
 		}
 	}
 	//
@@ -328,7 +329,7 @@ implements AsyncConsumer<T> {
 		if(tmpFileConsumer != null) {
 			tmpFileConsumer.interrupt();
 			LOG.debug(
-				LogUtil.MSG, "{}: interrupted persistent buffer consumer \"{}\"", getName(),
+				Markers.MSG, "{}: interrupted persistent buffer consumer \"{}\"", getName(),
 				tmpFileConsumer
 			);
 		}
@@ -337,7 +338,7 @@ implements AsyncConsumer<T> {
 			tmpFileProducer.interrupt();
 			tmpFileProducer = null;
 			LOG.debug(
-				LogUtil.MSG, "{}: interrupted persistent buffer producer \"{}\"", getName(),
+				Markers.MSG, "{}: interrupted persistent buffer producer \"{}\"", getName(),
 				tmpFileProducer
 			);
 		}
@@ -357,7 +358,7 @@ implements AsyncConsumer<T> {
 		}
 		final int dropCount = volatileQueue.size();
 		if(dropCount > 0) {
-			LOG.debug(LogUtil.MSG, "Dropped {} submit tasks", dropCount);
+			LOG.debug(Markers.MSG, "Dropped {} submit tasks", dropCount);
 		}
 		volatileQueue.clear(); // dispose
 	}

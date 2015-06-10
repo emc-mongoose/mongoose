@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.load.model.reader;
 //mongoose-common.jar
-import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.common.logging.Markers;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -29,7 +29,7 @@ extends BufferedReader {
 	throws IOException {
 		super(in);
 
-		LOG.trace(LogUtil.MSG, "Read data items randomly");
+		LOG.trace(Markers.MSG, "Read data items randomly");
 
 		this.maxCount = maxCount;
 		this.linesBuffer = new Vector<>(batchSize);

@@ -1,5 +1,6 @@
 package com.emc.mongoose.server.impl.load.executor;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 //
@@ -13,7 +14,6 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
@@ -53,9 +53,9 @@ implements WSLoadSvc<T> {
 		// close the exposed network service, if any
 		final Service svc = ServiceUtils.getLocalSvc(getName());
 		if(svc == null) {
-			LOG.debug(LogUtil.MSG, "The load was not exposed remotely");
+			LOG.debug(Markers.MSG, "The load was not exposed remotely");
 		} else {
-			LOG.debug(LogUtil.MSG, "The load was exposed remotely, removing the service");
+			LOG.debug(Markers.MSG, "The load was exposed remotely, removing the service");
 			ServiceUtils.close(svc);
 		}
 	}
@@ -63,24 +63,24 @@ implements WSLoadSvc<T> {
 	@Override @SuppressWarnings("unchecked")
 	public final void setConsumer(final ConsumerSvc<T> consumer) {
 		LOG.debug(
-			LogUtil.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
+			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
 			consumer, getName()
 		);
 		this.consumer = consumer;
 		try {
 			if(consumer != null) {
 				final String remoteSvcName = consumer.getName();
-				LOG.debug(LogUtil.MSG, "Name is {}", remoteSvcName);
+				LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
 				final Service localSvc = ServiceUtils.getLocalSvc(remoteSvcName);
 				if(localSvc == null) {
-					LOG.error(LogUtil.ERR, "Failed to get local service for name {}", remoteSvcName);
+					LOG.error(Markers.ERR, "Failed to get local service for name {}", remoteSvcName);
 				} else {
 					super.setConsumer((WSLoadExecutor<T>) localSvc);
 				}
 			}
-			LOG.debug(LogUtil.MSG, "Successfully resolved local service and appended it as consumer");
+			LOG.debug(Markers.MSG, "Successfully resolved local service and appended it as consumer");
 		} catch(final IOException ee) {
-			LOG.error(LogUtil.ERR, "Looks like network failure", ee);
+			LOG.error(Markers.ERR, "Looks like network failure", ee);
 		}
 	}
 	//
@@ -91,9 +91,9 @@ implements WSLoadSvc<T> {
 		if(consumer != null && RecordFrameBuffer.class.isInstance(consumer)) {
 			recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
 		}
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				LogUtil.MSG, "Returning {} data items records",
+				Markers.MSG, "Returning {} data items records",
 				recFrame == null ? 0 : recFrame.size()
 			);
 		}

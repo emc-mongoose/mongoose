@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.data;
 //
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
@@ -7,7 +8,6 @@ import com.emc.mongoose.core.api.data.UpdatableDataItem;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -24,7 +24,6 @@ import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.BitSet;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 15.09.14.
  A uniform data extension which may be logically split into isolated ranges for appends and updates.
@@ -198,9 +197,9 @@ implements AppendableDataItem, UpdatableDataItem {
 			rangeOffset = getRangeOffset(i);
 			rangeSize = getRangeSize(i);
 			if(maskRangesHistory.get(i)) {
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
-						LogUtil.MSG, "{}: range #{} has been modified", Long.toHexString(offset), i
+						Markers.MSG, "{}: range #{} has been modified", Long.toHexString(offset), i
 					);
 				}
 				updatedRange = new UniformData(
@@ -208,9 +207,9 @@ implements AppendableDataItem, UpdatableDataItem {
 				);
 				contentEquals = updatedRange.equals(chanSrc, 0, rangeSize);
 			} else if(currLayerIndex > 1) {
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
-						LogUtil.MSG, "{}: range #{} contains previous layer of data",
+						Markers.MSG, "{}: range #{} contains previous layer of data",
 						Long.toHexString(offset), i
 					);
 				}
@@ -223,7 +222,7 @@ implements AppendableDataItem, UpdatableDataItem {
 			}
 			if(!contentEquals) {
 				LOG.debug(
-					LogUtil.ERR, FMT_MSG_RANGE_CORRUPT,
+					Markers.ERR, FMT_MSG_RANGE_CORRUPT,
 					Long.toHexString(offset), i, rangeOffset, toString()
 				);
 				break;
@@ -264,9 +263,9 @@ implements AppendableDataItem, UpdatableDataItem {
 				if(!maskRangesHistory.get(nextCellPos) && !maskRangesPending.get(nextCellPos)) {
 					maskRangesPending.set(nextCellPos);
 					updateDone = true;
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
-							LogUtil.MSG, FMT_MSG_UPD_CELL,
+							Markers.MSG, FMT_MSG_UPD_CELL,
 							Long.toHexString(offset), nextCellPos, getRangeOffset(nextCellPos),
 							Hex.encodeHexString(maskRangesPending.toByteArray())
 						);
@@ -324,9 +323,9 @@ implements AppendableDataItem, UpdatableDataItem {
 			}
 		}
 		// move pending updated ranges to history
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				LogUtil.MSG, FMT_MSG_MERGE_MASKS,
+				Markers.MSG, FMT_MSG_MERGE_MASKS,
 				Long.toHexString(offset),
 				Hex.encodeHexString(maskRangesPending.toByteArray()),
 				Hex.encodeHexString(maskRangesHistory.toByteArray())

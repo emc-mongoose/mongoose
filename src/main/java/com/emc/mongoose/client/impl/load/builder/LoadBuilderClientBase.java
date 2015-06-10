@@ -3,6 +3,7 @@ package com.emc.mongoose.client.impl.load.builder;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -23,9 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.NoSuchElementException;
 /**
  Created by kurila on 20.10.14.
@@ -59,7 +58,7 @@ implements LoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> loadBuilderSvc;
 		int maxLastInstanceN = 0, nextInstanceN;
 		for(final String serverAddr : remoteServers) {
-			LOG.info(LogUtil.MSG, "Resolving service @ \"{}\"...", serverAddr);
+			LOG.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
 			loadBuilderSvc = resolve(serverAddr);
 			nextInstanceN = loadBuilderSvc.getLastInstanceNum();
 			if(nextInstanceN > maxLastInstanceN) {
@@ -94,7 +93,7 @@ implements LoadBuilderClient<T, U> {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
 			nextBuilder = get(addr);
-			LOG.debug(LogUtil.MSG, "Applying the configuration to server @ \"{}\"...", addr);
+			LOG.debug(Markers.MSG, "Applying the configuration to server @ \"{}\"...", addr);
 			nextBuilder.setProperties(runTimeConfig);
 		}
 		//
@@ -119,11 +118,11 @@ implements LoadBuilderClient<T, U> {
 				}
 			}
 		} catch(final NoSuchElementException e) {
-			LOG.warn(LogUtil.ERR, "No \"data.src.fpath\" property available");
+			LOG.warn(Markers.ERR, "No \"data.src.fpath\" property available");
 		} catch(final InvalidPathException e) {
-			LOG.warn(LogUtil.ERR, "Invalid data metainfo src file path: {}", dataMetaInfoFile);
+			LOG.warn(Markers.ERR, "Invalid data metainfo src file path: {}", dataMetaInfoFile);
 		} catch(final SecurityException e) {
-			LOG.warn(LogUtil.ERR, "Unexpected exception", e);
+			LOG.warn(Markers.ERR, "Unexpected exception", e);
 		}
 		return this;
 	}
