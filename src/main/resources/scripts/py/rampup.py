@@ -7,21 +7,21 @@ from java.lang import Long, Short, Throwable, NumberFormatException, Interrupted
 from org.apache.logging.log4j import Level, LogManager, ThreadContext
 #
 from com.emc.mongoose.common.conf import RunTimeConfig, SizeUtil
-from com.emc.mongoose.common.logging import LogUtil
+from com.emc.mongoose.common.logging import LogUtil, Markers
 #
 LOG = LogManager.getLogger()
 #
 def init():
 	runTimeConfig = RunTimeConfig.getContext()
-	LOG.debug(LogUtil.MSG, "Setting the metric update period to zero for chain scenario")
+	LOG.debug(Markers.MSG, "Setting the metric update period to zero for chain scenario")
 	runTimeConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0)
 	#
 	loadTypesChain = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_CHAIN_LOAD)
-	LOG.info(LogUtil.MSG, "Load types chain: {}", loadTypesChain)
+	LOG.info(Markers.MSG, "Load types chain: {}", loadTypesChain)
 	listSizes = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_RAMPUP_SIZES)
-	LOG.info(LogUtil.MSG, "Data sizes: {}", listSizes)
+	LOG.info(Markers.MSG, "Data sizes: {}", listSizes)
 	listThreadCounts = runTimeConfig.getStringArray(RunTimeConfig.KEY_SCENARIO_RAMPUP_THREAD_COUNTS)
-	LOG.info(LogUtil.MSG, "Thread counts: {}", listThreadCounts)
+	LOG.info(Markers.MSG, "Thread counts: {}", listThreadCounts)
 	return loadTypesChain, listSizes, listThreadCounts
 #
 def execute(loadBuilder, rampupParams=((),(),())):
@@ -40,17 +40,17 @@ def execute(loadBuilder, rampupParams=((),(),())):
 					loadBuilder, loadTypesChain, True, dataItemSize, dataItemSize, threadCount
 				)
 				chainExecute(nextChain, False)
-				LOG.debug(LogUtil.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
+				LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
 			except NumberFormatException as e:
-				LogUtil.exception(LogUtil.ERR, Level.WARN, e, "Failed to parse the next thread count")
+				LogUtil.exception(Markers.ERR, Level.WARN, e, "Failed to parse the next thread count")
 #
 if __name__ == "__builtin__":
 	loadBuilder = loadBuilderInit()
 	try:
 		execute(loadBuilder=loadBuilder, rampupParams=init())
 	except InterruptedException as e:
-		LOG.debug(LogUtil.MSG, "Rampup was interrupted")
+		LOG.debug(Markers.MSG, "Rampup was interrupted")
 	except Throwable as e:
 		LogUtil.exception(LOG, Level.ERROR, e, "Scenario failed")
 	loadBuilder.close()
-	LOG.info(LogUtil.MSG, "Scenario end")
+	LOG.info(Markers.MSG, "Scenario end")
