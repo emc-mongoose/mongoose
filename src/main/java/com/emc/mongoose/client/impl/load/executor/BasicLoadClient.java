@@ -122,7 +122,9 @@ implements LoadClient<T> {
 					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
 			)
 		);
-		setCorePoolSize(Math.max(Runtime.getRuntime().availableProcessors(), remoteLoadMap.size()));
+		setCorePoolSize(
+			10 * Math.max(Runtime.getRuntime().availableProcessors(), remoteLoadMap.size())
+		);
 		setMaximumPoolSize(getCorePoolSize());
 		//
 		String t = null;
