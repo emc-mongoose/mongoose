@@ -1,5 +1,5 @@
 package com.emc.mongoose.common.log;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //

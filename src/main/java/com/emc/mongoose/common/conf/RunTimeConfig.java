@@ -1,8 +1,8 @@
 package com.emc.mongoose.common.conf;
 // mongoose-common.jar
 import com.emc.mongoose.common.log.LogUtil;
-//
 import com.emc.mongoose.common.log.Markers;
+//
 import com.fasterxml.jackson.databind.JsonNode;
 //
 import org.apache.commons.configuration.BaseConfiguration;
@@ -203,7 +203,8 @@ implements Externalizable {
 		return getBoolean("run.request.retries");
 	}
 	//
-	public final String getApiName() {
+	public final
+	String getApiName() {
 		return getString(KEY_API_NAME);
 	}
 	//
@@ -215,7 +216,8 @@ implements Externalizable {
 		return getString("auth.id");
 	}
 	//
-	public final String getAuthSecret() {
+	public final
+	String getAuthSecret() {
 		return getString("auth.secret");
 	}
 	//
@@ -291,15 +293,18 @@ implements Externalizable {
 		return getString("run.name");
 	}
 	//
-	public final String getRunVersion() {
+	public final
+	String getRunVersion() {
 		return getString(KEY_RUN_VERSION);
 	}
 	//
-	public final long getLoadLimitCount() {
+	public final
+	long getLoadLimitCount() {
 		return getLong(KEY_DATA_ITEM_COUNT);
 	}
 	//
-	public final float getLoadLimitRate() {
+	public final
+	float getLoadLimitRate() {
 		return getFloat(KEY_LOAD_LIMIT_RATE);
 	}
 	//
@@ -315,7 +320,8 @@ implements Externalizable {
 		return SizeUtil.toSize(getString(KEY_DATA_SIZE_MAX));
 	}
 	//
-	public final float getDataSizeBias() {
+	public final
+	float getDataSizeBias() {
 		return getFloat(KEY_DATA_SIZE_BIAS);
 	}
 	//
@@ -344,7 +350,8 @@ implements Externalizable {
 		return getInt("remote.connection.timeoutMilliSec");
 	}
 	//
-	public final int getSocketTimeOut() {
+	public final
+	int getSocketTimeOut() {
 		return getInt("remote.socket.timeoutMilliSec");
 	}
 	//
@@ -360,7 +367,8 @@ implements Externalizable {
 		return getBoolean("remote.socket.tcpNoDelay");
 	}
 	//
-	public final int getSocketLinger() {
+	public final
+	int getSocketLinger() {
 		return getInt("remote.socket.linger");
 	}
 	//
@@ -396,7 +404,8 @@ implements Externalizable {
 		return getString("scenario.dir");
 	}
 	//
-	public final String getRunId() {
+	public final
+	String getRunId() {
 		return getString(KEY_RUN_ID);
 	}
 	//
@@ -408,7 +417,8 @@ implements Externalizable {
 		return TimeUtil.getTimeValue(getString(KEY_LOAD_LIMIT_TIME));
 	}
 	//
-	public final String getRunMode() {
+	public final
+	String getRunMode() {
 		return getString(KEY_RUN_MODE);
 	}
 	//

@@ -1,14 +1,14 @@
 package com.emc.mongoose.storage.mock.impl.request;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
-//
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataObject;
-//
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.UniformData;
-//
+// mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;

@@ -1,21 +1,22 @@
 package com.emc.mongoose.server.impl.load.executor;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
-//
-import com.emc.mongoose.server.impl.load.model.FrameBuffConsumer;
-//
-import com.emc.mongoose.server.api.load.model.ConsumerSvc;
-import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
-import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
-//
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
-import com.emc.mongoose.core.api.data.WSObject;
-//
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
+// mongoose-core-api.jar
+import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+// mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
+// mongoose-server-impl.jar
+import com.emc.mongoose.server.impl.load.model.FrameBuffConsumer;
+// mongoose-server-api.jar
+import com.emc.mongoose.server.api.load.model.ConsumerSvc;
+import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
+import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

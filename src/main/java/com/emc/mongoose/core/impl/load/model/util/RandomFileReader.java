@@ -1,47 +1,47 @@
-package com.emc.mongoose.core.impl.load.model.reader;
-//mongoose-common.jar
-//
+package com.emc.mongoose.core.impl.load.model.util;
+// mongoose-common.jar
 import com.emc.mongoose.common.log.Markers;
+// mongoose-core-impl.jar
+import com.emc.mongoose.core.api.load.model.util.LineReader;
+import com.emc.mongoose.core.api.load.model.util.Randomizer;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.Reader;
-import java.util.Random;
 import java.util.Vector;
-
 /**
  * Created by olga on 08.05.15.
  */
 public final class RandomFileReader
-extends BufferedReader {
+implements AutoCloseable{
 
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
 
+	private final LineReader reader;
 	private final Vector<String> linesBuffer;
-	private final Random random = new Random();
 	private final long maxCount;
+	private final Randomizer random;
+
 	private long count;
 	private boolean isEOF;
 
-	public RandomFileReader(final Reader in, final int batchSize, final long maxCount)
+	public RandomFileReader(final LineReader reader, final int batchSize, final long maxCount,
+		final Randomizer random)
 	throws IOException {
-		super(in);
-
 		LOG.trace(Markers.MSG, "Read data items randomly");
-
-		this.maxCount = maxCount;
+		this.reader = reader;
 		this.linesBuffer = new Vector<>(batchSize);
+		this.maxCount = maxCount;
+		this.random = random;
 		count = 0;
 		isEOF = false;
 	}
-
-	@Override
+	//
 	public final String readLine()
 	throws IOException {
 		if(linesBuffer.capacity() == 0) {
-			return super.readLine();
+			return reader.readLine();
 		}
 		//
 		fillUp();
@@ -57,7 +57,7 @@ extends BufferedReader {
 	private void fillUp()
 	throws IOException {
 		while(!isEOF && (count < maxCount) && (linesBuffer.size() < linesBuffer.capacity())) {
-			final String line = super.readLine();
+			final String line = reader.readLine();
 
 			if((line == null) || line.isEmpty()) {
 				isEOF = true;
@@ -67,5 +67,10 @@ extends BufferedReader {
 			count++;
 			linesBuffer.add(line);
 		}
+	}
+
+	@Override
+	public void close() throws Exception {
+		reader.close();
 	}
 }

@@ -182,6 +182,28 @@ sourceSets {
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 		compileClasspath += sourceSets.client.output + sourceSets.cli.output
 	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// JUnit 4 tests ///////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	test {
+		java {
+			srcDir(['src', 'test'].join(File.separator))
+			include '**'
+		}
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Main ////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	main {
+		java {
+			srcDir(['src', 'main'].join(File.separator))
+			include '**'
+		}
+		resources {
+			srcDir(['src', 'main'].join(File.separator))
+			include '**'
+		}
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -366,10 +388,15 @@ dependencies {
 		library.runtime_logging,
 		library.commons_cli,
 	)
+
+	testCompile (
+		library.junit,
+		library.junit_mockito,
+	)
 }
 
 configurations {
-	allCompile.extendsFrom(
+	compile.extendsFrom(
 		commonCompile,
 		coreApiCompile,
 		coreImplCompile,
@@ -386,7 +413,7 @@ configurations {
 		cliCompile,
 		examplesCompile,
 	)
-	allRuntime.extendsFrom(
+	runtime.extendsFrom(
 		commonRuntime,
 		coreApiRuntime,
 		coreImplRuntime,
@@ -402,6 +429,12 @@ configurations {
 		webuiRuntime,
 		cliRuntime,
 		examplesRuntime,
+	)
+	testCompile.extendsFrom(
+		compile,
+	)
+	testRuntime.extendsFrom(
+		runtime,
 	)
 }
 
@@ -810,7 +843,7 @@ task dist(type: Tar) {
 			from { 'conf' }
 		}
 		into('lib') {
-			from { configurations.allRuntime }
+			from { configurations.runtime }
 		}
 		from commonJar.outputs.files
 		from coreApiJar.outputs.files
@@ -843,13 +876,20 @@ idea {
 	module {
 		name = rootProject.name
 		jdkName = sourceCompatibility
-		scopes.PROVIDED.plus += [ configurations.allCompile ]
+		scopes.PROVIDED.plus += [ configurations.compile ]
 	}
 	project.ipr {
 		withXml { provider ->
 			provider.node.component.find { it.@name == 'VcsDirectoryMappings' }.mapping.@vcs = 'Git'
 		}
 	}
+}
+
+test {
+	jvmArgs '-Dlog4j.configurationFile=' + new File("").getCanonicalPath() + "${File.separator}${confDirName}${File.separator}logging.json"
+	jvmArgs '-Dlog4j.configurationFactory=org.apache.logging.log4j.core.config.json.JsonConfigurationFactory'
+	testLogging.showStandardStreams = true
+	testLogging { events "passed", "skipped", "failed" }
 }
 
 tasks.idea.dependsOn(cleanIdea)

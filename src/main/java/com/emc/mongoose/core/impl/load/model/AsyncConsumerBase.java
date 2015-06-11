@@ -1,9 +1,9 @@
 package com.emc.mongoose.core.impl.load.model;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
-//
 import com.emc.mongoose.common.log.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 //
@@ -151,9 +151,7 @@ implements AsyncConsumer<T> {
 					// the synchronization is necessary here to make sure that every data item is
 					// written completely to the file
 					synchronized(tmpFileWriter) {
-						super.interrupt(); // suspect bug: issue #395
-						// should invoke Thread.interrupt() instead this
-						// but invokes AsyncConsumerBase.interrupt() actually
+						super.interrupt();
 					}
 					//
 					try {

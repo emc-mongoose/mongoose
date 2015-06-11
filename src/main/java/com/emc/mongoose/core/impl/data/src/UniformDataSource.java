@@ -3,8 +3,8 @@ package com.emc.mongoose.core.impl.data.src;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
-// mongoose-core-api
 import com.emc.mongoose.common.log.Markers;
+// mongoose-core-api
 import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //

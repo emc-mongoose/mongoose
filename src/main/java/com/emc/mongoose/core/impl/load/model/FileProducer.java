@@ -3,14 +3,15 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
-//mongoose-core-api.jar
 import com.emc.mongoose.common.log.Markers;
-//
+//mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Producer;
-//mongoose-core-impl.jar
+// mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.load.model.reader.io.LineReader;
 import com.emc.mongoose.core.impl.load.model.reader.RandomFileReader;
+import com.emc.mongoose.core.impl.load.model.reader.util.Randomizer;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -27,6 +28,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
+import java.util.Random;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
@@ -133,6 +135,7 @@ implements Producer<T> {
 	public final void run() {
 		long dataItemsCount = 0;
 		int batchSize = 0;
+		final Randomizer random = (Randomizer) new Random();
 		//
 		final Charset charset =  StandardCharsets.UTF_8;
 		final CharsetDecoder decoder = charset.newDecoder();
@@ -140,15 +143,18 @@ implements Producer<T> {
 		if(RunTimeConfig.getContext().isEnabledDataRandom()) {
 			batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
 		}
+		//
 		try(
-			BufferedReader fReader = new RandomFileReader(
-				new InputStreamReader(
-					compressed ?
-						new GZIPInputStream(Files.newInputStream(fPath))
-						: Files.newInputStream(fPath),
-					decoder
+			RandomFileReader fReader = new RandomFileReader(
+				(LineReader) new BufferedReader(
+					new InputStreamReader(
+						compressed ?
+							new GZIPInputStream(Files.newInputStream(fPath))
+							: Files.newInputStream(fPath),
+						decoder
+					)
 				),
-				batchSize, maxCount
+				batchSize, maxCount, random
 			)
 		) {
 			String nextLine;

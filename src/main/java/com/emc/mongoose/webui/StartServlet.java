@@ -1,17 +1,17 @@
 package com.emc.mongoose.webui;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
-//
+// mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
-//
+// mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
-//
+// mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.Cinderella;
-//
+// mongoose-scenario.jar
 import com.emc.mongoose.run.scenario.ScriptRunner;
 //
 import org.apache.logging.log4j.Level;

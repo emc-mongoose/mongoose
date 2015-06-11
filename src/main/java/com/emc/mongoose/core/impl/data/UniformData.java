@@ -1,15 +1,15 @@
 package com.emc.mongoose.core.impl.data;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.ServiceUtils;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
-//
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
-//
-import com.emc.mongoose.common.net.ServiceUtils;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
