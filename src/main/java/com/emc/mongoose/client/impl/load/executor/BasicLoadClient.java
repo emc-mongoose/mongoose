@@ -633,7 +633,7 @@ implements LoadClient<T> {
 				} catch(final RejectedExecutionException e) {
 					Thread.sleep(submTimeOutMilliSec);
 				}
-			} while(remoteSubmFuture == null);
+			} while(remoteSubmFuture == null && !isShutdown());
 		}
 	}
 	//
@@ -763,7 +763,6 @@ implements LoadClient<T> {
 	@Override
 	public final void shutdown() {
 		super.shutdown();
-		LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
 		try {
 			awaitTermination(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException e) {
