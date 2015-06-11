@@ -1,8 +1,7 @@
-package com.emc.mongoose.webui.logging;
-//
-import com.emc.mongoose.webui.websockets.WebSocketLogListener;
+package com.emc.mongoose.common.log.appenders;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
+//
 //
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 //

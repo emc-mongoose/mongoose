@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.logging;
+package com.emc.mongoose.common.log.appenders;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //

@@ -12,6 +12,7 @@ import com.emc.mongoose.common.net.http.content.InputChannel;
 import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;

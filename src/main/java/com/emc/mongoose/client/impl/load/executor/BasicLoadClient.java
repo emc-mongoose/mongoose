@@ -101,14 +101,13 @@ implements LoadClient<T> {
 	private final ScheduledExecutorService mgmtConnExecutor;
 	private final List<PeriodicTask<Collection<T>>> frameFetchTasks = new LinkedList<>();
 	private final List<PeriodicTask> metricFetchTasks = new LinkedList<>();
-	//
-	////////////////////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////////////////
 	private final long maxCount;
 	private final String name, loadSvcAddrs[];
 	//
 	private final RunTimeConfig runTimeConfig;
 	private final RequestConfig<T> reqConfigCopy;
-	private final int metricsPeriodSec;
+	private final int metricsPeriodSec, reqTimeOutMilliSec;
 	protected volatile Producer<T> producer;
 	//
 	public BasicLoadClient(
@@ -123,7 +122,9 @@ implements LoadClient<T> {
 					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
 			)
 		);
-		setCorePoolSize(Math.max(Runtime.getRuntime().availableProcessors(), remoteLoadMap.size()));
+		setCorePoolSize(
+			10 * Math.max(Runtime.getRuntime().availableProcessors(), remoteLoadMap.size())
+		);
 		setMaximumPoolSize(getCorePoolSize());
 		//
 		String t = null;
@@ -151,6 +152,7 @@ implements LoadClient<T> {
 		this.producer = producer;
 		//
 		metricsPeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
+		reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
 		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
 			runTimeConfig.getRemotePortExport()
@@ -378,7 +380,7 @@ implements LoadClient<T> {
 			if(nextMetaInfoFrame != null && nextMetaInfoFrame.size() > 0) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
-						Markers.MSG, "Got next metainfo frame: containing {} recordds",
+						Markers.MSG, "Got next metainfo frame: containing {} records",
 						nextMetaInfoFrame.size()
 					);
 				}
@@ -482,7 +484,7 @@ implements LoadClient<T> {
 		mgmtConnExecutor.scheduleAtFixedRate(
 			new InterruptClientOnMaxCountTask(
 				this, maxCount,
-				new PeriodicTask[] { taskGetCountSucc, taskGetCountRej, taskGetCountRej }
+				new PeriodicTask[] {taskGetCountSucc, taskGetCountFail, taskGetCountRej}
 			), 0, periodSec, TimeUnit.SECONDS
 		);
 		//
@@ -612,7 +614,7 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void submit(final T dataItem)
-	throws RejectedExecutionException {
+	throws RejectedExecutionException, InterruptedException {
 		InstancePool<RemoteSubmitTask> mostAvailPool = null;
 		int maxPoolSize = 0, nextPoolSize;
 		for(final InstancePool<RemoteSubmitTask> nextPool : submTaskPoolMap.values()) {
@@ -625,7 +627,18 @@ implements LoadClient<T> {
 		if(mostAvailPool == null) {
 			throw new RejectedExecutionException("No remote load service to execute on");
 		} else {
-			submit(mostAvailPool.take(dataItem));
+			Future remoteSubmFuture = null;
+			for(
+				int tryCount = 0;
+				tryCount < reqTimeOutMilliSec && remoteSubmFuture == null && !isShutdown();
+				tryCount ++
+			) {
+				try {
+					remoteSubmFuture = submit(mostAvailPool.take(dataItem));
+				} catch(final RejectedExecutionException e) {
+					Thread.sleep(tryCount);
+				}
+			}
 		}
 	}
 	//

@@ -1,4 +1,4 @@
-package com.emc.mongoose.common.logging;
+package com.emc.mongoose.common.log;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;

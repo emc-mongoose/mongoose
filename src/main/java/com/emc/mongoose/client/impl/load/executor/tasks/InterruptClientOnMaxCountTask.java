@@ -35,6 +35,7 @@ implements PeriodicTask<Long> {
 	//
 	@Override
 	public final void run() {
+		processedCount.set(0); // should be reset
 		for(final PeriodicTask<Long> nextCountTask : getValueTasks) {
 			if(nextCountTask.getLastResult() != null && maxCount <= processedCount.addAndGet(nextCountTask.getLastResult())) {
 				try {

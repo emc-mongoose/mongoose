@@ -6,6 +6,7 @@ import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.logging.LogUtil;
 // mongoose-core-api
+import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;

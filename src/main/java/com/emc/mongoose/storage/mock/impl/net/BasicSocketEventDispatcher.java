@@ -4,9 +4,8 @@ import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
-//
-//
 import com.emc.mongoose.common.logging.Markers;
+//
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
 //
 import org.apache.http.impl.nio.DefaultHttpServerIODispatch;

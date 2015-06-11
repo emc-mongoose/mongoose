@@ -1,4 +1,4 @@
-package com.emc.mongoose.webui.websockets;
+package com.emc.mongoose.common.log.appenders;
 
 import java.util.EventListener;
 

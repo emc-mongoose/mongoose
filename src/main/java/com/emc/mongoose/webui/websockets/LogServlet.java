@@ -1,4 +1,4 @@
-package com.emc.mongoose.webui.websockets.impl;
+package com.emc.mongoose.webui.websockets;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import org.eclipse.jetty.websocket.servlet.WebSocketServlet;

@@ -6,7 +6,6 @@ import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 //
-//
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
@@ -146,8 +145,11 @@ implements Storage<T> {
 	@Override
 	public void run() {
 		ioStats.start();
-		createConsumer.start();
-		deleteConsumer.start();
+		try {
+			createConsumer.start();
+			deleteConsumer.start();
+		} catch(final RemoteException ignored) {
+		}
 		// if there is data src file path
 		final String dataFilePath = runTimeConfig.getDataSrcFPath();
 		final int dataSizeRadix = runTimeConfig.getDataRadixSize();
