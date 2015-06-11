@@ -3,7 +3,7 @@ package com.emc.mongoose.core.impl.load.builder;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 //
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 //
@@ -85,8 +85,9 @@ implements WSLoadBuilder<T, U> {
 		}
 		//
 		return (U) new BasicWSLoadExecutor<>(
-			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
-			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
+			localRunTimeConfig, wsReqConf, dataNodeAddrs,
+			threadsPerNodeMap.get(reqConf.getLoadType()), listFile,
+			maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
 		);
 	}
 }

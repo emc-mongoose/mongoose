@@ -2,11 +2,10 @@ package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.content.OutputChannel;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
-import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;

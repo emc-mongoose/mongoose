@@ -3,8 +3,8 @@ package com.emc.mongoose.storage.mock.impl.net;
 import com.emc.mongoose.common.conf.Constants;
 //
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;

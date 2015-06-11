@@ -6,8 +6,8 @@ import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
+//import org.apache.log.log4j.LogManager;
+//import org.apache.log.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.channels.WritableByteChannel;

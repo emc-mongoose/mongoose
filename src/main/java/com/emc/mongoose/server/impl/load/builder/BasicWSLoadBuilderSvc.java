@@ -2,8 +2,8 @@ package com.emc.mongoose.server.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
@@ -90,8 +90,9 @@ implements WSLoadBuilderSvc<T, U> {
 		}
 		//
 		return (U) new BasicWSLoadSvc<>(
-			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
-			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
+			localRunTimeConfig, wsReqConf, dataNodeAddrs,
+			threadsPerNodeMap.get(reqConf.getLoadType()), listFile,
+			maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
 		);
 	}
 	//

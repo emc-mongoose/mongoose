@@ -364,6 +364,7 @@ dependencies {
 	)
 	examplesRuntime (
 		library.runtime_logging,
+		library.commons_cli,
 	)
 }
 
@@ -761,7 +762,8 @@ task examplesJar(type: Jar) {
 				storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
 				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
 				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
-				configurations.cliRuntime.collect {
+				cliJar.outputs.files.collect {it.name}.join(' '),
+				configurations.examplesRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
 			].join(' ')

@@ -3,9 +3,9 @@ package com.emc.mongoose.storage.mock.impl.request;
 //import com.emc.mongoose.common.collections.InstancePool;
 //import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.IOUtils;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
 //
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.HttpEntity;

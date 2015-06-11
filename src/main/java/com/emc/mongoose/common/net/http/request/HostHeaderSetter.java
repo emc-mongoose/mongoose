@@ -10,8 +10,8 @@ import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpCoreContext;
 //
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
+//import org.apache.log.log4j.LogManager;
+//import org.apache.log.log4j.Logger;
 /**
  Created by kurila on 30.01.15.
  */

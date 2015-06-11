@@ -4,7 +4,7 @@ from org.apache.logging.log4j import Level, LogManager
 from org.apache.commons.configuration import ConversionException
 #
 from com.emc.mongoose.common.conf import Constants, RunTimeConfig
-from com.emc.mongoose.common.logging import LogUtil, Markers
+from com.emc.mongoose.common.log import LogUtil, Markers
 #
 from java.lang import IllegalStateException
 from java.rmi import RemoteException

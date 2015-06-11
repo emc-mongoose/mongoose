@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.mock.impl.response;
 //import com.emc.mongoose.common.collections.InstancePool;
 //import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.net.http.content.OutputChannel;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //

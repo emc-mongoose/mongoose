@@ -2,12 +2,12 @@ package com.emc.mongoose.common.net.http.content;
 //
 //import com.emc.mongoose.common.collections.InstancePool;
 //import com.emc.mongoose.common.collections.Reusable;
-//import com.emc.mongoose.common.logging.LogUtil;
+//import com.emc.mongoose.common.log.LogUtil;
 //
 import org.apache.http.nio.ContentDecoder;
 //
-//import org.apache.logging.log4j.Level;
-//import org.apache.logging.log4j.LogManager;
+//import org.apache.log.log4j.Level;
+//import org.apache.log.log4j.LogManager;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;

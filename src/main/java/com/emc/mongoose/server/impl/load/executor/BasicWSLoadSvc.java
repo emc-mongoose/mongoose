@@ -1,6 +1,6 @@
 package com.emc.mongoose.server.impl.load.executor;
 //
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 //

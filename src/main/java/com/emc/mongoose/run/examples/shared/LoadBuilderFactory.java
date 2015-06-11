@@ -4,7 +4,7 @@ import com.emc.mongoose.client.impl.load.builder.BasicWSLoadBuilderClient;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //

@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.impl.load.builder;
 //
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -9,7 +9,7 @@ import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
 //
 import org.apache.commons.configuration.ConversionException;
 //
@@ -30,7 +30,6 @@ implements LoadBuilder<T, U> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected RequestConfig<T> reqConf;
-	protected IOTask.Type loadType;
 	protected long maxCount, minObjSize, maxObjSize;
 	protected float objSizeBias, rateLimit;
 	protected int updatesPerItem;
@@ -183,7 +182,6 @@ implements LoadBuilder<T, U> {
 			);
 		} else {
 			reqConf.setLoadType(loadType);
-			this.loadType = loadType;
 		}
 		return this;
 	}
@@ -320,7 +318,6 @@ implements LoadBuilder<T, U> {
 		final LoadBuilderBase<T, U> lb = (LoadBuilderBase<T, U>) super.clone();
 		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
 		lb.reqConf = reqConf.clone();
-		lb.loadType = loadType;
 		lb.maxCount = maxCount;
 		lb.minObjSize = minObjSize;
 		lb.maxObjSize = maxObjSize;

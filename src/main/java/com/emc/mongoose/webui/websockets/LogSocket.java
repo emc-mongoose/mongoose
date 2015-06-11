@@ -1,10 +1,10 @@
 package com.emc.mongoose.webui.websockets;
 //
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.common.logging.WebSocketLogListener;
-import com.emc.mongoose.common.logging.WebUIAppender;
+import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.log.appenders.WebSocketLogListener;
+import com.emc.mongoose.common.log.appenders.WebUIAppender;
 //
 import com.fasterxml.jackson.databind.ObjectMapper;
 //

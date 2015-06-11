@@ -1,8 +1,8 @@
 package com.emc.mongoose.common.conf;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.Markers;
 import com.fasterxml.jackson.databind.JsonNode;
 //
 import org.apache.commons.configuration.BaseConfiguration;
@@ -462,6 +462,10 @@ implements Externalizable {
 	//
 	public final String[] getScenarioChainLoad() {
 		return getStringArray(KEY_SCENARIO_CHAIN_LOAD);
+	}
+	//
+	public final boolean getScenarioChainConcurrentFlag() {
+		return getBoolean(KEY_SCENARIO_CHAIN_CONCURRENT);
 	}
 	//
 	public final String[] getScenarioRampupThreadCounts() {

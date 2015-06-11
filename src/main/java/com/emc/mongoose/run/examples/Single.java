@@ -2,9 +2,9 @@ package com.emc.mongoose.run.examples;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
@@ -27,8 +27,12 @@ public final class Single
 implements Runnable {
 	//
 	static {
-		LogUtil.init();
-		RunTimeConfig.initContext();
+		try {
+			LogUtil.init();
+			RunTimeConfig.initContext();
+		} catch(final Exception e) {
+			e.printStackTrace(System.err);
+		}
 	}
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -47,6 +51,7 @@ implements Runnable {
 		this.timeUnit = timeOut > 0 ? timeUnit : TimeUnit.DAYS;
 	}
 	//
+	@Override
 	public final void run() {
 		try {
 			loadJob.start();
@@ -68,24 +73,29 @@ implements Runnable {
 	//
 	public static void main(final String... args) {
 		//
-		final RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
-		runTimeConfig.loadPropsFromJsonCfgFile(
-			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
-		);
-		runTimeConfig.loadSysProps();
-		// load the config from CLI arguments
-		final Map<String, String> properties = HumanFriendly.parseCli(args);
-		if(!properties.isEmpty()) {
-			LOG.debug(Markers.MSG, "Overriding properties {}", properties);
-			RunTimeConfig.getContext().overrideSystemProperties(properties);
+		try {
+			final RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
+			runTimeConfig.loadPropsFromJsonCfgFile(
+				Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF)
+					.resolve(RunTimeConfig.FNAME_CONF)
+			);
+			runTimeConfig.loadSysProps();
+			// load the config from CLI arguments
+			final Map<String, String> properties = HumanFriendly.parseCli(args);
+			if(!properties.isEmpty()) {
+				LOG.debug(Markers.MSG, "Overriding properties {}", properties);
+				RunTimeConfig.getContext().overrideSystemProperties(properties);
+			}
+			//
+			LOG.info(Markers.MSG, RunTimeConfig.getContext().toString());
+			//
+			final LoadBuilder loadBuilder = LoadBuilderFactory.getInstance();
+			final long timeOut = runTimeConfig.getLoadLimitTimeValue();
+			final TimeUnit timeUnit = runTimeConfig.getLoadLimitTimeUnit();
+			final Single singleLoadScenario = new Single(loadBuilder, timeOut, timeUnit);
+			singleLoadScenario.run();
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Scenario failed");
 		}
-		//
-		LOG.info(Markers.MSG, RunTimeConfig.getContext().toString());
-		//
-		final LoadBuilder loadBuilder = LoadBuilderFactory.getInstance();
-		final long timeOut = runTimeConfig.getLoadLimitTimeValue();
-		final TimeUnit timeUnit = runTimeConfig.getLoadLimitTimeUnit();
-		final Single singleLoadScenario = new Single(loadBuilder, timeOut, timeUnit);
-		singleLoadScenario.run();
 	}
 }

@@ -2,7 +2,7 @@ from timeout import init as timeOutInit
 from loadbuilder import init as loadBuilderInit
 #
 from com.emc.mongoose.common.conf import RunTimeConfig
-from com.emc.mongoose.common.logging import LogUtil, Markers
+from com.emc.mongoose.common.log import LogUtil, Markers
 #
 from com.emc.mongoose.core.api.io.task import IOTask
 #

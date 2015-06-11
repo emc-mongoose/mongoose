@@ -3,7 +3,7 @@
 		"status": "off",
 		"name": "mongoose",
 		"monitorInterval": "1000",
-		"packages": "com.emc.mongoose.webui.logging,com.emc.mongoose.common.logging",
+		"packages": "com.emc.mongoose.common.log.appenders",
 		"shutdownHook": "disable",
 		"appenders": {
 			"appender" : [
