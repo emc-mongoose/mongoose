@@ -107,7 +107,7 @@ implements LoadClient<T> {
 	//
 	private final RunTimeConfig runTimeConfig;
 	private final RequestConfig<T> reqConfigCopy;
-	private final int metricsPeriodSec, submTimeOutMilliSec;
+	private final int metricsPeriodSec, reqTimeOutMilliSec;
 	protected volatile Producer<T> producer;
 	//
 	public BasicLoadClient(
@@ -152,7 +152,7 @@ implements LoadClient<T> {
 		this.producer = producer;
 		//
 		metricsPeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
-		submTimeOutMilliSec = runTimeConfig.getRunSubmitTimeOutMilliSec();
+		reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
 		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
 			runTimeConfig.getRemotePortExport()
@@ -627,13 +627,17 @@ implements LoadClient<T> {
 			throw new RejectedExecutionException("No remote load service to execute on");
 		} else {
 			Future remoteSubmFuture = null;
-			do {
+			for(
+				int tryCount = 0;
+				tryCount < reqTimeOutMilliSec && remoteSubmFuture == null && !isShutdown();
+				tryCount ++
+			) {
 				try {
 					remoteSubmFuture = submit(mostAvailPool.take(dataItem));
 				} catch(final RejectedExecutionException e) {
-					Thread.sleep(submTimeOutMilliSec);
+					Thread.sleep(tryCount);
 				}
-			} while(remoteSubmFuture == null && !isShutdown());
+			}
 		}
 	}
 	//
