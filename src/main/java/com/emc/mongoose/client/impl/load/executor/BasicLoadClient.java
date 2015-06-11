@@ -483,7 +483,7 @@ implements LoadClient<T> {
 		mgmtConnExecutor.scheduleAtFixedRate(
 			new InterruptClientOnMaxCountTask(
 				this, maxCount,
-				new PeriodicTask[] {taskGetCountSucc, taskGetCountRej, taskGetCountRej}
+				new PeriodicTask[] {taskGetCountSucc, taskGetCountFail, taskGetCountRej}
 			), 0, periodSec, TimeUnit.SECONDS
 		);
 		//
