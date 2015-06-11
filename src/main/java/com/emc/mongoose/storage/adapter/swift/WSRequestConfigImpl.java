@@ -19,7 +19,9 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.security.NoSuchAlgorithmException;
 //
 /**
@@ -192,14 +194,15 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		uriSvcBasePath = String.class.cast(in.readObject());
-		Object t = in.readObject();
+		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
+		uriSvcBasePath = String.class.cast(ois.readUnshared());
+		Object t = ois.readUnshared();
 		if(t != null) {
 			setAuthToken(new WSAuthTokenImpl<>(this, String.class.cast(t)));
 		} else {
 			LOG.debug(LogUtil.MSG, "Note: no auth token has been got from load client side");
 		}
-		t = in.readObject();
+		t = ois.readUnshared();
 		if(t != null) {
 			setContainer(new WSContainerImpl<>(this, String.class.cast(t)));
 		} else {
@@ -211,9 +214,10 @@ extends WSRequestConfigBase<T> {
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(uriSvcBasePath);
-		out.writeObject(authToken == null ? null : authToken.getValue());
-		out.writeObject(container == null ? null : container.getName());
+		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
+		oos.writeUnshared(uriSvcBasePath);
+		oos.writeUnshared(authToken == null ? null : authToken.getValue());
+		oos.writeUnshared(container == null ? null : container.getName());
 	}
 	//
 	@Override
@@ -295,7 +299,7 @@ extends WSRequestConfigBase<T> {
 			try {
 				producer = new WSContainerProducer<>(container, BasicWSObject.class, maxCount, addr);
 			} catch(final NoSuchMethodException e) {
-				LogUtil.failure(LOG, Level.ERROR, e, "Unexpected failure");
+				LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		} else {
 			LOG.debug(LogUtil.MSG, "Using of container listing data producer is suppressed");

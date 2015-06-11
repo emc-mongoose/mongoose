@@ -3,14 +3,13 @@ from loadbuilder import init as loadBuilderInit
 #
 from org.apache.logging.log4j import Level, LogManager
 #
-from com.emc.mongoose.common.concurrent import NamingWorkerFactory
+from com.emc.mongoose.common.concurrent import GroupThreadFactory
 from com.emc.mongoose.common.conf import RunTimeConfig
 from com.emc.mongoose.common.logging import LogUtil
 #
 from com.emc.mongoose.core.api.io.task import IOTask
-from com.emc.mongoose.core.api.persist import DataItemBuffer
 #
-from com.emc.mongoose.core.impl.load.tasks import JoinLoadJobTask
+from com.emc.mongoose.core.impl.load.tasks import AwaitLoadJobTask
 #
 from java.lang import Long, String, Throwable, IllegalArgumentException, InterruptedException
 from java.util.concurrent import Executors
@@ -18,7 +17,7 @@ from java.util.concurrent import Executors
 LOG = LogManager.getLogger()
 #
 def build(
-	loadBuilder, loadTypesChain, flagConcurrent=True, flagUseItemsBuffer=True,
+	loadBuilder, loadTypesChain, flagUseItemsBuffer=True,
 	dataItemSizeMin=0, dataItemSizeMax=0, threadsPerNode=0
 ):
 	#
@@ -40,97 +39,62 @@ def build(
 			load = loadBuilder.build()
 			#
 			if load is not None:
-				if flagConcurrent:
-					if prevLoad is not None:
-						prevLoad.setConsumer(load)
-					chain.append(load)
-				else:
-					if prevLoad is not None:
-						if flagUseItemsBuffer:
-							mediatorBuff = loadBuilder.newDataItemBuffer()
-							if mediatorBuff is not None:
-								prevLoad.setConsumer(mediatorBuff)
-								chain.append(mediatorBuff)
-								mediatorBuff.setConsumer(load)
-							else:
-								LOG.error(LogUtil.ERR, "No mediator buffer instanced")
-						else:
-							prevLoad.setConsumer(load)
-					chain.append(load)
+				if prevLoad is not None:
+					prevLoad.setConsumer(load)
+				chain.append(load)
 			else:
 				LOG.error(LogUtil.ERR, "No load executor instanced")
 			if prevLoad is None:
 				loadBuilder.setInputFile(None) # prevent the file list producer creation for next loads
 			prevLoad = load
 		except IllegalArgumentException as e:
-			LogUtil.failure(
+			LogUtil.exception(
 				LOG, Level.ERROR, e, String.format("Wrong load type \"%s\", skipping", loadTypeStr)
 			)
 		except Throwable as e:
-			LogUtil.failure(LOG, Level.FATAL, e, "Unexpected failure")
+			LogUtil.exception(LOG, Level.FATAL, e, "Unexpected failure")
 	return chain
 	#
-def execute(chain=(), flagSimultaneous=True):
+def execute(chain=(), flagConcurrent=True):
 	runTimeOut = timeOutInit()
 	try:
-		if flagSimultaneous:
+		if flagConcurrent:
 			LOG.info(LogUtil.MSG, "Execute load jobs in parallel")
 			for load in reversed(chain):
 				load.start()
-			chainJoinExecSvc = Executors.newFixedThreadPool(
-				len(chain), NamingWorkerFactory("chainConcurrentJoin")
+			chainWaitExecSvc = Executors.newFixedThreadPool(
+				len(chain), GroupThreadFactory("chainFinishAwait")
 			)
 			for load in chain:
-				chainJoinExecSvc.submit(
-					JoinLoadJobTask(load, runTimeOut[1].toMillis(runTimeOut[0]))
+				chainWaitExecSvc.submit(
+					AwaitLoadJobTask(load, runTimeOut[0], runTimeOut[1])
 				)
-			chainJoinExecSvc.shutdown()
+			chainWaitExecSvc.shutdown()
 			try:
-				if chainJoinExecSvc.awaitTermination(runTimeOut[0], runTimeOut[1]):
+				if chainWaitExecSvc.awaitTermination(runTimeOut[0], runTimeOut[1]):
 					LOG.debug(LogUtil.MSG, "Load jobs are finished in time")
 			finally:
 				LOG.debug(
 					LogUtil.MSG, "{} load jobs are not finished in time",
-					chainJoinExecSvc.shutdownNow().size()
+					chainWaitExecSvc.shutdownNow().size()
 				)
 				for load in chain:
 					load.close()
 		else:
 			LOG.info(LogUtil.MSG, "Execute load jobs sequentially")
-			prevLoad, nextLoad = None, None
 			for nextLoad in chain:
-				if not isinstance(nextLoad, DataItemBuffer):
-					LOG.debug(LogUtil.MSG, "Starting next load job: \"{}\"", nextLoad)
-					nextLoad.start()
-					if prevLoad is not None and isinstance(prevLoad, DataItemBuffer):
-						LOG.debug(LogUtil.MSG, "Stop buffering the data items into \"{}\"", prevLoad)
-						prevLoad.close()
-						LOG.debug(LogUtil.MSG, "Start producing the data items from \"{}\"", prevLoad)
-						prevLoad.start()
-						try:
-							LOG.debug(
-								LogUtil.MSG, "Execute \"{}\" for up to {}[{}]",
-								nextLoad, runTimeOut[0], runTimeOut[1]
-							)
-							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
-						finally:
-							LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
-							prevLoad.interrupt()
-							LOG.debug(LogUtil.MSG, "Stop producing the data items from \"{}\"", prevLoad)
-							nextLoad.close()
-							LOG.debug(LogUtil.MSG, "Load job \"{}\" closed", nextLoad)
-					else:
-						try:
-							LOG.debug(
-								LogUtil.MSG, "Execute \"{}\" for up to {}[{}]",
-								nextLoad, runTimeOut[0], runTimeOut[1]
-							)
-							nextLoad.join(runTimeOut[1].toMillis(runTimeOut[0]))
-						finally:
-							LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
-							nextLoad.close()
-							LOG.debug(LogUtil.MSG, "Load job \"{}\" closed", nextLoad)
-				prevLoad = nextLoad
+				LOG.debug(LogUtil.MSG, "Starting next load job: \"{}\"", nextLoad)
+				nextLoad.start()
+				try:
+					LOG.debug(
+						LogUtil.MSG, "Execute \"{}\" for up to {}[{}]",
+						nextLoad, runTimeOut[0], runTimeOut[1]
+					)
+					nextLoad.await(runTimeOut[0], runTimeOut[1])
+				finally:
+					LOG.debug(LogUtil.MSG, "Load job \"{}\" done", nextLoad)
+					nextLoad.close()
+					LOG.debug(LogUtil.MSG, "Load job \"{}\" closed", nextLoad)
 	finally:
 		if chain is not None:
 			for loadJob in chain:
@@ -179,7 +143,7 @@ if __name__ == "__builtin__":
 	loadBuilder.getRequestConfig().setAnyDataProducerEnabled(False)
 	#
 	chain = build(
-		loadBuilder, loadTypesChain, flagConcurrent, flagItemsBuffer,
+		loadBuilder, loadTypesChain, flagItemsBuffer,
 		dataItemSizeMin if dataItemSize == 0 else dataItemSize,
 		dataItemSizeMax if dataItemSize == 0 else dataItemSize,
 		threadsPerNode
@@ -192,7 +156,7 @@ if __name__ == "__builtin__":
 		except InterruptedException as e:
 			LOG.debug(LogUtil.MSG, "Chain was interrupted")
 		except Throwable as e:
-			LogUtil.failure(LOG, Level.WARN, e, "Chain execution failure")
+			LogUtil.exception(LOG, Level.WARN, e, "Chain execution failure")
 	#
 	loadBuilder.close()
 	#

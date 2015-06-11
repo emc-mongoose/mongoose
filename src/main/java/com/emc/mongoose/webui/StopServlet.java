@@ -1,9 +1,10 @@
 package com.emc.mongoose.webui;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-//
 import com.emc.mongoose.common.logging.LogUtil;
+//
 import com.emc.mongoose.webui.logging.WebUIAppender;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +44,7 @@ public final class StopServlet extends CommonServlet {
 			}
 			stoppedRunModes.put(currentRunId, true);
 		} catch (InterruptedException e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Mongoose can't stop correctly through Web UI");
+			LogUtil.exception(LOG, Level.ERROR, e, "Mongoose can't stop correctly through Web UI");
 		}
 		request.getSession(true).setAttribute("stopped", stoppedRunModes);
 		response.setStatus(HttpServletResponse.SC_OK);

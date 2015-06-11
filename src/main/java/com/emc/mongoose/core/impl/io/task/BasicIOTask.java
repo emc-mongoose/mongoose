@@ -1,93 +1,141 @@
 package com.emc.mongoose.core.impl.io.task;
 //
-import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.collections.InstancePool;
+import com.emc.mongoose.common.logging.LogUtil;
 //
+import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
-import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+//
+import java.rmi.RemoteException;
+import java.util.HashMap;
+import java.util.Map;
 /**
  Created by andrey on 12.10.14.
  */
-public class BasicIOTask<T extends DataObject>
+public class BasicIOTask<T extends DataItem>
 implements IOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final static ThreadLocal<StringBuilder> THRLOC_SB = new ThreadLocal<StringBuilder>() {
+	protected final static ThreadLocal<StringBuilder> THRLOC_SB = new ThreadLocal<StringBuilder>() {
 		@Override
 		protected final StringBuilder initialValue() {
 			return new StringBuilder();
 		}
 	};
 	//
-	protected volatile RequestConfig<T> reqConf = null;
+	protected final LoadExecutor<T> loadExecutor;
+	protected final RequestConfig<T> reqConf;
+	//
 	protected volatile String nodeAddr = null;
 	protected volatile T dataItem = null;
 	protected volatile Status status = Status.FAIL_UNKNOWN;
 	//
 	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
 	protected volatile long transferSize = 0;
-	protected int reqSleepMilliSec = 0;
-	private volatile Type type;
-	// BEGIN pool related things
-	private final static InstancePool<BasicIOTask>
-		POOL_BASIC_IO_TASKS = new InstancePool<>(BasicIOTask.class);
 	//
-	@SuppressWarnings("unchecked")
-	public static <T extends DataObject> BasicIOTask<T> getInstanceFor(
-		final RequestConfig<T> reqConf, final T dataItem, final String nodeAddr
+	public BasicIOTask(final LoadExecutor<T> loadExecutor) {
+		this.loadExecutor = loadExecutor;
+		try {
+			this.reqConf = loadExecutor.getRequestConfig();
+		} catch(final RemoteException e) {
+			throw new IllegalStateException(e);
+		}
+	}
+	//
+	public final static Map<LoadExecutor, InstancePool<BasicIOTask>>
+		INSTANCE_POOL_MAP = new HashMap<>();
+	//
+	public static BasicIOTask getInstance(
+		final LoadExecutor loadExecutor, DataItem dataItem, final String nodeAddr
 	) {
-		return (BasicIOTask<T>) POOL_BASIC_IO_TASKS.take(reqConf, dataItem, nodeAddr);
+		InstancePool<BasicIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
+		if(instPool == null) {
+			try {
+				instPool = new InstancePool<>(
+					BasicIOTask.class.getConstructor(LoadExecutor.class), loadExecutor
+				);
+				INSTANCE_POOL_MAP.put(loadExecutor, instPool);
+			} catch(final NoSuchMethodException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+		//
+		return instPool.take(dataItem, nodeAddr);
+	}
+	//
+	@Override @SuppressWarnings("unchecked")
+	public final BasicIOTask<T> reuse(final Object... args) {
+		if(args == null) {
+			throw new IllegalArgumentException("No args for reusing");
+		} else {
+			if(args.length > 0) {
+				setDataItem((T) args[0]);
+			}
+			if(args.length > 1) {
+				setNodeAddr(String.class.cast(args[1]));
+			}
+		}
+		return this;
 	}
 	//
 	@Override
 	public void release() {
-		POOL_BASIC_IO_TASKS.release(this);
+		final InstancePool<BasicIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
+		if(instPool == null) {
+			throw new IllegalStateException("No pool found to release back");
+		} else {
+			instPool.release(this);
+		}
 	}
-	//
-	@Override @SuppressWarnings("unchecked")
-	public BasicIOTask<T> reuse(final Object... args)
-	throws IllegalStateException {
-		status = Status.FAIL_UNKNOWN;
-		reqTimeStart = reqTimeDone = respTimeStart = respTimeDone = transferSize = 0;
-		if(args.length > 0) {
-			setRequestConfig((RequestConfig<T>) args[0]);
-		}
-		if(args.length > 1) {
-			setDataItem((T) args[1]);
-		}
-		if(args.length > 2) {
-			setNodeAddr(String.class.cast(args[2]));
-		}
-		return this;
-	}
-	// END pool related things
-	private final static String MSG_PERF_TRACE_INVALID = "Invalid trace: ";
 	//
 	@Override
-	public final void complete() {
-		final String dataItemId = dataItem.getId();
+	public void complete() {
+		final String dataItemId = Long.toHexString(dataItem.getOffset());
 		StringBuilder strBuilder = THRLOC_SB.get();
-		strBuilder.setLength(0); // clear/reset
+		if(strBuilder == null) {
+			strBuilder = new StringBuilder();
+			THRLOC_SB.set(strBuilder);
+		} else {
+			strBuilder.setLength(0); // clear/reset
+		}
 		if(
-			respTimeDone < respTimeStart ||
-			respTimeStart < reqTimeDone ||
-			reqTimeDone < reqTimeStart
+			reqTimeDone >= reqTimeStart ||
+				respTimeStart >= reqTimeDone ||
+				respTimeDone >= respTimeStart
+			) {
+			LOG.info(
+				LogUtil.PERF_TRACE,
+				strBuilder
+					.append(nodeAddr).append(',')
+					.append(dataItemId).append(',')
+					.append(transferSize).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(respTimeStart - reqTimeDone).append(',')
+					.append(respTimeDone - reqTimeStart)
+					.toString()
+			);
+		} else if(
+			status != Status.CANCELLED &&
+			status != Status.FAIL_IO &&
+			status != Status.FAIL_TIMEOUT &&
+			status != Status.FAIL_UNKNOWN
 		) {
-			LOG.debug(
+			LOG.warn(
 				LogUtil.ERR,
 				strBuilder
-					.append(MSG_PERF_TRACE_INVALID)
+					.append("Invalid trace: ")
 					.append(nodeAddr).append(',')
-					.append(dataItemId == null ? Constants.EMPTY : dataItemId).append(',')
+					.append(dataItemId).append(',')
 					.append(transferSize).append(',')
 					.append(status.code).append(',')
 					.append(reqTimeStart).append(',')
@@ -96,36 +144,22 @@ implements IOTask<T> {
 					.append(respTimeDone)
 					.toString()
 			);
-		} else {
-			LOG.info(
-				LogUtil.PERF_TRACE,
-				strBuilder
-					.append(nodeAddr).append(',')
-					.append(dataItemId == null ? Constants.EMPTY : dataItemId).append(',')
-					.append(transferSize).append(',')
-					.append(status.code).append(',')
-					.append(reqTimeStart).append(',')
-					.append(respTimeStart - reqTimeDone).append(',')
-					.append(respTimeDone - reqTimeStart)
-					.toString()
-			);
 		}
 		//
+		try {
+			loadExecutor.handleResult(this);
+		} catch(final RemoteException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected network failure");
+		}
+		//
+		final int reqSleepMilliSec = reqConf.getReqSleepMilliSec();
 		if(reqSleepMilliSec > 0) {
 			try {
 				Thread.sleep(reqSleepMilliSec);
 			} catch(final InterruptedException e) {
-				LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted request sleep");
+				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
 			}
 		}
-	}
-	//
-	@Override
-	public IOTask<T> setRequestConfig(final RequestConfig<T> reqConf) {
-		this.reqConf = reqConf;
-		reqSleepMilliSec = reqConf.getReqSleepMilliSec();
-		type = reqConf.getLoadType();
-		return this;
 	}
 	//
 	@Override
@@ -142,7 +176,8 @@ implements IOTask<T> {
 	@Override
 	public IOTask<T> setDataItem(final T dataItem) {
 		this.dataItem = dataItem;
-		switch(type) {
+		final Type loadType = reqConf.getLoadType();
+		switch(loadType) {
 			case APPEND:
 				transferSize = AppendableDataItem.class.cast(dataItem).getPendingAugmentSize();
 				break;

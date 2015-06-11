@@ -4,29 +4,25 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 //
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.OutputStream;
-import java.io.SequenceInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.channels.ReadableByteChannel;
+import java.nio.channels.WritableByteChannel;
 import java.util.BitSet;
-import java.util.Vector;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 /**
@@ -44,14 +40,11 @@ implements AppendableDataItem, UpdatableDataItem {
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
 		FMT_MSG_RANGE_CORRUPT = "{}: range #{}(offset {}) of \"{}\" corrupted",
 		FMT_MSG_UPD_CELL = "{}: update cell at position: {}, offset: {}, new mask: {}",
-		FMT_MSG_UPD_RANGE = "{}: update range(#{}, [{}]) of with data({}, {}): {}",
-		FMT_MSG_RANGE_MODIFIED = "{}: range #{} [{}-{}] was modified, layer #{}: {}",
 		FMT_MSG_MERGE_MASKS = "{}: move pending ranges \"{}\" to history \"{}\"",
 		STR_EMPTY_MASK = "0";
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final BitSet maskRangesHistory = new BitSet(), maskRangesPending = new BitSet();
-	protected AtomicInteger currLayerIndex = new AtomicInteger();
-	//
+	protected int currLayerIndex = 0;
 	protected long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public RangeLayerData() {
@@ -72,18 +65,28 @@ implements AppendableDataItem, UpdatableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Human readable "serialization" implementation ///////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final static ThreadLocal<StringBuilder> THR_LOCAL_STR_BUILDER = new ThreadLocal<>();
+	//
 	@Override
-	public String toString() {
-		return super.toString() + ',' + Integer.toHexString(currLayerIndex.get()) + '/' +
-			(
+	public synchronized String toString() {
+		StringBuilder strBuilder = THR_LOCAL_STR_BUILDER.get();
+		if(strBuilder == null) {
+			strBuilder = new StringBuilder();
+			THR_LOCAL_STR_BUILDER.set(strBuilder);
+		} else {
+			strBuilder.setLength(0); // reset
+		}
+		return strBuilder
+			.append(super.toString()).append(RunTimeConfig.LIST_SEP)
+			.append(Integer.toHexString(currLayerIndex)).append('/')
+			.append(
 				maskRangesHistory.isEmpty() ?
 					STR_EMPTY_MASK : Hex.encodeHexString(maskRangesHistory.toByteArray())
-			)
-		;
+			).toString();
 	}
 	//
 	@Override
-	public void fromString(final String v)
+	public synchronized void fromString(final String v)
 	throws IllegalArgumentException, NullPointerException {
 		final int lastCommaPos = v.lastIndexOf(RunTimeConfig.LIST_SEP);
 		final String baseItemInfo, rangesInfo;
@@ -94,8 +97,8 @@ implements AppendableDataItem, UpdatableDataItem {
 			final int sepPos = rangesInfo.indexOf(LAYER_MASK_SEP);
 			try {
 				// extract hexadecimal layer number
-				currLayerIndex.set(Integer.valueOf(rangesInfo.substring(0, sepPos), 0x10));
-				setDataSource(UniformDataSource.DEFAULT, currLayerIndex.get());
+				currLayerIndex = Integer.valueOf(rangesInfo.substring(0, sepPos), 0x10);
+				setDataSource(UniformDataSource.DEFAULT, currLayerIndex);
 				// extract hexadecimal mask, convert into bit set and add to the existing mask
 				final String rangesMask = rangesInfo.substring(sepPos + 1, rangesInfo.length());
 				final char rangesMaskChars[];
@@ -107,9 +110,7 @@ implements AppendableDataItem, UpdatableDataItem {
 					rangesMaskChars = rangesMask.toCharArray();
 				}
 				// method "or" to merge w/ the existing mask
-				maskRangesHistory.or(
-					BitSet.valueOf(Hex.decodeHex(rangesMaskChars))
-				);
+				maskRangesHistory.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
 			} catch(final DecoderException | NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
 			}
@@ -126,21 +127,23 @@ implements AppendableDataItem, UpdatableDataItem {
 	// Binary serialization implementation /////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public void writeExternal(final ObjectOutput out)
+	public synchronized void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeInt(currLayerIndex.get());
-		out.writeObject(maskRangesHistory);
-		out.writeObject(maskRangesPending);
+		out.writeInt(currLayerIndex);
+		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
+		oos.writeUnshared(maskRangesHistory);
+		oos.writeUnshared(maskRangesPending);
 	}
 	//
 	@Override
-	public void readExternal(final ObjectInput in)
+	public synchronized void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		currLayerIndex.set(in.readInt());
-		maskRangesHistory.or(BitSet.class.cast(in.readObject()));
-		maskRangesPending.or(BitSet.class.cast(in.readObject()));
+		currLayerIndex = in.readInt();
+		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
+		maskRangesHistory.or(BitSet.class.cast(ois.readUnshared()));
+		maskRangesPending.or(BitSet.class.cast(ois.readUnshared()));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/*public static int log2(long value) {
@@ -153,11 +156,6 @@ implements AppendableDataItem, UpdatableDataItem {
 		if( value >= 0x4						) { value >>>= 2;	result += 2; }
 		return result + (int) (value >>> 1);
 	}*/
-	//
-	@Override
-	public final int getCurrLayerIndex() {
-		return currLayerIndex.get();
-	}
 	//
 	private static final double LOG2 = Math.log(2);
 	//
@@ -180,16 +178,15 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final boolean isContentEqualTo(final InputStream in)
+	public final synchronized boolean equals(final ReadableByteChannel chanSrc)
 	throws IOException {
 		// do not go over ranges if there's no updated ones
 		if(maskRangesHistory.isEmpty()) {
-			if(currLayerIndex.get() == 0) {
-				return isContentEqualTo(in, 0, size);
+			if(currLayerIndex == 0) {
+				return equals(chanSrc, 0, size);
 			} else {
-				return new UniformData(
-					offset, size, currLayerIndex.get(), UniformDataSource.DEFAULT
-				).isContentEqualTo(in, 0, size);
+				return new UniformData(offset, size, currLayerIndex, UniformDataSource.DEFAULT)
+					.equals(chanSrc, 0, size);
 			}
 		}
 		//
@@ -207,20 +204,10 @@ implements AppendableDataItem, UpdatableDataItem {
 					);
 				}
 				updatedRange = new UniformData(
-					offset + rangeOffset, rangeSize, currLayerIndex.get() + 1, UniformDataSource.DEFAULT
+					offset + rangeOffset, rangeSize, currLayerIndex + 1, UniformDataSource.DEFAULT
 				);
-				contentEquals = updatedRange.isContentEqualTo(in, 0, rangeSize);
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					final ByteArrayOutputStream contentRangeStream = new ByteArrayOutputStream();
-					updatedRange.writeTo(contentRangeStream);
-					LOG.trace(
-						LogUtil.MSG, FMT_MSG_RANGE_MODIFIED,
-						Long.toHexString(offset), i, rangeOffset, rangeOffset + rangeSize - 1,
-						currLayerIndex.get() + 1,
-						Base64.encodeBase64URLSafeString(contentRangeStream.toByteArray())
-					);
-				}
-			} else if(currLayerIndex.get() > 1) {
+				contentEquals = updatedRange.equals(chanSrc, 0, rangeSize);
+			} else if(currLayerIndex > 1) {
 				if(LOG.isTraceEnabled(LogUtil.MSG)) {
 					LOG.trace(
 						LogUtil.MSG, "{}: range #{} contains previous layer of data",
@@ -228,11 +215,11 @@ implements AppendableDataItem, UpdatableDataItem {
 					);
 				}
 				updatedRange = new UniformData(
-					offset + rangeOffset, rangeSize, currLayerIndex.get(), UniformDataSource.DEFAULT
+					offset + rangeOffset, rangeSize, currLayerIndex, UniformDataSource.DEFAULT
 				);
-				contentEquals = updatedRange.isContentEqualTo(in, 0, rangeSize);
+				contentEquals = updatedRange.equals(chanSrc, 0, rangeSize);
 			} else {
-				contentEquals = isContentEqualTo(in, rangeOffset, rangeSize);
+				contentEquals = equals(chanSrc, rangeOffset, rangeSize);
 			}
 			if(!contentEquals) {
 				LOG.debug(
@@ -247,6 +234,10 @@ implements AppendableDataItem, UpdatableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// UPDATE //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	public final boolean hasUpdatedRanges() {
+		return !maskRangesPending.isEmpty();
+	}
+	//
 	@Override
 	public final boolean isRangeUpdatePending(final int i) {
 		return maskRangesPending.get(i);
@@ -255,11 +246,12 @@ implements AppendableDataItem, UpdatableDataItem {
 	protected synchronized void switchToNextOverlay() {
 		maskRangesHistory.clear();
 		maskRangesPending.clear(); // clear the masks
-		setDataSource(UniformDataSource.DEFAULT, currLayerIndex.incrementAndGet()); // increment layer index
+		currLayerIndex ++;
+		setDataSource(UniformDataSource.DEFAULT, currLayerIndex); // increment layer index
 	}
 	//
 	@Override
-	public final void updateRandomRange()
+	public final synchronized void updateRandomRange()
 	throws IllegalStateException {
 		final int
 			countRangesTotal = getRangeCount(size),
@@ -316,79 +308,41 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final void writePendingUpdatesTo(final OutputStream out)
+	public final synchronized void writeUpdates(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		DataItem nextRangeData;
 		long rangeOffset, rangeSize;
-		synchronized(this) {
-			for(int i = 0; i < countRangesTotal; i++) {
-				rangeOffset = getRangeOffset(i);
-				rangeSize = getRangeSize(i);
-				if(maskRangesPending.get(i)) {
-					nextRangeData = new UniformData(
-						offset + rangeOffset, rangeSize, currLayerIndex.get() + 1, UniformDataSource.DEFAULT
-					);
-					nextRangeData.writeTo(out);
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
-						final ByteArrayOutputStream rangeContentStream = new ByteArrayOutputStream();
-						nextRangeData.writeTo(rangeContentStream);
-						LOG.trace(
-							LogUtil.MSG, FMT_MSG_UPD_RANGE,
-							toString(), i, rangeSize, offset + rangeOffset, currLayerIndex.get() + 1,
-							Base64.encodeBase64URLSafeString(rangeContentStream.toByteArray())
-						);
-					}
-				}
-			}
-			// move pending updated ranges to history
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(
-					LogUtil.MSG, FMT_MSG_MERGE_MASKS,
-					Long.toHexString(offset),
-					Hex.encodeHexString(maskRangesPending.toByteArray()),
-					Hex.encodeHexString(maskRangesHistory.toByteArray())
+		for(int i = 0; i < countRangesTotal; i++) {
+			rangeOffset = getRangeOffset(i);
+			rangeSize = getRangeSize(i);
+			if(maskRangesPending.get(i)) {
+				nextRangeData = new UniformData(
+					offset + rangeOffset, rangeSize, currLayerIndex + 1, UniformDataSource.DEFAULT
 				);
+				nextRangeData.write(chanOut);
 			}
-			maskRangesHistory.or(maskRangesPending);
-			maskRangesPending.clear();
 		}
-	}
-	//
-	@Override
-	public final InputStream getPendingUpdatesContent() {
-		final int countRangesTotal = getRangeCount(size);
-		final Vector<InputStream> updatedRangesData = new Vector<>();
-		long rangeOffset, rangeSize;
-		synchronized(this) {
-			for(int i = 0; i < countRangesTotal; i++) {
-				rangeOffset = getRangeOffset(i);
-				rangeSize = getRangeSize(i);
-				if(maskRangesPending.get(i)) {
-					updatedRangesData.add(
-						new UniformData(
-							offset + rangeOffset, rangeSize, currLayerIndex.get() + 1, UniformDataSource.DEFAULT
-						)
-					);
-				}
-			}
-			// move pending updated ranges to history
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(
-					LogUtil.MSG, FMT_MSG_MERGE_MASKS,
-					Long.toHexString(offset),
-					Hex.encodeHexString(maskRangesPending.toByteArray()),
-					Hex.encodeHexString(maskRangesHistory.toByteArray())
-				);
-			}
-			maskRangesHistory.or(maskRangesPending);
-			maskRangesPending.clear();
+		// move pending updated ranges to history
+		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			LOG.trace(
+				LogUtil.MSG, FMT_MSG_MERGE_MASKS,
+				Long.toHexString(offset),
+				Hex.encodeHexString(maskRangesPending.toByteArray()),
+				Hex.encodeHexString(maskRangesHistory.toByteArray())
+			);
 		}
-		return new SequenceInputStream(updatedRangesData.elements());
+		maskRangesHistory.or(maskRangesPending);
+		maskRangesPending.clear();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// APPEND //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final boolean isAppending() {
+		return pendingAugmentSize > 0;
+	}
+	//
 	@Override
 	public void append(final long augmentSize)
 	throws IllegalArgumentException {
@@ -413,78 +367,24 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final void writeAugmentTo(final OutputStream out)
+	public final synchronized void writeAugment(final WritableByteChannel chanOut)
 	throws IOException {
 		if(pendingAugmentSize > 0) {
-			synchronized(this) {
-				final int rangeIndex = size > 0 ? getRangeCount(size) - 1 : 0;
-				if(maskRangesHistory.get(rangeIndex)) { // write from next layer
-					new UniformData(
-						offset + size, pendingAugmentSize, currLayerIndex.get() + 1,
-						UniformDataSource.DEFAULT
-					).writeTo(out);
-					size += pendingAugmentSize;
-				} else { // write from current layer
-					setRelativeOffset(size);
-					// change the size
-					size += pendingAugmentSize;
-					// redirect the tail's data to the output
-					final byte buff[] = new byte[
-						pendingAugmentSize < LoadExecutor.BUFF_SIZE_HI ?
-							(int) pendingAugmentSize : LoadExecutor.BUFF_SIZE_HI
-					];
-					final int
-						countPages = (int) (pendingAugmentSize / buff.length),
-						countTailBytes = (int) (pendingAugmentSize % buff.length);
-					//
-					for(int i = 0; i < countPages; i++) {
-						if(read(buff) == buff.length) {
-							out.write(buff);
-						} else {
-							throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
-						}
-					}
-					if(countTailBytes > 0) { // tail bytes
-						if(read(buff, 0, countTailBytes)==countTailBytes) {
-							out.write(buff, 0, countTailBytes);
-						} else {
-							throw new InterruptedIOException(MSG_READ_RING_BLOCKED);
-						}
-					}
-				}
-				// clean up the appending on success
-				pendingAugmentSize = 0;
-				maskRangesHistory.or(maskRangesPending);
-				maskRangesPending.clear();
+			final int rangeIndex = size > 0 ? getRangeCount(size) - 1 : 0;
+			if(maskRangesHistory.get(rangeIndex)) { // write from next layer
+				new UniformData(
+					offset + size, pendingAugmentSize, currLayerIndex + 1,
+					UniformDataSource.DEFAULT
+				).write(chanOut);
+				size += pendingAugmentSize;
+			} else { // write from current layer
+				write(chanOut, size, pendingAugmentSize);
+				size += pendingAugmentSize;
 			}
+			// clean up the appending on success
+			pendingAugmentSize = 0;
+			maskRangesHistory.or(maskRangesPending);
+			maskRangesPending.clear();
 		}
 	}
-	//
-	@Override
-	public final InputStream getAugmentContent()
-	throws IOException {
-		InputStream augment;
-		if(pendingAugmentSize > 0) {
-			synchronized(this) {
-				if(maskRangesHistory.get(getRangeCount(size) - 1)) { // write from next layer
-					augment = new UniformData(
-						offset + size, pendingAugmentSize, currLayerIndex.get() + 1, UniformDataSource.DEFAULT
-					);
-				} else { // write from current layer
-					setRelativeOffset(size);
-					// change the size
-					size += pendingAugmentSize;
-					augment = this;
-				}
-				// clean up the appending on success
-				pendingAugmentSize = 0;
-				maskRangesHistory.or(maskRangesPending);
-				maskRangesPending.clear();
-			}
-		} else {
-			throw new IllegalStateException("No append scheduled");
-		}
-		return augment;
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
 }

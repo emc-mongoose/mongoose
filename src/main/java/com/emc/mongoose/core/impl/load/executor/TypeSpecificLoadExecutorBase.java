@@ -30,12 +30,14 @@ extends LimitedRateLoadExecutorBase<T> {
 	private final float sizeBias;
 	//
 	protected TypeSpecificLoadExecutorBase(
+		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias,
 		final float rateLimit, final int countUpdPerReq
 	) throws ClassCastException {
 		super(
+			dataCls,
 			runTimeConfig, reqConfig, addrs, connCountPerNode, listFile, maxCount,
 			sizeMin, sizeMax, sizeBias, rateLimit
 		);

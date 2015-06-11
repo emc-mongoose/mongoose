@@ -19,6 +19,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
+import java.rmi.RemoteException;
+import java.util.concurrent.TimeUnit;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -63,13 +65,25 @@ implements Producer<T> {
 	}
 	//
 	@Override
+	public final void await()
+	throws InterruptedException {
+		join();
+	}
+	//
+	@Override
+	public final void await(final long timeOut, final TimeUnit timeUnit)
+	throws InterruptedException {
+		timeUnit.timedJoin(this, timeOut);
+	}
+	//
+	@Override
 	public final void run() {
 		//
 		HttpResponse httpResp = null;
 		try {
 			httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET);
 		} catch(final IOException e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Failed to list the bucket: " + bucket);
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the bucket: " + bucket);
 		}
 		//
 		if(httpResp != null) {
@@ -92,22 +106,38 @@ implements Producer<T> {
 								final SAXParser
 									parser = SAXParserFactory.newInstance().newSAXParser();
 								try(final InputStream in = respEntity.getContent()) {
+									////////////////////////////////////////////////////////////////
 									parser.parse(
 										in,
 										new XMLBucketListParser<>(
 											consumer, dataConstructor, maxCount
 										)
 									);
+									////////////////////////////////////////////////////////////////
 								} catch(final SAXException e) {
-									LogUtil.failure(LOG, Level.WARN, e, "Failed to parse");
+									LogUtil.exception(LOG, Level.WARN, e, "Failed to parse");
 								} catch(final IOException e) {
-									LogUtil.failure(
+									LogUtil.exception(
 										LOG, Level.ERROR, e,
-										"Failed to read the bucket listing response content: "+bucket
+										"Failed to read the bucket listing response content: {}",
+										bucket
 									);
+								} finally {
+									if(consumer != null) {
+										try {
+											consumer.shutdown();
+										} catch(final RemoteException e) {
+											LogUtil.exception(
+												LOG, Level.WARN, e,
+												"Failed to limit data items count for remote consumer"
+											);
+										} finally {
+											consumer = null;
+										}
+									}
 								}
 							} catch(final ParserConfigurationException | SAXException e) {
-								LogUtil.failure(
+								LogUtil.exception(
 									LOG, Level.ERROR, e, "Failed to create SAX parser"
 								);
 							}

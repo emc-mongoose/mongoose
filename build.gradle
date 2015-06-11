@@ -340,6 +340,7 @@ dependencies {
 	// launcher
 	cliCompile (
 		library.commons_cli,
+		library.commons_collections4,
 		library.commons_configuration,
 		library.commons_lang,
 		library.log4j_api_plus_core,
@@ -350,6 +351,22 @@ dependencies {
 }
 
 configurations {
+	allCompile.extendsFrom(
+		commonCompile,
+		coreApiCompile,
+		coreImplCompile,
+		storageAdapterAtmosImplCompile,
+		storageAdapterS3Compile,
+		storageAdapterSwiftCompile,
+		serverApiCompile,
+		webserverCompile,
+		clientCompile,
+		scenarioCompile,
+		serverImplCompile,
+		storageMockCompile,
+		webuiCompile,
+		cliCompile,
+	)
 	allRuntime.extendsFrom(
 		commonRuntime,
 		coreApiRuntime,
@@ -372,7 +389,6 @@ configurations {
 
 task compileRMI(dependsOn: "compileServerImplJava") << {
 	String[] listClsRemote = [
-			'com.emc.mongoose.server.impl.persist.TmpFileItemBufferSvc',
 			'com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc',
 			'com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc'
 	]
@@ -405,10 +421,10 @@ task commonJar(type: Jar) {
 	manifest {
 		from sharedManifest
 		attributes (
-				'Implementation-Title': rootProject.name + "-common",
-				'Class-Path': configurations.commonRuntime.collect {
-					libsDirName + File.separator + it.getName()
-				}.join(' '),
+			'Implementation-Title': rootProject.name + "-common",
+			'Class-Path': configurations.commonRuntime.collect {
+				libsDirName + File.separator + it.getName()
+			}.join(' '),
 		)
 	}
 }
@@ -424,13 +440,13 @@ task coreApiJar(type: Jar) {
 	manifest {
 		from sharedManifest
 		attributes (
-				'Implementation-Title': rootProject.name + "-core-api",
-				'Class-Path': [
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						configurations.coreApiRuntime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-core-api",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				configurations.coreApiRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
 		)
 	}
 }
@@ -442,14 +458,14 @@ task coreImplJar(type: Jar) {
 	manifest {
 		from sharedManifest
 		attributes(
-				'Implementation-Title': rootProject.name + "-core-impl",
-				'Class-Path': [
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						coreApiJar.outputs.files.collect {it.name}.join(' '),
-						configurations.coreImplRuntime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-core-impl",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				configurations.coreImplRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
 		)
 	}
 }
@@ -775,7 +791,7 @@ idea {
 	module {
 		name = rootProject.name
 		jdkName = sourceCompatibility
-		scopes.PROVIDED.plus += [ configurations.allRuntime ]
+		scopes.PROVIDED.plus += [ configurations.allCompile ]
 	}
 	project.ipr {
 		withXml { provider ->

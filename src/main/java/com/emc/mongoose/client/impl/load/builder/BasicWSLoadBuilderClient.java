@@ -141,7 +141,7 @@ implements WSLoadBuilderClient<T, U> {
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
 				LOG.debug(LogUtil.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
-				LogUtil.failure(LOG, Level.ERROR, e, "Failed to generate JMX URL");
+				LogUtil.exception(LOG, Level.ERROR, e, "Failed to generate JMX URL");
 			}
 			//
 			nextJMXConn = null;
@@ -149,9 +149,8 @@ implements WSLoadBuilderClient<T, U> {
 				try {
 					nextJMXConn = JMXConnectorFactory.connect(nextJMXURL, null);
 				} catch(final IOException e) {
-					LogUtil.failure(
-						LOG, Level.ERROR, e,
-						String.format("Failed to connect to \"%s\" via JMX", nextJMXURL)
+					LogUtil.exception(
+						LOG, Level.ERROR, e, "Failed to connect to \"{}\" via JMX", nextJMXURL
 					);
 				}
 			}

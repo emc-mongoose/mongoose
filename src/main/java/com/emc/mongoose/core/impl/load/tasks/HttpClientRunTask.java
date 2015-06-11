@@ -38,18 +38,18 @@ implements Runnable {
 		try {
 			ioReactor.execute(ioEventDispatch);
 		} catch(final IOReactorException e) {
-			LogUtil.failure(
+			LogUtil.exception(
 				LOG, Level.ERROR, e,
 				"Possible max open files limit exceeded, please check the environment configuration"
 			);
 		} catch(final InterruptedIOException e) {
 			LOG.debug(LogUtil.MSG, "{}: interrupted", Thread.currentThread().getName());
 		} catch(final IOException e) {
-			LogUtil.failure(
+			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to execute the web storage client"
 			);
 		} catch(final IllegalStateException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Looks like I/O reactor shutdown");
 		}
 	}
 }

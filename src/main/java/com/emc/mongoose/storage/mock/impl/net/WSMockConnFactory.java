@@ -2,13 +2,12 @@ package com.emc.mongoose.storage.mock.impl.net;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 //
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 //
 import org.apache.http.config.ConnectionConfig;
 //
-import org.apache.http.impl.entity.StrictContentLengthStrategy;
 import org.apache.http.impl.nio.DefaultNHttpServerConnection;
 import org.apache.http.impl.nio.DefaultNHttpServerConnectionFactory;
 import org.apache.http.nio.NHttpConnection;
@@ -41,7 +40,7 @@ extends DefaultNHttpServerConnectionFactory {
 	) {
 		super(config);
 		connKillExecutor = Executors.newScheduledThreadPool(
-			1, new NamingWorkerFactory("connKiller")
+			1, new GroupThreadFactory("connKiller", true)
 		);
 		connCacheSize = runTimeConfig.getStorageMockFaultConnCacheSize();
 		connCache = new CircularFifoQueue<>(connCacheSize);
@@ -80,7 +79,7 @@ extends DefaultNHttpServerConnectionFactory {
 						conn.close();
 					}
 				} catch (final IOException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Failed to close the connection " + conn
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the connection: {}", conn
 					);
 				}
 			}

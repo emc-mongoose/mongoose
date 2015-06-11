@@ -2,18 +2,12 @@ package com.emc.mongoose.core.impl.data;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
 //
-import com.emc.mongoose.core.impl.data.ws.AugmentEntity;
-import com.emc.mongoose.core.impl.data.ws.UpdateRangesEntity;
-//
 import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.nio.ContentDecoder;
-import org.apache.http.nio.ContentEncoder;
-import org.apache.http.nio.IOControl;
 import org.apache.http.util.EntityUtils;
 //
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 //
 //import org.apache.logging.log4j.Level;
 //import org.apache.logging.log4j.LogManager;
@@ -58,7 +52,13 @@ implements WSObject {
 	//
 	@Override
 	public final long getContentLength() {
-		return size;
+		if(hasUpdatedRanges()) {
+			return getPendingRangesSize();
+		} else if(isAppending()) {
+			return getPendingAugmentSize();
+		} else {
+			return size;
+		}
 	}
 	//
 	@Override
@@ -72,9 +72,13 @@ implements WSObject {
 	}
 	//
 	@Override
-	public final InputStream getContent()
-	throws IOException, IllegalStateException {
-		return this;
+	public final InputStream getContent() {
+		throw new UnsupportedOperationException("Shouldn't be invoked");
+	}
+	//
+	@Override
+	public void writeTo(final OutputStream outstream) {
+		throw new UnsupportedOperationException("Shouldn't be invoked");
 	}
 	//
 	@Override
@@ -86,14 +90,6 @@ implements WSObject {
 	public final void consumeContent()
 	throws IOException {
 		EntityUtils.consume(this);
-	}
-	//
-	public final HttpEntity getPendingUpdatesContentEntity() {
-		return new UpdateRangesEntity<WSObject>(this);
-	}
-	//
-	public final HttpEntity getPendingAugmentContentEntity() {
-		return new AugmentEntity<WSObject>(this);
 	}
 }
 //

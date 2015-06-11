@@ -10,9 +10,7 @@ import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 // mongoose-client.jar
-import com.emc.mongoose.client.api.persist.DataItemBufferClient;
 import com.emc.mongoose.client.api.load.builder.LoadBuilderClient;
-import com.emc.mongoose.client.impl.persist.TmpFileItemBufferClient;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 //
@@ -25,7 +23,9 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.NoSuchElementException;
 /**
  Created by kurila on 20.10.14.
@@ -98,7 +98,7 @@ implements LoadBuilderClient<T, U> {
 			nextBuilder.setProperties(runTimeConfig);
 		}
 		//
-		final String newAddrs[] = runTimeConfig.getStorageAddrs();
+		final String newAddrs[] = runTimeConfig.getStorageAddrsWithPorts();
 		if(newAddrs != null && newAddrs.length > 0) {
 			dataNodeAddrs = newAddrs;
 		}
@@ -271,7 +271,7 @@ implements LoadBuilderClient<T, U> {
 		try {
 			invokePreConditions();
 		} catch(final IllegalStateException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Preconditions failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
 		return buildActually();
 	}
@@ -283,18 +283,12 @@ implements LoadBuilderClient<T, U> {
 	throws RemoteException;
 	//
 	@Override
-	public DataItemBufferClient<T> newDataItemBuffer()
-	throws RemoteException {
-		return new TmpFileItemBufferClient<>(this);
-	}
-	//
-	@Override
 	public String toString() {
 		StringBuilder strBuilder = new StringBuilder(reqConf.toString());
 		try {
 			strBuilder.append('-').append(get(keySet().iterator().next()).getLastInstanceNum());
 		} catch(final RemoteException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to make load builder string");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to make load builder string");
 		}
 		return strBuilder.toString();
 	}

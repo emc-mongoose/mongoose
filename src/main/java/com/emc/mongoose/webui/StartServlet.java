@@ -9,7 +9,7 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 //
-import com.emc.mongoose.storage.mock.impl.cinderella.Cinderella;
+import com.emc.mongoose.storage.mock.impl.Cinderella;
 //
 import com.emc.mongoose.run.scenario.Scenario;
 //
@@ -58,7 +58,7 @@ public final class StartServlet extends CommonServlet {
 				try {
 					response.getWriter().write(resultString);
 				} catch (final IOException e) {
-					LogUtil.failure(LOG, Level.DEBUG, e, "Failed to write in servlet response");
+					LogUtil.exception(LOG, Level.DEBUG, e, "Failed to write in servlet response");
 				}
 			}
 			return;
@@ -114,7 +114,7 @@ public final class StartServlet extends CommonServlet {
 					loadBuilderSvc.setProperties(runTimeConfig);
 					loadBuilderSvc.start();
 				} catch (final RemoteException e) {
-					LogUtil.failure(LOG, Level.ERROR, e, "Failed to start load builder service");
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to start load builder service");
 				}
 			}
 			@Override
@@ -171,7 +171,7 @@ public final class StartServlet extends CommonServlet {
 				try {
 					new Cinderella(runTimeConfig).run();
 				} catch (final IOException e) {
-					LogUtil.failure(LOG, Level.FATAL, e, "Failed run Cinderella");
+					LogUtil.exception(LOG, Level.FATAL, e, "Failed run Cinderella");
 				}
 			}
 

@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.api.io.task;
 //
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import org.apache.http.concurrent.FutureCallback;
@@ -23,9 +22,6 @@ extends
 	//
 	@Override
 	WSIOTask<T> setDataItem(final T dataItem);
-	//
-	@Override
-	WSIOTask<T> setRequestConfig(final RequestConfig<T> reqConf);
 	//
 	@Override
 	WSIOTask<T> setNodeAddr(final String nodeAddr)

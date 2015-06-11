@@ -28,6 +28,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 04.03.15.
  */
@@ -69,6 +70,18 @@ implements Producer<T> {
 	}
 	//
 	@Override
+	public final void await()
+	throws InterruptedException {
+		join();
+	}
+	//
+	@Override
+	public final void await(final long timeOut, final TimeUnit timeUnit)
+	throws InterruptedException {
+		timeUnit.timedJoin(this, timeOut);
+	}
+	//
+	@Override
 	public final void run() {
 		try {
 			final HttpResponse httpResp = container.execute(addr, MutableWSRequest.HTTPMethod.GET);
@@ -96,9 +109,9 @@ implements Producer<T> {
 							try(final InputStream in = respEntity.getContent()) {
 								handleJsonInputStream(in);
 							} catch(final IOException e) {
-								LogUtil.failure(
+								LogUtil.exception(
 									LOG, Level.ERROR, e,
-									"Failed to list the content of container: " + container
+									"Failed to list the content of container: {}", container
 								);
 							}
 							EntityUtils.consumeQuietly(respEntity);
@@ -107,19 +120,18 @@ implements Producer<T> {
 				}
 			}
 		} catch(final IOException e) {
-			LogUtil.failure(
-				LOG, Level.ERROR, e, "Failed to list the container :" + container
-			);
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the container: {}", container);
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Container \"{}\" producer interrupted", container);
 		} finally {
-			try {
-				consumer.shutdown();
-			} catch(final Exception e) {
-				LogUtil.failure(
-					LOG, Level.DEBUG, e,
-					"Failed to shutdown the consumer"
-				);
+			if(consumer != null) {
+				try {
+					consumer.shutdown();
+				} catch(final Exception e) {
+					LogUtil.exception(LOG, Level.DEBUG, e, "Failed to shutdown the consumer");
+				} finally {
+					consumer = null;
+				}
 			}
 		}
 	}
@@ -165,25 +177,33 @@ implements Producer<T> {
 													nextDataItem
 												);
 											}
-											count++;
+											count ++;
 										} else {
 											break;
 										}
 									} catch(
 										final InstantiationException | IllegalAccessException |
 											InvocationTargetException e
-										) {
-										LogUtil.failure(
+									) {
+										LogUtil.exception(
 											LOG, Level.WARN, e,
 											"Failed to create data item descriptor"
 										);
-									} catch(final RemoteException | RejectedExecutionException e) {
-										LogUtil.failure(
+									} catch(final RemoteException e) {
+										LogUtil.exception(
 											LOG, Level.WARN, e,
 											"Failed to submit new data object to the consumer"
 										);
 									} catch(final NumberFormatException e) {
 										LOG.debug(LogUtil.ERR, "Invalid id: {}", lastId);
+									} catch(final RejectedExecutionException e) {
+										LOG.debug(
+											LogUtil.ERR, "Consumer {} rejected the data item",
+											consumer
+										);
+									} catch(final InterruptedException e) {
+										LOG.debug(LogUtil.MSG, "Interrupted");
+										break;
 									}
 								} else {
 									LOG.trace(

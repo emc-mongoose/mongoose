@@ -4,11 +4,8 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.persist.DataItemBuffer;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
-//
-import com.emc.mongoose.core.impl.persist.TmpFileItemBuffer;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -20,8 +17,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.NoSuchElementException;
 /**
  Created by kurila on 20.10.14.
@@ -45,7 +44,7 @@ implements LoadBuilder<T, U> {
 			reqConf = getDefaultRequestConfig();
 			setProperties(RunTimeConfig.getContext());
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Failed to apply configuration");
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to apply configuration");
 		}
 	}
 	protected abstract RequestConfig<T> getDefaultRequestConfig();
@@ -136,7 +135,7 @@ implements LoadBuilder<T, U> {
 		//
 		paramName = RunTimeConfig.KEY_STORAGE_ADDRS;
 		try {
-			setDataNodeAddrs(runTimeConfig.getStorageAddrs());
+			setDataNodeAddrs(runTimeConfig.getStorageAddrsWithPorts());
 		} catch(final NoSuchElementException|ConversionException e) {
 			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
@@ -339,7 +338,7 @@ implements LoadBuilder<T, U> {
 		try {
 			invokePreConditions();
 		} catch(final IllegalStateException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Preconditions failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
 		return buildActually();
 	}
@@ -348,14 +347,6 @@ implements LoadBuilder<T, U> {
 	throws IllegalStateException;
 	//
 	protected abstract U buildActually();
-	//
-	@Override
-	public DataItemBuffer<T> newDataItemBuffer()
-	throws IOException {
-		return new TmpFileItemBuffer<>(maxCount);
-	}
-	//
-	private final static int MAX_LOAD_COUNT = 10;
 	//
 	private final static String FMT_STR = "%s.%dx%s", FMT_SIZE_RANGE = "%s-%s";
 	//

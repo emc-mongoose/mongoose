@@ -11,19 +11,17 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 //
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
-import com.emc.mongoose.server.api.persist.DataItemBufferSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 //
 import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
 //
 import com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc;
-import com.emc.mongoose.server.impl.persist.TmpFileItemBufferSvc;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 30.05.14.
  */
@@ -96,14 +94,6 @@ implements WSLoadBuilderSvc<T, U> {
 		);
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	public DataItemBufferSvc<T> newDataItemBuffer()
-	throws IOException {
-		return (DataItemBufferSvc<T>) ServiceUtils.create(
-			new TmpFileItemBufferSvc<>(getMaxCount())
-		);
-	}
-	//
 	public final void start() {
 		LOG.debug(LogUtil.MSG, "Load builder service instance created");
 		/*final RemoteStub stub = */ServiceUtils.create(this);
@@ -112,14 +102,14 @@ implements WSLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public final void join()
+	public final void await()
 	throws InterruptedException {
-		join(Long.MAX_VALUE);
+		await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 	//
 	@Override
-	public final void join(final long ms)
+	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException {
-		Thread.sleep(ms);
+		timeUnit.sleep(timeOut);
 	}
 }

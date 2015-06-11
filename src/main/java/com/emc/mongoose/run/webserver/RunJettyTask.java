@@ -56,7 +56,7 @@ implements Runnable {
             server.start();
             server.join();
         } catch (final Exception e) {
-            LogUtil.failure(LOG, Level.FATAL, e, "Web UI service failure");
+            LogUtil.exception(LOG, Level.FATAL, e, "Web UI service failure");
         }
     }
 

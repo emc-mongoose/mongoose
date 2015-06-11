@@ -15,7 +15,7 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.impl.cinderella.Cinderella;
+import com.emc.mongoose.storage.mock.impl.Cinderella;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -69,9 +69,9 @@ public final class ModeDispatcher {
 						loadBuilderSvc = new BasicWSLoadBuilderSvc<>(RunTimeConfig.getContext())
 				) {
 					loadBuilderSvc.start();
-					loadBuilderSvc.join();
+					loadBuilderSvc.await();
 				} catch(final IOException e) {
-					LogUtil.failure(rootLogger, Level.ERROR, e, "Load builder service failure");
+					LogUtil.exception(rootLogger, Level.ERROR, e, "Load builder service failure");
 				} catch(InterruptedException e) {
 					rootLogger.debug(LogUtil.MSG, "Interrupted load builder service");
 				}
@@ -86,7 +86,7 @@ public final class ModeDispatcher {
 				try {
 					new Cinderella(RunTimeConfig.getContext()).run();
 				} catch (final Exception e) {
-					LogUtil.failure(rootLogger, Level.FATAL, e, "Failed");
+					LogUtil.exception(rootLogger, Level.FATAL, e, "Failed");
 				}
 				break;
 			case Constants.RUN_MODE_CLIENT:

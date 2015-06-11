@@ -23,7 +23,9 @@ import org.apache.logging.log4j.Logger;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -201,21 +203,23 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final Object t = in.readObject();
+		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
+		final Object t = ois.readUnshared();
 		if(t == null) {
 			LOG.debug(LogUtil.MSG, "Note: no subtenant has got from load client side");
 		} else {
 			setSubTenant(new WSSubTenantImpl<>(this, String.class.cast(t)));
 		}
-		uriBasePath = String.class.cast(in.readObject());
+		uriBasePath = String.class.cast(ois.readUnshared());
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		out.writeObject(subTenant == null ? null : subTenant.getValue());
-		out.writeObject(uriBasePath);
+		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
+		oos.writeUnshared(subTenant == null ? null : subTenant.getValue());
+		oos.writeUnshared(uriBasePath);
 	}
 	//
 	@Override
@@ -327,16 +331,15 @@ extends WSRequestConfigBase<T> {
 		}
 		applyURI(httpRequest, dataItem);
 		switch(loadType) {
+			case UPDATE:
+			case APPEND:
+				applyRangesHeaders(httpRequest, dataItem);
 			case CREATE:
 				applyPayLoad(httpRequest, dataItem);
 				break;
-			case UPDATE:
-				applyRangesHeaders(httpRequest, dataItem);
-				applyPayLoad(httpRequest, dataItem.getPendingUpdatesContentEntity());
-				break;
-			case APPEND:
-				applyAppendRangeHeader(httpRequest, dataItem);
-				applyPayLoad(httpRequest, dataItem.getPendingAugmentContentEntity());
+			case READ:
+			case DELETE:
+				applyPayLoad(httpRequest, null);
 				break;
 		}
 	}
@@ -396,6 +399,7 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	public void receiveResponse(final HttpResponse response, final T dataItem) {
+		super.receiveResponse(response, dataItem);
 		applyObjectId(dataItem, response);
 	}
 }

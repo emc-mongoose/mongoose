@@ -8,13 +8,13 @@ import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.nio.ContentDecoder;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.nio.IOControl;
 //
-import java.io.InputStream;
 import java.net.URISyntaxException;
 /**
  Created by kurila on 29.09.14.
@@ -73,10 +73,9 @@ extends ObjectRequestConfig<T> {
 	@Override
 	WSRequestConfig<T> setProperties(final RunTimeConfig props);
 	//
-	@Override
-	WSIOTask<T> getRequestFor(final T dataItem, final String nodeAddr);
-	//
 	HeaderGroup getSharedHeaders();
+	//
+	HttpHost getNodeHost(final String nodeAddr);
 	//
 	String getUserAgent();
 	//

@@ -1,31 +1,125 @@
 package com.emc.mongoose.core.impl.io.task;
 //
-import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
+import com.emc.mongoose.common.collections.InstancePool;
+import com.emc.mongoose.common.logging.LogUtil;
+//
 import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
 //
-import com.emc.mongoose.common.collections.InstancePool;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+//
+import java.util.HashMap;
+import java.util.Map;
 /**
  Created by kurila on 23.12.14.
  */
 public class BasicObjectIOTask<T extends DataObject>
 extends BasicIOTask<T>
 implements DataObjectIOTask<T> {
-	// BEGIN pool related things
-	private final static InstancePool<BasicIOTask>
-		POOL_OBJ_TASKS = new InstancePool<>(BasicIOTask.class);
 	//
-	@SuppressWarnings("unchecked")
-	public static <T extends DataObject> BasicObjectIOTask<T> getInstanceFor(
-		final LoadExecutor<T> loadExecutor, final RequestConfig<T> reqConf, final T dataItem
+	private final static Logger LOG = LogManager.getLogger();
+	//
+	public BasicObjectIOTask(final ObjectLoadExecutor<T> loadExecutor) {
+		super(loadExecutor);
+	}
+	//
+	public final static Map<ObjectLoadExecutor, InstancePool<BasicObjectIOTask>>
+		INSTANCE_POOL_MAP = new HashMap<>();
+	//
+	public static BasicObjectIOTask getInstance(
+		final ObjectLoadExecutor loadExecutor, DataObject dataItem, final String nodeAddr
 	) {
-		return (BasicObjectIOTask<T>) POOL_OBJ_TASKS.take(loadExecutor, reqConf, dataItem);
+		InstancePool<BasicObjectIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
+		if(instPool == null) {
+			try {
+				instPool = new InstancePool<>(
+					BasicObjectIOTask.class.getConstructor(ObjectLoadExecutor.class), loadExecutor
+				);
+				INSTANCE_POOL_MAP.put(loadExecutor, instPool);
+			} catch(final NoSuchMethodException e) {
+				throw new IllegalStateException(e);
+			}
+		}
+		//
+		return instPool.take(dataItem, nodeAddr);
 	}
 	//
 	@Override
 	public void release() {
-		POOL_OBJ_TASKS.release(this);
+		final InstancePool<BasicObjectIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
+		if(instPool == null) {
+			throw new IllegalStateException("No pool found to release back");
+		} else {
+			instPool.release(this);
+		}
 	}
-	// END pool related things
+	//
+	@Override
+	public final void complete() {
+		final String dataItemId = dataItem.getId();
+		StringBuilder strBuilder = THRLOC_SB.get();
+		if(strBuilder == null) {
+			strBuilder = new StringBuilder();
+			THRLOC_SB.set(strBuilder);
+		} else {
+			strBuilder.setLength(0); // clear/reset
+		}
+		if(
+			reqTimeDone >= reqTimeStart &&
+			respTimeStart >= reqTimeDone &&
+			respTimeDone >= respTimeStart
+		) {
+			LOG.info(
+				LogUtil.PERF_TRACE,
+				strBuilder
+					.append(nodeAddr).append(',')
+					.append(dataItemId).append(',')
+					.append(transferSize).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(respTimeStart - reqTimeDone).append(',')
+					.append(respTimeDone - reqTimeStart)
+					.toString()
+			);
+		} else if(
+			status != Status.CANCELLED &&
+			status != Status.FAIL_IO &&
+			status != Status.FAIL_TIMEOUT &&
+			status != Status.FAIL_UNKNOWN
+		) {
+			LOG.warn(
+				LogUtil.ERR,
+				strBuilder
+					.append("Invalid trace: ")
+					.append(nodeAddr).append(',')
+					.append(dataItemId).append(',')
+					.append(transferSize).append(',')
+					.append(status.code).append(',')
+					.append(reqTimeStart).append(',')
+					.append(reqTimeDone).append(',')
+					.append(respTimeStart).append(',')
+					.append(respTimeDone)
+					.toString()
+			);
+		}
+		//
+		try {
+			loadExecutor.handleResult(this);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
+			e.printStackTrace(System.err);
+		}
+		//
+		final int reqSleepMilliSec = reqConf.getReqSleepMilliSec();
+		if(reqSleepMilliSec > 0) {
+			try {
+				Thread.sleep(reqSleepMilliSec);
+			} catch(final InterruptedException e) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted request sleep");
+			}
+		}
+	}
 }

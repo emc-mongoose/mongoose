@@ -5,7 +5,10 @@ import com.emc.mongoose.common.logging.LogUtil;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by andrey on 09.06.14.
  A pool for any reusable objects(instances).
@@ -17,10 +20,13 @@ extends ConcurrentLinkedQueue<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final Class<T> instanceCls;
+	private final Constructor<T> constructor;
+	private final Object sharedArgs[];
+	private final AtomicInteger instCount = new AtomicInteger(0);
 	//
-	public InstancePool(final Class<T> instanceCls) {
-		this.instanceCls = instanceCls;
+	public InstancePool(final Constructor<T> constructor, final Object... sharedArgs) {
+		this.constructor = constructor;
+		this.sharedArgs = sharedArgs;
 	}
 	//
 	@SuppressWarnings("unchecked")
@@ -29,8 +35,18 @@ extends ConcurrentLinkedQueue<T> {
 		T instance = poll();
 		if(instance == null) {
 			try {
-				instance = instanceCls.newInstance();
-			} catch(final NullPointerException|InstantiationException|IllegalAccessException e) {
+				if(sharedArgs == null || sharedArgs.length == 0) {
+					instance = constructor.newInstance();
+					instCount.incrementAndGet();
+				} else if(sharedArgs.length == 1) {
+					instance = constructor.newInstance(sharedArgs[0]);
+					instCount.incrementAndGet();
+				} else {
+					throw new IllegalArgumentException("Not implemented");
+				}
+			} catch(
+				final InstantiationException | IllegalAccessException | InvocationTargetException e
+			) {
 				throw new IllegalStateException("Reusable instantiation failure", e);
 			}
 		}
@@ -51,9 +67,7 @@ extends ConcurrentLinkedQueue<T> {
 	//
 	@Override
 	public final String toString() {
-		return String.format(
-			LogUtil.LOCALE_DEFAULT, "%s: %d instances are in the pool",
-			instanceCls.getCanonicalName(), size()
-		);
+		return "InstancePool<" + constructor.getDeclaringClass().getCanonicalName() + ">: " +
+			size() + " instances are in the pool of " + instCount.get() + " total";
 	}
 }

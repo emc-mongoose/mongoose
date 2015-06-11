@@ -4,7 +4,8 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
-import com.emc.mongoose.common.concurrent.NamingWorkerFactory;
+import com.emc.mongoose.common.collections.InstancePool;
+import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -15,26 +16,23 @@ import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.model.LogConsumer;
+import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
+import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
-import com.emc.mongoose.client.api.persist.DataItemBufferClient;
 import com.emc.mongoose.client.impl.load.executor.gauges.AvgDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
-import com.emc.mongoose.client.impl.load.executor.tasks.CountLimitWaitTask;
+import com.emc.mongoose.client.impl.load.executor.tasks.InterruptClientOnMaxCountTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.FrameFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
-import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
-//
-import com.emc.mongoose.core.impl.load.tasks.JoinLoadJobTask;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -54,16 +52,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 20.10.14.
  */
@@ -77,6 +74,8 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final Map<String, JMXConnector> remoteJMXConnMap;
 	private final Map<String, MBeanServerConnection> mBeanSrvConnMap;
+	private final Map<String, InstancePool<RemoteSubmitTask>> submTaskPoolMap;
+	//
 	private final MetricRegistry metrics = new MetricRegistry();
 	protected final JmxReporter metricsReporter;
 	//
@@ -104,10 +103,9 @@ implements LoadClient<T> {
 	private final long maxCount;
 	private final String name, loadSvcAddrs[];
 	//
-	private final LogConsumer<T> metaInfoLog;
 	private final RunTimeConfig runTimeConfig;
-	private final RequestConfig<T> reqConfig;
-	private final int retryCountMax, retryDelayMilliSec, metricsPeriodSec;
+	private final RequestConfig<T> reqConfigCopy;
+	private final int metricsPeriodSec;
 	protected volatile Producer<T> producer;
 	//
 	public BasicLoadClient(
@@ -117,14 +115,12 @@ implements LoadClient<T> {
 	) {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
-			new LinkedBlockingQueue<Runnable>(
+			new ArrayBlockingQueue<Runnable>(
 				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
 					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
 			)
 		);
-		setCorePoolSize(
-			Math.max(Runtime.getRuntime().availableProcessors(), remoteLoadMap.size())
-		);
+		setCorePoolSize(Math.max(Runtime.getRuntime().availableProcessors(), remoteLoadMap.size()));
 		setMaximumPoolSize(getCorePoolSize());
 		//
 		String t = null;
@@ -138,15 +134,18 @@ implements LoadClient<T> {
 		}
 		name = t;
 		//
-		setThreadFactory(new NamingWorkerFactory(String.format("clientSubmitWorker<%s>", name)));
+		setThreadFactory(
+			new GroupThreadFactory(String.format("clientSubmitWorker<%s>", name), true)
+		);
 		//
 		this.runTimeConfig = runTimeConfig;
-		this.reqConfig = reqConfig;
+		try {
+			this.reqConfigCopy = reqConfig.clone();
+		} catch(final CloneNotSupportedException e) {
+			throw new IllegalStateException("Failed to clone the request config");
+		}
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		this.producer = producer;
-		//
-		retryCountMax = runTimeConfig.getRunRetryCountMax();
-		retryDelayMilliSec = runTimeConfig.getRunRetryDelayMilliSec();
 		//
 		metricsPeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
 		//
@@ -165,25 +164,35 @@ implements LoadClient<T> {
 		this.remoteJMXConnMap = remoteJMXConnMap;
 		////////////////////////////////////////////////////////////////////////////////////////////
 		mBeanSrvConnMap = new HashMap<>();
+		submTaskPoolMap = new HashMap<>();
 		for(final String addr: loadSvcAddrs) {
 			try {
 				mBeanSrvConnMap.put(addr, remoteJMXConnMap.get(addr).getMBeanServerConnection());
 			} catch(final IOException e) {
-				LogUtil.failure(
-					LOG, Level.ERROR, e,
-					String.format("Failed to obtain MBean server connection for %s", addr)
+				LogUtil.exception(
+					LOG, Level.ERROR, e, "Failed to obtain MBean server connection for {}", addr
+				);
+			}
+			//
+			try {
+				submTaskPoolMap.put(
+					addr,
+					new InstancePool<>(
+						RemoteSubmitTask.class.getConstructor(LoadSvc.class),
+						remoteLoadMap.get(addr)
+					)
+				);
+			} catch(final NoSuchMethodException e) {
+				LogUtil.exception(
+					LOG, Level.FATAL, e, "Failed to create the remote submit task instance pool"
 				);
 			}
 		}
 		//
 		mgmtConnExecutor = new ScheduledThreadPoolExecutor(
-			19 + remoteLoadMap.size(), new NamingWorkerFactory(String.format("%s-remoteMonitor", name))
-		) { // make the shutdown method synchronized
-			@Override
-			public final synchronized void shutdown() {
-				super.shutdown();
-			}
-		};
+			20 + remoteLoadMap.size(), // 20 metric fetching tasks + N frame fetching tasks
+			new GroupThreadFactory(String.format("%s-remoteMonitor", name), true)
+		);
 		////////////////////////////////////////////////////////////////////////////////////////////
 		metricSuccCount = registerJmxGaugeSum(
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_COUNT
@@ -195,7 +204,7 @@ implements LoadClient<T> {
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_1MIN
 		);
 		metricTP5Min = registerJmxGaugeSumDouble(
-			DEFAULT_DOMAIN, METRIC_NAME_REQ+"."+METRIC_NAME_TP, ATTR_RATE_5MIN
+			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_5MIN
 		);
 		metricTP15Min = registerJmxGaugeSumDouble(
 			DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_TP, ATTR_RATE_15MIN
@@ -280,8 +289,6 @@ implements LoadClient<T> {
 				DEFAULT_DOMAIN, METRIC_NAME_REQ + "." + METRIC_NAME_LAT, ATTR_AVG
 			)
 		);
-		////////////////////////////////////////////////////////////////////////////////////////////
-		metaInfoLog = new LogConsumer<>(maxCount, Math.max(2, remoteLoadMap.size()));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private Gauge<Long> registerJmxGaugeSum(
@@ -347,21 +354,15 @@ implements LoadClient<T> {
 		T[] nextMetaInfoFrame;
 		for(final PeriodicTask<T[]> nextFrameFetchTask : frameFetchTasks) {
 			nextMetaInfoFrame = nextFrameFetchTask.getLastResult();
-			try {
-				if(nextMetaInfoFrame != null && nextMetaInfoFrame.length > 0) {
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
-						LOG.trace(
-							LogUtil.MSG, "Got next metainfo frame: {}",
-							Arrays.toString(nextMetaInfoFrame)
-						);
-					}
-					for(final T nextMetaInfoRec : nextMetaInfoFrame) {
-						metaInfoLog.submit(nextMetaInfoRec);
-					}
+			if(nextMetaInfoFrame != null && nextMetaInfoFrame.length > 0) {
+				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					LOG.trace(
+						LogUtil.MSG, "Got next metainfo frame: {}",
+						Arrays.toString(nextMetaInfoFrame)
+					);
 				}
-			} catch(final InterruptedException | RejectedExecutionException e) {
-				if(LOG.isTraceEnabled(LogUtil.ERR)) {
-					LogUtil.failure(LOG, Level.TRACE, e, "Failed to log the metainfo frame");
+				for(final T nextMetaInfoRec : nextMetaInfoFrame) {
+					LOG.info(LogUtil.DATA_LIST, nextMetaInfoRec);
 				}
 			}
 		}
@@ -389,7 +390,8 @@ implements LoadClient<T> {
 							String.format(LogUtil.INT_YELLOW_OVER_GREEN, countFail) :
 							String.format(LogUtil.INT_RED_OVER_GREEN, countFail),
 					//
-					avgLat, minLat == Long.MAX_VALUE ? 0 : minLat, medLat, maxLat == Long.MIN_VALUE ? 0 : maxLat,
+					avgLat, minLat == Long.MAX_VALUE ? 0 : minLat,
+					medLat, maxLat == Long.MIN_VALUE ? 0 : maxLat,
 					//
 					taskGetTPMean.getLastResult(), taskGetTP1Min.getLastResult(),
 					taskGetTP5Min.getLastResult(), taskGetTP15Min.getLastResult(),
@@ -420,9 +422,9 @@ implements LoadClient<T> {
 			LOG.info(logMarker, msg);
 		} catch(final NullPointerException e) {
 			if(isTerminating() || isTerminated()) {
-				LogUtil.failure(LOG, Level.TRACE, e, "Terminated already");
+				LogUtil.exception(LOG, Level.TRACE, e, "Terminated already");
 			} else {
-				LogUtil.failure(LOG, Level.TRACE, e, "Unexpected failure");
+				LogUtil.exception(LOG, Level.TRACE, e, "Unexpected failure");
 			}
 		}/* catch(final TimeoutException e) {
 			TraceLogger.failure(LOG, Level.DEBUG, e, "Distributed metrics aggregation timeout");
@@ -432,103 +434,101 @@ implements LoadClient<T> {
 	private void schedulePeriodicMgmtTasks() {
 		LoadSvc<T> nextLoadSvc;
 		final int periodSec = metricsPeriodSec > 0 ? metricsPeriodSec : 10;
-		synchronized(mgmtConnExecutor) {
-			//
-			for(final String loadSvcAddr : loadSvcAddrs) {
-				nextLoadSvc = remoteLoadMap.get(loadSvcAddr);
-				final PeriodicTask<T[]> nextFrameFetchTask = new FrameFetchPeriodicTask<>(
-					nextLoadSvc
-				);
-				frameFetchTasks.add(nextFrameFetchTask);
-				mgmtConnExecutor.scheduleAtFixedRate(
-					nextFrameFetchTask, 0, periodSec, TimeUnit.SECONDS
-				);
-			}
-			//
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetCountSubm, 0, periodSec, TimeUnit.SECONDS
+		//
+		for(final String loadSvcAddr : loadSvcAddrs) {
+			nextLoadSvc = remoteLoadMap.get(loadSvcAddr);
+			final PeriodicTask<T[]> nextFrameFetchTask = new FrameFetchPeriodicTask<>(
+				nextLoadSvc
 			);
+			frameFetchTasks.add(nextFrameFetchTask);
 			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetCountRej, 0, periodSec, TimeUnit.SECONDS
+				nextFrameFetchTask, 0, periodSec, TimeUnit.SECONDS
 			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetCountSucc, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetCountFail, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetCountBytes, 0, periodSec, TimeUnit.SECONDS
-			);
-			//
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetLatencyAvg, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetLatencyMin, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetLatencyMed, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetLatencyMax, 0, periodSec, TimeUnit.SECONDS
-			);
-			//
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetTPMean, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetTP1Min, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetTP5Min, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetTP15Min, 0, periodSec, TimeUnit.SECONDS
-			);
-			//
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetBWMean, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetBW1Min, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetBW5Min, 0, periodSec, TimeUnit.SECONDS
-			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				taskGetBW15Min, 0, periodSec, TimeUnit.SECONDS
-			);
+		}
+		//
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetCountSubm, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetCountRej, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetCountSucc, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetCountFail, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetCountBytes, 0, periodSec, TimeUnit.SECONDS
+		);
+		//
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetLatencyAvg, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetLatencyMin, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetLatencyMed, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetLatencyMax, 0, periodSec, TimeUnit.SECONDS
+		);
+		//
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetTPMean, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetTP1Min, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetTP5Min, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetTP15Min, 0, periodSec, TimeUnit.SECONDS
+		);
+		//
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetBWMean, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetBW1Min, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetBW5Min, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			taskGetBW15Min, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			new Runnable() {
+				@Override
+				public final void run() {
+					logMetaInfoFrames();
+				}
+			}, 0, periodSec, TimeUnit.SECONDS
+		);
+		mgmtConnExecutor.scheduleAtFixedRate(
+			new InterruptClientOnMaxCountTask(
+				this, maxCount,
+				new PeriodicTask[] { taskGetCountSucc, taskGetCountRej, taskGetCountRej }
+			), 0, periodSec, TimeUnit.SECONDS
+		);
+		//
+		if(metricsPeriodSec > 0) {
 			mgmtConnExecutor.scheduleAtFixedRate(
 				new Runnable() {
 					@Override
 					public final void run() {
-						logMetaInfoFrames();
+						logMetrics(LogUtil.PERF_AVG);
 					}
-				}, 0, periodSec, TimeUnit.SECONDS
+				}, 0, metricsPeriodSec, TimeUnit.SECONDS
 			);
-			mgmtConnExecutor.scheduleAtFixedRate(
-				new CountLimitWaitTask(
-					this, maxCount,
-					new PeriodicTask[] { taskGetCountSucc, taskGetCountRej, taskGetCountRej }
-				), 0, periodSec, TimeUnit.SECONDS
-			);
-			//
-			if(metricsPeriodSec > 0) {
-				mgmtConnExecutor.scheduleAtFixedRate(
-					new Runnable() {
-						@Override
-						public final void run() {
-							logMetrics(LogUtil.PERF_AVG);
-						}
-					}, 0, metricsPeriodSec, TimeUnit.SECONDS
-				);
-			}
 		}
 	}
 	//
 	@Override
-	public final void start() {
+	public final synchronized void start() {
 		//
 		LoadSvc<T> nextLoadSvc;
 		for(final String addr : loadSvcAddrs) {
@@ -552,7 +552,7 @@ implements LoadClient<T> {
 				producer.start();
 				LOG.debug(LogUtil.MSG, "Started object producer {}", producer);
 			} catch(final IOException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Failed to start the producer");
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to start the producer");
 			}
 		}
 		//
@@ -569,14 +569,14 @@ implements LoadClient<T> {
 		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
 		if(!isShutdown()) {
-			LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, String.format("Interrupting %s...", name));
+			LogUtil.trace(LOG, Level.DEBUG, LogUtil.MSG, "Interrupting {}", name);
 			shutdown();
 		}
 		//
-		if(isAlive()) {
+		if(!isTerminated()) {
 			final ExecutorService interruptExecutor = Executors.newFixedThreadPool(
 				remoteLoadMap.size(),
-				new NamingWorkerFactory(String.format("interrupt<%s>", getName()))
+				new GroupThreadFactory(String.format("interrupt<%s>", getName()))
 			);
 			for(final String addr : loadSvcAddrs) {
 				interruptExecutor.submit(new InterruptSvcTask(remoteLoadMap.get(addr), addr));
@@ -585,15 +585,10 @@ implements LoadClient<T> {
 			try {
 				interruptExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
 			} catch(final InterruptedException e) {
-				LogUtil.failure(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
+				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
 			}
 			LOG.debug(LogUtil.MSG, "{}: interrupted", name);
 		}
-	}
-	//
-	@Override
-	public final boolean isAlive() {
-		return !isTerminated();
 	}
 	//
 	private volatile LoadClient<T> consumer = null;
@@ -616,7 +611,7 @@ implements LoadClient<T> {
 					remoteLoadMap.get(addr).setConsumer(consumeMap.get(addr));
 				}
 			} catch(final ClassCastException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Data item class mismatch");
+				LogUtil.exception(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else if(LoadSvc.class.isInstance(consumer)) {
 			// single consumer for all these producers
@@ -627,17 +622,7 @@ implements LoadClient<T> {
 					remoteLoadMap.get(addr).setConsumer(loadSvc);
 				}
 			} catch(final ClassCastException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Data item class mismatch");
-			}
-		} else if(DataItemBufferClient.class.isInstance(consumer)) {
-			try {
-				final DataItemBufferClient<T> mediator = (DataItemBufferClient<T>) consumer;
-				LOG.debug(LogUtil.MSG, "Consumer is remote mediator buffer");
-				for(final String addr : loadSvcAddrs) {
-					remoteLoadMap.get(addr).setConsumer(mediator.get(addr));
-				}
-			} catch(final ClassCastException e) {
-				LogUtil.failure(LOG, Level.WARN, e, "Data item class mismatch");
+				LogUtil.exception(LOG, Level.WARN, e, "Data item class mismatch");
 			}
 		} else {
 			LOG.error(
@@ -646,44 +631,30 @@ implements LoadClient<T> {
 			);
 		}
 	}
+	//
+	@Override
+	public final RequestConfig<T> getRequestConfig() {
+		return reqConfigCopy;
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final AtomicLong countSubmCalls = new AtomicLong(0);
-	//
 	@Override
 	public final void submit(final T dataItem)
-	throws InterruptedException {
-		if(maxCount > getTaskCount()) { // getTaskCount() is inaccurate
-			final String addr = loadSvcAddrs[
-				(int) (countSubmCalls.getAndIncrement() % loadSvcAddrs.length)
-			];
-			final RemoteSubmitTask<T> remoteSubmitTask = RemoteSubmitTask
-				.getInstanceFor(remoteLoadMap.get(addr), dataItem);
-			int rejectCount = 0;
-			do {
-				try {
-					submit(remoteSubmitTask);
-					break;
-				} catch(final RejectedExecutionException e) {
-					rejectCount ++;
-					try {
-						Thread.sleep(rejectCount * retryDelayMilliSec);
-					} catch(final InterruptedException ee) {
-						break;
-					}
-				}
-			} while(rejectCount < retryCountMax && !isShutdown());
-		} else {
-			LOG.info(LogUtil.MSG, "maxCount = {}, taskCount = {}", maxCount, getTaskCount());
-			shutdown();
+	throws RejectedExecutionException {
+		InstancePool<RemoteSubmitTask> mostAvailPool = null;
+		int maxPoolSize = 0, nextPoolSize;
+		for(final InstancePool<RemoteSubmitTask> nextPool : submTaskPoolMap.values()) {
+			nextPoolSize = nextPool.size();
+			if(nextPoolSize >= maxPoolSize) {
+				maxPoolSize = nextPoolSize;
+				mostAvailPool = nextPool;
+			}
 		}
-		//
-		if(isShutdown()) {
-			throw new InterruptedException(
-				getName() + ": max data item count (" + maxCount +
-				") have been submitted, shutdown the submit executor"
-			);
+		if(mostAvailPool == null) {
+			throw new RejectedExecutionException("No remote load service to execute on");
+		} else {
+			submit(mostAvailPool.take(dataItem));
 		}
 	}
 	//
@@ -722,11 +693,11 @@ implements LoadClient<T> {
 							);
 						}
 					} catch(final NoSuchObjectException e) {
-						LogUtil.failure(
+						LogUtil.exception(
 							LOG, Level.DEBUG, e, "No remote service found for closing"
 						);
 					} catch(final IOException e) {
-						LogUtil.failure(
+						LogUtil.exception(
 							LOG, Level.WARN, e, "Failed to close remote load executor service"
 						);
 					}
@@ -742,15 +713,12 @@ implements LoadClient<T> {
 							LogUtil.ERR, "Remote JMX connection had been interrupted earlier"
 						);
 					} catch(final IOException e) {
-						LogUtil.failure(
-							LOG, Level.WARN, e,
-							String.format("Failed to close JMX connection to %s", addr)
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to close JMX connection to {}", addr
 						);
 					}
 				}
 				//
-				metaInfoLog.close();
-				LOG.debug(LogUtil.MSG, "Metainfo logger closed");
 				LoadCloseHook.del(this);
 				LOG.debug(LogUtil.MSG, "Clear the servers map");
 				remoteLoadMap.clear();
@@ -772,7 +740,7 @@ implements LoadClient<T> {
 		try {
 			producer = remoteLoadMap.entrySet().iterator().next().getValue().getProducer();
 		} catch(final RemoteException e) {
-			LogUtil.failure(LOG, Level.WARN, e, "Failed to get remote producer");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to get remote producer");
 		}
 		return producer;
 	}
@@ -783,11 +751,11 @@ implements LoadClient<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final void handleResult(final IOTask<T> task, final IOTask.Status status)
+	public final void handleResult(final IOTask<T> task)
 	throws RemoteException {
 		remoteLoadMap
 			.get(loadSvcAddrs[(int) (getTaskCount() % loadSvcAddrs.length)])
-			.handleResult(task, status);
+			.handleResult(task);
 	}
 	//
 	@Override
@@ -797,13 +765,13 @@ implements LoadClient<T> {
 		try {
 			awaitTermination(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException e) {
-			LogUtil.failure(LOG, Level.DEBUG, e, "Interrupted");
+			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 		} finally {
 			for(final String addr : remoteLoadMap.keySet()) {
 				try {
 					remoteLoadMap.get(addr).shutdown();
 				} catch(final RemoteException e) {
-					LogUtil.failure(LOG, Level.WARN, e, "Failed to shut down remote load service");
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down remote load service");
 				}
 			}
 		}
@@ -818,29 +786,29 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public final void join()
+	public final void await()
 	throws RemoteException, InterruptedException {
-		join(Long.MAX_VALUE);
+		await(Long.MAX_VALUE, TimeUnit.DAYS);
 	}
 	//
 	@Override
-	public final void join(final long timeOutMilliSec)
+	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws RemoteException, InterruptedException {
-		final ExecutorService joinExecutor = Executors.newFixedThreadPool(
+		final ExecutorService awaitExecutor = Executors.newFixedThreadPool(
 			remoteLoadMap.size() + 1,
-			new NamingWorkerFactory(String.format("joinWorker<%s>", getName()))
+			new GroupThreadFactory(String.format("awaitWorker<%s>", getName()))
 		);
-		joinExecutor.submit(
+		awaitExecutor.submit(
 			new Runnable() {
 				@Override
 				public final void run() {
 					// wait the remaining tasks to be transmitted to load servers
 					LOG.debug(
-						LogUtil.MSG, "{}: waiting remaining {} tasks to complete",
-						getName(), getQueue().size() + getActiveCount()
+						LogUtil.MSG, "{}: waiting remaining {} tasks to complete", getName(),
+						getQueue().size() + getActiveCount()
 					);
 					try {
-						awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS);
+						awaitTermination(timeOut, timeUnit);
 					} catch(final InterruptedException e) {
 						LOG.debug(LogUtil.MSG, "Interrupted");
 					}
@@ -848,23 +816,23 @@ implements LoadClient<T> {
 			}
 		);
 		for(final String addr : remoteLoadMap.keySet()) {
-			joinExecutor.submit(new JoinLoadJobTask(remoteLoadMap.get(addr), timeOutMilliSec));
+			awaitExecutor.submit(new AwaitLoadJobTask(remoteLoadMap.get(addr), timeOut, timeUnit));
 		}
-		joinExecutor.shutdown();
+		awaitExecutor.shutdown();
 		try {
-			LOG.debug(LogUtil.MSG, "Wait remote join tasks for finish {}[ms]", timeOutMilliSec);
-			if(joinExecutor.awaitTermination(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
-				LOG.debug(LogUtil.MSG, "All join tasks finished");
+			LOG.debug(LogUtil.MSG, "Wait remote await tasks for finish {}[{}]", timeOut, timeUnit);
+			if(awaitExecutor.awaitTermination(timeOut, timeUnit)) {
+				LOG.debug(LogUtil.MSG, "All await tasks finished");
 			} else {
-				LOG.debug(LogUtil.MSG, "Join tasks execution timeout");
+				LOG.debug(LogUtil.MSG, "Await tasks execution timeout");
 			}
 		} catch(final InterruptedException e) {
 			LOG.debug(LogUtil.MSG, "Interrupted");
 			throw new InterruptedException();
 		} finally {
 			LOG.debug(
-				LogUtil.MSG, "Interrupted join tasks: {}",
-				Arrays.toString(joinExecutor.shutdownNow().toArray())
+				LogUtil.MSG, "Interrupted await tasks: {}",
+				Arrays.toString(awaitExecutor.shutdownNow().toArray())
 			);
 		}
 	}

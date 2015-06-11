@@ -10,7 +10,7 @@ import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.io.OutputStream;
+import java.nio.channels.WritableByteChannel;
 import java.util.List;
 //
 /**
@@ -29,9 +29,9 @@ implements WSObjectMock {
 	public BasicWSObjectMock(final String id, final Long offset, final Long size) {
 		super(id, offset, size);
 	}
-	//////////////////////////////////
+	//
 	@Override
-	public final void append(final long augmentSize)
+	public final synchronized void append(final long augmentSize)
 	throws IllegalArgumentException {
 		if(augmentSize > 0) {
 			pendingAugmentSize = augmentSize;
@@ -47,7 +47,7 @@ implements WSObjectMock {
 	}
 	//
 	@Override
-	public final void updateRanges(final List<Long> ranges) {
+	public final synchronized void updateRanges(final List<Long> ranges) {
 		final int countRangesTotal = getRangeCount(size);
 		int startCellPos,
 			finishCellPos;
@@ -63,31 +63,29 @@ implements WSObjectMock {
 	}
 	//
 	@Override
-	public final void writeTo(final OutputStream out)
+	public final synchronized void write(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
-		synchronized (this) { // stream position protection
-			if(maskRangesPending.isEmpty()) {
-				super.writeTo(out);
-			} else {
-				for(int i = 0; i < countRangesTotal; i++) {
-					rangeOffset = getRangeOffset(i);
-					rangeSize = getRangeSize(i);
-					if(maskRangesPending.get(i)) { // range have been modified
-						updatedRange = new UniformData(
-							offset + rangeOffset, rangeSize, currLayerIndex.get() + 1,
-							UniformDataSource.DEFAULT
-						);
-						updatedRange.writeTo(out);
-					} else { // previous layer of updated ranges
-						updatedRange = new UniformData(
-							offset + rangeOffset, rangeSize, currLayerIndex.get(),
-							UniformDataSource.DEFAULT
-						);
-						updatedRange.writeTo(out);
-					}
+		if(maskRangesPending.isEmpty()) {
+			write(chanOut, 0, size);
+		} else {
+			for(int i = 0; i < countRangesTotal; i++) {
+				rangeOffset = getRangeOffset(i);
+				rangeSize = getRangeSize(i);
+				if(maskRangesPending.get(i)) { // range have been modified
+					updatedRange = new UniformData(
+						offset + rangeOffset, rangeSize, currLayerIndex + 1,
+						UniformDataSource.DEFAULT
+					);
+					updatedRange.write(chanOut);
+				} else { // previous layer of updated ranges
+					updatedRange = new UniformData(
+						offset + rangeOffset, rangeSize, currLayerIndex,
+						UniformDataSource.DEFAULT
+					);
+					updatedRange.write(chanOut);
 				}
 			}
 		}

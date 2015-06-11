@@ -56,7 +56,7 @@ implements DataSource {
 			DEFAULT = new UniformDataSource();
 			//LOG.info(Markers.MSG, "Default data source: {}", DEFAULT.toString());
 		} catch(final Exception e) {
-			LogUtil.failure(LOG, Level.ERROR, e, "Failed to create default data source");
+			LogUtil.exception(LOG, Level.ERROR, e, "Failed to create default data source");
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -195,7 +195,7 @@ implements DataSource {
 			}
 			LOG.debug(LogUtil.MSG, "New layer #{}", byteLayers.size() - 1);
 		}
-		return byteLayers.get(layerIndex).asReadOnlyBuffer();
+		return byteLayers.get(layerIndex);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }
