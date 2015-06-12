@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
@@ -31,6 +32,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
+import sun.misc.Signal;
+import sun.misc.SignalHandler;
 //
 import javax.management.MBeanServer;
 import java.io.IOException;
@@ -81,6 +84,12 @@ implements LoadExecutor<T> {
 	//
 	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
 	private final BlockingQueue<IOTask<T>> ioTaskSpentQueue;
+	//  Resume mongoose section
+	private volatile long lastTimeBeforeTermination = 0;
+	private volatile long elapsedTime = 0;
+	private volatile long reqTimeUpdateMilliSec = 1000;
+	//  Resume signal handler constant
+	private static final String SIGNAL_CONT = "CONT";
 	//
 	private final Thread
 		metricsDaemon = new Thread() {
@@ -120,6 +129,22 @@ implements LoadExecutor<T> {
 				}
 			}
 		};
+		/*updateLastTimeDaemon = new Thread() {
+			//
+			{ setDaemon(true); }
+			//
+			@Override
+			public final void run() {
+				try {
+					while (!isClosed.get()) {
+						lastTimeBeforeTermination = System.nanoTime();
+						Thread.sleep(reqTimeUpdateMilliSec);
+					}
+				} catch (final InterruptedException e) {
+					LOG.debug(LogUtil.MSG, "{}: interrupted", getName());
+				}
+			}
+		};*/
 	// STATES section
 	protected final AtomicLong
 		durTasksSum = new AtomicLong(0),
@@ -130,6 +155,10 @@ implements LoadExecutor<T> {
 	private final Lock lock = new ReentrantLock();
 	private final Condition condProducerDone = lock.newCondition();
 	//
+	/*private final Lock signalLock = new ReentrantLock();
+	private final Condition signalHandlerDone = signalLock.newCondition();
+	private final AtomicBoolean isSignalHandlerDone = new AtomicBoolean(false);*/
+	//
 	protected LoadExecutorBase(
 		final Class<T> dataCls,
 		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
@@ -137,6 +166,9 @@ implements LoadExecutor<T> {
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
 		super(dataCls, runTimeConfig, maxCount);
+		//
+		/*reqTimeUpdateMilliSec = (long) (0.01 * TimeUnit.MILLISECONDS.convert(runTimeConfig.getLoadMetricsPeriodSec(),
+			TimeUnit.SECONDS));*/
 		//
 		loadNum = LAST_INSTANCE_NUM.getAndIncrement();
 		storageNodeCount = addrs.length;
@@ -291,14 +323,19 @@ implements LoadExecutor<T> {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			LOG.debug(LogUtil.MSG, "Starting {}", getName());
 			// init metrics
+			final Clock userClock = getMetricsClock();
+			//
 			counterSubm = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_SUBM));
 			counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
 			counterReqFail = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_FAIL));
-			throughPut = metrics.meter(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_TP));
-			reqBytes = metrics.meter(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW));
+			throughPut = metrics.register(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_TP),
+				new Meter(userClock));
+			reqBytes = metrics.register(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW),
+				new Meter(userClock));
 			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
 			super.start();
+			//updateLastTimeDaemon.start();
 			ioTaskReleaseDaemon.setName("ioTaskReleaseDaemon<" + getName() + ">");
 			ioTaskReleaseDaemon.start();
 			if(producer == null) {
@@ -317,10 +354,40 @@ implements LoadExecutor<T> {
 			metricsDaemon.setName(getName());
 			metricsDaemon.start();
 			//
+			handleContSignal();
 			LOG.debug(LogUtil.MSG, "Started \"{}\"", getName());
 		} else {
 			LOG.warn(LogUtil.ERR, "Second start attempt - skipped");
 		}
+	}
+	//
+	private Clock getMetricsClock() {
+		return new Clock() {
+			private final long tickInterval = TimeUnit.SECONDS.toNanos(1);
+			//
+			@Override
+			public long getTick() {
+				final long currTime = System.nanoTime();
+				if (lastTimeBeforeTermination > 0) {
+					if (currTime - lastTimeBeforeTermination > tickInterval) {
+						elapsedTime = (currTime - lastTimeBeforeTermination) + elapsedTime;
+						lastTimeBeforeTermination = currTime;
+						return currTime - elapsedTime;
+					}
+				}
+				lastTimeBeforeTermination = currTime;
+				return currTime - elapsedTime;
+			}
+		};
+	}
+	//
+	private void handleContSignal() {
+		/*Signal.handle(new Signal(SIGNAL_CONT), new SignalHandler() {
+			@Override
+			public void handle(Signal sig) {
+				elapsedTime = (System.nanoTime() - lastTimeBeforeTermination) + elapsedTime;
+			}
+		});*/
 	}
 	//
 	@Override
