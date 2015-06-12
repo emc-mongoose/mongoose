@@ -38,7 +38,7 @@ public final class RandomFileReaderTest {
 
     @After
     public final void after()
-       throws Exception {
+	throws Exception {
     }
 
     @Test

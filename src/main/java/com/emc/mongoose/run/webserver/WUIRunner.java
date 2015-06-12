@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 /**
  * Created by gusakk on 02/10/14.
  */
-public class RunJettyTask
+public class WUIRunner
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -34,7 +34,7 @@ implements Runnable {
 			.resolve("web.xml").toString();
     }
 	//
-    public RunJettyTask(RunTimeConfig runTimeConfig) {
+    public WUIRunner(RunTimeConfig runTimeConfig) {
         this.runTimeConfig = runTimeConfig;
     }
 	//

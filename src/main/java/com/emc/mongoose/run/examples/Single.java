@@ -84,7 +84,7 @@ implements Runnable {
 			final Map<String, String> properties = HumanFriendly.parseCli(args);
 			if(!properties.isEmpty()) {
 				LOG.debug(Markers.MSG, "Overriding properties {}", properties);
-				RunTimeConfig.getContext().overrideSystemProperties(properties);
+				runTimeConfig.overrideSystemProperties(properties);
 			}
 			//
 			LOG.info(Markers.MSG, RunTimeConfig.getContext().toString());
