@@ -8,7 +8,6 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -37,8 +36,6 @@ public final class WSRequestConfigImpl<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
-	private final static String KEY_SUBTENANT = "api.type.atmos.subtenant";
 	//
 	public final static String
 		PREFIX_URI ="/rest/", API_TYPE_OBJ = "objects", API_TYPE_FS = "namespace";
@@ -180,9 +177,13 @@ extends WSRequestConfigBase<T> {
 		super.setProperties(runTimeConfig);
 		//
 		try {
-			setSubTenant(new WSSubTenantImpl<>(this, runTimeConfig.getString(KEY_SUBTENANT)));
+			setSubTenant(
+				new WSSubTenantImpl<>(
+					this, runTimeConfig.getString(RunTimeConfig.KEY_ATMOS_SUBTENANT)
+				)
+			);
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_SUBTENANT);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_ATMOS_SUBTENANT);
 		}
 		//
 		if(runTimeConfig.getStorageFileAccessEnabled()) {
@@ -395,7 +396,7 @@ extends WSRequestConfigBase<T> {
 			subTenant.create(storageAddrs[0]);
 		}
 		/*re*/setSubTenant(subTenant);
-		runTimeConfig.set(KEY_SUBTENANT, subTenant.getValue());
+		runTimeConfig.set(RunTimeConfig.KEY_ATMOS_SUBTENANT, subTenant.getValue());
 	}
 	//
 	@Override

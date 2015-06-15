@@ -110,13 +110,10 @@ implements WSRequestConfig<T> {
 		return newInstanceFor(RunTimeConfig.getContext().getApiName());
 	}
 	//
-	private final static String
-		FMT_CLS_PATH_ADAPTER_IMPL = "com.emc.mongoose.storage.adapter.%s.WSRequestConfigImpl";
-	//
 	@SuppressWarnings("unchecked")
 	public static WSRequestConfigBase newInstanceFor(final String api) {
 		WSRequestConfigBase reqConf = null;
-		final String apiImplClsFQN = String.format(FMT_CLS_PATH_ADAPTER_IMPL, api.toLowerCase());
+		final String apiImplClsFQN = PACKAGE_IMPL_BASE + "." + api.toLowerCase() + "." + ADAPTER_CLS;
 		try {
 			final Class apiImplCls = Class.forName(apiImplClsFQN);
 			final Constructor<WSRequestConfigBase>

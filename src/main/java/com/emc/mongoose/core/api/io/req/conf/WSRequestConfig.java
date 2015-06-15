@@ -35,10 +35,11 @@ extends ObjectRequestConfig<T> {
 		VALUE_KEEP_ALIVE = "keep-alive",
 		MSG_TMPL_NOT_SPECIFIED = "Required property \"{}\" is not specifed",
 		MSG_NO_DATA_ITEM = "Data item is not specified",
-		MSG_NO_REQ = "No request specified to apply to";
+		MSG_NO_REQ = "No request specified to apply to",
 		//
-	String[]
-		HEADERS_EMC = {
+		ADAPTER_CLS = "WSRequestConfigImpl",
+		//
+		HEADERS_EMC[] = {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_FS_ACCESS, /*KEY_EMC_NS, */KEY_EMC_SIG, KEY_EMC_UID
 		};
 	//

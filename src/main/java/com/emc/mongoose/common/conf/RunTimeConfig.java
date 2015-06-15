@@ -58,6 +58,7 @@ implements Externalizable {
 		KEY_DATA_RING_SIZE = "data.buffer.ring.size",
 		KEY_DATA_SRC_FPATH = "data.src.fpath",
 		//
+		KEY_LOAD_SERVERS = "load.servers",
 		KEY_LOAD_THREADS = "load.threads",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
@@ -90,6 +91,10 @@ implements Externalizable {
 		//  Rampup
 		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
 		KEY_SCENARIO_RAMPUP_THREAD_COUNTS = "scenario.type.rampup.threadCounts",
+		//
+		KEY_ATMOS_SUBTENANT = "api.type.atmos.subtenant",
+		KEY_SWIFT_AUTH_TOKEN = "api.type.swift.authToken",
+		KEY_SWIFT_CONTAINER = "api.type.swift.container",
 		//  For ui property tree
 		KEY_CHILDREN_PROPS = "children",
 		//
@@ -385,7 +390,7 @@ implements Externalizable {
 	}
 	//
 	public final String[] getLoadServers() {
-		return getStringArray("load.servers");
+		return getStringArray(KEY_LOAD_SERVERS);
 	}
 	//
 	public final String getDataSrcFPath() {

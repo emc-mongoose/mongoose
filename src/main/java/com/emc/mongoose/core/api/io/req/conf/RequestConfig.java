@@ -17,7 +17,9 @@ public interface RequestConfig<T extends DataItem>
 extends Externalizable, Cloneable, Closeable {
 	//
 	long serialVersionUID = 42L;
-	String HOST_PORT_SEP = ":";
+	String
+		HOST_PORT_SEP = ":",
+		PACKAGE_IMPL_BASE = "com.emc.mongoose.storage.adapter";
 	//
 	RequestConfig<T> clone()
 	throws CloneNotSupportedException;
