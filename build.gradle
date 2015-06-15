@@ -804,20 +804,6 @@ task examplesJar(type: Jar) {
 }
 
 task testsJar(type: Jar) {
-	dependsOn commonJar
-	dependsOn coreApiJar
-	dependsOn coreImplJar
-	dependsOn storageAdapterAtmosJar
-	dependsOn storageAdapterS3Jar
-	dependsOn storageAdapterSwiftJar
-	dependsOn serverApiJar
-	dependsOn serverImplJar
-	dependsOn webserverJar
-	dependsOn clientJar
-	dependsOn scenarioJar
-	dependsOn storageMockJar
-	dependsOn webuiJar
-	dependsOn cliJar
 
 	archiveName "${baseName}-tests.${extension}"
 
@@ -828,25 +814,6 @@ task testsJar(type: Jar) {
 		from sharedManifest
 		attributes(
 			'Implementation-Title': rootProject.name + "-tests",
-			'Class-Path': [
-				commonJar.outputs.files.collect {it.name}.join(' '),
-				coreApiJar.outputs.files.collect {it.name}.join(' '),
-				coreImplJar.outputs.files.collect {it.name}.join(' '),
-				storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
-				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
-				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
-				serverApiJar.outputs.files.collect {it.name}.join(' '),
-				serverImplJar.outputs.files.collect {it.name}.join(' '),
-				webserverJar.outputs.files.collect {it.name}.join(' '),
-				clientJar.outputs.files.collect {it.name}.join(' '),
-				scenarioJar.outputs.files.collect {it.name}.join(' '),
-				storageMockJar.outputs.files.collect {it.name}.join(' '),
-				webuiJar.outputs.files.collect {it.name}.join(' '),
-				cliJar.outputs.files.collect {it.name}.join(' '),
-				configurations.testRuntime.collect {
-					libsDirName + File.separator + it.getName()
-				}.join(' '),
-			].join(' ')
 		)
 	}
 }
