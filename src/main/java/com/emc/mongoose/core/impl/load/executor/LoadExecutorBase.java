@@ -24,6 +24,7 @@ import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
+import com.emc.mongoose.core.impl.load.model.PersistentAccumulatorProducer;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 //
 import org.apache.commons.lang.StringUtils;
@@ -68,6 +69,7 @@ implements LoadExecutor<T> {
 	//
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
+	protected final PersistentAccumulatorProducer<T> itemsBuff;
 	//
 	private final long maxCount;
 	private final int totalConnCount;
@@ -179,6 +181,8 @@ implements LoadExecutor<T> {
 		ioTaskSpentQueue = new ArrayBlockingQueue<>(maxQueueSize);
 		// create and configure the connection manager
 		dataSrc = reqConfig.getDataSource();
+		//
+		itemsBuff = new PersistentAccumulatorProducer<>(dataCls, runTimeConfig, this.maxCount);
 		//
 		if(listFile != null && listFile.length() > 0 && Files.isReadable(Paths.get(listFile))) {
 			try {
@@ -299,11 +303,19 @@ implements LoadExecutor<T> {
 			reqBytes = metrics.meter(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW));
 			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
-			super.start();
 			ioTaskReleaseDaemon.setName("ioTaskReleaseDaemon<" + getName() + ">");
 			ioTaskReleaseDaemon.start();
+			//
+			super.start(); // async consumer
+			//
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
+				try {
+					itemsBuff.close();
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
+				}
+				itemsBuff.start();
 			} else {
 				//
 				try {
@@ -392,16 +404,20 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	/*@Override
+	@Override
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
 		try {
-			super.submit(dataItem);
+			if(isStarted.get()) {
+				super.submit(dataItem);
+			} else { // accumulate until started
+				itemsBuff.submit(dataItem);
+			}
 		} catch(final RejectedExecutionException e) {
 			counterRej.inc();
 			throw e;
 		}
-	}*/
+	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final void submitSync(final T dataItem)
@@ -558,6 +574,7 @@ implements LoadExecutor<T> {
 					Markers.MSG, "Stopped the producer \"{}\" for \"{}\"", producer, getName()
 				);
 			}
+			itemsBuff.interrupt();
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to stop the producer: {}", producer);
 		} finally {
@@ -655,6 +672,10 @@ implements LoadExecutor<T> {
 						getName(), counterSubm.getCount() - counterResults.get()
 					);
 				}
+				// 1. are we in a paused state?
+				// 2. if yes, calculate the time spent in paused state since await invoked
+				// 3. wait for resume
+				// 4. invoke await here again using time difference
 			} finally {
 				lock.unlock();
 			}

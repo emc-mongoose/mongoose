@@ -75,7 +75,7 @@ implements Storage<T> {
 		super(runTimeConfig.getStorageMockCapacity());
 		this.runTimeConfig = runTimeConfig;
 		createConsumer = new AsyncConsumerBase<T>(
-			(Class<T>) BasicWSObjectMock.class, runTimeConfig, Long.MAX_VALUE, true
+			(Class<T>) BasicWSObjectMock.class, runTimeConfig, Long.MAX_VALUE
 		) {
 			{ setDaemon(true); setName("createQueueWorker"); start(); }
 			@Override
@@ -85,7 +85,7 @@ implements Storage<T> {
 			}
 		};
 		deleteConsumer = new AsyncConsumerBase<T>(
-			(Class<T>) BasicWSObjectMock.class, runTimeConfig, Long.MAX_VALUE, true
+			(Class<T>) BasicWSObjectMock.class, runTimeConfig, Long.MAX_VALUE
 		) {
 			{ setDaemon(true); setName("deleteQueueWorker"); start(); }
 			@Override

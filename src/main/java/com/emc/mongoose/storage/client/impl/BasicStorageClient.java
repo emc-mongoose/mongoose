@@ -22,6 +22,8 @@ public class BasicStorageClient<T extends DataItem>
 implements StorageClient<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
+	protected final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public synchronized BasicStorageClient<T> api(final String api)
@@ -34,7 +36,6 @@ implements StorageClient<T> {
 				"Storage API implementation was not found for \"" + api + "\""
 			);
 		}
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.setProperty(RunTimeConfig.KEY_API_NAME, api);
 		return this;
 	}
@@ -45,7 +46,6 @@ implements StorageClient<T> {
 		if(nodeAddrs == null || nodeAddrs.length == 0) {
 			throw new IllegalArgumentException("Empty storage node address list specified");
 		}
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.setProperty(RunTimeConfig.KEY_STORAGE_ADDRS, nodeAddrs);
 		return this;
 	}
@@ -56,7 +56,6 @@ implements StorageClient<T> {
 		if(loadServers == null || loadServers.length == 0) {
 			throw new IllegalArgumentException("Empty storage node address list specified");
 		}
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.setProperty(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
 		rtConfig.setProperty(RunTimeConfig.KEY_LOAD_SERVERS, loadServers);
 		return this;
@@ -70,7 +69,6 @@ implements StorageClient<T> {
 		if(secret == null || secret.length() == 0) {
 			throw new IllegalArgumentException("Empty secret specified");
 		}
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.setProperty(RunTimeConfig.KEY_AUTH_ID, id);
 		rtConfig.setProperty(RunTimeConfig.KEY_AUTH_SECRET, secret);
 		return this;
@@ -78,35 +76,30 @@ implements StorageClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public synchronized BasicStorageClient<T> bucket(final String value) {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.setProperty(RunTimeConfig.KEY_API_S3_BUCKET, value);
 		return this;
 	}
 	//
 	@Override
 	public synchronized BasicStorageClient<T> container(final String value) {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.setProperty(RunTimeConfig.KEY_SWIFT_CONTAINER, value);
 		return this;
 	}
 	//
 	@Override
 	public synchronized BasicStorageClient<T> subtenant(final String value) {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.setProperty(RunTimeConfig.KEY_ATMOS_SUBTENANT, value);
 		return this;
 	}
 	//
 	@Override
 	public synchronized BasicStorageClient<T> authToken(final String value) {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.setProperty(RunTimeConfig.KEY_SWIFT_AUTH_TOKEN, value);
 		return this;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public synchronized BasicStorageClient<T> limitCount(final long count) {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.setProperty(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, count);
 		return this;
 	}
@@ -115,7 +108,6 @@ implements StorageClient<T> {
 	public synchronized BasicStorageClient<T> limitTime(
 		final long timeOut, final TimeUnit timeUnit
 	) {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.setProperty(
 			RunTimeConfig.KEY_LOAD_LIMIT_TIME, timeOut + timeUnit.name().toLowerCase().charAt(0)
 		);
@@ -124,7 +116,6 @@ implements StorageClient<T> {
 	//
 	@Override
 	public synchronized BasicStorageClient<T> limitRate(final float rate) {
-		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.setProperty(RunTimeConfig.KEY_LOAD_LIMIT_RATE, rate);
 		return this;
 	}
