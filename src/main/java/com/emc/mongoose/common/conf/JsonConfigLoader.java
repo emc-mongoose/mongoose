@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -41,7 +42,10 @@ public class JsonConfigLoader {
 	public static void loadPropsFromJsonCfgFile(final Path propsDir, final RunTimeConfig tgtConfig) {
 		DEFAULT_CFG = tgtConfig;
 		//
-		final File cfgFile = propsDir.toFile();
+		File cfgFile =new File(RunTimeConfig.CONF_MONGOOSE);
+		if(Files.exists(propsDir) && !Files.isDirectory(propsDir)){
+			cfgFile = propsDir.toFile();
+		}
 		final ObjectMapper jsonMapper = new ObjectMapper();
 		//
 		try {

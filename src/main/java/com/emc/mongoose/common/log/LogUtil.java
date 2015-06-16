@@ -14,6 +14,7 @@ import org.apache.logging.log4j.core.config.Configurator;
 //
 import java.io.File;
 import java.io.PrintStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -99,9 +100,10 @@ public final class LogUtil {
 					RunTimeConfig.DIR_ROOT, Constants.DIR_CONF, FNAME_LOG_CONF
 				);
 				if(!Files.exists(logConfPath)){
-					ClassLoader classloader = Thread.currentThread().getContextClassLoader();
-					if (classloader.getResource("") != null) {
-						logConfPath = Paths.get(classloader.getResource("").getPath().toString(), Constants.DIR_CONF, FNAME_LOG_CONF);
+					ClassLoader classloader = LogUtil.class.getClassLoader();
+					final URL urlBundleLogConf = classloader.getResource("logging.json");
+					if (urlBundleLogConf != null) {
+						logConfPath = Paths.get(urlBundleLogConf.getPath().toString());
 					}
 				}
 				//

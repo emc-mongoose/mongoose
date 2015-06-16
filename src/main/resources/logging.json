@@ -2,7 +2,6 @@
 	"configuration": {
 		"status": "off",
 		"name": "mongoose",
-		"monitorInterval": "1000",
 		"shutdownHook": "disable",
 		"appenders": {
 			"appender" : [
@@ -33,51 +32,57 @@
 							}
 						]
 					}
-				}
+				}, {
+				"name": "async",
+				"type": "Async",
+				"blocking": "false",
+				"bufferSize": "200000",
+				"AppenderRef": { "ref": "stdout" }
+			  }
 			]
 		},
 		"loggers": {
 			"root": {
-				"level": "debug",
+				"level": "info",
 				"additivity": "false",
 				"AppenderRef": {
-					"ref": "stdout"
+					"ref": "async"
 				}
 			},
 			"logger": [
 				{
 					"name": "com.emc.mongoose.client",
-					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.common",
-					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.core",
-					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.run",
-					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.server",
-					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.adapter.atmos",
-					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.adapter.s3",
-					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.adapter.swift",
-					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.mock",
-					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.webui",
-					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "org.python.core.PyReflectedFunction",
-					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}
 			]
 		}
