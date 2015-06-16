@@ -394,10 +394,6 @@ dependencies {
 		library.junit,
 		library.junit_mockito,
 	)
-
-	testRuntime (
-		library.junit,
-	)
 }
 
 configurations {
@@ -789,6 +785,7 @@ task examplesJar(type: Jar) {
 		from sharedManifest
 		attributes(
 			'Implementation-Title': rootProject.name + "-examples",
+			'Main-Class': "com.emc.mongoose.run.examples.Single",
 			'Class-Path': [
 				clientJar.outputs.files.collect {it.name}.join(' '),
 				commonJar.outputs.files.collect {it.name}.join(' '),
@@ -826,10 +823,8 @@ task testsJar(type: Jar) {
 	dependsOn examplesJar
 
 	archiveName "${baseName}-tests.${extension}"
-
 	classifier = 'tests'
 	from sourceSets.test.output
-
 	manifest {
 		from sharedManifest
 		attributes(
@@ -928,7 +923,6 @@ task dist(type: Tar) {
 
 idea {
 	module {
-
 		name = rootProject.name
 		jdkName = sourceCompatibility
 		//scopes.PROVIDED.plus += [ configurations.compile ]
@@ -943,8 +937,6 @@ idea {
 			provider.node.component.find { it.@name == 'VcsDirectoryMappings' }.mapping.@vcs = 'Git'
 		}
 	}
-
-
 }
 
 test {
