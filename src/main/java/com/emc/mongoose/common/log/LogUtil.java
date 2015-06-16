@@ -13,7 +13,6 @@ import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
 //
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
