@@ -13,7 +13,9 @@ import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
 //
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
@@ -94,9 +96,15 @@ public final class LogUtil {
 					);
 				}
 				// determine the logger configuration file path
-				final Path logConfPath = Paths.get(
+				Path logConfPath = Paths.get(
 					RunTimeConfig.DIR_ROOT, Constants.DIR_CONF, FNAME_LOG_CONF
 				);
+				if(!Files.exists(logConfPath)){
+					ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+					if (classloader.getResource("") != null) {
+						logConfPath = Paths.get(classloader.getResource("").getPath().toString(), Constants.DIR_CONF, FNAME_LOG_CONF);
+					}
+				}
 				//
 				try {
 					LOG_CTX.set(Configurator.initialize("mongoose", logConfPath.toUri().toString()));

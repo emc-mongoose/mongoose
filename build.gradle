@@ -42,7 +42,8 @@ sourceSets {
 		}
 		resources {
 			srcDir(['src', 'main', 'resources'].join(File.separator))
-			include 'allpermissions.policy'
+			include '**'
+			exclude 'scripts'
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -392,6 +393,10 @@ dependencies {
 	testCompile (
 		library.junit,
 		library.junit_mockito,
+	)
+
+	testRuntime (
+		library.junit,
 	)
 }
 
@@ -804,6 +809,21 @@ task examplesJar(type: Jar) {
 }
 
 task testsJar(type: Jar) {
+	dependsOn commonJar
+	dependsOn coreApiJar
+	dependsOn coreImplJar
+	dependsOn storageAdapterAtmosJar
+	dependsOn storageAdapterS3Jar
+	dependsOn storageAdapterSwiftJar
+	dependsOn serverApiJar
+	dependsOn serverImplJar
+	dependsOn webserverJar
+	dependsOn clientJar
+	dependsOn scenarioJar
+	dependsOn storageMockJar
+	dependsOn webuiJar
+	dependsOn cliJar
+	dependsOn examplesJar
 
 	archiveName "${baseName}-tests.${extension}"
 
@@ -814,6 +834,26 @@ task testsJar(type: Jar) {
 		from sharedManifest
 		attributes(
 			'Implementation-Title': rootProject.name + "-tests",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				serverImplJar.outputs.files.collect {it.name}.join(' '),
+				webserverJar.outputs.files.collect {it.name}.join(' '),
+				clientJar.outputs.files.collect {it.name}.join(' '),
+				scenarioJar.outputs.files.collect {it.name}.join(' '),
+				storageMockJar.outputs.files.collect {it.name}.join(' '),
+				webuiJar.outputs.files.collect {it.name}.join(' '),
+				cliJar.outputs.files.collect {it.name}.join(' '),
+				examplesJar.outputs.files.collect {it.name}.join(' '),
+				configurations.testRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
 		)
 	}
 }
@@ -891,13 +931,20 @@ idea {
 
 		name = rootProject.name
 		jdkName = sourceCompatibility
-		scopes.PROVIDED.plus += [ configurations.compile ]
+		//scopes.PROVIDED.plus += [ configurations.compile ]
+		scopes = [
+			COMPILE: [plus: [configurations.compile], minus: []],
+			RUNTIME: [plus: [configurations.runtime], minus: [configurations.compile]],
+			TEST: [plus: [configurations.testRuntime], minus: [configurations.runtime]]
+		]
 	}
 	project.ipr {
 		withXml { provider ->
 			provider.node.component.find { it.@name == 'VcsDirectoryMappings' }.mapping.@vcs = 'Git'
 		}
 	}
+
+
 }
 
 test {

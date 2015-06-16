@@ -1,0 +1,85 @@
+{
+	"configuration": {
+		"status": "off",
+		"name": "mongoose",
+		"monitorInterval": "1000",
+		"shutdownHook": "disable",
+		"appenders": {
+			"appender" : [
+				{
+					"name": "stdout",
+					"type": "Console",
+					"PatternLayout": {
+						"alwaysWriteExceptions" : false,
+						"pattern": "%highlight{%d{ISO8601}{GMT+0} %p{length=1} %-25.25c{1} %-45.45t %m%n}"
+					},
+					"Filters": {
+						"Filter" : [
+							{
+								"type": "MarkerFilter",
+								"marker": "dataList",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "MarkerFilter",
+								"marker": "perfTrace",
+								"onMatch": "DENY",
+								"onMismatch": "NEUTRAL"
+							}, {
+								"type": "ThresholdFilter",
+								"level": "INFO",
+								"onMatch": "ACCEPT",
+								"onMismatch": "DENY"
+							}
+						]
+					}
+				}
+			]
+		},
+		"loggers": {
+			"root": {
+				"level": "debug",
+				"additivity": "false",
+				"AppenderRef": {
+					"ref": "stdout"
+				}
+			},
+			"logger": [
+				{
+					"name": "com.emc.mongoose.client",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+				}, {
+					"name": "com.emc.mongoose.common",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+				}, {
+					"name": "com.emc.mongoose.core",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+				}, {
+					"name": "com.emc.mongoose.run",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+				}, {
+					"name": "com.emc.mongoose.server",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+				}, {
+					"name": "com.emc.mongoose.storage.adapter.atmos",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+				}, {
+					"name": "com.emc.mongoose.storage.adapter.s3",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+				}, {
+					"name": "com.emc.mongoose.storage.adapter.swift",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+				}, {
+					"name": "com.emc.mongoose.storage.mock",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+				}, {
+					"name": "com.emc.mongoose.webui",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+				}, {
+					"name": "org.python.core.PyReflectedFunction",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "stdout" }
+				}
+			]
+		}
+	}
+}
