@@ -173,9 +173,9 @@ sourceSets {
 		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
 	}
-	examples {
+	util {
 		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'examples'].join(File.separator))
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'util'].join(File.separator))
 			include '**'
 		}
 		compileClasspath += sourceSets.common.output
@@ -380,11 +380,11 @@ dependencies {
 		library.runtime_logging,
 	)
 
-	examplesCompile (
+	utilCompile (
 		library.log4j_api_plus_core,
 		library.commons_configuration,
 	)
-	examplesRuntime (
+	utilRuntime (
 		library.runtime_logging,
 		library.commons_cli,
 	)
@@ -411,7 +411,7 @@ configurations {
 		storageMockCompile,
 		webuiCompile,
 		cliCompile,
-		examplesCompile,
+		utilCompile,
 	)
 	runtime.extendsFrom(
 		commonRuntime,
@@ -428,7 +428,7 @@ configurations {
 		storageMockRuntime,
 		webuiRuntime,
 		cliRuntime,
-		examplesRuntime,
+		utilRuntime,
 	)
 	testCompile.extendsFrom(
 		compile,
@@ -774,17 +774,17 @@ task cliJar(type: Jar) {
 	}
 }
 
-task examplesJar(type: Jar) {
+task utilJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, clientJar
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
 	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
-	archiveName "${baseName}-examples.${extension}"
-	from sourceSets.examples.output
+	archiveName "${baseName}-util.${extension}"
+	from sourceSets.util.output
 	manifest {
 		from sharedManifest
 		attributes(
-			'Implementation-Title': rootProject.name + "-examples",
-			'Main-Class': "com.emc.mongoose.run.examples.Single",
+			'Implementation-Title': rootProject.name + "-util",
+			'Main-Class': "Single",
 			'Class-Path': [
 				clientJar.outputs.files.collect {it.name}.join(' '),
 				commonJar.outputs.files.collect {it.name}.join(' '),
@@ -796,7 +796,7 @@ task examplesJar(type: Jar) {
 				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
 				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
 				cliJar.outputs.files.collect {it.name}.join(' '),
-				configurations.examplesRuntime.collect {
+				configurations.utilRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
 			].join(' ')
@@ -820,7 +820,7 @@ task dist(type: Tar) {
 	dependsOn storageMockJar
 	dependsOn webuiJar
 	dependsOn cliJar
-	dependsOn examplesJar
+	dependsOn utilJar
 
 	baseName = project.name
 	compression = Compression.GZIP
@@ -859,7 +859,7 @@ task dist(type: Tar) {
 		from storageMockJar.outputs.files
 		from webuiJar.outputs.files
 		from cliJar.outputs.files
-		from examplesJar.outputs.files
+		from utilJar.outputs.files
 		into('scripts') {
 			from { ["src", "main", "resources", "scripts"].join(File.separator) }
 		}

@@ -1,4 +1,4 @@
-package com.emc.mongoose.run.examples.shared;
+package com.emc.mongoose.util.scenario.shared;
 //
 import com.emc.mongoose.client.impl.load.builder.BasicWSLoadBuilderClient;
 //
