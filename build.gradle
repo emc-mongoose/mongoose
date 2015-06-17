@@ -199,12 +199,11 @@ sourceSets {
 	main {
 		java {
 			srcDir(['src', 'main'].join(File.separator))
-			include 'java'
+			include '**'
 		}
 		resources {
 			srcDir(['src', 'main'].join(File.separator))
-			include 'resources'
-			include 'webapp'
+			include '**'
 		}
 	}
 }
@@ -951,5 +950,9 @@ test {
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
 }
+
+build.dependsOn commonJar, coreApiJar, coreImplJar, storageAdapterAtmosJar, storageAdapterS3Jar
+build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, scenarioJar
+build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, examplesJar, testsJar
 
 tasks.idea.dependsOn(cleanIdea)
