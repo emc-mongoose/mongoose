@@ -1174,7 +1174,7 @@ function charts(chartsArray) {
 						currentRunMetricsPeriodSec: 0
 					}
 				];
-				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds", "bandwidth[obj/s]", "#bw-" + runId.split(".").join("_"));
+				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
 						updateFunction(CHART_TYPES.BW, json);
