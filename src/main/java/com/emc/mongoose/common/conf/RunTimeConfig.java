@@ -147,19 +147,6 @@ implements Externalizable {
 		}
 	}
 	//
-	public final static String CONF_MONGOOSE;
-	//
-	static {
-		final ClassLoader cl = RunTimeConfig.class.getClassLoader();
-		final URL urlMongooseConf = cl.getResource("mongoose.json");
-		if(urlMongooseConf == null) {
-			System.err.println(
-				"Failed to load configuration parameters from mongoose.json"
-			);
-		}
-		CONF_MONGOOSE = urlMongooseConf.getPath().toString();
-	}
-	//
 	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
 	private final Map<String, Object> properties = new HashMap<>();

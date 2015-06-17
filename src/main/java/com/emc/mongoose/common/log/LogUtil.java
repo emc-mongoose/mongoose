@@ -13,11 +13,7 @@ import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
 //
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintStream;
-import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -105,6 +101,7 @@ public final class LogUtil {
 				Path logConfPath = Paths.get(
 					RunTimeConfig.DIR_ROOT, Constants.DIR_CONF, FNAME_LOG_CONF
 				);
+				//
 				try {
 					if(!Files.exists(logConfPath)){
 						final ClassLoader classloader = LogUtil.class.getClassLoader();

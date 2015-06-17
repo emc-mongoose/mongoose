@@ -205,7 +205,6 @@ sourceSets {
 			srcDir(['src', 'main'].join(File.separator))
 			include '**'
 		}
-
 	}
 }
 
@@ -396,7 +395,6 @@ dependencies {
 		library.junit,
 		library.junit_mockito,
 	)
-
 }
 
 configurations {

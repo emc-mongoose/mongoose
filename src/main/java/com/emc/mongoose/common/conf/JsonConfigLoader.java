@@ -14,8 +14,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,11 +42,11 @@ public class JsonConfigLoader {
 	public static void loadPropsFromJsonCfgFile(final Path propsDir, final RunTimeConfig tgtConfig) {
 		DEFAULT_CFG = tgtConfig;
 		//
-		final ObjectMapper jsonMapper = new ObjectMapper();
 		final File cfgFile = propsDir.toFile();
+		final ObjectMapper jsonMapper = new ObjectMapper();
 		//
 		try {
-			JsonNode rootNode = null;
+			JsonNode rootNode;
 			if(cfgFile.exists() && cfgFile.isFile()){
 				LOG.debug(Markers.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
 				rootNode = jsonMapper.readTree(cfgFile);
