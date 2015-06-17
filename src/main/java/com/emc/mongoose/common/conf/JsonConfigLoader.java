@@ -51,13 +51,13 @@ public class JsonConfigLoader {
 				LOG.debug(Markers.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
 				rootNode = jsonMapper.readTree(cfgFile);
 			} else {
-				final ClassLoader cl = RunTimeConfig.class.getClassLoader();
-				final InputStream bundlMongooseConf = cl.getResourceAsStream(RunTimeConfig.FNAME_CONF);
+				final ClassLoader cl = JsonConfigLoader.class.getClassLoader();
+				final InputStream bundleMongooseConf = cl.getResourceAsStream(RunTimeConfig.FNAME_CONF);
 				LOG.debug(
 					Markers.MSG, "Load system properties from json file \"{}\"",
 					cl.getResource(RunTimeConfig.FNAME_CONF)
 				);
-				rootNode = jsonMapper.readTree(bundlMongooseConf);
+				rootNode = jsonMapper.readTree(bundleMongooseConf);
 			}
 			walkJsonTree(rootNode);
 			tgtConfig.setMongooseKeys(mongooseKeys);

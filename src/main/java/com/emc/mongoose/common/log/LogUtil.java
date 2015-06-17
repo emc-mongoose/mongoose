@@ -45,9 +45,7 @@ public final class LogUtil {
 		KEY_THREAD_CTX_INHERIT = "isThreadContextMapInheritable",
 		VALUE_THREAD_CTX_INHERIT = Boolean.toString(true),
 		//
-		FNAME_LOG_CONF = "logging.json",
-		//
-		MONGOOSE = "mongoose";
+		FNAME_LOG_CONF = "logging.json";
 	//
 	public static final Lock HOOKS_LOCK = new ReentrantLock();
 	public static final Condition HOOKS_COND = HOOKS_LOCK.newCondition();
@@ -107,10 +105,18 @@ public final class LogUtil {
 						final ClassLoader classloader = LogUtil.class.getClassLoader();
 						final URL bundleLogConfURL = classloader.getResource(FNAME_LOG_CONF);
 						if (bundleLogConfURL != null) {
-							LOG_CTX.set(Configurator.initialize(MONGOOSE, classloader, bundleLogConfURL.toURI()));
+							LOG_CTX.set(
+								Configurator.initialize(RunTimeConfig.getContext().getRunName(),
+									classloader, bundleLogConfURL.toURI()
+								)
+							);
 						}
 					} else {
-						LOG_CTX.set(Configurator.initialize(MONGOOSE, logConfPath.toUri().toString()));
+						LOG_CTX.set(
+							Configurator.initialize(RunTimeConfig.getContext().getRunName(),
+								logConfPath.toUri().toString()
+							)
+						);
 					}
 					//
 					if(LOG_CTX.get() == null) {
