@@ -630,6 +630,8 @@ function charts(chartsArray) {
 		width = 1070 - margin.left - margin.right,
 		height = 460 - margin.top - margin.bottom;
 	//  Some constants
+	var threadNameRegExp = "/([\d]+)-([A-Za-z0-9]+)-([CreateRdDlUpAn]+)[\d]*-([\d]*)x([\d]*)x?([\d]*)/gi";
+	//
 	var SCENARIO = {
 		single: "single",
 		chain: "chain",
@@ -757,9 +759,7 @@ function charts(chartsArray) {
 		//  get some fields from runTimeConfig
 		var runMetricsPeriodSec = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec];
         //
-        if (json.threadName.indexOf("remote") > -1) {
-            json.threadName = json.threadName.substring(0, json.threadName.lastIndexOf("-"));
-        }
+		json.threadName = json.threadName.match(threadNameRegExp);
         //
 		var currentMetricsPeriodSec = 0;
 		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
@@ -1477,9 +1477,7 @@ function charts(chartsArray) {
                         saveChart(path, 1070, 460);
                     });
 				return function(chartType, json) {
-					if (json.threadName.indexOf("remote") > -1) {
-						json.threadName = json.threadName.substring(0, json.threadName.lastIndexOf("-"));
-					}
+					json.threadName = json.threadName.match(threadNameRegExp);
 					var loadType = json.threadName;
 					//
 					var splitIndex = 0;
