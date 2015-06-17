@@ -205,6 +205,7 @@ sourceSets {
 			srcDir(['src', 'main'].join(File.separator))
 			include '**'
 		}
+
 	}
 }
 
@@ -942,8 +943,8 @@ idea {
 }
 
 test {
-	//jvmArgs '-Dlog4j.configurationFile=' + new File("").getCanonicalPath() + "${File.separator}${confDirName}${File.separator}logging.json"
-	//jvmArgs '-Dlog4j.configurationFactory=org.apache.logging.log4j.core.config.json.JsonConfigurationFactory'
+	jvmArgs '-Dlog4j.configurationFile=' + new File("").getCanonicalPath() + "${File.separator}${confDirName}${File.separator}logging.json"
+	jvmArgs '-Dlog4j.configurationFactory=org.apache.logging.log4j.core.config.json.JsonConfigurationFactory'
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
 }

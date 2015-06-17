@@ -13,7 +13,11 @@ import org.apache.logging.log4j.core.async.AsyncLoggerContextSelector;
 import org.apache.logging.log4j.core.config.Configurator;
 //
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -45,7 +49,9 @@ public final class LogUtil {
 		KEY_THREAD_CTX_INHERIT = "isThreadContextMapInheritable",
 		VALUE_THREAD_CTX_INHERIT = Boolean.toString(true),
 		//
-		FNAME_LOG_CONF = "logging.json";
+		FNAME_LOG_CONF = "logging.json",
+		//
+		MONGOOSE = "mongoose";
 	//
 	public static final Lock HOOKS_LOCK = new ReentrantLock();
 	public static final Condition HOOKS_COND = HOOKS_LOCK.newCondition();
@@ -99,16 +105,17 @@ public final class LogUtil {
 				Path logConfPath = Paths.get(
 					RunTimeConfig.DIR_ROOT, Constants.DIR_CONF, FNAME_LOG_CONF
 				);
-				if(!Files.exists(logConfPath)){
-					ClassLoader classloader = LogUtil.class.getClassLoader();
-					final URL urlBundleLogConf = classloader.getResource("logging.json");
-					if (urlBundleLogConf != null) {
-						logConfPath = Paths.get(urlBundleLogConf.getPath().toString());
-					}
-				}
-				//
 				try {
-					LOG_CTX.set(Configurator.initialize("mongoose", logConfPath.toUri().toString()));
+					if(!Files.exists(logConfPath)){
+						final ClassLoader classloader = LogUtil.class.getClassLoader();
+						final URL bundleLogConfURL = classloader.getResource(FNAME_LOG_CONF);
+						if (bundleLogConfURL != null) {
+							LOG_CTX.set(Configurator.initialize(MONGOOSE, classloader, bundleLogConfURL.toURI()));
+						}
+					} else {
+						LOG_CTX.set(Configurator.initialize(MONGOOSE, logConfPath.toUri().toString()));
+					}
+					//
 					if(LOG_CTX.get() == null) {
 						System.err.println("Logging configuration failed");
 					} else {

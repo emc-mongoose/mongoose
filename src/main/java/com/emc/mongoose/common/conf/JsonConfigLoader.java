@@ -13,6 +13,8 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
@@ -42,15 +44,23 @@ public class JsonConfigLoader {
 	public static void loadPropsFromJsonCfgFile(final Path propsDir, final RunTimeConfig tgtConfig) {
 		DEFAULT_CFG = tgtConfig;
 		//
-		File cfgFile =new File(RunTimeConfig.CONF_MONGOOSE);
-		if(Files.exists(propsDir) && !Files.isDirectory(propsDir)){
-			cfgFile = propsDir.toFile();
-		}
 		final ObjectMapper jsonMapper = new ObjectMapper();
+		final File cfgFile = propsDir.toFile();
 		//
 		try {
-			LOG.debug(Markers.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
-			final JsonNode rootNode = jsonMapper.readTree(cfgFile);
+			JsonNode rootNode = null;
+			if(cfgFile.exists() && cfgFile.isFile()){
+				LOG.debug(Markers.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
+				rootNode = jsonMapper.readTree(cfgFile);
+			} else {
+				final ClassLoader cl = RunTimeConfig.class.getClassLoader();
+				final InputStream bundlMongooseConf = cl.getResourceAsStream(RunTimeConfig.FNAME_CONF);
+				LOG.debug(
+					Markers.MSG, "Load system properties from json file \"{}\"",
+					cl.getResource(RunTimeConfig.FNAME_CONF)
+				);
+				rootNode = jsonMapper.readTree(bundlMongooseConf);
+			}
 			walkJsonTree(rootNode);
 			tgtConfig.setMongooseKeys(mongooseKeys);
 			tgtConfig.putJsonProps(rootNode);
