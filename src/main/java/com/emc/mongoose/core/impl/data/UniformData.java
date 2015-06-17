@@ -163,12 +163,12 @@ implements DataItem {
 	}
 	//
 	@Override
-	public void write(final WritableByteChannel chanDst)
+	public long write(final WritableByteChannel chanDst)
 	throws IOException {
-		write(chanDst, 0, size);
+		return write(chanDst, 0, size);
 	}
 	//
-	protected final void write(
+	protected final long write(
 		final WritableByteChannel chanDst, final long relOffset, final long len
 	) throws IOException {
 		long writtenCount = 0;
@@ -183,6 +183,7 @@ implements DataItem {
 				writtenCount += n;
 			}
 		}
+		return writtenCount;
 	}
 	//
 	@Override

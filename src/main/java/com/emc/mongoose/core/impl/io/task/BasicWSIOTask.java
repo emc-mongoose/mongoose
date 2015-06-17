@@ -181,7 +181,20 @@ implements WSIOTask<T> {
 				} else if(dataItem.hasUpdatedRanges()) {
 					dataItem.writeUpdates(chanOut);
 				} else {
-					dataItem.write(chanOut);
+					final long
+						t = System.nanoTime(),
+						writtenCount = dataItem.write(chanOut),
+						rate = 1000000000 * writtenCount / (System.nanoTime() - t);
+					if(dataItem.getSize() != writtenCount) {
+						LOG.warn(
+							Markers.ERR, "{}: written {} bytes instead of {}",
+							this, writtenCount, dataItem.getSize()
+						);
+					} else {
+						LOG.info(
+							Markers.MSG, "{}: write rate {}/s", this, SizeUtil.formatSize(rate)
+						);
+					}
 				}
 			}
 		} catch(final ClosedChannelException e) { // probably a manual interruption
