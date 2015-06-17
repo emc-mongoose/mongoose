@@ -199,11 +199,12 @@ sourceSets {
 	main {
 		java {
 			srcDir(['src', 'main'].join(File.separator))
-			include '**'
+			include 'java'
 		}
 		resources {
 			srcDir(['src', 'main'].join(File.separator))
-			include '**'
+			include 'resources'
+			include 'webapp'
 		}
 	}
 }
@@ -926,6 +927,10 @@ idea {
 	module {
 		name = rootProject.name
 		jdkName = sourceCompatibility
+		//
+		inheritOutputDirs = false
+		outputDir = sourceSets.common.output.resourcesDir
+		testOutputDir = sourceSets.common.output.resourcesDir
 		//scopes.PROVIDED.plus += [ configurations.compile ]
 		scopes = [
 			COMPILE: [plus: [configurations.compile], minus: []],
