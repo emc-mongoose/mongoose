@@ -1,26 +1,26 @@
 package com.emc.mongoose.util.client.api;
 //
+import com.emc.mongoose.core.api.data.DataItem;
+//
 import java.io.Closeable;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 /**
  Created by kurila on 15.06.15.
  The client class supporting the following storage I/O methods: write, read, delete, update, append.
  Note that all the methods are blocking. Use a low-level load execution
  builders and jobs interface if a non-blocking approach is required.
- <p>Every method accepts an {@link java.io.ObjectOutputStream} stream as a 1st argument which is
- used as the source of the data items descriptors which should be processed
+ <p>Every method accepts an {@link com.emc.mongoose.util.client.api.DataItemInput} stream as a 1st
+ argument which is used as the source of the data items descriptors which should be processed
  (e.g. written/read/deleted/etc). The resulting behavior is different for write methods and the
  remaining methods. If the value of the 1st argument is null write methods will generate new data
  items and read/delete/update/append methods will try to get the data items list from the specified
  bucket/container. Otherwise (1st argument is not null) write methods will re-create (possibly
  overwrite) exactly the same data items (same ids, sizes and contents) as specified by the source
  stream content and the remaining methods will process them as expected (read/delete/etc).</p>
- <p>The 2nd argument is always destination items stream which is used to serialize the data items
+ <p>The 2nd argument is always a destination for the data items which is used to serialize them
  after being processed successfully.</p>
  <p>Also each method returns the count of the successfully processed data items.</p>
  */
-public interface StorageClient
+public interface StorageClient<T extends DataItem>
 extends Closeable {
 
 	/**
@@ -29,7 +29,7 @@ extends Closeable {
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(
-		final ObjectInputStream srcItemsStream, final ObjectOutputStream dstItemsStream,
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
 		final long size
 	) throws IllegalArgumentException;
 
@@ -43,7 +43,7 @@ extends Closeable {
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(
-		final ObjectInputStream srcItemsStream, final ObjectOutputStream dstItemsStream,
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
 		final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException;
 
@@ -52,18 +52,18 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and
 	 no bucket/container is specified
 	 */
-	long read(final ObjectInputStream srcItemsStream, final ObjectOutputStream dstItemsStream)
+	long read(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput )
 	throws IllegalStateException;
 
 	/**
-	 The same as {@link #read(ObjectInputStream, ObjectOutputStream)} but with ability to control
+	 The same as {@link #read(DataItemInput, DataItemOutput)} but with ability to control
 	 the content verification
 	 @param verifyContentFlag To verify the content integrity or to not verify.
 	 @throws java.lang.IllegalStateException if no data items list is available and
 	 no bucket/container is specified
 	 */
 	long read(
-		final ObjectInputStream srcItemsStream, final ObjectOutputStream dstItemsStream,
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
 		final boolean verifyContentFlag
 	) throws IllegalStateException;
 
@@ -72,7 +72,7 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and
 	 no bucket/container is specified
 	 */
-	long delete(final ObjectInputStream srcItemsStream, final ObjectOutputStream dstItemsStream)
+	long delete(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput )
 	throws IllegalStateException;
 
 	/**
@@ -80,11 +80,11 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and
 	 no bucket/container is specified
 	 */
-	long update(final ObjectInputStream srcItemsStream, final ObjectOutputStream dstItemsStream)
+	long update(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput )
 	throws IllegalStateException;
 
 	/**
-	 The same as {@link #update(java.io.ObjectInputStream, java.io.ObjectOutputStream)} but with
+	 The same as {@link #update(DataItemInput, DataItemOutput)} but with
 	 ability to specify the count of the updated ranges per request.
 	 @param countPerTime the count of the non-overlapping ranges to update per one request
 	 @throws java.lang.IllegalArgumentException if non-positive value is passed
@@ -92,7 +92,7 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long update(
-		final ObjectInputStream srcItemsStream, final ObjectOutputStream dstItemsStream,
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
 		final int countPerTime
 	) throws IllegalArgumentException, IllegalStateException;
 
@@ -101,11 +101,11 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and
 	 no bucket/container is specified
 	 */
-	long append(final ObjectInputStream srcItemsStream, final ObjectOutputStream dstItemsStream)
+	long append(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput )
 	throws IllegalStateException;
 
 	/**
-	 The same as {@link #append(java.io.ObjectInputStream, java.io.ObjectOutputStream)} but with
+	 The same as {@link #append(DataItemInput, DataItemOutput)} but with
 	 ability to customize the size of the augment to append.
 	 @param augmentSize the size of the data item augment to append
 	 @throws IllegalArgumentException if non-positive value is passed
@@ -113,7 +113,7 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long append(
-		final ObjectInputStream srcItemsStream, final ObjectOutputStream dstItemsStream,
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
 		final long augmentSize
 	) throws IllegalArgumentException, IllegalStateException;
 }

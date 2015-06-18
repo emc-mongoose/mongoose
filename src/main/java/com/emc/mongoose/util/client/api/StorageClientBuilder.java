@@ -1,10 +1,12 @@
 package com.emc.mongoose.util.client.api;
 //
+import com.emc.mongoose.core.api.data.DataItem;
+//
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 17.06.15.
  */
-public interface StorageClientBuilder<U extends StorageClient> {
+public interface StorageClientBuilder<T extends DataItem, U extends StorageClient<T>> {
 	/**
 	 Set the storage API to use.
 	 @param api The value should match to any child package name from the
@@ -12,7 +14,7 @@ public interface StorageClientBuilder<U extends StorageClient> {
 	 @return self.
 	 @throws IllegalArgumentException if there's no package having the specified name.
 	 */
-	StorageClientBuilder<U> setAPI(final String api)
+	StorageClientBuilder<T, U> setAPI(final String api)
 	throws IllegalArgumentException;
 
 	/**
@@ -23,7 +25,7 @@ public interface StorageClientBuilder<U extends StorageClient> {
 	 @return self.
 	 @throws IllegalArgumentException if null or empty
 	 */
-	StorageClientBuilder<U> setNodes(final String nodeAddrs[])
+	StorageClientBuilder<T, U> setNodes(final String nodeAddrs[])
 	throws IllegalArgumentException;
 
 	/**
@@ -32,7 +34,7 @@ public interface StorageClientBuilder<U extends StorageClient> {
 	 @return self.
 	 @throws IllegalArgumentException if null or empty
 	 */
-	StorageClientBuilder<U> setClientMode(final String loadServers[])
+	StorageClientBuilder<T, U> setClientMode(final String loadServers[])
 	throws IllegalArgumentException;
 
 	/**
@@ -42,7 +44,7 @@ public interface StorageClientBuilder<U extends StorageClient> {
 	 @return self.
 	 @throws IllegalArgumentException if either id or secret is null or empty
 	 */
-	StorageClientBuilder<U> setAuth(final String id, final String secret)
+	StorageClientBuilder<T, U> setAuth(final String id, final String secret)
 	throws IllegalArgumentException;
 
 	/**
@@ -50,28 +52,28 @@ public interface StorageClientBuilder<U extends StorageClient> {
 	 @param value The name of the bucket, for example "sanity-nh-bucket1"
 	 @return self.
 	 */
-	StorageClientBuilder<U> setS3Bucket(final String value);
+	StorageClientBuilder<T, U> setS3Bucket(final String value);
 
 	/**
 	 Set the target Swift container for writing to/reading from/etc.
 	 @param value The name of the container, for example "sanity-nh-container1"
 	 @return self.
 	 */
-	StorageClientBuilder<U> setSwiftContainer(final String value);
+	StorageClientBuilder<T, U> setSwiftContainer(final String value);
 
 	/**
 	 Set the Atmos-specific subtenant to use.
 	 @param value The subtenant string value.
 	 @return self.
 	 */
-	StorageClientBuilder<U> setAtmosSubtenant(final String value);
+	StorageClientBuilder<T, U> setAtmosSubtenant(final String value);
 
 	/**
 	 Set the Swift-specific authentication token to use.
 	 @param value The authentication token string value
 	 @return self.
 	 */
-	StorageClientBuilder<U> setSwiftAuthToken(final String value);
+	StorageClientBuilder<T, U> setSwiftAuthToken(final String value);
 
 	/**
 	 Limit the storage I/O methods execution by data items count.
@@ -79,7 +81,7 @@ public interface StorageClientBuilder<U extends StorageClient> {
 	 @return self.
 	 @throws java.lang.IllegalArgumentException if less than 0
 	 */
-	StorageClientBuilder<U> setLimitCount(final long count)
+	StorageClientBuilder<T, U> setLimitCount(final long count)
 	throws IllegalArgumentException;
 
 	/**
@@ -89,7 +91,7 @@ public interface StorageClientBuilder<U extends StorageClient> {
 	 @return self.
 	 @throws java.lang.IllegalArgumentException if time out is negative or time unit is null
 	 */
-	StorageClientBuilder<U> setLimitTime(final long timeOut, final TimeUnit timeUnit)
+	StorageClientBuilder<T, U> setLimitTime(final long timeOut, final TimeUnit timeUnit)
 	throws IllegalArgumentException;
 
 	/**
@@ -98,7 +100,7 @@ public interface StorageClientBuilder<U extends StorageClient> {
 	 @return self.
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
-	StorageClientBuilder<U> setLimitRate(final float rate)
+	StorageClientBuilder<T, U> setLimitRate(final float rate)
 	throws IllegalArgumentException;
 
 	/** Build the storage client instance */
