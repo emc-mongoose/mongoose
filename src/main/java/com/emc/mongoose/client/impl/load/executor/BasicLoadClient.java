@@ -7,8 +7,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
@@ -19,7 +19,7 @@ import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
-import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
+import com.emc.mongoose.client.impl.load.executor.tasks.SubmitToLoadSvcTask;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
@@ -76,7 +76,6 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final Map<String, JMXConnector> remoteJMXConnMap;
 	private final Map<String, MBeanServerConnection> mBeanSrvConnMap;
-	private final Map<String, InstancePool<RemoteSubmitTask>> submTaskPoolMap;
 	//
 	private final MetricRegistry metrics = new MetricRegistry();
 	protected final JmxReporter metricsReporter;
@@ -170,27 +169,12 @@ implements LoadClient<T> {
 		this.remoteJMXConnMap = remoteJMXConnMap;
 		////////////////////////////////////////////////////////////////////////////////////////////
 		mBeanSrvConnMap = new HashMap<>();
-		submTaskPoolMap = new HashMap<>();
 		for(final String addr: loadSvcAddrs) {
 			try {
 				mBeanSrvConnMap.put(addr, remoteJMXConnMap.get(addr).getMBeanServerConnection());
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to obtain MBean server connection for {}", addr
-				);
-			}
-			//
-			try {
-				submTaskPoolMap.put(
-					addr,
-					new InstancePool<>(
-						RemoteSubmitTask.class.getConstructor(LoadSvc.class),
-						remoteLoadMap.get(addr)
-					)
-				);
-			} catch(final NoSuchMethodException e) {
-				LogUtil.exception(
-					LOG, Level.FATAL, e, "Failed to create the remote submit task instance pool"
 				);
 			}
 		}
@@ -312,6 +296,7 @@ implements LoadClient<T> {
 			remoteLoadMap.size() + frameFetchTasks.size(),
 			new GroupThreadFactory(String.format("%s-aggregator", name), true)
 		);
+
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private Gauge<Long> registerJmxGaugeSum(
@@ -624,29 +609,20 @@ implements LoadClient<T> {
 	@Override
 	public final void submit(final T dataItem)
 	throws RejectedExecutionException, InterruptedException {
-		InstancePool<RemoteSubmitTask> mostAvailPool = null;
-		int maxPoolSize = 0, nextPoolSize;
-		for(final InstancePool<RemoteSubmitTask> nextPool : submTaskPoolMap.values()) {
-			nextPoolSize = nextPool.size();
-			if(nextPoolSize >= maxPoolSize) {
-				maxPoolSize = nextPoolSize;
-				mostAvailPool = nextPool;
-			}
-		}
-		if(mostAvailPool == null) {
-			throw new RejectedExecutionException("No remote load service to execute on");
-		} else {
-			Future remoteSubmFuture = null;
-			for(
-				int tryCount = 0;
-				tryCount < reqTimeOutMilliSec && remoteSubmFuture == null && !isShutdown();
-				tryCount ++
-			) {
-				try {
-					remoteSubmFuture = submit(mostAvailPool.take(dataItem));
-				} catch(final RejectedExecutionException e) {
-					Thread.sleep(tryCount);
-				}
+		Future remoteSubmFuture = null;
+		for(
+			int tryCount = 0;
+			tryCount < reqTimeOutMilliSec && remoteSubmFuture == null && !isShutdown();
+			tryCount ++
+		) {
+			try {
+				remoteSubmFuture = submit(
+					SubmitToLoadSvcTask.getInstance(
+						remoteLoadMap.get(loadSvcAddrs[tryCount % loadSvcAddrs.length]), dataItem
+					)
+				);
+			} catch(final RejectedExecutionException e) {
+				Thread.sleep(tryCount);
 			}
 		}
 	}
@@ -673,7 +649,8 @@ implements LoadClient<T> {
 			forcedAggregator.shutdownNow();
 		}
 	}
-	//@Override
+	//
+	@Override
 	public final void close()
 	throws IOException {
 		LOG.debug(Markers.MSG, "trying to close");
@@ -777,6 +754,7 @@ implements LoadClient<T> {
 	@Override
 	public final void shutdown() {
 		super.shutdown();
+		LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
 		try {
 			awaitTermination(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS);
 		} catch(final InterruptedException e) {

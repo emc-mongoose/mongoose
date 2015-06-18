@@ -10,9 +10,9 @@ import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.WSLoadClient;
 //
-//import org.apache.logging.log4j.Level;
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
+//import org.apache.log.log4j.Level;
+//import org.apache.log.log4j.LogManager;
+//import org.apache.log.log4j.Logger;
 //
 import java.util.Map;
 import javax.management.remote.JMXConnector;

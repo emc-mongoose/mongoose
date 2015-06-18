@@ -1,8 +1,8 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 // mongoose-server-api.jar
-import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 //
 import org.apache.logging.log4j.Level;

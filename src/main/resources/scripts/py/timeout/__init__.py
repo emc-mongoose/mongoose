@@ -4,7 +4,7 @@ from java.util import NoSuchElementException
 from org.apache.logging.log4j import LogManager
 #
 from com.emc.mongoose.common.conf import RunTimeConfig
-from com.emc.mongoose.common.logging import Markers
+from com.emc.mongoose.common.log import Markers
 #
 LOG = LogManager.getLogger()
 #

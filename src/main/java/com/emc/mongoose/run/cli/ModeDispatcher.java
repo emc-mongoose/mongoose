@@ -2,15 +2,15 @@ package com.emc.mongoose.run.cli;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
-// mongoose-core-api.jar
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 // mongoose-scenario.jar
-import com.emc.mongoose.run.scenario.Scenario;
-import com.emc.mongoose.run.webserver.RunJettyTask;
+import com.emc.mongoose.run.scenario.ScriptRunner;
+import com.emc.mongoose.run.webserver.WUIRunner;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-server-impl.jar
@@ -79,7 +79,7 @@ public final class ModeDispatcher {
 				break;
 			case Constants.RUN_MODE_WEBUI:
 				rootLogger.debug(Markers.MSG, "Starting the web UI");
-				new RunJettyTask(RunTimeConfig.getContext()).run();
+				new WUIRunner(RunTimeConfig.getContext()).run();
 				break;
 			case Constants.RUN_MODE_CINDERELLA:
 			case Constants.RUN_MODE_WSMOCK:
@@ -93,7 +93,7 @@ public final class ModeDispatcher {
 			case Constants.RUN_MODE_CLIENT:
 			case Constants.RUN_MODE_STANDALONE:
 			case Constants.RUN_MODE_COMPAT_CLIENT:
-				new Scenario().run();
+				new ScriptRunner().run();
 				break;
 			default:
 				throw new IllegalArgumentException(

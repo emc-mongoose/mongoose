@@ -1,6 +1,7 @@
 package com.emc.mongoose.run.cli;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
+//
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
@@ -8,7 +9,6 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-//
 import org.apache.commons.lang.StringUtils;
 //
 import java.io.File;

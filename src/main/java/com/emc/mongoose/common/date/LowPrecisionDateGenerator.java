@@ -1,6 +1,6 @@
 package com.emc.mongoose.common.date;
 //
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
 //
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;

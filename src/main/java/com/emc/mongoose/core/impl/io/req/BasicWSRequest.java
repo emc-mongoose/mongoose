@@ -1,5 +1,5 @@
 package com.emc.mongoose.core.impl.io.req;
-//
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 //
 import org.apache.http.Header;

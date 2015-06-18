@@ -38,7 +38,7 @@
 
 	<servlet>
 		<servlet-name>LogServlet</servlet-name>
-		<servlet-class>com.emc.mongoose.webui.websockets.impl.LogServlet</servlet-class>
+		<servlet-class>com.emc.mongoose.webui.websockets.LogServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>

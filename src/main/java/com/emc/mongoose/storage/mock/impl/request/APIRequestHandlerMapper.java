@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl.request;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-//import com.emc.mongoose.common.logging.LogUtil;
+//import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
@@ -11,8 +11,8 @@ import org.apache.http.HttpRequest;
 import org.apache.http.nio.protocol.HttpAsyncRequestHandler;
 import org.apache.http.nio.protocol.HttpAsyncRequestHandlerMapper;
 //
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
+//import org.apache.log.log4j.LogManager;
+//import org.apache.log.log4j.Logger;
 /**
  Created by andrey on 13.05.15.
  */

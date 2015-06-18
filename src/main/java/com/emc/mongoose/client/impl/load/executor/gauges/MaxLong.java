@@ -3,11 +3,12 @@ package com.emc.mongoose.client.impl.load.executor.gauges;
  Created by kurila on 19.12.14.
  */
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 //
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.Markers;
+//
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

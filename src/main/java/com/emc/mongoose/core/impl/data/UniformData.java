@@ -1,15 +1,15 @@
 package com.emc.mongoose.core.impl.data;
-//
+// mongoose-common.jar
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.Markers;
+import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.ServiceUtils;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
-//
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
-//
-import com.emc.mongoose.common.net.ServiceUtils;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -202,7 +202,7 @@ implements DataItem {
 		//
 		final ByteBuffer inBuff = ByteBuffer.allocate(
 			(int) Math.min(
-				LoadExecutor.BUFF_SIZE_HI, Math.max(LoadExecutor.BUFF_SIZE_LO, len)
+				Constants.BUFF_SIZE_HI, Math.max(Constants.BUFF_SIZE_LO, len)
 			)
 		);
 		long doneByteCount = 0;

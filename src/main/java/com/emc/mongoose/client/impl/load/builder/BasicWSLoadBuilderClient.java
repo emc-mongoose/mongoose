@@ -1,17 +1,17 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-core-api.jar
-import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-common.jar
-import com.emc.mongoose.common.net.Service;
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.BasicWSObject;
@@ -90,10 +90,10 @@ implements WSLoadBuilderClient<T, U> {
 				// adjusting the buffer size for the expected data items size
 				final long approxDataItemsSize = srcProducer.getApproxDataItemsSize();
 				reqConf.setBuffSize(
-					approxDataItemsSize < LoadExecutor.BUFF_SIZE_LO ?
-						LoadExecutor.BUFF_SIZE_LO :
-						approxDataItemsSize > LoadExecutor.BUFF_SIZE_HI ?
-							LoadExecutor.BUFF_SIZE_HI : (int) approxDataItemsSize
+					approxDataItemsSize < Constants.BUFF_SIZE_LO ?
+						Constants.BUFF_SIZE_LO :
+						approxDataItemsSize > Constants.BUFF_SIZE_HI ?
+							Constants.BUFF_SIZE_HI : (int) approxDataItemsSize
 				);
 			} catch(final NoSuchMethodException | IOException e) {
 				LOG.error(Markers.ERR, "Failure", e);

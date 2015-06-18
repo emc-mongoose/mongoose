@@ -2,11 +2,10 @@ package com.emc.mongoose.storage.mock.impl.request;
 //
 //import com.emc.mongoose.common.collections.InstancePool;
 //import com.emc.mongoose.common.collections.Reusable;
-import com.emc.mongoose.common.io.StreamUtils;
-import com.emc.mongoose.common.logging.LogUtil;
-//
-import com.emc.mongoose.common.logging.Markers;
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.http.IOUtils;
+import com.emc.mongoose.common.log.LogUtil;
 //
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.HttpEntity;
@@ -19,7 +18,6 @@ import org.apache.http.nio.IOControl;
 import org.apache.http.nio.protocol.AbstractAsyncRequestConsumer;
 //
 import java.io.IOException;
-import java.nio.ByteBuffer;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -32,8 +30,8 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private ByteBuffer bbuff = null;
 	private HttpRequest httpRequest = null;
+	private long expectedContentSize = Constants.BUFF_SIZE_LO;
 	//
 	public BasicWSRequestConsumer() {
 		super();
@@ -50,29 +48,18 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	//
 	@Override
 	protected final void onEntityEnclosed(final HttpEntity entity, final ContentType contentType) {
-		final long dataSize = entity.getContentLength();
-		// adapt the buffer size or reuse existing thread local buffer if any
-		if(dataSize > LoadExecutor.BUFF_SIZE_HI) {
-			if(bbuff == null || bbuff.capacity() != LoadExecutor.BUFF_SIZE_HI) {
-				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_HI);
-			}
-		} else if(dataSize < LoadExecutor.BUFF_SIZE_LO) {
-			if(bbuff == null || bbuff.capacity() != LoadExecutor.BUFF_SIZE_LO) {
-				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
-			}
-		} else {
-			// reallocate only if content length is twice less/more than buffer size
-			if(bbuff == null || dataSize > 2 * bbuff.capacity() || bbuff.capacity() > 2 * dataSize) {
-				bbuff = ByteBuffer.allocate((int) dataSize); // type cast should be safe here
-			}
-		}
+		expectedContentSize = entity.getContentLength();
 	}
 	//
 	@Override
 	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
-			bbuff.clear();
-			final long ingestByteCount = StreamUtils.consumeQuietly(decoder, ioCtl, bbuff);
+			final long ingestByteCount = IOUtils.consumeQuietly(
+				decoder,
+				(int) Math.max(
+					Constants.BUFF_SIZE_LO, Math.min(Constants.BUFF_SIZE_HI, expectedContentSize)
+				)
+			);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.MSG, "Consumed {} bytes", ingestByteCount);
 			}

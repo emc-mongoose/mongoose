@@ -1,7 +1,5 @@
 package com.emc.mongoose.core.api.load.executor;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
-//
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
@@ -25,10 +23,7 @@ extends Producer<T>, Consumer<T> {
 	//
 	AtomicInteger LAST_INSTANCE_NUM = new AtomicInteger(0);
 	//
-	int
-		NANOSEC_SCALEDOWN = 1000, MIB = 0x100000,
-		BUFF_SIZE_LO = (int) RunTimeConfig.getContext().getDataBufferSize(),
-		BUFF_SIZE_HI = (int) RunTimeConfig.getContext().getDataRingSize();
+	int NANOSEC_SCALEDOWN = 1000, MIB = 0x100000;
 	//
 	String
 		METRIC_NAME_SUCC = "succ",

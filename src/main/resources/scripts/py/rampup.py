@@ -7,7 +7,7 @@ from java.lang import Long, Short, Throwable, NumberFormatException, Interrupted
 from org.apache.logging.log4j import Level, LogManager, ThreadContext
 #
 from com.emc.mongoose.common.conf import RunTimeConfig, SizeUtil
-from com.emc.mongoose.common.logging import LogUtil, Markers
+from com.emc.mongoose.common.log import LogUtil, Markers
 #
 LOG = LogManager.getLogger()
 #
