@@ -272,8 +272,8 @@ implements AsyncConsumer<T> {
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Submit data item failure");
 		} finally {
-			shutdown();
 			isAllSubm.set(true);
+			shutdown();
 			if(tmpFileConsumer != null) {
 				tmpFileConsumer.interrupt(); // delete the temp file
 			}

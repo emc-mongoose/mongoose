@@ -109,6 +109,7 @@ implements LoadClient<T> {
 	private final RequestConfig<T> reqConfigCopy;
 	private final int metricsPeriodSec, reqTimeOutMilliSec;
 	protected volatile Producer<T> producer;
+	protected volatile Consumer<T> consumer = null;
 	//
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
@@ -561,9 +562,17 @@ implements LoadClient<T> {
 			}
 			LOG.debug(Markers.MSG, "{}: interrupted", name);
 		}
+		//
+		if(consumer != null) {
+			try {
+				consumer.shutdown();
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to shut down the consumer \"{}\"", consumer
+				);
+			}
+		}
 	}
-	//
-	private volatile LoadClient<T> consumer = null;
 	//
 	@Override
 	public final Consumer<T> getConsumer() {
@@ -574,11 +583,12 @@ implements LoadClient<T> {
 	public final void setConsumer(final Consumer<T> consumer)
 	throws RemoteException {
 		if(LoadClient.class.isInstance(consumer)) {
+			LOG.debug(Markers.MSG, "Consumer is a LoadClient instance");
 			// consumer is client which has the map of consumers
 			try {
-				this.consumer = (LoadClient<T>) consumer;
-				final Map<String, LoadSvc<T>> consumeMap = this.consumer.getRemoteLoadMap();
-				LOG.debug(Markers.MSG, "Consumer is LoadClient instance");
+				this.consumer = consumer;
+				final Map<String, LoadSvc<T>> consumeMap = ((LoadClient<T>) consumer)
+					.getRemoteLoadMap();
 				for(final String addr : consumeMap.keySet()) {
 					remoteLoadMap.get(addr).setConsumer(consumeMap.get(addr));
 				}

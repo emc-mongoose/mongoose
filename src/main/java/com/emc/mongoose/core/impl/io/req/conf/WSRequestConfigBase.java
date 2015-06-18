@@ -609,7 +609,12 @@ implements WSRequestConfig<T> {
 						} else {
 							bbuff.clear();
 						}
-						StreamUtils.consumeQuietly(in, ioCtl, bbuff);
+						if(dataSize != StreamUtils.consumeQuietly(in, ioCtl, bbuff)) {
+							LOG.debug(
+								Markers.ERR, "Consumed data size is not equal to {}",
+								SizeUtil.formatSize(dataSize)
+							);
+						}
 					}
 				}
 			}
@@ -623,14 +628,16 @@ implements WSRequestConfig<T> {
 				LogUtil.exception(LOG, Level.WARN, e, "Content reading failure");
 			}
 		} finally { // try to read the remaining data if left in the input stream
-			ByteBuffer bbuff = THRLOC_BB_RESP_WRITE.get();
-			if(bbuff == null) {
-				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
-				THRLOC_BB_RESP_WRITE.set(bbuff);
-			} else {
-				bbuff.clear();
+			if(!in.isCompleted()) {
+				ByteBuffer bbuff = THRLOC_BB_RESP_WRITE.get();
+				if(bbuff == null) {
+					bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
+					THRLOC_BB_RESP_WRITE.set(bbuff);
+				} else {
+					bbuff.clear();
+				}
+				StreamUtils.consumeQuietly(in, ioCtl, bbuff);
 			}
-			StreamUtils.consumeQuietly(in, ioCtl, bbuff);
 		}
 		return verifyPass;
 	}
