@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.mock.impl.data;
 //
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.UniformData;
-import com.emc.mongoose.core.impl.data.src.UniformDataSource;
+import com.emc.mongoose.core.impl.data.util.UniformDataSource;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //

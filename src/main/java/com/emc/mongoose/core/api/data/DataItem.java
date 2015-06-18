@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.api.data;
 //
-import com.emc.mongoose.core.api.data.src.DataSource;
+import com.emc.mongoose.core.api.data.util.DataSource;
 //
 import java.io.Externalizable;
 import java.io.IOException;

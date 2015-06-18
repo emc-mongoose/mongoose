@@ -1,7 +1,7 @@
-package com.emc.mongoose.util.client.impl;
+package com.emc.mongoose.core.impl.data.util;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.util.client.api.DataItemInput;
+import com.emc.mongoose.core.api.data.util.DataItemInput;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

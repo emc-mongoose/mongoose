@@ -1,6 +1,8 @@
 package com.emc.mongoose.util.client.api;
 //
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.util.DataItemInput;
+import com.emc.mongoose.core.api.data.util.DataItemOutput;
 //
 import java.io.Closeable;
 /**
@@ -8,7 +10,7 @@ import java.io.Closeable;
  The client class supporting the following storage I/O methods: write, read, delete, update, append.
  Note that all the methods are blocking. Use a low-level load execution
  builders and jobs interface if a non-blocking approach is required.
- <p>Every method accepts an {@link com.emc.mongoose.util.client.api.DataItemInput} stream as a 1st
+ <p>Every method accepts an {@link com.emc.mongoose.core.api.data.util.DataItemInput} stream as a 1st
  argument which is used as the source of the data items descriptors which should be processed
  (e.g. written/read/deleted/etc). The resulting behavior is different for write methods and the
  remaining methods. If the value of the 1st argument is null write methods will generate new data

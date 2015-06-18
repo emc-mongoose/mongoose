@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.api.data.src;
+package com.emc.mongoose.core.api.data.util;
 //
 import java.io.Externalizable;
 import java.io.IOException;

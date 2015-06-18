@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.client.impl;
+package com.emc.mongoose.core.impl.data.util;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
