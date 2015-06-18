@@ -33,7 +33,9 @@ implements Bucket<T> {
 	private final static String VERSIONING_ENTITY_CONTENT =
 		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
 		"<Status>Enabled</Status></VersioningConfiguration>";
-	private final static String VERSIONING_URL_PART = "/?versioning";
+	private final static String
+		VERSIONING_URL_PART = "/?versioning",
+		MARKER_URL_PATH = "/?marker=";
 	//
 	private final WSRequestConfigImpl<T> reqConf;
 	private String name;
@@ -71,6 +73,15 @@ implements Bucket<T> {
 	}
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning)
+		throws IOException {
+		return execute(addr, method, versioning, false, null);
+	}
+	//
+	//
+	HttpResponse execute(
+		final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning,
+		final boolean isTruncated, final String nextMarker
+	)
 	throws IOException {
 		//
 		if(method == null) {
@@ -91,8 +102,13 @@ implements Bucket<T> {
 				if (versioning) {
 					httpReq.setUriPath(httpReq.getUriPath() + VERSIONING_URL_PART);
 					httpReq.setEntity(
-							new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
+						new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
 					);
+				}
+				break;
+			case GET:
+				if (isTruncated) {
+					httpReq.setUriPath(httpReq.getUriPath() + MARKER_URL_PATH + nextMarker);
 				}
 				break;
 		}

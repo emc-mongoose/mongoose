@@ -8,6 +8,8 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -23,10 +25,13 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
+
 /**
  Created by kurila on 08.10.14.
  */
@@ -82,81 +87,91 @@ implements Producer<T> {
 	public final void run() {
 		//
 		HttpResponse httpResp = null;
+		boolean isTruncated = false;
+		String marker = null;
 		try {
-			httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET);
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the bucket: " + bucket);
-		}
-		//
-		if(httpResp != null) {
-			final StatusLine statusLine = httpResp.getStatusLine();
-			if(statusLine == null) {
-				LOG.warn(Markers.MSG, "No response status returned");
-			} else {
-				final int statusCode = statusLine.getStatusCode();
-				if(statusCode >= 200 && statusCode < 300) {
-					final HttpEntity respEntity = httpResp.getEntity();
-					if(respEntity != null) {
-						String respContentType = ContentType.APPLICATION_XML.getMimeType();
-						if(respEntity.getContentType() != null) {
-							respContentType = respEntity.getContentType().getValue();
-						} else {
-							LOG.debug(Markers.ERR, "No content type returned");
-						}
-						if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
-							try {
-								final SAXParser
-									parser = SAXParserFactory.newInstance().newSAXParser();
-								try(final InputStream in = respEntity.getContent()) {
-									////////////////////////////////////////////////////////////////
-									parser.parse(
-										in,
-										new XMLBucketListParser<>(
-											consumer, dataConstructor, maxCount
-										)
-									);
-									////////////////////////////////////////////////////////////////
-								} catch(final SAXException e) {
-									LogUtil.exception(LOG, Level.WARN, e, "Failed to parse");
-								} catch(final IOException e) {
-									LogUtil.exception(
-										LOG, Level.ERROR, e,
-										"Failed to read the bucket listing response content: {}",
-										bucket
-									);
-								} finally {
-									if(consumer != null) {
-										try {
-											consumer.shutdown();
-										} catch(final RemoteException e) {
-											LogUtil.exception(
-												LOG, Level.WARN, e,
-												"Failed to limit data items count for remote consumer"
-											);
-										} finally {
-											consumer = null;
-										}
-									}
+			do {
+				try {
+					httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET, false, isTruncated, marker);
+				} catch (final IOException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the bucket: " + bucket);
+				}
+				//
+				if (httpResp != null) {
+					final StatusLine statusLine = httpResp.getStatusLine();
+					if (statusLine == null) {
+						LOG.warn(Markers.MSG, "No response status returned");
+					} else {
+						final int statusCode = statusLine.getStatusCode();
+						if (statusCode >= 200 && statusCode < 300) {
+							final HttpEntity respEntity = httpResp.getEntity();
+							if (respEntity != null) {
+								String respContentType = ContentType.APPLICATION_XML.getMimeType();
+								if (respEntity.getContentType() != null) {
+									respContentType = respEntity.getContentType().getValue();
+								} else {
+									LOG.debug(Markers.ERR, "No content type returned");
 								}
-							} catch(final ParserConfigurationException | SAXException e) {
-								LogUtil.exception(
-									LOG, Level.ERROR, e, "Failed to create SAX parser"
-								);
+								if (ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
+									try {
+										final SAXParser
+											parser = SAXParserFactory.newInstance().newSAXParser();
+										try (final InputStream in = respEntity.getContent()) {
+											////////////////////////////////////////////////////////////////
+											final XMLBucketListParser xmlBucketListparser = new XMLBucketListParser<>(
+												consumer, dataConstructor, maxCount
+											);
+											//
+											parser.parse(in, xmlBucketListparser);
+											if(isTruncated = xmlBucketListparser.isTruncated()){
+												System.out.println(isTruncated);
+												marker = xmlBucketListparser.getNextMarker();
+												System.out.println(marker);
+											}
+											////////////////////////////////////////////////////////////////
+										} catch (final SAXException e) {
+											LogUtil.exception(LOG, Level.WARN, e, "Failed to parse");
+										} catch (final IOException e) {
+											LogUtil.exception(
+												LOG, Level.ERROR, e,
+												"Failed to read the bucket listing response content: {}",
+												bucket
+											);
+										}
+									} catch (final ParserConfigurationException | SAXException e) {
+										LogUtil.exception(
+											LOG, Level.ERROR, e, "Failed to create SAX parser"
+										);
+									}
+								} else {
+									LOG.warn(
+										Markers.MSG, "Unexpected response content type: \"{}\"",
+										respContentType
+									);
+								}
+								EntityUtils.consumeQuietly(respEntity);
 							}
 						} else {
+							final String statusMsg = statusLine.getReasonPhrase();
 							LOG.warn(
-								Markers.MSG, "Unexpected response content type: \"{}\"",
-								respContentType
+								Markers.ERR, "Listing bucket \"{}\" response: {}/{}",
+								bucket, statusCode, statusMsg
 							);
 						}
-						EntityUtils.consumeQuietly(respEntity);
 					}
-				} else {
-					final String statusMsg = statusLine.getReasonPhrase();
-					LOG.warn(
-						Markers.ERR, "Listing bucket \"{}\" response: {}/{}",
-						bucket, statusCode, statusMsg
+				}
+			} while (isTruncated);
+		} finally {
+			if(consumer != null) {
+				try {
+					consumer.shutdown();
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e,
+						"Failed to limit data items count for remote consumer"
 					);
+				} finally {
+					consumer = null;
 				}
 			}
 		}
