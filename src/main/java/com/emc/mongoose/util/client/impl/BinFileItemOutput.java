@@ -1,0 +1,45 @@
+package com.emc.mongoose.util.client.impl;
+//
+import com.emc.mongoose.core.api.data.DataItem;
+//
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+/**
+ Created by kurila on 18.06.15.
+ */
+public class BinFileItemOutput<T extends DataItem>
+extends SerializingItemOutput<T> {
+	//
+	protected final Path itemsDstPath;
+	//
+	public BinFileItemOutput(final Path itemsDstPath)
+	throws IOException {
+		super(
+			new ObjectOutputStream(
+				new BufferedOutputStream(
+					Files.newOutputStream(
+						itemsDstPath, StandardOpenOption.APPEND, StandardOpenOption.CREATE_NEW,
+						StandardOpenOption.WRITE
+					)
+				)
+			)
+		);
+		this.itemsDstPath = itemsDstPath;
+	}
+	//
+	@Override
+	public void write(final T dataItem)
+	throws IOException {
+		itemsDst.writeUnshared(dataItem);
+	}
+	//
+	@Override
+	public BinFileItemInput<T> getInput()
+	throws IOException {
+		return new BinFileItemInput<>(itemsDstPath);
+	}
+}
