@@ -9,9 +9,9 @@ import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Producer;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.model.reader.io.LineReader;
-import com.emc.mongoose.core.impl.load.model.reader.RandomFileReader;
-import com.emc.mongoose.core.impl.load.model.reader.util.Randomizer;
+import com.emc.mongoose.core.api.load.model.util.LineReader;
+import com.emc.mongoose.core.impl.load.model.util.RandomFileReader;
+import com.emc.mongoose.core.api.load.model.util.Randomizer;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

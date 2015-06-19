@@ -18,7 +18,6 @@ import org.apache.logging.log4j.ThreadContext;
 //
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 /**
@@ -37,42 +36,46 @@ implements Runnable {
 	}
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final Map<String, Chain> loadStepsMap = new HashMap();
+	private final LoadBuilder loadBuilder;
+	private final long timeOut;
+	private final TimeUnit timeUnit;
+	private final String loadTypeSeq[], sizeSeq[], threadCountSeq[];
 	//
 	public Rampup(
 		final LoadBuilder loadBuilder, final long timeOut, final TimeUnit timeUnit,
 		final String loadTypeSeq[], final String sizeSeq[], final String threadCountSeq[]
 	) {
-		String nextSizeStr, nextStepName;
-		long nextSize;
+		this.loadBuilder = loadBuilder;
+		this.timeOut = timeOut;
+		this.timeUnit = timeUnit;
+		this.loadTypeSeq = loadTypeSeq;
+		this.sizeSeq = sizeSeq;
+		this.threadCountSeq = threadCountSeq;
+	}
+	//
+	@Override
+	public final void run() {
+		Chain nextLoadSeq;
 		for(int i = 0; i < sizeSeq.length; i++) {
-			nextSizeStr = sizeSeq[i];
+			final String nextSizeStr = sizeSeq[i];
 			for(final String nextThreadCountStr : threadCountSeq) {
 				ThreadContext.put("currentSize", nextSizeStr + "-" + i);
 				ThreadContext.put("currentThreadCount", nextThreadCountStr);
-				nextSize = SizeUtil.toSize(nextSizeStr);
-				nextStepName = nextThreadCountStr + "x" + nextSizeStr;
+				final long nextSize = SizeUtil.toSize(nextSizeStr);
+				final String nextStepName = nextThreadCountStr + "x" + nextSizeStr;
 				LOG.debug(Markers.MSG, "Build the next step load chain: \"{}\"", nextStepName);
 				try {
 					loadBuilder
 						.setMinObjSize(nextSize)
 						.setMaxObjSize(nextSize)
 						.setThreadsPerNodeDefault(Short.parseShort(nextThreadCountStr));
-					loadStepsMap.put(
-						nextStepName, new Chain(loadBuilder, timeOut, timeUnit, loadTypeSeq, false)
-					);
+					nextLoadSeq = new Chain(loadBuilder, timeOut, timeUnit, loadTypeSeq, false);
+					LOG.info(Markers.PERF_SUM, "---- Step {} start ----", nextStepName);
+					nextLoadSeq.run();
 				} catch(final RemoteException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to apply rampup params remotely");
 				}
 			}
-		}
-	}
-	//
-	@Override
-	public final void run() {
-		for(final String nextStepName : loadStepsMap.keySet()) {
-			LOG.info(Markers.PERF_SUM, "---- Step {} start ----", nextStepName);
-			loadStepsMap.get(nextStepName).run();
 		}
 	}
 	//

@@ -1,7 +1,7 @@
-package com.emc.mongoose.core.impl.load.model.reader;
+package com.emc.mongoose.core.impl.load.model.util;
 //mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.model.reader.io.LineReader;
-import com.emc.mongoose.core.impl.load.model.reader.util.Randomizer;
+import com.emc.mongoose.core.api.load.model.util.LineReader;
+import com.emc.mongoose.core.api.load.model.util.Randomizer;
 //
 import org.junit.Assert;
 import org.junit.Test;
