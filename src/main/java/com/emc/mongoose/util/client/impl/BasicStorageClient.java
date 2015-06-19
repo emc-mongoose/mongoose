@@ -1,12 +1,13 @@
 package com.emc.mongoose.util.client.impl;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
+//
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.util.DataItemInput;
 import com.emc.mongoose.core.api.data.util.DataItemOutput;
-//
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+//
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import java.io.IOException;
@@ -17,9 +18,13 @@ import java.rmi.RemoteException;
 public class BasicStorageClient<T extends DataItem>
 implements StorageClient<T> {
 	//
+	protected RunTimeConfig rtConfig;
 	protected LoadBuilder<T, LoadExecutor<T>> loadBuilder;
 	//
-	public BasicStorageClient(final LoadBuilder<T, LoadExecutor<T>> loadBuilder) {
+	public BasicStorageClient(
+		final RunTimeConfig rtConfig, final LoadBuilder<T, LoadExecutor<T>> loadBuilder
+	) {
+		this.rtConfig = rtConfig;
 		this.loadBuilder = loadBuilder;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -36,6 +41,9 @@ implements StorageClient<T> {
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, IOException {
+		long countSucc = 0;
+		final DataItemInputProducer<T> producer = new DataItemInputProducer<>(itemsInput);
+		final DataItemOutputConsumer<T> consumer = new DataItemOutputConsumer<>(itemsOutput);
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setMinObjSize(minSize)
@@ -43,9 +51,20 @@ implements StorageClient<T> {
 				.setObjSizeBias(sizeBias)
 				.build()
 		) {
-			;
+			loadJobExecutor.setConsumer(consumer);
+			producer.setConsumer(loadJobExecutor);
+			loadJobExecutor.start();
+			producer.start();
+			try {
+				loadJobExecutor.await(
+					rtConfig.getLoadLimitTimeValue(), rtConfig.getLoadLimitTimeUnit()
+				);
+			} catch(final InterruptedException | RemoteException ignored) {
+			} finally {
+				countSucc = loadJobExecutor.getLoadState().getCountSucc();
+			}
 		}
-		return 0;
+		return countSucc;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

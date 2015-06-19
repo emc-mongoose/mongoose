@@ -16,8 +16,8 @@ import java.util.Iterator;
 @RunWith(MockitoJUnitRunner.class)
 public class CollectionItemInputTest {
 	//
-	@Mock private Collection itemsSrc;
-	@Mock private Iterator itemsIter;
+	@Mock private Collection<DataItem> itemsSrc;
+	@Mock private Iterator<DataItem> itemsIter;
 	//
 	@Test
 	public void shouldReadSingleItem()
