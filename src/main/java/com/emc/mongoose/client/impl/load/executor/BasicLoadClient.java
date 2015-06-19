@@ -4,6 +4,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
+import com.emc.mongoose.client.impl.load.executor.tasks.SubmitToLoadSvcTask;
 import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -76,7 +77,6 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final Map<String, JMXConnector> remoteJMXConnMap;
 	private final Map<String, MBeanServerConnection> mBeanSrvConnMap;
-	private final Map<String, InstancePool<RemoteSubmitTask>> submTaskPoolMap;
 	//
 	private final MetricRegistry metrics = new MetricRegistry();
 	protected final JmxReporter metricsReporter;
@@ -170,27 +170,12 @@ implements LoadClient<T> {
 		this.remoteJMXConnMap = remoteJMXConnMap;
 		////////////////////////////////////////////////////////////////////////////////////////////
 		mBeanSrvConnMap = new HashMap<>();
-		submTaskPoolMap = new HashMap<>();
 		for(final String addr: loadSvcAddrs) {
 			try {
 				mBeanSrvConnMap.put(addr, remoteJMXConnMap.get(addr).getMBeanServerConnection());
 			} catch(final IOException e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to obtain MBean server connection for {}", addr
-				);
-			}
-			//
-			try {
-				submTaskPoolMap.put(
-					addr,
-					new InstancePool<>(
-						RemoteSubmitTask.class.getConstructor(LoadSvc.class),
-						remoteLoadMap.get(addr)
-					)
-				);
-			} catch(final NoSuchMethodException e) {
-				LogUtil.exception(
-					LOG, Level.FATAL, e, "Failed to create the remote submit task instance pool"
 				);
 			}
 		}
