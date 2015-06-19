@@ -4,8 +4,6 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
-import com.emc.mongoose.client.impl.load.executor.tasks.SubmitToLoadSvcTask;
-import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
@@ -20,7 +18,6 @@ import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
-import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
@@ -31,6 +28,7 @@ import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
+import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptClientOnMaxCountTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.FrameFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
@@ -64,6 +62,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 20.10.14.
  */
@@ -606,21 +605,24 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final AtomicInteger rrc = new AtomicInteger(0);
+	//
 	@Override
 	public final void submit(final T dataItem)
 	throws RejectedExecutionException, InterruptedException {
 		Future remoteSubmFuture = null;
+		String nextLoadSvcAddr;
 		for(
 			int tryCount = 0;
 			tryCount < reqTimeOutMilliSec && remoteSubmFuture == null && !isShutdown();
 			tryCount ++
-			) {
+		) {
 			try {
+				nextLoadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
 				remoteSubmFuture = submit(
-					SubmitToLoadSvcTask.getInstance(
-						remoteLoadMap.get(loadSvcAddrs[tryCount % loadSvcAddrs.length]), dataItem
-					)
+					RemoteSubmitTask.getInstance(remoteLoadMap.get(nextLoadSvcAddr), dataItem)
 				);
+				rrc.incrementAndGet();
 			} catch(final RejectedExecutionException e) {
 				Thread.sleep(tryCount);
 			}
