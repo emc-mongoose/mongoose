@@ -1,6 +1,5 @@
 package com.emc.mongoose.storage.adapter.s3;
 // mongoose-common.jar
-import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -8,7 +7,6 @@ import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -75,7 +73,7 @@ implements Bucket<T> {
 	}
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning)
-		throws IOException {
+	throws IOException {
 		return execute(addr, method, versioning, false, null);
 	}
 	//
@@ -83,8 +81,7 @@ implements Bucket<T> {
 	HttpResponse execute(
 		final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning,
 		final boolean isTruncated, final String nextMarker
-	)
-	throws IOException {
+	) throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
@@ -101,7 +98,7 @@ implements Bucket<T> {
 						)
 					);
 				}
-				if (versioning) {
+				if(versioning) {
 					httpReq.setUriPath(httpReq.getUriPath() + VERSIONING_URL_PART);
 					httpReq.setEntity(
 						new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
@@ -109,7 +106,7 @@ implements Bucket<T> {
 				}
 				break;
 			case GET:
-				if (isTruncated) {
+				if(isTruncated) {
 					httpReq.setUriPath(httpReq.getUriPath() + MARKER_URL_PATH + nextMarker);
 				}
 				break;

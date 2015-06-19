@@ -8,8 +8,6 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-
-import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -25,13 +23,10 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
-
 /**
  Created by kurila on 08.10.14.
  */
@@ -86,36 +81,36 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		//
-		HttpResponse httpResp;
+		HttpResponse httpResp = null;
 		boolean isTruncated = false;
 		String marker = null;
 		try {
 			do {
 				try {
 					httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET, false, isTruncated, marker);
-				} catch (final IOException e) {
+				} catch(final IOException e) {
 					throw new IOException("Failed to list the bucket: " + bucket, e);
 				}
 				//
-				if (httpResp != null) {
+				if(httpResp != null) {
 					final StatusLine statusLine = httpResp.getStatusLine();
-					if (statusLine == null) {
+					if(statusLine == null) {
 						LOG.warn(Markers.MSG, "No response status returned");
 					} else {
 						final int statusCode = statusLine.getStatusCode();
-						if (statusCode >= 200 && statusCode < 300) {
+						if(statusCode >= 200 && statusCode < 300) {
 							final HttpEntity respEntity = httpResp.getEntity();
-							if (respEntity != null) {
+							if(respEntity != null) {
 								String respContentType = ContentType.APPLICATION_XML.getMimeType();
-								if (respEntity.getContentType() != null) {
+								if(respEntity.getContentType() != null) {
 									respContentType = respEntity.getContentType().getValue();
 								} else {
 									LOG.debug(Markers.ERR, "No content type returned");
 								}
-								if (ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
+								if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
 									final SAXParser
 										parser = SAXParserFactory.newInstance().newSAXParser();
-									try (final InputStream in = respEntity.getContent()) {
+									try(final InputStream in = respEntity.getContent()) {
 										////////////////////////////////////////////////////////////////
 										final XMLBucketListParser xmlBucketListparser = new XMLBucketListParser<>(
 											consumer, dataConstructor, maxCount
@@ -126,9 +121,9 @@ implements Producer<T> {
 											marker = xmlBucketListparser.getNextMarker();
 										}
 										////////////////////////////////////////////////////////////////
-									} catch (final SAXException e) {
+									} catch(final SAXException e) {
 										throw new SAXException("Failed to parse", e);
-									} catch (final IOException e) {
+									} catch(final IOException e) {
 										throw new IOException(
 											"Failed to read the bucket listing response content: " +
 											bucket, e
@@ -151,13 +146,13 @@ implements Producer<T> {
 						}
 					}
 				}
-			} while (isTruncated);
-		} catch (final IOException e) {
+			} while(isTruncated);
+		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e,
 				"Failed to read the bucket: {}", bucket.getName()
 			);
-		} catch (final ParserConfigurationException | SAXException e) {
+		} catch(final ParserConfigurationException | SAXException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to create SAX parser"
 			);

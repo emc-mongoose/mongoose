@@ -180,7 +180,7 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		if(httpRequest.getUriPath().contains("marker")) {
-			String[] uriPatrs = httpRequest.getUriPath().split("[?]");
+			final String[] uriPatrs = httpRequest.getUriPath().split("[?]");
 			buffer.append('\n').append(uriPatrs[0]);
 		} else {
 			buffer.append('\n').append(httpRequest.getUriPath());

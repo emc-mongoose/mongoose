@@ -49,7 +49,6 @@ extends DefaultHandler {
 		isTruncated = false;
 	private volatile String
 		strId = null, strSize = null, nextMarker = null;
-
 	//
 	XMLBucketListParser(
 		final Consumer<T> consumer, final Constructor<T> dataConstructor, final long maxCount
