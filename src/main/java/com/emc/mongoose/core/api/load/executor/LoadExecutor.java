@@ -6,6 +6,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
+import com.emc.mongoose.core.api.models.LoadState;
 import org.apache.logging.log4j.Marker;
 //
 import java.rmi.RemoteException;
@@ -56,6 +57,9 @@ extends Producer<T>, Consumer<T> {
 	throws RemoteException, RejectedExecutionException;
 	//
 	void handleResult(final IOTask<T> task)
+	throws RemoteException;
+	//
+	LoadState getLoadState()
 	throws RemoteException;
 	//
 	void logMetrics(Marker marker)
