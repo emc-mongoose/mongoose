@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.adapter.s3;
 // mongoose-common.jar
+import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -7,6 +8,7 @@ import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
@@ -35,7 +37,7 @@ implements Bucket<T> {
 		"<Status>Enabled</Status></VersioningConfiguration>";
 	private final static String
 		VERSIONING_URL_PART = "/?versioning",
-		MARKER_URL_PATH = "/?marker=";
+		MARKER_URL_PATH = "?marker=";
 	//
 	private final WSRequestConfigImpl<T> reqConf;
 	private String name;

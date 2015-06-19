@@ -86,7 +86,7 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		//
-		HttpResponse httpResp = null;
+		HttpResponse httpResp;
 		boolean isTruncated = false;
 		String marker = null;
 		try {
@@ -94,7 +94,7 @@ implements Producer<T> {
 				try {
 					httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET, false, isTruncated, marker);
 				} catch (final IOException e) {
-					LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the bucket: " + bucket);
+					throw new IOException("Failed to list the bucket: " + bucket, e);
 				}
 				//
 				if (httpResp != null) {
@@ -113,34 +113,25 @@ implements Producer<T> {
 									LOG.debug(Markers.ERR, "No content type returned");
 								}
 								if (ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
-									try {
-										final SAXParser
-											parser = SAXParserFactory.newInstance().newSAXParser();
-										try (final InputStream in = respEntity.getContent()) {
-											////////////////////////////////////////////////////////////////
-											final XMLBucketListParser xmlBucketListparser = new XMLBucketListParser<>(
-												consumer, dataConstructor, maxCount
-											);
-											//
-											parser.parse(in, xmlBucketListparser);
-											if(isTruncated = xmlBucketListparser.isTruncated()){
-												System.out.println(isTruncated);
-												marker = xmlBucketListparser.getNextMarker();
-												System.out.println(marker);
-											}
-											////////////////////////////////////////////////////////////////
-										} catch (final SAXException e) {
-											LogUtil.exception(LOG, Level.WARN, e, "Failed to parse");
-										} catch (final IOException e) {
-											LogUtil.exception(
-												LOG, Level.ERROR, e,
-												"Failed to read the bucket listing response content: {}",
-												bucket
-											);
+									final SAXParser
+										parser = SAXParserFactory.newInstance().newSAXParser();
+									try (final InputStream in = respEntity.getContent()) {
+										////////////////////////////////////////////////////////////////
+										final XMLBucketListParser xmlBucketListparser = new XMLBucketListParser<>(
+											consumer, dataConstructor, maxCount
+										);
+										//
+										parser.parse(in, xmlBucketListparser);
+										if(isTruncated = xmlBucketListparser.isTruncated()){
+											marker = xmlBucketListparser.getNextMarker();
 										}
-									} catch (final ParserConfigurationException | SAXException e) {
-										LogUtil.exception(
-											LOG, Level.ERROR, e, "Failed to create SAX parser"
+										////////////////////////////////////////////////////////////////
+									} catch (final SAXException e) {
+										throw new SAXException("Failed to parse", e);
+									} catch (final IOException e) {
+										throw new IOException(
+											"Failed to read the bucket listing response content: " +
+											bucket, e
 										);
 									}
 								} else {
@@ -161,6 +152,15 @@ implements Producer<T> {
 					}
 				}
 			} while (isTruncated);
+		} catch (final IOException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e,
+				"Failed to read the bucket: {}", bucket.getName()
+			);
+		} catch (final ParserConfigurationException | SAXException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to create SAX parser"
+			);
 		} finally {
 			if(consumer != null) {
 				try {
