@@ -13,6 +13,7 @@ import java.rmi.RemoteException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
 Created by kurila on 23.10.14.
@@ -26,6 +27,8 @@ implements Runnable {
 	//
 	private final LoadExecutor loadExecutor;
 	private final String loadName;
+	//
+	private AtomicBoolean wasStateSaved = new AtomicBoolean(false);
 	//
 	private LoadCloseHook(final LoadExecutor loadExecutor) {
 		String ln = "";
@@ -100,6 +103,7 @@ implements Runnable {
 	public final void run() {
 		LOG.debug(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
 		try {
+			//saveCurrState();
 			loadExecutor.close();
 			LOG.debug(Markers.MSG, "The load executor \"{}\" closed successfully", loadName);
 		} catch(final Exception e) {
@@ -108,4 +112,24 @@ implements Runnable {
 			);
 		}
 	}
+	//
+	/*private void saveCurrState() {
+		if (!wasStateSaved.get()) {
+			final String fullFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+					Constants.DIR_LOG, RunTimeConfig.getContext().getRunId()).toFile() + File.separator + Constants.STATES_FILE;
+			final List<LoadState> states = new ArrayList<>();
+			try (final FileOutputStream fos = new FileOutputStream(fullFileName, false)) {
+				try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+					for (final LoadExecutor load : HOOKS_MAP.keySet()) {
+						states.add(load.getLoadState());
+					}
+					oos.writeObject(states);
+				}
+			} catch (final IOException e) {
+				LogUtil.exception(LOG, Level.ERROR, e, "Mongoose's state serialization failed");
+			}
+			wasStateSaved.compareAndSet(false, true);
+			System.out.println(wasStateSaved.get());
+		}
+	}*/
 }

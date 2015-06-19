@@ -123,7 +123,7 @@ public final class IOUtils {
 					} // else keep this buffer size
 				}
 				//
-				LOG.info(
+				LOG.trace(
 					Markers.MSG, "Byte count: done {}, last {}, next {}",
 					doneByteCount, lastByteCount, nextByteCount
 				);
