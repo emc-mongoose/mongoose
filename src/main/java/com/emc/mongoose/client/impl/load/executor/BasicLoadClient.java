@@ -4,7 +4,6 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
-import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -19,7 +18,6 @@ import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
-import com.emc.mongoose.client.impl.load.executor.tasks.SubmitToLoadSvcTask;
 // mongoose-server-api.jar
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
@@ -30,6 +28,7 @@ import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
+import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptClientOnMaxCountTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.FrameFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
@@ -63,6 +62,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 20.10.14.
  */
@@ -108,6 +108,7 @@ implements LoadClient<T> {
 	private final RequestConfig<T> reqConfigCopy;
 	private final int metricsPeriodSec, reqTimeOutMilliSec;
 	protected volatile Producer<T> producer;
+	protected volatile Consumer<T> consumer = null;
 	//
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
@@ -295,7 +296,6 @@ implements LoadClient<T> {
 			remoteLoadMap.size() + frameFetchTasks.size(),
 			new GroupThreadFactory(String.format("%s-aggregator", name), true)
 		);
-
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private Gauge<Long> registerJmxGaugeSum(
@@ -546,9 +546,17 @@ implements LoadClient<T> {
 			}
 			LOG.debug(Markers.MSG, "{}: interrupted", name);
 		}
+		//
+		if(consumer != null) {
+			try {
+				consumer.shutdown();
+			} catch(final RemoteException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to shut down the consumer \"{}\"", consumer
+				);
+			}
+		}
 	}
-	//
-	private volatile LoadClient<T> consumer = null;
 	//
 	@Override
 	public final Consumer<T> getConsumer() {
@@ -559,11 +567,12 @@ implements LoadClient<T> {
 	public final void setConsumer(final Consumer<T> consumer)
 	throws RemoteException {
 		if(LoadClient.class.isInstance(consumer)) {
+			LOG.debug(Markers.MSG, "Consumer is a LoadClient instance");
 			// consumer is client which has the map of consumers
 			try {
-				this.consumer = (LoadClient<T>) consumer;
-				final Map<String, LoadSvc<T>> consumeMap = this.consumer.getRemoteLoadMap();
-				LOG.debug(Markers.MSG, "Consumer is LoadClient instance");
+				this.consumer = consumer;
+				final Map<String, LoadSvc<T>> consumeMap = ((LoadClient<T>) consumer)
+					.getRemoteLoadMap();
 				for(final String addr : consumeMap.keySet()) {
 					remoteLoadMap.get(addr).setConsumer(consumeMap.get(addr));
 				}
@@ -596,21 +605,24 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final AtomicInteger rrc = new AtomicInteger(0);
+	//
 	@Override
 	public final void submit(final T dataItem)
 	throws RejectedExecutionException, InterruptedException {
 		Future remoteSubmFuture = null;
+		String nextLoadSvcAddr;
 		for(
 			int tryCount = 0;
 			tryCount < reqTimeOutMilliSec && remoteSubmFuture == null && !isShutdown();
 			tryCount ++
 		) {
 			try {
+				nextLoadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
 				remoteSubmFuture = submit(
-					SubmitToLoadSvcTask.getInstance(
-						remoteLoadMap.get(loadSvcAddrs[tryCount % loadSvcAddrs.length]), dataItem
-					)
+					RemoteSubmitTask.getInstance(remoteLoadMap.get(nextLoadSvcAddr), dataItem)
 				);
+				rrc.incrementAndGet();
 			} catch(final RejectedExecutionException e) {
 				Thread.sleep(tryCount);
 			}

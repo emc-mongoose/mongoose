@@ -564,9 +564,6 @@ implements WSRequestConfig<T> {
 		// may invoke applyObjectId in some implementations
 	}
 	//
-	private final static ThreadLocal<ByteBuffer>
-		THRLOC_BB_RESP_WRITE = new ThreadLocal<>(),
-		THRLOC_BB_RESP_READ = new ThreadLocal<>();
 	private final static ThreadLocal<InputChannel>
 		THRLOC_CHAN_IN = new ThreadLocal<>();
 	@Override
@@ -589,23 +586,14 @@ implements WSRequestConfig<T> {
 						} finally {
 							chanIn.close();
 						}
-					} else { /* consume the whole data item content - may estimate the buffer size
-						ByteBuffer bbuff = THRLOC_BB_RESP_READ.get();
+					} else {
 						final long dataSize = dataItem.getSize();
-						// should I adapt the buffer size?
-						if(bbuff == null || bbuff.capacity() > 2 * dataSize || dataSize > 2 * bbuff.capacity()) {
-							if(dataSize < LoadExecutor.BUFF_SIZE_LO) {
-								bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
-							} else if(dataSize > LoadExecutor.BUFF_SIZE_HI) {
-								bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_HI);
-							} else {
-								bbuff = ByteBuffer.allocate((int) dataSize); // cast is safe
-							}
-							THRLOC_BB_RESP_READ.set(bbuff);
-						} else {
-							bbuff.clear();
-						}*/
-						IOUtils.consumeQuietly(in, buffSize);
+						if(dataItem.getSize() != IOUtils.consumeQuietly(in, buffSize)) {
+							LOG.debug(
+								Markers.ERR, "Consumed data size is not equal to {}",
+								SizeUtil.formatSize(dataItem.getSize())
+							);
+						}
 					}
 				}
 			}
@@ -618,15 +606,10 @@ implements WSRequestConfig<T> {
 			} else {
 				LogUtil.exception(LOG, Level.WARN, e, "Content reading failure");
 			}
-		} finally { /* try to read the remaining data if left in the input stream
-			ByteBuffer bbuff = THRLOC_BB_RESP_WRITE.get();
-			if(bbuff == null) {
-				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
-				THRLOC_BB_RESP_WRITE.set(bbuff);
-			} else {
-				bbuff.clear();
-			}*/
-			IOUtils.consumeQuietly(in);
+		} finally {
+			if(!in.isCompleted()) {
+				IOUtils.consumeQuietly(in);
+			}
 		}
 		return verifyPass;
 	}

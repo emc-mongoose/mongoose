@@ -22,6 +22,7 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.RequestLine;
 import org.apache.http.StatusLine;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.BasicHttpContext;
@@ -181,7 +182,24 @@ implements WSIOTask<T> {
 				} else if(dataItem.hasUpdatedRanges()) {
 					dataItem.writeUpdates(chanOut);
 				} else {
-					dataItem.write(chanOut);
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						final long
+							t = System.nanoTime(),
+							writtenCount = dataItem.write(chanOut),
+							rate = 1000000000 * writtenCount / (System.nanoTime() - t);
+						if(dataItem.getSize() != writtenCount) {
+							LOG.trace(
+								Markers.ERR, "{}: written {} bytes instead of {}",
+								this, writtenCount, dataItem.getSize()
+							);
+						} else {
+							LOG.trace(
+								Markers.MSG, "{}: write rate {}/s", this, SizeUtil.formatSize(rate)
+							);
+						}
+					} else {
+						dataItem.write(chanOut);
+					}
 				}
 			}
 		} catch(final ClosedChannelException e) { // probably a manual interruption
@@ -259,9 +277,11 @@ implements WSIOTask<T> {
 					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_BAD_REQUEST:
+					final RequestLine requestLine = httpRequest.getRequestLine();
 					msgBuff
 						.append("Incorrect request: \"")
-						.append(httpRequest.getRequestLine()).append("\"\n");
+						.append(requestLine.getMethod()).append(' ')
+						.append(requestLine.getUri()).append("\"\n");
 					if(LOG.isTraceEnabled(Markers.ERR)) {
 						for(final Header rangeHeader : httpRequest.getAllHeaders()) {
 							msgBuff

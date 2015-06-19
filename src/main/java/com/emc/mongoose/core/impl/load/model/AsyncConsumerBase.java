@@ -116,8 +116,8 @@ implements AsyncConsumer<T> {
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Submit data item failure");
 		} finally {
-			shutdown();
 			isAllSubm.set(true);
+			shutdown();
 		}
 	}
 	//

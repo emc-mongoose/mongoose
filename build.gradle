@@ -43,6 +43,8 @@ sourceSets {
 		resources {
 			srcDir(['src', 'main', 'resources'].join(File.separator))
 			include 'allpermissions.policy'
+			include 'logging.json'
+			include 'mongoose.json'
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -804,6 +806,54 @@ task utilJar(type: Jar) {
 	}
 }
 
+task testsJar(type: Jar) {
+	dependsOn commonJar
+	dependsOn coreApiJar
+	dependsOn coreImplJar
+	dependsOn storageAdapterAtmosJar
+	dependsOn storageAdapterS3Jar
+	dependsOn storageAdapterSwiftJar
+	dependsOn serverApiJar
+	dependsOn serverImplJar
+	dependsOn webserverJar
+	dependsOn clientJar
+	dependsOn scenarioJar
+	dependsOn storageMockJar
+	dependsOn webuiJar
+	dependsOn cliJar
+	dependsOn examplesJar
+
+	archiveName "${baseName}-tests.${extension}"
+	classifier = 'tests'
+	from sourceSets.test.output
+	manifest {
+		from sharedManifest
+		attributes(
+			'Implementation-Title': rootProject.name + "-tests",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				serverImplJar.outputs.files.collect {it.name}.join(' '),
+				webserverJar.outputs.files.collect {it.name}.join(' '),
+				clientJar.outputs.files.collect {it.name}.join(' '),
+				scenarioJar.outputs.files.collect {it.name}.join(' '),
+				storageMockJar.outputs.files.collect {it.name}.join(' '),
+				webuiJar.outputs.files.collect {it.name}.join(' '),
+				cliJar.outputs.files.collect {it.name}.join(' '),
+				examplesJar.outputs.files.collect {it.name}.join(' '),
+				configurations.testRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
+		)
+	}
+}
+
 task dist(type: Tar) {
 
 	dependsOn commonJar
@@ -876,7 +926,16 @@ idea {
 	module {
 		name = rootProject.name
 		jdkName = sourceCompatibility
-		scopes.PROVIDED.plus += [ configurations.compile ]
+		//
+		inheritOutputDirs = false
+		outputDir = sourceSets.common.output.resourcesDir
+		testOutputDir = sourceSets.common.output.resourcesDir
+		//scopes.PROVIDED.plus += [ configurations.compile ]
+		scopes = [
+			COMPILE: [plus: [configurations.compile], minus: []],
+			RUNTIME: [plus: [configurations.runtime], minus: [configurations.compile]],
+			TEST: [plus: [configurations.testRuntime], minus: [configurations.runtime]]
+		]
 	}
 	project.ipr {
 		withXml { provider ->
@@ -891,5 +950,9 @@ test {
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
 }
+
+build.dependsOn commonJar, coreApiJar, coreImplJar, storageAdapterAtmosJar, storageAdapterS3Jar
+build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, scenarioJar
+build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, examplesJar, testsJar
 
 tasks.idea.dependsOn(cleanIdea)
