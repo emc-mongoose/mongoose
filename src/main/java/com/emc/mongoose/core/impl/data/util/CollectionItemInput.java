@@ -15,14 +15,11 @@ public class CollectionItemInput<T extends DataItem>
 implements DataItemInput<T> {
 	//
 	protected final Collection<T> itemsSrc;
-	protected Iterator<T> itemsIter = null;
+	protected Iterator<T> itemsIter;
 	//
 	public CollectionItemInput(final Collection<T> itemsSrc) {
 		this.itemsSrc = itemsSrc;
-		try {
-			reset();
-		} catch(final IOException ignored) {
-		}
+		this.itemsIter = itemsSrc.iterator();
 	}
 	/**
 	 @return null if the list is empty or no more elements are available
@@ -31,9 +28,6 @@ implements DataItemInput<T> {
 	@Override
 	public T read()
 	throws IOException {
-		if(itemsIter == null) {
-			reset();
-		}
 		return itemsIter.hasNext() ? itemsIter.next() : null;
 	}
 	/**

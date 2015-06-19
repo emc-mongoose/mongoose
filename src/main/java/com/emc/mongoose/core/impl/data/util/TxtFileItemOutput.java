@@ -17,11 +17,13 @@ public class TxtFileItemOutput<T extends DataItem>
 implements DataItemOutput<T> {
 	//
 	protected final Path itemsDstPath;
+	protected final Class<T> itemCls;
 	protected final BufferedWriter itemsDst;
 	//
-	public TxtFileItemOutput(final Path itemsDstPath)
+	public TxtFileItemOutput(final Path itemsDstPath, final Class<T> itemCls)
 	throws IOException {
 		this.itemsDstPath = itemsDstPath;
+		this.itemCls = itemCls;
 		itemsDst = Files.newBufferedWriter(
 			itemsDstPath, StandardCharsets.UTF_8,
 			StandardOpenOption.APPEND, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE
@@ -38,7 +40,11 @@ implements DataItemOutput<T> {
 	@Override
 	public TxtFileItemInput<T> getInput()
 	throws IOException {
-		return new TxtFileItemInput<>(itemsDstPath);
+		try {
+			return new TxtFileItemInput<>(itemsDstPath, itemCls);
+		} catch(final NoSuchMethodException e) {
+			throw new IOException(e);
+		}
 	}
 	//
 	@Override

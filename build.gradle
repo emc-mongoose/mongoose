@@ -821,7 +821,7 @@ task testsJar(type: Jar) {
 	dependsOn storageMockJar
 	dependsOn webuiJar
 	dependsOn cliJar
-	dependsOn examplesJar
+	dependsOn utilJar
 
 	archiveName "${baseName}-tests.${extension}"
 	classifier = 'tests'
@@ -845,7 +845,7 @@ task testsJar(type: Jar) {
 				storageMockJar.outputs.files.collect {it.name}.join(' '),
 				webuiJar.outputs.files.collect {it.name}.join(' '),
 				cliJar.outputs.files.collect {it.name}.join(' '),
-				examplesJar.outputs.files.collect {it.name}.join(' '),
+				utilJar.outputs.files.collect {it.name}.join(' '),
 				configurations.testRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
@@ -953,6 +953,6 @@ test {
 
 build.dependsOn commonJar, coreApiJar, coreImplJar, storageAdapterAtmosJar, storageAdapterS3Jar
 build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, scenarioJar
-build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, examplesJar, testsJar
+build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testsJar
 
 tasks.idea.dependsOn(cleanIdea)

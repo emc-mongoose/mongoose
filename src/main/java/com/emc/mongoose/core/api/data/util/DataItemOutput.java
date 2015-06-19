@@ -17,7 +17,12 @@ extends Closeable {
 	 */
 	void write(final T dataItem)
 	throws IOException;
-	//
+
+	/**
+	 Make a {@link DataItemInput} instance from this.
+	 @return {@link DataItemInput} instance containing the items which had been written to this output.
+	 @throws IOException
+	 */
 	DataItemInput<T> getInput()
 	throws IOException;
 }
