@@ -77,7 +77,6 @@ implements Bucket<T> {
 		return execute(addr, method, versioning, false, null);
 	}
 	//
-	//
 	HttpResponse execute(
 		final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning,
 		final boolean isTruncated, final String nextMarker
