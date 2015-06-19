@@ -624,29 +624,20 @@ implements LoadClient<T> {
 	@Override
 	public final void submit(final T dataItem)
 	throws RejectedExecutionException, InterruptedException {
-		InstancePool<RemoteSubmitTask> mostAvailPool = null;
-		int maxPoolSize = 0, nextPoolSize;
-		for(final InstancePool<RemoteSubmitTask> nextPool : submTaskPoolMap.values()) {
-			nextPoolSize = nextPool.size();
-			if(nextPoolSize >= maxPoolSize) {
-				maxPoolSize = nextPoolSize;
-				mostAvailPool = nextPool;
-			}
-		}
-		if(mostAvailPool == null) {
-			throw new RejectedExecutionException("No remote load service to execute on");
-		} else {
-			Future remoteSubmFuture = null;
-			for(
-				int tryCount = 0;
-				tryCount < reqTimeOutMilliSec && remoteSubmFuture == null && !isShutdown();
-				tryCount ++
+		Future remoteSubmFuture = null;
+		for(
+			int tryCount = 0;
+			tryCount < reqTimeOutMilliSec && remoteSubmFuture == null && !isShutdown();
+			tryCount ++
 			) {
-				try {
-					remoteSubmFuture = submit(mostAvailPool.take(dataItem));
-				} catch(final RejectedExecutionException e) {
-					Thread.sleep(tryCount);
-				}
+			try {
+				remoteSubmFuture = submit(
+					SubmitToLoadSvcTask.getInstance(
+						remoteLoadMap.get(loadSvcAddrs[tryCount % loadSvcAddrs.length]), dataItem
+					)
+				);
+			} catch(final RejectedExecutionException e) {
+				Thread.sleep(tryCount);
 			}
 		}
 	}
