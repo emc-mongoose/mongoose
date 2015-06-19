@@ -21,7 +21,7 @@ public final class SubmitToLoadSvcTask<T extends DataItem>
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static InstancePool<SubmitToLoadSvcTask>
-		INSTANCE_POOL = new InstancePool<>();
+		INSTANCE_POOL = new InstancePool<>(SubmitToLoadSvcTask.class);
 	//
 	@SuppressWarnings("unchecked")
 	public static <T extends DataItem> SubmitToLoadSvcTask<T> getInstance(
