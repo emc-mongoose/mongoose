@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.impl;
 // mongoose-common.jar
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
@@ -104,8 +104,8 @@ implements Storage<T> {
 		// connection config
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(2 * Constants.BUFF_SIZE_LO)
-			.setFragmentSizeHint(Constants.BUFF_SIZE_LO)
+			.setBufferSize(2 * BUFF_SIZE_LO)
+			.setFragmentSizeHint(BUFF_SIZE_LO)
 			.build();
 		connFactory = new BasicWSMockConnFactory(runTimeConfig, connConfig);
 		// Set up the HTTP protocol processor

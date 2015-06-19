@@ -1,7 +1,4 @@
 package com.emc.mongoose.core.impl.load.model.util;
-//mongoose-core-impl.jar
-import com.emc.mongoose.core.api.load.model.util.LineReader;
-import com.emc.mongoose.core.api.load.model.util.Randomizer;
 //
 import org.junit.Assert;
 import org.junit.Test;
@@ -13,6 +10,9 @@ import org.mockito.Matchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
+
+import java.io.BufferedReader;
+import java.util.Random;
 //
 /**
 * RandomFileReader Tester. 
@@ -26,10 +26,10 @@ import org.mockito.runners.MockitoJUnitRunner;
 public final class RandomFileReaderTest {
 
     @Mock
-    private LineReader reader;
+    private BufferedReader reader;
 
     @Mock
-    private Randomizer random;
+    private Random random;
 
     @Before
     public final void before()
@@ -38,7 +38,7 @@ public final class RandomFileReaderTest {
 
     @After
     public final void after()
-       throws Exception {
+	throws Exception {
     }
 
     @Test

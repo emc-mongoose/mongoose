@@ -3,8 +3,8 @@ package com.emc.mongoose.common.net.http;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
-//
 import com.emc.mongoose.common.log.Markers;
+//
 import org.apache.http.nio.ContentDecoder;
 //
 import org.apache.logging.log4j.Level;

@@ -100,6 +100,9 @@ implements Runnable {
 			final LoadBuilder loadBuilder = LoadBuilderFactory.getInstance();
 			final long timeOut = runTimeConfig.getLoadLimitTimeValue();
 			final TimeUnit timeUnit = runTimeConfig.getLoadLimitTimeUnit();
+			// adjust some defaults if necessary
+			LOG.debug(Markers.MSG, "Setting the metric update period to zero for chain scenario");
+			runTimeConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 			//
 			final String[] loadTypeSeq = runTimeConfig.getScenarioChainLoad();
 			final String[] sizeSeq = runTimeConfig.getScenarioRampupSizes();
