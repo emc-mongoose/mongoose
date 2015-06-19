@@ -81,7 +81,9 @@ implements Externalizable {
 		//
 		KEY_API_NAME = "api.name",
 		KEY_API_S3_BUCKET = "api.type.s3.bucket",
-		//
+		KEY_API_ATMOS_SUBTENANT = "api.type.atmos.subtenant",
+		KEY_API_SWIFT_AUTH_TOKEN = "api.type.swift.authToken",
+		KEY_API_SWIFT_CONTAINER = "api.type.swift.container",
 		//  Single
 		KEY_SCENARIO_SINGLE_LOAD = "scenario.type.single.load",
 		//  Chain
@@ -91,10 +93,6 @@ implements Externalizable {
 		//  Rampup
 		KEY_SCENARIO_RAMPUP_SIZES = "scenario.type.rampup.sizes",
 		KEY_SCENARIO_RAMPUP_THREAD_COUNTS = "scenario.type.rampup.threadCounts",
-		//
-		KEY_ATMOS_SUBTENANT = "api.type.atmos.subtenant",
-		KEY_SWIFT_AUTH_TOKEN = "api.type.swift.authToken",
-		KEY_SWIFT_CONTAINER = "api.type.swift.container",
 		//  For ui property tree
 		KEY_CHILDREN_PROPS = "children",
 		//

@@ -179,11 +179,11 @@ extends WSRequestConfigBase<T> {
 		try {
 			setSubTenant(
 				new WSSubTenantImpl<>(
-					this, runTimeConfig.getString(RunTimeConfig.KEY_ATMOS_SUBTENANT)
+					this, runTimeConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
 				)
 			);
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_ATMOS_SUBTENANT);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_API_ATMOS_SUBTENANT);
 		}
 		//
 		if(runTimeConfig.getStorageFileAccessEnabled()) {
@@ -396,7 +396,7 @@ extends WSRequestConfigBase<T> {
 			subTenant.create(storageAddrs[0]);
 		}
 		/*re*/setSubTenant(subTenant);
-		runTimeConfig.set(RunTimeConfig.KEY_ATMOS_SUBTENANT, subTenant.getValue());
+		runTimeConfig.set(RunTimeConfig.KEY_API_ATMOS_SUBTENANT, subTenant.getValue());
 	}
 	//
 	@Override

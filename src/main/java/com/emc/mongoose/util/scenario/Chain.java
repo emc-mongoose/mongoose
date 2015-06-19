@@ -13,7 +13,7 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 //
 import com.emc.mongoose.run.cli.HumanFriendly;
-import com.emc.mongoose.util.scenario.shared.LoadBuilderFactory;
+import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -184,7 +184,7 @@ implements Runnable {
 			//
 			LOG.info(Markers.MSG, RunTimeConfig.getContext().toString());
 			//
-			final LoadBuilder loadBuilder = LoadBuilderFactory.getInstance();
+			final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(runTimeConfig);
 			final long timeOut = runTimeConfig.getLoadLimitTimeValue();
 			final TimeUnit timeUnit = runTimeConfig.getLoadLimitTimeUnit();
 			//

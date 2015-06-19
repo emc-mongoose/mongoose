@@ -73,10 +73,10 @@ extends WSRequestConfigBase<T> {
 			uriSvcBasePath = localConfig.getString(KEY_CONF_SVC_BASEPATH);
 		}
 		if(authToken == null) {
-			setAuthToken(new WSAuthTokenImpl<>(this, localConfig.getString(RunTimeConfig.KEY_SWIFT_AUTH_TOKEN)));
+			setAuthToken(new WSAuthTokenImpl<>(this, localConfig.getString(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN)));
 		}
 		if(container == null) {
-			setContainer(new WSContainerImpl<>(this, localConfig.getString(RunTimeConfig.KEY_SWIFT_CONTAINER)));
+			setContainer(new WSContainerImpl<>(this, localConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER)));
 		}
 		//
 		refreshContainerPath();
@@ -158,14 +158,14 @@ extends WSRequestConfigBase<T> {
 			LOG.error(Markers.ERR, "Swift base uri path is not specified");
 		}
 		//
-		if(runTimeConfig.containsKey(RunTimeConfig.KEY_SWIFT_AUTH_TOKEN)) {
-			authToken = new WSAuthTokenImpl<>(this, runTimeConfig.getString(RunTimeConfig.KEY_SWIFT_AUTH_TOKEN));
+		if(runTimeConfig.containsKey(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN)) {
+			authToken = new WSAuthTokenImpl<>(this, runTimeConfig.getString(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN));
 		} else {
 			LOG.error(Markers.ERR, "Swift auth token is not specified");
 		}
 		//
-		if(runTimeConfig.containsKey(RunTimeConfig.KEY_SWIFT_CONTAINER)) {
-			container = new WSContainerImpl<>(this, runTimeConfig.getString(RunTimeConfig.KEY_SWIFT_CONTAINER));
+		if(runTimeConfig.containsKey(RunTimeConfig.KEY_API_SWIFT_CONTAINER)) {
+			container = new WSContainerImpl<>(this, runTimeConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER));
 		} else {
 			LOG.error(Markers.ERR, "Swift container is not specified");
 		}
@@ -265,7 +265,7 @@ extends WSRequestConfigBase<T> {
 			throw new IllegalStateException("No auth token was created");
 		}
 		sharedHeaders.updateHeader(new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue));
-		runTimeConfig.set(RunTimeConfig.KEY_SWIFT_AUTH_TOKEN, authTokenValue);
+		runTimeConfig.set(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN, authTokenValue);
 		// configure a container
 		if(container == null) {
 			throw new IllegalStateException("Container is not specified");
@@ -276,7 +276,7 @@ extends WSRequestConfigBase<T> {
 		} else {
 			container.create(storageNodeAddrs[0]);
 			if(container.exists(storageNodeAddrs[0])) {
-				runTimeConfig.set(RunTimeConfig.KEY_SWIFT_CONTAINER, containerName);
+				runTimeConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, containerName);
 			} else {
 				throw new IllegalStateException(
 					String.format("Container \"%s\" still doesn't exist", containerName)

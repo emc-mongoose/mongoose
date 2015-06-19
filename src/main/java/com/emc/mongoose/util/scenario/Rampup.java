@@ -9,7 +9,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 //
 import com.emc.mongoose.run.cli.HumanFriendly;
-import com.emc.mongoose.util.scenario.shared.LoadBuilderFactory;
+import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -97,7 +97,7 @@ implements Runnable {
 			//
 			LOG.info(Markers.MSG, RunTimeConfig.getContext().toString());
 			//
-			final LoadBuilder loadBuilder = LoadBuilderFactory.getInstance();
+			final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(runTimeConfig);
 			final long timeOut = runTimeConfig.getLoadLimitTimeValue();
 			final TimeUnit timeUnit = runTimeConfig.getLoadLimitTimeUnit();
 			// adjust some defaults if necessary
