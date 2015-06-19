@@ -74,12 +74,12 @@ implements Bucket<T> {
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning)
 	throws IOException {
-		return execute(addr, method, versioning, false, null);
+		return execute(addr, method, versioning, null);
 	}
 	//
 	HttpResponse execute(
-		final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning,
-		final boolean isTruncated, final String nextMarker
+		final String addr, final MutableWSRequest.HTTPMethod method,
+		final boolean versioning, final String bucketListingMarker
 	) throws IOException {
 		//
 		if(method == null) {
@@ -104,14 +104,14 @@ implements Bucket<T> {
 					);
 				}
 				break;
-			case GET:
-				if(isTruncated) {
-					httpReq.setUriPath(httpReq.getUriPath() + MARKER_URL_PATH + nextMarker);
-				}
-				break;
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
+		// if it is possible to get next bucket's list bucketListingMarker must be in URI reqest
+		// but must not be in canonical request.
+		if(MutableWSRequest.HTTPMethod.GET.equals(method) && bucketListingMarker != null) {
+			httpReq.setUriPath(httpReq.getUriPath() + MARKER_URL_PATH + bucketListingMarker);
+		}
 		return reqConf.execute(addr, httpReq);
 	}
 	//

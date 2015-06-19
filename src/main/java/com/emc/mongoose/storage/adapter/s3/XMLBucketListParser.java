@@ -30,9 +30,7 @@ extends DefaultHandler {
 		QNAME_ITEM = "Contents",
 		QNAME_ITEM_ID = "Key",
 		QNAME_ITEM_SIZE = "Size",
-		//
-		QNAME_NEXT_MARKER = "NextMarker",
-		QNAME_IS_TRUNCATED = "IsTruncated";
+		QNAME_NEXT_MARKER = "NextMarker";
 	//
 	private final Consumer<T> consumer;
 	private final Constructor<T> dataConstructor;
@@ -42,13 +40,9 @@ extends DefaultHandler {
 		isInsideItem = false,
 		isInsideItemId = false,
 		isInsideItemSize = false,
-		//
-		isNextMarker = false,
-		isTruncatedElement = false,
-		//
-		isTruncated = false;
+		isNextMarker = false;
 	private volatile String
-		strId = null, strSize = null, nextMarker = null;
+		strId = null, strSize = null, bucketListingNextMarker = null;
 	//
 	XMLBucketListParser(
 		final Consumer<T> consumer, final Constructor<T> dataConstructor, final long maxCount
@@ -67,7 +61,6 @@ extends DefaultHandler {
 		isInsideItemSize = isInsideItem && QNAME_ITEM_SIZE.equals(qName);
 		//
 		isNextMarker = QNAME_NEXT_MARKER.equals(qName);
-		isTruncatedElement = QNAME_IS_TRUNCATED.equals(qName);
 		super.startElement(uri, localName, qName, attrs);
 	}
 	//
@@ -136,19 +129,13 @@ extends DefaultHandler {
 			strId = new String(buff, start, length);
 		} else if(isInsideItemSize) {
 			strSize = new String(buff, start, length);
-		} else if(isTruncatedElement) {
-			isTruncated = new String(buff, start, length).equalsIgnoreCase("true");
 		} else if(isNextMarker) {
-			nextMarker = new String(buff, start, length);
+			bucketListingNextMarker = new String(buff, start, length);
 		}
 		super.characters(buff, start, length);
 	}
 	//
-	public final boolean isTruncated(){
-		return isTruncated;
-	}
-	//
-	public final String getNextMarker(){
-		return nextMarker;
+	public final String getBucketListingNextMarker(){
+		return bucketListingNextMarker;
 	}
 }

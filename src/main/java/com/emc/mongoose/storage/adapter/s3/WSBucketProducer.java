@@ -82,15 +82,10 @@ implements Producer<T> {
 	public final void run() {
 		//
 		HttpResponse httpResp = null;
-		boolean isTruncated = false;
-		String marker = null;
+		String bucketListingMarker = null;
 		try {
 			do {
-				try {
-					httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET, false, isTruncated, marker);
-				} catch(final IOException e) {
-					throw new IOException("Failed to list the bucket: " + bucket, e);
-				}
+				httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET, false, bucketListingMarker);
 				//
 				if(httpResp != null) {
 					final StatusLine statusLine = httpResp.getStatusLine();
@@ -117,17 +112,8 @@ implements Producer<T> {
 										);
 										//
 										parser.parse(in, xmlBucketListparser);
-										if(isTruncated = xmlBucketListparser.isTruncated()){
-											marker = xmlBucketListparser.getNextMarker();
-										}
+										bucketListingMarker = xmlBucketListparser.getBucketListingNextMarker();
 										////////////////////////////////////////////////////////////////
-									} catch(final SAXException e) {
-										throw new SAXException("Failed to parse", e);
-									} catch(final IOException e) {
-										throw new IOException(
-											"Failed to read the bucket listing response content: " +
-											bucket, e
-										);
 									}
 								} else {
 									LOG.warn(
@@ -146,13 +132,16 @@ implements Producer<T> {
 						}
 					}
 				}
-			} while(isTruncated);
+			} while(bucketListingMarker != null);
 		} catch(final IOException e) {
 			LogUtil.exception(
-				LOG, Level.ERROR, e,
-				"Failed to read the bucket: {}", bucket.getName()
+				LOG, Level.ERROR, e, "Failed to list the bucket: " + bucket + ", next marker: " + bucketListingMarker
 			);
-		} catch(final ParserConfigurationException | SAXException e) {
+		} catch(final SAXException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to parse"
+			);
+		} catch(final ParserConfigurationException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to create SAX parser"
 			);

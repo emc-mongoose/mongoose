@@ -179,12 +179,7 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		if(httpRequest.getUriPath().contains("marker")) {
-			final String[] uriPatrs = httpRequest.getUriPath().split("[?]");
-			buffer.append('\n').append(uriPatrs[0]);
-		} else {
-			buffer.append('\n').append(httpRequest.getUriPath());
-		}
+		buffer.append('\n').append(httpRequest.getUriPath());
 		//
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Canonical representation:\n{}", buffer);
