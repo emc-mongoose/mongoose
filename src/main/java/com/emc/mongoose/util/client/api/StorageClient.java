@@ -5,6 +5,7 @@ import com.emc.mongoose.core.api.data.util.DataItemInput;
 import com.emc.mongoose.core.api.data.util.DataItemOutput;
 //
 import java.io.Closeable;
+import java.io.IOException;
 /**
  Created by kurila on 15.06.15.
  The client class supporting the following storage I/O methods: write, read, delete, update, append.
@@ -33,7 +34,7 @@ extends Closeable {
 	long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
 		final long size
-	) throws IllegalArgumentException;
+	) throws IllegalArgumentException, IOException;
 
 	/**
 	 Write the randomly sized data items on the target storage.
@@ -47,7 +48,7 @@ extends Closeable {
 	long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
 		final long minSize, final long maxSize, final float sizeBias
-	) throws IllegalArgumentException;
+	) throws IllegalArgumentException, IOException;
 
 	/**
 	 Read the data items from the storage.

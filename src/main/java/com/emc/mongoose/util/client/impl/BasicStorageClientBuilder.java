@@ -13,10 +13,10 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 19.06.15.
  */
-public abstract class BasicClientBuilder<T extends WSObject, U extends StorageClient<T>>
+public abstract class BasicStorageClientBuilder<T extends WSObject, U extends StorageClient<T>>
 implements StorageClientBuilder<T, U> {
 	//
-	private final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+	protected final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 	//
 	@Override
 	public StorageClientBuilder<T, U> setAPI(final String api)
@@ -52,68 +52,50 @@ implements StorageClientBuilder<T, U> {
 	}
 	//
 	@Override
-	public StorageClientBuilder<T, U> setClientMode(final String loadServers[])
-	throws IllegalArgumentException {
+	public StorageClientBuilder<T, U> setClientMode(final String loadServers[]) {
 		if(loadServers == null || loadServers.length < 1) {
-			throw new IllegalArgumentException("Empty/null load server address list specified");
-		}
-		final StringBuilder addrListBuilder = new StringBuilder();
-		for(final String nextAddr : loadServers) {
-			if(addrListBuilder.length() > 0) {
-				addrListBuilder.append(RunTimeConfig.LIST_SEP);
+			rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
+		} else {
+			final StringBuilder addrListBuilder = new StringBuilder();
+			for(final String nextAddr : loadServers) {
+				if(addrListBuilder.length() > 0) {
+					addrListBuilder.append(RunTimeConfig.LIST_SEP);
+				}
+				addrListBuilder.append(nextAddr);
 			}
-			addrListBuilder.append(nextAddr);
-		}
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_ADDRS, addrListBuilder.toString());
-		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
-		return this;
-	}
-	//
-	@Override
-	public StorageClientBuilder<T, U> setAuth(final String id, final String secret)
-	throws IllegalArgumentException {
-		if(id != null) {
-			rtConfig.set(RunTimeConfig.KEY_AUTH_ID, id);
-		}
-		if(secret != null) {
-			rtConfig.set(RunTimeConfig.KEY_AUTH_SECRET, secret);
+			rtConfig.set(RunTimeConfig.KEY_STORAGE_ADDRS, addrListBuilder.toString());
+			rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
 		}
 		return this;
 	}
 	//
 	@Override
-	public StorageClientBuilder<T, U> setS3Bucket(final String value)
-	throws IllegalArgumentException {
-		if(value == null || value.length() == 0) {
-			throw new IllegalArgumentException("Empty/null S3 bucket name specified");
-		}
+	public StorageClientBuilder<T, U> setAuth(final String id, final String secret) {
+		rtConfig.set(RunTimeConfig.KEY_AUTH_ID, id);
+		rtConfig.set(RunTimeConfig.KEY_AUTH_SECRET, secret);
+		return this;
+	}
+	//
+	@Override
+	public StorageClientBuilder<T, U> setS3Bucket(final String value) {
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, value);
 		return this;
 	}
 	//
 	@Override
 	public StorageClientBuilder<T, U> setSwiftContainer(final String value) {
-		if(value == null || value.length() == 0) {
-			throw new IllegalArgumentException("Empty/null Swift container specified");
-		}
 		rtConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, value);
 		return this;
 	}
 	//
 	@Override
 	public StorageClientBuilder<T, U> setAtmosSubtenant(final String value) {
-		if(value == null || value.length() == 0) {
-			throw new IllegalArgumentException("Empty/null Atmos subtenant specified");
-		}
 		rtConfig.set(RunTimeConfig.KEY_API_ATMOS_SUBTENANT, value);
 		return this;
 	}
 	//
 	@Override
 	public StorageClientBuilder<T, U> setSwiftAuthToken(final String value) {
-		if(value == null || value.length() == 0) {
-			throw new IllegalArgumentException("Empty/null Swift auth token specified");
-		}
 		rtConfig.set(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN, value);
 		return this;
 	}
@@ -121,8 +103,8 @@ implements StorageClientBuilder<T, U> {
 	@Override
 	public StorageClientBuilder<T, U> setLimitCount(final long count)
 	throws IllegalArgumentException {
-		if(count < 1) {
-			throw new IllegalArgumentException("Count limit should be a positive integer");
+		if(count < 0) {
+			throw new IllegalArgumentException("Count limit shouldn' be negative");
 		}
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, count);
 		return this;
@@ -131,15 +113,20 @@ implements StorageClientBuilder<T, U> {
 	@Override
 	public StorageClientBuilder<T, U> setLimitTime(final long timeOut, final TimeUnit timeUnit)
 	throws IllegalArgumentException {
-		if(timeOut < 1) {
-			throw new IllegalArgumentException("Time limit value should be a positive integer");
+		if(timeOut < 0) {
+			throw new IllegalArgumentException("Time limit value shouldn't be negative");
 		}
+		TimeUnit tu = timeUnit;
 		if(timeUnit == null) {
-			throw new IllegalArgumentException("No time limit unit specified");
+			if(timeOut != 0) {
+				throw new IllegalArgumentException("No time limit unit specified");
+			} else {
+				tu = TimeUnit.DAYS;
+			}
 		}
 		rtConfig.set(
 			RunTimeConfig.KEY_LOAD_LIMIT_TIME,
-			Long.toString(timeOut) + timeUnit.name().toLowerCase().charAt(0)
+			Long.toString(timeOut) + tu.name().toLowerCase().charAt(0)
 		);
 		return this;
 	}
@@ -147,7 +134,10 @@ implements StorageClientBuilder<T, U> {
 	@Override
 	public StorageClientBuilder<T, U> setLimitRate(final float rate)
 	throws IllegalArgumentException {
-
+		if(rate < 0) {
+			throw new IllegalArgumentException("Rate limit should be >= 0");
+		}
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_RATE, rate);
 		return this;
 	}
 }

@@ -31,21 +31,18 @@ public interface StorageClientBuilder<T extends DataItem, U extends StorageClien
 	/**
 	 Change the run mode to load client mode, set the list of the remote load servers.
 	 @param loadServers Load servers list. FQDNs and IPs are acceptable.
+	 Null/empty value just switches (back) to the standalone mode.
 	 @return self.
-	 @throws IllegalArgumentException if null or empty
 	 */
-	StorageClientBuilder<T, U> setClientMode(final String loadServers[])
-	throws IllegalArgumentException;
+	StorageClientBuilder<T, U> setClientMode(final String loadServers[]);
 
 	/**
 	 Set credentials necessary to access the storage.
 	 @param id user id, for example "wuser1@sanity.local"
 	 @param secret the secret
 	 @return self.
-	 @throws IllegalArgumentException if either id or secret is null or empty
 	 */
-	StorageClientBuilder<T, U> setAuth(final String id, final String secret)
-	throws IllegalArgumentException;
+	StorageClientBuilder<T, U> setAuth(final String id, final String secret);
 
 	/**
 	 Set the target S3 bucket for writing to/reading from/etc.
@@ -77,7 +74,8 @@ public interface StorageClientBuilder<T extends DataItem, U extends StorageClien
 
 	/**
 	 Limit the storage I/O methods execution by data items count.
-	 @param count the max count of the data items to write/read/delete/etc, 0 means no limit
+	 @param count the max count of the data items to write/read/delete/etc,
+	 0 means no limit (infinite)
 	 @return self.
 	 @throws java.lang.IllegalArgumentException if less than 0
 	 */
@@ -86,7 +84,8 @@ public interface StorageClientBuilder<T extends DataItem, U extends StorageClien
 
 	/**
 	 Limit the storage I/O methods execution by the time.
-	 @param timeOut the maximum time to perform a I/O invocation, 0 means no limit
+	 @param timeOut the maximum time to perform a I/O invocation,
+	 0 time value or {0, null} arg values pair both mean no limit (infinite)
 	 @param timeUnit the time unit.
 	 @return self.
 	 @throws java.lang.IllegalArgumentException if time out is negative or time unit is null

@@ -8,8 +8,9 @@ import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.builder.WSLoadBuilder;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
+import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
 //
 import com.emc.mongoose.client.impl.load.builder.BasicWSLoadBuilderClient;
@@ -28,7 +29,7 @@ public class WSLoadBuilderFactory {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	@SuppressWarnings({"unchecked", "ConstantConditions"})
-	public static <T extends WSObject, U extends WSLoadExecutor<T>> WSLoadBuilder<T, U> getInstance(
+	public static <T extends WSObject, U extends LoadExecutor<T>> WSLoadBuilder<T, U> getInstance(
 		final RunTimeConfig rtConfig
 	) {
 		final String mode = rtConfig.getRunMode();
@@ -45,7 +46,8 @@ public class WSLoadBuilderFactory {
 				}
 				break;
 			default:
-				loadBuilderInstance = new BasicWSLoadBuilder<>(rtConfig);
+				final WSLoadBuilder<T, WSLoadExecutor<T>> lb = new BasicWSLoadBuilder<>(rtConfig);
+				loadBuilderInstance = (WSLoadBuilder<T, U>) lb;
 		}
 		return loadBuilderInstance;
 	}
