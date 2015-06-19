@@ -5,11 +5,12 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
-import com.emc.mongoose.common.http.RequestSharedHeaders;
-import com.emc.mongoose.common.http.RequestTargetHost;
-import com.emc.mongoose.common.io.HTTPContentDecoderChannel;
-import com.emc.mongoose.common.io.StreamUtils;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
+import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
+import com.emc.mongoose.common.net.http.content.InputChannel;
+import com.emc.mongoose.common.net.http.IOUtils;
+import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
@@ -18,7 +19,6 @@ import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
 // mongoose-core-impl
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.impl.data.RangeLayerData;
 import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
@@ -173,8 +173,8 @@ implements WSRequestConfig<T> {
 		// create HTTP client
 		final HttpProcessor httpProcessor= HttpProcessorBuilder
 			.create()
-			.add(new RequestSharedHeaders(sharedHeaders))
-			.add(new RequestTargetHost())
+			.add(new SharedHeadersAdder(sharedHeaders))
+			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
 				//.add(new RequestExpectContinue(true))
@@ -314,21 +314,21 @@ implements WSRequestConfig<T> {
 		try {
 			setScheme(this.runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
-			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_SCHEME);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_SCHEME);
 		}
 		//
 		try {
 			setNameSpace(this.runTimeConfig.getStorageNameSpace());
 		} catch(final NoSuchElementException e) {
-			LOG.debug(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_NAMESPACE);
+			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_NAMESPACE);
 		} catch(final IllegalStateException e) {
-			LOG.debug(LogUtil.ERR, "Failed to set the namespace", e);
+			LOG.debug(Markers.ERR, "Failed to set the namespace", e);
 		}
 		//
 		try {
 			setFileAccessEnabled(runTimeConfig.getStorageFileAccessEnabled());
 		} catch(final NoSuchElementException e) {
-			LOG.debug(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_FS_ACCESS);
+			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_FS_ACCESS);
 		}
 		//
 		super.setProperties(runTimeConfig);
@@ -377,7 +377,7 @@ implements WSRequestConfig<T> {
 						nodeAddrParts[0], Integer.valueOf(nodeAddrParts[1]), getScheme()
 					);
 				} else {
-					LOG.fatal(LogUtil.ERR, "Invalid node address: {}", nodeAddr);
+					LOG.fatal(Markers.ERR, "Invalid node address: {}", nodeAddr);
 					nodeHost = null;
 				}
 			} else {
@@ -395,7 +395,7 @@ implements WSRequestConfig<T> {
 		super.readExternal(in);
 		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
 		sharedHeaders = HeaderGroup.class.cast(ois.readUnshared());
-		LOG.trace(LogUtil.MSG, "Got headers set {}", sharedHeaders);
+		LOG.trace(Markers.MSG, "Got headers set {}", sharedHeaders);
 		setNameSpace(String.class.cast(ois.readUnshared()));
 		setFileAccessEnabled(Boolean.class.cast(ois.readUnshared()));
 	}
@@ -445,7 +445,7 @@ implements WSRequestConfig<T> {
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply auth header");
 		}
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 			final StringBuilder msgBuff = new StringBuilder("built request: ")
 				.append(httpRequest.getRequestLine().getMethod()).append(' ')
 				.append(httpRequest.getRequestLine().getUri()).append('\n');
@@ -463,7 +463,7 @@ implements WSRequestConfig<T> {
 			} else {
 				msgBuff.append("\t---- no content ----");
 			}
-			LOG.trace(LogUtil.MSG, msgBuff.toString());
+			LOG.trace(Markers.MSG, msgBuff.toString());
 		}
 	}
 	//
@@ -486,22 +486,22 @@ implements WSRequestConfig<T> {
 			for(int i = 0; i < rangeCount; i++) {
 				rangeLen = dataItem.getRangeSize(i);
 				if(dataItem.isRangeUpdatePending(i)) {
-					LOG.trace(LogUtil.MSG, "\"{}\": should update range #{}", dataItem, i);
+					LOG.trace(Markers.MSG, "\"{}\": should update range #{}", dataItem, i);
 					if(rangeBeg < 0) { // begin of the possible updated ranges sequence
 						rangeBeg = RangeLayerData.getRangeOffset(i);
 						rangeEnd = rangeBeg + rangeLen - 1;
 						LOG.trace(
-							LogUtil.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
+							Markers.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
 						);
 					} else if(rangeEnd > 0) { // next range in the sequence of updated ranges
 						rangeEnd += rangeLen;
 					}
 					if(i == rangeCount - 1) { // this is the last range which is updated also
-						LOG.trace(LogUtil.MSG, "End of the updated ranges sequence @{}", rangeEnd);
+						LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
 						httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + rangeBeg + "-" + rangeEnd);
 					}
 				} else if(rangeBeg > -1 && rangeEnd > -1) { // end of the updated ranges sequence
-					LOG.trace(LogUtil.MSG, "End of the updated ranges sequence @{}", rangeEnd);
+					LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
 					httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + rangeBeg + "-" + rangeEnd);
 					// drop the updated ranges sequence info
 					rangeBeg = -1;
@@ -521,9 +521,9 @@ implements WSRequestConfig<T> {
 	//
 	protected void applyDateHeader(final MutableWSRequest httpRequest) {
 		httpRequest.setHeader(HttpHeaders.DATE, LowPrecisionDateGenerator.getDateText());
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				LogUtil.MSG, "Apply date header \"{}\" to the request: \"{}\"",
+				Markers.MSG, "Apply date header \"{}\" to the request: \"{}\"",
 				httpRequest.getLastHeader(HttpHeaders.DATE), httpRequest
 			);
 		}
@@ -558,19 +558,16 @@ implements WSRequestConfig<T> {
 	//
 	@Override
 	public void receiveResponse(final HttpResponse response, final T dataItem) {
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				LogUtil.MSG, "Got response with {} bytes of payload data",
+				Markers.MSG, "Got response with {} bytes of payload data",
 				response.getFirstHeader(HttpHeaders.CONTENT_LENGTH).getValue()
 			);
 		}
 		// may invoke applyObjectId in some implementations
 	}
 	//
-	private final static ThreadLocal<ByteBuffer>
-		THRLOC_BB_RESP_WRITE = new ThreadLocal<>(),
-		THRLOC_BB_RESP_READ = new ThreadLocal<>();
-	private final static ThreadLocal<HTTPContentDecoderChannel>
+	private final static ThreadLocal<InputChannel>
 		THRLOC_CHAN_IN = new ThreadLocal<>();
 	@Override
 	public final boolean consumeContent(
@@ -581,9 +578,9 @@ implements WSRequestConfig<T> {
 			if(dataItem != null) {
 				if(loadType == IOTask.Type.READ) { // read
 					if(verifyContentFlag) { // read and do verify
-						HTTPContentDecoderChannel chanIn = THRLOC_CHAN_IN.get();
+						InputChannel chanIn = THRLOC_CHAN_IN.get();
 						if(chanIn == null) {
-							chanIn = new HTTPContentDecoderChannel();
+							chanIn = new InputChannel();
 							THRLOC_CHAN_IN.set(chanIn);
 						}
 						chanIn.setContentDecoder(in);
@@ -592,23 +589,14 @@ implements WSRequestConfig<T> {
 						} finally {
 							chanIn.close();
 						}
-					} else { // consume the whole data item content - may estimate the buffer size
-						ByteBuffer bbuff = THRLOC_BB_RESP_READ.get();
+					} else {
 						final long dataSize = dataItem.getSize();
-						// should I adapt the buffer size?
-						if(bbuff == null || bbuff.capacity() > 2 * dataSize || dataSize > 2 * bbuff.capacity()) {
-							if(dataSize < LoadExecutor.BUFF_SIZE_LO) {
-								bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
-							} else if(dataSize > LoadExecutor.BUFF_SIZE_HI) {
-								bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_HI);
-							} else {
-								bbuff = ByteBuffer.allocate((int) dataSize); // cast is safe
-							}
-							THRLOC_BB_RESP_READ.set(bbuff);
-						} else {
-							bbuff.clear();
+						if(dataItem.getSize() != IOUtils.consumeQuietly(in, buffSize)) {
+							LOG.debug(
+								Markers.ERR, "Consumed data size is not equal to {}",
+								SizeUtil.formatSize(dataItem.getSize())
+							);
 						}
-						StreamUtils.consumeQuietly(in, ioCtl, bbuff);
 					}
 				}
 			}
@@ -621,15 +609,10 @@ implements WSRequestConfig<T> {
 			} else {
 				LogUtil.exception(LOG, Level.WARN, e, "Content reading failure");
 			}
-		} finally { // try to read the remaining data if left in the input stream
-			ByteBuffer bbuff = THRLOC_BB_RESP_WRITE.get();
-			if(bbuff == null) {
-				bbuff = ByteBuffer.allocate(LoadExecutor.BUFF_SIZE_LO);
-				THRLOC_BB_RESP_WRITE.set(bbuff);
-			} else {
-				bbuff.clear();
+		} finally {
+			if(!in.isCompleted()) {
+				IOUtils.consumeQuietly(in);
 			}
-			StreamUtils.consumeQuietly(in, ioCtl, bbuff);
 		}
 		return verifyPass;
 	}
@@ -642,7 +625,7 @@ implements WSRequestConfig<T> {
 			super.close();
 		} finally {
 			clientDaemon.interrupt();
-			LOG.debug(LogUtil.MSG, "Client thread \"{}\" stopped", clientDaemon);
+			LOG.debug(Markers.MSG, "Client thread \"{}\" stopped", clientDaemon);
 		}
 		//
 		if(connPool != null && connPool.isShutdown()) {
@@ -659,7 +642,7 @@ implements WSRequestConfig<T> {
 		}
 		//
 		ioReactor.shutdown(1);
-		LOG.debug(LogUtil.MSG, "Closed web storage client");
+		LOG.debug(Markers.MSG, "Closed web storage client");
 	}
 	//
 	@Override
@@ -693,7 +676,7 @@ implements WSRequestConfig<T> {
 				);
 			}
 		} else {
-			LOG.warn(LogUtil.ERR, "Failed to determine the 1st storage node address");
+			LOG.warn(Markers.ERR, "Failed to determine the 1st storage node address");
 		}
 		//
 		if(tgtHost != null && connPool != null) {
@@ -706,7 +689,7 @@ implements WSRequestConfig<T> {
 				).get();
 			} catch(final InterruptedException e) {
 				if(!isClosed()) {
-					LOG.debug(LogUtil.ERR, "Interrupted during HTTP request execution");
+					LOG.debug(Markers.ERR, "Interrupted during HTTP request execution");
 				}
 			} catch(final ExecutionException e) {
 				if(!isClosed()) {

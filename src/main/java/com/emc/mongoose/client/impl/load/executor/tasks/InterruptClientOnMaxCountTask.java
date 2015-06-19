@@ -1,6 +1,7 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
@@ -34,12 +35,13 @@ implements PeriodicTask<Long> {
 	//
 	@Override
 	public final void run() {
+		processedCount.set(0); // should be reset
 		for(final PeriodicTask<Long> nextCountTask : getValueTasks) {
 			if(nextCountTask.getLastResult() != null && maxCount <= processedCount.addAndGet(nextCountTask.getLastResult())) {
 				try {
 					loadClient.interrupt();
 					LOG.debug(
-						LogUtil.MSG, "Load client \"{}\" was interrupted due to count limit {}",
+						Markers.MSG, "Load client \"{}\" was interrupted due to count limit {}",
 						loadClient, maxCount
 					);
 				} catch(final RemoteException e) {

@@ -1,17 +1,19 @@
 package com.emc.mongoose.core.impl.load.executor;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.http.RequestSharedHeaders;
-import com.emc.mongoose.common.http.RequestTargetHost;
-import com.emc.mongoose.common.logging.LogUtil;
-//
+import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.http.request.SharedHeadersAdder;
+import com.emc.mongoose.common.net.http.request.HostHeaderSetter;
+import com.emc.mongoose.common.log.LogUtil;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-//
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.task.BasicWSIOTask;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
@@ -89,8 +91,8 @@ implements WSLoadExecutor<T> {
 		//
 		httpProcessor = HttpProcessorBuilder
 			.create()
-			.add(new RequestSharedHeaders(sharedHeaders))
-			.add(new RequestTargetHost())
+			.add(new SharedHeadersAdder(sharedHeaders))
+			.add(new HostHeaderSetter())
 			.add(new RequestConnControl())
 			.add(new RequestUserAgent(userAgent))
 			//.add(new RequestExpectContinue(true))
@@ -120,8 +122,8 @@ implements WSLoadExecutor<T> {
 			.setSoReuseAddress(thrLocalConfig.getSocketReuseAddrFlag())
 			.setSoTimeout(thrLocalConfig.getSocketTimeOut())
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
-			.setRcvBufSize(IOTask.Type.READ.equals(loadType) ? buffSize : BUFF_SIZE_LO)
-			.setSndBufSize(IOTask.Type.READ.equals(loadType) ? BUFF_SIZE_LO : buffSize)
+			.setRcvBufSize(IOTask.Type.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
+			.setSndBufSize(IOTask.Type.READ.equals(loadType) ? Constants.BUFF_SIZE_LO : buffSize)
 			.setConnectTimeout(thrLocalConfig.getConnTimeOut());
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
@@ -129,7 +131,7 @@ implements WSLoadExecutor<T> {
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
 			.setBufferSize(buffSize)
-			.setFragmentSizeHint(BUFF_SIZE_LO)
+			.setFragmentSizeHint(Constants.BUFF_SIZE_LO)
 			.build();
 		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
 			reqExecutor, connConfig
@@ -167,7 +169,7 @@ implements WSLoadExecutor<T> {
 	@Override
 	public void start() {
 		if(clientDaemon == null) {
-			LOG.debug(LogUtil.ERR, "Not starting web load client due to initialization failures");
+			LOG.debug(Markers.ERR, "Not starting web load client due to initialization failures");
 		} else {
 			clientDaemon.start();
 			super.start();
@@ -185,18 +187,18 @@ implements WSLoadExecutor<T> {
 			try {
 				clientDaemon.interrupt();
 				LOG.debug(
-					LogUtil.MSG, "Web storage client daemon \"{}\" interrupted", clientDaemon
+					Markers.MSG, "Web storage client daemon \"{}\" interrupted", clientDaemon
 				);
 				if(connPool != null) {
 					connPool.closeExpired();
-					LOG.debug(LogUtil.MSG, "Closed expired (if any) connections in the pool");
+					LOG.debug(Markers.MSG, "Closed expired (if any) connections in the pool");
 					try {
 						connPool.closeIdle(1, TimeUnit.MILLISECONDS);
-						LOG.debug(LogUtil.MSG, "Closed idle connections (if any) in the pool");
+						LOG.debug(Markers.MSG, "Closed idle connections (if any) in the pool");
 					} finally {
 						try {
 							connPool.shutdown(1);
-							LOG.debug(LogUtil.MSG, "Connection pool has been shut down");
+							LOG.debug(Markers.MSG, "Connection pool has been shut down");
 						} catch(final IOException e) {
 							LogUtil.exception(
 								LOG, Level.WARN, e, "Connection pool shutdown failure"
@@ -206,7 +208,7 @@ implements WSLoadExecutor<T> {
 				}
 				//
 				ioReactor.shutdown(1);
-				LOG.debug(LogUtil.MSG, "I/O reactor has been shut down");
+				LOG.debug(Markers.MSG, "I/O reactor has been shut down");
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "I/O reactor shutdown failure");
 			} finally {
@@ -227,9 +229,9 @@ implements WSLoadExecutor<T> {
 		final Future<IOTask.Status> futureResult;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, wsTask);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
+			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(
-					LogUtil.MSG, "I/O task #{} has been submitted for execution: {}1",
+					Markers.MSG, "I/O task #{} has been submitted for execution: {}1",
 					wsTask.hashCode(), futureResult
 				);
 			}

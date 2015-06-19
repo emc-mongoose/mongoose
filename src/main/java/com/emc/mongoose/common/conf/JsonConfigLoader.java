@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.conf;
 //
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 //
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,8 +46,19 @@ public class JsonConfigLoader {
 		final ObjectMapper jsonMapper = new ObjectMapper();
 		//
 		try {
-			LOG.debug(LogUtil.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
-			final JsonNode rootNode = jsonMapper.readTree(cfgFile);
+			JsonNode rootNode;
+			if(cfgFile.exists() && cfgFile.isFile()){
+				LOG.debug(Markers.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
+				rootNode = jsonMapper.readTree(cfgFile);
+			} else {
+				final ClassLoader cl = JsonConfigLoader.class.getClassLoader();
+				final InputStream bundleMongooseConf = cl.getResourceAsStream(RunTimeConfig.FNAME_CONF);
+				LOG.debug(
+					Markers.MSG, "Load system properties from json file \"{}\"",
+					cl.getResource(RunTimeConfig.FNAME_CONF)
+				);
+				rootNode = jsonMapper.readTree(bundleMongooseConf);
+			}
 			walkJsonTree(rootNode);
 			tgtConfig.setMongooseKeys(mongooseKeys);
 			tgtConfig.putJsonProps(rootNode);

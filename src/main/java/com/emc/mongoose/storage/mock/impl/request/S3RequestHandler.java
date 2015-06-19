@@ -1,8 +1,8 @@
 package com.emc.mongoose.storage.mock.impl.request;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
-//
+import com.emc.mongoose.common.log.Markers;
+// mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //
@@ -31,8 +31,8 @@ extends WSRequestHandlerBase<T> {
 	) {
 		if(method.equals(METHOD_PUT) && requestURI.length == 2) {
 			httpResponse.setStatusCode(HttpStatus.SC_OK);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.MSG, "Created bucket: {}", requestURI[requestURI.length - 1]);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Created bucket: {}", requestURI[requestURI.length - 1]);
 			}
 		} else {
 			handleGenericDataReq(httpRequest, httpResponse, method, dataId);

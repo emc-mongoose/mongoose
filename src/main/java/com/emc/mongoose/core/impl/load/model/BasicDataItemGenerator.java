@@ -1,11 +1,12 @@
 package com.emc.mongoose.core.impl.load.model;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
-//
-import com.emc.mongoose.common.logging.LogUtil;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -78,7 +79,7 @@ implements Producer<T> {
 		final ThreadLocalRandom thrLocalRnd = ThreadLocalRandom.current();
 		//
 		LOG.debug(
-			LogUtil.MSG, "Will try to produce up to {} objects of {} size", maxCount,
+			Markers.MSG, "Will try to produce up to {} objects of {} size", maxCount,
 			minObjSize == maxObjSize ?
 				SizeUtil.formatSize(minObjSize) :
 				SizeUtil.formatSize(minObjSize)+".."+ SizeUtil.formatSize(maxObjSize)
@@ -101,9 +102,9 @@ implements Producer<T> {
 				}
 				newDataConsumer.submit(dataConstructor.newInstance(nextSize));
 				i ++;
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
-						LogUtil.MSG, "Submitted object #{} of size {}",
+						Markers.MSG, "Submitted object #{} of size {}",
 						i, SizeUtil.formatSize(nextSize)
 					);
 				}
@@ -117,11 +118,11 @@ implements Producer<T> {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to instantiate the data item");
 				break;
 			} catch(final InterruptedException e) {
-				LOG.debug(LogUtil.MSG, MSG_INTERRUPTED);
+				LOG.debug(Markers.MSG, MSG_INTERRUPTED);
 				break;
 			}
 		}
-		LOG.debug(LogUtil.MSG, "Finished, generated {} items", i);
+		LOG.debug(Markers.MSG, "Finished, generated {} items", i);
 	}
 	//
 }

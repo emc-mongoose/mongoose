@@ -1,13 +1,14 @@
 package com.emc.mongoose.storage.mock.impl.request;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
-//
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataObject;
-//
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.UniformData;
-//
+// mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
@@ -78,14 +79,14 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		this.ioStats = sharedStorage.getStats();
 	}
 	//
-	private final static ThreadLocal<HttpAsyncRequestConsumer<HttpRequest>>
+	private final static ThreadLocal<BasicWSRequestConsumer>
 		THRLOC_REQ_CONSUMER = new ThreadLocal<>();
 	@Override
 	public final HttpAsyncRequestConsumer<HttpRequest> processRequest(
 		final HttpRequest request, final HttpContext context
 	) throws HttpException, IOException {
 		try {
-			HttpAsyncRequestConsumer<HttpRequest> reqConsumer = THRLOC_REQ_CONSUMER.get();
+			BasicWSRequestConsumer reqConsumer = THRLOC_REQ_CONSUMER.get();
 			if(reqConsumer == null) {
 				reqConsumer = new BasicWSRequestConsumer();
 				THRLOC_REQ_CONSUMER.set(reqConsumer);
@@ -171,8 +172,8 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	private void handleCreate(
 		final HttpRequest httpRequest, final HttpResponse httpResponse, final String dataId
 	) {
-		if(LOG.isTraceEnabled(LogUtil.MSG)) {
-			LOG.trace(LogUtil.MSG, "Create data object with ID: {}", dataId);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Create data object with ID: {}", dataId);
 		}
 		try {
 			httpResponse.setStatusCode(HttpStatus.SC_OK);
@@ -196,14 +197,14 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final WSObjectMock dataObject = sharedStorage.get(dataId);
 		if(dataObject == null) {
 			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.ERR, "No such object: {}", dataId);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.ERR, "No such object: {}", dataId);
 			}
 			ioStats.markRead(-1);
 		} else {
 			response.setStatusCode(HttpStatus.SC_OK);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.MSG, "Send data object with ID: {}", dataId);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Send data object with ID: {}", dataId);
 			}
 			response.setEntity(dataObject);
 			ioStats.markRead(dataObject.getSize());
@@ -214,14 +215,14 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final T dataObject = sharedStorage.get(dataId);
 		if(dataObject == null) {
 			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.ERR, "No such object: {}", dataId);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.ERR, "No such object: {}", dataId);
 			}
 		} else {
 			sharedStorage.delete(dataObject);
 			response.setStatusCode(HttpStatus.SC_OK);
-			if(LOG.isTraceEnabled(LogUtil.MSG)) {
-				LOG.trace(LogUtil.MSG, "Delete data object with ID: {}", dataId);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Delete data object with ID: {}", dataId);
 			}
 			ioStats.markDelete();
 		}
@@ -235,8 +236,8 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final long offset = decodeRingBufferOffset(dataID);
 		final T dataObject = (T) new BasicWSObjectMock(dataID, offset, bytes);
 		sharedStorage.create(dataObject);
-		if(LOG.isTraceEnabled(LogUtil.DATA_LIST)) {
-			LOG.trace(LogUtil.DATA_LIST, dataObject);
+		if(LOG.isTraceEnabled(Markers.DATA_LIST)) {
+			LOG.trace(Markers.DATA_LIST, dataObject);
 		}
 		return dataObject;
 	}
@@ -246,7 +247,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	offset for mongoose v0.4x and 0.5x:
 		final byte dataIdBytes[] = Base64.decodeBase64(dataID);
 		final long offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
-	offset for mongoose versions prior to v.0.4:
+	offset for mongoose versions prior to v0.4:
 		final long offset = Long.valueOf(dataID, 0x10);
 	 */
 	private static long decodeRingBufferOffset(final String dataID)

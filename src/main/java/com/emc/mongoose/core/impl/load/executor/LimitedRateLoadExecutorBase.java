@@ -1,8 +1,8 @@
 package com.emc.mongoose.core.impl.load.executor;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-//
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 //
@@ -44,7 +44,7 @@ extends LoadExecutorBase<T> {
 		this.rateLimit = rateLimit;
 		if(rateLimit > 0) {
 			tgtDur = (int) (1000000 * addrs.length * connCountPerNode / rateLimit);
-			LOG.debug(LogUtil.MSG, "{}: target I/O task durations is {}[us]", getName(), tgtDur);
+			LOG.debug(Markers.MSG, "{}: target I/O task durations is {}[us]", getName(), tgtDur);
 		} else {
 			tgtDur = 0;
 		}
@@ -59,8 +59,8 @@ extends LoadExecutorBase<T> {
 		if(rateLimit > 0 && throughPut.getMeanRate() > rateLimit) {
 			final int microDelay = (int) (tgtDur - durTasksSum.get() / throughPut.getCount());
 			if(microDelay > 0) {
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(LogUtil.MSG, "Next delay: {}[us]", microDelay);
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(Markers.MSG, "Next delay: {}[us]", microDelay);
 				}
 				TimeUnit.MICROSECONDS.sleep(microDelay);
 			}

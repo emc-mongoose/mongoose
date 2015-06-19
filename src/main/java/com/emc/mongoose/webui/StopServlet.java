@@ -1,9 +1,9 @@
 package com.emc.mongoose.webui;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.webui.logging.WebUIAppender;
+import com.emc.mongoose.common.log.appenders.WebUIAppender;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;

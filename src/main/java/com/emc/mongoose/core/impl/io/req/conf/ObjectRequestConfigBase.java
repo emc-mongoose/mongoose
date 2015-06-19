@@ -1,9 +1,9 @@
 package com.emc.mongoose.core.impl.io.req.conf;
-//
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
-//
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.task.BasicObjectIOTask;
 /**
  Created by kurila on 23.12.14.

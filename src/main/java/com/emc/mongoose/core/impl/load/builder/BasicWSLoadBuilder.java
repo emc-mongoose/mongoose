@@ -1,12 +1,12 @@
 package com.emc.mongoose.core.impl.load.builder;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.logging.LogUtil;
-//
+import com.emc.mongoose.common.log.Markers;
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
-//
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.load.builder.ObjectLoadBuilder;
 import com.emc.mongoose.core.api.load.builder.WSLoadBuilder;
@@ -45,9 +45,9 @@ implements WSLoadBuilder<T, U> {
 		try {
 			WSRequestConfig.class.cast(reqConf).setScheme(runTimeConfig.getStorageProto());
 		} catch(final NoSuchElementException e) {
-			LOG.error(LogUtil.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, paramName);
 		} catch(final IllegalArgumentException e) {
-			LOG.error(LogUtil.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
+			LOG.error(Markers.ERR, MSG_TMPL_INVALID_VALUE, paramName, e.getMessage());
 		}
 		//
 		return this;
@@ -57,7 +57,7 @@ implements WSLoadBuilder<T, U> {
 	public final BasicWSLoadBuilder<T, U> clone()
 	throws CloneNotSupportedException {
 		final BasicWSLoadBuilder<T, U> lb = (BasicWSLoadBuilder<T, U>) super.clone();
-		LOG.debug(LogUtil.MSG, "Cloning request config for {}", reqConf.toString());
+		LOG.debug(Markers.MSG, "Cloning request config for {}", reqConf.toString());
 		return lb;
 	}
 	//
@@ -85,8 +85,9 @@ implements WSLoadBuilder<T, U> {
 		}
 		//
 		return (U) new BasicWSLoadExecutor<>(
-			localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
-			listFile, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
+			localRunTimeConfig, wsReqConf, dataNodeAddrs,
+			threadsPerNodeMap.get(reqConf.getLoadType()), listFile,
+			maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem
 		);
 	}
 }

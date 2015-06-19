@@ -1,6 +1,7 @@
 package com.emc.mongoose.common.conf;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 //
 import com.fasterxml.jackson.databind.JsonNode;
 //
@@ -202,7 +203,8 @@ implements Externalizable {
 		return getBoolean("run.request.retries");
 	}
 	//
-	public final String getApiName() {
+	public final
+	String getApiName() {
 		return getString(KEY_API_NAME);
 	}
 	//
@@ -214,7 +216,8 @@ implements Externalizable {
 		return getString("auth.id");
 	}
 	//
-	public final String getAuthSecret() {
+	public final
+	String getAuthSecret() {
 		return getString("auth.secret");
 	}
 	//
@@ -290,15 +293,18 @@ implements Externalizable {
 		return getString("run.name");
 	}
 	//
-	public final String getRunVersion() {
+	public final
+	String getRunVersion() {
 		return getString(KEY_RUN_VERSION);
 	}
 	//
-	public final long getLoadLimitCount() {
+	public final
+	long getLoadLimitCount() {
 		return getLong(KEY_DATA_ITEM_COUNT);
 	}
 	//
-	public final float getLoadLimitRate() {
+	public final
+	float getLoadLimitRate() {
 		return getFloat(KEY_LOAD_LIMIT_RATE);
 	}
 	//
@@ -314,7 +320,8 @@ implements Externalizable {
 		return SizeUtil.toSize(getString(KEY_DATA_SIZE_MAX));
 	}
 	//
-	public final float getDataSizeBias() {
+	public final
+	float getDataSizeBias() {
 		return getFloat(KEY_DATA_SIZE_BIAS);
 	}
 	//
@@ -343,7 +350,8 @@ implements Externalizable {
 		return getInt("remote.connection.timeoutMilliSec");
 	}
 	//
-	public final int getSocketTimeOut() {
+	public final
+	int getSocketTimeOut() {
 		return getInt("remote.socket.timeoutMilliSec");
 	}
 	//
@@ -359,7 +367,8 @@ implements Externalizable {
 		return getBoolean("remote.socket.tcpNoDelay");
 	}
 	//
-	public final int getSocketLinger() {
+	public final
+	int getSocketLinger() {
 		return getInt("remote.socket.linger");
 	}
 	//
@@ -395,7 +404,8 @@ implements Externalizable {
 		return getString("scenario.dir");
 	}
 	//
-	public final String getRunId() {
+	public final
+	String getRunId() {
 		return getString(KEY_RUN_ID);
 	}
 	//
@@ -407,7 +417,8 @@ implements Externalizable {
 		return TimeUtil.getTimeValue(getString(KEY_LOAD_LIMIT_TIME));
 	}
 	//
-	public final String getRunMode() {
+	public final
+	String getRunMode() {
 		return getString(KEY_RUN_MODE);
 	}
 	//
@@ -431,12 +442,12 @@ implements Externalizable {
 		return getInt("storage.mock.ioThreadsPerSocket");
 	}
 	//
-	public final int getStorageMockFaultPeriodSec() {
-		return getInt("storage.mock.fault.periodSec");
+	public final int getStorageMockMinConnLifeMilliSec() {
+		return getInt("storage.mock.fault.minConnLifeMilliSec");
 	}
 	//
-	public final int getStorageMockFaultConnCacheSize() {
-		return getInt("storage.mock.fault.connCacheSize");
+	public final int getStorageMockMaxConnLifeMilliSec() {
+		return getInt("storage.mock.fault.maxConnLifeMilliSec");
 	}
 	//
 	public final String getDataBufferRingSeed() {
@@ -461,6 +472,10 @@ implements Externalizable {
 	//
 	public final String[] getScenarioChainLoad() {
 		return getStringArray(KEY_SCENARIO_CHAIN_LOAD);
+	}
+	//
+	public final boolean getScenarioChainConcurrentFlag() {
+		return getBoolean(KEY_SCENARIO_CHAIN_CONCURRENT);
 	}
 	//
 	public final String[] getScenarioRampupThreadCounts() {
@@ -490,7 +505,7 @@ implements Externalizable {
 	public final synchronized void writeExternal(final ObjectOutput out)
 	throws IOException {
 		final Logger log = LogManager.getLogger();
-		log.debug(LogUtil.MSG, "Going to upload properties to a server");
+		log.debug(Markers.MSG, "Going to upload properties to a server");
 		String nextPropName;
 		Object nextPropValue;
 		final HashMap<String, String> propsMap = new HashMap<>();
@@ -498,7 +513,7 @@ implements Externalizable {
 			nextPropName = i.next();
 			nextPropValue = getProperty(nextPropName);
 			log.trace(
-				LogUtil.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
+				Markers.MSG, "Write property: \"{}\" = \"{}\"", nextPropName, nextPropValue
 			);
 			if(List.class.isInstance(nextPropValue)) {
 				propsMap.put(
@@ -510,20 +525,20 @@ implements Externalizable {
 			} else if(Number.class.isInstance(nextPropValue)) {
 				propsMap.put(nextPropName, Number.class.cast(nextPropValue).toString());
 			} else if(nextPropValue == null) {
-				log.warn(LogUtil.ERR, "Property \"{}\" is null");
+				log.warn(Markers.ERR, "Property \"{}\" is null");
 			} else {
 				log.error(
-					LogUtil.ERR, "Unexpected type \"{}\" for property \"{}\"",
+					Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
 					nextPropValue.getClass().getCanonicalName(), nextPropName
 				);
 			}
 		}
 		//
-		log.trace(LogUtil.MSG, "Sending configuration: {}", propsMap);
+		log.trace(Markers.MSG, "Sending configuration: {}", propsMap);
 		//
 		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
 		oos.writeUnshared(propsMap);
-		log.debug(LogUtil.MSG, "Uploaded the properties from client side");
+		log.debug(Markers.MSG, "Uploaded the properties from client side");
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -531,9 +546,9 @@ implements Externalizable {
 	throws IOException, ClassNotFoundException {
 		final Logger log = LogManager.getLogger();
 		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
-		log.debug(LogUtil.MSG, "Going to fetch the properties from client side");
+		log.debug(Markers.MSG, "Going to fetch the properties from client side");
 		final HashMap<String, String> confMap = HashMap.class.cast(ois.readUnshared());
-		log.trace(LogUtil.MSG, "Got the properties from client side: {}", confMap);
+		log.trace(Markers.MSG, "Got the properties from client side: {}", confMap);
 		//
 		final String
 			serverVersion = CONTEXT_CONFIG.get().getRunVersion(),
@@ -547,7 +562,7 @@ implements Externalizable {
 				nextPropValue = nextPropName.startsWith("remote.port.export") || nextPropName.startsWith("remote.port.import") ?
 					localRunTimeConfig.getString(nextPropName) :
 					confMap.get(nextPropName);
-				log.trace(LogUtil.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
+				log.trace(Markers.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
 				if(List.class.isInstance(nextPropValue)) {
 					setProperty(
 						nextPropName,
@@ -556,22 +571,22 @@ implements Externalizable {
 				} else if(String.class.isInstance(nextPropValue)) {
 					setProperty(nextPropName, String.class.cast(nextPropValue));
 				} else if(nextPropValue == null) {
-					log.debug(LogUtil.ERR, "Property \"{}\" is null", nextPropName);
+					log.debug(Markers.ERR, "Property \"{}\" is null", nextPropName);
 				} else {
 					log.error(
-						LogUtil.ERR, "Unexpected type \"{}\" for property \"{}\"",
+						Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
 						nextPropValue.getClass().getCanonicalName(), nextPropName
 					);
 				}
 			}
 			CONTEXT_CONFIG.set(this);
-			log.info(LogUtil.MSG, toString());
+			log.info(Markers.MSG, toString());
 		} else {
 			final String errMsg = String.format(
 				"%s, version mismatch, server: %s client: %s",
 				getRunName(), serverVersion, clientVersion
 			);
-			log.fatal(LogUtil.ERR, errMsg);
+			log.fatal(Markers.ERR, errMsg);
 			throw new IOException(errMsg);
 		}
 	}
@@ -594,7 +609,7 @@ implements Externalizable {
 		for(final Iterator<String> keyIter = sysProps.getKeys(); keyIter.hasNext();) {
 			key = keyIter.next();
 			log.trace(
-				LogUtil.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",
+				Markers.MSG, "System property: \"{}\": \"{}\" -> \"{}\"",
 				key, getProperty(key), sysProps.getProperty(key)
 			);
 			keys2override = MAP_OVERRIDE.get(key);

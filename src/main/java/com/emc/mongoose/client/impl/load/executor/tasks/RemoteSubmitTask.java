@@ -1,7 +1,8 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
 //
+import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
@@ -19,25 +20,36 @@ public final class RemoteSubmitTask<T extends DataItem>
 implements Runnable, Reusable<RemoteSubmitTask> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static InstancePool<RemoteSubmitTask>
+		INSTANCE_POOL = new InstancePool<>(RemoteSubmitTask.class);
 	//
-	private final LoadSvc<T> loadSvc;
-	//
-	public RemoteSubmitTask(final LoadSvc<T> loadSvc) {
-		this.loadSvc = loadSvc;
+	@SuppressWarnings("unchecked")
+	public static <T extends DataItem> RemoteSubmitTask<T> getInstance(
+		final LoadSvc<T> loadSvc, final T dataItem
+	) {
+		return INSTANCE_POOL.take(loadSvc, dataItem);
 	}
+	//
+	private LoadSvc<T> loadSvc = null;
 	private T dataItem = null;
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final RemoteSubmitTask reuse(final Object... args)
-	throws IllegalArgumentException, IllegalStateException {
-		if(args != null && args.length > 0) {
-			dataItem = (T) args[0];
+		throws IllegalArgumentException, IllegalStateException {
+		if(args != null) {
+			if(args.length > 0) {
+				loadSvc = (LoadSvc<T>) args[0];
+			}
+			if(args.length > 1) {
+				dataItem = (T) args[1];
+			}
 		}
 		return this;
 	}
 	//
 	@Override
 	public final void release() {
+		INSTANCE_POOL.release(this);
 	}
 	//
 	@Override

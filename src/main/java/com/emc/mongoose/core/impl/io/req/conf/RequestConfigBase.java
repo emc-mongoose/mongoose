@@ -1,13 +1,13 @@
 package com.emc.mongoose.core.impl.io.req.conf;
-//
-import com.emc.mongoose.common.logging.LogUtil;
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-//
+import com.emc.mongoose.common.log.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.src.DataSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
-//
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
 //
 import org.apache.commons.lang.StringUtils;
@@ -50,7 +50,7 @@ implements RequestConfig<T> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		LOG.trace(LogUtil.MSG, "New reqconf instance #" + hashCode());
+		LOG.trace(Markers.MSG, "New reqconf instance #" + hashCode());
 		api = runTimeConfig.getApiName();
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();
@@ -83,7 +83,7 @@ implements RequestConfig<T> {
 			setBuffSize(reqConf2Clone.getBuffSize());
 			setReqSleepMilliSec(reqConf2Clone.getReqSleepMilliSec());
 			LOG.debug(
-				LogUtil.MSG, "Forked req conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
+				Markers.MSG, "Forked req conf #{} from #{}", hashCode(), reqConf2Clone.hashCode()
 			);
 		}
 	}
@@ -107,7 +107,7 @@ implements RequestConfig<T> {
 			.setReqSleepMilliSec(reqSleepMilliSec);
 		requestConfigBranch.secret = secret;
 		LOG.debug(
-			LogUtil.MSG, "Forked req conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
+			Markers.MSG, "Forked req conf #{} from #{}", requestConfigBranch.hashCode(), hashCode()
 		);
 		return requestConfigBranch;
 	}
@@ -128,7 +128,7 @@ implements RequestConfig<T> {
 	}
 	@Override
 	public RequestConfigBase<T> setLoadType(final IOTask.Type loadType) {
-		LOG.trace(LogUtil.MSG, "Setting load type {}", loadType);
+		LOG.trace(Markers.MSG, "Setting load type {}", loadType);
 		this.loadType = loadType;
 		return this;
 	}
@@ -173,7 +173,7 @@ implements RequestConfig<T> {
 	@Override
 	public final RequestConfigBase<T> setPort(final int port)
 	throws IllegalArgumentException {
-		LOG.trace(LogUtil.MSG, "Using storage port: {}", port);
+		LOG.trace(Markers.MSG, "Using storage port: {}", port);
 		if(port > 0 || port < 0x10000) {
 			this.port = port;
 			/*uriTemplate = String.format(
@@ -324,29 +324,29 @@ implements RequestConfig<T> {
 	throws IOException, ClassNotFoundException {
 		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
 		setAPI(String.class.cast(ois.readUnshared()));
-		LOG.trace(LogUtil.MSG, "Got API {}", api);
+		LOG.trace(Markers.MSG, "Got API {}", api);
 		setLoadType(IOTask.Type.class.cast(ois.readUnshared()));
-		LOG.trace(LogUtil.MSG, "Got load type {}", loadType);
+		LOG.trace(Markers.MSG, "Got load type {}", loadType);
 		setScheme(String.class.cast(ois.readUnshared()));
-		LOG.trace(LogUtil.MSG, "Got scheme {}", scheme);
+		LOG.trace(Markers.MSG, "Got scheme {}", scheme);
 		setPort(in.readInt());
-		LOG.trace(LogUtil.MSG, "Got port {}", port);
+		LOG.trace(Markers.MSG, "Got port {}", port);
 		setUserName(String.class.cast(ois.readUnshared()));
-		LOG.trace(LogUtil.MSG, "Got user name {}", userName);
+		LOG.trace(Markers.MSG, "Got user name {}", userName);
 		setSecret(String.class.cast(ois.readUnshared()));
-		LOG.trace(LogUtil.MSG, "Got secret {}", secret);
+		LOG.trace(Markers.MSG, "Got secret {}", secret);
 		setNameSpace(String.class.cast(ois.readUnshared()));
-		LOG.trace(LogUtil.MSG, "Got namespace {}", secret);
+		LOG.trace(Markers.MSG, "Got namespace {}", secret);
 		setDataSource(DataSource.class.cast(ois.readUnshared()));
-		LOG.trace(LogUtil.MSG, "Got data source {}", dataSrc);
+		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
 		setRetries(in.readBoolean());
-		LOG.trace(LogUtil.MSG, "Got retry flag {}", retryFlag);
+		LOG.trace(Markers.MSG, "Got retry flag {}", retryFlag);
 		setAnyDataProducerEnabled(Boolean.class.cast(in.readBoolean()));
-		LOG.trace(LogUtil.MSG, "Got any producer enabled flag {}", anyDataProducerEnabled);
+		LOG.trace(Markers.MSG, "Got any producer enabled flag {}", anyDataProducerEnabled);
 		setVerifyContentFlag(in.readBoolean());
-		LOG.trace(LogUtil.MSG, "Got verify content flag {}", retryFlag);
+		LOG.trace(Markers.MSG, "Got verify content flag {}", retryFlag);
 		setReqSleepMilliSec(in.readInt());
-		LOG.trace(LogUtil.MSG, "Got requests sleep time {}", reqSleepMilliSec);
+		LOG.trace(Markers.MSG, "Got requests sleep time {}", reqSleepMilliSec);
 	}
 	//
 	@Override
@@ -360,7 +360,7 @@ implements RequestConfig<T> {
 	public void close()
 	throws IOException {
 		if(closeFlag.compareAndSet(false, true)) {
-			LOG.debug(LogUtil.MSG, "Request config instance #{} marked as closed", hashCode());
+			LOG.debug(Markers.MSG, "Request config instance #{} marked as closed", hashCode());
 		}
 	}
 	//

@@ -1,14 +1,15 @@
 package com.emc.mongoose.core.impl.load.model;
 //mongoose-common.jar
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 //mongoose-core-api.jar
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.Producer;
 //mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.load.model.reader.RandomFileReader;
+import com.emc.mongoose.core.impl.load.model.util.RandomFileReader;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -25,6 +26,7 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
+import java.util.Random;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPInputStream;
@@ -46,7 +48,7 @@ implements Producer<T> {
 	private final long maxCount;
 	private final boolean compressed;
 	//
-	private long approxDataItemsSize = LoadExecutor.BUFF_SIZE_LO;
+	private long approxDataItemsSize = Constants.BUFF_SIZE_LO;
 	private Consumer<T> consumer = null;
 	//
 	@SuppressWarnings("unchecked")
@@ -131,6 +133,7 @@ implements Producer<T> {
 	public final void run() {
 		long dataItemsCount = 0;
 		int batchSize = 0;
+		final Random random = new Random();
 		//
 		final Charset charset =  StandardCharsets.UTF_8;
 		final CharsetDecoder decoder = charset.newDecoder();
@@ -138,30 +141,33 @@ implements Producer<T> {
 		if(RunTimeConfig.getContext().isEnabledDataRandom()) {
 			batchSize = RunTimeConfig.getContext().getDataRandomBatchSize();
 		}
+		//
 		try(
-			BufferedReader fReader = new RandomFileReader(
-				new InputStreamReader(
-					compressed ?
-						new GZIPInputStream(Files.newInputStream(fPath))
-						: Files.newInputStream(fPath),
-					decoder
+			RandomFileReader fReader = new RandomFileReader(
+				new BufferedReader(
+					new InputStreamReader(
+						compressed ?
+							new GZIPInputStream(Files.newInputStream(fPath))
+							: Files.newInputStream(fPath),
+						decoder
+					)
 				),
-				batchSize, maxCount
+				batchSize, maxCount, random
 			)
 		) {
 			String nextLine;
 			T nextData;
 			LOG.debug(
-				LogUtil.MSG, "Going to produce up to {} data items for consumer \"{}\"",
+				Markers.MSG, "Going to produce up to {} data items for consumer \"{}\"",
 				consumer.getMaxCount(), consumer.toString()
 			);
 			do {
 				//
 				nextLine = fReader.readLine();
-				LOG.trace(LogUtil.MSG, "Got next line #{}: \"{}\"", dataItemsCount, nextLine);
+				LOG.trace(Markers.MSG, "Got next line #{}: \"{}\"", dataItemsCount, nextLine);
 				//
 				if(nextLine == null || nextLine.isEmpty()) {
-					LOG.debug(LogUtil.MSG, "No next line, exiting");
+					LOG.debug(Markers.MSG, "No next line, exiting");
 					break;
 				} else {
 					nextData = dataItemConstructor.newInstance(nextLine);
@@ -176,11 +182,11 @@ implements Producer<T> {
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to read line from the file");
 		} catch(final InterruptedException e) {
-			LOG.debug(LogUtil.MSG, "Interrupted");
+			LOG.debug(Markers.MSG, "Interrupted");
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure, file producer interrupted");
 		} finally {
-			LOG.debug(LogUtil.MSG, "Produced {} data items", dataItemsCount);
+			LOG.debug(Markers.MSG, "Produced {} data items", dataItemsCount);
 			try {
 				consumer.shutdown();
 			} catch(final RemoteException e) {
@@ -188,13 +194,13 @@ implements Producer<T> {
 			} finally {
 				consumer = null;
 			}
-			LOG.debug(LogUtil.MSG, "Exiting");
+			LOG.debug(Markers.MSG, "Exiting");
 		}
 	}
 	//
 	@Override
 	public final void setConsumer(final Consumer<T> consumer) {
-		LOG.debug(LogUtil.MSG, "Set consumer to \"{}\"", consumer.toString());
+		LOG.debug(Markers.MSG, "Set consumer to \"{}\"", consumer.toString());
 		this.consumer = consumer;
 	}
 	//

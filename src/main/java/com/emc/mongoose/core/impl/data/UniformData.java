@@ -1,15 +1,15 @@
 package com.emc.mongoose.core.impl.data;
-//
+// mongoose-common.jar
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.ServiceUtils;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.src.DataSource;
-//
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.src.UniformDataSource;
-//
-import com.emc.mongoose.common.logging.LogUtil;
-import com.emc.mongoose.common.net.ServiceUtils;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -163,12 +163,12 @@ implements DataItem {
 	}
 	//
 	@Override
-	public void write(final WritableByteChannel chanDst)
+	public long write(final WritableByteChannel chanDst)
 	throws IOException {
-		write(chanDst, 0, size);
+		return write(chanDst, 0, size);
 	}
 	//
-	protected final void write(
+	protected final long write(
 		final WritableByteChannel chanDst, final long relOffset, final long len
 	) throws IOException {
 		long writtenCount = 0;
@@ -178,11 +178,12 @@ implements DataItem {
 			enforceCircularity();
 			n = chanDst.write(ringBuff);
 			if(n < 0) {
-				LOG.warn(LogUtil.ERR, "Channel returned {} as written byte count", n);
+				LOG.warn(Markers.ERR, "Channel returned {} as written byte count", n);
 			} else if(n > 0) {
 				writtenCount += n;
 			}
 		}
+		return writtenCount;
 	}
 	//
 	@Override
@@ -201,7 +202,7 @@ implements DataItem {
 		//
 		final ByteBuffer inBuff = ByteBuffer.allocate(
 			(int) Math.min(
-				LoadExecutor.BUFF_SIZE_HI, Math.max(LoadExecutor.BUFF_SIZE_LO, len)
+				Constants.BUFF_SIZE_HI, Math.max(Constants.BUFF_SIZE_LO, len)
 			)
 		);
 		long doneByteCount = 0;
@@ -218,7 +219,7 @@ implements DataItem {
 			//
 			if(n < 0) { // premature end of stream
 				LOG.warn(
-					LogUtil.MSG, "{}: content size mismatch, expected: {}, got: {}",
+					Markers.MSG, "{}: content size mismatch, expected: {}, got: {}",
 					Long.toString(offset, DataObject.ID_RADIX), size, relOffset + doneByteCount
 				);
 				return false;
@@ -230,7 +231,7 @@ implements DataItem {
 					bi = inBuff.get();
 					if(bs != bi) {
 						LOG.warn(
-							LogUtil.MSG, "{}: content mismatch @ offset {}, expected: {}, got: {}",
+							Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, got: {}",
 							Long.toString(offset, DataObject.ID_RADIX),
 							relOffset + doneByteCount + m,
 							String.format("\"0x%X\"", bs), String.format("\"0x%X\"", bi)

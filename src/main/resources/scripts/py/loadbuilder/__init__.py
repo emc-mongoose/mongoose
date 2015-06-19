@@ -4,7 +4,7 @@ from org.apache.logging.log4j import Level, LogManager
 from org.apache.commons.configuration import ConversionException
 #
 from com.emc.mongoose.common.conf import Constants, RunTimeConfig
-from com.emc.mongoose.common.logging import LogUtil
+from com.emc.mongoose.common.log import LogUtil, Markers
 #
 from java.lang import IllegalStateException
 from java.rmi import RemoteException
@@ -19,7 +19,7 @@ def init():
 	try:
 		mode = localRunTimeConfig.getRunMode()
 	except NoSuchElementException:
-		LOG.fatal(LogUtil.ERR, "Launch mode is not specified, use -Drun.mode=<VALUE> argument")
+		LOG.fatal(Markers.ERR, "Launch mode is not specified, use -Drun.mode=<VALUE> argument")
 	#
 	loadBuilderInstance = None
 	#
@@ -31,11 +31,11 @@ def init():
 			try:
 				loadBuilderInstance = BasicWSLoadBuilderClient(localRunTimeConfig)
 			except ConversionException:
-				LOG.fatal(LogUtil.ERR, "Servers address list should be comma delimited")
+				LOG.fatal(Markers.ERR, "Servers address list should be comma delimited")
 			except NoSuchElementException:  # no one server addr not specified, try 127.0.0.1
-				LOG.fatal(LogUtil.ERR, "Servers address list not specified, try  arg -Dremote.servers=<LIST> to override")
+				LOG.fatal(Markers.ERR, "Servers address list not specified, try  arg -Dremote.servers=<LIST> to override")
 		except RemoteException as e:
-			LOG.fatal(LogUtil.ERR, "Failed to create load builder client: {}", e)
+			LOG.fatal(Markers.ERR, "Failed to create load builder client: {}", e)
 	else: # standalone
 		############################################################################################
 		from com.emc.mongoose.core.impl.load.builder import BasicWSLoadBuilder
@@ -46,5 +46,5 @@ def init():
 			LogUtil.exception(LOG, Level.FATAL, e, "Failed to create load builder client")
 	#
 	if loadBuilderInstance is None:
-		LOG.fatal(LogUtil.ERR, "No load builder instanced")
+		LOG.fatal(Markers.ERR, "No load builder instanced")
 	return loadBuilderInstance

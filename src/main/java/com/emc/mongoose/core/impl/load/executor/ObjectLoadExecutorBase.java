@@ -1,17 +1,17 @@
 package com.emc.mongoose.core.impl.load.executor;
-//
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-//
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.task.BasicObjectIOTask;
 //
 import java.io.IOException;
 //
-//import org.apache.logging.log4j.LogManager;
-//import org.apache.logging.log4j.Logger;
+//import org.apache.log.log4j.LogManager;
+//import org.apache.log.log4j.Logger;
 /**
  Created by kurila on 09.10.14.
  */

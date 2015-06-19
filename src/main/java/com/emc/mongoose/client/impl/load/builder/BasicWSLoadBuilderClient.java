@@ -3,14 +3,15 @@ package com.emc.mongoose.client.impl.load.builder;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-common.jar
-import com.emc.mongoose.common.net.Service;
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.BasicWSObject;
@@ -85,17 +86,17 @@ implements WSLoadBuilderClient<T, U> {
 				srcProducer = (FileProducer<T>) new FileProducer<>(
 					getMaxCount(), listFile, BasicWSObject.class
 				);
-				LOG.info(LogUtil.MSG, "Local data items will be read from file @ \"{}\"", listFile);
+				LOG.info(Markers.MSG, "Local data items will be read from file @ \"{}\"", listFile);
 				// adjusting the buffer size for the expected data items size
 				final long approxDataItemsSize = srcProducer.getApproxDataItemsSize();
 				reqConf.setBuffSize(
-					approxDataItemsSize < LoadExecutor.BUFF_SIZE_LO ?
-						LoadExecutor.BUFF_SIZE_LO :
-						approxDataItemsSize > LoadExecutor.BUFF_SIZE_HI ?
-							LoadExecutor.BUFF_SIZE_HI : (int) approxDataItemsSize
+					approxDataItemsSize < Constants.BUFF_SIZE_LO ?
+						Constants.BUFF_SIZE_LO :
+						approxDataItemsSize > Constants.BUFF_SIZE_HI ?
+							Constants.BUFF_SIZE_HI : (int) approxDataItemsSize
 				);
 			} catch(final NoSuchMethodException | IOException e) {
-				LOG.error(LogUtil.ERR, "Failure", e);
+				LOG.error(Markers.ERR, "Failure", e);
 			}
 		}
 		return this;
@@ -139,7 +140,7 @@ implements WSLoadBuilderClient<T, U> {
 					Integer.toString(jmxImportPort) + ServiceUtils.JMXRMI_URL_PATH +
 					Integer.toString(jmxImportPort);
 				nextJMXURL = new JMXServiceURL(svcJMXAddr);
-				LOG.debug(LogUtil.MSG, "Server JMX URL: {}", svcJMXAddr);
+				LOG.debug(Markers.MSG, "Server JMX URL: {}", svcJMXAddr);
 			} catch(final MalformedURLException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Failed to generate JMX URL");
 			}
@@ -167,13 +168,13 @@ implements WSLoadBuilderClient<T, U> {
 		);
 		if(srcProducer != null && srcProducer.getConsumer() == null) {
 			LOG.debug(
-				LogUtil.MSG, "Append consumer {} for producer {}",
+				Markers.MSG, "Append consumer {} for producer {}",
 				newLoadClient.getName(), srcProducer.getName()
 			);
 			srcProducer.setConsumer(newLoadClient);
 		}
 		srcProducer = null;
-		LOG.debug(LogUtil.MSG, "Load client {} created", newLoadClient.getName());
+		LOG.debug(Markers.MSG, "Load client {} created", newLoadClient.getName());
 		//
 		return (U) newLoadClient;
 	}

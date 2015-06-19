@@ -1,7 +1,8 @@
 package com.emc.mongoose.storage.adapter.swift;
-//
-import com.emc.mongoose.common.logging.LogUtil;
-//
+// mongoose-common.jar
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -64,14 +65,14 @@ implements Container<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(LogUtil.MSG, "No response status");
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.debug(LogUtil.MSG, "Container \"{}\" exists", name);
+						LOG.debug(Markers.MSG, "Container \"{}\" exists", name);
 						flagExists = true;
 					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
-						LOG.debug(LogUtil.MSG, "Container \"{}\" doesn't exist", name);
+						LOG.debug(Markers.MSG, "Container \"{}\" doesn't exist", name);
 					} else {
 						final StringBuilder msg = new StringBuilder("Check container \"")
 							.append(name).append("\" failure: ")
@@ -103,11 +104,11 @@ implements Container<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(LogUtil.MSG, "No response status");
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(LogUtil.MSG, "Container \"{}\" created", name);
+						LOG.info(Markers.MSG, "Container \"{}\" created", name);
 					} else {
 						final StringBuilder msg = new StringBuilder("Create container \"")
 							.append(name).append("\" failure: ")
@@ -119,7 +120,7 @@ implements Container<T> {
 							}
 						}
 						LOG.warn(
-							LogUtil.ERR, "Create container \"{}\" response ({}): {}",
+							Markers.ERR, "Create container \"{}\" response ({}): {}",
 							name, statusCode, msg.toString()
 						);
 					}
@@ -141,11 +142,11 @@ implements Container<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(LogUtil.MSG, "No response status");
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(LogUtil.MSG, "Container \"{}\" deleted", name);
+						LOG.info(Markers.MSG, "Container \"{}\" deleted", name);
 					} else {
 						final StringBuilder msg = new StringBuilder("Delete container \"")
 							.append(name).append("\" failure: ")
@@ -157,7 +158,7 @@ implements Container<T> {
 							}
 						}
 						LOG.warn(
-							LogUtil.ERR, "Delete container \"{}\" response ({}): {}",
+							Markers.ERR, "Delete container \"{}\" response ({}): {}",
 							name, statusCode, msg.toString()
 						);
 					}

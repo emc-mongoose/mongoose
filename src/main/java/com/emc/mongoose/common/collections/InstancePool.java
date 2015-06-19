@@ -1,7 +1,9 @@
 package com.emc.mongoose.common.collections;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -23,6 +25,19 @@ extends ConcurrentLinkedQueue<T> {
 	private final Constructor<T> constructor;
 	private final Object sharedArgs[];
 	private final AtomicInteger instCount = new AtomicInteger(0);
+	//
+	public InstancePool(final Class<T> cls) {
+		Constructor<T> constr = null;
+		try {
+			constr = cls.getConstructor();
+		} catch(final NoSuchMethodException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to get the default constructor for class {}", cls
+			);
+		}
+		constructor = constr;
+		sharedArgs = null;
+	}
 	//
 	public InstancePool(final Constructor<T> constructor, final Object... sharedArgs) {
 		this.constructor = constructor;
@@ -58,7 +73,7 @@ extends ConcurrentLinkedQueue<T> {
 		if(instance != null) {
 			if(!offer(instance)) {
 				LOG.debug(
-					LogUtil.ERR, "Failed to return the instance \"{}\" back into the pool \"{}\"",
+					Markers.ERR, "Failed to return the instance \"{}\" back into the pool \"{}\"",
 					instance.hashCode(), toString()
 				);
 			}

@@ -1,15 +1,21 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.emc.mongoose.common.conf.Constants;
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.log.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
 //
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.FileProducer;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -47,35 +53,35 @@ extends LimitedRateLoadExecutorBase<T> {
 		int buffSize;
 		if(producer != null && FileProducer.class.isInstance(producer)) {
 			final long approxDataItemSize = ((FileProducer) producer).getApproxDataItemsSize();
-			if(approxDataItemSize < BUFF_SIZE_LO) {
-				buffSize = BUFF_SIZE_LO;
-			} else if(approxDataItemSize > BUFF_SIZE_HI) {
-				buffSize = BUFF_SIZE_HI;
+			if(approxDataItemSize < Constants.BUFF_SIZE_LO) {
+				buffSize = Constants.BUFF_SIZE_LO;
+			} else if(approxDataItemSize > Constants.BUFF_SIZE_HI) {
+				buffSize = Constants.BUFF_SIZE_HI;
 			} else {
 				buffSize = (int) approxDataItemSize;
 			}
 		} else {
 			if(sizeMin == sizeMax) {
-				LOG.debug(LogUtil.MSG, "Fixed data item size: {}", SizeUtil.formatSize(sizeMin));
-				buffSize = sizeMin < BUFF_SIZE_HI ? (int) sizeMin : BUFF_SIZE_HI;
+				LOG.debug(Markers.MSG, "Fixed data item size: {}", SizeUtil.formatSize(sizeMin));
+				buffSize = sizeMin < Constants.BUFF_SIZE_HI ? (int) sizeMin : Constants.BUFF_SIZE_HI;
 			} else {
 				final long t = (sizeMin + sizeMax) / 2;
-				buffSize = t < BUFF_SIZE_HI ? (int) t : BUFF_SIZE_HI;
+				buffSize = t < Constants.BUFF_SIZE_HI ? (int) t : Constants.BUFF_SIZE_HI;
 				LOG.debug(
-					LogUtil.MSG, "Average data item size: {}",
+					Markers.MSG, "Average data item size: {}",
 					SizeUtil.formatSize(buffSize)
 				);
 			}
-			if(buffSize < BUFF_SIZE_LO) {
+			if(buffSize < Constants.BUFF_SIZE_LO) {
 				LOG.debug(
-					LogUtil.MSG, "Buffer size {} is less than lower bound {}",
-					SizeUtil.formatSize(buffSize), SizeUtil.formatSize(BUFF_SIZE_LO)
+					Markers.MSG, "Buffer size {} is less than lower bound {}",
+					SizeUtil.formatSize(buffSize), SizeUtil.formatSize(Constants.BUFF_SIZE_LO)
 				);
-				buffSize = BUFF_SIZE_LO;
+				buffSize = Constants.BUFF_SIZE_LO;
 			}
 		}
 		LOG.debug(
-			LogUtil.MSG, "Determined buffer size of {} for \"{}\"",
+			Markers.MSG, "Determined buffer size of {} for \"{}\"",
 			SizeUtil.formatSize(buffSize), getName()
 		);
 		this.reqConfigCopy.setBuffSize(buffSize);
@@ -126,9 +132,9 @@ extends LimitedRateLoadExecutorBase<T> {
 						sizeRange
 					);
 				dataItem.append(nextSize);
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
+				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
-						LogUtil.MSG, "Append the object \"{}\": +{}",
+						Markers.MSG, "Append the object \"{}\": +{}",
 						dataItem, SizeUtil.formatSize(nextSize)
 					);
 				}
@@ -136,9 +142,9 @@ extends LimitedRateLoadExecutorBase<T> {
 			case UPDATE:
 				if(dataItem.getSize() > 0) {
 					dataItem.updateRandomRanges(countUpdPerReq);
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
-							LogUtil.MSG, "Modified {} ranges for object \"{}\"",
+							Markers.MSG, "Modified {} ranges for object \"{}\"",
 							countUpdPerReq, dataItem
 						);
 					}

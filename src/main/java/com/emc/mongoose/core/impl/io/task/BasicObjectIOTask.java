@@ -1,8 +1,9 @@
 package com.emc.mongoose.core.impl.io.task;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.collections.InstancePool;
-import com.emc.mongoose.common.logging.LogUtil;
-//
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
@@ -73,7 +74,7 @@ implements DataObjectIOTask<T> {
 			respTimeDone >= respTimeStart
 		) {
 			LOG.info(
-				LogUtil.PERF_TRACE,
+				Markers.PERF_TRACE,
 				strBuilder
 					.append(nodeAddr).append(',')
 					.append(dataItemId).append(',')
@@ -91,7 +92,7 @@ implements DataObjectIOTask<T> {
 			status != Status.FAIL_UNKNOWN
 		) {
 			LOG.warn(
-				LogUtil.ERR,
+				Markers.ERR,
 				strBuilder
 					.append("Invalid trace: ")
 					.append(nodeAddr).append(',')

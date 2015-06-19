@@ -1,7 +1,8 @@
 package com.emc.mongoose.storage.adapter.atmos;
-//
-import com.emc.mongoose.common.logging.LogUtil;
-//
+// mongoose-common.jar
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -87,14 +88,14 @@ implements SubTenant<T> {
 					final HttpEntity httpEntity = httpResp.getEntity();
 					final StatusLine statusLine = httpResp.getStatusLine();
 					if(statusLine == null) {
-						LOG.warn(LogUtil.MSG, "No response status");
+						LOG.warn(Markers.MSG, "No response status");
 					} else {
 						final int statusCode = statusLine.getStatusCode();
 						if(statusCode == HttpStatus.SC_OK) {
-							LOG.debug(LogUtil.MSG, "Subtenant \"{}\" exists", value);
+							LOG.debug(Markers.MSG, "Subtenant \"{}\" exists", value);
 							flagExists = true;
 						} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
-							LOG.debug(LogUtil.MSG, "Subtenant \"{}\" doesn't exist", value);
+							LOG.debug(Markers.MSG, "Subtenant \"{}\" doesn't exist", value);
 						} else {
 							final StringBuilder msg = new StringBuilder(
 								statusLine.getReasonPhrase()
@@ -127,16 +128,16 @@ implements SubTenant<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(LogUtil.MSG, "No response status");
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
 						if(httpResp.containsHeader(KEY_SUBTENANT_ID)) {
 							value = httpResp.getLastHeader(KEY_SUBTENANT_ID).getValue();
-							LOG.info(LogUtil.MSG, "Subtenant \"{}\" created", value);
+							LOG.info(Markers.MSG, "Subtenant \"{}\" created", value);
 						} else {
 							LOG.warn(
-								LogUtil.ERR, "Storage response doesn't contain the header {}",
+								Markers.ERR, "Storage response doesn't contain the header {}",
 								KEY_SUBTENANT_ID
 							);
 						}
@@ -149,7 +150,7 @@ implements SubTenant<T> {
 							}
 						}
 						LOG.warn(
-							LogUtil.ERR, "Create subtenant \"{}\" response ({}): {}", value, statusCode, msg.toString()
+							Markers.ERR, "Create subtenant \"{}\" response ({}): {}", value, statusCode, msg.toString()
 						);
 					}
 				}
@@ -169,11 +170,11 @@ implements SubTenant<T> {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
 				if(statusLine == null) {
-					LOG.warn(LogUtil.MSG, "No response status");
+					LOG.warn(Markers.MSG, "No response status");
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode == HttpStatus.SC_OK) {
-						LOG.info(LogUtil.MSG, "Subtenant \"{}\" deleted", value);
+						LOG.info(Markers.MSG, "Subtenant \"{}\" deleted", value);
 					} else {
 						final StringBuilder msg = new StringBuilder(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
@@ -183,7 +184,7 @@ implements SubTenant<T> {
 							}
 						}
 						LOG.warn(
-							LogUtil.ERR, "Delete subtenant \"{}\" response ({}): {}", value, statusCode, msg.toString()
+							Markers.ERR, "Delete subtenant \"{}\" response ({}): {}", value, statusCode, msg.toString()
 						);
 					}
 				}

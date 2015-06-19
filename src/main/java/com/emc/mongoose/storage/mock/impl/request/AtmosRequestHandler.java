@@ -1,11 +1,11 @@
 package com.emc.mongoose.storage.mock.impl.request;
-//
+// mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.logging.LogUtil;
-//
+import com.emc.mongoose.common.log.Markers;
+// mongoose-storage-adapter-atmos.jar
 import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
-//
+// mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //
@@ -43,16 +43,16 @@ extends WSRequestHandlerBase<T> {
 				if(method.equalsIgnoreCase(METHOD_PUT)) {
 					final String subtenant = randomString(5);
 					httpResponse.setHeader(WSSubTenantImpl.KEY_SUBTENANT_ID, subtenant);
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
-						LOG.trace(LogUtil.MSG, "Created the subtenant: {}", subtenant);
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(Markers.MSG, "Created the subtenant: {}", subtenant);
 					}
 				}
 				httpResponse.setStatusCode(HttpStatus.SC_OK);
 			} else {
 				if(requestURI[2].equals(WSRequestConfigImpl.API_TYPE_OBJ)) {
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
-							LogUtil.MSG,
+							Markers.MSG,
 							"Handle atmos object request. URI doesn't contain the object ID."
 						);
 					}
@@ -64,9 +64,9 @@ extends WSRequestHandlerBase<T> {
 						handleGenericDataReq(httpRequest, httpResponse, method, newDataId);
 					}
 				} else {
-					if(LOG.isTraceEnabled(LogUtil.MSG)) {
+					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
-							LogUtil.MSG, "Handle atmos request. URI contains the object ID."
+							Markers.MSG, "Handle atmos request. URI contains the object ID."
 						);
 					}
 					handleGenericDataReq(httpRequest, httpResponse, method, dataId);

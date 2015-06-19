@@ -1,6 +1,7 @@
 package com.emc.mongoose.client.impl.load.executor.tasks;
 // mongoose-common.jar
-import com.emc.mongoose.common.logging.LogUtil;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 // mongoose-server-api.jar
@@ -13,17 +14,18 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
+import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
 /**
  Created by kurila on 17.12.14.
  */
 public final class FrameFetchPeriodicTask<T extends DataItem>
-implements PeriodicTask<T[]> {
+implements PeriodicTask<Collection<T>> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
 	//
 	private final LoadSvc<T> loadSvc;
-	private final AtomicReference<T[]> result = new AtomicReference<>();
+	private final AtomicReference<Collection<T>> result = new AtomicReference<>();
 	//
 	public FrameFetchPeriodicTask(final LoadSvc<T> loadSvc) {
 		this.loadSvc = loadSvc;
@@ -32,11 +34,11 @@ implements PeriodicTask<T[]> {
 	@Override
 	public final void run() {
 		try {
-			final T[] nextFrame = loadSvc.takeFrame();
+			final Collection<T> nextFrame = loadSvc.takeFrame();
 			if(nextFrame != null) {
 				result.set(nextFrame);
-				if(LOG.isTraceEnabled(LogUtil.MSG)) {
-					LOG.trace(LogUtil.MSG, "Got frame containing {} items", nextFrame.length);
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(Markers.MSG, "Got frame containing {} items", nextFrame.size());
 				}
 			}
 		} catch(final RemoteException | InterruptedException e) {
@@ -45,7 +47,7 @@ implements PeriodicTask<T[]> {
 	}
 	//
 	@Override
-	public final T[] getLastResult() {
+	public final Collection<T> getLastResult() {
 		return result.getAndSet(null);
 	}
 }

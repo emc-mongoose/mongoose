@@ -1,7 +1,8 @@
 package com.emc.mongoose.storage.adapter.atmos;
-//
-import com.emc.mongoose.common.logging.LogUtil;
-//
+// mongoose-common.jar
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
+// mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.data.WSObject;
 //
@@ -62,7 +63,7 @@ extends DefaultHandler {
 	@Override
 	public final void endDocument()
 	throws SAXException {
-		LOG.debug(LogUtil.MSG, "End of bucket listing, got {} items", count);
+		LOG.debug(Markers.MSG, "End of bucket listing, got {} items", count);
 		if(consumer != null) {
 			try {
 				consumer.shutdown();

@@ -43,6 +43,8 @@ sourceSets {
 		resources {
 			srcDir(['src', 'main', 'resources'].join(File.separator))
 			include 'allpermissions.policy'
+			include 'logging.json'
+			include 'mongoose.json'
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -172,6 +174,37 @@ sourceSets {
 		//
 		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
+	}
+	examples {
+		java {
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'examples'].join(File.separator))
+			include '**'
+		}
+		compileClasspath += sourceSets.common.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
+		compileClasspath += sourceSets.client.output + sourceSets.cli.output
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// JUnit 4 tests ///////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	test {
+		java {
+			srcDir(['src', 'test'].join(File.separator))
+			include '**'
+		}
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// Main ////////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	main {
+		java {
+			srcDir(['src', 'main'].join(File.separator))
+			include '**'
+		}
+		resources {
+			srcDir(['src', 'main'].join(File.separator))
+			include '**'
+		}
 	}
 }
 
@@ -348,10 +381,24 @@ dependencies {
 	cliRuntime (
 		library.runtime_logging,
 	)
+
+	examplesCompile (
+		library.log4j_api_plus_core,
+		library.commons_configuration,
+	)
+	examplesRuntime (
+		library.runtime_logging,
+		library.commons_cli,
+	)
+
+	testCompile (
+		library.junit,
+		library.junit_mockito,
+	)
 }
 
 configurations {
-	allCompile.extendsFrom(
+	compile.extendsFrom(
 		commonCompile,
 		coreApiCompile,
 		coreImplCompile,
@@ -366,8 +413,9 @@ configurations {
 		storageMockCompile,
 		webuiCompile,
 		cliCompile,
+		examplesCompile,
 	)
-	allRuntime.extendsFrom(
+	runtime.extendsFrom(
 		commonRuntime,
 		coreApiRuntime,
 		coreImplRuntime,
@@ -382,6 +430,13 @@ configurations {
 		storageMockRuntime,
 		webuiRuntime,
 		cliRuntime,
+		examplesRuntime,
+	)
+	testCompile.extendsFrom(
+		compile,
+	)
+	testRuntime.extendsFrom(
+		runtime,
 	)
 }
 
@@ -721,6 +776,84 @@ task cliJar(type: Jar) {
 	}
 }
 
+task examplesJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar, clientJar
+	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
+	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
+	archiveName "${baseName}-examples.${extension}"
+	from sourceSets.examples.output
+	manifest {
+		from sharedManifest
+		attributes(
+			'Implementation-Title': rootProject.name + "-examples",
+			'Main-Class': "com.emc.mongoose.run.examples.Single",
+			'Class-Path': [
+				clientJar.outputs.files.collect {it.name}.join(' '),
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				serverImplJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
+				cliJar.outputs.files.collect {it.name}.join(' '),
+				configurations.examplesRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
+		)
+	}
+}
+
+task testsJar(type: Jar) {
+	dependsOn commonJar
+	dependsOn coreApiJar
+	dependsOn coreImplJar
+	dependsOn storageAdapterAtmosJar
+	dependsOn storageAdapterS3Jar
+	dependsOn storageAdapterSwiftJar
+	dependsOn serverApiJar
+	dependsOn serverImplJar
+	dependsOn webserverJar
+	dependsOn clientJar
+	dependsOn scenarioJar
+	dependsOn storageMockJar
+	dependsOn webuiJar
+	dependsOn cliJar
+	dependsOn examplesJar
+
+	archiveName "${baseName}-tests.${extension}"
+	classifier = 'tests'
+	from sourceSets.test.output
+	manifest {
+		from sharedManifest
+		attributes(
+			'Implementation-Title': rootProject.name + "-tests",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				serverImplJar.outputs.files.collect {it.name}.join(' '),
+				webserverJar.outputs.files.collect {it.name}.join(' '),
+				clientJar.outputs.files.collect {it.name}.join(' '),
+				scenarioJar.outputs.files.collect {it.name}.join(' '),
+				storageMockJar.outputs.files.collect {it.name}.join(' '),
+				webuiJar.outputs.files.collect {it.name}.join(' '),
+				cliJar.outputs.files.collect {it.name}.join(' '),
+				examplesJar.outputs.files.collect {it.name}.join(' '),
+				configurations.testRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
+		)
+	}
+}
+
 task dist(type: Tar) {
 
 	dependsOn commonJar
@@ -737,6 +870,7 @@ task dist(type: Tar) {
 	dependsOn storageMockJar
 	dependsOn webuiJar
 	dependsOn cliJar
+	dependsOn examplesJar
 
 	baseName = project.name
 	compression = Compression.GZIP
@@ -759,7 +893,7 @@ task dist(type: Tar) {
 			from { 'conf' }
 		}
 		into('lib') {
-			from { configurations.allRuntime }
+			from { configurations.runtime }
 		}
 		from commonJar.outputs.files
 		from coreApiJar.outputs.files
@@ -775,6 +909,7 @@ task dist(type: Tar) {
 		from storageMockJar.outputs.files
 		from webuiJar.outputs.files
 		from cliJar.outputs.files
+		from examplesJar.outputs.files
 		into('scripts') {
 			from { ["src", "main", "resources", "scripts"].join(File.separator) }
 		}
@@ -791,7 +926,16 @@ idea {
 	module {
 		name = rootProject.name
 		jdkName = sourceCompatibility
-		scopes.PROVIDED.plus += [ configurations.allCompile ]
+		//
+		inheritOutputDirs = false
+		outputDir = sourceSets.common.output.resourcesDir
+		testOutputDir = sourceSets.common.output.resourcesDir
+		//scopes.PROVIDED.plus += [ configurations.compile ]
+		scopes = [
+			COMPILE: [plus: [configurations.compile], minus: []],
+			RUNTIME: [plus: [configurations.runtime], minus: [configurations.compile]],
+			TEST: [plus: [configurations.testRuntime], minus: [configurations.runtime]]
+		]
 	}
 	project.ipr {
 		withXml { provider ->
@@ -799,5 +943,16 @@ idea {
 		}
 	}
 }
+
+test {
+	jvmArgs '-Dlog4j.configurationFile=' + new File("").getCanonicalPath() + "${File.separator}${confDirName}${File.separator}logging.json"
+	jvmArgs '-Dlog4j.configurationFactory=org.apache.logging.log4j.core.config.json.JsonConfigurationFactory'
+	testLogging.showStandardStreams = true
+	testLogging { events "passed", "skipped", "failed" }
+}
+
+build.dependsOn commonJar, coreApiJar, coreImplJar, storageAdapterAtmosJar, storageAdapterS3Jar
+build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, scenarioJar
+build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, examplesJar, testsJar
 
 tasks.idea.dependsOn(cleanIdea)
