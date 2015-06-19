@@ -63,14 +63,15 @@ implements WSObjectMock {
 	}
 	//
 	@Override
-	public final synchronized void write(final WritableByteChannel chanOut)
+	public final synchronized long write(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
 		if(maskRangesPending.isEmpty()) {
-			write(chanOut, 0, size);
+			return write(chanOut, 0, size);
 		} else {
+			long writtenCount = 0;
 			for(int i = 0; i < countRangesTotal; i++) {
 				rangeOffset = getRangeOffset(i);
 				rangeSize = getRangeSize(i);
@@ -79,15 +80,16 @@ implements WSObjectMock {
 						offset + rangeOffset, rangeSize, currLayerIndex + 1,
 						UniformDataSource.DEFAULT
 					);
-					updatedRange.write(chanOut);
+					writtenCount += updatedRange.write(chanOut);
 				} else { // previous layer of updated ranges
 					updatedRange = new UniformData(
 						offset + rangeOffset, rangeSize, currLayerIndex,
 						UniformDataSource.DEFAULT
 					);
-					updatedRange.write(chanOut);
+					writtenCount += updatedRange.write(chanOut);
 				}
 			}
+			return writtenCount;
 		}
 	}
 }

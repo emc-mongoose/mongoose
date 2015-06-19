@@ -16,15 +16,15 @@ import java.rmi.RemoteException;
 /**
  Created by andrey on 22.05.15.
  */
-public final class SubmitToLoadSvcTask<T extends DataItem>
-implements Runnable, Reusable<SubmitToLoadSvcTask> {
+public final class RemoteSubmitTask<T extends DataItem>
+implements Runnable, Reusable<RemoteSubmitTask> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static InstancePool<SubmitToLoadSvcTask>
-		INSTANCE_POOL = new InstancePool<>(SubmitToLoadSvcTask.class);
+	private final static InstancePool<RemoteSubmitTask>
+		INSTANCE_POOL = new InstancePool<>(RemoteSubmitTask.class);
 	//
 	@SuppressWarnings("unchecked")
-	public static <T extends DataItem> SubmitToLoadSvcTask<T> getInstance(
+	public static <T extends DataItem> RemoteSubmitTask<T> getInstance(
 		final LoadSvc<T> loadSvc, final T dataItem
 	) {
 		return INSTANCE_POOL.take(loadSvc, dataItem);
@@ -34,8 +34,8 @@ implements Runnable, Reusable<SubmitToLoadSvcTask> {
 	private T dataItem = null;
 	//
 	@Override @SuppressWarnings("unchecked")
-	public final SubmitToLoadSvcTask reuse(final Object... args)
-	throws IllegalArgumentException, IllegalStateException {
+	public final RemoteSubmitTask reuse(final Object... args)
+		throws IllegalArgumentException, IllegalStateException {
 		if(args != null) {
 			if(args.length > 0) {
 				loadSvc = (LoadSvc<T>) args[0];
