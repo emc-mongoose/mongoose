@@ -272,6 +272,8 @@ implements Externalizable {
 		return getBoolean("load.type.read.verifyContent");
 	}
 	//
+	public final int getUpdateCountPerTime() { return getInt(KEY_LOAD_UPDATE_PER_ITEM); }
+	//
 	public final String getStorageProto() {
 		return getString("storage.scheme");
 	}

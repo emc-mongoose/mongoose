@@ -56,7 +56,7 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long read(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput )
-	throws IllegalStateException;
+	throws IllegalStateException, IOException;
 
 	/**
 	 The same as {@link #read(DataItemInput, DataItemOutput)} but with ability to control
@@ -68,7 +68,7 @@ extends Closeable {
 	long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
 		final boolean verifyContentFlag
-	) throws IllegalStateException;
+	) throws IllegalStateException, IOException;
 
 	/**
 	 Delete the data items on the storage.
@@ -76,7 +76,7 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long delete(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput )
-	throws IllegalStateException;
+	throws IllegalStateException, IOException;
 
 	/**
 	 Update the data items on the storage.
@@ -84,7 +84,7 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long update(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput )
-	throws IllegalStateException;
+	throws IllegalStateException, IOException;
 
 	/**
 	 The same as {@link #update(DataItemInput, DataItemOutput)} but with
@@ -97,7 +97,7 @@ extends Closeable {
 	long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
 		final int countPerTime
-	) throws IllegalArgumentException, IllegalStateException;
+	) throws IllegalArgumentException, IllegalStateException, IOException;
 
 	/**
 	 Append the data items on the storage. By default makes each data item size twice larger (rly?).
@@ -105,7 +105,7 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long append(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput )
-	throws IllegalStateException;
+	throws IllegalStateException, IOException;
 
 	/**
 	 The same as {@link #append(DataItemInput, DataItemOutput)} but with
@@ -118,5 +118,21 @@ extends Closeable {
 	long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
 		final long augmentSize
-	) throws IllegalArgumentException, IllegalStateException;
+	) throws IllegalArgumentException, IllegalStateException, IOException;
+
+	/**
+	 The same as {@link #append(DataItemInput, DataItemOutput)} but with
+	 ability to customize the size of the augment to append.
+	 @param augmentSizeMin the minimal size of the data augment to append
+	 @param augmentSizeMax the maximal size of the data augment to append
+	 @param augmentSizeBias see the
+	 <a href="https://asdwiki.isus.emc.com:8443/display/OS/Mongoose+HowTo#MongooseHowTo-Howtodealwithdataitemsizedistribution">doc regarding this feature</a>
+	 @throws IllegalArgumentException if non-positive value is passed
+	 @throws IllegalStateException if no data items list is available and
+	 no bucket/container is specified
+	 */
+	long append(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
+		final long augmentSizeMin, final long augmentSizeMax, final float augmentSizeBias
+	) throws IllegalArgumentException, IllegalStateException, IOException;
 }
