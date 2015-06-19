@@ -29,7 +29,8 @@ extends DefaultHandler {
 	private final static String
 		QNAME_ITEM = "Contents",
 		QNAME_ITEM_ID = "Key",
-		QNAME_ITEM_SIZE = "Size";
+		QNAME_ITEM_SIZE = "Size",
+		QNAME_NEXT_MARKER = "NextMarker";
 	//
 	private final Consumer<T> consumer;
 	private final Constructor<T> dataConstructor;
@@ -38,9 +39,10 @@ extends DefaultHandler {
 	private volatile boolean
 		isInsideItem = false,
 		isInsideItemId = false,
-		isInsideItemSize = false;
+		isInsideItemSize = false,
+		isNextMarker = false;
 	private volatile String
-		strId = null, strSize = null;
+		strId = null, strSize = null, bucketListingNextMarker = null;
 	//
 	XMLBucketListParser(
 		final Consumer<T> consumer, final Constructor<T> dataConstructor, final long maxCount
@@ -57,6 +59,8 @@ extends DefaultHandler {
 		isInsideItem = isInsideItem || QNAME_ITEM.equals(qName);
 		isInsideItemId = isInsideItem && QNAME_ITEM_ID.equals(qName);
 		isInsideItemSize = isInsideItem && QNAME_ITEM_SIZE.equals(qName);
+		//
+		isNextMarker = QNAME_NEXT_MARKER.equals(qName);
 		super.startElement(uri, localName, qName, attrs);
 	}
 	//
@@ -125,7 +129,13 @@ extends DefaultHandler {
 			strId = new String(buff, start, length);
 		} else if(isInsideItemSize) {
 			strSize = new String(buff, start, length);
+		} else if(isNextMarker) {
+			bucketListingNextMarker = new String(buff, start, length);
 		}
 		super.characters(buff, start, length);
+	}
+	//
+	public final String getBucketListingNextMarker(){
+		return bucketListingNextMarker;
 	}
 }

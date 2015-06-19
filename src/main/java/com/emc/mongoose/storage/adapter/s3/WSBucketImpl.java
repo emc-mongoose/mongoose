@@ -33,7 +33,9 @@ implements Bucket<T> {
 	private final static String VERSIONING_ENTITY_CONTENT =
 		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
 		"<Status>Enabled</Status></VersioningConfiguration>";
-	private final static String VERSIONING_URL_PART = "/?versioning";
+	private final static String
+		VERSIONING_URL_PART = "/?versioning",
+		MARKER_URL_PATH = "?marker=";
 	//
 	private final WSRequestConfigImpl<T> reqConf;
 	private String name;
@@ -72,6 +74,13 @@ implements Bucket<T> {
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning)
 	throws IOException {
+		return execute(addr, method, versioning, null);
+	}
+	//
+	HttpResponse execute(
+		final String addr, final MutableWSRequest.HTTPMethod method,
+		final boolean versioning, final String bucketListingMarker
+	) throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
@@ -88,16 +97,21 @@ implements Bucket<T> {
 						)
 					);
 				}
-				if (versioning) {
+				if(versioning) {
 					httpReq.setUriPath(httpReq.getUriPath() + VERSIONING_URL_PART);
 					httpReq.setEntity(
-							new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
+						new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
 					);
 				}
 				break;
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
+		// if it is possible to get next bucket's list bucketListingMarker must be in URI reqest
+		// but must not be in canonical request.
+		if(MutableWSRequest.HTTPMethod.GET.equals(method) && bucketListingMarker != null) {
+			httpReq.setUriPath(httpReq.getUriPath() + MARKER_URL_PATH + bucketListingMarker);
+		}
 		return reqConf.execute(addr, httpReq);
 	}
 	//

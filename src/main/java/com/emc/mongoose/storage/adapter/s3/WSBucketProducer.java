@@ -82,81 +82,80 @@ implements Producer<T> {
 	public final void run() {
 		//
 		HttpResponse httpResp = null;
+		String bucketListingMarker = null;
 		try {
-			httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET);
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the bucket: " + bucket);
-		}
-		//
-		if(httpResp != null) {
-			final StatusLine statusLine = httpResp.getStatusLine();
-			if(statusLine == null) {
-				LOG.warn(Markers.MSG, "No response status returned");
-			} else {
-				final int statusCode = statusLine.getStatusCode();
-				if(statusCode >= 200 && statusCode < 300) {
-					final HttpEntity respEntity = httpResp.getEntity();
-					if(respEntity != null) {
-						String respContentType = ContentType.APPLICATION_XML.getMimeType();
-						if(respEntity.getContentType() != null) {
-							respContentType = respEntity.getContentType().getValue();
-						} else {
-							LOG.debug(Markers.ERR, "No content type returned");
-						}
-						if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
-							try {
-								final SAXParser
-									parser = SAXParserFactory.newInstance().newSAXParser();
-								try(final InputStream in = respEntity.getContent()) {
-									////////////////////////////////////////////////////////////////
-									parser.parse(
-										in,
-										new XMLBucketListParser<>(
-											consumer, dataConstructor, maxCount
-										)
-									);
-									////////////////////////////////////////////////////////////////
-								} catch(final SAXException e) {
-									LogUtil.exception(LOG, Level.WARN, e, "Failed to parse");
-								} catch(final IOException e) {
-									LogUtil.exception(
-										LOG, Level.ERROR, e,
-										"Failed to read the bucket listing response content: {}",
-										bucket
-									);
-								} finally {
-									if(consumer != null) {
-										try {
-											consumer.shutdown();
-										} catch(final RemoteException e) {
-											LogUtil.exception(
-												LOG, Level.WARN, e,
-												"Failed to limit data items count for remote consumer"
-											);
-										} finally {
-											consumer = null;
-										}
-									}
+			do {
+				httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET, false, bucketListingMarker);
+				//
+				if(httpResp != null) {
+					final StatusLine statusLine = httpResp.getStatusLine();
+					if(statusLine == null) {
+						LOG.warn(Markers.MSG, "No response status returned");
+					} else {
+						final int statusCode = statusLine.getStatusCode();
+						if(statusCode >= 200 && statusCode < 300) {
+							final HttpEntity respEntity = httpResp.getEntity();
+							if(respEntity != null) {
+								String respContentType = ContentType.APPLICATION_XML.getMimeType();
+								if(respEntity.getContentType() != null) {
+									respContentType = respEntity.getContentType().getValue();
+								} else {
+									LOG.debug(Markers.ERR, "No content type returned");
 								}
-							} catch(final ParserConfigurationException | SAXException e) {
-								LogUtil.exception(
-									LOG, Level.ERROR, e, "Failed to create SAX parser"
-								);
+								if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
+									final SAXParser
+										parser = SAXParserFactory.newInstance().newSAXParser();
+									try(final InputStream in = respEntity.getContent()) {
+										////////////////////////////////////////////////////////////////
+										final XMLBucketListParser xmlBucketListparser = new XMLBucketListParser<>(
+											consumer, dataConstructor, maxCount
+										);
+										//
+										parser.parse(in, xmlBucketListparser);
+										bucketListingMarker = xmlBucketListparser.getBucketListingNextMarker();
+										////////////////////////////////////////////////////////////////
+									}
+								} else {
+									LOG.warn(
+										Markers.MSG, "Unexpected response content type: \"{}\"",
+										respContentType
+									);
+								}
+								EntityUtils.consumeQuietly(respEntity);
 							}
 						} else {
+							final String statusMsg = statusLine.getReasonPhrase();
 							LOG.warn(
-								Markers.MSG, "Unexpected response content type: \"{}\"",
-								respContentType
+								Markers.ERR, "Listing bucket \"{}\" response: {}/{}",
+								bucket, statusCode, statusMsg
 							);
 						}
-						EntityUtils.consumeQuietly(respEntity);
 					}
-				} else {
-					final String statusMsg = statusLine.getReasonPhrase();
-					LOG.warn(
-						Markers.ERR, "Listing bucket \"{}\" response: {}/{}",
-						bucket, statusCode, statusMsg
+				}
+			} while(bucketListingMarker != null);
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to list the bucket: " + bucket + ", next marker: " + bucketListingMarker
+			);
+		} catch(final SAXException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to parse"
+			);
+		} catch(final ParserConfigurationException e) {
+			LogUtil.exception(
+				LOG, Level.ERROR, e, "Failed to create SAX parser"
+			);
+		} finally {
+			if(consumer != null) {
+				try {
+					consumer.shutdown();
+				} catch(final RemoteException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e,
+						"Failed to limit data items count for remote consumer"
 					);
+				} finally {
+					consumer = null;
 				}
 			}
 		}
