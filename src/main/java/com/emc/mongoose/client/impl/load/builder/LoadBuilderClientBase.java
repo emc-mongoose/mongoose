@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -105,16 +106,26 @@ implements LoadBuilderClient<T, U> {
 		String dataMetaInfoFile = null;
 		try {
 			dataMetaInfoFile = this.runTimeConfig.getDataSrcFPath();
-			if(
-				dataMetaInfoFile!=null && dataMetaInfoFile.length() > 0 &&
-				Files.isReadable(Paths.get(dataMetaInfoFile))
-			) {
-				setInputFile(dataMetaInfoFile);
-				// disable API-specific producers
-				reqConf.setAnyDataProducerEnabled(false);
-				// disable file-based producers on the load servers side
-				for(final LoadBuilderSvc<T, U> nextLoadBuilder : values()) {
-					nextLoadBuilder.setInputFile(null);
+			if(dataMetaInfoFile!=null && dataMetaInfoFile.length() > 0) {
+				final Path dataItemsListPath = Paths.get(dataMetaInfoFile);
+				if(!Files.exists(dataItemsListPath)) {
+					LOG.warn(
+						Markers.ERR, "Data items source file \"{}\" doesn't exist",
+						dataItemsListPath
+					);
+				} else if(!Files.isReadable(dataItemsListPath)) {
+					LOG.warn(
+						Markers.ERR, "Data items source file \"{}\" is not readable",
+						dataItemsListPath
+					);
+				} else {
+					setInputFile(dataMetaInfoFile);
+					// disable API-specific producers
+					reqConf.setAnyDataProducerEnabled(false);
+					// disable file-based producers on the load servers side
+					for(final LoadBuilderSvc<T, U> nextLoadBuilder : values()) {
+						nextLoadBuilder.setInputFile(null);
+					}
 				}
 			}
 		} catch(final NoSuchElementException e) {

@@ -36,6 +36,7 @@ import org.apache.logging.log4j.Marker;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -211,16 +212,31 @@ implements LoadExecutor<T> {
 		// create and configure the connection manager
 		dataSrc = reqConfig.getDataSource();
 		//
-		if(listFile != null && listFile.length() > 0 && Files.isReadable(Paths.get(listFile))) {
-			try {
-				producer = new FileProducer<>(maxCount, listFile, dataCls);
-				LOG.debug(Markers.MSG, "{} will use file-based producer: {}", getName(), listFile);
-			} catch(final NoSuchMethodException | IOException e) {
-				LogUtil.exception(
-					LOG, Level.FATAL, e,
-					"Failed to create file-based producer for the class \"{}\" and src file \"{}\"",
-					dataCls.getName(), listFile
+		if(listFile != null && listFile.length() > 0) {
+			final Path dataItemsListPath = Paths.get(listFile);
+			if(!Files.exists(dataItemsListPath)) {
+				LOG.warn(
+					Markers.ERR, "Data items source file \"{}\" doesn't exist",
+					dataItemsListPath
 				);
+			} else if(!Files.isReadable(dataItemsListPath)) {
+				LOG.warn(
+					Markers.ERR, "Data items source file \"{}\" is not readable",
+					dataItemsListPath
+				);
+			} else {
+				try {
+					producer = new FileProducer<>(maxCount, listFile, dataCls);
+					LOG.debug(
+						Markers.MSG, "{} will use file-based producer: {}", getName(), listFile
+					);
+				} catch(final NoSuchMethodException | IOException e) {
+					LogUtil.exception(
+						LOG, Level.FATAL, e,
+						"Failed to create file producer for the class \"{}\" and src file \"{}\"",
+						dataCls.getName(), listFile
+					);
+				}
 			}
 		} else if(loadType == IOTask.Type.CREATE) {
 			try {
