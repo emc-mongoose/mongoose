@@ -20,6 +20,7 @@ import com.emc.mongoose.core.api.models.LoadState;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.impl.models.BasicLoadState;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
@@ -654,8 +655,9 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public LoadState getLoadState() throws RemoteException {
-		return null;
+	public LoadState getLoadState()
+	throws RemoteException {
+		return null; // TODO issue # Kirill, where is a jira ticket?
 	}
 	//
 	@Override

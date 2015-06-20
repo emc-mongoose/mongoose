@@ -11,7 +11,7 @@ extends BasicStorageClientBuilder<T, U> {
 	@Override @SuppressWarnings("unchecked")
 	public U build() {
 		return (U) new BasicStorageClient<>(
-			WSLoadBuilderFactory.getInstance(rtConfig)
+			rtConfig, WSLoadBuilderFactory.getInstance(rtConfig)
 		);
 	}
 }
