@@ -32,8 +32,19 @@ extends Closeable {
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long size
+	) throws IllegalArgumentException, IOException;
+
+	/**
+	 Write the fixed-sized data items on the storage using multiple threads/connections.
+	 @param threadCount the count of the threads/connections per storage node
+	 @param size the size of the data items to write.
+	 @throws java.lang.IllegalArgumentException if negative value is passed
+	 */
+	long write(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount, final long size
 	) throws IllegalArgumentException, IOException;
 
 	/**
@@ -46,8 +57,23 @@ extends Closeable {
 	 @throws java.lang.IllegalArgumentException if negative value is passed
 	 */
 	long write(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long minSize, final long maxSize, final float sizeBias
+	) throws IllegalArgumentException, IOException;
+
+	/**
+	 Write the randomly sized data items on the target storage.
+	 @param threadCount the count of the threads/connections per storage node
+	 @param minSize the minimum data item size
+	 @param maxSize the maximum data item size
+	 @param sizeBias see the
+	 <a href="https://asdwiki.isus.emc.com:8443/display/OS/Mongoose+HowTo#MongooseHowTo-Howtodealwithdataitemsizedistribution">doc regarding this feature</a>
+	 @return self.
+	 @throws java.lang.IllegalArgumentException if negative value is passed
+	 */
+	long write(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount, final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, IOException;
 
 	/**
@@ -55,8 +81,19 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and
 	 no bucket/container is specified
 	 */
-	long read(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput )
+	long read(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput)
 	throws IllegalStateException, IOException;
+
+	/**
+	 Read the data items from the storage.
+	 @param threadCount the count of the threads/connections per storage node
+	 @throws java.lang.IllegalStateException if no data items list is available and
+	 no bucket/container is specified
+	 */
+	long read(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount
+	) throws IllegalStateException, IOException;
 
 	/**
 	 The same as {@link #read(DataItemInput, DataItemOutput)} but with ability to control
@@ -66,8 +103,21 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long read(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final boolean verifyContentFlag
+	) throws IllegalStateException, IOException;
+
+	/**
+	 The same as {@link #read(DataItemInput, DataItemOutput)} but with ability to control
+	 the content verification
+	 @param threadCount the count of the threads/connections per storage node
+	 @param verifyContentFlag To verify the content integrity or to not verify.
+	 @throws java.lang.IllegalStateException if no data items list is available and
+	 no bucket/container is specified
+	 */
+	long read(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount, final boolean verifyContentFlag
 	) throws IllegalStateException, IOException;
 
 	/**
@@ -75,16 +125,38 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and
 	 no bucket/container is specified
 	 */
-	long delete(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput )
+	long delete(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput)
 	throws IllegalStateException, IOException;
+
+	/**
+	 Delete the data items on the storage.
+	 @param threadCount the count of the threads/connections per storage node
+	 @throws java.lang.IllegalStateException if no data items list is available and
+	 no bucket/container is specified
+	 */
+	long delete(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount
+	) throws IllegalStateException, IOException;
 
 	/**
 	 Update the data items on the storage.
 	 @throws java.lang.IllegalStateException if no data items list is available and
 	 no bucket/container is specified
 	 */
-	long update(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput )
+	long update(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput)
 	throws IllegalStateException, IOException;
+
+	/**
+	 Update the data items on the storage.
+	 @param threadCount the count of the threads/connections per storage node
+	 @throws java.lang.IllegalStateException if no data items list is available and
+	 no bucket/container is specified
+	 */
+	long update(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount
+	) throws IllegalStateException, IOException;
 
 	/**
 	 The same as {@link #update(DataItemInput, DataItemOutput)} but with
@@ -95,8 +167,22 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long update(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final int countPerTime
+	) throws IllegalArgumentException, IllegalStateException, IOException;
+
+	/**
+	 The same as {@link #update(DataItemInput, DataItemOutput)} but with
+	 ability to specify the count of the updated ranges per request.
+	 @param threadCount the count of the threads/connections per storage node
+	 @param countPerTime the count of the non-overlapping ranges to update per one request
+	 @throws java.lang.IllegalArgumentException if non-positive value is passed
+	 @throws java.lang.IllegalStateException if no data items list is available and
+	 no bucket/container is specified
+	 */
+	long update(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount, final int countPerTime
 	) throws IllegalArgumentException, IllegalStateException, IOException;
 
 	/**
@@ -104,8 +190,19 @@ extends Closeable {
 	 @throws java.lang.IllegalStateException if no data items list is available and
 	 no bucket/container is specified
 	 */
-	long append(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput )
+	long append(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput)
 	throws IllegalStateException, IOException;
+
+	/**
+	 Append the data items on the storage. By default makes each data item size twice larger (rly?).
+	 @param threadCount the count of the threads/connections per storage node
+	 @throws java.lang.IllegalStateException if no data items list is available and
+	 no bucket/container is specified
+	 */
+	long append(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount
+	) throws IllegalStateException, IOException;
 
 	/**
 	 The same as {@link #append(DataItemInput, DataItemOutput)} but with
@@ -116,8 +213,22 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long append(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long augmentSize
+	) throws IllegalArgumentException, IllegalStateException, IOException;
+
+	/**
+	 The same as {@link #append(DataItemInput, DataItemOutput)} but with
+	 ability to customize the size of the augment to append.
+	 @param threadCount the count of the threads/connections per storage node
+	 @param augmentSize the size of the data item augment to append
+	 @throws IllegalArgumentException if non-positive value is passed
+	 @throws IllegalStateException if no data items list is available and
+	 no bucket/container is specified
+	 */
+	long append(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount, final long augmentSize
 	) throws IllegalArgumentException, IllegalStateException, IOException;
 
 	/**
@@ -132,7 +243,24 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long append(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput ,
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long augmentSizeMin, final long augmentSizeMax, final float augmentSizeBias
+	) throws IllegalArgumentException, IllegalStateException, IOException;
+
+	/**
+	 The same as {@link #append(DataItemInput, DataItemOutput)} but with
+	 ability to customize the size of the augment to append.
+	 @param threadCount the count of the threads/connections per storage node
+	 @param sizeMin the minimal size of the data augment to append
+	 @param sizeMax the maximal size of the data augment to append
+	 @param sizeBias see the
+	 <a href="https://asdwiki.isus.emc.com:8443/display/OS/Mongoose+HowTo#MongooseHowTo-Howtodealwithdataitemsizedistribution">doc regarding this feature</a>
+	 @throws IllegalArgumentException if non-positive value is passed
+	 @throws IllegalStateException if no data items list is available and
+	 no bucket/container is specified
+	 */
+	long append(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount, final long sizeMin, final long sizeMax, final float sizeBias
 	) throws IllegalArgumentException, IllegalStateException, IOException;
 }

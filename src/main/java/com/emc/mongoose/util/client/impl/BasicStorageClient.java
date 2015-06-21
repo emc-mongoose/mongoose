@@ -21,6 +21,8 @@ import java.rmi.RemoteException;
 public class BasicStorageClient<T extends DataItem>
 implements StorageClient<T> {
 	//
+	protected final static short THREAD_COUNT_DEFAULT = 1;
+	//
 	protected RunTimeConfig rtConfig;
 	protected LoadBuilder<T, LoadExecutor<T>> loadBuilder;
 	//
@@ -65,13 +67,29 @@ implements StorageClient<T> {
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long size
 	) throws IllegalArgumentException, IOException {
-		return write(itemsInput, itemsOutput, size, size, 0);
+		return write(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, size, size, 0);
+	}
+	//
+	@Override
+	public long write(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount, final long size
+	) throws IllegalArgumentException, IOException {
+		return write(itemsInput, itemsOutput, threadCount, size, size, 0);
 	}
 	//
 	@Override
 	public long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long minSize, final long maxSize, final float sizeBias
+	) throws IllegalArgumentException, IOException {
+		return write(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, minSize, maxSize, sizeBias);
+	}
+	//
+	@Override
+	public long write(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount, final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, IOException {
 		//
 		final long countSucc;
@@ -83,6 +101,7 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(IOTask.Type.CREATE)
+				.setThreadsPerNodeFor(threadCount, IOTask.Type.CREATE)
 				.setMinObjSize(minSize)
 				.setMaxObjSize(maxSize)
 				.setObjSizeBias(sizeBias)
@@ -98,13 +117,29 @@ implements StorageClient<T> {
 	public long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput
 	) throws IllegalStateException, IOException {
-		return read(itemsInput, itemsOutput, rtConfig.getReadVerifyContent());
+		return read(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, rtConfig.getReadVerifyContent());
+	}
+	//
+	@Override
+	public long read(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount
+	) throws IllegalStateException, IOException {
+		return read(itemsInput, itemsOutput, threadCount, rtConfig.getReadVerifyContent());
 	}
 	//
 	@Override
 	public long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final boolean verifyContentFlag
+	) throws IllegalStateException, IOException {
+		return read(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, verifyContentFlag);
+	}
+	//
+	@Override
+	public long read(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount, final boolean verifyContentFlag
 	) throws IllegalStateException, IOException {
 		//
 		final long countSucc;
@@ -118,6 +153,7 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(IOTask.Type.READ)
+				.setThreadsPerNodeFor(threadCount, IOTask.Type.READ)
 				.build()
 		) {
 			countSucc = executeLoad(producer, loadJobExecutor, consumer);
@@ -127,8 +163,15 @@ implements StorageClient<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
+	public long delete(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput)
+	throws IllegalStateException, IOException {
+		return delete(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT);
+	}
+	//
+	@Override
 	public long delete(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount
 	) throws IllegalStateException, IOException {
 		//
 		final long countSucc;
@@ -140,6 +183,7 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(IOTask.Type.DELETE)
+				.setThreadsPerNodeFor(threadCount, IOTask.Type.DELETE)
 				.build()
 		) {
 			countSucc = executeLoad(producer, loadJobExecutor, consumer);
@@ -152,13 +196,35 @@ implements StorageClient<T> {
 	public long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput
 	) throws IllegalStateException, IOException {
-		return update(itemsInput, itemsOutput, rtConfig.getUpdateCountPerTime());
+		return update(
+			itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, rtConfig.getUpdateCountPerTime()
+		);
+	}
+	//
+	@Override
+	public long update(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount
+	) throws IllegalStateException, IOException {
+		return update(
+			itemsInput, itemsOutput, threadCount, rtConfig.getUpdateCountPerTime()
+		);
 	}
 	//
 	@Override
 	public long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final int countPerTime
+	) throws IllegalStateException, IOException {
+		return update(
+			itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, countPerTime
+		);
+	}
+	//
+	@Override
+	public long update(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount, final int countPerTime
 	) throws IllegalArgumentException, IllegalStateException, IOException {
 		//
 		final long countSucc;
@@ -170,6 +236,7 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(IOTask.Type.UPDATE)
+				.setThreadsPerNodeFor(threadCount, IOTask.Type.UPDATE)
 				.setUpdatesPerItem(countPerTime)
 				.build()
 		) {
@@ -184,7 +251,7 @@ implements StorageClient<T> {
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput
 	) throws IllegalStateException, IOException {
 		return append(
-			itemsInput, itemsOutput,
+			itemsInput, itemsOutput, THREAD_COUNT_DEFAULT,
 			rtConfig.getDataSizeMin(), rtConfig.getDataSizeMax(), rtConfig.getDataSizeBias()
 		);
 	}
@@ -192,15 +259,42 @@ implements StorageClient<T> {
 	@Override
 	public long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long augmentSize
-	) throws IllegalArgumentException, IllegalStateException, IOException {
-		return append(itemsInput, itemsOutput, augmentSize, augmentSize, 0);
+		final short threadCount
+	) throws IllegalStateException, IOException {
+		return append(
+			itemsInput, itemsOutput, threadCount,
+			rtConfig.getDataSizeMin(), rtConfig.getDataSizeMax(), rtConfig.getDataSizeBias()
+		);
 	}
 	//
 	@Override
 	public long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long augmentSizeMin, final long augmentSizeMax, final float augmentSizeBias
+		final long size
+	) throws IllegalArgumentException, IllegalStateException, IOException {
+		return append(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, size, size, 0);
+	}
+	//
+	@Override
+	public long append(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount, final long size
+	) throws IllegalArgumentException, IllegalStateException, IOException {
+		return append(itemsInput, itemsOutput, threadCount, size, size, 0);
+	}
+	//
+	@Override
+	public long append(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final long sizeMin, final long sizeMax, final float sizeBias
+	) throws IllegalArgumentException, IllegalStateException, IOException {
+		return append(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, sizeMin, sizeMax, sizeBias);
+	}
+	//
+	@Override
+	public long append(
+		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final short threadCount, final long sizeMin, final long sizeMax, final float sizeBias
 	) throws IllegalArgumentException, IllegalStateException, IOException {
 		//
 		final long countSucc;
@@ -212,9 +306,10 @@ implements StorageClient<T> {
 		try(
 			final LoadExecutor<T> loadJobExecutor = loadBuilder
 				.setLoadType(IOTask.Type.APPEND)
-				.setMinObjSize(augmentSizeMin)
-				.setMaxObjSize(augmentSizeMax)
-				.setObjSizeBias(augmentSizeBias)
+				.setThreadsPerNodeFor(threadCount, IOTask.Type.APPEND)
+				.setMinObjSize(sizeMin)
+				.setMaxObjSize(sizeMax)
+				.setObjSizeBias(sizeBias)
 				.build()
 		) {
 			countSucc = executeLoad(producer, loadJobExecutor, consumer);
