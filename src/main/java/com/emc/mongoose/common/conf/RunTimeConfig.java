@@ -105,8 +105,15 @@ implements Externalizable {
 		RunTimeConfig instance = RunTimeConfig.getContext();
 		if(instance == null) {
 			instance = new RunTimeConfig();
-			instance.set(KEY_RUN_ID, System.getProperty(KEY_RUN_ID));
-			instance.set(KEY_RUN_MODE, System.getProperty(KEY_RUN_MODE));
+			final String
+				runId = System.getProperty(KEY_RUN_ID),
+				runMode = System.getProperty(KEY_RUN_MODE);
+			if(runId != null && runId.length() > 0) {
+				instance.set(KEY_RUN_ID, runId);
+			}
+			if(runMode != null && runMode.length() > 0) {
+				instance.set(KEY_RUN_MODE, runMode);
+			}
 			setContext(instance);
 		}
 	}
@@ -158,6 +165,13 @@ implements Externalizable {
 	//
 	public long getSizeBytes(final String key) {
 		return SizeUtil.toSize(getString(key));
+	}
+	//
+	public RunTimeConfig() {
+		loadPropsFromJsonCfgFile(
+			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
+		);
+		loadSysProps();
 	}
 	//
 	public String getJsonProps() {

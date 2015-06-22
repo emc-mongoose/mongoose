@@ -208,7 +208,7 @@ implements Storage<T> {
 			if(timeOutValue > 0) {
 				multiSocketSvc.awaitTermination(timeOutValue, timeUnit);
 			} else {
-				multiSocketSvc.awaitTermination(Long.MAX_VALUE, timeUnit);
+				multiSocketSvc.awaitTermination(Long.MAX_VALUE, TimeUnit.DAYS);
 			}
 		} catch (final InterruptedException e) {
 			LOG.info(Markers.MSG, "Interrupting the Cinderella");

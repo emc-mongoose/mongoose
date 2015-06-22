@@ -16,10 +16,12 @@ import org.apache.logging.log4j.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 //
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Scanner;
 /**
@@ -29,9 +31,9 @@ public class SaveServlet
 extends CommonServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static String FILENAME = "config.txt";
+	private final static String FNAME_CONF_SAVE = "config.txt";
 	private final static File
-		FILE_PATH = Paths.get(
+		DIR_WEBAPP_CONF = Paths.get(
 			RunTimeConfig.DIR_ROOT, Constants.DIR_WEBAPP, Constants.DIR_CONF
 		).toFile();
 	//	HTTP Headers
@@ -47,7 +49,7 @@ extends CommonServlet {
 			response.setStatus(HttpServletResponse.SC_OK);
 			return;
 		}
-		final File fullFileName = new File(FILE_PATH.toString() + File.separator + FILENAME);
+		final File fullFileName = new File(DIR_WEBAPP_CONF.toString() + File.separator + FNAME_CONF_SAVE);
 		try {
 			final PrintWriter writer = response.getWriter();
 			final Scanner scanner = new Scanner(fullFileName);
@@ -75,13 +77,13 @@ extends CommonServlet {
 	}
 	//
 	private void saveConfigInSeparateFile() {
-		if (!FILE_PATH.mkdirs()) {
-			if (!FILE_PATH.exists()) {
+		if (!DIR_WEBAPP_CONF.mkdirs()) {
+			if (!DIR_WEBAPP_CONF.exists()) {
 				LOG.error(Markers.ERR, "Failed to create folders for ui config");
 				return;
 			}
 		}
-		try (final FileWriter writer = new FileWriter(FILE_PATH + File.separator + FILENAME)) {
+		try (final FileWriter writer = new FileWriter(DIR_WEBAPP_CONF + File.separator + FNAME_CONF_SAVE)) {
 			final PropertiesConfiguration props = new PropertiesConfiguration();
 			for (String key : runTimeConfig.getMongooseKeys()) {
 				props.setProperty(key, runTimeConfig.getProperty(key));

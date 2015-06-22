@@ -22,8 +22,7 @@ extends SerializingItemOutput<T> {
 			new ObjectOutputStream(
 				new BufferedOutputStream(
 					Files.newOutputStream(
-						itemsDstPath, StandardOpenOption.APPEND, StandardOpenOption.CREATE_NEW,
-						StandardOpenOption.WRITE
+						itemsDstPath, StandardOpenOption.APPEND, StandardOpenOption.WRITE
 					)
 				)
 			)

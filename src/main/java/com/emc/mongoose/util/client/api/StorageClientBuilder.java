@@ -102,6 +102,14 @@ public interface StorageClientBuilder<T extends DataItem, U extends StorageClien
 	StorageClientBuilder<T, U> setLimitRate(final float rate)
 	throws IllegalArgumentException;
 
+	/**
+	 Set the manual delay between each two requests to the storage inside single thread/connection.
+	 @param milliSec the time in milliseconds
+	 @throws java.lang.IllegalArgumentException if negative value is passed
+ 	 */
+	StorageClientBuilder<T, U> setReqThinkTime(final int milliSec)
+	throws IllegalArgumentException;
+
 	/** Build the storage client instance */
 	U build();
 }

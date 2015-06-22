@@ -20,7 +20,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,15 +33,11 @@ import java.util.concurrent.TimeUnit;
 public class Chain
 implements Runnable {
 	//
+	private final static Logger LOG;
 	static {
-		try {
-			LogUtil.init();
-			RunTimeConfig.initContext();
-		} catch(final Exception e) {
-			e.printStackTrace(System.err);
-		}
+		LogUtil.init();
+		LOG = LogManager.getLogger();
 	}
-	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final List<LoadExecutor> loadJobSeq = new LinkedList<>();
 	private final long timeOut;
@@ -169,12 +164,8 @@ implements Runnable {
 	public static void main(final String... args) {
 		//
 		try {
+			RunTimeConfig.initContext();
 			final RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
-			runTimeConfig.loadPropsFromJsonCfgFile(
-				Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF)
-					.resolve(RunTimeConfig.FNAME_CONF)
-			);
-			runTimeConfig.loadSysProps();
 			// load the config from CLI arguments
 			final Map<String, String> properties = HumanFriendly.parseCli(args);
 			if(!properties.isEmpty()) {

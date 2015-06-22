@@ -45,13 +45,6 @@ public final class ModeDispatcher {
 		final Logger rootLogger = LogManager.getRootLogger();
 		//
 		RunTimeConfig.initContext();
-		// load the config from file
-		RunTimeConfig.getContext().loadPropsFromJsonCfgFile(
-			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
-		);
-		rootLogger.debug(Markers.MSG, "Loaded the properties from the files");
-		// load the config from system properties
-		RunTimeConfig.getContext().loadSysProps();
 		// load the config from CLI arguments
 		final Map<String, String> properties = HumanFriendly.parseCli(args);
 		if(!properties.isEmpty()) {

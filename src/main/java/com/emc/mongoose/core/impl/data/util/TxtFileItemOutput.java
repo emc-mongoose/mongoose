@@ -26,7 +26,7 @@ implements DataItemOutput<T> {
 		this.itemCls = itemCls;
 		itemsDst = Files.newBufferedWriter(
 			itemsDstPath, StandardCharsets.UTF_8,
-			StandardOpenOption.APPEND, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE
+			StandardOpenOption.APPEND, StandardOpenOption.WRITE
 		);
 	}
 	//

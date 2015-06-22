@@ -140,4 +140,13 @@ implements StorageClientBuilder<T, U> {
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_RATE, rate);
 		return this;
 	}
+	//
+	@Override
+	public StorageClientBuilder<T, U> setReqThinkTime(final int milliSec) {
+		if(milliSec < 0) {
+			throw new IllegalArgumentException("Request manual delay should be >= 0");
+		}
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_REQSLEEP_MILLISEC, milliSec);
+		return this;
+	}
 }
