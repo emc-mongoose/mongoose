@@ -49,12 +49,12 @@ implements Runnable {
 				.setLimitRate(10000)
 				.build();
 			//
-			final DataItemOutput<WSObject> dataDstW = new TxtFileItemOutput<>(
-				Files.createTempFile(null, null), BasicWSObject.class
+			final DataItemOutput<WSObject> dataDstW = new BinFileItemOutput<>(
+				Files.createTempFile(null, null)
 			);
 			LOG.info(Markers.MSG, "Start writing");
 			final long nWritten = clientStandalone.write(
-				null, dataDstW, (short) 100, SizeUtil.toSize("1KB")
+				null, dataDstW, (short) 100, SizeUtil.toSize("16MB")
 			);
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
 			//
@@ -69,12 +69,12 @@ implements Runnable {
 			final long nDeleted = clientStandalone.delete(dataSrcD, null, (short) 100);
 			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
 			//
-			dataSrcR.reset();
+			final DataItemInput<WSObject> dataSrcRW = dataDstR.getInput();
 			final DataItemOutput<WSObject> dataDstRW = new BinFileItemOutput<>(
 				Files.createTempFile(null, null)
 			);
 			LOG.info(Markers.MSG, "Start rewriting");
-			final long nReWritten = clientStandalone.write(dataSrcR, dataDstRW, (short) 100);
+			final long nReWritten = clientStandalone.write(dataSrcRW, dataDstRW, (short) 100);
 			LOG.info(Markers.MSG, "Rewritten successfully {} items", nReWritten);
 			//
 		} catch(final Exception e) {
