@@ -1,19 +1,28 @@
 package com.emc.mongoose.core.impl.load.tasks;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.Constants;
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
+import com.emc.mongoose.core.api.models.LoadState;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
 Created by kurila on 23.10.14.
@@ -24,11 +33,10 @@ implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static Map<LoadExecutor, Thread> HOOKS_MAP = new ConcurrentHashMap<>();
+	private final static List<LoadState> STATES = new ArrayList<>();
 	//
 	private final LoadExecutor loadExecutor;
 	private final String loadName;
-	//
-	private AtomicBoolean wasStateSaved = new AtomicBoolean(false);
 	//
 	private LoadCloseHook(final LoadExecutor loadExecutor) {
 		String ln = "";
@@ -79,6 +87,7 @@ implements Runnable {
 				HOOKS_MAP.remove(loadExecutor);
 				LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
 				if (HOOKS_MAP.isEmpty()) {
+					saveCurrState();
 					try {
 						if (LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
 							try {
@@ -103,7 +112,7 @@ implements Runnable {
 	public final void run() {
 		LOG.debug(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
 		try {
-			//saveCurrState();
+			STATES.add(loadExecutor.getLoadState());
 			loadExecutor.close();
 			LOG.debug(Markers.MSG, "The load executor \"{}\" closed successfully", loadName);
 		} catch(final Exception e) {
@@ -113,23 +122,15 @@ implements Runnable {
 		}
 	}
 	//
-	/*private void saveCurrState() {
-		if (!wasStateSaved.get()) {
-			final String fullFileName = Paths.get(RunTimeConfig.DIR_ROOT,
-					Constants.DIR_LOG, RunTimeConfig.getContext().getRunId()).toFile() + File.separator + Constants.STATES_FILE;
-			final List<LoadState> states = new ArrayList<>();
-			try (final FileOutputStream fos = new FileOutputStream(fullFileName, false)) {
-				try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-					for (final LoadExecutor load : HOOKS_MAP.keySet()) {
-						states.add(load.getLoadState());
-					}
-					oos.writeObject(states);
-				}
-			} catch (final IOException e) {
-				LogUtil.exception(LOG, Level.ERROR, e, "Mongoose's state serialization failed");
+	private static void saveCurrState() {
+		final String fullFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+				Constants.DIR_LOG, RunTimeConfig.getContext().getRunId()).toFile() + File.separator + Constants.STATES_FILE;
+		try (final FileOutputStream fos = new FileOutputStream(fullFileName, false)) {
+			try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+				oos.writeObject(STATES);
 			}
-			wasStateSaved.compareAndSet(false, true);
-			System.out.println(wasStateSaved.get());
+		} catch (final IOException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Mongoose's state serialization failed");
 		}
-	}*/
+	}
 }
