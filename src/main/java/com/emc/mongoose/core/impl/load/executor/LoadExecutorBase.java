@@ -7,6 +7,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -36,12 +37,16 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
 import javax.management.MBeanServer;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -156,6 +161,9 @@ implements LoadExecutor<T> {
 			}
 		};
 	// STATES section
+	private AtomicBoolean fileExists = new AtomicBoolean(false);
+	private long restOfTimeLimit = 0;
+	private TimeUnit restOfTimeUnit;
 	protected final AtomicLong
 		durTasksSum = new AtomicLong(0),
 		counterResults = new AtomicLong(0);
@@ -348,6 +356,31 @@ implements LoadExecutor<T> {
 			reqBytes = metrics.meter(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW));
 			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
+			final String fullFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+					Constants.DIR_LOG, RunTimeConfig.getContext().getRunId()).toFile() + File.separator + Constants.STATES_FILE;
+			final File statesFile = new File(fullFileName);
+			if (statesFile.exists()) {
+				fileExists.set(true);
+				try {
+					final FileInputStream fis = new FileInputStream(fullFileName);
+					final ObjectInputStream ois = new ObjectInputStream(fis);
+					List<LoadState> states = (List<LoadState>) ois.readObject();
+					LoadState currState = null;
+					for (final LoadState state : states) {
+						if (state.getLoadNumber() == loadNum) {
+							currState = state;
+						}
+					}
+					if (currState != null) {
+						counterReqFail.inc(currState.getCountFail());
+						throughPut.mark(currState.getCountSucc());
+						restOfTimeLimit = currState.getLoadElapsedTimeValue();
+						restOfTimeUnit = currState.getLoadElapsedTimeUnit();
+					}
+				} catch (final Exception e) {
+					e.printStackTrace();
+				}
+			}
 			super.start();
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
@@ -587,9 +620,10 @@ implements LoadExecutor<T> {
 	@Override
 	public LoadState getLoadState()
 	throws RemoteException {
-		return new BasicLoadState(loadNum, runTimeConfig,
-				throughPut.getCount(), counterReqFail.getCount(),
-				TimeUnit.NANOSECONDS, System.nanoTime() - tsStart.get());
+		return new BasicLoadState(
+			loadNum, runTimeConfig, throughPut.getCount(), counterReqFail.getCount(),
+			TimeUnit.NANOSECONDS, System.nanoTime() - tsStart.get()
+		);
 	}
 	//
 	private boolean isDoneMaxCount() {
@@ -690,7 +724,19 @@ implements LoadExecutor<T> {
 			return;
 		}
 		//
-		long t = System.currentTimeMillis(), timeOutMilliSec = timeUnit.toMillis(timeOut);
+		long t = System.currentTimeMillis(), timeOutMilliSec;
+		if (fileExists.get()) {
+			final long loadTimeLimit = runTimeConfig.getLoadLimitTimeValue();
+			final TimeUnit loadTimeUnit = runTimeConfig.getLoadLimitTimeUnit();
+			System.out.println(restOfTimeUnit.toSeconds(restOfTimeLimit));
+			System.out.println(TimeUnit.MILLISECONDS.toSeconds(timeUnit.toMillis(timeOut) -
+					restOfTimeUnit.toMillis(restOfTimeLimit)));
+		} else {
+			timeOutMilliSec = timeUnit.toMillis(timeOut);
+		}
+		timeOutMilliSec = timeUnit.toMillis(timeOut);
+		//System.out.println(TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec));
+		//
 		if(lock.tryLock(timeOut, timeUnit)) {
 			try {
 				t = System.currentTimeMillis() - t; // the count of time wasted for locking
