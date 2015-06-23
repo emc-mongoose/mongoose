@@ -84,48 +84,72 @@ implements Producer<T> {
 	//
 	@Override
 	public final void run() {
+		int statusCode;
 		try {
-			final HttpResponse httpResp = container.execute(addr, MutableWSRequest.HTTPMethod.GET);
-			if(httpResp != null) {
-				final StatusLine statusLine = httpResp.getStatusLine();
-				if(statusLine == null) {
-					LOG.warn(Markers.MSG, "No response status returned");
-				} else {
-					final int statusCode = statusLine.getStatusCode();
-					if(statusCode >= 200 && statusCode < 300) {
-						final HttpEntity respEntity = httpResp.getEntity();
-						if(respEntity != null) {
-							String respContentType = ContentType.APPLICATION_JSON.getMimeType();
-							if(respEntity.getContentType() != null) {
-								respContentType = respEntity.getContentType().getValue();
-							} else {
-								LOG.debug(Markers.ERR, "No content type returned");
-							}
-							if(!respContentType.toLowerCase().contains("json")) {
-								LOG.warn(
-									Markers.ERR, "Unexpected response content type: \"{}\"",
-									respContentType
-								);
-							}
-							try(final InputStream in = respEntity.getContent()) {
-								handleJsonInputStream(in);
-							} catch(final IOException e) {
-								LogUtil.exception(
-									LOG, Level.ERROR, e,
-									"Failed to list the content of container: {}", container
-								);
-							}
-							EntityUtils.consumeQuietly(respEntity);
-						}
-					}
+			do {
+				final HttpResponse httpResp = container.execute(addr, MutableWSRequest.HTTPMethod.GET, lastId);
+				//
+				if (httpResp == null) {
+					LOG.warn(Markers.MSG, "No HTTP response returned");
+					break;
 				}
-			}
+				//
+				final StatusLine statusLine = httpResp.getStatusLine();
+				//
+				if (statusLine == null) {
+					LOG.warn(Markers.MSG, "No response status returned");
+					break;
+				}
+				//
+				statusCode = statusLine.getStatusCode();
+				//
+				if (statusCode < 200 || statusCode > 300) {
+					final String statusMsg = statusLine.getReasonPhrase();
+					LOG.warn(
+							Markers.ERR, "Listing container \"{}\" response: {}/{}",
+							container, statusCode, statusMsg
+					);
+					break;
+				}
+				//
+				final HttpEntity respEntity = httpResp.getEntity();
+				//
+				if (respEntity == null) {
+					LOG.warn(Markers.MSG, "No HTTP entity returned");
+					break;
+				}
+				//
+				//String respContentType = ContentType.APPLICATION_JSON.getMimeType();
+				//
+				if (respEntity.getContentType() == null) {
+					LOG.debug(Markers.ERR, "No content type returned");
+					break;
+				}
+				//
+				final String respContentType = respEntity.getContentType().getValue();
+				if (!respContentType.toLowerCase().contains("json")) {
+					LOG.warn(
+							Markers.ERR, "Unexpected response content type: \"{}\"",
+							respContentType
+					);
+					break;
+				}
+				try (final InputStream in = respEntity.getContent()) {
+					handleJsonInputStream(in);
+				} catch (final IOException e) {
+					LogUtil.exception(
+							LOG, Level.ERROR, e,
+							"Failed to list the content of container: {}", container
+					);
+				}
+				EntityUtils.consumeQuietly(respEntity);
+			} while (statusCode != 204 && lastId != null);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the container: {}", container);
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Container \"{}\" producer interrupted", container);
 		} finally {
-			if(consumer != null) {
+			if (consumer != null) {
 				try {
 					consumer.shutdown();
 				} catch(final Exception e) {
@@ -144,6 +168,7 @@ implements Producer<T> {
 	//
 	private void handleJsonInputStream(final InputStream in)
 	throws IOException, InterruptedException {
+		int containerListLenght = 0;
 		try(final JsonParser jsonParser = JSON_FACTORY.createParser(in)) {
 			final JsonToken rootToken = jsonParser.nextToken();
 			JsonToken nextToken;
@@ -179,6 +204,7 @@ implements Producer<T> {
 												);
 											}
 											count ++;
+											containerListLenght ++;
 										} else {
 											break;
 										}
@@ -237,6 +263,10 @@ implements Producer<T> {
 							break;
 					}
 				} while(!JsonToken.END_ARRAY.equals(nextToken));
+				// if container's list is empty last data ID has to equal null.
+				if (containerListLenght == 0) {
+					lastId = null;
+				}
 			} else {
 				LOG.warn(
 					Markers.ERR,
