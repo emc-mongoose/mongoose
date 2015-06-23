@@ -28,7 +28,6 @@ implements AsyncConsumer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	// configuration params
-	protected final RunTimeConfig runTimeConfig;
 	private final long maxCount;
 	protected final int submTimeOutMilliSec, maxQueueSize;
 	// states
@@ -39,21 +38,14 @@ implements AsyncConsumer<T> {
 		isAllSubm = new AtomicBoolean(false);
 	// volatile
 	private final BlockingQueue<T> volatileQueue;
-	// persistent
-	protected final Class<T> dataCls;
 	//
 	public AsyncConsumerBase(
-		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount
+		final long maxCount, final int maxQueueSize, final int submTimeOutMilliSec
 	) {
-		this.dataCls = dataCls;
-		this.runTimeConfig = runTimeConfig;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		maxQueueSize = (int) Math.min(
-			this.maxCount, runTimeConfig.getRunRequestQueueSize()
-		);
+		this.maxQueueSize = (int) Math.min(this.maxCount, maxQueueSize);
+		this.submTimeOutMilliSec = submTimeOutMilliSec;
 		volatileQueue = new ArrayBlockingQueue<>(maxQueueSize);
-		submTimeOutMilliSec = runTimeConfig.getRunSubmitTimeOutMilliSec();
-		//
 	}
 	//
 	@Override
@@ -127,7 +119,9 @@ implements AsyncConsumer<T> {
 	@Override
 	public void shutdown() {
 		if(!isStarted.get()) {
-			throw new IllegalStateException("Not started yet, but shutdown is invoked");
+			throw new IllegalStateException(
+				getName() + ": not started yet, but shutdown is invoked"
+			);
 		} else if(isShutdown.compareAndSet(false, true)) {
 			LOG.debug(Markers.MSG, "{}: consumed {} data items", getName(), counterPreSubm.get());
 		}

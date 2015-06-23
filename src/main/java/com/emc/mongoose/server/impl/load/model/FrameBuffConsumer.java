@@ -32,7 +32,10 @@ implements RecordFrameBuffer<T> {
 	public FrameBuffConsumer(
 		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount
 	) {
-		super(dataCls, runTimeConfig, maxCount);
+		super(
+			maxCount, runTimeConfig.getRunRequestQueueSize(),
+			runTimeConfig.getRunSubmitTimeOutMilliSec()
+		);
 		setName(Thread.currentThread().getName() + "-" + getClass().getSimpleName());
 		start();
 	}

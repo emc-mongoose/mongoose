@@ -39,11 +39,17 @@ implements AccumulatorProducer<T> {
 	//
 	private volatile long count = 0;
 	//
+	protected final Class<T> dataCls;
+	//
 	public PersistentAccumulatorProducer(
 		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount
 	) {
-		super(dataCls, runTimeConfig, maxCount);
+		super(
+			maxCount, runTimeConfig.getRunRequestQueueSize(),
+			runTimeConfig.getRunSubmitTimeOutMilliSec()
+		);
 		//
+		this.dataCls = dataCls;
 		final Path tmpFilePath = Paths.get(
 			System.getProperty("java.io.tmpdir"),
 			runTimeConfig.getRunName() + "-v" + runTimeConfig.getRunVersion()

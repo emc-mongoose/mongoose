@@ -23,9 +23,7 @@ import org.apache.logging.log4j.Logger;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -205,23 +203,21 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
-		final Object t = ois.readUnshared();
+		final Object t = in.readObject();
 		if(t == null) {
 			LOG.debug(Markers.MSG, "Note: no subtenant has got from load client side");
 		} else {
 			setSubTenant(new WSSubTenantImpl<>(this, String.class.cast(t)));
 		}
-		uriBasePath = String.class.cast(ois.readUnshared());
+		uriBasePath = String.class.cast(in.readObject());
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
-		oos.writeUnshared(subTenant == null ? null : subTenant.getValue());
-		oos.writeUnshared(uriBasePath);
+		out.writeObject(subTenant == null ? null : subTenant.getValue());
+		out.writeObject(uriBasePath);
 	}
 	//
 	@Override

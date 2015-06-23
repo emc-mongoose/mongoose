@@ -17,9 +17,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 06.06.14.
@@ -304,15 +302,14 @@ implements RequestConfig<T> {
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
-		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
-		oos.writeUnshared(getAPI());
-		oos.writeUnshared(getLoadType());
-		oos.writeUnshared(getScheme());
+		out.writeObject(getAPI());
+		out.writeObject(getLoadType());
+		out.writeObject(getScheme());
 		out.writeInt(getPort());
-		oos.writeUnshared(getUserName());
-		oos.writeUnshared(getSecret());
-		oos.writeUnshared(getNameSpace());
-		oos.writeUnshared(getDataSource());
+		out.writeObject(getUserName());
+		out.writeObject(getSecret());
+		out.writeObject(getNameSpace());
+		out.writeObject(getDataSource());
 		out.writeBoolean(getRetries());
 		out.writeBoolean(getAnyDataProducerEnabled());
 		out.writeBoolean(getVerifyContentFlag());
@@ -322,22 +319,21 @@ implements RequestConfig<T> {
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
-		setAPI(String.class.cast(ois.readUnshared()));
+		setAPI(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got API {}", api);
-		setLoadType(IOTask.Type.class.cast(ois.readUnshared()));
+		setLoadType(IOTask.Type.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got load type {}", loadType);
-		setScheme(String.class.cast(ois.readUnshared()));
+		setScheme(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got scheme {}", scheme);
 		setPort(in.readInt());
 		LOG.trace(Markers.MSG, "Got port {}", port);
-		setUserName(String.class.cast(ois.readUnshared()));
+		setUserName(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got user name {}", userName);
-		setSecret(String.class.cast(ois.readUnshared()));
+		setSecret(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got secret {}", secret);
-		setNameSpace(String.class.cast(ois.readUnshared()));
+		setNameSpace(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got namespace {}", secret);
-		setDataSource(DataSource.class.cast(ois.readUnshared()));
+		setDataSource(DataSource.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
 		setRetries(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got retry flag {}", retryFlag);

@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 13.05.15.
  */
-public final class BasicIOStats
+public final class BasicStorageIOStats
 extends Thread
 implements IOStats {
 	//
@@ -105,10 +105,10 @@ implements IOStats {
 	private final long updateMilliPeriod;
 	private final Storage storage;
 	//
-	public BasicIOStats(
+	public BasicStorageIOStats(
 		final RunTimeConfig runTimeConfig, final Storage storage
 	) {
-		super(BasicIOStats.class.getSimpleName());
+		super(BasicStorageIOStats.class.getSimpleName());
 		setDaemon(true);
 		updateMilliPeriod = TimeUnit.SECONDS.toMillis(runTimeConfig.getLoadMetricsPeriodSec());
 		this.storage = storage;

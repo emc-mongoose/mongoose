@@ -31,12 +31,6 @@ extends SerializingItemOutput<T> {
 	}
 	//
 	@Override
-	public void write(final T dataItem)
-	throws IOException {
-		itemsDst.writeUnshared(dataItem);
-	}
-	//
-	@Override
 	public BinFileItemInput<T> getInput()
 	throws IOException {
 		return new BinFileItemInput<>(itemsDstPath);

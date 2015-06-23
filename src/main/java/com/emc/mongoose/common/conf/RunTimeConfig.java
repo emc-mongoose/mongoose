@@ -555,8 +555,7 @@ implements Externalizable {
 		//
 		log.trace(Markers.MSG, "Sending configuration: {}", propsMap);
 		//
-		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
-		oos.writeUnshared(propsMap);
+		out.writeObject(propsMap);
 		log.debug(Markers.MSG, "Uploaded the properties from client side");
 	}
 	//
@@ -564,9 +563,8 @@ implements Externalizable {
 	public final synchronized void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		final Logger log = LogManager.getLogger();
-		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
 		log.debug(Markers.MSG, "Going to fetch the properties from client side");
-		final HashMap<String, String> confMap = HashMap.class.cast(ois.readUnshared());
+		final HashMap<String, String> confMap = HashMap.class.cast(in.readObject());
 		log.trace(Markers.MSG, "Got the properties from client side: {}", confMap);
 		//
 		final String

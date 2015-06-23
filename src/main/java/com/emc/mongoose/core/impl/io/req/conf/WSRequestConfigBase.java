@@ -72,9 +72,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
@@ -389,21 +387,19 @@ implements WSRequestConfig<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
-		sharedHeaders = HeaderGroup.class.cast(ois.readUnshared());
+		sharedHeaders = HeaderGroup.class.cast(in.readObject());
 		LOG.trace(Markers.MSG, "Got headers set {}", sharedHeaders);
-		setNameSpace(String.class.cast(ois.readUnshared()));
-		setFileAccessEnabled(Boolean.class.cast(ois.readUnshared()));
+		setNameSpace(String.class.cast(in.readObject()));
+		setFileAccessEnabled(Boolean.class.cast(in.readObject()));
 	}
 	//
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
-		oos.writeUnshared(sharedHeaders);
-		oos.writeUnshared(getNameSpace());
-		oos.writeUnshared(getFileAccessEnabled());
+		out.writeObject(sharedHeaders);
+		out.writeObject(getNameSpace());
+		out.writeObject(getFileAccessEnabled());
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse httpResponse) {

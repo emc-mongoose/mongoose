@@ -40,7 +40,7 @@ extends HttpServlet {
 	public void init() {
 		try {
 			super.init();
-			runTimeConfig = ((RunTimeConfig) getServletContext().getAttribute("runTimeConfig")).clone();
+			runTimeConfig = ((RunTimeConfig) getServletContext().getAttribute("rtConfig")).clone();
 		} catch (final ServletException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Interrupted servlet init method");
 		}

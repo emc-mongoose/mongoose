@@ -66,13 +66,16 @@ implements LoadExecutor<T> {
 	protected final int loadNum, connCountPerNode, storageNodeCount;
 	protected final String storageNodeAddrs[];
 	//
+	protected final Class<T> dataCls;
+	protected final RunTimeConfig rtConfig;
+	//
 	protected final DataSource dataSrc;
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
-	protected final PersistentAccumulatorProducer<T> itemsBuff;
+	protected volatile PersistentAccumulatorProducer<T> itemsBuff = null;
 	//
 	private final long maxCount;
 	private final int totalConnCount;
@@ -96,7 +99,7 @@ implements LoadExecutor<T> {
 			@Override
 			public final void run() {
 				final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
-					runTimeConfig.getLoadMetricsPeriodSec()
+					rtConfig.getLoadMetricsPeriodSec()
 				);
 				try {
 					if(metricsUpdatePeriodMilliSec > 0) {
@@ -125,7 +128,7 @@ implements LoadExecutor<T> {
 						if(isDoneAllSubm() || isDoneMaxCount()) {
 							if(
 								lock.tryLock(
-									runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+									rtConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
 								)
 							) {
 								try {
@@ -169,12 +172,17 @@ implements LoadExecutor<T> {
 	//
 	protected LoadExecutorBase(
 		final Class<T> dataCls,
-		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
+		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
-		super(dataCls, runTimeConfig, maxCount);
+		super(
+			maxCount, rtConfig.getRunRequestQueueSize(),
+			rtConfig.getRunSubmitTimeOutMilliSec()
+		);
 		//
+		this.dataCls = dataCls;
+		this.rtConfig = rtConfig;
 		loadNum = LAST_INSTANCE_NUM.getAndIncrement();
 		storageNodeCount = addrs.length;
 		//
@@ -198,7 +206,7 @@ implements LoadExecutor<T> {
 		}
 		loadType = reqConfig.getLoadType();
 		//
-		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemotePortExport());
+		mBeanServer = ServiceUtils.getMBeanServer(rtConfig.getRemotePortExport());
 		jmxReporter = JmxReporter.forRegistry(metrics)
 			//.convertDurationsTo(TimeUnit.MICROSECONDS)
 			//.convertRatesTo(TimeUnit.SECONDS)
@@ -215,8 +223,6 @@ implements LoadExecutor<T> {
 		ioTaskSpentQueue = new ArrayBlockingQueue<>(maxQueueSize);
 		// create and configure the connection manager
 		dataSrc = reqConfig.getDataSource();
-		//
-		itemsBuff = new PersistentAccumulatorProducer<>(dataCls, runTimeConfig, this.maxCount);
 		//
 		if(listFile != null && listFile.length() > 0) {
 			final Path dataItemsListPath = Paths.get(listFile);
@@ -359,12 +365,14 @@ implements LoadExecutor<T> {
 			//
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
-				try {
-					itemsBuff.close();
-				} catch(final IOException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
+				if(itemsBuff != null) {
+					try {
+						itemsBuff.close();
+					} catch(final IOException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
+					}
+					itemsBuff.start();
 				}
-				itemsBuff.start();
 			} else {
 				//
 				try {
@@ -392,7 +400,7 @@ implements LoadExecutor<T> {
 			shutdown();
 			// releasing the blocked join() methods, if any
 			try {
-				if(lock.tryLock(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)) {
+				if(lock.tryLock(rtConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)) {
 					try {
 						condProducerDone.signalAll();
 						LOG.debug(Markers.MSG, "{}: done/interrupted signal emitted", getName());
@@ -460,6 +468,17 @@ implements LoadExecutor<T> {
 			if(isStarted.get()) {
 				super.submit(dataItem);
 			} else { // accumulate until started
+				synchronized(itemsBuff) {
+					if(itemsBuff == null) {
+						itemsBuff = new PersistentAccumulatorProducer<>(
+							dataCls, rtConfig, this.maxCount
+						);
+						itemsBuff.setConsumer(this);
+						LOG.debug(
+							Markers.MSG, "{}: not started yet, consuming into the temporary file"
+						);
+					}
+				}
 				itemsBuff.submit(dataItem);
 			}
 		} catch(final RejectedExecutionException e) {
@@ -617,7 +636,9 @@ implements LoadExecutor<T> {
 					Markers.MSG, "Stopped the producer \"{}\" for \"{}\"", producer, getName()
 				);
 			}
-			itemsBuff.interrupt();
+			if(itemsBuff != null) {
+				itemsBuff.interrupt();
+			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to stop the producer: {}", producer);
 		} finally {
@@ -689,7 +710,7 @@ implements LoadExecutor<T> {
 	@Override
 	public final LoadState getLoadState() {
 		return new BasicLoadState(
-			loadNum, runTimeConfig, throughPut.getCount(), counterRej.getCount(),
+			loadNum, rtConfig, throughPut.getCount(), counterRej.getCount(),
 			TimeUnit.NANOSECONDS, System.nanoTime() - tsStart.get()
 		);
 	}

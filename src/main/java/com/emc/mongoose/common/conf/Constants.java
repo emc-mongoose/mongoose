@@ -23,8 +23,6 @@ public interface Constants {
 	String DIR_WEBAPP = "webapp";
 	String DIR_WEBINF = "WEB-INF";
 	//
-	String INHERITABLE_CONTEXT_MAP = "isThreadContextMapInheritable";
-	//
 	int BUFF_SIZE_LO = (int) RunTimeConfig.getContext().getDataBufferSize();
 	int BUFF_SIZE_HI = (int) RunTimeConfig.getContext().getDataRingSize();
 }

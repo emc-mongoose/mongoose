@@ -47,7 +47,7 @@ implements Runnable {
         webAppContext.setResourceBase(webResourceBaseDir);
         webAppContext.setDescriptor(webDescriptorBaseDir);
         webAppContext.setParentLoaderPriority(true);
-        webAppContext.setAttribute("runTimeConfig", runTimeConfig);
+        webAppContext.setAttribute("rtConfig", runTimeConfig);
 
         //
         server.setHandler(webAppContext);

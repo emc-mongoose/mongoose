@@ -9,7 +9,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.core.api.load.model.Consumer;
+import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
@@ -34,13 +34,15 @@ implements StorageClient<T> {
 	}
 	//
 	protected long executeLoad(
-		final Producer<T> producer, final LoadExecutor<T> loadExecutor, final Consumer<T> consumer
+		final Producer<T> producer, final LoadExecutor<T> loadExecutor,
+		final AsyncConsumer<T> consumer
 	) throws IOException {
 		//
 		final long countSucc;
 		//
 		if(consumer != null) {
 			loadExecutor.setConsumer(consumer);
+			consumer.start();
 		}
 		if(producer != null) {
 			producer.setConsumer(loadExecutor);
@@ -93,21 +95,24 @@ implements StorageClient<T> {
 	) throws IllegalArgumentException, IOException {
 		//
 		final long countSucc;
+		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
-		final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-			null : new DataItemOutputConsumer<>(itemsOutput);
-		//
 		try(
-			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(IOTask.Type.CREATE)
-				.setThreadsPerNodeFor(threadCount, IOTask.Type.CREATE)
-				.setMinObjSize(minSize)
-				.setMaxObjSize(maxSize)
-				.setObjSizeBias(sizeBias)
-				.build()
+			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
+				null : new DataItemOutputConsumer<>(itemsOutput)
 		) {
-			countSucc = executeLoad(producer, loadJobExecutor, consumer);
+			try(
+				final LoadExecutor<T> loadJobExecutor = loadBuilder
+					.setLoadType(IOTask.Type.CREATE)
+					.setThreadsPerNodeFor(threadCount, IOTask.Type.CREATE)
+					.setMinObjSize(minSize)
+					.setMaxObjSize(maxSize)
+					.setObjSizeBias(sizeBias)
+					.build()
+			) {
+				countSucc = executeLoad(producer, loadJobExecutor, consumer);
+			}
 		}
 		//
 		return countSucc;
@@ -143,20 +148,22 @@ implements StorageClient<T> {
 	) throws IllegalStateException, IOException {
 		//
 		final long countSucc;
+		loadBuilder.getRequestConfig().setVerifyContentFlag(verifyContentFlag);
+		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
-		final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-			null : new DataItemOutputConsumer<>(itemsOutput);
-		//
-		loadBuilder.getRequestConfig().setVerifyContentFlag(verifyContentFlag);
-		//
 		try(
-			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(IOTask.Type.READ)
-				.setThreadsPerNodeFor(threadCount, IOTask.Type.READ)
-				.build()
+			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
+				null : new DataItemOutputConsumer<>(itemsOutput)
 		) {
-			countSucc = executeLoad(producer, loadJobExecutor, consumer);
+			try(
+				final LoadExecutor<T> loadJobExecutor = loadBuilder
+					.setLoadType(IOTask.Type.READ)
+					.setThreadsPerNodeFor(threadCount, IOTask.Type.READ)
+					.build()
+			) {
+				countSucc = executeLoad(producer, loadJobExecutor, consumer);
+			}
 		}
 		//
 		return countSucc;
@@ -175,18 +182,21 @@ implements StorageClient<T> {
 	) throws IllegalStateException, IOException {
 		//
 		final long countSucc;
+		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
-		final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-			null : new DataItemOutputConsumer<>(itemsOutput);
-		//
 		try(
-			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(IOTask.Type.DELETE)
-				.setThreadsPerNodeFor(threadCount, IOTask.Type.DELETE)
-				.build()
+			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
+				null : new DataItemOutputConsumer<>(itemsOutput)
 		) {
-			countSucc = executeLoad(producer, loadJobExecutor, consumer);
+			try(
+				final LoadExecutor<T> loadJobExecutor = loadBuilder
+					.setLoadType(IOTask.Type.DELETE)
+					.setThreadsPerNodeFor(threadCount, IOTask.Type.DELETE)
+					.build()
+			) {
+				countSucc = executeLoad(producer, loadJobExecutor, consumer);
+			}
 		}
 		//
 		return countSucc;
@@ -228,19 +238,22 @@ implements StorageClient<T> {
 	) throws IllegalArgumentException, IllegalStateException, IOException {
 		//
 		final long countSucc;
+		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
-		final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-			null : new DataItemOutputConsumer<>(itemsOutput);
-		//
 		try(
-			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(IOTask.Type.UPDATE)
-				.setThreadsPerNodeFor(threadCount, IOTask.Type.UPDATE)
-				.setUpdatesPerItem(countPerTime)
-				.build()
+			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
+				null : new DataItemOutputConsumer<>(itemsOutput)
 		) {
-			countSucc = executeLoad(producer, loadJobExecutor, consumer);
+			try(
+				final LoadExecutor<T> loadJobExecutor = loadBuilder
+					.setLoadType(IOTask.Type.UPDATE)
+					.setThreadsPerNodeFor(threadCount, IOTask.Type.UPDATE)
+					.setUpdatesPerItem(countPerTime)
+					.build()
+			) {
+				countSucc = executeLoad(producer, loadJobExecutor, consumer);
+			}
 		}
 		//
 		return countSucc;
@@ -298,21 +311,24 @@ implements StorageClient<T> {
 	) throws IllegalArgumentException, IllegalStateException, IOException {
 		//
 		final long countSucc;
+		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
-		final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-			null : new DataItemOutputConsumer<>(itemsOutput);
-		//
 		try(
-			final LoadExecutor<T> loadJobExecutor = loadBuilder
-				.setLoadType(IOTask.Type.APPEND)
-				.setThreadsPerNodeFor(threadCount, IOTask.Type.APPEND)
-				.setMinObjSize(sizeMin)
-				.setMaxObjSize(sizeMax)
-				.setObjSizeBias(sizeBias)
-				.build()
+			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
+				null : new DataItemOutputConsumer<>(itemsOutput)
 		) {
-			countSucc = executeLoad(producer, loadJobExecutor, consumer);
+			try(
+				final LoadExecutor<T> loadJobExecutor = loadBuilder
+					.setLoadType(IOTask.Type.APPEND)
+					.setThreadsPerNodeFor(threadCount, IOTask.Type.APPEND)
+					.setMinObjSize(sizeMin)
+					.setMaxObjSize(sizeMax)
+					.setObjSizeBias(sizeBias)
+					.build()
+			) {
+				countSucc = executeLoad(producer, loadJobExecutor, consumer);
+			}
 		}
 		//
 		return countSucc;

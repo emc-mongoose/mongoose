@@ -17,9 +17,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.BitSet;
@@ -42,7 +40,8 @@ implements AppendableDataItem, UpdatableDataItem {
 		FMT_MSG_MERGE_MASKS = "{}: move pending ranges \"{}\" to history \"{}\"",
 		STR_EMPTY_MASK = "0";
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final BitSet maskRangesHistory = new BitSet(), maskRangesPending = new BitSet();
+	protected final BitSet
+		maskRangesHistory = new BitSet(Long.SIZE), maskRangesPending = new BitSet(Long.SIZE);
 	protected int currLayerIndex = 0;
 	protected long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,9 +129,8 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeInt(currLayerIndex);
-		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
-		oos.writeUnshared(maskRangesHistory);
-		oos.writeUnshared(maskRangesPending);
+		out.writeLong(maskRangesHistory.isEmpty() ? 0 : maskRangesHistory.toLongArray()[0]);
+		out.writeLong(maskRangesPending.isEmpty() ? 0 : maskRangesPending.toLongArray()[0]);
 	}
 	//
 	@Override
@@ -140,9 +138,8 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		currLayerIndex = in.readInt();
-		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
-		maskRangesHistory.or(BitSet.class.cast(ois.readUnshared()));
-		maskRangesPending.or(BitSet.class.cast(ois.readUnshared()));
+		maskRangesHistory.or(BitSet.valueOf(new long[] { in.readLong() }));
+		maskRangesPending.or(BitSet.valueOf(new long[] { in.readLong() }));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/*public static int log2(long value) {

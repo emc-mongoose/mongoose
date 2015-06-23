@@ -20,9 +20,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.security.NoSuchAlgorithmException;
 //
 /**
@@ -188,15 +186,14 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
-		uriSvcBasePath = String.class.cast(ois.readUnshared());
-		Object t = ois.readUnshared();
+		uriSvcBasePath = String.class.cast(in.readObject());
+		Object t = in.readObject();
 		if(t != null) {
 			setAuthToken(new WSAuthTokenImpl<>(this, String.class.cast(t)));
 		} else {
 			LOG.debug(Markers.MSG, "Note: no auth token has been got from load client side");
 		}
-		t = ois.readUnshared();
+		t = in.readObject();
 		if(t != null) {
 			setContainer(new WSContainerImpl<>(this, String.class.cast(t)));
 		} else {
@@ -208,10 +205,9 @@ extends WSRequestConfigBase<T> {
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
-		oos.writeUnshared(uriSvcBasePath);
-		oos.writeUnshared(authToken == null ? null : authToken.getValue());
-		oos.writeUnshared(container == null ? null : container.getName());
+		out.writeObject(uriSvcBasePath);
+		out.writeObject(authToken == null ? null : authToken.getValue());
+		out.writeObject(container == null ? null : container.getName());
 	}
 	//
 	@Override

@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
@@ -66,6 +67,8 @@ implements Producer<T> {
 			do {
 				try {
 					nextItem = itemIn.read();
+				} catch(final EOFException e) {
+					break;
 				} catch(final IOException e) {
 					LogUtil.exception(LOG, Level.WARN, e, "Failed to read the next data item");
 				}

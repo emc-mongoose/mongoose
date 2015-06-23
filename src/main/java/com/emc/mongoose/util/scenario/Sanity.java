@@ -9,8 +9,10 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.util.DataItemInput;
 import com.emc.mongoose.core.api.data.util.DataItemOutput;
 //
+import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.util.BinFileItemOutput;
 //
+import com.emc.mongoose.core.impl.data.util.TxtFileItemOutput;
 import com.emc.mongoose.storage.mock.impl.Cinderella;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -40,29 +42,31 @@ implements Runnable {
 		try {
 			final StorageClientBuilder<WSObject, StorageClient<WSObject>>
 				clientBuilder = new BasicWSClientBuilder<>();
-			final StorageClient<WSObject> client = clientBuilder
+			final StorageClient<WSObject> clientStandalone = clientBuilder
 				.setNodes(new String[] {"127.0.0.1:9020"})
 				.setLimitCount(1000000)
 				.setLimitTime(100, TimeUnit.SECONDS)
 				.setLimitRate(10000)
 				.build();
 			//
-			final DataItemOutput<WSObject> dataDstW = new BinFileItemOutput<>(
-				Files.createTempFile(null, null)
+			final DataItemOutput<WSObject> dataDstW = new TxtFileItemOutput<>(
+				Files.createTempFile(null, null), BasicWSObject.class
 			);
 			LOG.info(Markers.MSG, "Start writing");
-			final long nWritten = client.write(null, dataDstW, (short) 100, SizeUtil.toSize("1KB"));
+			final long nWritten = clientStandalone.write(
+				null, dataDstW, (short) 100, SizeUtil.toSize("1KB")
+			);
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
 			//
 			final DataItemInput<WSObject> dataSrcR = dataDstW.getInput();
 			final DataItemOutput<WSObject> dataDstR = new BinFileItemOutput<>(
 				Files.createTempFile(null, null)
 			);
-			final long nRead = client.read(dataSrcR, dataDstR, (short) 100);
+			final long nRead = clientStandalone.read(dataSrcR, dataDstR, (short) 100);
 			LOG.info(Markers.MSG, "Read successfully {} items", nRead);
 			//
 			final DataItemInput<WSObject> dataSrcD = dataDstR.getInput();
-			final long nDeleted = client.delete(dataSrcD, null, (short) 100);
+			final long nDeleted = clientStandalone.delete(dataSrcD, null, (short) 100);
 			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
 			//
 			dataSrcR.reset();
@@ -70,7 +74,7 @@ implements Runnable {
 				Files.createTempFile(null, null)
 			);
 			LOG.info(Markers.MSG, "Start rewriting");
-			final long nReWritten = client.write(dataSrcR, dataDstRW, (short) 100);
+			final long nReWritten = clientStandalone.write(dataSrcR, dataDstRW, (short) 100);
 			LOG.info(Markers.MSG, "Rewritten successfully {} items", nReWritten);
 			//
 		} catch(final Exception e) {
@@ -83,12 +87,15 @@ implements Runnable {
 	throws IOException, InterruptedException {
 		RunTimeConfig.initContext();
 		final Thread wsMockThread = new Thread(
-			new Cinderella<>(RunTimeConfig.getContext()), "wsMockSanityRunner"
+			new Cinderella<>(RunTimeConfig.getContext()), "wsMock"
 		);
-		final Thread sanityThread = new Thread(new Sanity(), "sanityRunner");
+		final Thread sanityThread = new Thread(new Sanity(), "sanity");
 		wsMockThread.start();
+		TimeUnit.SECONDS.sleep(1);
 		sanityThread.start();
+		TimeUnit.SECONDS.sleep(1);
 		sanityThread.join();
+		TimeUnit.SECONDS.sleep(1);
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Sanity done");
 	}

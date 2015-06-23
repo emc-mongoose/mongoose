@@ -35,8 +35,7 @@ implements DataItem {
 		FMT_MSG_OFFSET = "Data item offset is not correct hexadecimal value: \"%s\"",
 		FMT_MSG_SIZE = "Data item size is not correct hexadecimal value: \"%s\"";
 	protected final static String
-		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s",
-		MSG_READ_RING_BLOCKED = "Reading from data ring blocked?";
+		FMT_MSG_INVALID_RECORD = "Invalid data item meta info: %s";
 	private static AtomicLong
 		LAST_OFFSET = new AtomicLong(
 			Math.abs(

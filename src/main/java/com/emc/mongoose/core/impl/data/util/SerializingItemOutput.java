@@ -21,7 +21,11 @@ implements DataItemOutput<T> {
 	@Override
 	public void write(final T dataItem)
 	throws IOException {
-		itemsDst.writeUnshared(dataItem);
+		try {
+			itemsDst.writeUnshared(dataItem);
+		} catch(final ArrayIndexOutOfBoundsException e) {
+			e.printStackTrace(System.err);
+		}
 	}
 	//
 	@Override

@@ -1,22 +1,22 @@
 package com.emc.mongoose.core.api.models;
-
+//
 import com.emc.mongoose.common.conf.RunTimeConfig;
-
-import java.io.Serializable;
+//
+import java.io.Externalizable;
 import java.util.concurrent.TimeUnit;
-
 /**
  * Created by gusakk on 19.06.15.
  */
-public interface LoadState extends Serializable {
+public interface LoadState
+extends Externalizable {
 	//
 	void setLoadNumber(final int loadNumber);
 	//
 	int getLoadNumber();
 	//
-	void setRunTimeConfig(final RunTimeConfig runTimeConfig);
+	void setRtConfig(final RunTimeConfig runTimeConfig);
 	//
-	RunTimeConfig getRunTimeConfig();
+	RunTimeConfig getRtConfig();
 	//
 	void setCountSucc(final long countSucc);
 	//

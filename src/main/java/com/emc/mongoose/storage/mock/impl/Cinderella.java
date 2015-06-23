@@ -18,7 +18,7 @@ import com.emc.mongoose.storage.mock.impl.net.BasicSocketEventDispatcher;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.request.APIRequestHandlerMapper;
 import com.emc.mongoose.storage.mock.impl.net.BasicWSMockConnFactory;
-import com.emc.mongoose.storage.mock.impl.stats.BasicIOStats;
+import com.emc.mongoose.storage.mock.impl.stats.BasicStorageIOStats;
 //
 import org.apache.commons.collections4.map.LRUMap;
 //
@@ -74,9 +74,10 @@ implements Storage<T> {
 	throws IOException {
 		super(runTimeConfig.getStorageMockCapacity());
 		this.runTimeConfig = runTimeConfig;
-		createConsumer = new AsyncConsumerBase<T>(
-			(Class<T>) BasicWSObjectMock.class, runTimeConfig, Long.MAX_VALUE
-		) {
+		final int
+			maxQueueSize = runTimeConfig.getRunRequestQueueSize(),
+			submTimeOutMilliSec = runTimeConfig.getRunSubmitTimeOutMilliSec();
+		createConsumer = new AsyncConsumerBase<T>(Long.MAX_VALUE, maxQueueSize, submTimeOutMilliSec) {
 			{ setDaemon(true); setName("createQueueWorker"); start(); }
 			@Override
 			protected final void submitSync(final T dataItem)
@@ -84,9 +85,7 @@ implements Storage<T> {
 				put(dataItem.getId(), dataItem);
 			}
 		};
-		deleteConsumer = new AsyncConsumerBase<T>(
-			(Class<T>) BasicWSObjectMock.class, runTimeConfig, Long.MAX_VALUE
-		) {
+		deleteConsumer = new AsyncConsumerBase<T>(Long.MAX_VALUE, maxQueueSize, submTimeOutMilliSec) {
 			{ setDaemon(true); setName("deleteQueueWorker"); start(); }
 			@Override
 			protected final void submitSync(final T dataItem)
@@ -94,7 +93,7 @@ implements Storage<T> {
 				remove(dataItem.getId());
 			}
 		};
-		ioStats = new BasicIOStats(runTimeConfig, this);
+		ioStats = new BasicStorageIOStats(runTimeConfig, this);
 		countHeads = runTimeConfig.getStorageMockHeadCount();
 		portStart = runTimeConfig.getApiTypePort(runTimeConfig.getApiName());
 		LOG.info(
