@@ -83,16 +83,16 @@ implements Producer<T> {
 	public final void run() {
 		String bucketListingMarker = null;
 		long countSubmit = 0;
-		long bucket_max_keys = WSRequestConfig.LIST_SIZE;
+		long bucketMaxKeys = WSRequestConfig.PAGE_SIZE;
 		try {
 			do {
 				//
-				bucket_max_keys = (maxCount - countSubmit) > bucket_max_keys ?
-					bucket_max_keys : (maxCount - countSubmit);
+				bucketMaxKeys = (maxCount - countSubmit) > bucketMaxKeys ?
+					bucketMaxKeys : (maxCount - countSubmit);
 				//
 				final HttpResponse httpResp = bucket.execute(
 					addr, MutableWSRequest.HTTPMethod.GET, false,
-					bucketListingMarker, bucket_max_keys
+					bucketListingMarker, bucketMaxKeys
 				);
 				//
 				if (httpResp == null) {
@@ -155,7 +155,7 @@ implements Producer<T> {
 					////////////////////////////////////////////////////////////////
 				}
 				EntityUtils.consumeQuietly(respEntity);
-			} while (bucketListingMarker != null);
+			} while(bucketListingMarker != null);
 		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to list the bucket: " + bucket + ", next marker: " + bucketListingMarker

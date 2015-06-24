@@ -76,7 +76,7 @@ implements Bucket<T> {
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning)
 	throws IOException {
-		return execute(addr, method, versioning, null, WSRequestConfig.LIST_SIZE);
+		return execute(addr, method, versioning, null, WSRequestConfig.PAGE_SIZE);
 	}
 	//
 	HttpResponse execute(

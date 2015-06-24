@@ -17,7 +17,6 @@ import com.fasterxml.jackson.core.JsonToken;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
-import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -86,13 +85,13 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		int statusCode;
-		long container_limit = WSRequestConfig.LIST_SIZE;
+		long containerLimit = WSRequestConfig.PAGE_SIZE;
 		try {
 			do {
-				container_limit = (maxCount - count) > container_limit ?
-					container_limit : (maxCount - count);
+				containerLimit = (maxCount - count) > containerLimit ?
+					containerLimit : (maxCount - count);
 				final HttpResponse httpResp = container.execute(
-					addr, MutableWSRequest.HTTPMethod.GET, lastId, container_limit
+					addr, MutableWSRequest.HTTPMethod.GET, lastId, containerLimit
 				);
 				//
 				if (httpResp == null) {
@@ -112,8 +111,8 @@ implements Producer<T> {
 				if (statusCode < 200 || statusCode > 300) {
 					final String statusMsg = statusLine.getReasonPhrase();
 					LOG.warn(
-							Markers.ERR, "Listing container \"{}\" response: {}/{}",
-							container, statusCode, statusMsg
+						Markers.ERR, "Listing container \"{}\" response: {}/{}",
+						container, statusCode, statusMsg
 					);
 					break;
 				}
@@ -174,7 +173,7 @@ implements Producer<T> {
 	//
 	private void handleJsonInputStream(final InputStream in)
 	throws IOException, InterruptedException {
-		int containerListLenght = 0;
+		boolean isEmptyArray = false;
 		try(final JsonParser jsonParser = JSON_FACTORY.createParser(in)) {
 			final JsonToken rootToken = jsonParser.nextToken();
 			JsonToken nextToken;
@@ -210,7 +209,7 @@ implements Producer<T> {
 												);
 											}
 											count ++;
-											containerListLenght ++;
+											isEmptyArray = true;
 										} else {
 											break;
 										}
@@ -270,7 +269,7 @@ implements Producer<T> {
 					}
 				} while(!JsonToken.END_ARRAY.equals(nextToken));
 				// if container's list is empty or all data objects are submitted last data ID has to equal null.
-				if (containerListLenght == 0 || count == maxCount) {
+				if (isEmptyArray || count == maxCount) {
 					lastId = null;
 				}
 			} else {
