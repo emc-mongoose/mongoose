@@ -35,8 +35,6 @@ import com.emc.mongoose.client.impl.load.executor.tasks.DataItemsFetchPeriodicTa
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
 //
-import com.emc.mongoose.server.api.load.model.ConsumerSvc;
-import com.emc.mongoose.util.client.impl.DataItemOutputConsumer;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -371,7 +369,11 @@ implements LoadClient<T> {
 						nextDataItemsBuff.size()
 					);
 				}
-				if(DataItemOutputConsumer.class.isInstance(consumer)) {
+				if(consumer == null) {
+					for(final T nextDataItem : nextDataItemsBuff) {
+						LOG.info(Markers.DATA_LIST, nextDataItem);
+					}
+				} else {
 					try {
 						for(final T nextDataItem : nextDataItemsBuff) {
 							consumer.submit(nextDataItem);
@@ -383,10 +385,6 @@ implements LoadClient<T> {
 						LogUtil.exception(
 							LOG, Level.WARN, e, "Failed to feed the data item to consumer"
 						);
-					}
-				} else {
-					for(final T nextDataItem : nextDataItemsBuff) {
-						LOG.info(Markers.DATA_LIST, nextDataItem);
 					}
 				}
 			}
@@ -584,7 +582,8 @@ implements LoadClient<T> {
 	@Override
 	public final void setConsumer(final Consumer<T> consumer)
 	throws RemoteException {
-		if(LoadClient.class.isInstance(consumer)) {
+		this.consumer = consumer;
+		/*if(LoadClient.class.isInstance(consumer)) {
 			LOG.debug(Markers.MSG, "Consumer is a LoadClient instance");
 			// consumer is client which has the map of consumers
 			// this is necessary for the distributed chain/rampup scenarios
@@ -610,7 +609,7 @@ implements LoadClient<T> {
 				Markers.ERR, "Unexpected consumer type: {}",
 				consumer == null ? null : consumer.getClass()
 			);
-		}
+		}*/
 	}
 	//
 	@Override
