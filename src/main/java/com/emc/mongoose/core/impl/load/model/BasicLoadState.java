@@ -21,6 +21,15 @@ implements LoadState {
 	private TimeUnit timeUnit;
 	private long timeValue;
 	//
+	public BasicLoadState() {
+		loadNumber = -1;
+		rtConfig = null;
+		countSucc = -1;
+		countFail = -1;
+		timeUnit = null;
+		timeValue = -1;
+	}
+	//
 	public BasicLoadState(
 		final int loadNumber, final RunTimeConfig runTimeConfig, final long countSucc,
 		final long countFail, final TimeUnit timeUnit, final long timeValue
