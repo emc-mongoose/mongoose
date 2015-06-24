@@ -86,7 +86,6 @@ implements Producer<T> {
 		long bucketMaxKeys = WSRequestConfig.PAGE_SIZE;
 		try {
 			do {
-				//
 				bucketMaxKeys = (maxCount - countSubmit) > bucketMaxKeys ?
 					bucketMaxKeys : (maxCount - countSubmit);
 				//
@@ -155,7 +154,7 @@ implements Producer<T> {
 					////////////////////////////////////////////////////////////////
 				}
 				EntityUtils.consumeQuietly(respEntity);
-			} while(bucketListingMarker != null);
+			} while(bucketListingMarker != null && countSubmit != maxCount);
 		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to list the bucket: " + bucket + ", next marker: " + bucketListingMarker

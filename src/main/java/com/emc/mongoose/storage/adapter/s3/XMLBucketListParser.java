@@ -107,6 +107,7 @@ extends DefaultHandler {
 				} catch(final  RejectedExecutionException e) {
 					LogUtil.exception(LOG, Level.DEBUG, e, "Consumer rejected the data object");
 				} catch(final InterruptedException e) {
+					System.out.println("interrupted");
 					endDocument();
 				} catch(final NumberFormatException e) {
 					LOG.debug(Markers.ERR, "Invalid id: {}", strId);
@@ -131,15 +132,9 @@ extends DefaultHandler {
 			strSize = new String(buff, start, length);
 		} else if (isNextMarker) {
 			bucketListingNextMarker = new String(buff, start, length);
+			System.out.println("set bucket");
 		}
 		super.characters(buff, start, length);
-	}
-	//
-	@Override
-	public void endDocument()
-	throws SAXException {
-		bucketListingNextMarker = null;
-		super.endDocument();
 	}
 	//
 	public final String getBucketListingNextMarker() {
