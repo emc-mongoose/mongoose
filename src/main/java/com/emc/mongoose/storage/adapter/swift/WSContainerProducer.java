@@ -4,6 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
+import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.data.DataObject;
@@ -85,9 +86,14 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		int statusCode;
+		long container_limit = WSRequestConfig.LIST_SIZE;
 		try {
 			do {
-				final HttpResponse httpResp = container.execute(addr, MutableWSRequest.HTTPMethod.GET, lastId);
+				container_limit = (maxCount - count) > container_limit ?
+					container_limit : (maxCount - count);
+				final HttpResponse httpResp = container.execute(
+					addr, MutableWSRequest.HTTPMethod.GET, lastId, container_limit
+				);
 				//
 				if (httpResp == null) {
 					LOG.warn(Markers.MSG, "No HTTP response returned");
@@ -143,6 +149,7 @@ implements Producer<T> {
 					);
 				}
 				EntityUtils.consumeQuietly(respEntity);
+				System.out.println("lastId = " + lastId);
 			} while (statusCode != 204 && lastId != null);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the container: {}", container);
@@ -263,8 +270,8 @@ implements Producer<T> {
 							break;
 					}
 				} while(!JsonToken.END_ARRAY.equals(nextToken));
-				// if container's list is empty last data ID has to equal null.
-				if (containerListLenght == 0) {
+				// if container's list is empty or all data objects are submitted last data ID has to equal null.
+				if (containerListLenght == 0 || count == maxCount) {
 					lastId = null;
 				}
 			} else {
