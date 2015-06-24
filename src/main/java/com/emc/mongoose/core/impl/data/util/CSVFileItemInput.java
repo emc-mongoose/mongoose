@@ -14,7 +14,7 @@ import java.nio.file.Path;
 /**
  The data item input using CSV file containing the human-readable data item records as the source
  */
-public class TxtFileItemInput<T extends DataItem>
+public class CSVFileItemInput<T extends DataItem>
 implements DataItemInput<T> {
 	//
 	protected final Path itemsSrcPath;
@@ -26,7 +26,7 @@ implements DataItemInput<T> {
 	 @throws IOException
 	 @throws NoSuchMethodException
 	 */
-	public TxtFileItemInput(final Path itemsSrcPath, final Class<T> itemCls)
+	public CSVFileItemInput(final Path itemsSrcPath, final Class<T> itemCls)
 	throws IOException, NoSuchMethodException {
 		this.itemsSrcPath = itemsSrcPath;
 		itemsSrc = Files.newBufferedReader(itemsSrcPath, StandardCharsets.UTF_8);

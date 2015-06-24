@@ -14,14 +14,14 @@ import java.nio.file.StandardOpenOption;
  The data item output writing into the specified file human-readable data item records using the CSV
  format
  */
-public class TxtFileItemOutput<T extends DataItem>
+public class CSVFileItemOutput<T extends DataItem>
 implements DataItemOutput<T> {
 	//
 	protected final Path itemsDstPath;
 	protected final Class<T> itemCls;
 	protected final BufferedWriter itemsDst;
 	//
-	public TxtFileItemOutput(final Path itemsDstPath, final Class<T> itemCls)
+	public CSVFileItemOutput(final Path itemsDstPath, final Class<T> itemCls)
 	throws IOException {
 		this.itemsDstPath = itemsDstPath;
 		this.itemCls = itemCls;
@@ -39,10 +39,10 @@ implements DataItemOutput<T> {
 	}
 	//
 	@Override
-	public TxtFileItemInput<T> getInput()
+	public CSVFileItemInput<T> getInput()
 	throws IOException {
 		try {
-			return new TxtFileItemInput<>(itemsDstPath, itemCls);
+			return new CSVFileItemInput<>(itemsDstPath, itemCls);
 		} catch(final NoSuchMethodException e) {
 			throw new IOException(e);
 		}

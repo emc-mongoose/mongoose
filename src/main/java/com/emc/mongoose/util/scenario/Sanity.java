@@ -9,15 +9,8 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.util.DataItemInput;
 import com.emc.mongoose.core.api.data.util.DataItemOutput;
 //
-import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.util.BinFileItemOutput;
 //
-import com.emc.mongoose.core.impl.data.util.TxtFileItemOutput;
-import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
-import com.emc.mongoose.server.api.load.executor.LoadSvc;
-import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.Cinderella;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
