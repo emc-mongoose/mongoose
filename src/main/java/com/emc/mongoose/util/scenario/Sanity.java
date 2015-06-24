@@ -11,6 +11,9 @@ import com.emc.mongoose.core.api.data.util.DataItemOutput;
 //
 import com.emc.mongoose.core.impl.data.util.BinFileItemOutput;
 //
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.Cinderella;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -106,7 +109,7 @@ implements Runnable {
 			.setLimitCount(1000000)
 			.setLimitTime(100, TimeUnit.SECONDS)
 			.setLimitRate(10000);
-		// standalone
+		/* standalone
 		final Thread sanityThread1 = new Thread(
 			new Sanity(clientBuilder.build()), "sanityStandalone"
 		);
@@ -115,9 +118,9 @@ implements Runnable {
 		TimeUnit.SECONDS.sleep(1);
 		sanityThread1.join();
 		LOG.info(Markers.MSG, "Standalone sanity finished");
-		TimeUnit.SECONDS.sleep(1);
+		TimeUnit.SECONDS.sleep(1);*/
 		// distributed mode
-		/*rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_EXPORT, 1399);
+		rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_EXPORT, 1399);
 		final LoadBuilderSvc<WSObject, WSLoadSvc<WSObject>>
 			loadSvcBuilder = new BasicWSLoadBuilderSvc<>(rtConfig);
 		loadSvcBuilder.start();
@@ -134,7 +137,7 @@ implements Runnable {
 		LOG.info(Markers.MSG, "Distributed sanity finished");
 		TimeUnit.SECONDS.sleep(1);
 		loadSvcBuilder.close();
-		LOG.info(Markers.MSG, "Load service builder stopped");*/
+		LOG.info(Markers.MSG, "Load service builder stopped");
 		// finish
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");
