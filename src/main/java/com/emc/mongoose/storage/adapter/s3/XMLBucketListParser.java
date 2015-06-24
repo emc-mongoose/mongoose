@@ -72,12 +72,12 @@ extends DefaultHandler {
 		isInsideItemId = isInsideItemId && !QNAME_ITEM_ID.equals(qName);
 		isInsideItemSize = isInsideItemSize && !QNAME_ITEM_SIZE.equals(qName);
 		//
-		if(isInsideItem && QNAME_ITEM.equals(qName)) {
+		if (isInsideItem && QNAME_ITEM.equals(qName)) {
 			isInsideItem = false;
 			//
 			long offset, size = -1;
 			//
-			if(strSize != null && strSize.length() > 0) {
+			if (strSize != null && strSize.length() > 0) {
 				try {
 					size = Long.parseLong(strSize);
 				} catch(final NumberFormatException e) {
@@ -89,12 +89,12 @@ extends DefaultHandler {
 				LOG.trace(Markers.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
 			}
 			//
-			if(strId != null && strId.length() > 0 && size > -1) {
+			if (strId != null && strId.length() > 0 && size > -1) {
 				try {
 					offset = Long.parseLong(strId, DataObject.ID_RADIX);
-					if(offset < 0) {
+					if (offset < 0) {
 						LOG.warn(Markers.ERR, "Calculated from id ring offset is negative");
-					} else if(count < maxCount) {
+					} else if (count < maxCount) {
 						consumer.submit(dataConstructor.newInstance(strId, offset, size));
 						count ++;
 					} else {
@@ -125,17 +125,28 @@ extends DefaultHandler {
 	public final void characters(
 		final char buff[], final int start, final int length
 	) throws SAXException {
-		if(isInsideItemId) {
+		if (isInsideItemId) {
 			strId = new String(buff, start, length);
-		} else if(isInsideItemSize) {
+		} else if (isInsideItemSize) {
 			strSize = new String(buff, start, length);
-		} else if(isNextMarker) {
+		} else if (isNextMarker) {
 			bucketListingNextMarker = new String(buff, start, length);
 		}
 		super.characters(buff, start, length);
 	}
 	//
-	public final String getBucketListingNextMarker(){
+	@Override
+	public void endDocument()
+	throws SAXException {
+		bucketListingNextMarker = null;
+		super.endDocument();
+	}
+	//
+	public final String getBucketListingNextMarker() {
 		return bucketListingNextMarker;
+	}
+	//
+	public long getCountSubmit() {
+		return count;
 	}
 }

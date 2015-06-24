@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.adapter.s3;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
+import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -81,9 +82,18 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		String bucketListingMarker = null;
+		long countSubmit = 0;
+		long bucket_max_keys = WSRequestConfig.LIST_SIZE;
 		try {
 			do {
-				final HttpResponse httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET, false, bucketListingMarker);
+				//
+				bucket_max_keys = (maxCount - countSubmit) > bucket_max_keys ?
+					bucket_max_keys : (maxCount - countSubmit);
+				//
+				final HttpResponse httpResp = bucket.execute(
+					addr, MutableWSRequest.HTTPMethod.GET, false,
+					bucketListingMarker, bucket_max_keys
+				);
 				//
 				if (httpResp == null) {
 					LOG.warn(Markers.MSG, "No HTTP response is returned");
@@ -141,6 +151,7 @@ implements Producer<T> {
 					//
 					parser.parse(in, xmlBucketListparser);
 					bucketListingMarker = xmlBucketListparser.getBucketListingNextMarker();
+					countSubmit = xmlBucketListparser.getCountSubmit();
 					////////////////////////////////////////////////////////////////
 				}
 				EntityUtils.consumeQuietly(respEntity);
