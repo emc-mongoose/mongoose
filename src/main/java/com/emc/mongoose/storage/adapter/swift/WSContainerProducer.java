@@ -149,7 +149,7 @@ implements Producer<T> {
 					);
 				}
 				EntityUtils.consumeQuietly(respEntity);
-			} while (statusCode != 204 && lastId != null);
+			} while(statusCode != 204 && lastId != null);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the container: {}", container);
 		} catch(final InterruptedException e) {
