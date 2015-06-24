@@ -149,7 +149,6 @@ implements Producer<T> {
 					);
 				}
 				EntityUtils.consumeQuietly(respEntity);
-				System.out.println("lastId = " + lastId);
 			} while (statusCode != 204 && lastId != null);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the container: {}", container);
