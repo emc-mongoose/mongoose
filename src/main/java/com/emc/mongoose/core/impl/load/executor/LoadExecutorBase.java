@@ -20,7 +20,7 @@ import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.api.models.LoadState;
+import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
@@ -28,7 +28,7 @@ import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.load.model.PersistentAccumulatorProducer;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 //
-import com.emc.mongoose.core.impl.models.BasicLoadState;
+import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;

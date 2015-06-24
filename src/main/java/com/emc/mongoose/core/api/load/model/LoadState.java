@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.api.models;
+package com.emc.mongoose.core.api.load.model;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
@@ -14,9 +14,9 @@ extends Externalizable {
 	//
 	int getLoadNumber();
 	//
-	void setRtConfig(final RunTimeConfig runTimeConfig);
+	void setConfig(final RunTimeConfig runTimeConfig);
 	//
-	RunTimeConfig getRtConfig();
+	RunTimeConfig getConfig();
 	//
 	void setCountSucc(final long countSucc);
 	//

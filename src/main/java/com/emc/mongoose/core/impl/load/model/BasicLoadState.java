@@ -1,7 +1,7 @@
-package com.emc.mongoose.core.impl.models;
+package com.emc.mongoose.core.impl.load.model;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.core.api.models.LoadState;
+import com.emc.mongoose.core.api.load.model.LoadState;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -44,12 +44,12 @@ implements LoadState {
 	}
 	//
 	@Override
-	public void setRtConfig(RunTimeConfig rtConfig) {
+	public void setConfig(RunTimeConfig rtConfig) {
 		this.rtConfig = rtConfig;
 	}
 	//
 	@Override
-	public RunTimeConfig getRtConfig() {
+	public RunTimeConfig getConfig() {
 		return rtConfig;
 	}
 	//

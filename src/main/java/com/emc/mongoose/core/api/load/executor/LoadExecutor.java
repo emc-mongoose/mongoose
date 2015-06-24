@@ -5,7 +5,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.api.models.LoadState;
+import com.emc.mongoose.core.api.load.model.LoadState;
 //
 import org.apache.logging.log4j.Marker;
 //
