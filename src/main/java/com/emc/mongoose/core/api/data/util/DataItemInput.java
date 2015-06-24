@@ -13,6 +13,7 @@ extends Closeable {
 	/**
 	 Get next data item
 	 @return next data item or null if no data item available
+	 @throws java.io.EOFException if no data item available more
 	 @throws java.io.IOException if failed to read some-why
 	 */
 	T read()

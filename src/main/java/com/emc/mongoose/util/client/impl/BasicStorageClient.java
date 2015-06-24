@@ -33,7 +33,7 @@ implements StorageClient<T> {
 		this.loadBuilder = loadBuilder;
 	}
 	//
-	protected long executeLoad(
+	protected long executeLoadJob(
 		final Producer<T> producer, final LoadExecutor<T> loadExecutor,
 		final AsyncConsumer<T> consumer
 	) throws IOException {
@@ -111,7 +111,7 @@ implements StorageClient<T> {
 					.setObjSizeBias(sizeBias)
 					.build()
 			) {
-				countSucc = executeLoad(producer, loadJobExecutor, consumer);
+				countSucc = executeLoadJob(producer, loadJobExecutor, consumer);
 			}
 		}
 		//
@@ -162,7 +162,7 @@ implements StorageClient<T> {
 					.setThreadsPerNodeFor(threadCount, IOTask.Type.READ)
 					.build()
 			) {
-				countSucc = executeLoad(producer, loadJobExecutor, consumer);
+				countSucc = executeLoadJob(producer, loadJobExecutor, consumer);
 			}
 		}
 		//
@@ -195,7 +195,7 @@ implements StorageClient<T> {
 					.setThreadsPerNodeFor(threadCount, IOTask.Type.DELETE)
 					.build()
 			) {
-				countSucc = executeLoad(producer, loadJobExecutor, consumer);
+				countSucc = executeLoadJob(producer, loadJobExecutor, consumer);
 			}
 		}
 		//
@@ -252,7 +252,7 @@ implements StorageClient<T> {
 					.setUpdatesPerItem(countPerTime)
 					.build()
 			) {
-				countSucc = executeLoad(producer, loadJobExecutor, consumer);
+				countSucc = executeLoadJob(producer, loadJobExecutor, consumer);
 			}
 		}
 		//
@@ -327,7 +327,7 @@ implements StorageClient<T> {
 					.setObjSizeBias(sizeBias)
 					.build()
 			) {
-				countSucc = executeLoad(producer, loadJobExecutor, consumer);
+				countSucc = executeLoadJob(producer, loadJobExecutor, consumer);
 			}
 		}
 		//

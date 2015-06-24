@@ -7,14 +7,14 @@ import com.emc.mongoose.core.api.data.util.DataItemOutput;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 /**
- Created by kurila on 18.06.15.
+ The data item output implementation serializing the data items into the specified stream
  */
-public abstract class SerializingItemOutput<T extends DataItem>
+public abstract class ExternItemOutput<T extends DataItem>
 implements DataItemOutput<T> {
 	//
 	protected final ObjectOutputStream itemsDst;
 	//
-	protected SerializingItemOutput(final ObjectOutputStream itemsDst) {
+	protected ExternItemOutput(final ObjectOutputStream itemsDst) {
 		this.itemsDst = itemsDst;
 	}
 	//

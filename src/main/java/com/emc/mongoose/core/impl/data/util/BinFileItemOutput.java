@@ -9,13 +9,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 /**
- Created by kurila on 18.06.15.
+ An item input implementation serializing the data items to the specified file.
  */
 public class BinFileItemOutput<T extends DataItem>
-extends SerializingItemOutput<T> {
+extends ExternItemOutput<T> {
 	//
 	protected final Path itemsDstPath;
-	//
+	/**
+	 @param itemsDstPath the path to the file which should be used to store the serialized items
+	 @throws IOException if unable to open the file for writing
+	 */
 	public BinFileItemOutput(final Path itemsDstPath)
 	throws IOException {
 		super(

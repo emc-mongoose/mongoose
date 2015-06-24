@@ -36,6 +36,7 @@ import com.emc.mongoose.client.impl.load.executor.tasks.FrameFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
 //
+import com.emc.mongoose.server.api.load.model.ConsumerSvc;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -581,13 +582,13 @@ implements LoadClient<T> {
 			} catch(final ClassCastException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Data item class mismatch");
 			}
-		} else if(LoadSvc.class.isInstance(consumer)) {
+		} else if(ConsumerSvc.class.isInstance(consumer)) {
 			// single consumer for all these producers
 			try {
-				final LoadSvc<T> loadSvc = (LoadSvc<T>) consumer;
+				final ConsumerSvc<T> consumerSvc = (ConsumerSvc<T>) consumer;
 				LOG.debug(Markers.MSG, "Consumer is load service instance");
 				for(final String addr : loadSvcAddrs) {
-					remoteLoadMap.get(addr).setConsumer(loadSvc);
+					remoteLoadMap.get(addr).setConsumer(consumerSvc);
 				}
 			} catch(final ClassCastException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Data item class mismatch");

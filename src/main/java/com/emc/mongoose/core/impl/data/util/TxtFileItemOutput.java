@@ -11,7 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 /**
- Created by kurila on 18.06.15.
+ The data item output writing into the specified file human-readable data item records using the CSV
+ format
  */
 public class TxtFileItemOutput<T extends DataItem>
 implements DataItemOutput<T> {

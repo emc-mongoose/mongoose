@@ -18,9 +18,7 @@ import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -44,6 +42,8 @@ implements Externalizable {
 	public final static String
 		LIST_SEP = ",",
 		STORAGE_PORT_SEP = ":",
+		//
+		PREFIX_KEY_ALIASING = "aliasing.",
 		//
 		KEY_AUTH_ID = "auth.id",
 		KEY_AUTH_SECRET = "auth.secret",
@@ -73,6 +73,11 @@ implements Externalizable {
 		KEY_LOAD_LIMIT_RATE = "load.limit.rate",
 		KEY_LOAD_LIMIT_REQSLEEP_MILLISEC = "load.limit.reqSleepMilliSec",
 		KEY_RUN_VERSION = "run.version",
+		//
+		KEY_REMOTE_PORT_CONTROL = "remote.port.control",
+		KEY_REMOTE_PORT_EXPORT = "remote.port.export",
+		KEY_REMOTE_PORT_IMPORT = "remote.port.import",
+		KEY_REMOTE_PORT_WEBUI = "remote.port.webui",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
 		KEY_STORAGE_FS_ACCESS = "storage.fsAccess",
@@ -251,19 +256,19 @@ implements Externalizable {
 	}
 	//
 		public final int getRemotePortControl() {
-		return getInt("remote.port.control");
+		return getInt(KEY_REMOTE_PORT_CONTROL);
 	}
 	//
 	public final int getRemotePortExport() {
-		return getInt("remote.port.export");
+		return getInt(KEY_REMOTE_PORT_EXPORT);
 	}
 	//
 	public final int getRemotePortImport() {
-		return getInt("remote.port.import");
+		return getInt(KEY_REMOTE_PORT_IMPORT);
 	}
 	//
 	public final int getRemotePortWebUI() {
-		return getInt("remote.port.webui");
+		return getInt(KEY_REMOTE_PORT_WEBUI);
 	}
 	//
 	public final int getLoadMetricsPeriodSec() {
@@ -580,24 +585,22 @@ implements Externalizable {
 			final RunTimeConfig localRunTimeConfig = CONTEXT_CONFIG.get();
 			for(final String nextPropName: confMap.keySet()) {
 				// to not to override the import/export ports from the load client side
-				nextPropValue = nextPropName.startsWith("remote.port.export") || nextPropName.startsWith("remote.port.import") ?
-					localRunTimeConfig.getString(nextPropName) :
-					confMap.get(nextPropName);
+				if(nextPropName.startsWith(KEY_REMOTE_PORT_EXPORT) || nextPropName.startsWith(KEY_REMOTE_PORT_IMPORT)) {
+					nextPropValue = localRunTimeConfig.getProperty(nextPropName);
+				} else {
+					nextPropValue = confMap.get(nextPropName);
+				}
 				log.trace(Markers.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
 				if(List.class.isInstance(nextPropValue)) {
 					setProperty(
 						nextPropName,
 						StringUtils.join(List.class.cast(nextPropValue), LIST_SEP)
 					);
-				} else if(String.class.isInstance(nextPropValue)) {
-					setProperty(nextPropName, String.class.cast(nextPropValue));
-				} else if(nextPropValue == null) {
-					log.debug(Markers.ERR, "Property \"{}\" is null", nextPropName);
+				} else if(nextPropValue != null) {
+					setProperty(nextPropName, nextPropValue);
+					//setProperty(nextPropName, String.class.cast(nextPropValue));
 				} else {
-					log.error(
-						Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
-						nextPropValue.getClass().getCanonicalName(), nextPropName
-					);
+					log.debug(Markers.ERR, "Property \"{}\" is null", nextPropName);
 				}
 			}
 			CONTEXT_CONFIG.set(this);
@@ -615,8 +618,8 @@ implements Externalizable {
 	public synchronized void loadPropsFromJsonCfgFile(final Path propsDir) {
 		JsonConfigLoader.loadPropsFromJsonCfgFile(propsDir, this);
         for (String key : mongooseKeys) {
-            if (key.startsWith("aliasing.")) {
-                final String correctKey = key.replaceAll("aliasing.", "");
+            if (key.startsWith(PREFIX_KEY_ALIASING)) {
+                final String correctKey = key.replaceAll(PREFIX_KEY_ALIASING, "");
                 MAP_OVERRIDE.put(correctKey, getStringArray(key));
             }
         }

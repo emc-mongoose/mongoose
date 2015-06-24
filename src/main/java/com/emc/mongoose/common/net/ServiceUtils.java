@@ -185,16 +185,16 @@ public final class ServiceUtils {
 	}
 	/**
 	 Get the service created earlier if exists
-	 @param svcName
-	 @return
+	 @param svcName the service name
+	 @return the object representing the service
 	 */
 	public static Service getLocalSvc(final String svcName) {
 		return SVC_MAP.get(svcName);
 	}
 	/**
 	 Connect to server service
-	 @param url
-	 @return
+	 @param url the service URL
+	 @return the object representing the service
 	 */
 	public static Service getRemoteSvc(final String url) {
 		Remote remote = null;

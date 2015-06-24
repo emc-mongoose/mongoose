@@ -12,7 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 /**
- Created by kurila on 18.06.15.
+ The data item input using CSV file containing the human-readable data item records as the source
  */
 public class TxtFileItemInput<T extends DataItem>
 implements DataItemInput<T> {
@@ -20,7 +20,12 @@ implements DataItemInput<T> {
 	protected final Path itemsSrcPath;
 	protected final BufferedReader itemsSrc;
 	protected final Constructor<T> itemConstructor;
-	//
+	/**
+	 @param itemsSrcPath the path to the CSV file containing the data item records
+	 @param itemCls the particular data item implementation class used to parse the records
+	 @throws IOException
+	 @throws NoSuchMethodException
+	 */
 	public TxtFileItemInput(final Path itemsSrcPath, final Class<T> itemCls)
 	throws IOException, NoSuchMethodException {
 		this.itemsSrcPath = itemsSrcPath;

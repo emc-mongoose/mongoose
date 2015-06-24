@@ -9,13 +9,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 /**
- Created by kurila on 18.06.15.
+ An item input implementation deserializing the data items from the specified file.
  */
 public class BinFileItemInput<T extends DataItem>
-extends DeserializingItemInput<T> {
+extends ExternItemInput<T> {
 	//
 	protected final Path itemsSrcPath;
-	//
+	/**
+	 @param itemsSrcPath the path to the file which should be used to restore the serialized items
+	 @throws IOException if unable to open the file for reading
+	 */
 	public BinFileItemInput(final Path itemsSrcPath)
 	throws IOException {
 		super(

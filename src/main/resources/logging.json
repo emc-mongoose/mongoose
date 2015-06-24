@@ -26,7 +26,7 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "ThresholdFilter",
-								"level": "INFO",
+								"level": "DEBUG",
 								"onMatch": "ACCEPT",
 								"onMismatch": "DENY"
 							}
@@ -43,7 +43,7 @@
 		},
 		"loggers": {
 			"root": {
-				"level": "info",
+				"level": "debug",
 				"additivity": "false",
 				"AppenderRef": {
 					"ref": "async"
@@ -52,37 +52,40 @@
 			"logger": [
 				{
 					"name": "com.emc.mongoose.client",
-					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.common",
-					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.core",
-					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.run",
-					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.server",
-					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.adapter.atmos",
-					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.adapter.s3",
-					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.adapter.swift",
-					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.mock",
-					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "com.emc.mongoose.util",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.webui",
-					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "org.python.core.PyReflectedFunction",
-					"level": "info", "additivity": "false", "AppenderRef": { "ref": "async" }
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}
 			]
 		}

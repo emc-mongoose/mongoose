@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Iterator;
 /**
- Created by kurila on 17.06.15.
  Readable collection of the data items.
  */
 public class CollectionItemInput<T extends DataItem>
@@ -22,7 +21,7 @@ implements DataItemInput<T> {
 		this.itemsIter = itemsSrc.iterator();
 	}
 	/**
-	 @return null if the list is empty or no more elements are available
+	 @return null if the list is empty or no more elements are available, next data item otherwise
 	 @throws java.io.IOException doesn't throw
 	 */
 	@Override

@@ -126,7 +126,7 @@ extends DefaultNHttpServerConnection {
 			//
 			if(lastBuffSize != newBuffSize) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.info(
+					LOG.trace(
 						Markers.MSG, "{}: IN buffer size {} to {}", socket,
 						SizeUtil.formatSize(lastBuffSize), SizeUtil.formatSize(newBuffSize)
 					);

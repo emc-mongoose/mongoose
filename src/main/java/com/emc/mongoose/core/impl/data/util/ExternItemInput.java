@@ -6,14 +6,14 @@ import com.emc.mongoose.core.api.data.util.DataItemInput;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 /**
- Created by kurila on 18.06.15.
+ The data item input implementation deserializing the data items from the specified stream
  */
-public class DeserializingItemInput<T extends DataItem>
+public class ExternItemInput<T extends DataItem>
 implements DataItemInput<T> {
 	//
 	protected final ObjectInputStream itemsSrc;
 	//
-	public DeserializingItemInput(final ObjectInputStream itemsSrc) {
+	public ExternItemInput(final ObjectInputStream itemsSrc) {
 		this.itemsSrc = itemsSrc;
 	}
 	//
