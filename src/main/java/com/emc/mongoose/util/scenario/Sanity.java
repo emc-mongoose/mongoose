@@ -109,7 +109,7 @@ implements Runnable {
 			.setLimitCount(1000000)
 			.setLimitTime(100, TimeUnit.SECONDS)
 			.setLimitRate(10000);
-		/* standalone
+		// standalone
 		final Thread sanityThread1 = new Thread(
 			new Sanity(clientBuilder.build()), "sanityStandalone"
 		);
@@ -118,7 +118,7 @@ implements Runnable {
 		TimeUnit.SECONDS.sleep(1);
 		sanityThread1.join();
 		LOG.info(Markers.MSG, "Standalone sanity finished");
-		TimeUnit.SECONDS.sleep(1);*/
+		TimeUnit.SECONDS.sleep(1);
 		// distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_EXPORT, 1399);
 		final LoadBuilderSvc<WSObject, WSLoadSvc<WSObject>>
