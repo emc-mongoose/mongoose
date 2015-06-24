@@ -17,6 +17,7 @@ import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.api.load.model.LoadState;
+import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 // mongoose-server-api.jar
@@ -64,6 +65,7 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 20.10.14.
  */
@@ -97,6 +99,7 @@ implements LoadClient<T> {
 		taskGetTPMean, taskGetTP1Min, taskGetTP5Min, taskGetTP15Min,
 		taskGetBWMean, taskGetBW1Min, taskGetBW5Min, taskGetBW15Min,
 		taskGetLatencyMed, taskGetLatencyAvg;
+	private final AtomicLong tsStart = new AtomicLong(-1);
 	//
 	private final ScheduledExecutorService mgmtConnExecutor;
 	private final List<PeriodicTask<Collection<T>>> fetchItemsBuffTasks = new LinkedList<>();
@@ -312,7 +315,7 @@ implements LoadClient<T> {
 		final String domain, final String mBeanName, final String attrName
 	) {
 		return metrics.register(
-			MetricRegistry.name(name, mBeanName+"."+attrName),
+			MetricRegistry.name(name, mBeanName + "." + attrName),
 			new MinLong(name, domain, mBeanName, attrName, mBeanSrvConnMap)
 		);
 	}
@@ -502,39 +505,42 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final synchronized void start() {
-		//
-		LoadSvc<T> nextLoadSvc;
-		for(final String addr : loadSvcAddrs) {
-			nextLoadSvc = remoteLoadMap.get(addr);
-			try {
-				nextLoadSvc.start();
-				LOG.debug(
-					Markers.MSG, "{} started bound to remote service @{}",
-					nextLoadSvc.getName(), addr
-				);
-			} catch(final IOException e) {
-				LOG.error(Markers.ERR, "Failed to start remote load @" + addr, e);
+		if(tsStart.compareAndSet(-1, System.nanoTime())) {
+			LoadSvc<T> nextLoadSvc;
+			for(final String addr : loadSvcAddrs) {
+				nextLoadSvc = remoteLoadMap.get(addr);
+				try {
+					nextLoadSvc.start();
+					LOG.debug(
+						Markers.MSG, "{} started bound to remote service @{}",
+						nextLoadSvc.getName(), addr
+					);
+				} catch(final IOException e) {
+					LOG.error(Markers.ERR, "Failed to start remote load @" + addr, e);
+				}
 			}
-		}
-		//
-		if(producer == null) {
-			LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
-		} else {
 			//
-			try {
-				producer.start();
-				LOG.debug(Markers.MSG, "Started object producer {}", producer);
-			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to start the producer");
+			if(producer == null) {
+				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
+			} else {
+				//
+				try {
+					producer.start();
+					LOG.debug(Markers.MSG, "Started object producer {}", producer);
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to start the producer");
+				}
 			}
+			//
+			schedulePeriodicMgmtTasks();
+			metricsReporter.start();
+			LoadCloseHook.add(this);
+			prestartAllCoreThreads();
+			//
+			LOG.debug(Markers.MSG, "{}: started", name);
+		} else {
+			throw new IllegalStateException(name + ": was started already");
 		}
-		//
-		schedulePeriodicMgmtTasks();
-		metricsReporter.start();
-		LoadCloseHook.add(this);
-		prestartAllCoreThreads();
-		//
-		LOG.debug(Markers.MSG, "{}: started", name);
 	}
 	//
 	@Override
@@ -669,7 +675,11 @@ implements LoadClient<T> {
 	@Override
 	public LoadState getLoadState()
 	throws RemoteException {
-		return null; // TODO issue # Kirill, where is a jira ticket?
+		return new BasicLoadState(
+			remoteLoadMap.values().iterator().next().getLoadState().getLoadNumber(),
+			runTimeConfig, metricSuccCount.getValue(), taskGetCountFail.getLastResult(),
+			TimeUnit.NANOSECONDS, System.nanoTime() - tsStart.get()
+		);
 	}
 	//
 	@Override
