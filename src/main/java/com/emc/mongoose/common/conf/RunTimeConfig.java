@@ -79,6 +79,10 @@ implements Externalizable {
 		KEY_STORAGE_SCHEME = "storage.scheme",
 		KEY_STORAGE_NAMESPACE = "storage.namespace",
 		//
+		KEY_STORAGE_MOCK_CAPACITY = "storage.mock.capacity",
+		KEY_STORAGE_MOCK_HEAD_COUNT = "storage.mock.headCount",
+		KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET = "storage.mock.ioThreadsPerSocket",
+		//
 		KEY_API_NAME = "api.name",
 		KEY_API_S3_BUCKET = "api.type.s3.bucket",
 		KEY_API_ATMOS_SUBTENANT = "api.type.atmos.subtenant",
@@ -442,11 +446,11 @@ implements Externalizable {
 	}
 	//
 	public final int getStorageMockCapacity() {
-		return getInt("storage.mock.capacity");
+		return getInt(KEY_STORAGE_MOCK_CAPACITY);
 	}
 	//
 	public final int getStorageMockHeadCount() {
-		return getInt("storage.mock.headCount");
+		return getInt(KEY_STORAGE_MOCK_HEAD_COUNT);
 	}
 	//
 	public final int getDataRadixSize() {
@@ -458,7 +462,7 @@ implements Externalizable {
 	}
 	//
 	public final int getStorageMockIoThreadsPerSocket() {
-		return getInt("storage.mock.ioThreadsPerSocket");
+		return getInt(KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET);
 	}
 	//
 	public final int getStorageMockMinConnLifeMilliSec() {
