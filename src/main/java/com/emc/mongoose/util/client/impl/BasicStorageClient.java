@@ -14,7 +14,6 @@ import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import java.io.IOException;
-import java.rmi.RemoteException;
 /**
  Created by kurila on 19.06.15.
  */

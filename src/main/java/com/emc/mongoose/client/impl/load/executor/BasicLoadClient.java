@@ -679,6 +679,7 @@ implements LoadClient<T> {
 			LogUtil.exception(LOG, Level.WARN, e, "Interrupted while aggregating the remote info");
 		} finally {
 			forcedAggregator.shutdownNow();
+			postProcessDataItems();
 		}
 	}
 	//
@@ -702,10 +703,7 @@ implements LoadClient<T> {
 				LOG.debug(Markers.MSG, "do performing close");
 				interrupt();
 				forceFetchAndAggregation();
-				LOG.debug(Markers.MSG, "log summary metrics");
 				logMetrics(Markers.PERF_SUM);
-				LOG.debug(Markers.MSG, "log metainfo frames");
-				postProcessDataItems();
 				LOG.debug(
 					Markers.MSG, "Dropped {} remote tasks",
 					shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()

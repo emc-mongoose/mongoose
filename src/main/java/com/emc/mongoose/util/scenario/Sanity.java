@@ -113,7 +113,7 @@ implements Runnable {
 		clientBuilder
 			.setNodes(storageNodes)
 			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
-			.setLimitTime(150, TimeUnit.SECONDS)
+			.setLimitTime(50, TimeUnit.SECONDS)
 			.setLimitRate(15000);
 		// standalone
 		final Thread sanityThread1 = new Thread(

@@ -45,6 +45,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -214,8 +215,22 @@ implements Storage<T> {
 		} finally {
 			try {
 				createConsumer.close();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "I/O failure on close");
+			}
+			try {
 				deleteConsumer.close();
-				multiSocketSvc.shutdownNow();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "I/O failure on close");
+			}
+			for(final Runnable socketSvcTask : multiSocketSvc.shutdownNow()) {
+				try {
+					Closeable.class.cast(socketSvcTask).close();
+				} catch(final IOException e) {
+					LogUtil.exception(LOG, Level.WARN, e, "Closing socket I/O failure");
+				}
+			}
+			try {
 				ioStats.close();
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Closing I/O stats failure");

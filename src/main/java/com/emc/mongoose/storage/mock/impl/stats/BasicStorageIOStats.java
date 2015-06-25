@@ -169,7 +169,11 @@ implements IOStats {
 		if(!isInterrupted()) {
 			interrupt();
 		}
-		metricsReporter.close();
+		try {
+			metricsReporter.close();
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Closing the metrics reporter failure");
+		}
 	}
 	//
 	@Override

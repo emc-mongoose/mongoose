@@ -18,12 +18,14 @@ import org.apache.http.nio.NHttpConnectionFactory;
 import org.apache.http.nio.protocol.HttpAsyncService;
 import org.apache.http.nio.reactor.IOReactorException;
 //import org.apache.http.nio.reactor.ListenerEndpoint;
+import org.apache.http.nio.reactor.ListenerEndpoint;
 import org.apache.http.nio.reactor.ListeningIOReactor;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
@@ -32,7 +34,7 @@ import java.net.InetSocketAddress;
  */
 public final class BasicSocketEventDispatcher
 extends DefaultHttpServerIODispatch
-implements Runnable {
+implements Closeable, Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -71,63 +73,6 @@ implements Runnable {
 		);
 		this.ioStats = ioStats;
 	}
-	/*
-	private final Thread buffSizeAdjustDaemon = new Thread("buffSizeAdjustDaemon") {
-		//
-		{ setDaemon(true); }
-		//
-		@Override @SuppressWarnings("deprecation")
-		public final void run() {
-			//
-			int nextRcvBuffSize, nextSndBuffSize;
-			double writeRate, readRate;
-			boolean restartRequired = false;
-			long t;
-			//
-			while(!isInterrupted()) {
-				//
-				t = System.nanoTime();
-				//
-				writeRate = ioStats.getWriteRate();
-				if(writeRate > 0) {
-					nextRcvBuffSize = (int) (ioStats.getWriteRateBytes() / writeRate);
-					nextRcvBuffSize = Math.max(LoadExecutor.BUFF_SIZE_LO, nextRcvBuffSize);
-					nextRcvBuffSize = Math.min(LoadExecutor.BUFF_SIZE_HI, nextRcvBuffSize);
-				} else {
-					nextRcvBuffSize = LoadExecutor.BUFF_SIZE_LO;
-				}
-				if(nextRcvBuffSize != ioReactorConf.getRcvBufSize()) {
-					ioReactorConf.setRcvBufSize(nextRcvBuffSize);
-					restartRequired = true;
-				}
-				//
-				readRate = ioStats.getReadRate();
-				if(readRate > 0) {
-					nextSndBuffSize = (int) (ioStats.getReadRateBytes() / readRate);
-					nextSndBuffSize = Math.max(LoadExecutor.BUFF_SIZE_LO, nextSndBuffSize);
-					nextSndBuffSize = Math.min(LoadExecutor.BUFF_SIZE_HI, nextSndBuffSize);
-				} else {
-					nextSndBuffSize = LoadExecutor.BUFF_SIZE_LO;
-				}
-				if(nextSndBuffSize != ioReactorConf.getSndBufSize()) {
-					ioReactorConf.setSndBufSize(nextSndBuffSize);
-					restartRequired = true;
-				}
-				//
-				if(restartRequired) {
-					try {
-						try {
-							ioReactor.pause();
-						} finally {
-							ioReactor.resume();
-						}
-					} catch(final IOException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Failure during I/O reactor restart");
-					}
-				}
-			}
-		}
-	};*/
 	//
 	@Override
 	public final void run() {
@@ -144,7 +89,20 @@ implements Runnable {
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "{}: I/O failure", this);
 		} finally {
-			//buffSizeAdjustDaemon.interrupt();
+			try {
+				ioReactor.shutdown();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "{}: I/O failure during the shutdown", this);
+			}
+		}
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		ioReactor.shutdown();
+		for(final ListenerEndpoint endpoint : ioReactor.getEndpoints()) {
+			endpoint.close();
 		}
 	}
 	//
