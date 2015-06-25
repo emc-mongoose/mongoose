@@ -63,7 +63,7 @@ implements StorageClientBuilder<T, U> {
 				}
 				addrListBuilder.append(nextAddr);
 			}
-			rtConfig.set(RunTimeConfig.KEY_STORAGE_ADDRS, addrListBuilder.toString());
+			rtConfig.set(RunTimeConfig.KEY_LOAD_SERVERS, addrListBuilder.toString());
 			rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
 		}
 		return this;

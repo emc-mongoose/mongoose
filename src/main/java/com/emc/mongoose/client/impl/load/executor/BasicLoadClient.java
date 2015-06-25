@@ -110,7 +110,7 @@ implements LoadClient<T> {
 	//
 	private final RunTimeConfig runTimeConfig;
 	private final RequestConfig<T> reqConfigCopy;
-	private final int metricsPeriodSec, reqTimeOutMilliSec;
+	private final int instanceNum, metricsPeriodSec, reqTimeOutMilliSec;
 	protected volatile Producer<T> producer;
 	protected volatile Consumer<T> consumer = null;
 	//
@@ -141,6 +141,16 @@ implements LoadClient<T> {
 			LOG.error(Markers.ERR, "Looks like connectivity failure", e);
 		}
 		name = t;
+		//
+		int n = 0;
+		try {
+			n = remoteLoadMap.values().iterator().next().getInstanceNum();
+		} catch(final NoSuchElementException | NullPointerException e) {
+			LOG.error(Markers.ERR, "No remote load instances", e);
+		} catch(final IOException e) {
+			LOG.error(Markers.ERR, "Looks like connectivity failure", e);
+		}
+		instanceNum = n;
 		//
 		setThreadFactory(
 			new GroupThreadFactory(String.format("clientSubmitWorker<%s>", name), true)
@@ -675,8 +685,9 @@ implements LoadClient<T> {
 	@Override
 	public LoadState getLoadState()
 	throws RemoteException {
+		forceFetchAndAggregation();
 		return new BasicLoadState(
-			remoteLoadMap.values().iterator().next().getLoadState().getLoadNumber(),
+			instanceNum,
 			runTimeConfig, metricSuccCount.getValue(), taskGetCountFail.getLastResult(),
 			TimeUnit.NANOSECONDS, System.nanoTime() - tsStart.get()
 		);

@@ -86,6 +86,10 @@ implements Producer<T> {
 			} while(true);
 		} catch(final InterruptedException ignore) {
 		} finally {
+			LOG.debug(
+				Markers.MSG, "{}: producing done, shutting down the consumer \"{}\"",
+				itemIn, consumer
+			);
 			try {
 				consumer.shutdown();
 			} catch(final RemoteException e) {

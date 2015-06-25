@@ -138,7 +138,7 @@ implements Storage<T> {
 		// Register the default handler for all URIs
 		protocolHandler = new HttpAsyncService(httpProc, apiReqHandlerMapper);
 		multiSocketSvc = Executors.newFixedThreadPool(
-			countHeads, new GroupThreadFactory("cinderellaHead")
+			countHeads, new GroupThreadFactory("cinderellaHead", true)
 		);
 	}
 	//
@@ -215,6 +215,7 @@ implements Storage<T> {
 			try {
 				createConsumer.close();
 				deleteConsumer.close();
+				multiSocketSvc.shutdownNow();
 				ioStats.close();
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Closing I/O stats failure");

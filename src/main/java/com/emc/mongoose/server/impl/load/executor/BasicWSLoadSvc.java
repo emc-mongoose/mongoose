@@ -8,7 +8,6 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.executor.BasicWSLoadExecutor;
 // mongoose-server-impl.jar
@@ -102,9 +101,8 @@ implements WSLoadSvc<T> {
 	}
 	//
 	@Override
-	public final int getTotalConnCount()
-	throws RemoteException {
-		return connCountPerNode * storageNodeAddrs.length;
+	public final int getInstanceNum() {
+		return instanceNum;
 	}
 	//
 

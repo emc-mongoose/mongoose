@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface LoadExecutor<T extends DataItem>
 extends Producer<T>, AsyncConsumer<T> {
 	//
-	AtomicInteger LAST_INSTANCE_NUM = new AtomicInteger(0);
+	AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
 	//
 	int NANOSEC_SCALEDOWN = 1000, MIB = 0x100000;
 	//

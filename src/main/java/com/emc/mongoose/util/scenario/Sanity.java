@@ -9,7 +9,10 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.util.DataItemInput;
 import com.emc.mongoose.core.api.data.util.DataItemOutput;
 //
+import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.util.BinFileItemOutput;
+//
+import com.emc.mongoose.core.impl.data.util.CSVFileItemOutput;
 //
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
@@ -33,6 +36,9 @@ import java.util.concurrent.TimeUnit;
 public class Sanity
 implements Runnable {
 	//
+	private final static short DEFAULT_NODE_COUNT = 5, DEFAULT_CONN_PER_NODE = 5;
+	private final static long
+		DEFAULT_DATA_SIZE = SizeUtil.toSize("768KB"), DEFAULT_DATA_COUNT_MAX = 1500000;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -52,28 +58,28 @@ implements Runnable {
 			);
 			LOG.info(Markers.MSG, "Start writing");
 			final long nWritten = client.write(
-				null, dataDstW, (short) 8, SizeUtil.toSize("8MB")
+				null, dataDstW, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
 			//
-			final DataItemInput<WSObject> dataSrcR = dataDstW.getInput();
+			final DataItemInput<WSObject> dataSrcU = dataDstW.getInput();
+			final DataItemOutput dataDstU = new CSVFileItemOutput<>(
+				Files.createTempFile(null, null), BasicWSObject.class
+			);
+			LOG.info(Markers.MSG, "Start updating");
+			final long nUpdated = client.update(dataSrcU, dataDstU, DEFAULT_CONN_PER_NODE);
+			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
+			//
+			final DataItemInput<WSObject> dataSrcR = dataDstU.getInput();
 			final DataItemOutput<WSObject> dataDstR = new BinFileItemOutput<>(
 				Files.createTempFile(null, null)
 			);
-			final long nRead = client.read(dataSrcR, dataDstR, (short) 8);
+			final long nRead = client.read(dataSrcR, dataDstR, DEFAULT_CONN_PER_NODE, false);
 			LOG.info(Markers.MSG, "Read successfully {} items", nRead);
 			//
 			final DataItemInput<WSObject> dataSrcD = dataDstR.getInput();
-			final long nDeleted = client.delete(dataSrcD, null, (short) 8);
+			final long nDeleted = client.delete(dataSrcD, null, DEFAULT_CONN_PER_NODE);
 			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
-			//
-			final DataItemInput<WSObject> dataSrcRW = dataDstR.getInput();
-			final DataItemOutput<WSObject> dataDstRW = new BinFileItemOutput<>(
-				Files.createTempFile(null, null)
-			);
-			LOG.info(Markers.MSG, "Start rewriting");
-			final long nReWritten = client.write(dataSrcRW, dataDstRW, (short) 8);
-			LOG.info(Markers.MSG, "Rewritten successfully {} items", nReWritten);
 			//
 		} catch(final Exception e) {
 			e.printStackTrace(System.err);
@@ -87,9 +93,9 @@ implements Runnable {
 		RunTimeConfig.initContext();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, 1000000);
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, 8);
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET, 8);
+		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
+		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
+		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET, DEFAULT_CONN_PER_NODE);
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_EXPORT, 1299);
 		final Thread wsMockThread = new Thread(
 			new Cinderella<>(RunTimeConfig.getContext()), "wsMock"
@@ -100,15 +106,15 @@ implements Runnable {
 		//
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
 			clientBuilder = new BasicWSClientBuilder<>();
-		final String storageNodes[] = new String[] {
-			"127.0.0.1:9020", "127.0.0.1:9021", "127.0.0.1:9022", "127.0.0.1:9023",
-			"127.0.0.1:9024", "127.0.0.1:9025", "127.0.0.1:9026", "127.0.0.1:9027"
-		};
+		final String storageNodes[] = new String[DEFAULT_NODE_COUNT];
+		for(int i = 0; i < DEFAULT_NODE_COUNT; i ++) {
+			storageNodes[i] = "127.0.0.1:" + (9020 + i);
+		}
 		clientBuilder
 			.setNodes(storageNodes)
-			.setLimitCount(1000000)
-			.setLimitTime(100, TimeUnit.SECONDS)
-			.setLimitRate(10000);
+			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
+			.setLimitTime(150, TimeUnit.SECONDS)
+			.setLimitRate(15000);
 		// standalone
 		final Thread sanityThread1 = new Thread(
 			new Sanity(clientBuilder.build()), "sanityStandalone"
@@ -127,7 +133,7 @@ implements Runnable {
 		TimeUnit.SECONDS.sleep(1);
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_EXPORT, 1199);
 		final StorageClient<WSObject> distributedClient = clientBuilder
-			.setClientMode(new String[] { "127.0.0.1" })
+			.setClientMode(new String[] {"127.0.0.1"})
 			.build();
 		final Thread sanityThread2 = new Thread(new Sanity(distributedClient), "sanityDistributed");
 		sanityThread2.start();

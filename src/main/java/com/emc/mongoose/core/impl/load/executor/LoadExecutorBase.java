@@ -62,8 +62,9 @@ extends AsyncConsumerBase<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static int RELEASE_TIMEOUT_MILLISEC = 100;
 	//
-	protected final int loadNum, connCountPerNode, storageNodeCount;
+	protected final int instanceNum, connCountPerNode, storageNodeCount;
 	protected final String storageNodeAddrs[];
 	//
 	protected final Class<T> dataCls;
@@ -126,11 +127,7 @@ implements LoadExecutor<T> {
 					while(!isClosed.get()) {
 						// 1st check for done condition
 						if(isDoneAllSubm() || isDoneMaxCount()) {
-							if(
-								lock.tryLock(
-									rtConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
-								)
-							) {
+							if(lock.tryLock(RELEASE_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS)) {
 								try {
 									condProducerDone.signalAll();
 									LOG.debug(
@@ -149,7 +146,7 @@ implements LoadExecutor<T> {
 						}
 						// try to get a task for releasing into the pool
 						spentIOTask = ioTaskSpentQueue.poll(
-							submTimeOutMilliSec, TimeUnit.MILLISECONDS
+							RELEASE_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
 						);
 						// release the next task if necessary
 						if(spentIOTask != null) {
@@ -183,11 +180,11 @@ implements LoadExecutor<T> {
 		//
 		this.dataCls = dataCls;
 		this.rtConfig = rtConfig;
-		loadNum = LAST_INSTANCE_NUM.getAndIncrement();
+		instanceNum = NEXT_INSTANCE_NUM.getAndIncrement();
 		storageNodeCount = addrs.length;
 		//
 		setName(
-			Integer.toString(loadNum) + '-' +
+			Integer.toString(instanceNum) + '-' +
 				StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
 				StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
@@ -624,6 +621,12 @@ implements LoadExecutor<T> {
 	}
 	//
 	private boolean isDoneAllSubm() {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.debug(
+				Markers.MSG, "{}: all submitted: {}, results: {}, submitted: {}",
+				getName(), isAllSubm.get(), counterResults.get(), counterSubm.getCount()
+			);
+		}
 		return isAllSubm.get() && counterResults.get() >= counterSubm.getCount();
 	}
 	//
@@ -710,7 +713,7 @@ implements LoadExecutor<T> {
 	@Override
 	public final LoadState getLoadState() {
 		return new BasicLoadState(
-			loadNum, rtConfig, throughPut.getCount(), counterRej.getCount(),
+			instanceNum, rtConfig, throughPut.getCount(), counterRej.getCount(),
 			TimeUnit.NANOSECONDS, System.nanoTime() - tsStart.get()
 		);
 	}

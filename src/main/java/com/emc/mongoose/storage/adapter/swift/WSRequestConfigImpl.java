@@ -239,8 +239,7 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	public final String getCanonical(final MutableWSRequest httpRequest) {
-		// TODO swift specific things
-		return null;
+		return "";
 	}
 	//
 	@Override

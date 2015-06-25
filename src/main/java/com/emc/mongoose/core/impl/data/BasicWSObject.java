@@ -68,7 +68,7 @@ implements WSObject {
 	//
 	@Override
 	public final Header getContentEncoding() {
-		return null;
+		return null; // null is ok here
 	}
 	//
 	@Override

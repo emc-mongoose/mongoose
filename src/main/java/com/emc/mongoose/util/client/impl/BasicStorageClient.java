@@ -36,9 +36,7 @@ implements StorageClient<T> {
 	protected long executeLoadJob(
 		final Producer<T> producer, final LoadExecutor<T> loadExecutor,
 		final AsyncConsumer<T> consumer
-	) throws IOException {
-		//
-		final long countSucc;
+	) throws IOException, InterruptedException {
 		//
 		if(consumer != null) {
 			loadExecutor.setConsumer(consumer);
@@ -51,24 +49,18 @@ implements StorageClient<T> {
 		if(producer != null) {
 			producer.start();
 		}
+		loadExecutor.await(
+			rtConfig.getLoadLimitTimeValue(), rtConfig.getLoadLimitTimeUnit()
+		);
 		//
-		try {
-			loadExecutor.await(
-				rtConfig.getLoadLimitTimeValue(), rtConfig.getLoadLimitTimeUnit()
-			);
-		} catch(final InterruptedException | RemoteException ignored) {
-		} finally {
-			countSucc = loadExecutor.getLoadState().getCountSucc();
-		}
-		//
-		return countSucc;
+		return loadExecutor.getLoadState().getCountSucc();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long size
-	) throws IllegalArgumentException, IOException {
+	) throws IllegalArgumentException, InterruptedException, IOException {
 		return write(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, size, size, 0);
 	}
 	//
@@ -76,7 +68,7 @@ implements StorageClient<T> {
 	public long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount, final long size
-	) throws IllegalArgumentException, IOException {
+	) throws IllegalArgumentException, InterruptedException, IOException {
 		return write(itemsInput, itemsOutput, threadCount, size, size, 0);
 	}
 	//
@@ -84,7 +76,7 @@ implements StorageClient<T> {
 	public long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long minSize, final long maxSize, final float sizeBias
-	) throws IllegalArgumentException, IOException {
+	) throws IllegalArgumentException, InterruptedException, IOException {
 		return write(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, minSize, maxSize, sizeBias);
 	}
 	//
@@ -92,9 +84,8 @@ implements StorageClient<T> {
 	public long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount, final long minSize, final long maxSize, final float sizeBias
-	) throws IllegalArgumentException, IOException {
+	) throws IllegalArgumentException, InterruptedException, IOException {
 		//
-		final long countSucc;
 		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
@@ -111,17 +102,15 @@ implements StorageClient<T> {
 					.setObjSizeBias(sizeBias)
 					.build()
 			) {
-				countSucc = executeLoadJob(producer, loadJobExecutor, consumer);
+				return executeLoadJob(producer, loadJobExecutor, consumer);
 			}
 		}
-		//
-		return countSucc;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput
-	) throws IllegalStateException, IOException {
+	) throws IllegalStateException, InterruptedException, IOException {
 		return read(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, rtConfig.getReadVerifyContent());
 	}
 	//
@@ -129,7 +118,7 @@ implements StorageClient<T> {
 	public long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount
-	) throws IllegalStateException, IOException {
+	) throws IllegalStateException, InterruptedException, IOException {
 		return read(itemsInput, itemsOutput, threadCount, rtConfig.getReadVerifyContent());
 	}
 	//
@@ -137,7 +126,7 @@ implements StorageClient<T> {
 	public long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final boolean verifyContentFlag
-	) throws IllegalStateException, IOException {
+	) throws IllegalStateException, InterruptedException, IOException {
 		return read(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, verifyContentFlag);
 	}
 	//
@@ -145,9 +134,7 @@ implements StorageClient<T> {
 	public long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount, final boolean verifyContentFlag
-	) throws IllegalStateException, IOException {
-		//
-		final long countSucc;
+	) throws IllegalStateException, InterruptedException, IOException {
 		loadBuilder.getRequestConfig().setVerifyContentFlag(verifyContentFlag);
 		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
@@ -162,16 +149,14 @@ implements StorageClient<T> {
 					.setThreadsPerNodeFor(threadCount, IOTask.Type.READ)
 					.build()
 			) {
-				countSucc = executeLoadJob(producer, loadJobExecutor, consumer);
+				return executeLoadJob(producer, loadJobExecutor, consumer);
 			}
 		}
-		//
-		return countSucc;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public long delete(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput)
-	throws IllegalStateException, IOException {
+	throws IllegalStateException, InterruptedException, IOException {
 		return delete(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT);
 	}
 	//
@@ -179,9 +164,7 @@ implements StorageClient<T> {
 	public long delete(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount
-	) throws IllegalStateException, IOException {
-		//
-		final long countSucc;
+	) throws IllegalStateException, InterruptedException, IOException {
 		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
@@ -195,17 +178,15 @@ implements StorageClient<T> {
 					.setThreadsPerNodeFor(threadCount, IOTask.Type.DELETE)
 					.build()
 			) {
-				countSucc = executeLoadJob(producer, loadJobExecutor, consumer);
+				return executeLoadJob(producer, loadJobExecutor, consumer);
 			}
 		}
-		//
-		return countSucc;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput
-	) throws IllegalStateException, IOException {
+	) throws IllegalStateException, InterruptedException, IOException {
 		return update(
 			itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, rtConfig.getUpdateCountPerTime()
 		);
@@ -215,7 +196,7 @@ implements StorageClient<T> {
 	public long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount
-	) throws IllegalStateException, IOException {
+	) throws IllegalStateException, InterruptedException, IOException {
 		return update(
 			itemsInput, itemsOutput, threadCount, rtConfig.getUpdateCountPerTime()
 		);
@@ -225,7 +206,7 @@ implements StorageClient<T> {
 	public long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final int countPerTime
-	) throws IllegalStateException, IOException {
+	) throws IllegalStateException, InterruptedException, IOException {
 		return update(
 			itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, countPerTime
 		);
@@ -235,9 +216,7 @@ implements StorageClient<T> {
 	public long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount, final int countPerTime
-	) throws IllegalArgumentException, IllegalStateException, IOException {
-		//
-		final long countSucc;
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
 		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
@@ -252,17 +231,15 @@ implements StorageClient<T> {
 					.setUpdatesPerItem(countPerTime)
 					.build()
 			) {
-				countSucc = executeLoadJob(producer, loadJobExecutor, consumer);
+				return executeLoadJob(producer, loadJobExecutor, consumer);
 			}
 		}
-		//
-		return countSucc;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput
-	) throws IllegalStateException, IOException {
+	) throws IllegalStateException, InterruptedException, IOException {
 		return append(
 			itemsInput, itemsOutput, THREAD_COUNT_DEFAULT,
 			rtConfig.getDataSizeMin(), rtConfig.getDataSizeMax(), rtConfig.getDataSizeBias()
@@ -273,7 +250,7 @@ implements StorageClient<T> {
 	public long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount
-	) throws IllegalStateException, IOException {
+	) throws IllegalStateException, InterruptedException, IOException {
 		return append(
 			itemsInput, itemsOutput, threadCount,
 			rtConfig.getDataSizeMin(), rtConfig.getDataSizeMax(), rtConfig.getDataSizeBias()
@@ -284,7 +261,7 @@ implements StorageClient<T> {
 	public long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long size
-	) throws IllegalArgumentException, IllegalStateException, IOException {
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
 		return append(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, size, size, 0);
 	}
 	//
@@ -292,7 +269,7 @@ implements StorageClient<T> {
 	public long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount, final long size
-	) throws IllegalArgumentException, IllegalStateException, IOException {
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
 		return append(itemsInput, itemsOutput, threadCount, size, size, 0);
 	}
 	//
@@ -300,7 +277,7 @@ implements StorageClient<T> {
 	public long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long sizeMin, final long sizeMax, final float sizeBias
-	) throws IllegalArgumentException, IllegalStateException, IOException {
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
 		return append(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, sizeMin, sizeMax, sizeBias);
 	}
 	//
@@ -308,9 +285,7 @@ implements StorageClient<T> {
 	public long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount, final long sizeMin, final long sizeMax, final float sizeBias
-	) throws IllegalArgumentException, IllegalStateException, IOException {
-		//
-		final long countSucc;
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
 		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
 			null : new DataItemInputProducer<>(itemsInput);
@@ -327,11 +302,9 @@ implements StorageClient<T> {
 					.setObjSizeBias(sizeBias)
 					.build()
 			) {
-				countSucc = executeLoadJob(producer, loadJobExecutor, consumer);
+				return executeLoadJob(producer, loadJobExecutor, consumer);
 			}
 		}
-		//
-		return countSucc;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override

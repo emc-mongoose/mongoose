@@ -34,7 +34,7 @@ extends Closeable {
 	long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long size
-	) throws IllegalArgumentException, IOException;
+	) throws IllegalArgumentException, InterruptedException, IOException;
 
 	/**
 	 Write the fixed-sized data items on the storage using multiple threads/connections.
@@ -45,7 +45,7 @@ extends Closeable {
 	long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount, final long size
-	) throws IllegalArgumentException, IOException;
+	) throws IllegalArgumentException, InterruptedException, IOException;
 
 	/**
 	 Write the randomly sized data items on the target storage.
@@ -59,7 +59,7 @@ extends Closeable {
 	long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long minSize, final long maxSize, final float sizeBias
-	) throws IllegalArgumentException, IOException;
+	) throws IllegalArgumentException, InterruptedException, IOException;
 
 	/**
 	 Write the randomly sized data items on the target storage.
@@ -74,7 +74,7 @@ extends Closeable {
 	long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount, final long minSize, final long maxSize, final float sizeBias
-	) throws IllegalArgumentException, IOException;
+	) throws IllegalArgumentException, InterruptedException, IOException;
 
 	/**
 	 Read the data items from the storage.
@@ -82,7 +82,7 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long read(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput)
-	throws IllegalStateException, IOException;
+	throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Read the data items from the storage.
@@ -93,7 +93,7 @@ extends Closeable {
 	long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount
-	) throws IllegalStateException, IOException;
+	) throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 The same as {@link #read(DataItemInput, DataItemOutput)} but with ability to control
@@ -105,7 +105,7 @@ extends Closeable {
 	long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final boolean verifyContentFlag
-	) throws IllegalStateException, IOException;
+	) throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 The same as {@link #read(DataItemInput, DataItemOutput)} but with ability to control
@@ -118,7 +118,7 @@ extends Closeable {
 	long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount, final boolean verifyContentFlag
-	) throws IllegalStateException, IOException;
+	) throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Delete the data items on the storage.
@@ -126,7 +126,7 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long delete(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput)
-	throws IllegalStateException, IOException;
+	throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Delete the data items on the storage.
@@ -137,7 +137,7 @@ extends Closeable {
 	long delete(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount
-	) throws IllegalStateException, IOException;
+	) throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Update the data items on the storage.
@@ -145,7 +145,7 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long update(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput)
-	throws IllegalStateException, IOException;
+	throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Update the data items on the storage.
@@ -156,7 +156,7 @@ extends Closeable {
 	long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount
-	) throws IllegalStateException, IOException;
+	) throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 The same as {@link #update(DataItemInput, DataItemOutput)} but with
@@ -169,7 +169,7 @@ extends Closeable {
 	long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final int countPerTime
-	) throws IllegalArgumentException, IllegalStateException, IOException;
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 The same as {@link #update(DataItemInput, DataItemOutput)} but with
@@ -183,7 +183,7 @@ extends Closeable {
 	long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount, final int countPerTime
-	) throws IllegalArgumentException, IllegalStateException, IOException;
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Append the data items on the storage. By default makes each data item size twice larger (rly?).
@@ -191,7 +191,7 @@ extends Closeable {
 	 no bucket/container is specified
 	 */
 	long append(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput)
-	throws IllegalStateException, IOException;
+	throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 Append the data items on the storage. By default makes each data item size twice larger (rly?).
@@ -202,7 +202,7 @@ extends Closeable {
 	long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount
-	) throws IllegalStateException, IOException;
+	) throws IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 The same as {@link #append(DataItemInput, DataItemOutput)} but with
@@ -215,7 +215,7 @@ extends Closeable {
 	long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long augmentSize
-	) throws IllegalArgumentException, IllegalStateException, IOException;
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 The same as {@link #append(DataItemInput, DataItemOutput)} but with
@@ -229,7 +229,7 @@ extends Closeable {
 	long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount, final long augmentSize
-	) throws IllegalArgumentException, IllegalStateException, IOException;
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 The same as {@link #append(DataItemInput, DataItemOutput)} but with
@@ -245,7 +245,7 @@ extends Closeable {
 	long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long augmentSizeMin, final long augmentSizeMax, final float augmentSizeBias
-	) throws IllegalArgumentException, IllegalStateException, IOException;
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException;
 
 	/**
 	 The same as {@link #append(DataItemInput, DataItemOutput)} but with
@@ -262,5 +262,5 @@ extends Closeable {
 	long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final short threadCount, final long sizeMin, final long sizeMax, final float sizeBias
-	) throws IllegalArgumentException, IllegalStateException, IOException;
+	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException;
 }
