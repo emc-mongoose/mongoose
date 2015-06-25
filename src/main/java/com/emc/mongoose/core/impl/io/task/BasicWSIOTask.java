@@ -178,14 +178,14 @@ implements WSIOTask<T> {
 		try {
 			if(httpRequest.getEntity() != null) {
 				if(dataItem.isAppending()) {
-					dataItem.writeAugment(chanOut);
+					dataItem.writeAugmentFully(chanOut);
 				} else if(dataItem.hasUpdatedRanges()) {
-					dataItem.writeUpdates(chanOut);
+					dataItem.writeUpdatedRangesFully(chanOut);
 				} else {
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						final long
 							t = System.nanoTime(),
-							writtenCount = dataItem.write(chanOut),
+							writtenCount = dataItem.writeFully(chanOut),
 							rate = 1000000000 * writtenCount / (System.nanoTime() - t);
 						if(dataItem.getSize() != writtenCount) {
 							LOG.trace(
@@ -198,7 +198,7 @@ implements WSIOTask<T> {
 							);
 						}
 					} else {
-						dataItem.write(chanOut);
+						dataItem.writeFully(chanOut);
 					}
 				}
 			}

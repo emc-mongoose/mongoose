@@ -577,7 +577,7 @@ implements WSRequestConfig<T> {
 						}
 						chanIn.setContentDecoder(in);
 						try{
-							verifyPass = dataItem.equals(chanIn);
+							verifyPass = dataItem.readAndVerifyFully(chanIn);
 						} finally {
 							chanIn.close();
 						}

@@ -162,20 +162,27 @@ implements DataItem {
 	}
 	//
 	@Override
-	public long write(final WritableByteChannel chanDst)
-	throws IOException {
-		return write(chanDst, 0, size);
+	public final int write(final WritableByteChannel chanDst)
+		throws IOException {
+		enforceCircularity();
+		return chanDst.write(ringBuff);
 	}
 	//
-	protected final long write(
+	@Override
+	public long writeFully(final WritableByteChannel chanDst)
+	throws IOException {
+		return writeRange(chanDst, 0, size);
+	}
+	//
+	@Override
+	public final long writeRange(
 		final WritableByteChannel chanDst, final long relOffset, final long len
 	) throws IOException {
 		long writtenCount = 0;
 		int n;
 		setRelativeOffset(relOffset);
 		while(writtenCount < len) {
-			enforceCircularity();
-			n = chanDst.write(ringBuff);
+			n = write(chanDst);
 			if(n < 0) {
 				LOG.warn(Markers.ERR, "Channel returned {} as written byte count", n);
 			} else if(n > 0) {
@@ -186,62 +193,75 @@ implements DataItem {
 	}
 	//
 	@Override
-	public boolean equals(final ReadableByteChannel chanSrc)
+	public final int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
 	throws IOException {
-		return equals(chanSrc, 0, size);
+		//
+		enforceCircularity();
+		int n = ringBuff.remaining();
+		if(buff.capacity() > n) {
+			buff.limit(n);
+		}
+		//
+		n = chanSrc.read(buff);
+		//
+		if(n < 0) { // premature end of stream
+			throw new DataSizeException();
+		} else if(n > 0) {
+			byte bs, bi;
+			buff.flip();
+			for(int m = 0; m < n; m ++) {
+				bs = ringBuff.get();
+				bi = buff.get();
+				if(bs != bi) {
+					throw new DataCorruptionException(m, bs, bi);
+				}
+			}
+		}
+		return n;
+	}
+	//
+	@Override
+	public boolean readAndVerifyFully(final ReadableByteChannel chanSrc)
+	throws IOException {
+		return readAndVerifyRange(chanSrc, 0, size);
 	}
 	// checks that data read from input equals the specified range
-	protected final boolean equals(
+	@Override
+	public final boolean readAndVerifyRange(
 		final ReadableByteChannel chanSrc, final long relOffset, final long len
 	) throws IOException {
-		// byte counters
-		int n, m;
-		// source byte vs input byte
-		byte bs, bi;
+		setRelativeOffset(relOffset);
 		//
-		final ByteBuffer inBuff = ByteBuffer.allocate(
+		final ByteBuffer buff = ByteBuffer.allocate(
 			(int) Math.min(
 				Constants.BUFF_SIZE_HI, Math.max(Constants.BUFF_SIZE_LO, len)
 			)
 		);
-		long doneByteCount = 0;
-		setRelativeOffset(relOffset);
 		//
-		while(doneByteCount < len) {
-			//
-			enforceCircularity();
-			n = ringBuff.remaining();
-			if(inBuff.capacity() > n) {
-				inBuff.limit(n);
-			}
-			n = chanSrc.read(inBuff);
-			//
-			if(n < 0) { // premature end of stream
-				LOG.warn(
-					Markers.MSG, "{}: content size mismatch, expected: {}, got: {}",
-					Long.toString(offset, DataObject.ID_RADIX), size, relOffset + doneByteCount
-				);
-				return false;
-			} else if(n > 0) {
-				inBuff.flip();
-				//
-				for(m = 0; m < n; m ++) {
-					bs = ringBuff.get();
-					bi = inBuff.get();
-					if(bs != bi) {
-						LOG.warn(
-							Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, got: {}",
-							Long.toString(offset, DataObject.ID_RADIX),
-							relOffset + doneByteCount + m,
-							String.format("\"0x%X\"", bs), String.format("\"0x%X\"", bi)
-						);
-						return false;
-					}
+		int n;
+		long doneByteCount = 0;
+		try {
+			while(doneByteCount < len) {
+				n = readAndVerify(chanSrc, buff);
+				if(n > 0) {
+					buff.clear();
+					doneByteCount += n;
 				}
-				//
-				inBuff.clear();
-				doneByteCount += n;
 			}
+		} catch(final DataSizeException e) {
+			LOG.warn(
+				Markers.MSG, "{}: content size mismatch, expected: {}, actual: {}",
+				Long.toString(offset, DataObject.ID_RADIX), size, relOffset + doneByteCount
+			);
+			return false;
+		} catch(final DataCorruptionException e) {
+			LOG.warn(
+				Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {}",
+				Long.toString(offset, DataObject.ID_RADIX),
+				relOffset + doneByteCount + e.relOffset,
+				String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual)
+			);
+			return false;
 		}
 		return true;
 	}

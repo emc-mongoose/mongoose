@@ -23,7 +23,7 @@ extends DataItem {
 	//
 	long getPendingRangesSize();
 	//
-	void writeUpdates(final WritableByteChannel chanOut)
+	void writeUpdatedRangesFully(final WritableByteChannel chanOut)
 	throws IOException;
 	//
 	public long getRangeSize(final int i);

@@ -174,15 +174,15 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final synchronized boolean equals(final ReadableByteChannel chanSrc)
+	public final synchronized boolean readAndVerifyFully(final ReadableByteChannel chanSrc)
 	throws IOException {
 		// do not go over ranges if there's no updated ones
 		if(maskRangesHistory.isEmpty()) {
 			if(currLayerIndex == 0) {
-				return equals(chanSrc, 0, size);
+				return readAndVerifyRange(chanSrc, 0, size);
 			} else {
 				return new UniformData(offset, size, currLayerIndex, UniformDataSource.DEFAULT)
-					.equals(chanSrc, 0, size);
+					.readAndVerifyRange(chanSrc, 0, size);
 			}
 		}
 		//
@@ -202,7 +202,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				updatedRange = new UniformData(
 					offset + rangeOffset, rangeSize, currLayerIndex + 1, UniformDataSource.DEFAULT
 				);
-				contentEquals = updatedRange.equals(chanSrc, 0, rangeSize);
+				contentEquals = updatedRange.readAndVerifyRange(chanSrc, 0, rangeSize);
 			} else if(currLayerIndex > 1) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
@@ -213,9 +213,9 @@ implements AppendableDataItem, UpdatableDataItem {
 				updatedRange = new UniformData(
 					offset + rangeOffset, rangeSize, currLayerIndex, UniformDataSource.DEFAULT
 				);
-				contentEquals = updatedRange.equals(chanSrc, 0, rangeSize);
+				contentEquals = updatedRange.readAndVerifyRange(chanSrc, 0, rangeSize);
 			} else {
-				contentEquals = equals(chanSrc, rangeOffset, rangeSize);
+				contentEquals = readAndVerifyRange(chanSrc, rangeOffset, rangeSize);
 			}
 			if(!contentEquals) {
 				LOG.debug(
@@ -304,7 +304,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final synchronized void writeUpdates(final WritableByteChannel chanOut)
+	public final synchronized void writeUpdatedRangesFully(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		DataItem nextRangeData;
@@ -316,7 +316,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				nextRangeData = new UniformData(
 					offset + rangeOffset, rangeSize, currLayerIndex + 1, UniformDataSource.DEFAULT
 				);
-				nextRangeData.write(chanOut);
+				nextRangeData.writeFully(chanOut);
 			}
 		}
 		// move pending updated ranges to history
@@ -363,7 +363,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final synchronized void writeAugment(final WritableByteChannel chanOut)
+	public final synchronized void writeAugmentFully(final WritableByteChannel chanOut)
 	throws IOException {
 		if(pendingAugmentSize > 0) {
 			final int rangeIndex = size > 0 ? getRangeCount(size) - 1 : 0;
@@ -371,10 +371,10 @@ implements AppendableDataItem, UpdatableDataItem {
 				new UniformData(
 					offset + size, pendingAugmentSize, currLayerIndex + 1,
 					UniformDataSource.DEFAULT
-				).write(chanOut);
+				).writeFully(chanOut);
 				size += pendingAugmentSize;
 			} else { // write from current layer
-				write(chanOut, size, pendingAugmentSize);
+				writeRange(chanOut, size, pendingAugmentSize);
 				size += pendingAugmentSize;
 			}
 			// clean up the appending on success
