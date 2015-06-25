@@ -8,6 +8,7 @@ import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-storage-mock.jar
+import com.emc.mongoose.storage.mock.api.net.SocketEventDispatcher;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
 //
 import org.apache.http.impl.nio.DefaultHttpServerIODispatch;
@@ -34,14 +35,18 @@ import java.net.InetSocketAddress;
  */
 public final class BasicSocketEventDispatcher
 extends DefaultHttpServerIODispatch
-implements Closeable, Runnable {
+implements SocketEventDispatcher {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static GroupThreadFactory THREAD_GROUP = new GroupThreadFactory(
+		"wsMockSocketEvtDispatcher", true
+	);
 	//
 	private final ListeningIOReactor ioReactor;
 	private final InetSocketAddress socketAddress;
 	private final IOReactorConfig ioReactorConf;
 	private final IOStats ioStats;
+	private final Thread executor;
 	//
 	public BasicSocketEventDispatcher(
 		final RunTimeConfig runTimeConfig,
@@ -72,11 +77,17 @@ implements Closeable, Runnable {
 			ioReactorConf, new GroupThreadFactory("ioReactor")
 		);
 		this.ioStats = ioStats;
+		executor = THREAD_GROUP.newThread(this);
+
+	}
+	//
+	@Override
+	public final void start() {
+		executor.start();
 	}
 	//
 	@Override
 	public final void run() {
-		//buffSizeAdjustDaemon.start();
 		try {
 			// Listen of the given port
 			ioReactor.listen(socketAddress);
@@ -90,7 +101,7 @@ implements Closeable, Runnable {
 			LogUtil.exception(LOG, Level.WARN, e, "{}: I/O failure", this);
 		} finally {
 			try {
-				ioReactor.shutdown();
+				close();
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "{}: I/O failure during the shutdown", this);
 			}
@@ -98,11 +109,22 @@ implements Closeable, Runnable {
 	}
 	//
 	@Override
+	public final void join()
+	throws InterruptedException {
+		executor.join();
+	}
+	//
+	@Override
 	public final void close()
 	throws IOException {
-		ioReactor.shutdown();
-		for(final ListenerEndpoint endpoint : ioReactor.getEndpoints()) {
-			endpoint.close();
+		try {
+			ioReactor.shutdown();
+		} finally {
+			try {
+				executor.join();
+			} catch(final InterruptedException e) {
+				executor.interrupt(); // just try
+			}
 		}
 	}
 	//
