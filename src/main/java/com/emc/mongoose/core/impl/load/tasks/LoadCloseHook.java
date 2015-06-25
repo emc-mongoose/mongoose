@@ -19,9 +19,12 @@ import java.io.ObjectOutputStream;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -34,6 +37,8 @@ implements Runnable {
 	private final static Logger LOG = LogManager.getLogger();
 	private final static Map<LoadExecutor, Thread> HOOKS_MAP = new ConcurrentHashMap<>();
 	private final static List<LoadState> LOAD_STATES = new ArrayList<>();
+	//
+	public static final Map<String, Queue<LoadState>> STATES_MAP = new ConcurrentHashMap<>();
 	//
 	private final LoadExecutor loadExecutor;
 	private final String loadName;
@@ -86,6 +91,21 @@ implements Runnable {
 			} finally {
 				HOOKS_MAP.remove(loadExecutor);
 				LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
+				//
+				try {
+					final LoadState currState = loadExecutor.getLoadState();
+					final String stateRunId = currState.getRunTimeConfig().getRunId();
+					if (STATES_MAP.containsKey(stateRunId)) {
+						STATES_MAP.get(stateRunId).add(currState);
+					} else {
+						final Queue<LoadState> loadStates = new ConcurrentLinkedQueue<>();
+						loadStates.add(currState);
+						STATES_MAP.put(stateRunId, loadStates);
+					}
+				} catch (final RemoteException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to add state to list");
+				}
+				//
 				if (HOOKS_MAP.isEmpty()) {
 					saveCurrState();
 					try {
@@ -112,7 +132,7 @@ implements Runnable {
 	public final void run() {
 		LOG.debug(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
 		try {
-			final LoadState currState = loadExecutor.getLoadState();
+			/*final LoadState currState = loadExecutor.getLoadState();
 			final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 			final long currStateMillis = currState.getLoadElapsedTimeUnit().
 				toMillis(currState.getLoadElapsedTimeValue());
@@ -120,7 +140,7 @@ implements Runnable {
 				toMillis(localRunTimeConfig.getLoadLimitTimeValue());
 			if ((currStateMillis >= runTimeMillis) && (runTimeMillis > 0)) {
 				LOAD_STATES.add(currState);
-			}
+			}*/
 			loadExecutor.close();
 			LOG.debug(Markers.MSG, "The load executor \"{}\" closed successfully", loadName);
 		} catch(final Exception e) {
@@ -131,16 +151,20 @@ implements Runnable {
 	}
 	//
 	private static void saveCurrState() {
-		final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, RunTimeConfig.getContext().getRunId()).toFile()
-			+ File.separator + Constants.STATES_FILE;
-		try (final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {
-			try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-				oos.writeObject(LOAD_STATES);
+		for (final Map.Entry<String, Queue<LoadState>> entry : STATES_MAP.entrySet()) {
+			final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+					Constants.DIR_LOG, entry.getKey()).toFile() + File.separator
+					+ Constants.STATES_FILE;
+			try (final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {
+				try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+					oos.writeObject(new ArrayList<>(entry.getValue()));
+				}
+				STATES_MAP.remove(entry.getKey());
+				LOG.info(Markers.MSG, "The state of run with run.id: \"{}\" was saved successfully", entry.getKey());
+			} catch (final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e,
+						"Failed to serialize state of run with run.id: \"{}\" to the \".loadState\" file", entry.getKey());
 			}
-			LOG.info(Markers.MSG, "The state of run was saved successfully");
-		} catch (final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to serialize the state of run to the \".loadState\" file");
 		}
 	}
 }
