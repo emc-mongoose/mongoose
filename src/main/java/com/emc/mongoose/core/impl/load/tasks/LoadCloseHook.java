@@ -33,7 +33,7 @@ implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static Map<LoadExecutor, Thread> HOOKS_MAP = new ConcurrentHashMap<>();
-	private final static List<LoadState> STATES = new ArrayList<>();
+	private final static List<LoadState> LOAD_STATES = new ArrayList<>();
 	//
 	private final LoadExecutor loadExecutor;
 	private final String loadName;
@@ -112,7 +112,15 @@ implements Runnable {
 	public final void run() {
 		LOG.debug(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
 		try {
-			STATES.add(loadExecutor.getLoadState());
+			final LoadState currState = loadExecutor.getLoadState();
+			final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+			final long currStateMillis = currState.getLoadElapsedTimeUnit().
+				toMillis(currState.getLoadElapsedTimeValue());
+			final long runTimeMillis = localRunTimeConfig.getLoadLimitTimeUnit().
+				toMillis(localRunTimeConfig.getLoadLimitTimeValue());
+			if ((currStateMillis >= runTimeMillis) && (runTimeMillis > 0)) {
+				LOAD_STATES.add(currState);
+			}
 			loadExecutor.close();
 			LOG.debug(Markers.MSG, "The load executor \"{}\" closed successfully", loadName);
 		} catch(final Exception e) {
@@ -123,14 +131,16 @@ implements Runnable {
 	}
 	//
 	private static void saveCurrState() {
-		final String fullFileName = Paths.get(RunTimeConfig.DIR_ROOT,
-				Constants.DIR_LOG, RunTimeConfig.getContext().getRunId()).toFile() + File.separator + Constants.STATES_FILE;
-		try (final FileOutputStream fos = new FileOutputStream(fullFileName, false)) {
+		final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+			Constants.DIR_LOG, RunTimeConfig.getContext().getRunId()).toFile()
+			+ File.separator + Constants.STATES_FILE;
+		try (final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {
 			try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-				oos.writeObject(STATES);
+				oos.writeObject(LOAD_STATES);
 			}
+			LOG.info(Markers.MSG, "The state of run was saved successfully");
 		} catch (final IOException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Mongoose's state serialization failed");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to serialize the state of run to the \".loadState\" file");
 		}
 	}
 }
