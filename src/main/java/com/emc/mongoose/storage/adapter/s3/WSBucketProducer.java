@@ -1,6 +1,7 @@
 package com.emc.mongoose.storage.adapter.s3;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
+import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -80,59 +81,80 @@ implements Producer<T> {
 	//
 	@Override
 	public final void run() {
-		//
-		HttpResponse httpResp = null;
 		String bucketListingMarker = null;
+		long countSubmit = 0;
+		long bucketMaxKeys = WSRequestConfig.PAGE_SIZE;
 		try {
 			do {
-				httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET, false, bucketListingMarker);
+				bucketMaxKeys = (maxCount - countSubmit) > bucketMaxKeys ?
+					bucketMaxKeys : (maxCount - countSubmit);
 				//
-				if(httpResp != null) {
-					final StatusLine statusLine = httpResp.getStatusLine();
-					if(statusLine == null) {
-						LOG.warn(Markers.MSG, "No response status returned");
-					} else {
-						final int statusCode = statusLine.getStatusCode();
-						if(statusCode >= 200 && statusCode < 300) {
-							final HttpEntity respEntity = httpResp.getEntity();
-							if(respEntity != null) {
-								String respContentType = ContentType.APPLICATION_XML.getMimeType();
-								if(respEntity.getContentType() != null) {
-									respContentType = respEntity.getContentType().getValue();
-								} else {
-									LOG.debug(Markers.ERR, "No content type returned");
-								}
-								if(ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
-									final SAXParser
-										parser = SAXParserFactory.newInstance().newSAXParser();
-									try(final InputStream in = respEntity.getContent()) {
-										////////////////////////////////////////////////////////////////
-										final XMLBucketListParser xmlBucketListparser = new XMLBucketListParser<>(
-											consumer, dataConstructor, maxCount
-										);
-										//
-										parser.parse(in, xmlBucketListparser);
-										bucketListingMarker = xmlBucketListparser.getBucketListingNextMarker();
-										////////////////////////////////////////////////////////////////
-									}
-								} else {
-									LOG.warn(
-										Markers.MSG, "Unexpected response content type: \"{}\"",
-										respContentType
-									);
-								}
-								EntityUtils.consumeQuietly(respEntity);
-							}
-						} else {
-							final String statusMsg = statusLine.getReasonPhrase();
-							LOG.warn(
-								Markers.ERR, "Listing bucket \"{}\" response: {}/{}",
-								bucket, statusCode, statusMsg
-							);
-						}
-					}
+				final HttpResponse httpResp = bucket.execute(
+					addr, MutableWSRequest.HTTPMethod.GET, false,
+					bucketListingMarker, bucketMaxKeys
+				);
+				//
+				if (httpResp == null) {
+					LOG.warn(Markers.MSG, "No HTTP response is returned");
+					break;
 				}
-			} while(bucketListingMarker != null);
+				//
+				final StatusLine statusLine = httpResp.getStatusLine();
+				//
+				if (statusLine == null) {
+					LOG.warn(Markers.MSG, "No response status is returned");
+					break;
+				}
+				//
+				final int statusCode = statusLine.getStatusCode();
+				//
+				if (statusCode < 200 || statusCode > 300) {
+					final String statusMsg = statusLine.getReasonPhrase();
+					LOG.warn(
+							Markers.ERR, "Listing bucket \"{}\" response: {}/{}",
+							bucket, statusCode, statusMsg
+					);
+					break;
+				}
+				//
+				final HttpEntity respEntity = httpResp.getEntity();
+				if (respEntity == null) {
+					LOG.warn(Markers.ERR, "No HTTP entity is returned");
+					break;
+				}
+				//
+				//String respContentType = ContentType.APPLICATION_XML.getMimeType();
+				//
+				if (respEntity.getContentType() == null) {
+					LOG.debug(Markers.ERR, "No content type is returned");
+					break;
+				}
+				//
+				final String respContentType = respEntity.getContentType().getValue();
+				//
+				if (!ContentType.APPLICATION_XML.getMimeType().equals(respContentType)) {
+					LOG.warn(
+							Markers.MSG, "Unexpected response content type: \"{}\"",
+							respContentType
+					);
+					break;
+				}
+				//
+				final SAXParser
+					parser = SAXParserFactory.newInstance().newSAXParser();
+				try (final InputStream in = respEntity.getContent()) {
+					////////////////////////////////////////////////////////////////
+					final XMLBucketListParser xmlBucketListparser = new XMLBucketListParser<>(
+						consumer, dataConstructor, maxCount
+					);
+					//
+					parser.parse(in, xmlBucketListparser);
+					bucketListingMarker = xmlBucketListparser.getBucketListingNextMarker();
+					countSubmit = xmlBucketListparser.getCountSubmit();
+					////////////////////////////////////////////////////////////////
+				}
+				EntityUtils.consumeQuietly(respEntity);
+			} while(bucketListingMarker != null && countSubmit != maxCount);
 		} catch(final IOException e) {
 			LogUtil.exception(
 				LOG, Level.ERROR, e, "Failed to list the bucket: " + bucket + ", next marker: " + bucketListingMarker
@@ -146,7 +168,7 @@ implements Producer<T> {
 				LOG, Level.ERROR, e, "Failed to create SAX parser"
 			);
 		} finally {
-			if(consumer != null) {
+			if (consumer != null) {
 				try {
 					consumer.shutdown();
 				} catch(final RemoteException e) {

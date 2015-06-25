@@ -4,6 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
+import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.data.DataObject;
@@ -16,7 +17,6 @@ import com.fasterxml.jackson.core.JsonToken;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
-import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -84,48 +84,77 @@ implements Producer<T> {
 	//
 	@Override
 	public final void run() {
+		int statusCode;
+		long containerLimit = WSRequestConfig.PAGE_SIZE;
 		try {
-			final HttpResponse httpResp = container.execute(addr, MutableWSRequest.HTTPMethod.GET);
-			if(httpResp != null) {
-				final StatusLine statusLine = httpResp.getStatusLine();
-				if(statusLine == null) {
-					LOG.warn(Markers.MSG, "No response status returned");
-				} else {
-					final int statusCode = statusLine.getStatusCode();
-					if(statusCode >= 200 && statusCode < 300) {
-						final HttpEntity respEntity = httpResp.getEntity();
-						if(respEntity != null) {
-							String respContentType = ContentType.APPLICATION_JSON.getMimeType();
-							if(respEntity.getContentType() != null) {
-								respContentType = respEntity.getContentType().getValue();
-							} else {
-								LOG.debug(Markers.ERR, "No content type returned");
-							}
-							if(!respContentType.toLowerCase().contains("json")) {
-								LOG.warn(
-									Markers.ERR, "Unexpected response content type: \"{}\"",
-									respContentType
-								);
-							}
-							try(final InputStream in = respEntity.getContent()) {
-								handleJsonInputStream(in);
-							} catch(final IOException e) {
-								LogUtil.exception(
-									LOG, Level.ERROR, e,
-									"Failed to list the content of container: {}", container
-								);
-							}
-							EntityUtils.consumeQuietly(respEntity);
-						}
-					}
+			do {
+				containerLimit = (maxCount - count) > containerLimit ?
+					containerLimit : (maxCount - count);
+				final HttpResponse httpResp = container.execute(
+					addr, MutableWSRequest.HTTPMethod.GET, lastId, containerLimit
+				);
+				//
+				if (httpResp == null) {
+					LOG.warn(Markers.MSG, "No HTTP response returned");
+					break;
 				}
-			}
+				//
+				final StatusLine statusLine = httpResp.getStatusLine();
+				//
+				if (statusLine == null) {
+					LOG.warn(Markers.MSG, "No response status returned");
+					break;
+				}
+				//
+				statusCode = statusLine.getStatusCode();
+				//
+				if (statusCode < 200 || statusCode > 300) {
+					final String statusMsg = statusLine.getReasonPhrase();
+					LOG.warn(
+						Markers.ERR, "Listing container \"{}\" response: {}/{}",
+						container, statusCode, statusMsg
+					);
+					break;
+				}
+				//
+				final HttpEntity respEntity = httpResp.getEntity();
+				//
+				if (respEntity == null) {
+					LOG.warn(Markers.MSG, "No HTTP entity returned");
+					break;
+				}
+				//
+				//String respContentType = ContentType.APPLICATION_JSON.getMimeType();
+				//
+				if (respEntity.getContentType() == null) {
+					LOG.debug(Markers.ERR, "No content type returned");
+					break;
+				}
+				//
+				final String respContentType = respEntity.getContentType().getValue();
+				if (!respContentType.toLowerCase().contains("json")) {
+					LOG.warn(
+							Markers.ERR, "Unexpected response content type: \"{}\"",
+							respContentType
+					);
+					break;
+				}
+				try (final InputStream in = respEntity.getContent()) {
+					handleJsonInputStream(in);
+				} catch (final IOException e) {
+					LogUtil.exception(
+							LOG, Level.ERROR, e,
+							"Failed to list the content of container: {}", container
+					);
+				}
+				EntityUtils.consumeQuietly(respEntity);
+			} while(statusCode != 204 && lastId != null);
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.ERROR, e, "Failed to list the container: {}", container);
 		} catch(final InterruptedException e) {
 			LOG.debug(Markers.MSG, "Container \"{}\" producer interrupted", container);
 		} finally {
-			if(consumer != null) {
+			if (consumer != null) {
 				try {
 					consumer.shutdown();
 				} catch(final Exception e) {
@@ -144,6 +173,7 @@ implements Producer<T> {
 	//
 	private void handleJsonInputStream(final InputStream in)
 	throws IOException, InterruptedException {
+		boolean isEmptyArray = false;
 		try(final JsonParser jsonParser = JSON_FACTORY.createParser(in)) {
 			final JsonToken rootToken = jsonParser.nextToken();
 			JsonToken nextToken;
@@ -179,6 +209,7 @@ implements Producer<T> {
 												);
 											}
 											count ++;
+											isEmptyArray = true;
 										} else {
 											break;
 										}
@@ -237,6 +268,10 @@ implements Producer<T> {
 							break;
 					}
 				} while(!JsonToken.END_ARRAY.equals(nextToken));
+				// if container's list is empty or all data objects are submitted last data ID has to equal null.
+				if (isEmptyArray || count == maxCount) {
+					lastId = null;
+				}
 			} else {
 				LOG.warn(
 					Markers.ERR,
