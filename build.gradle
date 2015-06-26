@@ -936,7 +936,7 @@ idea {
 			RUNTIME: [plus: [configurations.runtime], minus: [configurations.compile]],
 			TEST: [plus: [configurations.testRuntime], minus: [configurations.runtime]]
 		]
-		//for clear mongoose.iml
+		//for cleaning mongoose.iml
 		iml{
 			beforeMerged { module ->
 				//if you want skip merging exclude dirs
