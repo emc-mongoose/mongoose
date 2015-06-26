@@ -652,10 +652,10 @@ implements LoadExecutor<T> {
 	@Override
 	public void close()
 	throws IOException {
-		LOG.debug(Markers.MSG, "Invoked close for {}", getName());
-		interrupt();
 		// interrupt the producing
 		if(isClosed.compareAndSet(false, true)) {
+			LOG.debug(Markers.MSG, "Invoked close for {}", getName());
+			interrupt();
 			try {
 				LOG.debug(Markers.MSG, "Forcing the shutdown");
 				reqConfigCopy.close(); // disables connection drop failures

@@ -42,6 +42,8 @@ extends ObjectRequestConfig<T> {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_FS_ACCESS, /*KEY_EMC_NS, */KEY_EMC_SIG, KEY_EMC_UID
 		};
 	//
+	long PAGE_SIZE = 1024;
+	//
 	MutableWSRequest createRequest();
 	//
 	MutableWSRequest.HTTPMethod getHTTPMethod();
