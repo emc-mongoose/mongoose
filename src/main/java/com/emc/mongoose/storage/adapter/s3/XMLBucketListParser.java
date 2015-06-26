@@ -29,7 +29,8 @@ extends DefaultHandler {
 	private final static String
 		QNAME_ITEM = "Contents",
 		QNAME_ITEM_ID = "Key",
-		QNAME_ITEM_SIZE = "Size";
+		QNAME_ITEM_SIZE = "Size",
+		QNAME_NEXT_MARKER = "NextMarker";
 	//
 	private final Consumer<T> consumer;
 	private final Constructor<T> dataConstructor;
@@ -38,9 +39,10 @@ extends DefaultHandler {
 	private volatile boolean
 		isInsideItem = false,
 		isInsideItemId = false,
-		isInsideItemSize = false;
+		isInsideItemSize = false,
+		isNextMarker = false;
 	private volatile String
-		strId = null, strSize = null;
+		strId = null, strSize = null, bucketListingNextMarker = null;
 	//
 	XMLBucketListParser(
 		final Consumer<T> consumer, final Constructor<T> dataConstructor, final long maxCount
@@ -57,6 +59,8 @@ extends DefaultHandler {
 		isInsideItem = isInsideItem || QNAME_ITEM.equals(qName);
 		isInsideItemId = isInsideItem && QNAME_ITEM_ID.equals(qName);
 		isInsideItemSize = isInsideItem && QNAME_ITEM_SIZE.equals(qName);
+		//
+		isNextMarker = QNAME_NEXT_MARKER.equals(qName);
 		super.startElement(uri, localName, qName, attrs);
 	}
 	//
@@ -68,12 +72,12 @@ extends DefaultHandler {
 		isInsideItemId = isInsideItemId && !QNAME_ITEM_ID.equals(qName);
 		isInsideItemSize = isInsideItemSize && !QNAME_ITEM_SIZE.equals(qName);
 		//
-		if(isInsideItem && QNAME_ITEM.equals(qName)) {
+		if (isInsideItem && QNAME_ITEM.equals(qName)) {
 			isInsideItem = false;
 			//
 			long offset, size = -1;
 			//
-			if(strSize != null && strSize.length() > 0) {
+			if (strSize != null && strSize.length() > 0) {
 				try {
 					size = Long.parseLong(strSize);
 				} catch(final NumberFormatException e) {
@@ -85,12 +89,12 @@ extends DefaultHandler {
 				LOG.trace(Markers.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
 			}
 			//
-			if(strId != null && strId.length() > 0 && size > -1) {
+			if (strId != null && strId.length() > 0 && size > -1) {
 				try {
 					offset = Long.parseLong(strId, DataObject.ID_RADIX);
-					if(offset < 0) {
+					if (offset < 0) {
 						LOG.warn(Markers.ERR, "Calculated from id ring offset is negative");
-					} else if(count < maxCount) {
+					} else if (count < maxCount) {
 						consumer.submit(dataConstructor.newInstance(strId, offset, size));
 						count ++;
 					} else {
@@ -103,6 +107,7 @@ extends DefaultHandler {
 				} catch(final  RejectedExecutionException e) {
 					LogUtil.exception(LOG, Level.DEBUG, e, "Consumer rejected the data object");
 				} catch(final InterruptedException e) {
+					System.out.println("interrupted");
 					endDocument();
 				} catch(final NumberFormatException e) {
 					LOG.debug(Markers.ERR, "Invalid id: {}", strId);
@@ -121,11 +126,22 @@ extends DefaultHandler {
 	public final void characters(
 		final char buff[], final int start, final int length
 	) throws SAXException {
-		if(isInsideItemId) {
+		if (isInsideItemId) {
 			strId = new String(buff, start, length);
-		} else if(isInsideItemSize) {
+		} else if (isInsideItemSize) {
 			strSize = new String(buff, start, length);
+		} else if (isNextMarker) {
+			bucketListingNextMarker = new String(buff, start, length);
+			System.out.println("set bucket");
 		}
 		super.characters(buff, start, length);
+	}
+	//
+	public final String getBucketListingNextMarker() {
+		return bucketListingNextMarker;
+	}
+	//
+	public long getCountSubmit() {
+		return count;
 	}
 }

@@ -36,6 +36,7 @@ import org.apache.logging.log4j.Marker;
 import javax.management.MBeanServer;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.HashMap;
@@ -107,15 +108,46 @@ implements LoadExecutor<T> {
 				}
 			}
 		},
-		ioTaskReleaseDaemon = new Thread() {
+		releaseDaemon = new Thread() {
 			//
 			{ setDaemon(true); }
 			//
 			@Override
 			public final void run() {
+				IOTask<T> spentIOTask;
 				try {
 					while(!isClosed.get()) {
-						ioTaskSpentQueue.take().release();
+						// 1st check for done condition
+						if(isDoneAllSubm() || isDoneMaxCount()) {
+							if(
+								lock.tryLock(
+									runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
+								)
+							) {
+								try {
+									condProducerDone.signalAll();
+									LOG.debug(
+										Markers.MSG, "{}: done/interrupted signal emitted",
+										getName()
+									);
+								} finally {
+									lock.unlock();
+								}
+							} else {
+								LOG.warn(
+									Markers.ERR, "{}: failed to acquire the lock in close method",
+									getName()
+								);
+							}
+						}
+						// try to get a task for releasing into the pool
+						spentIOTask = ioTaskSpentQueue.poll(
+							submTimeOutMilliSec, TimeUnit.MILLISECONDS
+						);
+						// release the next task if necessary
+						if(spentIOTask != null) {
+							spentIOTask.release();
+						}
 					}
 				} catch(final InterruptedException ignored) {
 				}
@@ -180,16 +212,31 @@ implements LoadExecutor<T> {
 		// create and configure the connection manager
 		dataSrc = reqConfig.getDataSource();
 		//
-		if(listFile != null && listFile.length() > 0 && Files.isReadable(Paths.get(listFile))) {
-			try {
-				producer = new FileProducer<>(maxCount, listFile, dataCls);
-				LOG.debug(Markers.MSG, "{} will use file-based producer: {}", getName(), listFile);
-			} catch(final NoSuchMethodException | IOException e) {
-				LogUtil.exception(
-					LOG, Level.FATAL, e,
-					"Failed to create file-based producer for the class \"{}\" and src file \"{}\"",
-					dataCls.getName(), listFile
+		if(listFile != null && listFile.length() > 0) {
+			final Path dataItemsListPath = Paths.get(listFile);
+			if(!Files.exists(dataItemsListPath)) {
+				LOG.warn(
+					Markers.ERR, "Data items source file \"{}\" doesn't exist",
+					dataItemsListPath
 				);
+			} else if(!Files.isReadable(dataItemsListPath)) {
+				LOG.warn(
+					Markers.ERR, "Data items source file \"{}\" is not readable",
+					dataItemsListPath
+				);
+			} else {
+				try {
+					producer = new FileProducer<>(maxCount, listFile, dataCls);
+					LOG.debug(
+						Markers.MSG, "{} will use file-based producer: {}", getName(), listFile
+					);
+				} catch(final NoSuchMethodException | IOException e) {
+					LogUtil.exception(
+						LOG, Level.FATAL, e,
+						"Failed to create file producer for the class \"{}\" and src file \"{}\"",
+						dataCls.getName(), listFile
+					);
+				}
 			}
 		} else if(loadType == IOTask.Type.CREATE) {
 			try {
@@ -300,8 +347,8 @@ implements LoadExecutor<T> {
 			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
 			super.start();
-			ioTaskReleaseDaemon.setName("ioTaskReleaseDaemon<" + getName() + ">");
-			ioTaskReleaseDaemon.start();
+			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
+			releaseDaemon.start();
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
 			} else {
@@ -533,20 +580,14 @@ implements LoadExecutor<T> {
 		}
 		//
 		counterResults.incrementAndGet();
-		if( // check that max count of results is reached OR
-			counterResults.get() >= maxCount ||
-			// consumer is not running and submitted count is equal to done count
-			(isAllSubm.get() && counterResults.get() >= counterSubm.getCount())
-		) { // so max count is reached OR all tasks are done
-			LOG.debug(
-				Markers.MSG, "{}: all {} task results has been obtained", getName(),
-				counterResults.get()
-			);
-			if(!isClosed.get()) {
-				// prevent further results handling
-				interrupt();
-			}
-		}
+	}
+	//
+	private boolean isDoneMaxCount() {
+		return counterResults.get() >= maxCount;
+	}
+	//
+	private boolean isDoneAllSubm() {
+		return isAllSubm.get() && counterResults.get() >= counterSubm.getCount();
 	}
 	//
 	@Override
@@ -568,10 +609,10 @@ implements LoadExecutor<T> {
 	@Override
 	public void close()
 	throws IOException {
-		LOG.debug(Markers.MSG, "Invoked close for {}", getName());
-		interrupt();
 		// interrupt the producing
 		if(isClosed.compareAndSet(false, true)) {
+			LOG.debug(Markers.MSG, "Invoked close for {}", getName());
+			interrupt();
 			try {
 				LOG.debug(Markers.MSG, "Forcing the shutdown");
 				reqConfigCopy.close(); // disables connection drop failures
@@ -583,7 +624,7 @@ implements LoadExecutor<T> {
 			} catch(final IllegalStateException | RejectedExecutionException e) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
-				ioTaskReleaseDaemon.interrupt();
+				releaseDaemon.interrupt();
 				ioTaskSpentQueue.clear();
 				BasicIOTask.INSTANCE_POOL_MAP.put(this, null); // dispose I/O tasks pool
 				jmxReporter.close();

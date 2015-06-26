@@ -1,0 +1,253 @@
+{
+	"properties": {
+		"aliasing": {
+			"storage.api": "api.name",
+
+			"api.s3.port": "api.type.s3.port",
+			"api.s3.auth.prefix": "api.type.s3.authPrefix",
+			"api.s3.bucket": "api.type.s3.bucket",
+			"api.s3.bucket.filesystem": "storage.fsAccess",
+			"api.s3.bucket.versioning": "storage.versioning",
+
+			"api.atmos.port": "api.type.atmos.port",
+			"api.atmos.subtenant": "api.type.atmos.subtenant",
+
+			"api.swift.port": "api.type.swift.port",
+			"api.swift.service.basepath": "api.type.swift.serviceBasepath",
+			"api.swift.auth.token": "api.type.swift.authToken",
+			"api.swift.container": "api.type.swift.container",
+
+			"storage.mock.data.offset.radix": "data.radix.offset",
+			"storage.mock.data.size.radix": "data.radix.size",
+			"storage.mock.head.count": "storage.mock.headCount",
+			"storage.mock.iothreads.persocket": "ioThreadsPerSocket",
+			"storage.mock.fault.sleep.msec": "storage.mock.fault.sleepMilliSec",
+			"storage.connection.timeout.millisec": "remote.connection.timeoutMilliSec",
+			"storage.connection.pool.timeout.millisec": "remote.connection.poolTimeoutMilliSec",
+			"storage.socket.timeout.millisec": "remote.socket.timeoutMilliSec",
+			"storage.socket.reuse.addr": "remote.socket.reuseAddr",
+			"storage.socket.keepalive": "remote.socket.keepalive",
+			"storage.socket.tcp.nodelay": "remote.socket.tcpNoDelay",
+			"storage.socket.linger": "remote.socket.linger",
+			"storage.socket.bind.backlog.size": "remote.socket.bindBacklogSize",
+			"storage.socket.interest.op.queued": "remote.socket.interestOpQueued",
+			"storage.socket.select.interval": "remote.socket.selectInterval",
+
+			"data.page.size": "data.buffer.size",
+			"data.ring.seed": "data.buffer.ring.seed",
+			"data.ring.size": "data.buffer.ring.size",
+
+			"http.sign.method": "http.signMethod",
+
+			"load.create.threads": "load.type.create.threads",
+			"load.read.threads": "load.type.read.threads",
+			"load.read.verify.content": "load.type.read.verifyContent",
+			"load.update.threads": "load.type.update.threads",
+			"load.update.per.item": "load.type.update.perItem",
+			"load.delete.threads": "load.type.delete.threads",
+			"load.append.threads": "load.type.append.threads",
+
+			"load.time": "load.limit.time",
+			"run.time": "load.limit.time",
+			"data.count": "load.limit.count",
+
+			"load.drivers": "load.servers",
+			"remote.servers": "load.servers",
+			"remote.control.port": "remote.port.control",
+			"remote.export.port": "remote.port.export",
+			"remote.import.port": "remote.port.import",
+			"remote.wuisvc.port": "remote.port.webui",
+
+			"run.metrics.period.sec": "load.metricsPeriodSec",
+			"run.scenario.name": "scenario.name",
+			"run.scenario.lang": "scenario.lang",
+			"run.scenario.dir": "scenario.dir",
+			"run.retry.delay.millisec": "run.retry.delayMilliSec",
+			"run.retry.count.max": "run.retry.countMax",
+			"run.request.timeout.millisec": "run.request.timeoutMilliSec",
+			"run.request.queue.size": "run.request.queueSize",
+
+			"scenario.single.load": "scenario.type.single.load",
+
+			"scenario.chain.load": "scenario.type.chain.load",
+			"scenario.chain.concurrent": "scenario.type.chain.concurrent",
+			"scenario.chain.itemsbuffer": "scenario.type.chain.itemsbuffer",
+
+			"scenario.rampup.thread.counts": "scenario.type.rampup.threadCounts",
+			"scenario.rampup.sizes": "scenario.type.rampup.sizes",
+
+			"data.size": [
+				"data.size.min",
+				"data.size.max"
+			],
+			"load.threads": [
+				"load.type.append.threads",
+				"load.type.create.threads",
+				"load.type.read.threads",
+				"load.type.update.threads",
+				"load.type.delete.threads"
+			]
+		},
+		"api": {
+			"name": "s3",
+			"type": {
+				"s3": {
+					"port": 9020,
+					"authPrefix": "AWS",
+					"bucket": ""
+				},
+				"atmos": {
+					"port": 9022,
+					"subtenant": ""
+				},
+				"swift": {
+					"port": 9024,
+					"serviceBasepath": "v1",
+					"authToken": "",
+					"container": ""
+				}
+			}
+		},
+		"auth": {
+			"id": "wuser1@sanity.local",
+			"secret": "uwXSy4kD+N8pmltfOC2JxtrJ+Tg7/yBswV6jMu6h"
+		},
+		"data": {
+			"size": {
+				"min": "1MB",
+				"max": "1MB",
+				"bias": 1
+			},
+			"src": {
+				"fpath": "",
+				"separator": ",",
+			  	"random": {
+				  	"enabled": false,
+				  	"batchSize": 1000
+				}
+			},
+			"radix": {
+				"size": 10,
+				"offset": 36
+			},
+			"buffer": {
+				"size": "4KB",
+				"ring": {
+					"seed": "7a42d9c483244167",
+					"size": "4MB"
+				}
+			}
+		},
+		"http": {
+			"signMethod": "HmacSHA1",
+			"content": {
+				"chunked": false,
+				"type": "application/octet-stream",
+				"repeatable": true
+			}
+		},
+		"load": {
+			"type": {
+				"create": {
+					"threads": 1
+				},
+				"read": {
+					"threads": 1,
+					"verifyContent": true
+				},
+				"update": {
+					"threads": 1,
+					"perItem": 1
+				},
+				"delete": {
+					"threads": 1
+				},
+				"append": {
+					"threads": 1
+				}
+			},
+			"limit": {
+				"count": 0,
+				"time": "0s",
+				"rate": 0,
+				"reqSleepMilliSec": 0
+			},
+			"servers": "127.0.0.1",
+			"metricsPeriodSec": 10
+		},
+		"scenario": {
+			"name": "single",
+			"lang": "py",
+			"dir": "scripts",
+			"type": {
+				"single": {
+					"load": "create"
+				},
+				"chain": {
+					"load": "create,append,update,read,delete",
+					"concurrent": true,
+					"itemsBuffer": true
+				},
+				"rampup": {
+					"threadCounts": "1,10,20,50,100,150,200,300,400,500",
+					"sizes": "1KB,8KB,64KB,1MB,8MB,64MB,1GB"
+				}
+			}
+		},
+		"storage": {
+			"addrs": "127.0.0.1",
+			"namespace": "s3",
+			"scheme": "http",
+			"mock": {
+				"headCount": 1,
+				"ioThreadsPerSocket": 100,
+				"capacity": 10000000,
+				"fault": {
+					"minConnLifeMilliSec": 0,
+					"maxConnLifeMilliSec": 0
+				}
+			},
+			"fsAccess": false,
+			"versioning": false
+		},
+		"remote": {
+			"connection" : {
+				"timeoutMilliSec": 1000000,
+				"poolTimeoutMilliSec": 1000000
+			},
+			"port" : {
+				"control": 1099,
+				"export": 1199,
+				"import": 1199,
+				"webui": 8080
+			},
+			"socket": {
+				"timeoutMilliSec": 1000000,
+				"reuseAddr": true,
+				"keepalive": true,
+				"tcpNoDelay": true,
+				"linger": 0,
+				"bindBacklogSize": 0,
+				"interestOpQueued": false,
+				"selectInterval": 100
+			},
+			"webui": {
+				"wsTimeOut": {
+					"value": 1,
+					"unit": "days"
+				}
+			}
+		},
+		"run": {
+			"name": "mongoose",
+			"version": "0.9.0",
+			"mode": "standalone",
+			"submitTimeOutMilliSec": 1000,
+			"request": {
+				"retries": false,
+				"timeoutMilliSec": 1000000,
+				"queueSize": 32768
+			}
+		}
+	}
+}
