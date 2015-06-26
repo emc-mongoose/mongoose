@@ -73,9 +73,9 @@ public final class ServiceUtils {
 		final String runMode = rtConfig.getRunMode();
 		if(
 			flagServeIfNotLoadServer ||
-				RUN_MODE_SERVER.equals(runMode) ||
-				RUN_MODE_COMPAT_SERVER.equals(runMode)
-			) {
+			RUN_MODE_SERVER.equals(runMode) ||
+			RUN_MODE_COMPAT_SERVER.equals(runMode)
+		) {
 			try {
 				LocateRegistry.createRegistry(rtConfig.getRemotePortControl());
 				LOG.debug(Markers.MSG, "RMI registry created");

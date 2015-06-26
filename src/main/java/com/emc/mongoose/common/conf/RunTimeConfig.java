@@ -547,13 +547,10 @@ implements Externalizable {
 				propsMap.put(nextPropName, String.class.cast(nextPropValue));
 			} else if(Number.class.isInstance(nextPropValue)) {
 				propsMap.put(nextPropName, Number.class.cast(nextPropValue).toString());
-			} else if(nextPropValue == null) {
-				log.warn(Markers.ERR, "Property \"{}\" is null");
+			} else if(nextPropValue != null) {
+				propsMap.put(nextPropName, nextPropValue.toString());
 			} else {
-				log.error(
-					Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
-					nextPropValue.getClass().getCanonicalName(), nextPropName
-				);
+				log.debug(Markers.ERR, "Property \"{}\" value is null", nextPropName);
 			}
 		}
 		//
@@ -578,7 +575,7 @@ implements Externalizable {
 			// put the properties into the System
 			Object nextPropValue;
 			final RunTimeConfig localRunTimeConfig = CONTEXT_CONFIG.get();
-			for(final String nextPropName: confMap.keySet()) {
+			for(final String nextPropName : confMap.keySet()) {
 				// to not to override the import/export ports from the load client side
 				if(nextPropName.startsWith(KEY_REMOTE_PORT_EXPORT) || nextPropName.startsWith(KEY_REMOTE_PORT_IMPORT)) {
 					nextPropValue = localRunTimeConfig.getProperty(nextPropName);
@@ -595,7 +592,7 @@ implements Externalizable {
 					setProperty(nextPropName, nextPropValue);
 					//setProperty(nextPropName, String.class.cast(nextPropValue));
 				} else {
-					log.debug(Markers.ERR, "Property \"{}\" is null", nextPropName);
+					log.debug(Markers.ERR, "Property \"{}\" value is null", nextPropName);
 				}
 			}
 			CONTEXT_CONFIG.set(this);

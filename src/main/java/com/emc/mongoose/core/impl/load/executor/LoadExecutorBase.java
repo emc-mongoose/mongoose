@@ -224,6 +224,7 @@ implements LoadExecutor<T> {
 				//.convertRatesTo(TimeUnit.SECONDS)
 				.registerWith(mBeanServer)
 				.build();
+			jmxReporter.start();
 		}
 		//
 		this.connCountPerNode = connCountPerNode;
@@ -396,9 +397,6 @@ implements LoadExecutor<T> {
 				}
 			}
 			//
-			if(jmxReporter != null) {
-				jmxReporter.start();
-			}
 			metricsDaemon.setName(getName());
 			metricsDaemon.start();
 			//
