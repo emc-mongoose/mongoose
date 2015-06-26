@@ -142,6 +142,14 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public final LoadBuilderClient<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws ClassCastException, RemoteException {
+		try {
+			this.reqConf.close(); // see jira ticket #437
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to close the replacing req config instance #{}",
+				hashCode()
+			);
+		}
 		this.reqConf = reqConf;
 		return this;
 	}

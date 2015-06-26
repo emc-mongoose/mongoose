@@ -33,6 +33,11 @@ extends ExternItemOutput<T> {
 		this.itemsDstPath = itemsDstPath;
 	}
 	//
+	public BinFileItemOutput()
+	throws IOException {
+		this(Files.createTempFile(null, ".bin"));
+	}
+	//
 	@Override
 	public BinFileItemInput<T> getInput()
 	throws IOException {

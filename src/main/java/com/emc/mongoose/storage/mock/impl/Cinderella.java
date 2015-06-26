@@ -185,6 +185,7 @@ implements Storage<T> {
 				sockEvtDispatchers[i] = new BasicSocketEventDispatcher(
 					runTimeConfig, protocolHandler, nextPort, connFactory, ioStats
 				);
+				sockEvtDispatchers[i].start();
 			} catch(final IOReactorException e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to start the head at port #{}", nextPort
@@ -207,29 +208,42 @@ implements Storage<T> {
 		} catch (final InterruptedException e) {
 			LOG.info(Markers.MSG, "Interrupting the Cinderella");
 		} finally {
+			//
 			try {
 				createConsumer.close();
+				LOG.debug(Markers.MSG, "Create consumer closed successfully");
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "I/O failure on close");
 			}
+			//
 			try {
 				deleteConsumer.close();
+				LOG.debug(Markers.MSG, "Delete consumer closed successfully");
 			} catch(final IOException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "I/O failure on close");
 			}
+			//
 			for(final SocketEventDispatcher sockEvtDispatcher : sockEvtDispatchers) {
 				if(sockEvtDispatcher != null) {
 					try {
 						sockEvtDispatcher.close();
+						LOG.debug(
+							Markers.MSG, "Socket event dispatcher \"{}\" closed successfully",
+							sockEvtDispatcher
+						);
 					} catch(final IOException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Closing socket I/O failure");
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Closing socket event dispatcher \"{}\" failure",
+							sockEvtDispatcher
+						);
 					}
 				}
 			}
 			try {
 				ioStats.close();
+				LOG.debug(Markers.MSG, "Storage I/O stats daemon closed successfully");
 			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Closing I/O stats failure");
+				LogUtil.exception(LOG, Level.WARN, e, "Closing storage I/O stats daemon failure");
 			}
 		}
 	}

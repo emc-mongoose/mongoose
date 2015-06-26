@@ -21,7 +21,7 @@ implements DataItemOutput<T> {
 	protected final Class<T> itemCls;
 	protected final BufferedWriter itemsDst;
 	//
-	public CSVFileItemOutput(final Path itemsDstPath, final Class<T> itemCls)
+	public CSVFileItemOutput(final Class<T> itemCls, final Path itemsDstPath)
 	throws IOException {
 		this.itemsDstPath = itemsDstPath;
 		this.itemCls = itemCls;
@@ -29,6 +29,11 @@ implements DataItemOutput<T> {
 			itemsDstPath, StandardCharsets.UTF_8,
 			StandardOpenOption.APPEND, StandardOpenOption.WRITE
 		);
+	}
+	//
+	public CSVFileItemOutput(final Class<T> itemCls)
+	throws IOException {
+		this(itemCls, Files.createTempFile(null, ".csv"));
 	}
 	//
 	@Override

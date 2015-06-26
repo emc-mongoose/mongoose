@@ -15,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.EOFException;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 19.06.15.
@@ -80,6 +81,10 @@ implements Producer<T> {
 					} catch(final RemoteException e) {
 						LogUtil.exception(
 							LOG, Level.WARN, e, "Failed to submit remotely the next data item"
+						);
+					} catch(final RejectedExecutionException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Consumer \"{}\" rejected the data item", consumer
 						);
 					}
 				}

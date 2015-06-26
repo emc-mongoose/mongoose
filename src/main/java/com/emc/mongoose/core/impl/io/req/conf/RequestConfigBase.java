@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.impl.io.req.conf;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
@@ -12,6 +13,7 @@ import com.emc.mongoose.core.impl.data.util.UniformDataSource;
 //
 import org.apache.commons.lang.StringUtils;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -48,7 +50,7 @@ implements RequestConfig<T> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		LOG.trace(Markers.MSG, "New reqconf instance #" + hashCode());
+		LogUtil.trace(LOG, Level.INFO, Markers.MSG, "New reqconf instance #{}", hashCode());
 		api = runTimeConfig.getApiName();
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();
@@ -356,12 +358,22 @@ implements RequestConfig<T> {
 	public void close()
 	throws IOException {
 		if(closeFlag.compareAndSet(false, true)) {
-			LOG.debug(Markers.MSG, "Request config instance #{} marked as closed", hashCode());
+			LOG.info(Markers.MSG, "Request config instance #{} marked as closed", hashCode());
 		}
 	}
 	//
 	@Override
 	public final boolean isClosed() {
 		return closeFlag.get();
+	}
+	//
+	@Override
+	protected void finalize()
+	throws Throwable {
+		try {
+			close();
+		} finally {
+			super.finalize();
+		}
 	}
 }

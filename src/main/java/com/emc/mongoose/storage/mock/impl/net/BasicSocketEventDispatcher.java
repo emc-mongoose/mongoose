@@ -120,11 +120,7 @@ implements SocketEventDispatcher {
 		try {
 			ioReactor.shutdown();
 		} finally {
-			try {
-				executor.join();
-			} catch(final InterruptedException e) {
-				executor.interrupt(); // just try
-			}
+			executor.interrupt(); // just try
 		}
 	}
 	//

@@ -1,10 +1,8 @@
 package com.emc.mongoose.core.impl.load.model;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 //
 import org.apache.logging.log4j.Level;
@@ -22,7 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /**
  Created by kurila on 26.05.15.
  */
-public abstract class AsyncConsumerBase<T extends DataItem>
+public abstract class AsyncConsumerBase<T>
 extends Thread
 implements AsyncConsumer<T> {
 	//
@@ -61,22 +59,22 @@ implements AsyncConsumer<T> {
 	}
 	/**
 	 May block the executing thread until the queue becomes able to ingest more
-	 @param dataItem
+	 @param item
 	 @throws RemoteException
 	 @throws InterruptedException
 	 @throws RejectedExecutionException
 	 */
 	@Override
-	public void submit(final T dataItem)
+	public void submit(final T item)
 	throws RemoteException, InterruptedException, RejectedExecutionException {
 		if(isStarted.get()) {
-			if(dataItem == null || counterPreSubm.get() >= maxCount) {
+			if(item == null || counterPreSubm.get() >= maxCount) {
 				shutdown();
 			}
 			if(isShutdown.get()) {
 				throw new InterruptedException("Shut down already");
 			}
-			if(volatileQueue.offer(dataItem, submTimeOutMilliSec, TimeUnit.MILLISECONDS)) {
+			if(volatileQueue.offer(item, submTimeOutMilliSec, TimeUnit.MILLISECONDS)) {
 				counterPreSubm.incrementAndGet();
 			} else {
 				throw new RejectedExecutionException("Submit queue timeout");
@@ -92,12 +90,12 @@ implements AsyncConsumer<T> {
 			Markers.MSG, "Determined submit queue capacity of {} for \"{}\"",
 			volatileQueue.remainingCapacity(), getName()
 		);
-		T nextDataItem;
+		T nextItem;
 		try {
 			while(volatileQueue.size() > 0 || !isShutdown.get()) {
-				nextDataItem = volatileQueue.poll(submTimeOutMilliSec, TimeUnit.MILLISECONDS);
-				if(nextDataItem != null) {
-					submitSync(nextDataItem);
+				nextItem = volatileQueue.poll(submTimeOutMilliSec, TimeUnit.MILLISECONDS);
+				if(nextItem != null) {
+					submitSync(nextItem);
 				}
 			}
 			LOG.debug(Markers.MSG, "{}: consuming finished", getName());
@@ -106,14 +104,14 @@ implements AsyncConsumer<T> {
 		} catch(final RejectedExecutionException e) {
 			LOG.debug(Markers.MSG, "{}: consuming rejected", getName());
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Submit data item failure");
+			LogUtil.exception(LOG, Level.WARN, e, "Submit item failure");
 		} finally {
 			isAllSubm.set(true);
 			shutdown();
 		}
 	}
 	//
-	protected abstract void submitSync(final T dataItem)
+	protected abstract void submitSync(final T item)
 	throws InterruptedException, RemoteException;
 	//
 	@Override
@@ -123,7 +121,7 @@ implements AsyncConsumer<T> {
 				getName() + ": not started yet, but shutdown is invoked"
 			);
 		} else if(isShutdown.compareAndSet(false, true)) {
-			LOG.debug(Markers.MSG, "{}: consumed {} data items", getName(), counterPreSubm.get());
+			LOG.debug(Markers.MSG, "{}: consumed {} items", getName(), counterPreSubm.get());
 		}
 	}
 	//

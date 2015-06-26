@@ -166,8 +166,16 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setRequestConfig(final RequestConfig<T> reqConf)
-		throws ClassCastException {
+	throws ClassCastException {
 		LOG.debug(Markers.MSG, "Set request builder: {}", reqConf.toString());
+		try {
+			this.reqConf.close(); // see jira ticket #437
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to close the replacing req config instance #{}",
+				hashCode()
+			);
+		}
 		this.reqConf = reqConf;
 		return this;
 	}
@@ -321,7 +329,7 @@ implements LoadBuilder<T, U> {
 		lb.maxCount = maxCount;
 		lb.minObjSize = minObjSize;
 		lb.maxObjSize = maxObjSize;
-		for(final IOTask.Type loadType: threadsPerNodeMap.keySet()) {
+		for(final IOTask.Type loadType : threadsPerNodeMap.keySet()) {
 			lb.threadsPerNodeMap.put(loadType, threadsPerNodeMap.get(loadType));
 		}
 		lb.dataNodeAddrs = dataNodeAddrs;
@@ -361,6 +369,7 @@ implements LoadBuilder<T, U> {
 	@Override
 	public final void close()
 	throws IOException {
+		LOG.error(Markers.MSG, "Close the req conf #{}", hashCode());
 		reqConf.close();
 	}
 }

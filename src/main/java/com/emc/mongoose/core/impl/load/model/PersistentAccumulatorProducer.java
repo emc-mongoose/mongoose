@@ -42,14 +42,14 @@ implements AccumulatorProducer<T> {
 	protected final Class<T> dataCls;
 	//
 	public PersistentAccumulatorProducer(
-		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount
+		final Class<T> itemCls, final RunTimeConfig runTimeConfig, final long maxCount
 	) {
 		super(
 			maxCount, runTimeConfig.getRunRequestQueueSize(),
 			runTimeConfig.getRunSubmitTimeOutMilliSec()
 		);
 		//
-		this.dataCls = dataCls;
+		this.dataCls = itemCls;
 		final Path tmpFilePath = Paths.get(
 			System.getProperty("java.io.tmpdir"),
 			runTimeConfig.getRunName() + "-v" + runTimeConfig.getRunVersion()
@@ -87,7 +87,7 @@ implements AccumulatorProducer<T> {
 		//
 		try {
 			tmpFileProducer = new FileProducer<>(
-				maxCount, tmpFile.getAbsolutePath(), dataCls, /*nested=*/true, COMPRESSION_ENABLED
+				maxCount, tmpFile.getAbsolutePath(), itemCls, /*nested=*/true, COMPRESSION_ENABLED
 			);
 		} catch(final IOException | NoSuchMethodException e) {
 			throw new IllegalStateException(e);
@@ -98,13 +98,13 @@ implements AccumulatorProducer<T> {
 	}
 	//
 	@Override
-	protected void submitSync(final T dataItem)
+	protected void submitSync(final T item)
 	throws InterruptedException, RemoteException {
-		if(dataItem != null) {
+		if(item != null) {
 			try {
 				synchronized(tmpFileWriter) {
 					// TODO SerializationUtils.serialize(dataItem)
-					tmpFileWriter.write(dataItem.toString());
+					tmpFileWriter.write(item.toString());
 					tmpFileWriter.newLine();
 				}
 				count ++;
