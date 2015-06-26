@@ -50,7 +50,6 @@ implements RequestConfig<T> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		LogUtil.trace(LOG, Level.INFO, Markers.MSG, "New reqconf instance #{}", hashCode());
 		api = runTimeConfig.getApiName();
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();
@@ -358,7 +357,7 @@ implements RequestConfig<T> {
 	public void close()
 	throws IOException {
 		if(closeFlag.compareAndSet(false, true)) {
-			LOG.info(Markers.MSG, "Request config instance #{} marked as closed", hashCode());
+			LOG.debug(Markers.MSG, "Request config instance #{} marked as closed", hashCode());
 		}
 	}
 	//

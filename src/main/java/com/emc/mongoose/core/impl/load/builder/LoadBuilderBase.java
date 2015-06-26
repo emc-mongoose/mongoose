@@ -369,7 +369,6 @@ implements LoadBuilder<T, U> {
 	@Override
 	public final void close()
 	throws IOException {
-		LOG.error(Markers.MSG, "Close the req conf #{}", hashCode());
 		reqConf.close();
 	}
 }

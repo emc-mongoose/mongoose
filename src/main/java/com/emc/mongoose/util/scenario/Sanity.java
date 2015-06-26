@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.util.DataItemInput;
 import com.emc.mongoose.core.api.data.util.DataItemOutput;
@@ -41,7 +42,7 @@ implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 5, DEFAULT_CONN_PER_NODE = 5;
 	private final static long
-		DEFAULT_DATA_SIZE = SizeUtil.toSize("256KB"), DEFAULT_DATA_COUNT_MAX = 5000000;
+		DEFAULT_DATA_SIZE = SizeUtil.toSize("256KB"), DEFAULT_DATA_COUNT_MAX = 1000000;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -68,30 +69,29 @@ implements Runnable {
 			final DataItemOutput<WSObject> dataDstR = new BinFileItemOutput<>();
 			final long nRead = client.read(dataSrcR, dataDstR, DEFAULT_CONN_PER_NODE);
 			LOG.info(Markers.MSG, "Read successfully {} items", nRead);
-			// append the written items
-			final DataItemInput<WSObject> dataSrcA = dataDstW.getInput();
-			final DataItemOutput dataDstA = new CSVFileItemOutput<>(BasicWSObject.class);
-			LOG.info(Markers.MSG, "Start updating");
-			final long nAppended = client.append(dataSrcA, dataDstA, DEFAULT_CONN_PER_NODE);
-			LOG.info(Markers.MSG, "Appended successfully {} items", nAppended);
 			// update the appended items
-			final DataItemInput<WSObject> dataSrcU = dataDstA.getInput();
+			final DataItemInput<WSObject> dataSrcU = dataDstW.getInput();
 			final DataItemOutput dataDstU = new CSVFileItemOutput<>(BasicWSObject.class);
 			LOG.info(Markers.MSG, "Start updating");
 			final long nUpdated = client.update(dataSrcU, dataDstU, DEFAULT_CONN_PER_NODE);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
-			// read the updated items
-			final DataItemInput<WSObject> dataSrcR2 = dataDstU.getInput();
+			// reread the updated items
+			final DataItemInput<WSObject> dataSrcR2 = dataDstW.getInput();
 			final Collection<WSObject> dataMemBuff = new ArrayList<>(1000);
 			final DataItemOutput<WSObject> dataDstR2 = new CollectionItemOutput<>(dataMemBuff);
-			LOG.info(Markers.MSG, "Start reading");
+			LOG.info(Markers.MSG, "Start rereading");
 			final long nRead2 = client.read(dataSrcR2, dataDstR2, DEFAULT_CONN_PER_NODE, false);
-			LOG.info(Markers.MSG, "Read successfully {} items", nRead2);
+			LOG.info(Markers.MSG, "Reread successfully {} items", nRead2);
 			// rewrite the read data items circularily
 			final DataItemInput<WSObject> dataSrcW2 = new CircularCollectionItemInput<>(dataMemBuff);
 			LOG.info(Markers.MSG, "Start circular rewriting");
 			final long nRewritten = client.write(dataSrcW2, null, DEFAULT_CONN_PER_NODE);
 			LOG.info(Markers.MSG, "Rewritten successfully {} times", nRewritten);
+			// append the written items
+			final DataItemInput<WSObject> dataSrcA = dataDstW.getInput();
+			LOG.info(Markers.MSG, "Start updating");
+			final long nAppended = client.append(dataSrcA, null, DEFAULT_CONN_PER_NODE);
+			LOG.info(Markers.MSG, "Appended successfully {} items", nAppended);
 			// delete all written data items
 			final DataItemInput<WSObject> dataSrcD = dataDstW.getInput();
 			final long nDeleted = client.delete(dataSrcD, null, DEFAULT_CONN_PER_NODE);
@@ -112,20 +112,18 @@ implements Runnable {
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET, DEFAULT_CONN_PER_NODE);
-		rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_EXPORT, 1299);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 		final Thread wsMockThread = new Thread(
 			new Cinderella<>(RunTimeConfig.getContext()), "wsMock"
 		);
 		wsMockThread.setDaemon(true);
 		wsMockThread.start();
-		TimeUnit.SECONDS.sleep(1);
 		//
 		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 10);
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
 			clientBuilder = new BasicWSClientBuilder<>();
 		final String storageNodes[] = new String[DEFAULT_NODE_COUNT];
-		for(int i = 0; i < DEFAULT_NODE_COUNT; i ++) {
+		for(int i = 0; i < DEFAULT_NODE_COUNT; i++) {
 			storageNodes[i] = "127.0.0.1:" + (9020 + i);
 		}
 		clientBuilder
@@ -134,37 +132,41 @@ implements Runnable {
 			.setLimitTime(100, TimeUnit.SECONDS)
 			.setLimitRate(15000);
 		// standalone
-		final Thread sanityThread1 = new Thread(
-			new Sanity(clientBuilder.build()), "sanityStandalone"
-		);
-		sanityThread1.start();
-		LOG.info(Markers.MSG, "Standalone sanity started");
-		TimeUnit.SECONDS.sleep(1);
-		sanityThread1.join();
-		LOG.info(Markers.MSG, "Standalone sanity finished");
-		TimeUnit.SECONDS.sleep(1);
+		try(final StorageClient<WSObject> client = clientBuilder.build()) {
+			final Thread sanityThread1 = new Thread(new Sanity(client), "sanityStandalone");
+			sanityThread1.start();
+			LOG.info(Markers.MSG, "Standalone sanity started");
+			sanityThread1.join();
+			LOG.info(Markers.MSG, "Standalone sanity finished");
+		}
 		// distributed mode
-		rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_EXPORT, 1399);
-		final LoadBuilderSvc<WSObject, WSLoadSvc<WSObject>>
-			loadSvcBuilder = new BasicWSLoadBuilderSvc<>(rtConfig);
-		loadSvcBuilder.start();
-		TimeUnit.SECONDS.sleep(1);
-		rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_EXPORT, 1199);
-		final StorageClient<WSObject> distributedClient = clientBuilder
-			.setClientMode(new String[] {"127.0.0.1"})
-			.build();
-		final Thread sanityThread2 = new Thread(new Sanity(distributedClient), "sanityDistributed");
-		sanityThread2.start();
-		LOG.info(Markers.MSG, "Distributed sanity started");
-		TimeUnit.SECONDS.sleep(1);
-		sanityThread2.join();
-		LOG.info(Markers.MSG, "Distributed sanity finished");
-		TimeUnit.SECONDS.sleep(1);
-		loadSvcBuilder.close();
-		LOG.info(Markers.MSG, "Load service builder stopped");
+		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
+		ServiceUtils.init();
+		//
+		try(
+			final LoadBuilderSvc<WSObject, WSLoadSvc<WSObject>>
+				loadSvcBuilder = new BasicWSLoadBuilderSvc<>(rtConfig);
+		) {
+			loadSvcBuilder.start();
+			TimeUnit.SECONDS.sleep(1);
+			rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_EXPORT, 1299);
+			try(
+				final StorageClient<WSObject> client = clientBuilder
+					.setClientMode(new String[] {"127.0.0.1"})
+					.build();
+			) {
+				final Thread sanityThread2 = new Thread(new Sanity(client), "sanityDistributed");
+				sanityThread2.start();
+				LOG.info(Markers.MSG, "Distributed sanity started");
+				sanityThread2.join();
+				LOG.info(Markers.MSG, "Distributed sanity finished");
+			}
+		}
 		// finish
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");
 		LOG.info(Markers.MSG, "Sanity done");
+		//
+		ServiceUtils.shutdown();
 	}
 }

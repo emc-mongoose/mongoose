@@ -22,9 +22,10 @@ extends CollectionItemInput<T> {
 	@Override
 	public T read()
 	throws IOException {
-		if(itemsIter == null || !itemsIter.hasNext()) {
+		final T item = super.read();
+		if(item == null) {
 			reset();
 		}
-		return super.read();
+		return item == null ? super.read() : item;
 	}
 }

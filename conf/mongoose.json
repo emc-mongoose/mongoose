@@ -211,6 +211,7 @@
 			"versioning": false
 		},
 		"remote": {
+			"serveIfNotLoadServer": false,
 			"connection" : {
 				"timeoutMilliSec": 1000000,
 				"poolTimeoutMilliSec": 1000000

@@ -7,6 +7,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -203,12 +204,27 @@ implements LoadExecutor<T> {
 		}
 		loadType = reqConfig.getLoadType();
 		//
-		mBeanServer = ServiceUtils.getMBeanServer(rtConfig.getRemotePortExport());
-		jmxReporter = JmxReporter.forRegistry(metrics)
-			//.convertDurationsTo(TimeUnit.MICROSECONDS)
-			//.convertRatesTo(TimeUnit.SECONDS)
-			.registerWith(mBeanServer)
-			.build();
+		final String runMode = rtConfig.getRunMode();
+		final boolean flagServeRemoteIfStandalone = rtConfig.getFlagServeIfNotLoadServer();
+		if(Constants.RUN_MODE_STANDALONE.equals(runMode) && !flagServeRemoteIfStandalone) {
+			LOG.debug(
+				Markers.MSG, "{}: running in the \"{}\" mode, remote serving is disabled",
+				getName(), runMode
+			);
+			mBeanServer = null;
+			jmxReporter = null;
+		} else {
+			LOG.debug(
+				Markers.MSG, "{}: running in the \"{}\" mode, remote serving flag is \"{}\"",
+				getName(), runMode, flagServeRemoteIfStandalone
+			);
+			mBeanServer = ServiceUtils.getMBeanServer(rtConfig.getRemotePortExport());
+			jmxReporter = JmxReporter.forRegistry(metrics)
+				//.convertDurationsTo(TimeUnit.MICROSECONDS)
+				//.convertRatesTo(TimeUnit.SECONDS)
+				.registerWith(mBeanServer)
+				.build();
+		}
 		//
 		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
@@ -380,7 +396,9 @@ implements LoadExecutor<T> {
 				}
 			}
 			//
-			jmxReporter.start();
+			if(jmxReporter != null) {
+				jmxReporter.start();
+			}
 			metricsDaemon.setName(getName());
 			metricsDaemon.start();
 			//
@@ -670,7 +688,9 @@ implements LoadExecutor<T> {
 				releaseDaemon.interrupt();
 				ioTaskSpentQueue.clear();
 				BasicIOTask.INSTANCE_POOL_MAP.put(this, null); // dispose I/O tasks pool
-				jmxReporter.close();
+				if(jmxReporter != null) {
+					jmxReporter.close();
+				}
 				LOG.debug(Markers.MSG, "JMX reported closed");
 				LoadCloseHook.del(this);
 				LOG.debug(Markers.MSG, "\"{}\" closed successfully", getName());

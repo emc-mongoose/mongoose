@@ -131,7 +131,7 @@ implements WSLoadExecutor<T> {
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
 			.setBufferSize(buffSize)
-			.setFragmentSizeHint(Constants.BUFF_SIZE_LO)
+			//.setFragmentSizeHint(Constants.BUFF_SIZE_LO)
 			.build();
 		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
 			reqExecutor, connConfig

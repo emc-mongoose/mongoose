@@ -102,8 +102,8 @@ implements Storage<T> {
 		// connection config
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(2 * BUFF_SIZE_LO)
-			.setFragmentSizeHint(BUFF_SIZE_LO)
+			.setBufferSize(BUFF_SIZE_LO)
+			//.setFragmentSizeHint(BUFF_SIZE_LO)
 			.build();
 		connFactory = new BasicWSMockConnFactory(runTimeConfig, connConfig);
 		// Set up the HTTP protocol processor
@@ -223,18 +223,18 @@ implements Storage<T> {
 				LogUtil.exception(LOG, Level.WARN, e, "I/O failure on close");
 			}
 			//
-			for(final SocketEventDispatcher sockEvtDispatcher : sockEvtDispatchers) {
-				if(sockEvtDispatcher != null) {
+			for(final SocketEventDispatcher sockEventDispatcher : sockEvtDispatchers) {
+				if(sockEventDispatcher != null) {
 					try {
-						sockEvtDispatcher.close();
+						sockEventDispatcher.close();
 						LOG.debug(
 							Markers.MSG, "Socket event dispatcher \"{}\" closed successfully",
-							sockEvtDispatcher
+							sockEventDispatcher
 						);
 					} catch(final IOException e) {
 						LogUtil.exception(
 							LOG, Level.WARN, e, "Closing socket event dispatcher \"{}\" failure",
-							sockEvtDispatcher
+							sockEventDispatcher
 						);
 					}
 				}
