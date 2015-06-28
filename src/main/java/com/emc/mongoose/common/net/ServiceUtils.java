@@ -67,15 +67,19 @@ public final class ServiceUtils {
 		}
 	}
 	//
-	private static void rmiRegistryInit() {
+	public static boolean isMgmtSvcAllowed() {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		final boolean flagServeIfNotLoadServer = rtConfig.getFlagServeIfNotLoadServer();
 		final String runMode = rtConfig.getRunMode();
-		if(
+		return
 			flagServeIfNotLoadServer ||
 			RUN_MODE_SERVER.equals(runMode) ||
-			RUN_MODE_COMPAT_SERVER.equals(runMode)
-		) {
+			RUN_MODE_COMPAT_SERVER.equals(runMode);
+	}
+	//
+	private static void rmiRegistryInit() {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		if(isMgmtSvcAllowed()) {
 			try {
 				LocateRegistry.createRegistry(rtConfig.getRemotePortControl());
 				LOG.debug(Markers.MSG, "RMI registry created");
@@ -90,10 +94,18 @@ public final class ServiceUtils {
 		}
 	}
 	//
+	public static void mBeanServerInit() {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		if(isMgmtSvcAllowed()) {
+			getMBeanServer(rtConfig.getRemotePortExport());
+		}
+	}
+	//
 	public static void init() {
 		setUpSvcShutdownHook();
 		setUpSecurityManager();
 		rmiRegistryInit();
+		mBeanServerInit();
 	}
 	//
 	static {

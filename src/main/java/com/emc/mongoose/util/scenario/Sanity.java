@@ -130,15 +130,15 @@ implements Runnable {
 			.setNodes(storageNodes)
 			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
 			.setLimitTime(100, TimeUnit.SECONDS)
-			.setLimitRate(15000);
+			.setLimitRate(10000);
 		// standalone
-		/*try(final StorageClient<WSObject> client = clientBuilder.build()) {
+		try(final StorageClient<WSObject> client = clientBuilder.build()) {
 			final Thread sanityThread1 = new Thread(new Sanity(client), "sanityStandalone");
 			sanityThread1.start();
 			LOG.info(Markers.MSG, "Standalone sanity started");
 			sanityThread1.join();
 			LOG.info(Markers.MSG, "Standalone sanity finished");
-		}*/
+		}
 		// distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
 		ServiceUtils.init();
@@ -162,11 +162,11 @@ implements Runnable {
 				LOG.info(Markers.MSG, "Distributed sanity finished");
 			}
 		}
+		//
+		ServiceUtils.shutdown();
 		// finish
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");
 		LOG.info(Markers.MSG, "Sanity done");
-		//
-		ServiceUtils.shutdown();
 	}
 }
