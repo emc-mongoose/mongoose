@@ -96,7 +96,7 @@ implements LoadExecutor<T> {
 	private final BlockingQueue<IOTask<T>> ioTaskSpentQueue;
 	//
 	private LoadState currState = null;
-	// these parameters are necessary for pause/resume Mongoose w/ SIGSTOP and SIGCONT signals
+	//  these parameters are necessary for pause/resume Mongoose w/ SIGSTOP and SIGCONT signals
 	private long lastTimeBeforeTermination = 0;
 	private long elapsedTimeInPause = 0;
 	//
