@@ -97,7 +97,7 @@ implements LoadExecutor<T> {
 	//
 	private LoadState currState = null;
 	private long lastTimeBeforeTermination = 0;
-	private long elapsedTimeInPause = 0;
+	private volatile long elapsedTimeInPause = 0;
 	//
 	private final Thread
 		metricsDaemon = new Thread() {
@@ -292,20 +292,6 @@ implements LoadExecutor<T> {
 	@Override
 	public final void logMetrics(final Marker logMarker) {
 		//
-		final long
-			countReqSucc = throughPut.getCount(),
-			countReqFail = counterReqFail.getCount();
-		final double
-			meanTP = throughPut.getMeanRate(),
-			oneMinTP = throughPut.getOneMinuteRate(),
-			fiveMinTP = throughPut.getFiveMinuteRate(),
-			fifteenMinTP = throughPut.getFifteenMinuteRate(),
-			meanBW = reqBytes.getMeanRate(),
-			oneMinBW = reqBytes.getOneMinuteRate(),
-			fiveMinBW = reqBytes.getFiveMinuteRate(),
-			fifteenMinBW = reqBytes.getFifteenMinuteRate();
-		final Snapshot respLatencySnapshot = respLatency.getSnapshot();
-		//
 		final double elapsedTime;
 		if (currState != null) {
 			elapsedTime = currState.getLoadElapsedTimeUnit().
@@ -313,6 +299,23 @@ implements LoadExecutor<T> {
 		} else {
 			elapsedTime = (System.nanoTime() - tsStart.get());
 		}
+		//
+		final long
+			countReqSucc = throughPut.getCount(),
+			countReqFail = counterReqFail.getCount();
+		final double
+			meanTP = (System.nanoTime() - lastTimeBeforeTermination > TimeUnit.SECONDS.toNanos(1))
+				? throughPut.getMeanRate() : countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
+			oneMinTP = throughPut.getOneMinuteRate(),
+			fiveMinTP = throughPut.getFiveMinuteRate(),
+			fifteenMinTP = throughPut.getFifteenMinuteRate(),
+			meanBW = (System.nanoTime() - lastTimeBeforeTermination > TimeUnit.SECONDS.toNanos(1))
+				? reqBytes.getMeanRate() : reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1),
+			oneMinBW = reqBytes.getOneMinuteRate(),
+			fiveMinBW = reqBytes.getFiveMinuteRate(),
+			fifteenMinBW = reqBytes.getFifteenMinuteRate();
+		final Snapshot respLatencySnapshot = respLatency.getSnapshot();
+		//
 		final String message = Markers.PERF_SUM.equals(logMarker) ?
 			String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
@@ -330,10 +333,8 @@ implements LoadExecutor<T> {
 				(int) respLatencySnapshot.getMedian(),
 				(int) respLatencySnapshot.getMax(),
 				//
-				countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1)
-				, oneMinTP, fiveMinTP, fifteenMinTP,
-				(reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1)) / MIB,
-				oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+				meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
+				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 			) :
 			String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
@@ -350,10 +351,8 @@ implements LoadExecutor<T> {
 				(int) respLatencySnapshot.getMedian(),
 				(int) respLatencySnapshot.getMax(),
 				//
-				countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
-				oneMinTP, fiveMinTP, fifteenMinTP,
-				(reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1)) / MIB,
-				oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+				meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
+				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 			);
 		LOG.info(logMarker, message);
 	}
