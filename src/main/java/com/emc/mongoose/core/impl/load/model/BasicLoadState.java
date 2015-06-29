@@ -1,7 +1,7 @@
-package com.emc.mongoose.core.impl.models;
+package com.emc.mongoose.core.impl.load.model;
 
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.core.api.models.LoadState;
+import com.emc.mongoose.core.api.load.model.LoadState;
 
 import java.util.concurrent.TimeUnit;
 
