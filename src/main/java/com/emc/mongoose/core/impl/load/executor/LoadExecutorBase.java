@@ -449,8 +449,11 @@ implements LoadExecutor<T> {
 		}
 	}
 	private boolean isLoadExecutorFinished(final LoadState state) {
-		final long loadTimeMillis = runTimeConfig.getLoadLimitTimeUnit().
-				toMillis(runTimeConfig.getLoadLimitTimeValue());
+		final RunTimeConfig localRunTimeConfig = state.getRunTimeConfig();
+		final long loadTimeMillis = (localRunTimeConfig.getLoadLimitTimeUnit().
+				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) > 0
+				? (localRunTimeConfig.getLoadLimitTimeUnit().
+				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
 		final long stateTimeMillis = state.getLoadElapsedTimeUnit().
 				toMillis(state.getLoadElapsedTimeValue());
 		return isDoneMaxCount() || (stateTimeMillis >= loadTimeMillis);
