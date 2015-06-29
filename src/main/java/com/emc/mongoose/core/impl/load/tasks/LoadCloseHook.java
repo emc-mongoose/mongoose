@@ -173,7 +173,7 @@ implements Runnable {
 				toMillis(localRunTimeConfig.getLoadLimitTimeValue());
 		for (final LoadState state : states) {
 			if ((state.getLoadElapsedTimeUnit().toMillis(state.getLoadElapsedTimeValue())
-					< runTimeMillis) || (runTimeMillis == 0))  {
+					< runTimeMillis) || (runTimeMillis <= 0))  {
 				return false;
 			}
 		}
