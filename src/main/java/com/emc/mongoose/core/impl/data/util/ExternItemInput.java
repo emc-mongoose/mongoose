@@ -20,13 +20,11 @@ implements DataItemInput<T> {
 	@Override @SuppressWarnings("unchecked")
 	public T read()
 	throws IOException {
-		T nextItem = null;
 		try {
-			nextItem = (T) itemsSrc.readUnshared();
+			return (T) itemsSrc.readUnshared();
 		} catch(final ClassNotFoundException e) {
 			throw new IOException(e);
 		}
-		return nextItem;
 	}
 	//
 	@Override

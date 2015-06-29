@@ -235,7 +235,6 @@ implements LoadExecutor<T> {
 			activeTasksStats.put(addr, new AtomicInteger(0));
 		}
 		ioTaskSpentQueue = new ArrayBlockingQueue<>(maxQueueSize);
-		// create and configure the connection manager
 		dataSrc = reqConfig.getDataSource();
 		//
 		if(listFile != null && listFile.length() > 0) {

@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.Iterator;
 //
 @RunWith(MockitoJUnitRunner.class)
-public class CollectionItemInputTest {
+public class ListItemInputTest {
 	//
 	@Mock private Collection<DataItem> itemsSrc;
 	@Mock private Iterator<DataItem> itemsIter;
@@ -32,7 +32,7 @@ public class CollectionItemInputTest {
 			.thenReturn(dataItem)
 			.thenReturn(null);
 		//
-		final CollectionItemInput<DataItem> itemsInput = new CollectionItemInput<>(itemsSrc);
+		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
 		Assert.assertEquals(itemsInput.read(), dataItem);
 	}
 	//
@@ -49,7 +49,7 @@ public class CollectionItemInputTest {
 			.thenReturn(dataItem)
 			.thenReturn(null);
 		//
-		final CollectionItemInput<DataItem> itemsInput = new CollectionItemInput<>(itemsSrc);
+		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
 		itemsInput.read();
 		Assert.assertEquals(null, itemsInput.read());
 	}
@@ -87,7 +87,7 @@ public class CollectionItemInputTest {
 			.thenReturn(dataItem3)
 			.thenReturn(null);
 		//
-		final CollectionItemInput<DataItem> itemsInput = new CollectionItemInput<>(itemsSrc);
+		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
 		Assert.assertEquals(dataItem1, itemsInput.read());
 		Assert.assertEquals(dataItem2, itemsInput.read());
 		itemsInput.reset();
@@ -97,7 +97,7 @@ public class CollectionItemInputTest {
 	@Test
 	public void shouldClose()
 	throws Exception {
-		final CollectionItemInput<DataItem> itemsInput = new CollectionItemInput<>(itemsSrc);
+		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
 		itemsInput.close();
 		Mockito.verify(itemsSrc).clear();
 	}

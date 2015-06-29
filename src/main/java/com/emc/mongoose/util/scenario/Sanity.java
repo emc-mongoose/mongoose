@@ -5,7 +5,6 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.util.DataItemInput;
 import com.emc.mongoose.core.api.data.util.DataItemOutput;
@@ -15,11 +14,7 @@ import com.emc.mongoose.core.impl.data.util.BinFileItemOutput;
 //
 import com.emc.mongoose.core.impl.data.util.CSVFileItemOutput;
 //
-import com.emc.mongoose.core.impl.data.util.CircularCollectionItemInput;
-import com.emc.mongoose.core.impl.data.util.CollectionItemOutput;
-import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
-import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
-import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+import com.emc.mongoose.core.impl.data.util.CircularListItemOutput;
 import com.emc.mongoose.storage.mock.impl.Cinderella;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -32,7 +27,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.06.15.
@@ -77,13 +71,14 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// reread the updated items
 			final DataItemInput<WSObject> dataSrcR2 = dataDstW.getInput();
-			final Collection<WSObject> dataMemBuff = new ArrayList<>(1000);
-			final DataItemOutput<WSObject> dataDstR2 = new CollectionItemOutput<>(dataMemBuff);
+			final DataItemOutput<WSObject> dataDstR2 = new CircularListItemOutput<>(
+				new ArrayList<WSObject>(1000), 1000
+			);
 			LOG.info(Markers.MSG, "Start rereading");
 			final long nRead2 = client.read(dataSrcR2, dataDstR2, DEFAULT_CONN_PER_NODE, false);
 			LOG.info(Markers.MSG, "Reread successfully {} items", nRead2);
-			// rewrite the read data items circularily
-			final DataItemInput<WSObject> dataSrcW2 = new CircularCollectionItemInput<>(dataMemBuff);
+			// rewrite the read data items in a circle
+			final DataItemInput<WSObject> dataSrcW2 = dataDstR2.getInput();
 			LOG.info(Markers.MSG, "Start circular rewriting");
 			final long nRewritten = client.write(dataSrcW2, null, DEFAULT_CONN_PER_NODE);
 			LOG.info(Markers.MSG, "Rewritten successfully {} times", nRewritten);
@@ -140,7 +135,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
 		// distributed mode
-		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
+		/*rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
 		ServiceUtils.init();
 		//
 		try(
@@ -163,7 +158,7 @@ implements Runnable {
 			}
 		}
 		//
-		ServiceUtils.shutdown();
+		ServiceUtils.shutdown();*/
 		// finish
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");

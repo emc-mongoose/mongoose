@@ -4,6 +4,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
 /**
  Created by kurila on 17.06.15.
  */
@@ -16,6 +17,15 @@ extends Closeable {
 	 @throws IOException if fails some-why
 	 */
 	void write(final T dataItem)
+	throws IOException;
+
+	/**
+	 Bulk write method for the data items from the specified buffer
+	 @param buffer the buffer containing the data items to write
+	 @return the count of the data items successfully written
+	 @throws IOException
+	 */
+	int write(final List<T> buffer)
 	throws IOException;
 
 	/**
