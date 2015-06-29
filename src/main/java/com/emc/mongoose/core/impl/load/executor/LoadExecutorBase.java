@@ -47,6 +47,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -99,6 +100,12 @@ implements LoadExecutor<T> {
 	//  these parameters are necessary for pause/resume Mongoose w/ SIGSTOP and SIGCONT signals
 	private long lastTimeBeforeTermination = 0;
 	private long elapsedTimeInPause = 0;
+	//
+	private static final List<String> IMMUTABLE_PARAMS = new ArrayList<>();
+	//
+	static {
+		initializeImmutableParams();
+	}
 	//
 	private final Thread
 		metricsDaemon = new Thread() {
@@ -287,6 +294,13 @@ implements LoadExecutor<T> {
 	public final String toString() {
 		return getName();
 	}
+	//
+	private static void initializeImmutableParams() {
+		IMMUTABLE_PARAMS.add("run.mode");
+		IMMUTABLE_PARAMS.add("run.version");
+		IMMUTABLE_PARAMS.add("scenario.name");
+	}
+	//
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -390,6 +404,10 @@ implements LoadExecutor<T> {
 				//  apply parameters from loadState to current load executor
 				for (final LoadState state : loadStates) {
 					if (state.getLoadNumber() == loadNum) {
+						if (isImmutableParamsChanged(state.getRunTimeConfig())) {
+							LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
+								getName());
+						}
 						counterReqFail.inc(state.getCountFail());
 						throughPut.mark(state.getCountSucc());
 						reqBytes.mark(state.getCountBytes());
@@ -446,6 +464,16 @@ implements LoadExecutor<T> {
 				return currTime - elapsedTimeInPause;
 			}
 		};
+	}
+	//
+	private boolean isImmutableParamsChanged(final RunTimeConfig loadStateConfig) {
+		for (final String param : IMMUTABLE_PARAMS) {
+			if (!runTimeConfig.getString(param).equals(loadStateConfig.getString(param))) {
+				System.out.println(param);
+				return true;
+			}
+		}
+		return false;
 	}
 	//
 	private void loadStateFromFile(final String fullStateFileName) {
