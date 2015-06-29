@@ -32,11 +32,11 @@ Register shutdown hook which should perform correct server-side shutdown even if
 public final class LoadCloseHook
 implements Runnable {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	private final static Map<String, Map<LoadExecutor, Thread>> HOOKS_MAP
+	private static final Logger LOG = LogManager.getLogger();
+	private static final Map<String, Map<LoadExecutor, Thread>> HOOKS_MAP
 			= new ConcurrentHashMap<>();
 	//
-	public static final Map<String, Queue<LoadState>> STATES_MAP = new ConcurrentHashMap<>();
+	public static final Map<String, Queue<LoadState>> LOAD_STATES = new ConcurrentHashMap<>();
 	//
 	private final LoadExecutor loadExecutor;
 	private final String loadName;
@@ -97,16 +97,15 @@ implements Runnable {
 				//
 				try {
 					final LoadState currState = loadExecutor.getLoadState();
-					final String stateRunId = currState.getRunTimeConfig().getRunId();
-					if (STATES_MAP.containsKey(stateRunId)) {
-						STATES_MAP.get(stateRunId).add(currState);
+					if (LOAD_STATES.containsKey(currRunId)) {
+						LOAD_STATES.get(currRunId).add(currState);
 					} else {
 						final Queue<LoadState> loadStates = new ConcurrentLinkedQueue<>();
 						loadStates.add(currState);
-						STATES_MAP.put(stateRunId, loadStates);
+						LOAD_STATES.put(currRunId, loadStates);
 					}
 				} catch (final RemoteException e) {
-					LogUtil.exception(LOG, Level.ERROR, e, "Failed to add state to list");
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to add load state to queue");
 				}
 				//
 				if (HOOKS_MAP.get(currRunId).isEmpty()) {
@@ -155,20 +154,21 @@ implements Runnable {
 				Constants.DIR_LOG, currRunId).resolve(Constants.STATES_FILE).toString();
 		try (final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {
 			try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-				oos.writeObject(new ArrayList<>(STATES_MAP.get(currRunId)));
+				oos.writeObject(new ArrayList<>(LOAD_STATES.get(currRunId)));
 			}
-			STATES_MAP.remove(currRunId);
+			LOAD_STATES.remove(currRunId);
 			LOG.info(Markers.MSG, "The state of run with run.id: \"{}\" was saved successfully in \"{}\" file",
-					currRunId, fullStateFileName);
+				currRunId, fullStateFileName);
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e,
-					"Failed to serialize state of run with run.id: \"{}\" to the \".loadState\" file", currRunId);
+				"Failed to save state of run with run.id: \"{}\" to the \"{}\" file",
+				currRunId, fullStateFileName);
 		}
 	}
 	//
 	private static boolean isRunFinished() {
 		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
-		final Queue<LoadState> states = STATES_MAP.get(localRunTimeConfig.getRunId());
+		final Queue<LoadState> states = LOAD_STATES.get(localRunTimeConfig.getRunId());
 		final long runTimeMillis = localRunTimeConfig.getLoadLimitTimeUnit().
 				toMillis(localRunTimeConfig.getLoadLimitTimeValue());
 		for (final LoadState state : states) {
