@@ -112,7 +112,7 @@ implements LoadClient<T> {
 	protected volatile Producer<T> producer;
 	protected volatile Consumer<T> consumer = null;
 	//
-	private LoadState currState;
+	private LoadState currState = null;
 	//
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
@@ -659,7 +659,7 @@ implements LoadClient<T> {
 	@Override
 	public LoadState getLoadState()
 	throws RemoteException {
-		return null;
+		return currState;
 	}
 	//
 	@Override
