@@ -20,6 +20,7 @@ import com.emc.mongoose.core.api.models.LoadState;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.impl.models.BasicLoadState;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
@@ -110,6 +111,8 @@ implements LoadClient<T> {
 	private final int metricsPeriodSec, reqTimeOutMilliSec;
 	protected volatile Producer<T> producer;
 	protected volatile Consumer<T> consumer = null;
+	//
+	private LoadState currState;
 	//
 	public BasicLoadClient(
 		final RunTimeConfig runTimeConfig, final Map<String, LoadSvc<T>> remoteLoadMap,
@@ -654,7 +657,8 @@ implements LoadClient<T> {
 	}
 	//
 	@Override
-	public LoadState getLoadState() throws RemoteException {
+	public LoadState getLoadState()
+	throws RemoteException {
 		return null;
 	}
 	//
