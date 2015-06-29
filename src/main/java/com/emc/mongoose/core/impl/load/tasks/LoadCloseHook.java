@@ -178,7 +178,7 @@ implements Runnable {
 			final long stateTimeMillis = state.getLoadElapsedTimeUnit().toMillis(state.getLoadElapsedTimeValue());
 			final long stateItemsCount = state.getCountSucc() + state.getCountFail();
 			if (((runTimeMillis == 0) && (maxItemsCountPerLoad == 0))
-				|| ((stateTimeMillis < runTimeMillis) || (stateItemsCount < maxItemsCountPerLoad)))  {
+				|| ((stateTimeMillis < runTimeMillis) && (stateItemsCount < maxItemsCountPerLoad)))  {
 				return false;
 			}
 		}
