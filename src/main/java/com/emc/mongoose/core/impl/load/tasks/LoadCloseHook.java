@@ -110,7 +110,10 @@ implements Runnable {
 				}
 				//
 				if (HOOKS_MAP.get(currRunId).isEmpty()) {
-					saveCurrState();
+					if (!isRunFinished()) {
+						saveCurrState();
+					}
+					HOOKS_MAP.remove(currRunId);
 					if (HOOKS_MAP.isEmpty()) {
 						try {
 							if (LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
@@ -161,5 +164,19 @@ implements Runnable {
 			LogUtil.exception(LOG, Level.WARN, e,
 					"Failed to serialize state of run with run.id: \"{}\" to the \".loadState\" file", currRunId);
 		}
+	}
+	//
+	private static boolean isRunFinished() {
+		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+		final Queue<LoadState> states = STATES_MAP.get(localRunTimeConfig.getRunId());
+		final long runTimeMillis = localRunTimeConfig.getLoadLimitTimeUnit().
+				toMillis(localRunTimeConfig.getLoadLimitTimeValue());
+		for (final LoadState state : states) {
+			if ((state.getLoadElapsedTimeUnit().toMillis(state.getLoadElapsedTimeValue())
+					< runTimeMillis) || (runTimeMillis == 0))  {
+				return false;
+			}
+		}
+		return true;
 	}
 }
