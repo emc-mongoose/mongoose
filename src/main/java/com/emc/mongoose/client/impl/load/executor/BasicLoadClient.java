@@ -16,11 +16,10 @@ import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.api.models.LoadState;
+import com.emc.mongoose.core.api.load.model.LoadState;
 import com.emc.mongoose.core.impl.load.tasks.AwaitLoadJobTask;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 // mongoose-server-api.jar
-import com.emc.mongoose.core.impl.models.BasicLoadState;
 import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
