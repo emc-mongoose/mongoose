@@ -96,8 +96,9 @@ implements LoadExecutor<T> {
 	private final BlockingQueue<IOTask<T>> ioTaskSpentQueue;
 	//
 	private LoadState currState = null;
+	// these parameters are necessary for pause/resume Mongoose w/ SIGSTOP and SIGCONT signals
 	private long lastTimeBeforeTermination = 0;
-	private volatile long elapsedTimeInPause = 0;
+	private long elapsedTimeInPause = 0;
 	//
 	private final Thread
 		metricsDaemon = new Thread() {
@@ -292,18 +293,21 @@ implements LoadExecutor<T> {
 	@Override
 	public final void logMetrics(final Marker logMarker) {
 		//
-		final double elapsedTime;
-		if (currState != null) {
-			elapsedTime = currState.getLoadElapsedTimeUnit().
-					toNanos(currState.getLoadElapsedTimeValue()) + (System.nanoTime() - tsStart.get());
-		} else {
-			elapsedTime = (System.nanoTime() - tsStart.get());
-		}
+		// duration when Mongoose did it's job
+		final double elapsedTime = (currState != null) ?
+			currState.getLoadElapsedTimeUnit().
+					toNanos(currState.getLoadElapsedTimeValue()) + (System.nanoTime() - tsStart.get())
+			: (System.nanoTime() - tsStart.get());
 		//
 		final long
 			countReqSucc = throughPut.getCount(),
 			countReqFail = counterReqFail.getCount();
 		final double
+			//  If Mongoose's run was paused w/ SIGSTOP signal then calculate meanTP and meanBW w/
+			//  values from Meter's library implementation after resumption. All metrics will be calculated correctly.
+			//  If Mongoose's run was paused w/ SIGINT signal then calculate these metrics w/o Meter's library
+			//  implementation. Only average values in TP and BW will be calculated correctly.
+			//  Other values will be gradually recovered.
 			meanTP = (System.nanoTime() - lastTimeBeforeTermination > TimeUnit.SECONDS.toNanos(1))
 				? throughPut.getMeanRate() : countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
 			oneMinTP = throughPut.getOneMinuteRate(),
@@ -380,9 +384,10 @@ implements LoadExecutor<T> {
 			final File statesFile = new File(fullStateFileName);
 			if (statesFile.exists()) {
 				if (!DESERIALIZED_STATES.containsKey(runTimeConfig.getRunId())) {
-					deserializeStateFromFile(fullStateFileName);
+					loadStateFromFile(fullStateFileName);
 				}
 				final List<LoadState> loadStates = DESERIALIZED_STATES.get(runTimeConfig.getRunId());
+				//  apply parameters from loadState to current load executor
 				for (final LoadState state : loadStates) {
 					if (state.getLoadNumber() == loadNum) {
 						counterReqFail.inc(state.getCountFail());
@@ -393,7 +398,8 @@ implements LoadExecutor<T> {
 					}
 				}
 			} else {
-				LOG.info(Markers.MSG, "File with state of run wasn't found. Starting new run...");
+				LOG.info(Markers.MSG, "File with state of run with run.id: \"{}\" wasn't found. Starting new run...",
+					RunTimeConfig.getContext().getRunId());
 			}
 			super.start();
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
@@ -424,6 +430,8 @@ implements LoadExecutor<T> {
 		return new Clock() {
 			private final long tickInterval = TimeUnit.SECONDS.toNanos(1);
 			//
+			//  This Clock's implementation provides correct time for calculating different metrics
+			//  after resumption Mongoose's run w/ SIGCONT signal.
 			@Override
 			public long getTick() {
 				final long currTime = System.nanoTime();
@@ -440,10 +448,10 @@ implements LoadExecutor<T> {
 		};
 	}
 	//
-	private void deserializeStateFromFile(final String fullStateFileName) {
+	private void loadStateFromFile(final String fullStateFileName) {
 		try (final FileInputStream fis = new FileInputStream(fullStateFileName)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
-				LOG.info(Markers.MSG, "Run with run.id: \"{}\" was continued",
+				LOG.info(Markers.MSG, "Run with run.id: \"{}\" was resumed",
 						runTimeConfig.getRunId());
 				final List<LoadState> loadStates = (List<LoadState>) ois.readObject();
 				DESERIALIZED_STATES.put(runTimeConfig.getRunId(), loadStates);
@@ -453,10 +461,10 @@ implements LoadExecutor<T> {
 				"File with state of run with run.id: \"{}\" wasn't found. Starting new run...", runTimeConfig.getRunId());
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to deserialize state of run with run.id: \"{}\" from \".loadState\" file",
-					runTimeConfig.getRunId());
+				"Failed to load state of run with run.id: \"{}\" from \"{}\" file. Starting new run...",
+					runTimeConfig.getRunId(), fullStateFileName);
 		} catch (final ClassNotFoundException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Class not found");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of run. Starting new run...");
 		}
 	}
 	//
