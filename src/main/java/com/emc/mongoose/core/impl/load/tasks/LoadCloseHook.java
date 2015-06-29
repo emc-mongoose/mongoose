@@ -170,15 +170,17 @@ implements Runnable {
 		final RunTimeConfig localRunTimeConfig = loadState.getRunTimeConfig();
 		final Queue<LoadState> states = LOAD_STATES.get(localRunTimeConfig.getRunId());
 		//
-		final long runTimeMillis = localRunTimeConfig.getLoadLimitTimeUnit().
-				toMillis(localRunTimeConfig.getLoadLimitTimeValue());
-		final long maxItemsCountPerLoad = localRunTimeConfig.getLoadLimitCount();
+		final long runTimeMillis = (localRunTimeConfig.getLoadLimitTimeUnit().
+				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) > 0
+				? (localRunTimeConfig.getLoadLimitTimeUnit().
+				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
+		final long maxItemsCountPerLoad = (localRunTimeConfig.getLoadLimitCount()) > 0
+				? localRunTimeConfig.getLoadLimitCount() : Long.MAX_VALUE;
 		//
 		for (final LoadState state : states) {
 			final long stateTimeMillis = state.getLoadElapsedTimeUnit().toMillis(state.getLoadElapsedTimeValue());
 			final long stateItemsCount = state.getCountSucc() + state.getCountFail();
-			if (((runTimeMillis == 0) && (maxItemsCountPerLoad == 0))
-				|| ((stateTimeMillis < runTimeMillis) && (stateItemsCount < maxItemsCountPerLoad)))  {
+			if ((stateTimeMillis < runTimeMillis) && (stateItemsCount < maxItemsCountPerLoad)) {
 				return false;
 			}
 		}
