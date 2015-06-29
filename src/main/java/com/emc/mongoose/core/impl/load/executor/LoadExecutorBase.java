@@ -413,6 +413,10 @@ implements LoadExecutor<T> {
 						throughPut.mark(state.getCountSucc());
 						reqBytes.mark(state.getCountBytes());
 						currState = state;
+						if (isLoadExecutorFinished(currState)) {
+							LOG.info(Markers.MSG, "<{}>: nothing to do more", getName());
+							return;
+						}
 						break;
 					}
 				}
@@ -444,6 +448,13 @@ implements LoadExecutor<T> {
 			LOG.warn(Markers.ERR, "Second start attempt - skipped");
 		}
 	}
+	private boolean isLoadExecutorFinished(final LoadState state) {
+		final long loadTimeMillis = runTimeConfig.getLoadLimitTimeUnit().
+				toMillis(runTimeConfig.getLoadLimitTimeValue());
+		final long stateTimeMillis = state.getLoadElapsedTimeUnit().
+				toMillis(state.getLoadElapsedTimeValue());
+		return isDoneMaxCount() || (stateTimeMillis >= loadTimeMillis);
+	}
 	//
 	private Clock getMetricsClock() {
 		return new Clock() {
@@ -470,7 +481,6 @@ implements LoadExecutor<T> {
 	private boolean isImmutableParamsChanged(final RunTimeConfig loadStateConfig) {
 		for (final String param : IMMUTABLE_PARAMS) {
 			if (!runTimeConfig.getString(param).equals(loadStateConfig.getString(param))) {
-				System.out.println(param);
 				return true;
 			}
 		}
@@ -721,12 +731,6 @@ implements LoadExecutor<T> {
 	}
 	//
 	private boolean isDoneMaxCount() {
-		if (currState != null) {
-			if ((currState.getCountSucc() + currState.getCountFail()) >= maxCount) {
-				LOG.info(Markers.MSG, "<{}>: nothing to do more", getName());
-				return true;
-			}
-		}
 		return counterResults.get() >= maxCount;
 	}
 	//
@@ -827,16 +831,10 @@ implements LoadExecutor<T> {
 		//
 		long t = System.currentTimeMillis(), timeOutMilliSec;
 		if (currState != null) {
-			final long loadTimeLimit = runTimeConfig.getLoadLimitTimeValue();
-			final TimeUnit loadLimitUnit = runTimeConfig.getLoadLimitTimeUnit();
-			if ((currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue())
-					>= loadLimitUnit.toMillis(loadTimeLimit)) && (loadTimeLimit > 0)) {
-				LOG.info(Markers.MSG, "<{}>: nothing to do more", getName());
-				timeOutMilliSec = 0;
-			} else {
-				timeOutMilliSec = timeUnit.toMillis(timeOut) -
-					currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue());
-			}
+			if (isLoadExecutorFinished(currState))
+				return;
+			timeOutMilliSec = timeUnit.toMillis(timeOut) -
+				currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue());
 		} else {
 			timeOutMilliSec = timeUnit.toMillis(timeOut);
 		}
