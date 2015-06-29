@@ -2,9 +2,11 @@ package com.emc.mongoose.core.impl.data.util;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.util.DataItemInput;
+import org.apache.commons.lang.SerializationUtils;
 //
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.util.List;
 /**
  The data item input implementation deserializing the data items from the specified stream
  */
@@ -25,6 +27,11 @@ implements DataItemInput<T> {
 		} catch(final ClassNotFoundException e) {
 			throw new IOException(e);
 		}
+	}
+	//
+	@Override
+	public int read(final List<T> buffer) {
+		itemsSrc.readFully();
 	}
 	//
 	@Override

@@ -32,10 +32,12 @@ extends ListItemOutput<T> {
 	public void write(final T dataItem)
 	throws IOException {
 		if(items.size() < capacity) {
-			items.add(dataItem);
+			super.write(dataItem);
 		} else {
+			if(i >= capacity) {
+				i %= capacity;
+			}
 			items.set(i ++, dataItem);
-			i %= capacity;
 		}
 	}
 	/**

@@ -2,7 +2,6 @@ package com.emc.mongoose.core.impl.data.util;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
-import java.io.EOFException;
 import java.io.IOException;
 import java.util.List;
 /**
@@ -23,11 +22,10 @@ extends ListItemInput<T> {
 	@Override
 	public T read()
 	throws IOException {
-		try {
-			return super.read();
-		} catch(final EOFException e) {
+		i ++;
+		if(i >= items.size()) {
 			reset();
-			return super.read();
 		}
+		return items.get(i);
 	}
 }
