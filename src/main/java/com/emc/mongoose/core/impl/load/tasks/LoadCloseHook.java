@@ -106,9 +106,9 @@ implements Runnable {
 					}
 					//
 					if (HOOKS_MAP.get(currRunId).isEmpty()) {
-						if (!isRunFinished()) {
+						//if (!isRunFinished(currState)) {
 							saveCurrState();
-						}
+						//}
 						HOOKS_MAP.remove(currRunId);
 						if (HOOKS_MAP.isEmpty()) {
 							try {
@@ -159,6 +159,11 @@ implements Runnable {
 			LOAD_STATES.remove(currRunId);
 			LOG.info(Markers.MSG, "The state of run with run.id: \"{}\" was saved successfully in \"{}\" file",
 				currRunId, fullStateFileName);
+			try {
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e,
 				"Failed to save state of run with run.id: \"{}\" to the \"{}\" file",
@@ -166,8 +171,8 @@ implements Runnable {
 		}
 	}
 	//
-	public static boolean isRunFinished() {
-		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+	public static boolean isRunFinished(final LoadState loadState) {
+		final RunTimeConfig localRunTimeConfig = loadState.getRunTimeConfig();
 		final Queue<LoadState> states = LOAD_STATES.get(localRunTimeConfig.getRunId());
 		//
 		final long runTimeMillis = (localRunTimeConfig.getLoadLimitTimeUnit().
