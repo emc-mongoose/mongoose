@@ -39,6 +39,7 @@ import org.apache.logging.log4j.Marker;
 import javax.management.MBeanServer;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.nio.file.Files;
@@ -50,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -65,7 +67,8 @@ public abstract class LoadExecutorBase<T extends DataItem>
 extends AsyncConsumerBase<T>
 implements LoadExecutor<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
+	private static final Logger LOG = LogManager.getLogger();
+	private static final Map<String, List<LoadState>> DESERIALIZED_STATES = new ConcurrentHashMap<>();
 	//
 	protected final int loadNum, connCountPerNode, storageNodeCount;
 	protected final String storageNodeAddrs[];
@@ -90,6 +93,8 @@ implements LoadExecutor<T> {
 	//
 	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
 	private final BlockingQueue<IOTask<T>> ioTaskSpentQueue;
+	//
+	private LoadState currState = null;
 	//
 	private final Thread
 		metricsDaemon = new Thread() {
@@ -161,9 +166,6 @@ implements LoadExecutor<T> {
 			}
 		};
 	// STATES section
-	private AtomicBoolean fileExists = new AtomicBoolean(false);
-	private long restOfTimeLimit = 0;
-	private TimeUnit restOfTimeUnit;
 	protected final AtomicLong
 		durTasksSum = new AtomicLong(0),
 		counterResults = new AtomicLong(0);
@@ -301,6 +303,13 @@ implements LoadExecutor<T> {
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
 		final Snapshot respLatencySnapshot = respLatency.getSnapshot();
 		//
+		final double elapsedTime;
+		if (currState != null) {
+			elapsedTime = currState.getLoadElapsedTimeUnit().
+					toNanos(currState.getLoadElapsedTimeValue()) + (System.nanoTime() - tsStart.get());
+		} else {
+			elapsedTime = (System.nanoTime() - tsStart.get());
+		}
 		final String message = Markers.PERF_SUM.equals(logMarker) ?
 			String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_SUM_METRICS,
@@ -318,8 +327,10 @@ implements LoadExecutor<T> {
 				(int) respLatencySnapshot.getMedian(),
 				(int) respLatencySnapshot.getMax(),
 				//
-				meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
-				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+				countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1)
+				, oneMinTP, fiveMinTP, fifteenMinTP,
+				(reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1)) / MIB,
+				oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 			) :
 			String.format(
 				LogUtil.LOCALE_DEFAULT, MSG_FMT_METRICS,
@@ -336,8 +347,10 @@ implements LoadExecutor<T> {
 				(int) respLatencySnapshot.getMedian(),
 				(int) respLatencySnapshot.getMax(),
 				//
-				meanTP, oneMinTP, fiveMinTP, fifteenMinTP,
-				meanBW / MIB, oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
+				countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
+				oneMinTP, fiveMinTP, fifteenMinTP,
+				(reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1)) / MIB,
+				oneMinBW / MIB, fiveMinBW / MIB, fifteenMinBW / MIB
 			);
 		LOG.info(logMarker, message);
 	}
@@ -356,30 +369,26 @@ implements LoadExecutor<T> {
 			reqBytes = metrics.meter(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW));
 			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
-			final String fullFileName = Paths.get(RunTimeConfig.DIR_ROOT,
-					Constants.DIR_LOG, RunTimeConfig.getContext().getRunId()).toFile() + File.separator + Constants.STATES_FILE;
-			final File statesFile = new File(fullFileName);
+			final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+					Constants.DIR_LOG, RunTimeConfig.getContext().getRunId())
+						.resolve(Constants.STATES_FILE).toString();
+			final File statesFile = new File(fullStateFileName);
 			if (statesFile.exists()) {
-				fileExists.set(true);
-				try {
-					final FileInputStream fis = new FileInputStream(fullFileName);
-					final ObjectInputStream ois = new ObjectInputStream(fis);
-					List<LoadState> states = (List<LoadState>) ois.readObject();
-					LoadState currState = null;
-					for (final LoadState state : states) {
-						if (state.getLoadNumber() == loadNum) {
-							currState = state;
-						}
-					}
-					if (currState != null) {
-						counterReqFail.inc(currState.getCountFail());
-						throughPut.mark(currState.getCountSucc());
-						restOfTimeLimit = currState.getLoadElapsedTimeValue();
-						restOfTimeUnit = currState.getLoadElapsedTimeUnit();
-					}
-				} catch (final Exception e) {
-					e.printStackTrace();
+				if (!DESERIALIZED_STATES.containsKey(runTimeConfig.getRunId())) {
+					deserializeStateFromFile(fullStateFileName);
 				}
+				final List<LoadState> loadStates = DESERIALIZED_STATES.get(runTimeConfig.getRunId());
+				for (final LoadState state : loadStates) {
+					if (state.getLoadNumber() == loadNum) {
+						counterReqFail.inc(state.getCountFail());
+						throughPut.mark(state.getCountSucc());
+						reqBytes.mark(state.getCountBytes());
+						currState = state;
+						break;
+					}
+				}
+			} else {
+				LOG.info(Markers.MSG, "File with state of run wasn't found. Starting new run...");
 			}
 			super.start();
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
@@ -403,6 +412,26 @@ implements LoadExecutor<T> {
 			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
 		} else {
 			LOG.warn(Markers.ERR, "Second start attempt - skipped");
+		}
+	}
+	//
+	private void deserializeStateFromFile(final String fullStateFileName) {
+		try (final FileInputStream fis = new FileInputStream(fullStateFileName)) {
+			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
+				LOG.info(Markers.MSG, "Run with run.id: \"{}\" was continued",
+						runTimeConfig.getRunId());
+				final List<LoadState> loadStates = (List<LoadState>) ois.readObject();
+				DESERIALIZED_STATES.put(runTimeConfig.getRunId(), loadStates);
+			}
+		} catch (final FileNotFoundException e) {
+			LogUtil.exception(LOG, Level.WARN, e,
+				"File with state of run with run.id: \"{}\" wasn't found. Starting new run...", runTimeConfig.getRunId());
+		} catch (final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e,
+				"Failed to deserialize state of run with run.id: \"{}\" from \".loadState\" file",
+					runTimeConfig.getRunId());
+		} catch (final ClassNotFoundException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Class not found");
 		}
 	}
 	//
@@ -620,9 +649,12 @@ implements LoadExecutor<T> {
 	@Override
 	public LoadState getLoadState()
 	throws RemoteException {
+		final long prevElapsedTime = currState != null ?
+				currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
 		return new BasicLoadState(
 			loadNum, runTimeConfig, throughPut.getCount(), counterReqFail.getCount(),
-			TimeUnit.NANOSECONDS, System.nanoTime() - tsStart.get()
+			reqBytes.getCount(), TimeUnit.NANOSECONDS,
+			prevElapsedTime + (System.nanoTime() - tsStart.get())
 		);
 	}
 	//
@@ -674,6 +706,7 @@ implements LoadExecutor<T> {
 				jmxReporter.close();
 				LOG.debug(Markers.MSG, "JMX reported closed");
 				LoadCloseHook.del(this);
+				DESERIALIZED_STATES.remove(runTimeConfig.getRunId());
 				LOG.debug(Markers.MSG, "\"{}\" closed successfully", getName());
 			}
 		} else {
@@ -725,17 +758,20 @@ implements LoadExecutor<T> {
 		}
 		//
 		long t = System.currentTimeMillis(), timeOutMilliSec;
-		if (fileExists.get()) {
+		if (currState != null) {
 			final long loadTimeLimit = runTimeConfig.getLoadLimitTimeValue();
-			final TimeUnit loadTimeUnit = runTimeConfig.getLoadLimitTimeUnit();
-			System.out.println(restOfTimeUnit.toSeconds(restOfTimeLimit));
-			System.out.println(TimeUnit.MILLISECONDS.toSeconds(timeUnit.toMillis(timeOut) -
-					restOfTimeUnit.toMillis(restOfTimeLimit)));
+			final TimeUnit loadLimitUnit = runTimeConfig.getLoadLimitTimeUnit();
+			if ((currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue())
+					>= loadLimitUnit.toMillis(loadTimeLimit)) && (loadTimeLimit > 0)) {
+				LOG.info(Markers.MSG, "<{}>: nothing to do more", getName());
+				timeOutMilliSec = 0;
+			} else {
+				timeOutMilliSec = timeUnit.toMillis(timeOut) -
+					currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue());
+			}
 		} else {
 			timeOutMilliSec = timeUnit.toMillis(timeOut);
 		}
-		timeOutMilliSec = timeUnit.toMillis(timeOut);
-		//System.out.println(TimeUnit.MILLISECONDS.toSeconds(timeOutMilliSec));
 		//
 		if(lock.tryLock(timeOut, timeUnit)) {
 			try {
