@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
+import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
@@ -95,6 +96,8 @@ implements LoadExecutor<T> {
 	private final BlockingQueue<IOTask<T>> ioTaskSpentQueue;
 	//
 	private LoadState currState = null;
+	private long lastTimeBeforeTermination = 0;
+	private long elapsedTimeInPause = 0;
 	//
 	private final Thread
 		metricsDaemon = new Thread() {
@@ -362,11 +365,14 @@ implements LoadExecutor<T> {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			LOG.debug(Markers.MSG, "Starting {}", getName());
 			// init metrics
+			final Clock userClock = getMetricsClock();
 			counterSubm = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_SUBM));
 			counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
 			counterReqFail = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_FAIL));
-			throughPut = metrics.meter(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_TP));
-			reqBytes = metrics.meter(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW));
+			throughPut = metrics.register(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_TP),
+					new Meter(userClock));
+			reqBytes = metrics.register(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW),
+					new Meter(userClock));
 			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
 			final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
@@ -413,6 +419,26 @@ implements LoadExecutor<T> {
 		} else {
 			LOG.warn(Markers.ERR, "Second start attempt - skipped");
 		}
+	}
+	//
+	private Clock getMetricsClock() {
+		return new Clock() {
+			private final long tickInterval = TimeUnit.SECONDS.toNanos(1);
+			//
+			@Override
+			public long getTick() {
+				final long currTime = System.nanoTime();
+				if (lastTimeBeforeTermination > 0) {
+					if (currTime - lastTimeBeforeTermination > tickInterval) {
+						elapsedTimeInPause += currTime - lastTimeBeforeTermination;
+						lastTimeBeforeTermination = currTime;
+						return currTime - elapsedTimeInPause;
+					}
+				}
+				lastTimeBeforeTermination = currTime;
+				return currTime - elapsedTimeInPause;
+			}
+		};
 	}
 	//
 	private void deserializeStateFromFile(final String fullStateFileName) {
