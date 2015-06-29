@@ -10,31 +10,17 @@ import java.util.concurrent.TimeUnit;
  */
 public interface LoadState extends Serializable {
 	//
-	void setLoadNumber(final int loadNumber);
-	//
 	int getLoadNumber();
-	//
-	void setRunTimeConfig(final RunTimeConfig runTimeConfig);
 	//
 	RunTimeConfig getRunTimeConfig();
 	//
-	void setCountSucc(final long countSucc);
-	//
 	long getCountSucc();
-	//
-	void setCountFail(final long countFail);
 	//
 	long getCountFail();
 	//
-	void setCountBytes(final long countBytes);
-	//
 	long getCountBytes();
 	//
-	void setLoadElapsedTimeUnit(final TimeUnit unit);
-	//
 	TimeUnit getLoadElapsedTimeUnit();
-	//
-	void setLoadElapsedTimeValue(final long value);
 	//
 	long getLoadElapsedTimeValue();
 }
