@@ -104,30 +104,30 @@ implements Runnable {
 						loadStates.add(currState);
 						LOAD_STATES.put(currRunId, loadStates);
 					}
-				} catch (final RemoteException e) {
-					LogUtil.exception(LOG, Level.ERROR, e, "Failed to add load state to queue");
-				}
-				//
-				if (HOOKS_MAP.get(currRunId).isEmpty()) {
-					if (!isRunFinished()) {
-						saveCurrState();
-					}
-					HOOKS_MAP.remove(currRunId);
-					if (HOOKS_MAP.isEmpty()) {
-						try {
-							if (LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
-								try {
-									LogUtil.HOOKS_COND.signalAll();
-								} finally {
-									LogUtil.HOOKS_LOCK.unlock();
+					//
+					if (HOOKS_MAP.get(currRunId).isEmpty()) {
+						if (!isRunFinished(currState)) {
+							saveCurrState();
+						}
+						HOOKS_MAP.remove(currRunId);
+						if (HOOKS_MAP.isEmpty()) {
+							try {
+								if (LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
+									try {
+										LogUtil.HOOKS_COND.signalAll();
+									} finally {
+										LogUtil.HOOKS_LOCK.unlock();
+									}
+								} else {
+									LOG.debug(Markers.ERR, "Failed to acquire the lock for the del method");
 								}
-							} else {
-								LOG.debug(Markers.ERR, "Failed to acquire the lock for the del method");
+							} catch (final InterruptedException e) {
+								LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 							}
-						} catch (final InterruptedException e) {
-							LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 						}
 					}
+				} catch (final RemoteException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to add load state to queue");
 				}
 			}
 		} else {
@@ -166,14 +166,19 @@ implements Runnable {
 		}
 	}
 	//
-	private static boolean isRunFinished() {
-		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+	private static boolean isRunFinished(final LoadState loadState) {
+		final RunTimeConfig localRunTimeConfig = loadState.getRunTimeConfig();
 		final Queue<LoadState> states = LOAD_STATES.get(localRunTimeConfig.getRunId());
+		//
 		final long runTimeMillis = localRunTimeConfig.getLoadLimitTimeUnit().
 				toMillis(localRunTimeConfig.getLoadLimitTimeValue());
+		final long maxItemsCountPerLoad = localRunTimeConfig.getLoadLimitCount();
+		//
 		for (final LoadState state : states) {
-			if ((state.getLoadElapsedTimeUnit().toMillis(state.getLoadElapsedTimeValue())
-					< runTimeMillis) || (runTimeMillis <= 0))  {
+			final long stateTimeMillis = state.getLoadElapsedTimeUnit().toMillis(state.getLoadElapsedTimeValue());
+			final long stateItemsCount = state.getCountSucc() + state.getCountFail();
+			if (((runTimeMillis == 0) && (maxItemsCountPerLoad == 0))
+				|| ((stateTimeMillis < runTimeMillis) || (stateItemsCount < maxItemsCountPerLoad)))  {
 				return false;
 			}
 		}
