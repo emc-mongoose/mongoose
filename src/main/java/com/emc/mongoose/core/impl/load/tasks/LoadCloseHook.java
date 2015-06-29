@@ -16,10 +16,11 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -35,8 +36,8 @@ public final class LoadCloseHook
 implements Runnable {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static Map<LoadExecutor, Thread> HOOKS_MAP = new ConcurrentHashMap<>();
-	private final static List<LoadState> LOAD_STATES = new ArrayList<>();
+	private final static Map<String, Map<LoadExecutor, Thread>> HOOKS_MAP
+			= new ConcurrentHashMap<>();
 	//
 	public static final Map<String, Queue<LoadState>> STATES_MAP = new ConcurrentHashMap<>();
 	//
@@ -65,7 +66,11 @@ implements Runnable {
 				hookTask, String.format("loadCloseHook<%s>", hookTask.loadName)
 			);
 			Runtime.getRuntime().addShutdownHook(hookThread);
-			HOOKS_MAP.put(loadExecutor, hookThread);
+			final String currRunId = RunTimeConfig.getContext().getRunId();
+			if (!HOOKS_MAP.containsKey(currRunId)) {
+				HOOKS_MAP.put(currRunId, new HashMap<LoadExecutor, Thread>());
+			}
+			HOOKS_MAP.get(currRunId).put(loadExecutor, hookThread);
 			LogUtil.LOAD_HOOKS_COUNT.incrementAndGet();
 			LOG.debug(
 				Markers.MSG, "Registered shutdown hook \"{}\"", hookTask.loadName
@@ -78,18 +83,19 @@ implements Runnable {
 	}
 	//
 	public static void del(final LoadExecutor loadExecutor) {
+		final String currRunId = RunTimeConfig.getContext().getRunId();
 		if (LoadCloseHook.class.isInstance(Thread.currentThread())) {
 			LOG.debug(Markers.MSG, "Won't remove the shutdown hook which is in progress");
-		} else if (HOOKS_MAP.containsKey(loadExecutor)) {
+		} else if (HOOKS_MAP.get(currRunId).containsKey(loadExecutor)) {
 			try {
-				Runtime.getRuntime().removeShutdownHook(HOOKS_MAP.get(loadExecutor));
+				Runtime.getRuntime().removeShutdownHook(HOOKS_MAP.get(currRunId).get(loadExecutor));
 				LOG.debug(Markers.MSG, "Shutdown hook for \"{}\" removed", loadExecutor);
 			} catch (final IllegalStateException e) {
 				LogUtil.exception(LOG, Level.TRACE, e, "Failed to remove the shutdown hook");
 			} catch (final SecurityException | IllegalArgumentException e) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
 			} finally {
-				HOOKS_MAP.remove(loadExecutor);
+				HOOKS_MAP.get(currRunId).remove(loadExecutor);
 				LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
 				//
 				try {
@@ -106,7 +112,7 @@ implements Runnable {
 					LogUtil.exception(LOG, Level.ERROR, e, "Failed to add state to list");
 				}
 				//
-				if (HOOKS_MAP.isEmpty()) {
+				if (HOOKS_MAP.get(currRunId).isEmpty()) {
 					saveCurrState();
 					try {
 						if (LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
@@ -132,15 +138,6 @@ implements Runnable {
 	public final void run() {
 		LOG.debug(Markers.MSG, "Closing the load executor \"{}\"...", loadName);
 		try {
-			/*final LoadState currState = loadExecutor.getLoadState();
-			final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
-			final long currStateMillis = currState.getLoadElapsedTimeUnit().
-				toMillis(currState.getLoadElapsedTimeValue());
-			final long runTimeMillis = localRunTimeConfig.getLoadLimitTimeUnit().
-				toMillis(localRunTimeConfig.getLoadLimitTimeValue());
-			if ((currStateMillis >= runTimeMillis) && (runTimeMillis > 0)) {
-				LOAD_STATES.add(currState);
-			}*/
 			loadExecutor.close();
 			LOG.debug(Markers.MSG, "The load executor \"{}\" closed successfully", loadName);
 		} catch(final Exception e) {
@@ -151,20 +148,19 @@ implements Runnable {
 	}
 	//
 	private static void saveCurrState() {
-		for (final Map.Entry<String, Queue<LoadState>> entry : STATES_MAP.entrySet()) {
-			final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
-					Constants.DIR_LOG, entry.getKey()).toFile() + File.separator
-					+ Constants.STATES_FILE;
-			try (final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {
-				try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
-					oos.writeObject(new ArrayList<>(entry.getValue()));
-				}
-				STATES_MAP.remove(entry.getKey());
-				LOG.info(Markers.MSG, "The state of run with run.id: \"{}\" was saved successfully", entry.getKey());
-			} catch (final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e,
-						"Failed to serialize state of run with run.id: \"{}\" to the \".loadState\" file", entry.getKey());
+		final String currRunId = RunTimeConfig.getContext().getRunId();
+		final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+				Constants.DIR_LOG, currRunId).resolve(Constants.STATES_FILE).toString();
+		try (final FileOutputStream fos = new FileOutputStream(fullStateFileName, false)) {
+			try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
+				oos.writeObject(new ArrayList<>(STATES_MAP.get(currRunId)));
 			}
+			STATES_MAP.remove(currRunId);
+			LOG.info(Markers.MSG, "The state of run with run.id: \"{}\" was saved successfully in \"{}\" file",
+					currRunId, fullStateFileName);
+		} catch (final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e,
+					"Failed to serialize state of run with run.id: \"{}\" to the \".loadState\" file", currRunId);
 		}
 	}
 }
