@@ -30,18 +30,8 @@ public class BasicLoadState implements LoadState {
 	}
 	//
 	@Override
-	public void setLoadNumber(int loadNumber) {
-		this.loadNumber = loadNumber;
-	}
-	//
-	@Override
 	public int getLoadNumber() {
 		return loadNumber;
-	}
-	//
-	@Override
-	public void setRunTimeConfig(RunTimeConfig runTimeConfig) {
-		this.runTimeConfig = runTimeConfig;
 	}
 	//
 	@Override
@@ -50,18 +40,8 @@ public class BasicLoadState implements LoadState {
 	}
 	//
 	@Override
-	public void setCountSucc(long countSucc) {
-		this.countSucc = countSucc;
-	}
-	//
-	@Override
 	public long getCountSucc() {
 		return countSucc;
-	}
-	//
-	@Override
-	public void setCountFail(long countFail) {
-		this.countFail = countFail;
 	}
 	//
 	@Override
@@ -70,27 +50,13 @@ public class BasicLoadState implements LoadState {
 	}
 	//
 	@Override
-	public void setCountBytes(long countBytes) {
-		this.countBytes = countBytes;
-	}
-	//
-	@Override
 	public long getCountBytes() {
 		return countBytes;
-	}
-	@Override
-	public void setLoadElapsedTimeUnit(TimeUnit unit) {
-		this.timeUnit = unit;
 	}
 	//
 	@Override
 	public TimeUnit getLoadElapsedTimeUnit() {
 		return timeUnit;
-	}
-	//
-	@Override
-	public void setLoadElapsedTimeValue(long value) {
-		this.timeValue = value;
 	}
 	//
 	@Override
