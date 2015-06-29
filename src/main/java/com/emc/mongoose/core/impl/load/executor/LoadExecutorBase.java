@@ -82,7 +82,7 @@ implements LoadExecutor<T> {
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
 	//
-	private long maxCount;
+	private final long maxCount;
 	private final int totalConnCount;
 	// METRICS section
 	protected final MetricRegistry metrics = new MetricRegistry();
@@ -408,9 +408,7 @@ implements LoadExecutor<T> {
 							LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
 								getName());
 						}
-						if (maxCount > 0) {
-							maxCount -= state.getCountSucc() + state.getCountFail();
-						}
+						counterResults.set(state.getCountSucc() + state.getCountFail());
 						counterReqFail.inc(state.getCountFail());
 						throughPut.mark(state.getCountSucc());
 						reqBytes.mark(state.getCountBytes());
@@ -723,6 +721,12 @@ implements LoadExecutor<T> {
 	}
 	//
 	private boolean isDoneMaxCount() {
+		if (currState != null) {
+			if ((currState.getCountSucc() + currState.getCountFail()) >= maxCount) {
+				LOG.info(Markers.MSG, "<{}>: nothing to do more", getName());
+				return true;
+			}
+		}
 		return counterResults.get() >= maxCount;
 	}
 	//
