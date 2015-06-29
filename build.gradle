@@ -936,6 +936,13 @@ idea {
 			RUNTIME: [plus: [configurations.runtime], minus: [configurations.compile]],
 			TEST: [plus: [configurations.testRuntime], minus: [configurations.runtime]]
 		]
+		//for cleaning mongoose.iml
+		iml{
+			beforeMerged { module ->
+				//if you want skip merging exclude dirs
+				module.excludeFolders.clear()
+			}
+		}
 	}
 	project.ipr {
 		withXml { provider ->

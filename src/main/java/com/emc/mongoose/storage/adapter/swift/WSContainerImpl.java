@@ -60,7 +60,9 @@ implements Container<T> {
 		boolean flagExists = false;
 		//
 		try {
-			final HttpResponse httpResp = execute(addr,  MutableWSRequest.HTTPMethod.HEAD);
+			final HttpResponse httpResp = execute(
+				addr,  MutableWSRequest.HTTPMethod.HEAD, null, WSRequestConfig.PAGE_SIZE
+			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -99,7 +101,9 @@ implements Container<T> {
 	public final void create(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.PUT);
+			final HttpResponse httpResp = execute(
+				addr, MutableWSRequest.HTTPMethod.PUT, null, WSRequestConfig.PAGE_SIZE
+			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -137,7 +141,9 @@ implements Container<T> {
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.DELETE);
+			final HttpResponse httpResp = execute(
+				addr, MutableWSRequest.HTTPMethod.DELETE, null, WSRequestConfig.PAGE_SIZE
+			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -172,8 +178,10 @@ implements Container<T> {
 	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	final HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)
-	throws IOException {
+	final HttpResponse execute(
+		final String addr, final MutableWSRequest.HTTPMethod method, final String markerSwiftContainer,
+		final long container_limit
+	) throws IOException {
 		//
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
@@ -188,6 +196,12 @@ implements Container<T> {
 			case GET:
 				// if method is get add json format parameter to uri path
 				httpReq.setUriPath(httpReq.getUriPath() + "?format=json");
+				// set container limit to get container's list with fix size.
+				httpReq.setUriPath(httpReq.getUriPath() + "&limit=" + container_limit);
+				// if it is possible to get next container's list marker must be in URI request.
+				if (markerSwiftContainer != null) {
+					httpReq.setUriPath(httpReq.getUriPath() + "&marker=" + markerSwiftContainer);
+				}
 				break;
 			case PUT:
 				httpReq.setHeader(

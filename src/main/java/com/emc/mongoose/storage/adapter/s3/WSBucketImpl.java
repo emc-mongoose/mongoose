@@ -6,6 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -33,7 +34,10 @@ implements Bucket<T> {
 	private final static String VERSIONING_ENTITY_CONTENT =
 		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
 		"<Status>Enabled</Status></VersioningConfiguration>";
-	private final static String VERSIONING_URL_PART = "/?versioning";
+	private final static String
+		VERSIONING_URL_PART = "/?versioning",
+		MAX_KEYS_URL_PART = "?max-keys=",
+		MARKER_URL_PART = "&marker=";
 	//
 	private final WSRequestConfigImpl<T> reqConf;
 	private String name;
@@ -72,8 +76,15 @@ implements Bucket<T> {
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning)
 	throws IOException {
+		return execute(addr, method, versioning, null, WSRequestConfig.PAGE_SIZE);
+	}
+	//
+	HttpResponse execute(
+		final String addr, final MutableWSRequest.HTTPMethod method,
+		final boolean versioning, final String bucketListingMarker, final long bucketMaxKeys
+	) throws IOException {
 		//
-		if(method == null) {
+		if (method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
 		final MutableWSRequest httpReq = reqConf
@@ -81,7 +92,7 @@ implements Bucket<T> {
 		//
 		switch(method) {
 			case PUT:
-				if(reqConf.getFileAccessEnabled()) {
+				if (reqConf.getFileAccessEnabled()) {
 					httpReq.setHeader(
 						new BasicHeader(
 							WSRequestConfigImpl.KEY_EMC_FS_ACCESS, Boolean.toString(true)
@@ -91,13 +102,22 @@ implements Bucket<T> {
 				if (versioning) {
 					httpReq.setUriPath(httpReq.getUriPath() + VERSIONING_URL_PART);
 					httpReq.setEntity(
-							new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
+						new StringEntity(VERSIONING_ENTITY_CONTENT, ContentType.APPLICATION_XML)
 					);
 				}
 				break;
 		}
 		//
 		reqConf.applyHeadersFinally(httpReq);
+		// this must not be in canonical request.
+		// set max-keys value when get new bucket's list.
+		if (MutableWSRequest.HTTPMethod.GET.equals(method)) {
+			httpReq.setUriPath(httpReq.getUriPath() + MAX_KEYS_URL_PART + bucketMaxKeys);
+			// if it is possible to get next bucket's list bucketListingMarker must be in URI request.
+			if (bucketListingMarker != null) {
+				httpReq.setUriPath(httpReq.getUriPath() + MARKER_URL_PART + bucketListingMarker);
+			}
+		}
 		return reqConf.execute(addr, httpReq);
 	}
 	//
