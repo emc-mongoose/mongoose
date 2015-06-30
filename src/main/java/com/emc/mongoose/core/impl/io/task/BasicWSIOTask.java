@@ -204,14 +204,17 @@ implements WSIOTask<T> {
 			}
 		} catch(final ClosedChannelException e) { // probably a manual interruption
 			status = Status.CANCELLED;
-			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
+			LogUtil.exception(
+				LOG, Level.TRACE, e, "#{}: utput channel closed during the operation", hashCode()
+			);
 		} catch(final IOException e) {
 			status = Status.FAIL_IO;
-			LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during the data output");
+			LogUtil.exception(
+				LOG, Level.DEBUG, e, "#{}: I/O failure during the data output", hashCode()
+			);
 		} catch(final Exception e) {
 			status = Status.FAIL_UNKNOWN;
-			e.printStackTrace(System.err);
-			LogUtil.exception(LOG, Level.ERROR, e, "Producing content failure");
+			LogUtil.exception(LOG, Level.ERROR, e, "#{}: producing content failure", hashCode());
 		} finally {
 			chanOut.close();
 		}

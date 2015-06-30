@@ -10,12 +10,12 @@ import org.mockito.Mockito;
 import org.mockito.runners.MockitoJUnitRunner;
 //
 import java.io.IOException;
-import java.util.Collection;
+import java.util.List;
 //
 @RunWith(MockitoJUnitRunner.class)
 public class ListItemOutputTest {
 	//
-	@Mock private Collection<DataItem> itemsMock;
+	@Mock private List<DataItem> itemsMock;
 	@Mock private ListItemInput<DataItem> itemsInputMock;
 	//
 	@Test

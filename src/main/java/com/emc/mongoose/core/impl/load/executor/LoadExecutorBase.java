@@ -407,7 +407,7 @@ implements LoadExecutor<T> {
 				if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
 					loadStateFromFile(fullStateFileName);
 				}
-				final List<LoadState> loadStates = DESERIALIZED_STATES.get(runTimeConfig.getRunId());
+				final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
 				//  apply parameters from loadState to current load executor
 				for (final LoadState state : loadStates) {
 					if (state.getLoadNumber() == instanceNum) {
@@ -488,14 +488,21 @@ implements LoadExecutor<T> {
 				DESERIALIZED_STATES.put(rtConfig.getRunId(), loadStates);
 			}
 		} catch (final FileNotFoundException e) {
-			LogUtil.exception(LOG, Level.WARN, e,
-				"File with state of run with run.id: \"{}\" wasn't found. Starting new run...", runTimeConfig.getRunId());
+			LogUtil.exception(
+				LOG, Level.WARN, e,
+				"File with state of run with run.id: \"{}\" wasn't found. Starting new run...",
+				rtConfig.getRunId()
+			);
 		} catch (final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to load state of run with run.id: \"{}\" from \"{}\" file. Starting new run...",
-					rtConfig.getRunId(), fullStateFileName);
+			LogUtil.exception(
+				LOG, Level.WARN, e,
+				"Failed to load state of run with the run id \"{}\" from the \"{}\" file, " +
+				"starting new run...", rtConfig.getRunId(), fullStateFileName
+			);
 		} catch (final ClassNotFoundException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of run. Starting new run...");
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to deserialize state of run, starting new run..."
+			);
 		}
 	}
 	//
@@ -733,8 +740,8 @@ implements LoadExecutor<T> {
 			currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue());
 		return new BasicLoadState(
 			instanceNum, rtConfig, throughPut.getCount(), counterReqFail.getCount(),
-			reqBytes.getCount(), TimeUnit.NANOSECONDS,
-			prevElapsedTime + (System.nanoTime() - tsStart.get())
+			reqBytes.getCount(), prevElapsedTime + (System.nanoTime() - tsStart.get()),
+			TimeUnit.NANOSECONDS
 		);
 	}
 	//

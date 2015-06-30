@@ -7,6 +7,23 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'war'
 
+buildscript {
+	repositories {
+		jcenter()
+		maven {
+			url 'http://asdrepo.isus.emc.com:8081/artifactory/repo'
+			credentials {
+				username = "${artifactory_user}"
+				password = "${artifactory_password}"
+			}
+		}
+	}
+	dependencies {
+		classpath "org.jfrog.buildinfo:build-info-extractor-gradle:3.1.1"
+	}
+}
+apply plugin: "com.jfrog.artifactory"
+
 sourceCompatibility = '1.7'
 
 distsDirName = 'dist'
@@ -967,3 +984,29 @@ build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, s
 build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testsJar
 
 tasks.idea.dependsOn(cleanIdea)
+
+artifactory {
+	contextUrl = "${artifactory_contextUrl}"   //The base Artifactory URL if not overridden by the publisher/resolver
+	publish {
+		repository {
+			repoKey = 'vipr-dev-local'
+			username = "${artifactory_user}"
+			password = "${artifactory_password}"
+			maven = true
+
+		}
+	}
+	resolve {
+		repository {
+			repoKey = 'repo'
+			username = "${artifactory_user}"
+			password = "${artifactory_password}"
+			maven = true
+		}
+	}
+}
+
+artifactoryPublish.dependsOn commonJar, coreApiJar, coreImplJar
+artifactoryPublish.dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
+artifactoryPublish.dependsOn serverApiJar, webserverJar, clientJar, scenarioJar, serverImplJar
+artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testsJar
