@@ -210,6 +210,7 @@ implements WSIOTask<T> {
 			LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during the data output");
 		} catch(final Exception e) {
 			status = Status.FAIL_UNKNOWN;
+			e.printStackTrace(System.err);
 			LogUtil.exception(LOG, Level.ERROR, e, "Producing content failure");
 		} finally {
 			chanOut.close();

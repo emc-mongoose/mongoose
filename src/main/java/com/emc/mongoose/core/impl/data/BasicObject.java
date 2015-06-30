@@ -48,8 +48,6 @@ implements DataObject {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Binary serialization implementation /////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	private final static int MAX_ID_BYTE_COUNT = 0x100;
-	//
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
@@ -57,7 +55,6 @@ implements DataObject {
 		final byte idBytes[] = id.getBytes(StandardCharsets.UTF_8);
 		out.writeInt(idBytes.length);
 		out.write(idBytes, 0, idBytes.length);
-		//ObjectOutputStream.class.cast(out).writeUnshared(id);
 	}
 	//
 	@Override

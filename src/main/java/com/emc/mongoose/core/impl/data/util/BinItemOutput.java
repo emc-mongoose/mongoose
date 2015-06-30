@@ -6,15 +6,16 @@ import com.emc.mongoose.core.api.data.util.DataItemOutput;
 //
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.util.List;
 /**
  The data item output implementation serializing the data items into the specified stream
  */
-public abstract class ExternItemOutput<T extends DataItem>
+public abstract class BinItemOutput<T extends DataItem>
 implements DataItemOutput<T> {
 	//
 	protected final ObjectOutputStream itemsDst;
 	//
-	protected ExternItemOutput(final ObjectOutputStream itemsDst) {
+	protected BinItemOutput(final ObjectOutputStream itemsDst) {
 		this.itemsDst = itemsDst;
 	}
 	//
@@ -26,6 +27,13 @@ implements DataItemOutput<T> {
 		} catch(final ArrayIndexOutOfBoundsException e) {
 			e.printStackTrace(System.err);
 		}
+	}
+	//
+	@Override
+	public int write(final List<T> buffer)
+	throws IOException {
+		itemsDst.writeUnshared(buffer);
+		return buffer.size();
 	}
 	//
 	@Override

@@ -18,6 +18,7 @@ import org.apache.http.nio.NHttpMessageWriterFactory;
 import org.apache.http.nio.reactor.IOSession;
 import org.apache.http.nio.util.ByteBufferAllocator;
 //
+import org.apache.http.nio.util.DirectByteBufferAllocator;
 import org.apache.http.nio.util.HeapByteBufferAllocator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -92,14 +93,14 @@ extends DefaultNHttpServerConnection {
 		final CharsetEncoder charencoder, final MessageConstraints constraints
 	) {
 		this(
-			session, buffersize, 0, HeapByteBufferAllocator.INSTANCE, chardecoder, charencoder,
+			session, buffersize, 0, DirectByteBufferAllocator.INSTANCE, chardecoder, charencoder,
 			constraints, null, null, null, null
 		);
 	}
 	//
 	public BasicWSMockConnection(final IOSession session, final int buffersize) {
 		this(
-			session, buffersize, 0, HeapByteBufferAllocator.INSTANCE, null, null, null, null, null,
+			session, buffersize, 0, DirectByteBufferAllocator.INSTANCE, null, null, null, null, null,
 			null, null
 		);
 	}

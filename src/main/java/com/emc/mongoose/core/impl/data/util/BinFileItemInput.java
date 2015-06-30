@@ -12,7 +12,7 @@ import java.nio.file.StandardOpenOption;
  An item input implementation deserializing the data items from the specified file.
  */
 public class BinFileItemInput<T extends DataItem>
-extends ExternItemInput<T> {
+extends BinItemInput<T> {
 	//
 	protected final Path itemsSrcPath;
 	/**

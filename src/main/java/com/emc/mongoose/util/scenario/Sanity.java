@@ -11,10 +11,9 @@ import com.emc.mongoose.core.api.data.util.DataItemOutput;
 //
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.util.BinFileItemOutput;
-//
 import com.emc.mongoose.core.impl.data.util.CSVFileItemOutput;
-//
 import com.emc.mongoose.core.impl.data.util.CircularListItemOutput;
+//
 import com.emc.mongoose.storage.mock.impl.Cinderella;
 //
 import com.emc.mongoose.util.client.api.StorageClient;

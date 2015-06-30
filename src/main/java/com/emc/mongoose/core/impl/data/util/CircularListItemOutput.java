@@ -41,7 +41,7 @@ extends ListItemOutput<T> {
 		}
 	}
 	/**
-	Bulk circular write method
+	 Bulk circular write method
 	 */
 	@Override
 	public int write(final List<T> buffer)

@@ -582,11 +582,13 @@ implements WSRequestConfig<T> {
 							chanIn.close();
 						}
 					} else {
-						final long dataSize = dataItem.getSize();
-						if(dataItem.getSize() != IOUtils.consumeQuietly(in, buffSize)) {
+						final long
+							dataSize = dataItem.getSize(),
+							actualSize = IOUtils.consumeQuietly(in, buffSize);
+						if(dataSize != actualSize) {
 							LOG.debug(
-								Markers.ERR, "Consumed data size is not equal to {}",
-								SizeUtil.formatSize(dataItem.getSize())
+								Markers.ERR, "Consumed data size is not equal to {}: {}",
+								SizeUtil.formatSize(dataSize), SizeUtil.formatSize(actualSize)
 							);
 						}
 					}

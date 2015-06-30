@@ -2,60 +2,39 @@ package com.emc.mongoose.core.impl.data.util;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
-import com.emc.mongoose.core.api.data.util.DataItemOutput;
-//
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 /**
- The data item output writing into the specified file human-readable data item records using the CSV
- format
+ Created by kurila on 30.06.15.
  */
 public class CSVFileItemOutput<T extends DataItem>
-implements DataItemOutput<T> {
+extends CSVItemOutput<T> {
 	//
-	protected final Path itemsDstPath;
-	protected final Class<T> itemCls;
-	protected final BufferedWriter itemsDst;
+	protected Path itemsFilePath;
 	//
-	public CSVFileItemOutput(final Class<T> itemCls, final Path itemsDstPath)
+	public CSVFileItemOutput(final Path itemsFilePath, final Class<T> itemCls)
 	throws IOException {
-		this.itemsDstPath = itemsDstPath;
-		this.itemCls = itemCls;
-		itemsDst = Files.newBufferedWriter(
-			itemsDstPath, StandardCharsets.UTF_8,
-			StandardOpenOption.APPEND, StandardOpenOption.WRITE
+		super(
+			Files.newOutputStream(itemsFilePath, StandardOpenOption.WRITE),
+			itemCls
 		);
+		this.itemsFilePath = itemsFilePath;
 	}
 	//
 	public CSVFileItemOutput(final Class<T> itemCls)
-	throws IOException {
-		this(itemCls, Files.createTempFile(null, ".csv"));
-	}
-	//
-	@Override
-	public void write(final T dataItem)
-	throws IOException {
-		itemsDst.write(dataItem.toString());
-		itemsDst.newLine();
+		throws IOException, NoSuchMethodException {
+		this(Files.createTempFile(null, ".csv"), itemCls);
 	}
 	//
 	@Override
 	public CSVFileItemInput<T> getInput()
 	throws IOException {
 		try {
-			return new CSVFileItemInput<>(itemsDstPath, itemCls);
+			return new CSVFileItemInput<>(itemsFilePath, itemCls);
 		} catch(final NoSuchMethodException e) {
 			throw new IOException(e);
 		}
-	}
-	//
-	@Override
-	public void close()
-	throws IOException {
-		itemsDst.close();
 	}
 }
