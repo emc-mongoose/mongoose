@@ -3,48 +3,30 @@ package com.emc.mongoose.core.impl.load.model;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.load.model.LoadState;
 
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectOutput;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Created by gusakk on 19.06.15.
  */
-public class BasicLoadState
-implements LoadState {
+public class BasicLoadState implements LoadState {
 	//
 	private int loadNumber;
-	private RunTimeConfig rtConfig;
+	private RunTimeConfig runTimeConfig;
 	private long countSucc;
 	private long countFail;
+	private long countBytes;
 	private TimeUnit timeUnit;
 	private long timeValue;
 	//
-	public BasicLoadState() {
-		loadNumber = -1;
-		rtConfig = null;
-		countSucc = -1;
-		countFail = -1;
-		timeUnit = null;
-		timeValue = -1;
-	}
-	//
-	public BasicLoadState(
-		final int loadNumber, final RunTimeConfig runTimeConfig, final long countSucc,
-		final long countFail, final TimeUnit timeUnit, final long timeValue
-	) {
+	public BasicLoadState(int loadNumber, RunTimeConfig runTimeConfig,
+    long countSucc, long countFail, long countBytes, TimeUnit timeUnit, long timeValue) {
 		this.loadNumber = loadNumber;
-		this.rtConfig = runTimeConfig;
+		this.runTimeConfig = runTimeConfig;
 		this.countSucc = countSucc;
 		this.countFail = countFail;
+		this.countBytes = countBytes;
 		this.timeUnit = timeUnit;
 		this.timeValue = timeValue;
-	}
-	//
-	@Override
-	public void setLoadNumber(int loadNumber) {
-		this.loadNumber = loadNumber;
 	}
 	//
 	@Override
@@ -53,18 +35,8 @@ implements LoadState {
 	}
 	//
 	@Override
-	public void setConfig(RunTimeConfig rtConfig) {
-		this.rtConfig = rtConfig;
-	}
-	//
-	@Override
-	public RunTimeConfig getConfig() {
-		return rtConfig;
-	}
-	//
-	@Override
-	public void setCountSucc(long countSucc) {
-		this.countSucc = countSucc;
+	public RunTimeConfig getRunTimeConfig() {
+		return runTimeConfig;
 	}
 	//
 	@Override
@@ -73,18 +45,13 @@ implements LoadState {
 	}
 	//
 	@Override
-	public void setCountFail(long countFail) {
-		this.countFail = countFail;
-	}
-	//
-	@Override
 	public long getCountFail() {
 		return countFail;
 	}
 	//
 	@Override
-	public void setLoadElapsedTimeUnit(TimeUnit unit) {
-		this.timeUnit = unit;
+	public long getCountBytes() {
+		return countBytes;
 	}
 	//
 	@Override
@@ -93,35 +60,7 @@ implements LoadState {
 	}
 	//
 	@Override
-	public void setLoadElapsedTimeValue(long value) {
-		this.timeValue = value;
-	}
-	//
-	@Override
 	public long getLoadElapsedTimeValue() {
 		return timeValue;
 	}
-	//
-	@Override
-	public void writeExternal(final ObjectOutput out)
-	throws IOException {
-		out.writeInt(loadNumber);
-		out.writeLong(countSucc);
-		out.writeLong(countFail);
-		out.writeLong(timeValue);
-		out.writeObject(timeUnit);
-		out.writeObject(rtConfig);
-	}
-	//
-	@Override
-	public void readExternal(final ObjectInput in)
-	throws IOException, ClassNotFoundException {
-		loadNumber = in.readInt();
-		countSucc = in.readLong();
-		countFail = in.readLong();
-		timeValue = in.readLong();
-		timeUnit = TimeUnit.class.cast(in.readObject());
-		rtConfig = RunTimeConfig.class.cast(rtConfig);
-	}
-	//
 }
