@@ -106,9 +106,9 @@ implements Runnable {
 					}
 					//
 					if (HOOKS_MAP.get(currRunId).isEmpty()) {
-						//if (!isRunFinished(currState)) {
+						if (!isRunFinished(currState)) {
 							saveCurrState();
-						//}
+						}
 						HOOKS_MAP.remove(currRunId);
 						if (HOOKS_MAP.isEmpty()) {
 							try {
@@ -148,7 +148,7 @@ implements Runnable {
 		}
 	}
 	//
-	private static void saveCurrState() {
+	public static void saveCurrState() {
 		final String currRunId = RunTimeConfig.getContext().getRunId();
 		final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
 				Constants.DIR_LOG, currRunId).resolve(Constants.STATES_FILE).toString();
@@ -156,14 +156,9 @@ implements Runnable {
 			try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
 				oos.writeObject(new ArrayList<>(LOAD_STATES.get(currRunId)));
 			}
-			LOAD_STATES.remove(currRunId);
 			LOG.info(Markers.MSG, "The state of run with run.id: \"{}\" was saved successfully in \"{}\" file",
 				currRunId, fullStateFileName);
-			try {
-				Thread.sleep(10000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
+			LOAD_STATES.remove(currRunId);
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e,
 				"Failed to save state of run with run.id: \"{}\" to the \"{}\" file",
