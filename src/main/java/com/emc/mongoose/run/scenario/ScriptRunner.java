@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,7 +80,15 @@ implements Runnable {
 				System.exit(1);
 			}
 			//
-			final Path scriptDir = Paths.get(RunTimeConfig.DIR_ROOT, scriptsRootDir, scriptLangKey);
+			Path scriptDir = Paths.get(RunTimeConfig.DIR_ROOT, scriptsRootDir, scriptLangKey);
+			if (!Files.exists(scriptDir)){
+				LOG.info(Markers.MSG, "Directory \"{}\" doesn't exist. Try look for bundle directory", scriptDir);
+				final ClassLoader classloader = ScriptRunner.class.getClassLoader();
+				final URL bundleScriptDirURL = classloader.getResource("");
+				if (bundleScriptDirURL != null) {
+					scriptDir = Paths.get(bundleScriptDirURL.getPath(), scriptsRootDir, scriptLangKey);
+				}
+			}
 			// language-specifig preparations
 			switch(scriptLangKey) {
 				case VALUE_JS:
@@ -106,7 +115,7 @@ implements Runnable {
 			if(Files.exists(scriptPath)) {
 				LOG.debug(Markers.MSG, "File \"{}\" exists", scriptPath);
 			} else {
-				LOG.fatal(Markers.ERR, "File \"{}\" doesn't exist", scriptPath);
+				LOG.info(Markers.MSG, "File \"{}\" doesn't exist", scriptPath);
 			}
 			//
 			if(Files.isReadable(scriptPath)) {

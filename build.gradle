@@ -124,6 +124,10 @@ sourceSets {
 			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'scenario'].join(File.separator))
 			include '**'
 		}
+		resources {
+			srcDir(['src', 'main', 'resources','scripts','py'].join(File.separator))
+			include '**'
+		}
 		compileClasspath += sourceSets.common.output
 	}
 	serverImpl {
@@ -185,12 +189,19 @@ sourceSets {
 		compileClasspath += sourceSets.client.output + sourceSets.cli.output
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	// JUnit 4 tests ///////////////////////////////////////////////////////////////////////////////
+	// Tests ///////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	test {
 		java {
-			srcDir(['src', 'test'].join(File.separator))
-			include '**'
+			srcDir(['src', 'test', 'java', 'com', 'emc', 'mongoose'].join(File.separator))
+			include 'core/**'
+		}
+	}
+	integTest {
+		java {
+			compileClasspath += main.output + test.output
+			runtimeClasspath += main.output + test.output
+			srcDir(['src', 'test', 'java', 'com', 'emc', 'mongoose', 'integ'].join(File.separator))
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -395,6 +406,10 @@ dependencies {
 		library.junit,
 		library.junit_mockito,
 	)
+
+	integTestCompile (
+		library.junit,
+	)
 }
 
 configurations {
@@ -436,6 +451,12 @@ configurations {
 		compile,
 	)
 	testRuntime.extendsFrom(
+		runtime,
+	)
+	integTestCompile.extendsFrom(
+		compile,
+	)
+	integTestRuntime.extendsFrom(
 		runtime,
 	)
 }
@@ -928,9 +949,8 @@ idea {
 		jdkName = sourceCompatibility
 		//
 		inheritOutputDirs = false
-		outputDir = sourceSets.common.output.resourcesDir
-		testOutputDir = sourceSets.common.output.resourcesDir
-		//scopes.PROVIDED.plus += [ configurations.compile ]
+		outputDir = sourceSets.main.output.resourcesDir
+		testOutputDir = sourceSets.main.output.resourcesDir
 		scopes = [
 			COMPILE: [plus: [configurations.compile], minus: []],
 			RUNTIME: [plus: [configurations.runtime], minus: [configurations.compile]],
@@ -958,8 +978,16 @@ test {
 	testLogging { events "passed", "skipped", "failed" }
 }
 
+task integTest(type: Test) {
+	testClassesDir = sourceSets.integTest.output.classesDir
+	classpath = sourceSets.integTest.compileClasspath
+
+}
+
 build.dependsOn commonJar, coreApiJar, coreImplJar, storageAdapterAtmosJar, storageAdapterS3Jar
 build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, scenarioJar
 build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, examplesJar, testsJar
 
 tasks.idea.dependsOn(cleanIdea)
+
+check.dependsOn integTest
