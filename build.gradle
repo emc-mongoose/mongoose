@@ -11,18 +11,15 @@ buildscript {
 	repositories {
 		jcenter()
 		maven {
-			url 'http://asdrepo.isus.emc.com:8081/artifactory/repo'
+			url "${artifactory_contextUrl}/repo"
 			credentials {
 				username = "${artifactory_user}"
 				password = "${artifactory_password}"
 			}
 		}
 	}
-	dependencies {
-		classpath "org.jfrog.buildinfo:build-info-extractor-gradle:3.1.1"
-	}
 }
-apply plugin: "com.jfrog.artifactory"
+apply plugin: "maven-publish"
 
 sourceCompatibility = '1.7'
 
@@ -38,7 +35,9 @@ def loadProjectVersionFrom(String sourceFileName) {
 	ext.version = json.properties.run.version
 }
 loadProjectVersionFrom confDirName + File.separator + project.name + ".json"
+
 version = ext.version
+group = 'com.emc.mongoose'
 
 task wrapper(type: Wrapper) {
 	gradleVersion = '1.7'
@@ -435,6 +434,7 @@ configurations {
 		cliCompile,
 		utilCompile,
 	)
+
 	runtime.extendsFrom(
 		commonRuntime,
 		coreApiRuntime,
@@ -452,12 +452,16 @@ configurations {
 		cliRuntime,
 		utilRuntime,
 	)
+
 	testCompile.extendsFrom(
 		compile,
 	)
 	testRuntime.extendsFrom(
 		runtime,
 	)
+
+	distArchive
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -491,7 +495,8 @@ ext.sharedManifest = manifest {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 task commonJar(type: Jar) {
-	archiveName "${baseName}-common.${extension}"
+	appendix "common"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.common.output
 	manifest {
 		from sharedManifest
@@ -510,7 +515,8 @@ task commonJar(type: Jar) {
 
 task coreApiJar(type: Jar) {
 	dependsOn commonJar
-	archiveName "${baseName}-core-api.${extension}"
+	archiveName "${baseName}-${appendix}.${extension}"
+	appendix "core-api"
 	from sourceSets.coreApi.output
 	manifest {
 		from sharedManifest
@@ -528,7 +534,8 @@ task coreApiJar(type: Jar) {
 
 task coreImplJar(type: Jar) {
 	dependsOn commonJar, coreApiJar
-	archiveName "${baseName}-core-impl.${extension}"
+	appendix "core-impl"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.coreImpl.output
 	manifest {
 		from sharedManifest
@@ -551,7 +558,8 @@ task coreImplJar(type: Jar) {
 
 task storageAdapterAtmosJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
-	archiveName "${baseName}-storage-adapter-atmos.${extension}"
+	appendix "storage-adapter-atmos"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.storageAdapterAtmos.output
 	manifest {
 		from sharedManifest
@@ -571,7 +579,8 @@ task storageAdapterAtmosJar(type: Jar) {
 
 task storageAdapterS3Jar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
-	archiveName "${baseName}-storage-adapter-s3.${extension}"
+	appendix "storage-adapter-s3"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.storageAdapterS3.output
 	manifest {
 		from sharedManifest
@@ -591,7 +600,8 @@ task storageAdapterS3Jar(type: Jar) {
 
 task storageAdapterSwiftJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
-	archiveName "${baseName}-storage-adapter-swift.${extension}"
+	appendix "storage-adapter-swift"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.storageAdapterSwift.output
 	manifest {
 		from sharedManifest
@@ -615,7 +625,8 @@ task storageAdapterSwiftJar(type: Jar) {
 
 task serverApiJar(type: Jar) {
 	dependsOn commonJar, coreApiJar
-	archiveName "${baseName}-server-api.${extension}"
+	appendix "server-api"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.serverApi.output
 	manifest {
 		from sharedManifest
@@ -634,7 +645,8 @@ task serverApiJar(type: Jar) {
 
 task webserverJar(type: Jar) {
 	dependsOn commonJar, compileRMI
-	archiveName "${baseName}-webserver.${extension}"
+	appendix "webserver"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.webserver.output
 	manifest {
 		from sharedManifest
@@ -656,46 +668,49 @@ task webserverJar(type: Jar) {
 
 task clientJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar
-	archiveName "${baseName}-client.${extension}"
+	appendix "client"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.client.output
 	manifest {
 		from sharedManifest
 		attributes(
-				'Implementation-Title': rootProject.name + "-client-impl",
-				'Class-Path': [
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						coreApiJar.outputs.files.collect {it.name}.join(' '),
-						coreImplJar.outputs.files.collect {it.name}.join(' '),
-						serverApiJar.outputs.files.collect {it.name}.join(' '),
-						configurations.clientRuntime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-client-impl",
+			'Class-Path': [
+					commonJar.outputs.files.collect {it.name}.join(' '),
+					coreApiJar.outputs.files.collect {it.name}.join(' '),
+					coreImplJar.outputs.files.collect {it.name}.join(' '),
+					serverApiJar.outputs.files.collect {it.name}.join(' '),
+					configurations.clientRuntime.collect {
+						libsDirName + File.separator + it.getName()
+					}.join(' '),
+			].join(' ')
 		)
 	}
 }
 
 task scenarioJar(type: Jar) {
 	dependsOn commonJar
-	archiveName "${baseName}-scenario.${extension}"
+	appendix "scenario"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.scenario.output
 	manifest {
 		from sharedManifest
 		attributes(
-				'Implementation-Title': rootProject.name + "-scenario",
-				'Class-Path': [
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						configurations.scenarioRuntime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-scenario",
+			'Class-Path': [
+					commonJar.outputs.files.collect {it.name}.join(' '),
+					configurations.scenarioRuntime.collect {
+						libsDirName + File.separator + it.getName()
+					}.join(' '),
+			].join(' ')
 		)
 	}
 }
 
 task serverImplJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar, compileRMI
-	archiveName "${baseName}-server-impl.${extension}"
+	appendix "server-impl"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.serverImpl.output
 	manifest {
 		from sharedManifest
@@ -716,7 +731,8 @@ task serverImplJar(type: Jar) {
 
 task storageMockJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
-	archiveName "${baseName}-storage-mock.${extension}"
+	appendix "storage-mock"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.storageMock.output
 	manifest {
 		from sharedManifest
@@ -736,7 +752,8 @@ task storageMockJar(type: Jar) {
 
 task webuiJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, scenarioJar, serverApiJar, serverImplJar, storageMockJar
-	archiveName "${baseName}-webui.${extension}"
+	appendix "webui"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.webui.output
 	manifest {
 		from sharedManifest
@@ -767,7 +784,8 @@ task cliJar(type: Jar) {
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
 	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
 	dependsOn clientJar, scenarioJar, webuiJar
-	archiveName "${baseName}.${extension}"
+	appendix "cli"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.cli.output
 	manifest {
 		from sharedManifest
@@ -800,7 +818,8 @@ task utilJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, clientJar
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
 	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar, storageMockJar
-	archiveName "${baseName}-util.${extension}"
+	appendix "util"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.util.output
 	manifest {
 		from sharedManifest
@@ -844,8 +863,8 @@ task testsJar(type: Jar) {
 	dependsOn cliJar
 	dependsOn utilJar
 
-	archiveName "${baseName}-tests.${extension}"
-	classifier = 'tests'
+	appendix "tests"
+	archiveName "${baseName}-${appendix}.${extension}"
 	from sourceSets.test.output
 	manifest {
 		from sharedManifest
@@ -985,28 +1004,86 @@ build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testsJ
 
 tasks.idea.dependsOn(cleanIdea)
 
-artifactory {
-	contextUrl = "${artifactory_contextUrl}"   //The base Artifactory URL if not overridden by the publisher/resolver
-	publish {
-		repository {
-			repoKey = 'vipr-dev-local'
-			username = "${artifactory_user}"
-			password = "${artifactory_password}"
-			maven = true
-
+publishing {
+	repositories {
+		maven {
+			url "${artifactory_contextUrl}/vipr-dev-local"
+			credentials {
+				username "${artifactory_user}"
+				password "${artifactory_password}"
+			}
 		}
 	}
-	resolve {
-		repository {
-			repoKey = 'repo'
-			username = "${artifactory_user}"
-			password = "${artifactory_password}"
-			maven = true
+	publications {
+		common(MavenPublication) {
+			artifactId "common"
+			artifact commonJar.archivePath
+		}
+		coreApi(MavenPublication) {
+			artifactId "core-api"
+			artifact coreApiJar.archivePath
+		}
+		coreImpl(MavenPublication) {
+			artifactId "core-impl"
+			artifact coreImplJar.archivePath
+		}
+		storageAdapterAtmos(MavenPublication) {
+			artifactId "storage-adapter-atmos"
+			artifact storageAdapterAtmosJar.archivePath
+		}
+		storageAdapterS3(MavenPublication) {
+			artifactId "storage-adapter-s3"
+			artifact storageAdapterS3Jar.archivePath
+		}
+		storageAdapterSwift(MavenPublication) {
+			artifactId "storage-adapter-swift"
+			artifact storageAdapterAtmosJar.archivePath
+		}
+		serverApi(MavenPublication) {
+			artifactId "server-api"
+			artifact serverApiJar.archivePath
+		}
+		webserver(MavenPublication) {
+			artifactId "webserver"
+			artifact webserverJar.archivePath
+		}
+		client(MavenPublication) {
+			artifactId "client"
+			artifact clientJar.archivePath
+		}
+		scenario(MavenPublication) {
+			artifactId "scenario"
+			artifact scenarioJar.archivePath
+		}
+		serverImpl(MavenPublication) {
+			artifactId "server-impl"
+			artifact serverImplJar.archivePath
+		}
+		storageMock(MavenPublication) {
+			artifactId "storage-mock"
+			artifact storageMockJar.archivePath
+		}
+		webui(MavenPublication) {
+			artifactId "webui"
+			artifact webuiJar.archivePath
+		}
+		cli(MavenPublication) {
+			artifactId "cli"
+			artifact cliJar.archivePath
+		}
+		util(MavenPublication) {
+			artifactId "util"
+			artifact utilJar.archivePath
+		}
+		/*tests(MavenPublication) {
+			artifactId "tests"
+			artifact testsJar.archivePath
+		}*/
+		tarBall(MavenPublication) {
+			artifact(dist.archivePath) {
+				artifactId "dist"
+				extension "tgz"
+			}
 		}
 	}
 }
-
-artifactoryPublish.dependsOn commonJar, coreApiJar, coreImplJar
-artifactoryPublish.dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
-artifactoryPublish.dependsOn serverApiJar, webserverJar, clientJar, scenarioJar, serverImplJar
-artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testsJar

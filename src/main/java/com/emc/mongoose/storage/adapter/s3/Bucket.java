@@ -1,10 +1,12 @@
 package com.emc.mongoose.storage.adapter.s3;
 //
 import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.data.util.DataItemInput;
 /**
  Created by kurila on 02.10.14.
  */
-public interface Bucket<T extends DataObject> {
+public interface Bucket<T extends DataObject>
+extends DataItemInput<T> {
 	//
 	String getName();
 	//

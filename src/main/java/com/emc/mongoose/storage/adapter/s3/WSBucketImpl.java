@@ -5,8 +5,8 @@ import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
-//
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -21,9 +21,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 /**
  Created by kurila on 02.10.14.
  */
@@ -119,6 +122,14 @@ implements Bucket<T> {
 			}
 		}
 		return reqConf.execute(addr, httpReq);
+	}
+	//
+	HttpResponse getListingPage(final String addr, final String bucketListingMarker)
+	throws IOException {
+		return execute(
+			addr, MutableWSRequest.HTTPMethod.GET, false, bucketListingMarker,
+			WSRequestConfig.PAGE_SIZE
+		);
 	}
 	//
 	@Override
@@ -284,5 +295,30 @@ implements Bucket<T> {
 			LogUtil.exception(LOG, Level.WARN, e, "HTTP request execution failure");
 		}
 		//
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	// DataItemInput<T> implementation /////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	protected final AtomicReference<String> nextMarkerRef = new AtomicReference<>(null);
+	//
+	@Override
+	public T read()
+	throws EOFException, IOException {
+		return null;
+	}
+	//
+	@Override
+	public int read(final List<T> buffer) throws IOException {
+		return 0;
+	}
+	//
+	@Override
+	public void reset()
+	throws IOException {
+	}
+	//
+	@Override
+	public void close()
+	throws IOException {
 	}
 }
