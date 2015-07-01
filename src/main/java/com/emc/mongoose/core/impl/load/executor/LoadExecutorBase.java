@@ -514,6 +514,11 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final void interrupt() {
+		if (currState != null) {
+			if (isLoadExecutorFinished(currState))
+				return;
+		}
+		//
 		if(isInterrupted.compareAndSet(false, true)) {
 			metricsDaemon.interrupt();
 			shutdown();
