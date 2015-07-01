@@ -156,12 +156,12 @@ implements Runnable {
 			try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
 				oos.writeObject(new ArrayList<>(LOAD_STATES.get(currRunId)));
 			}
-			LOG.info(Markers.MSG, "The state of run with run.id: \"{}\" was saved successfully in \"{}\" file",
-				currRunId, fullStateFileName);
+			LOG.info(Markers.MSG, "The state of load job[s] with run.id: \"{}\" " +
+				"was saved successfully in \"{}\" file", currRunId, fullStateFileName);
 			LOAD_STATES.remove(currRunId);
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to save state of run with run.id: \"{}\" to the \"{}\" file",
+				"Failed to save state of load job[s] with run.id: \"{}\" to the \"{}\" file",
 				currRunId, fullStateFileName);
 		}
 	}

@@ -415,14 +415,14 @@ implements LoadExecutor<T> {
 						reqBytes.mark(state.getCountBytes());
 						currState = state;
 						if (isLoadExecutorFinished(currState)) {
-							LOG.info(Markers.MSG, "<{}>: nothing to do more", getName());
+							LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
 							return;
 						}
 						break;
 					}
 				}
 			} else {
-				LOG.info(Markers.MSG, "File with state of run with run.id: \"{}\" wasn't found. Starting new run...",
+				LOG.debug(Markers.MSG, "File with state of run with run.id: \"{}\" wasn't found. Starting new run...",
 					RunTimeConfig.getContext().getRunId());
 			}
 			super.start();
@@ -500,14 +500,14 @@ implements LoadExecutor<T> {
 				DESERIALIZED_STATES.put(runTimeConfig.getRunId(), loadStates);
 			}
 		} catch (final FileNotFoundException e) {
-			LOG.debug(Markers.MSG, "File with state of run with run.id: \"{}\" wasn't found. " +
+			LOG.debug(Markers.MSG, "File with state of load job[s] with run.id: \"{}\" wasn't found. " +
 				"Starting new run...", runTimeConfig.getRunId());
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to load state of run with run.id: \"{}\" from \"{}\" file." +
+				"Failed to load state of load job[s] with run.id: \"{}\" from \"{}\" file." +
 				"Starting new run...", runTimeConfig.getRunId(), fullStateFileName);
 		} catch (final ClassNotFoundException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of run." +
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of load job[s]." +
 				"Starting new run...");
 		}
 	}
