@@ -4,7 +4,6 @@ import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.model.AsyncConsumer;
@@ -13,12 +12,13 @@ import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.Storage;
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
+import com.emc.mongoose.storage.mock.api.net.SocketEventDispatcher;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
 import com.emc.mongoose.storage.mock.impl.net.BasicSocketEventDispatcher;
 import com.emc.mongoose.storage.mock.impl.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.request.APIRequestHandlerMapper;
 import com.emc.mongoose.storage.mock.impl.net.BasicWSMockConnFactory;
-import com.emc.mongoose.storage.mock.impl.stats.BasicIOStats;
+import com.emc.mongoose.storage.mock.impl.stats.BasicStorageIOStats;
 //
 import org.apache.commons.collections4.map.LRUMap;
 //
@@ -46,13 +46,12 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
 /**
  * Created by olga on 28.01.15.
  */
@@ -61,10 +60,10 @@ extends LRUMap<String, T>
 implements Storage<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final ExecutorService multiSocketSvc;
+	private final SocketEventDispatcher sockEvtDispatchers[] ;
 	private final HttpAsyncService protocolHandler;
 	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
-	private final int portStart, countHeads;
+	private final int portStart;
 	private final RunTimeConfig runTimeConfig;
 	private final IOStats ioStats;
 	//
@@ -74,38 +73,36 @@ implements Storage<T> {
 	throws IOException {
 		super(runTimeConfig.getStorageMockCapacity());
 		this.runTimeConfig = runTimeConfig;
-		createConsumer = new AsyncConsumerBase<T>(
-			(Class<T>) BasicWSObjectMock.class, runTimeConfig, Long.MAX_VALUE, true
-		) {
-			{ setDaemon(true); setName("createQueueWorker"); start(); }
+		final int
+			maxQueueSize = runTimeConfig.getRunRequestQueueSize(),
+			submTimeOutMilliSec = runTimeConfig.getRunSubmitTimeOutMilliSec();
+		createConsumer = new AsyncConsumerBase<T>(Long.MAX_VALUE, maxQueueSize, submTimeOutMilliSec) {
+			{ setDaemon(true); setName("asyncCreateWorker"); start(); }
 			@Override
 			protected final void submitSync(final T dataItem)
 			throws InterruptedException, RemoteException {
 				put(dataItem.getId(), dataItem);
 			}
 		};
-		deleteConsumer = new AsyncConsumerBase<T>(
-			(Class<T>) BasicWSObjectMock.class, runTimeConfig, Long.MAX_VALUE, true
-		) {
-			{ setDaemon(true); setName("deleteQueueWorker"); start(); }
+		deleteConsumer = new AsyncConsumerBase<T>(Long.MAX_VALUE, maxQueueSize, submTimeOutMilliSec) {
+			{ setDaemon(true); setName("asyncDeleteWorker"); start(); }
 			@Override
 			protected final void submitSync(final T dataItem)
 			throws InterruptedException, RemoteException {
 				remove(dataItem.getId());
 			}
 		};
-		ioStats = new BasicIOStats(runTimeConfig, this);
-		countHeads = runTimeConfig.getStorageMockHeadCount();
+		ioStats = new BasicStorageIOStats(runTimeConfig, this);
+		sockEvtDispatchers = new SocketEventDispatcher[runTimeConfig.getStorageMockHeadCount()];
 		portStart = runTimeConfig.getApiTypePort(runTimeConfig.getApiName());
 		LOG.info(
 			Markers.MSG, "Starting with {} heads and capacity of {}",
-			countHeads, runTimeConfig.getStorageMockCapacity()
+			sockEvtDispatchers.length, runTimeConfig.getStorageMockCapacity()
 		);
 		// connection config
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
-			.setBufferSize(2 * BUFF_SIZE_LO)
-			.setFragmentSizeHint(0)
+			.setBufferSize(BUFF_SIZE_LO)
 			.build();
 		connFactory = new BasicWSMockConnFactory(runTimeConfig, connConfig);
 		// Set up the HTTP protocol processor
@@ -138,9 +135,6 @@ implements Storage<T> {
 		);
 		// Register the default handler for all URIs
 		protocolHandler = new HttpAsyncService(httpProc, apiReqHandlerMapper);
-		multiSocketSvc = Executors.newFixedThreadPool(
-			countHeads, new GroupThreadFactory("cinderellaHead")
-		);
 	}
 	//
 	@Override
@@ -157,7 +151,9 @@ implements Storage<T> {
 		if(!dataFilePath.isEmpty()) {
 			try(
 				final BufferedReader
-					bufferReader = new BufferedReader(new FileReader(dataFilePath))
+					bufferReader = Files.newBufferedReader(
+						Paths.get(dataFilePath), StandardCharsets.UTF_8
+					)
 			) {
 				String s;
 				while((s = bufferReader.readLine()) != null) {
@@ -181,44 +177,72 @@ implements Storage<T> {
 			}
 		}
 		//
-		for(int nextPort = portStart; nextPort < portStart + countHeads; nextPort ++){
+		int nextPort;
+		for(int i = 0; i < sockEvtDispatchers.length; i ++) {
+			nextPort = portStart + i;
 			try {
-				multiSocketSvc.submit(
-					new BasicSocketEventDispatcher(
-						runTimeConfig, protocolHandler, nextPort, connFactory, ioStats
-					)
+				sockEvtDispatchers[i] = new BasicSocketEventDispatcher(
+					runTimeConfig, protocolHandler, nextPort, connFactory, ioStats
 				);
+				sockEvtDispatchers[i].start();
 			} catch(final IOReactorException e) {
 				LogUtil.exception(
 					LOG, Level.ERROR, e, "Failed to start the head at port #{}", nextPort
 				);
 			}
 		}
-		if(countHeads > 1) {
+		if(sockEvtDispatchers.length > 1) {
 			LOG.info(Markers.MSG,"Listening the ports {} .. {}",
-				portStart, portStart + countHeads - 1);
+				portStart, portStart + sockEvtDispatchers.length - 1);
 		} else {
 			LOG.info(Markers.MSG,"Listening the port {}", portStart);
 		}
-		multiSocketSvc.shutdown();
 		//
 		try {
-			final long timeOutValue = runTimeConfig.getLoadLimitTimeValue();
-			final TimeUnit timeUnit = runTimeConfig.getLoadLimitTimeUnit();
-			if(timeOutValue > 0) {
-				multiSocketSvc.awaitTermination(timeOutValue, timeUnit);
-			} else {
-				multiSocketSvc.awaitTermination(Long.MAX_VALUE, timeUnit);
+			for(final SocketEventDispatcher sockEvtDispatcher : sockEvtDispatchers) {
+				if(sockEvtDispatcher != null) {
+					sockEvtDispatcher.join();
+				}
 			}
 		} catch (final InterruptedException e) {
 			LOG.info(Markers.MSG, "Interrupting the Cinderella");
 		} finally {
+			//
 			try {
 				createConsumer.close();
-				deleteConsumer.close();
-				ioStats.close();
+				LOG.debug(Markers.MSG, "Create consumer closed successfully");
 			} catch(final IOException e) {
-				LogUtil.exception(LOG, Level.WARN, e, "Closing I/O stats failure");
+				LogUtil.exception(LOG, Level.WARN, e, "I/O failure on close");
+			}
+			//
+			try {
+				deleteConsumer.close();
+				LOG.debug(Markers.MSG, "Delete consumer closed successfully");
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "I/O failure on close");
+			}
+			//
+			for(final SocketEventDispatcher sockEventDispatcher : sockEvtDispatchers) {
+				if(sockEventDispatcher != null) {
+					try {
+						sockEventDispatcher.close();
+						LOG.debug(
+							Markers.MSG, "Socket event dispatcher \"{}\" closed successfully",
+							sockEventDispatcher
+						);
+					} catch(final IOException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Closing socket event dispatcher \"{}\" failure",
+							sockEventDispatcher
+						);
+					}
+				}
+			}
+			try {
+				ioStats.close();
+				LOG.debug(Markers.MSG, "Storage I/O stats daemon closed successfully");
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Closing storage I/O stats daemon failure");
 			}
 		}
 	}

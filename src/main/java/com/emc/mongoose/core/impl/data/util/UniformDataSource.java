@@ -1,11 +1,11 @@
-package com.emc.mongoose.core.impl.data.src;
+package com.emc.mongoose.core.impl.data.util;
 // mongoose-common
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api
-import com.emc.mongoose.core.api.data.src.DataSource;
+import com.emc.mongoose.core.api.data.util.DataSource;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import org.apache.logging.log4j.Level;

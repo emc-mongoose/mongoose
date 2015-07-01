@@ -39,11 +39,7 @@ implements LoadBuilderClient<T, U> {
 	protected FileProducer<T> srcProducer = null;
 	protected String[] dataNodeAddrs = null;
 	protected volatile RunTimeConfig runTimeConfig;
-	protected volatile RequestConfig<T> reqConf;
-	//
-	{
-		reqConf = getDefaultRequestConfig();
-	}
+	protected volatile RequestConfig<T> reqConf = getDefaultRequestConfig();
 	//
 	public LoadBuilderClientBase()
 	throws IOException {
@@ -61,7 +57,7 @@ implements LoadBuilderClient<T, U> {
 		for(final String serverAddr : remoteServers) {
 			LOG.info(Markers.MSG, "Resolving service @ \"{}\"...", serverAddr);
 			loadBuilderSvc = resolve(serverAddr);
-			nextInstanceN = loadBuilderSvc.getLastInstanceNum();
+			nextInstanceN = loadBuilderSvc.getNextInstanceNum();
 			if(nextInstanceN > maxLastInstanceN) {
 				maxLastInstanceN = nextInstanceN;
 			}
@@ -71,7 +67,7 @@ implements LoadBuilderClient<T, U> {
 		setProperties(runTimeConfig);
 		//
 		for(final String serverAddr : remoteServers) {
-			get(serverAddr).setLastInstanceNum(maxLastInstanceN);
+			get(serverAddr).setNextInstanceNum(maxLastInstanceN);
 		}
 	}
 	//
@@ -146,6 +142,14 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public final LoadBuilderClient<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws ClassCastException, RemoteException {
+		try {
+			this.reqConf.close(); // see jira ticket #437
+		} catch(final IOException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to close the replacing req config instance #{}",
+				hashCode()
+			);
+		}
 		this.reqConf = reqConf;
 		return this;
 	}
@@ -262,7 +266,7 @@ implements LoadBuilderClient<T, U> {
 			nextBuilder = get(addr);
 			nextBuilder.setUpdatesPerItem(count);
 		}
-		return null;
+		return this;
 	}
 	//
 	@Override
@@ -296,7 +300,7 @@ implements LoadBuilderClient<T, U> {
 	public String toString() {
 		StringBuilder strBuilder = new StringBuilder(reqConf.toString());
 		try {
-			strBuilder.append('-').append(get(keySet().iterator().next()).getLastInstanceNum());
+			strBuilder.append('-').append(get(keySet().iterator().next()).getNextInstanceNum());
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to make load builder string");
 		}

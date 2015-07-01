@@ -18,11 +18,11 @@ extends AbstractHttpMessage
 implements MutableWSResponse {
 	@Override
 	public ProtocolVersion getProtocolVersion() {
-		return null;
+		return null; // achtung
 	}
 	@Override
 	public StatusLine getStatusLine() {
-		return null;
+		return null; // achtung
 	}
 	//
 	@Override
@@ -44,14 +44,14 @@ implements MutableWSResponse {
 	}
 	@Override
 	public HttpEntity getEntity() {
-		return null;
+		return null; // achtung
 	}
 	@Override
 	public void setEntity(final HttpEntity entity) {
 	}
 	@Override
 	public Locale getLocale() {
-		return null;
+		return null; // achtung
 	}
 	@Override
 	public void setReasonPhraseCatalog(final ReasonPhraseCatalog catalog) {

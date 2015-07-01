@@ -1,9 +1,10 @@
 package com.emc.mongoose.core.api.data;
 //
-import com.emc.mongoose.core.api.data.src.DataSource;
+import com.emc.mongoose.core.api.data.util.DataSource;
 //
 import java.io.Externalizable;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 /**
@@ -27,9 +28,22 @@ extends ReadableByteChannel, Externalizable {
 	//
 	void setDataSource(final DataSource dataSrc, final int layerNum);
 	//
-	long write(final WritableByteChannel chanDst)
+	int write(final WritableByteChannel chanDst)
 	throws IOException;
 	//
-	boolean equals(final ReadableByteChannel chanSrc)
+	long writeFully(final WritableByteChannel chanDst)
 	throws IOException;
+	//
+	long writeRange(final WritableByteChannel chanDst, final long relOffset, final long len)
+	throws IOException;
+	//
+	int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
+	throws IOException;
+	//
+	boolean readAndVerifyFully(final ReadableByteChannel chanSrc)
+	throws IOException;
+	//
+	boolean readAndVerifyRange(
+		final ReadableByteChannel chanSrc, final long relOffset, final long len
+	) throws IOException;
 }

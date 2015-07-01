@@ -59,13 +59,13 @@ implements WSLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public final int getLastInstanceNum() {
-		return LoadExecutor.LAST_INSTANCE_NUM.get();
+	public final int getNextInstanceNum() {
+		return LoadExecutor.NEXT_INSTANCE_NUM.get();
 	}
 	//
 	@Override
-	public final void setLastInstanceNum(final int instanceN) {
-		LoadExecutor.LAST_INSTANCE_NUM.set(instanceN);
+	public final void setNextInstanceNum(final int instanceN) {
+		LoadExecutor.NEXT_INSTANCE_NUM.set(instanceN);
 	}
 	//
 	@Override

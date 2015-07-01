@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.mock.impl.data;
 //
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.UniformData;
-import com.emc.mongoose.core.impl.data.src.UniformDataSource;
+import com.emc.mongoose.core.impl.data.util.UniformDataSource;
 //
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //
@@ -63,13 +63,13 @@ implements WSObjectMock {
 	}
 	//
 	@Override
-	public final synchronized long write(final WritableByteChannel chanOut)
+	public final synchronized long writeFully(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
 		if(maskRangesPending.isEmpty()) {
-			return write(chanOut, 0, size);
+			return writeRange(chanOut, 0, size);
 		} else {
 			long writtenCount = 0;
 			for(int i = 0; i < countRangesTotal; i++) {
@@ -80,13 +80,13 @@ implements WSObjectMock {
 						offset + rangeOffset, rangeSize, currLayerIndex + 1,
 						UniformDataSource.DEFAULT
 					);
-					writtenCount += updatedRange.write(chanOut);
+					writtenCount += updatedRange.writeFully(chanOut);
 				} else { // previous layer of updated ranges
 					updatedRange = new UniformData(
 						offset + rangeOffset, rangeSize, currLayerIndex,
 						UniformDataSource.DEFAULT
 					);
-					writtenCount += updatedRange.write(chanOut);
+					writtenCount += updatedRange.writeFully(chanOut);
 				}
 			}
 			return writtenCount;

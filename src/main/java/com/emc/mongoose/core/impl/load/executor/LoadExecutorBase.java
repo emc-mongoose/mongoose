@@ -17,19 +17,20 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.src.DataSource;
+import com.emc.mongoose.core.api.data.util.DataSource;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
-// mongoose-core-impl.jar
 import com.emc.mongoose.core.api.load.model.LoadState;
+// mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
+import com.emc.mongoose.core.impl.load.model.PersistentAccumulatorProducer;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
-//
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
+//
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -68,11 +69,15 @@ public abstract class LoadExecutorBase<T extends DataItem>
 extends AsyncConsumerBase<T>
 implements LoadExecutor<T> {
 	//
-	private static final Logger LOG = LogManager.getLogger();
-	private static final Map<String, List<LoadState>> DESERIALIZED_STATES = new ConcurrentHashMap<>();
+	private final static Logger LOG = LogManager.getLogger();
+	private final static int RELEASE_TIMEOUT_MILLISEC = 100;
+	private final static Map<String, List<LoadState>> DESERIALIZED_STATES = new ConcurrentHashMap<>();
 	//
-	protected final int loadNum, connCountPerNode, storageNodeCount;
+	protected final int instanceNum, connCountPerNode, storageNodeCount;
 	protected final String storageNodeAddrs[];
+	//
+	protected final Class<T> dataCls;
+	protected final RunTimeConfig rtConfig;
 	//
 	protected final DataSource dataSrc;
 	protected final RequestConfig<T> reqConfigCopy;
@@ -80,6 +85,7 @@ implements LoadExecutor<T> {
 	//
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
+	protected volatile PersistentAccumulatorProducer<T> itemsBuff = null;
 	//
 	private final long maxCount;
 	private final int totalConnCount;
@@ -108,7 +114,7 @@ implements LoadExecutor<T> {
 			@Override
 			public final void run() {
 				final long metricsUpdatePeriodMilliSec = TimeUnit.SECONDS.toMillis(
-					runTimeConfig.getLoadMetricsPeriodSec()
+					rtConfig.getLoadMetricsPeriodSec()
 				);
 				try {
 					if(metricsUpdatePeriodMilliSec > 0) {
@@ -135,11 +141,7 @@ implements LoadExecutor<T> {
 					while(!isClosed.get()) {
 						// 1st check for done condition
 						if(isDoneAllSubm() || isDoneMaxCount()) {
-							if(
-								lock.tryLock(
-									runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS
-								)
-							) {
+							if(lock.tryLock(RELEASE_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS)) {
 								try {
 									condProducerDone.signalAll();
 									LOG.debug(
@@ -158,7 +160,7 @@ implements LoadExecutor<T> {
 						}
 						// try to get a task for releasing into the pool
 						spentIOTask = ioTaskSpentQueue.poll(
-							submTimeOutMilliSec, TimeUnit.MILLISECONDS
+							RELEASE_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
 						);
 						// release the next task if necessary
 						if(spentIOTask != null) {
@@ -181,17 +183,22 @@ implements LoadExecutor<T> {
 	//
 	protected LoadExecutorBase(
 		final Class<T> dataCls,
-		final RunTimeConfig runTimeConfig, final RequestConfig<T> reqConfig, final String[] addrs,
+		final RunTimeConfig rtConfig, final RequestConfig<T> reqConfig, final String[] addrs,
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
-		super(dataCls, runTimeConfig, maxCount);
+		super(
+			maxCount, rtConfig.getRunRequestQueueSize(),
+			rtConfig.getRunSubmitTimeOutMilliSec()
+		);
 		//
-		loadNum = LAST_INSTANCE_NUM.getAndIncrement();
+		this.dataCls = dataCls;
+		this.rtConfig = rtConfig;
+		instanceNum = NEXT_INSTANCE_NUM.getAndIncrement();
 		storageNodeCount = addrs.length;
 		//
 		setName(
-			Integer.toString(loadNum) + '-' +
+			Integer.toString(instanceNum) + '-' +
 				StringUtils.capitalize(reqConfig.getAPI().toLowerCase()) + '-' +
 				StringUtils.capitalize(reqConfig.getLoadType().toString().toLowerCase()) +
 				(maxCount > 0 ? Long.toString(maxCount) : "") + '-' +
@@ -210,12 +217,28 @@ implements LoadExecutor<T> {
 		}
 		loadType = reqConfig.getLoadType();
 		//
-		mBeanServer = ServiceUtils.getMBeanServer(runTimeConfig.getRemotePortExport());
-		jmxReporter = JmxReporter.forRegistry(metrics)
-			//.convertDurationsTo(TimeUnit.MICROSECONDS)
-			//.convertRatesTo(TimeUnit.SECONDS)
-			.registerWith(mBeanServer)
-			.build();
+		final String runMode = rtConfig.getRunMode();
+		final boolean flagServeRemoteIfStandalone = rtConfig.getFlagServeIfNotLoadServer();
+		if(Constants.RUN_MODE_STANDALONE.equals(runMode) && !flagServeRemoteIfStandalone) {
+			LOG.debug(
+				Markers.MSG, "{}: running in the \"{}\" mode, remote serving is disabled",
+				getName(), runMode
+			);
+			mBeanServer = null;
+			jmxReporter = null;
+		} else {
+			LOG.debug(
+				Markers.MSG, "{}: running in the \"{}\" mode, remote serving flag is \"{}\"",
+				getName(), runMode, flagServeRemoteIfStandalone
+			);
+			mBeanServer = ServiceUtils.getMBeanServer(rtConfig.getRemotePortExport());
+			jmxReporter = JmxReporter.forRegistry(metrics)
+				//.convertDurationsTo(TimeUnit.MICROSECONDS)
+				//.convertRatesTo(TimeUnit.SECONDS)
+				.registerWith(mBeanServer)
+				.build();
+			jmxReporter.start();
+		}
 		//
 		this.connCountPerNode = connCountPerNode;
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
@@ -225,7 +248,6 @@ implements LoadExecutor<T> {
 			activeTasksStats.put(addr, new AtomicInteger(0));
 		}
 		ioTaskSpentQueue = new ArrayBlockingQueue<>(maxQueueSize);
-		// create and configure the connection manager
 		dataSrc = reqConfig.getDataSource();
 		//
 		if(listFile != null && listFile.length() > 0) {
@@ -292,8 +314,7 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final void logMetrics(final Marker logMarker) {
-		//
-		// duration when Mongoose did it's job
+		// duration when load is done
 		final double elapsedTime = (currState != null) ?
 			currState.getLoadElapsedTimeUnit().
 					toNanos(currState.getLoadElapsedTimeValue()) + (System.nanoTime() - tsStart.get())
@@ -373,9 +394,9 @@ implements LoadExecutor<T> {
 			counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
 			counterReqFail = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_FAIL));
 			throughPut = metrics.register(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_TP),
-					new Meter(userClock));
+				new Meter(userClock));
 			reqBytes = metrics.register(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW),
-					new Meter(userClock));
+				new Meter(userClock));
 			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
 			final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
@@ -383,13 +404,13 @@ implements LoadExecutor<T> {
 						.resolve(Constants.STATES_FILE).toString();
 			final File statesFile = new File(fullStateFileName);
 			if (statesFile.exists()) {
-				if (!DESERIALIZED_STATES.containsKey(runTimeConfig.getRunId())) {
+				if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
 					loadStateFromFile(fullStateFileName);
 				}
-				final List<LoadState> loadStates = DESERIALIZED_STATES.get(runTimeConfig.getRunId());
+				final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
 				//  apply parameters from loadState to current load executor
 				for (final LoadState state : loadStates) {
-					if (state.getLoadNumber() == loadNum) {
+					if (state.getLoadNumber() == instanceNum) {
 						counterReqFail.inc(state.getCountFail());
 						throughPut.mark(state.getCountSucc());
 						reqBytes.mark(state.getCountBytes());
@@ -401,11 +422,22 @@ implements LoadExecutor<T> {
 				LOG.info(Markers.MSG, "File with state of run with run.id: \"{}\" wasn't found. Starting new run...",
 					RunTimeConfig.getContext().getRunId());
 			}
-			super.start();
+			//
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
+			//
+			super.start();
+			//
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
+				if(itemsBuff != null) {
+					try {
+						itemsBuff.close();
+					} catch(final IOException e) {
+						LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
+					}
+					itemsBuff.start();
+				}
 			} else {
 				//
 				try {
@@ -416,7 +448,6 @@ implements LoadExecutor<T> {
 				}
 			}
 			//
-			jmxReporter.start();
 			metricsDaemon.setName(getName());
 			metricsDaemon.start();
 			//
@@ -452,19 +483,26 @@ implements LoadExecutor<T> {
 		try (final FileInputStream fis = new FileInputStream(fullStateFileName)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
 				LOG.info(Markers.MSG, "Run with run.id: \"{}\" was resumed",
-						runTimeConfig.getRunId());
+						rtConfig.getRunId());
 				final List<LoadState> loadStates = (List<LoadState>) ois.readObject();
-				DESERIALIZED_STATES.put(runTimeConfig.getRunId(), loadStates);
+				DESERIALIZED_STATES.put(rtConfig.getRunId(), loadStates);
 			}
 		} catch (final FileNotFoundException e) {
-			LogUtil.exception(LOG, Level.WARN, e,
-				"File with state of run with run.id: \"{}\" wasn't found. Starting new run...", runTimeConfig.getRunId());
+			LogUtil.exception(
+				LOG, Level.WARN, e,
+				"File with state of run with run.id: \"{}\" wasn't found. Starting new run...",
+				rtConfig.getRunId()
+			);
 		} catch (final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to load state of run with run.id: \"{}\" from \"{}\" file. Starting new run...",
-					runTimeConfig.getRunId(), fullStateFileName);
+			LogUtil.exception(
+				LOG, Level.WARN, e,
+				"Failed to load state of run with the run id \"{}\" from the \"{}\" file, " +
+				"starting new run...", rtConfig.getRunId(), fullStateFileName
+			);
 		} catch (final ClassNotFoundException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of run. Starting new run...");
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to deserialize state of run, starting new run..."
+			);
 		}
 	}
 	//
@@ -475,7 +513,7 @@ implements LoadExecutor<T> {
 			shutdown();
 			// releasing the blocked join() methods, if any
 			try {
-				if(lock.tryLock(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)) {
+				if(lock.tryLock(rtConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)) {
 					try {
 						condProducerDone.signalAll();
 						LOG.debug(Markers.MSG, "{}: done/interrupted signal emitted", getName());
@@ -536,16 +574,31 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	/*@Override
+	@Override
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
 		try {
-			super.submit(dataItem);
+			if(isStarted.get()) {
+				super.submit(dataItem);
+			} else { // accumulate until started
+				synchronized(itemsBuff) {
+					if(itemsBuff == null) {
+						itemsBuff = new PersistentAccumulatorProducer<>(
+							dataCls, rtConfig, this.maxCount
+						);
+						itemsBuff.setConsumer(this);
+						LOG.debug(
+							Markers.MSG, "{}: not started yet, consuming into the temporary file"
+						);
+					}
+				}
+				itemsBuff.submit(dataItem);
+			}
 		} catch(final RejectedExecutionException e) {
 			counterRej.inc();
 			throw e;
 		}
-	}*/
+	}
 	//
 	@Override @SuppressWarnings("unchecked")
 	protected final void submitSync(final T dataItem)
@@ -682,12 +735,13 @@ implements LoadExecutor<T> {
 	@Override
 	public LoadState getLoadState()
 	throws RemoteException {
-		final long prevElapsedTime = currState != null ?
-				currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
+		final long prevElapsedTime = currState == null ?
+			0 :
+			currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue());
 		return new BasicLoadState(
-			loadNum, runTimeConfig, throughPut.getCount(), counterReqFail.getCount(),
-			reqBytes.getCount(), TimeUnit.NANOSECONDS,
-			prevElapsedTime + (System.nanoTime() - tsStart.get())
+			instanceNum, rtConfig, throughPut.getCount(), counterReqFail.getCount(),
+			reqBytes.getCount(), prevElapsedTime + (System.nanoTime() - tsStart.get()),
+			TimeUnit.NANOSECONDS
 		);
 	}
 	//
@@ -696,6 +750,12 @@ implements LoadExecutor<T> {
 	}
 	//
 	private boolean isDoneAllSubm() {
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.debug(
+				Markers.MSG, "{}: all submitted: {}, results: {}, submitted: {}",
+				getName(), isAllSubm.get(), counterResults.get(), counterSubm.getCount()
+			);
+		}
 		return isAllSubm.get() && counterResults.get() >= counterSubm.getCount();
 	}
 	//
@@ -707,6 +767,9 @@ implements LoadExecutor<T> {
 				LOG.debug(
 					Markers.MSG, "Stopped the producer \"{}\" for \"{}\"", producer, getName()
 				);
+			}
+			if(itemsBuff != null) {
+				itemsBuff.interrupt();
 			}
 		} catch(final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to stop the producer: {}", producer);
@@ -736,10 +799,12 @@ implements LoadExecutor<T> {
 				releaseDaemon.interrupt();
 				ioTaskSpentQueue.clear();
 				BasicIOTask.INSTANCE_POOL_MAP.put(this, null); // dispose I/O tasks pool
-				jmxReporter.close();
+				if(jmxReporter != null) {
+					jmxReporter.close();
+				}
 				LOG.debug(Markers.MSG, "JMX reported closed");
 				LoadCloseHook.del(this);
-				DESERIALIZED_STATES.remove(runTimeConfig.getRunId());
+				DESERIALIZED_STATES.remove(rtConfig.getRunId());
 				LOG.debug(Markers.MSG, "\"{}\" closed successfully", getName());
 			}
 		} else {
@@ -792,8 +857,8 @@ implements LoadExecutor<T> {
 		//
 		long t = System.currentTimeMillis(), timeOutMilliSec;
 		if (currState != null) {
-			final long loadTimeLimit = runTimeConfig.getLoadLimitTimeValue();
-			final TimeUnit loadLimitUnit = runTimeConfig.getLoadLimitTimeUnit();
+			final long loadTimeLimit = rtConfig.getLoadLimitTimeValue();
+			final TimeUnit loadLimitUnit = rtConfig.getLoadLimitTimeUnit();
 			if ((currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue())
 					>= loadLimitUnit.toMillis(loadTimeLimit)) && (loadTimeLimit > 0)) {
 				LOG.info(Markers.MSG, "<{}>: nothing to do more", getName());

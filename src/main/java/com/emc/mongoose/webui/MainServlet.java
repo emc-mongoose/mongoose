@@ -26,7 +26,7 @@ extends HttpServlet {
 		request.getSession(true).setAttribute("runmodes", CommonServlet.THREADS_MAP.keySet());
 		request.getSession(true).setAttribute("stopped", CommonServlet.STOPPED_RUN_MODES);
 		request.getSession(true).setAttribute("chartsMap", CommonServlet.CHARTS_MAP);
-		request.setAttribute("runTimeConfig", CommonServlet.getLastRunTimeConfig());
+		request.setAttribute("rtConfig", CommonServlet.getLastRunTimeConfig());
 		try {
 			request.getRequestDispatcher("index.jsp").forward(request, response);
 		} catch (final IOException|ServletException e) {

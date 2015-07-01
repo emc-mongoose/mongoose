@@ -54,12 +54,7 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	@Override
 	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
-			final long ingestByteCount = IOUtils.consumeQuietly(
-				decoder,
-				(int) Math.max(
-					Constants.BUFF_SIZE_LO, Math.min(Constants.BUFF_SIZE_HI, expectedContentSize)
-				)
-			);
+			final long ingestByteCount = IOUtils.consumeQuietly(decoder, expectedContentSize);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.MSG, "Consumed {} bytes", ingestByteCount);
 			}

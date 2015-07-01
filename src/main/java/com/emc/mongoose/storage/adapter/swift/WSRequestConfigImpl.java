@@ -20,9 +20,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.security.NoSuchAlgorithmException;
 //
 /**
@@ -32,19 +30,12 @@ public final class WSRequestConfigImpl<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
-	public final static String
-		//
-		KEY_CONF_AUTH_TOKEN = "api.type.swift.authToken",
-		KEY_CONF_CONTAINER = "api.type.swift.container",
-		KEY_CONF_SVC_BASEPATH = "api.type.swift.serviceBasepath",
-		//
-		KEY_X_AUTH_TOKEN = "X-Auth-Token",
-		KEY_X_AUTH_USER = "X-Auth-User",
-		KEY_X_AUTH_KEY = "X-Auth-Key",
-		KEY_X_VERSIONING = "X-Versions-Location",
-		//
-		DEFAULT_VERSIONS_CONTAINER = "archive";
+	public final static String KEY_CONF_SVC_BASEPATH = "api.type.swift.serviceBasepath";
+	public final static String KEY_X_AUTH_TOKEN = "X-Auth-Token";
+	public final static String KEY_X_AUTH_USER = "X-Auth-User";
+	public final static String KEY_X_AUTH_KEY = "X-Auth-Key";
+	public final static String KEY_X_VERSIONING = "X-Versions-Location";
+	public final static String DEFAULT_VERSIONS_CONTAINER = "archive";
 	//
 	private String uriSvcBasePath = null, uriSvcBaseContainerPath = null;
 	private WSAuthTokenImpl<T> authToken = null;
@@ -80,10 +71,10 @@ extends WSRequestConfigBase<T> {
 			uriSvcBasePath = localConfig.getString(KEY_CONF_SVC_BASEPATH);
 		}
 		if(authToken == null) {
-			setAuthToken(new WSAuthTokenImpl<>(this, localConfig.getString(KEY_CONF_AUTH_TOKEN)));
+			setAuthToken(new WSAuthTokenImpl<>(this, localConfig.getString(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN)));
 		}
 		if(container == null) {
-			setContainer(new WSContainerImpl<>(this, localConfig.getString(KEY_CONF_CONTAINER)));
+			setContainer(new WSContainerImpl<>(this, localConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER)));
 		}
 		//
 		refreshContainerPath();
@@ -165,14 +156,14 @@ extends WSRequestConfigBase<T> {
 			LOG.error(Markers.ERR, "Swift base uri path is not specified");
 		}
 		//
-		if(runTimeConfig.containsKey(KEY_CONF_AUTH_TOKEN)) {
-			authToken = new WSAuthTokenImpl<>(this, runTimeConfig.getString(KEY_CONF_AUTH_TOKEN));
+		if(runTimeConfig.containsKey(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN)) {
+			authToken = new WSAuthTokenImpl<>(this, runTimeConfig.getString(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN));
 		} else {
 			LOG.error(Markers.ERR, "Swift auth token is not specified");
 		}
 		//
-		if(runTimeConfig.containsKey(KEY_CONF_CONTAINER)) {
-			container = new WSContainerImpl<>(this, runTimeConfig.getString(KEY_CONF_CONTAINER));
+		if(runTimeConfig.containsKey(RunTimeConfig.KEY_API_SWIFT_CONTAINER)) {
+			container = new WSContainerImpl<>(this, runTimeConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER));
 		} else {
 			LOG.error(Markers.ERR, "Swift container is not specified");
 		}
@@ -195,15 +186,14 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
-		uriSvcBasePath = String.class.cast(ois.readUnshared());
-		Object t = ois.readUnshared();
+		uriSvcBasePath = String.class.cast(in.readObject());
+		Object t = in.readObject();
 		if(t != null) {
 			setAuthToken(new WSAuthTokenImpl<>(this, String.class.cast(t)));
 		} else {
 			LOG.debug(Markers.MSG, "Note: no auth token has been got from load client side");
 		}
-		t = ois.readUnshared();
+		t = in.readObject();
 		if(t != null) {
 			setContainer(new WSContainerImpl<>(this, String.class.cast(t)));
 		} else {
@@ -215,10 +205,9 @@ extends WSRequestConfigBase<T> {
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
-		oos.writeUnshared(uriSvcBasePath);
-		oos.writeUnshared(authToken == null ? null : authToken.getValue());
-		oos.writeUnshared(container == null ? null : container.getName());
+		out.writeObject(uriSvcBasePath);
+		out.writeObject(authToken == null ? null : authToken.getValue());
+		out.writeObject(container == null ? null : container.getName());
 	}
 	//
 	@Override
@@ -250,8 +239,7 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	public final String getCanonical(final MutableWSRequest httpRequest) {
-		// TODO swift specific things
-		return null;
+		return "";
 	}
 	//
 	@Override
@@ -272,7 +260,7 @@ extends WSRequestConfigBase<T> {
 			throw new IllegalStateException("No auth token was created");
 		}
 		sharedHeaders.updateHeader(new BasicHeader(KEY_X_AUTH_TOKEN, authTokenValue));
-		runTimeConfig.set(KEY_CONF_AUTH_TOKEN, authTokenValue);
+		runTimeConfig.set(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN, authTokenValue);
 		// configure a container
 		if(container == null) {
 			throw new IllegalStateException("Container is not specified");
@@ -283,7 +271,7 @@ extends WSRequestConfigBase<T> {
 		} else {
 			container.create(storageNodeAddrs[0]);
 			if(container.exists(storageNodeAddrs[0])) {
-				runTimeConfig.set(KEY_CONF_CONTAINER, containerName);
+				runTimeConfig.set(RunTimeConfig.KEY_API_SWIFT_CONTAINER, containerName);
 			} else {
 				throw new IllegalStateException(
 					String.format("Container \"%s\" still doesn't exist", containerName)

@@ -17,7 +17,7 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.src.DataSource;
+import com.emc.mongoose.core.api.data.util.DataSource;
 // mongoose-core-impl
 import com.emc.mongoose.core.impl.data.RangeLayerData;
 import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
@@ -72,13 +72,10 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Constructor;
 import java.net.URISyntaxException;
-import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
@@ -110,13 +107,10 @@ implements WSRequestConfig<T> {
 		return newInstanceFor(RunTimeConfig.getContext().getApiName());
 	}
 	//
-	private final static String
-		FMT_CLS_PATH_ADAPTER_IMPL = "com.emc.mongoose.storage.adapter.%s.WSRequestConfigImpl";
-	//
 	@SuppressWarnings("unchecked")
 	public static WSRequestConfigBase newInstanceFor(final String api) {
 		WSRequestConfigBase reqConf = null;
-		final String apiImplClsFQN = String.format(FMT_CLS_PATH_ADAPTER_IMPL, api.toLowerCase());
+		final String apiImplClsFQN = PACKAGE_IMPL_BASE + "." + api.toLowerCase() + "." + ADAPTER_CLS;
 		try {
 			final Class apiImplCls = Class.forName(apiImplClsFQN);
 			final Constructor<WSRequestConfigBase>
@@ -393,21 +387,19 @@ implements WSRequestConfig<T> {
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
-		sharedHeaders = HeaderGroup.class.cast(ois.readUnshared());
+		sharedHeaders = HeaderGroup.class.cast(in.readObject());
 		LOG.trace(Markers.MSG, "Got headers set {}", sharedHeaders);
-		setNameSpace(String.class.cast(ois.readUnshared()));
-		setFileAccessEnabled(Boolean.class.cast(ois.readUnshared()));
+		setNameSpace(String.class.cast(in.readObject()));
+		setFileAccessEnabled(Boolean.class.cast(in.readObject()));
 	}
 	//
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
-		oos.writeUnshared(sharedHeaders);
-		oos.writeUnshared(getNameSpace());
-		oos.writeUnshared(getFileAccessEnabled());
+		out.writeObject(sharedHeaders);
+		out.writeObject(getNameSpace());
+		out.writeObject(getFileAccessEnabled());
 	}
 	//
 	protected void applyObjectId(final T dataItem, final HttpResponse httpResponse) {
@@ -585,16 +577,18 @@ implements WSRequestConfig<T> {
 						}
 						chanIn.setContentDecoder(in);
 						try{
-							verifyPass = dataItem.equals(chanIn);
+							verifyPass = dataItem.readAndVerifyFully(chanIn);
 						} finally {
 							chanIn.close();
 						}
 					} else {
-						final long dataSize = dataItem.getSize();
-						if(dataItem.getSize() != IOUtils.consumeQuietly(in, buffSize)) {
+						final long
+							dataSize = dataItem.getSize(),
+							actualSize = IOUtils.consumeQuietly(in, buffSize);
+						if(dataSize != actualSize) {
 							LOG.debug(
-								Markers.ERR, "Consumed data size is not equal to {}",
-								SizeUtil.formatSize(dataItem.getSize())
+								Markers.ERR, "Consumed data size is not equal to {}: {}",
+								SizeUtil.formatSize(dataSize), SizeUtil.formatSize(actualSize)
 							);
 						}
 					}

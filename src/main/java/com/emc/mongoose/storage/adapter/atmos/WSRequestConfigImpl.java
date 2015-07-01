@@ -8,7 +8,6 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -24,9 +23,7 @@ import org.apache.logging.log4j.Logger;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.util.NoSuchElementException;
@@ -37,8 +34,6 @@ public final class WSRequestConfigImpl<T extends WSObject>
 extends WSRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
-	private final static String KEY_SUBTENANT = "api.type.atmos.subtenant";
 	//
 	public final static String
 		PREFIX_URI ="/rest/", API_TYPE_OBJ = "objects", API_TYPE_FS = "namespace";
@@ -180,9 +175,13 @@ extends WSRequestConfigBase<T> {
 		super.setProperties(runTimeConfig);
 		//
 		try {
-			setSubTenant(new WSSubTenantImpl<>(this, runTimeConfig.getString(KEY_SUBTENANT)));
+			setSubTenant(
+				new WSSubTenantImpl<>(
+					this, runTimeConfig.getString(RunTimeConfig.KEY_API_ATMOS_SUBTENANT)
+				)
+			);
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_SUBTENANT);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_API_ATMOS_SUBTENANT);
 		}
 		//
 		if(runTimeConfig.getStorageFileAccessEnabled()) {
@@ -204,23 +203,21 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
-		final Object t = ois.readUnshared();
+		final Object t = in.readObject();
 		if(t == null) {
 			LOG.debug(Markers.MSG, "Note: no subtenant has got from load client side");
 		} else {
 			setSubTenant(new WSSubTenantImpl<>(this, String.class.cast(t)));
 		}
-		uriBasePath = String.class.cast(ois.readUnshared());
+		uriBasePath = String.class.cast(in.readObject());
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
-		oos.writeUnshared(subTenant == null ? null : subTenant.getValue());
-		oos.writeUnshared(uriBasePath);
+		out.writeObject(subTenant == null ? null : subTenant.getValue());
+		out.writeObject(uriBasePath);
 	}
 	//
 	@Override
@@ -395,7 +392,7 @@ extends WSRequestConfigBase<T> {
 			subTenant.create(storageAddrs[0]);
 		}
 		/*re*/setSubTenant(subTenant);
-		runTimeConfig.set(KEY_SUBTENANT, subTenant.getValue());
+		runTimeConfig.set(RunTimeConfig.KEY_API_ATMOS_SUBTENANT, subTenant.getValue());
 	}
 	//
 	@Override

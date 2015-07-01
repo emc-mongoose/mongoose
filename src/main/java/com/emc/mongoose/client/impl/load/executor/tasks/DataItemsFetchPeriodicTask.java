@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  Created by kurila on 17.12.14.
  */
-public final class FrameFetchPeriodicTask<T extends DataItem>
+public final class DataItemsFetchPeriodicTask<T extends DataItem>
 implements PeriodicTask<Collection<T>> {
 	//
 	private static final Logger LOG = LogManager.getLogger();
@@ -27,7 +27,8 @@ implements PeriodicTask<Collection<T>> {
 	private final LoadSvc<T> loadSvc;
 	private final AtomicReference<Collection<T>> result = new AtomicReference<>();
 	//
-	public FrameFetchPeriodicTask(final LoadSvc<T> loadSvc) {
+	public
+	DataItemsFetchPeriodicTask(final LoadSvc<T> loadSvc) {
 		this.loadSvc = loadSvc;
 	}
 	//

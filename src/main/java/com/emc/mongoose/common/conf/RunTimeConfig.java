@@ -18,9 +18,7 @@ import java.io.Externalizable;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -45,6 +43,8 @@ implements Externalizable {
 		LIST_SEP = ",",
 		STORAGE_PORT_SEP = ":",
 		//
+		PREFIX_KEY_ALIASING = "aliasing.",
+		//
 		KEY_AUTH_ID = "auth.id",
 		KEY_AUTH_SECRET = "auth.secret",
 		//
@@ -58,6 +58,7 @@ implements Externalizable {
 		KEY_DATA_RING_SIZE = "data.buffer.ring.size",
 		KEY_DATA_SRC_FPATH = "data.src.fpath",
 		//
+		KEY_LOAD_SERVERS = "load.servers",
 		KEY_LOAD_THREADS = "load.threads",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
@@ -73,14 +74,26 @@ implements Externalizable {
 		KEY_LOAD_LIMIT_REQSLEEP_MILLISEC = "load.limit.reqSleepMilliSec",
 		KEY_RUN_VERSION = "run.version",
 		//
+		KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER = "remote.serveIfNotLoadServer",
+		KEY_REMOTE_PORT_CONTROL = "remote.port.control",
+		KEY_REMOTE_PORT_EXPORT = "remote.port.export",
+		KEY_REMOTE_PORT_IMPORT = "remote.port.import",
+		KEY_REMOTE_PORT_WEBUI = "remote.port.webui",
+		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
 		KEY_STORAGE_FS_ACCESS = "storage.fsAccess",
 		KEY_STORAGE_SCHEME = "storage.scheme",
 		KEY_STORAGE_NAMESPACE = "storage.namespace",
 		//
+		KEY_STORAGE_MOCK_CAPACITY = "storage.mock.capacity",
+		KEY_STORAGE_MOCK_HEAD_COUNT = "storage.mock.headCount",
+		KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET = "storage.mock.ioThreadsPerSocket",
+		//
 		KEY_API_NAME = "api.name",
 		KEY_API_S3_BUCKET = "api.type.s3.bucket",
-		//
+		KEY_API_ATMOS_SUBTENANT = "api.type.atmos.subtenant",
+		KEY_API_SWIFT_AUTH_TOKEN = "api.type.swift.authToken",
+		KEY_API_SWIFT_CONTAINER = "api.type.swift.container",
 		//  Single
 		KEY_SCENARIO_SINGLE_LOAD = "scenario.type.single.load",
 		//  Chain
@@ -102,8 +115,15 @@ implements Externalizable {
 		RunTimeConfig instance = RunTimeConfig.getContext();
 		if(instance == null) {
 			instance = new RunTimeConfig();
-			instance.set(KEY_RUN_ID, System.getProperty(KEY_RUN_ID));
-			instance.set(KEY_RUN_MODE, System.getProperty(KEY_RUN_MODE));
+			final String
+				runId = System.getProperty(KEY_RUN_ID),
+				runMode = System.getProperty(KEY_RUN_MODE);
+			if(runId != null && runId.length() > 0) {
+				instance.set(KEY_RUN_ID, runId);
+			}
+			if(runMode != null && runMode.length() > 0) {
+				instance.set(KEY_RUN_MODE, runMode);
+			}
 			setContext(instance);
 		}
 	}
@@ -157,6 +177,13 @@ implements Externalizable {
 		return SizeUtil.toSize(getString(key));
 	}
 	//
+	public RunTimeConfig() {
+		loadPropsFromJsonCfgFile(
+			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
+		);
+		loadSysProps();
+	}
+	//
 	public String getJsonProps() {
 		JsonConfigLoader.updateProps(
 			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF), this, false
@@ -203,8 +230,7 @@ implements Externalizable {
 		return getBoolean("run.request.retries");
 	}
 	//
-	public final
-	String getApiName() {
+	public final String getApiName() {
 		return getString(KEY_API_NAME);
 	}
 	//
@@ -216,8 +242,7 @@ implements Externalizable {
 		return getString("auth.id");
 	}
 	//
-	public final
-	String getAuthSecret() {
+	public final String getAuthSecret() {
 		return getString("auth.secret");
 	}
 	//
@@ -229,20 +254,24 @@ implements Externalizable {
 		return SizeUtil.toSize(getString("data.buffer.ring.size"));
 	}
 	//
-		public final int getRemotePortControl() {
-		return getInt("remote.port.control");
+	public final boolean getFlagServeIfNotLoadServer() {
+		return getBoolean(KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER);
+	}
+	//
+	public final int getRemotePortControl() {
+		return getInt(KEY_REMOTE_PORT_CONTROL);
 	}
 	//
 	public final int getRemotePortExport() {
-		return getInt("remote.port.export");
+		return getInt(KEY_REMOTE_PORT_EXPORT);
 	}
 	//
 	public final int getRemotePortImport() {
-		return getInt("remote.port.import");
+		return getInt(KEY_REMOTE_PORT_IMPORT);
 	}
 	//
 	public final int getRemotePortWebUI() {
-		return getInt("remote.port.webui");
+		return getInt(KEY_REMOTE_PORT_WEBUI);
 	}
 	//
 	public final int getLoadMetricsPeriodSec() {
@@ -269,6 +298,8 @@ implements Externalizable {
 		return getBoolean("load.type.read.verifyContent");
 	}
 	//
+	public final int getUpdateCountPerTime() { return getInt(KEY_LOAD_UPDATE_PER_ITEM); }
+	//
 	public final String getStorageProto() {
 		return getString("storage.scheme");
 	}
@@ -293,18 +324,15 @@ implements Externalizable {
 		return getString("run.name");
 	}
 	//
-	public final
-	String getRunVersion() {
+	public final String getRunVersion() {
 		return getString(KEY_RUN_VERSION);
 	}
 	//
-	public final
-	long getLoadLimitCount() {
+	public final long getLoadLimitCount() {
 		return getLong(KEY_DATA_ITEM_COUNT);
 	}
 	//
-	public final
-	float getLoadLimitRate() {
+	public final float getLoadLimitRate() {
 		return getFloat(KEY_LOAD_LIMIT_RATE);
 	}
 	//
@@ -320,8 +348,7 @@ implements Externalizable {
 		return SizeUtil.toSize(getString(KEY_DATA_SIZE_MAX));
 	}
 	//
-	public final
-	float getDataSizeBias() {
+	public final float getDataSizeBias() {
 		return getFloat(KEY_DATA_SIZE_BIAS);
 	}
 	//
@@ -350,8 +377,7 @@ implements Externalizable {
 		return getInt("remote.connection.timeoutMilliSec");
 	}
 	//
-	public final
-	int getSocketTimeOut() {
+	public final int getSocketTimeOut() {
 		return getInt("remote.socket.timeoutMilliSec");
 	}
 	//
@@ -367,8 +393,7 @@ implements Externalizable {
 		return getBoolean("remote.socket.tcpNoDelay");
 	}
 	//
-	public final
-	int getSocketLinger() {
+	public final int getSocketLinger() {
 		return getInt("remote.socket.linger");
 	}
 	//
@@ -385,7 +410,7 @@ implements Externalizable {
 	}
 	//
 	public final String[] getLoadServers() {
-		return getStringArray("load.servers");
+		return getStringArray(KEY_LOAD_SERVERS);
 	}
 	//
 	public final String getDataSrcFPath() {
@@ -404,8 +429,7 @@ implements Externalizable {
 		return getString("scenario.dir");
 	}
 	//
-	public final
-	String getRunId() {
+	public final String getRunId() {
 		return getString(KEY_RUN_ID);
 	}
 	//
@@ -417,17 +441,16 @@ implements Externalizable {
 		return TimeUtil.getTimeValue(getString(KEY_LOAD_LIMIT_TIME));
 	}
 	//
-	public final
-	String getRunMode() {
+	public final String getRunMode() {
 		return getString(KEY_RUN_MODE);
 	}
 	//
 	public final int getStorageMockCapacity() {
-		return getInt("storage.mock.capacity");
+		return getInt(KEY_STORAGE_MOCK_CAPACITY);
 	}
 	//
 	public final int getStorageMockHeadCount() {
-		return getInt("storage.mock.headCount");
+		return getInt(KEY_STORAGE_MOCK_HEAD_COUNT);
 	}
 	//
 	public final int getDataRadixSize() {
@@ -439,7 +462,7 @@ implements Externalizable {
 	}
 	//
 	public final int getStorageMockIoThreadsPerSocket() {
-		return getInt("storage.mock.ioThreadsPerSocket");
+		return getInt(KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET);
 	}
 	//
 	public final int getStorageMockMinConnLifeMilliSec() {
@@ -524,20 +547,16 @@ implements Externalizable {
 				propsMap.put(nextPropName, String.class.cast(nextPropValue));
 			} else if(Number.class.isInstance(nextPropValue)) {
 				propsMap.put(nextPropName, Number.class.cast(nextPropValue).toString());
-			} else if(nextPropValue == null) {
-				log.warn(Markers.ERR, "Property \"{}\" is null");
+			} else if(nextPropValue != null) {
+				propsMap.put(nextPropName, nextPropValue.toString());
 			} else {
-				log.error(
-					Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
-					nextPropValue.getClass().getCanonicalName(), nextPropName
-				);
+				log.debug(Markers.ERR, "Property \"{}\" value is null", nextPropName);
 			}
 		}
 		//
 		log.trace(Markers.MSG, "Sending configuration: {}", propsMap);
 		//
-		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
-		oos.writeUnshared(propsMap);
+		out.writeObject(propsMap);
 		log.debug(Markers.MSG, "Uploaded the properties from client side");
 	}
 	//
@@ -545,9 +564,8 @@ implements Externalizable {
 	public final synchronized void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		final Logger log = LogManager.getLogger();
-		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
 		log.debug(Markers.MSG, "Going to fetch the properties from client side");
-		final HashMap<String, String> confMap = HashMap.class.cast(ois.readUnshared());
+		final HashMap<String, String> confMap = HashMap.class.cast(in.readObject());
 		log.trace(Markers.MSG, "Got the properties from client side: {}", confMap);
 		//
 		final String
@@ -557,26 +575,24 @@ implements Externalizable {
 			// put the properties into the System
 			Object nextPropValue;
 			final RunTimeConfig localRunTimeConfig = CONTEXT_CONFIG.get();
-			for(final String nextPropName: confMap.keySet()) {
+			for(final String nextPropName : confMap.keySet()) {
 				// to not to override the import/export ports from the load client side
-				nextPropValue = nextPropName.startsWith("remote.port.export") || nextPropName.startsWith("remote.port.import") ?
-					localRunTimeConfig.getString(nextPropName) :
-					confMap.get(nextPropName);
+				if(nextPropName.startsWith(KEY_REMOTE_PORT_EXPORT) || nextPropName.startsWith(KEY_REMOTE_PORT_IMPORT)) {
+					nextPropValue = localRunTimeConfig.getProperty(nextPropName);
+				} else {
+					nextPropValue = confMap.get(nextPropName);
+				}
 				log.trace(Markers.MSG, "Read property: \"{}\" = \"{}\"", nextPropName, nextPropValue);
 				if(List.class.isInstance(nextPropValue)) {
 					setProperty(
 						nextPropName,
 						StringUtils.join(List.class.cast(nextPropValue), LIST_SEP)
 					);
-				} else if(String.class.isInstance(nextPropValue)) {
-					setProperty(nextPropName, String.class.cast(nextPropValue));
-				} else if(nextPropValue == null) {
-					log.debug(Markers.ERR, "Property \"{}\" is null", nextPropName);
+				} else if(nextPropValue != null) {
+					setProperty(nextPropName, nextPropValue);
+					//setProperty(nextPropName, String.class.cast(nextPropValue));
 				} else {
-					log.error(
-						Markers.ERR, "Unexpected type \"{}\" for property \"{}\"",
-						nextPropValue.getClass().getCanonicalName(), nextPropName
-					);
+					log.debug(Markers.ERR, "Property \"{}\" value is null", nextPropName);
 				}
 			}
 			CONTEXT_CONFIG.set(this);
@@ -594,8 +610,8 @@ implements Externalizable {
 	public synchronized void loadPropsFromJsonCfgFile(final Path propsDir) {
 		JsonConfigLoader.loadPropsFromJsonCfgFile(propsDir, this);
         for (String key : mongooseKeys) {
-            if (key.startsWith("aliasing.")) {
-                final String correctKey = key.replaceAll("aliasing.", "");
+            if (key.startsWith(PREFIX_KEY_ALIASING)) {
+                final String correctKey = key.replaceAll(PREFIX_KEY_ALIASING, "");
                 MAP_OVERRIDE.put(correctKey, getStringArray(key));
             }
         }

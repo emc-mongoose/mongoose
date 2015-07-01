@@ -3,7 +3,6 @@ package com.emc.mongoose.server.impl.load.model;
 //import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.core.api.data.DataItem;
 //
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
@@ -19,7 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
  Created by kurila on 25.06.14.
  A log consumer which accumulates the data items until the accumulated data is externally taken.
  */
-public final class FrameBuffConsumer<T extends DataItem>
+public final class FrameBuffConsumer<T>
 extends AsyncConsumerBase<T>
 implements RecordFrameBuffer<T> {
 	//
@@ -32,15 +31,18 @@ implements RecordFrameBuffer<T> {
 	public FrameBuffConsumer(
 		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount
 	) {
-		super(dataCls, runTimeConfig, maxCount, true);
+		super(
+			maxCount, runTimeConfig.getRunRequestQueueSize(),
+			runTimeConfig.getRunSubmitTimeOutMilliSec()
+		);
 		setName(Thread.currentThread().getName() + "-" + getClass().getSimpleName());
 		start();
 	}
 	//
 	@Override
-	protected final void submitSync(final T dataItem)
+	protected final void submitSync(final T item)
 	throws InterruptedException, RemoteException {
-		buff.get().add(dataItem);
+		buff.get().add(item);
 	}
 	//
 	@Override

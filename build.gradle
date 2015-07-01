@@ -7,6 +7,23 @@ apply plugin: 'idea'
 apply plugin: 'eclipse'
 apply plugin: 'war'
 
+buildscript {
+	repositories {
+		jcenter()
+		maven {
+			url 'http://asdrepo.isus.emc.com:8081/artifactory/repo'
+			credentials {
+				username = "${artifactory_user}"
+				password = "${artifactory_password}"
+			}
+		}
+	}
+	dependencies {
+		classpath "org.jfrog.buildinfo:build-info-extractor-gradle:3.1.1"
+	}
+}
+apply plugin: "com.jfrog.artifactory"
+
 sourceCompatibility = '1.7'
 
 distsDirName = 'dist'
@@ -179,14 +196,15 @@ sourceSets {
 		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
 		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
 	}
-	examples {
+	util {
 		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'run', 'examples'].join(File.separator))
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'util'].join(File.separator))
 			include '**'
 		}
-		compileClasspath += sourceSets.common.output
+		compileClasspath += sourceSets.common.output + sourceSets.storageMock.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 		compileClasspath += sourceSets.client.output + sourceSets.cli.output
+		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Tests ///////////////////////////////////////////////////////////////////////////////
@@ -393,11 +411,13 @@ dependencies {
 		library.runtime_logging,
 	)
 
-	examplesCompile (
+	utilCompile (
 		library.log4j_api_plus_core,
 		library.commons_configuration,
+		library.commons_collections4,
+		library.httpcore,
 	)
-	examplesRuntime (
+	utilRuntime (
 		library.runtime_logging,
 		library.commons_cli,
 	)
@@ -428,7 +448,7 @@ configurations {
 		storageMockCompile,
 		webuiCompile,
 		cliCompile,
-		examplesCompile,
+		utilCompile,
 	)
 	runtime.extendsFrom(
 		commonRuntime,
@@ -445,7 +465,7 @@ configurations {
 		storageMockRuntime,
 		webuiRuntime,
 		cliRuntime,
-		examplesRuntime,
+		utilRuntime,
 	)
 	testCompile.extendsFrom(
 		compile,
@@ -797,17 +817,17 @@ task cliJar(type: Jar) {
 	}
 }
 
-task examplesJar(type: Jar) {
+task utilJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, clientJar
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
-	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
-	archiveName "${baseName}-examples.${extension}"
-	from sourceSets.examples.output
+	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar, storageMockJar
+	archiveName "${baseName}-util.${extension}"
+	from sourceSets.util.output
 	manifest {
 		from sharedManifest
 		attributes(
-			'Implementation-Title': rootProject.name + "-examples",
-			'Main-Class': "com.emc.mongoose.run.examples.Single",
+			'Implementation-Title': rootProject.name + "-util",
+			'Main-Class': "com.emc.mongoose.util.scenario.Sanity",
 			'Class-Path': [
 				clientJar.outputs.files.collect {it.name}.join(' '),
 				commonJar.outputs.files.collect {it.name}.join(' '),
@@ -818,8 +838,9 @@ task examplesJar(type: Jar) {
 				storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
 				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
 				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
+				storageMockJar.outputs.files.collect {it.name}.join(' '),
 				cliJar.outputs.files.collect {it.name}.join(' '),
-				configurations.examplesRuntime.collect {
+				configurations.utilRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
 			].join(' ')
@@ -842,7 +863,7 @@ task testsJar(type: Jar) {
 	dependsOn storageMockJar
 	dependsOn webuiJar
 	dependsOn cliJar
-	dependsOn examplesJar
+	dependsOn utilJar
 
 	archiveName "${baseName}-tests.${extension}"
 	classifier = 'tests'
@@ -866,7 +887,7 @@ task testsJar(type: Jar) {
 				storageMockJar.outputs.files.collect {it.name}.join(' '),
 				webuiJar.outputs.files.collect {it.name}.join(' '),
 				cliJar.outputs.files.collect {it.name}.join(' '),
-				examplesJar.outputs.files.collect {it.name}.join(' '),
+				utilJar.outputs.files.collect {it.name}.join(' '),
 				configurations.testRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
@@ -891,7 +912,7 @@ task dist(type: Tar) {
 	dependsOn storageMockJar
 	dependsOn webuiJar
 	dependsOn cliJar
-	dependsOn examplesJar
+	dependsOn utilJar
 
 	baseName = project.name
 	compression = Compression.GZIP
@@ -930,7 +951,7 @@ task dist(type: Tar) {
 		from storageMockJar.outputs.files
 		from webuiJar.outputs.files
 		from cliJar.outputs.files
-		from examplesJar.outputs.files
+		from utilJar.outputs.files
 		into('scripts') {
 			from { ["src", "main", "resources", "scripts"].join(File.separator) }
 		}
@@ -986,8 +1007,35 @@ task integTest(type: Test) {
 
 build.dependsOn commonJar, coreApiJar, coreImplJar, storageAdapterAtmosJar, storageAdapterS3Jar
 build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, scenarioJar
-build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, examplesJar, testsJar
+build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testsJar
 
 tasks.idea.dependsOn(cleanIdea)
 
 check.dependsOn integTest
+
+artifactory {
+	contextUrl = "${artifactory_contextUrl}"   //The base Artifactory URL if not overridden by the publisher/resolver
+	publish {
+		repository {
+			repoKey = 'vipr-dev-local'
+			username = "${artifactory_user}"
+			password = "${artifactory_password}"
+			maven = true
+
+		}
+	}
+	resolve {
+		repository {
+			repoKey = 'repo'
+			username = "${artifactory_user}"
+			password = "${artifactory_password}"
+			maven = true
+		}
+	}
+}
+
+artifactoryPublish.dependsOn commonJar, coreApiJar, coreImplJar
+artifactoryPublish.dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
+artifactoryPublish.dependsOn serverApiJar, webserverJar, clientJar, scenarioJar, serverImplJar
+artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testsJar
+

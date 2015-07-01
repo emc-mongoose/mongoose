@@ -1,10 +1,10 @@
 package com.emc.mongoose.core.impl.load.model;
-
+//
 import com.emc.mongoose.common.conf.RunTimeConfig;
+//
 import com.emc.mongoose.core.api.load.model.LoadState;
-
+//
 import java.util.concurrent.TimeUnit;
-
 /**
  * Created by gusakk on 19.06.15.
  */
@@ -18,8 +18,10 @@ public class BasicLoadState implements LoadState {
 	private TimeUnit timeUnit;
 	private long timeValue;
 	//
-	public BasicLoadState(int loadNumber, RunTimeConfig runTimeConfig,
-    long countSucc, long countFail, long countBytes, TimeUnit timeUnit, long timeValue) {
+	public BasicLoadState(
+		int loadNumber, RunTimeConfig runTimeConfig, long countSucc, long countFail,
+		long countBytes, long timeValue, TimeUnit timeUnit
+	) {
 		this.loadNumber = loadNumber;
 		this.runTimeConfig = runTimeConfig;
 		this.countSucc = countSucc;

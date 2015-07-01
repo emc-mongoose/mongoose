@@ -1,5 +1,6 @@
 package com.emc.mongoose.common.net;
 // mongoose-common.jar
+import static com.emc.mongoose.common.conf.Constants.*;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -30,7 +31,6 @@ import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.rmi.server.RemoteStub;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
@@ -46,37 +46,9 @@ public final class ServiceUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static int PORT_RMI_CONTROL;
-	static {
-		int tmpPort = Registry.REGISTRY_PORT;
-		try {
-			tmpPort = RunTimeConfig.getContext().getRemotePortControl();
-		} catch(final Exception e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e,
-				"Failed to take remote control port value, will use the default value \"{}\"",
-				tmpPort
-			);
-		} finally {
-			PORT_RMI_CONTROL = tmpPort;
-		}
-	}
+	private final static Map<String, Service> SVC_MAP = new ConcurrentHashMap<>();
 	//
-	private final static File JAR_SELF;
-	static {
-		File jarSelf = null;
-		try {
-			jarSelf = new File(
-				ServiceUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI()
-			);
-		} catch(final URISyntaxException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Determining the launcher path failure");
-		}
-		JAR_SELF = jarSelf;
-
-	}
-	//
-	static {
+	private static void setUpSvcShutdownHook() {
 		Runtime.getRuntime().addShutdownHook(
 			new Thread("remoteSvcShutDownHook") {
 				@Override
@@ -87,31 +59,57 @@ public final class ServiceUtils {
 		);
 	}
 	//
-	private final static Map<String, Service> SVC_MAP;
-	//private final static Registry REGISTRY;
-	static {
-		// set up security manager
+	private static void setUpSecurityManager() {
 		if(System.getSecurityManager() == null) {
 			final SecurityManager sm = new SecurityManager();
 			LOG.trace(Markers.MSG, "New security manager instance created");
 			System.setSecurityManager(sm);
 		}
-		//
-		SVC_MAP = new ConcurrentHashMap<>();
-		// create or use existing registry
-		//Registry registry = null;
-		try {
-			/*registry = */LocateRegistry.createRegistry(PORT_RMI_CONTROL);
-			LOG.debug(Markers.MSG, "RMI registry created");
-		} catch(final RemoteException e) {
+	}
+	//
+	public static boolean isMgmtSvcAllowed() {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		final boolean flagServeIfNotLoadServer = rtConfig.getFlagServeIfNotLoadServer();
+		final String runMode = rtConfig.getRunMode();
+		return
+			flagServeIfNotLoadServer ||
+			RUN_MODE_SERVER.equals(runMode) ||
+			RUN_MODE_COMPAT_SERVER.equals(runMode);
+	}
+	//
+	private static void rmiRegistryInit() {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		if(isMgmtSvcAllowed()) {
 			try {
-				/*registry = */LocateRegistry.getRegistry(PORT_RMI_CONTROL);
-				LOG.info(Markers.MSG, "Reusing already existing RMI registry");
-			} catch(final RemoteException ee) {
-				LOG.fatal(Markers.ERR, "Failed to obtain RMI registry", ee);
+				LocateRegistry.createRegistry(rtConfig.getRemotePortControl());
+				LOG.debug(Markers.MSG, "RMI registry created");
+			} catch(final RemoteException e) {
+				try {
+					LocateRegistry.getRegistry(rtConfig.getRemotePortControl());
+					LOG.info(Markers.MSG, "Reusing already existing RMI registry");
+				} catch(final RemoteException ee) {
+					LOG.fatal(Markers.ERR, "Failed to obtain RMI registry", ee);
+				}
 			}
 		}
-		//REGISTRY = registry;
+	}
+	//
+	public static void mBeanServerInit() {
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		if(isMgmtSvcAllowed()) {
+			getMBeanServer(rtConfig.getRemotePortExport());
+		}
+	}
+	//
+	public static void init() {
+		setUpSvcShutdownHook();
+		setUpSecurityManager();
+		rmiRegistryInit();
+		mBeanServerInit();
+	}
+	//
+	static {
+		init();
 	}
 	//
 	public static String getHostAddr() {
@@ -185,16 +183,16 @@ public final class ServiceUtils {
 	}
 	/**
 	 Get the service created earlier if exists
-	 @param svcName
-	 @return
+	 @param svcName the service name
+	 @return the object representing the service
 	 */
 	public static Service getLocalSvc(final String svcName) {
 		return SVC_MAP.get(svcName);
 	}
 	/**
 	 Connect to server service
-	 @param url
-	 @return
+	 @param url the service URL
+	 @return the object representing the service
 	 */
 	public static Service getRemoteSvc(final String url) {
 		Remote remote = null;
@@ -266,7 +264,7 @@ public final class ServiceUtils {
 				System.setProperty(
 					KEY_RMI_CODEBASE,
 					URLDecoder.decode(
-						JAR_SELF.toURI().toString(), StandardCharsets.UTF_8.displayName()
+						getSelfPath().toURI().toString(), StandardCharsets.UTF_8.displayName()
 					)
 				);
 			} catch(final UnsupportedEncodingException e) {
@@ -335,6 +333,19 @@ public final class ServiceUtils {
 		}
 		//
 		return mBeanServer;
+	}
+	//
+	private static File getSelfPath() {
+		File jarSelf = null;
+		try {
+			jarSelf = new File(
+				ServiceUtils.class.getProtectionDomain().getCodeSource().getLocation().toURI()
+			);
+		} catch(final URISyntaxException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Determining the launcher path failure");
+		}
+		return jarSelf;
+
 	}
 	//
 	public static void shutdown() {

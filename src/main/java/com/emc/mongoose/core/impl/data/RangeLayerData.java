@@ -7,7 +7,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.src.UniformDataSource;
+import com.emc.mongoose.core.impl.data.util.UniformDataSource;
 //
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
@@ -17,9 +17,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
 import java.util.BitSet;
@@ -42,7 +40,8 @@ implements AppendableDataItem, UpdatableDataItem {
 		FMT_MSG_MERGE_MASKS = "{}: move pending ranges \"{}\" to history \"{}\"",
 		STR_EMPTY_MASK = "0";
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	protected final BitSet maskRangesHistory = new BitSet(), maskRangesPending = new BitSet();
+	protected final BitSet
+		maskRangesHistory = new BitSet(Long.SIZE), maskRangesPending = new BitSet(Long.SIZE);
 	protected int currLayerIndex = 0;
 	protected long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,9 +129,8 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeInt(currLayerIndex);
-		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
-		oos.writeUnshared(maskRangesHistory);
-		oos.writeUnshared(maskRangesPending);
+		out.writeLong(maskRangesHistory.isEmpty() ? 0 : maskRangesHistory.toLongArray()[0]);
+		out.writeLong(maskRangesPending.isEmpty() ? 0 : maskRangesPending.toLongArray()[0]);
 	}
 	//
 	@Override
@@ -140,9 +138,8 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		currLayerIndex = in.readInt();
-		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
-		maskRangesHistory.or(BitSet.class.cast(ois.readUnshared()));
-		maskRangesPending.or(BitSet.class.cast(ois.readUnshared()));
+		maskRangesHistory.or(BitSet.valueOf(new long[] { in.readLong() }));
+		maskRangesPending.or(BitSet.valueOf(new long[] { in.readLong() }));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/*public static int log2(long value) {
@@ -177,15 +174,15 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final synchronized boolean equals(final ReadableByteChannel chanSrc)
+	public final synchronized boolean readAndVerifyFully(final ReadableByteChannel chanSrc)
 	throws IOException {
 		// do not go over ranges if there's no updated ones
 		if(maskRangesHistory.isEmpty()) {
 			if(currLayerIndex == 0) {
-				return equals(chanSrc, 0, size);
+				return readAndVerifyRange(chanSrc, 0, size);
 			} else {
 				return new UniformData(offset, size, currLayerIndex, UniformDataSource.DEFAULT)
-					.equals(chanSrc, 0, size);
+					.readAndVerifyRange(chanSrc, 0, size);
 			}
 		}
 		//
@@ -205,7 +202,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				updatedRange = new UniformData(
 					offset + rangeOffset, rangeSize, currLayerIndex + 1, UniformDataSource.DEFAULT
 				);
-				contentEquals = updatedRange.equals(chanSrc, 0, rangeSize);
+				contentEquals = updatedRange.readAndVerifyRange(chanSrc, 0, rangeSize);
 			} else if(currLayerIndex > 1) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(
@@ -216,9 +213,9 @@ implements AppendableDataItem, UpdatableDataItem {
 				updatedRange = new UniformData(
 					offset + rangeOffset, rangeSize, currLayerIndex, UniformDataSource.DEFAULT
 				);
-				contentEquals = updatedRange.equals(chanSrc, 0, rangeSize);
+				contentEquals = updatedRange.readAndVerifyRange(chanSrc, 0, rangeSize);
 			} else {
-				contentEquals = equals(chanSrc, rangeOffset, rangeSize);
+				contentEquals = readAndVerifyRange(chanSrc, rangeOffset, rangeSize);
 			}
 			if(!contentEquals) {
 				LOG.debug(
@@ -307,7 +304,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final synchronized void writeUpdates(final WritableByteChannel chanOut)
+	public final synchronized void writeUpdatedRangesFully(final WritableByteChannel chanOut)
 	throws IOException {
 		final int countRangesTotal = getRangeCount(size);
 		DataItem nextRangeData;
@@ -319,7 +316,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				nextRangeData = new UniformData(
 					offset + rangeOffset, rangeSize, currLayerIndex + 1, UniformDataSource.DEFAULT
 				);
-				nextRangeData.write(chanOut);
+				nextRangeData.writeFully(chanOut);
 			}
 		}
 		// move pending updated ranges to history
@@ -366,7 +363,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final synchronized void writeAugment(final WritableByteChannel chanOut)
+	public final synchronized void writeAugmentFully(final WritableByteChannel chanOut)
 	throws IOException {
 		if(pendingAugmentSize > 0) {
 			final int rangeIndex = size > 0 ? getRangeCount(size) - 1 : 0;
@@ -374,10 +371,10 @@ implements AppendableDataItem, UpdatableDataItem {
 				new UniformData(
 					offset + size, pendingAugmentSize, currLayerIndex + 1,
 					UniformDataSource.DEFAULT
-				).write(chanOut);
+				).writeFully(chanOut);
 				size += pendingAugmentSize;
 			} else { // write from current layer
-				write(chanOut, size, pendingAugmentSize);
+				writeRange(chanOut, size, pendingAugmentSize);
 				size += pendingAugmentSize;
 			}
 			// clean up the appending on success
