@@ -93,7 +93,6 @@ implements Runnable {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
 			} finally {
 				HOOKS_MAP.get(currRunId).remove(loadExecutor);
-				LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
 				//
 				try {
 					final LoadState currState = loadExecutor.getLoadState();
@@ -114,6 +113,7 @@ implements Runnable {
 							try {
 								if (LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
 									try {
+										LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
 										LogUtil.HOOKS_COND.signalAll();
 									} finally {
 										LogUtil.HOOKS_LOCK.unlock();
@@ -148,7 +148,7 @@ implements Runnable {
 		}
 	}
 	//
-	public static void saveCurrState() {
+	private static void saveCurrState() {
 		final String currRunId = RunTimeConfig.getContext().getRunId();
 		final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
 				Constants.DIR_LOG, currRunId).resolve(Constants.STATES_FILE).toString();
