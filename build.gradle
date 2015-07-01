@@ -5,7 +5,7 @@ apply plugin: 'java'
 apply plugin: 'java-library-distribution'
 apply plugin: 'idea'
 apply plugin: 'eclipse'
-apply plugin: 'war'
+apply plugin: 'maven-publish'
 
 buildscript {
 	repositories {
@@ -19,7 +19,6 @@ buildscript {
 		}
 	}
 }
-apply plugin: "maven-publish"
 
 sourceCompatibility = '1.7'
 
@@ -37,10 +36,10 @@ def loadProjectVersionFrom(String sourceFileName) {
 loadProjectVersionFrom confDirName + File.separator + project.name + ".json"
 
 version = ext.version
-group = 'com.emc.mongoose'
+group = 'mongoose'
 
 task wrapper(type: Wrapper) {
-	gradleVersion = '1.7'
+	gradleVersion = '2.4'
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -784,32 +783,31 @@ task cliJar(type: Jar) {
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
 	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
 	dependsOn clientJar, scenarioJar, webuiJar
-	appendix "cli"
-	archiveName "${baseName}-${appendix}.${extension}"
+	archiveName "${baseName}.${extension}"
 	from sourceSets.cli.output
 	manifest {
 		from sharedManifest
 		attributes(
-				'Implementation-Title': rootProject.name + "-cli",
-				'Main-Class': "com.emc.mongoose.run.cli.ModeDispatcher",
-				'Class-Path': [
-						clientJar.outputs.files.collect {it.name}.join(' '),
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						coreApiJar.outputs.files.collect {it.name}.join(' '),
-						coreImplJar.outputs.files.collect {it.name}.join(' '),
-						serverApiJar.outputs.files.collect {it.name}.join(' '),
-						serverImplJar.outputs.files.collect {it.name}.join(' '),
-						storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
-						storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
-						storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
-						storageMockJar.outputs.files.collect {it.name}.join(' '),
-						scenarioJar.outputs.files.collect {it.name}.join(' '),
-						webserverJar.outputs.files.collect {it.name}.join(' '),
-						webuiJar.outputs.files.collect {it.name}.join(' '),
-						configurations.cliRuntime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-cli",
+			'Main-Class': "com.emc.mongoose.run.cli.ModeDispatcher",
+			'Class-Path': [
+				clientJar.outputs.files.collect {it.name}.join(' '),
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				serverImplJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
+				storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
+				storageMockJar.outputs.files.collect {it.name}.join(' '),
+				scenarioJar.outputs.files.collect {it.name}.join(' '),
+				webserverJar.outputs.files.collect {it.name}.join(' '),
+				webuiJar.outputs.files.collect {it.name}.join(' '),
+				configurations.cliRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
 		)
 	}
 }
@@ -1016,73 +1014,106 @@ publishing {
 	}
 	publications {
 		common(MavenPublication) {
-			artifactId "common"
-			artifact commonJar.archivePath
+			artifactId "mongoose-common"
+			artifact (commonJar.archivePath) {
+				builtBy(commonJar)
+			}
 		}
 		coreApi(MavenPublication) {
-			artifactId "core-api"
-			artifact coreApiJar.archivePath
+			artifactId "mongoose-core-api"
+			artifact (coreApiJar.archivePath) {
+				builtBy(coreApiJar)
+			}
 		}
 		coreImpl(MavenPublication) {
-			artifactId "core-impl"
-			artifact coreImplJar.archivePath
+			artifactId "mongoose-core-impl"
+			artifact (coreImplJar.archivePath) {
+				builtBy(coreImplJar)
+			}
 		}
 		storageAdapterAtmos(MavenPublication) {
-			artifactId "storage-adapter-atmos"
-			artifact storageAdapterAtmosJar.archivePath
+			artifactId "mongoose-storage-adapter-atmos"
+			artifact (storageAdapterAtmosJar.archivePath) {
+				builtBy(storageAdapterAtmosJar)
+			}
 		}
 		storageAdapterS3(MavenPublication) {
-			artifactId "storage-adapter-s3"
-			artifact storageAdapterS3Jar.archivePath
+			artifactId "mongoose-storage-adapter-s3"
+			artifact (storageAdapterS3Jar.archivePath) {
+				builtBy(storageAdapterS3Jar)
+			}
 		}
 		storageAdapterSwift(MavenPublication) {
-			artifactId "storage-adapter-swift"
-			artifact storageAdapterAtmosJar.archivePath
+			artifactId "mongoose-storage-adapter-swift"
+			artifact (storageAdapterSwiftJar.archivePath) {
+				builtBy(storageAdapterSwiftJar)
+			}
 		}
 		serverApi(MavenPublication) {
-			artifactId "server-api"
-			artifact serverApiJar.archivePath
+			artifactId "mongoose-server-api"
+			artifact (serverApiJar.archivePath) {
+				builtBy(serverApiJar)
+			}
 		}
 		webserver(MavenPublication) {
-			artifactId "webserver"
-			artifact webserverJar.archivePath
+			artifactId "mongoose-webserver"
+			artifact (webserverJar.archivePath) {
+				builtBy(webserverJar)
+			}
 		}
 		client(MavenPublication) {
-			artifactId "client"
-			artifact clientJar.archivePath
+			artifactId "mongoose-client"
+			artifact (clientJar.archivePath) {
+				builtBy(clientJar)
+			}
 		}
 		scenario(MavenPublication) {
-			artifactId "scenario"
-			artifact scenarioJar.archivePath
+			artifactId "mongoose-scenario"
+			artifact (scenarioJar.archivePath) {
+				builtBy(scenarioJar)
+			}
 		}
 		serverImpl(MavenPublication) {
-			artifactId "server-impl"
-			artifact serverImplJar.archivePath
+			artifactId "mongoose-server-impl"
+			artifact (serverImplJar.archivePath) {
+				builtBy(serverImplJar)
+			}
 		}
 		storageMock(MavenPublication) {
-			artifactId "storage-mock"
-			artifact storageMockJar.archivePath
+			artifactId "mongoose-storage-mock"
+			artifact (storageMockJar.archivePath) {
+				builtBy(storageMockJar)
+			}
 		}
 		webui(MavenPublication) {
-			artifactId "webui"
-			artifact webuiJar.archivePath
+			artifactId "mongoose-webui"
+			artifact (webuiJar.archivePath) {
+				builtBy(webuiJar)
+			}
 		}
 		cli(MavenPublication) {
-			artifactId "cli"
-			artifact cliJar.archivePath
+			artifactId "mongoose-cli"
+			artifact (cliJar.archivePath) {
+				builtBy(cliJar)
+			}
 		}
 		util(MavenPublication) {
-			artifactId "util"
-			artifact utilJar.archivePath
+			artifactId "mongoose-util"
+			artifact (utilJar.archivePath) {
+				builtBy(utilJar)
+			}
 		}
-		/*tests(MavenPublication) {
-			artifactId "tests"
-			artifact testsJar.archivePath
-		}*/
+		tests(MavenPublication) {
+			artifactId "mongoose-tests"
+			artifact (testsJar.archivePath) {
+				builtBy(testsJar)
+			}
+		}
 		tarBall(MavenPublication) {
 			artifact(dist.archivePath) {
-				artifactId "dist"
+				artifactId "mongoose"
 				extension "tgz"
+				builtBy(dist)
 			}
 		}
 	}
