@@ -500,14 +500,15 @@ implements LoadExecutor<T> {
 				DESERIALIZED_STATES.put(runTimeConfig.getRunId(), loadStates);
 			}
 		} catch (final FileNotFoundException e) {
-			LogUtil.exception(LOG, Level.WARN, e,
-				"File with state of run with run.id: \"{}\" wasn't found. Starting new run...", runTimeConfig.getRunId());
+			LOG.debug(Markers.MSG, "File with state of run with run.id: \"{}\" wasn't found. " +
+				"Starting new run...", runTimeConfig.getRunId());
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to load state of run with run.id: \"{}\" from \"{}\" file. Starting new run...",
-					runTimeConfig.getRunId(), fullStateFileName);
+				"Failed to load state of run with run.id: \"{}\" from \"{}\" file." +
+				"Starting new run...", runTimeConfig.getRunId(), fullStateFileName);
 		} catch (final ClassNotFoundException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of run. Starting new run...");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of run." +
+				"Starting new run...");
 		}
 	}
 	//
@@ -593,7 +594,7 @@ implements LoadExecutor<T> {
 	@Override @SuppressWarnings("unchecked")
 	protected final void submitSync(final T dataItem)
 	throws InterruptedException, RemoteException {
-		if(counterSubm.getCount() + counterRej.getCount() >= maxCount) {
+		if (counterSubm.getCount() + counterRej.getCount() >= maxCount) {
 			LOG.debug(
 				Markers.MSG, "{}: all tasks has been submitted ({}) or rejected ({})", getName(),
 				counterSubm.getCount(), counterRej.getCount()
