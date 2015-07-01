@@ -408,6 +408,7 @@ implements LoadExecutor<T> {
 							LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
 								getName());
 						}
+						counterSubm.inc(state.getCountSucc() + state.getCountFail());
 						counterResults.set(state.getCountSucc() + state.getCountFail());
 						counterReqFail.inc(state.getCountFail());
 						throughPut.mark(state.getCountSucc());
@@ -598,6 +599,7 @@ implements LoadExecutor<T> {
 				counterSubm.getCount(), counterRej.getCount()
 			);
 			super.interrupt();
+			return;
 		}
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final String nextNodeAddr = storageNodeCount == 1 ? storageNodeAddrs[0] : getNextNode();
