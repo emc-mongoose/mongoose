@@ -83,11 +83,9 @@ implements Runnable {
 			Path scriptDir = Paths.get(RunTimeConfig.DIR_ROOT, scriptsRootDir, scriptLangKey);
 			if (!Files.exists(scriptDir)){
 				LOG.info(Markers.MSG, "Directory \"{}\" doesn't exist. Try look for bundle directory", scriptDir);
-				final ClassLoader classloader = ScriptRunner.class.getClassLoader();
-				final URL bundleScriptDirURL = classloader.getResource("");
-				if (bundleScriptDirURL != null) {
-					scriptDir = Paths.get(bundleScriptDirURL.getPath(), scriptsRootDir, scriptLangKey);
-				}
+				scriptDir = Paths.get(
+					System.getProperty("user.dir"), "src", "main", "resources", scriptsRootDir, scriptLangKey
+				);
 			}
 			// language-specifig preparations
 			switch(scriptLangKey) {

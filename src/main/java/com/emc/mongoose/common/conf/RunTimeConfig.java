@@ -163,7 +163,7 @@ implements Externalizable {
 			);
 		} else {
 			System.setProperty("java.security.policy", urlPolicy.toString());
-			System.setSecurityManager(new SecurityManager());
+			//System.setSecurityManager(new SecurityManager());
 		}
 	}
 	//

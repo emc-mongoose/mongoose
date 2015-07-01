@@ -34,7 +34,7 @@ import java.util.concurrent.locks.ReentrantLock;
  Created by kurila on 06.05.14.
  */
 public final class LogUtil {
-	private final static String
+	public final static String
 		//
 		KEY_LOG4J_CTX_SELECTOR = "Log4jContextSelector",
 		VALUE_LOG4J_CTX_ASYNC_SELECTOR = AsyncLoggerContextSelector.class.getCanonicalName(),
@@ -75,10 +75,10 @@ public final class LogUtil {
 		//
 		PATH_LOG_DIR = String.format("%s%slog", RunTimeConfig.DIR_ROOT, File.separator);
 	//
-	private final static AtomicReference<LoggerContext> LOG_CTX = new AtomicReference<>(null);
-	static {
+	public final static AtomicReference<LoggerContext> LOG_CTX = new AtomicReference<>(null);
+	/*static {
 		init();
-	}
+	}*/
 	public static void init() {
 		synchronized(LOG_CTX) {
 			if(LOG_CTX.get() == null) {
@@ -103,14 +103,16 @@ public final class LogUtil {
 				);
 				//
 				try {
-					if(!Files.exists(logConfPath)){
+					if (Files.exists(logConfPath)) {
+						LOG_CTX.set(Configurator.initialize(MONGOOSE, logConfPath.toUri().toString()));
+					} else if (System.getProperty("log4j.configurationFile") == null) {
 						final ClassLoader classloader = LogUtil.class.getClassLoader();
 						final URL bundleLogConfURL = classloader.getResource(FNAME_LOG_CONF);
 						if (bundleLogConfURL != null) {
 							LOG_CTX.set(Configurator.initialize(MONGOOSE, classloader, bundleLogConfURL.toURI()));
 						}
 					} else {
-						LOG_CTX.set(Configurator.initialize(MONGOOSE, logConfPath.toUri().toString()));
+						LOG_CTX.set(Configurator.initialize(MONGOOSE, System.getProperty("log4j.configurationFile")));
 					}
 					//
 					if(LOG_CTX.get() == null) {
