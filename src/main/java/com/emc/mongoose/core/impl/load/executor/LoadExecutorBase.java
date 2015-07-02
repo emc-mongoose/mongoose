@@ -105,6 +105,7 @@ implements LoadExecutor<T> {
 	//
 	private LoadState currState = null;
 	private UserClock userClock = new UserClock();
+	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
 	//
 	private static final List<String> IMMUTABLE_PARAMS = new ArrayList<>();
 	//
@@ -440,6 +441,7 @@ implements LoadExecutor<T> {
 						reqBytes.mark(state.getCountBytes());
 						currState = state;
 						if (isLoadExecutorFinished(currState)) {
+							isLoadFinished.compareAndSet(false, true);
 							LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
 							return;
 						}
@@ -485,7 +487,7 @@ implements LoadExecutor<T> {
 		}
 	}
 	private boolean isLoadExecutorFinished(final LoadState state) {
-		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+		final RunTimeConfig localRunTimeConfig = rtConfig;
 		final long loadTimeMillis = (localRunTimeConfig.getLoadLimitTimeUnit().
 				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) > 0
 				? (localRunTimeConfig.getLoadLimitTimeUnit().
@@ -527,10 +529,8 @@ implements LoadExecutor<T> {
 	//
 	@Override
 	public final void interrupt() {
-		if (currState != null) {
-			if (isLoadExecutorFinished(currState))
-				return;
-		}
+		if (isLoadFinished.get())
+			return;
 		//
 		if(isInterrupted.compareAndSet(false, true)) {
 			metricsDaemon.interrupt();
@@ -592,7 +592,7 @@ implements LoadExecutor<T> {
 	public final void setConsumer(final Consumer<T> consumer) {
 		this.consumer = consumer;
 		LOG.debug(
-			Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", consumer, getName()
+				Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", consumer, getName()
 		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -881,7 +881,7 @@ implements LoadExecutor<T> {
 		//
 		long t = System.currentTimeMillis(), timeOutMilliSec;
 		if (currState != null) {
-			if (isLoadExecutorFinished(currState))
+			if (isLoadFinished.get())
 				return;
 			timeOutMilliSec = timeUnit.toMillis(timeOut) -
 				currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue());
