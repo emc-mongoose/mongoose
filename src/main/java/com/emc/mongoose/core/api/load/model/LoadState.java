@@ -20,6 +20,8 @@ public interface LoadState extends Serializable {
 	//
 	long getCountBytes();
 	//
+	long getCountSubm();
+	//
 	TimeUnit getLoadElapsedTimeUnit();
 	//
 	long getLoadElapsedTimeValue();

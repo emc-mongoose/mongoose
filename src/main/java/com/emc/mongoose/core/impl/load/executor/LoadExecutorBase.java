@@ -736,7 +736,7 @@ implements LoadExecutor<T> {
 				currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
 		return new BasicLoadState(
 			loadNum, runTimeConfig, throughPut.getCount(), counterReqFail.getCount(),
-			reqBytes.getCount(), TimeUnit.NANOSECONDS,
+			reqBytes.getCount(), counterSubm.getCount(), TimeUnit.NANOSECONDS,
 			prevElapsedTime + (System.nanoTime() - tsStart.get())
 		);
 	}
