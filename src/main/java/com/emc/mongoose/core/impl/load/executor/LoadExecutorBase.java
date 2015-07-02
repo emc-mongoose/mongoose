@@ -448,7 +448,7 @@ implements LoadExecutor<T> {
 					}
 				} else {
 					DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
-					LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
+					LOG.debug(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
 						rtConfig.getRunId());
 				}
 			}
