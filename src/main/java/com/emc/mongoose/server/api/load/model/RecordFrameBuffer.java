@@ -8,7 +8,7 @@ import java.util.Collection;
 /**
  Created by kurila on 25.06.14.
  */
-public interface RecordFrameBuffer<T extends DataItem>
+public interface RecordFrameBuffer<T>
 extends AsyncConsumer<T> {
 	//
 	Collection<T> takeFrame()

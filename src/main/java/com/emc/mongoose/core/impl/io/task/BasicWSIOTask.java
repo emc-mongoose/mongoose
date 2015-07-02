@@ -178,14 +178,14 @@ implements WSIOTask<T> {
 		try {
 			if(httpRequest.getEntity() != null) {
 				if(dataItem.isAppending()) {
-					dataItem.writeAugment(chanOut);
+					dataItem.writeAugmentFully(chanOut);
 				} else if(dataItem.hasUpdatedRanges()) {
-					dataItem.writeUpdates(chanOut);
+					dataItem.writeUpdatedRangesFully(chanOut);
 				} else {
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						final long
 							t = System.nanoTime(),
-							writtenCount = dataItem.write(chanOut),
+							writtenCount = dataItem.writeFully(chanOut),
 							rate = 1000000000 * writtenCount / (System.nanoTime() - t);
 						if(dataItem.getSize() != writtenCount) {
 							LOG.trace(
@@ -198,21 +198,24 @@ implements WSIOTask<T> {
 							);
 						}
 					} else {
-						dataItem.write(chanOut);
+						dataItem.writeFully(chanOut);
 					}
 				}
 			}
 		} catch(final ClosedChannelException e) { // probably a manual interruption
 			status = Status.CANCELLED;
-			LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
+			LogUtil.exception(
+				LOG, Level.TRACE, e, "#{}: utput channel closed during the operation", hashCode()
+			);
 		} catch(final IOException e) {
 			status = Status.FAIL_IO;
-			LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during the data output");
+			LogUtil.exception(
+				LOG, Level.DEBUG, e, "#{}: I/O failure during the data output", hashCode()
+			);
 		} catch(final Exception e) {
 			status = Status.FAIL_UNKNOWN;
-			LogUtil.exception(LOG, Level.ERROR, e, "Producing content failure");
+			LogUtil.exception(LOG, Level.ERROR, e, "#{}: producing content failure", hashCode());
 		} finally {
-			out.complete();
 			chanOut.close();
 		}
 	}

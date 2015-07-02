@@ -48,16 +48,15 @@ public class JsonConfigLoader {
 		try {
 			JsonNode rootNode;
 			if(cfgFile.exists() && cfgFile.isFile()){
-				LOG.debug(Markers.MSG, "Load system properties from json file \"{}\"", cfgFile.toString());
+				LOG.debug(Markers.MSG, "Load the config from json file \"{}\"", cfgFile.toString());
 				rootNode = jsonMapper.readTree(cfgFile);
 			} else {
 				final ClassLoader cl = JsonConfigLoader.class.getClassLoader();
-				final InputStream bundleMongooseConf = cl.getResourceAsStream(RunTimeConfig.FNAME_CONF);
+				final InputStream bundledConf = cl.getResourceAsStream(RunTimeConfig.FNAME_CONF);
 				LOG.debug(
-					Markers.MSG, "Load system properties from json file \"{}\"",
-					cl.getResource(RunTimeConfig.FNAME_CONF)
+					Markers.MSG, "Load the bundled config", cl.getResource(RunTimeConfig.FNAME_CONF)
 				);
-				rootNode = jsonMapper.readTree(bundleMongooseConf);
+				rootNode = jsonMapper.readTree(bundledConf);
 			}
 			walkJsonTree(rootNode);
 			tgtConfig.setMongooseKeys(mongooseKeys);

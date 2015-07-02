@@ -116,7 +116,7 @@
 								"onMismatch": "NEUTRAL"
 							}, {
 								"type": "ThresholdFilter",
-								"level": "TRACE",
+								"level": "debug",
 								"onMatch": "NEUTRAL",
 								"onMismatch": "DENY"
 							}, {
@@ -285,6 +285,9 @@
 					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.storage.mock",
+					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
+				}, {
+					"name": "com.emc.mongoose.util",
 					"level": "debug", "additivity": "false", "AppenderRef": { "ref": "async" }
 				}, {
 					"name": "com.emc.mongoose.webui",

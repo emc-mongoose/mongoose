@@ -26,21 +26,14 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 13.05.15.
  */
-public final class BasicIOStats
+public final class BasicStorageIOStats
 extends Thread
 implements IOStats {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final MetricRegistry metricRegistry = new MetricRegistry();
-	private final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
-		RunTimeConfig.getContext().getRemotePortExport()
-	);
-	private final JmxReporter metricsReporter = JmxReporter.forRegistry(metricRegistry)
-		.convertDurationsTo(TimeUnit.SECONDS)
-		.convertRatesTo(TimeUnit.SECONDS)
-		.registerWith(mBeanServer)
-		.build();
+	private final JmxReporter jmxReporter;
 	private final Counter
 		countSuccCreate = metricRegistry.counter(
 			MetricRegistry.name(
@@ -105,13 +98,27 @@ implements IOStats {
 	private final long updateMilliPeriod;
 	private final Storage storage;
 	//
-	public BasicIOStats(
+	public BasicStorageIOStats(
 		final RunTimeConfig runTimeConfig, final Storage storage
 	) {
-		super(BasicIOStats.class.getSimpleName());
+		super(BasicStorageIOStats.class.getSimpleName());
 		setDaemon(true);
 		updateMilliPeriod = TimeUnit.SECONDS.toMillis(runTimeConfig.getLoadMetricsPeriodSec());
 		this.storage = storage;
+		//
+		final boolean flagServeIfNotLoadServer = runTimeConfig.getFlagServeIfNotLoadServer();
+		if(flagServeIfNotLoadServer) {
+			final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
+				RunTimeConfig.getContext().getRemotePortExport()
+			);
+			jmxReporter = JmxReporter.forRegistry(metricRegistry)
+				.convertDurationsTo(TimeUnit.SECONDS)
+				.convertRatesTo(TimeUnit.SECONDS)
+				.registerWith(mBeanServer)
+				.build();
+		} else {
+			jmxReporter = null;
+		}
 	}
 	//
 	private final static String
@@ -143,7 +150,9 @@ implements IOStats {
 	@Override
 	public final void start() {
 		LOG.debug(Markers.MSG, "Start");
-		metricsReporter.start();
+		if(jmxReporter != null) {
+			jmxReporter.start();
+		}
 		super.start();
 	}
 	//
@@ -169,7 +178,13 @@ implements IOStats {
 		if(!isInterrupted()) {
 			interrupt();
 		}
-		metricsReporter.close();
+		if(jmxReporter != null) {
+			try {
+				jmxReporter.close();
+			} catch(final Exception e) {
+				LogUtil.exception(LOG, Level.DEBUG, e, "Closing the metrics reporter failure");
+			}
+		}
 	}
 	//
 	@Override

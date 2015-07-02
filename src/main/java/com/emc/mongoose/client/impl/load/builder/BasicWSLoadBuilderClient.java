@@ -65,7 +65,7 @@ implements WSLoadBuilderClient<T, U> {
 		final Service remoteSvc = ServiceUtils.getRemoteSvc(
 			"//" + serverAddr + '/' + getClass().getPackage().getName().replace("client", "server")
 		);
-		if(remoteSvc==null) {
+		if(remoteSvc == null) {
 			throw new IOException("No remote load builder was resolved from " + serverAddr);
 		} else if(WSLoadBuilderSvc.class.isInstance(remoteSvc)) {
 			rlb = WSLoadBuilderSvc.class.cast(remoteSvc);

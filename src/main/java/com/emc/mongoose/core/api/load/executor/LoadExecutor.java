@@ -3,10 +3,10 @@ package com.emc.mongoose.core.api.load.executor;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.load.model.Consumer;
+import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 import com.emc.mongoose.core.api.load.model.Producer;
-//
 import com.emc.mongoose.core.api.load.model.LoadState;
+//
 import org.apache.logging.log4j.Marker;
 //
 import java.rmi.RemoteException;
@@ -20,9 +20,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  Supports method "join" for waiting the load execution to be done.
  */
 public interface LoadExecutor<T extends DataItem>
-extends Producer<T>, Consumer<T> {
+extends Producer<T>, AsyncConsumer<T> {
 	//
-	AtomicInteger LAST_INSTANCE_NUM = new AtomicInteger(0);
+	AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
 	//
 	int NANOSEC_SCALEDOWN = 1000, MIB = 0x100000;
 	//

@@ -1,7 +1,5 @@
 package com.emc.mongoose.core.api.load.model;
 //
-import com.emc.mongoose.core.api.data.DataItem;
-//
 import java.io.Closeable;
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
@@ -11,10 +9,10 @@ import java.util.concurrent.RejectedExecutionException;
  The count of the consumed data items may be limited externally.
  Also supports closing which may be necessary to perform a cleanup.
  */
-public interface Consumer<T extends DataItem>
+public interface Consumer<T>
 extends Closeable {
 	//
-	void submit(final T data)
+	void submit(final T item)
 	throws RemoteException, InterruptedException, RejectedExecutionException;
 	//
 	void shutdown()

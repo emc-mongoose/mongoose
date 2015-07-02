@@ -1,25 +1,25 @@
 package com.emc.mongoose.core.impl.io.req.conf;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.src.DataSource;
+import com.emc.mongoose.core.api.data.util.DataSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.src.UniformDataSource;
+import com.emc.mongoose.core.impl.data.util.UniformDataSource;
 //
 import org.apache.commons.lang.StringUtils;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.util.concurrent.atomic.AtomicBoolean;
 /**
  Created by kurila on 06.06.14.
@@ -50,7 +50,6 @@ implements RequestConfig<T> {
 	//
 	@SuppressWarnings("unchecked")
 	protected RequestConfigBase() {
-		LOG.trace(Markers.MSG, "New reqconf instance #" + hashCode());
 		api = runTimeConfig.getApiName();
 		secret = runTimeConfig.getAuthSecret();
 		userName = runTimeConfig.getAuthId();
@@ -304,15 +303,14 @@ implements RequestConfig<T> {
 	@Override
 	public void writeExternal(final ObjectOutput out)
 	throws IOException {
-		final ObjectOutputStream oos = ObjectOutputStream.class.cast(out);
-		oos.writeUnshared(getAPI());
-		oos.writeUnshared(getLoadType());
-		oos.writeUnshared(getScheme());
+		out.writeObject(getAPI());
+		out.writeObject(getLoadType());
+		out.writeObject(getScheme());
 		out.writeInt(getPort());
-		oos.writeUnshared(getUserName());
-		oos.writeUnshared(getSecret());
-		oos.writeUnshared(getNameSpace());
-		oos.writeUnshared(getDataSource());
+		out.writeObject(getUserName());
+		out.writeObject(getSecret());
+		out.writeObject(getNameSpace());
+		out.writeObject(getDataSource());
 		out.writeBoolean(getRetries());
 		out.writeBoolean(getAnyDataProducerEnabled());
 		out.writeBoolean(getVerifyContentFlag());
@@ -322,22 +320,21 @@ implements RequestConfig<T> {
 	@Override @SuppressWarnings("unchecked")
 	public void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
-		final ObjectInputStream ois = ObjectInputStream.class.cast(in);
-		setAPI(String.class.cast(ois.readUnshared()));
+		setAPI(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got API {}", api);
-		setLoadType(IOTask.Type.class.cast(ois.readUnshared()));
+		setLoadType(IOTask.Type.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got load type {}", loadType);
-		setScheme(String.class.cast(ois.readUnshared()));
+		setScheme(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got scheme {}", scheme);
 		setPort(in.readInt());
 		LOG.trace(Markers.MSG, "Got port {}", port);
-		setUserName(String.class.cast(ois.readUnshared()));
+		setUserName(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got user name {}", userName);
-		setSecret(String.class.cast(ois.readUnshared()));
+		setSecret(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got secret {}", secret);
-		setNameSpace(String.class.cast(ois.readUnshared()));
+		setNameSpace(String.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got namespace {}", secret);
-		setDataSource(DataSource.class.cast(ois.readUnshared()));
+		setDataSource(DataSource.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
 		setRetries(in.readBoolean());
 		LOG.trace(Markers.MSG, "Got retry flag {}", retryFlag);
@@ -367,5 +364,15 @@ implements RequestConfig<T> {
 	@Override
 	public final boolean isClosed() {
 		return closeFlag.get();
+	}
+	//
+	@Override
+	protected void finalize()
+	throws Throwable {
+		try {
+			close();
+		} finally {
+			super.finalize();
+		}
 	}
 }

@@ -18,6 +18,7 @@ import org.apache.http.nio.NHttpMessageWriterFactory;
 import org.apache.http.nio.reactor.IOSession;
 import org.apache.http.nio.util.ByteBufferAllocator;
 //
+import org.apache.http.nio.util.DirectByteBufferAllocator;
 import org.apache.http.nio.util.HeapByteBufferAllocator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -62,12 +63,22 @@ extends DefaultNHttpServerConnection {
 				// probe the input buffer for size limit
 				socket.setReceiveBufferSize(Constants.BUFF_SIZE_HI);
 				maxInBuffSize = socket.getReceiveBufferSize();
-				LOG.debug(Markers.MSG, "{}: max IN buffer size is {}", this, SizeUtil.formatSize(maxInBuffSize));
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "{}: max IN buffer size is {}", this,
+						SizeUtil.formatSize(maxInBuffSize)
+					);
+				}
 				socket.setReceiveBufferSize(Constants.BUFF_SIZE_LO); // reset back to the default
 				// probe the output buffer for size limit
 				socket.setSendBufferSize(Constants.BUFF_SIZE_HI);
 				maxOutBuffSize = socket.getSendBufferSize();
-				LOG.debug(Markers.MSG, "{}: max OUT buffer size is {}", this, SizeUtil.formatSize(maxOutBuffSize));
+				if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.trace(
+						Markers.MSG, "{}: max OUT buffer size is {}", this,
+						SizeUtil.formatSize(maxOutBuffSize)
+					);
+				}
 				socket.setSendBufferSize(Constants.BUFF_SIZE_LO); // reset back to the default
 				//
 				socket.setPerformancePreferences(0, 1, 2);
@@ -82,14 +93,14 @@ extends DefaultNHttpServerConnection {
 		final CharsetEncoder charencoder, final MessageConstraints constraints
 	) {
 		this(
-			session, buffersize, 0, HeapByteBufferAllocator.INSTANCE, chardecoder, charencoder,
+			session, buffersize, 0, DirectByteBufferAllocator.INSTANCE, chardecoder, charencoder,
 			constraints, null, null, null, null
 		);
 	}
 	//
 	public BasicWSMockConnection(final IOSession session, final int buffersize) {
 		this(
-			session, buffersize, 0, HeapByteBufferAllocator.INSTANCE, null, null, null, null, null,
+			session, buffersize, 0, DirectByteBufferAllocator.INSTANCE, null, null, null, null, null,
 			null, null
 		);
 	}
@@ -116,7 +127,7 @@ extends DefaultNHttpServerConnection {
 			//
 			if(lastBuffSize != newBuffSize) {
 				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.info(
+					LOG.trace(
 						Markers.MSG, "{}: IN buffer size {} to {}", socket,
 						SizeUtil.formatSize(lastBuffSize), SizeUtil.formatSize(newBuffSize)
 					);

@@ -4,7 +4,6 @@ package com.emc.mongoose.storage.mock.impl.response;
 //import com.emc.mongoose.common.collections.Reusable;
 import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //
@@ -47,7 +46,7 @@ implements HttpAsyncResponseProducer {
 		try {
 			final WSObjectMock dataItem = WSObjectMock.class.cast(response.getEntity());
 			if(dataItem != null) {
-				dataItem.write(chanOut);
+				dataItem.writeFully(chanOut);
 			}
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Content producing failure");

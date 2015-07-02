@@ -8,6 +8,7 @@ import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 // mongoose-storage-mock.jar
+import com.emc.mongoose.storage.mock.api.net.SocketEventDispatcher;
 import com.emc.mongoose.storage.mock.api.stats.IOStats;
 //
 import org.apache.http.impl.nio.DefaultHttpServerIODispatch;
@@ -18,12 +19,14 @@ import org.apache.http.nio.NHttpConnectionFactory;
 import org.apache.http.nio.protocol.HttpAsyncService;
 import org.apache.http.nio.reactor.IOReactorException;
 //import org.apache.http.nio.reactor.ListenerEndpoint;
+import org.apache.http.nio.reactor.ListenerEndpoint;
 import org.apache.http.nio.reactor.ListeningIOReactor;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.InetSocketAddress;
@@ -32,14 +35,18 @@ import java.net.InetSocketAddress;
  */
 public final class BasicSocketEventDispatcher
 extends DefaultHttpServerIODispatch
-implements Runnable {
+implements SocketEventDispatcher {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private final static GroupThreadFactory THREAD_GROUP = new GroupThreadFactory(
+		"wsMockSocketEvtDispatcher", true
+	);
 	//
 	private final ListeningIOReactor ioReactor;
 	private final InetSocketAddress socketAddress;
 	private final IOReactorConfig ioReactorConf;
 	private final IOStats ioStats;
+	private final Thread executor;
 	//
 	public BasicSocketEventDispatcher(
 		final RunTimeConfig runTimeConfig,
@@ -70,68 +77,17 @@ implements Runnable {
 			ioReactorConf, new GroupThreadFactory("ioReactor")
 		);
 		this.ioStats = ioStats;
+		executor = THREAD_GROUP.newThread(this);
+
 	}
-	/*
-	private final Thread buffSizeAdjustDaemon = new Thread("buffSizeAdjustDaemon") {
-		//
-		{ setDaemon(true); }
-		//
-		@Override @SuppressWarnings("deprecation")
-		public final void run() {
-			//
-			int nextRcvBuffSize, nextSndBuffSize;
-			double writeRate, readRate;
-			boolean restartRequired = false;
-			long t;
-			//
-			while(!isInterrupted()) {
-				//
-				t = System.nanoTime();
-				//
-				writeRate = ioStats.getWriteRate();
-				if(writeRate > 0) {
-					nextRcvBuffSize = (int) (ioStats.getWriteRateBytes() / writeRate);
-					nextRcvBuffSize = Math.max(LoadExecutor.BUFF_SIZE_LO, nextRcvBuffSize);
-					nextRcvBuffSize = Math.min(LoadExecutor.BUFF_SIZE_HI, nextRcvBuffSize);
-				} else {
-					nextRcvBuffSize = LoadExecutor.BUFF_SIZE_LO;
-				}
-				if(nextRcvBuffSize != ioReactorConf.getRcvBufSize()) {
-					ioReactorConf.setRcvBufSize(nextRcvBuffSize);
-					restartRequired = true;
-				}
-				//
-				readRate = ioStats.getReadRate();
-				if(readRate > 0) {
-					nextSndBuffSize = (int) (ioStats.getReadRateBytes() / readRate);
-					nextSndBuffSize = Math.max(LoadExecutor.BUFF_SIZE_LO, nextSndBuffSize);
-					nextSndBuffSize = Math.min(LoadExecutor.BUFF_SIZE_HI, nextSndBuffSize);
-				} else {
-					nextSndBuffSize = LoadExecutor.BUFF_SIZE_LO;
-				}
-				if(nextSndBuffSize != ioReactorConf.getSndBufSize()) {
-					ioReactorConf.setSndBufSize(nextSndBuffSize);
-					restartRequired = true;
-				}
-				//
-				if(restartRequired) {
-					try {
-						try {
-							ioReactor.pause();
-						} finally {
-							ioReactor.resume();
-						}
-					} catch(final IOException e) {
-						LogUtil.exception(LOG, Level.WARN, e, "Failure during I/O reactor restart");
-					}
-				}
-			}
-		}
-	};*/
+	//
+	@Override
+	public final void start() {
+		executor.start();
+	}
 	//
 	@Override
 	public final void run() {
-		//buffSizeAdjustDaemon.start();
 		try {
 			// Listen of the given port
 			ioReactor.listen(socketAddress);
@@ -144,7 +100,27 @@ implements Runnable {
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "{}: I/O failure", this);
 		} finally {
-			//buffSizeAdjustDaemon.interrupt();
+			try {
+				close();
+			} catch(final IOException e) {
+				LogUtil.exception(LOG, Level.WARN, e, "{}: I/O failure during the shutdown", this);
+			}
+		}
+	}
+	//
+	@Override
+	public final void join()
+	throws InterruptedException {
+		executor.join();
+	}
+	//
+	@Override
+	public final void close()
+	throws IOException {
+		try {
+			ioReactor.shutdown();
+		} finally {
+			executor.interrupt(); // just try
 		}
 	}
 	//
