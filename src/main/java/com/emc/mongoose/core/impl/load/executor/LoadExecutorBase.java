@@ -425,7 +425,6 @@ implements LoadExecutor<T> {
 				//  apply parameters from loadState to current load executor
 				for (final LoadState state : loadStates) {
 					if (state.getLoadNumber() == instanceNum) {
-					if (state.getLoadNumber() == loadNum) {
 						if (isImmutableParamsChanged(state.getRunTimeConfig())) {
 							LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
 								getName());
@@ -527,7 +526,7 @@ implements LoadExecutor<T> {
 		try (final FileInputStream fis = new FileInputStream(fullStateFileName)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
 				LOG.info(Markers.MSG, "Run with run.id: \"{}\" was resumed",
-						rtConfig.getRunId());
+					rtConfig.getRunId());
 				final List<LoadState> loadStates = (List<LoadState>) ois.readObject();
 				DESERIALIZED_STATES.put(rtConfig.getRunId(), loadStates);
 			}
@@ -783,8 +782,8 @@ implements LoadExecutor<T> {
 				currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
 		return new BasicLoadState(
 			instanceNum, rtConfig, throughPut.getCount(), counterReqFail.getCount(),
-			reqBytes.getCount(), counterSubm.getCount(), TimeUnit.NANOSECONDS,
-			prevElapsedTime + (System.nanoTime() - tsStart.get())
+			reqBytes.getCount(), counterSubm.getCount(),
+			prevElapsedTime + (System.nanoTime() - tsStart.get()),TimeUnit.NANOSECONDS
 		);
 	}
 	//

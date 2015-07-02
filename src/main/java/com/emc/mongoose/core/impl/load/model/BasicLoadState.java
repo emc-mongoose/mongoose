@@ -21,7 +21,7 @@ public class BasicLoadState implements LoadState {
 	//
 	public BasicLoadState(int loadNumber, RunTimeConfig runTimeConfig,
     long countSucc, long countFail, long countBytes, long countSubm,
-	TimeUnit timeUnit, long timeValue) {
+    long timeValue, TimeUnit timeUnit) {
 		this.loadNumber = loadNumber;
 		this.runTimeConfig = runTimeConfig;
 		this.countSucc = countSucc;
