@@ -13,12 +13,12 @@ import java.util.concurrent.BlockingQueue;
  The blocking queue wrapped in order to act as data item output from the tail and as data item input
  from the head.
  */
-public class DataItemBlockingQueue<T extends DataItem>
+public class ItemBlockingQueue<T extends DataItem>
 implements DataItemOutput<T>, DataItemInput<T> {
 	//
 	protected final BlockingQueue<T> queue;
 	//
-	public DataItemBlockingQueue(final BlockingQueue<T> queue) {
+	public ItemBlockingQueue(final BlockingQueue<T> queue) {
 		this.queue = queue;
 	}
 	//
@@ -44,7 +44,7 @@ implements DataItemOutput<T>, DataItemInput<T> {
 	}
 	//
 	@Override
-	public DataItemBlockingQueue<T> getInput()
+	public ItemBlockingQueue<T> getInput()
 	throws IOException {
 		return this;
 	}
