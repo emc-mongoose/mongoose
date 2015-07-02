@@ -485,7 +485,7 @@ implements LoadExecutor<T> {
 		}
 	}
 	private boolean isLoadExecutorFinished(final LoadState state) {
-		final RunTimeConfig localRunTimeConfig = state.getRunTimeConfig();
+		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
 		final long loadTimeMillis = (localRunTimeConfig.getLoadLimitTimeUnit().
 				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) > 0
 				? (localRunTimeConfig.getLoadLimitTimeUnit().
