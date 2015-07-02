@@ -1,12 +1,6 @@
 import org.gradle.api.tasks.bundling.Compression
 import groovy.json.JsonSlurper
 
-apply plugin: 'java'
-apply plugin: 'java-library-distribution'
-apply plugin: 'idea'
-apply plugin: 'eclipse'
-apply plugin: 'maven-publish'
-
 buildscript {
 	repositories {
 		jcenter()
@@ -18,7 +12,17 @@ buildscript {
 			}
 		}
 	}
+	dependencies {
+		classpath "org.jfrog.buildinfo:build-info-extractor-gradle:3.1.1"
+	}
 }
+
+apply plugin: 'java'
+apply plugin: 'java-library-distribution'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.artifactory'
 
 sourceCompatibility = '1.7'
 
@@ -201,7 +205,7 @@ sourceSets {
 		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	// JUnit 4 tests ///////////////////////////////////////////////////////////////////////////////
+	// Tests ///////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	test {
 		java {
@@ -416,6 +420,7 @@ dependencies {
 }
 
 configurations {
+
 	compile.extendsFrom(
 		commonCompile,
 		coreApiCompile,
@@ -459,24 +464,22 @@ configurations {
 		runtime,
 	)
 
-	distArchive
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 task compileRMI(dependsOn: "compileServerImplJava") << {
 	String[] listClsRemote = [
-			'com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc',
-			'com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc'
+		'com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc',
+		'com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc'
 	]
 	String clsPath = [
-			"${sourceSets.common.output.classesDir}",
-			"${sourceSets.coreApi.output.classesDir}",
-			"${sourceSets.coreImpl.output.classesDir}",
-			"${sourceSets.serverApi.output.classesDir}",
-			"${sourceSets.serverImpl.output.classesDir}",
-			"${configurations.serverImplCompile.asPath}",
+		"${sourceSets.common.output.classesDir}",
+		"${sourceSets.coreApi.output.classesDir}",
+		"${sourceSets.coreImpl.output.classesDir}",
+		"${sourceSets.serverApi.output.classesDir}",
+		"${sourceSets.serverImpl.output.classesDir}",
+		"${configurations.serverImplCompile.asPath}",
 	].join(File.pathSeparator)
 	for(cls in listClsRemote) {
 		String command = """rmic -classpath ${clsPath} -d ${sourceSets.serverImpl.output.classesDir} ${cls}"""
@@ -845,7 +848,8 @@ task utilJar(type: Jar) {
 	}
 }
 
-task testsJar(type: Jar) {
+task testJar(type: Jar) {
+
 	dependsOn commonJar
 	dependsOn coreApiJar
 	dependsOn coreImplJar
@@ -862,13 +866,13 @@ task testsJar(type: Jar) {
 	dependsOn cliJar
 	dependsOn utilJar
 
-	classifier "tests"
+	classifier "test"
 	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.test.output
 	manifest {
 		from sharedManifest
 		attributes(
-			'Implementation-Title': rootProject.name + "-tests",
+			'Implementation-Title': rootProject.name + "-test",
 			'Class-Path': [
 				commonJar.outputs.files.collect {it.name}.join(' '),
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
@@ -999,123 +1003,70 @@ test {
 
 build.dependsOn commonJar, coreApiJar, coreImplJar, storageAdapterAtmosJar, storageAdapterS3Jar
 build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, scenarioJar
-build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testsJar
+build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testJar
 
 tasks.idea.dependsOn(cleanIdea)
 
 publishing {
-	repositories {
-		maven {
-			url "${artifactory_contextUrl}/vipr-dev-local"
-			credentials {
-				username "${artifactory_user}"
-				password "${artifactory_password}"
+	publications {
+		artifactDist(MavenPublication) {
+			artifactId "dist"
+			artifact source: dist, extension: "tgz"
+		}
+	}
+}
+
+ext.publicJars = [
+	commonJar, coreApiJar, coreImplJar,
+	storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar,
+	serverApiJar, serverImplJar, clientJar, scenarioJar,
+	storageMockJar, webserverJar, webuiJar, cliJar, utilJar, testJar
+]
+
+for(nextPublicJar in publicJars) {
+	def baseName = nextPublicJar.baseName
+	def moduleName = nextPublicJar.classifier.split("-")*.capitalize().join("")
+	def artifactName = "artifact${moduleName}"
+	def configPrefix = "" + Character.toLowerCase(moduleName.charAt(0)) + moduleName.substring(1)
+	publishing.publications.create(artifactName, MavenPublication) {
+		artifact source: nextPublicJar, classifier: null
+		artifactId "${baseName}-${nextPublicJar.classifier}"
+		pom.withXml {
+			def root = asNode()
+			def deps = new Node(root, 'dependencies')
+			for(depJar in nextPublicJar.dependsOn) {
+				if(Jar.class.isInstance(depJar)) {
+					def node = new Node(deps, 'dependency')
+					new Node(node, 'groupId', group)
+					new Node(node, 'artifactId', "${depJar.baseName}-${depJar.classifier}")
+					new Node(node, 'version', depJar.version);
+				}
+			}
+			configurations.getByName(configPrefix + "Runtime").allDependencies.each { dep ->
+				def node = new Node(deps, 'dependency')
+				new Node(node, 'groupId', dep.group)
+				new Node(node, 'artifactId', dep.name)
+				new Node(node, 'version', dep.version);
 			}
 		}
 	}
-	publications {
-		common(MavenPublication) {
-			artifactId "mongoose-common"
-			artifact (commonJar.archivePath) {
-				builtBy(commonJar)
-			}
+}
+
+artifactory {
+	contextUrl = "${artifactory_contextUrl}"   //The base Artifactory URL if not overridden by the publisher/resolver
+	publish {
+		repository {
+			repoKey = 'vipr-dev-local'
+			username = "${artifactory_user}"
+			password = "${artifactory_password}"
+			maven = true
 		}
-		coreApi(MavenPublication) {
-			artifactId "mongoose-core-api"
-			artifact (coreApiJar.archivePath) {
-				builtBy(coreApiJar)
+		defaults {
+			for(nextPublicJar in publicJars) {
+				def suffix = nextPublicJar.classifier.split("-")*.capitalize().join("")
+				publications("artifact${suffix}")
 			}
-		}
-		coreImpl(MavenPublication) {
-			artifactId "mongoose-core-impl"
-			artifact (coreImplJar.archivePath) {
-				builtBy(coreImplJar)
-			}
-		}
-		storageAdapterAtmos(MavenPublication) {
-			artifactId "mongoose-storage-adapter-atmos"
-			artifact (storageAdapterAtmosJar.archivePath) {
-				builtBy(storageAdapterAtmosJar)
-			}
-		}
-		storageAdapterS3(MavenPublication) {
-			artifactId "mongoose-storage-adapter-s3"
-			artifact (storageAdapterS3Jar.archivePath) {
-				builtBy(storageAdapterS3Jar)
-			}
-		}
-		storageAdapterSwift(MavenPublication) {
-			artifactId "mongoose-storage-adapter-swift"
-			artifact (storageAdapterSwiftJar.archivePath) {
-				builtBy(storageAdapterSwiftJar)
-			}
-		}
-		serverApi(MavenPublication) {
-			artifactId "mongoose-server-api"
-			artifact (serverApiJar.archivePath) {
-				builtBy(serverApiJar)
-			}
-		}
-		webserver(MavenPublication) {
-			artifactId "mongoose-webserver"
-			artifact (webserverJar.archivePath) {
-				builtBy(webserverJar)
-			}
-		}
-		client(MavenPublication) {
-			artifactId "mongoose-client"
-			artifact (clientJar.archivePath) {
-				builtBy(clientJar)
-			}
-		}
-		scenario(MavenPublication) {
-			artifactId "mongoose-scenario"
-			artifact (scenarioJar.archivePath) {
-				builtBy(scenarioJar)
-			}
-		}
-		serverImpl(MavenPublication) {
-			artifactId "mongoose-server-impl"
-			artifact (serverImplJar.archivePath) {
-				builtBy(serverImplJar)
-			}
-		}
-		storageMock(MavenPublication) {
-			artifactId "mongoose-storage-mock"
-			artifact (storageMockJar.archivePath) {
-				builtBy(storageMockJar)
-			}
-		}
-		webui(MavenPublication) {
-			artifactId "mongoose-webui"
-			artifact (webuiJar.archivePath) {
-				builtBy(webuiJar)
-			}
-		}
-		cli(MavenPublication) {
-			artifactId "mongoose-cli"
-			artifact (cliJar.archivePath) {
-				builtBy(cliJar)
-			}
-		}
-		util(MavenPublication) {
-			artifactId "mongoose-util"
-			artifact (utilJar.archivePath) {
-				builtBy(utilJar)
-			}
-		}
-		tests(MavenPublication) {
-			artifactId "mongoose-tests"
-			artifact (testsJar.archivePath) {
-				builtBy(testsJar)
-			}
-		}
-		tarBall(MavenPublication) {
-			artifact(dist.archivePath) {
-				artifactId "dist"
-				extension "tgz"
-				builtBy(dist)
-			}
+			publications('artifactDist')
 		}
 	}
 }

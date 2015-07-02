@@ -45,8 +45,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public final class ServiceUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
 	private final static Map<String, Service> SVC_MAP = new ConcurrentHashMap<>();
+	private final static Map<Integer, MBeanServer> MBEAN_SERVERS = new ConcurrentHashMap<>();
+	private final static Collection<JMXConnectorServer>
+		JMX_CONNECTOR_SERVERS = new ConcurrentLinkedQueue<>();
 	//
 	private static void setUpSvcShutdownHook() {
 		Runtime.getRuntime().addShutdownHook(
@@ -249,10 +251,6 @@ public final class ServiceUtils {
 		JMXRMI_URL_PREFIX = "service:jmx:rmi:///jndi/rmi://",
 		JMXRMI_URL_PATH = "/jmxrmi";
 	//
-	private final static Map<Integer, MBeanServer>
-		MBEAN_SERVERS = new ConcurrentHashMap<>();
-	private final static Collection<JMXConnectorServer>
-		JMX_CONNECTOR_SERVERS = new ConcurrentLinkedQueue<>();
 	public static MBeanServer getMBeanServer(final int portJmxRmi) {
 		//
 		MBeanServer mBeanServer;
