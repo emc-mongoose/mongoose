@@ -8,7 +8,7 @@ import java.security.NoSuchAlgorithmException;
 /**
  * Created by olga on 02.07.15.
  */
-public final class WgetJava {
+public final class ContentGetter {
 
 	public static InputStream getStream(final String dataID)
 	throws IOException, NoSuchAlgorithmException {
