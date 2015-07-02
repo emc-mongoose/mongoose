@@ -4,8 +4,9 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.integTestTools.MD5SumJava;
-import com.emc.mongoose.integTestTools.WgetJava;
+import com.emc.mongoose.integ.integTestTools.MD5SumJava;
+import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
+import com.emc.mongoose.integ.integTestTools.WgetJava;
 // mongoose-cli.jar
 import com.emc.mongoose.run.cli.ModeDispatcher;
 // mongoose-storage-mock.jar
@@ -17,7 +18,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 //
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -35,12 +35,10 @@ public class WriteDefaultScenarioIT {
 
 	private static Thread wsMockThread;
 	private static RunTimeConfig runTimeConfig;
-	private static final ByteArrayOutputStream savedContent = new ByteArrayOutputStream();
+	private static SavedOutputStream savedContent = new SavedOutputStream(System.out);
 
 	@BeforeClass
 	public static void before() throws Exception{
-		//Save old console output
-		PrintStream oldPrintStream = System.out;
 		// Set new saved console output stream
 		System.setOut(new PrintStream(savedContent));
 		// If tests run from the IDEA full logging file must be set
@@ -68,8 +66,8 @@ public class WriteDefaultScenarioIT {
 		RunTimeConfig.setContext(runTimeConfig);
 		//run mongoose default scenario in standalone mode
 		ModeDispatcher.main(new String[]{"standalone"});
-		// Set old console output stream
-		System.setOut(oldPrintStream);
+		// Set olt System.out stream
+		System.setOut(savedContent.getPrintStream());
 	}
 
 	@AfterClass

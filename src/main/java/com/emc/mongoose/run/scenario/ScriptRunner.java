@@ -36,7 +36,9 @@ implements Runnable {
 		//
 		KEY_PYTHON_PATH = "python.path",
 		KEY_PYTHON_IMPORT_SITE = "python.import.site",
-		IDEA_RESOURCES_PATH = "src/main/resources";
+		SRC_DIR_NAME = "src",
+		MAIN_DIR_NAME = "main",
+		RESOURCES_DIR_NAME = "resources";
 	//
 	private final static ScriptEngineManager SCRIPT_ENGINE_MANAGER = new ScriptEngineManager();
 	private final static Map<String, String> SCRIPT_LANG_MAP = new HashMap<>();
@@ -82,10 +84,17 @@ implements Runnable {
 			//
 			Path scriptDir = Paths.get(RunTimeConfig.DIR_ROOT, scriptsRootDir, scriptLangKey);
 			if (!Files.exists(scriptDir)){
-				LOG.info(Markers.MSG, "Directory \"{}\" doesn't exist. Try look for bundle directory", scriptDir);
-				scriptDir = Paths.get(
-					System.getProperty("user.dir"), IDEA_RESOURCES_PATH, scriptsRootDir, scriptLangKey
+				LOG.info(
+					Markers.MSG, "Directory \"{}\" doesn't exist. " +
+					"Try to look for scripts in src/main/resources directory", scriptDir
 				);
+				scriptDir = Paths.get(
+					System.getProperty("user.dir"), SRC_DIR_NAME, MAIN_DIR_NAME,
+					RESOURCES_DIR_NAME, scriptsRootDir, scriptLangKey
+				);
+				if (!Files.exists(scriptDir)) {
+					LOG.fatal(Markers.ERR,  "Directory \"{}\" doesn't exist. ", scriptDir);
+				}
 			}
 			// language-specifig preparations
 			switch(scriptLangKey) {

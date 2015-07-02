@@ -76,9 +76,9 @@ public final class LogUtil {
 		PATH_LOG_DIR = String.format("%s%slog", RunTimeConfig.DIR_ROOT, File.separator);
 	//
 	private final static AtomicReference<LoggerContext> LOG_CTX = new AtomicReference<>(null);
-	/*static {
+	static {
 		init();
-	}*/
+	}
 	public static void init() {
 		synchronized(LOG_CTX) {
 			if(LOG_CTX.get() == null) {

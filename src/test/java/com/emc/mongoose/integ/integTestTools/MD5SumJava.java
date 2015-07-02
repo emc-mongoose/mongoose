@@ -1,4 +1,4 @@
-package com.emc.mongoose.integTestTools;
+package com.emc.mongoose.integ.integTestTools;
 
 import java.io.InputStream;
 import java.security.MessageDigest;

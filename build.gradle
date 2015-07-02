@@ -869,6 +869,7 @@ task testsJar(type: Jar) {
 	archiveName "${baseName}-tests.${extension}"
 	classifier = 'tests'
 	from sourceSets.test.output
+	from sourceSets.integTest.output
 	manifest {
 		from sharedManifest
 		attributes(
