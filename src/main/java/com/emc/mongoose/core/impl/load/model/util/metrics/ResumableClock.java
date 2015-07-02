@@ -7,14 +7,14 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by gusakk on 02.07.15.
  */
-public class UserClock extends Clock {
+public class ResumableClock extends Clock {
 	//
 	//  these parameters are necessary for pause/resume Mongoose w/ SIGSTOP and SIGCONT signals
 	private long lastTimeBeforeTermination;
 	private long elapsedTimeInPause;
 	private static final long TICK_INTERVAL = TimeUnit.SECONDS.toNanos(1);
 	//
-	public UserClock() {
+	public ResumableClock() {
 		lastTimeBeforeTermination = 0;
 		elapsedTimeInPause = 0;
 	}

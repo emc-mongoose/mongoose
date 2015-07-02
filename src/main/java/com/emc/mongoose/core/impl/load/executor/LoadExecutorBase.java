@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
-import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
@@ -28,7 +27,7 @@ import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.load.model.PersistentAccumulatorProducer;
-import com.emc.mongoose.core.impl.load.model.util.metrics.UserClock;
+import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 //
@@ -104,7 +103,7 @@ implements LoadExecutor<T> {
 	private final BlockingQueue<IOTask<T>> ioTaskSpentQueue;
 	//
 	private LoadState currState = null;
-	private UserClock userClock = new UserClock();
+	private ResumableClock resumableClock = new ResumableClock();
 	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
 	//
 	private static final List<String> IMMUTABLE_PARAMS = new ArrayList<>();
@@ -345,14 +344,14 @@ implements LoadExecutor<T> {
 			//  these metrics w/o Meter's library implementation.
 			//  Only average values in TP and BW will be calculated correctly.
 			//  Other values will be gradually recovered.
-			meanTP = (System.nanoTime() - userClock.getLastTimeBeforeTermination()
+			meanTP = (System.nanoTime() - resumableClock.getLastTimeBeforeTermination()
 				> TimeUnit.SECONDS.toNanos(1))
 				? throughPut.getMeanRate() : countReqSucc / elapsedTime
 				* TimeUnit.SECONDS.toNanos(1),
 			oneMinTP = throughPut.getOneMinuteRate(),
 			fiveMinTP = throughPut.getFiveMinuteRate(),
 			fifteenMinTP = throughPut.getFifteenMinuteRate(),
-			meanBW = (System.nanoTime() - userClock.getLastTimeBeforeTermination()
+			meanBW = (System.nanoTime() - resumableClock.getLastTimeBeforeTermination()
 					> TimeUnit.SECONDS.toNanos(1))
 				? reqBytes.getMeanRate() : reqBytes.getCount() / elapsedTime
 					* TimeUnit.SECONDS.toNanos(1),
@@ -413,9 +412,9 @@ implements LoadExecutor<T> {
 			counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
 			counterReqFail = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_FAIL));
 			throughPut = metrics.register(MetricRegistry.name(getName(),
-				METRIC_NAME_REQ, METRIC_NAME_TP), new Meter(userClock));
+				METRIC_NAME_REQ, METRIC_NAME_TP), new Meter(resumableClock));
 			reqBytes = metrics.register(MetricRegistry.name(getName(),
-				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(userClock));
+				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(resumableClock));
 			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
 			final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
