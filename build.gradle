@@ -36,7 +36,7 @@ def loadProjectVersionFrom(String sourceFileName) {
 loadProjectVersionFrom confDirName + File.separator + project.name + ".json"
 
 version = ext.version
-group = 'mongoose'
+group = "com.emc.${rootProject.name}"
 
 task wrapper(type: Wrapper) {
 	gradleVersion = '2.4'
@@ -494,8 +494,8 @@ ext.sharedManifest = manifest {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 task commonJar(type: Jar) {
-	appendix "common"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "common"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.common.output
 	manifest {
 		from sharedManifest
@@ -514,8 +514,8 @@ task commonJar(type: Jar) {
 
 task coreApiJar(type: Jar) {
 	dependsOn commonJar
-	archiveName "${baseName}-${appendix}.${extension}"
-	appendix "core-api"
+	classifier "core-api"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.coreApi.output
 	manifest {
 		from sharedManifest
@@ -533,8 +533,8 @@ task coreApiJar(type: Jar) {
 
 task coreImplJar(type: Jar) {
 	dependsOn commonJar, coreApiJar
-	appendix "core-impl"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "core-impl"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.coreImpl.output
 	manifest {
 		from sharedManifest
@@ -557,8 +557,8 @@ task coreImplJar(type: Jar) {
 
 task storageAdapterAtmosJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
-	appendix "storage-adapter-atmos"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "storage-adapter-atmos"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.storageAdapterAtmos.output
 	manifest {
 		from sharedManifest
@@ -578,8 +578,8 @@ task storageAdapterAtmosJar(type: Jar) {
 
 task storageAdapterS3Jar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
-	appendix "storage-adapter-s3"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "storage-adapter-s3"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.storageAdapterS3.output
 	manifest {
 		from sharedManifest
@@ -599,8 +599,8 @@ task storageAdapterS3Jar(type: Jar) {
 
 task storageAdapterSwiftJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
-	appendix "storage-adapter-swift"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "storage-adapter-swift"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.storageAdapterSwift.output
 	manifest {
 		from sharedManifest
@@ -624,8 +624,8 @@ task storageAdapterSwiftJar(type: Jar) {
 
 task serverApiJar(type: Jar) {
 	dependsOn commonJar, coreApiJar
-	appendix "server-api"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "server-api"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.serverApi.output
 	manifest {
 		from sharedManifest
@@ -644,8 +644,8 @@ task serverApiJar(type: Jar) {
 
 task webserverJar(type: Jar) {
 	dependsOn commonJar, compileRMI
-	appendix "webserver"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "webserver"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.webserver.output
 	manifest {
 		from sharedManifest
@@ -667,8 +667,8 @@ task webserverJar(type: Jar) {
 
 task clientJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar
-	appendix "client"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "client"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.client.output
 	manifest {
 		from sharedManifest
@@ -689,8 +689,8 @@ task clientJar(type: Jar) {
 
 task scenarioJar(type: Jar) {
 	dependsOn commonJar
-	appendix "scenario"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "scenario"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.scenario.output
 	manifest {
 		from sharedManifest
@@ -708,8 +708,8 @@ task scenarioJar(type: Jar) {
 
 task serverImplJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar, compileRMI
-	appendix "server-impl"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "server-impl"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.serverImpl.output
 	manifest {
 		from sharedManifest
@@ -730,8 +730,8 @@ task serverImplJar(type: Jar) {
 
 task storageMockJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
-	appendix "storage-mock"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "storage-mock"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.storageMock.output
 	manifest {
 		from sharedManifest
@@ -751,8 +751,8 @@ task storageMockJar(type: Jar) {
 
 task webuiJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, scenarioJar, serverApiJar, serverImplJar, storageMockJar
-	appendix "webui"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "webui"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.webui.output
 	manifest {
 		from sharedManifest
@@ -783,6 +783,7 @@ task cliJar(type: Jar) {
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
 	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
 	dependsOn clientJar, scenarioJar, webuiJar
+	classifier "cli"
 	archiveName "${baseName}.${extension}"
 	from sourceSets.cli.output
 	manifest {
@@ -816,8 +817,8 @@ task utilJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, clientJar
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
 	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar, storageMockJar
-	appendix "util"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "util"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.util.output
 	manifest {
 		from sharedManifest
@@ -861,8 +862,8 @@ task testsJar(type: Jar) {
 	dependsOn cliJar
 	dependsOn utilJar
 
-	appendix "tests"
-	archiveName "${baseName}-${appendix}.${extension}"
+	classifier "tests"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.test.output
 	manifest {
 		from sharedManifest
@@ -1111,7 +1112,7 @@ publishing {
 		}
 		tarBall(MavenPublication) {
 			artifact(dist.archivePath) {
-				artifactId "mongoose"
+				artifactId "dist"
 				extension "tgz"
 				builtBy(dist)
 			}
