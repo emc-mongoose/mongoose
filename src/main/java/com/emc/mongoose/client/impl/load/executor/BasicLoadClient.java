@@ -690,7 +690,7 @@ implements LoadClient<T> {
 		return new BasicLoadState(
 			instanceNum,
 			runTimeConfig, metricSuccCount.getValue(), taskGetCountFail.getLastResult(),
-			taskGetCountBytes.getLastResult(),
+			taskGetCountBytes.getLastResult(), taskGetCountSubm.getLastResult(),
 			System.nanoTime() - tsStart.get(), TimeUnit.NANOSECONDS
 		);
 	}

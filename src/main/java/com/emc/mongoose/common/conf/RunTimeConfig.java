@@ -596,7 +596,6 @@ implements Externalizable {
 				}
 			}
 			CONTEXT_CONFIG.set(this);
-			log.info(Markers.MSG, toString());
 		} else {
 			final String errMsg = String.format(
 				"%s, version mismatch, server: %s client: %s",

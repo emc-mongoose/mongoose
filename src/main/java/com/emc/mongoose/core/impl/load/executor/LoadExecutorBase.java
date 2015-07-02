@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.load.executor;
 //
-import com.codahale.metrics.Clock;
 import com.codahale.metrics.Counter;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.JmxReporter;
@@ -28,6 +27,7 @@ import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.load.model.PersistentAccumulatorProducer;
+import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 //
@@ -48,6 +48,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -102,9 +103,14 @@ implements LoadExecutor<T> {
 	private final BlockingQueue<IOTask<T>> ioTaskSpentQueue;
 	//
 	private LoadState currState = null;
-	//  these parameters are necessary for pause/resume Mongoose w/ SIGSTOP and SIGCONT signals
-	private long lastTimeBeforeTermination = 0;
-	private long elapsedTimeInPause = 0;
+	private ResumableClock resumableClock = new ResumableClock();
+	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
+	//
+	private static final List<String> IMMUTABLE_PARAMS = new ArrayList<>();
+	//
+	static {
+		initializeImmutableParams();
+	}
 	//
 	private final Thread
 		metricsDaemon = new Thread() {
@@ -309,6 +315,13 @@ implements LoadExecutor<T> {
 	public final String toString() {
 		return getName();
 	}
+	//
+	private static void initializeImmutableParams() {
+		IMMUTABLE_PARAMS.add("run.mode");
+		IMMUTABLE_PARAMS.add("run.version");
+		IMMUTABLE_PARAMS.add("scenario.name");
+	}
+	//
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -317,7 +330,7 @@ implements LoadExecutor<T> {
 		// duration when load is done
 		final double elapsedTime = (currState != null) ?
 			currState.getLoadElapsedTimeUnit().
-					toNanos(currState.getLoadElapsedTimeValue()) + (System.nanoTime() - tsStart.get())
+				toNanos(currState.getLoadElapsedTimeValue()) + (System.nanoTime() - tsStart.get())
 			: (System.nanoTime() - tsStart.get());
 		//
 		final long
@@ -325,17 +338,23 @@ implements LoadExecutor<T> {
 			countReqFail = counterReqFail.getCount();
 		final double
 			//  If Mongoose's run was paused w/ SIGSTOP signal then calculate meanTP and meanBW w/
-			//  values from Meter's library implementation after resumption. All metrics will be calculated correctly.
-			//  If Mongoose's run was paused w/ SIGINT signal then calculate these metrics w/o Meter's library
-			//  implementation. Only average values in TP and BW will be calculated correctly.
+			//  values from Meter's library implementation after resumption.
+			//  All metrics will be calculated correctly.
+			//  If Mongoose's run was paused w/ SIGINT signal then calculate
+			//  these metrics w/o Meter's library implementation.
+			//  Only average values in TP and BW will be calculated correctly.
 			//  Other values will be gradually recovered.
-			meanTP = (System.nanoTime() - lastTimeBeforeTermination > TimeUnit.SECONDS.toNanos(1))
-				? throughPut.getMeanRate() : countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
+			meanTP = (System.nanoTime() - resumableClock.getLastTimeBeforeTermination()
+				> TimeUnit.SECONDS.toNanos(1))
+				? throughPut.getMeanRate() : countReqSucc / elapsedTime
+				* TimeUnit.SECONDS.toNanos(1),
 			oneMinTP = throughPut.getOneMinuteRate(),
 			fiveMinTP = throughPut.getFiveMinuteRate(),
 			fifteenMinTP = throughPut.getFifteenMinuteRate(),
-			meanBW = (System.nanoTime() - lastTimeBeforeTermination > TimeUnit.SECONDS.toNanos(1))
-				? reqBytes.getMeanRate() : reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1),
+			meanBW = (System.nanoTime() - resumableClock.getLastTimeBeforeTermination()
+					> TimeUnit.SECONDS.toNanos(1))
+				? reqBytes.getMeanRate() : reqBytes.getCount() / elapsedTime
+					* TimeUnit.SECONDS.toNanos(1),
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
@@ -389,38 +408,49 @@ implements LoadExecutor<T> {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			LOG.debug(Markers.MSG, "Starting {}", getName());
 			// init metrics
-			final Clock userClock = getMetricsClock();
 			counterSubm = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_SUBM));
 			counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
 			counterReqFail = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_FAIL));
-			throughPut = metrics.register(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_TP),
-				new Meter(userClock));
-			reqBytes = metrics.register(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW),
-				new Meter(userClock));
+			throughPut = metrics.register(MetricRegistry.name(getName(),
+				METRIC_NAME_REQ, METRIC_NAME_TP), new Meter(resumableClock));
+			reqBytes = metrics.register(MetricRegistry.name(getName(),
+				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(resumableClock));
 			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
-			final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+			if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
+				final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
 					Constants.DIR_LOG, RunTimeConfig.getContext().getRunId())
-						.resolve(Constants.STATES_FILE).toString();
-			final File statesFile = new File(fullStateFileName);
-			if (statesFile.exists()) {
-				if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
+					.resolve(Constants.STATES_FILE).toString();
+				final File statesFile = new File(fullStateFileName);
+				if (statesFile.exists()) {
 					loadStateFromFile(fullStateFileName);
-				}
-				final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
-				//  apply parameters from loadState to current load executor
-				for (final LoadState state : loadStates) {
-					if (state.getLoadNumber() == instanceNum) {
-						counterReqFail.inc(state.getCountFail());
-						throughPut.mark(state.getCountSucc());
-						reqBytes.mark(state.getCountBytes());
-						currState = state;
-						break;
+					final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
+					//  apply parameters from loadState to current load executor
+					for (final LoadState state : loadStates) {
+						if (state.getLoadNumber() == instanceNum) {
+							if (isImmutableParamsChanged(state.getRunTimeConfig())) {
+								LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
+									getName());
+							}
+							counterSubm.inc(state.getCountSucc() + state.getCountFail());
+							counterResults.set(state.getCountSucc() + state.getCountFail());
+							counterReqFail.inc(state.getCountFail());
+							throughPut.mark(state.getCountSucc());
+							reqBytes.mark(state.getCountBytes());
+							currState = state;
+							if (isLoadExecutorFinished(currState)) {
+								isLoadFinished.compareAndSet(false, true);
+								LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
+								return;
+							}
+							break;
+						}
 					}
+				} else {
+					DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
+					LOG.debug(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
+						rtConfig.getRunId());
 				}
-			} else {
-				LOG.info(Markers.MSG, "File with state of run with run.id: \"{}\" wasn't found. Starting new run...",
-					RunTimeConfig.getContext().getRunId());
 			}
 			//
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
@@ -456,58 +486,52 @@ implements LoadExecutor<T> {
 			LOG.warn(Markers.ERR, "Second start attempt - skipped");
 		}
 	}
+	private boolean isLoadExecutorFinished(final LoadState state) {
+		final RunTimeConfig localRunTimeConfig = rtConfig;
+		final long loadTimeMillis = (localRunTimeConfig.getLoadLimitTimeUnit().
+				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) > 0
+				? (localRunTimeConfig.getLoadLimitTimeUnit().
+				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
+		final long stateTimeMillis = state.getLoadElapsedTimeUnit().
+				toMillis(state.getLoadElapsedTimeValue());
+		return isDoneMaxCount() || (stateTimeMillis >= loadTimeMillis);
+	}
 	//
-	private Clock getMetricsClock() {
-		return new Clock() {
-			private final long tickInterval = TimeUnit.SECONDS.toNanos(1);
-			//
-			//  This Clock's implementation provides correct time for calculating different metrics
-			//  after resumption Mongoose's run w/ SIGCONT signal.
-			@Override
-			public long getTick() {
-				final long currTime = System.nanoTime();
-				if (lastTimeBeforeTermination > 0) {
-					if (currTime - lastTimeBeforeTermination > tickInterval) {
-						elapsedTimeInPause += currTime - lastTimeBeforeTermination;
-						lastTimeBeforeTermination = currTime;
-						return currTime - elapsedTimeInPause;
-					}
-				}
-				lastTimeBeforeTermination = currTime;
-				return currTime - elapsedTimeInPause;
+	private boolean isImmutableParamsChanged(final RunTimeConfig loadStateConfig) {
+		for (final String param : IMMUTABLE_PARAMS) {
+			if (!rtConfig.getString(param).equals(loadStateConfig.getString(param))) {
+				return true;
 			}
-		};
+		}
+		return false;
 	}
 	//
 	private void loadStateFromFile(final String fullStateFileName) {
 		try (final FileInputStream fis = new FileInputStream(fullStateFileName)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
-				LOG.info(Markers.MSG, "Run with run.id: \"{}\" was resumed",
+				LOG.info(Markers.MSG, "Run \"{}\" was resumed",
 						rtConfig.getRunId());
 				final List<LoadState> loadStates = (List<LoadState>) ois.readObject();
 				DESERIALIZED_STATES.put(rtConfig.getRunId(), loadStates);
 			}
 		} catch (final FileNotFoundException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e,
-				"File with state of run with run.id: \"{}\" wasn't found. Starting new run...",
-				rtConfig.getRunId()
-			);
+			LOG.debug(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
+				rtConfig.getRunId());
 		} catch (final IOException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e,
-				"Failed to load state of run with the run id \"{}\" from the \"{}\" file, " +
-				"starting new run...", rtConfig.getRunId(), fullStateFileName
-			);
+			LogUtil.exception(LOG, Level.WARN, e,
+				"Failed to load state of run \"{}\" from \"{}\" file." +
+				"Starting new run", rtConfig.getRunId(), fullStateFileName);
 		} catch (final ClassNotFoundException e) {
-			LogUtil.exception(
-				LOG, Level.WARN, e, "Failed to deserialize state of run, starting new run..."
-			);
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of run." +
+				"Starting new run");
 		}
 	}
 	//
 	@Override
 	public final void interrupt() {
+		if (isLoadFinished.get())
+			return;
+		//
 		if(isInterrupted.compareAndSet(false, true)) {
 			metricsDaemon.interrupt();
 			shutdown();
@@ -568,7 +592,7 @@ implements LoadExecutor<T> {
 	public final void setConsumer(final Consumer<T> consumer) {
 		this.consumer = consumer;
 		LOG.debug(
-			Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", consumer, getName()
+				Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", consumer, getName()
 		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -609,6 +633,7 @@ implements LoadExecutor<T> {
 				counterSubm.getCount(), counterRej.getCount()
 			);
 			super.interrupt();
+			return;
 		}
 		// prepare the I/O task instance (make the link between the data item and load type)
 		final String nextNodeAddr = storageNodeCount == 1 ? storageNodeAddrs[0] : getNextNode();
@@ -735,13 +760,12 @@ implements LoadExecutor<T> {
 	@Override
 	public LoadState getLoadState()
 	throws RemoteException {
-		final long prevElapsedTime = currState == null ?
-			0 :
-			currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue());
+		final long prevElapsedTime = currState != null ?
+			currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
 		return new BasicLoadState(
 			instanceNum, rtConfig, throughPut.getCount(), counterReqFail.getCount(),
-			reqBytes.getCount(), prevElapsedTime + (System.nanoTime() - tsStart.get()),
-			TimeUnit.NANOSECONDS
+			reqBytes.getCount(), counterSubm.getCount(),
+			prevElapsedTime + (System.nanoTime() - tsStart.get()),TimeUnit.NANOSECONDS
 		);
 	}
 	//
@@ -857,16 +881,10 @@ implements LoadExecutor<T> {
 		//
 		long t = System.currentTimeMillis(), timeOutMilliSec;
 		if (currState != null) {
-			final long loadTimeLimit = rtConfig.getLoadLimitTimeValue();
-			final TimeUnit loadLimitUnit = rtConfig.getLoadLimitTimeUnit();
-			if ((currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue())
-					>= loadLimitUnit.toMillis(loadTimeLimit)) && (loadTimeLimit > 0)) {
-				LOG.info(Markers.MSG, "<{}>: nothing to do more", getName());
-				timeOutMilliSec = 0;
-			} else {
-				timeOutMilliSec = timeUnit.toMillis(timeOut) -
-					currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue());
-			}
+			if (isLoadFinished.get())
+				return;
+			timeOutMilliSec = timeUnit.toMillis(timeOut) -
+				currState.getLoadElapsedTimeUnit().toMillis(currState.getLoadElapsedTimeValue());
 		} else {
 			timeOutMilliSec = timeUnit.toMillis(timeOut);
 		}
