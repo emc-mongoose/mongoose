@@ -180,7 +180,8 @@ implements Runnable {
 		for (final LoadState state : states) {
 			final long stateTimeMillis = state.getLoadElapsedTimeUnit().toMillis(state.getLoadElapsedTimeValue());
 			final long stateItemsCount = state.getCountSucc() + state.getCountFail();
-			if ((stateTimeMillis < runTimeMillis) && (stateItemsCount < maxItemsCountPerLoad)) {
+			if ((stateTimeMillis < runTimeMillis) && (stateItemsCount < maxItemsCountPerLoad)
+					&& (stateItemsCount < state.getCountSubm())) {
 				return false;
 			}
 		}
