@@ -105,7 +105,7 @@ implements Runnable {
 					}
 					//
 					if (HOOKS_MAP.get(currRunId).isEmpty()) {
-						if (!isRunFinished(currState)) {
+						if (!isLoadJobFinished(currState)) {
 							saveCurrState();
 						}
 						HOOKS_MAP.remove(currRunId);
@@ -166,7 +166,7 @@ implements Runnable {
 		}
 	}
 	//
-	public static boolean isRunFinished(final LoadState loadState) {
+	public static boolean isLoadJobFinished(final LoadState loadState) {
 		final RunTimeConfig localRunTimeConfig = loadState.getRunTimeConfig();
 		final Queue<LoadState> states = LOAD_STATES.get(localRunTimeConfig.getRunId());
 		//
