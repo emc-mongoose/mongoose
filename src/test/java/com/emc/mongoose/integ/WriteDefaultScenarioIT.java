@@ -11,7 +11,6 @@ import com.emc.mongoose.run.cli.ModeDispatcher;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.impl.Cinderella;
 //
-import org.apache.logging.log4j.core.config.Configurator;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -44,6 +43,13 @@ public class WriteDefaultScenarioIT {
 		PrintStream oldPrintStream = System.out;
 		// Set new saved console output stream
 		System.setOut(new PrintStream(savedContent));
+		// If tests run from the IDEA full logging file must be set
+		if (System.getProperty("log4j.configurationFile") == null) {
+			String fullLogConfFile = Paths
+				.get(System.getProperty("user.dir"), Constants.DIR_CONF, "logging.json")
+				.toString();
+			System.setProperty("log4j.configurationFile", fullLogConfFile);
+		}
 		//Run the WS mock
 		LogUtil.init();
 		RunTimeConfig.initContext();

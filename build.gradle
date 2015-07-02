@@ -923,7 +923,7 @@ task dist(type: Tar) {
 	configurations.webuiRuntime.collect {
 		def path = it.getAbsolutePath()
 		if(
-		it.isFile() && (path.contains("jstl") ||
+			it.isFile() && (path.contains("jstl") ||
 			path.contains("log4j-web") ||
 			path.contains("webjars"))
 		) {

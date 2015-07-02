@@ -10,22 +10,21 @@ import java.security.NoSuchAlgorithmException;
  */
 public final class WgetJava {
 
-
 	public static InputStream getStream(final String dataID)
-		throws IOException, NoSuchAlgorithmException {
+	throws IOException, NoSuchAlgorithmException {
 		// There is url string w/o data ID
-		String firstPartURLString = "http://localhost:9020/bucket/";
-		URL url = new URL(firstPartURLString+dataID);
+		final String firstPartURLString = "http://localhost:9020/bucket/";
+		final URL url = new URL(firstPartURLString+dataID);
 		return url.openStream();
 	}
 
 	public static int getDataSize(final String dataID)
-		throws IOException, NoSuchAlgorithmException {
-		byte[] buffer = new byte[1024];
+	throws IOException, NoSuchAlgorithmException {
+		final byte[] buffer = new byte[1024];
 		int numRead;
 		int countByte = 0;
 
-		try (InputStream inputStream = getStream(dataID)) {
+		try (final InputStream inputStream = getStream(dataID)) {
 			do {
 				numRead = inputStream.read(buffer);
 				if (numRead > 0) {

@@ -10,11 +10,11 @@ public final class MD5SumJava {
 
 	public static String getMD5Checksum(final String dataID)
 	throws Exception {
-		MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-		byte[] buffer = new byte[1024];
+		final MessageDigest messageDigest = MessageDigest.getInstance("MD5");
+		final byte[] buffer = new byte[1024];
 		int numRead;
 
-		try (InputStream inputStream = WgetJava.getStream(dataID)) {
+		try (final InputStream inputStream = WgetJava.getStream(dataID)) {
 			do {
 				numRead = inputStream.read(buffer);
 				if (numRead > 0) {
@@ -23,7 +23,7 @@ public final class MD5SumJava {
 			} while (numRead != -1);
 		}
 
-		byte[] checksum = messageDigest.digest();
+		final byte[] checksum = messageDigest.digest();
 		String result = "";
 
 		//a faster way to convert a byte array to a HEX string

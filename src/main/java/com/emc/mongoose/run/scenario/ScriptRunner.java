@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -114,7 +113,7 @@ implements Runnable {
 			if(Files.exists(scriptPath)) {
 				LOG.debug(Markers.MSG, "File \"{}\" exists", scriptPath);
 			} else {
-				LOG.info(Markers.MSG, "File \"{}\" doesn't exist", scriptPath);
+				LOG.fatal(Markers.ERR, "File \"{}\" doesn't exist", scriptPath);
 			}
 			//
 			if(Files.isReadable(scriptPath)) {

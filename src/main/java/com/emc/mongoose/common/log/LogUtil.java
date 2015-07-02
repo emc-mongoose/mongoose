@@ -34,7 +34,7 @@ import java.util.concurrent.locks.ReentrantLock;
  Created by kurila on 06.05.14.
  */
 public final class LogUtil {
-	public final static String
+	private final static String
 		//
 		KEY_LOG4J_CTX_SELECTOR = "Log4jContextSelector",
 		VALUE_LOG4J_CTX_ASYNC_SELECTOR = AsyncLoggerContextSelector.class.getCanonicalName(),
@@ -75,7 +75,7 @@ public final class LogUtil {
 		//
 		PATH_LOG_DIR = String.format("%s%slog", RunTimeConfig.DIR_ROOT, File.separator);
 	//
-	public final static AtomicReference<LoggerContext> LOG_CTX = new AtomicReference<>(null);
+	private final static AtomicReference<LoggerContext> LOG_CTX = new AtomicReference<>(null);
 	/*static {
 		init();
 	}*/
