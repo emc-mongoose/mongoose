@@ -36,7 +36,8 @@ implements Runnable {
 		VALUE_PY = "py",
 		//
 		KEY_PYTHON_PATH = "python.path",
-		KEY_PYTHON_IMPORT_SITE = "python.import.site";
+		KEY_PYTHON_IMPORT_SITE = "python.import.site",
+		IDEA_RESOURCES_PATH = "src/main/resources";
 	//
 	private final static ScriptEngineManager SCRIPT_ENGINE_MANAGER = new ScriptEngineManager();
 	private final static Map<String, String> SCRIPT_LANG_MAP = new HashMap<>();
@@ -84,7 +85,7 @@ implements Runnable {
 			if (!Files.exists(scriptDir)){
 				LOG.info(Markers.MSG, "Directory \"{}\" doesn't exist. Try look for bundle directory", scriptDir);
 				scriptDir = Paths.get(
-					System.getProperty("user.dir"), "src", "main", "resources", scriptsRootDir, scriptLangKey
+					System.getProperty("user.dir"), IDEA_RESOURCES_PATH, scriptsRootDir, scriptLangKey
 				);
 			}
 			// language-specifig preparations

@@ -41,7 +41,7 @@ loadProjectVersionFrom confDirName + File.separator + project.name + ".json"
 version = ext.version
 
 task wrapper(type: Wrapper) {
-	gradleVersion = '1.7'
+	gradleVersion = '2.4'
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
