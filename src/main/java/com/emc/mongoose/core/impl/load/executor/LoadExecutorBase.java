@@ -417,39 +417,40 @@ implements LoadExecutor<T> {
 				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(resumableClock));
 			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
-			final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+			if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
+				final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
 					Constants.DIR_LOG, RunTimeConfig.getContext().getRunId())
-						.resolve(Constants.STATES_FILE).toString();
-			final File statesFile = new File(fullStateFileName);
-			if (statesFile.exists()) {
-				if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
+					.resolve(Constants.STATES_FILE).toString();
+				final File statesFile = new File(fullStateFileName);
+				if (statesFile.exists()) {
 					loadStateFromFile(fullStateFileName);
-				}
-				final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
-				//  apply parameters from loadState to current load executor
-				for (final LoadState state : loadStates) {
-					if (state.getLoadNumber() == instanceNum) {
-						if (isImmutableParamsChanged(state.getRunTimeConfig())) {
-							LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
-								getName());
+					final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
+					//  apply parameters from loadState to current load executor
+					for (final LoadState state : loadStates) {
+						if (state.getLoadNumber() == instanceNum) {
+							if (isImmutableParamsChanged(state.getRunTimeConfig())) {
+								LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
+									getName());
+							}
+							counterSubm.inc(state.getCountSucc() + state.getCountFail());
+							counterResults.set(state.getCountSucc() + state.getCountFail());
+							counterReqFail.inc(state.getCountFail());
+							throughPut.mark(state.getCountSucc());
+							reqBytes.mark(state.getCountBytes());
+							currState = state;
+							if (isLoadExecutorFinished(currState)) {
+								isLoadFinished.compareAndSet(false, true);
+								LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
+								return;
+							}
+							break;
 						}
-						counterSubm.inc(state.getCountSucc() + state.getCountFail());
-						counterResults.set(state.getCountSucc() + state.getCountFail());
-						counterReqFail.inc(state.getCountFail());
-						throughPut.mark(state.getCountSucc());
-						reqBytes.mark(state.getCountBytes());
-						currState = state;
-						if (isLoadExecutorFinished(currState)) {
-							isLoadFinished.compareAndSet(false, true);
-							LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
-							return;
-						}
-						break;
 					}
+				} else {
+					DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
+					LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
+						rtConfig.getRunId());
 				}
-			} else {
-				LOG.debug(Markers.MSG, "File with state of run with run.id: \"{}\" wasn't found. Starting new run...",
-					RunTimeConfig.getContext().getRunId());
 			}
 			//
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
@@ -508,21 +509,21 @@ implements LoadExecutor<T> {
 	private void loadStateFromFile(final String fullStateFileName) {
 		try (final FileInputStream fis = new FileInputStream(fullStateFileName)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
-				LOG.info(Markers.MSG, "Run with run.id: \"{}\" was resumed",
-					rtConfig.getRunId());
+				LOG.info(Markers.MSG, "Run \"{}\" was resumed",
+						rtConfig.getRunId());
 				final List<LoadState> loadStates = (List<LoadState>) ois.readObject();
 				DESERIALIZED_STATES.put(rtConfig.getRunId(), loadStates);
 			}
 		} catch (final FileNotFoundException e) {
-			LOG.debug(Markers.MSG, "File with state of load job[s] with run.id: " +
-				"\"{}\" wasn't found. Starting new run...", rtConfig.getRunId());
+			LOG.debug(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
+				rtConfig.getRunId());
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to load state of load job[s] with run.id: \"{}\" from \"{}\" file." +
-				"Starting new run...", rtConfig.getRunId(), fullStateFileName);
+				"Failed to load state of run \"{}\" from \"{}\" file." +
+				"Starting new run", rtConfig.getRunId(), fullStateFileName);
 		} catch (final ClassNotFoundException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of load job[s]." +
-				"Starting new run...");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of run." +
+				"Starting new run");
 		}
 	}
 	//
