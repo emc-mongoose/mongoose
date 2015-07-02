@@ -10,18 +10,18 @@ import java.util.concurrent.TimeUnit;
  */
 public class BasicLoadState implements LoadState {
 	//
-	private int loadNumber;
-	private RunTimeConfig runTimeConfig;
-	private long countSucc;
-	private long countFail;
-	private long countBytes;
-	private long countSubm;
-	private TimeUnit timeUnit;
-	private long timeValue;
+	private final int loadNumber;
+	private final RunTimeConfig runTimeConfig;
+	private final long countSucc;
+	private final long countFail;
+	private final long countBytes;
+	private final long countSubm;
+	private final TimeUnit timeUnit;
+	private final long timeValue;
 	//
-	public BasicLoadState(int loadNumber, RunTimeConfig runTimeConfig,
-    long countSucc, long countFail, long countBytes, long countSubm,
-    long timeValue, TimeUnit timeUnit) {
+	public BasicLoadState(final int loadNumber, final RunTimeConfig runTimeConfig,
+    final long countSucc, final long countFail, final long countBytes, final long countSubm,
+    final long timeValue, final TimeUnit timeUnit) {
 		this.loadNumber = loadNumber;
 		this.runTimeConfig = runTimeConfig;
 		this.countSucc = countSucc;

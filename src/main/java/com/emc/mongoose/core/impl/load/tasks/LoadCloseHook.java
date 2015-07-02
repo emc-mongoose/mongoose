@@ -178,7 +178,8 @@ implements Runnable {
 				? localRunTimeConfig.getLoadLimitCount() : Long.MAX_VALUE;
 		//
 		for (final LoadState state : states) {
-			final long stateTimeMillis = state.getLoadElapsedTimeUnit().toMillis(state.getLoadElapsedTimeValue());
+			final long stateTimeMillis = state.getLoadElapsedTimeUnit()
+				.toMillis(state.getLoadElapsedTimeValue());
 			final long stateItemsCount = state.getCountSucc() + state.getCountFail();
 			if ((stateTimeMillis < runTimeMillis) && (stateItemsCount < maxItemsCountPerLoad)
 					&& (stateItemsCount < state.getCountSubm())) {

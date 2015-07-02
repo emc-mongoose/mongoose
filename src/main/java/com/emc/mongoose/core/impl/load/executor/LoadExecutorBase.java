@@ -28,6 +28,7 @@ import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.load.model.PersistentAccumulatorProducer;
+import com.emc.mongoose.core.impl.load.model.util.metrics.UserClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 //
@@ -103,9 +104,7 @@ implements LoadExecutor<T> {
 	private final BlockingQueue<IOTask<T>> ioTaskSpentQueue;
 	//
 	private LoadState currState = null;
-	//  these parameters are necessary for pause/resume Mongoose w/ SIGSTOP and SIGCONT signals
-	private long lastTimeBeforeTermination = 0;
-	private long elapsedTimeInPause = 0;
+	private UserClock userClock = new UserClock();
 	//
 	private static final List<String> IMMUTABLE_PARAMS = new ArrayList<>();
 	//
@@ -331,7 +330,7 @@ implements LoadExecutor<T> {
 		// duration when load is done
 		final double elapsedTime = (currState != null) ?
 			currState.getLoadElapsedTimeUnit().
-					toNanos(currState.getLoadElapsedTimeValue()) + (System.nanoTime() - tsStart.get())
+				toNanos(currState.getLoadElapsedTimeValue()) + (System.nanoTime() - tsStart.get())
 			: (System.nanoTime() - tsStart.get());
 		//
 		final long
@@ -339,17 +338,23 @@ implements LoadExecutor<T> {
 			countReqFail = counterReqFail.getCount();
 		final double
 			//  If Mongoose's run was paused w/ SIGSTOP signal then calculate meanTP and meanBW w/
-			//  values from Meter's library implementation after resumption. All metrics will be calculated correctly.
-			//  If Mongoose's run was paused w/ SIGINT signal then calculate these metrics w/o Meter's library
-			//  implementation. Only average values in TP and BW will be calculated correctly.
+			//  values from Meter's library implementation after resumption.
+			//  All metrics will be calculated correctly.
+			//  If Mongoose's run was paused w/ SIGINT signal then calculate
+			//  these metrics w/o Meter's library implementation.
+			//  Only average values in TP and BW will be calculated correctly.
 			//  Other values will be gradually recovered.
-			meanTP = (System.nanoTime() - lastTimeBeforeTermination > TimeUnit.SECONDS.toNanos(1))
-				? throughPut.getMeanRate() : countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
+			meanTP = (System.nanoTime() - userClock.getLastTimeBeforeTermination()
+				> TimeUnit.SECONDS.toNanos(1))
+				? throughPut.getMeanRate() : countReqSucc / elapsedTime
+				* TimeUnit.SECONDS.toNanos(1),
 			oneMinTP = throughPut.getOneMinuteRate(),
 			fiveMinTP = throughPut.getFiveMinuteRate(),
 			fifteenMinTP = throughPut.getFifteenMinuteRate(),
-			meanBW = (System.nanoTime() - lastTimeBeforeTermination > TimeUnit.SECONDS.toNanos(1))
-				? reqBytes.getMeanRate() : reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1),
+			meanBW = (System.nanoTime() - userClock.getLastTimeBeforeTermination()
+					> TimeUnit.SECONDS.toNanos(1))
+				? reqBytes.getMeanRate() : reqBytes.getCount() / elapsedTime
+					* TimeUnit.SECONDS.toNanos(1),
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
@@ -403,14 +408,13 @@ implements LoadExecutor<T> {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
 			LOG.debug(Markers.MSG, "Starting {}", getName());
 			// init metrics
-			final Clock userClock = getMetricsClock();
 			counterSubm = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_SUBM));
 			counterRej = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_REJ));
 			counterReqFail = metrics.counter(MetricRegistry.name(getName(), METRIC_NAME_FAIL));
-			throughPut = metrics.register(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_TP),
-				new Meter(userClock));
-			reqBytes = metrics.register(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_BW),
-				new Meter(userClock));
+			throughPut = metrics.register(MetricRegistry.name(getName(),
+				METRIC_NAME_REQ, METRIC_NAME_TP), new Meter(userClock));
+			reqBytes = metrics.register(MetricRegistry.name(getName(),
+				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(userClock));
 			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
 			//
 			final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
@@ -491,28 +495,6 @@ implements LoadExecutor<T> {
 		return isDoneMaxCount() || (stateTimeMillis >= loadTimeMillis);
 	}
 	//
-	private Clock getMetricsClock() {
-		return new Clock() {
-			private final long tickInterval = TimeUnit.SECONDS.toNanos(1);
-			//
-			//  This Clock's implementation provides correct time for calculating different metrics
-			//  after resumption Mongoose's run w/ SIGCONT signal.
-			@Override
-			public long getTick() {
-				final long currTime = System.nanoTime();
-				if (lastTimeBeforeTermination > 0) {
-					if (currTime - lastTimeBeforeTermination > tickInterval) {
-						elapsedTimeInPause += currTime - lastTimeBeforeTermination;
-						lastTimeBeforeTermination = currTime;
-						return currTime - elapsedTimeInPause;
-					}
-				}
-				lastTimeBeforeTermination = currTime;
-				return currTime - elapsedTimeInPause;
-			}
-		};
-	}
-	//
 	private boolean isImmutableParamsChanged(final RunTimeConfig loadStateConfig) {
 		for (final String param : IMMUTABLE_PARAMS) {
 			if (!rtConfig.getString(param).equals(loadStateConfig.getString(param))) {
@@ -531,8 +513,8 @@ implements LoadExecutor<T> {
 				DESERIALIZED_STATES.put(rtConfig.getRunId(), loadStates);
 			}
 		} catch (final FileNotFoundException e) {
-			LOG.debug(Markers.MSG, "File with state of load job[s] with run.id: \"{}\" wasn't found. " +
-				"Starting new run...", rtConfig.getRunId());
+			LOG.debug(Markers.MSG, "File with state of load job[s] with run.id: " +
+				"\"{}\" wasn't found. Starting new run...", rtConfig.getRunId());
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e,
 				"Failed to load state of load job[s] with run.id: \"{}\" from \"{}\" file." +
@@ -779,7 +761,7 @@ implements LoadExecutor<T> {
 	public LoadState getLoadState()
 	throws RemoteException {
 		final long prevElapsedTime = currState != null ?
-				currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
+			currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
 		return new BasicLoadState(
 			instanceNum, rtConfig, throughPut.getCount(), counterReqFail.getCount(),
 			reqBytes.getCount(), counterSubm.getCount(),
