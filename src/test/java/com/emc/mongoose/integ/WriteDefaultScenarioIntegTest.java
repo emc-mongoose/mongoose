@@ -4,7 +4,6 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
 import com.emc.mongoose.integ.integTestTools.ContentGetter;
 // mongoose-cli.jar
@@ -59,7 +58,8 @@ public class WriteDefaultScenarioIntegTest {
 		DATA_SIZE = 1048576;
 
 	@BeforeClass
-	public static void before() throws Exception{
+	public static void before()
+	throws Exception{
 		// Set new saved console output stream
 		System.setOut(new PrintStream(savedContent));
 		// If tests run from the IDEA full logging file must be set
@@ -88,20 +88,23 @@ public class WriteDefaultScenarioIntegTest {
 	}
 
 	@AfterClass
-	public static void after() throws Exception{
+	public static void after()
+	throws Exception{
 		if (!wsMockThread.isInterrupted()) {
 			wsMockThread.interrupt();
 		}
 	}
 
 	@Test
-	public void shouldReportInformationAboutSummaryMetricsFromConsole() throws Exception{
+	public void shouldReportInformationAboutSummaryMetricsFromConsole()
+	throws Exception{
 		Assert.assertTrue(savedContent.toString().contains(SUMMARY_INDICATOR));
 		Assert.assertTrue(savedContent.toString().contains(SCENARIO_END_INDICATOR));
 	}
 
 	@Test
-	public void shouldCreateAllFilesWithLogs() throws Exception{
+	public void shouldCreateAllFilesWithLogs()
+	throws Exception{
 		//Get run ID
 		final String runID = RunTimeConfig.getContext().getRunId();
 
@@ -132,7 +135,8 @@ public class WriteDefaultScenarioIntegTest {
 	}
 
 	@Test
-	public void shouldReportScenarioEndFromConsole() throws Exception{
+	public void shouldReportScenarioEndFromConsole()
+	throws Exception{
 		//Get run ID
 		final String runID = RunTimeConfig.getContext().getRunId();
 
@@ -152,7 +156,8 @@ public class WriteDefaultScenarioIntegTest {
 	}
 
 	@Test
-	public void shouldReportCorrectWrittenCountToSummaryLogFile() throws Exception{
+	public void shouldReportCorrectWrittenCountToSummaryLogFile()
+	throws Exception{
 		//Get run ID
 		final String runID = RunTimeConfig.getContext().getRunId();
 
@@ -173,7 +178,8 @@ public class WriteDefaultScenarioIntegTest {
 	}
 
 	@Test
-	public void shouldCreateDataItemsFileWithInformationAboutAllObjects() throws Exception{
+	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
+	throws Exception{
 		//Get run ID
 		final String runID = RunTimeConfig.getContext().getRunId();
 
@@ -197,7 +203,8 @@ public class WriteDefaultScenarioIntegTest {
 	}
 
 	@Test
-	public void shouldGetDifferentObjectsFromServer() throws Exception{
+	public void shouldGetDifferentObjectsFromServer()
+	throws Exception{
 		//Get run ID
 		final String runID = RunTimeConfig.getContext().getRunId();
 
@@ -222,7 +229,8 @@ public class WriteDefaultScenarioIntegTest {
 	}
 
 	@Test
-	public void shouldGetAllObjectsFromServerAndDataSizeIsDefault() throws Exception{
+	public void shouldGetAllObjectsFromServerAndDataSizeIsDefault()
+	throws Exception{
 		//Get run ID
 		final String runID = RunTimeConfig.getContext().getRunId();
 
