@@ -1,14 +1,14 @@
 package com.emc.mongoose.storage.mock.api;
 //
-import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.storage.mock.api.stats.IOStats;
+import com.emc.mongoose.core.api.data.DataItem;
+
+import java.io.Closeable;
 /**
  Created by kurila on 03.06.15.
  */
-public interface Storage<T extends DataObject>
-extends Runnable {
+public interface Storage<T extends DataItem>
+extends Runnable, Closeable {
 	//
-	T get(final String id);
 	long getSize();
 	long getCapacity();
 	IOStats getStats();

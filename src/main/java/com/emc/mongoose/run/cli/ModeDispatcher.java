@@ -16,14 +16,13 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.impl.Cinderella;
+import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Map;
 /**
  Created by kurila on 04.07.14.

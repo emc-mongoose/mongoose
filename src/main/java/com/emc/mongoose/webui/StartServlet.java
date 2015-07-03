@@ -10,7 +10,7 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.impl.Cinderella;
+import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 // mongoose-scenario.jar
 import com.emc.mongoose.run.scenario.ScriptRunner;
 //

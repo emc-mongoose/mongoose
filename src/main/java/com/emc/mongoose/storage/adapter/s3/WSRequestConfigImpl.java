@@ -11,6 +11,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 //
+import com.emc.mongoose.util.client.impl.DataItemInputProducer;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 //
@@ -191,8 +192,10 @@ extends WSRequestConfigBase<T> {
 		Producer<T> producer = null;
 		if(anyDataProducerEnabled) {
 			try {
-				producer = new WSBucketProducer<>(bucket, BasicWSObject.class, maxCount, addr);
-			} catch(final NoSuchMethodException e) {
+				producer = new DataItemInputProducer<>(
+					new WSBucketItemInput<>(bucket, addr, (Class<T>) BasicWSObject.class)
+				);
+			} catch(final Exception e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		} else {

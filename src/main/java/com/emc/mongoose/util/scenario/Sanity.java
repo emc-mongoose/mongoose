@@ -6,15 +6,15 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.util.DataItemInput;
-import com.emc.mongoose.core.api.data.util.DataItemOutput;
+import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemOutput;
 //
 import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.data.util.BinFileItemOutput;
-import com.emc.mongoose.core.impl.data.util.CSVFileItemOutput;
-import com.emc.mongoose.core.impl.data.util.CircularListItemOutput;
+import com.emc.mongoose.core.impl.data.model.BinFileItemOutput;
+import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
+import com.emc.mongoose.core.impl.data.model.CircularListItemOutput;
 //
-import com.emc.mongoose.storage.mock.impl.Cinderella;
+import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;

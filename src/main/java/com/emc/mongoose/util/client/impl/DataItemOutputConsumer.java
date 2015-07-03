@@ -4,7 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.util.DataItemOutput;
+import com.emc.mongoose.core.api.data.model.DataItemOutput;
 import com.emc.mongoose.core.api.load.model.Consumer;
 //
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
