@@ -105,7 +105,9 @@ implements Runnable {
 					}
 					//
 					if (HOOKS_MAP.get(currRunId).isEmpty()) {
-						if (!isLoadJobFinished(currState)) {
+						if (!isLoadJobFinished(currState) &&
+								RunTimeConfig.getContext().getRunMode().equals(Constants.RUN_MODE_STANDALONE)
+								&& LOAD_STATES.get(currRunId).size() == 1) {
 							saveCurrState();
 						}
 						HOOKS_MAP.remove(currRunId);
