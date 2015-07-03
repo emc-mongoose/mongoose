@@ -88,7 +88,7 @@ sourceSets {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	storageAdapterAtmos {
 		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'web', 'adapter', 'atmos'].join(File.separator))
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 'atmos'].join(File.separator))
 			include '**'
 		}
 		compileClasspath += sourceSets.common.output
@@ -96,7 +96,7 @@ sourceSets {
 	}
 	storageAdapterS3 {
 		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'web', 'adapter', 's3'].join(File.separator))
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 's3'].join(File.separator))
 			include '**'
 		}
 		compileClasspath += sourceSets.common.output
@@ -104,7 +104,7 @@ sourceSets {
 	}
 	storageAdapterSwift {
 		java {
-			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'web', 'adapter', 'swift'].join(File.separator))
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 'swift'].join(File.separator))
 			include '**'
 		}
 		compileClasspath += sourceSets.common.output

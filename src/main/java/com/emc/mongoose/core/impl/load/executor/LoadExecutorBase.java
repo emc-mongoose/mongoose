@@ -23,14 +23,15 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
-import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.load.model.PersistentAccumulatorProducer;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 //
+import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -264,7 +265,9 @@ implements LoadExecutor<T> {
 				);
 			} else {
 				try {
-					producer = new FileProducer<>(maxCount, listFile, dataCls);
+					producer = new DataItemInputProducer<>(
+						new CSVFileItemInput<>(Paths.get(listFile), dataCls)
+					);
 					LOG.debug(
 						Markers.MSG, "{} will use file-based producer: {}", getName(), listFile
 					);

@@ -11,8 +11,6 @@ import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 //
-import com.emc.mongoose.common.conf.RunTimeConfig;
-//
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 //

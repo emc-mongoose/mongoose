@@ -5,8 +5,8 @@ package com.emc.mongoose.storage.mock.impl.web.response;
 import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.api.data.WSObjectMock;
 //
+import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HttpContext;
 //
@@ -44,7 +44,7 @@ implements HttpAsyncResponseProducer {
 	throws IOException {
 		chanOut.setContentEncoder(encoder);
 		try {
-			final WSObjectMock dataItem = WSObjectMock.class.cast(response.getEntity());
+			final BasicWSObjectMock dataItem = BasicWSObjectMock.class.cast(response.getEntity());
 			if(dataItem != null) {
 				dataItem.writeFully(chanOut);
 			}

@@ -11,6 +11,8 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
 import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 import com.emc.mongoose.core.api.load.model.Producer;
+import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
+import com.emc.mongoose.core.impl.load.model.DataItemOutputConsumer;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import java.io.IOException;

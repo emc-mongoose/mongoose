@@ -1,4 +1,4 @@
-package com.emc.mongoose.util.client.impl;
+package com.emc.mongoose.core.impl.load.model;
 //
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;

@@ -7,6 +7,10 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.load.model.AccumulatorProducer;
 import com.emc.mongoose.core.api.load.model.Consumer;
+import com.emc.mongoose.core.api.load.model.Producer;
+//
+import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
+//
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -22,7 +26,6 @@ import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.zip.GZIPOutputStream;
 /**
  Created by kurila on 16.06.15.
  */
@@ -31,11 +34,10 @@ extends AsyncConsumerBase<T>
 implements AccumulatorProducer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static boolean COMPRESSION_ENABLED = false;
 	//
 	private final BufferedWriter tmpFileWriter;
 	private final File tmpFile;
-	private final FileProducer<T> tmpFileProducer;
+	private final Producer<T> tmpFileProducer;
 	//
 	private volatile long count = 0;
 	//
@@ -59,10 +61,7 @@ implements AccumulatorProducer<T> {
 		}
 		//
 		try {
-			tmpFile = Files.createTempFile(
-				tmpFilePath, runTimeConfig.getRunId(),
-				COMPRESSION_ENABLED ? ".gz" : null
-			).toFile();
+			tmpFile = Files.createTempFile(tmpFilePath, runTimeConfig.getRunId(), null).toFile();
 			tmpFile.deleteOnExit();
 		} catch(final IOException e) {
 			throw new IllegalStateException(
@@ -72,11 +71,7 @@ implements AccumulatorProducer<T> {
 		//
 		try {
 			tmpFileWriter = new BufferedWriter(
-				new OutputStreamWriter(
-					COMPRESSION_ENABLED ? new GZIPOutputStream(
-						Files.newOutputStream(tmpFile.toPath())
-					) : Files.newOutputStream(tmpFile.toPath())
-				)
+				new OutputStreamWriter(Files.newOutputStream(tmpFile.toPath()))
 			);
 		} catch(final IOException e) {
 			throw new IllegalStateException(
@@ -86,8 +81,8 @@ implements AccumulatorProducer<T> {
 		}
 		//
 		try {
-			tmpFileProducer = new FileProducer<>(
-				maxCount, tmpFile.getAbsolutePath(), itemCls, /*nested=*/true, COMPRESSION_ENABLED
+			tmpFileProducer = new DataItemInputProducer<>(
+				new CSVFileItemInput<>(tmpFilePath, itemCls)
 			);
 		} catch(final IOException | NoSuchMethodException e) {
 			throw new IllegalStateException(e);
@@ -156,7 +151,10 @@ implements AccumulatorProducer<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public void start() {
-		tmpFileProducer.start();
+		try {
+			tmpFileProducer.start();
+		} catch(final RemoteException ignored) {
+		}
 	}
 	//
 	@Override

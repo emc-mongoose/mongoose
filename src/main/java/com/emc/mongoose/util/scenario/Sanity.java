@@ -16,6 +16,7 @@ import com.emc.mongoose.core.impl.data.model.CircularListItemOutput;
 //
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
+import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
@@ -108,7 +109,7 @@ implements Runnable {
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET, DEFAULT_CONN_PER_NODE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 		final Thread wsMockThread = new Thread(
-			new Cinderella<>(RunTimeConfig.getContext()), "wsMock"
+			new Cinderella(RunTimeConfig.getContext()), "wsMock"
 		);
 		wsMockThread.setDaemon(true);
 		wsMockThread.start();

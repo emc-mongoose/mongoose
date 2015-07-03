@@ -11,7 +11,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 //
-import com.emc.mongoose.util.client.impl.DataItemInputProducer;
+import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 //
