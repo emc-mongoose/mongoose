@@ -6,6 +6,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-server-api.jar
+import com.emc.mongoose.core.impl.load.executor.LoadExecutorBase;
 import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
@@ -155,6 +156,7 @@ public final class StartServlet extends CommonServlet {
 			//
 			@Override
 			public void interrupt() {
+				LoadExecutorBase.DESERIALIZED_STATES.remove(runTimeConfig.getRunId());
 				super.interrupt();
 			}
 		};

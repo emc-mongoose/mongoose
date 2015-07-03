@@ -72,7 +72,7 @@ implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int RELEASE_TIMEOUT_MILLISEC = 100;
-	private final static Map<String, List<LoadState>> DESERIALIZED_STATES = new ConcurrentHashMap<>();
+	public final static Map<String, List<LoadState>> DESERIALIZED_STATES = new ConcurrentHashMap<>();
 	//
 	protected final int instanceNum, connCountPerNode, storageNodeCount;
 	protected final String storageNodeAddrs[];
@@ -344,17 +344,15 @@ implements LoadExecutor<T> {
 			//  these metrics w/o Meter's library implementation.
 			//  Only average values in TP and BW will be calculated correctly.
 			//  Other values will be gradually recovered.
-			meanTP = (System.nanoTime() - resumableClock.getLastTimeBeforeTermination()
-				> TimeUnit.SECONDS.toNanos(1))
-				? throughPut.getMeanRate() : countReqSucc / elapsedTime
-				* TimeUnit.SECONDS.toNanos(1),
+			meanTP = (resumableClock.wasPaused())
+				? throughPut.getMeanRate() :
+				countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
 			oneMinTP = throughPut.getOneMinuteRate(),
 			fiveMinTP = throughPut.getFiveMinuteRate(),
 			fifteenMinTP = throughPut.getFifteenMinuteRate(),
-			meanBW = (System.nanoTime() - resumableClock.getLastTimeBeforeTermination()
-					> TimeUnit.SECONDS.toNanos(1))
-				? reqBytes.getMeanRate() : reqBytes.getCount() / elapsedTime
-					* TimeUnit.SECONDS.toNanos(1),
+			meanBW = (resumableClock.wasPaused())
+				? reqBytes.getMeanRate() :
+				reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1),
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
@@ -448,7 +446,7 @@ implements LoadExecutor<T> {
 					}
 				} else {
 					DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
-					LOG.debug(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
+					LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
 						rtConfig.getRunId());
 				}
 			}
@@ -828,7 +826,11 @@ implements LoadExecutor<T> {
 				}
 				LOG.debug(Markers.MSG, "JMX reported closed");
 				LoadCloseHook.del(this);
-				DESERIALIZED_STATES.remove(rtConfig.getRunId());
+				if (currState != null) {
+					if (DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
+						DESERIALIZED_STATES.get(rtConfig.getRunId()).remove(currState);
+					}
+				}
 				LOG.debug(Markers.MSG, "\"{}\" closed successfully", getName());
 			}
 		} else {
