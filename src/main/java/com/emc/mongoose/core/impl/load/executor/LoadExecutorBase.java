@@ -7,6 +7,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 // mongoose-common.jar
+import com.codahale.metrics.UniformReservoir;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -49,6 +50,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -409,7 +411,8 @@ implements LoadExecutor<T> {
 				METRIC_NAME_REQ, METRIC_NAME_TP), new Meter(resumableClock));
 			reqBytes = metrics.register(MetricRegistry.name(getName(),
 				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(resumableClock));
-			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
+			respLatency = metrics.register(MetricRegistry.name(getName(),
+				METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
 			//
 			if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
 				final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
@@ -442,6 +445,9 @@ implements LoadExecutor<T> {
 						isLoadFinished.compareAndSet(false, true);
 						LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
 						return;
+					}
+					for (int i = 0; i < state.getLatencyValues().length; i++) {
+						respLatency.update(state.getLatencyValues()[i]);
 					}
 					break;
 				}
@@ -483,11 +489,11 @@ implements LoadExecutor<T> {
 	private boolean isLoadExecutorFinished(final LoadState state) {
 		final RunTimeConfig localRunTimeConfig = rtConfig;
 		final long loadTimeMillis = (localRunTimeConfig.getLoadLimitTimeUnit().
-				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) > 0
-				? (localRunTimeConfig.getLoadLimitTimeUnit().
-				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
+			toMillis(localRunTimeConfig.getLoadLimitTimeValue())) > 0
+			? (localRunTimeConfig.getLoadLimitTimeUnit().
+			toMillis(localRunTimeConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
 		final long stateTimeMillis = state.getLoadElapsedTimeUnit().
-				toMillis(state.getLoadElapsedTimeValue());
+			toMillis(state.getLoadElapsedTimeValue());
 		return isDoneMaxCount() || (stateTimeMillis >= loadTimeMillis);
 	}
 	//
@@ -759,7 +765,8 @@ implements LoadExecutor<T> {
 		return new BasicLoadState(
 			instanceNum, rtConfig, throughPut.getCount(), counterReqFail.getCount(),
 			reqBytes.getCount(), counterSubm.getCount(),
-			prevElapsedTime + (System.nanoTime() - tsStart.get()),TimeUnit.NANOSECONDS
+			prevElapsedTime + (System.nanoTime() - tsStart.get()),TimeUnit.NANOSECONDS,
+			respLatency.getSnapshot().getValues()
 		);
 	}
 	//
