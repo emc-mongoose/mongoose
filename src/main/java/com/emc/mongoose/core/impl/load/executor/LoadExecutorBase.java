@@ -50,7 +50,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -412,46 +411,9 @@ implements LoadExecutor<T> {
 			reqBytes = metrics.register(MetricRegistry.name(getName(),
 				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(resumableClock));
 			respLatency = metrics.register(MetricRegistry.name(getName(),
-				METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
+                    METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
 			//
-			if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
-				final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
-					Constants.DIR_LOG, RunTimeConfig.getContext().getRunId())
-					.resolve(Constants.STATES_FILE).toString();
-				final File statesFile = new File(fullStateFileName);
-				if (statesFile.exists()) {
-					loadStateFromFile(fullStateFileName);
-				} else {
-					DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
-					LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
-						rtConfig.getRunId());
-				}
-			}
-			final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
-			//  apply parameters from loadState to current load executor
-			for (final LoadState state : loadStates) {
-				if (state.getLoadNumber() == instanceNum) {
-					if (isImmutableParamsChanged(state.getRunTimeConfig())) {
-						LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
-							getName());
-					}
-					counterSubm.inc(state.getCountSucc() + state.getCountFail());
-					counterResults.set(state.getCountSucc() + state.getCountFail());
-					counterReqFail.inc(state.getCountFail());
-					throughPut.mark(state.getCountSucc());
-					reqBytes.mark(state.getCountBytes());
-					currState = state;
-					if (isLoadExecutorFinished(currState)) {
-						isLoadFinished.compareAndSet(false, true);
-						LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
-						return;
-					}
-					for (int i = 0; i < state.getLatencyValues().length; i++) {
-						respLatency.update(state.getLatencyValues()[i]);
-					}
-					break;
-				}
-			}
+			saveStateInMap();
 			//
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
@@ -486,6 +448,53 @@ implements LoadExecutor<T> {
 			LOG.warn(Markers.ERR, "Second start attempt - skipped");
 		}
 	}
+    //
+    private void saveStateInMap() {
+        if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
+            final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+                Constants.DIR_LOG, RunTimeConfig.getContext().getRunId())
+                .resolve(Constants.STATES_FILE).toString();
+            final File statesFile = new File(fullStateFileName);
+            if (statesFile.exists()) {
+                loadStateFromFile(fullStateFileName);
+            } else {
+                DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
+                LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
+                    rtConfig.getRunId());
+            }
+        }
+        //
+        applyParamsToCurrLoad();
+    }
+    //
+    private void applyParamsToCurrLoad() {
+        final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
+        //  apply parameters from loadState to current load executor
+        for (final LoadState state : loadStates) {
+            if (state.getLoadNumber() == instanceNum) {
+                if (isImmutableParamsChanged(state.getRunTimeConfig())) {
+                    LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
+                        getName());
+                }
+                counterSubm.inc(state.getCountSucc() + state.getCountFail());
+                counterResults.set(state.getCountSucc() + state.getCountFail());
+                counterReqFail.inc(state.getCountFail());
+                throughPut.mark(state.getCountSucc());
+                reqBytes.mark(state.getCountBytes());
+                currState = state;
+                if (isLoadExecutorFinished(currState)) {
+                    isLoadFinished.compareAndSet(false, true);
+                    LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
+                    return;
+                }
+                for (int i = 0; i < state.getLatencyValues().length; i++) {
+                    respLatency.update(state.getLatencyValues()[i]);
+                }
+                break;
+            }
+        }
+    }
+    //
 	private boolean isLoadExecutorFinished(final LoadState state) {
 		final RunTimeConfig localRunTimeConfig = rtConfig;
 		final long loadTimeMillis = (localRunTimeConfig.getLoadLimitTimeUnit().
@@ -762,13 +771,23 @@ implements LoadExecutor<T> {
 	throws RemoteException {
 		final long prevElapsedTime = currState != null ?
 			currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
-		return new BasicLoadState(
-			instanceNum, rtConfig, throughPut.getCount(), counterReqFail.getCount(),
-			reqBytes.getCount(), counterSubm.getCount(),
-			prevElapsedTime + (System.nanoTime() - tsStart.get()),TimeUnit.NANOSECONDS,
-			respLatency.getSnapshot().getValues()
-		);
+        final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
+            .setLoadNumber(instanceNum)
+            .setRunTimeConfig(rtConfig)
+            .setCountSucc(throughPut.getCount())
+            .setCountFail(counterReqFail.getCount())
+            .setCountBytes(reqBytes.getCount())
+            .setCountSubm(counterSubm.getCount())
+            .setLoadElapsedTimeValue(prevElapsedTime + (System.nanoTime() - tsStart.get()))
+            .setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
+            .setLatencyValues(respLatency.getSnapshot().getValues());
+		//
+        return stateBuilder.build();
 	}
+    //
+    public long[] getLatencyValues() {
+        return respLatency.getSnapshot().getValues();
+    }
 	//
 	private boolean isDoneMaxCount() {
 		return counterResults.get() >= maxCount;

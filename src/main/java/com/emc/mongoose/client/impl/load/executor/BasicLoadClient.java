@@ -4,6 +4,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
+import com.emc.mongoose.client.impl.load.executor.gauges.*;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -25,11 +26,6 @@ import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
-import com.emc.mongoose.client.impl.load.executor.gauges.AvgDouble;
-import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
-import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
-import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
-import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
 import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptClientOnMaxCountTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.DataItemsFetchPeriodicTask;
@@ -406,7 +402,7 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final void logMetrics(final Marker logMarker) {
-		try {
+        try {
 			final long
 				countSucc = taskGetCountSucc.getLastResult(),
 				countFail = taskGetCountFail.getLastResult(),
@@ -687,13 +683,18 @@ implements LoadClient<T> {
 	public LoadState getLoadState()
 	throws RemoteException {
 		forceFetchAndAggregation();
-		return new BasicLoadState(
-			instanceNum,
-			runTimeConfig, metricSuccCount.getValue(), taskGetCountFail.getLastResult(),
-			taskGetCountBytes.getLastResult(), taskGetCountSubm.getLastResult(),
-			System.nanoTime() - tsStart.get(), TimeUnit.NANOSECONDS,
-			new long[] {1, 2}
-		);
+        final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
+            .setLoadNumber(instanceNum)
+            .setRunTimeConfig(runTimeConfig)
+            .setCountSucc(metricSuccCount.getValue())
+            .setCountFail(taskGetCountFail.getLastResult())
+            .setCountBytes(taskGetCountBytes.getLastResult())
+            .setCountSubm(taskGetCountSubm.getLastResult())
+            .setLoadElapsedTimeValue(System.nanoTime() - tsStart.get())
+            .setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
+            .setLatencyValues(remoteLoadMap.values().iterator().next().getLatencyValues());
+        //
+        return stateBuilder.build();
 	}
 	//
 	@Override

@@ -105,4 +105,8 @@ implements WSLoadSvc<T> {
 		return instanceNum;
 	}
 	//
+    @Override
+    public final long[] getLatencyValues() {
+        return super.getLatencyValues();
+    }
 }
