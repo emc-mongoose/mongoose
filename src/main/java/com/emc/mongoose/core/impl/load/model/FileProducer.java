@@ -34,6 +34,7 @@ import java.util.zip.GZIPInputStream;
  Created by kurila on 12.05.14.
  A data item producer which constructs data items while reading the special input file.
  */
+@Deprecated
 public class FileProducer<T extends DataItem>
 extends Thread
 implements Producer<T> {
