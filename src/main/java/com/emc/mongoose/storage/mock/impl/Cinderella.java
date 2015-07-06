@@ -103,6 +103,7 @@ implements Storage<T> {
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
 			.setBufferSize(BUFF_SIZE_LO)
+			.setFragmentSizeHint(0)
 			.build();
 		connFactory = new BasicWSMockConnFactory(runTimeConfig, connConfig);
 		// Set up the HTTP protocol processor
