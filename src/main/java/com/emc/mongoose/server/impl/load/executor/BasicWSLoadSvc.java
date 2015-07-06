@@ -105,5 +105,4 @@ implements WSLoadSvc<T> {
 		return instanceNum;
 	}
 	//
-
 }
