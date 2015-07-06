@@ -18,10 +18,11 @@ public class BasicLoadState implements LoadState {
 	private final long countSubm;
 	private final TimeUnit timeUnit;
 	private final long timeValue;
+	private long[] latencyValues;
 	//
 	public BasicLoadState(final int loadNumber, final RunTimeConfig runTimeConfig,
     final long countSucc, final long countFail, final long countBytes, final long countSubm,
-    final long timeValue, final TimeUnit timeUnit) {
+    final long timeValue, final TimeUnit timeUnit, final long[] latencyValues) {
 		this.loadNumber = loadNumber;
 		this.runTimeConfig = runTimeConfig;
 		this.countSucc = countSucc;
@@ -30,6 +31,7 @@ public class BasicLoadState implements LoadState {
 		this.countSubm = countSubm;
 		this.timeUnit = timeUnit;
 		this.timeValue = timeValue;
+		this.latencyValues = latencyValues;
 	}
 	//
 	@Override
@@ -60,6 +62,11 @@ public class BasicLoadState implements LoadState {
 	@Override
 	public long getCountSubm() {
 		return countSubm;
+	}
+	//
+	@Override
+	public long[] getLatencyValues() {
+		return latencyValues;
 	}
 	//
 	@Override

@@ -21,6 +21,8 @@ public interface LoadState extends Serializable {
 	//
 	long getCountSubm();
 	//
+	long[] getLatencyValues();
+	//
 	TimeUnit getLoadElapsedTimeUnit();
 	//
 	long getLoadElapsedTimeValue();

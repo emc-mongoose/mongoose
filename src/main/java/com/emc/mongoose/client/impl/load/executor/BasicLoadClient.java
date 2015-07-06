@@ -691,7 +691,8 @@ implements LoadClient<T> {
 			instanceNum,
 			runTimeConfig, metricSuccCount.getValue(), taskGetCountFail.getLastResult(),
 			taskGetCountBytes.getLastResult(), taskGetCountSubm.getLastResult(),
-			System.nanoTime() - tsStart.get(), TimeUnit.NANOSECONDS
+			System.nanoTime() - tsStart.get(), TimeUnit.NANOSECONDS,
+			new long[] {1, 2}
 		);
 	}
 	//
