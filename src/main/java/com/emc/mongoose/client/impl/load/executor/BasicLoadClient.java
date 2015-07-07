@@ -53,7 +53,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -783,7 +782,7 @@ implements LoadClient<T> {
 		try {
 			for (final LoadSvc<T> loadSvc : remoteLoadMap.values()) {
 				latencyValues.addAll(Arrays.asList(
-						ArrayUtils.toObject(loadSvc.getLoadState().getLatencyValues())
+					ArrayUtils.toObject(loadSvc.getLoadState().getLatencyValues())
 				));
 			}
 		} catch (final RemoteException e) {
