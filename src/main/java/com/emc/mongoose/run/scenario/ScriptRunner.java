@@ -35,7 +35,10 @@ implements Runnable {
 		VALUE_PY = "py",
 		//
 		KEY_PYTHON_PATH = "python.path",
-		KEY_PYTHON_IMPORT_SITE = "python.import.site";
+		KEY_PYTHON_IMPORT_SITE = "python.import.site",
+		SRC_DIR_NAME = "src",
+		MAIN_DIR_NAME = "main",
+		RESOURCES_DIR_NAME = "resources";
 	//
 	private final static ScriptEngineManager SCRIPT_ENGINE_MANAGER = new ScriptEngineManager();
 	private final static Map<String, String> SCRIPT_LANG_MAP = new HashMap<>();
@@ -79,7 +82,20 @@ implements Runnable {
 				System.exit(1);
 			}
 			//
-			final Path scriptDir = Paths.get(RunTimeConfig.DIR_ROOT, scriptsRootDir, scriptLangKey);
+			Path scriptDir = Paths.get(RunTimeConfig.DIR_ROOT, scriptsRootDir, scriptLangKey);
+			if (!Files.exists(scriptDir)){
+				LOG.info(
+					Markers.MSG, "Directory \"{}\" doesn't exist. " +
+					"Try to look for scripts in src/main/resources directory", scriptDir
+				);
+				scriptDir = Paths.get(
+					System.getProperty("user.dir"), SRC_DIR_NAME, MAIN_DIR_NAME,
+					RESOURCES_DIR_NAME, scriptsRootDir, scriptLangKey
+				);
+				if (!Files.exists(scriptDir)) {
+					LOG.fatal(Markers.ERR,  "Directory \"{}\" doesn't exist. ", scriptDir);
+				}
+			}
 			// language-specifig preparations
 			switch(scriptLangKey) {
 				case VALUE_JS:
