@@ -683,18 +683,18 @@ implements LoadClient<T> {
 	public LoadState getLoadState()
 	throws RemoteException {
 		forceFetchAndAggregation();
-        final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
-            .setLoadNumber(instanceNum)
-            .setRunTimeConfig(runTimeConfig)
-            .setCountSucc(metricSuccCount.getValue())
-            .setCountFail(taskGetCountFail.getLastResult())
-            .setCountBytes(taskGetCountBytes.getLastResult())
-            .setCountSubm(taskGetCountSubm.getLastResult())
-            .setLoadElapsedTimeValue(System.nanoTime() - tsStart.get())
-            .setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
-            .setLatencyValues(remoteLoadMap.values().iterator().next().getLatencyValues());
+		final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
+			.setLoadNumber(instanceNum)
+			.setRunTimeConfig(runTimeConfig)
+			.setCountSucc(metricSuccCount.getValue())
+			.setCountFail(taskGetCountFail.getLastResult())
+			.setCountBytes(taskGetCountBytes.getLastResult())
+			.setCountSubm(taskGetCountSubm.getLastResult())
+			.setLoadElapsedTimeValue(System.nanoTime() - tsStart.get())
+			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
+			.setLatencyValues(remoteLoadMap.values().iterator().next().getLatencyValues());
         //
-        return stateBuilder.build();
+		return stateBuilder.build();
 	}
 	//
 	@Override
