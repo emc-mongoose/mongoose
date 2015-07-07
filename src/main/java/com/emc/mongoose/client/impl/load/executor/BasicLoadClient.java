@@ -410,7 +410,7 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final void logMetrics(final Marker logMarker) {
-        try {
+		try {
 			final long
 				countSucc = taskGetCountSucc.getLastResult(),
 				countFail = taskGetCountFail.getLastResult(),

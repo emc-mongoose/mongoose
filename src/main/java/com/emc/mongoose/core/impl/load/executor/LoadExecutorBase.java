@@ -411,7 +411,7 @@ implements LoadExecutor<T> {
 			reqBytes = metrics.register(MetricRegistry.name(getName(),
 				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(resumableClock));
 			respLatency = metrics.register(MetricRegistry.name(getName(),
-                    METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
+				METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
 			//
 			saveStateInMap();
 			//
