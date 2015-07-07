@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
@@ -14,9 +15,13 @@ import com.emc.mongoose.core.impl.data.model.BinFileItemOutput;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
 import com.emc.mongoose.core.impl.data.model.CircularListItemOutput;
 //
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
+//
+import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+//
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
-import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
@@ -135,7 +140,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
 		// distributed mode
-		/*rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
+		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
 		ServiceUtils.init();
 		//
 		try(
@@ -158,7 +163,7 @@ implements Runnable {
 			}
 		}
 		//
-		ServiceUtils.shutdown();*/
+		ServiceUtils.shutdown();
 		// finish
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");

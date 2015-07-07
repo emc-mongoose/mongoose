@@ -653,13 +653,13 @@ task webserverJar(type: Jar) {
 	manifest {
 		from sharedManifest
 		attributes(
-				'Implementation-Title': rootProject.name + "-webserver",
-				'Class-Path': [
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						configurations.webserverRuntime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-webserver",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				configurations.webserverRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
 		)
 	}
 }
@@ -678,13 +678,13 @@ task clientJar(type: Jar) {
 		attributes(
 			'Implementation-Title': rootProject.name + "-client-impl",
 			'Class-Path': [
-					commonJar.outputs.files.collect {it.name}.join(' '),
-					coreApiJar.outputs.files.collect {it.name}.join(' '),
-					coreImplJar.outputs.files.collect {it.name}.join(' '),
-					serverApiJar.outputs.files.collect {it.name}.join(' '),
-					configurations.clientRuntime.collect {
-						libsDirName + File.separator + it.getName()
-					}.join(' '),
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				configurations.clientRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -700,10 +700,10 @@ task scenarioJar(type: Jar) {
 		attributes(
 			'Implementation-Title': rootProject.name + "-scenario",
 			'Class-Path': [
-					commonJar.outputs.files.collect {it.name}.join(' '),
-					configurations.scenarioRuntime.collect {
-						libsDirName + File.separator + it.getName()
-					}.join(' '),
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				configurations.scenarioRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -717,16 +717,16 @@ task serverImplJar(type: Jar) {
 	manifest {
 		from sharedManifest
 		attributes(
-				'Implementation-Title': rootProject.name + "-server-impl",
-				'Class-Path': [
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						coreApiJar.outputs.files.collect {it.name}.join(' '),
-						coreImplJar.outputs.files.collect {it.name}.join(' '),
-						serverApiJar.outputs.files.collect {it.name}.join(' '),
-						configurations.serverImplRuntime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-server-impl",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				configurations.serverImplRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
 		)
 	}
 }
@@ -739,40 +739,42 @@ task storageMockJar(type: Jar) {
 	manifest {
 		from sharedManifest
 		attributes(
-				'Implementation-Title': rootProject.name + "-storage-mock",
-				'Class-Path': [
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						coreApiJar.outputs.files.collect {it.name}.join(' '),
-						coreImplJar.outputs.files.collect {it.name}.join(' '),
-						configurations.storageMockRuntime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-storage-mock",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				configurations.storageMockRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
 		)
 	}
 }
 
 task webuiJar(type: Jar) {
-	dependsOn commonJar, coreApiJar, coreImplJar, scenarioJar, serverApiJar, serverImplJar, storageMockJar
+	dependsOn commonJar, coreApiJar, coreImplJar
+	dependsOn serverApiJar, serverImplJar
+	dependsOn storageMockJar, scenarioJar
 	classifier "webui"
 	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.webui.output
 	manifest {
 		from sharedManifest
 		attributes(
-				'Implementation-Title': rootProject.name + "-webui",
-				'Class-Path': [
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						coreApiJar.outputs.files.collect {it.name}.join(' '),
-						coreImplJar.outputs.files.collect {it.name}.join(' '),
-						scenarioJar.outputs.files.collect {it.name}.join(' '),
-						serverApiJar.outputs.files.collect {it.name}.join(' '),
-						serverImplJar.outputs.files.collect {it.name}.join(' '),
-						storageMockJar.outputs.files.collect {it.name}.join(' '),
-						configurations.webuiRuntime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-webui",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				scenarioJar.outputs.files.collect {it.name}.join(' '),
+				serverApiJar.outputs.files.collect {it.name}.join(' '),
+				serverImplJar.outputs.files.collect {it.name}.join(' '),
+				storageMockJar.outputs.files.collect {it.name}.join(' '),
+				configurations.webuiRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
 		)
 	}
 }
@@ -784,7 +786,7 @@ task webuiJar(type: Jar) {
 task cliJar(type: Jar) {
 	dependsOn commonJar, storageMockJar, coreApiJar, coreImplJar
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
-	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
+	//dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
 	dependsOn clientJar, scenarioJar, webuiJar
 	classifier "cli"
 	archiveName "${baseName}.${extension}"
@@ -818,8 +820,8 @@ task cliJar(type: Jar) {
 
 task utilJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, clientJar
-	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
-	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar, storageMockJar
+	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar, storageMockJar
+	//dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
 	classifier "util"
 	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.util.output
@@ -1028,14 +1030,16 @@ for(nextPublicJar in publicJars) {
 	def moduleName = nextPublicJar.classifier.split("-")*.capitalize().join("")
 	def artifactName = "artifact${moduleName}"
 	def configPrefix = "" + Character.toLowerCase(moduleName.charAt(0)) + moduleName.substring(1)
+	def mutualDeps = nextPublicJar.dependsOn
 	publishing.publications.create(artifactName, MavenPublication) {
 		artifact source: nextPublicJar, classifier: null
 		artifactId "${baseName}-${nextPublicJar.classifier}"
 		pom.withXml {
 			def root = asNode()
 			def deps = new Node(root, 'dependencies')
-			for(depJar in nextPublicJar.dependsOn) {
+			for(depJar in mutualDeps) {
 				if(Jar.class.isInstance(depJar)) {
+					//print "${depJar.baseName}-${depJar.classifier}-${depJar.version}, "
 					def node = new Node(deps, 'dependency')
 					new Node(node, 'groupId', group)
 					new Node(node, 'artifactId', "${depJar.baseName}-${depJar.classifier}")
@@ -1043,6 +1047,7 @@ for(nextPublicJar in publicJars) {
 				}
 			}
 			configurations.getByName(configPrefix + "Runtime").allDependencies.each { dep ->
+				//print "${dep.name}, "
 				def node = new Node(deps, 'dependency')
 				new Node(node, 'groupId', dep.group)
 				new Node(node, 'artifactId', dep.name)

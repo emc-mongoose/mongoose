@@ -1,7 +1,5 @@
 package com.emc.mongoose.util.scenario.shared;
 //
-import com.emc.mongoose.client.api.load.builder.WSLoadBuilderClient;
-import com.emc.mongoose.client.api.load.executor.WSLoadClient;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -13,6 +11,8 @@ import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
 import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
 //
+import com.emc.mongoose.client.api.load.builder.WSLoadBuilderClient;
+import com.emc.mongoose.client.api.load.executor.WSLoadClient;
 import com.emc.mongoose.client.impl.load.builder.BasicWSLoadBuilderClient;
 //
 import org.apache.logging.log4j.Level;
