@@ -413,7 +413,7 @@ implements LoadExecutor<T> {
 			respLatency = metrics.register(MetricRegistry.name(getName(),
 				METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
 			//
-			saveStateInMap();
+			restoreState();
 			//
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
@@ -449,7 +449,7 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	private void saveStateInMap() {
+	private void restoreState() {
 		if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
 			final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
 				Constants.DIR_LOG, RunTimeConfig.getContext().getRunId())
@@ -464,10 +464,10 @@ implements LoadExecutor<T> {
 			}
 		}
 		//
-		applyParamsToCurrLoad();
+		applyParams();
 	}
 	//
-	private void applyParamsToCurrLoad() {
+	private void applyParams() {
 		final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
 		//  apply parameters from loadState to current load executor
 		for (final LoadState state : loadStates) {
@@ -783,10 +783,6 @@ implements LoadExecutor<T> {
 			.setLatencyValues(respLatency.getSnapshot().getValues());
 		//
 		return stateBuilder.build();
-	}
-	//
-	public long[] getLatencyValues() {
-		return respLatency.getSnapshot().getValues();
 	}
 	//
 	private boolean isDoneMaxCount() {

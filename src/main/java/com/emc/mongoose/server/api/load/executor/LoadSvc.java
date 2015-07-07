@@ -16,7 +16,5 @@ public interface LoadSvc<T extends DataItem>
 extends LoadExecutor<T>, ConsumerSvc<T>, ProducerSvc<T>, RecordFrameBuffer<T> {
 	int getInstanceNum()
 	throws RemoteException;
-	long[] getLatencyValues()
-	throws RemoteException;
 }
 
