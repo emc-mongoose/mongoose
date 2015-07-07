@@ -20,7 +20,7 @@ extends Externalizable, Cloneable, Closeable {
 	int PAGE_SIZE = 1024;
 	String
 		HOST_PORT_SEP = ":",
-		PACKAGE_IMPL_BASE = "com.emc.mongoose.storage.web.adapter";
+		PACKAGE_IMPL_BASE = "com.emc.mongoose.storage.adapter";
 	//
 	RequestConfig<T> clone()
 	throws CloneNotSupportedException;

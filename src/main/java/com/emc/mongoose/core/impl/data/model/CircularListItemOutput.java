@@ -35,10 +35,11 @@ extends ListItemOutput<T> {
 			super.write(dataItem);
 		} else {
 			if(i >= capacity) {
-				i %= capacity;
+				i = 0;
 			}
-			items.set(i ++, dataItem);
+			items.set(i, dataItem);
 		}
+		i ++;
 	}
 	/**
 	 Bulk circular write method
@@ -46,20 +47,25 @@ extends ListItemOutput<T> {
 	@Override
 	public int write(final List<T> buffer)
 	throws IOException {
-		int buffSize = buffer.size(), remaining = buffSize, done, limit;
-		do {
-			limit = capacity - items.size();
-			done = buffSize - remaining;
-			if(remaining > limit) {
-				items.addAll(buffer.subList(done, done + limit));
-				i = 0;
-				remaining -= limit;
-			} else {
-				items.addAll(buffer.subList(done, buffSize));
-				i += remaining;
-				remaining = 0;
-			}
-		} while(remaining > 0);
+		int n, done = 0, limit, bufferSize = buffer.size();
+		try {
+			do {
+				if(items.size() == capacity) {
+					i = 0;
+				}
+				System.out.println(done + ", " + i + ", " + items.size());
+				limit = Math.min(bufferSize - done, i == 0 ? capacity : capacity - items.size());
+				n = items.size();
+				if(!items.addAll(buffer.subList(done, done + limit))) {
+					throw new IOException("Failed to write " + limit + " items");
+				}
+				n = items.size() - n;
+				done += n;
+				i += n;
+			} while(done < bufferSize);
+		} catch(final Exception e) {
+			e.printStackTrace(System.err);
+		}
 		return done;
 	}
 	/**

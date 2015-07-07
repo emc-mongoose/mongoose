@@ -22,10 +22,9 @@ extends ListItemInput<T> {
 	@Override
 	public T read()
 	throws IOException {
-		i ++;
 		if(i >= items.size()) {
 			reset();
 		}
-		return items.get(i);
+		return items.get(i ++);
 	}
 }

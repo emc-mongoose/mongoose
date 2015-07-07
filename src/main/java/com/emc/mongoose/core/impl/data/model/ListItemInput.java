@@ -28,11 +28,11 @@ implements DataItemInput<T> {
 	@Override
 	public T read()
 	throws IOException {
-		i ++;
-		if(i >= items.size()) {
+		if(i < items.size()) {
+			return items.get(i ++);
+		} else {
 			throw new EOFException();
 		}
-		return items.get(i);
 	}
 
 	/**
@@ -45,14 +45,15 @@ implements DataItemInput<T> {
 	@Override
 	public int read(final List<T> buffer)
 	throws IOException {
-		final int n = buffer.size();
-		i ++;
+		int n = buffer.size();
 		if(i < items.size()) {
 			buffer.addAll(items.subList(i, items.size()));
 		} else {
 			throw new EOFException();
 		}
-		return buffer.size() - n;
+		n = buffer.size() - n;
+		i += n;
+		return n;
 	}
 
 	/**
