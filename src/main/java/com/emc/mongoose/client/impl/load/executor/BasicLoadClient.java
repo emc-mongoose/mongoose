@@ -53,6 +53,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -714,11 +715,7 @@ implements LoadClient<T> {
 		LOG.debug(Markers.MSG, "trying to close");
 		synchronized(remoteLoadMap) {
 			if(!remoteLoadMap.isEmpty()) {
-				for (Map.Entry<String, LoadSvc<T>> entry : remoteLoadMap.entrySet()) {
-					latencyValues.addAll(Arrays.asList(
-						ArrayUtils.toObject(entry.getValue().getLatencyValues())
-					));
-				}
+				saveLastLatencyValues();
 				LOG.debug(Markers.MSG, "do performing close");
 				interrupt();
 				forceFetchAndAggregation();
@@ -779,6 +776,18 @@ implements LoadClient<T> {
 			} else {
 				LOG.debug(Markers.ERR, "Closed already");
 			}
+		}
+	}
+	//
+	private void saveLastLatencyValues() {
+		try {
+			for (final LoadSvc<T> loadSvc : remoteLoadMap.values()) {
+				latencyValues.addAll(Arrays.asList(
+						ArrayUtils.toObject(loadSvc.getLoadState().getLatencyValues())
+				));
+			}
+		} catch (final RemoteException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
 		}
 	}
 	//
