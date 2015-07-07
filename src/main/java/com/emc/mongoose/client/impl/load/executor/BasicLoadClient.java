@@ -32,6 +32,7 @@ import com.emc.mongoose.client.impl.load.executor.tasks.DataItemsFetchPeriodicTa
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
 //
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,13 +45,16 @@ import javax.management.remote.JMXConnector;
 import java.io.IOException;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -100,6 +104,7 @@ implements LoadClient<T> {
 	private final ScheduledExecutorService mgmtConnExecutor;
 	private final List<PeriodicTask<Collection<T>>> fetchItemsBuffTasks = new LinkedList<>();
 	private final List<PeriodicTask> metricFetchTasks = new LinkedList<>();
+	private final Set<Long> latencyValues = new HashSet<>(1028);
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	private final long maxCount;
 	private final String name, loadSvcAddrs[];
@@ -692,7 +697,10 @@ implements LoadClient<T> {
 			.setCountSubm(taskGetCountSubm.getLastResult())
 			.setLoadElapsedTimeValue(System.nanoTime() - tsStart.get())
 			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
-			.setLatencyValues(remoteLoadMap.values().iterator().next().getLatencyValues());
+			.setLatencyValues(ArrayUtils.toPrimitive(
+					latencyValues.toArray(new Long[latencyValues.size()])
+				)
+			);
         //
 		return stateBuilder.build();
 	}
@@ -703,6 +711,11 @@ implements LoadClient<T> {
 		LOG.debug(Markers.MSG, "trying to close");
 		synchronized(remoteLoadMap) {
 			if(!remoteLoadMap.isEmpty()) {
+				for (Map.Entry<String, LoadSvc<T>> entry : remoteLoadMap.entrySet()) {
+					latencyValues.addAll(Arrays.asList(
+						ArrayUtils.toObject(entry.getValue().getLatencyValues())
+					));
+				}
 				LOG.debug(Markers.MSG, "do performing close");
 				interrupt();
 				forceFetchAndAggregation();
