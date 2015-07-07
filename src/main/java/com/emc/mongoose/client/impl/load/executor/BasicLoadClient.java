@@ -4,7 +4,11 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
-import com.emc.mongoose.client.impl.load.executor.gauges.*;
+import com.emc.mongoose.client.impl.load.executor.gauges.AvgDouble;
+import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
+import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
+import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
+import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
