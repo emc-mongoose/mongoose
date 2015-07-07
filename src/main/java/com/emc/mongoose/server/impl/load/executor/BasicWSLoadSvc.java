@@ -63,8 +63,8 @@ implements WSLoadSvc<T> {
 	@Override @SuppressWarnings("unchecked")
 	public final void setConsumer(final ConsumerSvc<T> consumer) {
 		LOG.debug(
-			Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
-			consumer, getName()
+				Markers.MSG, "Set consumer {} for {}, trying to resolve local service from the name",
+				consumer, getName()
 		);
 		this.consumer = consumer;
 		try {
@@ -105,8 +105,9 @@ implements WSLoadSvc<T> {
 		return instanceNum;
 	}
 	//
-    @Override
-    public final long[] getLatencyValues() {
-        return super.getLatencyValues();
-    }
+	@Override
+	public final long[] getLatencyValues() {
+		return super.getLatencyValues();
+	}
+	//
 }
