@@ -90,14 +90,15 @@ implements WSLoadSvc<T> {
 	public final Collection<T> takeFrame()
 	throws RemoteException {
 		Collection<T> recFrame = null;
-		try {
-			if (consumer != null && RecordFrameBuffer.class.isInstance(consumer)) {
+		if (consumer != null && RecordFrameBuffer.class.isInstance(consumer)) {
+			try {
 				recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
+			} catch (final InterruptedException e) {
+				if (!isShutdown.get()) {
+					LogUtil.exception(LOG, Level.WARN, e, "Failed to fetch the frame");
+				}
 			}
-		} catch (final InterruptedException e) {
-			if (!isShutdown.get()) {
-				LogUtil.exception(LOG, Level.WARN, e, "Failed to fetch the frame");
-			}
+
 		}
 		if (LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(

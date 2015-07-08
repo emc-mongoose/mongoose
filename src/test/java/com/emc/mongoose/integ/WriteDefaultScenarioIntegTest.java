@@ -9,7 +9,7 @@ import com.emc.mongoose.integ.integTestTools.ContentGetter;
 // mongoose-cli.jar
 import com.emc.mongoose.run.cli.ModeDispatcher;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.impl.Cinderella;
+import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
 import org.apache.commons.codec.digest.DigestUtils;
 import org.junit.AfterClass;
@@ -73,7 +73,7 @@ public class WriteDefaultScenarioIntegTest {
 		LogUtil.init();
 		RunTimeConfig.initContext();
 		wsMockThread = new Thread(
-			new Cinderella<>(RunTimeConfig.getContext()), "wsMock"
+			new Cinderella(RunTimeConfig.getContext()), "wsMock"
 		);
 		wsMockThread.setDaemon(true);
 		wsMockThread.start();
