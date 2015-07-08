@@ -1,10 +1,11 @@
-package com.emc.mongoose.core.impl.data.model;
+package com.emc.mongoose.core.impl.data.util;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
 import static org.junit.Assert.*;
 
 import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.impl.data.model.CircularListItemInput;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 //

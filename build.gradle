@@ -1113,4 +1113,4 @@ artifactory {
 artifactoryPublish.dependsOn commonJar, coreApiJar, coreImplJar
 artifactoryPublish.dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
 artifactoryPublish.dependsOn serverApiJar, webserverJar, clientJar, scenarioJar, serverImplJar
-artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testsJar
+artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testJar

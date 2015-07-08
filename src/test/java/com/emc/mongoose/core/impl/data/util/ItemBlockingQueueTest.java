@@ -1,11 +1,14 @@
-package com.emc.mongoose.core.impl.data.model;
+package com.emc.mongoose.core.impl.data.util;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 //
+import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 import org.junit.Test;
 import static org.junit.Assert.*;
 //
+import org.junit.runner.RunWith;
 import org.mockito.Mockito;
+import org.mockito.runners.MockitoJUnitRunner;
 //
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
@@ -15,6 +18,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 //
+@RunWith(MockitoJUnitRunner.class)
 public class ItemBlockingQueueTest {
 	//
 	final DataItem
