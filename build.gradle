@@ -3,7 +3,10 @@ import groovy.json.JsonSlurper
 
 buildscript {
 	repositories {
-		jcenter()
+		jcenter {
+			url "http://jcenter.bintray.com/"
+		}
+		mavenCentral()
 		maven {
 			url "${artifactory_contextUrl}/repo"
 			credentials {
