@@ -25,7 +25,11 @@ import java.nio.file.Paths;
 	ReadDataItems10KBDefaultScenarioIntegTest.class,
 	ReadDataItems10MBDefaultScenarioIntegTest.class,
 	ReadDataItems200MBDefaultScenarioIntegTest.class,
-	FaildVerificationIntegTest.class
+	FaildVerificationIntegTest.class,
+	Write0BDataItemsScenarioIntegTest.class,
+	WriteDataItemWithRandomSizeIntegTest.class,
+	SingleWriteScenarioWith10ConcurrentConnectionsIntegTest.class,
+	SingleWriteScenarioWith100ConcurrentConnectionsIntegTest.class,
 })
 public class IntegTestSuite {
 

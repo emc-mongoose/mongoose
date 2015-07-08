@@ -1,16 +1,14 @@
 package com.emc.mongoose.integ;
-// mongoose-common.jar
+
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
-//
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.integ.integTestTools.ContentGetter;
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
 import com.emc.mongoose.integ.integTestTools.LogFileManager;
 import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
-import com.emc.mongoose.integ.integTestTools.ContentGetter;
-//
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.LogManager;
@@ -19,7 +17,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-//
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -33,18 +31,17 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
-//
+
 /**
- * Created by olga on 30.06.15.
- * Covers TC #1 (name: "Write some data items.", steps: all) in Mongoose Core Functional Testing
+ * Created by olga on 08.07.15.
  */
-public final class WriteDefaultScenarioIntegTest {
+public class Write0BDataItemsScenarioIntegTest {
 	//
 	private static SavedOutputStream savedOutputStream;
 	//
 	private static final int DATA_COUNT = 10;
 	private static String createRunId = IntegConstants.LOAD_CREATE;
-	private static final String DATA_SIZE = "1MB";
+	private static final String DATA_SIZE = "0B";
 
 	@BeforeClass
 	public static void before()
@@ -73,6 +70,8 @@ public final class WriteDefaultScenarioIntegTest {
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, DATA_COUNT);
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 				new ScriptRunner().run();
 			}

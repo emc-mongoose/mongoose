@@ -31,15 +31,15 @@ import java.util.TimeZone;
 
 /**
  * Created by olga on 07.07.15.
- *  Covers TC #2(name: "Read back the data items written in the different run.", steps: 3 for data.size=10MB)
+ * Covers TC #2(name: "Read back the data items written in the different run.", steps: 3 for data.size=10MB)
  * in Mongoose Core Functional Testing
  */
 public class FaildVerificationIntegTest {
 	private static SavedOutputStream savedOutputStream;
 	//
 	private static String
-		CREATE_RUN_ID = IntegConstants.LOAD_CREATE,
-		READ_RUN_ID = IntegConstants.LOAD_READ;
+		createRunId = IntegConstants.LOAD_CREATE,
+		readRunId = IntegConstants.LOAD_READ;
 	//
 	private static final int DATA_COUNT = 10;
 	private static final String DATA_SIZE = "10B";
@@ -48,10 +48,10 @@ public class FaildVerificationIntegTest {
 	public static void before()
 		throws Exception{
 		//Create run ID
-		CREATE_RUN_ID += ":" + DATA_SIZE + ":" + IntegConstants.FMT_DT.format(
+		createRunId += ":" + DATA_SIZE + ":" + IntegConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, CREATE_RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, createRunId);
 		// Init logger and runtime config
 		final String fullLogConfFile = Paths
 			.get(
@@ -68,10 +68,12 @@ public class FaildVerificationIntegTest {
 		Thread writeScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, CREATE_RUN_ID);
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, DATA_COUNT);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
+				// For correct work of verification option
+				UniformDataSource.DEFAULT = new UniformDataSource();
 				//
 				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 				new ScriptRunner().run();
@@ -84,10 +86,10 @@ public class FaildVerificationIntegTest {
 		savedOutputStream = new SavedOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create new run ID
-		READ_RUN_ID += ":" + DATA_SIZE + ":" + LogUtil.FMT_DT.format(
+		readRunId += ":" + DATA_SIZE + ":" + LogUtil.FMT_DT.format(
 			Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime()
 		);
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, READ_RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, readRunId);
 		//Reload default properties
 		runTimeConfig = new  RunTimeConfig();
 		RunTimeConfig.setContext(runTimeConfig);
@@ -95,9 +97,9 @@ public class FaildVerificationIntegTest {
 		Thread readScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, READ_RUN_ID);
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, readRunId);
 				RunTimeConfig.getContext()
-					.set(RunTimeConfig.KEY_DATA_SRC_FPATH, LogFileManager.getDataItemsFile(CREATE_RUN_ID).getPath());
+					.set(RunTimeConfig.KEY_DATA_SRC_FPATH, LogFileManager.getDataItemsFile(createRunId).getPath());
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, IntegConstants.LOAD_READ);
 				//Set another seed -> it has to brake verification
 				final String newSeed = "7a42d9c483244166";
@@ -113,13 +115,15 @@ public class FaildVerificationIntegTest {
 		readScenarioMongoose.start();
 		readScenarioMongoose.join();
 		readScenarioMongoose.interrupt();
+		//
+		System.setOut(savedOutputStream.getPrintStream());
 	}
 
 	@Test
 	public void shouldFailedReadOfAllDataItems()
 	throws Exception {
 		// Get perf.sum.csv file of read scenario
-		final File perfSumFile = LogFileManager.getPerfSumFile(READ_RUN_ID);
+		final File perfSumFile = LogFileManager.getPerfSumFile(readRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		bufferedReader.readLine();
 		int countFail = Integer.valueOf(bufferedReader.readLine().split(",")[IntegConstants.COUNT_FAIL_COLUMN_INDEX]);
@@ -130,7 +134,7 @@ public class FaildVerificationIntegTest {
 	public void shouldReportAboutFailedVerificationToConsole()
 		throws Exception {
 		// Get data.items.csv file of write scenario
-		final File dataItemsFile = LogFileManager.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogFileManager.getDataItemsFile(createRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 		String line = bufferedReader.readLine();
 		String dataID;
@@ -145,10 +149,10 @@ public class FaildVerificationIntegTest {
 	public void shouldReportAboutFailedVerificationToMessageFile()
 		throws Exception {
 		// Get data.items.csv file of write scenario
-		final File dataItemsFile = LogFileManager.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogFileManager.getDataItemsFile(createRunId);
 		final BufferedReader bufferedDataItemsReader = new BufferedReader(new FileReader(dataItemsFile));
 		// Get content of message.log file of read scenario
-		final String contentMessageFile = new Scanner(LogFileManager.getMessageFile(READ_RUN_ID))
+		final String contentMessageFile = new Scanner(LogFileManager.getMessageFile(readRunId))
 			.useDelimiter("\\Z")
 			.next();
 		String line = bufferedDataItemsReader.readLine();

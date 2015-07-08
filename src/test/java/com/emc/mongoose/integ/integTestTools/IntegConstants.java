@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.regex.Pattern;
 
 /**
  * Created by olga on 03.07.15.
@@ -13,6 +14,7 @@ public interface IntegConstants {
 	String SCENARIO_END_INDICATOR = "Scenario end";
 	String SUMMARY_INDICATOR = "summary:";
 	String CONTENT_MISMATCH_INDICATOR = ": content mismatch @ offset 0, expected:";
+	String PORT_INDICATOR = ":902";
 	//
 	String	MESSAGE_FILE_NAME = "messages.log";
 	String PERF_AVG_FILE_NAME = "perf.avg.csv";
@@ -51,5 +53,13 @@ public interface IntegConstants {
 	DateFormat FMT_DT = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT) {
 		{ setTimeZone(TimeZone.getTimeZone("UTC")); }
 	};
+	//
+	Pattern LOAD_THRED_NAME_PATTERN = Pattern.compile(
+		"[0-9]+-(S3|ATMOS|SWIFT)-(Create|Read|Update|Append|Delete)([0-9]+)?-([0-9]+x)?[0-9]+x[0-9]+#[0-9]+"
+	);
+	Pattern LOAD_PATTERN = Pattern.compile(
+		"[0-9]+-(S3|ATMOS|SWIFT)-(Create|Read|Update|Append|Delete)([0-9]+)?-([0-9]+x)?[0-9]+x[0-9]+"
+	);
+	Pattern TIME_PATTERN = Pattern.compile("[0-9]{2}:[0-9]{2}:[0-9]{2}");
 
 }

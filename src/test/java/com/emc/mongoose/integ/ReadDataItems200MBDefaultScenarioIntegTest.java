@@ -12,6 +12,7 @@ import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -20,6 +21,8 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Calendar;
 import java.util.Locale;
@@ -35,8 +38,8 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 	private static SavedOutputStream savedOutputStream;
 	//
 	private static String
-		CREATE_RUN_ID = IntegConstants.LOAD_CREATE,
-		READ_RUN_ID = IntegConstants.LOAD_READ;
+		createRunId = IntegConstants.LOAD_CREATE,
+		readRunId = IntegConstants.LOAD_READ;
 	//
 	private static final int DATA_COUNT = 10;
 	private static final String DATA_SIZE = "200MB";
@@ -45,10 +48,10 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 	public static void before()
 	throws Exception{
 		//Create run ID
-		CREATE_RUN_ID += ":" + DATA_SIZE + ":" + IntegConstants.FMT_DT.format(
+		createRunId += ":" + DATA_SIZE + ":" + IntegConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
-		System.setProperty(RunTimeConfig.KEY_RUN_ID,CREATE_RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, createRunId);
 		// Init logger and runtime config
 		final String fullLogConfFile = Paths
 			.get(
@@ -65,7 +68,7 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 		Thread writeScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, CREATE_RUN_ID);
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, DATA_COUNT);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
@@ -80,10 +83,10 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 		savedOutputStream = new SavedOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create new run ID
-		READ_RUN_ID += ":" + DATA_SIZE + ":" + LogUtil.FMT_DT.format(
+		readRunId += ":" + DATA_SIZE + ":" + LogUtil.FMT_DT.format(
 			Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime()
 		);
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, READ_RUN_ID);
+		System.setProperty(RunTimeConfig.KEY_RUN_ID, readRunId);
 		//Reload default properties
 		runTimeConfig = new  RunTimeConfig();
 		RunTimeConfig.setContext(runTimeConfig);
@@ -91,9 +94,9 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 		Thread readScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, READ_RUN_ID);
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, readRunId);
 				RunTimeConfig.getContext()
-					.set(RunTimeConfig.KEY_DATA_SRC_FPATH, LogFileManager.getDataItemsFile(CREATE_RUN_ID).getPath());
+					.set(RunTimeConfig.KEY_DATA_SRC_FPATH, LogFileManager.getDataItemsFile(createRunId).getPath());
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, IntegConstants.LOAD_READ);
 				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 				new ScriptRunner().run();
@@ -105,11 +108,74 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 		readScenarioMongoose.interrupt();
 	}
 
+	@AfterClass
+	public static void after()
+	throws Exception {
+		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
+		System.setOut(savedOutputStream.getPrintStream());
+	}
+
+	@Test
+	public void shouldCreateAllFilesWithLogsAfterWriteScenario()
+	throws Exception {
+		Path expectedFile = LogFileManager.getMessageFile(createRunId).toPath();
+		//Check that messages.log file is contained
+		Assert.assertTrue(Files.exists(expectedFile));
+
+		expectedFile = LogFileManager.getPerfAvgFile(createRunId).toPath();
+		//Check that perf.avg.csv file is contained
+		Assert.assertTrue(Files.exists(expectedFile));
+
+		expectedFile = LogFileManager.getPerfSumFile(createRunId).toPath();
+		//Check that perf.sum.csv file is contained
+		Assert.assertTrue(Files.exists(expectedFile));
+
+		expectedFile = LogFileManager.getPerfTraceFile(createRunId).toPath();
+		//Check that perf.trace.csv file is contained
+		Assert.assertTrue(Files.exists(expectedFile));
+
+		expectedFile = LogFileManager.getDataItemsFile(createRunId).toPath();
+		//Check that data.items.csv file is contained
+		Assert.assertTrue(Files.exists(expectedFile));
+
+		expectedFile = LogFileManager.getErrorsFile(createRunId).toPath();
+		//Check that errors.log file is not created
+		Assert.assertFalse(Files.exists(expectedFile));
+	}
+
+	@Test
+	public void shouldCreateAllFilesWithLogsAfterReadScenario()
+	throws Exception {
+		Path expectedFile = LogFileManager.getMessageFile(readRunId).toPath();
+		//Check that messages.log file is contained
+		Assert.assertTrue(Files.exists(expectedFile));
+
+		expectedFile = LogFileManager.getPerfAvgFile(readRunId).toPath();
+		//Check that perf.avg.csv file is contained
+		Assert.assertTrue(Files.exists(expectedFile));
+
+		expectedFile = LogFileManager.getPerfSumFile(readRunId).toPath();
+		//Check that perf.sum.csv file is contained
+		Assert.assertTrue(Files.exists(expectedFile));
+
+		expectedFile = LogFileManager.getPerfTraceFile(readRunId).toPath();
+		//Check that perf.trace.csv file is contained
+		Assert.assertTrue(Files.exists(expectedFile));
+
+		expectedFile = LogFileManager.getDataItemsFile(readRunId).toPath();
+		//Check that data.items.csv file is contained
+		Assert.assertTrue(Files.exists(expectedFile));
+
+		expectedFile = LogFileManager.getErrorsFile(readRunId).toPath();
+		//Check that errors.log file is not created
+		Assert.assertFalse(Files.exists(expectedFile));
+	}
+
 	@Test
 	public void shouldCreateCorrectDataItemsFilesAfterReadScenario()
 	throws Exception {
 		// Get data.items.csv file of read scenario run
-		final File readDataItemFile = LogFileManager.getDataItemsFile(READ_RUN_ID);
+		final File readDataItemFile = LogFileManager.getDataItemsFile(readRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readDataItemFile));
 		//
 		String line = bufferedReader.readLine();
@@ -123,7 +189,7 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 	public void shouldCreateCorrectPerfSumFilesAfterReadScenario()
 	throws Exception {
 		// Get perf.sum.csv file of read scenario run
-		final File readPerfSumFile = LogFileManager.getPerfSumFile(READ_RUN_ID);
+		final File readPerfSumFile = LogFileManager.getPerfSumFile(readRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readPerfSumFile));
 		//
 		String line = bufferedReader.readLine();
@@ -140,7 +206,7 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 	public void shouldCreateCorrectPerfAvgFilesAfterReadScenario()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File readPerfAvgFile = LogFileManager.getPerfAvgFile(READ_RUN_ID);
+		final File readPerfAvgFile = LogFileManager.getPerfAvgFile(readRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readPerfAvgFile));
 		//
 		String line = bufferedReader.readLine();
@@ -157,7 +223,7 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 	public void shouldCreateCorrectPerfTraceFilesAfterReadScenario()
 	throws Exception {
 		// Get perf.trace.csv file of write scenario run
-		final File readPerfTraceFile = LogFileManager.getPerfTraceFile(READ_RUN_ID);
+		final File readPerfTraceFile = LogFileManager.getPerfTraceFile(readRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readPerfTraceFile));
 		//
 		String line = bufferedReader.readLine();
@@ -174,7 +240,7 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 	public void shouldWriteAllDataItemsInCorrectSize()
 	throws Exception {
 		// Get data.items.csv file of write scenario run
-		final File writeDataItemFile = LogFileManager.getDataItemsFile(CREATE_RUN_ID);
+		final File writeDataItemFile = LogFileManager.getDataItemsFile(createRunId);
 		//Check correct data size in data.items.csv file
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writeDataItemFile));
 		String line = bufferedReader.readLine();
@@ -201,7 +267,7 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 	public void shouldGetAllWrittenObjectsFromServerAndDataSizeIsCorrect()
 	throws Exception {
 		//Read data.items.csv file of create scenario run
-		final File dataItemsFile = LogFileManager.getDataItemsFile(CREATE_RUN_ID);
+		final File dataItemsFile = LogFileManager.getDataItemsFile(createRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
 		String line = bufferedReader.readLine(), dataID;
@@ -219,7 +285,7 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 	public void shouldReportCorrectWrittenCountToSummaryLogFile()
 	throws Exception {
 		//Read perf.summary file of read scenario run
-		final File perfSumFile = LogFileManager.getPerfSumFile(READ_RUN_ID);
+		final File perfSumFile = LogFileManager.getPerfSumFile(readRunId);
 
 		//Check that file exists
 		Assert.assertTrue(perfSumFile.exists());
@@ -238,6 +304,6 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
 	throws Exception {
 		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
-		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
+		//Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
 	}
 }
