@@ -80,13 +80,12 @@ implements Storage<T> {
 		// if there is data src file path
 		final Path dataFilePath = Paths.get(rtConfig.getDataSrcFPath());
 		final int dataSizeRadix = rtConfig.getDataRadixSize();
-		if(null != dataFilePath && Files.exists(dataFilePath)) {
+		if(null != dataFilePath && !Files.isDirectory(dataFilePath) && Files.exists(dataFilePath)) {
 			T nextItem;
 			long count = 0;
 			try(
-				final CSVFileItemInput<T> csvFileItemInput = new CSVFileItemInput<>(
-					dataFilePath, itemCls
-				)
+				final CSVFileItemInput<T>
+					csvFileItemInput = new CSVFileItemInput<>(dataFilePath, itemCls)
 			) {
 				do {
 					nextItem = csvFileItemInput.read();
