@@ -4,6 +4,11 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
+import com.emc.mongoose.client.impl.load.executor.gauges.AvgDouble;
+import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
+import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
+import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
+import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -25,17 +30,13 @@ import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
-import com.emc.mongoose.client.impl.load.executor.gauges.AvgDouble;
-import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
-import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
-import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
-import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
 import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptClientOnMaxCountTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.DataItemsFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
 //
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,10 +52,13 @@ import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -104,6 +108,7 @@ implements LoadClient<T> {
 	private final ScheduledExecutorService mgmtConnExecutor;
 	private final List<PeriodicTask<Collection<T>>> fetchItemsBuffTasks = new LinkedList<>();
 	private final List<PeriodicTask> metricFetchTasks = new LinkedList<>();
+	private final Set<Long> latencyValues = new HashSet<>(1028);
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	private final long maxCount;
 	private final String name, loadSvcAddrs[];
@@ -687,12 +692,21 @@ implements LoadClient<T> {
 	public LoadState getLoadState()
 	throws RemoteException {
 		forceFetchAndAggregation();
-		return new BasicLoadState(
-			instanceNum,
-			runTimeConfig, metricSuccCount.getValue(), taskGetCountFail.getLastResult(),
-			taskGetCountBytes.getLastResult(),
-			System.nanoTime() - tsStart.get(), TimeUnit.NANOSECONDS
-		);
+		final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
+			.setLoadNumber(instanceNum)
+			.setRunTimeConfig(runTimeConfig)
+			.setCountSucc(metricSuccCount.getValue())
+			.setCountFail(taskGetCountFail.getLastResult())
+			.setCountBytes(taskGetCountBytes.getLastResult())
+			.setCountSubm(taskGetCountSubm.getLastResult())
+			.setLoadElapsedTimeValue(System.nanoTime() - tsStart.get())
+			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
+			.setLatencyValues(ArrayUtils.toPrimitive(
+					latencyValues.toArray(new Long[latencyValues.size()])
+				)
+			);
+        //
+		return stateBuilder.build();
 	}
 	//
 	@Override
@@ -701,6 +715,7 @@ implements LoadClient<T> {
 		LOG.debug(Markers.MSG, "trying to close");
 		synchronized(remoteLoadMap) {
 			if(!remoteLoadMap.isEmpty()) {
+				saveLastLatencyValues();
 				LOG.debug(Markers.MSG, "do performing close");
 				interrupt();
 				forceFetchAndAggregation();
@@ -761,6 +776,18 @@ implements LoadClient<T> {
 			} else {
 				LOG.debug(Markers.ERR, "Closed already");
 			}
+		}
+	}
+	//
+	private void saveLastLatencyValues() {
+		try {
+			for (final LoadSvc<T> loadSvc : remoteLoadMap.values()) {
+				latencyValues.addAll(Arrays.asList(
+						ArrayUtils.toObject(loadSvc.getLoadState().getLatencyValues())
+				));
+			}
+		} catch (final RemoteException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
 		}
 	}
 	//

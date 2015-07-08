@@ -210,8 +210,20 @@ sourceSets {
 	test {
 		java {
 			srcDir(['src', 'test'].join(File.separator))
+			include(['java', 'com', 'emc', 'mongoose', 'core', '**'].join(File.separator))
+		}
+	}
+	integTest {
+		java {
+			srcDir(['src', 'test'].join(File.separator))
+			include(['java', 'com', 'emc', 'mongoose', 'integ', '**'].join(File.separator))
+		}
+		resources {
+			srcDir(['src', 'main', 'resources'].join(File.separator))
 			include '**'
 		}
+		compileClasspath += sourceSets.main.output
+		runtimeClasspath += sourceSets.main.output
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Main ////////////////////////////////////////////////////////////////////////////////////////
@@ -417,6 +429,10 @@ dependencies {
 		library.junit,
 		library.junit_mockito,
 	)
+
+	integTestCompile(
+		library.junit,
+	)
 }
 
 configurations {
@@ -461,6 +477,13 @@ configurations {
 		compile,
 	)
 	testRuntime.extendsFrom(
+		runtime,
+	)
+	
+	integTestCompile.extendsFrom(
+		compile,
+	)
+	integTestRuntime.extendsFrom(
 		runtime,
 	)
 
@@ -566,15 +589,15 @@ task storageAdapterAtmosJar(type: Jar) {
 	manifest {
 		from sharedManifest
 		attributes(
-				'Implementation-Title': rootProject.name + "-storage-adapter-atmos",
-				'Class-Path': [
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						coreApiJar.outputs.files.collect {it.name}.join(' '),
-						coreImplJar.outputs.files.collect {it.name}.join(' '),
-						configurations.storageAdapterAtmosRuntime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-storage-adapter-atmos",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				configurations.storageAdapterAtmosRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
 		)
 	}
 }
@@ -587,15 +610,15 @@ task storageAdapterS3Jar(type: Jar) {
 	manifest {
 		from sharedManifest
 		attributes(
-				'Implementation-Title': rootProject.name + "-storage-adapter-s3s",
-				'Class-Path': [
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						coreApiJar.outputs.files.collect {it.name}.join(' '),
-						coreImplJar.outputs.files.collect {it.name}.join(' '),
-						configurations.storageAdapterS3Runtime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-storage-adapter-s3s",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				configurations.storageAdapterS3Runtime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
 		)
 	}
 }
@@ -608,15 +631,15 @@ task storageAdapterSwiftJar(type: Jar) {
 	manifest {
 		from sharedManifest
 		attributes(
-				'Implementation-Title': rootProject.name + "-storage-adapter-swift",
-				'Class-Path': [
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						coreApiJar.outputs.files.collect {it.name}.join(' '),
-						coreImplJar.outputs.files.collect {it.name}.join(' '),
-						configurations.storageAdapterSwiftRuntime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-storage-adapter-swift",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				coreImplJar.outputs.files.collect {it.name}.join(' '),
+				configurations.storageAdapterSwiftRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
 		)
 	}
 }
@@ -633,14 +656,14 @@ task serverApiJar(type: Jar) {
 	manifest {
 		from sharedManifest
 		attributes(
-				'Implementation-Title': rootProject.name + "-server-api",
-				'Class-Path': [
-						commonJar.outputs.files.collect {it.name}.join(' '),
-						coreApiJar.outputs.files.collect {it.name}.join(' '),
-						configurations.serverApiRuntime.collect {
-							libsDirName + File.separator + it.getName()
-						}.join(' '),
-				].join(' ')
+			'Implementation-Title': rootProject.name + "-server-api",
+			'Class-Path': [
+				commonJar.outputs.files.collect {it.name}.join(' '),
+				coreApiJar.outputs.files.collect {it.name}.join(' '),
+				configurations.serverApiRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
+			].join(' ')
 		)
 	}
 }
@@ -871,6 +894,7 @@ task testJar(type: Jar) {
 	classifier "test"
 	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.test.output
+	from sourceSets.integTest.output
 	manifest {
 		from sharedManifest
 		attributes(
@@ -1003,6 +1027,16 @@ test {
 	testLogging { events "passed", "skipped", "failed" }
 }
 
+task integTest(type: Test){
+	testClassesDir = sourceSets.integTest.output.classesDir
+	classpath = sourceSets.integTest.runtimeClasspath
+	jvmArgs '-Dlog4j.configurationFile=' + new File("").getCanonicalPath() + "${File.separator}${confDirName}${File.separator}logging.json"
+	jvmArgs '-Dlog4j.configurationFactory=org.apache.logging.log4j.core.config.json.JsonConfigurationFactory'
+	jvmArgs '-Djava.security.policy=file:/home/olga/mongoose/vipr-mongoose/src/main/resources/allpermissions.policy'
+	testLogging.showStandardStreams = true
+	testLogging { events "passed", "skipped", "failed" }
+}
+
 build.dependsOn commonJar, coreApiJar, coreImplJar, storageAdapterAtmosJar, storageAdapterS3Jar
 build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, scenarioJar
 build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testJar
@@ -1075,3 +1109,8 @@ artifactory {
 		}
 	}
 }
+
+artifactoryPublish.dependsOn commonJar, coreApiJar, coreImplJar
+artifactoryPublish.dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
+artifactoryPublish.dependsOn serverApiJar, webserverJar, clientJar, scenarioJar, serverImplJar
+artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testsJar

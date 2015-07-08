@@ -20,6 +20,7 @@ import com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.Marker;
 //
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
@@ -47,6 +48,7 @@ implements WSLoadBuilderSvc<T, U> {
 	public final String buildRemotely()
 	throws RemoteException {
 		final WSLoadSvc<T> loadSvc = (WSLoadSvc<T>) build();
+		LOG.info(Markers.MSG, RunTimeConfig.getContext().toString());
 		ServiceUtils.create(loadSvc);
 		return loadSvc.getName();
 	}

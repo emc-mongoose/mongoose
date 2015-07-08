@@ -103,14 +103,16 @@ public final class LogUtil {
 				);
 				//
 				try {
-					if(!Files.exists(logConfPath)){
+					if (Files.exists(logConfPath)) {
+						LOG_CTX.set(Configurator.initialize(MONGOOSE, logConfPath.toUri().toString()));
+					} else if (System.getProperty("log4j.configurationFile") == null) {
 						final ClassLoader classloader = LogUtil.class.getClassLoader();
 						final URL bundleLogConfURL = classloader.getResource(FNAME_LOG_CONF);
 						if (bundleLogConfURL != null) {
 							LOG_CTX.set(Configurator.initialize(MONGOOSE, classloader, bundleLogConfURL.toURI()));
 						}
 					} else {
-						LOG_CTX.set(Configurator.initialize(MONGOOSE, logConfPath.toUri().toString()));
+						LOG_CTX.set(Configurator.initialize(MONGOOSE, System.getProperty("log4j.configurationFile")));
 					}
 					//
 					if(LOG_CTX.get() == null) {

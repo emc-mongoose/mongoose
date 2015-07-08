@@ -93,7 +93,6 @@ implements Runnable {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
 			} finally {
 				HOOKS_MAP.get(currRunId).remove(loadExecutor);
-				LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
 				//
 				try {
 					final LoadState currState = loadExecutor.getLoadState();
@@ -104,30 +103,33 @@ implements Runnable {
 						loadStates.add(currState);
 						LOAD_STATES.put(currRunId, loadStates);
 					}
-				} catch (final RemoteException e) {
-					LogUtil.exception(LOG, Level.ERROR, e, "Failed to add load state to queue");
-				}
-				//
-				if (HOOKS_MAP.get(currRunId).isEmpty()) {
-					if (!isRunFinished()) {
-						saveCurrState();
-					}
-					HOOKS_MAP.remove(currRunId);
-					if (HOOKS_MAP.isEmpty()) {
-						try {
-							if (LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
-								try {
-									LogUtil.HOOKS_COND.signalAll();
-								} finally {
-									LogUtil.HOOKS_LOCK.unlock();
+					//
+					if (HOOKS_MAP.get(currRunId).isEmpty()) {
+						if (!isLoadJobFinished(currState) &&
+								RunTimeConfig.getContext().getRunMode().equals(Constants.RUN_MODE_STANDALONE)
+								&& LOAD_STATES.get(currRunId).size() == 1) {
+							saveCurrState();
+						}
+						HOOKS_MAP.remove(currRunId);
+						if (HOOKS_MAP.isEmpty()) {
+							try {
+								if (LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS)) {
+									try {
+										LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
+										LogUtil.HOOKS_COND.signalAll();
+									} finally {
+										LogUtil.HOOKS_LOCK.unlock();
+									}
+								} else {
+									LOG.debug(Markers.ERR, "Failed to acquire the lock for the del method");
 								}
-							} else {
-								LOG.debug(Markers.ERR, "Failed to acquire the lock for the del method");
+							} catch (final InterruptedException e) {
+								LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 							}
-						} catch (final InterruptedException e) {
-							LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 						}
 					}
+				} catch (final RemoteException e) {
+					LogUtil.exception(LOG, Level.ERROR, e, "Failed to add load state to queue");
 				}
 			}
 		} else {
@@ -156,24 +158,35 @@ implements Runnable {
 			try (final ObjectOutputStream oos = new ObjectOutputStream(fos)) {
 				oos.writeObject(new ArrayList<>(LOAD_STATES.get(currRunId)));
 			}
+			LOG.info(Markers.MSG, "Successfully saved state of run \"{}\"",
+				currRunId);
+			LOG.debug(Markers.MSG, "State of run was successfully saved in \"{}\" file",
+					fullStateFileName);
 			LOAD_STATES.remove(currRunId);
-			LOG.info(Markers.MSG, "The state of run with run.id: \"{}\" was saved successfully in \"{}\" file",
-				currRunId, fullStateFileName);
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to save state of run with run.id: \"{}\" to the \"{}\" file",
-				currRunId, fullStateFileName);
+				"Failed to save state of run \"{}\"",
+				currRunId);
 		}
 	}
 	//
-	private static boolean isRunFinished() {
-		final RunTimeConfig localRunTimeConfig = RunTimeConfig.getContext();
+	public static boolean isLoadJobFinished(final LoadState loadState) {
+		final RunTimeConfig localRunTimeConfig = loadState.getRunTimeConfig();
 		final Queue<LoadState> states = LOAD_STATES.get(localRunTimeConfig.getRunId());
-		final long runTimeMillis = localRunTimeConfig.getLoadLimitTimeUnit().
-				toMillis(localRunTimeConfig.getLoadLimitTimeValue());
+		//
+		final long runTimeMillis = (localRunTimeConfig.getLoadLimitTimeUnit().
+				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) > 0
+				? (localRunTimeConfig.getLoadLimitTimeUnit().
+				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
+		final long maxItemsCountPerLoad = (localRunTimeConfig.getLoadLimitCount()) > 0
+				? localRunTimeConfig.getLoadLimitCount() : Long.MAX_VALUE;
+		//
 		for (final LoadState state : states) {
-			if ((state.getLoadElapsedTimeUnit().toMillis(state.getLoadElapsedTimeValue())
-					< runTimeMillis) || (runTimeMillis <= 0))  {
+			final long stateTimeMillis = state.getLoadElapsedTimeUnit()
+				.toMillis(state.getLoadElapsedTimeValue());
+			final long stateItemsCount = state.getCountSucc() + state.getCountFail();
+			if ((stateTimeMillis < runTimeMillis) && (stateItemsCount < maxItemsCountPerLoad)
+					&& (stateItemsCount < state.getCountSubm())) {
 				return false;
 			}
 		}
