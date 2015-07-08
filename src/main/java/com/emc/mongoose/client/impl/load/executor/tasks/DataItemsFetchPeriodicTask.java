@@ -43,7 +43,8 @@ implements PeriodicTask<Collection<T>> {
 				}
 			}
 		} catch(final RemoteException | InterruptedException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to fetch the frame");
+			//  ignored
+			//LogUtil.exception(LOG, Level.WARN, e, "Failed to fetch the frame");
 		}
 	}
 	//
