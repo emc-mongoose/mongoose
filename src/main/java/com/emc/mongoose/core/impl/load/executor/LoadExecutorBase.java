@@ -344,15 +344,11 @@ implements LoadExecutor<T> {
 			//  these metrics w/o Meter's library implementation.
 			//  Only average values in TP and BW will be calculated correctly.
 			//  Other values will be gradually recovered.
-			meanTP = (resumableClock.wasPaused())
-				? throughPut.getMeanRate() :
-				countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
+			meanTP = countReqSucc / elapsedTime * TimeUnit.SECONDS.toNanos(1),
 			oneMinTP = throughPut.getOneMinuteRate(),
 			fiveMinTP = throughPut.getFiveMinuteRate(),
 			fifteenMinTP = throughPut.getFifteenMinuteRate(),
-			meanBW = (resumableClock.wasPaused())
-				? reqBytes.getMeanRate() :
-				reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1),
+			meanBW = reqBytes.getCount() / elapsedTime * TimeUnit.SECONDS.toNanos(1),
 			oneMinBW = reqBytes.getOneMinuteRate(),
 			fiveMinBW = reqBytes.getFiveMinuteRate(),
 			fifteenMinBW = reqBytes.getFifteenMinuteRate();
@@ -422,32 +418,32 @@ implements LoadExecutor<T> {
 				final File statesFile = new File(fullStateFileName);
 				if (statesFile.exists()) {
 					loadStateFromFile(fullStateFileName);
-					final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
-					//  apply parameters from loadState to current load executor
-					for (final LoadState state : loadStates) {
-						if (state.getLoadNumber() == instanceNum) {
-							if (isImmutableParamsChanged(state.getRunTimeConfig())) {
-								LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
-									getName());
-							}
-							counterSubm.inc(state.getCountSucc() + state.getCountFail());
-							counterResults.set(state.getCountSucc() + state.getCountFail());
-							counterReqFail.inc(state.getCountFail());
-							throughPut.mark(state.getCountSucc());
-							reqBytes.mark(state.getCountBytes());
-							currState = state;
-							if (isLoadExecutorFinished(currState)) {
-								isLoadFinished.compareAndSet(false, true);
-								LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
-								return;
-							}
-							break;
-						}
-					}
 				} else {
 					DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
 					LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
 						rtConfig.getRunId());
+				}
+			}
+			final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
+			//  apply parameters from loadState to current load executor
+			for (final LoadState state : loadStates) {
+				if (state.getLoadNumber() == instanceNum) {
+					if (isImmutableParamsChanged(state.getRunTimeConfig())) {
+						LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
+							getName());
+					}
+					counterSubm.inc(state.getCountSucc() + state.getCountFail());
+					counterResults.set(state.getCountSucc() + state.getCountFail());
+					counterReqFail.inc(state.getCountFail());
+					throughPut.mark(state.getCountSucc());
+					reqBytes.mark(state.getCountBytes());
+					currState = state;
+					if (isLoadExecutorFinished(currState)) {
+						isLoadFinished.compareAndSet(false, true);
+						LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
+						return;
+					}
+					break;
 				}
 			}
 			//
@@ -590,7 +586,7 @@ implements LoadExecutor<T> {
 	public final void setConsumer(final Consumer<T> consumer) {
 		this.consumer = consumer;
 		LOG.debug(
-				Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", consumer, getName()
+			Markers.MSG, "Appended the consumer \"{}\" for producer \"{}\"", consumer, getName()
 		);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////

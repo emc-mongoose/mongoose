@@ -18,15 +18,16 @@ import java.io.IOException;
 public final class MainServlet
 extends HttpServlet {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	//
+	private static final Logger LOG = LogManager.getLogger();
+	private static final String RT_CONFIG_NAME = "runTimeConfig";
+ 	//
 	@Override
 	public final void doGet(final HttpServletRequest request, final HttpServletResponse response) {
 		//
 		request.getSession(true).setAttribute("runmodes", CommonServlet.THREADS_MAP.keySet());
 		request.getSession(true).setAttribute("stopped", CommonServlet.STOPPED_RUN_MODES);
 		request.getSession(true).setAttribute("chartsMap", CommonServlet.CHARTS_MAP);
-		request.setAttribute("rtConfig", CommonServlet.getLastRunTimeConfig());
+		request.setAttribute(RT_CONFIG_NAME, CommonServlet.getLastRunTimeConfig());
 		try {
 			request.getRequestDispatcher("index.jsp").forward(request, response);
 		} catch (final IOException|ServletException e) {
