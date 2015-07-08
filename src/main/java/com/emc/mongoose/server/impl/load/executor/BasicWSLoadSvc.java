@@ -94,16 +94,16 @@ implements WSLoadSvc<T> {
 			if (consumer != null && RecordFrameBuffer.class.isInstance(consumer)) {
 				recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
 			}
-			if (LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-						Markers.MSG, "Returning {} data items records",
-						recFrame == null ? 0 : recFrame.size()
-				);
-			}
 		} catch (final InterruptedException e) {
 			if (!isShutdown.get()) {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to fetch the frame");
 			}
+		}
+		if (LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+					Markers.MSG, "Returning {} data items records",
+					recFrame == null ? 0 : recFrame.size()
+			);
 		}
 		return recFrame;
 	}
