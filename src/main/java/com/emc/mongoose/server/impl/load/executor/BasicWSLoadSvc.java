@@ -1,5 +1,6 @@
 package com.emc.mongoose.server.impl.load.executor;
 // mongoose-common.jar
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.net.Service;
@@ -17,6 +18,7 @@ import com.emc.mongoose.server.api.load.model.ConsumerSvc;
 import com.emc.mongoose.server.api.load.model.RecordFrameBuffer;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -86,15 +88,21 @@ implements WSLoadSvc<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final Collection<T> takeFrame()
-	throws RemoteException, InterruptedException {
+	throws RemoteException {
 		Collection<T> recFrame = null;
-		if(consumer != null && RecordFrameBuffer.class.isInstance(consumer)) {
-			recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
+		try {
+			if (consumer != null && RecordFrameBuffer.class.isInstance(consumer)) {
+				recFrame = ((RecordFrameBuffer<T>) consumer).takeFrame();
+			}
+		} catch (final InterruptedException e) {
+			if (!isShutdown.get()) {
+				LogUtil.exception(LOG, Level.WARN, e, "Failed to fetch the frame");
+			}
 		}
-		if(LOG.isTraceEnabled(Markers.MSG)) {
+		if (LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
-				Markers.MSG, "Returning {} data items records",
-				recFrame == null ? 0 : recFrame.size()
+					Markers.MSG, "Returning {} data items records",
+					recFrame == null ? 0 : recFrame.size()
 			);
 		}
 		return recFrame;

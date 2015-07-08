@@ -80,7 +80,13 @@ implements Runnable {
 	}
 	//
 	public static void del(final LoadExecutor loadExecutor) {
-		final String currRunId = RunTimeConfig.getContext().getRunId();
+		String currRunId;
+		try {
+			currRunId = loadExecutor.getLoadState().getRunTimeConfig().getRunId();
+		} catch (final RemoteException e) {
+			currRunId = RunTimeConfig.getContext().getRunId();
+			LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
+		}
 		if (LoadCloseHook.class.isInstance(Thread.currentThread())) {
 			LOG.debug(Markers.MSG, "Won't remove the shutdown hook which is in progress");
 		} else if (HOOKS_MAP.get(currRunId).containsKey(loadExecutor)) {
