@@ -144,7 +144,7 @@ implements Producer<T> {
 		}
 		//
 		try(
-			RandomFileReader fReader = new RandomFileReader(
+			final RandomFileReader fReader = new RandomFileReader(
 				new BufferedReader(
 					new InputStreamReader(
 						compressed ?

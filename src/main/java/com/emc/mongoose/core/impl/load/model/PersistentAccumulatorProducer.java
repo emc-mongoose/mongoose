@@ -5,6 +5,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.model.DataItemOutput;
 import com.emc.mongoose.core.api.load.model.AccumulatorProducer;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
@@ -12,6 +13,7 @@ import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
 //
 //
+import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,7 +37,7 @@ implements AccumulatorProducer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final BufferedWriter tmpFileWriter;
+	private final DataItemOutput<T> tmpFileOutput;
 	private final File tmpFile;
 	private final Producer<T> tmpFileProducer;
 	//
@@ -70,9 +72,10 @@ implements AccumulatorProducer<T> {
 		}
 		//
 		try {
-			tmpFileWriter = new BufferedWriter(
+			/*tmpFileWriter = new BufferedWriter(
 				new OutputStreamWriter(Files.newOutputStream(tmpFile.toPath()))
-			);
+			);*/
+			tmpFileOutput = new CSVFileItemOutput<T>(tmpFile.toPath(), itemCls);
 		} catch(final IOException e) {
 			throw new IllegalStateException(
 				"Failed to open the temporary file in " + tmpFilePath.toAbsolutePath(),
@@ -81,10 +84,8 @@ implements AccumulatorProducer<T> {
 		}
 		//
 		try {
-			tmpFileProducer = new DataItemInputProducer<>(
-				new CSVFileItemInput<>(tmpFilePath, itemCls)
-			);
-		} catch(final IOException | NoSuchMethodException e) {
+			tmpFileProducer = new DataItemInputProducer<>(tmpFileOutput.getInput());
+		} catch(final IOException e) {
 			throw new IllegalStateException(e);
 		}
 		//
@@ -97,10 +98,8 @@ implements AccumulatorProducer<T> {
 	throws InterruptedException, RemoteException {
 		if(item != null) {
 			try {
-				synchronized(tmpFileWriter) {
-					// TODO SerializationUtils.serialize(dataItem)
-					tmpFileWriter.write(item.toString());
-					tmpFileWriter.newLine();
+				synchronized(tmpFileOutput) {
+					tmpFileOutput.write(item);
 				}
 				count ++;
 			} catch(final IOException e) {
@@ -113,7 +112,7 @@ implements AccumulatorProducer<T> {
 	public void interrupt() {
 		// the synchronization is necessary here to make sure that every data item is
 		// written completely to the file
-		synchronized(tmpFileWriter) {
+		synchronized(tmpFileOutput) {
 			super.interrupt();
 		}
 		//
@@ -137,8 +136,8 @@ implements AccumulatorProducer<T> {
 		try {
 			super.close();
 		} finally {
-			synchronized(tmpFileWriter) {
-				tmpFileWriter.close();
+			synchronized(tmpFileOutput) {
+				tmpFileOutput.close();
 			}
 			LOG.debug(
 				Markers.MSG, "{}: closed the file \"{}\" for writing", getName(),
