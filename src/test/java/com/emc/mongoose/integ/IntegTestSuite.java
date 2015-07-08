@@ -3,15 +3,16 @@ package com.emc.mongoose.integ;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
+//
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
+//
 import com.emc.mongoose.storage.mock.impl.Cinderella;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+//
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
-
+//
 import java.nio.file.Paths;
 
 /**
@@ -20,9 +21,11 @@ import java.nio.file.Paths;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	WriteDefaultScenarioIntegTest.class,
-	ReadBackItemsWithSize10ByteDefaultScenarioIntegTest.class
-
-
+	ReadDataItems10BDefaultScenarioIntegTest.class,
+	ReadDataItems10KBDefaultScenarioIntegTest.class,
+	ReadDataItems10MBDefaultScenarioIntegTest.class,
+	ReadDataItems200MBDefaultScenarioIntegTest.class,
+	FaildVerificationIntegTest.class
 })
 public class IntegTestSuite {
 
@@ -30,7 +33,7 @@ public class IntegTestSuite {
 
 	@BeforeClass
 	public static void startCinderella()
-	throws Exception{
+	throws Exception {
 		// If tests run from the IDEA full logging file must be set
 		final String fullLogConfFile = Paths
 			.get(System.getProperty(IntegConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, IntegConstants.LOG_FILE_NAME)
@@ -47,7 +50,7 @@ public class IntegTestSuite {
 
 	@AfterClass
 	public static void interruptCinderella()
-	throws Exception{
+	throws Exception {
 		if (!wsMockThread.isInterrupted()) {
 			wsMockThread.interrupt();
 		}

@@ -2,62 +2,55 @@ package com.emc.mongoose.integ;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+//
 import com.emc.mongoose.integ.integTestTools.ContentGetter;
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
 import com.emc.mongoose.integ.integTestTools.LogFileManager;
 import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
+//
 import com.emc.mongoose.run.scenario.ScriptRunner;
-import com.emc.mongoose.storage.mock.impl.Cinderella;
+//
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.appender.ConsoleAppender;
-import org.apache.logging.log4j.core.config.Configuration;
-import org.apache.logging.log4j.core.config.ConfigurationFactory;
-import org.apache.logging.log4j.core.layout.PatternLayout;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
+//
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
-import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Locale;
-import java.util.Map;
 import java.util.TimeZone;
 
 /**
  * Created by olga on 03.07.15.
+ * Covers TC #2(name: "Read back the data items written in the different run.", steps: 1-2 for data.size=10B)
+ * in Mongoose Core Functional Testing
  */
-public final class ReadBackItemsWithSize10ByteDefaultScenarioIntegTest {
+public final class ReadDataItems10BDefaultScenarioIntegTest {
 
 	private static SavedOutputStream savedOutputStream;
 	//
 	private static String
-		CREATE_RUN_ID = "create",
-		READ_RUN_ID = "read";
-	//
-	public static final DateFormat FMT_DT = new SimpleDateFormat("yyyy.MM.dd.HH.mm.ss.SSS", Locale.ROOT) {
-		{ setTimeZone(TimeZone.getTimeZone("UTC")); }
-	};
+		CREATE_RUN_ID = IntegConstants.LOAD_CREATE,
+		READ_RUN_ID = IntegConstants.LOAD_READ;
 	//
 	private static final int DATA_COUNT = 10;
-	private static final int DATA_SIZE = 10;
+	private static final String DATA_SIZE = "10B";
 
 	@BeforeClass
 	public static void before()
 	throws Exception{
 		//Create run ID
-		CREATE_RUN_ID += ":" + DATA_SIZE + ":" + FMT_DT.format(
+		CREATE_RUN_ID += ":" + DATA_SIZE + ":" + IntegConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID,CREATE_RUN_ID);
@@ -69,21 +62,19 @@ public final class ReadBackItemsWithSize10ByteDefaultScenarioIntegTest {
 			.toString();
 		System.setProperty(IntegConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
 		LogUtil.init();
-		//final Logger rootLogger = LogManager.getRootLogger();
-		//
-		RunTimeConfig.initContext();
+		final Logger rootLogger = LogManager.getRootLogger();
+		//Reload default properties
+		RunTimeConfig runTimeConfig = new  RunTimeConfig();
+		RunTimeConfig.setContext(runTimeConfig);
 		//Run the write default mongoose scenario in standalone mode
 		Thread writeScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, CREATE_RUN_ID);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, DATA_COUNT);
-				RunTimeConfig.getContext()
-					.set(RunTimeConfig.KEY_DATA_SIZE_MAX, String.valueOf(DATA_SIZE) + IntegConstants.BYTE);
-				RunTimeConfig.getContext()
-					.set(RunTimeConfig.KEY_DATA_SIZE_MIN, String.valueOf(DATA_SIZE) + IntegConstants.BYTE);
-				//rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
+				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 				new ScriptRunner().run();
 			}
 		}, "writeScenarioMongoose");
@@ -98,17 +89,18 @@ public final class ReadBackItemsWithSize10ByteDefaultScenarioIntegTest {
 			Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime()
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, READ_RUN_ID);
-
+		//Reload default properties
+		runTimeConfig = new  RunTimeConfig();
+		RunTimeConfig.setContext(runTimeConfig);
+		//
 		Thread readScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, READ_RUN_ID);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_STANDALONE);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 0);
 				RunTimeConfig.getContext()
 					.set(RunTimeConfig.KEY_DATA_SRC_FPATH, LogFileManager.getDataItemsFile(CREATE_RUN_ID).getPath());
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, IntegConstants.LOAD_READ);
-				//rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
+				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 				new ScriptRunner().run();
 			}
 		}, "readScenarioMongoose");
@@ -116,13 +108,76 @@ public final class ReadBackItemsWithSize10ByteDefaultScenarioIntegTest {
 		readScenarioMongoose.start();
 		readScenarioMongoose.join();
 		readScenarioMongoose.interrupt();
-		// Set back System.out stream
-		System.setOut(savedOutputStream.getPrintStream());
+	}
+
+	@Test
+	public void shouldCreateCorrectDataItemsFilesAfterReadScenario()
+		throws Exception {
+		// Get data.items.csv file of read scenario run
+		final File readDataItemFile = LogFileManager.getDataItemsFile(READ_RUN_ID);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readDataItemFile));
+		//
+		String line = bufferedReader.readLine();
+		while (line != null) {
+			Assert.assertTrue(LogFileManager.matchWithDataItemsFilePattern(line));
+			line = bufferedReader.readLine();
+		}
+	}
+
+	@Test
+	public void shouldCreateCorrectPerfSumFilesAfterReadScenario()
+		throws Exception {
+		// Get perf.sum.csv file of read scenario run
+		final File readPerfSumFile = LogFileManager.getPerfSumFile(READ_RUN_ID);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readPerfSumFile));
+		//
+		String line = bufferedReader.readLine();
+		//Check that header of file is correct
+		Assert.assertEquals(LogFileManager.HEADER_PERF_SUM_FILE, line);
+		line = bufferedReader.readLine();
+		while (line != null) {
+			Assert.assertTrue(LogFileManager.matchWithPerfSumFilePattern(line));
+			line = bufferedReader.readLine();
+		}
+	}
+
+	@Test
+	public void shouldCreateCorrectPerfAvgFilesAfterReadScenario()
+		throws Exception {
+		// Get perf.avg.csv file of write scenario run
+		final File readPerfAvgFile = LogFileManager.getPerfAvgFile(READ_RUN_ID);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readPerfAvgFile));
+		//
+		String line = bufferedReader.readLine();
+		//Check that header of file is correct
+		Assert.assertEquals(LogFileManager.HEADER_PERF_AVG_FILE, line);
+		line = bufferedReader.readLine();
+		while (line != null) {
+			Assert.assertTrue(LogFileManager.matchWithPerfAvgFilePattern(line));
+			line = bufferedReader.readLine();
+		}
+	}
+
+	@Test
+	public void shouldCreateCorrectPerfTraceFilesAfterReadScenario()
+		throws Exception {
+		// Get perf.trace.csv file of write scenario run
+		final File readPerfTraceFile = LogFileManager.getPerfTraceFile(READ_RUN_ID);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readPerfTraceFile));
+		//
+		String line = bufferedReader.readLine();
+		//Check that header of file is correct
+		Assert.assertEquals(LogFileManager.HEADER_PERF_TRACE_FILE, line);
+		line = bufferedReader.readLine();
+		while (line != null) {
+			Assert.assertTrue(LogFileManager.matchWithPerfTraceFilePattern(line));
+			line = bufferedReader.readLine();
+		}
 	}
 
 	@Test
 	public void shouldWriteAllDataItemsInCorrectSize()
-		throws Exception{
+	throws Exception {
 		// Get data.items.csv file of write scenario run
 		final File writeDataItemFile = LogFileManager.getDataItemsFile(CREATE_RUN_ID);
 		//Check correct data size in data.items.csv file
@@ -139,7 +194,7 @@ public final class ReadBackItemsWithSize10ByteDefaultScenarioIntegTest {
 			Assert.assertEquals(layerAndMaskColumn.length, 2);
 			//Check that data items have correct data size
 			dataSize = Integer.valueOf(dataItemsColumns[IntegConstants.DATA_SIZE_COLUMN_INDEX]);
-			Assert.assertEquals(DATA_SIZE, dataSize);
+			Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), dataSize);
 			countDataItems++;
 			line = bufferedReader.readLine();
 		}
@@ -149,7 +204,7 @@ public final class ReadBackItemsWithSize10ByteDefaultScenarioIntegTest {
 
 	@Test
 	public void shouldGetAllWrittenObjectsFromServerAndDataSizeIsCorrect()
-		throws Exception{
+	throws Exception {
 		//Read data.items.csv file and search check log's level of summary message
 		final File dataItemsFile = LogFileManager.getDataItemsFile(CREATE_RUN_ID);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
@@ -160,15 +215,15 @@ public final class ReadBackItemsWithSize10ByteDefaultScenarioIntegTest {
 		while (line != null){
 			dataID = line.split(",")[IntegConstants.DATA_ID_COLUMN_INDEX];
 			actualDataSize = ContentGetter.getDataSize(dataID);
-			Assert.assertEquals(DATA_SIZE, actualDataSize);
+			Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), actualDataSize);
 			line = bufferedReader.readLine();
 		}
 	}
 
 	@Test
 	public void shouldReportCorrectWrittenCountToSummaryLogFile()
-		throws Exception{
-		//Read perf.summary file and search check log's level of summary message
+	throws Exception {
+		//Read perf.summary file of read single scenario
 		final File perfSumFile = LogFileManager.getPerfSumFile(READ_RUN_ID);
 
 		//Check that file exists
@@ -186,10 +241,22 @@ public final class ReadBackItemsWithSize10ByteDefaultScenarioIntegTest {
 
 	@Test
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
-		throws Exception{
+	throws Exception {
 		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
 		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
 	}
 
+	@Test
+	public void shouldReadDataItemsInSameOrderAsInFileOfWriteScenario()
+	throws Exception {
+		// Get data.items.csv file of create run
+		final File dataItemsFileWrite = LogFileManager.getDataItemsFile(CREATE_RUN_ID);
+		final byte[] bytesDataItemsFileWrite = Files.readAllBytes(dataItemsFileWrite.toPath());
+		// Get data.items.csv file of read run
+		final File dataItemsFileRead = LogFileManager.getDataItemsFile(READ_RUN_ID);
+		final byte[] bytesDataItemsFileRead = Files.readAllBytes(dataItemsFileRead.toPath());
+		// Check files are equal
+		Assert.assertTrue(Arrays.equals(bytesDataItemsFileRead, bytesDataItemsFileWrite));
+	}
 
 }

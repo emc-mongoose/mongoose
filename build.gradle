@@ -1003,6 +1003,9 @@ test {
 }
 
 task integTest(type: Test){
+	//Be able to run only test suit
+	include '**/IntegTestSuite.class'
+
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
 	jvmArgs '-Djava.security.policy=file:/home/olga/mongoose/vipr-mongoose/src/main/resources/allpermissions.policy'
