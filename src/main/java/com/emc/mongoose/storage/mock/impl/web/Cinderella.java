@@ -55,6 +55,7 @@ extends ObjectStorageMockBase<BasicWSObjectMock> {
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
 			.setBufferSize(BUFF_SIZE_LO)
+			.setFragmentSizeHint(0)
 			.build();
 		connFactory = new BasicWSMockConnFactory(rtConfig, connConfig);
 		// Set up the HTTP protocol processor

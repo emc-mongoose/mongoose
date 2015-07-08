@@ -6,7 +6,6 @@ buildscript {
 		jcenter {
 			url "http://jcenter.bintray.com/"
 		}
-		mavenCentral()
 		maven {
 			url "${artifactory_contextUrl}/repo"
 			credentials {
