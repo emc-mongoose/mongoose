@@ -43,30 +43,33 @@ extends ListItemOutput<T> {
 	}
 	/**
 	 Bulk circular write method
+	 @param buffer the list of the items to write in a batch mode
+	 @throws java.io.IOException if the destination collection fails to add the data items
+	 @return the size of the buffer to write
 	 */
 	@Override
 	public int write(final List<T> buffer)
 	throws IOException {
-		int n, done = 0, limit, bufferSize = buffer.size();
-		try {
-			do {
-				if(items.size() == capacity) {
-					i = 0;
-				}
-				System.out.println(done + ", " + i + ", " + items.size());
-				limit = Math.min(bufferSize - done, i == 0 ? capacity : capacity - items.size());
-				n = items.size();
-				if(!items.addAll(buffer.subList(done, done + limit))) {
-					throw new IOException("Failed to write " + limit + " items");
-				}
-				n = items.size() - n;
-				done += n;
-				i += n;
-			} while(done < bufferSize);
-		} catch(final Exception e) {
-			e.printStackTrace(System.err);
+		final int bufferSize = buffer.size();
+		if(bufferSize < capacity) {
+			// buffer may be placed entirely into the capacitor
+			final int limit = capacity - items.size(); // how many free space is in the capacitor;
+			if(bufferSize > limit) {
+				// should remove some items from the beginning of the capacitor in order to place
+				// the buffer entirely
+				items.removeAll(items.subList(0, bufferSize - limit));
+			}
+			if(!items.addAll(buffer)) {
+				throw new IOException("Failed to write " + bufferSize + " items");
+			}
+		} else {
+			// only a tail part of the buffer may be placed into the capacitor
+			items.clear(); // discard all the items in the capacitor
+			if(!items.addAll(buffer.subList(bufferSize - capacity, bufferSize))) {
+				throw new IOException("Failed to write " + bufferSize + " items");
+			}
 		}
-		return done;
+		return bufferSize;
 	}
 	/**
 	 @return the corresponding input

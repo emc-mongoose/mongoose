@@ -50,7 +50,7 @@ public class CircularListItemOutputTest {
 			new DataItem[] {dataItem0, dataItem1, dataItem2, dataItem3, dataItem4}
 		);
 		assertEquals(buffer.size(), itemOutput.write(buffer));
-		assertEquals(itemDst.get(0), dataItem4);
-		assertEquals(itemDst.get(1), dataItem3);
+		assertEquals(itemDst.get(0), dataItem3);
+		assertEquals(itemDst.get(1), dataItem4);
 	}
 }
