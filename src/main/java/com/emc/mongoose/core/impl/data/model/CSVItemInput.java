@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.data.model;
 //
-import com.emc.mongoose.common.conf.Constants;
+import static com.emc.mongoose.common.conf.Constants.BUFF_SIZE_LO;
 //
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
@@ -29,9 +29,7 @@ implements DataItemInput<T> {
 	 */
 	public CSVItemInput(final InputStream in, final Class<T> itemCls)
 	throws IOException, NoSuchMethodException {
-		itemsSrc = new BufferedReader(
-			new InputStreamReader(in, StandardCharsets.UTF_8), Constants.BUFF_SIZE_LO
-		);
+		itemsSrc = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 		itemConstructor = itemCls.getConstructor(String.class);
 	}
 	//
