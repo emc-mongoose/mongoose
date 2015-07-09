@@ -854,7 +854,7 @@ task utilJar(type: Jar) {
 		from sharedManifest
 		attributes(
 			'Implementation-Title': rootProject.name + "-util",
-			'Main-Class': "com.emc.mongoose.util.scenario.Sanity",
+			'Main-Class': "com.emc.mongoose.util.scenario.Chain",
 			'Class-Path': [
 				clientJar.outputs.files.collect {it.name}.join(' '),
 				commonJar.outputs.files.collect {it.name}.join(' '),

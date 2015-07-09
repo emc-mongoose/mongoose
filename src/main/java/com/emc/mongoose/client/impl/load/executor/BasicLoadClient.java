@@ -4,6 +4,7 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
+import com.codahale.metrics.Reporter;
 import com.emc.mongoose.client.impl.load.executor.gauges.AvgDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
@@ -172,14 +173,16 @@ implements LoadClient<T> {
 		metricsPeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
 		reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
-		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
-			runTimeConfig.getRemotePortExport()
-		);
-		metricsReporter = JmxReporter.forRegistry(metrics)
-			//.convertDurationsTo(TimeUnit.SECONDS)
-			//.convertRatesTo(TimeUnit.SECONDS)
-			.registerWith(mBeanServer)
-			.build();
+		if(runTimeConfig.getFlagServeIfNotLoadServer()) {
+			final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
+				runTimeConfig.getRemotePortExport()
+			);
+			metricsReporter = JmxReporter.forRegistry(metrics)
+				.registerWith(mBeanServer)
+				.build();
+		} else {
+			metricsReporter = null;
+		}
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
 		this.loadSvcAddrs = new String[remoteLoadMap.size()];
@@ -547,7 +550,9 @@ implements LoadClient<T> {
 			}
 			//
 			schedulePeriodicMgmtTasks();
-			metricsReporter.start();
+			if(metricsReporter != null) {
+				metricsReporter.start();
+			}
 			LoadCloseHook.add(this);
 			prestartAllCoreThreads();
 			//
@@ -690,7 +695,7 @@ implements LoadClient<T> {
 	@Override
 	public LoadState getLoadState()
 	throws RemoteException {
-		forceFetchAndAggregation();
+		//forceFetchAndAggregation();
 		final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
 			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(runTimeConfig)
@@ -700,7 +705,8 @@ implements LoadClient<T> {
 			.setCountSubm(taskGetCountSubm.getLastResult())
 			.setLoadElapsedTimeValue(System.nanoTime() - tsStart.get())
 			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
-			.setLatencyValues(ArrayUtils.toPrimitive(
+			.setLatencyValues(
+				ArrayUtils.toPrimitive(
 					latencyValues.toArray(new Long[latencyValues.size()])
 				)
 			);
@@ -711,21 +717,23 @@ implements LoadClient<T> {
 	@Override
 	public final void close()
 	throws IOException {
-		LOG.debug(Markers.MSG, "trying to close");
+		LOG.debug(Markers.MSG, "{}: trying to close", getName());
 		synchronized(remoteLoadMap) {
 			if(!remoteLoadMap.isEmpty()) {
 				saveLastLatencyValues();
-				LOG.debug(Markers.MSG, "do performing close");
+				LOG.debug(Markers.MSG, "{}: do performing close", getName());
 				interrupt();
 				forceFetchAndAggregation();
 				logMetrics(Markers.PERF_SUM);
 				LOG.debug(
-					Markers.MSG, "Dropped {} remote tasks",
-					shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()
+					Markers.MSG, "{}: dropped {} remote tasks",
+					getName(), shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()
 				);
-				metricsReporter.close();
+				if(metricsReporter != null) {
+					metricsReporter.close();
+				}
 				//
-				LOG.debug(Markers.MSG, "Closing the remote services...");
+				LOG.debug(Markers.MSG, "{}: closing the remote services...", getName());
 				LoadSvc<T> nextLoadSvc;
 				JMXConnector nextJMXConn;
 				for(final String addr : remoteLoadMap.keySet()) {
@@ -771,9 +779,9 @@ implements LoadClient<T> {
 				LoadCloseHook.del(this);
 				LOG.debug(Markers.MSG, "Clear the servers map");
 				remoteLoadMap.clear();
-				LOG.debug(Markers.MSG, "Closed {}", getName());
+				LOG.debug(Markers.MSG, "{}: closed", getName());
 			} else {
-				LOG.debug(Markers.ERR, "Closed already");
+				LOG.debug(Markers.MSG, "{}: closed already", getName());
 			}
 		}
 	}
@@ -781,9 +789,11 @@ implements LoadClient<T> {
 	private void saveLastLatencyValues() {
 		try {
 			for (final LoadSvc<T> loadSvc : remoteLoadMap.values()) {
-				latencyValues.addAll(Arrays.asList(
-					ArrayUtils.toObject(loadSvc.getLoadState().getLatencyValues())
-				));
+				latencyValues.addAll(
+					Arrays.asList(
+						ArrayUtils.toObject(loadSvc.getLoadState().getLatencyValues())
+					)
+				);
 			}
 		} catch (final RemoteException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");

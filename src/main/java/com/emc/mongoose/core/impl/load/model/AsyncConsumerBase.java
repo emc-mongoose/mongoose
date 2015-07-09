@@ -35,7 +35,7 @@ implements AsyncConsumer<T> {
 		isShutdown = new AtomicBoolean(false),
 		isAllSubm = new AtomicBoolean(false);
 	// volatile
-	private final BlockingQueue<T> volatileQueue;
+	private final BlockingQueue<T> transientQueue;
 	//
 	public AsyncConsumerBase(
 		final long maxCount, final int maxQueueSize, final int submTimeOutMilliSec
@@ -43,7 +43,7 @@ implements AsyncConsumer<T> {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
 		this.maxQueueSize = (int) Math.min(this.maxCount, maxQueueSize);
 		this.submTimeOutMilliSec = submTimeOutMilliSec;
-		volatileQueue = new ArrayBlockingQueue<>(maxQueueSize);
+		transientQueue = new ArrayBlockingQueue<>(maxQueueSize);
 	}
 	//
 	@Override
@@ -74,7 +74,7 @@ implements AsyncConsumer<T> {
 			if(isShutdown.get()) {
 				throw new InterruptedException("Shut down already");
 			}
-			if(volatileQueue.offer(item, submTimeOutMilliSec, TimeUnit.MILLISECONDS)) {
+			if(transientQueue.offer(item, submTimeOutMilliSec, TimeUnit.MILLISECONDS)) {
 				counterPreSubm.incrementAndGet();
 			} else {
 				throw new RejectedExecutionException("Submit queue timeout");
@@ -88,12 +88,12 @@ implements AsyncConsumer<T> {
 	public final void run() {
 		LOG.debug(
 			Markers.MSG, "Determined submit queue capacity of {} for \"{}\"",
-			volatileQueue.remainingCapacity(), getName()
+			transientQueue.remainingCapacity(), getName()
 		);
 		T nextItem;
 		try {
-			while(volatileQueue.size() > 0 || !isShutdown.get()) {
-				nextItem = volatileQueue.poll(submTimeOutMilliSec, TimeUnit.MILLISECONDS);
+			while(transientQueue.size() > 0 || !isShutdown.get()) {
+				nextItem = transientQueue.poll(submTimeOutMilliSec, TimeUnit.MILLISECONDS);
 				if(nextItem != null) {
 					submitSync(nextItem);
 				}
@@ -116,11 +116,11 @@ implements AsyncConsumer<T> {
 	//
 	@Override
 	public void shutdown() {
-		if(!isStarted.get()) {
+		/*if(!isStarted.get()) {
 			throw new IllegalStateException(
 				getName() + ": not started yet, but shutdown is invoked"
 			);
-		} else if(isShutdown.compareAndSet(false, true)) {
+		} else */if(isShutdown.compareAndSet(false, true)) {
 			LOG.debug(Markers.MSG, "{}: consumed {} items", getName(), counterPreSubm.get());
 		}
 	}
@@ -142,10 +142,10 @@ implements AsyncConsumer<T> {
 	public void close()
 	throws IOException {
 		shutdown();
-		final int dropCount = volatileQueue.size();
+		final int dropCount = transientQueue.size();
 		if(dropCount > 0) {
 			LOG.debug(Markers.MSG, "Dropped {} submit tasks", dropCount);
 		}
-		volatileQueue.clear(); // dispose
+		transientQueue.clear(); // dispose
 	}
 }

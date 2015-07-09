@@ -30,19 +30,23 @@ def execute(loadBuilder, rampupParams=((),(),())):
 	listThreadCounts = rampupParams[2]
 	for index, dataItemSizeStr in enumerate(listSizes):
 		dataItemSize = Long(SizeUtil.toSize(dataItemSizeStr))
+		interrupted = False
 		for threadCountStr in listThreadCounts:
-			try:
-				threadCount = Short.valueOf(threadCountStr)
-				LOG.info(Markers.PERF_SUM, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
-				ThreadContext.put("currentSize", dataItemSizeStr + "-" + str(index))
-				ThreadContext.put("currentThreadCount", str(threadCount))
-				nextChain = chainBuild(
-					loadBuilder, loadTypesChain, True, dataItemSize, dataItemSize, threadCount
-				)
-				chainExecute(nextChain, False)
-				LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
-			except NumberFormatException as e:
-				LogUtil.exception(Markers.ERR, Level.WARN, e, "Failed to parse the next thread count")
+			if not interrupted:
+				try:
+					threadCount = Short.valueOf(threadCountStr)
+					LOG.info(Markers.PERF_SUM, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
+					ThreadContext.put("currentSize", dataItemSizeStr + "-" + str(index))
+					ThreadContext.put("currentThreadCount", str(threadCount))
+					nextChain = chainBuild(
+						loadBuilder, loadTypesChain, True, dataItemSize, dataItemSize, threadCount
+					)
+					chainExecute(nextChain, False)
+					LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
+				except InterruptedException:
+					interrupted = True
+				except NumberFormatException as e:
+					LogUtil.exception(Markers.ERR, Level.WARN, e, "Failed to parse the next thread count")
 #
 if __name__ == "__builtin__":
 	loadBuilder = loadBuilderInit()

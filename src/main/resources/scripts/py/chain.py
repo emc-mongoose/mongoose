@@ -82,24 +82,31 @@ def execute(chain=(), flagConcurrent=True):
 					load.close()
 		else:
 			LOG.info(Markers.MSG, "Execute load jobs sequentially")
+			interrupted = False
 			for nextLoad in chain:
-				LOG.debug(Markers.MSG, "Starting next load job: \"{}\"", nextLoad)
-				nextLoad.start()
-				try:
-					LOG.debug(
-						Markers.MSG, "Execute \"{}\" for up to {}[{}]",
-						nextLoad, runTimeOut[0], runTimeOut[1]
-					)
-					nextLoad.await(runTimeOut[0], runTimeOut[1])
-				finally:
-					LOG.debug(Markers.MSG, "Load job \"{}\" done", nextLoad)
-					nextLoad.close()
-					LOG.debug(Markers.MSG, "Load job \"{}\" closed", nextLoad)
+				if not interrupted:
+					try:
+						LOG.debug(Markers.MSG, "Starting next load job: \"{}\"", nextLoad)
+						nextLoad.start()
+						try:
+							LOG.debug(
+								Markers.MSG, "Execute \"{}\" for up to {}[{}]",
+								nextLoad, runTimeOut[0], runTimeOut[1]
+							)
+							nextLoad.await(runTimeOut[0], runTimeOut[1])
+						except InterruptedException as e:
+							LOG.debug("{}: interrupted", nextLoad)
+							interrupted = True
+							raise e
+						finally:
+							LOG.debug(Markers.MSG, "Load job \"{}\" done", nextLoad)
+					finally:
+						nextLoad.close()
+						LOG.debug(Markers.MSG, "Load job \"{}\" closed", nextLoad)
 	finally:
-		if chain is not None:
-			for loadJob in chain:
-				del loadJob
-			del chain
+		for loadJob in chain:
+			del loadJob
+		del chain
 #
 if __name__ == "__builtin__":
 	#

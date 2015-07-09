@@ -425,12 +425,14 @@ implements LoadExecutor<T> {
 			//
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
+				itemsBuffLock.lock();
 				if(itemsBuff != null) {
 					try {
 						itemsBuff.close();
 					} catch(final IOException e) {
 						LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
 					}
+					isShutdown.compareAndSet(true, false); // cancel if shut down before start
 					itemsBuff.start();
 				}
 			} else {
@@ -610,6 +612,8 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final Lock itemsBuffLock = new ReentrantLock();
+	//
 	@Override
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
@@ -617,7 +621,8 @@ implements LoadExecutor<T> {
 			if(isStarted.get()) {
 				super.submit(dataItem);
 			} else { // accumulate until started
-				synchronized(itemsBuff) {
+				itemsBuffLock.lock();
+				try {
 					if(itemsBuff == null) {
 						itemsBuff = new PersistentAccumulatorProducer<>(
 							dataCls, rtConfig, this.maxCount
@@ -627,6 +632,8 @@ implements LoadExecutor<T> {
 							Markers.MSG, "{}: not started yet, consuming into the temporary file"
 						);
 					}
+				} finally {
+					itemsBuffLock.unlock();
 				}
 				itemsBuff.submit(dataItem);
 			}
