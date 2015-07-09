@@ -631,6 +631,11 @@ function charts(chartsArray) {
 	//  Some constants
 	var threadNameRegExp = /([\d]+)-([A-Za-z0-9]+)-([CreateRdDlUpAn]+)[\d]*-([\d]*)x([\d]*)x?([\d]*)/gi;
 	//
+	var SCALE = {
+		log: "Log Scales",
+		linear: "Linear Scales"
+	};
+	//
 	var SCENARIO = {
 		single: "single",
 		chain: "chain",
@@ -686,6 +691,7 @@ function charts(chartsArray) {
 		"#BC8F8F"
 	];
 	var CHART_MODES = [AVG, MIN_1, MIN_5, MIN_15];
+	var SCALE_TYPES = [SCALE.linear, SCALE.log];
     //
     function saveChart(chartDOMPath, w, h) {
         var html;
@@ -725,6 +731,27 @@ function charts(chartsArray) {
 	        document.body.removeChild(a);
         };
     }
+	//
+	function changeScale(xScale, yScale, scaleType) {
+		switch(scaleType) {
+			case SCALE.linear:
+				xScale = d3.scale.log()
+					.domain([
+						d3.min(data, function(c) {
+							return d3.min(c.values, function(d) { return (d.x <= 0) ? 0.1 : d.x; });
+						}),
+						d3.max(data, function(c) {
+							return d3.max(c.values, function(d) { return (d.x <= 0) ? 0.1 : d.x; });
+						})
+					])
+					.range([0, width]);
+				break;
+			case SCALE.log:
+				break;
+			default:
+				break;
+		}
+	}
 	//  Common functions for charts
 	function getScenarioChartObject(runId, runScenarioName, scenarioCharts) {
 		return {
@@ -763,10 +790,20 @@ function charts(chartsArray) {
 		var currentMetricsPeriodSec = 0;
 		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
 		//
-		var x = d3.scale.linear()
+		/*var x = d3.scale.linear()
 			.domain([
 				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
 				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; })  })
+			])
+			.range([0, width]);*/
+		var x = d3.scale.log()
+			.domain([
+				d3.min(data, function(c) {
+					return d3.min(c.values, function(d) { return (d.x <= 0) ? 0.1 : d.x; });
+				}),
+				d3.max(data, function(c) {
+					return d3.max(c.values, function(d) { return (d.x <= 0) ? 0.1 : d.x; });
+				})
 			])
 			.range([0, width]);
 
@@ -802,7 +839,7 @@ function charts(chartsArray) {
 		//
 		var line = d3.svg.line()
 			.x(function (d) {
-				return x(d.x);
+				return x((isNaN(x(d.x))) ? 0.1 : d.x);
 			})
 			.y(function (d) {
 				return y(d.y);
@@ -890,6 +927,41 @@ function charts(chartsArray) {
 					element.css("visibility", "hidden");
 				}
 			});
+		//  checkboxes for linear/log scales
+		svg.selectAll("foreignObject")
+			.data(SCALE_TYPES).enter()
+			.append("foreignObject")
+			.attr("class", "foreign")
+			.attr("x", 10)
+			.attr("width", 18)
+			.attr("height", 18)
+			.attr("transform", function(d, i) {
+				return "translate(" + (200*i + 300) + "," + (height + (margin.bottom/2)) + ")";
+			})
+			.append("xhtml:body")
+			.append("input")
+			.attr("type", "checkbox")
+			.attr("checked", function(d) { if (d === SCALE.linear) { return "checked"; } });
+			/*.on("click", function(d, i) {
+				var element = $(chartDOMPath + d.name.id);
+				if ($(this).is(":checked")) {
+					element.css("visibility", "visible")
+				} else {
+					element.css("visibility", "hidden");
+				}
+			});*/
+		svg.selectAll(".scale-labels")
+			.data(SCALE_TYPES).enter()
+			.append("text")
+			.attr("class", "scale-labels")
+			.attr("x", 35)
+			.attr("y", 10)
+			.attr("dy", ".35em")
+			.attr("transform", function(d, i) {
+				return "translate(" + (200*i + 300) + "," + (height + (margin.bottom/2)) + ")";
+			})
+			.style("text-anchor", "start")
+			.text(function(d) { return d; });
 		//
 		var legend = svg.selectAll(".legend")
 			.data(data).enter()
@@ -1002,6 +1074,14 @@ function charts(chartsArray) {
 			x.domain([
 				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
 				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; }); })
+			]);
+			x.domain([
+				d3.min(data, function(c) {
+					return d3.min(c.values, function(d) { return (d.x <= 0) ? 0.1 : d.x; });
+				}),
+				d3.max(data, function(c) {
+					return d3.max(c.values, function(d) { return (d.x <= 0) ? 0.1 : d.x; });
+				})
 			]);
 			y.domain([
 				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
