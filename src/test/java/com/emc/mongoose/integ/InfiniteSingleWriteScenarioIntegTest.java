@@ -31,6 +31,8 @@ public class InfiniteSingleWriteScenarioIntegTest {
 	//
 	private static String createRunId = IntegConstants.LOAD_CREATE;
 	private static final String DATA_SIZE = "1B";
+	//
+	private static Thread writeScenarioMongoose;
 
 	@BeforeClass
 	public static void before()
@@ -54,7 +56,7 @@ public class InfiniteSingleWriteScenarioIntegTest {
 		RunTimeConfig runTimeConfig = new  RunTimeConfig();
 		RunTimeConfig.setContext(runTimeConfig);
 		//run mongoose default scenario in standalone mode
-		Thread writeScenarioMongoose = new Thread(new Runnable() {
+		writeScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
@@ -65,8 +67,9 @@ public class InfiniteSingleWriteScenarioIntegTest {
 			}
 		}, "writeScenarioMongoose");
 		writeScenarioMongoose.start();
-		writeScenarioMongoose.join();
+		writeScenarioMongoose.join(15000);
 		writeScenarioMongoose.interrupt();
+
 	}
 
 	@AfterClass
@@ -80,5 +83,11 @@ public class InfiniteSingleWriteScenarioIntegTest {
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
 	throws Exception {
 		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
+	}
+
+	@Test
+	public void shouldStopAfterInterrupt()
+	throws Exception {
+
 	}
 }

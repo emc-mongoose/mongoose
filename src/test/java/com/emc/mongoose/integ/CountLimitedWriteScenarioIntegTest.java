@@ -2,6 +2,7 @@ package com.emc.mongoose.integ;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.conf.TimeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -28,18 +29,17 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * Created by olga on 08.07.15.
+ * Created by olga on 09.07.15.
  * Covers TC #6(name: "Limit the single write load job w/ both data item count and timeout",
- * steps: all, dominant limit: time) in Mongoose Core Functional Testing
+ * steps: all, dominant limit: count) in Mongoose Core Functional Testing
  */
-public class TimeLimitedWriteScenarioIntegTest {
+public class CountLimitedWriteScenarioIntegTest {
 	//
 	private static SavedOutputStream savedOutputStream;
 	//
 	private static String createRunId = IntegConstants.LOAD_CREATE;
-	private static final String DATA_SIZE = "1B", LIMIT_TIME = "1.minutes";
-	private static final int LIMIT_COUNT = 1000000000, LOAD_THREADS = 10;
-	private static long actualTimeMS;
+	private static final String DATA_SIZE = "1B", LIMIT_TIME = "365.days";
+	private static final int LIMIT_COUNT = 100000, LOAD_THREADS = 10;
 
 	@BeforeClass
 	public static void before()
@@ -76,11 +76,9 @@ public class TimeLimitedWriteScenarioIntegTest {
 				new ScriptRunner().run();
 			}
 		}, "writeScenarioMongoose");
-		actualTimeMS = System.currentTimeMillis();
 		writeScenarioMongoose.start();
 		writeScenarioMongoose.join();
 		writeScenarioMongoose.interrupt();
-		actualTimeMS = System.currentTimeMillis() - actualTimeMS;
 	}
 
 	@AfterClass
@@ -94,14 +92,6 @@ public class TimeLimitedWriteScenarioIntegTest {
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
 	throws Exception {
 		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
-	}
-
-	@Test
-	public void shuldRunScenarioFor1Minutes()
-	throws Exception {
-		final int precision = 2000;
-		final long expectedTimeMS = TimeUtil.getTimeValue(LIMIT_TIME) * 60000;
-		Assert.assertTrue((actualTimeMS >= expectedTimeMS - precision) && (actualTimeMS <= expectedTimeMS + precision));
 	}
 
 	@Test
@@ -133,21 +123,72 @@ public class TimeLimitedWriteScenarioIntegTest {
 	}
 
 	@Test
-	public void shouldPerfAvgFileContainsSomeInformation()
+	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
 	throws Exception {
-		final File perfAvgFile = LogFileManager.getPerfAvgFile(createRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
+		//Read data.items.csv file of create scenario run
+		final File dataItemsFile = LogFileManager.getDataItemsFile(createRunId);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
-		int countAvgLines = 0;
+		int dataSize, countDataItems = 0;
+		String line = bufferedReader.readLine();
+
+		while (line != null){
+			// Get dataSize from each line
+			dataSize = Integer.valueOf(line.split(",")[IntegConstants.DATA_SIZE_COLUMN_INDEX]);
+			Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), dataSize);
+			countDataItems++;
+			line = bufferedReader.readLine();
+		}
+		//Check that there are 10 lines in data.items.csv file
+		Assert.assertEquals(LIMIT_COUNT, countDataItems);
+	}
+	@Test
+	public void shouldCreateCorrectDataItemsFilesAfterWriteScenario()
+	throws Exception {
+		// Get data.items.csv file of write scenario run
+		final File writeDataItemFile = LogFileManager.getDataItemsFile(createRunId);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writeDataItemFile));
+		//
+		String line = bufferedReader.readLine();
+		while (line != null) {
+			Assert.assertTrue(LogFileManager.matchWithDataItemsFilePattern(line));
+			line = bufferedReader.readLine();
+		}
+	}
+
+	@Test
+	public void shouldCreateCorrectPerfSumFilesAfterWriteScenario()
+	throws Exception {
+		// Get perf.sum.csv file of write scenario run
+		final File writePerfSumFile = LogFileManager.getPerfSumFile(createRunId);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfSumFile));
+		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
-		Assert.assertEquals(LogFileManager.HEADER_PERF_AVG_FILE, line);
+		Assert.assertEquals(LogFileManager.HEADER_PERF_SUM_FILE, line);
 		line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(LogFileManager.matchWithPerfAvgFilePattern(line));
+			Assert.assertTrue(LogFileManager.matchWithPerfSumFilePattern(line));
 			line = bufferedReader.readLine();
-			countAvgLines++;
 		}
-		Assert.assertTrue(countAvgLines > 5 && countAvgLines < 7);
+	}
+
+	@Test
+	public void shouldReportCorrectWrittenCountToSummaryLogFile()
+		throws Exception {
+		//Read perf.summary file of create scenario run
+		final File perfSumFile = LogFileManager.getPerfSumFile(createRunId);
+
+		//Check that file exists
+		Assert.assertTrue(perfSumFile.exists());
+
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
+		bufferedReader.readLine();
+
+		// Get value of "CountSucc" column
+		final int actualCountSucc = Integer.valueOf(
+			bufferedReader.readLine().split(",")[IntegConstants.COUNT_SUCC_COLUMN_INDEX]
+		);
+		Assert.assertEquals(LIMIT_COUNT, actualCountSucc);
 	}
 }
