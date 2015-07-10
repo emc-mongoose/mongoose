@@ -784,13 +784,17 @@ implements LoadExecutor<T> {
 		final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
 			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(rtConfig)
-			.setCountSucc(throughPut.getCount())
-			.setCountFail(counterReqFail.getCount())
-			.setCountBytes(reqBytes.getCount())
-			.setCountSubm(counterSubm.getCount())
-			.setLoadElapsedTimeValue(prevElapsedTime + (System.nanoTime() - tsStart.get()))
+			.setCountSucc(throughPut == null ? 0 : throughPut.getCount())
+			.setCountFail(counterReqFail == null ? 0 : counterReqFail.getCount())
+			.setCountBytes(reqBytes == null ? 0 : reqBytes.getCount())
+			.setCountSubm(counterSubm == null ? 0 : counterSubm.getCount())
+			.setLoadElapsedTimeValue(
+				tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
+			)
 			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
-			.setLatencyValues(respLatency.getSnapshot().getValues());
+			.setLatencyValues(
+				respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
+			);
 		//
 		return stateBuilder.build();
 	}

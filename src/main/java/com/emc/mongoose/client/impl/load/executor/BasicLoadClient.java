@@ -317,6 +317,8 @@ implements LoadClient<T> {
 			remoteLoadMap.size() + fetchItemsBuffTasks.size(),
 			new GroupThreadFactory(String.format("%s-aggregator", name), true)
 		);
+		//
+		LoadCloseHook.add(this);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private Gauge<Long> registerJmxGaugeSum(
@@ -553,7 +555,6 @@ implements LoadClient<T> {
 			if(metricsReporter != null) {
 				metricsReporter.start();
 			}
-			LoadCloseHook.add(this);
 			prestartAllCoreThreads();
 			//
 			LOG.debug(Markers.MSG, "{}: started", name);
