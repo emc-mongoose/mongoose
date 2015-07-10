@@ -95,7 +95,7 @@ extends WSRequestConfigBase<T> {
 		try {
 			final WSBucketImpl<T> bucket = new WSBucketImpl<>(
 				this, this.runTimeConfig.getString(KEY_BUCKET_NAME),
-				this.runTimeConfig.getStorageVersioningEnabled()
+				this.runTimeConfig.getDataVersioningEnabled()
 			);
 			setBucket(bucket);
 		} catch(final NoSuchElementException e) {
@@ -111,7 +111,7 @@ extends WSRequestConfigBase<T> {
 		super.readExternal(in);
 		final String bucketName = String.class.cast(in.readObject());
 		LOG.debug(Markers.MSG, "Note: bucket {} has been got from load client side", bucketName);
-		setBucket(new WSBucketImpl<>(this, bucketName, runTimeConfig.getStorageVersioningEnabled()));
+		setBucket(new WSBucketImpl<>(this, bucketName, runTimeConfig.getDataVersioningEnabled()));
 	}
 	//
 	@Override
@@ -133,7 +133,7 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		httpRequest.setUriPath("/" + bucket + "/" + dataItem.getId());
+		httpRequest.setUriPath("/" + bucket + getPathFor(dataItem));
 	}
 	//
 	@Override

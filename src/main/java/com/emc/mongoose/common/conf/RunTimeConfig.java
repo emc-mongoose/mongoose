@@ -57,6 +57,9 @@ implements Externalizable {
 		KEY_DATA_RING_SEED = "data.buffer.ring.seed",
 		KEY_DATA_RING_SIZE = "data.buffer.ring.size",
 		KEY_DATA_SRC_FPATH = "data.src.fpath",
+		KEY_DATA_FS_ACCESS = "data.fsAccess",
+		KEY_DATA_PREFIX = "data.prefix",
+		KEY_DATA_VERSIONING = "data.versioning",
 		//
 		KEY_LOAD_SERVERS = "load.servers",
 		KEY_LOAD_THREADS = "load.threads",
@@ -81,7 +84,6 @@ implements Externalizable {
 		KEY_REMOTE_PORT_WEBUI = "remote.port.webui",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
-		KEY_STORAGE_FS_ACCESS = "storage.fsAccess",
 		KEY_STORAGE_SCHEME = "storage.scheme",
 		KEY_STORAGE_NAMESPACE = "storage.namespace",
 		//
@@ -305,19 +307,23 @@ implements Externalizable {
 	}
 	//
 	public final String getStorageNameSpace() {
-		return getString("storage.namespace");
+		return getString(KEY_STORAGE_NAMESPACE);
 	}
 	//
 	public final String getHttpSignMethod() {
 		return getString("http.signMethod");
 	}
 	//
-	public final boolean getStorageFileAccessEnabled() {
-		return getBoolean(KEY_STORAGE_FS_ACCESS);
+	public final boolean getDataFileAccessEnabled() {
+		return getBoolean(KEY_DATA_FS_ACCESS);
 	}
 	//
-	public final boolean getStorageVersioningEnabled() {
-		return getBoolean("storage.versioning");
+	public final String getDataPrefix() {
+		return getString(KEY_DATA_PREFIX);
+	}
+	//
+	public final boolean getDataVersioningEnabled() {
+		return getBoolean(KEY_DATA_VERSIONING);
 	}
 	//
 	public final String getRunName() {

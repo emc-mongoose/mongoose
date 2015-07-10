@@ -1,13 +1,12 @@
 {
 	"properties": {
 		"aliasing": {
-			"storage.api": "api.name",
 
 			"api.s3.port": "api.type.s3.port",
 			"api.s3.auth.prefix": "api.type.s3.authPrefix",
 			"api.s3.bucket": "api.type.s3.bucket",
-			"api.s3.bucket.filesystem": "storage.fsAccess",
-			"api.s3.bucket.versioning": "storage.versioning",
+			"api.s3.bucket.filesystem": "data.fsAccess",
+			"api.s3.bucket.versioning": "data.versioning",
 
 			"api.atmos.port": "api.type.atmos.port",
 			"api.atmos.subtenant": "api.type.atmos.subtenant",
@@ -17,6 +16,9 @@
 			"api.swift.auth.token": "api.type.swift.authToken",
 			"api.swift.container": "api.type.swift.container",
 
+			"storage.api": "api.name",
+			"storage.fsAccess": "data.fsAccess",
+			"storage.versioning": "data.versioning",
 			"storage.mock.data.offset.radix": "data.radix.offset",
 			"storage.mock.data.size.radix": "data.radix.size",
 			"storage.mock.head.count": "storage.mock.headCount",
@@ -136,7 +138,10 @@
 					"seed": "7a42d9c483244167",
 					"size": "4MB"
 				}
-			}
+			},
+			"fsAccess": false,
+			"prefix": null,
+			"versioning": false
 		},
 		"http": {
 			"signMethod": "HmacSHA1",
@@ -206,9 +211,7 @@
 					"minConnLifeMilliSec": 0,
 					"maxConnLifeMilliSec": 0
 				}
-			},
-			"fsAccess": false,
-			"versioning": false
+			}
 		},
 		"remote": {
 			"serveIfNotLoadServer": false,

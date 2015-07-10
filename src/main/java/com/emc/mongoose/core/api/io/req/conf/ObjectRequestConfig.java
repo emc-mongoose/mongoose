@@ -7,4 +7,6 @@ import com.emc.mongoose.core.api.data.DataObject;
  */
 public interface ObjectRequestConfig<T extends DataObject>
 extends RequestConfig<T> {
+	String getIdPrefix();
+	ObjectRequestConfig<T> setIdPrefix(final String idPrefix);
 }

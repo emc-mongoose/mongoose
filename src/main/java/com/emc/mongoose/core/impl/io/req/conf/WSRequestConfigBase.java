@@ -320,9 +320,9 @@ implements WSRequestConfig<T> {
 		}
 		//
 		try {
-			setFileAccessEnabled(runTimeConfig.getStorageFileAccessEnabled());
+			setFileAccessEnabled(runTimeConfig.getDataFileAccessEnabled());
 		} catch(final NoSuchElementException e) {
-			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_FS_ACCESS);
+			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_DATA_FS_ACCESS);
 		}
 		//
 		super.setProperties(runTimeConfig);
@@ -461,6 +461,14 @@ implements WSRequestConfig<T> {
 	//
 	protected abstract void applyURI(final MutableWSRequest httpRequest, final T dataItem)
 	throws IllegalArgumentException, URISyntaxException;
+	//
+	protected final String getPathFor(final T dataItem) {
+		if(fsAccess && idPrefix != null && !idPrefix.isEmpty()) {
+			return "/" + idPrefix + "/" + dataItem.getId();
+		} else {
+			return "/" + dataItem.getId();
+		}
+	}
 	//
 	protected final void applyPayLoad(
 		final MutableWSRequest httpRequest, final HttpEntity httpEntity

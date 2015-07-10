@@ -1,10 +1,12 @@
 package com.emc.mongoose.core.impl.io.req.conf;
 // mongoose-core-api.jar
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
-import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
-// mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.task.BasicObjectIOTask;
+
+import java.io.IOException;
+import java.io.ObjectInput;
+import java.io.ObjectOutput;
 /**
  Created by kurila on 23.12.14.
  */
@@ -12,16 +14,42 @@ public abstract class ObjectRequestConfigBase<T extends DataObject>
 extends RequestConfigBase<T>
 implements ObjectRequestConfig<T> {
 	//
+	protected volatile String idPrefix = null;
+	//
 	protected ObjectRequestConfigBase(final ObjectRequestConfig<T> reqConf2Clone) {
 		super(reqConf2Clone);
-	}
-	//
-	/*@Override
-	public Producer<T> getAnyDataProducer(long maxCount, LoadExecutor<T> loadExecutor) {
-		return null;
+		setIdPrefix(reqConf2Clone.getIdPrefix());
 	}
 	//
 	@Override
-	public void configureStorage(LoadExecutor<T> loadExecutor) throws IllegalStateException {
-	}*/
+	public ObjectRequestConfigBase<T> setProperties(final RunTimeConfig rtConfig) {
+		setIdPrefix(rtConfig.getDataPrefix());
+		super.setProperties(rtConfig);
+		return this;
+	}
+	//
+	@Override
+	public String getIdPrefix() {
+		return idPrefix;
+	}
+	//
+	@Override
+	public ObjectRequestConfigBase<T> setIdPrefix(final String idPrefix) {
+		this.idPrefix = idPrefix;
+		return this;
+	}
+	//
+	@Override
+	public void readExternal(final ObjectInput in)
+	throws IOException, ClassNotFoundException {
+		super.readExternal(in);
+		setIdPrefix(String.class.cast(in.readObject()));
+	}
+	//
+	@Override
+	public void writeExternal(final ObjectOutput out)
+	throws IOException {
+		super.writeExternal(out);
+		out.writeObject(getIdPrefix());
+	}
 }

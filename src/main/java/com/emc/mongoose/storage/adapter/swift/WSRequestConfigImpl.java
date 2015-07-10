@@ -168,7 +168,7 @@ extends WSRequestConfigBase<T> {
 			LOG.error(Markers.ERR, "Swift container is not specified");
 		}
 		//
-		if(runTimeConfig.getStorageVersioningEnabled()) {
+		if(runTimeConfig.getDataVersioningEnabled()) {
 			sharedHeaders.updateHeader(
 				new BasicHeader(KEY_X_VERSIONING, DEFAULT_VERSIONS_CONTAINER)
 			);
@@ -211,7 +211,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final MutableWSRequest httpRequest, final WSObject dataItem)
+	protected final void applyURI(final MutableWSRequest httpRequest, final T dataItem)
 	throws IllegalArgumentException {
 		if(uriSvcBaseContainerPath == null) {
 			LOG.warn(Markers.ERR, "Illegal URI template: <null>");
@@ -219,7 +219,7 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		httpRequest.setUriPath(uriSvcBaseContainerPath+"/"+dataItem.getId());
+		httpRequest.setUriPath(uriSvcBaseContainerPath + getPathFor(dataItem));
 	}
 	//
 	private Header headerAuthToken = null;
