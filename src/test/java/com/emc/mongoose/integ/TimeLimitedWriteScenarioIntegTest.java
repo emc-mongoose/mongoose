@@ -34,6 +34,7 @@ import java.util.regex.Matcher;
  * Created by olga on 08.07.15.
  * Covers TC #6(name: "Limit the single write load job w/ both data item count and timeout",
  * steps: all, dominant limit: time) in Mongoose Core Functional Testing
+ * HLUC: 1.1.6.2, 1.1.6.4
  */
 public class TimeLimitedWriteScenarioIntegTest {
 	//
@@ -63,10 +64,10 @@ public class TimeLimitedWriteScenarioIntegTest {
 		LogUtil.init();
 		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
 		//Reload default properties
-		RunTimeConfig runTimeConfig = new  RunTimeConfig();
+		final RunTimeConfig runTimeConfig = new  RunTimeConfig();
 		RunTimeConfig.setContext(runTimeConfig);
 		//run mongoose default scenario in standalone mode
-		Thread writeScenarioMongoose = new Thread(new Runnable() {
+		final Thread writeScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);

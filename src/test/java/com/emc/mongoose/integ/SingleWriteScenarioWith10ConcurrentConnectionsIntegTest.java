@@ -39,6 +39,7 @@ import java.util.regex.Matcher;
  * Created by olga on 08.07.15.
  * Covers TC #4(name: "Single write load using several concurrent threads/connections.", steps: all for load.threads=10)
  * in Mongoose Core Functional Testing
+ * HLUC: 1.3.2.1
  */
 public class SingleWriteScenarioWith10ConcurrentConnectionsIntegTest {
 	//

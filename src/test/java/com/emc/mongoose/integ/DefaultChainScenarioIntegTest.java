@@ -36,6 +36,7 @@ import java.util.regex.Matcher;
 /**
  * Created by olga on 10.07.15.
  * Covers TC #10 (name: "Launch the chain scenario w/ default configuration.", steps: all)
+ * HLUC: 1.4.2.1
  */
 public class DefaultChainScenarioIntegTest {
 	//

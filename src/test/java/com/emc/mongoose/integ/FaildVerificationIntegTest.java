@@ -33,6 +33,7 @@ import java.util.TimeZone;
  * Created by olga on 07.07.15.
  * Covers TC #2(name: "Read back the data items written in the different run.", steps: 3 for data.size=10MB)
  * in Mongoose Core Functional Testing
+ * HLUC: 1.1.4.2
  */
 public class FaildVerificationIntegTest {
 	private static SavedOutputStream savedOutputStream;

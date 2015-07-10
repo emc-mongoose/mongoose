@@ -5,34 +5,42 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+//
 import com.emc.mongoose.integ.integTestTools.ContentGetter;
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
 import com.emc.mongoose.integ.integTestTools.IntegLogManager;
 import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
+//
 import com.emc.mongoose.run.scenario.ScriptRunner;
+//
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
+//
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 import java.util.TimeZone;
 
 /**
- * Created by olga on 07.07.15.
- * Covers TC #2(name: "Read back the data items written in the different run.", steps: 1-2 for data.size=200MB)
+ * Created by olga on 03.07.15.
+ * Covers TC #2(name: "Read back the data items written in the different run.", steps: 1-2 for data.size=10B)
  * in Mongoose Core Functional Testing
+ * HLUC: 1.1.2.3, 1.1.4.2, 1.1.5.4, 1.3.9.1
  */
-public class ReadDataItems200MBDefaultScenarioIntegTest {
+public final class ReadDataItems10BScenarioIntegTest {
 
 	private static SavedOutputStream savedOutputStream;
 	//
@@ -41,7 +49,7 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 		readRunId = IntegConstants.LOAD_READ;
 	//
 	private static final int DATA_COUNT = 10;
-	private static final String DATA_SIZE = "200MB";
+	private static final String DATA_SIZE = "10B";
 
 	@BeforeClass
 	public static void before()
@@ -115,6 +123,67 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 	throws Exception {
 		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
 		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
+	}
+
+	@Test
+	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
+	throws Exception {
+		//Read data.items.csv file of create scenario run
+		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
+
+		int dataSize, countDataItems = 0;
+		String line = bufferedReader.readLine();
+
+		while (line != null){
+			// Get dataSize from each line
+			dataSize = Integer.valueOf(line.split(",")[IntegConstants.DATA_SIZE_COLUMN_INDEX]);
+			Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), dataSize);
+			countDataItems++;
+			line = bufferedReader.readLine();
+		}
+		//Check that there are 10 lines in data.items.csv file
+		Assert.assertEquals(DATA_COUNT, countDataItems);
+	}
+
+	@Test
+	public void shouldGetDifferentObjectsFromServer()
+	throws Exception {
+		//Read data.items.csv file of create scenario run
+		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
+
+		String line = bufferedReader.readLine(), dataID;
+		final Set setOfChecksum = new HashSet();
+
+		while (line != null){
+			dataID = line.split(",")[IntegConstants.DATA_ID_COLUMN_INDEX];
+			// Add each data checksum from set
+			try (final InputStream inputStream = ContentGetter.getStream(dataID)) {
+				setOfChecksum.add(DigestUtils.md2Hex(inputStream));
+			}
+			line = bufferedReader.readLine();
+		}
+		// If size of set with checksums is less then dataCount it's mean that some checksums are equals
+		Assert.assertEquals(DATA_COUNT, setOfChecksum.size());
+	}
+
+	@Test
+	public void shouldGetAllObjectsFromServerAndDataSizeIsDefault()
+	throws Exception {
+		//Read data.items.csv file of create scenario run
+		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
+
+		String line = bufferedReader.readLine(), dataID;
+		int actualDataSize;
+
+		while (line != null){
+			dataID = line.split(",")[IntegConstants.DATA_ID_COLUMN_INDEX];
+			actualDataSize = ContentGetter.getDataSize(dataID);
+			Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), actualDataSize);
+			line = bufferedReader.readLine();
+		}
 	}
 
 	@Test
@@ -285,7 +354,7 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 	@Test
 	public void shouldGetAllWrittenObjectsFromServerAndDataSizeIsCorrect()
 	throws Exception {
-		//Read data.items.csv file of create scenario run
+		//Read data.items.csv file and search check log's level of summary message
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
@@ -303,7 +372,7 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 	@Test
 	public void shouldReportCorrectWrittenCountToSummaryLogFile()
 	throws Exception {
-		//Read perf.summary file of read scenario run
+		//Read perf.summary file of read single scenario
 		final File perfSumFile = IntegLogManager.getPerfSumFile(readRunId);
 
 		//Check that file exists
@@ -318,4 +387,18 @@ public class ReadDataItems200MBDefaultScenarioIntegTest {
 		);
 		Assert.assertEquals(actualCountSucc, DATA_COUNT);
 	}
+
+	@Test
+	public void shouldReadDataItemsInSameOrderAsInFileOfWriteScenario()
+	throws Exception {
+		// Get data.items.csv file of create run
+		final File dataItemsFileWrite = IntegLogManager.getDataItemsFile(createRunId);
+		final byte[] bytesDataItemsFileWrite = Files.readAllBytes(dataItemsFileWrite.toPath());
+		// Get data.items.csv file of read run
+		final File dataItemsFileRead = IntegLogManager.getDataItemsFile(readRunId);
+		final byte[] bytesDataItemsFileRead = Files.readAllBytes(dataItemsFileRead.toPath());
+		// Check files are equal
+		Assert.assertTrue(Arrays.equals(bytesDataItemsFileRead, bytesDataItemsFileWrite));
+	}
+
 }

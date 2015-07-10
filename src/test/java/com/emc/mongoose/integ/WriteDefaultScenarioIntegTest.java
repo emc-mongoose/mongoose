@@ -35,6 +35,7 @@ import java.util.TimeZone;
 /**
  * Created by olga on 30.06.15.
  * Covers TC #1 (name: "Write some data items.", steps: all) in Mongoose Core Functional Testing
+ * HLUC: 1.1.1.1, 1.1.2.1, 1.3.1.1, 1.4.1.1, 1.5.3.1(1), 1.5.12.1
  */
 public final class WriteDefaultScenarioIntegTest {
 	//
@@ -63,10 +64,10 @@ public final class WriteDefaultScenarioIntegTest {
 		LogUtil.init();
 		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
 		//Reload default properties
-		RunTimeConfig runTimeConfig = new  RunTimeConfig();
+		final RunTimeConfig runTimeConfig = new  RunTimeConfig();
 		RunTimeConfig.setContext(runTimeConfig);
 		//run mongoose default scenario in standalone mode
-		Thread writeScenarioMongoose = new Thread(new Runnable() {
+		final Thread writeScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
@@ -115,6 +116,41 @@ public final class WriteDefaultScenarioIntegTest {
 		expectedFile = IntegLogManager.getErrorsFile(createRunId).toPath();
 		//Check that errors.log file is not created
 		Assert.assertFalse(Files.exists(expectedFile));
+	}
+
+	@Test
+	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
+		throws Exception {
+		final String[] runtimeConfCustomParam = RunTimeConfig.getContext().toString().split("\n");
+		for (final String confParam : runtimeConfCustomParam) {
+			if (confParam.contains(RunTimeConfig.KEY_API_NAME)) {
+				Assert.assertTrue(confParam.contains("s3"));
+			}
+			if (confParam.contains(RunTimeConfig.KEY_DATA_RING_SEED)) {
+				Assert.assertTrue(confParam.contains("7a42d9c483244167"));
+			}
+			if (confParam.contains(RunTimeConfig.KEY_DATA_RING_SIZE)) {
+				Assert.assertTrue(confParam.contains(DATA_SIZE));
+			}
+			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
+				Assert.assertTrue(confParam.contains("0"));
+			}
+			if (confParam.contains(RunTimeConfig.KEY_STORAGE_ADDRS)) {
+				Assert.assertTrue(confParam.contains("127.0.0.1"));
+			}
+			if (confParam.contains(RunTimeConfig.KEY_RUN_MODE)) {
+				Assert.assertTrue(confParam.contains(Constants.RUN_MODE_STANDALONE));
+			}
+			if (confParam.contains(RunTimeConfig.KEY_RUN_ID)) {
+				Assert.assertTrue(confParam.contains(createRunId));
+			}
+			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_TIME)) {
+				Assert.assertTrue(confParam.contains("0"));
+			}
+			if (confParam.contains(RunTimeConfig.KEY_SCENARIO_NAME)) {
+				Assert.assertTrue(confParam.contains(IntegConstants.SCENARIO_SINGLE));
+			}
+		}
 	}
 
 	@Test

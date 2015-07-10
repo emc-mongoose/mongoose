@@ -30,6 +30,7 @@ import java.util.TimeZone;
  * Created by olga on 09.07.15.
  * Covers TC #6(name: "Limit the single write load job w/ both data item count and timeout",
  * steps: all, dominant limit: count) in Mongoose Core Functional Testing
+ * HLUC: 1.1.5.2, 1.1.5.5
  */
 public class CountLimitedWriteScenarioIntegTest {
 	//

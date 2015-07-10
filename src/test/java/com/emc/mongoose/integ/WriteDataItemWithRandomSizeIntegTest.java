@@ -33,6 +33,7 @@ import java.util.TimeZone;
 /**
  * Created by olga on 08.07.15.
  * Covers TC #3 (name: "Write the data items w/ random size.", steps: all) in Mongoose Core Functional Testing
+ * HLUC: 1.1.3.1
  */
 public class WriteDataItemWithRandomSizeIntegTest {
 	//

@@ -10,7 +10,9 @@ import com.emc.mongoose.integ.integTestTools.IntegConstants;
 import com.emc.mongoose.integ.integTestTools.IntegLogManager;
 import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.Logger;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -18,20 +20,24 @@ import org.junit.Test;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 import java.util.TimeZone;
 
 /**
  * Created by olga on 07.07.15.
- * Covers TC #2(name: "Read back the data items written in the different run.", steps: 1-2 for data.size=10MB)
+ * Covers TC #2(name: "Read back the data items written in the different run.", steps: 1-2 for data.size=200MB)
  * in Mongoose Core Functional Testing
+ * HLUC: 1.1.2.6, 1.1.4.5, 1.1.5.4, 1.3.9.1
  */
-public class ReadDataItems10MBDefaultScenarioIntegTest {
+public class ReadDataItems200MBScenarioIntegTest {
 
 	private static SavedOutputStream savedOutputStream;
 	//
@@ -40,7 +46,7 @@ public class ReadDataItems10MBDefaultScenarioIntegTest {
 		readRunId = IntegConstants.LOAD_READ;
 	//
 	private static final int DATA_COUNT = 10;
-	private static final String DATA_SIZE = "10MB";
+	private static final String DATA_SIZE = "200MB";
 
 	@BeforeClass
 	public static void before()
@@ -76,6 +82,7 @@ public class ReadDataItems10MBDefaultScenarioIntegTest {
 		}, "writeScenarioMongoose");
 		writeScenarioMongoose.start();
 		writeScenarioMongoose.join();
+		IntegLogManager.waitLogger();
 		writeScenarioMongoose.interrupt();
 
 		savedOutputStream = new SavedOutputStream(System.out);
@@ -103,6 +110,7 @@ public class ReadDataItems10MBDefaultScenarioIntegTest {
 		//
 		readScenarioMongoose.start();
 		readScenarioMongoose.join();
+		IntegLogManager.waitLogger();
 		readScenarioMongoose.interrupt();
 		System.setOut(savedOutputStream.getPrintStream());
 	}
@@ -112,6 +120,67 @@ public class ReadDataItems10MBDefaultScenarioIntegTest {
 	throws Exception {
 		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
 		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
+	}
+
+	@Test
+	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
+	throws Exception {
+		//Read data.items.csv file of create scenario run
+		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
+
+		int dataSize, countDataItems = 0;
+		String line = bufferedReader.readLine();
+
+		while (line != null){
+			// Get dataSize from each line
+			dataSize = Integer.valueOf(line.split(",")[IntegConstants.DATA_SIZE_COLUMN_INDEX]);
+			Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), dataSize);
+			countDataItems++;
+			line = bufferedReader.readLine();
+		}
+		//Check that there are 10 lines in data.items.csv file
+		Assert.assertEquals(DATA_COUNT, countDataItems);
+	}
+
+	@Test
+	public void shouldGetDifferentObjectsFromServer()
+	throws Exception {
+		//Read data.items.csv file of create scenario run
+		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
+
+		String line = bufferedReader.readLine(), dataID;
+		final Set setOfChecksum = new HashSet();
+
+		while (line != null){
+			dataID = line.split(",")[IntegConstants.DATA_ID_COLUMN_INDEX];
+			// Add each data checksum from set
+			try (final InputStream inputStream = ContentGetter.getStream(dataID)) {
+				setOfChecksum.add(DigestUtils.md2Hex(inputStream));
+			}
+			line = bufferedReader.readLine();
+		}
+		// If size of set with checksums is less then dataCount it's mean that some checksums are equals
+		Assert.assertEquals(DATA_COUNT, setOfChecksum.size());
+	}
+
+	@Test
+	public void shouldGetAllObjectsFromServerAndDataSizeIsDefault()
+	throws Exception {
+		//Read data.items.csv file of create scenario run
+		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
+
+		String line = bufferedReader.readLine(), dataID;
+		int actualDataSize;
+
+		while (line != null){
+			dataID = line.split(",")[IntegConstants.DATA_ID_COLUMN_INDEX];
+			actualDataSize = ContentGetter.getDataSize(dataID);
+			Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), actualDataSize);
+			line = bufferedReader.readLine();
+		}
 	}
 
 	@Test
@@ -282,7 +351,7 @@ public class ReadDataItems10MBDefaultScenarioIntegTest {
 	@Test
 	public void shouldGetAllWrittenObjectsFromServerAndDataSizeIsCorrect()
 	throws Exception {
-		//Read data.items.csv file create scenario run
+		//Read data.items.csv file of create scenario run
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 

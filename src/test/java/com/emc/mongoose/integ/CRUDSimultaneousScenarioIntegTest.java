@@ -36,6 +36,7 @@ import java.util.regex.Matcher;
 /**
  * Created by olga on 10.07.15.
  * TC #13 (name: "CRUD - simultaneous chain scenario", steps: all) in Mongoose Core Functional Testing
+ * HLUC: 1.4.3.1, 1.5.6.3
  */
 public class CRUDSimultaneousScenarioIntegTest {
 	//

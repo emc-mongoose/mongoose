@@ -21,12 +21,12 @@ import java.nio.file.Paths;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	WriteDefaultScenarioIntegTest.class,
-	Write0BDataItemsScenarioIntegTest.class,
+	WriteScenarioWithNewPropertiesIntegTest.class,
 	WriteDataItemWithRandomSizeIntegTest.class,
-	ReadDataItems10BDefaultScenarioIntegTest.class,
-	ReadDataItems10KBDefaultScenarioIntegTest.class,
-	ReadDataItems10MBDefaultScenarioIntegTest.class,
-	ReadDataItems200MBDefaultScenarioIntegTest.class,
+	ReadDataItems10BScenarioIntegTest.class,
+	ReadDataItems10KBScenarioIntegTest.class,
+	ReadDataItems10MBScenarioIntegTest.class,
+	ReadDataItems200MBScenarioIntegTest.class,
 	FaildVerificationIntegTest.class,
 	SingleWriteScenarioWith10ConcurrentConnectionsIntegTest.class,
 	SingleWriteScenarioWith100ConcurrentConnectionsIntegTest.class,
