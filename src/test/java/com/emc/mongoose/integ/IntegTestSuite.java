@@ -21,15 +21,23 @@ import java.nio.file.Paths;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	WriteDefaultScenarioIntegTest.class,
+	Write0BDataItemsScenarioIntegTest.class,
+	WriteDataItemWithRandomSizeIntegTest.class,
 	ReadDataItems10BDefaultScenarioIntegTest.class,
 	ReadDataItems10KBDefaultScenarioIntegTest.class,
 	ReadDataItems10MBDefaultScenarioIntegTest.class,
 	ReadDataItems200MBDefaultScenarioIntegTest.class,
 	FaildVerificationIntegTest.class,
-	Write0BDataItemsScenarioIntegTest.class,
-	WriteDataItemWithRandomSizeIntegTest.class,
 	SingleWriteScenarioWith10ConcurrentConnectionsIntegTest.class,
 	SingleWriteScenarioWith100ConcurrentConnectionsIntegTest.class,
+	TimeLimitedWriteScenarioIntegTest.class,
+	InfiniteSingleWriteScenarioIntegTest.class,
+	FaildVerificationIntegTest.class,
+	CountLimitedWriteScenarioIntegTest.class,
+	CustomChainScenarioIntegTest.class,
+	CRUDSequentialScenarioIntegTest.class,
+	CRUDSimultaneousScenarioIntegTest.class,
+	DefaultChainScenarioIntegTest.class
 })
 public class IntegTestSuite {
 

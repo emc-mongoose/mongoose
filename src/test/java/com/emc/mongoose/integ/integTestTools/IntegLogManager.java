@@ -2,16 +2,20 @@ package com.emc.mongoose.integ.integTestTools;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.log.LogUtil;
+import com.emc.mongoose.common.log.Markers;
+import org.apache.logging.log4j.Level;
 
 import java.io.File;
 import java.nio.file.Paths;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Created by olga on 03.07.15.
  */
-public final class LogFileManager {
+public final class IntegLogManager {
 
 	//Patterns
 	private static final Pattern DATA_ITEMS_FILE_PATTERN = Pattern.compile("^[a-zA-Z0-9]+,[a-zA-Z0-9]+,[0-9]+,[0-9]+/[0-9a-fA-F]+$");
@@ -109,5 +113,19 @@ public final class LogFileManager {
 	public static boolean matchWithPerfTraceFilePattern(final String line) {
 		final Matcher matcher = PERF_TRACE_FILE_PATTERN.matcher(line);
 		return matcher.find();
+	}
+
+	public static void waitLogger()
+	throws InterruptedException {
+		if(LogUtil.LOAD_HOOKS_COUNT.get() != 0) {
+
+			LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS);
+
+			try {
+				LogUtil.HOOKS_COND.await(10, TimeUnit.SECONDS);
+			} finally {
+				LogUtil.HOOKS_LOCK.unlock();
+			}
+		}
 	}
 }

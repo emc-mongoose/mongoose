@@ -3,16 +3,14 @@ package com.emc.mongoose.integ;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.conf.TimeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
-import com.emc.mongoose.integ.integTestTools.LogFileManager;
+import com.emc.mongoose.integ.integTestTools.IntegLogManager;
 import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -78,13 +76,8 @@ public class CountLimitedWriteScenarioIntegTest {
 		}, "writeScenarioMongoose");
 		writeScenarioMongoose.start();
 		writeScenarioMongoose.join();
+		IntegLogManager.waitLogger();
 		writeScenarioMongoose.interrupt();
-	}
-
-	@AfterClass
-	public static void after()
-	throws Exception {
-		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
 		System.setOut(savedOutputStream.getPrintStream());
 	}
 
@@ -92,32 +85,50 @@ public class CountLimitedWriteScenarioIntegTest {
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
 	throws Exception {
 		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
+	}
+
+	@Test
+	public void shouldReportScenarioEndToMessageLogFile()
+	throws Exception {
+		//Read message file and search "Scenario End"
+		final File messageFile = IntegLogManager.getMessageFile(createRunId);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
+		// Search line in file which contains "Scenario end" string.
+		// Get out from the loop when line with "Scenario end" if found else returned line = null
+		String line;
+		do {
+			line = bufferedReader.readLine();
+		} while ((!line.contains(IntegConstants.SCENARIO_END_INDICATOR)) && line != null);
+
+		//Check the message file contain report about scenario end. If not line = null.
+		Assert.assertTrue(line.contains(IntegConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test
 	public void shouldCreateAllFilesWithLogs()
 	throws Exception {
-		Path expectedFile = LogFileManager.getMessageFile(createRunId).toPath();
+		Path expectedFile = IntegLogManager.getMessageFile(createRunId).toPath();
 		//Check that messages.log file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogFileManager.getPerfAvgFile(createRunId).toPath();
+		expectedFile = IntegLogManager.getPerfAvgFile(createRunId).toPath();
 		//Check that perf.avg.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogFileManager.getPerfSumFile(createRunId).toPath();
+		expectedFile = IntegLogManager.getPerfSumFile(createRunId).toPath();
 		//Check that perf.sum.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogFileManager.getPerfTraceFile(createRunId).toPath();
+		expectedFile = IntegLogManager.getPerfTraceFile(createRunId).toPath();
 		//Check that perf.trace.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogFileManager.getDataItemsFile(createRunId).toPath();
+		expectedFile = IntegLogManager.getDataItemsFile(createRunId).toPath();
 		//Check that data.items.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogFileManager.getErrorsFile(createRunId).toPath();
+		expectedFile = IntegLogManager.getErrorsFile(createRunId).toPath();
 		//Check that errors.log file is not created
 		Assert.assertFalse(Files.exists(expectedFile));
 	}
@@ -126,7 +137,7 @@ public class CountLimitedWriteScenarioIntegTest {
 	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
 	throws Exception {
 		//Read data.items.csv file of create scenario run
-		final File dataItemsFile = LogFileManager.getDataItemsFile(createRunId);
+		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
 		int dataSize, countDataItems = 0;
@@ -143,41 +154,41 @@ public class CountLimitedWriteScenarioIntegTest {
 		Assert.assertEquals(LIMIT_COUNT, countDataItems);
 	}
 	@Test
-	public void shouldCreateCorrectDataItemsFilesAfterWriteScenario()
+	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		// Get data.items.csv file of write scenario run
-		final File writeDataItemFile = LogFileManager.getDataItemsFile(createRunId);
+		final File writeDataItemFile = IntegLogManager.getDataItemsFile(createRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writeDataItemFile));
 		//
 		String line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(LogFileManager.matchWithDataItemsFilePattern(line));
+			Assert.assertTrue(IntegLogManager.matchWithDataItemsFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
 
 	@Test
-	public void shouldCreateCorrectPerfSumFilesAfterWriteScenario()
+	public void shouldCreateCorrectPerfSumFile()
 	throws Exception {
 		// Get perf.sum.csv file of write scenario run
-		final File writePerfSumFile = LogFileManager.getPerfSumFile(createRunId);
+		final File writePerfSumFile = IntegLogManager.getPerfSumFile(createRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfSumFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
-		Assert.assertEquals(LogFileManager.HEADER_PERF_SUM_FILE, line);
+		Assert.assertEquals(IntegLogManager.HEADER_PERF_SUM_FILE, line);
 		line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(LogFileManager.matchWithPerfSumFilePattern(line));
+			Assert.assertTrue(IntegLogManager.matchWithPerfSumFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
 
 	@Test
 	public void shouldReportCorrectWrittenCountToSummaryLogFile()
-		throws Exception {
+	throws Exception {
 		//Read perf.summary file of create scenario run
-		final File perfSumFile = LogFileManager.getPerfSumFile(createRunId);
+		final File perfSumFile = IntegLogManager.getPerfSumFile(createRunId);
 
 		//Check that file exists
 		Assert.assertTrue(perfSumFile.exists());

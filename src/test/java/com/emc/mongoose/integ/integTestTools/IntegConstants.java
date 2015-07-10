@@ -27,11 +27,13 @@ public interface IntegConstants {
 	String LOG_FILE_NAME = "logging.json";
 	String USER_DIR_PROPERTY_NAME = "user.dir";
 	//
-	String LOAD_CREATE = "create";
-	String LOAD_READ = "read";
-	String LOAD_UPDATE = "update";
-	String LOAD_APPEND = "append";
-	String LOAD_DELETE = "delete";
+	String KEY_VERIFY_CONTENT = "load.type.read.verifyContent";
+	//
+	String LOAD_CREATE = "Create";
+	String LOAD_READ = "Read";
+	String LOAD_UPDATE = "Update";
+	String LOAD_APPEND = "Append";
+	String LOAD_DELETE = "Delete";
 	//
 	String SCENARIO_SINGLE = "single";
 	String SCENARIO_CHAIN = "chain";
@@ -42,7 +44,9 @@ public interface IntegConstants {
 	String KBYTE = "KB";
 	String GBYTE = "GB";
 	String TBYTE = "TB";
-	String EBYTE= "EB";
+	String EBYTE = "EB";
+	//
+	String API_S3 = "s3";
 	//
 	int COUNT_SUCC_COLUMN_INDEX = 8;
 	int COUNT_FAIL_COLUMN_INDEX = 9;
@@ -61,5 +65,6 @@ public interface IntegConstants {
 		"[0-9]+-(S3|ATMOS|SWIFT)-(Create|Read|Update|Append|Delete)([0-9]+)?-([0-9]+x)?[0-9]+x[0-9]+"
 	);
 	Pattern TIME_PATTERN = Pattern.compile("[0-9]{2}:[0-9]{2}:[0-9]{2}");
+	Pattern LOAD_NAME_PATTERN = Pattern.compile("(Create|Read|Update|Append|Delete)");
 
 }

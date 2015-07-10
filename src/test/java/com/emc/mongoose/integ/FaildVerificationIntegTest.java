@@ -8,7 +8,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.util.UniformDataSource;
 //
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
-import com.emc.mongoose.integ.integTestTools.LogFileManager;
+import com.emc.mongoose.integ.integTestTools.IntegLogManager;
 import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
 //
 import com.emc.mongoose.run.scenario.ScriptRunner;
@@ -46,7 +46,7 @@ public class FaildVerificationIntegTest {
 
 	@BeforeClass
 	public static void before()
-		throws Exception{
+	throws Exception{
 		//Create run ID
 		createRunId += ":" + DATA_SIZE + ":" + IntegConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
@@ -65,7 +65,7 @@ public class FaildVerificationIntegTest {
 		RunTimeConfig runTimeConfig = new  RunTimeConfig();
 		RunTimeConfig.setContext(runTimeConfig);
 		//Run the write default mongoose scenario in standalone mode
-		Thread writeScenarioMongoose = new Thread(new Runnable() {
+		final Thread writeScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
@@ -81,6 +81,7 @@ public class FaildVerificationIntegTest {
 		}, "writeScenarioMongoose");
 		writeScenarioMongoose.start();
 		writeScenarioMongoose.join();
+		IntegLogManager.waitLogger();
 		writeScenarioMongoose.interrupt();
 
 		savedOutputStream = new SavedOutputStream(System.out);
@@ -94,12 +95,12 @@ public class FaildVerificationIntegTest {
 		runTimeConfig = new  RunTimeConfig();
 		RunTimeConfig.setContext(runTimeConfig);
 		//
-		Thread readScenarioMongoose = new Thread(new Runnable() {
+		final Thread readScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, readRunId);
 				RunTimeConfig.getContext()
-					.set(RunTimeConfig.KEY_DATA_SRC_FPATH, LogFileManager.getDataItemsFile(createRunId).getPath());
+					.set(RunTimeConfig.KEY_DATA_SRC_FPATH, IntegLogManager.getDataItemsFile(createRunId).getPath());
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, IntegConstants.LOAD_READ);
 				//Set another seed -> it has to brake verification
 				final String newSeed = "7a42d9c483244166";
@@ -114,6 +115,7 @@ public class FaildVerificationIntegTest {
 		//
 		readScenarioMongoose.start();
 		readScenarioMongoose.join();
+		IntegLogManager.waitLogger();
 		readScenarioMongoose.interrupt();
 		//
 		System.setOut(savedOutputStream.getPrintStream());
@@ -123,7 +125,7 @@ public class FaildVerificationIntegTest {
 	public void shouldFailedReadOfAllDataItems()
 	throws Exception {
 		// Get perf.sum.csv file of read scenario
-		final File perfSumFile = LogFileManager.getPerfSumFile(readRunId);
+		final File perfSumFile = IntegLogManager.getPerfSumFile(readRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		bufferedReader.readLine();
 		int countFail = Integer.valueOf(bufferedReader.readLine().split(",")[IntegConstants.COUNT_FAIL_COLUMN_INDEX]);
@@ -132,9 +134,9 @@ public class FaildVerificationIntegTest {
 
 	@Test
 	public void shouldReportAboutFailedVerificationToConsole()
-		throws Exception {
+	throws Exception {
 		// Get data.items.csv file of write scenario
-		final File dataItemsFile = LogFileManager.getDataItemsFile(createRunId);
+		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 		String line = bufferedReader.readLine();
 		String dataID;
@@ -147,12 +149,12 @@ public class FaildVerificationIntegTest {
 
 	@Test
 	public void shouldReportAboutFailedVerificationToMessageFile()
-		throws Exception {
+	throws Exception {
 		// Get data.items.csv file of write scenario
-		final File dataItemsFile = LogFileManager.getDataItemsFile(createRunId);
+		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
 		final BufferedReader bufferedDataItemsReader = new BufferedReader(new FileReader(dataItemsFile));
 		// Get content of message.log file of read scenario
-		final String contentMessageFile = new Scanner(LogFileManager.getMessageFile(readRunId))
+		final String contentMessageFile = new Scanner(IntegLogManager.getMessageFile(readRunId))
 			.useDelimiter("\\Z")
 			.next();
 		String line = bufferedDataItemsReader.readLine();

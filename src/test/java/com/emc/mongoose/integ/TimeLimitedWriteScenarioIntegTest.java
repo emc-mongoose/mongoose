@@ -6,12 +6,10 @@ import com.emc.mongoose.common.conf.TimeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
-import com.emc.mongoose.integ.integTestTools.LogFileManager;
+import com.emc.mongoose.integ.integTestTools.IntegLogManager;
 import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -23,9 +21,14 @@ import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
 
 /**
  * Created by olga on 08.07.15.
@@ -58,7 +61,7 @@ public class TimeLimitedWriteScenarioIntegTest {
 			.toString();
 		System.setProperty(IntegConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
 		LogUtil.init();
-		final Logger rootLogger = LogManager.getRootLogger();
+		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
 		//Reload default properties
 		RunTimeConfig runTimeConfig = new  RunTimeConfig();
 		RunTimeConfig.setContext(runTimeConfig);
@@ -79,14 +82,9 @@ public class TimeLimitedWriteScenarioIntegTest {
 		actualTimeMS = System.currentTimeMillis();
 		writeScenarioMongoose.start();
 		writeScenarioMongoose.join();
+		IntegLogManager.waitLogger();
 		writeScenarioMongoose.interrupt();
 		actualTimeMS = System.currentTimeMillis() - actualTimeMS;
-	}
-
-	@AfterClass
-	public static void after()
-	throws Exception {
-		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
 		System.setOut(savedOutputStream.getPrintStream());
 	}
 
@@ -94,60 +92,126 @@ public class TimeLimitedWriteScenarioIntegTest {
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
 	throws Exception {
 		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
+	}
+
+	@Test
+	public void shouldReportScenarioEndToMessageLogFile()
+	throws Exception {
+		//Read message file and search "Scenario End"
+		final File messageFile = IntegLogManager.getMessageFile(createRunId);
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
+		// Search line in file which contains "Scenario end" string.
+		// Get out from the loop when line with "Scenario end" if found else returned line = null
+		String line;
+		do {
+			line = bufferedReader.readLine();
+		} while ((!line.contains(IntegConstants.SCENARIO_END_INDICATOR)) && line != null);
+
+		//Check the message file contain report about scenario end. If not line = null.
+		Assert.assertTrue(line.contains(IntegConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test
 	public void shuldRunScenarioFor1Minutes()
 	throws Exception {
-		final int precision = 2000;
-		final long expectedTimeMS = TimeUtil.getTimeValue(LIMIT_TIME) * 60000;
-		Assert.assertTrue((actualTimeMS >= expectedTimeMS - precision) && (actualTimeMS <= expectedTimeMS + precision));
+		final int precisionMillis = 2000;
+		//1.minutes = 60000.milliseconds
+		final long loadLimitTimeMillis = TimeUtil.getTimeValue(LIMIT_TIME) * 60000;
+		Assert.assertTrue((actualTimeMS >= loadLimitTimeMillis - precisionMillis) && (actualTimeMS <= loadLimitTimeMillis + precisionMillis));
+		//
+		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
+		//
+		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+		Date startTime = null, finishTime = null;
+		// Get start time of loads
+		bufferedReader.readLine();
+		String line = bufferedReader.readLine();
+		Matcher matcher = IntegConstants.TIME_PATTERN.matcher(line);
+		if (matcher.find()) {
+			startTime = format.parse(matcher.group());
+		}
+		// Get finish time of loads
+		final File perfSumFile = IntegLogManager.getPerfSumFile(createRunId);
+		bufferedReader = new BufferedReader(new FileReader(perfSumFile));
+		bufferedReader.readLine();
+		line = bufferedReader.readLine();
+		matcher = IntegConstants.TIME_PATTERN.matcher(line);
+		if (matcher.find()) {
+			finishTime = format.parse(matcher.group());
+		}
+		//
+		long differenceTime;
+		for (int i = 0; i < 5; i++) {
+			differenceTime = finishTime.getTime() - startTime.getTime();
+			Assert.assertTrue(
+				differenceTime > loadLimitTimeMillis - precisionMillis &&
+					differenceTime > loadLimitTimeMillis + precisionMillis
+			);
+		}
 	}
 
 	@Test
 	public void shouldCreateAllFilesWithLogs()
 	throws Exception {
-		Path expectedFile = LogFileManager.getMessageFile(createRunId).toPath();
+		Path expectedFile = IntegLogManager.getMessageFile(createRunId).toPath();
 		//Check that messages.log file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogFileManager.getPerfAvgFile(createRunId).toPath();
+		expectedFile = IntegLogManager.getPerfAvgFile(createRunId).toPath();
 		//Check that perf.avg.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogFileManager.getPerfSumFile(createRunId).toPath();
+		expectedFile = IntegLogManager.getPerfSumFile(createRunId).toPath();
 		//Check that perf.sum.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogFileManager.getPerfTraceFile(createRunId).toPath();
+		expectedFile = IntegLogManager.getPerfTraceFile(createRunId).toPath();
 		//Check that perf.trace.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogFileManager.getDataItemsFile(createRunId).toPath();
+		expectedFile = IntegLogManager.getDataItemsFile(createRunId).toPath();
 		//Check that data.items.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = LogFileManager.getErrorsFile(createRunId).toPath();
+		expectedFile = IntegLogManager.getErrorsFile(createRunId).toPath();
 		//Check that errors.log file is not created
 		Assert.assertFalse(Files.exists(expectedFile));
 	}
 
 	@Test
-	public void shouldPerfAvgFileContainsSomeInformation()
+	public void shouldGeneralStatusOfTheRunIsRegularlyReports()
 	throws Exception {
-		final File perfAvgFile = LogFileManager.getPerfAvgFile(createRunId);
+		// Get perf.avg.csv file
+		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 
-		int countAvgLines = 0;
+		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+		Matcher matcher;
+		//
+		bufferedReader.readLine();
 		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(LogFileManager.HEADER_PERF_AVG_FILE, line);
-		line = bufferedReader.readLine();
+		final List<Date> listTimeOfReports = new ArrayList<>();
 		while (line != null) {
-			Assert.assertTrue(LogFileManager.matchWithPerfAvgFilePattern(line));
+			matcher = IntegConstants.TIME_PATTERN.matcher(line);
+			if (matcher.find()) {
+				listTimeOfReports.add(format.parse(matcher.group()));
+			}
 			line = bufferedReader.readLine();
-			countAvgLines++;
 		}
-		Assert.assertTrue(countAvgLines > 5 && countAvgLines < 7);
+		// Check period of reports is correct
+		long firstTime, nextTime;
+		// Period must be equal 10 sec
+		final int period = RunTimeConfig.getContext().getLoadMetricsPeriodSec();
+		// period must be equal 10 seconds = 10000 milliseconds
+		Assert.assertEquals(10, period);
+		//
+		for (int i = 0; i < listTimeOfReports.size() - 1; i++) {
+			firstTime = listTimeOfReports.get(i).getTime();
+			nextTime = listTimeOfReports.get(i + 1).getTime();
+			// period must be equal 10 seconds = 10000 milliseconds
+			Assert.assertEquals(10000, (nextTime - firstTime));
+		}
 	}
 }

@@ -5,11 +5,11 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
+import com.emc.mongoose.integ.integTestTools.IntegLogManager;
 import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,8 +31,6 @@ public class InfiniteSingleWriteScenarioIntegTest {
 	//
 	private static String createRunId = IntegConstants.LOAD_CREATE;
 	private static final String DATA_SIZE = "1B";
-	//
-	private static Thread writeScenarioMongoose;
 
 	@BeforeClass
 	public static void before()
@@ -53,10 +51,10 @@ public class InfiniteSingleWriteScenarioIntegTest {
 		LogUtil.init();
 		final Logger rootLogger = LogManager.getRootLogger();
 		//Reload default properties
-		RunTimeConfig runTimeConfig = new  RunTimeConfig();
+		final RunTimeConfig runTimeConfig = new  RunTimeConfig();
 		RunTimeConfig.setContext(runTimeConfig);
 		//run mongoose default scenario in standalone mode
-		writeScenarioMongoose = new Thread(new Runnable() {
+		final Thread writeScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
@@ -68,14 +66,8 @@ public class InfiniteSingleWriteScenarioIntegTest {
 		}, "writeScenarioMongoose");
 		writeScenarioMongoose.start();
 		writeScenarioMongoose.join(15000);
+		IntegLogManager.waitLogger();
 		writeScenarioMongoose.interrupt();
-
-	}
-
-	@AfterClass
-	public static void after()
-	throws Exception {
-		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
 		System.setOut(savedOutputStream.getPrintStream());
 	}
 
@@ -83,6 +75,7 @@ public class InfiniteSingleWriteScenarioIntegTest {
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
 	throws Exception {
 		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test
