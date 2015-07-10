@@ -48,7 +48,7 @@ implements DataItemInput<T> {
 	//
 	@Override
 	public final T read()
-		throws EOFException, IOException {
+	throws EOFException, IOException {
 		if(listPageIter == null || !listPageIter.hasNext()) {
 			listPageIter = getNextPageIterator();
 		}
@@ -57,7 +57,7 @@ implements DataItemInput<T> {
 	//
 	@Override
 	public final int read(final List<T> buffer)
-		throws IOException {
+	throws IOException {
 		if(listPageIter == null || !listPageIter.hasNext()) {
 			listPageIter = getNextPageIterator();
 		}

@@ -7,6 +7,8 @@ import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 //
+import com.emc.mongoose.core.impl.data.model.GenericWSContainerBase;
+//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -22,12 +24,11 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
 /**
  Created by kurila on 02.10.14.
  */
 public class WSBucketImpl<T extends WSObject>
+extends GenericWSContainerBase<T>
 implements Bucket<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
@@ -39,34 +40,11 @@ implements Bucket<T> {
 		MAX_KEYS_URL_PART = "?max-keys=",
 		MARKER_URL_PART = "&marker=";
 	//
-	private final WSRequestConfigImpl<T> reqConf;
-	private String name;
-	private boolean versioningEnabled;
-	//
 	public WSBucketImpl(
 		final WSRequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
 	) {
-		this.reqConf = reqConf;
-		//
-		if(name == null || name.length() == 0) {
-			final Date dt = Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime();
-			this.name = "mongoose-" + LogUtil.FMT_DT.format(dt);
-		} else {
-			this.name = name;
-		}
-		this.versioningEnabled = versioningEnabled;
+		super(reqConf, name, versioningEnabled);
 	}
-	//
-	@Override
-	public final String getName() {
-		return toString();
-	}
-	//
-	@Override
-	public final String toString() {
-		return name;
-	}
-	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)

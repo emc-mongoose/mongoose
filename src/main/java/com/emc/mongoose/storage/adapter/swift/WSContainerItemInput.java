@@ -3,9 +3,7 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
-//
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 //
@@ -26,7 +24,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ListIterator;
 /**
  Created by kurila on 03.07.15.
@@ -38,9 +35,9 @@ extends GenericContainerItemInputBase<T> {
 	private final static JsonFactory JSON_FACTORY = new JsonFactory();
 	private final static String KEY_SIZE = "bytes", KEY_ID = "name";
 	//
-	private boolean isInsideObjectToken = false;
+	private boolean isInsideObjectToken = false, eof = false;
 	private String lastId = null;
-	private long lastSize = -1, offset, count = 0;
+	private long lastSize = -1, count = 0;
 	//
 	public WSContainerItemInput(
 		final WSContainerImpl<T> container, final String nodeAddr, final Class<T> itemCls
@@ -51,6 +48,9 @@ extends GenericContainerItemInputBase<T> {
 	@Override
 	protected final ListIterator<T> getNextPageIterator()
 	throws EOFException, IOException {
+		if(eof) {
+			throw new EOFException();
+		}
 		// execute the request
 		final HttpResponse resp = WSContainerImpl.class.cast(container).execute(
 			nodeAddr, MutableWSRequest.HTTPMethod.GET, lastId, WSRequestConfig.PAGE_SIZE
@@ -99,6 +99,7 @@ extends GenericContainerItemInputBase<T> {
 	private void handleJsonInputStream(final InputStream in)
 	throws EOFException, IOException {
 		boolean isEmptyArray = false;
+		T nextItem;
 		try(final JsonParser jsonParser = JSON_FACTORY.createParser(in)) {
 			final JsonToken rootToken = jsonParser.nextToken();
 			JsonToken nextToken;
@@ -116,25 +117,15 @@ extends GenericContainerItemInputBase<T> {
 							if(isInsideObjectToken) {
 								if(lastId != null && lastSize > -1) {
 									try {
-										offset = Long.parseLong(lastId, DataObject.ID_RADIX);
-										if(offset < 0) {
-											LOG.warn(
-												Markers.ERR,
-												"Calculated from id ring offset is negative"
-											);
-										} else {
-											listPageBuffer.add(
-												itemConstructor.newInstance(
-													lastId, offset, lastSize
-												)
-											);
+										nextItem = container.buildItem(
+											itemConstructor, lastId, lastSize
+										);
+										if(nextItem != null) {
+											listPageBuffer.add(nextItem);
 											count ++;
 											isEmptyArray = true;
 										}
-									} catch(
-										final InstantiationException | IllegalAccessException |
-											InvocationTargetException e
-									) {
+									} catch(final IllegalStateException e) {
 										LogUtil.exception(
 											LOG, Level.WARN, e,
 											"Failed to create data item descriptor"
@@ -175,7 +166,7 @@ extends GenericContainerItemInputBase<T> {
 				} while(!JsonToken.END_ARRAY.equals(nextToken));
 				// if container's list is empty
 				if(isEmptyArray) {
-					throw new EOFException();
+					eof = true;
 				}
 			} else {
 				LOG.warn(

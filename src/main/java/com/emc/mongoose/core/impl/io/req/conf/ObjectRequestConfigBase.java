@@ -18,13 +18,17 @@ implements ObjectRequestConfig<T> {
 	//
 	protected ObjectRequestConfigBase(final ObjectRequestConfig<T> reqConf2Clone) {
 		super(reqConf2Clone);
-		setIdPrefix(reqConf2Clone.getIdPrefix());
+		if(reqConf2Clone != null) {
+			setIdPrefix(reqConf2Clone.getIdPrefix());
+		}
 	}
 	//
 	@Override
 	public ObjectRequestConfigBase<T> setProperties(final RunTimeConfig rtConfig) {
-		setIdPrefix(rtConfig.getDataPrefix());
-		super.setProperties(rtConfig);
+		if(rtConfig != null) {
+			setIdPrefix(rtConfig.getDataPrefix());
+			super.setProperties(rtConfig);
+		}
 		return this;
 	}
 	//

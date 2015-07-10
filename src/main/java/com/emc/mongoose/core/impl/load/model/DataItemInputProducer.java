@@ -31,6 +31,7 @@ implements Producer<T> {
 	//
 	public DataItemInputProducer(final DataItemInput<T> itemIn) {
 		this.itemIn = itemIn;
+		setDaemon(true);
 	}
 	//
 	@Override

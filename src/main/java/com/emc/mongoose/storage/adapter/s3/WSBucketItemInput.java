@@ -3,12 +3,13 @@ package com.emc.mongoose.storage.adapter.s3;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.data.model.GenericContainer;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 //
 import com.emc.mongoose.core.impl.data.GenericContainerItemInputBase;
+//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
@@ -41,6 +42,7 @@ extends GenericContainerItemInputBase<T> {
 	private final SAXParser parser;
 	//
 	private String nextPageMarker = null;
+	private boolean eof = false;
 	//
 	public WSBucketItemInput(
 		final WSBucketImpl<T> bucket, final String nodeAddr, final Class<T> itemCls
@@ -63,6 +65,7 @@ extends GenericContainerItemInputBase<T> {
 		//
 		private final List<T> itemsBuffer;
 		private final Constructor<T> itemConstructor;
+		private final GenericContainer<T> container;
 		private int count = 0;
 		private boolean
 			isInsideItem = false,
@@ -70,10 +73,15 @@ extends GenericContainerItemInputBase<T> {
 			itIsItemSize = false,
 			itIsNextMarker = false;
 		private String strId = null, strSize = null, nextPageMarker = null;
+		private T nextItem;
 		//
-		private PageContentHandler(final List<T> itemsBuffer, final Constructor<T> itemConstructor) {
+		private PageContentHandler(
+			final List<T> itemsBuffer, final Constructor<T> itemConstructor,
+			final GenericContainer<T> container
+		) {
 			this.itemsBuffer = itemsBuffer;
 			this.itemConstructor = itemConstructor;
+			this.container = container;
 		}
 		//
 		@Override
@@ -99,7 +107,7 @@ extends GenericContainerItemInputBase<T> {
 			if(isInsideItem && QNAME_ITEM.equals(qName)) {
 				isInsideItem = false;
 				//
-				long offset, size = -1;
+				long size = -1;
 				//
 				if(strSize != null && strSize.length() > 0) {
 					try {
@@ -115,11 +123,9 @@ extends GenericContainerItemInputBase<T> {
 				//
 				if(strId != null && strId.length() > 0 && size > -1) {
 					try {
-						offset = Long.parseLong(strId, DataObject.ID_RADIX);
-						if(offset < 0) {
-							LOG.warn(Markers.ERR, "Calculated from id ring offset is negative");
-						} else {
-							itemsBuffer.add(itemConstructor.newInstance(strId, offset, size));
+						nextItem = container.buildItem(itemConstructor, strId, size);
+						if(nextItem != null) {
+							itemsBuffer.add(nextItem);
 							count ++;
 						}
 					} catch(final NumberFormatException e) {
@@ -160,6 +166,9 @@ extends GenericContainerItemInputBase<T> {
 	@Override
 	protected final ListIterator<T> getNextPageIterator()
 	throws EOFException, IOException {
+		if(eof) {
+			throw new EOFException();
+		}
 		// execute the request
 		final HttpResponse resp = WSBucketImpl.class.cast(container).execute(
 			nodeAddr, MutableWSRequest.HTTPMethod.GET, false, nextPageMarker,
@@ -193,12 +202,12 @@ extends GenericContainerItemInputBase<T> {
 		parser.reset();
 		try(final InputStream in = respEntity.getContent()) {
 			final PageContentHandler<T> pageContentHandler = new PageContentHandler<>(
-				listPageBuffer, itemConstructor
+				listPageBuffer, itemConstructor, container
 			);
 			parser.parse(in, pageContentHandler);
 			nextPageMarker = pageContentHandler.getNextPageMarker();
 			if(null == nextPageMarker || 0 == pageContentHandler.getCount()) {
-				throw new EOFException(); // end of bucket list
+				eof = true; // end of bucket list
 			}
 			LOG.info("Listed {} items the last time", pageContentHandler.getCount());
 		} catch(final SAXException e) {
