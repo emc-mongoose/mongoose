@@ -17,9 +17,11 @@ import com.emc.mongoose.storage.mock.impl.web.response.BasicWSResponseProducer;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 //
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -37,9 +39,17 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  Created by andrey on 13.05.15.
  */
@@ -69,6 +79,8 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 	private final ObjectStorage<T> sharedStorage;
+	//
+	private final static Pattern RANGE_PATTERN = Pattern.compile("([0-9]+)-([0-9]+)?");
 	//
 	protected WSRequestHandlerBase(
 		final RunTimeConfig runTimeConfig, final ObjectStorage<T> sharedStorage
@@ -122,6 +134,13 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		// get URI components
 		final String[] requestURI = requestLine.getUri().split("/");
 		final String dataId = requestURI[requestURI.length - 1];
+		// get headers
+		/*
+		System.out.println("---------------------");
+		for (final Header header : r.getAllHeaders()) {
+			System.out.println(header.getName() + " : " + header.getValue());
+		}
+		*/
 		//
 		handleActually(httpRequest, httpResponse, method, requestURI, dataId);
 		// done
@@ -176,8 +195,19 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		}
 		try {
 			httpResponse.setStatusCode(HttpStatus.SC_OK);
-			final BasicWSObjectMock dataObject = writeDataObject(httpRequest, dataId);
-			ioStats.markCreate(dataObject.getSize());
+			BasicWSObjectMock dataObject;
+			//
+			if (sharedStorage.get(dataId) == null) {
+				dataObject = writeDataObject(httpRequest, dataId);
+				ioStats.markCreate(dataObject.getSize());
+			} else if (httpRequest.getFirstHeader(HttpHeaders.RANGE) != null) {
+				// get data object by ID
+				dataObject = sharedStorage.get(dataId);
+				handleRanges(httpRequest, httpResponse, dataObject);
+			} else {
+				httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+				LOG.debug(Markers.ERR, "Failed to append/update data item:{}", sharedStorage.get(dataId));
+			}
 		} catch(final HttpException e) {
 			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.ERROR, e, "Put method failure");
@@ -189,6 +219,41 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 				"Failed to decode the data id \"{}\" as ring buffer offset", dataId
 			);
 			ioStats.markCreate(-1);
+		}
+	}
+	//
+	private void handleRanges(final HttpRequest httpRequest, final HttpResponse httpResponse, final BasicWSObjectMock dataObject) {
+		//get content length
+		final HttpEntity entity = HttpEntityEnclosingRequest.class.cast(httpRequest).getEntity();
+		final long bytes = entity.getContentLength();
+		//
+		final Header headerRange = httpRequest.getFirstHeader(HttpHeaders.RANGE);
+		final Matcher matcherRange = RANGE_PATTERN.matcher(headerRange.getValue());
+		final List<Long> ranges= new ArrayList<>();
+		while (matcherRange.find()) {
+			ranges.add(Long.valueOf(matcherRange.group(1)));
+			if (matcherRange.group(2) != null) {
+				ranges.add(Long.valueOf(matcherRange.group(2)));
+			} else if (Long.valueOf(matcherRange.group(1)) != bytes) {
+				ranges.add(bytes);
+			}
+		}
+		// switch append or update
+		if (ranges.size() == 1) {
+			final long augmentSize = ranges.get(0);
+			//set new data object's size
+			dataObject.setSize(dataObject.getSize() + bytes);
+			dataObject.append(augmentSize);
+		} else if(ranges.size() > 1) {
+			dataObject.updateRanges(ranges);
+		} else {
+			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			LOG.debug(Markers.ERR, "There isn't header of ranges");
+			return;
+		}
+		sharedStorage.create((T) dataObject);
+		if(LOG.isTraceEnabled(Markers.DATA_LIST)) {
+			LOG.trace(Markers.DATA_LIST, dataObject);
 		}
 	}
 	//
@@ -267,5 +332,20 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	//
 	protected static String generateId() {
 		return Long.toString(UniformData.nextOffset(LAST_OFFSET), DataObject.ID_RADIX);
+	}
+	//
+	private final List<String> expectedHeaders = new ArrayList<>(
+		Arrays.asList(
+			HttpHeaders.DATE, HttpHeaders.AUTHORIZATION, HttpHeaders.HOST,
+			HttpHeaders.CONTENT_TYPE, HttpHeaders.CONTENT_LENGTH
+		)
+	);
+	private boolean isCorrectHeaders(final HttpRequest request) {
+		for (final Header header : request.getAllHeaders()) {
+			if (!expectedHeaders.contains(header.getName())) {
+				return false;
+			}
+		}
+		return true;
 	}
 }

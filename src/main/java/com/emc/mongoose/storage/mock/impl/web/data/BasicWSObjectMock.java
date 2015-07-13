@@ -92,4 +92,9 @@ implements UpdatableDataItemMock {
 			return writtenCount;
 		}
 	}
+
+	@Override
+	public long getContentLength() {
+		return size;
+	}
 }
