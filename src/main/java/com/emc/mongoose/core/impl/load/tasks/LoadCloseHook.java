@@ -150,7 +150,6 @@ implements Runnable {
 			loadExecutor.close();
 			LOG.debug(Markers.MSG, "The load executor \"{}\" closed successfully", loadName);
 		} catch(final Exception e) {
-			e.printStackTrace(System.err);
 			LogUtil.exception(
 				LOG, Level.DEBUG, e, "Failed to close the load executor \"{}\"", loadName
 			);

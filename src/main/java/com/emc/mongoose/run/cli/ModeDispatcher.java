@@ -46,7 +46,7 @@ public final class ModeDispatcher {
 		RunTimeConfig.initContext();
 		// load the config from CLI arguments
 		final Map<String, String> properties = HumanFriendly.parseCli(args);
-		if(!properties.isEmpty()) {
+		if(properties != null && !properties.isEmpty()) {
 			rootLogger.debug(Markers.MSG, "Overriding properties {}", properties);
 			RunTimeConfig.getContext().overrideSystemProperties(properties);
 		}
