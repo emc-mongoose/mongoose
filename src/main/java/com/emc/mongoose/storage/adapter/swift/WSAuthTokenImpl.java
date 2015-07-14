@@ -61,7 +61,7 @@ implements AuthToken<T> {
 							value = httpResp
 								.getFirstHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN)
 								.getValue();
-							LOG.info(Markers.MSG, "Created auth token \"{}\"", value);
+							LOG.info(Markers.MSG, "Created authorization token1 \"{}\"", value);
 						} else {
 							LOG.warn(Markers.ERR, "Server hasn't returned auth token header");
 						}
