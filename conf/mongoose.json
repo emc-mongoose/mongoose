@@ -101,16 +101,20 @@
 					"subtenant": ""
 				},
 				"swift": {
-					"port": 9024,
+					"port": 8080,
 					"serviceBasepath": "v1",
 					"authToken": "",
 					"container": ""
+				},
+				"sdk": {
+					"authPrefix": "AWS",
+					"bucket": ""
 				}
 			}
 		},
 		"auth": {
-			"id": "wuser1@sanity.local",
-			"secret": "uwXSy4kD+N8pmltfOC2JxtrJ+Tg7/yBswV6jMu6h"
+			"id": "test:tester",
+			"secret": "testing"
 		},
 		"data": {
 			"size": {
@@ -195,8 +199,8 @@
 			}
 		},
 		"storage": {
-			"addrs": "127.0.0.1",
-			"namespace": "s3",
+			"addrs": "10.247.193.37",
+			"namespace": "AUTH_test",
 			"scheme": "http",
 			"mock": {
 				"headCount": 1,
