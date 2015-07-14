@@ -84,7 +84,7 @@ public class WriteDefaultScenarioIntegTest {
 		//run mongoose default scenario in standalone mode
 		ModeDispatcher.main(new String[]{"standalone"});
 		// Set olt System.out stream
-		System.setOut(savedContent.getPrintStream());
+		System.setOut(savedContent.getReplacedStream());
 	}
 
 	@AfterClass

@@ -28,7 +28,7 @@ extends ByteArrayOutputStream {
 		out.write(b, off, len);
 	}
 
-	public final PrintStream getPrintStream(){
+	public final PrintStream getReplacedStream(){
 		return  this.out;
 	}
 }
