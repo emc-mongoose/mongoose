@@ -1,11 +1,11 @@
-package com.emc.mongoose.integ;
+package com.emc.mongoose.integ.suites.core.single;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
-import com.emc.mongoose.integ.integTestTools.ContentGetter;
+import com.emc.mongoose.integ.tools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.ContentGetter;
 // mongoose-cli.jar
 import com.emc.mongoose.run.cli.ModeDispatcher;
 // mongoose-storage-mock.jar
