@@ -782,51 +782,41 @@ function charts(chartsArray) {
 			.text(function(d) {
 				return d.id;
 			});
-		groupsEnter.selectAll(".foreign")
-			.data(function(d) { return d.types; })
-			.enter().append("foreignObject")
+		groupsEnter.append("foreignObject")
 			.attr("class", "foreign")
 			.attr("width", 18)
 			.attr("height", 18)
-			.attr("transform", function(d, i) {
-				return "translate(" + (100*i + 100) + "," + "-10)";
-			})
+			.attr("transform", "translate(20, -10)")
 			.append("xhtml:body")
 			.append("input")
-			.attr("type", "radio")
+			.attr("type", "checkbox")
 			.style("margin-left", "4px")
-			.attr("checked", function(d) {
-				if (d === SCALE_TYPES[0]) {
-					return "checked";
-				}
-			})
 			.on("click", function(d) {
+				var currScaleType = null;
+				if (d3.select(this).property("checked")) {
+					currScaleType = SCALE_TYPES[1];
+				} else {
+					d3.select(this).property("checked", false);
+					currScaleType = SCALE_TYPES[0];
+				}
 				//  remove previous elements in group
+				/*parentGroup.selectAll("input")
+					.property("checked", false);*/
+				//  select current checkbox
 				var parentGroup = d3.select(this.parentNode.parentNode.parentNode);
-				parentGroup.selectAll("input")
-					.property("checked", false);
-				//  select current radio button
-				d3.select(this).property("checked", true);
-				var currScaleType = d;
 				var scaleOrientation = parentGroup.attr("name");
 				chartEntry.updateScales(scaleOrientation, currScaleType);
 				//
 				//redrawGridAndAxis(chartSettings, data, currentScale, currScaleType);
 			});
-		groupsEnter.selectAll(".foreign-labels")
-			.data(function(d) { return d.types; })
-			.enter().append("text")
+		groupsEnter.append("text")
 			.attr("class", "foreign-labels")
 			.attr("x", 25)
 			.attr("y", 10)
 			.attr("dy", ".35em")
-			.attr("transform", function(d, i) {
-				return "translate(" + (100*i + 100) + "," + "-10)";
-			})
+			.attr("transform", "translate(20, -10)")
 			.style("text-anchor", "start")
-			.text(function(d) {
-				return d;
-			});
+			.text(SCALE_TYPES[1]);
 	}
 	//
 	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath) {
