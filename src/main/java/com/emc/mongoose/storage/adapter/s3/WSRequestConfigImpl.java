@@ -45,11 +45,19 @@ extends WSRequestConfigBase<T> {
 	public WSRequestConfigImpl()
 	throws NoSuchAlgorithmException {
 		this(null);
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Request ConfigImpl Declaration no arguments\n\n");
 	}
 	//
 	protected WSRequestConfigImpl(final WSRequestConfigImpl<T> reqConf2Clone)
 	throws NoSuchAlgorithmException {
 		super(reqConf2Clone);
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1] +
+				"\ns3 Request ConfigImpl Declaration one argument\nlook at me look at me\n");
+		System.out.println("Waiting for user input");
+		new java.util.Scanner(System.in).next();
 		authPrefixValue = runTimeConfig.getApiS3AuthPrefix() + " ";
 		if(reqConf2Clone != null) {
 			setBucket(reqConf2Clone.getBucket());
@@ -59,6 +67,9 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
 	public WSRequestConfigImpl<T> clone() {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" +whereAmI[whereAmI.length-1]+
+				"\ns3 Request ConfigImpl Method 'clone'\n\n");
 		WSRequestConfigImpl<T> copy = null;
 		try {
 			copy = new WSRequestConfigImpl<>(this);
@@ -69,10 +80,16 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	public final WSBucketImpl<T> getBucket() {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Request ConfigImpl Method 'getBucket'\n\n");
 		return bucket;
 	}
 	//
 	public final WSRequestConfigImpl<T> setBucket(final WSBucketImpl<T> bucket) {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1] +
+				"\ns3 Request ConfigImpl Method 'setBucket'\n\n");
 		LOG.debug(Markers.MSG, "Req conf instance #{}: set bucket \"{}\"", hashCode(), bucket);
 		this.bucket = bucket;
 		return this;
@@ -80,6 +97,9 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	public final WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Request ConfigImpl Method 'setNameSpace'\n\n");
 		super.setNameSpace(nameSpace);
 		//if(nameSpace == null || nameSpace.length() < 1) {
 			LOG.debug(Markers.MSG, "Using empty namespace");
@@ -92,6 +112,9 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final WSRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Request ConfigImpl Method 'setProperties'\n\n");
 		//
 		try {
 			final WSBucketImpl<T> bucket = new WSBucketImpl<>(
@@ -110,6 +133,9 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Request ConfigImpl Method 'readExternal'\n\n");
 		final String bucketName = String.class.cast(ObjectInputStream.class.cast(in).readUnshared());
 		LOG.debug(Markers.MSG, "Note: bucket {} has been got from load client side", bucketName);
 		setBucket(new WSBucketImpl<>(this, bucketName, runTimeConfig.getStorageVersioningEnabled()));
@@ -119,12 +145,18 @@ extends WSRequestConfigBase<T> {
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" +whereAmI[whereAmI.length-1]+
+				"\ns3 Request ConfigImpl Method 'writeExternal'\n\n");
 		ObjectOutputStream.class.cast(out).writeUnshared(bucket.getName());
 	}
 	//
 	@Override
 	protected final void applyURI(final MutableWSRequest httpRequest, final T dataItem)
 	throws IllegalStateException, URISyntaxException {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Request ConfigImpl Method 'applyURI'\n\n");
 		if(httpRequest == null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
 		}
@@ -139,9 +171,12 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	protected final void applyAuthHeader(final MutableWSRequest httpRequest) {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Request ConfigImpl Method 'applyAuthHeader'\n\n");
 		httpRequest.setHeader(
-			HttpHeaders.AUTHORIZATION,
-			authPrefixValue + userName + ":" + getSignature(getCanonical(httpRequest))
+				HttpHeaders.AUTHORIZATION,
+				authPrefixValue + userName + ":" + getSignature(getCanonical(httpRequest))
 		);
 	}
 	//
@@ -151,6 +186,9 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override
 	public final String getCanonical(final MutableWSRequest httpRequest) {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Request ConfigImpl Method 'getCanonical'\n\n");
 		final StringBuffer buffer = new StringBuffer(httpRequest.getRequestLine().getMethod());
 		//
 		for(final String headerName : HEADERS4CANONICAL) {
@@ -190,6 +228,9 @@ extends WSRequestConfigBase<T> {
 	//
 	@Override @SuppressWarnings("unchecked")
 	public final Producer<T> getAnyDataProducer(final long maxCount, final String addr) {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Request ConfigImpl Method 'getAnyDataProducer'\n\n");
 		Producer<T> producer = null;
 		if(anyDataProducerEnabled) {
 			try {
@@ -209,6 +250,9 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final void configureStorage(final String[] storageNodeAddrs)
 	throws IllegalStateException {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Request ConfigImpl Method 'configureStorage'\n\n");
 		if(bucket == null) {
 			throw new IllegalStateException("Bucket is not specified");
 		} else {

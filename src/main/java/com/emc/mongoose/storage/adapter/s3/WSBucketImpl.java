@@ -42,6 +42,9 @@ implements Bucket<T> {
 	public WSBucketImpl(
 		final WSRequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
 	) {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket implementation Deceleration \n\n");
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
@@ -55,11 +58,17 @@ implements Bucket<T> {
 	//
 	@Override
 	public final String getName() {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" +whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket implementation Method 'getName'\n\n");
 		return toString();
 	}
 	//
 	@Override
 	public final String toString() {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket implementation Method 'toString'\n\n");
 		return name;
 	}
 	//
@@ -67,12 +76,18 @@ implements Bucket<T> {
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)
 	throws IOException {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" +whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket implementation Method 'execute' 2 arguments\n\n");
 		return execute(addr, method, false);
 	}
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning)
 	throws IOException {
 		//
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket implementation Method 'execute' 3 arguments\n\n");
 		if(method == null) {
 			throw new IllegalArgumentException(MSG_INVALID_METHOD);
 		}
@@ -104,6 +119,9 @@ implements Bucket<T> {
 	@Override
 	public final boolean exists(final String addr)
 	throws IllegalStateException {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" +whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket implementation Method 'exists'\n\n");
 		boolean flagExists = false;
 		//
 		try {
@@ -149,6 +167,9 @@ implements Bucket<T> {
 	}
 	//
 	private void enableVersioning(final String addr, MutableWSRequest.HTTPMethod method) {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket implementation Method 'enableVersioning'\n\n");
 		try {
 			final HttpResponse httpResp = execute(addr, method, true);
 			if(httpResp != null) {
@@ -189,6 +210,9 @@ implements Bucket<T> {
 	public final void create(final String addr)
 	throws IllegalStateException {
 		//
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" +whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket implementation Method 'create'\n\n");
 		try {
 			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.PUT);
 			if(httpResp != null) {
@@ -229,6 +253,9 @@ implements Bucket<T> {
 	public final void delete(final String addr)
 	throws IllegalStateException {
 		//
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket implementation Method 'delete'\n\n");
 		try {
 			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.DELETE);
 			if(httpResp != null) {

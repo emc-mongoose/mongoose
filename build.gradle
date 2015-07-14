@@ -89,6 +89,14 @@ sourceSets {
 		compileClasspath += sourceSets.common.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
 	}
+	storageAdapterSDK {
+		java {
+			srcDir(['src', 'main', 'java', 'com', 'emc', 'mongoose', 'storage', 'adapter', 'sdk'].join(File.separator))
+			include '**'
+		}
+		compileClasspath += sourceSets.common.output
+		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// misc ////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -139,7 +147,7 @@ sourceSets {
 		}
 		compileClasspath += sourceSets.common.output
 		compileClasspath += sourceSets.coreApi.output + sourceSets.coreImpl.output
-		compileClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
+		compileClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output + sourceSets.storageAdapterSDK.output
 	}
 	webui {
 		java {
@@ -153,7 +161,7 @@ sourceSets {
 		compileClasspath += sourceSets.storageMock.output
 		//
 		runtimeClasspath += sourceSets.client.output + sourceSets.storageMock.output
-		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
+		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output + sourceSets.storageAdapterSDK.output
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// launcher ////////////////////////////////////////////////////////////////////////////////////
@@ -171,7 +179,7 @@ sourceSets {
 		compileClasspath += sourceSets.storageMock.output
 		//
 		runtimeClasspath += sourceSets.client.output + sourceSets.webui.output
-		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output
+		runtimeClasspath += sourceSets.storageAdapterAtmos.output + sourceSets.storageAdapterS3.output + sourceSets.storageAdapterSwift.output + sourceSets.storageAdapterSDK.output
 	}
 }
 
@@ -241,6 +249,16 @@ dependencies {
 		library.log4j_api,
 	)
 	storageAdapterS3Runtime (
+		library.runtime_logging,
+	)
+
+	storageAdapterSDKCompile (
+		library.commons_lang,
+		library.commons_configuration,
+		library.httpcore,
+		library.log4j_api,
+	)
+	storageAdapterSDKRuntime (
 		library.runtime_logging,
 	)
 
@@ -357,6 +375,7 @@ configurations {
 		coreImplCompile,
 		storageAdapterAtmosImplCompile,
 		storageAdapterS3Compile,
+		storageAdapterSDKCompile,
 		storageAdapterSwiftCompile,
 		serverApiCompile,
 		webserverCompile,
@@ -373,6 +392,7 @@ configurations {
 		coreImplRuntime,
 		storageAdapterAtmosImplRuntime,
 		storageAdapterS3Runtime,
+		storageAdapterSDKCompile,
 		storageAdapterSwiftRuntime,
 		serverApiRuntime,
 		webserverRuntime,
@@ -507,6 +527,26 @@ task storageAdapterS3Jar(type: Jar) {
 						coreApiJar.outputs.files.collect {it.name}.join(' '),
 						coreImplJar.outputs.files.collect {it.name}.join(' '),
 						configurations.storageAdapterS3Runtime.collect {
+							libsDirName + File.separator + it.getName()
+						}.join(' '),
+				].join(' ')
+		)
+	}
+}
+
+task storageAdapterSDKJar(type: Jar) {
+	dependsOn commonJar, coreApiJar, coreImplJar
+	archiveName "${baseName}-storage-adapter-sdk.${extension}"
+	from sourceSets.storageAdapterSDK.output
+	manifest {
+		from sharedManifest
+		attributes(
+				'Implementation-Title': rootProject.name + "-storage-adapter-sdk",
+				'Class-Path': [
+						commonJar.outputs.files.collect {it.name}.join(' '),
+						coreApiJar.outputs.files.collect {it.name}.join(' '),
+						coreImplJar.outputs.files.collect {it.name}.join(' '),
+						configurations.storageAdapterSDKRuntime.collect {
 							libsDirName + File.separator + it.getName()
 						}.join(' '),
 				].join(' ')
@@ -690,7 +730,7 @@ task webuiJar(type: Jar) {
 task cliJar(type: Jar) {
 	dependsOn commonJar, storageMockJar, coreApiJar, coreImplJar
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
-	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
+	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar, storageAdapterSDKJar
 	dependsOn clientJar, scenarioJar, webuiJar
 	archiveName "${baseName}.${extension}"
 	from sourceSets.cli.output
@@ -709,6 +749,7 @@ task cliJar(type: Jar) {
 						storageAdapterAtmosJar.outputs.files.collect {it.name}.join(' '),
 						storageAdapterS3Jar.outputs.files.collect {it.name}.join(' '),
 						storageAdapterSwiftJar.outputs.files.collect {it.name}.join(' '),
+						storageAdapterSDKJar.outputs.files.collect {it.name}.join(' '),
 						storageMockJar.outputs.files.collect {it.name}.join(' '),
 						scenarioJar.outputs.files.collect {it.name}.join(' '),
 						webserverJar.outputs.files.collect {it.name}.join(' '),
@@ -728,6 +769,7 @@ task dist(type: Tar) {
 	dependsOn coreImplJar
 	dependsOn storageAdapterAtmosJar
 	dependsOn storageAdapterS3Jar
+	dependsOn storageAdapterSDKJar
 	dependsOn storageAdapterSwiftJar
 	dependsOn serverApiJar
 	dependsOn webserverJar
@@ -766,6 +808,7 @@ task dist(type: Tar) {
 		from coreImplJar.outputs.files
 		from storageAdapterAtmosJar.outputs.files
 		from storageAdapterS3Jar.outputs.files
+		from storageAdapterSDKJar.outputs.files
 		from storageAdapterSwiftJar.outputs.files
 		from serverApiJar.outputs.files
 		from webserverJar.outputs.files

@@ -45,6 +45,10 @@ extends DefaultHandler {
 	XMLBucketListParser(
 		final Consumer<T> consumer, final Constructor<T> dataConstructor, final long maxCount
 	) {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n" +
+				"\n"+whereAmI[whereAmI.length-1]+"\nXML Bucket List Declaration\n" +
+				"\n");
 		this.consumer = consumer;
 		this.dataConstructor = dataConstructor;
 		this.maxCount = maxCount;
@@ -54,6 +58,9 @@ extends DefaultHandler {
 	public final void startElement(
 		final String uri, final String localName, final String qName, Attributes attrs
 	) throws SAXException {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n"+whereAmI[whereAmI.length-1]+"\nXML Bucket List Method 'startElement'\n" +
+				"\n");
 		isInsideItem = isInsideItem || QNAME_ITEM.equals(qName);
 		isInsideItemId = isInsideItem && QNAME_ITEM_ID.equals(qName);
 		isInsideItemSize = isInsideItem && QNAME_ITEM_SIZE.equals(qName);
@@ -65,6 +72,10 @@ extends DefaultHandler {
 		final String uri, final String localName, final String qName
 	) throws SAXException {
 		//
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n" +
+				"\n"+whereAmI[whereAmI.length-1]+"\nXML Bucket List Method 'endElement'\n" +
+				"\n");
 		isInsideItemId = isInsideItemId && !QNAME_ITEM_ID.equals(qName);
 		isInsideItemSize = isInsideItemSize && !QNAME_ITEM_SIZE.equals(qName);
 		//
@@ -121,6 +132,10 @@ extends DefaultHandler {
 	public final void characters(
 		final char buff[], final int start, final int length
 	) throws SAXException {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n" +
+				"\n"+whereAmI[whereAmI.length-1]+"\nXML Bucket List Method 'characters'\n" +
+				"\n");
 		if(isInsideItemId) {
 			strId = new String(buff, start, length);
 		} else if(isInsideItemSize) {

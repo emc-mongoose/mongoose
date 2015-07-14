@@ -47,6 +47,9 @@ implements Producer<T> {
 		final String addr
 	) throws ClassCastException, NoSuchMethodException {
 		super("bucket-" + bucket + "-producer");
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" +whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket Producer deceleration\n\n");
 		this.bucket = bucket;
 		this.dataConstructor = (Constructor<T>) dataCls.getConstructor(
 			String.class, Long.class, Long.class
@@ -57,29 +60,44 @@ implements Producer<T> {
 	//
 	@Override
 	public final void setConsumer(final Consumer<T> consumer) {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket Producer Method 'setConsumer'\n\n");
 		this.consumer = consumer;
 	}
 	//
 	@Override
 	public final Consumer<T> getConsumer() {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket Producer Method 'getConsumer'\n\n");
 		return consumer;
 	}
 	//
 	@Override
 	public final void await()
 	throws InterruptedException {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket Producer Method 'await' no arguments\n\n");
 		join();
 	}
 	//
 	@Override
 	public final void await(final long timeOut, final TimeUnit timeUnit)
 	throws InterruptedException {
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" + whereAmI[whereAmI.length-1]+
+				"\ns3 Bucket Producer Method 'await' 2 arguments\n\n");
 		timeUnit.timedJoin(this, timeOut);
 	}
 	//
 	@Override
 	public final void run() {
 		//
+		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
+		System.out.println("\n\n" +whereAmI[whereAmI.length-1]+
+				"\nBucket Producer Method 'run'\n\n");
 		HttpResponse httpResp = null;
 		try {
 			httpResp = bucket.execute(addr, MutableWSRequest.HTTPMethod.GET);
