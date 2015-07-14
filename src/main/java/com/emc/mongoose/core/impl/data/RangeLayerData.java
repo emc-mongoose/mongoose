@@ -7,7 +7,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.util.UniformDataSource;
+import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 //
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;

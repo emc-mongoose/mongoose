@@ -7,6 +7,8 @@ import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
 //
+import com.emc.mongoose.core.impl.data.model.GenericWSContainerBase;
+//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -20,38 +22,19 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
 /**
  Created by kurila on 03.03.15.
  */
 public final class WSContainerImpl<T extends WSObject>
+extends GenericWSContainerBase<T>
 implements Container<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final WSRequestConfigImpl<T> reqConf;
-	private String name;
-	//
-	public WSContainerImpl(final WSRequestConfigImpl<T> reqConf, final String name) {
-		this.reqConf = reqConf;
-		//
-		if(name == null || name.length() == 0) {
-			final Date dt = Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime();
-			this.name = "mongoose-" + LogUtil.FMT_DT.format(dt);
-		} else {
-			this.name = name;
-		}
-	}
-	//
-	@Override
-	public final String getName() {
-		return name;
-	}
-	//
-	@Override
-	public final String toString() {
-		return getName();
+	public WSContainerImpl(
+		final WSRequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
+	) {
+		super(reqConf, name, versioningEnabled);
 	}
 	//
 	@Override
@@ -190,7 +173,10 @@ implements Container<T> {
 		final MutableWSRequest httpReq = reqConf
 			.createRequest()
 			.setMethod(method)
-			.setUriPath("/"+reqConf.getSvcBasePath()+"/"+reqConf.getNameSpace()+"/"+name);
+			.setUriPath(
+				"/" + WSRequestConfigImpl.class.cast(reqConf).getSvcBasePath() +
+				"/" + reqConf.getNameSpace() + "/" + name
+			);
 		//
 		switch(method) {
 			case GET:

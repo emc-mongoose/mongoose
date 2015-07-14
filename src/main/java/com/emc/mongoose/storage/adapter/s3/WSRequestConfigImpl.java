@@ -11,6 +11,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 //
+import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 //
@@ -94,7 +95,7 @@ extends WSRequestConfigBase<T> {
 		try {
 			final WSBucketImpl<T> bucket = new WSBucketImpl<>(
 				this, this.runTimeConfig.getString(KEY_BUCKET_NAME),
-				this.runTimeConfig.getStorageVersioningEnabled()
+				this.runTimeConfig.getDataVersioningEnabled()
 			);
 			setBucket(bucket);
 		} catch(final NoSuchElementException e) {
@@ -110,7 +111,7 @@ extends WSRequestConfigBase<T> {
 		super.readExternal(in);
 		final String bucketName = String.class.cast(in.readObject());
 		LOG.debug(Markers.MSG, "Note: bucket {} has been got from load client side", bucketName);
-		setBucket(new WSBucketImpl<>(this, bucketName, runTimeConfig.getStorageVersioningEnabled()));
+		setBucket(new WSBucketImpl<>(this, bucketName, runTimeConfig.getDataVersioningEnabled()));
 	}
 	//
 	@Override
@@ -132,7 +133,7 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		httpRequest.setUriPath("/" + bucket + "/" + dataItem.getId());
+		httpRequest.setUriPath("/" + bucket + getPathFor(dataItem));
 	}
 	//
 	@Override
@@ -191,8 +192,10 @@ extends WSRequestConfigBase<T> {
 		Producer<T> producer = null;
 		if(anyDataProducerEnabled) {
 			try {
-				producer = new WSBucketProducer<>(bucket, BasicWSObject.class, maxCount, addr);
-			} catch(final NoSuchMethodException e) {
+				producer = new DataItemInputProducer<>(
+					new WSBucketItemInput<>(bucket, addr, (Class<T>) BasicWSObject.class)
+				);
+			} catch(final Exception e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		} else {

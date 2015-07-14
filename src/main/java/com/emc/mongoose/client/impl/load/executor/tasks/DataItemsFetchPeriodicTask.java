@@ -13,6 +13,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
+import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.concurrent.atomic.AtomicReference;
@@ -42,6 +43,7 @@ implements PeriodicTask<Collection<T>> {
 					LOG.trace(Markers.MSG, "Got frame containing {} items", nextFrame.size());
 				}
 			}
+		} catch(final NoSuchObjectException ignored) { // if no connection
 		} catch(final RemoteException | InterruptedException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to fetch the frame");
 		}

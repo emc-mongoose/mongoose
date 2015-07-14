@@ -19,6 +19,7 @@ import java.rmi.RemoteException;
 /**
  Created by kurila on 23.01.15.
  */
+@Deprecated
 public final class XMLSubTenantListParser<T extends WSObject>
 extends DefaultHandler {
 	//

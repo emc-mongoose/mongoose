@@ -36,6 +36,7 @@ implements WritableByteChannel {
 	public final void close()
 	throws IOException {
 		if(contentEncoder != null) {
+			contentEncoder.complete();
 			contentEncoder = null;
 		}
 	}

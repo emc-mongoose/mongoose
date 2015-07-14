@@ -45,12 +45,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public final class ServiceUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
 	private final static Map<String, Service> SVC_MAP = new ConcurrentHashMap<>();
-	private final static Map<Integer, MBeanServer>
-			MBEAN_SERVERS = new ConcurrentHashMap<>();
+	private final static Map<Integer, MBeanServer> MBEAN_SERVERS = new ConcurrentHashMap<>();
 	private final static Collection<JMXConnectorServer>
-			JMX_CONNECTOR_SERVERS = new ConcurrentLinkedQueue<>();
+		JMX_CONNECTOR_SERVERS = new ConcurrentLinkedQueue<>();
 	//
 	private static void setUpSvcShutdownHook() {
 		Runtime.getRuntime().addShutdownHook(

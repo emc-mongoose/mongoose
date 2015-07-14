@@ -17,21 +17,22 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.util.DataSource;
+import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
-import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.load.model.PersistentAccumulatorProducer;
 import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 //
+import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -271,7 +272,9 @@ implements LoadExecutor<T> {
 				);
 			} else {
 				try {
-					producer = new FileProducer<>(maxCount, listFile, dataCls);
+					producer = new DataItemInputProducer<>(
+						new CSVFileItemInput<>(Paths.get(listFile), dataCls)
+					);
 					LOG.debug(
 						Markers.MSG, "{} will use file-based producer: {}", getName(), listFile
 					);
@@ -422,12 +425,14 @@ implements LoadExecutor<T> {
 			//
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
+				itemsBuffLock.lock();
 				if(itemsBuff != null) {
 					try {
 						itemsBuff.close();
 					} catch(final IOException e) {
 						LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
 					}
+					isShutdown.compareAndSet(true, false); // cancel if shut down before start
 					itemsBuff.start();
 				}
 			} else {
@@ -607,6 +612,8 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final Lock itemsBuffLock = new ReentrantLock();
+	//
 	@Override
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
@@ -614,7 +621,8 @@ implements LoadExecutor<T> {
 			if(isStarted.get()) {
 				super.submit(dataItem);
 			} else { // accumulate until started
-				synchronized(itemsBuff) {
+				itemsBuffLock.lock();
+				try {
 					if(itemsBuff == null) {
 						itemsBuff = new PersistentAccumulatorProducer<>(
 							dataCls, rtConfig, this.maxCount
@@ -624,6 +632,8 @@ implements LoadExecutor<T> {
 							Markers.MSG, "{}: not started yet, consuming into the temporary file"
 						);
 					}
+				} finally {
+					itemsBuffLock.unlock();
 				}
 				itemsBuff.submit(dataItem);
 			}
@@ -774,13 +784,17 @@ implements LoadExecutor<T> {
 		final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
 			.setLoadNumber(instanceNum)
 			.setRunTimeConfig(rtConfig)
-			.setCountSucc(throughPut.getCount())
-			.setCountFail(counterReqFail.getCount())
-			.setCountBytes(reqBytes.getCount())
-			.setCountSubm(counterSubm.getCount())
-			.setLoadElapsedTimeValue(prevElapsedTime + (System.nanoTime() - tsStart.get()))
+			.setCountSucc(throughPut == null ? 0 : throughPut.getCount())
+			.setCountFail(counterReqFail == null ? 0 : counterReqFail.getCount())
+			.setCountBytes(reqBytes == null ? 0 : reqBytes.getCount())
+			.setCountSubm(counterSubm == null ? 0 : counterSubm.getCount())
+			.setLoadElapsedTimeValue(
+				tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
+			)
 			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
-			.setLatencyValues(respLatency.getSnapshot().getValues());
+			.setLatencyValues(
+				respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
+			);
 		//
 		return stateBuilder.build();
 	}

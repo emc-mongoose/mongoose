@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 04.03.15.
  */
+@Deprecated
 public final class WSContainerProducer<T extends WSObject>
 extends Thread
 implements Producer<T> {

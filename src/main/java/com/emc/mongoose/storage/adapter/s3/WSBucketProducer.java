@@ -31,6 +31,7 @@ import org.xml.sax.SAXException;
 /**
  Created by kurila on 08.10.14.
  */
+@Deprecated
 public final class WSBucketProducer<T extends WSObject>
 extends Thread
 implements Producer<T> {

@@ -21,6 +21,7 @@ import java.util.concurrent.RejectedExecutionException;
 /**
  Created by kurila on 09.10.14.
  */
+@Deprecated
 public final class XMLBucketListParser<T extends WSObject>
 extends DefaultHandler {
 	//
@@ -132,7 +133,6 @@ extends DefaultHandler {
 			strSize = new String(buff, start, length);
 		} else if (isNextMarker) {
 			bucketListingNextMarker = new String(buff, start, length);
-			System.out.println("set bucket");
 		}
 		super.characters(buff, start, length);
 	}

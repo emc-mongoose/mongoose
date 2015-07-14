@@ -1,7 +1,7 @@
 package com.emc.mongoose.core.api.io.req.conf;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.util.DataSource;
+import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.Producer;
 // mongoose-common.jar
@@ -17,6 +17,7 @@ public interface RequestConfig<T extends DataItem>
 extends Externalizable, Cloneable, Closeable {
 	//
 	long serialVersionUID = 42L;
+	int PAGE_SIZE = 1024;
 	String
 		HOST_PORT_SEP = ":",
 		PACKAGE_IMPL_BASE = "com.emc.mongoose.storage.adapter";

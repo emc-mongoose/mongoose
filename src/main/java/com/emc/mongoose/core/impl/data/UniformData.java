@@ -7,9 +7,9 @@ import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.data.util.DataSource;
+import com.emc.mongoose.core.api.data.model.DataSource;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.util.UniformDataSource;
+import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 //
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

@@ -3,7 +3,7 @@ ext {
 	library = { deps ->
 		deps.collectNested { dep ->
 			dependencies.create(dep) {
-				transitive = true
+				transitive = false
 			}
 		}
 	}

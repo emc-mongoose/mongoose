@@ -4,17 +4,23 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.util.DataItemInput;
-import com.emc.mongoose.core.api.data.util.DataItemOutput;
+import com.emc.mongoose.core.api.data.model.DataItemInput;
+import com.emc.mongoose.core.api.data.model.DataItemOutput;
 //
 import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.data.util.BinFileItemOutput;
-import com.emc.mongoose.core.impl.data.util.CSVFileItemOutput;
-import com.emc.mongoose.core.impl.data.util.CircularListItemOutput;
+import com.emc.mongoose.core.impl.data.model.BinFileItemOutput;
+import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
+import com.emc.mongoose.core.impl.data.model.CircularListItemOutput;
 //
-import com.emc.mongoose.storage.mock.impl.Cinderella;
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
+//
+import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
+//
+import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
@@ -108,7 +114,7 @@ implements Runnable {
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET, DEFAULT_CONN_PER_NODE);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 		final Thread wsMockThread = new Thread(
-			new Cinderella<>(RunTimeConfig.getContext()), "wsMock"
+			new Cinderella(RunTimeConfig.getContext()), "wsMock"
 		);
 		wsMockThread.setDaemon(true);
 		wsMockThread.start();
@@ -134,7 +140,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
 		// distributed mode
-		/*rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
+		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
 		ServiceUtils.init();
 		//
 		try(
@@ -157,7 +163,7 @@ implements Runnable {
 			}
 		}
 		//
-		ServiceUtils.shutdown();*/
+		ServiceUtils.shutdown();
 		// finish
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");

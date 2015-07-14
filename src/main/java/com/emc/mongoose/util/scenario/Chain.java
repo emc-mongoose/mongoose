@@ -1,7 +1,6 @@
 package com.emc.mongoose.util.scenario;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -125,35 +124,39 @@ implements Runnable {
 			}
 		} else {
 			LOG.info(Markers.MSG, "Execute load jobs sequentially");
+			boolean interrupted = false;
 			for(final LoadExecutor nextLoadJob : loadJobSeq) {
-				// start
-				try {
-					nextLoadJob.start();
-					LOG.debug(Markers.MSG, "Started the next load job: \"{}\"", nextLoadJob);
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to start the load job \"{}\"", nextLoadJob
-					);
-				}
-				// wait
-				try {
-					nextLoadJob.await(timeOut, timeUnit);
-				} catch(final InterruptedException e) {
-					Thread.currentThread().interrupt(); // ???
-				} catch(final RemoteException e) {
-					LogUtil.exception(
-						LOG, Level.WARN, e, "Failed to await the remote load job \"{}\"",
-						nextLoadJob
-					);
-				} finally {
-					// close
+				if(!interrupted) {
+					// start
 					try {
-						nextLoadJob.close();
-					} catch(final IOException e) {
+						nextLoadJob.start();
+						LOG.debug(Markers.MSG, "Started the next load job: \"{}\"", nextLoadJob);
+					} catch(final RemoteException e) {
 						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to close the load job \"{}\"", nextLoadJob
+							LOG, Level.WARN, e, "Failed to start the load job \"{}\"", nextLoadJob
 						);
 					}
+					// wait
+					try {
+						nextLoadJob.await(timeOut, timeUnit);
+					} catch(final InterruptedException e) {
+						LOG.debug(Markers.MSG, "{}: interrupted", nextLoadJob);
+						interrupted = true;
+						Thread.currentThread().interrupt();
+					} catch(final RemoteException e) {
+						LogUtil.exception(
+							LOG, Level.WARN, e, "Failed to await the remote load job \"{}\"",
+							nextLoadJob
+						);
+					}
+				}
+				//
+				try {
+					nextLoadJob.close();
+				} catch(final IOException e) {
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to close the load job \"{}\"", nextLoadJob
+					);
 				}
 			}
 		}
