@@ -17,13 +17,13 @@ extends ByteArrayOutputStream {
 	}
 
 	@Override
-	public synchronized void write(final int b) {
+	public final synchronized void write(final int b) {
 		super.write(b);
 		out.write(b);
 	}
 
 	@Override
-	public synchronized void write(final byte[] b, final int off, final int len) {
+	public final synchronized void write(final byte[] b, final int off, final int len) {
 		super.write(b, off, len);
 		out.write(b, off, len);
 	}

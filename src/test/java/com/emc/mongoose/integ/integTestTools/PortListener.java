@@ -6,7 +6,7 @@ import java.util.Scanner;
 /**
  * Created by olga on 08.07.15.
  */
-public class PortListener {
+public final class PortListener {
 
 	public static Scanner getNetstatOutput()
 	throws IOException {

@@ -45,7 +45,7 @@ public class SingleWriteScenarioWith10ConcurrentConnectionsIntegTest {
 	//
 	private static SavedOutputStream savedOutputStream;
 	//
-	private static final int DATA_COUNT = 1000000, LOAD_THREADS = 10;
+	private static final int LIMIT_COUNT = 1000000, LOAD_THREADS = 10;
 	private static String createRunId = IntegConstants.LOAD_CREATE;
 	private static final String DATA_SIZE = "0B";
 	private static Thread writeScenarioMongoose;
@@ -76,7 +76,7 @@ public class SingleWriteScenarioWith10ConcurrentConnectionsIntegTest {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, DATA_COUNT);
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 				RunTimeConfig.getContext().set("load.type.create.threads", LOAD_THREADS);
@@ -149,7 +149,7 @@ public class SingleWriteScenarioWith10ConcurrentConnectionsIntegTest {
 			line = bufferedReader.readLine();
 		}
 		//Check that there are 10 lines in data.items.csv file
-		Assert.assertEquals(DATA_COUNT, countDataItems);
+		Assert.assertEquals(LIMIT_COUNT, countDataItems);
 	}
 
 	public static void shouldReportScenarioEndToMessageLogFile()
@@ -252,7 +252,7 @@ public class SingleWriteScenarioWith10ConcurrentConnectionsIntegTest {
 				apiName = loadInfo[1].toLowerCase();
 				Assert.assertEquals(IntegConstants.API_S3, apiName);
 				// Check load type and load limit count values are correct
-				loadType = RunTimeConfig.getContext().getScenarioSingleLoad().toLowerCase() + String.valueOf(DATA_COUNT);
+				loadType = RunTimeConfig.getContext().getScenarioSingleLoad().toLowerCase() + String.valueOf(LIMIT_COUNT);
 				actualLoadType = loadInfo[2].toLowerCase();
 				Assert.assertEquals(loadType, actualLoadType);
 				// Check "threads per node" value is correct

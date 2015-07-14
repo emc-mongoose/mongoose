@@ -47,7 +47,7 @@ public class ReadDataItems10KBScenarioIntegTest {
 		createRunId = IntegConstants.LOAD_CREATE,
 		readRunId = IntegConstants.LOAD_READ;
 	//
-	private static final int DATA_COUNT = 10;
+	private static final int LIMIT_COUNT = 10;
 	private static final String DATA_SIZE = "10KB";
 
 	@BeforeClass
@@ -75,7 +75,7 @@ public class ReadDataItems10KBScenarioIntegTest {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, DATA_COUNT);
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
@@ -142,7 +142,7 @@ public class ReadDataItems10KBScenarioIntegTest {
 			line = bufferedReader.readLine();
 		}
 		//Check that there are 10 lines in data.items.csv file
-		Assert.assertEquals(DATA_COUNT, countDataItems);
+		Assert.assertEquals(LIMIT_COUNT, countDataItems);
 	}
 
 	@Test
@@ -164,7 +164,7 @@ public class ReadDataItems10KBScenarioIntegTest {
 			line = bufferedReader.readLine();
 		}
 		// If size of set with checksums is less then dataCount it's mean that some checksums are equals
-		Assert.assertEquals(DATA_COUNT, setOfChecksum.size());
+		Assert.assertEquals(LIMIT_COUNT, setOfChecksum.size());
 	}
 
 	@Test
@@ -347,7 +347,7 @@ public class ReadDataItems10KBScenarioIntegTest {
 			line = bufferedReader.readLine();
 		}
 		//Check that all data items are written
-		Assert.assertEquals(countDataItems, DATA_COUNT);
+		Assert.assertEquals(countDataItems, LIMIT_COUNT);
 	}
 
 	@Test
@@ -384,6 +384,6 @@ public class ReadDataItems10KBScenarioIntegTest {
 		final int actualCountSucc = Integer.valueOf(
 			bufferedReader.readLine().split(",")[IntegConstants.COUNT_SUCC_COLUMN_INDEX]
 		);
-		Assert.assertEquals(actualCountSucc, DATA_COUNT);
+		Assert.assertEquals(actualCountSucc, LIMIT_COUNT);
 	}
 }

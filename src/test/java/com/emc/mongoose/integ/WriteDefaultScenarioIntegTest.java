@@ -41,7 +41,7 @@ public final class WriteDefaultScenarioIntegTest {
 	//
 	private static SavedOutputStream savedOutputStream;
 	//
-	private static final int DATA_COUNT = 10;
+	private static final int LIMIT_COUNT = 10;
 	private static String createRunId = IntegConstants.LOAD_CREATE;
 	private static final String DATA_SIZE = "1MB";
 
@@ -71,7 +71,7 @@ public final class WriteDefaultScenarioIntegTest {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, DATA_COUNT);
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
 				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 				new ScriptRunner().run();
 			}
@@ -130,10 +130,10 @@ public final class WriteDefaultScenarioIntegTest {
 				Assert.assertTrue(confParam.contains("7a42d9c483244167"));
 			}
 			if (confParam.contains(RunTimeConfig.KEY_DATA_RING_SIZE)) {
-				Assert.assertTrue(confParam.contains(DATA_SIZE));
+				Assert.assertTrue(confParam.contains("4MB"));
 			}
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
-				Assert.assertTrue(confParam.contains("0"));
+				Assert.assertTrue(confParam.contains(String.valueOf(LIMIT_COUNT)));
 			}
 			if (confParam.contains(RunTimeConfig.KEY_STORAGE_ADDRS)) {
 				Assert.assertTrue(confParam.contains("127.0.0.1"));
@@ -186,7 +186,7 @@ public final class WriteDefaultScenarioIntegTest {
 		final int actualCountSucc = Integer.valueOf(
 			bufferedReader.readLine().split(",")[IntegConstants.COUNT_SUCC_COLUMN_INDEX]
 		);
-		Assert.assertEquals(DATA_COUNT, actualCountSucc);
+		Assert.assertEquals(LIMIT_COUNT, actualCountSucc);
 	}
 
 	@Test
@@ -207,7 +207,7 @@ public final class WriteDefaultScenarioIntegTest {
 			line = bufferedReader.readLine();
 		}
 		//Check that there are 10 lines in data.items.csv file
-		Assert.assertEquals(DATA_COUNT, countDataItems);
+		Assert.assertEquals(LIMIT_COUNT, countDataItems);
 	}
 
 	@Test
@@ -229,7 +229,7 @@ public final class WriteDefaultScenarioIntegTest {
 			line = bufferedReader.readLine();
 		}
 		// If size of set with checksums is less then dataCount it's mean that some checksums are equals
-		Assert.assertEquals(DATA_COUNT, setOfChecksum.size());
+		Assert.assertEquals(LIMIT_COUNT, setOfChecksum.size());
 	}
 
 	@Test

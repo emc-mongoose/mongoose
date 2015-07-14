@@ -42,7 +42,7 @@ public class FaildVerificationIntegTest {
 		createRunId = IntegConstants.LOAD_CREATE,
 		readRunId = IntegConstants.LOAD_READ;
 	//
-	private static final int DATA_COUNT = 10;
+	private static final int LIMIT_COUNT = 10;
 	private static final String DATA_SIZE = "10B";
 
 	@BeforeClass
@@ -70,7 +70,7 @@ public class FaildVerificationIntegTest {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, DATA_COUNT);
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 				// For correct work of verification option
@@ -130,7 +130,7 @@ public class FaildVerificationIntegTest {
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		bufferedReader.readLine();
 		int countFail = Integer.valueOf(bufferedReader.readLine().split(",")[IntegConstants.COUNT_FAIL_COLUMN_INDEX]);
-		Assert.assertEquals(DATA_COUNT, countFail);
+		Assert.assertEquals(LIMIT_COUNT, countFail);
 	}
 
 	@Test

@@ -39,7 +39,7 @@ public class WriteDataItemWithRandomSizeIntegTest {
 	//
 	private static SavedOutputStream savedOutputStream;
 	//
-	private static final int DATA_COUNT = 10;
+	private static final int LIMIT_COUNT = 10;
 	private static String createRunId = IntegConstants.LOAD_CREATE;
 	private static final String
 		DATA_SIZE_MIN = "10B",
@@ -71,7 +71,7 @@ public class WriteDataItemWithRandomSizeIntegTest {
 			@Override
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, DATA_COUNT);
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE_MIN);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE_MAX);
 				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
@@ -218,7 +218,7 @@ public class WriteDataItemWithRandomSizeIntegTest {
 		final int actualCountSucc = Integer.valueOf(
 			bufferedReader.readLine().split(",")[IntegConstants.COUNT_SUCC_COLUMN_INDEX]
 		);
-		Assert.assertEquals(DATA_COUNT, actualCountSucc);
+		Assert.assertEquals(LIMIT_COUNT, actualCountSucc);
 	}
 
 	@Test
@@ -247,7 +247,7 @@ public class WriteDataItemWithRandomSizeIntegTest {
 			line = bufferedReader.readLine();
 		}
 		// Check that there are 10 lines in data.items.csv file
-		Assert.assertEquals(DATA_COUNT, countDataItems);
+		Assert.assertEquals(LIMIT_COUNT, countDataItems);
 		// Check that there are different data sizes
 		Assert.assertTrue(dataItemSizes.size() > 1);
 		// Check data items min size is correct
@@ -275,7 +275,7 @@ public class WriteDataItemWithRandomSizeIntegTest {
 			line = bufferedReader.readLine();
 		}
 		// If size of set with checksums is less then dataCount it's mean that some checksums are equals
-		Assert.assertEquals(DATA_COUNT, setOfChecksum.size());
+		Assert.assertEquals(LIMIT_COUNT, setOfChecksum.size());
 	}
 
 	@Test
