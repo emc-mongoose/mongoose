@@ -212,7 +212,7 @@ text.shadow {
 	shape-rendering: crispEdges;
 }
 
-.grid .tick .minor {
+.minor {
 	stroke: lightgrey;
 	stroke-opacity: 0.5;
 	shape-rendering: crispEdges;
