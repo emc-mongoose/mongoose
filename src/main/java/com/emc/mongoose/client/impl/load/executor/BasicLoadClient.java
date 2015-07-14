@@ -838,12 +838,11 @@ implements LoadClient<T> {
 			for(final String addr : remoteLoadMap.keySet()) {
 				try {
 					remoteLoadMap.get(addr).shutdown();
+				} catch(final NoSuchObjectException ignored) {
 				} catch(final RemoteException e) {
-					if(!NoSuchObjectException.class.isInstance(e.getCause())) {
-						LogUtil.exception(
-							LOG, Level.WARN, e, "Failed to shut down remote load service"
-						);
-					}
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to shut down remote load service"
+					);
 				}
 			}
 		}
