@@ -10,6 +10,8 @@ public interface GenericContainer<T extends DataItem> {
 	//
 	String getName();
 	//
+	int getBatchSize();
+	//
 	boolean exists(final String addr)
 	throws IllegalStateException;
 	//

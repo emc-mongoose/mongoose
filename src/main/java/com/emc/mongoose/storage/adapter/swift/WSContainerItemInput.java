@@ -53,7 +53,7 @@ extends GenericContainerItemInputBase<T> {
 		}
 		// execute the request
 		final HttpResponse resp = WSContainerImpl.class.cast(container).execute(
-			nodeAddr, MutableWSRequest.HTTPMethod.GET, lastId, WSRequestConfig.PAGE_SIZE
+			nodeAddr, MutableWSRequest.HTTPMethod.GET, lastId, container.getBatchSize()
 		);
 		// response validation
 		if(resp == null) {

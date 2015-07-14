@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.adapter.s3;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -32,10 +33,10 @@ extends GenericWSContainerBase<T>
 implements Bucket<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static String VERSIONING_ENTITY_CONTENT =
-		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
-		"<Status>Enabled</Status></VersioningConfiguration>";
 	private final static String
+		VERSIONING_ENTITY_CONTENT =
+			"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
+			"<Status>Enabled</Status></VersioningConfiguration>",
 		VERSIONING_URL_PART = "/?versioning",
 		MAX_KEYS_URL_PART = "?max-keys=",
 		MARKER_URL_PART = "&marker=";
@@ -54,7 +55,7 @@ implements Bucket<T> {
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning)
 	throws IOException {
-		return execute(addr, method, versioning, null, WSRequestConfig.PAGE_SIZE);
+		return execute(addr, method, versioning, null, batchSize);
 	}
 	//
 	HttpResponse execute(

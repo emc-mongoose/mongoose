@@ -35,8 +35,8 @@ implements ObjectStorage<T> {
 		super(rtConfig, itemCls);
 		itemIndex = new LRUMap<>(rtConfig.getStorageMockCapacity());
 		final int
-			maxQueueSize = rtConfig.getRunRequestQueueSize(),
-			submTimeOutMilliSec = rtConfig.getRunSubmitTimeOutMilliSec();
+			maxQueueSize = rtConfig.getTasksMaxQueueSize(),
+			submTimeOutMilliSec = rtConfig.getTasksSubmitTimeOutMilliSec();
 		createConsumer = new AsyncConsumerBase<T>(Long.MAX_VALUE, maxQueueSize, submTimeOutMilliSec) {
 			{ setDaemon(true); setName("asyncCreateWorker"); start(); }
 			@Override

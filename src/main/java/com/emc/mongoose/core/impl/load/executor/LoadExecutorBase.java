@@ -196,8 +196,8 @@ implements LoadExecutor<T> {
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
 		super(
-			maxCount, rtConfig.getRunRequestQueueSize(),
-			rtConfig.getRunSubmitTimeOutMilliSec()
+			maxCount, rtConfig.getTasksMaxQueueSize(),
+			rtConfig.getTasksSubmitTimeOutMilliSec()
 		);
 		//
 		this.dataCls = dataCls;
@@ -550,21 +550,12 @@ implements LoadExecutor<T> {
 			metricsDaemon.interrupt();
 			shutdown();
 			// releasing the blocked join() methods, if any
+			lock.lock();
 			try {
-				if(lock.tryLock(rtConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)) {
-					try {
-						condProducerDone.signalAll();
-						LOG.debug(Markers.MSG, "{}: done/interrupted signal emitted", getName());
-					} finally {
-						lock.unlock();
-					}
-				} else {
-					LOG.warn(Markers.ERR, "{}: failed to acquire the lock in close method", getName());
-				}
-			} catch(final InterruptedException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "{}: Interrupted while acquiring the lock", getName()
-				);
+				condProducerDone.signalAll();
+				LOG.debug(Markers.MSG, "{}: done/interrupted signal emitted", getName());
+			} finally {
+				lock.unlock();
 			}
 			//
 			try {
@@ -913,7 +904,7 @@ implements LoadExecutor<T> {
 			return;
 		}
 		//
-		long t = System.currentTimeMillis(), timeOutMilliSec;
+		final long timeOutMilliSec;
 		if (currState != null) {
 			if (isLoadFinished.get())
 				return;
@@ -923,26 +914,22 @@ implements LoadExecutor<T> {
 			timeOutMilliSec = timeUnit.toMillis(timeOut);
 		}
 		//
-		if(lock.tryLock(timeOut, timeUnit)) {
-			try {
-				t = System.currentTimeMillis() - t; // the count of time wasted for locking
+		lock.lock();
+		try {
+			LOG.debug(
+				Markers.MSG, "{}: wait for the done condition at most for {}[ms]",
+				getName(), timeOutMilliSec
+			);
+			if(condProducerDone.await(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+				LOG.debug(Markers.MSG, "{}: join finished", getName());
+			} else {
 				LOG.debug(
-					Markers.MSG, "{}: wait for the done condition at most for {}[ms]",
-					getName(), timeOutMilliSec - t
+					Markers.MSG, "{}: join timeout, unhandled results left: {}",
+					getName(), counterSubm.getCount() - counterResults.get()
 				);
-				if(condProducerDone.await(timeOutMilliSec - t, TimeUnit.MILLISECONDS)) {
-					LOG.debug(Markers.MSG, "{}: join finished", getName());
-				} else {
-					LOG.debug(
-						Markers.MSG, "{}: join timeout, unhandled results left: {}",
-						getName(), counterSubm.getCount() - counterResults.get()
-					);
-				}
-			} finally {
-				lock.unlock();
 			}
-		} else {
-			LOG.warn(Markers.ERR, "Failed to acquire the lock for the join method");
+		} finally {
+			lock.unlock();
 		}
 	}
 }

@@ -44,7 +44,7 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr,  MutableWSRequest.HTTPMethod.HEAD, null, WSRequestConfig.PAGE_SIZE
+				addr,  MutableWSRequest.HTTPMethod.HEAD, null, batchSize
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -85,7 +85,7 @@ implements Container<T> {
 	throws IllegalStateException {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, MutableWSRequest.HTTPMethod.PUT, null, WSRequestConfig.PAGE_SIZE
+				addr, MutableWSRequest.HTTPMethod.PUT, null, batchSize
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -125,7 +125,7 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, MutableWSRequest.HTTPMethod.DELETE, null, WSRequestConfig.PAGE_SIZE
+				addr, MutableWSRequest.HTTPMethod.DELETE, null, batchSize
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();

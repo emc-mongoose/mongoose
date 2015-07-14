@@ -32,8 +32,8 @@ implements RecordFrameBuffer<T> {
 		final Class<T> dataCls, final RunTimeConfig runTimeConfig, final long maxCount
 	) {
 		super(
-			maxCount, runTimeConfig.getRunRequestQueueSize(),
-			runTimeConfig.getRunSubmitTimeOutMilliSec()
+			maxCount, runTimeConfig.getTasksMaxQueueSize(),
+			runTimeConfig.getTasksSubmitTimeOutMilliSec()
 		);
 		setName(Thread.currentThread().getName() + "-" + getClass().getSimpleName());
 		start();
