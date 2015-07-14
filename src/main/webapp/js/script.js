@@ -320,6 +320,11 @@ $(document).ready(function() {
 });
 
 /* Functions */
+//
+function getThreadNamePattern() {
+	return /([\d]+)-([A-Za-z0-9]+)-([CreateRdDlUpAn]+)[\d]*-([\d]*)x([\d]*)x?([\d]*)/gi;
+}
+//
 function excludeDuplicateOptions() {
 	var found = [];
 	var selectArray = $("select");
@@ -468,7 +473,6 @@ function configureWebSocketConnection(location, countOfRecords) {
 		PERF_AVG: "perf-avg-csv"
 	};
 	function processJsonLogEvents(chartsArray, json) {
-		var threadNameRegExp = /([\d]+)-([A-Za-z0-9]+)-([CreateRdDlUpAn]+)[\d]*-([\d]*)x([\d]*)x?([\d]*)/gi;
 		var runId = json.contextMap["run.id"];
 		var runMetricsPeriodSec = json.contextMap["load.metricsPeriodSec"];
 		var scenarioChainLoad = json.contextMap["scenario.type.chain.load"];
@@ -533,7 +537,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 							charts(chartsArray).single(json);
 							break;
 						case RUN_SCENARIO_NAME.chain:
-							json.threadName = json.threadName.match(threadNameRegExp)[0];
+							json.threadName = json.threadName.match(getThreadNamePattern())[0];
 							charts(chartsArray).chain(runId, runMetricsPeriodSec, json.threadName);
 							break;
 					}
@@ -628,8 +632,6 @@ function charts(chartsArray) {
 	var margin = {top: 40, right: 200, bottom: 60, left: 60},
 		width = 1070 - margin.left - margin.right,
 		height = 460 - margin.top - margin.bottom;
-	//  Some constants
-	var threadNameRegExp = /([\d]+)-([A-Za-z0-9]+)-([CreateRdDlUpAn]+)[\d]*-([\d]*)x([\d]*)x?([\d]*)/gi;
 	//
 	var SCENARIO = {
 		single: "single",
@@ -825,7 +827,7 @@ function charts(chartsArray) {
 		//  get some fields from runTimeConfig
 		var runMetricsPeriodSec = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec];
 		//
-		json.threadName = json.threadName.match(threadNameRegExp)[0];
+		json.threadName = json.threadName.match(getThreadNamePattern())[0];
 		//
 		var currentMetricsPeriodSec = 0;
 		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
@@ -1859,7 +1861,7 @@ function charts(chartsArray) {
 					}
 				}, 40);
 				return function(chartType, json) {
-					json.threadName = json.threadName.match(threadNameRegExp)[0];
+					json.threadName = json.threadName.match(getThreadNamePattern())[0];
 					var loadType = json.threadName;
 					//
 					var splitIndex = 0;
