@@ -7,6 +7,7 @@ import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 // mongoose-common.jar
+import com.codahale.metrics.UniformReservoir;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -16,21 +17,22 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.util.DataSource;
+import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.load.model.LoadState;
 // mongoose-core-impl.jar
+import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
 import com.emc.mongoose.core.impl.io.task.BasicIOTask;
 import com.emc.mongoose.core.impl.load.model.BasicDataItemGenerator;
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
-import com.emc.mongoose.core.impl.load.model.FileProducer;
 import com.emc.mongoose.core.impl.load.model.PersistentAccumulatorProducer;
 import com.emc.mongoose.core.impl.load.model.util.metrics.ResumableClock;
 import com.emc.mongoose.core.impl.load.tasks.LoadCloseHook;
 import com.emc.mongoose.core.impl.load.model.BasicLoadState;
 //
+import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
 import org.apache.commons.lang.StringUtils;
 //
 import org.apache.logging.log4j.Level;
@@ -194,8 +196,8 @@ implements LoadExecutor<T> {
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
 		super(
-			maxCount, rtConfig.getRunRequestQueueSize(),
-			rtConfig.getRunSubmitTimeOutMilliSec()
+			maxCount, rtConfig.getTasksMaxQueueSize(),
+			rtConfig.getTasksSubmitTimeOutMilliSec()
 		);
 		//
 		this.dataCls = dataCls;
@@ -270,7 +272,9 @@ implements LoadExecutor<T> {
 				);
 			} else {
 				try {
-					producer = new FileProducer<>(maxCount, listFile, dataCls);
+					producer = new DataItemInputProducer<>(
+						new CSVFileItemInput<>(Paths.get(listFile), dataCls)
+					);
 					LOG.debug(
 						Markers.MSG, "{} will use file-based producer: {}", getName(), listFile
 					);
@@ -409,43 +413,10 @@ implements LoadExecutor<T> {
 				METRIC_NAME_REQ, METRIC_NAME_TP), new Meter(resumableClock));
 			reqBytes = metrics.register(MetricRegistry.name(getName(),
 				METRIC_NAME_REQ, METRIC_NAME_BW), new Meter(resumableClock));
-			respLatency = metrics.histogram(MetricRegistry.name(getName(), METRIC_NAME_REQ, METRIC_NAME_LAT));
+			respLatency = metrics.register(MetricRegistry.name(getName(),
+				METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
 			//
-			if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
-				final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
-					Constants.DIR_LOG, RunTimeConfig.getContext().getRunId())
-					.resolve(Constants.STATES_FILE).toString();
-				final File statesFile = new File(fullStateFileName);
-				if (statesFile.exists()) {
-					loadStateFromFile(fullStateFileName);
-				} else {
-					DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
-					LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
-						rtConfig.getRunId());
-				}
-			}
-			final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
-			//  apply parameters from loadState to current load executor
-			for (final LoadState state : loadStates) {
-				if (state.getLoadNumber() == instanceNum) {
-					if (isImmutableParamsChanged(state.getRunTimeConfig())) {
-						LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
-							getName());
-					}
-					counterSubm.inc(state.getCountSucc() + state.getCountFail());
-					counterResults.set(state.getCountSucc() + state.getCountFail());
-					counterReqFail.inc(state.getCountFail());
-					throughPut.mark(state.getCountSucc());
-					reqBytes.mark(state.getCountBytes());
-					currState = state;
-					if (isLoadExecutorFinished(currState)) {
-						isLoadFinished.compareAndSet(false, true);
-						LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
-						return;
-					}
-					break;
-				}
-			}
+			restoreState();
 			//
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
@@ -454,12 +425,14 @@ implements LoadExecutor<T> {
 			//
 			if(producer == null) {
 				LOG.debug(Markers.MSG, "{}: using an external data items producer", getName());
+				itemsBuffLock.lock();
 				if(itemsBuff != null) {
 					try {
 						itemsBuff.close();
 					} catch(final IOException e) {
 						LogUtil.exception(LOG, Level.WARN, e, "Failed to close the items buffer file");
 					}
+					isShutdown.compareAndSet(true, false); // cancel if shut down before start
 					itemsBuff.start();
 				}
 			} else {
@@ -480,14 +453,61 @@ implements LoadExecutor<T> {
 			LOG.warn(Markers.ERR, "Second start attempt - skipped");
 		}
 	}
+	//
+	private void restoreState() {
+		if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
+			final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+				Constants.DIR_LOG, RunTimeConfig.getContext().getRunId())
+				.resolve(Constants.STATES_FILE).toString();
+			final File stateFile = new File(fullStateFileName);
+			if (stateFile.exists()) {
+				loadStateFromFile(fullStateFileName);
+			} else {
+				DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
+				LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
+					rtConfig.getRunId());
+			}
+		}
+		//
+		applyParams();
+	}
+	//
+	private void applyParams() {
+		final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
+		//  apply parameters from loadState to current load executor
+		for (final LoadState state : loadStates) {
+			if (state.getLoadNumber() == instanceNum) {
+				if (isImmutableParamsChanged(state.getRunTimeConfig())) {
+					LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
+						getName());
+				}
+				counterSubm.inc(state.getCountSucc() + state.getCountFail());
+				counterResults.set(state.getCountSucc() + state.getCountFail());
+				counterReqFail.inc(state.getCountFail());
+				throughPut.mark(state.getCountSucc());
+				reqBytes.mark(state.getCountBytes());
+				currState = state;
+				if (isLoadExecutorFinished(currState)) {
+					isLoadFinished.compareAndSet(false, true);
+					LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
+					return;
+				}
+				for (int i = 0;i < state.getLatencyValues().length; i++) {
+					respLatency.update(state.getLatencyValues()[i]);
+				}
+				break;
+			}
+		}
+	}
+	//
 	private boolean isLoadExecutorFinished(final LoadState state) {
 		final RunTimeConfig localRunTimeConfig = rtConfig;
 		final long loadTimeMillis = (localRunTimeConfig.getLoadLimitTimeUnit().
-				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) > 0
-				? (localRunTimeConfig.getLoadLimitTimeUnit().
-				toMillis(localRunTimeConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
+			toMillis(localRunTimeConfig.getLoadLimitTimeValue())) > 0
+			? (localRunTimeConfig.getLoadLimitTimeUnit().
+			toMillis(localRunTimeConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
 		final long stateTimeMillis = state.getLoadElapsedTimeUnit().
-				toMillis(state.getLoadElapsedTimeValue());
+			toMillis(state.getLoadElapsedTimeValue());
 		return isDoneMaxCount() || (stateTimeMillis >= loadTimeMillis);
 	}
 	//
@@ -504,7 +524,7 @@ implements LoadExecutor<T> {
 		try (final FileInputStream fis = new FileInputStream(fullStateFileName)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
 				LOG.info(Markers.MSG, "Run \"{}\" was resumed",
-						rtConfig.getRunId());
+					rtConfig.getRunId());
 				final List<LoadState> loadStates = (List<LoadState>) ois.readObject();
 				DESERIALIZED_STATES.put(rtConfig.getRunId(), loadStates);
 			}
@@ -530,21 +550,12 @@ implements LoadExecutor<T> {
 			metricsDaemon.interrupt();
 			shutdown();
 			// releasing the blocked join() methods, if any
+			lock.lock();
 			try {
-				if(lock.tryLock(rtConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS)) {
-					try {
-						condProducerDone.signalAll();
-						LOG.debug(Markers.MSG, "{}: done/interrupted signal emitted", getName());
-					} finally {
-						lock.unlock();
-					}
-				} else {
-					LOG.warn(Markers.ERR, "{}: failed to acquire the lock in close method", getName());
-				}
-			} catch(final InterruptedException e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "{}: Interrupted while acquiring the lock", getName()
-				);
+				condProducerDone.signalAll();
+				LOG.debug(Markers.MSG, "{}: done/interrupted signal emitted", getName());
+			} finally {
+				lock.unlock();
 			}
 			//
 			try {
@@ -592,6 +603,8 @@ implements LoadExecutor<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Consumer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
+	private final Lock itemsBuffLock = new ReentrantLock();
+	//
 	@Override
 	public void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
@@ -599,7 +612,8 @@ implements LoadExecutor<T> {
 			if(isStarted.get()) {
 				super.submit(dataItem);
 			} else { // accumulate until started
-				synchronized(itemsBuff) {
+				itemsBuffLock.lock();
+				try {
 					if(itemsBuff == null) {
 						itemsBuff = new PersistentAccumulatorProducer<>(
 							dataCls, rtConfig, this.maxCount
@@ -609,6 +623,8 @@ implements LoadExecutor<T> {
 							Markers.MSG, "{}: not started yet, consuming into the temporary file"
 						);
 					}
+				} finally {
+					itemsBuffLock.unlock();
 				}
 				itemsBuff.submit(dataItem);
 			}
@@ -756,11 +772,22 @@ implements LoadExecutor<T> {
 	throws RemoteException {
 		final long prevElapsedTime = currState != null ?
 			currState.getLoadElapsedTimeUnit().toNanos(currState.getLoadElapsedTimeValue()) : 0;
-		return new BasicLoadState(
-			instanceNum, rtConfig, throughPut.getCount(), counterReqFail.getCount(),
-			reqBytes.getCount(), counterSubm.getCount(),
-			prevElapsedTime + (System.nanoTime() - tsStart.get()),TimeUnit.NANOSECONDS
-		);
+		final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
+			.setLoadNumber(instanceNum)
+			.setRunTimeConfig(rtConfig)
+			.setCountSucc(throughPut == null ? 0 : throughPut.getCount())
+			.setCountFail(counterReqFail == null ? 0 : counterReqFail.getCount())
+			.setCountBytes(reqBytes == null ? 0 : reqBytes.getCount())
+			.setCountSubm(counterSubm == null ? 0 : counterSubm.getCount())
+			.setLoadElapsedTimeValue(
+				tsStart.get() < 0 ? 0 : prevElapsedTime + (System.nanoTime() - tsStart.get())
+			)
+			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
+			.setLatencyValues(
+				respLatency == null ? new long[]{} : respLatency.getSnapshot().getValues()
+			);
+		//
+		return stateBuilder.build();
 	}
 	//
 	private boolean isDoneMaxCount() {
@@ -877,7 +904,7 @@ implements LoadExecutor<T> {
 			return;
 		}
 		//
-		long t = System.currentTimeMillis(), timeOutMilliSec;
+		final long timeOutMilliSec;
 		if (currState != null) {
 			if (isLoadFinished.get())
 				return;
@@ -887,26 +914,22 @@ implements LoadExecutor<T> {
 			timeOutMilliSec = timeUnit.toMillis(timeOut);
 		}
 		//
-		if(lock.tryLock(timeOut, timeUnit)) {
-			try {
-				t = System.currentTimeMillis() - t; // the count of time wasted for locking
+		lock.lock();
+		try {
+			LOG.debug(
+				Markers.MSG, "{}: wait for the done condition at most for {}[ms]",
+				getName(), timeOutMilliSec
+			);
+			if(condProducerDone.await(timeOutMilliSec, TimeUnit.MILLISECONDS)) {
+				LOG.debug(Markers.MSG, "{}: join finished", getName());
+			} else {
 				LOG.debug(
-					Markers.MSG, "{}: wait for the done condition at most for {}[ms]",
-					getName(), timeOutMilliSec - t
+					Markers.MSG, "{}: join timeout, unhandled results left: {}",
+					getName(), counterSubm.getCount() - counterResults.get()
 				);
-				if(condProducerDone.await(timeOutMilliSec - t, TimeUnit.MILLISECONDS)) {
-					LOG.debug(Markers.MSG, "{}: join finished", getName());
-				} else {
-					LOG.debug(
-						Markers.MSG, "{}: join timeout, unhandled results left: {}",
-						getName(), counterSubm.getCount() - counterResults.get()
-					);
-				}
-			} finally {
-				lock.unlock();
 			}
-		} else {
-			LOG.warn(Markers.ERR, "Failed to acquire the lock for the join method");
+		} finally {
+			lock.unlock();
 		}
 	}
 }

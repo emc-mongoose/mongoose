@@ -184,7 +184,7 @@ extends WSRequestConfigBase<T> {
 			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_API_ATMOS_SUBTENANT);
 		}
 		//
-		if(runTimeConfig.getStorageFileAccessEnabled()) {
+		if(runTimeConfig.getDataFileAccessEnabled()) {
 			uriBasePath = PREFIX_URI + API_TYPE_FS;
 		} else {
 			uriBasePath = PREFIX_URI + API_TYPE_OBJ;
@@ -229,7 +229,7 @@ extends WSRequestConfigBase<T> {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
 		if(fsAccess || !IOTask.Type.CREATE.equals(loadType)) {
-			httpRequest.setUriPath(uriBasePath + "/" + dataItem.getId());
+			httpRequest.setUriPath(uriBasePath + getPathFor(dataItem));
 		} else if(!uriBasePath.equals(httpRequest.getUriPath())) { // "/rest/objects"
 			httpRequest.setUriPath(uriBasePath);
 		} // else do nothing, uri is "/rest/objects" already

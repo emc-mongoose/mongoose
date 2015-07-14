@@ -115,6 +115,9 @@ implements WSLoadExecutor<T> {
 		//
 		final RunTimeConfig thrLocalConfig = RunTimeConfig.getContext();
 		final int buffSize = wsReqConfigCopy.getBuffSize();
+		final long timeOutMs = runTimeConfig.getLoadLimitTimeUnit().toMillis(
+			runTimeConfig.getLoadLimitTimeValue()
+		);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(totalConnCount)
@@ -129,13 +132,16 @@ implements WSLoadExecutor<T> {
 			.setTcpNoDelay(thrLocalConfig.getSocketTCPNoDelayFlag())
 			.setRcvBufSize(IOTask.Type.READ.equals(loadType) ? buffSize : Constants.BUFF_SIZE_LO)
 			.setSndBufSize(IOTask.Type.READ.equals(loadType) ? Constants.BUFF_SIZE_LO : buffSize)
-			.setConnectTimeout(thrLocalConfig.getConnTimeOut());
+			.setConnectTimeout(
+				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
+			);
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
 		final ConnectionConfig connConfig = ConnectionConfig
 			.custom()
 			.setBufferSize(buffSize)
+			.setFragmentSizeHint(0)
 			.build();
 		final IOEventDispatch ioEventDispatch = new DefaultHttpClientIODispatch(
 			reqExecutor, connConfig
@@ -156,7 +162,8 @@ implements WSLoadExecutor<T> {
 			);
 		//
 		connPool = new BasicNIOConnPool(
-			ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
+			ioReactor, connFactory,
+			timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 		);
 		connPool.setMaxTotal(totalConnCount);
 		connPool.setDefaultMaxPerRoute(connCountPerNode);

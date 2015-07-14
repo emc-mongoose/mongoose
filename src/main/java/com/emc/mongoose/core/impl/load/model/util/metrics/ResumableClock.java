@@ -22,9 +22,10 @@ public class ResumableClock extends Clock {
 	//
 	@Override
 	public long getTick() {
+		//  TODO: implement this functionality #JIRA-451
 		//  This Clock's implementation provides correct time for calculating different metrics
 		//  after resumption Mongoose's run w/ SIGCONT signal.
-		final long currTime = System.nanoTime();
+		/*final long currTime = System.nanoTime();
 		if (lastTimeBeforeTermination > 0) {
 			if (currTime - lastTimeBeforeTermination > TICK_INTERVAL) {
 				elapsedTimeInPause += currTime - lastTimeBeforeTermination;
@@ -33,6 +34,7 @@ public class ResumableClock extends Clock {
 			}
 		}
 		lastTimeBeforeTermination = currTime;
-		return currTime - elapsedTimeInPause;
+		return currTime - elapsedTimeInPause;*/
+		return System.nanoTime();
 	}
 }

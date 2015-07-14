@@ -16,14 +16,13 @@ import com.emc.mongoose.server.api.load.builder.WSLoadBuilderSvc;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.impl.Cinderella;
+import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Map;
 /**
  Created by kurila on 04.07.14.
@@ -32,6 +31,8 @@ import java.util.Map;
 public final class ModeDispatcher {
 	//
 	public static void main(final String args[]) {
+		// load the config from CLI arguments
+		final Map<String, String> properties = HumanFriendly.parseCli(args);
 		//
 		final String runMode;
 		if(args == null || args.length == 0 || args[0].startsWith("-")) {
@@ -45,9 +46,7 @@ public final class ModeDispatcher {
 		final Logger rootLogger = LogManager.getRootLogger();
 		//
 		RunTimeConfig.initContext();
-		// load the config from CLI arguments
-		final Map<String, String> properties = HumanFriendly.parseCli(args);
-		if(!properties.isEmpty()) {
+		if(properties != null && !properties.isEmpty()) {
 			rootLogger.debug(Markers.MSG, "Overriding properties {}", properties);
 			RunTimeConfig.getContext().overrideSystemProperties(properties);
 		}

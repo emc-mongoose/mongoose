@@ -57,9 +57,13 @@ implements Externalizable {
 		KEY_DATA_RING_SEED = "data.buffer.ring.seed",
 		KEY_DATA_RING_SIZE = "data.buffer.ring.size",
 		KEY_DATA_SRC_FPATH = "data.src.fpath",
+		KEY_DATA_FS_ACCESS = "data.fsAccess",
+		KEY_DATA_PREFIX = "data.prefix",
+		KEY_DATA_VERSIONING = "data.versioning",
 		//
 		KEY_LOAD_SERVERS = "load.servers",
 		KEY_LOAD_THREADS = "load.threads",
+		KEY_LOAD_TASKS_BATCH_SIZE = "load.tasks.batchSize",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
 		KEY_RUN_ID = "run.id",
@@ -81,7 +85,6 @@ implements Externalizable {
 		KEY_REMOTE_PORT_WEBUI = "remote.port.webui",
 		//
 		KEY_STORAGE_ADDRS = "storage.addrs",
-		KEY_STORAGE_FS_ACCESS = "storage.fsAccess",
 		KEY_STORAGE_SCHEME = "storage.scheme",
 		KEY_STORAGE_NAMESPACE = "storage.namespace",
 		//
@@ -218,16 +221,8 @@ implements Externalizable {
 		return "api.type." + api + ".port";
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final int getRunReqTimeOutMilliSec() {
-		return getInt("run.request.timeoutMilliSec");
-	}
-	//
-	public final int getRunSubmitTimeOutMilliSec() {
-		return getInt("run.submitTimeOutMilliSec");
-	}
-	//
-	public final boolean getRunRequestRetries() {
-		return getBoolean("run.request.retries");
+	public final int getTasksSubmitTimeOutMilliSec() {
+		return getInt("load.tasks.submitTimeOutMilliSec");
 	}
 	//
 	public final String getApiName() {
@@ -254,6 +249,10 @@ implements Externalizable {
 		return SizeUtil.toSize(getString("data.buffer.ring.size"));
 	}
 	//
+	public final int getBatchSize() {
+		return getInt(KEY_LOAD_TASKS_BATCH_SIZE);
+	}
+	//
 	public final boolean getFlagServeIfNotLoadServer() {
 		return getBoolean(KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER);
 	}
@@ -278,8 +277,8 @@ implements Externalizable {
 		return getInt("load.metricsPeriodSec");
 	}
 	//
-	public final int getRunRequestQueueSize() {
-		return getInt("run.request.queueSize");
+	public final int getTasksMaxQueueSize() {
+		return getInt("load.tasks.maxQueueSize");
 	}
 	//
 	public final String getHttpContentType() {
@@ -305,19 +304,23 @@ implements Externalizable {
 	}
 	//
 	public final String getStorageNameSpace() {
-		return getString("storage.namespace");
+		return getString(KEY_STORAGE_NAMESPACE);
 	}
 	//
 	public final String getHttpSignMethod() {
 		return getString("http.signMethod");
 	}
 	//
-	public final boolean getStorageFileAccessEnabled() {
-		return getBoolean(KEY_STORAGE_FS_ACCESS);
+	public final boolean getDataFileAccessEnabled() {
+		return getBoolean(KEY_DATA_FS_ACCESS);
 	}
 	//
-	public final boolean getStorageVersioningEnabled() {
-		return getBoolean("storage.versioning");
+	public final String getDataPrefix() {
+		return getString(KEY_DATA_PREFIX);
+	}
+	//
+	public final boolean getDataVersioningEnabled() {
+		return getBoolean(KEY_DATA_VERSIONING);
 	}
 	//
 	public final String getRunName() {
@@ -367,14 +370,6 @@ implements Externalizable {
 			nodes.add(nodeAddr);
 		}
 		return nodes.toArray(new String[nodes.size()]);
-	}
-	//
-	public final int getConnPoolTimeOut() {
-		return getInt("remote.connection.poolTimeoutMilliSec");
-	}
-	//
-	public final int getConnTimeOut() {
-		return getInt("remote.connection.timeoutMilliSec");
 	}
 	//
 	public final int getSocketTimeOut() {
@@ -452,14 +447,15 @@ implements Externalizable {
 	public final int getStorageMockHeadCount() {
 		return getInt(KEY_STORAGE_MOCK_HEAD_COUNT);
 	}
+	//@Deprecated
+	//public final int getDataRadixSize() {
+	//	return getInt("data.radix.size");
+	//}
 	//
-	public final int getDataRadixSize() {
-		return getInt("data.radix.size");
-	}
-	//
-	public final int getDataRadixOffset() {
-		return getInt("data.radix.offset");
-	}
+	//@Deprecated
+	//public final int getDataRadixOffset() {
+	//	return getInt("data.radix.offset");
+	//}
 	//
 	public final int getStorageMockIoThreadsPerSocket() {
 		return getInt(KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET);

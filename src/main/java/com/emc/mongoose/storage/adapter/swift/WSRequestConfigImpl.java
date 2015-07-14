@@ -11,6 +11,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 //
+import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
 import org.apache.http.Header;
 import org.apache.http.message.BasicHeader;
 //
@@ -74,7 +75,12 @@ extends WSRequestConfigBase<T> {
 			setAuthToken(new WSAuthTokenImpl<>(this, localConfig.getString(RunTimeConfig.KEY_API_SWIFT_AUTH_TOKEN)));
 		}
 		if(container == null) {
-			setContainer(new WSContainerImpl<>(this, localConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER)));
+			setContainer(
+				new WSContainerImpl<>(
+					this, localConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER),
+					localConfig.getDataVersioningEnabled()
+				)
+			);
 		}
 		//
 		refreshContainerPath();
@@ -163,12 +169,15 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		if(runTimeConfig.containsKey(RunTimeConfig.KEY_API_SWIFT_CONTAINER)) {
-			container = new WSContainerImpl<>(this, runTimeConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER));
+			container = new WSContainerImpl<>(
+				this, runTimeConfig.getString(RunTimeConfig.KEY_API_SWIFT_CONTAINER),
+				runTimeConfig.getDataVersioningEnabled()
+			);
 		} else {
 			LOG.error(Markers.ERR, "Swift container is not specified");
 		}
 		//
-		if(runTimeConfig.getStorageVersioningEnabled()) {
+		if(runTimeConfig.getDataVersioningEnabled()) {
 			sharedHeaders.updateHeader(
 				new BasicHeader(KEY_X_VERSIONING, DEFAULT_VERSIONS_CONTAINER)
 			);
@@ -195,7 +204,11 @@ extends WSRequestConfigBase<T> {
 		}
 		t = in.readObject();
 		if(t != null) {
-			setContainer(new WSContainerImpl<>(this, String.class.cast(t)));
+			setContainer(
+				new WSContainerImpl<>(
+					this, String.class.cast(t), runTimeConfig.getDataVersioningEnabled()
+				)
+			);
 		} else {
 			LOG.debug(Markers.MSG, "Note: no container has been got from load client side");
 		}
@@ -211,7 +224,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final MutableWSRequest httpRequest, final WSObject dataItem)
+	protected final void applyURI(final MutableWSRequest httpRequest, final T dataItem)
 	throws IllegalArgumentException {
 		if(uriSvcBaseContainerPath == null) {
 			LOG.warn(Markers.ERR, "Illegal URI template: <null>");
@@ -219,7 +232,7 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		httpRequest.setUriPath(uriSvcBaseContainerPath+"/"+dataItem.getId());
+		httpRequest.setUriPath(uriSvcBaseContainerPath + getPathFor(dataItem));
 	}
 	//
 	private Header headerAuthToken = null;
@@ -286,12 +299,17 @@ extends WSRequestConfigBase<T> {
 		Producer<T> producer = null;
 		if(anyDataProducerEnabled) {
 			try {
-				producer = new WSContainerProducer<>(container, BasicWSObject.class, maxCount, addr);
-			} catch(final NoSuchMethodException e) {
+				producer = new DataItemInputProducer<>(
+					new WSContainerItemInput<>(container, addr, (Class<T>) BasicWSObject.class)
+				);
+			} catch(final Exception e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		} else {
-			LOG.debug(Markers.MSG, "Using of container listing data producer is suppressed");
+			LOG.debug(
+				Markers.MSG, "req conf {}: using of bucket listing data producer is suppressed",
+				hashCode()
+			);
 		}
 		return producer;
 	}

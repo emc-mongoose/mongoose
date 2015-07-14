@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 04.03.15.
  */
+@Deprecated
 public final class WSContainerProducer<T extends WSObject>
 extends Thread
 implements Producer<T> {
@@ -85,7 +86,7 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		int statusCode;
-		long containerLimit = WSRequestConfig.PAGE_SIZE;
+		long containerLimit = container.getBatchSize();
 		try {
 			do {
 				containerLimit = (maxCount - count) > containerLimit ?

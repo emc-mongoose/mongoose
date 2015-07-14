@@ -31,6 +31,7 @@ import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 23.01.15.
  */
+@Deprecated
 public class WSSubTenantProducer<T extends WSObject, U extends WSObject>
 extends Thread
 implements Producer<T> {

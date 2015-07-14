@@ -1,12 +1,15 @@
 package com.emc.mongoose.storage.adapter.s3;
 // mongoose-common.jar
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
-//
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+//
+import com.emc.mongoose.core.impl.data.model.GenericWSContainerBase;
+//
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -22,51 +25,27 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
 /**
  Created by kurila on 02.10.14.
  */
 public class WSBucketImpl<T extends WSObject>
+extends GenericWSContainerBase<T>
 implements Bucket<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static String VERSIONING_ENTITY_CONTENT =
-		"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
-		"<Status>Enabled</Status></VersioningConfiguration>";
 	private final static String
+		VERSIONING_ENTITY_CONTENT =
+			"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
+			"<Status>Enabled</Status></VersioningConfiguration>",
 		VERSIONING_URL_PART = "/?versioning",
 		MAX_KEYS_URL_PART = "?max-keys=",
 		MARKER_URL_PART = "&marker=";
 	//
-	private final WSRequestConfigImpl<T> reqConf;
-	private String name;
-	private boolean versioningEnabled;
-	//
 	public WSBucketImpl(
 		final WSRequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
 	) {
-		this.reqConf = reqConf;
-		//
-		if(name == null || name.length() == 0) {
-			final Date dt = Calendar.getInstance(LogUtil.TZ_UTC, LogUtil.LOCALE_DEFAULT).getTime();
-			this.name = "mongoose-" + LogUtil.FMT_DT.format(dt);
-		} else {
-			this.name = name;
-		}
-		this.versioningEnabled = versioningEnabled;
+		super(reqConf, name, versioningEnabled);
 	}
-	//
-	@Override
-	public final String getName() {
-		return toString();
-	}
-	//
-	@Override
-	public final String toString() {
-		return name;
-	}
-	//
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)
@@ -76,7 +55,7 @@ implements Bucket<T> {
 	//
 	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning)
 	throws IOException {
-		return execute(addr, method, versioning, null, WSRequestConfig.PAGE_SIZE);
+		return execute(addr, method, versioning, null, batchSize);
 	}
 	//
 	HttpResponse execute(

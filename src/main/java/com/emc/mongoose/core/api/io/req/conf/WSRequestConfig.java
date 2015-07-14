@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.api.io.req.conf;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.util.DataSource;
+import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -42,8 +42,6 @@ extends ObjectRequestConfig<T> {
 			KEY_EMC_ACCEPT, KEY_EMC_DATE, KEY_EMC_FS_ACCESS, /*KEY_EMC_NS, */KEY_EMC_SIG, KEY_EMC_UID
 		};
 	//
-	long PAGE_SIZE = 1024;
-	//
 	MutableWSRequest createRequest();
 	//
 	MutableWSRequest.HTTPMethod getHTTPMethod();
@@ -62,9 +60,6 @@ extends ObjectRequestConfig<T> {
 	//
 	@Override
 	WSRequestConfig<T> setDataSource(final DataSource dataSrc);
-	//
-	@Override
-	WSRequestConfig<T> setRetries(final boolean retryFlag);
 	//
 	String getNameSpace();
 	WSRequestConfig<T> setNameSpace(final String ns);

@@ -1,19 +1,17 @@
 package com.emc.mongoose.core.impl.io.req.conf;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataItem;
-import com.emc.mongoose.core.api.data.util.DataSource;
+import com.emc.mongoose.core.api.data.model.DataSource;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.util.UniformDataSource;
+import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 //
 import org.apache.commons.lang.StringUtils;
 //
-import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -38,7 +36,7 @@ implements RequestConfig<T> {
 	protected DataSource
 		dataSrc;
 	protected volatile boolean
-		retryFlag, verifyContentFlag, anyDataProducerEnabled;
+		verifyContentFlag, anyDataProducerEnabled;
 	private final AtomicBoolean closeFlag = new AtomicBoolean(false);
 	protected volatile RunTimeConfig runTimeConfig = RunTimeConfig.getContext();
 	protected volatile String
@@ -55,21 +53,19 @@ implements RequestConfig<T> {
 		userName = runTimeConfig.getAuthId();
 		loadType = IOTask.Type.CREATE;
 		dataSrc = UniformDataSource.DEFAULT;
-		retryFlag = runTimeConfig.getRunRequestRetries();
 		verifyContentFlag = runTimeConfig.getReadVerifyContent();
 		anyDataProducerEnabled = true;
 		scheme = runTimeConfig.getStorageProto();
 		port = runTimeConfig.getApiTypePort(api);
 		nameSpace = runTimeConfig.getStorageNameSpace();
 		buffSize = (int) runTimeConfig.getDataBufferSize();
-		reqSleepMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
+		reqSleepMilliSec = runTimeConfig.getLoadLimitReqSleepMilliSec();
 	}
 	//
 	protected RequestConfigBase(final RequestConfig<T> reqConf2Clone) {
 		this();
 		if(reqConf2Clone != null) {
 			setDataSource(reqConf2Clone.getDataSource());
-			setRetries(reqConf2Clone.getRetries());
 			setVerifyContentFlag(reqConf2Clone.getVerifyContentFlag());
 			setAnyDataProducerEnabled(reqConf2Clone.getAnyDataProducerEnabled());
 			setAPI(reqConf2Clone.getAPI());
@@ -93,7 +89,6 @@ implements RequestConfig<T> {
 		final RequestConfigBase<T> requestConfigBranch = (RequestConfigBase<T>) super.clone();
 		requestConfigBranch
 			.setDataSource(dataSrc)
-			.setRetries(retryFlag)
 			.setVerifyContentFlag(verifyContentFlag)
 			.setAnyDataProducerEnabled(anyDataProducerEnabled)
 			.setAPI(api)
@@ -228,16 +223,6 @@ implements RequestConfig<T> {
 	}
 	//
 	@Override
-	public final boolean getRetries() {
-		return retryFlag;
-	}
-	@Override
-	public RequestConfigBase<T> setRetries(final boolean retryFlag) {
-		this.retryFlag = retryFlag;
-		return this;
-	}
-	//
-	@Override
 	public final boolean getVerifyContentFlag() {
 		return verifyContentFlag;
 	}
@@ -282,7 +267,6 @@ implements RequestConfig<T> {
 		setPort(this.runTimeConfig.getApiTypePort(api));
 		setUserName(this.runTimeConfig.getAuthId());
 		setSecret(this.runTimeConfig.getAuthSecret());
-		setRetries(this.runTimeConfig.getRunRequestRetries());
 		setNameSpace(this.runTimeConfig.getStorageNameSpace());
 		setBuffSize((int)this.runTimeConfig.getDataBufferSize());
 		setReqSleepMilliSec(this.runTimeConfig.getLoadLimitReqSleepMilliSec());
@@ -311,7 +295,6 @@ implements RequestConfig<T> {
 		out.writeObject(getSecret());
 		out.writeObject(getNameSpace());
 		out.writeObject(getDataSource());
-		out.writeBoolean(getRetries());
 		out.writeBoolean(getAnyDataProducerEnabled());
 		out.writeBoolean(getVerifyContentFlag());
 		out.writeInt(getReqSleepMilliSec());
@@ -336,12 +319,10 @@ implements RequestConfig<T> {
 		LOG.trace(Markers.MSG, "Got namespace {}", secret);
 		setDataSource(DataSource.class.cast(in.readObject()));
 		LOG.trace(Markers.MSG, "Got data source {}", dataSrc);
-		setRetries(in.readBoolean());
-		LOG.trace(Markers.MSG, "Got retry flag {}", retryFlag);
 		setAnyDataProducerEnabled(Boolean.class.cast(in.readBoolean()));
 		LOG.trace(Markers.MSG, "Got any producer enabled flag {}", anyDataProducerEnabled);
 		setVerifyContentFlag(in.readBoolean());
-		LOG.trace(Markers.MSG, "Got verify content flag {}", retryFlag);
+		LOG.trace(Markers.MSG, "Got verify content flag {}", verifyContentFlag);
 		setReqSleepMilliSec(in.readInt());
 		LOG.trace(Markers.MSG, "Got requests sleep time {}", reqSleepMilliSec);
 	}

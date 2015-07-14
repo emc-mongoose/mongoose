@@ -1,17 +1,13 @@
 import org.gradle.api.tasks.bundling.Compression
 import groovy.json.JsonSlurper
 
-apply plugin: 'java'
-apply plugin: 'java-library-distribution'
-apply plugin: 'idea'
-apply plugin: 'eclipse'
-apply plugin: 'war'
-
 buildscript {
 	repositories {
-		jcenter()
+		jcenter {
+			url "http://jcenter.bintray.com/"
+		}
 		maven {
-			url 'http://asdrepo.isus.emc.com:8081/artifactory/repo'
+			url "${artifactory_contextUrl}/repo"
 			credentials {
 				username = "${artifactory_user}"
 				password = "${artifactory_password}"
@@ -22,7 +18,13 @@ buildscript {
 		classpath "org.jfrog.buildinfo:build-info-extractor-gradle:3.1.1"
 	}
 }
-apply plugin: "com.jfrog.artifactory"
+
+apply plugin: 'java'
+apply plugin: 'java-library-distribution'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+apply plugin: 'com.jfrog.artifactory'
 
 sourceCompatibility = '1.7'
 
@@ -38,7 +40,9 @@ def loadProjectVersionFrom(String sourceFileName) {
 	ext.version = json.properties.run.version
 }
 loadProjectVersionFrom confDirName + File.separator + project.name + ".json"
+
 version = ext.version
+group = "com.emc.${rootProject.name}"
 
 task wrapper(type: Wrapper) {
 	gradleVersion = '2.4'
@@ -203,7 +207,7 @@ sourceSets {
 		compileClasspath += sourceSets.serverApi.output + sourceSets.serverImpl.output
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	// JUnit 4 tests ///////////////////////////////////////////////////////////////////////////////
+	// Tests ///////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	test {
 		java {
@@ -434,6 +438,7 @@ dependencies {
 }
 
 configurations {
+
 	compile.extendsFrom(
 		commonCompile,
 		coreApiCompile,
@@ -451,6 +456,7 @@ configurations {
 		cliCompile,
 		utilCompile,
 	)
+
 	runtime.extendsFrom(
 		commonRuntime,
 		coreApiRuntime,
@@ -468,18 +474,21 @@ configurations {
 		cliRuntime,
 		utilRuntime,
 	)
+
 	testCompile.extendsFrom(
 		compile,
 	)
 	testRuntime.extendsFrom(
 		runtime,
 	)
+	
 	integTestCompile.extendsFrom(
 		compile,
 	)
 	integTestRuntime.extendsFrom(
 		runtime,
 	)
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -513,7 +522,8 @@ ext.sharedManifest = manifest {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 task commonJar(type: Jar) {
-	archiveName "${baseName}-common.${extension}"
+	classifier "common"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.common.output
 	manifest {
 		from sharedManifest
@@ -532,7 +542,8 @@ task commonJar(type: Jar) {
 
 task coreApiJar(type: Jar) {
 	dependsOn commonJar
-	archiveName "${baseName}-core-api.${extension}"
+	classifier "core-api"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.coreApi.output
 	manifest {
 		from sharedManifest
@@ -550,7 +561,8 @@ task coreApiJar(type: Jar) {
 
 task coreImplJar(type: Jar) {
 	dependsOn commonJar, coreApiJar
-	archiveName "${baseName}-core-impl.${extension}"
+	classifier "core-impl"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.coreImpl.output
 	manifest {
 		from sharedManifest
@@ -573,7 +585,8 @@ task coreImplJar(type: Jar) {
 
 task storageAdapterAtmosJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
-	archiveName "${baseName}-storage-adapter-atmos.${extension}"
+	classifier "storage-adapter-atmos"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.storageAdapterAtmos.output
 	manifest {
 		from sharedManifest
@@ -593,7 +606,8 @@ task storageAdapterAtmosJar(type: Jar) {
 
 task storageAdapterS3Jar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
-	archiveName "${baseName}-storage-adapter-s3.${extension}"
+	classifier "storage-adapter-s3"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.storageAdapterS3.output
 	manifest {
 		from sharedManifest
@@ -613,7 +627,8 @@ task storageAdapterS3Jar(type: Jar) {
 
 task storageAdapterSwiftJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
-	archiveName "${baseName}-storage-adapter-swift.${extension}"
+	classifier "storage-adapter-swift"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.storageAdapterSwift.output
 	manifest {
 		from sharedManifest
@@ -637,7 +652,8 @@ task storageAdapterSwiftJar(type: Jar) {
 
 task serverApiJar(type: Jar) {
 	dependsOn commonJar, coreApiJar
-	archiveName "${baseName}-server-api.${extension}"
+	classifier "server-api"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.serverApi.output
 	manifest {
 		from sharedManifest
@@ -656,7 +672,8 @@ task serverApiJar(type: Jar) {
 
 task webserverJar(type: Jar) {
 	dependsOn commonJar, compileRMI
-	archiveName "${baseName}-webserver.${extension}"
+	classifier "webserver"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.webserver.output
 	manifest {
 		from sharedManifest
@@ -678,7 +695,8 @@ task webserverJar(type: Jar) {
 
 task clientJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar
-	archiveName "${baseName}-client.${extension}"
+	classifier "client"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.client.output
 	manifest {
 		from sharedManifest
@@ -699,7 +717,8 @@ task clientJar(type: Jar) {
 
 task scenarioJar(type: Jar) {
 	dependsOn commonJar
-	archiveName "${baseName}-scenario.${extension}"
+	classifier "scenario"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.scenario.output
 	manifest {
 		from sharedManifest
@@ -717,7 +736,8 @@ task scenarioJar(type: Jar) {
 
 task serverImplJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar, compileRMI
-	archiveName "${baseName}-server-impl.${extension}"
+	classifier "server-impl"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.serverImpl.output
 	manifest {
 		from sharedManifest
@@ -738,7 +758,8 @@ task serverImplJar(type: Jar) {
 
 task storageMockJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar
-	archiveName "${baseName}-storage-mock.${extension}"
+	classifier "storage-mock"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.storageMock.output
 	manifest {
 		from sharedManifest
@@ -757,8 +778,11 @@ task storageMockJar(type: Jar) {
 }
 
 task webuiJar(type: Jar) {
-	dependsOn commonJar, coreApiJar, coreImplJar, scenarioJar, serverApiJar, serverImplJar, storageMockJar
-	archiveName "${baseName}-webui.${extension}"
+	dependsOn commonJar, coreApiJar, coreImplJar
+	dependsOn serverApiJar, serverImplJar
+	dependsOn storageMockJar, scenarioJar
+	classifier "webui"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.webui.output
 	manifest {
 		from sharedManifest
@@ -787,8 +811,9 @@ task webuiJar(type: Jar) {
 task cliJar(type: Jar) {
 	dependsOn commonJar, storageMockJar, coreApiJar, coreImplJar
 	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
-	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
+	//dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
 	dependsOn clientJar, scenarioJar, webuiJar
+	classifier "cli"
 	archiveName "${baseName}.${extension}"
 	from sourceSets.cli.output
 	manifest {
@@ -820,9 +845,10 @@ task cliJar(type: Jar) {
 
 task utilJar(type: Jar) {
 	dependsOn commonJar, coreApiJar, coreImplJar, clientJar
-	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar
-	dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar, storageMockJar
-	archiveName "${baseName}-util.${extension}"
+	dependsOn coreApiJar, coreImplJar, serverApiJar, serverImplJar, storageMockJar
+	//dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
+	classifier "util"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.util.output
 	manifest {
 		from sharedManifest
@@ -849,7 +875,8 @@ task utilJar(type: Jar) {
 	}
 }
 
-task testsJar(type: Jar) {
+task testJar(type: Jar) {
+
 	dependsOn commonJar
 	dependsOn coreApiJar
 	dependsOn coreImplJar
@@ -866,14 +893,14 @@ task testsJar(type: Jar) {
 	dependsOn cliJar
 	dependsOn utilJar
 
-	archiveName "${baseName}-tests.${extension}"
-	classifier = 'tests'
+	classifier "test"
+	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.test.output
 	from sourceSets.integTest.output
 	manifest {
 		from sharedManifest
 		attributes(
-			'Implementation-Title': rootProject.name + "-tests",
+			'Implementation-Title': rootProject.name + "-test",
 			'Class-Path': [
 				commonJar.outputs.files.collect {it.name}.join(' '),
 				coreApiJar.outputs.files.collect {it.name}.join(' '),
@@ -1015,9 +1042,57 @@ task integTest(type: Test){
 
 build.dependsOn commonJar, coreApiJar, coreImplJar, storageAdapterAtmosJar, storageAdapterS3Jar
 build.dependsOn storageAdapterSwiftJar, serverApiJar, webserverJar, clientJar, scenarioJar
-build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testsJar
+build.dependsOn serverImplJar, storageMockJar, webuiJar, cliJar, utilJar, testJar
 
 tasks.idea.dependsOn(cleanIdea)
+
+publishing {
+	publications {
+		artifactDist(MavenPublication) {
+			artifactId "dist"
+			artifact source: dist, extension: "tgz"
+		}
+	}
+}
+
+ext.publicJars = [
+	commonJar, coreApiJar, coreImplJar,
+	storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar,
+	serverApiJar, serverImplJar, clientJar, scenarioJar,
+	storageMockJar, webserverJar, webuiJar, cliJar, utilJar, testJar
+]
+
+for(nextPublicJar in publicJars) {
+	def baseName = nextPublicJar.baseName
+	def moduleName = nextPublicJar.classifier.split("-")*.capitalize().join("")
+	def artifactName = "artifact${moduleName}"
+	def configPrefix = "" + Character.toLowerCase(moduleName.charAt(0)) + moduleName.substring(1)
+	def mutualDeps = nextPublicJar.dependsOn
+	publishing.publications.create(artifactName, MavenPublication) {
+		artifact source: nextPublicJar, classifier: null
+		artifactId "${baseName}-${nextPublicJar.classifier}"
+		pom.withXml {
+			def root = asNode()
+			def deps = new Node(root, 'dependencies')
+			for(depJar in mutualDeps) {
+				if(Jar.class.isInstance(depJar)) {
+					//print "${depJar.baseName}-${depJar.classifier}-${depJar.version}, "
+					def node = new Node(deps, 'dependency')
+					new Node(node, 'groupId', group)
+					new Node(node, 'artifactId', "${depJar.baseName}-${depJar.classifier}")
+					new Node(node, 'version', depJar.version);
+				}
+			}
+			configurations.getByName(configPrefix + "Runtime").allDependencies.each { dep ->
+				//print "${dep.name}, "
+				def node = new Node(deps, 'dependency')
+				new Node(node, 'groupId', dep.group)
+				new Node(node, 'artifactId', dep.name)
+				new Node(node, 'version', dep.version);
+			}
+		}
+	}
+}
 
 artifactory {
 	contextUrl = "${artifactory_contextUrl}"   //The base Artifactory URL if not overridden by the publisher/resolver
@@ -1027,15 +1102,13 @@ artifactory {
 			username = "${artifactory_user}"
 			password = "${artifactory_password}"
 			maven = true
-
 		}
-	}
-	resolve {
-		repository {
-			repoKey = 'repo'
-			username = "${artifactory_user}"
-			password = "${artifactory_password}"
-			maven = true
+		defaults {
+			for(nextPublicJar in publicJars) {
+				def suffix = nextPublicJar.classifier.split("-")*.capitalize().join("")
+				publications("artifact${suffix}")
+			}
+			publications('artifactDist')
 		}
 	}
 }
@@ -1043,4 +1116,4 @@ artifactory {
 artifactoryPublish.dependsOn commonJar, coreApiJar, coreImplJar
 artifactoryPublish.dependsOn storageAdapterAtmosJar, storageAdapterS3Jar, storageAdapterSwiftJar
 artifactoryPublish.dependsOn serverApiJar, webserverJar, clientJar, scenarioJar, serverImplJar
-artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testsJar
+artifactoryPublish.dependsOn storageMockJar, webuiJar, cliJar, utilJar, testJar

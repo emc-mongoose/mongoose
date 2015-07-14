@@ -17,7 +17,7 @@ import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.data.util.DataSource;
+import com.emc.mongoose.core.api.data.model.DataSource;
 // mongoose-core-impl
 import com.emc.mongoose.core.impl.data.RangeLayerData;
 import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
@@ -188,6 +188,9 @@ implements WSRequestConfig<T> {
 			.custom()
 			.setBufferSize((int) runTimeConfig.getDataBufferSize())
 			.build();
+		final long timeOutMs = runTimeConfig.getLoadLimitTimeUnit().toMillis(
+			runTimeConfig.getLoadLimitTimeValue()
+		);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(1)
@@ -202,7 +205,9 @@ implements WSRequestConfig<T> {
 			.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
 			.setRcvBufSize((int) runTimeConfig.getDataBufferSize())
 			.setSndBufSize((int) runTimeConfig.getDataBufferSize())
-			.setConnectTimeout(runTimeConfig.getConnTimeOut());
+			.setConnectTimeout(
+				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
+			);
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
@@ -223,7 +228,8 @@ implements WSRequestConfig<T> {
 			connFactory = new BasicNIOConnFactory(connConfig);
 		//
 		connPool = new BasicNIOConnPool(
-			ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
+			ioReactor, connFactory,
+			timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 		);
 		connPool.setMaxTotal(1);
 		connPool.setDefaultMaxPerRoute(1);
@@ -280,12 +286,6 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setRetries(final boolean retryFlag) {
-		super.setRetries(retryFlag);
-		return this;
-	}
-	//
-	@Override
 	public final WSRequestConfigBase<T> setLoadType(final IOTask.Type loadType) {
 		super.setLoadType(loadType);
 		return this;
@@ -320,9 +320,9 @@ implements WSRequestConfig<T> {
 		}
 		//
 		try {
-			setFileAccessEnabled(runTimeConfig.getStorageFileAccessEnabled());
+			setFileAccessEnabled(runTimeConfig.getDataFileAccessEnabled());
 		} catch(final NoSuchElementException e) {
-			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_STORAGE_FS_ACCESS);
+			LOG.debug(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, RunTimeConfig.KEY_DATA_FS_ACCESS);
 		}
 		//
 		super.setProperties(runTimeConfig);
@@ -461,6 +461,14 @@ implements WSRequestConfig<T> {
 	//
 	protected abstract void applyURI(final MutableWSRequest httpRequest, final T dataItem)
 	throws IllegalArgumentException, URISyntaxException;
+	//
+	protected final String getPathFor(final T dataItem) {
+		if(fsAccess && idPrefix != null && !idPrefix.isEmpty()) {
+			return "/" + idPrefix + "/" + dataItem.getId();
+		} else {
+			return "/" + dataItem.getId();
+		}
+	}
 	//
 	protected final void applyPayLoad(
 		final MutableWSRequest httpRequest, final HttpEntity httpEntity

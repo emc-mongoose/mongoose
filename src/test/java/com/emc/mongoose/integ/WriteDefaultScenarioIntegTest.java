@@ -4,8 +4,8 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
-//
 import com.emc.mongoose.common.log.Markers;
+//
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
 import com.emc.mongoose.integ.integTestTools.IntegLogManager;
 import com.emc.mongoose.integ.integTestTools.SavedOutputStream;

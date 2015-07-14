@@ -4,6 +4,11 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
+import com.emc.mongoose.client.impl.load.executor.gauges.AvgDouble;
+import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
+import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
+import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
+import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -25,17 +30,13 @@ import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
-import com.emc.mongoose.client.impl.load.executor.gauges.AvgDouble;
-import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
-import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
-import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
-import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
 import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptClientOnMaxCountTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.DataItemsFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptSvcTask;
 //
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,10 +52,12 @@ import java.rmi.RemoteException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -104,13 +107,14 @@ implements LoadClient<T> {
 	private final ScheduledExecutorService mgmtConnExecutor;
 	private final List<PeriodicTask<Collection<T>>> fetchItemsBuffTasks = new LinkedList<>();
 	private final List<PeriodicTask> metricFetchTasks = new LinkedList<>();
+	private final Set<Long> latencyValues = new HashSet<>(1028);
 	//////////////////////////////////////////////////////////////////////////////////////////////////
 	private final long maxCount;
 	private final String name, loadSvcAddrs[];
 	//
 	private final RunTimeConfig runTimeConfig;
 	private final RequestConfig<T> reqConfigCopy;
-	private final int instanceNum, metricsPeriodSec, reqTimeOutMilliSec;
+	private final int instanceNum, metricsPeriodSec;
 	protected volatile Producer<T> producer;
 	protected volatile Consumer<T> consumer = null;
 	//
@@ -122,8 +126,8 @@ implements LoadClient<T> {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<Runnable>(
-				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
-					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
+				(maxCount > 0 && maxCount < runTimeConfig.getTasksMaxQueueSize()) ?
+					(int) maxCount : runTimeConfig.getTasksMaxQueueSize()
 			)
 		);
 		setCorePoolSize(
@@ -166,16 +170,17 @@ implements LoadClient<T> {
 		this.producer = producer;
 		//
 		metricsPeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
-		reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
-		final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
-			runTimeConfig.getRemotePortExport()
-		);
-		metricsReporter = JmxReporter.forRegistry(metrics)
-			//.convertDurationsTo(TimeUnit.SECONDS)
-			//.convertRatesTo(TimeUnit.SECONDS)
-			.registerWith(mBeanServer)
-			.build();
+		if(runTimeConfig.getFlagServeIfNotLoadServer()) {
+			final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
+				runTimeConfig.getRemotePortExport()
+			);
+			metricsReporter = JmxReporter.forRegistry(metrics)
+				.registerWith(mBeanServer)
+				.build();
+		} else {
+			metricsReporter = null;
+		}
 		////////////////////////////////////////////////////////////////////////////////////////////
 		this.remoteLoadMap = remoteLoadMap;
 		this.loadSvcAddrs = new String[remoteLoadMap.size()];
@@ -310,6 +315,8 @@ implements LoadClient<T> {
 			remoteLoadMap.size() + fetchItemsBuffTasks.size(),
 			new GroupThreadFactory(String.format("%s-aggregator", name), true)
 		);
+		//
+		LoadCloseHook.add(this);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private Gauge<Long> registerJmxGaugeSum(
@@ -543,8 +550,9 @@ implements LoadClient<T> {
 			}
 			//
 			schedulePeriodicMgmtTasks();
-			metricsReporter.start();
-			LoadCloseHook.add(this);
+			if(metricsReporter != null) {
+				metricsReporter.start();
+			}
 			prestartAllCoreThreads();
 			//
 			LOG.debug(Markers.MSG, "{}: started", name);
@@ -555,8 +563,6 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final void interrupt() {
-		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
-		//
 		if(!isShutdown()) {
 			LogUtil.trace(LOG, Level.DEBUG, Markers.MSG, "Interrupting {}", name);
 			shutdown();
@@ -572,7 +578,7 @@ implements LoadClient<T> {
 			}
 			interruptExecutor.shutdown();
 			try {
-				interruptExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
+				interruptExecutor.awaitTermination(metricsPeriodSec, TimeUnit.SECONDS);
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
 			}
@@ -644,7 +650,7 @@ implements LoadClient<T> {
 		String nextLoadSvcAddr;
 		for(
 			int tryCount = 0;
-			tryCount < reqTimeOutMilliSec && remoteSubmFuture == null && !isShutdown();
+			tryCount < Short.MAX_VALUE && remoteSubmFuture == null && !isShutdown();
 			tryCount ++
 		) {
 			try {
@@ -686,32 +692,45 @@ implements LoadClient<T> {
 	@Override
 	public LoadState getLoadState()
 	throws RemoteException {
-		forceFetchAndAggregation();
-		return new BasicLoadState(
-			instanceNum,
-			runTimeConfig, metricSuccCount.getValue(), taskGetCountFail.getLastResult(),
-			taskGetCountBytes.getLastResult(), taskGetCountSubm.getLastResult(),
-			System.nanoTime() - tsStart.get(), TimeUnit.NANOSECONDS
-		);
+		//forceFetchAndAggregation();
+		final LoadState.Builder<BasicLoadState> stateBuilder = new BasicLoadState.Builder()
+			.setLoadNumber(instanceNum)
+			.setRunTimeConfig(runTimeConfig)
+			.setCountSucc(metricSuccCount.getValue())
+			.setCountFail(taskGetCountFail.getLastResult())
+			.setCountBytes(taskGetCountBytes.getLastResult())
+			.setCountSubm(taskGetCountSubm.getLastResult())
+			.setLoadElapsedTimeValue(System.nanoTime() - tsStart.get())
+			.setLoadElapsedTimeUnit(TimeUnit.NANOSECONDS)
+			.setLatencyValues(
+				ArrayUtils.toPrimitive(
+					latencyValues.toArray(new Long[latencyValues.size()])
+				)
+			);
+        //
+		return stateBuilder.build();
 	}
 	//
 	@Override
 	public final void close()
 	throws IOException {
-		LOG.debug(Markers.MSG, "trying to close");
+		LOG.debug(Markers.MSG, "{}: trying to close", getName());
 		synchronized(remoteLoadMap) {
 			if(!remoteLoadMap.isEmpty()) {
-				LOG.debug(Markers.MSG, "do performing close");
+				saveLastLatencyValues();
+				LOG.debug(Markers.MSG, "{}: do performing close", getName());
 				interrupt();
 				forceFetchAndAggregation();
 				logMetrics(Markers.PERF_SUM);
 				LOG.debug(
-					Markers.MSG, "Dropped {} remote tasks",
-					shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()
+					Markers.MSG, "{}: dropped {} remote tasks",
+					getName(), shutdownNow().size() + mgmtConnExecutor.shutdownNow().size()
 				);
-				metricsReporter.close();
+				if(metricsReporter != null) {
+					metricsReporter.close();
+				}
 				//
-				LOG.debug(Markers.MSG, "Closing the remote services...");
+				LOG.debug(Markers.MSG, "{}: closing the remote services...", getName());
 				LoadSvc<T> nextLoadSvc;
 				JMXConnector nextJMXConn;
 				for(final String addr : remoteLoadMap.keySet()) {
@@ -757,10 +776,24 @@ implements LoadClient<T> {
 				LoadCloseHook.del(this);
 				LOG.debug(Markers.MSG, "Clear the servers map");
 				remoteLoadMap.clear();
-				LOG.debug(Markers.MSG, "Closed {}", getName());
+				LOG.debug(Markers.MSG, "{}: closed", getName());
 			} else {
-				LOG.debug(Markers.ERR, "Closed already");
+				LOG.debug(Markers.MSG, "{}: closed already", getName());
 			}
+		}
+	}
+	//
+	private void saveLastLatencyValues() {
+		try {
+			for (final LoadSvc<T> loadSvc : remoteLoadMap.values()) {
+				latencyValues.addAll(
+					Arrays.asList(
+						ArrayUtils.toObject(loadSvc.getLoadState().getLatencyValues())
+					)
+				);
+			}
+		} catch (final RemoteException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Unexpected failure");
 		}
 	}
 	//
@@ -798,15 +831,18 @@ implements LoadClient<T> {
 		super.shutdown();
 		LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
 		try {
-			awaitTermination(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS);
+			awaitTermination(metricsPeriodSec, TimeUnit.SECONDS);
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 		} finally {
 			for(final String addr : remoteLoadMap.keySet()) {
 				try {
 					remoteLoadMap.get(addr).shutdown();
+				} catch(final NoSuchObjectException ignored) {
 				} catch(final RemoteException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down remote load service");
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to shut down remote load service"
+					);
 				}
 			}
 		}

@@ -5,24 +5,26 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.DataItem;
+import com.emc.mongoose.core.api.data.model.DataItemOutput;
 import com.emc.mongoose.core.api.load.model.AccumulatorProducer;
 import com.emc.mongoose.core.api.load.model.Consumer;
+import com.emc.mongoose.core.api.load.model.Producer;
 //
+//
+//
+import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.zip.GZIPOutputStream;
 /**
  Created by kurila on 16.06.15.
  */
@@ -31,11 +33,10 @@ extends AsyncConsumerBase<T>
 implements AccumulatorProducer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static boolean COMPRESSION_ENABLED = false;
 	//
-	private final BufferedWriter tmpFileWriter;
+	private final DataItemOutput<T> tmpFileOutput;
 	private final File tmpFile;
-	private final FileProducer<T> tmpFileProducer;
+	private final Producer<T> tmpFileProducer;
 	//
 	private volatile long count = 0;
 	//
@@ -45,8 +46,8 @@ implements AccumulatorProducer<T> {
 		final Class<T> itemCls, final RunTimeConfig runTimeConfig, final long maxCount
 	) {
 		super(
-			maxCount, runTimeConfig.getRunRequestQueueSize(),
-			runTimeConfig.getRunSubmitTimeOutMilliSec()
+			maxCount, runTimeConfig.getTasksMaxQueueSize(),
+			runTimeConfig.getTasksSubmitTimeOutMilliSec()
 		);
 		//
 		this.dataCls = itemCls;
@@ -59,10 +60,7 @@ implements AccumulatorProducer<T> {
 		}
 		//
 		try {
-			tmpFile = Files.createTempFile(
-				tmpFilePath, runTimeConfig.getRunId(),
-				COMPRESSION_ENABLED ? ".gz" : null
-			).toFile();
+			tmpFile = Files.createTempFile(tmpFilePath, runTimeConfig.getRunId(), null).toFile();
 			tmpFile.deleteOnExit();
 		} catch(final IOException e) {
 			throw new IllegalStateException(
@@ -71,13 +69,10 @@ implements AccumulatorProducer<T> {
 		}
 		//
 		try {
-			tmpFileWriter = new BufferedWriter(
-				new OutputStreamWriter(
-					COMPRESSION_ENABLED ? new GZIPOutputStream(
-						Files.newOutputStream(tmpFile.toPath())
-					) : Files.newOutputStream(tmpFile.toPath())
-				)
-			);
+			/*tmpFileWriter = new BufferedWriter(
+				new OutputStreamWriter(Files.newOutputStream(tmpFile.toPath()))
+			);*/
+			tmpFileOutput = new CSVFileItemOutput<T>(tmpFile.toPath(), itemCls);
 		} catch(final IOException e) {
 			throw new IllegalStateException(
 				"Failed to open the temporary file in " + tmpFilePath.toAbsolutePath(),
@@ -86,10 +81,8 @@ implements AccumulatorProducer<T> {
 		}
 		//
 		try {
-			tmpFileProducer = new FileProducer<>(
-				maxCount, tmpFile.getAbsolutePath(), itemCls, /*nested=*/true, COMPRESSION_ENABLED
-			);
-		} catch(final IOException | NoSuchMethodException e) {
+			tmpFileProducer = new DataItemInputProducer<>(tmpFileOutput.getInput());
+		} catch(final IOException e) {
 			throw new IllegalStateException(e);
 		}
 		//
@@ -102,10 +95,8 @@ implements AccumulatorProducer<T> {
 	throws InterruptedException, RemoteException {
 		if(item != null) {
 			try {
-				synchronized(tmpFileWriter) {
-					// TODO SerializationUtils.serialize(dataItem)
-					tmpFileWriter.write(item.toString());
-					tmpFileWriter.newLine();
+				synchronized(tmpFileOutput) {
+					tmpFileOutput.write(item);
 				}
 				count ++;
 			} catch(final IOException e) {
@@ -118,7 +109,7 @@ implements AccumulatorProducer<T> {
 	public void interrupt() {
 		// the synchronization is necessary here to make sure that every data item is
 		// written completely to the file
-		synchronized(tmpFileWriter) {
+		synchronized(tmpFileOutput) {
 			super.interrupt();
 		}
 		//
@@ -142,8 +133,8 @@ implements AccumulatorProducer<T> {
 		try {
 			super.close();
 		} finally {
-			synchronized(tmpFileWriter) {
-				tmpFileWriter.close();
+			synchronized(tmpFileOutput) {
+				tmpFileOutput.close();
 			}
 			LOG.debug(
 				Markers.MSG, "{}: closed the file \"{}\" for writing", getName(),
@@ -156,7 +147,10 @@ implements AccumulatorProducer<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public void start() {
-		tmpFileProducer.start();
+		try {
+			tmpFileProducer.start();
+		} catch(final RemoteException ignored) {
+		}
 	}
 	//
 	@Override

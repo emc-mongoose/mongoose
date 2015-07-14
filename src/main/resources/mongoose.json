@@ -1,13 +1,12 @@
 {
 	"properties": {
 		"aliasing": {
-			"storage.api": "api.name",
 
 			"api.s3.port": "api.type.s3.port",
 			"api.s3.auth.prefix": "api.type.s3.authPrefix",
 			"api.s3.bucket": "api.type.s3.bucket",
-			"api.s3.bucket.filesystem": "storage.fsAccess",
-			"api.s3.bucket.versioning": "storage.versioning",
+			"api.s3.bucket.filesystem": "data.fsAccess",
+			"api.s3.bucket.versioning": "data.versioning",
 
 			"api.atmos.port": "api.type.atmos.port",
 			"api.atmos.subtenant": "api.type.atmos.subtenant",
@@ -17,6 +16,9 @@
 			"api.swift.auth.token": "api.type.swift.authToken",
 			"api.swift.container": "api.type.swift.container",
 
+			"storage.api": "api.name",
+			"storage.fsAccess": "data.fsAccess",
+			"storage.versioning": "data.versioning",
 			"storage.mock.data.offset.radix": "data.radix.offset",
 			"storage.mock.data.size.radix": "data.radix.size",
 			"storage.mock.head.count": "storage.mock.headCount",
@@ -62,10 +64,7 @@
 			"run.scenario.name": "scenario.name",
 			"run.scenario.lang": "scenario.lang",
 			"run.scenario.dir": "scenario.dir",
-			"run.retry.delay.millisec": "run.retry.delayMilliSec",
-			"run.retry.count.max": "run.retry.countMax",
-			"run.request.timeout.millisec": "run.request.timeoutMilliSec",
-			"run.request.queue.size": "run.request.queueSize",
+			"run.request.queue.size": "load.tasks.maxQueueSize",
 
 			"scenario.single.load": "scenario.type.single.load",
 
@@ -126,17 +125,16 @@
 				  	"batchSize": 1000
 				}
 			},
-			"radix": {
-				"size": 10,
-				"offset": 36
-			},
 			"buffer": {
 				"size": "4KB",
 				"ring": {
 					"seed": "7a42d9c483244167",
 					"size": "4MB"
 				}
-			}
+			},
+			"fsAccess": false,
+			"prefix": null,
+			"versioning": false
 		},
 		"http": {
 			"signMethod": "HmacSHA1",
@@ -172,6 +170,10 @@
 				"rate": 0,
 				"reqSleepMilliSec": 0
 			},
+			"tasks": {
+				"submitTimeOutMilliSec": 1000,
+				"maxQueueSize": 32768
+			},
 			"servers": "127.0.0.1",
 			"metricsPeriodSec": 10
 		},
@@ -206,16 +208,10 @@
 					"minConnLifeMilliSec": 0,
 					"maxConnLifeMilliSec": 0
 				}
-			},
-			"fsAccess": false,
-			"versioning": false
+			}
 		},
 		"remote": {
 			"serveIfNotLoadServer": false,
-			"connection" : {
-				"timeoutMilliSec": 1000000,
-				"poolTimeoutMilliSec": 1000000
-			},
 			"port" : {
 				"control": 1099,
 				"export": 1199,
@@ -242,13 +238,7 @@
 		"run": {
 			"name": "mongoose",
 			"version": "0.9.0",
-			"mode": "standalone",
-			"submitTimeOutMilliSec": 1000,
-			"request": {
-				"retries": false,
-				"timeoutMilliSec": 1000000,
-				"queueSize": 32768
-			}
+			"mode": "standalone"
 		}
 	}
 }

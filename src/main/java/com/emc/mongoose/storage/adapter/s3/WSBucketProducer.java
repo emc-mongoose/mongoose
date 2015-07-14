@@ -31,6 +31,7 @@ import org.xml.sax.SAXException;
 /**
  Created by kurila on 08.10.14.
  */
+@Deprecated
 public final class WSBucketProducer<T extends WSObject>
 extends Thread
 implements Producer<T> {
@@ -83,7 +84,7 @@ implements Producer<T> {
 	public final void run() {
 		String bucketListingMarker = null;
 		long countSubmit = 0;
-		long bucketMaxKeys = WSRequestConfig.PAGE_SIZE;
+		long bucketMaxKeys = bucket.getBatchSize();
 		try {
 			do {
 				bucketMaxKeys = (maxCount - countSubmit) > bucketMaxKeys ?

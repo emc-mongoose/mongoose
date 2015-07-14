@@ -57,7 +57,8 @@ implements Runnable, Reusable<RemoteSubmitTask> {
 	void run() {
 		try {
 			loadSvc.submit(dataItem);
-		} catch(final InterruptedException | RemoteException e){
+		} catch(final InterruptedException ignored) {
+		} catch(RemoteException e){
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to submit the data item {}", dataItem);
 		} finally {
 			release();
