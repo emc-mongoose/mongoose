@@ -657,14 +657,14 @@ function charts(chartsArray) {
 			text: "last 15 min avg"
 		};
 	var SCALE_TYPES = ["Linear Scale", "Log Scale"];
-	var SCALE_ORIENTATION = ["horizontal", "vertical"];
+	var SCALE_ORIENTATION = ["x", "y"];
 	//
 	var SCALES = [
 		{
-			id: "horizontal",
+			id: "x",
 			types: SCALE_TYPES
 		}, {
-			id: "vertical",
+			id: "y",
 			types: SCALE_TYPES
 		}
 	];
@@ -2122,7 +2122,9 @@ function charts(chartsArray) {
 			}
 
 			function drawCharts(data, xAxisLabel, yAxisLabel, path) {
-				data.forEach(function(d) {
+				var scalesArray = [];
+				data.forEach(function(d, i) {
+					var currIndex = i;
 					var currXScale = SCALE_TYPES[0];
 					var currYScale = SCALE_TYPES[0];
 					//
@@ -2139,6 +2141,16 @@ function charts(chartsArray) {
 							}); })
 						])
 						.range([height, 0]);
+					//
+					scalesArray.push({
+						xLabel: currXScale,
+						yLabel: currYScale,
+						x: x,
+						y: y,
+						update: function(index, x, y) {
+							redraw(index, x, y);
+						}
+					});
 					var color = d3.scale.ordinal()
 						.range(colorsList18);
 					color.domain(loadRampupSizesArray.map(function(d) { return d; }));
@@ -2294,7 +2306,10 @@ function charts(chartsArray) {
                         .on("click", function() {
                             saveChart(svg.node().parentNode, 740, 460);
                         });
-					function redraw(currXScale, currYScale) {
+					function redraw(index, x, y) {
+						var currXScale = scalesArray[index].xLabel;
+						var currYScale = scalesArray[index].yLabel;
+						//
 						switch (currXScale) {
 							case SCALE_TYPES[0]:
 								xAxisGroup.transition().call(d3.svg.axis().scale(x));
@@ -2323,7 +2338,7 @@ function charts(chartsArray) {
 								break;
 						}
 						//
-						/*switch (currYScale) {
+						switch (currYScale) {
 							case SCALE_TYPES[0]:
 								yAxisGroup.transition().call(d3.svg.axis().scale(y).orient("left"));
 								yGrid.call(d3.svg.axis().scale(y).orient("left")
@@ -2349,18 +2364,19 @@ function charts(chartsArray) {
 									.style("shape-rendering", "crispEdges")
 									.style("stroke-dasharray", "2,2");
 								break;
-						}*/
+						}
 						//
-						/*d.sizes.forEach(function(d, i) {
+						var loadTypeSvg = d3.select(path + "-" + d.loadType);
+						var currentLoadType = d.loadType;
+						//
+						d.sizes.forEach(function(d, i) {
 							//
-							var loadTypeSvg = d3.select(path + "-" + d.loadType);
-							//
-							var paths = loadTypeSvg.select(path + "-" + d.loadType + "-" + d.size + "-" + i)
+							var paths = loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
 								.selectAll("path").data(d.charts)
 								.attr("d", function(v) { return line(v.values); })
 								.attr("fill", "none");
 							//
-							var dots = loadTypeSvg.select(path + "-" + d.loadType + "-" + d.size + "-" + i)
+							var dots = loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
 								.data(d.charts)
 								.selectAll(".dot").data(function(v) { return v.values; })
 								.enter().append("circle")
@@ -2370,11 +2386,11 @@ function charts(chartsArray) {
 								.attr("cy", function(coord) { return y((isNaN(y(coord.y))) ? 0.1 : coord.y); })
 								.attr("r", 2);
 							//  Update dots
-							loadTypeSvg.select(path + "-" + d.loadType + "-" + d.size + "-" + i)
+							loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
 								.selectAll(".dot").data(function(v) { return v.values; })
 								.attr("cx", function(coord) { return x((isNaN(x(coord.x))) ? 0.1 : coord.x); })
 								.attr("cy", function(coord) { return y((isNaN(y(coord.y))) ? 0.1 : coord.y); })
-						});*/
+						});
 						//
 						d3.selectAll(".axis path, .axis line")
 							.style("fill", "none")
@@ -2400,41 +2416,40 @@ function charts(chartsArray) {
 								} else {
 									y = d3.scale.linear()
 										.domain([
-											d3.min(d.sizes, function(c) { return d3.min(c.charts, function(v) {
-												return d3.min(v.values, function(val) { return val.y; });
-											}); }),
+											0,
 											d3.max(d.sizes, function(c) { return d3.max(c.charts, function(v) {
 												return d3.max(v.values, function(val) { return val.y; });
 											}); })
 										])
-										.range([0, width]);
+										.range([height, 0]);
 									currYScale = SCALE_TYPES[0];
 								}
 							} else {
 								if (scaleOrientation === SCALE_ORIENTATION[0]) {
 									x = d3.scale.log()
-										.domain([0.1, d3.max(rampupThreadCountsArray)])
+										.domain([1, d3.max(rampupThreadCountsArray)])
 										.range([0, width]);
 									currXScale = SCALE_TYPES[1];
 								} else {
 									y = d3.scale.log()
 										.domain([
-											d3.min(d.sizes, function(c) { return d3.min(c.charts, function(v) {
-												return d3.min(v.values, function(val) {
-													return (isNaN(y(val.y))) ? 0.1 : val.y;
-												});
-											}); }),
+											1,
 											d3.max(d.sizes, function(c) { return d3.max(c.charts, function(v) {
 												return d3.max(v.values, function(val) {
-													return (isNaN(y(val.y))) ? 0.1 : val.y;
+													return (val.y <= 0) ? 1 : val.y;
 												});
 											}); })
 										])
-										.range([0, width]);
+										.range([height, 0]);
 									currYScale = SCALE_TYPES[1];
 								}
 							}
-							redraw(currXScale, currYScale);
+							//
+							scalesArray[currIndex].x = x;
+							scalesArray[currIndex].xLabel = currXScale;
+							scalesArray[currIndex].y = y;
+							scalesArray[currIndex].yLabel = currYScale;
+							redraw(currIndex, x, y);
 						}
 					}, 0);
 				});
@@ -2443,12 +2458,15 @@ function charts(chartsArray) {
 					var isFound = false;
 					data.forEach(function(d, i) {
 						if (json.message.formattedMessage.split(" ")[0].slice(1, -1).toLowerCase().indexOf(d.loadType) > -1) {
+							var x = scalesArray[i].x;
+							var y = scalesArray[i].y;
+							var currYScale = scalesArray[i].yLabel;
 							var loadTypeSvg = d3.select(path + "-" + d.loadType);
 							//
 							var currentLoadType = d.loadType;
 							var currentSizes = d.sizes;
 							var splitIndex;
-							switch(chartType) {
+							switch (chartType) {
 								case CHART_TYPES.TP:
 									splitIndex = 2;
 									break;
@@ -2461,85 +2479,36 @@ function charts(chartsArray) {
 							var first = parsedString.indexOf("(") + 1;
 							var second = parsedString.lastIndexOf(")");
 							var value = parsedString.substring(first, second).split("/");
-
-							var x = d3.scale.linear()
-								.domain([0, d3.max(rampupThreadCountsArray)])
-								.range([0, width]);
-
-							d.sizes.forEach(function(d, i) {
+							//
+							d.sizes.forEach(function (d, i) {
 								if (d.size === json.contextMap["currentSize"]) {
-									d.charts.forEach(function(c, i) {
-										c.values.push({ x: parseInt(json.contextMap["currentThreadCount"]), y: parseFloat(value[i]) });
-									});
-									//
-									var y = d3.scale.linear()
-										.domain([
-											0,
-											d3.max(currentSizes, function(c) { return d3.max(c.charts, function(v) {
-												return d3.max(v.values, function(val) { return val.y; });
-											}); })
-										]).range([height, 0]);
-									var line = d3.svg.line()
-										.x(function(d) {
-											return x(d.x);
-										})
-										.y(function(d) {
-											return y(d.y);
+									d.charts.forEach(function (c, i) {
+										c.values.push({
+											x: parseInt(json.contextMap["currentThreadCount"]),
+											y: parseFloat(value[i])
 										});
-									function makeYAxis() {
-										return d3.svg.axis()
-											.scale(y)
-											.orient("left");
-									}
-									var yAxis = d3.svg.axis()
-										.scale(y)
-										.orient("left");
-									var yAxisGroup = loadTypeSvg.select(".y-axis")
-										.call(yAxis);
-
-									var yGrid = loadTypeSvg.select(".y-grid")
-										.call(makeYAxis()
-											.tickSize(-width, 0, 0)
-											.tickFormat(""));
-
-									yAxisGroup.transition().call(yAxis);
-									yGrid.call(makeYAxis()
-										.tickSize(-width, 0, 0)
-										.tickFormat(""));
-									//
-									var paths = loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
-										.selectAll("path").data(d.charts)
-										.attr("d", function(v) { return line(v.values); })
-										.attr("fill", "none");
-									//
-									var dots = loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
-										.data(d.charts)
-										.selectAll(".dot").data(function(v) { return v.values; })
-										.enter().append("circle")
-										.attr("class", "dot")
-                                        //.style("stroke-width", "1.5px")
-										.attr("cx", function(coord) { return x(coord.x); })
-										.attr("cy", function(coord) { return y(coord.y); })
-										.attr("r", 2);
-									//  Update dots
-									loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
-										.selectAll(".dot").data(function(v) { return v.values; })
-										.attr("cx", function(coord) { return x(coord.x); })
-										.attr("cy", function(coord) { return y(coord.y); });
+									});
 								}
+								//
 							});
+							//
+							x.domain([(isNaN(x(0))) ? 1 : 0, d3.max(rampupThreadCountsArray)])
+								.range([0, width]);
+							y.domain([
+								(currYScale === SCALE_TYPES[1]) ? 1 : 0,
+								d3.max(currentSizes, function (c) {
+									return d3.max(c.charts, function (v) {
+										return d3.max(v.values, function (val) {
+											return ((currYScale === SCALE_TYPES[1]) && val.y <= 0) ?
+												1 : val.y;
+										});
+									});
+								})
+							]).range([height, 0]);
+							//
+							scalesArray[i].update(i, x, y);
 						}
 					});
-                    d3.selectAll(".axis path, .axis line")
-                        .style("fill", "none")
-                        .style("stroke", "grey")
-                        .style("stroke-width", "1")
-                        .style("shape-rendering", "crispEdges");
-                    //
-                    d3.selectAll(".grid .tick")
-                        .style("stroke", "lightgrey")
-                        .style("stroke-opacity", "0.7")
-                        .style("shape-rendering", "crispEdges");
 				}
 			}
 		}
