@@ -22,6 +22,7 @@ extends HttpServlet {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private static volatile RunTimeConfig LAST_RUN_TIME_CONFIG;
+	private static final RunTimeConfig DEFAULT_CFG;
 	//
 	public static ConcurrentHashMap<String, Thread> THREADS_MAP;
 	public static ConcurrentHashMap<String, Boolean> STOPPED_RUN_MODES;
@@ -34,6 +35,7 @@ extends HttpServlet {
 		STOPPED_RUN_MODES = new ConcurrentHashMap<>();
 		CHARTS_MAP = new ConcurrentHashMap<>();
 		LAST_RUN_TIME_CONFIG = RunTimeConfig.getContext().clone();
+		DEFAULT_CFG = RunTimeConfig.getContext();
 	}
 	//
 	@Override
@@ -49,6 +51,10 @@ extends HttpServlet {
 	protected void setupRunTimeConfig(final HttpServletRequest request) {
 		for (final Map.Entry<String, String[]> entry : request.getParameterMap().entrySet()) {
 			if (entry.getValue()[0].trim().isEmpty()) {
+				final String[] defaultPropValue = DEFAULT_CFG.getStringArray(entry.getKey());
+				if (defaultPropValue.length > 0 && !entry.getKey().equals(RunTimeConfig.KEY_RUN_ID)) {
+					runTimeConfig.set(entry.getKey(), convertArrayToString(defaultPropValue));
+				}
 				continue;
 			}
 			if (entry.getValue().length > 1) {
