@@ -17,7 +17,6 @@ public interface RequestConfig<T extends DataItem>
 extends Externalizable, Cloneable, Closeable {
 	//
 	long serialVersionUID = 42L;
-	int PAGE_SIZE = 1024;
 	String
 		HOST_PORT_SEP = ":",
 		PACKAGE_IMPL_BASE = "com.emc.mongoose.storage.adapter";
@@ -51,9 +50,6 @@ extends Externalizable, Cloneable, Closeable {
 	//
 	DataSource getDataSource();
 	RequestConfig<T> setDataSource(final DataSource dataSrc);
-	//
-	boolean getRetries();
-	RequestConfig<T> setRetries(final boolean retryFlag);
 	//
 	boolean getVerifyContentFlag();
 	RequestConfig<T> setVerifyContentFlag(final boolean verifyContentFlag);

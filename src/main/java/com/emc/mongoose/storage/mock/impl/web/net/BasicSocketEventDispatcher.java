@@ -52,6 +52,9 @@ implements Runnable {
 		super(protocolHandler, connFactory);
 		socketAddress = new InetSocketAddress(port);
 		// set I/O reactor configuration
+		final long timeOutMs = runTimeConfig.getLoadLimitTimeUnit().toMillis(
+			runTimeConfig.getLoadLimitTimeValue()
+		);
 		ioReactorConf = IOReactorConfig.custom()
 			.setIoThreadCount(runTimeConfig.getStorageMockIoThreadsPerSocket())
 			.setBacklogSize((int) runTimeConfig.getSocketBindBackLogSize())
@@ -65,7 +68,9 @@ implements Runnable {
 			.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
 			.setRcvBufSize(Constants.BUFF_SIZE_LO)
 			.setSndBufSize(Constants.BUFF_SIZE_LO)
-			.setConnectTimeout(runTimeConfig.getConnTimeOut())
+			.setConnectTimeout(
+				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
+			)
 			.build();
 		// create the server-side I/O reactor
 		ioReactor = new DefaultListeningIOReactor(

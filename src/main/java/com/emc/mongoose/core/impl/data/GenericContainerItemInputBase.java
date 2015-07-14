@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.data;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
@@ -21,7 +22,7 @@ implements DataItemInput<T> {
 	protected final GenericContainer<T> container;
 	protected final String nodeAddr;
 	protected final Constructor<T> itemConstructor;
-	protected final List<T> listPageBuffer = new ArrayList<>(RequestConfig.PAGE_SIZE);
+	protected final List<T> listPageBuffer;;
 	protected ListIterator<T> listPageIter = null;
 	//
 	protected GenericContainerItemInputBase(
@@ -36,6 +37,7 @@ implements DataItemInput<T> {
 		} catch(final NoSuchMethodException e) {
 			throw new IllegalStateException(e);
 		}
+		listPageBuffer = new ArrayList<>(RunTimeConfig.getContext().getBatchSize());
 	}
 	/**
 	 The method should fill the listPageBuffer and return its list iterator

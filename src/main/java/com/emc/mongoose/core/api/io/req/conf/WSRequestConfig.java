@@ -61,9 +61,6 @@ extends ObjectRequestConfig<T> {
 	@Override
 	WSRequestConfig<T> setDataSource(final DataSource dataSrc);
 	//
-	@Override
-	WSRequestConfig<T> setRetries(final boolean retryFlag);
-	//
 	String getNameSpace();
 	WSRequestConfig<T> setNameSpace(final String ns);
 	//

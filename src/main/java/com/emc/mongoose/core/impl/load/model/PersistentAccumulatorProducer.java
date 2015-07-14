@@ -10,7 +10,6 @@ import com.emc.mongoose.core.api.load.model.AccumulatorProducer;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 //
-import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
 //
 //
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
@@ -18,10 +17,8 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -49,8 +46,8 @@ implements AccumulatorProducer<T> {
 		final Class<T> itemCls, final RunTimeConfig runTimeConfig, final long maxCount
 	) {
 		super(
-			maxCount, runTimeConfig.getRunRequestQueueSize(),
-			runTimeConfig.getRunSubmitTimeOutMilliSec()
+			maxCount, runTimeConfig.getTasksMaxQueueSize(),
+			runTimeConfig.getTasksSubmitTimeOutMilliSec()
 		);
 		//
 		this.dataCls = itemCls;

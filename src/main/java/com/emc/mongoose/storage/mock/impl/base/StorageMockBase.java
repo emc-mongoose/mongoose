@@ -79,7 +79,7 @@ implements Storage<T> {
 	protected void loadPersistedDataItems() {
 		// if there is data src file path
 		final Path dataFilePath = Paths.get(rtConfig.getDataSrcFPath());
-		final int dataSizeRadix = rtConfig.getDataRadixSize();
+		//final int dataSizeRadix = rtConfig.getDataRadixSize();
 		if(null != dataFilePath && !Files.isDirectory(dataFilePath) && Files.exists(dataFilePath)) {
 			T nextItem;
 			long count = 0;
@@ -90,9 +90,9 @@ implements Storage<T> {
 				do {
 					nextItem = csvFileItemInput.read();
 					// if mongoose is v0.5.0
-					if(dataSizeRadix == 0x10) {
-						nextItem.setSize(Long.valueOf(String.valueOf(nextItem.getSize()), 0x10));
-					}
+					//if(dataSizeRadix == 0x10) {
+					//	nextItem.setSize(Long.valueOf(String.valueOf(nextItem.getSize()), 0x10));
+					//}
 					create(nextItem);
 					count ++;
 				} while(null != nextItem);

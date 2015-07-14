@@ -1,5 +1,6 @@
 package com.emc.mongoose.core.impl.data.model;
 //
+import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.WSObject;
@@ -23,7 +24,7 @@ implements GenericContainer<T> {
 	//
 	protected final WSRequestConfig<T> reqConf;
 	protected final String name, idPrefix;
-	protected final int idPrefixLen;
+	protected final int idPrefixLen, batchSize;
 	protected final boolean fsAccess, verifyContent, versioningEnabled;
 	//
 	protected GenericWSContainerBase(
@@ -39,6 +40,7 @@ implements GenericContainer<T> {
 		this.fsAccess = reqConf.getFileAccessEnabled();
 		this.idPrefix = reqConf.getIdPrefix();
 		idPrefixLen = idPrefix == null ? 0 : idPrefix.length();
+		batchSize = RunTimeConfig.getContext().getBatchSize();
 		this.verifyContent = reqConf.getVerifyContentFlag();
 		this.versioningEnabled = versioningEnabled;
 	}
@@ -51,6 +53,11 @@ implements GenericContainer<T> {
 	@Override
 	public final String toString() {
 		return name;
+	}
+	//
+	@Override
+	public final int getBatchSize() {
+		return batchSize;
 	}
 	//
 	@Override

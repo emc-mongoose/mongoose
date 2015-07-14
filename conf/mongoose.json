@@ -64,10 +64,7 @@
 			"run.scenario.name": "scenario.name",
 			"run.scenario.lang": "scenario.lang",
 			"run.scenario.dir": "scenario.dir",
-			"run.retry.delay.millisec": "run.retry.delayMilliSec",
-			"run.retry.count.max": "run.retry.countMax",
-			"run.request.timeout.millisec": "run.request.timeoutMilliSec",
-			"run.request.queue.size": "run.request.queueSize",
+			"run.request.queue.size": "load.tasks.maxQueueSize",
 
 			"scenario.single.load": "scenario.type.single.load",
 
@@ -128,10 +125,6 @@
 				  	"batchSize": 1000
 				}
 			},
-			"radix": {
-				"size": 10,
-				"offset": 36
-			},
 			"buffer": {
 				"size": "4KB",
 				"ring": {
@@ -177,6 +170,11 @@
 				"rate": 0,
 				"reqSleepMilliSec": 0
 			},
+			"tasks": {
+				"submitTimeOutMilliSec": 1000,
+				"maxQueueSize": 32768,
+				"batchSize": 1024
+			},
 			"servers": "127.0.0.1",
 			"metricsPeriodSec": 10
 		},
@@ -215,10 +213,6 @@
 		},
 		"remote": {
 			"serveIfNotLoadServer": false,
-			"connection" : {
-				"timeoutMilliSec": 1000000,
-				"poolTimeoutMilliSec": 1000000
-			},
 			"port" : {
 				"control": 1099,
 				"export": 1199,
@@ -245,13 +239,7 @@
 		"run": {
 			"name": "mongoose",
 			"version": "0.9.0",
-			"mode": "standalone",
-			"submitTimeOutMilliSec": 1000,
-			"request": {
-				"retries": false,
-				"timeoutMilliSec": 1000000,
-				"queueSize": 32768
-			}
+			"mode": "standalone"
 		}
 	}
 }

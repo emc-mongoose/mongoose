@@ -63,6 +63,7 @@ implements Externalizable {
 		//
 		KEY_LOAD_SERVERS = "load.servers",
 		KEY_LOAD_THREADS = "load.threads",
+		KEY_LOAD_TASKS_BATCH_SIZE = "load.tasks.batchSize",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
 		KEY_RUN_ID = "run.id",
@@ -220,16 +221,8 @@ implements Externalizable {
 		return "api.type." + api + ".port";
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final int getRunReqTimeOutMilliSec() {
-		return getInt("run.request.timeoutMilliSec");
-	}
-	//
-	public final int getRunSubmitTimeOutMilliSec() {
-		return getInt("run.submitTimeOutMilliSec");
-	}
-	//
-	public final boolean getRunRequestRetries() {
-		return getBoolean("run.request.retries");
+	public final int getTasksSubmitTimeOutMilliSec() {
+		return getInt("load.tasks.submitTimeOutMilliSec");
 	}
 	//
 	public final String getApiName() {
@@ -256,6 +249,10 @@ implements Externalizable {
 		return SizeUtil.toSize(getString("data.buffer.ring.size"));
 	}
 	//
+	public final int getBatchSize() {
+		return getInt(KEY_LOAD_TASKS_BATCH_SIZE);
+	}
+	//
 	public final boolean getFlagServeIfNotLoadServer() {
 		return getBoolean(KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER);
 	}
@@ -280,8 +277,8 @@ implements Externalizable {
 		return getInt("load.metricsPeriodSec");
 	}
 	//
-	public final int getRunRequestQueueSize() {
-		return getInt("run.request.queueSize");
+	public final int getTasksMaxQueueSize() {
+		return getInt("load.tasks.maxQueueSize");
 	}
 	//
 	public final String getHttpContentType() {
@@ -375,14 +372,6 @@ implements Externalizable {
 		return nodes.toArray(new String[nodes.size()]);
 	}
 	//
-	public final int getConnPoolTimeOut() {
-		return getInt("remote.connection.poolTimeoutMilliSec");
-	}
-	//
-	public final int getConnTimeOut() {
-		return getInt("remote.connection.timeoutMilliSec");
-	}
-	//
 	public final int getSocketTimeOut() {
 		return getInt("remote.socket.timeoutMilliSec");
 	}
@@ -458,14 +447,15 @@ implements Externalizable {
 	public final int getStorageMockHeadCount() {
 		return getInt(KEY_STORAGE_MOCK_HEAD_COUNT);
 	}
+	//@Deprecated
+	//public final int getDataRadixSize() {
+	//	return getInt("data.radix.size");
+	//}
 	//
-	public final int getDataRadixSize() {
-		return getInt("data.radix.size");
-	}
-	//
-	public final int getDataRadixOffset() {
-		return getInt("data.radix.offset");
-	}
+	//@Deprecated
+	//public final int getDataRadixOffset() {
+	//	return getInt("data.radix.offset");
+	//}
 	//
 	public final int getStorageMockIoThreadsPerSocket() {
 		return getInt(KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET);

@@ -56,7 +56,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		METHOD_DELETE = "delete",
 		METHOD_TRACE = "trace";
 	//
-	private final static int RING_OFFSET_RADIX = RunTimeConfig.getContext().getDataRadixOffset();
+	//private final static int RING_OFFSET_RADIX = RunTimeConfig.getContext().getDataRadixOffset();
 	private final static AtomicLong
 		LAST_OFFSET = new AtomicLong(
 			Math.abs(
@@ -232,7 +232,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final HttpEntity entity = HttpEntityEnclosingRequest.class.cast(request).getEntity();
 		final long bytes = entity.getContentLength();
 		// create data object or get it for append or update
-		final long offset = decodeRingBufferOffset(dataID);
+		final long offset = Long.valueOf(dataID, Character.MAX_RADIX);
 		final T dataObject = (T) new BasicWSObjectMock(dataID, offset, bytes);
 		sharedStorage.create(dataObject);
 		if(LOG.isTraceEnabled(Markers.DATA_LIST)) {
@@ -248,7 +248,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final long offset  = ByteBuffer.allocate(Long.SIZE / Byte.SIZE).put(dataIdBytes).getLong(0);
 	offset for mongoose versions prior to v0.4:
 		final long offset = Long.valueOf(dataID, 0x10);
-	 */
+	@Deprecated
 	private static long decodeRingBufferOffset(final String dataID)
 	throws HttpException, NumberFormatException {
 		long offset;
@@ -263,7 +263,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			throw new HttpException("Unsupported data ring offset radix: " + RING_OFFSET_RADIX);
 		}
 		return offset;
-	}
+	}*/
 	//
 	protected static String generateId() {
 		return Long.toString(UniformData.nextOffset(LAST_OFFSET), DataObject.ID_RADIX);

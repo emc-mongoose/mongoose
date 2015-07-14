@@ -84,7 +84,7 @@ implements Producer<T> {
 	public final void run() {
 		String bucketListingMarker = null;
 		long countSubmit = 0;
-		long bucketMaxKeys = WSRequestConfig.PAGE_SIZE;
+		long bucketMaxKeys = bucket.getBatchSize();
 		try {
 			do {
 				bucketMaxKeys = (maxCount - countSubmit) > bucketMaxKeys ?

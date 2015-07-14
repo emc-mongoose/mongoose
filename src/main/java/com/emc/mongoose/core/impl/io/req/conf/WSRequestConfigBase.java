@@ -188,6 +188,9 @@ implements WSRequestConfig<T> {
 			.custom()
 			.setBufferSize((int) runTimeConfig.getDataBufferSize())
 			.build();
+		final long timeOutMs = runTimeConfig.getLoadLimitTimeUnit().toMillis(
+			runTimeConfig.getLoadLimitTimeValue()
+		);
 		final IOReactorConfig.Builder ioReactorConfigBuilder = IOReactorConfig
 			.custom()
 			.setIoThreadCount(1)
@@ -202,7 +205,9 @@ implements WSRequestConfig<T> {
 			.setTcpNoDelay(runTimeConfig.getSocketTCPNoDelayFlag())
 			.setRcvBufSize((int) runTimeConfig.getDataBufferSize())
 			.setSndBufSize((int) runTimeConfig.getDataBufferSize())
-			.setConnectTimeout(runTimeConfig.getConnTimeOut());
+			.setConnectTimeout(
+				timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
+			);
 		//
 		final NHttpClientEventHandler reqExecutor = new HttpAsyncRequestExecutor();
 		//
@@ -223,7 +228,8 @@ implements WSRequestConfig<T> {
 			connFactory = new BasicNIOConnFactory(connConfig);
 		//
 		connPool = new BasicNIOConnPool(
-			ioReactor, connFactory, runTimeConfig.getConnPoolTimeOut()
+			ioReactor, connFactory,
+			timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
 		);
 		connPool.setMaxTotal(1);
 		connPool.setDefaultMaxPerRoute(1);
@@ -276,12 +282,6 @@ implements WSRequestConfig<T> {
 	@Override
 	public WSRequestConfigBase<T> setNameSpace(final String nameSpace) {
 		super.setNameSpace(nameSpace);
-		return this;
-	}
-	//
-	@Override
-	public final WSRequestConfigBase<T> setRetries(final boolean retryFlag) {
-		super.setRetries(retryFlag);
 		return this;
 	}
 	//

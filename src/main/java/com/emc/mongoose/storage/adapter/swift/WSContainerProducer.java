@@ -86,7 +86,7 @@ implements Producer<T> {
 	@Override
 	public final void run() {
 		int statusCode;
-		long containerLimit = WSRequestConfig.PAGE_SIZE;
+		long containerLimit = container.getBatchSize();
 		try {
 			do {
 				containerLimit = (maxCount - count) > containerLimit ?

@@ -172,7 +172,7 @@ extends GenericContainerItemInputBase<T> {
 		// execute the request
 		final HttpResponse resp = WSBucketImpl.class.cast(container).execute(
 			nodeAddr, MutableWSRequest.HTTPMethod.GET, false, nextPageMarker,
-			WSRequestConfig.PAGE_SIZE
+			container.getBatchSize()
 		);
 		// response validation
 		if(resp == null) {

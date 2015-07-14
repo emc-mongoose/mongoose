@@ -7,7 +7,6 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
 import com.emc.mongoose.core.api.load.model.Consumer;
 //
-import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -28,8 +27,8 @@ implements Consumer<T> {
 	//
 	public DataItemOutputConsumer(final DataItemOutput<T> itemOut) {
 		super(
-			Long.MAX_VALUE, RunTimeConfig.getContext().getRunRequestQueueSize(),
-			RunTimeConfig.getContext().getRunSubmitTimeOutMilliSec()
+			Long.MAX_VALUE, RunTimeConfig.getContext().getTasksMaxQueueSize(),
+			RunTimeConfig.getContext().getTasksSubmitTimeOutMilliSec()
 		);
 		this.itemOut = itemOut;
 	}

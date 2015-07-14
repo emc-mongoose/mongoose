@@ -4,7 +4,6 @@ import com.codahale.metrics.Gauge;
 import com.codahale.metrics.JmxReporter;
 import com.codahale.metrics.MetricRegistry;
 // mongoose-common.jar
-import com.codahale.metrics.Reporter;
 import com.emc.mongoose.client.impl.load.executor.gauges.AvgDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.MaxLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
@@ -115,7 +114,7 @@ implements LoadClient<T> {
 	//
 	private final RunTimeConfig runTimeConfig;
 	private final RequestConfig<T> reqConfigCopy;
-	private final int instanceNum, metricsPeriodSec, reqTimeOutMilliSec;
+	private final int instanceNum, metricsPeriodSec;
 	protected volatile Producer<T> producer;
 	protected volatile Consumer<T> consumer = null;
 	//
@@ -127,8 +126,8 @@ implements LoadClient<T> {
 		super(
 			1, 1, 0, TimeUnit.SECONDS,
 			new ArrayBlockingQueue<Runnable>(
-				(maxCount > 0 && maxCount < runTimeConfig.getRunRequestQueueSize()) ?
-					(int) maxCount : runTimeConfig.getRunRequestQueueSize()
+				(maxCount > 0 && maxCount < runTimeConfig.getTasksMaxQueueSize()) ?
+					(int) maxCount : runTimeConfig.getTasksMaxQueueSize()
 			)
 		);
 		setCorePoolSize(
@@ -171,7 +170,6 @@ implements LoadClient<T> {
 		this.producer = producer;
 		//
 		metricsPeriodSec = runTimeConfig.getLoadMetricsPeriodSec();
-		reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
 		//
 		if(runTimeConfig.getFlagServeIfNotLoadServer()) {
 			final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
@@ -565,8 +563,6 @@ implements LoadClient<T> {
 	//
 	@Override
 	public final void interrupt() {
-		final int reqTimeOutMilliSec = runTimeConfig.getRunReqTimeOutMilliSec();
-		//
 		if(!isShutdown()) {
 			LogUtil.trace(LOG, Level.DEBUG, Markers.MSG, "Interrupting {}", name);
 			shutdown();
@@ -582,7 +578,7 @@ implements LoadClient<T> {
 			}
 			interruptExecutor.shutdown();
 			try {
-				interruptExecutor.awaitTermination(reqTimeOutMilliSec, TimeUnit.MILLISECONDS);
+				interruptExecutor.awaitTermination(metricsPeriodSec, TimeUnit.SECONDS);
 			} catch(final InterruptedException e) {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Interrupting interrupted %<");
 			}
@@ -654,7 +650,7 @@ implements LoadClient<T> {
 		String nextLoadSvcAddr;
 		for(
 			int tryCount = 0;
-			tryCount < reqTimeOutMilliSec && remoteSubmFuture == null && !isShutdown();
+			tryCount < Short.MAX_VALUE && remoteSubmFuture == null && !isShutdown();
 			tryCount ++
 		) {
 			try {
@@ -835,15 +831,18 @@ implements LoadClient<T> {
 		super.shutdown();
 		LOG.debug(Markers.MSG, "{}: shutdown invoked", getName());
 		try {
-			awaitTermination(runTimeConfig.getRunReqTimeOutMilliSec(), TimeUnit.MILLISECONDS);
+			awaitTermination(metricsPeriodSec, TimeUnit.SECONDS);
 		} catch(final InterruptedException e) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
 		} finally {
 			for(final String addr : remoteLoadMap.keySet()) {
 				try {
 					remoteLoadMap.get(addr).shutdown();
+				} catch(final NoSuchObjectException ignored) {
 				} catch(final RemoteException e) {
-					LogUtil.exception(LOG, Level.WARN, e, "Failed to shut down remote load service");
+					LogUtil.exception(
+						LOG, Level.WARN, e, "Failed to shut down remote load service"
+					);
 				}
 			}
 		}

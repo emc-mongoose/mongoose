@@ -31,6 +31,8 @@ import java.util.Map;
 public final class ModeDispatcher {
 	//
 	public static void main(final String args[]) {
+		// load the config from CLI arguments
+		final Map<String, String> properties = HumanFriendly.parseCli(args);
 		//
 		final String runMode;
 		if(args == null || args.length == 0 || args[0].startsWith("-")) {
@@ -44,8 +46,6 @@ public final class ModeDispatcher {
 		final Logger rootLogger = LogManager.getRootLogger();
 		//
 		RunTimeConfig.initContext();
-		// load the config from CLI arguments
-		final Map<String, String> properties = HumanFriendly.parseCli(args);
 		if(properties != null && !properties.isEmpty()) {
 			rootLogger.debug(Markers.MSG, "Overriding properties {}", properties);
 			RunTimeConfig.getContext().overrideSystemProperties(properties);
