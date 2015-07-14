@@ -47,7 +47,7 @@ public final class IntegLogManager {
 		"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}$");
 	private static final Pattern PERF_TRACE_FILE_PATTERN = Pattern.compile(
 		// thread name pattern
-		"^[0-9]+-(S3|ATMOS|SWIFT)-(Create|Read|Update|Append|Delete)([0-9]+)?+-[0-9]+x[0-9]+#[0-9]+," +
+		"^[0-9]+-(S3|ATMOS|SWIFT)-(Create|Read|Update|Append|Delete)([0-9]+)?+-[0-9]+x[0-9]+(#[0-9]+)?," +
 		// TargetNode pattern
 		"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:[0-9]{1,5}," +
 		// DataItemId,DataItemSize pattern
@@ -118,7 +118,6 @@ public final class IntegLogManager {
 	public static void waitLogger()
 	throws InterruptedException {
 		if(LogUtil.LOAD_HOOKS_COUNT.get() != 0) {
-
 			LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS);
 
 			try {

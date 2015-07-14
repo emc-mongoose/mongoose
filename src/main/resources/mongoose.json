@@ -172,7 +172,8 @@
 			},
 			"tasks": {
 				"submitTimeOutMilliSec": 1000,
-				"maxQueueSize": 32768
+				"maxQueueSize": 32768,
+				"batchSize": 1024
 			},
 			"servers": "127.0.0.1",
 			"metricsPeriodSec": 10

@@ -6,8 +6,7 @@ import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
 //
-import com.emc.mongoose.storage.mock.impl.Cinderella;
-//
+import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
@@ -21,17 +20,15 @@ import java.nio.file.Paths;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	WriteDefaultScenarioIntegTest.class,
-	WriteScenarioWithNewPropertiesIntegTest.class,
 	WriteDataItemWithRandomSizeIntegTest.class,
+	ReadDataItems0BScenarioIntegTest.class,
 	ReadDataItems10BScenarioIntegTest.class,
 	ReadDataItems10KBScenarioIntegTest.class,
 	ReadDataItems10MBScenarioIntegTest.class,
 	ReadDataItems200MBScenarioIntegTest.class,
-	FaildVerificationIntegTest.class,
 	SingleWriteScenarioWith10ConcurrentConnectionsIntegTest.class,
 	SingleWriteScenarioWith100ConcurrentConnectionsIntegTest.class,
 	TimeLimitedWriteScenarioIntegTest.class,
-	InfiniteSingleWriteScenarioIntegTest.class,
 	FaildVerificationIntegTest.class,
 	CountLimitedWriteScenarioIntegTest.class,
 	CustomChainScenarioIntegTest.class,
@@ -55,7 +52,7 @@ public class IntegTestSuite {
 		LogUtil.init();
 		RunTimeConfig.initContext();
 		// If tests run from the IDEA full logging file must be set
-		wsMockThread = new Thread(new Cinderella<>(RunTimeConfig.getContext()), "cinderella");
+		wsMockThread = new Thread(new Cinderella(RunTimeConfig.getContext()), "cinderella");
 		wsMockThread.setDaemon(true);
 		wsMockThread.start();
 	}
