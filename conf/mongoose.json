@@ -248,7 +248,6 @@
 			"mode": "standalone",
 			"submitTimeOutMilliSec": 1000,
 			"request": {
-				"retries": false,
 				"timeoutMilliSec": 1000000,
 				"queueSize": 32768
 			}

@@ -280,12 +280,6 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final WSRequestConfigBase<T> setRetries(final boolean retryFlag) {
-		super.setRetries(retryFlag);
-		return this;
-	}
-	//
-	@Override
 	public final WSRequestConfigBase<T> setLoadType(final IOTask.Type loadType) {
 		super.setLoadType(loadType);
 		return this;

@@ -228,10 +228,6 @@ implements Externalizable {
 		return getInt("run.submitTimeOutMilliSec");
 	}
 	//
-	public final boolean getRunRequestRetries() {
-		return getBoolean("run.request.retries");
-	}
-	//
 	public final String getApiName() {
 		return getString(KEY_API_NAME);
 	}

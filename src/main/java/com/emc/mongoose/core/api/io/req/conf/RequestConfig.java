@@ -52,9 +52,6 @@ extends Externalizable, Cloneable, Closeable {
 	DataSource getDataSource();
 	RequestConfig<T> setDataSource(final DataSource dataSrc);
 	//
-	boolean getRetries();
-	RequestConfig<T> setRetries(final boolean retryFlag);
-	//
 	boolean getVerifyContentFlag();
 	RequestConfig<T> setVerifyContentFlag(final boolean verifyContentFlag);
 	//
