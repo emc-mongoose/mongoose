@@ -170,7 +170,7 @@ implements Externalizable {
 		}
 	}
 	//
-	private final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
+	public final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
 	//
 	private final Map<String, Object> properties = new HashMap<>();
 	//
