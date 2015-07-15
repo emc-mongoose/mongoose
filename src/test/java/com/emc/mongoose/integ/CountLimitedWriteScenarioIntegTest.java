@@ -98,6 +98,8 @@ public class CountLimitedWriteScenarioIntegTest {
 	throws Exception {
 		//Read message file and search "Scenario End"
 		final File messageFile = IntegLogManager.getMessageFile(createRunId);
+		Assert.assertTrue(messageFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
 		// Search line in file which contains "Scenario end" string.
 		// Get out from the loop when line with "Scenario end" if found else returned line = null
@@ -143,6 +145,8 @@ public class CountLimitedWriteScenarioIntegTest {
 	throws Exception {
 		//Read data.items.csv file of create scenario run
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(dataItemsFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
 		int dataSize, countDataItems = 0;
@@ -162,8 +166,10 @@ public class CountLimitedWriteScenarioIntegTest {
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		// Get data.items.csv file of write scenario run
-		final File writeDataItemFile = IntegLogManager.getDataItemsFile(createRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writeDataItemFile));
+		final File dataItemFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(dataItemFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemFile));
 		//
 		String line = bufferedReader.readLine();
 		while (line != null) {
@@ -176,8 +182,10 @@ public class CountLimitedWriteScenarioIntegTest {
 	public void shouldCreateCorrectPerfSumFile()
 	throws Exception {
 		// Get perf.sum.csv file of write scenario run
-		final File writePerfSumFile = IntegLogManager.getPerfSumFile(createRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfSumFile));
+		final File perfSumFile = IntegLogManager.getPerfSumFile(createRunId);
+		Assert.assertTrue(perfSumFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
@@ -194,6 +202,7 @@ public class CountLimitedWriteScenarioIntegTest {
 	throws Exception {
 		//Read perf.summary file of create scenario run
 		final File perfSumFile = IntegLogManager.getPerfSumFile(createRunId);
+		Assert.assertTrue(perfSumFile.exists());
 
 		//Check that file exists
 		Assert.assertTrue(perfSumFile.exists());

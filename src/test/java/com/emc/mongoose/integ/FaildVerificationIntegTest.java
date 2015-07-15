@@ -22,6 +22,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Calendar;
 import java.util.Locale;
@@ -81,7 +82,6 @@ public class FaildVerificationIntegTest {
 		}, "writeScenarioMongoose");
 		writeScenarioMongoose.start();
 		writeScenarioMongoose.join();
-		IntegLogManager.waitLogger();
 		writeScenarioMongoose.interrupt();
 
 		savedOutputStream = new SavedOutputStream(System.out);
@@ -115,8 +115,8 @@ public class FaildVerificationIntegTest {
 		//
 		readScenarioMongoose.start();
 		readScenarioMongoose.join();
-		IntegLogManager.waitLogger();
 		readScenarioMongoose.interrupt();
+		Thread.sleep(3000);
 		//
 		System.setOut(savedOutputStream.getPrintStream());
 	}
@@ -126,6 +126,8 @@ public class FaildVerificationIntegTest {
 	throws Exception {
 		// Get perf.sum.csv file of read scenario
 		final File perfSumFile = IntegLogManager.getPerfSumFile(readRunId);
+		Assert.assertTrue(perfSumFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		bufferedReader.readLine();
 		int countFail = Integer.valueOf(bufferedReader.readLine().split(",")[IntegConstants.COUNT_FAIL_COLUMN_INDEX]);
@@ -137,6 +139,8 @@ public class FaildVerificationIntegTest {
 	throws Exception {
 		// Get data.items.csv file of write scenario
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(dataItemsFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 		String line = bufferedReader.readLine();
 		String dataID;
@@ -152,6 +156,8 @@ public class FaildVerificationIntegTest {
 	throws Exception {
 		// Get data.items.csv file of write scenario
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(dataItemsFile.exists());
+		//
 		final BufferedReader bufferedDataItemsReader = new BufferedReader(new FileReader(dataItemsFile));
 		// Get content of message.log file of read scenario
 		final String contentMessageFile = new Scanner(IntegLogManager.getMessageFile(readRunId))

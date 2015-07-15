@@ -153,6 +153,8 @@ public final class WriteDefaultScenarioIntegTest {
 	throws Exception {
 		//Read message file and search "Scenario End"
 		final File messageFile = IntegLogManager.getMessageFile(createRunId);
+		Assert.assertTrue(messageFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
 		// Search line in file which contains "Scenario end" string.
 		// Get out from the loop when line with "Scenario end" if found else returned line = null
@@ -189,6 +191,8 @@ public final class WriteDefaultScenarioIntegTest {
 	throws Exception {
 		//Read data.items.csv file of create scenario run
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(dataItemsFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
 		int dataSize, countDataItems = 0;
@@ -210,6 +214,8 @@ public final class WriteDefaultScenarioIntegTest {
 	throws Exception {
 		//Read data.items.csv file of create scenario run
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(dataItemsFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
 		String line = bufferedReader.readLine(), dataID;
@@ -232,6 +238,8 @@ public final class WriteDefaultScenarioIntegTest {
 	throws Exception {
 		//Read data.items.csv file of create scenario run
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(dataItemsFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
 		String line = bufferedReader.readLine(), dataID;
@@ -249,8 +257,10 @@ public final class WriteDefaultScenarioIntegTest {
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		// Get data.items.csv file of write scenario run
-		final File writeDataItemFile = IntegLogManager.getDataItemsFile(createRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writeDataItemFile));
+		final File dataItemFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(dataItemFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemFile));
 		//
 		String line = bufferedReader.readLine();
 		while (line != null) {
@@ -263,8 +273,10 @@ public final class WriteDefaultScenarioIntegTest {
 	public void shouldCreateCorrectPerfSumFile()
 	throws Exception {
 		// Get perf.sum.csv file of write scenario run
-		final File writePerfSumFile = IntegLogManager.getPerfSumFile(createRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfSumFile));
+		final File perfSumFile = IntegLogManager.getPerfSumFile(createRunId);
+		Assert.assertTrue(perfSumFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
@@ -280,8 +292,10 @@ public final class WriteDefaultScenarioIntegTest {
 	public void shouldCreateCorrectPerfAvgFile()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File writePerfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfAvgFile));
+		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		Assert.assertTrue(perfAvgFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
@@ -297,8 +311,10 @@ public final class WriteDefaultScenarioIntegTest {
 	public void shouldCreateCorrectPerfTraceFile()
 	throws Exception {
 		// Get perf.trace.csv file of write scenario run
-		final File writePerfTraceFile = IntegLogManager.getPerfTraceFile(createRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfTraceFile));
+		final File perfTraceFile = IntegLogManager.getPerfTraceFile(createRunId);
+		Assert.assertTrue(perfTraceFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfTraceFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct

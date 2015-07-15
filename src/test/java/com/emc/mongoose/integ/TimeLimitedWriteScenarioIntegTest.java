@@ -105,6 +105,8 @@ public class TimeLimitedWriteScenarioIntegTest {
 	throws Exception {
 		//Read message file and search "Scenario End"
 		final File messageFile = IntegLogManager.getMessageFile(createRunId);
+		Assert.assertTrue(messageFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
 		// Search line in file which contains "Scenario end" string.
 		// Get out from the loop when line with "Scenario end" if found else returned line = null
@@ -129,6 +131,8 @@ public class TimeLimitedWriteScenarioIntegTest {
 		);
 		//
 		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		Assert.assertTrue(perfAvgFile.exists());
+		//
 		BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 		//
 		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
@@ -142,6 +146,8 @@ public class TimeLimitedWriteScenarioIntegTest {
 		}
 		// Get finish time of load
 		final File perfSumFile = IntegLogManager.getPerfSumFile(createRunId);
+		Assert.assertTrue(perfSumFile.exists());
+		//
 		bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		bufferedReader.readLine();
 		line = bufferedReader.readLine();
@@ -191,6 +197,8 @@ public class TimeLimitedWriteScenarioIntegTest {
 		final int precisionMillis = 1000;
 		// Get perf.avg.csv file
 		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		Assert.assertTrue(perfAvgFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 
 		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");

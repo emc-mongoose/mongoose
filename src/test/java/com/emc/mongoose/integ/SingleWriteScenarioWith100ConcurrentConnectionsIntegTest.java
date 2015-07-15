@@ -101,7 +101,6 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 		if (!writeScenarioMongoose.isInterrupted()) {
 			writeScenarioMongoose.join();
 			writeScenarioMongoose.interrupt();
-			IntegLogManager.waitLogger();
 		}
 		// Wait logger's output from console
 		Thread.sleep(3000);
@@ -140,6 +139,7 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 	throws Exception {
 		//Read data.items.csv file of create scenario run
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
 		int dataSize, countDataItems = 0;
@@ -203,8 +203,10 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 	public void shouldCreateCorrectDataItemsFiles()
 		throws Exception {
 		// Get data.items.csv file of write scenario run
-		final File writeDataItemFile = IntegLogManager.getDataItemsFile(createRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writeDataItemFile));
+		final File dataItemFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(dataItemFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemFile));
 		//
 		String line = bufferedReader.readLine();
 		while (line != null) {
@@ -217,8 +219,10 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 	public void shouldCreateCorrectPerfAvgFiles()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File writePerfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfAvgFile));
+		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		Assert.assertTrue(perfAvgFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
@@ -234,8 +238,10 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 	public void shouldCreateCorrectInformationAboutLoad()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File writePerfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfAvgFile));
+		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		Assert.assertTrue(perfAvgFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
@@ -276,6 +282,8 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 		final int precisionMillis = 1000;
 		// Get perf.avg.csv file
 		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		Assert.assertTrue(perfAvgFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 
 		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");

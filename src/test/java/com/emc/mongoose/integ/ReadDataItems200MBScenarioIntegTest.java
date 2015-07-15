@@ -84,7 +84,6 @@ public class ReadDataItems200MBScenarioIntegTest {
 		}, "writeScenarioMongoose");
 		writeScenarioMongoose.start();
 		writeScenarioMongoose.join();
-		IntegLogManager.waitLogger();
 		writeScenarioMongoose.interrupt();
 
 		savedOutputStream = new SavedOutputStream(System.out);
@@ -130,6 +129,8 @@ public class ReadDataItems200MBScenarioIntegTest {
 	throws Exception {
 		//Read data.items.csv file of create scenario run
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(dataItemsFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
 		int dataSize, countDataItems = 0;
@@ -151,6 +152,8 @@ public class ReadDataItems200MBScenarioIntegTest {
 	throws Exception {
 		//Read data.items.csv file of create scenario run
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(dataItemsFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
 		String line = bufferedReader.readLine(), dataID;
@@ -169,6 +172,8 @@ public class ReadDataItems200MBScenarioIntegTest {
 	throws Exception {
 		//Read message file and search "Scenario End"
 		final File messageFile = IntegLogManager.getMessageFile(readRunId);
+		Assert.assertTrue(messageFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
 		// Search line in file which contains "Scenario end" string.
 		// Get out from the loop when line with "Scenario end" if found else returned line = null
@@ -242,6 +247,8 @@ public class ReadDataItems200MBScenarioIntegTest {
 	throws Exception {
 		// Get data.items.csv file of read scenario run
 		final File readDataItemFile = IntegLogManager.getDataItemsFile(readRunId);
+		Assert.assertTrue(readDataItemFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readDataItemFile));
 		//
 		String line = bufferedReader.readLine();
@@ -256,6 +263,8 @@ public class ReadDataItems200MBScenarioIntegTest {
 	throws Exception {
 		// Get perf.sum.csv file of read scenario run
 		final File readPerfSumFile = IntegLogManager.getPerfSumFile(readRunId);
+		Assert.assertTrue(readPerfSumFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readPerfSumFile));
 		//
 		String line = bufferedReader.readLine();
@@ -273,6 +282,8 @@ public class ReadDataItems200MBScenarioIntegTest {
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
 		final File readPerfAvgFile = IntegLogManager.getPerfAvgFile(readRunId);
+		Assert.assertTrue(readPerfAvgFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readPerfAvgFile));
 		//
 		String line = bufferedReader.readLine();
@@ -290,6 +301,8 @@ public class ReadDataItems200MBScenarioIntegTest {
 	throws Exception {
 		// Get perf.trace.csv file of write scenario run
 		final File readPerfTraceFile = IntegLogManager.getPerfTraceFile(readRunId);
+		Assert.assertTrue(readPerfTraceFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readPerfTraceFile));
 		//
 		String line = bufferedReader.readLine();
@@ -307,6 +320,8 @@ public class ReadDataItems200MBScenarioIntegTest {
 	throws Exception {
 		// Get data.items.csv file of write scenario run
 		final File writeDataItemFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(writeDataItemFile.exists());
+
 		//Check correct data size in data.items.csv file
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writeDataItemFile));
 		String line = bufferedReader.readLine();
@@ -334,6 +349,8 @@ public class ReadDataItems200MBScenarioIntegTest {
 	throws Exception {
 		//Read data.items.csv file of create scenario run
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		Assert.assertTrue(dataItemsFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
 		String line = bufferedReader.readLine(), dataID;

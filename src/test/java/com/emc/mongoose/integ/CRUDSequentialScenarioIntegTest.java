@@ -120,6 +120,8 @@ public class CRUDSequentialScenarioIntegTest {
 	throws Exception {
 		//Read message file and search "Scenario End"
 		final File messageFile = IntegLogManager.getMessageFile(chainRunId);
+		Assert.assertTrue(messageFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
 		// Search line in file which contains "Scenario end" string.
 		// Get out from the loop when line with "Scenario end" if found else returned line = null
@@ -194,8 +196,10 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldCreateCorrectPerfAvgFile()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File writePerfAvgFile = IntegLogManager.getPerfAvgFile(chainRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfAvgFile));
+		final File perfAvgFile = IntegLogManager.getPerfAvgFile(chainRunId);
+		Assert.assertTrue(perfAvgFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
@@ -211,8 +215,10 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldCreateCorrectPerfSumFile()
 	throws Exception {
 		// Get perf.sum.csv file of write scenario run
-		final File writePerfSumFile = IntegLogManager.getPerfSumFile(chainRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfSumFile));
+		final File perfSumFile = IntegLogManager.getPerfSumFile(chainRunId);
+		Assert.assertTrue(perfSumFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
@@ -228,8 +234,10 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		// Get data.items.csv file of write scenario run
-		final File writeDataItemFile = IntegLogManager.getDataItemsFile(chainRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writeDataItemFile));
+		final File dataItemFile = IntegLogManager.getDataItemsFile(chainRunId);
+		Assert.assertTrue(dataItemFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemFile));
 		//
 		String line = bufferedReader.readLine();
 		while (line != null) {
@@ -242,8 +250,10 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldCreateCorrectPerfTraceFile()
 	throws Exception {
 		// Get perf.trace.csv file of write scenario run
-		final File writePerfTraceFile = IntegLogManager.getPerfTraceFile(chainRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfTraceFile));
+		final File perfTraceFile = IntegLogManager.getPerfTraceFile(chainRunId);
+		Assert.assertTrue(perfTraceFile.exists());
+		//
+		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfTraceFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
@@ -259,6 +269,8 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldContainedInformationAboutAllLoads()
 		throws Exception {
 		final File perfSumFile = IntegLogManager.getPerfSumFile(chainRunId);
+		Assert.assertTrue(perfSumFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		bufferedReader.readLine();
 		//
@@ -295,6 +307,8 @@ public class CRUDSequentialScenarioIntegTest {
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
 		final File writePerfAvgFile = IntegLogManager.getPerfAvgFile(chainRunId);
+		Assert.assertTrue(writePerfAvgFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfAvgFile));
 		//
 		String line = bufferedReader.readLine();
@@ -334,6 +348,8 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldPerfSumFileContainsSummaryInfoAboutAllLoads()
 	throws Exception {
 		final File perfSumFile = IntegLogManager.getPerfSumFile(chainRunId);
+		Assert.assertTrue(perfSumFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		//
 		bufferedReader.readLine();
@@ -350,6 +366,8 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldLoadsSwitchOperationsSynchronously()
 	throws Exception {
 		final File perfAvgFile = IntegLogManager.getPerfAvgFile(chainRunId);
+		Assert.assertTrue(perfAvgFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 		//
 		Matcher matcher;
@@ -376,6 +394,8 @@ public class CRUDSequentialScenarioIntegTest {
 		final int precisionMillis = 1000;
 		// Get perf.avg.csv file
 		final File perfAvgFile = IntegLogManager.getPerfAvgFile(chainRunId);
+		Assert.assertTrue(perfAvgFile.exists());
+		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 
 		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
@@ -427,6 +447,8 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldCreateLoadMustRunFor60Seconds()
 	throws Exception {
 		final File perfAvgFile = IntegLogManager.getPerfAvgFile(chainRunId);
+		Assert.assertTrue(perfAvgFile.exists());
+		//
 		BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 		//
 		Date startTimeLoad = null, finishTimeLoad = null;
@@ -448,6 +470,8 @@ public class CRUDSequentialScenarioIntegTest {
 		}
 		// Get finish time of loads
 		final File perfSumFile = IntegLogManager.getPerfSumFile(chainRunId);
+		Assert.assertTrue(perfSumFile.exists());
+		//
 		bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		bufferedReader.readLine();
 		line = bufferedReader.readLine();
@@ -475,6 +499,8 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldDataItemsMasksAreUpdate()
 	throws Exception {
 		final File dataItemsFile = IntegLogManager.getDataItemsFile(chainRunId);
+		//
+		Assert.assertTrue(dataItemsFile.exists());
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
 		final int firstMaskVal = 0;
