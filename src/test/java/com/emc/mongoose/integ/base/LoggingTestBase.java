@@ -1,11 +1,11 @@
-package com.emc.mongoose.integ;
+package com.emc.mongoose.integ.base;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 //
 import org.apache.logging.log4j.LogManager;
-//
 import org.apache.logging.log4j.Logger;
+//
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 //
@@ -22,7 +22,7 @@ public abstract class LoggingTestBase {
 	protected static Logger LOG;
 	//
 	@BeforeClass
-	public static void before()
+	public static void setUpClass()
 	throws Exception {
 		if (System.getProperty(LOG_CONF_PROPERTY_KEY) == null) {
 			String fullLogConfFile = Paths
@@ -36,7 +36,7 @@ public abstract class LoggingTestBase {
 	}
 	//
 	@AfterClass
-	public static void after()
+	public static void tearDownClass()
 	throws Exception {
 		LogUtil.shutdown();
 	}

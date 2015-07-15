@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.suites.core.single;
+package com.emc.mongoose.integ.core.single;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;

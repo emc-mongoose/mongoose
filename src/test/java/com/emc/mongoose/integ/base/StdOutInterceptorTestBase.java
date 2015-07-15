@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ;
+package com.emc.mongoose.integ.base;
 //
 import com.emc.mongoose.integ.tools.SavedOutputStream;
 //
@@ -9,19 +9,19 @@ import java.io.PrintStream;
 /**
  Created by kurila on 14.07.15.
  */
-public abstract class StdOutInterceptingTestBase {
+public abstract class StdOutInterceptorTestBase {
 	//
 	protected static SavedOutputStream STD_OUT_INTERCEPT_STREAM;
 	//
 	@BeforeClass
-	public static void before()
+	public static void setUpClass()
 	throws Exception {
 		STD_OUT_INTERCEPT_STREAM = new SavedOutputStream(System.out);
 		System.setOut(new PrintStream(STD_OUT_INTERCEPT_STREAM));
 	}
 	//
 	@AfterClass
-	public static void after()
+	public static void tearDownClass()
 	throws Exception {
 		System.setOut(STD_OUT_INTERCEPT_STREAM.getReplacedStream());
 	}
