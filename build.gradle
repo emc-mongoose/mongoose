@@ -213,6 +213,7 @@ sourceSets {
 		java {
 			srcDir(['src', 'test'].join(File.separator))
 			include(['java', 'com', 'emc', 'mongoose', 'core', '**'].join(File.separator))
+			include(['java', 'com', 'emc', 'mongoose', 'common', '**'].join(File.separator))
 		}
 	}
 	integTest {
@@ -1025,6 +1026,8 @@ idea {
 test {
 	jvmArgs '-Dlog4j.configurationFile=' + new File("").getCanonicalPath() + "${File.separator}${confDirName}${File.separator}logging.json"
 	jvmArgs '-Dlog4j.configurationFactory=org.apache.logging.log4j.core.config.json.JsonConfigurationFactory'
+	jvmArgs '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
+		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
 }
@@ -1036,7 +1039,8 @@ task integTest(type: Test, dependsOn: compileRMI) {
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
-	jvmArgs "-Djava.security.policy=file:" + new File("").getCanonicalPath() + "${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
+	jvmArgs '-Djava.security.policy=file:' + new File("").getCanonicalPath() +
+		"${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
 }
