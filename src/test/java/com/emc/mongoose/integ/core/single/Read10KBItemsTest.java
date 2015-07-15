@@ -7,10 +7,10 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
-import com.emc.mongoose.integ.integTestTools.ContentGetter;
+import com.emc.mongoose.integ.tools.ContentGetter;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
-import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.SavedOutputStream;
 //
 import com.emc.mongoose.run.scenario.ScriptRunner;
 //
@@ -113,7 +113,7 @@ public class Read10KBItemsTest {
 		readScenarioMongoose.interrupt();
 		// Wait logger's output from console
 		Thread.sleep(3000);
-		System.setOut(savedOutputStream.getPrintStream());
+		System.setOut(savedOutputStream.getReplacedStream());
 	}
 
 	@Test

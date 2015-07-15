@@ -9,10 +9,15 @@ import com.emc.mongoose.integ.core.chain.CRUDSimultaneousScenarioIntegTest;
 import com.emc.mongoose.integ.core.chain.CustomChainScenarioIntegTest;
 import com.emc.mongoose.integ.core.chain.DefaultChainScenarioIntegTest;
 import com.emc.mongoose.integ.core.single.DefaultWriteTest;
+import com.emc.mongoose.integ.core.single.Read10BItemsTest;
+import com.emc.mongoose.integ.core.single.Read10KBItemsTest;
+import com.emc.mongoose.integ.core.single.Read10MBItemsTest;
+import com.emc.mongoose.integ.core.single.Read200MBItemsTest;
 import com.emc.mongoose.integ.core.single.ReadVerificationTest;
 import com.emc.mongoose.integ.core.single.ReadZeroSizeItemsTest;
 import com.emc.mongoose.integ.core.single.WriteByCountTest;
 import com.emc.mongoose.integ.core.single.WriteByTimeTest;
+import com.emc.mongoose.integ.core.single.WriteRandomSizedItemsTest;
 import com.emc.mongoose.integ.core.single.WriteUsing100ConnTest;
 import com.emc.mongoose.integ.core.single.WriteUsing10ConnTest;
 import com.emc.mongoose.integ.tools.TestConstants;
@@ -31,12 +36,12 @@ import java.nio.file.Paths;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	DefaultWriteTest.class,
-	WriteDataItemWithRandomSizeIntegTest.class,
+	WriteRandomSizedItemsTest.class,
 	ReadZeroSizeItemsTest.class,
-	ReadDataItems10BScenarioIntegTest.class,
-	ReadDataItems10KBScenarioIntegTest.class,
-	ReadDataItems10MBScenarioIntegTest.class,
-	ReadDataItems200MBScenarioIntegTest.class,
+	Read10BItemsTest.class,
+	Read10KBItemsTest.class,
+	Read10MBItemsTest.class,
+	Read200MBItemsTest.class,
 	WriteUsing10ConnTest.class,
 	WriteUsing100ConnTest.class,
 	WriteByTimeTest.class,

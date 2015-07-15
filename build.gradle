@@ -1031,7 +1031,7 @@ test {
 
 task integTest(type: Test){
 	//Be able to run only test suit
-	include '**/IntegTestSuite.class'
+	include '**/IntegrationTestSuite.class'
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
