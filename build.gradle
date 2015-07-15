@@ -1030,10 +1030,11 @@ test {
 }
 
 task integTest(type: Test){
+	//Be able to run only test suit
+	include '**/IntegTestSuite.class'
+
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
-	jvmArgs '-Dlog4j.configurationFile=' + new File("").getCanonicalPath() + "${File.separator}${confDirName}${File.separator}logging.json"
-	jvmArgs '-Dlog4j.configurationFactory=org.apache.logging.log4j.core.config.json.JsonConfigurationFactory'
 	jvmArgs '-Djava.security.policy=file:/home/olga/mongoose/vipr-mongoose/src/main/resources/allpermissions.policy'
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }

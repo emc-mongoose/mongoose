@@ -208,7 +208,13 @@ text.shadow {
 
 .grid .tick {
 	stroke: lightgrey;
-	stroke-opacity: 0.7;
+	stroke-opacity: 1;
+	shape-rendering: crispEdges;
+}
+
+.minor {
+	stroke: lightgrey;
+	stroke-opacity: 0.5;
 	shape-rendering: crispEdges;
 }
 .grid path {

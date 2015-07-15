@@ -320,6 +320,11 @@ $(document).ready(function() {
 });
 
 /* Functions */
+//
+function getThreadNamePattern() {
+	return /([\d]+)-([A-Za-z0-9]+)-([CreateRdDlUpAn]+)[\d]*-([\d]*)x([\d]*)x?([\d]*)/gi;
+}
+//
 function excludeDuplicateOptions() {
 	var found = [];
 	var selectArray = $("select");
@@ -468,7 +473,6 @@ function configureWebSocketConnection(location, countOfRecords) {
 		PERF_AVG: "perf-avg-csv"
 	};
 	function processJsonLogEvents(chartsArray, json) {
-		var threadNameRegExp = /([\d]+)-([A-Za-z0-9]+)-([CreateRdDlUpAn]+)[\d]*-([\d]*)x([\d]*)x?([\d]*)/gi;
 		var runId = json.contextMap["run.id"];
 		var runMetricsPeriodSec = json.contextMap["load.metricsPeriodSec"];
 		var scenarioChainLoad = json.contextMap["scenario.type.chain.load"];
@@ -533,7 +537,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 							charts(chartsArray).single(json);
 							break;
 						case RUN_SCENARIO_NAME.chain:
-							json.threadName = json.threadName.match(threadNameRegExp)[0];
+							json.threadName = json.threadName.match(getThreadNamePattern())[0];
 							charts(chartsArray).chain(runId, runMetricsPeriodSec, json.threadName);
 							break;
 					}
@@ -628,8 +632,6 @@ function charts(chartsArray) {
 	var margin = {top: 40, right: 200, bottom: 60, left: 60},
 		width = 1070 - margin.left - margin.right,
 		height = 460 - margin.top - margin.bottom;
-	//  Some constants
-	var threadNameRegExp = /([\d]+)-([A-Za-z0-9]+)-([CreateRdDlUpAn]+)[\d]*-([\d]*)x([\d]*)x?([\d]*)/gi;
 	//
 	var SCENARIO = {
 		single: "single",
@@ -656,6 +658,18 @@ function charts(chartsArray) {
 			id: "15min",
 			text: "last 15 min avg"
 		};
+	var SCALE_TYPES = ["Linear Scale", "Log Scale"];
+	var SCALE_ORIENTATION = ["x", "y"];
+	//
+	var SCALES = [
+		{
+			id: "x",
+			types: SCALE_TYPES
+		}, {
+			id: "y",
+			types: SCALE_TYPES
+		}
+	];
 	//  Some constants from runTimeConfig
 	var RUN_TIME_CONFIG_CONSTANTS = {
 		runId: "run.id",
@@ -754,12 +768,67 @@ function charts(chartsArray) {
 		};
 	}
 	//
+	function appendScaleLabels(svg, chartEntry, addHeight) {
+		var groups = svg.selectAll(".scale-labels")
+			.data(SCALES);
+		//  enter selection
+		var groupsEnter = groups.enter().append("g")
+			.attr("class", "scale-labels")
+			.attr("name", function(d) { return d.id; })
+			.attr("transform", function(d, i) {
+				return "translate(10," + (i*20 + height + (margin.bottom/2) + addHeight) + ")";
+			});
+		groupsEnter.append("text")
+			.attr("dy", ".35em")
+			.style("text-anchor", "start")
+			.text(function(d) {
+				return d.id;
+			});
+		groupsEnter.append("foreignObject")
+			.attr("class", "foreign")
+			.attr("width", 18)
+			.attr("height", 18)
+			.attr("transform", "translate(20, -10)")
+			.append("xhtml:body")
+			.append("input")
+			.attr("type", "checkbox")
+			.style("margin-left", "4px")
+			.on("click", function(d) {
+				var currScaleType = null;
+				if (d3.select(this).property("checked")) {
+					currScaleType = SCALE_TYPES[1];
+				} else {
+					d3.select(this).property("checked", false);
+					currScaleType = SCALE_TYPES[0];
+				}
+				//  remove previous elements in group
+				/*parentGroup.selectAll("input")
+					.property("checked", false);*/
+				//  select current checkbox
+				var parentGroup = d3.select(this.parentNode.parentNode.parentNode);
+				var scaleOrientation = parentGroup.attr("name");
+				chartEntry.updateScales(scaleOrientation, currScaleType);
+				//
+				//redrawGridAndAxis(chartSettings, data, currentScale, currScaleType);
+			});
+		groupsEnter.append("text")
+			.attr("class", "foreign-labels")
+			.attr("x", 25)
+			.attr("y", 10)
+			.attr("dy", ".35em")
+			.attr("transform", "translate(20, -10)")
+			.style("text-anchor", "start")
+			.text(SCALE_TYPES[1]);
+	}
+	//
 	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath) {
+		var currXScale = SCALE_TYPES[0];
+		var currYScale = SCALE_TYPES[0];
 		//  get some fields from runTimeConfig
 		var runMetricsPeriodSec = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec];
-        //
-		json.threadName = json.threadName.match(threadNameRegExp)[0];
-        //
+		//
+		json.threadName = json.threadName.match(getThreadNamePattern())[0];
+		//
 		var currentMetricsPeriodSec = 0;
 		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
 		//
@@ -769,7 +838,7 @@ function charts(chartsArray) {
 				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; })  })
 			])
 			.range([0, width]);
-
+		//
 		var y = d3.scale.linear()
 			.domain([
 				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
@@ -802,10 +871,10 @@ function charts(chartsArray) {
 		//
 		var line = d3.svg.line()
 			.x(function (d) {
-				return x(d.x);
+				return x((isNaN(x(d.x))) ? 0.1 : d.x);
 			})
 			.y(function (d) {
-				return y(d.y);
+				return y((isNaN(y(d.y))) ? 0.1 : d.y);
 			});
 		//
 		var svg = d3.select(chartDOMPath)
@@ -816,8 +885,8 @@ function charts(chartsArray) {
 			.attr("height", height + margin.top + margin.bottom)
 			.append("g")
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
-            .style("font", "12px sans-serif")
-            .style("overflow-x", "auto");
+			.style("font", "12px sans-serif")
+			.style("overflow-x", "auto");
 
 		var xAxisGroup = svg.append("g")
 			.attr("class", "x axis")
@@ -840,7 +909,7 @@ function charts(chartsArray) {
 			.call(makeYAxis()
 				.tickSize(-width, 0, 0)
 				.tickFormat(""));
-        //
+		//
 		var levels = svg.selectAll(".level")
 			.data(data).enter()
 			.append("g")
@@ -870,7 +939,7 @@ function charts(chartsArray) {
 		svg.selectAll("foreignObject")
 			.data(data).enter()
 			.append("foreignObject")
-            .attr("class", "foreign")
+			.attr("class", "foreign")
 			.attr("x", width + 3)
 			.attr("width", 18)
 			.attr("height", 18)
@@ -890,6 +959,134 @@ function charts(chartsArray) {
 					element.css("visibility", "hidden");
 				}
 			});
+		function redraw(currXScale, currYScale) {
+			switch (currXScale) {
+				case SCALE_TYPES[0]:
+					xAxisGroup.transition().call(d3.svg.axis().scale(x));
+					xGrid.call(d3.svg.axis().scale(x)
+						.tickSize(-height, 0, 0)
+						.tickFormat(""));
+					xGrid.selectAll(".minor")
+						.style("stroke-opacity", "0.7")
+						.style("shape-rendering", "crispEdges")
+						.style("stroke", "lightgrey")
+						.style("stroke-dasharray", "0");
+					break;
+				case SCALE_TYPES[1]:
+					xAxisGroup.transition().call(d3.svg.axis().scale(x).orient("bottom").ticks(0, ".1s"));
+					xGrid.call(d3.svg.axis().scale(x)
+						.tickSize(-height, 0, 0)
+						.tickFormat(""))
+						.selectAll(".tick")
+						.data(x.ticks().map(x.tickFormat(0, ".1")), function(d) { return d; })
+						.exit()
+						.classed("minor", true);
+					xGrid.selectAll(".minor")
+						.style("stroke-opacity", "0.5")
+						.style("shape-rendering", "crispEdges")
+						.style("stroke-dasharray", "2,2");
+					break;
+			}
+			switch (currYScale) {
+				case SCALE_TYPES[0]:
+					yAxisGroup.transition().call(d3.svg.axis().scale(y).orient("left"));
+					yGrid.call(d3.svg.axis().scale(y).orient("left")
+						.tickSize(-width, 0, 0)
+						.tickFormat(""));
+					yGrid.selectAll(".minor")
+						.style("stroke-opacity", "0.7")
+						.style("shape-rendering", "crispEdges")
+						.style("stroke", "lightgrey")
+						.style("stroke-dasharray", "0");
+					break;
+				case SCALE_TYPES[1]:
+					yAxisGroup.transition().call(d3.svg.axis().scale(y).orient("left").ticks(0, ".1s"));
+					yGrid.call(d3.svg.axis().scale(y).orient("left")
+						.tickSize(-width, 0, 0)
+						.tickFormat(""))
+						.selectAll(".tick")
+						.data(y.ticks().map(y.tickFormat(0, ".1")), function(d) { return d; })
+						.exit()
+						.classed("minor", true);
+					yGrid.selectAll(".minor")
+						.style("stroke-opacity", "0.5")
+						.style("shape-rendering", "crispEdges")
+						.style("stroke-dasharray", "2,2");
+					break;
+			}
+			//
+			//  Update old charts
+			var paths = svg.selectAll(".level path")
+				.data(data)
+				.attr("d", function(d) { return line(d.values); })
+				.attr("stroke", function(d) { return color(d.name.id); })
+				.attr("fill", "none");
+
+			//
+			d3.selectAll(".axis path, .axis line")
+				.style("fill", "none")
+				.style("stroke", "grey")
+				.style("stroke-width", "1")
+				.style("shape-rendering", "crispEdges");
+			//
+			d3.selectAll(".grid .tick")
+				.style("stroke", "lightgrey")
+				.style("stroke-opacity", "0.7")
+				.style("shape-rendering", "crispEdges");
+			//
+		}
+		//  checkboxes for linear/log scales
+		appendScaleLabels(svg, {
+			updateScales: function(scaleOrientation, scaleType) {
+				// find scale and apply params to it
+				if (scaleType === SCALE_TYPES[0]) {
+					if (scaleOrientation === SCALE_ORIENTATION[0]) {
+						x = d3.scale.linear()
+							.domain([d3.min(data, function(c) { return d3.min(c.values, function(d) {
+								return d.x;
+							}); }),
+							d3.max(data, function(c) { return d3.max(c.values, function(d) {
+								return d.x;
+							}); })])
+							.range([0, width]);
+						currXScale = SCALE_TYPES[0];
+					} else {
+						y = d3.scale.linear()
+							.domain([d3.min(data, function(c) { return d3.min(c.values, function(d) {
+								return d.y;
+							}); }),
+							d3.max(data, function(c) { return d3.max(c.values, function(d) {
+								return d.y;
+							}); })])
+							.range([height, 0]);
+						currYScale = SCALE_TYPES[0];
+					}
+				} else {
+					if (scaleOrientation === SCALE_ORIENTATION[0]) {
+						x = d3.scale.log()
+							.domain([d3.min(data, function(c) { return d3.min(c.values, function(d) {
+								return d.x <= 0 ? 0.1 : d.x;
+							}); }),
+							d3.max(data, function(c) { return d3.max(c.values, function(d) {
+								return d.x <= 0 ? 0.1 : d.x;
+							}); })])
+							.range([0, width]);
+						currXScale = SCALE_TYPES[1];
+					} else {
+						y = d3.scale.log()
+							.domain([d3.min(data, function(c) { return d3.min(c.values, function(d) {
+								return d.y <= 0 ? 0.1 : d.y;
+							}); }),
+							d3.max(data, function(c) { return d3.max(c.values, function(d) {
+								return d.y <= 0 ? 0.1 : d.y;
+							}); })])
+							.range([height, 0]);
+						currYScale = SCALE_TYPES[1];
+					}
+				}
+				redraw(currXScale, currYScale);
+			}
+		}, 0);
 		//
 		var legend = svg.selectAll(".legend")
 			.data(data).enter()
@@ -919,23 +1116,28 @@ function charts(chartsArray) {
 			.style("font-size", "16px")
 			.style("text-decoration", "underline")
 			.text(json.threadName);
-        //
-        d3.selectAll(".axis path, .axis line")
-            .style("fill", "none")
-            .style("stroke", "grey")
-            .style("stroke-width", "1")
-            .style("shape-rendering", "crispEdges");
-        //
-        d3.selectAll(".grid .tick")
-            .style("stroke", "lightgrey")
-            .style("stroke-opacity", "0.7")
-            .style("shape-rendering", "crispEdges");
-        //
+		//
+		d3.selectAll(".axis path, .axis line")
+			.style("fill", "none")
+			.style("stroke", "grey")
+			.style("stroke-width", "1")
+			.style("shape-rendering", "crispEdges");
+		//
+		d3.selectAll(".grid .tick")
+			.style("stroke", "lightgrey")
+			.style("stroke-opacity", "1")
+			.style("shape-rendering", "crispEdges");
+		//
+		d3.selectAll(".minor")
+			.style("stroke-opacity", "0.5")
+			.style("shape-rendering", "crispEdges")
+			.style("stroke-dasharray", "2,2");
+		//
 		d3.select(chartDOMPath)
 			.append("a")
 			.text("Save chart")
-            .style("cursor", "pointer")
-            .style("margin-left", margin.left + "px")
+			.style("cursor", "pointer")
+			.style("margin-left", margin.left + "px")
 			.on("click", function() {
 				saveChart(chartDOMPath, 1070, 460);
 			});
@@ -985,13 +1187,13 @@ function charts(chartsArray) {
 							newDotsArray.push({x: endXCoord, y: minElement.y});
 						}
 						startOffset = endOffset;
-                        if (endOffset < CRITICAL_DOTS_COUNT && endOffset + step > CRITICAL_DOTS_COUNT) {
-                            var start = endOffset;
-                            while (start < CRITICAL_DOTS_COUNT) {
-                                newDotsArray.push({x: d.values[start].x, y: d.values[start].y});
-                                start++;
-                            }
-                        }
+						if (endOffset < CRITICAL_DOTS_COUNT && endOffset + step > CRITICAL_DOTS_COUNT) {
+							var start = endOffset;
+							while (start < CRITICAL_DOTS_COUNT) {
+								newDotsArray.push({x: d.values[start].x, y: d.values[start].y});
+								start++;
+							}
+						}
 						endOffset += step;
 					}
 					d.values = newDotsArray;
@@ -1000,40 +1202,21 @@ function charts(chartsArray) {
 			});
 			//
 			x.domain([
-				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
-				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; }); })
+				d3.min(data, function(c) { return d3.min(c.values, function(d) {
+					return (isNaN(x(d.x))) ? 0.1 : d.x;
+				}); }),
+				d3.max(data, function(c) { return d3.max(c.values, function(d) {
+					return (isNaN(x(d.x))) ? 0.1 : d.x;
+				}); })
 			]);
 			y.domain([
-				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.y; }); }),
-				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.y; }); })
+				d3.min(data, function(c) { return d3.min(c.values, function(d) {
+					return (isNaN(y(d.y))) ? 0.1 : d.y }); }),
+				d3.max(data, function(c) { return d3.max(c.values, function(d) {
+					return (isNaN(y(d.y))) ? 0.1 : d.y
+				}); })
 			]);
-			//
-			xAxisGroup.transition().call(xAxis);
-			yAxisGroup.transition().call(yAxis);
-			xGrid.call(makeXAxis()
-				.tickSize(-height, 0, 0)
-				.tickFormat(""));
-			yGrid.call(makeYAxis()
-				.tickSize(-width, 0, 0)
-				.tickFormat(""));
-			//  Update old charts
-			var paths = svg.selectAll(".level path")
-				.data(data)
-				.attr("d", function(d) { return line(d.values); })
-				.attr("stroke", function(d) { return color(d.name.id); })
-				.attr("fill", "none");
-
-            //
-            d3.selectAll(".axis path, .axis line")
-                .style("fill", "none")
-                .style("stroke", "grey")
-                .style("stroke-width", "1")
-                .style("shape-rendering", "crispEdges");
-            //
-            d3.selectAll(".grid .tick")
-                .style("stroke", "lightgrey")
-                .style("stroke-opacity", "0.7")
-                .style("shape-rendering", "crispEdges");
+			redraw(currXScale, currYScale);
 		};
 	}
 	//
@@ -1183,6 +1366,8 @@ function charts(chartsArray) {
 			//
 			function drawChart(data, chartTitle, xAxisLabel, yAxisLabel, path) {
 				//
+				var currXScale = SCALE_TYPES[0];
+				var currYScale = SCALE_TYPES[0];
 				var x = d3.scale.linear()
 					.domain([
 						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
@@ -1229,10 +1414,10 @@ function charts(chartsArray) {
 				//
 				var line = d3.svg.line()
 					.x(function (d) {
-						return x(d.x);
+						return x((isNaN(x(d.x))) ? 0.1 : d.x);
 					})
 					.y(function (d) {
-						return y(d.y);
+						return y((isNaN(y(d.y))) ? 0.1 : d.y);
 					});
 				//
                 var svg = d3.select(path)
@@ -1240,7 +1425,7 @@ function charts(chartsArray) {
                     .attr("class", "svg-container")
                     .append("svg")
                     .attr("width", width + margin.left + margin.right)
-                    .attr("height", height + margin.top + margin.bottom)
+                    .attr("height", height + margin.top + margin.bottom + 40)
                     .append("g")
                     .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
                     .style("font", "12px sans-serif")
@@ -1473,10 +1658,210 @@ function charts(chartsArray) {
                     .style("cursor", "pointer")
                     .style("margin-left", margin.left + "px")
                     .on("click", function() {
-                        saveChart(path, 1070, 460);
+                        saveChart(path, 1070, 500);
                     });
+				//
+				function redraw(currXScale, currYScale) {
+					switch (currXScale) {
+						case SCALE_TYPES[0]:
+							xAxisGroup.transition().call(d3.svg.axis().scale(x));
+							xGrid.call(d3.svg.axis().scale(x)
+								.tickSize(-height, 0, 0)
+								.tickFormat(""));
+							xGrid.selectAll(".minor")
+								.style("stroke-opacity", "0.7")
+								.style("shape-rendering", "crispEdges")
+								.style("stroke", "lightgrey")
+								.style("stroke-dasharray", "0");
+							break;
+						case SCALE_TYPES[1]:
+							xAxisGroup.transition().call(d3.svg.axis().scale(x).orient("bottom").ticks(0, ".1s"));
+							xGrid.call(d3.svg.axis().scale(x)
+								.tickSize(-height, 0, 0)
+								.tickFormat(""))
+								.selectAll(".tick")
+								.data(x.ticks().map(x.tickFormat(0, ".1")), function(d) { return d; })
+								.exit()
+								.classed("minor", true);
+							xGrid.selectAll(".minor")
+								.style("stroke-opacity", "0.5")
+								.style("shape-rendering", "crispEdges")
+								.style("stroke-dasharray", "2,2");
+							break;
+					}
+					switch (currYScale) {
+						case SCALE_TYPES[0]:
+							yAxisGroup.transition().call(d3.svg.axis().scale(y).orient("left"));
+							yGrid.call(d3.svg.axis().scale(y).orient("left")
+								.tickSize(-width, 0, 0)
+								.tickFormat(""));
+							yGrid.selectAll(".minor")
+								.style("stroke-opacity", "0.7")
+								.style("shape-rendering", "crispEdges")
+								.style("stroke", "lightgrey")
+								.style("stroke-dasharray", "0");
+							break;
+						case SCALE_TYPES[1]:
+							yAxisGroup.transition().call(d3.svg.axis().scale(y).orient("left").ticks(0, ".1s"));
+							yGrid.call(d3.svg.axis().scale(y).orient("left")
+								.tickSize(-width, 0, 0)
+								.tickFormat(""))
+								.selectAll(".tick")
+								.data(y.ticks().map(y.tickFormat(0, ".1")), function(d) { return d; })
+								.exit()
+								.classed("minor", true);
+							yGrid.selectAll(".minor")
+								.style("stroke-opacity", "0.5")
+								.style("shape-rendering", "crispEdges")
+								.style("stroke-dasharray", "2,2");
+							break;
+					}
+					//
+					//  Update old charts
+					var paths = svg.selectAll(".level")
+						.data(data)
+						.selectAll("path")
+						.data(function(d) {
+							return d.charts;
+						})
+						.attr("d", function(c) { return line(c.values); })
+						.attr("stroke-dasharray", function(c, i) {
+							switch (c.name.id) {
+								case AVG.id:
+									return "0,0";
+									break;
+								case MIN_1.id:
+									return "3,3";
+									break;
+								case MIN_5.id:
+									return "10,10";
+									break;
+								case MIN_15.id:
+									return "20,10,5,5,5,10";
+									break;
+							}
+						})
+						.attr("fill", "none");
+
+					//  Test
+					var rightLegend = svg.selectAll(".right-legend")
+						.data(data).enter()
+						.append("g")
+						.attr("class", "right-legend")
+						.attr("transform", function(d, i) {
+							return "translate(0," + i * 20 + ")";
+						});
+
+					rightLegend.append("rect")
+						.attr("x", width + 21)
+						.attr("width", 18)
+						.attr("height", 18)
+						.style("fill", function(d) { return color(d.loadType); });
+
+					rightLegend.append("text")
+						.attr("x", width + 43)
+						.attr("y", 9)
+						.attr("dy", ".35em")
+						.style("text-anchor", "start")
+						.text(function(d) { return d.loadType; });
+					//
+					svg.selectAll(".right-foreign")
+						.data(data).enter()
+						.append("foreignObject")
+						.attr("class", "foreign right-foreign")
+						.attr("x", width + 3)
+						.attr("width", 18)
+						.attr("height", 18)
+						.attr("transform", function(d, i) {
+							return "translate(0," + i * 20 + ")";
+						})
+						.append("xhtml:body")
+						.append("input")
+						.attr("type", "checkbox")
+						.attr("checked", "checked")
+						.on("click", function(d, i) {
+							var element = $(path + d.loadType);
+							if ($(this).is(":checked")) {
+								element.css("opacity", "1")
+							} else {
+								element.css("opacity", "0");
+							}
+						});
+					//
+					d3.selectAll(".axis path, .axis line")
+						.style("fill", "none")
+						.style("stroke", "grey")
+						.style("stroke-width", "1")
+						.style("shape-rendering", "crispEdges");
+					//
+					d3.selectAll(".grid .tick")
+						.style("stroke", "lightgrey")
+						.style("stroke-opacity", "0.7")
+						.style("shape-rendering", "crispEdges");
+					//
+				}
+				//
+				appendScaleLabels(svg, {
+					updateScales: function(scaleOrientation, scaleType) {
+						// find scale and apply params to it
+						if (scaleType === SCALE_TYPES[0]) {
+							if (scaleOrientation === SCALE_ORIENTATION[0]) {
+								x = d3.scale.linear()
+									.domain([
+										d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+											return d3.min(c.values, function(v) { return v.x; }); });
+										}),
+										d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+											return d3.max(c.values, function(v) { return v.x; }); });
+										})
+									])
+									.range([0, width]);
+								currXScale = SCALE_TYPES[0];
+							} else {
+								y = d3.scale.linear()
+									.domain([
+										d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+											return d3.min(c.values, function(v) { return v.y; }); });
+										}),
+										d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+											return d3.max(c.values, function(v) { return v.y; }); });
+										})
+									])
+									.range([height, 0]);
+								currYScale = SCALE_TYPES[0];
+							}
+						} else {
+							if (scaleOrientation === SCALE_ORIENTATION[0]) {
+								x = d3.scale.log()
+									.domain([
+										d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+											return d3.min(c.values, function(v) { return (v.x <= 0) ? 0.1 : v.x; }); });
+										}),
+										d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+											return d3.max(c.values, function(v) { return (v.x <= 0) ? 0.1 : v.x; }); });
+										})
+									])
+									.range([0, width]);
+								currXScale = SCALE_TYPES[1];
+							} else {
+								y = d3.scale.log()
+									.domain([
+										d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+											return d3.min(c.values, function(v) { return (v.y <= 0) ? 0.1 : v.y; }); });
+										}),
+										d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+											return d3.max(c.values, function(v) { return (v.y <= 0) ? 0.1 : v.y; }); });
+										})
+									])
+									.range([height, 0]);
+								currYScale = SCALE_TYPES[1];
+							}
+						}
+						redraw(currXScale, currYScale);
+					}
+				}, 40);
 				return function(chartType, json) {
-					json.threadName = json.threadName.match(threadNameRegExp)[0];
+					json.threadName = json.threadName.match(getThreadNamePattern())[0];
 					var loadType = json.threadName;
 					//
 					var splitIndex = 0;
@@ -1615,115 +2000,22 @@ function charts(chartsArray) {
 					//
 					x.domain([
 						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-							return d3.min(c.values, function(v) { return v.x; }); });
+							return d3.min(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : v.x; }); });
 						}),
 						d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-							return d3.max(c.values, function(v) { return v.x; }); });
+							return d3.max(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : v.x; }); });
 						})
 					]);
 					y.domain([
 						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-							return d3.min(c.values, function(v) { return v.y; }); });
+							return d3.min(c.values, function(v) { return (isNaN(y(v.y))) ? 0.1 : v.y; }); });
 						}),
 						d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-							return d3.max(c.values, function(v) { return v.y; }); });
+							return d3.max(c.values, function(v) { return (isNaN(y(v.y))) ? 0.1 : v.y; }); });
 						})
 					]);
 					//
-					xAxisGroup.transition().call(xAxis);
-					yAxisGroup.transition().call(yAxis);
-					xGrid.call(makeXAxis()
-						.tickSize(-height, 0, 0)
-						.tickFormat(""));
-					yGrid.call(makeYAxis()
-						.tickSize(-width, 0, 0)
-						.tickFormat(""));
-					//  Update old charts
-					/*var paths = svg.selectAll(".level path")
-						.data(data)
-						.attr("d", function(d) { return line(d.values); })
-						.attr("stroke", function(d) { return color(d.name); })
-						.attr("fill", "none");*/
-
-					var paths = svg.selectAll(".level")
-						.data(data)
-						.selectAll("path")
-						.data(function(d) {
-							return d.charts;
-						})
-						.attr("d", function(c) { return line(c.values); })
-						.attr("stroke-dasharray", function(c, i) {
-							switch (c.name.id) {
-								case AVG.id:
-									return "0,0";
-									break;
-								case MIN_1.id:
-									return "3,3";
-									break;
-								case MIN_5.id:
-									return "10,10";
-									break;
-								case MIN_15.id:
-									return "20,10,5,5,5,10";
-									break;
-							}
-						})
-						.attr("fill", "none");
-
-					//  Test
-					var rightLegend = svg.selectAll(".right-legend")
-						.data(data).enter()
-						.append("g")
-						.attr("class", "right-legend")
-						.attr("transform", function(d, i) {
-							return "translate(0," + i * 20 + ")";
-						});
-
-					rightLegend.append("rect")
-						.attr("x", width + 21)
-						.attr("width", 18)
-						.attr("height", 18)
-						.style("fill", function(d) { return color(d.loadType); });
-
-					rightLegend.append("text")
-						.attr("x", width + 43)
-						.attr("y", 9)
-						.attr("dy", ".35em")
-						.style("text-anchor", "start")
-						.text(function(d) { return d.loadType; });
-					//
-					svg.selectAll(".right-foreign")
-						.data(data).enter()
-						.append("foreignObject")
-						.attr("class", "foreign right-foreign")
-						.attr("x", width + 3)
-						.attr("width", 18)
-						.attr("height", 18)
-						.attr("transform", function(d, i) {
-							return "translate(0," + i * 20 + ")";
-						})
-						.append("xhtml:body")
-						.append("input")
-						.attr("type", "checkbox")
-						.attr("checked", "checked")
-						.on("click", function(d, i) {
-							var element = $(path + d.loadType);
-							if ($(this).is(":checked")) {
-								element.css("opacity", "1")
-							} else {
-								element.css("opacity", "0");
-							}
-						});
-                    d3.selectAll(".axis path, .axis line")
-                        .style("fill", "none")
-                        .style("stroke", "grey")
-                        .style("stroke-width", "1")
-                        .style("shape-rendering", "crispEdges");
-                    //
-                    d3.selectAll(".grid .tick")
-                        .style("stroke", "lightgrey")
-                        .style("stroke-opacity", "0.7")
-                        .style("shape-rendering", "crispEdges");
+					redraw(currXScale, currYScale);
 				};
 			}
 		},
@@ -1822,7 +2114,12 @@ function charts(chartsArray) {
 			}
 
 			function drawCharts(data, xAxisLabel, yAxisLabel, path) {
-				data.forEach(function(d) {
+				var scalesArray = [];
+				data.forEach(function(d, i) {
+					var currIndex = i;
+					var currXScale = SCALE_TYPES[0];
+					var currYScale = SCALE_TYPES[0];
+					//
 					var x = d3.scale.linear()
 						.domain([0, d3.max(rampupThreadCountsArray)])
 						.range([0, width]);
@@ -1836,6 +2133,16 @@ function charts(chartsArray) {
 							}); })
 						])
 						.range([height, 0]);
+					//
+					scalesArray.push({
+						xLabel: currXScale,
+						yLabel: currYScale,
+						x: x,
+						y: y,
+						update: function(index, x, y) {
+							redraw(index, x, y);
+						}
+					});
 					var color = d3.scale.ordinal()
 						.range(colorsList18);
 					color.domain(loadRampupSizesArray.map(function(d) { return d; }));
@@ -1858,11 +2165,11 @@ function charts(chartsArray) {
 							.orient("left");
 					}
 					var line = d3.svg.line()
-						.x(function(d) {
-							return x(d.x);
+						.x(function (d) {
+							return x((isNaN(x(d.x))) ? 0.1 : d.x);
 						})
-						.y(function(d) {
-							return y(d.y);
+						.y(function (d) {
+							return y((isNaN(y(d.y))) ? 0.1 : d.y);
 						});
                     var svg = d3.select(path)
                         .append("div")
@@ -1991,18 +2298,167 @@ function charts(chartsArray) {
                         .on("click", function() {
                             saveChart(svg.node().parentNode, 740, 460);
                         });
+					function redraw(index, x, y) {
+						var currXScale = scalesArray[index].xLabel;
+						var currYScale = scalesArray[index].yLabel;
+						//
+						switch (currXScale) {
+							case SCALE_TYPES[0]:
+								xAxisGroup.transition().call(d3.svg.axis().scale(x));
+								xGrid.call(d3.svg.axis().scale(x)
+									.tickSize(-height, 0, 0)
+									.tickFormat(""));
+								xGrid.selectAll(".minor")
+									.style("stroke-opacity", "0.7")
+									.style("shape-rendering", "crispEdges")
+									.style("stroke", "lightgrey")
+									.style("stroke-dasharray", "0");
+								break;
+							case SCALE_TYPES[1]:
+								xAxisGroup.transition().call(d3.svg.axis().scale(x).orient("bottom").ticks(0, ".1s"));
+								xGrid.call(d3.svg.axis().scale(x)
+									.tickSize(-height, 0, 0)
+									.tickFormat(""))
+									.selectAll(".tick")
+									.data(x.ticks().map(x.tickFormat(0, ".1")), function(d) { return d; })
+									.exit()
+									.classed("minor", true);
+								xGrid.selectAll(".minor")
+									.style("stroke-opacity", "0.5")
+									.style("shape-rendering", "crispEdges")
+									.style("stroke-dasharray", "2,2");
+								break;
+						}
+						//
+						switch (currYScale) {
+							case SCALE_TYPES[0]:
+								yAxisGroup.transition().call(d3.svg.axis().scale(y).orient("left"));
+								yGrid.call(d3.svg.axis().scale(y).orient("left")
+									.tickSize(-width, 0, 0)
+									.tickFormat(""));
+								yGrid.selectAll(".minor")
+									.style("stroke-opacity", "0.7")
+									.style("shape-rendering", "crispEdges")
+									.style("stroke", "lightgrey")
+									.style("stroke-dasharray", "0");
+								break;
+							case SCALE_TYPES[1]:
+								yAxisGroup.transition().call(d3.svg.axis().scale(y).orient("left").ticks(0, ".1s"));
+								yGrid.call(d3.svg.axis().scale(y).orient("left")
+									.tickSize(-width, 0, 0)
+									.tickFormat(""))
+									.selectAll(".tick")
+									.data(y.ticks().map(y.tickFormat(0, ".1")), function(d) { return d; })
+									.exit()
+									.classed("minor", true);
+								yGrid.selectAll(".minor")
+									.style("stroke-opacity", "0.5")
+									.style("shape-rendering", "crispEdges")
+									.style("stroke-dasharray", "2,2");
+								break;
+						}
+						//
+						var loadTypeSvg = d3.select(path + "-" + d.loadType);
+						var currentLoadType = d.loadType;
+						//
+						d.sizes.forEach(function(d, i) {
+							//
+							var paths = loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
+								.selectAll("path").data(d.charts)
+								.attr("d", function(v) { return line(v.values); })
+								.attr("fill", "none");
+							//
+							var dots = loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
+								.data(d.charts)
+								.selectAll(".dot").data(function(v) { return v.values; })
+								.enter().append("circle")
+								.attr("class", "dot")
+								//.style("stroke-width", "1.5px")
+								.attr("cx", function(coord) { return x((isNaN(x(coord.x))) ? 0.1 : coord.x); })
+								.attr("cy", function(coord) { return y((isNaN(y(coord.y))) ? 0.1 : coord.y); })
+								.attr("r", 2);
+							//  Update dots
+							loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
+								.selectAll(".dot").data(function(v) { return v.values; })
+								.attr("cx", function(coord) { return x((isNaN(x(coord.x))) ? 0.1 : coord.x); })
+								.attr("cy", function(coord) { return y((isNaN(y(coord.y))) ? 0.1 : coord.y); })
+						});
+						//
+						d3.selectAll(".axis path, .axis line")
+							.style("fill", "none")
+							.style("stroke", "grey")
+							.style("stroke-width", "1")
+							.style("shape-rendering", "crispEdges");
+						//
+						d3.selectAll(".grid .tick")
+							.style("stroke", "lightgrey")
+							.style("stroke-opacity", "0.7")
+							.style("shape-rendering", "crispEdges");
+					}
+					//
+					appendScaleLabels(svg, {
+						updateScales: function(scaleOrientation, scaleType) {
+							// find scale and apply params to it
+							if (scaleType === SCALE_TYPES[0]) {
+								if (scaleOrientation === SCALE_ORIENTATION[0]) {
+									x = d3.scale.linear()
+										.domain([0, d3.max(rampupThreadCountsArray)])
+										.range([0, width]);
+									currXScale = SCALE_TYPES[0];
+								} else {
+									y = d3.scale.linear()
+										.domain([
+											0,
+											d3.max(d.sizes, function(c) { return d3.max(c.charts, function(v) {
+												return d3.max(v.values, function(val) { return val.y; });
+											}); })
+										])
+										.range([height, 0]);
+									currYScale = SCALE_TYPES[0];
+								}
+							} else {
+								if (scaleOrientation === SCALE_ORIENTATION[0]) {
+									x = d3.scale.log()
+										.domain([1, d3.max(rampupThreadCountsArray)])
+										.range([0, width]);
+									currXScale = SCALE_TYPES[1];
+								} else {
+									y = d3.scale.log()
+										.domain([
+											1,
+											d3.max(d.sizes, function(c) { return d3.max(c.charts, function(v) {
+												return d3.max(v.values, function(val) {
+													return (val.y <= 0) ? 1 : val.y;
+												});
+											}); })
+										])
+										.range([height, 0]);
+									currYScale = SCALE_TYPES[1];
+								}
+							}
+							//
+							scalesArray[currIndex].x = x;
+							scalesArray[currIndex].xLabel = currXScale;
+							scalesArray[currIndex].y = y;
+							scalesArray[currIndex].yLabel = currYScale;
+							redraw(currIndex, x, y);
+						}
+					}, 0);
 				});
 				//
 				return function(chartType, json) {
 					var isFound = false;
 					data.forEach(function(d, i) {
 						if (json.message.formattedMessage.split(" ")[0].slice(1, -1).toLowerCase().indexOf(d.loadType) > -1) {
+							var x = scalesArray[i].x;
+							var y = scalesArray[i].y;
+							var currYScale = scalesArray[i].yLabel;
 							var loadTypeSvg = d3.select(path + "-" + d.loadType);
 							//
 							var currentLoadType = d.loadType;
 							var currentSizes = d.sizes;
 							var splitIndex;
-							switch(chartType) {
+							switch (chartType) {
 								case CHART_TYPES.TP:
 									splitIndex = 2;
 									break;
@@ -2015,85 +2471,36 @@ function charts(chartsArray) {
 							var first = parsedString.indexOf("(") + 1;
 							var second = parsedString.lastIndexOf(")");
 							var value = parsedString.substring(first, second).split("/");
-
-							var x = d3.scale.linear()
-								.domain([0, d3.max(rampupThreadCountsArray)])
-								.range([0, width]);
-
-							d.sizes.forEach(function(d, i) {
+							//
+							d.sizes.forEach(function (d, i) {
 								if (d.size === json.contextMap["currentSize"]) {
-									d.charts.forEach(function(c, i) {
-										c.values.push({ x: parseInt(json.contextMap["currentThreadCount"]), y: parseFloat(value[i]) });
-									});
-									//
-									var y = d3.scale.linear()
-										.domain([
-											0,
-											d3.max(currentSizes, function(c) { return d3.max(c.charts, function(v) {
-												return d3.max(v.values, function(val) { return val.y; });
-											}); })
-										]).range([height, 0]);
-									var line = d3.svg.line()
-										.x(function(d) {
-											return x(d.x);
-										})
-										.y(function(d) {
-											return y(d.y);
+									d.charts.forEach(function (c, i) {
+										c.values.push({
+											x: parseInt(json.contextMap["currentThreadCount"]),
+											y: parseFloat(value[i])
 										});
-									function makeYAxis() {
-										return d3.svg.axis()
-											.scale(y)
-											.orient("left");
-									}
-									var yAxis = d3.svg.axis()
-										.scale(y)
-										.orient("left");
-									var yAxisGroup = loadTypeSvg.select(".y-axis")
-										.call(yAxis);
-
-									var yGrid = loadTypeSvg.select(".y-grid")
-										.call(makeYAxis()
-											.tickSize(-width, 0, 0)
-											.tickFormat(""));
-
-									yAxisGroup.transition().call(yAxis);
-									yGrid.call(makeYAxis()
-										.tickSize(-width, 0, 0)
-										.tickFormat(""));
-									//
-									var paths = loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
-										.selectAll("path").data(d.charts)
-										.attr("d", function(v) { return line(v.values); })
-										.attr("fill", "none");
-									//
-									var dots = loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
-										.data(d.charts)
-										.selectAll(".dot").data(function(v) { return v.values; })
-										.enter().append("circle")
-										.attr("class", "dot")
-                                        //.style("stroke-width", "1.5px")
-										.attr("cx", function(coord) { return x(coord.x); })
-										.attr("cy", function(coord) { return y(coord.y); })
-										.attr("r", 2);
-									//  Update dots
-									loadTypeSvg.select(path + "-" + currentLoadType + "-" + d.size + "-" + i)
-										.selectAll(".dot").data(function(v) { return v.values; })
-										.attr("cx", function(coord) { return x(coord.x); })
-										.attr("cy", function(coord) { return y(coord.y); });
+									});
 								}
+								//
 							});
+							//
+							x.domain([(isNaN(x(0))) ? 1 : 0, d3.max(rampupThreadCountsArray)])
+								.range([0, width]);
+							y.domain([
+								(currYScale === SCALE_TYPES[1]) ? 1 : 0,
+								d3.max(currentSizes, function (c) {
+									return d3.max(c.charts, function (v) {
+										return d3.max(v.values, function (val) {
+											return ((currYScale === SCALE_TYPES[1]) && val.y <= 0) ?
+												1 : val.y;
+										});
+									});
+								})
+							]).range([height, 0]);
+							//
+							scalesArray[i].update(i, x, y);
 						}
 					});
-                    d3.selectAll(".axis path, .axis line")
-                        .style("fill", "none")
-                        .style("stroke", "grey")
-                        .style("stroke-width", "1")
-                        .style("shape-rendering", "crispEdges");
-                    //
-                    d3.selectAll(".grid .tick")
-                        .style("stroke", "lightgrey")
-                        .style("stroke-opacity", "0.7")
-                        .style("shape-rendering", "crispEdges");
 				}
 			}
 		}
