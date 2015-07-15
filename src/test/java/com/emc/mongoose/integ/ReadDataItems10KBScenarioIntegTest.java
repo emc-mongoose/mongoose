@@ -6,6 +6,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.integTestTools.ContentGetter;
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
 import com.emc.mongoose.integ.integTestTools.IntegLogManager;
@@ -78,6 +79,8 @@ public class ReadDataItems10KBScenarioIntegTest {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
+				// For correct work of verification option
+				UniformDataSource.DEFAULT = new UniformDataSource();
 				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 				new ScriptRunner().run();
 			}
@@ -112,17 +115,17 @@ public class ReadDataItems10KBScenarioIntegTest {
 		//
 		readScenarioMongoose.start();
 		readScenarioMongoose.join();
-		IntegLogManager.waitLogger();
 		readScenarioMongoose.interrupt();
+		// Wait logger's output from console
+		Thread.sleep(3000);
 		System.setOut(savedOutputStream.getPrintStream());
 	}
 
 	@Test
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
 	throws Exception {
-		//problem with console output saving (?)
-		//Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
-		//Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test

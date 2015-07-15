@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.TimeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
 import com.emc.mongoose.integ.integTestTools.IntegLogManager;
 import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
@@ -76,6 +77,8 @@ public class TimeLimitedWriteScenarioIntegTest {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, LIMIT_TIME);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_THREADS, LOAD_THREADS);
+				// For correct work of verification option
+				UniformDataSource.DEFAULT = new UniformDataSource();
 				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 				new ScriptRunner().run();
 			}
@@ -84,17 +87,17 @@ public class TimeLimitedWriteScenarioIntegTest {
 		writeScenarioMongoose.start();
 		writeScenarioMongoose.join();
 		actualTimeMS = System.currentTimeMillis() - actualTimeMS;
-		IntegLogManager.waitLogger();
 		writeScenarioMongoose.interrupt();
+		// Wait logger's output from console
+		Thread.sleep(3000);
 		System.setOut(savedOutputStream.getPrintStream());
 	}
 
 	@Test
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
 	throws Exception {
-		//problem with console output saving (?)
-		//Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
-		//Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test

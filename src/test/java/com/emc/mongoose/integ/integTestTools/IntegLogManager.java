@@ -114,17 +114,4 @@ public final class IntegLogManager {
 		final Matcher matcher = PERF_TRACE_FILE_PATTERN.matcher(line);
 		return matcher.find();
 	}
-
-	public static void waitLogger()
-	throws InterruptedException {
-		if(LogUtil.LOAD_HOOKS_COUNT.get() != 0) {
-			LogUtil.HOOKS_LOCK.tryLock(10, TimeUnit.SECONDS);
-
-			try {
-				LogUtil.HOOKS_COND.await(10, TimeUnit.SECONDS);
-			} finally {
-				LogUtil.HOOKS_LOCK.unlock();
-			}
-		}
-	}
 }

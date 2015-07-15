@@ -6,6 +6,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.integTestTools.IntegConstants;
 import com.emc.mongoose.integ.integTestTools.IntegLogManager;
 import com.emc.mongoose.integ.integTestTools.PortListener;
@@ -80,14 +81,18 @@ public class SingleWriteScenarioWith10ConcurrentConnectionsIntegTest {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 				RunTimeConfig.getContext().set("load.type.create.threads", LOAD_THREADS);
+				// For correct work of verification option
+				UniformDataSource.DEFAULT = new UniformDataSource();
 				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
 				new ScriptRunner().run();
 			}
 		}, "writeScenarioMongoose");
+		/*
 		// Before start Mongoose
 		int countConnections = PortListener.getCountConnectionsOnPort(IntegConstants.PORT_INDICATOR);
 		// Check that actual connection count = 1 because cinderella is run local (for single test run)
-		//Assert.assertEquals(1, countConnections);
+		Assert.assertEquals(1, countConnections);
+		*/
 		// Start Mongoose
 		writeScenarioMongoose.start();
 		writeScenarioMongoose.join(30000);
@@ -101,7 +106,9 @@ public class SingleWriteScenarioWith10ConcurrentConnectionsIntegTest {
 			IntegLogManager.waitLogger();
 			writeScenarioMongoose.interrupt();
 		}
-
+		// Wait logger's output from console
+		Thread.sleep(3000);
+		//
 		Path expectedFile = IntegLogManager.getMessageFile(createRunId).toPath();
 		//Check that messages.log file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
@@ -124,9 +131,8 @@ public class SingleWriteScenarioWith10ConcurrentConnectionsIntegTest {
 		//
 		shouldCreateDataItemsFileWithInformationAboutAllObjects();
 		//
-		//problem with console output saving (?)
-		//Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
-		//Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
 
 		shouldReportScenarioEndToMessageLogFile();
 
