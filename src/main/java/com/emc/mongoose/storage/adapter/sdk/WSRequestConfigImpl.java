@@ -35,12 +35,12 @@ extends WSRequestConfigBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	public final static String
-		KEY_BUCKET_NAME = "api.type.s3.bucket",
-		MSG_NO_BUCKET = "Bucket is not specified",
-		FMT_MSG_ERR_BUCKET_NOT_EXIST = "Created bucket \"%s\" still doesn't exist";
+		KEY_POOL_NAME = "api.type.sdk.Pool",
+		MSG_NO_POOL = "Pool is not specified",
+		FMT_MSG_ERR_POOL_NOT_EXIST = "Created pool \"%s\" still doesn't exist";
 	private final String authPrefixValue;
 	//
-	private WSPoolImpl<T> bucket;
+	private WSPoolImpl<T> pool;
 	//
 	public WSRequestConfigImpl()
 	throws NoSuchAlgorithmException {
@@ -52,7 +52,7 @@ extends WSRequestConfigBase<T> {
 		super(reqConf2Clone);
 		authPrefixValue = runTimeConfig.getApiS3AuthPrefix() + " ";
 		if(reqConf2Clone != null) {
-			setBucket(reqConf2Clone.getBucket());
+			setPool(reqConf2Clone.getPool());
 			setNameSpace(reqConf2Clone.getNameSpace());
 		}
 	}
@@ -68,13 +68,13 @@ extends WSRequestConfigBase<T> {
 		return copy;
 	}
 	//
-	public final WSPoolImpl<T> getBucket() {
-		return bucket;
+	public final WSPoolImpl<T> getPool() {
+		return pool;
 	}
 	//
-	public final WSRequestConfigImpl<T> setBucket(final WSPoolImpl<T> bucket) {
-		LOG.debug(Markers.MSG, "Req conf instance #{}: set bucket \"{}\"", hashCode(), bucket);
-		this.bucket = bucket;
+	public final WSRequestConfigImpl<T> setPool(final WSPoolImpl<T> pool) {
+		LOG.debug(Markers.MSG, "Req conf instance #{}: set pool \"{}\"", hashCode(), pool);
+		this.pool = pool;
 		return this;
 	}
 	//
@@ -94,13 +94,13 @@ extends WSRequestConfigBase<T> {
 		super.setProperties(runTimeConfig);
 		//
 		try {
-			final WSPoolImpl<T> bucket = new WSPoolImpl<>(
-				this, this.runTimeConfig.getString(KEY_BUCKET_NAME),
+			final WSPoolImpl<T> pool = new WSPoolImpl<>(
+				this, this.runTimeConfig.getString(KEY_POOL_NAME),
 				this.runTimeConfig.getStorageVersioningEnabled()
 			);
-			setBucket(bucket);
+			setPool(pool);
 		} catch(final NoSuchElementException e) {
-			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_BUCKET_NAME);
+			LOG.error(Markers.ERR, MSG_TMPL_NOT_SPECIFIED, KEY_POOL_NAME);
 		}
 		//
 		return this;
@@ -110,16 +110,16 @@ extends WSRequestConfigBase<T> {
 	public final void readExternal(final ObjectInput in)
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
-		final String bucketName = String.class.cast(ObjectInputStream.class.cast(in).readUnshared());
-		LOG.debug(Markers.MSG, "Note: bucket {} has been got from load client side", bucketName);
-		setBucket(new WSPoolImpl<>(this, bucketName, runTimeConfig.getStorageVersioningEnabled()));
+		final String poolName = String.class.cast(ObjectInputStream.class.cast(in).readUnshared());
+		LOG.debug(Markers.MSG, "Note: pool {} has been got from load client side", poolName);
+		setPool(new WSPoolImpl<>(this, poolName, runTimeConfig.getStorageVersioningEnabled()));
 	}
 	//
 	@Override
 	public final void writeExternal(final ObjectOutput out)
 	throws IOException {
 		super.writeExternal(out);
-		ObjectOutputStream.class.cast(out).writeUnshared(bucket.getName());
+		ObjectOutputStream.class.cast(out).writeUnshared(pool.getName());
 	}
 	//
 	@Override
@@ -128,13 +128,13 @@ extends WSRequestConfigBase<T> {
 		if(httpRequest == null) {
 			throw new IllegalArgumentException(MSG_NO_REQ);
 		}
-		if(bucket == null) {
-			throw new IllegalArgumentException(MSG_NO_BUCKET);
+		if(pool == null) {
+			throw new IllegalArgumentException(MSG_NO_POOL);
 		}
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		httpRequest.setUriPath("/" + bucket + "/" + dataItem.getId());
+		httpRequest.setUriPath("/" + pool + "/" + dataItem.getId());
 	}
 	//
 	@Override
@@ -193,13 +193,13 @@ extends WSRequestConfigBase<T> {
 		Producer<T> producer = null;
 		if(anyDataProducerEnabled) {
 			try {
-				producer = new WSPoolProducer<>(bucket, BasicWSObject.class, maxCount, addr);
+				producer = new WSPoolProducer<>(pool, BasicWSObject.class, maxCount, addr);
 			} catch(final NoSuchMethodException e) {
 				LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 			}
 		} else {
 			LOG.debug(
-				Markers.MSG, "req conf {}: using of bucket listing data producer is suppressed",
+				Markers.MSG, "req conf {}: using of pool listing data producer is suppressed",
 				hashCode()
 			);
 		}
@@ -209,22 +209,22 @@ extends WSRequestConfigBase<T> {
 	@Override
 	public final void configureStorage(final String[] storageNodeAddrs)
 	throws IllegalStateException {
-		if(bucket == null) {
-			throw new IllegalStateException("Bucket is not specified");
+		if(pool == null) {
+			throw new IllegalStateException("Pool is not specified");
 		} else {
-			LOG.debug(Markers.MSG, "Configure storage w/ bucket \"{}\"", bucket);
+			LOG.debug(Markers.MSG, "Configure storage w/ pool \"{}\"", pool);
 		}
-		final String bucketName = bucket.getName();
-		if(bucket.exists(storageNodeAddrs[0])) {
-			LOG.info(Markers.MSG, "Bucket \"{}\" already exists", bucketName);
+		final String poolName = pool.getName();
+		if(pool.exists(storageNodeAddrs[0])) {
+			LOG.info(Markers.MSG, "Pool \"{}\" already exists", poolName);
 		} else {
-			LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist, trying to create", bucketName);
-			bucket.create(storageNodeAddrs[0]);
-			if(bucket.exists(storageNodeAddrs[0])) {
-				runTimeConfig.set(KEY_BUCKET_NAME, bucketName);
+			LOG.debug(Markers.MSG, "Pool \"{}\" doesn't exist, trying to create", poolName);
+			pool.create(storageNodeAddrs[0]);
+			if(pool.exists(storageNodeAddrs[0])) {
+				runTimeConfig.set(KEY_POOL_NAME, poolName);
 			} else {
 				throw new IllegalStateException(
-					String.format(FMT_MSG_ERR_BUCKET_NOT_EXIST, bucketName)
+					String.format(FMT_MSG_ERR_POOL_NOT_EXIST, poolName)
 				);
 			}
 		}

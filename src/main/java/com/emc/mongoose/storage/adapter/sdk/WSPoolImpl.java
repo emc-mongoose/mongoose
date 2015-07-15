@@ -31,7 +31,7 @@ import java.util.Date;
  Created by kurila on 02.10.14.
  */
 public class WSPoolImpl<T extends WSObject>
-implements Bucket<T> {
+implements Pool<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String VERSIONING_ENTITY_CONTENT =
@@ -120,12 +120,12 @@ implements Bucket<T> {
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.debug(Markers.MSG, "Bucket \"{}\" exists", name);
+						LOG.debug(Markers.MSG, "Pool \"{}\" exists", name);
 						flagExists = true;
 					} else if(statusCode == HttpStatus.SC_NOT_FOUND) {
-						LOG.debug(Markers.MSG, "Bucket \"{}\" doesn't exist", name);
+						LOG.debug(Markers.MSG, "Pool \"{}\" doesn't exist", name);
 					} else {
-						final StringBuilder msg = new StringBuilder("Check bucket \"")
+						final StringBuilder msg = new StringBuilder("Check Pool \"")
 							.append(name).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
@@ -163,9 +163,9 @@ implements Bucket<T> {
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Bucket \"{}\" versioning enabled", name);
+						LOG.info(Markers.MSG, "Pool \"{}\" versioning enabled", name);
 					} else {
-						final StringBuilder msg = new StringBuilder("Bucket versioning \"")
+						final StringBuilder msg = new StringBuilder("Pool versioning \"")
 								.append(name).append("\" failure: ")
 								.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
@@ -177,7 +177,7 @@ implements Bucket<T> {
 							}
 						}
 						LOG.warn(
-								Markers.ERR, "Bucket versioning \"{}\" response ({}): {}",
+								Markers.ERR, "Pool versioning \"{}\" response ({}): {}",
 								name, statusCode, msg.toString()
 						);
 					}
@@ -203,9 +203,9 @@ implements Bucket<T> {
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Bucket \"{}\" created", name);
+						LOG.info(Markers.MSG, "Pool \"{}\" created", name);
 					} else {
-						final StringBuilder msg = new StringBuilder("Create bucket \"")
+						final StringBuilder msg = new StringBuilder("Create Pool \"")
 							.append(name).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
@@ -217,7 +217,7 @@ implements Bucket<T> {
 							}
 						}
 						LOG.warn(
-							Markers.ERR, "Create bucket \"{}\" response ({}): {}",
+							Markers.ERR, "Create Pool \"{}\" response ({}): {}",
 							name, statusCode, msg.toString()
 						);
 					}
@@ -243,9 +243,9 @@ implements Bucket<T> {
 				} else {
 					final int statusCode = statusLine.getStatusCode();
 					if(statusCode >= 200 && statusCode < 300) {
-						LOG.info(Markers.MSG, "Bucket \"{}\" deleted", name);
+						LOG.info(Markers.MSG, "Pool \"{}\" deleted", name);
 					} else {
-						final StringBuilder msg = new StringBuilder("Delete bucket \"")
+						final StringBuilder msg = new StringBuilder("Delete Pool \"")
 							.append(name).append("\" failure: ")
 							.append(statusLine.getReasonPhrase());
 						if(httpEntity != null) {
@@ -257,7 +257,7 @@ implements Bucket<T> {
 							}
 						}
 						LOG.warn(
-							Markers.ERR, "Delete bucket \"{}\" response ({}): {}",
+							Markers.ERR, "Delete Pool \"{}\" response ({}): {}",
 							name, statusCode, msg.toString()
 						);
 					}
