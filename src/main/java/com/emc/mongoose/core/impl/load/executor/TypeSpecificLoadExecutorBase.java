@@ -47,7 +47,7 @@ extends LimitedRateLoadExecutorBase<T> {
 		);
 		//
 		this.loadType = reqConfig.getLoadType();
-		//
+		// TODO
 		int buffSize;
 		if(producer != null && FileProducer.class.isInstance(producer)) {
 			final long approxDataItemSize = ((FileProducer) producer).getApproxDataItemsSize();

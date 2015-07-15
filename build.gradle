@@ -1029,13 +1029,14 @@ test {
 	testLogging { events "passed", "skipped", "failed" }
 }
 
-task integTest(type: Test){
+task integTest(type: Test, dependsOn: compileRMI) {
 	//Be able to run only test suit
-	include '**/IntegrationTestSuite.class'
+	include '**/DistributedLoadTestSuite.class'
+	//include '**/IntegrationTestSuite.class'
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
-	jvmArgs '-Djava.security.policy=file:/home/olga/mongoose/vipr-mongoose/src/main/resources/allpermissions.policy'
+	jvmArgs "-Djava.security.policy=file:" + new File("").getCanonicalPath() + "${File.separator}src${File.separator}main${File.separator}resources${File.separator}allpermissions.policy"
 	testLogging.showStandardStreams = true
 	testLogging { events "passed", "skipped", "failed" }
 }

@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.base;
+package com.emc.mongoose.integ.suite;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
@@ -8,18 +8,20 @@ import org.apache.logging.log4j.Logger;
 //
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 //
 import java.nio.file.Paths;
 /**
  Created by kurila on 14.07.15.
  */
-public abstract class LoggingTestBase {
+@RunWith(Suite.class)
+public abstract class LoggingTestSuite {
 	//
 	private final static String
 		LOG_CONF_PROPERTY_KEY = "log4j.configurationFile",
 		LOG_FILE_NAME = "logging.json",
 		USER_DIR_PROPERTY_NAME = "user.dir";
-	protected static Logger LOG;
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -31,7 +33,6 @@ public abstract class LoggingTestBase {
 			System.setProperty(LOG_CONF_PROPERTY_KEY, fullLogConfFile);
 		}
 		LogUtil.init();
-		LOG = LogManager.getLogger();
 
 	}
 	//

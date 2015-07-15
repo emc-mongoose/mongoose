@@ -3,9 +3,8 @@ package com.emc.mongoose.integ.distributed.single;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 //
+import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.WSObject;
-//
-import com.emc.mongoose.integ.base.DistributedLoadTestBase;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
@@ -18,8 +17,7 @@ import org.junit.Test;
 /**
  Created by kurila on 14.07.15.
  */
-public final class WriteByCountTest
-extends DistributedLoadTestBase {
+public final class WriteByCountTest {
 	//
 	private final static long COUNT_TO_WRITE = 100000;
 	//
@@ -29,11 +27,12 @@ extends DistributedLoadTestBase {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		RUNTIME_CONFIG.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, COUNT_TO_WRITE);
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, COUNT_TO_WRITE);
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
 			clientBuilder = new BasicWSClientBuilder<>();
 		CLIENT = clientBuilder
-			.setClientMode(new String[] {"127.0.0.1"})
+			.setClientMode(new String[] {ServiceUtils.getHostAddr()})
 			.build();
 		COUNT_WRITTEN = CLIENT.write(null, null, (short) 10, SizeUtil.toSize("10KB"));
 	}

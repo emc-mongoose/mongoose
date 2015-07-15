@@ -1,8 +1,10 @@
-package com.emc.mongoose.integ;
+package com.emc.mongoose.integ.suite;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
+//
+import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
 import com.emc.mongoose.integ.core.chain.CRUDSequentialScenarioIntegTest;
 import com.emc.mongoose.integ.core.chain.CRUDSimultaneousScenarioIntegTest;
@@ -22,7 +24,6 @@ import com.emc.mongoose.integ.core.single.WriteUsing100ConnTest;
 import com.emc.mongoose.integ.core.single.WriteUsing10ConnTest;
 import com.emc.mongoose.integ.tools.TestConstants;
 //
-import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
