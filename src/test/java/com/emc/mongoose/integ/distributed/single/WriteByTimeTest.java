@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 //
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
+//
 import com.emc.mongoose.core.api.data.WSObject;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -17,32 +18,34 @@ import org.junit.Assert;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
+//
 import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 14.07.15.
  */
-public final class WriteByCountTest {
+public final class WriteByTimeTest {
 	//
-	private final static long COUNT_TO_WRITE = 100000;
+	private final static long TIME_TO_WRITE_SEC = 100;
 	//
 	private static StorageClient<WSObject> CLIENT;
-	private static long COUNT_WRITTEN;
+	private static long COUNT_WRITTEN, TIME_ACTUAL_SEC;
 	private static Logger LOG;
 	//
 	@BeforeClass
 	public static void setUpClass()
-	throws Exception {
+		throws Exception {
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
 			clientBuilder = new BasicWSClientBuilder<>();
 		CLIENT = clientBuilder
-			.setLimitTime(0, TimeUnit.SECONDS)
-			.setLimitCount(COUNT_TO_WRITE)
+			.setLimitTime(TIME_TO_WRITE_SEC, TimeUnit.SECONDS)
+			.setLimitCount(0)
 			.setClientMode(new String[] {ServiceUtils.getHostAddr()})
 			.build();
-		COUNT_WRITTEN = CLIENT.write(null, null, (short) 10, SizeUtil.toSize("10KB"));
 		LOG = LogManager.getLogger();
-		LOG.info(Markers.MSG, "Written {} items", COUNT_WRITTEN);
+		TIME_ACTUAL_SEC = System.currentTimeMillis() / 1000;
+		COUNT_WRITTEN = CLIENT.write(null, null, (short) 10, SizeUtil.toSize("10KB"));
+		TIME_ACTUAL_SEC = System.currentTimeMillis() / 1000 - TIME_ACTUAL_SEC;
+		LOG.info(Markers.MSG, "Used {} [sec] to write {} items", TIME_ACTUAL_SEC, COUNT_WRITTEN);
 	}
 	//
 	@AfterClass
@@ -52,7 +55,12 @@ public final class WriteByCountTest {
 	}
 	//
 	@Test
-	public void checkReturnedCount() {
-		Assert.assertEquals(COUNT_WRITTEN, COUNT_TO_WRITE);
+	public void checkRunTimeNotLessThanLimit() {
+		Assert.assertTrue(TIME_ACTUAL_SEC >= TIME_TO_WRITE_SEC);
+	}
+	//
+	@Test
+	public void checkRunTimeNotMuchBiggerThanLimit() {
+		Assert.assertTrue(TIME_ACTUAL_SEC <= TIME_TO_WRITE_SEC + 10);
 	}
 }

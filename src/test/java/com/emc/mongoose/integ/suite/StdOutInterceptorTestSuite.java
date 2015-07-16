@@ -15,7 +15,7 @@ import java.io.PrintStream;
 public abstract class StdOutInterceptorTestSuite
 extends LoggingTestSuite {
 	//
-	protected static SavedOutputStream STD_OUT_INTERCEPT_STREAM;
+	public static SavedOutputStream STD_OUT_INTERCEPT_STREAM;
 	//
 	@BeforeClass
 	public static void setUpClass()
