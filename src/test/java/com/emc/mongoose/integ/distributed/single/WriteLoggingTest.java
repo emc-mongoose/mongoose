@@ -89,7 +89,7 @@ public class WriteLoggingTest {
 				if(nextStdOutLine == null) {
 					break;
 				} else {
-					nextLineMatcher = DATE_TIME_ISO8601.matcher(nextStdOutLine);
+					nextLineMatcher = CONSOLE_METRICS_AVG.matcher(nextStdOutLine);
 					if(nextLineMatcher.find()) {
 						LOG.warn(Markers.MSG, nextLineMatcher.group("dateTime"));
 					} else {
