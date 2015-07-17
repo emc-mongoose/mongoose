@@ -26,7 +26,7 @@ public class JsonConfigLoader {
 	private final static Logger LOG = LogManager.getLogger();
 	private final static Set<String> mongooseKeys = new HashSet<>();
 	//
-	public static enum JsonConfigLoaderActions {
+	public enum JsonConfigLoaderActions {
 		LOAD, UPDATE, UPLOAD
 	}
 	//

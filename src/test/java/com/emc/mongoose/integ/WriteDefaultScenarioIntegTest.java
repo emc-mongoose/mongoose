@@ -65,8 +65,7 @@ public final class WriteDefaultScenarioIntegTest {
 		LogUtil.init();
 		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
 		//Reload default properties
-		final RunTimeConfig runTimeConfig = new  RunTimeConfig();
-		RunTimeConfig.setContext(runTimeConfig);
+		RunTimeConfig.initContext();
 		//run mongoose default scenario in standalone mode
 		final Thread writeScenarioMongoose = new Thread(new Runnable() {
 			@Override

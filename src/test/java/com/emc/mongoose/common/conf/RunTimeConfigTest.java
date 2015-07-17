@@ -13,7 +13,7 @@ public class RunTimeConfigTest {
 	@Test
 	public void shouldHaveAliasesForNewConfParamNames()
 	throws Exception {
-		final RunTimeConfig runTimeConfig = new RunTimeConfig();
+		RunTimeConfig.initContext();
 		final Map<String, String[]> mapOverride = RunTimeConfig.MAP_OVERRIDE;
 
 		Assert.assertArrayEquals(mapOverride.get("api.s3.port"),

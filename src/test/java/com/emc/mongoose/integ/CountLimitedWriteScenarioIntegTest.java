@@ -60,8 +60,7 @@ public class CountLimitedWriteScenarioIntegTest {
 		LogUtil.init();
 		final Logger rootLogger = LogManager.getRootLogger();
 		//Reload default properties
-		RunTimeConfig runTimeConfig = new  RunTimeConfig();
-		RunTimeConfig.setContext(runTimeConfig);
+		RunTimeConfig.initContext();
 		//run mongoose default scenario in standalone mode
 		Thread writeScenarioMongoose = new Thread(new Runnable() {
 			@Override

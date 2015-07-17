@@ -63,8 +63,7 @@ public class FaildVerificationIntegTest {
 		LogUtil.init();
 		final Logger rootLogger = LogManager.getRootLogger();
 		//Reload default properties
-		RunTimeConfig runTimeConfig = new  RunTimeConfig();
-		RunTimeConfig.setContext(runTimeConfig);
+		RunTimeConfig.initContext();
 		//Run the write default mongoose scenario in standalone mode
 		final Thread writeScenarioMongoose = new Thread(new Runnable() {
 			@Override
@@ -92,8 +91,7 @@ public class FaildVerificationIntegTest {
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, readRunId);
 		//Reload default properties
-		runTimeConfig = new  RunTimeConfig();
-		RunTimeConfig.setContext(runTimeConfig);
+		RunTimeConfig.initContext();
 		//
 		final Thread readScenarioMongoose = new Thread(new Runnable() {
 			@Override

@@ -10,6 +10,8 @@ import com.emc.mongoose.core.api.load.model.LoadState;
 import org.apache.logging.log4j.Marker;
 //
 import java.rmi.RemoteException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,7 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface LoadExecutor<T extends DataItem>
 extends Producer<T>, AsyncConsumer<T> {
 	//
-	AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
+	Map<String, AtomicInteger> LOAD_INSTANCES = new ConcurrentHashMap<>();
+	//AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
 	//
 	int NANOSEC_SCALEDOWN = 1000, MIB = 0x100000;
 	//
