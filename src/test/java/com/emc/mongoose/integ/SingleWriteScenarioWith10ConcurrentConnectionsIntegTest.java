@@ -70,7 +70,9 @@ public class SingleWriteScenarioWith10ConcurrentConnectionsIntegTest {
 		LogUtil.init();
 		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
 		//Reload default properties
-		RunTimeConfig.initContext();
+		final RunTimeConfig runTimeConfig = new RunTimeConfig();
+		runTimeConfig.loadProperties();
+		RunTimeConfig.setContext(runTimeConfig);
 		//run mongoose default scenario in standalone mode
 		writeScenarioMongoose = new Thread(new Runnable() {
 			@Override

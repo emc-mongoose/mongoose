@@ -71,7 +71,9 @@ public class CustomChainScenarioIntegTest {
 		LogUtil.init();
 		final Logger rootLogger = LogManager.getRootLogger();
 		//Reload default properties
-		RunTimeConfig.initContext();
+		final RunTimeConfig runTimeConfig = new RunTimeConfig();
+		runTimeConfig.loadProperties();
+		RunTimeConfig.setContext(runTimeConfig);
 		//run mongoose default scenario in standalone mode
 		final Thread writeScenarioMongoose = new Thread(new Runnable() {
 			@Override
