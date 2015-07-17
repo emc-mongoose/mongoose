@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ;
+package com.emc.mongoose.integ.core.single;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -6,9 +6,9 @@ import com.emc.mongoose.common.conf.TimeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
-import com.emc.mongoose.integ.integTestTools.IntegConstants;
-import com.emc.mongoose.integ.integTestTools.IntegLogManager;
-import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.TestConstants;
+import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.tools.SavedOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
@@ -37,11 +37,11 @@ import java.util.regex.Matcher;
  * steps: all, dominant limit: time) in Mongoose Core Functional Testing
  * HLUC: 1.1.6.2, 1.1.6.4
  */
-public class TimeLimitedWriteScenarioIntegTest {
+public class WriteByTimeTest {
 	//
 	private static SavedOutputStream savedOutputStream;
 	//
-	private static String createRunId = IntegConstants.LOAD_CREATE;
+	private static String createRunId = TestConstants.LOAD_CREATE;
 	private static final String DATA_SIZE = "1B", LIMIT_TIME = "1.minutes";
 	private static final int LIMIT_COUNT = 1000000000, LOAD_THREADS = 10;
 	private static long actualTimeMS;
@@ -53,15 +53,15 @@ public class TimeLimitedWriteScenarioIntegTest {
 		savedOutputStream = new SavedOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create run ID
-		createRunId += ":infinite:" + IntegConstants.FMT_DT.format(
+		createRunId += ":infinite:" + TestConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, createRunId);
 		// If tests run from the IDEA full logging file must be set
 		final String fullLogConfFile = Paths
-			.get(System.getProperty(IntegConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, IntegConstants.LOG_FILE_NAME)
+			.get(System.getProperty(TestConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, TestConstants.LOG_FILE_NAME)
 			.toString();
-		System.setProperty(IntegConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
+		System.setProperty(TestConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
 		LogUtil.init();
 		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
 		//Reload default properties
@@ -91,21 +91,21 @@ public class TimeLimitedWriteScenarioIntegTest {
 		writeScenarioMongoose.interrupt();
 		// Wait logger's output from console
 		Thread.sleep(3000);
-		System.setOut(savedOutputStream.getPrintStream());
+		System.setOut(savedOutputStream.getReplacedStream());
 	}
 
 	@Test
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
 	throws Exception {
-		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
-		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(TestConstants.SUMMARY_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(TestConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//Read message file and search "Scenario End"
-		final File messageFile = IntegLogManager.getMessageFile(createRunId);
+		final File messageFile = LogParser.getMessageFile(createRunId);
 		Assert.assertTrue(messageFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
@@ -114,10 +114,10 @@ public class TimeLimitedWriteScenarioIntegTest {
 		String line;
 		do {
 			line = bufferedReader.readLine();
-		} while ((!line.contains(IntegConstants.SCENARIO_END_INDICATOR)) && line != null);
+		} while ((!line.contains(TestConstants.SCENARIO_END_INDICATOR)) && line != null);
 
 		//Check the message file contain report about scenario end. If not line = null.
-		Assert.assertTrue(line.contains(IntegConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(line.contains(TestConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test
@@ -131,7 +131,7 @@ public class TimeLimitedWriteScenarioIntegTest {
 			(actualTimeMS <= loadLimitTimeMillis + precisionMillis)
 		);
 		//
-		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		final File perfAvgFile = LogParser.getPerfAvgFile(createRunId);
 		Assert.assertTrue(perfAvgFile.exists());
 		//
 		BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
@@ -141,18 +141,18 @@ public class TimeLimitedWriteScenarioIntegTest {
 		// Get start time of load
 		bufferedReader.readLine();
 		String line = bufferedReader.readLine();
-		Matcher matcher = IntegConstants.TIME_PATTERN.matcher(line);
+		Matcher matcher = TestConstants.TIME_PATTERN.matcher(line);
 		if (matcher.find()) {
 			startTime = format.parse(matcher.group());
 		}
 		// Get finish time of load
-		final File perfSumFile = IntegLogManager.getPerfSumFile(createRunId);
+		final File perfSumFile = LogParser.getPerfSumFile(createRunId);
 		Assert.assertTrue(perfSumFile.exists());
 		//
 		bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		bufferedReader.readLine();
 		line = bufferedReader.readLine();
-		matcher = IntegConstants.TIME_PATTERN.matcher(line);
+		matcher = TestConstants.TIME_PATTERN.matcher(line);
 		if (matcher.find()) {
 			finishTime = format.parse(matcher.group());
 		}
@@ -167,27 +167,27 @@ public class TimeLimitedWriteScenarioIntegTest {
 	@Test
 	public void shouldCreateAllFilesWithLogs()
 	throws Exception {
-		Path expectedFile = IntegLogManager.getMessageFile(createRunId).toPath();
+		Path expectedFile = LogParser.getMessageFile(createRunId).toPath();
 		//Check that messages.log file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getPerfAvgFile(createRunId).toPath();
+		expectedFile = LogParser.getPerfAvgFile(createRunId).toPath();
 		//Check that perf.avg.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getPerfSumFile(createRunId).toPath();
+		expectedFile = LogParser.getPerfSumFile(createRunId).toPath();
 		//Check that perf.sum.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getPerfTraceFile(createRunId).toPath();
+		expectedFile = LogParser.getPerfTraceFile(createRunId).toPath();
 		//Check that perf.trace.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getDataItemsFile(createRunId).toPath();
+		expectedFile = LogParser.getDataItemsFile(createRunId).toPath();
 		//Check that data.items.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getErrorsFile(createRunId).toPath();
+		expectedFile = LogParser.getErrorsFile(createRunId).toPath();
 		//Check that errors.log file is not created
 		Assert.assertFalse(Files.exists(expectedFile));
 	}
@@ -197,7 +197,7 @@ public class TimeLimitedWriteScenarioIntegTest {
 	throws Exception {
 		final int precisionMillis = 1000;
 		// Get perf.avg.csv file
-		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		final File perfAvgFile = LogParser.getPerfAvgFile(createRunId);
 		Assert.assertTrue(perfAvgFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
@@ -209,7 +209,7 @@ public class TimeLimitedWriteScenarioIntegTest {
 		String line = bufferedReader.readLine();
 		final List<Date> listTimeOfReports = new ArrayList<>();
 		while (line != null) {
-			matcher = IntegConstants.TIME_PATTERN.matcher(line);
+			matcher = TestConstants.TIME_PATTERN.matcher(line);
 			if (matcher.find()) {
 				listTimeOfReports.add(format.parse(matcher.group()));
 			}

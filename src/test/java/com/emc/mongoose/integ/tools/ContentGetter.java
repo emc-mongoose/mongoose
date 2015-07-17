@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.integTestTools;
+package com.emc.mongoose.integ.tools;
 
 import java.io.IOException;
 import java.io.InputStream;

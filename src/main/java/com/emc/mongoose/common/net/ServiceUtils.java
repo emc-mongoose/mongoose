@@ -25,13 +25,12 @@ import java.net.SocketException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.rmi.Naming;
 import java.rmi.NoSuchObjectException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.server.RemoteStub;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -45,6 +44,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public final class ServiceUtils {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	private static Registry REGISTRY = null;
 	private final static Map<String, Service> SVC_MAP = new ConcurrentHashMap<>();
 	private final static Map<Integer, MBeanServer> MBEAN_SERVERS = new ConcurrentHashMap<>();
 	private final static Collection<JMXConnectorServer>
@@ -60,14 +60,14 @@ public final class ServiceUtils {
 			}
 		);
 	}
-	//
+	/*
 	private static void setUpSecurityManager() {
 		if(System.getSecurityManager() == null) {
 			final SecurityManager sm = new SecurityManager();
 			LOG.trace(Markers.MSG, "New security manager instance created");
 			System.setSecurityManager(sm);
 		}
-	}
+	}*/
 	//
 	public static boolean isMgmtSvcAllowed() {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
@@ -81,13 +81,13 @@ public final class ServiceUtils {
 	//
 	private static void rmiRegistryInit() {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
-		if(isMgmtSvcAllowed()) {
+		if(REGISTRY == null) {
 			try {
-				LocateRegistry.createRegistry(rtConfig.getRemotePortControl());
+				REGISTRY = LocateRegistry.createRegistry(rtConfig.getRemotePortControl());
 				LOG.debug(Markers.MSG, "RMI registry created");
 			} catch(final RemoteException e) {
 				try {
-					LocateRegistry.getRegistry(rtConfig.getRemotePortControl());
+					REGISTRY = LocateRegistry.getRegistry(rtConfig.getRemotePortControl());
 					LOG.info(Markers.MSG, "Reusing already existing RMI registry");
 				} catch(final RemoteException ee) {
 					LOG.fatal(Markers.ERR, "Failed to obtain RMI registry", ee);
@@ -105,7 +105,7 @@ public final class ServiceUtils {
 	//
 	public static void init() {
 		setUpSvcShutdownHook();
-		setUpSecurityManager();
+		//setUpSecurityManager();
 		rmiRegistryInit();
 		mBeanServerInit();
 	}
@@ -160,9 +160,10 @@ public final class ServiceUtils {
 	}
 	//
 	public static Remote create(final Service svc) {
-		RemoteStub stub = null;
+		//final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		Remote stub = null;
 		try {
-			stub = UnicastRemoteObject.exportObject(svc);
+			stub = UnicastRemoteObject.exportObject(svc, 0);
 			LOG.debug(Markers.MSG, "Exported service object successfully");
 		} catch(final RemoteException e) {
 			LogUtil.exception(LOG, Level.FATAL, e, "Failed to export service object");
@@ -170,14 +171,15 @@ public final class ServiceUtils {
 		//
 		if(stub != null) {
 			try {
-				final String svcName = svc.getName();
-				Naming.rebind(svcName, svc);
+				final String
+					rmiHostName = System.getProperty(ServiceUtils.KEY_RMI_HOSTNAME),
+					svcName = "//" + (rmiHostName == null ? getHostAddr() : rmiHostName) +
+						"/" + svc.getName();
+				REGISTRY.rebind(svcName, svc);
 				SVC_MAP.put(svcName, svc);
 				LOG.info(Markers.MSG, "New service bound: {}", svcName);
 			} catch(final RemoteException e) {
 				LOG.error(Markers.ERR, "Failed to rebind the service", e);
-			} catch(final MalformedURLException e) {
-				LOG.error(Markers.ERR, "Invalid URL", e);
 			}
 		}
 		//
@@ -200,7 +202,7 @@ public final class ServiceUtils {
 		Remote remote = null;
 		Service remoteSvc = null;
 		try {
-			remote = Naming.lookup(url);
+			remote = REGISTRY.lookup(url);
 			remoteSvc = Service.class.cast(remote);
 		} catch(final ClassCastException e) {
 			if(remote == null) {
@@ -210,8 +212,6 @@ public final class ServiceUtils {
 					Markers.ERR, "Unsupported type of the resolved service: {}", remote.getClass()
 				);
 			}
-		} catch(MalformedURLException e) {
-			LOG.error(Markers.ERR, "Looks like bad URL: \"{}\"", url);
 		} catch(final NotBoundException e) {
 			LOG.error(Markers.ERR, "No service bound with url \"{}\"", url);
 		} catch(final RemoteException e) {
@@ -230,15 +230,13 @@ public final class ServiceUtils {
 		//
 		try {
 			final String svcName = svc.getName();
-			Naming.unbind(svcName);
+			REGISTRY.unbind(svcName);
 			SVC_MAP.remove(svcName);
 			LOG.info(Markers.MSG, "Removed service: {}", svcName);
 		} catch(final NotBoundException e) {
 			LOG.debug(Markers.ERR, "Service not bound");
 		} catch(final RemoteException e) {
 			LOG.warn(Markers.ERR, "Possible connection failure", e);
-		} catch(final MalformedURLException e) {
-			LOG.error(Markers.ERR, "Invalid URL", e);
 		}
 	}
 	//

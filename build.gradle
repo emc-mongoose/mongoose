@@ -1032,9 +1032,10 @@ test {
 	testLogging { events "passed", "skipped", "failed" }
 }
 
-task integTest(type: Test){
+task integTest(type: Test, dependsOn: compileRMI) {
 	//Be able to run only test suit
-	include '**/IntegTestSuite.class'
+	include '**/DistributedLoadTestSuite.class'
+	//include '**/IntegrationTestSuite.class'
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath

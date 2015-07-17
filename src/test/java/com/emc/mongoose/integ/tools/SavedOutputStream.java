@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.integTestTools;
+package com.emc.mongoose.integ.tools;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -28,7 +28,7 @@ extends ByteArrayOutputStream {
 		out.write(b, off, len);
 	}
 
-	public final PrintStream getPrintStream(){
+	public final PrintStream getReplacedStream(){
 		return  this.out;
 	}
 }

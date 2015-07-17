@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.common.net.Service;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.data.WSObject;
@@ -152,7 +153,7 @@ implements Runnable {
 			rtConfig.set(RunTimeConfig.KEY_REMOTE_PORT_EXPORT, 1299);
 			try(
 				final StorageClient<WSObject> client = clientBuilder
-					.setClientMode(new String[] {"127.0.0.1"})
+					.setClientMode(new String[] {ServiceUtils.getHostAddr()})
 					.build();
 			) {
 				final Thread sanityThread2 = new Thread(new Sanity(client), "sanityDistributed");

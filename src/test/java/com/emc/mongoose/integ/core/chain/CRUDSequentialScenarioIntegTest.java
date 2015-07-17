@@ -1,13 +1,13 @@
-package com.emc.mongoose.integ;
+package com.emc.mongoose.integ.core.chain;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
-import com.emc.mongoose.integ.integTestTools.IntegConstants;
-import com.emc.mongoose.integ.integTestTools.IntegLogManager;
-import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.TestConstants;
+import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.tools.SavedOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -51,10 +51,10 @@ public class CRUDSequentialScenarioIntegTest {
 		LIMIT_TIME = "1.minutes",
 		SCENARIO_NAME = "chain",
 		CHAIN_LOADS =
-			IntegConstants.LOAD_CREATE.toLowerCase() + "," +
-			IntegConstants.LOAD_READ.toLowerCase() + "," +
-			IntegConstants.LOAD_UPDATE.toLowerCase() + "," +
-			IntegConstants.LOAD_DELETE.toLowerCase();
+			TestConstants.LOAD_CREATE.toLowerCase() + "," +
+			TestConstants.LOAD_READ.toLowerCase() + "," +
+			TestConstants.LOAD_UPDATE.toLowerCase() + "," +
+			TestConstants.LOAD_DELETE.toLowerCase();
 	private static final int LOAD_THREADS = 10;
 	private static final int LOADS_COUNT = 4;
 	private static final boolean
@@ -68,15 +68,15 @@ public class CRUDSequentialScenarioIntegTest {
 		savedOutputStream = new SavedOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create run ID
-		chainRunId = SCENARIO_NAME + ":" + IntegConstants.FMT_DT.format(
+		chainRunId = SCENARIO_NAME + ":" + TestConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, chainRunId);
 		// If tests run from the IDEA full logging file must be set
 		final String fullLogConfFile = Paths
-			.get(System.getProperty(IntegConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, IntegConstants.LOG_FILE_NAME)
+			.get(System.getProperty(TestConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, TestConstants.LOG_FILE_NAME)
 			.toString();
-		System.setProperty(IntegConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
+		System.setProperty(TestConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
 		LogUtil.init();
 		final Logger rootLogger = LogManager.getRootLogger();
 		//Reload default properties
@@ -106,21 +106,21 @@ public class CRUDSequentialScenarioIntegTest {
 		writeScenarioMongoose.interrupt();
 		// Wait logger's output from console
 		Thread.sleep(3000);
-		System.setOut(savedOutputStream.getPrintStream());
+		System.setOut(savedOutputStream.getReplacedStream());
 	}
 
 	@Test
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
 	throws Exception {
-		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
-		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(TestConstants.SUMMARY_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(TestConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//Read message file and search "Scenario End"
-		final File messageFile = IntegLogManager.getMessageFile(chainRunId);
+		final File messageFile = LogParser.getMessageFile(chainRunId);
 		Assert.assertTrue(messageFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
@@ -129,10 +129,10 @@ public class CRUDSequentialScenarioIntegTest {
 		String line;
 		do {
 			line = bufferedReader.readLine();
-		} while ((!line.contains(IntegConstants.SCENARIO_END_INDICATOR)) && line != null);
+		} while ((!line.contains(TestConstants.SCENARIO_END_INDICATOR)) && line != null);
 
 		//Check the message file contain report about scenario end. If not line = null.
-		Assert.assertTrue(line.contains(IntegConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(line.contains(TestConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test
@@ -167,23 +167,23 @@ public class CRUDSequentialScenarioIntegTest {
 	@Test
 	public void shouldCreateAllFilesWithLogs()
 	throws Exception {
-		Path expectedFile = IntegLogManager.getMessageFile(chainRunId).toPath();
+		Path expectedFile = LogParser.getMessageFile(chainRunId).toPath();
 		//Check that messages.log file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getPerfAvgFile(chainRunId).toPath();
+		expectedFile = LogParser.getPerfAvgFile(chainRunId).toPath();
 		//Check that perf.avg.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getPerfSumFile(chainRunId).toPath();
+		expectedFile = LogParser.getPerfSumFile(chainRunId).toPath();
 		//Check that perf.sum.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getPerfTraceFile(chainRunId).toPath();
+		expectedFile = LogParser.getPerfTraceFile(chainRunId).toPath();
 		//Check that perf.trace.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getDataItemsFile(chainRunId).toPath();
+		expectedFile = LogParser.getDataItemsFile(chainRunId).toPath();
 		//Check that data.items.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 		/*
@@ -197,17 +197,17 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldCreateCorrectPerfAvgFile()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File perfAvgFile = IntegLogManager.getPerfAvgFile(chainRunId);
+		final File perfAvgFile = LogParser.getPerfAvgFile(chainRunId);
 		Assert.assertTrue(perfAvgFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
-		Assert.assertEquals(IntegLogManager.HEADER_PERF_AVG_FILE, line);
+		Assert.assertEquals(LogParser.HEADER_PERF_AVG_FILE, line);
 		line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(IntegLogManager.matchWithPerfAvgFilePattern(line));
+			Assert.assertTrue(LogParser.matchWithPerfAvgFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
@@ -216,17 +216,17 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldCreateCorrectPerfSumFile()
 	throws Exception {
 		// Get perf.sum.csv file of write scenario run
-		final File perfSumFile = IntegLogManager.getPerfSumFile(chainRunId);
+		final File perfSumFile = LogParser.getPerfSumFile(chainRunId);
 		Assert.assertTrue(perfSumFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
-		Assert.assertEquals(IntegLogManager.HEADER_PERF_SUM_FILE, line);
+		Assert.assertEquals(LogParser.HEADER_PERF_SUM_FILE, line);
 		line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(IntegLogManager.matchWithPerfSumFilePattern(line));
+			Assert.assertTrue(LogParser.matchWithPerfSumFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
@@ -235,14 +235,14 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		// Get data.items.csv file of write scenario run
-		final File dataItemFile = IntegLogManager.getDataItemsFile(chainRunId);
+		final File dataItemFile = LogParser.getDataItemsFile(chainRunId);
 		Assert.assertTrue(dataItemFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemFile));
 		//
 		String line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(IntegLogManager.matchWithDataItemsFilePattern(line));
+			Assert.assertTrue(LogParser.matchWithDataItemsFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
@@ -251,17 +251,17 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldCreateCorrectPerfTraceFile()
 	throws Exception {
 		// Get perf.trace.csv file of write scenario run
-		final File perfTraceFile = IntegLogManager.getPerfTraceFile(chainRunId);
+		final File perfTraceFile = LogParser.getPerfTraceFile(chainRunId);
 		Assert.assertTrue(perfTraceFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfTraceFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
-		Assert.assertEquals(IntegLogManager.HEADER_PERF_TRACE_FILE, line);
+		Assert.assertEquals(LogParser.HEADER_PERF_TRACE_FILE, line);
 		line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(IntegLogManager.matchWithPerfTraceFilePattern(line));
+			Assert.assertTrue(LogParser.matchWithPerfTraceFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
@@ -269,7 +269,7 @@ public class CRUDSequentialScenarioIntegTest {
 	@Test
 	public void shouldContainedInformationAboutAllLoads()
 		throws Exception {
-		final File perfSumFile = IntegLogManager.getPerfSumFile(chainRunId);
+		final File perfSumFile = LogParser.getPerfSumFile(chainRunId);
 		Assert.assertTrue(perfSumFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
@@ -277,24 +277,24 @@ public class CRUDSequentialScenarioIntegTest {
 		//
 		int countLinesOfSumInfo = 0;
 		final Set<String> loadsSet = new HashSet<>();
-		loadsSet.add(IntegConstants.LOAD_CREATE);
-		loadsSet.add(IntegConstants.LOAD_READ);
-		loadsSet.add(IntegConstants.LOAD_UPDATE);
-		loadsSet.add(IntegConstants.LOAD_DELETE);
+		loadsSet.add(TestConstants.LOAD_CREATE);
+		loadsSet.add(TestConstants.LOAD_READ);
+		loadsSet.add(TestConstants.LOAD_UPDATE);
+		loadsSet.add(TestConstants.LOAD_DELETE);
 
 		String line = bufferedReader.readLine();
 		while (line != null) {
-			if (line.contains(IntegConstants.LOAD_CREATE) && loadsSet.contains(IntegConstants.LOAD_CREATE)) {
-				loadsSet.remove(IntegConstants.LOAD_CREATE);
+			if (line.contains(TestConstants.LOAD_CREATE) && loadsSet.contains(TestConstants.LOAD_CREATE)) {
+				loadsSet.remove(TestConstants.LOAD_CREATE);
 			}
-			if (line.contains(IntegConstants.LOAD_READ) && loadsSet.contains(IntegConstants.LOAD_READ)) {
-				loadsSet.remove(IntegConstants.LOAD_READ);
+			if (line.contains(TestConstants.LOAD_READ) && loadsSet.contains(TestConstants.LOAD_READ)) {
+				loadsSet.remove(TestConstants.LOAD_READ);
 			}
-			if (line.contains(IntegConstants.LOAD_UPDATE) && loadsSet.contains(IntegConstants.LOAD_UPDATE)) {
-				loadsSet.remove(IntegConstants.LOAD_UPDATE);
+			if (line.contains(TestConstants.LOAD_UPDATE) && loadsSet.contains(TestConstants.LOAD_UPDATE)) {
+				loadsSet.remove(TestConstants.LOAD_UPDATE);
 			}
-			if (line.contains(IntegConstants.LOAD_DELETE) && loadsSet.contains(IntegConstants.LOAD_DELETE)) {
-				loadsSet.remove(IntegConstants.LOAD_DELETE);
+			if (line.contains(TestConstants.LOAD_DELETE) && loadsSet.contains(TestConstants.LOAD_DELETE)) {
+				loadsSet.remove(TestConstants.LOAD_DELETE);
 			}
 			countLinesOfSumInfo ++;
 			line = bufferedReader.readLine();
@@ -307,14 +307,14 @@ public class CRUDSequentialScenarioIntegTest {
 	public void shouldCreateCorrectInformationAboutLoad()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File writePerfAvgFile = IntegLogManager.getPerfAvgFile(chainRunId);
+		final File writePerfAvgFile = LogParser.getPerfAvgFile(chainRunId);
 		Assert.assertTrue(writePerfAvgFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfAvgFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
-		Assert.assertEquals(IntegLogManager.HEADER_PERF_AVG_FILE, line);
+		Assert.assertEquals(LogParser.HEADER_PERF_AVG_FILE, line);
 		//
 		Matcher matcher, loadTypeMatcher;
 		String actualLoadType, apiName;
@@ -324,15 +324,15 @@ public class CRUDSequentialScenarioIntegTest {
 		line = bufferedReader.readLine();
 		while (line != null) {
 			//
-			matcher = IntegConstants.LOAD_PATTERN.matcher(line);
+			matcher = TestConstants.LOAD_PATTERN.matcher(line);
 			if (matcher.find()) {
 				loadInfo = matcher.group().split("(-|x)");
 				//Check api name is correct
 				apiName = loadInfo[1].toLowerCase();
-				Assert.assertEquals(IntegConstants.API_S3, apiName);
+				Assert.assertEquals(TestConstants.API_S3, apiName);
 				// Check load type and load limit count values are correct
 				actualLoadType = loadInfo[2];
-				loadTypeMatcher = IntegConstants.LOAD_NAME_PATTERN.matcher(actualLoadType);
+				loadTypeMatcher = TestConstants.LOAD_NAME_PATTERN.matcher(actualLoadType);
 				Assert.assertTrue(loadTypeMatcher.find());
 				// Check "threads per node" value is correct
 				threadsPerNode = Integer.valueOf(loadInfo[3]);
@@ -348,7 +348,7 @@ public class CRUDSequentialScenarioIntegTest {
 	@Test
 	public void shouldPerfSumFileContainsSummaryInfoAboutAllLoads()
 	throws Exception {
-		final File perfSumFile = IntegLogManager.getPerfSumFile(chainRunId);
+		final File perfSumFile = LogParser.getPerfSumFile(chainRunId);
 		Assert.assertTrue(perfSumFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
@@ -366,7 +366,7 @@ public class CRUDSequentialScenarioIntegTest {
 	@Test
 	public void shouldLoadsSwitchOperationsSynchronously()
 	throws Exception {
-		final File perfAvgFile = IntegLogManager.getPerfAvgFile(chainRunId);
+		final File perfAvgFile = LogParser.getPerfAvgFile(chainRunId);
 		Assert.assertTrue(perfAvgFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
@@ -375,9 +375,9 @@ public class CRUDSequentialScenarioIntegTest {
 		int counterSwitch = 1;
 		String
 			line = bufferedReader.readLine(),
-			prevLoadType = IntegConstants.LOAD_CREATE;
+			prevLoadType = TestConstants.LOAD_CREATE;
 		while (line != null) {
-			matcher = IntegConstants.LOAD_NAME_PATTERN.matcher(line);
+			matcher = TestConstants.LOAD_NAME_PATTERN.matcher(line);
 			if (matcher.find()){
 				if (!prevLoadType.equals(matcher.group())) {
 					counterSwitch++;
@@ -394,7 +394,7 @@ public class CRUDSequentialScenarioIntegTest {
 	throws Exception {
 		final int precisionMillis = 1000;
 		// Get perf.avg.csv file
-		final File perfAvgFile = IntegLogManager.getPerfAvgFile(chainRunId);
+		final File perfAvgFile = LogParser.getPerfAvgFile(chainRunId);
 		Assert.assertTrue(perfAvgFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
@@ -408,8 +408,8 @@ public class CRUDSequentialScenarioIntegTest {
 		// map by load type
 		final Map<String, ArrayList<Date>> mapReports = new HashMap<>(4);
 		while (line != null) {
-			matcherDate = IntegConstants.TIME_PATTERN.matcher(line);
-			matcherLoadType = IntegConstants.LOAD_NAME_PATTERN.matcher(line);
+			matcherDate = TestConstants.TIME_PATTERN.matcher(line);
+			matcherLoadType = TestConstants.LOAD_NAME_PATTERN.matcher(line);
 			if (matcherDate.find() && matcherLoadType.find()) {
 				loadType = matcherLoadType.group();
 				date = matcherDate.group();
@@ -447,7 +447,7 @@ public class CRUDSequentialScenarioIntegTest {
 	@Test
 	public void shouldCreateLoadMustRunFor60Seconds()
 	throws Exception {
-		final File perfAvgFile = IntegLogManager.getPerfAvgFile(chainRunId);
+		final File perfAvgFile = LogParser.getPerfAvgFile(chainRunId);
 		Assert.assertTrue(perfAvgFile.exists());
 		//
 		BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
@@ -459,10 +459,10 @@ public class CRUDSequentialScenarioIntegTest {
 		bufferedReader.readLine();
 		String line = bufferedReader.readLine();
 		while (line != null) {
-			matcherDate = IntegConstants.TIME_PATTERN.matcher(line);
-			matcherLoadName = IntegConstants.LOAD_NAME_PATTERN.matcher(line);
+			matcherDate = TestConstants.TIME_PATTERN.matcher(line);
+			matcherLoadName = TestConstants.LOAD_NAME_PATTERN.matcher(line);
 			if (matcherDate.find() && matcherLoadName.find()) {
-				if (matcherLoadName.group().equals(IntegConstants.LOAD_CREATE)) {
+				if (matcherLoadName.group().equals(TestConstants.LOAD_CREATE)) {
 					startTimeLoad =format.parse(matcherDate.group());
 					break;
 				}
@@ -470,17 +470,17 @@ public class CRUDSequentialScenarioIntegTest {
 			line = bufferedReader.readLine();
 		}
 		// Get finish time of loads
-		final File perfSumFile = IntegLogManager.getPerfSumFile(chainRunId);
+		final File perfSumFile = LogParser.getPerfSumFile(chainRunId);
 		Assert.assertTrue(perfSumFile.exists());
 		//
 		bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		bufferedReader.readLine();
 		line = bufferedReader.readLine();
 		while (line != null) {
-			matcherDate = IntegConstants.TIME_PATTERN.matcher(line);
-			matcherLoadName = IntegConstants.LOAD_NAME_PATTERN.matcher(line);
+			matcherDate = TestConstants.TIME_PATTERN.matcher(line);
+			matcherLoadName = TestConstants.LOAD_NAME_PATTERN.matcher(line);
 			if (matcherDate.find() && matcherLoadName.find()) {
-				if (matcherLoadName.group().equals(IntegConstants.LOAD_CREATE)) {
+				if (matcherLoadName.group().equals(TestConstants.LOAD_CREATE)) {
 					finishTimeLoad = format.parse(matcherDate.group());
 					break;
 				}
@@ -499,7 +499,7 @@ public class CRUDSequentialScenarioIntegTest {
 	@Test
 	public void shouldDataItemsMasksAreUpdate()
 	throws Exception {
-		final File dataItemsFile = IntegLogManager.getDataItemsFile(chainRunId);
+		final File dataItemsFile = LogParser.getDataItemsFile(chainRunId);
 		//
 		Assert.assertTrue(dataItemsFile.exists());
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));

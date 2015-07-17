@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ;
+package com.emc.mongoose.integ.core.single;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -6,10 +6,10 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
-import com.emc.mongoose.integ.integTestTools.IntegConstants;
-import com.emc.mongoose.integ.integTestTools.IntegLogManager;
-import com.emc.mongoose.integ.integTestTools.PortListener;
-import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.TestConstants;
+import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.tools.PortListener;
+import com.emc.mongoose.integ.tools.SavedOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.logging.log4j.Logger;
 import org.junit.AfterClass;
@@ -40,12 +40,12 @@ import java.util.regex.Matcher;
  * in Mongoose Core Functional Testing
  * HLUC: 1.3.2.2
  */
-public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
+public class WriteUsing100ConnTest {
 	//
 	private static SavedOutputStream savedOutputStream;
 	//
 	private static final int LIMIT_COUNT = 1000000, LOAD_THREADS = 100;
-	private static String createRunId = IntegConstants.LOAD_CREATE;
+	private static String createRunId = TestConstants.LOAD_CREATE;
 	private static final String DATA_SIZE = "0B";
 	private static Thread writeScenarioMongoose;
 
@@ -56,15 +56,15 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 		savedOutputStream = new SavedOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create run ID
-		createRunId += ":" + DATA_SIZE + ":" + IntegConstants.FMT_DT.format(
+		createRunId += ":" + DATA_SIZE + ":" + TestConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, createRunId);
 		// If tests run from the IDEA full logging file must be set
 		final String fullLogConfFile = Paths
-			.get(System.getProperty(IntegConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, IntegConstants.LOG_FILE_NAME)
+			.get(System.getProperty(TestConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, TestConstants.LOG_FILE_NAME)
 			.toString();
-		System.setProperty(IntegConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
+		System.setProperty(TestConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
 		LogUtil.init();
 		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
 		//Reload default properties
@@ -106,40 +106,40 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 		// Wait logger's output from console
 		Thread.sleep(3000);
 		//
-		Path expectedFile = IntegLogManager.getMessageFile(createRunId).toPath();
+		Path expectedFile = LogParser.getMessageFile(createRunId).toPath();
 		//Check that messages.log file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getPerfAvgFile(createRunId).toPath();
+		expectedFile = LogParser.getPerfAvgFile(createRunId).toPath();
 		//Check that perf.avg.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getPerfTraceFile(createRunId).toPath();
+		expectedFile = LogParser.getPerfTraceFile(createRunId).toPath();
 		//Check that perf.trace.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getDataItemsFile(createRunId).toPath();
+		expectedFile = LogParser.getDataItemsFile(createRunId).toPath();
 		//Check that data.items.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getErrorsFile(createRunId).toPath();
+		expectedFile = LogParser.getErrorsFile(createRunId).toPath();
 		//Check that errors.log file is not created
 		Assert.assertFalse(Files.exists(expectedFile));
 		//
 		shouldCreateDataItemsFileWithInformationAboutAllObjects();
 
-		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
-		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(TestConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(TestConstants.SUMMARY_INDICATOR));
 
 		shouldReportScenarioEndToMessageLogFile();
 
-		System.setOut(savedOutputStream.getPrintStream());
+		System.setOut(savedOutputStream.getReplacedStream());
 	}
 
 	public static void shouldCreateDataItemsFileWithInformationAboutAllObjects()
 	throws Exception {
 		//Read data.items.csv file of create scenario run
-		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		final File dataItemsFile = LogParser.getDataItemsFile(createRunId);
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
@@ -148,7 +148,7 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 
 		while (line != null){
 			// Get dataSize from each line
-			dataSize = Integer.valueOf(line.split(",")[IntegConstants.DATA_SIZE_COLUMN_INDEX]);
+			dataSize = Integer.valueOf(line.split(",")[TestConstants.DATA_SIZE_COLUMN_INDEX]);
 			Assert.assertEquals(SizeUtil.toSize(DATA_SIZE), dataSize);
 			countDataItems++;
 			line = bufferedReader.readLine();
@@ -160,24 +160,24 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 	public static void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//Read message file and search "Scenario End"
-		final File messageFile = IntegLogManager.getMessageFile(createRunId);
+		final File messageFile = LogParser.getMessageFile(createRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
 		// Search line in file which contains "Scenario end" string.
 		// Get out from the loop when line with "Scenario end" if found else returned line = null
 		String line;
 		do {
 			line = bufferedReader.readLine();
-		} while ((!line.contains(IntegConstants.SCENARIO_END_INDICATOR)) && line != null);
+		} while ((!line.contains(TestConstants.SCENARIO_END_INDICATOR)) && line != null);
 
 		//Check the message file contain report about scenario end. If not line = null.
-		Assert.assertTrue(line.contains(IntegConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(line.contains(TestConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test
 	public void shouldBeActiveAllConnections()
 	throws Exception {
 		for (int i = 0; i < 3; i++) {
-			int countConnections = PortListener.getCountConnectionsOnPort(IntegConstants.PORT_INDICATOR);
+			int countConnections = PortListener.getCountConnectionsOnPort(TestConstants.PORT_INDICATOR);
 			// Check that actual connection count = (LOAD_THREADS * 2 + 1) because cinderella is run local
 			Assert.assertEquals((LOAD_THREADS * 2 + 1), countConnections);
 		}
@@ -192,7 +192,7 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 		final Map<Thread, StackTraceElement[]> stackTraceElementMap = Thread.getAllStackTraces();
 		for (final Thread thread : stackTraceElementMap.keySet()) {
 			threadName = thread.getName();
-			matcher = IntegConstants.LOAD_THRED_NAME_PATTERN.matcher(threadName);
+			matcher = TestConstants.LOAD_THRED_NAME_PATTERN.matcher(threadName);
 			if (matcher.find()) {
 				countProduceWorkloadThreads++;
 			}
@@ -204,14 +204,14 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 	public void shouldCreateCorrectDataItemsFiles()
 		throws Exception {
 		// Get data.items.csv file of write scenario run
-		final File dataItemFile = IntegLogManager.getDataItemsFile(createRunId);
+		final File dataItemFile = LogParser.getDataItemsFile(createRunId);
 		Assert.assertTrue(dataItemFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemFile));
 		//
 		String line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(IntegLogManager.matchWithDataItemsFilePattern(line));
+			Assert.assertTrue(LogParser.matchWithDataItemsFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
@@ -220,17 +220,17 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 	public void shouldCreateCorrectPerfAvgFiles()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		final File perfAvgFile = LogParser.getPerfAvgFile(createRunId);
 		Assert.assertTrue(perfAvgFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
-		Assert.assertEquals(IntegLogManager.HEADER_PERF_AVG_FILE, line);
+		Assert.assertEquals(LogParser.HEADER_PERF_AVG_FILE, line);
 		line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(IntegLogManager.matchWithPerfAvgFilePattern(line));
+			Assert.assertTrue(LogParser.matchWithPerfAvgFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
@@ -239,14 +239,14 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 	public void shouldCreateCorrectInformationAboutLoad()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		final File perfAvgFile = LogParser.getPerfAvgFile(createRunId);
 		Assert.assertTrue(perfAvgFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
-		Assert.assertEquals(IntegLogManager.HEADER_PERF_AVG_FILE, line);
+		Assert.assertEquals(LogParser.HEADER_PERF_AVG_FILE, line);
 		//
 		Matcher matcher;
 		String loadType, actualLoadType, apiName;
@@ -256,12 +256,12 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 		line = bufferedReader.readLine();
 		while (line != null) {
 			//
-			matcher = IntegConstants.LOAD_PATTERN.matcher(line);
+			matcher = TestConstants.LOAD_PATTERN.matcher(line);
 			if (matcher.find()) {
 				loadInfo = matcher.group().split("(-|x)");
 				//Check api name is correct
 				apiName = loadInfo[1].toLowerCase();
-				Assert.assertEquals(IntegConstants.API_S3, apiName);
+				Assert.assertEquals(TestConstants.API_S3, apiName);
 				// Check load type and load limit count values are correct
 				loadType = RunTimeConfig.getContext().getScenarioSingleLoad().toLowerCase() + String.valueOf(LIMIT_COUNT);
 				actualLoadType = loadInfo[2].toLowerCase();
@@ -282,7 +282,7 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 	throws Exception {
 		final int precisionMillis = 1000;
 		// Get perf.avg.csv file
-		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		final File perfAvgFile = LogParser.getPerfAvgFile(createRunId);
 		Assert.assertTrue(perfAvgFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
@@ -294,7 +294,7 @@ public class SingleWriteScenarioWith100ConcurrentConnectionsIntegTest {
 		String line = bufferedReader.readLine();
 		final List<Date> listTimeOfReports = new ArrayList<>();
 		while (line != null) {
-			matcher = IntegConstants.TIME_PATTERN.matcher(line);
+			matcher = TestConstants.TIME_PATTERN.matcher(line);
 			if (matcher.find()) {
 				listTimeOfReports.add(format.parse(matcher.group()));
 			}

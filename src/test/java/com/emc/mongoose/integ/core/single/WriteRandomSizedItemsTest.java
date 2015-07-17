@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ;
+package com.emc.mongoose.integ.core.single;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -6,10 +6,10 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
-import com.emc.mongoose.integ.integTestTools.ContentGetter;
-import com.emc.mongoose.integ.integTestTools.IntegConstants;
-import com.emc.mongoose.integ.integTestTools.IntegLogManager;
-import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.ContentGetter;
+import com.emc.mongoose.integ.tools.TestConstants;
+import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.tools.SavedOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.logging.log4j.Logger;
@@ -36,12 +36,12 @@ import java.util.TimeZone;
  * Covers TC #3 (name: "Write the data items w/ random size.", steps: all) in Mongoose Core Functional Testing
  * HLUC: 1.1.3.1
  */
-public class WriteDataItemWithRandomSizeIntegTest {
+public class WriteRandomSizedItemsTest {
 	//
 	private static SavedOutputStream savedOutputStream;
 	//
 	private static final int LIMIT_COUNT = 10;
-	private static String createRunId = IntegConstants.LOAD_CREATE;
+	private static String createRunId = TestConstants.LOAD_CREATE;
 	private static final String
 		DATA_SIZE_MIN = "10B",
 		DATA_SIZE_MAX = "100KB";
@@ -53,15 +53,15 @@ public class WriteDataItemWithRandomSizeIntegTest {
 		savedOutputStream = new SavedOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		// Create run ID
-		createRunId += ":" + DATA_SIZE_MIN + "-" + DATA_SIZE_MAX + ":" + IntegConstants.FMT_DT.format(
+		createRunId += ":" + DATA_SIZE_MIN + "-" + DATA_SIZE_MAX + ":" + TestConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, createRunId);
 		// If tests run from the IDEA full logging file must be set
 		final String fullLogConfFile = Paths
-			.get(System.getProperty(IntegConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, IntegConstants.LOG_FILE_NAME)
+			.get(System.getProperty(TestConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, TestConstants.LOG_FILE_NAME)
 			.toString();
-		System.setProperty(IntegConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
+		System.setProperty(TestConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
 		LogUtil.init();
 		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
 		// Reload default properties
@@ -87,21 +87,21 @@ public class WriteDataItemWithRandomSizeIntegTest {
 		writeScenarioMongoose.interrupt();
 		// Wait logger's output from console
 		Thread.sleep(3000);
-		System.setOut(savedOutputStream.getPrintStream());
+		System.setOut(savedOutputStream.getReplacedStream());
 	}
 
 	@Test
 	public void shouldReportInformationAboutSummaryMetricsFromConsole()
 	throws Exception {
-		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SUMMARY_INDICATOR));
-		Assert.assertTrue(savedOutputStream.toString().contains(IntegConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(TestConstants.SUMMARY_INDICATOR));
+		Assert.assertTrue(savedOutputStream.toString().contains(TestConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test
 	public void shouldReportScenarioEndToMessageLogFile()
 	throws Exception {
 		//Read message file and search "Scenario End"
-		final File messageFile = IntegLogManager.getMessageFile(createRunId);
+		final File messageFile = LogParser.getMessageFile(createRunId);
 		Assert.assertTrue(messageFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(messageFile));
@@ -110,36 +110,36 @@ public class WriteDataItemWithRandomSizeIntegTest {
 		String line;
 		do {
 			line = bufferedReader.readLine();
-		} while ((!line.contains(IntegConstants.SCENARIO_END_INDICATOR)) && line != null);
+		} while ((!line.contains(TestConstants.SCENARIO_END_INDICATOR)) && line != null);
 
 		//Check the message file contain report about scenario end. If not line = null.
-		Assert.assertTrue(line.contains(IntegConstants.SCENARIO_END_INDICATOR));
+		Assert.assertTrue(line.contains(TestConstants.SCENARIO_END_INDICATOR));
 	}
 
 	@Test
 	public void shouldCreateAllFilesWithLogs()
 	throws Exception {
-		Path expectedFile = IntegLogManager.getMessageFile(createRunId).toPath();
+		Path expectedFile = LogParser.getMessageFile(createRunId).toPath();
 		//Check that messages.log file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getPerfAvgFile(createRunId).toPath();
+		expectedFile = LogParser.getPerfAvgFile(createRunId).toPath();
 		//Check that perf.avg.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getPerfSumFile(createRunId).toPath();
+		expectedFile = LogParser.getPerfSumFile(createRunId).toPath();
 		//Check that perf.sum.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getPerfTraceFile(createRunId).toPath();
+		expectedFile = LogParser.getPerfTraceFile(createRunId).toPath();
 		//Check that perf.trace.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getDataItemsFile(createRunId).toPath();
+		expectedFile = LogParser.getDataItemsFile(createRunId).toPath();
 		//Check that data.items.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		expectedFile = IntegLogManager.getErrorsFile(createRunId).toPath();
+		expectedFile = LogParser.getErrorsFile(createRunId).toPath();
 		//Check that errors.log file is not created
 		Assert.assertFalse(Files.exists(expectedFile));
 	}
@@ -148,14 +148,14 @@ public class WriteDataItemWithRandomSizeIntegTest {
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		// Get data.items.csv file of write scenario run
-		final File dataItemFile = IntegLogManager.getDataItemsFile(createRunId);
+		final File dataItemFile = LogParser.getDataItemsFile(createRunId);
 		Assert.assertTrue(dataItemFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemFile));
 		//
 		String line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(IntegLogManager.matchWithDataItemsFilePattern(line));
+			Assert.assertTrue(LogParser.matchWithDataItemsFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
@@ -164,17 +164,17 @@ public class WriteDataItemWithRandomSizeIntegTest {
 	public void shouldCreateCorrectPerfSumFile()
 	throws Exception {
 		// Get perf.sum.csv file of write scenario run
-		final File perfSumFile = IntegLogManager.getPerfSumFile(createRunId);
+		final File perfSumFile = LogParser.getPerfSumFile(createRunId);
 		Assert.assertTrue(perfSumFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
-		Assert.assertEquals(IntegLogManager.HEADER_PERF_SUM_FILE, line);
+		Assert.assertEquals(LogParser.HEADER_PERF_SUM_FILE, line);
 		line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(IntegLogManager.matchWithPerfSumFilePattern(line));
+			Assert.assertTrue(LogParser.matchWithPerfSumFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
@@ -183,17 +183,17 @@ public class WriteDataItemWithRandomSizeIntegTest {
 	public void shouldCreateCorrectPerfAvgFile()
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
-		final File perfAvgFile = IntegLogManager.getPerfAvgFile(createRunId);
+		final File perfAvgFile = LogParser.getPerfAvgFile(createRunId);
 		Assert.assertTrue(perfAvgFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
-		Assert.assertEquals(IntegLogManager.HEADER_PERF_AVG_FILE, line);
+		Assert.assertEquals(LogParser.HEADER_PERF_AVG_FILE, line);
 		line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(IntegLogManager.matchWithPerfAvgFilePattern(line));
+			Assert.assertTrue(LogParser.matchWithPerfAvgFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
@@ -202,17 +202,17 @@ public class WriteDataItemWithRandomSizeIntegTest {
 	public void shouldCreateCorrectPerfTraceFile()
 	throws Exception {
 		// Get perf.trace.csv file of write scenario run
-		final File perfTraceFile = IntegLogManager.getPerfTraceFile(createRunId);
+		final File perfTraceFile = LogParser.getPerfTraceFile(createRunId);
 		Assert.assertTrue(perfTraceFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfTraceFile));
 		//
 		String line = bufferedReader.readLine();
 		//Check that header of file is correct
-		Assert.assertEquals(IntegLogManager.HEADER_PERF_TRACE_FILE, line);
+		Assert.assertEquals(LogParser.HEADER_PERF_TRACE_FILE, line);
 		line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(IntegLogManager.matchWithPerfTraceFilePattern(line));
+			Assert.assertTrue(LogParser.matchWithPerfTraceFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
@@ -221,7 +221,7 @@ public class WriteDataItemWithRandomSizeIntegTest {
 	public void shouldReportCorrectWrittenCountToSummaryLogFile()
 	throws Exception {
 		// Read perf.summary file of create scenario run
-		final File perfSumFile = IntegLogManager.getPerfSumFile(createRunId);
+		final File perfSumFile = LogParser.getPerfSumFile(createRunId);
 
 		// Check that file exists
 		Assert.assertTrue(perfSumFile.exists());
@@ -231,7 +231,7 @@ public class WriteDataItemWithRandomSizeIntegTest {
 
 		// Get value of "CountSucc" column
 		final int actualCountSucc = Integer.valueOf(
-			bufferedReader.readLine().split(",")[IntegConstants.COUNT_SUCC_COLUMN_INDEX]
+			bufferedReader.readLine().split(",")[TestConstants.COUNT_SUCC_COLUMN_INDEX]
 		);
 		Assert.assertEquals(LIMIT_COUNT, actualCountSucc);
 	}
@@ -240,7 +240,7 @@ public class WriteDataItemWithRandomSizeIntegTest {
 	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
 	throws Exception {
 		// Read data.items.csv file of create scenario run
-		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		final File dataItemsFile = LogParser.getDataItemsFile(createRunId);
 		Assert.assertTrue(dataItemsFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
@@ -253,7 +253,7 @@ public class WriteDataItemWithRandomSizeIntegTest {
 		//
 		while (line != null) {
 			// Get dataSize from each line
-			dataSize = Integer.valueOf(line.split(",")[IntegConstants.DATA_SIZE_COLUMN_INDEX]);
+			dataSize = Integer.valueOf(line.split(",")[TestConstants.DATA_SIZE_COLUMN_INDEX]);
 			dataItemSizes.add(dataSize);
 			if (dataSize < actualMinSize) {
 				actualMinSize = dataSize;
@@ -277,7 +277,7 @@ public class WriteDataItemWithRandomSizeIntegTest {
 	public void shouldGetDifferentObjectsFromServer()
 	throws Exception {
 		//Read data.items.csv file of create scenario run
-		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		final File dataItemsFile = LogParser.getDataItemsFile(createRunId);
 		Assert.assertTrue(dataItemsFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
@@ -286,7 +286,7 @@ public class WriteDataItemWithRandomSizeIntegTest {
 		final Set setOfChecksum = new HashSet();
 
 		while (line != null){
-			dataID = line.split(",")[IntegConstants.DATA_ID_COLUMN_INDEX];
+			dataID = line.split(",")[TestConstants.DATA_ID_COLUMN_INDEX];
 			// Add each data checksum from set
 			try (final InputStream inputStream = ContentGetter.getStream(dataID)) {
 				setOfChecksum.add(DigestUtils.md2Hex(inputStream));
@@ -301,7 +301,7 @@ public class WriteDataItemWithRandomSizeIntegTest {
 	public void shouldGetAllObjectsFromServerAndDataSizeIsDefault()
 	throws Exception {
 		//Read data.items.csv file of create scenario run
-		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		final File dataItemsFile = LogParser.getDataItemsFile(createRunId);
 		Assert.assertTrue(dataItemsFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
@@ -312,8 +312,8 @@ public class WriteDataItemWithRandomSizeIntegTest {
 
 		while (line != null){
 			dataItemInfo = line.split(",");
-			dataID = dataItemInfo[IntegConstants.DATA_ID_COLUMN_INDEX];
-			expectedDataSize = Integer.valueOf(dataItemInfo[IntegConstants.DATA_SIZE_COLUMN_INDEX]);
+			dataID = dataItemInfo[TestConstants.DATA_ID_COLUMN_INDEX];
+			expectedDataSize = Integer.valueOf(dataItemInfo[TestConstants.DATA_SIZE_COLUMN_INDEX]);
 			actualDataSize = ContentGetter.getDataSize(dataID);
 			Assert.assertEquals(expectedDataSize, actualDataSize);
 			line = bufferedReader.readLine();

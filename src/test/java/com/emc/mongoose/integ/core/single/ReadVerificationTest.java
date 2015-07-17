@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ;
+package com.emc.mongoose.integ.core.single;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -6,9 +6,9 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
-import com.emc.mongoose.integ.integTestTools.IntegConstants;
-import com.emc.mongoose.integ.integTestTools.IntegLogManager;
-import com.emc.mongoose.integ.integTestTools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.TestConstants;
+import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.tools.SavedOutputStream;
 //
 import com.emc.mongoose.run.scenario.ScriptRunner;
 //
@@ -22,7 +22,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Calendar;
 import java.util.Locale;
@@ -35,12 +34,12 @@ import java.util.TimeZone;
  * in Mongoose Core Functional Testing
  * HLUC: 1.1.4.2
  */
-public class FaildVerificationIntegTest {
+public class ReadVerificationTest {
 	private static SavedOutputStream savedOutputStream;
 	//
 	private static String
-		createRunId = IntegConstants.LOAD_CREATE,
-		readRunId = IntegConstants.LOAD_READ;
+		createRunId = TestConstants.LOAD_CREATE,
+		readRunId = TestConstants.LOAD_READ;
 	//
 	private static final int LIMIT_COUNT = 10;
 	private static final String DATA_SIZE = "10B";
@@ -49,17 +48,17 @@ public class FaildVerificationIntegTest {
 	public static void before()
 	throws Exception{
 		//Create run ID
-		createRunId += ":" + DATA_SIZE + ":" + IntegConstants.FMT_DT.format(
+		createRunId += ":" + DATA_SIZE + ":" + TestConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, createRunId);
 		// Init logger and runtime config
 		final String fullLogConfFile = Paths
 			.get(
-				System.getProperty(IntegConstants.USER_DIR_PROPERTY_NAME),
-				Constants.DIR_CONF, IntegConstants.LOG_FILE_NAME)
+				System.getProperty(TestConstants.USER_DIR_PROPERTY_NAME),
+				Constants.DIR_CONF, TestConstants.LOG_FILE_NAME)
 			.toString();
-		System.setProperty(IntegConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
+		System.setProperty(TestConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
 		LogUtil.init();
 		final Logger rootLogger = LogManager.getRootLogger();
 		//Reload default properties
@@ -102,8 +101,8 @@ public class FaildVerificationIntegTest {
 			public void run() {
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, readRunId);
 				RunTimeConfig.getContext()
-					.set(RunTimeConfig.KEY_DATA_SRC_FPATH, IntegLogManager.getDataItemsFile(createRunId).getPath());
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, IntegConstants.LOAD_READ);
+					.set(RunTimeConfig.KEY_DATA_SRC_FPATH, LogParser.getDataItemsFile(createRunId).getPath());
+				RunTimeConfig.getContext().set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
 				//Set another seed -> it has to brake verification
 				final String newSeed = "7a42d9c483244166";
 				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_RING_SEED, newSeed);
@@ -120,19 +119,19 @@ public class FaildVerificationIntegTest {
 		readScenarioMongoose.interrupt();
 		Thread.sleep(3000);
 		//
-		System.setOut(savedOutputStream.getPrintStream());
+		System.setOut(savedOutputStream.getReplacedStream());
 	}
 
 	@Test
 	public void shouldFailedReadOfAllDataItems()
 	throws Exception {
 		// Get perf.sum.csv file of read scenario
-		final File perfSumFile = IntegLogManager.getPerfSumFile(readRunId);
+		final File perfSumFile = LogParser.getPerfSumFile(readRunId);
 		Assert.assertTrue(perfSumFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
 		bufferedReader.readLine();
-		int countFail = Integer.valueOf(bufferedReader.readLine().split(",")[IntegConstants.COUNT_FAIL_COLUMN_INDEX]);
+		int countFail = Integer.valueOf(bufferedReader.readLine().split(",")[TestConstants.COUNT_FAIL_COLUMN_INDEX]);
 		Assert.assertEquals(LIMIT_COUNT, countFail);
 	}
 
@@ -140,15 +139,15 @@ public class FaildVerificationIntegTest {
 	public void shouldReportAboutFailedVerificationToConsole()
 	throws Exception {
 		// Get data.items.csv file of write scenario
-		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		final File dataItemsFile = LogParser.getDataItemsFile(createRunId);
 		Assert.assertTrue(dataItemsFile.exists());
 		//
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 		String line = bufferedReader.readLine();
 		String dataID;
 		while (line != null){
-			dataID = line.split(",")[IntegConstants.DATA_ID_COLUMN_INDEX];
-			Assert.assertTrue(savedOutputStream.toString().contains(dataID+IntegConstants.CONTENT_MISMATCH_INDICATOR));
+			dataID = line.split(",")[TestConstants.DATA_ID_COLUMN_INDEX];
+			Assert.assertTrue(savedOutputStream.toString().contains(dataID+ TestConstants.CONTENT_MISMATCH_INDICATOR));
 			line = bufferedReader.readLine();
 		}
 	}
@@ -157,19 +156,19 @@ public class FaildVerificationIntegTest {
 	public void shouldReportAboutFailedVerificationToMessageFile()
 	throws Exception {
 		// Get data.items.csv file of write scenario
-		final File dataItemsFile = IntegLogManager.getDataItemsFile(createRunId);
+		final File dataItemsFile = LogParser.getDataItemsFile(createRunId);
 		Assert.assertTrue(dataItemsFile.exists());
 		//
 		final BufferedReader bufferedDataItemsReader = new BufferedReader(new FileReader(dataItemsFile));
 		// Get content of message.log file of read scenario
-		final String contentMessageFile = new Scanner(IntegLogManager.getMessageFile(readRunId))
+		final String contentMessageFile = new Scanner(LogParser.getMessageFile(readRunId))
 			.useDelimiter("\\Z")
 			.next();
 		String line = bufferedDataItemsReader.readLine();
 		String dataID;
 		while (line != null){
-			dataID = line.split(",")[IntegConstants.DATA_ID_COLUMN_INDEX];
-			Assert.assertTrue(contentMessageFile.contains(dataID + IntegConstants.CONTENT_MISMATCH_INDICATOR));
+			dataID = line.split(",")[TestConstants.DATA_ID_COLUMN_INDEX];
+			Assert.assertTrue(contentMessageFile.contains(dataID + TestConstants.CONTENT_MISMATCH_INDICATOR));
 			line = bufferedDataItemsReader.readLine();
 		}
 	}

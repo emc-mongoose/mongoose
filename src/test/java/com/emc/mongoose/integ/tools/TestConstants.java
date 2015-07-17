@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.integTestTools;
+package com.emc.mongoose.integ.tools;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 /**
  * Created by olga on 03.07.15.
  */
-public interface IntegConstants {
+public interface TestConstants {
 	//
 	String SCENARIO_END_INDICATOR = "Scenario end";
 	String SUMMARY_INDICATOR = "summary:";

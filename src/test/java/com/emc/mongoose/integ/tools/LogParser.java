@@ -1,21 +1,17 @@
-package com.emc.mongoose.integ.integTestTools;
+package com.emc.mongoose.integ.tools;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.log.Markers;
-import org.apache.logging.log4j.Level;
 
 import java.io.File;
 import java.nio.file.Paths;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * Created by olga on 03.07.15.
  */
-public final class IntegLogManager {
+public final class LogParser {
 
 	//Patterns
 	private static final Pattern DATA_ITEMS_FILE_PATTERN = Pattern.compile("^[a-zA-Z0-9]+,[a-zA-Z0-9]+,[0-9]+,[0-9]+/[0-9a-fA-F]+$");
@@ -67,32 +63,32 @@ public final class IntegLogManager {
 
 	public static File getMessageFile(final String runID){
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, runID, IntegConstants.MESSAGE_FILE_NAME).toString());
+			Constants.DIR_LOG, runID, TestConstants.MESSAGE_FILE_NAME).toString());
 	}
 
 	public static File getPerfAvgFile(final String runID){
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, runID, IntegConstants.PERF_AVG_FILE_NAME).toString());
+			Constants.DIR_LOG, runID, TestConstants.PERF_AVG_FILE_NAME).toString());
 	}
 
 	public static File getPerfSumFile(final String runID){
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, runID, IntegConstants.PERF_SUM_FILE_NAME).toString());
+			Constants.DIR_LOG, runID, TestConstants.PERF_SUM_FILE_NAME).toString());
 	}
 
 	public static File getPerfTraceFile(final String runID){
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, runID, IntegConstants.PERF_TRACE_FILE_NAME).toString());
+			Constants.DIR_LOG, runID, TestConstants.PERF_TRACE_FILE_NAME).toString());
 	}
 
 	public static File getDataItemsFile(final String runID){
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, runID, IntegConstants.DATA_ITEMS_FILE_NAME).toString());
+			Constants.DIR_LOG, runID, TestConstants.DATA_ITEMS_FILE_NAME).toString());
 	}
 
 	public static File getErrorsFile(final String runID){
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, runID, IntegConstants.ERR_FILE_NAME).toString());
+			Constants.DIR_LOG, runID, TestConstants.ERR_FILE_NAME).toString());
 	}
 
 	public static boolean matchWithDataItemsFilePattern(final String line) {
