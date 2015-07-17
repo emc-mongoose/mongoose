@@ -14,12 +14,12 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 public abstract class ConfiguredTestSuite
-extends StdOutInterceptorTestSuite {
+extends LoggingTestSuite {
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		StdOutInterceptorTestSuite.setUpClass();
+		LoggingTestSuite.setUpClass();
 		RunTimeConfig.initContext();
 		LogManager.getLogger().info(Markers.MSG, "Shared runtime configuration has been initialized");
 	}
@@ -28,6 +28,6 @@ extends StdOutInterceptorTestSuite {
 	public static void tearDownClass()
 	throws Exception {
 		// place code here
-		StdOutInterceptorTestSuite.tearDownClass();
+		LoggingTestSuite.tearDownClass();
 	}
 }

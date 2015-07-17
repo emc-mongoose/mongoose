@@ -3,9 +3,6 @@ package com.emc.mongoose.integ.suite;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.LogUtil;
 //
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-//
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;

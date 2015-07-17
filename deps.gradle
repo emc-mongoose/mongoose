@@ -16,6 +16,7 @@ ext {
 	commons_codec = [ "commons-codec:commons-codec:1.10" ]
 	commons_collections4 = [ "org.apache.commons:commons-collections4:4.0" ]
 	commons_configuration = [ "commons-configuration:commons-configuration:1.10" ]
+	commons_csv = [ "org.apache.commons:commons-csv:1.1" ]
 	commons_lang = [ "commons-lang:commons-lang:2.6" ]
 	commons_logging = [ "commons-logging:commons-logging:1.2" ]
 

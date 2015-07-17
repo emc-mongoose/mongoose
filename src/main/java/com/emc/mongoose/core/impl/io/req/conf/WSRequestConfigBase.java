@@ -648,11 +648,17 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final HttpResponse execute(final String tgtAddr, final HttpRequest request)
-	throws IllegalThreadStateException {
+	public final HttpResponse execute(final String tgtAddr, final HttpRequest request) {
 		//
-		if(!clientDaemon.isAlive()) {
-			clientDaemon.start();
+		try {
+			if(!clientDaemon.isAlive()) {
+				clientDaemon.start();
+			}
+		} catch(final IllegalThreadStateException e) {
+			LOG.error(
+				Markers.ERR, "#{}: failed to start the client thread which is in state: {}",
+				hashCode(), clientDaemon.getState()
+			);
 		}
 		//
 		HttpResponse response = null;

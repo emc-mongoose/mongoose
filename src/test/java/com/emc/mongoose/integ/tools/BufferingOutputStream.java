@@ -6,12 +6,12 @@ import java.io.PrintStream;
 /**
  * Created by olga on 02.07.15.
  */
-public final class SavedOutputStream
+public final class BufferingOutputStream
 extends ByteArrayOutputStream {
 
 	private final PrintStream out;
 
-	public SavedOutputStream(final PrintStream out){
+	public BufferingOutputStream(final PrintStream out){
 		super();
 		this.out = out;
 	}
@@ -29,6 +29,6 @@ extends ByteArrayOutputStream {
 	}
 
 	public final PrintStream getReplacedStream(){
-		return  this.out;
+		return this.out;
 	}
 }

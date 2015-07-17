@@ -53,7 +53,7 @@ import java.nio.file.Paths;
 	CRUDSimultaneousScenarioIntegTest.class,
 	DefaultChainScenarioIntegTest.class
 })
-public class IntegrationTestSuite {
+public class CoreTestSuite {
 
 	private static Thread wsMockThread;
 

@@ -6,17 +6,19 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.data.WSObject;
-//
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.integ.suite.LoggingTestSuite;
-import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
-import static com.emc.mongoose.integ.tools.LogPatterns.*;
-
-import com.emc.mongoose.integ.tools.LogParser;
-import com.emc.mongoose.integ.tools.BufferingOutputStream;
+//
+import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
+//
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
+//
+import com.emc.mongoose.integ.suite.LoggingTestSuite;
+import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
+import static com.emc.mongoose.integ.tools.LogPatterns.*;
+import com.emc.mongoose.integ.tools.LogParser;
+import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
@@ -34,18 +36,19 @@ import java.io.File;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 /**
  Created by kurila on 16.07.15.
  */
-public class WriteLoggingTest {
+public class UpdateLoggingTest {
 	//
-	private final static long COUNT_TO_WRITE = 1000;
-	private final static String RUN_ID = WriteLoggingTest.class.getCanonicalName();
+	private final static int COUNT_TO_WRITE = 1000;
+	private final static String RUN_ID = DeleteLoggingTest.class.getCanonicalName();
 	//
 	private static StorageClient<WSObject> CLIENT;
-	private static long COUNT_WRITTEN;
+	private static long COUNT_WRITTEN, COUNT_UPDATED;
 	private static Logger LOG;
 	private static byte STD_OUT_CONTENT[];
 	//
@@ -70,17 +73,21 @@ public class WriteLoggingTest {
 		if(stdOutInterceptorStream == null) {
 			throw new IllegalStateException(
 				"Looks like the test case is not included in the \"" +
-				StdOutInterceptorTestSuite.class.getSimpleName() + "\" test suite, cannot run"
+					StdOutInterceptorTestSuite.class.getSimpleName() + "\" test suite, cannot run"
 			);
 		}
+		final ItemBlockingQueue<WSObject> itemsQueue = new ItemBlockingQueue<>(
+			new ArrayBlockingQueue<WSObject>(COUNT_TO_WRITE)
+		);
+		COUNT_WRITTEN = CLIENT.write(null, itemsQueue, (short) 10, SizeUtil.toSize("10KB"));
 		stdOutInterceptorStream.reset(); // clear before using
-		COUNT_WRITTEN = CLIENT.write(null, null, (short) 10, SizeUtil.toSize("10KB"));
+		COUNT_UPDATED = CLIENT.update(itemsQueue, null, (short) 10);
 		TimeUnit.SECONDS.sleep(1);
 		STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 		LOG = LogManager.getLogger();
 		LOG.info(
-			Markers.MSG, "Written {} items, captured {} bytes from stdout",
-			COUNT_WRITTEN, STD_OUT_CONTENT.length
+			Markers.MSG, "Deleted {} items, captured {} bytes from stdout",
+			COUNT_UPDATED, STD_OUT_CONTENT.length
 		);
 	}
 	//
@@ -101,7 +108,7 @@ public class WriteLoggingTest {
 				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
 			)
 		) {
-			String nextStdOutLine;
+			String nextStdOutLine, loadType;
 			Matcher m;
 			do {
 				nextStdOutLine = in.readLine();
@@ -110,18 +117,16 @@ public class WriteLoggingTest {
 				} else {
 					m = CONSOLE_METRICS_AVG_CLIENT.matcher(nextStdOutLine);
 					if(m.find()) {
+						loadType = m.group("typeLoad");
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.CREATE.name(),
-							IOTask.Type.CREATE.name().toLowerCase().equals(
-								m.group("typeLoad").toLowerCase()
-							)
+							"Load type is not " + IOTask.Type.UPDATE.name() + ": " + loadType,
+							IOTask.Type.UPDATE.name().toLowerCase().equals(loadType.toLowerCase())
 						);
 						long
 							nextSuccCount = Long.parseLong(m.group("countSucc")),
 							nextFailCount = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							nextStdOutLine +
-							": next written items count " + nextSuccCount +
+							"Next updated items count " + nextSuccCount +
 							" is less than previous: " + lastSuccCount,
 							nextSuccCount >= lastSuccCount
 						);
@@ -146,7 +151,7 @@ public class WriteLoggingTest {
 				new InputStreamReader(new ByteArrayInputStream(STD_OUT_CONTENT))
 			)
 		) {
-			String nextStdOutLine;
+			String nextStdOutLine, loadType;
 			Matcher m;
 			do {
 				nextStdOutLine = in.readLine();
@@ -155,19 +160,18 @@ public class WriteLoggingTest {
 				} else {
 					m = CONSOLE_METRICS_SUM_CLIENT.matcher(nextStdOutLine);
 					if(m.find()) {
+						loadType = m.group("typeLoad");
 						Assert.assertTrue(
-							"Load type is not " + IOTask.Type.CREATE.name(),
-							IOTask.Type.CREATE.name().toLowerCase().equals(
-								m.group("typeLoad").toLowerCase()
-							)
+							"Load type is not " + IOTask.Type.UPDATE.name() + ": " + loadType,
+							IOTask.Type.UPDATE.name().toLowerCase().equals(loadType.toLowerCase())
 						);
 						long
 							countLimit = Long.parseLong(m.group("countLimit")),
 							countSucc = Long.parseLong(m.group("countSucc")),
 							countFail = Long.parseLong(m.group("countFail"));
 						Assert.assertTrue(
-							"Written items count " + countSucc +
-								" is not equal to the limit: " + countLimit,
+							"Updated items count " + countSucc +
+							" is not equal to the limit: " + countLimit,
 							countSucc == countLimit
 						);
 						Assert.assertTrue("There are failures reported", countFail == 0);
@@ -184,7 +188,7 @@ public class WriteLoggingTest {
 	//
 	@Test
 	public void checkFileAvgMetricsLogging()
-	throws Exception {
+		throws Exception {
 		boolean firstRow = true, secondRow = false;
 		final File logPerfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue("Performance avg metrics log file doesn't exist", logPerfAvgFile.exists());
@@ -220,10 +224,7 @@ public class WriteLoggingTest {
 					firstRow = false;
 				} else {
 					secondRow = true;
-					Assert.assertTrue(
-						"Load type is \"" + nextRec.get(3) + "\" but \"Create\" is expected",
-						IOTask.Type.CREATE.name().equalsIgnoreCase(nextRec.get(3))
-					);
+					Assert.assertTrue(nextRec.isConsistent());
 				}
 			}
 		}
@@ -232,7 +233,7 @@ public class WriteLoggingTest {
 	//
 	@Test
 	public void checkFileSumMetricsLogging()
-	throws Exception {
+		throws Exception {
 		boolean firstRow = true, secondRow = false;
 		final File logPerfSumFile = LogParser.getPerfSumFile(RUN_ID);
 		Assert.assertTrue("Performance sum metrics log file doesn't exist", logPerfSumFile.exists());
@@ -265,12 +266,9 @@ public class WriteLoggingTest {
 					Assert.assertEquals("BW5Min[MB/s]", nextRec.get(19));
 					Assert.assertEquals("BW15Min[MB/s]", nextRec.get(20));
 					firstRow = false;
-				} else {
+				} else  {
 					secondRow = true;
-					Assert.assertTrue(
-						"Load type is \"" + nextRec.get(3) + "\" but \"Create\" is expected",
-						IOTask.Type.CREATE.name().equalsIgnoreCase(nextRec.get(3))
-					);
+					Assert.assertTrue(nextRec.isConsistent());
 				}
 			}
 		}

@@ -435,6 +435,7 @@ dependencies {
 
 	integTestCompile(
 		library.junit,
+		library.commons_csv,
 	)
 }
 
@@ -921,6 +922,9 @@ task testJar(type: Jar) {
 				configurations.testRuntime.collect {
 					libsDirName + File.separator + it.getName()
 				}.join(' '),
+				configurations.integTestRuntime.collect {
+					libsDirName + File.separator + it.getName()
+				}.join(' '),
 			].join(' ')
 		)
 	}
@@ -1006,7 +1010,10 @@ idea {
 		scopes = [
 			COMPILE: [plus: [configurations.compile], minus: []],
 			RUNTIME: [plus: [configurations.runtime], minus: [configurations.compile]],
-			TEST: [plus: [configurations.testRuntime], minus: [configurations.runtime]]
+			TEST: [
+				plus: [configurations.testRuntime, configurations.integTestRuntime],
+				minus: [configurations.runtime]
+			],
 		]
 		//for cleaning mongoose.iml
 		iml{
@@ -1034,8 +1041,8 @@ test {
 
 task integTest(type: Test, dependsOn: compileRMI) {
 	//Be able to run only test suit
+	include '**/CoreTestSuite.class'
 	include '**/DistributedLoadTestSuite.class'
-	//include '**/IntegrationTestSuite.class'
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath

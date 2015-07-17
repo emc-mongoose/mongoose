@@ -6,7 +6,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.tools.TestConstants;
-import com.emc.mongoose.integ.tools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
@@ -40,7 +40,7 @@ import java.util.regex.Matcher;
  */
 public class CustomChainScenarioIntegTest {
 	//
-	private static SavedOutputStream savedOutputStream;
+	private static BufferingOutputStream savedOutputStream;
 	//
 	private static String chainRunId;
 	private static final String
@@ -55,7 +55,7 @@ public class CustomChainScenarioIntegTest {
 	public static void before()
 	throws Exception {
 		// Set new saved console output stream
-		savedOutputStream = new SavedOutputStream(System.out);
+		savedOutputStream = new BufferingOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create run ID
 		chainRunId = SCENARIO_NAME + ":" + TestConstants.FMT_DT.format(
@@ -317,7 +317,10 @@ public class CustomChainScenarioIntegTest {
 			countLinesOfSumInfo ++;
 			line = bufferedReader.readLine();
 		}
-		Assert.assertTrue(loadsSet.isEmpty());
+		Assert.assertTrue(
+			"The following load job summaries was not met: " + loadsSet.toString(),
+			loadsSet.isEmpty()
+		);
 		Assert.assertEquals(LOADS_COUNT, countLinesOfSumInfo);
 	}
 
@@ -373,7 +376,7 @@ public class CustomChainScenarioIntegTest {
 	@Test
 	public void shouldGeneralStatusOfTheRunIsRegularlyReports()
 	throws Exception {
-		final int precisionMillis = 1000;
+		final int precisionMillis = 10000;
 		// Get perf.avg.csv file
 		final File perfAvgFile = LogParser.getPerfAvgFile(chainRunId);
 		Assert.assertTrue(perfAvgFile.exists());

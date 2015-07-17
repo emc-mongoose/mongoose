@@ -13,7 +13,7 @@ import com.emc.mongoose.run.scenario.ScriptRunner;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.ContentGetter;
-import com.emc.mongoose.integ.tools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
 import org.apache.commons.codec.digest.DigestUtils;
 //
@@ -44,7 +44,7 @@ import java.util.TimeZone;
  */
 public final class DefaultWriteTest {
 	//
-	private static SavedOutputStream savedOutputStream;
+	private static BufferingOutputStream savedOutputStream;
 	//
 	private static final int LIMIT_COUNT = 10;
 	private static String createRunId = TestConstants.LOAD_CREATE;
@@ -54,7 +54,7 @@ public final class DefaultWriteTest {
 	public static void before()
 	throws Exception {
 		// Set new saved console output stream
-		savedOutputStream = new SavedOutputStream(System.out);
+		savedOutputStream = new BufferingOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create run ID
 		createRunId += ":" + DATA_SIZE + ":" + TestConstants.FMT_DT.format(
