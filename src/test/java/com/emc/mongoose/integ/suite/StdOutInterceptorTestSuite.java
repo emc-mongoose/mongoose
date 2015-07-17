@@ -1,6 +1,6 @@
 package com.emc.mongoose.integ.suite;
 //
-import com.emc.mongoose.integ.tools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -12,23 +12,28 @@ import java.io.PrintStream;
  Created by kurila on 14.07.15.
  */
 @RunWith(Suite.class)
-public abstract class StdOutInterceptorTestSuite
-extends LoggingTestSuite {
+public abstract class StdOutInterceptorTestSuite {
 	//
-	public static SavedOutputStream STD_OUT_INTERCEPT_STREAM;
+	private final static PrintStream defaultStdOut = System.out;
+	//
+	public static BufferingOutputStream getStdOutBufferingStream() {
+		final BufferingOutputStream stdOutBufferingStream = new BufferingOutputStream(defaultStdOut);
+		System.setOut(new PrintStream(stdOutBufferingStream));
+		return stdOutBufferingStream;
+	}
+	//
+	public static void reset() {
+		System.setOut(defaultStdOut);
+	}
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		LoggingTestSuite.setUpClass();
-		STD_OUT_INTERCEPT_STREAM = new SavedOutputStream(System.out);
-		System.setOut(new PrintStream(STD_OUT_INTERCEPT_STREAM));
 	}
 	//
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		System.setOut(STD_OUT_INTERCEPT_STREAM.getReplacedStream());
-		LoggingTestSuite.tearDownClass();
+		reset();
 	}
 }

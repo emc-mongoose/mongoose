@@ -10,7 +10,7 @@ import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.PortListener;
-import com.emc.mongoose.integ.tools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.BufferingOutputStream;
 //
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.logging.log4j.Logger;
@@ -44,7 +44,7 @@ import java.util.regex.Matcher;
  */
 public class WriteUsing10ConnTest {
 	//
-	private static SavedOutputStream savedOutputStream;
+	private static BufferingOutputStream savedOutputStream;
 	//
 	private static final int LIMIT_COUNT = 1000000, LOAD_THREADS = 10;
 	private static String createRunId = TestConstants.LOAD_CREATE;
@@ -55,7 +55,7 @@ public class WriteUsing10ConnTest {
 	public static void before()
 	throws Exception {
 		// Set new saved console output stream
-		savedOutputStream = new SavedOutputStream(System.out);
+		savedOutputStream = new BufferingOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create run ID
 		createRunId += ":" + DATA_SIZE + ":" + TestConstants.FMT_DT.format(

@@ -87,8 +87,7 @@ extends ObjectRequestConfig<T> {
 	//
 	void receiveResponse(final HttpResponse response, final T dataItem);
 	//
-	public HttpResponse execute(final String addr, final HttpRequest request)
-	throws IllegalThreadStateException;
+	HttpResponse execute(final String addr, final HttpRequest request);
 	//
 	boolean consumeContent(final ContentDecoder in, final IOControl ioCtl, T dataItem);
 }

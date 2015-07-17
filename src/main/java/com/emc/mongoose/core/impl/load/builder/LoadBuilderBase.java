@@ -167,6 +167,9 @@ implements LoadBuilder<T, U> {
 	@Override
 	public LoadBuilder<T, U> setRequestConfig(final RequestConfig<T> reqConf)
 	throws ClassCastException {
+		if(this.reqConf.equals(reqConf)) {
+			return this;
+		}
 		LOG.debug(Markers.MSG, "Set request builder: {}", reqConf.toString());
 		try {
 			this.reqConf.close(); // see jira ticket #437

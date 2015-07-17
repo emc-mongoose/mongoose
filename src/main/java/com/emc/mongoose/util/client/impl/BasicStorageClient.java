@@ -17,6 +17,7 @@ import com.emc.mongoose.core.impl.load.model.DataItemOutputConsumer;
 import com.emc.mongoose.util.client.api.StorageClient;
 //
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 /**
  Created by kurila on 19.06.15.
  */
@@ -51,8 +52,10 @@ implements StorageClient<T> {
 		if(producer != null) {
 			producer.start();
 		}
+		final long timeOut = rtConfig.getLoadLimitTimeValue();
+		final TimeUnit timeUnit = rtConfig.getLoadLimitTimeUnit();
 		loadExecutor.await(
-			rtConfig.getLoadLimitTimeValue(), rtConfig.getLoadLimitTimeUnit()
+			timeOut == 0 ? Long.MAX_VALUE : timeOut, timeUnit == null ? TimeUnit.DAYS : timeUnit
 		);
 		//
 		return loadExecutor.getLoadState().getCountSucc();

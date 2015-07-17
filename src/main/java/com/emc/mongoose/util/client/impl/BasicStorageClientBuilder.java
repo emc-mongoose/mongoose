@@ -121,7 +121,7 @@ implements StorageClientBuilder<T, U> {
 			if(timeOut != 0) {
 				throw new IllegalArgumentException("No time limit unit specified");
 			} else {
-				tu = TimeUnit.DAYS;
+				tu = TimeUnit.SECONDS;
 			}
 		}
 		rtConfig.set(

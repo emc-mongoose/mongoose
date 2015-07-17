@@ -9,7 +9,7 @@ import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.tools.ContentGetter;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
-import com.emc.mongoose.integ.tools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
@@ -35,7 +35,7 @@ import java.util.TimeZone;
  */
 public class Read200MBItemsTest {
 
-	private static SavedOutputStream savedOutputStream;
+	private static BufferingOutputStream savedOutputStream;
 	//
 	private static String
 		createRunId = TestConstants.LOAD_CREATE,
@@ -83,7 +83,7 @@ public class Read200MBItemsTest {
 		writeScenarioMongoose.join();
 		writeScenarioMongoose.interrupt();
 
-		savedOutputStream = new SavedOutputStream(System.out);
+		savedOutputStream = new BufferingOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create new run ID
 		readRunId += ":" + DATA_SIZE + ":" + LogUtil.FMT_DT.format(

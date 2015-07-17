@@ -7,7 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
-import com.emc.mongoose.integ.tools.SavedOutputStream;
+import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -40,7 +40,7 @@ import java.util.regex.Matcher;
  */
 public class CRUDSimultaneousScenarioIntegTest {
 	//
-	private static SavedOutputStream savedOutputStream;
+	private static BufferingOutputStream savedOutputStream;
 	//
 	private static String chainRunId;
 	private static final String
@@ -55,7 +55,7 @@ public class CRUDSimultaneousScenarioIntegTest {
 	public static void before()
 	throws Exception {
 		// Set new saved console output stream
-		savedOutputStream = new SavedOutputStream(System.out);
+		savedOutputStream = new BufferingOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create run ID
 		chainRunId = SCENARIO_NAME + ":" + TestConstants.FMT_DT.format(

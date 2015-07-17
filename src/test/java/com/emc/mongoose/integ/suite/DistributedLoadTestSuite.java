@@ -21,9 +21,13 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	//com.emc.mongoose.integ.distributed.single.WriteByCountTest.class,
-	//com.emc.mongoose.integ.distributed.single.WriteByTimeTest.class,
-	com.emc.mongoose.integ.distributed.single.WriteLoggingTest.class
+	com.emc.mongoose.integ.distributed.single.WriteByCountTest.class,
+	com.emc.mongoose.integ.distributed.single.WriteByTimeTest.class,
+	com.emc.mongoose.integ.distributed.single.WriteLoggingTest.class,
+	com.emc.mongoose.integ.distributed.single.ReadLoggingTest.class,
+	com.emc.mongoose.integ.distributed.single.DeleteLoggingTest.class,
+	com.emc.mongoose.integ.distributed.single.UpdateLoggingTest.class,
+	com.emc.mongoose.integ.distributed.chain.SequentialLoadTest.class
 })
 public class DistributedLoadTestSuite
 extends WSMockTestSuite {
@@ -36,6 +40,7 @@ extends WSMockTestSuite {
 		WSMockTestSuite.setUpClass();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
+		rtConfig.set(RunTimeConfig.KEY_LOAD_SERVERS, ServiceUtils.getHostAddr());
 		ServiceUtils.init();
 		LOAD_BUILDER_SVC = new BasicWSLoadBuilderSvc<>(rtConfig);
 		LOAD_BUILDER_SVC.start();
