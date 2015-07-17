@@ -14,43 +14,47 @@ import java.util.regex.Pattern;
 public final class LogParser {
 
 	//Patterns
-	private static final Pattern DATA_ITEMS_FILE_PATTERN = Pattern.compile("^[a-zA-Z0-9]+,[a-zA-Z0-9]+,[0-9]+,[0-9]+/[0-9a-fA-F]+$");
-	private static final Pattern PERF_SUM_FILE_PATTERN = Pattern.compile(
-		//data and time pattern
-		"^\"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}\"," +
-		//load ID, type API, load type and connection count pattern
-		"[0-9]+,(S3|ATMOS|SWIFT),(Create|Read|Update|Append|Delete),[0-9]+," +
-		//node count, load servers count, count of success and count af fail pattern
-		"[0-9]+,[0-9]*+,[0-9]+,[0-9]+," +
-		//LatencyAvg[us], LatencyMin[us],LatencyMed[us],LatencyMax[us] pattern
-		"[0-9]+,[0-9]+,[0-9]+,[0-9]+," +
-		//TPAvg,TP1Min,TP5Min,TP15Min pattern
-		"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}," +
-		//BWAvg[MB/s],BW1Min[MB/s],BW5Min[MB/s],BW15Min[MB/s] pattern
-		"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}$");
-	private static final Pattern PERF_AVG_FILE_PATTERN = Pattern.compile(
-		//data and time pattern
-		"^\"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}\"," +
-		//load ID, type API, load type and connection count pattern
-		"[0-9]+,(S3|ATMOS|SWIFT),(Create|Read|Update|Append|Delete),[0-9]+," +
-		//node count, load servers count, count of success, count of pending and count af fail pattern
-		"[0-9]+,[0-9]*+,[0-9]+,[0-9]+,[0-9]+," +
-		//LatencyAvg[us], LatencyMin[us],LatencyMed[us],LatencyMax[us] pattern
-		"[0-9]+,[0-9]+,[0-9]+,[0-9]+," +
-		//TPAvg,TP1Min,TP5Min,TP15Min pattern
-		"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}," +
-		//BWAvg[MB/s],BW1Min[MB/s],BW5Min[MB/s],BW15Min[MB/s] pattern
-		"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}$");
-	private static final Pattern PERF_TRACE_FILE_PATTERN = Pattern.compile(
-		// thread name pattern
-		"^[0-9]+-(S3|ATMOS|SWIFT)-(Create|Read|Update|Append|Delete)([0-9]+)?+-[0-9]+x[0-9]+(#[0-9]+)?," +
-		// TargetNode pattern
-		"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:[0-9]{1,5}," +
-		// DataItemId,DataItemSize pattern
-		"[a-zA-Z0-9]+,[0-9]+," +
-		// StatusCode,ReqTimeStart[us],Latency[us],Duration[us]
-		"[0-9]+,[0-9]+,[0-9]+,[0-9]+$");
-
+	private static final Pattern
+		DATA_ITEMS_FILE_PATTERN = Pattern.compile(
+			"^[a-zA-Z0-9]+,[a-zA-Z0-9]+,[0-9]+,[0-9]+/[0-9a-fA-F]+$"
+		),
+		PERF_SUM_FILE_PATTERN = Pattern.compile(
+			//data and time pattern
+			"^\"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}\"," +
+			//load ID, type API, load type and connection count pattern
+			"[0-9]+,(S3|ATMOS|SWIFT),(Create|Read|Update|Append|Delete),[0-9]+," +
+			//node count, load servers count, count of success and count af fail pattern
+			"[0-9]+,[0-9]*+,[0-9]+,[0-9]+," +
+			//LatencyAvg[us], LatencyMin[us],LatencyMed[us],LatencyMax[us] pattern
+			"[0-9]+,[0-9]+,[0-9]+,[0-9]+," +
+			//TPAvg,TP1Min,TP5Min,TP15Min pattern
+			"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}," +
+			//BWAvg[MB/s],BW1Min[MB/s],BW5Min[MB/s],BW15Min[MB/s] pattern
+			"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}$"
+		),
+		PERF_AVG_FILE_PATTERN = Pattern.compile(
+			//data and time pattern
+			"^\"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}\"," +
+			//load ID, type API, load type and connection count pattern
+			"[0-9]+,(S3|ATMOS|SWIFT),(Create|Read|Update|Append|Delete),[0-9]+," +
+			//node count, load servers count, count of success, count of pending and count af fail pattern
+			"[0-9]+,[0-9]*+,[0-9]+,[0-9]+,[0-9]+," +
+			//LatencyAvg[us], LatencyMin[us],LatencyMed[us],LatencyMax[us] pattern
+			"[0-9]+,[0-9]+,[0-9]+,[0-9]+," +
+			//TPAvg,TP1Min,TP5Min,TP15Min pattern
+			"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}," +
+			//BWAvg[MB/s],BW1Min[MB/s],BW5Min[MB/s],BW15Min[MB/s] pattern
+			"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}$"),
+		PERF_TRACE_FILE_PATTERN = Pattern.compile(
+			// thread name pattern
+			"^[0-9]+-(S3|ATMOS|SWIFT)-(Create|Read|Update|Append|Delete)([0-9]+)?+-[0-9]+x[0-9]+(#[0-9]+)?," +
+			// TargetNode pattern
+			"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:[0-9]{1,5}," +
+			// DataItemId,DataItemSize pattern
+			"[a-zA-Z0-9]+,[0-9]+," +
+			// StatusCode,ReqTimeStart[us],Latency[us],Duration[us]
+			"[0-9]+,[0-9]+,[0-9]+,[0-9]+$"
+		);
 	//Headers
 	public static final String HEADER_PERF_TRACE_FILE = "Thread,TargetNode,DataItemId,DataItemSize,StatusCode," +
 		"ReqTimeStart[us],Latency[us],Duration[us]";

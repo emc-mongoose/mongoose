@@ -21,7 +21,9 @@ import org.junit.runners.Suite;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	com.emc.mongoose.integ.distributed.single.WriteByCountTest.class
+	//com.emc.mongoose.integ.distributed.single.WriteByCountTest.class,
+	//com.emc.mongoose.integ.distributed.single.WriteByTimeTest.class,
+	com.emc.mongoose.integ.distributed.single.WriteLoggingTest.class
 })
 public class DistributedLoadTestSuite
 extends WSMockTestSuite {
