@@ -17,10 +17,10 @@ extends LoadBuilder<T, U>, Service {
 	String buildRemotely()
 	throws RemoteException;
 	//
-	int getNextInstanceNum()
+	int getNextInstanceNum(final String runId)
 	throws RemoteException;
 	//
-	void setNextInstanceNum(final int instanceN)
+	void setNextInstanceNum(final String runId, final int instanceN)
 	throws RemoteException;
 	//
 }
