@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public interface LoadExecutor<T extends DataItem>
 extends Producer<T>, AsyncConsumer<T> {
 	//
-	Map<String, AtomicInteger> LOAD_INSTANCES = new ConcurrentHashMap<>();
+	Map<String, AtomicInteger> INSTANCE_NUMBERS = new ConcurrentHashMap<>();
 	//AtomicInteger NEXT_INSTANCE_NUM = new AtomicInteger(0);
 	//
 	int NANOSEC_SCALEDOWN = 1000, MIB = 0x100000;

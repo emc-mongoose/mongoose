@@ -202,10 +202,10 @@ implements LoadExecutor<T> {
 		//
 		this.dataCls = dataCls;
 		this.rtConfig = rtConfig;
-		if (!LOAD_INSTANCES.containsKey(rtConfig.getRunId())) {
-			LOAD_INSTANCES.put(rtConfig.getRunId(), new AtomicInteger(0));
+		if (!INSTANCE_NUMBERS.containsKey(rtConfig.getRunId())) {
+			INSTANCE_NUMBERS.put(rtConfig.getRunId(), new AtomicInteger(0));
 		}
-		instanceNum = LOAD_INSTANCES.get(rtConfig.getRunId()).getAndIncrement();
+		instanceNum = INSTANCE_NUMBERS.get(rtConfig.getRunId()).getAndIncrement();
 		storageNodeCount = addrs.length;
 		//
 		setName(
