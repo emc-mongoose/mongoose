@@ -2425,7 +2425,7 @@ function charts(chartsArray) {
 								} else {
 									y = d3.scale.log()
 										.domain([
-											1,
+											0.1,
 											d3.max(d.sizes, function(c) { return d3.max(c.charts, function(v) {
 												return d3.max(v.values, function(val) {
 													return (val.y <= 0) ? 1 : val.y;
@@ -2487,7 +2487,7 @@ function charts(chartsArray) {
 							x.domain([(isNaN(x(0))) ? 1 : 0, d3.max(rampupThreadCountsArray)])
 								.range([0, width]);
 							y.domain([
-								(currYScale === SCALE_TYPES[1]) ? 1 : 0,
+								(currYScale === SCALE_TYPES[1]) ? 0.1 : 0,
 								d3.max(currentSizes, function (c) {
 									return d3.max(c.charts, function (v) {
 										return d3.max(v.values, function (val) {
