@@ -135,7 +135,7 @@ public class WriteUsing10ConnTest {
 
 		shouldReportScenarioEndToMessageLogFile();
 
-		System.setOut(savedOutputStream.getReplacedStream());
+		savedOutputStream.close();
 	}
 
 	public static void shouldCreateDataItemsFileWithInformationAboutAllObjects()

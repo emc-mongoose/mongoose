@@ -132,7 +132,7 @@ public class WriteUsing100ConnTest {
 
 		shouldReportScenarioEndToMessageLogFile();
 
-		System.setOut(savedOutputStream.getReplacedStream());
+		savedOutputStream.close();
 	}
 
 	public static void shouldCreateDataItemsFileWithInformationAboutAllObjects()

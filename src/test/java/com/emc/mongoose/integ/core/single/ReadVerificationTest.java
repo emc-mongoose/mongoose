@@ -117,7 +117,7 @@ public class ReadVerificationTest {
 		readScenarioMongoose.interrupt();
 		Thread.sleep(3000);
 		//
-		System.setOut(savedOutputStream.getReplacedStream());
+		savedOutputStream.close();
 	}
 
 	@Test

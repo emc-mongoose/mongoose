@@ -86,7 +86,7 @@ public class DefaultChainScenarioIntegTest {
 		writeScenarioMongoose.interrupt();
 		// Wait logger's output from console
 		Thread.sleep(3000);
-		System.setOut(savedOutputStream.getReplacedStream());
+		savedOutputStream.close();
 	}
 
 	@Test
