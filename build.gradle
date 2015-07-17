@@ -1035,7 +1035,7 @@ test {
 task integTest(type: Test, dependsOn: compileRMI) {
 	//Be able to run only test suit
 	include '**/DistributedLoadTestSuite.class'
-	//include '**/IntegrationTestSuite.class'
+	include '**/IntegrationTestSuite.class'
 
 	testClassesDir = sourceSets.integTest.output.classesDir
 	classpath = sourceSets.integTest.runtimeClasspath
