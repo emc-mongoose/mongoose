@@ -132,7 +132,7 @@ implements Externalizable {
 		}
 	}
 	//
-	private void loadProperties() {
+	public void loadProperties() {
 		loadPropsFromJsonCfgFile(
 			Paths.get(RunTimeConfig.DIR_ROOT, Constants.DIR_CONF).resolve(RunTimeConfig.FNAME_CONF)
 		);
