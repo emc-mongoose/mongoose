@@ -1,4 +1,4 @@
-package com.emc.mongoose.integ.distributed.chain;
+package com.emc.mongoose.integ.distributed.rampup;
 //
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.load.builder.LoadBuilder;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
-import com.emc.mongoose.util.scenario.Chain;
+import com.emc.mongoose.util.scenario.Rampup;
 import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
 import org.apache.commons.csv.CSVFormat;
@@ -20,7 +20,7 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
+//
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -32,17 +32,19 @@ import java.util.regex.Matcher;
 
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIENT;
 /**
- Created by kurila on 17.07.15.
+ Created by andrey on 17.07.15.
  */
-public class SequentialLoadTest {
+public class RampupTest {
 	//
 	private final static String
-		RUN_ID = SequentialLoadTest.class.getCanonicalName(),
-		LOAD_SEQ[] = { "create", "read", "read", "delete", "delete" };
-	private static final int
-		LOAD_JOB_TIME_LIMIT_SEC = 30,
+		RUN_ID = RampupTest.class.getCanonicalName(),
+		LOAD_SEQ[] = {"create", "read", "delete"},
+		SIZE_SEQ[] = {"1KB", "10KB", "100KB"},
+		THREAD_COUNT_SEQ[] = {"1", "10", "100"};
+	private final static int
+		LOAD_LIMIT_TIME_SEC = 5,
 		PRECISION_SEC = 10,
-		COUNT_STEPS = LOAD_SEQ.length;
+		COUNT_STEPS = LOAD_SEQ.length * SIZE_SEQ.length * THREAD_COUNT_SEQ.length;
 	//
 	private static Logger LOG;
 	private static long DURATION_TOTAL_SEC = -1;
@@ -54,17 +56,22 @@ public class SequentialLoadTest {
 		LOG = LogManager.getLogger();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		rtConfig.set(RunTimeConfig.KEY_SCENARIO_CHAIN_CONCURRENT, false);
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LOAD_LIMIT_TIME_SEC) + "s");
+		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
 		try(final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig)) {
-			final Chain chainScenario = new Chain(
-				loadBuilder, LOAD_JOB_TIME_LIMIT_SEC, TimeUnit.SECONDS, LOAD_SEQ, false
+			final Rampup rampupScenario = new Rampup(
+				loadBuilder, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS,
+				LOAD_SEQ, SIZE_SEQ, THREAD_COUNT_SEQ
 			);
+			//
 			try(
 				final BufferingOutputStream
 					stdOutBuffer = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 			) {
 				DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000;
-				chainScenario.run();
+				rampupScenario.run();
 				DURATION_TOTAL_SEC = System.currentTimeMillis() / 1000 - DURATION_TOTAL_SEC;
 				STD_OUT_CONTENT = stdOutBuffer.toByteArray();
 			}
@@ -81,14 +88,14 @@ public class SequentialLoadTest {
 	throws Exception {
 		Assert.assertTrue(
 			"Actual duration (" + DURATION_TOTAL_SEC + "[s]) is much more than expected (" +
-			COUNT_STEPS * LOAD_JOB_TIME_LIMIT_SEC + "[s])",
-			DURATION_TOTAL_SEC <= PRECISION_SEC + COUNT_STEPS * LOAD_JOB_TIME_LIMIT_SEC
+			COUNT_STEPS * LOAD_LIMIT_TIME_SEC + "[s])",
+			DURATION_TOTAL_SEC <= PRECISION_SEC + COUNT_STEPS * LOAD_LIMIT_TIME_SEC
 		);
 	}
 	//
 	@Test
 	public void checkLogStdOutSummariesCount()
-		throws Exception {
+	throws Exception {
 		int countSummaries = 0;
 		try(
 			final BufferedReader in = new BufferedReader(
@@ -110,7 +117,7 @@ public class SequentialLoadTest {
 			} while(true);
 		}
 		Assert.assertEquals(
-			"Invalid summary log statements in the std out", COUNT_STEPS, countSummaries
+			"Wrong summary log statements count in the stdout", COUNT_STEPS, countSummaries
 		);
 	}
 	//
@@ -151,9 +158,11 @@ public class SequentialLoadTest {
 					Assert.assertEquals("BW5Min[MB/s]", nextRec.get(19));
 					Assert.assertEquals("BW15Min[MB/s]", nextRec.get(20));
 				} else {
-					final String countSrvStr = nextRec.get(6);
-					if(countSrvStr.length() > 0 && Integer.parseInt(countSrvStr) == 1) {
-						countSummaries ++;
+					if(nextRec.size() == 21) {
+						final String countSrvStr = nextRec.get(6);
+						if(countSrvStr.length() > 0 && Integer.parseInt(countSrvStr) == 1) {
+							countSummaries++;
+						}
 					}
 				}
 			}

@@ -2,7 +2,6 @@ package com.emc.mongoose.integ.distributed.single;
 //
 import com.emc.mongoose.common.conf.SizeUtil;
 //
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.data.WSObject;
@@ -10,9 +9,6 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
-//
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 //
 import org.junit.Assert;
 import org.junit.AfterClass;
@@ -27,31 +23,30 @@ public final class WriteByTimeTest {
 	//
 	private final static long TIME_TO_WRITE_SEC = 100;
 	//
-	private static StorageClient<WSObject> CLIENT;
 	private static long COUNT_WRITTEN, TIME_ACTUAL_SEC;
-	private static Logger LOG;
 	//
 	@BeforeClass
 	public static void setUpClass()
 		throws Exception {
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
 			clientBuilder = new BasicWSClientBuilder<>();
-		CLIENT = clientBuilder
-			.setLimitTime(TIME_TO_WRITE_SEC, TimeUnit.SECONDS)
-			.setLimitCount(0)
-			.setClientMode(new String[] {ServiceUtils.getHostAddr()})
-			.build();
-		LOG = LogManager.getLogger();
-		TIME_ACTUAL_SEC = System.currentTimeMillis() / 1000;
-		COUNT_WRITTEN = CLIENT.write(null, null, (short) 10, SizeUtil.toSize("10KB"));
-		TIME_ACTUAL_SEC = System.currentTimeMillis() / 1000 - TIME_ACTUAL_SEC;
-		LOG.info(Markers.MSG, "Used {} [sec] to write {} items", TIME_ACTUAL_SEC, COUNT_WRITTEN);
+		try(
+			final StorageClient<WSObject>
+				client = new BasicWSClientBuilder<>()
+					.setLimitTime(TIME_TO_WRITE_SEC, TimeUnit.SECONDS)
+					.setLimitCount(0)
+					.setClientMode(new String[] {ServiceUtils.getHostAddr()})
+					.build()
+		) {
+			TIME_ACTUAL_SEC = System.currentTimeMillis() / 1000;
+			COUNT_WRITTEN = client.write(null, null, (short) 10, SizeUtil.toSize("10KB"));
+			TIME_ACTUAL_SEC = System.currentTimeMillis() / 1000 - TIME_ACTUAL_SEC;
+		}
 	}
 	//
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		CLIENT.close();
 	}
 	//
 	@Test

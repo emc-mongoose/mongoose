@@ -163,7 +163,7 @@ implements DataItem {
 	//
 	@Override
 	public final int write(final WritableByteChannel chanDst)
-		throws IOException {
+	throws IOException {
 		enforceCircularity();
 		return chanDst.write(ringBuff);
 	}
