@@ -51,9 +51,9 @@ implements UpdatableDataItemMock {
 		final int countRangesTotal = getRangeCount(size);
 		int startCellPos,
 			finishCellPos;
-		for(int i = 0; i < ranges.size(); i ++){
+		for(int i = 0; i < ranges.size(); i++){
 			startCellPos = getRangeCount(ranges.get(i));
-			finishCellPos = getRangeCount(ranges.get(i ++)) + 1;
+			finishCellPos = getRangeCount(ranges.get(i++)) + 1;
 			maskRangesPending.set(startCellPos, finishCellPos);
 		}
 		//return true if mask is full -> inc layer
@@ -92,7 +92,7 @@ implements UpdatableDataItemMock {
 			return writtenCount;
 		}
 	}
-
+	//
 	@Override
 	public long getContentLength() {
 		return size;

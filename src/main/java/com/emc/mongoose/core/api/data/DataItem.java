@@ -28,7 +28,7 @@ extends ReadableByteChannel, Externalizable {
 	//
 	void setDataSource(final DataSource dataSrc, final int layerNum);
 	//
-	int write(final WritableByteChannel chanDst)
+	int write(final WritableByteChannel chanDst, final long buffLimit)
 	throws IOException;
 	//
 	long writeFully(final WritableByteChannel chanDst)
