@@ -53,7 +53,8 @@ implements WSLoadSvc<T> {
 	throws IOException {
 		super.close();
 		// close the exposed network service, if any
-		final Service svc = ServiceUtils.getLocalSvc(getName());
+		final Service svc = ServiceUtils.getLocalSvc(
+			ServiceUtils.getLocalSvcName(getName()));
 		if(svc == null) {
 			LOG.debug(Markers.MSG, "The load was not exposed remotely");
 		} else {
@@ -73,7 +74,9 @@ implements WSLoadSvc<T> {
 			if(consumer != null) {
 				final String remoteSvcName = consumer.getName();
 				LOG.debug(Markers.MSG, "Name is {}", remoteSvcName);
-				final Service localSvc = ServiceUtils.getLocalSvc(remoteSvcName);
+				final Service localSvc = ServiceUtils.getLocalSvc(
+					ServiceUtils.getLocalSvcName(remoteSvcName)
+				);
 				if(localSvc == null) {
 					LOG.error(Markers.ERR, "Failed to get local service for name {}", remoteSvcName);
 				} else {

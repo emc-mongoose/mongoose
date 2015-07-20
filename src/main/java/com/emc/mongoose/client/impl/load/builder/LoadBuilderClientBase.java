@@ -1,6 +1,7 @@
 package com.emc.mongoose.client.impl.load.builder;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -285,12 +286,16 @@ implements LoadBuilderClient<T, U> {
 	@Override
 	public final U build()
 	throws RemoteException {
+		U client = null;
 		try {
 			invokePreConditions();
+			client = buildActually();
+		} catch (final DuplicateSvcNameException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Service is busy by another client");
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
-		return buildActually();
+		return client;
 	}
 	//
 	protected abstract void invokePreConditions()
