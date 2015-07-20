@@ -23,6 +23,8 @@ import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  Created by kurila on 30.05.14.
  */
@@ -58,13 +60,16 @@ implements WSLoadBuilderSvc<T, U> {
 	}
 	//
 	@Override
-	public final int getNextInstanceNum() {
-		return LoadExecutor.NEXT_INSTANCE_NUM.get();
+	public final int getNextInstanceNum(final String runId) {
+		if (!LoadExecutor.INSTANCE_NUMBERS.containsKey(runId)) {
+			LoadExecutor.INSTANCE_NUMBERS.put(runId, new AtomicInteger(0));
+		}
+		return LoadExecutor.INSTANCE_NUMBERS.get(runId).get();
 	}
 	//
 	@Override
-	public final void setNextInstanceNum(final int instanceN) {
-		LoadExecutor.NEXT_INSTANCE_NUM.set(instanceN);
+	public final void setNextInstanceNum(final String runId, final int instanceN) {
+		LoadExecutor.INSTANCE_NUMBERS.get(runId).set(instanceN);
 	}
 	//
 	@Override

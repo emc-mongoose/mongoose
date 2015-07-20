@@ -60,7 +60,8 @@ public class ReadZeroSizeItemsTest {
 		LogUtil.init();
 		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
 		//Reload default properties
-		RunTimeConfig runTimeConfig = new  RunTimeConfig();
+		RunTimeConfig runTimeConfig = new RunTimeConfig();
+		runTimeConfig.loadProperties();
 		RunTimeConfig.setContext(runTimeConfig);
 		//Run the write default mongoose scenario in standalone mode
 		final Thread writeScenarioMongoose = new Thread(new Runnable() {
@@ -88,7 +89,8 @@ public class ReadZeroSizeItemsTest {
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, readRunId);
 		//Reload default properties
-		runTimeConfig = new  RunTimeConfig();
+		runTimeConfig = new RunTimeConfig();
+		runTimeConfig.loadProperties();
 		RunTimeConfig.setContext(runTimeConfig);
 		//
 		final Thread readScenarioMongoose = new Thread(new Runnable() {

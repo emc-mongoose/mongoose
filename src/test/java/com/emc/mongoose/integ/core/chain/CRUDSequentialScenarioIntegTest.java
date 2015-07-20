@@ -80,7 +80,8 @@ public class CRUDSequentialScenarioIntegTest {
 		LogUtil.init();
 		final Logger rootLogger = LogManager.getRootLogger();
 		//Reload default properties
-		final RunTimeConfig runTimeConfig = new  RunTimeConfig();
+		final RunTimeConfig runTimeConfig = new RunTimeConfig();
+		runTimeConfig.loadProperties();
 		RunTimeConfig.setContext(runTimeConfig);
 		//run mongoose default scenario in standalone mode
 		final Thread writeScenarioMongoose = new Thread(new Runnable() {

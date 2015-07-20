@@ -99,6 +99,9 @@ implements Runnable {
 				LogUtil.exception(LOG, Level.WARN, e, "Failed to remove the shutdown hook");
 			} finally {
 				HOOKS_MAP.get(currRunId).remove(loadExecutor);
+				if (LogUtil.LOAD_HOOKS_COUNT.get() > 1) {
+					LogUtil.LOAD_HOOKS_COUNT.decrementAndGet();
+				}
 				//
 				try {
 					final LoadState currState = loadExecutor.getLoadState();
