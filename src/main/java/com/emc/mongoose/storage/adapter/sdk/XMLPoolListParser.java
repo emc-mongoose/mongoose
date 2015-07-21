@@ -13,6 +13,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.crypto.Data;
 import java.lang.reflect.Constructor;
 import java.rmi.RemoteException;
 import java.util.concurrent.RejectedExecutionException;
@@ -25,7 +26,7 @@ import java.util.concurrent.RejectedExecutionException;
 /**
  Created by kurila on 09.10.14.
  */
-public final class XMLPoolListParser<T extends WSObject>
+public final class XMLPoolListParser<T extends DataObject>
 extends DefaultHandler {
 	//
 	private final static Logger LOG = LogManager.getLogger();

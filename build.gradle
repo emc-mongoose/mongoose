@@ -257,9 +257,11 @@ dependencies {
 		library.commons_configuration,
 		library.httpcore,
 		library.log4j_api,
+		files('FPLibrary.jar')
 	)
 	storageAdapterSDKRuntime (
 		library.runtime_logging,
+                files('FPLibrary.jar')
 	)
 
 	storageAdapterSwiftCompile (
