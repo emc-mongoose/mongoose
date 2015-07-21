@@ -85,7 +85,7 @@ implements Runnable {
 	public final void run() {
 		if(isConcurrent) {
 			LOG.info(Markers.MSG, "Execute load jobs in parallel");
-			for(int i = loadJobSeq.size(); i >= 0; i --) {
+			for(int i = loadJobSeq.size() - 1; i >= 0; i --) {
 				try {
 					loadJobSeq.get(i).start();
 				} catch(final RemoteException e) {

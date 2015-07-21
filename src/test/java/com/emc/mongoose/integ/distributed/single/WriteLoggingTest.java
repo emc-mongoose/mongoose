@@ -16,6 +16,7 @@ import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.api.StorageClientBuilder;
+import com.emc.mongoose.util.client.impl.BasicStorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
 import org.apache.commons.csv.CSVFormat;
@@ -44,7 +45,6 @@ public class WriteLoggingTest {
 	private final static long COUNT_TO_WRITE = 1000;
 	private final static String RUN_ID = WriteLoggingTest.class.getCanonicalName();
 	//
-	private static StorageClient<WSObject> CLIENT;
 	private static long COUNT_WRITTEN;
 	private static Logger LOG;
 	private static byte STD_OUT_CONTENT[];
@@ -52,43 +52,35 @@ public class WriteLoggingTest {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		TimeUnit.SECONDS.sleep(5);
 		// reinit run id and the log path
 		RunTimeConfig
 			.getContext()
 			.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		LoggingTestSuite.setUpClass();
 		//
-		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
-			clientBuilder = new BasicWSClientBuilder<>();
-		CLIENT = clientBuilder
-			.setLimitTime(0, TimeUnit.SECONDS)
-			.setLimitCount(COUNT_TO_WRITE)
-			.setClientMode(new String[] {ServiceUtils.getHostAddr()})
-			.build();
-		final BufferingOutputStream
-			stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream();
-		if(stdOutInterceptorStream == null) {
-			throw new IllegalStateException(
-				"Looks like the test case is not included in the \"" +
-				StdOutInterceptorTestSuite.class.getSimpleName() + "\" test suite, cannot run"
-			);
+		try(
+			final StorageClient<WSObject>
+				client = new BasicWSClientBuilder<>()
+					.setLimitTime(0, TimeUnit.SECONDS)
+					.setLimitCount(COUNT_TO_WRITE)
+					.setClientMode(new String[] {ServiceUtils.getHostAddr()})
+					.build()
+		) {
+			try(
+				final BufferingOutputStream
+					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
+			) {
+				COUNT_WRITTEN = client.write(null, null, (short) 10, SizeUtil.toSize("10KB"));
+				TimeUnit.SECONDS.sleep(1);
+				STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
+			}
 		}
-		stdOutInterceptorStream.reset(); // clear before using
-		COUNT_WRITTEN = CLIENT.write(null, null, (short) 10, SizeUtil.toSize("10KB"));
-		TimeUnit.SECONDS.sleep(1);
-		STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
-		LOG = LogManager.getLogger();
-		LOG.info(
-			Markers.MSG, "Written {} items, captured {} bytes from stdout",
-			COUNT_WRITTEN, STD_OUT_CONTENT.length
-		);
 	}
 	//
 	@AfterClass
 	public static void tearDownClass()
 	throws Exception {
-		StdOutInterceptorTestSuite.reset();
-		CLIENT.close();
 	}
 	//
 	@Test

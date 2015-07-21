@@ -1,7 +1,9 @@
 package com.emc.mongoose.common.net;
 // mongoose-common.jar
-import static com.emc.mongoose.common.conf.Constants.*;
+import static com.emc.mongoose.common.conf.Constants.RUN_MODE_COMPAT_SERVER;
+import static com.emc.mongoose.common.conf.Constants.RUN_MODE_SERVER;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -159,7 +161,8 @@ public final class ServiceUtils {
 		return getHostAddr().hashCode();
 	}
 	//
-	public static Remote create(final Service svc) {
+	public static Remote create(final Service svc)
+	throws RemoteException {
 		//final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		Remote stub = null;
 		try {
@@ -171,13 +174,14 @@ public final class ServiceUtils {
 		//
 		if(stub != null) {
 			try {
-				final String
-					rmiHostName = System.getProperty(ServiceUtils.KEY_RMI_HOSTNAME),
-					svcName = "//" + (rmiHostName == null ? getHostAddr() : rmiHostName) +
-						"/" + svc.getName();
-				REGISTRY.rebind(svcName, svc);
-				SVC_MAP.put(svcName, svc);
-				LOG.info(Markers.MSG, "New service bound: {}", svcName);
+				final String svcName = getLocalSvcName(svc.getName());
+				if (!SVC_MAP.containsKey(svcName)) {
+					REGISTRY.rebind(svcName, svc);
+					SVC_MAP.put(svcName, svc);
+					LOG.info(Markers.MSG, "New service bound: {}", svcName);
+				} else {
+					throw new DuplicateSvcNameException();
+				}
 			} catch(final RemoteException e) {
 				LOG.error(Markers.ERR, "Failed to rebind the service", e);
 			}
@@ -193,6 +197,13 @@ public final class ServiceUtils {
 	public static Service getLocalSvc(final String svcName) {
 		return SVC_MAP.get(svcName);
 	}
+	//
+	public static String getLocalSvcName(final String name) {
+		final String rmiHostName = System.getProperty(ServiceUtils.KEY_RMI_HOSTNAME);
+		return "//" + (rmiHostName == null ? getHostAddr() : rmiHostName) +
+			"/" + name;
+	}
+	//
 	/**
 	 Connect to server service
 	 @param url the service URL
@@ -229,7 +240,7 @@ public final class ServiceUtils {
 		}
 		//
 		try {
-			final String svcName = svc.getName();
+			final String svcName = getLocalSvcName(svc.getName());
 			REGISTRY.unbind(svcName);
 			SVC_MAP.remove(svcName);
 			LOG.info(Markers.MSG, "Removed service: {}", svcName);

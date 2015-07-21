@@ -1,7 +1,9 @@
 package com.emc.mongoose.server.impl.load.builder;
 //mongoose-common.jar
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
+import com.emc.mongoose.common.exceptions.DuplicateSvcNameException;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
@@ -18,6 +20,7 @@ import com.emc.mongoose.core.impl.load.builder.BasicWSLoadBuilder;
 // mongoose-server-impl.jar
 import com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -34,6 +37,8 @@ implements WSLoadBuilderSvc<T, U> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
+	private String configTable = null;
+	//
 	public BasicWSLoadBuilderSvc(final RunTimeConfig runTimeConfig) {
 		super(runTimeConfig);
 	}
@@ -41,6 +46,11 @@ implements WSLoadBuilderSvc<T, U> {
 	@Override
 	public final WSLoadBuilderSvc<T, U> setProperties(final RunTimeConfig clientConfig) {
 		super.setProperties(clientConfig);
+		final String runMode = clientConfig.getRunMode();
+		if (!runMode.equals(Constants.RUN_MODE_SERVER)
+			&& !runMode.equals(Constants.RUN_MODE_COMPAT_SERVER)) {
+			configTable = clientConfig.toString();
+		}
 		RunTimeConfig.getContext();
 		return this;
 	}
@@ -49,8 +59,15 @@ implements WSLoadBuilderSvc<T, U> {
 	public final String buildRemotely()
 	throws RemoteException {
 		final WSLoadSvc<T> loadSvc = (WSLoadSvc<T>) build();
-		LOG.info(Markers.MSG, RunTimeConfig.getContext().toString());
-		ServiceUtils.create(loadSvc);
+		try {
+			ServiceUtils.create(loadSvc);
+			if (configTable != null) {
+				LOG.info(Markers.MSG, configTable);
+				configTable = null;
+			}
+		} catch (final DuplicateSvcNameException e) {
+			throw new DuplicateSvcNameException();
+		}
 		return loadSvc.getName();
 	}
 	//
@@ -100,10 +117,16 @@ implements WSLoadBuilderSvc<T, U> {
 		);
 	}
 	//
-	public final void start() {
+	public final void start()
+	throws RemoteException {
 		LOG.debug(Markers.MSG, "Load builder service instance created");
-		/*final RemoteStub stub = */ServiceUtils.create(this);
+		try {
+		/*final RemoteStub stub = */
+			ServiceUtils.create(this);
 		/*LOG.debug(Markers.MSG, stub.toString());*/
+		} catch (final DuplicateSvcNameException e) {
+			LogUtil.exception(LOG, Level.ERROR, e, "Possible load service usage collision");
+		}
 		LOG.info(Markers.MSG, "Server started and waiting for the requests");
 	}
 	//

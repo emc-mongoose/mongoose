@@ -163,7 +163,7 @@ implements DataItem {
 	//
 	@Override
 	public final int write(final WritableByteChannel chanDst, final long writtenCount)
-		throws IOException {
+	throws IOException {
 		enforceCircularity();
 		ringBuff.limit(
 			(int) (ringBuff.position() + (size - writtenCount) > ringBuffSize ? ringBuffSize :

@@ -27,7 +27,9 @@ import org.junit.runners.Suite;
 	com.emc.mongoose.integ.distributed.single.ReadLoggingTest.class,
 	com.emc.mongoose.integ.distributed.single.DeleteLoggingTest.class,
 	com.emc.mongoose.integ.distributed.single.UpdateLoggingTest.class,
-	com.emc.mongoose.integ.distributed.chain.SequentialLoadTest.class
+	com.emc.mongoose.integ.distributed.chain.SequentialLoadTest.class,
+	com.emc.mongoose.integ.distributed.chain.SimultaneousLoadTest.class,
+	com.emc.mongoose.integ.distributed.rampup.RampupTest.class
 })
 public class DistributedLoadTestSuite
 extends WSMockTestSuite {

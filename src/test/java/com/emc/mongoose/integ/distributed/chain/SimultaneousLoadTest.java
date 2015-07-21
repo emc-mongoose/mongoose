@@ -13,14 +13,11 @@ import com.emc.mongoose.util.scenario.shared.WSLoadBuilderFactory;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-//
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
+//
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -31,33 +28,32 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 import static com.emc.mongoose.integ.tools.LogPatterns.CONSOLE_METRICS_SUM_CLIENT;
+//
 /**
  Created by kurila on 17.07.15.
  */
-public class SequentialLoadTest {
+public class SimultaneousLoadTest {
 	//
 	private final static String
-		RUN_ID = SequentialLoadTest.class.getCanonicalName(),
-		LOAD_SEQ[] = { "create", "read", "read", "delete", "delete" };
-	private static final int
-		LOAD_JOB_TIME_LIMIT_SEC = 30,
+		RUN_ID = SimultaneousLoadTest.class.getCanonicalName(),
+		LOAD_SEQ[] = { "create", "read", "update", "append", "delete" };
+	private final static int
+		LOAD_LIMIT_TIME_SEC = 100,
 		PRECISION_SEC = 10,
 		COUNT_STEPS = LOAD_SEQ.length;
 	//
-	private static Logger LOG;
 	private static long DURATION_TOTAL_SEC = -1;
 	private static byte STD_OUT_CONTENT[] = null;
 	//
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
-		LOG = LogManager.getLogger();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
 		try(final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig)) {
 			final Chain chainScenario = new Chain(
-				loadBuilder, LOAD_JOB_TIME_LIMIT_SEC, TimeUnit.SECONDS, LOAD_SEQ, false
+				loadBuilder, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS, LOAD_SEQ, true
 			);
 			try(
 				final BufferingOutputStream
@@ -79,10 +75,9 @@ public class SequentialLoadTest {
 	@Test
 	public void checkTotalDuration()
 	throws Exception {
-		Assert.assertTrue(
-			"Actual duration (" + DURATION_TOTAL_SEC + "[s]) is much more than expected (" +
-			COUNT_STEPS * LOAD_JOB_TIME_LIMIT_SEC + "[s])",
-			DURATION_TOTAL_SEC <= PRECISION_SEC + COUNT_STEPS * LOAD_JOB_TIME_LIMIT_SEC
+		Assert.assertEquals(
+			"Actual duration is not equal to the expected",
+			LOAD_LIMIT_TIME_SEC, DURATION_TOTAL_SEC, PRECISION_SEC
 		);
 	}
 	//
@@ -116,7 +111,7 @@ public class SequentialLoadTest {
 	//
 	@Test
 	public void checkLogFileSummariesCount()
-	throws Exception {
+		throws Exception {
 		boolean firstRow = true;
 		int countSummaries = 0;
 		final File logPerfSumFile = LogParser.getPerfSumFile(RUN_ID);
