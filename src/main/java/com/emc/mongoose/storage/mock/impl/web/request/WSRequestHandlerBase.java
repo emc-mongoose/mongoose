@@ -38,14 +38,12 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
 /**
  Created by andrey on 13.05.15.
  */
@@ -130,6 +128,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		// get URI components
 		final String[] requestURI = requestLine.getUri().split("/");
 		final String dataId = requestURI[requestURI.length - 1];
+		//
 		handleActually(httpRequest, httpResponse, method, requestURI, dataId);
 		// done
 		BasicWSResponseProducer respProducer = THRLOC_RESP_PRODUCER.get();
@@ -186,10 +185,11 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			BasicWSObjectMock dataObject;
 			//
 			if (sharedStorage.get(dataId) == null) {
+				// write data item if it isn't exist
 				dataObject = writeDataObject(httpRequest, dataId);
 				ioStats.markCreate(dataObject.getSize());
 			} else if (httpRequest.getFirstHeader(HttpHeaders.RANGE) != null) {
-				// get data object by ID
+				// get data object by ID if it's append or update
 				dataObject = sharedStorage.get(dataId);
 				handleRanges(httpRequest, httpResponse, dataObject);
 			} else {
@@ -214,7 +214,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		//get content length
 		final HttpEntity entity = HttpEntityEnclosingRequest.class.cast(httpRequest).getEntity();
 		final long bytes = entity.getContentLength();
-		//
+		// create list of ranges interval(s)
 		final Header headerRange = httpRequest.getFirstHeader(HttpHeaders.RANGE);
 		final Matcher matcherRange = RANGE_PATTERN.matcher(headerRange.getValue());
 		final List<Long> ranges= new ArrayList<>();
@@ -226,7 +226,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 				ranges.add(bytes);
 			}
 		}
-		// switch append or update
+		// switch append or update. If ranges list contains 1 element it's append.
 		if (ranges.size() == 1) {
 			final long augmentSize = ranges.get(0);
 			//set new data object's size
