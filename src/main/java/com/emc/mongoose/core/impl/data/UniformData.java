@@ -162,11 +162,12 @@ implements DataItem {
 	}
 	//
 	@Override
-	public final int write(final WritableByteChannel chanDst, long buffLimit)
+	public final int write(final WritableByteChannel chanDst, final long writtenCount)
 		throws IOException {
 		enforceCircularity();
 		ringBuff.limit(
-			(int) (getRelativeOffset() + buffLimit > ringBuffSize ? ringBuffSize : getRelativeOffset() + buffLimit)
+			(int) (ringBuff.position() + (size - writtenCount) > ringBuffSize ? ringBuffSize :
+				ringBuff.position() + (size - writtenCount))
 		);
 		return chanDst.write(ringBuff);
 	}
@@ -185,7 +186,7 @@ implements DataItem {
 		int n;
 		//setRelativeOffset(relOffset);
 		while(writtenCount < len) {
-			n = write(chanDst, len - writtenCount);
+			n = write(chanDst, writtenCount);
 			if(n < 0) {
 				LOG.warn(Markers.ERR, "Channel returned {} as written byte count", n);
 			} else if(n > 0) {
