@@ -162,10 +162,12 @@ implements DataItem {
 	}
 	//
 	@Override
-	public final int write(final WritableByteChannel chanDst, final long buffLimit)
+	public final int write(final WritableByteChannel chanDst, long buffLimit)
 		throws IOException {
 		enforceCircularity();
-		ringBuff.limit((int) ((getRelativeOffset() + buffLimit) > ringBuffSize ? ringBuffSize : (getRelativeOffset() + buffLimit)));
+		ringBuff.limit(
+			(int) (getRelativeOffset() + buffLimit > ringBuffSize ? ringBuffSize : getRelativeOffset() + buffLimit)
+		);
 		return chanDst.write(ringBuff);
 	}
 	//
@@ -232,15 +234,13 @@ implements DataItem {
 		final ReadableByteChannel chanSrc, final long relOffset, final long len
 	) throws IOException {
 		setRelativeOffset(relOffset);
-		//
-		final ByteBuffer buff = ByteBuffer.allocate(
-			(int) Math.min(Constants.BUFF_SIZE_HI, len)
-		);
+		ByteBuffer buff;
 		//
 		int n;
 		long doneByteCount = 0;
 		try {
 			while(doneByteCount < len) {
+				buff = ByteBuffer.allocate((int) Math.min(Constants.BUFF_SIZE_HI, len - doneByteCount));
 				n = readAndVerify(chanSrc, buff);
 				if(n > 0) {
 					buff.clear();

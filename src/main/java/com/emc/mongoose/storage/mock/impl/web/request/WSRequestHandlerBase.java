@@ -14,7 +14,6 @@ import com.emc.mongoose.storage.mock.api.IOStats;
 import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.web.response.BasicWSResponseProducer;
 //
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 //
 import org.apache.http.Header;
@@ -38,12 +37,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -80,7 +76,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 	private final ObjectStorage<T> sharedStorage;
 	//
-	private final static Pattern RANGE_PATTERN = Pattern.compile("([0-9]+)-([0-9]+)?");
+	private final static Pattern RANGE_PATTERN = Pattern.compile("(?<firstPosition>[\\d]+)-(?<secondPosition>[\\d]+)?");
 	//
 	protected WSRequestHandlerBase(
 		final RunTimeConfig runTimeConfig, final ObjectStorage<T> sharedStorage
@@ -134,14 +130,6 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		// get URI components
 		final String[] requestURI = requestLine.getUri().split("/");
 		final String dataId = requestURI[requestURI.length - 1];
-		// get headers
-		/*
-		System.out.println("---------------------");
-		for (final Header header : r.getAllHeaders()) {
-			System.out.println(header.getName() + " : " + header.getValue());
-		}
-		*/
-		//
 		handleActually(httpRequest, httpResponse, method, requestURI, dataId);
 		// done
 		BasicWSResponseProducer respProducer = THRLOC_RESP_PRODUCER.get();
@@ -231,10 +219,10 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		final Matcher matcherRange = RANGE_PATTERN.matcher(headerRange.getValue());
 		final List<Long> ranges= new ArrayList<>();
 		while (matcherRange.find()) {
-			ranges.add(Long.valueOf(matcherRange.group(1)));
-			if (matcherRange.group(2) != null) {
-				ranges.add(Long.valueOf(matcherRange.group(2)));
-			} else if (Long.valueOf(matcherRange.group(1)) != bytes) {
+			ranges.add(Long.valueOf(matcherRange.group("firstPosition")));
+			if (matcherRange.group("secondPosition") != null) {
+				ranges.add(Long.valueOf(matcherRange.group("secondPosition")));
+			} else if (Long.valueOf(matcherRange.group("firstPosition")) != bytes) {
 				ranges.add(bytes);
 			}
 		}
@@ -332,20 +320,5 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	//
 	protected static String generateId() {
 		return Long.toString(UniformData.nextOffset(LAST_OFFSET), DataObject.ID_RADIX);
-	}
-	//
-	private final List<String> expectedHeaders = new ArrayList<>(
-		Arrays.asList(
-			HttpHeaders.DATE, HttpHeaders.AUTHORIZATION, HttpHeaders.HOST,
-			HttpHeaders.CONTENT_TYPE, HttpHeaders.CONTENT_LENGTH
-		)
-	);
-	private boolean isCorrectHeaders(final HttpRequest request) {
-		for (final Header header : request.getAllHeaders()) {
-			if (!expectedHeaders.contains(header.getName())) {
-				return false;
-			}
-		}
-		return true;
 	}
 }
