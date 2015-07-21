@@ -125,7 +125,7 @@ implements WSLoadBuilderSvc<T, U> {
 			ServiceUtils.create(this);
 		/*LOG.debug(Markers.MSG, stub.toString());*/
 		} catch (final DuplicateSvcNameException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Service is busy by another client");
+			LogUtil.exception(LOG, Level.ERROR, e, "Possible load service usage collision");
 		}
 		LOG.info(Markers.MSG, "Server started and waiting for the requests");
 	}

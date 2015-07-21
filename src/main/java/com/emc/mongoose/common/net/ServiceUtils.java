@@ -179,7 +179,6 @@ public final class ServiceUtils {
 					REGISTRY.rebind(svcName, svc);
 					SVC_MAP.put(svcName, svc);
 					LOG.info(Markers.MSG, "New service bound: {}", svcName);
-					throw new DuplicateSvcNameException();
 				} else {
 					throw new DuplicateSvcNameException();
 				}

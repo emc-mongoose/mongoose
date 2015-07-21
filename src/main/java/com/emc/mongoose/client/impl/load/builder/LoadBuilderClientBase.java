@@ -291,7 +291,7 @@ implements LoadBuilderClient<T, U> {
 			invokePreConditions();
 			client = buildActually();
 		} catch (final DuplicateSvcNameException e) {
-			LogUtil.exception(LOG, Level.ERROR, e, "Service is busy by another client");
+			LogUtil.exception(LOG, Level.ERROR, e, "Possible load service usage collision");
 		} catch(final IllegalStateException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Preconditions failure");
 		}
@@ -302,7 +302,7 @@ implements LoadBuilderClient<T, U> {
 	throws IllegalStateException;
 	//
 	protected abstract U buildActually()
-	throws RemoteException;
+	throws RemoteException, DuplicateSvcNameException;
 	//
 	@Override
 	public String toString() {
