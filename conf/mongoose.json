@@ -17,6 +17,9 @@
 			"api.swift.auth.token": "api.type.swift.authToken",
 			"api.swift.container": "api.type.swift.container",
 
+			"api.sdk.auth.prefix": "api.type.sdk.authPrefix",
+			"api.sdk.bucket": "api.type.sdk.bucket",
+			"api.sdk.port": "api.type.sdk.port",
 			"storage.mock.data.offset.radix": "data.radix.offset",
 			"storage.mock.data.size.radix": "data.radix.size",
 			"storage.mock.head.count": "storage.mock.headCount",
@@ -89,7 +92,7 @@
 			]
 		},
 		"api": {
-			"name": "s3",
+			"name": "sdk",
 			"type": {
 				"s3": {
 					"port": 9020,
@@ -107,7 +110,7 @@
 					"container": ""
 				},
 				"sdk": {
-					"authPrefix": "AWS",
+					"port": 1000,
 					"bucket": ""
 				}
 			}

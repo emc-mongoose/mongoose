@@ -56,8 +56,6 @@ extends WSRequestConfigBase<T> {
 		StackTraceElement[] whereAmI = Thread.currentThread().getStackTrace();
 		System.out.println("\n\n" + whereAmI[whereAmI.length-1] +
 				"\ns3 Request ConfigImpl Declaration one argument\nlook at me look at me\n");
-		System.out.println("Waiting for user input");
-		new java.util.Scanner(System.in).next();
 		authPrefixValue = runTimeConfig.getApiS3AuthPrefix() + " ";
 		if(reqConf2Clone != null) {
 			setBucket(reqConf2Clone.getBucket());
