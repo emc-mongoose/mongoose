@@ -235,7 +235,7 @@ public final class DefaultWriteTest {
 			line = bufferedReader.readLine();
 		}
 		// If size of set with checksums is less then dataCount it's mean that some checksums are equals
-		Assert.assertEquals(LIMIT_COUNT, setOfChecksum.size());
+		Assert.assertEquals("Did not read different objects from server mock",LIMIT_COUNT, setOfChecksum.size());
 	}
 
 	@Test

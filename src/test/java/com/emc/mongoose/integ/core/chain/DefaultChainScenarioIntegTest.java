@@ -161,16 +161,16 @@ public class DefaultChainScenarioIntegTest {
 		//Check that perf.trace.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 
-		/*
+
 		//Cinderella can't append and update data items
-		expectedFile = IntegLogManager.getDataItemsFile(chainRunId).toPath();
+		expectedFile = LogParser.getDataItemsFile(chainRunId).toPath();
 		//Check that data.items.csv file is contained
 		Assert.assertTrue(Files.exists(expectedFile));
 		//
-		expectedFile = IntegLogManager.getErrorsFile(chainRunId).toPath();
+		//expectedFile = LogParser.getErrorsFile(chainRunId).toPath();
 		//Check that errors.lod file isn't contained
-		Assert.assertFalse(Files.exists(expectedFile));
-		*/
+		//Assert.assertFalse(Files.exists(expectedFile));
+
 	}
 
 	@Test
@@ -229,17 +229,17 @@ public class DefaultChainScenarioIntegTest {
 			line = bufferedReader.readLine();
 		}
 	}
-	/*
+
 	@Test
 	public void shouldCreateCorrectDataItemsFile()
 	throws Exception {
 		// Get data.items.csv file of write scenario run
-		final File writeDataItemFile = IntegLogManager.getDataItemsFile(chainRunId);
+		final File writeDataItemFile = LogParser.getDataItemsFile(chainRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writeDataItemFile));
 		//
 		String line = bufferedReader.readLine();
 		while (line != null) {
-			Assert.assertTrue(IntegLogManager.matchWithDataItemsFilePattern(line));
+			Assert.assertTrue(LogParser.matchWithDataItemsFilePattern(line));
 			line = bufferedReader.readLine();
 		}
 	}
@@ -247,7 +247,7 @@ public class DefaultChainScenarioIntegTest {
 	@Test
 	public void shouldDataItemsMasksAreUpdate()
 	throws Exception {
-		final File dataItemsFile = IntegLogManager.getDataItemsFile(chainRunId);
+		final File dataItemsFile = LogParser.getDataItemsFile(chainRunId);
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
 
 		final int firstMaskVal = 0;
@@ -257,11 +257,14 @@ public class DefaultChainScenarioIntegTest {
 		while (line != null) {
 			maskVal = Integer.valueOf(line.split("(/)")[1]);
 			// Check that data items masks are update and not equal 0
-			Assert.assertFalse(maskVal != firstMaskVal);
+			if (maskVal == firstMaskVal) {
+				System.out.println(line + "   mask = "+ maskVal);
+			}
+			Assert.assertNotEquals(String.format("Data item %s wasn't updated", line),firstMaskVal, maskVal);
 			line = bufferedReader.readLine();
 		}
 	}
-	*/
+
 	@Test
 	public void shouldCreateCorrectInformationAboutLoad()
 	throws Exception {
@@ -460,24 +463,4 @@ public class DefaultChainScenarioIntegTest {
 			);
 		}
 	}
-
-	/* While Cinderella can't append and update data items
-	@Test
-	public void shouldDataItemsMasksAreUpdate()
-	throws Exception {
-		final File dataItemsFile = IntegLogManager.getDataItemsFile(chainRunId);
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemsFile));
-
-		final int firstMaskVal = 0;
-		int maskVal;
-		String line = bufferedReader.readLine();
-
-		while (line != null) {
-			maskVal = Integer.valueOf(line.split("(/)")[1]);
-			// Check that data items masks are update and not equal 0
-			Assert.assertTrue(maskVal != firstMaskVal);
-			line = bufferedReader.readLine();
-		}
-	}
-	*/
 }
