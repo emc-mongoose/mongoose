@@ -43,8 +43,11 @@ implements Pool<T> {
 	//
 	private final RequestConfigImpl<T> reqConf;
 	private String name;
+	private boolean versioningEnabled;
 	//
-	public PoolImpl( final RequestConfigImpl<T> reqConf, final String name) {
+	public PoolImpl(
+			final RequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
+	) {
 		this.reqConf = reqConf;
 		//
 		if(name == null || name.length() == 0) {
@@ -53,6 +56,7 @@ implements Pool<T> {
 		} else {
 			this.name = name;
 		}
+		this.versioningEnabled = versioningEnabled;
 	}
 	//
 	@Override
