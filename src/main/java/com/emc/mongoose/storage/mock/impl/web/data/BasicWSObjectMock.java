@@ -38,8 +38,8 @@ implements UpdatableDataItemMock {
 			final int
 				lastCellPos = getRangeCount(size) - 1,
 				nextCellPos = getRangeCount(size + augmentSize);
-			if(lastCellPos < nextCellPos && maskRangesPending.get(lastCellPos)) {
-				maskRangesPending.set(lastCellPos, nextCellPos);
+			if(lastCellPos < nextCellPos && maskRangesHistory.get(lastCellPos)) {
+				maskRangesHistory.set(lastCellPos, nextCellPos);
 			}
 		} else {
 			throw new IllegalArgumentException("Illegal append size: " + augmentSize);
@@ -54,10 +54,10 @@ implements UpdatableDataItemMock {
 		for(int i = 0; i < ranges.size(); i++){
 			startCellPos = getRangeCount(ranges.get(i));
 			finishCellPos = getRangeCount(ranges.get(i++)) + 1;
-			maskRangesPending.set(startCellPos, finishCellPos);
+			maskRangesHistory.set(startCellPos, finishCellPos);
 		}
 		//return true if mask is full -> inc layer
-		if(maskRangesPending.cardinality() == countRangesTotal){
+		if(maskRangesHistory.cardinality() == countRangesTotal){
 			switchToNextOverlay();
 		}
 	}
@@ -68,14 +68,14 @@ implements UpdatableDataItemMock {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
-		if(maskRangesPending.isEmpty()) {
+		if(maskRangesHistory.isEmpty()) {
 			return writeRange(chanOut, 0, size);
 		} else {
 			long writtenCount = 0;
 			for(int i = 0; i < countRangesTotal; i++) {
 				rangeOffset = getRangeOffset(i);
 				rangeSize = getRangeSize(i);
-				if(maskRangesPending.get(i)) { // range have been modified
+				if(maskRangesHistory.get(i)) { // range have been modified
 					updatedRange = new UniformData(
 						offset + rangeOffset, rangeSize, currLayerIndex + 1,
 						UniformDataSource.DEFAULT

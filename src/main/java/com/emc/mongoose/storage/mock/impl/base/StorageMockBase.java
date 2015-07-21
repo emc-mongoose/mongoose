@@ -81,21 +81,21 @@ implements Storage<T> {
 		final Path dataFilePath = Paths.get(rtConfig.getDataSrcFPath());
 		//final int dataSizeRadix = rtConfig.getDataRadixSize();
 		if(null != dataFilePath && !Files.isDirectory(dataFilePath) && Files.exists(dataFilePath)) {
-			T nextItem;
 			long count = 0;
 			try(
 				final CSVFileItemInput<T>
 					csvFileItemInput = new CSVFileItemInput<>(dataFilePath, itemCls)
 			) {
-				do {
-					nextItem = csvFileItemInput.read();
+				T nextItem = csvFileItemInput.read();
+				while (null != nextItem) {
 					// if mongoose is v0.5.0
 					//if(dataSizeRadix == 0x10) {
 					//	nextItem.setSize(Long.valueOf(String.valueOf(nextItem.getSize()), 0x10));
 					//}
 					create(nextItem);
 					count ++;
-				} while(null != nextItem);
+					nextItem = csvFileItemInput.read();
+				}
 			} catch(final EOFException e) {
 				LOG.debug(Markers.MSG, "Loaded {} data items from file {}", count, dataFilePath);
 			} catch(final IOException | NoSuchMethodException e) {
