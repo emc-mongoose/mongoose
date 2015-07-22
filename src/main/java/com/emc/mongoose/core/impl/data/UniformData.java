@@ -181,7 +181,7 @@ implements DataItem {
 	public final long writeRange(
 		final WritableByteChannel chanDst, final long relOffset, final long len
 	) throws IOException {
-		int writtenCount = 0;
+		long writtenCount = 0;
 		int n;
 		setRelativeOffset(relOffset);
 		while(writtenCount < len) {
