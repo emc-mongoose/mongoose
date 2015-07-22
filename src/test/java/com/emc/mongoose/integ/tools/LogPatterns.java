@@ -16,6 +16,12 @@ public interface LogPatterns {
 		TYPE_API = Pattern.compile("(?<typeApi>[A-Za-z0-9]+)"),
 		TYPE_LOAD = Pattern.compile("(?<typeLoad>[CreatRdDlUpAn]{4,6})"),
 		//
+		DATA_ID = Pattern.compile("(?<dataID>[\\w\\d]+)"),
+		DATA_OFFSET = DATA_ID,
+		API_NAME = Pattern.compile("(?<apiName>[S3ATMOWIF]{2,5})"),
+		ITEM_COUNTS_SUCC = Pattern.compile("(?<countSucc>[\\d]+)"),
+		ITEM_COUNTS_FAIL = Pattern.compile("(?<countFail>[\\d]+)"),
+		//
 		CONSOLE_LOAD_NAME_SUFFIX = Pattern.compile(
 			"(?<countLimit>[\\d]*)\\-(?<countConn>[\\d]*)x(?<countNodes>[\\d]*)"
 		),
@@ -40,11 +46,20 @@ public interface LogPatterns {
 		CONSOLE_LATENCY = Pattern.compile(
 			"latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\)"
 		),
+		LATENCY = Pattern.compile(
+			"(?<latency>(\\d+),(\\d+),(\\d+),(\\d+))"
+		),
 		CONSOLE_TP = Pattern.compile(
 			"TP\\[/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\)"
 		),
+		TP = Pattern.compile(
+			"(?<TP>([\\.\\d]+),([\\.\\d]+),([\\.\\d]+),([\\.\\d]+))"
+		),
 		CONSOLE_BW = Pattern.compile(
 			"BW\\[MB/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\)"
+		),
+		BW = Pattern.compile(
+			"(?<BW>([\\.\\d]+),([\\.\\d]+),([\\.\\d]+),([\\.\\d]+))"
 		),
 		//
 		CONSOLE_METRICS_AVG = Pattern.compile(
@@ -75,5 +90,15 @@ public interface LogPatterns {
 			"\"" + CONSOLE_FULL_LOAD_NAME_CLIENT.pattern() + "\"[\\s]+summary:[\\s]+" +
 			CONSOLE_ITEM_COUNTS_SUM.pattern() + ";[\\s]+" +
 			CONSOLE_LATENCY + ";[\\s]+" + CONSOLE_TP + ";[\\s]+" + CONSOLE_BW
+		),
+		//
+		DATA_ITEMS_FILE = Pattern.compile(
+		"^" + DATA_ID.pattern() + "," + DATA_OFFSET.pattern() + "," + ",[\\d]+,[\\d]+/[\\p{XDigit}]+$"
+		),
+		PERF_SUM_FILE = Pattern.compile(
+			"^\"" + DATE_TIME_ISO8601 +"\"," +
+			"[\\d]+," + API_NAME.pattern() + "," + TYPE_LOAD.pattern() + ",[\\d]+," +
+			"[\\d]+,[\\d]*+," + ITEM_COUNTS_SUCC.pattern() + "," + ITEM_COUNTS_FAIL.pattern()+ "," +
+			LATENCY.pattern() + "," + TP.pattern() + "," + BW.pattern()+ "$"
 		);
 }
