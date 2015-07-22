@@ -184,17 +184,17 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			httpResponse.setStatusCode(HttpStatus.SC_OK);
 			BasicWSObjectMock dataObject;
 			//
-			if (sharedStorage.get(dataId) == null) {
-				// write data item if it isn't exist
+			if (httpRequest.getFirstHeader(HttpHeaders.RANGE) == null) {
+				// write or recreate data item
 				dataObject = writeDataObject(httpRequest, dataId);
 				ioStats.markCreate(dataObject.getSize());
-			} else if (httpRequest.getFirstHeader(HttpHeaders.RANGE) != null) {
-				// get data object by ID if it's append or update
+			} else if (sharedStorage.get(dataId) != null){
+				// else do append or update if data item exist
 				dataObject = sharedStorage.get(dataId);
 				handleRanges(httpRequest, httpResponse, dataObject);
 			} else {
-				httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-				LOG.debug(Markers.ERR, "Failed to append/update data item:{}", sharedStorage.get(dataId));
+				httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+				LOG.debug(Markers.ERR, "Unknown request");
 			}
 		} catch(final HttpException e) {
 			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
@@ -235,7 +235,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		} else if(ranges.size() > 1) {
 			dataObject.updateRanges(ranges);
 		} else {
-			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 			LOG.debug(Markers.ERR, "There isn't header of ranges");
 			return;
 		}

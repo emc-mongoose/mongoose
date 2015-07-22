@@ -95,7 +95,7 @@ implements DataItem {
 		ringBuffSize = ringBuff.capacity();
 	}
 	//
-	private void reset() {
+	protected void reset() {
 		ringBuff.limit(ringBuffSize).position((int) (offset % ringBuffSize));
 	}
 	//
@@ -184,7 +184,6 @@ implements DataItem {
 	) throws IOException {
 		long writtenCount = 0;
 		int n;
-		reset();
 		//setRelativeOffset(relOffset);
 		while(writtenCount < len) {
 			n = write(chanDst, writtenCount);
