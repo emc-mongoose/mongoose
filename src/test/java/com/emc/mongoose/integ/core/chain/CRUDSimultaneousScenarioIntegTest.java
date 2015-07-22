@@ -58,7 +58,7 @@ public class CRUDSimultaneousScenarioIntegTest {
 		savedOutputStream = new BufferingOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create run ID
-		chainRunId = SCENARIO_NAME + ":" + TestConstants.FMT_DT.format(
+		chainRunId = "CRUDSimul:" + TestConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, chainRunId);

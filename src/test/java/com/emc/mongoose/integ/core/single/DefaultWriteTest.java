@@ -57,7 +57,7 @@ public final class DefaultWriteTest {
 		savedOutputStream = new BufferingOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create run ID
-		createRunId += ":" + DATA_SIZE + ":" + TestConstants.FMT_DT.format(
+		createRunId += "Def:" + DATA_SIZE + ":" + TestConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, createRunId);

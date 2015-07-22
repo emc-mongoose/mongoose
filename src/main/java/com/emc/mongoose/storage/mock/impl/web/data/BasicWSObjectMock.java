@@ -68,7 +68,7 @@ implements UpdatableDataItemMock {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
-		if(maskRangesHistory.isEmpty()) {
+		if (maskRangesHistory.isEmpty()) {
 			return writeRange(chanOut, 0, size);
 		} else {
 			long writtenCount = 0;

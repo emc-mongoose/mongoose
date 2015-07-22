@@ -48,7 +48,7 @@ public class WriteByCountTest {
 		savedOutputStream = new BufferingOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create run ID
-		createRunId += ":infinite:" + TestConstants.FMT_DT.format(
+		createRunId += "ByCount:" + TestConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, createRunId);
