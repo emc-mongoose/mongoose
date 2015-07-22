@@ -222,8 +222,6 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			ranges.add(Long.valueOf(matcherRange.group("firstPosition")));
 			if (matcherRange.group("secondPosition") != null) {
 				ranges.add(Long.valueOf(matcherRange.group("secondPosition")));
-			} else if (Long.valueOf(matcherRange.group("firstPosition")) != bytes) {
-				ranges.add(bytes);
 			}
 		}
 		// switch append or update. If ranges list contains 1 element it's append.
@@ -233,6 +231,9 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			dataObject.setSize(dataObject.getSize() + bytes);
 			dataObject.append(augmentSize);
 		} else if(ranges.size() > 1) {
+			if (ranges.size() % 2 != 0) {
+				ranges.add(bytes);
+			}
 			dataObject.updateRanges(ranges);
 		} else {
 			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
