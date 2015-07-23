@@ -241,11 +241,9 @@ implements DataItem {
 			while(doneByteCount < len) {
 				n = readAndVerify(chanSrc, buff);
 				if(n > 0) {
-					buff.clear();
 					doneByteCount += n;
-					// Constants.BUFF_SIZE_HI has type int -> if (len - doneByteCount) < Constants.BUFF_SIZE_HI
-					// then (len - doneByteCount) < Integer.MAX_VALUE
-					buff.limit((int) Math.min(len - doneByteCount, Constants.BUFF_SIZE_HI));
+					buff.position(0)
+						.limit((int) Math.min(len - doneByteCount, buff.capacity()));
 				}
 			}
 		} catch(final DataSizeException e) {
