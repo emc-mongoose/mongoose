@@ -184,7 +184,7 @@ implements DataItem {
 	) throws IOException {
 		long writtenCount = 0;
 		int n;
-		//setRelativeOffset(relOffset);
+		setRelativeOffset(relOffset);
 		while(writtenCount < len) {
 			n = write(chanDst, writtenCount);
 			if(n < 0) {
