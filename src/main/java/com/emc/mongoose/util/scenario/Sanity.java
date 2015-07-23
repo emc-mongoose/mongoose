@@ -81,7 +81,7 @@ implements Runnable {
 				new ArrayList<WSObject>(1000), 1000
 			);
 			LOG.info(Markers.MSG, "Start rereading");
-			final long nRead2 = client.read(dataSrcR2, dataDstR2, DEFAULT_CONN_PER_NODE, false);
+			final long nRead2 = client.read(dataSrcR2, dataDstR2, DEFAULT_CONN_PER_NODE);
 			LOG.info(Markers.MSG, "Reread successfully {} items", nRead2);
 			// rewrite the read data items in a circle
 			final DataItemInput<WSObject> dataSrcW2 = dataDstR2.getInput();

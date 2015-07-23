@@ -205,7 +205,7 @@ implements WSIOTask<T> {
 		} catch(final ClosedChannelException e) { // probably a manual interruption
 			status = Status.CANCELLED;
 			LogUtil.exception(
-				LOG, Level.TRACE, e, "#{}: utput channel closed during the operation", hashCode()
+				LOG, Level.TRACE, e, "#{}: output channel closed during the operation", hashCode()
 			);
 		} catch(final IOException e) {
 			status = Status.FAIL_IO;
