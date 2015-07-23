@@ -165,8 +165,7 @@ implements DataItem {
 	public final int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
 		enforceCircularity();
-		// ringBufferSize has type int -> if maxCount < ringBuff.remaining() then maxCount < Integer.MAX_VALUE
-		final int n = maxCount > ringBuff.remaining() ? ringBuff.remaining() : (int) maxCount;
+		int n = (int) Math.min(maxCount, ringBuff.remaining());
 		ringBuff.limit(ringBuff.position() + n);
 		return chanDst.write(ringBuff);
 	}
@@ -185,7 +184,7 @@ implements DataItem {
 		int n;
 		setRelativeOffset(relOffset);
 		while(writtenCount < len) {
-			n = write(chanDst, len - writtenCount);
+			n = write(chanDst, len-writtenCount);
 			if(n < 0) {
 				LOG.warn(Markers.ERR, "Channel returned {} as written byte count", n);
 			} else if(n > 0) {
@@ -201,7 +200,7 @@ implements DataItem {
 		//
 		enforceCircularity();
 		int n = ringBuff.remaining();
-		if(buff.capacity() > n) {
+		if(buff.limit() > n) {
 			buff.limit(n);
 		}
 		//
@@ -234,21 +233,19 @@ implements DataItem {
 		final ReadableByteChannel chanSrc, final long relOffset, final long len
 	) throws IOException {
 		setRelativeOffset(relOffset);
-		ByteBuffer buff;
+		final ByteBuffer buff = ByteBuffer.allocate((int) Math.min(Constants.BUFF_SIZE_HI, len));
 		//
-		int n, maxCount;
+		int n;
 		long doneByteCount = 0;
 		try {
 			while(doneByteCount < len) {
-				// Constants.BUFF_SIZE_HI has type int -> if (len - doneByteCount) < Constants.BUFF_SIZE_HI
-				// then (len - doneByteCount) < Integer.MAX_VALUE
-				maxCount = len - doneByteCount > Constants.BUFF_SIZE_HI ? Constants.BUFF_SIZE_HI :
-					(int) (len - doneByteCount);
-				buff = ByteBuffer.allocate(maxCount);
 				n = readAndVerify(chanSrc, buff);
 				if(n > 0) {
 					buff.clear();
 					doneByteCount += n;
+					// Constants.BUFF_SIZE_HI has type int -> if (len - doneByteCount) < Constants.BUFF_SIZE_HI
+					// then (len - doneByteCount) < Integer.MAX_VALUE
+					buff.limit((int) Math.min(len - doneByteCount, Constants.BUFF_SIZE_HI));
 				}
 			}
 		} catch(final DataSizeException e) {
