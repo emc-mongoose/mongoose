@@ -162,13 +162,12 @@ implements DataItem {
 	}
 	//
 	@Override
-	public final int write(final WritableByteChannel chanDst, final long writtenCount)
+	public final int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
 		enforceCircularity();
-		ringBuff.limit(
-			(int) (ringBuff.position() + (size - writtenCount) > ringBuffSize ? ringBuffSize :
-				ringBuff.position() + (size - writtenCount))
-		);
+		// ringBufferSize has type int -> if maxCount < ringBuff.remaining() then maxCount < Integer.MAX_VALUE
+		final int n = maxCount > ringBuff.remaining() ? ringBuff.remaining() : (int) maxCount;
+		ringBuff.limit(ringBuff.position() + n);
 		return chanDst.write(ringBuff);
 	}
 	//
@@ -186,7 +185,7 @@ implements DataItem {
 		int n;
 		setRelativeOffset(relOffset);
 		while(writtenCount < len) {
-			n = write(chanDst, writtenCount);
+			n = write(chanDst, len - writtenCount);
 			if(n < 0) {
 				LOG.warn(Markers.ERR, "Channel returned {} as written byte count", n);
 			} else if(n > 0) {
@@ -237,11 +236,15 @@ implements DataItem {
 		setRelativeOffset(relOffset);
 		ByteBuffer buff;
 		//
-		int n;
+		int n, maxCount;
 		long doneByteCount = 0;
 		try {
 			while(doneByteCount < len) {
-				buff = ByteBuffer.allocate((int) Math.min(Constants.BUFF_SIZE_HI, len - doneByteCount));
+				// Constants.BUFF_SIZE_HI has type int -> if (len - doneByteCount) < Constants.BUFF_SIZE_HI
+				// then (len - doneByteCount) < Integer.MAX_VALUE
+				maxCount = len - doneByteCount > Constants.BUFF_SIZE_HI ? Constants.BUFF_SIZE_HI :
+					(int) (len - doneByteCount);
+				buff = ByteBuffer.allocate(maxCount);
 				n = readAndVerify(chanSrc, buff);
 				if(n > 0) {
 					buff.clear();
