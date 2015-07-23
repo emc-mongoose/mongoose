@@ -74,7 +74,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 	private final ObjectStorage<T> sharedStorage;
 	//
-	private final static Pattern RANGE_PATTERN = Pattern.compile("(?<firstPosition>[\\d]+)-(?<secondPosition>[\\d]+)?");
+	private final static Pattern RANGE_PATTERN = Pattern.compile("(?<firstPosition>[\\d]+)\\-(?<secondPosition>[\\d]+)?");
 	//
 	protected WSRequestHandlerBase(
 		final RunTimeConfig runTimeConfig, final ObjectStorage<T> sharedStorage
@@ -222,18 +222,16 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			ranges.add(Long.valueOf(matcherRange.group("firstPosition")));
 			if (matcherRange.group("secondPosition") != null) {
 				ranges.add(Long.valueOf(matcherRange.group("secondPosition")));
-			}
-		}
-		// switch append or update. If ranges list contains 1 element it's append.
-		if (ranges.size() == 1) {
-			final long augmentSize = ranges.get(0);
-			//set new data object's size
-			dataObject.setSize(dataObject.getSize() + bytes);
-			dataObject.append(augmentSize);
-		} else if(ranges.size() > 1) {
-			if (ranges.size() % 2 != 0) {
+			} else {
 				ranges.add(bytes);
 			}
+		}
+		// switch append or update. If first range is equal data item's size it's append.
+		if (ranges.get(0) == dataObject.getSize()) {
+			//set new data object's size
+			dataObject.setSize(dataObject.getSize() + bytes);
+			dataObject.append(bytes);
+		} else if(ranges.get(ranges.size() - 1) <= dataObject.getSize()) {
 			dataObject.updateRanges(ranges);
 		} else {
 			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
