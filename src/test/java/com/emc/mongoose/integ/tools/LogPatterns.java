@@ -17,7 +17,7 @@ public interface LogPatterns {
 		TYPE_LOAD = Pattern.compile("(?<typeLoad>[CreatRdDlUpAn]{4,6})"),
 		//
 		DATA_ID = Pattern.compile("(?<dataID>[\\w\\d]+)"),
-		DATA_OFFSET = DATA_ID,
+		DATA_OFFSET = Pattern.compile("(?<dataOffset>[\\w\\d]+)"),
 		API_NAME = Pattern.compile("(?<apiName>[S3ATMOWIF]{2,5})"),
 		ITEM_COUNTS_SUCC = Pattern.compile("(?<countSucc>[\\d]+)"),
 		ITEM_COUNTS_FAIL = Pattern.compile("(?<countFail>[\\d]+)"),
