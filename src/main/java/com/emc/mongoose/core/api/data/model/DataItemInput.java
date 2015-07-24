@@ -22,13 +22,14 @@ extends Closeable {
 	throws EOFException, IOException;
 
 	/**
-	 Bulk data items read. Will try to read up to buffer.length data items in a time.
+	 Bulk data items read.
 	 @param buffer buffer for the data items
-	 @return count of the data items were read successfully.
+	 @param maxCount max count of the items to read
+	 @return count of the data items have been read and put into the buffer actually
 	 @throws java.io.EOFException if no data item available more
 	 @throws java.io.IOException if failed to read some-why
 	 */
-	int read(final List<T> buffer)
+	int read(final List<T> buffer, final int maxCount)
 	throws IOException;
 
 	/**

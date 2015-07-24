@@ -6,9 +6,8 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.GenericContainer;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 //
-import com.emc.mongoose.core.impl.data.GenericContainerItemInputBase;
+import com.emc.mongoose.core.impl.data.model.GenericContainerItemInputBase;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -30,7 +29,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.util.List;
-import java.util.ListIterator;
 /**
  Created by kurila on 03.07.15.
  */
@@ -164,7 +162,7 @@ extends GenericContainerItemInputBase<T> {
 	}
 	//
 	@Override
-	protected final ListIterator<T> getNextPageIterator()
+	protected final void loadNextPage()
 	throws EOFException, IOException {
 		if(eof) {
 			throw new EOFException();
@@ -202,7 +200,7 @@ extends GenericContainerItemInputBase<T> {
 		parser.reset();
 		try(final InputStream in = respEntity.getContent()) {
 			final PageContentHandler<T> pageContentHandler = new PageContentHandler<>(
-				listPageBuffer, itemConstructor, container
+				items, itemConstructor, container
 			);
 			parser.parse(in, pageContentHandler);
 			nextPageMarker = pageContentHandler.getNextPageMarker();
@@ -213,8 +211,6 @@ extends GenericContainerItemInputBase<T> {
 		} catch(final SAXException e) {
 			throw new IOException(e);
 		}
-		//
-		return listPageBuffer.listIterator();
 	}
 	//
 	/**

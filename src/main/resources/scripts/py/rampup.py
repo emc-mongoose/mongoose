@@ -2,7 +2,7 @@ from loadbuilder import init as loadBuilderInit
 from chain import build as chainBuild
 from chain import execute as chainExecute
 #
-from java.lang import Long, Short, Throwable, NumberFormatException, InterruptedException
+from java.lang import Long, Integer, Throwable, NumberFormatException, InterruptedException
 #
 from org.apache.logging.log4j import Level, LogManager, ThreadContext
 #
@@ -34,7 +34,7 @@ def execute(loadBuilder, rampupParams=((),(),())):
 		for threadCountStr in listThreadCounts:
 			if not interrupted:
 				try:
-					threadCount = Short.valueOf(threadCountStr)
+					threadCount = Integer.parseInt(threadCountStr)
 					LOG.info(Markers.PERF_SUM, "---- Step {}x{} start ----", threadCount, dataItemSizeStr)
 					ThreadContext.put("currentSize", dataItemSizeStr + "-" + str(index))
 					ThreadContext.put("currentThreadCount", str(threadCount))

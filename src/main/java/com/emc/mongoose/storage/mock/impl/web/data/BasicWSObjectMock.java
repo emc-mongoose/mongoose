@@ -4,7 +4,7 @@ import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.UniformData;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 //
-import com.emc.mongoose.storage.mock.api.UpdatableDataItemMock;
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
 //import org.apache.log.log4j.LogManager;
 //import org.apache.log.log4j.Logger;
@@ -18,7 +18,7 @@ import java.util.List;
  */
 public class BasicWSObjectMock
 extends BasicWSObject
-implements UpdatableDataItemMock {
+implements WSObjectMock {
 	//private final static Logger LOG = LogManager.getLogger();
 	//
 	public BasicWSObjectMock(final String metaInfo) {

@@ -126,7 +126,7 @@ if __name__ == "__builtin__":
 	except:
 		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_DATA_SIZE)
 	try:
-		threadsPerNode = Long(runTimeConfig.getShort(RunTimeConfig.KEY_LOAD_THREADS))
+		threadsPerNode = Long(runTimeConfig.getInt(RunTimeConfig.KEY_LOAD_THREADS))
 	except:
 		LOG.debug(Markers.MSG, "No \"{}\" specified", RunTimeConfig.KEY_LOAD_THREADS)
 	#

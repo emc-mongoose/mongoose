@@ -479,7 +479,9 @@ implements WSRequestConfig<T> {
 	protected final void applyRangesHeaders(final MutableWSRequest httpRequest, final T dataItem) {
 		httpRequest.removeHeaders(HttpHeaders.RANGE); // cleanup
 		if(dataItem.isAppending()) {
-			httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + dataItem.getSize() + "-");
+			httpRequest.addHeader(
+				HttpHeaders.RANGE, VALUE_RANGE_PREFIX + dataItem.getSize() + VALUE_RANGE_CONCAT
+			);
 		} else if(dataItem.hasUpdatedRanges()) {
 			long rangeBeg = -1, rangeEnd = -1, rangeLen;
 			int rangeCount = dataItem.getCountRangesTotal();
@@ -498,7 +500,10 @@ implements WSRequestConfig<T> {
 					}
 					if(i == rangeCount - 1) { // this is the last range which is updated also
 						LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
-						httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + rangeBeg + "-" + rangeEnd);
+						httpRequest.addHeader(
+							HttpHeaders.RANGE,
+							VALUE_RANGE_PREFIX + rangeBeg + VALUE_RANGE_CONCAT + rangeEnd
+						);
 					}
 				} else if(rangeBeg > -1 && rangeEnd > -1) { // end of the updated ranges sequence
 					LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);

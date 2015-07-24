@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.data;
+package com.emc.mongoose.core.impl.data.model;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
@@ -11,22 +11,21 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 /**
  The implementation should have a state representing the actual position in the container listing
  */
 public abstract class GenericContainerItemInputBase<T extends DataItem>
+extends ListItemInput<T>
 implements DataItemInput<T> {
 	//
 	protected final GenericContainer<T> container;
 	protected final String nodeAddr;
 	protected final Constructor<T> itemConstructor;
-	protected final List<T> listPageBuffer;;
-	protected ListIterator<T> listPageIter = null;
 	//
 	protected GenericContainerItemInputBase(
 		final GenericContainer<T> container, final String nodeAddr, final Class<T> itemCls
 	) throws IllegalStateException {
+		super(new ArrayList<T>(RunTimeConfig.getContext().getBatchSize()));
 		this.container = container;
 		this.nodeAddr = nodeAddr;
 		try {
@@ -36,7 +35,6 @@ implements DataItemInput<T> {
 		} catch(final NoSuchMethodException e) {
 			throw new IllegalStateException(e);
 		}
-		listPageBuffer = new ArrayList<>(RunTimeConfig.getContext().getBatchSize());
 	}
 	/**
 	 The method should fill the listPageBuffer and return its list iterator
@@ -44,29 +42,29 @@ implements DataItemInput<T> {
 	 @throws EOFException if no more items is available from the storage side
 	 @throws IOException
 	 */
-	protected abstract ListIterator<T> getNextPageIterator()
+	protected abstract void loadNextPage()
 	throws EOFException, IOException;
+	//
+	protected void loadNewPageIfNecessary()
+	throws EOFException, IOException {
+		if(i == items.size() || 0 == items.size()) {
+			loadNextPage();
+			i = 0;
+		}
+	}
 	//
 	@Override
 	public final T read()
 	throws EOFException, IOException {
-		if(listPageIter == null || !listPageIter.hasNext()) {
-			listPageIter = getNextPageIterator();
-		}
-		return listPageIter.next();
+		loadNewPageIfNecessary();
+		return super.read();
 	}
 	//
 	@Override
-	public final int read(final List<T> buffer)
+	public final int read(final List<T> buffer, final int maxCount)
 	throws IOException {
-		if(listPageIter == null || !listPageIter.hasNext()) {
-			listPageIter = getNextPageIterator();
-		}
-		int n = buffer.size(), m = listPageIter.nextIndex();
-		buffer.addAll(listPageBuffer.subList(m, listPageBuffer.size()));
-		n = buffer.size() - n;
-		listPageIter = listPageBuffer.listIterator(n + m);
-		return n;
+		loadNewPageIfNecessary();
+		return super.read(buffer, maxCount);
 	}
 	/**
 	 Read the items from the beginning of the container listing
@@ -75,8 +73,8 @@ implements DataItemInput<T> {
 	@Override
 	public void reset()
 	throws IOException {
-		listPageBuffer.clear();
-		listPageIter = null;
+		items.clear();
+		i = 0;
 	}
 	/**
 	 The default implementation does nothing

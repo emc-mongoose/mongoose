@@ -100,6 +100,16 @@ implements ObjectStorage<T> {
 	}
 	//
 	@Override
+	public void update(final T dataItem, final long start, final long end) {
+		// TODO
+	}
+	//
+	@Override
+	public void append(final T dataItem, final long start, final long len) {
+		// TODO
+	}
+	//
+	@Override
 	public T get(final String id) {
 		synchronized(itemIndex) {
 			return itemIndex.get(id);

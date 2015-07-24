@@ -5,9 +5,8 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 //
-import com.emc.mongoose.core.impl.data.GenericContainerItemInputBase;
+import com.emc.mongoose.core.impl.data.model.GenericContainerItemInputBase;
 //
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -24,7 +23,6 @@ import org.apache.logging.log4j.Logger;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ListIterator;
 /**
  Created by kurila on 03.07.15.
  */
@@ -46,7 +44,7 @@ extends GenericContainerItemInputBase<T> {
 	}
 	//
 	@Override
-	protected final ListIterator<T> getNextPageIterator()
+	protected final void loadNextPage()
 	throws EOFException, IOException {
 		if(eof) {
 			throw new EOFException();
@@ -85,8 +83,6 @@ extends GenericContainerItemInputBase<T> {
 			handleJsonInputStream(in);
 			LOG.info("Listed {} items the last time", count - lastTimeCount);
 		}
-		//
-		return listPageBuffer.listIterator();
 	}
 	//
 	@Override
@@ -121,7 +117,7 @@ extends GenericContainerItemInputBase<T> {
 											itemConstructor, lastId, lastSize
 										);
 										if(nextItem != null) {
-											listPageBuffer.add(nextItem);
+											items.add(nextItem);
 											count ++;
 											isEmptyArray = true;
 										}

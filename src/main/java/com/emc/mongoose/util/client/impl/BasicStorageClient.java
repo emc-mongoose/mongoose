@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 public class BasicStorageClient<T extends DataItem>
 implements StorageClient<T> {
 	//
-	protected final static short THREAD_COUNT_DEFAULT = 1;
+	protected final static int THREAD_COUNT_DEFAULT = 1;
 	//
 	protected RunTimeConfig rtConfig;
 	protected LoadBuilder<T, LoadExecutor<T>> loadBuilder;
@@ -62,33 +62,24 @@ implements StorageClient<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public long write(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long size
-	) throws IllegalArgumentException, InterruptedException, IOException {
-		return write(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, size, size, 0);
+	public long write(final long size)
+	throws IllegalArgumentException, InterruptedException, IOException {
+		return write(null, null, 0, THREAD_COUNT_DEFAULT, size, size, 0);
 	}
 	//
 	@Override
 	public long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final short threadCount, final long size
+		final long maxCount, final int threadCount, final long size
 	) throws IllegalArgumentException, InterruptedException, IOException {
-		return write(itemsInput, itemsOutput, threadCount, size, size, 0);
+		return write(itemsInput, itemsOutput, maxCount, THREAD_COUNT_DEFAULT, size, size, 0);
 	}
 	//
 	@Override
 	public long write(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final long maxCount, final int threadCount,
 		final long minSize, final long maxSize, final float sizeBias
-	) throws IllegalArgumentException, InterruptedException, IOException {
-		return write(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, minSize, maxSize, sizeBias);
-	}
-	//
-	@Override
-	public long write(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final short threadCount, final long minSize, final long maxSize, final float sizeBias
 	) throws IllegalArgumentException, InterruptedException, IOException {
 		//
 		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
@@ -101,6 +92,7 @@ implements StorageClient<T> {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
 					.setLoadType(IOTask.Type.CREATE)
+					.setMaxCount(maxCount)
 					.setThreadsPerNodeFor(threadCount, IOTask.Type.CREATE)
 					.setMinObjSize(minSize)
 					.setMaxObjSize(maxSize)
@@ -113,32 +105,15 @@ implements StorageClient<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public long read(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput
-	) throws IllegalStateException, InterruptedException, IOException {
-		return read(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, rtConfig.getReadVerifyContent());
+	public long read(final DataItemInput<T> itemsInput)
+	throws IllegalStateException, InterruptedException, IOException {
+		return read(itemsInput, null, 0, THREAD_COUNT_DEFAULT, rtConfig.getReadVerifyContent());
 	}
 	//
 	@Override
 	public long read(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final short threadCount
-	) throws IllegalStateException, InterruptedException, IOException {
-		return read(itemsInput, itemsOutput, threadCount, rtConfig.getReadVerifyContent());
-	}
-	//
-	@Override
-	public long read(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final boolean verifyContentFlag
-	) throws IllegalStateException, InterruptedException, IOException {
-		return read(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, verifyContentFlag);
-	}
-	//
-	@Override
-	public long read(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final short threadCount, final boolean verifyContentFlag
+		final long maxCount, final int threadCount, final boolean verifyContentFlag
 	) throws IllegalStateException, InterruptedException, IOException {
 		loadBuilder.getRequestConfig().setVerifyContentFlag(verifyContentFlag);
 		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
@@ -151,6 +126,7 @@ implements StorageClient<T> {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
 					.setLoadType(IOTask.Type.READ)
+					.setMaxCount(maxCount)
 					.setThreadsPerNodeFor(threadCount, IOTask.Type.READ)
 					.build()
 			) {
@@ -160,15 +136,15 @@ implements StorageClient<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public long delete(final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput)
+	public long delete(final DataItemInput<T> itemsInput)
 	throws IllegalStateException, InterruptedException, IOException {
-		return delete(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT);
+		return delete(itemsInput, null, 0, THREAD_COUNT_DEFAULT);
 	}
 	//
 	@Override
 	public long delete(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final short threadCount
+		final long maxCount, final int threadCount
 	) throws IllegalStateException, InterruptedException, IOException {
 		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
@@ -180,6 +156,7 @@ implements StorageClient<T> {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
 					.setLoadType(IOTask.Type.DELETE)
+					.setMaxCount(maxCount)
 					.setThreadsPerNodeFor(threadCount, IOTask.Type.DELETE)
 					.build()
 			) {
@@ -189,38 +166,15 @@ implements StorageClient<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public long update(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput
-	) throws IllegalStateException, InterruptedException, IOException {
-		return update(
-			itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, rtConfig.getUpdateCountPerTime()
-		);
+	public long update(final DataItemInput<T> itemsInput)
+	throws IllegalStateException, InterruptedException, IOException {
+		return update(itemsInput, null, 0, THREAD_COUNT_DEFAULT, rtConfig.getUpdateCountPerTime());
 	}
 	//
 	@Override
 	public long update(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final short threadCount
-	) throws IllegalStateException, InterruptedException, IOException {
-		return update(
-			itemsInput, itemsOutput, threadCount, rtConfig.getUpdateCountPerTime()
-		);
-	}
-	//
-	@Override
-	public long update(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final int countPerTime
-	) throws IllegalStateException, InterruptedException, IOException {
-		return update(
-			itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, countPerTime
-		);
-	}
-	//
-	@Override
-	public long update(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final short threadCount, final int countPerTime
+		final long maxCount, final int threadCount, final int countPerTime
 	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
 		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?
@@ -232,6 +186,7 @@ implements StorageClient<T> {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
 					.setLoadType(IOTask.Type.UPDATE)
+					.setMaxCount(maxCount)
 					.setThreadsPerNodeFor(threadCount, IOTask.Type.UPDATE)
 					.setUpdatesPerItem(countPerTime)
 					.build()
@@ -242,54 +197,24 @@ implements StorageClient<T> {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public long append(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput
-	) throws IllegalStateException, InterruptedException, IOException {
-		return append(
-			itemsInput, itemsOutput, THREAD_COUNT_DEFAULT,
-			rtConfig.getDataSizeMin(), rtConfig.getDataSizeMax(), rtConfig.getDataSizeBias()
-		);
+	public long append(final DataItemInput<T> itemsInput, final long size)
+	throws IllegalStateException, InterruptedException, IOException {
+		return append(itemsInput, null, 0, THREAD_COUNT_DEFAULT, size, size, 0);
 	}
 	//
 	@Override
 	public long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final short threadCount
-	) throws IllegalStateException, InterruptedException, IOException {
-		return append(
-			itemsInput, itemsOutput, threadCount,
-			rtConfig.getDataSizeMin(), rtConfig.getDataSizeMax(), rtConfig.getDataSizeBias()
-		);
-	}
-	//
-	@Override
-	public long append(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final long size
+		final long maxCount, final int threadCount, final long size
 	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
-		return append(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, size, size, 0);
+		return append(itemsInput, itemsOutput, maxCount, threadCount, size, size, 0);
 	}
 	//
 	@Override
 	public long append(
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final short threadCount, final long size
-	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
-		return append(itemsInput, itemsOutput, threadCount, size, size, 0);
-	}
-	//
-	@Override
-	public long append(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
+		final long maxCount, final int threadCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
-	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
-		return append(itemsInput, itemsOutput, THREAD_COUNT_DEFAULT, sizeMin, sizeMax, sizeBias);
-	}
-	//
-	@Override
-	public long append(
-		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
-		final short threadCount, final long sizeMin, final long sizeMax, final float sizeBias
 	) throws IllegalArgumentException, IllegalStateException, InterruptedException, IOException {
 		loadBuilder.getRequestConfig().setAnyDataProducerEnabled(itemsInput == null);
 		final DataItemInputProducer<T> producer = itemsInput == null ?

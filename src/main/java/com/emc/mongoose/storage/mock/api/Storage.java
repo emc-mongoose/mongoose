@@ -1,7 +1,7 @@
 package com.emc.mongoose.storage.mock.api;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-
+//
 import java.io.Closeable;
 /**
  Created by kurila on 03.06.15.
@@ -15,4 +15,6 @@ extends Runnable, Closeable {
 	// async methods
 	void create(final T dataItem);
 	void delete(final T dataItem);
+	void update(final T dataItem, long start, long end);
+	void append(final T dataItem, long start, long len);
 }

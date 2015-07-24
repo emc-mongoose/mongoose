@@ -75,15 +75,16 @@ implements DataItemOutput<T>, DataItemInput<T> {
 	}
 	/**
 	 Non-blocking bulk read implementation
+	 @param maxCount the count limit
 	 @param buffer buffer for the data items
 	 @return the count of the items been read
 	 @throws IOException if something goes wrong
 	 */
 	@Override
-	public int read(final List<T> buffer)
+	public int read(final List<T> buffer, final int maxCount)
 	throws IOException {
 		try {
-			return queue.drainTo(buffer);
+			return queue.drainTo(buffer, maxCount);
 		} catch(final UnsupportedOperationException | IllegalArgumentException e) {
 			throw new IOException(e);
 		}

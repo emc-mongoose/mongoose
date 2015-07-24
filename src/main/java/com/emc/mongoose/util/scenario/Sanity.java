@@ -14,8 +14,10 @@ import com.emc.mongoose.core.api.data.model.DataItemOutput;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.model.BinFileItemOutput;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
+import com.emc.mongoose.core.impl.data.model.CircularListItemInput;
 import com.emc.mongoose.core.impl.data.model.CircularListItemOutput;
 //
+import com.emc.mongoose.core.impl.data.model.ListItemOutput;
 import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
 import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
 //
@@ -33,6 +35,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.06.15.
@@ -41,8 +44,8 @@ public class Sanity
 implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 5, DEFAULT_CONN_PER_NODE = 5;
-	private final static long
-		DEFAULT_DATA_SIZE = SizeUtil.toSize("256KB"), DEFAULT_DATA_COUNT_MAX = 1000000;
+	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("1KB");
+	private final static int DEFAULT_DATA_COUNT_MAX = 10;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -58,45 +61,58 @@ implements Runnable {
 	public void run() {
 		try {
 			// create new items
-			final DataItemOutput<WSObject> dataDstW = new BinFileItemOutput<>();
+			final List<WSObject> dataItems = new ArrayList<>(DEFAULT_DATA_COUNT_MAX);
+			final DataItemOutput<WSObject> dataDstW = new ListItemOutput<>(dataItems);
 			LOG.info(Markers.MSG, "Start writing");
 			final long nWritten = client.write(
-				null, dataDstW, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
+				null, dataDstW, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
 			// read and verify the written items
 			final DataItemInput<WSObject> dataSrcR = dataDstW.getInput();
 			final DataItemOutput<WSObject> dataDstR = new BinFileItemOutput<>();
-			final long nRead = client.read(dataSrcR, dataDstR, DEFAULT_CONN_PER_NODE);
+			final long nRead = client.read(
+				dataSrcR, dataDstR, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, true
+			);
 			LOG.info(Markers.MSG, "Read successfully {} items", nRead);
 			// update the appended items
 			final DataItemInput<WSObject> dataSrcU = dataDstW.getInput();
 			final DataItemOutput dataDstU = new CSVFileItemOutput<>(BasicWSObject.class);
 			LOG.info(Markers.MSG, "Start updating");
-			final long nUpdated = client.update(dataSrcU, dataDstU, DEFAULT_CONN_PER_NODE);
+			final long nUpdated = client.update(
+				dataSrcU, dataDstU, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, 2
+			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// reread the updated items
-			final DataItemInput<WSObject> dataSrcR2 = dataDstW.getInput();
+			final DataItemInput<WSObject> dataSrcR2 = dataDstU.getInput();
 			final DataItemOutput<WSObject> dataDstR2 = new CircularListItemOutput<>(
-				new ArrayList<WSObject>(1000), 1000
+				dataItems, 100
 			);
 			LOG.info(Markers.MSG, "Start rereading");
-			final long nRead2 = client.read(dataSrcR2, dataDstR2, DEFAULT_CONN_PER_NODE);
+			final long nRead2 = client.read(
+				dataSrcR2, dataDstR2, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, true
+			);
 			LOG.info(Markers.MSG, "Reread successfully {} items", nRead2);
-			// rewrite the read data items in a circle
+			/* rewrite the read data items in a circle
 			final DataItemInput<WSObject> dataSrcW2 = dataDstR2.getInput();
 			LOG.info(Markers.MSG, "Start circular rewriting");
-			final long nRewritten = client.write(dataSrcW2, null, DEFAULT_CONN_PER_NODE);
+			final long nRewritten = client.write(
+				dataSrcW2, null, 1000000000, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
+			);
 			LOG.info(Markers.MSG, "Rewritten successfully {} times", nRewritten);
 			// append the written items
 			final DataItemInput<WSObject> dataSrcA = dataDstW.getInput();
-			LOG.info(Markers.MSG, "Start updating");
-			final long nAppended = client.append(dataSrcA, null, DEFAULT_CONN_PER_NODE);
+			LOG.info(Markers.MSG, "Start appending");
+			final long nAppended = client.append(
+				dataSrcA, null, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, 3 * DEFAULT_DATA_SIZE
+			);
 			LOG.info(Markers.MSG, "Appended successfully {} items", nAppended);
 			// delete all written data items
 			final DataItemInput<WSObject> dataSrcD = dataDstW.getInput();
-			final long nDeleted = client.delete(dataSrcD, null, DEFAULT_CONN_PER_NODE);
-			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
+			final long nDeleted = client.delete(
+				dataSrcD, null, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE
+			);
+			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);*/
 			//
 		} catch(final Exception e) {
 			e.printStackTrace(System.err);
@@ -118,7 +134,7 @@ implements Runnable {
 			new Cinderella(RunTimeConfig.getContext()), "wsMock"
 		);
 		wsMockThread.setDaemon(true);
-		wsMockThread.start();
+		//wsMockThread.start();
 		//
 		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 10);
 		final StorageClientBuilder<WSObject, StorageClient<WSObject>>
@@ -128,9 +144,10 @@ implements Runnable {
 			storageNodes[i] = "127.0.0.1:" + (9020 + i);
 		}
 		clientBuilder
-			.setNodes(storageNodes)
+			.setNodes(new String[]{"10.249.237.73", "10.249.237.74", "10.249.237.75"})
+			.setAuth("wuser1@sanity.local", "H1jTDL869wgZapHsylVcSYTx3aM7NxVABy8h017Z")
 			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
-			.setLimitTime(100, TimeUnit.SECONDS)
+			.setLimitTime(180, TimeUnit.SECONDS)
 			.setLimitRate(10000);
 		// standalone
 		try(final StorageClient<WSObject> client = clientBuilder.build()) {
@@ -140,7 +157,7 @@ implements Runnable {
 			sanityThread1.join();
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
-		// distributed mode
+		/* distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
 		ServiceUtils.init();
 		//
@@ -164,9 +181,9 @@ implements Runnable {
 			}
 		}
 		//
-		ServiceUtils.shutdown();
+		ServiceUtils.shutdown();*/
 		// finish
-		wsMockThread.interrupt();
+		//wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");
 		LOG.info(Markers.MSG, "Sanity done");
 	}
