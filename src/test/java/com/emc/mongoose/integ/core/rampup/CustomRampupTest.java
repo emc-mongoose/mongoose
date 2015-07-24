@@ -41,9 +41,9 @@ public class CustomRampupTest {
 	private static String rampupRunID;
 	private static final String
 		LIMIT_TIME = "60.seconds",
-		RAMPUP_SIZES = "10KB",//,1MB,10MB",
-		RAMPUP_THREAD_COUNTS = "10,50";//,100";
-	private static final int COUNT_STEPS = 2;
+		RAMPUP_SIZES = "10KB,1MB,10MB",
+		RAMPUP_THREAD_COUNTS = "10,50,100";
+	private static final int COUNT_STEPS = 9;
 
 	@BeforeClass
 	public static void before()
