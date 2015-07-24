@@ -10,7 +10,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.regex.Matcher;
 
 /**
  * Created by olga on 03.07.15.
@@ -64,11 +63,28 @@ public final class LogParser {
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
 			if (firstRow) {
+				Assert.assertEquals("DateTimeISO8601", nextRec.get(0));
+				Assert.assertEquals("LoadId", nextRec.get(1));
+				Assert.assertEquals("TypeAPI", nextRec.get(2));
+				Assert.assertEquals("TypeLoad", nextRec.get(3));
+				Assert.assertEquals("CountConn", nextRec.get(4));
+				Assert.assertEquals("CountNode", nextRec.get(5));
+				Assert.assertEquals("CountLoadServer", nextRec.get(6));
+				Assert.assertEquals("CountSucc", nextRec.get(7));
+				Assert.assertEquals("CountFail", nextRec.get(8));
+				Assert.assertEquals("LatencyAvg[us]", nextRec.get(9));
+				Assert.assertEquals("LatencyMin[us]", nextRec.get(10));
+				Assert.assertEquals("LatencyMed[us]", nextRec.get(11));
+				Assert.assertEquals("LatencyMax[us]", nextRec.get(12));
+				Assert.assertEquals("TPAvg", nextRec.get(13));
+				Assert.assertEquals("TP1Min", nextRec.get(14));
+				Assert.assertEquals("TP5Min", nextRec.get(15));
+				Assert.assertEquals("TP15Min", nextRec.get(16));
+				Assert.assertEquals("BWAvg[MB/s]", nextRec.get(17));
+				Assert.assertEquals("BW1Min[MB/s]", nextRec.get(18));
+				Assert.assertEquals("BW5Min[MB/s]", nextRec.get(19));
+				Assert.assertEquals("BW15Min[MB/s]", nextRec.get(20));
 				firstRow = false;
-				Assert.assertEquals(
-					String.format("Not correct headers of perf.sum.csv file: %s", nextRec.toString()),
-					nextRec.toString(), LogParser.HEADER_PERF_SUM_FILE
-				);
 			} else {
 				Assert.assertTrue(
 					"Data and time format is not correct",
@@ -146,10 +162,28 @@ public final class LogParser {
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
 			if(firstRow) {
-				Assert.assertEquals(
-					String.format("Not correct headers of perf.avg.csv file: %s", nextRec.toString()),
-					nextRec.toString(), LogParser.HEADER_PERF_AVG_FILE
-				);
+				Assert.assertEquals("DateTimeISO8601", nextRec.get(0));
+				Assert.assertEquals("LoadId", nextRec.get(1));
+				Assert.assertEquals("TypeAPI", nextRec.get(2));
+				Assert.assertEquals("TypeLoad", nextRec.get(3));
+				Assert.assertEquals("CountConn", nextRec.get(4));
+				Assert.assertEquals("CountNode", nextRec.get(5));
+				Assert.assertEquals("CountLoadServer", nextRec.get(6));
+				Assert.assertEquals("CountSucc", nextRec.get(7));
+				Assert.assertEquals("CountPending", nextRec.get(8));
+				Assert.assertEquals("CountFail", nextRec.get(9));
+				Assert.assertEquals("LatencyAvg[us]", nextRec.get(10));
+				Assert.assertEquals("LatencyMin[us]", nextRec.get(11));
+				Assert.assertEquals("LatencyMed[us]", nextRec.get(12));
+				Assert.assertEquals("LatencyMax[us]", nextRec.get(13));
+				Assert.assertEquals("TPAvg", nextRec.get(14));
+				Assert.assertEquals("TP1Min", nextRec.get(15));
+				Assert.assertEquals("TP5Min", nextRec.get(16));
+				Assert.assertEquals("TP15Min", nextRec.get(17));
+				Assert.assertEquals("BWAvg[MB/s]", nextRec.get(18));
+				Assert.assertEquals("BW1Min[MB/s]", nextRec.get(19));
+				Assert.assertEquals("BW5Min[MB/s]", nextRec.get(20));
+				Assert.assertEquals("BW15Min[MB/s]", nextRec.get(21));
 				firstRow = false;
 			} else {
 				Assert.assertTrue(
@@ -253,11 +287,15 @@ public final class LogParser {
 		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 		for(final CSVRecord nextRec : recIter) {
 			if (firstRow) {
+				Assert.assertEquals("Thread", nextRec.get(0));
+				Assert.assertEquals("TargetNode", nextRec.get(1));
+				Assert.assertEquals("DataItemId", nextRec.get(2));
+				Assert.assertEquals("DataItemSize", nextRec.get(3));
+				Assert.assertEquals("StatusCode", nextRec.get(4));
+				Assert.assertEquals("ReqTimeStart[us]", nextRec.get(5));
+				Assert.assertEquals("Latency[us]", nextRec.get(6));
+				Assert.assertEquals("Duration[us]", nextRec.get(7));
 				firstRow = false;
-				Assert.assertEquals(
-					String.format("Not correct headers of perf.trace.csv file: %s", nextRec.toString()),
-					nextRec.toString(), LogParser.HEADER_PERF_TRACE_FILE
-				);
 			} else {
 				Assert.assertTrue(
 					"Thread name format is not correct", nextRec.get(0).matches(LogPatterns.THREAD_NAME.pattern())
