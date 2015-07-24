@@ -16,16 +16,6 @@ import java.nio.file.Paths;
  */
 public final class LogParser {
 
-	//Headers
-	public static final String HEADER_PERF_TRACE_FILE = "Thread,TargetNode,DataItemId,DataItemSize,StatusCode," +
-		"ReqTimeStart[us],Latency[us],Duration[us]";
-	public static final String HEADER_PERF_AVG_FILE = "DateTimeISO8601,LoadId,TypeAPI,TypeLoad,CountConn,CountNode," +
-		"CountLoadServer,CountSucc,CountPending,CountFail,LatencyAvg[us],LatencyMin[us],LatencyMed[us]," +
-		"LatencyMax[us],TPAvg,TP1Min,TP5Min,TP15Min,BWAvg[MB/s],BW1Min[MB/s],BW5Min[MB/s],BW15Min[MB/s]";
-	public static final String HEADER_PERF_SUM_FILE = "DateTimeISO8601,LoadId,TypeAPI,TypeLoad,CountConn,CountNode," +
-		"CountLoadServer,CountSucc,CountFail,LatencyAvg[us],LatencyMin[us],LatencyMed[us]," +
-		"LatencyMax[us],TPAvg,TP1Min,TP5Min,TP15Min,BWAvg[MB/s],BW1Min[MB/s],BW5Min[MB/s],BW15Min[MB/s]";
-
 	public static File getMessageFile(final String runID){
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,
 			Constants.DIR_LOG, runID, TestConstants.MESSAGE_FILE_NAME).toString());

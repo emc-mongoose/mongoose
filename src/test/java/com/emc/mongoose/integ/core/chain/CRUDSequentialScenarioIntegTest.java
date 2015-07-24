@@ -301,8 +301,6 @@ public class CRUDSequentialScenarioIntegTest {
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(writePerfAvgFile));
 		//
 		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(LogParser.HEADER_PERF_AVG_FILE, line);
 		//
 		Matcher matcher, loadTypeMatcher;
 		String actualLoadType, apiName;
