@@ -242,7 +242,7 @@ public class CustomRampupTest {
 				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
 		) {
 			boolean firstRow = true;
-			int iterationCount = 5, stepsCount = 0;
+			int iterationCount = 4, stepsCount = 0;
 			final Set<String> loadsSet = new HashSet<>();
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
