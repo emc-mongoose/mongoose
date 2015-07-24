@@ -105,8 +105,8 @@ public final class LogParser {
 				Assert.assertTrue(
 					"Count of node is not correct", LogParser.isInteger(nextRec.get(5))
 				);
-				Assert.assertNull(
-					"There are not load servers in run", nextRec.get(6)
+				Assert.assertTrue(
+					"There are not load servers in run", nextRec.get(6).isEmpty()
 				);
 				Assert.assertTrue(
 					"Count of success is not correct", LogParser.isInteger(nextRec.get(7))
@@ -205,8 +205,8 @@ public final class LogParser {
 				Assert.assertTrue(
 					"Count of node is not correct", LogParser.isInteger(nextRec.get(5))
 				);
-				Assert.assertNull(
-					"There are not load servers in run", nextRec.get(6)
+				Assert.assertTrue(
+					"There are not load servers in run", nextRec.get(6).isEmpty()
 				);
 				Assert.assertTrue(
 					"Count of success is not correct", LogParser.isInteger(nextRec.get(7))
@@ -313,7 +313,7 @@ public final class LogParser {
 					"Status code and mask format is not correct", LogParser.isInteger(nextRec.get(4))
 				);
 				Assert.assertTrue(
-					"Request time start format is not correct", LogParser.isInteger(nextRec.get(5))
+					"Request time start format is not correct", LogParser.isLong(nextRec.get(5))
 				);
 				Assert.assertTrue(
 					"Latency format is not correct", LogParser.isInteger(nextRec.get(6))
@@ -328,6 +328,15 @@ public final class LogParser {
 	public static boolean isInteger(final String line){
 		try {
 			Integer.parseInt(line);
+			return true;
+		} catch (final NumberFormatException e) {
+			return false;
+		}
+	}
+
+	public static boolean isLong(final String line){
+		try {
+			Long.parseLong(line);
 			return true;
 		} catch (final NumberFormatException e) {
 			return false;
