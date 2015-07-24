@@ -7,6 +7,8 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
+import com.filepool.fplibrary.FPLibraryException;
+import com.filepool.fplibrary.FPPool;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -83,14 +85,22 @@ implements Pool<T> {
 		return flagExists;
 	}
 	//
-	private void enableVersioning(final String addr, MutableWSRequest.HTTPMethod method) {
-
-	}
 	//
 	@Override
 	public final void create(final String addr)
 	throws IllegalStateException {
 		//
+
+		try {
+
+			FPPool pool = new FPPool(addr);
+			System.out.println("Pool open @ "+addr);
+
+		}catch (FPLibraryException e){
+
+		}catch (IllegalArgumentException e){
+
+		}
 
 	}
 	//
