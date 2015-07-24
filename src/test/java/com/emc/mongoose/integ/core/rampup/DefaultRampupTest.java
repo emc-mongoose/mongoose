@@ -7,7 +7,6 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
-import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.commons.csv.CSVFormat;
@@ -30,7 +29,6 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.regex.Matcher;
 
 /**
  * Created by olga on 22.07.15.

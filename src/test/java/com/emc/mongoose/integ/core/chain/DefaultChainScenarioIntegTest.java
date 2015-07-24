@@ -257,7 +257,7 @@ public class DefaultChainScenarioIntegTest {
 	@Test
 	public void shouldCreateCorrectInformationAboutLoad()
 	throws Exception {
-		// Get perf.avg.csv file of write scenario run
+		// Get perf.avg.csv file
 		final File perfAvgFile = LogParser.getPerfAvgFile(chainRunId);
 		Assert.assertTrue(perfAvgFile.exists());
 		//

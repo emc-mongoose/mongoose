@@ -176,7 +176,7 @@ public final class DefaultWriteTest {
 	@Test
 	public void shouldReportCorrectWrittenCountToSummaryLogFile()
 	throws Exception {
-		//Read perf.summary file of create scenario run
+		//Read perf.summary file
 		final File perfSumFile = LogParser.getPerfSumFile(createRunId);
 
 		//Check that file exists
@@ -195,7 +195,7 @@ public final class DefaultWriteTest {
 	@Test
 	public void shouldCreateDataItemsFileWithInformationAboutAllObjects()
 	throws Exception {
-		//Read data.items.csv file of create scenario run
+		//Read data.items.csv file
 		final File dataItemsFile = LogParser.getDataItemsFile(createRunId);
 		Assert.assertTrue(dataItemsFile.exists());
 		//
@@ -218,7 +218,7 @@ public final class DefaultWriteTest {
 	@Test
 	public void shouldGetDifferentObjectsFromServer()
 	throws Exception {
-		//Read data.items.csv file of create scenario run
+		//Read data.items.csv file
 		final File dataItemsFile = LogParser.getDataItemsFile(createRunId);
 		Assert.assertTrue(dataItemsFile.exists());
 		//
@@ -242,7 +242,7 @@ public final class DefaultWriteTest {
 	@Test
 	public void shouldGetAllObjectsFromServerAndDataSizeIsDefault()
 	throws Exception {
-		//Read data.items.csv file of create scenario run
+		//Read data.items.csv file
 		final File dataItemsFile = LogParser.getDataItemsFile(createRunId);
 		Assert.assertTrue(dataItemsFile.exists());
 		//
@@ -277,7 +277,7 @@ public final class DefaultWriteTest {
 	@Test
 	public void shouldCreateCorrectPerfSumFile()
 	throws Exception {
-		// Get perf.sum.csv file of write scenario run
+		// Get perf.sum.csv file
 		final File perfSumFile = LogParser.getPerfSumFile(createRunId);
 		Assert.assertTrue(perfSumFile.exists());
 		//
@@ -292,7 +292,7 @@ public final class DefaultWriteTest {
 	@Test
 	public void shouldCreateCorrectPerfAvgFile()
 	throws Exception {
-		// Get perf.avg.csv file of write scenario run
+		// Get perf.avg.csv file
 		final File perfAvgFile = LogParser.getPerfAvgFile(createRunId);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
 		//
@@ -307,7 +307,7 @@ public final class DefaultWriteTest {
 	@Test
 	public void shouldCreateCorrectPerfTraceFile()
 	throws Exception {
-		// Get perf.trace.csv file of write scenario run
+		// Get perf.trace.csv file
 		final File perfTraceFile = LogParser.getPerfTraceFile(createRunId);
 		Assert.assertTrue("perf.trace.csv file doesn't exist",perfTraceFile.exists());
 		//

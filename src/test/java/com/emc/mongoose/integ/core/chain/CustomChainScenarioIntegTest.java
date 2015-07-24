@@ -186,7 +186,7 @@ public class CustomChainScenarioIntegTest {
 	@Test
 	public void shouldCreateCorrectDataItemsFiles()
 	throws Exception {
-		// Get data.items.csv file of write scenario run
+		// Get data.items.csv file
 		final File dataItemFile = LogParser.getDataItemsFile(chainRunId);
 		Assert.assertTrue(dataItemFile.exists());
 		//
@@ -201,7 +201,7 @@ public class CustomChainScenarioIntegTest {
 	@Test
 	public void shouldCreateCorrectPerfTraceFile()
 	throws Exception {
-		// Get perf.trace.csv file of write scenario run
+		// Get perf.trace.csv file
 		final File perfTraceFile = LogParser.getPerfTraceFile(chainRunId);
 		Assert.assertTrue("perf.trace.csv file doesn't exist",perfTraceFile.exists());
 		//
@@ -216,7 +216,7 @@ public class CustomChainScenarioIntegTest {
 	@Test
 	public void shouldCreateCorrectPerfAvgFile()
 	throws Exception {
-		// Get perf.avg.csv file of write scenario run
+		// Get perf.avg.csv file
 		final File perfAvgFile = LogParser.getPerfAvgFile(chainRunId);
 		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
 		//
@@ -231,7 +231,7 @@ public class CustomChainScenarioIntegTest {
 	@Test
 	public void shouldCreateCorrectPerfSumFile()
 	throws Exception {
-		// Get perf.sum.csv file of write scenario run
+		// Get perf.sum.csv file
 		final File perfSumFile = LogParser.getPerfSumFile(chainRunId);
 		Assert.assertTrue(perfSumFile.exists());
 		//

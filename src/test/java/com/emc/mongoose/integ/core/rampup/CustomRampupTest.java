@@ -7,7 +7,6 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.integ.tools.LogParser;
-import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.commons.csv.CSVFormat;
@@ -30,7 +29,6 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.regex.Matcher;
 
 /**
  * Created by olga on 22.07.15.
@@ -189,7 +187,7 @@ public class CustomRampupTest {
 	@Test
 	public void shouldCreateCorrectPerfSumFile()
 		throws Exception {
-		// Get perf.sum.csv file of write scenario run
+		// Get perf.sum.csv file
 		final File perfSumFile = LogParser.getPerfSumFile(rampupRunID);
 		Assert.assertTrue("perf.sum.csv file must be exist", perfSumFile.exists());
 		//
@@ -204,7 +202,7 @@ public class CustomRampupTest {
 	@Test
 	public void shouldCreateCorrectDataItemsFile()
 		throws Exception {
-		// Get data.items.csv file of write scenario run
+		// Get data.items.csv file
 		final File dataItemFile = LogParser.getDataItemsFile(rampupRunID);
 		Assert.assertTrue("data.items.csv file must be exist", dataItemFile.exists());
 		//
@@ -219,7 +217,7 @@ public class CustomRampupTest {
 	@Test
 	public void shouldCreateCorrectPerfTraceFile()
 		throws Exception {
-		// Get perf.trace.csv file of write scenario run
+		// Get perf.trace.csv file
 		final File perfTraceFile = LogParser.getPerfTraceFile(rampupRunID);
 		Assert.assertTrue("perf.trace.csv file doesn't exist",perfTraceFile.exists());
 		//

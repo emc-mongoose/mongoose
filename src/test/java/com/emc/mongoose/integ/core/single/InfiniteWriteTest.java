@@ -6,7 +6,6 @@ import com.emc.mongoose.common.log.LogUtil;
 //
 //
 import com.emc.mongoose.integ.tools.LogPatterns;
-import com.emc.mongoose.integ.tools.ProcessManager;
 import com.emc.mongoose.integ.tools.TestConstants;
 //
 //
@@ -31,7 +30,6 @@ import java.util.regex.Matcher;
 public class InfiniteWriteTest {
 	//
 	private static final long EXPECTED_RUN_TIME = 10000;
-	private static long ACTUAL_RUN_TIME;
 	private static Process process;
 
 	@BeforeClass
@@ -44,7 +42,6 @@ public class InfiniteWriteTest {
 			.toString();
 		System.setProperty(TestConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
 		LogUtil.init();
-		final Logger rootLogger = LogManager.getRootLogger();
 		//Reload default properties
 		final RunTimeConfig runTimeConfig = new RunTimeConfig();
 		runTimeConfig.loadProperties();
