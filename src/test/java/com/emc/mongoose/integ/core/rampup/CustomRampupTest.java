@@ -10,6 +10,8 @@ import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.run.scenario.ScriptRunner;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
 import org.apache.logging.log4j.Logger;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -19,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -190,21 +193,11 @@ public class CustomRampupTest {
 		final File perfSumFile = LogParser.getPerfSumFile(rampupRunID);
 		Assert.assertTrue("perf.sum.csv file must be exist", perfSumFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
-		//
-		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(
-			String.format("Header %s of perf.sum.csv file must be correct", line),
-			LogParser.HEADER_PERF_SUM_FILE, line
-		);
-		line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(
-				String.format("Line %s must be correct", line),
-				LogParser.matchWithPerfSumFilePattern(line)
-			);
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectPerfSumCSV(in);
 		}
 	}
 
@@ -215,15 +208,11 @@ public class CustomRampupTest {
 		final File dataItemFile = LogParser.getDataItemsFile(rampupRunID);
 		Assert.assertTrue("data.items.csv file must be exist", dataItemFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemFile));
-		//
-		String line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(
-				String.format("Line %s must be correct", line),
-				LogParser.matchWithDataItemsFilePattern(line)
-			);
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(dataItemFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectDataItemsCSV(in);
 		}
 	}
 
@@ -232,23 +221,13 @@ public class CustomRampupTest {
 		throws Exception {
 		// Get perf.trace.csv file of write scenario run
 		final File perfTraceFile = LogParser.getPerfTraceFile(rampupRunID);
-		Assert.assertTrue("perf.trace.csv file must be exist", perfTraceFile.exists());
+		Assert.assertTrue("perf.trace.csv file doesn't exist",perfTraceFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfTraceFile));
-		//
-		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(
-			String.format("Header %s of perf.sum.csv file must be correct", line),
-			LogParser.HEADER_PERF_TRACE_FILE, line
-		);
-		line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(
-				String.format("Line %s must be correct", line),
-				LogParser.matchWithPerfTraceFilePattern(line)
-			);
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfTraceFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectPerfTraceCSV(in);
 		}
 	}
 
@@ -258,49 +237,39 @@ public class CustomRampupTest {
 		final File perfSumFile = LogParser.getPerfSumFile(rampupRunID);
 		Assert.assertTrue("perf.sum.csv file must be exist", perfSumFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
-		bufferedReader.readLine();
-		//
-		int countSteps = 0, countSucc;
-		final int zeroVal = 0;
-		String line;
-		do {
-			line = bufferedReader.readLine();
-			if (line == null) {
-				break;
-			}
-			countSteps++;
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			boolean firstRow = true;
+			int iterationCount = 5, stepsCount = 0;
 			final Set<String> loadsSet = new HashSet<>();
-			loadsSet.add(TestConstants.LOAD_CREATE);
-			loadsSet.add(TestConstants.LOAD_READ);
-			loadsSet.add(TestConstants.LOAD_UPDATE);
-			loadsSet.add(TestConstants.LOAD_APPEND);
-			loadsSet.add(TestConstants.LOAD_DELETE);
-			line = bufferedReader.readLine();
-			for (int i = 0; i < 5 && line != null; i++) {
-				Matcher matcher = LogPatterns.PERF_SUM_FILE.matcher(line);
-				if (matcher.find()) {
-					// Geet load type from step
-					if ( loadsSet.contains(matcher.group("typeLoad")) ) {
-						loadsSet.remove(matcher.group("typeLoad"));
+			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+			for(final CSVRecord nextRec : recIter) {
+				if (firstRow) {
+					firstRow = false;
+				} else {
+					if (iterationCount == 5 ) {
+						iterationCount = 0;
+						stepsCount++;
+						//
+						Assert.assertTrue("There are not all load types in this step", loadsSet.isEmpty());
+						loadsSet.clear();
+						loadsSet.add(TestConstants.LOAD_CREATE);
+						loadsSet.add(TestConstants.LOAD_READ);
+						loadsSet.add(TestConstants.LOAD_UPDATE);
+						loadsSet.add(TestConstants.LOAD_APPEND);
+						loadsSet.add(TestConstants.LOAD_DELETE);
+					} else {
+						iterationCount++;
 					}
-					// Get Count Succ from load
-					if ( loadsSet.contains(matcher.group("countSucc")) ) {
-						countSucc = Integer.valueOf(matcher.group("countSucc"));
-						Assert.assertNotEquals(
-							String.format("Value of metric: %d - must be bigger than 0", countSucc),
-							zeroVal, countSucc
-						);
-					}
+					//
+					Assert.assertTrue("This load already exist in this step", loadsSet.contains(nextRec.get(3)));
+					loadsSet.remove(nextRec.get(3));
+					Assert.assertNotEquals("Count of success equals 0 ", 0, nextRec.get(7));
 				}
-				line = bufferedReader.readLine();
 			}
-			Assert.assertTrue(
-				String.format("Step doesn't contain %d load type in step %d", loadsSet.size(), countSteps),
-				loadsSet.isEmpty()
-			);
-			line = bufferedReader.readLine();
-		} while (line != null);
-		Assert.assertEquals("Steps counts must be equal" + COUNT_STEPS, COUNT_STEPS, countSteps);
+			Assert.assertEquals("Steps counts must be equal" + COUNT_STEPS, COUNT_STEPS, stepsCount);
+		}
 	}
 }

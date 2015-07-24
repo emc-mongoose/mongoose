@@ -2,59 +2,21 @@ package com.emc.mongoose.integ.tools;
 
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+import org.junit.Assert;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created by olga on 03.07.15.
  */
 public final class LogParser {
 
-	//Patterns
-	private static final Pattern
-		DATA_ITEMS_FILE_PATTERN = Pattern.compile(
-			"^[a-zA-Z0-9]+,[a-zA-Z0-9]+,[0-9]+,[0-9]+/[0-9a-fA-F]+$"
-		),
-		PERF_SUM_FILE_PATTERN = Pattern.compile(
-			//data and time pattern
-			"^\"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}\"," +
-			//load ID, type API, load type and connection count pattern
-			"[0-9]+,(S3|ATMOS|SWIFT),(Create|Read|Update|Append|Delete),[0-9]+," +
-			//node count, load servers count, count of success and count af fail pattern
-			"[0-9]+,[0-9]*+,[0-9]+,[0-9]+," +
-			//LatencyAvg[us], LatencyMin[us],LatencyMed[us],LatencyMax[us] pattern
-			"[0-9]+,[0-9]+,[0-9]+,[0-9]+," +
-			//TPAvg,TP1Min,TP5Min,TP15Min pattern
-			"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}," +
-			//BWAvg[MB/s],BW1Min[MB/s],BW5Min[MB/s],BW15Min[MB/s] pattern
-			"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}$"
-		),
-		PERF_AVG_FILE_PATTERN = Pattern.compile(
-			//data and time pattern
-			"^\"[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3}\"," +
-			//load ID, type API, load type and connection count pattern
-			"[0-9]+,(S3|ATMOS|SWIFT),(Create|Read|Update|Append|Delete),[0-9]+," +
-			//node count, load servers count, count of success, count of pending and count af fail pattern
-			"[0-9]+,[0-9]*+,[0-9]+,[0-9]+,[0-9]+," +
-			//LatencyAvg[us], LatencyMin[us],LatencyMed[us],LatencyMax[us] pattern
-			"[0-9]+,[0-9]+,[0-9]+,[0-9]+," +
-			//TPAvg,TP1Min,TP5Min,TP15Min pattern
-			"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}," +
-			//BWAvg[MB/s],BW1Min[MB/s],BW5Min[MB/s],BW15Min[MB/s] pattern
-			"[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3},[0-9]+\\.[0-9]{3}$"),
-		PERF_TRACE_FILE_PATTERN = Pattern.compile(
-			// thread name pattern
-			"^[0-9]+-(S3|ATMOS|SWIFT)-(Create|Read|Update|Append|Delete)([0-9]+)?+-[0-9]+x[0-9]+(#[0-9]+)?," +
-			// TargetNode pattern
-			"[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}:[0-9]{1,5}," +
-			// DataItemId,DataItemSize pattern
-			"[a-zA-Z0-9]+,[0-9]+," +
-			// StatusCode,ReqTimeStart[us],Latency[us],Duration[us]
-			"[0-9]+,[0-9]+,[0-9]+,[0-9]+$"
-		);
 	//Headers
 	public static final String HEADER_PERF_TRACE_FILE = "Thread,TargetNode,DataItemId,DataItemSize,StatusCode," +
 		"ReqTimeStart[us],Latency[us],Duration[us]";
@@ -94,24 +56,253 @@ public final class LogParser {
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,
 			Constants.DIR_LOG, runID, TestConstants.ERR_FILE_NAME).toString());
 	}
+	//
+	public static void assertCorrectPerfSumCSV(BufferedReader in)
+	throws IOException {
+		boolean firstRow = true;
+		//
+		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+		for(final CSVRecord nextRec : recIter) {
+			if (firstRow) {
+				firstRow = false;
+				Assert.assertEquals(
+					String.format("Not correct headers of perf.sum.csv file: %s", nextRec.toString()),
+					nextRec.toString(), LogParser.HEADER_PERF_SUM_FILE
+				);
+			} else {
+				Assert.assertTrue(
+					"Data and time format is not correct",
+					nextRec.get(0).matches(LogPatterns.DATE_TIME_ISO8601.pattern())
+				);
+				Assert.assertTrue(
+					"Load ID is not correct", LogParser.isInteger(nextRec.get(1))
+				);
+				Assert.assertTrue(
+					"API type format is not correct", nextRec.get(2).matches(LogPatterns.TYPE_API.pattern())
+				);
+				Assert.assertTrue(
+					"Load type format is not correct",nextRec.get(3).matches(LogPatterns.TYPE_LOAD.pattern())
+				);
+				Assert.assertTrue(
+					"Count of connection is not correct", LogParser.isInteger(nextRec.get(4))
+				);
+				Assert.assertTrue(
+					"Count of node is not correct", LogParser.isInteger(nextRec.get(5))
+				);
+				Assert.assertNull(
+					"There are not load servers in run", nextRec.get(6)
+				);
+				Assert.assertTrue(
+					"Count of success is not correct", LogParser.isInteger(nextRec.get(7))
+				);
+				Assert.assertTrue(
+					"Count of fail is not correct", LogParser.isInteger(nextRec.get(8))
+				);
+				//
+				Assert.assertTrue(
+					"Latency avg is not correct", LogParser.isInteger(nextRec.get(9))
+				);
+				Assert.assertTrue(
+					"Latency min is not correct", LogParser.isInteger(nextRec.get(10))
+				);
+				Assert.assertTrue(
+					"Latency median is not correct", LogParser.isInteger(nextRec.get(11))
+				);
+				Assert.assertTrue(
+					"Latency max is not correct", LogParser.isInteger(nextRec.get(12))
+				);
+				Assert.assertTrue(
+					"TP avg is not correct", LogParser.isDouble(nextRec.get(13))
+				);
+				Assert.assertTrue(
+					"TP 1 minutes is not correct", LogParser.isDouble(nextRec.get(14))
+				);
+				Assert.assertTrue(
+					"TP  5 minutes is not correct", LogParser.isDouble(nextRec.get(15))
+				);
+				Assert.assertTrue(
+					"TP  15 minutes is not correct", LogParser.isDouble(nextRec.get(16))
+				);
+				Assert.assertTrue(
+					"BW avg is not correct", LogParser.isDouble(nextRec.get(17))
+				);
+				Assert.assertTrue(
+					"BW 1 minutes is not correct", LogParser.isDouble(nextRec.get(18))
+				);
+				Assert.assertTrue(
+					"BW  5 minutes is not correct", LogParser.isDouble(nextRec.get(19))
+				);
+				Assert.assertTrue(
+					"BW  15 minutes is not correct", LogParser.isDouble(nextRec.get(20))
+				);
+			}
+		}
+	}
+	//
+	public static void assertCorrectPerfAvgCSV(BufferedReader in)
+		throws IOException {
+		boolean firstRow = true;
 
-	public static boolean matchWithDataItemsFilePattern(final String line) {
-		final Matcher matcher = DATA_ITEMS_FILE_PATTERN.matcher(line);
-		return matcher.find();
+		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+		for(final CSVRecord nextRec : recIter) {
+			if(firstRow) {
+				Assert.assertEquals(
+					String.format("Not correct headers of perf.avg.csv file: %s", nextRec.toString()),
+					nextRec.toString(), LogParser.HEADER_PERF_AVG_FILE
+				);
+				firstRow = false;
+			} else {
+				Assert.assertTrue(
+					"Data and time format is not correct",
+					nextRec.get(0).matches(LogPatterns.DATE_TIME_ISO8601.pattern())
+				);
+				Assert.assertTrue(
+					"Load ID is not correct", LogParser.isInteger(nextRec.get(1))
+				);
+				Assert.assertTrue(
+					"API type format is not correct", nextRec.get(2).matches(LogPatterns.TYPE_API.pattern())
+				);
+				Assert.assertTrue(
+					"Load type format is not correct",nextRec.get(3).matches(LogPatterns.TYPE_LOAD.pattern())
+				);
+				Assert.assertTrue(
+					"Count of connection is not correct", LogParser.isInteger(nextRec.get(4))
+				);
+				Assert.assertTrue(
+					"Count of node is not correct", LogParser.isInteger(nextRec.get(5))
+				);
+				Assert.assertNull(
+					"There are not load servers in run", nextRec.get(6)
+				);
+				Assert.assertTrue(
+					"Count of success is not correct", LogParser.isInteger(nextRec.get(7))
+				);
+				Assert.assertTrue(
+					"Count of pending is not correct", LogParser.isInteger(nextRec.get(8))
+				);
+				Assert.assertTrue(
+					"Count of fail is not correct", LogParser.isInteger(nextRec.get(9))
+				);
+				//
+				Assert.assertTrue(
+					"Latency avg is not correct", LogParser.isInteger(nextRec.get(10))
+				);
+				Assert.assertTrue(
+					"Latency min is not correct", LogParser.isInteger(nextRec.get(11))
+				);
+				Assert.assertTrue(
+					"Latency median is not correct", LogParser.isInteger(nextRec.get(12))
+				);
+				Assert.assertTrue(
+					"Latency max is not correct", LogParser.isInteger(nextRec.get(13))
+				);
+				Assert.assertTrue(
+					"TP avg is not correct", LogParser.isDouble(nextRec.get(14))
+				);
+				Assert.assertTrue(
+					"TP 1 minutes is not correct", LogParser.isDouble(nextRec.get(15))
+				);
+				Assert.assertTrue(
+					"TP  5 minutes is not correct", LogParser.isDouble(nextRec.get(16))
+				);
+				Assert.assertTrue(
+					"TP  15 minutes is not correct", LogParser.isDouble(nextRec.get(17))
+				);
+				Assert.assertTrue(
+					"BW avg is not correct", LogParser.isDouble(nextRec.get(18))
+				);
+				Assert.assertTrue(
+					"BW 1 minutes is not correct", LogParser.isDouble(nextRec.get(19))
+				);
+				Assert.assertTrue(
+					"BW  5 minutes is not correct", LogParser.isDouble(nextRec.get(20))
+				);
+				Assert.assertTrue(
+					"BW  15 minutes is not correct", LogParser.isDouble(nextRec.get(21))
+				);
+			}
+		}
+	}
+	//
+	public static void assertCorrectDataItemsCSV(BufferedReader in)
+		throws IOException {
+		//
+		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+		for(final CSVRecord nextRec : recIter) {
+			Assert.assertTrue(
+				"Data ID format is not correct", nextRec.get(0).matches(LogPatterns.DATA_ID.pattern())
+			);
+			// Data offset has the same pattern as data ID
+			Assert.assertTrue(
+				"Data offset is not correct", nextRec.get(1).matches(LogPatterns.DATA_ID.pattern())
+			);
+			Assert.assertTrue(
+				"Data size format is not correct", LogParser.isInteger(nextRec.get(2))
+			);
+			Assert.assertTrue(
+				"Data layer and mask format is not correct",
+				nextRec.get(3).matches(LogPatterns.DATA_LAYER_MASK.pattern())
+			);
+		}
+	}
+	//
+	public static void assertCorrectPerfTraceCSV(BufferedReader in)
+		throws IOException {
+		boolean firstRow = true;
+		//
+		final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
+		for(final CSVRecord nextRec : recIter) {
+			if (firstRow) {
+				firstRow = false;
+				Assert.assertEquals(
+					String.format("Not correct headers of perf.trace.csv file: %s", nextRec.toString()),
+					nextRec.toString(), LogParser.HEADER_PERF_TRACE_FILE
+				);
+			} else {
+				Assert.assertTrue(
+					"Thread name format is not correct", nextRec.get(0).matches(LogPatterns.THREAD_NAME.pattern())
+				);
+				Assert.assertTrue(
+					"Target node is not correct", nextRec.get(1).matches(LogPatterns.TARGET_NODE.pattern())
+				);
+				Assert.assertTrue(
+					"Data ID format is not correct", nextRec.get(2).matches(LogPatterns.DATA_ID.pattern())
+				);
+				Assert.assertTrue(
+					"Data size format is not correct", LogParser.isInteger(nextRec.get(3))
+				);
+				Assert.assertTrue(
+					"Status code and mask format is not correct", LogParser.isInteger(nextRec.get(4))
+				);
+				Assert.assertTrue(
+					"Request time start format is not correct", LogParser.isInteger(nextRec.get(5))
+				);
+				Assert.assertTrue(
+					"Latency format is not correct", LogParser.isInteger(nextRec.get(6))
+				);
+				Assert.assertTrue(
+					"Duration format is not correct", LogParser.isInteger(nextRec.get(7))
+				);
+			}
+		}
+	}
+	//
+	public static boolean isInteger(final String line){
+		try {
+			Integer.parseInt(line);
+			return true;
+		} catch (final NumberFormatException e) {
+			return false;
+		}
 	}
 
-	public static boolean matchWithPerfSumFilePattern(final String line) {
-		final Matcher matcher = PERF_SUM_FILE_PATTERN.matcher(line);
-		return matcher.find();
+	public static boolean isDouble(final String line){
+		try {
+			Double.parseDouble(line);
+			return true;
+		} catch (final NumberFormatException e) {
+			return false;
+		}
 	}
 
-	public static boolean matchWithPerfAvgFilePattern(final String line) {
-		final Matcher matcher = PERF_AVG_FILE_PATTERN.matcher(line);
-		return matcher.find();
-	}
-
-	public static boolean matchWithPerfTraceFilePattern(final String line) {
-		final Matcher matcher = PERF_TRACE_FILE_PATTERN.matcher(line);
-		return matcher.find();
-	}
 }

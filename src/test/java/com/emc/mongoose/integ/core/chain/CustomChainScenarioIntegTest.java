@@ -19,6 +19,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -189,12 +190,11 @@ public class CustomChainScenarioIntegTest {
 		final File dataItemFile = LogParser.getDataItemsFile(chainRunId);
 		Assert.assertTrue(dataItemFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemFile));
-		//
-		String line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(LogParser.matchWithDataItemsFilePattern(line));
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(dataItemFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectDataItemsCSV(in);
 		}
 	}
 
@@ -203,17 +203,13 @@ public class CustomChainScenarioIntegTest {
 	throws Exception {
 		// Get perf.trace.csv file of write scenario run
 		final File perfTraceFile = LogParser.getPerfTraceFile(chainRunId);
-		Assert.assertTrue(perfTraceFile.exists());
+		Assert.assertTrue("perf.trace.csv file doesn't exist",perfTraceFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfTraceFile));
-		//
-		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(LogParser.HEADER_PERF_TRACE_FILE, line);
-		line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(LogParser.matchWithPerfTraceFilePattern(line));
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfTraceFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectPerfTraceCSV(in);
 		}
 	}
 
@@ -222,17 +218,13 @@ public class CustomChainScenarioIntegTest {
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
 		final File perfAvgFile = LogParser.getPerfAvgFile(chainRunId);
-		Assert.assertTrue(perfAvgFile.exists());
+		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
-		//
-		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(LogParser.HEADER_PERF_AVG_FILE, line);
-		line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(LogParser.matchWithPerfAvgFilePattern(line));
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectPerfAvgCSV(in);
 		}
 	}
 
@@ -243,15 +235,11 @@ public class CustomChainScenarioIntegTest {
 		final File perfSumFile = LogParser.getPerfSumFile(chainRunId);
 		Assert.assertTrue(perfSumFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
-		//
-		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(LogParser.HEADER_PERF_SUM_FILE, line);
-		line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(LogParser.matchWithPerfSumFilePattern(line));
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectPerfSumCSV(in);
 		}
 	}
 

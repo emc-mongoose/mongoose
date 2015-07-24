@@ -3,115 +3,95 @@ package com.emc.mongoose.integ.core.single;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
-import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 //
-import com.emc.mongoose.integ.tools.BufferingOutputStream;
+import com.emc.mongoose.integ.tools.LogPatterns;
 import com.emc.mongoose.integ.tools.ProcessManager;
 import com.emc.mongoose.integ.tools.TestConstants;
 //
-import com.emc.mongoose.run.scenario.ScriptRunner;
 //
-import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.io.PrintStream;
-import java.lang.reflect.InvocationTargetException;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Field;
 import java.nio.file.Paths;
-import java.util.Calendar;
-import java.util.Locale;
-import java.util.TimeZone;
+import java.text.SimpleDateFormat;
+import java.util.regex.Matcher;
 
 /**
  * Created by olga on 23.07.15.
  */
 public class InfiniteWriteTest {
 	//
-	private static BufferingOutputStream savedOutputStream;
-	//
-	private static String createRunId = TestConstants.LOAD_CREATE;
-	private static final long EXPECTED_RUN_TIME = 180000;
+	private static final long EXPECTED_RUN_TIME = 10000;
 	private static long ACTUAL_RUN_TIME;
-	private static Thread writeScenarioMongoose;
+	private static Process process;
 
 	@BeforeClass
 	public static void before()
-		throws Exception {
-		// Set new saved console output stream
-		savedOutputStream = new BufferingOutputStream(System.out);
-		System.setOut(new PrintStream(savedOutputStream));
+	throws Exception {
 
-		//Create run ID
-		createRunId += "Infinite:" + ":" + TestConstants.FMT_DT.format(
-			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
-		);
-
-		System.setProperty(RunTimeConfig.KEY_RUN_ID, createRunId);
 		// If tests run from the IDEA full logging file must be set
 		final String fullLogConfFile = Paths
 			.get(System.getProperty(TestConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, TestConstants.LOG_FILE_NAME)
 			.toString();
 		System.setProperty(TestConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
-
 		LogUtil.init();
-		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
-
+		final Logger rootLogger = LogManager.getRootLogger();
 		//Reload default properties
 		final RunTimeConfig runTimeConfig = new RunTimeConfig();
 		runTimeConfig.loadProperties();
 		RunTimeConfig.setContext(runTimeConfig);
-
-		//run mongoose default scenario in standalone mode
-		writeScenarioMongoose = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				//Create thread for call SIGINT
-				final Thread processSIGINT = new Thread(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							System.out.println("start");
-							Thread.sleep(EXPECTED_RUN_TIME);
-							System.out.println("kill");
-							ProcessManager.callSIGINT(writeScenarioMongoose.getId());
-						} catch (final InterruptedException e) {
-							//do nothing
-						} catch (IOException e) {
-							LogUtil.exception(rootLogger, Level.ERROR, e,
-								"Can't call SIGINT ");
-						}
-
-					}
-				}, "processSIGINT");
-				processSIGINT.setDaemon(true);
-				processSIGINT.start();
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
-				// For correct work of verification option
-				UniformDataSource.DEFAULT = new UniformDataSource();
-				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
-				new ScriptRunner().run();
-			}
-		}, "writeScenarioMongoose");
-
-
-
-		ACTUAL_RUN_TIME = System.nanoTime();
-		writeScenarioMongoose.start();
-		writeScenarioMongoose.join();
-		writeScenarioMongoose.interrupt();
-		ACTUAL_RUN_TIME = System.nanoTime() - ACTUAL_RUN_TIME;
-		// Wait logger's output from console
-		Thread.sleep(3000);
-		savedOutputStream.close();
+		//
+		final ProcessBuilder processBuilder = new ProcessBuilder(
+			"java", "-jar",
+			RunTimeConfig.getContext().getRunName() + "-"+ RunTimeConfig.getContext().getRunVersion() +
+			File.separator + "mongoose.jar"
+		);
+		processBuilder.directory(new File(System.getProperty("user.dir")));
+		process = processBuilder.start();
+		final int processID = getPid(process);
+		Thread.sleep(EXPECTED_RUN_TIME);
+		Runtime.getRuntime().exec(String.format("kill -SIGINT %d", processID));
 	}
 
 	@Test
-	public void shouldBlaBla()
+	public void shouldWriteScenarioExitAfterSIGINT()
 	throws Exception{
-		System.out.println(ACTUAL_RUN_TIME);
+		InputStream is = process.getInputStream();
+		InputStreamReader isr = new InputStreamReader(is);
+		BufferedReader br = new BufferedReader(isr);
+		String line;
+		final SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+		long startTime = 0, finishTime = 0;
+		while ((line = br.readLine()) != null) {
+			Matcher matcher = LogPatterns.DATE_TIME_ISO8601.matcher(line);
+			if (matcher.find()) {
+				finishTime = format.parse(matcher.group("time")).getTime();
+				if (startTime == 0) {
+					startTime = finishTime;
+				}
+			}
+		}
+		final long actualRunTime = finishTime - startTime;
+		Assert.assertEquals("Mongoose run time is not equal expected time", EXPECTED_RUN_TIME, actualRunTime, 2000);
+	}
+
+	public static int getPid(Process process) {
+		try {
+			Class<?> ProcessImpl = process.getClass();
+			Field field = ProcessImpl.getDeclaredField("pid");
+			field.setAccessible(true);
+			return field.getInt(process);
+		} catch (NoSuchFieldException | IllegalAccessException | IllegalArgumentException e) {
+			return -1;
+		}
 	}
 }
