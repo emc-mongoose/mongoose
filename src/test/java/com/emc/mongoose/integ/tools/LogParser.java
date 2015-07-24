@@ -75,7 +75,7 @@ public final class LogParser {
 				Assert.assertEquals("BW5Min[MB/s]", nextRec.get(19));
 				Assert.assertEquals("BW15Min[MB/s]", nextRec.get(20));
 				firstRow = false;
-			} else {
+			} else if (nextRec.size() == 21) {
 				Assert.assertTrue(
 					"Data and time format is not correct",
 					nextRec.get(0).matches(LogPatterns.DATE_TIME_ISO8601.pattern())
