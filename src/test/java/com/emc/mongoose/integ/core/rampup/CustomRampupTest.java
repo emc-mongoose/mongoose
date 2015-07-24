@@ -41,9 +41,9 @@ public class CustomRampupTest {
 	private static String rampupRunID;
 	private static final String
 		LIMIT_TIME = "60.seconds",
-		RAMPUP_SIZES = "10KB,1MB,10MB",
-		RAMPUP_THREAD_COUNTS = "10,50,100";
-	private static final int COUNT_STEPS = 9;
+		RAMPUP_SIZES = "10KB",//,1MB,10MB",
+		RAMPUP_THREAD_COUNTS = "10,50";//,100";
+	private static final int COUNT_STEPS = 2;
 
 	@BeforeClass
 	public static void before()
@@ -246,10 +246,11 @@ public class CustomRampupTest {
 			final Set<String> loadsSet = new HashSet<>();
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
+
 				if (firstRow) {
 					firstRow = false;
 				} else if (nextRec.size() == 21){
-					if (iterationCount == 5 ) {
+					if (iterationCount == 4) {
 						iterationCount = 0;
 						stepsCount++;
 						//
@@ -264,7 +265,8 @@ public class CustomRampupTest {
 						iterationCount++;
 					}
 					//
-					Assert.assertTrue("This load already exist in this step", loadsSet.contains(nextRec.get(3)));
+					System.out.println(nextRec.get(3) + " " + loadsSet.size());
+					Assert.assertTrue("This load isn't exist in this step", loadsSet.contains(nextRec.get(3)));
 					loadsSet.remove(nextRec.get(3));
 					Assert.assertNotEquals("Count of success equals 0 ", 0, nextRec.get(7));
 				}

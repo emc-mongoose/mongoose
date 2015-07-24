@@ -244,7 +244,7 @@ public class DefaultRampupTest {
 				if (firstRow) {
 					firstRow = false;
 				} else if (nextRec.size() == 21) {
-					if (iterationCount == 5 ) {
+					if (iterationCount == 4) {
 						iterationCount = 0;
 						stepsCount++;
 						//
