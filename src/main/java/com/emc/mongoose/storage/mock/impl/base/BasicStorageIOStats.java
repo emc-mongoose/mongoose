@@ -13,7 +13,7 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.executor.LoadExecutor;
 //
-import com.emc.mongoose.storage.mock.api.Storage;
+import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.api.IOStats;
 //
 import org.apache.logging.log4j.Level;
@@ -36,69 +36,69 @@ implements IOStats {
 	private final Counter
 		countSuccCreate = metricRegistry.counter(
 			MetricRegistry.name(
-				Storage.class, String.valueOf(IOTask.Type.CREATE), METRIC_COUNT,
+				StorageMock.class, String.valueOf(IOTask.Type.CREATE), METRIC_COUNT,
 				LoadExecutor.METRIC_NAME_SUCC
 			)
 		),
 		countSuccRead = metricRegistry.counter(
 			MetricRegistry.name(
-				Storage.class, String.valueOf(IOTask.Type.READ), METRIC_COUNT,
+				StorageMock.class, String.valueOf(IOTask.Type.READ), METRIC_COUNT,
 				LoadExecutor.METRIC_NAME_SUCC
 			)
 		),
 		countSuccDelete = metricRegistry.counter(
 			MetricRegistry.name(
-				Storage.class, String.valueOf(IOTask.Type.DELETE), METRIC_COUNT,
+				StorageMock.class, String.valueOf(IOTask.Type.DELETE), METRIC_COUNT,
 				LoadExecutor.METRIC_NAME_SUCC
 			)
 		),
 		countFailCreate = metricRegistry.counter(
 			MetricRegistry.name(
-				Storage.class, String.valueOf(IOTask.Type.CREATE), METRIC_COUNT,
+				StorageMock.class, String.valueOf(IOTask.Type.CREATE), METRIC_COUNT,
 				LoadExecutor.METRIC_NAME_FAIL
 			)
 		),
 		countFailRead = metricRegistry.counter(
 			MetricRegistry.name(
-				Storage.class, String.valueOf(IOTask.Type.READ), METRIC_COUNT,
+				StorageMock.class, String.valueOf(IOTask.Type.READ), METRIC_COUNT,
 				LoadExecutor.METRIC_NAME_FAIL
 			)
 		);
 	private final Meter
 		bwAll = metricRegistry.meter(
-			MetricRegistry.name(Storage.class, ALL_METHODS, LoadExecutor.METRIC_NAME_BW)
+			MetricRegistry.name(StorageMock.class, ALL_METHODS, LoadExecutor.METRIC_NAME_BW)
 		),
 		bwCreate = metricRegistry.meter(
 			MetricRegistry.name(
-				Storage.class, String.valueOf(IOTask.Type.CREATE), LoadExecutor.METRIC_NAME_BW
+				StorageMock.class, String.valueOf(IOTask.Type.CREATE), LoadExecutor.METRIC_NAME_BW
 			)
 		),
 		bwRead = metricRegistry.meter(
 			MetricRegistry.name(
-				Storage.class, String.valueOf(IOTask.Type.READ), LoadExecutor.METRIC_NAME_BW
+				StorageMock.class, String.valueOf(IOTask.Type.READ), LoadExecutor.METRIC_NAME_BW
 			)
 		),
 		tpAll = metricRegistry.meter(
 			MetricRegistry.name(
-				Storage.class, ALL_METHODS, LoadExecutor.METRIC_NAME_TP
+				StorageMock.class, ALL_METHODS, LoadExecutor.METRIC_NAME_TP
 			)
 		),
 		tpCreate = metricRegistry.meter(
 			MetricRegistry.name(
-				Storage.class, String.valueOf(IOTask.Type.CREATE), LoadExecutor.METRIC_NAME_TP
+				StorageMock.class, String.valueOf(IOTask.Type.CREATE), LoadExecutor.METRIC_NAME_TP
 			)
 		),
 		tpRead = metricRegistry.meter(
 			MetricRegistry.name(
-				Storage.class, String.valueOf(IOTask.Type.READ), LoadExecutor.METRIC_NAME_TP
+				StorageMock.class, String.valueOf(IOTask.Type.READ), LoadExecutor.METRIC_NAME_TP
 			)
 		);
 	//
 	private final long updateMilliPeriod;
-	private final Storage storage;
+	private final StorageMock storage;
 	//
 	public BasicStorageIOStats(
-		final RunTimeConfig runTimeConfig, final Storage storage
+		final RunTimeConfig runTimeConfig, final StorageMock storage
 	) {
 		super(BasicStorageIOStats.class.getSimpleName());
 		setDaemon(true);

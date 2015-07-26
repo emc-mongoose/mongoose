@@ -6,6 +6,9 @@ import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
+import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.impl.data.BasicWSObject;
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.base.ObjectStorageMockBase;
 import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.web.net.BasicSocketEventDispatcher;
@@ -35,6 +38,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 /**
  * Created by olga on 28.01.15.
  */
@@ -131,20 +135,6 @@ extends ObjectStorageMockBase<BasicWSObjectMock> {
 	@Override
 	public final void close()
 	throws IOException {
-		try {
-			createConsumer.close();
-			LOG.debug(Markers.MSG, "Create consumer closed successfully");
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "I/O failure on close");
-		}
-		//
-		try {
-			deleteConsumer.close();
-			LOG.debug(Markers.MSG, "Delete consumer closed successfully");
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "I/O failure on close");
-		}
-		//
 		for(final BasicSocketEventDispatcher sockEventDispatcher : sockEvtDispatchers) {
 			if(sockEventDispatcher != null) {
 				try {
@@ -165,4 +155,68 @@ extends ObjectStorageMockBase<BasicWSObjectMock> {
 		super.close();
 	}
 	//
+	@Override
+	public final BasicWSObjectMock create(final String id, final long offset, final long size)
+	throws InterruptedException, ExecutionException {
+		final BasicWSMockTask task = BasicWSMockTask.getInstance(
+			itemIndex, id, IOTask.Type.CREATE, offset, size
+		);
+		try {
+			return (BasicWSObjectMock) taskExecutor.submit(task).get();
+		} finally {
+			task.release();
+		}
+	}
+	//
+	@Override
+	public final BasicWSObjectMock update(final String id, final long offset, final long size)
+	throws InterruptedException, ExecutionException {
+		final BasicWSMockTask task = BasicWSMockTask.getInstance(
+			itemIndex, id, IOTask.Type.UPDATE, offset, size
+		);
+		try {
+			return (BasicWSObjectMock) taskExecutor.submit(task).get();
+		} finally {
+			task.release();
+		}
+	}
+	//
+	@Override
+	public final BasicWSObjectMock append(final String id, final long offset, final long size)
+		throws InterruptedException, ExecutionException {
+		final BasicWSMockTask task = BasicWSMockTask.getInstance(
+			itemIndex, id, IOTask.Type.APPEND, offset, size
+		);
+		try {
+			return (BasicWSObjectMock) taskExecutor.submit(task).get();
+		} finally {
+			task.release();
+		}
+	}
+	//
+	@Override
+	public final BasicWSObjectMock read(final String id, final long offset, final long size)
+		throws InterruptedException, ExecutionException {
+		final BasicWSMockTask task = BasicWSMockTask.getInstance(
+			itemIndex, id, IOTask.Type.READ, offset, size
+		);
+		try {
+			return (BasicWSObjectMock) taskExecutor.submit(task).get();
+		} finally {
+			task.release();
+		}
+	}
+	//
+	@Override
+	public final BasicWSObjectMock delete(final String id)
+	throws InterruptedException, ExecutionException {
+		final BasicWSMockTask task = BasicWSMockTask.getInstance(
+			itemIndex, id, IOTask.Type.DELETE, 0, 0
+		);
+		try {
+			return (BasicWSObjectMock) taskExecutor.submit(task).get();
+		} finally {
+			task.release();
+		}
+	}
 }

@@ -8,7 +8,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 //
 import com.emc.mongoose.core.impl.data.model.CSVFileItemInput;
 import com.emc.mongoose.storage.mock.api.IOStats;
-import com.emc.mongoose.storage.mock.api.Storage;
+import com.emc.mongoose.storage.mock.api.StorageMock;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -23,7 +23,7 @@ import java.nio.file.Paths;
  Created by kurila on 03.07.15.
  */
 public abstract class StorageMockBase<T extends DataItem>
-implements Storage<T> {
+implements StorageMock<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//

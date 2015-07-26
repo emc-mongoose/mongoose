@@ -3,7 +3,7 @@ package com.emc.mongoose.integ.suite;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.storage.mock.api.Storage;
+import com.emc.mongoose.storage.mock.api.StorageMock;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 //
@@ -16,7 +16,7 @@ import org.junit.BeforeClass;
 public abstract class WSMockTestSuite
 extends ConfiguredTestSuite {
 	//
-	private static Storage<BasicWSObjectMock> WSMOCK;
+	private static StorageMock<BasicWSObjectMock> WSMOCK;
 	private static Thread WSMOCK_THREAD;
 	//
 	@BeforeClass

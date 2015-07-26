@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.mock.impl.web.request;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.api.ObjectStorage;
+import com.emc.mongoose.storage.mock.api.ObjectStorageMock;
 //
 import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 import org.apache.http.HttpRequest;
@@ -20,7 +20,7 @@ extends WSRequestHandlerBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public S3RequestHandler(final RunTimeConfig runTimeConfig, final ObjectStorage<T> sharedStorage) {
+	public S3RequestHandler(final RunTimeConfig runTimeConfig, final ObjectStorageMock<T> sharedStorage) {
 		super(runTimeConfig, sharedStorage);
 	}
 	//

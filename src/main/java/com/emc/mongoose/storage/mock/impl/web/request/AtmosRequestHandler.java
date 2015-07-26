@@ -3,7 +3,7 @@ package com.emc.mongoose.storage.mock.impl.web.request;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.storage.mock.api.ObjectStorage;
+import com.emc.mongoose.storage.mock.api.ObjectStorageMock;
 //
 import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 // mongoose-storage-adapter-atmos.jar
@@ -26,7 +26,7 @@ extends WSRequestHandlerBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String URI_BASE_PATH = "/rest";
 	//
-	public AtmosRequestHandler(final RunTimeConfig runTimeConfig, final ObjectStorage<T> sharedStorage) {
+	public AtmosRequestHandler(final RunTimeConfig runTimeConfig, final ObjectStorageMock<T> sharedStorage) {
 		super(runTimeConfig, sharedStorage);
 	}
 	//
