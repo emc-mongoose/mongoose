@@ -506,9 +506,7 @@ function configureWebSocketConnection(location, countOfRecords) {
 			case MARKERS.PERF_SUM:
 				appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, json);
 				if (json.contextMap["scenario.name"] === RUN_SCENARIO_NAME.rampup) {
-					//alert(json.contextMap["currentSize"]);
 					chartsArray.forEach(function(d) {
-						//console.log(d);
 						if (d["run.id"] === runId) {
 							d.charts.forEach(function(c) {
 								c.update(json);
@@ -516,9 +514,6 @@ function configureWebSocketConnection(location, countOfRecords) {
 						}
 					});
 				}
-				/*if (json.contextMap["run.scenario.name"] === RUN_SCENARIO_NAME.rampup) {
-				 charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
-				 }*/
 				break;
 			case MARKERS.PERF_AVG:
 				appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, json);
@@ -545,15 +540,77 @@ function configureWebSocketConnection(location, countOfRecords) {
 				break;
 		}
 	}
+	//
+	function handleLogEventsArray(chartsArray, runId, logEventsArray) {
+		var entry = runId.split(".").join("_");
+		var scenarioName = logEventsArray[0].contextMap["scenario.name"];
+		var points = [];
+		logEventsArray.forEach(function(element) {
+			switch (element.marker.name) {
+				case MARKERS.ERR:
+					appendMessageToTable(entry, LOG_FILES.ERR, countOfRecords, element);
+					break;
+				case MARKERS.MSG:
+					appendMessageToTable(entry, LOG_FILES.MSG, countOfRecords, element);
+					break;
+				case MARKERS.PERF_SUM:
+					appendMessageToTable(entry, LOG_FILES.PERF_SUM, countOfRecords, element);
+					points.push(element);
+					break;
+				case MARKERS.PERF_AVG:
+					appendMessageToTable(entry, LOG_FILES.PERF_AVG, countOfRecords, element);
+					points.push(element);
+					break;
+			}
+		});
+		if (points.length > 0) {
+			var filtered = null;
+			switch (scenarioName) {
+				case RUN_SCENARIO_NAME.single:
+					filtered = points.filter(function(d) {
+						return (d.marker.name === MARKERS.PERF_AVG)
+						? d : -1;
+					});
+					charts(chartsArray).single(filtered[0], filtered);
+					break;
+				case RUN_SCENARIO_NAME.chain:
+					filtered = points.filter(function(d) {
+						return (d.marker.name === MARKERS.PERF_AVG)
+							? d : -1;
+					});
+					//charts(chartsArray).chain();
+					break;
+				case RUN_SCENARIO_NAME.rampup:
+					filtered = points.filter(function(d) {
+						return (d.marker.name === MARKERS.PERF_AVG)
+							? d : -1;
+					});
+					//charts(chartsArray).rampup();
+					break;
+			}
+		}
+	}
 	return {
 		connect: function(chartsArray) {
 			this.ws = new WebSocket(location);
 			this.ws.onmessage = function(message) {
 				var json = JSON.parse(message.data);
 				if ($.isArray(json)) {
-					json.forEach(function(d) {
-						processJsonLogEvents(chartsArray, d);
+					var logEventsByRunId = {};
+					json.forEach(function(element) {
+						var runId = element.contextMap["run.id"];
+						if (element.marker !== null) {
+							if (!logEventsByRunId.hasOwnProperty(runId)) {
+								logEventsByRunId[runId] = [];
+							}
+							logEventsByRunId[runId].push(element);
+						}
 					});
+					for (var runId in logEventsByRunId) {
+						if (logEventsByRunId.hasOwnProperty(runId)) {
+							handleLogEventsArray(chartsArray, runId, logEventsByRunId[runId]);
+						}
+					}
 				} else {
 					processJsonLogEvents(chartsArray, json);
 				}
@@ -748,9 +805,10 @@ function charts(chartsArray) {
 		};
 	}
 	//
-	function drawThroughputCharts(data, json) {
+	function drawThroughputCharts(data, json, sec) {
 		var updateFunction = drawChart(data, json, "seconds[s]", "TP[obj/s]",
-				"#tp-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"));
+				"#tp-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
+			sec);
 		return {
 			update: function(json) {
 				updateFunction(CHART_TYPES.TP, json.message.formattedMessage);
@@ -758,14 +816,33 @@ function charts(chartsArray) {
 		};
 	}
 	//
-	function drawBandwidthCharts(data, json) {
+	function drawBandwidthCharts(data, json, sec) {
 		var updateFunction = drawChart(data, json, "seconds[s]", "BW[MB/s]",
-				"#bw-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"));
+				"#bw-" + json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId].split(".").join("_"),
+			sec);
 		return {
 			update: function(json) {
 				updateFunction(CHART_TYPES.BW, json.message.formattedMessage);
 			}
 		};
+	}
+	//
+	function parsePerfAvgLogEvent(chartType, json) {
+		var splitIndex = 0;
+		switch(chartType) {
+			case CHART_TYPES.TP:
+				splitIndex = 2;
+				break;
+			case CHART_TYPES.BW:
+				splitIndex = 3;
+				break;
+		}
+		//
+		var parsedString = json.message.formattedMessage.split(";")[splitIndex];
+		var first = parsedString.indexOf("(") + 1;
+		var second = parsedString.lastIndexOf(")");
+		var value = parsedString.substring(first, second).split("/");
+		return value;
 	}
 	//
 	function appendScaleLabels(svg, chartEntry, addHeight) {
@@ -821,7 +898,7 @@ function charts(chartsArray) {
 			.text(SCALE_TYPES[1]);
 	}
 	//
-	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath) {
+	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath, sec) {
 		var currXScale = SCALE_TYPES[0];
 		var currYScale = SCALE_TYPES[0];
 		//  get some fields from runTimeConfig
@@ -830,6 +907,9 @@ function charts(chartsArray) {
 		json.threadName = json.threadName.match(getThreadNamePattern())[0];
 		//
 		var currentMetricsPeriodSec = 0;
+		if (sec !== undefined) {
+			currentMetricsPeriodSec = sec;
+		}
 		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
 		//
 		var x = d3.scale.linear()
@@ -919,7 +999,8 @@ function charts(chartsArray) {
 			.append("path")
 			.attr("class", "line")
 			.attr("d", function(d)  { return line(d.values); })
-			.attr("stroke", function(d) { return color(d.name.id); });
+			.attr("stroke", function(d) { return color(d.name.id); })
+			.attr("fill", "none");
 		//  Axis X Label
 		svg.append("text")
 			.attr("x", width - 2)
@@ -1221,10 +1302,12 @@ function charts(chartsArray) {
 	}
 	//
 	return {
-		single: function(json) {
+		single: function(json, array) {
 			//  get some fields from runTimeConfig
 			var runId = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runId];
 			var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
+			var runMetricsPeriodSec =
+				parseInt(json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runMetricsPeriodSec]);
 			//
 			var data = [
 				{
@@ -1249,9 +1332,82 @@ function charts(chartsArray) {
 					]
 				}
 			];
-			chartsArray.push(getScenarioChartObject(runId, runScenarioName,
-					[drawThroughputCharts($.extend(true, [], data), json),
-						drawBandwidthCharts($.extend(true, [], data), json)]));
+			//
+			var throughput = $.extend(true, [], data);
+			var bandwidth = $.extend(true, [], data);
+			//
+			function initializeDataArray(destArray, dataArray, chartType) {
+				var currMetricsPeriodSec = -runMetricsPeriodSec;
+				dataArray.forEach(function(d) {
+					var value = parsePerfAvgLogEvent(chartType, d);
+					currMetricsPeriodSec += runMetricsPeriodSec;
+					destArray.forEach(function(item, i) {
+						if (item.values.length === CRITICAL_DOTS_COUNT) {
+							var newDotsArray = [];
+							var step = 4;
+							var startOffset = 0;
+							var endOffset = 4;
+							while (endOffset <= CRITICAL_DOTS_COUNT) {
+								var slicedArray = item.values.slice(startOffset, endOffset);
+								var minElement = slicedArray[0];
+								var maxElement = slicedArray[0];
+								slicedArray.forEach(function(c) {
+									if (c.y < minElement.y) {
+										minElement = c;
+									}
+									if (c.y > maxElement.y) {
+										maxElement = c;
+									}
+								});
+								var startXCoord = slicedArray[0].x;
+								var endXCoord = slicedArray[step/2].x;
+								if (minElement.x < maxElement.x) {
+									newDotsArray.push({x: startXCoord, y: minElement.y});
+									newDotsArray.push({x: endXCoord, y: maxElement.y});
+								} else {
+									newDotsArray.push({x: startXCoord, y: maxElement.y});
+									newDotsArray.push({x: endXCoord, y: minElement.y});
+								}
+								startOffset = endOffset;
+								if (endOffset < CRITICAL_DOTS_COUNT && endOffset + step > CRITICAL_DOTS_COUNT) {
+									var start = endOffset;
+									while (start < CRITICAL_DOTS_COUNT) {
+										newDotsArray.push({x: item.values[start].x, y: item.values[start].y});
+										start++;
+									}
+								}
+								endOffset += step;
+							}
+							item.values = newDotsArray;
+						}
+						item.values.push({x: currMetricsPeriodSec, y: parseFloat(value[i])});
+					});
+				});
+				return currMetricsPeriodSec;
+			}
+			//
+			function clearArrays() {
+				throughput.forEach(function(d) {
+					return d.values.shift();
+				});
+				bandwidth.forEach(function(d) {
+					return d.values.shift();
+				})
+			}
+			//
+			if ((array !== undefined) && (array.length > 0)) {
+				clearArrays();
+				var tpSec = initializeDataArray(throughput, array, CHART_TYPES.TP);
+				var bwSec = initializeDataArray(bandwidth, array, CHART_TYPES.BW);
+				chartsArray.push(getScenarioChartObject(runId, runScenarioName,
+					[drawThroughputCharts(throughput, json, tpSec),
+						drawBandwidthCharts(bandwidth, json, bwSec)]));
+			} else {
+				//
+				chartsArray.push(getScenarioChartObject(runId, runScenarioName,
+					[drawThroughputCharts(throughput, json),
+						drawBandwidthCharts(bandwidth, json)]));
+			}
 		},
 		chain: function(runId, runMetricsPeriodSec, loadType) {
 			//
