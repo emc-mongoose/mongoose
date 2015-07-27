@@ -46,7 +46,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
@@ -419,7 +421,9 @@ implements LoadExecutor<T> {
 			respLatency = metrics.register(MetricRegistry.name(getName(),
 				METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
 			//
-			restoreState();
+			//if (RunTimeConfig.getContext().getRunMode().equals(Constants.RUN_MODE_STANDALONE)) {
+				restoreState();
+			//}
 			//
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
@@ -464,7 +468,7 @@ implements LoadExecutor<T> {
 				.resolve(Constants.STATES_FILE).toString();
 			final File stateFile = new File(fullStateFileName);
 			if (stateFile.exists()) {
-				loadStateFromFile(fullStateFileName);
+				restoreStateFromFile(fullStateFileName);
 			} else {
 				DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
 				LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
@@ -523,7 +527,7 @@ implements LoadExecutor<T> {
 		return false;
 	}
 	//
-	private void loadStateFromFile(final String fullStateFileName) {
+	private void restoreStateFromFile(final String fullStateFileName) {
 		try (final FileInputStream fis = new FileInputStream(fullStateFileName)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
 				LOG.info(Markers.MSG, "Run \"{}\" was resumed",
@@ -541,6 +545,19 @@ implements LoadExecutor<T> {
 		} catch (final ClassNotFoundException e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of run." +
 				"Starting new run");
+		}
+		deleteHandledStateFile(fullStateFileName);
+	}
+	//
+	private void deleteHandledStateFile(final String fileName) {
+		try {
+			Files.delete(Paths.get(fileName));
+		} catch (final NoSuchFileException e) {
+			LogUtil.exception(LOG, Level.WARN, e,
+				"File \"{}\" with state of run wasn't found", fileName);
+		} catch (final IOException e) {
+			LogUtil.exception(LOG, Level.WARN, e,
+				"Failed to delete file \"{}\"", fileName);
 		}
 	}
 	//
