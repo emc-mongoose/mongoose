@@ -112,7 +112,7 @@ implements WSRequestConfig<T> {
 	}
 	//
 	private final static String
-		FMT_CLS_PATH_ADAPTER_IMPL = "com.emc.mongoose.storage.adapter.%s.RequestConfigImpl";
+		FMT_CLS_PATH_ADAPTER_IMPL = "com.emc.mongoose.storage.adapter.%s.WSRequestConfigImpl";
 	//
 	@SuppressWarnings("unchecked")
 	public static WSRequestConfigBase newInstanceFor(final String api) {
