@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -170,12 +171,11 @@ public class WriteByCountTest {
 		final File dataItemFile = LogParser.getDataItemsFile(createRunId);
 		Assert.assertTrue(dataItemFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemFile));
-		//
-		String line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(LogParser.matchWithDataItemsFilePattern(line));
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(dataItemFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectDataItemsCSV(in);
 		}
 	}
 
@@ -186,15 +186,11 @@ public class WriteByCountTest {
 		final File perfSumFile = LogParser.getPerfSumFile(createRunId);
 		Assert.assertTrue(perfSumFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfSumFile));
-		//
-		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(LogParser.HEADER_PERF_SUM_FILE, line);
-		line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(LogParser.matchWithPerfSumFilePattern(line));
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfSumFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectPerfSumCSV(in);
 		}
 	}
 

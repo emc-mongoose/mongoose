@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 public interface LogPatterns {
 	Pattern
 		DATE_TIME_ISO8601 = Pattern.compile(
-			"(?<dateTime>[\\d]{4}\\-[\\d]{2}-[\\d]{2}T[\\d]{2}:[\\d]{2}:[\\d]{2},[\\d]{3})"
+			"(?<dateTime>[\\d]{4}\\-[\\d]{2}-[\\d]{2}T(?<time>[\\d]{2}:[\\d]{2}:[\\d]{2},[\\d]{3}))"
 		),
 		LOG_LEVEL = Pattern.compile("(?<levelLog>[FEWIDT])"),
 		CLASS_NAME = Pattern.compile("[A-Za-z]+[\\w]*"),
@@ -16,11 +16,9 @@ public interface LogPatterns {
 		TYPE_API = Pattern.compile("(?<typeApi>[A-Za-z0-9]+)"),
 		TYPE_LOAD = Pattern.compile("(?<typeLoad>[CreatRdDlUpAn]{4,6})"),
 		//
-		DATA_ID = Pattern.compile("(?<dataID>[\\w\\d]+)"),
-		DATA_OFFSET = Pattern.compile("(?<dataOffset>[\\w\\d]+)"),
-		API_NAME = Pattern.compile("(?<apiName>[S3ATMOWIF]{2,5})"),
-		ITEM_COUNTS_SUCC = Pattern.compile("(?<countSucc>[\\d]+)"),
-		ITEM_COUNTS_FAIL = Pattern.compile("(?<countFail>[\\d]+)"),
+		DATA_ID = Pattern.compile("(?<dataID>[A-Za-z0-9]+)"),
+		DATA_LAYER_MASK = Pattern.compile("(?<layerMask>[\\d]+/[\\p{XDigit}]+)"),
+		TARGET_NODE = Pattern.compile("(?<targetNode>[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}:[\\d]{1,5})"),
 		//
 		CONSOLE_LOAD_NAME_SUFFIX = Pattern.compile(
 			"(?<countLimit>[\\d]*)\\-(?<countConn>[\\d]*)x(?<countNodes>[\\d]*)"
@@ -46,20 +44,11 @@ public interface LogPatterns {
 		CONSOLE_LATENCY = Pattern.compile(
 			"latency\\[us\\]=\\((\\d+)/(\\d+)/(\\d+)/(\\d+)\\)"
 		),
-		LATENCY = Pattern.compile(
-			"(?<latency>(\\d+),(\\d+),(\\d+),(\\d+))"
-		),
 		CONSOLE_TP = Pattern.compile(
 			"TP\\[/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\)"
 		),
-		TP = Pattern.compile(
-			"(?<TP>([\\.\\d]+),([\\.\\d]+),([\\.\\d]+),([\\.\\d]+))"
-		),
 		CONSOLE_BW = Pattern.compile(
 			"BW\\[MB/s\\]=\\(([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)/([\\.\\d]+)\\)"
-		),
-		BW = Pattern.compile(
-			"(?<BW>([\\.\\d]+),([\\.\\d]+),([\\.\\d]+),([\\.\\d]+))"
 		),
 		//
 		CONSOLE_METRICS_AVG = Pattern.compile(
@@ -90,15 +79,5 @@ public interface LogPatterns {
 			"\"" + CONSOLE_FULL_LOAD_NAME_CLIENT.pattern() + "\"[\\s]+summary:[\\s]+" +
 			CONSOLE_ITEM_COUNTS_SUM.pattern() + ";[\\s]+" +
 			CONSOLE_LATENCY + ";[\\s]+" + CONSOLE_TP + ";[\\s]+" + CONSOLE_BW
-		),
-		//
-		DATA_ITEMS_FILE = Pattern.compile(
-		"^" + DATA_ID.pattern() + "," + DATA_OFFSET.pattern() + "," + ",[\\d]+,[\\d]+/[\\p{XDigit}]+$"
-		),
-		PERF_SUM_FILE = Pattern.compile(
-			"^\"" + DATE_TIME_ISO8601 +"\"," +
-			"[\\d]+," + API_NAME.pattern() + "," + TYPE_LOAD.pattern() + ",[\\d]+," +
-			"[\\d]+,[\\d]*+," + ITEM_COUNTS_SUCC.pattern() + "," + ITEM_COUNTS_FAIL.pattern()+ "," +
-			LATENCY.pattern() + "," + TP.pattern() + "," + BW.pattern()+ "$"
 		);
 }

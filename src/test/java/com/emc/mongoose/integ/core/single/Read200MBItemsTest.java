@@ -20,6 +20,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -247,12 +248,11 @@ public class Read200MBItemsTest {
 		final File readDataItemFile = LogParser.getDataItemsFile(readRunId);
 		Assert.assertTrue(readDataItemFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readDataItemFile));
-		//
-		String line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(LogParser.matchWithDataItemsFilePattern(line));
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(readDataItemFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectDataItemsCSV(in);
 		}
 	}
 
@@ -263,53 +263,41 @@ public class Read200MBItemsTest {
 		final File readPerfSumFile = LogParser.getPerfSumFile(readRunId);
 		Assert.assertTrue(readPerfSumFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readPerfSumFile));
-		//
-		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(LogParser.HEADER_PERF_SUM_FILE, line);
-		line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(LogParser.matchWithPerfSumFilePattern(line));
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(readPerfSumFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectPerfSumCSV(in);
 		}
 	}
 
 	@Test
 	public void shouldCreateCorrectPerfAvgFileAfterReadScenario()
 	throws Exception {
-		// Get perf.avg.csv file of write scenario run
+		// Get perf.avg.csv file
 		final File readPerfAvgFile = LogParser.getPerfAvgFile(readRunId);
-		Assert.assertTrue(readPerfAvgFile.exists());
+		Assert.assertTrue("perfAvg.csv file doesn't exist", readPerfAvgFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readPerfAvgFile));
-		//
-		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(LogParser.HEADER_PERF_AVG_FILE, line);
-		line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(LogParser.matchWithPerfAvgFilePattern(line));
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(readPerfAvgFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectPerfAvgCSV(in);
 		}
 	}
 
 	@Test
 	public void shouldCreateCorrectPerfTraceFileAfterReadScenario()
 	throws Exception {
-		// Get perf.trace.csv file of write scenario run
+		// Get perf.trace.csv file
 		final File readPerfTraceFile = LogParser.getPerfTraceFile(readRunId);
-		Assert.assertTrue(readPerfTraceFile.exists());
+		Assert.assertTrue("perf.trace.csv file doesn't exist",readPerfTraceFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(readPerfTraceFile));
-		//
-		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(LogParser.HEADER_PERF_TRACE_FILE, line);
-		line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(LogParser.matchWithPerfTraceFilePattern(line));
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(readPerfTraceFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectPerfTraceCSV(in);
 		}
 	}
 

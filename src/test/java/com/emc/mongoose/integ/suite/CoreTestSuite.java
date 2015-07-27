@@ -4,24 +4,15 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.integ.core.rampup.CustomRampupTest;
+import com.emc.mongoose.integ.core.rampup.DefaultRampupTest;
+import com.emc.mongoose.integ.core.single.*;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
 import com.emc.mongoose.integ.core.chain.CRUDSequentialScenarioIntegTest;
 import com.emc.mongoose.integ.core.chain.CRUDSimultaneousScenarioIntegTest;
 import com.emc.mongoose.integ.core.chain.CustomChainScenarioIntegTest;
 import com.emc.mongoose.integ.core.chain.DefaultChainScenarioIntegTest;
-import com.emc.mongoose.integ.core.single.DefaultWriteTest;
-import com.emc.mongoose.integ.core.single.Read10BItemsTest;
-import com.emc.mongoose.integ.core.single.Read10KBItemsTest;
-import com.emc.mongoose.integ.core.single.Read10MBItemsTest;
-import com.emc.mongoose.integ.core.single.Read200MBItemsTest;
-import com.emc.mongoose.integ.core.single.ReadVerificationTest;
-import com.emc.mongoose.integ.core.single.ReadZeroSizeItemsTest;
-import com.emc.mongoose.integ.core.single.WriteByCountTest;
-import com.emc.mongoose.integ.core.single.WriteByTimeTest;
-import com.emc.mongoose.integ.core.single.WriteRandomSizedItemsTest;
-import com.emc.mongoose.integ.core.single.WriteUsing100ConnTest;
-import com.emc.mongoose.integ.core.single.WriteUsing10ConnTest;
 import com.emc.mongoose.integ.tools.TestConstants;
 //
 import org.junit.AfterClass;
@@ -51,7 +42,10 @@ import java.nio.file.Paths;
 	CustomChainScenarioIntegTest.class,
 	CRUDSequentialScenarioIntegTest.class,
 	CRUDSimultaneousScenarioIntegTest.class,
-	DefaultChainScenarioIntegTest.class
+	DefaultChainScenarioIntegTest.class,
+	CustomRampupTest.class,
+	DefaultRampupTest.class,
+	InfiniteWriteTest.class
 })
 public class CoreTestSuite {
 
