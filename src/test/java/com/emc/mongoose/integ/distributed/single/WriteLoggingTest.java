@@ -71,7 +71,7 @@ public class WriteLoggingTest {
 				final BufferingOutputStream
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 			) {
-				COUNT_WRITTEN = client.write(null, null, (short) 10, SizeUtil.toSize("10KB"));
+				COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 			}

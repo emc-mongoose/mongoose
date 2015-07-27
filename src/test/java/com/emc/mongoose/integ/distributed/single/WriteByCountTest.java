@@ -34,7 +34,7 @@ public final class WriteByCountTest {
 					.setClientMode(new String[] {ServiceUtils.getHostAddr()})
 					.build()
 		) {
-			COUNT_WRITTEN = client.write(null, null, (short) 10, SizeUtil.toSize("10KB"));
+			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
 		}
 	}
 	//

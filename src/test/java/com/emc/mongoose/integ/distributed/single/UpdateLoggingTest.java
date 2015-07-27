@@ -79,9 +79,9 @@ public class UpdateLoggingTest {
 		final ItemBlockingQueue<WSObject> itemsQueue = new ItemBlockingQueue<>(
 			new ArrayBlockingQueue<WSObject>(COUNT_TO_WRITE)
 		);
-		COUNT_WRITTEN = CLIENT.write(null, itemsQueue, (short) 10, SizeUtil.toSize("10KB"));
+		COUNT_WRITTEN = CLIENT.write(null, itemsQueue, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
 		stdOutInterceptorStream.reset(); // clear before using
-		COUNT_UPDATED = CLIENT.update(itemsQueue, null, (short) 10);
+		COUNT_UPDATED = CLIENT.update(itemsQueue, null, 0, 10, 10);
 		TimeUnit.SECONDS.sleep(1);
 		STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 		LOG = LogManager.getLogger();

@@ -79,9 +79,9 @@ public class ReadLoggingTest {
 		final ItemBlockingQueue<WSObject> itemsQueue = new ItemBlockingQueue<>(
 			new ArrayBlockingQueue<WSObject>(COUNT_TO_WRITE)
 		);
-		COUNT_WRITTEN = CLIENT.write(null, itemsQueue, (short) 10, SizeUtil.toSize("10KB"));
+		COUNT_WRITTEN = CLIENT.write(null, itemsQueue, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
 		stdOutInterceptorStream.reset(); // clear before using
-		COUNT_READ = CLIENT.read(itemsQueue, null, (short) 10);
+		COUNT_READ = CLIENT.read(itemsQueue, null, 0, 10, true);
 		TimeUnit.SECONDS.sleep(1);
 		STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 		LOG = LogManager.getLogger();
