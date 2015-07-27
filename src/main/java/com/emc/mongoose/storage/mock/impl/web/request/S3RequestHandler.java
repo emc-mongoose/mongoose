@@ -3,9 +3,9 @@ package com.emc.mongoose.storage.mock.impl.web.request;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.api.ObjectStorageMock;
+import com.emc.mongoose.storage.mock.api.WSMock;
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
-import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -15,12 +15,12 @@ import org.apache.logging.log4j.Logger;
 /**
  Created by andrey on 13.05.15.
  */
-public final class S3RequestHandler<T extends BasicWSObjectMock>
+public final class S3RequestHandler<T extends WSObjectMock>
 extends WSRequestHandlerBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public S3RequestHandler(final RunTimeConfig runTimeConfig, final ObjectStorageMock<T> sharedStorage) {
+	public S3RequestHandler(final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage) {
 		super(runTimeConfig, sharedStorage);
 	}
 	//

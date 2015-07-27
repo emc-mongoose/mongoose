@@ -19,7 +19,7 @@ import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataSource;
 // mongoose-core-impl
-import com.emc.mongoose.core.impl.data.RangeLayerData;
+import static com.emc.mongoose.core.impl.data.RangeLayerData.getRangeOffset;
 import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
@@ -475,47 +475,41 @@ implements WSRequestConfig<T> {
 	) {
 		httpRequest.setEntity(httpEntity);
 	}
+	//
+	private final static ThreadLocal<StringBuilder> THRLOC_SB = new ThreadLocal<>();
 	// merge subsequent updated ranges functionality is here
 	protected final void applyRangesHeaders(final MutableWSRequest httpRequest, final T dataItem) {
 		httpRequest.removeHeaders(HttpHeaders.RANGE); // cleanup
+		//
+		final int prefixLen = VALUE_RANGE_PREFIX.length();
+		StringBuilder sb = THRLOC_SB.get();
+		if(sb == null) {
+			sb = new StringBuilder(VALUE_RANGE_PREFIX);
+			THRLOC_SB.set(sb);
+		} else {
+			sb.setLength(prefixLen); // reset
+		}
+		//
 		if(dataItem.isAppending()) {
-			httpRequest.addHeader(
-				HttpHeaders.RANGE, VALUE_RANGE_PREFIX + dataItem.getSize() + VALUE_RANGE_CONCAT
-			);
+			sb.append(dataItem.getSize()).append(VALUE_RANGE_CONCAT);
 		} else if(dataItem.hasUpdatedRanges()) {
-			long rangeBeg = -1, rangeEnd = -1, rangeLen;
-			int rangeCount = dataItem.getCountRangesTotal();
-			for(int i = 0; i < rangeCount; i++) {
-				rangeLen = dataItem.getRangeSize(i);
+			final int rangeCount = dataItem.getCountRangesTotal();
+			for(int i = 0; i < rangeCount; i ++) {
 				if(dataItem.isRangeUpdatePending(i)) {
-					LOG.trace(Markers.MSG, "\"{}\": should update range #{}", dataItem, i);
-					if(rangeBeg < 0) { // begin of the possible updated ranges sequence
-						rangeBeg = RangeLayerData.getRangeOffset(i);
-						rangeEnd = rangeBeg + rangeLen - 1;
-						LOG.trace(
-							Markers.MSG, "Begin of the possible updated ranges sequence @{}", rangeBeg
-						);
-					} else if(rangeEnd > 0) { // next range in the sequence of updated ranges
-						rangeEnd += rangeLen;
+					if(sb.length() > prefixLen) {
+						sb.append(RunTimeConfig.LIST_SEP);
 					}
-					if(i == rangeCount - 1) { // this is the last range which is updated also
-						LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
-						httpRequest.addHeader(
-							HttpHeaders.RANGE,
-							VALUE_RANGE_PREFIX + rangeBeg + VALUE_RANGE_CONCAT + rangeEnd
-						);
-					}
-				} else if(rangeBeg > -1 && rangeEnd > -1) { // end of the updated ranges sequence
-					LOG.trace(Markers.MSG, "End of the updated ranges sequence @{}", rangeEnd);
-					httpRequest.addHeader(HttpHeaders.RANGE, "bytes=" + rangeBeg + "-" + rangeEnd);
-					// drop the updated ranges sequence info
-					rangeBeg = -1;
-					rangeEnd = -1;
+					sb
+						.append(getRangeOffset(i))
+						.append(VALUE_RANGE_CONCAT)
+						.append(getRangeOffset(i + 1) - 1);
 				}
 			}
 		} else {
-			throw new IllegalStateException("applyRangesHeaders invoked while there's nothing to do");
+			throw new IllegalStateException("no pending range updates/appends to apply");
 		}
+		//
+		httpRequest.addHeader(HttpHeaders.RANGE, sb.toString());
 	}
 	/*
 	protected final static DateFormat FMT_DATE_RFC1123 = new SimpleDateFormat(

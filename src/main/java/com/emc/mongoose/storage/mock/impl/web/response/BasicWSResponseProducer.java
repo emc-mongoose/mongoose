@@ -6,7 +6,7 @@ import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-storage-mock.jar
 //
-import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
+import com.emc.mongoose.storage.mock.impl.base.BasicObjectMock;
 import org.apache.http.HttpResponse;
 import org.apache.http.protocol.HttpContext;
 //
@@ -44,7 +44,7 @@ implements HttpAsyncResponseProducer {
 	throws IOException {
 		chanOut.setContentEncoder(encoder);
 		try {
-			final BasicWSObjectMock dataItem = BasicWSObjectMock.class.cast(response.getEntity());
+			final BasicObjectMock dataItem = BasicObjectMock.class.cast(response.getEntity());
 			if(dataItem != null) {
 				dataItem.writeFully(chanOut);
 			}

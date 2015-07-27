@@ -3,12 +3,12 @@ package com.emc.mongoose.storage.mock.impl.web.request;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 //
-import com.emc.mongoose.storage.mock.api.ObjectStorageMock;
-//
-import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 // mongoose-storage-adapter-atmos.jar
 import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
+//
+import com.emc.mongoose.storage.mock.api.WSMock;
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
@@ -20,13 +20,13 @@ import org.apache.logging.log4j.Logger;
 /**
  Created by andrey on 13.05.15.
  */
-public final class AtmosRequestHandler<T extends BasicWSObjectMock>
+public final class AtmosRequestHandler<T extends WSObjectMock>
 extends WSRequestHandlerBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static String URI_BASE_PATH = "/rest";
 	//
-	public AtmosRequestHandler(final RunTimeConfig runTimeConfig, final ObjectStorageMock<T> sharedStorage) {
+	public AtmosRequestHandler(final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage) {
 		super(runTimeConfig, sharedStorage);
 	}
 	//

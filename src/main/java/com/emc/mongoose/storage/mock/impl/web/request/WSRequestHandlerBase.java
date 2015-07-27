@@ -6,11 +6,13 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.DataObject;
+import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_PREFIX;
+import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_CONCAT;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.UniformData;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.api.ObjectStorageMock;
 import com.emc.mongoose.storage.mock.api.IOStats;
+import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.web.response.BasicWSResponseProducer;
 //
@@ -41,8 +43,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 /**
  Created by andrey on 13.05.15.
  */
@@ -71,10 +71,10 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	private final IOStats ioStats;
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
-	private final ObjectStorageMock<T> sharedStorage;
+	private final WSMock<T> sharedStorage;
 	//
 	protected WSRequestHandlerBase(
-		final RunTimeConfig runTimeConfig, final ObjectStorageMock<T> sharedStorage
+		final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage
 	) {
 		this.rateLimit = runTimeConfig.getLoadLimitRate();
 		this.sharedStorage = sharedStorage;
@@ -168,23 +168,19 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			case METHOD_DELETE:
 				handleDelete(httpResponse, dataId);
 				break;
-	}
+		}
 	}
 	//
 	private void handleWrite(
 		final HttpRequest request, final HttpResponse response, final String dataId
 	) {
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Create data object with ID: {}", dataId);
-		}
 		try {
 			response.setStatusCode(HttpStatus.SC_OK);
-			T dataObject;
 			final Header rangeHeaders[] = request.getHeaders(HttpHeaders.RANGE);
 			//
 			if(rangeHeaders == null || rangeHeaders.length == 0) {
 				// write or recreate data item
-				dataObject = createDataObject(request, dataId);
+				final T dataObject = createDataObject(request, dataId);
 				ioStats.markCreate(dataObject.getSize());
 			} else {
 				// else do append or update if data item exist
@@ -207,51 +203,51 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		}
 	}
 	//
-	private final static String
-		KEY_RANGE_START = "rangeStart",
-		KEY_RANGE_END = "rangeEnd";
-	private final static Pattern PATTERN_RANGE = Pattern.compile(
-		"bytes=((?<" + KEY_RANGE_START + ">\\d+)\\-(?<" + KEY_RANGE_END + ">\\d*),?)+"
-	);
-	//
 	private void handleRanges(
 		final String dataId, final Header rangeHeaders[], final HttpResponse httpResponse,
-	    final long contentLength
-	) {
-		String rangeStartValue, rangeEndValue;
-		long rangeStart, rangeEnd;
+		final long contentLength
+	) throws IllegalArgumentException {
+		String rangeHeaderValue, rangeValuePairs[], rangeValue[];
+		long offset;
 		for(final Header rangeHeader : rangeHeaders) {
-			try {
-				final Matcher matcher = PATTERN_RANGE.matcher(rangeHeader.getValue());
-				while(matcher.find()) {
-					rangeStartValue = matcher.group(KEY_RANGE_START);
-					rangeStart = Long.parseLong(rangeStartValue);
-					rangeEndValue = matcher.group(KEY_RANGE_END);
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, "{}: range found: {}-{}",
-							dataId, rangeStartValue, rangeEndValue
-						);
-					}
-					if(rangeEndValue == null || rangeEndValue.length() == 0) {
-						sharedStorage.append(dataId, rangeStart, contentLength);
-						break;
-					} else {
-						rangeEnd = Long.parseLong(rangeEndValue);
-						sharedStorage.update(dataId, rangeStart, rangeEnd - rangeStart);
+			rangeHeaderValue = rangeHeader.getValue();
+			if(rangeHeaderValue.startsWith(VALUE_RANGE_PREFIX)) {
+				rangeHeaderValue = rangeHeaderValue.substring(
+					VALUE_RANGE_PREFIX.length(), rangeHeaderValue.length()
+				);
+				rangeValuePairs = rangeHeaderValue.split(RunTimeConfig.LIST_SEP);
+				for(final String rangeValuePair : rangeValuePairs) {
+					rangeValue = rangeValuePair.split(VALUE_RANGE_CONCAT);
+					try {
+						if(rangeValue.length == 1) {
+							sharedStorage.append(
+								dataId, Long.parseLong(rangeValue[0]), contentLength
+							);
+						} else if(rangeValue.length == 2) {
+							offset = Long.parseLong(rangeValue[0]);
+							sharedStorage.update(
+								dataId, offset, Long.parseLong(rangeValue[1]) - offset + 1
+							);
+						} else {
+							LOG.warn(
+								Markers.ERR, "Invalid range header value: \"{}\"", rangeHeaderValue
+							);
+						}
+					} catch(
+						final ExecutionException | InterruptedException | NumberFormatException e
+					) {
+						LogUtil.exception(LOG, Level.WARN, e, "Range modification failure");
 					}
 				}
-			} catch(final Exception e) {
-				LogUtil.exception(
-					LOG, Level.WARN, e, "Failed to parse the range header: \"{}\"", rangeHeader
-				);
+			} else {
+				LOG.warn(Markers.ERR, "Invalid range header value: \"{}\"", rangeHeaderValue);
 			}
 		}
 	}
 	//
 	private void handleRead(final HttpResponse response, final String dataId) {
 		try {
-			final WSObjectMock dataObject = sharedStorage.read(dataId, 0, 0);
+			final T dataObject = sharedStorage.read(dataId, 0, 0);
 			if(dataObject == null) {
 				response.setStatusCode(HttpStatus.SC_NOT_FOUND);
 				if(LOG.isTraceEnabled(Markers.MSG)) {

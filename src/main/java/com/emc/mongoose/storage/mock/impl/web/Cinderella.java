@@ -5,12 +5,12 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-// mongoose-storage-mock.jar
+//
 import com.emc.mongoose.core.api.io.task.IOTask;
-import com.emc.mongoose.core.impl.data.BasicWSObject;
+// mongoose-storage-mock.jar
+import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.base.ObjectStorageMockBase;
-import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.web.net.BasicSocketEventDispatcher;
 import com.emc.mongoose.storage.mock.impl.web.request.APIRequestHandlerMapper;
 import com.emc.mongoose.storage.mock.impl.web.net.BasicWSMockConnFactory;
@@ -42,8 +42,9 @@ import java.util.concurrent.ExecutionException;
 /**
  * Created by olga on 28.01.15.
  */
-public final class Cinderella
-extends ObjectStorageMockBase<BasicWSObjectMock> {
+public final class Cinderella<T extends WSObjectMock>
+extends ObjectStorageMockBase<T>
+implements WSMock<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final BasicSocketEventDispatcher sockEvtDispatchers[] ;
@@ -52,7 +53,7 @@ extends ObjectStorageMockBase<BasicWSObjectMock> {
 	//
 	public Cinderella(final RunTimeConfig rtConfig)
 	throws IOException {
-		super(rtConfig, BasicWSObjectMock.class);
+		super(rtConfig, (Class<T>) BasicWSObjectMock.class);
 		sockEvtDispatchers = new BasicSocketEventDispatcher[rtConfig.getStorageMockHeadCount()];
 		LOG.info(Markers.MSG, "Starting with {} heads", sockEvtDispatchers.length);
 		// connection config
@@ -156,65 +157,65 @@ extends ObjectStorageMockBase<BasicWSObjectMock> {
 	}
 	//
 	@Override
-	public final BasicWSObjectMock create(final String id, final long offset, final long size)
+	public final T create(final String id, final long offset, final long size)
 	throws InterruptedException, ExecutionException {
 		final BasicWSMockTask task = BasicWSMockTask.getInstance(
 			itemIndex, id, IOTask.Type.CREATE, offset, size
 		);
 		try {
-			return (BasicWSObjectMock) taskExecutor.submit(task).get();
+			return (T) taskExecutor.submit(task).get();
 		} finally {
 			task.release();
 		}
 	}
 	//
 	@Override
-	public final BasicWSObjectMock update(final String id, final long offset, final long size)
+	public final T update(final String id, final long offset, final long size)
 	throws InterruptedException, ExecutionException {
 		final BasicWSMockTask task = BasicWSMockTask.getInstance(
 			itemIndex, id, IOTask.Type.UPDATE, offset, size
 		);
 		try {
-			return (BasicWSObjectMock) taskExecutor.submit(task).get();
+			return (T) taskExecutor.submit(task).get();
 		} finally {
 			task.release();
 		}
 	}
 	//
 	@Override
-	public final BasicWSObjectMock append(final String id, final long offset, final long size)
+	public final T append(final String id, final long offset, final long size)
 		throws InterruptedException, ExecutionException {
 		final BasicWSMockTask task = BasicWSMockTask.getInstance(
 			itemIndex, id, IOTask.Type.APPEND, offset, size
 		);
 		try {
-			return (BasicWSObjectMock) taskExecutor.submit(task).get();
+			return (T) taskExecutor.submit(task).get();
 		} finally {
 			task.release();
 		}
 	}
 	//
 	@Override
-	public final BasicWSObjectMock read(final String id, final long offset, final long size)
+	public final T read(final String id, final long offset, final long size)
 		throws InterruptedException, ExecutionException {
 		final BasicWSMockTask task = BasicWSMockTask.getInstance(
 			itemIndex, id, IOTask.Type.READ, offset, size
 		);
 		try {
-			return (BasicWSObjectMock) taskExecutor.submit(task).get();
+			return (T) taskExecutor.submit(task).get();
 		} finally {
 			task.release();
 		}
 	}
 	//
 	@Override
-	public final BasicWSObjectMock delete(final String id)
+	public final T delete(final String id)
 	throws InterruptedException, ExecutionException {
 		final BasicWSMockTask task = BasicWSMockTask.getInstance(
 			itemIndex, id, IOTask.Type.DELETE, 0, 0
 		);
 		try {
-			return (BasicWSObjectMock) taskExecutor.submit(task).get();
+			return (T) taskExecutor.submit(task).get();
 		} finally {
 			task.release();
 		}

@@ -3,9 +3,9 @@ package com.emc.mongoose.storage.mock.impl.web.request;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //import com.emc.mongoose.common.log.LogUtil;
 //
-import com.emc.mongoose.storage.mock.api.ObjectStorageMock;
+import com.emc.mongoose.storage.mock.api.WSMock;
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
-import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 import org.apache.http.HttpRequest;
 //
 import org.apache.http.nio.protocol.HttpAsyncRequestHandler;
@@ -16,7 +16,7 @@ import org.apache.http.nio.protocol.HttpAsyncRequestHandlerMapper;
 /**
  Created by andrey on 13.05.15.
  */
-public final class APIRequestHandlerMapper<T extends BasicWSObjectMock>
+public final class APIRequestHandlerMapper<T extends WSObjectMock>
 implements HttpAsyncRequestHandlerMapper {
 	//
 	//private final static Logger LOG = LogManager.getLogger();
@@ -26,7 +26,7 @@ implements HttpAsyncRequestHandlerMapper {
 	private final SwiftRequestHandler<T> reqHandlerSwift;
 	//
 	public APIRequestHandlerMapper(
-		final RunTimeConfig runTimeConfig, final ObjectStorageMock<T> sharedStorage
+		final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage
 	) {
 		reqHandlerAtmos = new AtmosRequestHandler<>(runTimeConfig, sharedStorage);
 		reqHandlerS3 =  new S3RequestHandler<>(runTimeConfig, sharedStorage);

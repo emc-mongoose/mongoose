@@ -1,10 +1,12 @@
 package com.emc.mongoose.storage.mock.impl.base;
 //
+import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.collections.Reusable;
 //
-import com.emc.mongoose.core.api.data.DataObject;
-//
 import com.emc.mongoose.core.api.io.task.IOTask;
+//
+import com.emc.mongoose.storage.mock.api.DataObjectMock;
+import com.emc.mongoose.storage.mock.api.ObjectStorageMockTask;
 import com.emc.mongoose.storage.mock.api.StorageMockTask;
 //
 import org.apache.logging.log4j.LogManager;
@@ -14,10 +16,21 @@ import java.util.Map;
 /**
  Created by andrey on 27.07.15.
  */
-public abstract class ObjectStorageMockTaskBase<T extends DataObject>
-implements StorageMockTask<T> {
+public class BasicObjectMockTask<T extends DataObjectMock>
+implements ObjectStorageMockTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
+	private final static InstancePool<BasicObjectMockTask> TASK_POOL = new InstancePool<>(
+		BasicObjectMockTask.class
+	);
+	//
+	public static <T extends DataObjectMock> BasicObjectMockTask getInstance(
+		final Map<String, T> index, final String id, final IOTask.Type type,
+		final long offset, final long size
+	) {
+		return TASK_POOL.take(index, id, type, offset, size);
+	}
 	//
 	protected Map<String, T> index;
 	protected String id;
@@ -25,7 +38,7 @@ implements StorageMockTask<T> {
 	protected long offset, size;
 	//
 	@Override
-	public Reusable<StorageMockTask<T>> reuse(final Object... args)
+	public final Reusable<StorageMockTask<T>> reuse(final Object... args)
 	throws IllegalArgumentException, IllegalStateException {
 		if(args != null) {
 			if(args.length > 0) {
@@ -48,7 +61,12 @@ implements StorageMockTask<T> {
 	}
 	//
 	@Override
-	public T call() {
+	public void release() {
+		TASK_POOL.release(this);
+	}
+	//
+	@Override
+	public final T call() {
 		T dataObject = null;
 		switch(type) {
 			case CREATE:
@@ -63,15 +81,21 @@ implements StorageMockTask<T> {
 				break;
 			case UPDATE:
 				dataObject = index.get(id);
-				// TODO update
+				if(dataObject != null) {
+					dataObject.update(offset, size);
+				}
 				break;
 			case APPEND:
 				dataObject = index.get(id);
-				// TODO append
+				if(dataObject != null) {
+					dataObject.append(offset, size);
+				}
 				break;
 		}
 		return dataObject;
 	}
 	//
-	protected abstract T createNew(final String id, final long offset, final long size);
+	protected T createNew(final String id, final long offset, final long size) {
+		return (T) new BasicObjectMock(id, offset, size);
+	}
 }

@@ -3,8 +3,11 @@ package com.emc.mongoose.core.impl.data;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.DataCorruptionException;
 import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.AppendableDataItem;
+import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.data.DataSizeException;
 import com.emc.mongoose.core.api.data.UpdatableDataItem;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
@@ -35,7 +38,6 @@ implements AppendableDataItem, UpdatableDataItem {
 	//
 	protected final static String
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
-		FMT_MSG_RANGE_CORRUPT = "{}: range #{}(offset {}) of \"{}\" corrupted",
 		FMT_MSG_UPD_CELL = "{}: update cell at position: {}, offset: {}, new mask: {}",
 		FMT_MSG_MERGE_MASKS = "{}: move pending ranges \"{}\" to history \"{}\"",
 		STR_EMPTY_MASK = "0";
@@ -179,10 +181,10 @@ implements AppendableDataItem, UpdatableDataItem {
 		// do not go over ranges if there's no updated ones
 		if(maskRangesHistory.isEmpty()) {
 			if(currLayerIndex == 0) {
-				return readAndVerifyRange(chanSrc, 0, size);
+				return super.readAndVerifyFully(chanSrc);
 			} else {
 				return new UniformData(offset, size, currLayerIndex, UniformDataSource.DEFAULT)
-					.readAndVerifyRange(chanSrc, 0, size);
+					.readAndVerifyFully(chanSrc);
 			}
 		}
 		//
@@ -193,35 +195,49 @@ implements AppendableDataItem, UpdatableDataItem {
 		for(int i = 0; i < countRangesTotal; i ++) {
 			rangeOffset = getRangeOffset(i);
 			rangeSize = getRangeSize(i);
-			if(maskRangesHistory.get(i)) {
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						Markers.MSG, "{}: range #{} has been modified", Long.toHexString(offset), i
+			try {
+				if(maskRangesHistory.get(i)) {
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG, "{}: range #{} has been modified",
+							Long.toHexString(offset), i
+						);
+					}
+					updatedRange = new UniformData(
+						offset + rangeOffset, rangeSize, currLayerIndex + 1,
+						UniformDataSource.DEFAULT
 					);
-				}
-				updatedRange = new UniformData(
-					offset + rangeOffset, rangeSize, currLayerIndex + 1, UniformDataSource.DEFAULT
-				);
-				contentEquals = updatedRange.readAndVerifyRange(chanSrc, 0, rangeSize);
-			} else if(currLayerIndex > 1) {
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						Markers.MSG, "{}: range #{} contains previous layer of data",
-						Long.toHexString(offset), i
+					updatedRange.readAndVerifyRange(chanSrc, 0, rangeSize);
+				} else if(currLayerIndex > 0) {
+					if(LOG.isTraceEnabled(Markers.MSG)) {
+						LOG.trace(
+							Markers.MSG, "{}: range #{} contains previous layer of data",
+							Long.toHexString(offset), i
+						);
+					}
+					updatedRange = new UniformData(
+						offset + rangeOffset, rangeSize, currLayerIndex,
+						UniformDataSource.DEFAULT
 					);
+					updatedRange.readAndVerifyRange(chanSrc, 0, rangeSize);
+				} else {
+					readAndVerifyRange(chanSrc, rangeOffset, rangeSize);
 				}
-				updatedRange = new UniformData(
-					offset + rangeOffset, rangeSize, currLayerIndex, UniformDataSource.DEFAULT
+			} catch(final DataSizeException e) {
+				LOG.warn(
+					Markers.MSG, "{}: content size mismatch, expected: {}, actual: {}",
+					Long.toString(offset, DataObject.ID_RADIX),
+					getRangeOffset(i) + size, getRangeOffset(i) + e.offset
 				);
-				contentEquals = updatedRange.readAndVerifyRange(chanSrc, 0, rangeSize);
-			} else {
-				contentEquals = readAndVerifyRange(chanSrc, rangeOffset, rangeSize);
-			}
-			if(!contentEquals) {
-				LOG.debug(
-					Markers.ERR, FMT_MSG_RANGE_CORRUPT,
-					Long.toHexString(offset), i, rangeOffset, toString()
+				contentEquals = false;
+				break;
+			} catch(final DataCorruptionException e) {
+				LOG.warn(
+					Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {}",
+					Long.toString(offset, DataObject.ID_RADIX), getRangeOffset(i) + e.offset,
+					String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual)
 				);
+				contentEquals = false;
 				break;
 			}
 		}

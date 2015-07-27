@@ -6,7 +6,6 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.DataObject;
 //
-import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 import com.emc.mongoose.storage.mock.api.ObjectStorageMock;
 //
 import org.apache.commons.collections4.map.LRUMap;
