@@ -171,7 +171,7 @@
 				"reqSleepMilliSec": 0
 			},
 			"tasks": {
-				"submitTimeOutMilliSec": 1000,
+				"submitTimeOutMilliSec": 10000,
 				"maxQueueSize": 32768,
 				"batchSize": 1024
 			},
