@@ -45,6 +45,7 @@ def execute(loadBuilder, rampupParams=((),(),())):
 					LOG.debug(Markers.MSG, "---- Step {}x{} finish ----", threadCount, dataItemSizeStr)
 				except InterruptedException:
 					interrupted = True
+					return
 				except NumberFormatException as e:
 					LogUtil.exception(Markers.ERR, Level.WARN, e, "Failed to parse the next thread count")
 #
