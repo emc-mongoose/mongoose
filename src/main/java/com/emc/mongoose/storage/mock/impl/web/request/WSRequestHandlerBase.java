@@ -26,7 +26,9 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.HttpVersion;
 import org.apache.http.MethodNotSupportedException;
+import org.apache.http.ProtocolVersion;
 import org.apache.http.RequestLine;
 import org.apache.http.protocol.HttpContext;
 //
@@ -237,6 +239,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 						final ExecutionException | InterruptedException | NumberFormatException e
 					) {
 						LogUtil.exception(LOG, Level.WARN, e, "Range modification failure");
+						httpResponse.setStatusCode(HttpStatus.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
 					}
 				}
 			} else {

@@ -214,7 +214,6 @@ implements WSIOTask<T> {
 			);
 		} catch(final Exception e) {
 			status = Status.FAIL_UNKNOWN;
-			e.printStackTrace(System.out);
 			LogUtil.exception(LOG, Level.ERROR, e, "#{}: producing content failure", hashCode());
 		} finally {
 			chanOut.close();

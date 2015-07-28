@@ -36,6 +36,7 @@ extends BinItemOutput<T> {
 	public BinFileItemOutput()
 	throws IOException {
 		this(Files.createTempFile(null, ".bin"));
+		this.itemsDstPath.toFile().deleteOnExit();
 	}
 	//
 	@Override

@@ -257,7 +257,9 @@ implements AppendableDataItem, UpdatableDataItem {
 	//
 	protected synchronized void switchToNextOverlay() {
 		maskRangesHistory.clear();
-		maskRangesPending.clear(); // clear the masks
+		if(maskRangesPending.cardinality() == getRangeCount(size)) {
+			maskRangesPending.clear();
+		}
 		currLayerIndex ++;
 		setDataSource(UniformDataSource.DEFAULT, currLayerIndex); // increment layer index
 	}
@@ -364,7 +366,7 @@ implements AppendableDataItem, UpdatableDataItem {
 				lastCellPos = size > 0 ? getRangeCount(size) - 1 : 0,
 				nextCellPos = getRangeCount(size + augmentSize);
 			if(lastCellPos < nextCellPos && maskRangesHistory.get(lastCellPos)) {
-				maskRangesPending.set(lastCellPos, nextCellPos);
+				maskRangesHistory.set(lastCellPos, nextCellPos);
 			}
 		} else {
 			throw new IllegalArgumentException(
@@ -401,8 +403,6 @@ implements AppendableDataItem, UpdatableDataItem {
 			}
 			// clean up the appending on success
 			pendingAugmentSize = 0;
-			maskRangesHistory.or(maskRangesPending);
-			maskRangesPending.clear();
 		}
 	}
 }

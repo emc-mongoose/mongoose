@@ -32,33 +32,28 @@ implements DataObjectMock {
 		super(id, offset, size);
 	}
 	//
-	@Override
-	public final synchronized void append(final long augmentSize)
-	throws IllegalArgumentException {
-		if(augmentSize > 0) {
-			pendingAugmentSize = augmentSize;
-			final int
-				lastCellPos = getRangeCount(size) - 1,
-				nextCellPos = getRangeCount(size + augmentSize);
-			if(lastCellPos < nextCellPos && maskRangesHistory.get(lastCellPos)) {
-				maskRangesHistory.set(lastCellPos, nextCellPos);
-			}
-		} else {
-			throw new IllegalArgumentException(id + ": illegal append size: " + augmentSize);
-		}
-	}
-	//
-	public final synchronized void update(final long offset, final long size) {
+	public final synchronized void update(final long offset, final long size)
+	throws IllegalArgumentException, IllegalStateException {
 		if(size < 0) {
 			throw new IllegalArgumentException("Range size should not be negative");
 		}
 		final int
+			countRangesTotal = getRangeCount(this.size),
 			maskIndexStart = getRangeCount(offset),
 			maskIndexEnd = getRangeCount(offset + size);
-		if(maskIndexStart == maskIndexEnd) {
-			maskRangesHistory.set(maskIndexStart);
-		} else {
-			maskRangesHistory.set(maskIndexStart, maskIndexEnd);
+		for(int i = maskIndexStart; i < maskIndexEnd; i ++) {
+			if(countRangesTotal > 0 && countRangesTotal == maskRangesHistory.cardinality()) {
+				// mask is full, switch to the next layer
+				currLayerIndex++;
+				maskRangesHistory.clear();
+			}
+			if(maskRangesHistory.get(i)) {
+				throw new IllegalStateException(
+					"Range " + i + " is already updated, but mask is not full"
+				);
+			} else {
+				maskRangesHistory.set(i);
+			}
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
@@ -95,6 +90,7 @@ implements DataObjectMock {
 		if (maskRangesHistory.isEmpty()) {
 			return writeRange(chanOut, 0, size);
 		} else {
+			LOG.info(Markers.MSG, toString());
 			long writtenCount = 0;
 			for(int i = 0; i < countRangesTotal; i++) {
 				rangeOffset = getRangeOffset(i);

@@ -222,10 +222,6 @@ implements Externalizable {
 		return "api.type." + api + ".port";
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final int getTasksSubmitTimeOutMilliSec() {
-		return getInt("load.tasks.submitTimeOutMilliSec");
-	}
-	//
 	public final String getApiName() {
 		return getString(KEY_API_NAME);
 	}

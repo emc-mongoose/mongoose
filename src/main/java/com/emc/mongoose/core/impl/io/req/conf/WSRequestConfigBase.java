@@ -591,7 +591,7 @@ implements WSRequestConfig<T> {
 					} else {
 						final long
 							dataSize = dataItem.getSize(),
-							actualSize = IOUtils.consumeQuietly(in, dataSize);
+							actualSize = IOUtils.consumeQuietly(in/*, dataSize*/);
 						if(dataSize != actualSize) {
 							LOG.debug(
 								Markers.ERR, "Consumed data size is not equal to {}: {}",

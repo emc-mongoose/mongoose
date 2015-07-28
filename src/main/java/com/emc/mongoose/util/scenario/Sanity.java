@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.common.net.ServiceUtils;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 import com.emc.mongoose.core.api.data.model.DataItemOutput;
@@ -12,11 +13,16 @@ import com.emc.mongoose.core.api.data.model.DataItemOutput;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
 import com.emc.mongoose.core.impl.data.model.BinFileItemOutput;
 import com.emc.mongoose.core.impl.data.model.CSVFileItemOutput;
+import com.emc.mongoose.core.impl.data.model.CircularListItemInput;
 import com.emc.mongoose.core.impl.data.model.CircularListItemOutput;
 //
+import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 import com.emc.mongoose.core.impl.data.model.ListItemOutput;
 //
 //
+import com.emc.mongoose.server.api.load.builder.LoadBuilderSvc;
+import com.emc.mongoose.server.api.load.executor.WSLoadSvc;
+import com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc;
 import com.emc.mongoose.storage.mock.impl.web.Cinderella;
 //
 import com.emc.mongoose.util.client.api.StorageClient;
@@ -28,8 +34,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 /**
  Created by andrey on 22.06.15.
@@ -38,8 +46,8 @@ public class Sanity
 implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 5, DEFAULT_CONN_PER_NODE = 5;
-	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("1KB");
-	private final static int DEFAULT_DATA_COUNT_MAX = 1000;
+	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("256KB");
+	private final static int DEFAULT_DATA_COUNT_MAX = 10;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -55,59 +63,64 @@ implements Runnable {
 	public void run() {
 		try {
 			// create new items
-			final List<WSObject> dataItems = new ArrayList<>(DEFAULT_DATA_COUNT_MAX);
-			final DataItemOutput<WSObject> dataDstW = new ListItemOutput<>(dataItems);
+			final DataItemOutput<WSObject> dataDstW = new ListItemOutput<>(
+				new ArrayList<WSObject>(DEFAULT_DATA_COUNT_MAX)
+			);
 			LOG.info(Markers.MSG, "Start writing");
 			final long nWritten = client.write(
 				null, dataDstW, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
-			// read and verify the written items
-			final DataItemInput<WSObject> dataSrcR = dataDstW.getInput();
-			final DataItemOutput<WSObject> dataDstR = new BinFileItemOutput<>();
-			final long nRead = client.read(
-				dataSrcR, dataDstR, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, true
-			);
-			LOG.info(Markers.MSG, "Read successfully {} items", nRead);
-			// update the items
-			final DataItemInput<WSObject> dataSrcU = dataDstW.getInput();
-			final DataItemOutput dataDstU = new CSVFileItemOutput<>(BasicWSObject.class);
+			// update the created items
 			LOG.info(Markers.MSG, "Start updating");
+			final DataItemOutput<WSObject> dataDstU = new BinFileItemOutput<>();
 			final long nUpdated = client.update(
-				dataSrcU, dataDstU, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, 2
+				dataDstW.getInput(), dataDstU, 0, DEFAULT_CONN_PER_NODE, 15
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
-			// reread the updated items
-			final DataItemInput<WSObject> dataSrcR2 = dataDstU.getInput();
-			final DataItemOutput<WSObject> dataDstR2 = new CircularListItemOutput<>(
-				dataItems, 100
+			// read and verify the updated items
+			final DataItemOutput dataDstR = new CSVFileItemOutput<>(BasicWSObject.class);
+			final long nRead = client.read(
+				dataDstU.getInput(), dataDstR, 0, DEFAULT_CONN_PER_NODE, true
 			);
-			LOG.info(Markers.MSG, "Start rereading");
-			final long nRead2 = client.read(
-				dataSrcR2, dataDstR2, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, true
+			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead);
+			// variable-sized appending of the verified data items
+			final DataItemOutput<WSObject> dataDstA = new ItemBlockingQueue<>(
+				new ArrayBlockingQueue<WSObject>(DEFAULT_DATA_COUNT_MAX)
 			);
-			LOG.info(Markers.MSG, "Reread successfully {} items", nRead2);
-			// rewrite the read data items in a circle
-			final DataItemInput<WSObject> dataSrcW2 = dataDstR2.getInput();
-			LOG.info(Markers.MSG, "Start circular rewriting");
-			final long nRewritten = client.write(
-				dataSrcW2, null, 100000, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
-			);
-			LOG.info(Markers.MSG, "Rewritten successfully {} times", nRewritten);
-			// append the written items
-			final DataItemInput<WSObject> dataSrcA = dataDstW.getInput();
-			LOG.info(Markers.MSG, "Start appending");
 			final long nAppended = client.append(
-				dataSrcA, null, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, 3 * DEFAULT_DATA_SIZE
+				dataDstR.getInput(), dataDstA, 0, DEFAULT_CONN_PER_NODE,
+				DEFAULT_DATA_SIZE, 3 * DEFAULT_DATA_SIZE, 1
 			);
 			LOG.info(Markers.MSG, "Appended successfully {} items", nAppended);
-			// delete all written data items
-			final DataItemInput<WSObject> dataSrcD = dataDstW.getInput();
-			final long nDeleted = client.delete(
-				dataSrcD, null, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE
+			// update again the appended data items
+			final Path tmpItemsFilePath = Files.createTempFile("reUpdatedItems", ".csv"); // do not delete on exit
+			final DataItemOutput dataDstU2 = new CSVFileItemOutput<>(
+				tmpItemsFilePath, BasicWSObject.class
 			);
+			final long nUpdated2 = client.update(
+				dataDstA.getInput(), dataDstU2, 0, DEFAULT_CONN_PER_NODE, 15
+			);
+			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
+			// read and verify the updated items again
+			final long nRead2 = client.read(
+				dataDstU2.getInput(), null, 0, DEFAULT_CONN_PER_NODE, true
+			);
+			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
+			// recreate the items
+			final long nReWritten = client.write(
+				dataDstW.getInput(), null, 0, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
+			);
+			LOG.info(Markers.MSG, "Rewritten successfully {} items", nReWritten);
+			// read and verify the rewritten data items
+			// read and verify the updated items again
+			final long nRead3 = client.read(
+				dataDstW.getInput(), null, 0, DEFAULT_CONN_PER_NODE, true
+			);
+			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);
+			// delete all created data items
+			final long nDeleted = client.delete(dataDstW.getInput(), null, 0, DEFAULT_CONN_PER_NODE);
 			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
-			//
 		} catch(final Exception e) {
 			e.printStackTrace(System.err);
 			LogUtil.exception(LOG, Level.ERROR, e, "Sanity failure");
@@ -141,7 +154,7 @@ implements Runnable {
 			.setNodes(storageNodes)
 			.setAuth("wuser1@sanity.local", "H1jTDL869wgZapHsylVcSYTx3aM7NxVABy8h017Z")
 			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
-			.setLimitTime(180, TimeUnit.SECONDS)
+			.setLimitTime(1000, TimeUnit.SECONDS)
 			.setLimitRate(10000);
 		// standalone
 		try(final StorageClient<WSObject> client = clientBuilder.build()) {
@@ -174,8 +187,8 @@ implements Runnable {
 				LOG.info(Markers.MSG, "Distributed sanity finished");
 			}
 		}
-		//
-		ServiceUtils.shutdown();*/
+		*/
+		ServiceUtils.shutdown();
 		// finish
 		wsMockThread.interrupt();
 		LOG.info(Markers.MSG, "Storage mock stopped");

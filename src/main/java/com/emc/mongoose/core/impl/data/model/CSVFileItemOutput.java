@@ -26,6 +26,7 @@ extends CSVItemOutput<T> {
 	public CSVFileItemOutput(final Class<T> itemCls)
 		throws IOException, NoSuchMethodException {
 		this(Files.createTempFile(null, ".csv"), itemCls);
+		this.itemsFilePath.toFile().deleteOnExit();
 	}
 	//
 	@Override

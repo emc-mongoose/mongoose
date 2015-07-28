@@ -1,7 +1,6 @@
 package com.emc.mongoose.common.net.http;
 //
 import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
@@ -24,11 +23,44 @@ public final class IOUtils {
 	//
 	private final static ThreadLocal<Map<Integer, ByteBuffer>>
 		THRLOC_BUFF_SIZE_MAP = new ThreadLocal<>();
+	/*private final static int
+		BUFF_SIZE_STEP = 2, BUFF_SIZES[],
+		BUFF_SIZE_MIN, BUFF_SIZE_MAX;
+	static {
+		int stepCount = 1;
+		for(int x = Constants.BUFF_SIZE_LO; x < Constants.BUFF_SIZE_HI; x *= BUFF_SIZE_STEP) {
+			stepCount ++;
+		}
+		BUFF_SIZES = new int[stepCount];
+		for(
+			int i = 0, nextBuffSize = Constants.BUFF_SIZE_LO;
+			nextBuffSize <= Constants.BUFF_SIZE_HI;
+			nextBuffSize *= BUFF_SIZE_STEP
+		) {
+			BUFF_SIZES[i] = nextBuffSize;
+			i ++;
+		}
+		BUFF_SIZE_MIN = BUFF_SIZES[0];
+		BUFF_SIZE_MAX = BUFF_SIZES[BUFF_SIZES.length - 1];
+	}
 	//
 	public static long consumeQuietly(final ContentDecoder in, final long expectedSize) {
+		//
+		int buffSize = 0;
+		if(expectedSize < BUFF_SIZE_MIN) {
+			buffSize = BUFF_SIZE_MIN;
+		} else if(expectedSize > BUFF_SIZE_MAX) {
+			buffSize = BUFF_SIZE_MAX;
+		} else {
+			for(final int nextBuffSize : BUFF_SIZES) {
+				if(expectedSize <= nextBuffSize) {
+					buffSize = nextBuffSize;
+					break;
+				}
+			}
+		}
+		//
 		long doneByteCount = 0;
-		final int buffSize = (int) Math.max(
-			Constants.BUFF_SIZE_LO, Math.min(expectedSize, Constants.BUFF_SIZE_HI));
 		int lastByteCount;
 		//
 		Map<Integer, ByteBuffer> buffSizeMap = THRLOC_BUFF_SIZE_MAP.get();
@@ -71,7 +103,7 @@ public final class IOUtils {
 		}
 		//
 		return doneByteCount;
-	}
+	}*/
 	//
 	public static long consumeQuietly(final ContentDecoder in) {
 		long doneByteCount = 0;
@@ -92,6 +124,11 @@ public final class IOUtils {
 				if(buff == null) {
 					buff = ByteBuffer.allocateDirect(nextByteCount);
 					buffSizeMap.put(nextByteCount, buff);
+					LOG.debug(
+						Markers.MSG,
+						"Thread local direct memory buffer map changed: count: {}, sizes: {}",
+						buffSizeMap.hashCode(), buffSizeMap.size(), buffSizeMap.keySet()
+					);
 				} else {
 					buff.clear();
 				}
