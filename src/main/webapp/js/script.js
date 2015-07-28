@@ -575,16 +575,27 @@ function configureWebSocketConnection(location, countOfRecords) {
 				case RUN_SCENARIO_NAME.chain:
 					filtered = points.filter(function(d) {
 						return d.marker.name === MARKERS.PERF_AVG;
-					})
+					});
 					var runMetricsPeriodSec = logEventsArray[0].contextMap["load.metricsPeriodSec"];
 					charts(chartsArray).chain(runId, runMetricsPeriodSec, null, filtered);
 					break;
 				case RUN_SCENARIO_NAME.rampup:
 					filtered = points.filter(function(d) {
-						return (d.marker.name === MARKERS.PERF_SUM)
-							? d : -1;
+						return d.marker.name === MARKERS.PERF_SUM;
 					});
-					//charts(chartsArray).rampup();
+					var scenarioChainLoad = filtered[0].contextMap["scenario.type.chain.load"];
+					var rampupThreadCounts = filtered[0].contextMap["scenario.type.rampup.threadCounts"];
+					var loadRampupSizes = filtered[0].contextMap["scenario.type.rampup.sizes"];
+					charts(chartsArray).rampup(runId, scenarioChainLoad, rampupThreadCounts, loadRampupSizes);
+					chartsArray.forEach(function(d) {
+						if (d["run.id"] === runId) {
+							d.charts.forEach(function(c) {
+								filtered.forEach(function(v) {
+									c.update(v);
+								})
+							});
+						}
+					});
 					break;
 			}
 		}
@@ -2676,7 +2687,7 @@ function charts(chartsArray) {
 					}, 0);
 				});
 				//
-				return function(chartType, json) {
+				return function(chartType, json, array) {
 					var isFound = false;
 					data.forEach(function(d, i) {
 						if (json.message.formattedMessage.split(" ")[0].slice(1, -1).toLowerCase().indexOf(d.loadType) > -1) {
