@@ -383,13 +383,19 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException {
 		if(pendingAugmentSize > 0) {
 			final int rangeIndex = size > 0 ? getRangeCount(size) - 1 : 0;
-			if(maskRangesHistory.get(rangeIndex)) { // write from next layer
+			if(maskRangesHistory.get(rangeIndex)) { // write from the next layer
 				new UniformData(
 					offset + size, pendingAugmentSize, currLayerIndex + 1,
 					UniformDataSource.DEFAULT
 				).writeFully(chanOut);
 				size += pendingAugmentSize;
-			} else { // write from current layer
+			} else if(currLayerIndex > 0) { // write from the current layer
+				new UniformData(
+					offset + size, pendingAugmentSize, currLayerIndex,
+					UniformDataSource.DEFAULT
+				).writeFully(chanOut);
+				size += pendingAugmentSize;
+			} else { // write from the zero layer
 				writeRange(chanOut, size, pendingAugmentSize);
 				size += pendingAugmentSize;
 			}

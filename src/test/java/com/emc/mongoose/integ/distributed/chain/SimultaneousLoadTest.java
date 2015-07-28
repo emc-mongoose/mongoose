@@ -50,6 +50,7 @@ public class SimultaneousLoadTest {
 	throws Exception {
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
+		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, 0);
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
 		try(final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig)) {
 			final Chain chainScenario = new Chain(
