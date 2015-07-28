@@ -568,21 +568,20 @@ function configureWebSocketConnection(location, countOfRecords) {
 			switch (scenarioName) {
 				case RUN_SCENARIO_NAME.single:
 					filtered = points.filter(function(d) {
-						return (d.marker.name === MARKERS.PERF_AVG)
-						? d : -1;
+						return d.marker.name === MARKERS.PERF_AVG;
 					});
 					charts(chartsArray).single(filtered[0], filtered);
 					break;
 				case RUN_SCENARIO_NAME.chain:
 					filtered = points.filter(function(d) {
-						return (d.marker.name === MARKERS.PERF_AVG)
-							? d : -1;
-					});
-					//charts(chartsArray).chain();
+						return d.marker.name === MARKERS.PERF_AVG;
+					})
+					var runMetricsPeriodSec = logEventsArray[0].contextMap["load.metricsPeriodSec"];
+					charts(chartsArray).chain(runId, runMetricsPeriodSec, null, filtered);
 					break;
 				case RUN_SCENARIO_NAME.rampup:
 					filtered = points.filter(function(d) {
-						return (d.marker.name === MARKERS.PERF_AVG)
+						return (d.marker.name === MARKERS.PERF_SUM)
 							? d : -1;
 					});
 					//charts(chartsArray).rampup();
@@ -803,6 +802,56 @@ function charts(chartsArray) {
 			"run.scenario.name": runScenarioName,
 			"charts": scenarioCharts
 		};
+	}
+	//
+	function simplifyChart(destArray, dataArray, chartType, runMetricsPeriodSec) {
+		var currMetricsPeriodSec = -runMetricsPeriodSec;
+		dataArray.forEach(function(d) {
+			var value = parsePerfAvgLogEvent(chartType, d);
+			currMetricsPeriodSec += runMetricsPeriodSec;
+			destArray.forEach(function(item, i) {
+				if (item.values.length === CRITICAL_DOTS_COUNT) {
+					var newDotsArray = [];
+					var step = 4;
+					var startOffset = 0;
+					var endOffset = 4;
+					while (endOffset <= CRITICAL_DOTS_COUNT) {
+						var slicedArray = item.values.slice(startOffset, endOffset);
+						var minElement = slicedArray[0];
+						var maxElement = slicedArray[0];
+						slicedArray.forEach(function(c) {
+							if (c.y < minElement.y) {
+								minElement = c;
+							}
+							if (c.y > maxElement.y) {
+								maxElement = c;
+							}
+						});
+						var startXCoord = slicedArray[0].x;
+						var endXCoord = slicedArray[step/2].x;
+						if (minElement.x < maxElement.x) {
+							newDotsArray.push({x: startXCoord, y: minElement.y});
+							newDotsArray.push({x: endXCoord, y: maxElement.y});
+						} else {
+							newDotsArray.push({x: startXCoord, y: maxElement.y});
+							newDotsArray.push({x: endXCoord, y: minElement.y});
+						}
+						startOffset = endOffset;
+						if (endOffset < CRITICAL_DOTS_COUNT && endOffset + step > CRITICAL_DOTS_COUNT) {
+							var start = endOffset;
+							while (start < CRITICAL_DOTS_COUNT) {
+								newDotsArray.push({x: item.values[start].x, y: item.values[start].y});
+								start++;
+							}
+						}
+						endOffset += step;
+					}
+					item.values = newDotsArray;
+				}
+				item.values.push({x: currMetricsPeriodSec, y: parseFloat(value[i])});
+			});
+		});
+		return currMetricsPeriodSec;
 	}
 	//
 	function drawThroughputCharts(data, json, sec) {
@@ -1337,53 +1386,7 @@ function charts(chartsArray) {
 			var bandwidth = $.extend(true, [], data);
 			//
 			function initializeDataArray(destArray, dataArray, chartType) {
-				var currMetricsPeriodSec = -runMetricsPeriodSec;
-				dataArray.forEach(function(d) {
-					var value = parsePerfAvgLogEvent(chartType, d);
-					currMetricsPeriodSec += runMetricsPeriodSec;
-					destArray.forEach(function(item, i) {
-						if (item.values.length === CRITICAL_DOTS_COUNT) {
-							var newDotsArray = [];
-							var step = 4;
-							var startOffset = 0;
-							var endOffset = 4;
-							while (endOffset <= CRITICAL_DOTS_COUNT) {
-								var slicedArray = item.values.slice(startOffset, endOffset);
-								var minElement = slicedArray[0];
-								var maxElement = slicedArray[0];
-								slicedArray.forEach(function(c) {
-									if (c.y < minElement.y) {
-										minElement = c;
-									}
-									if (c.y > maxElement.y) {
-										maxElement = c;
-									}
-								});
-								var startXCoord = slicedArray[0].x;
-								var endXCoord = slicedArray[step/2].x;
-								if (minElement.x < maxElement.x) {
-									newDotsArray.push({x: startXCoord, y: minElement.y});
-									newDotsArray.push({x: endXCoord, y: maxElement.y});
-								} else {
-									newDotsArray.push({x: startXCoord, y: maxElement.y});
-									newDotsArray.push({x: endXCoord, y: minElement.y});
-								}
-								startOffset = endOffset;
-								if (endOffset < CRITICAL_DOTS_COUNT && endOffset + step > CRITICAL_DOTS_COUNT) {
-									var start = endOffset;
-									while (start < CRITICAL_DOTS_COUNT) {
-										newDotsArray.push({x: item.values[start].x, y: item.values[start].y});
-										start++;
-									}
-								}
-								endOffset += step;
-							}
-							item.values = newDotsArray;
-						}
-						item.values.push({x: currMetricsPeriodSec, y: parseFloat(value[i])});
-					});
-				});
-				return currMetricsPeriodSec;
+				return simplifyChart(destArray, dataArray, chartType, runMetricsPeriodSec);
 			}
 			//
 			function clearArrays() {
@@ -1409,7 +1412,7 @@ function charts(chartsArray) {
 						drawBandwidthCharts(bandwidth, json)]));
 			}
 		},
-		chain: function(runId, runMetricsPeriodSec, loadType) {
+		chain: function(runId, runMetricsPeriodSec, loadType, array) {
 			//
 			var AVG = {
 					id: "avg",
@@ -1435,45 +1438,144 @@ function charts(chartsArray) {
 				BW: "bandwidth"
 			};
 			//
+			var data = [
+				{
+					loadType: loadType,
+					charts: [
+						{
+							name: AVG,
+							values: [
+								{x: 0, y: 0}
+							]
+						}, {
+							name: MIN_1,
+							values: [
+								{x: 0, y: 0}
+							]
+						}, {
+							name: MIN_5,
+							values: [
+								{x: 0, y: 0}
+							]
+						}, {
+							name: MIN_15,
+							values: [
+								{x: 0, y: 0}
+							]
+						}
+					],
+					currentRunMetricsPeriodSec: 0
+				}
+			];
+			//
+			var throughput = $.extend(true, [], data);
+			var bandwidth = $.extend(true, [], data);
+			//
+			function initializeDataArray(destArray, dataArray, chartType) {
+				//
+				var loadTypes = [];
+				dataArray.filter(function(d) {
+					var loadType = d.threadName.match(getThreadNamePattern())[0];
+					var result = this.indexOf(loadType) === -1;
+					if (result === true) {
+						this.push(loadType);
+					}
+					return result;
+				}, loadTypes);
+				destArray[0].loadType = loadTypes[0];
+				var i = 1;
+				while (i < loadTypes.length) {
+					var firstElement = $.extend(true, {}, destArray[0]);
+					firstElement.loadType = loadTypes[i];
+					destArray.push(firstElement);
+					i++;
+				}
+				//
+				dataArray.forEach(function(d) {
+					var value = parsePerfAvgLogEvent(chartType, d);
+					var loadType = d.threadName.match(getThreadNamePattern())[0];
+					destArray.forEach(function(d) {
+						if (d.loadType === loadType) {
+							isFound = true;
+							d.currentRunMetricsPeriodSec += parseInt(runMetricsPeriodSec);
+							d.charts.forEach(function(c, i) {
+								if (c.values.length === CRITICAL_DOTS_COUNT) {
+									var newDotsArray = [];
+									var step = 4;
+									var startOffset = 0;
+									var endOffset = 4;
+									while (endOffset <= CRITICAL_DOTS_COUNT) {
+										var slicedArray = c.values.slice(startOffset, endOffset);
+										var minElement = slicedArray[0];
+										var maxElement = slicedArray[0];
+										slicedArray.forEach(function(v) {
+											if (v.y < minElement.y) {
+												minElement = v;
+											}
+											if (v.y > maxElement.y) {
+												maxElement = v;
+											}
+										});
+										var startXCoord = slicedArray[0].x;
+										var endXCoord = slicedArray[step/2].x;
+										if (minElement.x < maxElement.x) {
+											newDotsArray.push({x: startXCoord, y: minElement.y});
+											newDotsArray.push({x: endXCoord, y: maxElement.y});
+										} else {
+											newDotsArray.push({x: startXCoord, y: maxElement.y});
+											newDotsArray.push({x: endXCoord, y: minElement.y});
+										}
+										startOffset = endOffset;
+										if (endOffset < CRITICAL_DOTS_COUNT && endOffset + step > CRITICAL_DOTS_COUNT) {
+											var start = endOffset;
+											while (start < CRITICAL_DOTS_COUNT) {
+												newDotsArray.push({x: c.values[start].x, y: c.values[start].y});
+												start++;
+											}
+										}
+										endOffset += step;
+									}
+									c.values = newDotsArray;
+								}
+								c.values.push({x: d.currentRunMetricsPeriodSec, y: parseFloat(value[i])});
+							})
+						}
+					});
+				});
+			}
+			//
+			function clearArrays() {
+				throughput.forEach(function(d) {
+					d.charts.forEach(function(c) {
+						c.values.shift();
+					});
+					d.currentRunMetricsPeriodSec = -parseInt(runMetricsPeriodSec);
+				});
+				bandwidth.forEach(function(d) {
+					d.charts.forEach(function(c) {
+						c.values.shift();
+					});
+					d.currentRunMetricsPeriodSec = -parseInt(runMetricsPeriodSec);
+				});
+			}
+			//
+			if ((array !== undefined) && (array.length > 0)) {
+				clearArrays();
+				//
+				initializeDataArray(throughput, array, CHART_TYPES.TP);
+				initializeDataArray(bandwidth, array, CHART_TYPES.BW);
+			}
+			//
 			chartsArray.push({
 				"run.id": runId,
 				"run.scenario.name": SCENARIO.chain,
 				"charts": [
-					drawThroughputChart(),
-					drawBandwidthChart()
+					drawThroughputChart(throughput),
+					drawBandwidthChart(bandwidth)
 				]
 			});
 			//
-			function drawThroughputChart() {
-				var data = [
-					{
-						loadType: loadType,
-						charts: [
-							{
-								name: AVG,
-								values: [
-									{x: 0, y: 0}
-								]
-							}, {
-								name: MIN_1,
-								values: [
-									{x: 0, y: 0}
-								]
-							}, {
-								name: MIN_5,
-								values: [
-									{x: 0, y: 0}
-								]
-							}, {
-								name: MIN_15,
-								values: [
-									{x: 0, y: 0}
-								]
-							}
-						],
-						currentRunMetricsPeriodSec: 0
-					}
-				];
+			function drawThroughputChart(data) {
 				var updateFunction = drawChart(data, "Throughput[obj/s]", "seconds", "throughput[obj/s]", "#tp-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
@@ -1482,36 +1584,7 @@ function charts(chartsArray) {
 				};
 			}
 			//
-			function drawBandwidthChart() {
-				var data = [
-					{
-						loadType: loadType,
-						charts: [
-							{
-								name: AVG,
-								values: [
-									{x: 0, y: 0}
-								]
-							}, {
-								name: MIN_1,
-								values: [
-									{x: 0, y: 0}
-								]
-							}, {
-								name: MIN_5,
-								values: [
-									{x: 0, y: 0}
-								]
-							}, {
-								name: MIN_15,
-								values: [
-									{x: 0, y: 0}
-								]
-							}
-						],
-						currentRunMetricsPeriodSec: 0
-					}
-				];
+			function drawBandwidthChart(data) {
 				var updateFunction = drawChart(data, "Bandwidth[MB/s]", "seconds", "bandwidth[MB/s]", "#bw-" + runId.split(".").join("_"));
 				return {
 					update: function(json) {
@@ -1623,6 +1696,7 @@ function charts(chartsArray) {
 				        return d.charts;
 					}).enter()
 					.append("path")
+					.attr("fill", "none")
 					.attr("class", "line")
 					.attr("d", function(c) { return line(c.values); })
 					.attr("stroke-dasharray", function(c, i) {
