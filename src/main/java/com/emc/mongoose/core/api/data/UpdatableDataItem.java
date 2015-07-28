@@ -11,9 +11,11 @@ import java.nio.channels.WritableByteChannel;
 public interface UpdatableDataItem
 extends DataItem {
 	//
-	boolean hasUpdatedRanges();
+	boolean hasAnyUpdatedRanges();
 	//
-	boolean isRangeUpdatePending(final int i);
+	boolean isCurrLayerRangeUpdating(final int i);
+	//
+	boolean isNextLayerRangeUpdating(final int i);
 	//
 	void updateRandomRange();
 	//

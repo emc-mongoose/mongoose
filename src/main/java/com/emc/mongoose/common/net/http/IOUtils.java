@@ -127,7 +127,7 @@ public final class IOUtils {
 					LOG.debug(
 						Markers.MSG,
 						"Thread local direct memory buffer map changed: count: {}, sizes: {}",
-						buffSizeMap.hashCode(), buffSizeMap.size(), buffSizeMap.keySet()
+						buffSizeMap.size(), buffSizeMap.keySet()
 					);
 				} else {
 					buff.clear();

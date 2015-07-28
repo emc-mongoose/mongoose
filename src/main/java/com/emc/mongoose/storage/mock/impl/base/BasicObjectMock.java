@@ -42,17 +42,17 @@ implements DataObjectMock {
 			maskIndexStart = getRangeCount(offset),
 			maskIndexEnd = getRangeCount(offset + size);
 		for(int i = maskIndexStart; i < maskIndexEnd; i ++) {
-			if(countRangesTotal > 0 && countRangesTotal == maskRangesHistory.cardinality()) {
+			if(countRangesTotal > 0 && countRangesTotal == maskRangesRead.cardinality()) {
 				// mask is full, switch to the next layer
-				currLayerIndex++;
-				maskRangesHistory.clear();
+				currLayerIndex ++;
+				maskRangesRead.clear();
 			}
-			if(maskRangesHistory.get(i)) {
+			if(maskRangesRead.get(i)) {
 				throw new IllegalStateException(
-					"Range " + i + " is already updated, but mask is not full"
+					"Range " + i + " is already updated, but mask is: " + maskRangesRead.toString()
 				);
 			} else {
-				maskRangesHistory.set(i);
+				maskRangesRead.set(i);
 			}
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -73,12 +73,12 @@ implements DataObjectMock {
 			);
 		}
 		final int
-			maskIndexStart = getRangeCount(offset),
-			maskIndexEnd = getRangeCount(offset + size);
-		this.size += size;
-		if(maskRangesHistory.get(maskIndexStart) && maskIndexEnd > maskIndexStart) {
-			maskRangesHistory.set(maskIndexStart, maskIndexEnd);
+			lastCellPos = this.size > 0 ? getRangeCount(this.size) - 1 : 0,
+			nextCellPos = getRangeCount(this.size + size);
+		if(lastCellPos < nextCellPos && maskRangesRead.get(lastCellPos)) {
+			maskRangesRead.set(lastCellPos, nextCellPos);
 		}
+		this.size += size;
 	}
 	//
 	@Override
@@ -87,15 +87,14 @@ implements DataObjectMock {
 		final int countRangesTotal = getRangeCount(size);
 		long rangeOffset, rangeSize;
 		UniformData updatedRange;
-		if (maskRangesHistory.isEmpty()) {
+		if (maskRangesRead.isEmpty()) {
 			return writeRange(chanOut, 0, size);
 		} else {
-			LOG.info(Markers.MSG, toString());
 			long writtenCount = 0;
 			for(int i = 0; i < countRangesTotal; i++) {
 				rangeOffset = getRangeOffset(i);
 				rangeSize = getRangeSize(i);
-				if(maskRangesHistory.get(i)) { // range have been modified
+				if(maskRangesRead.get(i)) { // range have been modified
 					updatedRange = new UniformData(
 						offset + rangeOffset, rangeSize, currLayerIndex + 1,
 						UniformDataSource.DEFAULT

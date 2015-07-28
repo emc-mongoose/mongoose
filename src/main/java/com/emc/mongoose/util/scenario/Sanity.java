@@ -75,7 +75,7 @@ implements Runnable {
 			LOG.info(Markers.MSG, "Start updating");
 			final DataItemOutput<WSObject> dataDstU = new BinFileItemOutput<>();
 			final long nUpdated = client.update(
-				dataDstW.getInput(), dataDstU, 0, DEFAULT_CONN_PER_NODE, 15
+				dataDstW.getInput(), dataDstU, 0, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated successfully {} items", nUpdated);
 			// read and verify the updated items
@@ -99,7 +99,7 @@ implements Runnable {
 				tmpItemsFilePath, BasicWSObject.class
 			);
 			final long nUpdated2 = client.update(
-				dataDstA.getInput(), dataDstU2, 0, DEFAULT_CONN_PER_NODE, 15
+				dataDstA.getInput(), dataDstU2, 0, DEFAULT_CONN_PER_NODE, 10
 			);
 			LOG.info(Markers.MSG, "Updated again successfully {} items", nUpdated2);
 			// read and verify the updated items again
@@ -154,7 +154,7 @@ implements Runnable {
 			.setNodes(storageNodes)
 			.setAuth("wuser1@sanity.local", "H1jTDL869wgZapHsylVcSYTx3aM7NxVABy8h017Z")
 			.setLimitCount(DEFAULT_DATA_COUNT_MAX)
-			.setLimitTime(1000, TimeUnit.SECONDS)
+			.setLimitTime(100, TimeUnit.SECONDS)
 			.setLimitRate(10000);
 		// standalone
 		try(final StorageClient<WSObject> client = clientBuilder.build()) {

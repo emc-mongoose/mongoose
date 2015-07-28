@@ -179,7 +179,7 @@ implements WSIOTask<T> {
 			if(httpRequest.getEntity() != null) {
 				if(dataItem.isAppending()) {
 					dataItem.writeAugmentFully(chanOut);
-				} else if(dataItem.hasUpdatedRanges()) {
+				} else if(dataItem.hasAnyUpdatedRanges()) {
 					dataItem.writeUpdatedRangesFully(chanOut);
 				} else {
 					if(LOG.isTraceEnabled(Markers.MSG)) {

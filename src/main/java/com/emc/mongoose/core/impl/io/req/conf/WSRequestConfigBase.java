@@ -492,10 +492,21 @@ implements WSRequestConfig<T> {
 		//
 		if(dataItem.isAppending()) {
 			sb.append(dataItem.getSize()).append(VALUE_RANGE_CONCAT);
-		} else if(dataItem.hasUpdatedRanges()) {
+		} else if(dataItem.hasAnyUpdatedRanges()) {
 			final int rangeCount = dataItem.getCountRangesTotal();
 			for(int i = 0; i < rangeCount; i ++) {
-				if(dataItem.isRangeUpdatePending(i)) {
+				if(dataItem.isCurrLayerRangeUpdating(i)) {
+					if(sb.length() > prefixLen) {
+						sb.append(RunTimeConfig.LIST_SEP);
+					}
+					sb
+						.append(getRangeOffset(i))
+						.append(VALUE_RANGE_CONCAT)
+						.append(getRangeOffset(i + 1) - 1);
+				}
+			}
+			for(int i = 0; i < rangeCount; i ++) {
+				if(dataItem.isNextLayerRangeUpdating(i)) {
 					if(sb.length() > prefixLen) {
 						sb.append(RunTimeConfig.LIST_SEP);
 					}

@@ -38,12 +38,12 @@ implements AppendableDataItem, UpdatableDataItem {
 	//
 	protected final static String
 		FMT_MSG_MASK = "Ranges mask is not correct hexadecimal value: %s",
-		FMT_MSG_UPD_CELL = "{}: update cell at position: {}, offset: {}, new mask: {}",
 		FMT_MSG_MERGE_MASKS = "{}: move pending ranges \"{}\" to history \"{}\"",
 		STR_EMPTY_MASK = "0";
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	protected final BitSet
-		maskRangesHistory = new BitSet(Long.SIZE), maskRangesPending = new BitSet(Long.SIZE);
+		maskRangesRead = new BitSet(Long.SIZE),
+		maskRangesWrite[] = new BitSet[] { new BitSet(Long.SIZE), new BitSet(Long.SIZE)};
 	protected int currLayerIndex = 0;
 	protected long pendingAugmentSize = 0;
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -80,8 +80,8 @@ implements AppendableDataItem, UpdatableDataItem {
 			.append(super.toString()).append(RunTimeConfig.LIST_SEP)
 			.append(Integer.toHexString(currLayerIndex)).append('/')
 			.append(
-				maskRangesHistory.isEmpty() ?
-					STR_EMPTY_MASK : Hex.encodeHexString(maskRangesHistory.toByteArray())
+				maskRangesRead.isEmpty() ? STR_EMPTY_MASK :
+				Hex.encodeHexString(maskRangesRead.toByteArray())
 			).toString();
 	}
 	//
@@ -110,7 +110,7 @@ implements AppendableDataItem, UpdatableDataItem {
 					rangesMaskChars = rangesMask.toCharArray();
 				}
 				// method "or" to merge w/ the existing mask
-				maskRangesHistory.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
+				maskRangesRead.or(BitSet.valueOf(Hex.decodeHex(rangesMaskChars)));
 			} catch(final DecoderException | NumberFormatException e) {
 				throw new IllegalArgumentException(String.format(FMT_MSG_MASK, rangesInfo));
 			}
@@ -121,7 +121,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public int hashCode() {
-		return super.hashCode() ^ maskRangesHistory.hashCode() ^ maskRangesPending.hashCode();
+		return super.hashCode() ^ maskRangesRead.hashCode() ^ maskRangesWrite.hashCode();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Binary serialization implementation /////////////////////////////////////////////////////////
@@ -131,8 +131,9 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException {
 		super.writeExternal(out);
 		out.writeInt(currLayerIndex);
-		out.writeLong(maskRangesHistory.isEmpty() ? 0 : maskRangesHistory.toLongArray()[0]);
-		out.writeLong(maskRangesPending.isEmpty() ? 0 : maskRangesPending.toLongArray()[0]);
+		out.writeLong(maskRangesRead.isEmpty() ? 0 : maskRangesRead.toLongArray()[0]);
+		out.writeLong(maskRangesWrite[0].isEmpty() ? 0 : maskRangesWrite[0].toLongArray()[0]);
+		out.writeLong(maskRangesWrite[1].isEmpty() ? 0 : maskRangesWrite[1].toLongArray()[0]);
 	}
 	//
 	@Override
@@ -140,8 +141,9 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException, ClassNotFoundException {
 		super.readExternal(in);
 		currLayerIndex = in.readInt();
-		maskRangesHistory.or(BitSet.valueOf(new long[] { in.readLong() }));
-		maskRangesPending.or(BitSet.valueOf(new long[] { in.readLong() }));
+		maskRangesRead.or(BitSet.valueOf(new long[]{in.readLong()}));
+		maskRangesWrite[0].or(BitSet.valueOf(new long[]{in.readLong()}));
+		maskRangesWrite[1].or(BitSet.valueOf(new long[]{in.readLong()}));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/*public static int log2(long value) {
@@ -179,7 +181,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	public final synchronized boolean readAndVerifyFully(final ReadableByteChannel chanSrc)
 	throws IOException {
 		// do not go over ranges if there's no updated ones
-		if(maskRangesHistory.isEmpty()) {
+		if(maskRangesRead.isEmpty()) {
 			if(currLayerIndex == 0) {
 				return super.readAndVerifyFully(chanSrc);
 			} else {
@@ -196,7 +198,7 @@ implements AppendableDataItem, UpdatableDataItem {
 			rangeOffset = getRangeOffset(i);
 			rangeSize = getRangeSize(i);
 			try {
-				if(maskRangesHistory.get(i)) {
+				if(maskRangesRead.get(i)) {
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
 							Markers.MSG, "{}: range #{} has been modified",
@@ -234,7 +236,7 @@ implements AppendableDataItem, UpdatableDataItem {
 			} catch(final DataCorruptionException e) {
 				LOG.warn(
 					Markers.MSG, "{}: content mismatch @ offset {}, expected: {}, actual: {}",
-					Long.toString(offset, DataObject.ID_RADIX), getRangeOffset(i) + e.offset,
+					toString(), getRangeOffset(i) + e.offset,
 					String.format("\"0x%X\"", e.expected), String.format("\"0x%X\"", e.actual)
 				);
 				contentEquals = false;
@@ -246,22 +248,18 @@ implements AppendableDataItem, UpdatableDataItem {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// UPDATE //////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final boolean hasUpdatedRanges() {
-		return !maskRangesPending.isEmpty();
+	public final boolean hasAnyUpdatedRanges() {
+		return !maskRangesWrite[0].isEmpty() || !maskRangesWrite[1].isEmpty();
 	}
 	//
 	@Override
-	public final boolean isRangeUpdatePending(final int i) {
-		return maskRangesPending.get(i);
+	public final boolean isCurrLayerRangeUpdating(final int i) {
+		return maskRangesWrite[0].get(i);
 	}
 	//
-	protected synchronized void switchToNextOverlay() {
-		maskRangesHistory.clear();
-		if(maskRangesPending.cardinality() == getRangeCount(size)) {
-			maskRangesPending.clear();
-		}
-		currLayerIndex ++;
-		setDataSource(UniformDataSource.DEFAULT, currLayerIndex); // increment layer index
+	@Override
+	public final boolean isNextLayerRangeUpdating(final int i) {
+		return maskRangesWrite[1].get(i);
 	}
 	//
 	@Override
@@ -271,27 +269,29 @@ implements AppendableDataItem, UpdatableDataItem {
 			countRangesTotal = getRangeCount(size),
 			startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
 		int nextCellPos;
-		boolean updateDone = false;
-		do {
+		if(countRangesTotal > maskRangesRead.cardinality() + maskRangesWrite[0].cardinality()) {
+			// current layer has not updated yet ranges
 			for(int i = 0; i < countRangesTotal; i++) {
 				nextCellPos = (startCellPos + i) % countRangesTotal;
-				if(!maskRangesHistory.get(nextCellPos) && !maskRangesPending.get(nextCellPos)) {
-					maskRangesPending.set(nextCellPos);
-					updateDone = true;
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(
-							Markers.MSG, FMT_MSG_UPD_CELL,
-							Long.toHexString(offset), nextCellPos, getRangeOffset(nextCellPos),
-							Hex.encodeHexString(maskRangesPending.toByteArray())
-						);
+				if(!maskRangesRead.get(nextCellPos)) {
+					if(!maskRangesWrite[0].get(nextCellPos)) {
+						maskRangesWrite[0].set(nextCellPos);
+						break;
 					}
-					break;
 				}
 			}
-			if(!updateDone) { // looks like there's no free range to update left
-				switchToNextOverlay();
+		} else {
+			// update the next layer ranges
+			for(int i = 0; i < countRangesTotal; i++) {
+				nextCellPos = (startCellPos + i) % countRangesTotal;
+				if(!maskRangesWrite[0].get(nextCellPos)) {
+					if(!maskRangesWrite[1].get(nextCellPos)) {
+						maskRangesWrite[1].set(nextCellPos);
+						break;
+					}
+				}
 			}
-		} while(!updateDone);
+		}
 	}
 	//
 	@Override
@@ -314,7 +314,7 @@ implements AppendableDataItem, UpdatableDataItem {
 		final long rangeCount = getRangeCount(size);
 		long pendingSize = 0;
 		for(int i = 0; i < rangeCount; i ++) {
-			if(maskRangesPending.get(i)) {
+			if(maskRangesWrite[0].get(i) || maskRangesWrite[1].get(i)) {
 				pendingSize += getRangeSize(i);
 			}
 		}
@@ -324,15 +324,17 @@ implements AppendableDataItem, UpdatableDataItem {
 	@Override
 	public final synchronized void writeUpdatedRangesFully(final WritableByteChannel chanOut)
 	throws IOException {
-		final int countRangesTotal = getRangeCount(size);
-		DataItem nextRangeData;
+		BitSet layerMask;
 		long rangeOffset, rangeSize;
-		for(int i = 0; i < countRangesTotal; i++) {
-			rangeOffset = getRangeOffset(i);
-			rangeSize = getRangeSize(i);
-			if(maskRangesPending.get(i)) {
+		DataItem nextRangeData;
+		for(int i = 0; i < maskRangesWrite.length; i ++) {
+			layerMask = maskRangesWrite[i];
+			for(int j = layerMask.nextSetBit(0); j >= 0; j = layerMask.nextSetBit(j + 1)) {
+				rangeOffset = getRangeOffset(j);
+				rangeSize = getRangeSize(j);
 				nextRangeData = new UniformData(
-					offset + rangeOffset, rangeSize, currLayerIndex + 1, UniformDataSource.DEFAULT
+					offset + rangeOffset, rangeSize, currLayerIndex + i + 1,
+					UniformDataSource.DEFAULT
 				);
 				nextRangeData.writeFully(chanOut);
 			}
@@ -342,12 +344,19 @@ implements AppendableDataItem, UpdatableDataItem {
 			LOG.trace(
 				Markers.MSG, FMT_MSG_MERGE_MASKS,
 				Long.toHexString(offset),
-				Hex.encodeHexString(maskRangesPending.toByteArray()),
-				Hex.encodeHexString(maskRangesHistory.toByteArray())
+				Hex.encodeHexString(maskRangesWrite[0].toByteArray()),
+				Hex.encodeHexString(maskRangesRead.toByteArray())
 			);
 		}
-		maskRangesHistory.or(maskRangesPending);
-		maskRangesPending.clear();
+		if(maskRangesWrite[1].isEmpty()) {
+			maskRangesRead.or(maskRangesWrite[0]);
+		} else {
+			maskRangesRead.clear();
+			maskRangesRead.or(maskRangesWrite[1]);
+			maskRangesWrite[1].clear();
+			currLayerIndex ++;
+		}
+		maskRangesWrite[0].clear();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// APPEND //////////////////////////////////////////////////////////////////////////////////////
@@ -365,8 +374,8 @@ implements AppendableDataItem, UpdatableDataItem {
 			final int
 				lastCellPos = size > 0 ? getRangeCount(size) - 1 : 0,
 				nextCellPos = getRangeCount(size + augmentSize);
-			if(lastCellPos < nextCellPos && maskRangesHistory.get(lastCellPos)) {
-				maskRangesHistory.set(lastCellPos, nextCellPos);
+			if(lastCellPos < nextCellPos && maskRangesRead.get(lastCellPos)) {
+				maskRangesRead.set(lastCellPos, nextCellPos);
 			}
 		} else {
 			throw new IllegalArgumentException(
@@ -385,7 +394,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	throws IOException {
 		if(pendingAugmentSize > 0) {
 			final int rangeIndex = size > 0 ? getRangeCount(size) - 1 : 0;
-			if(maskRangesHistory.get(rangeIndex)) { // write from the next layer
+			if(maskRangesRead.get(rangeIndex)) { // write from the next layer
 				new UniformData(
 					offset + size, pendingAugmentSize, currLayerIndex + 1,
 					UniformDataSource.DEFAULT
