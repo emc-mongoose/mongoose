@@ -64,7 +64,7 @@ public class ItemBlockingQueueTest {
 			),
 			buffIn = new ArrayList<>(5);
 		itemsIO.write(buffOut);
-		assertEquals(5, itemsIO.read(buffIn));
+		assertEquals(5, itemsIO.read(buffIn, 5));
 		assertEquals(buffIn, buffOut);
 	}
 	//

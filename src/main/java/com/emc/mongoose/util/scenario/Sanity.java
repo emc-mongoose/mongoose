@@ -62,13 +62,13 @@ implements Runnable {
 				null, dataDstW, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Written successfully {} items", nWritten);
-			/* read and verify the written items
+			// read and verify the written items
 			final DataItemInput<WSObject> dataSrcR = dataDstW.getInput();
 			final DataItemOutput<WSObject> dataDstR = new BinFileItemOutput<>();
 			final long nRead = client.read(
 				dataSrcR, dataDstR, DEFAULT_DATA_COUNT_MAX, DEFAULT_CONN_PER_NODE, true
 			);
-			LOG.info(Markers.MSG, "Read successfully {} items", nRead);*/
+			LOG.info(Markers.MSG, "Read successfully {} items", nRead);
 			// update the items
 			final DataItemInput<WSObject> dataSrcU = dataDstW.getInput();
 			final DataItemOutput dataDstU = new CSVFileItemOutput<>(BasicWSObject.class);
