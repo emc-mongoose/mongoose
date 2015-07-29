@@ -154,6 +154,6 @@ public class SimultaneousLoadTest {
 				}
 			}
 		}
-		Assert.assertEquals("Wrong summary log statements count", COUNT_STEPS, countSummaries);
+		Assert.assertEquals("Wrong summary log statements count", 2 * COUNT_STEPS, countSummaries);
 	}
 }

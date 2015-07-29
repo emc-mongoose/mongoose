@@ -44,7 +44,7 @@ import java.util.regex.Matcher;
  */
 public class UpdateLoggingTest {
 	//
-	private final static int COUNT_TO_WRITE = 1000;
+	private final static int COUNT_LIMIT = 1000;
 	private final static String RUN_ID = DeleteLoggingTest.class.getCanonicalName();
 	//
 	private static StorageClient<WSObject> CLIENT;
@@ -65,7 +65,7 @@ public class UpdateLoggingTest {
 			clientBuilder = new BasicWSClientBuilder<>();
 		CLIENT = clientBuilder
 			.setLimitTime(0, TimeUnit.SECONDS)
-			.setLimitCount(COUNT_TO_WRITE)
+			.setLimitCount(COUNT_LIMIT)
 			.setClientMode(new String[] {ServiceUtils.getHostAddr()})
 			.build();
 		final BufferingOutputStream
@@ -77,11 +77,11 @@ public class UpdateLoggingTest {
 			);
 		}
 		final ItemBlockingQueue<WSObject> itemsQueue = new ItemBlockingQueue<>(
-			new ArrayBlockingQueue<WSObject>(COUNT_TO_WRITE)
+			new ArrayBlockingQueue<WSObject>(COUNT_LIMIT)
 		);
-		COUNT_WRITTEN = CLIENT.write(null, itemsQueue, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
+		COUNT_WRITTEN = CLIENT.write(null, itemsQueue, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
 		stdOutInterceptorStream.reset(); // clear before using
-		COUNT_UPDATED = CLIENT.update(itemsQueue, null, 0, 10, 10);
+		COUNT_UPDATED = CLIENT.update(itemsQueue, null, COUNT_LIMIT, 10, 10);
 		TimeUnit.SECONDS.sleep(1);
 		STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 		LOG = LogManager.getLogger();

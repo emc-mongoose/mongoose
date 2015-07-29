@@ -47,7 +47,7 @@ implements Runnable {
 	//
 	private final static short DEFAULT_NODE_COUNT = 5, DEFAULT_CONN_PER_NODE = 5;
 	private final static long DEFAULT_DATA_SIZE = SizeUtil.toSize("256KB");
-	private final static int DEFAULT_DATA_COUNT_MAX = 10;
+	private final static int DEFAULT_DATA_COUNT_MAX = 1000000;
 	public final static Logger LOG;
 	static {
 		LogUtil.init();
@@ -107,17 +107,16 @@ implements Runnable {
 				dataDstU2.getInput(), null, 0, DEFAULT_CONN_PER_NODE, true
 			);
 			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead2);
-			// recreate the items
+			/* recreate the items
 			final long nReWritten = client.write(
 				dataDstW.getInput(), null, 0, DEFAULT_CONN_PER_NODE, DEFAULT_DATA_SIZE
 			);
 			LOG.info(Markers.MSG, "Rewritten successfully {} items", nReWritten);
 			// read and verify the rewritten data items
-			// read and verify the updated items again
 			final long nRead3 = client.read(
 				dataDstW.getInput(), null, 0, DEFAULT_CONN_PER_NODE, true
 			);
-			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);
+			LOG.info(Markers.MSG, "Read and verified successfully {} items", nRead3);*/
 			// delete all created data items
 			final long nDeleted = client.delete(dataDstW.getInput(), null, 0, DEFAULT_CONN_PER_NODE);
 			LOG.info(Markers.MSG, "Deleted successfully {} items", nDeleted);
@@ -133,7 +132,7 @@ implements Runnable {
 		RunTimeConfig.initContext();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		//
-		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, 1000000);
+		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_CAPACITY, DEFAULT_DATA_COUNT_MAX);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_HEAD_COUNT, DEFAULT_NODE_COUNT);
 		rtConfig.set(RunTimeConfig.KEY_STORAGE_MOCK_IO_THREADS_PER_SOCKET, DEFAULT_CONN_PER_NODE);
 		//rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
@@ -164,7 +163,7 @@ implements Runnable {
 			sanityThread1.join();
 			LOG.info(Markers.MSG, "Standalone sanity finished");
 		}
-		/* distributed mode
+		// distributed mode
 		rtConfig.set(RunTimeConfig.KEY_REMOTE_SERVE_IF_NOT_LOAD_SERVER, true);
 		ServiceUtils.init();
 		//
@@ -187,7 +186,7 @@ implements Runnable {
 				LOG.info(Markers.MSG, "Distributed sanity finished");
 			}
 		}
-		*/
+		//
 		ServiceUtils.shutdown();
 		// finish
 		wsMockThread.interrupt();

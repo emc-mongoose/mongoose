@@ -2,7 +2,6 @@ package com.emc.mongoose.integ.distributed.single;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
-import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 //
 import com.emc.mongoose.core.api.data.WSObject;
@@ -15,13 +14,10 @@ import static com.emc.mongoose.integ.tools.LogPatterns.*;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
 import com.emc.mongoose.util.client.api.StorageClient;
-import com.emc.mongoose.util.client.api.StorageClientBuilder;
-import com.emc.mongoose.util.client.impl.BasicStorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
 //
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import org.junit.AfterClass;
@@ -42,7 +38,7 @@ import java.util.regex.Matcher;
  */
 public class WriteLoggingTest {
 	//
-	private final static long COUNT_TO_WRITE = 1000;
+	private final static long COUNT_LIMIT = 1000;
 	private final static String RUN_ID = WriteLoggingTest.class.getCanonicalName();
 	//
 	private static long COUNT_WRITTEN;
@@ -63,7 +59,7 @@ public class WriteLoggingTest {
 			final StorageClient<WSObject>
 				client = new BasicWSClientBuilder<>()
 					.setLimitTime(0, TimeUnit.SECONDS)
-					.setLimitCount(COUNT_TO_WRITE)
+					.setLimitCount(COUNT_LIMIT)
 					.setClientMode(new String[] {ServiceUtils.getHostAddr()})
 					.build()
 		) {
@@ -71,7 +67,7 @@ public class WriteLoggingTest {
 				final BufferingOutputStream
 					stdOutInterceptorStream = StdOutInterceptorTestSuite.getStdOutBufferingStream()
 			) {
-				COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
+				COUNT_WRITTEN = client.write(null, null, COUNT_LIMIT, 10, SizeUtil.toSize("10KB"));
 				TimeUnit.SECONDS.sleep(1);
 				STD_OUT_CONTENT = stdOutInterceptorStream.toByteArray();
 			}

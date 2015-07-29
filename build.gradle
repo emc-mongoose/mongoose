@@ -494,27 +494,6 @@ configurations {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-task compileRMI(dependsOn: "compileServerImplJava") << {
-	String[] listClsRemote = [
-		'com.emc.mongoose.server.impl.load.builder.BasicWSLoadBuilderSvc',
-		'com.emc.mongoose.server.impl.load.executor.BasicWSLoadSvc'
-	]
-	String clsPath = [
-		"${sourceSets.common.output.classesDir}",
-		"${sourceSets.coreApi.output.classesDir}",
-		"${sourceSets.coreImpl.output.classesDir}",
-		"${sourceSets.serverApi.output.classesDir}",
-		"${sourceSets.serverImpl.output.classesDir}",
-		"${configurations.serverImplCompile.asPath}",
-	].join(File.pathSeparator)
-	for(cls in listClsRemote) {
-		String command = """rmic -classpath ${clsPath} -d ${sourceSets.serverImpl.output.classesDir} ${cls}"""
-		String test = command.execute().text
-		print test
-	}
-}
-
 ext.sharedManifest = manifest {
 	attributes('Implementation-Version': version)
 }
@@ -673,7 +652,7 @@ task serverApiJar(type: Jar) {
 }
 
 task webserverJar(type: Jar) {
-	dependsOn commonJar, compileRMI
+	dependsOn commonJar
 	classifier "webserver"
 	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.webserver.output
@@ -737,7 +716,7 @@ task scenarioJar(type: Jar) {
 }
 
 task serverImplJar(type: Jar) {
-	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar, compileRMI
+	dependsOn commonJar, coreApiJar, coreImplJar, serverApiJar
 	classifier "server-impl"
 	archiveName "${baseName}-${classifier}.${extension}"
 	from sourceSets.serverImpl.output
@@ -1039,7 +1018,7 @@ test {
 	testLogging { events "passed", "skipped", "failed" }
 }
 
-task integTest(type: Test, dependsOn: compileRMI) {
+task integTest(type: Test) {
 	//Be able to run only test suit
 	//include '**/CoreTestSuite.class'
 	include '**/DistributedLoadTestSuite.class'
