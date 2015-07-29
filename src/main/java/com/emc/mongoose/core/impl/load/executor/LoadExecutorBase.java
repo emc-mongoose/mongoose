@@ -46,7 +46,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -421,9 +420,7 @@ implements LoadExecutor<T> {
 			respLatency = metrics.register(MetricRegistry.name(getName(),
 				METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
 			//
-			//if (RunTimeConfig.getContext().getRunMode().equals(Constants.RUN_MODE_STANDALONE)) {
-				restoreState();
-			//}
+			restoreState();
 			//
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
@@ -546,10 +543,10 @@ implements LoadExecutor<T> {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of run." +
 				"Starting new run");
 		}
-		deleteHandledStateFile(fullStateFileName);
+		removePreviousStateFile(fullStateFileName);
 	}
 	//
-	private void deleteHandledStateFile(final String fileName) {
+	private void removePreviousStateFile(final String fileName) {
 		try {
 			Files.delete(Paths.get(fileName));
 		} catch (final NoSuchFileException e) {
@@ -557,7 +554,7 @@ implements LoadExecutor<T> {
 				"File \"{}\" with state of run wasn't found", fileName);
 		} catch (final IOException e) {
 			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to delete file \"{}\"", fileName);
+				"Failed to remove the file \"{}\"", fileName);
 		}
 	}
 	//
