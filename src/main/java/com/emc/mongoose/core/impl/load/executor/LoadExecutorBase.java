@@ -424,6 +424,8 @@ implements LoadExecutor<T> {
 			if (RunTimeConfig.getContext().getRunMode().
 					equals(Constants.RUN_MODE_STANDALONE)) {
 				restoreState();
+				if (isLoadFinished.get())
+					return;
 			}
 			//
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
@@ -475,9 +477,9 @@ implements LoadExecutor<T> {
 				LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
 					rtConfig.getRunId());
 			}
+		} else {
+			applyParams();
 		}
-		//
-		applyParams();
 	}
 	//
 	private void applyParams() {
@@ -496,7 +498,7 @@ implements LoadExecutor<T> {
 					LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
 					return;
 				}
-				for (int i = 0;i < state.getLatencyValues().length; i++) {
+				for (int i = 0; i < state.getLatencyValues().length; i++) {
 					respLatency.update(state.getLatencyValues()[i]);
 				}
 				break;
@@ -539,6 +541,10 @@ implements LoadExecutor<T> {
 				LOG.info(Markers.MSG, "Run \"{}\" was resumed",
 					rtConfig.getRunId());
 				DESERIALIZED_STATES.put(rtConfig.getRunId(), loadStates);
+				applyParams();
+				if (isLoadFinished.get()) {
+					return;
+				}
 			}
 		} catch (final FileNotFoundException e) {
 			LOG.debug(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
@@ -570,7 +576,6 @@ implements LoadExecutor<T> {
 	public final void interrupt() {
 		if (isLoadFinished.get())
 			return;
-		//
 		if(isInterrupted.compareAndSet(false, true)) {
 			metricsDaemon.interrupt();
 			shutdown();
