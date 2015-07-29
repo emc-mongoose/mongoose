@@ -14,12 +14,13 @@ import com.emc.mongoose.storage.mock.api.IOStats;
 import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.web.response.BasicWSResponseProducer;
 //
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 //
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -36,10 +37,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 /**
  Created by andrey on 13.05.15.
  */
@@ -69,6 +73,8 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
 	private final ObjectStorage<T> sharedStorage;
+	//
+	private final static Pattern RANGE_PATTERN = Pattern.compile("(?<firstPosition>[\\d]+)\\-(?<secondPosition>[\\d]+)?");
 	//
 	protected WSRequestHandlerBase(
 		final RunTimeConfig runTimeConfig, final ObjectStorage<T> sharedStorage
@@ -176,8 +182,20 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		}
 		try {
 			httpResponse.setStatusCode(HttpStatus.SC_OK);
-			final BasicWSObjectMock dataObject = writeDataObject(httpRequest, dataId);
-			ioStats.markCreate(dataObject.getSize());
+			BasicWSObjectMock dataObject;
+			//
+			if (httpRequest.getFirstHeader(HttpHeaders.RANGE) == null) {
+				// write or recreate data item
+				dataObject = writeDataObject(httpRequest, dataId);
+				ioStats.markCreate(dataObject.getSize());
+			} else if (sharedStorage.get(dataId) != null){
+				// else do append or update if data item exist
+				dataObject = sharedStorage.get(dataId);
+				handleRanges(httpRequest, httpResponse, dataObject);
+			} else {
+				httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+				LOG.debug(Markers.ERR, "Unknown request");
+			}
 		} catch(final HttpException e) {
 			httpResponse.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			LogUtil.exception(LOG, Level.ERROR, e, "Put method failure");
@@ -189,6 +207,40 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 				"Failed to decode the data id \"{}\" as ring buffer offset", dataId
 			);
 			ioStats.markCreate(-1);
+		}
+	}
+	//
+	private void handleRanges(final HttpRequest httpRequest, final HttpResponse httpResponse, final BasicWSObjectMock dataObject) {
+		//get content length
+		final HttpEntity entity = HttpEntityEnclosingRequest.class.cast(httpRequest).getEntity();
+		final long bytes = entity.getContentLength();
+		// create list of ranges interval(s)
+		final Header headerRange = httpRequest.getFirstHeader(HttpHeaders.RANGE);
+		final Matcher matcherRange = RANGE_PATTERN.matcher(headerRange.getValue());
+		final List<Long> ranges= new ArrayList<>();
+		while (matcherRange.find()) {
+			ranges.add(Long.valueOf(matcherRange.group("firstPosition")));
+			if (matcherRange.group("secondPosition") != null) {
+				ranges.add(Long.valueOf(matcherRange.group("secondPosition")));
+			} else {
+				ranges.add(bytes);
+			}
+		}
+		// switch append or update. If first range is equal data item's size it's append.
+		if (ranges.get(0) == dataObject.getSize()) {
+			//set new data object's size
+			dataObject.setSize(dataObject.getSize() + bytes);
+			dataObject.append(bytes);
+		} else if(ranges.get(ranges.size() - 1) <= dataObject.getSize()) {
+			dataObject.updateRanges(ranges);
+		} else {
+			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			LOG.debug(Markers.ERR, "There isn't header of ranges");
+			return;
+		}
+		sharedStorage.create((T) dataObject);
+		if(LOG.isTraceEnabled(Markers.DATA_LIST)) {
+			LOG.trace(Markers.DATA_LIST, dataObject);
 		}
 	}
 	//

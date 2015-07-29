@@ -95,7 +95,7 @@ implements DataItem {
 		ringBuffSize = ringBuff.capacity();
 	}
 	//
-	private void reset() {
+	protected void reset() {
 		ringBuff.limit(ringBuffSize).position((int) (offset % ringBuffSize));
 	}
 	//
@@ -162,9 +162,11 @@ implements DataItem {
 	}
 	//
 	@Override
-	public final int write(final WritableByteChannel chanDst)
+	public final int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException {
 		enforceCircularity();
+		int n = (int) Math.min(maxCount, ringBuff.remaining());
+		ringBuff.limit(ringBuff.position() + n);
 		return chanDst.write(ringBuff);
 	}
 	//
@@ -182,7 +184,7 @@ implements DataItem {
 		int n;
 		setRelativeOffset(relOffset);
 		while(writtenCount < len) {
-			n = write(chanDst);
+			n = write(chanDst, len-writtenCount);
 			if(n < 0) {
 				LOG.warn(Markers.ERR, "Channel returned {} as written byte count", n);
 			} else if(n > 0) {
@@ -198,7 +200,7 @@ implements DataItem {
 		//
 		enforceCircularity();
 		int n = ringBuff.remaining();
-		if(buff.capacity() > n) {
+		if(buff.limit() > n) {
 			buff.limit(n);
 		}
 		//
@@ -231,12 +233,7 @@ implements DataItem {
 		final ReadableByteChannel chanSrc, final long relOffset, final long len
 	) throws IOException {
 		setRelativeOffset(relOffset);
-		//
-		final ByteBuffer buff = ByteBuffer.allocate(
-			(int) Math.min(
-				Constants.BUFF_SIZE_HI, Math.max(Constants.BUFF_SIZE_LO, len)
-			)
-		);
+		final ByteBuffer buff = ByteBuffer.allocate((int) Math.min(Constants.BUFF_SIZE_HI, len));
 		//
 		int n;
 		long doneByteCount = 0;
@@ -244,8 +241,9 @@ implements DataItem {
 			while(doneByteCount < len) {
 				n = readAndVerify(chanSrc, buff);
 				if(n > 0) {
-					buff.clear();
 					doneByteCount += n;
+					buff.position(0)
+						.limit((int) Math.min(len - doneByteCount, buff.capacity()));
 				}
 			}
 		} catch(final DataSizeException e) {

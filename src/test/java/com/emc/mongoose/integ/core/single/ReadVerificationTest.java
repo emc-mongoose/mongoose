@@ -48,7 +48,7 @@ public class ReadVerificationTest {
 	public static void before()
 	throws Exception{
 		//Create run ID
-		createRunId += ":" + DATA_SIZE + ":" + TestConstants.FMT_DT.format(
+		createRunId += "VerifFail:" + TestConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, createRunId);

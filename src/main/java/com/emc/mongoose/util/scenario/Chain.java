@@ -66,8 +66,9 @@ implements Runnable {
 				loadBuilder.setLoadType(IOTask.Type.valueOf(loadTypeStr.toUpperCase()));
 				nextLoadJob = loadBuilder.build();
 				if(prevLoadJob == null) {
-					// prevent the file list producer creation for next load jobs
+					// prevent the producer creation for next load jobs
 					loadBuilder.setInputFile(null);
+					loadBuilder.getRequestConfig().setAnyDataProducerEnabled(false);
 				} else {
 					prevLoadJob.setConsumer(nextLoadJob);
 				}

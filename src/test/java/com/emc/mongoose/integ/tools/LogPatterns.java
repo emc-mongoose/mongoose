@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 public interface LogPatterns {
 	Pattern
 		DATE_TIME_ISO8601 = Pattern.compile(
-			"(?<dateTime>[\\d]{4}\\-[\\d]{2}-[\\d]{2}T[\\d]{2}:[\\d]{2}:[\\d]{2},[\\d]{3})"
+			"(?<dateTime>[\\d]{4}\\-[\\d]{2}-[\\d]{2}T(?<time>[\\d]{2}:[\\d]{2}:[\\d]{2},[\\d]{3}))"
 		),
 		LOG_LEVEL = Pattern.compile("(?<levelLog>[FEWIDT])"),
 		CLASS_NAME = Pattern.compile("[A-Za-z]+[\\w]*"),
@@ -15,6 +15,10 @@ public interface LogPatterns {
 		NUM_LOAD = Pattern.compile("(?<numLoad>[\\d]+)"),
 		TYPE_API = Pattern.compile("(?<typeApi>[A-Za-z0-9]+)"),
 		TYPE_LOAD = Pattern.compile("(?<typeLoad>[CreatRdDlUpAn]{4,6})"),
+		//
+		DATA_ID = Pattern.compile("(?<dataID>[A-Za-z0-9]+)"),
+		DATA_LAYER_MASK = Pattern.compile("(?<layerMask>[\\d]+/[\\p{XDigit}]+)"),
+		TARGET_NODE = Pattern.compile("(?<targetNode>[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}\\.[\\d]{1,3}:[\\d]{1,5})"),
 		//
 		CONSOLE_LOAD_NAME_SUFFIX = Pattern.compile(
 			"(?<countLimit>[\\d]*)\\-(?<countConn>[\\d]*)x(?<countNodes>[\\d]*)"

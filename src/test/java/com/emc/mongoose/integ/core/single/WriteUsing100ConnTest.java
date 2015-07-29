@@ -21,6 +21,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,7 +57,7 @@ public class WriteUsing100ConnTest {
 		savedOutputStream = new BufferingOutputStream(System.out);
 		System.setOut(new PrintStream(savedOutputStream));
 		//Create run ID
-		createRunId += ":" + DATA_SIZE + ":" + TestConstants.FMT_DT.format(
+		createRunId += "100Conn:" + TestConstants.FMT_DT.format(
 			Calendar.getInstance(TimeZone.getTimeZone("UTC"), Locale.ROOT).getTime()
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, createRunId);
@@ -207,12 +208,11 @@ public class WriteUsing100ConnTest {
 		final File dataItemFile = LogParser.getDataItemsFile(createRunId);
 		Assert.assertTrue(dataItemFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(dataItemFile));
-		//
-		String line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(LogParser.matchWithDataItemsFilePattern(line));
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(dataItemFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectDataItemsCSV(in);
 		}
 	}
 
@@ -221,17 +221,13 @@ public class WriteUsing100ConnTest {
 	throws Exception {
 		// Get perf.avg.csv file of write scenario run
 		final File perfAvgFile = LogParser.getPerfAvgFile(createRunId);
-		Assert.assertTrue(perfAvgFile.exists());
+		Assert.assertTrue("perfAvg.csv file doesn't exist", perfAvgFile.exists());
 		//
-		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
-		//
-		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(LogParser.HEADER_PERF_AVG_FILE, line);
-		line = bufferedReader.readLine();
-		while (line != null) {
-			Assert.assertTrue(LogParser.matchWithPerfAvgFilePattern(line));
-			line = bufferedReader.readLine();
+		try(
+			final BufferedReader
+				in = Files.newBufferedReader(perfAvgFile.toPath(), StandardCharsets.UTF_8)
+		) {
+			LogParser.assertCorrectPerfAvgCSV(in);
 		}
 	}
 
@@ -245,8 +241,6 @@ public class WriteUsing100ConnTest {
 		final BufferedReader bufferedReader = new BufferedReader(new FileReader(perfAvgFile));
 		//
 		String line = bufferedReader.readLine();
-		//Check that header of file is correct
-		Assert.assertEquals(LogParser.HEADER_PERF_AVG_FILE, line);
 		//
 		Matcher matcher;
 		String loadType, actualLoadType, apiName;
