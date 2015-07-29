@@ -529,6 +529,9 @@ implements LoadClient<T> {
 			if (isSavedStateOfRunExists(runTimeConfig.getRunId())) {
 				LOG.warn(Markers.MSG, "Run \"{}\": configuration immutability violated. " +
 					"Starting new run", runTimeConfig.getRunId());
+			} else {
+				LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". " +
+					"Starting new run", runTimeConfig.getRunId());
 			}
 			LoadSvc<T> nextLoadSvc;
 			for(final String addr : loadSvcAddrs) {
