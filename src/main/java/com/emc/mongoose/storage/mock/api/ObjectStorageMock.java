@@ -9,19 +9,14 @@ import java.util.concurrent.ExecutionException;
 public interface ObjectStorageMock<T extends DataObject>
 extends StorageMock<T> {
 	//
-	T create(final String id, final long offset, final long size)
-	throws InterruptedException, ExecutionException;
+	T create(final String id, final long offset, final long size);
 	//
-	T update(final String id, final long offset, final long size)
-	throws InterruptedException, ExecutionException;
+	T update(final String id, final long offset, final long size);
 	//
-	T append(final String id, final long offset, final long size)
-	throws InterruptedException, ExecutionException;
+	T append(final String id, final long offset, final long size);
 	//
-	T read(final String id, final long offset, final long size)
-	throws InterruptedException, ExecutionException;
+	T read(final String id, final long offset, final long size);
 	//
-	T delete(final String id)
-	throws InterruptedException, ExecutionException;
+	T delete(final String id);
 	//
 }

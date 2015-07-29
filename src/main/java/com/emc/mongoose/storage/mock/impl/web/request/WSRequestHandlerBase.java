@@ -26,9 +26,7 @@ import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.HttpVersion;
 import org.apache.http.MethodNotSupportedException;
-import org.apache.http.ProtocolVersion;
 import org.apache.http.RequestLine;
 import org.apache.http.protocol.HttpContext;
 //
@@ -41,7 +39,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -191,11 +188,7 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 					HttpEntityEnclosingRequest.class.cast(request).getEntity().getContentLength()
 				);
 			}
-		} catch(final ExecutionException | InterruptedException | HttpException e) {
-			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-			LogUtil.exception(LOG, Level.ERROR, e, "Write storage failure");
-			ioStats.markCreate(-1);
-		} catch(final NumberFormatException e) {
+		} catch(final NumberFormatException | HttpException e) {
 			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			LogUtil.exception(
 				LOG, Level.ERROR, e,
@@ -220,26 +213,19 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 				rangeValuePairs = rangeHeaderValue.split(RunTimeConfig.LIST_SEP);
 				for(final String rangeValuePair : rangeValuePairs) {
 					rangeValue = rangeValuePair.split(VALUE_RANGE_CONCAT);
-					try {
-						if(rangeValue.length == 1) {
-							sharedStorage.append(
-								dataId, Long.parseLong(rangeValue[0]), contentLength
-							);
-						} else if(rangeValue.length == 2) {
-							offset = Long.parseLong(rangeValue[0]);
-							sharedStorage.update(
-								dataId, offset, Long.parseLong(rangeValue[1]) - offset + 1
-							);
-						} else {
-							LOG.warn(
-								Markers.ERR, "Invalid range header value: \"{}\"", rangeHeaderValue
-							);
-						}
-					} catch(
-						final ExecutionException | InterruptedException | NumberFormatException e
-					) {
-						LogUtil.exception(LOG, Level.WARN, e, "Range modification failure");
-						httpResponse.setStatusCode(HttpStatus.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+					if(rangeValue.length == 1) {
+						sharedStorage.append(
+							dataId, Long.parseLong(rangeValue[0]), contentLength
+						);
+					} else if(rangeValue.length == 2) {
+						offset = Long.parseLong(rangeValue[0]);
+						sharedStorage.update(
+							dataId, offset, Long.parseLong(rangeValue[1]) - offset + 1
+						);
+					} else {
+						LOG.warn(
+							Markers.ERR, "Invalid range header value: \"{}\"", rangeHeaderValue
+						);
 					}
 				}
 			} else {
@@ -249,52 +235,41 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	}
 	//
 	private void handleRead(final HttpResponse response, final String dataId) {
-		try {
-			final T dataObject = sharedStorage.read(dataId, 0, 0);
-			if(dataObject == null) {
-				response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.ERR, "No such object: {}", dataId);
-				}
-				ioStats.markRead(-1);
-			} else {
-				response.setStatusCode(HttpStatus.SC_OK);
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.MSG, "Send data object with ID: {}", dataId);
-				}
-				response.setEntity(dataObject);
-				ioStats.markRead(dataObject.getSize());
+		final T dataObject = sharedStorage.read(dataId, 0, 0);
+		if(dataObject == null) {
+			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.ERR, "No such object: {}", dataId);
 			}
-		} catch(final InterruptedException | ExecutionException e) {
-			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to read the data object: {}", dataId);
 			ioStats.markRead(-1);
+		} else {
+			response.setStatusCode(HttpStatus.SC_OK);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Send data object with ID: {}", dataId);
+			}
+			response.setEntity(dataObject);
+			ioStats.markRead(dataObject.getSize());
 		}
 	}
 	//
 	private void handleDelete(final HttpResponse response, final String dataId){
-		try {
-			final T dataObject = sharedStorage.delete(dataId);
-			if(dataObject == null) {
-				response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.ERR, "No such object: {}", dataId);
-				}
-			} else {
-				response.setStatusCode(HttpStatus.SC_OK);
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(Markers.MSG, "Delete data object with ID: {}", dataId);
-				}
-				ioStats.markDelete();
+		final T dataObject = sharedStorage.delete(dataId);
+		if(dataObject == null) {
+			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.ERR, "No such object: {}", dataId);
 			}
-		} catch(final InterruptedException | ExecutionException e) {
-			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
-			LogUtil.exception(LOG, Level.ERROR, e, "Failed to delete the data object: {}", dataId);
+		} else {
+			response.setStatusCode(HttpStatus.SC_OK);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.MSG, "Delete data object with ID: {}", dataId);
+			}
+			ioStats.markDelete();
 		}
 	}
 	//
 	private T createDataObject(final HttpRequest request, final String dataId)
-	throws HttpException, NumberFormatException, InterruptedException, ExecutionException {
+	throws HttpException, NumberFormatException {
 		final HttpEntity entity = HttpEntityEnclosingRequest.class.cast(request).getEntity();
 		final long size = entity.getContentLength();
 		// create data object or get it for append or update

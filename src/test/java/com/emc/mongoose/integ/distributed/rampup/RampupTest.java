@@ -49,6 +49,7 @@ public class RampupTest {
 	private static Logger LOG;
 	private static long DURATION_TOTAL_SEC = -1;
 	private static byte STD_OUT_CONTENT[] = null;
+	private static File FILE_LOG_PERF_SUM;
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -60,6 +61,10 @@ public class RampupTest {
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, Long.toString(LOAD_LIMIT_TIME_SEC) + "s");
 		rtConfig.set(RunTimeConfig.KEY_LOAD_METRICS_PERIOD_SEC, 0);
 		rtConfig.set(RunTimeConfig.KEY_RUN_MODE, Constants.RUN_MODE_CLIENT);
+		FILE_LOG_PERF_SUM = LogParser.getPerfSumFile(RUN_ID);
+		if(FILE_LOG_PERF_SUM.exists()) {
+			FILE_LOG_PERF_SUM.delete();
+		}
 		try(final LoadBuilder loadBuilder = WSLoadBuilderFactory.getInstance(rtConfig)) {
 			final Rampup rampupScenario = new Rampup(
 				loadBuilder, LOAD_LIMIT_TIME_SEC, TimeUnit.SECONDS,
@@ -126,11 +131,10 @@ public class RampupTest {
 	throws Exception {
 		boolean firstRow = true;
 		int countSummaries = 0;
-		final File logPerfSumFile = LogParser.getPerfSumFile(RUN_ID);
-		Assert.assertTrue("Performance sum metrics file doesn't exist", logPerfSumFile.exists());
+		Assert.assertTrue("Performance sum metrics file doesn't exist", FILE_LOG_PERF_SUM.exists());
 		try(
 			final BufferedReader
-				in = Files.newBufferedReader(logPerfSumFile.toPath(), StandardCharsets.UTF_8)
+				in = Files.newBufferedReader(FILE_LOG_PERF_SUM.toPath(), StandardCharsets.UTF_8)
 		) {
 			final Iterable<CSVRecord> recIter = CSVFormat.RFC4180.parse(in);
 			for(final CSVRecord nextRec : recIter) {
@@ -167,6 +171,6 @@ public class RampupTest {
 				}
 			}
 		}
-		Assert.assertEquals("Wrong summary log statements count", 2 * COUNT_STEPS, countSummaries);
+		Assert.assertEquals("Wrong summary log statements count", COUNT_STEPS, countSummaries);
 	}
 }

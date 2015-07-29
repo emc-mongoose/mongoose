@@ -5,8 +5,6 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-//
-import com.emc.mongoose.core.api.io.task.IOTask;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
@@ -38,7 +36,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.util.concurrent.ExecutionException;
 /**
  * Created by olga on 28.01.15.
  */
@@ -157,67 +154,38 @@ implements WSMock<T> {
 	}
 	//
 	@Override
-	public final T create(final String id, final long offset, final long size)
-	throws InterruptedException, ExecutionException {
-		final BasicWSMockTask task = BasicWSMockTask.getInstance(
-			itemIndex, id, IOTask.Type.CREATE, offset, size
-		);
-		try {
-			return (T) taskExecutor.submit(task).get();
-		} finally {
-			task.release();
-		}
+	public final T create(final String id, final long offset, final long size) {
+		final T newDataObject = (T) new BasicWSObjectMock(id, offset, size);
+		itemIndex.put(id, newDataObject);
+		return newDataObject;
 	}
 	//
 	@Override
-	public final T update(final String id, final long offset, final long size)
-	throws InterruptedException, ExecutionException {
-		final BasicWSMockTask task = BasicWSMockTask.getInstance(
-			itemIndex, id, IOTask.Type.UPDATE, offset, size
-		);
-		try {
-			return (T) taskExecutor.submit(task).get();
-		} finally {
-			task.release();
+	public final T update(final String id, final long offset, final long size) {
+		final T dataObject = itemIndex.get(id);
+		if(dataObject != null) {
+			dataObject.update(offset, size);
 		}
+		return dataObject;
 	}
 	//
 	@Override
-	public final T append(final String id, final long offset, final long size)
-		throws InterruptedException, ExecutionException {
-		final BasicWSMockTask task = BasicWSMockTask.getInstance(
-			itemIndex, id, IOTask.Type.APPEND, offset, size
-		);
-		try {
-			return (T) taskExecutor.submit(task).get();
-		} finally {
-			task.release();
+	public final T append(final String id, final long offset, final long size) {
+		final T dataObject = itemIndex.get(id);
+		if(dataObject != null) {
+			dataObject.append(offset, size);
 		}
+		return dataObject;
 	}
 	//
 	@Override
-	public final T read(final String id, final long offset, final long size)
-		throws InterruptedException, ExecutionException {
-		final BasicWSMockTask task = BasicWSMockTask.getInstance(
-			itemIndex, id, IOTask.Type.READ, offset, size
-		);
-		try {
-			return (T) taskExecutor.submit(task).get();
-		} finally {
-			task.release();
-		}
+	public final T read(final String id, final long offset, final long size) {
+		// TODO partial read
+		return itemIndex.get(id);
 	}
 	//
 	@Override
-	public final T delete(final String id)
-	throws InterruptedException, ExecutionException {
-		final BasicWSMockTask task = BasicWSMockTask.getInstance(
-			itemIndex, id, IOTask.Type.DELETE, 0, 0
-		);
-		try {
-			return (T) taskExecutor.submit(task).get();
-		} finally {
-			task.release();
-		}
+	public final T delete(final String id) {
+		return itemIndex.remove(id);
 	}
 }

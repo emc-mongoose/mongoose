@@ -1,23 +1,19 @@
 package com.emc.mongoose.storage.mock.impl.base;
 //
-import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.load.model.AsyncConsumer;
+//
+import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 //
 import com.emc.mongoose.storage.mock.api.ObjectStorageMock;
 //
 import org.apache.commons.collections4.map.LRUMap;
 //
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-//
 import java.io.IOException;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.rmi.RemoteException;
+import java.util.Map;
 /**
  Created by kurila on 03.07.15.
  */
@@ -25,34 +21,41 @@ public abstract class ObjectStorageMockBase<T extends DataObject>
 extends StorageMockBase<T>
 implements ObjectStorageMock<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	//
-	protected final LRUMap<String, T> itemIndex;
-	//
-	protected final ThreadPoolExecutor taskExecutor;
+	protected final Map<String, T> itemIndex;
+	protected final AsyncConsumer<T> createWorker, deleteWorker;
+	protected final int capacity;
 	//
 	protected ObjectStorageMockBase(final RunTimeConfig rtConfig, final Class<T> itemCls) {
 		super(rtConfig, itemCls);
+		capacity = rtConfig.getStorageMockCapacity();
 		itemIndex = new LRUMap<>(rtConfig.getStorageMockCapacity());
 		final int maxQueueSize = rtConfig.getTasksMaxQueueSize();
-		taskExecutor = new ThreadPoolExecutor(
-			1, 1, 0, TimeUnit.SECONDS,
-			new ArrayBlockingQueue<Runnable>(maxQueueSize),
-			new GroupThreadFactory("storageWorker", true),
-			new RejectedExecutionHandler() {
-				@Override
-				public final void rejectedExecution(
-					final Runnable task, final ThreadPoolExecutor threadPoolExecutor
-				) {
-					LOG.warn(Markers.ERR, "Rejected the storage task");
-				}
+		//
+		createWorker = new AsyncConsumerBase<T>(Long.MAX_VALUE, Long.MAX_VALUE, maxQueueSize) {
+			{ setName("createWorker"); setDaemon(true); }
+			@Override
+			protected final void submitSync(final T item)
+			throws InterruptedException, RemoteException {
+				create(item);
 			}
-		);
+		};
+		deleteWorker = new AsyncConsumerBase<T>(Long.MAX_VALUE, Long.MAX_VALUE, maxQueueSize) {
+			{ setName("deleteWorker"); setDaemon(true); }
+			protected final void submitSync(final T item)
+			throws InterruptedException, RemoteException {
+				itemIndex.remove(item.getId());
+			}
+		};
 	}
 	//
 	@Override
 	protected void startAsyncConsuming() {
-		taskExecutor.prestartCoreThread();
+		try {
+			createWorker.start();
+			deleteWorker.start();
+		} catch(final RemoteException e) {
+			throw new RuntimeException(e);
+		}
 	}
 	//
 	@Override
@@ -62,21 +65,26 @@ implements ObjectStorageMock<T> {
 	//
 	@Override
 	public long getCapacity() {
-		return itemIndex.maxSize();
+		return capacity;
 	}
 	//
 	@Override
 	public final void create(final T dataItem) {
-		synchronized(itemIndex) {
-			itemIndex.put(dataItem.getId(), dataItem);
-		}
+		itemIndex.put(dataItem.getId(), dataItem);
 	}
 	//
 	@Override
 	public void close()
 	throws IOException {
-		LOG.debug(Markers.MSG, "Dropped {} storage tasks", taskExecutor.shutdownNow().size());
-		itemIndex.clear();
-		super.close();
+		try {
+			createWorker.close();
+		} finally {
+			try {
+				deleteWorker.close();
+			} finally {
+				itemIndex.clear();
+				super.close();
+			}
+		}
 	}
 }
