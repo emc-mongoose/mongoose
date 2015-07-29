@@ -328,6 +328,7 @@ implements LoadExecutor<T> {
 		IMMUTABLE_PARAMS.add("run.mode");
 		IMMUTABLE_PARAMS.add("run.version");
 		IMMUTABLE_PARAMS.add("scenario.name");
+		IMMUTABLE_PARAMS.add("scenario.type.single.load");
 	}
 	//
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -420,7 +421,10 @@ implements LoadExecutor<T> {
 			respLatency = metrics.register(MetricRegistry.name(getName(),
 				METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
 			//
-			restoreState();
+			if (RunTimeConfig.getContext().getRunMode().
+					equals(Constants.RUN_MODE_STANDALONE)) {
+				restoreState();
+			}
 			//
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
 			releaseDaemon.start();
@@ -481,10 +485,6 @@ implements LoadExecutor<T> {
 		//  apply parameters from loadState to current load executor
 		for (final LoadState state : loadStates) {
 			if (state.getLoadNumber() == instanceNum) {
-				if (isImmutableParamsChanged(state.getRunTimeConfig())) {
-					LOG.warn(Markers.MSG, "\"{}\": configuration immutability violated.",
-						getName());
-				}
 				counterSubm.inc(state.getCountSucc() + state.getCountFail());
 				counterResults.set(state.getCountSucc() + state.getCountFail());
 				counterReqFail.inc(state.getCountFail());
@@ -527,9 +527,17 @@ implements LoadExecutor<T> {
 	private void restoreStateFromFile(final String fullStateFileName) {
 		try (final FileInputStream fis = new FileInputStream(fullStateFileName)) {
 			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
+				final List<LoadState> loadStates = (List<LoadState>) ois.readObject();
+				for (final LoadState state : loadStates) {
+					if (isImmutableParamsChanged(state.getRunTimeConfig())) {
+						LOG.warn(Markers.MSG, "Run \"{}\": configuration immutability violated. " +
+							"Starting new run", rtConfig);
+						DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
+						return;
+					}
+				}
 				LOG.info(Markers.MSG, "Run \"{}\" was resumed",
 					rtConfig.getRunId());
-				final List<LoadState> loadStates = (List<LoadState>) ois.readObject();
 				DESERIALIZED_STATES.put(rtConfig.getRunId(), loadStates);
 			}
 		} catch (final FileNotFoundException e) {

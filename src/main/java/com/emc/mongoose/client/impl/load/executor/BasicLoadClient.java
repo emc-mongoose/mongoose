@@ -10,6 +10,7 @@ import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -46,7 +47,9 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 //
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.util.Arrays;
@@ -523,6 +526,10 @@ implements LoadClient<T> {
 	@Override
 	public final synchronized void start() {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
+			if (isSavedStateOfRunExists(runTimeConfig.getRunId())) {
+				LOG.warn(Markers.MSG, "Run \"{}\": configuration immutability violated. " +
+					"Starting new run", runTimeConfig.getRunId());
+			}
 			LoadSvc<T> nextLoadSvc;
 			for(final String addr : loadSvcAddrs) {
 				nextLoadSvc = remoteLoadMap.get(addr);
@@ -559,6 +566,13 @@ implements LoadClient<T> {
 		} else {
 			throw new IllegalStateException(name + ": was started already");
 		}
+	}
+	//
+	private boolean isSavedStateOfRunExists(final String runId) {
+		final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
+			Constants.DIR_LOG, runId).resolve(Constants.STATES_FILE).toString();
+		final File stateFile = new File(fullStateFileName);
+		return stateFile.exists();
 	}
 	//
 	@Override
