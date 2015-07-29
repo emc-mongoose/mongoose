@@ -531,7 +531,7 @@ implements LoadExecutor<T> {
 				for (final LoadState state : loadStates) {
 					if (isImmutableParamsChanged(state.getRunTimeConfig())) {
 						LOG.warn(Markers.MSG, "Run \"{}\": configuration immutability violated. " +
-							"Starting new run", rtConfig);
+							"Starting new run", rtConfig.getRunId());
 						DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
 						return;
 					}
