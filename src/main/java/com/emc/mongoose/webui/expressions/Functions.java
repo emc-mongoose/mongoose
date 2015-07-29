@@ -32,10 +32,10 @@ public class Functions {
 
 	private static String convertArrayToString(final String[] stringArray) {
 		return Arrays.toString(stringArray)
-								.replace("[", "")
-								.replace("]", "")
-								.replace(" ", "")
-								.trim();
+			.replace("[", "")
+			.replace("]", "")
+			.replace(" ", "")
+			.trim();
 	}
 
 }
