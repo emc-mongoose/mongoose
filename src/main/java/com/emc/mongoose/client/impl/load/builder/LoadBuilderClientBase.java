@@ -225,7 +225,7 @@ implements LoadBuilderClient<T, U> {
 	}
 	//
 	@Override
-	public final LoadBuilderClient<T, U> setThreadsPerNodeDefault(final short threadCount)
+	public final LoadBuilderClient<T, U> setThreadsPerNodeDefault(final int threadCount)
 	throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {
@@ -237,7 +237,7 @@ implements LoadBuilderClient<T, U> {
 	//
 	@Override
 	public final LoadBuilderClient<T, U> setThreadsPerNodeFor(
-		final short threadCount, final IOTask.Type loadType
+		final int threadCount, final IOTask.Type loadType
 	) throws IllegalArgumentException, RemoteException {
 		LoadBuilderSvc<T, U> nextBuilder;
 		for(final String addr : keySet()) {

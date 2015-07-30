@@ -6,6 +6,7 @@ import com.emc.mongoose.core.api.data.DataItem;
 import com.emc.mongoose.core.api.data.model.DataItemInput;
 //
 import java.io.BufferedReader;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -51,25 +52,28 @@ implements DataItemInput<T> {
 	}
 	//
 	@Override
-	public int read(final List<T> buffer)
+	public int read(final List<T> buffer, final int maxCount)
 	throws IOException {
+		int i;
 		String nextLine;
-		T nextItem;
-		final int n = buffer.size();
-		do {
-			nextLine = itemsSrc.readLine();
-			if(nextLine == null) {
-				break;
+		try {
+			for(i = 0; i < maxCount; i ++) {
+				nextLine = itemsSrc.readLine();
+				if(nextLine == null) {
+					if(i == 0) {
+						throw new EOFException();
+					} else {
+						break;
+					}
+				}
+				buffer.add(itemConstructor.newInstance(nextLine));
 			}
-			try {
-				nextItem = itemConstructor.newInstance(nextLine);
-			} catch(
-				final InstantiationException | IllegalAccessException | InvocationTargetException e
-			) {
-				throw new IOException(e);
-			}
-		} while(buffer.add(nextItem));
-		return buffer.size() - n;
+		} catch(
+			final InstantiationException | IllegalAccessException | InvocationTargetException e
+		) {
+			throw new IOException(e);
+		}
+		return i;
 	}
 	//
 	@Override

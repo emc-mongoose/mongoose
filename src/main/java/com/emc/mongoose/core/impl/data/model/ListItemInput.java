@@ -38,20 +38,21 @@ implements DataItemInput<T> {
 	/**
 	 Bulk read into the specified buffer
 	 @param buffer buffer for the data items
+	 @param maxCount the count limit
 	 @return the count of the data items been read
 	 @throws java.io.EOFException if there's nothing to read more
 	 @throws IOException if fails some-why
 	 */
 	@Override
-	public int read(final List<T> buffer)
+	public int read(final List<T> buffer, final int maxCount)
 	throws IOException {
-		int n = buffer.size();
-		if(i < items.size()) {
-			buffer.addAll(items.subList(i, items.size()));
+		int n = items.size() - i;
+		if(n > 0) {
+			n = Math.min(n, maxCount);
+			buffer.addAll(items.subList(i, i + n));
 		} else {
 			throw new EOFException();
 		}
-		n = buffer.size() - n;
 		i += n;
 		return n;
 	}

@@ -581,7 +581,7 @@ implements LoadClient<T> {
 	@Override
 	public final void interrupt() {
 		if(!isShutdown()) {
-			LogUtil.trace(LOG, Level.DEBUG, Markers.MSG, "Interrupting {}", name);
+			LOG.debug(Markers.MSG, "Interrupting {}", name);
 			shutdown();
 		}
 		//

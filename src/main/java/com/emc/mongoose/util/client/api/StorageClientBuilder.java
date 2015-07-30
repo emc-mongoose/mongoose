@@ -45,6 +45,13 @@ public interface StorageClientBuilder<T extends DataItem, U extends StorageClien
 	StorageClientBuilder<T, U> setAuth(final String id, final String secret);
 
 	/**
+	 Set the target namespace for data used in some storage APIs (S3, Swift, etc).
+	 @param value the namespace value, for example "s3"
+	 @return self
+	 */
+	StorageClientBuilder<T, U> setNamespace(final String value);
+
+	/**
 	 Set the target S3 bucket for writing to/reading from/etc.
 	 @param value The name of the bucket, for example "sanity-nh-bucket1"
 	 @return self.

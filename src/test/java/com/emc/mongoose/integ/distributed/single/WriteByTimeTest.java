@@ -39,7 +39,7 @@ public final class WriteByTimeTest {
 					.build()
 		) {
 			TIME_ACTUAL_SEC = System.currentTimeMillis() / 1000;
-			COUNT_WRITTEN = client.write(null, null, (short) 10, SizeUtil.toSize("10KB"));
+			COUNT_WRITTEN = client.write(null, null, 0, 10, SizeUtil.toSize("10KB"));
 			TIME_ACTUAL_SEC = System.currentTimeMillis() / 1000 - TIME_ACTUAL_SEC;
 		}
 	}

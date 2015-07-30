@@ -153,7 +153,7 @@ implements LoadExecutor<T> {
 							if(lock.tryLock(RELEASE_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS)) {
 								try {
 									condProducerDone.signalAll();
-									LOG.debug(
+									LOG.trace(
 										Markers.MSG, "{}: done/interrupted signal emitted",
 										getName()
 									);
@@ -197,8 +197,8 @@ implements LoadExecutor<T> {
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
 		super(
-			maxCount, rtConfig.getTasksMaxQueueSize(),
-			rtConfig.getTasksSubmitTimeOutMilliSec()
+			maxCount, rtConfig.getLoadLimitTimeUnit().toMillis(rtConfig.getLoadLimitTimeValue()),
+			rtConfig.getTasksMaxQueueSize()
 		);
 		//
 		this.dataCls = dataCls;

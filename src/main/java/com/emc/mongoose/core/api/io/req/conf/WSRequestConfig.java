@@ -32,6 +32,8 @@ extends ObjectRequestConfig<T> {
 		KEY_EMC_UID = "x-emc-uid",
 		//
 		VALUE_KEEP_ALIVE = "keep-alive",
+		VALUE_RANGE_PREFIX = "bytes=",
+		VALUE_RANGE_CONCAT = "-",
 		MSG_TMPL_NOT_SPECIFIED = "Required property \"{}\" is not specifed",
 		MSG_NO_DATA_ITEM = "Data item is not specified",
 		MSG_NO_REQ = "No request specified to apply to",

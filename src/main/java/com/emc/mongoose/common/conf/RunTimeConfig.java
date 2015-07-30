@@ -222,10 +222,6 @@ implements Externalizable {
 		return "api.type." + api + ".port";
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
-	public final int getTasksSubmitTimeOutMilliSec() {
-		return getInt("load.tasks.submitTimeOutMilliSec");
-	}
-	//
 	public final String getApiName() {
 		return getString(KEY_API_NAME);
 	}
@@ -478,8 +474,8 @@ implements Externalizable {
 		return SizeUtil.toSize(getString("data.buffer.ring.size"));
 	}
 	//
-	public final short getLoadTypeThreads(final String loadType) {
-		return getShort("load.type." + loadType + ".threads");
+	public final int getThreadCountFor(final String loadType) {
+		return getInt("load.type." + loadType + ".threads");
 	}
 	//
 	public final String getApiS3AuthPrefix() {

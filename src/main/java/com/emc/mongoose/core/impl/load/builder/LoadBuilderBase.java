@@ -34,7 +34,7 @@ implements LoadBuilder<T, U> {
 	protected float objSizeBias, rateLimit;
 	protected int updatesPerItem;
 	protected String listFile, dataNodeAddrs[];
-	protected final HashMap<IOTask.Type, Short> threadsPerNodeMap;
+	protected final HashMap<IOTask.Type, Integer> threadsPerNodeMap;
 	//
 	{
 		threadsPerNodeMap = new HashMap<>();
@@ -66,7 +66,7 @@ implements LoadBuilder<T, U> {
 			paramName = RunTimeConfig.getLoadThreadsParamName(loadType.name().toLowerCase());
 			try {
 				setThreadsPerNodeFor(
-					runTimeConfig.getLoadTypeThreads(
+					runTimeConfig.getThreadCountFor(
 						loadType.name().toLowerCase()
 					), loadType
 				);
@@ -266,7 +266,7 @@ implements LoadBuilder<T, U> {
 	}
 	//
 	@Override
-	public LoadBuilder<T, U> setThreadsPerNodeDefault(final short threadsPerNode)
+	public LoadBuilder<T, U> setThreadsPerNodeDefault(final int threadsPerNode)
 	throws IllegalArgumentException {
 		if(threadsPerNode < 1) {
 			throw new IllegalArgumentException("Thread count should not be less than 1");
@@ -280,7 +280,7 @@ implements LoadBuilder<T, U> {
 	//
 	@Override
 	public LoadBuilder<T, U> setThreadsPerNodeFor(
-		final short threadsPerNode, final IOTask.Type loadType
+		final int threadsPerNode, final IOTask.Type loadType
 	) throws IllegalArgumentException {
 		if(threadsPerNode < 1) {
 			throw new IllegalArgumentException("Thread count should not be less than 1");

@@ -2,7 +2,7 @@ package com.emc.mongoose.storage.mock.impl.web.request;
 //
 //import com.emc.mongoose.common.collections.InstancePool;
 //import com.emc.mongoose.common.collections.Reusable;
-import com.emc.mongoose.common.conf.Constants;
+//import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.common.log.LogUtil;
@@ -31,7 +31,7 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private HttpRequest httpRequest = null;
-	private long expectedContentSize = Constants.BUFF_SIZE_LO;
+	//private long expectedContentSize = Constants.BUFF_SIZE_LO;
 	//
 	public BasicWSRequestConsumer() {
 		super();
@@ -48,13 +48,13 @@ extends AbstractAsyncRequestConsumer<HttpRequest> {
 	//
 	@Override
 	protected final void onEntityEnclosed(final HttpEntity entity, final ContentType contentType) {
-		expectedContentSize = entity.getContentLength();
+		//expectedContentSize = entity.getContentLength();
 	}
 	//
 	@Override
 	protected final void onContentReceived(final ContentDecoder decoder, final IOControl ioCtl) {
 		try {
-			final long ingestByteCount = IOUtils.consumeQuietly(decoder, expectedContentSize);
+			final long ingestByteCount = IOUtils.consumeQuietly(decoder/*, expectedContentSize*/);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.MSG, "Consumed {} bytes", ingestByteCount);
 			}

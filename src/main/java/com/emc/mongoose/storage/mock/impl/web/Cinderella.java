@@ -6,8 +6,9 @@ import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
+import com.emc.mongoose.storage.mock.api.WSMock;
+import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.base.ObjectStorageMockBase;
-import com.emc.mongoose.storage.mock.impl.web.data.BasicWSObjectMock;
 import com.emc.mongoose.storage.mock.impl.web.net.BasicSocketEventDispatcher;
 import com.emc.mongoose.storage.mock.impl.web.request.APIRequestHandlerMapper;
 import com.emc.mongoose.storage.mock.impl.web.net.BasicWSMockConnFactory;
@@ -38,8 +39,9 @@ import java.io.IOException;
 /**
  * Created by olga on 28.01.15.
  */
-public final class Cinderella
-extends ObjectStorageMockBase<BasicWSObjectMock> {
+public final class Cinderella<T extends WSObjectMock>
+extends ObjectStorageMockBase<T>
+implements WSMock<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final BasicSocketEventDispatcher sockEvtDispatchers[] ;
@@ -48,7 +50,7 @@ extends ObjectStorageMockBase<BasicWSObjectMock> {
 	//
 	public Cinderella(final RunTimeConfig rtConfig)
 	throws IOException {
-		super(rtConfig, BasicWSObjectMock.class);
+		super(rtConfig, (Class<T>) BasicWSObjectMock.class);
 		sockEvtDispatchers = new BasicSocketEventDispatcher[rtConfig.getStorageMockHeadCount()];
 		LOG.info(Markers.MSG, "Starting with {} heads", sockEvtDispatchers.length);
 		// connection config
@@ -131,20 +133,6 @@ extends ObjectStorageMockBase<BasicWSObjectMock> {
 	@Override
 	public final void close()
 	throws IOException {
-		try {
-			createConsumer.close();
-			LOG.debug(Markers.MSG, "Create consumer closed successfully");
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "I/O failure on close");
-		}
-		//
-		try {
-			deleteConsumer.close();
-			LOG.debug(Markers.MSG, "Delete consumer closed successfully");
-		} catch(final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "I/O failure on close");
-		}
-		//
 		for(final BasicSocketEventDispatcher sockEventDispatcher : sockEvtDispatchers) {
 			if(sockEventDispatcher != null) {
 				try {
@@ -165,4 +153,39 @@ extends ObjectStorageMockBase<BasicWSObjectMock> {
 		super.close();
 	}
 	//
+	@Override
+	public final T create(final String id, final long offset, final long size) {
+		final T newDataObject = (T) new BasicWSObjectMock(id, offset, size);
+		itemIndex.put(id, newDataObject);
+		return newDataObject;
+	}
+	//
+	@Override
+	public final T update(final String id, final long offset, final long size) {
+		final T dataObject = itemIndex.get(id);
+		if(dataObject != null) {
+			dataObject.update(offset, size);
+		}
+		return dataObject;
+	}
+	//
+	@Override
+	public final T append(final String id, final long offset, final long size) {
+		final T dataObject = itemIndex.get(id);
+		if(dataObject != null) {
+			dataObject.append(offset, size);
+		}
+		return dataObject;
+	}
+	//
+	@Override
+	public final T read(final String id, final long offset, final long size) {
+		// TODO partial read
+		return itemIndex.get(id);
+	}
+	//
+	@Override
+	public final T delete(final String id) {
+		return itemIndex.remove(id);
+	}
 }

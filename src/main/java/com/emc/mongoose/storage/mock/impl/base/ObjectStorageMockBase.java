@@ -1,60 +1,49 @@
 package com.emc.mongoose.storage.mock.impl.base;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.load.model.AsyncConsumer;
 //
 import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
 //
-import com.emc.mongoose.storage.mock.api.ObjectStorage;
+import com.emc.mongoose.storage.mock.api.ObjectStorageMock;
 //
 import org.apache.commons.collections4.map.LRUMap;
 //
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-//
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.concurrent.RejectedExecutionException;
+import java.util.Map;
 /**
  Created by kurila on 03.07.15.
  */
 public abstract class ObjectStorageMockBase<T extends DataObject>
 extends StorageMockBase<T>
-implements ObjectStorage<T> {
+implements ObjectStorageMock<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	//
-	protected final LRUMap<String, T> itemIndex;
-	protected final AsyncConsumer<T> createConsumer, deleteConsumer;
+	protected final Map<String, T> itemIndex;
+	protected final AsyncConsumer<T> createWorker, deleteWorker;
+	protected final int capacity;
 	//
 	protected ObjectStorageMockBase(final RunTimeConfig rtConfig, final Class<T> itemCls) {
 		super(rtConfig, itemCls);
+		capacity = rtConfig.getStorageMockCapacity();
 		itemIndex = new LRUMap<>(rtConfig.getStorageMockCapacity());
-		final int
-			maxQueueSize = rtConfig.getTasksMaxQueueSize(),
-			submTimeOutMilliSec = rtConfig.getTasksSubmitTimeOutMilliSec();
-		createConsumer = new AsyncConsumerBase<T>(Long.MAX_VALUE, maxQueueSize, submTimeOutMilliSec) {
-			{ setDaemon(true); setName("asyncCreateWorker"); start(); }
+		final int maxQueueSize = rtConfig.getTasksMaxQueueSize();
+		//
+		createWorker = new AsyncConsumerBase<T>(Long.MAX_VALUE, Long.MAX_VALUE, maxQueueSize) {
+			{ setName("createWorker"); setDaemon(true); }
 			@Override
-			protected final void submitSync(final T dataItem)
+			protected final void submitSync(final T item)
 			throws InterruptedException, RemoteException {
-				synchronized(itemIndex) {
-					itemIndex.put(dataItem.getId(), dataItem);
-				}
+				create(item);
 			}
 		};
-		deleteConsumer = new AsyncConsumerBase<T>(Long.MAX_VALUE, maxQueueSize, submTimeOutMilliSec) {
-			{ setDaemon(true); setName("asyncDeleteWorker"); start(); }
-			@Override
-			protected final void submitSync(final T dataItem)
+		deleteWorker = new AsyncConsumerBase<T>(Long.MAX_VALUE, Long.MAX_VALUE, maxQueueSize) {
+			{ setName("deleteWorker"); setDaemon(true); }
+			protected final void submitSync(final T item)
 			throws InterruptedException, RemoteException {
-				synchronized(itemIndex) {
-					itemIndex.remove(dataItem.getId());
-				}
+				itemIndex.remove(item.getId());
 			}
 		};
 	}
@@ -62,12 +51,10 @@ implements ObjectStorage<T> {
 	@Override
 	protected void startAsyncConsuming() {
 		try {
-			createConsumer.start();
-		} catch(final RemoteException ignored) {
-		}
-		try {
-			deleteConsumer.start();
-		} catch(final RemoteException ignored) {
+			createWorker.start();
+			deleteWorker.start();
+		} catch(final RemoteException e) {
+			throw new RuntimeException(e);
 		}
 	}
 	//
@@ -78,38 +65,26 @@ implements ObjectStorage<T> {
 	//
 	@Override
 	public long getCapacity() {
-		return itemIndex.maxSize();
+		return capacity;
 	}
 	//
 	@Override
-	public void create(final T dataItem) {
-		try {
-			createConsumer.submit(dataItem);
-		} catch(final InterruptedException | RejectedExecutionException | RemoteException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Create submission failure");
-		}
-	}
-	//
-	@Override
-	public void delete(final T dataItem) {
-		try {
-			deleteConsumer.submit(dataItem);
-		} catch(final InterruptedException | RejectedExecutionException | RemoteException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Delete submission failure");
-		}
-	}
-	//
-	@Override
-	public T get(final String id) {
-		synchronized(itemIndex) {
-			return itemIndex.get(id);
-		}
+	public final void create(final T dataItem) {
+		itemIndex.put(dataItem.getId(), dataItem);
 	}
 	//
 	@Override
 	public void close()
 	throws IOException {
-		itemIndex.clear();
-		super.close();
+		try {
+			createWorker.close();
+		} finally {
+			try {
+				deleteWorker.close();
+			} finally {
+				itemIndex.clear();
+				super.close();
+			}
+		}
 	}
 }

@@ -43,24 +43,24 @@ implements AccumulatorProducer<T> {
 	protected final Class<T> dataCls;
 	//
 	public PersistentAccumulatorProducer(
-		final Class<T> itemCls, final RunTimeConfig runTimeConfig, final long maxCount
+		final Class<T> itemCls, final RunTimeConfig rtConfig, final long maxCount
 	) {
 		super(
-			maxCount, runTimeConfig.getTasksMaxQueueSize(),
-			runTimeConfig.getTasksSubmitTimeOutMilliSec()
+			maxCount, rtConfig.getLoadLimitTimeUnit().toMillis(rtConfig.getLoadLimitTimeValue()),
+			rtConfig.getTasksMaxQueueSize()
 		);
 		//
 		this.dataCls = itemCls;
 		final Path tmpFilePath = Paths.get(
 			System.getProperty("java.io.tmpdir"),
-			runTimeConfig.getRunName() + "-v" + runTimeConfig.getRunVersion()
+			rtConfig.getRunName() + "-v" + rtConfig.getRunVersion()
 		);
 		if(!tmpFilePath.toFile().exists() && !tmpFilePath.toFile().mkdirs()) {
 			LOG.warn(Markers.ERR, "Failed to create the directory: \"{}\"", tmpFilePath);
 		}
 		//
 		try {
-			tmpFile = Files.createTempFile(tmpFilePath, runTimeConfig.getRunId(), null).toFile();
+			tmpFile = Files.createTempFile(tmpFilePath, rtConfig.getRunId(), null).toFile();
 			tmpFile.deleteOnExit();
 		} catch(final IOException e) {
 			throw new IllegalStateException(

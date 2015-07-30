@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.TimeZone;
-
+import java.util.concurrent.TimeUnit;
 /**
  * Created by olga on 10.07.15.
  * HLUC: 1.1.2.2, 1.1.4.1, 1.1.5.4, 1.3.9.1
@@ -61,17 +61,17 @@ public class ReadZeroSizeItemsTest {
 		LogUtil.init();
 		final Logger rootLogger = org.apache.logging.log4j.LogManager.getRootLogger();
 		//Reload default properties
-		RunTimeConfig runTimeConfig = new RunTimeConfig();
+		final RunTimeConfig runTimeConfig = new RunTimeConfig();
 		runTimeConfig.loadProperties();
 		RunTimeConfig.setContext(runTimeConfig);
 		//Run the write default mongoose scenario in standalone mode
 		final Thread writeScenarioMongoose = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, createRunId);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
+				runTimeConfig.set(RunTimeConfig.KEY_RUN_ID, createRunId);
+				runTimeConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
+				runTimeConfig.set(RunTimeConfig.KEY_DATA_SIZE_MAX, DATA_SIZE);
+				runTimeConfig.set(RunTimeConfig.KEY_DATA_SIZE_MIN, DATA_SIZE);
 				// For correct work of verification option
 				UniformDataSource.DEFAULT = new UniformDataSource();
 				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
@@ -90,24 +90,29 @@ public class ReadZeroSizeItemsTest {
 		);
 		System.setProperty(RunTimeConfig.KEY_RUN_ID, readRunId);
 		//Reload default properties
-		runTimeConfig = new RunTimeConfig();
 		runTimeConfig.loadProperties();
 		RunTimeConfig.setContext(runTimeConfig);
 		//
-		final Thread readScenarioMongoose = new Thread(new Runnable() {
-			@Override
-			public void run() {
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_RUN_ID, readRunId);
-				RunTimeConfig.getContext()
-					.set(RunTimeConfig.KEY_DATA_SRC_FPATH, LogParser.getDataItemsFile(createRunId).getPath());
-				RunTimeConfig.getContext().set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
-				rootLogger.info(Markers.MSG, RunTimeConfig.getContext().toString());
-				new ScriptRunner().run();
-			}
-		}, "readScenarioMongoose");
+		final Thread readScenarioMongoose = new Thread(
+			new Runnable() {
+				@Override
+				public void run() {
+					runTimeConfig.set(RunTimeConfig.KEY_RUN_ID, readRunId);
+					runTimeConfig.set(
+						RunTimeConfig.KEY_DATA_SRC_FPATH,
+						LogParser.getDataItemsFile(createRunId).getPath()
+					);
+					runTimeConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_TIME, "100s");
+					runTimeConfig.set(RunTimeConfig.KEY_SCENARIO_SINGLE_LOAD, TestConstants.LOAD_READ);
+					rootLogger.info(Markers.MSG, runTimeConfig);
+					new ScriptRunner().run();
+				}
+			},
+			"readScenarioMongoose"
+		);
 		//
 		readScenarioMongoose.start();
-		readScenarioMongoose.join();
+		TimeUnit.SECONDS.timedJoin(readScenarioMongoose, 100);
 		readScenarioMongoose.interrupt();
 		// Wait logger's output from console
 		Thread.sleep(3000);

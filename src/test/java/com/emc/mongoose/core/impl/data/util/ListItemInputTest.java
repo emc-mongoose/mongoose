@@ -59,7 +59,7 @@ public class ListItemInputTest {
 			.when(itemsSrc.subList(0, dataItems.length))
 			.thenReturn(Arrays.asList(dataItems));
 		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
-		Assert.assertEquals(itemsInput.read(buffer), dataItems.length);
+		Assert.assertEquals(itemsInput.read(buffer, dataItems.length), dataItems.length);
 	}
 	//
 	@Test
@@ -77,7 +77,7 @@ public class ListItemInputTest {
 			.when(itemsSrc.subList(0, dataItems.length))
 			.thenReturn(Arrays.asList(dataItems));
 		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
-		Assert.assertEquals(itemsInput.read(buffer), dataItems.length);
+		Assert.assertEquals(itemsInput.read(buffer, dataItems.length), dataItems.length);
 	}
 	//
 	@Test
@@ -95,10 +95,10 @@ public class ListItemInputTest {
 			.when(itemsSrc.subList(0, dataItems.length))
 			.thenReturn(Arrays.asList(dataItems));
 		final ListItemInput<DataItem> itemsInput = new ListItemInput<>(itemsSrc);
-		Assert.assertEquals(itemsInput.read(buffer), dataItems.length);
+		Assert.assertEquals(itemsInput.read(buffer, dataItems.length), dataItems.length);
 		Assert.assertEquals(buffer.size(), dataItems.length);
 		itemsInput.reset();
-		Assert.assertEquals(itemsInput.read(buffer), dataItems.length);
+		Assert.assertEquals(itemsInput.read(buffer, dataItems.length), dataItems.length);
 		Assert.assertEquals(buffer.size(), 2 * dataItems.length);
 	}
 	//

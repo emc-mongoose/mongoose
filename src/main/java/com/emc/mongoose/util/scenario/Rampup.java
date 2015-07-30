@@ -62,7 +62,7 @@ implements Runnable {
 					loadBuilder
 						.setMinObjSize(nextSize)
 						.setMaxObjSize(nextSize)
-						.setThreadsPerNodeDefault(Short.parseShort(nextThreadCountStr));
+						.setThreadsPerNodeDefault(Integer.parseInt(nextThreadCountStr));
 					nextLoadSeq = new Chain(loadBuilder, timeOut, timeUnit, loadTypeSeq, false);
 					LOG.info(Markers.PERF_SUM, "---- Step {} start ----", nextStepName);
 					nextLoadSeq.run();

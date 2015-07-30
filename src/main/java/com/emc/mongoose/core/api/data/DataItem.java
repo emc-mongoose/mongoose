@@ -31,19 +31,19 @@ extends ReadableByteChannel, Externalizable {
 	int write(final WritableByteChannel chanDst, final long maxCount)
 	throws IOException;
 	//
+	long writeRange(final WritableByteChannel chanDst, final long relOffset, final long len)
+		throws IOException;
+	//
 	long writeFully(final WritableByteChannel chanDst)
 	throws IOException;
 	//
-	long writeRange(final WritableByteChannel chanDst, final long relOffset, final long len)
-	throws IOException;
-	//
 	int readAndVerify(final ReadableByteChannel chanSrc, final ByteBuffer buff)
-	throws IOException;
+	throws DataSizeException, DataCorruptionException, IOException;
+	//
+	long readAndVerifyRange(
+		final ReadableByteChannel chanSrc, final long relOffset, final long len
+	) throws DataSizeException, DataCorruptionException, IOException;
 	//
 	boolean readAndVerifyFully(final ReadableByteChannel chanSrc)
 	throws IOException;
-	//
-	boolean readAndVerifyRange(
-		final ReadableByteChannel chanSrc, final long relOffset, final long len
-	) throws IOException;
 }

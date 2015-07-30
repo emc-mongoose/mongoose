@@ -77,6 +77,12 @@ implements StorageClientBuilder<T, U> {
 	}
 	//
 	@Override
+	public StorageClientBuilder<T, U> setNamespace(final String value) {
+		rtConfig.set(RunTimeConfig.KEY_STORAGE_NAMESPACE, value);
+		return this;
+	}
+	//
+	@Override
 	public StorageClientBuilder<T, U> setS3Bucket(final String value) {
 		rtConfig.set(RunTimeConfig.KEY_API_S3_BUCKET, value);
 		return this;
