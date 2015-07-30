@@ -185,7 +185,6 @@ implements Externalizable {
 		IMMUTABLE_PARAMS.add("run.mode");
 		IMMUTABLE_PARAMS.add("run.version");
 		IMMUTABLE_PARAMS.add("scenario.name");
-		IMMUTABLE_PARAMS.add("scenario.type.single.load");
 	}
 	//
 	public final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
