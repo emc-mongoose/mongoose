@@ -113,6 +113,8 @@ implements Externalizable {
 	//
 	private static InheritableThreadLocal<RunTimeConfig>
 		CONTEXT_CONFIG = new InheritableThreadLocal<>();
+	private static final List<String>
+		IMMUTABLE_PARAMS = new ArrayList<>();
 	//
 	public static void initContext() {
 		RunTimeConfig instance = RunTimeConfig.getContext();
@@ -176,6 +178,14 @@ implements Externalizable {
 			System.setProperty("java.security.policy", urlPolicy.toString());
 			System.setSecurityManager(new SecurityManager());
 		}
+		initImmutableParams();
+	}
+	//
+	private static void initImmutableParams() {
+		IMMUTABLE_PARAMS.add("run.mode");
+		IMMUTABLE_PARAMS.add("run.version");
+		IMMUTABLE_PARAMS.add("scenario.name");
+		IMMUTABLE_PARAMS.add("scenario.type.single.load");
 	}
 	//
 	public final static Map<String, String[]> MAP_OVERRIDE = new HashMap<>();
@@ -193,6 +203,15 @@ implements Externalizable {
 			Paths.get(DIR_ROOT, Constants.DIR_CONF).resolve(FNAME_CONF), this, false
 		);
 		return rootNode.toString();
+	}
+	//
+	public boolean isImmutableParamsChanged(final RunTimeConfig loadStateCfg) {
+		for (final String param : IMMUTABLE_PARAMS) {
+			if (!getString(param).equals(loadStateCfg.getString(param))) {
+				return true;
+			}
+		}
+		return false;
 	}
 	//
 	public final synchronized void putJsonProps(final JsonNode rootNode) {
