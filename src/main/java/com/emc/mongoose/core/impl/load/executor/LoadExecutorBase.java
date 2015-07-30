@@ -41,23 +41,15 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.Marker;
 //
 import javax.management.MBeanServer;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.rmi.RemoteException;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -75,7 +67,6 @@ implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	private final static int RELEASE_TIMEOUT_MILLISEC = 100;
-	public final static Map<String, List<LoadState>> DESERIALIZED_STATES = new ConcurrentHashMap<>();
 	//
 	protected final int instanceNum, connCountPerNode, storageNodeCount;
 	protected final String storageNodeAddrs[];
@@ -108,12 +99,6 @@ implements LoadExecutor<T> {
 	private LoadState currState = null;
 	private ResumableClock resumableClock = new ResumableClock();
 	private AtomicBoolean isLoadFinished = new AtomicBoolean(false);
-	//
-	private static final List<String> IMMUTABLE_PARAMS = new ArrayList<>();
-	//
-	static {
-		initializeImmutableParams();
-	}
 	//
 	private final Thread
 		metricsDaemon = new Thread() {
@@ -324,13 +309,6 @@ implements LoadExecutor<T> {
 		return getName();
 	}
 	//
-	private static void initializeImmutableParams() {
-		IMMUTABLE_PARAMS.add("run.mode");
-		IMMUTABLE_PARAMS.add("run.version");
-		IMMUTABLE_PARAMS.add("scenario.name");
-		IMMUTABLE_PARAMS.add("scenario.type.single.load");
-	}
-	//
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Producer implementation /////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////
@@ -423,9 +401,19 @@ implements LoadExecutor<T> {
 			//
 			if (RunTimeConfig.getContext().getRunMode().
 					equals(Constants.RUN_MODE_STANDALONE)) {
-				restoreState();
-				if (isLoadFinished.get())
-					return;
+				if (!RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
+					BasicLoadState.restoreScenarioState(rtConfig);
+				}
+			}
+			setLoadState(BasicLoadState.findStateByLoadNumber(instanceNum, rtConfig));
+			if (isLoadFinished.get()) {
+				try {
+					close();
+				} catch (IOException e) {
+					LogUtil.exception(LOG, Level.ERROR, e,
+						"Couldn't close the load executor \"{}\"", getName());
+				}
+				return;
 			}
 			//
 			releaseDaemon.setName("releaseDaemon<" + getName() + ">");
@@ -461,114 +449,6 @@ implements LoadExecutor<T> {
 			LOG.debug(Markers.MSG, "Started \"{}\"", getName());
 		} else {
 			LOG.warn(Markers.ERR, "Second start attempt - skipped");
-		}
-	}
-	//
-	private void restoreState() {
-		if (!DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
-			final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
-				Constants.DIR_LOG, RunTimeConfig.getContext().getRunId())
-				.resolve(Constants.STATES_FILE).toString();
-			final File stateFile = new File(fullStateFileName);
-			if (stateFile.exists()) {
-				restoreStateFromFile(fullStateFileName);
-			} else {
-				DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
-				LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
-					rtConfig.getRunId());
-			}
-		} else {
-			applyParams();
-		}
-	}
-	//
-	private void applyParams() {
-		final List<LoadState> loadStates = DESERIALIZED_STATES.get(rtConfig.getRunId());
-		//  apply parameters from loadState to current load executor
-		for (final LoadState state : loadStates) {
-			if (state.getLoadNumber() == instanceNum) {
-				counterSubm.inc(state.getCountSucc() + state.getCountFail());
-				counterResults.set(state.getCountSucc() + state.getCountFail());
-				counterReqFail.inc(state.getCountFail());
-				throughPut.mark(state.getCountSucc());
-				reqBytes.mark(state.getCountBytes());
-				currState = state;
-				if (isLoadExecutorFinished(currState)) {
-					isLoadFinished.compareAndSet(false, true);
-					LOG.info(Markers.MSG, "\"{}\": nothing to do more", getName());
-					return;
-				}
-				for (int i = 0; i < state.getLatencyValues().length; i++) {
-					respLatency.update(state.getLatencyValues()[i]);
-				}
-				break;
-			}
-		}
-	}
-	//
-	private boolean isLoadExecutorFinished(final LoadState state) {
-		final RunTimeConfig localRunTimeConfig = rtConfig;
-		final long loadTimeMillis = (localRunTimeConfig.getLoadLimitTimeUnit().
-			toMillis(localRunTimeConfig.getLoadLimitTimeValue())) > 0
-			? (localRunTimeConfig.getLoadLimitTimeUnit().
-			toMillis(localRunTimeConfig.getLoadLimitTimeValue())) : Long.MAX_VALUE;
-		final long stateTimeMillis = state.getLoadElapsedTimeUnit().
-			toMillis(state.getLoadElapsedTimeValue());
-		return isDoneMaxCount() || (stateTimeMillis >= loadTimeMillis);
-	}
-	//
-	private boolean isImmutableParamsChanged(final RunTimeConfig loadStateConfig) {
-		for (final String param : IMMUTABLE_PARAMS) {
-			if (!rtConfig.getString(param).equals(loadStateConfig.getString(param))) {
-				return true;
-			}
-		}
-		return false;
-	}
-	//
-	private void restoreStateFromFile(final String fullStateFileName) {
-		try (final FileInputStream fis = new FileInputStream(fullStateFileName)) {
-			try (final ObjectInputStream ois = new ObjectInputStream(fis)) {
-				final List<LoadState> loadStates = (List<LoadState>) ois.readObject();
-				for (final LoadState state : loadStates) {
-					if (isImmutableParamsChanged(state.getRunTimeConfig())) {
-						LOG.warn(Markers.MSG, "Run \"{}\": configuration immutability violated. " +
-							"Starting new run", rtConfig.getRunId());
-						DESERIALIZED_STATES.put(rtConfig.getRunId(), new ArrayList<LoadState>());
-						return;
-					}
-				}
-				LOG.info(Markers.MSG, "Run \"{}\" was resumed",
-					rtConfig.getRunId());
-				DESERIALIZED_STATES.put(rtConfig.getRunId(), loadStates);
-				applyParams();
-				if (isLoadFinished.get()) {
-					return;
-				}
-			}
-		} catch (final FileNotFoundException e) {
-			LOG.debug(Markers.MSG, "Could not find saved state of run \"{}\". Starting new run",
-				rtConfig.getRunId());
-		} catch (final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to load state of run \"{}\" from \"{}\" file." +
-				"Starting new run", rtConfig.getRunId(), fullStateFileName);
-		} catch (final ClassNotFoundException e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to deserialize state of run." +
-				"Starting new run");
-		}
-		removePreviousStateFile(fullStateFileName);
-	}
-	//
-	private void removePreviousStateFile(final String fileName) {
-		try {
-			Files.delete(Paths.get(fileName));
-		} catch (final NoSuchFileException e) {
-			LogUtil.exception(LOG, Level.WARN, e,
-				"File \"{}\" with state of run wasn't found", fileName);
-		} catch (final IOException e) {
-			LogUtil.exception(LOG, Level.WARN, e,
-				"Failed to remove the file \"{}\"", fileName);
 		}
 	}
 	//
@@ -798,6 +678,27 @@ implements LoadExecutor<T> {
 	}
 	//
 	@Override
+	public void setLoadState(final LoadState state) {
+		if (state != null) {
+			if (state.isLoadFinished(rtConfig)) {
+				isLoadFinished.compareAndSet(false, true);
+				LOG.warn(Markers.MSG, "\"{}\": nothing to do more", getName());
+				return;
+			}
+			//  apply parameters from loadState to current load executor
+			counterSubm.inc(state.getCountSucc() + state.getCountFail());
+			counterResults.set(state.getCountSucc() + state.getCountFail());
+			counterReqFail.inc(state.getCountFail());
+			throughPut.mark(state.getCountSucc());
+			reqBytes.mark(state.getCountBytes());
+			for (int i = 0; i < state.getLatencyValues().length; i++) {
+				respLatency.update(state.getLatencyValues()[i]);
+			}
+			currState = state;
+		}
+	}
+	//
+	@Override
 	public LoadState getLoadState()
 	throws RemoteException {
 		final long prevElapsedTime = currState != null ?
@@ -880,8 +781,8 @@ implements LoadExecutor<T> {
 				LOG.debug(Markers.MSG, "JMX reported closed");
 				LoadCloseHook.del(this);
 				if (currState != null) {
-					if (DESERIALIZED_STATES.containsKey(rtConfig.getRunId())) {
-						DESERIALIZED_STATES.get(rtConfig.getRunId()).remove(currState);
+					if (RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
+						RESTORED_STATES_MAP.get(rtConfig.getRunId()).remove(currState);
 					}
 				}
 				LOG.debug(Markers.MSG, "\"{}\" closed successfully", getName());

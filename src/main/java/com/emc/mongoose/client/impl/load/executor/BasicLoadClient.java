@@ -526,7 +526,7 @@ implements LoadClient<T> {
 	@Override
 	public final synchronized void start() {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
-			if (isSavedStateOfRunExists(runTimeConfig.getRunId())) {
+			if (BasicLoadState.isSavedStateOfRunExists(runTimeConfig.getRunId())) {
 				LOG.warn(Markers.MSG, "Run \"{}\": configuration immutability violated. " +
 					"Starting new run", runTimeConfig.getRunId());
 			} else {
@@ -569,13 +569,6 @@ implements LoadClient<T> {
 		} else {
 			throw new IllegalStateException(name + ": was started already");
 		}
-	}
-	//
-	private boolean isSavedStateOfRunExists(final String runId) {
-		final String fullStateFileName = Paths.get(RunTimeConfig.DIR_ROOT,
-			Constants.DIR_LOG, runId).resolve(Constants.STATES_FILE).toString();
-		final File stateFile = new File(fullStateFileName);
-		return stateFile.exists();
 	}
 	//
 	@Override
@@ -703,6 +696,25 @@ implements LoadClient<T> {
 		} finally {
 			forcedAggregator.shutdownNow();
 			postProcessDataItems();
+		}
+	}
+	//
+	@Override
+	public void setLoadState(final LoadState state) {
+		LoadSvc<T> nextLoadSvc;
+		for (final String addr : remoteLoadMap.keySet()) {
+			nextLoadSvc = remoteLoadMap.get(addr);
+			try {
+				nextLoadSvc.setLoadState(state);
+			} catch (final RemoteException e) {
+				try {
+					LogUtil.exception(LOG, Level.WARN, e,
+						"Failed to set load state for load service \"{}\"", nextLoadSvc.getName());
+				} catch (final RemoteException remote) {
+					LogUtil.exception(LOG, Level.WARN, remote,
+						"Unexpected failure");
+				}
+			}
 		}
 	}
 	//

@@ -27,6 +27,8 @@ public interface LoadState extends Serializable {
 	//
 	TimeUnit getLoadElapsedTimeUnit();
 	//
+	boolean isLoadFinished(final RunTimeConfig rtConfig);
+	//
 	interface Builder<T> {
 		//
 		Builder<T> setLoadNumber(final int loadNumber);

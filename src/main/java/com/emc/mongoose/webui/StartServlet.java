@@ -156,7 +156,7 @@ public final class StartServlet extends CommonServlet {
 			//
 			@Override
 			public void interrupt() {
-				LoadExecutorBase.DESERIALIZED_STATES.remove(runTimeConfig.getRunId());
+				LoadExecutorBase.RESTORED_STATES_MAP.remove(runTimeConfig.getRunId());
 				LoadExecutorBase.INSTANCE_NUMBERS.remove(runTimeConfig.getRunId());
 				super.interrupt();
 			}
