@@ -404,8 +404,8 @@ implements LoadExecutor<T> {
 				if (!RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
 					BasicLoadState.restoreScenarioState(rtConfig);
 				}
+				setLoadState(BasicLoadState.findStateByLoadNumber(instanceNum, rtConfig));
 			}
-			setLoadState(BasicLoadState.findStateByLoadNumber(instanceNum, rtConfig));
 			if (isLoadFinished.get()) {
 				try {
 					close();
