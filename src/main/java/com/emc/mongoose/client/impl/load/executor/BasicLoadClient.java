@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -526,12 +527,16 @@ implements LoadClient<T> {
 	@Override
 	public final synchronized void start() {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
-			if (BasicLoadState.isSavedStateOfRunExists(runTimeConfig.getRunId())) {
-				LOG.warn(Markers.MSG, "Run \"{}\": configuration immutability violated. " +
-					"Starting new run", runTimeConfig.getRunId());
-			} else {
-				LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". " +
-					"Starting new run", runTimeConfig.getRunId());
+			//  print these messages only once, for first load executor in scenario
+			if (!RESTORED_STATES_MAP.containsKey(runTimeConfig.getRunId())) {
+				if (BasicLoadState.isSavedStateOfRunExists(runTimeConfig.getRunId())) {
+					LOG.warn(Markers.MSG, "Run \"{}\": configuration immutability violated. " +
+						"Starting new run", runTimeConfig.getRunId());
+				} else {
+					LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". " +
+						"Starting new run", runTimeConfig.getRunId());
+				}
+				RESTORED_STATES_MAP.put(runTimeConfig.getRunId(), new ArrayList<LoadState>());
 			}
 			LoadSvc<T> nextLoadSvc;
 			for(final String addr : loadSvcAddrs) {
