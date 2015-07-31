@@ -62,7 +62,6 @@ implements StorageMock<T> {
 	}
 	//
 	protected void start() {
-		startAsyncConsuming();
 		loadPersistedDataItems();
 		ioStats.start();
 		startListening();
@@ -73,8 +72,6 @@ implements StorageMock<T> {
 	throws IOException {
 		ioStats.close();
 	}
-	//
-	protected abstract void startAsyncConsuming();
 	//
 	protected void loadPersistedDataItems() {
 		// if there is data src file path

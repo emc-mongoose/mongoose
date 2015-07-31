@@ -42,29 +42,33 @@ extends WSRequestHandlerBase<T> {
 		final HttpRequest httpRequest, final HttpResponse httpResponse, final String method,
 		final String requestURI[], final String dataId
 	) {
+		final String container;
 		if(requestURI.length > 1) {
 			if(requestURI[1].equals(AUTH)) { // create an auth token
-				final String authToken = randomString(5);
+				final String authToken = randomString(0x10);
 				if(LOG.isTraceEnabled(Markers.MSG)) {
 					LOG.trace(Markers.MSG, "Created auth token: {}", authToken);
 				}
 				httpResponse.setHeader(WSRequestConfigImpl.KEY_X_AUTH_TOKEN, authToken);
 				httpResponse.setStatusCode(HttpStatus.SC_OK);
 			} else if(
-				requestURI[1].equals(apiBasePathSwift) && requestURI.length == 4 &&
-				method.equalsIgnoreCase(METHOD_PUT)
-			) { // put the container
-				httpResponse.setStatusCode(HttpStatus.SC_OK);
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						Markers.MSG, "Create the container: {}", requestURI[requestURI.length - 1]
-					);
-				}
+				requestURI[1].equals(apiBasePathSwift) && requestURI.length == 4
+			) {
+				container = requestURI[requestURI.length - 1];
+				handleGenericContainerReq(httpRequest, httpResponse, method, container, dataId);
 			} else {
-				handleGenericDataReq(httpRequest, httpResponse, method, dataId);
+				container = requestURI[requestURI.length - 2];
+				handleGenericDataReq(httpRequest, httpResponse, method, container, dataId);
 			}
 		} else {
 			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 		}
+	}
+	//
+	@Override
+	protected final void handleContainerList(
+		final HttpRequest req, final HttpResponse resp, final String name, final String dataId
+	) {
+		// TODO build json listing
 	}
 }

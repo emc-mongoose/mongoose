@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.Markers;
 //
 // mongoose-storage-adapter-atmos.jar
+import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 import com.emc.mongoose.storage.adapter.atmos.WSRequestConfigImpl;
 import com.emc.mongoose.storage.adapter.atmos.WSSubTenantImpl;
 //
@@ -39,16 +40,15 @@ extends WSRequestHandlerBase<T> {
 		final HttpRequest httpRequest, final HttpResponse httpResponse, final String method,
 		final String requestURI[], final String dataId
 	) {
+		final String subtenant = httpRequest.containsHeader(SubTenant.KEY_SUBTENANT_ID) ?
+			httpRequest.getLastHeader(SubTenant.KEY_SUBTENANT_ID).getValue() : null;
 		if(requestURI.length > 2) {
 			if(requestURI[2].equals(WSSubTenantImpl.SUBTENANT)) { // subtenant-related request
-				if(method.equalsIgnoreCase(METHOD_PUT)) {
-					final String subtenant = randomString(5);
-					httpResponse.setHeader(WSSubTenantImpl.KEY_SUBTENANT_ID, subtenant);
-					if(LOG.isTraceEnabled(Markers.MSG)) {
-						LOG.trace(Markers.MSG, "Created the subtenant: {}", subtenant);
-					}
-				}
-				httpResponse.setStatusCode(HttpStatus.SC_OK);
+				handleGenericContainerReq(
+					httpRequest, httpResponse,
+					METHOD_PUT.equals(method) ? randomString(16) : subtenant,
+					method, dataId
+				);
 			} else {
 				if(requestURI[2].equals(WSRequestConfigImpl.API_TYPE_OBJ)) {
 					if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -62,7 +62,9 @@ extends WSRequestHandlerBase<T> {
 							newDataId = generateId(),
 							headerLocation = httpRequest.getRequestLine().getUri()+"/"+newDataId;
 						httpResponse.setHeader(HttpHeaders.LOCATION, headerLocation);
-						handleGenericDataReq(httpRequest, httpResponse, method, newDataId);
+						handleGenericDataReq(
+							httpRequest, httpResponse, method, subtenant, newDataId
+						);
 					}
 				} else {
 					if(LOG.isTraceEnabled(Markers.MSG)) {
@@ -70,11 +72,20 @@ extends WSRequestHandlerBase<T> {
 							Markers.MSG, "Handle atmos request. URI contains the object ID."
 						);
 					}
-					handleGenericDataReq(httpRequest, httpResponse, method, dataId);
+					handleGenericDataReq(
+						httpRequest, httpResponse, method, subtenant, dataId
+					);
 				}
 			}
 		} else {
 			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 		}
+	}
+	//
+	@Override
+	protected final void handleContainerList(
+		final HttpRequest req, final HttpResponse resp, final String name, final String dataId
+	) {
+		resp.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
 	}
 }

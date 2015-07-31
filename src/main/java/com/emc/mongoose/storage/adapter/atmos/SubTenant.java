@@ -6,6 +6,8 @@ import com.emc.mongoose.core.api.data.DataObject;
  */
 public interface SubTenant<T extends DataObject> {
 	//
+	String KEY_SUBTENANT_ID = "subtenantID";
+	//
 	String getValue();
 	//
 	boolean exists(final String addr)

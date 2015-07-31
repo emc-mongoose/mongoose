@@ -1,12 +1,10 @@
 package com.emc.mongoose.storage.adapter.s3;
 // mongoose-common.jar
-import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 //
 import com.emc.mongoose.core.impl.data.model.GenericWSContainerBase;
 //
@@ -33,13 +31,6 @@ extends GenericWSContainerBase<T>
 implements Bucket<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static String
-		VERSIONING_ENTITY_CONTENT =
-			"<VersioningConfiguration xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\">" +
-			"<Status>Enabled</Status></VersioningConfiguration>",
-		VERSIONING_URL_PART = "/?versioning",
-		MAX_KEYS_URL_PART = "?max-keys=",
-		MARKER_URL_PART = "&marker=";
 	//
 	public WSBucketImpl(
 		final WSRequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
@@ -53,8 +44,9 @@ implements Bucket<T> {
 		return execute(addr, method, false);
 	}
 	//
-	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning)
-	throws IOException {
+	HttpResponse execute(
+		final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning
+	) throws IOException {
 		return execute(addr, method, versioning, null, batchSize);
 	}
 	//
@@ -91,10 +83,10 @@ implements Bucket<T> {
 		// this must not be in canonical request.
 		// set max-keys value when get new bucket's list.
 		if (MutableWSRequest.HTTPMethod.GET.equals(method)) {
-			httpReq.setUriPath(httpReq.getUriPath() + MAX_KEYS_URL_PART + bucketMaxKeys);
+			httpReq.setUriPath(httpReq.getUriPath() + "?" + URL_ARG_MAX_KEYS + "=" + bucketMaxKeys);
 			// if it is possible to get next bucket's list bucketListingMarker must be in URI request.
 			if (bucketListingMarker != null) {
-				httpReq.setUriPath(httpReq.getUriPath() + MARKER_URL_PART + bucketListingMarker);
+				httpReq.setUriPath(httpReq.getUriPath() + "&" + URL_ARG_MARKER + "=" + bucketListingMarker);
 			}
 		}
 		return reqConf.execute(addr, httpReq);

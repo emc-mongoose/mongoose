@@ -28,7 +28,6 @@ implements SubTenant<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public final static String KEY_SUBTENANT_ID = "subtenantID";
 	@SuppressWarnings("FieldCanBeLocal")
 	private final WSRequestConfigImpl<T> reqConf;
 	private String value = null;

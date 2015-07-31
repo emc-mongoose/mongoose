@@ -2,65 +2,47 @@ package com.emc.mongoose.storage.mock.impl.base;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
-import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.load.model.AsyncConsumer;
-//
-import com.emc.mongoose.core.impl.load.model.AsyncConsumerBase;
-//
+import com.emc.mongoose.storage.mock.api.ContainerMockAlreadyExistsException;
+import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
+import com.emc.mongoose.storage.mock.api.DataObjectMock;
+import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
+import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.ObjectStorageMock;
 //
 import org.apache.commons.collections4.map.LRUMap;
 //
 import java.io.IOException;
-import java.rmi.RemoteException;
+import java.util.Collection;
 import java.util.Map;
 /**
  Created by kurila on 03.07.15.
  */
-public abstract class ObjectStorageMockBase<T extends DataObject>
+public abstract class ObjectStorageMockBase<T extends DataObjectMock>
 extends StorageMockBase<T>
 implements ObjectStorageMock<T> {
 	//
-	protected final Map<String, T> itemIndex;
-	protected final AsyncConsumer<T> createWorker, deleteWorker;
-	protected final int capacity;
+	protected final Map<String, ObjectContainerMock<T>> containersIndex;
+	protected final ObjectContainerMock<T> defaultContainer;
+	protected final int capacity, containerCapacity;
 	//
 	protected ObjectStorageMockBase(final RunTimeConfig rtConfig, final Class<T> itemCls) {
 		super(rtConfig, itemCls);
 		capacity = rtConfig.getStorageMockCapacity();
-		itemIndex = new LRUMap<>(rtConfig.getStorageMockCapacity());
-		final int maxQueueSize = rtConfig.getTasksMaxQueueSize();
-		//
-		createWorker = new AsyncConsumerBase<T>(Long.MAX_VALUE, Long.MAX_VALUE, maxQueueSize) {
-			{ setName("createWorker"); setDaemon(true); }
-			@Override
-			protected final void submitSync(final T item)
-			throws InterruptedException, RemoteException {
-				create(item);
-			}
-		};
-		deleteWorker = new AsyncConsumerBase<T>(Long.MAX_VALUE, Long.MAX_VALUE, maxQueueSize) {
-			{ setName("deleteWorker"); setDaemon(true); }
-			protected final void submitSync(final T item)
-			throws InterruptedException, RemoteException {
-				itemIndex.remove(item.getId());
-			}
-		};
-	}
-	//
-	@Override
-	protected void startAsyncConsuming() {
-		try {
-			createWorker.start();
-			deleteWorker.start();
-		} catch(final RemoteException e) {
-			throw new RuntimeException(e);
-		}
+		containerCapacity = rtConfig.getStorageMockContainerCapacity();
+		containersIndex = new LRUMap<>(rtConfig.getStorageMockContainerCountLimit());
+		defaultContainer = new BasicObjectContainerMock<T>(
+			ObjectContainerMock.DEFAULT_NAME, containerCapacity
+		);
+		containersIndex.put(ObjectContainerMock.DEFAULT_NAME, defaultContainer);
 	}
 	//
 	@Override
 	public long getSize() {
-		return itemIndex.size();
+		long size = 0;
+		for(final ObjectContainerMock<T> c : containersIndex.values()) {
+			size += c.size();
+		}
+		return size;
 	}
 	//
 	@Override
@@ -70,21 +52,130 @@ implements ObjectStorageMock<T> {
 	//
 	@Override
 	public final void create(final T dataItem) {
-		itemIndex.put(dataItem.getId(), dataItem);
+		defaultContainer.put(dataItem.getId(), dataItem);
 	}
 	//
 	@Override
 	public void close()
 	throws IOException {
-		try {
-			createWorker.close();
-		} finally {
-			try {
-				deleteWorker.close();
-			} finally {
-				itemIndex.clear();
-				super.close();
-			}
+		for(final ObjectContainerMock<T> container : containersIndex.values()) {
+			container.clear();
+		}
+		containersIndex.clear();
+	}
+	//
+	protected abstract T newDataObject(final String id, final long offset, final long size);
+	//
+	@Override
+	public final T create(
+		final String container, final String id, final long offset, final long size
+	) throws ContainerMockNotFoundException {
+		final ObjectContainerMock<T> tgtContainer = containersIndex.get(container);
+		if(tgtContainer == null) {
+			throw new ContainerMockNotFoundException();
+		}
+		final T newDataObject = newDataObject(id, offset, size);
+		tgtContainer.put(id, newDataObject);
+		return newDataObject;
+	}
+	//
+	@Override
+	public final T update(
+		final String container, final String id, final long offset, final long size
+	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+		final ObjectContainerMock<T> srcContainer = containersIndex.get(container);
+		if(srcContainer == null) {
+			throw new ContainerMockNotFoundException();
+		}
+		final T dataObject = srcContainer.get(id);
+		if(dataObject == null) {
+			throw new ObjectMockNotFoundException();
+		}
+		dataObject.update(offset, size);
+		return dataObject;
+	}
+	//
+	@Override
+	public final T append(
+		final String container, final String id, final long offset, final long size
+	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+		final ObjectContainerMock<T> srcContainer = containersIndex.get(container);
+		if(srcContainer == null) {
+			throw new ContainerMockNotFoundException();
+		}
+		final T dataObject = srcContainer.get(id);
+		if(dataObject == null) {
+			throw new ObjectMockNotFoundException();
+		}
+		dataObject.append(offset, size);
+		return dataObject;
+	}
+	//
+	@Override
+	public final T read(
+		final String container, final String id, final long offset, final long size
+	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+		// TODO partial read using offset and size args
+		final ObjectContainerMock<T> srcContainer = containersIndex.get(container);
+		if(srcContainer == null) {
+			throw new ContainerMockNotFoundException();
+		}
+		final T dataObject = srcContainer.get(id);
+		if(dataObject == null) {
+			throw new ObjectMockNotFoundException();
+		}
+		return dataObject;
+	}
+	//
+	@Override
+	public final T delete(final String container, final String id)
+		throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+		final ObjectContainerMock<T> srcContainer = containersIndex.get(container);
+		if(srcContainer == null) {
+			throw new ContainerMockNotFoundException();
+		}
+		final T dataObject = srcContainer.remove(id);
+		if(null == dataObject) {
+			throw new ObjectMockNotFoundException();
+		}
+		return dataObject;
+	}
+	//
+	@Override
+	public final ObjectContainerMock<T> create(final String name)
+	throws ContainerMockAlreadyExistsException {
+		if(containersIndex.containsKey(name)) {
+			throw new ContainerMockAlreadyExistsException();
+		}
+		final ObjectContainerMock<T> c = new BasicObjectContainerMock<>(name, containerCapacity);
+		containersIndex.put(name, c);
+		return c;
+	}
+	//
+	@Override
+	public final boolean exists(final String name) {
+		return containersIndex.containsKey(name);
+	}
+	//
+	@Override
+	public final ObjectContainerMock<T> delete(final String name)
+	throws ContainerMockNotFoundException {
+		final ObjectContainerMock<T> c = containersIndex.remove(name);
+		if(c == null) {
+			throw new ContainerMockNotFoundException();
+		}
+		return c;
+	}
+	//
+	@Override
+	public final String list(
+		final String container, final String marker, final Collection<T> buffDst, final int maxCount
+	) throws ContainerMockNotFoundException {
+		final ObjectContainerMock<T> c = containersIndex.get(container);
+		if(c == null) {
+			throw new ContainerMockNotFoundException();
+		} else {
+			return c.list(marker, buffDst, maxCount);
 		}
 	}
 }

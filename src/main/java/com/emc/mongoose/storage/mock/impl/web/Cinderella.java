@@ -6,6 +6,9 @@ import com.emc.mongoose.common.date.LowPrecisionDateGenerator;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-mock.jar
+import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
+import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
+import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.base.ObjectStorageMockBase;
@@ -118,6 +121,11 @@ implements WSMock<T> {
 	}
 	//
 	@Override
+	protected final T newDataObject(final String id, final long offset, final long size) {
+		return (T) new BasicWSObjectMock(id, offset, size);
+	}
+	//
+	@Override
 	protected final void await() {
 		try {
 			for(final BasicSocketEventDispatcher sockEvtDispatcher : sockEvtDispatchers) {
@@ -151,41 +159,5 @@ implements WSMock<T> {
 		}
 		//
 		super.close();
-	}
-	//
-	@Override
-	public final T create(final String id, final long offset, final long size) {
-		final T newDataObject = (T) new BasicWSObjectMock(id, offset, size);
-		itemIndex.put(id, newDataObject);
-		return newDataObject;
-	}
-	//
-	@Override
-	public final T update(final String id, final long offset, final long size) {
-		final T dataObject = itemIndex.get(id);
-		if(dataObject != null) {
-			dataObject.update(offset, size);
-		}
-		return dataObject;
-	}
-	//
-	@Override
-	public final T append(final String id, final long offset, final long size) {
-		final T dataObject = itemIndex.get(id);
-		if(dataObject != null) {
-			dataObject.append(offset, size);
-		}
-		return dataObject;
-	}
-	//
-	@Override
-	public final T read(final String id, final long offset, final long size) {
-		// TODO partial read
-		return itemIndex.get(id);
-	}
-	//
-	@Override
-	public final T delete(final String id) {
-		return itemIndex.remove(id);
 	}
 }

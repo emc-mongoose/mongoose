@@ -11,7 +11,10 @@ import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.UniformData;
 // mongoose-storage-mock.jar
+import com.emc.mongoose.storage.mock.api.ContainerMockAlreadyExistsException;
+import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.IOStats;
+import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.web.response.BasicWSResponseProducer;
@@ -70,12 +73,15 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	private final IOStats ioStats;
 	private final float rateLimit;
 	private final AtomicInteger lastMilliDelay = new AtomicInteger(1);
-	private final WSMock<T> sharedStorage;
+	//
+	protected final WSMock<T> sharedStorage;
+	protected final int batchSize;
 	//
 	protected WSRequestHandlerBase(
 		final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage
 	) {
 		this.rateLimit = runTimeConfig.getLoadLimitRate();
+		this.batchSize = runTimeConfig.getBatchSize();
 		this.sharedStorage = sharedStorage;
 		this.ioStats = sharedStorage.getStats();
 	}
@@ -148,30 +154,31 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	}
 	//
 	protected void handleGenericDataReq(
-		final HttpRequest httpRequest, final HttpResponse httpResponse, final String method,
-		final String dataId
+		final HttpRequest httpRequest, final HttpResponse httpResponse,
+		final String container, final String method, final String dataId
 	) {
 		switch(method) {
 			case METHOD_POST:
-				handleWrite(httpRequest, httpResponse, dataId);
+				handleWrite(httpRequest, httpResponse, container, dataId);
 				break;
 			case METHOD_PUT:
-				handleWrite(httpRequest, httpResponse, dataId);
+				handleWrite(httpRequest, httpResponse, container, dataId);
 				break;
 			case METHOD_GET:
-				handleRead(httpResponse, dataId);
+				handleRead(httpResponse, container, dataId);
 				break;
 			case METHOD_HEAD:
 				httpResponse.setStatusCode(HttpStatus.SC_OK);
 				break;
 			case METHOD_DELETE:
-				handleDelete(httpResponse, dataId);
+				handleDelete(httpResponse, container, dataId);
 				break;
 		}
 	}
 	//
 	private void handleWrite(
-		final HttpRequest request, final HttpResponse response, final String dataId
+		final HttpRequest request, final HttpResponse response,
+		final String container, final String dataId
 	) {
 		try {
 			response.setStatusCode(HttpStatus.SC_OK);
@@ -179,15 +186,18 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 			//
 			if(rangeHeaders == null || rangeHeaders.length == 0) {
 				// write or recreate data item
-				final T dataObject = createDataObject(request, dataId);
+				final T dataObject = createDataObject(request, response, container, dataId);
 				ioStats.markCreate(dataObject.getSize());
 			} else {
 				// else do append or update if data item exist
 				handleRanges(
-					dataId, rangeHeaders, response,
+					container, dataId, rangeHeaders,
 					HttpEntityEnclosingRequest.class.cast(request).getEntity().getContentLength()
 				);
 			}
+		} catch(final ContainerMockNotFoundException | ObjectMockNotFoundException e) {
+			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+			ioStats.markCreate(-1);
 		} catch(final NumberFormatException | HttpException e) {
 			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			LogUtil.exception(
@@ -199,9 +209,9 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	}
 	//
 	private void handleRanges(
-		final String dataId, final Header rangeHeaders[], final HttpResponse httpResponse,
-		final long contentLength
-	) throws IllegalArgumentException {
+		final String container, final String dataId,
+		final Header rangeHeaders[], final long contentLength
+	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
 		String rangeHeaderValue, rangeValuePairs[], rangeValue[];
 		long offset;
 		for(final Header rangeHeader : rangeHeaders) {
@@ -215,12 +225,12 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 					rangeValue = rangeValuePair.split(VALUE_RANGE_CONCAT);
 					if(rangeValue.length == 1) {
 						sharedStorage.append(
-							dataId, Long.parseLong(rangeValue[0]), contentLength
+							container, dataId, Long.parseLong(rangeValue[0]), contentLength
 						);
 					} else if(rangeValue.length == 2) {
 						offset = Long.parseLong(rangeValue[0]);
 						sharedStorage.update(
-							dataId, offset, Long.parseLong(rangeValue[1]) - offset + 1
+							container, dataId, offset, Long.parseLong(rangeValue[1]) - offset + 1
 						);
 					} else {
 						LOG.warn(
@@ -234,47 +244,70 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		}
 	}
 	//
-	private void handleRead(final HttpResponse response, final String dataId) {
-		final T dataObject = sharedStorage.read(dataId, 0, 0);
-		if(dataObject == null) {
-			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.ERR, "No such object: {}", dataId);
-			}
-			ioStats.markRead(-1);
-		} else {
+	private void handleRead(
+		final HttpResponse response, final String container, final String dataId
+	) {
+		try {
+			final T dataObject = sharedStorage.read(container, dataId, 0, 0);
 			response.setStatusCode(HttpStatus.SC_OK);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.MSG, "Send data object with ID: {}", dataId);
 			}
 			response.setEntity(dataObject);
 			ioStats.markRead(dataObject.getSize());
-		}
-	}
-	//
-	private void handleDelete(final HttpResponse response, final String dataId){
-		final T dataObject = sharedStorage.delete(dataId);
-		if(dataObject == null) {
+		} catch(final ContainerMockNotFoundException e) {
+			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.ERR, "No such container: {}", dataId);
+			}
+			ioStats.markRead(-1);
+		} catch(final ObjectMockNotFoundException e) {
 			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.ERR, "No such object: {}", dataId);
 			}
-		} else {
+			ioStats.markRead(-1);
+		}
+	}
+	//
+	private void handleDelete(
+		final HttpResponse response, final String container, final String dataId
+	) {
+		try {
+			sharedStorage.delete(container, dataId);
 			response.setStatusCode(HttpStatus.SC_OK);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.MSG, "Delete data object with ID: {}", dataId);
 			}
 			ioStats.markDelete();
+		} catch(final ContainerMockNotFoundException e) {
+			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.ERR, "No such container: {}", dataId);
+			}
+		} catch(final ObjectMockNotFoundException e) {
+			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(Markers.ERR, "No such object: {}", dataId);
+			}
 		}
 	}
 	//
-	private T createDataObject(final HttpRequest request, final String dataId)
-	throws HttpException, NumberFormatException {
+	private T createDataObject(
+		final HttpRequest request, final HttpResponse response,
+		final String container, final String dataId
+	) throws HttpException, NumberFormatException {
 		final HttpEntity entity = HttpEntityEnclosingRequest.class.cast(request).getEntity();
 		final long size = entity.getContentLength();
 		// create data object or get it for append or update
 		final long offset = Long.valueOf(dataId, Character.MAX_RADIX);
-		return sharedStorage.create(dataId, offset, size);
+		T dataObject = null;
+		try {
+			dataObject = sharedStorage.create(container, dataId, offset, size);
+		} catch(final ContainerMockNotFoundException e) {
+			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+		}
+		return dataObject;
 	}
 	/*
 	offset for mongoose versions since v0.6:
@@ -303,5 +336,56 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	//
 	protected static String generateId() {
 		return Long.toString(UniformData.nextOffset(LAST_OFFSET), DataObject.ID_RADIX);
+	}
+	//
+	protected void handleGenericContainerReq(
+		final HttpRequest httpRequest, final HttpResponse httpResponse,
+		final String container, final String method, final String dataId
+	) {
+		switch(method) {
+			case METHOD_POST:
+				httpResponse.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
+				break;
+			case METHOD_PUT:
+				handleContainerCreate(httpRequest, httpResponse, container);
+				break;
+			case METHOD_GET:
+				handleContainerList(httpRequest, httpResponse, container, dataId);
+				break;
+			case METHOD_HEAD:
+				handleContainerExists(httpResponse, container);
+				break;
+			case METHOD_DELETE:
+				handleContainerDelete(httpResponse, container);
+				break;
+		}
+	}
+	//
+	private void handleContainerCreate(
+		final HttpRequest req, final HttpResponse resp, final String name
+	) {
+		try {
+			sharedStorage.create(name);
+		} catch(final ContainerMockAlreadyExistsException e) {
+			resp.setStatusCode(HttpStatus.SC_CONFLICT);
+		}
+	}
+	//
+	protected abstract void handleContainerList(
+		final HttpRequest req, final HttpResponse resp, final String name, final String dataId
+	);
+	//
+	private void handleContainerExists(final HttpResponse resp, final String name) {
+		if(!sharedStorage.exists(name)) {
+			resp.setStatusCode(HttpStatus.SC_NOT_FOUND);
+		}
+	}
+	//
+	private void handleContainerDelete(final HttpResponse resp, final String name) {
+		try {
+			sharedStorage.delete(name);
+		} catch(final ContainerMockNotFoundException e) {
+			resp.setStatusCode(HttpStatus.SC_NOT_FOUND);
+		}
 	}
 }
