@@ -162,8 +162,8 @@ implements Container<T> {
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
 	final HttpResponse execute(
-		final String addr, final MutableWSRequest.HTTPMethod method, final String markerSwiftContainer,
-		final long container_limit
+		final String addr, final MutableWSRequest.HTTPMethod method, final String nextMarker,
+		final long maxCount
 	) throws IOException {
 		//
 		if(method == null) {
@@ -183,10 +183,10 @@ implements Container<T> {
 				// if method is get add json format parameter to uri path
 				httpReq.setUriPath(httpReq.getUriPath() + "?format=json");
 				// set container limit to get container's list with fix size.
-				httpReq.setUriPath(httpReq.getUriPath() + "&limit=" + container_limit);
+				httpReq.setUriPath(httpReq.getUriPath() + "&limit=" + maxCount);
 				// if it is possible to get next container's list marker must be in URI request.
-				if (markerSwiftContainer != null) {
-					httpReq.setUriPath(httpReq.getUriPath() + "&marker=" + markerSwiftContainer);
+				if (nextMarker != null) {
+					httpReq.setUriPath(httpReq.getUriPath() + "&marker=" + nextMarker);
 				}
 				break;
 			case PUT:
