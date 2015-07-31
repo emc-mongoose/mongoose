@@ -737,6 +737,42 @@ function charts(chartsArray) {
 			types: SCALE_TYPES
 		}
 	];
+	//  for time accomodation. For more info see #JIRA-314
+	var TIME_LIMITATIONS = {
+		"seconds": {
+			"limit": 300 * 1,
+			"value": 1,
+			"next": "minutes"
+		},
+		"minutes": {
+			"limit": 300 * 60,
+			"value": 60,
+			"next": "hours"
+		},
+		"hours": {
+			"limit": 120 * 60 * 60,
+			"value": 60 * 60,
+			"next": "days"
+		},
+		"days": {
+			"limit": 35 * 24 * 60 * 60,
+			"value": 24 * 60 * 60,
+			"next": "weeks"
+		},
+		"weeks": {
+			"limit": 20 * 7 * 24 * 60 * 60,
+			"value": 7 * 24 * 60 * 60,
+			"next": "months"
+		},
+		"months": {
+			"limit": 60 * 4 * 7 * 24 * 60 * 60,
+			"value": 4 * 7 * 24 * 60 * 60,
+			"next": "years"
+		},
+		"years": {
+			"next": null
+		}
+	}
 	//  Some constants from runTimeConfig
 	var RUN_TIME_CONFIG_CONSTANTS = {
 		runId: "run.id",
@@ -958,6 +994,17 @@ function charts(chartsArray) {
 			.text(SCALE_TYPES[1]);
 	}
 	//
+	function isTimeLimitReached(domainMaxValue, currTimeUnit) {
+		return domainMaxValue >= currTimeUnit.limit;
+	}
+	//
+	function getConvertedTickValue(oldTick, currTimeUnit) {
+		if (oldTick % currTimeUnit.value === 0) {
+			return oldTick;
+		}
+		return "";
+	}
+	//
 	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath, sec) {
 		var currXScale = SCALE_TYPES[0];
 		var currYScale = SCALE_TYPES[0];
@@ -971,6 +1018,8 @@ function charts(chartsArray) {
 			currentMetricsPeriodSec = sec;
 		}
 		//var runScenarioName = json.contextMap[RUN_TIME_CONFIG_CONSTANTS.runScenarioName];
+		//
+		var currTimeUnit = TIME_LIMITATIONS.seconds;
 		//
 		var x = d3.scale.linear()
 			.domain([
@@ -990,9 +1039,19 @@ function charts(chartsArray) {
 			range(colorsList18);
 		color.domain(data.map(function(d) { return d.name.id; }));
 		//
+		while (isTimeLimitReached(x.domain()[x.domain().length - 1], currTimeUnit)) {
+			currTimeUnit = currTimeUnit.next;
+			if (currTimeUnit.next === null) {
+				return;
+			}
+		}
+		//
 		var xAxis = d3.svg.axis()
 			.scale(x)
-			.orient("bottom");
+			.orient("bottom")
+			.tickFormat(function(d) {
+				return getConvertedTickValue(d, currTimeUnit);
+			});
 		var yAxis = d3.svg.axis()
 			.scale(y)
 			.orient("left");
@@ -1000,7 +1059,10 @@ function charts(chartsArray) {
 		function makeXAxis() {
 			return d3.svg.axis()
 				.scale(x)
-				.orient("bottom");
+				.orient("bottom")
+				.tickFormat(function(d) {
+					return getConvertedTickValue(d, currTimeUnit);
+				});
 		}
 
 		function makeYAxis() {
@@ -1103,8 +1165,8 @@ function charts(chartsArray) {
 		function redraw(currXScale, currYScale) {
 			switch (currXScale) {
 				case SCALE_TYPES[0]:
-					xAxisGroup.transition().call(d3.svg.axis().scale(x));
-					xGrid.call(d3.svg.axis().scale(x)
+					xAxisGroup.transition().call(xAxis);
+					xGrid.call(makeXAxis()
 						.tickSize(-height, 0, 0)
 						.tickFormat(""));
 					xGrid.selectAll(".minor")
@@ -1357,6 +1419,15 @@ function charts(chartsArray) {
 					return (isNaN(y(d.y))) ? 0.1 : d.y
 				}); })
 			]);
+			//
+			while (isTimeLimitReached(x.domain()[x.domain().length - 1], currTimeUnit)) {
+				currTimeUnit = currTimeUnit.next;
+				if (currTimeUnit.next === null) {
+					return;
+				}
+			}
+			console.log(currTimeUnit);
+			//
 			redraw(currXScale, currYScale);
 		};
 	}
