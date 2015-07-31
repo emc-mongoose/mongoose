@@ -401,17 +401,21 @@ implements LoadExecutor<T> {
 			//
 			if (rtConfig.isRunResumeEnabled()) {
 				if (rtConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE)) {
-					if (!RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
-						BasicLoadState.restoreScenarioState(rtConfig);
+					try {
+						if (!RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
+							BasicLoadState.restoreScenarioState(rtConfig);
+						}
+						setLoadState(BasicLoadState.findStateByLoadNumber(instanceNum, rtConfig));
+					} catch (final Exception e) {
+						LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 					}
-					setLoadState(BasicLoadState.findStateByLoadNumber(instanceNum, rtConfig));
 				}
 			}
 			//
 			if (isLoadFinished.get()) {
 				try {
 					close();
-				} catch (IOException e) {
+				} catch (final IOException e) {
 					LogUtil.exception(LOG, Level.ERROR, e,
 						"Couldn't close the load executor \"{}\"", getName());
 				}
