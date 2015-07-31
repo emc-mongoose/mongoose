@@ -399,13 +399,15 @@ implements LoadExecutor<T> {
 			respLatency = metrics.register(MetricRegistry.name(getName(),
 				METRIC_NAME_REQ, METRIC_NAME_LAT), new Histogram(new UniformReservoir()));
 			//
-			if (RunTimeConfig.getContext().getRunMode().
-					equals(Constants.RUN_MODE_STANDALONE)) {
-				if (!RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
-					BasicLoadState.restoreScenarioState(rtConfig);
+			if (rtConfig.isRunResumeEnabled()) {
+				if (rtConfig.getRunMode().equals(Constants.RUN_MODE_STANDALONE)) {
+					if (!RESTORED_STATES_MAP.containsKey(rtConfig.getRunId())) {
+						BasicLoadState.restoreScenarioState(rtConfig);
+					}
+					setLoadState(BasicLoadState.findStateByLoadNumber(instanceNum, rtConfig));
 				}
-				setLoadState(BasicLoadState.findStateByLoadNumber(instanceNum, rtConfig));
 			}
+			//
 			if (isLoadFinished.get()) {
 				try {
 					close();

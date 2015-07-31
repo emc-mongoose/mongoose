@@ -238,7 +238,10 @@
 		"run": {
 			"name": "mongoose",
 			"version": "0.9.0",
-			"mode": "standalone"
+			"mode": "standalone",
+			"resume": {
+				"enabled" : true
+			}
 		}
 	}
 }

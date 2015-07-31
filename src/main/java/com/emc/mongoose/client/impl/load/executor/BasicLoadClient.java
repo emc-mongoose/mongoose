@@ -527,16 +527,11 @@ implements LoadClient<T> {
 	@Override
 	public final synchronized void start() {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
-			//  print these messages only once, for first load executor in scenario
-			if (!RESTORED_STATES_MAP.containsKey(runTimeConfig.getRunId())) {
-				if (BasicLoadState.isSavedStateOfRunExists(runTimeConfig.getRunId())) {
-					LOG.warn(Markers.MSG, "Run \"{}\": configuration immutability violated. " +
-						"Starting new run", runTimeConfig.getRunId());
-				} else {
-					LOG.info(Markers.MSG, "Could not find saved state of run \"{}\". " +
-						"Starting new run", runTimeConfig.getRunId());
+			if (runTimeConfig.isRunResumeEnabled()) {
+				if (!RESTORED_STATES_MAP.containsKey(runTimeConfig.getRunId())) {
+					BasicLoadState.restoreScenarioState(runTimeConfig);
 				}
-				RESTORED_STATES_MAP.put(runTimeConfig.getRunId(), new ArrayList<LoadState>());
+				setLoadState(BasicLoadState.findStateByLoadNumber(instanceNum, runTimeConfig));
 			}
 			LoadSvc<T> nextLoadSvc;
 			for(final String addr : loadSvcAddrs) {
@@ -706,20 +701,8 @@ implements LoadClient<T> {
 	//
 	@Override
 	public void setLoadState(final LoadState state) {
-		LoadSvc<T> nextLoadSvc;
-		for (final String addr : remoteLoadMap.keySet()) {
-			nextLoadSvc = remoteLoadMap.get(addr);
-			try {
-				nextLoadSvc.setLoadState(state);
-			} catch (final RemoteException e) {
-				try {
-					LogUtil.exception(LOG, Level.WARN, e,
-						"Failed to set load state for load service \"{}\"", nextLoadSvc.getName());
-				} catch (final RemoteException remote) {
-					LogUtil.exception(LOG, Level.WARN, remote,
-						"Unexpected failure");
-				}
-			}
+		if (state != null) {
+			LOG.warn(Markers.MSG, "Failed to resume run in distributed mode. See #JIRA-411");
 		}
 	}
 	//

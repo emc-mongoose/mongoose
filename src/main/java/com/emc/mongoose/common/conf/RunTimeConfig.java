@@ -109,6 +109,8 @@ implements Externalizable {
 		//  For ui property tree
 		KEY_CHILDREN_PROPS = "children",
 		//
+		KEY_RUN_RESUME_ENABLED = "run.resume.enabled",
+		//
 		FNAME_CONF = "mongoose.json";
 	//
 	private static InheritableThreadLocal<RunTimeConfig>
@@ -534,6 +536,10 @@ implements Externalizable {
 	//
 	public final boolean isEnabledDataRandom() {return  getBoolean("data.src.random.enabled");}
 	public final int getDataRandomBatchSize() {return getInt("data.src.random.batchSize");}
+	//
+	public final boolean isRunResumeEnabled() {
+		return getBoolean("run.resume.enabled");
+	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final synchronized void writeExternal(final ObjectOutput out)
