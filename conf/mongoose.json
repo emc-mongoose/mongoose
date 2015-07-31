@@ -240,7 +240,7 @@
 			"version": "0.9.0",
 			"mode": "standalone",
 			"resume": {
-				"enabled" : true
+				"enabled" : false
 			}
 		}
 	}
