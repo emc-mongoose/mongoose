@@ -2,6 +2,7 @@ package com.emc.mongoose.storage.mock.impl.base;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.storage.mock.api.ContainerMockAlreadyExistsException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.DataObjectMock;
@@ -10,6 +11,9 @@ import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.ObjectStorageMock;
 //
 import org.apache.commons.collections4.map.LRUMap;
+//
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.util.Collection;
@@ -20,6 +24,8 @@ import java.util.Map;
 public abstract class ObjectStorageMockBase<T extends DataObjectMock>
 extends StorageMockBase<T>
 implements ObjectStorageMock<T> {
+	//
+	private final static Logger LOG = LogManager.getLogger();
 	//
 	protected final Map<String, ObjectContainerMock<T>> containersIndex;
 	protected final ObjectContainerMock<T> defaultContainer;
@@ -70,6 +76,10 @@ implements ObjectStorageMock<T> {
 	public final T create(
 		final String container, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException {
+		LOG.info(
+			Markers.MSG, "Try to create the item w/ id \"{}\" in the container \"{}\"",
+			id, container
+		);
 		final ObjectContainerMock<T> tgtContainer = containersIndex.get(container);
 		if(tgtContainer == null) {
 			throw new ContainerMockNotFoundException();
@@ -83,6 +93,10 @@ implements ObjectStorageMock<T> {
 	public final T update(
 		final String container, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+		LOG.info(
+			Markers.MSG, "Try to update the item w/ id \"{}\" in the container \"{}\"",
+			id, container
+		);
 		final ObjectContainerMock<T> srcContainer = containersIndex.get(container);
 		if(srcContainer == null) {
 			throw new ContainerMockNotFoundException();
@@ -99,6 +113,10 @@ implements ObjectStorageMock<T> {
 	public final T append(
 		final String container, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+		LOG.info(
+			Markers.MSG, "Try to append the item w/ id \"{}\" in the container \"{}\"",
+			id, container
+		);
 		final ObjectContainerMock<T> srcContainer = containersIndex.get(container);
 		if(srcContainer == null) {
 			throw new ContainerMockNotFoundException();
@@ -115,6 +133,10 @@ implements ObjectStorageMock<T> {
 	public final T read(
 		final String container, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+		LOG.info(
+			Markers.MSG, "Try to read the item w/ id \"{}\" in the container \"{}\"",
+			id, container
+		);
 		// TODO partial read using offset and size args
 		final ObjectContainerMock<T> srcContainer = containersIndex.get(container);
 		if(srcContainer == null) {
@@ -129,7 +151,11 @@ implements ObjectStorageMock<T> {
 	//
 	@Override
 	public final T delete(final String container, final String id)
-		throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+	throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+		LOG.info(
+			Markers.MSG, "Try to delete the item w/ id \"{}\" in the container \"{}\"",
+			id, container
+		);
 		final ObjectContainerMock<T> srcContainer = containersIndex.get(container);
 		if(srcContainer == null) {
 			throw new ContainerMockNotFoundException();
@@ -144,6 +170,7 @@ implements ObjectStorageMock<T> {
 	@Override
 	public final ObjectContainerMock<T> create(final String name)
 	throws ContainerMockAlreadyExistsException {
+		LOG.info(Markers.MSG, "Try to create the container \"{}\"", name);
 		if(containersIndex.containsKey(name)) {
 			throw new ContainerMockAlreadyExistsException();
 		}
@@ -160,6 +187,7 @@ implements ObjectStorageMock<T> {
 	@Override
 	public final ObjectContainerMock<T> delete(final String name)
 	throws ContainerMockNotFoundException {
+		LOG.info(Markers.MSG, "Try to delete the container \"{}\"", name);
 		final ObjectContainerMock<T> c = containersIndex.remove(name);
 		if(c == null) {
 			throw new ContainerMockNotFoundException();
@@ -171,6 +199,11 @@ implements ObjectStorageMock<T> {
 	public final String list(
 		final String container, final String marker, final Collection<T> buffDst, final int maxCount
 	) throws ContainerMockNotFoundException {
+		LOG.info(
+			Markers.MSG,
+			"Try to get the container \"{}\" listing using marker \"{}\" and count limit {}",
+			container, marker, maxCount
+		);
 		final ObjectContainerMock<T> c = containersIndex.get(container);
 		if(c == null) {
 			throw new ContainerMockNotFoundException();

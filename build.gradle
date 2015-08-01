@@ -379,6 +379,7 @@ dependencies {
 		library.commons_collections4,
 		library.commons_configuration,
 		library.httpcore_plus_nio,
+		library.jackson_databind,
 		library.log4j_api,
 		library.metrics_core,
 	)

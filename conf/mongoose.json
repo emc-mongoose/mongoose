@@ -204,7 +204,7 @@
 				"headCount": 1,
 				"ioThreadsPerSocket": 100,
 				"capacity": 10000000,
-				"contaner": {
+				"container": {
 					"capacity": 10000000,
 					"countLimit": 1000
 				},

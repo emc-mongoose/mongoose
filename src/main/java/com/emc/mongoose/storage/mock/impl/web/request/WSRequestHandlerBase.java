@@ -155,22 +155,26 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	//
 	protected void handleGenericDataReq(
 		final HttpRequest httpRequest, final HttpResponse httpResponse,
-		final String container, final String method, final String dataId
+		final String method, final String container, final String dataId
 	) {
 		switch(method) {
 			case METHOD_POST:
+				LOG.info(Markers.MSG, "Write date object request: /{}/{}", container, dataId);
 				handleWrite(httpRequest, httpResponse, container, dataId);
 				break;
 			case METHOD_PUT:
+				LOG.info(Markers.MSG, "Write data object request: /{}/{}", container, dataId);
 				handleWrite(httpRequest, httpResponse, container, dataId);
 				break;
 			case METHOD_GET:
+				LOG.info(Markers.MSG, "Read data object request: /{}/{}", container, dataId);
 				handleRead(httpResponse, container, dataId);
 				break;
 			case METHOD_HEAD:
 				httpResponse.setStatusCode(HttpStatus.SC_OK);
 				break;
 			case METHOD_DELETE:
+				LOG.info(Markers.MSG, "Delete data object request: /{}/{}", container, dataId);
 				handleDelete(httpResponse, container, dataId);
 				break;
 		}
@@ -340,22 +344,26 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 	//
 	protected void handleGenericContainerReq(
 		final HttpRequest httpRequest, final HttpResponse httpResponse,
-		final String container, final String method, final String dataId
+		final String method, final String container, final String dataId
 	) {
 		switch(method) {
 			case METHOD_POST:
 				httpResponse.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
 				break;
 			case METHOD_PUT:
+				LOG.info(Markers.MSG, "Create container request: {}", container);
 				handleContainerCreate(httpRequest, httpResponse, container);
 				break;
 			case METHOD_GET:
+				LOG.info(Markers.MSG, "List container request: {}/{}", container, dataId);
 				handleContainerList(httpRequest, httpResponse, container, dataId);
 				break;
 			case METHOD_HEAD:
+				LOG.info(Markers.MSG, "Check container existence request: {}", container);
 				handleContainerExists(httpResponse, container);
 				break;
 			case METHOD_DELETE:
+				LOG.info(Markers.MSG, "Delete container request: {}", container);
 				handleContainerDelete(httpResponse, container);
 				break;
 		}
