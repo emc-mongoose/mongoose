@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.adapter.atmos;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.io.req.HTTPMethod;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -51,7 +52,7 @@ implements SubTenant<T> {
 		MSG_INVALID_METHOD = "<NULL> is invalid HTTP method",
 		SUBTENANT = "subtenant";
 	//
-	final HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)
+	final HttpResponse execute(final String addr, final HTTPMethod method)
 	throws IOException {
 		//
 		if(method == null) {
@@ -59,7 +60,7 @@ implements SubTenant<T> {
 		}
 		final MutableWSRequest httpReq = reqConf.createRequest().setMethod(method);
 		//
-		if(MutableWSRequest.HTTPMethod.PUT.equals(method)) {
+		if(HTTPMethod.PUT.equals(method)) {
 			httpReq.setUriPath(WSRequestConfigImpl.PREFIX_URI + SUBTENANT);
 			httpReq.setHeader(
 				new BasicHeader(
@@ -82,7 +83,7 @@ implements SubTenant<T> {
 		//
 		if(value!= null && value.length() > 0) {
 			try {
-				final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.HEAD);
+				final HttpResponse httpResp = execute(addr, HTTPMethod.HEAD);
 				if(httpResp != null) {
 					final HttpEntity httpEntity = httpResp.getEntity();
 					final StatusLine statusLine = httpResp.getStatusLine();
@@ -122,7 +123,7 @@ implements SubTenant<T> {
 	public final void create(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.PUT);
+			final HttpResponse httpResp = execute(addr, HTTPMethod.PUT);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -164,7 +165,7 @@ implements SubTenant<T> {
 	public final void delete(final String addr)
 	throws IllegalStateException {
 		try {
-			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.DELETE);
+			final HttpResponse httpResp = execute(addr, HTTPMethod.DELETE);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();

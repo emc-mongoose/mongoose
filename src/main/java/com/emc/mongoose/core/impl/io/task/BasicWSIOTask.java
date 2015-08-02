@@ -7,6 +7,7 @@ import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
+import com.emc.mongoose.core.api.io.req.HTTPMethod;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -54,7 +55,7 @@ implements WSIOTask<T> {
 	//
 	private final HeaderGroup sharedHeaders;
 	private final MutableWSRequest httpRequest = new BasicWSRequest(
-		MutableWSRequest.HTTPMethod.PUT, null, null
+		HTTPMethod.PUT, null, null
 	);
 	private WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	//

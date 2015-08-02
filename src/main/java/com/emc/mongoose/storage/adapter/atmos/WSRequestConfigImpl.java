@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.io.req.HTTPMethod;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
@@ -80,20 +81,21 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public MutableWSRequest.HTTPMethod getHTTPMethod() {
-		MutableWSRequest.HTTPMethod method;
+	public
+	HTTPMethod getHTTPMethod() {
+		HTTPMethod method;
 		switch(loadType) {
 			case CREATE:
-				method = MutableWSRequest.HTTPMethod.POST;
+				method = HTTPMethod.POST;
 				break;
 			case READ:
-				method = MutableWSRequest.HTTPMethod.GET;
+				method = HTTPMethod.GET;
 				break;
 			case DELETE:
-				method = MutableWSRequest.HTTPMethod.DELETE;
+				method = HTTPMethod.DELETE;
 				break;
 			default: // UPDATE, APPEND
-				method = MutableWSRequest.HTTPMethod.PUT;
+				method = HTTPMethod.PUT;
 				break;
 		}
 		return method;

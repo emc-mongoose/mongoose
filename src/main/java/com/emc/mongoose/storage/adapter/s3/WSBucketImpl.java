@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.adapter.s3;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.io.req.HTTPMethod;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 //
@@ -39,19 +40,19 @@ implements Bucket<T> {
 	}
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
-	HttpResponse execute(final String addr, final MutableWSRequest.HTTPMethod method)
+	HttpResponse execute(final String addr, final HTTPMethod method)
 	throws IOException {
 		return execute(addr, method, false);
 	}
 	//
 	HttpResponse execute(
-		final String addr, final MutableWSRequest.HTTPMethod method, final boolean versioning
+		final String addr, final HTTPMethod method, final boolean versioning
 	) throws IOException {
 		return execute(addr, method, versioning, null, batchSize);
 	}
 	//
 	HttpResponse execute(
-		final String addr, final MutableWSRequest.HTTPMethod method,
+		final String addr, final HTTPMethod method,
 		final boolean versioning, final String bucketListingMarker, final long bucketMaxKeys
 	) throws IOException {
 		//
@@ -82,7 +83,7 @@ implements Bucket<T> {
 		reqConf.applyHeadersFinally(httpReq);
 		// this must not be in canonical request.
 		// set max-keys value when get new bucket's list.
-		if (MutableWSRequest.HTTPMethod.GET.equals(method)) {
+		if (HTTPMethod.GET.equals(method)) {
 			httpReq.setUriPath(httpReq.getUriPath() + "?" + URL_ARG_MAX_KEYS + "=" + bucketMaxKeys);
 			// if it is possible to get next bucket's list bucketListingMarker must be in URI request.
 			if (bucketListingMarker != null) {
@@ -98,7 +99,7 @@ implements Bucket<T> {
 		boolean flagExists = false;
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.HEAD);
+			final HttpResponse httpResp = execute(addr, HTTPMethod.HEAD);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -133,13 +134,13 @@ implements Bucket<T> {
 		}
 		//
 		if (flagExists && versioningEnabled){
-			enableVersioning(addr, MutableWSRequest.HTTPMethod.PUT);
+			enableVersioning(addr, HTTPMethod.PUT);
 		}
 		//
 		return flagExists;
 	}
 	//
-	private void enableVersioning(final String addr, MutableWSRequest.HTTPMethod method) {
+	private void enableVersioning(final String addr, HTTPMethod method) {
 		try {
 			final HttpResponse httpResp = execute(addr, method, true);
 			if(httpResp != null) {
@@ -181,7 +182,7 @@ implements Bucket<T> {
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.PUT);
+			final HttpResponse httpResp = execute(addr, HTTPMethod.PUT);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();
@@ -221,7 +222,7 @@ implements Bucket<T> {
 	throws IllegalStateException {
 		//
 		try {
-			final HttpResponse httpResp = execute(addr, MutableWSRequest.HTTPMethod.DELETE);
+			final HttpResponse httpResp = execute(addr, HTTPMethod.DELETE);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
 				final StatusLine statusLine = httpResp.getStatusLine();

@@ -3,6 +3,7 @@ package com.emc.mongoose.storage.adapter.swift;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.io.req.HTTPMethod;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -44,7 +45,7 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr,  MutableWSRequest.HTTPMethod.HEAD, null, batchSize
+				addr,  HTTPMethod.HEAD, null, batchSize
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -85,7 +86,7 @@ implements Container<T> {
 	throws IllegalStateException {
 		try {
 			final HttpResponse httpResp = execute(
-				addr, MutableWSRequest.HTTPMethod.PUT, null, batchSize
+				addr, HTTPMethod.PUT, null, batchSize
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -125,7 +126,7 @@ implements Container<T> {
 		//
 		try {
 			final HttpResponse httpResp = execute(
-				addr, MutableWSRequest.HTTPMethod.DELETE, null, batchSize
+				addr, HTTPMethod.DELETE, null, batchSize
 			);
 			if(httpResp != null) {
 				final HttpEntity httpEntity = httpResp.getEntity();
@@ -162,7 +163,7 @@ implements Container<T> {
 	private final static String MSG_INVALID_METHOD = "<NULL> is invalid HTTP method";
 	//
 	final HttpResponse execute(
-		final String addr, final MutableWSRequest.HTTPMethod method, final String nextMarker,
+		final String addr, final HTTPMethod method, final String nextMarker,
 		final long maxCount
 	) throws IOException {
 		//

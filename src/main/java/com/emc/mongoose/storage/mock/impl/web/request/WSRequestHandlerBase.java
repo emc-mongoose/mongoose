@@ -5,16 +5,14 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.ServiceUtils;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.data.DataObject;
 import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_PREFIX;
 import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_CONCAT;
-// mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.data.UniformData;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.ContainerMockAlreadyExistsException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.IOStats;
 import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
+import com.emc.mongoose.storage.mock.api.ReqURIMatchingHandler;
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 import com.emc.mongoose.storage.mock.impl.web.response.BasicWSResponseProducer;
@@ -35,7 +33,6 @@ import org.apache.http.protocol.HttpContext;
 //
 import org.apache.http.nio.protocol.HttpAsyncExchange;
 import org.apache.http.nio.protocol.HttpAsyncRequestConsumer;
-import org.apache.http.nio.protocol.HttpAsyncRequestHandler;
 //
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -49,7 +46,7 @@ import java.util.concurrent.atomic.AtomicLong;
  Created by andrey on 13.05.15.
  */
 public abstract class WSRequestHandlerBase<T extends WSObjectMock>
-implements HttpAsyncRequestHandler<HttpRequest> {
+implements ReqURIMatchingHandler<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -125,13 +122,9 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		// prepare
 		final HttpRequest httpRequest = httpExchange.getRequest();
 		final HttpResponse httpResponse = httpExchange.getResponse();
-		final RequestLine requestLine = httpRequest.getRequestLine();
-		final String method = requestLine.getMethod().toLowerCase(LogUtil.LOCALE_DEFAULT);
-		// get URI components
-		final String[] requestURI = requestLine.getUri().split("/");
-		final String dataId = requestURI[requestURI.length - 1];
+		final RequestLine reqLine = httpRequest.getRequestLine();
 		//
-		handleActually(httpRequest, httpResponse, method, requestURI, dataId);
+		handleActually(httpRequest, httpResponse, reqLine.getMethod(), reqLine.getUri());
 		// done
 		BasicWSResponseProducer respProducer = THRLOC_RESP_PRODUCER.get();
 		if(respProducer == null) {
@@ -141,11 +134,6 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		respProducer.setResponse(httpResponse);
 		httpExchange.submitResponse(respProducer);
 	}
-	//
-	protected abstract void handleActually(
-		final HttpRequest httpRequest, final HttpResponse httpResponse,
-		final String method, final String requestURI[], final String dataId
-	);
 	//
 	protected static String randomString(final int len) {
 		final byte buff[] = new byte[len];
@@ -337,10 +325,6 @@ implements HttpAsyncRequestHandler<HttpRequest> {
 		}
 		return offset;
 	}*/
-	//
-	protected static String generateId() {
-		return Long.toString(UniformData.nextOffset(LAST_OFFSET), DataObject.ID_RADIX);
-	}
 	//
 	protected void handleGenericContainerReq(
 		final HttpRequest httpRequest, final HttpResponse httpResponse,

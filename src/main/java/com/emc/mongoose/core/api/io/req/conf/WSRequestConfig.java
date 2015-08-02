@@ -1,6 +1,7 @@
 package com.emc.mongoose.core.api.io.req.conf;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.data.model.DataSource;
+import com.emc.mongoose.core.api.io.req.HTTPMethod;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -46,7 +47,7 @@ extends ObjectRequestConfig<T> {
 	//
 	MutableWSRequest createRequest();
 	//
-	MutableWSRequest.HTTPMethod getHTTPMethod();
+	HTTPMethod getHTTPMethod();
 	//
 	@Override
 	WSRequestConfig<T> setAPI(final String api);

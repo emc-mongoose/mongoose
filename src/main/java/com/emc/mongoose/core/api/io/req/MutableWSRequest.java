@@ -17,6 +17,4 @@ extends HttpEntityEnclosingRequest {
 	MutableWSRequest setUriPath(final String path);
 	//
 	void clearHeaders();
-	//
-	enum HTTPMethod { DELETE, GET, HEAD, PUT, POST, TRACE }
 }

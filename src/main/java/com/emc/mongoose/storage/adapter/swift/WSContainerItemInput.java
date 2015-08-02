@@ -4,7 +4,7 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
+import com.emc.mongoose.core.api.io.req.HTTPMethod;
 //
 import com.emc.mongoose.core.impl.data.model.GenericContainerItemInputBase;
 //
@@ -51,7 +51,7 @@ extends GenericContainerItemInputBase<T> {
 		}
 		// execute the request
 		final HttpResponse resp = WSContainerImpl.class.cast(container).execute(
-			nodeAddr, MutableWSRequest.HTTPMethod.GET, lastId, container.getBatchSize()
+			nodeAddr, HTTPMethod.GET, lastId, container.getBatchSize()
 		);
 		// response validation
 		if(resp == null) {

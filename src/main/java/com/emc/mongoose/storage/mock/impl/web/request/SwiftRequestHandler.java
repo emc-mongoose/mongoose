@@ -50,7 +50,7 @@ extends WSRequestHandlerBase<T> {
 		apiBasePathSwift = runTimeConfig.getString(WSRequestConfigImpl.KEY_CONF_SVC_BASEPATH);
 	}
 	//
-	public boolean matches(final String requestURI) {
+	public boolean matches(final HttpRequest httpRequest) {
 		return requestURI != null &&
 			(requestURI.startsWith(AUTH, 1) || requestURI.startsWith(apiBasePathSwift, 1));
 	}

@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.adapter.s3;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.HTTPMethod;
 import com.emc.mongoose.core.api.load.model.Consumer;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.api.data.WSObject;
@@ -91,7 +90,7 @@ implements Producer<T> {
 					bucketMaxKeys : (maxCount - countSubmit);
 				//
 				final HttpResponse httpResp = bucket.execute(
-					addr, MutableWSRequest.HTTPMethod.GET, false,
+					addr, HTTPMethod.GET, false,
 					bucketListingMarker, bucketMaxKeys
 				);
 				//

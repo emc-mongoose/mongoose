@@ -11,6 +11,8 @@ import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
+import org.apache.http.Header;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -45,8 +47,11 @@ extends WSRequestHandlerBase<T> {
 	private final static Logger LOG = LogManager.getLogger();
 	//
 	private final static String
-		MAX_KEYS = "maxKeys", MARKER = "marker";
+		MAX_KEYS = "maxKeys", MARKER = "marker",
+		BUCKET = "bucket", OBJ_ID = "objId",
+		AUTH_PREFIX = RunTimeConfig.getContext().getApiS3AuthPrefix() + " ";
 	private final static Pattern
+		PATTERN_URI = Pattern.compile("/(?<" + BUCKET + ">[^/]+)/?(?<" + OBJ_ID + ">[^\\?]+)?"),
 		PATTERN_MAX_KEYS = Pattern.compile(Bucket.URL_ARG_MAX_KEYS + "=(?<" + MAX_KEYS +  ">[\\d]+)&?"),
 		PATTERN_MARKER = Pattern.compile(Bucket.URL_ARG_MARKER + "=(?<" + MARKER + ">[a-z\\d]+)&?");
 	//
@@ -55,17 +60,40 @@ extends WSRequestHandlerBase<T> {
 	}
 	//
 	@Override
+	public boolean matches(final HttpRequest httpRequest) {
+		final Header authHeader = httpRequest.getFirstHeader(HttpHeaders.AUTHORIZATION);
+		if(authHeader == null) {
+			return false;
+		}
+		return authHeader.getValue().startsWith(AUTH_PREFIX);
+	}
+	//
+	@Override
 	public final void handleActually(
-		final HttpRequest httpRequest, final HttpResponse httpResponse, final String method,
-		final String requestURI[], final String dataId
+		final HttpRequest httpRequest, final HttpResponse httpResponse,
+		final String method, final String requestURI
 	) {
-		final String bucketName;
-		if(requestURI.length == 2) {
-			bucketName = requestURI[requestURI.length - 1];
-			handleGenericContainerReq(httpRequest, httpResponse, method, bucketName, dataId);
-		} else {
-			bucketName = requestURI[requestURI.length - 2];
-			handleGenericDataReq(httpRequest, httpResponse, method, bucketName, dataId);
+		final Matcher m = PATTERN_URI.matcher(requestURI);
+		try {
+			if(m.find()) {
+				final String
+					bucket = m.group(BUCKET),
+					objId = m.group(OBJ_ID);
+				if(bucket != null) {
+					if(objId == null) {
+						handleGenericContainerReq(httpRequest, httpResponse, method, bucket, null);
+					} else {
+						handleGenericDataReq(httpRequest, httpResponse, method, bucket, objId);
+					}
+				} else {
+					httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+				}
+			} else {
+				httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+			}
+		} catch(final IllegalArgumentException | IllegalStateException e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to parse the request URI: {}", requestURI);
+			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 		}
 	}
 	//

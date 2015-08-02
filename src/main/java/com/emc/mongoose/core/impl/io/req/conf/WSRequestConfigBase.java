@@ -12,6 +12,7 @@ import com.emc.mongoose.common.net.http.content.InputChannel;
 import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
+import com.emc.mongoose.core.api.io.req.HTTPMethod;
 import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -245,17 +246,18 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public MutableWSRequest.HTTPMethod getHTTPMethod() {
-		MutableWSRequest.HTTPMethod method;
+	public
+	HTTPMethod getHTTPMethod() {
+		HTTPMethod method;
 		switch(loadType) {
 			case READ:
-				method = MutableWSRequest.HTTPMethod.GET;
+				method = HTTPMethod.GET;
 				break;
 			case DELETE:
-				method = MutableWSRequest.HTTPMethod.DELETE;
+				method = HTTPMethod.DELETE;
 				break;
 			default:
-				method = MutableWSRequest.HTTPMethod.PUT;
+				method = HTTPMethod.PUT;
 				break;
 		}
 		return method;
