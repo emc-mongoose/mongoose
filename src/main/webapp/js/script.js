@@ -742,35 +742,42 @@ function charts(chartsArray) {
 		"seconds": {
 			"limit": 300 * 1,
 			"value": 1,
-			"next": "minutes"
+			"next": "minutes",
+			"label": "seconds[s]"
 		},
 		"minutes": {
 			"limit": 300 * 60,
 			"value": 60,
-			"next": "hours"
+			"next": "hours",
+			"label": "minutes[m]"
 		},
 		"hours": {
 			"limit": 120 * 60 * 60,
 			"value": 60 * 60,
-			"next": "days"
+			"next": "days",
+			"label": "hours[h]"
 		},
 		"days": {
 			"limit": 35 * 24 * 60 * 60,
 			"value": 24 * 60 * 60,
-			"next": "weeks"
+			"next": "weeks",
+			"label": "days[d]"
 		},
 		"weeks": {
 			"limit": 20 * 7 * 24 * 60 * 60,
 			"value": 7 * 24 * 60 * 60,
-			"next": "months"
+			"next": "months",
+			"label": "weeks[w]"
 		},
 		"months": {
 			"limit": 60 * 4 * 7 * 24 * 60 * 60,
 			"value": 4 * 7 * 24 * 60 * 60,
-			"next": "years"
+			"next": "years",
+			"label": "months[m]"
 		},
 		"years": {
-			"next": null
+			"next": null,
+			"label": "years[y]"
 		}
 	}
 	//  Some constants from runTimeConfig
@@ -998,13 +1005,6 @@ function charts(chartsArray) {
 		return domainMaxValue >= currTimeUnit.limit;
 	}
 	//
-	function getConvertedTickValue(oldTick, currTimeUnit) {
-		if (oldTick % currTimeUnit.value === 0) {
-			return oldTick;
-		}
-		return "";
-	}
-	//
 	function drawChart(data, json, xAxisLabel, yAxisLabel, chartDOMPath, sec) {
 		var currXScale = SCALE_TYPES[0];
 		var currYScale = SCALE_TYPES[0];
@@ -1024,7 +1024,22 @@ function charts(chartsArray) {
 		var x = d3.scale.linear()
 			.domain([
 				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x; }); }),
-				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; })  })
+				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x; }); })
+			])
+			.range([0, width]);
+		//
+		while (isTimeLimitReached(x.domain()[x.domain().length - 1], currTimeUnit)) {
+			if (currTimeUnit.next === null) {
+				return;
+			}
+			currTimeUnit = TIME_LIMITATIONS[currTimeUnit.next];
+			xAxisLabel = currTimeUnit.label;
+		}
+		//
+		x = d3.scale.linear()
+			.domain([
+				d3.min(data, function(c) { return d3.min(c.values, function(d) { return d.x / currTimeUnit.value; }); }),
+				d3.max(data, function(c) { return d3.max(c.values, function(d) { return d.x / currTimeUnit.value; })  })
 			])
 			.range([0, width]);
 		//
@@ -1039,19 +1054,9 @@ function charts(chartsArray) {
 			range(colorsList18);
 		color.domain(data.map(function(d) { return d.name.id; }));
 		//
-		while (isTimeLimitReached(x.domain()[x.domain().length - 1], currTimeUnit)) {
-			currTimeUnit = currTimeUnit.next;
-			if (currTimeUnit.next === null) {
-				return;
-			}
-		}
-		//
 		var xAxis = d3.svg.axis()
 			.scale(x)
-			.orient("bottom")
-			.tickFormat(function(d) {
-				return getConvertedTickValue(d, currTimeUnit);
-			});
+			.orient("bottom");
 		var yAxis = d3.svg.axis()
 			.scale(y)
 			.orient("left");
@@ -1059,10 +1064,7 @@ function charts(chartsArray) {
 		function makeXAxis() {
 			return d3.svg.axis()
 				.scale(x)
-				.orient("bottom")
-				.tickFormat(function(d) {
-					return getConvertedTickValue(d, currTimeUnit);
-				});
+				.orient("bottom");
 		}
 
 		function makeYAxis() {
@@ -1073,7 +1075,7 @@ function charts(chartsArray) {
 		//
 		var line = d3.svg.line()
 			.x(function (d) {
-				return x((isNaN(x(d.x))) ? 0.1 : d.x);
+				return x((isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value));
 			})
 			.y(function (d) {
 				return y((isNaN(y(d.y))) ? 0.1 : d.y);
@@ -1089,7 +1091,14 @@ function charts(chartsArray) {
 			.attr("transform", "translate(" + margin.left + "," + margin.top + ")")
 			.style("font", "12px sans-serif")
 			.style("overflow-x", "auto");
-
+		//
+		//  Axis X Label
+		var horizontalLabel = svg.append("text")
+			.attr("x", width - 2)
+			.attr("y", height - 2)
+			.style("text-anchor", "end")
+			.text(xAxisLabel);
+		//
 		var xAxisGroup = svg.append("g")
 			.attr("class", "x axis")
 			.attr("transform", "translate(0," + height + ")")
@@ -1123,12 +1132,6 @@ function charts(chartsArray) {
 			.attr("d", function(d)  { return line(d.values); })
 			.attr("stroke", function(d) { return color(d.name.id); })
 			.attr("fill", "none");
-		//  Axis X Label
-		svg.append("text")
-			.attr("x", width - 2)
-			.attr("y", height - 2)
-			.style("text-anchor", "end")
-			.text(xAxisLabel);
 
 		//  Axis Y Label
 		svg.append("text")
@@ -1165,8 +1168,8 @@ function charts(chartsArray) {
 		function redraw(currXScale, currYScale) {
 			switch (currXScale) {
 				case SCALE_TYPES[0]:
-					xAxisGroup.transition().call(xAxis);
-					xGrid.call(makeXAxis()
+					xAxisGroup.transition().call(d3.svg.axis().scale(x).orient("bottom"));
+					xGrid.call(d3.svg.axis().scale(x)
 						.tickSize(-height, 0, 0)
 						.tickFormat(""));
 					xGrid.selectAll(".minor")
@@ -1217,7 +1220,6 @@ function charts(chartsArray) {
 						.style("stroke-dasharray", "2,2");
 					break;
 			}
-			//
 			//  Update old charts
 			var paths = svg.selectAll(".level path")
 				.data(data)
@@ -1246,10 +1248,10 @@ function charts(chartsArray) {
 					if (scaleOrientation === SCALE_ORIENTATION[0]) {
 						x = d3.scale.linear()
 							.domain([d3.min(data, function(c) { return d3.min(c.values, function(d) {
-								return d.x;
+								return d.x / currTimeUnit.value;
 							}); }),
 							d3.max(data, function(c) { return d3.max(c.values, function(d) {
-								return d.x;
+								return d.x / currTimeUnit.value;
 							}); })])
 							.range([0, width]);
 						currXScale = SCALE_TYPES[0];
@@ -1268,10 +1270,10 @@ function charts(chartsArray) {
 					if (scaleOrientation === SCALE_ORIENTATION[0]) {
 						x = d3.scale.log()
 							.domain([d3.min(data, function(c) { return d3.min(c.values, function(d) {
-								return d.x <= 0 ? 0.1 : d.x;
+								return d.x <= 0 ? 0.1 : (d.x / currTimeUnit.value);
 							}); }),
 							d3.max(data, function(c) { return d3.max(c.values, function(d) {
-								return d.x <= 0 ? 0.1 : d.x;
+								return d.x <= 0 ? 0.1 : (d.x / currTimeUnit.value);
 							}); })])
 							.range([0, width]);
 						currXScale = SCALE_TYPES[1];
@@ -1404,12 +1406,20 @@ function charts(chartsArray) {
 				d.values.push({x: currentMetricsPeriodSec, y: parseFloat(value[i])});
 			});
 			//
+			while (isTimeLimitReached(x.domain()[x.domain().length - 1], currTimeUnit)) {
+				if (currTimeUnit.next === null) {
+					return;
+				}
+				currTimeUnit = TIME_LIMITATIONS[currTimeUnit.next];
+				horizontalLabel.text(currTimeUnit.label);
+			}
+			//
 			x.domain([
 				d3.min(data, function(c) { return d3.min(c.values, function(d) {
-					return (isNaN(x(d.x))) ? 0.1 : d.x;
+					return (isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value);
 				}); }),
 				d3.max(data, function(c) { return d3.max(c.values, function(d) {
-					return (isNaN(x(d.x))) ? 0.1 : d.x;
+					return (isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value);
 				}); })
 			]);
 			y.domain([
@@ -1419,14 +1429,6 @@ function charts(chartsArray) {
 					return (isNaN(y(d.y))) ? 0.1 : d.y
 				}); })
 			]);
-			//
-			while (isTimeLimitReached(x.domain()[x.domain().length - 1], currTimeUnit)) {
-				currTimeUnit = currTimeUnit.next;
-				if (currTimeUnit.next === null) {
-					return;
-				}
-			}
-			console.log(currTimeUnit);
 			//
 			redraw(currXScale, currYScale);
 		};
@@ -1679,6 +1681,9 @@ function charts(chartsArray) {
 				//
 				var currXScale = SCALE_TYPES[0];
 				var currYScale = SCALE_TYPES[0];
+				//
+				var currTimeUnit = TIME_LIMITATIONS.seconds;
+				//
 				var x = d3.scale.linear()
 					.domain([
 						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
@@ -1690,6 +1695,23 @@ function charts(chartsArray) {
 					])
 					.range([0, width]);
 
+				while (isTimeLimitReached(x.domain()[x.domain().length - 1], currTimeUnit)) {
+					if (currTimeUnit.next === null) {
+						return;
+					}
+					currTimeUnit = TIME_LIMITATIONS[currTimeUnit.next];
+					xAxisLabel = currTimeUnit.label;
+				}
+				x = d3.scale.linear()
+					.domain([
+						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
+							return d3.min(c.values, function(v) { return v.x / currTimeUnit.value; }); });
+						}),
+						d3.max(data, function(d) { return d3.max(d.charts, function(c) {
+							return d3.max(c.values, function(v) { return v.x / currTimeUnit.value; }); });
+						})
+					])
+					.range([0, width]);
 				var y = d3.scale.linear()
 					.domain([
 						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
@@ -1725,7 +1747,7 @@ function charts(chartsArray) {
 				//
 				var line = d3.svg.line()
 					.x(function (d) {
-						return x((isNaN(x(d.x))) ? 0.1 : d.x);
+						return x((isNaN(x(d.x))) ? 0.1 : (d.x / currTimeUnit.value));
 					})
 					.y(function (d) {
 						return y((isNaN(y(d.y))) ? 0.1 : d.y);
@@ -1930,7 +1952,7 @@ function charts(chartsArray) {
 					.attr("stroke-width", "none")
 					.text(function(d) { return d.text; });
 				//  Axis X Label
-				svg.append("text")
+				var horizontalLabel = svg.append("text")
 					.attr("x", width - 2)
 					.attr("y", height - 2)
 					.style("text-anchor", "end")
@@ -2121,10 +2143,10 @@ function charts(chartsArray) {
 								x = d3.scale.linear()
 									.domain([
 										d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-											return d3.min(c.values, function(v) { return v.x; }); });
+											return d3.min(c.values, function(v) { return v.x / currTimeUnit.value; }); });
 										}),
 										d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-											return d3.max(c.values, function(v) { return v.x; }); });
+											return d3.max(c.values, function(v) { return v.x / currTimeUnit.value; }); });
 										})
 									])
 									.range([0, width]);
@@ -2147,10 +2169,10 @@ function charts(chartsArray) {
 								x = d3.scale.log()
 									.domain([
 										d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-											return d3.min(c.values, function(v) { return (v.x <= 0) ? 0.1 : v.x; }); });
+											return d3.min(c.values, function(v) { return (v.x <= 0) ? 0.1 : (v.x / currTimeUnit.value); }); });
 										}),
 										d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-											return d3.max(c.values, function(v) { return (v.x <= 0) ? 0.1 : v.x; }); });
+											return d3.max(c.values, function(v) { return (v.x <= 0) ? 0.1 : (v.x / currTimeUnit.value); }); });
 										})
 									])
 									.range([0, width]);
@@ -2310,12 +2332,20 @@ function charts(chartsArray) {
 							});
 					}
 					//
+					while (isTimeLimitReached(x.domain()[x.domain().length - 1], currTimeUnit)) {
+						if (currTimeUnit.next === null) {
+							return;
+						}
+						currTimeUnit = TIME_LIMITATIONS[currTimeUnit.next];
+						horizontalLabel.text(currTimeUnit.label);
+					}
+					//
 					x.domain([
 						d3.min(data, function(d) { return d3.min(d.charts, function(c) {
-							return d3.min(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : v.x; }); });
+							return d3.min(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : (v.x / currTimeUnit.value); }); });
 						}),
 						d3.max(data, function(d) { return d3.max(d.charts, function(c) {
-							return d3.max(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : v.x; }); });
+							return d3.max(c.values, function(v) { return (isNaN(x(v.x))) ? 0.1 : (v.x / currTimeUnit.value); }); });
 						})
 					]);
 					y.domain([
