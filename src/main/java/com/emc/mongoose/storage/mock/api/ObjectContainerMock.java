@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.Future;
 /**
  Created by kurila on 31.07.15.
  */
@@ -15,4 +16,8 @@ extends Map<String, T> {
 	String getName();
 	//
 	String list(final String marker, final Collection<T> buffDst, final int maxCount);
+	//
+	Future<T> putAsync(final String oid, final T obj);
+	//
+	Future<T> removeAsync(final String oid);
 }
