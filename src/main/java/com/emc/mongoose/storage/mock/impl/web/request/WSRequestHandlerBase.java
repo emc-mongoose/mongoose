@@ -124,7 +124,9 @@ implements ReqURIMatchingHandler<T> {
 		final HttpResponse httpResponse = httpExchange.getResponse();
 		final RequestLine reqLine = httpRequest.getRequestLine();
 		//
-		handleActually(httpRequest, httpResponse, reqLine.getMethod(), reqLine.getUri());
+		handleActually(
+			httpRequest, httpResponse, reqLine.getMethod().toLowerCase(), reqLine.getUri()
+		);
 		// done
 		BasicWSResponseProducer respProducer = THRLOC_RESP_PRODUCER.get();
 		if(respProducer == null) {
@@ -147,22 +149,18 @@ implements ReqURIMatchingHandler<T> {
 	) {
 		switch(method) {
 			case METHOD_POST:
-				LOG.info(Markers.MSG, "Write date object request: /{}/{}", container, dataId);
 				handleWrite(httpRequest, httpResponse, container, dataId);
 				break;
 			case METHOD_PUT:
-				LOG.info(Markers.MSG, "Write data object request: /{}/{}", container, dataId);
 				handleWrite(httpRequest, httpResponse, container, dataId);
 				break;
 			case METHOD_GET:
-				LOG.info(Markers.MSG, "Read data object request: /{}/{}", container, dataId);
 				handleRead(httpResponse, container, dataId);
 				break;
 			case METHOD_HEAD:
 				httpResponse.setStatusCode(HttpStatus.SC_OK);
 				break;
 			case METHOD_DELETE:
-				LOG.info(Markers.MSG, "Delete data object request: /{}/{}", container, dataId);
 				handleDelete(httpResponse, container, dataId);
 				break;
 		}
@@ -335,19 +333,15 @@ implements ReqURIMatchingHandler<T> {
 				httpResponse.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
 				break;
 			case METHOD_PUT:
-				LOG.info(Markers.MSG, "Create container request: {}", container);
 				handleContainerCreate(httpRequest, httpResponse, container);
 				break;
 			case METHOD_GET:
-				LOG.info(Markers.MSG, "List container request: {}/{}", container, dataId);
 				handleContainerList(httpRequest, httpResponse, container, dataId);
 				break;
 			case METHOD_HEAD:
-				LOG.info(Markers.MSG, "Check container existence request: {}", container);
 				handleContainerExists(httpResponse, container);
 				break;
 			case METHOD_DELETE:
-				LOG.info(Markers.MSG, "Delete container request: {}", container);
 				handleContainerDelete(httpResponse, container);
 				break;
 		}

@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.integ.core.api.s3.S3UsePreExistingBucketTest;
 import com.emc.mongoose.integ.core.rampup.CustomRampupTest;
 import com.emc.mongoose.integ.core.rampup.DefaultRampupTest;
 import com.emc.mongoose.integ.core.single.*;
@@ -27,7 +28,8 @@ import java.nio.file.Paths;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
-	DefaultWriteTest.class,
+	S3UsePreExistingBucketTest.class,
+	/*DefaultWriteTest.class,
 	WriteRandomSizedItemsTest.class,
 	ReadZeroSizeItemsTest.class,
 	Read10BItemsTest.class,
@@ -45,7 +47,7 @@ import java.nio.file.Paths;
 	DefaultChainScenarioIntegTest.class,
 	CustomRampupTest.class,
 	DefaultRampupTest.class,
-	InfiniteWriteTest.class
+	InfiniteWriteTest.class*/
 })
 public class CoreTestSuite {
 

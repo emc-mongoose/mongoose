@@ -27,9 +27,12 @@ extends ObjectRequestConfig<T> {
 		KEY_EMC_ACCEPT = "x-emc-accept",
 		KEY_EMC_FS_ACCESS = "x-emc-file-system-access-enabled",
 		KEY_EMC_DATE = "x-emc-date",
+		KEY_EMC_LIMIT = "x-emc-limit",
 		KEY_EMC_NS = "x-emc-namespace",
 		KEY_EMC_RANGE = "x-emc-range",
 		KEY_EMC_SIG = "x-emc-signature",
+		KEY_EMC_TAGS = "x-emc-tags",
+		KEY_EMC_TOKEN = "x-emc-token",
 		KEY_EMC_UID = "x-emc-uid",
 		//
 		VALUE_KEEP_ALIVE = "keep-alive",

@@ -39,7 +39,7 @@ extends GenericContainerItemInputBase<T> {
 	//
 	private final SAXParser parser;
 	//
-	private String nextPageMarker = null;
+	private String lastOid = null;
 	private boolean eof = false;
 	//
 	public WSBucketItemInput(
@@ -59,7 +59,7 @@ extends GenericContainerItemInputBase<T> {
 			QNAME_ITEM = "Contents",
 			QNAME_ITEM_ID = "Key",
 			QNAME_ITEM_SIZE = "Size",
-			QNAME_NEXT_MARKER = "NextMarker";
+			QNAME_IS_TRUNCATED = "IsTruncated";
 		//
 		private final List<T> itemsBuffer;
 		private final Constructor<T> itemConstructor;
@@ -69,8 +69,9 @@ extends GenericContainerItemInputBase<T> {
 			isInsideItem = false,
 			itIsItemId = false,
 			itIsItemSize = false,
-			itIsNextMarker = false;
-		private String strId = null, strSize = null, nextPageMarker = null;
+			itIsTruncateFlag = false,
+			isTruncated = false;
+		private String lastOid = null, strSize = null;
 		private T nextItem;
 		//
 		private PageContentHandler(
@@ -89,8 +90,7 @@ extends GenericContainerItemInputBase<T> {
 			isInsideItem = isInsideItem || QNAME_ITEM.equals(qName);
 			itIsItemId = isInsideItem && QNAME_ITEM_ID.equals(qName);
 			itIsItemSize = isInsideItem && QNAME_ITEM_SIZE.equals(qName);
-			//
-			itIsNextMarker = QNAME_NEXT_MARKER.equals(qName);
+			itIsTruncateFlag = QNAME_IS_TRUNCATED.equals(qName);
 			super.startElement(uri, localName, qName, attrs);
 		}
 		//
@@ -101,6 +101,7 @@ extends GenericContainerItemInputBase<T> {
 			//
 			itIsItemId = itIsItemId && !QNAME_ITEM_ID.equals(qName);
 			itIsItemSize = itIsItemSize && !QNAME_ITEM_SIZE.equals(qName);
+			itIsTruncateFlag = itIsTruncateFlag && !QNAME_IS_TRUNCATED.equals(qName);
 			//
 			if(isInsideItem && QNAME_ITEM.equals(qName)) {
 				isInsideItem = false;
@@ -119,20 +120,20 @@ extends GenericContainerItemInputBase<T> {
 					LOG.trace(Markers.ERR, "No \"{}\" element or empty", QNAME_ITEM_SIZE);
 				}
 				//
-				if(strId != null && strId.length() > 0 && size > -1) {
+				if(lastOid != null && lastOid.length() > 0 && size > -1) {
 					try {
-						nextItem = container.buildItem(itemConstructor, strId, size);
+						nextItem = container.buildItem(itemConstructor, lastOid, size);
 						if(nextItem != null) {
 							itemsBuffer.add(nextItem);
 							count ++;
 						}
 					} catch(final NumberFormatException e) {
-						LOG.debug(Markers.ERR, "Invalid id: {}", strId);
+						LOG.debug(Markers.ERR, "Invalid id: {}", lastOid);
 					} catch(final Exception e) {
 						LogUtil.exception(LOG, Level.ERROR, e, "Unexpected failure");
 					}
 				} else {
-					LOG.trace(Markers.ERR, "Invalid object id ({}) or size ({})", strId, strSize);
+					LOG.trace(Markers.ERR, "Invalid object id ({}) or size ({})", lastOid, strSize);
 				}
 			}
 			//
@@ -143,21 +144,13 @@ extends GenericContainerItemInputBase<T> {
 		public final void characters(final char buff[], final int start, final int length)
 		throws SAXException {
 			if(itIsItemId) {
-				strId = new String(buff, start, length);
+				lastOid = new String(buff, start, length);
 			} else if(itIsItemSize) {
 				strSize = new String(buff, start, length);
-			} else if(itIsNextMarker) {
-				nextPageMarker = new String(buff, start, length);
+			} else if(itIsTruncateFlag) {
+				isTruncated = Boolean.parseBoolean(new String(buff, start, length));
 			}
 			super.characters(buff, start, length);
-		}
-		//
-		public String getNextPageMarker() {
-			return nextPageMarker;
-		}
-		//
-		public int getCount() {
-			return count;
 		}
 	}
 	//
@@ -169,7 +162,7 @@ extends GenericContainerItemInputBase<T> {
 		}
 		// execute the request
 		final HttpResponse resp = WSBucketImpl.class.cast(container).execute(
-			nodeAddr, HTTPMethod.GET, false, nextPageMarker,
+			nodeAddr, HTTPMethod.GET, false, lastOid,
 			container.getBatchSize()
 		);
 		// response validation
@@ -182,9 +175,7 @@ extends GenericContainerItemInputBase<T> {
 		}
 		final int statusCode = status.getStatusCode();
 		if(statusCode < 200 || statusCode > 300) {
-			throw new IOException(
-				"Listing bucket \"" + container + "\" response: " + status
-			);
+			throw new IOException("Listing bucket \"" + container + "\" response: " + status);
 		}
 		final HttpEntity respEntity = resp.getEntity();
 		if(respEntity == null) {
@@ -203,11 +194,15 @@ extends GenericContainerItemInputBase<T> {
 				items, itemConstructor, container
 			);
 			parser.parse(in, pageContentHandler);
-			nextPageMarker = pageContentHandler.getNextPageMarker();
-			if(null == nextPageMarker || 0 == pageContentHandler.getCount()) {
+			lastOid = pageContentHandler.lastOid;
+			if(!pageContentHandler.isTruncated || lastOid == null) {
 				eof = true; // end of bucket list
 			}
-			LOG.info("Listed {} items the last time", pageContentHandler.getCount());
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					"Listed {} items the last time, last oid: {}", pageContentHandler.count, lastOid
+				);
+			}
 		} catch(final SAXException e) {
 			throw new IOException(e);
 		}
@@ -221,6 +216,6 @@ extends GenericContainerItemInputBase<T> {
 	public final void reset()
 	throws IOException {
 		super.reset();
-		nextPageMarker = null;
+		lastOid = null;
 	}
 }

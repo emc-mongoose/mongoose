@@ -5,6 +5,7 @@ import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
 //
 import java.util.Collection;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicInteger;
 /**
  Created by kurila on 31.07.15.
  */
@@ -14,6 +15,7 @@ implements ObjectContainerMock<T> {
 	//
 	protected final String name;
 	protected final int capacity;
+	protected final AtomicInteger size = new AtomicInteger(0);
 	//
 	public BasicObjectContainerMock(final String name, final int capacity) {
 		super();
@@ -30,7 +32,7 @@ implements ObjectContainerMock<T> {
 	public final String list(final String marker, final Collection<T> buffDst, final int maxCount) {
 		String nextId = marker;
 		for(int i = 0; i < maxCount; i ++) {
-			nextId = higherKey(nextId);
+			nextId = nextId == null ? firstKey() : higherKey(nextId);
 			if(nextId == null) {
 				break;
 			}
@@ -40,10 +42,24 @@ implements ObjectContainerMock<T> {
 	}
 	//
 	@Override
-	public final T put(final String id, final T object) {
-		if(size() == capacity) {
-			super.remove(lastKey());
+	public final T remove(final Object key) {
+		final T removed = super.remove(key);
+		if(removed != null) {
+			size.decrementAndGet();
 		}
-		return super.put(id, object);
+		return removed;
+	}
+	//
+	@Override
+	public final T put(final String id, final T object) {
+		final T replaced = super.put(id, object);
+		if(replaced == null) {
+			if(size.get() == capacity) {
+				super.remove(lastKey());
+			} else {
+				size.incrementAndGet();
+			}
+		}
+		return replaced;
 	}
 }

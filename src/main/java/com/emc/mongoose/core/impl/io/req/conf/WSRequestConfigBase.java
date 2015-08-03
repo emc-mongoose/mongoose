@@ -557,7 +557,7 @@ implements WSRequestConfig<T> {
 				mac = Mac.getInstance(signMethod);
 				mac.init(secretKey);
 			} catch(final NoSuchAlgorithmException | InvalidKeyException e) {
-				LogUtil.exception(LOG, Level.FATAL, e, "Failed to calculate the signature");
+				e.printStackTrace(System.out);
 				throw new IllegalStateException("Failed to init MAC cypher instance");
 			}
 			THRLOC_MAC.set(mac);

@@ -51,8 +51,10 @@ extends WSRequestHandlerBase<T> {
 		BUCKET = "bucket", OBJ_ID = "objId",
 		AUTH_PREFIX = RunTimeConfig.getContext().getApiS3AuthPrefix() + " ";
 	private final static Pattern
-		PATTERN_URI = Pattern.compile("/(?<" + BUCKET + ">[^/]+)/?(?<" + OBJ_ID + ">[^\\?]+)?"),
-		PATTERN_MAX_KEYS = Pattern.compile(Bucket.URL_ARG_MAX_KEYS + "=(?<" + MAX_KEYS +  ">[\\d]+)&?"),
+		PATTERN_URI = Pattern.compile("/(?<" + BUCKET + ">[^/^\\?]+)/?(?<" + OBJ_ID + ">[^\\?]+)?"),
+		PATTERN_MAX_KEYS = Pattern.compile(
+			Bucket.URL_ARG_MAX_KEYS + "=(?<" + MAX_KEYS +  ">[\\d]+)&?"
+		),
 		PATTERN_MARKER = Pattern.compile(Bucket.URL_ARG_MARKER + "=(?<" + MARKER + ">[a-z\\d]+)&?");
 	//
 	public S3RequestHandler(final RunTimeConfig runTimeConfig, final WSMock<T> sharedStorage) {
@@ -112,7 +114,7 @@ extends WSRequestHandlerBase<T> {
 		final HttpRequest req, final HttpResponse resp, final String name, final String dataId
 	) {
 		final String uri = req.getRequestLine().getUri();
-		int maxCount = -1;
+		int maxCount = batchSize;
 		String marker = null;
 		final Matcher maxKeysMatcher = PATTERN_MAX_KEYS.matcher(uri);
 		if(maxKeysMatcher.find()) {
@@ -130,10 +132,6 @@ extends WSRequestHandlerBase<T> {
 			}
 		}
 		//
-		if(maxCount <= 0) {
-			maxCount = batchSize;
-		}
-		//
 		final List<T> buff = new ArrayList<>(maxCount);
 		try {
 			marker = sharedStorage.list(name, marker, buff, maxCount);
@@ -145,6 +143,7 @@ extends WSRequestHandlerBase<T> {
 			resp.setStatusCode(HttpStatus.SC_NOT_FOUND);
 			return;
 		}
+		resp.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_XML.getMimeType());
 		//
 		final Document doc = DOM_BUILDER.newDocument();
 		final Element eRoot = doc.createElementNS(
@@ -160,11 +159,8 @@ extends WSRequestHandlerBase<T> {
 		eRoot.appendChild(e);
 		e = doc.createElement("Prefix"); // TODO prefix support
 		eRoot.appendChild(e);
-		e = doc.createElement("Marker");
-		e.appendChild(doc.createTextNode(marker));
-		eRoot.appendChild(e);
 		e = doc.createElement("MaxKeys");
-		e.appendChild(doc.createTextNode(Integer.toString(maxCount)));
+		e.appendChild(doc.createTextNode(Integer.toString(buff.size())));
 		eRoot.appendChild(e);
 		//
 		for(final T dataObject : buff) {
@@ -188,12 +184,6 @@ extends WSRequestHandlerBase<T> {
 			return;
 		}
 		//
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "Responding the bucket \"{}\" listing content:\n{}",
-				name, new String(bos.toByteArray())
-			);
-		}
 		resp.setEntity(new NByteArrayEntity(bos.toByteArray(), ContentType.APPLICATION_XML));
 	}
 }

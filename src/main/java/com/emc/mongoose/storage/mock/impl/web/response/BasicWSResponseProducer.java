@@ -6,8 +6,11 @@ import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-storage-mock.jar
 //
-import com.emc.mongoose.storage.mock.impl.base.BasicObjectMock;
+import com.emc.mongoose.storage.mock.api.DataObjectMock;
+//
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.nio.entity.NByteArrayEntity;
 import org.apache.http.protocol.HttpContext;
 //
 import org.apache.http.nio.ContentEncoder;
@@ -42,22 +45,27 @@ implements HttpAsyncResponseProducer {
 	@Override
 	public final void produceContent(final ContentEncoder encoder, final IOControl ioctrl)
 	throws IOException {
-		chanOut.setContentEncoder(encoder);
-		try {
-			final BasicObjectMock dataItem = BasicObjectMock.class.cast(response.getEntity());
-			if(dataItem != null) {
-				dataItem.writeFully(chanOut);
-			}
-		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Content producing failure");
-		} finally {
+		final HttpEntity respEntity = response.getEntity();
+		if(DataObjectMock.class.isInstance(respEntity)) {
+			chanOut.setContentEncoder(encoder);
 			try {
-				if (!encoder.isCompleted()) {
-					encoder.complete();
+				final DataObjectMock dataItem = DataObjectMock.class.cast(response.getEntity());
+				if(dataItem != null) {
+					dataItem.writeFully(chanOut);
 				}
+			} catch(final Exception e) {
+				LogUtil.exception(LOG, Level.WARN, e, "Content producing failure");
 			} finally {
-				chanOut.close();
+				try {
+					if(!encoder.isCompleted()) {
+						encoder.complete();
+					}
+				} finally {
+					chanOut.close();
+				}
 			}
+		} else if(NByteArrayEntity.class.isInstance(respEntity)) {
+			((NByteArrayEntity) respEntity).produceContent(encoder, ioctrl);
 		}
 	}
 	//

@@ -3,12 +3,12 @@ package com.emc.mongoose.storage.mock.api;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import java.util.Collection;
-import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.Map;
 /**
  Created by kurila on 31.07.15.
  */
 public interface ObjectContainerMock<T extends DataObjectMock>
-extends ConcurrentNavigableMap<String, T> {
+extends Map<String, T> {
 	//
 	String DEFAULT_NAME = RunTimeConfig.getContext().getRunName();
 	//

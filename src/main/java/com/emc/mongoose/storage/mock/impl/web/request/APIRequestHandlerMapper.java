@@ -36,10 +36,9 @@ implements HttpAsyncRequestHandlerMapper {
 	//
 	@Override
 	public final HttpAsyncRequestHandler<HttpRequest> lookup(final HttpRequest httpRequest) {
-		final String requestURI = httpRequest.getRequestLine().getUri();
-		if(reqHandlerAtmos.matches(requestURI)) {
+		if(reqHandlerAtmos.matches(httpRequest)) {
 			return reqHandlerAtmos;
-		} else if(reqHandlerSwift.matches(requestURI)) {
+		} else if(reqHandlerSwift.matches(httpRequest)) {
 			return reqHandlerSwift;
 		} else {
 			return reqHandlerS3;

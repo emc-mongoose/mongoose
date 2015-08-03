@@ -14,6 +14,7 @@ import com.fasterxml.jackson.core.JsonToken;
 //
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.StatusLine;
 //
 import org.apache.logging.log4j.Level;
@@ -62,6 +63,9 @@ extends GenericContainerItemInputBase<T> {
 			throw new IOException("Invalid HTTP response: " + resp);
 		}
 		final int statusCode = status.getStatusCode();
+		if(statusCode == HttpStatus.SC_NO_CONTENT) {
+			throw new EOFException();
+		}
 		if(statusCode < 200 || statusCode > 300) {
 			throw new IOException(
 				"Listing container \"" + container + "\" response: " + status
@@ -81,7 +85,12 @@ extends GenericContainerItemInputBase<T> {
 		try(final InputStream in = respEntity.getContent()) {
 			final long lastTimeCount = count;
 			handleJsonInputStream(in);
-			LOG.info("Listed {} items the last time", count - lastTimeCount);
+			if(lastTimeCount - count == 0) {
+				throw new EOFException();
+			}
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.info("Listed {} items the last time", count - lastTimeCount);
+			}
 		}
 	}
 	//
@@ -94,7 +103,7 @@ extends GenericContainerItemInputBase<T> {
 	//
 	private void handleJsonInputStream(final InputStream in)
 	throws EOFException, IOException {
-		boolean isEmptyArray = false;
+		boolean isEmptyArray = true;
 		T nextItem;
 		try(final JsonParser jsonParser = JSON_FACTORY.createParser(in)) {
 			final JsonToken rootToken = jsonParser.nextToken();
@@ -119,7 +128,7 @@ extends GenericContainerItemInputBase<T> {
 										if(nextItem != null) {
 											items.add(nextItem);
 											count ++;
-											isEmptyArray = true;
+											isEmptyArray = false;
 										}
 									} catch(final IllegalStateException e) {
 										LogUtil.exception(
