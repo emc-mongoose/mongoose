@@ -52,6 +52,8 @@ public class SequentialLoadTest {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		//  remove log dir w/ previous logs
+		LogParser.removeLogDirectory(RUN_ID);
 		LOG = LogManager.getLogger();
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
