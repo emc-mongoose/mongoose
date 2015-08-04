@@ -8,7 +8,6 @@ import com.emc.mongoose.common.net.ServiceUtils;
 import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_PREFIX;
 import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_CONCAT;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.storage.mock.api.ContainerMockAlreadyExistsException;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.IOStats;
@@ -21,7 +20,6 @@ import com.emc.mongoose.storage.mock.impl.web.response.BasicWSResponseProducer;
 import org.apache.commons.codec.binary.Hex;
 //
 import org.apache.http.Header;
-import org.apache.http.HttpEntity;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpHeaders;
@@ -294,6 +292,12 @@ implements ReqURIMatchingHandler<T> {
 			sharedStorage.create(container, dataId, offset, size);
 		} catch(final ContainerMockNotFoundException e) {
 			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
+		} catch(final ContainerMockException e) {
+			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to create the data object in the container \"{}\"",
+				container
+			);
 		}
 	}
 	/*
@@ -347,11 +351,7 @@ implements ReqURIMatchingHandler<T> {
 	private void handleContainerCreate(
 		final HttpRequest req, final HttpResponse resp, final String name
 	) {
-		try {
-			sharedStorage.create(name);
-		} catch(final ContainerMockAlreadyExistsException e) {
-			resp.setStatusCode(HttpStatus.SC_CONFLICT);
-		}
+		sharedStorage.create(name);
 	}
 	//
 	protected abstract void handleContainerList(
@@ -359,16 +359,17 @@ implements ReqURIMatchingHandler<T> {
 	);
 	//
 	private void handleContainerExists(final HttpResponse resp, final String name) {
-		if(!sharedStorage.exists(name)) {
-			resp.setStatusCode(HttpStatus.SC_NOT_FOUND);
+		try {
+			if(null != sharedStorage.get(name)) {
+				resp.setStatusCode(HttpStatus.SC_NOT_FOUND);
+			}
+		} catch(final ContainerMockException e) {
+			resp.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to get the container \"{}\"", name);
 		}
 	}
 	//
 	private void handleContainerDelete(final HttpResponse resp, final String name) {
-		try {
-			sharedStorage.delete(name);
-		} catch(final ContainerMockNotFoundException e) {
-			resp.setStatusCode(HttpStatus.SC_NOT_FOUND);
-		}
+		sharedStorage.delete(name);
 	}
 }

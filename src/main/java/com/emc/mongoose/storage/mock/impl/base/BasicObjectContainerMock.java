@@ -1,23 +1,14 @@
 package com.emc.mongoose.storage.mock.impl.base;
 //
+import com.emc.mongoose.common.concurrent.Sequencer;
 import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
 //
 import com.emc.mongoose.storage.mock.api.DataObjectMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
 //
 import org.apache.commons.collections4.map.LRUMap;
 //
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-//
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
@@ -25,94 +16,81 @@ import java.util.concurrent.FutureTask;
  Created by kurila on 31.07.15.
  */
 public final class BasicObjectContainerMock<T extends DataObjectMock>
-extends Thread
+extends LRUMap<String, T>
 implements ObjectContainerMock<T> {
 	//
-	private final static Logger LOG = LogManager.getLogger();
-	private final static class ObjectMockIndex<T extends DataObjectMock>
-	extends LRUMap<String, T> {
-		//
-		public ObjectMockIndex(final int capacity) {
-			super(capacity);
-		}
-		//
-		public final T list(final String afterOid, final Collection<T> buffDst, final int limit) {
-			if(isEmpty()) {
-				return null;
-			}
-			LinkEntry<String, T> nextEntry = getEntry(afterOid);
-			for(int i = 0; i < limit; i++) {
-				nextEntry = nextEntry == null ? getEntry(firstKey()) : entryAfter(nextEntry);
-				if(nextEntry == null) {
-					break;
-				}
-				buffDst.add(nextEntry.getValue());
-			}
-			return nextEntry == null ? null : nextEntry.getValue();
-		}
-	}
-	//
-	private final ObjectMockIndex<T> index;
-	private final BlockingQueue<FutureTask<T>> taskQueue = new ArrayBlockingQueue<>(0x1000);
+	private final String name;
+	private final Sequencer seqWorker;
 	//
 	public BasicObjectContainerMock(final String name, final int capacity) {
-		super(name);
-		setDaemon(true);
-		index = new ObjectMockIndex<>(capacity);
-		start();
-	}
-	//
-	public final void run() {
-		final int batchSize = RunTimeConfig.getContext().getBatchSize();
-		final List<FutureTask<T>> taskBuff = new ArrayList<>(batchSize);
-		int n;
-		try {
-			while(true) {
-				n = taskQueue.drainTo(taskBuff);
-				if(n > 0) {
-					for(final FutureTask<T> nextTask : taskBuff) {
-						try {
-							nextTask.run();
-						} catch(final Exception e) {
-							LogUtil.exception(LOG, Level.WARN, e, "Task \"{}\" failed", nextTask);
-						}
-					}
-					taskBuff.clear();
-				} else {
-					Thread.sleep(10);
-				}
-			}
-		} catch(final InterruptedException e) {
-			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted");
-		} finally {
-			close();
-		}
-	}
-	//
-	@Override
-	public final int size() {
-		return index.size();
+		super(capacity);
+		this.name = name;
+		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		seqWorker = new Sequencer(
+			"sequencer<" + name + ">", true, rtConfig.getTasksMaxQueueSize(),
+			rtConfig.getBatchSize(), 10
+		);
+		seqWorker.start();
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final Future<T> put(final String oid, final T obj)
-	throws InterruptedException {
-		final FutureTask<T> putTask = new PutTask<>(index, oid, obj);
-		taskQueue.put(putTask);
+	public final String getName() {
+		return name;
+	}
+	//
+	@Override
+	public final T list(final String afterOid, final Collection<T> buffDst, final int limit) {
+		if(isEmpty()) {
+			return null;
+		}
+		LinkEntry<String, T> nextEntry = getEntry(afterOid);
+		for(int i = 0; i < limit; i++) {
+			nextEntry = nextEntry == null ? getEntry(firstKey()) : entryAfter(nextEntry);
+			if(nextEntry == null) {
+				break;
+			}
+			buffDst.add(nextEntry.getValue());
+		}
+		return nextEntry == null ? null : nextEntry.getValue();
+	}
+	//
+	@Override
+	public final void close() {
+		if(seqWorker.isAlive()) {
+			seqWorker.interrupt();
+		}
+		clear();
+	}
+	//
+	@Override
+	protected void finalize()
+		throws Throwable {
+		try {
+			close();
+		} finally {
+			super.finalize();
+		}
+	}
+	////////////////////////////////////////////////////////////////////////////////////////////////
+	@Override
+	public final Future<T> submitPut(final String oid, final T obj)
+		throws InterruptedException {
+		final FutureTask<T> putTask = new PutObjectTask<>(this, oid, obj);
+		seqWorker.submit(putTask);
 		return putTask;
 	}
 	//
-	private final static class PutTask<T extends DataObjectMock>
+	private final static class PutObjectTask<T extends DataObjectMock>
 	extends FutureTask<T> {
 		//
-		private final static class PutCall<T extends DataObjectMock>
+		private final static class PutObjectCall<T extends DataObjectMock>
 		implements Callable<T> {
 			//
-			private final Map<String, T> index;
+			private final ObjectContainerMock<T> index;
 			private final String oid;
 			private final T obj;
 			//
-			private PutCall(final Map<String, T> index, final String oid, final T obj) {
+			private PutObjectCall(final ObjectContainerMock<T> index, final String oid, final T obj) {
 				this.index = index;
 				this.oid = oid;
 				this.obj = obj;
@@ -120,34 +98,34 @@ implements ObjectContainerMock<T> {
 			//
 			@Override
 			public final T call()
-			throws Exception {
+				throws Exception {
 				return index.put(oid, obj);
 			}
 		}
 		//
-		public PutTask(final Map<String, T> index, final String oid, final T obj) {
-			super(new PutCall<>(index, oid, obj));
+		public PutObjectTask(final ObjectContainerMock<T> index, final String oid, final T obj) {
+			super(new PutObjectCall<>(index, oid, obj));
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final Future<T> get(final String oid)
+	public final Future<T> submitGet(final String oid)
 	throws InterruptedException {
-		final FutureTask<T> getTask = new GetTask<>(index, oid);
-		taskQueue.put(getTask);
+		final FutureTask<T> getTask = new GetObjectTask<>(this, oid);
+		seqWorker.submit(getTask);
 		return getTask;
 	}
 	//
-	private final static class GetTask<T extends DataObjectMock>
+	private final static class GetObjectTask<T extends DataObjectMock>
 	extends FutureTask<T> {
 		//
-		private final static class GetCall<T extends DataObjectMock>
+		private final static class GetObjectCall<T extends DataObjectMock>
 		implements Callable<T> {
 			//
-			private final Map<String, T> index;
+			private final ObjectContainerMock<T> index;
 			private final String oid;
 			//
-			private GetCall(final Map<String, T> index, final String oid) {
+			private GetObjectCall(final ObjectContainerMock<T> index, final String oid) {
 				this.index = index;
 				this.oid = oid;
 			}
@@ -159,29 +137,29 @@ implements ObjectContainerMock<T> {
 			}
 		}
 		//
-		public GetTask(final Map<String, T> index, final String oid) {
-			super(new GetCall<T>(index, oid));
+		public GetObjectTask(final ObjectContainerMock<T> index, final String oid) {
+			super(new GetObjectCall<>(index, oid));
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final Future<T> remove(final String oid)
+	public final Future<T> submitRemove(final String oid)
 	throws InterruptedException {
-		final FutureTask<T> removeTask = new RemoveTask<>(index, oid);
-		taskQueue.put(removeTask);
+		final FutureTask<T> removeTask = new RemoveObjectTask<>(this, oid);
+		seqWorker.submit(removeTask);
 		return removeTask;
 	}
 	//
-	private final static class RemoveTask<T extends DataObjectMock>
+	private final static class RemoveObjectTask<T extends DataObjectMock>
 	extends FutureTask<T> {
 		//
-		private final static class RemoveCall<T extends DataObjectMock>
+		private final static class RemoveObjectCall<T extends DataObjectMock>
 		implements Callable<T> {
 			//
-			private final Map<String, T> index;
+			private final ObjectContainerMock<T> index;
 			private final String oid;
 			//
-			private RemoveCall(final Map<String, T> index, final String oid) {
+			private RemoveObjectCall(final ObjectContainerMock<T> index, final String oid) {
 				this.index = index;
 				this.oid = oid;
 			}
@@ -193,32 +171,32 @@ implements ObjectContainerMock<T> {
 			}
 		}
 		//
-		public RemoveTask(final Map<String, T> index, final String oid) {
-			super(new RemoveCall<T>(index, oid));
+		public RemoveObjectTask(final ObjectContainerMock<T> index, final String oid) {
+			super(new RemoveObjectCall<>(index, oid));
 		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final Future<T> list(final String oid, final Collection<T> buff, final int limit)
+	public final Future<T> submitList(final String oid, final Collection<T> buff, final int limit)
 	throws InterruptedException {
-		final FutureTask<T> listTask = new ListTask<>(index, oid, buff, limit);
-		taskQueue.put(listTask);
+		final FutureTask<T> listTask = new ListObjectTask<>(this, oid, buff, limit);
+		seqWorker.submit(listTask);
 		return listTask;
 	}
 	//
-	public final static class ListTask<T extends DataObjectMock>
+	public final static class ListObjectTask<T extends DataObjectMock>
 	extends FutureTask<T> {
 		//
-		private final static class ListCall<T extends DataObjectMock>
+		private final static class ListObjectCall<T extends DataObjectMock>
 		implements Callable<T> {
 			//
-			private final ObjectMockIndex<T> index;
+			private final ObjectContainerMock<T> index;
 			private final String oid;
 			private final Collection<T> buff;
 			private final int limit;
 			//
-			private ListCall(
-				final ObjectMockIndex<T> index, final String oid, final Collection<T> buff,
+			private ListObjectCall(
+				final ObjectContainerMock<T> index, final String oid, final Collection<T> buff,
 				final int limit
 			) {
 				this.index = index;
@@ -234,30 +212,11 @@ implements ObjectContainerMock<T> {
 			}
 		}
 		//
-		public ListTask(
-			final ObjectMockIndex<T> index, final String oid, final Collection<T> buff,
+		public ListObjectTask(
+			final ObjectContainerMock<T> index, final String oid, final Collection<T> buff,
 			final int limit
 		) {
-			super(new ListCall<T>(index, oid, buff, limit));
-		}
-	}
-	////////////////////////////////////////////////////////////////////////////////////////////////
-	@Override
-	public final void close() {
-		if(isAlive()) {
-			interrupt();
-		}
-		taskQueue.clear();
-		index.clear();
-	}
-	//
-	@Override
-	protected void finalize()
-	throws Throwable {
-		try {
-			close();
-		} finally {
-			super.finalize();
+			super(new ListObjectCall<>(index, oid, buff, limit));
 		}
 	}
 }

@@ -1,17 +1,18 @@
 package com.emc.mongoose.storage.mock.api;
 //
 import java.util.Collection;
+import java.util.Map;
 /**
  Created by kurila on 03.07.15.
  */
 public interface ObjectStorageMock<T extends DataObjectMock>
-extends StorageMock<T> {
+extends Map<String, ObjectContainerMock<T>>, StorageMock<T> {
 	//
 	void create(final String container, final String id, final long offset, final long size)
-	throws ContainerMockNotFoundException;
+	throws ContainerMockException;
 	//
 	void delete(final String container, final String id)
-	throws ContainerMockNotFoundException;
+	throws ContainerMockException;
 	//
 	void update(final String container, final String id, final long offset, final long size)
 	throws ContainerMockException, ObjectMockNotFoundException;
@@ -22,15 +23,15 @@ extends StorageMock<T> {
 	T read(final String container, final String id, final long offset, final long size)
 	throws ContainerMockException, ObjectMockNotFoundException;
 	//
-	ObjectContainerMock<T> create(final String name)
-	throws ContainerMockAlreadyExistsException;
-	//
-	boolean exists(final String name);
-	//
-	ObjectContainerMock<T> delete(final String name)
-	throws ContainerMockNotFoundException;
-	//
 	T list(
 		final String container, final String marker, final Collection<T> buffDst, final int maxCount
 	) throws ContainerMockException;
+	//
+	void create(final String name);
+	//
+	ObjectContainerMock<T> get(final String name)
+	throws ContainerMockException;
+	//
+	void delete(final String name);
+
 }
