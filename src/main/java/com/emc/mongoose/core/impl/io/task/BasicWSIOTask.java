@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common
-import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.common.net.http.content.OutputChannel;
@@ -42,8 +41,6 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 /**
  Created by kurila on 06.06.14.
  */
@@ -59,7 +56,7 @@ implements WSIOTask<T> {
 	);
 	private WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	//
-	public BasicWSIOTask(final WSLoadExecutor<T> loadExecutor) {
+	public <U extends WSLoadExecutor<T>> BasicWSIOTask(final U loadExecutor) {
 		super(loadExecutor);
 		//
 		wsReqConf = (WSRequestConfig<T>) reqConf;
@@ -71,44 +68,6 @@ implements WSIOTask<T> {
 		//
 		if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
 			httpRequest.setMethod(wsReqConf.getHTTPMethod());
-		}
-	}
-	//
-	public final static Map<WSLoadExecutor, InstancePool<BasicWSIOTask>>
-		INSTANCE_POOL_MAP = new HashMap<>();
-	//
-	public static BasicWSIOTask getInstance(
-		final WSLoadExecutor loadExecutor, WSObject dataItem, final String nodeAddr
-	) {
-		InstancePool<BasicWSIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
-		if(instPool == null) {
-			try {
-				instPool = new InstancePool<>(
-					BasicWSIOTask.class.getConstructor(WSLoadExecutor.class), loadExecutor
-				);
-				INSTANCE_POOL_MAP.put(loadExecutor, instPool);
-			} catch(final NoSuchMethodException e) {
-				throw new IllegalStateException(e);
-			}
-		}
-		//
-		return instPool.take(dataItem, nodeAddr);
-	}
-	//
-	@Override
-	public void release() {
-		final InstancePool<BasicWSIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
-		if(instPool == null) {
-			throw new IllegalStateException("No pool found to release back");
-		} else {
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-					Markers.MSG,
-					"Releasing the task #{} back into the pool for {}: {}",
-					hashCode(), loadExecutor, instPool.toString()
-				);
-			}
-			instPool.release(this);
 		}
 	}
 	//
@@ -150,6 +109,7 @@ implements WSIOTask<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final HttpHost getTarget() {
+		LOG.debug(Markers.MSG, "Get target for I/O task: {}", nodeAddr);
 		return wsReqConf.getNodeHost(nodeAddr);
 	}
 	//
@@ -161,6 +121,7 @@ implements WSIOTask<T> {
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply the final headers");
 		}
+		LOG.debug(Markers.MSG, "Request generated: {}", httpRequest.getRequestLine());
 		reqTimeStart = System.nanoTime() / 1000;
 		return httpRequest;
 	}
@@ -170,6 +131,7 @@ implements WSIOTask<T> {
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
+		LOG.debug(Markers.MSG, "Producing content start: {}", httpRequest.getRequestLine());
 		OutputChannel chanOut = THRLOC_CHAN_OUT.get();
 		if(chanOut == null) {
 			chanOut = new OutputChannel();
@@ -219,14 +181,15 @@ implements WSIOTask<T> {
 		} finally {
 			chanOut.close();
 		}
+		LOG.debug(Markers.MSG, "Producing content finish: {}", httpRequest.getRequestLine());
 	}
 	//
 	@Override
 	public final void requestCompleted(final HttpContext context) {
 		reqTimeDone = System.nanoTime() / 1000;
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Task #{}: request sent completely", hashCode());
-		}
+		//if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.debug(Markers.MSG, "Request sent completely: {}", httpRequest.getRequestLine());
+		//}
 	}
 	//
 	@Override
@@ -234,7 +197,7 @@ implements WSIOTask<T> {
 		return WSObject.IS_CONTENT_REPEATABLE;
 	}
 	//
-	@Override @SuppressWarnings("SynchronizeOnNonFinalField")
+	@Override
 	public final void resetRequest() {
 		respStatusCode = -1;
 		status = Status.FAIL_UNKNOWN;
@@ -267,7 +230,10 @@ implements WSIOTask<T> {
 		respTimeStart = System.nanoTime() / 1000;
 		final StatusLine status = response.getStatusLine();
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "#{}, got response \"{}\"", hashCode(), status);
+			LOG.trace(
+				Markers.MSG, "Got response \"{}\" for request: {}",
+				status, httpRequest.getRequestLine()
+			);
 		}
 		respStatusCode = status.getStatusCode();
 		//
@@ -501,6 +467,7 @@ implements WSIOTask<T> {
 	@Override
 	public final void completed(final IOTask.Status status) {
 		complete();
+		LOG.debug(Markers.MSG, "I/O task completed for request: {}", httpRequest.getRequestLine());
 	}
 	/**
 	 Overrides HttpAsyncRequestProducer.failed(Exception),

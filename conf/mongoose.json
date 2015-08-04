@@ -206,7 +206,7 @@
 				"capacity": 10000000,
 				"container": {
 					"capacity": 10000000,
-					"countLimit": 1000
+					"countLimit": 10000000
 				},
 				"fault": {
 					"minConnLifeMilliSec": 0,

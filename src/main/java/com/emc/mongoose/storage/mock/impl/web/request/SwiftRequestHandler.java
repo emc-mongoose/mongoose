@@ -6,6 +6,7 @@ import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-adapter-swift.jar
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 //
+import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
@@ -139,14 +140,18 @@ extends WSRequestHandlerBase<T> {
 		}
 		//
 		final List<T> buff = new ArrayList<>(maxCount);
+		final T lastObj;
 		try {
-			marker = sharedStorage.list(name, marker, buff, maxCount);
+			lastObj = sharedStorage.list(name, marker, buff, maxCount);
 			LOG.info(
 				Markers.MSG, "Generated list of {} objects, last one is \"{}\"",
-				buff.size(), marker
+				buff.size(), lastObj
 			);
 		} catch(final ContainerMockNotFoundException e) {
 			resp.setStatusCode(HttpStatus.SC_NOT_FOUND);
+			return;
+		} catch(final ContainerMockException e) {
+			resp.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
 		//

@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.io.task;
 // mongoose-common.jar
-import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
@@ -16,8 +15,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.rmi.RemoteException;
-import java.util.HashMap;
-import java.util.Map;
 /**
  Created by andrey on 12.10.14.
  */
@@ -43,34 +40,13 @@ implements IOTask<T> {
 	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
 	protected volatile long transferSize = 0;
 	//
-	public BasicIOTask(final LoadExecutor<T> loadExecutor) {
+	public <U extends LoadExecutor<T>> BasicIOTask(final U loadExecutor) {
 		this.loadExecutor = loadExecutor;
 		try {
 			this.reqConf = loadExecutor.getRequestConfig();
 		} catch(final RemoteException e) {
 			throw new IllegalStateException(e);
 		}
-	}
-	//
-	public final static Map<LoadExecutor, InstancePool<BasicIOTask>>
-		INSTANCE_POOL_MAP = new HashMap<>();
-	//
-	public static BasicIOTask getInstance(
-		final LoadExecutor loadExecutor, DataItem dataItem, final String nodeAddr
-	) {
-		InstancePool<BasicIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
-		if(instPool == null) {
-			try {
-				instPool = new InstancePool<>(
-					BasicIOTask.class.getConstructor(LoadExecutor.class), loadExecutor
-				);
-				INSTANCE_POOL_MAP.put(loadExecutor, instPool);
-			} catch(final NoSuchMethodException e) {
-				throw new IllegalStateException(e);
-			}
-		}
-		//
-		return instPool.take(dataItem, nodeAddr);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")
@@ -89,13 +65,7 @@ implements IOTask<T> {
 	}
 	//
 	@Override
-	public void release() {
-		final InstancePool<BasicIOTask> instPool = INSTANCE_POOL_MAP.get(loadExecutor);
-		if(instPool == null) {
-			throw new IllegalStateException("No pool found to release back");
-		} else {
-			instPool.release(this);
-		}
+	public final void release() {
 	}
 	//
 	@Override

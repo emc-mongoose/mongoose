@@ -47,8 +47,8 @@ extends ConcurrentLinkedQueue<T> {
 	@SuppressWarnings("unchecked")
 	public final T take(final Object... args)
 	throws IllegalStateException, IllegalArgumentException {
-		T instance = poll();
-		if(instance == null) {
+		T instance = null;//poll();
+		//if(instance == null) {
 			try {
 				if(sharedArgs == null || sharedArgs.length == 0) {
 					instance = constructor.newInstance();
@@ -64,7 +64,7 @@ extends ConcurrentLinkedQueue<T> {
 			) {
 				throw new IllegalStateException("Reusable instantiation failure", e);
 			}
-		}
+		//}
 		//
 		return (T) instance.reuse(args);
 	}

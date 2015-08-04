@@ -9,6 +9,7 @@ import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_
 import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_CONCAT;
 // mongoose-storage-mock.jar
 import com.emc.mongoose.storage.mock.api.ContainerMockAlreadyExistsException;
+import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.IOStats;
 import com.emc.mongoose.storage.mock.api.ObjectMockNotFoundException;
@@ -105,7 +106,7 @@ implements ReqURIMatchingHandler<T> {
 		THRLOC_RESP_PRODUCER = new ThreadLocal<>();
 	@Override
 	public final void handle(
-		final HttpRequest r, final HttpAsyncExchange httpExchange, final HttpContext httpContext
+		final HttpRequest req, final HttpAsyncExchange httpExchange, final HttpContext httpContext
 	) {
 		// load rate limitation algorithm
 		if(rateLimit > 0) {
@@ -176,8 +177,11 @@ implements ReqURIMatchingHandler<T> {
 			//
 			if(rangeHeaders == null || rangeHeaders.length == 0) {
 				// write or recreate data item
-				final T dataObject = createDataObject(request, response, container, dataId);
-				ioStats.markCreate(dataObject.getSize());
+				final long size = ((HttpEntityEnclosingRequest) request)
+					.getEntity()
+					.getContentLength();
+				createDataObject(request, response, container, dataId, size);
+				ioStats.markCreate(size);
 			} else {
 				// else do append or update if data item exist
 				handleRanges(
@@ -188,11 +192,10 @@ implements ReqURIMatchingHandler<T> {
 		} catch(final ContainerMockNotFoundException | ObjectMockNotFoundException e) {
 			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
 			ioStats.markCreate(-1);
-		} catch(final NumberFormatException | HttpException e) {
+		} catch(final ContainerMockException | NumberFormatException | HttpException e) {
 			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			LogUtil.exception(
-				LOG, Level.ERROR, e,
-				"Failed to decode the data id \"{}\" as ring buffer offset", dataId
+				LOG, Level.ERROR, e, "Failed to perform a range update/append for \"{}\"", dataId
 			);
 			ioStats.markCreate(-1);
 		}
@@ -201,7 +204,7 @@ implements ReqURIMatchingHandler<T> {
 	private void handleRanges(
 		final String container, final String dataId,
 		final Header rangeHeaders[], final long contentLength
-	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+	) throws ContainerMockException, ObjectMockNotFoundException {
 		String rangeHeaderValue, rangeValuePairs[], rangeValue[];
 		long offset;
 		for(final Header rangeHeader : rangeHeaders) {
@@ -247,13 +250,16 @@ implements ReqURIMatchingHandler<T> {
 			ioStats.markRead(dataObject.getSize());
 		} catch(final ContainerMockNotFoundException e) {
 			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-			if(LOG.isTraceEnabled(Markers.MSG)) {
+			if(LOG.isTraceEnabled(Markers.ERR)) {
 				LOG.trace(Markers.ERR, "No such container: {}", dataId);
 			}
 			ioStats.markRead(-1);
+		} catch(final ContainerMockException e) {
+			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			ioStats.markRead(-1);
 		} catch(final ObjectMockNotFoundException e) {
 			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-			if(LOG.isTraceEnabled(Markers.MSG)) {
+			if(LOG.isTraceEnabled(Markers.ERR)) {
 				LOG.trace(Markers.ERR, "No such object: {}", dataId);
 			}
 			ioStats.markRead(-1);
@@ -275,29 +281,20 @@ implements ReqURIMatchingHandler<T> {
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.ERR, "No such container: {}", dataId);
 			}
-		} catch(final ObjectMockNotFoundException e) {
-			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(Markers.ERR, "No such object: {}", dataId);
-			}
 		}
 	}
 	//
-	private T createDataObject(
+	private void createDataObject(
 		final HttpRequest request, final HttpResponse response,
-		final String container, final String dataId
+		final String container, final String dataId, final long size
 	) throws HttpException, NumberFormatException {
-		final HttpEntity entity = HttpEntityEnclosingRequest.class.cast(request).getEntity();
-		final long size = entity.getContentLength();
 		// create data object or get it for append or update
 		final long offset = Long.valueOf(dataId, Character.MAX_RADIX);
-		T dataObject = null;
 		try {
-			dataObject = sharedStorage.create(container, dataId, offset, size);
+			sharedStorage.create(container, dataId, offset, size);
 		} catch(final ContainerMockNotFoundException e) {
 			response.setStatusCode(HttpStatus.SC_NOT_FOUND);
 		}
-		return dataObject;
 	}
 	/*
 	offset for mongoose versions since v0.6:

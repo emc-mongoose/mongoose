@@ -8,6 +8,7 @@ import com.emc.mongoose.common.log.Markers;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 //
+import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
@@ -166,9 +167,9 @@ extends WSRequestHandlerBase<T> {
 		}
 		//
 		final List<T> buff = new ArrayList<>(maxCount);
-		final String nextOid;
+		final T lastObj;
 		try {
-			nextOid = sharedStorage.list(subtenant, oid, buff, maxCount);
+			lastObj = sharedStorage.list(subtenant, oid, buff, maxCount);
 			LOG.info(
 				Markers.MSG, "Generated list of {} objects, last one is \"{}\"",
 				buff.size(), oid
@@ -176,10 +177,13 @@ extends WSRequestHandlerBase<T> {
 		} catch(final ContainerMockNotFoundException e) {
 			resp.setStatusCode(HttpStatus.SC_NOT_FOUND);
 			return;
+		} catch(final ContainerMockException e) {
+			resp.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			return;
 		}
 		//
-		if(nextOid != null) {
-			resp.setHeader(WSRequestConfig.KEY_EMC_TOKEN, nextOid);
+		if(lastObj != null) {
+			resp.setHeader(WSRequestConfig.KEY_EMC_TOKEN, lastObj.getId());
 		}
 		//
 		final Document doc = DOM_BUILDER.newDocument();

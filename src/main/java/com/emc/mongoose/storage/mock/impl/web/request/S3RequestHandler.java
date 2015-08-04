@@ -7,6 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.storage.adapter.s3.Bucket;
 //
+import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.WSMock;
 import com.emc.mongoose.storage.mock.api.WSObjectMock;
@@ -133,14 +134,18 @@ extends WSRequestHandlerBase<T> {
 		}
 		//
 		final List<T> buff = new ArrayList<>(maxCount);
+		final T lastObj;
 		try {
-			marker = sharedStorage.list(name, marker, buff, maxCount);
+			lastObj = sharedStorage.list(name, marker, buff, maxCount);
 			LOG.info(
 				Markers.MSG, "Generated list of {} objects, last one is \"{}\"",
-				buff.size(), marker
+				buff.size(), lastObj
 			);
 		} catch(final ContainerMockNotFoundException e) {
 			resp.setStatusCode(HttpStatus.SC_NOT_FOUND);
+			return;
+		} catch(final ContainerMockException e) {
+			resp.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			return;
 		}
 		resp.setHeader(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_XML.getMimeType());
@@ -155,7 +160,7 @@ extends WSRequestHandlerBase<T> {
 		e.appendChild(doc.createTextNode(name));
 		eRoot.appendChild(e);
 		e = doc.createElement("IsTruncated");
-		e.appendChild(doc.createTextNode(Boolean.toString(marker != null)));
+		e.appendChild(doc.createTextNode(Boolean.toString(lastObj != null)));
 		eRoot.appendChild(e);
 		e = doc.createElement("Prefix"); // TODO prefix support
 		eRoot.appendChild(e);

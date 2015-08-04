@@ -8,6 +8,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 // mongoose-common.jar
 import com.codahale.metrics.UniformReservoir;
+import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -55,8 +56,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -74,8 +73,8 @@ extends AsyncConsumerBase<T>
 implements LoadExecutor<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	private final static int RELEASE_TIMEOUT_MILLISEC = 100;
-	public final static Map<String, List<LoadState>> DESERIALIZED_STATES = new ConcurrentHashMap<>();
+	public final static Map<String, List<LoadState>>
+		DESERIALIZED_STATES = new ConcurrentHashMap<>();
 	//
 	protected final int instanceNum, connCountPerNode, storageNodeCount;
 	protected final String storageNodeAddrs[];
@@ -87,6 +86,7 @@ implements LoadExecutor<T> {
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
+	protected InstancePool<IOTask<T>> ioTaskPool;
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
 	protected volatile PersistentAccumulatorProducer<T> itemsBuff = null;
@@ -103,7 +103,6 @@ implements LoadExecutor<T> {
 	protected final JmxReporter jmxReporter;
 	//
 	private final Map<String, AtomicInteger> activeTasksStats = new HashMap<>();
-	private final BlockingQueue<IOTask<T>> ioTaskSpentQueue;
 	//
 	private LoadState currState = null;
 	private ResumableClock resumableClock = new ResumableClock();
@@ -145,38 +144,24 @@ implements LoadExecutor<T> {
 			//
 			@Override
 			public final void run() {
-				IOTask<T> spentIOTask;
-				try {
-					while(!isClosed.get()) {
-						// 1st check for done condition
-						if(isDoneAllSubm() || isDoneMaxCount()) {
-							if(lock.tryLock(RELEASE_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS)) {
-								try {
-									condProducerDone.signalAll();
-									LOG.trace(
-										Markers.MSG, "{}: done/interrupted signal emitted",
-										getName()
-									);
-								} finally {
-									lock.unlock();
-								}
-							} else {
-								LOG.warn(
-									Markers.ERR, "{}: failed to acquire the lock in close method",
-									getName()
-								);
-							}
-						}
-						// try to get a task for releasing into the pool
-						spentIOTask = ioTaskSpentQueue.poll(
-							RELEASE_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS
-						);
-						// release the next task if necessary
-						if(spentIOTask != null) {
-							spentIOTask.release();
+				while(!isClosed.get()) {
+					try {
+						TimeUnit.MILLISECONDS.sleep(10);
+					} catch(final InterruptedException e) {
+						break;
+					}
+					if(isDoneAllSubm() || isDoneMaxCount()) {
+						lock.lock();
+						try {
+							condProducerDone.signalAll();
+							LOG.trace(
+								Markers.MSG, "{}: done/interrupted signal emitted",
+								getName()
+							);
+						} finally {
+							lock.unlock();
 						}
 					}
-				} catch(final InterruptedException ignored) {
 				}
 			}
 		};
@@ -228,6 +213,7 @@ implements LoadExecutor<T> {
 			this.reqConfigCopy = reqConfigClone;
 		}
 		loadType = reqConfig.getLoadType();
+		ioTaskPool = getIOTaskPool();
 		//
 		final String runMode = rtConfig.getRunMode();
 		final boolean flagServeRemoteIfStandalone = rtConfig.getFlagServeIfNotLoadServer();
@@ -259,7 +245,6 @@ implements LoadExecutor<T> {
 		for(final String addr : storageNodeAddrs) {
 			activeTasksStats.put(addr, new AtomicInteger(0));
 		}
-		ioTaskSpentQueue = new ArrayBlockingQueue<>(maxQueueSize);
 		dataSrc = reqConfig.getDataSource();
 		//
 		if(listFile != null && listFile.length() > 0) {
@@ -688,9 +673,29 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	@SuppressWarnings("unchecked")
-	protected BasicIOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
-		return BasicIOTask.getInstance(this, dataItem, nextNodeAddr);
+	protected <U extends IOTask<T>> InstancePool<U> getIOTaskPool() {
+		try {
+			return (InstancePool) new InstancePool<>(
+				BasicIOTask.class.getConstructor(LoadExecutor.class), this
+			);
+		} catch(final NoSuchMethodException e) {
+			throw new RuntimeException(e);
+		}
+	}
+	//
+	private <U extends IOTask<T>> U getIOTask(final T dataItem, final String nextNodeAddr) {
+		final U ioTask = (U) ioTaskPool.take(dataItem, nextNodeAddr);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "I/O task leased: {}", ioTask.hashCode());
+		}
+		return ioTask;
+	}
+	//
+	private void releaseIOTask(final IOTask<T> ioTask) {
+		ioTaskPool.release(ioTask);
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "I/O task released: {}", ioTask.hashCode());
+		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing implementation
@@ -782,6 +787,8 @@ implements LoadExecutor<T> {
 		}
 		//
 		counterResults.incrementAndGet();
+		//
+		releaseIOTask(ioTask);
 	}
 	//
 	@Override
@@ -859,8 +866,7 @@ implements LoadExecutor<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
 				releaseDaemon.interrupt();
-				ioTaskSpentQueue.clear();
-				BasicIOTask.INSTANCE_POOL_MAP.put(this, null); // dispose I/O tasks pool
+				ioTaskPool.clear();
 				if(jmxReporter != null) {
 					jmxReporter.close();
 				}

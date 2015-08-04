@@ -4,4 +4,12 @@ package com.emc.mongoose.storage.mock.api;
  */
 public class ContainerMockException
 extends Exception {
+	//
+	public ContainerMockException() {
+		super();
+	}
+	//
+	public ContainerMockException(final Throwable t) {
+		super(t);
+	}
 }

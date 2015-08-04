@@ -2,8 +2,11 @@ package com.emc.mongoose.storage.mock.impl.base;
 //
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
+import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
 import com.emc.mongoose.storage.mock.api.ContainerMockAlreadyExistsException;
+import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.DataObjectMock;
 import com.emc.mongoose.storage.mock.api.ObjectContainerMock;
@@ -12,12 +15,14 @@ import com.emc.mongoose.storage.mock.api.ObjectStorageMock;
 //
 import org.apache.commons.collections4.map.LRUMap;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 /**
@@ -61,7 +66,15 @@ implements ObjectStorageMock<T> {
 	//
 	@Override
 	public final void create(final T dataItem) {
-		defaultContainer.put(dataItem.getId(), dataItem);
+		try {
+			defaultContainer.put(dataItem.getId(), dataItem).get();
+		} catch(final InterruptedException | ExecutionException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e,
+				"Failed to put the object \"{}\" into the default container \"{}\"",
+				dataItem.getId(), defaultContainer.getName()
+			);
+		}
 	}
 	//
 	@Override
@@ -70,7 +83,7 @@ implements ObjectStorageMock<T> {
 		lock.lock();
 		try {
 			for(final ObjectContainerMock<T> container : containersIndex.values()) {
-				container.clear();
+				container.close();
 			}
 		} finally {
 			lock.unlock();
@@ -81,7 +94,7 @@ implements ObjectStorageMock<T> {
 	protected abstract T newDataObject(final String id, final long offset, final long size);
 	//
 	@Override
-	public final T create(
+	public final void create(
 		final String container, final String oid, final long offset, final long size
 	) throws ContainerMockNotFoundException {
 		final ObjectContainerMock<T> tgtContainer;
@@ -95,14 +108,17 @@ implements ObjectStorageMock<T> {
 			throw new ContainerMockNotFoundException();
 		}
 		final T obj = newDataObject(oid, offset, size);
-		tgtContainer.put(oid, obj);
-		return obj;
+		try {
+			tgtContainer.put(oid, obj);
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the create task");
+		}
 	}
 	//
 	@Override
-	public final T update(
+	public final void update(
 		final String container, final String id, final long offset, final long size
-	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+	) throws ContainerMockException, ObjectMockNotFoundException {
 		final ObjectContainerMock<T> srcContainer;
 		lock.lock();
 		try {
@@ -113,15 +129,20 @@ implements ObjectStorageMock<T> {
 		if(srcContainer == null) {
 			throw new ContainerMockNotFoundException();
 		}
-		final T dataObject = srcContainer.get(id);
-		dataObject.update(offset, size);
-		return dataObject;
+		try {
+			final T dataObject = srcContainer.get(id).get();
+			dataObject.update(offset, size);
+		} catch(final ExecutionException e) {
+			throw new ContainerMockException(e);
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the update task");
+		}
 	}
 	//
 	@Override
-	public final T append(
+	public final void append(
 		final String container, final String id, final long offset, final long size
-	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+	) throws ContainerMockException, ObjectMockNotFoundException {
 		final ObjectContainerMock<T> srcContainer;
 		lock.lock();
 		try {
@@ -132,15 +153,20 @@ implements ObjectStorageMock<T> {
 		if(srcContainer == null) {
 			throw new ContainerMockNotFoundException();
 		}
-		final T dataObject = srcContainer.get(id);
-		dataObject.append(offset, size);
-		return dataObject;
+		try {
+			final T dataObject = srcContainer.get(id).get();
+			dataObject.update(offset, size);
+		} catch(final ExecutionException e) {
+			throw new ContainerMockException(e);
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the update task");
+		}
 	}
 	//
 	@Override
 	public final T read(
 		final String container, final String id, final long offset, final long size
-	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+	) throws ContainerMockException, ObjectMockNotFoundException {
 		// TODO partial read using offset and size args
 		final ObjectContainerMock<T> srcContainer;
 		lock.lock();
@@ -152,16 +178,20 @@ implements ObjectStorageMock<T> {
 		if(srcContainer == null) {
 			throw new ContainerMockNotFoundException();
 		}
-		final T dataObject = srcContainer.get(id);
-		if(dataObject == null) {
-			throw new ObjectMockNotFoundException();
+		try {
+			final T dataObject = srcContainer.get(id).get();
+			if(dataObject == null) {
+				throw new ObjectMockNotFoundException();
+			}
+			return dataObject;
+		} catch(final ExecutionException | InterruptedException e) {
+			throw new ContainerMockException(e);
 		}
-		return dataObject;
 	}
 	//
 	@Override
-	public final T delete(final String container, final String id)
-	throws ContainerMockNotFoundException, ObjectMockNotFoundException {
+	public final void delete(final String container, final String id)
+	throws ContainerMockNotFoundException {
 		final ObjectContainerMock<T> srcContainer;
 		lock.lock();
 		try {
@@ -172,11 +202,11 @@ implements ObjectStorageMock<T> {
 		if(srcContainer == null) {
 			throw new ContainerMockNotFoundException();
 		}
-		final T dataObject = srcContainer.get(id);
-		if(null == dataObject) {
-			throw new ObjectMockNotFoundException();
+		try {
+			srcContainer.remove(id);
+		} catch(final InterruptedException e) {
+			LogUtil.exception(LOG, Level.DEBUG, e, "Interrupted while submitting the delete task");
 		}
-		return dataObject;
 	}
 	//
 	@Override
@@ -218,19 +248,25 @@ implements ObjectStorageMock<T> {
 		if(c == null) {
 			throw new ContainerMockNotFoundException();
 		} else {
-			c.clear();
+			try {
+				c.close();
+			} catch(final IOException e) {
+				LogUtil.exception(
+					LOG, Level.WARN, e, "Failed to delete the container \"{}\"", name
+				);
+			}
 		}
 		return c;
 	}
 	//
 	@Override
-	public final String list(
-		final String container, final String marker, final Collection<T> buffDst, final int maxCount
-	) throws ContainerMockNotFoundException {
+	public final T list(
+		final String container, final String afterOid, final Collection<T> buffDst, final int limit
+	) throws ContainerMockException {
 		LOG.info(
 			Markers.MSG,
 			"Try to get the container \"{}\" listing using marker \"{}\" and count limit {}",
-			container, marker, maxCount
+			container, afterOid, limit
 		);
 		final ObjectContainerMock<T> c;
 		lock.lock();
@@ -242,7 +278,11 @@ implements ObjectStorageMock<T> {
 		if(c == null) {
 			throw new ContainerMockNotFoundException();
 		} else {
-			return c.list(marker, buffDst, maxCount);
+			try {
+				return c.list(afterOid, buffDst, limit).get();
+			} catch(final ExecutionException | InterruptedException e) {
+				throw new ContainerMockException(e);
+			}
 		}
 	}
 }

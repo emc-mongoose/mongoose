@@ -7,20 +7,20 @@ import java.util.Collection;
 public interface ObjectStorageMock<T extends DataObjectMock>
 extends StorageMock<T> {
 	//
-	T create(final String container, final String id, final long offset, final long size)
+	void create(final String container, final String id, final long offset, final long size)
 	throws ContainerMockNotFoundException;
 	//
-	T update(final String container, final String id, final long offset, final long size)
-	throws ContainerMockNotFoundException, ObjectMockNotFoundException;
+	void delete(final String container, final String id)
+	throws ContainerMockNotFoundException;
 	//
-	T append(final String container, final String id, final long offset, final long size)
-	throws ContainerMockNotFoundException, ObjectMockNotFoundException;
+	void update(final String container, final String id, final long offset, final long size)
+	throws ContainerMockException, ObjectMockNotFoundException;
+	//
+	void append(final String container, final String id, final long offset, final long size)
+	throws ContainerMockException, ObjectMockNotFoundException;
 	//
 	T read(final String container, final String id, final long offset, final long size)
-	throws ContainerMockNotFoundException, ObjectMockNotFoundException;
-	//
-	T delete(final String container, final String id)
-	throws ContainerMockNotFoundException, ObjectMockNotFoundException;
+	throws ContainerMockException, ObjectMockNotFoundException;
 	//
 	ObjectContainerMock<T> create(final String name)
 	throws ContainerMockAlreadyExistsException;
@@ -30,7 +30,7 @@ extends StorageMock<T> {
 	ObjectContainerMock<T> delete(final String name)
 	throws ContainerMockNotFoundException;
 	//
-	String list(
+	T list(
 		final String container, final String marker, final Collection<T> buffDst, final int maxCount
-	) throws ContainerMockNotFoundException;
+	) throws ContainerMockException;
 }
