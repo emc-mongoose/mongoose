@@ -56,7 +56,7 @@ implements WSIOTask<T> {
 	);
 	private WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
 	//
-	public <U extends WSLoadExecutor<T>> BasicWSIOTask(final U loadExecutor) {
+	public BasicWSIOTask(final WSLoadExecutor<T> loadExecutor) {
 		super(loadExecutor);
 		//
 		wsReqConf = (WSRequestConfig<T>) reqConf;
@@ -69,6 +69,14 @@ implements WSIOTask<T> {
 		if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
 			httpRequest.setMethod(wsReqConf.getHTTPMethod());
 		}
+	}
+	//
+	public BasicWSIOTask(
+		final WSLoadExecutor<T> loadExecutor, final T dataObject, final String nodeAddr
+	) {
+		this(loadExecutor);
+		setDataItem(dataObject);
+		setNodeAddr(nodeAddr);
 	}
 	//
 	@Override
@@ -109,7 +117,6 @@ implements WSIOTask<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final HttpHost getTarget() {
-		LOG.debug(Markers.MSG, "Get target for I/O task: {}", nodeAddr);
 		return wsReqConf.getNodeHost(nodeAddr);
 	}
 	//
@@ -121,7 +128,6 @@ implements WSIOTask<T> {
 		} catch(final Exception e) {
 			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply the final headers");
 		}
-		LOG.debug(Markers.MSG, "Request generated: {}", httpRequest.getRequestLine());
 		reqTimeStart = System.nanoTime() / 1000;
 		return httpRequest;
 	}
@@ -131,7 +137,6 @@ implements WSIOTask<T> {
 	@Override
 	public final void produceContent(final ContentEncoder out, final IOControl ioCtl)
 	throws IOException {
-		LOG.debug(Markers.MSG, "Producing content start: {}", httpRequest.getRequestLine());
 		OutputChannel chanOut = THRLOC_CHAN_OUT.get();
 		if(chanOut == null) {
 			chanOut = new OutputChannel();
@@ -181,15 +186,14 @@ implements WSIOTask<T> {
 		} finally {
 			chanOut.close();
 		}
-		LOG.debug(Markers.MSG, "Producing content finish: {}", httpRequest.getRequestLine());
 	}
 	//
 	@Override
 	public final void requestCompleted(final HttpContext context) {
 		reqTimeDone = System.nanoTime() / 1000;
-		//if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.debug(Markers.MSG, "Request sent completely: {}", httpRequest.getRequestLine());
-		//}
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "Request sent completely: {}", httpRequest.getRequestLine());
+		}
 	}
 	//
 	@Override
@@ -467,7 +471,11 @@ implements WSIOTask<T> {
 	@Override
 	public final void completed(final IOTask.Status status) {
 		complete();
-		LOG.debug(Markers.MSG, "I/O task completed for request: {}", httpRequest.getRequestLine());
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(Markers.MSG, "I/O task completed for request: {}",
+				httpRequest.getRequestLine()
+			);
+		}
 	}
 	/**
 	 Overrides HttpAsyncRequestProducer.failed(Exception),

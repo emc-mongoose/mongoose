@@ -19,8 +19,16 @@ implements DataObjectIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	public <U extends ObjectLoadExecutor<T>> BasicObjectIOTask(final U loadExecutor) {
+	public BasicObjectIOTask(final ObjectLoadExecutor<T> loadExecutor) {
 		super(loadExecutor);
+	}
+	//
+	public BasicObjectIOTask(
+		final ObjectLoadExecutor<T> loadExecutor, final T dataObject, final String nodeAddr
+	) {
+		this(loadExecutor);
+		setDataItem(dataObject);
+		setNodeAddr(nodeAddr);
 	}
 	//
 	@Override

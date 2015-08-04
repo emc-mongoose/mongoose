@@ -8,7 +8,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Snapshot;
 // mongoose-common.jar
 import com.codahale.metrics.UniformReservoir;
-import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
@@ -86,7 +85,7 @@ implements LoadExecutor<T> {
 	protected final RequestConfig<T> reqConfigCopy;
 	protected final IOTask.Type loadType;
 	//
-	protected InstancePool<IOTask<T>> ioTaskPool;
+	//protected InstancePool<IOTask<T>> ioTaskPool;
 	protected volatile Producer<T> producer = null;
 	protected volatile Consumer<T> consumer;
 	protected volatile PersistentAccumulatorProducer<T> itemsBuff = null;
@@ -213,7 +212,6 @@ implements LoadExecutor<T> {
 			this.reqConfigCopy = reqConfigClone;
 		}
 		loadType = reqConfig.getLoadType();
-		ioTaskPool = getIOTaskPool();
 		//
 		final String runMode = rtConfig.getRunMode();
 		final boolean flagServeRemoteIfStandalone = rtConfig.getFlagServeIfNotLoadServer();
@@ -666,7 +664,6 @@ implements LoadExecutor<T> {
 			counterSubm.inc();
 			activeTasksStats.get(nextNodeAddr).incrementAndGet(); // increment node's usage counter
 		} catch(final RejectedExecutionException e) {
-			releaseIOTask(ioTask);
 			if(!isInterrupted.get()) {
 				counterRej.inc();
 				LogUtil.exception(LOG, Level.DEBUG, e, "Rejected the I/O task {}", ioTask);
@@ -674,23 +671,8 @@ implements LoadExecutor<T> {
 		}
 	}
 	//
-	protected <U extends IOTask<T>> InstancePool<U> getIOTaskPool() {
-		try {
-			return (InstancePool) new InstancePool<>(
-				BasicIOTask.class.getConstructor(LoadExecutor.class), this
-			);
-		} catch(final NoSuchMethodException e) {
-			throw new RuntimeException(e);
-		}
-	}
-	//
-	private <U extends IOTask<T>> U getIOTask(final T dataItem, final String nextNodeAddr) {
-		final U ioTask = (U) ioTaskPool.take(dataItem, nextNodeAddr);
-		return ioTask;
-	}
-	//
-	private void releaseIOTask(final IOTask<T> ioTask) {
-		ioTaskPool.release(ioTask);
+	protected IOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
+		return new BasicIOTask<>(this).setDataItem(dataItem).setNodeAddr(nextNodeAddr);
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing implementation
@@ -782,8 +764,6 @@ implements LoadExecutor<T> {
 		}
 		//
 		counterResults.incrementAndGet();
-		//
-		releaseIOTask(ioTask);
 	}
 	//
 	@Override
@@ -861,7 +841,6 @@ implements LoadExecutor<T> {
 				LogUtil.exception(LOG, Level.DEBUG, e, "Failed to poison the consumer");
 			} finally {
 				releaseDaemon.interrupt();
-				ioTaskPool.clear();
 				if(jmxReporter != null) {
 					jmxReporter.close();
 				}

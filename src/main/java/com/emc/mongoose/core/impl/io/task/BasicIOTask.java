@@ -40,13 +40,21 @@ implements IOTask<T> {
 	protected volatile long reqTimeStart = 0, reqTimeDone = 0, respTimeStart = 0, respTimeDone = 0;
 	protected volatile long transferSize = 0;
 	//
-	public <U extends LoadExecutor<T>> BasicIOTask(final U loadExecutor) {
+	public BasicIOTask(final LoadExecutor<T> loadExecutor) {
 		this.loadExecutor = loadExecutor;
 		try {
 			this.reqConf = loadExecutor.getRequestConfig();
 		} catch(final RemoteException e) {
 			throw new IllegalStateException(e);
 		}
+	}
+	//
+	public BasicIOTask(
+		final LoadExecutor<T> loadExecutor, final T dataItem, final String nodeAddr
+	) {
+		this(loadExecutor);
+		setDataItem(dataItem);
+		setNodeAddr(nodeAddr);
 	}
 	//
 	@Override @SuppressWarnings("unchecked")

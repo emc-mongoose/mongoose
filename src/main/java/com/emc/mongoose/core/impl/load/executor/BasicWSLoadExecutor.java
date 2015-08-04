@@ -23,7 +23,6 @@ import org.apache.http.ExceptionLogger;
 import org.apache.http.HttpHost;
 import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
-import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
@@ -169,14 +168,8 @@ implements WSLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected <U extends IOTask<T>> InstancePool<U> getIOTaskPool() {
-		try {
-			return (InstancePool) new InstancePool<>(
-				BasicWSIOTask.class.getConstructor(WSLoadExecutor.class), this
-			);
-		} catch(final NoSuchMethodException e) {
-			throw new RuntimeException(e);
-		}
+	protected WSIOTask<T> getIOTask(final T dataObject, final String nodeAddr) {
+		return new BasicWSIOTask<>(this, dataObject, nodeAddr);
 	}
 	//
 	@Override
@@ -236,11 +229,11 @@ implements WSLoadExecutor<T> {
 		final Future<IOTask.Status> futureResult;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, wsTask);
-			//if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.debug(
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
 					Markers.MSG, "I/O task #{} has been submitted for execution", wsTask.hashCode()
 				);
-			//}
+			}
 		} catch(final Exception e) {
 			throw new RejectedExecutionException(e);
 		}

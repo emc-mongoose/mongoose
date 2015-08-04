@@ -1,9 +1,8 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-core-api.jar
-import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
 import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.io.task.IOTask;
+import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -36,13 +35,7 @@ implements ObjectLoadExecutor<T> {
 	}
 	//
 	@Override
-	protected <U extends IOTask<T>> InstancePool<U> getIOTaskPool() {
-		try {
-			return (InstancePool) new InstancePool<>(
-				BasicObjectIOTask.class.getConstructor(ObjectLoadExecutor.class), this
-			);
-		} catch(final NoSuchMethodException e) {
-			throw new RuntimeException(e);
-		}
+	protected DataObjectIOTask<T> getIOTask(final T dataItem, final String nextNodeAddr) {
+		return new BasicObjectIOTask<>(this, dataItem, nextNodeAddr);
 	}
 }
