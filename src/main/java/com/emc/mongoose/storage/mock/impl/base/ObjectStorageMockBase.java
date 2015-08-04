@@ -18,6 +18,8 @@ import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 /**
  Created by kurila on 03.07.15.
  */
@@ -30,6 +32,7 @@ implements ObjectStorageMock<T> {
 	protected final Map<String, ObjectContainerMock<T>> containersIndex;
 	protected final ObjectContainerMock<T> defaultContainer;
 	protected final int capacity, containerCapacity;
+	protected final Lock lock = new ReentrantLock();
 	//
 	protected ObjectStorageMockBase(final RunTimeConfig rtConfig, final Class<T> itemCls) {
 		super(rtConfig, itemCls);
@@ -64,8 +67,13 @@ implements ObjectStorageMock<T> {
 	@Override
 	public void close()
 	throws IOException {
-		for(final ObjectContainerMock<T> container : containersIndex.values()) {
-			container.clear();
+		lock.lock();
+		try {
+			for(final ObjectContainerMock<T> container : containersIndex.values()) {
+				container.clear();
+			}
+		} finally {
+			lock.unlock();
 		}
 		containersIndex.clear();
 	}
@@ -74,29 +82,38 @@ implements ObjectStorageMock<T> {
 	//
 	@Override
 	public final T create(
-		final String container, final String id, final long offset, final long size
+		final String container, final String oid, final long offset, final long size
 	) throws ContainerMockNotFoundException {
-		final ObjectContainerMock<T> tgtContainer = containersIndex.get(container);
+		final ObjectContainerMock<T> tgtContainer;
+		lock.lock();
+		try {
+			tgtContainer = containersIndex.get(container);
+		} finally {
+			lock.unlock();
+		}
 		if(tgtContainer == null) {
 			throw new ContainerMockNotFoundException();
 		}
-		final T newDataObject = newDataObject(id, offset, size);
-		tgtContainer.put(id, newDataObject);
-		return newDataObject;
+		final T obj = newDataObject(oid, offset, size);
+		tgtContainer.put(oid, obj);
+		return obj;
 	}
 	//
 	@Override
 	public final T update(
 		final String container, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
-		final ObjectContainerMock<T> srcContainer = containersIndex.get(container);
+		final ObjectContainerMock<T> srcContainer;
+		lock.lock();
+		try {
+			srcContainer = containersIndex.get(container);
+		} finally {
+			lock.unlock();
+		}
 		if(srcContainer == null) {
 			throw new ContainerMockNotFoundException();
 		}
 		final T dataObject = srcContainer.get(id);
-		if(dataObject == null) {
-			throw new ObjectMockNotFoundException();
-		}
 		dataObject.update(offset, size);
 		return dataObject;
 	}
@@ -105,14 +122,17 @@ implements ObjectStorageMock<T> {
 	public final T append(
 		final String container, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
-		final ObjectContainerMock<T> srcContainer = containersIndex.get(container);
+		final ObjectContainerMock<T> srcContainer;
+		lock.lock();
+		try {
+			srcContainer = containersIndex.get(container);
+		} finally {
+			lock.unlock();
+		}
 		if(srcContainer == null) {
 			throw new ContainerMockNotFoundException();
 		}
 		final T dataObject = srcContainer.get(id);
-		if(dataObject == null) {
-			throw new ObjectMockNotFoundException();
-		}
 		dataObject.append(offset, size);
 		return dataObject;
 	}
@@ -122,7 +142,13 @@ implements ObjectStorageMock<T> {
 		final String container, final String id, final long offset, final long size
 	) throws ContainerMockNotFoundException, ObjectMockNotFoundException {
 		// TODO partial read using offset and size args
-		final ObjectContainerMock<T> srcContainer = containersIndex.get(container);
+		final ObjectContainerMock<T> srcContainer;
+		lock.lock();
+		try {
+			srcContainer = containersIndex.get(container);
+		} finally {
+			lock.unlock();
+		}
 		if(srcContainer == null) {
 			throw new ContainerMockNotFoundException();
 		}
@@ -136,11 +162,17 @@ implements ObjectStorageMock<T> {
 	@Override
 	public final T delete(final String container, final String id)
 	throws ContainerMockNotFoundException, ObjectMockNotFoundException {
-		final ObjectContainerMock<T> srcContainer = containersIndex.get(container);
+		final ObjectContainerMock<T> srcContainer;
+		lock.lock();
+		try {
+			srcContainer = containersIndex.get(container);
+		} finally {
+			lock.unlock();
+		}
 		if(srcContainer == null) {
 			throw new ContainerMockNotFoundException();
 		}
-		final T dataObject = srcContainer.remove(id);
+		final T dataObject = srcContainer.get(id);
 		if(null == dataObject) {
 			throw new ObjectMockNotFoundException();
 		}
@@ -154,19 +186,35 @@ implements ObjectStorageMock<T> {
 			throw new ContainerMockAlreadyExistsException();
 		}
 		final ObjectContainerMock<T> c = new BasicObjectContainerMock<>(name, containerCapacity);
-		containersIndex.put(name, c);
+		lock.lock();
+		try {
+			containersIndex.put(name, c);
+		} finally {
+			lock.unlock();
+		}
 		return c;
 	}
 	//
 	@Override
 	public final boolean exists(final String name) {
-		return containersIndex.containsKey(name);
+		lock.lock();
+		try {
+			return containersIndex.containsKey(name);
+		} finally {
+			lock.unlock();
+		}
 	}
 	//
 	@Override
 	public final ObjectContainerMock<T> delete(final String name)
 	throws ContainerMockNotFoundException {
-		final ObjectContainerMock<T> c = containersIndex.remove(name);
+		final ObjectContainerMock<T> c;
+		lock.lock();
+		try {
+			c = containersIndex.remove(name);
+		} finally {
+			lock.unlock();
+		}
 		if(c == null) {
 			throw new ContainerMockNotFoundException();
 		} else {
@@ -184,7 +232,13 @@ implements ObjectStorageMock<T> {
 			"Try to get the container \"{}\" listing using marker \"{}\" and count limit {}",
 			container, marker, maxCount
 		);
-		final ObjectContainerMock<T> c = containersIndex.get(container);
+		final ObjectContainerMock<T> c;
+		lock.lock();
+		try {
+			c = containersIndex.get(container);
+		} finally {
+			lock.unlock();
+		}
 		if(c == null) {
 			throw new ContainerMockNotFoundException();
 		} else {

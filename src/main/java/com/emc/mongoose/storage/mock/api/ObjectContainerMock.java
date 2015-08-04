@@ -16,8 +16,4 @@ extends Map<String, T> {
 	String getName();
 	//
 	String list(final String marker, final Collection<T> buffDst, final int maxCount);
-	//
-	Future<T> putAsync(final String oid, final T obj);
-	//
-	Future<T> removeAsync(final String oid);
 }
