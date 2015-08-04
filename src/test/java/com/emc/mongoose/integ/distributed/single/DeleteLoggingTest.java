@@ -55,6 +55,8 @@ public class DeleteLoggingTest {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		//  remove log dir w/ previous logs
+		LogParser.removeLogDirectory(RUN_ID);
 		// reinit run id and the log path
 		RunTimeConfig
 			.getContext()

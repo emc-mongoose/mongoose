@@ -1,26 +1,30 @@
 package com.emc.mongoose.integ.suite;
 
-import com.emc.mongoose.common.conf.Constants;
-import com.emc.mongoose.common.conf.RunTimeConfig;
-import com.emc.mongoose.common.log.LogUtil;
-//
 import com.emc.mongoose.integ.core.rampup.CustomRampupTest;
 import com.emc.mongoose.integ.core.rampup.DefaultRampupTest;
-import com.emc.mongoose.integ.core.single.*;
-import com.emc.mongoose.storage.mock.impl.web.Cinderella;
-//
+
 import com.emc.mongoose.integ.core.chain.CRUDSequentialScenarioIntegTest;
 import com.emc.mongoose.integ.core.chain.CRUDSimultaneousScenarioIntegTest;
 import com.emc.mongoose.integ.core.chain.CustomChainScenarioIntegTest;
 import com.emc.mongoose.integ.core.chain.DefaultChainScenarioIntegTest;
-import com.emc.mongoose.integ.tools.TestConstants;
-//
+
+import com.emc.mongoose.integ.core.single.DefaultWriteTest;
+import com.emc.mongoose.integ.core.single.InfiniteWriteTest;
+import com.emc.mongoose.integ.core.single.Read10BItemsTest;
+import com.emc.mongoose.integ.core.single.Read10KBItemsTest;
+import com.emc.mongoose.integ.core.single.Read10MBItemsTest;
+import com.emc.mongoose.integ.core.single.Read200MBItemsTest;
+import com.emc.mongoose.integ.core.single.ReadVerificationTest;
+import com.emc.mongoose.integ.core.single.ReadZeroSizeItemsTest;
+import com.emc.mongoose.integ.core.single.WriteByCountTest;
+import com.emc.mongoose.integ.core.single.WriteByTimeTest;
+import com.emc.mongoose.integ.core.single.WriteRandomSizedItemsTest;
+import com.emc.mongoose.integ.core.single.WriteUsing100ConnTest;
+import com.emc.mongoose.integ.core.single.WriteUsing10ConnTest;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
-//
-import java.nio.file.Paths;
 
 /**
  * Created by olga on 03.07.15.
@@ -28,9 +32,9 @@ import java.nio.file.Paths;
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
 	DefaultWriteTest.class,
-	WriteRandomSizedItemsTest.class,
-	ReadZeroSizeItemsTest.class,
 	Read10BItemsTest.class,
+	/*WriteRandomSizedItemsTest.class,
+	ReadZeroSizeItemsTest.class,
 	Read10KBItemsTest.class,
 	Read10MBItemsTest.class,
 	Read200MBItemsTest.class,
@@ -44,35 +48,18 @@ import java.nio.file.Paths;
 	CRUDSimultaneousScenarioIntegTest.class,
 	DefaultChainScenarioIntegTest.class,
 	CustomRampupTest.class,
-	DefaultRampupTest.class,
+	DefaultRampupTest.class,*/
 	InfiniteWriteTest.class
 })
 public class CoreTestSuite {
-
-	private static Thread wsMockThread;
-
 	@BeforeClass
-	public static void startCinderella()
+	public static void setUpClass()
 	throws Exception {
-		// If tests run from the IDEA full logging file must be set
-		final String fullLogConfFile = Paths
-			.get(System.getProperty(TestConstants.USER_DIR_PROPERTY_NAME), Constants.DIR_CONF, TestConstants.LOG_FILE_NAME)
-			.toString();
-		System.setProperty(TestConstants.LOG_CONF_PROPERTY_KEY, fullLogConfFile);
-		//
-		LogUtil.init();
-		RunTimeConfig.initContext();
-		// If tests run from the IDEA full logging file must be set
-		wsMockThread = new Thread(new Cinderella(RunTimeConfig.getContext()), "cinderella");
-		wsMockThread.setDaemon(true);
-		wsMockThread.start();
+		WSMockTestSuite.setUpClass();
 	}
-
 	@AfterClass
-	public static void interruptCinderella()
+	public static void tearDownClass()
 	throws Exception {
-		if (!wsMockThread.isInterrupted()) {
-			wsMockThread.interrupt();
-		}
+		WSMockTestSuite.tearDownClass();
 	}
 }

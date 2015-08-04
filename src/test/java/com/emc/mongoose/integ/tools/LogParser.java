@@ -9,12 +9,34 @@ import org.junit.Assert;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
  * Created by olga on 03.07.15.
  */
 public final class LogParser {
+
+	public static void removeLogDirectory(final String runID)
+	throws Exception {
+		final Path logDir = Paths.get(RunTimeConfig.DIR_ROOT,
+			Constants.DIR_LOG, runID);
+		removeDirectory(logDir);
+	}
+
+	private static void removeDirectory(final Path path)
+	throws Exception {
+		final File dir = path.toFile();
+		if (dir.listFiles() != null) {
+			for (final File currFile : dir.listFiles()) {
+				if (currFile.isDirectory()) {
+					removeDirectory(currFile.getAbsoluteFile().toPath());
+				}
+				Files.deleteIfExists(currFile.toPath());
+			}
+		}
+	}
 
 	public static File getMessageFile(final String runID){
 		return new File(Paths.get(RunTimeConfig.DIR_ROOT,

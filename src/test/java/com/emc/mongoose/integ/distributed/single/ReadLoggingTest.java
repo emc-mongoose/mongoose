@@ -56,6 +56,8 @@ public class ReadLoggingTest {
 	public static void setUpClass()
 	throws Exception {
 		// reinit run id and the log path
+		//  remove log dir w/ previous logs
+		LogParser.removeLogDirectory(RUN_ID);
 		RunTimeConfig
 			.getContext()
 			.set(RunTimeConfig.KEY_RUN_ID, RUN_ID);
@@ -225,6 +227,7 @@ public class ReadLoggingTest {
 					Assert.assertEquals("BW15Min[MB/s]", nextRec.get(21));
 					firstRow = false;
 				} else {
+					System.out.println("A");
 					secondRow = true;
 					Assert.assertTrue(nextRec.isConsistent());
 				}

@@ -48,6 +48,8 @@ public class WriteLoggingTest {
 	@BeforeClass
 	public static void setUpClass()
 	throws Exception {
+		//  remove log dir w/ previous logs
+		LogParser.removeLogDirectory(RUN_ID);
 		TimeUnit.SECONDS.sleep(5);
 		// reinit run id and the log path
 		RunTimeConfig
