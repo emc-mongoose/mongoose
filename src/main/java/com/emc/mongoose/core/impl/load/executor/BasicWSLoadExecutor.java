@@ -25,8 +25,6 @@ import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.nio.pool.BasicNIOPoolEntry;
 import org.apache.http.message.HeaderGroup;
-import org.apache.http.nio.reactor.SessionRequest;
-import org.apache.http.nio.reactor.SessionRequestCallback;
 import org.apache.http.protocol.HttpProcessor;
 import org.apache.http.protocol.HttpProcessorBuilder;
 import org.apache.http.protocol.RequestConnControl;
@@ -53,7 +51,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
-import java.net.SocketAddress;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -162,18 +159,7 @@ implements WSLoadExecutor<T> {
 		connPool = new BasicNIOConnPool(
 			ioReactor, connFactory,
 			timeOutMs > 0 && timeOutMs < Integer.MAX_VALUE ? (int) timeOutMs : Integer.MAX_VALUE
-		) {
-			@Override
-			protected final void onLease(final BasicNIOPoolEntry entry) {
-				LOG.debug(Markers.MSG, "Pool entry lease: {}", entry);
-				super.onLease(entry);
-			}
-			@Override
-			protected final void onRelease(final BasicNIOPoolEntry entry) {
-				LOG.debug(Markers.MSG, "Pool entry release: {}", entry);
-				super.onRelease(entry);
-			}
-		};
+		);
 		connPool.setMaxTotal(totalConnCount);
 		connPool.setDefaultMaxPerRoute(connCountPerNode);
 		//
@@ -250,12 +236,11 @@ implements WSLoadExecutor<T> {
 		final Future<IOTask.Status> futureResult;
 		try {
 			futureResult = client.execute(wsTask, wsTask, connPool, wsTask, wsTask);
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-					Markers.MSG, "I/O task #{} has been submitted for execution: {}1",
-					wsTask.hashCode(), futureResult
+			//if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.debug(
+					Markers.MSG, "I/O task #{} has been submitted for execution", wsTask.hashCode()
 				);
-			}
+			//}
 		} catch(final Exception e) {
 			throw new RejectedExecutionException(e);
 		}

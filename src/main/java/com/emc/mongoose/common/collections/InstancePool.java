@@ -47,8 +47,8 @@ extends ConcurrentLinkedQueue<T> {
 	@SuppressWarnings("unchecked")
 	public final T take(final Object... args)
 	throws IllegalStateException, IllegalArgumentException {
-		T instance = null;//poll();
-		//if(instance == null) {
+		T instance = poll();
+		if(instance == null) {
 			try {
 				if(sharedArgs == null || sharedArgs.length == 0) {
 					instance = constructor.newInstance();
@@ -64,14 +64,27 @@ extends ConcurrentLinkedQueue<T> {
 			) {
 				throw new IllegalStateException("Reusable instantiation failure", e);
 			}
-		//}
+			//if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.debug(Markers.MSG, "Using new instance: {}/{}", instance.hashCode(), instance);
+			//}
+		} else {
+			//if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.debug(Markers.MSG, "Reusing the instance: {}/{}", instance.hashCode(), instance);
+			//}
+		}
 		//
 		return (T) instance.reuse(args);
 	}
 	//
 	public final void release(final T instance) {
 		if(instance != null) {
-			if(!offer(instance)) {
+			if(offer(instance)) {
+				//if(LOG.isTraceEnabled(Markers.MSG)) {
+					LOG.debug(
+						Markers.MSG, "Released the instance: {}/{}", instance.hashCode(), instance
+					);
+				//}
+			} else {
 				LOG.debug(
 					Markers.ERR, "Failed to return the instance \"{}\" back into the pool \"{}\"",
 					instance.hashCode(), toString()

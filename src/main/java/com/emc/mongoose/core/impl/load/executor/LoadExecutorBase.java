@@ -666,6 +666,7 @@ implements LoadExecutor<T> {
 			counterSubm.inc();
 			activeTasksStats.get(nextNodeAddr).incrementAndGet(); // increment node's usage counter
 		} catch(final RejectedExecutionException e) {
+			releaseIOTask(ioTask);
 			if(!isInterrupted.get()) {
 				counterRej.inc();
 				LogUtil.exception(LOG, Level.DEBUG, e, "Rejected the I/O task {}", ioTask);
@@ -685,17 +686,11 @@ implements LoadExecutor<T> {
 	//
 	private <U extends IOTask<T>> U getIOTask(final T dataItem, final String nextNodeAddr) {
 		final U ioTask = (U) ioTaskPool.take(dataItem, nextNodeAddr);
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "I/O task leased: {}", ioTask.hashCode());
-		}
 		return ioTask;
 	}
 	//
 	private void releaseIOTask(final IOTask<T> ioTask) {
 		ioTaskPool.release(ioTask);
-		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "I/O task released: {}", ioTask.hashCode());
-		}
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	// Balancing implementation
