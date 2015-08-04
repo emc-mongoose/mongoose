@@ -5,8 +5,10 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.logging.LogUtil;
 import com.emc.mongoose.common.logging.Markers;
 import com.emc.mongoose.core.api.data.DataObject;
+import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
 import com.emc.mongoose.core.api.load.model.Producer;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
+import com.emc.mongoose.core.impl.io.req.conf.ObjectRequestConfigBase;
 import com.emc.mongoose.core.impl.io.req.conf.RequestConfigBase;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -25,8 +27,8 @@ import java.util.NoSuchElementException;
 /**
  Created by kurila on 26.03.14.
  */
-public final class RequestConfigImpl<T extends DataObject>
-extends RequestConfigBase<T> {
+public final class ObjectRequestConfigImpl<T extends DataObject>
+extends ObjectRequestConfigBase<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
@@ -38,14 +40,15 @@ extends RequestConfigBase<T> {
 	//
 	private PoolImpl<T> pool;
 	//
-	public RequestConfigImpl()
+	public ObjectRequestConfigImpl()
 	throws NoSuchAlgorithmException {
 		this(null);
 	}
 	//
-	protected RequestConfigImpl(final RequestConfigImpl<T> reqConf2Clone)
+	protected ObjectRequestConfigImpl(final ObjectRequestConfigImpl<T> reqConf2Clone)
 	throws NoSuchAlgorithmException{
 		super(reqConf2Clone);
+		System.out.println("in code");
 //		authPrefixValue = runTimeConfig.getApiS3AuthPrefix() + " ";
 //		if(reqConf2Clone != null) {
 //			setPool(reqConf2Clone.getPool());
@@ -54,8 +57,8 @@ extends RequestConfigBase<T> {
 	}
 	//
 	@Override @SuppressWarnings("CloneDoesntCallSuperClone")
-	public RequestConfigImpl<T> clone() {
-		RequestConfigImpl<T> copy = null;
+	public ObjectRequestConfigImpl<T> clone() {
+		ObjectRequestConfigImpl<T> copy = null;
 		//try {
 			//copy = new RequestConfigImpl<>(this);
 		//} catch(final NoSuchAlgorithmException e) {
@@ -68,14 +71,14 @@ extends RequestConfigBase<T> {
 //		return pool;
 //	}
 	//
-	public final RequestConfigImpl<T> setPool(final PoolImpl<T> pool) {
+	public final ObjectRequestConfigImpl<T> setPool(final PoolImpl<T> pool) {
 		LOG.debug(Markers.MSG, "Req conf instance #{}: set pool \"{}\"", hashCode(), pool);
 		this.pool = pool;
 		return this;
 	}
 
 	@Override
-	public final RequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
+	public final ObjectRequestConfigImpl<T> setProperties(final RunTimeConfig runTimeConfig) {
 		super.setProperties(runTimeConfig);
 		//
 		try {

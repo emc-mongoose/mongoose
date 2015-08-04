@@ -9,6 +9,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
 import com.emc.mongoose.core.api.io.req.conf.RequestConfig;
 import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.builder.ObjectLoadBuilder;
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
@@ -21,23 +22,26 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.xml.crypto.Data;
+import java.util.HashMap;
 import java.util.NoSuchElementException;
 
 /**
  * Created by Brandon on 7/28/15.
  */
-public class BasicObjectLoadBuilder<T extends DataObject, U extends ObjectLoadExecutor<T>> extends LoadBuilderBase {
+public class BasicObjectLoadBuilder<T extends DataObject, U extends ObjectLoadExecutor<T>>
+        extends LoadBuilderBase <T, U>
+        implements ObjectLoadBuilder<T,U>{
 
     private final static Logger LOG = LogManager.getLogger();
     //
-    public BasicObjectLoadBuilder(final RunTimeConfig runTimeConfig, WSRequestConfig wsReqConf, String[] dataNodeAddrs, Object o, String listFile, long maxCount, long minObjSize, long maxObjSize, float objSizeBias, float rateLimit, int updatesPerItem) {
+    public BasicObjectLoadBuilder(final RunTimeConfig runTimeConfig) {
         super(runTimeConfig);
         setProperties(runTimeConfig);
     }
     //
     @Override @SuppressWarnings("unchecked")
     protected ObjectRequestConfig<T> getDefaultRequestConfig(){
-        return (ObjectRequestConfig<T>) WSRequestConfigBase.getInstance();
+        return (ObjectRequestConfig<T>) ObjectRequestConfigBase.getInstance();
     }
 
 
@@ -90,9 +94,11 @@ public class BasicObjectLoadBuilder<T extends DataObject, U extends ObjectLoadEx
             );
         }
         //
+
+        //
         return (U) new BasicObjectLoadBuilder<>(
-               localRunTimeConfig, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
-               listFile, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem)
+               localRunTimeConfig)//, wsReqConf, dataNodeAddrs, threadsPerNodeMap.get(loadType),
+               //listFile, maxCount, minObjSize, maxObjSize, objSizeBias, rateLimit, updatesPerItem)
         ;
     }
 }

@@ -43,12 +43,12 @@ implements Pool<T> {
 		"<Status>Enabled</Status></VersioningConfiguration>";
 	private final static String VERSIONING_URL_PART = "/?versioning";
 	//
-	private final RequestConfigImpl<T> reqConf;
+	private final ObjectRequestConfigImpl<T> reqConf;
 	private String name;
 	private boolean versioningEnabled;
 	//
 	public PoolImpl(
-			final RequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
+			final ObjectRequestConfigImpl<T> reqConf, final String name, final boolean versioningEnabled
 	) {
 		this.reqConf = reqConf;
 		//
