@@ -25,11 +25,11 @@ def init():
 	#
 	if mode == Constants.RUN_MODE_CLIENT or mode == Constants.RUN_MODE_COMPAT_CLIENT:
 		############################################################################################
-		from com.emc.mongoose.client.impl.load.builder import BasicWSLoadBuilderClient
+		from com.emc.mongoose.client.impl.load.builder import BasicObjectLoadBuilderClient
 		############################################################################################
 		try:
 			try:
-				loadBuilderInstance = BasicWSLoadBuilderClient(localRunTimeConfig)
+				loadBuilderInstance = BasicObjectLoadBuilderClient(localRunTimeConfig)
 			except ConversionException:
 				LOG.fatal(Markers.ERR, "Servers address list should be comma delimited")
 			except NoSuchElementException:  # no one server addr not specified, try 127.0.0.1
@@ -38,10 +38,10 @@ def init():
 			LOG.fatal(Markers.ERR, "Failed to create load builder client: {}", e)
 	else: # standalone
 		############################################################################################
-		from com.emc.mongoose.core.impl.load.builder import BasicWSLoadBuilder
+		from com.emc.mongoose.core.impl.load.builder import BasicObjectLoadBuilder
 		############################################################################################
 		try:
-			loadBuilderInstance = BasicWSLoadBuilder(localRunTimeConfig)
+			loadBuilderInstance = BasicObjectLoadBuilder(localRunTimeConfig)
 		except IllegalStateException as e:
 			LogUtil.exception(LOG, Level.FATAL, e, "Failed to create load builder client")
 	#

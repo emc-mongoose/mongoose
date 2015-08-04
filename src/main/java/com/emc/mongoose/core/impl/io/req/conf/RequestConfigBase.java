@@ -217,6 +217,7 @@ implements RequestConfig<T> {
 		this.nameSpace = nameSpace;
 		return this;
 	}
+
 	//
 	@Override
 	public final DataSource getDataSource() {
