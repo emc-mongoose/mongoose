@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
 import com.emc.mongoose.integ.tools.ContentGetter;
@@ -55,6 +56,7 @@ public final class Read10BItemsTest {
 		LogParser.removeLogDirectory(CREATE_RUN_ID);
 		LogParser.removeLogDirectory(READ_RUN_ID);
 		//
+		RunTimeConfig.setContext(RunTimeConfig.getDefaultCfg());
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
 		rtConfig.set(RunTimeConfig.KEY_RUN_ID, CREATE_RUN_ID);
 		rtConfig.set(RunTimeConfig.KEY_LOAD_LIMIT_COUNT, LIMIT_COUNT);
@@ -79,8 +81,9 @@ public final class Read10BItemsTest {
 	private static void executeLoadJob(final RunTimeConfig rtConfig)
 	throws Exception {
 		LOG.info(Markers.MSG, rtConfig.toString());
+		UniformDataSource.DEFAULT = new UniformDataSource();
 		try (final BufferingOutputStream stdOutStream =
-		        StdOutInterceptorTestSuite.getStdOutBufferingStream()) {
+				StdOutInterceptorTestSuite.getStdOutBufferingStream()) {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptRunner().run();
 			//  Wait for "Scenario end" message

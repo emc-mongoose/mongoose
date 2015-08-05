@@ -63,6 +63,7 @@ implements Externalizable {
 		//
 		KEY_LOAD_SERVERS = "load.servers",
 		KEY_LOAD_THREADS = "load.threads",
+		KEY_LOAD_TYPE_CREATE_THREADS = "load.type.create.threads",
 		KEY_LOAD_TASKS_BATCH_SIZE = "load.tasks.batchSize",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
@@ -117,12 +118,14 @@ implements Externalizable {
 		CONTEXT_CONFIG = new InheritableThreadLocal<>();
 	private static final List<String>
 		IMMUTABLE_PARAMS = new ArrayList<>();
+	private static RunTimeConfig DEFAULT_CFG;
 	//
 	public static void initContext() {
 		RunTimeConfig instance = RunTimeConfig.getContext();
 		if(instance == null) {
 			instance = new RunTimeConfig();
 			instance.loadProperties();
+			DEFAULT_CFG = instance;
 			final String
 				runId = System.getProperty(KEY_RUN_ID),
 				runMode = System.getProperty(KEY_RUN_MODE);
@@ -134,6 +137,10 @@ implements Externalizable {
 			}
 			setContext(instance);
 		}
+	}
+	//
+	public static RunTimeConfig getDefaultCfg() {
+		return DEFAULT_CFG.clone();
 	}
 	//
 	public void loadProperties() {
