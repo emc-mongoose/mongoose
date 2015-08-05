@@ -204,7 +204,7 @@ implements DataSource {
 						i, Long.toHexString(nextSeed)
 					);
 					generateData(nextLayer, nextSeed);
-					byteLayers.set(i, nextLayer);
+					byteLayers.add(nextLayer);
 				}
 			}
 		}

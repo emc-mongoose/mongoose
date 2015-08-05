@@ -4,6 +4,8 @@ import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 //
+import com.emc.mongoose.integ.core.api.atmos.AtmosMultiRangeUpdateTest;
+import com.emc.mongoose.integ.core.api.s3.S3ReadUsingBucketListingTest;
 import com.emc.mongoose.integ.core.api.s3.S3UsePreExistingBucketTest;
 import com.emc.mongoose.integ.core.rampup.CustomRampupTest;
 import com.emc.mongoose.integ.core.rampup.DefaultRampupTest;
@@ -28,7 +30,9 @@ import java.nio.file.Paths;
  */
 @RunWith(Suite.class)
 @Suite.SuiteClasses({
+	AtmosMultiRangeUpdateTest.class,
 	S3UsePreExistingBucketTest.class,
+	S3ReadUsingBucketListingTest.class,
 	/*DefaultWriteTest.class,
 	WriteRandomSizedItemsTest.class,
 	ReadZeroSizeItemsTest.class,

@@ -87,7 +87,7 @@ implements StorageClient<T> {
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput)
+				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -121,7 +121,7 @@ implements StorageClient<T> {
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput)
+				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -151,7 +151,7 @@ implements StorageClient<T> {
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput)
+				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -181,7 +181,7 @@ implements StorageClient<T> {
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput)
+				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder
@@ -221,7 +221,7 @@ implements StorageClient<T> {
 			null : new DataItemInputProducer<>(itemsInput);
 		try(
 			final DataItemOutputConsumer<T> consumer = itemsOutput == null ?
-				null : new DataItemOutputConsumer<>(itemsOutput)
+				null : new DataItemOutputConsumer<>(itemsOutput, maxCount)
 		) {
 			try(
 				final LoadExecutor<T> loadJobExecutor = loadBuilder

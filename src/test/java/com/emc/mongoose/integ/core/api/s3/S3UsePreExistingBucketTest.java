@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
  */
 public final class S3UsePreExistingBucketTest {
 	//
-	private final static long COUNT_TO_WRITE = 100000;
+	private final static long COUNT_TO_WRITE = 10000;
 	//
 	private static long COUNT_WRITTEN;
 	private static Bucket BUCKET;
@@ -37,6 +37,9 @@ public final class S3UsePreExistingBucketTest {
 			reqConf, S3UsePreExistingBucketTest.class.getSimpleName(), false
 		);
 		BUCKET.create("127.0.0.1");
+		if(!BUCKET.exists("127.0.0.1")) {
+			Assert.fail("Failed to pre-create the bucket for test");
+		}
 		//
 		try(
 			final StorageClient<WSObject>

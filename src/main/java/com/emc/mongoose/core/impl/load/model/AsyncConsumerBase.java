@@ -14,6 +14,7 @@ import java.rmi.RemoteException;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 /**
@@ -92,10 +93,14 @@ implements AsyncConsumer<T> {
 		);
 		T nextItem;
 		try {
-			while(transientQueue.size() > 0 || !isShutdown.get()) {
-				nextItem = transientQueue.take();
+			for(long i = 0; i < maxCount;) {
+				if(transientQueue.size() == 0 && isShutdown.get()) {
+					break;
+				}
+				nextItem = transientQueue.poll(submTimeOutMilliSec, TimeUnit.MILLISECONDS);
 				if(nextItem != null) {
 					submitSync(nextItem);
+					i ++;
 				}
 			}
 			LOG.debug(Markers.MSG, "{}: consuming finished", getName());

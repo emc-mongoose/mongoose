@@ -137,10 +137,12 @@ extends WSRequestHandlerBase<T> {
 		final T lastObj;
 		try {
 			lastObj = sharedStorage.listObjects(name, marker, buff, maxCount);
-			LOG.info(
-				Markers.MSG, "Generated list of {} objects, last one is \"{}\"",
-				buff.size(), lastObj
-			);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Bucket \"{}\": generated list of {} objects, last one is \"{}\"",
+					name, buff.size(), lastObj
+				);
+			}
 		} catch(final ContainerMockNotFoundException e) {
 			resp.setStatusCode(HttpStatus.SC_NOT_FOUND);
 			return;

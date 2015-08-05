@@ -170,10 +170,12 @@ extends WSRequestHandlerBase<T> {
 		final T lastObj;
 		try {
 			lastObj = sharedStorage.listObjects(subtenant, oid, buff, maxCount);
-			LOG.info(
-				Markers.MSG, "Generated list of {} objects, last one is \"{}\"",
-				buff.size(), oid
-			);
+			if(LOG.isTraceEnabled(Markers.MSG)) {
+				LOG.trace(
+					Markers.MSG, "Subtenant \"{}\": generated list of {} objects, last one is \"{}\"",
+					subtenant, buff.size(), lastObj
+				);
+			}
 		} catch(final ContainerMockNotFoundException e) {
 			resp.setStatusCode(HttpStatus.SC_NOT_FOUND);
 			return;
@@ -232,7 +234,7 @@ extends WSRequestHandlerBase<T> {
 		return Hex.encodeHexString(buff);
 	}
 	//
-	private String generateSubtenant() {
+	public static String generateSubtenant() {
 		final byte buff[] = new byte[0x10];
 		ThreadLocalRandom.current().nextBytes(buff);
 		return Hex.encodeHexString(buff);

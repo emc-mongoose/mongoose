@@ -25,9 +25,9 @@ implements Consumer<T> {
 	//
 	protected final DataItemOutput<T> itemOut;
 	//
-	public DataItemOutputConsumer(final DataItemOutput<T> itemOut) {
+	public DataItemOutputConsumer(final DataItemOutput<T> itemOut, final long maxCount) {
 		super(
-			Long.MAX_VALUE,
+			maxCount > 0 ? maxCount : Long.MAX_VALUE,
 			RunTimeConfig.getContext().getLoadLimitTimeUnit().toMillis(
 				RunTimeConfig.getContext().getLoadLimitTimeValue()
 			),

@@ -142,8 +142,8 @@ implements AppendableDataItem, UpdatableDataItem {
 		super.readExternal(in);
 		currLayerIndex = in.readInt();
 		maskRangesRead.or(BitSet.valueOf(new long[]{in.readLong()}));
-		maskRangesWrite[0].or(BitSet.valueOf(new long[]{in.readLong()}));
-		maskRangesWrite[1].or(BitSet.valueOf(new long[]{in.readLong()}));
+		maskRangesWrite[0].or(BitSet.valueOf(new long[] {in.readLong()}));
+		maskRangesWrite[1].or(BitSet.valueOf(new long[] {in.readLong()}));
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	/*public static int log2(long value) {
@@ -298,7 +298,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	public final void updateRandomRanges(final int count)
 	throws IllegalArgumentException, IllegalStateException {
 		final int countRangesTotal = getRangeCount(size);
-		if(count < 1 || count > countRangesTotal) {
+		if(count < 1) {
 			throw new IllegalArgumentException(
 				"Range count should be more than 0 and less than max " + countRangesTotal +
 				" for the item size"
