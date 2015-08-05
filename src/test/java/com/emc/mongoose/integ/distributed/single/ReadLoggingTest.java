@@ -227,7 +227,6 @@ public class ReadLoggingTest {
 					Assert.assertEquals("BW15Min[MB/s]", nextRec.get(21));
 					firstRow = false;
 				} else {
-					System.out.println("A");
 					secondRow = true;
 					Assert.assertTrue(nextRec.isConsistent());
 				}
