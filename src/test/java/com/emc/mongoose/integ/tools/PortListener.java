@@ -1,6 +1,8 @@
 package com.emc.mongoose.integ.tools;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Scanner;
 
 /**
@@ -8,25 +10,26 @@ import java.util.Scanner;
  */
 public final class PortListener {
 
-	public static Scanner getNetstatOutput()
-	throws IOException {
-		final String[] netstatCommand = { "netstat", "-an" };
-		final Process netstat = Runtime.getRuntime().exec(netstatCommand);
-		return new Scanner(netstat.getInputStream(), "IBM850").useDelimiter("\\n");
-	}
-
 	public static int getCountConnectionsOnPort(final String port)
-	throws IOException {
-		Scanner netstatOutputScanner = getNetstatOutput();
+	throws Exception {
 		int countConnections = 0;
-		String line;
-		while (netstatOutputScanner.hasNext()) {
-			line = netstatOutputScanner.next();
-			if (line.contains(port)) {
-				countConnections++;
+		try (final BufferedReader bufferedReader = getNetstatOutput()) {
+			String line;
+			while ((line = bufferedReader.readLine()) != null) {
+				System.out.println(line);
 			}
 		}
-		netstatOutputScanner.close();
-		return countConnections;
+		return 1;
 	}
+
+	private static BufferedReader getNetstatOutput()
+	throws Exception {
+		final String cmd = "netstat -an | grep \\:902 | wc -l";
+		final Process netstat = Runtime.getRuntime().exec(cmd);
+		netstat.waitFor();
+		return new BufferedReader(
+			new InputStreamReader(netstat.getInputStream())
+		);
+	}
+
 }

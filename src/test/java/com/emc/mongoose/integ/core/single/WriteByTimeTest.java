@@ -154,7 +154,7 @@ public class WriteByTimeTest {
 		Assert.assertNotNull(finishTime);
 		final long differenceTime = finishTime.getTime() - startTime.getTime();
 		Assert.assertTrue(
-			differenceTime >= loadLimitTimeMillis &&
+			differenceTime >= loadLimitTimeMillis - precisionMillis &&
 			differenceTime < loadLimitTimeMillis + precisionMillis
 		);
 		bufferedReader.close();
@@ -191,7 +191,7 @@ public class WriteByTimeTest {
 	@Test
 	public void shouldGeneralStatusOfTheRunIsRegularlyReports()
 	throws Exception {
-		final int precisionMillis = 1000;
+		final int precisionMillis = 3000;
 		// Get perf.avg.csv file
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue(perfAvgFile.exists());
