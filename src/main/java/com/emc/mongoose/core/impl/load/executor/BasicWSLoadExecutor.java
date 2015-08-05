@@ -1,6 +1,5 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-common.jar
-import com.emc.mongoose.common.collections.InstancePool;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;

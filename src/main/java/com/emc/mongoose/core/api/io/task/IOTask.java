@@ -1,14 +1,11 @@
 package com.emc.mongoose.core.api.io.task;
 //
 import com.emc.mongoose.core.api.data.DataItem;
-// mongoose-common.jar
-import com.emc.mongoose.common.collections.Reusable;
 /**
  Created by kurila on 02.06.14.
  Request entity supporting some common operations.
  */
-public interface IOTask<T extends DataItem>
-extends Reusable<IOTask<T>> {
+public interface IOTask<T extends DataItem> {
 	//
 	enum Type {
 		CREATE, READ, DELETE, UPDATE, APPEND

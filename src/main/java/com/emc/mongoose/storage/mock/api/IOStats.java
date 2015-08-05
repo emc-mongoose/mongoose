@@ -7,17 +7,14 @@ import java.io.Closeable;
 public interface IOStats
 extends Runnable, Closeable {
 	//
-	String METRIC_COUNT = "count", ALL_METHODS = "all";
+	enum IOType { WRITE, READ, DELETE }
 	//
 	void start();
 	//
-	void markCreate(final long size);
-	void markRead(final long size);
-	void markDelete();
+	void markWrite(final boolean succ, final long size);
+	void markRead(final boolean succ, final long size);
+	void markDelete(final boolean succ);
 	//
-	double getMeanRate();
-	double getWriteRate();
-	double getWriteRateBytes();
-	double getReadRate();
-	double getReadRateBytes();
+	double getRate();
+	double getRateBytes();
 }

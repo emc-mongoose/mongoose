@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 //
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
 import java.util.concurrent.RunnableFuture;
@@ -30,7 +31,7 @@ extends Thread {
 	) {
 		super(name);
 		setDaemon(daemonFlag);
-		queue = new SingleConsumerDisruptorQueue<>(queueCapacity, false);
+		queue = new ArrayBlockingQueue<>(queueCapacity, false);
 		this.batchSize = batchSize;
 		buff = new ArrayList<>(batchSize);
 		this.sleepTimeMilliSec = sleepTimeMilliSec;

@@ -260,7 +260,6 @@ dependencies {
 		library.commons_lang,
 		library.commons_collections4,
 		library.httpcore_plus_nio,
-		library.lmax_disruptor,
 		library.log4j_api_plus_core,
 		library.jackson_core,
 		library.jackson_databind,

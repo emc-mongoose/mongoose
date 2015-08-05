@@ -57,25 +57,6 @@ implements IOTask<T> {
 		setNodeAddr(nodeAddr);
 	}
 	//
-	@Override @SuppressWarnings("unchecked")
-	public final BasicIOTask<T> reuse(final Object... args) {
-		if(args == null) {
-			throw new IllegalArgumentException("No args for reusing");
-		} else {
-			if(args.length > 0) {
-				setDataItem((T) args[0]);
-			}
-			if(args.length > 1) {
-				setNodeAddr(String.class.cast(args[1]));
-			}
-		}
-		return this;
-	}
-	//
-	@Override
-	public final void release() {
-	}
-	//
 	@Override
 	public void complete() {
 		final String dataItemId = Long.toHexString(dataItem.getOffset());

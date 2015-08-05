@@ -30,7 +30,6 @@ import com.emc.mongoose.server.api.load.executor.LoadSvc;
 // mongoose-client.jar
 import com.emc.mongoose.client.api.load.executor.LoadClient;
 import com.emc.mongoose.client.api.load.executor.tasks.PeriodicTask;
-import com.emc.mongoose.client.impl.load.executor.tasks.RemoteSubmitTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.InterruptClientOnMaxCountTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.DataItemsFetchPeriodicTask;
 import com.emc.mongoose.client.impl.load.executor.tasks.GaugeValuePeriodicTask;
@@ -643,26 +642,41 @@ implements LoadClient<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	private final AtomicInteger rrc = new AtomicInteger(0);
 	//
+	private final class RemoteSubmitTask
+	implements Runnable {
+		//
+		private final T dataItem;
+		//
+		private RemoteSubmitTask(final T dataItem) {
+			this.dataItem = dataItem;
+		}
+		//
+		@Override
+		public final void run() {
+			String loadSvcAddr;
+			for(int tryCount = 0; tryCount < Short.MAX_VALUE && !isShutdown(); tryCount ++) {
+				try {
+					loadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
+					remoteLoadMap.get(loadSvcAddr).submit(dataItem);
+					rrc.incrementAndGet();
+					break;
+				} catch(final RejectedExecutionException | RemoteException e) {
+					try {
+						Thread.sleep(tryCount);
+					} catch(final InterruptedException ee) {
+						break;
+					}
+				} catch(final InterruptedException e) {
+					break;
+				}
+			}
+		}
+	}
+	//
 	@Override
 	public final void submit(final T dataItem)
 	throws RejectedExecutionException, InterruptedException {
-		Future remoteSubmFuture = null;
-		String nextLoadSvcAddr;
-		for(
-			int tryCount = 0;
-			tryCount < Short.MAX_VALUE && remoteSubmFuture == null && !isShutdown();
-			tryCount ++
-		) {
-			try {
-				nextLoadSvcAddr = loadSvcAddrs[(rrc.get() + tryCount) % loadSvcAddrs.length];
-				remoteSubmFuture = submit(
-					RemoteSubmitTask.getInstance(remoteLoadMap.get(nextLoadSvcAddr), dataItem)
-				);
-				rrc.incrementAndGet();
-			} catch(final RejectedExecutionException e) {
-				Thread.sleep(tryCount);
-			}
-		}
+		submit(new RemoteSubmitTask(dataItem));
 	}
 	//
 	private void forceFetchAndAggregation() {

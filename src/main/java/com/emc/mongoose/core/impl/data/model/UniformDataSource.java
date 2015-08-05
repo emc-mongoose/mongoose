@@ -32,7 +32,8 @@ implements DataSource {
 	//
 	private long seed;
 	private int size;
-	private final List<ByteBuffer> byteLayers = new ArrayList<>(1);
+	private volatile ByteBuffer zeroByteLayer;
+	private final List<ByteBuffer> byteLayers = new ArrayList<>();
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	public UniformDataSource()
 	throws NumberFormatException {
@@ -46,7 +47,7 @@ implements DataSource {
 		LOG.debug(Markers.MSG, "New ring buffer instance #{}", hashCode());
 		this.seed = seed;
 		this.size = size;
-		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
+		zeroByteLayer = ByteBuffer.allocateDirect(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.add(zeroByteLayer);
 	}
@@ -126,13 +127,13 @@ implements DataSource {
 	}
 	//
 	@Override
-	public final void setSize(final int size)
+	public final synchronized void setSize(final int size)
 	throws IllegalArgumentException {
 		if(size < 1) {
 			throw new IllegalArgumentException("Illegal ring size: " + size);
 		}
 		this.size = size;
-		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
+		zeroByteLayer = ByteBuffer.allocateDirect(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.clear();
 		byteLayers.add(zeroByteLayer);
@@ -144,9 +145,9 @@ implements DataSource {
 	}
 	//
 	@Override
-	public final void setSeed(final long seed) {
+	public final synchronized void setSeed(final long seed) {
 		this.seed = seed;
-		final ByteBuffer zeroByteLayer = ByteBuffer.allocateDirect(size);
+		zeroByteLayer = ByteBuffer.allocateDirect(size);
 		generateData(zeroByteLayer, seed);
 		byteLayers.clear();
 		byteLayers.add(zeroByteLayer);
@@ -158,7 +159,7 @@ implements DataSource {
 	public final String toString() {
 		return
 			Long.toHexString(seed) + RunTimeConfig.LIST_SEP +
-			Integer.toHexString(byteLayers.get(0).capacity());
+			Integer.toHexString(zeroByteLayer.capacity());
 	}
 	//
 	@Override
@@ -175,28 +176,39 @@ implements DataSource {
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
-	public final synchronized ByteBuffer getLayer(final int layerIndex) {
-		final int layerCount = byteLayers.size();
-		if(layerIndex >= layerCount) {
-			ByteBuffer prevLayer = byteLayers.get(layerCount - 1), nextLayer;
-			long prevSeed, nextSeed;
-			final int ringSize = prevLayer.capacity();
-			for(int i = layerCount; i <= layerIndex; i ++) {
-				nextLayer = ByteBuffer.allocateDirect(ringSize);
-				prevSeed = prevLayer.getLong(0);
-				nextSeed = Long.reverse(nextWord(Long.reverseBytes(prevSeed)));
-				LOG.debug(
-					Markers.MSG,
-					"Generate new byte layer #{}, previous seed: \"{}\", next one: \"{}\"",
-					i, Long.toHexString(prevSeed), Long.toHexString(nextSeed)
-				);
-				generateData(nextLayer, nextSeed);
-				byteLayers.add(nextLayer);
-				prevLayer = nextLayer;
-			}
-			LOG.debug(Markers.MSG, "New layer #{}", byteLayers.size() - 1);
+	public final ByteBuffer getLayer(final int layerIndex) {
+		// zero layer always exists so it may be useful to do it very simply and fast
+		if(layerIndex == 0) {
+			return zeroByteLayer;
 		}
-		return byteLayers.get(layerIndex);
+		// else
+		final int ringSize = zeroByteLayer.capacity();
+		long nextSeed;
+		ByteBuffer nextLayer = zeroByteLayer;
+		for(int i = byteLayers.size(); i <= layerIndex; i ++) {
+			synchronized(byteLayers) {
+				if(byteLayers.size() > i) {
+					nextLayer = byteLayers.get(i);
+				} else {
+					nextLayer = ByteBuffer.allocateDirect(ringSize);
+					nextSeed = Long.reverse(
+						nextWord(
+							Long.reverseBytes(
+								byteLayers.get(i - 1).getLong(0)
+							)
+						)
+					);
+					LOG.debug(
+						Markers.MSG,
+						"Generate new byte layer #{} using the seed: \"{}\"",
+						i, Long.toHexString(nextSeed)
+					);
+					generateData(nextLayer, nextSeed);
+					byteLayers.set(i, nextLayer);
+				}
+			}
+		}
+		return nextLayer;
 	}
 	////////////////////////////////////////////////////////////////////////////////////////////////
 }

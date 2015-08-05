@@ -169,7 +169,7 @@ extends WSRequestHandlerBase<T> {
 		final List<T> buff = new ArrayList<>(maxCount);
 		final T lastObj;
 		try {
-			lastObj = sharedStorage.list(subtenant, oid, buff, maxCount);
+			lastObj = sharedStorage.listObjects(subtenant, oid, buff, maxCount);
 			LOG.info(
 				Markers.MSG, "Generated list of {} objects, last one is \"{}\"",
 				buff.size(), oid
