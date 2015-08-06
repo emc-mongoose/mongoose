@@ -13,7 +13,7 @@ public final class ContentGetter {
 	public static InputStream getStream(final String dataID)
 	throws IOException, NoSuchAlgorithmException {
 		// There is url string w/o data ID
-		final String firstPartURLString = "http://localhost:9020/bucket/";
+		final String firstPartURLString = "http://127.0.0.1:9020/bucket/";
 		final URL url = new URL(firstPartURLString+dataID);
 		return url.openStream();
 	}
