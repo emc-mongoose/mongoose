@@ -10,6 +10,7 @@ import com.emc.mongoose.client.impl.load.executor.gauges.MinLong;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumDouble;
 import com.emc.mongoose.client.impl.load.executor.gauges.SumLong;
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
+import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
@@ -45,9 +46,12 @@ import javax.management.MBeanServer;
 import javax.management.MBeanServerConnection;
 import javax.management.remote.JMXConnector;
 //
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -522,6 +526,12 @@ implements LoadClient<T> {
 	@Override
 	public final synchronized void start() {
 		if(tsStart.compareAndSet(-1, System.nanoTime())) {
+			if (runTimeConfig.isRunResumeEnabled()) {
+				if (!RESTORED_STATES_MAP.containsKey(runTimeConfig.getRunId())) {
+					BasicLoadState.restoreScenarioState(runTimeConfig);
+				}
+				setLoadState(BasicLoadState.findStateByLoadNumber(instanceNum, runTimeConfig));
+			}
 			LoadSvc<T> nextLoadSvc;
 			for(final String addr : loadSvcAddrs) {
 				nextLoadSvc = remoteLoadMap.get(addr);
@@ -700,6 +710,13 @@ implements LoadClient<T> {
 		} finally {
 			forcedAggregator.shutdownNow();
 			postProcessDataItems();
+		}
+	}
+	//
+	@Override
+	public void setLoadState(final LoadState state) {
+		if (state != null) {
+			LOG.warn(Markers.MSG, "Failed to resume run in distributed mode. See #JIRA-411");
 		}
 	}
 	//
