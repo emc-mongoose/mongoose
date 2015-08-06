@@ -1,8 +1,8 @@
-package com.emc.mongoose.core.impl.io.req.conf;
+package com.emc.mongoose.core.impl.io.req;
 // mongoose-core-api.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.core.api.data.DataObject;
-import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
+import com.emc.mongoose.core.api.io.req.ObjectRequestConfig;
 
 import java.io.IOException;
 import java.io.ObjectInput;

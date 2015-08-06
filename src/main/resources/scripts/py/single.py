@@ -22,9 +22,14 @@ def init():
 		LOG.debug(Markers.MSG, "Using load type: {}", loadType.name())
 		loadBuilder.setLoadType(loadType)
 	except NoSuchElementException:
-		LOG.error(Markers.ERR, "No load type specified, try arg -Dscenario.single.load=<VALUE> to override")
+		LOG.error(
+			Markers.ERR,
+			"No load type specified, try arg -Dscenario.single.load=<VALUE> to override"
+		)
 	except IllegalArgumentException:
-		LOG.error(Markers.ERR, "No such load type, it should be a constant from Load.Type enumeration")
+		LOG.error(
+			Markers.ERR, "No such load type, it should be a constant from Load.Type enumeration"
+		)
 	return loadBuilder
 #
 def build(loadBuilder):

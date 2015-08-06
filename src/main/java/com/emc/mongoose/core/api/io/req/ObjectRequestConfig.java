@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.api.io.req.conf;
+package com.emc.mongoose.core.api.io.req;
 //
 import com.emc.mongoose.core.api.data.DataObject;
 /**

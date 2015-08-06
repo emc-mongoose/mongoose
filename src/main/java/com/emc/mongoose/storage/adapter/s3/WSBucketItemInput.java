@@ -5,8 +5,8 @@ import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.GenericContainer;
-import com.emc.mongoose.core.api.io.req.HTTPMethod;
 //
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.impl.data.model.GenericContainerItemInputBase;
 //
 import org.apache.http.HttpEntity;
@@ -162,8 +162,7 @@ extends GenericContainerItemInputBase<T> {
 		}
 		// execute the request
 		final HttpResponse resp = WSBucketImpl.class.cast(container).execute(
-			nodeAddr, HTTPMethod.GET, false, lastOid,
-			container.getBatchSize()
+			nodeAddr, WSRequestConfig.METHOD_GET, false, lastOid, container.getBatchSize()
 		);
 		// response validation
 		if(resp == null) {

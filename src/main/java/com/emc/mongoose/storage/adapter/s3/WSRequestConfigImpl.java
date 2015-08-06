@@ -5,13 +5,12 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.data.BasicWSObject;
-//
 import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpHeaders;
 //
@@ -123,18 +122,15 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final MutableWSRequest httpRequest, final T dataItem)
+	protected final String getUriPath(final T dataItem)
 	throws IllegalStateException, URISyntaxException {
-		if(httpRequest == null) {
-			throw new IllegalArgumentException(MSG_NO_REQ);
-		}
 		if(bucket == null) {
 			throw new IllegalArgumentException(MSG_NO_BUCKET);
 		}
 		if(dataItem == null) {
 			throw new IllegalArgumentException(MSG_NO_DATA_ITEM);
 		}
-		httpRequest.setUriPath("/" + bucket + getPathFor(dataItem));
+		return "/" + bucket + getFilePathFor(dataItem);
 	}
 	//
 	@Override
@@ -190,7 +186,8 @@ extends WSRequestConfigBase<T> {
 			}
 		}
 		//
-		canonical.append('\n').append(httpRequest.getRequestLine().getUri());
+		final String uri = httpRequest.getRequestLine().getUri();
+		canonical.append('\n').append(uri.contains("?") ? uri.substring(0, uri.indexOf("?")) : uri);
 		//
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(Markers.MSG, "Canonical representation:\n{}", canonical);

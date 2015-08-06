@@ -1,6 +1,6 @@
 package com.emc.mongoose.core.impl.load.executor;
 // mongoose-core-api.jar
-import com.emc.mongoose.core.api.io.req.conf.ObjectRequestConfig;
+import com.emc.mongoose.core.api.io.req.ObjectRequestConfig;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.io.task.DataObjectIOTask;
 import com.emc.mongoose.core.api.load.executor.ObjectLoadExecutor;

@@ -5,13 +5,12 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.load.model.Producer;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
 import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.data.BasicWSObject;
-import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
-//
+import com.emc.mongoose.core.impl.io.req.WSRequestConfigBase;
 import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
+//
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.message.BasicHeader;
@@ -225,7 +224,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	protected final void applyURI(final MutableWSRequest httpRequest, final T dataItem)
+	protected final String getUriPath(final T dataItem)
 	throws IllegalArgumentException {
 		if(uriSvcBaseContainerPath == null) {
 			LOG.warn(Markers.ERR, "Illegal URI template: <null>");
@@ -233,7 +232,7 @@ extends WSRequestConfigBase<T> {
 		if(dataItem == null) {
 			throw new IllegalArgumentException("Illegal data item: <null>");
 		}
-		httpRequest.setUriPath(uriSvcBaseContainerPath + getPathFor(dataItem));
+		return uriSvcBaseContainerPath + getFilePathFor(dataItem);
 	}
 	//
 	private Header headerAuthToken = null;

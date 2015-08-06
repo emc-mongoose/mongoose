@@ -32,12 +32,8 @@ public interface IOTask<T extends DataItem> {
 		}
 	}
 	//
-	IOTask<T> setNodeAddr(final String nodeAddr)
-	throws IllegalStateException;
-	//
 	String getNodeAddr();
 	//
-	IOTask<T> setDataItem(final T dataItem);
 	T getDataItem();
 	//
 	long getTransferSize();

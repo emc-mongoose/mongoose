@@ -1,4 +1,4 @@
-package com.emc.mongoose.core.impl.io.req.conf;
+package com.emc.mongoose.core.impl.io.req;
 // mongoose-common
 import com.emc.mongoose.common.conf.Constants;
 import com.emc.mongoose.common.conf.RunTimeConfig;
@@ -12,16 +12,13 @@ import com.emc.mongoose.common.net.http.content.InputChannel;
 import com.emc.mongoose.common.net.http.IOUtils;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
-import com.emc.mongoose.core.api.io.req.HTTPMethod;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.core.api.data.model.DataSource;
 // mongoose-core-impl
 import static com.emc.mongoose.core.impl.data.RangeLayerData.getRangeOffset;
-import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 import com.emc.mongoose.core.impl.load.tasks.HttpClientRunTask;
 //
 import org.apache.commons.codec.binary.Base64;
@@ -39,6 +36,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.NoConnectionReuseStrategy;
 import org.apache.http.impl.nio.reactor.DefaultConnectingIOReactor;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.message.BasicHttpEntityEnclosingRequest;
 import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.HttpCoreContext;
 import org.apache.http.protocol.HttpProcessor;
@@ -241,26 +239,43 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public final MutableWSRequest createRequest() {
-		return new BasicWSRequest(getHTTPMethod(), null, null);
+	public HttpEntityEnclosingRequest createGenericRequest(final String method, final String uri) {
+		return new BasicHttpEntityEnclosingRequest(method, uri);
 	}
 	//
 	@Override
-	public
-	HTTPMethod getHTTPMethod() {
-		HTTPMethod method;
+	public HttpEntityEnclosingRequest createDataRequest(final T obj, final String nodeAddr)
+	throws URISyntaxException {
+		final HttpEntityEnclosingRequest request = new BasicHttpEntityEnclosingRequest(
+			getHttpMethod(), getUriPath(obj)
+		);
+		applyObjectId(obj, null);
 		switch(loadType) {
+			case UPDATE:
+			case APPEND:
+				applyRangesHeaders(request, obj);
+			case CREATE:
+				applyPayLoad(request, obj);
+				break;
 			case READ:
-				method = HTTPMethod.GET;
-				break;
 			case DELETE:
-				method = HTTPMethod.DELETE;
-				break;
-			default:
-				method = HTTPMethod.PUT;
+				applyPayLoad(request, null);
 				break;
 		}
-		return method;
+		applyHeadersFinally(request);
+		return request;
+	}
+	//
+	@Override
+	public String getHttpMethod() {
+		switch(loadType) {
+			case READ:
+				return METHOD_GET;
+			case DELETE:
+				return METHOD_DELETE;
+			default:
+				return METHOD_PUT;
+		}
 	}
 	//
 	@Override
@@ -348,11 +363,6 @@ implements WSRequestConfig<T> {
 		return sharedHeaders;
 	}
 	//
-	@Override
-	public final String getUserAgent() {
-		return userAgent;
-	}
-	//
 	private final static ThreadLocal<Map<String, HttpHost>>
 		THREAD_CACHED_NODE_MAP = new ThreadLocal<>();
 	//
@@ -409,25 +419,6 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public void applyDataItem(final MutableWSRequest httpRequest, final T dataItem)
-	throws IllegalStateException, URISyntaxException {
-		applyObjectId(dataItem, null);
-		applyURI(httpRequest, dataItem);
-		switch(loadType) {
-			case UPDATE:
-			case APPEND:
-				applyRangesHeaders(httpRequest, dataItem);
-			case CREATE:
-				applyPayLoad(httpRequest, dataItem);
-				break;
-			case READ:
-			case DELETE:
-				applyPayLoad(httpRequest, null);
-				break;
-		}
-	}
-	//
-	@Override
 	public void applyHeadersFinally(final HttpEntityEnclosingRequest httpRequest) {
 		try {
 			applyDateHeader(httpRequest);
@@ -466,10 +457,10 @@ implements WSRequestConfig<T> {
 		}
 	}
 	//
-	protected abstract void applyURI(final MutableWSRequest httpRequest, final T dataItem)
+	protected abstract String getUriPath(final T dataItem)
 	throws IllegalArgumentException, URISyntaxException;
 	//
-	protected final String getPathFor(final T dataItem) {
+	protected final String getFilePathFor(final T dataItem) {
 		if(fsAccess && idPrefix != null && !idPrefix.isEmpty()) {
 			return "/" + idPrefix + "/" + dataItem.getId();
 		} else {

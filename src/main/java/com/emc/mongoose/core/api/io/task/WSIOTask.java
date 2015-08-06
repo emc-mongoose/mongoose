@@ -19,11 +19,4 @@ extends
 	HttpAsyncResponseConsumer<IOTask.Status>,
 	HttpContext,
 	FutureCallback<IOTask.Status> {
-	//
-	@Override
-	WSIOTask<T> setDataItem(final T dataItem);
-	//
-	@Override
-	WSIOTask<T> setNodeAddr(final String nodeAddr)
-	throws IllegalStateException;
 }

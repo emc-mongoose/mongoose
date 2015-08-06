@@ -5,7 +5,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 // mongoose-storage-adapter-atmos.jar
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.storage.adapter.atmos.SubTenant;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
@@ -99,7 +99,7 @@ extends WSRequestHandlerBase<T> {
 				String oid = m.group(KEY_OID);
 				long offset = -1;
 				if(oid == null) {
-					if(METHOD_POST.equals(method)) {
+					if(WSRequestConfig.METHOD_POST.equals(method)) {
 						oid = generateId();
 						if(metaDataList != null) {
 							String keyValuePair[];
@@ -125,7 +125,7 @@ extends WSRequestHandlerBase<T> {
 						if(300 > httpResponse.getStatusLine().getStatusCode()) {
 							httpResponse.setHeader(HttpHeaders.LOCATION, OBJ_PATH + '/' + oid);
 						}
-					} else if(METHOD_GET.equals(method)) {
+					} else if(WSRequestConfig.METHOD_GET.equals(method)) {
 						String subtenant = null;
 						if(metaDataList != null) {
 							String keyValuePair[];
@@ -156,11 +156,11 @@ extends WSRequestHandlerBase<T> {
 		} else if(requestURI.startsWith(AT_PATH)) {
 			httpResponse.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
 		} else if(requestURI.startsWith(ST_PATH)) {
-			final String subtenant = METHOD_PUT.equals(method) ?
+			final String subtenant = WSRequestConfig.METHOD_PUT.equals(method) ?
 				generateSubtenant() : getSubtenant(httpRequest);
 			handleGenericContainerReq(
 				httpRequest, httpResponse, method,
-				METHOD_PUT.equals(method) ? generateSubtenant() : subtenant, null
+				WSRequestConfig.METHOD_PUT.equals(method) ? generateSubtenant() : subtenant, null
 			);
 		} else {
 			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);

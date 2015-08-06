@@ -4,10 +4,10 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
-import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_PREFIX;
-import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_CONCAT;
+import static com.emc.mongoose.core.api.io.req.WSRequestConfig.VALUE_RANGE_PREFIX;
+import static com.emc.mongoose.core.api.io.req.WSRequestConfig.VALUE_RANGE_CONCAT;
 // mongoose-storage-mock.jar
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.IOStats;
@@ -48,14 +48,6 @@ public abstract class WSRequestHandlerBase<T extends WSObjectMock>
 implements ReqURIMatchingHandler<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
-	//
-	protected final static String
-		METHOD_PUT = "put",
-		METHOD_GET = "get",
-		METHOD_POST = "post",
-		METHOD_HEAD = "head",
-		METHOD_DELETE = "delete",
-		METHOD_TRACE = "trace";
 	//
 	private final IOStats ioStats;
 	private final float rateLimit;
@@ -148,19 +140,19 @@ implements ReqURIMatchingHandler<T> {
 			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
 		} else {
 			switch(method) {
-				case METHOD_POST:
+				case WSRequestConfig.METHOD_POST:
 					handleWrite(httpRequest, httpResponse, container, oid, offset);
 					break;
-				case METHOD_PUT:
+				case WSRequestConfig.METHOD_PUT:
 					handleWrite(httpRequest, httpResponse, container, oid, offset);
 					break;
-				case METHOD_GET:
+				case WSRequestConfig.METHOD_GET:
 					handleRead(httpResponse, container, oid, offset);
 					break;
-				case METHOD_HEAD:
+				case WSRequestConfig.METHOD_HEAD:
 					httpResponse.setStatusCode(HttpStatus.SC_OK);
 					break;
-				case METHOD_DELETE:
+				case WSRequestConfig.METHOD_DELETE:
 					handleDelete(httpResponse, container, oid, offset);
 					break;
 			}
@@ -301,19 +293,19 @@ implements ReqURIMatchingHandler<T> {
 		final String method, final String container, final String dataId
 	) {
 		switch(method) {
-			case METHOD_POST:
+			case WSRequestConfig.METHOD_POST:
 				httpResponse.setStatusCode(HttpStatus.SC_NOT_IMPLEMENTED);
 				break;
-			case METHOD_PUT:
+			case WSRequestConfig.METHOD_PUT:
 				handleContainerCreate(httpRequest, httpResponse, container);
 				break;
-			case METHOD_GET:
+			case WSRequestConfig.METHOD_GET:
 				handleContainerList(httpRequest, httpResponse, container, dataId);
 				break;
-			case METHOD_HEAD:
+			case WSRequestConfig.METHOD_HEAD:
 				handleContainerExists(httpResponse, container);
 				break;
-			case METHOD_DELETE:
+			case WSRequestConfig.METHOD_DELETE:
 				handleContainerDelete(httpResponse, container);
 				break;
 		}

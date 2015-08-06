@@ -4,8 +4,8 @@ import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.HTTPMethod;
 //
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.impl.data.model.GenericContainerItemInputBase;
 //
 import com.fasterxml.jackson.core.JsonFactory;
@@ -52,7 +52,7 @@ extends GenericContainerItemInputBase<T> {
 		}
 		// execute the request
 		final HttpResponse resp = WSContainerImpl.class.cast(container).execute(
-			nodeAddr, HTTPMethod.GET, lastId, container.getBatchSize()
+			nodeAddr, WSRequestConfig.METHOD_GET, lastId, container.getBatchSize()
 		);
 		// response validation
 		if(resp == null) {

@@ -6,28 +6,20 @@ import com.emc.mongoose.common.net.http.content.OutputChannel;
 import com.emc.mongoose.common.log.LogUtil;
 // mongoose-core-api
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.api.io.req.HTTPMethod;
-import com.emc.mongoose.core.api.io.req.MutableWSRequest;
-import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
+import com.emc.mongoose.core.api.io.req.WSRequestConfig;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.io.task.WSIOTask;
 // mongoose-core-impl
 import com.emc.mongoose.core.api.load.executor.WSLoadExecutor;
-import com.emc.mongoose.core.impl.io.req.BasicWSRequest;
 //
-import org.apache.http.Header;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
-import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.RequestLine;
 import org.apache.http.StatusLine;
-import org.apache.http.message.HeaderGroup;
 import org.apache.http.protocol.BasicHttpContext;
-import org.apache.http.protocol.HTTP;
 import org.apache.http.protocol.HttpContext;
 //
 import org.apache.http.nio.ContentDecoder;
@@ -39,9 +31,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.ByteBuffer;
 import java.nio.channels.ClosedChannelException;
-import java.util.Arrays;
 /**
  Created by kurila on 06.06.14.
  */
@@ -51,56 +43,10 @@ implements WSIOTask<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	//
-	private final HeaderGroup sharedHeaders;
-	private final MutableWSRequest httpRequest = new BasicWSRequest(
-		HTTPMethod.PUT, null, null
-	);
-	private WSRequestConfig<T> wsReqConf = null; // overrides RequestBase.reqConf field
-	//
-	public BasicWSIOTask(final WSLoadExecutor<T> loadExecutor) {
-		super(loadExecutor);
-		//
-		wsReqConf = (WSRequestConfig<T>) reqConf;
-		//final HeaderGroup headers = wsReqConf.getSharedHeaders();
-		sharedHeaders = wsReqConf.getSharedHeaders();
-		/*for(final Header header : headers.getAllHeaders()) {
-			sharedHeaders.updateHeader(header);
-		}*/
-		//
-		if(!httpRequest.getMethod().equals(wsReqConf.getHTTPMethod())) {
-			httpRequest.setMethod(wsReqConf.getHTTPMethod());
-		}
-	}
-	//
 	public BasicWSIOTask(
 		final WSLoadExecutor<T> loadExecutor, final T dataObject, final String nodeAddr
 	) {
-		this(loadExecutor);
-		setDataItem(dataObject);
-		setNodeAddr(nodeAddr);
-	}
-	//
-	@Override
-	public final WSIOTask<T> setDataItem(final T dataItem) {
-		try {
-			super.setDataItem(dataItem);
-			wsReqConf.applyDataItem(httpRequest, dataItem);
-		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply data item");
-		}
-		return this;
-	}
-	//
-	@Override
-	public final WSIOTask<T> setNodeAddr(final String nodeAddr)
-	throws IllegalStateException {
-		super.setNodeAddr(nodeAddr);
-		final HttpHost tgtHost = wsReqConf.getNodeHost(nodeAddr);
-		if(tgtHost != null) {
-			httpRequest.setUriAddr(tgtHost.toURI());
-			httpRequest.setHeader(HTTP.TARGET_HOST, nodeAddr);
-		}
-		return this;
+		super(loadExecutor, dataObject, nodeAddr);
 	}
 	/**
 	 * Warning: invoked implicitly and untimely in the depths of HttpCore lib.
@@ -118,16 +64,23 @@ implements WSIOTask<T> {
 	////////////////////////////////////////////////////////////////////////////////////////////////
 	@Override
 	public final HttpHost getTarget() {
-		return wsReqConf.getNodeHost(nodeAddr);
+		return ((WSRequestConfig<T>) reqConf).getNodeHost(nodeAddr);
 	}
 	//
 	@Override
 	public final HttpRequest generateRequest()
 	throws IOException, HttpException {
+		final HttpEntityEnclosingRequest httpRequest;
 		try {
-			wsReqConf.applyHeadersFinally(httpRequest);
-		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply the final headers");
+			 httpRequest = ((WSRequestConfig<T>)reqConf).createDataRequest(dataItem, nodeAddr);
+		} catch(final URISyntaxException e) {
+			throw new HttpException("Failed to generate the request", e);
+		}
+		if(LOG.isTraceEnabled(Markers.MSG)) {
+			LOG.trace(
+				Markers.MSG, "I/O task #{}: generated the request: {}",
+				hashCode(), httpRequest
+			);
 		}
 		reqTimeStart = System.nanoTime() / 1000;
 		return httpRequest;
@@ -145,12 +98,8 @@ implements WSIOTask<T> {
 		}
 		chanOut.setContentEncoder(out);
 		try {
-			if(httpRequest.getEntity() != null) {
-				if(dataItem.isAppending()) {
-					dataItem.writeAugmentFully(chanOut);
-				} else if(dataItem.hasAnyUpdatedRanges()) {
-					dataItem.writeUpdatedRangesFully(chanOut);
-				} else {
+			switch(reqConf.getLoadType()) {
+				case CREATE:
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						final long
 							t = System.nanoTime(),
@@ -169,7 +118,19 @@ implements WSIOTask<T> {
 					} else {
 						dataItem.writeFully(chanOut);
 					}
-				}
+					break;
+				case READ:
+					// TODO there's a probability to specify some content in this case
+					break;
+				case DELETE:
+					// TODO there's a probability to specify some content in this case
+					break;
+				case UPDATE:
+					dataItem.writeUpdatedRangesFully(chanOut);
+					break;
+				case APPEND:
+					dataItem.writeAugmentFully(chanOut);
+					break;
 			}
 		} catch(final ClosedChannelException e) { // probably a manual interruption
 			status = Status.CANCELLED;
@@ -193,7 +154,7 @@ implements WSIOTask<T> {
 	public final void requestCompleted(final HttpContext context) {
 		reqTimeDone = System.nanoTime() / 1000;
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Request sent completely: {}", httpRequest.getRequestLine());
+			LOG.trace(Markers.MSG, "I/O task #{}: request sent completely", hashCode());
 		}
 	}
 	//
@@ -207,18 +168,6 @@ implements WSIOTask<T> {
 		respStatusCode = -1;
 		status = Status.FAIL_UNKNOWN;
 		exception = null;
-		if(httpRequest != null) {
-			httpRequest.clearHeaders();
-			httpRequest.setHeaders(sharedHeaders.getAllHeaders());
-			httpRequest.setEntity(null);
-			if(LOG.isTraceEnabled(Markers.MSG)) {
-				LOG.trace(
-					Markers.MSG, "Task #{}: reset the request, left headers: {}, shared headers: {}",
-					hashCode(), Arrays.toString(httpRequest.getAllHeaders()),
-					Arrays.toString(sharedHeaders.getAllHeaders())
-				);
-			}
-		}
 	}
 	/*
 	@Override @SuppressWarnings("unchecked")
@@ -235,10 +184,7 @@ implements WSIOTask<T> {
 		respTimeStart = System.nanoTime() / 1000;
 		final StatusLine status = response.getStatusLine();
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(
-				Markers.MSG, "Got response \"{}\" for request: {}",
-				status, httpRequest.getRequestLine()
-			);
+			LOG.trace(Markers.MSG, "I/O task #{}: got response \"{}\"", hashCode(), status);
 		}
 		respStatusCode = status.getStatusCode();
 		//
@@ -252,55 +198,19 @@ implements WSIOTask<T> {
 					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_BAD_REQUEST:
-					final RequestLine requestLine = httpRequest.getRequestLine();
-					msgBuff
-						.append("Incorrect request: \"")
-						.append(requestLine.getMethod()).append(' ')
-						.append(requestLine.getUri()).append("\"\n");
-					if(LOG.isTraceEnabled(Markers.ERR)) {
-						for(final Header rangeHeader : httpRequest.getAllHeaders()) {
-							msgBuff
-								.append('\t').append(rangeHeader.getName()).append(": ")
-								.append(rangeHeader.getValue()).append('\n');
-						}
-					}
 					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_UNAUTHORIZED:
 				case HttpStatus.SC_FORBIDDEN:
-					msgBuff.append("Access failure for data item: \"").append(dataItem);
-					if(LOG.isTraceEnabled(Markers.ERR)) {
-						msgBuff.append("\"\nSource request headers:\n");
-						for(final Header rangeHeader : httpRequest.getAllHeaders()) {
-							msgBuff
-								.append('\t').append(rangeHeader.getName()).append(": ")
-								.append(rangeHeader.getValue()).append('\n');
-						}
-						msgBuff
-							.append("Canonical request view:\n")
-							.append(wsReqConf.getCanonical(httpRequest))
-							.append('\n');
-					}
 					this.status = Status.RESP_FAIL_AUTH;
 					break;
 				case HttpStatus.SC_NOT_FOUND:
-					msgBuff
-						.append("Not found: ").append(httpRequest.getUriAddr())
-						.append(httpRequest.getUriPath()).append('\n');
 					this.status = Status.RESP_FAIL_NOT_FOUND;
 					break;
 				case HttpStatus.SC_METHOD_NOT_ALLOWED:
-					msgBuff
-						.append("The operation is not allowed: \"")
-						.append(httpRequest.getRequestLine())
-						.append("\"\n");
 					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_CONFLICT:
-					msgBuff
-						.append("Conflicting resource modification on \"")
-						.append(httpRequest.getUriPath())
-						.append("\"\n");
 					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_LENGTH_REQUIRED:
@@ -311,33 +221,19 @@ implements WSIOTask<T> {
 				case HttpStatus.SC_REQUEST_TOO_LONG:
 					msgBuff
 						.append("Content is too large: ")
-						.append(SizeUtil.formatSize(transferSize))
+						.append(SizeUtil.formatSize(getTransferSize()))
 						.append('\n');
 					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_REQUEST_URI_TOO_LONG:
-					msgBuff
-						.append("URI is too long: \"")
-						.append(httpRequest.getUriPath()).append("\"\n");
 					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE:
-					msgBuff
-						.append("Unsupported media type: \"")
-						.append(httpRequest.getEntity().getContentType())
-						.append("\"\n");
+					msgBuff.append("Unsupported media type\n");
 					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_REQUESTED_RANGE_NOT_SATISFIABLE:
 					msgBuff.append("Incorrect range\n");
-					if(LOG.isTraceEnabled(Markers.ERR)) {
-						for(final Header rangeHeader : httpRequest.getHeaders(HttpHeaders.RANGE)) {
-							msgBuff
-								.append("Incorrect range ").append(rangeHeader.getValue())
-								.append(" for data item ").append(dataItem.getId())
-								.append('\n');
-						}
-					}
 					this.status = Status.RESP_FAIL_CLIENT;
 					break;
 				case 429:
@@ -365,10 +261,7 @@ implements WSIOTask<T> {
 					this.status = Status.FAIL_TIMEOUT;
 					break;
 				case HttpStatus.SC_HTTP_VERSION_NOT_SUPPORTED:
-					msgBuff
-						.append("HTTP version is not supported: ")
-						.append(httpRequest.getProtocolVersion())
-						.append("\n");
+					msgBuff.append("HTTP version is not supported\n");
 					this.status = Status.RESP_FAIL_SVC;
 					break;
 				case HttpStatus.SC_INSUFFICIENT_STORAGE:
@@ -385,14 +278,13 @@ implements WSIOTask<T> {
 			//
 			if(LOG.isDebugEnabled(Markers.ERR)) {
 				LOG.debug(
-					Markers.ERR, "Task #{}: {}{}/{} <- {} {}{}",
-					hashCode(), msgBuff, respStatusCode, status.getReasonPhrase(),
-					httpRequest.getMethod(), httpRequest.getUriAddr(), httpRequest.getUriPath()
+					Markers.ERR, "Task #{}: {}{}/{}",
+					hashCode(), msgBuff, respStatusCode, status.getReasonPhrase()
 				);
 			}
 		} else {
 			this.status = Status.SUCC;
-			wsReqConf.receiveResponse(response, dataItem);
+			((WSRequestConfig<T>) reqConf).receiveResponse(response, dataItem);
 		}
 	}
 	//
@@ -413,12 +305,13 @@ implements WSIOTask<T> {
 				status = Status.CANCELLED;
 				LogUtil.exception(LOG, Level.TRACE, e, "Output channel closed during the operation");
 			} catch(final IOException e) {
-				if(!wsReqConf.isClosed()) {
+				if(!reqConf.isClosed()) {
 					LogUtil.exception(LOG, Level.DEBUG, e, "I/O failure during content consuming");
 				}
 			}
 		} else {
-			if(!wsReqConf.consumeContent(in, ioCtl, dataItem)) { // content corruption
+			// check for the content corruption
+			if(!((WSRequestConfig<T>) reqConf).consumeContent(in, ioCtl, dataItem)) {
 				status = Status.RESP_FAIL_CORRUPT;
 			}
 		}
@@ -473,9 +366,7 @@ implements WSIOTask<T> {
 	public final void completed(final IOTask.Status status) {
 		complete();
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "I/O task completed for request: {}",
-				httpRequest.getRequestLine()
-			);
+			LOG.trace(Markers.MSG, "I/O task #{} completed", hashCode());
 		}
 	}
 	/**
@@ -486,7 +377,7 @@ implements WSIOTask<T> {
 	 */
 	@Override
 	public final void failed(final Exception e) {
-		if(!wsReqConf.isClosed()) {
+		if(!reqConf.isClosed()) {
 			LogUtil.exception(LOG, Level.DEBUG, e, "{}: I/O task failure", hashCode());
 		}
 		exception = e;
