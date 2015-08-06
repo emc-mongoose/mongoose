@@ -15,6 +15,7 @@ import com.emc.mongoose.storage.mock.api.WSObjectMock;
 //
 import org.apache.commons.codec.binary.Hex;
 //
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -67,9 +68,9 @@ extends WSRequestHandlerBase<T> {
 		KEY_FNAME = "fName";
 	private final static Pattern
 		PATTERN_REQ_URI_OBJ = Pattern.compile(
-			OBJ_PATH + "/?(?<" + KEY_OID + ">[a-f\\d]{44})?\\??(?<" + KEY_VERSIONING +
+		OBJ_PATH + "/?(?<" + KEY_OID + ">[a-f\\d]{44})?\\??(?<" + KEY_VERSIONING +
 			">versions)?"
-		),
+	),
 		PATTERN_REQ_URI_NS = Pattern.compile(
 			NS_PATH + "/?(?<" + KEY_DIR + ">[\\w]+/)*(?<" + KEY_FNAME + ">[^\\?])\\??(?<" +
 				KEY_VERSIONING + ">versions)?"
@@ -89,22 +90,51 @@ extends WSRequestHandlerBase<T> {
 		final HttpRequest httpRequest, final HttpResponse httpResponse,
 		final String method, final String requestURI
 	) {
+		final String metaDataList[] = httpRequest.containsHeader(WSRequestConfig.KEY_EMC_TAGS) ?
+			httpRequest.getFirstHeader(WSRequestConfig.KEY_EMC_TAGS).getValue().split(",") :
+			null;
 		if(requestURI.startsWith(OBJ_PATH)) {
 			final Matcher m = PATTERN_REQ_URI_OBJ.matcher(requestURI);
 			if(m.find()) {
 				String oid = m.group(KEY_OID);
+				long offset = -1;
 				if(oid == null) {
 					if(METHOD_POST.equals(method)) {
 						oid = generateId();
+						if(metaDataList != null) {
+							String keyValuePair[];
+							for(final String metaData : metaDataList) {
+								keyValuePair = metaData.split("=");
+								if(keyValuePair.length == 2 && "offset".equals(keyValuePair[0])) {
+									try {
+										offset = Long.parseLong(keyValuePair[1]);
+									} catch(final NumberFormatException e) {
+										LogUtil.exception(
+											LOG, Level.WARN, e,
+											"Failed to parse offset meta tag value: \"{}\"",
+											keyValuePair[1]
+										);
+									}
+								}
+							}
+						}
 						handleGenericDataReq(
-							httpRequest, httpResponse, method, getSubtenant(httpRequest), oid
+							httpRequest, httpResponse, method, getSubtenant(httpRequest),
+							oid, offset
 						);
+						if(300 > httpResponse.getStatusLine().getStatusCode()) {
+							httpResponse.setHeader(HttpHeaders.LOCATION, OBJ_PATH + '/' + oid);
+						}
 					} else if(METHOD_GET.equals(method)) {
 						String subtenant = null;
-						if(httpRequest.containsHeader(WSRequestConfig.KEY_EMC_TAGS)) {
-							subtenant = httpRequest
-								.getFirstHeader(WSRequestConfig.KEY_EMC_TAGS)
-								.getValue();
+						if(metaDataList != null) {
+							String keyValuePair[];
+							for(final String metaData : metaDataList) {
+								keyValuePair = metaData.split("=");
+								if(keyValuePair.length == 2 && "subtenant".equals(keyValuePair[0])) {
+									subtenant = keyValuePair[1];
+								}
+							}
 						}
 						if(httpRequest.containsHeader(WSRequestConfig.KEY_EMC_TOKEN)) {
 							oid = httpRequest
@@ -115,7 +145,7 @@ extends WSRequestHandlerBase<T> {
 					}
 				} else {
 					handleGenericDataReq(
-						httpRequest, httpResponse, method, getSubtenant(httpRequest), oid
+						httpRequest, httpResponse, method, getSubtenant(httpRequest), oid, offset
 					);
 				}
 			} else {
@@ -129,9 +159,8 @@ extends WSRequestHandlerBase<T> {
 			final String subtenant = METHOD_PUT.equals(method) ?
 				generateSubtenant() : getSubtenant(httpRequest);
 			handleGenericContainerReq(
-				httpRequest, httpResponse,
-				METHOD_PUT.equals(method) ? generateSubtenant() : subtenant,
-				method, null
+				httpRequest, httpResponse, method,
+				METHOD_PUT.equals(method) ? generateSubtenant() : subtenant, null
 			);
 		} else {
 			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
@@ -140,6 +169,7 @@ extends WSRequestHandlerBase<T> {
 	//
 	private final static DocumentBuilder DOM_BUILDER;
 	private final static TransformerFactory TF = TransformerFactory.newInstance();
+
 	static {
 		try {
 			DOM_BUILDER = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -147,6 +177,7 @@ extends WSRequestHandlerBase<T> {
 			throw new RuntimeException(e);
 		}
 	}
+
 	//
 	@Override
 	protected final void handleContainerList(
@@ -181,6 +212,7 @@ extends WSRequestHandlerBase<T> {
 			return;
 		} catch(final ContainerMockException e) {
 			resp.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			LogUtil.exception(LOG, Level.WARN, e, "Subtenant \"{}\" failure", subtenant);
 			return;
 		}
 		//
@@ -221,8 +253,12 @@ extends WSRequestHandlerBase<T> {
 	}
 	//
 	private String getSubtenant(final HttpRequest httpRequest) {
-		if(httpRequest.containsHeader(SubTenant.KEY_SUBTENANT_ID)) {
-			return httpRequest.getLastHeader(SubTenant.KEY_SUBTENANT_ID).getValue();
+		if(httpRequest.containsHeader(WSRequestConfig.KEY_EMC_UID)) {
+			final String uid[] = httpRequest
+				.getLastHeader(WSRequestConfig.KEY_EMC_UID)
+				.getValue()
+				.split("/");
+			return uid.length < 1 ? null : uid[0];
 		} else {
 			return null;
 		}
@@ -238,5 +274,16 @@ extends WSRequestHandlerBase<T> {
 		final byte buff[] = new byte[0x10];
 		ThreadLocalRandom.current().nextBytes(buff);
 		return Hex.encodeHexString(buff);
+	}
+	//
+	@Override
+	protected final boolean handleContainerCreate(
+		final HttpRequest req, final HttpResponse resp, final String name
+	) {
+		final boolean created = super.handleContainerCreate(req, resp, name);
+		if(created) {
+			resp.setHeader(SubTenant.KEY_SUBTENANT_ID, name);
+		}
+		return created;
 	}
 }

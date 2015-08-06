@@ -1,7 +1,6 @@
 package com.emc.mongoose.storage.mock.impl.web.net;
 //
 import com.emc.mongoose.common.concurrent.GroupThreadFactory;
-import com.emc.mongoose.common.conf.RunTimeConfig;
 //
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -40,13 +39,14 @@ extends DefaultNHttpServerConnectionFactory {
 	private final NHttpMessageWriterFactory<HttpResponse> responseWriterFactory = null;
 	//
 	public BasicWSMockConnFactory(
-		final RunTimeConfig runTimeConfig, final ConnectionConfig connConfig
+		final ConnectionConfig connConfig,
+		final int minConnLifeMilliSec, final int maxConnLifeMilliSec
 	) {
 		super(connConfig);
 		this.connConfig = connConfig;
 		//
-		minConnLifeMilliSec = runTimeConfig.getStorageMockMinConnLifeMilliSec();
-		maxConnLifeMilliSec = runTimeConfig.getStorageMockMaxConnLifeMilliSec();
+		this.minConnLifeMilliSec = minConnLifeMilliSec;
+		this.maxConnLifeMilliSec = maxConnLifeMilliSec;
 		if(minConnLifeMilliSec < 0 || maxConnLifeMilliSec < minConnLifeMilliSec) {
 			throw new IllegalArgumentException(
 				"Illegal min/max connection live times: " + minConnLifeMilliSec + ", " +

@@ -41,4 +41,9 @@ implements DataItemOutput<T> {
 	throws IOException {
 		itemsDst.close();
 	}
+	//
+	@Override
+	public String toString() {
+		return "binItemOutput<" + itemsDst + ">";
+	}
 }

@@ -32,6 +32,7 @@ public final class S3ReadUsingBucketListingTest {
 				client = new BasicWSClientBuilder<>()
 					.setLimitTime(0, TimeUnit.SECONDS)
 					.setLimitCount(COUNT_TO_WRITE)
+					.setAPI("s3")
 					.setS3Bucket(BUCKET_NAME)
 					.build()
 		) {

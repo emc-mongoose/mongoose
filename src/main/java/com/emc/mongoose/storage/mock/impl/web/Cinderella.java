@@ -44,14 +44,42 @@ extends ObjectStorageMockBase<T>
 implements WSMock<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
+	//
 	private final BasicSocketEventDispatcher sockEvtDispatchers[] ;
 	private final HttpAsyncService protocolHandler;
 	private final NHttpConnectionFactory<DefaultNHttpServerConnection> connFactory;
+	private final int portStart;
 	//
 	public Cinderella(final RunTimeConfig rtConfig)
 	throws IOException {
-		super(rtConfig, (Class<T>) BasicWSObjectMock.class);
-		sockEvtDispatchers = new BasicSocketEventDispatcher[rtConfig.getStorageMockHeadCount()];
+		this(
+			rtConfig.getStorageMockHeadCount(),
+			rtConfig.getStorageMockIoThreadsPerSocket(),
+			rtConfig.getApiTypePort(rtConfig.getApiName()),
+			rtConfig.getStorageMockCapacity(),
+			rtConfig.getStorageMockContainerCapacity(),
+			rtConfig.getStorageMockContainerCountLimit(),
+			rtConfig.getDataSrcFPath(),
+			rtConfig.getLoadMetricsPeriodSec(),
+			rtConfig.getFlagServeIfNotLoadServer(),
+			rtConfig.getStorageMockMinConnLifeMilliSec(),
+			rtConfig.getStorageMockMaxConnLifeMilliSec()
+		);
+	}
+	//
+	public Cinderella(
+		final int headCount, final int ioThreadCount, final int portStart,
+		final int storageCapacity, final int containerCapacity, final int containerCountLimit,
+		final String dataSrcPath, final int metricsPeriodSec, final boolean jmxServeFlag,
+	    final int minConnLifeMilliSec, final int maxConnLifeMilliSec
+	) throws IOException {
+		super(
+			(Class<T>) BasicWSObjectMock.class,
+			storageCapacity, containerCapacity, containerCountLimit, headCount * ioThreadCount,
+			dataSrcPath, metricsPeriodSec, jmxServeFlag
+		);
+		this.portStart = portStart;
+		sockEvtDispatchers = new BasicSocketEventDispatcher[headCount];
 		LOG.info(Markers.MSG, "Starting with {} heads", sockEvtDispatchers.length);
 		// connection config
 		final ConnectionConfig connConfig = ConnectionConfig
@@ -59,7 +87,9 @@ implements WSMock<T> {
 			.setBufferSize(BUFF_SIZE_LO)
 			.setFragmentSizeHint(0)
 			.build();
-		connFactory = new BasicWSMockConnFactory(rtConfig, connConfig);
+		connFactory = new BasicWSMockConnFactory(
+			connConfig, minConnLifeMilliSec, maxConnLifeMilliSec
+		);
 		// Set up the HTTP protocol processor
 		final HttpProcessor httpProc = HttpProcessorBuilder.create()
 			.add( // this is a date header generator below
@@ -76,9 +106,8 @@ implements WSMock<T> {
 			)
 			.add( // user-agent header
 				new ResponseServer(
-					String.format(
-						"%s/%s", Cinderella.class.getSimpleName(), rtConfig.getRunVersion()
-					)
+					Cinderella.class.getSimpleName() + "/" +
+					RunTimeConfig.getContext().getRunVersion()
 				)
 			)
 			.add(new ResponseContent())
@@ -86,7 +115,7 @@ implements WSMock<T> {
 			.build();
 		// Create request handler registry
 		final HttpAsyncRequestHandlerMapper apiReqHandlerMapper = new APIRequestHandlerMapper<>(
-			rtConfig, this
+			RunTimeConfig.getContext(), this
 		);
 		// Register the default handler for all URIs
 		protocolHandler = new HttpAsyncService(httpProc, apiReqHandlerMapper);
@@ -99,7 +128,7 @@ implements WSMock<T> {
 			nextPort = portStart + i;
 			try {
 				sockEvtDispatchers[i] = new BasicSocketEventDispatcher(
-					rtConfig, protocolHandler, nextPort, connFactory, ioStats
+					RunTimeConfig.getContext(), protocolHandler, nextPort, connFactory, ioStats
 				);
 				sockEvtDispatchers[i].start();
 			} catch(final IOReactorException e) {

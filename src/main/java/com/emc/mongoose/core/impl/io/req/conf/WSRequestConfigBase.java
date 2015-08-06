@@ -428,16 +428,21 @@ implements WSRequestConfig<T> {
 	}
 	//
 	@Override
-	public void applyHeadersFinally(final MutableWSRequest httpRequest) {
+	public void applyHeadersFinally(final HttpEntityEnclosingRequest httpRequest) {
 		try {
 			applyDateHeader(httpRequest);
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply date header");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a date header");
+		}
+		try {
+			applyMetaDataHeaders(httpRequest);
+		} catch(final Exception e) {
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply a metadata headers");
 		}
 		try {
 			applyAuthHeader(httpRequest);
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply auth header");
+			LogUtil.exception(LOG, Level.WARN, e, "Failed to apply an auth header");
 		}
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			final StringBuilder msgBuff = new StringBuilder("built request: ")
@@ -473,14 +478,14 @@ implements WSRequestConfig<T> {
 	}
 	//
 	protected final void applyPayLoad(
-		final MutableWSRequest httpRequest, final HttpEntity httpEntity
+		final HttpEntityEnclosingRequest httpRequest, final HttpEntity httpEntity
 	) {
 		httpRequest.setEntity(httpEntity);
 	}
 	//
 	private final static ThreadLocal<StringBuilder> THRLOC_SB = new ThreadLocal<>();
 	// merge subsequent updated ranges functionality is here
-	protected final void applyRangesHeaders(final MutableWSRequest httpRequest, final T dataItem) {
+	protected final void applyRangesHeaders(final HttpRequest httpRequest, final T dataItem) {
 		httpRequest.removeHeaders(HttpHeaders.RANGE); // cleanup
 		//
 		final int prefixLen = VALUE_RANGE_PREFIX.length();
@@ -531,7 +536,7 @@ implements WSRequestConfig<T> {
 		{ setTimeZone(Main.TZ_UTC); }
 	};*/
 	//
-	protected void applyDateHeader(final MutableWSRequest httpRequest) {
+	protected void applyDateHeader(final HttpRequest httpRequest) {
 		httpRequest.setHeader(HttpHeaders.DATE, LowPrecisionDateGenerator.getDateText());
 		if(LOG.isTraceEnabled(Markers.MSG)) {
 			LOG.trace(
@@ -541,7 +546,10 @@ implements WSRequestConfig<T> {
 		}
 	}
 	//
-	protected abstract void applyAuthHeader(final MutableWSRequest httpRequest);
+	protected void applyMetaDataHeaders(final HttpEntityEnclosingRequest httpRequest) {
+	}
+	//
+	protected abstract void applyAuthHeader(final HttpRequest httpRequest);
 	//
 	//@Override
 	//public final int hashCode() {
@@ -561,8 +569,6 @@ implements WSRequestConfig<T> {
 				throw new IllegalStateException("Failed to init MAC cypher instance");
 			}
 			THRLOC_MAC.set(mac);
-		} else {
-			mac.reset();
 		}
 		sigData = mac.doFinal(canonicalForm.getBytes());
 		return Base64.encodeBase64String(sigData);

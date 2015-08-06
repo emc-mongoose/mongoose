@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-storage-adapter-swift.jar
+import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.storage.adapter.swift.WSRequestConfigImpl;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
@@ -91,7 +92,15 @@ extends WSRequestHandlerBase<T> {
 						container = m.group(KEY_CONTAINER),
 						oid = m.group(KEY_OID);
 					if(oid != null) {
-						handleGenericDataReq(httpRequest, httpResponse, method, container, oid);
+						final long offset;
+						if(METHOD_PUT.equals(method) || METHOD_POST.equals(method)) {
+							offset = Long.parseLong(oid, DataObject.ID_RADIX);
+						} else {
+							offset = -1;
+						}
+						handleGenericDataReq(
+							httpRequest, httpResponse, method, container, oid, offset
+						);
 					} else if(container != null) {
 						handleGenericContainerReq(
 							httpRequest, httpResponse, method, container, null

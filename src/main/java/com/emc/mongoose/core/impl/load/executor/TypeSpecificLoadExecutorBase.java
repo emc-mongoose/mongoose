@@ -4,6 +4,7 @@ import com.emc.mongoose.common.conf.Constants;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.conf.RunTimeConfig;
+import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 // mongoose-core-api.jar
 import com.emc.mongoose.core.api.io.task.IOTask;
@@ -14,6 +15,7 @@ import com.emc.mongoose.core.api.data.UpdatableDataItem;
 // mongoose-core-impl.jar
 import com.emc.mongoose.core.impl.load.model.FileProducer;
 //
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 //
@@ -122,36 +124,44 @@ extends LimitedRateLoadExecutorBase<T> {
 	@Override
 	public final void submit(final T dataItem)
 	throws InterruptedException, RemoteException, RejectedExecutionException {
-		switch(loadType) {
-			case APPEND:
-				final long nextSize = sizeMin +
-					(long) (
-						Math.pow(ThreadLocalRandom.current().nextDouble(), sizeBias) *
-						sizeRange
-					);
-				dataItem.append(nextSize);
-				if(LOG.isTraceEnabled(Markers.MSG)) {
-					LOG.trace(
-						Markers.MSG, "Append the object \"{}\": +{}",
-						dataItem, SizeUtil.formatSize(nextSize)
-					);
-				}
-				break;
-			case UPDATE:
-				if(dataItem.getSize() > 0) {
-					dataItem.updateRandomRanges(countUpdPerReq);
+		try {
+			switch(loadType) {
+				case APPEND:
+					final long nextSize = sizeMin +
+						(long) (
+							Math.pow(ThreadLocalRandom.current().nextDouble(), sizeBias) * sizeRange
+						);
+					try {
+						dataItem.append(nextSize);
+					} catch(final IllegalArgumentException e) {
+					}
 					if(LOG.isTraceEnabled(Markers.MSG)) {
 						LOG.trace(
-							Markers.MSG, "Modified {} ranges for object \"{}\"",
-							countUpdPerReq, dataItem
+							Markers.MSG, "Append the object \"{}\": +{}",
+							dataItem, SizeUtil.formatSize(nextSize)
 						);
 					}
-				} else {
-					throw new RejectedExecutionException(
-						"It's impossible to update empty data item"
-					);
-				}
-				break;
+					break;
+				case UPDATE:
+					if(dataItem.getSize() > 0) {
+						dataItem.updateRandomRanges(countUpdPerReq);
+						if(LOG.isTraceEnabled(Markers.MSG)) {
+							LOG.trace(
+								Markers.MSG, "Modified {} ranges for object \"{}\"",
+								countUpdPerReq, dataItem
+							);
+						}
+					} else {
+						throw new RejectedExecutionException(
+							"It's impossible to update empty data item"
+						);
+					}
+					break;
+			}
+		} catch(final IllegalArgumentException e) {
+			LogUtil.exception(
+				LOG, Level.WARN, e, "Failed to {} the data item", loadType.name().toLowerCase()
+			);
 		}
 		//
 		super.submit(dataItem);

@@ -14,7 +14,7 @@ extends CSVItemOutput<T> {
 	//
 	protected Path itemsFilePath;
 	//
-	public CSVFileItemOutput(final Path itemsFilePath, final Class<T> itemCls)
+	public CSVFileItemOutput(final Path itemsFilePath, final Class<? extends T> itemCls)
 	throws IOException {
 		super(
 			Files.newOutputStream(itemsFilePath, StandardOpenOption.WRITE),
@@ -23,8 +23,8 @@ extends CSVItemOutput<T> {
 		this.itemsFilePath = itemsFilePath;
 	}
 	//
-	public CSVFileItemOutput(final Class<T> itemCls)
-		throws IOException, NoSuchMethodException {
+	public CSVFileItemOutput(final Class<? extends T> itemCls)
+	throws IOException, NoSuchMethodException {
 		this(Files.createTempFile(null, ".csv"), itemCls);
 		this.itemsFilePath.toFile().deleteOnExit();
 	}
@@ -37,5 +37,10 @@ extends CSVItemOutput<T> {
 		} catch(final NoSuchMethodException e) {
 			throw new IOException(e);
 		}
+	}
+	//
+	@Override
+	public String toString() {
+		return "csvFileItemOutput<" + itemsFilePath.getFileName() + ">";
 	}
 }

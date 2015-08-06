@@ -36,13 +36,16 @@ implements ObjectStorageMock<T> {
 	private final AtomicInteger countContainers = new AtomicInteger(0);
 	private volatile boolean isCapacityExhausted = false;
 	//
-	protected ObjectStorageMockBase(final RunTimeConfig rtConfig, final Class<T> itemCls) {
-		super(rtConfig, itemCls);
-		storageCapacity = rtConfig.getStorageMockCapacity();
-		containerCapacity = rtConfig.getStorageMockContainerCapacity();
-		containerCountLimit = rtConfig.getStorageMockContainerCountLimit();
-		final int expectConcurrencyLevel = rtConfig.getStorageMockHeadCount() *
-			rtConfig.getStorageMockIoThreadsPerSocket();
+	protected ObjectStorageMockBase(
+		final Class<T> itemCls,
+		final int storageCapacity, final int containerCapacity, final int containerCountLimit,
+	    final int expectConcurrencyLevel, final String dataSrcPath, final int metricsPeriodSec,
+		final boolean jmxServeFlag
+	) {
+		super(itemCls, dataSrcPath, metricsPeriodSec, jmxServeFlag);
+		this.storageCapacity = storageCapacity;
+		this.containerCapacity = containerCapacity;
+		this.containerCountLimit = containerCountLimit;
 		containersIndex = new ConcurrentHashMap<>(
 			containerCountLimit, 0.75f, expectConcurrencyLevel
 		);
@@ -165,8 +168,9 @@ implements ObjectStorageMock<T> {
 	}
 	//
 	@Override
-	public final void deleteObject(final String container, final String id)
-	throws ContainerMockNotFoundException {
+	public final void deleteObject(
+		final String container, final String id, final long offset, final long size
+	) throws ContainerMockNotFoundException {
 		try {
 			final ObjectContainerMock<T> c = getContainer(container);
 			if(c == null) {

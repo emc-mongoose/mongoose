@@ -85,4 +85,9 @@ implements DataItemInput<T> {
 	throws IOException {
 		itemsSrc.close();
 	}
+	//
+	@Override
+	public String toString() {
+		return "binItemInput<" + itemsSrc.toString() + ">";
+	}
 }

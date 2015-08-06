@@ -84,4 +84,9 @@ implements DataItemInput<T> {
 	public void close()
 	throws IOException {
 	}
+	//
+	@Override
+	public String toString() {
+		return "containerItemInput<" + container.getName() + ">";
+	}
 }

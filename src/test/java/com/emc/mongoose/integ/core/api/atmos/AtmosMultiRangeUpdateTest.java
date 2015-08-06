@@ -1,19 +1,24 @@
 package com.emc.mongoose.integ.core.api.atmos;
+//
 import com.emc.mongoose.common.conf.SizeUtil;
+//
 import com.emc.mongoose.core.api.data.WSObject;
-import com.emc.mongoose.core.impl.data.model.ItemBlockingQueue;
+import com.emc.mongoose.core.api.data.model.DataItemOutput;
+//
 import com.emc.mongoose.core.impl.data.model.ListItemOutput;
+//
 import com.emc.mongoose.storage.mock.impl.web.request.AtmosRequestHandler;
+//
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
+//
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
+//
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,10 +28,12 @@ import java.util.regex.Pattern;
 public final class AtmosMultiRangeUpdateTest {
 	//
 	private final static int COUNT_TO_WRITE = 1000;
-	private final static String subtenant = AtmosRequestHandler.generateSubtenant();
-	private final static List<WSObject> BUFF_READ = new ArrayList<>(COUNT_TO_WRITE);
+	private final static List<WSObject>
+		BUFF_WRITE = new ArrayList<>(COUNT_TO_WRITE),
+		BUFF_UPDATE0 = new ArrayList<>(COUNT_TO_WRITE),
+		BUFF_UPDATE1 = new ArrayList<>(COUNT_TO_WRITE);
 	//
-	private static long COUNT_WRITTEN, COUNT_UPDATED, COUNT_READ;
+	private static long COUNT_WRITTEN, COUNT_UPDATED0, COUNT_READ0, COUNT_UPDATED1, COUNT_READ1;
 	//
 	@BeforeClass
 	public static void setUpClass()
@@ -37,22 +44,23 @@ public final class AtmosMultiRangeUpdateTest {
 				client = new BasicWSClientBuilder<>()
 					.setLimitTime(0, TimeUnit.SECONDS)
 					.setLimitCount(COUNT_TO_WRITE)
-					.setAtmosSubtenant(subtenant)
+					.setAPI("atmos")
 					.build()
 		) {
-			final ItemBlockingQueue<WSObject> buffWritten = new ItemBlockingQueue<>(
-				new ArrayBlockingQueue<WSObject>(COUNT_TO_WRITE)
-			);
+			final DataItemOutput<WSObject> writeOutput = new ListItemOutput<>(BUFF_WRITE);
 			COUNT_WRITTEN = client.write(
-				null, buffWritten, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB")
+				null, writeOutput, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB")
 			);
-			final ItemBlockingQueue<WSObject> buffUpdated = new ItemBlockingQueue<>(
-				new ArrayBlockingQueue<WSObject>((int) COUNT_WRITTEN)
+			final DataItemOutput<WSObject> updateOutput0 = new ListItemOutput<>(BUFF_UPDATE0);
+			COUNT_UPDATED0 = client.update(
+				writeOutput.getInput(), updateOutput0, COUNT_TO_WRITE, 10, 10
 			);
-			COUNT_UPDATED = client.update(buffWritten, buffUpdated, COUNT_TO_WRITE, 10, 20);
-			COUNT_READ = client.read(
-				buffUpdated, new ListItemOutput<>(BUFF_READ), COUNT_UPDATED, 10, true
+			COUNT_READ0 = client.read(updateOutput0.getInput(), null, COUNT_UPDATED0, 10, true);
+			final DataItemOutput<WSObject> updateOutput1 = new ListItemOutput<>(BUFF_UPDATE0);
+			COUNT_UPDATED1 = client.update(
+				writeOutput.getInput(), updateOutput1, COUNT_TO_WRITE, 10, 10
 			);
+			COUNT_READ1 = client.read(updateOutput1.getInput(), null, COUNT_UPDATED1, 10, true);
 		}
 	}
 	//
@@ -66,17 +74,17 @@ public final class AtmosMultiRangeUpdateTest {
 	);
 	//
 	@Test
-	public void checkUpdatedItems()
+	public void checkMultiplyUpdatedTwiceItems()
 	throws Exception {
 		int layer, mask, size;
 		String s;
 		Matcher m;
-		for(final WSObject obj : BUFF_READ) {
+		for(final WSObject obj : BUFF_UPDATE1) {
 			s = obj.toString();
 			m = PATTERN_OBJ_METAINFO.matcher(s);
 			if(m.find()) {
 				layer = Integer.parseInt(m.group("layer"), 0x10);
-				if(layer == 0) {
+				if(layer < 1) {
 					Assert.fail("Invalid layer value: " + s);
 					break;
 				}
@@ -86,7 +94,7 @@ public final class AtmosMultiRangeUpdateTest {
 					break;
 				}
 				size = Integer.parseInt(m.group("size"));
-				if(size != 100) {
+				if(size != 10240) {
 					Assert.fail("Invalid size value: " + s);
 					break;
 				}

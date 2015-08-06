@@ -6,6 +6,9 @@ import java.rmi.RemoteException;
  */
 public interface AsyncConsumer<T>
 extends Consumer<T> {
+	//
+	int POLL_TIMEOUT_MILLISEC = 100;
+	//
 	void start()
 	throws RemoteException, IllegalThreadStateException;
 }

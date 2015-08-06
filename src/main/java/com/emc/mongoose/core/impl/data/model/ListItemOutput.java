@@ -66,6 +66,12 @@ implements DataItemOutput<T> {
 
 	//
 	@Override
+	public String toString() {
+		return "itemOutput<" + items + ">";
+	}
+
+	//
+	@Override
 	protected void finalize()
 	throws Throwable {
 		items.clear();

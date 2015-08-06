@@ -81,7 +81,7 @@ implements SubTenant<T> {
 	throws IllegalStateException {
 		boolean flagExists = false;
 		//
-		if(value!= null && value.length() > 0) {
+		if(value != null && value.length() > 0) {
 			try {
 				final HttpResponse httpResp = execute(addr, HTTPMethod.HEAD);
 				if(httpResp != null) {

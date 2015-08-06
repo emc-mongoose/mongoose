@@ -20,7 +20,7 @@ extends StorageMock<T> {
 	T getObject(final String container, final String id, final long offset, final long size)
 	throws ContainerMockException;
 	//
-	void deleteObject(final String container, final String id)
+	void deleteObject(final String container, final String id, final long offset, final long size)
 	throws ContainerMockNotFoundException;
 	//
 	void updateObject(final String container, final String id, final long offset, final long size)

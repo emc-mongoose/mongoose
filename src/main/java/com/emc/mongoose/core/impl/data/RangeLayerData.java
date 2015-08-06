@@ -263,8 +263,7 @@ implements AppendableDataItem, UpdatableDataItem {
 	}
 	//
 	@Override
-	public final synchronized void updateRandomRange()
-	throws IllegalStateException {
+	public final synchronized void updateRandomRange() {
 		final int
 			countRangesTotal = getRangeCount(size),
 			startCellPos = ThreadLocalRandom.current().nextInt(countRangesTotal);
@@ -296,9 +295,9 @@ implements AppendableDataItem, UpdatableDataItem {
 	//
 	@Override
 	public final void updateRandomRanges(final int count)
-	throws IllegalArgumentException, IllegalStateException {
+	throws IllegalArgumentException {
 		final int countRangesTotal = getRangeCount(size);
-		if(count < 1) {
+		if(count < 1 || count > countRangesTotal) {
 			throw new IllegalArgumentException(
 				"Range count should be more than 0 and less than max " + countRangesTotal +
 				" for the item size"

@@ -5,6 +5,7 @@ import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.log.LogUtil;
 import com.emc.mongoose.common.log.Markers;
 //
+import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.storage.adapter.s3.Bucket;
 //
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
@@ -86,7 +87,15 @@ extends WSRequestHandlerBase<T> {
 					if(objId == null) {
 						handleGenericContainerReq(httpRequest, httpResponse, method, bucket, null);
 					} else {
-						handleGenericDataReq(httpRequest, httpResponse, method, bucket, objId);
+						final long offset;
+						if(METHOD_PUT.equals(method) || METHOD_POST.equals(method)) {
+							offset = Long.parseLong(objId, DataObject.ID_RADIX);
+						} else {
+							offset = -1;
+						}
+						handleGenericDataReq(
+							httpRequest, httpResponse, method, bucket, objId, offset
+						);
 					}
 				} else {
 					httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);

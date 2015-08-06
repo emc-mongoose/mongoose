@@ -180,10 +180,7 @@ implements LoadExecutor<T> {
 		final int connCountPerNode, final String listFile, final long maxCount,
 		final long sizeMin, final long sizeMax, final float sizeBias
 	) {
-		super(
-			maxCount, rtConfig.getLoadLimitTimeUnit().toMillis(rtConfig.getLoadLimitTimeValue()),
-			rtConfig.getTasksMaxQueueSize()
-		);
+		super(maxCount, rtConfig.getTasksMaxQueueSize());
 		//
 		this.dataCls = dataCls;
 		this.rtConfig = rtConfig;

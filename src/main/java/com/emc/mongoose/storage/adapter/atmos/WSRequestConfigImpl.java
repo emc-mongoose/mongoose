@@ -1,5 +1,6 @@
 package com.emc.mongoose.storage.adapter.atmos;
 // mongoose-core-api.jar
+import com.emc.mongoose.core.api.data.DataObject;
 import com.emc.mongoose.core.api.io.req.HTTPMethod;
 import com.emc.mongoose.core.api.io.task.IOTask;
 import com.emc.mongoose.core.api.load.model.Producer;
@@ -14,7 +15,10 @@ import com.emc.mongoose.common.log.Markers;
 import org.apache.commons.codec.binary.Base64;
 //
 import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.message.BasicHeader;
 //
@@ -81,8 +85,7 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public
-	HTTPMethod getHTTPMethod() {
+	public HTTPMethod getHTTPMethod() {
 		HTTPMethod method;
 		switch(loadType) {
 			case CREATE:
@@ -238,8 +241,40 @@ extends WSRequestConfigBase<T> {
 
 	}
 	//
+	private final static ThreadLocal<StringBuilder>
+		THR_LOC_METADATA_STR_BUILDER = new ThreadLocal<>();
+	//
 	@Override
-	protected final void applyAuthHeader(final MutableWSRequest httpRequest) {
+	protected final void applyMetaDataHeaders(final HttpEntityEnclosingRequest request) {
+		//
+		StringBuilder md = THR_LOC_METADATA_STR_BUILDER.get();
+		if(md == null) {
+			md = new StringBuilder();
+			THR_LOC_METADATA_STR_BUILDER.set(md);
+		} else {
+			md.setLength(0); // reset/clear
+		}
+		//
+		if(subTenant != null) {
+			md.append("subtenant=").append(subTenant.getValue());
+		}
+		if(IOTask.Type.CREATE.equals(loadType)) {
+			final HttpEntity entity = request.getEntity();
+			if(entity != null && WSObject.class.isInstance(entity)) {
+				if(md.length() > 0) {
+					md.append(',');
+				}
+				md.append("offset=").append(((T) request.getEntity()).getOffset());
+			}
+		}
+		//
+		if(md.length() > 0) {
+			request.setHeader(KEY_EMC_TAGS, md.toString());
+		}
+	}
+	//
+	@Override
+	protected final void applyAuthHeader(final HttpRequest httpRequest) {
 		httpRequest.setHeader(KEY_EMC_SIG, getSignature(getCanonical(httpRequest)));
 	}
 	//
@@ -247,33 +282,44 @@ extends WSRequestConfigBase<T> {
 		HttpHeaders.CONTENT_TYPE, HttpHeaders.RANGE, HttpHeaders.DATE
 	};
 	//
+	private final static ThreadLocal<StringBuilder>
+		THR_LOC_CANONICAL_STR_BUILDER = new ThreadLocal<>();
+	//
 	@Override
-	public final String getCanonical(final MutableWSRequest httpRequest) {
-		final StringBuilder buffer = new StringBuilder(httpRequest.getRequestLine().getMethod());
-		//Map<String, String> sharedHeaders = sharedConfig.getSharedHeaders();
+	public final String getCanonical(final HttpRequest httpRequest) {
+		//
+		StringBuilder canonical = THR_LOC_CANONICAL_STR_BUILDER.get();
+		if(canonical == null) {
+			canonical = new StringBuilder();
+			THR_LOC_CANONICAL_STR_BUILDER.set(canonical);
+		} else {
+			canonical.setLength(0); // reset/clear
+		}
+		canonical.append(httpRequest.getRequestLine().getMethod());
+		//
 		for(final String headerName : HEADERS4CANONICAL) {
 			// support for multiple non-unique header keys
 			if(sharedHeaders.containsHeader(headerName)) {
-				buffer.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
+				canonical.append('\n').append(sharedHeaders.getFirstHeader(headerName).getValue());
 			} else if(httpRequest.containsHeader(headerName)) {
 				for(final Header header: httpRequest.getHeaders(headerName)) {
-					buffer.append('\n').append(header.getValue());
+					canonical.append('\n').append(header.getValue());
 				}
 			} else {
-				buffer.append('\n');
+				canonical.append('\n');
 			}
 		}
 		//
-		buffer.append('\n').append(httpRequest.getUriPath());
+		canonical.append('\n').append(httpRequest.getRequestLine().getUri());
 		//
 		for(final String emcHeaderName: HEADERS_EMC) {
 			if(sharedHeaders.containsHeader(emcHeaderName)) {
-				buffer
+				canonical
 					.append('\n').append(emcHeaderName.toLowerCase())
 					.append(':').append(sharedHeaders.getFirstHeader(emcHeaderName).getValue());
 			} else {
 				for(final Header emcHeader: httpRequest.getHeaders(emcHeaderName)) {
-					buffer.append('\n').append(emcHeaderName.toLowerCase()).append(':').append(
+					canonical.append('\n').append(emcHeaderName.toLowerCase()).append(':').append(
 						emcHeader.getValue()
 					);
 				}
@@ -281,10 +327,10 @@ extends WSRequestConfigBase<T> {
 		}
 		//
 		if(LOG.isTraceEnabled(Markers.MSG)) {
-			LOG.trace(Markers.MSG, "Canonical request form:\n{}", buffer.toString());
+			LOG.trace(Markers.MSG, "Canonical request form:\n{}", canonical.toString());
 		}
 		//
-		return buffer.toString();
+		return canonical.toString();
 	}
 	//
 	@Override

@@ -8,6 +8,7 @@ import com.emc.mongoose.core.api.data.WSObject;
 // mongoose-common.jar
 import com.emc.mongoose.common.conf.RunTimeConfig;
 //
+import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -85,9 +86,9 @@ extends ObjectRequestConfig<T> {
 	void applyDataItem(final MutableWSRequest httpRequest, T dataItem)
 	throws URISyntaxException;
 	//
-	void applyHeadersFinally(final MutableWSRequest httpRequest);
+	void applyHeadersFinally(final HttpEntityEnclosingRequest httpRequest);
 	//
-	String getCanonical(final MutableWSRequest httpRequest);
+	String getCanonical(final HttpRequest httpRequest);
 	//
 	String getSignature(final String canonicalForm);
 	//

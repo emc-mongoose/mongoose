@@ -79,15 +79,14 @@ implements IOStats {
 	private final StorageMock storage;
 	//
 	public BasicStorageIOStats(
-		final RunTimeConfig runTimeConfig, final StorageMock storage
+		final StorageMock storage, final int metricsPeriodSec, final boolean jmxServeFlag
 	) {
 		super(BasicStorageIOStats.class.getSimpleName());
 		setDaemon(true);
-		updateMilliPeriod = TimeUnit.SECONDS.toMillis(runTimeConfig.getLoadMetricsPeriodSec());
+		updateMilliPeriod = TimeUnit.SECONDS.toMillis(metricsPeriodSec);
 		this.storage = storage;
 		//
-		final boolean flagServeIfNotLoadServer = runTimeConfig.getFlagServeIfNotLoadServer();
-		if(flagServeIfNotLoadServer) {
+		if(jmxServeFlag) {
 			final MBeanServer mBeanServer = ServiceUtils.getMBeanServer(
 				RunTimeConfig.getContext().getRemotePortExport()
 			);

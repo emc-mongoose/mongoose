@@ -7,6 +7,7 @@ import com.emc.mongoose.common.log.Markers;
 import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_PREFIX;
 import static com.emc.mongoose.core.api.io.req.conf.WSRequestConfig.VALUE_RANGE_CONCAT;
 // mongoose-storage-mock.jar
+import com.emc.mongoose.core.api.io.req.conf.WSRequestConfig;
 import com.emc.mongoose.storage.mock.api.ContainerMockException;
 import com.emc.mongoose.storage.mock.api.ContainerMockNotFoundException;
 import com.emc.mongoose.storage.mock.api.IOStats;
@@ -131,33 +132,44 @@ implements ReqURIMatchingHandler<T> {
 		ThreadLocalRandom.current().nextBytes(buff);
 		return Hex.encodeHexString(buff);
 	}
-	//
+	/**
+	 @param httpRequest
+	 @param httpResponse
+	 @param method
+	 @param container
+	 @param oid
+	 @param offset note that this is a ring buffer offset only
+	 */
 	protected void handleGenericDataReq(
 		final HttpRequest httpRequest, final HttpResponse httpResponse,
-		final String method, final String container, final String dataId
+		final String method, final String container, final String oid, final long offset
 	) {
-		switch(method) {
-			case METHOD_POST:
-				handleWrite(httpRequest, httpResponse, container, dataId);
-				break;
-			case METHOD_PUT:
-				handleWrite(httpRequest, httpResponse, container, dataId);
-				break;
-			case METHOD_GET:
-				handleRead(httpResponse, container, dataId);
-				break;
-			case METHOD_HEAD:
-				httpResponse.setStatusCode(HttpStatus.SC_OK);
-				break;
-			case METHOD_DELETE:
-				handleDelete(httpResponse, container, dataId);
-				break;
+		if(container == null) {
+			httpResponse.setStatusCode(HttpStatus.SC_BAD_REQUEST);
+		} else {
+			switch(method) {
+				case METHOD_POST:
+					handleWrite(httpRequest, httpResponse, container, oid, offset);
+					break;
+				case METHOD_PUT:
+					handleWrite(httpRequest, httpResponse, container, oid, offset);
+					break;
+				case METHOD_GET:
+					handleRead(httpResponse, container, oid, offset);
+					break;
+				case METHOD_HEAD:
+					httpResponse.setStatusCode(HttpStatus.SC_OK);
+					break;
+				case METHOD_DELETE:
+					handleDelete(httpResponse, container, oid, offset);
+					break;
+			}
 		}
 	}
 	//
 	private void handleWrite(
 		final HttpRequest request, final HttpResponse response,
-		final String container, final String dataId
+		final String container, final String oid, final long offset
 	) {
 		try {
 			response.setStatusCode(HttpStatus.SC_OK);
@@ -167,10 +179,9 @@ implements ReqURIMatchingHandler<T> {
 			final Header rangeHeaders[] = request.getHeaders(HttpHeaders.RANGE);
 			//
 			if(rangeHeaders == null || rangeHeaders.length == 0) {
-				// write or recreate data item
-				final long offset = Long.valueOf(dataId, Character.MAX_RADIX);
+				// write or rewrite data item
 				try {
-					sharedStorage.createObject(container, dataId, offset, size);
+					sharedStorage.createObject(container, oid, offset, size);
 					ioStats.markWrite(true, size);
 				} catch(final ContainerMockNotFoundException e) {
 					response.setStatusCode(HttpStatus.SC_NOT_FOUND);
@@ -182,7 +193,7 @@ implements ReqURIMatchingHandler<T> {
 			} else {
 				// else do append or update if data item exist
 				ioStats.markWrite(
-					handlePartialWrite(container, dataId, rangeHeaders, size),
+					handlePartialWrite(container, oid, rangeHeaders, size),
 					size
 				);
 			}
@@ -192,7 +203,7 @@ implements ReqURIMatchingHandler<T> {
 		} catch(final ContainerMockException | NumberFormatException e) {
 			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
 			LogUtil.exception(
-				LOG, Level.ERROR, e, "Failed to perform a range update/append for \"{}\"", dataId
+				LOG, Level.ERROR, e, "Failed to perform a range update/append for \"{}\"", oid
 			);
 			ioStats.markWrite(false, 0);
 		}
@@ -238,10 +249,10 @@ implements ReqURIMatchingHandler<T> {
 	}
 	//
 	private void handleRead(
-		final HttpResponse response, final String container, final String dataId
+		final HttpResponse response, final String container, final String dataId, final long offset
 	) {
 		try {
-			final T dataObject = sharedStorage.getObject(container, dataId, 0, 0);
+			final T dataObject = sharedStorage.getObject(container, dataId, offset, 0);
 			if(dataObject == null) {
 				response.setStatusCode(HttpStatus.SC_NOT_FOUND);
 				ioStats.markRead(false, 0);
@@ -261,15 +272,16 @@ implements ReqURIMatchingHandler<T> {
 			ioStats.markRead(false, 0);
 		} catch(final ContainerMockException e) {
 			response.setStatusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
+			LogUtil.exception(LOG, Level.WARN, e, "Container \"{}\" failure", container);
 			ioStats.markRead(false, 0);
 		}
 	}
 	//
 	private void handleDelete(
-		final HttpResponse response, final String container, final String dataId
+		final HttpResponse response, final String container, final String dataId, final long offset
 	) {
 		try {
-			sharedStorage.deleteObject(container, dataId);
+			sharedStorage.deleteObject(container, dataId, offset, -1);
 			response.setStatusCode(HttpStatus.SC_OK);
 			if(LOG.isTraceEnabled(Markers.MSG)) {
 				LOG.trace(Markers.MSG, "Delete data object with ID: {}", dataId);
@@ -307,16 +319,19 @@ implements ReqURIMatchingHandler<T> {
 		}
 	}
 	//
-	private void handleContainerCreate(
+	protected boolean handleContainerCreate(
 		final HttpRequest req, final HttpResponse resp, final String name
 	) {
 		try {
 			if(!sharedStorage.createContainer(name)) {
 				resp.setStatusCode(HttpStatus.SC_CONFLICT);
+				return false;
 			}
 		} catch(final StorageMockCapacityLimitReachedException e) {
 			resp.setStatusCode(HttpStatus.SC_INSUFFICIENT_STORAGE);
+			return false;
 		}
+		return true;
 	}
 	//
 	protected abstract void handleContainerList(

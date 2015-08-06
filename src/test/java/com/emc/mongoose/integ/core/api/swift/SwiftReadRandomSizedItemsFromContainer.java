@@ -1,5 +1,5 @@
 package com.emc.mongoose.integ.core.api.swift;
-import com.emc.mongoose.common.conf.SizeUtil;
+
 import com.emc.mongoose.core.api.data.WSObject;
 import com.emc.mongoose.util.client.api.StorageClient;
 import com.emc.mongoose.util.client.impl.BasicWSClientBuilder;
@@ -10,9 +10,9 @@ import org.junit.Test;
 
 import java.util.concurrent.TimeUnit;
 /**
- Created by kurila on 03.08.15.
+ Created by kurila on 06.08.15.
  */
-public class SwiftReadUsingContainerListingTest {
+public class SwiftReadRandomSizedItemsFromContainer {
 	//
 	private final static long COUNT_TO_WRITE = 10000;
 	private final static String
@@ -33,7 +33,9 @@ public class SwiftReadUsingContainerListingTest {
 				.setS3Bucket(CONTAINER_NAME)
 				.build()
 		) {
-			COUNT_WRITTEN = client.write(null, null, COUNT_TO_WRITE, 10, SizeUtil.toSize("10KB"));
+			COUNT_WRITTEN = client.write(
+				null, null, COUNT_TO_WRITE, 10, 0, 123456, 3
+			);
 			COUNT_READ = client.read(null, null, COUNT_TO_WRITE, 10, true);
 		}
 	}

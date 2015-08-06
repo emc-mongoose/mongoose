@@ -21,14 +21,14 @@ public class CSVItemInput<T extends DataItem>
 implements DataItemInput<T> {
 	//
 	protected final BufferedReader itemsSrc;
-	protected final Constructor<T> itemConstructor;
+	protected final Constructor<? extends T> itemConstructor;
 	/**
 	 @param in the input stream to read the data item records from
 	 @param itemCls the particular data item implementation class used to parse the records
 	 @throws IOException
 	 @throws NoSuchMethodException
 	 */
-	public CSVItemInput(final InputStream in, final Class<T> itemCls)
+	public CSVItemInput(final InputStream in, final Class<? extends T> itemCls)
 	throws IOException, NoSuchMethodException {
 		itemsSrc = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 		itemConstructor = itemCls.getConstructor(String.class);
@@ -86,5 +86,10 @@ implements DataItemInput<T> {
 	public void close()
 	throws IOException {
 		itemsSrc.close();
+	}
+	//
+	@Override
+	public String toString() {
+		return "csvItemInput<" + itemsSrc.toString() + ">";
 	}
 }

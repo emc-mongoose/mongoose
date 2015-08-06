@@ -26,10 +26,10 @@ implements AsyncConsumer<T> {
 	//
 	private final static Logger LOG = LogManager.getLogger();
 	// configuration params
-	private final long maxCount, submTimeOutMilliSec;
+	protected final long maxCount;
 	protected final int maxQueueSize;
 	// states
-	private final AtomicLong counterPreSubm = new AtomicLong(0);
+	protected final AtomicLong counterPreSubm = new AtomicLong(0);
 	protected final AtomicBoolean
 		isStarted = new AtomicBoolean(false),
 		isShutdown = new AtomicBoolean(false),
@@ -37,11 +37,9 @@ implements AsyncConsumer<T> {
 	// volatile
 	private final BlockingQueue<T> transientQueue;
 	//
-	public AsyncConsumerBase(
-		final long maxCount, final long submTimeOutMilliSec, final int maxQueueSize
-	) throws IllegalArgumentException {
+	public AsyncConsumerBase(final long maxCount, final int maxQueueSize)
+	throws IllegalArgumentException {
 		this.maxCount = maxCount > 0 ? maxCount : Long.MAX_VALUE;
-		this.submTimeOutMilliSec = submTimeOutMilliSec > 0 ? submTimeOutMilliSec : Long.MAX_VALUE;
 		if(maxQueueSize > 0) {
 			this.maxQueueSize = (int) Math.min(this.maxCount, maxQueueSize);
 		} else {
@@ -97,7 +95,7 @@ implements AsyncConsumer<T> {
 				if(transientQueue.size() == 0 && isShutdown.get()) {
 					break;
 				}
-				nextItem = transientQueue.poll(submTimeOutMilliSec, TimeUnit.MILLISECONDS);
+				nextItem = transientQueue.poll(POLL_TIMEOUT_MILLISEC, TimeUnit.MILLISECONDS);
 				if(nextItem != null) {
 					submitSync(nextItem);
 					i ++;

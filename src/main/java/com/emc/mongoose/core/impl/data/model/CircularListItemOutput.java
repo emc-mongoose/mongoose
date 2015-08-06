@@ -80,4 +80,9 @@ extends ListItemOutput<T> {
 	throws IOException {
 		return new CircularListItemInput<>(items);
 	}
+	//
+	@Override
+	public final String toString() {
+		return "circularItemOutput<" + items + ">";
+	}
 }

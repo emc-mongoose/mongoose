@@ -17,10 +17,10 @@ import java.util.List;
 public abstract class CSVItemOutput<T extends DataItem>
 implements DataItemOutput<T> {
 	//
-	protected final Class<T> itemCls;
+	protected final Class<? extends T> itemCls;
 	protected final BufferedWriter itemsDst;
 	//
-	protected CSVItemOutput(final OutputStream out, final Class<T> itemCls)
+	protected CSVItemOutput(final OutputStream out, final Class<? extends T> itemCls)
 	throws IOException {
 		itemsDst = new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
 		this.itemCls = itemCls;
@@ -46,5 +46,10 @@ implements DataItemOutput<T> {
 	public void close()
 	throws IOException {
 		itemsDst.close();
+	}
+	//
+	@Override
+	public String toString() {
+		return "csvItemOutput<" + itemsDst + ">";
 	}
 }

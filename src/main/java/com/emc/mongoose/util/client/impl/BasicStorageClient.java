@@ -72,7 +72,7 @@ implements StorageClient<T> {
 		final DataItemInput<T> itemsInput, final DataItemOutput<T> itemsOutput,
 		final long maxCount, final int threadCount, final long size
 	) throws IllegalArgumentException, InterruptedException, IOException {
-		return write(itemsInput, itemsOutput, maxCount, THREAD_COUNT_DEFAULT, size, size, 0);
+		return write(itemsInput, itemsOutput, maxCount, threadCount, size, size, 0);
 	}
 	//
 	@Override
@@ -99,7 +99,7 @@ implements StorageClient<T> {
 					.setObjSizeBias(sizeBias)
 					.build()
 			) {
-				return executeLoadJob(producer, loadJobExecutor, consumer);
+				return executeLoadJob(producer, (LoadExecutor<T>) loadJobExecutor, consumer);
 			}
 		}
 	}

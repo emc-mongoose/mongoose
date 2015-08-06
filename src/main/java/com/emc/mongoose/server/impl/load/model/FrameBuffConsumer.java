@@ -31,10 +31,7 @@ implements RecordFrameBuffer<T> {
 	public FrameBuffConsumer(
 		final Class<T> dataCls, final RunTimeConfig rtConfig, final long maxCount
 	) {
-		super(
-			maxCount, rtConfig.getLoadLimitTimeUnit().toMillis(rtConfig.getLoadLimitTimeValue()),
-			rtConfig.getTasksMaxQueueSize()
-		);
+		super(maxCount, rtConfig.getTasksMaxQueueSize());
 		setName(Thread.currentThread().getName() + "-" + getClass().getSimpleName());
 		start();
 	}

@@ -13,6 +13,7 @@ import com.emc.mongoose.core.impl.io.req.conf.WSRequestConfigBase;
 //
 import com.emc.mongoose.core.impl.load.model.DataItemInputProducer;
 import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 import org.apache.http.message.BasicHeader;
 //
 import org.apache.logging.log4j.Level;
@@ -238,7 +239,7 @@ extends WSRequestConfigBase<T> {
 	private Header headerAuthToken = null;
 	//
 	@Override
-	protected final void applyAuthHeader(final MutableWSRequest httpRequest) {
+	protected final void applyAuthHeader(final HttpRequest httpRequest) {
 		final String authTokenValue = authToken == null ? null : authToken.getValue();
 		if(authTokenValue != null) {
 			if(!httpRequest.containsHeader(KEY_X_AUTH_TOKEN)) {
@@ -251,8 +252,8 @@ extends WSRequestConfigBase<T> {
 	}
 	//
 	@Override
-	public final String getCanonical(final MutableWSRequest httpRequest) {
-		return "";
+	public final String getCanonical(final HttpRequest httpRequest) {
+		return null;
 	}
 	//
 	@Override
