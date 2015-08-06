@@ -43,8 +43,8 @@ public class Read10KBItemsTest {
 	private static final String RUN_ID = Read10KBItemsTest.class.getCanonicalName();
 
 	private static final String
-			CREATE_RUN_ID = RUN_ID + TestConstants.LOAD_CREATE,
-			READ_RUN_ID = RUN_ID + TestConstants.LOAD_READ;
+		CREATE_RUN_ID = RUN_ID + TestConstants.LOAD_CREATE,
+		READ_RUN_ID = RUN_ID + TestConstants.LOAD_READ;
 
 	private static Logger LOG;
 

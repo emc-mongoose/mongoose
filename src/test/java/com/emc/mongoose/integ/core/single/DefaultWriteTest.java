@@ -114,8 +114,16 @@ public final class DefaultWriteTest {
 	@Test
 	public void shouldCustomValuesDisplayedCorrectlyInConfigurationTable()
 		throws Exception {
-		final String[] runtimeConfCustomParam = RunTimeConfig.getContext().toString().split("\n");
-		for (final String confParam : runtimeConfCustomParam) {
+		final String configTable = RunTimeConfig.getContext().toString();
+		final Set<String> params = new HashSet<>();
+		//  skip table header
+		int start = 126;
+		int lineOffset = 100;
+		while (start + lineOffset < configTable.length()) {
+			params.add(configTable.substring(start, start + lineOffset));
+			start += lineOffset;
+		}
+		for (final String confParam : params) {
 			if (confParam.contains(RunTimeConfig.KEY_LOAD_LIMIT_COUNT)) {
 				Assert.assertTrue(confParam.contains(String.valueOf(LIMIT_COUNT)));
 			}

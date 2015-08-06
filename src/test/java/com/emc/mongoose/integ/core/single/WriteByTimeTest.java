@@ -116,7 +116,7 @@ public class WriteByTimeTest {
 	@Test
 	public void shouldRunScenarioFor1Minutes()
 	throws Exception {
-		final int precisionMillis = 10000;
+		final int precisionMillis = 5000;
 		//1.minutes = 60000.milliseconds
 		final long loadLimitTimeMillis = TimeUtil.getTimeValue(LIMIT_TIME) * 60000;
 		Assert.assertTrue(

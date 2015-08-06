@@ -66,7 +66,7 @@ public class InfiniteWriteTest {
 			}
 			final long actualRunTime = finishTime - startTime;
 			Assert.assertEquals("Mongoose run time is not equal expected time",
-				EXPECTED_RUN_TIME, actualRunTime, 4000);
+				EXPECTED_RUN_TIME, actualRunTime, 5500);
 		}
 	}
 
