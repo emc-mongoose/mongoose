@@ -80,7 +80,7 @@ public class WriteUsing10ConnTest {
 			}
 		}, "writeScenarioThread");
 		SCENARIO_THREAD.start();
-		SCENARIO_THREAD.join();
+		SCENARIO_THREAD.join(30000);
 	}
 
 	private static void executeLoadJob(final RunTimeConfig rtConfig)
