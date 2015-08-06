@@ -369,7 +369,7 @@ public class CustomChainScenarioIntegTest {
 		//
 		long differenceTime;
 		// 1.minutes = 60000.milliseconds
-		final int precisionMillis = 3000, loadLimitTimeMillis = 60000;
+		final int precisionMillis = 5000, loadLimitTimeMillis = 60000;
 
 		for (int i = 0; i < 5; i++) {
 			differenceTime = finishTimeLoad.get(i).getTime() - startTimeLoad.get(i).getTime();
@@ -384,7 +384,7 @@ public class CustomChainScenarioIntegTest {
 	@Test
 	public void shouldGeneralStatusOfTheRunIsRegularlyReports()
 	throws Exception {
-		final int precisionMillis = 10000;
+		final int precisionMillis = 3000;
 		// Get perf.avg.csv file
 		final File perfAvgFile = LogParser.getPerfAvgFile(RUN_ID);
 		Assert.assertTrue(perfAvgFile.exists());
