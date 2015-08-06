@@ -3,7 +3,6 @@ package com.emc.mongoose.integ.core.single;
 import com.emc.mongoose.common.conf.RunTimeConfig;
 import com.emc.mongoose.common.conf.SizeUtil;
 import com.emc.mongoose.common.log.Markers;
-//
 import com.emc.mongoose.core.impl.data.model.UniformDataSource;
 import com.emc.mongoose.integ.suite.LoggingTestSuite;
 import com.emc.mongoose.integ.suite.StdOutInterceptorTestSuite;
@@ -11,7 +10,6 @@ import com.emc.mongoose.integ.tools.TestConstants;
 import com.emc.mongoose.integ.tools.LogParser;
 import com.emc.mongoose.integ.tools.PortListener;
 import com.emc.mongoose.integ.tools.BufferingOutputStream;
-//
 import com.emc.mongoose.run.scenario.ScriptRunner;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -36,23 +34,25 @@ import java.util.regex.Matcher;
 
 /**
  * Created by olga on 08.07.15.
- * Covers TC #4(name: "Single write load using several concurrent threads/connections.", steps: all for load.threads=10)
+ * Covers TC #4(name: "Single write load using several concurrent threads/connections.", steps: all for load.threads=100)
  * in Mongoose Core Functional Testing
- * HLUC: 1.3.2.1
+ * HLUC: 1.3.2.2
  */
 public class WriteUsing100ConnTest {
-	//
+
 	private static BufferingOutputStream STD_OUTPUT_STREAM;
 
-	private static final String RUN_ID = WriteUsing100ConnTest.class.getCanonicalName();
-	private static final String DATA_SIZE = "0B";
 	private static final int LIMIT_COUNT = 1000000, LOAD_THREADS = 100;
+	private static String RUN_ID = WriteUsing100ConnTest.class.getCanonicalName();
+	private static final String DATA_SIZE = "0B";
+
+	private static Thread SCENARIO_THREAD;
 
 	private static Logger LOG;
 
 	@BeforeClass
 	public static void before()
-			throws Exception {
+	throws Exception {
 		//  remove log dir w/ previous logs
 		LogParser.removeLogDirectory(RUN_ID);
 		//
@@ -66,9 +66,18 @@ public class WriteUsing100ConnTest {
 		LoggingTestSuite.setUpClass();
 
 		LOG = LogManager.getLogger();
-		//  write
-		executeLoadJob(rtConfig);
-		STD_OUTPUT_STREAM.close();
+		SCENARIO_THREAD = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					executeLoadJob(rtConfig);
+				} catch (final Exception e) {
+					Assert.fail("Failed to execute load job");
+				}
+			}
+		}, "writeScenarioThread");
+		SCENARIO_THREAD.start();
+		SCENARIO_THREAD.join(30000);
 	}
 
 	private static void executeLoadJob(final RunTimeConfig rtConfig)
@@ -76,7 +85,7 @@ public class WriteUsing100ConnTest {
 		LOG.info(Markers.MSG, rtConfig.toString());
 		UniformDataSource.DEFAULT = new UniformDataSource();
 		try (final BufferingOutputStream stdOutStream =
-				     StdOutInterceptorTestSuite.getStdOutBufferingStream()) {
+			     StdOutInterceptorTestSuite.getStdOutBufferingStream()) {
 			//  Run mongoose default scenario in standalone mode
 			new ScriptRunner().run();
 			//  Wait for "Scenario end" message
@@ -88,6 +97,12 @@ public class WriteUsing100ConnTest {
 	@AfterClass
 	public static void after()
 	throws Exception {
+		if (!SCENARIO_THREAD.isInterrupted()) {
+			SCENARIO_THREAD.join();
+			SCENARIO_THREAD.interrupt();
+		}
+		// Wait logger's output from console
+		Thread.sleep(3000);
 		//
 		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
 		//Check that messages.log file is contained
@@ -110,7 +125,7 @@ public class WriteUsing100ConnTest {
 		Assert.assertFalse(Files.exists(expectedFile));
 		//
 		shouldCreateDataItemsFileWithInformationAboutAllObjects();
-		//
+
 		Assert.assertTrue(STD_OUTPUT_STREAM.toString()
 			.contains(TestConstants.SCENARIO_END_INDICATOR));
 		Assert.assertTrue(STD_OUTPUT_STREAM.toString()
@@ -118,6 +133,7 @@ public class WriteUsing100ConnTest {
 
 		shouldReportScenarioEndToMessageLogFile();
 
+		STD_OUTPUT_STREAM.close();
 	}
 
 	public static void shouldCreateDataItemsFileWithInformationAboutAllObjects()
@@ -126,7 +142,7 @@ public class WriteUsing100ConnTest {
 		final File dataItemsFile = LogParser.getDataItemsFile(RUN_ID);
 		//
 		try (final BufferedReader bufferedReader =
-		        new BufferedReader(new FileReader(dataItemsFile))) {
+			     new BufferedReader(new FileReader(dataItemsFile))) {
 			int dataSize, countDataItems = 0;
 			String line;
 
@@ -145,9 +161,8 @@ public class WriteUsing100ConnTest {
 	throws Exception {
 		//Read message file and search "Scenario End"
 		final File messageFile = LogParser.getMessageFile(RUN_ID);
-		//
 		try (final BufferedReader bufferedReader =
-		        new BufferedReader(new FileReader(messageFile))) {
+			     new BufferedReader(new FileReader(messageFile))) {
 			String line;
 			while ((line = bufferedReader.readLine()) != null) {
 				if (line.contains(TestConstants.SCENARIO_END_INDICATOR)) {
@@ -166,7 +181,8 @@ public class WriteUsing100ConnTest {
 		for (int i = 0; i < 3; i++) {
 			int countConnections = PortListener
 				.getCountConnectionsOnPort(TestConstants.PORT_INDICATOR);
-			// Check that actual connection count = (LOAD_THREADS * 2 + 1) because cinderella is run local
+			// Check that actual connection count = (LOAD_THREADS * 2 + 1)
+			// because cinderella is run local
 			Assert.assertEquals((LOAD_THREADS * 2 + 1), countConnections);
 		}
 	}
@@ -244,7 +260,7 @@ public class WriteUsing100ConnTest {
 					Assert.assertEquals(TestConstants.API_S3, apiName);
 					// Check load type and load limit count values are correct
 					loadType = RunTimeConfig.getContext().getScenarioSingleLoad()
-							.toLowerCase() + String.valueOf(LIMIT_COUNT);
+						.toLowerCase() + String.valueOf(LIMIT_COUNT);
 					actualLoadType = loadInfo[2].toLowerCase();
 					Assert.assertEquals(loadType, actualLoadType);
 					// Check "threads per node" value is correct
@@ -252,7 +268,7 @@ public class WriteUsing100ConnTest {
 					Assert.assertEquals(LOAD_THREADS, threadsPerNode);
 					//Check node count is correct
 					countNode = Integer.valueOf(loadInfo[4]);
-					Assert.assertEquals( 1 , countNode);
+					Assert.assertEquals(1, countNode);
 				}
 			}
 		}
@@ -297,6 +313,5 @@ public class WriteUsing100ConnTest {
 				);
 			}
 		}
-		//
 	}
 }

@@ -50,6 +50,8 @@ public class WriteUsing10ConnTest {
 
 	private static Logger LOG;
 
+	private static Thread SCENARIO_THREAD;
+
 	@BeforeClass
 	public static void before()
 	throws Exception {
@@ -67,8 +69,18 @@ public class WriteUsing10ConnTest {
 
 		LOG = LogManager.getLogger();
 		//  write
-		executeLoadJob(rtConfig);
-		STD_OUTPUT_STREAM.close();
+		SCENARIO_THREAD = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				try {
+					executeLoadJob(rtConfig);
+				} catch (final Exception e) {
+					Assert.fail("Failed to execute load job");
+				}
+			}
+		}, "writeScenarioThread");
+		SCENARIO_THREAD.start();
+		SCENARIO_THREAD.join();
 	}
 
 	private static void executeLoadJob(final RunTimeConfig rtConfig)
@@ -88,6 +100,11 @@ public class WriteUsing10ConnTest {
 	@AfterClass
 	public static void after()
 	throws Exception {
+		if (!SCENARIO_THREAD.isInterrupted()) {
+			SCENARIO_THREAD.join();
+			SCENARIO_THREAD.interrupt();
+		}
+		TimeUnit.SECONDS.sleep(3);
 		//
 		Path expectedFile = LogParser.getMessageFile(RUN_ID).toPath();
 		//Check that messages.log file is contained
@@ -117,6 +134,8 @@ public class WriteUsing10ConnTest {
 			.contains(TestConstants.SUMMARY_INDICATOR));
 
 		shouldReportScenarioEndToMessageLogFile();
+
+		STD_OUTPUT_STREAM.close();
 
 	}
 
@@ -165,7 +184,7 @@ public class WriteUsing10ConnTest {
 	throws Exception {
 		for (int i = 0; i < 3; i++) {
 			int countConnections = PortListener
-				.getCountConnectionsOnPort(TestConstants.PORT_INDICATOR);
+					.getCountConnectionsOnPort(TestConstants.PORT_INDICATOR);
 			// Check that actual connection count = (LOAD_THREADS * 2 + 1) because cinderella is run local
 			Assert.assertEquals((LOAD_THREADS * 2 + 1), countConnections);
 		}
@@ -226,7 +245,7 @@ public class WriteUsing10ConnTest {
 		Assert.assertTrue(perfAvgFile.exists());
 		//
 		try (final BufferedReader bufferedReader =
-			     new BufferedReader(new FileReader(perfAvgFile))) {
+		        new BufferedReader(new FileReader(perfAvgFile))) {
 			String line;
 			Matcher matcher;
 			String loadType, actualLoadType, apiName;
@@ -252,7 +271,7 @@ public class WriteUsing10ConnTest {
 					Assert.assertEquals(LOAD_THREADS, threadsPerNode);
 					//Check node count is correct
 					countNode = Integer.valueOf(loadInfo[4]);
-					Assert.assertEquals( 1 , countNode);
+					Assert.assertEquals(1, countNode);
 				}
 			}
 		}
