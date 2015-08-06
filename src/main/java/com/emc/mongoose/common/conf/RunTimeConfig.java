@@ -64,6 +64,10 @@ implements Externalizable {
 		KEY_LOAD_SERVERS = "load.servers",
 		KEY_LOAD_THREADS = "load.threads",
 		KEY_LOAD_TYPE_CREATE_THREADS = "load.type.create.threads",
+		KEY_LOAD_TYPE_READ_THREADS = "load.type.read.threads",
+		KEY_LOAD_TYPE_UPDATE_THREADS = "load.type.update.threads",
+		KEY_LOAD_TYPE_DELETE_THREADS = "load.type.delete.threads",
+		KEY_LOAD_TYPE_APPEND_THREADS = "load.type.append.threads",
 		KEY_LOAD_TASKS_BATCH_SIZE = "load.tasks.batchSize",
 		KEY_LOAD_UPDATE_PER_ITEM = "load.type.update.perItem",
 		//
