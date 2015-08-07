@@ -105,22 +105,15 @@ implements WSRequestConfig<T> {
 	//
 	@SuppressWarnings("unchecked")
 	public static WSRequestConfigBase newInstanceFor(final String api) {
-		WSRequestConfigBase reqConf = null;
+		final WSRequestConfigBase reqConf;
 		final String apiImplClsFQN = PACKAGE_IMPL_BASE + "." + api.toLowerCase() + "." + ADAPTER_CLS;
 		try {
 			final Class apiImplCls = Class.forName(apiImplClsFQN);
 			final Constructor<WSRequestConfigBase>
 				constructor = (Constructor<WSRequestConfigBase>) apiImplCls.getConstructors()[0];
 			reqConf = constructor.newInstance();
-		} catch(final ClassNotFoundException e) {
-			LogUtil.exception(LOG, Level.FATAL, e, "API implementation \"{}\" is not found", api);
-		} catch(final ClassCastException e) {
-			LogUtil.exception(
-				LOG, Level.FATAL, e,
-				"Class \"{}\" is not valid API implementation for \"{}\"", apiImplClsFQN, api
-			);
 		} catch(final Exception e) {
-			LogUtil.exception(LOG, Level.FATAL, e, "WS API config instantiation failure");
+			throw new RuntimeException(e);
 		}
 		return reqConf;
 	}
