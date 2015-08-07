@@ -34,6 +34,7 @@ public class SwiftUsePreExistingAuthTokenTest {
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, SwiftUsePreExistingAuthTokenTest.class.getCanonicalName()
 		);
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_API_NAME, "swift");
 		//
 		final WSRequestConfigImpl reqConf = new WSRequestConfigImpl();
 		reqConf.setProperties(RunTimeConfig.getContext());
@@ -46,7 +47,6 @@ public class SwiftUsePreExistingAuthTokenTest {
 			final StorageClient<WSObject> client = new BasicWSClientBuilder<>()
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
-				.setAPI("swift")
 				.setSwiftAuthToken(AUTH_TOKEN.getValue())
 				.build()
 		) {

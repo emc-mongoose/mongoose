@@ -31,6 +31,7 @@ public class SwiftUsePreExistingContainerTest {
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, SwiftUsePreExistingContainerTest.class.getCanonicalName()
 		);
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_API_NAME, "swift");
 		//
 		final WSRequestConfigImpl reqConf = new WSRequestConfigImpl();
 		reqConf.setProperties(RunTimeConfig.getContext());

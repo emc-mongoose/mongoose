@@ -35,8 +35,10 @@ public class AtmosUsePreExistingSubtenantTest {
 		);
 		//
 		final RunTimeConfig rtConfig = RunTimeConfig.getContext();
+		rtConfig.set(RunTimeConfig.KEY_API_NAME, "atmos");
 		final WSRequestConfigImpl reqConf = (WSRequestConfigImpl) WSLoadBuilderFactory
-			.getInstance(rtConfig).getRequestConfig();
+			.getInstance(rtConfig)
+			.getRequestConfig();
 		reqConf.setProperties(RunTimeConfig.getContext());
 		SUBTENANT = new WSSubTenantImpl(
 			reqConf, AtmosRequestHandler.generateSubtenant()
@@ -50,7 +52,6 @@ public class AtmosUsePreExistingSubtenantTest {
 			final StorageClient<WSObject> client = new BasicWSClientBuilder<>()
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
-				.setAPI("atmos")
 				.setAtmosSubtenant(SUBTENANT.getValue())
 				.build()
 		) {

@@ -34,12 +34,12 @@ public class AtmosReadUsingCSVInputTest {
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, AtmosReadUsingCSVInputTest.class.getCanonicalName()
 		);
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_API_NAME, "atmos");
 		//
 		try(
 			final StorageClient<T> client = new BasicWSClientBuilder<T, StorageClient<T>>()
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
-				.setAPI("atmos")
 				.build()
 		) {
 			final DataItemOutput<T> writeOutput = new CSVFileItemOutput<>(

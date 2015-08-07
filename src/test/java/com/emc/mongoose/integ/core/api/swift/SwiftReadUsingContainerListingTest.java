@@ -33,13 +33,13 @@ public class SwiftReadUsingContainerListingTest {
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, SwiftReadUsingContainerListingTest.class.getCanonicalName()
 		);
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_API_NAME, "swift");
 		//
 		try(
 			final StorageClient<WSObject>
 				client = new BasicWSClientBuilder<>()
 				.setLimitTime(0, TimeUnit.SECONDS)
 				.setLimitCount(COUNT_TO_WRITE)
-				.setAPI("swift")
 				.setS3Bucket(CONTAINER_NAME)
 				.build()
 		) {

@@ -35,6 +35,7 @@ public final class S3UsePreExistingBucketTest {
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, S3UsePreExistingBucketTest.class.getCanonicalName()
 		);
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_API_NAME, "s3");
 		//
 		final WSRequestConfigImpl reqConf = new WSRequestConfigImpl();
 		reqConf.setProperties(RunTimeConfig.getContext());
@@ -51,7 +52,6 @@ public final class S3UsePreExistingBucketTest {
 				client = new BasicWSClientBuilder<>()
 					.setLimitTime(0, TimeUnit.SECONDS)
 					.setLimitCount(COUNT_TO_WRITE)
-					.setAPI("s3")
 					.setS3Bucket(BUCKET.getName())
 					.build()
 		) {

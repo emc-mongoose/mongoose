@@ -47,13 +47,13 @@ public final class AtmosMultiRangeUpdateTest {
 		RunTimeConfig.getContext().set(
 			RunTimeConfig.KEY_RUN_ID, AtmosMultiRangeUpdateTest.class.getCanonicalName()
 		);
+		RunTimeConfig.getContext().set(RunTimeConfig.KEY_API_NAME, "atmos");
 		//
 		try(
 			final StorageClient<WSObject>
 				client = new BasicWSClientBuilder<>()
 					.setLimitTime(0, TimeUnit.SECONDS)
 					.setLimitCount(COUNT_TO_WRITE)
-					.setAPI("atmos")
 					.build()
 		) {
 			final DataItemOutput<WSObject> writeOutput = new ListItemOutput<>(BUFF_WRITE);
